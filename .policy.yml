@@ -39,6 +39,7 @@ policy:
             - Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration-pgvector.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
+            - Workflow .github/workflows/pr-unified-storage-compatibility.yml succeeded or skipped
             - Workflow .github/workflows/reject-gh-secrets.yml succeeded or skipped
             - Workflow .github/workflows/run-schema-v2-e2e.yml succeeded or skipped
             - Workflow .github/workflows/shellcheck.yml succeeded or skipped
@@ -234,6 +235,7 @@ approval_rules:
           conclusions:
             - skipped
             - success
+            - failure
           workflows:
             - .github/workflows/detect-breaking-changes-levitate.yml
   - name: Workflow .github/workflows/documentation-ci.yml succeeded or skipped
@@ -491,7 +493,6 @@ approval_rules:
       changed_files:
         paths:
           - ^pkg\/apis\/(?:(?:[^/]*(?:/|$))*)$
-          - ^pkg\/aggregator\/apis\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/apimachinery\/apis\/(?:(?:[^/]*(?:/|$))*)$
           - ^hack\/(?:(?:[^/]*(?:/|$))*)$
           - ^apps\/(?:(?:[^/]*(?:/|$))*)$
@@ -636,6 +637,21 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/pr-test-integration.yml
+  - name: Workflow .github/workflows/pr-unified-storage-compatibility.yml succeeded or skipped
+    if:
+      file_not_deleted:
+        paths:
+          - ^\.github\/workflows\/pr-unified-storage-compatibility\.yml$
+      targets_branch:
+        pattern: (^main$)
+    requires:
+      conditions:
+        has_workflow_result:
+          conclusions:
+            - skipped
+            - success
+          workflows:
+            - .github/workflows/pr-unified-storage-compatibility.yml
   - name: Workflow .github/workflows/reject-gh-secrets.yml succeeded or skipped
     if:
       file_not_deleted:

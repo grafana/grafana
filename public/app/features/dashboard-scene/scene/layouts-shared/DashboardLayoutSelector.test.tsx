@@ -15,7 +15,6 @@ import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { type LayoutParent } from '../types/LayoutParent';
 
 import { DashboardLayoutSelector } from './DashboardLayoutSelector';
 
@@ -33,7 +32,7 @@ describe('DashboardLayoutSelector', () => {
     const user = userEvent.setup();
     const scene = buildTestScene();
     const layoutManager = scene.state.body;
-    const spy = jest.spyOn(layoutManager.parent as LayoutParent, 'switchLayout');
+    const spy = jest.spyOn(scene, 'switchLayout');
 
     render(<DashboardLayoutSelector layoutManager={layoutManager} />);
 
@@ -46,7 +45,8 @@ describe('DashboardLayoutSelector', () => {
     const user = userEvent.setup();
     const scene = buildTestScene();
     const layoutManager = (scene.state.body as RowsLayoutManager).state.rows[0].state.layout;
-    const spy = jest.spyOn(layoutManager.parent as LayoutParent, 'switchLayout');
+    const layoutParent = (scene.state.body as RowsLayoutManager).state.rows[0];
+    const spy = jest.spyOn(layoutParent, 'switchLayout');
 
     render(<DashboardLayoutSelector layoutManager={layoutManager} />);
 
@@ -80,6 +80,82 @@ describe('DashboardLayoutSelector', () => {
 
     const tabsOption = screen.getByLabelText('layout-selection-option-Tabs');
     expect(tabsOption).not.toBeDisabled();
+  });
+
+  it('should not disable tabs option when a rows layout sits under tabs -> rows (tabs -> rows -> tabs)', async () => {
+    const innerRows = new RowsLayoutManager({
+      rows: [new RowItem({ title: 'Inner row', layout: AutoGridLayoutManager.createEmpty() })],
+    });
+    const scene = new DashboardScene({
+      title: 'testScene',
+      editable: true,
+      $variables: new SceneVariableSet({ variables: [] }),
+      body: new TabsLayoutManager({
+        tabs: [
+          new TabItem({
+            title: 'Tab 1',
+            layout: new RowsLayoutManager({
+              rows: [new RowItem({ title: 'Middle row', layout: innerRows })],
+            }),
+          }),
+        ],
+      }),
+    });
+    activateFullSceneTree(scene);
+
+    render(<DashboardLayoutSelector layoutManager={innerRows} />);
+
+    expect(screen.getByLabelText('layout-selection-option-Tabs')).not.toBeDisabled();
+  });
+
+  it('should disable tabs option when the closest enclosing group is tabs', async () => {
+    const rows = new RowsLayoutManager({
+      rows: [new RowItem({ title: 'Row 1', layout: AutoGridLayoutManager.createEmpty() })],
+    });
+    const scene = new DashboardScene({
+      title: 'testScene',
+      editable: true,
+      $variables: new SceneVariableSet({ variables: [] }),
+      body: new TabsLayoutManager({
+        tabs: [new TabItem({ title: 'Tab 1', layout: rows })],
+      }),
+    });
+    activateFullSceneTree(scene);
+
+    render(<DashboardLayoutSelector layoutManager={rows} />);
+
+    const tabsOption = screen.getByLabelText('layout-selection-option-Tabs');
+    expect(tabsOption).toBeDisabled();
+  });
+
+  it('should not disable tabs option when tabs are nested deeper than a direct child row', async () => {
+    const scene = new DashboardScene({
+      title: 'testScene',
+      editable: true,
+      $variables: new SceneVariableSet({ variables: [] }),
+      body: new RowsLayoutManager({
+        rows: [
+          new RowItem({
+            title: 'Row 1',
+            layout: new RowsLayoutManager({
+              rows: [
+                new RowItem({
+                  title: 'Nested row',
+                  layout: new TabsLayoutManager({
+                    tabs: [new TabItem({ title: 'Tab 1', layout: AutoGridLayoutManager.createEmpty() })],
+                  }),
+                }),
+              ],
+            }),
+          }),
+        ],
+      }),
+    });
+    activateFullSceneTree(scene);
+
+    render(<DashboardLayoutSelector layoutManager={scene.state.body} />);
+
+    expect(screen.getByLabelText('layout-selection-option-Tabs')).not.toBeDisabled();
   });
 });
 

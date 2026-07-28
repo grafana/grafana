@@ -88,6 +88,21 @@ export function getRepeatVariableValueSet(
   });
 }
 
+/**
+ * Deep-clone a section-scoped variable set so duplicated rows/tabs get unique scene keys.
+ * Without new keys, edit-pane selection resolves to the first variable with a matching key.
+ */
+export function cloneSectionVariableSet(variableSet: SceneVariables | undefined): SceneVariableSet | undefined {
+  if (!(variableSet instanceof SceneVariableSet)) {
+    return undefined;
+  }
+
+  return variableSet.clone({
+    key: undefined,
+    variables: variableSet.state.variables.map((variable) => variable.clone({ key: undefined })),
+  });
+}
+
 export function removeRepeatLocalVariableFromSet(
   variableSet: SceneVariables | undefined,
   repeatVariableName: string | undefined

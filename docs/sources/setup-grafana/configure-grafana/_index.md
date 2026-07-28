@@ -326,8 +326,8 @@ You must reload the connections with old certificates for them to work.
 
 #### `socket_gid`
 
-GID where the socket should be set when `protocol=socket`.
-Make sure that the target group is in the group of Grafana process and that Grafana process is the file owner before you change this setting.
+GID of the socket when `protocol=socket`.
+Make sure that the user running the Grafana process is a member of the target group and is the file owner before you change this setting.
 It is recommended to set the GID as HTTP server user GID.
 Not set when the value is `-1`.
 
@@ -661,7 +661,7 @@ If tracking with RudderStack is enabled, you can provide a custom URL to load th
 
 Optional.
 This is mirroring the old configuration option, which will be deprecated.
-If `rudderstack_sdk_url` and `rudderstack_v3_sdk_url` are both set, the feature toggle `rudderstackUpgrade` will control which one is loaded.
+If `rudderstack_sdk_url` and `rudderstack_v3_sdk_url` are both set, the v3 SDK is loaded.
 
 #### `rudderstack_config_url`
 
@@ -685,6 +685,16 @@ Optionally, use this option to override the default endpoint address for Applica
 #### `application_insights_auto_route_tracking`
 
 Optionally, use this to configure `enableAutoRouteTracking` in Azure Application Insights. Defaults to `true`. For more details, refer to the [Azure documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/app/application-insights-faq#is-there-a-way-to-see-fewer-events-per-transaction-when-i-use-the-application-insights-javascript-sdk)
+
+#### `posthog_token`
+
+If you want to track Grafana usage via PostHog, specify _your_ PostHog project API key here.
+By default this feature is disabled.
+
+#### `posthog_host`
+
+Optional PostHog instance host URL. Defaults to `https://us.i.posthog.com` (PostHog US Cloud).
+Set this if you use PostHog EU Cloud (`https://eu.i.posthog.com`) or a self-hosted instance.
 
 #### `feedback_links_enabled`
 
@@ -1376,6 +1386,8 @@ clouds_config = `[
 
 Specifies whether Grafana is running in Azure with Managed Identity configured (for example, running in a Azure Virtual Machines instance). Disabled by default, needs to be explicitly enabled.
 
+When enabled, Grafana automatically forwards the Azure platform's managed-identity discovery environment variables (`IDENTITY_ENDPOINT`, `IDENTITY_HEADER`, `IDENTITY_SERVER_THUMBPRINT`, `IMDS_ENDPOINT`, `MSI_ENDPOINT`, `MSI_SECRET`) to the Grafana-owned Azure plugins listed in [`forward_settings_to_plugins`](#forward_settings_to_plugins). This is required for the Azure SDK inside the plugin process to obtain tokens on Azure App Service, Azure Container Apps, Azure Arc, and Service Fabric, where managed-identity endpoints are not reachable via IMDS.
+
 #### `managed_identity_client_id`
 
 The client ID to use for user-assigned managed identity.
@@ -1389,6 +1401,8 @@ Specifies whether Entra ID Workload Identity authentication should be enabled in
 For more documentation on Entra ID Workload Identity, review [Entra ID Workload Identity](https://azure.github.io/azure-workload-identity/docs/) documentation.
 
 Disabled by default, needs to be explicitly enabled.
+
+When enabled, Grafana automatically forwards the workload-identity environment variables injected by the AKS `azure-workload-identity` webhook (`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_FEDERATED_TOKEN_FILE`, `AZURE_AUTHORITY_HOST`) to the Grafana-owned Azure plugins listed in [`forward_settings_to_plugins`](#forward_settings_to_plugins). This is required for the Azure SDK inside the plugin process to perform federated token exchange.
 
 #### `workload_identity_tenant_id`
 
@@ -2478,6 +2492,26 @@ When set to `false`, the OTLP client will use TLS credentials with the default s
 
 <hr>
 
+### `[tracing.opentelemetry.file]`
+
+Grafana can capture its own distributed traces to a local file in OpenTelemetry Protocol (OTLP) JSON format, without running a collector or a tracing backend.
+Capturing stops when the file reaches the size limit or the capture duration elapses, whichever comes first.
+Use this exporter for support: turn it on, reproduce an issue, then collect and share the file.
+
+#### `path`
+
+The path to the capture file, for example, `/var/lib/grafana/traces/capture.json`. Setting this option turns on the file exporter. The parent directory must already exist and be writable by Grafana. Default value is empty, which turns off the exporter.
+
+#### `max_file_size_bytes`
+
+The maximum size of the capture file, in bytes. Default value is `104857600` (100 MiB). The value must be greater than `0`.
+
+#### `capture_duration`
+
+How long to capture traces after Grafana starts, expressed as a duration such as `10m`. Default value is `10m`. The value must be greater than `0`.
+
+<hr>
+
 ### `[external_image_storage]`
 
 These options control how images should be made public so they can be shared on services like Slack or email message.
@@ -2762,6 +2796,15 @@ When enabled, preinstalled plugins without a pinned version are automatically up
 The default is `true`.
 
 To prevent automatic updates for specific plugins, pin them to a specific version using the format `plugin_id@version` in the `preinstall` setting.
+
+<hr>
+
+### `[marketplace]`
+
+#### `license_directory`
+
+Directory containing Marketplace license files for plugins. Name each file `license-<PLUGIN_ID>.jwt`.
+Defaults to the Grafana data path, alongside the default Enterprise `license.jwt` file.
 
 <hr>
 
@@ -3126,7 +3169,7 @@ Set this to `false` to disable loading other custom base maps and hide them in t
 
 Refer to [Role-based access control](../../administration/roles-and-permissions/access-control/) for more information.
 
-#### `plugin_cleanup`
+#### `plugins_cleanup`
 
 Comma-separated list of plugin IDs whose RBAC data (roles, permissions, and seed assignments) will be purged from the database at startup.
 Use this to clean up leftover data from plugins that have been uninstalled or renamed.
@@ -3135,7 +3178,7 @@ The cleanup runs once at startup and is a no-op when the list is empty.
 
 ```ini
 # Example
-plugin_cleanup = grafana-slo-app, grafana-irm-app
+plugins_cleanup = grafana-slo-app, grafana-irm-app
 ```
 
 ### `[navigation.app_sections]`

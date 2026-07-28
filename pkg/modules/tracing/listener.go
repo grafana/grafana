@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/semconv"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -72,9 +71,9 @@ func (l *Listener) Failed(from services.State, failure error) {
 // startSpan creates and stores a span for the given state
 func (l *Listener) startSpan(toState services.State, fromState *services.State) {
 	spanName := fmt.Sprintf("%s Service", toState.String())
-	_, span := tracing.Start(l.ctx, spanName, semconv.GrafanaServiceName(l.serviceName))
+	_, span := tracing.Start(l.ctx, spanName, attribute.String("grafana.service.name", l.serviceName))
 	attributes := []attribute.KeyValue{
-		semconv.GrafanaServiceName(l.serviceName),
+		attribute.String("grafana.service.name", l.serviceName),
 	}
 	if fromState != nil {
 		attributes = append(attributes, attribute.String("modules.tracing.from_state", fromState.String()))

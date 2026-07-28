@@ -1,3 +1,4 @@
+import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
@@ -28,10 +29,6 @@ import { LogsTable } from './LogsTable';
 import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
 import { getPanelData } from './testsUtils';
-
-jest.mock('@openfeature/react-sdk', () => ({
-  useBooleanFlagValue: jest.fn().mockReturnValue(false),
-}));
 
 const fieldConfig: FieldConfigSource = {
   defaults: {},
@@ -122,7 +119,13 @@ const setUp = (
         {...props}
       />
     </PanelContextProvider>,
-    { wrapper: ({ children }) => <Provider store={store}>{children}</Provider> }
+    {
+      wrapper: ({ children }) => (
+        <Provider store={store}>
+          <OpenFeatureTestProvider>{children}</OpenFeatureTestProvider>
+        </Provider>
+      ),
+    }
   );
 };
 

@@ -26,7 +26,7 @@ import { AllLabelsContent } from './LabelsContent';
 import { SeverityFilter } from './SeverityFilter';
 import { canonicalSeverity } from './severity';
 
-export const LABELS_COLUMN_WIDTH = 250;
+const LABELS_COLUMN_WIDTH = 250;
 const COLLAPSED_WIDTH = 36;
 const SKELETON_ROW_COUNT = 6;
 
@@ -304,7 +304,7 @@ function getSidebarFilterValues(labels: LabelStats[], key: SidebarFilterKey): Si
  * Returns the current firing/pending instance counts based on the active query filter,
  * or undefined while the data is still loading.
  */
-export function useInstanceCounts(): { firing: number; pending: number } | undefined {
+function useInstanceCounts(): { firing: number; pending: number } | undefined {
   const filter = useQueryFilter();
 
   // Strip alertstate from filter since the instance count query adds its own alertstate matchers

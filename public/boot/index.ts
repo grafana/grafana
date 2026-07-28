@@ -1,3 +1,4 @@
+import { type Display } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { type CurrentUserDTO, type GrafanaConfig, type NavLinkDTO } from '@grafana/data';
 
 const publicDashboardAccessToken = window.__grafanaPublicDashboardAccessToken;
@@ -82,6 +83,24 @@ interface BootApiResponse {
 }
 
 type FetchBootDataResult = undefined | { redirect: string } | BootApiResponse;
+
+/**
+ * Rotate the session token if it's within the expiry window
+ */
+async function rotateExpiredSession() {
+  try {
+    const sessionExpiration = getSessionExpiration();
+    const now = new Date();
+
+    // If the session has expired, don't continue trying to fetch boot data
+    if (sessionExpiration && now >= sessionExpiration) {
+      await rotateSession();
+    }
+    // Just ignore any errors in session rotation. The user can just log in again.
+  } catch (error) {
+    console.warn('Failed to rotate session', error);
+  }
+}
 
 /**
  * Fetches boot data from the server. If it returns undefined, it should be retried later.
@@ -170,18 +189,7 @@ async function fetchBootData(): Promise<FetchBootDataResult> {
 function loadBootData(): Promise<{ redirect: string } | BootApiResponse> {
   return new Promise((resolve, reject) => {
     const attemptFetch = async () => {
-      try {
-        const sessionExpiration = getSessionExpiration();
-        const now = new Date();
-
-        // If the session has expired, don't continue trying to fetch boot data
-        if (sessionExpiration && now >= sessionExpiration) {
-          await rotateSession();
-        }
-      } catch (error) {
-        // Just ignore any errors in session rotation. The user can just log in again.
-        console.warn('Failed to rotate session', error);
-      }
+      await rotateExpiredSession();
 
       try {
         const bootData = await fetchBootData();
@@ -204,7 +212,49 @@ function loadBootData(): Promise<{ redirect: string } | BootApiResponse> {
   });
 }
 
-async function initGrafana() {
+async function fetchUser(): Promise<Display | undefined> {
+  // Without a namespace we can't target the endpoint, so treat as anonymous
+  // and let the app render its unauthenticated flow.
+  const namespace = window.grafanaBootData?.settings?.namespace;
+  if (!namespace) {
+    return undefined;
+  }
+
+  const resp = await fetch(`/apis/iam.grafana.app/v0alpha1/namespaces/${namespace}/users/~`);
+  if (resp.status === 401) {
+    return undefined;
+  }
+  if (!resp.ok) {
+    throw new Error(`Unexpected /users/~ response: ${resp.status}`);
+  }
+  return resp.json();
+}
+
+function applyCustomFavIcon() {
+  // @ts-ignore - enterprise only setting.
+  const customFavIcon = window.grafanaBootData.settings.whitelabeling?.favIcon;
+  if (!customFavIcon) {
+    return;
+  }
+
+  const existingFavIconEl = document.getElementById('grafana_favicon');
+  if (existingFavIconEl && !(existingFavIconEl instanceof HTMLLinkElement)) {
+    return;
+  }
+
+  const favicon = existingFavIconEl ?? document.createElement('link');
+  favicon.rel = 'icon';
+  favicon.type = 'image/png';
+  favicon.id = 'grafana_favicon';
+
+  if (!existingFavIconEl) {
+    document.head.appendChild(favicon);
+  }
+
+  favicon.href = customFavIcon;
+}
+
+async function initBootDataFromLegacy() {
   // Preserve a mix of values from the initial boot data, and from the backend
   // - nav tree and user info come from the backend
   // - merge settings from both. FS settings contains less values
@@ -216,63 +266,68 @@ async function initGrafana() {
     return Promise.reject({ redirect: bootData.redirect });
   }
 
+  window.grafanaBootData.user = bootData.user;
   window.grafanaBootData.settings = {
     ...bootData.settings,
     ...window.grafanaBootData.settings,
   };
   window.grafanaBootData.navTree = bootData.navTree;
-  window.grafanaBootData.user = bootData.user;
+
   if (bootData.settings?.buildInfo?.edition) {
     window.grafanaBootData.settings.buildInfo.edition = bootData.settings.buildInfo.edition;
   }
 
-  if (!window.__grafanaReduceBootdataAPI) {
-    // The per-theme CSS still contains some global styles needed
-    // to render the page correctly.
-    const cssLink = document.createElement('link');
-    cssLink.rel = 'stylesheet';
+  // The per-theme CSS still contains some global styles needed
+  // to render the page correctly.
+  const cssLink = document.createElement('link');
+  cssLink.rel = 'stylesheet';
 
-    const theme = window.grafanaBootData.user.theme;
-    if (theme === 'system') {
-      const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      window.grafanaBootData.user.lightTheme = !darkQuery.matches;
-    }
-
-    const isLightTheme = window.grafanaBootData.user.lightTheme;
-
-    document.body.classList.add(isLightTheme ? 'theme-light' : 'theme-dark');
-
-    const lang = window.grafanaBootData.user.language;
-    if (lang) {
-      document.documentElement.lang = lang;
-    }
-
-    cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
-    document.head.appendChild(cssLink);
+  const theme = window.grafanaBootData.user.theme;
+  if (theme === 'system') {
+    const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    window.grafanaBootData.user.lightTheme = !darkQuery.matches;
   }
 
-  // Set custom fav icon if set in whitelabeling settings
-  // @ts-ignore - enterprise only setting.
-  const customFavIcon = window.grafanaBootData.settings.whitelabeling?.favIcon;
-  if (customFavIcon) {
-    let existingFavIconEl = document.getElementById('grafana_favicon');
+  const isLightTheme = window.grafanaBootData.user.lightTheme;
+  document.body.classList.add(isLightTheme ? 'theme-light' : 'theme-dark');
 
-    if (existingFavIconEl && !(existingFavIconEl instanceof HTMLLinkElement)) {
-      return;
-    }
-
-    const favicon = existingFavIconEl ?? document.createElement('link');
-
-    favicon.rel = 'icon';
-    favicon.type = 'image/png';
-    favicon.id = 'grafana_favicon';
-
-    if (!existingFavIconEl) {
-      document.head.appendChild(favicon);
-    }
-
-    favicon.href = customFavIcon;
+  const lang = window.grafanaBootData.user.language;
+  if (lang) {
+    document.documentElement.lang = lang;
   }
+
+  cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
+  document.head.appendChild(cssLink);
+}
+
+async function initBootDataFromMT() {
+  await rotateExpiredSession();
+
+  const display = await fetchUser();
+  if (display) {
+    window.grafanaBootData.user = {
+      ...window.grafanaBootData.user,
+      isSignedIn: true,
+      id: display.internalId ?? 0,
+      uid: display.identity?.name ?? '',
+      name: display.displayName,
+      gravatarUrl: display.avatarURL ?? '',
+    };
+  } else {
+    window.grafanaBootData.user = {
+      ...window.grafanaBootData.user,
+      isSignedIn: false,
+    };
+  }
+}
+
+async function initGrafana() {
+  if (window.__grafanaReduceBootdataAPI) {
+    await initBootDataFromMT();
+  } else {
+    await initBootDataFromLegacy();
+  }
+  applyCustomFavIcon();
 }
 
 window.__grafana_boot_data_promise = initGrafana();

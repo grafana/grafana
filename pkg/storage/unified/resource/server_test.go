@@ -16,6 +16,7 @@ import (
 	"github.com/bwmarrin/snowflake"
 	badger "github.com/dgraph-io/badger/v4"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -558,6 +559,92 @@ func TestSimpleServer(t *testing.T) {
 	})
 }
 
+func TestListStoredResources(t *testing.T) {
+	testUser := &identity.StaticRequester{
+		Type:           authlib.TypeUser,
+		Login:          "testuser",
+		UserID:         123,
+		UserUID:        "u123",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true,
+	}
+	ctx := authlib.WithAuthInfo(context.Background(), testUser)
+
+	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = db.Close() })
+
+	store, err := NewKVStorageBackend(KVBackendOptions{KvStore: NewBadgerKV(db)})
+	require.NoError(t, err)
+
+	server, err := NewResourceServer(ResourceServerOptions{Backend: store})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		stopCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = server.Stop(stopCtx)
+	})
+
+	create := func(namespace, name string) {
+		raw := []byte(fmt.Sprintf(`{
+			"apiVersion": "playlist.grafana.app/v0alpha1",
+			"kind": "Playlist",
+			"metadata": {"name": %q, "namespace": %q},
+			"spec": {"title": "hello", "interval": "5m"}
+		}`, name, namespace))
+		resp, err := server.Create(ctx, &resourcepb.CreateRequest{
+			Value: raw,
+			Key: &resourcepb.ResourceKey{
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Namespace: namespace,
+				Name:      name,
+			},
+		})
+		require.NoError(t, err)
+		require.Nil(t, resp.Error)
+	}
+
+	// Two objects of the same group/resource in ns1 must be reported once.
+	create("ns1", "item1")
+	create("ns1", "item2")
+	create("ns2", "item3")
+
+	t.Run("discovers resources for a namespace", func(t *testing.T) {
+		resp, err := server.ListStoredResources(ctx, &resourcepb.ListStoredResourcesRequest{Namespace: "ns1"})
+		require.NoError(t, err)
+		require.Equal(t, []*resourcepb.ListStoredResourcesResponse_StoredResource{
+			{Namespace: "ns1", Group: "playlist.grafana.app", Resource: "playlists"},
+		}, resp.Items)
+	})
+
+	t.Run("non-existent namespace returns no items", func(t *testing.T) {
+		resp, err := server.ListStoredResources(ctx, &resourcepb.ListStoredResourcesRequest{Namespace: "missing"})
+		require.NoError(t, err)
+		require.Empty(t, resp.Items)
+	})
+
+	t.Run("empty namespace is rejected with InvalidArgument", func(t *testing.T) {
+		_, err := server.ListStoredResources(ctx, &resourcepb.ListStoredResourcesRequest{})
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("backend errors are returned as codes.Internal", func(t *testing.T) {
+		errServer, err := NewResourceServer(ResourceServerOptions{
+			Backend: &mockStorageBackend{listStoredErr: errors.New("boom")},
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			stopCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
+			_ = errServer.Stop(stopCtx)
+		})
+
+		_, err = errServer.ListStoredResources(ctx, &resourcepb.ListStoredResourcesRequest{Namespace: "ns1"})
+		require.Equal(t, codes.Internal, status.Code(err))
+	})
+}
+
 func TestRunInQueue(t *testing.T) {
 	const testTenantID = "test-tenant"
 	t.Run("should execute successfully when queue has capacity", func(t *testing.T) {
@@ -706,7 +793,7 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 }
 
 func TestGetQuotaUsage(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("returns error when overrides service is not configured", func(t *testing.T) {
 		s := &server{
@@ -738,26 +825,30 @@ func TestGetQuotaUsage(t *testing.T) {
 `
 		require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
 
-		// Create a real OverridesService with the temp file
 		overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tracing.NewNoopTracerService(), ReloadOptions{
 			FilePath: tmpFile,
 		})
 		require.NoError(t, err)
-		require.NoError(t, overridesService.init(ctx))
-		defer func() {
-			_ = overridesService.stop(ctx)
-		}()
 
-		// Create a mock backend that returns resource stats (reusing mockStorageBackend from search_test.go)
-		mockBackend := &mockStorageBackend{
-			resourceStats: []ResourceStats{{Count: 42}},
+		// Stats flow through GetStats -> searchClient.
+		searchClient := newFakeResourceIndexClient()
+		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
+			Stats: []*resourcepb.ResourceStatsResponse_Stats{{
+				Group:    "dashboard.grafana.app",
+				Resource: "dashboards",
+				Count:    42,
+			}},
 		}
 
-		s := &server{
-			backend:          mockBackend,
-			overridesService: overridesService,
-			log:              log.NewNopLogger(),
-		}
+		s, err := NewResourceServer(ResourceServerOptions{
+			Backend:          &mockStorageBackend{},
+			SearchClient:     searchClient,
+			OverridesService: overridesService,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = s.Stop(ctx)
+		})
 
 		resp, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
 			Key: &resourcepb.ResourceKey{
@@ -770,6 +861,49 @@ func TestGetQuotaUsage(t *testing.T) {
 		require.Nil(t, resp.Error)
 		assert.Equal(t, int64(42), resp.Usage)
 		assert.Equal(t, int64(500), resp.Limit)
+	})
+
+	t.Run("surfaces stats response error on the response", func(t *testing.T) {
+		tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
+		content := `overrides:
+  "123":
+    quotas:
+      dashboard.grafana.app/dashboards:
+        limit: 500
+`
+		require.NoError(t, os.WriteFile(tmpFile, []byte(content), 0644))
+
+		overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tracing.NewNoopTracerService(), ReloadOptions{
+			FilePath: tmpFile,
+		})
+		require.NoError(t, err)
+
+		searchClient := newFakeResourceIndexClient()
+		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
+			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
+		}
+
+		s, err := NewResourceServer(ResourceServerOptions{
+			Backend:          &mockStorageBackend{},
+			SearchClient:     searchClient,
+			OverridesService: overridesService,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = s.Stop(ctx)
+		})
+
+		resp, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "stacks-123",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+			},
+		})
+		require.NoError(t, err)
+		require.NotNil(t, resp.Error)
+		assert.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+		assert.Equal(t, "stats blew up", resp.Error.Message)
 	})
 }
 
@@ -808,7 +942,7 @@ func TestCheckQuotas(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx := context.Background()
+			ctx := t.Context()
 
 			overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
 			overrides := fmt.Sprintf(`overrides:
@@ -831,13 +965,18 @@ func TestCheckQuotas(t *testing.T) {
 				Resource:  "dashboards",
 			}
 
+			searchClient := newFakeResourceIndexClient()
+			searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{{
+					Group:    nsr.Group,
+					Resource: nsr.Resource,
+					Count:    1,
+				}},
+			}
+
 			server, err := NewResourceServer(ResourceServerOptions{
-				Backend: &mockStorageBackend{
-					resourceStats: []ResourceStats{{
-						NamespacedResource: nsr,
-						Count:              1,
-					}},
-				},
+				Backend:          &mockStorageBackend{},
+				SearchClient:     searchClient,
 				OverridesService: overridesService,
 				QuotasConfig:     QuotasConfig{EnforcedResources: tt.enforcedResources},
 			})
@@ -854,6 +993,92 @@ func TestCheckQuotas(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+
+	t.Run("stats response error fails open (no quota error returned)", func(t *testing.T) {
+		ctx := t.Context()
+
+		overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
+		overrides := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1
+`
+		require.NoError(t, os.WriteFile(overridesFile, []byte(overrides), 0644))
+
+		tcr := tracing.NewNoopTracerService()
+		overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tcr.Tracer, ReloadOptions{
+			FilePath: overridesFile,
+		})
+		require.NoError(t, err)
+
+		nsr := NamespacedResource{
+			Namespace: "stacks-123",
+			Group:     "grafana.dashboard.app",
+			Resource:  "dashboards",
+		}
+
+		searchClient := newFakeResourceIndexClient()
+		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
+			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
+		}
+
+		metrics := ProvideStorageMetrics(prometheus.NewRegistry())
+		server, err := NewResourceServer(ResourceServerOptions{
+			Backend:          &mockStorageBackend{},
+			SearchClient:     searchClient,
+			OverridesService: overridesService,
+			StorageMetrics:   metrics,
+			QuotasConfig:     QuotasConfig{EnforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true}},
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = server.Stop(ctx)
+		})
+
+		require.NoError(t, server.checkQuota(ctx, nsr))
+		require.Equal(t, float64(1), testutil.ToFloat64(
+			metrics.DegradedOperations.WithLabelValues("check_quota", "stats_error", nsr.Group, nsr.Resource)))
+	})
+}
+
+func TestNewResourceServer_RequiresStatsSourceWhenQuotasEnabled(t *testing.T) {
+	ctx := t.Context()
+
+	overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
+	overrides := `overrides:
+  "123":
+    quotas:
+      grafana.dashboard.app/dashboards:
+        limit: 1
+`
+	require.NoError(t, os.WriteFile(overridesFile, []byte(overrides), 0644))
+
+	tcr := tracing.NewNoopTracerService()
+	overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tcr.Tracer, ReloadOptions{
+		FilePath: overridesFile,
+	})
+	require.NoError(t, err)
+
+	t.Run("errors when neither search server nor search client is configured", func(t *testing.T) {
+		_, err := NewResourceServer(ResourceServerOptions{
+			Backend:          &mockStorageBackend{},
+			OverridesService: overridesService,
+		})
+		require.Error(t, err)
+	})
+
+	t.Run("succeeds when a search client is configured", func(t *testing.T) {
+		server, err := NewResourceServer(ResourceServerOptions{
+			Backend:          &mockStorageBackend{},
+			SearchClient:     newFakeResourceIndexClient(),
+			OverridesService: overridesService,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = server.Stop(ctx)
+		})
+	})
 }
 
 func TestShouldEnforce(t *testing.T) {
@@ -1144,6 +1369,30 @@ func (m *mockWatchServer) SetTrailer(metadata.MD)       {}
 func (m *mockWatchServer) SendMsg(any) error            { return nil }
 func (m *mockWatchServer) RecvMsg(any) error            { return nil }
 
+// mockDailyStatsServer implements resourcepb.ResourceStats_GetResourceDailyStatsServer
+// for testing, collecting everything sent by the server.
+type mockDailyStatsServer struct {
+	grpc.ServerStream
+	ctx  context.Context
+	days []*resourcepb.DailyStat
+}
+
+func newMockDailyStatsServer(ctx context.Context) *mockDailyStatsServer {
+	return &mockDailyStatsServer{ctx: ctx}
+}
+
+func (m *mockDailyStatsServer) Send(d *resourcepb.DailyStat) error {
+	m.days = append(m.days, d)
+	return nil
+}
+
+func (m *mockDailyStatsServer) Context() context.Context     { return m.ctx }
+func (m *mockDailyStatsServer) SetHeader(metadata.MD) error  { return nil }
+func (m *mockDailyStatsServer) SendHeader(metadata.MD) error { return nil }
+func (m *mockDailyStatsServer) SetTrailer(metadata.MD)       {}
+func (m *mockDailyStatsServer) SendMsg(any) error            { return nil }
+func (m *mockDailyStatsServer) RecvMsg(any) error            { return nil }
+
 const (
 	watchTestGroup     = "playlist.grafana.app"
 	watchTestResource  = "playlists"
@@ -1371,6 +1620,86 @@ func TestPeriodicBookmarks(t *testing.T) {
 		require.NoError(t, eg.Wait())
 
 		require.Empty(t, bookmarks)
+	})
+}
+
+// stubWatchServer is a ResourceStore_WatchServer mock whose Send returns a
+// caller-supplied error. It is used to exercise Watch's error handling without
+// relying on races between the watch context and concrete Send failures.
+type stubWatchServer struct {
+	grpc.ServerStream
+	ctx     context.Context
+	sendErr error
+}
+
+func (s *stubWatchServer) Send(*resourcepb.WatchEvent) error { return s.sendErr }
+func (s *stubWatchServer) Context() context.Context          { return s.ctx }
+func (s *stubWatchServer) SetHeader(metadata.MD) error       { return nil }
+func (s *stubWatchServer) SendHeader(metadata.MD) error      { return nil }
+func (s *stubWatchServer) SetTrailer(metadata.MD)            {}
+func (s *stubWatchServer) SendMsg(any) error                 { return nil }
+func (s *stubWatchServer) RecvMsg(any) error                 { return nil }
+
+// TestWatchContextCancellation pins down how Watch translates errors that
+// surface during context cancellation. The watch loop has an explicit
+// `case <-ctx.Done(): return nil` branch, but `select` is nondeterministic, so
+// when the context is canceled we may instead run a Send/Read that returns
+// the context error. Watch must treat that as a clean shutdown, while still
+// surfacing unrelated errors and context errors that did not originate from
+// our own context.
+func TestWatchContextCancellation(t *testing.T) {
+	testUser := newWatchTestUser()
+
+	watchReq := &resourcepb.WatchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:    watchTestGroup,
+				Resource: watchTestResource,
+			},
+		},
+		// SendInitialEvents forces Watch to call Send during the backfill, so
+		// the configured stub error path is hit deterministically without
+		// having to race with the bookmark ticker or the broadcaster.
+		SendInitialEvents: true,
+	}
+
+	setup := func(t *testing.T) *server {
+		t.Helper()
+		srv := newWatchTestServer(t, watchTestServerOpts{})
+		require.NoError(t, createTestPlaylist(authlib.WithAuthInfo(t.Context(), testUser), srv))
+		return srv
+	}
+
+	t.Run("returns nil when own context is canceled", func(t *testing.T) {
+		srv := setup(t)
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+		cancel()
+
+		// Whatever sendErr we configure, Watch should swallow it because the
+		// context error from our own ctx will always be the proximate cause.
+		stub := &stubWatchServer{ctx: ctx, sendErr: context.Canceled}
+		require.NoError(t, srv.Watch(watchReq, stub))
+	})
+
+	t.Run("propagates non-context Send errors", func(t *testing.T) {
+		srv := setup(t)
+		ctx := authlib.WithAuthInfo(t.Context(), testUser)
+
+		sentinel := errors.New("send failed")
+		stub := &stubWatchServer{ctx: ctx, sendErr: sentinel}
+		err := srv.Watch(watchReq, stub)
+		require.ErrorIs(t, err, sentinel)
+	})
+
+	t.Run("propagates context errors that did not come from our own context", func(t *testing.T) {
+		srv := setup(t)
+		// Own context is alive; a Send returning context.Canceled here must
+		// have come from somewhere else and is a real error to report.
+		ctx := authlib.WithAuthInfo(t.Context(), testUser)
+
+		stub := &stubWatchServer{ctx: ctx, sendErr: context.Canceled}
+		err := srv.Watch(watchReq, stub)
+		require.ErrorIs(t, err, context.Canceled)
 	})
 }
 
@@ -1861,6 +2190,236 @@ func TestNewEventPermissionChecks(t *testing.T) {
 	})
 }
 
+// TestStatsAccessChecks covers the authorization behavior of the usage-stats
+// RPCs: reads must be equivalent to reading the object (folder-aware authz),
+// while ingest only requires an authenticated caller.
+func TestStatsAccessChecks(t *testing.T) {
+	user := &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		Login:     "testuser",
+		UserID:    123,
+		UserUID:   "u123",
+		OrgRole:   identity.RoleEditor,
+		Namespace: "default",
+	}
+	ctx := authlib.WithAuthInfo(context.Background(), user)
+
+	const (
+		group     = "playlist.grafana.app"
+		resource  = "playlists"
+		namespace = "default"
+		name      = "test-resource"
+		folderA   = "folder-a"
+	)
+
+	value := []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"` + name + `","uid":"test-uid","namespace":"` + namespace + `","annotations":{"grafana.app/folder":"` + folderA + `"}},"spec":{"title":"t","interval":"5m","items":[]}}`)
+
+	key := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: namespace, Name: name}
+
+	// newStatsServer builds a stats-enabled server backed by an in-memory KV
+	// store (leases are required by the ingester) and seeds one resource in
+	// folderA using an always-allow client before switching to ac.
+	newStatsServer := func(t *testing.T, ac *callbackAccessClient) *server {
+		t.Helper()
+		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = db.Close() })
+
+		kv := NewBadgerKV(db)
+		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, EnableKVLeases: true, Holder: "test"})
+		require.NoError(t, err)
+
+		srv, err := NewResourceServer(ResourceServerOptions{
+			Backend:           store,
+			AccessClient:      ac,
+			UsageStatsEnabled: true,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = srv.Stop(stopCtx)
+		})
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+		return srv
+	}
+
+	t.Run("GetResourceDailyStats passes the resolved folder to the access check", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac)
+
+		var capturedReq authlib.CheckRequest
+		var capturedFolder string
+		ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			capturedReq, capturedFolder = req, folder
+			return allow()
+		}
+
+		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(ctx))
+		require.NoError(t, err)
+		require.Equal(t, utils.VerbGet, capturedReq.Verb)
+		require.Equal(t, name, capturedReq.Name)
+		require.Equal(t, folderA, capturedFolder, "read must resolve the object folder, not pass an empty one")
+	})
+
+	t.Run("GetResourceDailyStats is denied when the user cannot read the object", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac)
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
+
+		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(ctx))
+		require.Equal(t, codes.PermissionDenied, status.Code(err))
+	})
+
+	t.Run("RecordEvent does not perform an object-level access check", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac)
+
+		// Even a deny-all access client must not block ingest: the path only
+		// requires an authenticated caller.
+		accessCalled := false
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+			accessCalled = true
+			return deny()
+		}
+
+		_, err := srv.RecordEvent(ctx, &resourcepb.RecordEventRequest{
+			Key:    key,
+			Events: []*resourcepb.ResourceEvent{{Metric: "views", Value: 1}},
+		})
+		require.NoError(t, err)
+		require.False(t, accessCalled, "ingest must not call the access client")
+	})
+
+	t.Run("RecordEvent requires an authenticated caller", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac)
+
+		_, err := srv.RecordEvent(context.Background(), &resourcepb.RecordEventRequest{
+			Key:    key,
+			Events: []*resourcepb.ResourceEvent{{Metric: "views", Value: 1}},
+		})
+		require.Equal(t, codes.Unauthenticated, status.Code(err))
+	})
+}
+
+func TestGetResourceDailyStats(t *testing.T) {
+	user := &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		Login:     "testuser",
+		UserID:    123,
+		UserUID:   "u123",
+		OrgRole:   identity.RoleEditor,
+		Namespace: "default",
+	}
+	ctx := authlib.WithAuthInfo(context.Background(), user)
+
+	const (
+		group     = "dashboard.grafana.app"
+		resource  = "dashboards"
+		namespace = "default"
+		name      = "test-dashboard"
+		folderA   = "folder-a"
+	)
+
+	value := []byte(`{"apiVersion":"dashboard.grafana.app/v1beta1","kind":"Dashboard","metadata":{"name":"` + name + `","uid":"test-uid","namespace":"` + namespace + `","annotations":{"grafana.app/folder":"` + folderA + `"}},"spec":{"title":"t"}}`)
+
+	key := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: namespace, Name: name}
+
+	newStatsServer := func(t *testing.T, ac *callbackAccessClient, enabled bool) *server {
+		t.Helper()
+		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = db.Close() })
+
+		kv := NewBadgerKV(db)
+		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, EnableKVLeases: true, Holder: "test"})
+		require.NoError(t, err)
+
+		srv, err := NewResourceServer(ResourceServerOptions{
+			Backend:           store,
+			AccessClient:      ac,
+			UsageStatsEnabled: enabled,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_ = srv.Stop(stopCtx)
+		})
+
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+		return srv
+	}
+
+	t.Run("returns the recorded daily stats", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac, true)
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+
+		_, err := srv.RecordEvent(ctx, &resourcepb.RecordEventRequest{
+			Key:    key,
+			Events: []*resourcepb.ResourceEvent{{Metric: "views", Value: 3}, {Metric: "queries", Value: 1}},
+		})
+		require.NoError(t, err)
+
+		// Buffered events only surface after a flush to the KV store.
+		require.NoError(t, srv.statsIngester.Flush(ctx))
+
+		stream := newMockDailyStatsServer(ctx)
+		err = srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, stream)
+		require.NoError(t, err)
+		require.Len(t, stream.days, 1)
+		require.Equal(t, uint64(3), stream.days[0].Metrics["views"])
+		require.Equal(t, uint64(1), stream.days[0].Metrics["queries"])
+	})
+
+	t.Run("returns no days when nothing has been recorded", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac, true)
+		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
+
+		stream := newMockDailyStatsServer(ctx)
+		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, stream)
+		require.NoError(t, err)
+		require.Empty(t, stream.days)
+	})
+
+	t.Run("is unimplemented when usage stats are disabled", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac, false)
+
+		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(ctx))
+		require.Equal(t, codes.Unimplemented, status.Code(err))
+	})
+
+	t.Run("requires an authenticated caller", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac, true)
+
+		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(context.Background()))
+		require.Equal(t, codes.Unauthenticated, status.Code(err))
+	})
+
+	t.Run("rejects an invalid request key", func(t *testing.T) {
+		ac := &callbackAccessClient{}
+		srv := newStatsServer(t, ac, true)
+
+		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{
+			Key: &resourcepb.ResourceKey{Namespace: namespace, Resource: resource, Name: name},
+		}, newMockDailyStatsServer(ctx))
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+}
+
 // TestFolderDeletePermissionChecks verifies that the unified resource server enforces
 // authorization correctly when the resource being deleted is itself a folder
 // (group=folder.grafana.app, resource=folders). The key difference from generic resources
@@ -2257,4 +2816,26 @@ func TestGetBlob_RejectsMissingResourceKey(t *testing.T) {
 	rsp, err := srv.GetBlob(ctxWithUserInNs("org-1"), &resourcepb.GetBlobRequest{Uid: "blob-uid"})
 	require.NoError(t, err)
 	require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+}
+
+func TestClassifyAuthError(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		{"nil", nil, ""},
+		{"namespace mismatch", authlib.ErrNamespaceMismatch, "auth_namespace_mismatch"},
+		{"unavailable", status.Error(codes.Unavailable, "down"), "auth_unavailable"},
+		{"deadline exceeded", status.Error(codes.DeadlineExceeded, "slow"), "auth_unavailable"},
+		{"resource exhausted", status.Error(codes.ResourceExhausted, "rate"), "auth_unavailable"},
+		{"permission denied", status.Error(codes.PermissionDenied, "no"), "auth_rejected"},
+		{"invalid argument", status.Error(codes.InvalidArgument, "bad"), "auth_rejected"},
+		{"unknown", errors.New("boom"), "auth_error"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, classifyAuthError(tt.err))
+		})
+	}
 }

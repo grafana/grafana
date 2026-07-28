@@ -649,10 +649,8 @@ func NewTestMultiOrgAlertmanager(t *testing.T, opts ...TestMultiOrgAlertmanagerO
 		options.featureToggles,
 		nil,
 		false,
-		nil, // adminConfigStore - not needed when datasource sync feature flag is off
-		nil, // datasourceService - not needed when datasource sync feature flag is off
-		nil, // httpClientProvider - not needed when datasource sync feature flag is off
-		&validations.OSSDataSourceRequestValidator{}, // requestValidator - not needed when datasource sync feature flag is off
+		// Sync deps are nil — tests do not enable the sync feature flag.
+		NewExternalAMSyncer(nil, nil, &validations.OSSDataSourceRequestValidator{}, cfg, m.GetMultiOrgAlertmanagerMetrics(), log.New("testlogger"), nil, nil, nil),
 		moaOpts...,
 	)
 	require.NoError(t, err)
@@ -709,14 +707,14 @@ type FakeReceiverService struct {
 }
 
 type FakeEmailValidator struct {
-	ValidateIntegrationFunc       func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error
+	ValidateIntegrationFunc       func(ctx context.Context, orgID int64, integration models.Integration, decryptFn models.DecryptFn, logger log.Logger) error
 	ValidateIntegrationConfigFunc func(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error
 }
 
 func NewFakeEmailValidator(t *testing.T, err error) *FakeEmailValidator {
 	t.Helper()
 	return &FakeEmailValidator{
-		ValidateIntegrationFunc: func(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
+		ValidateIntegrationFunc: func(ctx context.Context, orgID int64, integration models.Integration, decryptFn models.DecryptFn, logger log.Logger) error {
 			return err
 		},
 		ValidateIntegrationConfigFunc: func(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error {
@@ -725,9 +723,9 @@ func NewFakeEmailValidator(t *testing.T, err error) *FakeEmailValidator {
 	}
 }
 
-func (f *FakeEmailValidator) ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, logger log.Logger) error {
+func (f *FakeEmailValidator) ValidateIntegration(ctx context.Context, orgID int64, integration models.Integration, decryptFn models.DecryptFn, logger log.Logger) error {
 	if f.ValidateIntegrationFunc != nil {
-		return f.ValidateIntegrationFunc(ctx, orgID, integration, logger)
+		return f.ValidateIntegrationFunc(ctx, orgID, integration, decryptFn, logger)
 	}
 	return nil
 }

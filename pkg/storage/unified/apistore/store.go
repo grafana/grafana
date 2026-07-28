@@ -76,6 +76,13 @@ type StorageOptions struct {
 	// Allow writing objects with metadata.annotations[grafana.app/folder]
 	EnableFolderSupport bool
 
+	// RequireFolder rejects writes that omit the grafana.app/folder annotation
+	// or use the root/general folder. Orthogonal to EnableFolderSupport:
+	//   - EnableFolderSupport=false rejects writes that DO set the folder annotation.
+	//   - RequireFolder=true rejects writes that DO NOT set it (or set it to root).
+	// Only meaningful when EnableFolderSupport=true.
+	RequireFolder bool
+
 	// Some resources should not allow the absolute maximum (254 characters)
 	MaximumNameLength int
 
@@ -699,6 +706,17 @@ func (s *Storage) GuaranteedUpdate(
 				}
 				continue
 			}
+
+			// A write that carries a resourceVersion is a conditional (optimistic
+			// concurrency) update, not a create. Reaching here means the object was
+			// deleted between the caller's read and this write, so the precondition can
+			// never hold. Report a Conflict so the caller re-reads and retries, rather
+			// than resurrecting the object or failing downstream with the opaque
+			// "resourceVersion should not be set on objects to be created" create error.
+			// Unconditional writes (no resourceVersion) still upsert as before.
+			if m, merr := utils.MetaAccessor(updatedObj); merr == nil && m.GetResourceVersion() != "" {
+				return apierrors.NewConflict(s.gr, req.Key.Name, errors.New("the object was deleted"))
+			}
 			return s.Create(ctx, key, updatedObj, destination, 0)
 		}
 
@@ -741,6 +759,10 @@ func (s *Storage) GuaranteedUpdate(
 			err = resource.GetError(resource.AsErrorResult(err))
 		} else if updateResponse.Error != nil {
 			if attempt < MaxUpdateAttempts && updateResponse.Error.Code == http.StatusConflict {
+				// Delete the secure values this attempt created; the next attempt recreates them.
+				// finish only echoes the conflict back and logs any cleanup failure itself, so we
+				// discard its return and retry instead of surfacing it.
+				_ = v.finish(ctx, resource.GetError(updateResponse.Error), s.opts.SecureValues)
 				continue // try the read again
 			}
 			err = resource.GetError(updateResponse.Error)

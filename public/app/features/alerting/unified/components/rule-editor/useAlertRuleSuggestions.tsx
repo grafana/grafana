@@ -117,7 +117,7 @@ function promNamespacesToNamespaceGroups(promNamespaces: RuleNamespace[]) {
   return groups;
 }
 
-export function rulerRulesToNamespaceGroups(rulerConfig: RulerRulesConfigDTO) {
+function rulerRulesToNamespaceGroups(rulerConfig: RulerRulesConfigDTO) {
   const result = new Map<string, string[]>();
   Object.entries(rulerConfig).forEach(([namespace, groups]) => {
     result.set(

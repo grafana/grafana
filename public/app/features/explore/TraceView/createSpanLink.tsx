@@ -26,7 +26,7 @@ import { type DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-import { type LokiQuery } from '../../../plugins/datasource/loki/types';
+import { type LokiQuery } from '../../loki-helpers/types';
 import { type ExploreFieldLinkModel, getFieldLinksForExplore, getVariableUsageInfo } from '../utils/links';
 
 import { type SpanLinkDef, type SpanLinkFunc, SpanLinkType } from './components/types/links';
@@ -144,7 +144,7 @@ const formatDefaultKeys = (keys: string[]) => {
 const defaultKeys = formatDefaultKeys(['cluster', 'hostname', 'namespace', 'pod', 'service.name', 'service.namespace']);
 export const defaultProfilingKeys = formatDefaultKeys(['service.name', 'service.namespace']);
 export const pyroscopeProfileIdTagKey = 'pyroscope.profile.id';
-export const feO11yTagKey = 'gf.feo11y.app.id';
+const feO11yTagKey = 'gf.feo11y.app.id';
 
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,

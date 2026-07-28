@@ -4,7 +4,7 @@ import { debounce } from 'lodash';
 
 import { type NavIndex, type PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
@@ -25,7 +25,8 @@ import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/d
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 
-import { DashboardEditActionEvent, EDIT_PANE_COLLAPSED_KEY } from '../edit-pane/shared';
+import { DashboardEditActionEvent } from '../edit-pane/events';
+import { EDIT_PANE_COLLAPSED_KEY } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
@@ -127,6 +128,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     return () => {
       this.commitChanges();
+      reportInteraction('panel_edit_closed', {}, { silent: true });
     };
   }
 
@@ -314,6 +316,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   }
 
   public onDiscard = () => {
+    reportInteraction('panel_edit_discarded', {}, { silent: true });
     this.setState({ isDirty: false });
 
     const panel = this.state.panelRef.resolve();

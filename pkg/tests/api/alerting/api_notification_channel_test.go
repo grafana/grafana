@@ -742,7 +742,7 @@ const alertmanagerConfig = `
             "name": "email_test",
             "type": "email",
             "settings": {
-              "addresses": "test@email.com",
+              "addresses": "test@example.com",
               "singleEmail": true
             }
           }
@@ -1262,7 +1262,7 @@ var expAlertmanagerConfigFromAPI = `
             "type": "email",
             "disableResolveMessage": false,
             "settings": {
-              "addresses": "test@email.com",
+              "addresses": "test@example.com",
               "singleEmail": true
             },
             "secureFields": {}
@@ -1600,7 +1600,7 @@ var expAlertmanagerConfigFromAPI = `
 var expEmailNotifications = []*notifications.SendEmailCommandSync{
 	{
 		SendEmailCommand: notifications.SendEmailCommand{
-			To:          []string{"test@email.com"},
+			To:          []string{"test@example.com"},
 			SingleEmail: true,
 			Template:    "ng_alert_notification",
 			Subject:     "[FIRING:1] EmailAlert (default)",

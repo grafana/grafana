@@ -1,5 +1,14 @@
+import {
+  DataQueryErrorType,
+  FieldType,
+  getDefaultTimeRange,
+  LoadingState,
+  type PanelData,
+  type PanelPlugin,
+  toDataFrame,
+} from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { sceneGraph, type VizPanel } from '@grafana/scenes';
+import { SceneDataNode, SceneDataTransformer, sceneGraph, type VizPanel } from '@grafana/scenes';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -93,6 +102,7 @@ function buildPanelScene(panels: VizPanel[] = [], elementMap: Record<string, num
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
+    activateEditPane: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -124,6 +134,7 @@ function buildAutoGridPanelScene(panels: VizPanel[] = [], elementMap: Record<str
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
+    activateEditPane: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -191,6 +202,19 @@ async function addPanel(
     throw new Error(`ADD_PANEL failed: ${result.error}`);
   }
   return getElementName(result.data);
+}
+
+function makePanelData(overrides: Partial<PanelData>): PanelData {
+  return { state: LoadingState.Done, series: [], timeRange: getDefaultTimeRange(), ...overrides };
+}
+
+// Attaches a live data provider to an already-added panel so LIST_PANELS can read its runtime status.
+function attachPanelData(scene: DashboardScene, title: string, data: PanelData) {
+  const panel = scene.state.body.getVizPanels().find((p) => p.state.title === title);
+  if (!panel) {
+    throw new Error(`panel not found: ${title}`);
+  }
+  panel.setState({ $data: new SceneDataTransformer({ $data: new SceneDataNode({ data }), transformations: [] }) });
 }
 
 describe('Panel mutation commands', () => {
@@ -281,6 +305,271 @@ describe('Panel mutation commands', () => {
       expect(result.success).toBe(true);
       const data = result.data as PanelElementsData;
       expect(data.elements).toHaveLength(0);
+    });
+
+    it('includeStatus reports the loading state for a loading panel', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Loading Panel');
+      attachPanelData(scene, 'Loading Panel', makePanelData({ state: LoadingState.Loading }));
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [name], includeStatus: true },
+      });
+      const entry = (result.data as PanelElementsData).elements[0];
+
+      expect(entry.status).toEqual({
+        loadingState: LoadingState.Loading,
+        hasError: false,
+        hasNoData: false,
+      });
+      expect(entry.dataSchema).toBeUndefined();
+    });
+
+    it('includeStatus reports structured errors with refId and type', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Error Panel');
+      attachPanelData(
+        scene,
+        'Error Panel',
+        makePanelData({
+          state: LoadingState.Error,
+          errors: [{ message: 'boom', refId: 'A', type: DataQueryErrorType.Unknown }],
+        })
+      );
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [name], includeStatus: true },
+      });
+      const status = (result.data as PanelElementsData).elements[0].status;
+
+      expect(status?.hasError).toBe(true);
+      expect(status?.loadingState).toBe(LoadingState.Error);
+      expect(status?.errors).toEqual([
+        { source: 'query', message: 'boom', refId: 'A', type: DataQueryErrorType.Unknown },
+      ]);
+    });
+
+    it('includeStatus reads the error message from data.message when the top-level message is absent', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Backend Error Panel');
+      attachPanelData(
+        scene,
+        'Backend Error Panel',
+        makePanelData({
+          state: LoadingState.Error,
+          errors: [{ refId: 'A', data: { message: 'backend boom' } }],
+        })
+      );
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [name], includeStatus: true },
+      });
+      const status = (result.data as PanelElementsData).elements[0].status;
+
+      expect(status?.hasError).toBe(true);
+      expect(status?.errors).toEqual([{ source: 'query', message: 'backend boom', refId: 'A' }]);
+    });
+
+    it('includeStatus does not flag hasError for an error object with no usable message (Done state)', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Empty Error Panel');
+      attachPanelData(
+        scene,
+        'Empty Error Panel',
+        makePanelData({ state: LoadingState.Done, series: [], errors: [{}] })
+      );
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [name], includeStatus: true },
+      });
+      const status = (result.data as PanelElementsData).elements[0].status;
+
+      expect(status?.hasError).toBe(false);
+      expect(status?.errors).toBeUndefined();
+    });
+
+    it('includeStatus surfaces a plugin load error as a hard error, even with a data provider present', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Broken Plugin Panel');
+      // Healthy data underneath, but the panel plugin failed to load.
+      attachPanelData(scene, 'Broken Plugin Panel', makePanelData({ state: LoadingState.Done }));
+      const panel = scene.state.body.getVizPanels().find((p) => p.state.title === 'Broken Plugin Panel');
+      panel?.setState({ _pluginLoadError: 'Failed to load panel plugin' });
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [name], includeStatus: true },
+      });
+      const status = (result.data as PanelElementsData).elements[0].status;
+
+      expect(status).toEqual({
+        loadingState: LoadingState.Error,
+        hasError: true,
+        hasNoData: false,
+        errors: [{ source: 'plugin', message: 'Failed to load panel plugin' }],
+      });
+    });
+
+    it('includeStatus surfaces a plugin compile error (loadError) even without _pluginLoadError', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Compile Error Panel');
+      attachPanelData(scene, 'Compile Error Panel', makePanelData({ state: LoadingState.Done }));
+      const panel = scene.state.body.getVizPanels().find((p) => p.state.title === 'Compile Error Panel')!;
+      // Compile failure: error plugin with loadError, no _pluginLoadError set.
+      jest.spyOn(panel, 'getPlugin').mockReturnValue({ loadError: true } as unknown as PanelPlugin);
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [name], includeStatus: true },
+      });
+      const status = (result.data as PanelElementsData).elements[0].status;
+
+      expect(status?.hasError).toBe(true);
+      expect(status?.loadingState).toBe(LoadingState.Error);
+      expect(status?.errors?.[0].source).toBe('plugin');
+    });
+
+    it('includeStatus reports hasNoData for a done panel with no series', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Empty Panel');
+      attachPanelData(scene, 'Empty Panel', makePanelData({ state: LoadingState.Done, series: [] }));
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [name], includeStatus: true },
+      });
+      const status = (result.data as PanelElementsData).elements[0].status;
+
+      expect(status?.hasNoData).toBe(true);
+      expect(status?.hasError).toBe(false);
+      expect(status?.loadingState).toBe(LoadingState.Done);
+    });
+
+    it('surfaces deduped data-frame notices (includeStatus) and the frame schema (includeSchema)', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Notice Panel');
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1] },
+          { name: 'value', type: FieldType.number, values: [2] },
+        ],
+        meta: { notices: [{ severity: 'warning', text: 'slow query' }] },
+      });
+      attachPanelData(scene, 'Notice Panel', makePanelData({ state: LoadingState.Done, series: [frame, frame] }));
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [name], includeStatus: true, includeSchema: true },
+      });
+      const entry = (result.data as PanelElementsData).elements[0];
+
+      expect(entry.status?.notices).toEqual([{ severity: 'warning', text: 'slow query' }]);
+      expect(entry.status?.hasNoData).toBe(false);
+      expect(entry.dataSchema?.[0].fields.map((f) => f.name)).toEqual(['time', 'value']);
+    });
+
+    it('includeStatus and includeSchema are independent', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Independent Panel');
+      const frame = toDataFrame({ fields: [{ name: 'time', type: FieldType.time, values: [1] }] });
+      attachPanelData(scene, 'Independent Panel', makePanelData({ state: LoadingState.Done, series: [frame] }));
+
+      const statusOnly = (
+        (await client.execute({ type: 'LIST_PANELS', payload: { elements: [name], includeStatus: true } }))
+          .data as PanelElementsData
+      ).elements[0];
+      expect(statusOnly.status).toBeDefined();
+      expect(statusOnly.dataSchema).toBeUndefined();
+
+      const schemaOnly = (
+        (await client.execute({ type: 'LIST_PANELS', payload: { elements: [name], includeSchema: true } }))
+          .data as PanelElementsData
+      ).elements[0];
+      expect(schemaOnly.dataSchema).toBeDefined();
+      expect(schemaOnly.status).toBeUndefined();
+    });
+
+    it('includeStatus folds an error-severity notice into errors, not notices', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Error Notice Panel');
+      const frame = toDataFrame({
+        fields: [{ name: 'time', type: FieldType.time, values: [1] }],
+        meta: {
+          notices: [
+            { severity: 'error', text: 'datasource rejected the query' },
+            { severity: 'info', text: 'sampled' },
+          ],
+        },
+      });
+      attachPanelData(scene, 'Error Notice Panel', makePanelData({ state: LoadingState.Done, series: [frame] }));
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [name], includeStatus: true },
+      });
+      const status = (result.data as PanelElementsData).elements[0].status;
+
+      expect(status?.hasError).toBe(true);
+      expect(status?.errors).toEqual([{ source: 'notice', message: 'datasource rejected the query' }]);
+      expect(status?.notices).toEqual([{ severity: 'info', text: 'sampled' }]);
+    });
+
+    it('does not attach status when includeStatus is not set', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Plain Panel');
+      attachPanelData(scene, 'Plain Panel', makePanelData({ state: LoadingState.Done }));
+
+      const result = await client.execute({ type: 'LIST_PANELS', payload: { elements: [name] } });
+      const entry = (result.data as PanelElementsData).elements[0];
+
+      expect('status' in entry).toBe(false);
+      expect('dataSchema' in entry).toBe(false);
+    });
+
+    it('reports loading for a panel whose query has not resolved yet', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Pending Panel');
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [name], includeStatus: true },
+      });
+      const status = (result.data as PanelElementsData).elements[0].status;
+
+      expect(status?.loadingState).toBe(LoadingState.Loading);
+      expect(status?.hasError).toBe(false);
+    });
+
+    it('omits status for a panel without a data provider', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'No Data Provider');
+      const panel = scene.state.body.getVizPanels().find((p) => p.state.title === 'No Data Provider');
+      panel?.setState({ $data: undefined });
+
+      const result = await client.execute({
+        type: 'LIST_PANELS',
+        payload: { elements: [name], includeStatus: true },
+      });
+      const entry = (result.data as PanelElementsData).elements[0];
+
+      expect(entry.status).toBeUndefined();
     });
   });
 

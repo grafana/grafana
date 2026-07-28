@@ -23,9 +23,7 @@ aliases:
 
 {{< admonition type="note" >}}
 
-**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
-
-[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
+Git Sync functionalities are constantly evolving. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
 {{< /admonition >}}
 
@@ -40,7 +38,29 @@ You can add dashboards to Git Sync using any of the following options:
 
 You can import dashboards directly into your Git Sync provisioned folders using the Grafana UI or the HTTP API.
 
+![Import dashboard](/static/img/docs/ascode/gitsync-dashboards-import.png)
+
+To access the Import dashboard tool from the Git Sync UI:
+
+1. Go to the **Dashboards tab** of you connection.
+1. On the top right corner, click **New**.
+1. Select **Import dashboard** and you'll be redirected to the wizard.
+1. Upload or paste the dashboard JSON.
+1. Fill in the relevant fields, including the branch and repository folder, and press **Import**.
+1. Open the pull request, follow your regular workflow, and merge. Note that it could take a few minutes until the imported dashboard appears.
+
+Keep in mind the following:
+
+- UIDs are globally unique per org. Two repositories with dashboards sharing a UID will conflict.
+- Two dashboards can share a title as long as they live at different paths in the repo. If a file with the same name already exists at the target path, the import is stopped before it overwrites anything.
+
 For more information refer to [Import dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/import-dashboards/) in the Data Visualization documentation.
+
+{{< admonition type="note" >}}
+
+It may take a few minutes for your changes to reflect on your screen. If they don't, refresh the UI manually.
+
+{{< /admonition >}}
 
 ## Copy an existing dashboard from the Grafana UI
 
@@ -84,8 +104,6 @@ Where:
 - _<GIT_REPO>_: The path to the repository synced with Git Sync
 - _<DASHBOARDS_PATH>_: The path where the dashboards you want to export are located. The dashboards path must be under the repository
 
-See more at [Manage resources with Grafana CLI](https://grafana.github.io/grafanactl/guides/manage-resources/).
-
 ## Add a dashboard via JSON export
 
 To add an existing dashboard to Git Sync via JSON export, you need to:
@@ -109,10 +127,10 @@ To export a dashboard as a JSON file it must follow this CRD structure:
 
 The structure includes:
 
-- `apiVersion`: Specifies the API version. Both classic and `v2` JSON models are supported. For more information, refer to [Dashboard JSON model](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/)
-- `kind`: Identifies the resource type (Dashboard)
-- `metadata`: Contains the dashboard identifier `uid`. You can find the identifier in the dashboard's URL or in the exported JSON
-- `spec`: Wraps your original dashboard JSON
+- `apiVersion`: Specifies the API version. Both classic and `v2` JSON models are supported. For more information, refer to [Dashboard JSON model](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/view-dashboard-json-model/).
+- `kind`: Identifies the resource type (Dashboard).
+- `metadata`: Contains the dashboard identifier `uid`. You can find the identifier in the dashboard's URL or in the exported JSON.
+- `spec`: Wraps your original dashboard JSON.
 
 ## Work with Git-managed dashboards
 

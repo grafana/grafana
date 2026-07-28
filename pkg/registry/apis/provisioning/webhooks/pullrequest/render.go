@@ -60,13 +60,30 @@ func (r *screenshotRenderer) RenderScreenshot(ctx context.Context, repo provisio
 	} else {
 		path = path + "?kiosk"
 	}
+	// Render as the worker identity already on the context (set by the job
+	// driver for the repository's org) so the dashboard resolves in
+	// multi-org/Cloud setups. The render key carries only {OrgID, UserID,
+	// OrgRole}; the worker identity supplies UserID 0, which the render authn
+	// client maps to a synthetic render-service identity pinned to that org. A
+	// real user id would instead make OrgRedirect try to switch that user's
+	// active org while rendering.
+	orgID, userID, orgRole := int64(1), int64(0), identity.RoleAdmin
+	if requester, err := identity.GetRequester(ctx); err == nil {
+		if id := requester.GetOrgID(); id > 0 {
+			orgID = id
+			if uid, idErr := requester.GetInternalID(); idErr == nil {
+				userID = uid
+			}
+			orgRole = requester.GetOrgRole()
+		}
+	}
 	result, err := r.render.Render(ctx, rendering.RenderPNG, rendering.Opts{
 		CommonOpts: rendering.CommonOpts{
 			Path: path,
 			AuthOpts: rendering.AuthOpts{
-				OrgID:   1, // TODO!!!, use the worker identity
-				UserID:  1,
-				OrgRole: identity.RoleAdmin,
+				OrgID:   orgID,
+				UserID:  userID,
+				OrgRole: orgRole,
 			},
 			TimeoutOpts: rendering.TimeoutOpts{
 				Timeout: time.Second * 30,

@@ -1,11 +1,12 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, useChromeHeaderHeight } from '@grafana/runtime';
-import { type VizPanel, useSceneObjectState } from '@grafana/scenes';
+import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
+import { useSceneObjectState } from '@grafana/scenes';
 import {
   ElementSelectionContext,
   useSidebar,
@@ -20,12 +21,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
-import { type PopoverTarget, AssistantPopoverContext } from '../assistant/AssistantPopoverContext';
-import {
-  useDashboardAssistantViewMode,
-  usePopoverDismissOnClickOutside,
-} from '../assistant/DashboardAssistantViewMode';
-import { ViewModePanelPromptCard } from '../assistant/ViewModePanelPromptCard';
+import { DashboardControlsChrome } from '../scene/DashboardControlsChrome';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
@@ -51,14 +47,13 @@ export function DashboardEditPaneSplitter(props: Props) {
 }
 
 function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
-  const headerHeight = useChromeHeaderHeight();
-  const styles = useStyles2(getStyles, headerHeight ?? 0);
+  const styles = useStyles2(getStyles);
 
   return (
     <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
       <div className={styles.canvasWrappperOld}>
         <NavToolbarActions dashboard={dashboard} />
-        <div className={styles.controlsWrapperSticky}>{controls}</div>
+        <DashboardControlsChrome>{controls}</DashboardControlsChrome>
         <div className={styles.body}>{body}</div>
       </div>
     </NativeScrollbar>
@@ -66,9 +61,8 @@ function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
 }
 
 function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, controls }: Props) {
-  const headerHeight = useChromeHeaderHeight();
   const { editPane } = dashboard.state;
-  const styles = useStyles2(getStyles, headerHeight ?? 0);
+  const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const { isPlaying } = playlistSrv.useState();
@@ -82,54 +76,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
     shouldActivateOrKeepAlive: true,
   });
 
-  const { isEnabled: isAssistantEnabled } = useDashboardAssistantViewMode({
-    dashboard,
-    isEditing,
-  });
-
-  // --- Assistant popover state (decoupled from selection system) ---
-  // Stores an array of PopoverTargets to support multi-panel context.
-  // Once the popover is open, clicking another sparkle adds that panel;
-  // clicking the same sparkle again removes it (toggle).
-  const [popoverTargets, setPopoverTargets] = useState<PopoverTarget[]>([]);
-
-  // Close popover when entering edit mode
-  useEffect(() => {
-    if (isEditing) {
-      setPopoverTargets([]);
-    }
-  }, [isEditing]);
-
-  const clearPopover = useCallback(() => setPopoverTargets([]), []);
-  usePopoverDismissOnClickOutside(popoverTargets.length > 0, clearPopover);
-
-  const popoverContextValue = useMemo(
-    () => ({
-      openPopover: (panel: VizPanel, anchorEl: HTMLElement, multi: boolean) => {
-        setPopoverTargets((prev) => {
-          const exists = prev.findIndex((t) => t.panel === panel);
-
-          if (multi) {
-            // Shift+click: toggle panel in/out of the selection
-            if (exists >= 0) {
-              return prev.filter((_, i) => i !== exists);
-            }
-            return [...prev, { panel, anchorEl }];
-          }
-
-          // Plain click: replace selection, or toggle off if already the only one
-          if (exists >= 0 && prev.length === 1) {
-            return [];
-          }
-          return [{ panel, anchorEl }];
-        });
-      },
-    }),
-    []
-  );
-
-  // Selection is only needed in edit mode — the assistant popover is triggered
-  // exclusively via the sparkle button, not through the selection system.
+  // Selection is only needed in edit mode.
   useEffect(() => {
     if (isEditing) {
       editPane.enableSelection();
@@ -202,31 +149,29 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
           ref={onBodyRef}
           onPointerDown={onClearSelection}
           data-testid={selectors.components.DashboardEditPaneSplitter.bodyContainer}
+          // The dashboard scrolls inside this element rather than the document body, so make it
+          // focusable; without this, arrow/page keys can't scroll the dashboard once it's focused.
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+          tabIndex={0}
+          aria-label={t('dashboard.layout.scroll-content', 'Dashboard content')}
         >
           {body}
         </div>
 
         <Sidebar contextValue={sidebarContext}>
-          <DashboardEditPaneRenderer editPane={editPane} dashboard={dashboard} />
+          <DashboardEditPaneRenderer dashboard={dashboard} />
         </Sidebar>
       </div>
     );
   }
 
-  const showPopover = !isEditing && isAssistantEnabled && popoverTargets.length > 0;
-
   return (
-    <AssistantPopoverContext.Provider value={popoverContextValue}>
-      <div className={styles.container}>
-        <ElementSelectionContext.Provider value={selectionContext}>
-          <div className={styles.controlsWrapperSticky} onPointerDown={onClearSelection}>
-            {controls}
-          </div>
-          {renderBody()}
-          {showPopover && <ViewModePanelPromptCard targets={popoverTargets} onClose={clearPopover} />}
-        </ElementSelectionContext.Provider>
-      </div>
-    </AssistantPopoverContext.Provider>
+    <div className={styles.container}>
+      <ElementSelectionContext.Provider value={selectionContext}>
+        <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
+        {renderBody()}
+      </ElementSelectionContext.Provider>
+    </div>
   );
 }
 
@@ -258,11 +203,12 @@ function useUpdateAppChromeActions(dashboard: DashboardScene) {
   useLayoutEffect(() => {
     const hasUid = Boolean(dashboard.state.uid);
     const canStar = Boolean(dashboard.state.meta.canStar);
+    const isSnapshot = Boolean(dashboard.state.meta.isSnapshot);
 
     const breadcrumbActions = (
       <>
         {hasUid && canStar && <StarButton dashboard={dashboard} />}
-        {hasUid && canStar && <PublicDashboardBadge dashboard={dashboard} />}
+        {hasUid && canStar && !isSnapshot && <PublicDashboardBadge dashboard={dashboard} />}
         {renderDynamicNavActions()}
       </>
     );
@@ -288,7 +234,7 @@ function renderDynamicNavActions() {
   });
 }
 
-function getStyles(theme: GrafanaTheme2, headerHeight: number) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     canvasWrappperOld: css({
       label: 'canvas-wrapper-old',
@@ -310,7 +256,9 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       flexGrow: 1,
       position: 'relative',
       flex: '1 1 0',
-      overflow: 'hidden',
+      // minHeight (not overflow: hidden) constrains this flex item without clipping the
+      // scrollContainer bleed strip below.
+      minHeight: 0,
 
       [theme.breakpoints.down('sm')]: {
         flex: 1,
@@ -322,7 +270,6 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
     }),
     bodyWrapperKiosk: css({
       padding: theme.spacing(0, 2, 2, 2),
-      overflow: 'unset',
     }),
     scrollContainer: css({
       display: 'flex',
@@ -332,8 +279,13 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       overflow: 'auto',
       scrollbarWidth: 'thin',
       scrollbarGutter: 'stable',
-      // without top padding the fixed controls headers is rendered over the selection outline.
-      padding: theme.spacing(0.125, 1, 2, 2),
+      // the tabIndex is only here to allow keyboard scrolling, so suppress the focus outline.
+      outline: 'none',
+      // Clip-bleed: top padding + matching negative margin cancel out visually but extend the
+      // clip box under the controls bar, so top-row selection outlines aren't sheared off. The
+      // bar paints over the overlap — see DashboardControlsChrome.
+      padding: theme.spacing(1, 1, 2, 2),
+      marginTop: theme.spacing(-1),
     }),
     scrollContainerNoSidebar: css({
       paddingRight: theme.spacing(2),
@@ -345,8 +297,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       gap: theme.spacing(1),
       boxSizing: 'border-box',
       flexDirection: 'column',
-      // without top padding the fixed controls headers is rendered over the selection outline.
-      padding: theme.spacing(0.125, 2, 2, 2),
+      padding: theme.spacing(0, 2, 2, 2),
     }),
     bodyEditing: css({
       position: 'absolute',
@@ -359,15 +310,6 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       scrollbarGutter: 'stable',
       // Because the edit pane splitter handle area adds padding we can reduce it here
       paddingRight: theme.spacing(1),
-    }),
-    controlsWrapperSticky: css({
-      [theme.breakpoints.up('md')]: {
-        position: 'sticky',
-        // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.
-        zIndex: theme.zIndex.sidemenu,
-        background: theme.colors.background.canvas,
-        top: headerHeight,
-      },
     }),
   };
 }

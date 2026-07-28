@@ -5,7 +5,7 @@ const DASHBOARD_UID = 'HYaGDGIMk';
 test.use({
   timezoneId: 'Pacific/Easter',
   featureToggles: {
-    dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    dashboardNewLayouts: true,
   },
 });
 

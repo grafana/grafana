@@ -104,7 +104,7 @@ export interface SymbolAlign {
  * Static options for text display.  See:
  * https://openlayers.org/en/latest/apidoc/module-ol_style_Text.html
  */
-export interface TextStyleConfig {
+interface TextStyleConfig {
   fontSize?: number;
   offsetX?: number;
   offsetY?: number;

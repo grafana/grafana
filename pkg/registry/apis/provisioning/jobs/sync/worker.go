@@ -106,10 +106,11 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		err := fmt.Errorf("sync job submitted for repository that does not support read-write")
 		return tracing.Error(span, err)
 	}
-	// Enforce max_file_size at the repo boundary so oversized files are
-	// surfaced as per-file errors during pull instead of being silently
-	// applied. Mirrors the cap enforced on the files API in [filesConnector].
-	rw = repository.NewSizeLimitedReaderWriter(rw, r.maxFileSize)
+	if r.maxFileSize > 0 {
+		if m, ok := rw.(repository.SizeLimitedReader); ok {
+			m.WithMaxFileSize(r.maxFileSize)
+		}
+	}
 
 	syncStatus := job.Status.ToSyncStatus(job.Name)
 	// Preserve last ref

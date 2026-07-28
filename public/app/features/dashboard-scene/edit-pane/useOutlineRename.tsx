@@ -26,6 +26,8 @@ export function useOutlineRename(editableElement: EditableDashboardElement, isEd
   const onInputBlur = () => {
     if (state.error) {
       editableElement.onChangeName!(state.originalName!);
+    } else {
+      editableElement.onCommitName?.();
     }
 
     setState({});

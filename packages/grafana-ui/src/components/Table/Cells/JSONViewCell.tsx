@@ -5,8 +5,12 @@ import { getCellLinks } from '../../../utils/table';
 import { CellActions } from '../CellActions';
 import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
 import { TableCellInspectorMode } from '../TableCellInspector';
+import {
+  tooltipOnClickHandler,
+  type DataLinksActionsTooltipCoords,
+  getDataLinksActionsTooltipUtils,
+} from '../cellUtils';
 import { type TableCellProps } from '../types';
-import { tooltipOnClickHandler, type DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../utils';
 
 export function JSONViewCell(props: TableCellProps): JSX.Element {
   const { cell, tableStyles, cellProps, field, row } = props;

@@ -85,6 +85,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "test", out.GetName())
 	require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
+	require.Equal(t, "1", out.GetResourceVersion())
 
 	t.Run("get", func(t *testing.T) {
 		out, err := client.Get(ctx, "test", metav1.GetOptions{})
@@ -105,7 +106,8 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			Object: map[string]any{
 				"apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
 				"metadata": map[string]any{
-					"name": "test",
+					"name":            "test",
+					"resourceVersion": out.GetResourceVersion(),
 				},
 				"spec": map[string]any{
 					"title":     "test",
@@ -131,6 +133,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		}, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, "test", out.GetName())
+		require.Equal(t, "2", out.GetResourceVersion())
 		require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
 
 		ds, err := datasourceV0alpha1.FromUnstructured(out)
@@ -305,31 +308,6 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			// Read JSON lines
 			qdr, err := chunked.AccumulateJSONLines(bytes.NewReader(raw))
 			require.NoError(t, err)
-
-			checkCSVResult(qdr.Responses["A"])
-			checkCSVResult(qdr.Responses["B"])
-		})
-
-		// Use the deprecated connections path
-		// NOTE: remove after this is deployed to hosted grafana
-		t.Run("deprecated connections path", func(t *testing.T) {
-			var statusCode int
-			result := adminClient.Post().
-				Namespace("default").
-				Resource("connections"). // <<<<< should rewrite to datasources
-				Name("test").            // datasource UID
-				SubResource("query").
-				SetHeader("Content-type", "application/json").
-				Body(body).
-				Do(ctx).
-				StatusCode(&statusCode)
-
-			require.Equal(t, int(http.StatusOK), statusCode) // query success
-			raw, _ := result.Raw()
-			require.NotNil(t, raw)
-
-			qdr := &backend.QueryDataResponse{}
-			err = json.Unmarshal(raw, qdr)
 
 			checkCSVResult(qdr.Responses["A"])
 			checkCSVResult(qdr.Responses["B"])

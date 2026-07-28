@@ -5,9 +5,10 @@ import { useStyles2 } from '@grafana/ui';
 
 import { getQueryEditorTypeConfig, QueryEditorType } from '../../constants';
 import { type StackedEditorItem } from '../QueryEditorContext';
+import { getHiddenMaskStyles } from '../utils';
 
 import { StackedQueryItem, StackedTransformationItem } from './StackedItem';
-import { type StackedItem } from './utils';
+import { isStackedItemHidden, type StackedItem } from './utils';
 
 interface StackedSectionProps {
   item: StackedItem;
@@ -18,10 +19,11 @@ interface StackedSectionProps {
 export function StackedSection({ item, isCurrent, headingId }: StackedSectionProps) {
   const styles = useStyles2(getStyles);
   const activeStyle = isCurrent ? styles.activeItemStyleByType[item.type] : undefined;
+  const isHidden = isStackedItemHidden(item);
 
   return (
     <section
-      className={cx(styles.item, activeStyle)}
+      className={cx(styles.item, activeStyle, { [styles.hiddenAccentBar]: isHidden })}
       aria-current={isCurrent ? 'true' : undefined}
       aria-labelledby={headingId}
       data-stacked-editor-item-id={item.id}
@@ -68,5 +70,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     activeItemStyleByType,
+    hiddenAccentBar: css({
+      '&::before': getHiddenMaskStyles(theme),
+    }),
   };
 };

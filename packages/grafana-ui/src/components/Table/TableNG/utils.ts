@@ -1,4 +1,3 @@
-import { type Property } from 'csstype';
 import memoize from 'micro-memoize';
 import { type CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
@@ -32,11 +31,12 @@ import { TableCellInspectorMode } from '../TableCellInspector';
 import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
 
-import { inferPills } from './Cells/PillCell';
 import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
 import { COLUMN, TABLE } from './constants';
+import { type TextAlign } from './styles';
 import {
   type TableRow,
+  type TableCellValue,
   type ColumnTypes,
   type FrameToRowsConverter,
   type Comparator,
@@ -45,6 +45,33 @@ import {
   type MeasureCellHeightEntry,
   type FilterType,
 } from './types';
+
+// inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
+// styles.ts → utils.tsx → renderers.tsx → PillCell.tsx → styles.ts
+/* ---------------------------- Pill inference ----------------------------- */
+const SPLIT_RE = /\s*,\s*/;
+
+export function inferPills(rawValue: TableCellValue): unknown[] {
+  if (rawValue === '' || rawValue == null) {
+    return [];
+  }
+
+  if (Array.isArray(rawValue)) {
+    return rawValue.filter((v) => v != null).map((v) => String(v).trim());
+  }
+
+  const value = String(rawValue);
+
+  if (value[0] === '[') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value.trim().split(SPLIT_RE);
+    }
+  }
+
+  return value.trim().split(SPLIT_RE);
+}
 
 /* ---------------------------- Cell calculations --------------------------- */
 /**
@@ -431,8 +458,6 @@ const TEXT_CELL_TYPES = new Set<TableCellDisplayMode>([
   TableCellDisplayMode.ColorBackground,
 ]);
 
-export type TextAlign = 'left' | 'right' | 'center';
-
 /**
  * @internal
  * Returns the text-align value for inline-displayed cells for a field based on its type and configuration.
@@ -448,14 +473,6 @@ export function getAlignment(field: Field): TextAlign {
   }
 
   return align;
-}
-
-/**
- * @internal
- * Returns the justify-content value for flex-displayed cells for a field based on its type and configuration.
- */
-export function getJustifyContent(textAlign: TextAlign): Property.JustifyContent {
-  return textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start';
 }
 
 const DEFAULT_CELL_OPTIONS = { type: TableCellDisplayMode.Auto } as const;
@@ -776,44 +793,97 @@ export function applyFilter(
 }
 
 /* ----------------------------- Data grid mapping ---------------------------- */
+// Row metadata keys that must never be shadowed by a same-named data column when
+// building rows via prototype getters (a column named e.g. "__index" would otherwise
+// override the metadata that every cell lookup depends on).
+const RESERVED_ROW_KEYS = new Set(['__depth', '__index', '__parentIndex']);
+
 /**
  * @internal
+ * Builds a converter that maps a DataFrame (struct-of-arrays) into an array of
+ * TableRows (array-of-structs) without eval/`unsafe-eval`.
+ *
+ * Rather than copying every cell value into each row (which forces V8 to use
+ * slow computed-key stores and dominates conversion time on wide frames), each
+ * data row is created from a per-frame prototype that exposes one getter per
+ * column. The getter reads `frame.fields[col].values[this.__index]` on demand,
+ * so construction is O(rows) tiny objects instead of O(rows * cols) writes.
+ *
+ * The `row[displayName]` access contract is preserved for all consumers (sort,
+ * filter, row-height measuring). Note that columns are exposed via the prototype
+ * rather than as own properties, so they do not appear in `Object.keys(row)` /
+ * `JSON.stringify(row)`; no consumer relies on enumerating row own-keys.
+ *
+ * @param displayNames The display names of the frame's fields, in the order they are stored in the frame.
+ * @param nestedFramesFieldName name of the field that contains nested frames. If provided, an expander placeholder row will be emitted for each non-empty nested frame.
  */
-export function compileFrameToRecords(frame: DataFrame, nestedFramesFieldName?: string): FrameToRowsConverter {
-  const fnBody = `
-    const values = frame.fields.map(f => f.values);
-    const hasNestedFrames = '${nestedFramesFieldName ?? ''}'.length > 0;
+export function compileFrameToRecords(displayNames: string[], nestedFramesFieldName?: string): FrameToRowsConverter {
+  const nestedColIdx = nestedFramesFieldName ? displayNames.indexOf(nestedFramesFieldName) : -1;
+
+  return (frame: DataFrame, nestedRowIndex?: number): TableRow[] => {
+    const values = frame.fields.map((f) => f.values);
     const frameLength = frame.length ?? values[0]?.length ?? 0;
-    const rows = Array(frameLength);
 
-    let rowCount = 0;
-    for (let i = 0; i < frameLength; i++) {
-      rows[rowCount] = {
-        __depth: 0,
-        __index: i,
-        ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getDisplayName(field))}: values[${fieldIdx}][i]`).join(',')}
-      };
-      if (nestedRowIndex != null) {
-        rows[rowCount].__parentIndex = nestedRowIndex;
+    // Build a prototype carrying one getter per column. The nested-frames column
+    // is intentionally not exposed (it is replaced by an expander placeholder row),
+    // and the reserved meta keys are never shadowed by a same-named column so the
+    // true row metadata (notably __index, used to resolve every cell) always wins.
+    const proto = {
+      __depth: -1,
+      __index: -1,
+      __parentIndex: undefined,
+    };
+    const descriptors: PropertyDescriptorMap = {};
+    for (let j = 0; j < displayNames.length; j++) {
+      const name = displayNames[j];
+      if (j === nestedColIdx || RESERVED_ROW_KEYS.has(name)) {
+        continue;
       }
-      rowCount++;
+      const col = values[j];
+      descriptors[name] = {
+        enumerable: true,
+        get(this: TableRow) {
+          return col[this.__index];
+        },
+      };
+    }
+    Object.defineProperties(proto, descriptors);
 
-      if (hasNestedFrames) {
-        const childFrame = rows[rowCount-1][${JSON.stringify(nestedFramesFieldName)}];
-        if (childFrame) {
-          delete rows[rowCount - 1][${JSON.stringify(nestedFramesFieldName)}];
-          rows[rowCount] = { __depth: 1, __index: i };
-          rowCount++;
-        }
+    const hasParent = nestedRowIndex != null;
+    const nestedValues = nestedColIdx === -1 ? undefined : values[nestedColIdx];
+
+    const createRow = (index: number, depth: number): TableRow => {
+      const row: TableRow = Object.create(proto);
+      row.__depth = depth;
+      row.__index = index;
+      if (hasParent) {
+        row.__parentIndex = nestedRowIndex;
+      }
+      return row;
+    };
+
+    // Fast path: without a nested-frames column the output is exactly one row
+    // per frame entry, so it can be sized up front and written by index.
+    if (nestedValues === undefined) {
+      const result = Array(frameLength);
+      for (let i = 0; i < frameLength; i++) {
+        result[i] = createRow(i, 0);
+      }
+      return result;
+    }
+
+    // Nested path: each entry may emit an extra expander placeholder row, so the
+    // final length isn't known without inspecting the nested column.
+    const rows: TableRow[] = [];
+    for (let i = 0; i < frameLength; i++) {
+      rows.push(createRow(i, 0));
+      if (nestedValues[i]) {
+        rows.push({ __depth: 1, __index: i });
       }
     }
-    return rows;
-  `;
 
-  // Creates a function that converts a DataFrame into an array of TableRows
-  // Uses new Function() for performance as it's faster than creating rows using loops
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return new Function('frame', 'nestedRowIndex', fnBody) as FrameToRowsConverter;
+    return rows;
+  };
 }
 
 /* ----------------------------- Data grid comparator ---------------------------- */
@@ -926,13 +996,6 @@ export function rowKeyGetter(row: TableRow): string {
 
 /**
  * @internal
- * Returns true if the DataFrame contains nested frames
- */
-export const getIsNestedTable = (fields: Field[]): boolean =>
-  fields.some(({ type }) => type === FieldType.nestedFrames);
-
-/**
- * @internal
  * Calculate the footer height based on the maximum reducer count
  */
 export const calculateFooterHeight = (fields: Field[]): number => {
@@ -969,6 +1032,9 @@ export const predicateByName = (name: string) => (f: Field) => f.name === name |
 export function getVisibleFields(fields: Field[]): Field[] {
   return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hideFrom?.viz !== true);
 }
+
+export const getIsNestedTable = (fields: Field[]): boolean =>
+  fields.some(({ type }) => type === FieldType.nestedFrames);
 
 /**
  * @internal
@@ -1192,22 +1258,6 @@ export function parseStyleJson(rawValue: unknown): CSSProperties | void {
     }
   }
 }
-
-// Safari 26.0 introduced rendering bugs which require us to disable several features of the table.
-// The bugs were later fixed in Safari 26.2.
-export const IS_SAFARI_26 = (() => {
-  if (navigator == null) {
-    return false;
-  }
-  const userAgent = navigator.userAgent;
-  const safariVersionMatch = userAgent.match(/Version\/(\d+)\.(\d+)/);
-  if (!safariVersionMatch) {
-    return false;
-  }
-  const majorVersion = +safariVersionMatch[1];
-  const minorVersion = +safariVersionMatch[2];
-  return majorVersion === 26 && minorVersion <= 1;
-})();
 
 export const getStableRowKey = (rowIndex: number, frame?: DataFrame): string => {
   const key = frame?.meta?.custom?.stableRowKey;

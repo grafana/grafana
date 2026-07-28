@@ -1,17 +1,16 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { RadioButtonGroup, Box, ConfirmModal } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
-import { containsTabsLayout } from './findAllGridTypes';
+import { hasDirectTabsChild } from './hasDirectTabsChild';
 import { layoutRegistry } from './layoutRegistry';
 
 export interface Props {
@@ -23,22 +22,19 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
   const options = layoutRegistry.list().filter((layout) => layout.isGridLayout === isGridLayout);
   const [newLayout, setNewLayout] = useState<LayoutRegistryItem | undefined>();
 
-  const disableTabsReason = useMemo(() => {
-    if (config.featureToggles.unlimitedLayoutsNesting) {
-      return undefined;
-    }
-
-    // Check parent hierarchy
+  const disableTabsReason = useMemo((): 'parent' | 'child' | undefined => {
     let parent = layoutManager.parent;
     while (parent) {
-      if (parent instanceof TabsLayoutManager) {
-        return 'parent';
+      if (isDashboardLayoutManager(parent)) {
+        if (parent instanceof TabsLayoutManager) {
+          return 'parent';
+        }
+        break;
       }
       parent = parent.parent;
     }
 
-    // Check child hierarchy
-    if (containsTabsLayout(layoutManager)) {
+    if (hasDirectTabsChild(layoutManager)) {
       return 'child';
     }
 

@@ -93,7 +93,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     vizBox: css({
       position: 'relative',
       background: 'none',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       cursor: 'pointer',
       border: `1px solid ${theme.colors.border.medium}`,
 
@@ -105,11 +105,11 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:hover': {
         background: theme.colors.background.secondary,
-        borderColor: theme.colors.primary.border,
+        borderColor: theme.colors.accent.main,
       },
     }),
     selected: css({
-      borderColor: theme.colors.primary.border,
+      borderColor: theme.colors.accent.main,
       background: theme.colors.background.secondary,
     }),
     imgBox: css({

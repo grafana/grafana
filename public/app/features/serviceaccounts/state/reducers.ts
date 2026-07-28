@@ -10,13 +10,13 @@ import {
 } from 'app/types/serviceaccount';
 
 // serviceAccountsProfilePage
-export const initialStateProfile: ServiceAccountProfileState = {
+const initialStateProfile: ServiceAccountProfileState = {
   serviceAccount: {} as ServiceAccountDTO,
   isLoading: true,
   tokens: [],
 };
 
-export const serviceAccountProfileSlice = createSlice({
+const serviceAccountProfileSlice = createSlice({
   name: 'serviceaccount',
   initialState: initialStateProfile,
   reducers: {
@@ -41,7 +41,7 @@ export const serviceAccountProfileSlice = createSlice({
   },
 });
 
-export const serviceAccountProfileReducer = serviceAccountProfileSlice.reducer;
+const serviceAccountProfileReducer = serviceAccountProfileSlice.reducer;
 export const {
   serviceAccountLoaded,
   serviceAccountTokensLoaded,
@@ -52,7 +52,7 @@ export const {
 } = serviceAccountProfileSlice.actions;
 
 // serviceAccountsListPage
-export const initialStateList: ServiceAccountsState = {
+const initialStateList: ServiceAccountsState = {
   serviceAccounts: [],
   isLoading: true,
   roleOptions: [],
@@ -114,7 +114,7 @@ const serviceAccountsSlice = createSlice({
     }),
   },
 });
-export const serviceAccountsReducer = serviceAccountsSlice.reducer;
+const serviceAccountsReducer = serviceAccountsSlice.reducer;
 
 export const {
   serviceAccountsFetchBegin,

@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -95,90 +94,6 @@ func Test_RawMessageMarshaling(t *testing.T) {
 		require.NoError(t, yaml.Unmarshal(data, &n))
 		assert.Equal(t, RawMessage(`{"data":"test"}`), n.Field)
 	})
-}
-
-func TestPostableUserConfig_GetMergedTemplateDefinitions(t *testing.T) {
-	testCases := []struct {
-		name              string
-		config            PostableUserConfig
-		expectedTemplates int
-	}{
-		{
-			name: "no templates",
-			config: PostableUserConfig{
-				TemplateFiles: map[string]string{},
-				ExtraConfigs:  []ExtraConfiguration{},
-			},
-			expectedTemplates: 0,
-		},
-		{
-			name: "grafana templates only",
-			config: PostableUserConfig{
-				TemplateFiles: map[string]string{
-					"grafana-template1": "{{ define \"test\" }}Hello{{ end }}",
-					"grafana-template2": "{{ define \"test2\" }}World{{ end }}",
-				},
-				ExtraConfigs: []ExtraConfiguration{},
-			},
-			expectedTemplates: 2,
-		},
-		{
-			name: "mimir templates only",
-			config: PostableUserConfig{
-				TemplateFiles: map[string]string{},
-				ExtraConfigs: []ExtraConfiguration{
-					{
-						TemplateFiles: map[string]string{
-							"mimir-template": "{{ define \"mimir\" }}Mimir{{ end }}",
-						},
-					},
-				},
-			},
-			expectedTemplates: 1,
-		},
-		{
-			name: "mixed templates",
-			config: PostableUserConfig{
-				TemplateFiles: map[string]string{
-					"grafana-template": "{{ define \"grafana\" }}Grafana{{ end }}",
-				},
-				ExtraConfigs: []ExtraConfiguration{
-					{
-						TemplateFiles: map[string]string{
-							"mimir-template": "{{ define \"mimir\" }}Mimir{{ end }}",
-						},
-					},
-				},
-			},
-			expectedTemplates: 2,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result := tc.config.GetMergedTemplateDefinitions()
-			require.Len(t, result, tc.expectedTemplates)
-
-			templateMap := make(map[string]string)
-			kindMap := make(map[string]definition.TemplateKind)
-			for _, tmpl := range result {
-				templateMap[tmpl.Name] = tmpl.Content
-				kindMap[tmpl.Name] = tmpl.Kind
-			}
-
-			for name, content := range tc.config.TemplateFiles {
-				require.Equal(t, content, templateMap[name])
-				require.Equal(t, definition.GrafanaTemplateKind, kindMap[name])
-			}
-
-			if len(tc.config.ExtraConfigs) > 0 {
-				for name, content := range tc.config.ExtraConfigs[0].TemplateFiles {
-					require.Equal(t, content, templateMap[name])
-					require.Equal(t, definition.MimirTemplateKind, kindMap[name])
-				}
-			}
-		})
-	}
 }
 
 func TestExtraConfiguration_Validate(t *testing.T) {

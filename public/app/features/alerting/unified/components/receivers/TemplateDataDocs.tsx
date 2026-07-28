@@ -167,7 +167,7 @@ function KeyValueTemplateDataTable() {
   );
 }
 
-export const getTemplateDataTableStyles = (theme: GrafanaTheme2) => ({
+const getTemplateDataTableStyles = (theme: GrafanaTheme2) => ({
   table: css({
     borderCollapse: 'collapse',
     width: '100%',

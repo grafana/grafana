@@ -21,7 +21,8 @@ on:
     - 'main'
     - 'release-*.*.*'
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
   setup:
@@ -32,8 +33,6 @@ jobs:
       release_branch: ${{ steps.output.outputs.release_branch }}
       dry_run: ${{ steps.output.outputs.dry_run }}
       latest: ${{ steps.output.outputs.latest }}
-      private_key: ${{ steps.output.outputs.delivery_bot_pem }}
-      app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
     env:
       HEAD_REF: ${{ github.head_ref }}
       DRY_RUN: ${{ inputs.dry_run }}
@@ -63,6 +62,9 @@ jobs:
   create_next_release_branch_grafana:
     name: Create next release branch (Grafana)
     needs: setup
+    # Security releases don't open a new patch development branch: the next branch is the
+    # incremented +security-NN created below, not a version bump.
+    if: ${{ !contains(needs.setup.outputs.version, '+security') }}
     permissions:
       contents: read
       id-token: write
@@ -73,6 +75,7 @@ jobs:
   create_next_release_branch_enterprise:
     name: Create next release branch (Grafana Enterprise)
     needs: setup
+    if: ${{ !contains(needs.setup.outputs.version, '+security') }}
     permissions:
       contents: read
       id-token: write
@@ -80,20 +83,13 @@ jobs:
     with:
       ownerRepo: 'grafana/grafana-enterprise'
       source: ${{ needs.setup.outputs.release_branch }}
-  create_security_branch_grafana:
-    name: Create security branch (Grafana Security Mirror)
-    needs: setup
-    permissions:
-      id-token: write
-    uses: grafana/grafana/.github/workflows/create-security-branch.yml@main
-    with:
-      release_branch: ${{ needs.setup.outputs.release_branch }}
-      security_branch_number: "01"
-      repository: grafana/grafana-security-mirror
+  # No security-mirror job: grafana-security-mirror branches are created automatically
+  # from the release branch (the part before the +), so the branch always exists.
   create_security_branch_enterprise:
     name: Create security branch (Enterprise)
     needs: setup
     permissions:
+      contents: read
       id-token: write
     uses: grafana/grafana/.github/workflows/create-security-branch.yml@main
     with:
@@ -104,6 +100,8 @@ jobs:
     needs:
       - setup
       - create_next_release_branch_grafana
+    # No next branch is created for security releases, so there is nothing to migrate to.
+    if: ${{ !contains(needs.setup.outputs.version, '+security') }}
     permissions:
       contents: read
       id-token: write
@@ -116,6 +114,7 @@ jobs:
     needs:
       - setup
       - create_next_release_branch_enterprise
+    if: ${{ !contains(needs.setup.outputs.version, '+security') }}
     permissions:
       contents: read
       id-token: write
@@ -144,6 +143,79 @@ jobs:
       version: ${{ needs.setup.outputs.version }}
       dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
       latest: ${{ needs.setup.outputs.latest }}
+
+  # Attach this release's deb/rpm to the GitHub release so the external apt/yum repo-sync can consume
+  # them. Runs for every non-+security, non-dry-run public release. The gcom public packages API is the
+  # authoritative manifest (it holds exactly this version's build), so no build id is needed. Sources
+  # packages from dl.grafana.com (no GCS) and verifies each checksum against that API before uploading.
+  # RPMs are the signed ones served by dl.grafana.com.
+  attach_release_packages:
+    name: Attach Linux packages to the GitHub release
+    needs:
+      - setup
+      - create_github_release
+    if: ${{ needs.setup.outputs.dry_run != 'true' && !contains(needs.setup.outputs.version, '+security') }}
+    runs-on: ubuntu-arm64-small
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.setup.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Download, verify checksums, and attach deb/rpm
+        run: |
+          set -euo pipefail
+
+          version="${VERSION#v}"   # gcom API + dl.grafana.com filenames use the bare version
+          tag="v${version}"        # the GitHub release tag
+
+          workdir="$(mktemp -d)"
+          files=()
+
+          for product in grafana grafana-enterprise; do
+            api="https://grafana.com/api/${product}/versions/${version}/packages"
+            echo "Reading package manifest: ${api}"
+            # The gcom public packages API is the authoritative manifest: each entry has url
+            # (dl.grafana.com) + sha256. gcom holds exactly this version's build, so selecting by the
+            # .deb/.rpm extension yields the right set without needing a build id.
+            manifest="$(curl -fsSL "$api")"
+            count="$(printf '%s' "$manifest" | jq '(.items // .) | length')"
+
+            i=0
+            while [ "$i" -lt "$count" ]; do
+              url="$(printf '%s' "$manifest" | jq -r "(.items // .)[$i].url")"
+              sha="$(printf '%s' "$manifest" | jq -r "(.items // .)[$i].sha256" | tr -d '[:space:]')"
+              i=$((i + 1))
+
+              case "$url" in
+                *.deb | *.rpm) ;;
+                *) continue ;;
+              esac
+
+              fname="$(basename "$url")"
+              dest="${workdir}/${fname}"
+              echo "Downloading ${url}"
+              curl -fsSL -o "$dest" "$url"
+
+              actual="$(sha256sum "$dest" | awk '{print $1}')"
+              if [ "$actual" != "$sha" ]; then
+                echo "::error::checksum mismatch for ${fname}: expected '${sha}', got '${actual}'"
+                exit 1
+              fi
+              echo "verified ${fname}"
+              files+=("$dest")
+            done
+          done
+
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "::error::no deb/rpm found for ${version} in the gcom packages manifest"
+            exit 1
+          fi
+
+          echo "Uploading ${#files[@]} package(s) to release ${tag}..."
+          gh release upload "$tag" "${files[@]}" --clobber --repo "$GH_REPO"
+
   post_on_slack:
     needs: setup
     runs-on: ubuntu-arm64-small

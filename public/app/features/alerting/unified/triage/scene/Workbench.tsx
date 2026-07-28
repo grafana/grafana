@@ -21,7 +21,7 @@ export class WorkbenchSceneObject extends SceneObjectBase<SceneObjectState> {
   public static Component = WorkbenchRenderer;
 }
 
-export function WorkbenchRenderer() {
+function WorkbenchRenderer() {
   const [timeRange] = useTimeRange();
   const domain = convertTimeRangeToDomain(timeRange);
 

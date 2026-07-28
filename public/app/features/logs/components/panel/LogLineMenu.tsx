@@ -168,15 +168,17 @@ export const LogLineMenu = ({ active, log, styles }: Props) => {
   );
 
   return (
-    <Dropdown overlay={menu} placement="bottom-start">
-      <IconButton
-        className={styles.menuIcon}
-        name={active ? 'angle-right' : 'ellipsis-v'}
-        aria-label={t('logs.log-line-menu.icon-label', 'Log menu')}
-        role="button"
-        variant={active ? 'primary' : undefined}
-      />
-    </Dropdown>
+    <div className={`${styles.menuWrapper} log-line-menu`}>
+      <Dropdown overlay={menu} placement="bottom-start">
+        <IconButton
+          className={styles.menuIcon}
+          name={active ? 'angle-right' : 'ellipsis-v'}
+          aria-label={t('logs.log-line-menu.icon-label', 'Log menu')}
+          role="button"
+          variant={active ? 'primary' : undefined}
+        />
+      </Dropdown>
+    </div>
   );
 };
 

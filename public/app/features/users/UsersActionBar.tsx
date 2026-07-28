@@ -13,7 +13,7 @@ import { changeSearchQuery } from './state/actions';
 import { getUsersSearchQuery } from './state/selectors';
 import { getCanInviteUsersToOrg } from './utils';
 
-export interface OwnProps {
+interface OwnProps {
   showInvites: boolean;
   onShowInvites: () => void;
 }

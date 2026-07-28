@@ -20,7 +20,7 @@ export class DashboardFiltersOverviewPane extends SceneObjectBase {
   }
 }
 
-export function DashboardFiltersOverviewPaneRenderer({ model }: SceneComponentProps<DashboardFiltersOverviewPane>) {
+function DashboardFiltersOverviewPaneRenderer({ model }: SceneComponentProps<DashboardFiltersOverviewPane>) {
   const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
   const styles = useStyles2(getStyles);
   const [searchQuery, setSearchQuery] = useState('');

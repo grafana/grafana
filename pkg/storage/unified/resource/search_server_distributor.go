@@ -151,8 +151,30 @@ func (ds *distributorServer) VectorSearch(ctx context.Context, r *resourcepb.Vec
 	if r.Key != nil {
 		ns = r.Key.Namespace
 	}
-	ctx = userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, metadata.MD{}), ns)
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = make(metadata.MD)
+	}
+	ctx = userutils.InjectOrgID(metadata.NewOutgoingContext(ctx, md), ns)
 	return client.(*RingClient).Client.VectorSearch(ctx, r)
+}
+
+// HybridSearch needs the namespace's local bleve index for its lexical
+// leg, so it routes namespace-sticky like Search — not random like
+// VectorSearch (pgvector is reachable from any pod).
+func (ds *distributorServer) HybridSearch(ctx context.Context, r *resourcepb.HybridSearchRequest) (*resourcepb.HybridSearchResponse, error) {
+	ctx, span := ds.tracing.Start(ctx, "distributor.HybridSearch")
+	defer span.End()
+
+	var ns string
+	if r.Key != nil {
+		ns = r.Key.Namespace
+	}
+	ctx, client, err := ds.getClientToDistributeRequest(ctx, ns, "HybridSearch")
+	if err != nil {
+		return nil, err
+	}
+	return client.HybridSearch(ctx, r)
 }
 
 func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {

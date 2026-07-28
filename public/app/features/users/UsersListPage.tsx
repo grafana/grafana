@@ -45,10 +45,6 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export type Props = ConnectedProps<typeof connector>;
 
-export interface State {
-  showInvites: boolean;
-}
-
 export const UsersListPageUnconnected = ({
   users,
   page,
@@ -120,11 +116,3 @@ export const UsersListPageUnconnected = ({
 };
 
 export const UsersListPageContent = connector(UsersListPageUnconnected);
-
-export default function UsersListPage() {
-  return (
-    <Page navId="users">
-      <UsersListPageContent />
-    </Page>
-  );
-}

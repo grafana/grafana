@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -88,32 +89,40 @@ func cleanIntegrationState(t *testing.T, engine *xorm.Engine) {
 	_, _ = engine.DB().ExecContext(ctx,
 		`DELETE FROM vector_promoted WHERE namespace LIKE 'integration-test%'`)
 	_, _ = engine.DB().ExecContext(ctx,
+		`DELETE FROM query_embedding_cache WHERE namespace LIKE 'integration-test%'`)
+	_, _ = engine.DB().ExecContext(ctx,
+		`DELETE FROM vector_search_rate_buckets WHERE namespace LIKE 'integration-test%'`)
+	_, _ = engine.DB().ExecContext(ctx,
 		`UPDATE vector_latest_rv SET latest_rv = 0 WHERE id = 1`)
+	_, _ = engine.DB().ExecContext(ctx,
+		`DELETE FROM vector_backfill_jobs WHERE model = $1`, testModel)
 }
 
 func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 
+	// Metadata mirrors the dashboard embed extractor's real schema:
+	// scalar datasourceUid/language keys (embed/dashboard/extractor.go).
 	vectors := []Vector{
 		{
 			Namespace: "integration-test", Resource: testResource, UID: "dash-1", Title: "CPU Dashboard", Subresource: "panel/1",
 			ResourceVersion: 10, Folder: "folder-a",
 			Content:   "CPU usage over time for production servers",
-			Metadata:  json.RawMessage(`{"datasource_uids":["prom-1"],"query_languages":["promql"]}`),
+			Metadata:  json.RawMessage(`{"datasourceUid":"prom-1","language":"promql"}`),
 			Embedding: makeEmbedding(0.9, 0.1), Model: testModel,
 		},
 		{
 			Namespace: "integration-test", Resource: testResource, UID: "dash-1", Title: "CPU Dashboard", Subresource: "panel/2",
 			ResourceVersion: 10, Folder: "folder-a",
 			Content:   "Memory usage alerts dashboard",
-			Metadata:  json.RawMessage(`{"datasource_uids":["prom-1"],"query_languages":["promql"]}`),
+			Metadata:  json.RawMessage(`{"datasourceUid":"prom-1","language":"promql"}`),
 			Embedding: makeEmbedding(0.1, 0.9), Model: testModel,
 		},
 		{
 			Namespace: "integration-test", Resource: testResource, UID: "dash-2", Title: "Logs Dashboard", Subresource: "panel/1",
 			ResourceVersion: 20, Folder: "folder-b",
 			Content:   "Log volume by service",
-			Metadata:  json.RawMessage(`{"datasource_uids":["loki-1"],"query_languages":["logql"]}`),
+			Metadata:  json.RawMessage(`{"datasourceUid":"loki-1","language":"logql"}`),
 			Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
 		},
 	}
@@ -139,10 +148,87 @@ func TestIntegrationVectorUpsertAndSearch(t *testing.T) {
 	require.Len(t, results, 2)
 
 	results, err = backend.Search(ctx, "integration-test", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
-		SearchFilter{Field: "query_languages", Values: []string{"logql"}})
+		SearchFilter{Field: "language", Values: []string{"logql"}})
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	assert.Equal(t, "dash-2", results[0].UID)
+}
+
+// Metadata containment must match regardless of how the writer shaped the
+// value: the dashboard embed extractor stores scalars while external
+// collections store arrays, and both live in the same column.
+func TestIntegrationMetadataFilterShapes(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	vectors := []Vector{
+		{
+			Namespace: "integration-test-shapes", Resource: testResource, UID: "scalar-dash", Title: "Scalar", Subresource: "panel/1",
+			ResourceVersion: 1, Folder: "f",
+			Content:   "scalar-shaped metadata like the embed extractor writes",
+			Metadata:  json.RawMessage(`{"datasourceUid":"prom-1","language":"promql"}`),
+			Embedding: makeEmbedding(0.9, 0.1), Model: testModel,
+		},
+		{
+			Namespace: "integration-test-shapes", Resource: testResource, UID: "array-dash", Title: "Array", Subresource: "chunk/1",
+			ResourceVersion: 1, Folder: "f",
+			Content:   "array-shaped metadata like external collections write",
+			Metadata:  json.RawMessage(`{"datasourceUid":["prom-1","prom-2"],"language":["promql"]}`),
+			Embedding: makeEmbedding(0.8, 0.2), Model: testModel,
+		},
+		{
+			Namespace: "integration-test-shapes", Resource: testResource, UID: "other-dash", Title: "Other", Subresource: "panel/1",
+			ResourceVersion: 1, Folder: "f",
+			Content:   "different datasource entirely",
+			Metadata:  json.RawMessage(`{"datasourceUid":"loki-1","language":"logql"}`),
+			Embedding: makeEmbedding(0.7, 0.3), Model: testModel,
+		},
+	}
+	require.NoError(t, backend.Upsert(ctx, vectors))
+
+	uids := func(rs []VectorSearchResult) []string {
+		out := make([]string, 0, len(rs))
+		for _, r := range rs {
+			out = append(out, r.UID)
+		}
+		return out
+	}
+
+	// one value matches both storage shapes
+	results, err := backend.Search(ctx, "integration-test-shapes", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
+		SearchFilter{Field: "datasourceUid", Values: []string{"prom-1"}})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"scalar-dash", "array-dash"}, uids(results))
+
+	// scalar-only match
+	results, err = backend.Search(ctx, "integration-test-shapes", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
+		SearchFilter{Field: "language", Values: []string{"logql"}})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"other-dash"}, uids(results))
+
+	// array element beyond the first still matches
+	results, err = backend.Search(ctx, "integration-test-shapes", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
+		SearchFilter{Field: "datasourceUid", Values: []string{"prom-2"}})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"array-dash"}, uids(results))
+
+	// multiple values are IN semantics (any-of), across shapes
+	results, err = backend.Search(ctx, "integration-test-shapes", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
+		SearchFilter{Field: "datasourceUid", Values: []string{"prom-1", "loki-1"}})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"scalar-dash", "array-dash", "other-dash"}, uids(results))
+
+	// two filters AND together
+	results, err = backend.Search(ctx, "integration-test-shapes", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
+		SearchFilter{Field: "datasourceUid", Values: []string{"prom-1"}},
+		SearchFilter{Field: "language", Values: []string{"promql"}})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"scalar-dash", "array-dash"}, uids(results))
+
+	// empty-values filter is skipped, not rendered as invalid SQL
+	results, err = backend.Search(ctx, "integration-test-shapes", testModel, testResource, makeEmbedding(0.5, 0.5), 10,
+		SearchFilter{Field: "datasourceUid", Values: []string{}})
+	require.NoError(t, err)
+	assert.Len(t, results, 3)
 }
 
 func TestIntegrationVectorDeleteSubresources(t *testing.T) {
@@ -161,7 +247,7 @@ func TestIntegrationVectorDeleteSubresources(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
 	require.Len(t, stored, 3)
 
@@ -186,6 +272,70 @@ func TestIntegrationVectorDeleteSubresources(t *testing.T) {
 	require.NoError(t, err)
 }
 
+// TestIntegrationDeleteNamespace verifies a tenant wipe removes every row for a
+// namespace across embeddings, query cache, rate buckets, and vector_promoted,
+// while leaving other namespaces untouched.
+func TestIntegrationDeleteNamespace(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+
+	const nsA = "integration-test-a"
+	const nsB = "integration-test-b"
+
+	cache := backend.(QueryEmbeddingCache)
+	limiter := backend.(RateLimiter)
+
+	seed := func(ns string) {
+		require.NoError(t, backend.Upsert(ctx, []Vector{
+			{Namespace: ns, Resource: testResource, UID: "dash", Title: "Dash", Subresource: "panel/1",
+				ResourceVersion: 10, Content: "content", Metadata: json.RawMessage(`{}`),
+				Embedding: makeEmbedding(0.5, 0.5), Model: testModel},
+		}))
+		require.NoError(t, cache.Put(ctx, ns, testModel, fmt.Sprintf("%064d", 1), makeEmbedding(0.5, 0.5)))
+		_, _, err := limiter.Allow(ctx, ns, time.Minute, 100)
+		require.NoError(t, err)
+		_, err = engine.DB().ExecContext(ctx,
+			`INSERT INTO vector_promoted (namespace, resource) VALUES ($1, $2)`, ns, testResource)
+		require.NoError(t, err)
+	}
+	seed(nsA)
+	seed(nsB)
+
+	deleted, err := backend.DeleteNamespace(ctx, nsA)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), deleted, "one embedding row removed for nsA")
+
+	// nsA gone from every table.
+	existsA, err := backend.Exists(ctx, nsA, testModel, testResource, "dash")
+	require.NoError(t, err)
+	assert.False(t, existsA, "nsA embeddings should be gone")
+
+	countA, err := cache.Count(ctx, nsA)
+	require.NoError(t, err)
+	assert.Equal(t, int64(0), countA, "nsA query cache should be gone")
+
+	assert.Equal(t, 0, rawCount(t, engine, `SELECT count(*) FROM vector_search_rate_buckets WHERE namespace = $1`, nsA))
+	assert.Equal(t, 0, rawCount(t, engine, `SELECT count(*) FROM vector_promoted WHERE namespace = $1`, nsA))
+
+	// nsB untouched.
+	existsB, err := backend.Exists(ctx, nsB, testModel, testResource, "dash")
+	require.NoError(t, err)
+	assert.True(t, existsB, "nsB embeddings should survive")
+
+	countB, err := cache.Count(ctx, nsB)
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), countB, "nsB query cache should survive")
+
+	assert.Equal(t, 1, rawCount(t, engine, `SELECT count(*) FROM vector_search_rate_buckets WHERE namespace = $1`, nsB))
+	assert.Equal(t, 1, rawCount(t, engine, `SELECT count(*) FROM vector_promoted WHERE namespace = $1`, nsB))
+}
+
+func rawCount(t *testing.T, engine *xorm.Engine, query string, args ...any) int {
+	t.Helper()
+	var n int
+	require.NoError(t, engine.DB().QueryRowContext(context.Background(), query, args...).Scan(&n))
+	return n
+}
+
 // TestIntegrationVectorUpsertReplaceSubresources pins the atomic
 // "replace the stored subresource set for this UID" contract the
 // reconciler depends on: subresources not present in the new write get
@@ -197,7 +347,7 @@ func TestIntegrationVectorUpsertReplaceSubresources(t *testing.T) {
 	mk := func(uid, sub, content string) Vector {
 		return Vector{
 			Namespace: "integration-test", Resource: testResource, UID: uid, Title: uid,
-			Subresource: sub, ResourceVersion: 10, Content: content,
+			Subresource: sub, ResourceVersion: 10, Content: content, Folder: "folder-a",
 			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
 		}
 	}
@@ -214,21 +364,23 @@ func TestIntegrationVectorUpsertReplaceSubresources(t *testing.T) {
 
 	// Replace dash-a with just panel/1 (rewritten) and panel/4 (new).
 	// panel/2 and panel/3 must be deleted in the same transaction.
-	err := backend.UpsertReplaceSubresources(ctx, []Vector{
+	// desired = the full surviving set; changed = the rows to write.
+	err := backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash-a", []Vector{
 		mk("dash-a", "panel/1", "a-1 updated"),
 		mk("dash-a", "panel/4", "a-4 new"),
-	})
+	}, []string{"panel/1", "panel/4"})
 	require.NoError(t, err)
 
-	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-a")
+	stored, folder, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-a")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{
 		"panel/1": "a-1 updated",
 		"panel/4": "a-4 new",
 	}, stored, "stale subresources removed; new set is the exact replacement")
+	assert.Equal(t, "folder-a", folder, "stored folder is returned alongside content")
 
 	// dash-b must be untouched.
-	storedB, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-b")
+	storedB, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-b")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{
 		"panel/1": "b-1",
@@ -239,10 +391,9 @@ func TestIntegrationVectorUpsertReplaceSubresources(t *testing.T) {
 	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash-b"))
 }
 
-// TestIntegrationVectorUpsertReplaceSubresources_MultiUID verifies
-// that a single call covering multiple UIDs replaces each UID's set
-// independently in one transaction.
-func TestIntegrationVectorUpsertReplaceSubresources_MultiUID(t *testing.T) {
+// changed ⊊ desired: only `changed` rows are rewritten, panels in
+// `desired` but not `changed` are kept, and nothing is deleted.
+func TestIntegrationVectorUpsertReplaceSubresources_PartialUpdate(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 
 	mk := func(uid, sub, content string) Vector {
@@ -254,27 +405,57 @@ func TestIntegrationVectorUpsertReplaceSubresources_MultiUID(t *testing.T) {
 	}
 
 	require.NoError(t, backend.Upsert(ctx, []Vector{
-		mk("dash-a", "panel/1", "a-1"),
-		mk("dash-a", "panel/2", "a-2"),
-		mk("dash-b", "panel/1", "b-1"),
-		mk("dash-b", "panel/2", "b-2"),
+		mk("dash", "panel/1", "p1"),
+		mk("dash", "panel/2", "p2"),
+		mk("dash", "panel/3", "p3"),
 	}))
 
-	require.NoError(t, backend.UpsertReplaceSubresources(ctx, []Vector{
-		mk("dash-a", "panel/1", "a-1 v2"),
-		mk("dash-b", "panel/3", "b-3"),
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash",
+		[]Vector{
+			mk("dash", "panel/2", "p2 v2"), // changed
+			mk("dash", "panel/9", "p9"),    // new
+		},
+		[]string{"panel/1", "panel/2", "panel/3", "panel/9"},
+	))
+
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{
+		"panel/1": "p1",    // untouched (kept via desired, not in changed)
+		"panel/2": "p2 v2", // rewritten
+		"panel/3": "p3",    // untouched
+		"panel/9": "p9",    // new
+	}, stored)
+
+	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash"))
+}
+
+// Empty `changed`: a panel is dropped from `desired` and deleted, with nothing to upsert.
+func TestIntegrationVectorUpsertReplaceSubresources_DeleteOnlyNoChange(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	mk := func(uid, sub, content string) Vector {
+		return Vector{
+			Namespace: "integration-test", Resource: testResource, UID: uid, Title: uid,
+			Subresource: sub, ResourceVersion: 1, Content: content,
+			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
+		}
+	}
+
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("dash", "panel/1", "p1"),
+		mk("dash", "panel/2", "p2"),
 	}))
 
-	storedA, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-a")
-	require.NoError(t, err)
-	assert.Equal(t, map[string]string{"panel/1": "a-1 v2"}, storedA)
+	// No changed vectors; desired drops panel/2.
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash",
+		nil, []string{"panel/1"}))
 
-	storedB, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-b")
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
-	assert.Equal(t, map[string]string{"panel/3": "b-3"}, storedB)
+	assert.Equal(t, map[string]string{"panel/1": "p1"}, stored)
 
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash-a"))
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash-b"))
+	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash"))
 }
 
 // TestIntegrationVectorUpsertReplaceSubresources_EmptyInput is the
@@ -288,9 +469,9 @@ func TestIntegrationVectorUpsertReplaceSubresources_EmptyInput(t *testing.T) {
 		Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
 	}}))
 
-	require.NoError(t, backend.UpsertReplaceSubresources(ctx, nil))
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash", nil, nil))
 
-	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{"panel/1": "untouched"}, stored)
 
@@ -321,14 +502,14 @@ func TestIntegrationVectorUpsertReplaceSubresources_AtomicOnValidationError(t *t
 	// Second vector has empty Title — Validate() rejects it.
 	bad := mk("dash", "panel/2", "v2-bad")
 	bad.Title = ""
-	err := backend.UpsertReplaceSubresources(ctx, []Vector{
+	err := backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash", []Vector{
 		mk("dash", "panel/1", "v2"),
 		bad,
-	})
+	}, []string{"panel/1", "panel/2"})
 	require.Error(t, err)
 
 	// State is unchanged: panel/1 still has v1 content, panel/2 still present.
-	stored, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
+	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{"panel/1": "v1", "panel/2": "v1"}, stored,
 		"failed batch leaves no half-applied state")
@@ -385,6 +566,21 @@ func TestIntegrationVectorGetLatestRV(t *testing.T) {
 	rv, err = backend.GetLatestRV(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, int64(100), rv)
+}
+
+func TestIntegrationVectorCreateBackfillJob(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, testResource, 100))
+
+	// Second insert for the same (model, resource) is a no-op (ON CONFLICT
+	// DO NOTHING): the original row is preserved, not overwritten with 200.
+	require.NoError(t, backend.CreateBackfillJob(ctx, testModel, testResource, 200))
+
+	jobs, err := backend.ListIncompleteBackfillJobs(ctx, testModel)
+	require.NoError(t, err)
+	require.Len(t, jobs, 1, "exactly one job exists after the conflicting insert")
+	assert.Equal(t, int64(100), jobs[0].StoppingRV, "original stopping_rv preserved")
 }
 
 func TestIntegrationVectorReconcilerLock(t *testing.T) {
@@ -480,4 +676,131 @@ func makeEmbedding(a, b float32) []float32 {
 	e[0] = a
 	e[1] = b
 	return e
+}
+
+func TestEnsureResourcePartition_RejectsUnsafeResource(t *testing.T) {
+	b := &pgvectorBackend{}
+	for _, res := range []string{"", "Dashboards", "dash-boards", "a.b", "drop;table", "with space"} {
+		require.Error(t, b.EnsureResourcePartition(context.Background(), res),
+			"resource %q must be rejected", res)
+	}
+}
+
+func TestIntegrationVectorEnsureResourcePartition(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+	pg := backend.(*pgvectorBackend)
+
+	const res = "testpartition"
+	leaf := subtreeName(res)
+	idx := leaf + "_metadata_idx"
+	drop := func() { _, _ = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP TABLE IF EXISTS %s`, leaf)) }
+	drop()
+	t.Cleanup(drop)
+
+	// Absent before creation.
+	ready, err := pg.resourcePartitionReady(ctx, leaf, idx)
+	require.NoError(t, err)
+	require.False(t, ready)
+
+	// Create it: partition + metadata index both present.
+	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
+	ready, err = pg.resourcePartitionReady(ctx, leaf, idx)
+	require.NoError(t, err)
+	assert.True(t, ready, "leaf attached as partition and metadata index present")
+
+	// Heals a missing index: drop it, retry must recreate it.
+	_, err = engine.DB().ExecContext(ctx, fmt.Sprintf(`DROP INDEX IF EXISTS %s`, idx))
+	require.NoError(t, err)
+	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
+	ready, err = pg.resourcePartitionReady(ctx, leaf, idx)
+	require.NoError(t, err)
+	assert.True(t, ready, "missing index recreated on retry")
+
+	// Idempotent: a second call (fast path) is a no-op, no error.
+	require.NoError(t, backend.EnsureResourcePartition(ctx, res))
+}
+
+// TestIntegrationVectorTimestamps pins the created_at/updated_at contract:
+// created_at is stamped once on insert and preserved across re-embeds, while
+// updated_at advances on every upsert of the same row.
+func TestIntegrationVectorTimestamps(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+
+	v := Vector{
+		Namespace: "integration-test", Resource: testResource, UID: "dash-ts", Title: "Dash",
+		Subresource: "panel/1", ResourceVersion: 10, Folder: "folder-a",
+		Content: "original content", Metadata: json.RawMessage(`{}`),
+		Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
+	}
+	require.NoError(t, backend.Upsert(ctx, []Vector{v}))
+
+	created1, updated1 := readEmbeddingTimestamps(t, engine, v.Namespace, v.Model, v.UID, v.Subresource)
+	require.False(t, created1.IsZero(), "created_at must be stamped on insert")
+	// Both columns default to the same transaction timestamp on insert.
+	require.Equal(t, created1, updated1)
+
+	// CURRENT_TIMESTAMP has microsecond resolution and is fixed per
+	// transaction, so a short sleep guarantees a strictly greater updated_at
+	// on the next upsert without flakiness.
+	time.Sleep(10 * time.Millisecond)
+
+	v.Content = "changed content"
+	v.Embedding = makeEmbedding(0.6, 0.4)
+	require.NoError(t, backend.Upsert(ctx, []Vector{v}))
+
+	created2, updated2 := readEmbeddingTimestamps(t, engine, v.Namespace, v.Model, v.UID, v.Subresource)
+	require.Equal(t, created1, created2, "created_at must not change on re-embed")
+	require.True(t, updated2.After(updated1), "updated_at must advance on re-embed")
+
+	require.NoError(t, backend.Delete(ctx, v.Namespace, testModel, testResource, v.UID))
+}
+
+func readEmbeddingTimestamps(t *testing.T, engine *xorm.Engine, namespace, model, uid, subresource string) (createdAt, updatedAt time.Time) {
+	t.Helper()
+	row := engine.DB().QueryRowContext(context.Background(),
+		`SELECT created_at, updated_at FROM embeddings
+			WHERE namespace = $1 AND model = $2 AND uid = $3 AND subresource = $4`,
+		namespace, model, uid, subresource)
+	require.NoError(t, row.Scan(&createdAt, &updatedAt))
+	return createdAt, updatedAt
+}
+
+func TestIntegrationVectorCollectionCatalog(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+
+	// The migration seeds the dashboards row.
+	c, found, err := backend.ResolveCollection(ctx, "dashboard.grafana.app", "dashboards")
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, "dashboards", c.PartitionKey)
+	assert.False(t, c.IsExternal)
+
+	// Unknown pair: not found, no error.
+	_, found, err = backend.ResolveCollection(ctx, "nope.grafana.app", "nope")
+	require.NoError(t, err)
+	assert.False(t, found)
+
+	// Insert an external collection whose resource name is not a valid SQL
+	// identifier — the catalog decouples resource names from partition keys.
+	_, err = engine.DB().ExecContext(ctx, `
+		INSERT INTO embedding_collections (group_name, resource, partition_key, is_external)
+		VALUES ('ext.example.com', 'my-things', 'my_things', true)
+		ON CONFLICT DO NOTHING`)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_, _ = engine.DB().ExecContext(context.Background(),
+			`DELETE FROM embedding_collections WHERE group_name = 'ext.example.com'`)
+	})
+
+	c, found, err = backend.ResolveCollection(ctx, "ext.example.com", "my-things")
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, "my_things", c.PartitionKey)
+	assert.True(t, c.IsExternal)
+
+	// validateResource rides the catalog: operations on an unprovisioned
+	// partition key are rejected before touching the embeddings table.
+	_, err = backend.Search(ctx, "ns", testModel, "not-provisioned", make([]float32, 3), 5)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unsupported resource")
 }

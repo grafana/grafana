@@ -6,39 +6,73 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/authlib/types"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/sync/singleflight"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-var logger = log.New("accesscontrol.zanzana_resolver")
+var zLogger = log.New("accesscontrol.zanzana_resolver")
 
 // ZanzanaPermissionResolver handles resolving user permissions using Zanzana
 type ZanzanaPermissionResolver struct {
-	client  zanzana.Client
-	userSvc user.Service
+	client        zanzana.Client
+	userSvc       user.Service
+	scopeResolver *uidToIDResolver
+	// useExternalGroups mirrors cfg.IDUseExternalGroupsForGroupsClaim: it selects which
+	// team memberships are sent as Zanzana contextual tuples for the current user, so the
+	// merged permissions match what the forward Check path (which uses the groups claim)
+	// enforces.
+	useExternalGroups bool
 }
 
-func NewZanzanaPermissionResolver(client zanzana.Client, userSvc user.Service) *ZanzanaPermissionResolver {
+func NewZanzanaPermissionResolver(
+	client zanzana.Client,
+	userSvc user.Service,
+	configProvider restcfg.RestConfigProvider,
+	useExternalGroups bool,
+) *ZanzanaPermissionResolver {
 	return &ZanzanaPermissionResolver{
-		client:  client,
-		userSvc: userSvc,
+		client:            client,
+		userSvc:           userSvc,
+		useExternalGroups: useExternalGroups,
+		scopeResolver:     newUIDToIDResolver(configProvider),
 	}
+}
+
+// teamsForCurrentUser returns the team memberships to send as Zanzana contextual tuples
+// for the signed-in user, mirroring the id token groups claim (resolveGroupsClaim):
+// proxy/IdP-supplied external groups when id_use_external_groups_for_groups_claim is set,
+// otherwise the user's stored team memberships. Without this, team-based grants are not
+// reflected in the merged legacy permissions.
+func (r *ZanzanaPermissionResolver) teamsForCurrentUser(usr identity.Requester) []string {
+	if r.useExternalGroups {
+		return usr.GetExternalGroups()
+	}
+	return usr.GetGroups()
 }
 
 // ResolveCurrentUserPermissions lists Zanzana-supported permissions for the signed-in identity.
 func (r *ZanzanaPermissionResolver) ResolveCurrentUserPermissions(ctx context.Context, usr identity.Requester) ([]ac.Permission, error) {
 	subject := usr.GetUID()
-	namespace := claims.OrgNamespaceFormatter(usr.GetOrgID())
-	return r.listAllWithPrefix(ctx, namespace, subject, "", "")
+	namespace := types.OrgNamespaceFormatter(usr.GetOrgID())
+	return r.listAllWithPrefix(ctx, namespace, subject, r.teamsForCurrentUser(usr), "", "")
 }
 
 // searchUsersPermissions searches for users' permissions using Zanzana
@@ -70,31 +104,33 @@ func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Con
 
 	var subject string
 	if isServiceAccount {
-		subject = claims.NewTypeID(claims.TypeServiceAccount, uid)
+		subject = types.NewTypeID(types.TypeServiceAccount, uid)
 	} else {
-		subject = claims.NewTypeID(claims.TypeUser, uid)
+		subject = types.NewTypeID(types.TypeUser, uid)
 	}
 
-	namespace := claims.OrgNamespaceFormatter(orgID)
+	namespace := types.OrgNamespaceFormatter(orgID)
 
 	var err error
 	if options.Action != "" {
 		group, resource, verb := common.TranslateActionToListParams(options.Action)
 		if group != "" && resource != "" {
-			perms, err := r.listPermissions(ctx, namespace, subject, group, resource, verb, options.Action, options.Scope)
+			// Per-user search resolves another identity's permissions; their request-time
+			// contextual team membership isn't available here, so no teams are passed.
+			perms, err := r.listPermissions(ctx, namespace, subject, nil, group, resource, verb, options.Action, options.Scope)
 			if err != nil {
 				return nil, err
 			}
 			permissions = append(permissions, perms...)
 		}
 	} else if options.ActionPrefix != "" {
-		permissions, err = r.listAllWithPrefix(ctx, namespace, subject, options.ActionPrefix, options.Scope)
+		permissions, err = r.listAllWithPrefix(ctx, namespace, subject, nil, options.ActionPrefix, options.Scope)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		// Neither action nor prefix specified (namespacedId-only query): list every supported action.
-		permissions, err = r.listAllWithPrefix(ctx, namespace, subject, "", options.Scope)
+		permissions, err = r.listAllWithPrefix(ctx, namespace, subject, nil, "", options.Scope)
 		if err != nil {
 			return nil, err
 		}
@@ -153,7 +189,7 @@ func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedIn
 					if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 						return err
 					}
-					logger.Warn("failed to resolve zanzana permissions for user", "userID", userHit.ID, "error", err)
+					zLogger.Warn("failed to resolve zanzana permissions for user", "userID", userHit.ID, "error", err)
 					return nil
 				}
 
@@ -188,20 +224,16 @@ func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedIn
 	return result, nil
 }
 
-func scopeFromAction(action, name string) string {
-	parts := strings.SplitN(action, ":", 2)
-	if parts[0] == "" {
-		return name
-	}
-	return ac.Scope(parts[0], "uid", name)
+// resourceScope scopes an object by the resource type Zanzana listed it under
+// (e.g. "folders:uid:abc"), not by the action prefix, so permission actions like
+// "folders.permissions:read" stay scoped on "folders:uid:<uid>".
+func resourceScope(resource, name string) string {
+	return ac.Scope(resource, "uid", name)
 }
 
-func allScopeFromAction(action string) string {
-	parts := strings.SplitN(action, ":", 2)
-	if parts[0] == "" {
-		return "*"
-	}
-	return ac.Scope(parts[0], "*")
+// resourceWildcardScope is the org-wide scope for the listed resource ("folders:*").
+func resourceWildcardScope(resource string) string {
+	return ac.Scope(resource, "*")
 }
 
 // folderScopeForLegacyRBAC returns a legacy RBAC scope for folder-scoped access (folders:uid:<uid>).
@@ -215,14 +247,82 @@ func isDashboardRBACAction(action string) bool {
 	return strings.HasPrefix(action, "dashboards:")
 }
 
+// isTeamRBACAction matches team-management actions whose scopes need UID→ID translation.
+func isTeamRBACAction(action string) bool {
+	return strings.HasPrefix(action, "teams:") || strings.HasPrefix(action, "teams.")
+}
+
+// resolveTeamScope translates a team UID to the legacy teams:id:<numericID> scope.
+func (r *ZanzanaPermissionResolver) resolveTeamScope(ctx context.Context, namespace, teamUID string) (string, error) {
+	if r.scopeResolver == nil {
+		return "", errors.New("scope resolver not initialized")
+	}
+	nsInfo, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse namespace: %w", err)
+	}
+	id, err := r.scopeResolver.GetTeamIDByUID(ctx, nsInfo, teamUID)
+	if err != nil {
+		return "", err
+	}
+	return ac.Scope("teams", "id", fmt.Sprintf("%d", id)), nil
+}
+
+// teamWildcardScope returns the legacy wildcard scope for teams (teams:id:*).
+func teamWildcardScope() string {
+	return ac.Scope("teams", "id", "*")
+}
+
+// isUserRBACAction matches user-management actions, including the org.users:* family.
+func isUserRBACAction(action string) bool {
+	return strings.HasPrefix(action, "users:") || strings.HasPrefix(action, "users.") ||
+		strings.HasPrefix(action, "org.users:")
+}
+
+// userScopeKind returns the legacy RBAC scope kind for a user-management action.
+// Most user actions are server-level and scoped to global.users (users:read/write/delete and
+// users.permissions:write all grant global.users:* in the fixed roles). The org-level
+// exceptions, scoped to the users kind, are users.permissions:read (fixed:org.users:reader)
+// and the org.users:* family (fixed:org.users:reader/writer).
+func userScopeKind(action string) string {
+	// users.permissions:read and the org.users:* family are org-scoped (the users kind);
+	// the remaining user-management actions are server-level (global.users).
+	if action == ac.ActionUsersPermissionsRead || strings.HasPrefix(action, "org.users:") {
+		return "users"
+	}
+	return "global.users"
+}
+
+// resolveUserScope translates a user UID to the legacy <kind>:id:<numericID> scope for the action.
+func (r *ZanzanaPermissionResolver) resolveUserScope(ctx context.Context, namespace, action, userUID string) (string, error) {
+	if r.scopeResolver == nil {
+		return "", errors.New("scope resolver not initialized")
+	}
+	nsInfo, err := types.ParseNamespace(namespace)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse namespace: %w", err)
+	}
+	id, err := r.scopeResolver.GetUserIDByUID(ctx, nsInfo, userUID)
+	if err != nil {
+		return "", err
+	}
+	return ac.Scope(userScopeKind(action), "id", fmt.Sprintf("%d", id)), nil
+}
+
+// userWildcardScope returns the legacy wildcard scope for a user action (<kind>:id:*).
+func userWildcardScope(action string) string {
+	return ac.Scope(userScopeKind(action), "id", "*")
+}
+
 // listPermissions lists permissions for a subject on a given group/resource
-func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject, group, resource, verb, action, scope string) ([]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject string, teams []string, group, resource, verb, action, scope string) ([]ac.Permission, error) {
 	req := &authzv1.ListRequest{
 		Namespace: namespace,
 		Subject:   subject,
 		Group:     group,
 		Verb:      verb,
 		Resource:  resource,
+		Teams:     teams,
 	}
 
 	resp, err := r.client.List(ctx, req)
@@ -269,7 +369,7 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 			}
 			appendIfMatches(ac.Permission{
 				Action: action,
-				Scope:  allScopeFromAction(action),
+				Scope:  resourceWildcardScope(resource),
 			})
 			// Generic dashboard list grants org-wide dashboard access; legacy RBAC also records
 			// folder wildcard for the same action (see SearchUsersPermissions / Reduce).
@@ -277,19 +377,52 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 				Action: action,
 				Scope:  ac.Scope("folders", "*"),
 			})
+		} else if isTeamRBACAction(action) {
+			appendIfMatches(ac.Permission{
+				Action: action,
+				Scope:  teamWildcardScope(),
+			})
+		} else if isUserRBACAction(action) {
+			appendIfMatches(ac.Permission{
+				Action: action,
+				Scope:  userWildcardScope(action),
+			})
 		} else {
 			appendIfMatches(ac.Permission{
 				Action: action,
-				Scope:  allScopeFromAction(action),
+				Scope:  resourceWildcardScope(resource),
 			})
 		}
 	}
 
-	// Convert Items to legacy scopes (e.g. dashboards:uid:<name>).
+	// Items are objects of the listed resource type, scoped by that resource.
+	// Team and user actions need UID→ID translation so scopes match legacy RBAC
+	// (teams:id:<n> / users:id:<n>).
 	for _, item := range resp.Items {
+		var itemScope string
+		switch {
+		case isTeamRBACAction(action):
+			resolved, err := r.resolveTeamScope(ctx, namespace, item)
+			if err != nil {
+				zLogger.Warn("failed to resolve team UID to ID, using uid scope", "uid", item, "error", err)
+				itemScope = resourceScope(resource, item)
+			} else {
+				itemScope = resolved
+			}
+		case isUserRBACAction(action):
+			resolved, err := r.resolveUserScope(ctx, namespace, action, item)
+			if err != nil {
+				zLogger.Warn("failed to resolve user UID to ID, using uid scope", "uid", item, "error", err)
+				itemScope = resourceScope(resource, item)
+			} else {
+				itemScope = resolved
+			}
+		default:
+			itemScope = resourceScope(resource, item)
+		}
 		appendIfMatches(ac.Permission{
 			Action: action,
-			Scope:  scopeFromAction(action, item),
+			Scope:  itemScope,
 		})
 	}
 
@@ -305,13 +438,17 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 	return permissions, nil
 }
 
-func (r *ZanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, namespace, subject, prefix, scope string) ([]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, namespace, subject string, teams []string, prefix, scope string) ([]ac.Permission, error) {
 	var permissions []ac.Permission
 	for _, entry := range common.SupportedActions() {
 		if strings.HasPrefix(entry.Action, prefix) {
-			perms, err := r.listPermissions(ctx, namespace, subject, entry.Group, entry.Resource, entry.Verb, entry.Action, scope)
+			perms, err := r.listPermissions(ctx, namespace, subject, teams, entry.Group, entry.Resource, entry.Verb, entry.Action, scope)
 			if err != nil {
-				return nil, err
+				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+					return nil, err
+				}
+				zLogger.Warn("failed to list zanzana permissions for action, skipping", "action", entry.Action, "error", err)
+				continue
 			}
 			permissions = append(permissions, perms...)
 		}
@@ -430,4 +567,145 @@ func (r *ZanzanaPermissionResolver) MergeSearch(ctx context.Context, usr identit
 		return legacy
 	}
 	return MergePermissions(legacy, zPerms)
+}
+
+// GVRs are derived from the IAM resource info so the group/version/resource always match what
+// the apiserver serves, instead of hardcoding (which previously drifted to the wrong group).
+var (
+	teamGVR = iamv0.TeamResourceInfo.GroupVersionResource()
+	userGVR = iamv0.UserResourceInfo.GroupVersionResource()
+)
+
+// UID→internal-ID mappings are immutable for an object's lifetime, so a long TTL is safe;
+// the bound just caps memory and tolerates the rare deleted-then-absent UID.
+const uidToIDCacheTTL = 1 * time.Hour
+
+// Bounds the detached singleflight fetch. The fetch runs on a context decoupled from any single
+// caller (see getObjectID), so without this a hung apiserver Get would block the flight—and every
+// follower waiting on it—indefinitely.
+const uidToIDFetchTimeout = 10 * time.Second
+
+type uidToIDResolver struct {
+	mu             sync.RWMutex
+	clients        map[schema.GroupVersionResource]dynamic.NamespaceableResourceInterface
+	configProvider restcfg.RestConfigProvider
+	// cache stores resolved UID→internal-ID mappings; sf collapses concurrent resolutions
+	// of the same key into a single apiserver Get. Both teams and users resolve through here,
+	// and the same UIDs recur across every action during a permission merge, so this removes
+	// the bulk of the redundant apiserver lookups.
+	cache *localcache.CacheService
+	sf    singleflight.Group
+}
+
+func newUIDToIDResolver(configProvider restcfg.RestConfigProvider) *uidToIDResolver {
+	return &uidToIDResolver{
+		clients:        make(map[schema.GroupVersionResource]dynamic.NamespaceableResourceInterface),
+		configProvider: configProvider,
+		cache:          localcache.New(uidToIDCacheTTL, 10*time.Minute),
+	}
+}
+
+func (r *uidToIDResolver) getDynamicClient(ctx context.Context, nsInfo types.NamespaceInfo, gvr schema.GroupVersionResource) (dynamic.ResourceInterface, error) {
+	r.mu.RLock()
+	cli, ok := r.clients[gvr]
+	r.mu.RUnlock()
+	if ok {
+		return cli.Namespace(nsInfo.Value), nil
+	}
+
+	if r.configProvider == nil {
+		return nil, errors.New("config provider not initialized")
+	}
+
+	restCfg, err := r.configProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	dyn, err := dynamic.NewForConfig(restCfg)
+	if err != nil {
+		return nil, err
+	}
+	cli = dyn.Resource(gvr)
+
+	r.mu.Lock()
+	r.clients[gvr] = cli
+	r.mu.Unlock()
+
+	return cli.Namespace(nsInfo.Value), nil
+}
+
+func (r *uidToIDResolver) getObjectID(ctx context.Context, nsInfo types.NamespaceInfo, gvr schema.GroupVersionResource, name string) (int64, error) {
+	// Key by resource type so team/user UIDs can't collide, and by the namespace value the
+	// fetch actually scopes the Get on (cli.Namespace(nsInfo.Value) in fetchObjectID), so
+	// tenants stay isolated. Don't key on OrgID: multiple namespaces can share an OrgID
+	// (every cloud stacks-N namespace parses to OrgID 1), which would collide their entries
+	// and collapse cross-tenant resolutions into a single singleflight fetch.
+	key := fmt.Sprintf("%s/%s/%s", gvr.Resource, nsInfo.Value, name)
+	if v, ok := r.cache.Get(key); ok {
+		return v.(int64), nil
+	}
+
+	ch := r.sf.DoChan(key, func() (any, error) {
+		// Re-check under the flight: a concurrent resolution may have populated the cache
+		// while we were waiting for the singleflight slot.
+		if v, ok := r.cache.Get(key); ok {
+			return v.(int64), nil
+		}
+		// Detach from the caller's context so one caller cancelling (request timeout, client
+		// disconnect) does not fail the shared fetch for every other caller on this flight.
+		// A bounded timeout still prevents a hung Get from blocking the flight forever.
+		fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), uidToIDFetchTimeout)
+		defer cancel()
+		id, err := r.fetchObjectID(fetchCtx, nsInfo, gvr, name)
+		if err != nil {
+			return 0, err
+		}
+		// Only cache successful lookups, and skip id == 0: that is the sentinel returned when the
+		// deprecated internal-ID label is missing/unparseable (e.g. a dual-write window), so caching
+		// it would pin a bogus value for the full TTL instead of re-resolving once it's populated.
+		if id != 0 {
+			r.cache.Set(key, id, uidToIDCacheTTL)
+		}
+		return id, nil
+	})
+
+	// Wait on this caller's own context so a cancelled caller returns promptly while the
+	// shared fetch continues for everyone else.
+	select {
+	case <-ctx.Done():
+		return 0, ctx.Err()
+	case res := <-ch:
+		if res.Err != nil {
+			return 0, res.Err
+		}
+		return res.Val.(int64), nil
+	}
+}
+
+func (r *uidToIDResolver) fetchObjectID(ctx context.Context, nsInfo types.NamespaceInfo, gvr schema.GroupVersionResource, name string) (int64, error) {
+	cli, err := r.getDynamicClient(ctx, nsInfo, gvr)
+	if err != nil {
+		return 0, err
+	}
+
+	srvCtx := identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
+	result, err := cli.Get(srvCtx, name, metav1.GetOptions{})
+	if err != nil {
+		return 0, err
+	}
+
+	meta, err := utils.MetaAccessor(result)
+	if err != nil {
+		return 0, err
+	}
+	return meta.GetDeprecatedInternalID(), nil // nolint:staticcheck
+}
+
+func (r *uidToIDResolver) GetTeamIDByUID(ctx context.Context, nsInfo types.NamespaceInfo, uid string) (int64, error) {
+	return r.getObjectID(ctx, nsInfo, teamGVR, uid)
+}
+
+func (r *uidToIDResolver) GetUserIDByUID(ctx context.Context, nsInfo types.NamespaceInfo, uid string) (int64, error) {
+	return r.getObjectID(ctx, nsInfo, userGVR, uid)
 }

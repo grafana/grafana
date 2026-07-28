@@ -143,10 +143,6 @@ export const alertingAlertRuleFormSchema = z.object({
   returnTo: z.string().optional().describe('Optional URL to return to after creating the alert'),
 });
 
-// Export types for use in plugins
-export type AlertingAlertRuleFormSchemaType = z.infer<typeof alertingAlertRuleFormSchema>;
-export type AlertingModelSchemaType = z.infer<typeof alertingModelSchema>;
-
 // Simple API that only exposes the navigate to alert rule form schema
 export const alertingAlertRuleFormSchemaApi = {
   alertingAlertRuleFormSchema,

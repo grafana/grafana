@@ -11,11 +11,12 @@ import { useInhibitedAlerts } from './useInhibitedAlerts';
 export function useHasInhibitedInstances(ruleUid: string | undefined): {
   hasInhibitedInstances: boolean;
   isLoading: boolean;
+  isFetching: boolean;
 } {
-  const { inhibitedAlerts, isLoading } = useInhibitedAlerts();
+  const { inhibitedAlerts, isLoading, isFetching } = useInhibitedAlerts();
 
   const hasInhibitedInstances =
     ruleUid !== undefined && inhibitedAlerts.some((alert) => alert.labels.__alert_rule_uid__ === ruleUid);
 
-  return { hasInhibitedInstances, isLoading };
+  return { hasInhibitedInstances, isLoading, isFetching };
 }

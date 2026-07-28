@@ -270,12 +270,15 @@ func GetHealthFromQuery(v url.Values) (map[string]struct{}, error) {
 	return health, nil
 }
 
+type StatusPreparer func(ruleUIDs []string)
+
 type RuleGroupStatusesOptions struct {
 	Ctx               context.Context
 	OrgID             int64
 	Query             url.Values
 	AllowedNamespaces map[string]string
 	SortByFullpath    bool
+	StatusPreparer    StatusPreparer
 }
 
 type ListAlertRulesStore interface {
@@ -605,6 +608,15 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 		}
 	}
 	span.AddEvent("Provenances retrieved from store")
+
+	if ctx.opts.StatusPreparer != nil {
+		ruleUIDs := make([]string, 0, len(ruleList))
+		for _, rule := range ruleList {
+			ruleUIDs = append(ruleUIDs, rule.UID)
+		}
+
+		ctx.opts.StatusPreparer(ruleUIDs)
+	}
 
 	groupedRules := getGroupedRules(log, ruleList, ctx.ruleNamesSet, ctx.opts.AllowedNamespaces)
 

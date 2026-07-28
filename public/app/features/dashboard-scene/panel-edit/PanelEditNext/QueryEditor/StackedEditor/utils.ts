@@ -36,6 +36,12 @@ export function getStackedQueryEditorType(query: DataQuery): QueryEditorType.Que
   return getEditorType(query) === QueryEditorType.Expression ? QueryEditorType.Expression : QueryEditorType.Query;
 }
 
+export function isStackedItemHidden(item: StackedItem): boolean {
+  return item.type === QueryEditorType.Transformation
+    ? Boolean(item.transformation.transformConfig.disabled)
+    : Boolean(item.query.hide);
+}
+
 /**
  * The primary selected card as an identity-only {@link StackedEditorItem}. Transformations take
  * precedence over queries: they sit downstream in the pipeline, so when both are selected the user

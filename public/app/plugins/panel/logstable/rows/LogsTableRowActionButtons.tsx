@@ -76,7 +76,7 @@ export function LogsTableRowActionButtons(props: Props) {
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     background: theme.colors.background.secondary,
     boxShadow: theme.shadows.z2,

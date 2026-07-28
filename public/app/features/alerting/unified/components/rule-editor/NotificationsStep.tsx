@@ -242,16 +242,14 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
   ]);
   const selectedPolicy = watch('selectedPolicy');
 
-  const multiplePoliciesEnabled = config.featureToggles.alertingMultiplePolicies ?? false;
-
-  // Prefer the policy field (notification_settings.policy — canonical and honored by the backend
-  // in both toggle states), falling back to the legacy __grafana_managed_route__ label, so the
-  // notification preview fetches the correct routing tree instead of always defaulting to root.
+  // Prefer the policy field (notification_settings.policy — canonical and honored by the backend),
+  // falling back to the legacy __grafana_managed_route__ label, so the notification preview fetches
+  // the correct routing tree instead of always defaulting to root.
   const policyNameForPreview = selectedPolicy || labels.find((l) => l.key === NAMED_ROOT_LABEL_NAME)?.value;
 
   return (
     <Stack direction="column" gap={2}>
-      {multiplePoliciesEnabled && <PolicyTreeSelector />}
+      <PolicyTreeSelector />
       <NotificationPreview
         alertQueries={queries}
         customLabels={labels}
@@ -328,7 +326,7 @@ interface NotificationsStepDescriptionProps {
   manualRouting: boolean;
 }
 
-export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
+const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptionProps) => {
   return (
     <Stack alignItems="center">
       <Text variant="bodySmall" color="secondary">

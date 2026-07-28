@@ -7,15 +7,18 @@ import { RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 
 import { getVariablesCompatibility } from './getVariablesCompatibility';
+import { toControlSourceRef } from './predefinedVariables';
 
 jest.mock('../serialization/sceneVariablesSetToVariables', () => ({
   sceneVariablesSetToVariables: (
-    set: { state: { variables: Array<{ state: { name: string; type?: string } }> } },
+    set: { state: { variables: Array<{ state: { name: string; type?: string; origin?: unknown } }> } },
     _keepQueryOptions?: boolean,
-    excludeVariable?: unknown
+    excludeVariable?: unknown,
+    includeRuntimeVariables?: boolean
   ) => {
     return set.state.variables
       .filter((v) => v !== excludeVariable)
+      .filter((v) => includeRuntimeVariables || v.state.origin === undefined)
       .map((v) => ({ name: v.state.name, type: v.state.type ?? 'custom' }));
   },
 }));
@@ -173,6 +176,28 @@ describe('getVariablesCompatibility', () => {
       expect(names).toContain('dashVar');
       expect(names).not.toContain('sectionVar1');
       expect(names).not.toContain('sectionVar2');
+    });
+
+    it('includes predefined global/folder variables for query editor listing', () => {
+      const predefined = new CustomVariable({
+        name: 'env',
+        query: 'prod,dev',
+        value: 'prod',
+        text: 'prod',
+        origin: toControlSourceRef({ type: 'global' }),
+      });
+      const local = makeVar('dashVar');
+
+      const dashboard = new DashboardScene({
+        $variables: new SceneVariableSet({ variables: [predefined, local] }),
+        body: new RowsLayoutManager({ rows: [] }),
+      });
+
+      const result = getVariablesCompatibility(dashboard);
+      const names = result.map((v) => v.name);
+
+      expect(names).toContain('env');
+      expect(names).toContain('dashVar');
     });
 
     it('deduplicates: dashboard variables take precedence over section variables with the same name', () => {

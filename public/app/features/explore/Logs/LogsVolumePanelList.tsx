@@ -50,7 +50,7 @@ type Props = {
   logs: LogRowModel[];
 };
 
-export const VISIBLE_RANGE_FRAME_NAME = 'Visible range';
+const VISIBLE_RANGE_FRAME_NAME = 'Visible range';
 export const LogsVolumePanelList = ({
   logsVolumeData,
   absoluteRange,

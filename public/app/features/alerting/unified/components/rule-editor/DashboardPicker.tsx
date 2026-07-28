@@ -381,9 +381,7 @@ export function getDashboardUid(dashboardDTO: DashboardResponse | undefined) {
   return dashboardDTO.dashboard.uid;
 }
 
-export function getDashboardFolderTitle(
-  dashboardDTO: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | undefined
-) {
+function getDashboardFolderTitle(dashboardDTO: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | undefined) {
   if (!dashboardDTO || !('dashboard' in dashboardDTO)) {
     return undefined;
   }

@@ -26,7 +26,7 @@ export const initialDataSourceVariableModelState: DataSourceVariableModel = {
   refresh: VariableRefresh.onDashboardLoad,
 };
 
-export const dataSourceVariableSlice = createSlice({
+const dataSourceVariableSlice = createSlice({
   name: 'templating/datasource',
   initialState: initialVariablesState,
   reducers: {

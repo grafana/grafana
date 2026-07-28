@@ -40,10 +40,9 @@ const (
 	StorageTypeUnifiedGrpc   StorageType = "unified-grpc"
 	StorageTypeUnifiedKVGrpc StorageType = "unified-kv-grpc"
 
-	// Deprecated: legacy is a shim that is no longer necessary
-	StorageTypeLegacy StorageType = "legacy"
-
 	BlobThresholdDefault int = 0
+
+	DefaultGrpcClientKeepaliveTime time.Duration = 0
 )
 
 type RestConfigProvider interface {
@@ -152,7 +151,7 @@ func NewStorageOptions() *StorageOptions {
 		Address:                                "localhost:10000",
 		GrpcClientAuthenticationTokenNamespace: "*",
 		GrpcClientAuthenticationAllowInsecure:  false,
-		GrpcClientKeepaliveTime:                0,
+		GrpcClientKeepaliveTime:                DefaultGrpcClientKeepaliveTime,
 		BlobThresholdBytes:                     BlobThresholdDefault,
 		UnifiedStorageConfig:                   make(map[string]setting.UnifiedStorageConfig),
 	}
@@ -188,15 +187,13 @@ func (o *StorageOptions) Validate() []error {
 	errs := []error{}
 	switch o.StorageType {
 	// nolint:staticcheck
-	case StorageTypeLegacy:
-		// no-op
 	case StorageTypeUnifiedKVGrpc:
 		// no-op (enterprise only)
 	case StorageTypeFile, StorageTypeEtcd, StorageTypeUnified, StorageTypeUnifiedGrpc:
 		// no-op
 	default:
 		// nolint:staticcheck
-		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-type must be one of %s, %s, %s, %s, %s", StorageTypeFile, StorageTypeEtcd, StorageTypeLegacy, StorageTypeUnified, StorageTypeUnifiedGrpc))
+		errs = append(errs, fmt.Errorf("--grafana-apiserver-storage-type must be one of %s, %s, %s, %s", StorageTypeFile, StorageTypeEtcd, StorageTypeUnified, StorageTypeUnifiedGrpc))
 	}
 
 	if _, _, err := net.SplitHostPort(o.Address); err != nil {
@@ -325,9 +322,8 @@ func (o *StorageOptions) buildGrpcDialOptions() []grpc.DialOption {
 
 	if o.GrpcClientKeepaliveTime > 0 {
 		opts = append(opts, grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:                o.GrpcClientKeepaliveTime,
-			Timeout:             10 * time.Second,
-			PermitWithoutStream: true,
+			Time:    o.GrpcClientKeepaliveTime,
+			Timeout: 10 * time.Second,
 		}))
 	}
 

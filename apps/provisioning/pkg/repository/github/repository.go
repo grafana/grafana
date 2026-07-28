@@ -18,11 +18,10 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-// Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
 type githubRepository struct {
 	git.GitRepository
 	config *provisioning.Repository
-	gh     Client // assumes github.com base URL
+	gh     Client
 
 	owner string
 	repo  string
@@ -36,7 +35,7 @@ type GithubRepository interface {
 	repository.Repository
 	repository.Versioned
 	repository.Writer
-	repository.Reader
+	repository.SizeLimitedReader
 	repository.RepositoryWithURLs
 	repository.StageableRepository
 	repository.BranchHandler
@@ -45,6 +44,7 @@ type GithubRepository interface {
 	Client() Client
 }
 
+// NewRepository builds a github.com repository client.
 func NewRepository(
 	ctx context.Context,
 	config *provisioning.Repository,
@@ -52,15 +52,31 @@ func NewRepository(
 	factory *Factory,
 	token common.RawSecureValue,
 ) (GithubRepository, error) {
-	owner, repo, err := ParseOwnerRepoGithub(config.Spec.GitHub.URL)
+	return newRepository(ctx, config, gitRepo, factory, token, WithCustomServerURL(gitRepo.URL()))
+}
+
+func newRepository(
+	ctx context.Context,
+	config *provisioning.Repository,
+	gitRepo git.GitRepository,
+	factory *Factory,
+	token common.RawSecureValue,
+	opts ...ClientOption,
+) (GithubRepository, error) {
+	owner, repo, err := ParseOwnerRepoGithub(gitRepo.URL())
 	if err != nil {
 		return nil, fmt.Errorf("parse owner and repo: %w", err)
+	}
+
+	ghClient, err := factory.New(ctx, owner, repo, token, opts...)
+	if err != nil {
+		return nil, fmt.Errorf("create github client: %w", err)
 	}
 
 	return &githubRepository{
 		config:        config,
 		GitRepository: gitRepo,
-		gh:            factory.New(ctx, token), // TODO, baseURL from config
+		gh:            ghClient,
 		owner:         owner,
 		repo:          repo,
 	}, nil
@@ -79,7 +95,7 @@ func (r *githubRepository) Client() Client {
 }
 
 func (r *githubRepository) GetDefaultBranch(ctx context.Context) (string, error) {
-	repo, err := r.gh.GetRepository(ctx, r.owner, r.repo)
+	repo, err := r.gh.GetRepository(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get repository metadata: %w", err)
 	}
@@ -87,11 +103,11 @@ func (r *githubRepository) GetDefaultBranch(ctx context.Context) (string, error)
 }
 
 func (r *githubRepository) GetCurrentBranch() string {
-	return r.config.Spec.GitHub.Branch
+	return r.config.Branch()
 }
 
 func (r *githubRepository) SetBranch(branch string) {
-	r.config.Spec.GitHub.Branch = branch
+	r.config.SetBranch(branch)
 	r.GitRepository.SetBranch(branch)
 }
 
@@ -114,18 +130,18 @@ func ParseOwnerRepoGithub(giturl string) (owner string, repo string, err error) 
 
 // Test implements provisioning.Repository.
 func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	url := r.config.Spec.GitHub.URL
+	url := r.config.URL()
 	_, _, err := ParseOwnerRepoGithub(url)
 	if err != nil {
 		return repository.FromFieldError(field.Invalid(
-			field.NewPath("spec", "github", "url"), url, err.Error())), nil
+			field.NewPath("spec", r.config.Spec.Type.String(), "url"), url, err.Error())), nil
 	}
 
 	// For Github repositories, in case the branch is empty, we get the default branch and set it up for testing.
 	if r.GetCurrentBranch() == "" {
 		branch, err := r.GetDefaultBranch(ctx)
 		if err != nil {
-			return testResultFromGetDefaultBranchError(url, err), nil
+			return r.testResultFromGetDefaultBranchError(err), nil
 		}
 
 		r.SetBranch(branch)
@@ -147,8 +163,9 @@ func (r *githubRepository) Test(ctx context.Context) (*provisioning.TestResults,
 // user-facing TestResults. The /test endpoint is the onboarding entry point; surfacing
 // these as bare Go errors turns recoverable conditions (wrong URL, missing token scope,
 // transient GitHub outage) into opaque HTTP 500s.
-func testResultFromGetDefaultBranchError(url string, err error) *provisioning.TestResults {
-	path := field.NewPath("spec", "github", "url")
+func (r *githubRepository) testResultFromGetDefaultBranchError(err error) *provisioning.TestResults {
+	url := r.config.URL()
+	path := field.NewPath("spec", r.config.Spec.Type.String(), "url")
 	code := http.StatusBadRequest
 	var detail string
 
@@ -156,11 +173,11 @@ func testResultFromGetDefaultBranchError(url string, err error) *provisioning.Te
 	case errors.Is(err, repository.ErrFileNotFound):
 		detail = fmt.Sprintf("repository %q not found, or the configured token does not have access to it", url)
 	case errors.Is(err, repository.ErrUnauthorized):
-		path = field.NewPath("spec", "github", "token")
+		path = field.NewPath("spec", r.config.Spec.Type.String(), "token")
 		code = http.StatusUnauthorized
 		detail = "authentication failed: the configured token is invalid or expired"
 	case errors.Is(err, repository.ErrPermissionDenied):
-		path = field.NewPath("spec", "github", "token")
+		path = field.NewPath("spec", r.config.Spec.Type.String(), "token")
 		code = http.StatusForbidden
 		detail = fmt.Sprintf("the configured token lacks permission to access %q", url)
 	case errors.Is(err, repository.ErrServerUnavailable):
@@ -192,7 +209,7 @@ func (r *githubRepository) checkBranchProtection(ctx context.Context) *provision
 	var allReasons []string
 
 	// Check classic branch protection rules
-	bp, err := r.gh.GetBranchProtection(ctx, r.owner, r.repo, r.GetCurrentBranch())
+	bp, err := r.gh.GetBranchProtection(ctx, r.GetCurrentBranch())
 	if err != nil {
 		// Failed to check branch protection - return error to user
 		return &provisioning.TestResults{
@@ -200,7 +217,7 @@ func (r *githubRepository) checkBranchProtection(ctx context.Context) *provision
 			Success: false,
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
-				Field:  field.NewPath("spec", "github", "branch").String(),
+				Field:  field.NewPath("spec", r.config.Spec.Type.String(), "branch").String(),
 				Detail: fmt.Sprintf("failed to check branch protection for branch %q: %v", r.GetCurrentBranch(), err),
 			}},
 		}
@@ -213,7 +230,7 @@ func (r *githubRepository) checkBranchProtection(ctx context.Context) *provision
 	}
 
 	// Check repository rulesets
-	rulesets, err := r.gh.GetRulesets(ctx, r.owner, r.repo, r.GetCurrentBranch())
+	rulesets, err := r.gh.GetRulesets(ctx, r.GetCurrentBranch())
 	if err != nil {
 		// Failed to check rulesets - return error to user
 		return &provisioning.TestResults{
@@ -221,7 +238,7 @@ func (r *githubRepository) checkBranchProtection(ctx context.Context) *provision
 			Success: false,
 			Errors: []provisioning.ErrorDetails{{
 				Type:   metav1.CauseTypeFieldValueInvalid,
-				Field:  field.NewPath("spec", "github", "branch").String(),
+				Field:  field.NewPath("spec", r.config.Spec.Type.String(), "branch").String(),
 				Detail: fmt.Sprintf("failed to check repository rulesets for branch %q: %v", r.GetCurrentBranch(), err),
 			}},
 		}
@@ -260,11 +277,11 @@ func (r *githubRepository) hasWriteWorkflow() bool {
 
 func (r *githubRepository) History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error) {
 	if ref == "" {
-		ref = r.config.Spec.GitHub.Branch
+		ref = r.config.Branch()
 	}
 
-	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
-	commits, err := r.gh.Commits(ctx, r.owner, r.repo, finalPath, ref)
+	finalPath := safepath.Join(r.config.Path(), path)
+	commits, err := r.gh.Commits(ctx, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, repository.ErrFileNotFound) {
 			return nil, repository.ErrFileNotFound
@@ -311,31 +328,49 @@ func (r *githubRepository) ListRefs(ctx context.Context) ([]provisioning.RefItem
 	}
 
 	for i := range refs {
-		refs[i].RefURL = fmt.Sprintf("%s/tree/%s", r.config.Spec.GitHub.URL, refs[i].Name)
+		refs[i].RefURL = fmt.Sprintf("%s/tree/%s", r.config.URL(), refs[i].Name)
 	}
 
 	return refs, nil
 }
 
 // ResourceURLs implements RepositoryWithURLs.
+// encodeGitPath percent-encodes each segment of a slash-separated repository
+// path so characters that are valid in git paths but reserved in URLs (#, ?, %,
+// spaces, …) don't corrupt the resulting blob link.
+func encodeGitPath(p string) string {
+	segments := strings.Split(p, "/")
+	for i, s := range segments {
+		segments[i] = url.PathEscape(s)
+	}
+	return strings.Join(segments, "/")
+}
+
 func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.FileInfo) (*provisioning.RepositoryURLs, error) {
-	cfg := r.config.Spec.GitHub
-	if file.Path == "" || cfg == nil {
+	url := r.config.URL()
+	branch := r.config.Branch()
+	if file.Path == "" || url == "" {
 		return nil, nil
 	}
 
 	ref := file.Ref
 	if ref == "" {
-		ref = cfg.Branch
+		ref = branch
 	}
+
+	// file.Path is relative to the configured repository path (Read joins that
+	// prefix before fetching), so re-apply it here or scoped repos get 404 links.
+	// Use the provider-agnostic Path() so this is nil-safe for GitHub Enterprise
+	// (Spec.GitHub is nil there).
+	repoPath := safepath.Join(r.config.Path(), file.Path)
 
 	urls := &provisioning.RepositoryURLs{
-		RepositoryURL: cfg.URL,
-		SourceURL:     fmt.Sprintf("%s/blob/%s/%s", cfg.URL, ref, file.Path),
+		RepositoryURL: r.config.URL(),
+		SourceURL:     fmt.Sprintf("%s/blob/%s/%s", url, ref, encodeGitPath(repoPath)),
 	}
 
-	if ref != cfg.Branch {
-		urls.CompareURL = fmt.Sprintf("%s/compare/%s...%s", cfg.URL, cfg.Branch, ref)
+	if ref != branch {
+		urls.CompareURL = fmt.Sprintf("%s/compare/%s...%s", url, branch, ref)
 
 		// Create a new pull request
 		urls.NewPullRequestURL = fmt.Sprintf("%s?quick_pull=1&labels=grafana", urls.CompareURL)
@@ -346,19 +381,22 @@ func (r *githubRepository) ResourceURLs(ctx context.Context, file *repository.Fi
 
 // RefURLs implements RepositoryWithURLs.
 func (r *githubRepository) RefURLs(ctx context.Context, ref string) (*provisioning.RepositoryURLs, error) {
-	cfg := r.config.Spec.GitHub
-	if cfg == nil || ref == "" {
+	url := r.config.URL()
+	branch := r.config.Branch()
+	if url == "" || ref == "" {
 		return nil, nil
 	}
 
 	urls := &provisioning.RepositoryURLs{
-		SourceURL: fmt.Sprintf("%s/tree/%s", cfg.URL, ref),
+		SourceURL: fmt.Sprintf("%s/tree/%s", url, ref),
 	}
 
-	if ref != cfg.Branch {
-		urls.CompareURL = fmt.Sprintf("%s/compare/%s...%s", cfg.URL, cfg.Branch, ref)
+	if ref != branch {
+		urls.CompareURL = fmt.Sprintf("%s/compare/%s...%s", url, branch, ref)
 		urls.NewPullRequestURL = fmt.Sprintf("%s?quick_pull=1&labels=grafana", urls.CompareURL)
 	}
 
 	return urls, nil
 }
+
+var _ (GithubRepository) = (*githubRepository)(nil)

@@ -15,7 +15,7 @@ import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
 
-export interface QueryDatasourceData {
+interface QueryDatasourceData {
   datasource?: DataSourceApi;
   dsSettings?: DataSourceInstanceSettings;
 }
@@ -76,7 +76,9 @@ export function QueryEditorPanel({
       <Alert
         severity="error"
         title={t('query-editor-renderer.datasource-load-error-title', 'Failed to load datasource for this query')}
-      />
+      >
+        {t('query-editor-renderer.datasource-load-error-body', 'Select a datasource for this query to continue.')}
+      </Alert>
     );
   }
 

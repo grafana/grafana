@@ -20,10 +20,15 @@ permissions: {}
 # target branch onto the source branch, to verify compatibility before merging.
 jobs:
   dispatch-job:
-    # If the source is not from a fork then dispatch the job to the workflow.
-    # This will fail on forks when trying to broker a token, so instead, forks will create the required status and mark
-    # it as a success
-    if: ${{ ! github.event.pull_request.head.repo.fork }}
+    # Only runs in grafana/grafana; the workflow file is mirrored to other repos but the
+    # patch-check pipeline (security-patch-actions + grafana-security-patches) is specific
+    # to the OSS repo. Skipping here is acceptable to policy-bot, which allows `skipped`
+    # as a pass.
+    #
+    # Also: dispatching a workflow requires brokering an installation token, which fails on
+    # forks, so forks skip via the same check below and the dispatch-job-fork no-op records
+    # the required status as success.
+    if: ${{ github.repository == 'grafana/grafana' && ! github.event.pull_request.head.repo.fork }}
     env:
       HEAD_REF: ${{ github.head_ref }}
       BASE_REF: ${{ github.base_ref }}
@@ -129,8 +134,9 @@ jobs:
 
   dispatch-job-fork:
     # If the source is from a fork then use the built-in workflow token to create the same status and unconditionally
-    # mark it as a success.
-    if: ${{ github.event.pull_request.head.repo.fork }}
+    # mark it as a success. Also only meaningful in grafana/grafana (the patch-check
+    # pipeline is OSS-only); in mirrored copies this skips alongside dispatch-job.
+    if: ${{ github.repository == 'grafana/grafana' && github.event.pull_request.head.repo.fork }}
     permissions:
       statuses: write
     runs-on: ubuntu-arm64-small

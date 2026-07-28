@@ -2,7 +2,6 @@ import { type ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
 import { type TimeZone } from '@grafana/schema';
 import {
@@ -19,7 +18,6 @@ import {
   type WeekStart,
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
 import { GenAIDashDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIDashDescriptionButton';
 import { GenAIDashTitleButton } from 'app/features/dashboard/components/GenAI/GenAIDashTitleButton';
 import { MoveProvisionedDashboardDrawer } from 'app/features/provisioning/components/Dashboards/MoveProvisionedDashboardDrawer';
@@ -34,6 +32,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DeleteDashboardButton } from './DeleteDashboardButton';
+import { TimePickerSettings } from './TimePickerSettings';
 import { type DashboardEditView, type DashboardEditViewState, useDashboardEditPageNav } from './utils';
 
 export interface GeneralSettingsEditViewState extends DashboardEditViewState {
@@ -272,9 +271,7 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
                 <Label htmlFor="title-input">
                   <Trans i18nKey="dashboard-settings.general.title-label">Title</Trans>
                 </Label>
-                {config.featureToggles.dashgpt && (
-                  <GenAIDashTitleButton onGenerate={(title) => model.onTitleChange(title)} />
-                )}
+                <GenAIDashTitleButton onGenerate={(title) => model.onTitleChange(title)} />
               </Stack>
             }
           >
@@ -292,9 +289,7 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
                 <Label htmlFor="description-input">
                   {t('dashboard-settings.general.description-label', 'Description')}
                 </Label>
-                {config.featureToggles.dashgpt && (
-                  <GenAIDashDescriptionButton onGenerate={(description) => model.onDescriptionChange(description)} />
-                )}
+                <GenAIDashDescriptionButton onGenerate={(description) => model.onDescriptionChange(description)} />
               </Stack>
             }
           >
@@ -341,22 +336,16 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
             <RadioButtonGroup value={editable} options={EDITABLE_OPTIONS} onChange={model.onEditableChange} />
           </Field>
 
-          {config.featureToggles.dashboardDefaultLayoutSelector && (
-            <Field
-              noMargin
-              label={t('dashboard-settings.general.default-grid-label', 'Default grid')}
-              description={t(
-                'dashboard-settings.general.default-grid-description',
-                'Select layout type to be used for new rows and tabs'
-              )}
-            >
-              <RadioButtonGroup
-                value={defaultGrid}
-                options={DEFAULT_GRID_OPTIONS}
-                onChange={model.onDefaultGridChange}
-              />
-            </Field>
-          )}
+          <Field
+            noMargin
+            label={t('dashboard-settings.general.default-grid-label', 'Default grid')}
+            description={t(
+              'dashboard-settings.general.default-grid-description',
+              'Select layout type to be used for new rows and tabs'
+            )}
+          >
+            <RadioButtonGroup value={defaultGrid} options={DEFAULT_GRID_OPTIONS} onChange={model.onDefaultGridChange} />
+          </Field>
         </Box>
 
         <TimePickerSettings

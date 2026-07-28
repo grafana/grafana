@@ -7,7 +7,6 @@ import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks'
 import {
   getAlertmanagerConfigHandler,
   grafanaAlertingConfigurationStatusHandler,
-  updateAlertmanagerConfigHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/alertmanagers';
 import { getFolderHandler } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { listNamespacedTimeIntervalHandler } from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
@@ -225,6 +224,35 @@ export const setMuteTimingsListError = () => {
 };
 
 /**
+ * Makes the mock server respond with an error when deleting a time interval,
+ * mirroring the API server conflict returned when the interval is still in use.
+ */
+export const setDeleteTimeIntervalError = (
+  message = 'Time interval is used',
+  messageId = 'alerting.notifications.time-intervals.used',
+  status = 409
+) => {
+  const handler = http.delete(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/timeintervals/:name`, () => {
+    const errorResponse: ApiMachineryError = {
+      kind: 'Status',
+      apiVersion: 'v1',
+      metadata: {},
+      status: 'Failure',
+      message,
+      reason: 'Conflict',
+      details: {
+        uid: messageId,
+      },
+      code: status,
+    };
+    return HttpResponse.json<ApiMachineryError>(errorResponse, { status });
+  });
+
+  server.use(handler);
+  return handler;
+};
+
+/**
  * Makes the mock server respond with no time intervals
  */
 export const setTimeIntervalsListEmpty = () => {
@@ -372,12 +400,6 @@ export const failPlugin = (pluginId: SupportedPlugin, status = 500) => {
 export const getErrorResponse = (message: string, status = 500) => HttpResponse.json({ message }, { status });
 
 const defaultError = getErrorResponse('Unknown error');
-/** Make alertmanager config update fail */
-export const makeAlertmanagerConfigUpdateFail = (
-  responseOverride: ReturnType<typeof getErrorResponse> = defaultError
-) => {
-  server.use(updateAlertmanagerConfigHandler(responseOverride));
-};
 
 /** Make fetching alertmanager config fail */
 export const makeAllAlertmanagerConfigFetchFail = (

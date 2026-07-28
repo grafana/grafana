@@ -119,8 +119,8 @@ export { getStreamingFrameOptions } from '../dataframe/StreamingDataFrame';
 export { fieldIndexComparer } from '../field/fieldComparers';
 export { decoupleHideFromState } from '../field/decoupleHideFromState';
 export { findNumericFieldMinMax } from '../field/fieldOverrides';
-export { type PanelOptionsSupplier } from '../panel/PanelPlugin';
+export { type PluginViewOptionsQuickToggles, type PanelPluginViewOptions } from '../panel/PanelPlugin';
 export { sanitize, sanitizeUrl } from '../text/sanitize';
-export { type NestedValueAccess, type NestedPanelOptions, isNestedPanelOptions } from '../utils/OptionsUIBuilders';
+
 export { NewThemeOptionsSchema } from '../themes/createTheme';
 export { createFieldsOrdererAuto } from '../transformations/transformers/order';

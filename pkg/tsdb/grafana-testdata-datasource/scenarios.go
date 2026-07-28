@@ -81,6 +81,12 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 	})
 
 	s.registerScenario(&Scenario{
+		ID:      kinds.TestDataQueryTypeFlakyQuery,
+		Name:    "Flaky Query",
+		handler: s.handleFlakyQueryScenario,
+	})
+
+	s.registerScenario(&Scenario{
 		ID:      kinds.TestDataQueryTypeNoDataPoints,
 		Name:    "No Data Points",
 		handler: s.handleClientSideScenario,
@@ -216,6 +222,13 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 		ID:      kinds.TestDataQueryTypeErrorWithSource,
 		Name:    "Error with source",
 		handler: s.handleErrorWithSourceScenario,
+	})
+
+	s.registerScenario(&Scenario{
+		ID:          kinds.TestDataQueryTypeErrorsAndNotices,
+		Name:        "Errors and notices",
+		handler:     s.handleErrorsAndNoticesScenario,
+		Description: "Returns a random walk series with one query-result notice of each severity (info, warning, error) attached to the frame meta. Useful for previewing the panel query errors and notices UI.",
 	})
 
 	s.queryMux.HandleFunc("", s.handleFallbackScenario)
@@ -422,6 +435,50 @@ func (s *Service) handleQueryMetaScenario(ctx context.Context, req *backend.Quer
 	return resp, nil
 }
 
+// handleErrorsAndNoticesScenario returns a normal random walk time series whose
+// frame meta carries one query-result notice of each severity (info, warning,
+// error). It is a live example for the unified panel query errors and notices UI
+// (feature toggle grafana.newPanelQueryErrorsUI). One notice sets Inspect so the
+// inspector has a tab to navigate to.
+func (s *Service) handleErrorsAndNoticesScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	notices := []data.Notice{
+		{
+			Severity: data.NoticeSeverityInfo,
+			Text:     "This is an info notice",
+		},
+		{
+			Severity: data.NoticeSeverityWarning,
+			Text:     "This query is slow - consider narrowing the range",
+		},
+		{
+			Severity: data.NoticeSeverityError,
+			Text:     "Datasource returned a partial result",
+			Inspect:  data.InspectTypeError,
+		},
+	}
+
+	for _, q := range req.Queries {
+		model, err := GetJSONModel(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		frame := RandomWalk(q, model, 0)
+		if frame.Meta == nil {
+			frame.Meta = &data.FrameMeta{}
+		}
+		frame.Meta.Notices = notices
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, frame)
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
 func (s *Service) handleRandomWalkWithErrorScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
@@ -459,6 +516,66 @@ func (s *Service) handleRandomWalkSlowScenario(ctx context.Context, req *backend
 	}
 
 	return resp, nil
+}
+
+func (s *Service) handleFlakyQueryScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	resp := backend.NewQueryDataResponse()
+
+	shouldError := false
+	if len(req.Queries) > 0 {
+		if model, err := GetJSONModel(req.Queries[0].JSON); err == nil && model.ErrorProbability > 0 {
+			if rand.Float64()*100 < model.ErrorProbability {
+				shouldError = true
+			}
+		}
+	}
+
+	for _, q := range req.Queries {
+		model, err := GetJSONModel(q.JSON)
+		if err != nil {
+			continue
+		}
+
+		baseDelay, _ := time.ParseDuration(model.QueryDelay)
+		time.Sleep(flakyQueryDelay(baseDelay, model.QueryDelayVariability))
+
+		if shouldError {
+			status := backend.Status(model.ErrorStatusCode)
+			if status == 0 {
+				status = backend.StatusBadRequest
+			}
+			src := backend.ErrorSourcePlugin
+			if model.ErrorSource == kinds.ErrorSourceDownstream {
+				src = backend.ErrorSourceDownstream
+			}
+			resp.Responses[q.RefID] = backend.ErrDataResponseWithSource(status, src, model.ErrorMessage)
+			continue
+		}
+
+		respD := resp.Responses[q.RefID]
+		respD.Frames = append(respD.Frames, RandomWalk(q, model, 0))
+		resp.Responses[q.RefID] = respD
+	}
+
+	return resp, nil
+}
+
+// flakyQueryDelay applies a symmetric jitter to base, where variability is a
+// percentage (0-100). A variability of 100 yields a uniform delay in [0, 2*base].
+// The result is clamped to a non-negative duration.
+func flakyQueryDelay(base time.Duration, variability float64) time.Duration {
+	if base <= 0 {
+		return 0
+	}
+
+	v := variability / 100
+	factor := 1 + (rand.Float64()*2-1)*v
+	delay := time.Duration(float64(base) * factor)
+	if delay < 0 {
+		return 0
+	}
+
+	return delay
 }
 
 func (s *Service) handleRandomWalkTableScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

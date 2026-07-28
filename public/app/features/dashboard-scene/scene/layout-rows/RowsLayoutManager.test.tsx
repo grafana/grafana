@@ -1,4 +1,5 @@
-import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { VariableHide } from '@grafana/data';
+import { ConstantVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../DashboardScene';
@@ -281,6 +282,38 @@ describe('RowsLayoutManager', () => {
       expect(duplicated.state.rows[0]).not.toBe(rows[0]);
       expect(duplicated.state.rows[1]).not.toBe(rows[1]);
       expect(duplicated.state.rows[2]).not.toBe(rows[2]);
+    });
+
+    it('should clone section constant variables as independent instances with the same name', () => {
+      const constantVar = new ConstantVariable({
+        name: 'env',
+        type: 'constant',
+        value: 'prod',
+        hide: VariableHide.hideVariable,
+      });
+      const originalRow = new RowItem({
+        title: 'Row 1',
+        layout: AutoGridLayoutManager.createEmpty(),
+        $variables: new SceneVariableSet({ variables: [constantVar] }),
+      });
+      buildRowsLayoutManager([originalRow]);
+
+      const duplicatedRow = originalRow.duplicate();
+
+      const originalConstant = originalRow.state.$variables!.state.variables[0] as ConstantVariable;
+      const duplicatedConstant = duplicatedRow.state.$variables!.state.variables[0] as ConstantVariable;
+
+      expect(duplicatedConstant).not.toBe(originalConstant);
+      expect(duplicatedConstant.state.key).not.toBe(originalConstant.state.key);
+      expect(originalConstant.state.name).toBe('env');
+      expect(duplicatedConstant.state.name).toBe('env');
+      expect(originalConstant.state.value).toBe('prod');
+      expect(duplicatedConstant.state.value).toBe('prod');
+
+      duplicatedConstant.setState({ value: 'staging' });
+
+      expect(originalConstant.state.value).toBe('prod');
+      expect(duplicatedConstant.state.value).toBe('staging');
     });
 
     describe('when rows contain panels', () => {

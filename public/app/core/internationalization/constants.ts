@@ -3,7 +3,7 @@ import { uniq } from 'lodash';
 
 import { DEFAULT_LANGUAGE, PSEUDO_LOCALE, LANGUAGES as SUPPORTED_LANGUAGES } from '@grafana/i18n';
 
-export type LocaleFileLoader = () => Promise<ResourceKey>;
+type LocaleFileLoader = () => Promise<ResourceKey>;
 
 export const GRAFANA_NAMESPACE = 'grafana' as const;
 

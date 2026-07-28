@@ -2,18 +2,414 @@ package jobs
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	k8stesting "k8s.io/client-go/testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	fakeclientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
+
+func newTestStore(client provisioningv0alpha1.ProvisioningV0alpha1Interface) *persistentStore {
+	return &persistentStore{
+		client:       client,
+		clock:        time.Now,
+		expiry:       30 * time.Second,
+		queueMetrics: RegisterQueueMetrics(prometheus.NewPedanticRegistry()),
+	}
+}
+
+// TestClaim_StampsOwnerToken verifies that claiming a job stamps a unique owner
+// token alongside the claim timestamp, so ownership can be verified later.
+func TestClaim_StampsOwnerToken(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := newTestStore(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "stacks-123"},
+		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "test-job")
+	require.NoError(t, err)
+	require.NotNil(t, claimed)
+	defer rollback()
+
+	assert.NotEmpty(t, claimed.Labels[LabelJobClaim], "claim timestamp should be set")
+	assert.NotEmpty(t, claimed.Labels[LabelJobClaimOwner], "claim owner token should be set")
+}
+
+// TestClaim_AlreadyClaimed verifies that claiming a job another worker holds
+// fails with ErrAlreadyClaimed and leaves the job untouched.
+func TestClaim_AlreadyClaimed(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := newTestStore(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-job",
+			Namespace: "stacks-123",
+			Labels: map[string]string{
+				LabelJobClaim:      "1000000000000",
+				LabelJobClaimOwner: "owner-B",
+			},
+		},
+		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "test-job")
+	require.ErrorIs(t, err, ErrAlreadyClaimed)
+	assert.Nil(t, claimed)
+	assert.Nil(t, rollback)
+
+	after, err := fakeClient.Jobs("stacks-123").Get(ctx, "test-job", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "owner-B", after.Labels[LabelJobClaimOwner], "the existing claim must be left untouched")
+}
+
+// TestClaim_NotFound verifies that claiming a job that no longer exists (e.g.
+// completed and deleted before we got to it) reports NotFound so callers drop it.
+func TestClaim_NotFound(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := newTestStore(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "no-such-job")
+	require.Error(t, err)
+	assert.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
+	assert.Nil(t, claimed)
+	assert.Nil(t, rollback)
+}
+
+// TestClaim_RetriesOnConflict verifies that a conflicting update (the job
+// changed between our read and write, but is still unclaimed) is retried with
+// fresh state rather than reported as a failure.
+func TestClaim_RetriesOnConflict(t *testing.T) {
+	//nolint:staticcheck // NewSimpleClientset is needed; NewClientset requires schema registration not available for this type.
+	clientset := fakeclientset.NewSimpleClientset()
+	fakeClient := clientset.ProvisioningV0alpha1()
+	store := newTestStore(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "stacks-123"},
+		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	conflicts := 1
+	clientset.PrependReactor("update", "jobs", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		if conflicts > 0 {
+			conflicts--
+			return true, nil, apierrors.NewConflict(provisioning.JobResourceInfo.GroupResource(), "test-job", errors.New("simulated conflict"))
+		}
+		return false, nil, nil
+	})
+
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "test-job")
+	require.NoError(t, err, "a transient conflict on a still-unclaimed job should be retried")
+	require.NotNil(t, claimed)
+	defer rollback()
+	assert.NotEmpty(t, claimed.Labels[LabelJobClaim])
+}
+
+// TestClaim_ConflictThenClaimedByOther verifies that when the conflicting
+// writer turns out to be another claimer, the retry observes the claim and
+// reports ErrAlreadyClaimed instead of stomping it.
+func TestClaim_ConflictThenClaimedByOther(t *testing.T) {
+	//nolint:staticcheck // NewSimpleClientset is needed; NewClientset requires schema registration not available for this type.
+	clientset := fakeclientset.NewSimpleClientset()
+	fakeClient := clientset.ProvisioningV0alpha1()
+	store := newTestStore(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "stacks-123"},
+		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// The first update conflicts; the "winner" stamps its claim before our retry
+	// re-reads. The winner writes through the object tracker: reactors run under
+	// the Fake's lock, so going through the clientset here would self-deadlock.
+	tracker := clientset.Tracker()
+	gvr := provisioning.JobResourceInfo.GroupVersionResource()
+	intercepted := false
+	clientset.PrependReactor("update", "jobs", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		if intercepted {
+			return false, nil, nil
+		}
+		intercepted = true
+
+		current, err := tracker.Get(gvr, "stacks-123", "test-job")
+		if err != nil {
+			return true, nil, err
+		}
+		winner, ok := current.DeepCopyObject().(*provisioning.Job)
+		if !ok {
+			return true, nil, errors.New("unexpected object type in tracker")
+		}
+		winner.Labels = map[string]string{
+			LabelJobClaim:      "1000000000000",
+			LabelJobClaimOwner: "owner-B",
+		}
+		if err := tracker.Update(gvr, winner, "stacks-123"); err != nil {
+			return true, nil, err
+		}
+		return true, nil, apierrors.NewConflict(provisioning.JobResourceInfo.GroupResource(), "test-job", errors.New("simulated conflict"))
+	})
+
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "test-job")
+	require.ErrorIs(t, err, ErrAlreadyClaimed)
+	assert.Nil(t, claimed)
+	assert.Nil(t, rollback)
+
+	after, err := fakeClient.Jobs("stacks-123").Get(ctx, "test-job", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "owner-B", after.Labels[LabelJobClaimOwner], "the winner's claim must be left untouched")
+}
+
+// TestListUnclaimedJobs verifies that only jobs without a claim label are returned.
+func TestListUnclaimedJobs(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := newTestStore(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "unclaimed-job", Namespace: "stacks-123"},
+		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "claimed-job",
+			Namespace: "stacks-123",
+			Labels: map[string]string{
+				LabelJobClaim:      "1000000000000",
+				LabelJobClaimOwner: "owner-B",
+			},
+		},
+		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	unclaimed, err := store.ListUnclaimedJobs(ctx, 16)
+	require.NoError(t, err)
+	require.Len(t, unclaimed, 1)
+	assert.Equal(t, "unclaimed-job", unclaimed[0].GetName())
+}
+
+// TestClaim_RollbackSkipsJobOwnedByAnother verifies that the claim rollback does not
+// strip the claim from a job that is now owned by another worker. Job names are
+// deterministic, so by the time we roll back, the same name may be a re-created job
+// another worker is running; clearing its claim would reintroduce duplicate execution.
+func TestClaim_RollbackSkipsJobOwnedByAnother(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := newTestStore(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "stacks-123"},
+		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	_, rollback, err := store.Claim(ctx, "stacks-123", "test-job")
+	require.NoError(t, err)
+
+	// Simulate another worker taking over the same job name after our claim.
+	taken, err := fakeClient.Jobs("stacks-123").Get(ctx, "test-job", metav1.GetOptions{})
+	require.NoError(t, err)
+	taken.Labels[LabelJobClaimOwner] = "another-worker"
+	_, err = fakeClient.Jobs("stacks-123").Update(ctx, taken, metav1.UpdateOptions{})
+	require.NoError(t, err)
+
+	// Rolling back our (now lost) claim must not disturb the other worker's job.
+	rollback()
+
+	after, err := fakeClient.Jobs("stacks-123").Get(ctx, "test-job", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "another-worker", after.Labels[LabelJobClaimOwner], "rollback must not strip another worker's claim")
+	assert.NotEmpty(t, after.Labels[LabelJobClaim], "rollback must not clear the active claim timestamp")
+}
+
+// TestRenewLease_LostToAnotherOwner verifies that a worker cannot renew a claim
+// that now belongs to a different owner (same job name, different owner token).
+// This is the core protection against two workers processing the same job: once
+// a job is reaped and re-claimed by another worker, the original worker's renewal
+// must fail with ErrLeaseLost so it aborts instead of continuing to run.
+func TestRenewLease_LostToAnotherOwner(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := newTestStore(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	// The store's job is claimed by owner-B.
+	created, err := fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-job",
+			Namespace: "stacks-123",
+			UID:       "uid-1",
+			Labels: map[string]string{
+				LabelJobClaim:      "1000000000000",
+				LabelJobClaimOwner: "owner-B",
+			},
+		},
+		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// We hold a claim with owner-A on the same job name/UID.
+	ours := created.DeepCopy()
+	ours.Labels[LabelJobClaimOwner] = "owner-A"
+
+	err = store.RenewLease(ctx, ours)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, ErrLeaseLost), "expected ErrLeaseLost, got %v", err)
+}
+
+// TestRenewLease_LostToReincarnatedJob verifies that a matching owner token is not
+// enough: if the object was deleted and re-created under the same name (new UID),
+// renewal must still fail.
+func TestRenewLease_LostToReincarnatedJob(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := newTestStore(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	created, err := fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-job",
+			Namespace: "stacks-123",
+			UID:       "uid-2", // reincarnated object has a new UID
+			Labels: map[string]string{
+				LabelJobClaim:      "1000000000000",
+				LabelJobClaimOwner: "owner-A",
+			},
+		},
+		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// Same owner token, but we still hold the original UID.
+	ours := created.DeepCopy()
+	ours.UID = "uid-1"
+
+	err = store.RenewLease(ctx, ours)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, ErrLeaseLost), "expected ErrLeaseLost, got %v", err)
+}
+
+// TestComplete_RefusesJobOwnedByAnother verifies that a worker which has lost its
+// lease does not delete the job now owned by another worker. Complete must report
+// NotFound and leave the job in the store untouched.
+func TestComplete_RefusesJobOwnedByAnother(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := newTestStore(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	// The store holds a job now owned by owner-B (a reincarnation with a new UID).
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-job",
+			Namespace: "stacks-123",
+			UID:       "uid-2",
+			Labels: map[string]string{
+				LabelJobClaim:      "2000000000000",
+				LabelJobClaimOwner: "owner-B",
+			},
+		},
+		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// We try to complete our stale claim (original UID, owner-A).
+	stale := &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-job",
+			Namespace: "stacks-123",
+			UID:       "uid-1",
+			Labels: map[string]string{
+				LabelJobClaim:      "1000000000000",
+				LabelJobClaimOwner: "owner-A",
+			},
+		},
+		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}
+
+	err = store.Complete(ctx, stale)
+	require.Error(t, err)
+	assert.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
+
+	// The job owned by owner-B must still be in the store.
+	still, err := fakeClient.Jobs("stacks-123").Get(ctx, "test-job", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "owner-B", still.Labels[LabelJobClaimOwner])
+}
+
+// TestComplete_SucceedsForOwner verifies the happy path: the rightful owner
+// completes and the job is removed from the active store.
+func TestComplete_SucceedsForOwner(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := newTestStore(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	created, err := fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-job",
+			Namespace: "stacks-123",
+			UID:       "uid-1",
+			Labels: map[string]string{
+				LabelJobClaim:      "1000000000000",
+				LabelJobClaimOwner: "owner-A",
+			},
+		},
+		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	err = store.Complete(ctx, created.DeepCopy())
+	require.NoError(t, err)
+
+	_, err = fakeClient.Jobs("stacks-123").Get(ctx, "test-job", metav1.GetOptions{})
+	assert.True(t, apierrors.IsNotFound(err), "job should be deleted, got %v", err)
+}
 
 func newTestClientset() provisioningv0alpha1.ProvisioningV0alpha1Interface {
 	//nolint:staticcheck // NewSimpleClientset is needed; NewClientset requires schema registration not available for this type.
@@ -175,4 +571,85 @@ func TestRenewLease_ThenUpdateDoesNotConflict(t *testing.T) {
 	assert.NoError(t, err,
 		"Update after RenewLease should not conflict. "+
 			"If it does, RenewLease stored a stale ResourceVersion.")
+}
+
+func TestGenerateJobName(t *testing.T) {
+	t.Run("pull and migrate share a deterministic sync name", func(t *testing.T) {
+		pull := &provisioning.Job{Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull}}
+		migrate := &provisioning.Job{Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionMigrate}}
+		generateJobName(pull)
+		generateJobName(migrate)
+		assert.Equal(t, "repo-sync", pull.Name)
+		assert.Equal(t, "repo-sync", migrate.Name)
+	})
+
+	t.Run("test jobs get unique names so concurrent load can be queued on one repository", func(t *testing.T) {
+		first := &provisioning.Job{Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionTest}}
+		second := &provisioning.Job{Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionTest}}
+		generateJobName(first)
+		generateJobName(second)
+		assert.NotEqual(t, first.Name, second.Name,
+			"two test jobs on the same repository must not collide on name")
+		assert.Contains(t, first.Name, "repo-test-")
+		assert.Contains(t, second.Name, "repo-test-")
+	})
+}
+
+func TestWebhookAttribution(t *testing.T) {
+	t.Run("no attribution in context", func(t *testing.T) {
+		require.Nil(t, webhookAttributionFromContext(t.Context()))
+	})
+
+	t.Run("empty attribution is not recorded", func(t *testing.T) {
+		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{})
+		require.Nil(t, webhookAttributionFromContext(ctx))
+	})
+
+	t.Run("origin is recorded without a sender", func(t *testing.T) {
+		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{Origin: "github"})
+		require.Equal(t, map[string]string{appjobs.AnnoAuthorOrigin: "github"}, webhookAttributionFromContext(ctx))
+	})
+
+	t.Run("sender without id or origin", func(t *testing.T) {
+		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{Sender: "grot"})
+		require.Equal(t, map[string]string{appjobs.AnnoAuthor: "grot"}, webhookAttributionFromContext(ctx))
+	})
+
+	t.Run("sender with id and origin", func(t *testing.T) {
+		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{Sender: "grot", SenderID: "123", Origin: "GitHub"})
+		require.Equal(t, map[string]string{
+			appjobs.AnnoAuthor:       "grot",
+			appjobs.AnnoAuthorID:     "123",
+			appjobs.AnnoAuthorOrigin: "GitHub",
+		}, webhookAttributionFromContext(ctx))
+	})
+
+	t.Run("insert stamps annotations on the job", func(t *testing.T) {
+		client := fakeclientset.NewSimpleClientset()
+		store := newTestStore(client.ProvisioningV0alpha1())
+
+		ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{Sender: "grot", SenderID: "123", Origin: "GitHub"})
+		job, err := store.Insert(ctx, "default", provisioning.JobSpec{
+			Repository: "repo",
+			Action:     provisioning.JobActionPull,
+		})
+		require.NoError(t, err)
+		require.Equal(t, "grot", job.Annotations[appjobs.AnnoAuthor])
+		require.Equal(t, "123", job.Annotations[appjobs.AnnoAuthorID])
+		require.Equal(t, "GitHub", job.Annotations[appjobs.AnnoAuthorOrigin])
+	})
+}
+
+func TestWebhookAttributionFromContext_ReturnsACopy(t *testing.T) {
+	ctx := WithWebhookAttribution(t.Context(), WebhookAttribution{Sender: "grot", SenderID: "123", Origin: "github"})
+
+	first := webhookAttributionFromContext(ctx)
+	first[appjobs.AnnoAuthor] = "mutated"
+	delete(first, appjobs.AnnoAuthorID)
+
+	require.Equal(t, map[string]string{
+		appjobs.AnnoAuthor:       "grot",
+		appjobs.AnnoAuthorID:     "123",
+		appjobs.AnnoAuthorOrigin: "github",
+	}, webhookAttributionFromContext(ctx))
 }

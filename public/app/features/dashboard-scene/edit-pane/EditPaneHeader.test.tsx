@@ -30,6 +30,7 @@ setPluginImportUtils({
 // Mock DashboardInteractions
 jest.mock('../utils/interactions', () => ({
   DashboardInteractions: {
+    editSessionStarted: jest.fn(),
     trackDeleteDashboardElement: jest.fn(),
   },
 }));

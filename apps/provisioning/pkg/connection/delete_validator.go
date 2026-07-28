@@ -53,18 +53,29 @@ func (v *ReferencedByRepositoriesValidator) Validate(ctx context.Context, a admi
 		return fmt.Errorf("failed to check for referencing repositories: %w", err)
 	}
 
-	if len(repos) > 0 {
-		repoNames := make([]string, len(repos))
-		for i, repo := range repos {
-			repoNames[i] = repo.GetName()
+	// Only repositories that are not themselves being deleted block the connection
+	// delete. A repository that is already terminating (DeletionTimestamp set) still
+	// appears in the listing until its finalizers complete, but it is on its way out;
+	// counting it would reject the connection delete during that eventual-consistency
+	// window — which is exactly the race that breaks `terraform destroy` when a
+	// connection and its repository are torn down together. A terminating repository's
+	// finalizers rely on its own stored token, not the live connection, so the
+	// connection is safe to delete once the repository's delete has been issued.
+	var blockingNames []string
+	for _, repo := range repos {
+		if repo.GetDeletionTimestamp() != nil {
+			continue
 		}
+		blockingNames = append(blockingNames, repo.GetName())
+	}
 
+	if len(blockingNames) > 0 {
 		return apierrors.NewInvalid(
 			provisioning.ConnectionResourceInfo.GroupVersionKind().GroupKind(),
 			connectionName,
 			field.ErrorList{field.Forbidden(
 				field.NewPath("metadata", "name"),
-				fmt.Sprintf("cannot delete connection: referenced by %d repository(s): %v", len(repos), repoNames),
+				fmt.Sprintf("cannot delete connection: referenced by %d repository(s): %v", len(blockingNames), blockingNames),
 			)},
 		)
 	}

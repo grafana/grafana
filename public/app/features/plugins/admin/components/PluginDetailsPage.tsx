@@ -105,7 +105,7 @@ export function PluginDetailsPage({
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     alert: css({
       marginBottom: theme.spacing(2),

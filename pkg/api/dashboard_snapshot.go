@@ -24,21 +24,39 @@ import (
 // r.Post("/api/snapshots/"
 func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
-		namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
-		return func(w http.ResponseWriter, r *http.Request) {
-			requester, err := identity.GetRequester(r.Context())
-			if err != nil || requester == nil {
-				w.WriteHeader(http.StatusUnauthorized)
-				_, _ = w.Write([]byte(`{"message":"Unauthorized"}`))
-				return
-			}
-			r.URL.Path = "/apis/dashboard.grafana.app/v0alpha1/namespaces/" +
-				namespaceMapper(requester.GetOrgID()) + "/snapshots/create"
-			hs.clientConfigProvider.DirectlyServeHTTP(w, r)
-		}
+	if !hs.Features.IsEnabledGlobally(featuremgmt.FlagKubernetesSnapshots) {
+		return hs.CreateDashboardSnapshot
 	}
-	return hs.CreateDashboardSnapshot
+
+	// Opt-in backward-compat lever for public-mode external snapshot hosts:
+	// keep accepting unauthenticated pushes on /api/snapshots so old senders
+	// (and new senders without externalSnapshotsK8SAPIPush) can still post to
+	// a migrated external instance. CreateDashboardSnapshot itself branches
+	// to CreateDashboardSnapshotPublic when SnapshotPublicMode is set. Default
+	// off rejects anonymous legacy pushes; flip on during the migration window
+	// and off again once all senders have migrated.
+	//
+	// Not compatible with snapshot dual-write Mode5: in Mode5 unified storage
+	// is the only store, the k8s create API is mandatory, and this bypass
+	// would write to legacy SQL where reads will never find it.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if hs.Cfg.SnapshotPublicMode &&
+		hs.Features.IsEnabledGlobally(featuremgmt.FlagExternalSnapshotsSupportLegacyAPI) {
+		return hs.CreateDashboardSnapshot
+	}
+
+	namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
+	return func(w http.ResponseWriter, r *http.Request) {
+		requester, err := identity.GetRequester(r.Context())
+		if err != nil || requester == nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"message":"Unauthorized"}`))
+			return
+		}
+		r.URL.Path = "/apis/dashboard.grafana.app/v0alpha1/namespaces/" +
+			namespaceMapper(requester.GetOrgID()) + "/snapshots/create"
+		hs.clientConfigProvider.DirectlyServeHTTP(w, r)
+	}
 }
 
 // swagger:route GET /snapshot/shared-options snapshots getSharingOptions

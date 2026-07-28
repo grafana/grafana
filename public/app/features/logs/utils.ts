@@ -45,7 +45,7 @@ import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME, parseLogsFrame } fro
 
 /**
  * Returns the log level of a log line.
- * Parse the line for level words. If no level is found, it returns `LogLevel.unknown`.
+ * Parse the line for level words. If no level is found, it returns `LogLevel.unspecified`.
  *
  * Example: `getLogLevel('WARN 1999-12-31 this is great') // LogLevel.warn`
  * @deprecated
@@ -53,12 +53,12 @@ import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME, parseLogsFrame } fro
 export function getLogLevel(line: string): LogLevel {
   const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaLogLevelInference, false);
   if (!enabled) {
-    return LogLevel.unknown;
+    return LogLevel.unspecified;
   }
   if (!line) {
-    return LogLevel.unknown;
+    return LogLevel.unspecified;
   }
-  let level = LogLevel.unknown;
+  let level = LogLevel.unspecified;
   let currentIndex: number | undefined = undefined;
 
   for (const [key, value] of Object.entries(LogLevel)) {
@@ -78,7 +78,7 @@ export function getLogLevel(line: string): LogLevel {
 export function getLogLevelFromKey(key: string | number): LogLevel {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const level = LogLevel[key.toString().toLowerCase() as keyof typeof LogLevel];
-  if (level) {
+  if (level !== undefined) {
     return level;
   }
   if (typeof key === 'string') {
@@ -87,13 +87,13 @@ export function getLogLevelFromKey(key: string | number): LogLevel {
     // Safety check to confirm that we're parsing a number and not a number with a string.
     // For example `parseInt('1abcd', 10)` outputs 1
     if (key.length === numericLevel.toString().length) {
-      return NumericLogLevel[key] || LogLevel.unknown;
+      return NumericLogLevel[key] || LogLevel.unspecified;
     }
   } else if (typeof key === 'number') {
-    return NumericLogLevel[key] || LogLevel.unknown;
+    return NumericLogLevel[key] || LogLevel.unspecified;
   }
 
-  return LogLevel.unknown;
+  return LogLevel.unspecified;
 }
 
 export function calculateLogsLabelStats(rows: LogRowModel[], label: string): LogLabelStatsModel[] {
@@ -574,7 +574,7 @@ export const downloadLogs = async (
           );
         }
         const transformedDataFrame = await lastValueFrom(transformDataFrame(transforms, [dataFrame]));
-        downloadDataFrameAsCsv(transformedDataFrame[0], `Logs-${dataFrame.refId}`);
+        downloadDataFrameAsCsv(transformedDataFrame[0], `Logs-${dataFrame.refId}`, undefined, undefined, false, true);
       }
       break;
     }

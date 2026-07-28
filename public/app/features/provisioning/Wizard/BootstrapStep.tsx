@@ -63,7 +63,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
   const styles = useStyles2(getStyles);
 
   const isLoading = isRepositoryStatusLoading || isResourceStatsLoading || !isRepositoryReady;
-  const isQuotaExceeded = !isLoading && maxResourcesPerRepository > 0 && fileCount > maxResourcesPerRepository;
+  const isQuotaWarning = !isLoading && maxResourcesPerRepository > 0 && fileCount > maxResourcesPerRepository;
 
   useEffect(() => {
     // Pick a nice name based on type+settings, but only if user hasn't modified it
@@ -95,21 +95,21 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
           onClick: retryRepositoryStatus,
         },
       });
-    } else if (isQuotaExceeded) {
+    } else if (isQuotaWarning) {
       const onPrem = isOnPrem();
       setStepStatusInfo({
-        status: 'error',
-        error: {
-          title: t('provisioning.bootstrap-step.error-quota-exceeded-title', 'Resource quota exceeded'),
+        status: 'warning',
+        warning: {
+          title: t('provisioning.bootstrap-step.warning-quota-may-exceed-title', 'Resource limit may be exceeded'),
           message: onPrem
             ? t(
-                'provisioning.bootstrap-step.error-quota-exceeded-message-onprem',
-                'This repository folder contains {{fileCount}} resources, which exceeds your instance limit of {{limit}}. To sync this repository, update your Grafana configuration or reduce the number of resources to sync.',
+                'provisioning.bootstrap-step.warning-quota-may-exceed-message-onprem',
+                'This repository folder contains approximately {{fileCount}} resources, which may exceed your instance limit of {{limit}}. If the limit is reached during sync, some resources will be skipped. You can continue and adjust later, or update your Grafana configuration.',
                 { fileCount, limit: maxResourcesPerRepository }
               )
             : t(
-                'provisioning.bootstrap-step.error-quota-exceeded-message',
-                'This repository folder contains {{fileCount}} resources, which exceeds your account limit of {{limit}}. To sync this repository, upgrade your account or reduce the number of resources to sync.',
+                'provisioning.bootstrap-step.warning-quota-may-exceed-message',
+                'This repository folder contains approximately {{fileCount}} resources, which may exceed your account limit of {{limit}}. If the limit is reached during sync, some resources will be skipped. You can continue and adjust later, or upgrade your account.',
                 { fileCount, limit: maxResourcesPerRepository }
               ),
         },
@@ -134,7 +134,7 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     repositoryStatusError,
     retryRepositoryStatus,
     maxResourcesPerRepository,
-    isQuotaExceeded,
+    isQuotaWarning,
     fileCount,
     isUnhealthy,
   ]);
@@ -153,8 +153,8 @@ export const BootstrapStep = memo(function BootstrapStep({ settingsData, repoNam
     );
   }
 
-  // Only show error state if: query error, OR unhealthy (already reconciled), OR quota exceeded
-  if (repositoryStatusError || isUnhealthy || isQuotaExceeded) {
+  // Only show error state if: query error, OR unhealthy (already reconciled)
+  if (repositoryStatusError || isUnhealthy) {
     // error message and retry will be set in above step status
     return null;
   }

@@ -23,7 +23,9 @@ const mockVariable = mockDataSource({
 });
 
 const dsSrvMock: Pick<DataSourceSrv, 'get' | 'getList' | 'getInstanceSettings'> = {
-  get: jest.fn(async () => ({ getDefaultQuery: undefined }) as unknown as DataSourceApi),
+  get: jest.fn(
+    async () => ({ getDefaultQuery: undefined, type: DataSourceType.Alertmanager }) as unknown as DataSourceApi
+  ),
   getList: jest.fn((filters?: GetDataSourceListFilters) => (filters?.variables ? [mockDS, mockVariable] : [mockDS])),
   getInstanceSettings: jest.fn(() => mockDS),
 };
@@ -89,6 +91,79 @@ describe('QueryEditorRows', () => {
       ],
       { skipAutoImport: true }
     );
+  });
+
+  it('Should replace a single query with multiple queries in place, preserving the original refId for the first', () => {
+    const onQueriesChangeMock = jest.fn();
+    const onRunQueriesMock = jest.fn();
+
+    const testProps = {
+      ...props,
+      onQueriesChange: onQueriesChangeMock,
+      onUpdateDatasources: jest.fn(),
+      onRunQueries: onRunQueriesMock,
+    };
+
+    const component = new QueryEditorRows(testProps);
+    const replacements = [
+      { refId: 'X', datasource: mockDS, expr: 'q1' },
+      { refId: 'Y', datasource: mockDS, expr: 'q2' },
+      { refId: 'Z', datasource: mockDS, expr: 'q3' },
+    ];
+
+    component.onReplaceQueries(replacements, 0);
+
+    expect(onQueriesChangeMock).toHaveBeenCalledWith(
+      [
+        { ...replacements[0], refId: 'A' }, // first reuses the replaced query's refId
+        { ...replacements[1], refId: 'C' }, // rest get fresh refIds that don't collide with B
+        { ...replacements[2], refId: 'D' },
+        props.queries[1], // second query (B) unchanged
+      ],
+      { skipAutoImport: true }
+    );
+    expect(onRunQueriesMock).toHaveBeenCalled();
+  });
+
+  it('Should be a no-op when replacing with an empty query list', () => {
+    const onQueriesChangeMock = jest.fn();
+    const onRunQueriesMock = jest.fn();
+
+    const component = new QueryEditorRows({
+      ...props,
+      onQueriesChange: onQueriesChangeMock,
+      onUpdateDatasources: jest.fn(),
+      onRunQueries: onRunQueriesMock,
+    });
+
+    component.onReplaceQueries([], 0);
+
+    expect(onQueriesChangeMock).not.toHaveBeenCalled();
+    expect(onRunQueriesMock).not.toHaveBeenCalled();
+  });
+
+  it('Should switch to mixed datasource when replacing with multiple queries spanning datasources', () => {
+    const onQueriesChangeMock = jest.fn();
+    const onUpdateDatasourcesMock = jest.fn();
+
+    const testProps = {
+      ...props,
+      onQueriesChange: onQueriesChangeMock,
+      onUpdateDatasources: onUpdateDatasourcesMock,
+      onRunQueries: jest.fn(),
+      dsSettings: { ...props.dsSettings, uid: 'current-datasource' },
+      queries: [{ datasource: { uid: 'current-datasource', type: 'prometheus' }, refId: 'A' }],
+    };
+
+    const component = new QueryEditorRows(testProps);
+    const replacements = [
+      { refId: 'X', datasource: { uid: 'prom', type: 'prometheus' }, expr: 'q1' },
+      { refId: 'Y', datasource: { uid: 'loki', type: 'loki' }, expr: 'q2' },
+    ];
+
+    component.onReplaceQueries(replacements, 0);
+
+    expect(onUpdateDatasourcesMock).toHaveBeenCalledWith({ uid: MIXED_DATASOURCE_NAME });
   });
 
   it('Should call onUpdateDatasources when replacing query with different datasource creates mixed scenario', () => {
@@ -229,6 +304,18 @@ describe('QueryEditorRows', () => {
     );
 
     expect(await screen.findAllByTestId(selectors.components.QueryEditorRows.rows)).toHaveLength(1);
+  });
+
+  it('Should mark each query row with the datasource plugin boundary', async () => {
+    renderScenario();
+
+    const rowA = await screen.findByTestId(
+      selectors.components.Plugins.queryEditorRow(DataSourceType.Alertmanager, 'A')
+    );
+    expect(rowA).toHaveAttribute('data-plugin-id', DataSourceType.Alertmanager);
+    expect(
+      await screen.findByTestId(selectors.components.Plugins.queryEditorRow(DataSourceType.Alertmanager, 'B'))
+    ).toBeInTheDocument();
   });
 
   it('Should be able to expand and collapse queries', async () => {

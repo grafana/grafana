@@ -85,7 +85,7 @@ describe('browse-dashboards DeleteModal', () => {
     expect(mockOnDismiss).toHaveBeenCalled();
   });
 
-  it('shows a numeric affected item count for a single folder selection', async () => {
+  it('warns that the selected folder contains other resources', async () => {
     render(
       <DeleteModal
         {...defaultProps}
@@ -100,8 +100,8 @@ describe('browse-dashboards DeleteModal', () => {
       />
     );
 
-    expect(await screen.findByText(/This action will delete the folder/i)).toBeInTheDocument();
-    expect(await screen.findByText(/5 item/)).toBeInTheDocument();
-    expect(screen.queryByText(/NaN item/)).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole('alert', { name: /contains other resources that will be deleted/i })
+    ).toBeInTheDocument();
   });
 });

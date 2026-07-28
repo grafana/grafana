@@ -1,13 +1,7 @@
 import { cloneDeep } from 'lodash';
 import { type Observable, of } from 'rxjs';
 
-import {
-  type AnnotationEvent,
-  type AnnotationQuery,
-  type DataFrame,
-  DataFrameView,
-  type DataSourceApi,
-} from '@grafana/data';
+import { type AnnotationEvent, type AnnotationQuery, type DataSourceApi } from '@grafana/data';
 import { config, toDataQueryError } from '@grafana/runtime';
 import { dispatch } from 'app/store/store';
 
@@ -118,21 +112,4 @@ export function translateQueryResult(annotation: AnnotationQuery, results: Annot
   }
 
   return results;
-}
-
-export function annotationsFromDataFrames(data?: DataFrame[]): AnnotationEvent[] {
-  if (!data || !data.length) {
-    return [];
-  }
-
-  const annotations: AnnotationEvent[] = [];
-  for (const frame of data) {
-    const view = new DataFrameView<AnnotationEvent>(frame);
-    for (let index = 0; index < frame.length; index++) {
-      const annotation = cloneDeep(view.get(index));
-      annotations.push(annotation);
-    }
-  }
-
-  return annotations;
 }

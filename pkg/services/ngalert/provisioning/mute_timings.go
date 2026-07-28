@@ -303,10 +303,10 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 		return err
 	}
 
-	if isTimeIntervalInUseInRoutes(existing.Name, revision.Config.AlertmanagerConfig.Route) {
+	if revision.TimeIntervalUsedByRoutes(existing.Name) {
 		ns, _ := svc.ruleNotificationsStore.ListContactPointRoutings(ctx, models.ListContactPointRoutingsQuery{OrgID: orgID, TimeIntervalName: existing.Name})
 		// ignore error here because it's not important
-		return MakeErrTimeIntervalInUse(true, slices.Collect(maps.Keys(ns)))
+		return MakeErrTimeIntervalInUse(existing.Name, true, slices.Collect(maps.Keys(ns)))
 	}
 
 	if err = svc.checkOptimisticConcurrency(existingInterval, models.Provenance(provenance), version, "delete"); err != nil {
@@ -320,7 +320,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 			return err
 		}
 		if len(keys) > 0 {
-			return MakeErrTimeIntervalInUse(false, slices.Collect(maps.Keys(keys)))
+			return MakeErrTimeIntervalInUse(existing.Name, false, slices.Collect(maps.Keys(keys)))
 		}
 
 		if err := svc.configStore.Save(ctx, revision, orgID); err != nil {
@@ -328,26 +328,6 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 		}
 		return svc.provenanceStore.DeleteProvenance(ctx, &existingInterval, orgID)
 	})
-}
-
-func isTimeIntervalInUseInRoutes(name string, route *v1.Route) bool {
-	if route == nil {
-		return false
-	}
-	if slices.Contains(route.MuteTimeIntervals, name) {
-		return true
-	}
-
-	if slices.Contains(route.ActiveTimeIntervals, name) {
-		return true
-	}
-
-	for _, route := range route.Routes {
-		if isTimeIntervalInUseInRoutes(name, route) {
-			return true
-		}
-	}
-	return false
 }
 
 func (svc *MuteTimingService) getMuteTimingByName(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, name string) (definitions.MuteTimeInterval, bool, error) {

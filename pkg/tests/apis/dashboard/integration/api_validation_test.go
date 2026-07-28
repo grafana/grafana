@@ -1007,9 +1007,13 @@ func createFolderObject(t *testing.T, title string, namespace string, parentFold
 		},
 	}
 
+	meta, _ := utils.MetaAccessor(folderObj)
 	if parentFolderUID != "" {
-		meta, _ := utils.MetaAccessor(folderObj)
 		meta.SetFolder(parentFolderUID)
+	} else {
+		// Root folders request default permissions so Editors/Viewers get access via the
+		// resource-permission path; nested folders inherit from their parent.
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 	}
 
 	return folderObj

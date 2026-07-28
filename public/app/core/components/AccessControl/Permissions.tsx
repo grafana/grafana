@@ -9,7 +9,6 @@ import { Trans, t } from '@grafana/i18n';
 import { Text, Box, Button, useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import { DescendantCount } from 'app/features/browse-dashboards/components/BrowseActions/DescendantCount';
 
 import { AddPermission } from './AddPermission';
 import { PermissionList } from './PermissionList';
@@ -163,16 +162,8 @@ export const Permissions = ({
         {canSetPermissions && resource === 'folders' && (
           <Box paddingBottom={2}>
             <Trans i18nKey="access-control.permissions.permissions-change-warning">
-              This will change permissions for this folder and all its descendants. In total, this will affect:
+              This will change permissions for this folder and all its descendants.
             </Trans>
-            <DescendantCount
-              selectedItems={{
-                folder: { [resourceId]: true },
-                dashboard: {},
-                panel: {},
-                $all: false,
-              }}
-            />
           </Box>
         )}
         {permissions.value?.length === 0 && (

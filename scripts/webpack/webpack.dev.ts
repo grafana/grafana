@@ -49,7 +49,7 @@ export default (env: Env = {}) => {
     resolve: {
       alias: {
         // Packages linked for development need react to be resolved from the same location
-        react: path.resolve('./node_modules/react'),
+        react: env.react19 ? path.resolve('./node_modules/react-19') : path.resolve('./node_modules/react'),
 
         // This is required to correctly resolve react-router-dom when linking with
         //  local version of @grafana/scenes

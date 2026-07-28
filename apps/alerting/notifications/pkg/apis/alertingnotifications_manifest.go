@@ -21,6 +21,9 @@ import (
 )
 
 var (
+	rawSchemaConfigv0alpha1             = []byte(`{"Condition":{"additionalProperties":false,"description":"Condition mirrors metav1.Condition. Inlined because the app-sdk codegen\nhere can't reference metav1.Condition from CUE. Field semantics are\nk8s-standard; reason values are produced by SyncReason in the syncer.","properties":{"lastTransitionTime":{"description":"RFC3339","type":"string"},"message":{"type":"string"},"observedGeneration":{"type":"integer"},"reason":{"type":"string"},"status":{"enum":["True","False","Unknown"],"type":"string"},"type":{"type":"string"}},"required":["type","status","lastTransitionTime","reason"],"type":"object"},"Config":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID of the Mimir/Cortex Alertmanager datasource to\nsync from. Empty means no sync is configured for the current org. The\noperator ini setting ` + "`" + `unified_alerting.external_alertmanager_uid` + "`" + `\noverrides this when set; see status.externalAlertmanagerSync.origin.","type":"string"}},"type":"object"}},"type":"object"},"status":{"additionalProperties":false,"properties":{"conditions":{"description":"Standard k8s-style condition list. Each binary-state feature owns one\ncondition type. Current types:\n  - ExternalAlertmanagerSynced: True after a successful sync, False\n    after a failed attempt, Unknown until the first attempt.","items":{"$ref":"#/components/schemas/Condition"},"type":"array"},"externalAlertmanagerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.","type":"string"},"origin":{"description":"origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_alertmanager_uid) wins over \"api\"\n(spec.externalAlertmanagerSync.datasourceUid).","enum":["api","ini"],"type":"string"}},"type":"object"},"observedGeneration":{"description":"observedGeneration is the spec.generation last evaluated by the\ncontrollers writing this status.","type":"integer"}},"type":"object"}}`)
+	versionSchemaConfigv0alpha1         app.VersionSchema
+	_                                   = json.Unmarshal(rawSchemaConfigv0alpha1, &versionSchemaConfigv0alpha1)
 	rawSchemaInhibitionRulev0alpha1     = []byte(`{"InhibitionRule":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"Matcher":{"additionalProperties":false,"properties":{"label":{"type":"string"},"type":{"enum":["=","!=","=~","!~"],"type":"string"},"value":{"type":"string"}},"required":["type","label","value"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"equal":{"description":"equal specifies which labels must have equal values between source and target alerts\nfor the inhibition to take effect","items":{"type":"string"},"type":"array"},"source_matchers":{"description":"source_matchers define the alerts that act as inhibitors (silencing other alerts)","items":{"$ref":"#/components/schemas/Matcher"},"type":"array"},"target_matchers":{"description":"target_matchers define the alerts that can be inhibited (silenced)","items":{"$ref":"#/components/schemas/Matcher"},"type":"array"}},"type":"object"}}`)
 	versionSchemaInhibitionRulev0alpha1 app.VersionSchema
 	_                                   = json.Unmarshal(rawSchemaInhibitionRulev0alpha1, &versionSchemaInhibitionRulev0alpha1)
@@ -63,6 +66,22 @@ var appManifestData = app.ManifestData{
 			Name:   "v0alpha1",
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
+				{
+					Kind:       "Config",
+					Plural:     "Configs",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaConfigv0alpha1,
+				},
+
 				{
 					Kind:       "InhibitionRule",
 					Plural:     "InhibitionRules",
@@ -1066,6 +1085,7 @@ func RemoteManifest() app.Manifest {
 }
 
 var kindVersionToGoType = map[string]resource.Kind{
+	"Config/v0alpha1":         v0alpha1.ConfigKind(),
 	"InhibitionRule/v0alpha1": v0alpha1.InhibitionRuleKind(),
 	"Receiver/v0alpha1":       v0alpha1.ReceiverKind(),
 	"RoutingTree/v0alpha1":    v0alpha1.RoutingTreeKind(),

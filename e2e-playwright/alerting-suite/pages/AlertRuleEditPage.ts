@@ -67,7 +67,7 @@ export class AlertRuleEditPage {
     // whose accessible name combines the DS name with badges/tags
     // (e.g. "gdev-testdata Tags TestData") — match by prefix.
     await this.page
-      .getByRole('button', { name: new RegExp(`^${dataSourceName}\\b`, 'i') })
+      .getByRole('option', { name: new RegExp(`^${dataSourceName}\\b`, 'i') })
       .first()
       .click();
   }
@@ -128,6 +128,13 @@ export class AlertRuleEditPage {
 
   async save(): Promise<void> {
     await this.saveButton.click();
+  }
+
+  async saveAndWaitForSuccess(outcome: 'created' | 'updated'): Promise<void> {
+    await this.save();
+
+    const message = outcome === 'created' ? 'Rule added successfully' : 'Rule updated successfully';
+    await expect(this.page.getByRole('status', { name: message })).toBeVisible();
   }
 
   protected get nameInput(): Locator {

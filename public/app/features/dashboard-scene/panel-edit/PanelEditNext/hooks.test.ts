@@ -1,11 +1,20 @@
 import { renderHook } from '@testing-library/react';
 import type React from 'react';
 
-import { buildVizAndDataPaneGrid, getDefaultSidebarRatio, useRatioResize } from './hooks';
+import { useTheme2 } from '@grafana/ui';
+
+import { useEditPaneCollapsed } from '../../edit-pane/shared';
+import { getDashboardSceneFor } from '../../utils/utils';
+import type { PanelEditor } from '../PanelEditor';
+import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
+import { useScrollReflowLimit } from '../useScrollReflowLimit';
+
+import { buildVizAndDataPaneGrid, getDefaultSidebarRatio, usePanelEditorShell, useRatioResize } from './hooks';
 
 jest.mock('@grafana/ui', () => ({
   useStyles2: jest.fn(() => ({ dragHandleVertical: 'drag-v', dragHandleHorizontal: 'drag-h' })),
   getDragStyles: jest.fn(),
+  useTheme2: jest.fn(),
 }));
 
 jest.mock('@grafana/runtime', () => ({ config: { featureToggles: {} } }));
@@ -19,10 +28,47 @@ jest.mock('./constants', () => ({
 jest.mock('../../edit-pane/shared', () => ({ useEditPaneCollapsed: jest.fn() }));
 jest.mock('../../utils/utils', () => ({ getDashboardSceneFor: jest.fn() }));
 jest.mock('../PanelEditor', () => ({}));
+jest.mock('../splitter/useSnappingSplitter', () => ({ useSnappingSplitter: jest.fn() }));
+jest.mock('../useScrollReflowLimit', () => ({ useScrollReflowLimit: jest.fn() }));
+
+describe('usePanelEditorShell', () => {
+  it('subscribes to and returns dashboard controls', () => {
+    const controls = { Component: jest.fn() };
+    const dashboard = { useState: jest.fn(() => ({ controls })) };
+    const optionsPane = { Component: jest.fn() };
+    const model = { useState: jest.fn(() => ({ optionsPane })) } as unknown as PanelEditor;
+    const setIsCollapsed = jest.fn();
+    const splitter = { splitterState: { collapsed: false } };
+
+    jest.mocked(getDashboardSceneFor).mockReturnValue(dashboard as never);
+    jest.mocked(useEditPaneCollapsed).mockReturnValue([true, setIsCollapsed]);
+    jest.mocked(useScrollReflowLimit).mockReturnValue(false);
+    jest.mocked(useTheme2).mockReturnValue({ spacing: jest.fn(() => '16px') } as never);
+    jest.mocked(useSnappingSplitter).mockReturnValue(splitter as never);
+
+    const { result } = renderHook(() => usePanelEditorShell(model));
+
+    expect(dashboard.useState).toHaveBeenCalled();
+    expect(useSnappingSplitter).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collapsed: true,
+        direction: 'row',
+        disabled: false,
+      })
+    );
+    expect(setIsCollapsed).toHaveBeenCalledWith(false);
+    expect(result.current).toEqual({
+      dashboard,
+      optionsPane,
+      isScrollingLayout: false,
+      splitter,
+      controls,
+    });
+  });
+});
 
 describe('buildVizAndDataPaneGrid', () => {
   const base = {
-    controlsEnabled: false,
     hasDataPane: true,
     isSidebarFullWidth: false,
     showBanner: true,
@@ -36,19 +82,10 @@ describe('buildVizAndDataPaneGrid', () => {
     expect(gridTemplateAreas).toBe('"viz viz"');
   });
 
-  it('places the controls row above the viz when controls are enabled', () => {
-    const { gridTemplateAreas, gridTemplateRows } = buildVizAndDataPaneGrid({ ...base, controlsEnabled: true });
-
-    expect(gridTemplateAreas).toBe(
-      '"controls controls"\n"viz viz"\n"version-toggle version-toggle"\n"sidebar data-pane"'
-    );
-    expect(gridTemplateRows).toBe('auto 1fr auto 1fr');
-  });
-
   it('makes sidebar span every row when isSidebarFullWidth is true', () => {
-    const { gridTemplateAreas } = buildVizAndDataPaneGrid({ ...base, controlsEnabled: true, isSidebarFullWidth: true });
+    const { gridTemplateAreas } = buildVizAndDataPaneGrid({ ...base, isSidebarFullWidth: true });
 
-    expect(gridTemplateAreas).toBe('"sidebar controls"\n"sidebar viz"\n"sidebar version-toggle"\n"sidebar data-pane"');
+    expect(gridTemplateAreas).toBe('"sidebar viz"\n"sidebar version-toggle"\n"sidebar data-pane"');
   });
 
   it('omits version-toggle row when showBanner is false', () => {
@@ -64,12 +101,12 @@ describe('buildVizAndDataPaneGrid', () => {
     expect(buildVizAndDataPaneGrid({ ...base, vizRatio: 0.75 }).gridTemplateRows).toBe('3fr auto 1fr');
   });
 
-  it('converts sidebarRatio 0.5 to equal columns (minmax(250px, 1fr) 1fr)', () => {
-    expect(buildVizAndDataPaneGrid({ ...base, sidebarRatio: 0.5 }).gridTemplateColumns).toBe('minmax(250px, 1fr) 1fr');
+  it('converts sidebarRatio 0.5 to equal columns (minmax(200px, 1fr) 1fr)', () => {
+    expect(buildVizAndDataPaneGrid({ ...base, sidebarRatio: 0.5 }).gridTemplateColumns).toBe('minmax(200px, 1fr) 1fr');
   });
 
   it('converts sidebarRatio 0.25 to approximately one-third of the available width', () => {
-    // 0.25 / (1 - 0.25) = 0.333...fr — wrapped in minmax(250px, Xfr)
+    // 0.25 / (1 - 0.25) = 0.333...fr — wrapped in minmax(200px, Xfr)
     const columns = buildVizAndDataPaneGrid({ ...base, sidebarRatio: 0.25 }).gridTemplateColumns;
     const match = columns.match(/minmax\(\d+px,\s*([\d.]+)fr\)/);
     expect(match).not.toBeNull();

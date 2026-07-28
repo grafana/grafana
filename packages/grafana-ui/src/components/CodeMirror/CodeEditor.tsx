@@ -1,8 +1,7 @@
 import { acceptCompletion, autocompletion, startCompletion } from '@codemirror/autocomplete';
 import { EditorState, Prec } from '@codemirror/state';
-import { keymap } from '@codemirror/view';
-import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
-import CodeMirror, { EditorView } from '@uiw/react-codemirror';
+import { EditorView, keymap } from '@codemirror/view';
+import CodeMirror from '@uiw/react-codemirror';
 import { memo, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
@@ -10,6 +9,7 @@ import { t } from '@grafana/i18n';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 
+import { createCodeEditorTheme } from './theme';
 import {
   type CodeMirrorCompletionMode,
   type CodeMirrorCompletionSource,
@@ -85,6 +85,7 @@ const autocompleteSpaceKeymap = Prec.highest(
 export const CodeEditor = memo(function CodeEditor({
   value,
   language,
+  sqlDialect,
   height = '200px',
   onChange,
   'aria-label': ariaLabel,
@@ -92,9 +93,15 @@ export const CodeEditor = memo(function CodeEditor({
   completionSources,
   completionMode = 'merge',
   extensions: additionalExtensions,
+  theme: themeOverride,
+  basicSetup,
+  indentWithTab = true,
+  readOnly = false,
+  lineWrapping = false,
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
-  const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language);
+  const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
+  const editorTheme = useMemo(() => createCodeEditorTheme(theme), [theme]);
 
   const extensions = useMemo(
     () => [
@@ -102,9 +109,18 @@ export const CodeEditor = memo(function CodeEditor({
       ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
       ...(languageExtension ? [languageExtension] : []),
       ...getCompletionExtensions(completionSources, completionMode),
+      ...(lineWrapping ? [EditorView.lineWrapping] : []),
       ...(additionalExtensions ?? []),
     ],
-    [ariaLabel, ariaLabelledby, languageExtension, completionSources, completionMode, additionalExtensions]
+    [
+      ariaLabel,
+      ariaLabelledby,
+      languageExtension,
+      completionSources,
+      completionMode,
+      lineWrapping,
+      additionalExtensions,
+    ]
   );
   return (
     <>
@@ -117,11 +133,14 @@ export const CodeEditor = memo(function CodeEditor({
         </Alert>
       )}
       <CodeMirror
-        theme={theme.isDark ? vscodeDark : vscodeLight}
+        theme={themeOverride ?? editorTheme}
         value={value}
         height={height}
         extensions={extensions}
         onChange={onChange}
+        basicSetup={basicSetup}
+        indentWithTab={indentWithTab}
+        readOnly={readOnly}
       />
     </>
   );

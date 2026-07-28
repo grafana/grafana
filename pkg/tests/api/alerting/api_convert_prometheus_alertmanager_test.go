@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"path"
@@ -15,9 +16,14 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -34,7 +40,6 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
 		EnableFeatureToggles: []string{
-			featuremgmt.FlagAlertingMultiplePolicies,
 			featuremgmt.FlagAlertingImportAlertmanagerAPI,
 		},
 	})
@@ -376,6 +381,243 @@ receivers:
 		})
 	})
 
+	t.Run("promote imports configuration into main Grafana config", func(t *testing.T) {
+		identifier := "test-promote-main"
+
+		amConfig := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `
+route:
+  receiver: promoted-webhook
+receivers:
+  - name: promoted-webhook
+    webhook_configs:
+      - url: 'http://127.0.0.1:8080/webhook'
+`,
+			TemplateFiles: map[string]string{
+				"promoted.tmpl": `{{ define "promoted" }}Promoted{{ end }}`,
+			},
+		}
+
+		rawResp, status, _ := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, amConfig, map[string]string{
+			"Content-Type":                         "application/yaml",
+			"X-Grafana-Alerting-Config-Identifier": identifier,
+			"X-Grafana-Alerting-Promote":           "true",
+		})
+		requireStatusCode(t, http.StatusAccepted, status, "")
+		require.Equal(t, "success", rawResp.Status)
+		require.NotNil(t, rawResp.Stats)
+		require.Equal(t, identifier, rawResp.Stats.AddedRoute)
+		require.Contains(t, rawResp.Stats.AddedReceivers, "promoted-webhook")
+		require.Len(t, rawResp.Stats.AddedTemplates, 1, "one template UID should be reported as added")
+
+		// Promoted config must not be stored in ExtraConfigs.
+		_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, map[string]string{
+			"X-Grafana-Alerting-Config-Identifier": identifier,
+		})
+		requireStatusCode(t, http.StatusNotFound, status, "")
+
+		// Promoted receiver and template must appear in the main Grafana alertmanager config.
+		mainConfig, status, _ := apiClient.GetAlertmanagerConfigWithStatus(t)
+		requireStatusCode(t, http.StatusOK, status, "")
+		require.Empty(t, mainConfig.ExtraConfigs)
+		receiverNames := make([]string, 0, len(mainConfig.AlertmanagerConfig.Receivers))
+		for _, r := range mainConfig.AlertmanagerConfig.Receivers {
+			receiverNames = append(receiverNames, r.Name)
+		}
+		require.Contains(t, receiverNames, "promoted-webhook")
+		require.Contains(t, mainConfig.TemplateFiles, "promoted.tmpl")
+
+		// Promoted template must be accessible via the provisioning templates API with no provenance —
+		// meaning it is not locked and can be edited through regular APIs.
+		templates, status, _ := apiClient.GetTemplatesWithStatus(t)
+		requireStatusCode(t, http.StatusOK, status, "")
+		var found *apimodels.NotificationTemplate
+		for i := range templates {
+			if templates[i].Name == "promoted.tmpl" {
+				found = &templates[i]
+				break
+			}
+		}
+		require.NotNil(t, found, "promoted.tmpl must appear in the provisioning templates API")
+		require.Empty(t, found.Provenance, "promoted template must have no provenance (not locked)")
+	})
+
+	t.Run("dry-run with promote validates but does not save", func(t *testing.T) {
+		identifier := "test-dryrun-promote"
+
+		amConfig := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `
+route:
+  receiver: dryrun-promote-receiver
+receivers:
+  - name: dryrun-promote-receiver
+    webhook_configs:
+      - url: 'http://127.0.0.1:8080/dryrun'
+`,
+		}
+
+		_, status, body := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, amConfig, map[string]string{
+			"Content-Type":                         "application/yaml",
+			"X-Grafana-Alerting-Config-Identifier": identifier,
+			"X-Grafana-Alerting-Dry-Run":           "true",
+			"X-Grafana-Alerting-Promote":           "true",
+		})
+		requireStatusCode(t, http.StatusOK, status, body) // dry-run returns 200
+		rawResp := apimodels.ConvertAlertmanagerResponse{}
+		require.NoError(t, json.Unmarshal([]byte(body), &rawResp))
+		require.Equal(t, "success", rawResp.Status)
+		require.NotNil(t, rawResp.Stats)
+		require.Equal(t, identifier, rawResp.Stats.AddedRoute)
+		require.Contains(t, rawResp.Stats.AddedReceivers, "dryrun-promote-receiver")
+
+		// Nothing must be saved — neither in ExtraConfigs nor in the main config.
+		_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, map[string]string{
+			"X-Grafana-Alerting-Config-Identifier": identifier,
+		})
+		requireStatusCode(t, http.StatusNotFound, status, "")
+
+		mainConfig, status, _ := apiClient.GetAlertmanagerConfigWithStatus(t)
+		requireStatusCode(t, http.StatusOK, status, "")
+		receiverNames := make([]string, 0, len(mainConfig.AlertmanagerConfig.Receivers))
+		for _, r := range mainConfig.AlertmanagerConfig.Receivers {
+			receiverNames = append(receiverNames, r.Name)
+		}
+		require.NotContains(t, receiverNames, "dryrun-promote-receiver")
+	})
+
+	t.Run("promote blocks re-import with same identifier", func(t *testing.T) {
+		identifier := "test-promote-reimport"
+
+		amConfig := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `
+route:
+  receiver: reimport-receiver
+receivers:
+  - name: reimport-receiver
+    webhook_configs:
+      - url: 'http://127.0.0.1:8080/reimport'
+`,
+		}
+		headers := map[string]string{
+			"Content-Type":                         "application/yaml",
+			"X-Grafana-Alerting-Config-Identifier": identifier,
+			"X-Grafana-Alerting-Promote":           "true",
+		}
+
+		_, status, _ := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, amConfig, headers)
+		requireStatusCode(t, http.StatusAccepted, status, "")
+
+		// Re-importing with the same identifier must fail: the identifier is now locked in ManagedRoutes.
+		_, status, body := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, amConfig, headers)
+		requireStatusCode(t, http.StatusBadRequest, status, body)
+	})
+
+	t.Run("promote with replace removes pre-existing ExtraConfig", func(t *testing.T) {
+		identifierA := "test-promote-replace-a"
+		identifierB := "test-promote-replace-b"
+
+		// Step 1: import config A without promote.
+		_, status, _ := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `
+route:
+  receiver: replace-a-receiver
+receivers:
+  - name: replace-a-receiver
+    webhook_configs:
+      - url: 'http://127.0.0.1:8080/a'
+`,
+		}, map[string]string{
+			"Content-Type":                         "application/yaml",
+			"X-Grafana-Alerting-Config-Identifier": identifierA,
+		})
+		requireStatusCode(t, http.StatusAccepted, status, "")
+
+		// Verify A is in ExtraConfigs.
+		_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, map[string]string{
+			"X-Grafana-Alerting-Config-Identifier": identifierA,
+		})
+		requireStatusCode(t, http.StatusOK, status, "")
+
+		// Step 2: import config B with promote=true and replace=true.
+		rawResp, status, _ := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `
+route:
+  receiver: replace-b-receiver
+receivers:
+  - name: replace-b-receiver
+    webhook_configs:
+      - url: 'http://127.0.0.1:8080/b'
+`,
+		}, map[string]string{
+			"Content-Type":                            "application/yaml",
+			"X-Grafana-Alerting-Config-Identifier":    identifierB,
+			"X-Grafana-Alerting-Promote":              "true",
+			"X-Grafana-Alerting-Config-Force-Replace": "true",
+		})
+		requireStatusCode(t, http.StatusAccepted, status, "")
+		require.Equal(t, identifierB, rawResp.Stats.AddedRoute)
+
+		// Config A must be gone from ExtraConfigs (replaced and promoted away).
+		_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, map[string]string{
+			"X-Grafana-Alerting-Config-Identifier": identifierA,
+		})
+		requireStatusCode(t, http.StatusNotFound, status, "")
+
+		// Config B is promoted, so it must not be in ExtraConfigs either.
+		_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, map[string]string{
+			"X-Grafana-Alerting-Config-Identifier": identifierB,
+		})
+		requireStatusCode(t, http.StatusNotFound, status, "")
+
+		// B's receiver must be in the main config; A's must not.
+		mainConfig, status, _ := apiClient.GetAlertmanagerConfigWithStatus(t)
+		requireStatusCode(t, http.StatusOK, status, "")
+		require.Empty(t, mainConfig.ExtraConfigs)
+		receiverNames := make([]string, 0, len(mainConfig.AlertmanagerConfig.Receivers))
+		for _, r := range mainConfig.AlertmanagerConfig.Receivers {
+			receiverNames = append(receiverNames, r.Name)
+		}
+		require.Contains(t, receiverNames, "replace-b-receiver")
+		require.NotContains(t, receiverNames, "replace-a-receiver")
+	})
+
+	t.Run("promote preserves rename result when receiver conflicts with existing", func(t *testing.T) {
+		identifier := "test-promote-rename"
+
+		// Import a config with a receiver named "opsgenie", which conflicts with the
+		// pre-existing receiver created by EnsureReceiver at the top of this test.
+		rawResp, status, _ := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `
+route:
+  receiver: opsgenie
+receivers:
+  - name: opsgenie
+    webhook_configs:
+      - url: 'http://127.0.0.1:8080/opsgenie'
+`,
+		}, map[string]string{
+			"Content-Type":                         "application/yaml",
+			"X-Grafana-Alerting-Config-Identifier": identifier,
+			"X-Grafana-Alerting-Promote":           "true",
+		})
+		requireStatusCode(t, http.StatusAccepted, status, "")
+		require.Equal(t, "success", rawResp.Status)
+		require.NotNil(t, rawResp.RenameResources, "conflicting receiver must produce a rename result")
+		require.Contains(t, rawResp.RenameResources.Receivers, "opsgenie")
+
+		renamedName := rawResp.RenameResources.Receivers["opsgenie"]
+		require.NotEmpty(t, renamedName)
+
+		// The renamed receiver must appear in the main config under its new name.
+		mainConfig, status, _ := apiClient.GetAlertmanagerConfigWithStatus(t)
+		requireStatusCode(t, http.StatusOK, status, "")
+		receiverNames := make([]string, 0, len(mainConfig.AlertmanagerConfig.Receivers))
+		for _, r := range mainConfig.AlertmanagerConfig.Receivers {
+			receiverNames = append(receiverNames, r.Name)
+		}
+		require.Contains(t, receiverNames, renamedName)
+	})
+
 	t.Run("dry-run should not create configuration", func(t *testing.T) {
 		identifier := "config"
 		// Create first configuration
@@ -405,6 +647,64 @@ receivers:
 		})
 
 		_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, firstHeaders)
+		requireStatusCode(t, http.StatusNotFound, status, "")
+	})
+
+	// Use case: user imports config as staged via convert API, then promotes it via the dedicated promote endpoint.
+	t.Run("staged import promoted via dedicated promote endpoint", func(t *testing.T) {
+		identifier := "test-dedicated-promote-staged"
+		defer cleanup(identifier)
+
+		amConfig := apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `
+route:
+  receiver: staged-webhook
+receivers:
+  - name: staged-webhook
+    webhook_configs:
+      - url: 'http://127.0.0.1:8080/staged'
+`,
+		}
+
+		// Import as staged (no promote flag).
+		_, status, _ := apiClient.RawConvertPrometheusPostAlertmanagerConfig(t, amConfig, map[string]string{
+			"Content-Type":                         "application/yaml",
+			"X-Grafana-Alerting-Config-Identifier": identifier,
+		})
+		requireStatusCode(t, http.StatusAccepted, status, "")
+
+		// Verify config is staged in ExtraConfigs.
+		_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, map[string]string{
+			"X-Grafana-Alerting-Config-Identifier": identifier,
+		})
+		requireStatusCode(t, http.StatusOK, status, "")
+
+		// Promote via dedicated endpoint.
+		rawResp, status, body := apiClient.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
+		requireStatusCode(t, http.StatusAccepted, status, body)
+		require.Equal(t, "success", rawResp.Status)
+		require.NotNil(t, rawResp.Stats)
+		require.Equal(t, identifier, rawResp.Stats.AddedRoute)
+		require.Contains(t, rawResp.Stats.AddedReceivers, "staged-webhook")
+
+		// Promoted config must no longer be in ExtraConfigs.
+		_, status, _ = apiClient.RawConvertPrometheusGetAlertmanagerConfig(t, map[string]string{
+			"X-Grafana-Alerting-Config-Identifier": identifier,
+		})
+		requireStatusCode(t, http.StatusNotFound, status, "")
+
+		// Receiver must appear in main config.
+		mainConfig, status, _ := apiClient.GetAlertmanagerConfigWithStatus(t)
+		requireStatusCode(t, http.StatusOK, status, "")
+		receiverNames := make([]string, 0, len(mainConfig.AlertmanagerConfig.Receivers))
+		for _, r := range mainConfig.AlertmanagerConfig.Receivers {
+			receiverNames = append(receiverNames, r.Name)
+		}
+		require.Contains(t, receiverNames, "staged-webhook")
+	})
+
+	t.Run("promote non-existent identifier returns 404", func(t *testing.T) {
+		_, status, _ := apiClient.RawConvertPrometheusPromoteAlertmanagerConfig(t, "does-not-exist")
 		requireStatusCode(t, http.StatusNotFound, status, "")
 	})
 }
@@ -448,5 +748,143 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints_FeatureFlagDisabled(t
 	t.Run("DELETE should return not implemented when feature flag disabled", func(t *testing.T) {
 		_, status, _ := apiClient.RawConvertPrometheusDeleteAlertmanagerConfig(t, headers)
 		requireStatusCode(t, http.StatusNotImplemented, status, "")
+	})
+}
+
+// TestIntegrationPromoteAlertmanagerAccessControl verifies RBAC enforcement on the dedicated promote endpoint.
+// It also covers the auto-sync use case: an admin (or background sync) creates a staged ExtraConfig,
+// and a user with the appropriate permissions promotes it.
+func TestIntegrationPromoteAlertmanagerAccessControl(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	testinfra.SQLiteIntegrationTest(t)
+
+	dir, gpath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagAlertingImportAlertmanagerAPI,
+		},
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, gpath)
+	adminClient := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
+	permissionsStore := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
+
+	const identifier = "test-promote-rbac"
+
+	stagedConfig := apimodels.AlertmanagerUserConfig{
+		AlertmanagerConfig: `
+route:
+  receiver: rbac-webhook
+receivers:
+  - name: rbac-webhook
+    webhook_configs:
+      - url: 'http://127.0.0.1:8080/rbac'
+`,
+	}
+
+	// stageConfig creates a fresh ExtraConfig via the admin client and registers cleanup.
+	stageConfig := func(t *testing.T) {
+		t.Helper()
+		_, status, body := adminClient.RawConvertPrometheusPostAlertmanagerConfig(t, stagedConfig, map[string]string{
+			"Content-Type":                         "application/yaml",
+			"X-Grafana-Alerting-Config-Identifier": identifier,
+		})
+		requireStatusCode(t, http.StatusAccepted, status, body)
+		t.Cleanup(func() {
+			adminClient.RawConvertPrometheusDeleteAlertmanagerConfig(t, map[string]string{
+				"X-Grafana-Alerting-Config-Identifier": identifier,
+			})
+		})
+	}
+
+	// createUser creates a user with orgRole=None and grants the given permission sets.
+	// globalCmds are for unscoped actions; importsCmds grant actions scoped to all imports (uid:*).
+	createUserFn := func(t *testing.T, globalActions, importsActions []string) apiClient {
+		t.Helper()
+		login := util.GenerateShortUID()
+		uid := createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+			DefaultOrgRole: string(org.RoleNone),
+			Password:       user.Password(login),
+			Login:          login,
+		})
+		if len(globalActions) > 0 {
+			_, err := permissionsStore.SetUserResourcePermission(
+				context.Background(), 1,
+				accesscontrol.User{ID: uid},
+				resourcepermissions.SetResourcePermissionCommand{Actions: globalActions},
+				nil,
+			)
+			require.NoError(t, err)
+		}
+		if len(importsActions) > 0 {
+			_, err := permissionsStore.SetUserResourcePermission(
+				context.Background(), 1,
+				accesscontrol.User{ID: uid},
+				resourcepermissions.SetResourcePermissionCommand{
+					Actions:           importsActions,
+					Resource:          accesscontrol.AlertingAlertmanagerImportsKind,
+					ResourceAttribute: "uid",
+					ResourceID:        "*",
+				},
+				nil,
+			)
+			require.NoError(t, err)
+		}
+		client := newAlertingApiClient(grafanaListedAddr, login, login)
+		client.ReloadCachedPermissions(t)
+		return client
+	}
+
+	allGlobal := []string{
+		accesscontrol.ActionAlertingReceiversCreate,
+		accesscontrol.ActionAlertingManagedRoutesCreate,
+	}
+	allImports := []string{
+		accesscontrol.ActionAlertingAlertmanagerImportsRead,
+		accesscontrol.ActionAlertingAlertmanagerImportsDelete,
+	}
+
+	// Use case 1 — auto-sync flow: the staged config was created by an admin (or background sync);
+	// a user with all required permissions promotes it via the dedicated endpoint.
+	t.Run("user with all required permissions can promote", func(t *testing.T) {
+		stageConfig(t)
+		client := createUserFn(t, allGlobal, allImports)
+		_, status, body := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
+		requireStatusCode(t, http.StatusAccepted, status, body)
+	})
+
+	// The following tests verify RBAC middleware enforcement. The middleware rejects before any DB
+	// access, so no staged config is needed — 403 is returned regardless of whether the config exists.
+	t.Run("user with no permissions gets 403", func(t *testing.T) {
+		client := createUserFn(t, nil, nil)
+		_, status, _ := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
+		requireStatusCode(t, http.StatusForbidden, status, "")
+	})
+
+	t.Run("user missing ImportsRead gets 403", func(t *testing.T) {
+		client := createUserFn(t, allGlobal, []string{accesscontrol.ActionAlertingAlertmanagerImportsDelete})
+		_, status, _ := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
+		requireStatusCode(t, http.StatusForbidden, status, "")
+	})
+
+	t.Run("user missing ImportsDelete gets 403", func(t *testing.T) {
+		client := createUserFn(t, allGlobal, []string{accesscontrol.ActionAlertingAlertmanagerImportsRead})
+		_, status, _ := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
+		requireStatusCode(t, http.StatusForbidden, status, "")
+	})
+
+	t.Run("user missing ReceiversCreate gets 403", func(t *testing.T) {
+		client := createUserFn(t, []string{accesscontrol.ActionAlertingManagedRoutesCreate}, allImports)
+		_, status, _ := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
+		requireStatusCode(t, http.StatusForbidden, status, "")
+	})
+
+	t.Run("user missing ManagedRoutesCreate gets 403", func(t *testing.T) {
+		client := createUserFn(t, []string{accesscontrol.ActionAlertingReceiversCreate}, allImports)
+		_, status, _ := client.RawConvertPrometheusPromoteAlertmanagerConfig(t, identifier)
+		requireStatusCode(t, http.StatusForbidden, status, "")
 	})
 }

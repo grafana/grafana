@@ -25,11 +25,6 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
 
   return (
     <div ref={containerRef} className={styles.pageContainer} style={layout.gridStyles}>
-      {scene.controls && (
-        <div className={styles.controlsWrapper}>
-          <scene.controls.Component model={scene.controls} />
-        </div>
-      )}
       <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout })}>
         <PanelEditPanelWrapper panel={scene.panel} tableView={scene.tableView} dashboard={scene.dashboard} />
         {nextDataPane && (
@@ -81,6 +76,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
   return {
     pageContainer: css({
       display: 'grid',
+      width: '100%',
       gap: theme.spacing(2),
       overflow: 'hidden',
       paddingBottom: theme.spacing(2),
@@ -99,10 +95,11 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       paddingLeft: theme.spacing(2),
       minWidth: 0,
       minHeight: 0,
-      overflow: 'hidden',
+      containerType: 'size',
     }),
     sidebarContent: css({
       height: '100%',
+      overflow: 'hidden',
     }),
     viz: css({
       gridArea: 'viz',
@@ -118,14 +115,6 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       overflow: 'hidden',
       minHeight: 0,
     }),
-    controlsWrapper: css({
-      gridArea: 'controls',
-      display: 'flex',
-      flexDirection: 'column',
-      ...(sidebarSize === SidebarSize.Mini && {
-        paddingLeft: theme.spacing(2),
-      }),
-    }),
     fixedSizeViz: css({
       height: '100vh',
     }),
@@ -139,11 +128,20 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       position: 'absolute',
       top: 0,
       bottom: 0,
-      right: 0,
+      // Sit inside the grid gap between the sidebar and the data pane (width matches the
+      // gap) so the handle and its pill never overlap the sidebar's vertical scrollbar,
+      // which renders at the inner right edge of the sidebar box.
+      right: `-${theme.spacing(2)}`,
+      width: theme.spacing(2),
     }),
     resizeHandlePill: css({
       height: '100%',
-      width: 2,
+      // Pill (::after) is 200px by default. Shrink to half when sidebar is tight.
+      '@container (max-height: 250px)': {
+        '&::after': {
+          height: 100,
+        },
+      },
     }),
   };
 }

@@ -17,7 +17,7 @@ export interface CartoConfig {
   showLabels?: boolean;
 }
 
-export const defaultCartoConfig: CartoConfig = {
+const defaultCartoConfig: CartoConfig = {
   theme: LayerTheme.Auto,
   showLabels: true,
 };

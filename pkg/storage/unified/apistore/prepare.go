@@ -84,27 +84,60 @@ func (v *objectForStorage) finish(ctx context.Context, err error, secrets secret
 	return nil
 }
 
-// verifyFolder enforces the folder-annotation contract on write. When folder
-// support is disabled, any folder annotation is a validation error (422): the
-// resource does not live in the folder tree at all. When folder support is
-// enabled, the annotation is accepted as-is.
+// verifyFolder enforces the folder-annotation contract on write.
+//
+//   - EnableFolderSupport=false: the resource does not live in the folder tree
+//     at all; reject any write that sets the folder annotation.
+//   - EnableFolderSupport=true and RequireFolder=false: any folder value is
+//     accepted (including empty / root).
+//   - EnableFolderSupport=true and RequireFolder=true: the folder annotation
+//     must be present and non-root; resources of this kind must live in a real
+//     folder.
 func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
-	if s.opts.EnableFolderSupport {
+	folderUID := obj.GetFolder()
+	if !s.opts.EnableFolderSupport {
+		if folderUID == "" {
+			return nil
+		}
+		return apierrors.NewInvalid(
+			obj.GetGroupVersionKind().GroupKind(),
+			obj.GetName(),
+			field.ErrorList{
+				field.Forbidden(
+					field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
+					fmt.Sprintf("folders are not supported for %s", s.gr.String()),
+				),
+			},
+		)
+	}
+	if !s.opts.RequireFolder {
 		return nil
 	}
-	if obj.GetFolder() == "" {
-		return nil
+	if folderUID == "" {
+		return apierrors.NewInvalid(
+			obj.GetGroupVersionKind().GroupKind(),
+			obj.GetName(),
+			field.ErrorList{
+				field.Required(
+					field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
+					fmt.Sprintf("folder is required for %s", s.gr.String()),
+				),
+			},
+		)
 	}
-	return apierrors.NewInvalid(
-		obj.GetGroupVersionKind().GroupKind(),
-		obj.GetName(),
-		field.ErrorList{
-			field.Forbidden(
-				field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
-				fmt.Sprintf("folders are not supported for %s", s.gr.String()),
-			),
-		},
-	)
+	if folder.IsRootFolderUID(folderUID) {
+		return apierrors.NewInvalid(
+			obj.GetGroupVersionKind().GroupKind(),
+			obj.GetName(),
+			field.ErrorList{
+				field.Forbidden(
+					field.NewPath("metadata", "annotations").Key(utils.AnnoKeyFolder),
+					fmt.Sprintf("%s cannot be created in the root folder", s.gr.String()),
+				),
+			},
+		)
+	}
+	return nil
 }
 
 // Called on create

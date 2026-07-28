@@ -1,5 +1,7 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
+import { Controls, Sidebar } from './page-objects';
+
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
@@ -16,23 +18,27 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can use dashboard outline', async ({ gotoDashboardPage, selectors, page }) => {
+    test('can use dashboard outline', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+
+      await controls.enterEditMode();
+      await sidebar.toolbar.clickButton('Outline');
 
       // Should be able to click Variables item in outline to see add variable button
-      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Variables')).click();
+      await sidebar.contentOutline.clickItem('Variables');
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.addVariableButton)
       ).toBeVisible();
 
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
+      await sidebar.toolbar.clickButton('Outline');
 
       // Clicking a panel should scroll that panel in view
       await expect(page.getByText('Dashboard panel 48')).not.toBeInViewport();
-      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('Panel #48')).click();
+
+      await sidebar.contentOutline.clickItem('Panel #48');
       await expect(page.getByText('Dashboard panel 48')).toBeInViewport();
     });
 
@@ -40,21 +46,28 @@ test.describe(
       gotoDashboardPage,
       selectors,
       page,
+      components,
     }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
-      const outlineTree = page.getByRole('tree');
+      await controls.enterEditMode();
+      await sidebar.toolbar.clickButton('Outline');
+
+      const outlineTree = sidebar.contentOutline.getTree();
       const emptyIndicator = outlineTree.getByText('(empty)').first();
 
       await expect(emptyIndicator).not.toBeVisible();
-      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.node('Variables')).click();
+
+      await sidebar.contentOutline.toggleNode('Variables');
       await expect(emptyIndicator).toBeVisible();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
+
+      await sidebar.toolbar.clickButton('Outline');
       await expect(outlineTree).not.toBeVisible();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
+
+      await sidebar.toolbar.clickButton('Outline');
       await expect(emptyIndicator).toBeVisible();
     });
 
@@ -62,23 +75,25 @@ test.describe(
       gotoDashboardPage,
       selectors,
       page,
+      components,
     }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
-      const outlineTree = page.getByRole('tree');
+      await controls.enterEditMode();
+      await sidebar.toolbar.clickButton('Outline');
 
-      await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.node('Variables')).click();
+      const outlineTree = sidebar.contentOutline.getTree();
+
+      await sidebar.contentOutline.toggleNode('Variables');
       await expect(outlineTree.getByText('(empty)').first()).toBeVisible();
 
-      // Exit edit mode
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
+      await controls.exitEditMode();
 
-      // Re-enter edit mode
-      await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.outlineButton).click();
+      await controls.enterEditMode();
+      await sidebar.toolbar.clickButton('Outline');
       await expect(outlineTree.getByText('(empty)').first()).toBeVisible();
     });
   }

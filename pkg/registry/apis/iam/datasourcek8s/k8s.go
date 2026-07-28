@@ -1,6 +1,10 @@
 package datasourcek8s
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+)
 
 // K8sDatasourceAPIGroup returns the k8s API group for a Grafana datasource type
 func K8sDatasourceAPIGroup(dsType string) string {
@@ -19,9 +23,13 @@ func DSTypeFromDatasourceAPIGroup(group string) string {
 }
 
 // LegacyUIDScopeToK8s builds a k8s-style datasource resource scope from the suffix of
-// legacy scope "datasources:uid:<uid>"
+// legacy scope "datasources:uid:<uid>". Wildcard ("*") stays as "datasources:*";
+// concrete UIDs use the "datasources:uid:<uid>" form.
 func LegacyUIDScopeToK8s(dsType, uid string) string {
-	return K8sDatasourceAPIGroup(dsType) + "/datasources:" + uid
+	if uid == "*" {
+		return K8sDatasourceAPIGroup(dsType) + "/datasources:*"
+	}
+	return K8sDatasourceAPIGroup(dsType) + "/datasources:uid:" + uid
 }
 
 // LegacyVerbToK8sAction maps the substring after legacy prefix "datasources:" to a Kubernetes API action.
@@ -72,12 +80,19 @@ func LegacyDatasourceAction(dsType string, action *string) {
 
 // LegacyDatasourceScopeAndActionToK8s converts legacy datasource scope and action to k8s form
 func LegacyDatasourceScopeAndActionToK8s(datasourceType, scope, action string) (string, string) {
-	if datasourceType == "" {
+	kind, _, uid := accesscontrol.SplitScope(scope)
+	if kind != "datasources" {
 		return scope, action
 	}
-	if uid, ok := strings.CutPrefix(scope, "datasources:uid:"); ok {
-		scope = LegacyUIDScopeToK8s(datasourceType, uid)
+	if uid == "*" {
+		// datasource type is not set for wildcard scopes, we use "*" instead
+		datasourceType = "*"
+	} else if datasourceType == "" {
+		// TODO: datasource type is not set, this should be an error
+		return scope, action
 	}
+
+	scope = LegacyUIDScopeToK8s(datasourceType, uid)
 	if converted, ok := legacyActionToK8s(datasourceType, action); ok {
 		action = converted
 	}

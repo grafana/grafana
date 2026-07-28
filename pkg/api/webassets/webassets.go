@@ -16,7 +16,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/httpclient"
 	"github.com/open-feature/go-sdk/openfeature"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 )
+
+var tracer = otel.Tracer("github.com/grafana/grafana/pkg/api/webassets")
 
 type ManifestInfo struct {
 	FilePath  string `json:"src,omitempty"`
@@ -43,6 +47,9 @@ var (
 )
 
 func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licensing) (*dtos.EntryPointAssets, error) {
+	ctx, span := tracer.Start(ctx, "webassets.GetWebAssets")
+	defer span.End()
+
 	entryPointAssetsCacheMu.RLock()
 	ret := entryPointAssetsCache
 	entryPointAssetsCacheMu.RUnlock()
@@ -90,6 +97,10 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	}
 
 	entryPointAssetsCache = result
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
 	return entryPointAssetsCache, err
 }
 
