@@ -50,6 +50,79 @@ func facetFieldsForMapping(provider resource.SearchFieldsProvider, group, kindRe
 	return fields
 }
 
+// textQueryKind is the free-text query a physical index field needs, so callers
+// don't have to know how the field is analyzed.
+type textQueryKind int
+
+const (
+	textQueryStandard textQueryKind = iota // standard analyzer
+	textQueryNgram                         // ngram analyzer
+	textQueryTerm                          // keyword analyzer, exact token
+	// textQueryTermLowered is a keyword field holding a copy of another field's
+	// value. Those copies are written lowercased, so the term looked up has to
+	// be lowercased too.
+	textQueryTermLowered
+)
+
+// textQueryKindsForMapping derives the query kind of every physical index field
+// from the same declarations that produced the mapping, so the two cannot drift
+// apart (see addCapabilityFieldMappings).
+func textQueryKindsForMapping(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) map[string]textQueryKind {
+	kinds := map[string]textQueryKind{}
+	add := func(def resource.SearchFieldDefinition, prefix string) {
+		// Non-string fields are never analyzed.
+		if def.Type != resource.SearchFieldTypeString {
+			return
+		}
+		if def.HasCapability(resource.SearchCapabilityText) {
+			kinds[prefix+def.Name] = textQueryStandard
+		}
+		if name, ok := ngramVariant(def); ok {
+			kinds[prefix+name] = textQueryNgram
+		}
+		if name, ok := keywordVariant(def); ok {
+			// A keyword form under its own name is the value as indexed; under a
+			// different name it is a lowercased copy (see populateFieldVariants
+			// and UpdateCopyFields for title).
+			kind := textQueryTerm
+			if name != def.Name {
+				kind = textQueryTermLowered
+			}
+			kinds[prefix+name] = kind
+		}
+	}
+
+	for _, def := range resource.StandardSearchFieldDefinitions() {
+		add(def, "")
+	}
+	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
+		add(def, resource.SEARCH_FIELD_PREFIX)
+	}
+	// Selectable fields are keyword-mapped (see getBleveDocMappings).
+	for _, name := range selectableFields {
+		kinds[resource.SEARCH_SELECTABLE_FIELDS_PREFIX+name] = textQueryTerm
+	}
+	for _, name := range keywordSubDocumentFields {
+		kinds[name] = textQueryTerm
+	}
+	return kinds
+}
+
+// keywordSubDocumentFields are keyword-mapped fields that live in sub-documents
+// and so are not modellable as SearchFieldDefinitions yet (see
+// managerSubDocumentMapping and sourceSubDocumentMapping). The labels
+// sub-document is deliberately absent: it has no keyword default analyzer.
+var keywordSubDocumentFields = []string{
+	resource.SEARCH_FIELD_MANAGER_KIND,
+	resource.SEARCH_FIELD_MANAGER_ID,
+	resource.SEARCH_FIELD_SOURCE_PATH,
+	resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+}
+
+// referenceFieldPrefix is the keyword-analyzed reference sub-document. Its keys
+// are resource kinds, so they cannot be enumerated up front.
+const referenceFieldPrefix = "reference."
+
 // addCapabilityFieldMappings adds bleve field mappings to parent for a single
 // declared search field. The field is placed under parent using def.Name as
 // the local name; this helper does not add any sub-document prefix (callers
@@ -331,7 +404,7 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 	// override these on a DocumentMapping — only on individual FieldMappings.
 	referenceMapper := bleve.NewDocumentMapping()
 	referenceMapper.DefaultAnalyzer = keyword.Name
-	mapper.AddSubDocumentMapping("reference", referenceMapper)
+	mapper.AddSubDocumentMapping(strings.TrimSuffix(referenceFieldPrefix, "."), referenceMapper)
 
 	labelMapper := bleve.NewDocumentMapping()
 	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)

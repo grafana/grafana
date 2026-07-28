@@ -1,5 +1,5 @@
 import { saveAs } from 'file-saver';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
@@ -142,5 +142,97 @@ describe('dashboard diagnostics', () => {
     expect(saveAs).toHaveBeenCalledTimes(1);
     const [, filename] = jest.mocked(saveAs).mock.calls[0];
     expect(filename).toMatch(/^dashboard-diagnostics-\d{8}-\d{6}\.tar\.gz$/);
+  });
+});
+
+// The Content-Disposition parser (fileNameFromContentDisposition) isn't exported, so it's exercised
+// through its only caller-visible surface: the filename saveAs is called with. `undefined` matches
+// (no name parsed -> generated fallback) are asserted separately below.
+describe('Content-Disposition filename parsing', () => {
+  beforeEach(() => {
+    jest.mocked(saveAs).mockClear();
+  });
+
+  it.each([
+    ['a quoted filename', 'attachment; filename="bundle.tar.gz"', 'bundle.tar.gz'],
+    ['an unquoted filename', 'attachment; filename=bundle.tar.gz', 'bundle.tar.gz'],
+    [
+      'an unquoted filename followed by an RFC5987 filename* param (stops at the ";")',
+      "attachment; filename=bundle.tar.gz; filename*=UTF-8''b%C3%BCndle.tar.gz",
+      'bundle.tar.gz',
+    ],
+    ['a case-insensitive header key', 'attachment; FILENAME=Bundle.TAR.gz', 'Bundle.TAR.gz'],
+  ])('uses the parsed name for %s', async (_name, header, expected) => {
+    const blob = new Blob(['bundle'], { type: 'application/gzip' });
+    setupBackendSrv({ data: blob, headers: new Headers({ 'Content-Disposition': header }) });
+
+    await downloadDiagnosticsForQueries([{ refId: 'A' }], '1', '2');
+
+    expect(saveAs).toHaveBeenCalledWith(blob, expected);
+  });
+
+  it.each([
+    // A bare RFC5987 filename* is not decoded here (the parser matches "filename=" literally), so it
+    // falls through to the generated fallback rather than yielding a mangled name.
+    ['a bare RFC5987 filename*', "attachment; filename*=UTF-8''r%C3%A9sum%C3%A9.tar.gz"],
+    ['a header with no filename parameter', 'attachment'],
+    ['an empty header value', ''],
+  ])('falls back to a generated name for %s', async (_name, header) => {
+    const blob = new Blob(['bundle'], { type: 'application/gzip' });
+    setupBackendSrv({ data: blob, headers: new Headers({ 'Content-Disposition': header }) });
+
+    await downloadDiagnosticsForQueries([{ refId: 'A' }], '1', '2');
+
+    expect(saveAs).toHaveBeenCalledTimes(1);
+    const [, filename] = jest.mocked(saveAs).mock.calls[0];
+    expect(filename).toMatch(/^diagnostics-\d{8}-\d{6}\.tar\.gz$/);
+  });
+});
+
+describe('abort signal handling', () => {
+  beforeEach(() => {
+    jest.mocked(saveAs).mockClear();
+  });
+
+  it('forwards the abort signal to the POST fetch when downloading panel diagnostics', async () => {
+    const fetch = setupBackendSrv({ data: new Blob(['x']), headers: new Headers() });
+    const { signal } = new AbortController();
+
+    await downloadDiagnosticsForQueries([{ refId: 'A' }], '1', '2', signal);
+
+    // The drawer's AbortController.signal must reach getBackendSrv so cancel/unmount can abort the
+    // in-flight request; showErrorAlert stays false so the drawer surfaces failures itself.
+    expect(fetch).toHaveBeenCalledWith(expect.objectContaining({ abortSignal: signal, showErrorAlert: false }));
+  });
+
+  it('forwards the abort signal through the whole dashboard job lifecycle', async () => {
+    const { signal } = new AbortController();
+
+    const startFetch = setupBackendSrv({ data: { uid: 'job-1' } });
+    await startDashboardDiagnostics(
+      [{ id: 1, title: 'A', from: '1', to: '2', queries: [{ refId: 'A' }] }],
+      undefined,
+      signal
+    );
+    expect(startFetch).toHaveBeenCalledWith(expect.objectContaining({ abortSignal: signal }));
+
+    const statusFetch = setupBackendSrv({ data: { uid: 'job-1', state: 'complete', panelsTotal: 1, panelsDone: 1 } });
+    await getDashboardDiagnosticsStatus('job-1', signal);
+    expect(statusFetch).toHaveBeenCalledWith(expect.objectContaining({ abortSignal: signal }));
+
+    const downloadFetch = setupBackendSrv({ data: new Blob(['x']), headers: new Headers() });
+    await downloadDashboardDiagnostics('job-1', signal);
+    expect(downloadFetch).toHaveBeenCalledWith(expect.objectContaining({ abortSignal: signal }));
+  });
+
+  it('rejects and saves nothing when the fetch errors (e.g. an aborted request)', async () => {
+    // An aborted in-flight request surfaces as a rejected observable; the flow must reject cleanly and
+    // not attempt to save a file.
+    const err = new DOMException('The user aborted a request.', 'AbortError');
+    const fetch = jest.fn().mockReturnValue(throwError(() => err));
+    jest.mocked(getBackendSrv).mockReturnValue({ fetch } as unknown as ReturnType<typeof getBackendSrv>);
+
+    await expect(downloadDiagnosticsForQueries([{ refId: 'A' }], '1', '2')).rejects.toBe(err);
+    expect(saveAs).not.toHaveBeenCalled();
   });
 });
