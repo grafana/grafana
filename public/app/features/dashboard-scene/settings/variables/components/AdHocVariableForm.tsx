@@ -187,9 +187,9 @@ export function AdHocVariableForm({
 
       {datasourceSupported && onAllowCustomValueChange && (
         <Field
-          label={t('dashboard.edit-pane.variable.selection-options.allow-custom-values', 'Allow custom values')}
+          label={t('dashboard.sidebar.variable.selection-options.allow-custom-values', 'Allow custom values')}
           description={t(
-            'dashboard.edit-pane.variable.selection-options.allow-custom-values-description',
+            'dashboard.sidebar.variable.selection-options.allow-custom-values-description',
             'Enables users to enter values'
           )}
           noMargin

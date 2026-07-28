@@ -116,7 +116,7 @@ export class VariableOptions extends PageObject {
           .click();
 
         await this.page.keyboard.type(dataSource);
-        await this.page.getByRole('button', { name: dataSource }).click();
+        await this.page.getByRole('option', { name: dataSource }).click();
       });
     },
   };
@@ -131,7 +131,7 @@ export class VariableOptions extends PageObject {
           .click();
 
         await this.page.keyboard.type(dataSource);
-        await this.page.getByRole('button', { name: dataSource }).click();
+        await this.page.getByRole('option', { name: dataSource }).click();
 
         await this.page
           .getByRole('alert', { name: /this data source does not support filters/ })

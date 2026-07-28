@@ -682,10 +682,6 @@ const (
 	// Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
 	FlagPrometheusTypeMigration = "prometheusTypeMigration"
 
-	// FlagPluginContainers
-	// Enables running plugins in containers
-	FlagPluginContainers = "pluginContainers"
-
 	// FlagCdnPluginsLoadFirst
 	// Prioritize loading plugins from the CDN before other sources
 	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
@@ -985,4 +981,12 @@ const (
 	// FlagGrafanaMultiTenantNavTree
 	// Builds the navigation tree client-side instead of reading it from /bootdata
 	FlagGrafanaMultiTenantNavTree = "grafana.multiTenantNavTree"
+
+	// FlagAuthzListFoldersViaSearch
+	// Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.
+	FlagAuthzListFoldersViaSearch = "authz.listFoldersViaSearch"
+
+	// FlagLibraryElementsFolderTreeViaSearch
+	// Build the library-elements folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips on GET /api/library-elements.
+	FlagLibraryElementsFolderTreeViaSearch = "libraryElements.folderTreeViaSearch"
 )
