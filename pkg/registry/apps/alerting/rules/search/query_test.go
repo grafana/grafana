@@ -205,6 +205,95 @@ func TestBuildSearchRequest_labelSelectorInIsASet(t *testing.T) {
 	})
 }
 
+// TestBuildSearchRequest_labelsFilterLeaf covers the labels filter leaf, whose
+// operator has to mean what it means in a labelSelector: the values in one leaf
+// are a set, so In disjoins them. NotIn is that set's complement, and
+// NOT(a OR b) is NOT a AND NOT b — so its values conjoin instead, which is why
+// they cannot share a requirement.
+func TestBuildSearchRequest_labelsFilterLeaf(t *testing.T) {
+	const notIn = model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn
+	gr := alertrule.ResourceInfo.GroupResource()
+	build := func(op model.CreateSearchRulesRequestSearchFilterLeafOperator, vals ...string) *resourcepb.ResourceSearchRequest {
+		req, _, err := buildSearchRequest(model.CreateSearchRulesRequestBody{
+			Where: &model.CreateSearchRulesRequestSearchWhereNode{
+				Filter: &model.CreateSearchRulesRequestSearchFilterLeaf{Field: fieldLabels, Operator: op, Values: vals},
+			},
+		}, "default", gr, nil)
+		require.NoError(t, err)
+		return req
+	}
+
+	teamA := &ngmodels.AlertRule{Labels: map[string]string{"team": "a"}}
+	teamB := &ngmodels.AlertRule{Labels: map[string]string{"team": "b"}}
+	other := &ngmodels.AlertRule{Labels: map[string]string{"other": "x"}}
+
+	t.Run("In disjoins its values", func(t *testing.T) {
+		req := build(opIn, "team=a", "team=b")
+		require.Len(t, req.Options.Fields, 1, "values must share one requirement to disjoin")
+		assert.Equal(t, "in", req.Options.Fields[0].Operator)
+		assert.ElementsMatch(t, []string{"team=a", "team=b"}, req.Options.Fields[0].Values)
+
+		groups := extractFilters(req).labelGroups
+		assert.True(t, matchLabels(teamA, groups))
+		assert.True(t, matchLabels(teamB, groups))
+		assert.False(t, matchLabels(other, groups))
+	})
+
+	t.Run("an existence value keeps its bare term", func(t *testing.T) {
+		req := build(opIn, "team", "other=x")
+		require.Len(t, req.Options.Fields, 1)
+		// "team=" would mean team equals the empty string, not team exists.
+		assert.ElementsMatch(t, []string{"team", "other=x"}, req.Options.Fields[0].Values)
+
+		groups := extractFilters(req).labelGroups
+		assert.True(t, matchLabels(teamA, groups), "team exists")
+		assert.True(t, matchLabels(other, groups), "other=x matches")
+	})
+
+	t.Run("NotIn conjoins, one requirement per value", func(t *testing.T) {
+		req := build(notIn, "team=a", "team=b")
+		require.Len(t, req.Options.Fields, 2, "negated values must not share a requirement")
+		for _, r := range req.Options.Fields {
+			assert.Equal(t, "notin", r.Operator, "batching these as one \"in\" inverts the filter")
+		}
+
+		groups := extractFilters(req).labelGroups
+		assert.False(t, matchLabels(teamA, groups))
+		assert.False(t, matchLabels(teamB, groups), "both values must be excluded")
+		assert.True(t, matchLabels(other, groups))
+	})
+
+	t.Run("NotIn on existence values", func(t *testing.T) {
+		req := build(notIn, "team", "other")
+		require.Len(t, req.Options.Fields, 2)
+		assert.ElementsMatch(t, []string{"team"}, req.Options.Fields[0].Values)
+		assert.ElementsMatch(t, []string{"other"}, req.Options.Fields[1].Values)
+
+		groups := extractFilters(req).labelGroups
+		assert.False(t, matchLabels(teamA, groups), "team must not exist")
+		assert.False(t, matchLabels(other, groups), "other must not exist")
+	})
+
+	t.Run("single values are unchanged", func(t *testing.T) {
+		for _, tc := range []struct {
+			op       model.CreateSearchRulesRequestSearchFilterLeafOperator
+			value    string
+			operator string
+			term     string
+		}{
+			{opIn, "team=a", "in", "team=a"},
+			{opIn, "team", "in", "team"},
+			{notIn, "team=a", "notin", "team=a"},
+			{notIn, "team", "notin", "team"},
+		} {
+			req := build(tc.op, tc.value)
+			require.Len(t, req.Options.Fields, 1, "%s %q", tc.op, tc.value)
+			assert.Equal(t, tc.operator, req.Options.Fields[0].Operator, "%s %q", tc.op, tc.value)
+			assert.Equal(t, []string{tc.term}, req.Options.Fields[0].Values, "%s %q", tc.op, tc.value)
+		}
+	})
+}
+
 func TestBuildSearchRequest_rejectsUnknownFilterField(t *testing.T) {
 	body := model.CreateSearchRulesRequestBody{
 		Where: &model.CreateSearchRulesRequestSearchWhereNode{

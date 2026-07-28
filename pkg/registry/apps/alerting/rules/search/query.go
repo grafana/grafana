@@ -237,6 +237,7 @@ func applyFilter(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearch
 	}
 
 	if leaf.Field == fieldLabels {
+		matchers := make([]labelMatcher, 0, len(leaf.Values))
 		for _, v := range leaf.Values {
 			// The In/NotIn operator carries negation, so a "!"-prefixed value
 			// would double-negate. Reject it rather than resolve it ambiguously.
@@ -245,9 +246,17 @@ func applyFilter(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearch
 			}
 			m := parseLabelMatcher(v)
 			if leaf.Operator == model.CreateSearchRulesRequestSearchFilterLeafOperatorNotIn {
-				m = negateMatcher(m)
+				// NotIn is the complement of the set, and NOT(a OR b) is
+				// NOT a AND NOT b — so the negated matchers conjoin and each
+				// needs its own requirement. Batching them would read as
+				// "any one differs", which is the wrong answer.
+				req.Options.Fields = append(req.Options.Fields, labelMatcherRequirement(negateMatcher(m)))
+				continue
 			}
-			req.Options.Fields = append(req.Options.Fields, labelMatcherRequirement(m))
+			matchers = append(matchers, m)
+		}
+		if len(matchers) > 0 {
+			req.Options.Fields = append(req.Options.Fields, labelMatchersRequirement(matchers))
 		}
 		return nil
 	}
@@ -532,32 +541,44 @@ func parseLabelMatcher(s string) labelMatcher {
 // to and from a requirement on the indexed "labels" field, using flattened
 // "key"/"key=value" terms and in/notin operators so a matcher survives the
 // request and resolves the same way on both backends.
+// labelMatchersRequirement encodes matchers that must be read as a set — any one
+// of them matching is enough — into a single requirement.
+//
+// Only non-negated matchers may be passed: negation conjoins rather than
+// disjoins, so a negated matcher needs a requirement of its own. See the NotIn
+// branch in applyFilter.
 func labelMatchersRequirement(ms []labelMatcher) *resourcepb.Requirement {
 	if len(ms) == 1 {
 		return labelMatcherRequirement(ms[0])
 	}
 	r := &resourcepb.Requirement{Key: fieldLabels, Operator: "in", Values: make([]string, 0, len(ms))}
 	for _, m := range ms {
-		r.Values = append(r.Values, m.key+"="+m.value)
+		r.Values = append(r.Values, labelTerm(m))
 	}
 	return r
 }
 
 func labelMatcherRequirement(m labelMatcher) *resourcepb.Requirement {
-	r := &resourcepb.Requirement{Key: fieldLabels, Operator: "in"}
-	switch m.op {
-	case matchEquals:
-		r.Values = []string{m.key + "=" + m.value}
-	case matchNotEquals:
-		r.Operator = "notin"
-		r.Values = []string{m.key + "=" + m.value}
-	case matchExists:
-		r.Values = []string{m.key}
-	case matchNotExists:
-		r.Operator = "notin"
-		r.Values = []string{m.key}
+	operator := "in"
+	if labelMatcherIsNegated(m) {
+		operator = "notin"
 	}
-	return r
+	return &resourcepb.Requirement{Key: fieldLabels, Operator: operator, Values: []string{labelTerm(m)}}
+}
+
+// labelTerm is the indexed term for a matcher: a bare key for an existence
+// check, "key=value" for an equality one. Negation is carried by the
+// requirement's operator rather than the term, so the negated and non-negated
+// forms of a matcher share a term.
+func labelTerm(m labelMatcher) string {
+	if m.op == matchExists || m.op == matchNotExists {
+		return m.key
+	}
+	return m.key + "=" + m.value
+}
+
+func labelMatcherIsNegated(m labelMatcher) bool {
+	return m.op == matchNotEquals || m.op == matchNotExists
 }
 
 func requirementToLabelMatchers(r *resourcepb.Requirement) []labelMatcher {
