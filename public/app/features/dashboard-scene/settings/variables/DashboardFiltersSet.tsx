@@ -14,13 +14,13 @@ import {
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { AddFilterButton, DashboardFiltersList } from '../../edit-pane/dashboard/DashboardFiltersList';
-import { partitionVariablesByDisplay } from '../../edit-pane/dashboard/DashboardVariablesList';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
+import { AddFilterButton, DashboardFiltersList } from '../../sidebar/dashboard/DashboardFiltersList';
+import { partitionVariablesByDisplay } from '../../sidebar/dashboard/DashboardVariablesList';
 
 export interface DashboardFiltersSetState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;

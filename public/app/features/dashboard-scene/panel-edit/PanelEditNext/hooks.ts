@@ -6,7 +6,7 @@ import { useLocalStorage } from 'react-use';
 import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
-import { useEditPaneCollapsed } from '../../edit-pane/shared';
+import { useEditPaneCollapsed } from '../../sidebar/shared';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { type PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';

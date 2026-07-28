@@ -8,7 +8,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
-import { DashboardSidebarSplitter } from '../edit-pane/DashboardSidebarSplitter';
+import { DashboardSidebarSplitter } from '../sidebar/DashboardSidebarSplitter';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/SoloPanelContext';
 
 import { type DashboardScene } from './DashboardScene';

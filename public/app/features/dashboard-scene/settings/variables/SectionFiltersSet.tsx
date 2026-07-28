@@ -13,12 +13,12 @@ import {
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { SectionFiltersList } from '../../edit-pane/SectionFiltersList';
-import { partitionVariablesByDisplay } from '../../edit-pane/dashboard/DashboardVariablesList';
 import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
+import { SectionFiltersList } from '../../sidebar/SectionFiltersList';
+import { partitionVariablesByDisplay } from '../../sidebar/dashboard/DashboardVariablesList';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
 export interface SectionFiltersSetState extends SceneObjectState {

@@ -5,8 +5,8 @@ import { type SceneDataProvider, type VizPanel, useSceneObjectState } from '@gra
 import { SceneContext, SceneContextObject } from '@grafana/scenes-react';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
-import { ToggleViewPanePaneEvent } from '../edit-pane/events';
 import { getDashboardSceneLike } from '../scene/types/dashboard';
+import { ToggleViewPanePaneEvent } from '../sidebar/events';
 
 import { FanoutPanel } from './FanoutPanel';
 import { ViewPanelSidePane } from './ViewPanelSidePane';

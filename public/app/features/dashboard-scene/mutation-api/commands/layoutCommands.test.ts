@@ -13,8 +13,8 @@ import type { MutationResult } from '../types';
 
 // Mock the edit-pane actions so that perform() is called synchronously
 // instead of publishing an event (which requires a DashboardScene subscriber).
-jest.mock('../../edit-pane/shared', () => {
-  const actual = jest.requireActual('../../edit-pane/shared');
+jest.mock('../../sidebar/shared', () => {
+  const actual = jest.requireActual('../../sidebar/shared');
   return {
     ...actual,
     dashboardEditActions: {

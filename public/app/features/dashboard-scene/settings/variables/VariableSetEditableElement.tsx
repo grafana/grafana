@@ -11,14 +11,14 @@ import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { partitionVariablesByDisplay } from '../../edit-pane/dashboard/DashboardVariablesList';
-import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
 import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
   isEditableDashboardElement,
 } from '../../scene/types/EditableDashboardElement';
+import { partitionVariablesByDisplay } from '../../sidebar/dashboard/DashboardVariablesList';
+import { dashboardEditActions } from '../../sidebar/shared';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';

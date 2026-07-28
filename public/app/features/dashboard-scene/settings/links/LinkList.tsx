@@ -7,8 +7,8 @@ import { t, Trans } from '@grafana/i18n';
 import type { DashboardLink } from '@grafana/schema';
 import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { dashboardEditActions } from '../../edit-pane/shared';
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { dashboardEditActions } from '../../sidebar/shared';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import { openAddLinkPane, openLinkEditPane } from './LinkAddEditableElement';

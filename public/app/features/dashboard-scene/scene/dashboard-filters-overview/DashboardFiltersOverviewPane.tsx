@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase, sceneUtils } from '@grafana/scenes';
 import { Box, IconButton, Text, useStyles2 } from '@grafana/ui';
 
-import { DashboardSidebar } from '../../edit-pane/DashboardSidebar';
+import { DashboardSidebar } from '../../sidebar/DashboardSidebar';
 
 import { DashboardFiltersOverview } from './DashboardFiltersOverview';
 import { DashboardFiltersOverviewSearch } from './DashboardFiltersOverviewSearch';
