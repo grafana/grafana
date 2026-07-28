@@ -156,8 +156,7 @@ value is knowable; no `toBeGreaterThanOrEqual` where the code guarantees a stric
 ## Step 4 — Canvas / rendering panels: use the draw-call snapshot harness
 
 Panels that draw to canvas (timeseries, heatmap, xychart, timeline, piechart, sparkline)
-are tested by **capturing the ctx draw-call stream**, not by pixel-diffing (visual
-regression is Meticulous's job). Follow the established harness:
+are tested by **capturing the ctx draw-call stream**, not by pixel-diffing. Follow the established harness:
 
 ```ts
 import { createGrafanaUiMeasureTextJestMock, installCanvasPath2DShim,
