@@ -432,7 +432,10 @@ describe('fieldValueColors progressive enhancement', () => {
     expect(first.getAll(values).map((i) => first.index[i] ?? null)).toEqual(expected);
     expect(second.getAll(values).map((i) => second.index[i] ?? null)).toEqual(expected);
 
-    // telemetry fires once per session, not on every config build
+    // telemetry fires once per session, not on every config build.
+    // NB: scatter.ts tracks "already reported" in a non-resettable module-level flag, so this
+    // count only holds while this stays the only test that trips the blocked-`Function` fallback
+    // (the parity cases above call compileSpec/interpretSpec directly and never reach it).
     expect(logWarning).toHaveBeenCalledTimes(1);
   });
 });
