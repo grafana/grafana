@@ -236,8 +236,9 @@ func storedFacetFieldsForMapping(provider resource.SearchFieldsProvider, group, 
 //     (see keywordVariant). sort enables DocValues.
 //   - text                    → standard-analyzer text mapping at def.Name.
 //   - partial                 → ngram mapping at def.Name + "_ngram".
-//   - retrieve                → Store: true on the canonical field
-//     (def.Name if text is declared, else the keyword variant).
+//   - retrieve / facet        → Store: true on the canonical field
+//     (def.Name if text is declared, else the keyword variant). Facet implies
+//     stored: app-side post-rank facet aggregation reads the stored value.
 //
 // Special case: when a field has only [filter] (with or without retrieve) and
 // no text capability, the keyword variant is named def.Name directly, without
@@ -257,6 +258,7 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 	hasText := def.HasCapability(resource.SearchCapabilityText)
 	hasPartial := def.HasCapability(resource.SearchCapabilityPartial)
 	hasSort := def.HasCapability(resource.SearchCapabilitySort)
+	hasFacet := def.HasCapability(resource.SearchCapabilityFacet)
 	hasRetrieve := def.HasCapability(resource.SearchCapabilityRetrieve)
 	hasUnranked := def.HasCapability(resource.SearchCapabilityUnranked)
 
@@ -287,7 +289,7 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 		m.DocValues = hasSort
 		// Canonical field for storage is the keyword variant only when no text
 		// mapping will also be created.
-		m.Store = hasRetrieve && !hasText
+		m.Store = (hasRetrieve || hasFacet) && !hasText
 		m.IncludeInAll = false
 		parent.AddFieldMappingsAt(keywordName, m)
 	}
@@ -297,7 +299,7 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 		m.Analyzer = standard.Name
 		m.IncludeTermVectors = false
 		m.DocValues = false
-		m.Store = hasRetrieve
+		m.Store = hasRetrieve || hasFacet
 		m.IncludeInAll = false
 		m.SkipFreqNorm = hasUnranked
 		parent.AddFieldMappingsAt(def.Name, m)

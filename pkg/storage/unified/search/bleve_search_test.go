@@ -1774,7 +1774,9 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Equal(t, legacyRes.Facet, res.Facet)
 	})
 
-	t.Run("non-stored facets stay on the in-searcher path", func(t *testing.T) {
+	t.Run("managedBy facets match the in-searcher path", func(t *testing.T) {
+		// managedBy is facet-capable and stored (facet implies stored), so the
+		// post-rank path aggregates it app-side like any other facet field.
 		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
 		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
 		docs := []*resource.BulkIndexItem{
@@ -1799,6 +1801,12 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 		require.Equal(t, legacyNames, names)
 		require.Equal(t, legacyRes.Facet, res.Facet)
+		// The denied doc's manager must not leak into the authorized facet.
+		f := res.Facet["managedBy"]
+		require.Equal(t, int64(2), f.Total)
+		for _, term := range f.Terms {
+			require.NotEqual(t, "repo:secret", term.Term)
+		}
 	})
 
 	t.Run("zero facet limit matches the in-searcher path", func(t *testing.T) {

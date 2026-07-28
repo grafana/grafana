@@ -492,13 +492,19 @@ type hashableVersion struct {
 	Fields  []hashableField `json:"f"`
 }
 
+// searchFieldIndexMappingVersion changes when the server's interpretation of
+// capabilities changes the persisted index shape without changing declarations.
+// Bumping it shifts IndexAffectingHash and triggers a one-time index rebuild.
+const searchFieldIndexMappingVersion = 2
+
 // hashablePayload is the canonical hash input. Standard search fields
 // (shared by every kind) are mixed in alongside per-(group, resource)
-// versioned fields so that changes to the standard set shift every kind's
-// hash and trigger a rebuild via the SearchFieldsHash check.
+// versioned fields and the server mapping revision so either declaration or
+// mapping-semantic changes trigger a rebuild via the SearchFieldsHash check.
 type hashablePayload struct {
-	Standard []hashableField   `json:"s"`
-	Versions []hashableVersion `json:"v"`
+	MappingVersion int               `json:"m"`
+	Standard       []hashableField   `json:"s"`
+	Versions       []hashableVersion `json:"v"`
 }
 
 // canonicalHashableFields normalises a SearchFieldDefinition slice into
@@ -545,8 +551,9 @@ func (p *mapProvider) IndexAffectingHash(group, resource string) string {
 		})
 	}
 	payload := hashablePayload{
-		Standard: canonicalHashableFields(StandardSearchFieldDefinitions()),
-		Versions: versionPayloads,
+		MappingVersion: searchFieldIndexMappingVersion,
+		Standard:       canonicalHashableFields(StandardSearchFieldDefinitions()),
+		Versions:       versionPayloads,
 	}
 
 	// json.Marshal can only return a non-nil error for inputs it cannot

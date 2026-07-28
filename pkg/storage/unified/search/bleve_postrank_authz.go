@@ -140,18 +140,11 @@ func (b *bleveIndex) ensureAuthzFields(searchrequest *bleve.SearchRequest) {
 	}
 }
 
-func (b *bleveIndex) canAggregateFacetsPostRank(facets map[string]*resourcepb.ResourceSearchRequest_Facet) bool {
-	for _, facet := range facets {
-		if _, ok := b.searchFields.storedFacetFields[facet.Field]; !ok {
-			return false
-		}
-	}
-	return true
-}
-
 // ensureFacetFields makes Bleve load the stored facet fields so the post-rank
-// runner can aggregate them app-side. Like ensureAuthzFields this extends the
-// Bleve load list only; it is not part of the response column list.
+// runner can aggregate them app-side. Facet capability implies the canonical
+// field is stored, so every facetable field has a stored form to load. Like
+// ensureAuthzFields this extends the Bleve load list only; it is not part of
+// the response column list.
 func (b *bleveIndex) ensureFacetFields(searchrequest *bleve.SearchRequest, req *resourcepb.ResourceSearchRequest) {
 	if slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_ALL_FIELDS) {
 		return

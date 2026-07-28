@@ -203,8 +203,8 @@ func TestAddCapabilityFieldMappings_SortWithoutFilter(t *testing.T) {
 }
 
 func TestAddCapabilityFieldMappings_FacetOnly(t *testing.T) {
-	// facet shares the keyword variant. Without retrieve, the field is
-	// indexed but not stored — same as the existing "managedBy" mapping.
+	// facet shares the keyword variant, and facet capability implies stored:
+	// app-side post-rank facet aggregation reads the stored value.
 	got := flatMappings(t, resource.SearchFieldDefinition{
 		Name:         "managedBy",
 		Type:         resource.SearchFieldTypeString,
@@ -213,7 +213,7 @@ func TestAddCapabilityFieldMappings_FacetOnly(t *testing.T) {
 	require.Equal(t, []string{"managedBy"}, slices.Sorted(maps.Keys(got)))
 	m := got["managedBy"]
 	assert.Equal(t, keyword.Name, m.Analyzer)
-	assert.False(t, m.Store)
+	assert.True(t, m.Store)
 }
 
 func TestKeywordFieldsForMapping(t *testing.T) {
@@ -278,6 +278,7 @@ func TestStoredFacetFieldsForMapping(t *testing.T) {
 		gvr: {
 			{Name: "summary", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFacet}},
 			{Name: "category", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFacet}},
+			{Name: "facetOnly", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFacet}},
 		},
 	}, nil)
 
@@ -288,7 +289,9 @@ func TestStoredFacetFieldsForMapping(t *testing.T) {
 	assert.Equal(t, "fields.summary", fields["fields.summary"])
 	assert.Equal(t, "fields.category", fields["category"])
 	assert.Equal(t, "fields.category", fields["fields.category"])
+	assert.Equal(t, "fields.facetOnly", fields["facetOnly"])
 	assert.NotContains(t, fields, resource.SEARCH_FIELD_FOLDER)
+	assert.NotContains(t, fields, "labels.region")
 }
 
 func TestTextQueryKindsForMapping(t *testing.T) {
