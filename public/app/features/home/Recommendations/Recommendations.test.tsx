@@ -138,7 +138,6 @@ describe('Recommendations', () => {
     const setupLink = await screen.findByRole('link', { name: /Set up Hosted Traces/, hidden: true });
     expect(setupLink).toHaveAttribute('href', '/a/grafana-exploretraces-app');
     expect(screen.queryByRole('link', { name: /Enable Hosted Traces/, hidden: true })).not.toBeInTheDocument();
-
   });
 
   it('hides the setup card when the user lacks app access to the silent app', async () => {

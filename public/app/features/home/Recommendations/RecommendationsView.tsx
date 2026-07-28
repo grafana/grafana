@@ -172,7 +172,6 @@ export function RecommendationsView({ recommendations, startingState }: Recommen
                       />
                     </Stack>
                   )}
-
                 </Stack>
 
                 <div className={styles.outer}>
