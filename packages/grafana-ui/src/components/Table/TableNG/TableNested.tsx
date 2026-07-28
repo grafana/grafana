@@ -51,7 +51,6 @@ import {
   calculateFooterHeight,
   createTypographyContext,
   extractPixelValue,
-  getApplyToRowBgFn,
   getCellColorInlineStylesFactory,
   getCellLinks,
   getDefaultRowHeight,
@@ -197,10 +196,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const availableWidth = useMemo(() => width - COLUMN.EXPANDER_WIDTH - scrollbarWidth, [width, scrollbarWidth]);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
-  const applyToRowBgFn = useMemo(
-    () => getApplyToRowBgFn(data.fields, getCellColorInlineStyles) ?? undefined,
-    [data.fields, getCellColorInlineStyles]
-  );
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
   const typographyCtx = useMemo(
@@ -376,7 +371,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const columnBuildConfig = useMemo(
     (): ColumnBuildConfig => ({
       theme,
-      applyToRowBgFn,
       getCellColorInlineStyles,
       getTextColorForBackground,
       rowHeight,
@@ -396,7 +390,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       timeRange,
     }),
     [
-      applyToRowBgFn,
       disableKeyboardEvents,
       disableSanitizeHtml,
       filter,
