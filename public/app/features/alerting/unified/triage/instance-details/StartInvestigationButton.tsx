@@ -12,6 +12,8 @@ interface StartInvestigationButtonProps {
   alertState?: GrafanaAlertState | null;
   /** ISO timestamp when this firing episode began (from state history). */
   alertStartsAt?: string;
+  /** ISO timestamp when this firing episode ended (from state history). */
+  alertEndsAt?: string;
 }
 
 /**
@@ -27,8 +29,16 @@ export function StartInvestigationButton({
   rule,
   alertState,
   alertStartsAt,
+  alertEndsAt,
 }: StartInvestigationButtonProps) {
-  const view = useStartInvestigation({ instanceLabels, commonLabels, rule, alertState, alertStartsAt });
+  const view = useStartInvestigation({
+    instanceLabels,
+    commonLabels,
+    rule,
+    alertState,
+    alertStartsAt,
+    alertEndsAt,
+  });
 
   switch (view.status) {
     case 'hidden':

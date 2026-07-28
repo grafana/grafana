@@ -28,6 +28,8 @@ export interface UseStartInvestigationArgs {
   alertState?: GrafanaAlertState | null;
   /** ISO timestamp when this firing episode began; omit when unknown. */
   alertStartsAt?: string;
+  /** ISO timestamp when this firing episode ended; used when the alert is resolved. */
+  alertEndsAt?: string;
 }
 
 /**
@@ -57,6 +59,7 @@ export function useStartInvestigation({
   rule,
   alertState,
   alertStartsAt,
+  alertEndsAt,
 }: UseStartInvestigationArgs): StartInvestigationViewModel {
   const dispatch = useDispatch();
   const featureEnabled = isManualAssistantInvestigationEnabled();
@@ -190,14 +193,19 @@ export function useStartInvestigation({
     if (!requestBody) {
       return;
     }
-    const status = alertState === GrafanaAlertState.Normal ? 'resolved' : 'firing';
+    const isResolved = alertState === GrafanaAlertState.Normal;
+    const status = isResolved ? 'resolved' : 'firing';
     const generatorURL = rule?.uid ? createAbsoluteUrl(`/alerting/grafana/${rule.uid}/view`) : undefined;
+    // Prefer state-history resolve time; fall back to now so Assistant always gets
+    // a non-zero endsAt for resolved alerts (required for downstream context).
+    const endsAt = isResolved ? (alertEndsAt ?? new Date().toISOString()) : undefined;
     startInvestigation({
       ...requestBody,
       name: rule?.title,
       alerts: requestBody.alerts.map((alert) => ({
         ...alert,
         ...(alertStartsAt ? { startsAt: alertStartsAt } : {}),
+        ...(endsAt ? { endsAt } : {}),
         status,
         generatorURL,
       })),

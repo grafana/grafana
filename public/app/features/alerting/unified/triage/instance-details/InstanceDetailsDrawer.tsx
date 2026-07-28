@@ -43,7 +43,7 @@ import { InstanceTimelineSection } from './InstanceTimelineSection';
 import { QueryVisualization } from './QueryVisualization';
 import { isDrawerRangeShorterThanQuery } from './drawerTimeRangeUtils';
 import { useInstanceAlertState } from './instanceStateUtils';
-import { getAlertInstanceStartsAtIso } from './startInvestigationFromAlert';
+import { getAlertInstanceEndsAtIso, getAlertInstanceStartsAtIso } from './startInvestigationFromAlert';
 import { convertStateHistoryToAnnotations } from './stateHistoryUtils';
 import { formatTimelineDate, noop } from './timelineUtils';
 
@@ -221,6 +221,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
       commonLabels,
       alertState: instanceState,
       alertStartsAt: getAlertInstanceStartsAtIso(historyRecords),
+      alertEndsAt: getAlertInstanceEndsAtIso(historyRecords),
       onOpenSilence: handleOpenSilence,
     }),
     [instanceLabels, commonLabels, instanceState, historyRecords, handleOpenSilence]

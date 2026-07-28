@@ -18,10 +18,11 @@ export function isManualAssistantInvestigationEnabled(): boolean {
   );
 }
 
+// Matches Assistant investigation states (api/internal/investigations/model).
 // Includes paused — loops can pause mid-run and should keep the "in progress" UI.
-const ACTIVE_INVESTIGATION_STATES = new Set(['pending', 'running', 'in_progress', 'in-progress', 'paused']);
+const ACTIVE_INVESTIGATION_STATES = new Set(['pending', 'in_progress', 'paused']);
 
-const TERMINAL_INVESTIGATION_STATES = new Set(['completed', 'failed', 'cancelled', 'canceled']);
+const TERMINAL_INVESTIGATION_STATES = new Set(['completed', 'failed', 'cancelled']);
 
 /** True while the Assistant is still producing the report (or paused mid-run). */
 export function isAssistantInvestigationActive(state: string | undefined): boolean {
@@ -35,7 +36,7 @@ export function isAssistantInvestigationCompleted(state: string | undefined): bo
 
 /** True when the investigation failed or was cancelled. */
 export function isAssistantInvestigationFailed(state: string | undefined): boolean {
-  return state === 'failed' || state === 'cancelled' || state === 'canceled';
+  return state === 'failed' || state === 'cancelled';
 }
 
 /** True when polling can stop — completed, failed, or cancelled. */
@@ -129,6 +130,30 @@ export function getAlertInstanceStartsAtIso(historyRecords: LogRecord[] | undefi
   }
 
   return openEpisodeStart !== undefined ? new Date(openEpisodeStart).toISOString() : undefined;
+}
+
+/**
+ * ISO end time of the latest closed firing episode from state history.
+ * Used as endsAt when starting an investigation for a resolved alert.
+ * Returns undefined while the episode is still open or history is incomplete.
+ */
+export function getAlertInstanceEndsAtIso(historyRecords: LogRecord[] | undefined): string | undefined {
+  if (!historyRecords?.length) {
+    return undefined;
+  }
+
+  const ordered = [...historyRecords].sort((a, b) => a.timestamp - b.timestamp);
+  let lastEpisodeEnd: number | undefined;
+
+  for (const record of ordered) {
+    const wasInEpisode = isFiringEpisodeState(record.line.previous);
+    const isInEpisode = isFiringEpisodeState(record.line.current);
+    if (wasInEpisode && !isInEpisode) {
+      lastEpisodeEnd = record.timestamp;
+    }
+  }
+
+  return lastEpisodeEnd !== undefined ? new Date(lastEpisodeEnd).toISOString() : undefined;
 }
 
 export interface BuildFromAlertRequestArgs {

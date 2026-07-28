@@ -51,6 +51,8 @@ interface InstanceDetailsDrawerTitleProps {
   alertState?: GrafanaAlertState | null;
   /** ISO start of the current firing episode, for Assistant investigation context. */
   alertStartsAt?: string;
+  /** ISO end of the latest closed firing episode, for resolved-alert investigations. */
+  alertEndsAt?: string;
   rule?: GrafanaRuleDefinition;
   onOpenSilence?: () => void;
   titleText?: string;
@@ -66,6 +68,7 @@ export function InstanceDetailsDrawerTitle({
   commonLabels,
   alertState,
   alertStartsAt,
+  alertEndsAt,
   rule,
   onOpenSilence,
   titleText,
@@ -202,6 +205,7 @@ export function InstanceDetailsDrawerTitle({
                 rule={rule}
                 alertState={alertState}
                 alertStartsAt={alertStartsAt}
+                alertEndsAt={alertEndsAt}
               />
             </Stack>
           </Box>

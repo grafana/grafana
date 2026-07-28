@@ -6,18 +6,33 @@ import { alertingApi } from './alertingApi';
 
 const getProxyApiUrl = (path: string) => `/api/plugins/${SupportedPlugin.Assistant}/resources${path}`;
 
-/** An AlertManager-style alert, matching the payload the Assistant's from-alert endpoint accepts. */
-interface AssistantAlert {
+/** Labels-only alert used for group identity (lookup / RTK cache key). */
+export interface LookupInvestigationAlert {
   labels: Record<string, string>;
   annotations?: Record<string, string>;
+}
+
+/**
+ * Lookup body: alert-group identity only. Volatile create fields (name, commonLabels,
+ * startsAt/endsAt/status/generatorURL) are not part of this contract.
+ */
+export interface LookupInvestigationFromAlertRequest {
+  alerts: LookupInvestigationAlert[];
+  groupLabels?: Record<string, string>;
+  externalURL?: string;
+}
+
+/** AlertManager-style alert for create — includes delivery / episode timing fields. */
+export interface StartInvestigationAlert extends LookupInvestigationAlert {
   status?: string;
   startsAt?: string;
+  endsAt?: string;
   generatorURL?: string;
 }
 
 export interface StartInvestigationFromAlertRequest {
   name?: string;
-  alerts: AssistantAlert[];
+  alerts: StartInvestigationAlert[];
   commonLabels?: Record<string, string>;
   groupLabels?: Record<string, string>;
   externalURL?: string;
@@ -25,15 +40,16 @@ export interface StartInvestigationFromAlertRequest {
 
 /**
  * Strips per-delivery / rule-metadata fields so create/lookup share one RTK cache
- * identity. startsAt, status, name, generatorURL, and commonLabels can change while
- * the drawer is open (rule load, Start click, sibling-instance recomputation);
- * group identity (alerts[].labels / groupLabels) must not change mid-drawer.
+ * identity. startsAt, endsAt, status, name, generatorURL, and commonLabels can change
+ * while the drawer is open; group identity (alerts[].labels / groupLabels) must not.
  */
-export function stableFromAlertRequest(body: StartInvestigationFromAlertRequest): StartInvestigationFromAlertRequest {
+export function stableFromAlertRequest(body: StartInvestigationFromAlertRequest): LookupInvestigationFromAlertRequest {
   const { name: _name, commonLabels: _commonLabels, ...rest } = body;
   return {
     ...rest,
-    alerts: body.alerts.map(({ startsAt: _startsAt, status: _status, generatorURL: _generatorURL, ...alert }) => alert),
+    alerts: body.alerts.map(
+      ({ startsAt: _startsAt, endsAt: _endsAt, status: _status, generatorURL: _generatorURL, ...alert }) => alert
+    ),
   };
 }
 
@@ -41,7 +57,7 @@ export function stableFromAlertRequest(body: StartInvestigationFromAlertRequest)
 export interface AssistantInvestigation {
   id: string;
   title: string;
-  // Assistant-owned enum; known values include pending / in_progress / paused / completed / failed / cancelled.
+  // Assistant-owned enum: pending / in_progress / paused / completed / failed / cancelled.
   state: string;
   chatId?: string;
 }
@@ -109,7 +125,7 @@ export const assistantApi = alertingApi.injectEndpoints({
 
     // Read-only: return the investigation already linked to this alert group, or null
     // when none exists (404). Used when reopening the instance drawer.
-    lookupInvestigationFromAlert: build.query<AssistantInvestigation | null, StartInvestigationFromAlertRequest>({
+    lookupInvestigationFromAlert: build.query<AssistantInvestigation | null, LookupInvestigationFromAlertRequest>({
       async queryFn(body, _api, _extraOptions, baseQuery) {
         const result = await baseQuery({
           url: getProxyApiUrl('/api/v1/investigations/from-alert/lookup'),

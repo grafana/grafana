@@ -5,6 +5,7 @@ import { stableFromAlertRequest } from '../../api/assistantApi';
 
 import {
   buildFromAlertRequest,
+  getAlertInstanceEndsAtIso,
   getAlertInstanceStartsAtIso,
   getAssistantInvestigationUrl,
   isAssistantInvestigationActive,
@@ -77,7 +78,7 @@ describe('buildFromAlertRequest', () => {
 });
 
 describe('stableFromAlertRequest', () => {
-  it('strips startsAt, status, name, generatorURL, and commonLabels so identity stays stable', () => {
+  it('strips startsAt, endsAt, status, name, generatorURL, and commonLabels so identity stays stable', () => {
     const beforeRule = stableFromAlertRequest({
       alerts: [{ labels: { alertname: 'HighCPU' } }],
       groupLabels: { alertname: 'HighCPU' },
@@ -90,6 +91,7 @@ describe('stableFromAlertRequest', () => {
           labels: { alertname: 'HighCPU' },
           status: 'firing',
           startsAt: '2026-01-01T00:00:00Z',
+          endsAt: '2026-01-01T01:00:00Z',
           generatorURL: 'https://grafana.example/alerting/grafana/rule-1/view',
         },
       ],
@@ -102,8 +104,9 @@ describe('stableFromAlertRequest', () => {
       alerts: [
         {
           labels: { alertname: 'HighCPU' },
-          status: 'firing',
+          status: 'resolved',
           startsAt: '2026-01-01T00:00:00Z',
+          endsAt: '2026-01-01T02:00:00Z',
           generatorURL: 'https://grafana.example/alerting/grafana/rule-1/view',
         },
       ],
@@ -112,23 +115,25 @@ describe('stableFromAlertRequest', () => {
 
     expect(beforeRule).toEqual(afterStart);
     expect(afterStart).toEqual(afterCommonLabelsShift);
-    expect(afterStart.name).toBeUndefined();
-    expect(afterStart.commonLabels).toBeUndefined();
-    expect(afterStart.alerts[0].status).toBeUndefined();
-    expect(afterStart.alerts[0].startsAt).toBeUndefined();
-    expect(afterStart.alerts[0].generatorURL).toBeUndefined();
+    expect(afterStart).toEqual({
+      alerts: [{ labels: { alertname: 'HighCPU' } }],
+      groupLabels: { alertname: 'HighCPU' },
+    });
   });
 });
 
 describe('investigation state helpers', () => {
   describe('isAssistantInvestigationActive', () => {
-    it.each(['pending', 'running', 'in_progress', 'in-progress', 'paused'])('treats %s as active', (state) => {
+    it.each(['pending', 'in_progress', 'paused'])('treats %s as active', (state) => {
       expect(isAssistantInvestigationActive(state)).toBe(true);
     });
 
-    it.each(['completed', 'failed', 'cancelled', 'canceled', undefined, ''])('treats %s as inactive', (state) => {
-      expect(isAssistantInvestigationActive(state)).toBe(false);
-    });
+    it.each(['completed', 'failed', 'cancelled', 'running', 'in-progress', 'canceled', undefined, ''])(
+      'treats %s as inactive',
+      (state) => {
+        expect(isAssistantInvestigationActive(state)).toBe(false);
+      }
+    );
   });
 
   describe('isAssistantInvestigationCompleted', () => {
@@ -139,22 +144,23 @@ describe('investigation state helpers', () => {
   });
 
   describe('isAssistantInvestigationFailed', () => {
-    it.each(['failed', 'cancelled', 'canceled'])('treats %s as failed', (state) => {
+    it.each(['failed', 'cancelled'])('treats %s as failed', (state) => {
       expect(isAssistantInvestigationFailed(state)).toBe(true);
     });
 
     it('is false for other states', () => {
       expect(isAssistantInvestigationFailed('completed')).toBe(false);
+      expect(isAssistantInvestigationFailed('canceled')).toBe(false);
       expect(isAssistantInvestigationFailed(undefined)).toBe(false);
     });
   });
 
   describe('isAssistantInvestigationTerminal', () => {
-    it.each(['completed', 'failed', 'cancelled', 'canceled'])('treats %s as terminal', (state) => {
+    it.each(['completed', 'failed', 'cancelled'])('treats %s as terminal', (state) => {
       expect(isAssistantInvestigationTerminal(state)).toBe(true);
     });
 
-    it.each(['pending', 'in_progress', 'paused', 'weird-future-state', undefined, ''])(
+    it.each(['pending', 'in_progress', 'paused', 'canceled', 'weird-future-state', undefined, ''])(
       'treats %s as non-terminal',
       (state) => {
         expect(isAssistantInvestigationTerminal(state)).toBe(false);
@@ -265,6 +271,43 @@ describe('investigation state helpers', () => {
       ]);
 
       expect(startsAt).toBeUndefined();
+    });
+  });
+
+  describe('getAlertInstanceEndsAtIso', () => {
+    it('returns undefined when history is empty', () => {
+      expect(getAlertInstanceEndsAtIso(undefined)).toBeUndefined();
+      expect(getAlertInstanceEndsAtIso([])).toBeUndefined();
+    });
+
+    it('returns undefined while the firing episode is still open', () => {
+      const endsAt = getAlertInstanceEndsAtIso([
+        { timestamp: 1_000, line: { previous: GrafanaAlertState.Normal, current: GrafanaAlertState.Alerting } },
+        { timestamp: 5_000, line: { previous: GrafanaAlertState.Alerting, current: GrafanaAlertState.Recovering } },
+      ]);
+
+      expect(endsAt).toBeUndefined();
+    });
+
+    it('uses the leave-episode timestamp after resolve', () => {
+      const endsAt = getAlertInstanceEndsAtIso([
+        { timestamp: 1_000, line: { previous: GrafanaAlertState.Normal, current: GrafanaAlertState.Alerting } },
+        { timestamp: 5_000, line: { previous: GrafanaAlertState.Alerting, current: GrafanaAlertState.Recovering } },
+        { timestamp: 8_000, line: { previous: GrafanaAlertState.Recovering, current: GrafanaAlertState.Normal } },
+      ]);
+
+      expect(endsAt).toBe(new Date(8_000).toISOString());
+    });
+
+    it('uses the most recent closed episode when history has multiple cycles', () => {
+      const endsAt = getAlertInstanceEndsAtIso([
+        { timestamp: 1_000, line: { previous: GrafanaAlertState.Normal, current: GrafanaAlertState.Alerting } },
+        { timestamp: 5_000, line: { previous: GrafanaAlertState.Alerting, current: GrafanaAlertState.Normal } },
+        { timestamp: 9_000, line: { previous: GrafanaAlertState.Normal, current: GrafanaAlertState.Alerting } },
+        { timestamp: 12_000, line: { previous: GrafanaAlertState.Alerting, current: GrafanaAlertState.Normal } },
+      ]);
+
+      expect(endsAt).toBe(new Date(12_000).toISOString());
     });
   });
 });
