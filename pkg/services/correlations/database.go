@@ -215,6 +215,8 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			}
 			if cmd.Config.TimeRange.Field != nil || cmd.Config.TimeRange.Range != nil {
 				correlation.Config.TimeRange = cmd.Config.TimeRange
+			} else {
+				correlation.Config.TimeRange = TimeRange{}
 			}
 			if cmd.Config.Transformations != nil {
 				correlation.Config.Transformations = cmd.Config.Transformations
