@@ -1,11 +1,20 @@
 import { renderHook } from '@testing-library/react';
 import type React from 'react';
 
-import { buildVizAndDataPaneGrid, getDefaultSidebarRatio, useRatioResize } from './hooks';
+import { useTheme2 } from '@grafana/ui';
+
+import { useSidebarCollapsed } from '../../sidebar/shared';
+import { getDashboardSceneFor } from '../../utils/utils';
+import type { PanelEditor } from '../PanelEditor';
+import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
+import { useScrollReflowLimit } from '../useScrollReflowLimit';
+
+import { buildVizAndDataPaneGrid, getDefaultSidebarRatio, usePanelEditorShell, useRatioResize } from './hooks';
 
 jest.mock('@grafana/ui', () => ({
   useStyles2: jest.fn(() => ({ dragHandleVertical: 'drag-v', dragHandleHorizontal: 'drag-h' })),
   getDragStyles: jest.fn(),
+  useTheme2: jest.fn(),
 }));
 
 jest.mock('@grafana/runtime', () => ({ config: { featureToggles: {} } }));
@@ -16,13 +25,50 @@ jest.mock('./constants', () => ({
   QUERY_EDITOR_SIDEBAR_SIZE_KEY: 'grafana.dashboard.query-editor-next.sidebar-size',
   QUERY_EDITOR_BANNER_DISMISSED_KEY: 'grafana.dashboard.query-editor-next.banner-dismissed',
 }));
-jest.mock('../../edit-pane/shared', () => ({ useEditPaneCollapsed: jest.fn() }));
+jest.mock('../../sidebar/shared', () => ({ useSidebarCollapsed: jest.fn() }));
 jest.mock('../../utils/utils', () => ({ getDashboardSceneFor: jest.fn() }));
 jest.mock('../PanelEditor', () => ({}));
+jest.mock('../splitter/useSnappingSplitter', () => ({ useSnappingSplitter: jest.fn() }));
+jest.mock('../useScrollReflowLimit', () => ({ useScrollReflowLimit: jest.fn() }));
+
+describe('usePanelEditorShell', () => {
+  it('subscribes to and returns dashboard controls', () => {
+    const controls = { Component: jest.fn() };
+    const dashboard = { useState: jest.fn(() => ({ controls })) };
+    const optionsPane = { Component: jest.fn() };
+    const model = { useState: jest.fn(() => ({ optionsPane })) } as unknown as PanelEditor;
+    const setIsCollapsed = jest.fn();
+    const splitter = { splitterState: { collapsed: false } };
+
+    jest.mocked(getDashboardSceneFor).mockReturnValue(dashboard as never);
+    jest.mocked(useSidebarCollapsed).mockReturnValue([true, setIsCollapsed]);
+    jest.mocked(useScrollReflowLimit).mockReturnValue(false);
+    jest.mocked(useTheme2).mockReturnValue({ spacing: jest.fn(() => '16px') } as never);
+    jest.mocked(useSnappingSplitter).mockReturnValue(splitter as never);
+
+    const { result } = renderHook(() => usePanelEditorShell(model));
+
+    expect(dashboard.useState).toHaveBeenCalled();
+    expect(useSnappingSplitter).toHaveBeenCalledWith(
+      expect.objectContaining({
+        collapsed: true,
+        direction: 'row',
+        disabled: false,
+      })
+    );
+    expect(setIsCollapsed).toHaveBeenCalledWith(false);
+    expect(result.current).toEqual({
+      dashboard,
+      optionsPane,
+      isScrollingLayout: false,
+      splitter,
+      controls,
+    });
+  });
+});
 
 describe('buildVizAndDataPaneGrid', () => {
   const base = {
-    controlsEnabled: false,
     hasDataPane: true,
     isSidebarFullWidth: false,
     showBanner: true,
@@ -36,19 +82,10 @@ describe('buildVizAndDataPaneGrid', () => {
     expect(gridTemplateAreas).toBe('"viz viz"');
   });
 
-  it('places the controls row above the viz when controls are enabled', () => {
-    const { gridTemplateAreas, gridTemplateRows } = buildVizAndDataPaneGrid({ ...base, controlsEnabled: true });
-
-    expect(gridTemplateAreas).toBe(
-      '"controls controls"\n"viz viz"\n"version-toggle version-toggle"\n"sidebar data-pane"'
-    );
-    expect(gridTemplateRows).toBe('auto 1fr auto 1fr');
-  });
-
   it('makes sidebar span every row when isSidebarFullWidth is true', () => {
-    const { gridTemplateAreas } = buildVizAndDataPaneGrid({ ...base, controlsEnabled: true, isSidebarFullWidth: true });
+    const { gridTemplateAreas } = buildVizAndDataPaneGrid({ ...base, isSidebarFullWidth: true });
 
-    expect(gridTemplateAreas).toBe('"sidebar controls"\n"sidebar viz"\n"sidebar version-toggle"\n"sidebar data-pane"');
+    expect(gridTemplateAreas).toBe('"sidebar viz"\n"sidebar version-toggle"\n"sidebar data-pane"');
   });
 
   it('omits version-toggle row when showBanner is false', () => {

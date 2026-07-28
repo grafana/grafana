@@ -11,14 +11,14 @@ import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { partitionVariablesByDisplay } from '../../edit-pane/dashboard/DashboardVariablesList';
-import { dashboardEditActions } from '../../edit-pane/shared';
 import { DashboardScene } from '../../scene/DashboardScene';
 import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
   isEditableDashboardElement,
 } from '../../scene/types/EditableDashboardElement';
+import { partitionVariablesByDisplay } from '../../sidebar/dashboard/DashboardVariablesList';
+import { dashboardEditActions } from '../../sidebar/shared';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
@@ -50,9 +50,9 @@ export class VariableSetEditableElement implements EditableDashboardElement {
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.variable-set', 'Variables'),
+      typeName: t('dashboard.sidebar.elements.variable-set', 'Variables'),
       icon: 'x',
-      instanceName: t('dashboard.edit-pane.elements.variable-set', 'Variables'),
+      instanceName: t('dashboard.sidebar.elements.variable-set', 'Variables'),
     };
   }
 
@@ -95,8 +95,8 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
 
   const onEditVariable = useCallback(
     (variable: SceneVariable) => {
-      const { editPane } = getDashboardSceneFor(set).state;
-      editPane.selectObject(variable);
+      const { sidebar } = getDashboardSceneFor(set).state;
+      sidebar.selectObject(variable);
     },
     [set]
   );
@@ -195,7 +195,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
                 >
                   <div className={styles.variableContent}>
                     <div {...draggableProvided.dragHandleProps} onPointerDown={onPointerDown}>
-                      <Tooltip content={t('dashboard.edit-pane.variables.reorder', 'Drag to reorder')} placement="top">
+                      <Tooltip content={t('dashboard.sidebar.variables.reorder', 'Drag to reorder')} placement="top">
                         <Icon name="draggabledots" size="md" className={styles.dragHandle} />
                       </Tooltip>
                     </div>
@@ -209,7 +209,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
                   </div>
                   <Stack direction="row" gap={1} alignItems="center">
                     <Button variant="primary" size="sm" fill="outline">
-                      <Trans i18nKey="dashboard.edit-pane.variables.select-variable">Select</Trans>
+                      <Trans i18nKey="dashboard.sidebar.variables.select-variable">Select</Trans>
                     </Button>
                   </Stack>
                 </div>
@@ -243,7 +243,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
             onClick={onAddVariable}
             data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
           >
-            <Trans i18nKey="dashboard.edit-pane.variables.add-variable">Add variable</Trans>
+            <Trans i18nKey="dashboard.sidebar.variables.add-variable">Add variable</Trans>
           </Button>
         </Box>
       )}

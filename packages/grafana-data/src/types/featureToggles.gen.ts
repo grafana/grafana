@@ -194,11 +194,6 @@ export interface FeatureToggles {
   */
   externalSnapshotsSupportLegacyAPI?: boolean;
   /**
-  * Routes library panel requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesLibraryPanels?: boolean;
-  /**
   * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
   * @default true
   */
@@ -308,16 +303,6 @@ export interface FeatureToggles {
   * @default true
   */
   dashboardNewLayouts?: boolean;
-  /**
-  * Enables default layout selector in dashboard settings
-  * @default true
-  */
-  dashboardDefaultLayoutSelector?: boolean;
-  /**
-  * Enables the assistant prompt popover on panel click in dashboard view mode
-  * @default false
-  */
-  dashboardAssistantPopover?: boolean;
   /**
   * Enables undo/redo in dynamic dashboards
   * @default false
@@ -695,11 +680,6 @@ export interface FeatureToggles {
   */
   azureMonitorDisableLogLimit?: boolean;
   /**
-  * Enables experimental reconciler for playlists
-  * @default false
-  */
-  playlistsReconciler?: boolean;
-  /**
   * Adds support for quotes and special characters in label values for Prometheus queries
   * @default false
   */
@@ -889,6 +869,11 @@ export interface FeatureToggles {
   * @default false
   */
   azureMonitorLogsBuilderEditor?: boolean;
+  /**
+  * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
+  * @default false
+  */
+  azureMonitorBatchAPI?: boolean;
   /**
   * Enables UI functionality to permanently delete alert rules
   * @default true
@@ -1121,11 +1106,6 @@ export interface FeatureToggles {
   */
   prometheusTypeMigration?: boolean;
   /**
-  * Enables running plugins in containers
-  * @default false
-  */
-  pluginContainers?: boolean;
-  /**
   * Prioritize loading plugins from the CDN before other sources
   * @default false
   */
@@ -1205,16 +1185,6 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesAlertingHistorian?: boolean;
-  /**
-  * Enables support for section level variables (rows and tabs)
-  * @default true
-  */
-  dashboardSectionVariables?: boolean;
-  /**
-  * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
-  * @default false
-  */
-  globalDashboardVariables?: boolean;
   /**
   * Enables the ASAP smoothing transformation for time series data
   * @default false

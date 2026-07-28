@@ -95,7 +95,7 @@ export type PluginExtensionExploreContext = {
   timeRange: RawTimeRange;
   timeZone: TimeZone;
   shouldShowAddCorrelation: boolean;
-  panelsSate?: ExplorePanelsState;
+  panelsState?: ExplorePanelsState;
 };
 
 function useExtensionPointContext(props: Props): PluginExtensionExploreContext {
