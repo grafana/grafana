@@ -7,8 +7,8 @@ import { t, Trans } from '@grafana/i18n';
 import type { DashboardLink } from '@grafana/schema';
 import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { dashboardEditActions } from '../../edit-pane/shared';
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { dashboardEditActions } from '../../sidebar/shared';
 import { DashboardInteractions } from '../../utils/interactions';
 
 import { openAddLinkPane, openLinkEditPane } from './LinkAddEditableElement';
@@ -106,7 +106,7 @@ export function LinkList({ dashboard }: { dashboard: DashboardScene }) {
               {(draggableProvided) => (
                 <div className={styles.linkItem} ref={draggableProvided.innerRef} {...draggableProvided.draggableProps}>
                   <div {...draggableProvided.dragHandleProps} onPointerDown={onPointerDown}>
-                    <Tooltip content={t('dashboard.edit-pane.links.reorder', 'Drag to reorder')} placement="top">
+                    <Tooltip content={t('dashboard.sidebar.links.reorder', 'Drag to reorder')} placement="top">
                       <Icon name="draggabledots" size="md" className={styles.dragHandle} />
                     </Tooltip>
                   </div>
@@ -123,13 +123,13 @@ export function LinkList({ dashboard }: { dashboard: DashboardScene }) {
                       }
                     }}
                   >
-                    <Text truncate>{item.link.title || t('dashboard.edit-pane.links.untitled', 'Untitled link')}</Text>
+                    <Text truncate>{item.link.title || t('dashboard.sidebar.links.untitled', 'Untitled link')}</Text>
                     {item.link.placement === 'inControlsMenu' && (
                       <Icon name="sliders-v-alt" size="sm" className={styles.hiddenIcon} />
                     )}
                     <Stack direction="row" gap={1} alignItems="center">
                       <Button variant="primary" size="sm" fill="outline">
-                        <Trans i18nKey="dashboard.edit-pane.links.select-link">Select</Trans>
+                        <Trans i18nKey="dashboard.sidebar.links.select-link">Select</Trans>
                       </Button>
                     </Stack>
                   </div>
@@ -155,7 +155,7 @@ export function LinkList({ dashboard }: { dashboard: DashboardScene }) {
       )}
       <Box paddingBottom={1} paddingTop={1} display={'flex'}>
         <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={onAddLink}>
-          <Trans i18nKey="dashboard.edit-pane.links.add-link">Add link</Trans>
+          <Trans i18nKey="dashboard.sidebar.links.add-link">Add link</Trans>
         </Button>
       </Box>
     </Stack>
