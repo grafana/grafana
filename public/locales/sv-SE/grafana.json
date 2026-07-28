@@ -5544,135 +5544,6 @@
       "switch-layout-tab": "Byt layout",
       "tab-title": "Ändra fliktitel"
     },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "Ändra datakälla för kommentarer",
-        "choose-panels": "Välj paneler",
-        "color": "Färg",
-        "color-description": "Färg som ska användas för kommentarshändelsemarkörer",
-        "data-source": "Datakälla",
-        "display": "Visa kommentar-kontroller i",
-        "display-options": {
-          "above-dashboard": "Ovanför instrumentpanel",
-          "controls-menu": "Kontrollmeny",
-          "controls-menu-description": "Kan nås när kontrollmenyn är öppen",
-          "hidden": "Dolt",
-          "hidden-description": "Döljer växlingen för att aktivera eller inaktivera denna kommentar"
-        },
-        "enabled": "Aktiverad",
-        "enabled-description": "När aktiverat utfärdas kommentarsfrågan vid varje uppdatering av instrumentpanelen",
-        "name": "Namn",
-        "open-query-editor": "Öppna frågeredigeraren",
-        "open-query-editor-tooltip": "Öppna frågeredigeraren för att konfigurera kommentarsfrågan",
-        "panel-filter": {
-          "all-panels": "Alla paneler",
-          "all-panels-description": "Skicka kommentarsdata till alla paneler som stöder kommentarer",
-          "all-panels-except": "Alla paneler förutom",
-          "all-panels-except-description": "Skicka inte kommentarer till följande paneler",
-          "selected-panels": "Valda paneler",
-          "selected-panels-description": "Skicka kommentarerna till de uttryckligen angivna panelerna"
-        },
-        "query": "Fråga",
-        "query-editor-close": "Stäng",
-        "query-editor-modal-title": "Kommenteringsfråga",
-        "show-in": "Visa i"
-      },
-      "annotations": {
-        "add-annotation": "Lägg till kommentar",
-        "reorder": "Ändra ordning genom att dra",
-        "select-annotation": "Välj"
-      },
-      "elements": {
-        "annotation": "Kommentar",
-        "annotation-set": "Kommentarer och varningar",
-        "dashboard": "Instrumentpanel",
-        "element": "Element",
-        "filter": "",
-        "filters-set": "",
-        "link-set": "Länkar",
-        "local-variable": "Lokal variabel",
-        "multiple-elements": "Flera element",
-        "multiple-elements-delete-text": "Är du säker på att du vill radera dessa element?",
-        "multiple-panels": "Flera paneler",
-        "multiple-panels-delete-text": "Är du säker på att du vill radera dessa paneler? Alla frågor kommer att tas bort.",
-        "objects": "Objekt",
-        "panel": "Panel",
-        "panels": "Paneler",
-        "row": "Rad",
-        "rows": "Rader",
-        "section-filters-set": "",
-        "tab": "Flik",
-        "tabs": "Flikar",
-        "variable": "{{type}}-variabel",
-        "variable-set": "Variabler"
-      },
-      "links": {
-        "add-link": "Lägg till länk",
-        "reorder": "Ändra ordning genom att dra",
-        "select-link": "Välj",
-        "untitled": "Namnlös länk"
-      },
-      "row": {
-        "header": {
-          "hide": "Dölj",
-          "title": "Radrubrik"
-        }
-      },
-      "section-filters": {
-        "title": ""
-      },
-      "section-variables": {
-        "title": "Variabler"
-      },
-      "variable": {
-        "change-type": "",
-        "change-type-aria-label": "Ändra variabeltyp",
-        "custom-options": {
-          "apply": "Tillämpa",
-          "change-value": "Ändra variabelvärde",
-          "discard": "Kassera",
-          "modal-title": "Anpassade alternativ"
-        },
-        "datasource-options": {
-          "name-filter": "Namnfilter",
-          "name-filter-description": "Regex-filter för vilka datakällsinstanser som ska inkluderas. Lämna tomt för alla.",
-          "name-filter-placeholder": "Exempel: /^prod/",
-          "type": "Typ",
-          "type-placeholder": "Välj typ av datakälla"
-        },
-        "description": "Beskrivning",
-        "description-placeholder": "Beskrivande text",
-        "label": "Etikett",
-        "label-description": "Valfritt visningsnamn",
-        "name": "Namn",
-        "open-editor": "Öppna variabelredigerare",
-        "open-editor-tooltip": "För fler variabelalternativ öppna variabelredigeraren",
-        "query-options": {
-          "close": "Stäng",
-          "modal-title": "Frågevariabel",
-          "preview": "Förhandsgranska"
-        },
-        "selection-options": {
-          "allow-custom-values": "Tillåt anpassade värden",
-          "allow-custom-values-description": "Gör det möjligt för användare att ange värden",
-          "category": "Urvalsalternativ",
-          "custom-all-value": "Anpassa allt värde",
-          "custom-all-value-description": "Ett reguljärt jokertecken eller annat värde som representerar alla",
-          "include-all": "Inkludera alla värden",
-          "include-all-description": "Aktiverar ett enda alternativ som representerar alla värden",
-          "multi-value": "Multivärde"
-        },
-        "type-category": "{{type}}-alternativ"
-      },
-      "variables": {
-        "add-variable": "Lägg till variabel",
-        "change-type": "",
-        "reorder": "Ändra ordning genom att dra",
-        "select-type": "Välj typ av variabel",
-        "select-type-card-tooltip": "Klicka för att välja typ",
-        "select-variable": "Välj"
-      }
-    },
     "empty": {
       "add-library-panel-body": "Lägg till visualiseringar som delas med andra paneler.",
       "add-library-panel-button": "Lägg till bibliotekspanel",
@@ -6192,6 +6063,43 @@
         "title": "Lägg till",
         "tooltip": "Lägg till nytt element"
       },
+      "annotation": {
+        "change-data-source": "Ändra datakälla för kommentarer",
+        "choose-panels": "Välj paneler",
+        "color": "Färg",
+        "color-description": "Färg som ska användas för kommentarshändelsemarkörer",
+        "data-source": "Datakälla",
+        "display": "Visa kommentar-kontroller i",
+        "display-options": {
+          "above-dashboard": "Ovanför instrumentpanel",
+          "controls-menu": "Kontrollmeny",
+          "controls-menu-description": "Kan nås när kontrollmenyn är öppen",
+          "hidden": "Dolt",
+          "hidden-description": "Döljer växlingen för att aktivera eller inaktivera denna kommentar"
+        },
+        "enabled": "Aktiverad",
+        "enabled-description": "När aktiverat utfärdas kommentarsfrågan vid varje uppdatering av instrumentpanelen",
+        "name": "Namn",
+        "open-query-editor": "Öppna frågeredigeraren",
+        "open-query-editor-tooltip": "Öppna frågeredigeraren för att konfigurera kommentarsfrågan",
+        "panel-filter": {
+          "all-panels": "Alla paneler",
+          "all-panels-description": "Skicka kommentarsdata till alla paneler som stöder kommentarer",
+          "all-panels-except": "Alla paneler förutom",
+          "all-panels-except-description": "Skicka inte kommentarer till följande paneler",
+          "selected-panels": "Valda paneler",
+          "selected-panels-description": "Skicka kommentarerna till de uttryckligen angivna panelerna"
+        },
+        "query": "Fråga",
+        "query-editor-close": "Stäng",
+        "query-editor-modal-title": "Kommenteringsfråga",
+        "show-in": "Visa i"
+      },
+      "annotations": {
+        "add-annotation": "Lägg till kommentar",
+        "reorder": "Ändra ordning genom att dra",
+        "select-annotation": "Välj"
+      },
       "dashboard-options": {
         "title": "Alternativ",
         "tooltip": "Alternativ för instrumentpanel"
@@ -6200,20 +6108,110 @@
         "title": "Kod",
         "tooltip": "Redigera som kod"
       },
+      "elements": {
+        "annotation": "Kommentar",
+        "annotation-set": "Kommentarer och varningar",
+        "dashboard": "Instrumentpanel",
+        "element": "Element",
+        "filter": "",
+        "filters-set": "",
+        "link-set": "Länkar",
+        "local-variable": "Lokal variabel",
+        "multiple-elements": "Flera element",
+        "multiple-elements-delete-text": "Är du säker på att du vill radera dessa element?",
+        "multiple-panels": "Flera paneler",
+        "multiple-panels-delete-text": "Är du säker på att du vill radera dessa paneler? Alla frågor kommer att tas bort.",
+        "objects": "Objekt",
+        "panel": "Panel",
+        "panels": "Paneler",
+        "row": "Rad",
+        "rows": "Rader",
+        "section-filters-set": "",
+        "tab": "Flik",
+        "tabs": "Flikar",
+        "variable": "{{type}}-variabel",
+        "variable-set": "Variabler"
+      },
       "export": {
         "title": "Exportera"
       },
       "filters": "",
+      "links": {
+        "add-link": "Lägg till länk",
+        "reorder": "Ändra ordning genom att dra",
+        "select-link": "Välj",
+        "untitled": "Namnlös länk"
+      },
       "open": "",
       "outline": {
         "title": "Översikt",
         "tooltip": "Innehållskontur"
       },
       "redo": "Gör om",
+      "row": {
+        "header": {
+          "hide": "Dölj",
+          "title": "Radrubrik"
+        }
+      },
+      "section-filters": {
+        "title": ""
+      },
+      "section-variables": {
+        "title": "Variabler"
+      },
       "snapshot": {
         "tooltip": "Öppna ursprunglig instrumentpanel"
       },
       "undo": "Ångra",
+      "variable": {
+        "change-type": "",
+        "change-type-aria-label": "Ändra variabeltyp",
+        "custom-options": {
+          "apply": "Tillämpa",
+          "change-value": "Ändra variabelvärde",
+          "discard": "Kassera",
+          "modal-title": "Anpassade alternativ"
+        },
+        "datasource-options": {
+          "name-filter": "Namnfilter",
+          "name-filter-description": "Regex-filter för vilka datakällsinstanser som ska inkluderas. Lämna tomt för alla.",
+          "name-filter-placeholder": "Exempel: /^prod/",
+          "type": "Typ",
+          "type-placeholder": "Välj typ av datakälla"
+        },
+        "description": "Beskrivning",
+        "description-placeholder": "Beskrivande text",
+        "label": "Etikett",
+        "label-description": "Valfritt visningsnamn",
+        "name": "Namn",
+        "open-editor": "Öppna variabelredigerare",
+        "open-editor-tooltip": "För fler variabelalternativ öppna variabelredigeraren",
+        "query-options": {
+          "close": "Stäng",
+          "modal-title": "Frågevariabel",
+          "preview": "Förhandsgranska"
+        },
+        "selection-options": {
+          "allow-custom-values": "Tillåt anpassade värden",
+          "allow-custom-values-description": "Gör det möjligt för användare att ange värden",
+          "category": "Urvalsalternativ",
+          "custom-all-value": "Anpassa allt värde",
+          "custom-all-value-description": "Ett reguljärt jokertecken eller annat värde som representerar alla",
+          "include-all": "Inkludera alla värden",
+          "include-all-description": "Aktiverar ett enda alternativ som representerar alla värden",
+          "multi-value": "Multivärde"
+        },
+        "type-category": "{{type}}-alternativ"
+      },
+      "variables": {
+        "add-variable": "Lägg till variabel",
+        "change-type": "",
+        "reorder": "Ändra ordning genom att dra",
+        "select-type": "Välj typ av variabel",
+        "select-type-card-tooltip": "Klicka för att välja typ",
+        "select-variable": "Välj"
+      },
       "view-panel": {
         "disabled": "",
         "fanout-by-series": "",
@@ -6807,9 +6805,6 @@
       "title-hidden-count_one": "Dold ({{count}})",
       "title-hidden-count_other": "Dold ({{count}})"
     },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "Ge feedback om den nya upplevelsen av att redigera instrumentpanelen"
-    },
     "dashboard-link-form": {
       "back-to-list": "Tillbaka till listan",
       "label-icon": "Ikon",
@@ -6881,6 +6876,9 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Kontroller för instrumentpanel"
+    },
+    "dashboard-sidebar-renderer": {
+      "title-feedback-dashboard-editing-experience": "Ge feedback om den nya upplevelsen av att redigera instrumentpanelen"
     },
     "data-source-variable-form": {
       "data-source-options": "Alternativ för datakälla",

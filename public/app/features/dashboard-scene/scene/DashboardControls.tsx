@@ -217,7 +217,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   if (!model.hasControls()) {
     // The controls row hosts the dashboard action buttons (with new layouts) and the panel edit
     // actions, so it must render even when the dashboard itself contributes no other controls.
-    // DashboardControlActions handles the per-button visibility, including the edit-panel cases.
+    // DashboardControlActions handles the per-button visibility, including the sidebar cases.
     if ((config.featureToggles.dashboardNewLayouts || editPanel) && kioskMode !== KioskMode.Full) {
       return (
         <>

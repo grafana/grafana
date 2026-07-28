@@ -140,12 +140,12 @@ describe('PanelEditor', () => {
         }),
       });
 
-      dashboard.state.editPane.selectObject(panel, { force: true });
-      expect(dashboard.state.editPane.getSelectedObject()).toBe(panel);
+      dashboard.state.sidebar.selectObject(panel, { force: true });
+      expect(dashboard.state.sidebar.getSelectedObject()).toBe(panel);
 
       deactivate = activateFullSceneTree(dashboard);
 
-      expect(dashboard.state.editPane.getSelectedObject()).toBeUndefined();
+      expect(dashboard.state.sidebar.getSelectedObject()).toBeUndefined();
     });
   });
 
