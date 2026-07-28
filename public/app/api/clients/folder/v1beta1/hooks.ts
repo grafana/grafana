@@ -219,7 +219,7 @@ export function useGetFolderQueryFacade(uid?: string) {
   // proper access info for the root and "shared with me" folders.
   const resultFolder = useGetFolderQuery(shouldUseAppPlatformAPI && !isVirtualFolder ? params : skipToken);
   const resultAccess = useGetFolderAccessQuery(shouldUseAppPlatformAPI ? params : skipToken);
-  const resultParents = useGetFolderParentsQuery(shouldUseAppPlatformAPI ? params : skipToken);
+  const resultParents = useGetFolderParentsQuery(shouldUseAppPlatformAPI && !isVirtualFolder ? params : skipToken);
   const [triggerGetUserDisplayMapping, resultUserDisplay] = useLazyGetDisplayMappingQuery();
 
   const needsUserData = useMemo(() => {
@@ -250,7 +250,7 @@ export function useGetFolderQueryFacade(uid?: string) {
       data,
       currentData: data,
       refetch: async () => {
-        return Promise.all([resultParents.refetch(), resultAccess.refetch()]);
+        return resultAccess.refetch();
       },
     };
   } else {
