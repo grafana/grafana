@@ -23,6 +23,20 @@ export function readScalar(frames: DataFrame[], refId: string): number | null {
   return typeof v === 'number' && Number.isFinite(v) ? v : null;
 }
 
+/** Last sample of the `refId` instant vector plus one identifying label off its number field. */
+export function readLabeledScalar(
+  frames: DataFrame[],
+  refId: string,
+  label: string
+): { value: number; label: string | null } | null {
+  const field = frames.find((f) => f.refId === refId)?.fields.find((f) => f.type === FieldType.number);
+  if (!field || field.values.length === 0) {
+    return null;
+  }
+  const v = field.values[field.values.length - 1];
+  return typeof v === 'number' && Number.isFinite(v) ? { value: v, label: field.labels?.[label] ?? null } : null;
+}
+
 // Extract the first usable time series for `refId` as a sparkline input. Requires a real series
 // (> 1 point) so a single-point instant/vector frame is rejected; skips frames whose time/number
 // fields are absent or length-mismatched rather than trusting the first refId match.
