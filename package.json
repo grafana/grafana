@@ -265,7 +265,7 @@
     "@emotion/react": "11.14.0",
     "@fingerprintjs/fingerprintjs": "^3.4.2",
     "@floating-ui/dom": "^1.7.6",
-    "@floating-ui/react": "0.27.19",
+    "@floating-ui/react": "0.27.20",
     "@formatjs/intl-durationformat": "^0.7.0",
     "@grafana/alerting": "workspace:*",
     "@grafana/api-clients": "workspace:*",
