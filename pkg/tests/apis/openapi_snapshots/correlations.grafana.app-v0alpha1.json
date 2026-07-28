@@ -821,6 +821,15 @@
           "target": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationTargetSpec"
           },
+          "timeRange": {
+            "description": "null is for PATCH/edit when we want to clear the value, undefined is if it's not valid for the correlation type",
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationTimeRangeSpec"
+              }
+            ]
+          },
           "transformations": {
             "type": "array",
             "items": {
@@ -937,6 +946,31 @@
       "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationTargetSpec": {
         "type": "object",
         "additionalProperties": true
+      },
+      "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationTimeRangeSpec": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "range": {
+            "type": "object",
+            "required": [
+              "from",
+              "to"
+            ],
+            "properties": {
+              "from": {
+                "type": "integer"
+              },
+              "to": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
       },
       "com.github.grafana.grafana.apps.correlations.pkg.apis.correlation.v0alpha1.CorrelationTransformationSpec": {
         "type": "object",
