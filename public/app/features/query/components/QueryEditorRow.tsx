@@ -76,10 +76,6 @@ export interface Props<TQuery extends DataQuery> {
   collapsable?: boolean;
   hideRefId?: boolean;
   queryLibraryRef?: string;
-  /**
-   * Leave saved-query editing mode. Only clears the reference — re-opening the library drawer is the
-   * editing banner's job, since it knows which query to highlight and how to handle selection.
-   */
   onExitQueryLibraryEdit?: () => void;
   addingSavedQuery?: boolean;
   onCancelAddSavedQuery?: () => void;
@@ -454,7 +450,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
     // Both "editing an existing saved query" and "adding a new saved query" hide the per-row
-    // save/duplicate/remove actions — saving is driven by the banner above the editor instead.
+    // save/duplicate/remove action
     const isEditingQueryLibrary = queryLibraryRef !== undefined || !!addingSavedQuery;
     const isUnifiedAlerting = app === CoreApp.UnifiedAlerting;
     const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
