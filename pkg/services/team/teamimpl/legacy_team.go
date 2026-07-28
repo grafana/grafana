@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 // At package level
@@ -24,8 +25,9 @@ type LegacyService struct {
 	tracer tracing.Tracer
 }
 
-func NewLegacyService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
-	store := &xormStore{db: db, cfg: cfg, deletes: []string{}}
+func NewLegacyService(ctx context.Context, db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
+	sql := legacysql.NewDatabaseProvider(db)
+	store := &xormStore{sql: sql, cfg: cfg, deletes: []string{}}
 
 	return &LegacyService{
 		cache:  localcache.New(defaultCacheDuration, 2*defaultCacheDuration),
@@ -105,7 +107,7 @@ func (s *LegacyService) IsTeamMember(ctx context.Context, orgId int64, teamId in
 		attribute.Int64("userID", userId),
 	))
 	defer span.End()
-	return s.store.IsMember(orgId, teamId, userId)
+	return s.store.IsMember(ctx, orgId, teamId, userId)
 }
 
 func (s *LegacyService) RemoveUsersMemberships(ctx context.Context, userID int64) error {
