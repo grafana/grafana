@@ -131,7 +131,7 @@ export function InstallControlsButton({
           data: { pluginId: plugin.id },
         }),
       ],
-      prompt: `Help me install and create a new ${plugin.name} datasource.`,
+      prompt: `Help me install ${plugin.name} datasource.`,
       autoSend: true,
     });
   };
