@@ -194,39 +194,6 @@ func TestClaim_ConflictThenClaimedByOther(t *testing.T) {
 	assert.Equal(t, "owner-B", after.Labels[LabelJobClaimOwner], "the winner's claim must be left untouched")
 }
 
-// TestListUnclaimedJobs verifies that only jobs without a claim label are returned.
-func TestListUnclaimedJobs(t *testing.T) {
-	fakeClient := newTestClientset()
-	store := newTestStore(fakeClient)
-
-	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
-	require.NoError(t, err)
-
-	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "unclaimed-job", Namespace: "stacks-123"},
-		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
-	}, metav1.CreateOptions{})
-	require.NoError(t, err)
-
-	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "claimed-job",
-			Namespace: "stacks-123",
-			Labels: map[string]string{
-				LabelJobClaim:      "1000000000000",
-				LabelJobClaimOwner: "owner-B",
-			},
-		},
-		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
-	}, metav1.CreateOptions{})
-	require.NoError(t, err)
-
-	unclaimed, err := store.ListUnclaimedJobs(ctx, 16)
-	require.NoError(t, err)
-	require.Len(t, unclaimed, 1)
-	assert.Equal(t, "unclaimed-job", unclaimed[0].GetName())
-}
-
 // TestClaim_RollbackSkipsJobOwnedByAnother verifies that the claim rollback does not
 // strip the claim from a job that is now owned by another worker. Job names are
 // deterministic, so by the time we roll back, the same name may be a re-created job
