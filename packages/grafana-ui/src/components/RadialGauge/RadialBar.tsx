@@ -1,5 +1,3 @@
-import { useMemo } from 'react';
-
 import { colorManipulator, FALLBACK_COLOR, type FieldDisplay } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
