@@ -43,14 +43,49 @@ func NewBundler() *Bundler {
 	return &Bundler{}
 }
 
+// BuildOption sets optional bundle contents. An option, rather than another parameter on Build, because
+// only some callers can supply these artifacts -- paneldata.json needs a browser.
+type BuildOption func(*buildConfig)
+
+type buildConfig struct {
+	panelData json.RawMessage
+}
+
+// WithPanelData bundles paneldata.json: the data frames the user's browser was holding for the panel,
+// serialized client-side from already-resolved scene state.
+//
+// This is the frontend counterpart to querydata.json, which holds what the datasource's *backend*
+// returned. Diffing the two is the point: a datasource plugin's frontend code also processes the
+// response, so frames present in querydata.json but missing or altered here pin the loss on the
+// plugin's frontend rather than on its backend or the upstream.
+//
+// Unlike panel.json it is data, not a definition: reading it re-runs no queries and re-applies no
+// transformations.
+//
+// The payload is stored as the client sent it, deliberately unvalidated. This is an experimental,
+// admin-only, on-prem-gated feature, and the failure mode is contained: indentJSON falls back to the
+// raw bytes for anything it cannot parse, so a malformed payload yields a malformed artifact rather
+// than a failed bundle. Size is likewise unbounded here -- the client decides what is worth sending,
+// and web.Bind's 100MiB request cap is the backstop.
+func WithPanelData(panelData json.RawMessage) BuildOption {
+	return func(cfg *buildConfig) {
+		cfg.panelData = panelData
+	}
+}
+
 // Build assembles a .tar.gz bundle from the query response, the captured HAR buffer, and the
 // optional panel/dashboard JSON the client supplied. traffic.har is omitted when nothing was
 // captured.
 //
 // Server logs are intentionally omitted because they are not scoped to this request and would leak
 // unrelated activity into a bundle meant for external sharing; they will be tackled in a follow-up.
-func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON, queryRequestJSON json.RawMessage, queryRequestErr, queryErr error) ([]byte, error) {
+func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON, queryRequestJSON json.RawMessage, queryRequestErr, queryErr error, opts ...BuildOption) ([]byte, error) {
 	files := map[string][]byte{}
+
+	cfg := buildConfig{}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
 
 	// queryRequestErr is the caller's failure to serialize the request into queryRequestJSON. Record it
 	// so a support engineer can tell the request JSON was omitted because serialization failed rather
@@ -83,6 +118,10 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 	}
 	if len(har) > 0 {
 		files["traffic.har"] = har
+	}
+
+	if len(cfg.panelData) > 0 {
+		files["paneldata.json"] = indentJSON(cfg.panelData)
 	}
 
 	if len(panelJSON) > 0 {

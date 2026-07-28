@@ -1011,3 +1011,33 @@ func readTarGz(t *testing.T, data []byte) map[string][]byte {
 	}
 	return out
 }
+
+func TestBundler_Build_bundlesPanelData(t *testing.T) {
+	panelData := json.RawMessage(`{"version":1,"frames":[{"schema":{"name":"frontend-frames"}}]}`)
+
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil,
+		WithPanelData(panelData))
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.JSONEq(t, string(panelData), string(files["paneldata.json"]))
+}
+
+func TestBundler_Build_omitsPanelDataWhenNotSupplied(t *testing.T) {
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	require.NotContains(t, readTarGz(t, blob), "paneldata.json")
+}
+
+func TestBundler_Build_malformedPanelDataDoesNotSinkTheBundle(t *testing.T) {
+	// The payload is client-supplied and deliberately unvalidated (experimental feature). What must hold
+	// is that garbage in it costs the bundle nothing else: every other artifact still ships.
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil,
+		WithPanelData(json.RawMessage(`{"version":1,`)))
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "panel.json")
+	require.Equal(t, `{"version":1,`, string(files["paneldata.json"]), "stored as sent")
+}

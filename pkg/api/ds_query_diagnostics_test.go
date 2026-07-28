@@ -343,3 +343,24 @@ func TestQueryDiagnostics_noCapturePerRefIDError_returns400(t *testing.T) {
 	// No HAR captured + a per-refID error -> bare 400, no bundle (matches QueryMetricsV2's per-refID handling).
 	require.Equal(t, http.StatusBadRequest, hs.QueryDiagnostics(c).Status())
 }
+
+func TestQueryDiagnostics_bundlesPanelData(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	fakeQuery := query.NewFakeQueryService(t)
+	returnFreshHARResponse(fakeQuery, "QueryData")
+	hs := &HTTPServer{queryDataService: fakeQuery}
+	c, rec := newDiagReqCtx(t, `{
+		"queries":[{"refId":"A"}],
+		"panelData":{"version":1,"frames":[{"schema":{"name":"frontend-marker"}}]}
+	}`, nil)
+
+	resp := hs.QueryDiagnostics(c)
+	require.Equal(t, http.StatusOK, resp.Status())
+
+	resp.WriteTo(c)
+	files := readTarGzFiles(t, rec.Body.Bytes())
+	// The frontend's frames land in their own artifact, so they can be diffed against querydata.json
+	// (the backend's response) to localise data lost inside the plugin's frontend code.
+	require.Contains(t, string(files["paneldata.json"]), "frontend-marker")
+	require.NotContains(t, string(files["querydata.json"]), "frontend-marker")
+}
