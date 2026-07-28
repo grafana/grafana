@@ -303,27 +303,25 @@ why each test exists.
 
 ## Rules checklist
 
-- Assert concrete computed values / exact call args — never only `toBeDefined`, `instanceof`,
-  "did not throw", or length-mirrors-input.
-- The `it(...)` description must be equivalent to what the test asserts.
-- Verify the test reaches the target branch (set gates; use untyped inputs for inference).
-- One data builder per file; don't mix `toDataFrame` and `createDataFrame`. Use `getPanelProps`
-  and call `applyFieldOverrides` for panel renders.
-- `it.each` for variants; delete duplicates; avoid over-involved mocks.
-- Canvas panels → draw-call snapshot harness, deterministic (fixed size, UTC, renderer-ready wait).
-- E2E for interaction; define selectors in `@grafana/e2e-selectors` first; query by selector.
-- Every panel gets an `@a11y` E2E test (`scanForA11yViolations` + `toHaveNoA11yViolations`),
-  plus interaction snapshots (`toMatchAriaSnapshot`) across a variety of states
-  (hover/tooltip, legend toggle, sort/filter, edit, empty) — not just first render.
-- Don't add tests to code slated for deletion.
-- Apply the 10 anti-flake rules; never assert on a canvas before `status === 1`.
-- Run the codeowner coverage check before pushing (it gates the PR).
-- Never commit an unfocused, verbose, or implementation-coupled "slop" test; no unreadable
-  DOM snapshot tests. Review AI output thoroughly before opening a PR.
-- Tests land in the same PR as the feature or bug fix; aim for intentional coverage, not
-  incidental, and close every bug with a regression test at the right layer.
+Pointers to the sections above — read them for the detail:
+
+- Principle 2 — assert concrete values / exact call args; never bare `toBeDefined`,
+  `instanceof`, "did not throw", or length-mirrors-input.
+- Principle 3 — no unfocused/verbose/implementation-coupled slop; review AI output before a PR.
+- Step 1 — one data builder per file; `getPanelProps` + `applyFieldOverrides` for panel renders.
+- Step 2 — `it(...)` equivalent to the assertion; `it.each` for variants, delete duplicates.
+- Step 3 — verify the test reaches the target branch (set gates; untyped inputs for inference).
+- Step 4 — canvas panels → draw-call harness, deterministic, wait for `status === 1`.
+- Step 5 — E2E selectors-first; every panel gets an `@a11y` test plus interaction aria-snapshots.
+- Step 6 — no tests for code slated for deletion.
+- Anti-flake — apply all 10 rules.
+- SDLC — tests land in the same PR as the feature/fix; close every bug with a regression test.
+- Verify — run the codeowner coverage check before pushing (it gates the PR).
 
 ## Exemplar files
+
+Additional exemplars not already cited inline above (Step 1 has the panel-props builder,
+Step 4 the canvas harness, Step 5 the a11y specs):
 
 - Behavior-specific util tests with typed uPlot mocks & `it.each`:
   `public/app/plugins/panel/barchart/bars.test.ts`
@@ -332,9 +330,6 @@ why each test exists.
 - Concrete-value assertions & clear descriptions:
   `packages/grafana-ui/src/components/Table/{utils,cellUtils}.test.ts`,
   `packages/grafana-ui/src/components/uPlot/config/gradientFills.test.ts`
-- Canvas draw-call harness: `public/app/plugins/panel/timeseries/TimeSeriesPanel.canvasTestUtils.tsx`
-  and the `TimeSeriesPanel.{lines,fills,annotations,axisPlacement,axisRange}.canvas.test.tsx` suites
-- Panel-props builder: `public/app/plugins/panel/test-utils.ts`
 - E2E panel spec + shared helpers: `e2e-playwright/panels-suite/table-footer.spec.ts`,
   `e2e-playwright/panels-suite/table-utils.ts`
 
