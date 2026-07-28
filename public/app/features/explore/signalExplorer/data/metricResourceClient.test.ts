@@ -1,7 +1,17 @@
 import type { TimeRange } from '@grafana/data';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
-import { CACHE_TTL_MS, fetchCatalog, fetchLabelKeys, fetchLabelValues, __clearCache } from './metricResourceClient';
+import {
+  CACHE_TTL_MS,
+  dsKey,
+  fetchCatalog,
+  fetchLabelKeys,
+  fetchLabelValues,
+  getMetricCacheGeneration,
+  invalidateMetricCache,
+  subscribeToMetricCache,
+  __clearCache,
+} from './metricResourceClient';
 
 const range = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 
@@ -151,6 +161,75 @@ describe('metricResourceClient', () => {
       await fetchLabelValues({ uid: 'p1' }, range, 'http_requests_total', 'job');
 
       expect(lp.queryLabelValues).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('invalidation', () => {
+    const twoDatasources = () => {
+      const lpA = makeLP();
+      const lpB = makeLP();
+      (getDataSourceInstance as jest.Mock).mockImplementation((ref: { uid?: string }) =>
+        Promise.resolve({ languageProvider: ref.uid === 'ds-a' ? lpA : lpB })
+      );
+      return { lpA, lpB };
+    };
+
+    it('drops every cached entry so the next call refetches', async () => {
+      const lp = makeLP();
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+      await fetchCatalog({ uid: 'p1' }, range);
+      await fetchLabelKeys({ uid: 'p1' }, range, 'http_requests_total');
+
+      invalidateMetricCache();
+
+      await fetchCatalog({ uid: 'p1' }, range);
+      await fetchLabelKeys({ uid: 'p1' }, range, 'http_requests_total');
+      expect(lp.start).toHaveBeenCalledTimes(2);
+      expect(lp.queryLabelKeys).toHaveBeenCalledTimes(2);
+    });
+
+    it('drops only the given datasource when one is named', async () => {
+      const { lpA, lpB } = twoDatasources();
+      await fetchCatalog({ uid: 'ds-a' }, range);
+      await fetchCatalog({ uid: 'ds-b' }, range);
+
+      invalidateMetricCache({ uid: 'ds-a' });
+
+      await fetchCatalog({ uid: 'ds-a' }, range);
+      await fetchCatalog({ uid: 'ds-b' }, range);
+      expect(lpA.start).toHaveBeenCalledTimes(2);
+      expect(lpB.start).toHaveBeenCalledTimes(1);
+    });
+
+    it('notifies subscribers with a changed generation for the invalidated datasource only', () => {
+      const listener = jest.fn();
+      const unsubscribe = subscribeToMetricCache(listener);
+      const before = getMetricCacheGeneration(dsKey({ uid: 'ds-a' }));
+      const otherBefore = getMetricCacheGeneration(dsKey({ uid: 'ds-b' }));
+
+      invalidateMetricCache({ uid: 'ds-a' });
+
+      expect(listener).toHaveBeenCalled();
+      expect(getMetricCacheGeneration(dsKey({ uid: 'ds-a' }))).not.toBe(before);
+      expect(getMetricCacheGeneration(dsKey({ uid: 'ds-b' }))).toBe(otherBefore);
+      unsubscribe();
+    });
+
+    it('changes the generation of every datasource when none is named', () => {
+      const before = getMetricCacheGeneration(dsKey({ uid: 'ds-b' }));
+
+      invalidateMetricCache();
+
+      expect(getMetricCacheGeneration(dsKey({ uid: 'ds-b' }))).not.toBe(before);
+    });
+
+    it('stops notifying an unsubscribed listener', () => {
+      const listener = jest.fn();
+      subscribeToMetricCache(listener)();
+
+      invalidateMetricCache();
+
+      expect(listener).not.toHaveBeenCalled();
     });
   });
 

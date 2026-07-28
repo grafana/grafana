@@ -100,6 +100,28 @@ describe('useMetricCatalog', () => {
     expect(spy).toHaveBeenLastCalledWith({ type: 'prometheus' }, range);
   });
 
+  it('refetches when the cache is invalidated, so a host refresh control reaches a mounted tree', async () => {
+    // Expiry alone never gets here: a relative range is one request key for the life of the page.
+    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
+    const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    act(() => client.invalidateMetricCache());
+
+    await waitFor(() => expect(spy).toHaveBeenCalledTimes(2));
+  });
+
+  it('ignores an invalidation aimed at a different datasource', async () => {
+    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
+    const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => client.invalidateMetricCache({ uid: 'p2' }));
+
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
   it('does not let a superseded response overwrite a newer one (stale-response ordering)', async () => {
     const first = deferred<MetricRow[]>();
     const second = deferred<MetricRow[]>();

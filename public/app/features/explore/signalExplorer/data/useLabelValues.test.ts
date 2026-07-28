@@ -148,4 +148,15 @@ describe('useLabelValues', () => {
     expect(result.current.loading).toBe(true);
     expect(result.current.values).toEqual([]);
   });
+
+  it('refetches when the cache is invalidated, so a host refresh control reaches an expanded label', async () => {
+    const spy = jest.spyOn(client, 'fetchLabelValues').mockResolvedValue(['web-1']);
+    const { result } = renderHook(() => useLabelValues({ uid: 'p1' }, range, 'up', 'job', true));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    act(() => client.invalidateMetricCache());
+
+    await waitFor(() => expect(spy).toHaveBeenCalledTimes(2));
+  });
 });

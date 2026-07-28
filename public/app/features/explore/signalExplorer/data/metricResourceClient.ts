@@ -61,6 +61,61 @@ export function __clearCache() {
   }
 }
 
+// Dropping cache entries is not on its own enough to refresh anything: the hooks only refetch when
+// the request they are keyed on changes, and a relative range keeps the same key forever. So an
+// invalidation also bumps a generation the hooks include in that key, and tells them it moved.
+let globalGeneration = 0;
+const generationByDsKey = new Map<string, number>();
+const listeners = new Set<() => void>();
+
+/**
+ * The current cache generation for one `dsKey`. Changes whenever entries for that datasource are
+ * invalidated, which is what makes the hooks treat the same datasource and range as a new request.
+ */
+export function getMetricCacheGeneration(key: string): number {
+  return globalGeneration + (generationByDsKey.get(key) ?? 0);
+}
+
+/** Subscribe to invalidations. Returns the unsubscribe function, for `useSyncExternalStore`. */
+export function subscribeToMetricCache(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+/**
+ * Forget what is cached, so the next fetch goes back to the datasource — the refresh action a host
+ * needs, because expiry alone never fires while a card sits open on a relative range.
+ *
+ * With a `dsRef`, only that datasource's entries go and only hooks pointed at it refetch. With no
+ * argument, everything goes: every mounted hook re-requests, and any datasource that is genuinely
+ * unchanged just pays for one round trip.
+ */
+export function invalidateMetricCache(dsRef?: DataSourceRef): void {
+  if (dsRef) {
+    const key = dsKey(dsRef);
+    for (const cache of allCaches) {
+      for (const cacheKey of cache.keys()) {
+        // Keys are `${tag}:${dsKey}:${rest}` — see the `fetch*` functions below.
+        if (cacheKey.slice(cacheKey.indexOf(':') + 1).startsWith(`${key}:`)) {
+          cache.delete(cacheKey);
+        }
+      }
+    }
+    generationByDsKey.set(key, (generationByDsKey.get(key) ?? 0) + 1);
+  } else {
+    for (const cache of allCaches) {
+      cache.clear();
+    }
+    globalGeneration++;
+  }
+
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
 /**
  * The cache identity of a time range, on the same terms as `dsKey`. A refresh that keeps the same
  * relative range string (`now-1h`/`now`) is deliberately the same key: it is served from cache, so

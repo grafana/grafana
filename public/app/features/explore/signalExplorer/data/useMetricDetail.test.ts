@@ -124,4 +124,15 @@ describe('useMetricDetail', () => {
     expect(result.current.loading).toBe(true);
     expect(result.current.labelKeys).toEqual([]);
   });
+
+  it('refetches when the cache is invalidated, so a host refresh control reaches an expanded row', async () => {
+    const spy = jest.spyOn(client, 'fetchLabelKeys').mockResolvedValue(['instance', 'job']);
+    const { result } = renderHook(() => useMetricDetail({ uid: 'p1' }, range, 'up', true));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    act(() => client.invalidateMetricCache());
+
+    await waitFor(() => expect(spy).toHaveBeenCalledTimes(2));
+  });
 });

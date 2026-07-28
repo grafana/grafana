@@ -5,6 +5,7 @@ import type { DataSourceRef, TimeRange } from '@grafana/data';
 import type { MetricRow, MetricType } from '../types';
 
 import { dsKey, fetchCatalog, rangeKey } from './metricResourceClient';
+import { useMetricCacheGeneration } from './useMetricCacheGeneration';
 
 export function useMetricCatalog(
   dsRef: DataSourceRef,
@@ -27,8 +28,11 @@ export function useMetricCatalog(
   // not refetch here: the client already serves that unchanged key from its own cache, so a
   // second effect run would be a redundant no-op.
   const fromTo = rangeKey(timeRange);
+  // Which lands the other way round for an explicit invalidation: the datasource and range are
+  // unchanged, but the cached answer for them is gone, so this must count as a different request.
+  const generation = useMetricCacheGeneration(dsRef);
 
-  const requestKey = `${requestDsKey}|${fromTo}`;
+  const requestKey = `${requestDsKey}|${fromTo}|${generation}`;
   const [activeKey, setActiveKey] = useState<string | null>(null);
   if (requestKey !== activeKey) {
     // Adjust state during render, not only in the effect below: passive effects run after the
@@ -68,7 +72,7 @@ export function useMetricCatalog(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestDsKey, fromTo]);
+  }, [requestDsKey, fromTo, generation]);
 
   const metrics = useMemo(() => {
     const q = (opts?.searchText ?? '').toLowerCase();
