@@ -730,12 +730,46 @@ func (k *failingBatchGetKV) BatchGet(ctx context.Context, section string, keys [
 	}
 }
 
-// TestKvStorageBackend_WatchWriteEvents_FailedBatchReadIsNotReportedAsMissing
-// guards the two error paths of a batched read. A failed read returns no keys at
-// all, so every event in the batch is still pending afterwards — reporting those
-// as missing data would turn one storage error into a batch-sized burst of false
-// data-loss errors, and on shutdown into one such burst per buffered batch.
-func TestKvStorageBackend_WatchWriteEvents_FailedBatchReadIsNotReportedAsMissing(t *testing.T) {
+// unreadableValueKV wraps a KV and hands back a value whose Read fails for every
+// data key holding nameMatch, standing in for a truncated or corrupt blob.
+type unreadableValueKV struct {
+	KV
+	nameMatch string
+	err       error
+}
+
+func (k *unreadableValueKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	values := k.KV.BatchGet(ctx, section, keys)
+	if section != kv.DataSection {
+		return values
+	}
+	return func(yield func(kv.KeyValue, error) bool) {
+		for obj, err := range values {
+			if err == nil && strings.Contains(obj.Key, k.nameMatch) {
+				// The caller only closes the value it is handed, so close the real one here.
+				_ = obj.Value.Close()
+				obj.Value = failingReadCloser{err: k.err}
+			}
+			if !yield(obj, err) {
+				return
+			}
+		}
+	}
+}
+
+type failingReadCloser struct{ err error }
+
+func (f failingReadCloser) Read([]byte) (int, error) { return 0, f.err }
+func (f failingReadCloser) Close() error             { return nil }
+
+// TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing
+// guards the error paths of resolving a batch. A failed batch read returns no
+// keys at all, so every event in the batch is still pending afterwards —
+// reporting those as missing data would turn one storage error into a
+// batch-sized burst of false data-loss errors, and on shutdown into one such
+// burst per buffered batch. A single unreadable value must likewise be reported
+// once, as the read failure it is.
+func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t *testing.T) {
 	newBatch := func() []Event {
 		batch := make([]Event, 0, dataBatchSize)
 		for i := range dataBatchSize {
@@ -778,6 +812,64 @@ func TestKvStorageBackend_WatchWriteEvents_FailedBatchReadIsNotReportedAsMissing
 
 		assert.Empty(t, out)
 		assert.Zero(t, logger.ErrorLogs.Calls, "shutdown is not a data problem")
+	})
+
+	t.Run("an unreadable value is reported once, not also as missing data", func(t *testing.T) {
+		const numEvents = 3
+		logger := &logtest.Fake{}
+		kvStore := &unreadableValueKV{
+			KV:        setupBadgerKV(t),
+			nameMatch: "unreadable-1",
+			err:       errors.New("value is corrupt"),
+		}
+		backend := setupTestStorageBackend(t, withKV(kvStore), withLogger(logger))
+		ctx := t.Context()
+
+		for i := range numEvents {
+			name := fmt.Sprintf("unreadable-%d", i)
+			obj, err := createTestObjectWithName(name, appsNamespace, fmt.Sprintf("value-%d", i))
+			require.NoError(t, err)
+			metaAccessor, err := utils.MetaAccessor(obj)
+			require.NoError(t, err)
+
+			_, err = backend.WriteEvent(ctx, WriteEvent{
+				Type: resourcepb.WatchEvent_ADDED,
+				Key: &resourcepb.ResourceKey{
+					Namespace: appsNamespace.Namespace,
+					Group:     appsNamespace.Group,
+					Resource:  appsNamespace.Resource,
+					Name:      name,
+				},
+				Value:     objectToJSONBytes(t, obj),
+				Object:    metaAccessor,
+				ObjectOld: metaAccessor,
+			})
+			require.NoError(t, err)
+		}
+
+		batch := make([]Event, 0, numEvents)
+		for event, err := range backend.eventStore.ListSince(ctx, 0, SortOrderAsc) {
+			require.NoError(t, err)
+			batch = append(batch, event)
+		}
+		require.Len(t, batch, numEvents)
+
+		out := make(chan *WrittenEvent, numEvents)
+		require.True(t, backend.emitWriteEvents(ctx, batch, out),
+			"one unreadable value should not tear down the watch stream")
+		close(out)
+
+		delivered := make([]string, 0, numEvents)
+		for event := range out {
+			delivered = append(delivered, event.Key.Name)
+		}
+		assert.Equal(t, []string{"unreadable-0", "unreadable-2"}, delivered,
+			"the events around the unreadable one must still be delivered")
+
+		// The value was present, so also calling it missing data sends whoever reads
+		// the log looking for a write that was never lost.
+		assert.Equal(t, 1, logger.ErrorLogs.Calls, "the read failure alone should be logged")
+		assert.Equal(t, "failed to read data for event", logger.ErrorLogs.Message)
 	})
 }
 

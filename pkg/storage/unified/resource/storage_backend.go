@@ -2250,13 +2250,10 @@ func (i *kvHistoryIterator) Value() []byte {
 
 // WatchWriteEvents returns a channel that receives write events.
 //
-// Notifications carry metadata only, so each one needs its value read back.
-// Resolving them one at a time caps the stream at a storage round trip per
-// event, which under write-heavy load is slow enough that the notifier's buffer
-// overflows and notifications are dropped. Instead, every notification that has
-// already arrived is resolved in one batched read.
+// Notifications carry metadata only, so values are read back — everything that
+// has already arrived in one batched read, since a read per event is slow enough
+// under load to overflow the notifier's buffer and drop notifications.
 func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
-	// Create a channel to receive events
 	events := make(chan *WrittenEvent, 10000) // TODO: make this configurable
 
 	notifierEvents := k.notifier.Watch(ctx, k.watchOpts)
@@ -2272,9 +2269,8 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 			}
 			batch = append(batch[:0], event)
 
-			// Take whatever else is already queued: resolving a batch costs the same
-			// single round trip as resolving the one event we are holding. A closed
-			// channel is picked up by the next receive above.
+			// A batch costs the same round trip as the one event we hold, so take
+			// whatever else is queued. A close is picked up by the receive above.
 		fill:
 			for len(batch) < dataBatchSize {
 				select {
@@ -2317,12 +2313,12 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 	// storage cursor open, and a slow watcher must not pin it.
 	values := make(map[DataKey][]byte, len(batch))
 	readFailed := false
+	// Keys present in storage but unreadable — not the same as missing data.
+	var unreadable map[DataKey]bool
 	for obj, err := range k.dataStore.BatchGet(ctx, keys) {
 		if err != nil {
-			// A cancelled context yields this error with no results at all. That is
-			// the shutdown path, not a storage problem, and the notifier channel may
-			// still hold a buffered backlog — grinding through it would log an error
-			// per remaining batch.
+			// A cancelled context surfaces here with no results: shutdown, not a storage
+			// problem, and grinding the backlog would log an error per buffered batch.
 			if ctx.Err() != nil {
 				return false
 			}
@@ -2333,22 +2329,22 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 		data, err := readAndClose(obj.Value)
 		if err != nil {
 			k.log.Error("failed to read data for event", "key", obj.Key.String(), "error", err)
+			if unreadable == nil {
+				unreadable = make(map[DataKey]bool)
+			}
+			unreadable[obj.Key] = true
 			continue
 		}
 		values[obj.Key] = data
 	}
 
 	// Emit in notification order rather than in the order the read returned.
-	// Monotonic resource versions are what keep watchers from relisting, so that
-	// guarantee should rest on the notifier, which owns ordering, rather than on
-	// a storage query returning rows in the order they were asked for.
 	for i, event := range batch {
 		data, ok := values[keys[i]]
 		if !ok {
-			// BatchGet omits keys it has no value for rather than erroring. A failed
-			// read says nothing about the rest of the batch, so don't report those as
-			// data loss.
-			if !readFailed {
+			// BatchGet omits keys it has no value for rather than erroring — but a failed
+			// batch read reported on none of them, and an unreadable value already did.
+			if !readFailed && !unreadable[keys[i]] {
 				k.log.Error("no data for event", "key", keys[i].String())
 			}
 			continue
