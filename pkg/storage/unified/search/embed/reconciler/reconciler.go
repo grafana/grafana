@@ -656,7 +656,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 
 	switch ev.action {
 	case resourcepb.WatchEvent_DELETED:
-		if err := s.vectorBackend.Delete(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), ev.name); err != nil {
+		if _, _, err := s.vectorBackend.DeleteRows(ctx, ev.namespace, s.batchEmbedder.Model(), builder.Resource(), vector.DeleteSelector{UIDs: []string{ev.name}}); err != nil {
 			statusLabel = "delete_error"
 			return err
 		}
@@ -698,7 +698,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 	// drop everything stored under this UID rather than leaving orphans.
 	if len(items) == 0 {
 		s.log.Info("skipping empty extract", "namespace", ev.namespace, "group", ev.group, "resource", ev.resource, "name", ev.name)
-		if err := s.vectorBackend.Delete(ctx, ev.namespace, model, builder.Resource(), ev.name); err != nil {
+		if _, _, err := s.vectorBackend.DeleteRows(ctx, ev.namespace, model, builder.Resource(), vector.DeleteSelector{UIDs: []string{ev.name}}); err != nil {
 			statusLabel = "delete_error"
 			return err
 		}

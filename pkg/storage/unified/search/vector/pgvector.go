@@ -307,22 +307,55 @@ func (b *pgvectorBackend) subresourceKeysTx(ctx context.Context, tx db.Tx, names
 	return out, nil
 }
 
-func (b *pgvectorBackend) Delete(ctx context.Context, namespace, model, resource, uid string) error {
+// defaultDeleteAllPageSize bounds one DeleteRows(All) statement so a huge
+// collection wipe can't hold a long-running delete; callers loop on hasMore.
+const defaultDeleteAllPageSize = 10000
+
+func (b *pgvectorBackend) DeleteRows(ctx context.Context, namespace, model, resource string, sel DeleteSelector) (int64, bool, error) {
 	if model == "" {
-		return fmt.Errorf("model must not be empty")
+		return 0, false, fmt.Errorf("model must not be empty")
+	}
+	if (len(sel.UIDs) > 0) == sel.All {
+		return 0, false, fmt.Errorf("exactly one of UIDs or All must be set")
 	}
 	if err := b.validateResource(ctx, resource); err != nil {
-		return err
+		return 0, false, err
 	}
-	req := &sqlVectorCollectionDeleteRequest{
+
+	if len(sel.UIDs) > 0 {
+		res, err := dbutil.Exec(ctx, b.db, sqlVectorCollectionDeleteUIDs, &sqlVectorCollectionDeleteUIDsRequest{
+			SQLTemplate: sqltemplate.New(b.dialect),
+			Resource:    resource,
+			Namespace:   namespace,
+			Model:       model,
+			UIDs:        sel.UIDs,
+		})
+		if err != nil {
+			return 0, false, err
+		}
+		n, err := res.RowsAffected()
+		return n, false, err
+	}
+
+	limit := sel.Limit
+	if limit <= 0 {
+		limit = defaultDeleteAllPageSize
+	}
+	res, err := dbutil.Exec(ctx, b.db, sqlVectorCollectionDeleteAll, &sqlVectorCollectionDeleteAllRequest{
 		SQLTemplate: sqltemplate.New(b.dialect),
 		Resource:    resource,
 		Namespace:   namespace,
 		Model:       model,
-		UID:         uid,
+		Limit:       limit,
+	})
+	if err != nil {
+		return 0, false, err
 	}
-	_, err := dbutil.Exec(ctx, b.db, sqlVectorCollectionDelete, req)
-	return err
+	n, err := res.RowsAffected()
+	if err != nil {
+		return 0, false, err
+	}
+	return n, n == int64(limit), nil
 }
 
 func (b *pgvectorBackend) DeleteSubresources(ctx context.Context, namespace, model, resource, uid string, subresources []string) error {

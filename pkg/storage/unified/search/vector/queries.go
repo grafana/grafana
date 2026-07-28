@@ -31,7 +31,8 @@ func mustTemplate(filename string) *template.Template {
 var (
 	sqlVectorCollectionUpsert            = mustTemplate("vector_collection_upsert.sql")
 	sqlVectorCollectionRefreshMeta       = mustTemplate("vector_collection_refresh_meta.sql")
-	sqlVectorCollectionDelete            = mustTemplate("vector_collection_delete.sql")
+	sqlVectorCollectionDeleteUIDs        = mustTemplate("vector_collection_delete_uids.sql")
+	sqlVectorCollectionDeleteAll         = mustTemplate("vector_collection_delete_all.sql")
 	sqlVectorCollectionDeleteSubresource = mustTemplate("vector_collection_delete_subresources.sql")
 	sqlVectorNamespaceDeleteEmbeddings   = mustTemplate("vector_namespace_delete_embeddings.sql")
 	sqlVectorNamespaceDeleteQueryCache   = mustTemplate("vector_namespace_delete_query_cache.sql")
@@ -95,17 +96,42 @@ func (r *sqlVectorCollectionRefreshMetaRequest) Validate() error {
 	return nil
 }
 
-type sqlVectorCollectionDeleteRequest struct {
+type sqlVectorCollectionDeleteUIDsRequest struct {
 	sqltemplate.SQLTemplate
 	Resource  string
 	Namespace string
 	Model     string
-	UID       string
+	UIDs      []string
 }
 
-func (r *sqlVectorCollectionDeleteRequest) Validate() error {
-	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
+func (r *sqlVectorCollectionDeleteUIDsRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" {
 		return fmt.Errorf("missing required fields")
+	}
+	if len(r.UIDs) == 0 {
+		return fmt.Errorf("uids must not be empty")
+	}
+	return nil
+}
+
+func (r *sqlVectorCollectionDeleteUIDsRequest) UIDsSlice() reflect.Value {
+	return reflect.ValueOf(r.UIDs)
+}
+
+type sqlVectorCollectionDeleteAllRequest struct {
+	sqltemplate.SQLTemplate
+	Resource  string
+	Namespace string
+	Model     string
+	Limit     int
+}
+
+func (r *sqlVectorCollectionDeleteAllRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	if r.Limit <= 0 {
+		return fmt.Errorf("limit must be positive")
 	}
 	return nil
 }

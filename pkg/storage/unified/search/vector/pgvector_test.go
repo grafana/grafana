@@ -150,12 +150,12 @@ func TestPgvectorBackend_UpsertReplaceSubresources_UnknownResource_Rejected(t *t
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
-func TestPgvectorBackend_Delete_EmptyModel_Rejected(t *testing.T) {
+func TestPgvectorBackend_DeleteRows_EmptyModel_Rejected(t *testing.T) {
 	rdb := test.NewDBProviderNopSQL(t)
 	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
 	ctx := testutil.NewDefaultTestContext(t)
 
-	err := backend.Delete(ctx, "ns", "", "dashboards", "dash-1")
+	_, _, err := backend.DeleteRows(ctx, "ns", "", "dashboards", DeleteSelector{UIDs: []string{"dash-1"}})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "model must not be empty")
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())

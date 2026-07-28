@@ -268,15 +268,17 @@ func (f *fakeVector) upsertLocked(vs []vector.Vector) error {
 	}
 	return nil
 }
-func (f *fakeVector) Delete(_ context.Context, ns, model, res, uid string) error {
+func (f *fakeVector) DeleteRows(_ context.Context, ns, model, res string, sel vector.DeleteSelector) (int64, bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.deleteErr != nil {
-		return f.deleteErr
+		return 0, false, f.deleteErr
 	}
-	f.deletes = append(f.deletes, deleteCall{ns, model, res, uid})
-	delete(f.storedSubs, subsKey(ns, model, res, uid))
-	return nil
+	for _, uid := range sel.UIDs {
+		f.deletes = append(f.deletes, deleteCall{ns, model, res, uid})
+		delete(f.storedSubs, subsKey(ns, model, res, uid))
+	}
+	return int64(len(sel.UIDs)), false, nil
 }
 func (f *fakeVector) DeleteSubresources(_ context.Context, ns, model, res, uid string, subs []string) error {
 	f.mu.Lock()

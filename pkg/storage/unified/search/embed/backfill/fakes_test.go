@@ -242,11 +242,13 @@ func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
 	f.upserts = append(f.upserts, vs)
 	return nil
 }
-func (f *fakeVector) Delete(_ context.Context, namespace, model, res, uid string) error {
+func (f *fakeVector) DeleteRows(_ context.Context, namespace, model, res string, sel vector.DeleteSelector) (int64, bool, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.deletes = append(f.deletes, deleteCall{namespace, model, res, uid})
-	return nil
+	for _, uid := range sel.UIDs {
+		f.deletes = append(f.deletes, deleteCall{namespace, model, res, uid})
+	}
+	return int64(len(sel.UIDs)), false, nil
 }
 func (f *fakeVector) DeleteSubresources(_ context.Context, namespace, model, res, uid string, subs []string) error {
 	f.mu.Lock()

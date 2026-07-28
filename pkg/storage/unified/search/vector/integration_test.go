@@ -268,7 +268,7 @@ func TestIntegrationVectorDeleteSubresources(t *testing.T) {
 	require.Len(t, results, 1)
 	assert.Equal(t, "panel/1", results[0].Subresource)
 
-	err = backend.Delete(ctx, "integration-test", testModel, testResource, "dash")
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"dash"}})
 	require.NoError(t, err)
 }
 
@@ -387,8 +387,10 @@ func TestIntegrationVectorUpsertReplaceSubresources(t *testing.T) {
 		"panel/2": "b-2",
 	}, storedB, "neighbor UID is isolated from the replace")
 
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash-a"))
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash-b"))
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"dash-a"}})
+	require.NoError(t, err)
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"dash-b"}})
+	require.NoError(t, err)
 }
 
 // changed ⊊ desired: only `changed` rows are rewritten, panels in
@@ -428,7 +430,8 @@ func TestIntegrationVectorUpsertReplaceSubresources_PartialUpdate(t *testing.T) 
 		"panel/9": "p9",    // new
 	}, stored)
 
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash"))
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"dash"}})
+	require.NoError(t, err)
 }
 
 // Empty `changed`: a panel is dropped from `desired` and deleted, with nothing to upsert.
@@ -456,7 +459,8 @@ func TestIntegrationVectorUpsertReplaceSubresources_DeleteOnlyNoChange(t *testin
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{"panel/1": "p1"}, stored)
 
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash"))
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"dash"}})
+	require.NoError(t, err)
 }
 
 // TestIntegrationVectorUpsertReplaceSubresources_EmptyInput is the
@@ -476,7 +480,8 @@ func TestIntegrationVectorUpsertReplaceSubresources_EmptyInput(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, map[string]string{"panel/1": "untouched"}, stored)
 
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash"))
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"dash"}})
+	require.NoError(t, err)
 }
 
 // TestIntegrationVectorUpsertReplaceSubresources_AtomicOnValidationError
@@ -515,7 +520,8 @@ func TestIntegrationVectorUpsertReplaceSubresources_AtomicOnValidationError(t *t
 	assert.Equal(t, map[string]string{"panel/1": "v1", "panel/2": "v1"}, stored,
 		"failed batch leaves no half-applied state")
 
-	require.NoError(t, backend.Delete(ctx, "integration-test", testModel, testResource, "dash"))
+	_, _, err = backend.DeleteRows(ctx, "integration-test", testModel, testResource, DeleteSelector{UIDs: []string{"dash"}})
+	require.NoError(t, err)
 }
 
 func TestIntegrationVectorExists(t *testing.T) {
@@ -753,7 +759,8 @@ func TestIntegrationVectorTimestamps(t *testing.T) {
 	require.Equal(t, created1, created2, "created_at must not change on re-embed")
 	require.True(t, updated2.After(updated1), "updated_at must advance on re-embed")
 
-	require.NoError(t, backend.Delete(ctx, v.Namespace, testModel, testResource, v.UID))
+	_, _, err := backend.DeleteRows(ctx, v.Namespace, testModel, testResource, DeleteSelector{UIDs: []string{v.UID}})
+	require.NoError(t, err)
 }
 
 func readEmbeddingTimestamps(t *testing.T, engine *xorm.Engine, namespace, model, uid, subresource string) (createdAt, updatedAt time.Time) {
@@ -834,4 +841,41 @@ func TestIntegrationVectorMetadataOnlyRefresh(t *testing.T) {
 	require.Len(t, rows, 1)
 	require.Equal(t, "After", rows[0].Title)
 	require.JSONEq(t, `{"embeddedAt":2}`, string(rows[0].Metadata))
+}
+
+func TestIntegrationVectorDeleteRows(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	mk := func(uid, sub string) Vector {
+		return Vector{
+			Namespace: "ns-del", Resource: testResource, UID: uid, Title: "T",
+			Subresource: sub, Content: "c", Embedding: makeEmbedding(0.2, 0.2), Model: testModel,
+		}
+	}
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		mk("u1", ""), mk("u1", "chunk/1"), mk("u2", ""), mk("u3", ""),
+	}))
+
+	// UIDs selector: whole entities including subresources.
+	n, more, err := backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{UIDs: []string{"u1", "u2"}})
+	require.NoError(t, err)
+	require.False(t, more)
+	require.EqualValues(t, 3, n)
+
+	// All selector with tiny page to exercise hasMore.
+	require.NoError(t, backend.Upsert(ctx, []Vector{mk("u4", ""), mk("u5", "")}))
+	n, more, err = backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{All: true, Limit: 2})
+	require.NoError(t, err)
+	require.EqualValues(t, 2, n)
+	require.True(t, more) // u3 remains
+	n, more, err = backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{All: true, Limit: 2})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, n)
+	require.False(t, more)
+
+	// Selector validation.
+	_, _, err = backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{})
+	require.Error(t, err)
+	_, _, err = backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{UIDs: []string{"x"}, All: true})
+	require.Error(t, err)
 }

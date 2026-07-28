@@ -46,8 +46,12 @@ type VectorBackend interface {
 	// to the given tuple.
 	UpsertReplaceSubresources(ctx context.Context, namespace, model, resource, uid string, changed []Vector, metadataOnly []VectorMeta, desired []string) error
 
-	// Delete removes every resource and subresource under `uid`. model must be non-empty.
-	Delete(ctx context.Context, namespace, model, resource, uid string) error
+	// DeleteRows removes rows selected by sel within (namespace, model,
+	// resource). Exactly one selector field must be set. UIDs deletes whole
+	// entities (all their subresources) in one statement. All deletes
+	// everything, paged by Limit — hasMore reports whether another page
+	// remains. model must be non-empty.
+	DeleteRows(ctx context.Context, namespace, model, resource string, sel DeleteSelector) (deleted int64, hasMore bool, err error)
 
 	// DeleteSubresources removes specific subresources under `uid`. Empty
 	// slice is a no-op. model must be non-empty.
@@ -56,7 +60,7 @@ type VectorBackend interface {
 	// DeleteNamespace removes every row belonging to a namespace across all
 	// resources and models, plus its cached query embeddings, rate buckets, and
 	// promotion log rows. Used when a tenant is hard-deleted. Returns the number
-	// of embedding rows removed. Not scoped by model/resource/uid, unlike Delete.
+	// of embedding rows removed. Not scoped by model/resource/uid, unlike DeleteRows.
 	DeleteNamespace(ctx context.Context, namespace string) (int64, error)
 
 	// GetSubresourceContent returns subresource → stored content and the
@@ -164,6 +168,14 @@ type VectorMeta struct {
 	Subresource string
 	Title       string
 	Metadata    json.RawMessage
+}
+
+// DeleteSelector picks rows for DeleteRows. Exactly one of UIDs/All is set;
+// a Filter field joins in PR2 without another method.
+type DeleteSelector struct {
+	UIDs  []string
+	All   bool
+	Limit int // page size when All; 0 means defaultDeleteAllPageSize
 }
 
 func (v *Vector) Validate() error {

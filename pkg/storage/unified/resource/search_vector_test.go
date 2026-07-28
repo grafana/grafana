@@ -103,8 +103,8 @@ func (f *fakeVectorBackend) Upsert(context.Context, []vector.Vector) error { ret
 func (f *fakeVectorBackend) UpsertReplaceSubresources(context.Context, string, string, string, string, []vector.Vector, []vector.VectorMeta, []string) error {
 	return nil
 }
-func (f *fakeVectorBackend) Delete(context.Context, string, string, string, string) error {
-	return nil
+func (f *fakeVectorBackend) DeleteRows(context.Context, string, string, string, vector.DeleteSelector) (int64, bool, error) {
+	return 0, false, nil
 }
 func (f *fakeVectorBackend) DeleteSubresources(context.Context, string, string, string, string, []string) error {
 	return nil
