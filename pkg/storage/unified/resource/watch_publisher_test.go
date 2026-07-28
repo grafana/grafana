@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -82,5 +84,18 @@ func TestPublishWatchNotification(t *testing.T) {
 		backend := &kvStorageBackend{log: log.NewNopLogger()}
 		// Must not panic on a nil publisher.
 		backend.publishWatchNotification(context.Background(), event)
+	})
+
+	t.Run("counts the notification even when delivery is disabled", func(t *testing.T) {
+		// The published counter is the source-of-truth denominator for consumer-side
+		// completeness, so it must reflect every committed write regardless of whether
+		// NATS delivery is enabled.
+		metrics := newKVBackendMetrics(prometheus.NewPedanticRegistry())
+		backend := &kvStorageBackend{log: log.NewNopLogger(), eventPublisher: &fakeEventPublisher{enabled: false}, metrics: metrics}
+
+		backend.publishWatchNotification(context.Background(), event)
+
+		got := testutil.ToFloat64(metrics.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action)))
+		assert.Equal(t, float64(1), got)
 	})
 }

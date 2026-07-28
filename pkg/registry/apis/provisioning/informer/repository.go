@@ -34,18 +34,19 @@ type RepositoryGetter interface {
 // backs. Under NATS the getter reads reconcile state fresh from the API and the
 // quota count from the informer's shared snapshot (written back on each reconcile
 // read); otherwise the getter reads the informer's cache lister.
-func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) (DeltaSource, RepositoryGetter) {
+func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, metrics *Metrics) (DeltaSource, RepositoryGetter) {
 	if nats.Enabled(subscriber) {
 		store := usinformer.NewStore()
-		source := NewRepositoryInformer(subscriber, client, "", resync, store)
+		source := NewRepositoryInformer(subscriber, client, "", resync, store, metrics)
 		return source, NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
-	return inf.Informer(), NewCachedRepositoryGetter(inf.Lister())
+	source := metrics.MeterAPIServer(provisioningapis.RepositoryResourceInfo.GroupVersionResource().Resource, inf.Informer())
+	return source, NewCachedRepositoryGetter(inf.Lister())
 }
 
 // NewRepositoryInformer builds an Informer for repositories.
-func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store) *usinformer.Informer {
+func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, metrics *Metrics) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
@@ -61,7 +62,7 @@ func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interfac
 		}
 		return out, nil
 	}
-	return usinformer.NewInformer(subscriber, provisioningapis.RepositoryResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
+	return usinformer.NewInformer(subscriber, provisioningapis.RepositoryResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list, metrics.NATSRecorder())
 }
 
 // NewCachedRepositoryGetter backs a RepositoryGetter with the informer's

@@ -26,17 +26,18 @@ type ConnectionGetter interface {
 // NewConnectionDeltaSource returns the connection delta source and the getter it
 // backs. Under NATS the getter reads reconcile state fresh from the API;
 // otherwise it reads the informer's cache lister.
-func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) (DeltaSource, ConnectionGetter) {
+func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, metrics *Metrics) (DeltaSource, ConnectionGetter) {
 	if nats.Enabled(subscriber) {
-		source := NewConnectionInformer(subscriber, client, "", resync, usinformer.NewStore())
+		source := NewConnectionInformer(subscriber, client, "", resync, usinformer.NewStore(), metrics)
 		return source, NewClientConnectionGetter(client.ProvisioningV0alpha1())
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Connections()
-	return inf.Informer(), NewCachedConnectionGetter(inf.Lister())
+	source := metrics.MeterAPIServer(provisioningapis.ConnectionResourceInfo.GroupVersionResource().Resource, inf.Informer())
+	return source, NewCachedConnectionGetter(inf.Lister())
 }
 
 // NewConnectionInformer builds an Informer for connections.
-func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store) *usinformer.Informer {
+func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, metrics *Metrics) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Connection{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
@@ -52,7 +53,7 @@ func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interfac
 		}
 		return out, nil
 	}
-	return usinformer.NewInformer(subscriber, provisioningapis.ConnectionResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
+	return usinformer.NewInformer(subscriber, provisioningapis.ConnectionResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list, metrics.NATSRecorder())
 }
 
 // NewCachedConnectionGetter backs a ConnectionGetter with the informer's

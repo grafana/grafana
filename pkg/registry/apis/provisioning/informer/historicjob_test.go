@@ -45,7 +45,7 @@ func TestNewHistoricJobDeltaSource_SelectsSourceByNATS(t *testing.T) {
 	client := fake.NewClientset()
 
 	t.Run("NATS off uses apiserver informer", func(t *testing.T) {
-		src := NewHistoricJobDeltaSource(false, client, time.Minute)
+		src := NewHistoricJobDeltaSource(false, client, time.Minute, nil)
 		_, isPeriodic := src.(*usinformer.CachelessPeriodicInformer)
 		assert.False(t, isPeriodic, "expected the apiserver informer, not the periodic lister")
 		_, isInformer := src.(cache.SharedIndexInformer)
@@ -53,7 +53,7 @@ func TestNewHistoricJobDeltaSource_SelectsSourceByNATS(t *testing.T) {
 	})
 
 	t.Run("NATS on uses periodic lister", func(t *testing.T) {
-		src := NewHistoricJobDeltaSource(true, client, time.Minute)
+		src := NewHistoricJobDeltaSource(true, client, time.Minute, nil)
 		_, isPeriodic := src.(*usinformer.CachelessPeriodicInformer)
 		assert.True(t, isPeriodic, "expected the periodic lister when NATS is enabled")
 	})
@@ -66,7 +66,7 @@ func TestNewHistoricJobPeriodicInformer_ListsFromClient(t *testing.T) {
 		&provisioningapis.HistoricJob{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "old"}},
 	)
 
-	src := NewHistoricJobPeriodicInformer(client, "", time.Hour)
+	src := NewHistoricJobPeriodicInformer(client, "", time.Hour, nil)
 	h := &addRecorder{}
 	_, err := src.AddEventHandler(h)
 	require.NoError(t, err)

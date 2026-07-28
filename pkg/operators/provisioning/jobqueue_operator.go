@@ -51,7 +51,7 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	// satisfy DeltaSource, so the rest of the wiring is identical.
 	jobController := controller.NewJobController()
 
-	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval(), informer.RegisterMetrics(deps.Registerer))
 	reg, err := jobInformer.AddEventHandler(jobController.EventHandler())
 	if err != nil {
 		return fmt.Errorf("failed to add job event handler: %w", err)

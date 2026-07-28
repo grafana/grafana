@@ -46,6 +46,11 @@ func actionToWatchNotificationType(action kv.DataAction) resourcepb.WatchNotific
 // their own API version, so no object body is sent. Errors are logged and
 // swallowed: the write is already durable in the event store.
 func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event Event) {
+	// Count the notification before the delivery guard: this is the source-of-truth
+	// denominator for consumer-side completeness, and it must reflect every
+	// committed write whether or not NATS delivery is enabled.
+	k.metrics.recordPublishedNotification(event)
+
 	if k.eventPublisher == nil || !k.eventPublisher.Enabled() {
 		return
 	}

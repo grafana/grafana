@@ -1093,7 +1093,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			// Create JobController to handle job create notifications
 			jobController := appcontroller.NewJobController()
-			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval, informer.RegisterMetrics(b.registry))
 			if _, err := jobSource.AddEventHandler(jobController.EventHandler()); err != nil {
 				return fmt.Errorf("add job controller event handler: %w", err)
 			}
@@ -1170,7 +1170,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			// The repository delta source and the getter it backs.
-			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval, informer.RegisterMetrics(b.registry))
 			repoController := controller.NewRepositoryController(
 				b.GetClient(),
 				reconcileRepoGetter,
@@ -1212,7 +1212,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
 			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
-			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval, informer.RegisterMetrics(b.registry))
 			connController := controller.NewConnectionController(
 				connGetter,
 				connStatusPatcher,
@@ -1252,7 +1252,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 					b.GetClient(),
 					historyJobExpiration,
 				)
-				historySource := informer.NewHistoricJobDeltaSource(nats.Enabled(b.natsSubscriber), c, historyJobExpiration)
+				historySource := informer.NewHistoricJobDeltaSource(nats.Enabled(b.natsSubscriber), c, historyJobExpiration, informer.RegisterMetrics(b.registry))
 				if _, err := historySource.AddEventHandler(historyJobController.EventHandler()); err != nil {
 					return fmt.Errorf("add history job controller event handler: %w", err)
 				}

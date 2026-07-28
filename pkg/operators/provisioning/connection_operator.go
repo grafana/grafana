@@ -46,8 +46,12 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 		return fmt.Errorf("failed to get health metrics recorder: %w", err)
 	}
 
+	// Expose the controller's named workqueue metrics (depth, adds, retries,
+	// queue/work duration). Must be set before the controller builds its queue.
+	registerWorkqueueMetrics(deps.Registerer)
+
 	// The connection delta source and the getter it backs.
-	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval(), informer.RegisterMetrics(deps.Registerer))
 	connController := controller.NewConnectionController(
 		connGetter,
 		statusPatcher,
