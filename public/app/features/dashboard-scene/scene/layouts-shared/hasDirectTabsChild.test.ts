@@ -4,19 +4,19 @@ import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 
-import { containsTabsLayout } from './findAllGridTypes';
+import { hasDirectTabsChild } from './hasDirectTabsChild';
 
-describe('containsTabsLayout', () => {
-  it('should return true when layout is TabsLayoutManager', () => {
+describe('hasDirectTabsChild', () => {
+  it('should return false when layout is a bare tabs layout', () => {
     const layout = new TabsLayoutManager({
       tabs: [new TabItem({ layout: AutoGridLayoutManager.createEmpty() })],
     });
-    expect(containsTabsLayout(layout)).toBe(true);
+    expect(hasDirectTabsChild(layout)).toBe(false);
   });
 
   it('should return false when layout is a grid layout', () => {
     const layout = AutoGridLayoutManager.createEmpty();
-    expect(containsTabsLayout(layout)).toBe(false);
+    expect(hasDirectTabsChild(layout)).toBe(false);
   });
 
   it('should return false when layout is RowsLayoutManager with no tabs in rows', () => {
@@ -26,10 +26,10 @@ describe('containsTabsLayout', () => {
         new RowItem({ layout: AutoGridLayoutManager.createEmpty() }),
       ],
     });
-    expect(containsTabsLayout(layout)).toBe(false);
+    expect(hasDirectTabsChild(layout)).toBe(false);
   });
 
-  it('should return true when RowsLayoutManager contains a row with tabs layout', () => {
+  it('should return true when a direct child row holds a tabs layout', () => {
     const layout = new RowsLayoutManager({
       rows: [
         new RowItem({ layout: AutoGridLayoutManager.createEmpty() }),
@@ -40,10 +40,10 @@ describe('containsTabsLayout', () => {
         }),
       ],
     });
-    expect(containsTabsLayout(layout)).toBe(true);
+    expect(hasDirectTabsChild(layout)).toBe(true);
   });
 
-  it('should return true when any row contains tabs layout', () => {
+  it('should return true when any direct child row holds a tabs layout', () => {
     const layout = new RowsLayoutManager({
       rows: [
         new RowItem({
@@ -55,6 +55,25 @@ describe('containsTabsLayout', () => {
         new RowItem({ layout: AutoGridLayoutManager.createEmpty() }),
       ],
     });
-    expect(containsTabsLayout(layout)).toBe(true);
+    expect(hasDirectTabsChild(layout)).toBe(true);
+  });
+
+  it('should return false when tabs are nested deeper than a direct child (rows > rows > tabs)', () => {
+    const layout = new RowsLayoutManager({
+      rows: [
+        new RowItem({
+          layout: new RowsLayoutManager({
+            rows: [
+              new RowItem({
+                layout: new TabsLayoutManager({
+                  tabs: [new TabItem({ layout: AutoGridLayoutManager.createEmpty() })],
+                }),
+              }),
+            ],
+          }),
+        }),
+      ],
+    });
+    expect(hasDirectTabsChild(layout)).toBe(false);
   });
 });

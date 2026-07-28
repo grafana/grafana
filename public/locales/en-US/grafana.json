@@ -2943,7 +2943,6 @@
           "stop-alerting-inside-range": "Stop alerting (or pending state) when inside range",
           "stop-alerting-less": "Stop alerting (or pending state) when less than",
           "stop-alerting-more": "Stop alerting (or pending state) when more than",
-          "stop-alerting-not-equal": "Stop alerting (or pending state) when not equal to",
           "stop-alerting-outside-range": "Stop alerting (or pending state) when outside range",
           "title": "Custom recovery threshold"
         }
@@ -3639,9 +3638,24 @@
         "declare-incident": "Declare incident",
         "declare-incident-no-permission": "You do not have permission to access Incident",
         "instance-details": "Instance details",
+        "investigation-checking": "Checking for investigation…",
+        "investigation-lookup-failed": "Could not check for an existing investigation. Try again.",
+        "investigation-lookup-retry": "Retry check",
+        "investigation-poll-failed": "Could not refresh investigation status. Try again.",
+        "investigation-poll-retry": "Retry status",
+        "investigation-report-failed": "The investigation report failed or was cancelled. You can open it or try again.",
+        "investigation-running": "Generating investigation report…",
+        "investigation-start-failed": "Could not start the investigation. Try again.",
+        "investigation-starting": "Starting…",
+        "investigation-waiting-identity": "Waiting for alert details before starting an investigation.",
+        "investigation-watch-live": "Watch live in assistant workspace",
+        "open-failed-investigation": "Open failed report",
+        "open-investigation": "Open full investigation report",
         "section-silence": "Silence",
         "silence-button": "Silence",
-        "silence-no-permission": "You do not have permission to create silences"
+        "silence-no-permission": "You do not have permission to create silences",
+        "start-investigation": "Start investigation",
+        "start-investigation-tooltip": "Assistant will draft it in your workspace"
       },
       "labels-column-title": "Labels",
       "no-firing-or-pending-instances": "You have no alert instances in a firing or pending state for the selected time range.",
@@ -5397,7 +5411,7 @@
       },
       "add-panel": "Add panel",
       "disabled-child-contains-tabs": "Cannot change to tabs because a row already contains tabs",
-      "disabled-nested-grouping": "Grouping is limited to 3 levels",
+      "disabled-nested-grouping": "Grouping is limited to {{maxDepth}} levels",
       "disabled-nested-tabs": "Tabs cannot be nested inside other tabs",
       "group-into-row": "Group into row",
       "group-into-tab": "Group into tab",
@@ -15827,7 +15841,24 @@
     "name-show-mini-map": "Show mini map"
   },
   "textng": {
-    "placeholder": "New text panel"
+    "category-text": "Text",
+    "code-view": {
+      "aria-label-code-content": "Code content"
+    },
+    "editor": {
+      "aria-label-content": "Text content",
+      "view-preview": "Preview",
+      "view-split": "Split",
+      "view-write": "Write"
+    },
+    "mode-options": {
+      "label-code": "Code",
+      "label-html": "HTML",
+      "label-markdown": "Markdown"
+    },
+    "name-language": "Language",
+    "name-mode": "Mode",
+    "name-show-line-numbers": "Show line numbers"
   },
   "theme-playground": {
     "label-base-theme": "Base theme",

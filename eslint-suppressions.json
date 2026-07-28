@@ -1256,11 +1256,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/rule-editor/formDefaults.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 6
-    }
-  },
   "public/app/features/alerting/unified/types/alerting.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
@@ -2825,11 +2820,6 @@
   },
   "public/app/plugins/panel/barchart/quadtree.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/bargauge/BarGaugePanel.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
