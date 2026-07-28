@@ -7978,7 +7978,9 @@
       "description-mixed": "Use multiple data sources"
     },
     "list": {
-      "no-data-source-message": "No data sources found"
+      "no-data-source-message": "No data sources found",
+      "results-found_one": "{{count}} data source found",
+      "results-found_other": "{{count}} data sources found"
     },
     "modal": {
       "configure-new-data-source": "Open a new tab and configure a data source",
