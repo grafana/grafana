@@ -1,7 +1,6 @@
 import { PluginExtensionPoints } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationService, usePluginLinks } from '@grafana/runtime';
 import { Sidebar } from '@grafana/ui';
-import { usePluginLinks } from 'app/features/plugins/extensions/usePluginLinks';
 
 export interface DashboardSidebarExtensionPointProps {
   dashboardUid?: string;

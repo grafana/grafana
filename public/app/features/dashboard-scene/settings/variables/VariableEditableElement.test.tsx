@@ -4,6 +4,7 @@ import { type ReactNode } from 'react';
 import { getWrapper } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { CustomVariable, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
 
@@ -27,6 +28,8 @@ jest.mock('../../utils/interactions', () => ({
 const variableActionButtonClickedMock = jest.mocked(DashboardInteractions.variableActionButtonClicked);
 
 const TestWrapper = getWrapper({ renderWithRouter: true });
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 function buildTestVariables() {
   const var1 = new CustomVariable({ name: 'query0', query: 'a, b, c' });
