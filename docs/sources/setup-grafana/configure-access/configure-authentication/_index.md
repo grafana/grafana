@@ -20,7 +20,7 @@ Grafana provides many ways to authenticate users. Some authentication integratio
 
 The following table shows all supported authentication methods and the features available for them. [Team sync](../configure-team-sync/), [active sync](enhanced-ldap/#active-ldap-synchronization), and [SAML](saml/) are available in Grafana Enterprise and Grafana Cloud. They aren't available in Grafana open source.
 
-| Authentication method                | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole mapping | Auto Login | Single Logout | SCIM support |
+| Authentication method                | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole Sync | Auto Login | Single Logout | SCIM support |
 | :----------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ | :----------- |
 | [Anonymous access](anonymous-auth/)  | N/A               | N/A          | N/A          | N/A                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           | N/A          |
 | [Auth Proxy](auth-proxy/)            | no                | yes          | yes          | no                    | yes       | no             | N/A         | no                   | N/A        | N/A           | N/A          |
