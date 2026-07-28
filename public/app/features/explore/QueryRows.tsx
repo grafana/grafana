@@ -11,7 +11,6 @@ import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
 import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
-import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { changeDatasource } from './state/datasource';
 import { setAddingSavedQueryAction, updateQueryLibraryRefAction } from './state/explorePane';
 import { changeQueries, runQueries } from './state/query';
@@ -41,7 +40,6 @@ const makeSelectors = (exploreId: string) => {
 
 export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
   const dispatch = useDispatch();
-  const { openDrawer } = useQueryLibraryContext();
   const {
     getQueries,
     getDatasourceInstanceSettings,
@@ -101,33 +99,11 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
     reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
   };
 
-  const onCancelQueryLibraryEdit = () => {
-    // Store the current queryLibraryRef before clearing it
-    const originalQueryRef = queryLibraryRef;
-
-    // Clear the queryLibraryRef to exit editing mode
-    dispatch(updateQueryLibraryRefAction({ exploreId, queryLibraryRef: undefined }));
-
-    // Open drawer with the original query highlighted
-    if (originalQueryRef) {
-      openDrawer({
-        datasourceFilters: [],
-        options: {
-          context: 'explore',
-          highlightQuery: originalQueryRef,
-        },
-      });
-    }
-  };
-
-  // After a successful save the editing banner re-opens the drawer itself (it knows which query to
-  // highlight), so this only has to leave editing mode.
-  const onQueryLibraryEditSaved = useCallback(
+  const onExitQueryLibraryEdit = useCallback(
     () => dispatch(updateQueryLibraryRefAction({ exploreId, queryLibraryRef: undefined })),
     [dispatch, exploreId]
   );
 
-  // Exit "adding a new saved query" mode (e.g. the banner's Discard, or after saving-and-continuing).
   const onCancelAddSavedQuery = useCallback(() => {
     dispatch(setAddingSavedQueryAction({ exploreId, addingSavedQuery: false }));
   }, [dispatch, exploreId]);
@@ -156,8 +132,7 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
       history={history}
       eventBus={eventBridge}
       queryLibraryRef={queryLibraryRef}
-      onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
-      onQueryLibraryEditSaved={onQueryLibraryEditSaved}
+      onExitQueryLibraryEdit={onExitQueryLibraryEdit}
       addingSavedQuery={addingSavedQuery}
       onCancelAddSavedQuery={onCancelAddSavedQuery}
       isOpen={isOpen}

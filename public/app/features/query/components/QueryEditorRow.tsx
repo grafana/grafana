@@ -76,8 +76,11 @@ export interface Props<TQuery extends DataQuery> {
   collapsable?: boolean;
   hideRefId?: boolean;
   queryLibraryRef?: string;
-  onCancelQueryLibraryEdit?: () => void;
-  onQueryLibraryEditSaved?: () => void;
+  /**
+   * Leave saved-query editing mode. Only clears the reference — re-opening the library drawer is the
+   * editing banner's job, since it knows which query to highlight and how to handle selection.
+   */
+  onExitQueryLibraryEdit?: () => void;
   addingSavedQuery?: boolean;
   onCancelAddSavedQuery?: () => void;
   isOpen?: boolean;
@@ -276,13 +279,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     reportInteraction('query_library-update_query_from_explore_cancelled', {
       datasourceType: query.datasource?.type,
     });
-    this.props.onCancelQueryLibraryEdit?.();
+    this.props.onExitQueryLibraryEdit?.();
   };
 
   onExitQueryLibraryEditingMode = () => {
-    // Exit query library editing mode after successful update. Unlike cancelling, this must not re-open
-    // the library drawer — the editing banner does that itself so it can highlight the query it saved.
-    this.props.onQueryLibraryEditSaved?.();
+    this.props.onExitQueryLibraryEdit?.();
   };
 
   onCopyQuery = () => {
@@ -546,7 +547,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       onQueryOpenChanged,
       app,
       queryLibraryRef,
-      onCancelQueryLibraryEdit,
       addingSavedQuery,
       onCancelAddSavedQuery,
     } = this.props;
@@ -612,7 +612,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             app={app}
             queryLibraryRef={queryLibraryRef}
             mode={addingSavedQuery ? 'add' : 'edit'}
-            onCancelEdit={addingSavedQuery ? onCancelAddSavedQuery : onCancelQueryLibraryEdit}
+            onCancelEdit={addingSavedQuery ? onCancelAddSavedQuery : this.onCancelQueryLibraryEdit}
             onUpdateSuccess={this.onExitQueryLibraryEditingMode}
             onSelectQuery={this.onSelectQueryFromLibrary}
           />

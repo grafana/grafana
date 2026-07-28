@@ -32,12 +32,10 @@ export function initializeFromURL(
   // Clear all the panes in the store first to avoid stale data.
   dispatch(clearPanes());
 
-  // Transient flag set by the Saved Queries "New query" entry point (/explore?createSavedQuery=true).
   // Seeded onto the first pane only so the "Adding a new saved query" banner shows; split-view URLs are unaffected.
   const addingSavedQuery = location.getSearch().get('createSavedQuery') === 'true';
 
-  // Saved query being edited via the "Edit in Explore" flow (/explore?queryLibraryRef=<uid>). Seeding it at
-  // init (rather than a post-navigation dispatch) is what lets the "Editing from saved queries" banner render
+  // Seeding it at init (rather than a post-navigation dispatch) is what lets the "Editing from saved queries" banner render
   // on the first, cold Explore mount. First pane only, mirroring addingSavedQuery.
   const queryLibraryRef = location.getSearch().get('queryLibraryRef') ?? undefined;
 
