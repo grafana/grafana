@@ -30,8 +30,8 @@ describe('addStandardDataReduceOptions', () => {
     const builder = new PanelOptionsEditorBuilder<SingleStatBaseOptions>();
     addStandardDataReduceOptions(builder, false);
 
-    expect(getItem(builder, 'reduceOptions.fields')).toBeUndefined();
-    expect(getItem(builder, 'reduceOptions.values')).toBeDefined();
+    const paths = builder.getItems().map((item) => item.path);
+    expect(paths).toEqual(['reduceOptions.values', 'reduceOptions.limit', 'reduceOptions.calcs']);
   });
 
   // The limit input and the calculation picker are mutually exclusive: limit shows for "all values"
@@ -112,7 +112,6 @@ describe('addOrientationOption', () => {
     addOrientationOption(builder);
 
     const item = getItem(builder, 'orientation');
-    expect(item).toBeDefined();
     expect(item?.defaultValue).toBe(VizOrientation.Auto);
   });
 

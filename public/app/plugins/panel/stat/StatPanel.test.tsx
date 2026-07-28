@@ -29,6 +29,15 @@ function createNumericFrame(values = [10, 20, 30], fieldOverrides = {}): DataFra
   });
 }
 
+function createTimeSeriesFrame(values = [10, 20, 30]): DataFrame {
+  return toDataFrame({
+    fields: [
+      { name: 'time', type: FieldType.time, values: values.map((_, i) => i + 1), config: {} },
+      { name: 'value', type: FieldType.number, values, config: {} },
+    ],
+  });
+}
+
 function renderStatPanel(
   optionsOverrides?: Partial<Options>,
   dataOverrides?: Partial<{ series: DataFrame[] }>,
@@ -106,12 +115,7 @@ describe('StatPanel', () => {
 
   it('renders a sparkline chart alongside the value when graphMode is Area', () => {
     // A time + number frame produces a sparkline, exercising the sparkline.timeRange branch.
-    const frame = toDataFrame({
-      fields: [
-        { name: 'time', type: FieldType.time, values: [1, 2, 3], config: {} },
-        { name: 'value', type: FieldType.number, values: [10, 20, 30], config: {} },
-      ],
-    });
+    const frame = createTimeSeriesFrame();
 
     const { container } = renderStatPanel({ graphMode: BigValueGraphMode.Area }, { series: [frame] });
 
@@ -121,12 +125,7 @@ describe('StatPanel', () => {
   });
 
   it('renders no sparkline chart when graphMode is None', () => {
-    const frame = toDataFrame({
-      fields: [
-        { name: 'time', type: FieldType.time, values: [1, 2, 3], config: {} },
-        { name: 'value', type: FieldType.number, values: [10, 20, 30], config: {} },
-      ],
-    });
+    const frame = createTimeSeriesFrame();
 
     const { container } = renderStatPanel({ graphMode: BigValueGraphMode.None }, { series: [frame] });
 
@@ -135,12 +134,7 @@ describe('StatPanel', () => {
   });
 
   it('renders the value with percent change enabled', () => {
-    const frame = toDataFrame({
-      fields: [
-        { name: 'time', type: FieldType.time, values: [1, 2, 3], config: {} },
-        { name: 'value', type: FieldType.number, values: [10, 20, 30], config: {} },
-      ],
-    });
+    const frame = createTimeSeriesFrame();
 
     renderStatPanel({ showPercentChange: true }, { series: [frame] });
 

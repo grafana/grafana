@@ -149,12 +149,14 @@ describe('Stat Panel Migrations', () => {
     expect(panel.fieldConfig.defaults.color).toBeUndefined();
   });
 
-  it('does not touch the field config when this is a different plugin', () => {
+  it('leaves the field config untouched for a non-singlestat plugin', () => {
     const old = {};
 
     const panel = { fieldConfig: { defaults: {}, overrides: [] } } as unknown as PanelModel;
-    // The angular migration branch is skipped, so the field config is left as-is.
-    expect(() => statPanelChangedHandler(panel, 'timeseries', old)).not.toThrow();
-    expect(panel.fieldConfig.defaults.color).toBeUndefined();
+    // The angular migration branch is skipped, so no color is added to the field config.
+    statPanelChangedHandler(panel, 'timeseries', old);
+
+    expect(panel.fieldConfig.defaults).toEqual({});
+    expect(panel.fieldConfig.overrides).toEqual([]);
   });
 });
