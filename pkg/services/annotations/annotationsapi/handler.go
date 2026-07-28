@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	annotationpkg "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,8 +45,9 @@ func (e *partialDecodeError) Unwrap() error { return e.Err }
 
 // MigrationProxy routes annotation writes to the new API server.
 type MigrationProxy struct {
-	client annotationClient
-	logger log.Logger
+	client  annotationClient
+	userSvc user.Service
+	logger  log.Logger
 }
 
 // ProvideMigrationProxy builds the proxy that routes legacy annotation operations to the new API server.
@@ -66,9 +68,15 @@ func ProvideMigrationProxy(cfg *setting.Cfg, userSvc user.Service, exchanger aut
 		return nil, fmt.Errorf("annotation proxy: api_server_url must be set when api_migration_phase is %q", phase)
 	}
 
+	client, err := newAnnotationAPIClient(cfg, exchanger)
+	if err != nil {
+		return nil, err
+	}
+
 	return &MigrationProxy{
-		client: newAnnotationAPIClient(cfg, userSvc, exchanger),
-		logger: log.New("annotationsapi"),
+		client:  client,
+		userSvc: userSvc,
+		logger:  log.New("annotationsapi"),
 	}, nil
 }
 
@@ -92,7 +100,7 @@ func (h *MigrationProxy) List(ctx context.Context, orgID int64, query *annotatio
 	userMap := map[string]*user.User{}
 	if len(createdByMeta) > 0 {
 		var err error
-		userMap, err = h.client.GetUsersFromMeta(ctx, createdByMeta)
+		userMap, err = client.GetUsersFromMeta(ctx, h.userSvc, createdByMeta)
 		if err != nil {
 			h.logger.Warn("failed to hydrate annotation users", "err", err)
 		}
@@ -267,7 +275,7 @@ func (h *MigrationProxy) Get(ctx context.Context, orgID int64, annotationID int6
 
 	createdBy := anno.GetCreatedBy()
 	if createdBy != "" {
-		if users, err := h.client.GetUsersFromMeta(ctx, []string{createdBy}); err == nil {
+		if users, err := client.GetUsersFromMeta(ctx, h.userSvc, []string{createdBy}); err == nil {
 			if u, ok := users[createdBy]; ok {
 				applyUserToDTO(u, dto)
 			}
