@@ -111,12 +111,8 @@ After `yarn start` has built the assets, it will continue to do so whenever any 
 If you want to contribute to any of the plugins listed below (that are found within the `public/app/plugins` directory) they require running additional commands to watch and rebuild them.
 
 - azuremonitor
-- grafana-postgresql-datasource
-- grafana-pyroscope-datasource
 - grafana-testdata-datasource
-- jaeger
 - mysql
-- loki
 
 To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
 
@@ -124,7 +120,8 @@ To build and watch all these plugins you can run the following command. Note thi
 yarn plugin:build:dev
 ```
 
-If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>` with the plugins name field found in its package.json. e.g. `@grafana-plugins/jaeger`.
+If, instead, you would like to build and watch a specific plugin you can run the following command. Make sure to substitute `<name_of_plugin>`
+with the plugins name field found in its package.json. e.g. `@grafana-plugins/awesome_plugin`.
 
 ```
 yarn workspace <name_of_plugin> dev
@@ -133,7 +130,7 @@ yarn workspace <name_of_plugin> dev
 If you want to run multiple specific plugins, you can use the following command.
 
 ```
-yarn nx run-many -t dev --projects="@grafana-plugins/grafana-azure-monitor-datasource,@grafana-plugins/jaeger"
+yarn nx run-many -t dev --projects="@grafana-plugins/<name_of_plugin>,@grafana-plugins/<name_of_plugin>"
 ```
 
 If you're unsure of the name of the plugins you'd like to run you can query nx with the following command to get a list of all plugins:
@@ -300,7 +297,7 @@ Installing and configuring databases can be a tricky business. Grafana uses [Doc
 In the root directory of your Grafana repository, run the following command:
 
 ```
-make devenv sources=influxdb,loki
+make devenv sources=influxdb
 ```
 
 The script generates a Docker Compose file with the databases you specify as `sources`, and runs them in the background.

@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
@@ -64,7 +65,7 @@ func executeMockedQuery(t *testing.T, name string, query queryModel) *backend.Da
 		query.MaxSeries = 50
 	}
 
-	dr := executeQuery(context.Background(), glog, query, runner, query.MaxSeries)
+	dr := executeQuery(context.Background(), log.NewNullLogger(), query, runner, query.MaxSeries)
 	return &dr
 }
 
@@ -229,7 +230,7 @@ func TestRealQuery(t *testing.T) {
 		runner, err := runnerFromDataSource(dsInfo)
 		require.NoError(t, err)
 
-		dr := executeQuery(context.Background(), glog, queryModel{
+		dr := executeQuery(context.Background(), log.NewNullLogger(), queryModel{
 			MaxDataPoints: 100,
 			RawQuery:      "buckets()",
 		}, runner, 50)

@@ -146,6 +146,40 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		})
 	})
 
+	t.Run("search_post_rank_authz", func(t *testing.T) {
+		setSectionKey := func(cfg *Cfg, key, value string) {
+			section := cfg.Raw.Section("unified_storage")
+			_, err := section.NewKey(key, value)
+			assert.NoError(t, err)
+		}
+
+		t.Run("defaults to off with zero tunables", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			cfg.setUnifiedStorageConfig()
+			assert.False(t, cfg.SearchPostRankAuthz)
+			assert.Equal(t, 0, cfg.SearchPostRankAuthzOverFetchFactor)
+			assert.Equal(t, 0, cfg.SearchPostRankAuthzMaxWindow)
+			assert.Equal(t, 0, cfg.SearchPostRankAuthzMaxCandidates)
+		})
+
+		t.Run("reads configured values", func(t *testing.T) {
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			assert.NoError(t, err)
+			setSectionKey(cfg, "search_post_rank_authz", "true")
+			setSectionKey(cfg, "search_post_rank_authz_over_fetch_factor", "20")
+			setSectionKey(cfg, "search_post_rank_authz_max_window", "5000")
+			setSectionKey(cfg, "search_post_rank_authz_max_candidates", "12345")
+			cfg.setUnifiedStorageConfig()
+			assert.True(t, cfg.SearchPostRankAuthz)
+			assert.Equal(t, 20, cfg.SearchPostRankAuthzOverFetchFactor)
+			assert.Equal(t, 5000, cfg.SearchPostRankAuthzMaxWindow)
+			assert.Equal(t, 12345, cfg.SearchPostRankAuthzMaxCandidates)
+		})
+	})
+
 	t.Run("env vars create unified_storage resource sections without ini file", func(t *testing.T) {
 		// Set env vars for a resource that has NO ini section defined.
 		t.Setenv("GF_UNIFIED_STORAGE_DASHBOARDS_DASHBOARD_GRAFANA_APP_DUALWRITERMODE", "3")
@@ -423,4 +457,31 @@ func TestIsTargetEligibleForMigrations(t *testing.T) {
 			assert.Equal(t, tt.expected, isTargetEligibleForMigrations(tt.targets))
 		})
 	}
+}
+
+func TestVectorAllowedCollections(t *testing.T) {
+	t.Run("defaults: dashboards internal, no external", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		cfg.setUnifiedStorageConfig()
+
+		assert.Equal(t, []string{"dashboard.grafana.app/dashboards"}, cfg.VectorAllowedInternalCollections)
+		assert.Empty(t, cfg.VectorAllowedExternalCollections)
+	})
+
+	t.Run("explicit lists are parsed as CSV", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		section := cfg.Raw.Section("unified_storage")
+		_, err = section.NewKey("vector_allowed_internal_collections", "dashboard.grafana.app/dashboards, folder.grafana.app/folders")
+		assert.NoError(t, err)
+		_, err = section.NewKey("vector_allowed_external_collections", "ext.example.com/my-things")
+		assert.NoError(t, err)
+		cfg.setUnifiedStorageConfig()
+
+		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.VectorAllowedInternalCollections)
+		assert.Equal(t, []string{"ext.example.com/my-things"}, cfg.VectorAllowedExternalCollections)
+	})
 }

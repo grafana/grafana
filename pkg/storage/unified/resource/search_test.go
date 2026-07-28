@@ -37,6 +37,11 @@ type MockResourceIndex struct {
 
 	buildInfo IndexBuildInfo
 	docCount  int64
+
+	// Optional configured results for the managed-object RPCs. When nil the
+	// methods return an error, matching the default "not expected" behaviour.
+	managedObjects *resourcepb.ListManagedObjectsResponse
+	managedCounts  []*resourcepb.CountManagedObjectsResponse_ResourceCount
 }
 
 func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
@@ -52,6 +57,9 @@ func (m *MockResourceIndex) Search(_ context.Context, _ types.AccessClient, _ *r
 }
 
 func (m *MockResourceIndex) CountManagedObjects(_ context.Context, _ *SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
+	if m.managedCounts != nil {
+		return m.managedCounts, nil
+	}
 	return nil, fmt.Errorf("not expected")
 }
 
@@ -60,6 +68,9 @@ func (m *MockResourceIndex) DocCount(_ context.Context, _ string, _ *SearchStats
 }
 
 func (m *MockResourceIndex) ListManagedObjects(_ context.Context, _ *resourcepb.ListManagedObjectsRequest, _ *SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
+	if m.managedObjects != nil {
+		return m.managedObjects, nil
+	}
 	return nil, fmt.Errorf("not expected")
 }
 
@@ -81,9 +92,13 @@ func (f *fakeDocumentBuilder) BuildDocument(_ context.Context, _ *resourcepb.Res
 
 // mockStorageBackend implements StorageBackend for testing
 type mockStorageBackend struct {
+	UnimplementedStorageBackend
 	resourceStats   []ResourceStats
 	lastImportTimes []ResourceLastImportTime
 	statsCalls      atomic.Int32
+	listStoredCalls atomic.Int32
+	listStoredErr   error
+	lastCountLimit  atomic.Int64
 }
 
 func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
@@ -96,6 +111,38 @@ func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr Namespace
 		}
 	}
 	return result, nil
+}
+
+// ListStoredResources reports the distinct group/resource identities in the
+// namespace, derived from the configured resourceStats. It is the discovery
+// primitive the search server uses instead of counting via GetResourceStats.
+func (m *mockStorageBackend) ListStoredResources(_ context.Context, filter NamespacedResource) ([]NamespacedResource, error) {
+	m.listStoredCalls.Add(1)
+	if m.listStoredErr != nil {
+		return nil, m.listStoredErr
+	}
+	if filter.Namespace == "" {
+		return nil, fmt.Errorf("namespace is required")
+	}
+	var result []NamespacedResource
+	for _, stat := range m.resourceStats {
+		if stat.Namespace != filter.Namespace {
+			continue
+		}
+		if filter.Group != "" && stat.Group != filter.Group {
+			continue
+		}
+		if filter.Resource != "" && stat.Resource != filter.Resource {
+			continue
+		}
+		result = append(result, stat.NamespacedResource)
+	}
+	return result, nil
+}
+
+func (m *mockStorageBackend) GetResourceStatsWithLimit(ctx context.Context, nsr NamespacedResource, minCount, countLimit int) ([]ResourceStats, error) {
+	m.lastCountLimit.Store(int64(countLimit))
+	return m.GetResourceStats(ctx, nsr, minCount)
 }
 
 func (m *mockStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
@@ -140,20 +187,55 @@ func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context) ite
 type mockSearchBackend struct {
 	openIndexes []NamespacedResource
 
-	mu              sync.Mutex
-	buildIndexCalls []buildIndexCall
-	cache           map[NamespacedResource]ResourceIndex
-	stopCalls       atomic.Int32
+	mu                sync.Mutex
+	buildIndexCalls   []buildIndexCall
+	cache             map[NamespacedResource]ResourceIndex
+	stopCalls         atomic.Int32
+	snapshotThreshold int64
+}
+
+func (m *mockSearchBackend) SnapshotCountThreshold() int64 {
+	return m.snapshotThreshold
 }
 
 type buildIndexCall struct {
-	key    NamespacedResource
-	size   int64
-	fields SearchableDocumentFields
+	key  NamespacedResource
+	size int64
 }
 
 func (m *mockSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
 	return nil, nil
+}
+
+// TestStartupIndexStatsCountLimit checks the cap the startup prebuild passes to
+// the backend: init min size + 1, raised to the snapshot threshold + 1 when
+// snapshots are enabled.
+func TestStartupIndexStatsCountLimit(t *testing.T) {
+	cases := []struct {
+		name              string
+		initMinCount      int
+		snapshotThreshold int64 // 0 means no active snapshot store
+		wantLimit         int64
+	}{
+		{"no snapshot store", 5, 0, 6},
+		{"snapshot threshold higher", 5, 100, 101},
+		{"init min higher", 50, 10, 51},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			storage := &mockStorageBackend{}
+			server, err := newSearchServer(SearchOptions{
+				Backend:      &mockSearchBackend{snapshotThreshold: tc.snapshotThreshold},
+				Resources:    &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
+				InitMinCount: tc.initMinCount,
+			}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+			require.NoError(t, err)
+
+			_, err = server.startupIndexStats(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, tc.wantLimit, storage.lastCountLimit.Load())
+		})
+	}
 }
 
 func (m *mockSearchBackend) WriteOpenIndexStats(_ time.Time) error {
@@ -166,7 +248,7 @@ func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
 	return m.cache[key]
 }
 
-func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration) (ResourceIndex, error) {
+func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
 
 	// Call the builder function (required by the contract)
@@ -186,9 +268,8 @@ func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResour
 	// Determine if this is an empty index based on size
 	// Empty indexes are characterized by size == 0
 	m.buildIndexCalls = append(m.buildIndexCalls, buildIndexCall{
-		key:    key,
-		size:   size,
-		fields: fields,
+		key:  key,
+		size: size,
 	})
 
 	return index, nil
@@ -240,7 +321,7 @@ func TestBuildIndexesUsesOpenIndexStats(t *testing.T) {
 		Backend:      search,
 		Resources:    supplier,
 		InitMinCount: 10,
-	}, storage, nil, nil, nil, nil, nil, nil, nil)
+	}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	built, err := support.buildIndexes(t.Context())
@@ -267,7 +348,7 @@ func TestBuildIndexesFallsBackToResourceStats(t *testing.T) {
 		Backend:      search,
 		Resources:    supplier,
 		InitMinCount: 10,
-	}, storage, nil, nil, nil, nil, nil, nil, nil)
+	}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	built, err := support.buildIndexes(t.Context())
@@ -301,7 +382,7 @@ func TestBuildIndexesAppliesOwnershipToOpenIndexStats(t *testing.T) {
 	support, err := newSearchServer(SearchOptions{
 		Backend:   search,
 		Resources: supplier,
-	}, storage, nil, nil, nil, nil, nil, nil, ownsIndexFn)
+	}, storage, nil, nil, nil, nil, nil, nil, nil, ownsIndexFn)
 	require.NoError(t, err)
 
 	built, err := support.buildIndexes(t.Context())
@@ -321,7 +402,7 @@ func TestSearchServerStopStopsBackend(t *testing.T) {
 	support, err := newSearchServer(SearchOptions{
 		Backend:   search,
 		Resources: supplier,
-	}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil)
+	}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	support.bgTaskCancel = func() {}
 
@@ -349,7 +430,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -406,7 +487,7 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 	}
 
 	// Enable searchAfterWrite
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -454,7 +535,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -803,7 +884,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		BuildVersion:         semver.MustParse("6.5.0"), // Running version
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -880,7 +961,7 @@ func TestRebuildIndexes(t *testing.T) {
 		Resources: supplier,
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -972,7 +1053,7 @@ func TestRebuildIndexes(t *testing.T) {
 			InitMinCount: 1,
 		}
 
-		support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+		support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, support)
 
@@ -1085,7 +1166,7 @@ func TestRebuildIndexesForResource(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -1166,7 +1247,7 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchServer(opts, nil, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -1275,7 +1356,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 		MinBuildVersion: semver.MustParse("5.0.0"),
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -1286,7 +1367,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	require.Equal(t, numIndexes, len(chsNoJitter))
 
 	// Create a second server with the same config to get a fresh rebuild queue.
-	support2, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support2, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	// With jitter: some indexes get extra tolerance, so fewer should be queued.
@@ -1316,11 +1397,11 @@ func newBlockingSearchBackend(cache map[NamespacedResource]ResourceIndex) *block
 	}
 }
 
-func (b *blockingSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, fields SearchableDocumentFields, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, maxFreshSnapshotAge time.Duration) (ResourceIndex, error) {
+func (b *blockingSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, maxFreshSnapshotAge time.Duration) (ResourceIndex, error) {
 	b.buildCalls.Add(1)
 	b.startedOnce.Do(func() { close(b.onStarted) })
 	<-b.proceed
-	return b.mockSearchBackend.BuildIndex(ctx, key, size, fields, reason, builder, updater, rebuild, lastImportTime, maxFreshSnapshotAge)
+	return b.mockSearchBackend.BuildIndex(ctx, key, size, reason, builder, updater, rebuild, lastImportTime, maxFreshSnapshotAge)
 }
 
 // TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated verifies the
@@ -1346,7 +1427,7 @@ func TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated(t *testing.T) {
 	}
 
 	opts := SearchOptions{Backend: search, Resources: supplier}
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	// Fire the first rebuild. It will claim the in-flight slot and block
@@ -1479,7 +1560,7 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 		GroupsResources: map[string]string{"group": "res"},
 	}
 	opts := SearchOptions{Backend: search, Resources: supplier}
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	done := make(chan struct{})

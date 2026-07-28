@@ -10,7 +10,11 @@ import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { VariableEditableElement } from '../../settings/variables/VariableEditableElement';
 import { openAddVariablePane } from '../../settings/variables/VariableTypeSelectionPane';
-import { getDefaultTopPlacementLabel, isEditableVariableType } from '../../settings/variables/utils';
+import {
+  getDefaultTopPlacementLabel,
+  isEditableVariableType,
+  isVariableEditable,
+} from '../../settings/variables/utils';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
@@ -140,7 +144,7 @@ export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) 
 
 export function partitionVariablesByEditability(variables: SceneVariable[]) {
   const { editable = [], nonEditable = [] } = partitionSceneObjects(variables, (v) =>
-    isEditableVariableType(v.state.type) ? 'editable' : 'nonEditable'
+    isVariableEditable(v) ? 'editable' : 'nonEditable'
   );
   return { editable, nonEditable };
 }

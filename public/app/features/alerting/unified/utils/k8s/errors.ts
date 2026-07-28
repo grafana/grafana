@@ -7,13 +7,17 @@ import { getErrorCode } from '../misc';
 
 export const ERROR_NEWER_CONFIGURATION = 'alerting.notifications.conflict' as const;
 export const ERROR_ROUTES_MATCHER_CONFLICT = 'alerting.notifications.routes.conflictingMatchers' as const;
+export const ERROR_TIME_INTERVAL_IN_USE = 'alerting.notifications.time-intervals.used' as const;
 
 export type ApiMachineryErrorResponse = FetchError<ApiMachineryError>;
 
 // these are known error IDs, used by both Kubernetes API and the front-end (using error `cause`).
 export type KnownErrorCodes = typeof ERROR_NEWER_CONFIGURATION;
 // Kubernetes API Machinery errors are a superset of supported errors codes.
-type KnownMachineryErrorCodes = KnownErrorCodes | typeof ERROR_ROUTES_MATCHER_CONFLICT;
+type KnownMachineryErrorCodes =
+  | KnownErrorCodes
+  | typeof ERROR_ROUTES_MATCHER_CONFLICT
+  | typeof ERROR_TIME_INTERVAL_IN_USE;
 
 /**
  * This function gives us the opportunity to translate or transform error codes that are returned from the Kubernetes APIs
@@ -39,6 +43,10 @@ export function getErrorMessageFromApiMachineryErrorResponse(error: ApiMachinery
 
   const errorMessageMap: Record<KnownMachineryErrorCodes, string | undefined> = {
     [ERROR_NEWER_CONFIGURATION]: getErrorMessageFromCode(code),
+    [ERROR_TIME_INTERVAL_IN_USE]: t(
+      'alerting.errors.time-interval-in-use',
+      'This time interval cannot be deleted because it is still used by one or more notification policies or alert rules.'
+    ),
     [ERROR_ROUTES_MATCHER_CONFLICT]: t(
       'alerting.policies.update-errors.routes.conflictingMatchers',
       'Cannot add or update route: matchers conflict with an external routing tree if we merged matchers {{-matchers}}. This would make the route unreachable.',

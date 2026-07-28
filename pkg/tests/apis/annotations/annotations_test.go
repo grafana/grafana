@@ -254,6 +254,19 @@ func TestIntegrationAnnotationTags(t *testing.T) {
 	for _, tag := range rsp.Result.Tags {
 		require.Contains(t, tag.Tag, "env")
 	}
+
+	// A caller without organization annotation read is rejected with the handler's 403.
+	errorRsp := apis.DoRequest(helper, apis.RequestParams{
+		User: helper.Org1.None,
+		Path: basePath,
+	}, &metav1.Status{})
+	require.Equal(t, http.StatusForbidden, errorRsp.Response.StatusCode)
+
+	status := errorRsp.Result
+	require.NotNil(t, status)
+	require.Equal(t, int32(http.StatusForbidden), status.Code)
+	require.Equal(t, metav1.StatusReasonForbidden, status.Reason)
+	require.Contains(t, status.Message, "requires the annotations:read permission with the organization scope")
 }
 
 func TestIntegrationAnnotationGraphite(t *testing.T) {
@@ -284,11 +297,17 @@ func TestIntegrationAnnotationGraphite(t *testing.T) {
 	require.Equal(t, "deployment\nv1.2.3", text)
 
 	// An empty `what` is rejected.
-	rsp = apis.DoRequest(helper, apis.RequestParams{
+	errorRsp := apis.DoRequest(helper, apis.RequestParams{
 		User:   helper.Org1.Admin,
 		Method: http.MethodPost,
 		Path:   path,
-		Body:   []byte(`{"what":""}`),
-	}, &annotationV0.Annotation{})
-	require.Equal(t, http.StatusInternalServerError, rsp.Response.StatusCode)
+		Body:   []byte(`{"what":"","tags":[]}`),
+	}, &metav1.Status{})
+	require.Equal(t, http.StatusBadRequest, errorRsp.Response.StatusCode)
+
+	status := errorRsp.Result
+	require.NotNil(t, status)
+	require.Equal(t, int32(http.StatusBadRequest), status.Code)
+	require.Equal(t, metav1.StatusReasonBadRequest, status.Reason)
+	require.Contains(t, status.Message, "what field should not be empty")
 }

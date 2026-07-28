@@ -4,6 +4,7 @@ import { map, distinctUntilChanged } from 'rxjs/operators';
 
 import { type LocationService, type ScopesContextValue, type ScopesContextValueState } from '@grafana/runtime';
 
+import { type ScopesApiClient } from './ScopesApiClient';
 import { type ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
 import { deserializeFolderPath, serializeFolderPath } from './dashboards/scopeNavgiationUtils';
 import { type ScopesSelectorService } from './selector/ScopesSelectorService';
@@ -31,7 +32,8 @@ export class ScopesService implements ScopesContextValue {
   constructor(
     private selectorService: ScopesSelectorService,
     private dashboardsService: ScopesDashboardsService,
-    private locationService: LocationService
+    private locationService: LocationService,
+    private apiClient: ScopesApiClient
   ) {
     this._state = new BehaviorSubject<State>({
       enabled: false,
@@ -248,6 +250,53 @@ export class ScopesService implements ScopesContextValue {
       this.updateState({ enabled });
       if (enabled) {
         const { appliedScopes, scopes } = this.selectorService.state;
+        // When there is no selection yet, fetch the default scope and apply
+        // it. Fire-and-forget so setEnabled stays sync. fetchDefaultScope is
+        // itself gated on grafana.useDefaultScopesEndpoint and returns
+        // undefined when off, so the call is safe here.
+        if (appliedScopes.length === 0) {
+          this.apiClient
+            .fetchDefaultScope()
+            .then((name) => {
+              // Only apply if scopes is still enabled AND the user has neither
+              // applied nor started picking a scope in the meantime. Checking
+              // selectedScopes as well as appliedScopes preserves any pending
+              // selection: the user may have opened the selector and ticked a
+              // scope before this slower fetch resolved — clobbering that with
+              // the default scope would silently discard their choice. If the
+              // user navigated to a non-scope page before the fetch resolved,
+              // state.enabled is now false and applying would leak `?scopes=…`
+              // into a page that doesn't use scopes.
+              if (
+                !name ||
+                !this.state.enabled ||
+                this.selectorService.state.appliedScopes.length > 0 ||
+                this.selectorService.state.selectedScopes.length > 0
+              ) {
+                return;
+              }
+              // Bypass this.changeScopes (which hardcodes redirectOnApply=false
+              // for URL-driven init) and call the selector service directly
+              // with redirectOnApply=true. If the default scope's scope node
+              // resolves with a redirectPath once applyScopes has loaded scope
+              // metadata and nodes, the user is redirected there — same as manual
+              // selection. The scope metadata is already in the getScope RTK Query
+              // cache (seeded by fetchDefaultScope), so applyScopes' downstream
+              // fetch is a cache hit.
+              // Return the promise so the outer .catch below actually catches
+              // a rejection from changeScopes → applyScopes → fetch chains.
+              // Without the return, the inner promise floats free and any
+              // rejection surfaces as unhandled.
+              return this.selectorService.changeScopes([name], undefined, undefined, true);
+            })
+            .catch((err) => {
+              // Match the .catch(...) pattern used by the resolvePathToRoot(...)
+              // calls elsewhere in this file so a rejection from either
+              // fetchDefaultScope or the changeScopes chain above is logged
+              // instead of surfacing as an unhandled rejection.
+              console.error('Failed to apply default scope:', err);
+            });
+        }
         // Defer the URL write when scope metadata has not loaded yet.
         // setEnabled is called from `@grafana/scenes` during dashboard mount,
         // which can race with `applyScopes` and re-write a stale `scope_node`

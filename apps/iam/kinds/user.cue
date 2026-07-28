@@ -44,7 +44,7 @@ userv0alpha1: userKind & {
 			name: "lastSeenAt"
 			path: "status.lastSeenAt"
 			type: "int64"
-			capabilities: ["filter", "sort", "retrieve"]
+			capabilities: ["sort", "retrieve"]
 			// Sort on last-seen puts missing values last; index the zero value so
 			// never-seen users keep their historical epoch-0 sort position.
 			emitZeroIfAbsent: true
@@ -64,6 +64,14 @@ userv0alpha1: userKind & {
 			capabilities: ["filter", "retrieve"]
 			emitZeroIfAbsent: true
 			description:      "Whether the user is disabled"
+		},
+		{
+			name:  "externalAuthModules"
+			path:  "spec.externalAuthInfo[*].module"
+			type:  "string"
+			array: true
+			capabilities: ["retrieve"]
+			description: "Auth module identifiers the user is externally synced with"
 		},
 	]
 	routes: {

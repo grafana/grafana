@@ -198,13 +198,14 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 					{
 						Type:     metav1.CauseTypeFieldValueInvalid,
 						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "appID").String(),
-						Detail:   "verify appID is correct",
+						Detail:   "authentication failed. The appID exists but could not be accessed with the privateKey. Verify appID is correct",
 						BadValue: c.cfg.AppID(),
 					},
 					{
-						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("secure", "privateKey").String(),
-						Detail: "verify privateKey is correct",
+						Type:     metav1.CauseTypeFieldValueInvalid,
+						Field:    field.NewPath("secure", "privateKey").String(),
+						Detail:   "authentication failed. Verify privateKey is the generated private key for the appID",
+						BadValue: "****",
 					},
 				},
 			}, nil
@@ -241,7 +242,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				},
 			}, nil
 		default:
-			// Generic error - invalid spec
+			// Generic error
 			return &provisioning.TestResults{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: provisioning.APIVERSION,
@@ -251,15 +252,8 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:     metav1.CauseTypeFieldValueInvalid,
-						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "appID").String(),
-						Detail:   "verify appID is correct",
-						BadValue: c.cfg.AppID(),
-					},
-					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
-						Field:  field.NewPath("secure", "privateKey").String(),
-						Detail: "verify privateKey is correct",
+						Detail: fmt.Errorf("failed to GET app: %w", err).Error(),
 					},
 				},
 			}, nil
@@ -358,7 +352,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				},
 			}, nil
 		default:
-			// Generic error - invalid spec
+			// Generic error
 			return &provisioning.TestResults{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: provisioning.APIVERSION,
@@ -368,10 +362,8 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 				Success: false,
 				Errors: []provisioning.ErrorDetails{
 					{
-						Type:     metav1.CauseTypeFieldValueInvalid,
-						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "installationID").String(),
-						Detail:   "invalid installation ID",
-						BadValue: c.cfg.InstallationID(),
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Detail: fmt.Errorf("failed to GET app installation: %w", err).Error(),
 					},
 				},
 			}, nil

@@ -459,6 +459,43 @@ describe('setDashboardPanelContext', () => {
       ]);
     });
 
+    it('should not add a filter that already exists with the same key, value and operator', () => {
+      const { scene, context } = buildTestScene({
+        existingFilterVariable: true,
+      });
+
+      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+
+      variable.setState({ filters: [{ key: 'existing', value: 'val', operator: '=' }] });
+
+      const filters: AdHocFilterItem[] = [
+        { key: 'existing', value: 'val', operator: '=' },
+        { key: 'cluster', value: 'cluster', operator: '=' },
+      ];
+
+      context.onAddAdHocFilters?.(filters);
+      expect(variable.state.filters).toEqual([
+        { key: 'existing', value: 'val', operator: '=' },
+        { key: 'cluster', value: 'cluster', operator: '=' },
+      ]);
+    });
+
+    it('should not update the filters when all new filters are duplicates', () => {
+      const { scene, context } = buildTestScene({
+        existingFilterVariable: true,
+      });
+
+      const variable = getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+
+      variable.setState({ filters: [{ key: 'existing', value: 'val', operator: '=' }] });
+      const updateFiltersSpy = jest.spyOn(variable, 'updateFilters');
+
+      context.onAddAdHocFilters?.([{ key: 'existing', value: 'val', operator: '=' }]);
+
+      expect(updateFiltersSpy).not.toHaveBeenCalled();
+      expect(variable.state.filters).toEqual([{ key: 'existing', value: 'val', operator: '=' }]);
+    });
+
     it('should not do anything if filters empty', () => {
       const { scene, context } = buildTestScene({
         existingFilterVariable: true,

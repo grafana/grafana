@@ -9,8 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	folderv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
-	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
@@ -47,17 +45,6 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	// Jobs informer and controller for insert notifications. Under the NATS watch
-	// the source is a NATS-backed informer; otherwise an apiserver-backed one. Both
-	// satisfy DeltaSource, so the rest of the wiring is identical.
-	jobController := controller.NewJobController()
-
-	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
-	reg, err := jobInformer.AddEventHandler(jobController.EventHandler())
-	if err != nil {
-		return fmt.Errorf("failed to add job event handler: %w", err)
-	}
-
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
 	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
 	if err != nil {
@@ -75,14 +62,23 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 			jobInterval:          controllerCfg.jobInterval,
 			leaseRenewalInterval: controllerCfg.leaseRenewalInterval,
 			maxSyncWorkers:       controllerCfg.maxSyncWorkers,
-			folderAPIVersion:     controllerCfg.folderAPIVersion,
 		},
 		jobStore,
 		jobHistoryWriter,
-		jobController.InsertNotifications(),
 	)
 	if err != nil {
 		return fmt.Errorf("build driver: %w", err)
+	}
+
+	// Jobs informer feeding the driver's work queue with job keys. Under the NATS
+	// watch the source is a NATS-backed informer; otherwise an apiserver-backed
+	// one. Both satisfy DeltaSource, so the rest of the wiring is identical. The
+	// handler must be registered before the informer runs: the NATS-backed source
+	// has no cache to replay for late handlers.
+	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	reg, err := jobInformer.AddEventHandler(driver.EventHandler())
+	if err != nil {
+		return fmt.Errorf("failed to add job event handler: %w", err)
 	}
 
 	var wg sync.WaitGroup
@@ -135,7 +131,6 @@ type jobQueueControllerConfig struct {
 	leaseRenewalInterval time.Duration
 	concurrentDrivers    int
 	maxSyncWorkers       int
-	folderAPIVersion     string
 }
 
 func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*jobQueueControllerConfig, error) {
@@ -145,7 +140,6 @@ func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Reg
 	}
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
-	folderAPIVersion := operatorSec.Key("folders_api_version").MustString(folderv1beta1.APIVersion)
 
 	return &jobQueueControllerConfig{
 		ControllerConfig:     *controllerCfg,
@@ -154,6 +148,5 @@ func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Reg
 		maxJobTimeout:        operatorSec.Key("max_job_timeout").MustDuration(20 * time.Minute),
 		jobInterval:          operatorSec.Key("job_interval").MustDuration(30 * time.Second),
 		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(jobClaimExpiry / 3),
-		folderAPIVersion:     folderAPIVersion,
 	}, nil
 }

@@ -119,37 +119,8 @@ const grantAllPermissions = () => {
   ]);
 };
 
-describe('PolicyTreeSelector - feature toggle OFF', () => {
+describe('PolicyTreeSelector', () => {
   testWithFeatureToggles({ enable: ['alerting.rulesAPIV2'] });
-
-  beforeEach(() => {
-    localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
-    contextSrv.isEditor = true;
-    contextSrv.hasEditPermissionInFolders = true;
-    setAlertmanagerChoices(AlertmanagerChoice.Internal, 1);
-    grantAllPermissions();
-  });
-
-  it('does not show policy tree selector when feature toggle is disabled', async () => {
-    const { user } = renderRuleEditor();
-
-    await user.type(await ui.inputs.name.find(), 'my great new rule');
-    await selectFolderAndGroup(user);
-
-    // Wait for the form to be fully loaded
-    await waitFor(() => {
-      expect(ui.buttons.save.get()).toBeEnabled();
-    });
-
-    // Should NOT show any policy selector elements
-    expect(policyTreeUi.policySelector.query()).not.toBeInTheDocument();
-    expect(policyTreeUi.changeButton.query()).not.toBeInTheDocument();
-    expect(policyTreeUi.defaultBadge.query()).not.toBeInTheDocument();
-  });
-});
-
-describe('PolicyTreeSelector - feature toggle ON', () => {
-  testWithFeatureToggles({ enable: ['alertingMultiplePolicies', 'alerting.rulesAPIV2'] });
 
   beforeEach(() => {
     localStorage.setItem(MANUAL_ROUTING_KEY, 'false');
@@ -319,8 +290,8 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
   });
 
   // Regression test for bug #1 from PR #124697:
-  // AutomaticRooting passed policyName={undefined} to NotificationPreview when only
-  // alertingMultiplePolicies was enabled (alertingPolicyRoutingSettings OFF).
+  // AutomaticRooting passed policyName={undefined} to NotificationPreview when a
+  // non-default policy tree was selected (alertingPolicyRoutingSettings OFF).
   // The selected tree (stored as __grafana_managed_route__ label) was never forwarded,
   // so routing was always evaluated against the default tree.
   describe('notification preview routing (alertingPolicyRoutingSettings OFF)', () => {
@@ -468,8 +439,8 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
   });
 
   // Regression: a rule routed via notification_settings.policy (the canonical, backend-honored
-  // storage) was shown as "Default policy" and silently dropped on save when only
-  // alertingMultiplePolicies was enabled (alertingPolicyRoutingSettings OFF), because the
+  // storage) was shown as "Default policy" and silently dropped on save when a non-default
+  // policy tree was selected (alertingPolicyRoutingSettings OFF), because the
   // selector/save paths only looked at the legacy __grafana_managed_route__ label.
   describe('edit existing rule with notification_settings.policy (alertingPolicyRoutingSettings OFF)', () => {
     const CUSTOM_POLICY_NAME = 'Managed Policy - Empty Provisioned';
@@ -543,7 +514,7 @@ describe('PolicyTreeSelector - feature toggle ON', () => {
 
 describe('PolicyTreeSelector - alertingPolicyRoutingSettings ON', () => {
   testWithFeatureToggles({
-    enable: ['alertingMultiplePolicies', 'alertingPolicyRoutingSettings', 'alerting.rulesAPIV2'],
+    enable: ['alertingPolicyRoutingSettings', 'alerting.rulesAPIV2'],
   });
 
   beforeEach(() => {

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -182,7 +183,7 @@ func TestIntegration_NamespacingForRules(t *testing.T) {
 	t.Run("org separation", func(t *testing.T) {
 		cfgProvider, err := configprovider.ProvideService(cfg)
 		require.NoError(t, err)
-		orgService, err := orgimpl.ProvideService(store, cfg, quotaimpl.ProvideService(context.Background(), store, cfgProvider))
+		orgService, err := orgimpl.ProvideService(store, cfg, quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfgProvider))
 		require.NoError(t, err)
 		newOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "Test Org 2"})
 		require.NoError(t, err)
@@ -389,7 +390,7 @@ func TestIntegration_NamespacingForPrometheusRules(t *testing.T) {
 	t.Run("should maintain org separation for Prometheus rules", func(t *testing.T) {
 		cfgProvider, err := configprovider.ProvideService(cfg)
 		require.NoError(t, err)
-		orgService, err := orgimpl.ProvideService(store, cfg, quotaimpl.ProvideService(context.Background(), store, cfgProvider))
+		orgService, err := orgimpl.ProvideService(store, cfg, quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfgProvider))
 		require.NoError(t, err)
 		newOrg, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "Prometheus Test Org 2"})
 		require.NoError(t, err)

@@ -68,6 +68,14 @@ export const ThemeComponentsInputSchema = z
       borderHover: z.string().optional(),
       text: z.string().optional(),
     }),
+    checkbox: z.object({
+      activeBackground: z.string().optional(),
+      activeBackgroundHover: z.string().optional(),
+    }),
+    switch: z.object({
+      activeBackground: z.string().optional(),
+      activeBackgroundHover: z.string().optional(),
+    }),
     tooltip: z.object({
       text: z.string().optional(),
       background: z.string().optional(),
@@ -78,8 +86,6 @@ export const ThemeComponentsInputSchema = z
       borderColor: z.string().optional(),
       boxShadow: z.string().optional(),
       background: z.string().optional(),
-      contentBackground: z.string().optional(),
-      contentBorderColor: z.string().optional(),
     }),
     dropdown: z.object({
       background: z.string().optional(),
@@ -145,14 +151,20 @@ export function createComponents(colors: ThemeColors, componentsInput: ThemeComp
       text: colors.text.primary,
       background: colors.mode === 'dark' ? colors.background.canvas : colors.background.primary,
     },
+    checkbox: {
+      activeBackground: colors.accent.main,
+      activeBackgroundHover: colors.accent.shade,
+    },
+    switch: {
+      activeBackground: colors.accent.main,
+      activeBackgroundHover: colors.accent.shade,
+    },
     panel: {
       padding: 1,
       headerHeight: 5,
       background: colors.background.primary,
       borderColor: colors.border.weak,
       boxShadow: 'none',
-      contentBackground: colors.background.secondary,
-      contentBorderColor: colors.border.medium,
     },
     dropdown: {
       background: colors.background.elevated,

@@ -55,7 +55,7 @@
   "dependencies": {
     "@grafana/data": "13.2.0-pre",
     "@grafana/e2e-selectors": "13.2.0-pre",
-    "@grafana/faro-web-sdk": "^2.7.0",
+    "@grafana/faro-web-sdk": "^2.8.2",
     "@grafana/schema": "13.2.0-pre",
     "@grafana/ui": "13.2.0-pre",
     "@openfeature/core": "^1.10.0",

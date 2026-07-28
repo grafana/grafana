@@ -179,7 +179,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
 
       '&:focus': {
-        border: `2px solid ${theme.colors.accent.border}`,
+        border: `2px solid ${theme.colors.accent.main}`,
       },
 
       '&:hover, &:focus': {

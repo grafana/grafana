@@ -128,6 +128,26 @@ When Grafana restarts, the UI might show incorrect state for some alerts until t
 In some cases, alerts that were firing before the crash might fire again.
 If this happens, Grafana might send duplicate notifications for firing alerts.
 
+## Limit on the number of results per alert rule
+
+Each alert rule evaluation generates one alert instance per series in the rule's query result set. Rules with high-cardinality result sets consume more CPU, memory, network, and database resources, and can produce a large number of alert instances (refer to [High load on database caused by a high number of alert instances](#high-load-on-database-caused-by-a-high-number-of-alert-instances)).
+
+To prevent this, Grafana can limit the number of query evaluation results a single alert rule produces in one evaluation. When a rule's query returns more results than the limit, the evaluation fails with an error similar to the following:
+
+```
+query evaluation returned too many results: 12345 (limit: 10000)
+```
+
+The alert rule enters the [Error state](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/) and produces no alert instances for that evaluation until you reduce its result set below the limit.
+
+In self-managed Grafana, set this limit using the [`alerting_rule_evaluation_results`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana#alerting_rule_evaluation_results) option in the `[quota]` section. The default is `-1` (unlimited). In Grafana Cloud, Grafana Labs manages this limit.
+
+To resolve the error, reduce the cardinality of the rule's result set:
+
+- Aggregate the query so it returns fewer series. For example, sum or average by fewer labels.
+- Add label filters so the query returns only the series you need to alert on.
+- Split a single high-cardinality rule into several rules with narrower queries.
+
 ## Alert rule migrations for Grafana 11.6.0
 
 When you upgrade to Grafana 11.6.0, a migration is performed on the `alert_rule_versions` table. If you experience a 11.6.0 upgrade that causes a migration failure, then your `alert_rule_versions` table has too many rows. To fix this, you need to truncated the `alert_rule_versions` table for the migration to complete.

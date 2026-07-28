@@ -70,6 +70,14 @@ func (UnimplementedStorageBackend) GetResourceStats(context.Context, NamespacedR
 	return nil, errUnimplemented
 }
 
+func (UnimplementedStorageBackend) GetResourceStatsWithLimit(context.Context, NamespacedResource, int, int) ([]ResourceStats, error) {
+	return nil, errUnimplemented
+}
+
+func (UnimplementedStorageBackend) ListStoredResources(context.Context, NamespacedResource) ([]NamespacedResource, error) {
+	return nil, errUnimplemented
+}
+
 func (UnimplementedStorageBackend) GetResourceLastImportTimes(context.Context) iter.Seq2[ResourceLastImportTime, error] {
 	return func(yield func(ResourceLastImportTime, error) bool) {
 		yield(ResourceLastImportTime{}, errUnimplemented)

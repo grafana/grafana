@@ -1,11 +1,10 @@
-Hey there! 👋
-Grafana spotted 3 changes (2 with issues).
+📋 Grafana detected **3** resource changes in this pull request — ⚠️ 2 need attention.
 
-| Action | Kind | Resource | Preview | Status |
-|--------|------|----------|---------|--------|
-| create | Dashboard | Good Dashboard | [preview](http://grafana/admin/preview) | ✅ |
-| update | Dashboard | [Bad Dashboard](http://grafana/d/bad) | [preview](http://grafana/admin/preview) | ⚠️ |
-| create | Playlist | Broken Playlist |  | ⚠️ |
+| Action | Kind | Resource | File | Preview | Status |
+|--------|------|----------|------|---------|--------|
+| ➕ Added | Dashboard | Good Dashboard | good.json | [preview](http://grafana/admin/preview) | ✅ |
+| ✏️ Updated | Dashboard | [Bad Dashboard](http://grafana/d/bad) | bad.json | [preview](http://grafana/admin/preview) | ⚠️ |
+| ➕ Added | Playlist | Broken Playlist | invalid.yaml |  | ⚠️ |
 
 ### ⚠️ Validation Issues
 

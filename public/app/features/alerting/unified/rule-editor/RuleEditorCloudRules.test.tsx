@@ -1,5 +1,5 @@
 import { type UserEvent } from '@testing-library/user-event';
-import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
+import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen } from 'test/test-utils';
 
@@ -16,6 +16,7 @@ import { mimirDataSource } from '../mocks/server/configure';
 import { MIMIR_DATASOURCE_UID } from '../mocks/server/constants';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { setupPluginsExtensionsHook } from '../testSetup/plugins';
+import { MANUAL_ROUTING_KEY, SIMPLIFIED_QUERY_EDITOR_KEY } from '../utils/rule-form';
 
 jest.mock('../components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -50,6 +51,9 @@ describe('RuleEditor cloud', () => {
   });
 
   beforeEach(() => {
+    localStorage.removeItem(SIMPLIFIED_QUERY_EDITOR_KEY);
+    localStorage.removeItem(MANUAL_ROUTING_KEY);
+
     // Mock getPluginSettings to ensure labels plugin is not detected
     // This ensures consistent test behavior across OSS and Enterprise environments
     jest.spyOn(pluginSettings, 'getPluginSettings').mockRejectedValue(new Error('Plugin not found'));
@@ -69,6 +73,9 @@ describe('RuleEditor cloud', () => {
 
   it('can create a new cloud alert', async () => {
     const { user } = renderRuleEditor();
+
+    await ui.inputs.name.find();
+    await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
 
     const removeExpressionsButtons = await screen.findAllByLabelText(/Remove expression/);
     expect(removeExpressionsButtons).toHaveLength(2);
@@ -111,6 +118,9 @@ describe('RuleEditor cloud', () => {
 
   it('should keep existing rule interval duration when attaching new rules', async () => {
     const { user } = renderRuleEditor();
+
+    await ui.inputs.name.find();
+    await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
 
     const removeExpressionsButtons = await screen.findAllByLabelText(/Remove expression/);
     expect(removeExpressionsButtons).toHaveLength(2);

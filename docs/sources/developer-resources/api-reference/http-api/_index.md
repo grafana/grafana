@@ -31,16 +31,21 @@ If you need to manage or access other resources from your [Grafana Cloud Stack](
 
 Grafana is deprecating legacy APIs (`/api`) in favor of a new generation of improved APIs (`/apis`) which follow a standardized API structure alongside consistent API versioning.
 
-To learn more refer to the new [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/) and the [API migration guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration/).
+To learn more refer to:
+
+- The new [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/) for information on the new HTTP API structure.
+- The [API migration guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration/) for details on the legacy API deprecation process.
 
 ## The Grafana API specification
 
-HTTP API specs are available in Swagger:
+Grafana HTTP APIs comply both with the [OpenAPI v2 specification (Swagger 2.0)](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/public/api-merged.json) and [OpenAPI v3 specification](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/public/openapi3.json). While both describe the exact same set of Grafana HTTP API routes (dashboards, folders, data sources, organizations, users, teams, RBAC, alerting provisioning...), v2 is the canonical specification and source of truth, and v3 is converted from the v2 file using a conversion script.
 
-- [OpenAPI v2 specification](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/public/api-merged.json)
-- [OpenAPI v3 specification](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/public/openapi3.json), generated from the v2 specs
+If you're consuming a Grafana HTTP API:
 
-You can browse and try out both via the Swagger UI editor (served by the Grafana server) by navigating to `/swagger-ui`.
+- Use v2 if your tooling (SDK generators, older Swagger UI, `terraform-provider-grafana`) expects Swagger 2.0.
+- Use v3 if your tooling requires OpenAPI 3.x (for example, newer codegen tools, some API gateways, Postman's newer import features).
+
+You can browse and try out both via the Swagger UI editor, served by the Grafana server, by navigating to `/swagger-ui`.
 
 ## Authentication
 
@@ -57,7 +62,7 @@ The following table lists all available HTTP API reference pages. New APIs are l
 | [Banners HTTP API (Swagger)](https://play.grafana.org/swagger?api=banners.grafana.app-v0alpha1)                                                                             | **New**              | No                  |
 | [Dashboard HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/)                                              | **New**              | `/api/dashboards/*` |
 | [Folder HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/folder/)                                                    | **New**              | `/api/folders/*`    |
-| [SLO](https://play.grafana.org/swagger?api=grafana-slo-app.plugins.grafana.com-v1)                                                                                          | **New - Cloud only** | No                  |
+| [SLO (Swagger)](https://play.grafana.org/swagger?api=grafana-slo-app.plugins.grafana.com-v1)                                                                                | **New - Cloud only** | No                  |
 | [Playlist HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/playlist/)                                                | **New**              | No                  |
 | [Resource history HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/resource-history/)                                | **New**              | No                  |
 | [Secrets Management HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/secrets_management/)                            | **New**              | No                  |
@@ -89,3 +94,11 @@ The following table lists all available HTTP API reference pages. New APIs are l
 | [Team HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/team/)                                             | Deprecated           | Not Applicable      |
 | [Team Sync HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/team_sync/)                                   | Deprecated           | Not Applicable      |
 | [User HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/user/)                                             | Deprecated           | Not Applicable      |
+
+## Related resources
+
+Use the following resources to keep working with Grafana APIs:
+
+- **API structure:** Refer to [The new API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+- **Migration guide:** Refer to [Migrate to the new APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration).
+- **Swagger UI:** Open the `/swagger` page in your Grafana instance to inspect endpoint schemas and try requests.

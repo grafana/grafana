@@ -1,6 +1,10 @@
 package nats
 
 import (
+	"context"
+	"fmt"
+
+	authnlib "github.com/grafana/authlib/authn"
 	natsclient "github.com/nats-io/nats.go"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -12,13 +16,26 @@ import (
 type Config struct {
 	cfg    setting.NATSSettings
 	server *Server
+	// tokenExchanger is non-nil only when token-exchange auth is configured; it
+	// mints the short-lived access token each connection presents. The authlib
+	// client caches tokens internally, so exchanging per (re)connect is cheap.
+	tokenExchanger authnlib.TokenExchanger
 }
 
 func newConfig(cfg setting.NATSSettings, server *Server) *Config {
-	return &Config{
+	c := &Config{
 		cfg:    cfg,
 		server: server,
 	}
+	if cfg.Auth.Mode == setting.NATSAuthModeTokenExchange && cfg.Auth.TokenExchangeEnabled() {
+		// NewTokenExchangeClient only errors when the token or URL is empty, and
+		// TokenExchangeEnabled has already established both are set.
+		c.tokenExchanger, _ = authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
+			Token:            cfg.Auth.TokenExchangeToken,
+			TokenExchangeURL: cfg.Auth.TokenExchangeURL,
+		})
+	}
+	return c
 }
 
 // ProvideNATSConfig builds the shared connection config from configuration and
@@ -35,6 +52,27 @@ func (c *Config) TLS() setting.NATSTLSSettings { return c.cfg.TLS }
 
 // Token returns the shared auth token, if any.
 func (c *Config) Token() string { return c.cfg.Auth.Token }
+
+// AuthMode reports the explicitly selected connection auth mechanism.
+func (c *Config) AuthMode() setting.NATSAuthMode { return c.cfg.Auth.Mode }
+
+// exchangeAccessToken mints a fresh access token scoped to the configured
+// audiences. Callers present the returned token as the NATS connect token; an
+// external auth-callout service verifies it and grants the connection's
+// permissions.
+func (c *Config) exchangeAccessToken(ctx context.Context) (string, error) {
+	if c.tokenExchanger == nil {
+		return "", fmt.Errorf("nats token exchange is not configured")
+	}
+	resp, err := c.tokenExchanger.Exchange(ctx, authnlib.TokenExchangeRequest{
+		Namespace: c.cfg.Auth.TokenExchangeNamespace,
+		Audiences: c.cfg.Auth.TokenExchangeAudiences,
+	})
+	if err != nil {
+		return "", err
+	}
+	return resp.Token, nil
+}
 
 // PublisherCredentials returns the credentials file the publisher connection
 // should use, falling back to the shared credentials when none is set.

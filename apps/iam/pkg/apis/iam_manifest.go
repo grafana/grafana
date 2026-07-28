@@ -91,7 +91,7 @@ var appManifestData = app.ManifestData{
 							Name:             "lastSeenAt",
 							Path:             "status.lastSeenAt",
 							Type:             "int64",
-							Capabilities:     []string{"filter", "sort", "retrieve"},
+							Capabilities:     []string{"sort", "retrieve"},
 							EmitZeroIfAbsent: true,
 							Description:      "The last seen timestamp of the user",
 						},
@@ -109,6 +109,14 @@ var appManifestData = app.ManifestData{
 							Capabilities:     []string{"filter", "retrieve"},
 							EmitZeroIfAbsent: true,
 							Description:      "Whether the user is disabled",
+						},
+						{
+							Name:         "externalAuthModules",
+							Path:         "spec.externalAuthInfo[*].module",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"retrieve"},
+							Description:  "Auth module identifiers the user is externally synced with",
 						},
 					},
 					Routes: map[string]spec3.PathProps{
@@ -1369,6 +1377,18 @@ var appManifestData = app.ManifestData{
 								"email": {
 									SchemaProps: spec.SchemaProps{
 										Type: []string{"string"},
+									},
+								},
+								"externalAuthModules": {
+									SchemaProps: spec.SchemaProps{
+										Type:        []string{"array"},
+										Description: "Auth module identifiers the user is externally synced with.",
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Type: []string{"string"},
+												}},
+										},
 									},
 								},
 								"internalId": {

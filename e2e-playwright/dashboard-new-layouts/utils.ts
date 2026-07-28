@@ -1,68 +1,58 @@
-import { type Page } from '@playwright/test';
+import { type Locator, type Page } from '@playwright/test';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { type DashboardPage, type E2ESelectorGroups, expect } from '@grafana/plugin-e2e';
+import { Components, type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
-import { Controls, Sidebar } from './page-objects';
+import { Controls, Panel, Sidebar } from './page-objects';
 
 export const flows = {
   async addNewGenericVariable(
     page: Page,
     dashboardPage: DashboardPage,
     selectors: E2ESelectorGroups,
-    variable: Variable
+    variable: Variable,
+    skipEnterEditMode = false
   ) {
-    const controls = new Controls(page, dashboardPage, selectors);
-    const sidebar = new Sidebar(page, dashboardPage, selectors);
+    // Keep the flows signature unchanged for unmigrated callers: build the
+    // `components` fixture equivalent from the page context
+    const components = new Components(dashboardPage.ctx);
+    const controls = new Controls({ page, dashboardPage, selectors, components });
+    const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
-    await controls.enterEditMode();
+    if (!skipEnterEditMode) {
+      await controls.enterEditMode();
+    }
 
     await sidebar.toolbar.clickButton('Add');
-    await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.addNewVariableButton).click();
+    await sidebar.addOptions.clickNewVariableButton();
 
-    await dashboardPage
-      .getByGrafanaSelector(selectors.components.PanelEditor.ElementEditPane.variableType(variable.type))
-      .click();
+    await sidebar.variableOptions.selectVariableType(variable.type);
 
     // New variable creation schedules a delayed autofocus to name input
     // Let that timer finish before we interact to prevent focus on the wrong input
     await dashboardPage.ctx.page.waitForTimeout(250);
 
-    const variableNameInput = dashboardPage.getByGrafanaSelector(
-      selectors.components.PanelEditor.ElementEditPane.variableNameInput
-    );
-    await variableNameInput.click();
-    await variableNameInput.fill(variable.name);
-    await variableNameInput.blur();
+    await sidebar.variableOptions.setName(variable.name);
     if (variable.label) {
-      const variableLabelInput = dashboardPage.getByGrafanaSelector(
-        selectors.components.PanelEditor.ElementEditPane.variableLabelInput
-      );
-      await variableLabelInput.click();
-      await variableLabelInput.fill(variable.label);
-      await variableLabelInput.blur();
+      await sidebar.variableOptions.setLabel(variable.label);
     }
   },
-  async addNewTextBoxVariable(dashboardPage: DashboardPage, variable: Variable) {
-    await flows.addNewGenericVariable(dashboardPage.ctx.page, dashboardPage, selectors, variable);
-    // set the textbox variable value
-    const type = 'variable-type Value';
-    const fieldLabel = dashboardPage.getByGrafanaSelector(
-      selectors.components.PanelEditor.OptionsPane.fieldLabel(type)
-    );
-    await expect(fieldLabel).toBeVisible();
-    const inputField = fieldLabel.locator('input');
-    await expect(inputField).toBeVisible();
-    await inputField.fill(variable.value);
-    await inputField.blur();
+  async addNewTextBoxVariable(
+    page: Page,
+    dashboardPage: DashboardPage,
+    selectors: E2ESelectorGroups,
+    variable: Variable
+  ) {
+    await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
 
+    const components = new Components(dashboardPage.ctx);
+    const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+
+    await sidebar.variableOptions.textbox.setValue(variable.value);
     if (variable.display) {
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect)
-        .click();
-      await dashboardPage.ctx.page.getByText(variable.display, { exact: true }).click();
+      await sidebar.variableOptions.selectDisplay(variable.display);
     }
   },
 };
@@ -82,11 +72,12 @@ export async function saveDashboard(
   selectors: E2ESelectorGroups,
   title?: string
 ) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
-  if (title) {
-    await page.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput).fill(title);
-  }
-  await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.DashboardSaveDrawer.saveButton).click();
+  // Keep the flows signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const controls = new Controls({ page, dashboardPage, selectors, components });
+
+  await controls.saveDashboard(title);
 
   // wait for the toast
   const toast = page.getByRole('status', { name: 'Dashboard saved' });
@@ -102,14 +93,16 @@ export async function checkRepeatedPanelTitles(
   options: Array<string | number>,
   expectHidden = false
 ) {
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const panel = new Panel({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+
   for (const option of options) {
-    const titleLocator = dashboardPage.getByGrafanaSelector(
-      selectors.components.Panels.Panel.title(`${title}${option}`)
-    );
     if (expectHidden) {
-      await expect(titleLocator).toBeHidden();
+      await expect(panel.getContainerByTitle(`${title}${option}`)).toBeHidden();
     } else {
-      await expect(titleLocator).toBeVisible();
+      await expect(panel.getContainerByTitle(`${title}${option}`)).toBeVisible();
     }
   }
 }
@@ -120,19 +113,15 @@ export async function movePanel(
   sourcePanel: string | RegExp,
   targetPanel: string | RegExp
 ) {
-  // Get target panel position
-  const targetPanelElement = dashboardPage
-    .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-    .filter({ hasText: targetPanel })
-    .first();
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const panel = new Panel({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
 
-  // Get source panel element
-  const sourcePanelElement = dashboardPage
-    .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-    .filter({ hasText: sourcePanel });
-
-  // Perform drag and drop
-  await sourcePanelElement.dragTo(targetPanelElement);
+  await test.step(`Move panel "${sourcePanel}" onto "${targetPanel}"`, async () => {
+    // Perform drag and drop; pixel-sensitive mechanics stay out of page objects
+    await panel.getHeaderByTitle(sourcePanel).dragTo(panel.getHeaderByTitle(targetPanel));
+  });
 }
 
 export async function getPanelPosition(
@@ -140,12 +129,13 @@ export async function getPanelPosition(
   selectors: E2ESelectorGroups,
   panelTitle: string | RegExp
 ) {
-  const panel = dashboardPage
-    .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
-    .filter({ hasText: panelTitle })
-    .first();
-  const boundingBox = await panel.boundingBox();
-  return boundingBox;
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const panel = new Panel({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+
+  // boundingBox() is a point-in-time snapshot and stays out of page objects
+  return panel.getHeaderByTitle(panelTitle).boundingBox();
 }
 
 export async function verifyChanges(
@@ -233,6 +223,27 @@ export async function goToPanelSnapshot(page: Page) {
   expect(snapshotUrl).toBeDefined();
 
   await page.goto(snapshotUrl);
+}
+
+/**
+ * Coordinate-based drag: hover the source, press, move in steps, release.
+ * Playwright's locator.dragTo() does not trigger the dnd library (pangea) used by
+ * tabs/rows, which requires intermediate mousemove events.
+ */
+export async function dragTo(
+  page: Page,
+  sourceName: string,
+  source: Locator,
+  toX: number,
+  toY: number,
+  options?: { steps?: number }
+) {
+  await test.step(`Drag ${sourceName} to (${toX}, ${toY})`, async () => {
+    await source.hover();
+    await page.mouse.down();
+    await page.mouse.move(toX, toY, { steps: options?.steps ?? 5 });
+    await page.mouse.up();
+  });
 }
 
 export async function moveTab(
@@ -376,13 +387,11 @@ export async function fillVariableValue(
   varName: string,
   text: string
 ) {
-  const variable = dashboardPage
-    .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(varName))
-    .locator('..')
-    .locator('input');
-  await variable.click();
-  await variable.clear();
-  await variable.fill(text);
-  await variable.press('Enter');
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const controls = new Controls({ page, dashboardPage, selectors, components });
+
+  await controls.variables.setValue(varName, text);
   await page.waitForLoadState('networkidle');
 }

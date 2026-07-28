@@ -255,7 +255,7 @@ const TeamList = () => {
                 props: {
                   onConfirm: async () => {
                     reportInteraction('grafana_teams_list_delete_modal_confirm_clicked');
-                    await deleteTeam({ uid: original.uid });
+                    await deleteTeam({ uid: original.uid }).unwrap();
                   },
                   teamName: original.name,
                   ownedFolder: ownedFolders && ownedFolders.length > 0,
@@ -335,6 +335,7 @@ const TeamList = () => {
                 <FilterInput
                   placeholder={t('teams.team-list.placeholder-search-teams', 'Search teams')}
                   value={query}
+                  escapeRegex={false}
                   onChange={setQuery}
                 />
               </InlineField>

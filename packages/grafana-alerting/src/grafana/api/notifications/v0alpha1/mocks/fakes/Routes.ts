@@ -10,7 +10,7 @@ import {
 
 import { type LabelMatcher } from '../../../../../matchers/types';
 import { DEFAULT_NAMESPACE, generateResourceVersion } from '../../../../../mocks/util';
-import { USER_DEFINED_TREE_NAME } from '../../../../../notificationPolicies/consts';
+import { USER_DEFINED_TREE_NAME } from '../../../../../notificationPolicies/routingTrees';
 import { type Route } from '../../../../../notificationPolicies/types';
 
 export const LabelMatcherFactory = Factory.define<LabelMatcher>(() => {

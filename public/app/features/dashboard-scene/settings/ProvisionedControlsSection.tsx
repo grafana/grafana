@@ -8,6 +8,8 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { type ControlSourceRef } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { CollapsableSection, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { getPredefinedOrigin } from '../utils/predefinedVariables';
+
 type Column = {
   i18nKey: string;
   defaultText: string;
@@ -16,15 +18,16 @@ type Column = {
 type Props = {
   columns: Column[];
   children: ReactNode;
+  label?: ReactNode;
 };
 
-export function ProvisionedControlsSection({ columns, children }: Props) {
+export function ProvisionedControlsSection({ columns, children, label }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const styles = useStyles2(getStyles);
 
   return (
     <div className={styles.container}>
-      <CollapsableSection label={<ProvisionedControlsSectionLabel />} isOpen={isOpen} onToggle={setIsOpen}>
+      <CollapsableSection label={label ?? <ProvisionedControlsSectionLabel />} isOpen={isOpen} onToggle={setIsOpen}>
         <table className={classNames('filter-table', 'filter-table--hover', styles.table)} role="grid">
           <thead>
             <tr>
@@ -59,6 +62,26 @@ function ProvisionedControlsSectionLabel() {
 export function SourceIcon({ origin }: { origin: ControlSourceRef | undefined }) {
   const styles = useStyles2(getStyles);
   const pluginName = usePluginName(origin);
+
+  const predefinedOrigin = getPredefinedOrigin(origin);
+  if (predefinedOrigin) {
+    const isGlobal = predefinedOrigin.type === 'global';
+    const content = isGlobal
+      ? t(
+          'dashboard-scene.provisioned-controls-section.tooltip-global',
+          'Global variable, shared across all dashboards'
+        )
+      : t(
+          'dashboard-scene.provisioned-controls-section.tooltip-folder',
+          "Folder variable, inherited from this dashboard's folder"
+        );
+
+    return (
+      <Tooltip content={content}>
+        <Icon name={isGlobal ? 'globe' : 'folder'} className={styles.iconMuted} aria-label={content} />
+      </Tooltip>
+    );
+  }
 
   return (
     <Tooltip content={getSourceTooltip(pluginName)}>

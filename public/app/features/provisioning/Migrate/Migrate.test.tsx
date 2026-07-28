@@ -230,9 +230,21 @@ describe('Migrate', () => {
       await waitFor(() => expect(screen.queryByText(drawerText)).not.toBeInTheDocument());
     });
 
-    it('offers a connect action instead of migrate when no write-capable repo is connected', async () => {
-      // A PR-only repo can't run a migration, matching the drawer's guard.
+    it('still offers the migrate action when the only connected repo cannot push', async () => {
+      // A PR-only repo can't run a migration, but the flow stays reachable so the
+      // drawer can explain how to enable it — rather than hiding it behind Configure.
       respondWithRepositories([createRepository({ metadata: { name: 'pr-only' }, spec: { workflows: ['branch'] } })]);
+      respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
+
+      render(<Migrate />);
+
+      expect(await screen.findByText('Team A')).toBeInTheDocument();
+      expect(await screen.findByRole('button', { name: /migrate (all|selected)/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /configure/i })).not.toBeInTheDocument();
+    });
+
+    it('offers a connect action in the footer when no repository is connected', async () => {
+      respondWithRepositories([]);
       respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
 
       render(<Migrate />);
@@ -257,10 +269,8 @@ describe('Migrate', () => {
       expect(await screen.findByText(/all resources not yet managed by git will be migrated/i)).toBeInTheDocument();
     });
 
-    it('offers a connect action on the resource-list-error fallback when no write repo is connected', async () => {
-      // PR-only repo can't run a migration, so the error fallback surfaces the
-      // connect action instead of the migrate-everything button.
-      respondWithRepositories([createRepository({ metadata: { name: 'pr-only' }, spec: { workflows: ['branch'] } })]);
+    it('offers a connect action on the resource-list-error fallback when no repository is connected', async () => {
+      respondWithRepositories([]);
       server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
 
       render(<Migrate />);
@@ -469,11 +479,11 @@ describe('Migrate', () => {
       expect(await screen.findByText(/all resources not yet managed by git will be migrated/i)).toBeInTheDocument();
     });
 
-    it('shows a connect action in the partial-failure warning when no write repo is connected', async () => {
+    it('offers a connect action in the partial-failure warning when no repository is connected', async () => {
       respondWithStats(withPlaylists);
       enablePlaylists();
       server.use(http.get(PLAYLISTS_ROUTE, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
-      respondWithRepositories([createRepository({ metadata: { name: 'pr-only' }, spec: { workflows: ['branch'] } })]);
+      respondWithRepositories([]);
       respondWithSearch([folderHit('team-a', 'Team A'), dashboardHit('d1', 'Dashboard One', 'team-a')]);
 
       render(<Migrate />);

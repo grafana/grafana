@@ -155,7 +155,9 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 
 	manager, _ := meta.GetManagerProperties()
 	// TODO: how should we handle this?
-	if manager.Identity == r.repo.Config().GetName() {
+	// Only treat it as already-in-repository when a repository manager owns it;
+	// matching on identity alone would misclassify other manager kinds.
+	if manager.Kind == utils.ManagerKindRepo && manager.Identity == r.repo.Config().GetName() {
 		// If it's already in the repository, we don't need to write it
 		return "", ErrAlreadyInRepository
 	}
@@ -194,6 +196,13 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 
 	if options.Path != "" {
 		fileName = safepath.Join(options.Path, fileName)
+	}
+
+	// The folder path is derived from folder titles, which are not sanitized.
+	// Reject any unsafe path (traversal, absolute, too deep) before it reaches
+	// the backend, using the same validation enforced on the import side.
+	if err := IsPathSupported(fileName); err != nil {
+		return "", fmt.Errorf("unsafe export path %q: %w", fileName, err)
 	}
 
 	parsed := ParsedResource{
@@ -398,7 +407,7 @@ func (r *ResourcesManager) deleteOldResource(ctx context.Context, sourcePath, ol
 	}
 
 	if currentPath := existing.GetAnnotations()[utils.AnnoKeySourcePath]; currentPath != "" && currentPath != sourcePath {
-		return fmt.Errorf("skipping delete of old resource %s: now managed by %s, not %s", oldName, currentPath, sourcePath)
+		return NewResourceManagedByOtherFileError(oldName, currentPath, sourcePath)
 	}
 
 	requestingManager := utils.ManagerProperties{

@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
@@ -9,6 +10,7 @@ import { useStyles2, PanelContainer, ScrollContainer } from '@grafana/ui';
 
 import { type ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
+import { MetricsExplorer } from './MetricsExplorer';
 
 function scrollableChildren(item: ContentOutlineItemContextProps) {
   return item.children?.filter((child) => child.type !== 'filter') || [];
@@ -40,11 +42,24 @@ export const CONTENT_OUTLINE_LOCAL_STORAGE_KEYS = {
   expanded: 'grafana.explore.contentOutline.expanded',
 };
 
-export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | undefined; panelId: string }) {
+export function ContentOutline({
+  scroller,
+  panelId,
+  showMetricsExplorer = false,
+}: {
+  scroller: HTMLElement | undefined;
+  panelId: string;
+  showMetricsExplorer?: boolean;
+}) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(
     store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, true)
   );
-  const styles = useStyles2(getStyles, contentOutlineExpanded);
+  const metricsSidebarEnabled = useBooleanFlagValue('grafana.exploreMetricsSidebar', false, {
+    suspendUntilReady: false,
+    suspendWhileReconciling: false,
+  });
+  const metricsExplorerVisible = metricsSidebarEnabled && showMetricsExplorer && contentOutlineExpanded;
+  const styles = useStyles2(getStyles, contentOutlineExpanded, metricsExplorerVisible);
   const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
@@ -153,110 +168,178 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
     }
   }, [outlineItems, verticalScroll]);
 
+  const toggleButton = (
+    <ContentOutlineItemButton
+      icon={'arrow-from-right'}
+      tooltip={
+        contentOutlineExpanded
+          ? t('explore.content-outline.tooltip-collapse-outline', 'Collapse outline')
+          : t('explore.content-outline.tooltip-expand-outline', 'Expand outline')
+      }
+      tooltipPlacement={contentOutlineExpanded ? 'right' : 'bottom'}
+      onClick={toggle}
+      className={cx(styles.toggleContentOutlineButton, {
+        [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsShouldIndent,
+      })}
+      aria-expanded={contentOutlineExpanded}
+    />
+  );
+
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
-      <ScrollContainer>
-        <div className={styles.content}>
-          <ContentOutlineItemButton
-            icon={'arrow-from-right'}
-            tooltip={
-              contentOutlineExpanded
-                ? t('explore.content-outline.tooltip-collapse-outline', 'Collapse outline')
-                : t('explore.content-outline.tooltip-expand-outline', 'Expand outline')
-            }
-            tooltipPlacement={contentOutlineExpanded ? 'right' : 'bottom'}
-            onClick={toggle}
-            className={cx(styles.toggleContentOutlineButton, {
-              [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsShouldIndent,
-            })}
-            aria-expanded={contentOutlineExpanded}
-          />
+      {metricsExplorerVisible && (
+        <>
+          <div className={styles.header}>
+            <span className={styles.headerTitle}>
+              {t('explore.content-outline.title-datasource-explorer', 'Datasource explorer')}
+            </span>
+            <div className={styles.toggleWrapper}>{toggleButton}</div>
+          </div>
+          <MetricsExplorer />
+        </>
+      )}
 
-          {outlineItems.map((item) => {
-            return (
-              <Fragment key={item.id}>
-                <ContentOutlineItemButton
-                  key={item.id}
-                  title={contentOutlineExpanded ? item.title : undefined}
-                  contentOutlineExpanded={contentOutlineExpanded}
-                  className={cx(styles.buttonStyles, {
-                    [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsHaveDeleteButton,
-                    [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
-                  })}
-                  indentStyle={cx({
-                    [styles.indentRoot]: !isCollapsible(item) && outlineItemsShouldIndent,
-                    [styles.sectionHighlighter]:
-                      isChildActive(item, activeSectionChildId) && !contentOutlineExpanded && sectionsExpanded[item.id],
-                  })}
-                  icon={item.icon}
-                  onClick={() => handleItemClicked(item)}
-                  tooltip={item.title}
-                  collapsible={isCollapsible(item)}
-                  collapsed={!sectionsExpanded[item.id]}
-                  toggleCollapsed={() => toggleSection(item.id)}
-                  isActive={shouldBeActive(item, activeSectionId, activeSectionChildId, sectionsExpanded)}
-                  sectionId={item.id}
-                  color={item.color}
-                />
-                <div id={item.id} data-testid={`section-wrapper-${item.id}`}>
-                  {item.children &&
-                    isCollapsible(item) &&
-                    sectionsExpanded[item.id] &&
-                    item.children.map((child, i) => (
-                      <div key={child.id} className={styles.itemWrapper}>
-                        {contentOutlineExpanded && (
-                          <div
-                            className={cx(styles.itemConnector, {
-                              [styles.firstItemConnector]: i === 0,
-                              [styles.lastItemConnector]: i === (item.children?.length || 0) - 1,
+      <div className={styles.outlineSection}>
+        <ScrollContainer>
+          <div className={styles.content}>
+            {!metricsExplorerVisible && toggleButton}
+            {outlineItems.map((item) => {
+              return (
+                <Fragment key={item.id}>
+                  <ContentOutlineItemButton
+                    key={item.id}
+                    title={contentOutlineExpanded ? item.title : undefined}
+                    contentOutlineExpanded={contentOutlineExpanded}
+                    className={cx(styles.buttonStyles, {
+                      [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsHaveDeleteButton,
+                      [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
+                    })}
+                    indentStyle={cx({
+                      [styles.indentRoot]: !isCollapsible(item) && outlineItemsShouldIndent,
+                      [styles.sectionHighlighter]:
+                        isChildActive(item, activeSectionChildId) &&
+                        !contentOutlineExpanded &&
+                        sectionsExpanded[item.id],
+                    })}
+                    icon={item.icon}
+                    onClick={() => handleItemClicked(item)}
+                    tooltip={item.title}
+                    collapsible={isCollapsible(item)}
+                    collapsed={!sectionsExpanded[item.id]}
+                    toggleCollapsed={() => toggleSection(item.id)}
+                    isActive={shouldBeActive(item, activeSectionId, activeSectionChildId, sectionsExpanded)}
+                    sectionId={item.id}
+                    color={item.color}
+                  />
+                  <div id={item.id} data-testid={`section-wrapper-${item.id}`}>
+                    {item.children &&
+                      isCollapsible(item) &&
+                      sectionsExpanded[item.id] &&
+                      item.children.map((child, i) => (
+                        <div key={child.id} className={styles.itemWrapper}>
+                          {contentOutlineExpanded && (
+                            <div
+                              className={cx(styles.itemConnector, {
+                                [styles.firstItemConnector]: i === 0,
+                                [styles.lastItemConnector]: i === (item.children?.length || 0) - 1,
+                              })}
+                            />
+                          )}
+                          <ContentOutlineItemButton
+                            key={child.id}
+                            title={contentOutlineExpanded ? child.title : undefined}
+                            contentOutlineExpanded={contentOutlineExpanded}
+                            icon={contentOutlineExpanded ? undefined : item.icon}
+                            className={cx(styles.buttonStyles, {
+                              [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsHaveDeleteButton,
+                              [styles.sectionHighlighter]:
+                                isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
                             })}
+                            indentStyle={styles.indentChild}
+                            onClick={(e) => {
+                              handleItemClicked(child);
+                              child.onClick?.(e);
+                            }}
+                            tooltip={child.title}
+                            isActive={shouldBeActive(child, activeSectionId, activeSectionChildId, sectionsExpanded)}
+                            extraHighlight={child.highlight}
+                            color={child.color}
+                            onRemove={child.onRemove ? () => child.onRemove?.(child.id) : undefined}
                           />
-                        )}
-                        <ContentOutlineItemButton
-                          key={child.id}
-                          title={contentOutlineExpanded ? child.title : undefined}
-                          contentOutlineExpanded={contentOutlineExpanded}
-                          icon={contentOutlineExpanded ? undefined : item.icon}
-                          className={cx(styles.buttonStyles, {
-                            [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsHaveDeleteButton,
-                            [styles.sectionHighlighter]:
-                              isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
-                          })}
-                          indentStyle={styles.indentChild}
-                          onClick={(e) => {
-                            handleItemClicked(child);
-                            child.onClick?.(e);
-                          }}
-                          tooltip={child.title}
-                          isActive={shouldBeActive(child, activeSectionId, activeSectionChildId, sectionsExpanded)}
-                          extraHighlight={child.highlight}
-                          color={child.color}
-                          onRemove={child.onRemove ? () => child.onRemove?.(child.id) : undefined}
-                        />
-                      </div>
-                    ))}
-                </div>
-              </Fragment>
-            );
-          })}
-        </div>
-      </ScrollContainer>
+                        </div>
+                      ))}
+                  </div>
+                </Fragment>
+              );
+            })}
+          </div>
+        </ScrollContainer>
+      </div>
     </PanelContainer>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, expanded: boolean) => {
+const getStyles = (theme: GrafanaTheme2, expanded: boolean, metricsExplorerVisible: boolean) => {
+  const expandedWidth = metricsExplorerVisible ? '300px' : '160px';
+
   return {
     wrapper: css({
       label: 'wrapper',
       position: 'relative',
       display: 'flex',
-      justifyContent: 'center',
+      flexDirection: 'column',
       marginRight: theme.spacing(1),
       height: '100%',
+      overflow: 'hidden',
       backgroundColor: theme.colors.background.primary,
-      width: expanded ? '160px' : undefined,
-      minWidth: expanded ? '160px' : undefined,
+      width: expanded ? expandedWidth : undefined,
+      minWidth: expanded ? expandedWidth : undefined,
+    }),
+    header: css({
+      label: 'content-outline-header',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: expanded ? 'space-between' : 'center',
+      gap: theme.spacing(1),
+      flex: '0 0 auto',
+      padding: expanded ? theme.spacing(1, 1, 0.5, 1) : theme.spacing(1, 0.5),
+    }),
+    headerTitle: css({
+      label: 'content-outline-header-title',
+      flex: '1 1 auto',
+      minWidth: 0,
+      fontSize: theme.typography.h6.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.text.primary,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    }),
+    toggleWrapper: css({
+      label: 'content-outline-toggle-wrapper',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      flex: '0 0 auto',
+      width: theme.spacing(4),
+    }),
+    outlineSection: css({
+      label: 'outline-section',
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: 0,
+      ...(metricsExplorerVisible
+        ? {
+            // Shrinkable so a tall outline scrolls (via ScrollContainer) instead of
+            // clipping against the wrapper, while still sizing to content and sitting
+            // at the bottom.
+            flex: '0 1 auto',
+            marginTop: 'auto',
+            borderTop: `1px solid ${theme.colors.border.weak}`,
+          }
+        : {
+            flex: '1 1 auto',
+          }),
     }),
     content: css({
       label: 'content',

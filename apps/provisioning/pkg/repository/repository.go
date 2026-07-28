@@ -197,27 +197,6 @@ type WebhookRepository interface {
 	SubscribedEvents() []string
 }
 
-// WebhookConfig is the provider-agnostic representation of a git provider webhook.
-// Each provider implements it with its own struct holding the common fields
-// plus any provider-specific ones.
-type WebhookConfig interface {
-	GetID() int64
-	GetURL() string
-	GetEvents() []string
-	GetSecret() string
-	SetURL(url string)
-	SetEvents(events []string)
-	SetSecret(secret string)
-}
-
-//go:generate mockery --name WebhookClient --structname MockWebhookClient --inpackage --filename mock_webhook_client.go --with-expecter
-type WebhookClient interface {
-	CreateWebhook(ctx context.Context, url string, events []string, secret string) (WebhookConfig, error)
-	GetWebhook(ctx context.Context, webhookID int64) (WebhookConfig, error)
-	EditWebhook(ctx context.Context, hook WebhookConfig) error
-	DeleteWebhook(ctx context.Context, webhookID int64) error
-}
-
 type FileAction string
 
 const (
@@ -256,4 +235,16 @@ type BranchHandler interface {
 	GetDefaultBranch(ctx context.Context) (string, error)
 	GetCurrentBranch() string
 	SetBranch(branch string)
+}
+
+// PullRequestRepo is implemented by repositories that can be evaluated and
+// commented on as part of a pull request preview job.
+//
+//go:generate mockery --name PullRequestRepo --structname MockPullRequestRepo --inpackage --filename pull_request_repo_mock.go --with-expecter
+type PullRequestRepo interface {
+	Config() *provisioning.Repository
+	Read(ctx context.Context, path, ref string) (*FileInfo, error)
+	MergeBase(ctx context.Context, headRef string) (string, error)
+	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
+	CommentPullRequest(ctx context.Context, prNumber int, comment string) error
 }

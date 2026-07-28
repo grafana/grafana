@@ -122,10 +122,6 @@ function getDefaultEditorSettings(ruleType?: RuleFormType) {
     return undefined;
   }
 
-  const editorSettingsEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
-  if (!editorSettingsEnabled) {
-    return undefined;
-  }
   //then, check in local storage if the user has saved last rule with sections simplified
   const queryEditorSettings = localStorage.getItem(SIMPLIFIED_QUERY_EDITOR_KEY);
   const notificationStepSettings = localStorage.getItem(MANUAL_ROUTING_KEY);
