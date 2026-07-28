@@ -3,6 +3,7 @@ package libraryelements
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"sync/atomic"
 	"testing"
 
@@ -19,9 +20,15 @@ import (
 )
 
 // trackingFolderService wraps a folder.Service and tracks how many times GetFolders is called.
+// searchHits/searchErr are honored independently of FakeService.ExpectedHitList/
+// ExpectedError so tests can drive the search path into failure without also
+// breaking the GetFolders fallback that shares those fields on FakeService.
 type trackingFolderService struct {
 	*foldertest.FakeService
 	getFoldersCallCount atomic.Int32
+	searchHits          searchmodel.HitList
+	searchErr           error
+	overrideSearch      bool
 }
 
 func newTrackingFolderService() *trackingFolderService {
@@ -33,6 +40,13 @@ func newTrackingFolderService() *trackingFolderService {
 func (s *trackingFolderService) GetFolders(ctx context.Context, q folder.GetFoldersQuery) ([]*folder.Folder, error) {
 	s.getFoldersCallCount.Add(1)
 	return s.FakeService.GetFolders(ctx, q)
+}
+
+func (s *trackingFolderService) SearchFolders(ctx context.Context, q folder.SearchFoldersQuery) (searchmodel.HitList, error) {
+	if s.overrideSearch {
+		return s.searchHits, s.searchErr
+	}
+	return s.FakeService.SearchFolders(ctx, q)
 }
 
 func (s *trackingFolderService) GetCallCount() int {
@@ -128,6 +142,45 @@ func TestFolderTreeCache_Unit(t *testing.T) {
 			parents = append(parents, ancestor.UID)
 		}
 		assert.Contains(t, parents, "folder-a")
+	})
+
+	t.Run("falls back to GetFolders when SearchFolders errors", func(t *testing.T) {
+		sc := setupTestScenario(t)
+
+		trackingSvc := newTrackingFolderService()
+		trackingSvc.ExpectedFolders = []*folder.Folder{
+			{UID: "folder-a", Title: "Folder A", OrgID: 1},
+		}
+		trackingSvc.overrideSearch = true
+		trackingSvc.searchErr = errors.New("search index unavailable")
+
+		cache := newFolderTreeCache(trackingSvc, true)
+		tree, err := cache.get(context.Background(), sc.reqContext.SignedInUser)
+		require.NoError(t, err)
+		require.NotNil(t, tree)
+
+		assert.True(t, tree.Contains("folder-a"))
+		assert.Equal(t, 1, trackingSvc.GetCallCount())
+	})
+
+	t.Run("falls back to GetFolders when SearchFolders returns no hits", func(t *testing.T) {
+		sc := setupTestScenario(t)
+
+		trackingSvc := newTrackingFolderService()
+		trackingSvc.ExpectedFolders = []*folder.Folder{
+			{UID: "folder-a", Title: "Folder A", OrgID: 1},
+		}
+		// SearchFolders returns an empty hit list (index still warming up).
+		trackingSvc.overrideSearch = true
+		trackingSvc.searchHits = searchmodel.HitList{}
+
+		cache := newFolderTreeCache(trackingSvc, true)
+		tree, err := cache.get(context.Background(), sc.reqContext.SignedInUser)
+		require.NoError(t, err)
+		require.NotNil(t, tree)
+
+		assert.True(t, tree.Contains("folder-a"))
+		assert.Equal(t, 1, trackingSvc.GetCallCount())
 	})
 
 	t.Run("falls back to GetFolders when useSearch is set but the requester has no ID token", func(t *testing.T) {

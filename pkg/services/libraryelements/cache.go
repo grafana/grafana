@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 )
@@ -57,6 +58,7 @@ func panelFolderFromContext(ctx context.Context, panelUID string) (string, bool)
 type folderTreeCache struct {
 	cache     *localcache.CacheService
 	folderSvc folder.Service
+	log       log.Logger
 	// useSearch builds the tree from the search index (lightweight UID+parent
 	// refs) instead of a full folder object list, avoiding the paged object-list
 	// round-trips that dominate large instances. Feature-flag controlled.
@@ -67,6 +69,7 @@ func newFolderTreeCache(folderSvc folder.Service, useSearch bool) *folderTreeCac
 	return &folderTreeCache{
 		cache:     localcache.New(30*time.Second, 1*time.Minute),
 		folderSvc: folderSvc,
+		log:       log.New("library-elements.folder-tree-cache"),
 		useSearch: useSearch,
 	}
 }
@@ -101,11 +104,15 @@ func (c *folderTreeCache) get(ctx context.Context, user identity.Requester) (*fo
 // call as a service call and returns every folder in the org, which would leak
 // library elements from folders the user can't read.
 func (c *folderTreeCache) listFolders(ctx context.Context, user identity.Requester) ([]*folder.Folder, error) {
-	if !c.useSearch || user.GetIDToken() == "" {
+	getFolders := func() ([]*folder.Folder, error) {
 		return c.folderSvc.GetFolders(ctx, folder.GetFoldersQuery{
 			OrgID:        user.GetOrgID(),
 			SignedInUser: user,
 		})
+	}
+
+	if !c.useSearch || user.GetIDToken() == "" {
+		return getFolders()
 	}
 
 	// Unlike GetFolders, folderimpl.SearchFolders authorizes off the requester in
@@ -116,8 +123,17 @@ func (c *folderTreeCache) listFolders(ctx context.Context, user identity.Request
 		OrgID:        user.GetOrgID(),
 		SignedInUser: user,
 	})
+	// Fall back to GetFolders when the search index errors or returns no hits.
+	// Both happen during a search-index rebuild or cold start; caching an empty
+	// tree from search would make GET /api/library-elements filter out
+	// non-admin users' folder-based elements until the TTL expires. GetFolders
+	// hits the source of truth directly and stays correct through those windows.
 	if err != nil {
-		return nil, err
+		c.log.FromContext(ctx).Warn("folder search failed, falling back to GetFolders", "error", err, "orgID", user.GetOrgID())
+		return getFolders()
+	}
+	if len(hits) == 0 {
+		return getFolders()
 	}
 	folders := make([]*folder.Folder, 0, len(hits))
 	for _, hit := range hits {
