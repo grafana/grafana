@@ -53,7 +53,9 @@ type buildConfig struct {
 }
 
 // WithPanelData bundles paneldata.json: the data frames the user's browser was holding for the panel,
-// serialized client-side from already-resolved scene state.
+// serialized client-side from already-resolved scene state -- or, when that serialization failed, the
+// {version, captureError} record the frontend sends in their place, so a capture that broke on the way
+// out stays distinguishable from a browser that had no frames to give (which sends nothing at all).
 //
 // This is the frontend counterpart to querydata.json, which holds what the datasource's *backend*
 // returned. Diffing the two is the point: a datasource plugin's frontend code also processes the
@@ -72,13 +74,19 @@ type buildConfig struct {
 // feature.
 //
 // Size is the one failure this does NOT contain, and it is the client's to bound: web.MaxBindBodyBytes
-// caps the whole REQUEST rather than this field, so a payload past it fails web.Bind before Build runs
-// and costs the caller the entire bundle instead of just this artifact. Bounding it is intentionally
-// postponed.
+// caps the whole REQUEST (at 100MiB) rather than this field, so a payload past it fails web.Bind before
+// Build runs and costs the caller the entire bundle instead of just this artifact. Bounding it is
+// intentionally postponed.
 //
 // Leaving it uncapped is also deliberately asymmetric with querydata.json, which IS capped
 // (maxQueryDataArtifactBytes) and degrades to a frame summary above it. Matching that cap would cost
 // the common case a complete diff to make the rare oversized one symmetric.
+//
+// Note for whoever adds the client-side bound: that reasoning only holds BELOW
+// maxQueryDataArtifactBytes. Past it querydata.json is already a frame summary, so a complete
+// paneldata.json has no fields left to be diffed against -- only frame and row counts -- and the
+// uncapped side stops buying a complete diff exactly where the payload is heaviest. Pick the two caps
+// together rather than independently.
 func WithPanelData(panelData json.RawMessage) BuildOption {
 	return func(cfg *buildConfig) {
 		cfg.panelData = panelData
@@ -87,7 +95,7 @@ func WithPanelData(panelData json.RawMessage) BuildOption {
 
 // Build assembles a .tar.gz bundle from the query response, the captured HAR buffer, and the
 // optional panel/dashboard JSON the client supplied. traffic.har is omitted when nothing was
-// captured.
+// captured. Artifacts only some callers can supply arrive through opts; see BuildOption.
 //
 // Server logs are intentionally omitted because they are not scoped to this request and would leak
 // unrelated activity into a bundle meant for external sharing; they will be tackled in a follow-up.
