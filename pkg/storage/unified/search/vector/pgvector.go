@@ -25,6 +25,12 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/
 
 var _ VectorBackend = (*pgvectorBackend)(nil)
 
+// maxPartitionKeyLen keeps `embeddings_<key>` under Postgres's 63-byte
+// identifier limit (len("embeddings_") == 11). Postgres would otherwise
+// silently truncate the table name, and the pg_inherits existence check
+// (which uses the untruncated name) would re-attempt DDL forever.
+const maxPartitionKeyLen = 52
+
 // backfillAdvisoryLockName is hashed by Postgres' hashtext() into the
 // 64-bit advisory-lock keyspace. Keeping the lock identity as a string in
 // the SQL makes it self-documenting; an operator looking at pg_locks can
@@ -591,6 +597,9 @@ func (b *pgvectorBackend) EnsureResourcePartition(ctx context.Context, resource 
 	// sanitizeIdentifier would alter to keep it injection-safe.
 	if resource == "" || sanitizeIdentifier(resource) != resource {
 		return fmt.Errorf("ensure partition: unsafe resource %q", resource)
+	}
+	if len(resource) > maxPartitionKeyLen {
+		return fmt.Errorf("ensure partition: resource %q too long (%d > %d chars)", resource, len(resource), maxPartitionKeyLen)
 	}
 	leaf := subtreeName(resource) // embeddings_<resource>
 	idx := leaf + "_metadata_idx"

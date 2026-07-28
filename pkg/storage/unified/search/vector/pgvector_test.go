@@ -3,6 +3,8 @@ package vector
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"strings"
 	"testing"
 	"unicode/utf8"
 
@@ -289,4 +291,27 @@ func TestTruncateRunes(t *testing.T) {
 		require.True(t, utf8.ValidString(got))
 		require.Equal(t, 5, utf8.RuneCountInString(got))
 	})
+}
+
+func TestEnsureResourcePartition_RejectsOverlongResource(t *testing.T) {
+	// 63-byte Postgres identifier limit minus len("embeddings_") = 52.
+	// Postgres would silently truncate a longer name, breaking the
+	// existence fast-path forever.
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
+	ctx := testutil.NewDefaultTestContext(t)
+
+	ok52 := strings.Repeat("a", 52)
+	bad53 := strings.Repeat("a", 53)
+
+	err := backend.EnsureResourcePartition(ctx, bad53)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "too long")
+
+	// 52 passes the length guard (then hits the DB check — mock it minimally).
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnError(errors.New("stop here"))
+	err = backend.EnsureResourcePartition(ctx, ok52)
+	require.Error(t, err)
+	require.NotContains(t, err.Error(), "too long")
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
