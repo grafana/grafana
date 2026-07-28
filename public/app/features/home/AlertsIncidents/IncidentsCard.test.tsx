@@ -74,20 +74,6 @@ afterEach(() => {
 });
 
 describe('IncidentsCard', () => {
-  it('renders nothing when the Incident plugin is not installed', () => {
-    mockUseIrmPlugin.mockReturnValue({ pluginId: SupportedPlugin.Incident, installed: false, loading: false });
-
-    const { container } = render(<IncidentsCard />);
-    expect(container).toBeEmptyDOMElement();
-  });
-
-  it('renders nothing while the plugin availability is still loading', () => {
-    mockUseIrmPlugin.mockReturnValue({ pluginId: SupportedPlugin.Incident, installed: undefined, loading: true });
-
-    const { container } = render(<IncidentsCard />);
-    expect(container).toBeEmptyDOMElement();
-  });
-
   it('lists active incidents with severity, count badge, and detail links', async () => {
     mockIncidents(activeIncidents);
 

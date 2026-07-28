@@ -522,9 +522,13 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await moveRow(dashboardPage, page, selectors, `${repeatTitleBase}1`, singleRowTitle);
 
-      let singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
-      const repeatedRowBox = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}1`);
-      expect(singleRowBox.y).toBeLessThan(repeatedRowBox.y || 0);
+      // The row order is only updated after the drop animation finishes (onDragEnd),
+      // so retry the position check until the reorder has been applied
+      await expect(async () => {
+        const singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
+        const repeatedRowBox = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}1`);
+        expect(singleRowBox.y).toBeLessThan(repeatedRowBox.y);
+      }).toPass();
 
       // Wait for save button to be active (indicates changes have been applied)
       // since we cannot verify that changes have been applied by checking the JSON diff we have to check the Save button state
@@ -536,7 +540,7 @@ test.describe(
 
       await page.reload();
 
-      singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
+      const singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
       for (let i = 1; i <= repeatOptions.length; i++) {
         // verify move by row position
         const repeatedRow = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}${i}`);

@@ -46,7 +46,7 @@ func makeTestJob(rv string) *provisioning.Job {
 // carried forward across the status overwrite that happens on every call.
 func TestOnProgress_IncrementsProgressUpdates(t *testing.T) {
 	store := &MockStore{}
-	driver := &jobDriver{store: store}
+	driver := &jobProcessor{store: store}
 	driver.currentJob = makeTestJob("1")
 
 	// Echo the job back so the driver's local copy keeps the persisted count.
@@ -74,7 +74,7 @@ func TestOnProgress_IncrementsProgressUpdates(t *testing.T) {
 // going, so a failed write must not bump ProgressUpdates for the next call.
 func TestOnProgress_FailedWriteDoesNotInflateCount(t *testing.T) {
 	store := &MockStore{}
-	driver := &jobDriver{store: store}
+	driver := &jobProcessor{store: store}
 	driver.currentJob = makeTestJob("1")
 
 	// First write fails with a non-conflict error (no retry).
@@ -106,7 +106,7 @@ func TestOnProgress_FailedWriteDoesNotInflateCount(t *testing.T) {
 // goroutine — permanent deadlock since sync.Mutex is non-reentrant.
 func TestOnProgress_DeadlockOnConflict(t *testing.T) {
 	store := &MockStore{}
-	driver := &jobDriver{store: store}
+	driver := &jobProcessor{store: store}
 	driver.currentJob = makeTestJob("100")
 
 	// First Update: conflict triggers retry
@@ -138,7 +138,7 @@ func TestOnProgress_DeadlockOnConflict(t *testing.T) {
 // conflicts, onProgress returns an error without deadlocking or leaking d.mu.
 func TestOnProgress_AllRetriesConflict(t *testing.T) {
 	store := &MockStore{}
-	driver := &jobDriver{store: store}
+	driver := &jobProcessor{store: store}
 	driver.currentJob = makeTestJob("100")
 
 	// All attempts return conflict — the 3rd attempt has attempt < maxRetries-1 == false,
@@ -186,7 +186,7 @@ func TestOnProgress_AllRetriesConflict(t *testing.T) {
 // can acquire it (simulating the main driver thread).
 func TestOnProgress_MutexNotLeakedOnConflict(t *testing.T) {
 	store := &MockStore{}
-	driver := &jobDriver{store: store}
+	driver := &jobProcessor{store: store}
 	driver.currentJob = makeTestJob("100")
 
 	store.EXPECT().Update(mock.Anything, mock.Anything).Return(nil, newConflictError()).Once()
@@ -264,8 +264,8 @@ func newNotFoundError() error {
 	)
 }
 
-func setupDriverForProcessJob(worker *MockWorker, repoGetter *MockRepoGetter) *jobDriver {
-	return &jobDriver{
+func setupDriverForProcessJob(worker *MockWorker, repoGetter *MockRepoGetter) *jobProcessor {
+	return &jobProcessor{
 		workers:    []Worker{worker},
 		repoGetter: repoGetter,
 	}
@@ -479,7 +479,7 @@ func TestProcessJob_OrphanCleanup_RepoRecreated_ReturnsError(t *testing.T) {
 }
 
 func TestProcessJob_NilCurrentJob_ReturnsNil(t *testing.T) {
-	driver := &jobDriver{}
+	driver := &jobProcessor{}
 	recorder := &MockJobProgressRecorder{}
 
 	err := driver.processJob(context.Background(), recorder)

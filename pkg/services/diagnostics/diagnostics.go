@@ -655,16 +655,7 @@ func HasCapturedHAR(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffe
 	return captured
 }
 
-// collectHAR returns the captured HTTP traffic as HAR 1.2 JSON. It merges two sources: the
-// in-process buffer (core plugins) and the __har__ response frame(s) returned by externalized gRPC
-// plugins. Returns (nil, nil) when nothing was captured, and a non-nil error if traffic was
-// captured but could not be serialized (so the caller can fail rather than return an empty bundle).
-//
-// NOTE: the __har__ frame path is inert until the SDK-side HTTP capture middleware that emits those
-// frames ships and Grafana is bumped to that SDK version — until then external (out-of-process)
-// plugin traffic is NOT captured. Externally-sourced frames are merged VERBATIM: redaction is
-// intentionally deferred (see the harcapture package doc), so — exactly like in-process capture —
-// the recorded headers/cookies/query/URLs/bodies are not sanitized.
+// collectHAR returns the captured HTTP traffic as HAR 1.2 JSON.
 func collectHAR(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer) ([]byte, error) {
 	var bufferDoc []byte
 	if harBuffer != nil && harBuffer.Len() > 0 {
