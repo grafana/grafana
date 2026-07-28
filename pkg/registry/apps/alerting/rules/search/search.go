@@ -133,7 +133,7 @@ func (h *Handler) run(ctx context.Context, body model.CreateSearchRulesRequestBo
 	// across the federated kinds. If a backend ever returns a differently
 	// ordered set between pages, offset paging would skip or duplicate rows.
 	next := ""
-	if rows := rowCount(resp); offset+rows < resp.TotalHits {
+	if rows := rowCount(resp); rows != 0 && offset+rows < resp.TotalHits {
 		next = strconv.FormatInt(offset+rows, 10)
 	}
 	return resp, next, nil
