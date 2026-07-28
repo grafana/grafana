@@ -383,7 +383,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	actionSetService := resourcepermissions.NewActionSetService()
 	permissionRegistry := permreg.ProvidePermissionRegistry()
-	serverLockService := serverlock.ProvideService(sqlStore, tracingService)
+	serverLockService := serverlock.ProvideService(legacyDatabaseProvider, tracingService)
 	registerer := metrics.ProvideRegisterer()
 	storeProvider := store2.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
@@ -1143,7 +1143,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	actionSetService := resourcepermissions.NewActionSetService()
 	permissionRegistry := permreg.ProvidePermissionRegistry()
-	serverLockService := serverlock.ProvideService(sqlStore, tracingService)
+	serverLockService := serverlock.ProvideService(legacyDatabaseProvider, tracingService)
 	registerer := metrics.ProvideRegistererForTest()
 	storeProvider := store2.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
@@ -1878,7 +1878,7 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	secretDBMigrator := migrator.NewWithEngine(sqlStore)
 	actionSetService := resourcepermissions.NewActionSetService()
 	permissionRegistry := permreg.ProvidePermissionRegistry()
-	serverLockService := serverlock.ProvideService(sqlStore, tracingService)
+	serverLockService := serverlock.ProvideService(legacyDatabaseProvider, tracingService)
 	storeProvider := store2.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
 	defaultElector := leaderelection.NewDefaultElector()

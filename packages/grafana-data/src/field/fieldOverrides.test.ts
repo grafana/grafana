@@ -447,6 +447,56 @@ describe('applyFieldOverrides', () => {
     expect(config.decimals).toEqual(1);
   });
 
+  it('resolves threshold valueExpr steps from defaults into a sorted numeric config', () => {
+    const variables: Record<string, unknown> = { warn: '25', multi: ['1', '2'] };
+    // mimics the function-format convention of sceneGraph.interpolate/templateSrv.replace:
+    // the custom format function receives the raw variable value (an array when multi-value)
+    const replaceVariables: InterpolateFunction = (value, _scopedVars, format) => {
+      return value.replace(/\$(\w+)/g, (match, name) => {
+        if (!(name in variables)) {
+          return match;
+        }
+        if (typeof format === 'function') {
+          return format(variables[name]);
+        }
+        return String(variables[name]);
+      });
+    };
+
+    const data = applyFieldOverrides({
+      data: [f0],
+      fieldConfig: {
+        defaults: {
+          thresholds: {
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: 'green' },
+              { value: 80, color: 'red' },
+              { value: 50, valueExpr: '$warn', color: 'orange' },
+              { value: 90, valueExpr: '$multi', color: 'blue' },
+            ],
+          },
+        },
+        overrides: [],
+      },
+      replaceVariables,
+      theme: createTheme(),
+      fieldConfigRegistry: customFieldRegistry,
+    })[0];
+
+    // resolved ($warn -> 25), fallen back ($multi has 2 values selected -> 90),
+    // sorted ascending with the base step first, and no valueExpr left anywhere
+    expect(data.fields[1].config.thresholds).toEqual({
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 25, color: 'orange' },
+        { value: 80, color: 'red' },
+        { value: 90, color: 'blue' },
+      ],
+    });
+  });
+
   it('should skip overrides with unknown matcher ids', () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
 

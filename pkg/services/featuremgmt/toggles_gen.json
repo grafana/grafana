@@ -1583,7 +1583,8 @@
       "metadata": {
         "name": "dashboardDefaultLayoutSelector",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-22T11:26:27Z"
       },
       "spec": {
         "description": "Enables default layout selector in dashboard settings",
@@ -3062,6 +3063,21 @@
         "description": "Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.thresholdsInterpolation",
+        "resourceVersion": "1784639663172",
+        "creationTimestamp": "2026-07-21T13:14:23Z",
+        "deletionTimestamp": "2026-07-27T09:35:58Z"
+      },
+      "spec": {
+        "description": "Enables using dashboard variables in panel threshold values",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "false"
       }

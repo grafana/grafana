@@ -304,11 +304,6 @@ export interface FeatureToggles {
   */
   dashboardNewLayouts?: boolean;
   /**
-  * Enables default layout selector in dashboard settings
-  * @default true
-  */
-  dashboardDefaultLayoutSelector?: boolean;
-  /**
   * Enables undo/redo in dynamic dashboards
   * @default false
   */
@@ -1105,11 +1100,6 @@ export interface FeatureToggles {
   * @default true
   */
   prometheusTypeMigration?: boolean;
-  /**
-  * Enables running plugins in containers
-  * @default false
-  */
-  pluginContainers?: boolean;
   /**
   * Prioritize loading plugins from the CDN before other sources
   * @default false
