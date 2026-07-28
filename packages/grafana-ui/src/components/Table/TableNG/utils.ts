@@ -1033,9 +1033,6 @@ export function getVisibleFields(fields: Field[]): Field[] {
   return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hideFrom?.viz !== true);
 }
 
-export const getIsNestedTable = (fields: Field[]): boolean =>
-  fields.some(({ type }) => type === FieldType.nestedFrames);
-
 /**
  * @internal
  * returns a map of column types by display name
