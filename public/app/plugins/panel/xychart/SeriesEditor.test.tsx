@@ -101,6 +101,14 @@ const minimalItem: SeriesEditorProps['item'] = {
   name: 'Series',
 };
 
+/**
+ * A panel `options` object for the given series mapping. The generated `Options` type has
+ * required fields the editor never reads, so this is the single place the narrowing cast lives.
+ */
+function mappingOptions(mapping: SeriesMapping): Options {
+  return { mapping } as Options;
+}
+
 function buildProps(onChange: SeriesEditorProps['onChange'], overrides: EditorOverrides = {}): SeriesEditorProps {
   const { value = [{ ...defaultFrameMatcher }], contextOverrides, ...rest } = overrides;
 
@@ -110,7 +118,7 @@ function buildProps(onChange: SeriesEditorProps['onChange'], overrides: EditorOv
     item: minimalItem,
     context: {
       data: makeTestData(),
-      options: { mapping: SeriesMapping.Auto } as Options,
+      options: mappingOptions(SeriesMapping.Auto),
       ...contextOverrides,
     },
     ...rest,
@@ -166,7 +174,7 @@ describe('SeriesEditor', () => {
     });
 
     it('shows the series list and add button in manual mapping', () => {
-      renderEditor({ contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options } });
+      renderEditor({ contextOverrides: { options: mappingOptions(SeriesMapping.Manual) } });
 
       expect(screen.getByRole('button', { name: /add series/i })).toBeVisible();
       expect(screen.getByTestId('layer-name-div')).toBeVisible();
@@ -179,7 +187,7 @@ describe('SeriesEditor', () => {
       const user = userEvent.setup();
       const { onChange, configAt } = renderEditor({
         value: [{ ...defaultFrameMatcher }],
-        contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
+        contextOverrides: { options: mappingOptions(SeriesMapping.Manual) },
       });
 
       await user.click(screen.getByRole('button', { name: /add series/i }));
@@ -198,7 +206,7 @@ describe('SeriesEditor', () => {
       ];
       const { onChange, configAt } = renderEditor({
         value: twoSeries,
-        contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
+        contextOverrides: { options: mappingOptions(SeriesMapping.Manual) },
       });
 
       const firstRow = screen.getByRole('button', { name: /select series 1/i });
@@ -217,7 +225,7 @@ describe('SeriesEditor', () => {
 
       renderEditor({
         value: twoSeries,
-        contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
+        contextOverrides: { options: mappingOptions(SeriesMapping.Manual) },
       });
 
       expect(screen.getByTestId('field-name-picker-x')).toHaveTextContent('x (ax)');
@@ -230,7 +238,7 @@ describe('SeriesEditor', () => {
     it('renames a series', async () => {
       const user = userEvent.setup();
       const { lastConfig } = renderEditor({
-        contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
+        contextOverrides: { options: mappingOptions(SeriesMapping.Manual) },
       });
 
       await user.click(screen.getByTestId('layer-name-div'));
@@ -247,7 +255,7 @@ describe('SeriesEditor', () => {
       const named: XYSeriesConfig[] = [{ ...defaultFrameMatcher, name: { fixed: 'Revenue' } }];
       const { lastConfig } = renderEditor({
         value: named,
-        contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
+        contextOverrides: { options: mappingOptions(SeriesMapping.Manual) },
       });
 
       await user.click(screen.getByTestId('layer-name-div'));
@@ -268,13 +276,13 @@ describe('SeriesEditor', () => {
 
       const { rerenderEditor } = renderEditor({
         value: twoSeries,
-        contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
+        contextOverrides: { options: mappingOptions(SeriesMapping.Manual) },
       });
 
       await user.click(screen.getByRole('button', { name: /select series 2/i }));
       expect(screen.getByTestId('field-name-picker-x')).toHaveTextContent('x (bx)');
 
-      rerenderEditor({ value: twoSeries, contextOverrides: { options: { mapping: SeriesMapping.Auto } as Options } });
+      rerenderEditor({ value: twoSeries, contextOverrides: { options: mappingOptions(SeriesMapping.Auto) } });
 
       // The reset drops back to the default first series, so the X picker is empty again.
       expect(screen.getByTestId('field-name-picker-x')).toHaveTextContent('x (empty)');
@@ -292,12 +300,12 @@ describe('SeriesEditor', () => {
 
       const { onChange, lastConfig, rerenderEditor } = renderEditor({
         value: customSeries,
-        contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
+        contextOverrides: { options: mappingOptions(SeriesMapping.Manual) },
       });
 
       rerenderEditor({
         value: customSeries,
-        contextOverrides: { options: { mapping: SeriesMapping.Auto } as Options },
+        contextOverrides: { options: mappingOptions(SeriesMapping.Auto) },
       });
 
       expect(onChange).toHaveBeenCalled();
@@ -406,7 +414,7 @@ describe('SeriesEditor', () => {
 
         renderEditor({
           value: series,
-          contextOverrides: { options: { mapping: SeriesMapping.Manual } as Options },
+          contextOverrides: { options: mappingOptions(SeriesMapping.Manual) },
         });
 
         const filter = pickerSettings(dim).filter;
@@ -429,7 +437,7 @@ describe('SeriesEditor', () => {
       'uses the $expected base name mode for $mapping mapping with $frames frame(s)',
       ({ mapping, frames, expected }) => {
         renderEditor({
-          contextOverrides: { data: makeTestData().slice(0, frames), options: { mapping } as Options },
+          contextOverrides: { data: makeTestData().slice(0, frames), options: mappingOptions(mapping) },
         });
 
         expect(pickerSettings('x').baseNameMode).toBe(expected);
