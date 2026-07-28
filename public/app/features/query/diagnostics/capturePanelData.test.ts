@@ -88,7 +88,9 @@ describe('capturePanelData', () => {
 
     // querydata.json is a server-side re-run at its own resolution, so without this a step or point-count
     // difference is indistinguishable from data the plugin's frontend lost.
-    expect(captured?.request).toEqual({
+    // toStrictEqual, not toEqual: the latter treats an undefined property as absent, so the inFlight
+    // expectation below would hold whether or not the key was set.
+    expect(captured?.request).toStrictEqual({
       from: 1_700_000_000_000,
       to: 1_700_000_300_000,
       intervalMs: 15_000,
