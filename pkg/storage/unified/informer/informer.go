@@ -20,6 +20,18 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
 
+// DeltaSource is the subset of cache.SharedIndexInformer the controllers use to
+// receive events: register a handler (whose registration reports HasSynced) and
+// run until stopped. Both an apiserver-backed SharedIndexInformer and the
+// NATS-backed Informer satisfy it, so wiring can pick a source without the
+// controller knowing which it is.
+type DeltaSource interface {
+	AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error)
+	Run(stopCh <-chan struct{})
+}
+
+var _ DeltaSource = (*Informer)(nil)
+
 // ObjectFunc builds a minimal typed object carrying just the identity from a
 // notification (namespace + name). The controllers treat a change notification
 // as a signal — they re-fetch the object from the API in their reconcile — so

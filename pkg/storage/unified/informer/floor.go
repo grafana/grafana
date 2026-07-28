@@ -1,12 +1,17 @@
 package informer
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -29,6 +34,14 @@ const (
 	// sweepInterval is how often Raise scans for expired floors, so expiry cost
 	// is amortized over the event stream instead of paid per call.
 	sweepInterval = time.Minute
+
+	// defaultStaleReadRetries and defaultStaleReadBackoff bound how long GetFresh
+	// waits in place for the API to catch up to an announced resource version.
+	// They cover the common case of a short replication lag; anything longer
+	// surfaces as ErrStaleRead so the caller's workqueue (and ultimately the
+	// periodic re-list) takes over the retrying.
+	defaultStaleReadRetries = 4
+	defaultStaleReadBackoff = 250 * time.Millisecond
 )
 
 // RVFloor tracks, per object, the highest resource version any informer event
@@ -118,12 +131,12 @@ func floorKey(namespace, name string) string {
 	return namespace + "/" + name
 }
 
-// withRVFloor wraps a delta source so every delivered event maintains the floor
+// WithRVFloor wraps a delta source so every delivered event maintains the floor
 // before the wrapped handler runs: adds and updates raise it to the object's
 // announced version, deletes forget it. Raising first means that by the time a
 // controller's handler enqueues the key, the floor its reconcile read must meet
 // is already in place.
-func withRVFloor(source DeltaSource, floor *RVFloor) DeltaSource {
+func WithRVFloor(source DeltaSource, floor *RVFloor) DeltaSource {
 	return floorTrackingSource{DeltaSource: source, floor: floor}
 }
 
@@ -161,7 +174,7 @@ func (h floorTrackingHandler) OnDelete(obj interface{}) {
 // raise lifts the floor to the object's resource version. Objects without a
 // parseable version (never expected from the NATS informer, which stamps live
 // events and re-lists full objects) simply don't move the floor, so a missing
-// version degrades to today's unchecked behavior rather than blocking reads.
+// version degrades to unchecked reads rather than blocking them.
 func (h floorTrackingHandler) raise(obj interface{}) {
 	acc, err := apimeta.Accessor(obj)
 	if err != nil {
@@ -172,4 +185,90 @@ func (h floorTrackingHandler) raise(obj interface{}) {
 		return
 	}
 	h.floor.Raise(acc.GetNamespace(), acc.GetName(), rv)
+}
+
+// FreshReader bundles a freshness floor with the retry policy GetFresh uses to
+// wait out visibility lag. Build one with NewFreshReader for the defaults; the
+// fields are exported so tests can tighten them.
+type FreshReader struct {
+	// Floor is the freshness floor informer events raise; nil disables the check.
+	Floor *RVFloor
+	// Retries is the total number of reads before giving up with ErrStaleRead.
+	Retries int
+	// Backoff is the wait between reads.
+	Backoff time.Duration
+}
+
+func NewFreshReader(floor *RVFloor) FreshReader {
+	return FreshReader{Floor: floor, Retries: defaultStaleReadRetries, Backoff: defaultStaleReadBackoff}
+}
+
+// GetFresh fetches an object until the read is at least as fresh as the key's
+// floor, so a reconcile never acts on state older than the event that woke it.
+//
+//   - a read at or above the floor settles it and is returned;
+//   - a read below it — or a NotFound while a floor says the object exists — is
+//     a visibility lag: re-read up to Retries times, then return ErrStaleRead
+//     (which deliberately does not wrap the NotFound, so callers don't mistake a
+//     stale 404 for a trusted delete);
+//   - a NotFound with no floor outstanding is trusted and returned as is;
+//   - an object whose version does not parse fails open: enforcement cannot
+//     apply, so it is returned rather than spun on.
+func GetFresh[T runtime.Object](ctx context.Context, r FreshReader, namespace, name string, fetch func(context.Context) (T, error)) (T, error) {
+	var zero T
+	if r.Retries < 1 {
+		r.Retries = 1
+	}
+	var floor int64
+	if r.Floor != nil {
+		floor = r.Floor.Floor(namespace, name)
+	}
+
+	for attempt := 0; ; attempt++ {
+		obj, err := fetch(ctx)
+		switch {
+		case apierrors.IsNotFound(err) && floor == 0:
+			return zero, err
+		case err != nil && !apierrors.IsNotFound(err):
+			return zero, err
+		case err == nil:
+			rv := objectRV(obj)
+			if floor == 0 || rv == 0 || rv >= floor {
+				if r.Floor != nil {
+					r.Floor.Settle(namespace, name, rv)
+				}
+				return obj, nil
+			}
+		}
+
+		// Below the floor (or 404 while an event says the object exists): the
+		// announced write is committed but not visible to this read path yet.
+		if attempt+1 >= r.Retries {
+			return zero, fmt.Errorf("%w: %s/%s not visible at resource version %d after %d reads",
+				ErrStaleRead, namespace, name, floor, attempt+1)
+		}
+		logging.FromContext(ctx).Info("reconcile read below announced resource version; retrying",
+			"namespace", namespace, "name", name, "floor", floor, "attempt", attempt+1)
+		select {
+		case <-ctx.Done():
+			return zero, ctx.Err()
+		case <-time.After(r.Backoff):
+		}
+	}
+}
+
+// objectRV parses the object's resource version normalized to snowflake form,
+// the same space RVFloor stores, so reads of rows that still carry
+// legacy-format versions compare correctly against floors from the wire.
+// Returns 0 when the version does not parse.
+func objectRV(obj runtime.Object) int64 {
+	acc, err := apimeta.Accessor(obj)
+	if err != nil {
+		return 0
+	}
+	rv, err := strconv.ParseInt(acc.GetResourceVersion(), 10, 64)
+	if err != nil || rv <= 0 {
+		return 0
+	}
+	return resource.ToSnowflakeRV(rv)
 }

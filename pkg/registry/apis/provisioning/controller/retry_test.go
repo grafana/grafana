@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/client-go/util/workqueue"
 
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 func newRetryTestController(processFn func(string) error) *RepositoryController {
@@ -34,7 +34,7 @@ func TestProcessNextWorkItem_RetriesStaleReads(t *testing.T) {
 	rc := newRetryTestController(func(string) error {
 		calls++
 		if calls < maxAttempts {
-			return fmt.Errorf("get repository: %w", informer.ErrStaleRead)
+			return fmt.Errorf("get repository: %w", usinformer.ErrStaleRead)
 		}
 		return nil
 	})
@@ -53,7 +53,7 @@ func TestProcessNextWorkItem_DropsStaleReadAfterMaxAttempts(t *testing.T) {
 	var calls int
 	rc := newRetryTestController(func(string) error {
 		calls++
-		return fmt.Errorf("get repository: %w", informer.ErrStaleRead)
+		return fmt.Errorf("get repository: %w", usinformer.ErrStaleRead)
 	})
 	rc.queue.Add("ns/r")
 

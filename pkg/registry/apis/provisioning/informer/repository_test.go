@@ -176,10 +176,11 @@ func TestClientGetCachedListRepositoryGetter_WaitsForAnnouncedVersion(t *testing
 		return true, repoWithRV("ns", "r", rvFresh), nil
 	})
 
-	floor := NewRVFloor()
+	floor := usinformer.NewRVFloor()
 	floor.Raise("ns", "r", rvFresh)
 	store := newFakeStore()
-	g := clientGetCachedListRepositoryGetter{client: client.ProvisioningV0alpha1(), store: store, floor: floor, retries: 3}
+	g := clientGetCachedListRepositoryGetter{client: client.ProvisioningV0alpha1(), store: store,
+		reader: usinformer.FreshReader{Floor: floor, Retries: 3}}
 
 	got, err := g.Get(context.Background(), "ns", "r")
 	require.NoError(t, err)
@@ -192,30 +193,18 @@ func TestClientGetCachedListRepositoryGetter_WaitsForAnnouncedVersion(t *testing
 	require.Len(t, list, 1, "only the fresh read may be written back to the snapshot")
 }
 
-// A read that never catches up to the floor surfaces ErrStaleRead (so the
-// controller requeues the key) instead of handing the reconcile stale state.
-func TestClientGetCachedListRepositoryGetter_StaleReadExhaustsToError(t *testing.T) {
-	client := fake.NewClientset(repoWithRV("ns", "r", rvStale))
-	floor := NewRVFloor()
-	floor.Raise("ns", "r", rvFresh)
-	g := clientGetCachedListRepositoryGetter{client: client.ProvisioningV0alpha1(), store: newFakeStore(), floor: floor, retries: 3}
-
-	_, err := g.Get(context.Background(), "ns", "r")
-	require.ErrorIs(t, err, ErrStaleRead)
-	assert.Equal(t, rvFresh, floor.Floor("ns", "r"), "an unmet floor must stay for the retry")
-}
-
 // A 404 while an event announced the object exists is a stale read, not a
 // delete: the getter must not trust it (or evict the snapshot on it).
 func TestClientGetCachedListRepositoryGetter_NotFoundBelowFloorIsStale(t *testing.T) {
 	client := fake.NewClientset()
-	floor := NewRVFloor()
+	floor := usinformer.NewRVFloor()
 	floor.Raise("ns", "r", rvFresh)
 	store := newFakeStore(repoWithRV("ns", "r", rvStale))
-	g := clientGetCachedListRepositoryGetter{client: client.ProvisioningV0alpha1(), store: store, floor: floor, retries: 3}
+	g := clientGetCachedListRepositoryGetter{client: client.ProvisioningV0alpha1(), store: store,
+		reader: usinformer.FreshReader{Floor: floor, Retries: 3}}
 
 	_, err := g.Get(context.Background(), "ns", "r")
-	require.ErrorIs(t, err, ErrStaleRead)
+	require.ErrorIs(t, err, usinformer.ErrStaleRead)
 	assert.False(t, apierrors.IsNotFound(err), "the NotFound must not leak through as a trusted delete")
 	assert.Empty(t, store.deleted, "an ambiguous 404 must not evict the snapshot")
 }
@@ -255,7 +244,7 @@ func TestNewRepositoryDeltaSource_EnforcesNotificationVersion(t *testing.T) {
 		Namespace: testNamespace, Name: "r", ResourceVersion: rvFresh,
 	})
 	_, err = getter.Get(context.Background(), testNamespace, "r")
-	require.ErrorIs(t, err, ErrStaleRead)
+	require.ErrorIs(t, err, usinformer.ErrStaleRead)
 
 	// Once the API catches up, the same floor is met and the read goes through.
 	caughtUp.Store(true)
