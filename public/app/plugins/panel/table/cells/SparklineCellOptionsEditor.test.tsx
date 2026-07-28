@@ -36,9 +36,16 @@ describe('SparklineCellOptionsEditor', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ lineWidth: 5, hideValue: true }));
   });
 
-  it('hides draw-style-dependent options that fail their showIf', () => {
-    // barAlignment only applies to the Bars draw style; a line sparkline must not show it
+  // barAlignment only applies to the Bars draw style. Query by the field's label
+  // text (not getByLabelText): a wrapped radiogroup editor has no label association,
+  // so getByLabelText would be null whether the option is shown or hidden.
+  it('shows the bar-alignment option for the Bars draw style', () => {
+    setup({ drawStyle: GraphDrawStyle.Bars });
+    expect(screen.getByText('Bar alignment')).toBeInTheDocument();
+  });
+
+  it('hides the bar-alignment option for non-Bars draw styles', () => {
     setup({ drawStyle: GraphDrawStyle.Line });
-    expect(screen.queryByLabelText('Bar alignment')).not.toBeInTheDocument();
+    expect(screen.queryByText('Bar alignment')).not.toBeInTheDocument();
   });
 });
