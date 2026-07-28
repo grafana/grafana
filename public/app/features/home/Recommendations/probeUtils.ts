@@ -134,7 +134,7 @@ export async function listProbeCandidates(
  * Only when the leader has no data (or errors) fan out to the rest in parallel. `hasData` must
  * not throw — an unusable datasource counts as no data.
  */
-export async function findDatasourceWithData(
+async function findDatasourceWithData(
   candidates: DataSourceInstanceListItem[],
   hasData: (ds: DataSourceInstanceListItem) => Promise<boolean>
 ): Promise<DataSourceInstanceListItem | null> {
