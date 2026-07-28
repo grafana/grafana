@@ -34,6 +34,7 @@ describe('DirectionDimensionEditor', () => {
 
     await user.click(screen.getByRole('radio', { name: 'Field' }));
 
+    expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith({
       mode: DirectionDimensionMode.Field,
       fixed: ConnectionDirection.Forward,
@@ -46,9 +47,11 @@ describe('DirectionDimensionEditor', () => {
 
     await selectOptionInTest(screen.getByRole('combobox'), 'Reverse');
 
-    expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ fixed: ConnectionDirection.Reverse, field: undefined })
-    );
+    expect(onChange).toHaveBeenCalledWith({
+      mode: DirectionDimensionMode.Fixed,
+      fixed: ConnectionDirection.Reverse,
+      field: undefined,
+    });
   });
 
   it('renders the field picker instead of the direction selector in Field mode', () => {

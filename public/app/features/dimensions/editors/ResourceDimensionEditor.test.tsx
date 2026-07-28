@@ -35,7 +35,9 @@ describe('ResourceDimensionEditor', () => {
 
     await user.click(screen.getByRole('radio', { name: 'Field' }));
 
-    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ mode: ResourceDimensionMode.Field }));
+    // Only the mode flips; fixed/field are preserved on the emitted config.
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith({ mode: ResourceDimensionMode.Field, fixed: '', field: '' });
   });
 
   it('renders the field picker in Field mode', () => {
