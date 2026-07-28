@@ -82,6 +82,11 @@ type Informer struct {
 	// fails; defaults to defaultSubscribeRetry.
 	retryInterval time.Duration
 
+	// degradedStart lets Run fall back to re-list-only operation when the live
+	// subscription cannot be opened, instead of holding the initial list (and
+	// HasSynced) until it succeeds. See AllowDegradedStart.
+	degradedStart bool
+
 	// reconnect signals the run loop to re-list after a NATS reconnect, since a
 	// round-robin subscription can miss events published while it was down.
 	// Buffered depth 1 and a non-blocking send coalesce bursts into one re-list.
@@ -154,6 +159,17 @@ func (n *Informer) AddEventHandler(handler cache.ResourceEventHandler) (cache.Re
 // HasSynced reports whether the initial full list has completed at least once.
 func (n *Informer) HasSynced() bool { return n.synced.Load() }
 
+// AllowDegradedStart lets Run operate in re-list-only degraded mode while the
+// live subscription cannot be opened — most commonly at startup, when the
+// embedded NATS server has no client URL yet — instead of holding the initial
+// list (and HasSynced) until it succeeds. Run keeps retrying the subscription
+// in the background and forces a re-list once it opens, reconciling whatever
+// was published in between. Consumers whose progress must not stall with NATS
+// (e.g. the job queue, whose only feed is this informer) opt in; the default
+// gating suits controllers that prefer not to start against a snapshot with no
+// live updates. Call before Run.
+func (n *Informer) AllowDegradedStart() { n.degradedStart = true }
+
 // registration implements cache.ResourceEventHandlerRegistration by deferring to
 // the informer's sync state, so a NATS informer registration is interchangeable
 // with an apiserver one at the wiring seam.
@@ -178,8 +194,9 @@ func (c syncedChecker) Done() <-chan struct{} { return c.informer.syncedCh }
 // (retrying until it succeeds, unless live notifications are disabled), then
 // performs the initial list (marking HasSynced), then serves live notifications
 // and a periodic re-list. Subscribing before listing means it never lists — nor
-// reports HasSynced — while it still cannot watch the resource. Register handlers
-// before calling Run.
+// reports HasSynced — while it still cannot watch the resource, unless
+// AllowDegradedStart opted into re-list-only operation for that window.
+// Register handlers before calling Run.
 func (n *Informer) Run(stopCh <-chan struct{}) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -204,11 +221,13 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 	// while we are listing is delivered (core NATS has no replay) rather than
 	// dropped in a list-to-subscribe gap. If the subscription cannot be created
 	// yet — most commonly at startup, before the embedded NATS server has a client
-	// URL — keep retrying and do NOT list or report HasSynced: re-listing a
-	// resource we cannot watch would start the controller against a snapshot with
-	// no live updates until the next resync. A nil newObject or a disabled
-	// subscriber means the informer is re-list-only, so there is no subscription
-	// to wait for.
+	// URL — the default is to keep retrying and NOT list or report HasSynced:
+	// re-listing a resource we cannot watch would start the controller against a
+	// snapshot with no live updates until the next resync. With
+	// AllowDegradedStart the informer proceeds in re-list-only mode instead and
+	// retrySubscribe opens the subscription in the background. A nil newObject or
+	// a disabled subscriber means the informer is re-list-only, so there is no
+	// subscription to wait for.
 	if n.newObject != nil && nats.Enabled(n.subscriber) {
 		subject := resourcewatch.Subject(n.gvr, n.namespace)
 		// Re-list on reconnect: a round-robin subscription can miss events
@@ -217,18 +236,29 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 		if n.queueGroup != "" {
 			opts = append(opts, nats.WithQueueGroup(n.queueGroup))
 		}
-		for {
-			s, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
-			if err == nil {
-				sub = s
-				n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
-				break
-			}
-			n.log.Warn("nats informer: subscribe failed, will retry", "subject", subject, "error", err)
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(n.retryInterval):
+		s, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
+		switch {
+		case err == nil:
+			sub = s
+			n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
+		case n.degradedStart:
+			n.log.Warn("nats informer: subscribe failed; starting in re-list-only degraded mode",
+				"subject", subject, "gvr", n.gvr.String(), "error", err)
+			go n.retrySubscribe(ctx, subject, opts)
+		default:
+			for {
+				n.log.Warn("nats informer: subscribe failed, will retry", "subject", subject, "error", err)
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(n.retryInterval):
+				}
+				s, err = n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
+				if err == nil {
+					sub = s
+					n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
+					break
+				}
 			}
 		}
 	}
@@ -265,6 +295,34 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 			n.log.Debug("nats reconnected; re-listing", "gvr", n.gvr.String())
 			_ = n.relist(ctx, false)
 		}
+	}
+}
+
+// retrySubscribe keeps trying to open the live subscription while the informer
+// runs in re-list-only degraded mode (see AllowDegradedStart). Once it opens,
+// a reconnect signal forces a re-list to reconcile whatever was published while
+// there was no subscription, and the goroutine holds the subscription until
+// shutdown so its lifecycle needs no shared state with Run.
+func (n *Informer) retrySubscribe(ctx context.Context, subject string, opts []nats.SubscribeOption) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(n.retryInterval):
+		}
+		s, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
+		if err != nil {
+			n.log.Warn("nats informer: subscribe failed, will retry", "subject", subject, "error", err)
+			continue
+		}
+		n.log.Info("nats informer: subscription opened; leaving re-list-only degraded mode",
+			"subject", subject, "gvr", n.gvr.String())
+		n.signalReconnect()
+		<-ctx.Done()
+		if err := s.Unsubscribe(); err != nil {
+			n.log.Debug("nats informer: unsubscribe", "error", err)
+		}
+		return
 	}
 }
 
