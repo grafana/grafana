@@ -16,9 +16,11 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/searchencoding"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -201,6 +203,7 @@ func resourceKey(namespace string, gr schema.GroupResource) *resourcepb.Resource
 
 // rowReader reads cells from a search result table by column name.
 type rowReader struct {
+	cols   []*resourcepb.ResourceTableColumnDefinition
 	idx    map[string]int
 	row    *resourcepb.ResourceTableRow
 	logger log.Logger
@@ -216,16 +219,33 @@ func (h *Handler) newRowReaders(resp *resourcepb.ResourceSearchResponse) []rowRe
 	}
 	readers := make([]rowReader, 0, len(resp.Results.Rows))
 	for _, row := range resp.Results.Rows {
-		readers = append(readers, rowReader{idx: idx, row: row, logger: h.logger})
+		readers = append(readers, rowReader{cols: resp.Results.Columns, idx: idx, row: row, logger: h.logger})
 	}
 	return readers
 }
 
-func (r rowReader) str(name string) string {
-	if i, ok := r.idx[name]; ok && i < len(r.row.Cells) {
-		return string(r.row.Cells[i])
+func (r rowReader) value(name string) any {
+	i, ok := r.idx[name]
+	if !ok || i >= len(r.row.Cells) || i >= len(r.cols) || len(r.row.Cells[i]) == 0 {
+		return nil
 	}
-	return ""
+	// We encode using the builder encoders in the legacy storage implementation which is
+	// what allows us to use this here.
+	v, err := resource.DecodeCell(r.cols[i], i, r.row.Cells[i])
+	if err != nil {
+		r.warn(name, err)
+		return nil
+	}
+	return v
+}
+
+func (r rowReader) warn(column string, err error) {
+	r.logger.Warn("failed to decode rule search result column", "column", column, "rule", r.row.Key.GetName(), "error", err)
+}
+
+func (r rowReader) str(name string) string {
+	v, _ := r.value(name).(string)
+	return v
 }
 
 func (r rowReader) strPtr(name string) *string {
@@ -236,39 +256,51 @@ func (r rowReader) strPtr(name string) *string {
 }
 
 func (r rowReader) boolPtr(name string) *bool {
-	if v := r.str(name); v != "" {
-		if b, err := strconv.ParseBool(v); err == nil {
-			return &b
-		}
+	v, ok := r.value(name).(bool)
+	if !ok {
+		return nil
 	}
-	return nil
+	return &v
 }
 
 func (r rowReader) int64Ptr(name string) *int64 {
-	if v := r.str(name); v != "" {
-		if n, err := strconv.ParseInt(v, 10, 64); err == nil {
-			return &n
-		}
+	v, ok := r.value(name).(int64)
+	if !ok {
+		return nil
 	}
-	return nil
+	return &v
 }
 
-func (r rowReader) jsonMap(name string) map[string]string {
-	var out map[string]string
-	if i, ok := r.idx[name]; ok && i < len(r.row.Cells) && len(r.row.Cells[i]) > 0 {
-		if err := json.Unmarshal(r.row.Cells[i], &out); err != nil {
-			r.logger.Warn("failed to decode rule search result column", "column", name, "rule", r.row.Key.GetName(), "error", err)
+func (r rowReader) strings(name string) []string {
+	v, ok := r.value(name).([]any)
+	if !ok {
+		return nil
+	}
+	out := make([]string, 0, len(v))
+	for _, e := range v {
+		if s, ok := e.(string); ok {
+			out = append(out, s)
 		}
+	}
+	if len(out) == 0 {
+		return nil
 	}
 	return out
 }
 
-func (r rowReader) datasourceUIDs() []string {
-	var out []string
-	if i, ok := r.idx[fieldDatasourceUIDs]; ok && i < len(r.row.Cells) && len(r.row.Cells[i]) > 0 {
-		if err := json.Unmarshal(r.row.Cells[i], &out); err != nil {
-			r.logger.Warn("failed to decode rule search result column", "column", fieldDatasourceUIDs, "rule", r.row.Key.GetName(), "error", err)
-		}
+func (r rowReader) labels() map[string]string {
+	return searchencoding.LabelMap(r.strings(fieldLabels))
+}
+
+func (r rowReader) jsonMap(name string) map[string]string {
+	v := r.str(name)
+	if v == "" {
+		return nil
+	}
+	var out map[string]string
+	if err := json.Unmarshal([]byte(v), &out); err != nil {
+		r.warn(name, err)
+		return nil
 	}
 	return out
 }
@@ -317,8 +349,8 @@ func (r rowReader) fields() model.CreateSearchRulesRuleSearchHitFields {
 		Type:           r.strPtr(fieldType),
 		Interval:       r.strPtr(fieldInterval),
 		Paused:         r.boolPtr(fieldPaused),
-		Labels:         r.jsonMap(fieldLabels),
-		DatasourceUIDs: r.datasourceUIDs(),
+		Labels:         r.labels(),
+		DatasourceUIDs: r.strings(fieldDatasourceUIDs),
 	}
 	if r.str(fieldType) == "recordingrule" {
 		f.Metric = r.strPtr(fieldMetric)

@@ -8,11 +8,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-app-sdk/app"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -217,13 +222,106 @@ func TestBuildSearchRequest_filterLeafValidation(t *testing.T) {
 	})
 }
 
-// TestResultColumnsMatchCells guards the positional lockstep between the column
-// definitions and the cell encoder: a mismatch would misalign every result
-// field. It must fail if a column is added to one without the other.
-func TestResultColumnsMatchCells(t *testing.T) {
-	rule := &ngmodels.AlertRule{Title: "x", UID: "u", Record: &ngmodels.Record{Metric: "m", TargetDatasourceUID: "d"}}
-	require.Equal(t, len(resultColumns), len(ruleCells(rule)),
-		"resultColumns and ruleCells must stay in positional lockstep")
+// legacyResponse builds the search response the legacy backend would return for
+// a single rule.
+func legacyResponse(t *testing.T, rule *ngmodels.AlertRule) *resourcepb.ResourceSearchResponse {
+	t.Helper()
+	cells, err := ruleCells(rule)
+	require.NoError(t, err)
+	return &resourcepb.ResourceSearchResponse{
+		TotalHits: 1,
+		Results: &resourcepb.ResourceTable{
+			Columns: resultColumnDefinitions(),
+			Rows:    []*resourcepb.ResourceTableRow{{Key: ruleKey("default", rule), Cells: cells}},
+		},
+	}
+}
+
+// TestResultColumnsCoverSearchFields asserts the result table carries exactly
+// the fields the kinds declare, plus the two standard fields the document
+// builder supplies. A field added to the CUE but not here would be indexed and
+// filterable on the unified backend yet missing from every hit, and a name here
+// that no kind declares has no column definition to encode against.
+func TestResultColumnsCoverSearchFields(t *testing.T) {
+	want := map[string]struct{}{fieldTitle: {}, fieldFolder: {}}
+	provider := resource.NewManifestBackedProvider([]app.Manifest{rulesmanifest.LocalManifest()})
+	for _, gr := range []schema.GroupResource{
+		alertrule.ResourceInfo.GroupResource(),
+		recordingrule.ResourceInfo.GroupResource(),
+	} {
+		for _, sfd := range provider.Fields(schema.GroupVersionResource{Group: gr.Group, Resource: gr.Resource}) {
+			want[sfd.Name] = struct{}{}
+		}
+	}
+
+	names := make([]string, 0, len(want))
+	for name := range want {
+		names = append(names, name)
+	}
+	assert.ElementsMatch(t, names, resultColumns)
+}
+
+// TestSearchFieldsAgreeAcrossKinds guards the fields both rule kinds declare.
+// validateCrossVersionConsistency enforces this across versions of one kind,
+// but nothing enforces it across the two kinds, and buildSearchColumns resolves
+// a conflict by taking the first declaration. A divergence would therefore give
+// one kind's rows the other kind's column type: the legacy encoder would reject
+// the value at request time, and a unified hit would decode against a type it
+// was not encoded with.
+func TestSearchFieldsAgreeAcrossKinds(t *testing.T) {
+	provider := resource.NewManifestBackedProvider([]app.Manifest{rulesmanifest.LocalManifest()})
+	fieldsFor := func(gr schema.GroupResource) map[string]resource.SearchFieldDefinition {
+		out := map[string]resource.SearchFieldDefinition{}
+		for _, sfd := range provider.Fields(schema.GroupVersionResource{Group: gr.Group, Resource: gr.Resource}) {
+			out[sfd.Name] = sfd
+		}
+		return out
+	}
+
+	alert := fieldsFor(alertrule.ResourceInfo.GroupResource())
+	recording := fieldsFor(recordingrule.ResourceInfo.GroupResource())
+
+	shared := 0
+	for name, a := range alert {
+		r, ok := recording[name]
+		if !ok {
+			continue
+		}
+		shared++
+		assert.Equal(t, a.Type, r.Type, "field %q has a different type on each kind", name)
+		assert.Equal(t, a.Array, r.Array, "field %q is an array on only one kind", name)
+		assert.ElementsMatch(t, a.Capabilities, r.Capabilities, "field %q has different capabilities on each kind", name)
+	}
+	// Guard the guard: if the kinds stop sharing fields entirely this test would
+	// pass vacuously.
+	require.NotZero(t, shared, "expected the rule kinds to share search fields")
+}
+
+// TestResultTableBuiltCleanly asserts the result table assembled without
+// dropping columns. Construction degrades rather than panicking, so a
+// declaration gap would otherwise only show up as a missing field at runtime.
+func TestResultTableBuiltCleanly(t *testing.T) {
+	require.NoError(t, results.err)
+	require.Empty(t, results.skipped)
+	require.Len(t, results.defs, len(resultColumns))
+	require.Len(t, results.encoders, len(resultColumns))
+}
+
+// TestResultColumnsAreTyped pins that the legacy table declares the same column
+// types the unified index does. Declaring everything as a string would still
+// round-trip through this package's own reader, but a hit from the unified
+// backend would then decode against different types.
+func TestResultColumnsAreTyped(t *testing.T) {
+	byName := map[string]*resourcepb.ResourceTableColumnDefinition{}
+	for _, col := range resultColumnDefinitions() {
+		byName[col.Name] = col
+	}
+
+	require.Equal(t, resourcepb.ResourceTableColumnDefinition_BOOLEAN, byName[fieldPaused].Type)
+	require.Equal(t, resourcepb.ResourceTableColumnDefinition_INT64, byName[fieldPanelID].Type)
+	require.True(t, byName[fieldLabels].IsArray, "labels is indexed as flattened terms")
+	require.True(t, byName[fieldDatasourceUIDs].IsArray)
+	require.False(t, byName[fieldAnnotations].IsArray, "annotations is a whole JSON object")
 }
 
 func TestBuildSearchRequest_rejectsUnsortableField(t *testing.T) {
@@ -245,6 +343,11 @@ func TestBuildSearchRequest_rejectsNestedAnd(t *testing.T) {
 // TestCellsParseRoundTrip verifies a rule encoded into table cells decodes back
 // into the expected hit fields.
 func TestCellsParseRoundTrip(t *testing.T) {
+	dashboardUID := "dash1"
+	// Eight digits is exactly the width of the int64 fast path in
+	// resourceTableColumn.Decode, so a panel ID written as a decimal string
+	// would decode to an unrelated number instead of failing.
+	panelID := int64(12345678)
 	rule := &ngmodels.AlertRule{
 		UID:             "uid1",
 		Title:           "cpu high",
@@ -256,18 +359,14 @@ func TestCellsParseRoundTrip(t *testing.T) {
 		Labels:          map[string]string{"team": "a"},
 		Annotations:     map[string]string{"summary": "cpu is high"},
 		Data:            []ngmodels.AlertQuery{{DatasourceUID: "ds1"}, {DatasourceUID: expr.DatasourceUID}},
+		DashboardUID:    &dashboardUID,
+		PanelID:         &panelID,
 		NotificationSettings: &ngmodels.NotificationSettings{
 			ContactPointRouting: &ngmodels.ContactPointRouting{Receiver: "slack"},
 		},
 	}
 
-	resp := &resourcepb.ResourceSearchResponse{
-		TotalHits: 1,
-		Results: &resourcepb.ResourceTable{
-			Columns: resultColumnDefinitions(),
-			Rows:    []*resourcepb.ResourceTableRow{{Key: ruleKey("default", rule), Cells: ruleCells(rule)}},
-		},
-	}
+	resp := legacyResponse(t, rule)
 	hits := NewHandler(nil, nil).parseHits(resp)
 	require.Len(t, hits, 1)
 	h := hits[0]
@@ -296,6 +395,10 @@ func TestCellsParseRoundTrip(t *testing.T) {
 	assert.Equal(t, "slack", *fields.Receiver)
 	require.NotNil(t, fields.NotificationType)
 	assert.Equal(t, "SimplifiedRouting", *fields.NotificationType)
+	require.NotNil(t, fields.DashboardUID)
+	assert.Equal(t, "dash1", *fields.DashboardUID)
+	require.NotNil(t, fields.PanelID)
+	assert.Equal(t, int64(12345678), *fields.PanelID)
 }
 
 // TestParseHits_recordingRuleKind verifies a recording-rule row is discriminated
@@ -309,13 +412,7 @@ func TestParseHits_recordingRuleKind(t *testing.T) {
 		Record:          &ngmodels.Record{Metric: "cpu_total", TargetDatasourceUID: "ds-target"},
 		Data:            []ngmodels.AlertQuery{{DatasourceUID: "ds1"}},
 	}
-	resp := &resourcepb.ResourceSearchResponse{
-		TotalHits: 1,
-		Results: &resourcepb.ResourceTable{
-			Columns: resultColumnDefinitions(),
-			Rows:    []*resourcepb.ResourceTableRow{{Key: ruleKey("default", rule), Cells: ruleCells(rule)}},
-		},
-	}
+	resp := legacyResponse(t, rule)
 	hits := NewHandler(nil, nil).parseHits(resp)
 	require.Len(t, hits, 1)
 	h := hits[0]

@@ -2,13 +2,13 @@ package search
 
 import (
 	"context"
-	"encoding/json"
-	"strconv"
+	"fmt"
 	"time"
 
 	prom_model "github.com/prometheus/common/model"
 	"google.golang.org/grpc"
 
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/searchencoding"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
@@ -30,7 +30,18 @@ type legacyClient struct {
 }
 
 func NewLegacyClient(service provisioning.AlertRuleService) *legacyClient {
-	return &legacyClient{service: service, logger: log.New("alerting.rules.search.legacy")}
+	logger := log.New("alerting.rules.search.legacy")
+
+	// Surface a degraded result table at startup. Both conditions are schema
+	// bugs the tests should have caught, so report them where an operator can
+	// see them rather than letting hits quietly lose fields.
+	if len(results.skipped) > 0 {
+		logger.Warn("rule search result columns dropped: no declared search field", "columns", results.skipped)
+	}
+	if results.err != nil {
+		logger.Error("rule search result table could not be built; legacy search will fail", "error", results.err)
+	}
+	return &legacyClient{service: service, logger: logger}
 }
 
 func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
@@ -71,9 +82,13 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 
 	table := &resourcepb.ResourceTable{Columns: resultColumnDefinitions()}
 	for _, r := range page {
+		cells, err := ruleCells(r)
+		if err != nil {
+			return nil, err
+		}
 		table.Rows = append(table.Rows, &resourcepb.ResourceTableRow{
 			Key:   ruleKey(req.Options.GetKey().GetNamespace(), r),
-			Cells: ruleCells(r),
+			Cells: cells,
 		})
 	}
 	return &resourcepb.ResourceSearchResponse{Results: table, TotalHits: int64(total)}, nil
@@ -88,45 +103,73 @@ func ruleKey(namespace string, r *ngmodels.AlertRule) *resourcepb.ResourceKey {
 	return &resourcepb.ResourceKey{Namespace: namespace, Group: gr.Group, Resource: gr.Resource, Name: r.UID}
 }
 
-// ruleCells encodes the result columns for a rule, in resultColumns order.
-func ruleCells(r *ngmodels.AlertRule) [][]byte {
-	labels, _ := json.Marshal(r.Labels)
-	annotations, _ := json.Marshal(r.Annotations)
-	datasources, _ := json.Marshal(sourceDatasourceUIDs(r))
-
-	var dashboardUID, panelID, metric, targetDatasourceUID string
-	if r.DashboardUID != nil {
-		dashboardUID = *r.DashboardUID
-	}
-	if r.PanelID != nil {
-		panelID = strconv.FormatInt(*r.PanelID, 10)
-	}
-	if r.Record != nil {
-		metric = r.Record.Metric
-		targetDatasourceUID = r.Record.TargetDatasourceUID
-	}
+// ruleColumnValues maps a rule onto the declared search columns, keyed by
+// column name. Values are in their native Go type — the column's encoder turns
+// them into cells — so this must not pre-format them as strings: a "42" written
+// into the int64 panelID column would be read back as a big-endian int64.
+func ruleColumnValues(r *ngmodels.AlertRule) map[string]any {
 	receiver, notificationType, routingTree := notificationFields(r.NotificationSettings)
 
-	// TODO: see if there is a safer way to make sure the ordering of cells matches the resultColumns definition, without relying on manual maintenance of this function when columns are added/removed/reshuffled.
-	return [][]byte{
-		[]byte(ruleType(r)),
-		[]byte(r.Title),
-		[]byte(r.NamespaceUID),
-		[]byte(promDuration(time.Duration(r.IntervalSeconds) * time.Second)),
-		[]byte(strconv.FormatBool(r.IsPaused)),
-		labels,
-		datasources,
-		annotations,
-		[]byte(promDurationOrEmpty(r.For)),
-		[]byte(promDurationOrEmpty(r.KeepFiringFor)),
-		[]byte(dashboardUID),
-		[]byte(panelID),
-		[]byte(receiver),
-		[]byte(notificationType),
-		[]byte(routingTree),
-		[]byte(metric),
-		[]byte(targetDatasourceUID),
+	vals := map[string]any{
+		fieldType:             ruleType(r),
+		fieldTitle:            r.Title,
+		fieldFolder:           r.NamespaceUID,
+		fieldInterval:         promDuration(time.Duration(r.IntervalSeconds) * time.Second),
+		fieldPaused:           r.IsPaused,
+		fieldFor:              promDurationOrEmpty(r.For),
+		fieldKeepFiringFor:    promDurationOrEmpty(r.KeepFiringFor),
+		fieldReceiver:         receiver,
+		fieldNotificationType: notificationType,
+		fieldRoutingTree:      routingTree,
 	}
+
+	// labels and annotations go through the shared encoding so the legacy rows
+	// carry exactly what the unified index holds: labels flattened to matchable
+	// terms, annotations kept whole as a JSON object.
+	if terms := searchencoding.LabelTerms(r.Labels); len(terms) > 0 {
+		vals[fieldLabels] = terms
+	}
+	if a := searchencoding.AnnotationsJSON(r.Annotations); a != "" {
+		vals[fieldAnnotations] = a
+	}
+	if uids := sourceDatasourceUIDs(r); len(uids) > 0 {
+		vals[fieldDatasourceUIDs] = uids
+	}
+	if r.DashboardUID != nil {
+		vals[fieldDashboardUID] = *r.DashboardUID
+	}
+	if r.PanelID != nil {
+		vals[fieldPanelID] = *r.PanelID
+	}
+	if r.Record != nil {
+		vals[fieldMetric] = r.Record.Metric
+		vals[fieldTargetDatasourceUID] = r.Record.TargetDatasourceUID
+	}
+	return vals
+}
+
+// ruleCells encodes a rule into the result table's cells. Positions come from
+// the column index rather than the literal order of this function, so adding a
+// column cannot silently misalign the rest of the row.
+func ruleCells(r *ngmodels.AlertRule) ([][]byte, error) {
+	if results.err != nil {
+		return nil, results.err
+	}
+	cells := make([][]byte, len(results.defs))
+	for name, v := range ruleColumnValues(r) {
+		i, ok := results.index[name]
+		if !ok {
+			// skip undefined columns instead of failing
+			// This should never happnen in practice
+			continue
+		}
+		cell, err := results.encoders[i](v)
+		if err != nil {
+			return nil, fmt.Errorf("encoding rule search column %q: %w", name, err)
+		}
+		cells[i] = cell
+	}
+	return cells, nil
 }
 
 func promDuration(d time.Duration) string {
@@ -172,17 +215,6 @@ func ruleTypeForRequest(req *resourcepb.ResourceSearchRequest) ngmodels.RuleType
 		return ngmodels.RuleTypeFilterRecording
 	}
 	return ngmodels.RuleTypeFilterAlerting
-}
-
-func resultColumnDefinitions() []*resourcepb.ResourceTableColumnDefinition {
-	cols := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(resultColumns))
-	for _, name := range resultColumns {
-		cols = append(cols, &resourcepb.ResourceTableColumnDefinition{
-			Name: name,
-			Type: resourcepb.ResourceTableColumnDefinition_STRING,
-		})
-	}
-	return cols
 }
 
 func applyOffset(rules []*ngmodels.AlertRule, offset, limit int64) []*ngmodels.AlertRule {
