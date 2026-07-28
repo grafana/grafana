@@ -39,13 +39,32 @@ func TestParseLabelMatcher(t *testing.T) {
 func TestMatchLabels(t *testing.T) {
 	rule := &ngmodels.AlertRule{Labels: map[string]string{"team": "a", "__grafana_origin": "plugin/x"}}
 
-	assert.True(t, matchLabels(rule, []labelMatcher{parseLabelMatcher("team=a")}))
-	assert.False(t, matchLabels(rule, []labelMatcher{parseLabelMatcher("team=b")}))
-	assert.True(t, matchLabels(rule, []labelMatcher{parseLabelMatcher("team!=b")}))
-	assert.True(t, matchLabels(rule, []labelMatcher{parseLabelMatcher("__grafana_origin")}))
-	assert.False(t, matchLabels(rule, []labelMatcher{parseLabelMatcher("!__grafana_origin")}))
-	// all matchers must hold (AND)
-	assert.False(t, matchLabels(rule, []labelMatcher{parseLabelMatcher("team=a"), parseLabelMatcher("missing")}))
+	// one matcher per group: the group is satisfied by its only matcher
+	group := func(vals ...string) [][]labelMatcher {
+		out := make([][]labelMatcher, 0, len(vals))
+		for _, v := range vals {
+			out = append(out, []labelMatcher{parseLabelMatcher(v)})
+		}
+		return out
+	}
+	assert.True(t, matchLabels(rule, group("team=a")))
+	assert.False(t, matchLabels(rule, group("team=b")))
+	assert.True(t, matchLabels(rule, group("team!=b")))
+	assert.True(t, matchLabels(rule, group("__grafana_origin")))
+	assert.False(t, matchLabels(rule, group("!__grafana_origin")))
+
+	// separate groups conjoin: every group must be satisfied
+	assert.False(t, matchLabels(rule, group("team=a", "missing")))
+	assert.True(t, matchLabels(rule, group("team=a", "__grafana_origin")))
+
+	// one group disjoins: any matcher in it is enough. This is what a
+	// Kubernetes "in (a, b)" selector compiles to.
+	oneGroup := [][]labelMatcher{{parseLabelMatcher("team=a"), parseLabelMatcher("team=b")}}
+	assert.True(t, matchLabels(rule, oneGroup))
+	assert.False(t, matchLabels(rule, [][]labelMatcher{{parseLabelMatcher("team=x"), parseLabelMatcher("team=y")}}))
+
+	// an empty group constrains nothing
+	assert.True(t, matchLabels(rule, [][]labelMatcher{{}}))
 }
 
 func TestMatchDatasources(t *testing.T) {
@@ -126,11 +145,64 @@ func TestBuildSearchRequestExtractRoundTrip(t *testing.T) {
 	assert.True(t, f.sortDesc)
 	// labelSelector "team=a" and the labels NotIn "!__grafana_origin" both flow
 	// into the indexed labels field.
-	assert.ElementsMatch(t, []labelMatcher{
-		{key: "team", value: "a", op: matchEquals},
+	assert.ElementsMatch(t, [][]labelMatcher{
+		{{key: "team", value: "a", op: matchEquals}},
 		// NotIn of an existence matcher negates to a not-exists matcher.
-		{key: "__grafana_origin", op: matchNotExists},
-	}, f.labels)
+		{{key: "__grafana_origin", op: matchNotExists}},
+	}, f.labelGroups)
+}
+
+// TestBuildSearchRequest_labelSelectorInIsASet covers a Kubernetes "in (a, b)"
+// selector. Its values are set membership, so they have to reach the backends as
+// one multi-value requirement. Emitted as separate requirements they conjoin,
+// and the selector can never match.
+func TestBuildSearchRequest_labelSelectorInIsASet(t *testing.T) {
+	gr := alertrule.ResourceInfo.GroupResource()
+	build := func(selector string) *resourcepb.ResourceSearchRequest {
+		sel := selector
+		req, _, err := buildSearchRequest(
+			model.CreateSearchRulesRequestBody{LabelSelector: &sel}, "default", gr, nil)
+		require.NoError(t, err)
+		return req
+	}
+
+	t.Run("multi-value In becomes one requirement", func(t *testing.T) {
+		req := build("team in (a,b)")
+		require.Len(t, req.Options.Fields, 1, "values must stay in one requirement to OR")
+		assert.Equal(t, "in", req.Options.Fields[0].Operator)
+		assert.ElementsMatch(t, []string{"team=a", "team=b"}, req.Options.Fields[0].Values)
+
+		// and the legacy side reads it back as one group, so it disjoins
+		f := extractFilters(req)
+		require.Len(t, f.labelGroups, 1)
+		assert.Len(t, f.labelGroups[0], 2)
+
+		ruleA := &ngmodels.AlertRule{Labels: map[string]string{"team": "a"}}
+		ruleB := &ngmodels.AlertRule{Labels: map[string]string{"team": "b"}}
+		ruleC := &ngmodels.AlertRule{Labels: map[string]string{"team": "c"}}
+		assert.True(t, matchLabels(ruleA, f.labelGroups), "team=a should match in (a,b)")
+		assert.True(t, matchLabels(ruleB, f.labelGroups), "team=b should match in (a,b)")
+		assert.False(t, matchLabels(ruleC, f.labelGroups))
+	})
+
+	t.Run("separate selector requirements still conjoin", func(t *testing.T) {
+		req := build("team in (a,b),env=prod")
+		require.Len(t, req.Options.Fields, 2)
+
+		f := extractFilters(req)
+		require.Len(t, f.labelGroups, 2)
+		both := &ngmodels.AlertRule{Labels: map[string]string{"team": "a", "env": "prod"}}
+		teamOnly := &ngmodels.AlertRule{Labels: map[string]string{"team": "a"}}
+		assert.True(t, matchLabels(both, f.labelGroups))
+		assert.False(t, matchLabels(teamOnly, f.labelGroups), "env=prod must also hold")
+	})
+
+	t.Run("single-value forms are unchanged", func(t *testing.T) {
+		for _, sel := range []string{"team=a", "team in (a)", "team!=a", "team", "!team"} {
+			req := build(sel)
+			assert.Len(t, req.Options.Fields, 1, "selector %q", sel)
+		}
+	})
 }
 
 func TestBuildSearchRequest_rejectsUnknownFilterField(t *testing.T) {

@@ -308,6 +308,10 @@ func validateFilterLeaf(leaf *model.CreateSearchRulesRequestSearchFilterLeaf) er
 		if _, err := strconv.ParseBool(leaf.Values[0]); err != nil {
 			return fmt.Errorf("invalid %q value %q: must be a boolean", fieldPaused, leaf.Values[0])
 		}
+	case fieldPanelID:
+		if _, err := strconv.ParseInt(leaf.Values[0], 10, 64); err != nil {
+			return fmt.Errorf("invalid %q value %q: must be an integer", fieldPanelID, leaf.Values[0])
+		}
 	}
 	return nil
 }
@@ -340,9 +344,13 @@ func applyLabelSelector(req *resourcepb.ResourceSearchRequest, selector *string)
 		if err != nil {
 			return err
 		}
-		for _, m := range matchers {
-			req.Options.Fields = append(req.Options.Fields, labelMatcherRequirement(m))
+		if len(matchers) == 0 {
+			continue
 		}
+		// One requirement per selector requirement, not per matcher. Kubernetes
+		// "in (a, b)" is set membership, so its values must OR; emitting them as
+		// separate requirements would AND them and the selector could never match.
+		req.Options.Fields = append(req.Options.Fields, labelMatchersRequirement(matchers))
 	}
 	return nil
 }
@@ -419,11 +427,14 @@ func trimSortPrefix(s string) string {
 // legacy backend. The handler encodes these into the request; the legacy and
 // unified backends each decode the request in their own way.
 type filters struct {
-	text                string
-	names               []string
-	folders             []string
-	datasourceUIDs      []string
-	labels              []labelMatcher
+	text           string
+	names          []string
+	folders        []string
+	datasourceUIDs []string
+	// labelGroups holds label matchers grouped by the requirement they came
+	// from. A rule must satisfy at least one matcher in every group: values
+	// within a requirement are a set (OR), separate requirements conjoin (AND).
+	labelGroups         [][]labelMatcher
 	paused              *bool
 	dashboardUID        string
 	panelID             string
@@ -447,7 +458,7 @@ func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
 			case fieldFolder:
 				f.folders = r.Values
 			case fieldLabels:
-				f.labels = append(f.labels, requirementToLabelMatchers(r)...)
+				f.labelGroups = append(f.labelGroups, requirementToLabelMatchers(r))
 			case fieldDatasourceUIDs:
 				f.datasourceUIDs = r.Values
 			case fieldPaused:
@@ -521,6 +532,17 @@ func parseLabelMatcher(s string) labelMatcher {
 // to and from a requirement on the indexed "labels" field, using flattened
 // "key"/"key=value" terms and in/notin operators so a matcher survives the
 // request and resolves the same way on both backends.
+func labelMatchersRequirement(ms []labelMatcher) *resourcepb.Requirement {
+	if len(ms) == 1 {
+		return labelMatcherRequirement(ms[0])
+	}
+	r := &resourcepb.Requirement{Key: fieldLabels, Operator: "in", Values: make([]string, 0, len(ms))}
+	for _, m := range ms {
+		r.Values = append(r.Values, m.key+"="+m.value)
+	}
+	return r
+}
+
 func labelMatcherRequirement(m labelMatcher) *resourcepb.Requirement {
 	r := &resourcepb.Requirement{Key: fieldLabels, Operator: "in"}
 	switch m.op {
@@ -566,30 +588,40 @@ func matchText(r *ngmodels.AlertRule, text string) bool {
 	return strings.Contains(strings.ToLower(r.Title), strings.ToLower(text))
 }
 
-// matchLabels returns true when every matcher holds against the rule labels.
-func matchLabels(r *ngmodels.AlertRule, matchers []labelMatcher) bool {
-	for _, m := range matchers {
-		v, ok := r.Labels[m.key]
-		switch m.op {
-		case matchExists:
-			if !ok {
-				return false
-			}
-		case matchNotExists:
-			if ok {
-				return false
-			}
-		case matchEquals:
-			if !ok || v != m.value {
-				return false
-			}
-		case matchNotEquals:
-			if ok && v == m.value {
-				return false
-			}
+// matchLabels returns true when every group is satisfied by at least one of its
+// matchers: a conjunction of groups, each group a disjunction of its matchers.
+func matchLabels(r *ngmodels.AlertRule, groups [][]labelMatcher) bool {
+	for _, group := range groups {
+		if !matchAnyLabel(r, group) {
+			return false
 		}
 	}
 	return true
+}
+
+func matchAnyLabel(r *ngmodels.AlertRule, group []labelMatcher) bool {
+	for _, m := range group {
+		if matchLabel(r, m) {
+			return true
+		}
+	}
+	// An empty group constrains nothing.
+	return len(group) == 0
+}
+
+func matchLabel(r *ngmodels.AlertRule, m labelMatcher) bool {
+	v, ok := r.Labels[m.key]
+	switch m.op {
+	case matchExists:
+		return ok
+	case matchNotExists:
+		return !ok
+	case matchEquals:
+		return ok && v == m.value
+	case matchNotEquals:
+		return !ok || v != m.value
+	}
+	return false
 }
 
 // serverSideDatasourceUIDs are the synthetic datasources used for expression

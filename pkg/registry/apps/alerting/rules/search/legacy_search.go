@@ -70,7 +70,7 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 
 	filtered := rules[:0]
 	for _, r := range rules {
-		if !matchText(r, f.text) || !matchLabels(r, f.labels) || !matchDatasources(r, f.datasourceUIDs) {
+		if !matchText(r, f.text) || !matchLabels(r, f.labelGroups) || !matchDatasources(r, f.datasourceUIDs) {
 			continue
 		}
 		filtered = append(filtered, r)
