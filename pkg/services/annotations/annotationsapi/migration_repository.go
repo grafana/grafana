@@ -19,6 +19,7 @@ type annotationProxy interface {
 	Delete(ctx context.Context, orgID int64, annotationID int64) error
 	Get(ctx context.Context, orgID int64, annotationID int64) (*annotations.ItemDTO, error)
 	List(ctx context.Context, orgID int64, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error)
+	FindTags(ctx context.Context, orgID int64, query *annotations.TagsQuery) (annotations.FindTagsResult, error)
 }
 
 var _ annotations.Repository = (*migrationRepository)(nil)
@@ -195,7 +196,27 @@ func (r *migrationRepository) Delete(ctx context.Context, params *annotations.De
 	}
 }
 
-// TODO: FindTags reads from legacy only. Follow up to proxy tag searches to the new store.
+// FindTags reads tag counts from the new store and merges in legacy's, since alert annotations
+// stay in legacy in every phase and, before the backfill completes, so do older user annotations.
 func (r *migrationRepository) FindTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	return r.legacy.FindTags(ctx, query)
+	newResult, err := r.proxy.FindTags(ctx, query.OrgID, query)
+	if err != nil {
+		// Tags are an aggregate with no per-record identity, so unlike a search there is no
+		// way to tell a partial result from a complete one. Fail loudly in proxy-all rather
+		// than silently returning only legacy's tags.
+		if r.cfg.AnnotationAppPlatform.ProxyAll() {
+			return annotations.FindTagsResult{}, err
+		}
+		r.logger.Warn("new store tag search failed, returning legacy results only", "err", err)
+		newResult = annotations.FindTagsResult{}
+	}
+
+	legacyResult, err := r.legacy.FindTags(ctx, query)
+	if err != nil {
+		return annotations.FindTagsResult{}, err
+	}
+
+	return annotations.FindTagsResult{
+		Tags: MergeTags(newResult.Tags, legacyResult.Tags, query.Limit),
+	}, nil
 }

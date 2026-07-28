@@ -24,6 +24,10 @@ type fakeLegacy struct {
 	updateItems  []*annotations.Item
 	deleteParams []*annotations.DeleteParams
 	deleteErr    error
+
+	findTagsResult annotations.FindTagsResult
+	findTagsErr    error
+	findTagsCalls  []*annotations.TagsQuery
 }
 
 func (f *fakeLegacy) Find(_ context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
@@ -40,8 +44,9 @@ func (f *fakeLegacy) Delete(_ context.Context, params *annotations.DeleteParams)
 	f.deleteParams = append(f.deleteParams, params)
 	return f.deleteErr
 }
-func (f *fakeLegacy) FindTags(context.Context, *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	return annotations.FindTagsResult{}, nil
+func (f *fakeLegacy) FindTags(_ context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	f.findTagsCalls = append(f.findTagsCalls, query)
+	return f.findTagsResult, f.findTagsErr
 }
 
 type fakeProxy struct {
@@ -62,6 +67,15 @@ type fakeProxy struct {
 
 	deleteErr   error
 	deleteCalls int
+
+	findTagsResult annotations.FindTagsResult
+	findTagsErr    error
+	findTagsCalls  []*annotations.TagsQuery
+}
+
+func (f *fakeProxy) FindTags(_ context.Context, _ int64, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	f.findTagsCalls = append(f.findTagsCalls, query)
+	return f.findTagsResult, f.findTagsErr
 }
 
 func (f *fakeProxy) List(_ context.Context, _ int64, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
@@ -498,5 +512,72 @@ func TestMigrationRepository_Delete(t *testing.T) {
 		require.NoError(t, repo.Delete(context.Background(), &annotations.DeleteParams{OrgID: 1, DashboardID: 9, PanelID: 2}))
 		assert.Zero(t, proxy.deleteCalls)
 		require.Len(t, legacy.deleteParams, 1)
+	})
+}
+
+func TestMigrationRepository_FindTags(t *testing.T) {
+	tags := func(pairs ...any) annotations.FindTagsResult {
+		result := annotations.FindTagsResult{}
+		for i := 0; i < len(pairs); i += 2 {
+			result.Tags = append(result.Tags, &annotations.TagsDTO{
+				Tag:   pairs[i].(string),
+				Count: int64(pairs[i+1].(int)),
+			})
+		}
+		return result
+	}
+
+	for _, phase := range []string{"proxy-writes", "proxy-all"} {
+		t.Run("merges new store and legacy tags in "+phase, func(t *testing.T) {
+			legacy := &fakeLegacy{findTagsResult: tags("alert", 3, "shared", 1)}
+			proxy := &fakeProxy{findTagsResult: tags("shared", 2, "new", 4)}
+			repo := newTestRepo(t, phase, legacy, proxy, usertest.NewUserServiceFake())
+
+			result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{OrgID: 1})
+			require.NoError(t, err)
+			assert.Equal(t, tags("alert", 3, "new", 4, "shared", 3).Tags, result.Tags,
+				"legacy still owns alert annotations in every phase, so its tags are always merged in")
+			require.Len(t, proxy.findTagsCalls, 1)
+			require.Len(t, legacy.findTagsCalls, 1)
+		})
+	}
+
+	t.Run("applies the query limit to the merged result", func(t *testing.T) {
+		legacy := &fakeLegacy{findTagsResult: tags("c", 1, "d", 1)}
+		proxy := &fakeProxy{findTagsResult: tags("a", 1, "b", 1)}
+		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
+
+		result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{OrgID: 1, Limit: 2})
+		require.NoError(t, err)
+		assert.Equal(t, tags("a", 1, "b", 1).Tags, result.Tags)
+	})
+
+	t.Run("degrades to legacy tags when the new store fails in proxy-writes", func(t *testing.T) {
+		legacy := &fakeLegacy{findTagsResult: tags("legacy", 1)}
+		proxy := &fakeProxy{findTagsErr: assert.AnError}
+		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
+
+		result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{OrgID: 1})
+		require.NoError(t, err)
+		assert.Equal(t, tags("legacy", 1).Tags, result.Tags)
+	})
+
+	t.Run("fails when the new store fails in proxy-all", func(t *testing.T) {
+		legacy := &fakeLegacy{findTagsResult: tags("legacy", 1)}
+		proxy := &fakeProxy{findTagsErr: assert.AnError}
+		repo := newTestRepo(t, "proxy-all", legacy, proxy, usertest.NewUserServiceFake())
+
+		_, err := repo.FindTags(context.Background(), &annotations.TagsQuery{OrgID: 1})
+		require.ErrorIs(t, err, assert.AnError)
+		assert.Empty(t, legacy.findTagsCalls, "the new store is authoritative, so we do not mask the failure")
+	})
+
+	t.Run("fails when legacy fails", func(t *testing.T) {
+		legacy := &fakeLegacy{findTagsErr: assert.AnError}
+		proxy := &fakeProxy{findTagsResult: tags("new", 1)}
+		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
+
+		_, err := repo.FindTags(context.Background(), &annotations.TagsQuery{OrgID: 1})
+		require.ErrorIs(t, err, assert.AnError)
 	})
 }

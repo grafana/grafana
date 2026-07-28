@@ -384,4 +384,100 @@ func TestMigrationProxy(t *testing.T) {
 			assert.Empty(t, client.deletedNames, "the old record must not be deleted if the new one was not created")
 		})
 	})
+
+	t.Run("FindTags", func(t *testing.T) {
+		t.Run("converts the tag counts from the new store", func(t *testing.T) {
+			client := &fakeTagClient{tags: []annotationV0.GetTagsV0alpha1BodyTags{
+				{Tag: "outage", Count: 3},
+				{Tag: "region:eu", Count: 1},
+			}}
+			proxy := &MigrationProxy{client: client, logger: log.New("test")}
+
+			result, err := proxy.FindTags(context.Background(), 1, &annotations.TagsQuery{OrgID: 1, Tag: "o", Limit: 10})
+			require.NoError(t, err)
+			assert.Equal(t, []*annotations.TagsDTO{
+				{Tag: "outage", Count: 3},
+				{Tag: "region:eu", Count: 1},
+			}, result.Tags)
+
+			require.Len(t, client.tagQueries, 1)
+			assert.Equal(t, "o", client.tagQueries[0].Tag, "the query is passed through unchanged")
+		})
+
+		t.Run("propagates the client error", func(t *testing.T) {
+			proxy := &MigrationProxy{client: &fakeTagClient{err: assert.AnError}, logger: log.New("test")}
+
+			_, err := proxy.FindTags(context.Background(), 1, &annotations.TagsQuery{OrgID: 1})
+			require.ErrorIs(t, err, assert.AnError)
+		})
+	})
+}
+
+// fakeTagClient serves tag counts from the new store and records the queries it was asked for.
+type fakeTagClient struct {
+	annotationClient
+
+	tags       []annotationV0.GetTagsV0alpha1BodyTags
+	err        error
+	tagQueries []*annotations.TagsQuery
+}
+
+func (f *fakeTagClient) ListTags(_ context.Context, _ int64, query *annotations.TagsQuery) ([]annotationV0.GetTagsV0alpha1BodyTags, error) {
+	f.tagQueries = append(f.tagQueries, query)
+	return f.tags, f.err
+}
+
+func TestMergeTags(t *testing.T) {
+	tag := func(name string, count int64) *annotations.TagsDTO {
+		return &annotations.TagsDTO{Tag: name, Count: count}
+	}
+
+	tests := []struct {
+		name       string
+		newTags    []*annotations.TagsDTO
+		legacyTags []*annotations.TagsDTO
+		limit      int64
+		want       []*annotations.TagsDTO
+	}{
+		{
+			name:       "sums the counts of tags present in both stores",
+			newTags:    []*annotations.TagsDTO{tag("shared", 2)},
+			legacyTags: []*annotations.TagsDTO{tag("shared", 3)},
+			want:       []*annotations.TagsDTO{tag("shared", 5)},
+		},
+		{
+			name:       "sorts ascending by tag regardless of the input ordering",
+			newTags:    []*annotations.TagsDTO{tag("zebra", 9), tag("alpha", 1)},
+			legacyTags: []*annotations.TagsDTO{tag("middle", 5)},
+			want:       []*annotations.TagsDTO{tag("alpha", 1), tag("middle", 5), tag("zebra", 9)},
+		},
+		{
+			name:       "truncates to the limit after sorting",
+			newTags:    []*annotations.TagsDTO{tag("c", 1), tag("a", 1)},
+			legacyTags: []*annotations.TagsDTO{tag("b", 1), tag("d", 1)},
+			limit:      3,
+			want:       []*annotations.TagsDTO{tag("a", 1), tag("b", 1), tag("c", 1)},
+		},
+		{
+			name:       "keeps every tag when the limit is zero",
+			newTags:    []*annotations.TagsDTO{tag("a", 1)},
+			legacyTags: []*annotations.TagsDTO{tag("b", 1)},
+			want:       []*annotations.TagsDTO{tag("a", 1), tag("b", 1)},
+		},
+		{
+			name: "returns an empty result when neither store has tags",
+			want: []*annotations.TagsDTO{},
+		},
+		{
+			name:    "keeps key:value tags distinct from their bare key",
+			newTags: []*annotations.TagsDTO{tag("region:eu", 1), tag("region", 2)},
+			want:    []*annotations.TagsDTO{tag("region", 2), tag("region:eu", 1)},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, MergeTags(tt.newTags, tt.legacyTags, tt.limit))
+		})
+	}
 }
