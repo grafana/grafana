@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useEffect, useRef, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { LoadingState, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
+import { isFetchError, logError } from '@grafana/runtime';
 import {
   sceneGraph,
   type SceneComponentProps,
@@ -12,11 +12,13 @@ import {
   type SceneObject,
   SceneObjectBase,
   type SceneObjectRef,
+  type SceneDataProvider,
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
+import { capturePanelScreenshot } from 'app/features/query/diagnostics/capturePanelScreenshot';
 import {
   type DashboardDiagnosticsPanel,
   downloadDashboardDiagnostics,
@@ -33,6 +35,10 @@ import { type SceneShareTabState, type ShareView } from './types';
 // generation timeout) before giving up client-side.
 const POLL_INTERVAL_MS = 1000;
 const MAX_POLL_ATTEMPTS = 300;
+
+// How long to wait for one panel's data before capturing it anyway. Bounded
+// so a single panel whose query never settles cannot hold up the whole bundle.
+const PANEL_DATA_TIMEOUT_MS = 15_000;
 
 export interface DownloadDashboardDiagnosticsState extends SceneShareTabState {
   dashboardRef?: SceneObjectRef<DashboardScene>;
@@ -51,7 +57,7 @@ export class DownloadDashboardDiagnostics
   public getSubtitle() {
     return t(
       'dashboard.diagnostics.subtitle-dashboard',
-      'Bundle HTTP traffic (HAR) and panel JSON for every panel in this dashboard to help troubleshoot.'
+      'Bundle HTTP traffic (HAR), panel JSON, and a screenshot for every panel in this dashboard to help troubleshoot.'
     );
   }
 }
@@ -72,6 +78,11 @@ function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunn
   return undefined;
 }
 
+// Reported through logError rather than surfaced in the UI or written to the console: on a whole-dashboard
+// run an individual panel can legitimately fail to capture, so an alert per miss would be noise, and the
+// manifest records each reason anyway.
+const SCREENSHOT_FAILURE_MESSAGE = 'Download diagnostics: failed to capture panel screenshot for';
+
 // panel.state.key is "panel-<id>"; parse the numeric id without importing utils (import cycle, as above).
 // Mirrors getPanelIdForVizPanel in dashboard-scene/utils/utils.ts, including its non-null assertion:
 // every VizPanel in the scene graph is keyed this way, so an undefined key indicates a real bug
@@ -91,7 +102,7 @@ async function collectDashboardPanels(dashboard: DashboardScene): Promise<Dashbo
   // Promise.all preserves scene-graph order, and null entries (non-VizPanels, panels with no active
   // queries such as text panels) are dropped afterwards.
   const collected = await Promise.all(
-    vizPanels.map(async (obj): Promise<DashboardDiagnosticsPanel | null> => {
+    vizPanels.map(async (obj): Promise<{ panel: VizPanel; entry: DashboardDiagnosticsPanel } | null> => {
       const panel = obj instanceof VizPanel ? obj : undefined;
       if (!panel) {
         return null;
@@ -119,16 +130,107 @@ async function collectDashboardPanels(dashboard: DashboardScene): Promise<Dashbo
       // save-model elements), so the id has to match that source panel for the backend to resolve its
       // panel JSON. Each clone still gets its own array entry, so its captured queries aren't lost.
       return {
-        id: panelIdFrom(panel),
-        title: panel.state.title ?? '',
-        from: String(timeRange.from.valueOf()),
-        to: String(timeRange.to.valueOf()),
-        queries,
+        panel,
+        entry: {
+          id: panelIdFrom(panel),
+          title: panel.state.title ?? '',
+          from: String(timeRange.from.valueOf()),
+          to: String(timeRange.to.valueOf()),
+          queries,
+        },
       };
     })
   );
 
-  return collected.filter((panel): panel is DashboardDiagnosticsPanel => panel !== null);
+  const resolved = collected.filter((c): c is { panel: VizPanel; entry: DashboardDiagnosticsPanel } => c !== null);
+  await attachPanelScreenshots(resolved);
+  return resolved.map((c) => c.entry);
+}
+
+/**
+ * Captures every panel and attaches the PNG to its request entry.
+ *
+ * The problem this solves: on a dashboard taller than the viewport, most panels have never run their
+ * queries. Scenes wraps each panel in `LazyLoader` with `mode="query"`, which mounts the panel's DOM
+ * immediately but forwards viewport intersection to its query runner; `SceneQueryRunner.runWithTimeRange`
+ * then skips the query outright while the panel is out of view. Capturing as-is would yield an empty
+ * "No data" image for every panel below the fold -- worse than no image, because it is indistinguishable
+ * from the empty-panel bug the bundle usually exists to diagnose.
+ *
+ * So each panel's query runner is told to ignore the viewport (`bypassIsInViewChanged`, the same lever
+ * the dashboard datasource uses to read an off-screen source panel), its data is awaited, and only then
+ * is it captured. An off-screen panel paints normally once it has data -- it is in the layout, merely
+ * scrolled past -- so nothing has to be scrolled into view and the user's scroll position is untouched.
+ *
+ * Bypass is enabled for every panel up front so their queries run concurrently, then captures are taken
+ * one at a time: capture is main-thread work (the renderer walks every stylesheet in the document), so
+ * running them in parallel would not make it faster.
+ */
+async function attachPanelScreenshots(items: Array<{ panel: VizPanel; entry: DashboardDiagnosticsPanel }>) {
+  const providers = items.map(({ panel }) => getDataProviderFor(panel));
+  providers.forEach((provider) => provider?.bypassIsInViewChanged?.(true));
+
+  try {
+    for (const [index, { panel, entry }] of items.entries()) {
+      const onError = (error: Error) =>
+        logError(error, { context: SCREENSHOT_FAILURE_MESSAGE, panelKey: panel.state.key ?? '' });
+      try {
+        await waitForPanelData(providers[index]);
+      } catch (error) {
+        // A panel whose data never settles is still worth capturing -- whatever it shows (a spinner, an
+        // error, "No data") is what the user would see, and the reason is reported either way.
+        onError(error instanceof Error ? error : new Error(String(error)));
+      }
+      // requireInViewport is off here precisely because the wait above removed the reason for it.
+      entry.screenshot = await capturePanelScreenshot(panel.getPathId(), onError, { requireInViewport: false });
+    }
+  } finally {
+    // Always hand the viewport back to the query runners, even if a capture threw: leaving bypass on
+    // would keep off-screen panels refreshing for the rest of the session.
+    providers.forEach((provider) => provider?.bypassIsInViewChanged?.(false));
+  }
+}
+
+/** The panel's data provider (a query runner, or the transformer wrapping one). Repeat clones share the
+ * provider with their parent, hence the parent fallback -- same lookup the drawers already use. */
+function getDataProviderFor(panel: VizPanel): SceneDataProvider | undefined {
+  return panel.state.$data ?? panel.parent?.state.$data;
+}
+
+function hasSettled(provider: SceneDataProvider): boolean {
+  const state = provider.state.data?.state;
+  return state === LoadingState.Done || state === LoadingState.Error;
+}
+
+/**
+ * Waits for the provider to reach a terminal state, bounded so one stuck panel can't hold the bundle.
+ *
+ * Returns immediately when there is nothing to wait for: no provider, an **inactive** one, or data that
+ * has already settled. The inactive check is the important one -- an inactive provider never runs its
+ * queries, so waiting on it would burn the full timeout per panel for a result that is never coming.
+ *
+ * Event-driven rather than polled, so a result that arrives early is not waited out.
+ */
+function waitForPanelData(provider: SceneDataProvider | undefined): Promise<void> {
+  if (!provider || !provider.isActive || hasSettled(provider)) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve, reject) => {
+    const finish = (settle: () => void) => {
+      clearTimeout(timer);
+      subscription.unsubscribe();
+      settle();
+    };
+    const timer = setTimeout(
+      () => finish(() => reject(new Error(`panel data did not settle within ${PANEL_DATA_TIMEOUT_MS}ms`))),
+      PANEL_DATA_TIMEOUT_MS
+    );
+    const subscription = provider.subscribeToState(() => {
+      if (hasSettled(provider)) {
+        finish(resolve);
+      }
+    });
+  });
 }
 
 // The download uses blob/json fetches whose FetchError carries the detail in status/statusText, so
@@ -223,8 +325,8 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
         title={t('dashboard.diagnostics.sensitive-warning-title', 'May contain sensitive data')}
       >
         <Trans i18nKey="dashboard.diagnostics.sensitive-warning-body">
-          The bundle can include request headers, query parameters, and server log lines. Review it before sharing
-          outside your organization.
+          The bundle can include request headers, query parameters, server log lines, and images of the panels as
+          currently displayed. Review it before sharing outside your organization.
         </Trans>
       </Alert>
 

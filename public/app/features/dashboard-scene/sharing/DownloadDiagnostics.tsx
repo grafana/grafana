@@ -17,6 +17,7 @@ import {
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
+import { capturePanelScreenshot } from 'app/features/query/diagnostics/capturePanelScreenshot';
 import { downloadDiagnosticsForQueries } from 'app/features/query/diagnostics/downloadDiagnostics';
 import { interpolateDiagnosticsQueries } from 'app/features/query/diagnostics/interpolateQueries';
 
@@ -41,12 +42,14 @@ export class DownloadDiagnostics extends SceneObjectBase<DownloadDiagnosticsStat
   public getSubtitle() {
     return t(
       'dashboard.diagnostics.subtitle-panel',
-      'Bundle HTTP traffic (HAR), logs, and panel JSON to help troubleshoot this panel.'
+      'Bundle HTTP traffic (HAR), logs, panel JSON, and a screenshot of this panel to help troubleshoot it.'
     );
   }
 }
 
 const SAVE_MODEL_FAILURE_MESSAGE = 'Download diagnostics: failed to build panel/dashboard JSON, bundling without it';
+const SCREENSHOT_FAILURE_MESSAGE =
+  'Download diagnostics: failed to capture panel screenshot, bundling without panel.png';
 
 // Inlined rather than imported from dashboard-scene/utils/utils: that module transitively reaches
 // DashboardScene, which imports ShareDrawer (which imports this view), creating an import cycle.
@@ -160,6 +163,17 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
     const controller = new AbortController();
     abortRef.current = controller;
 
+    // Capture the panel before anything else awaits. The drawer overlays the dashboard without
+    // reflowing it, so the panel is still mounted at the size the user was looking at; capturing first
+    // keeps panel.png a picture of that, taken before the diagnostic re-run produces different data.
+    // Best-effort: a failure is logged and the bundle ships without panel.png.
+    const screenshot = await capturePanelScreenshot(panel.getPathId(), (error) => {
+      logError(error, { context: SCREENSHOT_FAILURE_MESSAGE, panelKey: panel.state.key ?? '' });
+    });
+    if (controller.signal.aborted) {
+      return;
+    }
+
     // Interpolate template and scoped variables so the captured request matches the request the
     // panel actually ran; scopedVars carries the panel so scene variables (including a repeated
     // panel's clone-local value) resolve correctly.
@@ -203,7 +217,8 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
       String(timeRange.to.valueOf()),
       controller.signal,
       panelModel,
-      dashboardModel
+      dashboardModel,
+      screenshot
     );
   }, [panelRef, dashboardRef]);
 
@@ -227,8 +242,8 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
         title={t('dashboard.diagnostics.sensitive-warning-title', 'May contain sensitive data')}
       >
         <Trans i18nKey="dashboard.diagnostics.sensitive-warning-body">
-          The bundle can include request headers, query parameters, and server log lines. Review it before sharing
-          outside your organization.
+          The bundle can include request headers, query parameters, server log lines, and images of the panels as
+          currently displayed. Review it before sharing outside your organization.
         </Trans>
       </Alert>
 

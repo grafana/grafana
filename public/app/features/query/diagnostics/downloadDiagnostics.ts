@@ -39,7 +39,11 @@ export async function downloadDiagnosticsForQueries(
   // Optional panel and dashboard save models. When supplied they are bundled as panel.json /
   // dashboard.json (the backend includes them verbatim); omitted keys simply aren't sent.
   panel?: unknown,
-  dashboard?: unknown
+  dashboard?: unknown,
+  // Optional base64 PNG of the panel as the browser rendered it, bundled as panel.png. Unlike the
+  // save models this is not a definition the reader has to re-run, so it is the one artifact that
+  // shows what the user actually saw. Omitted when capture failed.
+  screenshot?: string
 ): Promise<void> {
   const visibleQueries = queries.filter((query) => !query.hide);
 
@@ -52,7 +56,7 @@ export async function downloadDiagnosticsForQueries(
       url: DIAGNOSTICS_ENDPOINT,
       method: 'POST',
       responseType: 'blob',
-      data: { from, to, queries: visibleQueries, panel, dashboard },
+      data: { from, to, queries: visibleQueries, panel, dashboard, screenshot },
       // Surface failures in the drawer instead of a global toast.
       showErrorAlert: false,
       // Cancelling the drawer aborts the in-flight request.
@@ -73,6 +77,9 @@ export interface DashboardDiagnosticsPanel {
   from: string;
   to: string;
   queries: DataQuery[];
+  /** Base64 PNG of the panel as the browser drew it, bundled as <panel-dir>/panel.png. Undefined when
+   * it could not be captured — typically a panel the user never scrolled into view. */
+  screenshot?: string;
 }
 
 /** State of an async dashboard-diagnostics generation job, as reported by the status endpoint. */
