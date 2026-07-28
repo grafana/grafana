@@ -17,8 +17,8 @@ export class DashboardOptions extends PageObject {
       .locator('textarea');
   }
 
-  async switchLayout(layoutType: 'auto' | 'custom', options = { confirm: false }) {
-    const stepTitle = options.confirm
+  async switchLayout(layoutType: 'auto' | 'custom', { confirm = false }: { confirm?: boolean } = {}) {
+    const stepTitle = confirm
       ? `Switch layout to ${layoutType} grid (with confirmation)`
       : `Switch layout to ${layoutType} grid`;
 
@@ -32,7 +32,7 @@ export class DashboardOptions extends PageObject {
       const optionName = layoutType === 'auto' ? 'Auto' : 'Custom';
       await layoutGroup.getByLabel(`layout-selection-option-${optionName}`).click();
 
-      if (options.confirm) {
+      if (confirm) {
         // despite its name, ConfirmModal.delete is the testid of every ConfirmModal confirm button (see ConfirmContent.tsx)
         await this.dashboardPage.getByGrafanaSelector(this.selectors.pages.ConfirmModal.delete).click();
       }
