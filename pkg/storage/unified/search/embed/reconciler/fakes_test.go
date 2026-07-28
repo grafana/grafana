@@ -380,6 +380,9 @@ func (f *fakeVector) TryAcquireReconcilerLock(context.Context) (func(), bool, er
 		f.lockReleases++
 	}, true, nil
 }
+func (f *fakeVector) WithEntityLock(ctx context.Context, _, _, _ string, fn func(context.Context) error) error {
+	return fn(ctx)
+}
 
 // fakeBackfiller records that Run was invoked and blocks until ctx is
 // cancelled, mirroring the real backfiller's lifetime semantics.

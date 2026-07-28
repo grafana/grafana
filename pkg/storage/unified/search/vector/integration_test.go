@@ -946,3 +946,52 @@ func TestIntegrationEnsureCollection(t *testing.T) {
 		_, _ = engine.DB().ExecContext(context.Background(), `DROP TABLE IF EXISTS embeddings_prov_race_external`)
 	})
 }
+
+func TestIntegrationWithEntityLock(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	var order []string
+	var mu sync.Mutex
+	record := func(s string) { mu.Lock(); order = append(order, s); mu.Unlock() }
+
+	firstInside := make(chan struct{})
+	release := make(chan struct{})
+	done := make(chan struct{})
+
+	go func() {
+		_ = backend.WithEntityLock(ctx, "ns-lock", testResource, "u-lock", func(context.Context) error {
+			record("first-in")
+			close(firstInside)
+			<-release
+			record("first-out")
+			return nil
+		})
+		close(done)
+	}()
+
+	<-firstInside
+	second := make(chan struct{})
+	go func() {
+		_ = backend.WithEntityLock(ctx, "ns-lock", testResource, "u-lock", func(context.Context) error {
+			record("second-in")
+			return nil
+		})
+		close(second)
+	}()
+
+	// Second must not enter while first holds the lock.
+	select {
+	case <-second:
+		t.Fatal("second acquired lock while first held it")
+	case <-time.After(300 * time.Millisecond):
+	}
+
+	close(release)
+	<-done
+	<-second
+	require.Equal(t, []string{"first-in", "first-out", "second-in"}, order)
+
+	// Different entity does not contend.
+	err := backend.WithEntityLock(ctx, "ns-lock", testResource, "other-uid", func(context.Context) error { return nil })
+	require.NoError(t, err)
+}

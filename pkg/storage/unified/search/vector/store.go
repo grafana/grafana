@@ -127,6 +127,13 @@ type VectorBackend interface {
 	// On pod crash the underlying connection drops and Postgres releases
 	// the lock automatically.
 	TryAcquireBackfillLock(ctx context.Context) (release func(), acquired bool, err error)
+
+	// WithEntityLock runs fn while holding a blocking session advisory lock
+	// scoped to (namespace, resource, uid). It serializes the
+	// read-diff-embed-write window of subresource syncs for one entity so
+	// concurrent writers can't interleave stale diffs. The lock rides a
+	// dedicated connection; a crash releases it automatically.
+	WithEntityLock(ctx context.Context, namespace, resource, uid string, fn func(context.Context) error) error
 }
 
 // BackfillJob is one row from vector_backfill_jobs.

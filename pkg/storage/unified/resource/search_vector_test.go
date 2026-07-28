@@ -148,6 +148,9 @@ func (f *fakeVectorBackend) CompleteBackfillJob(context.Context, int64) error { 
 func (f *fakeVectorBackend) TryAcquireBackfillLock(context.Context) (func(), bool, error) {
 	return func() {}, true, nil
 }
+func (f *fakeVectorBackend) WithEntityLock(ctx context.Context, _, _, _ string, fn func(context.Context) error) error {
+	return fn(ctx)
+}
 
 // newTestSearchServer builds a searchServer with just the fields the
 // VectorSearch handler needs, skipping all of newSearchServer's larger

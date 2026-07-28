@@ -344,6 +344,9 @@ func (f *fakeVector) TryAcquireBackfillLock(context.Context) (func(), bool, erro
 		f.lockReleases++
 	}, true, nil
 }
+func (f *fakeVector) WithEntityLock(ctx context.Context, _, _, _ string, fn func(context.Context) error) error {
+	return fn(ctx)
+}
 
 // fakeText is a deterministic embedder: returns one fixed-dim vector per text.
 type fakeText struct {

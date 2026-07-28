@@ -794,3 +794,24 @@ func (b *pgvectorBackend) TryAcquireReconcilerLock(ctx context.Context) (func(),
 	}
 	return release, true, nil
 }
+
+func (b *pgvectorBackend) WithEntityLock(ctx context.Context, namespace, resource, uid string, fn func(context.Context) error) error {
+	conn, err := b.db.SqlDB().Conn(ctx)
+	if err != nil {
+		return fmt.Errorf("entity lock conn: %w", err)
+	}
+	defer func() { _ = conn.Close() }()
+
+	lockName := "vectorentity|" + namespace + "|" + resource + "|" + uid
+	if _, err := conn.ExecContext(ctx,
+		"SELECT pg_advisory_lock(hashtext($1)::bigint)", lockName); err != nil {
+		return fmt.Errorf("entity lock: %w", err)
+	}
+	defer func() {
+		// Background so a cancelled parent doesn't prevent unlock.
+		_, _ = conn.ExecContext(context.Background(),
+			"SELECT pg_advisory_unlock(hashtext($1)::bigint)", lockName)
+	}()
+
+	return fn(ctx)
+}
