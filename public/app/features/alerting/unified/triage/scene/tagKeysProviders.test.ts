@@ -1,8 +1,19 @@
-import { type DataSourceApi, type MetricFindValue } from '@grafana/data';
+import { type DataSourceApi, type MetricFindValue, getDefaultTimeRange } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { AdHocFiltersVariable, EmbeddedScene, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
+import {
+  type AdHocFilterWithLabels,
+  AdHocFiltersVariable,
+  EmbeddedScene,
+  SceneTimeRange,
+  SceneVariableSet,
+} from '@grafana/scenes';
 
-import { getAdHocTagKeysProvider, getAdHocTagValuesProvider, getGroupByTagKeysProvider } from './tagKeysProviders';
+import {
+  fetchTagValues,
+  getAdHocTagKeysProvider,
+  getAdHocTagValuesProvider,
+  getGroupByTagKeysProvider,
+} from './tagKeysProviders';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -120,6 +131,30 @@ describe('tagKeysProviders', () => {
       expect(result.values).not.toEqual(
         expect.arrayContaining([{ text: 'namespace_extracted', value: 'namespace_extracted', group: 'All' }])
       );
+    });
+  });
+
+  describe('fetchTagValues', () => {
+    it('forwards the filters param to the datasource getTagValues call', async () => {
+      const getTagValues = jest.fn().mockResolvedValue([{ text: 'platform-monitoring' }] satisfies MetricFindValue[]);
+      mockGetDataSourceSrv({ getTagValues });
+
+      const timeRange = getDefaultTimeRange();
+      const filters: AdHocFilterWithLabels[] = [{ key: 'cluster', operator: '=', value: 'prod' }];
+
+      const result = await fetchTagValues(timeRange, 'team', filters);
+
+      expect(result).toEqual([{ text: 'platform-monitoring' }]);
+      expect(getTagValues).toHaveBeenCalledWith(expect.objectContaining({ key: 'team', filters, timeRange }));
+    });
+
+    it('defaults to no filters when the param is omitted', async () => {
+      const getTagValues = jest.fn().mockResolvedValue([] satisfies MetricFindValue[]);
+      mockGetDataSourceSrv({ getTagValues });
+
+      await fetchTagValues(getDefaultTimeRange(), 'team');
+
+      expect(getTagValues).toHaveBeenCalledWith(expect.objectContaining({ key: 'team', filters: [] }));
     });
   });
 

@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { escapeRegExp } from 'lodash';
+import { escapeRegExp, uniq } from 'lodash';
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
@@ -22,11 +22,38 @@ function alertSeverityLevel(alert: AlertmanagerAlert) {
   return canonicalSeverity(alert.labels.severity ?? '');
 }
 
-function buildTeamMatchers(teamNames: string[]) {
-  if (teamNames.length === 0) {
+function buildTeamMatchers(teamValues: string[]) {
+  if (teamValues.length === 0) {
     return [];
   }
-  return [{ name: 'team', value: teamNames.map(escapeRegExp).join('|'), isRegex: true, isEqual: true }];
+  return [{ name: 'team', value: teamValues.map(escapeRegExp).join('|'), isRegex: true, isEqual: true }];
+}
+
+// Any run of separator characters between or around the name's letter/digit runs.
+// Alertmanager compiles matchers with Go's RE2, which supports \p{...} classes;
+// don't reuse this pattern in a JS RegExp without the `u` flag.
+const SEPARATORS = '[^\\p{L}\\p{N}]*';
+
+/**
+ * Regex pattern matching any labeling convention of a team name: only the
+ * letter/digit runs must appear, with arbitrary separators (or none) between
+ * and around them. "Team (US)" matches "Team (US)", "team-us" or "TeamUS" —
+ * but not "team-us-2", since Alertmanager anchors regex matchers.
+ * Null for names without any letters or digits.
+ */
+function toTolerantPattern(teamName: string): string | null {
+  // Runs of letters/digits contain no regex metacharacters, so no escaping is needed.
+  const runs = teamName.match(/[\p{L}\p{N}]+/gu);
+  return runs && SEPARATORS + runs.join(SEPARATORS) + SEPARATORS;
+}
+
+function buildTolerantTeamMatchers(teamNames: string[]) {
+  const patterns = uniq(teamNames.map(toTolerantPattern).filter((p): p is string => p !== null));
+  if (patterns.length === 0) {
+    return [];
+  }
+  // (?i) (a Go RE2 inline flag): the label's casing is as unpredictable as its separators.
+  return [{ name: 'team', value: `(?i)${patterns.join('|')}`, isRegex: true, isEqual: true }];
 }
 
 /**
@@ -39,9 +66,12 @@ function resolveTeamMatchers(selectedTeam: string | undefined, userTeamNames: st
     return [];
   }
   if (selectedTeam) {
+    // Dropdown selections are real `team` label values, so they're matched exactly.
     return buildTeamMatchers([selectedTeam]);
   }
-  return buildTeamMatchers(userTeamNames);
+  // The `team` alert label is free-form — typically some slugged or re-cased variant
+  // of the Grafana team name — so the own-teams default matches tolerantly.
+  return buildTolerantTeamMatchers(userTeamNames);
 }
 
 // Exported so the homepage skeleton reserves the card slot using the same gate.

@@ -58,14 +58,18 @@ async function fetchTagKeys(timeRange: TimeRange): Promise<MetricFindValue[]> {
  * Fetch tag values for a given key from the configured Prometheus datasource,
  * scoped to the GRAFANA_ALERTS metric.
  */
-async function fetchTagValues(timeRange: TimeRange, key: string): Promise<MetricFindValue[]> {
+export async function fetchTagValues(
+  timeRange: TimeRange,
+  key: string,
+  filters: AdHocFilterWithLabels[] = []
+): Promise<MetricFindValue[]> {
   const ds = await getDataSourceSrv().get({ uid: DATASOURCE_UID });
 
   if (!ds.getTagValues) {
     return [];
   }
 
-  const result = await ds.getTagValues({ key, filters: [], timeRange, queries: [metricQuery] });
+  const result = await ds.getTagValues({ key, filters, timeRange, queries: [metricQuery] });
 
   return Array.isArray(result) ? result : (result.data ?? []);
 }

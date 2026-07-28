@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { PluginIncludeType, type PluginMeta } from '@grafana/data';
-import { setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
+import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -11,6 +11,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT, type IncidentPreview } from 'app/features/alerting/unified/api/incidentsApi';
 import { pluginMeta } from 'app/features/alerting/unified/testSetup/plugins';
+import { fetchTagValues } from 'app/features/alerting/unified/triage/scene/tagKeysProviders';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -22,6 +23,13 @@ jest.mock('../analytics/main', () => ({
   tabChanged: jest.fn(),
   clearHistoryClicked: jest.fn(),
   homepageViewed: jest.fn(),
+}));
+
+// The team dropdown loads its options from the `team` label values on alerts,
+// via the triage fetchTagValues helper; mock it rather than the datasource layer.
+jest.mock('app/features/alerting/unified/triage/scene/tagKeysProviders', () => ({
+  ...jest.requireActual('app/features/alerting/unified/triage/scene/tagKeysProviders'),
+  fetchTagValues: jest.fn(),
 }));
 
 setBackendSrv(backendSrv);
@@ -54,37 +62,9 @@ function mockTeams(teams: Array<{ name: string }>) {
   );
 }
 
-/**
- * Grafana org teams returned by the team dropdown's /api/teams/search fetches.
- * Honors the `query` (case-insensitive name contains) and `perpage` params like
- * the real endpoint; returns the query params of each request received.
- */
-function mockOrgTeams(teams: Array<{ name: string }>) {
-  const requests: Array<{ query: string | null; perpage: string | null }> = [];
-  server.use(
-    http.get('/api/teams/search', ({ request }) => {
-      const params = new URL(request.url).searchParams;
-      const query = params.get('query');
-      const perpage = Number(params.get('perpage') ?? 1000);
-      requests.push({ query, perpage: params.get('perpage') });
-
-      const matching = teams.filter((t) => !query || t.name.toLowerCase().includes(query.toLowerCase()));
-      return HttpResponse.json({
-        teams: matching.slice(0, perpage).map((t, i) => ({
-          ...t,
-          id: i + 1,
-          uid: `org-team-${i}`,
-          orgId: 1,
-          memberCount: 1,
-          isProvisioned: false,
-        })),
-        totalCount: matching.length,
-        page: 1,
-        perPage: perpage,
-      });
-    })
-  );
-  return requests;
+/** `team` label values the dropdown fetches from the state-history Prometheus datasource. */
+function mockTeamLabelValues(values: string[]) {
+  jest.mocked(fetchTagValues).mockResolvedValue(values.map((value) => ({ text: value, value })));
 }
 
 /** Mocks the alertmanager alerts endpoint; returns the `filter` query params of each request received. */
@@ -121,6 +101,16 @@ function mockIncidents(incidents: IncidentPreview[], { hasMore = false } = {}) {
   );
 }
 
+/**
+ * Wire form of useFiringAlerts' tolerant own-teams pattern for one team name:
+ * its letter/digit runs joined by separator gaps. quoteWithEscape doubles the
+ * pattern's backslashes when the matcher is serialized into the filter param.
+ */
+function wireTolerantPattern(...runs: string[]) {
+  const sep = '[^\\\\p{L}\\\\p{N}]*';
+  return sep + runs.join(sep) + sep;
+}
+
 const activeIncident: IncidentPreview = {
   incidentID: '101',
   title: 'Database outage',
@@ -128,14 +118,21 @@ const activeIncident: IncidentPreview = {
   createdTime: '2024-01-02T10:00:00Z',
 };
 
+const originalStateHistory = config.unifiedAlerting.stateHistory;
+
 beforeEach(async () => {
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   // Grant alerting permission by default
   jest
     .spyOn(contextSrv, 'hasPermission')
     .mockImplementation((action: string) => action === AccessControlAction.AlertingInstanceRead);
+  // The team dropdown only renders when the state-history Prometheus datasource is configured.
+  config.unifiedAlerting.stateHistory = {
+    ...originalStateHistory,
+    prometheusTargetDatasourceUID: 'state-history-ds',
+  };
   mockTeams([]);
-  mockOrgTeams([]);
+  mockTeamLabelValues([]);
   mockAlerts([]);
   // The component probes the IRM/Incident plugin settings; absent by default.
   // Tests that need the incidents tab layer mockIncidentPlugin() on top.
@@ -152,6 +149,7 @@ afterEach(async () => {
   await act(async () => {
     setTestFlags({});
   });
+  config.unifiedAlerting.stateHistory = originalStateHistory;
   jest.restoreAllMocks();
   // getPluginSettings memoizes per plugin ID at module scope; clear it so each
   // test's plugin-settings handler actually gets hit.
@@ -301,7 +299,7 @@ describe('AlertIncidentTabs', () => {
 
   describe('team filter dropdown', () => {
     it('shows the dropdown on the Alerts tab and hides it on the Incidents tab', async () => {
-      mockOrgTeams([{ name: 'Team A' }]);
+      mockTeamLabelValues(['Team A']);
       mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
       mockIncidentPlugin();
       mockIncidents([activeIncident]);
@@ -319,15 +317,19 @@ describe('AlertIncidentTabs', () => {
 
     it('refetches alerts filtered to only the selected team', async () => {
       mockTeams([{ name: 'Team A' }, { name: 'Team B' }]);
-      mockOrgTeams([{ name: 'Team A' }, { name: 'Team B' }, { name: 'Team C' }]);
+      mockTeamLabelValues(['Team A', 'Team B', 'Team C']);
       const requests = mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
 
       const { user } = render(<AlertIncidentTabs />);
 
-      // Initial request is filtered to the user's own teams.
+      // Initial request is filtered to the user's own teams, matched tolerantly
+      // ((?i) + separator gaps) since the free-form `team` label usually carries
+      // some slugged or re-cased variant of the team name.
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
       expect(requests).toHaveLength(1);
-      expect(requests[0]).toEqual(['team=~"Team A|Team B"']);
+      expect(requests[0]).toEqual([
+        `team=~"(?i)${wireTolerantPattern('Team', 'A')}|${wireTolerantPattern('Team', 'B')}"`,
+      ]);
 
       await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
       // This user belongs to teams, so the default option describes that scope and
@@ -345,7 +347,7 @@ describe('AlertIncidentTabs', () => {
 
     it("restores the user's own-teams scope when selecting the 'Your teams' option", async () => {
       mockTeams([{ name: 'Team A' }]);
-      mockOrgTeams([{ name: 'Team A' }, { name: 'Team C' }]);
+      mockTeamLabelValues(['Team A', 'Team C']);
       // The user's own teams have a firing alert; the explicitly selected team has none.
       server.use(
         http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
@@ -376,7 +378,7 @@ describe('AlertIncidentTabs', () => {
 
     it("shows unfiltered org-wide alerts when a team member selects 'All teams'", async () => {
       mockTeams([{ name: 'Team A' }]);
-      mockOrgTeams([{ name: 'Team A' }, { name: 'Team C' }]);
+      mockTeamLabelValues(['Team A', 'Team C']);
       // Own-teams requests see one alert; the unfiltered request also surfaces an
       // alert from another team and one with no team label at all.
       const requests: string[][] = [];
@@ -419,7 +421,7 @@ describe('AlertIncidentTabs', () => {
 
     it("shows the generic empty message when 'All teams' is selected and there are no alerts", async () => {
       mockTeams([{ name: 'Team A' }]);
-      mockOrgTeams([{ name: 'Team A' }, { name: 'Team C' }]);
+      mockTeamLabelValues(['Team A', 'Team C']);
       // The user's own teams have a firing alert; the org as a whole has none
       // (contrived, but isolates the empty copy for the all-teams scope).
       server.use(
@@ -444,13 +446,15 @@ describe('AlertIncidentTabs', () => {
 
     it("restores the own-teams filter when selecting 'Your teams' after 'All teams'", async () => {
       mockTeams([{ name: 'Team A' }]);
-      mockOrgTeams([{ name: 'Team A' }, { name: 'Team C' }]);
+      mockTeamLabelValues(['Team A', 'Team C']);
       const requests = mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
 
       const { user } = render(<AlertIncidentTabs />);
 
+      const ownTeamsFilter = `team=~"(?i)${wireTolerantPattern('Team', 'A')}"`;
+
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
-      expect(requests[0]).toEqual(['team=~"Team A"']);
+      expect(requests[0]).toEqual([ownTeamsFilter]);
       const combobox = await screen.findByRole('combobox', { name: /filter alerts by team/i });
 
       await user.click(combobox);
@@ -465,13 +469,13 @@ describe('AlertIncidentTabs', () => {
       await waitFor(() => expect(combobox).toHaveDisplayValue('Your teams'));
       // RTK Query re-serves the cached own-teams entry rather than refetching, so
       // assert on the requests that were made, not on a new one.
-      expect(requests.every((r) => r.length === 0 || r[0] === 'team=~"Team A"')).toBe(true);
+      expect(requests.every((r) => r.length === 0 || r[0] === ownTeamsFilter)).toBe(true);
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
     });
 
     it('shows the loading skeleton while the switched team request is in flight, then the filtered alerts', async () => {
       mockTeams([{ name: 'Team A' }]);
-      mockOrgTeams([{ name: 'Team A' }, { name: 'Team C' }]);
+      mockTeamLabelValues(['Team A', 'Team C']);
 
       // First request (user's teams) resolves immediately; the second (Team C) is
       // held open behind a gate so the in-flight loading state can be observed.
@@ -509,7 +513,7 @@ describe('AlertIncidentTabs', () => {
 
     it('does not refetch when re-selecting the already selected team', async () => {
       mockTeams([{ name: 'Team A' }]);
-      mockOrgTeams([{ name: 'Team A' }, { name: 'Team C' }]);
+      mockTeamLabelValues(['Team A', 'Team C']);
       const requests = mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
 
       const { user } = render(<AlertIncidentTabs />);
@@ -531,7 +535,7 @@ describe('AlertIncidentTabs', () => {
 
     it('shows a team-scoped empty message when the selected team has no alerts', async () => {
       mockTeams([{ name: 'Team A' }]);
-      mockOrgTeams([{ name: 'Team A' }, { name: 'Team C' }]);
+      mockTeamLabelValues(['Team A', 'Team C']);
       // The user's own teams have a firing alert; the explicitly selected team has none.
       server.use(
         http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
@@ -554,12 +558,8 @@ describe('AlertIncidentTabs', () => {
       expect(screen.queryByText('No firing alerts for your teams.')).not.toBeInTheDocument();
     });
 
-    it('searches teams server-side so teams beyond the first page are reachable', async () => {
-      // 150 teams: the default (unfiltered) page only covers the first 100,
-      // so "Zebra Squad" is only reachable via a server-side query.
-      const manyTeams = Array.from({ length: 150 }, (_, i) => ({ name: `Team ${String(i).padStart(3, '0')}` }));
-      manyTeams.push({ name: 'Zebra Squad' });
-      const teamRequests = mockOrgTeams(manyTeams);
+    it('filters the fetched team values client-side as the user types', async () => {
+      mockTeamLabelValues(['Team Alpha', 'Team Beta', 'Zebra Squad']);
       mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
 
       const { user } = render(<AlertIncidentTabs />);
@@ -568,23 +568,50 @@ describe('AlertIncidentTabs', () => {
       const combobox = await screen.findByRole('combobox', { name: /filter alerts by team/i });
       await user.click(combobox);
 
-      // Default list: the default-scope option plus the first page of teams, fetched
-      // without a query and capped at one page. This user belongs to no teams, so the
-      // default scope is unfiltered and the option reads "All teams" — exactly once,
-      // with no duplicate from the explicit all-teams option team members get.
+      // Default list: the default-scope option plus every fetched value. This user
+      // belongs to no teams, so the default scope is unfiltered and the option reads
+      // "All teams" — exactly once, with no duplicate from the explicit all-teams
+      // option team members get.
       expect(await screen.findByRole('option', { name: 'All teams' })).toBeInTheDocument();
       expect(screen.getAllByRole('option', { name: 'All teams' })).toHaveLength(1);
-      expect(await screen.findByRole('option', { name: 'Team 000' })).toBeInTheDocument();
-      expect(teamRequests).toContainEqual({ query: null, perpage: '100' });
-      // Sliced out of the first page, so absent from the default list.
-      expect(screen.queryByRole('option', { name: 'Zebra Squad' })).not.toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'Team Alpha' })).toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'Zebra Squad' })).toBeInTheDocument();
 
-      // Typing issues a server-side search that surfaces the out-of-page team.
-      // Use keyboard() instead of type(): type() re-clicks the input, which
-      // toggles the menu closed and flushes the selected label into the input.
+      // Typing narrows the list client-side (case-insensitive contains) and drops
+      // the scope sentinels. Use keyboard() instead of type(): type() re-clicks the
+      // input, which toggles the menu closed and flushes the selected label into it.
       await user.keyboard('zebra');
-      expect(await screen.findByRole('option', { name: 'Zebra Squad' })).toBeInTheDocument();
-      expect(teamRequests).toContainEqual({ query: 'zebra', perpage: '100' });
+      // "Zebra Squad" is already on the unfiltered list, so wait for the others to
+      // drop out rather than for it to appear.
+      await waitFor(() => expect(screen.queryByRole('option', { name: 'Team Alpha' })).not.toBeInTheDocument());
+      expect(screen.getByRole('option', { name: 'Zebra Squad' })).toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'All teams' })).not.toBeInTheDocument();
+    });
+
+    it('hides the dropdown when the state-history Prometheus datasource is not configured', async () => {
+      config.unifiedAlerting.stateHistory = { ...originalStateHistory, prometheusTargetDatasourceUID: undefined };
+      mockTeamLabelValues(['Team A']);
+      mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+
+      render(<AlertIncidentTabs />);
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      expect(screen.queryByRole('combobox', { name: /filter alerts by team/i })).not.toBeInTheDocument();
+    });
+
+    it('sends a slug-style label value as-is and names it in the empty message', async () => {
+      mockTeamLabelValues(['platform-monitoring']);
+      // No alerts carry the selected team label, so the team-scoped empty copy shows.
+      const requests = mockAlerts([]);
+
+      const { user } = render(<AlertIncidentTabs />);
+
+      await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
+      await user.click(await screen.findByRole('option', { name: 'platform-monitoring' }));
+
+      // The selected value is a real label value, so the matcher carries it verbatim.
+      await waitFor(() => expect(requests).toContainEqual(['team=~"platform-monitoring"']));
+      expect(await screen.findByText('No firing alerts for platform-monitoring.')).toBeInTheDocument();
     });
   });
 });

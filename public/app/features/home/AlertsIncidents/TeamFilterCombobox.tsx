@@ -1,22 +1,17 @@
 import { useCallback, useMemo } from 'react';
+import { useAsync } from 'react-use';
 
+import { getDefaultTimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { Combobox, type ComboboxOption } from '@grafana/ui';
-import { useLazySearchTeamsQuery, useSearchTeamsQuery, type SearchTeamsApiArg } from 'app/api/clients/legacy';
+import { fetchTagValues } from 'app/features/alerting/unified/triage/scene/tagKeysProviders';
 
 import { ALL_TEAMS_VALUE } from './constants';
 
 const DEFAULT_OPTION_VALUE = '';
 
-const TEAMS_PAGE_SIZE = 100;
-
-// Shared args builder so the eager query and the lazy searches hit the same
-// RTK Query cache entries (`query: undefined` serializes identically to no query).
-const searchTeamsArgs = (query?: string): SearchTeamsApiArg => ({
-  query: query || undefined,
-  perpage: TEAMS_PAGE_SIZE,
-  sort: 'name-asc',
-});
+const collator = new Intl.Collator();
 
 // Clearing the selection restores useFiringAlerts' default scope: the user's own
 // teams when they belong to any, otherwise all org alerts. The label mirrors that
@@ -44,15 +39,29 @@ interface Props {
 }
 
 /**
- * Dropdown to filter the homepage firing alerts by team. Hidden while teams
- * load, on error, or when the org has no teams.
- *
- * Shows the first page of teams by default; typing searches server-side, so
- * teams beyond the first page are still reachable.
+ * Dropdown to filter the homepage firing alerts by team. The options are the
+ * `team` label values seen on alerts (from the state-history Prometheus
+ * datasource), not Grafana org teams — that's what the alertmanager matcher
+ * actually filters on. Hidden while values load, on error, when no alert
+ * carries a team label, or when the state-history datasource isn't configured.
  */
 export function TeamFilterCombobox({ selectedTeam, onChange, userHasTeams }: Props) {
-  const { data, isLoading, error } = useSearchTeamsQuery(searchTeamsArgs());
-  const [searchTeams] = useLazySearchTeamsQuery();
+  // Read at render time (not module scope) so tests can vary the config.
+  const datasourceConfigured = Boolean(config.unifiedAlerting.stateHistory?.prometheusTargetDatasourceUID);
+
+  // Fetched once per mount; the label-value set changes slowly enough that
+  // client-side filtering over it covers the search box.
+  const {
+    value: teamValues,
+    loading,
+    error,
+  } = useAsync(async () => {
+    if (!datasourceConfigured) {
+      return [];
+    }
+    const values = await fetchTagValues(getDefaultTimeRange(), 'team');
+    return values.map((v) => String(v.value ?? v.text)).sort((a, b) => collator.compare(a, b));
+  }, [datasourceConfigured]);
 
   // Async Combobox needs the full option (not just the value) to show a label.
   // Must be memoized: a new object every render makes downshift think the
@@ -67,20 +76,20 @@ export function TeamFilterCombobox({ selectedTeam, onChange, userHasTeams }: Pro
 
   const loadOptions = useCallback(
     async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
-      // preferCacheValue: reopening with the same input reuses the cached page.
-      const result = await searchTeams(searchTeamsArgs(inputValue), true).unwrap();
-      const teamOptions = (result.teams ?? []).map((team) => ({ label: team.name, value: team.name }));
+      const query = inputValue.toLowerCase();
+      const teamOptions = (teamValues ?? [])
+        .filter((team) => team.toLowerCase().includes(query))
+        .map((team) => ({ label: team, value: team }));
       // The scope sentinels only belong on the unfiltered default list. "All teams"
       // is added only for team members — otherwise the default option already says it.
       return inputValue
         ? teamOptions
         : [getDefaultOption(userHasTeams), ...(userHasTeams ? [getAllTeamsOption()] : []), ...teamOptions];
     },
-    [searchTeams, userHasTeams]
+    [teamValues, userHasTeams]
   );
 
-  const teams = data?.teams ?? [];
-  if (isLoading || error || teams.length === 0) {
+  if (!datasourceConfigured || loading || error || !teamValues || teamValues.length === 0) {
     return null;
   }
 
