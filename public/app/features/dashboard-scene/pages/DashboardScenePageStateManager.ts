@@ -1046,7 +1046,8 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       };
     }
 
-    const candidates = await fetchPredefinedVariables(folderUid);
+    // Fail open on initial load: a null fetch (error) is treated as no predefined variables.
+    const candidates = (await fetchPredefinedVariables(folderUid)) ?? [];
     const predefinedVariables = resolvePredefinedVariablesForDashboard(candidates, resolutionInput);
 
     // Always attach (including []) so scene-cache hits can sync — including clearing

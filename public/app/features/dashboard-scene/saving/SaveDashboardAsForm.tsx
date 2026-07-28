@@ -5,9 +5,14 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { AnnoKeyIgnorePredefinedVariables } from 'app/features/apiserver/types';
+import {
+  AnnoKeyIgnorePredefinedVariables,
+  AnnoKeyManagerIdentity,
+  AnnoKeyManagerKind,
+} from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
@@ -25,6 +30,39 @@ interface SaveDashboardAsFormDTO {
 export interface Props {
   dashboard: DashboardScene;
   changeInfo: DashboardChangeInfo;
+}
+
+/**
+ * Merges folder/provisioning overlay into dashboard meta for Save As without dropping
+ * existing k8s identity fields (name, resourceVersion, etc.). Canceling Save As after a
+ * folder change must leave the live scene able to save as an update.
+ */
+export function nextMetaAfterSaveAsFolderChange(
+  currentMeta: DashboardMeta,
+  folderUid: string | undefined,
+  provisionedMeta: Awaited<ReturnType<typeof getProvisionedMeta>>
+): DashboardMeta {
+  const currentAnnotations = currentMeta.k8s?.annotations ?? {};
+  const ignoreValue = currentAnnotations[AnnoKeyIgnorePredefinedVariables];
+
+  // Drop previous folder's manager annotations; keep everything else (including denylist).
+  const preservedAnnotations = Object.fromEntries(
+    Object.entries(currentAnnotations).filter(([key]) => key !== AnnoKeyManagerIdentity && key !== AnnoKeyManagerKind)
+  );
+
+  return {
+    ...currentMeta,
+    folderUid,
+    k8s: {
+      ...currentMeta.k8s,
+      ...provisionedMeta.k8s,
+      annotations: {
+        ...preservedAnnotations,
+        ...provisionedMeta.k8s?.annotations,
+        ...(ignoreValue !== undefined ? { [AnnoKeyIgnorePredefinedVariables]: ignoreValue } : {}),
+      },
+    },
+  };
 }
 
 export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
@@ -210,22 +248,8 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
             onChange={async (uid: string | undefined, title: string | undefined) => {
               setValue('folder', { uid, title });
               const provisionedMeta = await getProvisionedMeta(uid);
-              const ignoreValue = dashboard.state.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
-              // Replace folder/provisioned overlay, but keep the editor denylist so a folder
-              // change before first save does not drop ignorePredefinedVariables.
               dashboard.setState({
-                meta: {
-                  ...dashboard.state.meta,
-                  ...provisionedMeta,
-                  folderUid: uid,
-                  k8s: {
-                    ...provisionedMeta.k8s,
-                    annotations: {
-                      ...provisionedMeta.k8s?.annotations,
-                      ...(ignoreValue !== undefined ? { [AnnoKeyIgnorePredefinedVariables]: ignoreValue } : {}),
-                    },
-                  },
-                },
+                meta: nextMetaAfterSaveAsFolderChange(dashboard.state.meta, uid, provisionedMeta),
               });
               // Re-validate title when folder changes to check for duplicates in new folder
               trigger('title');

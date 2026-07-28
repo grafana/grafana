@@ -114,7 +114,11 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
 const mockFetchPredefinedVariables = jest.fn();
 jest.mock('../utils/predefinedVariables', () => ({
   ...jest.requireActual('../utils/predefinedVariables'),
-  fetchPredefinedVariables: (...args: unknown[]) => mockFetchPredefinedVariables(...args) ?? Promise.resolve([]),
+  fetchPredefinedVariables: (...args: unknown[]) => {
+    const result = mockFetchPredefinedVariables(...args);
+    // Preserve null (fetch failure); only default when the mock is unset.
+    return result === undefined ? Promise.resolve([]) : result;
+  },
 }));
 
 locationUtil.initialize({
@@ -2802,6 +2806,31 @@ describe('DashboardScene', () => {
       resolveFirstFetch([globalVar, folderVar]);
       await firstRefresh;
       expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toEqual(['folderVar']);
+    });
+
+    it('should keep existing predefined variables when the fetch fails', async () => {
+      const globalVar = {
+        kind: 'CustomVariable' as const,
+        spec: {
+          name: 'globalVar',
+          current: { text: 'a', value: 'a' },
+          query: 'a,b,c',
+          origin: toControlSourceRef({ type: 'global' }),
+        },
+      } as VariableKind;
+
+      mockFetchPredefinedVariables.mockResolvedValueOnce([globalVar]).mockResolvedValueOnce(null);
+
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({ variables: [] }),
+        meta: { folderUid: 'folder-1', k8s: { annotations: {} } },
+      });
+
+      await scene.refreshPredefinedVariables();
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toContain('globalVar');
+
+      await scene.refreshPredefinedVariables();
+      expect(sceneGraph.getVariables(scene).state.variables.map((v) => v.state.name)).toContain('globalVar');
     });
 
     it('should ignore in-flight refresh results after discard restores the denylist', async () => {

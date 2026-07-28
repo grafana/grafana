@@ -98,13 +98,13 @@ describe('fetchPredefinedVariables', () => {
     expect(result[1].spec.origin).toEqual({ type: 'folder', folderUid: 'folder-1' });
   });
 
-  it('fails open and returns an empty list when the fetch errors', async () => {
+  it('returns null when the fetch errors so callers can keep existing variables', async () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     mockGet.mockRejectedValue(new Error('boom'));
 
     const result = await fetchPredefinedVariables('folder-1');
 
-    expect(result).toEqual([]);
+    expect(result).toBeNull();
     expect(warnSpy).toHaveBeenCalled();
     warnSpy.mockRestore();
   });

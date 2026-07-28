@@ -122,7 +122,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             {globalDashboardVariablesEnabled && (
               <Sidebar.Button
                 icon="dollar-alt"
-                onClick={() => editPane.openPane(new DashboardPredefinedVariablesPane({}))}
+                onClick={() => sidebar.openPane(new DashboardPredefinedVariablesPane({}))}
                 title={t('dashboard.sidebar.predefined-variables.title', 'Predefined variables')}
                 tooltip={t(
                   'dashboard.sidebar.predefined-variables.tooltip',

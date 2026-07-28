@@ -392,6 +392,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (refreshId !== this._predefinedVariablesRefreshId) {
       return;
     }
+    // Keep the currently injected set when the fetch fails — do not treat failure as "none".
+    if (candidates === null) {
+      return;
+    }
     this.setPredefinedVariables(resolvePredefinedVariablesForDashboard(candidates, resolutionInput));
   }
 
