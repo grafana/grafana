@@ -13,6 +13,8 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Enable manually starting an Assistant investigation from the alert instance drawer. */
+  AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
   AlertingRuleQuality: "alerting.ruleQuality",
   /** Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana */
@@ -93,6 +95,8 @@ export const FlagKeys = {
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
   GrafanaStarredFolders: "grafana.starredFolders",
+  /** Enables using dashboard variables in panel threshold values */
+  GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
@@ -156,6 +160,17 @@ export const FlagKeys = {
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
+
+/**
+ * Enable manually starting an Assistant investigation from the alert instance drawer.
+ *
+ * **Details:**
+ * - flag key: `alerting.manualAssistantInvestigation`
+ * - default value: `false`
+ */
+export const useFlagAlertingManualAssistantInvestigation = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.manualAssistantInvestigation", false, options).value;
+};
 
 /**
  * Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
@@ -595,6 +610,17 @@ export const useFlagGrafanaSecretsReferenceValueUI = (options?: ReactFlagEvaluat
  */
 export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.starredFolders", false, options).value;
+};
+
+/**
+ * Enables using dashboard variables in panel threshold values
+ *
+ * **Details:**
+ * - flag key: `grafana.thresholdsInterpolation`
+ * - default value: `false`
+ */
+export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.thresholdsInterpolation", false, options).value;
 };
 
 /**

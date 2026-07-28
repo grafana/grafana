@@ -38,6 +38,19 @@ export class Controls extends PageObject {
     });
   }
 
+  async setTimeRange(from: string, to: string) {
+    await test.step(`Set time range from "${from}" to "${to}"`, async () => {
+      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.openButton).click();
+      const fromField = this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.fromField);
+      await fromField.click();
+      await fromField.fill(from);
+      const toField = this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.toField);
+      await toField.click();
+      await toField.fill(to);
+      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.applyTimeRange).click();
+    });
+  }
+
   async openControlsMenu() {
     await test.step('Open controls menu', async () => {
       await this.dashboardPage.getByGrafanaSelector(this.selectors.pages.Dashboard.ControlsButton).click();
@@ -75,6 +88,15 @@ export class Controls extends PageObject {
     getInput: (variableLabel: string): Locator => {
       // the input has no selector of its own: like the dropdown trigger, it lives in the label's next sibling
       return this.variables.getLabel(variableLabel).locator('+ *').locator('input');
+    },
+    setValue: async (variableLabel: string, text: string) => {
+      await test.step(`Set value of variable "${variableLabel}" to "${text}"`, async () => {
+        const input = this.variables.getInput(variableLabel);
+        await input.click();
+        await input.clear();
+        await input.fill(text);
+        await input.press('Enter');
+      });
     },
   };
 }
