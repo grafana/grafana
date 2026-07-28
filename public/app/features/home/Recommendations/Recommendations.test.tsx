@@ -11,10 +11,12 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { ctaClicked } from '../analytics/main';
 
 import { Recommendations } from './Recommendations';
+import { HOSTED_TRACES_APP_ID } from './appPluginIds';
 import {
   fetchClusterCpuSeries,
   fetchKubernetesHealth,
   fetchKubernetesInventory,
+  KUBERNETES_APP_ID,
   resolveKubernetesDatasource,
 } from './kubernetesData';
 import { useSolutionState } from './solutionState';
@@ -54,8 +56,9 @@ jest.mock('./solutionState', () => ({
   useSolutionState: jest.fn(),
 }));
 
+// Removed-app ids stay literal: the never-render guard must outlive their deleted constants.
 const LEGACY_APP_IDS = ['grafana-synthetic-monitoring-app', 'grafana-app-observability-app', 'grafana-kowalski-app'];
-const APP_IDS = ['grafana-exploretraces-app', 'grafana-k8s-app', ...LEGACY_APP_IDS];
+const APP_IDS = [HOSTED_TRACES_APP_ID, KUBERNETES_APP_ID, ...LEGACY_APP_IDS];
 
 const listItem = (id: string, overrides: Partial<LocalPlugin> = {}) => ({
   id,
