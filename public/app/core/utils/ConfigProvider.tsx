@@ -27,8 +27,6 @@ export const ThemeProvider = ({ children, value }: { children: React.ReactNode; 
 
   const [theme, setTheme] = useState(() => maybeRemapTheme(value, visualRefreshEnabled));
 
-  config.theme2 = theme;
-
   const themeWithFlags = useMemo(
     () => ({
       ...theme,
