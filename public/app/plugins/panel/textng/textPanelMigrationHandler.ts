@@ -1,6 +1,6 @@
 import { type PanelModel } from '@grafana/data';
 
-import { TextMode, type Options } from '../../schemas/textng/panelcfg.gen';
+import { TextMode, type Options } from './panelcfg.gen';
 
 type LegacyTextPanel = PanelModel<Options> & { content?: string; mode?: TextMode };
 

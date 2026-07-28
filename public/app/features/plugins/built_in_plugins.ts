@@ -79,6 +79,9 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   // panels
   'core:plugin/text': () =>
     getFeatureFlagClient().getBooleanValue('grafana.newTextPanel', false) ? textNGPanel() : textPanel(),
+  // Registered under its own id so it can own a schema; dashboards still persist type "text",
+  // which the swap above resolves. Hidden from the viz picker until the two are swapped at GA.
+  'core:plugin/textng': textNGPanel,
   'core:plugin/timeseries': timeseriesPanel,
   'core:plugin/trend': trendPanel,
   'core:plugin/state-timeline': stateTimelinePanel,

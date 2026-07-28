@@ -6,8 +6,7 @@ import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
-import { type CodeLanguage } from '../../schemas/textng/panelcfg.gen';
-
+import { type CodeLanguage } from './panelcfg.gen';
 import { getCodeMirrorLanguage } from './utils';
 
 export interface TextNGCodeViewProps {

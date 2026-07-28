@@ -9,8 +9,8 @@ import { RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { CodeMirrorEditor, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 import config from 'app/core/config';
 
-import { CodeLanguage, TextMode } from '../../../schemas/textng/panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
+import { CodeLanguage, TextMode } from '../panelcfg.gen';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
 type ViewMode = 'write' | 'split' | 'preview';

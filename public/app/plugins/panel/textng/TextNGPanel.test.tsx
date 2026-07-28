@@ -3,9 +3,8 @@ import { render, screen } from '@testing-library/react';
 import { CoreApp, dateTime, LoadingState, EventBusSrv } from '@grafana/data';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
-import { CodeLanguage, TextMode } from '../../schemas/textng/panelcfg.gen';
-
 import { type Props, TextNGPanel } from './TextNGPanel';
+import { CodeLanguage, TextMode } from './panelcfg.gen';
 
 // Stub the heavy lazy CodeMirror bundle used by the inline editor and the
 // read-only code view.

@@ -1,7 +1,7 @@
 import { renderTextPanelMarkdown, textUtil } from '@grafana/data';
 import { type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 
-import { CodeLanguage, TextMode } from '../../schemas/textng/panelcfg.gen';
+import { CodeLanguage, TextMode } from './panelcfg.gen';
 
 export function getInterpolateFormat(codeLanguage?: CodeLanguage): 'json' | 'html' {
   return codeLanguage === CodeLanguage.Json ? 'json' : 'html';

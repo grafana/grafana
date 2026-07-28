@@ -1,15 +1,8 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import {
-  CodeLanguage,
-  defaultCodeOptions,
-  defaultOptions,
-  type Options,
-  TextMode,
-} from '../../schemas/textng/panelcfg.gen';
-
 import { TextNGPanel } from './TextNGPanel';
+import { CodeLanguage, defaultCodeOptions, defaultOptions, type Options, TextMode } from './panelcfg.gen';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
 export const plugin = new PanelPlugin<Options>(TextNGPanel)

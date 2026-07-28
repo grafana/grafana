@@ -7,9 +7,8 @@ import { CoreApp, type GrafanaTheme2, type PanelProps, type InterpolateFunction 
 import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 
-import { defaultCodeOptions, defaultOptions, type Options, TextMode } from '../../schemas/textng/panelcfg.gen';
-
 import { TextNGCodeView } from './TextNGCodeView';
+import { defaultCodeOptions, defaultOptions, type Options, TextMode } from './panelcfg.gen';
 import { getInterpolateFormat, transformContent } from './utils';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));

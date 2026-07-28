@@ -1,9 +1,10 @@
 {
   "type": "panel",
   "name": "Text NG",
-  "id": "text",
+  "id": "textng",
   "suggestions": true,
   "skipDataQuery": true,
+  "hideFromList": true,
 
   "info": {
     "description": "Text panel v2 panel schema.",
