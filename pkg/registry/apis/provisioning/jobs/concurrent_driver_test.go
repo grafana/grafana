@@ -101,13 +101,24 @@ func TestConcurrentJobDriver_EventHandler_UpdateEnqueue(t *testing.T) {
 	handler.UpdateFunc(claimed, claimed)
 	assert.Equal(t, 0, driver.queue.Len(), "claimed jobs must not enqueue")
 
-	// A full unclaimed object (re-list or apiserver resync/watch) enqueues:
-	// this recovers rolled-back claims and previously dropped keys.
+	// A live watch update that removes the claim (a rollback after a
+	// post-claim failure) carries a bumped resource version and must not
+	// enqueue: the job's side effects may already have run, and the queue would
+	// redeliver the in-flight key immediately. The next resync recovers it.
+	rolledBack := claimed.DeepCopy()
+	rolledBack.ResourceVersion = "43"
+	rolledBack.Labels = nil
+	handler.UpdateFunc(claimed, rolledBack)
+	assert.Equal(t, 0, driver.queue.Len(), "live rollback updates must not enqueue")
+
+	// A resync/re-list redelivery hands the same stored object as old and new;
+	// an unclaimed one enqueues: this recovers rolled-back claims and
+	// previously dropped keys at the resync cadence.
 	unclaimed := &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "pending-job", ResourceVersion: "43"},
 	}
 	handler.UpdateFunc(unclaimed, unclaimed)
-	assert.Equal(t, 1, driver.queue.Len(), "full unclaimed updates must enqueue")
+	assert.Equal(t, 1, driver.queue.Len(), "full unclaimed resync updates must enqueue")
 
 	// Repeated resync deliveries of the same key coalesce while queued.
 	handler.UpdateFunc(unclaimed, unclaimed)

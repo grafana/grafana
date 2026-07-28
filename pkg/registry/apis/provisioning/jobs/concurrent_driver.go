@@ -118,7 +118,7 @@ func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerFuncs {
 			}
 			c.enqueueCreate(job)
 		},
-		UpdateFunc: func(_, newObj interface{}) {
+		UpdateFunc: func(oldObj, newObj interface{}) {
 			job, ok := newObj.(*provisioning.Job)
 			if !ok {
 				c.logger.Error("unexpected object type in job update event", "type", fmt.Sprintf("%T", newObj))
@@ -133,11 +133,22 @@ func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerFuncs {
 			if job.ResourceVersion == "" {
 				return
 			}
-			// Full objects (apiserver watch/resync and NATS re-lists) enqueue only
-			// while unclaimed: new jobs the create event missed, rolled-back
-			// claims, and keys dropped after retry exhaustion. Claimed jobs are
-			// running-job churn; also not logged (one per running job per resync).
+			// Claimed jobs are running-job churn; also not logged (one per running
+			// job per resync).
 			if job.Labels[LabelJobClaim] != "" {
+				return
+			}
+			// Only resync/re-list redeliveries enqueue. They are recognizable
+			// because both wirings hand the handler the same stored object as old
+			// and new (identical resource versions), while a live watch update
+			// always carries a bumped one. A live update that removes the claim —
+			// a rollback after a post-claim failure — must NOT enqueue: the job's
+			// side effects may already have run, and because the rollback lands
+			// while the key is still in flight, the queue would redeliver it the
+			// moment the worker calls Done, re-running the job immediately and
+			// without backoff. The next resync re-delivers it at the recovery
+			// cadence instead.
+			if oldJob, ok := oldObj.(*provisioning.Job); ok && oldJob.ResourceVersion != job.ResourceVersion {
 				return
 			}
 			c.enqueueRecovered(job)

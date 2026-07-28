@@ -146,12 +146,21 @@ func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Reg
 
 	operatorSec := cfg.SectionWithEnvOverrides("operator")
 
+	// The jobs informer resyncs on jobInterval and that resync is the driver's
+	// only recovery path for unclaimed jobs. A non-positive value would disable
+	// the apiserver informer's resync entirely (and fall back to an unrelated
+	// default under NATS), so clamp it to the default instead.
+	jobInterval := operatorSec.Key("job_interval").MustDuration(30 * time.Second)
+	if jobInterval <= 0 {
+		jobInterval = 30 * time.Second
+	}
+
 	return &jobQueueControllerConfig{
 		ControllerConfig:     *controllerCfg,
 		concurrentDrivers:    operatorSec.Key("concurrent_drivers").MustInt(3),
 		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
 		maxJobTimeout:        operatorSec.Key("max_job_timeout").MustDuration(20 * time.Minute),
-		jobInterval:          operatorSec.Key("job_interval").MustDuration(30 * time.Second),
+		jobInterval:          jobInterval,
 		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(jobClaimExpiry / 3),
 	}, nil
 }
