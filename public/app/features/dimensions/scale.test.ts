@@ -86,15 +86,17 @@ describe('scale dimensions', () => {
     expect([supplier.get(0), supplier.get(1)]).toEqual([2, 2]);
   });
 
-  it('value() resolves the dimension at the last non-null entry', () => {
+  it('value() scales the last non-null field value (not an index into the field)', () => {
     const frame: DataFrame = {
       name: 'a',
-      length: 2,
-      fields: [{ name: 'v', type: FieldType.number, values: [0, 1], config: { min: 0, max: 1 } }],
+      length: 3,
+      // values deliberately differ from their indices so an index/value mix-up is caught
+      fields: [{ name: 'v', type: FieldType.number, values: [10, 20, null], config: {} }],
     };
     const supplier = getScaledDimension(frame, { min: 0, max: 100, field: 'v', fixed: 0 });
-    // last non-null entry (1) is the field max -> top of the 0..100 output range
+    // field ranges 10..20; the last non-null value (20) is the field max -> top of 0..100 output
     expect(supplier.value()).toBe(100);
+    // and the field min (10) maps to the bottom of the output range
     expect(supplier.get(0)).toBe(0);
   });
 });
