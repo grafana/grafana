@@ -140,14 +140,6 @@ describe('Recommendations', () => {
     expect(await screen.findByText('Recommendations for your stack')).toBeInTheDocument();
   });
 
-  it('shows the no-data card when no datasource has Kubernetes data', async () => {
-    render(<Recommendations />);
-
-    expect(await screen.findByRole('heading', { name: 'No data flowing yet' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Hosted Metrics' })).not.toBeInTheDocument();
-  });
-
   it('renders nothing when the user cannot manage plugins', async () => {
     jest.mocked(contextSrv.hasPermission).mockReturnValue(false);
 

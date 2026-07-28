@@ -1,66 +1,56 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { Stack } from '@grafana/ui';
 
 import { ExistingSolutionCard } from './ExistingSolutionCard';
 import { NoDataCard } from './NoDataCard';
+import { useSolutionState } from './solutionState';
+import { type ExistingSolutionId } from './solutionsMatrix';
 import { type ExistingItem } from './types';
 import { useExistingSolutions } from './useExistingSolutions';
 
-const stubbedExisting: ExistingItem[] = [
-  {
-    id: 'hosted-metrics',
-    title: 'Hosted Metrics',
-    icon: 'chart-line',
-    stats: {
-      primary: '4.2M series',
-      secondary: '12 hosts',
-    },
-    alert: {
-      primary: '3 hosts above 90% disk',
-      details: ['web-03 critical at 96%, ~6 h to full'],
-      action: 'View',
-      href: '#',
-    },
-    action: 'Open infrastructure',
-    href: '#',
-  },
-  {
-    id: 'hosted-logs',
-    title: 'Hosted Logs',
-    icon: 'file-alt',
-    stats: {
-      primary: '47 GB ingested',
-      secondary: '8 sources',
-    },
-    alert: {
-      primary: 'Ingest spike detected',
-      details: ['checkout-service logs up 3x in the last hour'],
-      action: 'View',
-      href: '#',
-    },
-    action: 'Open Explore (Logs)',
-    href: '#',
-  },
-];
+interface RecommendationExistingProps {
+  /** Selection the card displays: undefined while providers settle, null when none exists, else the id. */
+  onSelectionChange?: (id: ExistingSolutionId | null | undefined) => void;
+}
 
-export function RecommendationExisting() {
-  const [selectedTitle, setSelectedTitle] = useState<string>();
+export function RecommendationExisting({ onSelectionChange }: RecommendationExistingProps) {
+  const [selectedId, setSelectedId] = useState<ExistingSolutionId>();
   const { loading, solutions } = useExistingSolutions();
+  // Shares the TTL-cached resolution with useExistingSolutions — no extra probes.
+  const { value: resolution } = useSolutionState();
+
+  // The effective selection (explicit pick ?? default) is computed before the early returns so
+  // the report effect runs unconditionally (Rules of Hooks). While loading it reports undefined
+  // (the parent holds the carousel skeleton); settled with no solution it reports null (the
+  // parent shows the global list).
+  const selected: ExistingItem | undefined = solutions.find((item) => item.id === selectedId) ?? solutions[0];
+  const effectiveId = loading ? undefined : (selected?.id ?? null);
+  // useLayoutEffect: the parent's carousel swap commits before paint, so the list never
+  // flashes the global order once the default selection settles.
+  useLayoutEffect(() => {
+    onSelectionChange?.(effectiveId);
+  }, [effectiveId, onSelectionChange]);
 
   if (loading) {
     return <RecommendationExistingSkeleton />;
   }
 
-  // Stubs are placeholders, not live solutions: they never satisfy the no-data check.
-  if (solutions.length === 0) {
-    return <NoDataCard />;
+  if (!selected) {
+    // NoDataCard's hard claim is only true when every core signal settled inactive; anything
+    // else (active-but-no-entry, unknown) gets the softened variant.
+    const s = resolution?.state;
+    const allInactive =
+      !!s &&
+      s.metrics === 'inactive' &&
+      s.logs === 'inactive' &&
+      s.traces === 'inactive' &&
+      s.kubernetes === 'inactive';
+    return <NoDataCard variant={allInactive ? 'empty' : 'partial'} />;
   }
 
-  const existing = [...solutions, ...stubbedExisting];
-  const selected = existing.find((item) => item.title === selectedTitle) ?? existing[0];
-  return <ExistingSolutionCard existing={existing} selected={selected} onSelect={setSelectedTitle} />;
+  return <ExistingSolutionCard existing={solutions} selected={selected} onSelect={setSelectedId} />;
 }
 
 // Mirrors the card body (dropdown pill, icon + title, stats, CTA) while the solution
