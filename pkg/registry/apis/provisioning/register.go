@@ -1121,10 +1121,21 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// considered abandoned.
 			leaseRenewalInterval := jobClaimExpiry / 3
 
+			// The jobs informer resyncs on job_poll_interval (default 30s) rather
+			// than the controllers' resync_interval, preserving the job pickup
+			// cadence (and config key) of the polling design this replaced. The
+			// driver gets the same value so its post-claim cooldown tracks the
+			// configured recovery cadence.
+			jobPollInterval := b.jobPollInterval
+			if jobPollInterval <= 0 {
+				jobPollInterval = setting.ProvisioningJobPollIntervalDefault
+			}
+
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,                    // 3 drivers for now
 				20*time.Minute,       // Max time for each job
+				jobPollInterval,      // Jobs informer resync = post-claim cooldown
 				leaseRenewalInterval, // Lease renewal interval
 				b.jobs, repoGetter, jobHistoryWriter,
 				b.registry,
@@ -1140,14 +1151,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// jobs and is the driver's only recovery path. The handler must be
 			// registered before the informer runs: the NATS-backed source has no
 			// cache to replay for late handlers.
-			//
-			// The jobs informer resyncs on job_poll_interval (default 30s) rather
-			// than the controllers' resync_interval, preserving the job pickup
-			// cadence (and config key) of the polling design this replaced.
-			jobPollInterval := b.jobPollInterval
-			if jobPollInterval <= 0 {
-				jobPollInterval = setting.ProvisioningJobPollIntervalDefault
-			}
 			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, jobPollInterval)
 			if _, err := jobSource.AddEventHandler(driver.EventHandler()); err != nil {
 				return fmt.Errorf("add job event handler: %w", err)

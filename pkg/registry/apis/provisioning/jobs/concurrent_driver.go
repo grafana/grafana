@@ -23,15 +23,10 @@ import (
 // resync/re-list re-delivers the key if the job is still unclaimed.
 const maxClaimAttempts = 3
 
-// postClaimCooldown is how long a key is barred from processing after its job
-// failed post-claim: the side effects may already have run, and the rolled-back
-// claim makes the job immediately claimable again. The bar is enforced at
-// dequeue time because enqueue-side filtering cannot cover every path back into
-// the queue — a resync that snapshots the job before the worker's claim lands
-// adds the in-flight key, the queue marks it dirty, and redelivers it the
-// moment Done runs. The duration matches the default resync cadence, so a
-// dropped key is re-added by a later resync once the cooldown has passed.
-const postClaimCooldown = 30 * time.Second
+// defaultPostClaimCooldown is the post-claim cooldown used when the constructor
+// is given a non-positive resync interval. It matches the default resync
+// cadence of both wirings.
+const defaultPostClaimCooldown = 30 * time.Second
 
 // ConcurrentJobDriver processes provisioning jobs with a pool of worker
 // goroutines fed by a single per-replica work queue of job keys. Keys enter
@@ -51,9 +46,19 @@ type ConcurrentJobDriver struct {
 	metrics              *JobMetrics
 	queue                workqueue.TypedRateLimitingInterface[string]
 
+	// postClaimCooldown is how long a key is barred from processing after its
+	// job failed post-claim: the side effects may already have run, and the
+	// rolled-back claim makes the job immediately claimable again. The bar is
+	// enforced at dequeue time because enqueue-side filtering cannot cover every
+	// path back into the queue — a resync that snapshots the job before the
+	// worker's claim lands adds the in-flight key, the queue marks it dirty, and
+	// redelivers it the moment Done runs. It equals the jobs informer's resync
+	// interval, so recovery of a failed run keeps the configured pickup cadence:
+	// the first resync after the cooldown passes re-adds the key.
+	postClaimCooldown time.Duration
+
 	// mu guards cooldowns. cooldowns maps a job key to the time its post-claim
-	// cooldown expires (see postClaimCooldown); workers refuse to process a key
-	// before then.
+	// cooldown expires; workers refuse to process a key before then.
 	mu        sync.Mutex
 	cooldowns map[string]time.Time
 
@@ -62,10 +67,13 @@ type ConcurrentJobDriver struct {
 	logger logging.Logger
 }
 
-// NewConcurrentJobDriver creates a new concurrent job driver that spawns multiple job workers.
+// NewConcurrentJobDriver creates a new concurrent job driver that spawns
+// multiple job workers. resyncInterval is the jobs informer's resync/re-list
+// cadence; the driver uses it as the post-claim cooldown so failed-run recovery
+// tracks the configured pickup interval (non-positive falls back to 30s).
 func NewConcurrentJobDriver(
 	numDrivers int,
-	jobTimeout, leaseRenewalInterval time.Duration,
+	jobTimeout, resyncInterval, leaseRenewalInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
 	historicJobs HistoryWriter,
@@ -75,6 +83,9 @@ func NewConcurrentJobDriver(
 ) (*ConcurrentJobDriver, error) {
 	if numDrivers <= 0 {
 		return nil, fmt.Errorf("numDrivers must be greater than 0, got %d", numDrivers)
+	}
+	if resyncInterval <= 0 {
+		resyncInterval = defaultPostClaimCooldown
 	}
 	// Default lease renewal interval to 1/3 of job timeout, minimum 5 seconds
 	if leaseRenewalInterval <= 0 {
@@ -90,6 +101,7 @@ func NewConcurrentJobDriver(
 		numDrivers:           numDrivers,
 		jobTimeout:           jobTimeout,
 		leaseRenewalInterval: leaseRenewalInterval,
+		postClaimCooldown:    resyncInterval,
 		store:                store,
 		repoGetter:           repoGetter,
 		historicJobs:         historicJobs,
@@ -227,7 +239,7 @@ func (c *ConcurrentJobDriver) startCooldown(key string) {
 			delete(c.cooldowns, k)
 		}
 	}
-	c.cooldowns[key] = now.Add(postClaimCooldown)
+	c.cooldowns[key] = now.Add(c.postClaimCooldown)
 }
 
 // inCooldown reports whether key is still within its post-claim cooldown,
@@ -370,7 +382,7 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 		// in-flight key dirty, and the queue redelivers it as soon as we return.
 		c.startCooldown(key)
 		logger.Error("job failed after it was claimed - dropping from queue; the informer re-list re-adds it after a cooldown",
-			"attempt", attempt, "cooldown", postClaimCooldown, "error", err)
+			"attempt", attempt, "cooldown", c.postClaimCooldown, "error", err)
 		c.queue.Forget(key)
 	case attempt >= maxClaimAttempts:
 		logger.Error("job failed too many times - dropping from queue; the informer re-list re-adds it if still unclaimed",

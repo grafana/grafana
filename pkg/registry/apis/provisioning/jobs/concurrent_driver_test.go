@@ -21,7 +21,7 @@ func newTestConcurrentDriver(t *testing.T, numDrivers int, store Store, repoGett
 	t.Helper()
 	driver, err := NewConcurrentJobDriver(
 		numDrivers,
-		time.Minute, 30*time.Second,
+		time.Minute, 30*time.Second, 30*time.Second,
 		store, repoGetter, history,
 		prometheus.NewRegistry(),
 		metrics,
@@ -36,7 +36,7 @@ func newTestConcurrentDriver(t *testing.T, numDrivers int, store Store, repoGett
 func TestNewConcurrentJobDriver_RejectsBadConfig(t *testing.T) {
 	_, err := NewConcurrentJobDriver(
 		0,
-		time.Minute, 30*time.Second,
+		time.Minute, 30*time.Second, 30*time.Second,
 		&MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{},
 		prometheus.NewRegistry(), nil,
 	)

@@ -59,6 +59,7 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		driverConfig{
 			concurrentDrivers:    controllerCfg.concurrentDrivers,
 			maxJobTimeout:        controllerCfg.maxJobTimeout,
+			jobInterval:          controllerCfg.jobInterval,
 			leaseRenewalInterval: controllerCfg.leaseRenewalInterval,
 			maxSyncWorkers:       controllerCfg.maxSyncWorkers,
 		},

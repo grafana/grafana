@@ -117,7 +117,7 @@ func TestConcurrentJobDriver_Run_StopsOnContextCancel(t *testing.T) {
 
 	driver, err := NewConcurrentJobDriver(
 		2,
-		time.Minute, 30*time.Second,
+		time.Minute, 30*time.Second, 30*time.Second,
 		store, &MockRepoGetter{}, &MockHistoryWriter{},
 		prometheus.NewRegistry(),
 		nil,
@@ -178,7 +178,7 @@ func TestConcurrentJobDriver_Run_AllDriversExitBeforeRunReturns(t *testing.T) {
 
 	driver, err := NewConcurrentJobDriver(
 		numDrivers,
-		time.Minute, 30*time.Second,
+		time.Minute, 30*time.Second, 30*time.Second,
 		store, &MockRepoGetter{}, &MockHistoryWriter{},
 		prometheus.NewRegistry(),
 		nil,
