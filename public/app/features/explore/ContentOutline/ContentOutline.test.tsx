@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { store } from '@grafana/data';
+import { type DataSourceInstanceSettings, store } from '@grafana/data';
+import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 
 import { ContentOutline } from './ContentOutline';
 
@@ -20,10 +22,21 @@ const scrollerMock = document.createElement('div');
 
 const unregisterMock = jest.fn();
 
-const setup = (mergeSingleChild = false, showMetricsExplorer = false) => {
+const promSettings = {
+  uid: 'prom-uid',
+  type: 'prometheus',
+  name: 'gdev-prometheus',
+  meta: { id: 'prometheus', info: { logos: { small: 'prometheus.svg' } } },
+} as unknown as DataSourceInstanceSettings;
+
+const setup = (mergeSingleChild = false, showSignalExplorer = false, queries: DataQuery[] = []) => {
   HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
 
   scrollerMock.scroll = jest.fn();
+
+  setDataSourceSrv({
+    getInstanceSettings: () => promSettings,
+  } as unknown as DataSourceSrv);
 
   // Mock useContentOutlineContext with custom outlineItems
   const mockUseContentOutlineContext = require('./ContentOutlineContext').useContentOutlineContext;
@@ -79,7 +92,8 @@ const setup = (mergeSingleChild = false, showMetricsExplorer = false) => {
     <ContentOutline
       scroller={scrollerMock}
       panelId="content-outline-container-1"
-      showMetricsExplorer={showMetricsExplorer}
+      showSignalExplorer={showSignalExplorer}
+      queries={queries}
     />
   );
 };
@@ -183,37 +197,50 @@ describe('<ContentOutline />', () => {
     getBoolMock.mockRestore();
   });
 
-  describe('metrics explorer', () => {
+  describe('signal explorer', () => {
+    const promQueries: DataQuery[] = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
+
     afterEach(() => {
       useBooleanFlagValueMock.mockImplementation((_: string, defaultValue: boolean) => defaultValue);
     });
 
-    it('hides the header title and the metrics explorer by default (feature toggle off)', () => {
-      setup();
+    it('hides the header title and the query cards by default (feature toggle off)', () => {
+      setup(false, false, promQueries);
       expect(screen.queryByText('Outline')).not.toBeInTheDocument();
       expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
-      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('signal-card-A')).not.toBeInTheDocument();
     });
 
-    it('does not render the metrics explorer or header title when the feature toggle is disabled', () => {
+    it('does not render the query cards or header title when the feature toggle is disabled', () => {
       useBooleanFlagValueMock.mockReturnValue(false);
-      setup(false, true);
-      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+      setup(false, true, promQueries);
+      expect(screen.queryByTestId('signal-card-A')).not.toBeInTheDocument();
       expect(screen.queryByText('Outline')).not.toBeInTheDocument();
     });
 
-    it('renders the metrics explorer and "Datasource explorer" title when the toggle is enabled and Prometheus is selected', () => {
+    it('renders a query card and the "Datasource explorer" title when the toggle is enabled and Prometheus is selected', () => {
       useBooleanFlagValueMock.mockReturnValue(true);
-      setup(false, true);
+      setup(false, true, promQueries);
       expect(screen.getByText('Datasource explorer')).toBeInTheDocument();
+      expect(screen.getByTestId('signal-card-A')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toBeInTheDocument();
+    });
+
+    it('renders the metrics explorer once a Prometheus card is expanded', async () => {
+      useBooleanFlagValueMock.mockReturnValue(true);
+      setup(false, true, promQueries);
+      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+
       expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
       expect(screen.getByText('up')).toBeInTheDocument();
     });
 
-    it('does not render the metrics explorer or header title when the toggle is enabled but Prometheus is not selected', () => {
+    it('does not render the query cards or header title when the toggle is enabled but Prometheus is not selected', () => {
       useBooleanFlagValueMock.mockReturnValue(true);
-      setup(false, false);
-      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+      setup(false, false, promQueries);
+      expect(screen.queryByTestId('signal-card-A')).not.toBeInTheDocument();
       expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
       expect(screen.queryByText('Outline')).not.toBeInTheDocument();
     });
