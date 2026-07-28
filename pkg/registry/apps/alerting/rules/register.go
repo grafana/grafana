@@ -86,7 +86,7 @@ func RegisterAppInstaller(
 		MembershipResolver:            membershipIndex,
 		NotificationSettingsValidator: newNotificationSettingsValidator(ng),
 		WatchNamespace:                watchNamespace(cfg),
-		SearchRulesHandler:            searchHandler.SearchRules,
+		SearchRulesHandler:            search.WithAPIStatusErrorResponse(searchHandler.SearchRules),
 	}
 
 	provider := simple.NewAppProvider(rulesManifest.LocalManifest(), appSpecificConfig, rulesApp.New)
