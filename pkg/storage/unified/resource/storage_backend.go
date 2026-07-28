@@ -2301,7 +2301,6 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 // done and the stream should stop.
 func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, out chan<- *WrittenEvent) bool {
 	keys := make([]DataKey, len(batch))
-	pending := make(map[DataKey]Event, len(batch))
 	for i, event := range batch {
 		keys[i] = DataKey{
 			Group:           event.Group,
@@ -2312,27 +2311,46 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 			Action:          event.Action,
 			Folder:          event.Folder,
 		}
-		pending[keys[i]] = event
 	}
 
 	// Read the whole batch before emitting any of it: the iterator holds a
-	// storage cursor open, and a slow watcher must not pin it. BatchGet yields in
-	// request order, so the batch stays sorted by resource version.
-	written := make([]*WrittenEvent, 0, len(batch))
+	// storage cursor open, and a slow watcher must not pin it.
+	values := make(map[DataKey][]byte, len(batch))
+	readFailed := false
 	for obj, err := range k.dataStore.BatchGet(ctx, keys) {
 		if err != nil {
+			// A cancelled context yields this error with no results at all. That is
+			// the shutdown path, not a storage problem, and the notifier channel may
+			// still hold a buffered backlog — grinding through it would log an error
+			// per remaining batch.
+			if ctx.Err() != nil {
+				return false
+			}
 			k.log.Error("failed to get data for events", "error", err)
+			readFailed = true
 			break
 		}
-		event, ok := pending[obj.Key]
-		if !ok {
-			continue
-		}
-		delete(pending, obj.Key)
-
 		data, err := readAndClose(obj.Value)
 		if err != nil {
 			k.log.Error("failed to read data for event", "key", obj.Key.String(), "error", err)
+			continue
+		}
+		values[obj.Key] = data
+	}
+
+	// Emit in notification order rather than in the order the read returned.
+	// Monotonic resource versions are what keep watchers from relisting, so that
+	// guarantee should rest on the notifier, which owns ordering, rather than on
+	// a storage query returning rows in the order they were asked for.
+	for i, event := range batch {
+		data, ok := values[keys[i]]
+		if !ok {
+			// BatchGet omits keys it has no value for rather than erroring. A failed
+			// read says nothing about the rest of the batch, so don't report those as
+			// data loss.
+			if !readFailed {
+				k.log.Error("no data for event", "key", keys[i].String())
+			}
 			continue
 		}
 
@@ -2346,7 +2364,8 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 			t = resourcepb.WatchEvent_DELETED
 		}
 
-		written = append(written, &WrittenEvent{
+		select {
+		case out <- &WrittenEvent{
 			Key: &resourcepb.ResourceKey{
 				Namespace: event.Namespace,
 				Group:     event.Group,
@@ -2359,16 +2378,7 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 			ResourceVersion: event.ResourceVersion,
 			PreviousRV:      event.PreviousRV,
 			Timestamp:       resourceVersionTime(event.ResourceVersion).Unix(),
-		})
-	}
-	// Whatever BatchGet did not return has no value to deliver.
-	for key := range pending {
-		k.log.Error("no data for event", "key", key.String())
-	}
-
-	for _, event := range written {
-		select {
-		case out <- event:
+		}:
 		case <-ctx.Done():
 			return false
 		}

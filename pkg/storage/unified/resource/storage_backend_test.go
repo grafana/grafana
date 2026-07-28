@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"iter"
@@ -19,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -44,6 +46,12 @@ func withKV(kv KV) func(*KVBackendOptions) {
 func withSettleDelay(d time.Duration) func(*KVBackendOptions) {
 	return func(opts *KVBackendOptions) {
 		opts.WatchOptions.SettleDelay = d
+	}
+}
+
+func withLogger(l log.Logger) func(*KVBackendOptions) {
+	return func(opts *KVBackendOptions) {
+		opts.Log = l
 	}
 }
 
@@ -704,6 +712,73 @@ func TestKvStorageBackend_WatchWriteEvents_BatchesValueReads(t *testing.T) {
 	tripsAfter, keysAfter := kvStore.stats()
 	assert.Equal(t, numEvents/dataBatchSize, tripsAfter-tripsBefore, "the batch should be resolved in one read per chunk")
 	assert.Equal(t, numEvents, keysAfter-keysBefore, "every event should be read exactly once")
+}
+
+// failingBatchGetKV wraps a KV and fails every batched read of the data section,
+// standing in for a storage outage.
+type failingBatchGetKV struct {
+	KV
+	err error
+}
+
+func (k *failingBatchGetKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	if section != kv.DataSection {
+		return k.KV.BatchGet(ctx, section, keys)
+	}
+	return func(yield func(kv.KeyValue, error) bool) {
+		yield(kv.KeyValue{}, k.err)
+	}
+}
+
+// TestKvStorageBackend_WatchWriteEvents_FailedBatchReadIsNotReportedAsMissing
+// guards the two error paths of a batched read. A failed read returns no keys at
+// all, so every event in the batch is still pending afterwards — reporting those
+// as missing data would turn one storage error into a batch-sized burst of false
+// data-loss errors, and on shutdown into one such burst per buffered batch.
+func TestKvStorageBackend_WatchWriteEvents_FailedBatchReadIsNotReportedAsMissing(t *testing.T) {
+	newBatch := func() []Event {
+		batch := make([]Event, 0, dataBatchSize)
+		for i := range dataBatchSize {
+			batch = append(batch, Event{
+				Namespace:       appsNamespace.Namespace,
+				Group:           appsNamespace.Group,
+				Resource:        appsNamespace.Resource,
+				Name:            fmt.Sprintf("failing-%03d", i),
+				ResourceVersion: int64(i + 1),
+				Action:          DataActionCreated,
+			})
+		}
+		return batch
+	}
+
+	t.Run("storage error is logged once and the stream continues", func(t *testing.T) {
+		logger := &logtest.Fake{}
+		kvStore := &failingBatchGetKV{KV: setupBadgerKV(t), err: errors.New("storage is down")}
+		backend := setupTestStorageBackend(t, withKV(kvStore), withLogger(logger))
+
+		out := make(chan *WrittenEvent, dataBatchSize)
+		assert.True(t, backend.emitWriteEvents(t.Context(), newBatch(), out),
+			"a storage error should not tear down the watch stream")
+
+		assert.Empty(t, out)
+		assert.Equal(t, 1, logger.ErrorLogs.Calls, "the read failure alone should be logged")
+		assert.Equal(t, "failed to get data for events", logger.ErrorLogs.Message)
+	})
+
+	t.Run("cancellation stops the stream without logging", func(t *testing.T) {
+		logger := &logtest.Fake{}
+		backend := setupTestStorageBackend(t, withLogger(logger))
+
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		out := make(chan *WrittenEvent, dataBatchSize)
+		assert.False(t, backend.emitWriteEvents(ctx, newBatch(), out),
+			"a cancelled context should stop the stream rather than drain the backlog")
+
+		assert.Empty(t, out)
+		assert.Zero(t, logger.ErrorLogs.Calls, "shutdown is not a data problem")
+	})
 }
 
 // TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites verifies that when many
