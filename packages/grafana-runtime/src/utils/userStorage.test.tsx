@@ -409,3 +409,45 @@ describe('useUserStorage', () => {
     expect(result.current).not.toBe(first);
   });
 });
+
+describe('usePluginUserStorage', () => {
+  it('returns the same instance across re-renders', () => {
+    const { result, rerender } = renderHook(() => usePluginUserStorage());
+    const first = result.current;
+    rerender();
+    expect(result.current).toBe(first);
+  });
+
+  it('returns a new instance when the plugin id changes', () => {
+    const { usePluginContext } = require('@grafana/data');
+    const originalImpl = usePluginContext.getMockImplementation();
+
+    try {
+      const { result, rerender } = renderHook(() => usePluginUserStorage());
+      const first = result.current;
+
+      usePluginContext.mockReturnValue({ meta: { id: 'other-plugin' } });
+      rerender();
+      expect(result.current).not.toBe(first);
+    } finally {
+      usePluginContext.mockImplementation(originalImpl);
+    }
+  });
+
+  it('should throw error when used outside plugin context', () => {
+    const { usePluginContext } = require('@grafana/data');
+    const originalImpl = usePluginContext.getMockImplementation();
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      usePluginContext.mockReturnValue(null);
+
+      expect(() => {
+        renderHook(() => usePluginUserStorage());
+      }).toThrow('No PluginContext found. The usePluginUserStorage() hook can only be used from a plugin.');
+    } finally {
+      usePluginContext.mockImplementation(originalImpl);
+      consoleSpy.mockRestore();
+    }
+  });
+});
