@@ -160,13 +160,13 @@ describe('DataSourcePicker', () => {
       //Mock ds is set as current, it appears on top
       getInstanceSettingsMock.mockReturnValue(mockDS1);
       await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS1.name });
-      let cards = await screen.findAllByTestId('data-source-card');
+      let cards = await screen.findAllByTestId(/^data-testid data source card/);
       expect(await findByText(cards[0], mockDS1.name, { selector: 'span' })).toBeInTheDocument();
 
       //xMock ds is set as current, it appears on top
       getInstanceSettingsMock.mockReturnValue(mockDS2);
       await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS2.name });
-      cards = await screen.findAllByTestId('data-source-card');
+      cards = await screen.findAllByTestId(/^data-testid data source card/);
       expect(await findByText(cards[0], mockDS2.name, { selector: 'span' })).toBeInTheDocument();
     });
 
