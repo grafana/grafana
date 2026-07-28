@@ -5,6 +5,7 @@ import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { plugin } from './module';
+import { tableSuggestionsSupplier } from './suggestions';
 
 // building the plugin's fieldConfigRegistry runs the table useCustomConfig path,
 // which resolves the 'stats-picker' standard editor; initialise the registry so
@@ -30,13 +31,17 @@ describe('table module', () => {
     expect(plugin.onPanelTypeChanged).toBe(tablePanelChangedHandler);
   });
 
-  it('wires up a suggestions supplier', () => {
+  it('wires up the table suggestions supplier', () => {
     const dataSummary = getPanelDataSummary([
       createDataFrame({
         fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3] }],
       }),
     ]);
-    expect(plugin.getSuggestions(dataSummary)).toHaveLength(1);
+
+    // Assert the plugin delegates to tableSuggestionsSupplier by matching the wired supplier's
+    // scores; the supplier's own count/score semantics are covered in suggestions.test.ts.
+    const suppliedScores = tableSuggestionsSupplier(dataSummary).map((s) => s.score);
+    expect(plugin.getSuggestions(dataSummary)?.map((s) => s.score)).toEqual(suppliedScores);
   });
 
   it('registers the cell-options custom editors', () => {
