@@ -30,7 +30,6 @@ Testing model, top to bottom:
 
 - **E2E** (pinnacle) — validate the system via real user flows; powerful but slow, so keep
   it targeted and few.
-- **Visual regression** (middle) — catch UI / interaction drift (handled by Meticulous).
 - **Unit** (base) — cheap, plentiful specs documenting behavior for logic/utils.
 - **Static analysis** (foundation) — lint + strong TypeScript interfaces.
 
