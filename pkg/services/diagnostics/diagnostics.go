@@ -44,7 +44,8 @@ func NewBundler() *Bundler {
 }
 
 // BuildOption sets optional bundle contents. An option, rather than another parameter on Build, because
-// only some callers can supply these artifacts -- paneldata.json needs a browser.
+// only some callers can supply these artifacts -- paneldata.json needs a browser. BuildDashboard accepts
+// none of these: paneldata.json is single-panel-only for now.
 type BuildOption func(*buildConfig)
 
 type buildConfig struct {
@@ -55,15 +56,26 @@ type buildConfig struct {
 // serialized client-side from already-resolved scene state.
 //
 // This is the frontend counterpart to querydata.json, which holds what the datasource's *backend*
-// returned.
+// returned. Diffing the two is the point: a datasource plugin's frontend code also processes the
+// response, so frames present in querydata.json but missing or altered here pin the loss on the
+// plugin's frontend rather than on its backend or the upstream.
 //
 // Unlike panel.json it is data, not a definition: reading it re-runs no queries and re-applies no
 // transformations.
 //
-// The payload is stored byte-for-byte as the client sent it: deliberately unvalidated, not
-// pretty-printed (unlike the other JSON artifacts -- indenting would hold a second, larger copy of an
-// unbounded payload), and not capped -- this is an experimental, admin-only, on-prem-gated feature and
-// the failure mode is contained.
+// The payload is stored byte-for-byte as the client sent it: deliberately unvalidated and, unlike the
+// other JSON artifacts, not pretty-printed. Nothing here parses it, so a malformed payload yields a
+// malformed artifact rather than a failed bundle, and indenting would hold a second, larger copy of an
+// unbounded input. This is an experimental, admin-only, on-prem-gated feature.
+//
+// Size is the one failure this does NOT contain, and it is the client's to bound: web.MaxBindBodyBytes
+// caps the whole REQUEST rather than this field, so a payload past it fails web.Bind before Build runs
+// and costs the caller the entire bundle instead of just this artifact. Bounding it is intentionally
+// postponed.
+//
+// Leaving it uncapped is also deliberately asymmetric with querydata.json, which IS capped
+// (maxQueryDataArtifactBytes) and degrades to a frame summary above it. Matching that cap would cost
+// the common case a complete diff to make the rare oversized one symmetric.
 func WithPanelData(panelData json.RawMessage) BuildOption {
 	return func(cfg *buildConfig) {
 		cfg.panelData = panelData
@@ -119,8 +131,8 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 
 	// A bare "null" is 4 bytes of valid JSON, so it clears a length check: treat it as not supplied
 	// rather than bundling an artifact whose whole content reads as "the frontend was holding no
-	// frames". Absent (not supplied) and empty (supplied, nothing in it) must not collapse into the
-	// same signal -- that is exactly the frontend-loss misreading WithPanelData warns about.
+	// frames". A real capture of zero frames ({"version":1,"frames":[]}) still ships -- that one IS a
+	// frontend loss worth seeing, and it must not collapse into "the client had nothing to send".
 	if panelData := bytes.TrimSpace(cfg.panelData); len(panelData) > 0 && !bytes.Equal(panelData, []byte("null")) {
 		// Stored as sent, not indented -- see WithPanelData for why.
 		files["paneldata.json"] = panelData
