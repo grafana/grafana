@@ -23,6 +23,7 @@ declare module "@openfeature/core" {
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
     | "dashboard.notebooks"
+    | "grafana.reportingV2Layouts"
     | "stateTimeline.nameAboveBars"
     | "grafana.secretsReferenceValueUI"
     | "sqlExpressionsColumnAutoComplete"

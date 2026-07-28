@@ -80,7 +80,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-12-02,feedbackButton,preview,@grafana/dashboards-squad,false,false,true
 2023-11-06,pdfTables,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-22,reporting.pdfTablesFrontend,experimental,@grafana/grafana-operator-experience-squad,false,false,false
-2026-05-22,reportingV2Layouts,experimental,@grafana/grafana-operator-experience-squad,false,false,true
+2026-07-28,grafana.reportingV2Layouts,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-05-22,reportRenderBinding,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2024-01-02,canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 2026-06-08,canvasExternalPlugin,experimental,@grafana/dataviz-squad,false,false,false
