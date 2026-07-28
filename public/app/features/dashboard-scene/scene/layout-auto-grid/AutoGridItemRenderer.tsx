@@ -20,10 +20,10 @@ import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_
 export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem>) {
   const { body, repeatedPanels = [], key } = model.useState();
   const { draggingKey } = model.getParentGrid().useState();
-  const { isEditing, preload } = useDashboardState(model);
+  const { isEditing, preload, route } = useDashboardState(model);
   const styles = useStyles2(getStyles);
   const soloPanelContext = useSoloPanelContext();
-  const isLazy = useMemo(() => getIsLazy(preload), [preload]);
+  const isLazy = useMemo(() => getIsLazy(preload, route), [preload, route]);
 
   // Check if this grid is a drop target for external drags
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);

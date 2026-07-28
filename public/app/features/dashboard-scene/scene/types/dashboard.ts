@@ -1,7 +1,7 @@
 import { type VizPanel, type SceneObject, type SceneObjectState } from '@grafana/scenes';
 import { type DashboardLink } from '@grafana/schema';
 import { type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
-import { type DashboardMeta } from 'app/types/dashboard';
+import { type DashboardMeta, type DashboardRoutes } from 'app/types/dashboard';
 
 import { type DashboardEditPaneLike } from '../../edit-pane/types';
 import { type PanelEditor } from '../../panel-edit/PanelEditor';
@@ -28,6 +28,8 @@ export interface DashboardSceneState extends SceneObjectState {
   editable?: boolean;
   /** Allows disabling grid lazy loading */
   preload?: boolean;
+  /** Route the dashboard was loaded on — render surfaces like Report disable panel lazy loading */
+  route?: DashboardRoutes;
   /** A uid when saved */
   uid?: string;
   /** @experimental */

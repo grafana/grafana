@@ -33,6 +33,13 @@ export declare global {
     __grafanaImageRendererMessageChannel?: (message: string) => void;
 
     /**
+     * Injected by grafana-image-renderer: its effective readiness timeout for this capture
+     * (browser.readiness.timeout), in milliseconds. Lets the frontend bound its own
+     * readiness signalling to stay within the renderer's budget.
+     */
+    __grafanaImageRendererReadinessTimeoutMs?: number;
+
+    /**
      * Set by Grafana to indicate support for the render binding protocol.
      * The image renderer can check this to decide whether to use this mechanism or a fallback.
      */

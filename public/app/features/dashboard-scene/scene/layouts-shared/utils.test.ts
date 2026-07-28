@@ -1,4 +1,5 @@
 import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
+import { DashboardRoutes } from 'app/types/dashboard';
 
 import { generateUniqueTitle, getIsLazy } from './utils';
 
@@ -76,4 +77,18 @@ describe('getIsLazy', () => {
       expect(getIsLazy(preload)).toBe(expected);
     }
   );
+
+  it('should forward the route to isRenderTarget so render-only routes disable lazy loading', () => {
+    jest.mocked(isRenderTarget).mockReturnValue(true);
+
+    expect(getIsLazy(undefined, DashboardRoutes.Report)).toBe(false);
+    expect(isRenderTarget).toHaveBeenCalledWith(DashboardRoutes.Report);
+  });
+
+  it('should call isRenderTarget without a route when none is provided', () => {
+    jest.mocked(isRenderTarget).mockReturnValue(false);
+
+    expect(getIsLazy(undefined)).toBe(true);
+    expect(isRenderTarget).toHaveBeenCalledWith(undefined);
+  });
 });

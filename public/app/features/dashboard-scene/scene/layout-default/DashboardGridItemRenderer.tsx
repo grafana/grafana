@@ -43,8 +43,8 @@ function PanelWrapper({ panel, isLazy, containerRef, isSelected }: PanelWrapperP
 export function DashboardGridItemRenderer({ model }: SceneComponentProps<DashboardGridItem>) {
   const { repeatedPanels = [], itemHeight, variableName, body } = model.useState();
   const soloPanelContext = useSoloPanelContext();
-  const { preload } = useDashboardState(model);
-  const isLazy = useMemo(() => getIsLazy(preload), [preload]);
+  const { preload, route } = useDashboardState(model);
+  const isLazy = useMemo(() => getIsLazy(preload, route), [preload, route]);
   const { isSelected: isSourceSelected } = useElementSelection(body.state.key);
   const layoutStyle = useLayoutStyle(
     model.getRepeatDirection(),

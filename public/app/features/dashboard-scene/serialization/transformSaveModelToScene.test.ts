@@ -26,7 +26,7 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { createPanelSaveModel } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plugins/datasource/dashboard/constants';
-import { type DashboardDataDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO, DashboardRoutes } from 'app/types/dashboard';
 
 import { getSceneCreationOptions } from '../pages/DashboardScenePageStateManager';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -201,6 +201,34 @@ describe('transformSaveModelToScene', () => {
       const body = layout.state.grid;
 
       expect(body.state.isLazy).toBeFalsy();
+    });
+
+    it('should not return lazy loaded panels when loaded on the report route, without any render auth signal', () => {
+      contextSrv.user.authenticatedBy = '';
+
+      const panel1 = createPanelSaveModel({
+        title: 'test1',
+        gridPos: { x: 0, y: 1, w: 12, h: 8 },
+      }) as Panel;
+
+      const dashboard = {
+        ...defaultDashboard,
+        title: 'Test dashboard',
+        uid: 'test-uid',
+        panels: [panel1],
+      };
+
+      const oldModel = new DashboardModel(dashboard);
+
+      const scene = createDashboardSceneFromDashboardModel(oldModel, dashboard, {
+        uid: 'test-uid',
+        route: DashboardRoutes.Report,
+      });
+      const layout = scene.state.body as DefaultGridLayoutManager;
+      const body = layout.state.grid;
+
+      expect(body.state.isLazy).toBeFalsy();
+      expect(scene.state.route).toBe(DashboardRoutes.Report);
     });
   });
 

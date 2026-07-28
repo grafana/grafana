@@ -397,7 +397,7 @@ export function createDashboardSceneFromDashboardModel(
     // Default v1 layout: DefaultGridLayoutManager
     body = new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
-        isLazy: getIsLazy(dto.preload),
+        isLazy: getIsLazy(dto.preload, options?.route),
         children: createSceneObjectsForPanels(oldModel.panels),
       }),
     });
@@ -409,6 +409,7 @@ export function createDashboardSceneFromDashboardModel(
       description: oldModel.description,
       editable: oldModel.editable,
       preload: dto.preload ?? false,
+      route: options?.route,
       isDirty: false,
       links: [...(options?.defaultLinks ?? []), ...(oldModel.links ?? [])],
       meta: oldModel.meta,
