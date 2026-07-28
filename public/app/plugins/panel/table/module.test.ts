@@ -24,7 +24,7 @@ describe('table module', () => {
     expect(plugin.onPanelTypeChanged).toBe(tablePanelChangedHandler);
   });
 
-  it('wires up the suggestions supplier', () => {
+  it('wires up a suggestions supplier', () => {
     const dataSummary = getPanelDataSummary([
       createDataFrame({
         fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3] }],
@@ -52,19 +52,19 @@ describe('table module', () => {
       // showIf receives the custom field config; only cellOptions.type gates this switch
       customConfigItem('inspect').showIf!({ cellOptions: { type } } as never, undefined);
 
-    it.each([
-      TableCellDisplayMode.Auto,
-      TableCellDisplayMode.JSONView,
-      TableCellDisplayMode.ColorText,
-      TableCellDisplayMode.ColorBackground,
-    ])('is shown for the %s cell type', (type) => {
-      expect(showIf(type)).toBe(true);
-    });
-
-    it.each([TableCellDisplayMode.Gauge, TableCellDisplayMode.Image, TableCellDisplayMode.Sparkline])(
-      'is hidden for the %s cell type',
-      (type) => {
-        expect(showIf(type)).toBe(false);
+    it.each`
+      cellType                                | shown
+      ${TableCellDisplayMode.Auto}            | ${true}
+      ${TableCellDisplayMode.JSONView}        | ${true}
+      ${TableCellDisplayMode.ColorText}       | ${true}
+      ${TableCellDisplayMode.ColorBackground} | ${true}
+      ${TableCellDisplayMode.Gauge}           | ${false}
+      ${TableCellDisplayMode.Image}           | ${false}
+      ${TableCellDisplayMode.Sparkline}       | ${false}
+    `(
+      'is $shown for the $cellType cell type',
+      ({ cellType, shown }: { cellType: TableCellDisplayMode; shown: boolean }) => {
+        expect(showIf(cellType)).toBe(shown);
       }
     );
   });

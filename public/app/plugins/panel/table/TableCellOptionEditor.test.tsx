@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
-import { BarGaugeDisplayMode, TableCellDisplayMode, type TableCellOptions } from '@grafana/schema';
+import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode, type TableCellOptions } from '@grafana/schema';
 import { mockComboboxRect } from '@grafana/test-utils';
 
 import { TableCellOptionEditor } from './TableCellOptionEditor';
@@ -42,10 +42,16 @@ describe('TableCellOptionEditor', () => {
     expect(screen.getByRole('combobox')).toHaveDisplayValue('Colored text');
   });
 
-  it('renders the sub-editor matching the current cell type', () => {
-    setup({ type: TableCellDisplayMode.Gauge });
-    // the gauge sub-editor is the only cell type exposing a "Gauge display mode" control
-    expect(screen.getByText('Gauge display mode')).toBeInTheDocument();
+  // each cell type that has extra options renders its own sub-editor, identified
+  // here by a control label unique to that sub-editor
+  it.each<[TableCellOptions, string]>([
+    [{ type: TableCellDisplayMode.Gauge }, 'Gauge display mode'],
+    [{ type: TableCellDisplayMode.ColorBackground }, 'Background display mode'],
+    [{ type: TableCellDisplayMode.Image }, 'Alt text'],
+    [{ type: TableCellDisplayMode.Markdown }, 'Dynamic height'],
+  ])('renders the sub-editor for %o', (cellOptions, controlLabel) => {
+    setup(cellOptions);
+    expect(screen.getByText(controlLabel)).toBeInTheDocument();
   });
 
   it('renders no sub-editor for cell types without extra options', () => {
@@ -53,10 +59,18 @@ describe('TableCellOptionEditor', () => {
     expect(screen.queryByText('Gauge display mode')).not.toBeInTheDocument();
   });
 
-  it('resets to just the new type (default settings) when the cell type changes', async () => {
-    const { onChange } = setup({ type: TableCellDisplayMode.Auto });
-    await selectCellType('Gauge');
-    expect(onChange).toHaveBeenCalledWith({ type: TableCellDisplayMode.Gauge });
+  it('discards the previous type settings when the cell type changes', async () => {
+    // start on a gauge with non-default settings configured
+    const { onChange } = setup({
+      type: TableCellDisplayMode.Gauge,
+      mode: BarGaugeDisplayMode.Lcd,
+      valueDisplayMode: BarGaugeValueMode.Hidden,
+    });
+
+    await selectCellType('Colored background');
+
+    // the new value is exactly the new type — none of the gauge settings carry over
+    expect(onChange).toHaveBeenCalledWith({ type: TableCellDisplayMode.ColorBackground });
   });
 
   it('merges sub-editor option changes into the current cell options', async () => {
