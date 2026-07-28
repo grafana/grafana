@@ -27,6 +27,7 @@ export function DroppableCategory({ droppableId, title, children, itemsCount }: 
             headerActionPlacement="left"
             compactIcons
             isNested
+            isDashboardSidebar
             className={styles.category}
             renderTitle={() => (
               <span className={styles.title}>

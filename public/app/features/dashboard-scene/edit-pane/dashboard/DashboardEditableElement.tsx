@@ -184,6 +184,7 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
       headerActions: <AddVariableButton dashboard={dashboard} />,
       itemsCount: variableCount,
       renderTitle: () => title,
+      isDashboardSidebar: true,
     });
 
     if ($variables instanceof SceneVariableSet && variableCount > 0) {
@@ -226,6 +227,7 @@ function useAnnotationsCategory(dataLayerSet: DashboardDataLayerSet): OptionsPan
       headerActions: <AddAnnotationButton dataLayerSet={dataLayerSet} />,
       itemsCount: annotationCount,
       renderTitle: () => title,
+      isDashboardSidebar: true,
     });
 
     category.addItem(
@@ -253,6 +255,7 @@ function useLinksCategory(dashboard: DashboardScene): OptionsPaneCategoryDescrip
       headerActions: <AddLinkButton dashboard={dashboard} />,
       itemsCount: links.length,
       renderTitle: () => title,
+      isDashboardSidebar: true,
     });
 
     if (links.length) {

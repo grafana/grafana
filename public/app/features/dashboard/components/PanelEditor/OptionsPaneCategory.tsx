@@ -20,6 +20,7 @@ export interface OptionsPaneCategoryProps {
   forceOpen?: boolean;
   className?: string;
   isNested?: boolean;
+  isDashboardSidebar?: boolean;
   children: ReactNode;
   sandboxId?: string;
   /**
@@ -48,6 +49,7 @@ export const OptionsPaneCategory = React.memo(
     className,
     itemsCount,
     isNested = false,
+    isDashboardSidebar = false,
     sandboxId,
     headerActions,
     headerActionPlacement = 'right',
@@ -161,7 +163,8 @@ export const OptionsPaneCategory = React.memo(
     const boxStyles = cx(
       {
         [styles.box]: true,
-        [styles.boxNested]: isNested,
+        [styles.boxSidebar]: isDashboardSidebar,
+        [styles.boxNestedSidebar]: isNested && isDashboardSidebar,
         [styles.boxNestedExpanded]: isNested && isExpanded,
       },
       className
@@ -175,6 +178,8 @@ export const OptionsPaneCategory = React.memo(
 
     const bodyStyles = cx(styles.body, {
       [styles.bodyNested]: isNested,
+      [styles.bodySidebar]: isDashboardSidebar,
+      [styles.bodyNestedSidebar]: isNested && isDashboardSidebar,
     });
 
     /**
@@ -236,7 +241,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   boxNestedExpanded: css({
     marginBottom: theme.spacing(2),
   }),
-  boxNested: css({
+  boxSidebar: css({
     borderTop: 'none',
   }),
   title: css({
@@ -285,6 +290,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
   }),
   body: css({
+    padding: theme.spacing(1, 2),
+  }),
+  bodySidebar: css({
     padding: theme.spacing(0, 1),
   }),
   titleDisabled: css({
@@ -297,8 +305,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   bodyNested: css({
     position: 'relative',
-    padding: theme.spacing(0, 1),
-
+    paddingRight: 0,
+  }),
+  boxNestedSidebar: css({
+    padding: theme.spacing(0, 0.5),
+  }),
+  bodyNestedSidebar: css({
     '&:before': {
       content: "''",
       position: 'absolute',
