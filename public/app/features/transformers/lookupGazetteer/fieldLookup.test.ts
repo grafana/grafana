@@ -1,7 +1,43 @@
+import { lastValueFrom, of } from 'rxjs';
+
 import { DataTransformerID, toDataFrame, FieldMatcherID, fieldMatchers, FieldType } from '@grafana/data';
 import { frameAsGazetter } from 'app/features/geo/gazetteer/gazetteer';
 
-import { addFieldsFromGazetteer } from './fieldLookup';
+import countriesJSON from '../../../../gazetteer/countries.json';
+
+import { addFieldsFromGazetteer, fieldLookupTransformer } from './fieldLookup';
+
+describe('Lookup gazetteer from the worldmap format', () => {
+  beforeAll(() => {
+    window.__grafana_public_path__ = 'https://grafana.fake/public/';
+  });
+
+  beforeEach(() => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: jest.fn().mockResolvedValue(countriesJSON),
+    } as unknown as Response);
+  });
+
+  it('adds country fields using the default countries gazetteer', async () => {
+    const data = toDataFrame({
+      name: 'countries',
+      fields: [{ name: 'code2letters', type: FieldType.string, values: ['FR'] }],
+    });
+
+    const operator = fieldLookupTransformer.operator({ lookupField: 'code2letters' }, { interpolate: (v) => v });
+    const out = await lastValueFrom(of([data]).pipe(operator));
+
+    expect(out[0].fields.map((f) => [f.name, f.values])).toEqual([
+      ['code2letters', ['FR']],
+      ['id', ['FR']],
+      ['name', ['France']],
+      ['lng', [2.213749]],
+      ['lat', [46.227638]],
+    ]);
+  });
+});
 
 describe('Lookup gazetteer', () => {
   it('adds lat/lon based on string field', async () => {
