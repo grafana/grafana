@@ -13,11 +13,9 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/retry"
-	"k8s.io/client-go/util/workqueue"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
@@ -34,10 +32,6 @@ import (
 )
 
 const loggerName = "provisioning-repository-controller"
-
-const (
-	maxAttempts = 3
-)
 
 //go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock.go --with-expecter
 type finalizerProcessor interface {
@@ -66,10 +60,9 @@ type RepositoryController struct {
 	enqueueRepository func(obj any)
 	keyFunc           func(obj any) (string, error)
 
-	queue           workqueue.TypedRateLimitingInterface[string]
+	runner          *appcontroller.Runner
 	resyncInterval  time.Duration
 	minSyncInterval time.Duration
-	drainTimeout    time.Duration
 
 	registry                      prometheus.Registerer
 	tracer                        tracing.Tracer
@@ -108,14 +101,8 @@ func NewRepositoryController(
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
 
 	rc := &RepositoryController{
-		client: provisioningClient,
-		repos:  repos,
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name: "provisioningRepositoryController",
-			},
-		),
+		client:            provisioningClient,
+		repos:             repos,
 		repoFactory:       repoFactory,
 		connectionFactory: connectionFactory,
 		healthChecker:     healthChecker,
@@ -134,7 +121,6 @@ func NewRepositoryController(
 		tracer:                        tracer,
 		resyncInterval:                resyncInterval,
 		minSyncInterval:               minSyncInterval,
-		drainTimeout:                  drainTimeout,
 		quotaGetter:                   quotaGetter,
 		tokenMetrics:                  repoTokenMetrics,
 		incrementalPolicy:             incrementalPolicy,
@@ -144,6 +130,18 @@ func NewRepositoryController(
 	rc.processFn = rc.process
 	rc.enqueueRepository = rc.enqueue
 	rc.keyFunc = repoKeyFunc
+
+	// The runner-provided context is ignored: process builds its own from
+	// context.Background() so an in-flight reconcile can finish during the
+	// shutdown drain rather than being canceled with it.
+	rc.runner = appcontroller.NewRunner(appcontroller.RunnerConfig{
+		Name:         "provisioningRepositoryController",
+		Logger:       rc.logger,
+		DrainTimeout: drainTimeout,
+		Process: func(_ context.Context, key string) error {
+			return rc.processFn(key)
+		},
+	})
 
 	return rc
 }
@@ -172,49 +170,8 @@ func repoKeyFunc(obj any) (string, error) {
 // The onStarted callback is invoked once all workers have been launched.
 // The onShutdown callback is invoked immediately when context cancellation is
 // detected, before draining in-flight work.
-//
-// Note: This function intentionally does NOT create a tracing span because it runs indefinitely
-// until shutdown. Individual processing operations already have their own spans.
 func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStarted func(), onShutdown func()) {
-	defer utilruntime.HandleCrash()
-	defer rc.queue.ShutDown()
-
-	logger := rc.logger
-	ctx = logging.Context(ctx, logger)
-	logger.Info("Starting RepositoryController")
-	defer logger.Info("Shutting down RepositoryController")
-
-	logger.Info("Starting workers", "count", workerCount)
-	for i := 0; i < workerCount; i++ {
-		workerCtx := logging.Context(ctx, logger.With("worker_id", i))
-		go wait.UntilWithContext(workerCtx, rc.runWorker, time.Second)
-	}
-
-	logger.Info("Started workers")
-	onStarted()
-
-	<-ctx.Done()
-	onShutdown()
-	logger.Info("Shutting down workers, draining queue")
-
-	drainDone := make(chan struct{})
-	go func() {
-		rc.queue.ShutDownWithDrain()
-		close(drainDone)
-	}()
-
-	select {
-	case <-drainDone:
-		logger.Info("Queue drained successfully")
-	case <-time.After(rc.drainTimeout):
-		logger.Warn("Drain timeout exceeded, forcing shutdown")
-		rc.queue.ShutDown()
-	}
-}
-
-func (rc *RepositoryController) runWorker(ctx context.Context) {
-	for rc.processNextWorkItem(ctx) {
-	}
+	rc.runner.Run(ctx, workerCount, onStarted, onShutdown)
 }
 
 func (rc *RepositoryController) enqueue(obj interface{}) {
@@ -223,51 +180,7 @@ func (rc *RepositoryController) enqueue(obj interface{}) {
 		utilruntime.HandleError(fmt.Errorf("couldn't get key for object: %v", err))
 		return
 	}
-	rc.queue.Add(key)
-}
-
-// processNextWorkItem deals with one key off the queue.
-// It returns false when it's time to quit.
-func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
-	key, quit := rc.queue.Get()
-	if quit {
-		return false
-	}
-	defer rc.queue.Done(key)
-
-	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
-	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "repository", name)
-	logger.Info("RepositoryController processing key")
-
-	err := rc.processFn(key)
-	if err == nil {
-		rc.queue.Forget(key)
-		return true
-	}
-
-	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
-	attempts := rc.queue.NumRequeues(key) + 1
-	logger = logger.With("error", err, "attempts", attempts)
-	logger.Error("RepositoryController failed to process key")
-
-	if attempts >= maxAttempts {
-		logger.Error("RepositoryController failed too many times")
-		rc.queue.Forget(key)
-		return true
-	}
-
-	if !apierrors.IsServiceUnavailable(err) {
-		logger.Info("RepositoryController will not retry")
-		rc.queue.Forget(key)
-		return true
-	} else {
-		logger.Info("RepositoryController will retry as service is unavailable")
-	}
-
-	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
-	rc.queue.AddRateLimited(key)
-
-	return true
+	rc.runner.Enqueue(key)
 }
 
 func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provisioning.Repository) error {
@@ -734,7 +647,7 @@ func (rc *RepositoryController) process(key string) error {
 			// delete it and can loop under secret-store read-after-write lag.
 			if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
 				logger.Info("repository token secret not yet readable after recent write; will retry", "error", err)
-				rc.queue.AddAfter(key, tokenWriteRetryDelay)
+				rc.runner.EnqueueAfter(key, tokenWriteRetryDelay)
 				return nil
 			}
 

@@ -8,10 +8,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/workqueue"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -23,19 +20,10 @@ import (
 
 const connectionLoggerName = "provisioning-connection-controller"
 
-const (
-	connectionMaxAttempts = 3
-
-	// tokenWriteRetryDelay is how long to wait before re-checking a connection or
-	// repository whose token secret was written recently but is not yet readable from
-	// the secret store. It is shared by the connection and repository controllers.
-	tokenWriteRetryDelay = 2 * time.Second
-)
-
-type connectionQueueItem struct {
-	key      string
-	attempts int
-}
+// tokenWriteRetryDelay is how long to wait before re-checking a connection or
+// repository whose token secret was written recently but is not yet readable from
+// the secret store. It is shared by the connection and repository controllers.
+const tokenWriteRetryDelay = 2 * time.Second
 
 // ConnectionStatusPatcher defines the interface for updating connection status.
 //
@@ -55,11 +43,10 @@ type ConnectionController struct {
 	tokenMetrics      *connectionTokenMetrics
 
 	// To allow injection for testing.
-	processFn func(ctx context.Context, item *connectionQueueItem) error
+	processFn func(ctx context.Context, key string) error
 
-	queue          workqueue.TypedRateLimitingInterface[*connectionQueueItem]
+	runner         *appcontroller.Runner
 	resyncInterval time.Duration
-	drainTimeout   time.Duration
 }
 
 // NewConnectionController creates a new ConnectionController.
@@ -73,23 +60,24 @@ func NewConnectionController(
 	registry prometheus.Registerer,
 ) *ConnectionController {
 	cc := &ConnectionController{
-		conns: conns,
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
-			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{
-				Name: "provisioningConnectionController",
-			},
-		),
+		conns:             conns,
 		statusPatcher:     statusPatcher,
 		healthChecker:     healthChecker,
 		connectionFactory: connectionFactory,
 		tokenMetrics:      registerConnectionTokenMetrics(registry),
 		logger:            logging.DefaultLogger.With("logger", connectionLoggerName),
 		resyncInterval:    resyncInterval,
-		drainTimeout:      drainTimeout,
 	}
 
 	cc.processFn = cc.process
+	cc.runner = appcontroller.NewRunner(appcontroller.RunnerConfig{
+		Name:         "provisioningConnectionController",
+		Logger:       cc.logger,
+		DrainTimeout: drainTimeout,
+		Process: func(ctx context.Context, key string) error {
+			return cc.processFn(ctx, key)
+		},
+	})
 
 	return cc
 }
@@ -111,98 +99,20 @@ func (cc *ConnectionController) enqueue(obj interface{}) {
 		cc.logger.Error("failed to get key for object", "error", err)
 		return
 	}
-	cc.queue.Add(&connectionQueueItem{key: key})
+	cc.runner.Enqueue(key)
 }
 
 // Run starts the ConnectionController. The onStarted callback is invoked once
 // all workers have been launched, before blocking on ctx.Done().
 func (cc *ConnectionController) Run(ctx context.Context, workerCount int, onStarted func(), onShutdown func()) {
-	defer utilruntime.HandleCrash()
-	defer cc.queue.ShutDown()
-
-	logger := cc.logger
-	ctx = logging.Context(ctx, logger)
-	logger.Info("Starting ConnectionController")
-	defer logger.Info("Shutting down ConnectionController")
-
-	logger.Info("Starting workers", "count", workerCount)
-	for i := range workerCount {
-		workerCtx := logging.Context(ctx, logger.With("worker_id", i))
-		go wait.UntilWithContext(workerCtx, cc.runWorker, time.Second)
-	}
-
-	logger.Info("Started workers")
-	onStarted()
-
-	<-ctx.Done()
-	onShutdown()
-	logger.Info("Shutting down workers, draining queue")
-
-	drainDone := make(chan struct{})
-	go func() {
-		cc.queue.ShutDownWithDrain()
-		close(drainDone)
-	}()
-
-	select {
-	case <-drainDone:
-		logger.Info("Queue drained successfully")
-	case <-time.After(cc.drainTimeout):
-		logger.Warn("Drain timeout exceeded, forcing shutdown")
-		cc.queue.ShutDown()
-	}
+	cc.runner.Run(ctx, workerCount, onStarted, onShutdown)
 }
 
-func (cc *ConnectionController) runWorker(ctx context.Context) {
-	for cc.processNextWorkItem(ctx) {
-	}
-}
-
-func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
-	item, quit := cc.queue.Get()
-	if quit {
-		return false
-	}
-	defer cc.queue.Done(item)
-
-	namespace, name, _ := cache.SplitMetaNamespaceKey(item.key)
-	logger := logging.FromContext(ctx).With("work_key", item.key, "namespace", namespace, "connection", name)
-	logger.Info("ConnectionController processing key")
-
-	err := cc.processFn(ctx, item)
-	if err == nil {
-		cc.queue.Forget(item)
-		return true
-	}
-
-	item.attempts++
-	logger = logger.With("error", err, "attempts", item.attempts)
-	logger.Error("ConnectionController failed to process key")
-
-	if item.attempts >= connectionMaxAttempts {
-		logger.Error("ConnectionController failed too many times")
-		cc.queue.Forget(item)
-		return true
-	}
-
-	if !apierrors.IsServiceUnavailable(err) {
-		logger.Info("ConnectionController will not retry")
-		cc.queue.Forget(item)
-		return true
-	}
-
-	logger.Info("ConnectionController will retry as service is unavailable")
-	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", item, err))
-	cc.queue.AddRateLimited(item)
-
-	return true
-}
-
-func (cc *ConnectionController) process(ctx context.Context, item *connectionQueueItem) error {
-	logger := cc.logger.With("key", item.key)
+func (cc *ConnectionController) process(ctx context.Context, key string) error {
+	logger := cc.logger.With("key", key)
 	ctx = logging.Context(ctx, logger)
 
-	namespace, name, err := cache.SplitMetaNamespaceKey(item.key)
+	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		logger.Error("retrieving namespace and name from key", "error", err)
 		return err
@@ -250,7 +160,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 			// would delete it and can loop under secret-store read-after-write lag.
 			if tokenRecentlyCreated(time.UnixMilli(conn.Status.Token.LastUpdated)) {
 				logger.Info("connection token secret not yet readable after recent write; will retry", "error", err)
-				cc.queue.AddAfter(&connectionQueueItem{key: item.key}, tokenWriteRetryDelay)
+				cc.runner.EnqueueAfter(key, tokenWriteRetryDelay)
 				return nil
 			}
 			logger.Warn("connection token secret could not be decrypted, regenerating", "error", err)
