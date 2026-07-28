@@ -3,8 +3,10 @@
  *
  * `SignalExplorerRail` is one arrangement of these pieces — the leaf components, hooks and state
  * below it are exported so an alternative shell can be composed from the same parts. Anything not
- * listed here (the resource client) is an implementation detail of that arrangement and may change
- * without notice.
+ * listed here is an implementation detail of that arrangement and may change without notice; the
+ * resource client is published in part, and only in part: `dsKey`, `rangeKey` and
+ * `invalidateMetricCache` are contract, while its `fetch*` functions are not — a host reaches data
+ * through the hooks, which own the loading and cancellation rules that go with it.
  *
  * ## Shared state
  *
@@ -32,10 +34,23 @@
 // `MetricRow` the data shape is aliased so the `MetricRow` component keeps its own name here.
 export type { MetricRow as MetricRowModel, MetricType } from './types';
 
-export { deriveMetricType, getMetricTypeOptions } from './data/metricType';
+export { deriveMetricType, getMetricTypeLabel, getMetricTypeOptions } from './data/metricType';
 export { useLabelValues } from './data/useLabelValues';
 export { useMetricCatalog } from './data/useMetricCatalog';
 export { useMetricDetail } from './data/useMetricDetail';
+
+/**
+ * The identity the cache gives a request. Anything keyed off "which datasource, which range" — a
+ * paging offset, a reset key, a memo — must use these rather than re-deriving them, because two refs
+ * or ranges the client considers equal are served the same data: telling them apart resets state for
+ * a request that never actually changed. `rangeKey` in particular is the raw range, so a refresh on
+ * `now-1h` is deliberately the same key.
+ *
+ * `invalidateMetricCache` is the way to force fresh data before the entries expire on their own —
+ * the action behind a shell's refresh control. It drops the cached entries *and* makes every mounted
+ * hook re-request; entries also expire by themselves after `CACHE_TTL_MS`.
+ */
+export { dsKey, invalidateMetricCache, rangeKey } from './data/metricResourceClient';
 
 // `detectMetricsInQueries` produces `{ refId: metricNames[] }` and the metric rows badge off
 // `{ metricName: refIds[] }`; `toRefsByMetric` is the adapter between them, so it ships with them.
@@ -65,8 +80,26 @@ export {
 } from './state/selectors';
 
 export { DatasourceCard, type DatasourceCardProps } from './components/DatasourceCard';
-export { MetricMetadataBlock, type MetricMetadataBlockProps } from './components/MetricMetadataBlock';
+export { LabelValuesBlock, type LabelValuesBlockProps } from './components/LabelValuesBlock';
 export { MetricRow, type MetricRowProps } from './components/MetricRow';
 export { MetricTree, type MetricTreeProps } from './components/MetricTree';
-export { MetricTypeFilter, type MetricTypeFilterProps } from './components/MetricTypeFilter';
 export { SignalExplorerRail, type SignalExplorerRailProps } from './components/SignalExplorerRail';
+
+// `getMetricTypeBadgeColor` ships with the block that uses it: the colours are not arbitrary, each
+// one was measured against the foreground `getContrastText` derives from it so the badge clears
+// WCAG AA in both themes. A second, hand-picked palette elsewhere would not.
+export {
+  MetricMetadataBlock,
+  getMetricTypeBadgeColor,
+  type MetricMetadataBlockProps,
+} from './components/MetricMetadataBlock';
+
+/**
+ * Every list here is fed by a Prometheus resource call and so is unbounded in production — a catalog
+ * runs to tens of thousands of names. Capping what reaches the DOM is a requirement, not a
+ * refinement, and this is the shared implementation of it: a host building its own list uses this
+ * rather than deciding again how much to render.
+ */
+export { INITIAL_BATCH, useVisibleBatch } from './components/useVisibleBatch';
+
+export { MetricTypeFilter, type MetricTypeFilterProps } from './components/MetricTypeFilter';
