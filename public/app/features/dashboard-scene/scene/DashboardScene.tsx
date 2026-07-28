@@ -63,8 +63,6 @@ import {
   ManagerKind,
   type ResourceForCreate,
 } from '../../apiserver/types';
-import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
-import { dashboardEditActions } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from '../saving/shared';
@@ -85,6 +83,8 @@ import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
+import { DashboardSidebar } from '../sidebar/DashboardSidebar';
+import { dashboardEditActions } from '../sidebar/shared';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -221,7 +221,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         state.body ?? state.preferences?.defaultLayoutTemplate?.clone() ?? DefaultGridLayoutManager.fromVizPanels([]),
       links: state.links ?? [],
       ...state,
-      editPane: new DashboardEditPane(),
+      sidebar: new DashboardSidebar(),
       layoutOrchestrator: new DashboardLayoutOrchestrator(),
       preferences: state.preferences ?? {},
     });
@@ -442,13 +442,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * reference-counted, so we retain the handler and release it on exit (see deactivateEditPane).
    */
   public activateEditPane() {
-    const { editPane } = this.state;
-    if (editPane.isActive) {
+    const { sidebar } = this.state;
+    if (sidebar.isActive) {
       return;
     }
     // Release the previous pane's activation before acquiring a new one.
     this.deactivateEditPane();
-    this._editPaneActivation = editPane.activate();
+    this._editPaneActivation = sidebar.activate();
   }
 
   private deactivateEditPane() {
