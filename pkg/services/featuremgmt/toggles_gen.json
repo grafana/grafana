@@ -1090,6 +1090,20 @@
     },
     {
       "metadata": {
+        "name": "authz.listFoldersViaSearch",
+        "resourceVersion": "1782267268333",
+        "creationTimestamp": "2026-06-24T02:14:28Z"
+      },
+      "spec": {
+        "description": "Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "awsAssumeRolePerDatasourceExternalId",
         "resourceVersion": "1784056946678",
         "creationTimestamp": "2026-07-14T19:22:26Z"
@@ -3962,6 +3976,20 @@
         "description": "Routes library panel requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "libraryElements.folderTreeViaSearch",
+        "resourceVersion": "1782273749340",
+        "creationTimestamp": "2026-06-24T04:02:29Z"
+      },
+      "spec": {
+        "description": "Build the library-elements folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips on GET /api/library-elements.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
