@@ -207,6 +207,7 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
         render: () => <AddVariableButton dashboard={dashboard} />,
       })
     );
+
     if ($variables?.state.variables.length) {
       category.addItem(
         new OptionsPaneItemDescriptor({
