@@ -3298,8 +3298,6 @@
         "error-retry": "Retry",
         "error-title": "Couldn't load imported configurations",
         "loading": "Loading imported configurations…",
-        "no-permission-body": "Contact your administrator to request access to imported Alertmanager configurations.",
-        "no-permission-title": "You don't have permission to view imported configurations",
         "staged-description": "A read-only, reversible copy of an imported Alertmanager config. Promote it to merge into your live config, or revert to remove it.",
         "staged-title": "Staged configuration"
       },
