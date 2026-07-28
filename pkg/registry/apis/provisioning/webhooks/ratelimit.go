@@ -22,7 +22,7 @@ const (
 	defaultMaxBuckets = 50_000
 )
 
-type ipRateLimiter struct {
+type ipRateLimiterImpl struct {
 	rps             rate.Limit
 	burst           int
 	ttl             time.Duration
@@ -41,8 +41,18 @@ type ipBucket struct {
 	elem     *list.Element // position of this key in order
 }
 
-func newIPRateLimiter(rps rate.Limit, burst int, trustedIPHeader string) *ipRateLimiter {
-	return &ipRateLimiter{
+type RateLimiter interface {
+	Allow(key string, now time.Time) bool
+	Wrap(key string, handler http.Handler) http.Handler
+}
+
+var _ RateLimiter = (*ipRateLimiterImpl)(nil)
+
+func newIPRateLimiter(rps rate.Limit, burst int, trustedIPHeader string) *ipRateLimiterImpl {
+	if rps <= 0 {
+		return nil
+	}
+	return &ipRateLimiterImpl{
 		rps:             rps,
 		burst:           burst,
 		ttl:             defaultRateLimiterTTL,
@@ -53,7 +63,17 @@ func newIPRateLimiter(rps rate.Limit, burst int, trustedIPHeader string) *ipRate
 	}
 }
 
-func (l *ipRateLimiter) allow(key string, now time.Time) bool {
+func NewConfiguredRateLimiter(rps int, trustedIPHeader string) RateLimiter {
+	if rps <= 0 {
+		return nil
+	}
+	return newIPRateLimiter(rate.Limit(rps), rps*2, trustedIPHeader)
+}
+
+// Allow reports whether a request keyed by key may proceed, consuming one
+// token. It satisfies RateLimiter; allow is the clock-injectable variant used
+// by tests.
+func (l *ipRateLimiterImpl) Allow(key string, now time.Time) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -79,7 +99,7 @@ func (l *ipRateLimiter) allow(key string, now time.Time) bool {
 
 // sweep evicts buckets idle beyond the TTL. It runs at most once per sweep
 // interval so the scan cost is amortized across requests.
-func (l *ipRateLimiter) sweep(now time.Time) {
+func (l *ipRateLimiterImpl) sweep(now time.Time) {
 	if now.Sub(l.lastSweep) <= defaultRateLimiterSweep {
 		return
 	}
@@ -92,7 +112,7 @@ func (l *ipRateLimiter) sweep(now time.Time) {
 	l.lastSweep = now
 }
 
-func (l *ipRateLimiter) evictOldest() {
+func (l *ipRateLimiterImpl) evictOldest() {
 	back := l.order.Back()
 	if back == nil {
 		return
@@ -102,9 +122,9 @@ func (l *ipRateLimiter) evictOldest() {
 	delete(l.buckets, key)
 }
 
-func (l *ipRateLimiter) wrap(tenant string, next http.Handler) http.Handler {
+func (l *ipRateLimiterImpl) Wrap(tenant string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !l.allow(l.clientKey(tenant, r), time.Now()) {
+		if !l.Allow(l.clientKey(tenant, r), time.Now()) {
 			http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)
 			return
 		}
@@ -118,7 +138,7 @@ func (l *ipRateLimiter) wrap(tenant string, next http.Handler) http.Handler {
 // deliveries. The IP component keeps a direct attacker in a separate bucket from
 // GitHub's shared egress IPs within the same tenant, so throttling the attacker
 // does not 429 (and thereby drop) that tenant's legitimate webhook events.
-func (l *ipRateLimiter) clientKey(tenant string, r *http.Request) string {
+func (l *ipRateLimiterImpl) clientKey(tenant string, r *http.Request) string {
 	return tenant + "|" + l.clientIP(r)
 }
 
@@ -130,13 +150,16 @@ func (l *ipRateLimiter) clientKey(tenant string, r *http.Request) string {
 // request. Only the configured header is consulted — no other forwarding header
 // (e.g. X-Forwarded-For) is, since trusting a positional entry in a
 // client-controlled list is spoofable.
-func (l *ipRateLimiter) clientIP(r *http.Request) string {
+func (l *ipRateLimiterImpl) clientIP(r *http.Request) string {
 	peer := remoteHost(r.RemoteAddr)
 	if l.trustedIPHeader == "" {
 		return peer
 	}
-	if ip := strings.TrimSpace(r.Header.Get(l.trustedIPHeader)); ip != "" {
-		return ip
+	if rawIp := strings.TrimSpace(r.Header.Get(l.trustedIPHeader)); rawIp != "" {
+		if ip := net.ParseIP(rawIp); ip != nil {
+			return ip.String()
+		}
+		return peer
 	}
 	return peer
 }

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
-	"golang.org/x/time/rate"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -52,7 +51,7 @@ type webhookConnector struct {
 	// replayCache is the process-wide webhook replay cache, shared across every
 	// provider repository the connector dispatches for.
 	replayCache *replayCache
-	rateLimiter *ipRateLimiter
+	rateLimiter RateLimiter
 }
 
 func NewWebhookConnector(
@@ -60,26 +59,14 @@ func NewWebhookConnector(
 	core webhookCore,
 	renderer pullrequest.ScreenshotRenderer,
 	registry prometheus.Registerer,
-	trustedIPHeader string,
-	rateLimitRPS int,
+	rateLimiter RateLimiter,
 ) *webhookConnector {
-	metrics := registerWebhookMetrics(registry)
-
-	// A non-positive rps disables rate limiting: the limiter is left nil and
-	// Connect skips wrapping. When enabled, the limiter keys on the client IP
-	// carried by trustedIPHeader if that header is configured; when the header is
-	// empty (the default) it always keys on the real TCP peer (RemoteAddr).
-	var rateLimiter *ipRateLimiter
-	if rateLimitRPS > 0 {
-		rateLimiter = newIPRateLimiter(rate.Limit(rateLimitRPS), rateLimitRPS*2, trustedIPHeader)
-	}
-
 	return &webhookConnector{
 		webhooksEnabled: webhooksEnabled,
 		core:            core,
 		renderer:        renderer,
 		registry:        registry,
-		metrics:         metrics,
+		metrics:         registerWebhookMetrics(registry),
 		replayCache:     newReplayCache(defaultReplayCacheTTL),
 		rateLimiter:     rateLimiter,
 	}
@@ -241,7 +228,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 
 	var h http.Handler = handler
 	if s.rateLimiter != nil {
-		h = s.rateLimiter.wrap(namespace, h)
+		h = s.rateLimiter.Wrap(namespace, h)
 	}
 
 	return h, nil

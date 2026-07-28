@@ -19,45 +19,45 @@ func TestIPRateLimiterAllow(t *testing.T) {
 		l := newIPRateLimiter(10, 20, "")
 
 		for i := 0; i < 20; i++ {
-			assert.True(t, l.allow("1.2.3.4", now), "request %d should be allowed within burst", i)
+			assert.True(t, l.Allow("1.2.3.4", now), "request %d should be allowed within burst", i)
 		}
-		assert.False(t, l.allow("1.2.3.4", now), "request beyond burst should be rejected")
+		assert.False(t, l.Allow("1.2.3.4", now), "request beyond burst should be rejected")
 	})
 
 	t.Run("consumes one token per request", func(t *testing.T) {
 		// burst of 3 means exactly 3 instantaneous requests are allowed.
 		l := newIPRateLimiter(1, 3, "")
 
-		assert.True(t, l.allow("1.2.3.4", now))
-		assert.True(t, l.allow("1.2.3.4", now))
-		assert.True(t, l.allow("1.2.3.4", now))
-		assert.False(t, l.allow("1.2.3.4", now))
+		assert.True(t, l.Allow("1.2.3.4", now))
+		assert.True(t, l.Allow("1.2.3.4", now))
+		assert.True(t, l.Allow("1.2.3.4", now))
+		assert.False(t, l.Allow("1.2.3.4", now))
 	})
 
 	t.Run("refills at the configured rps over time", func(t *testing.T) {
 		l := newIPRateLimiter(10, 10, "")
 
 		for i := 0; i < 10; i++ {
-			require.True(t, l.allow("1.2.3.4", now))
+			require.True(t, l.Allow("1.2.3.4", now))
 		}
-		assert.False(t, l.allow("1.2.3.4", now))
+		assert.False(t, l.Allow("1.2.3.4", now))
 
 		// After 1s at 10 rps, 10 tokens have refilled (capped at burst).
 		later := now.Add(time.Second)
 		for i := 0; i < 10; i++ {
-			assert.True(t, l.allow("1.2.3.4", later), "request %d should be allowed after refill", i)
+			assert.True(t, l.Allow("1.2.3.4", later), "request %d should be allowed after refill", i)
 		}
-		assert.False(t, l.allow("1.2.3.4", later))
+		assert.False(t, l.Allow("1.2.3.4", later))
 	})
 
 	t.Run("tracks each key independently", func(t *testing.T) {
 		l := newIPRateLimiter(1, 1, "")
 
-		assert.True(t, l.allow("1.1.1.1", now))
-		assert.False(t, l.allow("1.1.1.1", now), "first key is now drained")
+		assert.True(t, l.Allow("1.1.1.1", now))
+		assert.False(t, l.Allow("1.1.1.1", now), "first key is now drained")
 
-		assert.True(t, l.allow("2.2.2.2", now))
-		assert.False(t, l.allow("2.2.2.2", now))
+		assert.True(t, l.Allow("2.2.2.2", now))
+		assert.False(t, l.Allow("2.2.2.2", now))
 	})
 }
 
@@ -65,13 +65,13 @@ func TestIPRateLimiterTTLSweep(t *testing.T) {
 	l := newIPRateLimiter(1, 1, "")
 	start := time.Unix(0, 0)
 
-	require.True(t, l.allow("1.1.1.1", start))
+	require.True(t, l.Allow("1.1.1.1", start))
 	require.Len(t, l.buckets, 1)
 
 	// A request from another key past the sweep interval, with the first key
 	// idle beyond its TTL, should evict the stale bucket.
 	later := start.Add(defaultRateLimiterTTL + defaultRateLimiterSweep + time.Second)
-	require.True(t, l.allow("2.2.2.2", later))
+	require.True(t, l.Allow("2.2.2.2", later))
 
 	_, ok := l.buckets["1.1.1.1"]
 	assert.False(t, ok, "idle bucket should be evicted")
@@ -87,10 +87,10 @@ func TestIPRateLimiterMaxBuckets(t *testing.T) {
 		l := newIPRateLimiter(1, 1, "")
 		l.maxBuckets = 3
 
-		l.allow("a", now)
-		l.allow("b", now)
-		l.allow("c", now)
-		l.allow("d", now) // exceeds cap, should evict the oldest ("a")
+		l.Allow("a", now)
+		l.Allow("b", now)
+		l.Allow("c", now)
+		l.Allow("d", now) // exceeds cap, should evict the oldest ("a")
 
 		assert.Equal(t, 3, len(l.buckets))
 		assert.Equal(t, 3, l.order.Len())
@@ -102,11 +102,11 @@ func TestIPRateLimiterMaxBuckets(t *testing.T) {
 		l := newIPRateLimiter(1, 1, "")
 		l.maxBuckets = 3
 
-		l.allow("a", now)
-		l.allow("b", now)
-		l.allow("c", now)
-		l.allow("a", now) // touch "a" so "b" is now the oldest
-		l.allow("d", now) // should evict "b"
+		l.Allow("a", now)
+		l.Allow("b", now)
+		l.Allow("c", now)
+		l.Allow("a", now) // touch "a" so "b" is now the oldest
+		l.Allow("d", now) // should evict "b"
 
 		_, ok := l.buckets["b"]
 		assert.False(t, ok, "touched key should be retained over an untouched older one")
@@ -118,13 +118,13 @@ func TestIPRateLimiterMaxBuckets(t *testing.T) {
 		l := newIPRateLimiter(1, 1, "")
 		l.maxBuckets = 1
 
-		assert.True(t, l.allow("victim", now))
-		assert.False(t, l.allow("victim", now), "victim drained its single token")
+		assert.True(t, l.Allow("victim", now))
+		assert.False(t, l.Allow("victim", now), "victim drained its single token")
 
-		l.allow("attacker", now) // evicts "victim"
+		l.Allow("attacker", now) // evicts "victim"
 
 		// victim returns: it gets a fresh full bucket and is allowed, not denied.
-		assert.True(t, l.allow("victim", now), "evicted client must not be locked out")
+		assert.True(t, l.Allow("victim", now), "evicted client must not be locked out")
 	})
 }
 
@@ -132,7 +132,7 @@ func TestIPRateLimiterWrap(t *testing.T) {
 	t.Run("passes allowed requests to the next handler", func(t *testing.T) {
 		l := newIPRateLimiter(10, 20, "")
 		var called bool
-		h := l.wrap("ns1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := l.Wrap("ns1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			called = true
 			w.WriteHeader(http.StatusOK)
 		}))
@@ -149,7 +149,7 @@ func TestIPRateLimiterWrap(t *testing.T) {
 	t.Run("returns 429 once the limit is exceeded", func(t *testing.T) {
 		l := newIPRateLimiter(1, 1, "")
 		var calls int
-		h := l.wrap("ns1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := l.Wrap("ns1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			calls++
 		}))
 
@@ -174,7 +174,7 @@ func TestIPRateLimiterWrap(t *testing.T) {
 		// forged headers are ignored: every request from one peer shares a bucket.
 		l := newIPRateLimiter(1, 1, "")
 		var calls int
-		h := l.wrap("ns1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := l.Wrap("ns1", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			calls++
 		}))
 
@@ -284,27 +284,35 @@ func TestRateLimiterDefaults(t *testing.T) {
 	assert.GreaterOrEqual(t, defaultWebhookBurst, int(rate.Limit(defaultWebhookRPS)))
 }
 
-func TestNewWebhookConnectorRateLimit(t *testing.T) {
+func TestNewConfiguredRateLimiter(t *testing.T) {
 	t.Run("positive rps with a trusted header builds a limiter with burst twice the rate", func(t *testing.T) {
-		c := NewWebhookConnector(false, nil, nil, prometheus.NewRegistry(), "X-Real-Ip", 25)
-		if assert.NotNil(t, c.rateLimiter) {
-			assert.Equal(t, rate.Limit(25), c.rateLimiter.rps)
-			assert.Equal(t, 50, c.rateLimiter.burst)
-			assert.Equal(t, "X-Real-Ip", c.rateLimiter.trustedIPHeader)
+		l := NewConfiguredRateLimiter(25, "X-Real-Ip")
+		if assert.NotNil(t, l) {
+			impl := l.(*ipRateLimiterImpl)
+			assert.Equal(t, rate.Limit(25), impl.rps)
+			assert.Equal(t, 50, impl.burst)
+			assert.Equal(t, "X-Real-Ip", impl.trustedIPHeader)
 		}
 	})
 
 	t.Run("non-positive rps disables the limiter", func(t *testing.T) {
-		for _, rps := range []int{0, -5} {
-			c := NewWebhookConnector(false, nil, nil, prometheus.NewRegistry(), "X-Real-Ip", rps)
-			assert.Nil(t, c.rateLimiter, "rps=%d should leave the limiter disabled", rps)
-		}
+		assert.Nil(t, NewConfiguredRateLimiter(0, "X-Real-Ip"), "rps=%d should disable the limiter", 0)
+		assert.Nil(t, NewConfiguredRateLimiter(-1, "X-Real-Ip"), "rps=%d should disable the limiter", -1)
 	})
 
 	t.Run("positive rps without a trusted header enables the limiter keyed on the peer", func(t *testing.T) {
-		c := NewWebhookConnector(false, nil, nil, prometheus.NewRegistry(), "", 25)
-		if assert.NotNil(t, c.rateLimiter) {
-			assert.Equal(t, "", c.rateLimiter.trustedIPHeader, "no header means it keys on RemoteAddr")
+		l := NewConfiguredRateLimiter(25, "")
+		if assert.NotNil(t, l) {
+			assert.Equal(t, "", l.(*ipRateLimiterImpl).trustedIPHeader, "no header means it keys on RemoteAddr")
 		}
 	})
+}
+
+func TestNewWebhookConnectorStoresRateLimiter(t *testing.T) {
+	limiter := newIPRateLimiter(1, 1, "")
+	c := NewWebhookConnector(false, nil, nil, prometheus.NewRegistry(), limiter)
+	assert.Same(t, limiter, c.rateLimiter, "the passed-in limiter should be used as-is")
+
+	c = NewWebhookConnector(false, nil, nil, prometheus.NewRegistry(), nil)
+	assert.Nil(t, c.rateLimiter, "a nil limiter disables rate limiting")
 }
