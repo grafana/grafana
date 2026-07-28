@@ -323,8 +323,13 @@ describe('SaveProvisionedDashboard', () => {
     });
   });
 
-  it('restores the git-flow folder on cancel even for a save-as-copy of an existing dashboard', async () => {
-    const dashboard = createDashboard({ folderUid: 'git-folder-uid', uid: 'existing-uid' });
+  it('restores the initial meta on cancel for a save-as-copy of an existing dashboard', async () => {
+    const initialMeta = {
+      folderUid: 'git-folder-uid',
+      uid: 'existing-uid',
+      k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo, [AnnoKeyManagerIdentity]: 'test-repo' } },
+    } as DashboardMeta;
+    const dashboard = createDashboard({ folderUid: 'git-folder-uid', uid: 'existing-uid', initialMeta });
     const { user, unmount } = setup(
       { isNew: false },
       { dashboard, saveAsCopy: true, changeInfo: { isNew: false } as unknown as DashboardChangeInfo }
@@ -336,7 +341,8 @@ describe('SaveProvisionedDashboard', () => {
     dashboard.state.meta = { folderUid: 'db-folder-uid' };
     unmount();
 
-    expect(dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: 'git-folder-uid', uid: 'existing-uid' } });
+    // The open dashboard keeps its managed-repo identity, not the mid-flow preview meta
+    expect(dashboard.setState).toHaveBeenCalledWith({ meta: initialMeta });
   });
 
   it('clears the folder when switching to the database form', async () => {

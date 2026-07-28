@@ -62,8 +62,8 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
   }, []);
 
   // Cancel in the database form bypasses drawer.onClose, so undo the switch on unmount too. New
-  // dashboards go back to their initial meta like onClose does, otherwise closing via the drawer's
-  // X would put the provisioned fields it just cleared straight back.
+  // dashboards and copies go back to their initial meta like onClose does, otherwise closing via
+  // the drawer's X would put the provisioned fields it just cleared straight back.
   useEffect(() => {
     return () => {
       const pending = takePendingSwitch();
@@ -83,7 +83,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
     // Only a Ready repo has a trustworthy folder; anything else restores the entry folder so switch-back lands on a working Git form
     const gitMeta =
       repoDataStatus === RepoViewStatus.Ready ? { ...meta } : { ...meta, folderUid: entryFolderUid, k8s: undefined };
-    dbSwitchRef.current = { active: true, gitMeta, wasNew: changeInfo.isNew };
+    dbSwitchRef.current = { active: true, gitMeta, wasNew: isNewDashboard };
 
     // Only an unmanaged folder is a valid database target; provisioned and orphaned ones are rejected.
     // Manager annotations go with it, or saveCompleted would carry them into the saved database dashboard.

@@ -32,8 +32,9 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     const changeInfo = dashboard.getDashboardChanges();
     dashboard.setState({
       overlay: undefined,
-      // Reset meta to initial state if it's a new dashboard to remove provisioned fields
-      meta: changeInfo.isNew ? dashboard.getInitialState()?.meta : dashboard.state.meta,
+      // New and save-as-copy flows retarget the scene meta while previewing save targets,
+      // so a cancelled save must restore the initial meta
+      meta: changeInfo.isNew || this.state.saveAsCopy ? dashboard.getInitialState()?.meta : dashboard.state.meta,
     });
   };
 

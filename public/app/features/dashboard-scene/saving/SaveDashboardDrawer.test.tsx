@@ -1,4 +1,4 @@
-import { screen, render, waitFor } from '@testing-library/react';
+import { act, screen, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId, byText } from 'testing-library-selector';
@@ -300,6 +300,22 @@ describe('SaveDashboardDrawer', () => {
 
       const dataSent = saveDashboardMutationMock.mock.calls[0][0];
       expect(dataSent.dashboard.uid).toEqual('');
+    });
+
+    it('Should restore the initial meta when closing without saving', async () => {
+      const { dashboard, openAndRender } = setup({ meta: { folderUid: 'initial-folder', folderTitle: 'Initial' } });
+      const drawer = openAndRender({ saveAsCopy: true });
+
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      // The save-as forms retarget the scene meta while previewing target folders
+      act(() => {
+        dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: undefined, folderTitle: undefined } });
+        drawer.onClose();
+      });
+
+      expect(dashboard.state.meta.folderUid).toBe('initial-folder');
+      expect(dashboard.state.meta.folderTitle).toBe('Initial');
     });
   });
 
