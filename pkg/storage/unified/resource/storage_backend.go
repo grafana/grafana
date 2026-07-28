@@ -2261,29 +2261,12 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 	go func() {
 		defer close(events)
 
-		batch := make([]Event, 0, dataBatchSize)
+		buf := make([]Event, 0, dataBatchSize)
 		for {
-			event, ok := <-notifierEvents
+			batch, ok := nextEventBatch(notifierEvents, buf[:0])
 			if !ok {
 				return
 			}
-			batch = append(batch[:0], event)
-
-			// A batch costs the same round trip as the one event we hold, so take
-			// whatever else is queued. A close is picked up by the receive above.
-		fill:
-			for len(batch) < dataBatchSize {
-				select {
-				case event, ok := <-notifierEvents:
-					if !ok {
-						break fill
-					}
-					batch = append(batch, event)
-				default:
-					break fill
-				}
-			}
-
 			if !k.emitWriteEvents(ctx, batch, events) {
 				return
 			}
@@ -2292,11 +2275,73 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 	return events, nil
 }
 
+func nextEventBatch(notifications <-chan Event, buf []Event) ([]Event, bool) {
+	event, ok := <-notifications
+	if !ok {
+		return nil, false
+	}
+	batch := append(buf, event)
+
+	for len(batch) < cap(batch) {
+		select {
+		case event, ok := <-notifications:
+			if !ok {
+				// Emit what we have; the next call sees the closed channel and stops.
+				return batch, true
+			}
+			batch = append(batch, event)
+		default:
+			return batch, true
+		}
+	}
+	return batch, true
+}
+
 // emitWriteEvents resolves the values a batch of notifications refers to and
 // forwards them, preserving resource version order. It reports false when ctx is
 // done and the stream should stop.
 func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, out chan<- *WrittenEvent) bool {
+	values, ok := k.readEventValues(ctx, batch)
+	if !ok {
+		return false
+	}
+
+	// Emit in notification order rather than in the order the read returned.
+	for i, event := range batch {
+		if values[i] == nil {
+			continue
+		}
+		select {
+		case out <- &WrittenEvent{
+			Key: &resourcepb.ResourceKey{
+				Namespace: event.Namespace,
+				Group:     event.Group,
+				Resource:  event.Resource,
+				Name:      event.Name,
+			},
+			Type:            convertEventType(event.Action),
+			Folder:          event.Folder,
+			Value:           values[i],
+			ResourceVersion: event.ResourceVersion,
+			PreviousRV:      event.PreviousRV,
+			Timestamp:       resourceVersionTime(event.ResourceVersion).Unix(),
+		}:
+		case <-ctx.Done():
+			return false
+		}
+	}
+	return true
+}
+
+// readEventValues reads the value each notification refers to, positionally
+// aligned with batch, leaving entries it could not resolve nil and logging why.
+// It reports false when ctx is done and the stream should stop.
+//
+// The whole batch is read before any of it is emitted: the iterator holds a
+// storage cursor open, and a slow watcher must not pin it.
+func (k *kvStorageBackend) readEventValues(ctx context.Context, batch []Event) ([][]byte, bool) {
 	keys := make([]DataKey, len(batch))
+	pending := make(map[DataKey]int, len(batch))
 	for i, event := range batch {
 		keys[i] = DataKey{
 			Group:           event.Group,
@@ -2307,79 +2352,41 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 			Action:          event.Action,
 			Folder:          event.Folder,
 		}
+		pending[keys[i]] = i
 	}
 
-	// Read the whole batch before emitting any of it: the iterator holds a
-	// storage cursor open, and a slow watcher must not pin it.
-	values := make(map[DataKey][]byte, len(batch))
-	readFailed := false
-	// Keys present in storage but unreadable — not the same as missing data.
-	var unreadable map[DataKey]bool
+	values := make([][]byte, len(batch))
 	for obj, err := range k.dataStore.BatchGet(ctx, keys) {
 		if err != nil {
 			// A cancelled context surfaces here with no results: shutdown, not a storage
 			// problem, and grinding the backlog would log an error per buffered batch.
 			if ctx.Err() != nil {
-				return false
+				return nil, false
 			}
+			// One report covers every key left pending.
 			k.log.Error("failed to get data for events", "error", err)
-			readFailed = true
-			break
+			return values, true
 		}
+
+		i, ok := pending[obj.Key]
+		if !ok {
+			continue
+		}
+		delete(pending, obj.Key)
+
 		data, err := readAndClose(obj.Value)
 		if err != nil {
 			k.log.Error("failed to read data for event", "key", obj.Key.String(), "error", err)
-			if unreadable == nil {
-				unreadable = make(map[DataKey]bool)
-			}
-			unreadable[obj.Key] = true
 			continue
 		}
-		values[obj.Key] = data
+		values[i] = data
 	}
 
-	// Emit in notification order rather than in the order the read returned.
-	for i, event := range batch {
-		data, ok := values[keys[i]]
-		if !ok {
-			// BatchGet omits keys it has no value for rather than erroring — but a failed
-			// batch read reported on none of them, and an unreadable value already did.
-			if !readFailed && !unreadable[keys[i]] {
-				k.log.Error("no data for event", "key", keys[i].String())
-			}
-			continue
-		}
-
-		var t resourcepb.WatchEvent_Type
-		switch event.Action {
-		case DataActionCreated:
-			t = resourcepb.WatchEvent_ADDED
-		case DataActionUpdated:
-			t = resourcepb.WatchEvent_MODIFIED
-		case DataActionDeleted:
-			t = resourcepb.WatchEvent_DELETED
-		}
-
-		select {
-		case out <- &WrittenEvent{
-			Key: &resourcepb.ResourceKey{
-				Namespace: event.Namespace,
-				Group:     event.Group,
-				Resource:  event.Resource,
-				Name:      event.Name,
-			},
-			Type:            t,
-			Folder:          event.Folder,
-			Value:           data,
-			ResourceVersion: event.ResourceVersion,
-			PreviousRV:      event.PreviousRV,
-			Timestamp:       resourceVersionTime(event.ResourceVersion).Unix(),
-		}:
-		case <-ctx.Done():
-			return false
-		}
+	// BatchGet omits keys it has no value for rather than erroring.
+	for key := range pending {
+		k.log.Error("no data for event", "key", key.String())
 	}
-	return true
+	return values, true
 }
 
 // GetResourceStats returns resource stats within the storage backend.
