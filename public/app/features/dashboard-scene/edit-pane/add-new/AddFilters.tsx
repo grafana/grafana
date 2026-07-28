@@ -25,7 +25,7 @@ export function openAddFilterForm(dashboard: DashboardSceneLike, sectionOwner: S
   });
 
   dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
-  dashboard.state.editPane.selectObject(newVar, { force: true, multi: false });
+  dashboard.state.sidebar.selectObject(newVar, { force: true, multi: false });
 }
 
 export function AddFilters({ dashboardScene }: { dashboardScene: DashboardSceneLike }) {

@@ -64,7 +64,7 @@ interface NewLayoutEmptyProps {
 }
 
 const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
-  const { uid, isEditing, editPane, body } = dashboard.useState();
+  const { uid, isEditing, sidebar, body } = dashboard.useState();
   const isEditingNewDashboard = isEditing && !uid;
   const isAutoGrid = body instanceof AutoGridLayoutManager;
 
@@ -76,11 +76,11 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
     if (
       isEditingNewDashboard &&
       dashboard.getEditSessionSource() !== 'assistant' &&
-      editPane.state.openPane?.getId() !== 'add'
+      sidebar.state.openPane?.getId() !== 'add'
     ) {
-      editPane.openPane(new AddNewEditPane({}));
+      sidebar.openPane(new AddNewEditPane({}));
     }
-  }, [isEditingNewDashboard, dashboard, editPane]);
+  }, [isEditingNewDashboard, dashboard, sidebar]);
 
   const onSelectAutoGrid = () => {
     dashboard.switchLayout(AutoGridLayoutManager.createEmpty());

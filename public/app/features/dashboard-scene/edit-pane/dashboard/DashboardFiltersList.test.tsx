@@ -36,7 +36,7 @@ function renderFiltersList(variables: SceneVariable[] = []) {
     isEditing: true,
   });
   activateFullSceneTree(dashboardScene);
-  jest.spyOn(dashboardScene.state.editPane, 'selectObject');
+  jest.spyOn(dashboardScene.state.sidebar, 'selectObject');
 
   const renderResult = render(<DashboardFiltersList variableSet={variableSet} />);
 
@@ -102,7 +102,7 @@ describe('<DashboardFiltersList />', () => {
 
         await user.click(getByText(visibleFilter1.state.name));
 
-        expect(elements.dashboardScene.state.editPane.selectObject).toHaveBeenCalledWith(visibleFilter1);
+        expect(elements.dashboardScene.state.sidebar.selectObject).toHaveBeenCalledWith(visibleFilter1);
       });
     });
 

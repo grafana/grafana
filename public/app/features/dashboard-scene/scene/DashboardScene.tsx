@@ -209,7 +209,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         state.body ?? state.preferences?.defaultLayoutTemplate?.clone() ?? DefaultGridLayoutManager.fromVizPanels([]),
       links: state.links ?? [],
       ...state,
-      editPane: new DashboardSidebar(),
+      sidebar: new DashboardSidebar(),
       layoutOrchestrator: new DashboardLayoutOrchestrator(),
       preferences: state.preferences ?? {},
     });
@@ -395,13 +395,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * reference-counted, so we retain the handler and release it on exit (see deactivateEditPane).
    */
   public activateEditPane() {
-    const { editPane } = this.state;
-    if (editPane.isActive) {
+    const { sidebar } = this.state;
+    if (sidebar.isActive) {
       return;
     }
     // Release the previous pane's activation before acquiring a new one.
     this.deactivateEditPane();
-    this._editPaneActivation = editPane.activate();
+    this._editPaneActivation = sidebar.activate();
   }
 
   private deactivateEditPane() {

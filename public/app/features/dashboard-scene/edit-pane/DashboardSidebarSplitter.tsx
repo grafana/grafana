@@ -61,7 +61,7 @@ function DashboardSidebarSplitterLegacy({ dashboard, body, controls }: Props) {
 }
 
 function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, controls }: Props) {
-  const { editPane } = dashboard.state;
+  const { sidebar } = dashboard.state;
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
@@ -72,18 +72,18 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
    */
   useUpdateAppChromeActions(dashboard);
 
-  const { selectionContext, openPane, previousState } = useSceneObjectState(editPane, {
+  const { selectionContext, openPane, previousState } = useSceneObjectState(sidebar, {
     shouldActivateOrKeepAlive: true,
   });
 
   // Selection is only needed in edit mode.
   useEffect(() => {
     if (isEditing) {
-      editPane.enableSelection();
+      sidebar.enableSelection();
     } else {
-      editPane.disableSelection();
+      sidebar.disableSelection();
     }
-  }, [isEditing, editPane]);
+  }, [isEditing, sidebar]);
 
   const theme = useTheme2();
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
@@ -94,8 +94,8 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
     persistenceKey: isEditing ? 'dashboard' : 'dashboard-view',
     hiddenPersistenceKey: 'dashboard',
     defaultToDocked: isEditing ? true : false,
-    onClosePane: () => editPane.closePane(),
-    onGoBack: () => editPane.goBackToPrevious(),
+    onClosePane: () => sidebar.closePane(),
+    onGoBack: () => sidebar.goBackToPrevious(),
     canGoBack: previousState !== undefined,
     defaultIsHidden: isEditing ? false : isMobile,
   });
@@ -106,15 +106,15 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
    * Sync docked state to sidebar state
    */
   useEffect(() => {
-    editPane.setState({ isDocked: sidebarContext.isDocked });
-  }, [sidebarContext.isDocked, editPane]);
+    sidebar.setState({ isDocked: sidebarContext.isDocked });
+  }, [sidebarContext.isDocked, sidebar]);
 
   const onClearSelection: React.PointerEventHandler<HTMLDivElement> = (evt) => {
     if (evt.shiftKey) {
       return;
     }
 
-    editPane.clearSelection();
+    sidebar.clearSelection();
   };
 
   const onBodyRef = (ref: HTMLDivElement | null) => {

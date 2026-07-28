@@ -30,10 +30,10 @@ export interface Props {
 }
 
 /**
- * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
+ * Making the Sidebar rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
 export function DashboardSidebarRenderer({ dashboard }: Props) {
-  const sidebar = dashboard.state.editPane;
+  const sidebar = dashboard.state.sidebar;
   const { openPane, selectionContext, outlinePane } = useSceneObjectState(sidebar, {
     shouldActivateOrKeepAlive: true,
   });
@@ -214,7 +214,7 @@ function renderEnterpriseItems() {
 }
 
 function UndoButton({ dashboard }: ToolbarActionProps) {
-  const sidebar = dashboard.state.editPane;
+  const sidebar = dashboard.state.sidebar;
   const { undoStack } = sidebar.useState();
   const undoAction = undoStack[undoStack.length - 1];
   const undoWord = t('dashboard.sidebar.undo', 'Undo');
@@ -232,7 +232,7 @@ function UndoButton({ dashboard }: ToolbarActionProps) {
 }
 
 function RedoButton({ dashboard }: ToolbarActionProps) {
-  const sidebar = dashboard.state.editPane;
+  const sidebar = dashboard.state.sidebar;
   const { redoStack } = sidebar.useState();
   const redoAction = redoStack[redoStack.length - 1];
   const redoWord = t('dashboard.sidebar.redo', 'Redo');

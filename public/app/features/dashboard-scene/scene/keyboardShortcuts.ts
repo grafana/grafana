@@ -289,7 +289,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       key: 'p v',
       onTrigger: () => {
         if (scene.state.isEditing && store.exists(LS_PANEL_COPY_KEY)) {
-          const sidebar = scene.state.editPane;
+          const sidebar = scene.state.sidebar;
           const selectedObj = sidebar.getSelectedObject();
           sidebar.pastePanel(selectedObj);
 

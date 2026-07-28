@@ -52,7 +52,7 @@ function renderVariablesList(
     isEditing: true,
   });
   activateFullSceneTree(dashboardScene);
-  jest.spyOn(dashboardScene.state.editPane, 'selectObject');
+  jest.spyOn(dashboardScene.state.sidebar, 'selectObject');
 
   const renderResult = render(
     <DashboardVariablesList
@@ -133,7 +133,7 @@ describe('<DashboardVariablesList />', () => {
 
         await user.click(getByText(visibleVar1.state.name));
 
-        expect(elements.dashboardScene.state.editPane.selectObject).toHaveBeenCalledWith(visibleVar1);
+        expect(elements.dashboardScene.state.sidebar.selectObject).toHaveBeenCalledWith(visibleVar1);
       });
     });
 

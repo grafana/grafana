@@ -95,8 +95,8 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
 
   const onEditVariable = useCallback(
     (variable: SceneVariable) => {
-      const { editPane } = getDashboardSceneFor(set).state;
-      editPane.selectObject(variable);
+      const { sidebar } = getDashboardSceneFor(set).state;
+      sidebar.selectObject(variable);
     },
     [set]
   );

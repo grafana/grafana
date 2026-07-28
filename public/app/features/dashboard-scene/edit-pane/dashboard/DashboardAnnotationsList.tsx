@@ -35,8 +35,8 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
   );
 
   const onClickAnnotation = useCallback((a: DashboardAnnotationsDataLayer) => {
-    const { editPane } = getDashboardSceneFor(a).state;
-    editPane.selectObject(a);
+    const { sidebar } = getDashboardSceneFor(a).state;
+    sidebar.selectObject(a);
   }, []);
 
   const onDragEnd = useCallback(

@@ -31,8 +31,8 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(filters), [filters]);
 
   const onClickFilter = useCallback((variable: SceneVariable) => {
-    const { editPane } = getDashboardSceneFor(variable).state;
-    editPane.selectObject(variable);
+    const { sidebar } = getDashboardSceneFor(variable).state;
+    sidebar.selectObject(variable);
   }, []);
 
   const onDragEnd = useMemo(

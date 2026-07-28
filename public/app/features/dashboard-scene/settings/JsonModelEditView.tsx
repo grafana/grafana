@@ -161,7 +161,7 @@ function JsonModelEditViewComponent({ model }: SceneComponentProps<JsonModelEdit
   const goToSidebar = () => {
     // close settings and open the "Edit as code" sidebar pane
     const dashboard = getDashboardSceneFor(model);
-    dashboard.state.editPane.openPane(new DashboardCodePane({}));
+    dashboard.state.sidebar.openPane(new DashboardCodePane({}));
     locationService.partial({ editview: null });
 
     DashboardInteractions.takeMeToSidebarClicked({ item: 'json-model' });

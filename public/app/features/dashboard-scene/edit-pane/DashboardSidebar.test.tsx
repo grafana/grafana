@@ -48,13 +48,13 @@ describe('DashboardSidebar', () => {
   describe('Selection', () => {
     it('Can select dashboard', () => {
       const scene = buildTestScene();
-      scene.state.editPane.state.selectionContext.onSelect({ id: scene.state.key! }, {});
-      expect(scene.state.editPane.getSelectedObject()).toBe(scene);
+      scene.state.sidebar.state.selectionContext.onSelect({ id: scene.state.key! }, {});
+      expect(scene.state.sidebar.getSelectedObject()).toBe(scene);
     });
 
     it('single panel and multi panel selection', () => {
       const scene = buildTestScene();
-      const sidebar = scene.state.editPane;
+      const sidebar = scene.state.sidebar;
       const panel1 = scene.onCreateNewPanel();
 
       expect(sidebar.getSelectedObject()).toBe(panel1);
@@ -78,7 +78,7 @@ describe('DashboardSidebar', () => {
 
     it('Clear selection should select dashboard when docked', () => {
       const scene = buildTestScene();
-      const sidebar = scene.state.editPane;
+      const sidebar = scene.state.sidebar;
 
       const panel = scene.onCreateNewPanel();
       sidebar.clearSelection();
@@ -94,7 +94,7 @@ describe('DashboardSidebar', () => {
 
     it('Force selecting should keep selecting if already selected', () => {
       const scene = buildTestScene();
-      const sidebar = scene.state.editPane;
+      const sidebar = scene.state.sidebar;
 
       // This selects panel
       const panel = scene.onCreateNewPanel();
@@ -114,7 +114,7 @@ describe('DashboardSidebar', () => {
 
     it('Selecting when none element pane is open should not toggle selection', () => {
       const scene = buildTestScene();
-      const sidebar = scene.state.editPane;
+      const sidebar = scene.state.sidebar;
 
       const panel = scene.onCreateNewPanel();
 
@@ -148,7 +148,7 @@ describe('DashboardSidebar', () => {
 
     it('Removing a panel that is not selected', () => {
       const scene = buildTestScene();
-      const sidebar = scene.state.editPane;
+      const sidebar = scene.state.sidebar;
 
       const panel1 = scene.onCreateNewPanel();
       const panel2 = scene.onCreateNewPanel();
@@ -168,7 +168,7 @@ describe('DashboardSidebar', () => {
 
   it('Handles edit action events that adds objects', () => {
     const scene = buildTestScene();
-    const sidebar = scene.state.editPane;
+    const sidebar = scene.state.sidebar;
 
     scene.onCreateNewPanel();
 
@@ -187,7 +187,7 @@ describe('DashboardSidebar', () => {
 
   it('when new action comes in clears redo stack', () => {
     const scene = buildTestScene();
-    const sidebar = scene.state.editPane;
+    const sidebar = scene.state.sidebar;
 
     scene.onCreateNewPanel();
 
@@ -202,7 +202,7 @@ describe('DashboardSidebar', () => {
 
   it('clone should not include undo/redo history', () => {
     const scene = buildTestScene();
-    const sidebar = scene.state.editPane;
+    const sidebar = scene.state.sidebar;
 
     scene.onCreateNewPanel();
     scene.onCreateNewPanel();
@@ -220,7 +220,7 @@ describe('DashboardSidebar', () => {
 
   it('clone should preserve the outline collapsed state', () => {
     const scene = buildTestScene();
-    const sidebar = scene.state.editPane;
+    const sidebar = scene.state.sidebar;
     const outlinePane = sidebar.state.outlinePane!;
 
     outlinePane.setNodeCollapsed('some-key', false);
@@ -254,7 +254,7 @@ describe('DashboardSidebar', () => {
 
     activateFullSceneTree(dashboard);
 
-    const sidebar = dashboard.state.editPane;
+    const sidebar = dashboard.state.sidebar;
     sidebar.selectObject(variable, { force: true });
 
     const changedVariable = new ConstantVariable({ name: 'service' });
@@ -304,7 +304,7 @@ describe('DashboardSidebar', () => {
     expect(local.state.name).toBe('env');
     expect(variableSet.state.variables).toEqual([local]);
 
-    dashboard.state.editPane.undoAction();
+    dashboard.state.sidebar.undoAction();
 
     expect(local.state.name).toBe('localVar');
     expect(variableSet.state.variables).toEqual([predefined, local]);
@@ -667,7 +667,7 @@ function buildTestSceneWithRepeat(layoutManager: DashboardLayoutManager) {
 
   return {
     variables,
-    sidebar: scene.state.editPane,
+    sidebar: scene.state.sidebar,
     scene,
   };
 }
@@ -683,7 +683,7 @@ function setupEmptyDashboard(): {
   });
   config.featureToggles.dashboardNewLayouts = true;
   activateFullSceneTree(dashboard);
-  return { dashboard, sidebar: dashboard.state.editPane };
+  return { dashboard, sidebar: dashboard.state.sidebar };
 }
 
 function setupWithTwoTabs(): {
@@ -707,7 +707,7 @@ function setupWithTwoTabs(): {
   });
   config.featureToggles.dashboardNewLayouts = true;
   activateFullSceneTree(dashboard);
-  return { dashboard, tab1, tab2, tab1Viz: panel, sidebar: dashboard.state.editPane };
+  return { dashboard, tab1, tab2, tab1Viz: panel, sidebar: dashboard.state.sidebar };
 }
 
 function setupWithTwoRows(): {
@@ -731,5 +731,5 @@ function setupWithTwoRows(): {
   });
   config.featureToggles.dashboardNewLayouts = true;
   activateFullSceneTree(dashboard);
-  return { dashboard, row1, row2, row1Viz: panel, sidebar: dashboard.state.editPane };
+  return { dashboard, row1, row2, row1Viz: panel, sidebar: dashboard.state.sidebar };
 }

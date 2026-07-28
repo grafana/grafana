@@ -50,7 +50,7 @@ async function testDashboardEditableElement(dashboard: DashboardScene, inputElem
     fireEvent.blur(inputElement);
   };
 
-  const sidebar = dashboard.state.editPane;
+  const sidebar = dashboard.state.sidebar;
   expect(sidebar.state.undoStack).toHaveLength(0);
   expect(sidebar.state.redoStack).toHaveLength(0);
   expect(inputElement).toHaveValue('initial');

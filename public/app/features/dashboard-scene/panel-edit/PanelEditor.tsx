@@ -99,7 +99,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     // Clear any panel selection when entering panel edit mode.
     // Need to clear selection here since selection is activated when panel edit mode is entered through the panel actions menu. This causes sidebar panel editor to be open when exiting panel edit mode
-    dashboard.state.editPane.clearSelection();
+    dashboard.state.sidebar.clearSelection();
 
     if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
       const isPaneCollapsed = sessionStorage.getItem(EDIT_PANE_COLLAPSED_KEY) === 'true';
@@ -165,7 +165,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // is not active while panel edit is active so we have to let the edit pane (which owns undo/redo)
     // publish this event when it activates
     const dashboard = getDashboardSceneFor(this);
-    dashboard.state.editPane.setPanelEditAction(editAction);
+    dashboard.state.sidebar.setPanelEditAction(editAction);
   }
 
   public waitForPlugin(retry = 0) {

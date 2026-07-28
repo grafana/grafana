@@ -337,7 +337,7 @@ export class RowsLayoutManager
       return;
     }
 
-    const sidebar = getDashboardSceneFor(this).state.editPane;
+    const sidebar = getDashboardSceneFor(this).state.sidebar;
     sidebar.selectObject(row!, { force: true, multi: false });
   }
 

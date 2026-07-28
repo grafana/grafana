@@ -24,8 +24,8 @@ export function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLa
 
   const onSelectAnnotation = useCallback(
     (layer: SceneDataLayerProvider) => {
-      const { editPane } = getDashboardSceneFor(dataLayerSet).state;
-      editPane.selectObject(layer);
+      const { sidebar } = getDashboardSceneFor(dataLayerSet).state;
+      sidebar.selectObject(layer);
     },
     [dataLayerSet]
   );

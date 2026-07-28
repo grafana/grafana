@@ -24,7 +24,7 @@ describe('openAddFilterForm', () => {
   it('adds an adhoc filter to the dashboard variable set', () => {
     const variableSet = new SceneVariableSet({ variables: [] });
     const dashboard = new DashboardScene({ $variables: variableSet, isEditing: true });
-    jest.spyOn(dashboard.state.editPane, 'selectObject');
+    jest.spyOn(dashboard.state.sidebar, 'selectObject');
 
     openAddFilterForm(dashboard, dashboard);
 
@@ -32,7 +32,7 @@ describe('openAddFilterForm', () => {
     const { source, addedObject } = addVariableMock.mock.calls[0][0];
     expect(source).toBe(variableSet);
     expect(addedObject).toBeInstanceOf(AdHocFiltersVariable);
-    expect(dashboard.state.editPane.selectObject).toHaveBeenCalledWith(addedObject, { force: true, multi: false });
+    expect(dashboard.state.sidebar.selectObject).toHaveBeenCalledWith(addedObject, { force: true, multi: false });
   });
 
   it('adds an adhoc filter to a section variable set', () => {
@@ -45,7 +45,7 @@ describe('openAddFilterForm', () => {
       body: new RowsLayoutManager({ rows: [row] }),
       isEditing: true,
     });
-    jest.spyOn(dashboard.state.editPane, 'selectObject');
+    jest.spyOn(dashboard.state.sidebar, 'selectObject');
 
     openAddFilterForm(dashboard, row);
 
@@ -53,7 +53,7 @@ describe('openAddFilterForm', () => {
     const { source, addedObject } = addVariableMock.mock.calls[0][0];
     expect(source).toBe(sectionVarSet);
     expect(addedObject).toBeInstanceOf(AdHocFiltersVariable);
-    expect(dashboard.state.editPane.selectObject).toHaveBeenCalledWith(addedObject, { force: true, multi: false });
+    expect(dashboard.state.sidebar.selectObject).toHaveBeenCalledWith(addedObject, { force: true, multi: false });
   });
 
   it('creates a variable set on the section if none exists', () => {
@@ -62,7 +62,7 @@ describe('openAddFilterForm', () => {
       body: new RowsLayoutManager({ rows: [row] }),
       isEditing: true,
     });
-    jest.spyOn(dashboard.state.editPane, 'selectObject');
+    jest.spyOn(dashboard.state.sidebar, 'selectObject');
 
     expect(row.state.$variables).toBeUndefined();
 
@@ -86,7 +86,7 @@ describe('openAddFilterForm', () => {
       body: new RowsLayoutManager({ rows: [row] }),
       isEditing: true,
     });
-    jest.spyOn(dashboard.state.editPane, 'selectObject');
+    jest.spyOn(dashboard.state.sidebar, 'selectObject');
 
     openAddFilterForm(dashboard, row);
 

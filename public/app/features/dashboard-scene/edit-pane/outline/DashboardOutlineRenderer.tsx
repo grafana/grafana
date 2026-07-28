@@ -49,7 +49,7 @@ export function DashboardOutlineRenderer({ model }: SceneComponentProps<Dashboar
             <DashboardOutlineNode
               sceneObject={dashboard}
               isEditing={isEditing}
-              sidebar={dashboard.state.editPane}
+              sidebar={dashboard.state.sidebar}
               outline={model}
               depth={0}
               index={0}

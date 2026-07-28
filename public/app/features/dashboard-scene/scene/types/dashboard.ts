@@ -63,7 +63,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** How many panels to show per row for search results */
   panelsPerRow?: number;
   /** options pane */
-  editPane: DashboardSidebarLike;
+  sidebar: DashboardSidebarLike;
   /** Manages dragging/dropping of layout items */
   layoutOrchestrator: DashboardLayoutOrchestrator;
   /** True while default variables from datasources are being loaded */

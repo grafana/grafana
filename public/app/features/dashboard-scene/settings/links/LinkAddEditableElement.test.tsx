@@ -81,7 +81,7 @@ describe('LinkAddEditableElement', () => {
 
     it('registers an undoable action on the edit pane', () => {
       const dashboard = buildDashboard();
-      const sidebar = dashboard.state.editPane;
+      const sidebar = dashboard.state.sidebar;
 
       expect(sidebar.state.undoStack).toHaveLength(0);
 
@@ -92,7 +92,7 @@ describe('LinkAddEditableElement', () => {
 
     it('supports undo of the added link', () => {
       const dashboard = buildDashboard([createTestLink({ title: 'Existing' })]);
-      const sidebar = dashboard.state.editPane;
+      const sidebar = dashboard.state.sidebar;
 
       openAddLinkPane(dashboard);
       expect(dashboard.state.links).toHaveLength(2);
@@ -104,7 +104,7 @@ describe('LinkAddEditableElement', () => {
 
     it('clears selection on undo after adding a link', () => {
       const dashboard = buildDashboard();
-      const sidebar = dashboard.state.editPane;
+      const sidebar = dashboard.state.sidebar;
 
       openAddLinkPane(dashboard);
       expect(sidebar.getSelectedObject()).toBeDefined();
@@ -115,7 +115,7 @@ describe('LinkAddEditableElement', () => {
 
     it('reselects the link on redo after undo', () => {
       const dashboard = buildDashboard();
-      const sidebar = dashboard.state.editPane;
+      const sidebar = dashboard.state.sidebar;
 
       openAddLinkPane(dashboard);
       expect(sidebar.getSelectedObject()).toBeDefined();
@@ -200,7 +200,7 @@ describe('LinkAddEditableElement', () => {
 
         element.onDelete();
 
-        const sidebar = dashboard.state.editPane;
+        const sidebar = dashboard.state.sidebar;
         expect(sidebar.state.undoStack).toHaveLength(1);
 
         act(() => sidebar.undoAction());

@@ -109,12 +109,12 @@ describe('DashboardSidebarRenderer', () => {
     expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
 
     // With defaultToDocked: true when editing, sidebar starts docked
-    expect(scene.state.editPane.state.isDocked).toBe(true);
+    expect(scene.state.sidebar.state.isDocked).toBe(true);
 
     // Clicking dock toggle should undock the sidebar
     act(() => screen.getByTestId(selectors.components.Sidebar.dockToggle).click());
 
-    expect(scene.state.editPane.state.isDocked).toBe(false);
+    expect(scene.state.sidebar.state.isDocked).toBe(false);
   });
 
   describe('outline interactions tracking', () => {
@@ -162,13 +162,13 @@ describe('DashboardSidebarRenderer', () => {
 
       // Open the outline pane first
       await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton));
-      expect(scene.state.editPane.state.openPane).toBeDefined();
+      expect(scene.state.sidebar.state.openPane).toBeDefined();
 
       // Click hide
       await user.click(screen.getByTestId(selectors.components.Sidebar.showHideToggle));
 
       // Pane should be cleared
-      expect(scene.state.editPane.state.openPane).toBeUndefined();
+      expect(scene.state.sidebar.state.openPane).toBeUndefined();
       // The sidebar container should no longer be rendered (only the show toggle remains)
       expect(screen.queryByTestId(selectors.components.Sidebar.container)).not.toBeInTheDocument();
     });
@@ -186,14 +186,14 @@ describe('DashboardSidebarRenderer', () => {
 
       // Select the panel programmatically (clicking a panel in real UX)
       const panel = scene.state.body.getVizPanels()[0];
-      act(() => scene.state.editPane.selectObject(panel));
+      act(() => scene.state.sidebar.selectObject(panel));
 
       // Sidebar pops up — effective isDocked is false during temp-show
       expect(screen.getByTestId(selectors.components.Sidebar.container)).toBeInTheDocument();
-      expect(scene.state.editPane.state.isDocked).toBe(false);
+      expect(scene.state.sidebar.state.isDocked).toBe(false);
 
       // De-selecting closes the pane and re-hides the sidebar
-      act(() => scene.state.editPane.clearSelection(true));
+      act(() => scene.state.sidebar.clearSelection(true));
 
       expect(screen.queryByTestId(selectors.components.Sidebar.container)).not.toBeInTheDocument();
     });

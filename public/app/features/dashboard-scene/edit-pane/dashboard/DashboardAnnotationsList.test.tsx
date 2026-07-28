@@ -36,7 +36,7 @@ async function renderAnnotationsList(annotationLayers: DashboardAnnotationsDataL
   const dashboardScene = new DashboardScene({ $data: dataLayerSet });
 
   activateFullSceneTree(dashboardScene);
-  jest.spyOn(dashboardScene.state.editPane, 'selectObject');
+  jest.spyOn(dashboardScene.state.sidebar, 'selectObject');
 
   let renderResult!: ReturnType<typeof render>;
 
@@ -188,7 +188,7 @@ describe('User interactions', () => {
 
       await user.click(getByText(visibleEnabled.state.name));
 
-      expect(elements.dashboardScene.state.editPane.selectObject).toHaveBeenCalledWith(visibleEnabled);
+      expect(elements.dashboardScene.state.sidebar.selectObject).toHaveBeenCalledWith(visibleEnabled);
     });
   });
 

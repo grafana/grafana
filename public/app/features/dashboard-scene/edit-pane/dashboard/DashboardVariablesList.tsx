@@ -58,8 +58,8 @@ export function DashboardVariablesList({
   const { visible, controlsMenu, hidden } = useMemo(() => partitionVariablesByDisplay(editable), [editable]);
 
   const onClickVariable = useCallback((variable: SceneVariable) => {
-    const { editPane } = getDashboardSceneFor(variable).state;
-    editPane.selectObject(variable);
+    const { sidebar } = getDashboardSceneFor(variable).state;
+    sidebar.selectObject(variable);
   }, []);
 
   const onDragEnd = useMemo(

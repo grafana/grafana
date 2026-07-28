@@ -30,11 +30,11 @@ import {
 } from './utils';
 
 export function openAddVariablePane(dashboard: DashboardSceneLike) {
-  dashboard.state.editPane.openPane(new VariableAddPane({ sectionOwner: dashboard.getRef() }));
+  dashboard.state.sidebar.openPane(new VariableAddPane({ sectionOwner: dashboard.getRef() }));
 }
 
 export function openAddSectionVariablePane(dashboard: DashboardSceneLike, sectionOwner: SceneObject) {
-  dashboard.state.editPane.openPane(new VariableAddPane({ sectionOwner: sectionOwner.getRef() }));
+  dashboard.state.sidebar.openPane(new VariableAddPane({ sectionOwner: sectionOwner.getRef() }));
 }
 
 export interface VariableAddPaneState extends SceneObjectState {
@@ -105,7 +105,7 @@ export class VariableTypeChangePane
 
 export function openChangeVariableTypePane(variable: SceneVariable) {
   const dashboard = getDashboardSceneLike(variable);
-  dashboard.state.editPane.openPane(new VariableTypeChangePane({ variableRef: variable.getRef() }));
+  dashboard.state.sidebar.openPane(new VariableTypeChangePane({ variableRef: variable.getRef() }));
 }
 
 function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableTypeChangePane>) {
@@ -121,7 +121,7 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
       }
 
       if (type === variable.state.type) {
-        dashboard.state.editPane.goBackToPrevious();
+        dashboard.state.sidebar.goBackToPrevious();
         return;
       }
 

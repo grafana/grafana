@@ -37,7 +37,7 @@ function renderLinksList(links: DashboardLink[] = []) {
     isEditing: true,
   });
   activateFullSceneTree(dashboardScene);
-  jest.spyOn(dashboardScene.state.editPane, 'selectObject');
+  jest.spyOn(dashboardScene.state.sidebar, 'selectObject');
 
   const renderResult = render(<DashboardLinksList dashboard={dashboardScene} />);
 

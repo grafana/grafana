@@ -24,7 +24,7 @@ export function ViewPanelWrapper({ panel, showControlsPane }: { panel: VizPanel;
 
 function ViewPanelWithPane({ panel, dataProvider }: { panel: VizPanel; dataProvider: SceneDataProvider }) {
   const dashboard = getDashboardSceneLike(panel);
-  const { editPane } = dashboard.useState();
+  const { sidebar } = dashboard.useState();
   const { data } = dataProvider.useState();
   const context = usePanelSceneContextObject(panel);
   const isSmallScreen = !useMediaQueryMinWidth('sm');
@@ -34,23 +34,23 @@ function ViewPanelWithPane({ panel, dataProvider }: { panel: VizPanel; dataProvi
   // Open pane on mount
   useEffect(() => {
     if (!isSmallScreen) {
-      editPane.openPane(viewPanelPane);
+      sidebar.openPane(viewPanelPane);
     }
-  }, [editPane, isSmallScreen, viewPanelPane]);
+  }, [sidebar, isSmallScreen, viewPanelPane]);
 
   // Handle manual toggling of the pane via the edit pane buttons
   // This is done via an event that sidebar pane button publishes as the ViewPanelSidePane instance & panel ref is only available from this component
   useEffect(() => {
-    const sub = editPane.subscribeToEvent(ToggleViewPanePaneEvent, () => {
-      if (editPane.state.openPane === viewPanelPane) {
-        editPane.closePane();
+    const sub = sidebar.subscribeToEvent(ToggleViewPanePaneEvent, () => {
+      if (sidebar.state.openPane === viewPanelPane) {
+        sidebar.closePane();
       } else {
-        editPane.openPane(viewPanelPane);
+        sidebar.openPane(viewPanelPane);
       }
     });
 
     return () => sub.unsubscribe();
-  }, [viewPanelPane, editPane]);
+  }, [viewPanelPane, sidebar]);
 
   if (!context || !data || !fanoutMode) {
     return <panel.Component model={panel} />;

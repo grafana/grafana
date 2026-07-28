@@ -148,7 +148,7 @@ describe('VariableEditableElement', () => {
     renderVariableEditPane(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
-    expect(dashboard.state.editPane.state.openPane).toBeInstanceOf(VariableTypeChangePane);
+    expect(dashboard.state.sidebar.state.openPane).toBeInstanceOf(VariableTypeChangePane);
     expect(screen.getByText('Change variable type')).toBeInTheDocument();
   });
 });
@@ -188,7 +188,7 @@ function buildDashboardVariableScene() {
   });
 
   activateFullSceneTree(dashboard);
-  dashboard.state.editPane.selectObject(variable, { force: true });
+  dashboard.state.sidebar.selectObject(variable, { force: true });
 
   return { dashboard, variableSet };
 }
