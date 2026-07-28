@@ -115,6 +115,73 @@ describe('Lookup gazetteer', () => {
     `);
   });
 
+  it('does not look up more values than the frame has rows', () => {
+    const data = toDataFrame({
+      name: 'countries',
+      fields: [{ name: 'code2letters', type: FieldType.string, values: ['FR'] }],
+    });
+
+    const matcher = fieldMatchers.get(FieldMatcherID.byName).get('code2letters');
+
+    const frame = toDataFrame({
+      fields: [
+        { name: 'id', values: ['FR', 'DE', 'ES'] },
+        { name: 'name', values: ['France', 'Germany', 'Spain'] },
+        { name: 'lng', values: [2.2137, 10.4515, -3.7492] },
+        { name: 'lat', values: [46.2276, 51.1657, 40.4637] },
+      ],
+    });
+    const gaz = frameAsGazetter(frame, { path: 'path/to/gaz.json' });
+    const find = jest.spyOn(gaz, 'find');
+
+    const out = addFieldsFromGazetteer([data], gaz, matcher)[0];
+
+    expect(find).toHaveBeenCalledTimes(1);
+    expect(find).toHaveBeenCalledWith('FR');
+
+    expect(out.length).toBe(1);
+    for (const field of out.fields) {
+      expect(field.values).toHaveLength(1);
+    }
+    expect(out.fields.map((f) => [f.name, f.values])).toEqual([
+      ['code2letters', ['FR']],
+      ['id', ['FR']],
+      ['name', ['France']],
+      ['lng', [2.2137]],
+      ['lat', [46.2276]],
+    ]);
+  });
+
+  it('looks up rows past the number of gazetteer entries', () => {
+    const data = toDataFrame({
+      name: 'locations',
+      fields: [
+        { name: 'location', type: FieldType.string, values: ['AL', 'AK', 'AZ', 'CA'] },
+        { name: 'values', type: FieldType.number, values: [0, 10, 5, 1] },
+      ],
+    });
+
+    const matcher = fieldMatchers.get(FieldMatcherID.byName).get('location');
+
+    const frame = toDataFrame({
+      fields: [
+        { name: 'id', values: ['CA', 'AL'] },
+        { name: 'name', values: ['California', 'Alabama'] },
+      ],
+    });
+    const gaz = frameAsGazetter(frame, { path: 'path/to/gaz.json' });
+
+    const out = addFieldsFromGazetteer([data], gaz, matcher)[0];
+
+    // 'CA' is row 3, past the 2 gazetteer entries, and must still be looked up
+    expect(out.fields.map((f) => [f.name, f.values])).toEqual([
+      ['location', ['AL', 'AK', 'AZ', 'CA']],
+      ['id', ['AL', undefined, undefined, 'CA']],
+      ['name', ['Alabama', undefined, undefined, 'California']],
+      ['values', [0, 10, 5, 1]],
+    ]);
+  });
+
   it('goes through entire gazetteer to find matches', async () => {
     const cfg = {
       id: DataTransformerID.fieldLookup,

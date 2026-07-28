@@ -61,7 +61,8 @@ export function addFieldsFromGazetteer(frames: DataFrame[], gazetteer: Gazetteer
           fields.push({ ...gazetteerField, values: buffer });
         }
 
-        for (let valueIndex = 0; valueIndex < gazetteer.count!; valueIndex++) {
+        // One lookup per row: the buffers above are sized to the frame, not to the gazetteer
+        for (let valueIndex = 0; valueIndex < frameLength; valueIndex++) {
           const foundValue = gazetteer.find(values[valueIndex]);
 
           if (foundValue?.index != null) {
