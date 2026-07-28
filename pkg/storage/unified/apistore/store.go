@@ -356,59 +356,69 @@ func (s *Storage) Delete(
 		return errors.New("missing auth info")
 	}
 
-	if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
-		return err
-	}
-
 	k, err := s.getKey(key)
 	if err != nil {
 		return err
 	}
-	cmd := &resourcepb.DeleteRequest{Key: k}
 
-	if preconditions != nil {
-		if err := preconditions.Check(key, out); err != nil {
+	// The delete is conditional on the resource version read here, so a
+	// concurrent write (e.g. a controller status update) between the read and
+	// the delete produces a conflict. Callers of an unconditional delete never
+	// supplied that resource version, so re-read and retry rather than
+	// surfacing the conflict; explicit preconditions are re-checked against
+	// the fresh read each attempt. This mirrors the upstream etcd3
+	// conditionalDelete retry loop.
+	for attempt := 1; ; attempt++ {
+		if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
 			return err
 		}
-		if preconditions.UID != nil {
-			cmd.Uid = string(*preconditions.UID)
+
+		cmd := &resourcepb.DeleteRequest{Key: k}
+
+		if preconditions != nil {
+			if err := preconditions.Check(key, out); err != nil {
+				return err
+			}
+			if preconditions.UID != nil {
+				cmd.Uid = string(*preconditions.UID)
+			}
 		}
-	}
 
-	if validateDeletion != nil {
-		if err := validateDeletion(ctx, out); err != nil {
-			return err
+		if validateDeletion != nil {
+			if err := validateDeletion(ctx, out); err != nil {
+				return err
+			}
 		}
-	}
 
-	meta, err := utils.MetaAccessor(out)
-	if err != nil {
-		return fmt.Errorf("unable to read object %w", err)
-	}
-	if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
-		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
-	}
+		meta, err := utils.MetaAccessor(out)
+		if err != nil {
+			return fmt.Errorf("unable to read object %w", err)
+		}
+		if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
+			return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
+		}
 
-	cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
-	if err != nil {
-		return resource.GetError(resource.AsErrorResult(err))
-	}
-	rsp, err := s.store.Delete(ctx, cmd)
-	if err != nil {
-		return resource.GetError(resource.AsErrorResult(err))
-	}
-	if rsp.Error != nil {
-		return resource.GetError(rsp.Error)
-	}
+		cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
+		if err != nil {
+			return resource.GetError(resource.AsErrorResult(err))
+		}
+		rsp, err := s.store.Delete(ctx, cmd)
+		if err != nil {
+			return resource.GetError(resource.AsErrorResult(err))
+		}
+		if rsp.Error != nil {
+			if rsp.Error.Code == http.StatusConflict && attempt < MaxUpdateAttempts {
+				continue
+			}
+			return resource.GetError(rsp.Error)
+		}
 
-	if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
-		logging.FromContext(ctx).Warn("failed to delete inline secure values", "err", err)
-	}
+		if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
+			logging.FromContext(ctx).Warn("failed to delete inline secure values", "err", err)
+		}
 
-	if err := s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion)); err != nil {
-		return err
+		return s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion))
 	}
-	return nil
 }
 
 // This version is not yet passing the watch tests
