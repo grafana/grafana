@@ -21,6 +21,8 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 	ctx, span := tracing.Start(ctx, "ofrep.proxy.evalAllFlags")
 	defer span.End()
 
+	b.logger.Debug("Proxying bulk flag eval request", "namespace", namespace, "isAuthedUser", isAuthedUser)
+
 	r = r.WithContext(ctx)
 
 	proxy, err := b.newProxy(ofrepPath, namespace)
@@ -73,6 +75,8 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 	ctx, span := tracing.Start(ctx, "ofrep.proxy.evalFlag")
 	defer span.End()
 
+	b.logger.Debug("Proxying single flag eval request", "namespace", namespace, "key", flagKey, "isAuthedUser", isAuthedUser)
+
 	r = r.WithContext(ctx)
 
 	proxy, err := b.newProxy(path.Join(ofrepPath, flagKey), namespace)
@@ -110,7 +114,7 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 		// Not public -> respond as if the flag doesn't exist, so an unauthed
 		// caller can't use the 404-vs-401 distinction to probe which private
 		// flags exist.
-		b.logger.Debug("Unauthed request for non-public flag, responding as not-found", "key", flagKey)
+		b.logger.Debug("Unauthed request for non-public flag, responding as not-found", "namespace", namespace, "key", flagKey)
 		notFoundBody, err := json.Marshal(goffmodel.OFREPEvaluateErrorResponse{
 			OFREPCommonErrorResponse: goffmodel.OFREPCommonErrorResponse{
 				ErrorCode:    "FLAG_NOT_FOUND",
