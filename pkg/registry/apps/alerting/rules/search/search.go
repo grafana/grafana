@@ -124,7 +124,7 @@ func (h *Handler) run(ctx context.Context, body model.CreateSearchRulesRequestBo
 		return nil, "", err
 	}
 	if resp.Error != nil {
-		return nil, "", apierrors.NewInternalError(errorFromResult(resp.Error))
+		return nil, "", resource.GetError(resp.Error)
 	}
 	// The continue token is a numeric offset into a single, stably-ordered
 	// result set. This is correct only because each backend paginates one
@@ -366,10 +366,6 @@ func (r rowReader) fields() model.CreateSearchRulesRuleSearchHitFields {
 	f.NotificationType = r.strPtr(fieldNotificationType)
 	f.RoutingTree = r.strPtr(fieldRoutingTree)
 	return f
-}
-
-func errorFromResult(e *resourcepb.ErrorResult) error {
-	return &apierrors.StatusError{ErrStatus: metav1.Status{Status: metav1.StatusFailure, Message: e.Message, Code: e.Code}}
 }
 
 func writeJSON(w app.CustomRouteResponseWriter, obj any) error {
