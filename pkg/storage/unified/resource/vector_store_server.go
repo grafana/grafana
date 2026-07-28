@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/json"
 
 	claims "github.com/grafana/authlib/types"
 	"google.golang.org/grpc/codes"
@@ -82,11 +83,102 @@ func (s *VectorStoreServer) authorize(ctx context.Context, namespace, group, res
 	return nil
 }
 
+// validateInputs enforces the per-input contract. When requireUID is
+// non-empty (UpsertSubresources), every input's uid must be empty or equal
+// to it.
+func validateInputs(inputs []*resourcepb.EmbeddingInput, requireUID string) error {
+	if len(inputs) == 0 {
+		return status.Error(codes.InvalidArgument, "inputs must not be empty")
+	}
+	if len(inputs) > maxWriteBatch {
+		return status.Errorf(codes.InvalidArgument, "too many inputs: %d > %d", len(inputs), maxWriteBatch)
+	}
+	for i, in := range inputs {
+		switch {
+		case in == nil:
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: empty", i)
+		case requireUID == "" && in.Uid == "":
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: uid is required", i)
+		case requireUID != "" && in.Uid != "" && in.Uid != requireUID:
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: uid %q does not match request uid %q", i, in.Uid, requireUID)
+		case in.Content == "":
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: content is required", i)
+		case in.Title == "":
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: title is required", i)
+		case len(in.Metadata) > maxMetadataBytes:
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: metadata exceeds %d bytes", i, maxMetadataBytes)
+		case len(in.Metadata) > 0 && !json.Valid(in.Metadata):
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: metadata is not valid JSON", i)
+		}
+	}
+	return nil
+}
+
+// embedInputs embeds every input's content (retrieval-document task) and
+// returns one Vector per input, stamped with the collection's partition key.
+// Embedding is all-or-nothing per batch: a provider failure fails the call.
+func (s *VectorStoreServer) embedInputs(ctx context.Context, namespace string, coll vector.Collection, uid string, inputs []*resourcepb.EmbeddingInput) ([]vector.Vector, error) {
+	texts := make([]string, len(inputs))
+	for i, in := range inputs {
+		texts[i] = in.Content
+	}
+	out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
+		Texts:     texts,
+		Normalize: s.embedder.ShouldNormalize(),
+		Task:      embedder.TaskRetrievalDocument,
+		Tenant:    namespace,
+	})
+	if err != nil {
+		s.log.Error("vector store: embed batch", "err", err, "group", coll.Group, "resource", coll.Resource)
+		return nil, status.Error(codes.Internal, "embed batch")
+	}
+	if len(out.Embeddings) != len(inputs) {
+		return nil, status.Errorf(codes.Internal, "embedder returned %d embeddings for %d inputs", len(out.Embeddings), len(inputs))
+	}
+	rows := make([]vector.Vector, len(inputs))
+	for i, in := range inputs {
+		rowUID := in.Uid
+		if rowUID == "" {
+			rowUID = uid
+		}
+		rows[i] = vector.Vector{
+			Namespace:   namespace,
+			Resource:    coll.PartitionKey,
+			UID:         rowUID,
+			Title:       in.Title,
+			Subresource: in.Subresource,
+			Content:     in.Content,
+			Metadata:    in.Metadata,
+			Embedding:   out.Embeddings[i].Dense,
+			Model:       s.embedder.Model,
+		}
+	}
+	return rows, nil
+}
+
 func (s *VectorStoreServer) Upsert(ctx context.Context, req *resourcepb.VectorUpsertRequest) (*resourcepb.VectorUpsertResponse, error) {
 	if err := s.authorize(ctx, req.Namespace, req.Group, req.Resource); err != nil {
 		return nil, err
 	}
-	return nil, status.Error(codes.Unimplemented, "not implemented yet")
+	if err := validateInputs(req.Inputs, ""); err != nil {
+		return nil, err
+	}
+
+	coll, err := s.store.EnsureCollection(ctx, req.Group, req.Resource, true)
+	if err != nil {
+		s.log.Error("vector store: ensure collection", "err", err, "group", req.Group, "resource", req.Resource)
+		return nil, status.Error(codes.Internal, "provision collection")
+	}
+
+	rows, err := s.embedInputs(ctx, req.Namespace, coll, "", req.Inputs)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.store.Upsert(ctx, rows); err != nil {
+		s.log.Error("vector store: upsert", "err", err, "group", req.Group, "resource", req.Resource)
+		return nil, status.Error(codes.Internal, "upsert")
+	}
+	return &resourcepb.VectorUpsertResponse{Upserted: int64(len(rows))}, nil
 }
 
 func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourcepb.VectorUpsertSubresourcesRequest) (*resourcepb.VectorUpsertSubresourcesResponse, error) {

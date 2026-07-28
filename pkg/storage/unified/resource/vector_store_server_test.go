@@ -2,6 +2,8 @@ package resource
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -175,4 +177,87 @@ func TestVectorStore_UpdateMetadataUnimplemented(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Equal(t, codes.Unimplemented, status.Code(err))
+}
+
+func TestVectorStore_UpsertHappyPath(t *testing.T) {
+	store := &fakeWriteStore{}
+	s := newTestVectorStoreServer(store)
+
+	resp, err := s.Upsert(vsAuthedCtx(), &resourcepb.VectorUpsertRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Inputs: []*resourcepb.EmbeddingInput{
+			{Uid: "u1", Content: "hello", Title: "One", Metadata: []byte(`{"k":"v"}`)},
+			{Uid: "u2", Subresource: "chunk/1", Content: "world", Title: "Two"},
+		},
+	})
+	require.NoError(t, err)
+	assert.EqualValues(t, 2, resp.Upserted)
+	assert.Empty(t, resp.Failures)
+
+	// Provisioned exactly once, then wrote both rows with the partition key.
+	assert.Equal(t, []string{"g/r"}, store.ensured)
+	require.Len(t, store.upserts, 1)
+	rows := store.upserts[0]
+	require.Len(t, rows, 2)
+	assert.Equal(t, "r_external", rows[0].Resource, "rows carry the partition key, not the resource name")
+	assert.Equal(t, "ns", rows[0].Namespace)
+	assert.Equal(t, "test/model-1", rows[0].Model)
+	assert.Equal(t, "u1", rows[0].UID)
+	assert.Equal(t, "One", rows[0].Title)
+	assert.Equal(t, "hello", rows[0].Content)
+	assert.NotEmpty(t, rows[0].Embedding)
+	assert.Equal(t, "chunk/1", rows[1].Subresource)
+}
+
+func TestVectorStore_UpsertValidation(t *testing.T) {
+	cases := []struct {
+		name   string
+		mutate func(*resourcepb.VectorUpsertRequest)
+	}{
+		{"empty inputs", func(r *resourcepb.VectorUpsertRequest) { r.Inputs = nil }},
+		{"too many inputs", func(r *resourcepb.VectorUpsertRequest) {
+			r.Inputs = make([]*resourcepb.EmbeddingInput, 501)
+			for i := range r.Inputs {
+				r.Inputs[i] = &resourcepb.EmbeddingInput{Uid: "u", Content: "c", Title: "t"}
+			}
+		}},
+		{"missing uid", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Uid = "" }},
+		{"missing content", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Content = "" }},
+		{"missing title", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Title = "" }},
+		{"oversized metadata", func(r *resourcepb.VectorUpsertRequest) {
+			r.Inputs[0].Metadata = []byte(`{"k":"` + strings.Repeat("x", 4096) + `"}`)
+		}},
+		{"invalid metadata json", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Metadata = []byte(`{not json`) }},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &fakeWriteStore{}
+			s := newTestVectorStoreServer(store)
+			req := validUpsertReq()
+			tc.mutate(req)
+			_, err := s.Upsert(vsAuthedCtx(), req)
+			require.Error(t, err)
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+			assert.Empty(t, store.ensured, "validation failures must not provision")
+			assert.Empty(t, store.upserts)
+		})
+	}
+}
+
+func TestVectorStore_UpsertEmbedFailureIsInternal(t *testing.T) {
+	store := &fakeWriteStore{}
+	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4, wantErr: errors.New("provider down")}), []string{"g/r"}, nil)
+	s.store = store
+	_, err := s.Upsert(vsAuthedCtx(), validUpsertReq())
+	require.Error(t, err)
+	assert.Equal(t, codes.Internal, status.Code(err))
+	assert.Empty(t, store.upserts)
+}
+
+func TestVectorStore_UpsertStorageFailureIsInternal(t *testing.T) {
+	store := &fakeWriteStore{upsertErr: errors.New("db down")}
+	s := newTestVectorStoreServer(store)
+	_, err := s.Upsert(vsAuthedCtx(), validUpsertReq())
+	require.Error(t, err)
+	assert.Equal(t, codes.Internal, status.Code(err))
 }
