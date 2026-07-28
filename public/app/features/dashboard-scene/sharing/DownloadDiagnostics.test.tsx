@@ -66,7 +66,7 @@ describe('DownloadDiagnostics', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
 
     expect(downloadDiagnosticsForQueries).toHaveBeenCalledTimes(1);
-    const [queries, from, to] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    const [{ queries, from, to }] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
     // The component forwards the panel's queries verbatim; hidden-query filtering happens
     // downstream in downloadDiagnosticsForQueries (mocked here).
     expect(queries).toEqual([{ refId: 'A' }, { refId: 'B', hide: true }]);
@@ -80,7 +80,7 @@ describe('DownloadDiagnostics', () => {
     render(<tab.Component model={tab} />);
     await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
 
-    const [, , , , panelModel, dashboardModel] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    const [{ panel: panelModel, dashboard: dashboardModel }] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
     // The whole dashboard save model is sent (bundled as dashboard.json), and this panel's JSON is
     // resolved from it by id (VizPanel key "panel-1" -> id 1) and sent as panel.json.
     expect(dashboardModel).toEqual(expect.objectContaining({ uid: 'dash-1' }));
@@ -99,7 +99,8 @@ describe('DownloadDiagnostics', () => {
     render(<tab.Component model={tab} />);
     await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
 
-    const [, , , , panelModel, forwardedDashboardModel] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    const [{ panel: panelModel, dashboard: forwardedDashboardModel }] =
+      jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
     expect(forwardedDashboardModel).toBe(dashboardModel);
     expect(panelModel).toBe(panelElement);
   });
@@ -118,7 +119,7 @@ describe('DownloadDiagnostics', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
 
     expect(downloadDiagnosticsForQueries).toHaveBeenCalledTimes(1);
-    const [, , , , panelModel, dashboardModel] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    const [{ panel: panelModel, dashboard: dashboardModel }] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
     expect(panelModel).toBeUndefined();
     expect(dashboardModel).toBeUndefined();
     expect(screen.queryByText('Failed to generate diagnostics')).not.toBeInTheDocument();
@@ -137,7 +138,7 @@ describe('DownloadDiagnostics', () => {
     render(<tab.Component model={tab} />);
     await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
 
-    const [, , , , , , panelData] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    const [{ panelData }] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
     // Bundled as paneldata.json, which is what querydata.json (the backend's frames) gets diffed against.
     expect(panelData).toMatchObject({
       version: 1,
@@ -165,7 +166,7 @@ describe('DownloadDiagnostics', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
 
     expect(downloadDiagnosticsForQueries).toHaveBeenCalledTimes(1);
-    const [, , , , , , panelData] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    const [{ panelData }] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
     // The failure is recorded rather than dropped: an absent artifact would be indistinguishable from a
     // panel that had no frames to give. No frames key, which would read as exactly that.
     expect(panelData).toEqual({
@@ -190,7 +191,7 @@ describe('DownloadDiagnostics', () => {
     render(<tab.Component model={tab} />);
     await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
 
-    const [queries] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    const [{ queries }] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
     expect(queries).toEqual([
       // A had no datasource -> filled from the runner; B keeps its own.
       { refId: 'A', datasource: { uid: 'runner-ds', type: 'prometheus' } },
@@ -211,7 +212,7 @@ describe('DownloadDiagnostics', () => {
     render(<tab.Component model={tab} />);
     await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
 
-    const [queries] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    const [{ queries }] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
     // The resolved query, not the literal $job, is what gets captured (WMD1 / #1530).
     expect(queries).toEqual([
       { refId: 'A', datasource: { uid: 'prom', type: 'prometheus' }, expr: 'up{job="grafana"}' },

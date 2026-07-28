@@ -228,15 +228,15 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
       panelData = capturePanelDataFailure(panel, error);
     }
 
-    await downloadDiagnosticsForQueries(
+    await downloadDiagnosticsForQueries({
       queries,
-      String(timeRange.from.valueOf()),
-      String(timeRange.to.valueOf()),
-      controller.signal,
-      panelModel,
-      dashboardModel,
-      panelData
-    );
+      from: String(timeRange.from.valueOf()),
+      to: String(timeRange.to.valueOf()),
+      signal: controller.signal,
+      panel: panelModel,
+      dashboard: dashboardModel,
+      panelData,
+    });
   }, [panelRef, dashboardRef]);
 
   const handleDismiss = () => {
