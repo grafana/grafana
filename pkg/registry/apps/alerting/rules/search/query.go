@@ -91,6 +91,12 @@ func buildSearchRequest(body model.CreateSearchRulesRequestBody, namespace strin
 		return nil, 0, fmt.Errorf("facets are not supported")
 	}
 
+	// Unified search ANDs repeated fields together while legacy picks one
+	// reject repeated fields here to avoid ambiguity when we move from legacy
+	// to unified. The exception to this is labels
+	if err := rejectRepeatedFilterFields(body.Where); err != nil {
+		return nil, 0, err
+	}
 	if err := applyWhere(req, body.Where); err != nil {
 		return nil, 0, err
 	}
@@ -101,6 +107,30 @@ func buildSearchRequest(body model.CreateSearchRulesRequestBody, namespace strin
 		return nil, 0, err
 	}
 	return req, offset, nil
+}
+
+func rejectRepeatedFilterFields(node *model.CreateSearchRulesRequestSearchWhereNode) error {
+	seen := make(map[string]struct{})
+
+	var walk func(*model.CreateSearchRulesRequestSearchWhereNode) error
+	walk = func(n *model.CreateSearchRulesRequestSearchWhereNode) error {
+		if n == nil {
+			return nil
+		}
+		if leaf := n.Filter; leaf != nil && leaf.Field != fieldLabels {
+			if _, repeated := seen[leaf.Field]; repeated {
+				return fmt.Errorf("field %q is filtered more than once; combine the values into one filter", leaf.Field)
+			}
+			seen[leaf.Field] = struct{}{}
+		}
+		for i := range n.And {
+			if err := walk(&n.And[i]); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	return walk(node)
 }
 
 // applyWhere flattens the where tree onto the request. v1 supports a top-level

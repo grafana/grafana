@@ -340,6 +340,50 @@ func TestBuildSearchRequest_rejectsNestedAnd(t *testing.T) {
 	require.Error(t, err)
 }
 
+// TestBuildSearchRequest_repeatedFilterFields covers a field filtered twice.
+// Neither backend can honor it and they disagree: legacy keeps the last leaf,
+// unified ANDs both into an unsatisfiable conjunction and returns nothing.
+func TestBuildSearchRequest_repeatedFilterFields(t *testing.T) {
+	gr := alertrule.ResourceInfo.GroupResource()
+	build := func(node *model.CreateSearchRulesRequestSearchWhereNode) error {
+		_, _, err := buildSearchRequest(model.CreateSearchRulesRequestBody{Where: node}, "default", gr, nil)
+		return err
+	}
+
+	t.Run("rejects a repeated field", func(t *testing.T) {
+		require.Error(t, build(andNode(
+			filterLeaf(fieldFolder, opIn, "folder-a"),
+			filterLeaf(fieldFolder, opIn, "folder-b"),
+		)))
+	})
+
+	// type never becomes a requirement — kindSelection reads it off the body and
+	// applyFilter drops the leaf — so a second, differing type leaf would
+	// otherwise be silently ignored in favour of the first.
+	t.Run("rejects repeated type", func(t *testing.T) {
+		require.Error(t, build(andNode(
+			filterLeaf(fieldType, opIn, "alertrule"),
+			filterLeaf(fieldType, opIn, "recordingrule"),
+		)))
+	})
+
+	// labels is the exception: repeating it is how a caller ANDs matchers, and
+	// extractFilters accumulates those rather than overwriting.
+	t.Run("allows repeated labels", func(t *testing.T) {
+		require.NoError(t, build(andNode(
+			filterLeaf(fieldLabels, opIn, "team=a"),
+			filterLeaf(fieldLabels, opIn, "env=prod"),
+		)))
+	})
+
+	t.Run("still allows one filter per field", func(t *testing.T) {
+		require.NoError(t, build(andNode(
+			filterLeaf(fieldFolder, opIn, "folder-a", "folder-b"),
+			filterLeaf(fieldReceiver, opIn, "slack"),
+		)))
+	})
+}
+
 // TestCellsParseRoundTrip verifies a rule encoded into table cells decodes back
 // into the expected hit fields.
 func TestCellsParseRoundTrip(t *testing.T) {
