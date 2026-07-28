@@ -79,10 +79,11 @@ const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
 const ProvisioningSyncResourceTimeoutDefault = 30 * time.Second
 
 // ProvisioningControllerResyncIntervalDefault is the default value for the
-// [provisioning] resync_interval key. It sets how often the
-// provisioning controllers' informers re-list (repository, connection, job) as
-// a fallback to the live watch/NATS notifications. A shorter value reconciles
-// stale state sooner at the cost of more full LISTs.
+// [provisioning] resync_interval key. It sets how often the provisioning
+// controllers' informers re-list (repository, connection) as a fallback to the
+// live watch/NATS notifications. A shorter value reconciles stale state sooner
+// at the cost of more full LISTs. The jobs informer resyncs on
+// job_poll_interval instead.
 const ProvisioningControllerResyncIntervalDefault = 60 * time.Second
 
 // ProvisioningHistoryExpirationDefault is the default value for the
@@ -90,6 +91,13 @@ const ProvisioningControllerResyncIntervalDefault = 60 * time.Second
 // retained before the resync-driven cleanup removes it and the resync interval
 // of the historic-job informer that feeds that cleanup.
 const ProvisioningHistoryExpirationDefault = 10 * time.Minute
+
+// ProvisioningJobPollIntervalDefault is the default value for the [provisioning]
+// job_poll_interval key: the jobs informer's resync/re-list interval, which is
+// how often unclaimed jobs missed by the live watch/NATS notifications are
+// picked up. The key predates the informer-driven job queue (it used to be a
+// poll loop) and keeps its name and default so existing config keeps its meaning.
+const ProvisioningJobPollIntervalDefault = 30 * time.Second
 
 var (
 	customInitPath = "conf/custom.ini"
@@ -197,6 +205,7 @@ type Cfg struct {
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
 	ProvisioningControllerResyncInterval      time.Duration // informer re-list interval for repo/connection/job controllers; default 60s; <=0 = default
 	ProvisioningHistoryExpiration             time.Duration // HistoricJob retention and historic-job informer resync; default 10m; <=0 = default
+	ProvisioningJobPollInterval               time.Duration // jobs informer resync/re-list interval (recovery for jobs missed by live notifications); default 30s; <=0 = default
 	ProvisioningPublicRootURL                 string        // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
 	DataPath                                  string
 	LogsPath                                  string
@@ -2576,6 +2585,7 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
 	cfg.ProvisioningControllerResyncInterval = iniFile.Section("provisioning").Key("resync_interval").MustDuration(ProvisioningControllerResyncIntervalDefault)
 	cfg.ProvisioningHistoryExpiration = iniFile.Section("provisioning").Key("history_expiration").MustDuration(ProvisioningHistoryExpirationDefault)
+	cfg.ProvisioningJobPollInterval = iniFile.Section("provisioning").Key("job_poll_interval").MustDuration(ProvisioningJobPollIntervalDefault)
 	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
 
 	// Read job history configuration

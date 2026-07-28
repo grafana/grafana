@@ -922,6 +922,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("history_expiration", opts.ProvisioningHistoryExpiration.String())
 		require.NoError(t, err)
 	}
+	if opts.ProvisioningJobPollInterval > 0 {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("job_poll_interval", opts.ProvisioningJobPollInterval.String())
+		require.NoError(t, err)
+	}
 	if opts.EnableSCIM {
 		scimSection, err := getOrCreateSection("auth.scim")
 		require.NoError(t, err)
@@ -1114,18 +1120,23 @@ type GrafanaOpts struct {
 	// (HistoricJob retention + historic-job informer resync). Set it low to
 	// exercise the re-list-driven cleanup quickly. Zero leaves the default (10m).
 	ProvisioningHistoryExpiration time.Duration
-	GrafanaComSSOAPIToken         string
-	LicensePath                   string
-	EnableRecordingRules          bool
-	EnableSCIM                    bool
-	RBACSingleOrganization        bool
-	GlobalRoleSeedingEnabled      bool
-	APIServerRuntimeConfig        string
-	DisableControllers            bool
-	DisableDBCleanup              bool
-	MigrationParquetBuffer        bool
-	MigrationChunkMaxBytes        int64
-	EnableSQLKVBackend            bool
+	// ProvisioningJobPollInterval overrides [provisioning] job_poll_interval, the
+	// jobs informer's resync/re-list interval. Set it high in NATS tests so a job
+	// that is picked up quickly can only have been woken by the live
+	// notification, not the re-list. Zero leaves the default (30s).
+	ProvisioningJobPollInterval time.Duration
+	GrafanaComSSOAPIToken       string
+	LicensePath                 string
+	EnableRecordingRules        bool
+	EnableSCIM                  bool
+	RBACSingleOrganization      bool
+	GlobalRoleSeedingEnabled    bool
+	APIServerRuntimeConfig      string
+	DisableControllers          bool
+	DisableDBCleanup            bool
+	MigrationParquetBuffer      bool
+	MigrationChunkMaxBytes      int64
+	EnableSQLKVBackend          bool
 	// NATSEnabled starts an embedded Core NATS bus ([nats] enabled=true,
 	// mode=embedded). Provisioning controllers then consume resource-change
 	// notifications through the NATS-backed informer instead of the apiserver
