@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -87,6 +88,10 @@ type Informer struct {
 	// HasSynced) until it succeeds. See AllowDegradedStart.
 	degradedStart bool
 
+	// jitterFactor randomizes each resync interval by up to this fraction to avoid
+	// a thundering herd; defaults to defaultResyncJitterFactor.
+	jitterFactor float64
+
 	// reconnect signals the run loop to re-list after a NATS reconnect, since a
 	// round-robin subscription can miss events published while it was down.
 	// Buffered depth 1 and a non-blocking send coalesce bursts into one re-list.
@@ -135,6 +140,7 @@ func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, na
 		log:           log.New("provisioning.informer.nats"),
 		store:         store,
 		retryInterval: defaultSubscribeRetry,
+		jitterFactor:  defaultResyncJitterFactor,
 		syncedCh:      make(chan struct{}),
 		reconnect:     make(chan struct{}, 1),
 	}
@@ -282,13 +288,21 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 	n.synced.Store(true)
 	close(n.syncedCh)
 
-	resync := time.NewTicker(n.resync)
+	// Jitter each interval independently so informers that started together do not
+	// re-list in lockstep and stampede the API server. A fresh timer per pass
+	// (rather than a fixed ticker) lets the delay vary every time.
+	resync := time.NewTimer(wait.Jitter(n.resync, n.jitterFactor))
 	defer resync.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-resync.C:
+			// Re-arm before relisting so a slow LIST or handler dispatch is not
+			// added to the interval; this keeps the cadence start-to-start (as the
+			// ticker was) rather than relist-duration + resync. Reset is safe here
+			// because the timer has already fired and C has been drained.
+			resync.Reset(wait.Jitter(n.resync, n.jitterFactor))
 			// Error already logged in relist; the next tick retries.
 			_ = n.relist(ctx, false)
 		case <-n.reconnect:
