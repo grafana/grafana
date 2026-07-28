@@ -90,9 +90,8 @@ const probesBySolution: Record<string, { get(): Promise<boolean>; reset(): void 
 };
 
 /**
- * True when the solution already receives data. An empty candidate list (or empty Faro registry)
- * is definitive no-data; an errored probe — including any candidate failing while no data was
- * found elsewhere — reports true: unknown fails toward hiding the recommendation.
+ * True when the solution already receives data. When the probe cannot answer, unknown fails
+ * toward true: hiding a recommendation beats recommending setup for data that may exist.
  */
 export async function hasSolutionData(pluginId: string): Promise<boolean> {
   const probe = probesBySolution[pluginId];
