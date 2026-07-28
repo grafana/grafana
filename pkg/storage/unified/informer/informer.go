@@ -2,6 +2,7 @@ package informer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"sync/atomic"
@@ -38,7 +39,20 @@ type ObjectFunc func(namespace, name string) runtime.Object
 // set. The periodic re-list is what makes the informer correct despite
 // round-robin delivery: an event routed to another replica, or a hard delete
 // that is never announced, is reconciled on the next list.
+//
+// A ListFunc may return its objects together with ErrPartialList to signal that
+// the set is a deliberately truncated view — e.g. the jobs list stopped
+// paginating under worker backpressure — rather than the complete resource. The
+// informer upserts a partial list (adds/updates only) instead of diffing it for
+// deletes; see relist. Any other non-nil error means the list failed.
 type ListFunc func(ctx context.Context) ([]runtime.Object, error)
+
+// ErrPartialList is returned by a ListFunc alongside a valid object slice to mark
+// that slice as a deliberately truncated view of the resource rather than the
+// complete set. It is modeled on io.EOF: a signal delivered with valid data, not
+// a failure. On a partial list the informer upserts what it got (Merge) and never
+// diffs for removals, because the objects it did not fetch are unread, not gone.
+var ErrPartialList = errors.New("nats informer: partial list")
 
 // defaultResync is the fallback re-list cadence when a caller passes a
 // non-positive interval.
@@ -420,9 +434,26 @@ func (n *Informer) onNotification() nats.MessageHandler {
 // isInInitialList=true) and there is nothing to delete.
 func (n *Informer) relist(ctx context.Context, initial bool) error {
 	objs, err := n.list(ctx)
-	if err != nil {
+	// ErrPartialList is a signal, not a failure: it accompanies a valid but
+	// deliberately truncated set (see ErrPartialList). Any other error means the
+	// list failed and objs must be ignored — return so the snapshot is untouched
+	// and the next tick retries.
+	partial := errors.Is(err, ErrPartialList)
+	if err != nil && !partial {
 		n.log.Warn("nats informer: list failed", "gvr", n.gvr.String(), "error", err)
 		return err
+	}
+
+	// A partial re-list must not diff for removals: the objects it did not fetch
+	// are unread, not deleted, and Replace would emit spurious OnDeletes for them
+	// and corrupt snapshot readers (e.g. a quota count). Upsert what we got and
+	// dispatch adds/updates only; the next complete re-list reconciles removals.
+	if partial {
+		added := n.store.Merge(objs)
+		n.log.Debug("nats informer re-listed (partial)", "gvr", n.gvr.String(), "initial", initial,
+			"count", len(objs), "added", len(added))
+		n.dispatchAddUpdate(objs, added, initial)
+		return nil
 	}
 
 	// Swap the snapshot for the fresh set; added/removed are the keys that appeared
@@ -430,13 +461,26 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 	added, removed := n.store.Replace(objs)
 	n.log.Debug("nats informer re-listed", "gvr", n.gvr.String(), "initial", initial,
 		"count", len(objs), "added", len(added), "removed", len(removed))
+	n.dispatchAddUpdate(objs, added, initial)
+
+	for _, obj := range removed {
+		o := obj
+		n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(o) })
+	}
+	return nil
+}
+
+// dispatchAddUpdate delivers each object in objs as an add if its key is in added
+// (first seen this re-list) or an update otherwise, mirroring how a
+// SharedInformer's reflector distinguishes a newly-observed key from a resynced
+// one. Both the Replace and Merge paths share it; only the delete diff differs.
+func (n *Informer) dispatchAddUpdate(objs, added []runtime.Object, initial bool) {
 	addedKeys := make(map[string]struct{}, len(added))
 	for _, obj := range added {
 		if key, err := cache.MetaNamespaceKeyFunc(obj); err == nil {
 			addedKeys[key] = struct{}{}
 		}
 	}
-
 	for _, obj := range objs {
 		o := obj
 		key, _ := cache.MetaNamespaceKeyFunc(o)
@@ -446,12 +490,6 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(o, o) })
 		}
 	}
-
-	for _, obj := range removed {
-		o := obj
-		n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(o) })
-	}
-	return nil
 }
 
 func (n *Informer) dispatch(fn func(cache.ResourceEventHandler)) {

@@ -96,3 +96,78 @@ func TestListAllPages(t *testing.T) {
 		})
 	}
 }
+
+func jobNames(t *testing.T, objs []runtime.Object) []string {
+	t.Helper()
+	names := make([]string, 0, len(objs))
+	for _, obj := range objs {
+		job, ok := obj.(*provisioningapis.Job)
+		require.True(t, ok)
+		names = append(names, job.Name)
+	}
+	return names
+}
+
+func TestListPagesBackpressure(t *testing.T) {
+	pages := map[string]*provisioningapis.JobList{
+		"":      pagedJobList("page2", "a", "b"),
+		"page2": pagedJobList("page3", "c", "d"),
+		"page3": pagedJobList("", "e"),
+	}
+	newPageFunc := func(calls *[]string) pageFunc {
+		return func(_ context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+			*calls = append(*calls, opts.Continue)
+			l, ok := pages[opts.Continue]
+			require.Truef(t, ok, "unexpected continue token %q", opts.Continue)
+			return l, nil
+		}
+	}
+
+	t.Run("stops after the first page when there is no capacity", func(t *testing.T) {
+		var calls []string
+		// keepPaging is checked between pages; false stops the chain after page 1.
+		out, complete, err := listPages(context.Background(), newPageFunc(&calls), func() bool { return false })
+		require.NoError(t, err)
+		require.False(t, complete, "a chain stopped early must report incomplete")
+		require.Equal(t, []string{""}, calls, "must not fetch beyond the first page")
+		require.Equal(t, []string{"a", "b"}, jobNames(t, out))
+	})
+
+	t.Run("reads exactly the pages capacity allows", func(t *testing.T) {
+		var calls []string
+		// Capacity for two pages, then backpressure stops the third.
+		budget := 2
+		out, complete, err := listPages(context.Background(), newPageFunc(&calls), func() bool {
+			budget--
+			return budget > 0
+		})
+		require.NoError(t, err)
+		require.False(t, complete)
+		require.Equal(t, []string{"", "page2"}, calls)
+		require.Equal(t, []string{"a", "b", "c", "d"}, jobNames(t, out))
+	})
+
+	t.Run("reads every page when capacity never runs out", func(t *testing.T) {
+		var calls []string
+		out, complete, err := listPages(context.Background(), newPageFunc(&calls), func() bool { return true })
+		require.NoError(t, err)
+		require.True(t, complete, "reaching the end reports complete")
+		require.Equal(t, []string{"", "page2", "page3"}, calls)
+		require.Equal(t, []string{"a", "b", "c", "d", "e"}, jobNames(t, out))
+	})
+
+	t.Run("a single-page set is always complete regardless of capacity", func(t *testing.T) {
+		var calls []string
+		page := func(_ context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+			calls = append(calls, opts.Continue)
+			return pagedJobList("", "only"), nil
+		}
+		// keepPaging returns false, but with no continue token there is no next page
+		// to gate — the set fits in one page, so it is complete.
+		out, complete, err := listPages(context.Background(), page, func() bool { return false })
+		require.NoError(t, err)
+		require.True(t, complete)
+		require.Equal(t, []string{""}, calls)
+		require.Equal(t, []string{"only"}, jobNames(t, out))
+	})
+}

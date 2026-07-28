@@ -118,6 +118,18 @@ func NewConcurrentJobDriver(
 	}, nil
 }
 
+// HasCapacity reports whether the work queue has room for more discovered jobs.
+// It returns false once at least numDrivers keys are already queued: every worker
+// then has work waiting, so discovering more only grows the backlog and memory
+// without improving throughput. The jobs informer consults it to stop paginating
+// its re-list under backpressure (see NewJobInformer); a page holds up to 500
+// jobs, far more than numDrivers, so under load the re-list settles at one page
+// per resync. queue.Len counts only queued (not in-flight) keys, so a full page
+// keeps the queue above the threshold until the workers drain it.
+func (c *ConcurrentJobDriver) HasCapacity() bool {
+	return c.queue.Len() < c.numDrivers
+}
+
 // EventHandler returns informer event handlers that feed the work queue.
 // Register it with the jobs informer before the informer runs: the NATS-backed
 // source has no cache to replay for late handlers.

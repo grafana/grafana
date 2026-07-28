@@ -43,6 +43,24 @@ func TestNewConcurrentJobDriver_RejectsBadConfig(t *testing.T) {
 	require.ErrorContains(t, err, "numDrivers")
 }
 
+// HasCapacity reports true until numDrivers keys are queued, then false: this is
+// the backpressure signal the jobs informer uses to stop paginating its re-list
+// once every worker already has work waiting.
+func TestConcurrentJobDriver_HasCapacity(t *testing.T) {
+	driver := newTestConcurrentDriver(t, 2, &MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+
+	assert.True(t, driver.HasCapacity(), "an empty queue has capacity")
+
+	driver.queue.Add("ns/a")
+	assert.True(t, driver.HasCapacity(), "one queued key with two drivers still has capacity")
+
+	driver.queue.Add("ns/b")
+	assert.False(t, driver.HasCapacity(), "once numDrivers keys are queued there is no capacity")
+
+	driver.queue.Add("ns/c")
+	assert.False(t, driver.HasCapacity(), "a growing backlog still has no capacity")
+}
+
 // TestConcurrentJobDriver_EventHandler_Enqueue verifies which informer add
 // events feed the work queue: minimal (NATS-style) objects and unclaimed full
 // objects enqueue, while full objects that already carry a claim are skipped.

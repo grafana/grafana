@@ -571,3 +571,106 @@ func TestInformer_SignalReconnectDoesNotBlock(t *testing.T) {
 		n.signalReconnect()
 	}
 }
+
+// A ListFunc that returns ErrPartialList alongside its objects marks the set as
+// deliberately truncated: the informer upserts what it got (adds for newly-seen
+// keys, updates for known ones) but must NOT diff for removals — an object it did
+// not fetch is unread, not deleted, so no OnDelete fires and it stays in the
+// snapshot until a later complete re-list. This is what lets the jobs informer
+// stop paginating under backpressure without stranding or false-deleting jobs.
+func TestInformer_PartialListUpsertsWithoutDeleting(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		handler := &recordingHandler{}
+		ctx := context.Background()
+
+		// phase 0: complete list of a,b. phase 1: partial list dropping b. phase 2:
+		// partial list that also surfaces a newly-seen c.
+		var phase atomic.Int64
+		list := func(context.Context) ([]runtime.Object, error) {
+			switch phase.Load() {
+			case 0:
+				return []runtime.Object{obj("a"), obj("b")}, nil
+			case 1:
+				return []runtime.Object{obj("a")}, ErrPartialList
+			default:
+				return []runtime.Object{obj("a"), obj("c")}, ErrPartialList
+			}
+		}
+		store := NewStore()
+		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, store, newObjectFunc, list)
+		_, err := n.AddEventHandler(handler)
+		require.NoError(t, err)
+		stopCh := make(chan struct{})
+		defer func() { close(stopCh); synctest.Wait() }()
+		go n.Run(stopCh)
+
+		// Initial complete list adds both and seeds the snapshot.
+		synctest.Wait()
+		require.True(t, n.HasSynced())
+		assert.ElementsMatch(t, []string{"a", "b"}, handler.addedNames())
+		assert.ElementsMatch(t, []string{"a", "b"}, storeNames(store.List(ctx)))
+
+		// A partial re-list drops b, but b must not be deleted: it is unread, not
+		// gone, so no OnDelete fires and it remains in the snapshot.
+		phase.Store(1)
+		n.signalReconnect()
+		synctest.Wait()
+		assert.Empty(t, handler.deletedNames(), "a partial list must not delete the object it did not fetch")
+		assert.Contains(t, handler.updatedNames(), "a", "the re-fetched known object is an update")
+		assert.ElementsMatch(t, []string{"a", "b"}, storeNames(store.List(ctx)), "the unread object stays in the snapshot")
+
+		// A newly-seen object in a partial list is still delivered as an add, and
+		// still nothing is deleted.
+		phase.Store(2)
+		n.signalReconnect()
+		synctest.Wait()
+		assert.Contains(t, handler.addedNames(), "c", "a first-seen object in a partial list is an add")
+		assert.Empty(t, handler.deletedNames(), "a partial list never deletes")
+		assert.ElementsMatch(t, []string{"a", "b", "c"}, storeNames(store.List(ctx)))
+	})
+}
+
+// Once a complete re-list follows the partial ones, the delete diff runs again:
+// an object truly gone since the last complete snapshot is finally delivered as a
+// delete. This is the recovery that a partial list defers, not drops.
+func TestInformer_CompleteListAfterPartialResumesDeletes(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		handler := &recordingHandler{}
+		ctx := context.Background()
+
+		var phase atomic.Int64
+		list := func(context.Context) ([]runtime.Object, error) {
+			switch phase.Load() {
+			case 0:
+				return []runtime.Object{obj("a"), obj("b")}, nil
+			case 1:
+				return []runtime.Object{obj("a")}, ErrPartialList // partial: b unread, not deleted
+			default:
+				return []runtime.Object{obj("a")}, nil // complete: b is genuinely gone
+			}
+		}
+		store := NewStore()
+		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, store, newObjectFunc, list)
+		_, err := n.AddEventHandler(handler)
+		require.NoError(t, err)
+		stopCh := make(chan struct{})
+		defer func() { close(stopCh); synctest.Wait() }()
+		go n.Run(stopCh)
+
+		synctest.Wait()
+		require.True(t, n.HasSynced())
+
+		phase.Store(1)
+		n.signalReconnect()
+		synctest.Wait()
+		require.Empty(t, handler.deletedNames(), "partial list defers the delete")
+
+		phase.Store(2)
+		n.signalReconnect()
+		synctest.Wait()
+		assert.Equal(t, []string{"b"}, handler.deletedNames(), "the next complete list emits the deferred delete")
+		assert.ElementsMatch(t, []string{"a"}, storeNames(store.List(ctx)))
+	})
+}

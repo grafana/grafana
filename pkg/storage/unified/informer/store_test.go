@@ -36,6 +36,24 @@ func TestStore_ReplaceReportsDiff(t *testing.T) {
 	assert.ElementsMatch(t, []string{"a", "c"}, storeNames(s.List(ctx)))
 }
 
+// Merge upserts without removing anything absent — the partial-re-list path — and
+// reports only the keys that were newly added, so a truncated list never makes
+// its unread objects look deleted.
+func TestStore_MergeUpsertsWithoutRemoving(t *testing.T) {
+	s := NewStore()
+	ctx := context.Background()
+
+	added := s.Merge([]runtime.Object{obj("a"), obj("b")})
+	assert.ElementsMatch(t, []string{"a", "b"}, storeNames(added), "first merge adds everything")
+	assert.ElementsMatch(t, []string{"a", "b"}, storeNames(s.List(ctx)))
+
+	// c is new; a is re-observed (not reported); b is absent from this merge but
+	// must survive — Merge never removes.
+	added = s.Merge([]runtime.Object{obj("a"), obj("c")})
+	assert.Equal(t, []string{"c"}, storeNames(added), "only the newly-seen key is reported as added")
+	assert.ElementsMatch(t, []string{"a", "b", "c"}, storeNames(s.List(ctx)), "a merge never drops an absent key")
+}
+
 // Update and Delete are the write-throughs that keep the store warm between
 // re-lists; List reflects them immediately.
 func TestStore_WriteThrough(t *testing.T) {

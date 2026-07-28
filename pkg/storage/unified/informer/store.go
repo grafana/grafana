@@ -35,6 +35,13 @@ type Store interface {
 	// handlers still wake for an object first seen by a re-list — and removed as
 	// OnDelete for objects that have vanished since the previous re-list.
 	Replace(objs []runtime.Object) (added, removed []runtime.Object)
+	// Merge upserts objs into the store and reports the objects whose key was not
+	// present before (added), without removing anything absent. It is the write
+	// path for a partial re-list — one deliberately truncated before the full set
+	// was read (e.g. under worker backpressure) — which must not make the objects
+	// it did not fetch look deleted, as Replace's diff would. added is dispatched
+	// as OnAdd exactly as for Replace; there is no removed set.
+	Merge(objs []runtime.Object) (added []runtime.Object)
 }
 
 // store is the in-memory Store implementation.
@@ -120,4 +127,24 @@ func (s *store) Replace(objs []runtime.Object) (added, removed []runtime.Object)
 		}
 	}
 	return added, removed
+}
+
+// Merge upserts objs into the store without removing keys absent from objs, and
+// returns the objects whose key was not present before. It is the partial-re-list
+// counterpart to Replace: a truncated list must not make its unread objects look
+// deleted, so Merge never diffs for removals.
+func (s *store) Merge(objs []runtime.Object) (added []runtime.Object) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, obj := range objs {
+		key, err := cache.MetaNamespaceKeyFunc(obj)
+		if err != nil {
+			continue
+		}
+		if _, ok := s.items[key]; !ok {
+			added = append(added, obj)
+		}
+		s.items[key] = obj
+	}
+	return added
 }
