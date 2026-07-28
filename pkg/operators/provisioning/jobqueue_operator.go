@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/server"
@@ -46,17 +45,6 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		return fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	// Jobs informer and controller for insert notifications. Under the NATS watch
-	// the source is a NATS-backed informer; otherwise an apiserver-backed one. Both
-	// satisfy DeltaSource, so the rest of the wiring is identical.
-	jobController := controller.NewJobController()
-
-	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
-	reg, err := jobInformer.AddEventHandler(jobController.EventHandler())
-	if err != nil {
-		return fmt.Errorf("failed to add job event handler: %w", err)
-	}
-
 	jobHistoryWriter := jobs.NewAPIClientHistoryWriter(provisioningClient.ProvisioningV0alpha1())
 	jobStore, err := jobs.NewJobStore(provisioningClient.ProvisioningV0alpha1(), jobClaimExpiry, deps.Registerer)
 	if err != nil {
@@ -77,10 +65,20 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		},
 		jobStore,
 		jobHistoryWriter,
-		jobController.InsertNotifications(),
 	)
 	if err != nil {
 		return fmt.Errorf("build driver: %w", err)
+	}
+
+	// Jobs informer feeding the driver's work queue with job keys. Under the NATS
+	// watch the source is a NATS-backed informer; otherwise an apiserver-backed
+	// one. Both satisfy DeltaSource, so the rest of the wiring is identical. The
+	// handler must be registered before the informer runs: the NATS-backed source
+	// has no cache to replay for late handlers.
+	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
+	reg, err := jobInformer.AddEventHandler(driver.EventHandler())
+	if err != nil {
+		return fmt.Errorf("failed to add job event handler: %w", err)
 	}
 
 	var wg sync.WaitGroup

@@ -2943,7 +2943,6 @@
           "stop-alerting-inside-range": "Stop alerting (or pending state) when inside range",
           "stop-alerting-less": "Stop alerting (or pending state) when less than",
           "stop-alerting-more": "Stop alerting (or pending state) when more than",
-          "stop-alerting-not-equal": "Stop alerting (or pending state) when not equal to",
           "stop-alerting-outside-range": "Stop alerting (or pending state) when outside range",
           "title": "Custom recovery threshold"
         }
@@ -5397,7 +5396,7 @@
       },
       "add-panel": "Add panel",
       "disabled-child-contains-tabs": "Cannot change to tabs because a row already contains tabs",
-      "disabled-nested-grouping": "Grouping is limited to 3 levels",
+      "disabled-nested-grouping": "Grouping is limited to {{maxDepth}} levels",
       "disabled-nested-tabs": "Tabs cannot be nested inside other tabs",
       "group-into-row": "Group into row",
       "group-into-tab": "Group into tab",
@@ -6347,8 +6346,7 @@
         "tooltip": "Dashboard settings"
       },
       "discard-library-panel-changes": "Discard library panel changes",
-      "discard-panel": "Discard panel changes",
-      "discard-panel-new": "Discard panel",
+      "discard-library-panel-changes-short": "Discard",
       "edit": {
         "label": "Edit",
         "tooltip": "Enter edit mode"
@@ -6370,9 +6368,6 @@
       "more-save-options": "More save options",
       "new": {
         "back-to-dashboard": "Back to dashboard",
-        "discard-library-panel-changes": "Discard library panel changes",
-        "discard-panel": "Discard panel changes",
-        "discard-panel-new": "Discard panel",
         "enter-edit-mode": {
           "label": "Make editable",
           "tooltip": "This dashboard was marked as read only"
@@ -6397,7 +6392,6 @@
           "tooltip": "Save as copy"
         },
         "save-dashboard-short": "Save",
-        "save-library-panel": "Save library panel",
         "save-template": {
           "label": "Save",
           "tooltip": "Save template changes"
@@ -6405,10 +6399,13 @@
         "share": {
           "arrow": "Share",
           "tooltip": "Copy link"
-        },
-        "unlink-library-panel": "Unlink library panel"
+        }
       },
       "open-original": "Open original dashboard",
+      "panel-edit-back": "Back",
+      "panel-edit-back-tooltip": "Back to dashboard view",
+      "panel-edit-discard": "Discard",
+      "panel-edit-discard-tooltip": "Discard panel changes",
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
@@ -6427,6 +6424,7 @@
       },
       "save-dashboard-short": "Save",
       "save-library-panel": "Save library panel",
+      "save-library-panel-short": "Save",
       "settings": "Dashboard settings",
       "share-button": "Share",
       "snapshot": {
@@ -6436,7 +6434,8 @@
       "star-added": "Added to starred",
       "star-remove-error": "Failed to remove from starred",
       "star-removed": "Removed from starred",
-      "unlink-library-panel": "Unlink library panel"
+      "unlink-library-panel": "Unlink library panel",
+      "unlink-library-panel-short": "Unlink"
     },
     "transformation-editor": {
       "input-data": "Input data",
