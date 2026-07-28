@@ -441,7 +441,7 @@ describe('RuleListActions', () => {
     });
   });
 
-  describe('Auto-sync Mimir Alertmanager — disables import menu items', () => {
+  describe('Auto-sync Mimir Alertmanager — disables Alertmanager import menu items', () => {
     testWithFeatureToggles({
       enable: ['alerting.syncExternalAlertmanager', 'alertingMigrationUI', 'alertingMigrationWizardUI'],
     });
@@ -452,53 +452,35 @@ describe('RuleListActions', () => {
       setupAutoSyncConfig(server, uid ? { specUid: uid } : {});
     }
 
-    async function findDisabledItem(menu: HTMLElement, role: 'importAlertRules' | 'importToGma') {
+    async function findDisabledWizardItem(menu: HTMLElement) {
       // The menu item renders the disabled reason in its `description` slot, so the accessible
       // name expands beyond the original label — match via a name regex that ignores the suffix.
-      return await byRole('menuitem', {
-        name: role === 'importAlertRules' ? /import alert rules/i : /import to grafana alerting/i,
-      }).find(menu);
+      return await byRole('menuitem', { name: /import to grafana alerting/i }).find(menu);
     }
 
-    it('disables "Import alert rules" with a reason when sync is configured for the org', async () => {
-      grantUserRole(OrgRole.Admin);
-      grantUserPermissions([
-        AccessControlAction.AlertingRuleRead,
-        AccessControlAction.AlertingRuleCreate,
-        AccessControlAction.AlertingProvisioningSetStatus,
-        AccessControlAction.ActionAlertingNotificationsConfigRead,
-      ]);
-      mockAutoSync('mimir-uid');
+    // Auto-sync only mirrors the Alertmanager configuration, and the rule convert endpoints have no
+    // sync check, so the rules-only import stays available to admins and non-admins alike.
+    it.each([OrgRole.Admin, OrgRole.Editor])(
+      'keeps "Import alert rules" enabled for %s when sync is configured for the org',
+      async (role) => {
+        grantUserRole(role);
+        grantUserPermissions([
+          AccessControlAction.AlertingRuleRead,
+          AccessControlAction.AlertingRuleCreate,
+          AccessControlAction.AlertingProvisioningSetStatus,
+          AccessControlAction.ActionAlertingNotificationsConfigRead,
+        ]);
+        mockAutoSync('mimir-uid');
 
-      const { user } = render(<RuleListActions />);
-      await user.click(ui.moreButton.get());
-      const menu = await ui.moreMenu.find();
+        const { user } = render(<RuleListActions />);
+        await user.click(ui.moreButton.get());
+        const menu = await ui.moreMenu.find();
 
-      const item = await findDisabledItem(menu, 'importAlertRules');
-      expect(item).toHaveAttribute('aria-disabled', 'true');
-      expect(item).not.toHaveAttribute('href');
-      expect(item).toHaveTextContent(/auto-sync/i);
-    });
-
-    it('blocks "Import alert rules" for a non-admin with import permission when sync is active', async () => {
-      grantUserRole(OrgRole.Editor);
-      grantUserPermissions([
-        AccessControlAction.AlertingRuleRead,
-        AccessControlAction.AlertingRuleCreate,
-        AccessControlAction.AlertingProvisioningSetStatus,
-        AccessControlAction.ActionAlertingNotificationsConfigRead,
-      ]);
-      mockAutoSync('mimir-uid');
-
-      const { user } = render(<RuleListActions />);
-      await user.click(ui.moreButton.get());
-      const menu = await ui.moreMenu.find();
-
-      const item = await findDisabledItem(menu, 'importAlertRules');
-      expect(item).toHaveAttribute('aria-disabled', 'true');
-      expect(item).not.toHaveAttribute('href');
-      expect(item).toHaveTextContent(/auto-sync/i);
-    });
+        const item = ui.menuOptions.importAlertRules.get(menu);
+        expect(item).toHaveAttribute('href', '/alerting/import-datasource-managed-rules');
+        expect(item).not.toHaveAttribute('aria-disabled', 'true');
+      }
+    );
 
     it('disables "Import to Grafana Alerting" with a reason when sync is configured for the org', async () => {
       grantUserRole(OrgRole.Editor);
@@ -513,7 +495,7 @@ describe('RuleListActions', () => {
       await user.click(ui.moreButton.get());
       const menu = await ui.moreMenu.find();
 
-      const item = await findDisabledItem(menu, 'importToGma');
+      const item = await findDisabledWizardItem(menu);
       expect(item).toHaveAttribute('aria-disabled', 'true');
       expect(item).not.toHaveAttribute('href');
       expect(item).toHaveTextContent(/auto-sync/i);

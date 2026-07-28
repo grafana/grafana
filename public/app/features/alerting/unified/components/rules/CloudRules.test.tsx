@@ -1,5 +1,5 @@
 import { Provider } from 'react-redux';
-import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { render, testWithFeatureToggles } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { OrgRole } from '@grafana/data';
@@ -37,7 +37,7 @@ function renderWithCloudResults() {
   );
 }
 
-describe('CloudRules — Mimir AM auto-sync gate', () => {
+describe('CloudRules — Mimir AM auto-sync', () => {
   beforeEach(() => {
     grantUserRole(OrgRole.Admin);
     grantUserPermissions([
@@ -46,7 +46,7 @@ describe('CloudRules — Mimir AM auto-sync gate', () => {
       // Both grafana-managed perms are required to enable canMigrateToGMA.
       AccessControlAction.AlertingRuleCreate,
       AccessControlAction.AlertingProvisioningSetStatus,
-      // Required for useIsAutoSyncActive to read the Config resource.
+      // Read access to the sync Config, so a reinstated gate would resolve rather than fail open.
       AccessControlAction.ActionAlertingNotificationsConfigRead,
     ]);
   });
@@ -54,42 +54,11 @@ describe('CloudRules — Mimir AM auto-sync gate', () => {
   describe('with alertingMigrationUI and alerting.syncExternalAlertmanager enabled', () => {
     testWithFeatureToggles({ enable: ['alertingMigrationUI', 'alerting.syncExternalAlertmanager'] });
 
-    it('disables the data source import button with a tooltip when Mimir AM auto-sync is configured', async () => {
-      setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
-
-      const { user } = renderWithCloudResults();
-
-      // Re-query each tick — the LinkButton re-mounts as `disabled` flips, so a single captured
-      // reference can become stale.
-      await waitFor(() => {
-        expect(ui.migrateButton.get()).toHaveAttribute('aria-disabled', 'true');
-      });
-
-      // The disabled `<a>` has `pointer-events: none`; the tooltip handlers attach to the wrapping
-      // span. Hover that ancestor so the floating-ui hover registers in jsdom.
-      // eslint-disable-next-line testing-library/no-node-access
-      const tooltipTarget = ui.migrateButton.get().parentElement!;
-      await user.hover(tooltipTarget);
-      expect(await screen.findByRole('tooltip', { name: /auto-sync/i })).toBeInTheDocument();
-    });
-
-    it('enables the data source import button when Mimir AM auto-sync is not configured', async () => {
-      setupAutoSyncConfig(server, {});
-
-      renderWithCloudResults();
-
-      const btn = await ui.migrateButton.find();
-      expect(btn).not.toHaveAttribute('aria-disabled', 'true');
-    });
-  });
-
-  describe('with alerting.syncExternalAlertmanager feature flag off', () => {
-    testWithFeatureToggles({ enable: ['alertingMigrationUI'] });
-
-    it('enables the data source import button regardless of Config state', async () => {
-      // Flag off ⇒ useIsAutoSyncActive short-circuits via skipToken; the Config query must
-      // never fire even when a sync is configured. Asserting the request never fired is what
-      // makes this fail on a missing gate — the button starts enabled anyway.
+    // Auto-sync mirrors only the Alertmanager configuration, and the rule convert endpoints have no
+    // sync check, so this rules-only button must not consult the sync state at all. Asserting the
+    // Config query never fires is what makes this fail if the gate is reinstated — the button starts
+    // enabled either way.
+    it('keeps the data source import button enabled while Mimir AM auto-sync is configured', async () => {
       const { requestSpy } = setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
 
       renderWithCloudResults();

@@ -18,6 +18,7 @@ import { useRulesFilter } from '../hooks/useFilteredRules';
 import { useImportEntrypointState } from '../hooks/useImportEntrypointState';
 import { useAlertRulesNav } from '../navigation/useAlertRulesNav';
 import { getRulesDataSources } from '../utils/datasource';
+import { ALERTING_PATHS } from '../utils/navigation';
 
 import { AlertsActivityBanner } from './AlertsActivityBanner';
 import { FilterView } from './FilterView';
@@ -96,20 +97,19 @@ export function RuleListActions() {
               onClick={toggleShowExportDrawer}
             />
           )}
+          {/* Not gated on auto-sync: this imports rules only, which the sync worker never touches. */}
           {canImportRulesToGMA && (
             <Menu.Item
               label={t('alerting.rule-list-v2.import-to-gma', 'Import alert rules')}
               icon="upload"
-              url="/alerting/import-datasource-managed-rules"
-              disabled={importDisabled}
-              description={importDisabled ? importDisabledReason : undefined}
+              url={ALERTING_PATHS.IMPORT_DATASOURCE_MANAGED_RULES}
             />
           )}
           {canAccessMigrationWizardUI && (
             <Menu.Item
               label={t('alerting.rule-list-v2.import-to-gma-tool', 'Import to Grafana Alerting')}
               icon="exchange-alt"
-              url="/alerting/import-to-gma"
+              url={ALERTING_PATHS.IMPORT_TO_GMA}
               disabled={importDisabled}
               description={importDisabled ? importDisabledReason : undefined}
             />
