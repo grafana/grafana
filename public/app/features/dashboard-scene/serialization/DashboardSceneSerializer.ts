@@ -462,6 +462,9 @@ export class V2DashboardSerializer
     if (this.metadata) {
       this.metadata = {
         ...this.metadata,
+        // Save As create returns a new name; keep serializer metadata in sync so a follow-up
+        // save cannot accidentally PUT the source dashboard.
+        name: result.uid,
         generation: result.version,
       };
     }

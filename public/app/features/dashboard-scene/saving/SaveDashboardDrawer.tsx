@@ -35,10 +35,11 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
   public onClose = () => {
     const dashboard = this.state.dashboardRef.resolve();
     const changeInfo = dashboard.getDashboardChanges();
+    // Save As folder picker mutates live meta; restore on cancel so the source dash isn't left dirty.
+    const shouldRestoreMeta = changeInfo.isNew || Boolean(this.state.saveAsCopy);
     dashboard.setState({
       overlay: undefined,
-      // Reset meta to initial state if it's a new dashboard to remove provisioned fields
-      meta: changeInfo.isNew ? dashboard.getInitialState()?.meta : dashboard.state.meta,
+      meta: shouldRestoreMeta ? (dashboard.getInitialState()?.meta ?? dashboard.state.meta) : dashboard.state.meta,
     });
   };
 
@@ -163,7 +164,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     }
 
     if (saveAsCopy || changeInfo.isNew) {
-      return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} />;
+      return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} onCancel={model.onClose} />;
     }
 
     if (isProvisioned || managedResourceCannotBeEdited) {

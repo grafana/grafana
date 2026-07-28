@@ -1,4 +1,4 @@
-import { screen, render, waitFor } from '@testing-library/react';
+import { act, screen, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId, byText } from 'testing-library-selector';
@@ -307,6 +307,34 @@ describe('SaveDashboardDrawer', () => {
       const dataSent = saveDashboardMutationMock.mock.calls[0][0];
       expect(dataSent.dashboard.uid).toEqual('');
       expect(dataSent.k8s).toBeUndefined();
+    });
+
+    it('restores meta on cancel after a Save As folder change', async () => {
+      const { dashboard, openAndRender } = setup({
+        meta: { folderUid: 'original-folder', folderTitle: 'Original' },
+      });
+      const initialFolderUid = dashboard.getInitialState()?.meta.folderUid;
+
+      const drawer = openAndRender({ saveAsCopy: true });
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      act(() => {
+        dashboard.setState({
+          meta: {
+            ...dashboard.state.meta,
+            folderUid: 'other-folder',
+            folderTitle: 'Other',
+          },
+        });
+      });
+      expect(dashboard.state.meta.folderUid).toBe('other-folder');
+
+      act(() => {
+        drawer.onClose();
+      });
+
+      expect(dashboard.state.overlay).toBeUndefined();
+      expect(dashboard.state.meta.folderUid).toBe(initialFolderUid);
     });
 
     it('Should persist predefined-variable denylist annotations', async () => {

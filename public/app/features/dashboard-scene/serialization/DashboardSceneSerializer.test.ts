@@ -1507,6 +1507,11 @@ describe('DashboardSceneSerializer', () => {
   describe('onSaveComplete', () => {
     it('should set the initialSaveModel correctly', () => {
       const serializer = new V2DashboardSerializer();
+      serializer.metadata = {
+        name: 'source-uid',
+        resourceVersion: '1',
+        creationTimestamp: '2023-01-01T00:00:00Z',
+      };
       const saveModel = defaultDashboardV2Spec();
       const response = {
         id: 1,
@@ -1522,6 +1527,9 @@ describe('DashboardSceneSerializer', () => {
       expect(serializer.initialSaveModel).toEqual({
         ...saveModel,
       });
+      // Save As create must update metadata.name so follow-up saves don't PUT the source.
+      expect(serializer.metadata?.name).toBe('aa');
+      expect(serializer.metadata?.generation).toBe(2);
     });
 
     it('should allow retrieving snapshot url', () => {

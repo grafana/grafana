@@ -30,6 +30,8 @@ interface SaveDashboardAsFormDTO {
 export interface Props {
   dashboard: DashboardScene;
   changeInfo: DashboardChangeInfo;
+  /** Prefer drawer.onClose so Save As folder/meta mutations are restored on cancel. */
+  onCancel?: () => void;
 }
 
 /**
@@ -65,7 +67,7 @@ export function nextMetaAfterSaveAsFolderChange(
   };
 }
 
-export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
+export function SaveDashboardAsForm({ dashboard, changeInfo, onCancel }: Props) {
   const { changedSaveModel } = changeInfo;
 
   const { register, handleSubmit, setValue, formState, getValues, watch, trigger } = useForm<SaveDashboardAsFormDTO>({
@@ -170,7 +172,7 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
   };
 
   const cancelButton = (
-    <Button variant="secondary" onClick={() => dashboard.closeModal()} fill="outline">
+    <Button variant="secondary" onClick={() => (onCancel ? onCancel() : dashboard.closeModal())} fill="outline">
       <Trans i18nKey="dashboard-scene.save-dashboard-as-form.cancel-button.cancel">Cancel</Trans>
     </Button>
   );

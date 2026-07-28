@@ -469,6 +469,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     this._changeTracker.stopTrackingChanges();
 
+    // Save As / first save mint a new uid; skip the refresh await below so redirect isn't delayed.
+    const isNewResource = result.uid !== this.state.uid;
+
     this.setState({
       version: result.version,
       isDirty: false,
@@ -486,8 +489,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     this.state.editPanel?.dashboardSaved();
 
-    // Re-apply denylist to the live variable set before re-baselining dirty state.
-    await this.refreshPredefinedVariables();
+    // Re-apply denylist before re-baselining on in-place saves. Skip awaiting on Save As —
+    // we're about to navigate away.
+    if (!isNewResource) {
+      await this.refreshPredefinedVariables();
+    }
 
     this._initialState = sceneUtils.cloneSceneObjectState(this.state);
     this._initialUrlState = locationService.getLocation();
