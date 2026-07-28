@@ -2,10 +2,6 @@ import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 export interface SearchStatusProps {
-  /**
-   * Already translated and formatted, e.g. "3 data sources found". Owned by the
-   * caller so this component holds no translatable strings of its own.
-   */
   message: string;
 }
 
