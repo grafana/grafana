@@ -67,6 +67,14 @@ type buildConfig struct {
 // raw bytes for anything it cannot parse, so a malformed payload yields a malformed artifact rather
 // than a failed bundle. Size is likewise unbounded here -- the client decides what is worth sending,
 // and web.Bind's 100MiB request cap is the backstop.
+//
+// That unbounded size is deliberately asymmetric with querydata.json, which IS capped
+// (maxQueryDataArtifactBytes) and degrades to a frame summary above it. So on a panel whose backend
+// response exceeds that cap, the bundle holds full frontend frames beside a summarized backend
+// artifact, and the diff above is only a name/rows/fields comparison rather than a field-for-field
+// one. That case announces itself -- querydata.json carries "truncated": true -- so read the marker
+// before reading a series missing here as a frontend loss. Capping this artifact to match would cost
+// the common case (a complete diff) to make the rare one symmetric, so it is left uncapped.
 func WithPanelData(panelData json.RawMessage) BuildOption {
 	return func(cfg *buildConfig) {
 		cfg.panelData = panelData
