@@ -1491,10 +1491,10 @@ export interface FeatureToggles {
   * Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.
   * @default false
   */
-  ['authz.listFoldersViaSearch']?: boolean;
+  authzListFoldersViaSearch?: boolean;
   /**
   * Build the library-elements folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips on GET /api/library-elements.
   * @default false
   */
-  ['libraryElements.folderTreeViaSearch']?: boolean;
+  libraryElementsFolderTreeViaSearch?: boolean;
 }

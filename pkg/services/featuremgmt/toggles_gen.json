@@ -892,9 +892,9 @@
     },
     {
       "metadata": {
-        "name": "authz.listFoldersViaSearch",
-        "resourceVersion": "1785250398373",
-        "creationTimestamp": "2026-07-28T14:53:18Z"
+        "name": "authzListFoldersViaSearch",
+        "resourceVersion": "1785264763031",
+        "creationTimestamp": "2026-07-28T18:52:43Z"
       },
       "spec": {
         "description": "Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.",
@@ -2923,9 +2923,9 @@
     },
     {
       "metadata": {
-        "name": "libraryElements.folderTreeViaSearch",
-        "resourceVersion": "1785250398373",
-        "creationTimestamp": "2026-07-28T14:53:18Z"
+        "name": "libraryElementsFolderTreeViaSearch",
+        "resourceVersion": "1785264763031",
+        "creationTimestamp": "2026-07-28T18:52:43Z"
       },
       "spec": {
         "description": "Build the library-elements folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips on GET /api/library-elements.",

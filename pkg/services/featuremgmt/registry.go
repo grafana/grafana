@@ -2351,7 +2351,7 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "authz.listFoldersViaSearch",
+			Name:         "authzListFoldersViaSearch",
 			Description:  "Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
@@ -2359,7 +2359,7 @@ var (
 			Expression:   "false",
 		},
 		{
-			Name:         "libraryElements.folderTreeViaSearch",
+			Name:         "libraryElementsFolderTreeViaSearch",
 			Description:  "Build the library-elements folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips on GET /api/library-elements.",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,

@@ -292,5 +292,5 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-09,kubernetesTeamSync,experimental,@grafana/identity-access-team,false,false,false
 2026-01-27,alertingMultiplePolicies,experimental,@grafana/alerting-squad,false,false,false
 2026-02-11,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
-2026-07-28,authz.listFoldersViaSearch,experimental,@grafana/identity-access-team,false,false,false
-2026-07-28,libraryElements.folderTreeViaSearch,experimental,@grafana/identity-access-team,false,false,false
+2026-07-28,authzListFoldersViaSearch,experimental,@grafana/identity-access-team,false,false,false
+2026-07-28,libraryElementsFolderTreeViaSearch,experimental,@grafana/identity-access-team,false,false,false
