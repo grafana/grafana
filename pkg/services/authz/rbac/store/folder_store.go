@@ -172,7 +172,21 @@ func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 	defer span.End()
 
 	if s.searcher != nil {
-		return s.listFoldersViaSearch(ctx, ns)
+		folders, err := s.listFoldersViaSearch(ctx, ns)
+		// Fall back to the object list when the search index errors or returns
+		// no folders. Both can happen during a search-index rebuild or cold start
+		// (fresh boot, reindex in progress); caching a stale/empty tree from
+		// search would make inherited permission checks silently deny access
+		// until the TTL expires. The object list hits the source of truth
+		// directly, so it stays correct through reindex windows.
+		if err != nil {
+			logger.FromContext(ctx).Warn("folder search failed, falling back to object list", "error", err, "namespace", ns.Value)
+			return s.listFoldersViaList(ctx, ns)
+		}
+		if len(folders) == 0 {
+			return s.listFoldersViaList(ctx, ns)
+		}
+		return folders, nil
 	}
 	return s.listFoldersViaList(ctx, ns)
 }
