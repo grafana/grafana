@@ -1,7 +1,7 @@
 import { logMeasurement, reportInteraction } from '@grafana/runtime';
 import { type performanceUtils } from '@grafana/scenes';
 
-import { consumeDashboardFetchTiming } from './DashboardFetchTiming';
+import { consumeDashboardFetchTiming, FETCH_ATTRIBUTION_MAX_LEAD_MS } from './DashboardFetchTiming';
 import { SLOW_OPERATION_THRESHOLD_MS } from './performanceConstants';
 import {
   registerPerformanceObserver,
@@ -245,7 +245,15 @@ export class DashboardAnalyticsAggregator implements performanceUtils.ScenePerfo
     // actually loaded the definition. Later interactions on the same dashboard (refresh,
     // time_range_change, ...) must not re-report it. This is the only call site, so
     // consuming here is safe.
-    const dashboardFetchDuration = consumeDashboardFetchTiming(this.dashboardUID);
+    // data.timestamp is the profile's end, data.duration spans back to its start - a fetch
+    // recorded any earlier than that (minus a small allowance for the scene-transform work
+    // that sits between the fetch resolving and the profile starting) belongs to an
+    // abandoned/cancelled load, not this interaction.
+    const profileStart = data.timestamp - (data.duration || 0);
+    const dashboardFetchDuration = consumeDashboardFetchTiming(
+      this.dashboardUID,
+      profileStart - FETCH_ATTRIBUTION_MAX_LEAD_MS
+    );
 
     const payload = {
       duration: data.duration || 0,

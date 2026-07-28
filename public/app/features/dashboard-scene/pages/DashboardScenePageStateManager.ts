@@ -534,11 +534,14 @@ abstract class DashboardScenePageStateManagerBase<T>
     // this resolves - record it separately so it can be attached to those events later.
     const fetchStart = performance.now();
     const rsp = await this.fetchDashboard(options);
-    recordDashboardFetchTiming(options.uid || undefined, performance.now() - fetchStart);
 
     if (!rsp) {
+      // Cancelled or failed fetch - nothing was actually loaded, so don't record a timing
+      // that could get misattributed to a later, unrelated load.
       return null;
     }
+
+    recordDashboardFetchTiming(options.uid || undefined, performance.now() - fetchStart);
 
     const enrichedOptions = await this.enrichLoadOptions(rsp, options);
     const scene = this.transformResponseToScene(rsp, enrichedOptions);

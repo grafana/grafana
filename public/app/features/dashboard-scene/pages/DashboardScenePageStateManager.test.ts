@@ -481,6 +481,16 @@ describe('DashboardScenePageStateManager v1', () => {
       expect(consumeDashboardFetchTiming('fake-dash')).toBeGreaterThanOrEqual(0);
     });
 
+    it('should not record dashboard fetch timing when the fetch is cancelled', async () => {
+      // fetchDashboard swallows cancelled fetch errors and resolves to null (see isFetchError(e) && e.cancelled).
+      setupLoadDashboardMockReject({ status: 0, data: null, cancelled: true });
+
+      const loader = new DashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: 'fake-dash-cancelled', route: DashboardRoutes.Normal });
+
+      expect(consumeDashboardFetchTiming('fake-dash-cancelled')).toBeUndefined();
+    });
+
     it('should use DashboardScene creator to initialize the snapshot scene', async () => {
       setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
 

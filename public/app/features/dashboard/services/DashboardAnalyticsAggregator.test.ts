@@ -99,6 +99,25 @@ describe('DashboardAnalyticsAggregator', () => {
     expect(payloads[1]).not.toHaveProperty('dashboardFetchDuration');
   });
 
+  it('omits dashboardFetchDuration when the recorded fetch is stale (a slow refetch that resolved long after this profile started)', () => {
+    jest.spyOn(performance, 'now').mockReturnValue(0);
+    recordDashboardFetchTiming('dash-uid', 87.26);
+    jest.spyOn(performance, 'now').mockRestore();
+
+    // profileStart = timestamp - duration = 19750, far outside the attribution window around 0.
+    aggregator.onDashboardInteractionComplete({
+      interactionType: 'dashboard_view',
+      operationId: 'op-1',
+      timestamp: 2e4,
+      duration: 250,
+      networkDuration: 120.5,
+      longFramesCount: 0,
+      longFramesTotalTime: 0,
+    });
+
+    expect(getDashboardRenderPayloads()[0]).not.toHaveProperty('dashboardFetchDuration');
+  });
+
   it('reports a per-phase duration breakdown alongside total_time on the panel_render event', () => {
     aggregator.onPanelOperationStart(panelOp('query', 0));
 

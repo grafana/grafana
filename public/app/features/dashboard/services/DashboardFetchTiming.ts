@@ -10,16 +10,18 @@
  * The fetch duration belongs only to the dashboard_render event that actually loaded the
  * definition - consuming it clears the slot so later interactions on the same dashboard
  * (refresh, time_range_change, ...) correctly omit dashboardFetchDuration instead of
- * re-reporting a stale value.
- *
- * Known acceptable edge case: if a profile is cancelled (e.g. the tab is hidden mid-load),
- * the slot survives uncommitted and the next completed interaction for that uid consumes
- * it late, attributing the fetch to the wrong interaction. Rare enough not to guard against.
+ * re-reporting a stale value. A slow refetch can also resolve after its triggering profile
+ * has already completed; consumeDashboardFetchTiming's `notBefore` guard drops timings that
+ * are too old to belong to the interaction being reported, rather than letting them get
+ * misattributed to whichever interaction happens to consume them next.
  */
+
+export const FETCH_ATTRIBUTION_MAX_LEAD_MS = 5000;
 
 interface DashboardFetchTimingSlot {
   uid: string | undefined;
   durationMs: number;
+  recordedAt: number;
 }
 
 let lastFetchTiming: DashboardFetchTimingSlot | undefined;
@@ -30,7 +32,7 @@ let lastFetchTiming: DashboardFetchTimingSlot | undefined;
  * still match it up.
  */
 export function recordDashboardFetchTiming(uid: string | undefined, durationMs: number): void {
-  lastFetchTiming = { uid, durationMs };
+  lastFetchTiming = { uid, durationMs, recordedAt: performance.now() };
 }
 
 /**
@@ -38,8 +40,15 @@ export function recordDashboardFetchTiming(uid: string | undefined, durationMs: 
  * match so subsequent calls return undefined until the next fetch is recorded. A stored uid
  * of undefined matches any request. On a uid mismatch (or empty slot), returns undefined and
  * leaves the slot untouched.
+ *
+ * `notBefore`, when given, rejects (and discards) a timing recorded earlier than that instant.
+ * The initial-load fetch legitimately completes before the interaction's profile starts (scene
+ * transform work sits in between), so callers should pass a `notBefore` a little earlier than
+ * their profile's start - see FETCH_ATTRIBUTION_MAX_LEAD_MS. Anything older than that is a fetch
+ * from an abandoned or cancelled load and gets dropped rather than misattributed to whatever
+ * interaction consumes it next.
  */
-export function consumeDashboardFetchTiming(uid: string): number | undefined {
+export function consumeDashboardFetchTiming(uid: string, notBefore?: number): number | undefined {
   if (!lastFetchTiming) {
     return undefined;
   }
@@ -48,7 +57,12 @@ export function consumeDashboardFetchTiming(uid: string): number | undefined {
     return undefined;
   }
 
-  const { durationMs } = lastFetchTiming;
+  const { durationMs, recordedAt } = lastFetchTiming;
   lastFetchTiming = undefined;
+
+  if (notBefore !== undefined && recordedAt < notBefore) {
+    return undefined;
+  }
+
   return durationMs;
 }

@@ -1,6 +1,10 @@
 import { consumeDashboardFetchTiming, recordDashboardFetchTiming } from './DashboardFetchTiming';
 
 describe('DashboardFetchTiming', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('returns the recorded duration for a matching uid', () => {
     recordDashboardFetchTiming('dash-1', 123.4);
 
@@ -39,5 +43,30 @@ describe('DashboardFetchTiming', () => {
 
     expect(consumeDashboardFetchTiming('dash-1')).toBeUndefined();
     expect(consumeDashboardFetchTiming('dash-2')).toBe(20);
+  });
+
+  describe('notBefore staleness guard', () => {
+    it('returns the duration when recorded at or after notBefore', () => {
+      jest.spyOn(performance, 'now').mockReturnValue(1000);
+      recordDashboardFetchTiming('dash-1', 42);
+
+      expect(consumeDashboardFetchTiming('dash-1', 900)).toBe(42);
+    });
+
+    it('discards a timing recorded before notBefore, but still clears the slot', () => {
+      jest.spyOn(performance, 'now').mockReturnValue(1000);
+      recordDashboardFetchTiming('dash-1', 42);
+
+      expect(consumeDashboardFetchTiming('dash-1', 1500)).toBeUndefined();
+      // The stale timing must not be attributed to a later consume - the slot is gone either way.
+      expect(consumeDashboardFetchTiming('dash-1', 900)).toBeUndefined();
+    });
+
+    it('applies the old (unguarded) behavior when notBefore is omitted', () => {
+      jest.spyOn(performance, 'now').mockReturnValue(1000);
+      recordDashboardFetchTiming('dash-1', 42);
+
+      expect(consumeDashboardFetchTiming('dash-1')).toBe(42);
+    });
   });
 });
