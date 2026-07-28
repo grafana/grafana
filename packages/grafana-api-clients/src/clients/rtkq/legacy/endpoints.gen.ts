@@ -24,7 +24,6 @@ export const addTagTypes = [
   'saml',
   'org',
   'invites',
-  'preferences',
   'orgs',
   'query_history',
   'recording_rules',
@@ -34,6 +33,7 @@ export const addTagTypes = [
   'signing_keys',
   'teams',
   'sync_team_groups',
+  'preferences',
   'signed_in_user',
   'user',
   'users',
@@ -990,18 +990,6 @@ const injectedRtkApi = api
         query: (queryArg) => ({ url: `/org/invites/${queryArg.invitationCode}/revoke`, method: 'DELETE' }),
         invalidatesTags: ['org', 'invites'],
       }),
-      getOrgPreferences: build.query<GetOrgPreferencesApiResponse, GetOrgPreferencesApiArg>({
-        query: () => ({ url: `/org/preferences` }),
-        providesTags: ['org', 'preferences'],
-      }),
-      patchOrgPreferences: build.mutation<PatchOrgPreferencesApiResponse, PatchOrgPreferencesApiArg>({
-        query: (queryArg) => ({ url: `/org/preferences`, method: 'PATCH', body: queryArg.patchPrefsCmd }),
-        invalidatesTags: ['org', 'preferences'],
-      }),
-      updateOrgPreferences: build.mutation<UpdateOrgPreferencesApiResponse, UpdateOrgPreferencesApiArg>({
-        query: (queryArg) => ({ url: `/org/preferences`, method: 'PUT', body: queryArg.updatePrefsCmd }),
-        invalidatesTags: ['org', 'preferences'],
-      }),
       getCurrentOrgQuota: build.query<GetCurrentOrgQuotaApiResponse, GetCurrentOrgQuotaApiArg>({
         query: () => ({ url: `/org/quotas` }),
         providesTags: ['quota', 'org'],
@@ -1563,18 +1551,6 @@ const injectedRtkApi = api
       changeUserPassword: build.mutation<ChangeUserPasswordApiResponse, ChangeUserPasswordApiArg>({
         query: (queryArg) => ({ url: `/user/password`, method: 'PUT', body: queryArg.changeUserPasswordCommand }),
         invalidatesTags: ['signed_in_user'],
-      }),
-      getUserPreferences: build.query<GetUserPreferencesApiResponse, GetUserPreferencesApiArg>({
-        query: () => ({ url: `/user/preferences` }),
-        providesTags: ['signed_in_user', 'preferences'],
-      }),
-      patchUserPreferences: build.mutation<PatchUserPreferencesApiResponse, PatchUserPreferencesApiArg>({
-        query: (queryArg) => ({ url: `/user/preferences`, method: 'PATCH', body: queryArg.patchPrefsCmd }),
-        invalidatesTags: ['signed_in_user', 'preferences'],
-      }),
-      updateUserPreferences: build.mutation<UpdateUserPreferencesApiResponse, UpdateUserPreferencesApiArg>({
-        query: (queryArg) => ({ url: `/user/preferences`, method: 'PUT', body: queryArg.updatePrefsCmd }),
-        invalidatesTags: ['signed_in_user', 'preferences'],
       }),
       getUserQuotas: build.query<GetUserQuotasApiResponse, GetUserQuotasApiArg>({
         query: () => ({ url: `/user/quotas` }),
@@ -2489,18 +2465,6 @@ export type RevokeInviteApiResponse =
 export type RevokeInviteApiArg = {
   invitationCode: string;
 };
-export type GetOrgPreferencesApiResponse = /** status 200 (empty) */ PreferencesSpec;
-export type GetOrgPreferencesApiArg = void;
-export type PatchOrgPreferencesApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type PatchOrgPreferencesApiArg = {
-  patchPrefsCmd: PatchPrefsCmd;
-};
-export type UpdateOrgPreferencesApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type UpdateOrgPreferencesApiArg = {
-  updatePrefsCmd: UpdatePrefsCmd;
-};
 export type GetCurrentOrgQuotaApiResponse = /** status 200 (empty) */ QuotaDto[];
 export type GetCurrentOrgQuotaApiArg = void;
 export type GetOrgUsersForCurrentOrgApiResponse = /** status 200 (empty) */ OrgUserDto[];
@@ -3001,18 +2965,6 @@ export type ChangeUserPasswordApiResponse =
 export type ChangeUserPasswordApiArg = {
   /** To change the email, name, login, theme, provide another one. */
   changeUserPasswordCommand: ChangeUserPasswordCommand;
-};
-export type GetUserPreferencesApiResponse = /** status 200 (empty) */ PreferencesSpec;
-export type GetUserPreferencesApiArg = void;
-export type PatchUserPreferencesApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type PatchUserPreferencesApiArg = {
-  patchPrefsCmd: PatchPrefsCmd;
-};
-export type UpdateUserPreferencesApiResponse =
-  /** status 200 An OKResponse is returned if the request was successful. */ SuccessResponseBody;
-export type UpdateUserPreferencesApiArg = {
-  updatePrefsCmd: UpdatePrefsCmd;
 };
 export type GetUserQuotasApiResponse = /** status 200 (empty) */ QuotaDto[];
 export type GetUserQuotasApiArg = void;
@@ -4417,59 +4369,6 @@ export type AddInviteForm = {
   role?: 'None' | 'Viewer' | 'Editor' | 'Admin';
   sendEmail?: boolean;
 };
-export type PreferencesNavbarPreference = {
-  bookmarkUrls?: string[];
-};
-export type PreferencesQueryHistoryPreference = {
-  /** one of: '' | 'query' | 'starred'; */
-  homeTab?: string;
-};
-export type PreferencesSpec = {
-  /** UID for the home dashboard */
-  homeDashboardUID?: string;
-  /** Explicit home URL (NOTE: this can only be modified in the system settings) */
-  homeURL?: string;
-  /** Selected language */
-  language?: string;
-  navbar?: PreferencesNavbarPreference;
-  queryHistory?: PreferencesQueryHistoryPreference;
-  /** user interface theme */
-  theme?: string;
-  /** The timezone selection */
-  timezone?: string;
-  /** day of the week (sunday, monday, etc) */
-  weekStart?: string;
-};
-export type NavbarPreference = {
-  bookmarkUrls?: string[];
-};
-export type QueryHistoryPreference = {
-  homeTab?: string;
-};
-export type PatchPrefsCmd = {
-  /** The numerical :id of a favorited dashboard */
-  homeDashboardId?: number;
-  homeDashboardUID?: string;
-  language?: string;
-  navbar?: NavbarPreference;
-  queryHistory?: QueryHistoryPreference;
-  theme?: 'light' | 'dark';
-  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
-  timezone?: string;
-  weekStart?: string;
-};
-export type UpdatePrefsCmd = {
-  /** The numerical :id of a favorited dashboard */
-  homeDashboardId?: number;
-  homeDashboardUID?: string;
-  language?: string;
-  navbar?: NavbarPreference;
-  queryHistory?: QueryHistoryPreference;
-  theme?: 'light' | 'dark' | 'system';
-  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
-  timezone?: string;
-  weekStart?: string;
-};
 export type OrgUserDto = {
   accessControl?: {
     [key: string]: boolean;
@@ -5212,6 +5111,47 @@ export type SetTeamMembershipsCommand = {
 export type UpdateTeamMemberCommand = {
   permission?: PermissionType;
 };
+export type PreferencesNavbarPreference = {
+  bookmarkUrls?: string[];
+};
+export type PreferencesQueryHistoryPreference = {
+  /** one of: '' | 'query' | 'starred'; */
+  homeTab?: string;
+};
+export type PreferencesSpec = {
+  /** UID for the home dashboard */
+  homeDashboardUID?: string;
+  /** Explicit home URL (NOTE: this can only be modified in the system settings) */
+  homeURL?: string;
+  /** Selected language */
+  language?: string;
+  navbar?: PreferencesNavbarPreference;
+  queryHistory?: PreferencesQueryHistoryPreference;
+  /** user interface theme */
+  theme?: string;
+  /** The timezone selection */
+  timezone?: string;
+  /** day of the week (sunday, monday, etc) */
+  weekStart?: string;
+};
+export type NavbarPreference = {
+  bookmarkUrls?: string[];
+};
+export type QueryHistoryPreference = {
+  homeTab?: string;
+};
+export type UpdatePrefsCmd = {
+  /** The numerical :id of a favorited dashboard */
+  homeDashboardId?: number;
+  homeDashboardUID?: string;
+  language?: string;
+  navbar?: NavbarPreference;
+  queryHistory?: QueryHistoryPreference;
+  theme?: 'light' | 'dark' | 'system';
+  /** Any IANA timezone string (e.g. America/New_York), 'utc', 'browser', or empty string */
+  timezone?: string;
+  weekStart?: string;
+};
 export type UserProfileDto = {
   accessControl?: {
     [key: string]: boolean;
@@ -5606,10 +5546,6 @@ export const {
   useLazyGetPendingOrgInvitesQuery,
   useAddOrgInviteMutation,
   useRevokeInviteMutation,
-  useGetOrgPreferencesQuery,
-  useLazyGetOrgPreferencesQuery,
-  usePatchOrgPreferencesMutation,
-  useUpdateOrgPreferencesMutation,
   useGetCurrentOrgQuotaQuery,
   useLazyGetCurrentOrgQuotaQuery,
   useGetOrgUsersForCurrentOrgQuery,
@@ -5740,10 +5676,6 @@ export const {
   useGetSignedInUserOrgListQuery,
   useLazyGetSignedInUserOrgListQuery,
   useChangeUserPasswordMutation,
-  useGetUserPreferencesQuery,
-  useLazyGetUserPreferencesQuery,
-  usePatchUserPreferencesMutation,
-  useUpdateUserPreferencesMutation,
   useGetUserQuotasQuery,
   useLazyGetUserQuotasQuery,
   useRevokeUserAuthTokenMutation,

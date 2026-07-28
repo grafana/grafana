@@ -19,14 +19,6 @@ aliases:
 
 # Before you begin
 
-{{< admonition type="note" >}}
-
-**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
-
-[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
-
-{{< /admonition >}}
-
 Before you begin to set up Git Sync, ensure you have the following:
 
 - A Grafana instance (Cloud, OSS, or Enterprise)
@@ -35,7 +27,30 @@ Before you begin to set up Git Sync, ensure you have the following:
 - If you're [using webhooks or image rendering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend), a public instance with external access
   - Optional: The [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs
 
-Moreover, make sure you're not blocking any of the Grafana services IPs. For a list of IPs you need to add to your allowlist, refer to [Hosted Grafana source IPs](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/#hosted-grafana).
+## Network connectivity and IP allowlisting
+
+Git Sync requires network connectivity between your Grafana instance and Git server. Understanding the traffic patterns helps you configure firewall rules and allowlists correctly.
+
+### Traffic types
+
+Git Sync uses two types of network traffic:
+
+- **Sync operations (pull and push)**: Grafana → Git Server
+  - Egress traffic from Hosted Grafana IPs
+  - Customer Git servers must allow inbound traffic from these IPs
+  - For a list of IPs to add to your Git server's allowlist, refer to [Hosted Grafana source IPs](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/#hosted-grafana)
+- **Webhooks (instantaneous sync)**: Git Server → Grafana stack
+  - Inbound traffic to the stack's public endpoint
+  - The Git server must be able to reach `*.grafana.net`
+  - Required only if you're [using webhooks](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend)
+
+### AWS PrivateLink and Private Data Source Connect
+
+Git Sync does not route over AWS PrivateLink or Private Data Source Connect (PDC).
+
+AWS PrivateLink and PDC provide a separate tunnel for data source query traffic (Grafana → your private databases or data sources). Git Sync uses the normal public path from the Hosted Grafana IPs and is independent of PrivateLink/PDC.
+
+If you use AWS PrivateLink or PDC for data sources, you can still use Git Sync. The two features neither interfere with nor depend on each other.
 
 Finally, get acquainted with the following topics:
 

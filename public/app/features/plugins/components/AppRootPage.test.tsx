@@ -1,11 +1,13 @@
 import { act, screen } from '@testing-library/react';
-import { Component } from 'react';
+import { Component, useEffect } from 'react';
 import { Routes, Route, Link } from 'react-router-dom-v5-compat';
 import { render } from 'test/test-utils';
 
 import { AppPlugin, PluginType, type AppRootProps, type NavModelItem, PluginIncludeType, OrgRole } from '@grafana/data';
 import { getMockPlugin } from '@grafana/data/test';
+import { selectors } from '@grafana/e2e-selectors';
 import { setEchoSrv } from '@grafana/runtime';
+import { refetchPluginSettings } from '@grafana/runtime/internal';
 import { getPluginSettings } from '@grafana/runtime/unstable';
 import { GrafanaRouteWrapper } from 'app/core/navigation/GrafanaRoute';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -24,8 +26,17 @@ jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   getPluginSettings: jest.fn(),
 }));
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  refetchPluginSettings: jest.fn(),
+}));
 jest.mock('../importer/pluginImporter', () => ({
   pluginImporter: { importApp: jest.fn() },
+}));
+jest.mock('./pluginNavFallbacks', () => ({
+  pluginNavFallbacks: {
+    'my-awesome-plugin': () => <div>Assistant onboarding fallback</div>,
+  },
 }));
 
 jest.mock('@grafana/runtime', () => ({
@@ -58,6 +69,10 @@ const getPluginSettingsMock = getPluginSettings as jest.Mock<
   ReturnType<typeof getPluginSettings>,
   Parameters<typeof getPluginSettings>
 >;
+const refetchPluginSettingsMock = refetchPluginSettings as jest.Mock<
+  ReturnType<typeof refetchPluginSettings>,
+  Parameters<typeof refetchPluginSettings>
+>;
 
 // don't care about this component - it's just for a test
 // eslint-disable-next-line react-prefer-function-component/react-prefer-function-component
@@ -69,7 +84,7 @@ class RootComponent extends Component<AppRootProps> {
   }
 }
 
-function renderUnderRouter(page = '') {
+function renderUnderRouter(page = '', pluginId = 'my-awesome-plugin') {
   const appPluginNavItem: NavModelItem = {
     text: 'App',
     id: 'plugin-page-app',
@@ -103,11 +118,11 @@ function renderUnderRouter(page = '') {
   const pagePath = page ? `/${page}` : '';
   const route = {
     path: `/a/:pluginId/*`,
-    component: () => <AppRootPage pluginId="my-awesome-plugin" pluginNavSection={appsSection} />,
+    component: () => <AppRootPage pluginId={pluginId} pluginNavSection={appsSection} />,
   };
 
   const Foo = () => {
-    return <Link to={`/a/my-awesome-plugin${pagePath}`}>Navigate</Link>;
+    return <Link to={`/a/${pluginId}${pagePath}`}>Navigate</Link>;
   };
 
   return render(
@@ -128,7 +143,7 @@ function renderUnderRouter(page = '') {
     </ExtensionRegistriesProvider>,
     {
       historyOptions: {
-        initialEntries: [`/a/my-awesome-plugin${pagePath}`],
+        initialEntries: [`/a/${pluginId}${pagePath}`],
       },
     }
   );
@@ -148,14 +163,65 @@ describe('AppRootPage', () => {
 
   it("should show a not found page if the plugin settings can't load", async () => {
     jest.spyOn(console, 'error').mockImplementation();
-    getPluginSettingsMock.mockRejectedValue(new Error('Unknown Plugin'));
+    refetchPluginSettingsMock.mockRejectedValue(new Error('Unknown Plugin'));
     // Renders once for the first time
     renderUnderRouter();
     expect(await screen.findByText('App not found')).toBeVisible();
   });
 
+  it('renders a registered nav fallback when plugin settings return 404', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    refetchPluginSettingsMock.mockRejectedValue(
+      new Error('Unknown Plugin', { cause: { status: 404, data: { message: 'Plugin not found' } } })
+    );
+
+    renderUnderRouter();
+
+    expect(await screen.findByText('Assistant onboarding fallback')).toBeVisible();
+    expect(screen.queryByText('App not found')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ['a 500 response', new Error('Unknown Plugin', { cause: { status: 500, data: {} } })],
+    ['a 403 response', { status: 403, data: {} }],
+    ['a non-fetch error', new Error('Import failed')],
+  ])('does not render a registered nav fallback for %s', async (_name, error) => {
+    jest.spyOn(console, 'error').mockImplementation();
+    refetchPluginSettingsMock.mockRejectedValue(error);
+
+    renderUnderRouter();
+
+    expect(await screen.findByText('App not found')).toBeVisible();
+    expect(screen.queryByText('Assistant onboarding fallback')).not.toBeInTheDocument();
+  });
+
+  it('renders a registered nav fallback without plugin install permission', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    contextSrv.user.permissions = {};
+    refetchPluginSettingsMock.mockRejectedValue(
+      new Error('Unknown Plugin', { cause: { status: 404, data: { message: 'Plugin not found' } } })
+    );
+
+    renderUnderRouter();
+
+    expect(await screen.findByText('Assistant onboarding fallback')).toBeVisible();
+    expect(screen.queryByText('App not found')).not.toBeInTheDocument();
+  });
+
+  it('does not render a fallback for an unregistered plugin', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    getPluginSettingsMock.mockRejectedValue(
+      new Error('Unknown Plugin', { cause: { status: 404, data: { message: 'Plugin not found' } } })
+    );
+
+    renderUnderRouter('', 'unregistered-plugin');
+
+    expect(await screen.findByText('App not found')).toBeVisible();
+    expect(screen.queryByText('Assistant onboarding fallback')).not.toBeInTheDocument();
+  });
+
   it('should not render the component if we are not under a plugin path', async () => {
-    getPluginSettingsMock.mockResolvedValue(pluginMeta);
+    refetchPluginSettingsMock.mockResolvedValue(pluginMeta);
 
     const plugin = new AppPlugin();
     plugin.meta = pluginMeta;
@@ -179,6 +245,61 @@ describe('AppRootPage', () => {
       screen.getByRole('link', { name: 'Navigate' }).click();
     });
     expect(RootComponent.timesRendered).toEqual(2);
+  });
+
+  it('should mark the plugin boundary on the page when the plugin provides its own nav', async () => {
+    refetchPluginSettingsMock.mockResolvedValue(pluginMeta);
+
+    const NavChangingRootComponent = ({ onNavChanged }: AppRootProps) => {
+      useEffect(() => {
+        onNavChanged({
+          main: { text: 'My awesome plugin' },
+          node: { text: 'My awesome plugin' },
+        });
+      }, [onNavChanged]);
+
+      return <p>my great component</p>;
+    };
+
+    const plugin = new AppPlugin();
+    plugin.meta = pluginMeta;
+    plugin.root = NavChangingRootComponent;
+    importAppPluginMock.mockResolvedValue(plugin);
+
+    renderUnderRouter();
+
+    expect(await screen.findByText('my great component')).toBeVisible();
+    expect(await screen.findByTestId(selectors.components.Plugins.appPage('my-awesome-plugin'))).toHaveAttribute(
+      'data-plugin-id',
+      'my-awesome-plugin'
+    );
+  });
+
+  it('refetches registered plugin settings when re-entering the route after uninstall', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    refetchPluginSettingsMock
+      .mockResolvedValueOnce(pluginMeta)
+      .mockRejectedValueOnce(
+        new Error('Unknown Plugin', { cause: { status: 404, data: { message: 'Plugin not found' } } })
+      );
+
+    const plugin = new AppPlugin();
+    plugin.meta = pluginMeta;
+    plugin.root = RootComponent;
+    importAppPluginMock.mockResolvedValue(plugin);
+
+    renderUnderRouter();
+    expect(await screen.findByText('my great component')).toBeVisible();
+
+    await act(async () => {
+      screen.getByRole('link', { name: 'Navigate' }).click();
+    });
+    await act(async () => {
+      screen.getByRole('link', { name: 'Navigate' }).click();
+    });
+
+    expect(await screen.findByText('Assistant onboarding fallback')).toBeVisible();
+    expect(refetchPluginSettingsMock).toHaveBeenCalledTimes(2);
   });
 
   describe('When accessing using different roles', () => {
@@ -233,7 +354,7 @@ describe('AppRootPage', () => {
         ],
       });
 
-      getPluginSettingsMock.mockResolvedValue(pluginMetaWithIncludes);
+      refetchPluginSettingsMock.mockResolvedValue(pluginMetaWithIncludes);
 
       const plugin = new AppPlugin();
       plugin.meta = pluginMetaWithIncludes;

@@ -1,72 +1,45 @@
-import { useMemo } from 'react';
-
 import { t, Trans } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
-import { Badge, LinkButton } from '@grafana/ui';
-import { ACTIVE_INCIDENTS_QUERY_LIMIT, incidentsApi } from 'app/features/alerting/unified/api/incidentsApi';
+import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
+import { Badge, LinkButton, Tooltip } from '@grafana/ui';
+import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
-import { canAccessPluginPage, useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/filters/severity';
-import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
-import { SummaryCard, SummaryCardAge, SummaryCardTitle } from './SummaryCard';
-import { HOME_CARD_MAX_ITEMS } from './constants';
+import { ctaClicked } from '../analytics/main';
+
+import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
+import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
 import { severityLevelColor } from './severity';
+import { useIncidents, type IncidentsData } from './useIncidents';
 
 export function IncidentsCard() {
-  const { pluginId, installed, loading, settings } = useIrmPlugin(SupportedPlugin.Incident);
-
-  // Hide the card whenever the Incident/IRM plugin isn't available — including while the
-  // settings probe is in flight, so the card never flashes in before disappearing.
-  if (loading || !installed) {
-    return null;
-  }
-
-  // Gate incident links like DeclareIncidentButton/InstanceDetailsDrawerTitle do: a user without
-  // access to the plugin's incidents page sees titles as plain text, not links that 403 on click.
-  const canAccess = settings ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents')) : false;
-  // canDeclare gates on the plugin's /incidents/declare write include; the button itself deep-links to
-  // /incidents?declare=new (IRM's declare flow), and canAccessPluginPage ignores the query string.
-  const canDeclare = settings ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents/declare')) : false;
-
-  return <IncidentsCardInner pluginId={pluginId} canAccess={canAccess} canDeclare={canDeclare} />;
+  const data = useIncidents();
+  return <IncidentsCardView data={data} />;
 }
 
-type IncidentsCardInnerProps = {
-  pluginId: string;
-  canAccess: boolean;
-  canDeclare: boolean;
-};
-
-/**
- * Inner component avoids calling hooks conditionally —
- * the availability gate lives in the parent wrapper.
- */
-function IncidentsCardInner({ pluginId, canAccess, canDeclare }: IncidentsCardInnerProps) {
-  const { data: incidents = [], isLoading, error, refetch } = incidentsApi.useGetActiveIncidentsQuery({ pluginId });
-  const incidentCount = incidents?.length ?? 0;
-  // A 404 from the Incident backend means this org has no incident record yet (plugin installed but not
-  // onboarded, or no incident ever created) — that's "no active incidents", not a failure. Every other
-  // error (401/403/5xx/network) is genuine and surfaced to the user.
-  const loadError = !!error && !(isFetchError(error) && error.status === 404);
-
-  // Most recent incidents first; capped client-side.
-  const displayed = useMemo(
-    () =>
-      [...incidents]
-        .sort((a, b) => new Date(b.createdTime).getTime() - new Date(a.createdTime).getTime())
-        .slice(0, HOME_CARD_MAX_ITEMS),
-    [incidents]
-  );
+/** Render-only card body; data comes from useIncidents so callers control where the hook runs. */
+export function IncidentsCardView({
+  data,
+  hideFooterActions = false,
+}: {
+  data: IncidentsData;
+  hideFooterActions?: boolean;
+}) {
+  const redesignEnabled = useFlagGrafanaGrowthHomepage();
+  const { pluginId, canAccess, canDeclare, displayed, count, hasMore, loading, error, refetch } = data;
 
   return (
     <SummaryCard
       title={t('home.incidents-card.title', 'Active incidents')}
-      count={incidentCount}
-      countLimit={ACTIVE_INCIDENTS_QUERY_LIMIT}
-      loading={isLoading}
+      count={count}
+      // Only cap the badge when the server actually truncated the result; a full page with
+      // nothing beyond it should read the exact count, not "{limit}+".
+      countLimit={hasMore ? ACTIVE_INCIDENTS_QUERY_LIMIT : undefined}
+      loading={loading}
       error={
-        loadError
+        error
           ? { title: t('home.incidents-card.error-title', 'Could not load active incidents'), onRetry: () => refetch() }
           : undefined
       }
@@ -74,34 +47,55 @@ function IncidentsCardInner({ pluginId, canAccess, canDeclare }: IncidentsCardIn
       items={displayed}
       getItemKey={(incident) => incident.incidentID}
       renderItem={(incident) => (
-        <>
-          <Badge text={incident.severityLabel} color={severityLevelColor(canonicalSeverity(incident.severityLabel))} />
-          <SummaryCardTitle
-            href={canAccess ? createBridgeURL(pluginId, `/incidents/${incident.incidentID}`) : undefined}
-          >
-            {incident.title}
-          </SummaryCardTitle>
-          <SummaryCardAge date={new Date(incident.createdTime)} />
-        </>
+        <ListRow
+          prefix={
+            redesignEnabled ? (
+              // Same severity treatment as the firing-alerts rows so the two tabs share one visual language
+              <Tooltip content={incident.severityLabel}>
+                <span>
+                  <SeverityBars level={canonicalSeverity(incident.severityLabel)} />
+                  <span className="sr-only">{incident.severityLabel}</span>
+                </span>
+              </Tooltip>
+            ) : (
+              <SummaryCardPrefix>
+                <Badge
+                  text={incident.severityLabel}
+                  color={severityLevelColor(canonicalSeverity(incident.severityLabel))}
+                />
+              </SummaryCardPrefix>
+            )
+          }
+          title={incident.title}
+          trailing={<SummaryCardAge date={new Date(incident.createdTime)} />}
+          href={canAccess ? createBridgeURL(pluginId, `/incidents/${incident.incidentID}`) : undefined}
+          onClick={() => ctaClicked({ surface: 'incidents_card', action: 'incident_detail', placement: 'list' })}
+          showDivider={redesignEnabled}
+        />
       )}
+      emptyAction={
+        canDeclare ? (
+          <LinkButton
+            variant="primary"
+            icon="fire"
+            href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
+            onClick={() =>
+              ctaClicked({ surface: 'incidents_card', action: 'declare_incident', placement: 'empty_state' })
+            }
+          >
+            <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
+          </LinkButton>
+        ) : undefined
+      }
       footer={
-        !incidentCount
-          ? canDeclare && (
-              <LinkButton
-                variant="secondary"
-                size="sm"
-                fill="text"
-                icon="fire"
-                href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
-              >
-                <Trans i18nKey="home.incidents-card.declare">Declare an incident</Trans>
-              </LinkButton>
-            )
-          : canAccess && (
-              <LinkButton variant="secondary" size="sm" fill="text" href={createBridgeURL(pluginId, '/incidents')}>
-                <Trans i18nKey="home.incidents-card.view-all">View all incidents</Trans>
-              </LinkButton>
-            )
+        !hideFooterActions && (
+          <DeclareAndViewIncidentsButtons
+            pluginId={pluginId}
+            hasIncidents={count > 0}
+            canDeclare={canDeclare}
+            canAccess={canAccess}
+          />
+        )
       }
     />
   );

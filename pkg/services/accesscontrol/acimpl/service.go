@@ -436,11 +436,23 @@ func (s *Service) getCachedPermissions(ctx context.Context, key string, getPermi
 		return permissions, nil
 	}
 
-	if err := s.cache.ExclusiveSet(key, getValue, cacheTTL); err != nil {
+	// ReloadCache forces a fresh computation, so bypass the read-coalescing
+	// re-check and always recompute under the lock.
+	if options.ReloadCache {
+		if err := s.cache.ExclusiveSet(key, getValue, cacheTTL); err != nil {
+			return nil, err
+		}
+		return permissions, nil
+	}
+
+	// Coalesce concurrent misses for the same key: callers that block on the lock
+	// reuse the value the winner computed instead of each re-running getPermissionsFn.
+	value, err := s.cache.GetOrExclusiveSet(key, getValue, cacheTTL)
+	if err != nil {
 		return nil, err
 	}
 
-	return permissions, nil
+	return value.([]accesscontrol.Permission), nil
 }
 
 func (s *Service) getCachedTeamsPermissions(ctx context.Context, user identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {

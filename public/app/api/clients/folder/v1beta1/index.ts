@@ -1,6 +1,5 @@
 import { generatedAPI } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { invalidateQuotaUsage } from '@grafana/api-clients/rtkq/quotas/v0alpha1';
-import { config } from '@grafana/runtime';
 import { PAGE_SIZE } from 'app/features/browse-dashboards/api/constants';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { dispatch } from 'app/store/store';
@@ -9,10 +8,6 @@ import { type DescendantCount } from 'app/types/folders';
 import { getParsedCounts } from './utils';
 
 async function refreshTeamFolders() {
-  if (!config.featureToggles.teamFolders) {
-    return;
-  }
-
   // Lazy-imported to avoid a circular dependency: state/actions transitively imports
   // browseDashboardsAPI, which imports this module via folder/v1beta1/hooks.
   const { refetchChildren } = await import('app/features/browse-dashboards/state/actions');
@@ -93,7 +88,7 @@ export const folderAPIv1beta1 = generatedAPI
           const initialCounts: DescendantCount = {
             folders: folderUIDs.length,
             dashboards: dashboardUIDs.length,
-            library_elements: 0,
+            librarypanels: 0,
             alertrules: 0,
           };
 
@@ -113,7 +108,7 @@ export const folderAPIv1beta1 = generatedAPI
               acc.folders += counts.folders ?? 0;
               acc.dashboards += counts.dashboards ?? 0;
               acc.alertrules += counts.alertrules ?? 0;
-              acc.library_elements += counts.library_elements ?? 0;
+              acc.librarypanels += counts.librarypanels ?? 0;
               return acc;
             }, initialCounts);
 

@@ -20,7 +20,7 @@ export function BootstrapStepCardIcons({ target, repoType }: { target: Target; r
       <Stack>
         <Icon name="folder" size="xxl" />
         <Icon name="arrow-left" size="xxl" />
-        <RepoIcon type={repoType} />
+        <RepoIcon type={repoType} autoHeight />
       </Stack>
     );
   }
@@ -30,7 +30,7 @@ export function BootstrapStepCardIcons({ target, repoType }: { target: Target; r
       <Stack>
         <Icon name="apps" size="xxl" />
         <Icon name="arrow-left" size="xxl" />
-        <RepoIcon type={repoType} />
+        <RepoIcon type={repoType} autoHeight />
       </Stack>
     );
   }

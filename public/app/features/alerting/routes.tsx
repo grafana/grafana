@@ -99,14 +99,12 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/alerting/routes/policy/:name/edit',
       roles: evaluateAccess([AccessControlAction.AlertingNotificationsRead, ...PERMISSIONS_NOTIFICATION_POLICIES]),
-      component: config.featureToggles.alertingMultiplePolicies
-        ? importAlertingComponent(
-            () =>
-              import(
-                /* webpackChunkName: "PolicyPage" */ 'app/features/alerting/unified/components/notification-policies/PolicyPage'
-              )
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "PolicyPage" */ 'app/features/alerting/unified/components/notification-policies/PolicyPage'
           )
-        : () => <Navigate replace to="/alerting/routes" />,
+      ),
     },
     {
       path: '/alerting/silences',
@@ -309,7 +307,11 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/import-to-gma',
-      roles: () => ['Admin'],
+      roles: evaluateAccess([
+        AccessControlAction.AlertingRuleCreate,
+        AccessControlAction.AlertingProvisioningSetStatus,
+        AccessControlAction.AlertingNotificationsWrite,
+      ]),
       component: config.featureToggles.alertingMigrationWizardUI
         ? importAlertingComponent(
             () =>

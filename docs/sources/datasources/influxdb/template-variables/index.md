@@ -123,11 +123,12 @@ InfluxDB supports the use of filters for InfluxQL. They allow you to define mult
 
 To add filters:
 
-1. Navigate to **Dashboard settings** > **Variables**.
+1. Navigate to the dashboard you want to update and click **Edit**.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Filter and Group by**.
 1. Enter a **Name** for the filter.
-1. Select your InfluxDB data source.
+1. Select an option in the **Display** drop-down list to control where on the dashboard the filter is displayed.
+1. Select your InfluxDB data source in the **Data source** drop-down list.
 
 For more information, refer to the [Filter and Group by documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/).
 

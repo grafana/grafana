@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	types "k8s.io/apimachinery/pkg/types"
 
 	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -44,7 +45,7 @@ var (
 )
 
 func TestMain(m *testing.M) {
-	if err := openfeature.SetProvider(provider); err != nil {
+	if err := openfeature.SetProviderAndWait(provider); err != nil {
 		panic(err)
 	}
 
@@ -1830,6 +1831,14 @@ func (m *MockK8sHandler) Create(ctx context.Context, obj *unstructured.Unstructu
 
 func (m *MockK8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts metav1.UpdateOptions) (*unstructured.Unstructured, error) {
 	args := m.Called(ctx, obj, orgID, opts)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
+}
+
+func (m *MockK8sHandler) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, orgID int64, opts metav1.PatchOptions) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, name, pt, data, orgID, opts)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

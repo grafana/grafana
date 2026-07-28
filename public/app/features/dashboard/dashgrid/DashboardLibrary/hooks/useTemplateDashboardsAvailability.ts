@@ -1,12 +1,14 @@
-import { type DataSourceInstanceSettings } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceInstanceListItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
+import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import { getDashboardTemplatesTab } from '../enterprise-components/DashboardTemplatesTabExtension';
+import { canReadDashboardTemplates } from '../utils/templatePermissions';
 
 interface TemplateDashboardsAvailability {
   /** The first available `grafana-testdata-datasource`, used to power the Grafana-provisioned templates. */
-  testDataSource: DataSourceInstanceSettings | undefined;
+  testDataSource: DataSourceInstanceListItem | undefined;
   /** Grafana-provisioned templates are available (feature toggle on AND a test datasource exists). */
   showGrafanaTemplates: boolean;
   /** Custom templates are available (flag on AND the enterprise tab is registered). */
@@ -23,10 +25,18 @@ interface TemplateDashboardsAvailability {
  * renders nothing.
  */
 export function useTemplateDashboardsAvailability(): TemplateDashboardsAvailability {
-  const showCustomTemplates = useFlagGrafanaCustomDashboardTemplates() && getDashboardTemplatesTab() !== null;
-  const testDataSource = config.featureToggles.dashboardTemplates
-    ? getDataSourceSrv().getList({ type: 'grafana-testdata-datasource' })[0]
-    : undefined;
+  // Custom templates require the `dashboardtemplates:read` RBAC permission: without it the user
+  // cannot list templates (the API denies it), so the tab/entry points must not be offered.
+  const showCustomTemplates =
+    useFlagGrafanaCustomDashboardTemplates() && getDashboardTemplatesTab() !== null && canReadDashboardTemplates();
+
+  // Skip the lookup entirely when the Grafana-provisioned path is disabled — passing `undefined`
+  // returns the full list, which is wasted work since we'd discard the result.
+  const { items, isLoading } = useDataSourceInstanceList(
+    config.featureToggles.dashboardTemplates ? { type: 'grafana-testdata-datasource' } : undefined
+  );
+
+  const testDataSource = config.featureToggles.dashboardTemplates && !isLoading ? items[0] : undefined;
   const showGrafanaTemplates = Boolean(testDataSource);
 
   return {

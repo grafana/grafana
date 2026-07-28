@@ -4,9 +4,11 @@ import { render, testWithFeatureToggles } from 'test/test-utils';
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
+import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type GrafanaGroupUpdatedResponse } from '../api/alertRuleModel';
+import { alertingApi } from '../api/alertingApi';
 import { type ContactPoint, RuleFormType, type RuleFormValues } from '../types/rule-form';
 
 import { AlertRuleDrawerForm, type AlertRuleDrawerFormProps } from './AlertRuleDrawerForm';
@@ -369,6 +371,29 @@ describe('AlertRuleDrawerForm', () => {
           'Alert rule created',
           'Your alert rule has been created successfully.'
         );
+      });
+
+      it('invalidates the legacy rule cache so the panel alerts list refreshes', async () => {
+        // The app-platform create lives on a separate cache slice, so the drawer must explicitly
+        // invalidate the CombinedAlertRule tag the panel list relies on.
+        mockUpsertUngroupedGrafanaRule.mockResolvedValue('new-rule-uid');
+
+        // Spy on dispatch before render so the component's useDispatch() captures the spy.
+        const store = configureStore();
+        const dispatchSpy = jest.spyOn(store, 'dispatch');
+
+        const { user } = render(<AlertRuleDrawerForm {...defaultProps} prefill={submittablePrefill} />, { store });
+
+        await user.click(screen.getByRole('button', { name: /Create/i }));
+
+        await waitFor(() => {
+          expect(dispatchSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+              type: `${alertingApi.reducerPath}/invalidateTags`,
+              payload: expect.arrayContaining(['CombinedAlertRule']),
+            })
+          );
+        });
       });
 
       it('shows an error notification when the v2 mutation rejects', async () => {

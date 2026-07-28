@@ -292,6 +292,17 @@ describe('UnconfiguredPanelComp', () => {
 
         expect(dashboard.onShowAddLibraryPanelDrawer).toHaveBeenCalled();
       });
+
+      it('tracks the use library panel interaction', async () => {
+        const dashboard = buildDashboard({ isEditing: true });
+        jest.spyOn(dashboard, 'onShowAddLibraryPanelDrawer').mockImplementation(() => {});
+        const { user, root } = renderPanel();
+
+        await user.hover(root);
+        await user.click(screen.getByRole('button', { name: /use library panel/i }));
+
+        expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('use_library_panel', 1, 'panel');
+      });
     });
 
     describe('queryLibraryEnabled = false', () => {

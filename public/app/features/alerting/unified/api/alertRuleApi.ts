@@ -333,6 +333,9 @@ export const alertRuleApi = alertingApi.injectEndpoints({
           ]),
           ...promTags,
           'DeletedRules',
+          // Combined rule views (e.g. the panel alerts list) read through prometheusRuleNamespaces /
+          // rulerRules, which provide CombinedAlertRule. Without this they only refresh on the poll.
+          'CombinedAlertRule',
         ];
       },
     }),

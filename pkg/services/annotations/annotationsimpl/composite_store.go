@@ -16,10 +16,10 @@ import (
 // CompositeStore is a read store that combines two or more read stores, and queries all stores in parallel.
 type CompositeStore struct {
 	logger  log.Logger
-	readers []readStore
+	readers []ReadStore
 }
 
-func NewCompositeStore(logger log.Logger, readers ...readStore) *CompositeStore {
+func NewCompositeStore(logger log.Logger, readers ...ReadStore) *CompositeStore {
 	return &CompositeStore{
 		logger:  logger,
 		readers: readers,

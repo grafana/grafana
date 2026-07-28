@@ -19,17 +19,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
-	postgres "github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource"
-	pyroscope "github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
-	"github.com/grafana/grafana/pkg/tsdb/jaeger"
-	"github.com/grafana/grafana/pkg/tsdb/loki"
-	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
-	"github.com/grafana/grafana/pkg/tsdb/parca"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 )
 
@@ -38,17 +32,11 @@ const (
 	AzureMonitor  = "grafana-azure-monitor-datasource"
 	Graphite      = "graphite"
 	InfluxDB      = "influxdb"
-	Loki          = "loki"
 	Prometheus    = "prometheus"
 	TestData      = "grafana-testdata-datasource"
 	TestDataAlias = "testdata"
-	PostgreSQL    = "grafana-postgresql-datasource"
 	MySQL         = "mysql"
-	MSSQL         = "mssql"
 	Grafana       = "grafana"
-	Pyroscope     = "grafana-pyroscope-datasource"
-	Parca         = "parca"
-	Jaeger        = "jaeger"
 )
 
 func init() {
@@ -89,9 +77,9 @@ func ProvideCoreProvider(coreRegistry *Registry) plugins.BackendFactoryProvider 
 }
 
 func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service,
-	grap *graphite.Service, idb *influxdb.Service, lk *loki.Service,
-	pr *prometheus.Service, td *testdatasource.Service, pg *postgres.Service, my *mysql.Service,
-	ms *mssql.Service, graf *grafanads.Service, pyroscope *pyroscope.Service, parca *parca.Service, jaeger *jaeger.Service) *Registry {
+	grap *graphite.Service, idb *influxdb.Service,
+	pr *prometheus.Service, td *testdatasource.Service, my *mysql.Service,
+	graf *grafanads.Service) *Registry {
 	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
 	sdktracing.InitDefaultTracer(tracer)
 
@@ -100,16 +88,10 @@ func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *clou
 		AzureMonitor: asBackendPlugin(am),
 		Graphite:     asBackendPlugin(grap),
 		InfluxDB:     asBackendPlugin(idb),
-		Loki:         asBackendPlugin(lk),
 		Prometheus:   asBackendPlugin(pr),
 		TestData:     asBackendPlugin(td),
-		PostgreSQL:   asBackendPlugin(pg),
 		MySQL:        asBackendPlugin(my),
-		MSSQL:        asBackendPlugin(ms),
 		Grafana:      asBackendPlugin(graf),
-		Pyroscope:    asBackendPlugin(pyroscope),
-		Parca:        asBackendPlugin(parca),
-		Jaeger:       asBackendPlugin(jaeger),
 	})
 }
 
@@ -217,22 +199,10 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 		svc = graphite.ProvideService(httpClientProvider, tracer)
 	case InfluxDB:
 		svc = influxdb.ProvideService(httpClientProvider)
-	case Loki:
-		svc = loki.ProvideService(httpClientProvider, tracer)
 	case Prometheus:
 		svc = prometheus.ProvideService(httpClientProvider)
-	case PostgreSQL:
-		svc = postgres.ProvideService()
 	case MySQL:
 		svc = mysql.ProvideService()
-	case MSSQL:
-		svc = mssql.ProvideService()
-	case Pyroscope:
-		svc = pyroscope.ProvideService(httpClientProvider)
-	case Parca:
-		svc = parca.ProvideService(httpClientProvider)
-	case Jaeger:
-		svc = jaeger.ProvideService(httpClientProvider)
 	default:
 		return nil, ErrCorePluginNotFound
 	}

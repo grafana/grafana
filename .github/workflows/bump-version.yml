@@ -31,7 +31,7 @@ jobs:
       # finish within its timeout, so every push is rejected with "workflows scope may
       # be required" -- even when no workflow files are touched. workflows:write tells
       # GitHub to skip that scan. grafana-writer is the only app installed with that
-      # scope here. Commits go through the Git Data API via kminehart/ghcommit-action
+      # scope here. Commits go through the Git Data API via planetscale/ghcommit-action
       # so they're automatically signed under grafana-writer[bot]'s identity, satisfying
       # upcoming required_signatures rules.
       - name: Get GitHub App token
@@ -60,7 +60,7 @@ jobs:
             -f "sha=${BASE_SHA}"
       - if: ${{ inputs.push == true || inputs.push == 'true' }}
         name: Commit bump-version changes
-        uses: kminehart/ghcommit-action@4bb24db6682acdccc9c91291e44b1d328a379ea8
+        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
         with:
           commit_message: "bump version ${{ env.VERSION }}"
           repo: ${{ github.repository }}

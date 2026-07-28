@@ -2,7 +2,6 @@ import { type ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
 import { type TimeZone } from '@grafana/schema';
 import {
@@ -337,22 +336,16 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
             <RadioButtonGroup value={editable} options={EDITABLE_OPTIONS} onChange={model.onEditableChange} />
           </Field>
 
-          {config.featureToggles.dashboardDefaultLayoutSelector && (
-            <Field
-              noMargin
-              label={t('dashboard-settings.general.default-grid-label', 'Default grid')}
-              description={t(
-                'dashboard-settings.general.default-grid-description',
-                'Select layout type to be used for new rows and tabs'
-              )}
-            >
-              <RadioButtonGroup
-                value={defaultGrid}
-                options={DEFAULT_GRID_OPTIONS}
-                onChange={model.onDefaultGridChange}
-              />
-            </Field>
-          )}
+          <Field
+            noMargin
+            label={t('dashboard-settings.general.default-grid-label', 'Default grid')}
+            description={t(
+              'dashboard-settings.general.default-grid-description',
+              'Select layout type to be used for new rows and tabs'
+            )}
+          >
+            <RadioButtonGroup value={defaultGrid} options={DEFAULT_GRID_OPTIONS} onChange={model.onDefaultGridChange} />
+          </Field>
         </Box>
 
         <TimePickerSettings

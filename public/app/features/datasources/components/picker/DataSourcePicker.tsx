@@ -4,7 +4,7 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { debounce } from 'lodash';
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, useMemo } from 'react';
 import * as React from 'react';
 import { type Observable } from 'rxjs';
 
@@ -78,6 +78,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const [isOpen, setOpen] = useState(false);
   const [inputHasFocus, setInputHasFocus] = useState(false);
   const [filterTerm, setFilterTerm] = useState<string>('');
+  const listboxId = useId();
+  const [activeItemId, setActiveItemId] = useState<string>();
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
   const ref = useRef<HTMLDivElement>(null);
   const debouncedTrackSearch = useMemo(
@@ -243,6 +245,11 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
           className={inputHasFocus ? undefined : styles.input}
           data-testid={selectors.components.DataSourcePicker.inputV2}
           aria-label={t('datasources.data-source-picker.aria-label-select-a-data-source', 'Select a data source')}
+          role="combobox"
+          aria-expanded={isOpen}
+          aria-controls={listboxId}
+          aria-autocomplete="list"
+          aria-activedescendant={isOpen ? activeItemId : undefined}
           autoComplete="off"
           prefix={currentValue ? prefixIcon : undefined}
           suffix={<Icon name={isOpen ? 'search' : 'angle-down'} />}
@@ -296,6 +303,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
               onNavigateOutsiteFooter={onNavigateOutsiteFooter}
               dataSources={dataSources}
               favoriteDataSources={favoriteDataSources}
+              listboxId={listboxId}
+              onActiveItemChange={setActiveItemId}
             />
           </div>
         </Portal>
@@ -333,6 +342,8 @@ interface PickerContentProps extends DataSourcePickerProps {
   onNavigateOutsiteFooter: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
   dataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
   favoriteDataSources: FavoriteDatasources;
+  listboxId: string;
+  onActiveItemChange: (id: string | undefined) => void;
 }
 
 const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((props, ref) => {

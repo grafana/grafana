@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
+import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption, selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
@@ -235,12 +235,14 @@ describe('RuleEditor grafana managed rules', () => {
       )
     );
 
-    renderRuleEditor();
+    const { user } = renderRuleEditor();
 
     // Wait for the form to load
     await screen.findByRole('textbox', { name: 'name' });
 
-    // The rule type section should be visible
+    await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
+
+    // The rule type section should be visible in advanced mode
     expect(await screen.findByText('Rule type')).toBeInTheDocument();
   });
 });
@@ -299,10 +301,12 @@ describe('RuleEditor with alertingDisableDMAinUI feature toggle', () => {
     // Wait for the form to load
     await ui.inputs.name.find();
 
+    await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
+
     // Should be able to interact with the alert name input
     await user.type(ui.inputs.name.get(), 'My Grafana-managed alert');
 
-    // Expressions should still be available for Grafana-managed alerts
+    // Expressions should still be available for Grafana-managed alerts in advanced mode
     const removeExpressionsButtons = await screen.findAllByLabelText(/Remove expression/);
     expect(removeExpressionsButtons.length).toBeGreaterThan(0);
   });

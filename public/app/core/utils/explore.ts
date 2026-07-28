@@ -24,7 +24,7 @@ import {
   urlUtil,
   generateUUID,
 } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { RefreshPicker } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { type QueryOptions, type QueryTransaction } from 'app/types/explore';
@@ -74,7 +74,7 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
         .map(async (q) => {
           // if the query defines a datasource, use that one, otherwise use the one from the panel, which should always be defined.
           // this will rejects if the datasource is not found, or return the default one if dsRef is not provided.
-          const queryDs = await getDataSourceSrv().get(q.datasource || dsRef);
+          const queryDs = await getDataSourceInstance(q.datasource || dsRef);
 
           return {
             // interpolate the query using its datasource `interpolateVariablesInQueries` method if defined, othewise return the query as-is.
@@ -186,13 +186,13 @@ export async function generateEmptyQuery(
     // otherwise use last queries' datasource
     datasourceRef = queries[queries.length - 1].datasource;
   } else {
-    datasourceInstance = await getDataSourceSrv().get();
+    datasourceInstance = await getDataSourceInstance();
     defaultQuery = datasourceInstance.getDefaultQuery?.(CoreApp.Explore);
     datasourceRef = datasourceInstance.getRef();
   }
 
   if (!datasourceInstance) {
-    datasourceInstance = await getDataSourceSrv().get(datasourceRef);
+    datasourceInstance = await getDataSourceInstance(datasourceRef);
     defaultQuery = datasourceInstance.getDefaultQuery?.(CoreApp.Explore);
   }
 
@@ -230,7 +230,7 @@ export async function ensureQueries(
       let validDS = true;
       if (query.datasource) {
         try {
-          await getDataSourceSrv().get(query.datasource.uid);
+          await getDataSourceInstance(query.datasource.uid);
         } catch {
           console.error(`One of the queries has a datasource that is no longer available and was removed.`);
           validDS = false;
@@ -249,7 +249,7 @@ export async function ensureQueries(
   }
   try {
     // if a datasource override get its ref, otherwise get the default datasource
-    const emptyQueryRef = newQueryDataSourceOverride ?? (await getDataSourceSrv().get()).getRef();
+    const emptyQueryRef = newQueryDataSourceOverride ?? (await getDataSourceInstance()).getRef();
     const emptyQuery = await generateEmptyQuery(queries ?? [], undefined, emptyQueryRef);
     return [emptyQuery];
   } catch {

@@ -140,6 +140,7 @@ export function queryResultToViewItem(
     kind: parseKindString(item.kind),
     uid: item.uid,
     title: item.name,
+    description: item.description,
     url: item.url,
     tags: item.tags ?? [],
     managedBy: managedByStr,

@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	annotationapp "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -165,14 +166,6 @@ func (hs *HTTPServer) PostAnnotation(c *contextmodel.ReqContext) response.Respon
 	})
 }
 
-func formatGraphiteAnnotation(what string, data string) string {
-	text := what
-	if data != "" {
-		text = text + "\n" + data
-	}
-	return text
-}
-
 // swagger:route POST /annotations/graphite annotations postGraphiteAnnotation
 //
 // Create Annotation in Graphite format.
@@ -186,40 +179,16 @@ func formatGraphiteAnnotation(what string, data string) string {
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) PostGraphiteAnnotation(c *contextmodel.ReqContext) response.Response {
-	cmd := dtos.PostGraphiteAnnotationsCmd{}
+	cmd := annotationapp.PostGraphiteAnnotationsCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	if cmd.What == "" {
-		err := &AnnotationError{"what field should not be empty"}
+	tagsArray, err := cmd.Validate()
+	if err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
 	}
 
-	text := formatGraphiteAnnotation(cmd.What, cmd.Data)
-
-	// Support tags in prior to Graphite 0.10.0 format (string of tags separated by space)
-	var tagsArray []string
-	switch tags := cmd.Tags.(type) {
-	case string:
-		if tags != "" {
-			tagsArray = strings.Split(tags, " ")
-		} else {
-			tagsArray = []string{}
-		}
-	case []any:
-		for _, t := range tags {
-			if tagStr, ok := t.(string); ok {
-				tagsArray = append(tagsArray, tagStr)
-			} else {
-				err := &AnnotationError{"tag should be a string"}
-				return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
-			}
-		}
-	default:
-		err := &AnnotationError{"unsupported tags format"}
-		return response.Error(http.StatusBadRequest, "Failed to save Graphite annotation", err)
-	}
-
+	text := annotationapp.FormatGraphiteText(cmd.What, cmd.Data)
 	userID, _ := identity.UserIdentifier(c.GetID())
 	item := annotations.Item{
 		OrgID:  c.GetOrgID(),
@@ -719,7 +688,7 @@ type PostAnnotationParams struct {
 type PostGraphiteAnnotationParams struct {
 	// in:body
 	// required:true
-	Body dtos.PostGraphiteAnnotationsCmd `json:"body"`
+	Body annotationapp.PostGraphiteAnnotationsCmd `json:"body"`
 }
 
 // swagger:parameters updateAnnotation

@@ -105,7 +105,11 @@ func checkManagerPropertiesOnUpdateSpec(auth authtypes.AuthInfo, obj utils.Grafa
 
 	// For non-Terraform managers, identity changes are also blocked.
 	// Remove the old manager first, then add a new one with a different identity.
-	if hasOld && managerNew.Kind != utils.ManagerKindTerraform && managerNew.Identity != managerOld.Identity {
+	//
+	// Classic shim kinds are exempt: their identity is absent or unstable (e.g. a
+	// file-provisioning reader name, or empty for API/converted-Prometheus origins),
+	// so it is not a user-defined stable ID and must not be treated as immutable.
+	if hasOld && managerNew.Kind != utils.ManagerKindTerraform && !managerNew.Kind.IsClassic() && managerNew.Identity != managerOld.Identity {
 		return &apierrors.StatusError{ErrStatus: metav1.Status{
 			Status:  metav1.StatusFailure,
 			Code:    http.StatusForbidden,
@@ -196,7 +200,10 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 		// This can fallback to writing the value with a provisioning client
 		return errResourceIsManagedInRepository
 
-	case utils.ManagerKindPlugin, utils.ManagerKindClassicFP: // nolint:staticcheck
+	case utils.ManagerKindPlugin,
+		utils.ManagerKindClassicFP,                  // nolint:staticcheck
+		utils.ManagerKindClassicAPI,                 // nolint:staticcheck
+		utils.ManagerKindClassicConvertedPrometheus: // nolint:staticcheck
 		// ?? what identity do we use for legacy internal requests?
 		return nil // no error
 

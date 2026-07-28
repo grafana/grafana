@@ -13,6 +13,7 @@ import {
   useLazyGetDisplayMappingQuery,
 } from 'app/api/clients/iam/v0alpha1';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { updateDashboardName } from 'app/core/reducers/navBarTree';
 import {
   useDeleteFolderMutation as useDeleteFolderMutationLegacy,
   useGetFolderQuery as useGetFolderQueryLegacy,
@@ -28,6 +29,7 @@ import {
   browseDashboardsAPI,
 } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
+import { getFolderURL as getStarredFolderURL } from 'app/features/browse-dashboards/utils/dashboards';
 import { type FolderDTO, type NewFolder } from 'app/types/folders';
 import { dispatch } from 'app/types/store';
 
@@ -35,6 +37,7 @@ import kbn from '../../../../core/utils/kbn';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
+  AnnoKeyGrantPermissions,
   AnnoKeyManagerKind,
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
@@ -440,9 +443,10 @@ export function useCreateFolder() {
         metadata: {
           ...partialMetadata,
           generateName: 'f',
-          annotations: {
-            ...(folder.parentUid && { [AnnoKeyFolder]: folder.parentUid }),
-          },
+          annotations:
+            folder.parentUid && !isRootFolderUID(folder.parentUid)
+              ? { [AnnoKeyFolder]: folder.parentUid }
+              : { [AnnoKeyGrantPermissions]: 'default' },
         },
       },
     };
@@ -488,6 +492,10 @@ export function useUpdateFolder() {
 
     const result = await updateFolder(payload);
     refresh({ childrenOf: folder.parentUid });
+    // Browse-tree refetch doesn't touch the mounted Starred nav row; update its label directly.
+    if (!result.error && folder.title) {
+      dispatch(updateDashboardName({ id: folder.uid, title: folder.title, url: getStarredFolderURL(folder.uid) }));
+    }
 
     return {
       ...result,

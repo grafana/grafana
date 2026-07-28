@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/open-feature/go-sdk/openfeature"
 )
 
 // GetBootdataAPI returns the same data we currently have rendered into index.html
@@ -42,9 +41,7 @@ func (hs *HTTPServer) GetBootdata(c *contextmodel.ReqContext) {
 		return
 	}
 
-	ofClient := openfeature.NewDefaultClient()
-	autoLoginFlagEnabled := ofClient.Boolean(c.Req.Context(), featuremgmt.FlagFrontendServiceSSOAutoLogin, false, openfeature.TransactionContext(c.Req.Context()))
-	if autoLoginFlagEnabled && !c.IsSignedIn {
+	if !c.IsSignedIn {
 		data.AutoLoginRedirectURL = hs.getAutoLoginRedirectURL(c)
 	}
 

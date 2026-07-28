@@ -2,13 +2,13 @@ package resource
 
 import (
 	"slices"
-	"strings"
 
 	"github.com/grafana/grafana-app-sdk/app"
 )
 
-// SelectableFields returns map of <group>/<Kind> to list of selectable fields for known manifests.
-func SelectableFields() map[string][]string {
+// SelectableFields returns a map keyed by (group, kind) to the list of
+// selectable fields for known manifests.
+func SelectableFields() map[LowerGroupResource][]string {
 	return SelectableFieldsForManifests(AppManifests())
 }
 
@@ -33,11 +33,11 @@ func AppManifestsWithKinds(manifiests []app.Manifest) []app.Manifest {
 	return filtered
 }
 
-// SelectableFieldsForManifests returns map of <group/kind> to list of selectable fields (across all versions).
-// Also <group/plural> is included as a key, pointing to the same fields.
-// Keys are lower-case.
-func SelectableFieldsForManifests(manifests []app.Manifest) map[string][]string {
-	fields := map[string][]string{}
+// SelectableFieldsForManifests returns a map keyed by (group, kind) to the list
+// of selectable fields (across all versions). Each kind is also keyed by
+// (group, plural), pointing to the same fields.
+func SelectableFieldsForManifests(manifests []app.Manifest) map[LowerGroupResource][]string {
+	fields := map[LowerGroupResource][]string{}
 	for _, m := range manifests {
 		for k, v := range selectableFieldsForManifest(m) {
 			fields[k] = v
@@ -46,7 +46,7 @@ func SelectableFieldsForManifests(manifests []app.Manifest) map[string][]string 
 	return fields
 }
 
-func selectableFieldsForManifest(m app.Manifest) map[string][]string {
+func selectableFieldsForManifest(m app.Manifest) map[LowerGroupResource][]string {
 	kindFields := map[string]map[string]bool{}
 	kinds := map[string]app.ManifestVersionKind{}
 
@@ -65,7 +65,7 @@ func selectableFieldsForManifest(m app.Manifest) map[string][]string {
 		}
 	}
 
-	fields := map[string][]string{}
+	fields := map[LowerGroupResource][]string{}
 	for k, v := range kinds {
 		fs := make([]string, 0, len(kindFields[k]))
 		for f := range kindFields[k] {
@@ -73,8 +73,8 @@ func selectableFieldsForManifest(m app.Manifest) map[string][]string {
 		}
 		slices.Sort(fs)
 
-		fields[strings.ToLower(m.ManifestData.Group+"/"+v.Kind)] = fs
-		fields[strings.ToLower(m.ManifestData.Group+"/"+v.Plural)] = fs
+		fields[NewLowerGroupResource(m.ManifestData.Group, v.Kind)] = fs
+		fields[NewLowerGroupResource(m.ManifestData.Group, v.Plural)] = fs
 	}
 
 	return fields

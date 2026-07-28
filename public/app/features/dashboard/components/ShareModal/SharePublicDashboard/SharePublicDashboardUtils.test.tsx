@@ -1,5 +1,6 @@
-import { type DataSourceRef, type DataQuery, type TypedVariableModel } from '@grafana/data';
+import { type DataSourceApi, type DataSourceRef, type DataQuery, type TypedVariableModel } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { updateConfig } from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -17,22 +18,23 @@ const mockDS = mockDataSource({
   type: 'mock-ds-type',
 });
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    get: () =>
-      Promise.resolve(
-        new DataSourceWithBackend({
-          ...mockDS,
-          meta: {
-            ...mockDS.meta,
-            alerting: true,
-            backend: true,
-          },
-        })
-      ),
-  }),
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
 }));
+
+beforeEach(() => {
+  jest.mocked(getDataSourceInstance).mockResolvedValue(
+    new DataSourceWithBackend({
+      ...mockDS,
+      meta: {
+        ...mockDS.meta,
+        alerting: true,
+        backend: true,
+      },
+    }) as unknown as DataSourceApi
+  );
+});
 
 describe('dashboardHasTemplateVariables', () => {
   it('false', () => {

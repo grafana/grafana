@@ -51,16 +51,16 @@
     "not IE 11"
   ],
   "dependencies": {
-    "@emotion/css": "11.13.5",
+    "@emotion/css": "^11.13.5",
     "@grafana/data": "13.2.0-pre",
     "@grafana/ui": "13.2.0-pre",
-    "@leeoniya/ufuzzy": "1.0.19",
+    "@leeoniya/ufuzzy": "^1.0.19",
     "d3-scale": "^4.0.2",
     "lodash": "^4.17.23",
-    "react": "18.3.1",
-    "react-use": "17.6.0",
-    "react-virtualized-auto-sizer": "1.0.26",
-    "tinycolor2": "1.6.0"
+    "react": "^18.3.1",
+    "react-use": "^17.6.1",
+    "react-virtualized-auto-sizer": "^1.0.26",
+    "tinycolor2": "^1.6.0"
   },
   "devDependencies": {
     "@grafana/test-utils": "workspace:*",
@@ -81,7 +81,7 @@
     "@types/react": "18.3.18",
     "@types/react-table": "^7.7.20",
     "@types/tinycolor2": "1.4.6",
-    "esbuild": "0.25.8",
+    "esbuild": "0.28.1",
     "fs-extra": "^11.3.2",
     "jest": "^29.6.4",
     "jest-canvas-mock": "2.5.2",

@@ -336,7 +336,7 @@ export class KeybindingSrv {
 
     // delete panel
     this.bindWithPanelId('p r', (panelId) => {
-      if (dashboard.canEditPanelById(panelId) && !(dashboard.panelInView || dashboard.panelInEdit)) {
+      if (dashboard.canEditPanelById(panelId) && !dashboard.panelInEdit) {
         appEvents.publish(new RemovePanelEvent(panelId));
       }
     });

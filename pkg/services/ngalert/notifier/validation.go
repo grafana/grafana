@@ -62,17 +62,17 @@ type staticContactPointValidator struct {
 	availableTimeIntervals map[string]struct{}
 }
 
-func newStaticContactPointValidator(am *v1.PostableApiAlertingConfig) staticContactPointValidator {
+func newStaticContactPointValidator(am *v1.AMConfigV1) staticContactPointValidator {
 	availableReceivers := make(map[string]struct{})
-	for _, receiver := range am.GetReceivers() {
+	for _, receiver := range am.AlertmanagerConfig.GetReceivers() {
 		availableReceivers[receiver.GetName()] = struct{}{}
 	}
 
 	availableTimeIntervals := make(map[string]struct{})
-	for _, interval := range am.GetMuteTimeIntervals() {
+	for _, interval := range am.AlertmanagerConfig.MuteTimeIntervals {
 		availableTimeIntervals[interval.Name] = struct{}{}
 	}
-	for _, interval := range am.GetTimeIntervals() {
+	for _, interval := range am.AlertmanagerConfig.TimeIntervals {
 		availableTimeIntervals[interval.Name] = struct{}{}
 	}
 
@@ -84,13 +84,13 @@ func newStaticContactPointValidator(am *v1.PostableApiAlertingConfig) staticCont
 
 // NewContactPointRoutingValidator creates a new NotificationSettingsValidator from the given apiAlertingConfig that
 // only validates ContactPointRouting.
-func NewContactPointRoutingValidator(am *v1.PostableApiAlertingConfig) ContactPointRoutingValidator {
+func NewContactPointRoutingValidator(am *v1.AMConfigV1) ContactPointRoutingValidator {
 	return newStaticContactPointValidator(am)
 }
 
 // NewNotificationSettingsValidator creates a new NotificationSettingsValidator from the given apiAlertingConfig.
 func NewNotificationSettingsValidator(cfg *v1.AMConfigV1) NotificationSettingsValidator {
-	validator := newStaticContactPointValidator(&cfg.AlertmanagerConfig)
+	validator := newStaticContactPointValidator(cfg)
 
 	availableRoutes := make(map[string]struct{}, len(cfg.ManagedRoutes)+1)
 	for routeName := range cfg.ManagedRoutes {

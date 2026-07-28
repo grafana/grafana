@@ -18,7 +18,7 @@ export function getVariablesCompatibility(sceneObject: SceneObject): TypedVariab
   // scope to that object's ancestry so datasource pickers only show variables from
   // the same section + dashboard globals.
   if (sceneObject instanceof DashboardScene) {
-    const selectedObject = sceneObject.state.editPane.getSelectedObject();
+    const selectedObject = sceneObject.state.sidebar.getSelectedObject();
 
     if (selectedObject) {
       // @ts-expect-error
@@ -42,7 +42,7 @@ function collectAncestorVariables(sceneObject: SceneObject): VariableModel[] {
   while (current) {
     if (current.state.$variables instanceof SceneVariableSet) {
       const set = current.state.$variables;
-      const models = sceneVariablesSetToVariables(set, keepQueryOptions, excludedVariable);
+      const models = sceneVariablesSetToVariables(set, keepQueryOptions, excludedVariable, true);
 
       for (const model of models) {
         if (!seenNames.has(model.name)) {
@@ -61,7 +61,7 @@ function collectGlobalVariables(sceneObject: SceneObject): TypedVariableModel[] 
   const set = sceneGraph.getVariables(sceneObject);
   const keepQueryOptions = true;
 
-  const legacyModels = sceneVariablesSetToVariables(set, keepQueryOptions);
+  const legacyModels = sceneVariablesSetToVariables(set, keepQueryOptions, undefined, true);
 
   // Sadly templateSrv.getVariables returns TypedVariableModel but sceneVariablesSetToVariables return persisted schema model
   // They look close to identical (differ in what is optional in some places).

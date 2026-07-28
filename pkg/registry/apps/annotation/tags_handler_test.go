@@ -22,11 +22,11 @@ import (
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 )
 
-func TestTagsHandler(t *testing.T) {
+func TestIntegrationTagsHandler(t *testing.T) {
 	ctx := t.Context()
 
 	// create several test annotations with different tags in multiple namespaces
-	store := NewMemoryStore()
+	store := newTestPostgresStore(t)
 	annotations := []*annotationV0.Annotation{
 		// namespace default annotations
 		{
@@ -71,7 +71,7 @@ func TestTagsHandler(t *testing.T) {
 	}
 
 	allowAll := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return true }}
-	handler := newTagsHandler(store.(TagProvider), allowAll, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+	handler := newTagsHandler(store, allowAll, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
 
 	tests := []struct {
 		name         string
@@ -224,8 +224,8 @@ func TestTagsHandler(t *testing.T) {
 	}
 }
 
-func TestTagsHandlerAuthorization(t *testing.T) {
-	store := NewMemoryStore()
+func TestIntegrationTagsHandlerAuthorization(t *testing.T) {
+	store := newTestPostgresStore(t)
 	anno := &annotationV0.Annotation{
 		ObjectMeta: metav1.ObjectMeta{Name: "a-1", Namespace: metav1.NamespaceDefault},
 		Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"secret-canary"}},
@@ -253,7 +253,7 @@ func TestTagsHandlerAuthorization(t *testing.T) {
 
 	t.Run("denies callers without organization annotation read", func(t *testing.T) {
 		denyAll := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return false }}
-		handler := newTagsHandler(store.(TagProvider), denyAll, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+		handler := newTagsHandler(store, denyAll, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
 
 		req, writer := newRequest()
 		err := handler(ctx, writer, req)
@@ -272,7 +272,7 @@ func TestTagsHandlerAuthorization(t *testing.T) {
 				item.Name == "organization" &&
 				item.Verb == utils.VerbList
 		}}
-		handler := newTagsHandler(store.(TagProvider), orgReader, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+		handler := newTagsHandler(store, orgReader, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
 
 		req, writer := newRequest()
 		err := handler(ctx, writer, req)

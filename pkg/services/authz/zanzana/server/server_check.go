@@ -120,17 +120,16 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation string, resou
 	ctx, span := s.tracer.Start(ctx, "server.checkTyped")
 	defer span.End()
 
-	if !resource.IsValidRelation(relation) {
-		return &authzv1.CheckResponse{Allowed: false}, nil
-	}
-
 	var (
 		resourceIdent       = resource.ResourceIdent()
 		resourceCtx         = resource.Context()
 		subresourceRelation = common.SubresourceRelation(relation)
 	)
 
-	if resource.HasSubresource() {
+	// The subresource branch is gated on the subresource relation, independently of the base
+	// relation: a type may support e.g. resource_create without a per-object base create
+	// (user / service-account), so the base-relation guard below must not block it.
+	if resource.HasSubresource() && resource.IsValidRelation(subresourceRelation) {
 		// Check if subject has access as a subresource
 		res, err := s.openfgaCheck(ctx, store, subject, common.SubresourcePermissionRelation(subresourceRelation), resourceIdent, contextuals, resourceCtx)
 		if err != nil {
@@ -142,7 +141,7 @@ func (s *Server) checkTyped(ctx context.Context, subject, relation string, resou
 		}
 	}
 
-	if resourceIdent == "" {
+	if !resource.IsValidRelation(relation) || resourceIdent == "" {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}
 

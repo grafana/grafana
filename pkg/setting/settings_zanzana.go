@@ -70,6 +70,10 @@ type ZanzanaReconcilerSettings struct {
 	FolderAPIServerURL string
 	// URL of the IAM apiserver (standalone mode only, not needed for embedded).
 	IAMAPIServerURL string
+	// URL of the setting apiserver (setting.grafana.app). When set, the reconciler reads
+	// per-namespace anonymous-access config and reconciles the anonymous role assignment.
+	// Standalone mode only; for embedded the loopback client is used when available.
+	SettingAPIServerURL string
 	// Skip TLS verification when connecting to apiservers.
 	TLSInsecure bool
 	// Number of worker goroutines.
@@ -132,6 +136,9 @@ type ZanzanaServerSettings struct {
 }
 
 type OpenFgaServerSettings struct {
+	// OpenFGA experimental features to enable
+	Experimentals []string
+
 	// ListObjects settings
 	// Max number of concurrent datastore reads for ListObjects queries
 	MaxConcurrentReadsForListObjects uint32
@@ -349,6 +356,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zs.CacheSettings.SharedIteratorTTL = serverSec.Key("shared_iterator_ttl").MustDuration(10 * time.Second)
 
 	openfgaSec := cfg.SectionWithEnvOverrides("openfga")
+	zs.OpenFgaServerSettings.Experimentals = openfgaSec.Key("experimentals").Strings(",")
 
 	// ListObjects settings
 	zs.OpenFgaServerSettings.MaxConcurrentReadsForListObjects = uint32(openfgaSec.Key("max_concurrent_reads_for_list_objects").MustUint(0))
@@ -408,6 +416,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zr.Mode = ZanzanaReconcilerMode(reconcilerSec.Key("mode").MustString("legacy"))
 	zr.FolderAPIServerURL = reconcilerSec.Key("folder_apiserver_url").MustString("")
 	zr.IAMAPIServerURL = reconcilerSec.Key("iam_apiserver_url").MustString("")
+	zr.SettingAPIServerURL = reconcilerSec.Key("setting_apiserver_url").MustString("")
 	zr.TLSInsecure = reconcilerSec.Key("tls_insecure").MustBool(false)
 	zr.Workers = reconcilerSec.Key("workers").MustInt(4)
 	zr.Interval = reconcilerSec.Key("interval").MustDuration(1 * time.Hour)

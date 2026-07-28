@@ -5544,135 +5544,6 @@
       "switch-layout-tab": "Layout wechseln",
       "tab-title": "Tab-Titel ändern"
     },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "Anmerkungsdatenquelle ändern",
-        "choose-panels": "Panels auswählen",
-        "color": "Farbe",
-        "color-description": "Farbe, die für Ereignismarkierungen von Anmerkungen verwendet werden soll",
-        "data-source": "Datenquelle",
-        "display": "Anmerkungssteuerung anzeigen in",
-        "display-options": {
-          "above-dashboard": "Über dem Dashboard",
-          "controls-menu": "Steuerungsmenü",
-          "controls-menu-description": "Kann aufgerufen werden, wenn das Steuerungsmenü geöffnet ist",
-          "hidden": "Ausgeblendet",
-          "hidden-description": "Blendet den Schalter zum Ein- oder Ausschalten dieser Anmerkung aus"
-        },
-        "enabled": "Aktiviert",
-        "enabled-description": "Wenn dies aktiviert ist, wird bei jeder Aktualisierung des Dashboards eine Annotationsabfrage ausgegeben",
-        "name": "Name",
-        "open-query-editor": "Abfrage-Editor öffnen",
-        "open-query-editor-tooltip": "Abfrage-Editor öffnen, um die Anmerkungsabfrage zu konfigurieren",
-        "panel-filter": {
-          "all-panels": "Alle Panels",
-          "all-panels-description": "Anmerkungsdaten an alle Panels senden, die Anmerkungen unterstützen",
-          "all-panels-except": "Alle Panels außer",
-          "all-panels-except-description": "Keine Anmerkungsdaten an die folgenden Panels senden",
-          "selected-panels": "Ausgewählte Panels",
-          "selected-panels-description": "Anmerkungen an die explizit aufgelisteten Panels senden"
-        },
-        "query": "Abfrage",
-        "query-editor-close": "Schließen",
-        "query-editor-modal-title": "Annotationsabfrage",
-        "show-in": "Anzeigen in"
-      },
-      "annotations": {
-        "add-annotation": "Anmerkung hinzufügen",
-        "reorder": "Ziehen, um neu anzuordnen",
-        "select-annotation": "Auswählen"
-      },
-      "elements": {
-        "annotation": "Anmerkung",
-        "annotation-set": "Anmerkungen und Warnungen",
-        "dashboard": "Dashboard",
-        "element": "Element",
-        "filter": "",
-        "filters-set": "",
-        "link-set": "Links",
-        "local-variable": "Lokale Variable",
-        "multiple-elements": "Mehrere Elemente",
-        "multiple-elements-delete-text": "Sind Sie sicher, dass Sie diese Elemente löschen möchten?",
-        "multiple-panels": "Mehrere Panels",
-        "multiple-panels-delete-text": "Sind Sie sicher, dass Sie diese Panels löschen möchten? Alle Abfragen werden entfernt.",
-        "objects": "Objekte",
-        "panel": "Panel",
-        "panels": "Fenster",
-        "row": "Zeile",
-        "rows": "Zeilen",
-        "section-filters-set": "",
-        "tab": "Tab",
-        "tabs": "Tabs",
-        "variable": "{{type}} Variable",
-        "variable-set": "Variable"
-      },
-      "links": {
-        "add-link": "Link hinzufügen",
-        "reorder": "Ziehen, um neu anzuordnen",
-        "select-link": "Auswählen",
-        "untitled": "Link ohne Titel"
-      },
-      "row": {
-        "header": {
-          "hide": "Ausblenden",
-          "title": "Kopfzeile"
-        }
-      },
-      "section-filters": {
-        "title": ""
-      },
-      "section-variables": {
-        "title": "Variablen"
-      },
-      "variable": {
-        "change-type": "",
-        "change-type-aria-label": "Variablentyp ändern",
-        "custom-options": {
-          "apply": "Anwenden",
-          "change-value": "Variablenwert ändern",
-          "discard": "Verwerfen",
-          "modal-title": "Benutzerdefinierte Optionen"
-        },
-        "datasource-options": {
-          "name-filter": "Namensfilter",
-          "name-filter-description": "Der Regex-Filter, für den Datenquelleninstanzen einbezogen werden sollen. Für alle leer lassen.",
-          "name-filter-placeholder": "Beispiel: /^prod/",
-          "type": "Typ",
-          "type-placeholder": "Datenquellentyp auswählen"
-        },
-        "description": "Beschreibung",
-        "description-placeholder": "Beschreibender Text",
-        "label": "Label",
-        "label-description": "Optionaler Anzeigename",
-        "name": "Name",
-        "open-editor": "Variablen-Editor öffnen",
-        "open-editor-tooltip": "Öffnen Sie den Variablen-Editor für weitere Variablenoptionen",
-        "query-options": {
-          "close": "Schließen",
-          "modal-title": "Abfragevariable",
-          "preview": "Vorschau"
-        },
-        "selection-options": {
-          "allow-custom-values": "Benutzerdefinierte Werte zulassen",
-          "allow-custom-values-description": "Ermöglicht Nutzern die Eingabe von Werten",
-          "category": "Auswahloptionen",
-          "custom-all-value": "Alle Werte benutzerdefiniert",
-          "custom-all-value-description": "Ein Platzhalter-Regex oder ein anderer Wert, um „Alle“ darzustellen",
-          "include-all": "Wert „Alle einbeziehen“",
-          "include-all-description": "Aktiviert eine einzelne Option, die alle Werte darstellt",
-          "multi-value": "Mehrwertig"
-        },
-        "type-category": "{{type}} Optionen"
-      },
-      "variables": {
-        "add-variable": "Variable hinzufügen",
-        "change-type": "",
-        "reorder": "Ziehen, um neu anzuordnen",
-        "select-type": "Variablentyp auswählen",
-        "select-type-card-tooltip": "Klicken Sie zur Auswahl des Typs",
-        "select-variable": "Auswählen"
-      }
-    },
     "empty": {
       "add-library-panel-body": "Füge Visualisierungen hinzu, die mit anderen Dashboards geteilt werden.",
       "add-library-panel-button": "Bibliotheksfenster hinzufügen",
@@ -6192,6 +6063,43 @@
         "title": "Hinzufügen",
         "tooltip": "Neues Element hinzufügen"
       },
+      "annotation": {
+        "change-data-source": "Anmerkungsdatenquelle ändern",
+        "choose-panels": "Panels auswählen",
+        "color": "Farbe",
+        "color-description": "Farbe, die für Ereignismarkierungen von Anmerkungen verwendet werden soll",
+        "data-source": "Datenquelle",
+        "display": "Anmerkungssteuerung anzeigen in",
+        "display-options": {
+          "above-dashboard": "Über dem Dashboard",
+          "controls-menu": "Steuerungsmenü",
+          "controls-menu-description": "Kann aufgerufen werden, wenn das Steuerungsmenü geöffnet ist",
+          "hidden": "Ausgeblendet",
+          "hidden-description": "Blendet den Schalter zum Ein- oder Ausschalten dieser Anmerkung aus"
+        },
+        "enabled": "Aktiviert",
+        "enabled-description": "Wenn dies aktiviert ist, wird bei jeder Aktualisierung des Dashboards eine Annotationsabfrage ausgegeben",
+        "name": "Name",
+        "open-query-editor": "Abfrage-Editor öffnen",
+        "open-query-editor-tooltip": "Abfrage-Editor öffnen, um die Anmerkungsabfrage zu konfigurieren",
+        "panel-filter": {
+          "all-panels": "Alle Panels",
+          "all-panels-description": "Anmerkungsdaten an alle Panels senden, die Anmerkungen unterstützen",
+          "all-panels-except": "Alle Panels außer",
+          "all-panels-except-description": "Keine Anmerkungsdaten an die folgenden Panels senden",
+          "selected-panels": "Ausgewählte Panels",
+          "selected-panels-description": "Anmerkungen an die explizit aufgelisteten Panels senden"
+        },
+        "query": "Abfrage",
+        "query-editor-close": "Schließen",
+        "query-editor-modal-title": "Annotationsabfrage",
+        "show-in": "Anzeigen in"
+      },
+      "annotations": {
+        "add-annotation": "Anmerkung hinzufügen",
+        "reorder": "Ziehen, um neu anzuordnen",
+        "select-annotation": "Auswählen"
+      },
       "dashboard-options": {
         "title": "Optionen",
         "tooltip": "Dashboard-Optionen"
@@ -6200,20 +6108,110 @@
         "title": "Code",
         "tooltip": "Als Code bearbeiten"
       },
+      "elements": {
+        "annotation": "Anmerkung",
+        "annotation-set": "Anmerkungen und Warnungen",
+        "dashboard": "Dashboard",
+        "element": "Element",
+        "filter": "",
+        "filters-set": "",
+        "link-set": "Links",
+        "local-variable": "Lokale Variable",
+        "multiple-elements": "Mehrere Elemente",
+        "multiple-elements-delete-text": "Sind Sie sicher, dass Sie diese Elemente löschen möchten?",
+        "multiple-panels": "Mehrere Panels",
+        "multiple-panels-delete-text": "Sind Sie sicher, dass Sie diese Panels löschen möchten? Alle Abfragen werden entfernt.",
+        "objects": "Objekte",
+        "panel": "Panel",
+        "panels": "Fenster",
+        "row": "Zeile",
+        "rows": "Zeilen",
+        "section-filters-set": "",
+        "tab": "Tab",
+        "tabs": "Tabs",
+        "variable": "{{type}} Variable",
+        "variable-set": "Variable"
+      },
       "export": {
         "title": "Exportieren"
       },
       "filters": "",
+      "links": {
+        "add-link": "Link hinzufügen",
+        "reorder": "Ziehen, um neu anzuordnen",
+        "select-link": "Auswählen",
+        "untitled": "Link ohne Titel"
+      },
       "open": "",
       "outline": {
         "title": "Übersicht",
         "tooltip": "Inhaltsübersicht"
       },
       "redo": "Wiederherstellen",
+      "row": {
+        "header": {
+          "hide": "Ausblenden",
+          "title": "Kopfzeile"
+        }
+      },
+      "section-filters": {
+        "title": ""
+      },
+      "section-variables": {
+        "title": "Variablen"
+      },
       "snapshot": {
         "tooltip": "Original-Dashboard öffnen"
       },
       "undo": "Rückgängig machen",
+      "variable": {
+        "change-type": "",
+        "change-type-aria-label": "Variablentyp ändern",
+        "custom-options": {
+          "apply": "Anwenden",
+          "change-value": "Variablenwert ändern",
+          "discard": "Verwerfen",
+          "modal-title": "Benutzerdefinierte Optionen"
+        },
+        "datasource-options": {
+          "name-filter": "Namensfilter",
+          "name-filter-description": "Der Regex-Filter, für den Datenquelleninstanzen einbezogen werden sollen. Für alle leer lassen.",
+          "name-filter-placeholder": "Beispiel: /^prod/",
+          "type": "Typ",
+          "type-placeholder": "Datenquellentyp auswählen"
+        },
+        "description": "Beschreibung",
+        "description-placeholder": "Beschreibender Text",
+        "label": "Label",
+        "label-description": "Optionaler Anzeigename",
+        "name": "Name",
+        "open-editor": "Variablen-Editor öffnen",
+        "open-editor-tooltip": "Öffnen Sie den Variablen-Editor für weitere Variablenoptionen",
+        "query-options": {
+          "close": "Schließen",
+          "modal-title": "Abfragevariable",
+          "preview": "Vorschau"
+        },
+        "selection-options": {
+          "allow-custom-values": "Benutzerdefinierte Werte zulassen",
+          "allow-custom-values-description": "Ermöglicht Nutzern die Eingabe von Werten",
+          "category": "Auswahloptionen",
+          "custom-all-value": "Alle Werte benutzerdefiniert",
+          "custom-all-value-description": "Ein Platzhalter-Regex oder ein anderer Wert, um „Alle“ darzustellen",
+          "include-all": "Wert „Alle einbeziehen“",
+          "include-all-description": "Aktiviert eine einzelne Option, die alle Werte darstellt",
+          "multi-value": "Mehrwertig"
+        },
+        "type-category": "{{type}} Optionen"
+      },
+      "variables": {
+        "add-variable": "Variable hinzufügen",
+        "change-type": "",
+        "reorder": "Ziehen, um neu anzuordnen",
+        "select-type": "Variablentyp auswählen",
+        "select-type-card-tooltip": "Klicken Sie zur Auswahl des Typs",
+        "select-variable": "Auswählen"
+      },
       "view-panel": {
         "disabled": "",
         "fanout-by-series": "",
@@ -6807,9 +6805,6 @@
       "title-hidden-count_one": "Ausgeblendet ({{count}})",
       "title-hidden-count_other": "Ausgeblendet ({{count}})"
     },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "Feedback zur neuen Dashboard-Bearbeitungsoberfläche geben"
-    },
     "dashboard-link-form": {
       "back-to-list": "Zurück zur Liste",
       "label-icon": "Symbol",
@@ -6881,6 +6876,9 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Dashboard-Steuerelemente"
+    },
+    "dashboard-sidebar-renderer": {
+      "title-feedback-dashboard-editing-experience": "Feedback zur neuen Dashboard-Bearbeitungsoberfläche geben"
     },
     "data-source-variable-form": {
       "data-source-options": "Datenquellenoptionen",

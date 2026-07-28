@@ -62,7 +62,7 @@ func ProvideAppInstallers(
 		installers = append(installers, rulesAppInstaller)
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesCorrelations) {
+	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesCorrelations) || features.IsEnabledGlobally(featuremgmt.FlagGrafanaCorrelationsSkipLegacy) {
 		installers = append(installers, correlationsAppInstaller)
 	}
 	if alertingNotificationAppInstaller != nil {
@@ -73,8 +73,7 @@ func ProvideAppInstallers(
 		installers = append(installers, logsdrilldownAppInstaller)
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
+	if advisorAppInstaller != nil {
 		installers = append(installers, advisorAppInstaller)
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature

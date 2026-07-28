@@ -5610,135 +5610,6 @@
       "switch-layout-tab": "Переключить макет",
       "tab-title": "Измените заголовок вкладки"
     },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "Изменить источник данных для аннотаций",
-        "choose-panels": "Выберите панели",
-        "color": "Цвет",
-        "color-description": "Цвет, который будет использоваться для маркеров событий аннотаций",
-        "data-source": "Источник данных",
-        "display": "Показывать элементы управления аннотациями в",
-        "display-options": {
-          "above-dashboard": "Над дашбордом",
-          "controls-menu": "Меню управления",
-          "controls-menu-description": "Доступно при открытом меню управления",
-          "hidden": "Скрыто",
-          "hidden-description": "Скрывает переключатель для включения и отключения этой аннотации"
-        },
-        "enabled": "Включено",
-        "enabled-description": "Если этот параметр включен, запрос аннотации создается при каждом обновлении дашборда",
-        "name": "Имя",
-        "open-query-editor": "Открыть редактор запросов",
-        "open-query-editor-tooltip": "Откройте редактор запросов, чтобы настроить запрос аннотаций",
-        "panel-filter": {
-          "all-panels": "Все панели",
-          "all-panels-description": "Отправляйте данные аннотаций на все панели, которые их поддерживают",
-          "all-panels-except": "Все панели, кроме",
-          "all-panels-except-description": "Данные аннотаций не будут отправлены на следующие панели",
-          "selected-panels": "Выбранные панели",
-          "selected-panels-description": "Отправляйте аннотации только на указанные панели"
-        },
-        "query": "Запрос",
-        "query-editor-close": "Закрыть",
-        "query-editor-modal-title": "Запрос аннотаций",
-        "show-in": "Показать в"
-      },
-      "annotations": {
-        "add-annotation": "Добавить аннотацию",
-        "reorder": "Перетащите для изменения порядка",
-        "select-annotation": "Выбрать"
-      },
-      "elements": {
-        "annotation": "Аннотация",
-        "annotation-set": "Аннотации и оповещения",
-        "dashboard": "Дашборд",
-        "element": "Элемент",
-        "filter": "",
-        "filters-set": "",
-        "link-set": "Ссылки",
-        "local-variable": "Локальная переменная",
-        "multiple-elements": "Несколько элементов",
-        "multiple-elements-delete-text": "Действительно удалить элементы?",
-        "multiple-panels": "Несколько панелей",
-        "multiple-panels-delete-text": "Действительно удалить панели? Все запросы будут удалены.",
-        "objects": "Объекты",
-        "panel": "Панель",
-        "panels": "Панели",
-        "row": "Строка",
-        "rows": "Строки",
-        "section-filters-set": "",
-        "tab": "Вкладка",
-        "tabs": "Вкладки",
-        "variable": "Тип переменной: {{type}}",
-        "variable-set": "Переменные"
-      },
-      "links": {
-        "add-link": "Добавить ссылку",
-        "reorder": "Перетащите для изменения порядка",
-        "select-link": "Выбрать",
-        "untitled": "Ссылка без имени"
-      },
-      "row": {
-        "header": {
-          "hide": "Скрыть",
-          "title": "Заголовок строки"
-        }
-      },
-      "section-filters": {
-        "title": ""
-      },
-      "section-variables": {
-        "title": "Переменные"
-      },
-      "variable": {
-        "change-type": "",
-        "change-type-aria-label": "Изменить тип переменной",
-        "custom-options": {
-          "apply": "Применить",
-          "change-value": "Изменить значение переменной",
-          "discard": "Отменить",
-          "modal-title": "Пользовательские параметры"
-        },
-        "datasource-options": {
-          "name-filter": "Фильтр по названию",
-          "name-filter-description": "Фильтр регулярных выражений для включения экземпляров источников данных. Оставьте пустым для всех.",
-          "name-filter-placeholder": "Пример: /^prod/",
-          "type": "Тип",
-          "type-placeholder": "Выбрать тип источника данных"
-        },
-        "description": "Описание",
-        "description-placeholder": "Поясняющий текст",
-        "label": "Метка",
-        "label-description": "Отображаемое имя (необязательно)",
-        "name": "Имя",
-        "open-editor": "Открыть редактор переменных",
-        "open-editor-tooltip": "Для получения дополнительных параметров переменных откройте редактор переменных",
-        "query-options": {
-          "close": "Закрыть",
-          "modal-title": "Переменная запроса",
-          "preview": "Предварительный просмотр"
-        },
-        "selection-options": {
-          "allow-custom-values": "Разрешить пользовательские значения",
-          "allow-custom-values-description": "Позволяет пользователям вводить значения.",
-          "category": "Параметры выбора",
-          "custom-all-value": "Пользовательское значение «все»",
-          "custom-all-value-description": "Регулярное выражение с подстановочным знаком или другое значение для представления параметра «Все».",
-          "include-all": "Значение «Включить все»",
-          "include-all-description": "Включает один параметр, который представляет все значения",
-          "multi-value": "Многозначное значение"
-        },
-        "type-category": "Тип параметров: {{type}}"
-      },
-      "variables": {
-        "add-variable": "Добавление переменной",
-        "change-type": "",
-        "reorder": "Перетащите для изменения порядка",
-        "select-type": "Выберите тип переменной",
-        "select-type-card-tooltip": "Нажмите, чтобы выбрать тип",
-        "select-variable": "Выбрать"
-      }
-    },
     "empty": {
       "add-library-panel-body": "Добавьте визуализации, которые используются совместно с другими дашбордами.",
       "add-library-panel-button": "Добавить панель библиотеки",
@@ -6260,6 +6131,43 @@
         "title": "Добавить",
         "tooltip": "Добавьте новый элемент"
       },
+      "annotation": {
+        "change-data-source": "Изменить источник данных для аннотаций",
+        "choose-panels": "Выберите панели",
+        "color": "Цвет",
+        "color-description": "Цвет, который будет использоваться для маркеров событий аннотаций",
+        "data-source": "Источник данных",
+        "display": "Показывать элементы управления аннотациями в",
+        "display-options": {
+          "above-dashboard": "Над дашбордом",
+          "controls-menu": "Меню управления",
+          "controls-menu-description": "Доступно при открытом меню управления",
+          "hidden": "Скрыто",
+          "hidden-description": "Скрывает переключатель для включения и отключения этой аннотации"
+        },
+        "enabled": "Включено",
+        "enabled-description": "Если этот параметр включен, запрос аннотации создается при каждом обновлении дашборда",
+        "name": "Имя",
+        "open-query-editor": "Открыть редактор запросов",
+        "open-query-editor-tooltip": "Откройте редактор запросов, чтобы настроить запрос аннотаций",
+        "panel-filter": {
+          "all-panels": "Все панели",
+          "all-panels-description": "Отправляйте данные аннотаций на все панели, которые их поддерживают",
+          "all-panels-except": "Все панели, кроме",
+          "all-panels-except-description": "Данные аннотаций не будут отправлены на следующие панели",
+          "selected-panels": "Выбранные панели",
+          "selected-panels-description": "Отправляйте аннотации только на указанные панели"
+        },
+        "query": "Запрос",
+        "query-editor-close": "Закрыть",
+        "query-editor-modal-title": "Запрос аннотаций",
+        "show-in": "Показать в"
+      },
+      "annotations": {
+        "add-annotation": "Добавить аннотацию",
+        "reorder": "Перетащите для изменения порядка",
+        "select-annotation": "Выбрать"
+      },
       "dashboard-options": {
         "title": "Параметры",
         "tooltip": "Параметры дашборда"
@@ -6268,20 +6176,110 @@
         "title": "Код",
         "tooltip": "Отредактируйте как код"
       },
+      "elements": {
+        "annotation": "Аннотация",
+        "annotation-set": "Аннотации и оповещения",
+        "dashboard": "Дашборд",
+        "element": "Элемент",
+        "filter": "",
+        "filters-set": "",
+        "link-set": "Ссылки",
+        "local-variable": "Локальная переменная",
+        "multiple-elements": "Несколько элементов",
+        "multiple-elements-delete-text": "Действительно удалить элементы?",
+        "multiple-panels": "Несколько панелей",
+        "multiple-panels-delete-text": "Действительно удалить панели? Все запросы будут удалены.",
+        "objects": "Объекты",
+        "panel": "Панель",
+        "panels": "Панели",
+        "row": "Строка",
+        "rows": "Строки",
+        "section-filters-set": "",
+        "tab": "Вкладка",
+        "tabs": "Вкладки",
+        "variable": "Тип переменной: {{type}}",
+        "variable-set": "Переменные"
+      },
       "export": {
         "title": "Экспорт"
       },
       "filters": "",
+      "links": {
+        "add-link": "Добавить ссылку",
+        "reorder": "Перетащите для изменения порядка",
+        "select-link": "Выбрать",
+        "untitled": "Ссылка без имени"
+      },
       "open": "",
       "outline": {
         "title": "Структура",
         "tooltip": "Структура содержимого"
       },
       "redo": "Повторить",
+      "row": {
+        "header": {
+          "hide": "Скрыть",
+          "title": "Заголовок строки"
+        }
+      },
+      "section-filters": {
+        "title": ""
+      },
+      "section-variables": {
+        "title": "Переменные"
+      },
       "snapshot": {
         "tooltip": "Открытие исходного дашборда"
       },
       "undo": "Отменить",
+      "variable": {
+        "change-type": "",
+        "change-type-aria-label": "Изменить тип переменной",
+        "custom-options": {
+          "apply": "Применить",
+          "change-value": "Изменить значение переменной",
+          "discard": "Отменить",
+          "modal-title": "Пользовательские параметры"
+        },
+        "datasource-options": {
+          "name-filter": "Фильтр по названию",
+          "name-filter-description": "Фильтр регулярных выражений для включения экземпляров источников данных. Оставьте пустым для всех.",
+          "name-filter-placeholder": "Пример: /^prod/",
+          "type": "Тип",
+          "type-placeholder": "Выбрать тип источника данных"
+        },
+        "description": "Описание",
+        "description-placeholder": "Поясняющий текст",
+        "label": "Метка",
+        "label-description": "Отображаемое имя (необязательно)",
+        "name": "Имя",
+        "open-editor": "Открыть редактор переменных",
+        "open-editor-tooltip": "Для получения дополнительных параметров переменных откройте редактор переменных",
+        "query-options": {
+          "close": "Закрыть",
+          "modal-title": "Переменная запроса",
+          "preview": "Предварительный просмотр"
+        },
+        "selection-options": {
+          "allow-custom-values": "Разрешить пользовательские значения",
+          "allow-custom-values-description": "Позволяет пользователям вводить значения.",
+          "category": "Параметры выбора",
+          "custom-all-value": "Пользовательское значение «все»",
+          "custom-all-value-description": "Регулярное выражение с подстановочным знаком или другое значение для представления параметра «Все».",
+          "include-all": "Значение «Включить все»",
+          "include-all-description": "Включает один параметр, который представляет все значения",
+          "multi-value": "Многозначное значение"
+        },
+        "type-category": "Тип параметров: {{type}}"
+      },
+      "variables": {
+        "add-variable": "Добавление переменной",
+        "change-type": "",
+        "reorder": "Перетащите для изменения порядка",
+        "select-type": "Выберите тип переменной",
+        "select-type-card-tooltip": "Нажмите, чтобы выбрать тип",
+        "select-variable": "Выбрать"
+      },
       "view-panel": {
         "disabled": "",
         "fanout-by-series": "",
@@ -6883,9 +6881,6 @@
       "title-hidden-count_many": "Скрыто ({{count}})",
       "title-hidden-count_other": "Скрыто ({{count}})"
     },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "Оставьте отзыв о новой функции редактирования дашбордов"
-    },
     "dashboard-link-form": {
       "back-to-list": "Назад к списку",
       "label-icon": "Значок",
@@ -6957,6 +6952,9 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Управление дашбордами"
+    },
+    "dashboard-sidebar-renderer": {
+      "title-feedback-dashboard-editing-experience": "Оставьте отзыв о новой функции редактирования дашбордов"
     },
     "data-source-variable-form": {
       "data-source-options": "Параметры источника данных",

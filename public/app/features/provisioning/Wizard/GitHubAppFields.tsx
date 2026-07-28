@@ -20,13 +20,14 @@ import { getConnectionFormErrors } from '../utils/getFormErrors';
 
 import { useStepStatus } from './StepStatusContext';
 import { GithubAppStepInstruction } from './components/GithubAppStepInstruction';
-import { type ConnectionCreationResult, type WizardFormData } from './types';
+import { type ConnectionCreationResult, type GitHubBasedConnectionType, type WizardFormData } from './types';
 
 interface GitHubAppFieldsProps {
+  connectionType: GitHubBasedConnectionType;
   onGitHubAppSubmit: (result: ConnectionCreationResult) => void;
 }
 
-export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
+export function GitHubAppFields({ connectionType, onGitHubAppSubmit }: GitHubAppFieldsProps) {
   const styles = useStyles2(getStyles);
   const {
     control,
@@ -34,20 +35,31 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
     setValue,
     formState: { errors },
   } = useFormContext<WizardFormData>();
-
   const { setStepStatusInfo } = useStepStatus();
 
   // GH app form
   const credentialForm = useForm<ConnectionFormData>({
-    defaultValues: {
-      type: 'github',
-      title: '',
-      description: '',
-      appID: '',
-      installationID: '',
-      privateKey: '',
-      webhookDisabled: false,
-    },
+    defaultValues:
+      connectionType === 'githubEnterprise'
+        ? {
+            type: 'githubEnterprise',
+            title: '',
+            description: '',
+            appID: '',
+            installationID: '',
+            privateKey: '',
+            webhookDisabled: false,
+            serverUrl: '',
+          }
+        : {
+            type: 'github',
+            title: '',
+            description: '',
+            appID: '',
+            installationID: '',
+            privateKey: '',
+            webhookDisabled: false,
+          },
   });
 
   const [createConnection, connectionRequest] = useCreateOrUpdateConnection();
@@ -56,7 +68,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
     isLoading,
     connections: githubConnections,
     error: connectionListError,
-  } = useConnectionOptions(true);
+  } = useConnectionOptions(true, connectionType);
 
   const hasNoConnections = !isLoading && !connectionListError && githubConnections.length === 0;
 
@@ -79,14 +91,24 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
       return;
     }
 
-    const { title, description, appID, installationID, privateKey, webhookDisabled } = credentialForm.getValues();
-    const spec: ConnectionSpec = {
-      type: 'github',
-      title,
-      ...(description && { description }),
-      github: { appID, installationID },
-      ...(webhookDisabled ? { webhook: { disabled: true } } : {}),
+    const form = credentialForm.getValues();
+    const baseSpec = {
+      title: form.title,
+      ...(form.description && { description: form.description }),
+      ...(form.webhookDisabled ? { webhook: { disabled: true } } : {}),
     };
+    const spec: ConnectionSpec =
+      form.type === 'githubEnterprise'
+        ? {
+            ...baseSpec,
+            type: 'githubEnterprise',
+            githubEnterprise: { appID: form.appID, installationID: form.installationID, serverUrl: form.serverUrl },
+          }
+        : {
+            ...baseSpec,
+            type: 'github',
+            github: { appID: form.appID, installationID: form.installationID },
+          };
 
     const defaultErrorMessage = t(
       'provisioning.wizard.github-app-creation-default-error',
@@ -108,7 +130,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
     };
 
     try {
-      const result = await createConnection(spec, privateKey);
+      const result = await createConnection(spec, form.privateKey);
       if (result.data?.metadata?.name) {
         credentialForm.reset();
         onGitHubAppSubmit({ success: true, connectionName: result.data.metadata.name });
@@ -221,6 +243,7 @@ export function GitHubAppFields({ onGitHubAppSubmit }: GitHubAppFieldsProps) {
         <FormProvider {...credentialForm}>
           <GitHubConnectionFields
             required
+            type={connectionType}
             onNewConnectionCreation={handleCreateConnection}
             isCreating={connectionRequest.isLoading}
           />

@@ -220,9 +220,13 @@ describe('HeatmapPanel (canvas)', () => {
 
   const assertUPlotReady = async () => {
     expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeVisible();
-    await waitFor(() =>
-      expect(screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')).toBeVisible()
-    );
+
+    await waitFor(() => uPlotInstance?.status === 1);
+    await waitFor(() => {
+      return expect(
+        screen.getByTestId(selectors.components.VizLayout.container).querySelector('.u-over')
+      ).toBeVisible();
+    });
   };
 
   const assertCanvasOutput = async (snapshotSize: { width: number; height: number } = { width, height }) => {
