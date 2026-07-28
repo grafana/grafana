@@ -155,6 +155,19 @@ value is knowable; no `toBeGreaterThanOrEqual` where the code guarantees a stric
 (use `toBeGreaterThan`). Confine any external-interface cast to one helper
 (`asUPlot(u)`, `as unknown as DataFrameDTO`) rather than sprinkling `@ts-expect-error`.
 
+To type a mocked function or module, use `jest.mocked(fn)` — never
+`fn as jest.MockedFunction<typeof fn>` (or `as jest.Mocked<…>`). `jest.mocked` is the
+type-safe, less noisy repo convention and gives typed access to `.mock` / `.mockReturnValue`:
+
+```ts
+import { measureText } from '@grafana/ui';
+jest.mock('@grafana/ui', () => ({ ...jest.requireActual('@grafana/ui'), measureText: jest.fn() }));
+
+const measureTextMock = jest.mocked(measureText); // ✅ not `measureText as jest.MockedFunction<…>`
+measureTextMock.mockReturnValue({ width: 100 } as TextMetrics);
+expect(measureTextMock).toHaveBeenCalledWith('label', 12);
+```
+
 ## Step 4 — Canvas / rendering panels: use the draw-call snapshot harness
 
 Panels that draw to canvas (timeseries, heatmap, xychart, timeline, piechart, sparkline)
@@ -319,7 +332,8 @@ Pointers to the sections above — read them for the detail:
 - Principle 3 — no unfocused/verbose/implementation-coupled slop; review AI output before a PR.
 - Step 1 — one data builder per file; `getPanelProps` + `applyFieldOverrides` for panel renders.
 - Step 2 — `it(...)` equivalent to the assertion; `it.each` for variants, delete duplicates.
-- Step 3 — verify the test reaches the target branch (set gates; untyped inputs for inference).
+- Step 3 — verify the test reaches the target branch (set gates; untyped inputs for inference);
+  type mocks with `jest.mocked(fn)`, never `as jest.MockedFunction<…>`.
 - Step 4 — canvas panels → draw-call harness, deterministic, wait for `status === 1`.
 - Step 5 — E2E selectors-first; every panel gets an `@a11y` test plus interaction aria-snapshots.
 - Step 6 — no tests for code slated for deletion.
