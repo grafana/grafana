@@ -4,11 +4,13 @@ import { type TreeItem } from '../types';
 
 import {
   buildTree,
+  filterByStatusCategories,
   filterTree,
   flattenTree,
   getIconName,
   getItemType,
   getStatus,
+  getStatusCategory,
   mergeFilesAndResources,
 } from './treeUtils';
 
@@ -1224,5 +1226,148 @@ describe('filterTree', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].path).toBe('config.json');
+  });
+});
+
+describe('getStatusCategory', () => {
+  const item = (overrides: Partial<TreeItem>): TreeItem => ({
+    path: 'a.json',
+    title: 'a',
+    type: 'Dashboard',
+    level: 0,
+    children: [],
+    ...overrides,
+  });
+
+  it('should return the sync status when there is no warning', () => {
+    expect(getStatusCategory(item({ status: 'synced' }), true)).toBe('synced');
+    expect(getStatusCategory(item({ status: 'pending' }), true)).toBe('pending');
+  });
+
+  it('should return undefined when there is no status', () => {
+    expect(getStatusCategory(item({ status: undefined }), true)).toBeUndefined();
+  });
+
+  it('should return warning when missing folder metadata and warnings are included', () => {
+    expect(getStatusCategory(item({ status: 'pending', missingFolderMetadata: true }), true)).toBe('warning');
+  });
+
+  it('should ignore missing folder metadata when warnings are not included', () => {
+    expect(getStatusCategory(item({ status: 'pending', missingFolderMetadata: true }), false)).toBe('pending');
+  });
+});
+
+describe('filterByStatusCategories', () => {
+  const sampleTree: TreeItem[] = [
+    {
+      path: 'dashboards',
+      title: 'Dashboards',
+      type: 'Folder',
+      level: 0,
+      status: 'pending',
+      children: [
+        {
+          path: 'dashboards/monitoring.json',
+          title: 'System Monitoring',
+          type: 'Dashboard',
+          level: 0,
+          status: 'synced',
+          children: [],
+        },
+        {
+          path: 'dashboards/sales.json',
+          title: 'Sales Report',
+          type: 'Dashboard',
+          level: 0,
+          status: 'pending',
+          children: [],
+        },
+      ],
+    },
+    {
+      path: 'reports',
+      title: 'Reports',
+      type: 'Folder',
+      level: 0,
+      status: 'synced',
+      children: [
+        {
+          path: 'reports/weekly.json',
+          title: 'Weekly',
+          type: 'Dashboard',
+          level: 0,
+          status: 'synced',
+          children: [],
+        },
+      ],
+    },
+  ];
+
+  it('should return all items when no categories are selected', () => {
+    expect(filterByStatusCategories(sampleTree, [])).toEqual(sampleTree);
+  });
+
+  it('should keep only pending items and their ancestor folders', () => {
+    const result = filterByStatusCategories(sampleTree, ['pending']);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].path).toBe('dashboards');
+    expect(result[0].children).toHaveLength(1);
+    expect(result[0].children[0].path).toBe('dashboards/sales.json');
+  });
+
+  it('should keep only synced items and their ancestor folders', () => {
+    const result = filterByStatusCategories(sampleTree, ['synced']);
+
+    // Both folders have a synced descendant, and the synced 'reports' folder matches itself too.
+    expect(result).toHaveLength(2);
+    expect(result[0].path).toBe('dashboards');
+    expect(result[0].children).toHaveLength(1);
+    expect(result[0].children[0].path).toBe('dashboards/monitoring.json');
+    expect(result[1].path).toBe('reports');
+  });
+
+  it('should combine multiple categories', () => {
+    const result = filterByStatusCategories(sampleTree, ['synced', 'pending']);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].children).toHaveLength(2);
+  });
+
+  it('should keep a folder that matches itself even without matching children', () => {
+    const tree: TreeItem[] = [
+      {
+        path: 'folder',
+        title: 'Folder',
+        type: 'Folder',
+        level: 0,
+        status: 'pending',
+        children: [{ path: 'folder/a.json', title: 'a', type: 'Dashboard', level: 0, status: 'synced', children: [] }],
+      },
+    ];
+
+    const result = filterByStatusCategories(tree, ['pending']);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].path).toBe('folder');
+    expect(result[0].children).toHaveLength(0);
+  });
+
+  it('should match the warning category only when warnings are included', () => {
+    const tree: TreeItem[] = [
+      {
+        path: 'folder',
+        title: 'Folder',
+        type: 'Folder',
+        level: 0,
+        status: 'pending',
+        missingFolderMetadata: true,
+        children: [],
+      },
+    ];
+
+    expect(filterByStatusCategories(tree, ['warning'], true)).toHaveLength(1);
+    // Without warnings included the item is categorized as pending, so 'warning' does not match.
+    expect(filterByStatusCategories(tree, ['warning'], false)).toHaveLength(0);
   });
 });

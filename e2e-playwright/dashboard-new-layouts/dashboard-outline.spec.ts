@@ -18,11 +18,11 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can use dashboard outline', async ({ gotoDashboardPage, selectors, page }) => {
+    test('can use dashboard outline', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
-      const controls = new Controls(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Outline');
@@ -46,11 +46,12 @@ test.describe(
       gotoDashboardPage,
       selectors,
       page,
+      components,
     }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
-      const controls = new Controls(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Outline');
@@ -74,11 +75,12 @@ test.describe(
       gotoDashboardPage,
       selectors,
       page,
+      components,
     }) => {
       const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
 
-      const controls = new Controls(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await controls.enterEditMode();
       await sidebar.toolbar.clickButton('Outline');

@@ -249,7 +249,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     rowSelected: css({
       color: theme.colors.text.primary,
-      outline: `1px dashed ${theme.colors.accent.border} !important`,
+      outline: `1px dashed ${theme.colors.accent.main} !important`,
       backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.05),
     }),
     nodeButton: css({

@@ -181,6 +181,7 @@ export enum AccessControlAction {
 
   PluginsInstall = 'plugins:install',
   PluginsWrite = 'plugins:write',
+  PluginsAppAccess = 'plugins.app:access',
 
   // Settings
   SettingsRead = 'settings:read',
@@ -199,6 +200,9 @@ export enum AccessControlAction {
 
   // Provisioning
   ProvisioningRepositoriesRead = 'provisioning.repositories:read',
+  ProvisioningRepositoriesWrite = 'provisioning.repositories:write',
+  ProvisioningConnectionsCreate = 'provisioning.connections:create',
+  ProvisioningConnectionsWrite = 'provisioning.connections:write',
 }
 
 export interface Role extends RoleDto {

@@ -14,7 +14,6 @@ import (
 	"github.com/oklog/ulid/v2"
 	"gocloud.dev/blob"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -43,15 +42,13 @@ const (
 // that would otherwise be built from cfg.IndexSnapshotBucketURL. Used by
 // the SQL wiring layer to inject a KV-backed store.
 func NewSearchOptions(
-	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	docs resource.DocumentBuilderSupplier,
 	indexMetrics *resource.BleveIndexMetrics,
 	ownsIndexFn func(key resource.NamespacedResource) (bool, error),
 	snapshotStore RemoteIndexStore,
 ) (resource.SearchOptions, error) {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if cfg.EnableSearch || features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+	if cfg.EnableSearch {
 		root := cfg.IndexPath
 		if root == "" {
 			root = filepath.Join(cfg.DataPath, "unified-search", "bleve")
@@ -86,26 +83,24 @@ func NewSearchOptions(
 			return resource.SearchOptions{}, err
 		}
 
-		// docs is optional in some tests; only install the search-field mappings
-		// and their hashes when a real supplier is present. Both come from the app
-		// manifests, and the hashes are derived from the same providers that drive
-		// the mappings so the two always agree.
-		var searchFieldsHashes map[resource.LowerGroupResource]string
-		var searchFieldsProviders map[resource.LowerGroupResource]resource.SearchFieldsProvider
-		if docs != nil {
-			// Search fields come from the app manifests: every in-tree kind that
-			// has custom search fields declares them in its CUE manifest.
-			searchFieldsProviders, err = resource.SearchFieldProviders(resource.AppManifests())
-			if err != nil {
-				return resource.SearchOptions{}, err
-			}
-			searchFieldsHashes = resource.SearchFieldsHashesForProviders(searchFieldsProviders)
+		// MergeManifestsByKind is the single point a future live-manifest source will
+		// be added to; the built-in manifests are the only source today.
+		manifests := resource.MergeManifestsByKind(resource.AppManifests())
+		selectableFields, searchFieldsHashes, searchFieldsProviders, err := resource.SearchFieldsForManifests(manifests)
+		if err != nil {
+			return resource.SearchOptions{}, err
+		}
+
+		// Without a document supplier (some tests) the index has nothing to map, so
+		// leave out the mappings and their hashes; the selectable fields stay.
+		if docs == nil {
+			searchFieldsHashes, searchFieldsProviders = nil, nil
 		}
 
 		// One registry holds selectable fields, hashes, and providers, shared by the
 		// index backend and the search server so a future live-manifest source can
 		// swap them consistently.
-		searchFields := resource.NewSearchFieldsRegistry(resource.SelectableFields(), searchFieldsHashes, searchFieldsProviders)
+		searchFields := resource.NewSearchFieldsRegistry(selectableFields, searchFieldsHashes, searchFieldsProviders)
 
 		bleve, err := NewBleveBackend(BleveOptions{
 			Root:                           root,

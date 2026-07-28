@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -50,7 +51,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 		}
 		cfgProvider, err := configprovider.ProvideService(cfg)
 		require.NoError(t, err)
-		quotaService := quotaimpl.ProvideService(context.Background(), sqlStore, cfgProvider)
+		quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(sqlStore), cfgProvider)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(
@@ -334,6 +335,15 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.EqualValues(t, queryResult.TotalCount, 2)
 				require.Equal(t, queryResult.Teams[0].ID, teamIds[0])
 				require.Equal(t, queryResult.Teams[1].ID, teamIds[1])
+
+				// Filtering by a single team id must also filter TotalCount, not
+				// return the unfiltered org total.
+				singleQuery := &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, TeamIds: []int64{teamIds[0]}}
+				singleQueryResult, err := teamSvc.SearchTeams(context.Background(), singleQuery)
+				require.NoError(t, err)
+				require.Len(t, singleQueryResult.Teams, 1)
+				require.EqualValues(t, singleQueryResult.TotalCount, 1)
+				require.Equal(t, singleQueryResult.Teams[0].ID, teamIds[0])
 			})
 
 			t.Run("Should be able to query teams by UIDs", func(t *testing.T) {
@@ -354,6 +364,15 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.EqualValues(t, queryResult.TotalCount, 2)
 				assert.Contains(t, teamUIDs, queryResult.Teams[0].UID)
 				assert.Contains(t, teamUIDs, queryResult.Teams[1].UID)
+
+				// Filtering by a single UID must also filter TotalCount, not
+				// return the unfiltered org total.
+				singleQuery := &team.SearchTeamsQuery{OrgID: testOrgID, SignedInUser: testUser, UIDs: []string{teamUIDs[0]}}
+				singleQueryResult, err := teamSvc.SearchTeams(context.Background(), singleQuery)
+				require.NoError(t, err)
+				require.Len(t, singleQueryResult.Teams, 1)
+				require.EqualValues(t, singleQueryResult.TotalCount, 1)
+				require.Equal(t, singleQueryResult.Teams[0].UID, teamUIDs[0])
 			})
 
 			t.Run("Should be able to return all teams a user is member of", func(t *testing.T) {
@@ -481,7 +500,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				sqlStore = db.InitTestDB(t)
 				cfgProvider, err := configprovider.ProvideService(cfg)
 				require.NoError(t, err)
-				quotaService := quotaimpl.ProvideService(context.Background(), sqlStore, cfgProvider)
+				quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(sqlStore), cfgProvider)
 				orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 				require.NoError(t, err)
 				userSvc, err := userimpl.ProvideService(
@@ -637,7 +656,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 		cfgProvider, err := configprovider.ProvideService(cfg)
 		require.NoError(t, err)
-		quotaService := quotaimpl.ProvideService(context.Background(), store, cfgProvider)
+		quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfgProvider)
 		orgSvc, err := orgimpl.ProvideService(store, cfg, quotaService)
 		require.NoError(t, err)
 		userSvc, err := userimpl.ProvideService(

@@ -100,7 +100,7 @@ func MaybeWrapWithWebhook(
 	// If there is a webhook already registered from a previous enabled state, wrap with
 	// GithubWebhookRepository anyway so OnUpdate can delete the stale hook from GitHub.
 	if r.Spec.Webhook != nil && r.Spec.Webhook.Disabled {
-		if r.Status.Webhook == nil || r.Status.Webhook.ID == 0 {
+		if repository.GetID(r.Status.Webhook).IsEmpty() {
 			logger.Debug("Skipping webhook setup: webhook is disabled")
 			return base, nil
 		}

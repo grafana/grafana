@@ -119,11 +119,6 @@ export interface FeatureToggles {
   */
   mlExpressions?: boolean;
   /**
-  * Expose some datasources as apiservers.
-  * @default false
-  */
-  datasourceAPIServers?: boolean;
-  /**
   * Register experimental APIs with the k8s API server, including all datasources
   * @default false
   */
@@ -198,11 +193,6 @@ export interface FeatureToggles {
   * @default false
   */
   externalSnapshotsSupportLegacyAPI?: boolean;
-  /**
-  * Routes library panel requests from /api to the /apis endpoint
-  * @default false
-  */
-  kubernetesLibraryPanels?: boolean;
   /**
   * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
   * @default true
@@ -319,11 +309,6 @@ export interface FeatureToggles {
   */
   dashboardDefaultLayoutSelector?: boolean;
   /**
-  * Enables the assistant prompt popover on panel click in dashboard view mode
-  * @default false
-  */
-  dashboardAssistantPopover?: boolean;
-  /**
   * Enables undo/redo in dynamic dashboards
   * @default false
   */
@@ -390,7 +375,7 @@ export interface FeatureToggles {
   jitterAlertRulesWithinGroups?: boolean;
   /**
   * Enable audit logging with Kubernetes under app platform
-  * @default false
+  * @default true
   */
   auditLoggingAppPlatform?: boolean;
   /**
@@ -695,11 +680,6 @@ export interface FeatureToggles {
   */
   azureMonitorDisableLogLimit?: boolean;
   /**
-  * Enables experimental reconciler for playlists
-  * @default false
-  */
-  playlistsReconciler?: boolean;
-  /**
   * Adds support for quotes and special characters in label values for Prometheus queries
   * @default false
   */
@@ -774,11 +754,6 @@ export interface FeatureToggles {
   * @default true
   */
   alertingNotificationsStepMode?: boolean;
-  /**
-  * Enables cross cluster search in the Elasticsearch data source
-  * @default false
-  */
-  elasticsearchCrossClusterSearch?: boolean;
   /**
   * Defaults to using the Loki `/labels` API instead of `/series`
   * @default true
@@ -894,6 +869,11 @@ export interface FeatureToggles {
   * @default false
   */
   azureMonitorLogsBuilderEditor?: boolean;
+  /**
+  * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
+  * @default false
+  */
+  azureMonitorBatchAPI?: boolean;
   /**
   * Enables UI functionality to permanently delete alert rules
   * @default true
@@ -1215,11 +1195,6 @@ export interface FeatureToggles {
   * @default true
   */
   dashboardSectionVariables?: boolean;
-  /**
-  * Enables global and folder-scoped dashboard variables via dashboard.grafana.app
-  * @default false
-  */
-  globalDashboardVariables?: boolean;
   /**
   * Enables the ASAP smoothing transformation for time series data
   * @default false

@@ -51,7 +51,6 @@ jest.mock('@grafana/assistant', () => ({
 
 // metadata and interactive elements
 const ELEMENTS = {
-  loading: byText(/Loading rule/i),
   metadata: {
     summary: (text: string) => byText(text),
     runbook: (url: string) => byRole('link', { name: url }),
@@ -703,7 +702,7 @@ const renderRuleViewer = async (
     { historyOptions: { initialEntries: [path] }, store }
   );
 
-  await waitFor(() => expect(ELEMENTS.loading.query()).not.toBeInTheDocument());
+  await screen.findByRole('heading', { name: rule.name });
 
   return view;
 };

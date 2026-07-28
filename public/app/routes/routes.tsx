@@ -57,6 +57,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/notebook/:uid/:slug?',
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Notebook,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotebookScenePage" */ '../features/notebook/pages/NotebookScenePage')
+      ),
+    },
+    {
       path: '/dashboard/assistant-preview/*',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',
@@ -155,7 +163,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/browse-dashboards/BrowseDashboardsPage')
       ),
     },
-    config.featureToggles.globalDashboardVariables && {
+    {
       path: '/dashboards/variables',
       roles: () =>
         contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
@@ -166,7 +174,7 @@ export function getAppRoutes(): RouteDescriptor[] {
           )
       ),
     },
-    config.featureToggles.globalDashboardVariables && {
+    {
       path: '/dashboards/variables/new',
       roles: () =>
         contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
@@ -177,7 +185,7 @@ export function getAppRoutes(): RouteDescriptor[] {
           )
       ),
     },
-    config.featureToggles.globalDashboardVariables && {
+    {
       // Nested under a static /edit segment so a variable whose derived
       // metadata.name is literally "new" can never collide with the create route.
       path: '/dashboards/variables/edit/:name',

@@ -6,4 +6,7 @@ zipkin
 opentsdb
 stackdriver
 mssql
+jaeger
+loki
+grafana-postgresql-datasource
 grafana-pyroscope-datasource

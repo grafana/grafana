@@ -16,7 +16,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationSearchToObject } from '@grafana/runtime';
+import { config, isFetchError, locationSearchToObject } from '@grafana/runtime';
+import { refetchPluginSettings } from '@grafana/runtime/internal';
 import { getLogger, getPluginSettings } from '@grafana/runtime/unstable';
 import { Alert, ErrorWithStack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
@@ -40,6 +41,7 @@ import { buildPluginSectionNav } from '../utils';
 
 import { PluginErrorBoundary } from './PluginErrorBoundary';
 import { buildPluginPageContext, PluginPageContext } from './PluginPageContext';
+import { pluginNavFallbacks } from './pluginNavFallbacks';
 import { RestrictedGrafanaApisProvider } from './restrictedGrafanaApis/RestrictedGrafanaApisProvider';
 
 interface Props {
@@ -53,6 +55,7 @@ interface Props {
 interface State {
   loading: boolean;
   loadingError: boolean;
+  errorStatus?: number;
   plugin?: AppPlugin | null;
   // Used to display a tab navigation (used before the new Top Nav)
   pluginNav: NavModel | null;
@@ -70,7 +73,7 @@ function AppRootPage({ pluginId, pluginNavSection }: Props) {
   const location = useLocation();
   const [state, dispatch] = useReducer(stateSlice.reducer, initialState);
   const currentUrl = config.appSubUrl + location.pathname + location.search;
-  const { plugin, loading, loadingError, pluginNav } = state;
+  const { plugin, loading, loadingError, errorStatus, pluginNav } = state;
   const navModel = buildPluginSectionNav(currentUrl, pluginNavSection);
   const queryParams = useMemo(() => locationSearchToObject(location.search), [location.search]);
   const context = useMemo(() => buildPluginPageContext(navModel, pluginId), [navModel, pluginId]);
@@ -88,10 +91,13 @@ function AppRootPage({ pluginId, pluginNavSection }: Props) {
   if (!plugin || pluginId !== plugin.meta.id) {
     // Use current layout while loading to reduce flickering
     const currentLayout = grafanaContext.chrome.state.getValue().layout;
+    const PluginNavFallback = pluginNavFallbacks[pluginId];
+    const shouldRenderFallback = !loading && loadingError && errorStatus === 404 && PluginNavFallback;
+
     return (
       <Page navModel={navModel} pageNav={{ text: '' }} layout={currentLayout}>
         {loading && <PageLoader />}
-        {!loading && loadingError && <EntityNotFound entity="App" />}
+        {shouldRenderFallback ? <PluginNavFallback /> : !loading && loadingError && <EntityNotFound entity="App" />}
       </Page>
     );
   }
@@ -236,7 +242,8 @@ const stateSlice = createSlice({
 
 async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyAction>) {
   try {
-    const app = await getPluginSettings(pluginId).then((info) => {
+    const loadPluginSettings = pluginNavFallbacks[pluginId] ? refetchPluginSettings : getPluginSettings;
+    const app = await loadPluginSettings(pluginId).then((info) => {
       const error = getAppPluginPageError(info);
       if (error) {
         appEvents.emit(AppEvents.alertError, [error]);
@@ -245,13 +252,23 @@ async function loadAppPlugin(pluginId: string, dispatch: React.Dispatch<AnyActio
       }
       return pluginImporter.importApp(info);
     });
-    dispatch(stateSlice.actions.setState({ plugin: app, loading: false, loadingError: false, pluginNav: null }));
+    dispatch(
+      stateSlice.actions.setState({
+        plugin: app,
+        loading: false,
+        loadingError: false,
+        errorStatus: undefined,
+        pluginNav: null,
+      })
+    );
   } catch (err) {
+    const cause = err instanceof Error && err.cause ? err.cause : err;
     dispatch(
       stateSlice.actions.setState({
         plugin: null,
         loading: false,
         loadingError: true,
+        errorStatus: isFetchError(cause) ? cause.status : undefined,
         pluginNav: process.env.NODE_ENV === 'development' ? getExceptionNav(err) : getNotFoundNav(),
       })
     );

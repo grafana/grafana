@@ -689,6 +689,8 @@ export function LegacyTableNG(props: TableNGProps) {
           !IS_SAFARI_26 && typeof rowHeight !== 'string' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
         const textWrap = typeof rowHeight === 'string' || shouldTextWrap(field);
         const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
+        const fieldAppliesToRow =
+          cellOptions.type === TableCellDisplayMode.ColorBackground && cellOptions.applyToRow === true;
         const cellStyleOptions: TableCellStyleOptions = {
           textAlign,
           textWrap,
@@ -726,7 +728,9 @@ export function LegacyTableNG(props: TableNGProps) {
           }
 
           let style: CSSProperties = { ...rowCellStyle };
-          if (canBeColorized) {
+          // When this field itself opts into applyToRow, it defers to the shared row color
+          // (chosen from the first such field) rather than painting its own color over it.
+          if (canBeColorized && !fieldAppliesToRow) {
             const value = props.row[props.column.key];
             const displayValue = field.display!(value); // this fires here to get colors, then again to get rendered value?
             const cellColorStyles = getCellColorInlineStyles(cellOptions, displayValue, applyToRowBgFn != null);

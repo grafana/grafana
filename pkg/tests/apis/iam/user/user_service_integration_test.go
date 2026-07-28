@@ -1,12 +1,14 @@
 package user
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -374,12 +376,13 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 	}
 
 	type searchUserHit struct {
-		ID      int64     `json:"id"`
-		UID     string    `json:"uid"`
-		Name    string    `json:"name"`
-		Login   string    `json:"login"`
-		Email   string    `json:"email"`
-		Created time.Time `json:"created"`
+		ID         int64     `json:"id"`
+		UID        string    `json:"uid"`
+		Name       string    `json:"name"`
+		Login      string    `json:"login"`
+		Email      string    `json:"email"`
+		Created    time.Time `json:"created"`
+		AuthLabels []string  `json:"authLabels"`
 	}
 
 	type searchUsersResponse struct {
@@ -428,6 +431,23 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 			require.NotEmpty(t, betaUser.Result.UID)
 			require.NotZero(t, betaUser.Result.ID)
 
+			// Give alpha-user an external auth module so the search response carries its provider labels.
+			userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+				User:      helper.Org1.Admin,
+				Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+				GVR:       gvrUsers,
+			})
+			ctx := context.Background()
+			alphaObj, err := userClient.Resource.Get(ctx, alphaUser.Result.UID, metav1.GetOptions{})
+			require.NoError(t, err)
+			alphaSpec := alphaObj.Object["spec"].(map[string]interface{})
+			alphaSpec["externalAuthInfo"] = []interface{}{
+				map[string]interface{}{"module": "ldap", "authID": "alpha-ldap"},
+			}
+			alphaObj.Object["spec"] = alphaSpec
+			_, err = userClient.Resource.Update(ctx, alphaObj, metav1.UpdateOptions{})
+			require.NoError(t, err)
+
 			// Wait for the search index to be populated.
 			time.Sleep(2 * time.Second)
 
@@ -466,6 +486,11 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 				require.Equal(t, "alpha@example.com", hit.Email)
 				require.Equal(t, alphaUser.Result.ID, hit.ID)
 				require.False(t, hit.Created.IsZero(), "created timestamp should be populated")
+				if mode >= rest.Mode4 {
+					require.Equal(t, []string{"LDAP"}, hit.AuthLabels, "external auth module should map to an auth label")
+				} else {
+					require.Empty(t, hit.AuthLabels, "legacy SQL search does not surface external auth modules")
+				}
 			})
 
 			t.Run("should filter results by query", func(t *testing.T) {
@@ -570,6 +595,122 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 					}
 				})
 			}
+		})
+	}
+}
+
+// go test --tags "pro" -timeout 120s -run ^TestIntegrationUserServiceOrgUsers$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
+func TestIntegrationUserServiceOrgUsers(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	type createUserResponse struct {
+		ID  int64  `json:"id"`
+		UID string `json:"uid"`
+	}
+
+	type orgUser struct {
+		UserID int64  `json:"userId"`
+		UID    string `json:"uid"`
+		Login  string `json:"login"`
+		Email  string `json:"email"`
+		Role   string `json:"role"`
+	}
+
+	type searchOrgUsersResponse struct {
+		OrgUsers   []orgUser `json:"orgUsers"`
+		TotalCount int64     `json:"totalCount"`
+	}
+
+	logins := func(users []orgUser) []string {
+		out := make([]string, 0, len(users))
+		for _, u := range users {
+			out = append(out, u.Login)
+		}
+		return out
+	}
+
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5} {
+		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				APIServerStorageType:   "unified",
+				RBACSingleOrganization: true,
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"users.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesUsersApi,
+					featuremgmt.FlagKubernetesUsersRedirect,
+				},
+			})
+
+			firstUser := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: "POST",
+				Path:   "/api/admin/users",
+				Body:   []byte(`{"name": "Org User One", "email": "org-user-one@example.com", "login": "org-user-one", "password": "password123"}`),
+			}, &createUserResponse{})
+			require.Equal(t, 200, firstUser.Response.StatusCode, "body: %s", string(firstUser.Body))
+			require.NotEmpty(t, firstUser.Result.UID)
+
+			secondUser := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: "POST",
+				Path:   "/api/admin/users",
+				Body:   []byte(`{"name": "Org User Two", "email": "org-user-two@example.com", "login": "org-user-two", "password": "password123"}`),
+			}, &createUserResponse{})
+			require.Equal(t, 200, secondUser.Response.StatusCode, "body: %s", string(secondUser.Body))
+			require.NotEmpty(t, secondUser.Result.UID)
+
+			t.Cleanup(func() {
+				apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "DELETE",
+					Path:   fmt.Sprintf("/api/admin/users/%d", firstUser.Result.ID),
+				}, &struct{}{})
+				apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "DELETE",
+					Path:   fmt.Sprintf("/api/admin/users/%d", secondUser.Result.ID),
+				}, &struct{}{})
+			})
+
+			t.Run("GET /api/org/users returns the org users via the redirect", func(t *testing.T) {
+				rsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   "/api/org/users",
+				}, &[]orgUser{})
+				require.Equal(t, 200, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+
+				got := logins(*rsp.Result)
+				require.Contains(t, got, "org-user-one", "got: %v", got)
+				require.Contains(t, got, "org-user-two", "got: %v", got)
+			})
+
+			// The non-paged list must return the same users as the paged variant;
+			// they previously diverged because only the paged handler was redirected.
+			t.Run("GET /api/org/users agrees with /api/org/users/search", func(t *testing.T) {
+				listRsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   "/api/org/users",
+				}, &[]orgUser{})
+				require.Equal(t, 200, listRsp.Response.StatusCode, "body: %s", string(listRsp.Body))
+
+				searchRsp := apis.DoRequest(helper, apis.RequestParams{
+					User:   helper.Org1.Admin,
+					Method: "GET",
+					Path:   "/api/org/users/search?perpage=100",
+				}, &searchOrgUsersResponse{})
+				require.Equal(t, 200, searchRsp.Response.StatusCode, "body: %s", string(searchRsp.Body))
+
+				require.ElementsMatch(t, logins(searchRsp.Result.OrgUsers), logins(*listRsp.Result))
+			})
 		})
 	}
 }

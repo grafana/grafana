@@ -21,12 +21,11 @@ import (
 // liveDeliveryWait therefore proves live delivery.
 func TestIntegrationProvisioningNATS_JobProcessedOverNATS(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := t.Context()
 
 	job := helper.CreatePullJob(t, "nats-job-direct", "ghost-repo")
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		got, err := helper.Jobs.Resource.Get(ctx, job.GetName(), metav1.GetOptions{})
+		got, err := helper.Jobs.Resource.Get(t.Context(), job.GetName(), metav1.GetOptions{})
 		if apierrors.IsNotFound(err) {
 			// Archived to a historic job — it was picked up and processed.
 			return

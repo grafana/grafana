@@ -29,6 +29,10 @@
       "@grafana-app/source": "./src/schema/dashboard/*/index.ts",
       "types": "./dist/types/schema/dashboard/*/index.d.ts"
     },
+    "./apis/notebook/*": {
+      "@grafana-app/source": "./src/schema/notebook/*/index.ts",
+      "types": "./dist/types/schema/notebook/*/index.d.ts"
+    },
     "./dist/esm/raw/composable/annotationslist/panelcfg/x/AnnotationsListPanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/annotationslist/panelcfg/x/types.gen.ts",
       "types": "./dist/types/raw/composable/annotationslist/panelcfg/x/types.gen.d.ts",
@@ -130,12 +134,6 @@
       "types": "./dist/types/raw/composable/logstable/panelcfg/x/types.gen.d.ts",
       "import": "./dist/esm/raw/composable/logstable/panelcfg/x/types.gen.mjs",
       "require": "./dist/cjs/raw/composable/logstable/panelcfg/x/types.gen.cjs"
-    },
-    "./dist/esm/raw/composable/loki/dataquery/x/LokiDataQuery_types.gen": {
-      "@grafana-app/source": "./src/raw/composable/loki/dataquery/x/types.gen.ts",
-      "types": "./dist/types/raw/composable/loki/dataquery/x/types.gen.d.ts",
-      "import": "./dist/esm/raw/composable/loki/dataquery/x/types.gen.mjs",
-      "require": "./dist/cjs/raw/composable/loki/dataquery/x/types.gen.cjs"
     },
     "./dist/esm/raw/composable/newgauge/panelcfg/x/NewGaugePanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/newgauge/panelcfg/x/types.gen.ts",

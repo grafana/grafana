@@ -154,7 +154,7 @@
   },
   "packages/grafana-data/src/types/dataFrame.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 4
+      "count": 3
     }
   },
   "packages/grafana-data/src/types/dataLink.ts": {
@@ -284,11 +284,6 @@
   "packages/grafana-data/src/utils/location.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "packages/grafana-data/src/utils/store.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 6
     }
   },
   "packages/grafana-data/src/utils/url.ts": {
@@ -772,11 +767,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/utils/logger.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/utils/useAsyncDependency.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -840,11 +830,6 @@
   },
   "public/app/core/components/OptionsUI/select.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx": {
-    "@grafana/no-locale-compare": {
       "count": 1
     }
   },
@@ -1034,11 +1019,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/Authorize.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    }
-  },
   "public/app/features/alerting/unified/components/alert-groups/AlertGroupFilter.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -1206,11 +1186,6 @@
   "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/CloudDataSourceSelector.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/rules/Filter/RulesFilter.v1.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 4
     }
   },
   "public/app/features/alerting/unified/components/rules/RulesTable.tsx": {
@@ -1829,9 +1804,6 @@
     }
   },
   "public/app/features/datasources/state/selectors.ts": {
-    "@grafana/no-locale-compare": {
-      "count": 2
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
     }
@@ -1906,11 +1878,6 @@
   },
   "public/app/features/explore/RichHistory/RichHistorySettingsTab.tsx": {
     "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/RichHistory/RichHistoryStarredTab.tsx": {
-    "react-hooks/exhaustive-deps": {
       "count": 1
     }
   },
@@ -2262,14 +2229,6 @@
       "count": 1
     }
   },
-  "public/app/features/support-bundles/SupportBundlesCreate.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    },
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/features/templating/fieldAccessorCache.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
@@ -2565,11 +2524,6 @@
       "count": 2
     }
   },
-  "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/BasicLogsToggle.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
   "public/app/plugins/datasource/azuremonitor/components/ConfigEditor/CurrentUserFallbackCredentials.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
@@ -2859,62 +2813,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/datasource/jaeger/datasource.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/loki/components/LokiContextUi.tsx": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 7
-    }
-  },
-  "public/app/plugins/datasource/loki/components/LokiLabelBrowser.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/loki/components/LokiQueryEditor.tsx": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/datasource/loki/components/LokiQueryField.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/loki/configuration/DerivedField.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 4
-    },
-    "@grafana/require-no-margin": {
-      "count": 9
-    }
-  },
-  "public/app/plugins/datasource/loki/datasource.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilder.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/loki/querybuilder/state.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 2
-    }
-  },
-  "public/app/plugins/datasource/loki/shardQuerySplitting.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 2
-    }
-  },
   "public/app/plugins/panel/annolist/AnnoListPanel.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
@@ -2953,11 +2851,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/canvas/editor/element/ParamsEditor.tsx": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/canvas/editor/element/PlacementEditor.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
@@ -2988,14 +2881,6 @@
   },
   "public/app/plugins/panel/geomap/GeomapPanel.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/geomap/components/MarkersLegend.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    },
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },

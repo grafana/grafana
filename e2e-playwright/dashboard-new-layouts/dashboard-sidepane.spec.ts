@@ -21,11 +21,11 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('Can go back to previous selection or pane', async ({ gotoDashboardPage, selectors, page }) => {
+    test('Can go back to previous selection or pane', async ({ gotoDashboardPage, selectors, page, components }) => {
       const dashboardPage = await gotoDashboardPage({});
 
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
-      const panel = new Panel(page, dashboardPage, selectors);
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+      const panel = new Panel({ page, dashboardPage, selectors, components });
 
       await sidebar.addOptions.clickNewPanelButton();
       await sidebar.panelOptions.setTitle('Panel 1');

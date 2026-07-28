@@ -37,6 +37,7 @@ import {
   extractPixelValue,
   getAlignment,
   getAlignmentFactor,
+  getApplyToRowBgFn,
   getCellColorInlineStylesFactory,
   getCellLinks,
   getCellOptions,
@@ -212,6 +213,46 @@ describe('TableNG utils', () => {
           });
         }
       );
+    });
+  });
+
+  describe('getApplyToRowBgFn', () => {
+    const theme = createTheme();
+
+    const makeColorBackgroundField = (color: string, applyToRow: boolean): Field => ({
+      name: color,
+      type: FieldType.number,
+      values: [1],
+      config: {
+        custom: {
+          cellOptions: {
+            type: TableCellDisplayMode.ColorBackground,
+            mode: TableCellBackgroundDisplayMode.Basic,
+            applyToRow,
+          },
+        },
+      },
+      display: () => ({ text: '1', numeric: 1, color }),
+    });
+
+    it('returns undefined when no field has applyToRow enabled', () => {
+      const fields = [makeColorBackgroundField('#ff0000', false), makeColorBackgroundField('#0000ff', false)];
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      expect(getApplyToRowBgFn(fields, getCellColorInlineStyles)).toBeUndefined();
+    });
+
+    it('uses the color of the first (leftmost) field with applyToRow enabled', () => {
+      const fields = [makeColorBackgroundField('#ff0000', true), makeColorBackgroundField('#0000ff', true)];
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      const rowBgFn = getApplyToRowBgFn(fields, getCellColorInlineStyles);
+      expect(rowBgFn?.(0).background).toBe('#ff0000');
+    });
+
+    it('skips fields without applyToRow when picking the winning field', () => {
+      const fields = [makeColorBackgroundField('#ff0000', false), makeColorBackgroundField('#0000ff', true)];
+      const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
+      const rowBgFn = getApplyToRowBgFn(fields, getCellColorInlineStyles);
+      expect(rowBgFn?.(0).background).toBe('#0000ff');
     });
   });
 
