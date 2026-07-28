@@ -962,6 +962,10 @@ const (
 	// Add support for Kubernetes reporting new APIs
 	FlagKubernetesReporting = "kubernetesReporting"
 
+	// FlagReportingRedirectReportsToK8SApi
+	// Redirect legacy report CRUD API endpoints to the Kubernetes reporting API
+	FlagReportingRedirectReportsToK8SApi = "reporting.redirectReportsToK8SApi"
+
 	// FlagGrafanaOnDemandDiagnostics
 	// Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more
 	FlagGrafanaOnDemandDiagnostics = "grafana.onDemandDiagnostics"

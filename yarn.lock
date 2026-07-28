@@ -10983,9 +10983,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uiw/codemirror-extensions-basic-setup@npm:4.25.9":
-  version: 4.25.9
-  resolution: "@uiw/codemirror-extensions-basic-setup@npm:4.25.9"
+"@uiw/codemirror-extensions-basic-setup@npm:4.25.11":
+  version: 4.25.11
+  resolution: "@uiw/codemirror-extensions-basic-setup@npm:4.25.11"
   dependencies:
     "@codemirror/autocomplete": "npm:^6.0.0"
     "@codemirror/commands": "npm:^6.0.0"
@@ -11002,19 +11002,19 @@ __metadata:
     "@codemirror/search": ">=6.0.0"
     "@codemirror/state": ">=6.0.0"
     "@codemirror/view": ">=6.0.0"
-  checksum: 10/bab06a40bdd8fb99a0af5115511cdb812c93aac2b93ccd8a02bdf8ea06098d6be2ce1302efc560a3b577171a5cd87d34c3215e523f21450ba100b147dfcb975c
+  checksum: 10/d3e11076c01636836a3d77d09d888e9ade4fddede2ff26a91b3d2a4b6b3ef8873067bd2766183771b354263ec8eb93e99f59ddd26718f5b359aa6e4bd77055a5
   languageName: node
   linkType: hard
 
 "@uiw/react-codemirror@npm:^4.25.9":
-  version: 4.25.9
-  resolution: "@uiw/react-codemirror@npm:4.25.9"
+  version: 4.25.11
+  resolution: "@uiw/react-codemirror@npm:4.25.11"
   dependencies:
     "@babel/runtime": "npm:^7.18.6"
     "@codemirror/commands": "npm:^6.1.0"
     "@codemirror/state": "npm:^6.1.1"
     "@codemirror/theme-one-dark": "npm:^6.0.0"
-    "@uiw/codemirror-extensions-basic-setup": "npm:4.25.9"
+    "@uiw/codemirror-extensions-basic-setup": "npm:4.25.11"
     codemirror: "npm:^6.0.0"
   peerDependencies:
     "@babel/runtime": ">=7.11.0"
@@ -11024,7 +11024,7 @@ __metadata:
     codemirror: ">=6.0.0"
     react: ">=17.0.0"
     react-dom: ">=17.0.0"
-  checksum: 10/02c6ababa9307cf10aee5b32db1a0e5885485960819d708cd154bc218cf4d8b182b5fb49fa7386014401d71c8391ce211b29b2de201ad1fdece2c1716d09a74d
+  checksum: 10/aea4e332a9c3fd9b0274f458afc5f60233fd4ff1cd4dc34a5d2aa5629b33b0af459b290bceff320889710cb16d5501fc369638b4e778c2ceeddb21ca72af9992
   languageName: node
   linkType: hard
 
@@ -22980,11 +22980,11 @@ __metadata:
   linkType: hard
 
 "marked-mangle@npm:^1.1.12":
-  version: 1.1.12
-  resolution: "marked-mangle@npm:1.1.12"
+  version: 1.1.13
+  resolution: "marked-mangle@npm:1.1.13"
   peerDependencies:
-    marked: ">=4 <18"
-  checksum: 10/3340af16fb4247142a6cb803e89a8e1650f2f4878da0d05344dd80780abd575288015e3f9ff831e075a0b09cc5947fce39fd68bcdce2fc8ed2f727a603d78ada
+    marked: ">=4 <19"
+  checksum: 10/c7cb122458f1b9615e8e19ca60fe508ff6a2d2a4915d210058dd5b0a0a476f08c836ace39b19e7beabe255dfb68578082b250ed7854f9cc699cd3a453b6f594c
   languageName: node
   linkType: hard
 
@@ -25771,10 +25771,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"papaparse@npm:5.5.3, papaparse@npm:^5.5.3":
+"papaparse@npm:5.5.3":
   version: 5.5.3
   resolution: "papaparse@npm:5.5.3"
   checksum: 10/383e38f8ff910be48b684e7f47b84dbe5e67708669c13bb21f316a0591ef183ff670dfc7eb9f6d0a8b67e21a5b0e8934712cda96ff8fb678d6591e597d108bd1
+  languageName: node
+  linkType: hard
+
+"papaparse@npm:^5.5.3":
+  version: 5.5.4
+  resolution: "papaparse@npm:5.5.4"
+  checksum: 10/929466b2acb464b2ac4ad5542d58097967a5c0ef0ca8d9e05e0e8effadbb4077692f19c7601bb32dc56bd982941b38a8e83d7db9e5025483ca859abf7e9a5031
   languageName: node
   linkType: hard
 
