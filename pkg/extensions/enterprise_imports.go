@@ -610,6 +610,7 @@ import (
 	_ "go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	_ "go.opentelemetry.io/otel"
 	_ "go.opentelemetry.io/otel/attribute"
+	_ "go.opentelemetry.io/otel/baggage"
 	_ "go.opentelemetry.io/otel/codes"
 	_ "go.opentelemetry.io/otel/propagation"
 	_ "go.opentelemetry.io/otel/semconv/v1.17.0"
