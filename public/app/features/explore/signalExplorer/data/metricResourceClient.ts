@@ -14,29 +14,51 @@ interface PromLanguageProvider {
   queryLabelValues(timeRange: TimeRange, labelKey: string, match?: string, limit?: number): Promise<string[]>;
 }
 
-const catalogCache = new Map<string, Promise<MetricRow[]>>();
-const labelKeysCache = new Map<string, Promise<string[]>>();
-const labelValuesCache = new Map<string, Promise<string[]>>();
+/**
+ * How long a resolved entry is served from cache. A relative range (`now-1h`/`now`) is one cache key
+ * for the whole life of the page, so without expiry a catalog fetched on first open would still be
+ * the answer hours later and a metric scraped since would never appear.
+ *
+ * Five minutes is the safety net, not the refresh mechanism: nothing re-runs on its own, so an entry
+ * is only re-fetched the next time something asks for it after expiry (a card reopening, a range
+ * change, or `invalidateMetricCache`). Actual freshness is also bounded below by the Prometheus
+ * language provider's own cache, which snaps a range to an interval derived from the datasource's
+ * cache level — expiring here lets a request through, it does not guarantee a network call.
+ */
+export const CACHE_TTL_MS = 5 * 60 * 1000;
 
-function once<T>(cache: Map<string, Promise<T>>, key: string, fn: () => Promise<T>): Promise<T> {
+interface CacheEntry<T> {
+  value: Promise<T>;
+  expiresAt: number;
+}
+
+const catalogCache = new Map<string, CacheEntry<MetricRow[]>>();
+const labelKeysCache = new Map<string, CacheEntry<string[]>>();
+const labelValuesCache = new Map<string, CacheEntry<string[]>>();
+
+const allCaches = [catalogCache, labelKeysCache, labelValuesCache];
+
+function once<T>(cache: Map<string, CacheEntry<T>>, key: string, fn: () => Promise<T>): Promise<T> {
   const hit = cache.get(key);
-  if (hit) {
-    return hit;
+  if (hit && hit.expiresAt > Date.now()) {
+    return hit.value;
   }
-  const p = fn().catch((e) => {
+  const value = fn().catch((e) => {
     // Never cache a rejection: a transient failure shouldn't permanently poison a retry.
     cache.delete(key);
     throw e;
   });
-  cache.set(key, p);
-  return p;
+  // Stamped when the request starts rather than when it resolves, so a slow fetch expires early
+  // rather than extending its own lifetime by however long it took.
+  cache.set(key, { value, expiresAt: Date.now() + CACHE_TTL_MS });
+  return value;
 }
 
 /** Test-only: reset the module-level caches between test cases. Not part of the public API. */
 export function __clearCache() {
-  catalogCache.clear();
-  labelKeysCache.clear();
-  labelValuesCache.clear();
+  for (const cache of allCaches) {
+    cache.clear();
+  }
 }
 
 /**

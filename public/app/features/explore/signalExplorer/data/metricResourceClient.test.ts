@@ -1,7 +1,7 @@
 import type { TimeRange } from '@grafana/data';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
-import { fetchCatalog, fetchLabelKeys, fetchLabelValues, __clearCache } from './metricResourceClient';
+import { CACHE_TTL_MS, fetchCatalog, fetchLabelKeys, fetchLabelValues, __clearCache } from './metricResourceClient';
 
 const range = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 
@@ -108,6 +108,50 @@ describe('metricResourceClient', () => {
     expect(rowsB).toEqual([{ name: 'b_metric', type: 'gauge', help: 'from B', unit: undefined }]);
     expect(lpA.start).toHaveBeenCalledTimes(1);
     expect(lpB.start).toHaveBeenCalledTimes(1);
+  });
+
+  describe('expiry', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('serves a later call from cache while the entry is still fresh', async () => {
+      jest.useFakeTimers();
+      const lp = makeLP();
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+
+      await fetchCatalog({ uid: 'p1' }, range);
+      jest.advanceTimersByTime(CACHE_TTL_MS - 1);
+      await fetchCatalog({ uid: 'p1' }, range);
+
+      expect(lp.start).toHaveBeenCalledTimes(1);
+    });
+
+    it('refetches once the entry has expired, so a newly scraped metric can appear', async () => {
+      jest.useFakeTimers();
+      const lp = makeLP();
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+
+      await fetchCatalog({ uid: 'p1' }, range);
+      lp.retrieveMetrics.mockReturnValue(['http_requests_total', 'node_load1', 'brand_new_total']);
+      jest.advanceTimersByTime(CACHE_TTL_MS + 1);
+      const rows = await fetchCatalog({ uid: 'p1' }, range);
+
+      expect(lp.start).toHaveBeenCalledTimes(2);
+      expect(rows.map((row) => row.name)).toContain('brand_new_total');
+    });
+
+    it('expires label values too, not only the catalog', async () => {
+      jest.useFakeTimers();
+      const lp = makeLP();
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+
+      await fetchLabelValues({ uid: 'p1' }, range, 'http_requests_total', 'job');
+      jest.advanceTimersByTime(CACHE_TTL_MS + 1);
+      await fetchLabelValues({ uid: 'p1' }, range, 'http_requests_total', 'job');
+
+      expect(lp.queryLabelValues).toHaveBeenCalledTimes(2);
+    });
   });
 
   it('fails cleanly when the resolved datasource has no languageProvider', async () => {
