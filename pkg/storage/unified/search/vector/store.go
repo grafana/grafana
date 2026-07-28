@@ -183,7 +183,7 @@ type VectorMeta struct {
 }
 
 // DeleteSelector picks rows for DeleteRows. Exactly one of UIDs/All is set;
-// a Filter field joins in PR2 without another method.
+// a Filter field joins with the metadata filter dialect without another method.
 type DeleteSelector struct {
 	UIDs  []string
 	All   bool
