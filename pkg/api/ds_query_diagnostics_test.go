@@ -362,5 +362,8 @@ func TestQueryDiagnostics_bundlesPanelData(t *testing.T) {
 	// The frontend's frames land in their own artifact, so they can be diffed against querydata.json
 	// (the backend's response) to localise data lost inside the plugin's frontend code.
 	require.Contains(t, string(files["paneldata.json"]), "frontend-marker")
+	// Anchored: without this, the assertion below passes vacuously if querydata.json ever stops being
+	// written -- the missing key yields an empty string, which contains nothing.
+	require.Contains(t, files, "querydata.json")
 	require.NotContains(t, string(files["querydata.json"]), "frontend-marker")
 }

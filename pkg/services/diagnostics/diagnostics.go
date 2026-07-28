@@ -55,26 +55,15 @@ type buildConfig struct {
 // serialized client-side from already-resolved scene state.
 //
 // This is the frontend counterpart to querydata.json, which holds what the datasource's *backend*
-// returned. Diffing the two is the point: a datasource plugin's frontend code also processes the
-// response, so frames present in querydata.json but missing or altered here pin the loss on the
-// plugin's frontend rather than on its backend or the upstream.
+// returned.
 //
 // Unlike panel.json it is data, not a definition: reading it re-runs no queries and re-applies no
 // transformations.
 //
-// The payload is stored as the client sent it, deliberately unvalidated. This is an experimental,
-// admin-only, on-prem-gated feature, and the failure mode is contained: indentJSON falls back to the
-// raw bytes for anything it cannot parse, so a malformed payload yields a malformed artifact rather
-// than a failed bundle. Size is likewise unbounded here -- the client decides what is worth sending,
-// and web.Bind's 100MiB request cap is the backstop.
-//
-// That unbounded size is deliberately asymmetric with querydata.json, which IS capped
-// (maxQueryDataArtifactBytes) and degrades to a frame summary above it. So on a panel whose backend
-// response exceeds that cap, the bundle holds full frontend frames beside a summarized backend
-// artifact, and the diff above is only a name/rows/fields comparison rather than a field-for-field
-// one. That case announces itself -- querydata.json carries "truncated": true -- so read the marker
-// before reading a series missing here as a frontend loss. Capping this artifact to match would cost
-// the common case (a complete diff) to make the rare one symmetric, so it is left uncapped.
+// The payload is stored byte-for-byte as the client sent it: deliberately unvalidated, not
+// pretty-printed (unlike the other JSON artifacts -- indenting would hold a second, larger copy of an
+// unbounded payload), and not capped -- this is an experimental, admin-only, on-prem-gated feature and
+// the failure mode is contained.
 func WithPanelData(panelData json.RawMessage) BuildOption {
 	return func(cfg *buildConfig) {
 		cfg.panelData = panelData
@@ -128,8 +117,13 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 		files["traffic.har"] = har
 	}
 
-	if len(cfg.panelData) > 0 {
-		files["paneldata.json"] = indentJSON(cfg.panelData)
+	// A bare "null" is 4 bytes of valid JSON, so it clears a length check: treat it as not supplied
+	// rather than bundling an artifact whose whole content reads as "the frontend was holding no
+	// frames". Absent (not supplied) and empty (supplied, nothing in it) must not collapse into the
+	// same signal -- that is exactly the frontend-loss misreading WithPanelData warns about.
+	if panelData := bytes.TrimSpace(cfg.panelData); len(panelData) > 0 && !bytes.Equal(panelData, []byte("null")) {
+		// Stored as sent, not indented -- see WithPanelData for why.
+		files["paneldata.json"] = panelData
 	}
 
 	if len(panelJSON) > 0 {

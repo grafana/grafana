@@ -1030,9 +1030,23 @@ func TestBundler_Build_omitsPanelDataWhenNotSupplied(t *testing.T) {
 	require.NotContains(t, readTarGz(t, blob), "paneldata.json")
 }
 
-func TestBundler_Build_malformedPanelDataDoesNotSinkTheBundle(t *testing.T) {
-	// The payload is client-supplied and deliberately unvalidated (experimental feature). What must hold
-	// is that garbage in it costs the bundle nothing else: every other artifact still ships.
+func TestBundler_Build_omitsPanelDataWhenNull(t *testing.T) {
+	// A client that sends "panelData": null supplied nothing, so no artifact: one whose whole content is
+	// `null` reads as "the frontend was holding no frames", which is a frontend loss that never happened.
+	for _, payload := range []string{`null`, ` null `, ``} {
+		blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil,
+			WithPanelData(json.RawMessage(payload)))
+		require.NoError(t, err)
+
+		require.NotContains(t, readTarGz(t, blob), "paneldata.json", "payload %q", payload)
+	}
+}
+
+func TestBundler_Build_unparseablePanelDataDoesNotSinkTheBundle(t *testing.T) {
+	// Build stores the payload as sent and parses none of it, so a payload it could not parse costs the
+	// bundle nothing else: every other artifact still ships. Unreachable through the HTTP endpoint --
+	// web.Bind rejects a body that isn't valid JSON before Build runs, so the worst that arrives there is
+	// a well-formed payload of the wrong shape -- this pins the contract for direct callers.
 	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil,
 		WithPanelData(json.RawMessage(`{"version":1,`)))
 	require.NoError(t, err)
