@@ -260,7 +260,7 @@ describe('DashboardScene', () => {
         // Restored state from when edit mode started
         expect(scene.state.title).toBe('hello');
 
-        // Clears edit-panel related state
+        // Clears sidebar related state
         expect(scene.state.editPanel).toBeUndefined();
         expect(scene.state.overlay).toBeUndefined();
 
@@ -270,20 +270,20 @@ describe('DashboardScene', () => {
       });
 
       it('activateEditPane activates an inactive edit pane and releases it on exit', () => {
-        const editPane = scene.state.editPane;
-        expect(editPane.isActive).toBe(false);
+        const sidebar = scene.state.sidebar;
+        expect(sidebar.isActive).toBe(false);
 
         scene.activateEditPane();
-        expect(editPane.isActive).toBe(true);
+        expect(sidebar.isActive).toBe(true);
 
         scene.exitEditMode({ skipConfirm: true });
-        expect(editPane.isActive).toBe(false);
+        expect(sidebar.isActive).toBe(false);
       });
 
       it('activateEditPane is a no-op when the edit pane is already active', () => {
-        const editPane = scene.state.editPane;
-        const activateSpy = jest.spyOn(editPane, 'activate');
-        editPane.activate();
+        const sidebar = scene.state.sidebar;
+        const activateSpy = jest.spyOn(sidebar, 'activate');
+        sidebar.activate();
 
         scene.activateEditPane();
 
@@ -291,17 +291,17 @@ describe('DashboardScene', () => {
       });
 
       it('re-activates the swapped-in edit pane when discarding and keeping edit', () => {
-        const editPane = scene.state.editPane;
+        const sidebar = scene.state.sidebar;
         scene.activateEditPane();
-        expect(editPane.isActive).toBe(true);
+        expect(sidebar.isActive).toBe(true);
 
         scene.discardChangesAndKeepEditing();
 
         // The original pane is released, but a fresh clone is swapped in and re-activated so
         // programmatic mutations keep working while we stay in edit mode.
-        expect(editPane.isActive).toBe(false);
-        const newEditPane = scene.state.editPane;
-        expect(newEditPane).not.toBe(editPane);
+        expect(sidebar.isActive).toBe(false);
+        const newEditPane = scene.state.sidebar;
+        expect(newEditPane).not.toBe(sidebar);
         expect(newEditPane.isActive).toBe(true);
       });
 
@@ -684,10 +684,10 @@ describe('DashboardScene', () => {
       });
 
       it('Should select new row', () => {
-        scene.state.editPane.activate();
+        scene.state.sidebar.activate();
 
         const row = scene.onCreateNewRow();
-        expect(scene.state.editPane.getSelectedObject()).toBe(row);
+        expect(scene.state.sidebar.getSelectedObject()).toBe(row);
       });
 
       it('Should fail to copy a panel if it does not have a grid item parent', () => {

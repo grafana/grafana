@@ -1,6 +1,6 @@
 import { SceneGridLayout, VizPanel } from '@grafana/scenes';
 
-import { dashboardEditActions } from '../../edit-pane/shared';
+import { dashboardEditActions } from '../../sidebar/shared';
 import { getLegacySlugForRowOrTab } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -14,7 +14,7 @@ import { getTabsLayoutUrlKeysToTry, TabsLayoutManager } from './TabsLayoutManage
 
 let lastUndo: (() => void) | undefined;
 
-jest.mock('../../edit-pane/shared', () => ({
+jest.mock('../../sidebar/shared', () => ({
   dashboardEditActions: {
     addElement: jest.fn(({ perform, undo }) => {
       perform();

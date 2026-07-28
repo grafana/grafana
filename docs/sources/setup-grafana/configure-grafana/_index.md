@@ -2492,6 +2492,26 @@ When set to `false`, the OTLP client will use TLS credentials with the default s
 
 <hr>
 
+### `[tracing.opentelemetry.file]`
+
+Grafana can capture its own distributed traces to a local file in OpenTelemetry Protocol (OTLP) JSON format, without running a collector or a tracing backend.
+Capturing stops when the file reaches the size limit or the capture duration elapses, whichever comes first.
+Use this exporter for support: turn it on, reproduce an issue, then collect and share the file.
+
+#### `path`
+
+The path to the capture file, for example, `/var/lib/grafana/traces/capture.json`. Setting this option turns on the file exporter. The parent directory must already exist and be writable by Grafana. Default value is empty, which turns off the exporter.
+
+#### `max_file_size_bytes`
+
+The maximum size of the capture file, in bytes. Default value is `104857600` (100 MiB). The value must be greater than `0`.
+
+#### `capture_duration`
+
+How long to capture traces after Grafana starts, expressed as a duration such as `10m`. Default value is `10m`. The value must be greater than `0`.
+
+<hr>
+
 ### `[external_image_storage]`
 
 These options control how images should be made public so they can be shared on services like Slack or email message.
