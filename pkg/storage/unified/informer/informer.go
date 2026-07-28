@@ -7,6 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/grafana/dskit/backoff"
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -318,11 +319,18 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 // there was no subscription, and the goroutine holds the subscription until
 // shutdown so its lifecycle needs no shared state with Run.
 func (n *Informer) retrySubscribe(ctx context.Context, subject string, opts []nats.SubscribeOption) {
-	for {
-		select {
-		case <-ctx.Done():
+	// min == max pins the cadence to exactly retryInterval (no jitter, no
+	// growth), matching the foreground subscribe retry in Run; MaxRetries 0
+	// retries until ctx ends.
+	boff := backoff.New(ctx, backoff.Config{
+		MinBackoff: n.retryInterval,
+		MaxBackoff: n.retryInterval,
+	})
+	for boff.Ongoing() {
+		// Run just attempted the subscription, so wait before the first retry.
+		boff.Wait()
+		if !boff.Ongoing() {
 			return
-		case <-time.After(n.retryInterval):
 		}
 		s, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
 		if err != nil {
