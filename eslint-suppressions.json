@@ -3001,7 +3001,7 @@
       "count": 4
     }
   },
-  "public/app/plugins/panel/text/textPanelMigrationHandler.ts": {
+  "public/app/plugins/panel/text/v1/textPanelMigrationHandler.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
