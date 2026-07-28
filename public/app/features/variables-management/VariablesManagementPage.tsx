@@ -13,7 +13,9 @@ import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
+import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch } from 'app/store/store';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { VariableEditorView } from './VariableEditorView';
 import {
@@ -63,6 +65,10 @@ export default function VariablesManagementPage() {
   const tree = useMemo(() => buildVariablesTree(variables, folderTitles), [variables, folderTitles]);
 
   const selectedVariables = variables.filter((v) => v.metadata.name && selected.has(v.metadata.name));
+
+  const canCreate = contextSrv.hasPermission(AccessControlAction.VariablesCreate);
+  const canWrite = contextSrv.hasPermission(AccessControlAction.VariablesWrite);
+  const canDelete = contextSrv.hasPermission(AccessControlAction.VariablesDelete);
 
   const onToggleFolder = (folderUid: string) => {
     setExpandedFolders((prev) => {
@@ -219,7 +225,8 @@ export default function VariablesManagementPage() {
     <Page
       navId="dashboards/variables"
       actions={
-        !isEmpty && (
+        !isEmpty &&
+        canCreate && (
           <Button icon="plus" onClick={() => locationService.push(`${LIST_URL}/new`)}>
             <Trans i18nKey="variables-management.page.new-variable">New variable</Trans>
           </Button>
@@ -231,12 +238,14 @@ export default function VariablesManagementPage() {
           <LoadVariablesError error={error} />
         ) : isEmpty ? (
           <EmptyState
-            variant="call-to-action"
+            variant={canCreate ? 'call-to-action' : 'not-found'}
             message={t('variables-management.page.empty-title', "You haven't created any variables yet")}
             button={
-              <Button icon="plus" size="lg" onClick={() => locationService.push(`${LIST_URL}/new`)}>
-                <Trans i18nKey="variables-management.page.empty-cta">New variable</Trans>
-              </Button>
+              canCreate ? (
+                <Button icon="plus" size="lg" onClick={() => locationService.push(`${LIST_URL}/new`)}>
+                  <Trans i18nKey="variables-management.page.empty-cta">New variable</Trans>
+                </Button>
+              ) : undefined
             }
           >
             <Trans i18nKey="variables-management.page.empty-body">
@@ -245,7 +254,7 @@ export default function VariablesManagementPage() {
           </EmptyState>
         ) : (
           <div className={styles.content}>
-            {selected.size > 0 && (
+            {selected.size > 0 && (canWrite || canDelete) && (
               <Stack gap={1} alignItems="center">
                 <Text color="secondary">
                   {t('variables-management.page.selected-count', '', {
@@ -254,12 +263,16 @@ export default function VariablesManagementPage() {
                     defaultValue_other: '{{count}} selected',
                   })}
                 </Text>
-                <Button variant="secondary" onClick={() => setPendingAction('move')} disabled={isProcessing}>
-                  <Trans i18nKey="variables-management.page.move">Move</Trans>
-                </Button>
-                <Button variant="destructive" onClick={() => setPendingAction('delete')} disabled={isProcessing}>
-                  <Trans i18nKey="variables-management.page.delete">Delete</Trans>
-                </Button>
+                {canWrite && (
+                  <Button variant="secondary" onClick={() => setPendingAction('move')} disabled={isProcessing}>
+                    <Trans i18nKey="variables-management.page.move">Move</Trans>
+                  </Button>
+                )}
+                {canDelete && (
+                  <Button variant="destructive" onClick={() => setPendingAction('delete')} disabled={isProcessing}>
+                    <Trans i18nKey="variables-management.page.delete">Delete</Trans>
+                  </Button>
+                )}
               </Stack>
             )}
             <VariablesTable
@@ -268,7 +281,8 @@ export default function VariablesManagementPage() {
               onToggleFolder={onToggleFolder}
               selected={selected}
               onSetSelected={onSetSelected}
-              onEdit={onEdit}
+              onEdit={canWrite ? onEdit : undefined}
+              selectable={canWrite || canDelete}
             />
           </div>
         )}

@@ -95,6 +95,11 @@ export enum AccessControlAction {
   PlaylistsRead = 'playlists:read',
   PlaylistsWrite = 'playlists:write',
 
+  VariablesCreate = 'variables:create',
+  VariablesRead = 'variables:read',
+  VariablesWrite = 'variables:write',
+  VariablesDelete = 'variables:delete',
+
   // Support bundle actions
   ActionSupportBundlesCreate = 'support.bundles:create',
   ActionSupportBundlesRead = 'support.bundles:read',

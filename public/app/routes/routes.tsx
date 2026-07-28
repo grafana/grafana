@@ -165,8 +165,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/variables',
-      roles: () =>
-        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.VariablesRead]),
       component: SafeDynamicImport(
         () =>
           import(
@@ -176,8 +175,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/dashboards/variables/new',
-      roles: () =>
-        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.VariablesCreate]),
       component: SafeDynamicImport(
         () =>
           import(
@@ -190,7 +188,7 @@ export function getAppRoutes(): RouteDescriptor[] {
       // metadata.name is literally "new" can never collide with the create route.
       path: '/dashboards/variables/edit/:name',
       roles: () =>
-        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
+        contextSrv.evaluatePermission([AccessControlAction.VariablesWrite, AccessControlAction.VariablesCreate]),
       component: SafeDynamicImport(
         () =>
           import(
