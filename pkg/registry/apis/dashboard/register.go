@@ -389,11 +389,12 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		case admission.Connect:
 			return nil
 		}
-	// Reachability invariant: this case only fires when the apiserver routes
-	// a request to the v2beta1 Notebook storage, which is registered in
-	// UpdateAPIGroupInfo behind FlagDashboardNotebooks. Without the flag the
-	// apiserver has no route and admission never dispatches here. Create/Update
-	// enforce the notebook-only layout; delete/connect need no validation.
+	// Reachability invariant: notebook storage is always registered, but
+	// FlagDashboardNotebooks is gated per request in GetAuthorizer. When the
+	// feature is disabled the authorizer denies the request (403) before
+	// admission runs, so this case only fires when notebooks are enabled.
+	// Create/Update enforce the notebook-only layout; delete/connect need no
+	// validation.
 	case dashv2beta1.NotebookResourceInfo.GroupVersionResource().Resource:
 		switch op {
 		case admission.Create, admission.Update:
@@ -968,20 +969,20 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		storage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagDashboardNotebooks) {
-		opts.StorageOptsRegister(dashv2beta1.NotebookResourceInfo.GroupResource(), apistore.StorageOptions{
-			EnableFolderSupport: true,
-		})
+	// Notebook storage is always registered so FlagDashboardNotebooks can be
+	// evaluated per request (and targeted per tenant) via OpenFeature in the
+	// authorizer, without requiring a restart. See GetAuthorizer.
+	opts.StorageOptsRegister(dashv2beta1.NotebookResourceInfo.GroupResource(), apistore.StorageOptions{
+		EnableFolderSupport: true,
+	})
 
-		nbStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.NotebookResourceInfo, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
-
-		notebookStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
-		notebookStorage[dashv2beta1.NotebookResourceInfo.StoragePath()] = nbStore
+	nbStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.NotebookResourceInfo, opts.OptsGetter)
+	if err != nil {
+		return err
 	}
+
+	notebookStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
+	notebookStorage[dashv2beta1.NotebookResourceInfo.StoragePath()] = nbStore
 
 	return nil
 }
@@ -1421,11 +1422,19 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
 	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
+	// Notebooks defer to the service authorizer when the feature is enabled, so
+	// the notebook authorizer wraps that same instance as its fallback.
+	notebookAuthorizer := newNotebookAuthorizer(serviceAuthorizer)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-			if attr.IsResourceRequest() && attr.GetResource() == dashv0.SNAPSHOT_RESOURCE {
-				return snapshotAuthorizer.Authorize(ctx, attr)
+			if attr.IsResourceRequest() {
+				switch attr.GetResource() {
+				case dashv2beta1.NotebookResourceInfo.GetName():
+					return notebookAuthorizer.Authorize(ctx, attr)
+				case dashv0.SnapshotResourceInfo.GetName():
+					return snapshotAuthorizer.Authorize(ctx, attr)
+				}
 			}
 			return serviceAuthorizer.Authorize(ctx, attr)
 		})
