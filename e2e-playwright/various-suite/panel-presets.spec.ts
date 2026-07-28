@@ -235,20 +235,18 @@ test.describe(
       const preset = getPresetCard(page, 'Lines with points');
       await expect(preset, 'preset card is visible').toBeVisible({ timeout: 10000 });
 
-      // uPlot's cursor only reacts to a moving pointer and its tooltip dismisses itself
-      // shortly after the pointer stops, so sweep across the preview and sample as we go
-      const vizTooltip = page.getByTestId(selectors.components.Panels.Visualization.Tooltip.Wrapper);
       const box = (await preset.boundingBox())!;
-      let vizTooltipsSeen = 0;
+      const center = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 
-      for (const fraction of [0.3, 0.5, 0.7]) {
-        await page.mouse.move(box.x + box.width * fraction, box.y + box.height * 0.5, { steps: 5 });
-        vizTooltipsSeen += await vizTooltip.count();
-      }
+      // checking hit-testing instead of the tooltip, which uPlot opens and dismisses on its
+      // own timing. no pointer events also rules out the crosshair and one-click data links
+      const pointerReachesPreview = await page.evaluate(
+        ({ x, y }) => document.elementFromPoint(x, y)?.closest('.uplot') != null,
+        center
+      );
+      expect(pointerReachesPreview, 'previewed panel should not receive pointer events').toBe(false);
 
-      expect(vizTooltipsSeen, 'previewed panel should not render a viz tooltip').toBe(0);
-
-      // the hover did register - the card's own tooltip is showing the preset name
+      await page.mouse.move(center.x, center.y);
       await expect(
         page.getByTestId(selectors.components.Tooltip.container),
         'card tooltip shows the preset name'
