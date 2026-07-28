@@ -5,7 +5,8 @@ import {
   FieldType,
   getMinMaxAndDelta,
 } from '@grafana/data';
-import { type DataSourceWithBackend } from '@grafana/runtime';
+import { PromApplication, type PromOptions } from '@grafana/prometheus';
+import { type DataSourceWithBackend, getDataSourceSrv } from '@grafana/runtime';
 
 import { probeProxyGet, PROBE_TIMEOUT_MS, resolveBackendInstance, withTimeout } from './probeUtils';
 import { readLabeledScalar, readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
@@ -240,6 +241,23 @@ async function fetchDiskHoursToFull(
   return hours != null && hours > 0 && hours <= DISK_ETA_MAX_HOURS ? hours : null;
 }
 
+// prometheus_tsdb_head_series is a Prometheus self-monitoring metric. On multi-tenant
+// remote-write backends (Mimir/Cortex — every Grafana Cloud hosted datasource) any such
+// series was ingested from other Prometheus servers, so the trend would chart a foreign
+// population; skip rather than mislabel it. Vanilla/untyped datasources keep the query.
+async function fetchSeriesSparkline(
+  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
+): Promise<FieldSparkline | null> {
+  const jsonData = getDataSourceSrv().getInstanceSettings(ds.uid)?.jsonData as PromOptions | undefined;
+  const promType = jsonData?.prometheusType;
+  if (promType === PromApplication.Mimir || promType === PromApplication.Cortex) {
+    return null;
+  }
+  return runRangeQuery('series', 'sum(prometheus_tsdb_head_series)', DATA_LOOKBACK_HOURS, ds)
+    .then((frames) => readSeries(frames, 'series'))
+    .catch(() => null);
+}
+
 /**
  * Active-series count, metric-name count, node_exporter host count, the 24h active-series
  * sparkline, and disk pressure for the worst host. Every field fails soft to null; the card
@@ -262,9 +280,7 @@ export async function fetchMetricsActivity(
     getResource<{ data?: unknown }>(instance, 'api/v1/label/__name__/values', { start, end })
       .then((res) => (Array.isArray(res?.data) ? res.data.length : null))
       .catch(() => null),
-    runRangeQuery('series', 'sum(prometheus_tsdb_head_series)', DATA_LOOKBACK_HOURS, ds)
-      .then((frames) => readSeries(frames, 'series'))
-      .catch(() => null),
+    fetchSeriesSparkline(ds),
     runInstantQueries(
       {
         hosts: 'count(node_uname_info)',

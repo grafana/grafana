@@ -1,5 +1,11 @@
 import { createDataFrame, type DataSourceInstanceListItem, FieldType } from '@grafana/data';
-import { type BackendSrv, type DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
+import {
+  type BackendSrv,
+  type DataSourceSrv,
+  type DataSourceWithBackend,
+  getBackendSrv,
+  getDataSourceSrv,
+} from '@grafana/runtime';
 
 import { resolveBackendInstance } from './probeUtils';
 import { runInstantQueries, runRangeQuery } from './promQuery';
@@ -26,12 +32,14 @@ jest.mock('./promQuery', () => ({
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: jest.fn(),
+  getDataSourceSrv: jest.fn(),
 }));
 
 const mockResolveBackendInstance = jest.mocked(resolveBackendInstance);
 const mockRunInstantQueries = jest.mocked(runInstantQueries);
 const mockRunRangeQuery = jest.mocked(runRangeQuery);
 const mockProxyGet = jest.fn();
+const mockGetInstanceSettings = jest.fn();
 
 const DATA_LOOKBACK_HOURS = 24;
 const NS_IN_MS = 1e6;
@@ -53,6 +61,10 @@ beforeEach(() => {
   mockRunRangeQuery.mockReset();
   mockRunRangeQuery.mockResolvedValue([]);
   jest.mocked(getBackendSrv).mockReturnValue({ get: mockProxyGet } as unknown as BackendSrv);
+  mockGetInstanceSettings.mockReset();
+  jest.mocked(getDataSourceSrv).mockReturnValue({
+    getInstanceSettings: mockGetInstanceSettings,
+  } as unknown as DataSourceSrv);
 });
 
 afterEach(() => {
@@ -312,6 +324,26 @@ describe('fetchMetricsActivity', () => {
       { eta: expect.stringContaining('instance="web-03:9100"') },
       prom
     );
+  });
+
+  it('skips the head-series sparkline on Mimir/Cortex-backed datasources', async () => {
+    mockGetInstanceSettings.mockReturnValue({ jsonData: { prometheusType: 'Mimir' } });
+    const getResource = jest.fn(async (path: string) => {
+      if (path === 'api/v1/cardinality/label_values') {
+        return { series_count_total: 4_200_000 };
+      }
+      if (path === 'api/v1/label/__name__/values') {
+        return { data: ['up'] };
+      }
+      throw new Error(`unexpected path ${path}`);
+    });
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+
+    const activity = await fetchMetricsActivity(prom);
+
+    expect(activity.series).toBe(4_200_000);
+    expect(activity.seriesSparkline).toBeNull();
+    expect(mockRunRangeQuery).not.toHaveBeenCalled();
   });
 
   it('falls back to TSDB head stats when the cardinality API is unavailable', async () => {
