@@ -128,115 +128,49 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 	return out
 }
 
-// settleBuffer holds arrivals until they are old enough to emit. The drain
-// goroutine fills it and the emit loop empties it, so a blocked emit does not
-// stop the drain.
-type settleBuffer struct {
-	mu     sync.Mutex
-	events []Event
-	max    int
-}
-
-// add buffers evt, reporting false when the buffer is at capacity.
-func (b *settleBuffer) add(evt Event) bool {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-	if len(b.events) >= b.max {
-		return false
-	}
-	b.events = append(b.events, evt)
-	return true
-}
-
-// takeSettled removes and returns every event with an RV at or below threshold,
-// in ascending RV order.
-func (b *settleBuffer) takeSettled(threshold int64) []Event {
-	b.mu.Lock()
-	defer b.mu.Unlock()
-
-	slices.SortFunc(b.events, func(a, b Event) int {
-		return cmp.Compare(a.ResourceVersion, b.ResourceVersion)
-	})
-
-	settled := 0
-	for settled < len(b.events) && b.events[settled].ResourceVersion <= threshold {
-		settled++
-	}
-	if settled == 0 {
-		return nil
-	}
-	taken := b.events[:settled:settled]
-	b.events = b.events[settled:]
-	return taken
-}
-
 // settleEvents pumps raw to out, buffering events for opts.SettleDelay so late
 // or out-of-order arrivals are reordered: on each tick the buffer is sorted and
 // events settled past now-SettleDelay are emitted in ascending RV order. This
 // keeps downstream RVs monotonic, avoiding stale caches and 410 relist storms.
 // Closes out and returns when ctx is canceled or raw is closed.
-//
-// Draining raw runs in its own goroutine so a blocked send to out never stops
-// reading raw. Emission is tick-driven and therefore bursty — a second's worth
-// of settled events is handed over at once — so a consumer that is briefly
-// behind would otherwise back up raw and make the producer, which sends without
-// blocking, drop notifications. Under sustained overload the buffer fills and
-// the drain stalls, so raw backs up and the producer drops as before, keeping
-// memory bounded and drop accounting in one place.
 func settleEvents(ctx context.Context, raw <-chan Event, out chan<- Event, opts WatchOptions) {
 	defer close(out)
-
-	buffer := &settleBuffer{max: opts.BufferSize}
-	drained := make(chan struct{}) // closed when raw closes or ctx is canceled
-
-	go func() {
-		defer close(drained)
-		bo := backoff.New(ctx, backoff.Config{
-			MinBackoff: opts.MinBackoff,
-			MaxBackoff: opts.MaxBackoff,
-			MaxRetries: 0, // infinite retries; ctx cancel stops the loop
-		})
-		for {
-			var evt Event
-			select {
-			case e, ok := <-raw:
-				if !ok {
-					return // channel closed, context canceled
-				}
-				evt = e
-			case <-ctx.Done():
-				return
-			}
-			for !buffer.add(evt) {
-				if !bo.Ongoing() {
-					return
-				}
-				bo.Wait()
-			}
-			bo.Reset()
-		}
-	}()
+	var buffer []Event
 
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
 	for {
+		// Wait for an event or a tick
 		select {
+		case evt, ok := <-raw:
+			if !ok {
+				return // channel closed, context canceled
+			}
+			buffer = append(buffer, evt)
+			continue
 		case <-ticker.C:
-		case <-drained:
-			return
 		case <-ctx.Done():
 			return
 		}
 
+		// Sort buffer by RV
+		slices.SortFunc(buffer, func(a, b Event) int {
+			return cmp.Compare(a.ResourceVersion, b.ResourceVersion)
+		})
+
 		// Emit events that have "settled" (old enough that concurrent writes should have appeared).
-		for _, evt := range buffer.takeSettled(snowflakeFromTime(time.Now().Add(-opts.SettleDelay))) {
+		threshold := snowflakeFromTime(time.Now().Add(-opts.SettleDelay))
+		emitted := 0
+		for emitted < len(buffer) && buffer[emitted].ResourceVersion <= threshold {
 			select {
-			case out <- evt:
+			case out <- buffer[emitted]:
 			case <-ctx.Done():
 				return
 			}
+			emitted++
 		}
+		buffer = buffer[emitted:]
 	}
 }
 

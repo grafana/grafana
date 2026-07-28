@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"iter"
 	"math/rand/v2"
 	"slices"
 	"strings"
@@ -584,80 +585,54 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 	}
 }
 
-// latencyTrackingKV makes data reads slow and observable, so a test can tell
-// whether a watch stream's reads overlap. Tracking stays off until startTracking
-// and is limited to keys containing keyFilter, keeping write-path reads out of
-// the count.
-type latencyTrackingKV struct {
+// roundTripCountingKV counts the reads issued against the data section, so a
+// test can tell how many storage round trips resolving a set of events took.
+type roundTripCountingKV struct {
 	KV
-	keyFilter string
-
-	mu          sync.Mutex
-	delay       time.Duration
-	tracking    bool
-	inflight    int
-	maxInflight int
+	mu         sync.Mutex
+	roundTrips int
+	keysRead   int
 }
 
-func (k *latencyTrackingKV) startTracking(delay time.Duration) {
-	k.mu.Lock()
-	defer k.mu.Unlock()
-	k.delay = delay
-	k.tracking = true
-}
-
-func (k *latencyTrackingKV) maxConcurrentReads() int {
-	k.mu.Lock()
-	defer k.mu.Unlock()
-	return k.maxInflight
-}
-
-// enter reports the delay to apply, or false when this read is not tracked.
-func (k *latencyTrackingKV) enter(section, key string) (time.Duration, bool) {
-	k.mu.Lock()
-	defer k.mu.Unlock()
-	if !k.tracking || section != dataSection || !strings.Contains(key, k.keyFilter) {
-		return 0, false
+func (k *roundTripCountingKV) count(section string, keys int) {
+	if section != dataSection {
+		return
 	}
-	k.inflight++
-	k.maxInflight = max(k.maxInflight, k.inflight)
-	return k.delay, true
-}
-
-func (k *latencyTrackingKV) exit() {
 	k.mu.Lock()
 	defer k.mu.Unlock()
-	k.inflight--
+	k.roundTrips++
+	k.keysRead += keys
 }
 
-func (k *latencyTrackingKV) Get(ctx context.Context, section string, key string) (io.ReadCloser, error) {
-	if delay, tracked := k.enter(section, key); tracked {
-		defer k.exit()
-		time.Sleep(delay)
-	}
+func (k *roundTripCountingKV) stats() (roundTrips, keysRead int) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	return k.roundTrips, k.keysRead
+}
+
+func (k *roundTripCountingKV) Get(ctx context.Context, section string, key string) (io.ReadCloser, error) {
+	k.count(section, 1)
 	return k.KV.Get(ctx, section, key)
 }
 
-// TestKvStorageBackend_WatchWriteEvents_FetchesConcurrentlyInOrder asserts the
-// reads that resolve notification values overlap rather than running one round
-// trip at a time, without disturbing delivery order.
-func TestKvStorageBackend_WatchWriteEvents_FetchesConcurrentlyInOrder(t *testing.T) {
-	const numEvents = 32 // more than watchFetchConcurrency, so the window is reused
+func (k *roundTripCountingKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	k.count(section, len(keys))
+	return k.KV.BatchGet(ctx, section, keys)
+}
 
-	kvStore := &latencyTrackingKV{KV: setupBadgerKV(t), keyFilter: "watch-order-"}
-	// The settle delay has to outlast the write phase so every event is emitted in
-	// one batch once tracking is on.
-	backend := setupTestStorageBackend(t, withChannelNotifier, withKV(kvStore), withSettleDelay(2*time.Second))
+// TestKvStorageBackend_emitWriteEvents asserts that a batch of notifications is
+// resolved in a single storage round trip and delivered in ascending resource
+// version order, including when a value has gone missing.
+func TestKvStorageBackend_emitWriteEvents(t *testing.T) {
+	const numEvents = 2 * dataBatchSize // spans more than one batched read
 
-	ctx, cancel := context.WithTimeout(t.Context(), 60*time.Second)
-	defer cancel()
-
-	stream, err := backend.WatchWriteEvents(ctx)
-	require.NoError(t, err)
+	kvStore := &roundTripCountingKV{KV: setupBadgerKV(t)}
+	backend := setupTestStorageBackend(t, withKV(kvStore))
+	ctx := t.Context()
 
 	writtenRVs := make([]int64, numEvents)
 	for i := range numEvents {
-		name := fmt.Sprintf("watch-order-%d", i)
+		name := fmt.Sprintf("emit-%03d", i)
 		obj, err := createTestObjectWithName(name, appsNamespace, fmt.Sprintf("value-%d", i))
 		require.NoError(t, err)
 		metaAccessor, err := utils.MetaAccessor(obj)
@@ -679,27 +654,45 @@ func TestKvStorageBackend_WatchWriteEvents_FetchesConcurrentlyInOrder(t *testing
 		require.NoError(t, err)
 	}
 
-	kvStore.startTracking(20 * time.Millisecond)
+	// Take the notifications from the event store so their keys are the ones the
+	// writes actually produced.
+	batch := make([]Event, 0, numEvents)
+	for event, err := range backend.eventStore.ListSince(ctx, 0, SortOrderAsc) {
+		require.NoError(t, err)
+		batch = append(batch, event)
+	}
+	require.Len(t, batch, numEvents)
+
+	// A missing value must not shift the events around it.
+	const missing = numEvents / 2
+	require.NoError(t, backend.dataStore.Delete(ctx, DataKey{
+		Group:           batch[missing].Group,
+		Resource:        batch[missing].Resource,
+		Namespace:       batch[missing].Namespace,
+		Name:            batch[missing].Name,
+		ResourceVersion: batch[missing].ResourceVersion,
+		Action:          batch[missing].Action,
+		Folder:          batch[missing].Folder,
+	}))
+
+	tripsBefore, keysBefore := kvStore.stats()
+
+	out := make(chan *WrittenEvent, numEvents)
+	require.True(t, backend.emitWriteEvents(ctx, batch, out))
+	close(out)
 
 	receivedRVs := make([]int64, 0, numEvents)
-	for range numEvents {
-		select {
-		case writtenEvent := <-stream:
-			receivedRVs = append(receivedRVs, writtenEvent.ResourceVersion)
-		case <-ctx.Done():
-			require.FailNow(t, "timed out waiting for events", "received %d of %d", len(receivedRVs), numEvents)
-		}
+	for event := range out {
+		receivedRVs = append(receivedRVs, event.ResourceVersion)
 	}
+	assert.Equal(t, slices.Delete(slices.Clone(writtenRVs), missing, missing+1), receivedRVs,
+		"events must be delivered in ascending resource version order, minus the one with no value")
 
-	assert.Equal(t, writtenRVs, receivedRVs, "events must be delivered in ascending resource version order")
-
-	// A serial fetch peaks at exactly 2 — one read running while the consumer
-	// holds the previous result — so anything above that means reads fan out. The
-	// floor is absolute rather than derived from watchFetchConcurrency, which
-	// would make the assertion vacuous if the window were ever shrunk.
-	t.Logf("peak concurrent value reads: %d", kvStore.maxConcurrentReads())
-	assert.Greater(t, kvStore.maxConcurrentReads(), 2,
-		"value reads should fan out across the window instead of running one at a time")
+	// dataStore chunks at dataBatchSize, so the whole batch costs len(batch)/dataBatchSize
+	// reads. Resolving one event at a time would cost numEvents.
+	tripsAfter, keysAfter := kvStore.stats()
+	assert.Equal(t, numEvents/dataBatchSize, tripsAfter-tripsBefore, "the batch should be resolved in one read per chunk")
+	assert.Equal(t, numEvents, keysAfter-keysBefore, "every event should be read exactly once")
 }
 
 // TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites verifies that when many

@@ -46,11 +46,6 @@ const (
 	defaultSearchLookback             = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
 	persistDeadline                   = 10 * time.Second
-
-	// watchFetchConcurrency bounds the value reads WatchWriteEvents keeps in
-	// flight while resolving notifications, so a burst cannot swamp the store.
-	// Ordering is preserved regardless of its size.
-	watchFetchConcurrency = 16
 )
 
 // IsResourceNameMixedCase reports whether a successful read returned a
@@ -2253,123 +2248,132 @@ func (i *kvHistoryIterator) Value() []byte {
 	return i.value
 }
 
-// fetchedEvent pairs a notification with its value, or the error that prevented
-// reading it.
-type fetchedEvent struct {
-	event Event
-	data  []byte
-	err   error
-}
-
-// fetchEventData resolves the value a notification refers to. Notifications
-// carry metadata only, so every event costs a storage read.
-func (k *kvStorageBackend) fetchEventData(ctx context.Context, event Event) ([]byte, error) {
-	dataReader, err := k.dataStore.Get(ctx, DataKey{
-		Group:           event.Group,
-		Resource:        event.Resource,
-		Namespace:       event.Namespace,
-		Name:            event.Name,
-		ResourceVersion: event.ResourceVersion,
-		Action:          event.Action,
-		Folder:          event.Folder,
-	})
-	if err != nil {
-		return nil, err
-	}
-	if dataReader == nil {
-		return nil, errors.New("no data for event")
-	}
-	data, err := readAndClose(dataReader)
-	if err != nil {
-		return nil, fmt.Errorf("read and close data for event: %w", err)
-	}
-	return data, nil
-}
-
 // WatchWriteEvents returns a channel that receives write events.
 //
-// Resolving values inline while consuming the notifier would cap the stream at
-// one storage round trip per event, overflowing the notifier's buffers (and so
-// dropping notifications) under write-heavy load. Reads are instead issued
-// concurrently within a fixed window and consumed in issue order, which keeps
-// delivery in resource version order while overlapping the round trips.
+// Notifications carry metadata only, so each one needs its value read back.
+// Resolving them one at a time caps the stream at a storage round trip per
+// event, which under write-heavy load is slow enough that the notifier's buffer
+// overflows and notifications are dropped. Instead, every notification that has
+// already arrived is resolved in one batched read.
 func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
 	// Create a channel to receive events
 	events := make(chan *WrittenEvent, 10000) // TODO: make this configurable
 
 	notifierEvents := k.notifier.Watch(ctx, k.watchOpts)
 
-	// pending holds one slot per in-flight read, ordered by arrival. Its capacity
-	// is the window: enqueuing blocks once it is full.
-	pending := make(chan chan fetchedEvent, watchFetchConcurrency)
-
-	go func() {
-		defer close(pending)
-		for event := range notifierEvents {
-			slot := make(chan fetchedEvent, 1)
-			select {
-			case pending <- slot:
-			case <-ctx.Done():
-				return
-			}
-			go func(event Event) {
-				data, err := k.fetchEventData(ctx, event)
-				slot <- fetchedEvent{event: event, data: data, err: err}
-			}(event)
-		}
-	}()
-
 	go func() {
 		defer close(events)
-		for slot := range pending {
-			var fetched fetchedEvent
-			select {
-			case fetched = <-slot:
-			case <-ctx.Done():
+
+		batch := make([]Event, 0, dataBatchSize)
+		for {
+			event, ok := <-notifierEvents
+			if !ok {
 				return
 			}
-			event := fetched.event
-			if fetched.err != nil {
-				k.log.Error("failed to get data for event",
-					"namespace", event.Namespace,
-					"group", event.Group,
-					"resource", event.Resource,
-					"name", event.Name,
-					"resource_version", event.ResourceVersion,
-					"error", fetched.err)
-				continue
-			}
-			var t resourcepb.WatchEvent_Type
-			switch event.Action {
-			case DataActionCreated:
-				t = resourcepb.WatchEvent_ADDED
-			case DataActionUpdated:
-				t = resourcepb.WatchEvent_MODIFIED
-			case DataActionDeleted:
-				t = resourcepb.WatchEvent_DELETED
+			batch = append(batch[:0], event)
+
+			// Take whatever else is already queued: resolving a batch costs the same
+			// single round trip as resolving the one event we are holding. A closed
+			// channel is picked up by the next receive above.
+		fill:
+			for len(batch) < dataBatchSize {
+				select {
+				case event, ok := <-notifierEvents:
+					if !ok {
+						break fill
+					}
+					batch = append(batch, event)
+				default:
+					break fill
+				}
 			}
 
-			select {
-			case events <- &WrittenEvent{
-				Key: &resourcepb.ResourceKey{
-					Namespace: event.Namespace,
-					Group:     event.Group,
-					Resource:  event.Resource,
-					Name:      event.Name,
-				},
-				Type:            t,
-				Folder:          event.Folder,
-				Value:           fetched.data,
-				ResourceVersion: event.ResourceVersion,
-				PreviousRV:      event.PreviousRV,
-				Timestamp:       resourceVersionTime(event.ResourceVersion).Unix(),
-			}:
-			case <-ctx.Done():
+			if !k.emitWriteEvents(ctx, batch, events) {
 				return
 			}
 		}
 	}()
 	return events, nil
+}
+
+// emitWriteEvents resolves the values a batch of notifications refers to and
+// forwards them, preserving resource version order. It reports false when ctx is
+// done and the stream should stop.
+func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, out chan<- *WrittenEvent) bool {
+	keys := make([]DataKey, len(batch))
+	pending := make(map[DataKey]Event, len(batch))
+	for i, event := range batch {
+		keys[i] = DataKey{
+			Group:           event.Group,
+			Resource:        event.Resource,
+			Namespace:       event.Namespace,
+			Name:            event.Name,
+			ResourceVersion: event.ResourceVersion,
+			Action:          event.Action,
+			Folder:          event.Folder,
+		}
+		pending[keys[i]] = event
+	}
+
+	// Read the whole batch before emitting any of it: the iterator holds a
+	// storage cursor open, and a slow watcher must not pin it. BatchGet yields in
+	// request order, so the batch stays sorted by resource version.
+	written := make([]*WrittenEvent, 0, len(batch))
+	for obj, err := range k.dataStore.BatchGet(ctx, keys) {
+		if err != nil {
+			k.log.Error("failed to get data for events", "error", err)
+			break
+		}
+		event, ok := pending[obj.Key]
+		if !ok {
+			continue
+		}
+		delete(pending, obj.Key)
+
+		data, err := readAndClose(obj.Value)
+		if err != nil {
+			k.log.Error("failed to read data for event", "key", obj.Key.String(), "error", err)
+			continue
+		}
+
+		var t resourcepb.WatchEvent_Type
+		switch event.Action {
+		case DataActionCreated:
+			t = resourcepb.WatchEvent_ADDED
+		case DataActionUpdated:
+			t = resourcepb.WatchEvent_MODIFIED
+		case DataActionDeleted:
+			t = resourcepb.WatchEvent_DELETED
+		}
+
+		written = append(written, &WrittenEvent{
+			Key: &resourcepb.ResourceKey{
+				Namespace: event.Namespace,
+				Group:     event.Group,
+				Resource:  event.Resource,
+				Name:      event.Name,
+			},
+			Type:            t,
+			Folder:          event.Folder,
+			Value:           data,
+			ResourceVersion: event.ResourceVersion,
+			PreviousRV:      event.PreviousRV,
+			Timestamp:       resourceVersionTime(event.ResourceVersion).Unix(),
+		})
+	}
+	// Whatever BatchGet did not return has no value to deliver.
+	for key := range pending {
+		k.log.Error("no data for event", "key", key.String())
+	}
+
+	for _, event := range written {
+		select {
+		case out <- event:
+		case <-ctx.Done():
+			return false
+		}
+	}
+	return true
 }
 
 // GetResourceStats returns resource stats within the storage backend.

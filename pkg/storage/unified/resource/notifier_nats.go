@@ -100,32 +100,37 @@ func newNatsNotifier(subscriber EventSubscriber, dropped *prometheus.CounterVec,
 // volume. Keys are throttled independently: a storm on one reason must not hide
 // the first occurrence of another.
 type throttledLog struct {
-	interval   time.Duration
-	mu         sync.Mutex
-	last       map[string]time.Time
-	suppressed map[string]int64
+	interval time.Duration
+
+	mu    sync.Mutex
+	state map[string]*throttleState
+}
+
+type throttleState struct {
+	last       time.Time
+	suppressed int64
 }
 
 func newThrottledLog(interval time.Duration) *throttledLog {
-	return &throttledLog{
-		interval:   interval,
-		last:       make(map[string]time.Time),
-		suppressed: make(map[string]int64),
-	}
+	return &throttledLog{interval: interval, state: make(map[string]*throttleState)}
 }
 
 func (t *throttledLog) next(key string) (suppressed int64, ok bool) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
+	s := t.state[key]
+	if s == nil {
+		s = &throttleState{}
+		t.state[key] = s
+	}
+
 	now := time.Now()
-	if last, seen := t.last[key]; seen && now.Sub(last) < t.interval {
-		t.suppressed[key]++
+	if !s.last.IsZero() && now.Sub(s.last) < t.interval {
+		s.suppressed++
 		return 0, false
 	}
-	suppressed = t.suppressed[key]
-	t.suppressed[key] = 0
-	t.last[key] = now
+	suppressed, s.suppressed, s.last = s.suppressed, 0, now
 	return suppressed, true
 }
 
