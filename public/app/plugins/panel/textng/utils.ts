@@ -9,10 +9,6 @@ export function getInterpolateFormat(codeLanguage?: CodeLanguage): 'json' | 'htm
 
 /** Shared by the panel and the edit-time preview so they can't diverge. */
 export function transformContent(mode: TextMode, content: string, disableSanitizeHtml: boolean): string {
-  if (!content) {
-    return ' ';
-  }
-
   switch (mode) {
     case TextMode.Code:
       break;
@@ -28,7 +24,9 @@ export function transformContent(mode: TextMode, content: string, disableSanitiz
       });
   }
 
-  return content;
+  // DangerouslySetHtmlContent throws on falsy html, and content that is not
+  // empty can still render to nothing — blank lines, or only a comment.
+  return content || ' ';
 }
 
 /** Maps the panel's CodeLanguage option to CodeMirrorEditor's lazy-loaded language names. */

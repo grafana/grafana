@@ -1,12 +1,13 @@
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
+import { act, useState } from 'react';
 
 import config from 'app/core/config';
 
 import { CodeLanguage, TextMode } from '../../../schemas/textng/panelcfg.gen';
 
 import { PREVIEW_TEST_ID, TextNGEditor } from './TextNGEditor';
+import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
@@ -176,14 +177,6 @@ describe('TextNGEditor', () => {
       expect(screen.getByRole('textbox')).toHaveValue('# Data center = $datacenter');
     });
 
-    it('does not render a formatting toolbar', async () => {
-      setup('hello', TextMode.Markdown);
-      await enterWriteMode();
-
-      expect(screen.queryByRole('button', { name: 'Insert variable' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Bold' })).not.toBeInTheDocument();
-    });
-
     it('forwards editor changes via a debounced onChange', async () => {
       const { onChange } = setup('initial', TextMode.Markdown);
       await enterWriteMode();
@@ -249,6 +242,49 @@ describe('TextNGEditor', () => {
       // Matches the panel render path, which keys the interpolation format off
       // code.language alone.
       expect(replaceVariables).toHaveBeenCalledWith('# Hello', {}, 'json');
+    });
+  });
+
+  // Content that renders to nothing is covered exhaustively in utils.test.ts;
+  // this asserts the preview survives it. Reproduces deleting everything and
+  // pressing enter in Split view.
+  it('does not crash the preview for content that renders to nothing', async () => {
+    setup('# Hello', TextMode.Markdown);
+    await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+
+    // fireEvent, because userEvent.type() does not reproduce a whitespace-only value.
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: '\n' } });
+
+    expect(screen.getByTestId(PREVIEW_TEST_ID)).toBeInTheDocument();
+  });
+
+  describe('formatting toolbar', () => {
+    it('renders alongside the editor in Write view', async () => {
+      setup('hello', TextMode.Markdown);
+      await enterWriteMode();
+
+      expect(screen.getByTestId(FORMAT_TOOLBAR_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('renders in Split view', async () => {
+      setup('hello', TextMode.Markdown);
+
+      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+
+      expect(screen.getByTestId(FORMAT_TOOLBAR_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('is hidden in Preview view, where there is nothing to format', () => {
+      setup('hello', TextMode.Markdown);
+
+      expect(screen.queryByTestId(FORMAT_TOOLBAR_TEST_ID)).not.toBeInTheDocument();
+    });
+
+    it('is not rendered in Code mode', async () => {
+      setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+      await enterWriteMode();
+
+      expect(screen.queryByTestId(FORMAT_TOOLBAR_TEST_ID)).not.toBeInTheDocument();
     });
   });
 

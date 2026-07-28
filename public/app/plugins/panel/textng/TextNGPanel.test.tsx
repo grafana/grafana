@@ -94,6 +94,18 @@ describe('TextNGPanel', () => {
     expect(() => setup(props)).not.toThrow();
   });
 
+  // Markdown renders a lone newline to an empty string, which
+  // DangerouslySetHtmlContent rejects with "html prop can't be null".
+  it('should not throw for content that renders to nothing', () => {
+    const content = '\n';
+    replaceVariablesMock.mockReturnValueOnce(content);
+    const props = Object.assign({}, defaultProps, {
+      options: { content, mode: TextMode.Markdown },
+    });
+
+    expect(() => setup(props)).not.toThrow();
+  });
+
   it('sanitizes content in html mode', () => {
     const contentTest = '<form><p>Form tags are sanitized.</p></form>\n<script>Script tags are sanitized.</script>';
     replaceVariablesMock.mockReturnValueOnce(contentTest);

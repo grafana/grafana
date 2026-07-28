@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { type GrafanaTheme2, type InterpolateFunction } from '@grafana/data';
@@ -12,6 +12,8 @@ import config from 'app/core/config';
 import { CodeLanguage, TextMode } from '../../../schemas/textng/panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
+
+import { TextNGFormatToolbar } from './TextNGFormatToolbar';
 
 type ViewMode = 'write' | 'split' | 'preview';
 
@@ -43,6 +45,7 @@ export function TextNGEditor({
   // a blur can fire before React re-renders with the new draft.
   const draftRef = useRef(content);
   const committedContent = useRef(content);
+  const editorContainerRef = useRef<HTMLDivElement | null>(null);
 
   const [prevContent, setPrevContent] = useState(content);
   if (content !== prevContent) {
@@ -54,10 +57,12 @@ export function TextNGEditor({
     }
   }
 
-  const handleDraftChange = (next: string) => {
+  // Stable identity: CodeMirrorEditor reconfigures itself whenever onChange
+  // changes, which would otherwise happen on every keystroke.
+  const handleDraftChange = useCallback((next: string) => {
     draftRef.current = next;
     setDraft(next);
-  };
+  }, []);
 
   const commitDraft = () => {
     const next = draftRef.current;
@@ -120,13 +125,14 @@ export function TextNGEditor({
     <div className={styles.wrapper} data-testid="TextNGEditor">
       <div className={styles.toolbar}>
         <RadioButtonGroup options={viewOptions} value={view} onChange={setView} size="sm" />
+        {showEditor && <TextNGFormatToolbar mode={mode} editorContainerRef={editorContainerRef} />}
       </div>
 
       <div className={cx(styles.body, view === 'split' && styles.splitBody)}>
         {showEditor && (
           // Outside interactions (Save, Apply, Back) blur the editor on mousedown,
           // so a pending draft is committed before anything reads the options.
-          <div className={cx(styles.pane, styles.editorPane)} onBlur={commitDraft}>
+          <div ref={editorContainerRef} className={cx(styles.pane, styles.editorPane)} onBlur={commitDraft}>
             <CodeMirrorEditor
               value={draft}
               onChange={handleDraftChange}
@@ -155,7 +161,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   toolbar: css({
     display: 'flex',
     alignItems: 'center',
+    gap: theme.spacing(1),
     marginBottom: theme.spacing(1),
+    // Reserved so dropping the format toolbar in Preview does not shift the panes.
+    minHeight: theme.spacing(theme.components.height.md),
   }),
   body: css({
     display: 'flex',
@@ -185,11 +194,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   previewPane: css({
     overflow: 'auto',
-    padding: theme.spacing(1, 2),
     background: theme.colors.background.primary,
   }),
   markdownHtml: css({
     height: '100%',
+    // Kept in sync with the rendered panel so content does not shift on edit.
+    padding: theme.spacing(1, 2),
   }),
   codeView: css({
     height: '100%',

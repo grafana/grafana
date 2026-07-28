@@ -145,6 +145,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   markdownHtml: css({
     height: '100%',
+    // Kept in sync with the editor's preview so content does not shift on edit.
+    padding: theme.spacing(1, 2),
   }),
   codeContainer: css({
     height: '100%',
