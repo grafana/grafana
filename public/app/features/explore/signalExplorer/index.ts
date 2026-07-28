@@ -102,4 +102,10 @@ export {
  */
 export { INITIAL_BATCH, useVisibleBatch } from './components/useVisibleBatch';
 
+/**
+ * Exported without a consumer inside this module, deliberately. The card's own type filter was
+ * removed from the design, but `cards[refId].typeFilter` and `useMetricCatalog`'s `typeFilter` option
+ * both remain, so this is the control for them wherever a shell decides that filter belongs. It is
+ * not dead code awaiting deletion.
+ */
 export { MetricTypeFilter, type MetricTypeFilterProps } from './components/MetricTypeFilter';
