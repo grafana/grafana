@@ -37,7 +37,7 @@ func (b *APIBuilder) proxyAllFlagReq(ctx context.Context, isAuthedUser bool, nam
 		}
 
 		// Unauth is always filtered to public flags. Authed is filtered only when the flag is on.
-		if isAuthedUser && !bulkFlagEvalFilteringEnabled(ctx) {
+		if isAuthedUser && !bulkFlagEvalFilteringEnabled(ctx, b.logger) {
 			return nil
 		}
 
