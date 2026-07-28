@@ -423,6 +423,84 @@ func testNotifierWatchMultipleEvents(t *testing.T, ctx context.Context, notifier
 	assert.Equal(t, expectedNames, receivedEvents)
 }
 
+func TestSettleEvents_KeepsDrainingWhileConsumerIsBlocked(t *testing.T) {
+	// While the emit loop waits on a consumer, raw must keep being drained:
+	// otherwise the producer — which sends to raw without blocking — drops
+	// notifications the settle buffer had room for.
+	synctest.Test(t, func(t *testing.T) {
+		opts := WatchOptions{BufferSize: 4, SettleDelay: time.Millisecond}.normalize()
+
+		raw := make(chan Event, opts.BufferSize)
+		out := make(chan Event) // never read, so the emit loop blocks on its send
+
+		go settleEvents(t.Context(), raw, out, opts)
+
+		// Resource versions must come from the clock: synctest's fake time starts
+		// before the snowflake epoch, so small values never settle.
+		base := snowflakeFromTime(time.Now())
+		event := func(i int) Event {
+			return Event{
+				Namespace:       "default",
+				Group:           "playlists.grafana.app",
+				Resource:        "playlists",
+				Name:            fmt.Sprintf("playlist_%d", i),
+				ResourceVersion: base + int64(i),
+				Action:          DataActionCreated,
+			}
+		}
+
+		// Get the emit loop blocked: the first tick after the settle delay hands
+		// this event to the consumer, which never reads.
+		raw <- event(0)
+		time.Sleep(opts.SettleDelay + time.Second)
+		synctest.Wait()
+
+		// With the consumer stuck, raw must still accept a full settle buffer plus a
+		// full raw buffer. synctest.Wait parks until the drain goroutine is idle, so
+		// a rejected send means it stopped draining, not that it was behind.
+		for i := range 2 * opts.BufferSize {
+			select {
+			case raw <- event(i + 1):
+			default:
+				t.Fatalf("send %d rejected: raw is no longer drained while the consumer is blocked", i)
+			}
+			synctest.Wait()
+		}
+	})
+}
+
+func TestSettleBuffer(t *testing.T) {
+	evt := func(rv int64) Event {
+		return Event{ResourceVersion: rv, Action: DataActionCreated}
+	}
+
+	t.Run("reports when full so the caller can apply backpressure", func(t *testing.T) {
+		buffer := &settleBuffer{max: 2}
+		assert.True(t, buffer.add(evt(1)))
+		assert.True(t, buffer.add(evt(2)))
+		assert.False(t, buffer.add(evt(3)), "buffer is full")
+
+		// Draining frees capacity again.
+		require.Len(t, buffer.takeSettled(2), 2)
+		assert.True(t, buffer.add(evt(3)))
+	})
+
+	t.Run("takes only settled events, in ascending resource version order", func(t *testing.T) {
+		buffer := &settleBuffer{max: 10}
+		for _, rv := range []int64{30, 10, 20, 40} {
+			require.True(t, buffer.add(evt(rv)))
+		}
+
+		taken := buffer.takeSettled(30)
+		require.Len(t, taken, 3)
+		assert.Equal(t, []int64{10, 20, 30}, []int64{taken[0].ResourceVersion, taken[1].ResourceVersion, taken[2].ResourceVersion})
+
+		// The unsettled event stays buffered until its threshold is reached.
+		assert.Nil(t, buffer.takeSettled(39))
+		require.Len(t, buffer.takeSettled(40), 1)
+	})
+}
+
 func TestChannelNotifier(t *testing.T) {
 	log := log.NewNopLogger()
 

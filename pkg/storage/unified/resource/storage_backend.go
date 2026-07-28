@@ -46,6 +46,11 @@ const (
 	defaultSearchLookback             = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
 	persistDeadline                   = 10 * time.Second
+
+	// watchFetchConcurrency bounds the value reads WatchWriteEvents keeps in
+	// flight while resolving notifications, so a burst cannot swamp the store.
+	// Ordering is preserved regardless of its size.
+	watchFetchConcurrency = 16
 )
 
 // IsResourceNameMixedCase reports whether a successful read returned a
@@ -2248,31 +2253,90 @@ func (i *kvHistoryIterator) Value() []byte {
 	return i.value
 }
 
+// fetchedEvent pairs a notification with its value, or the error that prevented
+// reading it.
+type fetchedEvent struct {
+	event Event
+	data  []byte
+	err   error
+}
+
+// fetchEventData resolves the value a notification refers to. Notifications
+// carry metadata only, so every event costs a storage read.
+func (k *kvStorageBackend) fetchEventData(ctx context.Context, event Event) ([]byte, error) {
+	dataReader, err := k.dataStore.Get(ctx, DataKey{
+		Group:           event.Group,
+		Resource:        event.Resource,
+		Namespace:       event.Namespace,
+		Name:            event.Name,
+		ResourceVersion: event.ResourceVersion,
+		Action:          event.Action,
+		Folder:          event.Folder,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if dataReader == nil {
+		return nil, errors.New("no data for event")
+	}
+	data, err := readAndClose(dataReader)
+	if err != nil {
+		return nil, fmt.Errorf("read and close data for event: %w", err)
+	}
+	return data, nil
+}
+
 // WatchWriteEvents returns a channel that receives write events.
+//
+// Resolving values inline while consuming the notifier would cap the stream at
+// one storage round trip per event, overflowing the notifier's buffers (and so
+// dropping notifications) under write-heavy load. Reads are instead issued
+// concurrently within a fixed window and consumed in issue order, which keeps
+// delivery in resource version order while overlapping the round trips.
 func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *WrittenEvent, error) {
 	// Create a channel to receive events
 	events := make(chan *WrittenEvent, 10000) // TODO: make this configurable
 
 	notifierEvents := k.notifier.Watch(ctx, k.watchOpts)
+
+	// pending holds one slot per in-flight read, ordered by arrival. Its capacity
+	// is the window: enqueuing blocks once it is full.
+	pending := make(chan chan fetchedEvent, watchFetchConcurrency)
+
 	go func() {
+		defer close(pending)
 		for event := range notifierEvents {
-			// fetch the data
-			dataReader, err := k.dataStore.Get(ctx, DataKey{
-				Group:           event.Group,
-				Resource:        event.Resource,
-				Namespace:       event.Namespace,
-				Name:            event.Name,
-				ResourceVersion: event.ResourceVersion,
-				Action:          event.Action,
-				Folder:          event.Folder,
-			})
-			if err != nil || dataReader == nil {
-				k.log.Error("failed to get data for event", "error", err)
-				continue
+			slot := make(chan fetchedEvent, 1)
+			select {
+			case pending <- slot:
+			case <-ctx.Done():
+				return
 			}
-			data, err := readAndClose(dataReader)
-			if err != nil {
-				k.log.Error("failed to read and close data for event", "error", err)
+			go func(event Event) {
+				data, err := k.fetchEventData(ctx, event)
+				slot <- fetchedEvent{event: event, data: data, err: err}
+			}(event)
+		}
+	}()
+
+	go func() {
+		defer close(events)
+		for slot := range pending {
+			var fetched fetchedEvent
+			select {
+			case fetched = <-slot:
+			case <-ctx.Done():
+				return
+			}
+			event := fetched.event
+			if fetched.err != nil {
+				k.log.Error("failed to get data for event",
+					"namespace", event.Namespace,
+					"group", event.Group,
+					"resource", event.Resource,
+					"name", event.Name,
+					"resource_version", event.ResourceVersion,
+					"error", fetched.err)
 				continue
 			}
 			var t resourcepb.WatchEvent_Type
@@ -2285,7 +2349,8 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 				t = resourcepb.WatchEvent_DELETED
 			}
 
-			events <- &WrittenEvent{
+			select {
+			case events <- &WrittenEvent{
 				Key: &resourcepb.ResourceKey{
 					Namespace: event.Namespace,
 					Group:     event.Group,
@@ -2294,13 +2359,15 @@ func (k *kvStorageBackend) WatchWriteEvents(ctx context.Context) (<-chan *Writte
 				},
 				Type:            t,
 				Folder:          event.Folder,
-				Value:           data,
+				Value:           fetched.data,
 				ResourceVersion: event.ResourceVersion,
 				PreviousRV:      event.PreviousRV,
 				Timestamp:       resourceVersionTime(event.ResourceVersion).Unix(),
+			}:
+			case <-ctx.Done():
+				return
 			}
 		}
-		close(events)
 	}()
 	return events, nil
 }

@@ -584,6 +584,124 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 	}
 }
 
+// latencyTrackingKV makes data reads slow and observable, so a test can tell
+// whether a watch stream's reads overlap. Tracking stays off until startTracking
+// and is limited to keys containing keyFilter, keeping write-path reads out of
+// the count.
+type latencyTrackingKV struct {
+	KV
+	keyFilter string
+
+	mu          sync.Mutex
+	delay       time.Duration
+	tracking    bool
+	inflight    int
+	maxInflight int
+}
+
+func (k *latencyTrackingKV) startTracking(delay time.Duration) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.delay = delay
+	k.tracking = true
+}
+
+func (k *latencyTrackingKV) maxConcurrentReads() int {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	return k.maxInflight
+}
+
+// enter reports the delay to apply, or false when this read is not tracked.
+func (k *latencyTrackingKV) enter(section, key string) (time.Duration, bool) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	if !k.tracking || section != dataSection || !strings.Contains(key, k.keyFilter) {
+		return 0, false
+	}
+	k.inflight++
+	k.maxInflight = max(k.maxInflight, k.inflight)
+	return k.delay, true
+}
+
+func (k *latencyTrackingKV) exit() {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	k.inflight--
+}
+
+func (k *latencyTrackingKV) Get(ctx context.Context, section string, key string) (io.ReadCloser, error) {
+	if delay, tracked := k.enter(section, key); tracked {
+		defer k.exit()
+		time.Sleep(delay)
+	}
+	return k.KV.Get(ctx, section, key)
+}
+
+// TestKvStorageBackend_WatchWriteEvents_FetchesConcurrentlyInOrder asserts the
+// reads that resolve notification values overlap rather than running one round
+// trip at a time, without disturbing delivery order.
+func TestKvStorageBackend_WatchWriteEvents_FetchesConcurrentlyInOrder(t *testing.T) {
+	const numEvents = 32 // more than watchFetchConcurrency, so the window is reused
+
+	kvStore := &latencyTrackingKV{KV: setupBadgerKV(t), keyFilter: "watch-order-"}
+	// The settle delay has to outlast the write phase so every event is emitted in
+	// one batch once tracking is on.
+	backend := setupTestStorageBackend(t, withChannelNotifier, withKV(kvStore), withSettleDelay(2*time.Second))
+
+	ctx, cancel := context.WithTimeout(t.Context(), 60*time.Second)
+	defer cancel()
+
+	stream, err := backend.WatchWriteEvents(ctx)
+	require.NoError(t, err)
+
+	writtenRVs := make([]int64, numEvents)
+	for i := range numEvents {
+		name := fmt.Sprintf("watch-order-%d", i)
+		obj, err := createTestObjectWithName(name, appsNamespace, fmt.Sprintf("value-%d", i))
+		require.NoError(t, err)
+		metaAccessor, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+
+		writtenRVs[i], err = backend.WriteEvent(ctx, WriteEvent{
+			Type: resourcepb.WatchEvent_ADDED,
+			Key: &resourcepb.ResourceKey{
+				Namespace: appsNamespace.Namespace,
+				Group:     appsNamespace.Group,
+				Resource:  appsNamespace.Resource,
+				Name:      name,
+			},
+			Value:      objectToJSONBytes(t, obj),
+			Object:     metaAccessor,
+			ObjectOld:  metaAccessor,
+			PreviousRV: 0,
+		})
+		require.NoError(t, err)
+	}
+
+	kvStore.startTracking(20 * time.Millisecond)
+
+	receivedRVs := make([]int64, 0, numEvents)
+	for range numEvents {
+		select {
+		case writtenEvent := <-stream:
+			receivedRVs = append(receivedRVs, writtenEvent.ResourceVersion)
+		case <-ctx.Done():
+			require.FailNow(t, "timed out waiting for events", "received %d of %d", len(receivedRVs), numEvents)
+		}
+	}
+
+	assert.Equal(t, writtenRVs, receivedRVs, "events must be delivered in ascending resource version order")
+
+	// A serial fetch peaks at exactly 2 — one read running while the consumer
+	// holds the previous result — so anything above that means reads fan out. The
+	// floor is absolute rather than derived from watchFetchConcurrency, which
+	// would make the assertion vacuous if the window were ever shrunk.
+	t.Logf("peak concurrent value reads: %d", kvStore.maxConcurrentReads())
+	assert.Greater(t, kvStore.maxConcurrentReads(), 2,
+		"value reads should fan out across the window instead of running one at a time")
+}
+
 // TestIntegrationKvStorageBackend_WatchWriteEvents_ConcurrentWrites verifies that when many
 // concurrent WriteEvent calls happen, the watch stream delivers every event exactly once and
 // in ascending ResourceVersion order.

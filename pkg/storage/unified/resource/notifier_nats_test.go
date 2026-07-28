@@ -215,6 +215,65 @@ func TestNatsNotifierWatch_DropsUnmarshalableData(t *testing.T) {
 	assert.Equal(t, float64(1), testutil.ToFloat64(dropped.WithLabelValues("unmarshal_error")))
 }
 
+func TestThrottledLog(t *testing.T) {
+	t.Run("allows the first line and throttles the rest, reporting the suppressed count", func(t *testing.T) {
+		tl := newThrottledLog(time.Hour)
+
+		suppressed, ok := tl.next("reason")
+		require.True(t, ok, "first occurrence must always be logged")
+		assert.Zero(t, suppressed)
+
+		for range 5 {
+			_, ok := tl.next("reason")
+			assert.False(t, ok, "further occurrences within the interval must be throttled")
+		}
+
+		// Expiring the interval releases the next line, which reports everything
+		// suppressed since the previous one.
+		tl.interval = 0
+		suppressed, ok = tl.next("reason")
+		require.True(t, ok)
+		assert.Equal(t, int64(5), suppressed)
+
+		// The count resets once reported.
+		suppressed, ok = tl.next("reason")
+		require.True(t, ok)
+		assert.Zero(t, suppressed)
+	})
+
+	t.Run("throttles each key independently", func(t *testing.T) {
+		tl := newThrottledLog(time.Hour)
+
+		_, ok := tl.next("first")
+		require.True(t, ok)
+		_, ok = tl.next("first")
+		require.False(t, ok)
+
+		// A storm on one key must not hide the first occurrence of another.
+		_, ok = tl.next("second")
+		assert.True(t, ok)
+	})
+}
+
+func TestNatsNotifierDrop_CountsEveryDropWhileThrottlingLogs(t *testing.T) {
+	sub := &fakeEventSubscriber{enabled: true}
+	dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
+	n := newNatsNotifier(sub, dropped, log.NewNopLogger())
+
+	// The counter is the source of truth for drop rates, so it must stay exact
+	// even though the warning is throttled to one line per interval.
+	logged := 0
+	for range 100 {
+		n.drop(dropReasonBufferFull, "dropped watch notification, channel full", "subject", "some.subject")
+		if _, ok := n.dropLog.next(dropReasonBufferFull); ok {
+			logged++
+		}
+	}
+
+	assert.Equal(t, float64(100), testutil.ToFloat64(dropped.WithLabelValues(dropReasonBufferFull)))
+	assert.Zero(t, logged, "no line should be released within the throttle interval")
+}
+
 func TestNatsNotifierWatch_ClosesAndUnsubscribesOnContextCancel(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
 	n := newNatsNotifier(sub, nil, log.NewNopLogger())

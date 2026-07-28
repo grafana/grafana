@@ -2,6 +2,8 @@ package resource
 
 import (
 	"context"
+	"sync"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/protobuf/proto"
@@ -61,6 +63,7 @@ func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (kv.Data
 type natsNotifier struct {
 	subscriber EventSubscriber
 	dropped    *prometheus.CounterVec // by reason; nil is allowed (no accounting)
+	dropLog    *throttledLog
 	log        log.Logger
 }
 
@@ -69,6 +72,12 @@ const (
 	dropReasonUnmarshalError = "unmarshal_error"
 	dropReasonUnknownType    = "unknown_type"
 )
+
+// dropLogInterval throttles the per-reason drop warning. The handler runs on the
+// bus dispatch goroutine, which delivers a subscription's messages one at a
+// time, so a line per dropped message during a storm slows delivery enough to
+// cause further drops. The dropped counter stays exact.
+const dropLogInterval = 10 * time.Second
 
 var dropReasons = []string{dropReasonBufferFull, dropReasonUnmarshalError, dropReasonUnknownType}
 
@@ -81,13 +90,53 @@ func newNatsNotifier(subscriber EventSubscriber, dropped *prometheus.CounterVec,
 	return &natsNotifier{
 		subscriber: subscriber,
 		dropped:    dropped,
+		dropLog:    newThrottledLog(dropLogInterval),
 		log:        logger,
 	}
 }
 
-func (n *natsNotifier) drop(reason string) {
+// throttledLog reports whether a warning should be emitted for a key, and how
+// many were suppressed since the previous one so a throttled line still conveys
+// volume. Keys are throttled independently: a storm on one reason must not hide
+// the first occurrence of another.
+type throttledLog struct {
+	interval   time.Duration
+	mu         sync.Mutex
+	last       map[string]time.Time
+	suppressed map[string]int64
+}
+
+func newThrottledLog(interval time.Duration) *throttledLog {
+	return &throttledLog{
+		interval:   interval,
+		last:       make(map[string]time.Time),
+		suppressed: make(map[string]int64),
+	}
+}
+
+func (t *throttledLog) next(key string) (suppressed int64, ok bool) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	now := time.Now()
+	if last, seen := t.last[key]; seen && now.Sub(last) < t.interval {
+		t.suppressed[key]++
+		return 0, false
+	}
+	suppressed = t.suppressed[key]
+	t.suppressed[key] = 0
+	t.last[key] = now
+	return suppressed, true
+}
+
+// drop accounts a dropped notification and logs at most one line per reason per
+// dropLogInterval.
+func (n *natsNotifier) drop(reason, msg string, logCtx ...any) {
 	if n.dropped != nil {
 		n.dropped.WithLabelValues(reason).Inc()
+	}
+	if suppressed, ok := n.dropLog.next(reason); ok {
+		n.log.Warn(msg, append(logCtx, "suppressed_since_last_log", suppressed)...)
 	}
 }
 
@@ -111,8 +160,7 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 		select {
 		case raw <- evt:
 		default:
-			n.drop(dropReasonBufferFull)
-			n.log.Warn("dropped watch notification, channel full", "subject", subject)
+			n.drop(dropReasonBufferFull, "dropped watch notification, channel full", "subject", subject)
 		}
 	}
 
@@ -162,14 +210,12 @@ func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject st
 func (n *natsNotifier) decode(subject string, data []byte) (Event, bool) {
 	var notification resourcepb.WatchNotification
 	if err := proto.Unmarshal(data, &notification); err != nil {
-		n.drop(dropReasonUnmarshalError)
-		n.log.Warn("failed to unmarshal watch notification", "subject", subject, "error", err)
+		n.drop(dropReasonUnmarshalError, "failed to unmarshal watch notification", "subject", subject, "error", err)
 		return Event{}, false
 	}
 	action, ok := watchNotificationTypeToAction(notification.Type)
 	if !ok {
-		n.drop(dropReasonUnknownType)
-		n.log.Warn("dropped watch notification with unknown type", "subject", subject)
+		n.drop(dropReasonUnknownType, "dropped watch notification with unknown type", "subject", subject)
 		return Event{}, false
 	}
 	return Event{
