@@ -125,6 +125,109 @@ describe('capturePanelData', () => {
 
     expect(captured?.request?.inFlight).toBeUndefined();
   });
+
+  it('omits errors when the query did not error', () => {
+    // An absent key has to read as "nothing went wrong", not "nobody looked".
+    expect(capturePanelData(panel(), runnerWith(panelData()))?.errors).toBeUndefined();
+  });
+
+  it('records why the frames are missing when the plugin frontend threw', () => {
+    // The case the artifact is weakest without: runRequest's catchError emits state Error with no series
+    // and only the deprecated singular error set. Empty frames against a healthy querydata.json localise
+    // the loss to the frontend, but the reason lives nowhere else -- traffic.har recorded a successful
+    // round trip and the server never saw a browser-side exception.
+    const captured = capturePanelData(
+      panel(),
+      runnerWith(
+        panelData({
+          state: LoadingState.Error,
+          series: [],
+          error: { refId: 'A', message: 'Cannot read properties of undefined (reading "result")' },
+        })
+      )
+    );
+
+    expect(captured?.frames).toEqual([]);
+    expect(captured?.errors).toEqual([
+      expect.objectContaining({ refId: 'A', message: 'Cannot read properties of undefined (reading "result")' }),
+    ]);
+  });
+
+  it('prefers the errors array over the deprecated singular error', () => {
+    const captured = capturePanelData(
+      panel(),
+      runnerWith(
+        panelData({
+          state: LoadingState.Error,
+          errors: [
+            { refId: 'A', message: 'upstream exploded', status: 502, statusText: 'Bad Gateway', traceId: 'abc123' },
+            { refId: 'B', message: 'also this one' },
+          ],
+          error: { message: 'upstream exploded' },
+        })
+      )
+    );
+
+    expect(captured?.errors).toEqual([
+      {
+        refId: 'A',
+        message: 'upstream exploded',
+        status: 502,
+        statusText: 'Bad Gateway',
+        traceId: 'abc123',
+        type: undefined,
+        detail: undefined,
+      },
+      expect.objectContaining({ refId: 'B', message: 'also this one' }),
+    ]);
+  });
+
+  it('copies scalar fields out rather than embedding the thrown object', () => {
+    // toDataQueryError returns *the object that was thrown* with a message attached, so PanelData.error is
+    // not the tidy DataQueryError its type claims -- a fetch/axios error brings a circular config along.
+    // Embedding it would fail the caller's serialization guard and cost the frames too, to explain why the
+    // frames are missing.
+    const thrown: Record<string, unknown> = { refId: 'A', message: 'Request failed', status: 500 };
+    thrown.config = { adapter: () => undefined, self: thrown };
+    const captured = capturePanelData(
+      panel(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      runnerWith(panelData({ state: LoadingState.Error, series: [], error: thrown as any }))
+    );
+
+    expect(() => JSON.stringify(captured)).not.toThrow();
+    expect(captured?.errors).toEqual([
+      {
+        refId: 'A',
+        message: 'Request failed',
+        status: 500,
+        statusText: undefined,
+        traceId: undefined,
+        type: undefined,
+        detail: undefined,
+      },
+    ]);
+  });
+
+  it('records the server detail a development-mode Grafana returns', () => {
+    const captured = capturePanelData(
+      panel(),
+      runnerWith(
+        panelData({
+          state: LoadingState.Error,
+          errors: [
+            {
+              refId: 'A',
+              message: 'Query data error',
+              data: { message: 'Query data error', error: 'pq: relation "foo" does not exist' },
+            },
+          ],
+        })
+      )
+    );
+
+    expect(captured?.errors?.[0].detail).toBe('pq: relation "foo" does not exist');
+  });
 });
 
 describe('capturePanelDataFailure', () => {

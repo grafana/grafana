@@ -1,4 +1,4 @@
-import { dataFrameToJSON, LoadingState, type DataFrameJSON } from '@grafana/data';
+import { dataFrameToJSON, LoadingState, type DataFrameJSON, type PanelData } from '@grafana/data';
 import { type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
 
 /** Schema version stamped into paneldata.json so a reader knows how to interpret it. */
@@ -23,7 +23,34 @@ export interface PanelDataArtifact extends PanelDataArtifactHeader {
   /** LoadingState at capture time (`Done`, `Error`, `Loading`, …), as the query runner reported it. */
   state?: string;
   request?: PanelDataRequestContext;
+  /** Why the frames are missing or short, when the frontend knows. Omitted when the query did not error. */
+  errors?: PanelDataError[];
   frames: DataFrameJSON[];
+}
+
+/**
+ * A query error as the frontend recorded it — the counterpart to the missing frames.
+ *
+ * Without this the artifact can prove a frontend loss and not explain it: when a plugin's frontend
+ * throws, `runRequest`'s `catchError` emits `state: Error` with no series, so the capture shows empty
+ * `frames` against a healthy `querydata.json` and the reason is nowhere in the bundle — `traffic.har`
+ * recorded a successful round trip and the server logs never saw a browser-side exception.
+ *
+ * Scalar fields only, copied out one by one rather than spread. `toDataQueryError` returns *the object
+ * that was thrown* with a `message` attached, so `PanelData.error` is not the tidy `DataQueryError` its
+ * type suggests — it can be a fetch/axios error carrying a circular `config` or `request`. Spreading it
+ * would push captures that are otherwise fine into `captureError`, losing the frames to salvage the
+ * explanation for why they are missing.
+ */
+interface PanelDataError {
+  refId?: string;
+  message?: string;
+  status?: number;
+  statusText?: string;
+  traceId?: string;
+  type?: string;
+  /** `data.error`: the server's detailed message, populated only when Grafana runs in development mode. */
+  detail?: string;
 }
 
 /**
@@ -60,6 +87,25 @@ interface PanelDataRequestContext {
    * a difference against `querydata.json`.
    */
   inFlight?: true;
+}
+
+function captureErrors(data: PanelData): PanelDataError[] | undefined {
+  // errors[] is the modern field, but runRequest's catchError sets only the deprecated singular error --
+  // which is exactly the plugin-frontend-threw case this is here for. Read both.
+  const errors = data.errors?.length ? data.errors : data.error ? [data.error] : [];
+  if (!errors.length) {
+    return undefined;
+  }
+
+  return errors.map((error) => ({
+    refId: error.refId,
+    message: error.message,
+    status: error.status,
+    statusText: error.statusText,
+    traceId: error.traceId,
+    type: error.type,
+    detail: error.data?.error,
+  }));
 }
 
 /**
@@ -113,6 +159,9 @@ export function capturePanelData(panel: VizPanel, runner: SceneQueryRunner | und
           inFlight: inFlight ? true : undefined,
         }
       : undefined,
+    // Omitted when the query did not error, so an absent key reads as "nothing went wrong here" rather
+    // than "nobody looked".
+    errors: captureErrors(data),
     // Deliberately unbounded, for now. A very large panel makes for a large request body, and past
     // web.MaxBindBodyBytes (100MiB) web.Bind rejects it and the whole bundle is lost rather than just
     // this artifact. That is accepted at this stage: the feature is experimental, admin-only and
