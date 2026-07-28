@@ -254,7 +254,7 @@ visual regression to Meticulous.
 - Deferring comprehensiveness to a follow-up PR is acceptable — leave an explicit note
   rather than shipping a shallow test that looks complete.
 
-## Anti-flake rules (from tests disabled & re-enabled, Apr–Jul 2026)
+## Anti-flake rules
 
 Each rule maps to a real DataViz stabilization; global Playwright config retries once in CI
 only. **Avoid → Do:**
