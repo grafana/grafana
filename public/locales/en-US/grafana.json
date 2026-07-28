@@ -15469,6 +15469,7 @@
       "default-error": "Enter a date ({{dateExample}}) or relative time ({{relativeTimeExample1}}, {{relativeTimeExample2}})",
       "fiscal-year": "Fiscal year: {{from}} - {{to}}",
       "from-input": "From",
+      "milliseconds-label": "Show milliseconds",
       "open-input-calendar": "Open calendar",
       "range-error": "\"From\" date must be before \"To\" date",
       "required-error": "This field is required",

@@ -123,6 +123,112 @@ describe('TimeRangeForm', () => {
     expect(within(target.container).getByLabelText('To')).toHaveValue('2021-06-19 19:59:00');
   });
 
+  describe('milliseconds', () => {
+    const msRange = (): TimeRange => {
+      const from = dateTimeParse('2021-06-17T00:00:00.123Z', { timeZone: 'utc' });
+      const to = dateTimeParse('2021-06-19T23:59:00.456Z', { timeZone: 'utc' });
+      return { from, to, raw: { from, to } };
+    };
+
+    const noMsRange = (): TimeRange => {
+      const from = dateTimeParse('2021-06-17T00:00:00.000Z', { timeZone: 'utc' });
+      const to = dateTimeParse('2021-06-19T23:59:00.000Z', { timeZone: 'utc' });
+      return { from, to, raw: { from, to } };
+    };
+
+    it('shows milliseconds by default when the range is absolute and has milliseconds', async () => {
+      const { findByLabelText } = setup(msRange());
+
+      expect(await findByLabelText('From')).toHaveValue('2021-06-17 00:00:00.123');
+      expect(await findByLabelText('To')).toHaveValue('2021-06-19 23:59:00.456');
+      expect(screen.getByLabelText('Show milliseconds')).toBeChecked();
+    });
+
+    it('auto-enables and shows milliseconds when reopened with an absolute ISO-string range (scenes round-trip)', async () => {
+      // Scenes serializes an applied absolute range and returns raw as ISO strings with ms.
+      const range: TimeRange = {
+        from: dateTimeParse('2024-01-01T12:34:56.789Z', { timeZone: 'utc' }),
+        to: dateTimeParse('2024-01-02T01:02:03.456Z', { timeZone: 'utc' }),
+        raw: { from: '2024-01-01T12:34:56.789Z', to: '2024-01-02T01:02:03.456Z' },
+      };
+      const { findByLabelText } = setup(range);
+
+      expect(screen.getByLabelText('Show milliseconds')).toBeChecked();
+      expect(await findByLabelText('From')).toHaveValue('2024-01-01 12:34:56.789');
+      expect(await findByLabelText('To')).toHaveValue('2024-01-02 01:02:03.456');
+    });
+
+    it('hides milliseconds when the toggle is switched off', async () => {
+      const { findByLabelText } = setup(msRange());
+
+      await user.click(screen.getByLabelText('Show milliseconds'));
+
+      expect(await findByLabelText('From')).toHaveValue('2021-06-17 00:00:00');
+      expect(await findByLabelText('To')).toHaveValue('2021-06-19 23:59:00');
+    });
+
+    it('is off by default when the range has no milliseconds and can be toggled on', async () => {
+      const { findByLabelText } = setup(noMsRange());
+
+      expect(screen.getByLabelText('Show milliseconds')).not.toBeChecked();
+      expect(await findByLabelText('From')).toHaveValue('2021-06-17 00:00:00');
+
+      await user.click(screen.getByLabelText('Show milliseconds'));
+
+      expect(await findByLabelText('From')).toHaveValue('2021-06-17 00:00:00.000');
+    });
+
+    it('preserves uncommitted absolute edits when toggling milliseconds on (does not revert to relative)', async () => {
+      const relativeRange: TimeRange = {
+        from: dateTimeParse('now-5m', { timeZone: 'utc' }),
+        to: dateTimeParse('now', { timeZone: 'utc' }),
+        raw: { from: 'now-5m', to: 'now' },
+      };
+      const { findByLabelText } = setup(relativeRange);
+
+      const fromInput = await findByLabelText('From');
+      const toInput = await findByLabelText('To');
+      // Simulate selecting an absolute range (as the calendar does) without applying.
+      await user.clear(fromInput);
+      await user.type(fromInput, '2021-06-17 00:00:00');
+      await user.clear(toInput);
+      await user.type(toInput, '2021-06-19 23:59:00');
+
+      await user.click(screen.getByText('Show milliseconds'));
+
+      expect(await findByLabelText('From')).toHaveValue('2021-06-17 00:00:00.000');
+      expect(await findByLabelText('To')).toHaveValue('2021-06-19 23:59:00.000');
+    });
+
+    it('leaves relative values untouched when toggling milliseconds on', async () => {
+      const relativeRange: TimeRange = {
+        from: dateTimeParse('now-5m', { timeZone: 'utc' }),
+        to: dateTimeParse('now', { timeZone: 'utc' }),
+        raw: { from: 'now-5m', to: 'now' },
+      };
+      const { findByLabelText } = setup(relativeRange);
+
+      await user.click(screen.getByText('Show milliseconds'));
+
+      expect(await findByLabelText('From')).toHaveValue('now-5m');
+      expect(await findByLabelText('To')).toHaveValue('now');
+    });
+
+    it('applies a manually entered millisecond value', async () => {
+      const onApply = jest.fn();
+      render(<TimeRangeContent isFullscreen={true} value={defaultTimeRange} onApply={onApply} timeZone="utc" />);
+
+      const fromInput = screen.getByLabelText('From');
+      await user.clear(fromInput);
+      await user.type(fromInput, '2021-06-17 00:00:00.123');
+      await user.click(screen.getByRole('button', { name: 'Apply time range' }));
+
+      expect(onApply).toHaveBeenCalledTimes(1);
+      const applied: TimeRange = onApply.mock.calls[0][0];
+      expect(applied.from.format('YYYY-MM-DD HH:mm:ss.SSS')).toBe('2021-06-17 00:00:00.123');
+    });
+  });
+
   describe('Given custom system date format', () => {
     const originalFullDate = systemDateFormats.fullDate;
     beforeEach(() => {

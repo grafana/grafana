@@ -5,7 +5,15 @@ import moment from 'moment-timezone';
 import { type DateTimeOptions, getTimeZone } from './common';
 import { parse, isValid } from './datemath';
 import { systemDateFormats } from './formats';
-import { type DateTimeInput, type DateTime, isDateTime, dateTime, toUtc, dateTimeForTimeZone } from './moment_wrapper';
+import {
+  type DateTimeInput,
+  type DateTime,
+  type FormatInput,
+  isDateTime,
+  dateTime,
+  toUtc,
+  dateTimeForTimeZone,
+} from './moment_wrapper';
 
 /**
  * The type that describes options that can be passed when parsing a date and time value.
@@ -63,7 +71,9 @@ const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateT
   }
 
   let timeZone = getTimeZone(options);
-  let format = options?.format ?? systemDateFormats.fullDate;
+  // Accept both the default format and its millisecond variant so that values typed or pasted
+  // with millisecond precision (e.g. 2024-01-15 12:30:45.123) are parsed without losing the fraction.
+  let format: FormatInput = options?.format ?? [systemDateFormats.fullDate, systemDateFormats.fullDateMS];
   if (value.endsWith('Z')) {
     // This is a special case when we have an ISO date string
     // In this case we want to force the format to be ISO and the timeZone to be UTC

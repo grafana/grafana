@@ -8,7 +8,7 @@ export interface DateTimeBuiltinFormat {
 }
 export const ISO_8601: DateTimeBuiltinFormat = moment.ISO_8601;
 export type DateTimeInput = Date | string | number | Array<string | number> | DateTime | null; // | undefined;
-export type FormatInput = string | DateTimeBuiltinFormat | undefined;
+export type FormatInput = string | string[] | DateTimeBuiltinFormat | undefined;
 export type DurationInput = string | number | DateTimeDuration;
 export type DurationUnit =
   | 'year'
