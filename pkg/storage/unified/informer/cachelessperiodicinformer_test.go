@@ -39,10 +39,12 @@ func TestCachelessPeriodicInformer_ReListsOnJitteredInterval(t *testing.T) {
 		return []runtime.Object{obj("a")}, nil
 	}
 
+	// Small resync so the recurring timer fires quickly. The default jitter keeps
+	// each interval within [resync, resync*1.1] — orders of magnitude below the
+	// one-second Eventually window, so the loose calls>=3 check never flakes.
+	// (Note: jitterFactor 0 would NOT pin the interval — wait.Jitter treats a
+	// non-positive factor as 1.0, i.e. up to 100% jitter.)
 	src := NewCachelessPeriodicInformer("things", 10*time.Millisecond, list)
-	// Pin jitter to 0 so the interval is deterministic and the test is not flaky;
-	// the jittered path is still exercised via wait.Jitter with a zero factor.
-	src.jitterFactor = 0
 	h := &recordingHandler{}
 	_, err := src.AddEventHandler(h)
 	require.NoError(t, err)
