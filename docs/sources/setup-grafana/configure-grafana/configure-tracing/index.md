@@ -115,7 +115,11 @@ For more information about how to analyze trace files, refer to [Go command trac
 
 ## Export traces to a file
 
-Grafana can write its own distributed traces to a local file in OpenTelemetry Protocol (OTLP) JSON format, without a collector or a tracing backend. This helps you get traces for debugging without setting up the backend: turn on the exporter, reproduce the issue, then collect and share the file. This feature is not intended to be used as a permanent configuration, but as a helper for troubleshooting issues at Grafana.
+Grafana can write its own distributed traces to a local file in OpenTelemetry Protocol (OTLP) JSON format, without a collector or a tracing backend. This helps you get traces for debugging without setting up the backend: turn on the exporter, reproduce the issue, then collect and share the file.
+
+{{< admonition type="note" >}}
+Don't use this exporter as a permanent configuration. Use it to troubleshoot issues in Grafana, then turn it off.
+{{< /admonition >}}
 
 This is different from the `-tracing` option in the previous section. That option writes a low-level Go runtime execution trace for `go tool trace`, whereas the file exporter emits the same OpenTelemetry spans that Grafana sends to Jaeger or OTLP endpoints, which describe how requests flow through Grafana.
 
