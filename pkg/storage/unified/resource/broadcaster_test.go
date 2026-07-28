@@ -12,15 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func drainChan[T any](ch chan T) []T {
-	close(ch)
-	var out []T
-	for v := range ch {
-		out = append(out, v)
-	}
-	return out
-}
-
 func requireMetricValue(t *testing.T, collector prometheus.Collector, expected float64) {
 	t.Helper()
 	require.Equal(t, expected, testutil.ToFloat64(collector))
@@ -33,67 +24,28 @@ func requireMetricEventually(t *testing.T, collector prometheus.Collector, expec
 	}, time.Second, 10*time.Millisecond)
 }
 
-func TestRingBuffer(t *testing.T) {
-	c := newRingBuffer[int](10)
-
-	// empty buffer
-	dst := make(chan int, 10)
-	require.True(t, c.readInto(dst))
-	require.Empty(t, drainChan(dst))
-
-	c.add(1)
-	dst = make(chan int, 10)
-	require.True(t, c.readInto(dst))
-	require.Equal(t, []int{1}, drainChan(dst))
-
-	for i := 2; i <= 6; i++ {
-		c.add(i)
-	}
-	dst = make(chan int, 10)
-	require.True(t, c.readInto(dst))
-	require.Equal(t, []int{1, 2, 3, 4, 5, 6}, drainChan(dst))
-
-	for i := 7; i <= 11; i++ {
-		c.add(i)
-	}
-
-	// buffer is full (size 10), oldest item (1) evicted
-	dst = make(chan int, 10)
-	require.True(t, c.readInto(dst))
-	require.Equal(t, []int{2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, drainChan(dst))
-
-	c.add(12)
-	c.add(13)
-
-	// two more evictions
-	dst = make(chan int, 10)
-	require.True(t, c.readInto(dst))
-	require.Equal(t, []int{4, 5, 6, 7, 8, 9, 10, 11, 12, 13}, drainChan(dst))
-
-	// destination too small — returns false
-	small := make(chan int, 1)
-	require.False(t, c.readInto(small))
-}
-
 func TestBroadcaster(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	ch := make(chan int)
 	reg := prometheus.NewPedanticRegistry()
 	metrics := newBroadcasterMetrics(reg)
 	input := []int{1, 2, 3}
-	go func() {
-		for _, v := range input {
-			ch <- v
-		}
-	}()
 	t.Cleanup(func() {
 		close(ch)
 	})
 
 	b := NewBroadcaster(ctx, ch, metrics, nil)
 
+	// Subscribe before sending: the broadcaster only delivers events that
+	// arrive after the subscription, so there is no replay cache to rely on.
 	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
+
+	go func() {
+		for _, v := range input {
+			ch <- v
+		}
+	}()
 
 	for _, expected := range input {
 		v, ok := <-sub
@@ -278,55 +230,6 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 			}
 		case <-time.After(5 * time.Second):
 			t.Fatal("timed out: subscriber was not disconnected after overflow cap exceeded")
-		}
-	}
-}
-
-func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	ch := make(chan int)
-	t.Cleanup(func() { close(ch) })
-
-	// Subscriber buffer (defaultCacheSize + 100) > defaultCacheSize,
-	// so readInto should leave headroom.
-	const subBuf = defaultCacheSize + 100
-	const ovfCap = 1000
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil)
-
-	// Fill the cache to capacity by sending items through the input channel
-	// (no subscribers yet, so items only go to cache).
-	for i := 0; i < defaultCacheSize; i++ {
-		ch <- i
-	}
-
-	// Subscribe — readInto sends all cached items into the subscriber channel.
-	sub, err := b.Subscribe(ctx, "test", "test")
-	require.NoError(t, err)
-
-	// Read one cached item to confirm the subscription is active.
-	select {
-	case _, ok := <-sub:
-		require.True(t, ok)
-	case <-time.After(2 * time.Second):
-		t.Fatal("timed out waiting for first cached item")
-	}
-
-	// Send additional events. The channel has headroom (buffer > cache)
-	// so these arrive without overflowing.
-	const extra = 10
-	for i := 0; i < extra; i++ {
-		ch <- 1000 + i
-	}
-
-	// Read all remaining items — subscriber should still be alive.
-	for i := 0; i < extra; i++ {
-		select {
-		case _, ok := <-sub:
-			require.True(t, ok, "subscriber disconnected at item %d", i)
-		case <-time.After(2 * time.Second):
-			t.Fatalf("timed out at item %d of %d", i, extra)
 		}
 	}
 }
