@@ -13,6 +13,30 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+// kindSearchFields is what the query and indexing paths need to know about a
+// kind's declared search fields. Each lookup answers a different question and
+// is keyed differently, so they are derived once per index rather than walked
+// per request.
+type kindSearchFields struct {
+	// keywordFields maps a filter, sort or facet field name to the
+	// keyword-analyzed index field backing it.
+	keywordFields map[string]keywordField
+	// textQueryKinds maps physical index field names to the query their analyzer
+	// needs.
+	textQueryKinds map[string]textQueryKind
+	// variants drives the index-time copy of per-kind values into the variant
+	// fields this kind's mapping declares.
+	variants []fieldVariant
+}
+
+func newKindSearchFields(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) kindSearchFields {
+	return kindSearchFields{
+		keywordFields:  keywordFieldsForMapping(provider, group, kindResource, selectableFields),
+		textQueryKinds: textQueryKindsForMapping(provider, group, kindResource, selectableFields),
+		variants:       fieldVariantsOf(fieldDefinitionsForMapping(provider, group, kindResource)),
+	}
+}
+
 // fieldDefinitionsForMapping returns the SearchFieldDefinition slice that
 // drives the per-kind fields.* sub-document mapping. The provider is the
 // only source of truth: a kind that wants per-kind bleve mappings must
@@ -22,32 +46,6 @@ func fieldDefinitionsForMapping(provider resource.SearchFieldsProvider, group, k
 		return nil
 	}
 	return provider.Fields(schema.GroupVersionResource{Group: group, Resource: kindResource})
-}
-
-// facetFieldsForMapping returns the logical facet field names accepted by the
-// search API and the keyword-analyzed bleve fields that back them. Dynamic
-// fields are deliberately absent because they have no facet capability.
-func facetFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string) map[string]string {
-	fields := make(map[string]string)
-	add := func(def resource.SearchFieldDefinition, prefix string) {
-		if !def.HasCapability(resource.SearchCapabilityFacet) {
-			return
-		}
-		logicalName := prefix + def.Name
-		fields[logicalName] = prefix + keywordVariantName(def.Name, def.HasCapability(resource.SearchCapabilityText))
-	}
-
-	for _, def := range resource.StandardSearchFieldDefinitions() {
-		add(def, "")
-	}
-	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
-		add(def, resource.SEARCH_FIELD_PREFIX)
-		// Requests accept per-kind fields with or without the internal fields. prefix.
-		if physicalName, ok := fields[resource.SEARCH_FIELD_PREFIX+def.Name]; ok {
-			fields[def.Name] = physicalName
-		}
-	}
-	return fields
 }
 
 // textQueryKind is the free-text query a physical index field needs, so callers
@@ -107,6 +105,75 @@ func textQueryKindsForMapping(provider resource.SearchFieldsProvider, group, kin
 	}
 	return kinds
 }
+
+// keywordField is the keyword-analyzed index field backing a logical field.
+// lowered marks the copies that are written lowercased (see
+// populateFieldVariants and UpdateCopyFields). filterable and facetable carry
+// the capabilities that decide what a request may ask of the field: a keyword
+// form can exist for sorting alone.
+type keywordField struct {
+	name       string
+	lowered    bool
+	filterable bool
+	facetable  bool
+}
+
+// term returns value in the form the field was indexed in, because a TermQuery
+// does not analyze its input.
+func (k keywordField) term(value string) string {
+	if k.lowered {
+		return strings.ToLower(value)
+	}
+	return value
+}
+
+// keywordFieldsForMapping derives which fields are keyword-analyzed, and where
+// that keyword form lives, from the declarations that produced the mapping, so
+// the query side cannot drift from it (see keywordVariant).
+//
+// Keys are the names filters, sorts and facets arrive with. Labels are absent on
+// purpose: the label sub-document has no keyword analyzer.
+func keywordFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) map[string]keywordField {
+	fields := map[string]keywordField{}
+	add := func(key string, def resource.SearchFieldDefinition, prefix string) {
+		name, ok := keywordVariant(def)
+		if !ok {
+			return
+		}
+		fields[key] = keywordField{
+			name: prefix + name,
+			// A keyword form under a different name is a lowercased copy.
+			lowered:    name != def.Name,
+			filterable: def.HasCapability(resource.SearchCapabilityFilter),
+			facetable:  def.HasCapability(resource.SearchCapabilityFacet),
+		}
+	}
+
+	for _, def := range resource.StandardSearchFieldDefinitions() {
+		add(def.Name, def, "")
+	}
+	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
+		add(resource.SEARCH_FIELD_PREFIX+def.Name, def, resource.SEARCH_FIELD_PREFIX)
+		// Requests may name a per-kind field without the internal fields. prefix.
+		// A standard field of the same name wins, matching resolveFieldName.
+		if _, taken := fields[def.Name]; !taken {
+			add(def.Name, def, resource.SEARCH_FIELD_PREFIX)
+		}
+	}
+	// Selectable fields and the keyword sub-documents exist to be filtered on,
+	// but declare no capabilities (see getBleveDocMappings).
+	for _, name := range selectableFields {
+		key := resource.SEARCH_SELECTABLE_FIELDS_PREFIX + name
+		fields[key] = keywordField{name: key, filterable: true}
+	}
+	for _, name := range keywordSubDocumentFields {
+		fields[name] = keywordField{name: name, filterable: true}
+	}
+	return fields
+}
+
+// standardKeywordFields covers an index opened without per-kind declarations.
+var standardKeywordFields = keywordFieldsForMapping(nil, "", "", nil)
 
 // keywordSubDocumentFields are keyword-mapped fields that live in sub-documents
 // and so are not modellable as SearchFieldDefinitions yet (see
