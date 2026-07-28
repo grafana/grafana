@@ -19,9 +19,7 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code
 
 # Overview of the `gcx` CLI
 
-`gcx` is a single CLI that allows you and your AI coding agent structured access to both Grafana (dashboards, folders, alert rules, data sources) and Grafana Cloud products such as Synthetic Monitoring, K6, Fleet Management, Incidents, or Adaptive Telemetry.
-
-`gcx` ships with a suite of agent skills for common workflows like alert investigation, root-cause analysis, dashboard GitOps, SLO management, and observability setup. It natively supports agentic workflows and it's integrated with Grafana Assistant, combining the previously fragmented user experience into one single tool.
+`gcx` is a single CLI that ships with a suite of agent skills and allows you and your AI coding agent structured access to both Grafana (dashboards, folders, alert rules, data sources) and Grafana Cloud products such as Synthetic Monitoring, K6, Fleet Management, Incidents, or Adaptive Telemetry. It's integrated with Grafana Assistant, combining the previously fragmented user experience into one single tool.
 
 `gcx` is under continuous development. [Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
 
@@ -41,12 +39,11 @@ If you want to migrate from `grafanctl` to `gcx`, search-and-replace `grafanactl
 
 ## Learn more
 
-Refer to the [`gcx` repository](https://github.com/grafana/gcx) in GitHub for more information on:
+Refer to the documents in this section and the [`gcx` repository](https://github.com/grafana/gcx) in GitHub for more information on:
 
-- Installation and configuration
+- Installation
+- Configuration
+- Migration of your configuration files to v1 format
+- Usage statistics
 - How to manage resources, including dashboards-as-code
 - CLI command reference
-
-## Explore
-
-{{< card-grid key="cards" type="simple" >}}
