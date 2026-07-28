@@ -31,15 +31,9 @@ func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, name
 		return &provisioningapis.Job{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
 	}
 	list := func(ctx context.Context) ([]runtime.Object, error) {
-		l, err := c.Jobs(namespace).List(ctx, metav1.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
-		out := make([]runtime.Object, len(l.Items))
-		for i := range l.Items {
-			out[i] = &l.Items[i]
-		}
-		return out, nil
+		return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+			return c.Jobs(namespace).List(ctx, opts)
+		})
 	}
 	return usinformer.NewInformer(subscriber, provisioningapis.JobResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
 }
