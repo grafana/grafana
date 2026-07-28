@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -124,6 +125,7 @@ type APIBuilder struct {
 	repoStore           grafanarest.Storage
 	repoLister          repository.RepositoryByConnectionLister
 	repoValidator       repository.Validator
+	repoValidatorOpts   []repository.ValidatorOption
 	connectionStore     grafanarest.Storage
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
@@ -357,6 +359,17 @@ func RegisterAPIService(
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	maxFileSize := cfg.ProvisioningMaxFileSize
 	incrementalPolicy := repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges)
+	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
+
+	// allowed_git_urls contain an allowlist of Git URLs that are allowed to be used for Git repositories.
+	// It should contain enpoints that otherwise would be blocked by the URL validator.
+	allowListConfig := provisioningSec.Key("allowed_git_urls").Strings(",")
+	allowlist, err := repository.NewAllowlist(allowListConfig)
+	if err != nil {
+		return nil, fmt.Errorf("invalid allowed_git_urls configuration: %w", err)
+	}
+	urlValidator := repository.NewURLValidator(allowlist, net.DefaultResolver.LookupIPAddr)
+	repoValidatorOpts := []repository.ValidatorOption{repository.WithURLValidator(urlValidator)}
 
 	// Register v0alpha1 (preferred version)
 	builder, err := NewAPIBuilder(
@@ -394,6 +407,7 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
+	builder.repoValidatorOpts = repoValidatorOpts
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
@@ -439,6 +453,7 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
+	v1beta1Builder.repoValidatorOpts = repoValidatorOpts
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	v1beta1Builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	v1beta1Builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
@@ -806,7 +821,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	b.admissionHandler = appadmission.NewHandler()
 
 	// Repository mutator and validator
-	b.repoValidator = repository.NewValidator(b.allowImageRendering, b.repoFactory)
+	b.repoValidator = repository.NewValidator(b.allowImageRendering, b.repoFactory, b.repoValidatorOpts...)
 
 	existingReposValidator := repository.NewVerifyAgainstExistingRepositoriesValidator(b.repoLister, b.quotaGetter)
 	connWebhookValidator := repogithub.NewConnectionWebhookValidator(b)
@@ -1076,14 +1091,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				syncWorker,
 			)
 
-			// Create JobController to handle job create notifications
-			jobController := appcontroller.NewJobController()
-			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
-			if _, err := jobSource.AddEventHandler(jobController.EventHandler()); err != nil {
-				return fmt.Errorf("add job controller event handler: %w", err)
-			}
-			go jobSource.Run(postStartHookCtx.Done())
-
 			// Add any extra workers
 			workers = append(workers, b.extraWorkers...)
 
@@ -1112,8 +1119,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// considered abandoned.
 			leaseRenewalInterval := jobClaimExpiry / 3
 
-			// Fallback poll for new jobs; the driver is also woken immediately by
-			// the job-create notification. Configurable via [provisioning]
+			// Backstop poll for unclaimed jobs missed by the informer events (one
+			// list per interval per replica). Configurable via [provisioning]
 			// job_poll_interval; <=0 falls back to the default.
 			jobPollInterval := b.jobPollInterval
 			if jobPollInterval <= 0 {
@@ -1124,10 +1131,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,                    // 3 drivers for now
 				20*time.Minute,       // Max time for each job
-				jobPollInterval,      // Periodically look for new jobs
+				jobPollInterval,      // Periodically look for unclaimed jobs
 				leaseRenewalInterval, // Lease renewal interval
 				b.jobs, repoGetter, jobHistoryWriter,
-				jobController.InsertNotifications(),
 				b.registry,
 				&metrics,
 				workers...,
@@ -1135,6 +1141,15 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if err != nil {
 				return err
 			}
+
+			// Feed the driver's work queue from job create events. The handler must
+			// be registered before the informer runs: the NATS-backed source has no
+			// cache to replay for late handlers.
+			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			if _, err := jobSource.AddEventHandler(driver.EventHandler()); err != nil {
+				return fmt.Errorf("add job event handler: %w", err)
+			}
+			go jobSource.Run(postStartHookCtx.Done())
 
 			go func() {
 				if err := driver.Run(postStartHookCtx.Context); err != nil {

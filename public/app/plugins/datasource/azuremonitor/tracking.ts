@@ -31,6 +31,8 @@ export type AzureMonitorDashboardLoadedProps = {
   azure_monitor_multiple_resource: number;
   /** number of Azure Monitor queries */
   azure_monitor_query: number;
+  /** number of Azure Monitor queries whose datasource has the Metrics Batch API enabled */
+  azure_monitor_batch_api_queries: number;
 
   /** number of non hidden queries of type Azure Logs Analytics if any  */
   azure_log_analytics_queries: number;
@@ -83,4 +85,21 @@ export type AzureMonitorDashboardLoadedProps = {
   azure_grafana_template_variable_query: number;
   azure_locations_query: number;
   azure_unknown_query: number;
+};
+
+/**
+ * Fired when a user toggles the Metrics Batch API setting in the datasource
+ * config editor (only visible behind the azureMonitorBatchAPI feature toggle).
+ *
+ * This allows answering questions about adoption of the Metrics Batch API:
+ * how many datasources enable it, and whether users turn it back off.
+ */
+export const trackAzureMonitorBatchAPIToggled = (props: AzureMonitorBatchAPIToggledProps) => {
+  reportInteraction('grafana_ds_azuremonitor_batch_api_toggled', props);
+};
+
+export type AzureMonitorBatchAPIToggledProps = {
+  grafana_version?: string;
+  /** the new state of the Batch API setting */
+  enabled: boolean;
 };

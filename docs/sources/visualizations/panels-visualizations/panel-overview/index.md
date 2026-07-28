@@ -88,7 +88,7 @@ By hovering over a panel with the mouse you can use some shortcuts that target t
 
 - `e`: Toggle panel edit view
 - `v`: Toggle panel full screen view
-- `pu`: Share link
+- `pu`: Copy panel share link
 - `pe`: Share embed
 - `ps`: Share snapshot
 - `px`: Open panel in **Explore**

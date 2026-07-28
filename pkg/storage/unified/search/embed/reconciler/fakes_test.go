@@ -207,6 +207,10 @@ func newFakeVector() *fakeVector {
 
 func subsKey(ns, model, res, uid string) string { return ns + "|" + model + "|" + res + "|" + uid }
 
+func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
+}
+
 func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	return nil, nil
 }
@@ -284,6 +288,9 @@ func (f *fakeVector) DeleteSubresources(_ context.Context, ns, model, res, uid s
 		}
 	}
 	return nil
+}
+func (f *fakeVector) DeleteNamespace(_ context.Context, _ string) (int64, error) {
+	return 0, nil
 }
 func (f *fakeVector) GetSubresourceContent(_ context.Context, ns, model, res, uid string) (map[string]string, string, error) {
 	f.mu.Lock()

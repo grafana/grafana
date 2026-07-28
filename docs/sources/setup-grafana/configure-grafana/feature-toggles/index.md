@@ -36,7 +36,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
 | `dashboardNewLayouts`                        | Enables new dashboard layouts                                                                                                                                 | Yes                |
-| `dashboardDefaultLayoutSelector`             | Enables default layout selector in dashboard settings                                                                                                         | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
 | `sqlExpressions`                             | Enables SQL Expressions, which can execute SQL queries against data source results.                                                                           | Yes                |
 | `cloudWatchNewLabelParsing`                  | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
@@ -103,6 +102,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `queryEditorNext`                 | Enables next generation query editor experience                                                |
 | `flameGraphWithCallTree`          | Enables the new Flame Graph UI containing the Call Tree view                                   |
 | `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session          |
+| `grafana.dynamicTraceToLogs`      | Check for the existence of logs when linking from the Trace View                               |
 
 ## Development feature toggles
 

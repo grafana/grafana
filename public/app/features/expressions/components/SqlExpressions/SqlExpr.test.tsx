@@ -296,8 +296,6 @@ describe('SqlExpr', () => {
   });
 
   describe('autocomplete metadata', () => {
-    testWithFeatureToggles({ enable: ['sqlExpressionsColumnAutoComplete'] });
-
     afterEach(() => {
       jest.restoreAllMocks();
       mockDataSourceSrv.get.mockResolvedValue({
@@ -306,7 +304,7 @@ describe('SqlExpr', () => {
     });
 
     it('uses interpolated source queries for column autocomplete', async () => {
-      setTestFlags({ sqlExpressionsCodeMirror: true });
+      setTestFlags({ sqlExpressionsCodeMirror: true, sqlExpressionsColumnAutoComplete: true });
 
       const onChange = jest.fn();
       const sourceQuery = {
@@ -382,8 +380,6 @@ describe('SqlExpr', () => {
   });
 
   describe('autocomplete completions', () => {
-    testWithFeatureToggles({ enable: ['sqlExpressionsColumnAutoComplete'] });
-
     afterEach(() => {
       jest.restoreAllMocks();
       mockDataSourceSrv.get.mockResolvedValue({
@@ -392,7 +388,7 @@ describe('SqlExpr', () => {
     });
 
     it('returns no column completions when the field fetch fails', async () => {
-      setTestFlags({ sqlExpressionsCodeMirror: true });
+      setTestFlags({ sqlExpressionsCodeMirror: true, sqlExpressionsColumnAutoComplete: true });
 
       jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockRejectedValue(new Error('boom'));
 
@@ -414,7 +410,7 @@ describe('SqlExpr', () => {
     });
 
     it('maps fetched fields to column completions', async () => {
-      setTestFlags({ sqlExpressionsCodeMirror: true });
+      setTestFlags({ sqlExpressionsCodeMirror: true, sqlExpressionsColumnAutoComplete: true });
 
       jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({
         fields: [{ name: 'cpu', type: 'number', config: {}, values: [] }],
@@ -441,7 +437,7 @@ describe('SqlExpr', () => {
     });
 
     it('maps fetched fields to column completions for table names with spaces', async () => {
-      setTestFlags({ sqlExpressionsCodeMirror: true });
+      setTestFlags({ sqlExpressionsCodeMirror: true, sqlExpressionsColumnAutoComplete: true });
 
       const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({
         fields: [
@@ -474,6 +470,8 @@ describe('SqlExpr', () => {
     });
 
     it('maps fetched fields to legacy editor column completions', async () => {
+      setTestFlags({ sqlExpressionsColumnAutoComplete: true });
+
       const runMetaSQLExprQuery = jest.spyOn(dataSource, 'runMetaSQLExprQuery').mockResolvedValue({
         fields: [{ name: 'metric value', type: 'number', config: {}, values: [] }],
         length: 1,

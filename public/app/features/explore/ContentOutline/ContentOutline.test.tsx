@@ -9,12 +9,18 @@ jest.mock('./ContentOutlineContext', () => ({
   useContentOutlineContext: jest.fn(),
 }));
 
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+
+jest.mock('@openfeature/react-sdk', () => ({
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+}));
+
 const scrollIntoViewMock = jest.fn();
 const scrollerMock = document.createElement('div');
 
 const unregisterMock = jest.fn();
 
-const setup = (mergeSingleChild = false) => {
+const setup = (mergeSingleChild = false, showMetricsExplorer = false) => {
   HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
 
   scrollerMock.scroll = jest.fn();
@@ -69,7 +75,13 @@ const setup = (mergeSingleChild = false) => {
     unregister: unregisterMock,
   });
 
-  return render(<ContentOutline scroller={scrollerMock} panelId="content-outline-container-1" />);
+  return render(
+    <ContentOutline
+      scroller={scrollerMock}
+      panelId="content-outline-container-1"
+      showMetricsExplorer={showMetricsExplorer}
+    />
+  );
 };
 
 describe('<ContentOutline />', () => {
@@ -169,5 +181,41 @@ describe('<ContentOutline />', () => {
     expect(expandContentOutlineButton).toBeInTheDocument();
 
     getBoolMock.mockRestore();
+  });
+
+  describe('metrics explorer', () => {
+    afterEach(() => {
+      useBooleanFlagValueMock.mockImplementation((_: string, defaultValue: boolean) => defaultValue);
+    });
+
+    it('hides the header title and the metrics explorer by default (feature toggle off)', () => {
+      setup();
+      expect(screen.queryByText('Outline')).not.toBeInTheDocument();
+      expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+    });
+
+    it('does not render the metrics explorer or header title when the feature toggle is disabled', () => {
+      useBooleanFlagValueMock.mockReturnValue(false);
+      setup(false, true);
+      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+      expect(screen.queryByText('Outline')).not.toBeInTheDocument();
+    });
+
+    it('renders the metrics explorer and "Datasource explorer" title when the toggle is enabled and Prometheus is selected', () => {
+      useBooleanFlagValueMock.mockReturnValue(true);
+      setup(false, true);
+      expect(screen.getByText('Datasource explorer')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
+      expect(screen.getByText('up')).toBeInTheDocument();
+    });
+
+    it('does not render the metrics explorer or header title when the toggle is enabled but Prometheus is not selected', () => {
+      useBooleanFlagValueMock.mockReturnValue(true);
+      setup(false, false);
+      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+      expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
+      expect(screen.queryByText('Outline')).not.toBeInTheDocument();
+    });
   });
 });

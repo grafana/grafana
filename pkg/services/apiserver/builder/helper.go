@@ -82,14 +82,6 @@ var PathRewriters = []filters.PathRewriter{
 			return matches[1] + "/name" // connector requires a name
 		},
 	},
-	{
-		// Rewrite the deprecated query path
-		// NOTE, this should be removed after the enterprise changes are running in hosted grafana
-		Pattern: regexp.MustCompile(`(/apis/.*.datasource.grafana.app/v0alpha1/namespaces/.*/connections/.*/query$)`),
-		ReplaceFunc: func(matches []string) string {
-			return strings.Replace(matches[0], "connections", "datasources", 1)
-		},
-	},
 }
 
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
@@ -303,30 +295,22 @@ func InstallAPIs(
 	builderMetrics *BuilderMetrics,
 	apiResourceConfig *serverstorage.ResourceConfig,
 ) error {
-	// dual writing is only enabled when the storage type is not legacy.
-	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
-	// support the legacy storage type.
-	var dualWrite grafanarest.DualWriteBuilder
-
-	// nolint:staticcheck
-	if storageOpts.StorageType != options.StorageTypeLegacy {
-		dualWrite = func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
-			key := gr.String()
-			if resourceConfig, ok := storageOpts.UnifiedStorageConfig[key]; ok {
-				builderMetrics.RecordDualWriterTargetMode(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
-			}
-			// unified must never serve an apiVersion the scheme never registered; with no
-			// legacy fallback there is nothing safe to serve, so refuse to install.
-			served := servedVersionsForResource(scheme, gr, storage)
-			if err := dualWriteService.ValidateServedVersions(context.Background(), gr, served); err != nil {
-				if legacy == nil {
-					return nil, fmt.Errorf("cannot serve %q from unified storage: %w", gr.String(), err)
-				}
-				klog.Warningf("serving legacy storage for %q: %v", gr.String(), err)
-				return legacy, nil
-			}
-			return dualWriteService.NewStorage(gr, legacy, storage)
+	dualWrite := func(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error) {
+		key := gr.String()
+		if resourceConfig, ok := storageOpts.UnifiedStorageConfig[key]; ok {
+			builderMetrics.RecordDualWriterTargetMode(gr.Resource, gr.Group, resourceConfig.DualWriterMode)
 		}
+		// unified must never serve an apiVersion the scheme never registered; with no
+		// legacy fallback there is nothing safe to serve, so refuse to install.
+		served := servedVersionsForResource(scheme, gr, storage)
+		if err := dualWriteService.ValidateServedVersions(context.Background(), gr, served); err != nil {
+			if legacy == nil {
+				return nil, fmt.Errorf("cannot serve %q from unified storage: %w", gr.String(), err)
+			}
+			klog.Warningf("serving legacy storage for %q: %v", gr.String(), err)
+			return legacy, nil
+		}
+		return dualWriteService.NewStorage(gr, legacy, storage)
 	}
 
 	// NOTE: we build a map structure by version only for the purposes of InstallAPIGroup

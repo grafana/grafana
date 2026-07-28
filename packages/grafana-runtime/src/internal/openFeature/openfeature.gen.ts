@@ -25,6 +25,8 @@ export const FlagKeys = {
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
+  /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
+  AzureMonitorBatchAPI: "azureMonitorBatchAPI",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
@@ -33,8 +35,6 @@ export const FlagKeys = {
   DashboardSectionVariables: "dashboardSectionVariables",
   /** Enables the Assistant button in the dashboard templates card */
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
-  /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
-  DashboardsFilterablePanels: "dashboards.filterablePanels",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
@@ -57,8 +57,14 @@ export const FlagKeys = {
   GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
+  /** Check for the existence of logs when linking from the Trace View */
+  GrafanaDynamicTraceToLogs: "grafana.dynamicTraceToLogs",
   /** Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button) */
   GrafanaEnableScopesFirstMode: "grafana.enableScopesFirstMode",
+  /** Enables the sidebar in Explore metrics (Metrics Drilldown) */
+  GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
+  /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
+  GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Enables PLG-focused growth redesign of the unified homepage */
   GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
@@ -71,6 +77,8 @@ export const FlagKeys = {
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Whether to use the new SharedPreferences functional component */
   GrafanaNewPreferencesPage: "grafana.newPreferencesPage",
+  /** Enables the new text panel */
+  GrafanaNewTextPanel: "grafana.newTextPanel",
   /** Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more */
   GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
@@ -85,6 +93,8 @@ export const FlagKeys = {
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
   GrafanaStarredFolders: "grafana.starredFolders",
+  /** Enables using dashboard variables in panel threshold values */
+  GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
@@ -135,6 +145,8 @@ export const FlagKeys = {
   SplashScreen: "splashScreen",
   /** Enables CodeMirror editor for SQL Expressions */
   SqlExpressionsCodeMirror: "sqlExpressionsCodeMirror",
+  /** Enables column autocomplete for SQL Expressions */
+  SqlExpressionsColumnAutoComplete: "sqlExpressionsColumnAutoComplete",
   /** Enables option to position series names above bars in the state timeline panel */
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
@@ -214,6 +226,17 @@ export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagE
 };
 
 /**
+ * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
+ *
+ * **Details:**
+ * - flag key: `azureMonitorBatchAPI`
+ * - default value: `false`
+ */
+export const useFlagAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("azureMonitorBatchAPI", false, options).value;
+};
+
+/**
  * Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
  *
  * **Details:**
@@ -255,17 +278,6 @@ export const useFlagDashboardSectionVariables = (options?: ReactFlagEvaluationOp
  */
 export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardTemplatesAssistantButton", false, options).value;
-};
-
-/**
- * Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels
- *
- * **Details:**
- * - flag key: `dashboards.filterablePanels`
- * - default value: `false`
- */
-export const useFlagDashboardsFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboards.filterablePanels", false, options).value;
 };
 
 /**
@@ -390,6 +402,17 @@ export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvalu
 };
 
 /**
+ * Check for the existence of logs when linking from the Trace View
+ *
+ * **Details:**
+ * - flag key: `grafana.dynamicTraceToLogs`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDynamicTraceToLogs = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dynamicTraceToLogs", false, options).value;
+};
+
+/**
  * Enables UI changes for integrations that require a scope to always be selected (for example, hides the scope selector's Remove all button)
  *
  * **Details:**
@@ -398,6 +421,28 @@ export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvalu
  */
 export const useFlagGrafanaEnableScopesFirstMode = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.enableScopesFirstMode", false, options).value;
+};
+
+/**
+ * Enables the sidebar in Explore metrics (Metrics Drilldown)
+ *
+ * **Details:**
+ * - flag key: `grafana.exploreMetricsSidebar`
+ * - default value: `false`
+ */
+export const useFlagGrafanaExploreMetricsSidebar = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.exploreMetricsSidebar", false, options).value;
+};
+
+/**
+ * Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels
+ *
+ * **Details:**
+ * - flag key: `grafana.filterablePanels`
+ * - default value: `false`
+ */
+export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.filterablePanels", false, options).value;
 };
 
 /**
@@ -464,6 +509,17 @@ export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaNewPreferencesPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.newPreferencesPage", true, options).value;
+};
+
+/**
+ * Enables the new text panel
+ *
+ * **Details:**
+ * - flag key: `grafana.newTextPanel`
+ * - default value: `false`
+ */
+export const useFlagGrafanaNewTextPanel = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.newTextPanel", false, options).value;
 };
 
 /**
@@ -544,6 +600,17 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
 };
 
 /**
+ * Enables using dashboard variables in panel threshold values
+ *
+ * **Details:**
+ * - flag key: `grafana.thresholdsInterpolation`
+ * - default value: `false`
+ */
+export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.thresholdsInterpolation", false, options).value;
+};
+
+/**
  * Replaces the bundled home dashboard with the unified homepage React page
  *
  * **Details:**
@@ -581,10 +648,10 @@ export const useFlagGrafanaVectorSearchCmdk = (options?: ReactFlagEvaluationOpti
  *
  * **Details:**
  * - flag key: `grafana.viewPanelPane`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.viewPanelPane", false, options).value;
+  return useFlag("grafana.viewPanelPane", true, options).value;
 };
 
 /**
@@ -816,6 +883,17 @@ export const useFlagSplashScreen = (options?: ReactFlagEvaluationOptions): boole
  */
 export const useFlagSqlExpressionsCodeMirror = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("sqlExpressionsCodeMirror", false, options).value;
+};
+
+/**
+ * Enables column autocomplete for SQL Expressions
+ *
+ * **Details:**
+ * - flag key: `sqlExpressionsColumnAutoComplete`
+ * - default value: `false`
+ */
+export const useFlagSqlExpressionsColumnAutoComplete = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("sqlExpressionsColumnAutoComplete", false, options).value;
 };
 
 /**

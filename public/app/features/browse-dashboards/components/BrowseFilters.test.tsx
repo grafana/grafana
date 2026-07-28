@@ -1,32 +1,18 @@
 import { render, screen } from 'test/test-utils';
 
+import { setBackendSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
+import { getSearchTeamsHandler } from '@grafana/test-utils/handlers';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { SearchLayout, type SearchState } from 'app/features/search/types';
 
 import { BrowseFilters } from './BrowseFilters';
 
 const mockUseSearchStateManager = jest.fn();
-const mockSearchTeamsQuery = jest.fn();
-const mockGetSortOptions = jest.fn().mockResolvedValue([]);
 
 jest.mock('app/features/search/state/SearchStateManager', () => ({
   useSearchStateManager: () => mockUseSearchStateManager(),
-}));
-
-jest.mock('app/features/search/service/searcher', () => ({
-  getGrafanaSearcher: () => ({
-    getSortOptions: mockGetSortOptions,
-    sortPlaceholder: 'Sort',
-  }),
-}));
-
-jest.mock('app/api/clients/legacy', () => ({
-  legacyAPI: {
-    reducerPath: 'legacyAPI',
-    reducer: (state = {}) => state,
-    middleware: () => (next: (action: unknown) => unknown) => (action: unknown) => next(action),
-  },
-  useSearchTeamsQuery: (...args: unknown[]) => mockSearchTeamsQuery(...args),
 }));
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -35,6 +21,14 @@ jest.mock('app/core/services/context_srv', () => ({
     user: { uid: 1, orgId: 1 },
   },
 }));
+
+setBackendSrv(backendSrv);
+setupMockServer([
+  getSearchTeamsHandler([
+    { uid: 'team-a', name: 'Team A', avatarUrl: '' },
+    { uid: 'test-team', name: 'Test Team', avatarUrl: '' },
+  ]),
+]);
 
 mockComboboxRect();
 
@@ -63,18 +57,6 @@ const createStateManager = () => ({
 });
 
 describe('BrowseFilters', () => {
-  beforeEach(() => {
-    mockSearchTeamsQuery.mockReturnValue({
-      data: {
-        teams: [
-          { uid: 'team-a', name: 'Team A', avatarUrl: '' },
-          { uid: 'test-team', name: 'Test Team', avatarUrl: '' },
-        ],
-      },
-      isLoading: false,
-    });
-  });
-
   afterEach(() => {
     jest.clearAllMocks();
   });
