@@ -7,10 +7,10 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, TextLink, Icon, FilterPill, Tooltip } from '@grafana/ui';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { AddNewEditPane } from 'app/features/dashboard-scene/edit-pane/add-new/AddNewEditPane';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
+import { AddNewEditPane } from 'app/features/dashboard-scene/sidebar/add-new/AddNewEditPane';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
@@ -64,7 +64,7 @@ interface NewLayoutEmptyProps {
 }
 
 const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
-  const { uid, isEditing, editPane, body } = dashboard.useState();
+  const { uid, isEditing, sidebar, body } = dashboard.useState();
   const isEditingNewDashboard = isEditing && !uid;
   const isAutoGrid = body instanceof AutoGridLayoutManager;
 
@@ -76,11 +76,11 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
     if (
       isEditingNewDashboard &&
       dashboard.getEditSessionSource() !== 'assistant' &&
-      editPane.state.openPane?.getId() !== 'add'
+      sidebar.state.openPane?.getId() !== 'add'
     ) {
-      editPane.openPane(new AddNewEditPane({}));
+      sidebar.openPane(new AddNewEditPane({}));
     }
-  }, [isEditingNewDashboard, dashboard, editPane]);
+  }, [isEditingNewDashboard, dashboard, sidebar]);
 
   const onSelectAutoGrid = () => {
     dashboard.switchLayout(AutoGridLayoutManager.createEmpty());

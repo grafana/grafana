@@ -5511,135 +5511,6 @@
       "switch-layout-tab": "切换布局",
       "tab-title": "更改选项卡标题"
     },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "更改注释数据源",
-        "choose-panels": "选择面板",
-        "color": "颜色",
-        "color-description": "用于注释事件标记的颜色",
-        "data-source": "数据源",
-        "display": "显示此范围内的注释控件",
-        "display-options": {
-          "above-dashboard": "数据面板上方",
-          "controls-menu": "控件菜单",
-          "controls-menu-description": "控件菜单打开时可以访问",
-          "hidden": "隐藏",
-          "hidden-description": "隐藏用于开启或关闭此注释的切换按钮"
-        },
-        "enabled": "已启用",
-        "enabled-description": "启用后，每次数据面板刷新时都会发出注释查询",
-        "name": "名称",
-        "open-query-editor": "打开查询编辑器",
-        "open-query-editor-tooltip": "打开查询编辑器以配置注释查询",
-        "panel-filter": {
-          "all-panels": "所有面板",
-          "all-panels-description": "将注释数据发送到支持注释的所有面板",
-          "all-panels-except": "所有面板，以下除外",
-          "all-panels-except-description": "不要将注释数据发送到以下面板",
-          "selected-panels": "所选面板",
-          "selected-panels-description": "将注释发送到明确列出的面板"
-        },
-        "query": "查询",
-        "query-editor-close": "关闭",
-        "query-editor-modal-title": "注释查询",
-        "show-in": "显示于"
-      },
-      "annotations": {
-        "add-annotation": "添加注释",
-        "reorder": "拖动以重新排序",
-        "select-annotation": "选择"
-      },
-      "elements": {
-        "annotation": "注释",
-        "annotation-set": "注释和警报",
-        "dashboard": "仪表板",
-        "element": "元素",
-        "filter": "",
-        "filters-set": "",
-        "link-set": "关联",
-        "local-variable": "局部变量",
-        "multiple-elements": "多个元素",
-        "multiple-elements-delete-text": "您确定要删除这些元素吗？",
-        "multiple-panels": "多个面板",
-        "multiple-panels-delete-text": "您确定要删除这些面板吗？所有查询都将被移除。",
-        "objects": "对象",
-        "panel": "面板",
-        "panels": "面板",
-        "row": "行",
-        "rows": "行",
-        "section-filters-set": "",
-        "tab": "标签页",
-        "tabs": "标签页",
-        "variable": "{{type}} 变量",
-        "variable-set": "变量"
-      },
-      "links": {
-        "add-link": "添加链接",
-        "reorder": "拖动以重新排序",
-        "select-link": "选择",
-        "untitled": "无标题链接"
-      },
-      "row": {
-        "header": {
-          "hide": "隐藏",
-          "title": "行标题"
-        }
-      },
-      "section-filters": {
-        "title": ""
-      },
-      "section-variables": {
-        "title": "变量"
-      },
-      "variable": {
-        "change-type": "",
-        "change-type-aria-label": "更改变量类型",
-        "custom-options": {
-          "apply": "应用",
-          "change-value": "更改变量值",
-          "discard": "丢弃",
-          "modal-title": "自定义选项"
-        },
-        "datasource-options": {
-          "name-filter": "名称筛选器",
-          "name-filter-description": "正则表达式筛选器，用于选择要包含的数据源实例。保留所有为空。",
-          "name-filter-placeholder": "示例：/^prod/",
-          "type": "类型",
-          "type-placeholder": "选择数据源类型"
-        },
-        "description": "描述",
-        "description-placeholder": "描述性文本",
-        "label": "标签",
-        "label-description": "可选显示名称",
-        "name": "名称",
-        "open-editor": "打开变量编辑器",
-        "open-editor-tooltip": "如需更多变量选项，请打开变量编辑器",
-        "query-options": {
-          "close": "关闭",
-          "modal-title": "查询变量",
-          "preview": "预览"
-        },
-        "selection-options": {
-          "allow-custom-values": "允许自定义值",
-          "allow-custom-values-description": "允许用户输入值",
-          "category": "选择内容选项",
-          "custom-all-value": "自定义所有值",
-          "custom-all-value-description": "用于表示“全部”的通配符正则表达式或其他值",
-          "include-all": "包含“全部”值",
-          "include-all-description": "启用代表所有值的单个选项",
-          "multi-value": "多值"
-        },
-        "type-category": "{{type}} 选项"
-      },
-      "variables": {
-        "add-variable": "添加变量",
-        "change-type": "",
-        "reorder": "拖动以重新排序",
-        "select-type": "选择变量类型",
-        "select-type-card-tooltip": "点击以选择类型",
-        "select-variable": "选择"
-      }
-    },
     "empty": {
       "add-library-panel-body": "添加与其他仪表板共享的可视化。",
       "add-library-panel-button": "添加库面板",
@@ -6158,6 +6029,43 @@
         "title": "添加",
         "tooltip": "添加新元素"
       },
+      "annotation": {
+        "change-data-source": "更改注释数据源",
+        "choose-panels": "选择面板",
+        "color": "颜色",
+        "color-description": "用于注释事件标记的颜色",
+        "data-source": "数据源",
+        "display": "显示此范围内的注释控件",
+        "display-options": {
+          "above-dashboard": "数据面板上方",
+          "controls-menu": "控件菜单",
+          "controls-menu-description": "控件菜单打开时可以访问",
+          "hidden": "隐藏",
+          "hidden-description": "隐藏用于开启或关闭此注释的切换按钮"
+        },
+        "enabled": "已启用",
+        "enabled-description": "启用后，每次数据面板刷新时都会发出注释查询",
+        "name": "名称",
+        "open-query-editor": "打开查询编辑器",
+        "open-query-editor-tooltip": "打开查询编辑器以配置注释查询",
+        "panel-filter": {
+          "all-panels": "所有面板",
+          "all-panels-description": "将注释数据发送到支持注释的所有面板",
+          "all-panels-except": "所有面板，以下除外",
+          "all-panels-except-description": "不要将注释数据发送到以下面板",
+          "selected-panels": "所选面板",
+          "selected-panels-description": "将注释发送到明确列出的面板"
+        },
+        "query": "查询",
+        "query-editor-close": "关闭",
+        "query-editor-modal-title": "注释查询",
+        "show-in": "显示于"
+      },
+      "annotations": {
+        "add-annotation": "添加注释",
+        "reorder": "拖动以重新排序",
+        "select-annotation": "选择"
+      },
       "dashboard-options": {
         "title": "选项",
         "tooltip": "数据面板选项"
@@ -6166,20 +6074,110 @@
         "title": "代码",
         "tooltip": "以代码形式编辑"
       },
+      "elements": {
+        "annotation": "注释",
+        "annotation-set": "注释和警报",
+        "dashboard": "仪表板",
+        "element": "元素",
+        "filter": "",
+        "filters-set": "",
+        "link-set": "关联",
+        "local-variable": "局部变量",
+        "multiple-elements": "多个元素",
+        "multiple-elements-delete-text": "您确定要删除这些元素吗？",
+        "multiple-panels": "多个面板",
+        "multiple-panels-delete-text": "您确定要删除这些面板吗？所有查询都将被移除。",
+        "objects": "对象",
+        "panel": "面板",
+        "panels": "面板",
+        "row": "行",
+        "rows": "行",
+        "section-filters-set": "",
+        "tab": "标签页",
+        "tabs": "标签页",
+        "variable": "{{type}} 变量",
+        "variable-set": "变量"
+      },
       "export": {
         "title": "导出"
       },
       "filters": "",
+      "links": {
+        "add-link": "添加链接",
+        "reorder": "拖动以重新排序",
+        "select-link": "选择",
+        "untitled": "无标题链接"
+      },
       "open": "",
       "outline": {
         "title": "大纲",
         "tooltip": "内容大纲"
       },
       "redo": "重做",
+      "row": {
+        "header": {
+          "hide": "隐藏",
+          "title": "行标题"
+        }
+      },
+      "section-filters": {
+        "title": ""
+      },
+      "section-variables": {
+        "title": "变量"
+      },
       "snapshot": {
         "tooltip": "打开原始数据面板"
       },
       "undo": "撤销",
+      "variable": {
+        "change-type": "",
+        "change-type-aria-label": "更改变量类型",
+        "custom-options": {
+          "apply": "应用",
+          "change-value": "更改变量值",
+          "discard": "丢弃",
+          "modal-title": "自定义选项"
+        },
+        "datasource-options": {
+          "name-filter": "名称筛选器",
+          "name-filter-description": "正则表达式筛选器，用于选择要包含的数据源实例。保留所有为空。",
+          "name-filter-placeholder": "示例：/^prod/",
+          "type": "类型",
+          "type-placeholder": "选择数据源类型"
+        },
+        "description": "描述",
+        "description-placeholder": "描述性文本",
+        "label": "标签",
+        "label-description": "可选显示名称",
+        "name": "名称",
+        "open-editor": "打开变量编辑器",
+        "open-editor-tooltip": "如需更多变量选项，请打开变量编辑器",
+        "query-options": {
+          "close": "关闭",
+          "modal-title": "查询变量",
+          "preview": "预览"
+        },
+        "selection-options": {
+          "allow-custom-values": "允许自定义值",
+          "allow-custom-values-description": "允许用户输入值",
+          "category": "选择内容选项",
+          "custom-all-value": "自定义所有值",
+          "custom-all-value-description": "用于表示“全部”的通配符正则表达式或其他值",
+          "include-all": "包含“全部”值",
+          "include-all-description": "启用代表所有值的单个选项",
+          "multi-value": "多值"
+        },
+        "type-category": "{{type}} 选项"
+      },
+      "variables": {
+        "add-variable": "添加变量",
+        "change-type": "",
+        "reorder": "拖动以重新排序",
+        "select-type": "选择变量类型",
+        "select-type-card-tooltip": "点击以选择类型",
+        "select-variable": "选择"
+      },
       "view-panel": {
         "disabled": "",
         "fanout-by-series": "",
@@ -6769,9 +6767,6 @@
       "title-controls-menu-count_other": "控件菜单 ({{count}})",
       "title-hidden-count_other": "隐藏 ({{count}})"
     },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "提供有关新数据面板编辑体验的反馈"
-    },
     "dashboard-link-form": {
       "back-to-list": "回到列表",
       "label-icon": "图标",
@@ -6843,6 +6838,9 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "数据面板控件"
+    },
+    "dashboard-sidebar-renderer": {
+      "title-feedback-dashboard-editing-experience": "提供有关新数据面板编辑体验的反馈"
     },
     "data-source-variable-form": {
       "data-source-options": "数据源选项",
