@@ -121,9 +121,18 @@ function captureErrors(data: PanelData): PanelDataError[] | undefined {
  * nor a *rendering* fault is visible here. This artifact answers exactly one question: did the plugin's
  * frontend return what its backend produced?
  *
- * One caveat for the diff: core normalises every frame on the way in — `preProcessPanelData` runs each
- * through `toDataFrame` and `guessFieldTypes` — so a field the backend typed one way and this artifact
- * types another is core normalising, not the plugin rewriting anything.
+ * Two caveats for the diff, both cases of core moving data around rather than the plugin losing it:
+ *
+ * 1. Core normalises every frame on the way in — `preProcessPanelData` runs each through `toDataFrame`
+ *    and `guessFieldTypes` — so a field the backend typed one way and this artifact types another is
+ *    core normalising, not the plugin rewriting anything.
+ * 2. Annotation frames are **not** here. `processResponsePacket` routes every frame whose
+ *    `meta.dataTopic` is `Annotations` out of `series` and into `PanelData.annotations`, so a datasource
+ *    that returns them from a panel query (testdata's annotations scenario, the dashboard datasource)
+ *    has those frames in `querydata.json` and absent here — which reads as exactly the frontend loss
+ *    this artifact exists to prove. They are left out rather than captured because
+ *    `SceneQueryRunner._combineDataLayers` merges the dashboard's own annotation layers into that field,
+ *    so it is not the datasource's output alone and the part that is is not separately reachable.
  *
  * Takes the query runner the caller already resolved rather than walking to it again, so the frames here
  * are guaranteed to come from the same runner as the queries the caller sends alongside them.
