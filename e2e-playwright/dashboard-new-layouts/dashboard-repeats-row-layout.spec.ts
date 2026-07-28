@@ -540,11 +540,14 @@ test.describe(
 
       await page.reload();
 
-      const singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
+      // after reload the collapsed rows and their repeats re-render asynchronously, so
+      // re-measure both boxes on each poll until the layout settles into the saved order
       for (let i = 1; i <= repeatOptions.length; i++) {
-        // verify move by row position
-        const repeatedRow = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}${i}`);
-        expect(singleRowBox?.y).toBeLessThan(repeatedRow?.y || 0);
+        await expect(async () => {
+          const singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
+          const repeatedRow = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}${i}`);
+          expect(singleRowBox.y).toBeLessThan(repeatedRow.y);
+        }).toPass();
       }
     });
   }
