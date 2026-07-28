@@ -154,7 +154,7 @@ func keywordFieldsForMapping(provider resource.SearchFieldsProvider, group, kind
 	}
 	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
 		add(resource.SEARCH_FIELD_PREFIX+def.Name, def, resource.SEARCH_FIELD_PREFIX)
-		// Requests may name a per-kind field without the internal fields. prefix.
+		// Requests may name a per-kind field without the internal fields prefix.
 		// A standard field of the same name wins, matching resolveFieldName.
 		if _, taken := fields[def.Name]; !taken {
 			add(def.Name, def, resource.SEARCH_FIELD_PREFIX)

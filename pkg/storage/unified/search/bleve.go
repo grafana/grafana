@@ -2804,7 +2804,7 @@ func (b *bleveIndex) getSortFields(req *resourcepb.ResourceSearchRequest) []stri
 		input := resolveFieldName(b.fields, sort.Field)
 		// Sort on the keyword form, or the analyzed field would order by its first
 		// token instead of the whole value. Those copies are stored lowercased, so
-		// sorting is case-insensitive, as it has always been for title.
+		// sorting is case-insensitive.
 		if kf, ok := b.keywordFieldFor(input); ok {
 			input = kf.name
 		}
