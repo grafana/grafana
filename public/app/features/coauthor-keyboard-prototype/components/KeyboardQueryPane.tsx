@@ -26,6 +26,7 @@ import { analyzeSection, applyChangeWindow, applySwapFunction, applySwapMetric, 
 
 import { HighlightedQueryEditor } from './HighlightedQueryEditor';
 import { KeyboardPopover, type PopoverContent, type Pos } from './KeyboardPopover';
+import { NUDGE_HEIGHT, NUDGE_WIDTH, SelectionNudge } from './SelectionNudge';
 
 type Flow = 1 | 2 | 3 | 4;
 type SubKind = 'swap-function' | 'swap-metric' | 'change-window';
@@ -55,6 +56,10 @@ export function KeyboardQueryPane({ onFlowChange, onOpenAssistant }: Props) {
   const [preview, setPreview] = useState<PreviewSegment[] | null>(null);
   // Persistent highlight over the section a popover refers to (Flow 1).
   const [highlight, setHighlight] = useState<{ start: number; end: number } | null>(null);
+  // Flow 1: the "Explain or edit" pill offered while text is highlighted.
+  const [nudge, setNudge] = useState<Pos | null>(null);
+  // True after `/` is swallowed over a selection, until the completing space.
+  const [slashPending, setSlashPending] = useState(false);
 
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -71,6 +76,8 @@ export function KeyboardQueryPane({ onFlowChange, onOpenAssistant }: Props) {
     setSubKind(null);
     setPreview(null);
     setHighlight(null);
+    setNudge(null);
+    setSlashPending(false);
   };
 
   const later = (ms: number, fn: () => void) => {
@@ -94,6 +101,28 @@ export function KeyboardQueryPane({ onFlowChange, onOpenAssistant }: Props) {
     const left = Math.max(0, Math.min(taRect.left - wrapRect.left + c.left, wrap.clientWidth - 430));
     const top = taRect.top - wrapRect.top + c.top + c.height + 6;
     return { left, top };
+  };
+
+  // The pill sits *above* the highlight, centred on it, so it never covers the
+  // text the user just selected.
+  const nudgeAnchorAt = (start: number, end: number): Pos => {
+    const ta = editorRef.current;
+    const wrap = wrapRef.current;
+    if (!ta || !wrap) {
+      return { left: 0, top: 0 };
+    }
+    const a = getCaretCoordinates(ta, start);
+    const b = getCaretCoordinates(ta, end);
+    const taRect = ta.getBoundingClientRect();
+    const wrapRect = wrap.getBoundingClientRect();
+    // A multi-line selection has no meaningful centre — hug its start instead.
+    const sameLine = Math.abs(a.top - b.top) < 2;
+    const center = sameLine ? (a.left + b.left) / 2 : a.left;
+    const left = Math.max(
+      0,
+      Math.min(taRect.left - wrapRect.left + center - NUDGE_WIDTH / 2, wrap.clientWidth - NUDGE_WIDTH)
+    );
+    return { left, top: taRect.top - wrapRect.top + a.top - NUDGE_HEIGHT - 6 };
   };
 
   // Temporary "Pasted query" nudge: auto-dismisses after 7s unless the user
@@ -140,23 +169,37 @@ export function KeyboardQueryPane({ onFlowChange, onOpenAssistant }: Props) {
   };
 
   // -- Editor triggers ----------------------------------------------------
-  const handleSelect = () => {
+  // Highlighting only offers the pill; the full popover waits for a click or
+  // the `/` + space command. Un-highlighting takes the pill away again.
+  const syncSelection = () => {
     const ta = editorRef.current;
     if (!ta) {
       return;
     }
     const s = ta.selectionStart;
     const e = ta.selectionEnd;
-    if (s === e) {
-      return;
-    }
-    const section = analyzeSection(workingRaw, s, e);
+    const section = s === e ? null : analyzeSection(workingRaw, s, e);
     if (!section) {
+      sectionRef.current = null;
+      setNudge(null);
+      setSlashPending(false);
       return;
     }
     sectionRef.current = section;
+    setNudge(nudgeAnchorAt(s, e));
+  };
+
+  // Opens the full Flow 1 experience over the section the pill was offered for,
+  // so the highlight survives losing the textarea's native selection.
+  const openHighlightFlow = () => {
+    const section = sectionRef.current;
+    if (!section) {
+      return;
+    }
     seq.current++;
-    setPos(anchorAt(e));
+    setNudge(null);
+    setSlashPending(false);
+    setPos(anchorAt(section.end));
     setInputValue('');
     setSubKind(null);
     setPreview(null);
@@ -167,6 +210,27 @@ export function KeyboardQueryPane({ onFlowChange, onOpenAssistant }: Props) {
   };
 
   const handleKeyDown = (ev: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const hasSelection = ev.currentTarget.selectionStart !== ev.currentTarget.selectionEnd;
+
+    // Over a highlight, typing `/` would replace the selection — swallow it and
+    // wait for the space that completes the command.
+    if (ev.key === '/' && hasSelection && sectionRef.current) {
+      ev.preventDefault();
+      setSlashPending(true);
+      return;
+    }
+    if (slashPending) {
+      if (ev.key === ' ') {
+        ev.preventDefault();
+        openHighlightFlow();
+        return;
+      }
+      // Anything other than a bare modifier abandons the half-typed command.
+      if (!['Shift', 'Meta', 'Control', 'Alt'].includes(ev.key)) {
+        setSlashPending(false);
+      }
+    }
+
     if (ev.key === ' ') {
       const ta = ev.currentTarget;
       const p = ta.selectionStart;
@@ -300,6 +364,9 @@ export function KeyboardQueryPane({ onFlowChange, onOpenAssistant }: Props) {
   // Editing the query while the pasted nudge is up dismisses it ("keep typing").
   const handleEditorChange = (next: string) => {
     setWorkingRaw(next);
+    // Typing invalidates whatever was highlighted.
+    setNudge(null);
+    setSlashPending(false);
     if (content?.kind === 'f4-pasted' && next !== pastedValueRef.current) {
       closePopover();
     }
@@ -472,6 +539,10 @@ export function KeyboardQueryPane({ onFlowChange, onOpenAssistant }: Props) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!content) {
+        if (nudge && e.key === 'Escape') {
+          setNudge(null);
+          setSlashPending(false);
+        }
         return;
       }
       if (e.key === 'Escape') {
@@ -487,7 +558,38 @@ export function KeyboardQueryPane({ onFlowChange, onOpenAssistant }: Props) {
     document.addEventListener('keydown', onKey, true);
     return () => document.removeEventListener('keydown', onKey, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content]);
+  }, [content, nudge]);
+
+  // A textarea's `select` event doesn't fire when the selection *collapses*, so
+  // the un-highlight case has to come from the document-level event.
+  useEffect(() => {
+    const onSelectionChange = () => {
+      if (content || document.activeElement !== editorRef.current) {
+        return;
+      }
+      syncSelection();
+    };
+    document.addEventListener('selectionchange', onSelectionChange);
+    return () => document.removeEventListener('selectionchange', onSelectionChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [content, workingRaw]);
+
+  // Clicking anywhere that isn't the pill or the editor drops the pill.
+  useEffect(() => {
+    if (!nudge) {
+      return;
+    }
+    const onDown = (e: MouseEvent) => {
+      const t = e.target;
+      if (t instanceof Element && (t.closest('[data-coauthor-nudge]') || t.closest('textarea'))) {
+        return;
+      }
+      setNudge(null);
+      setSlashPending(false);
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [nudge]);
 
   // Click outside the popover closes it (like Esc).
   useEffect(() => {
@@ -566,12 +668,16 @@ export function KeyboardQueryPane({ onFlowChange, onOpenAssistant }: Props) {
                 editorRef={editorRef}
                 onChange={handleEditorChange}
                 onKeyDown={handleKeyDown}
-                onSelect={handleSelect}
+                onSelect={syncSelection}
                 onPaste={handlePaste}
                 preview={preview}
                 highlightRange={highlight}
               />
             </div>
+
+            {nudge && !content && (
+              <SelectionNudge pos={nudge} slashPending={slashPending} onClick={openHighlightFlow} />
+            )}
 
             {content && (
               <KeyboardPopover

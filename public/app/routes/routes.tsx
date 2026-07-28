@@ -116,6 +116,37 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      // Design/interaction prototype: updated highlight flow (mock data only)
+      path: '/coauthor-highlight',
+      chromeless: true,
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "CoauthorHighlightPage" */ 'app/features/coauthor-keyboard-prototype/CoauthorHighlightPage'
+          )
+      ),
+    },
+    {
+      // Design/interaction prototype: v1 MVP of the highlight flow (mock data only)
+      path: '/coauthor-mvp',
+      chromeless: true,
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "CoauthorMvpPage" */ 'app/features/coauthor-keyboard-prototype/CoauthorMvpPage')
+      ),
+    },
+    {
+      // Component reference for the coauthor prototypes (mock data only)
+      path: '/coauthor-components',
+      chromeless: true,
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "CoauthorGalleryPage" */ 'app/features/coauthor-keyboard-prototype/CoauthorGalleryPage'
+          )
+      ),
+    },
+    {
       // We currently have no core usage of the embedded dashboard so is to have a page for e2e to test
       path: '/dashboards/embedding-test',
       component: SafeDynamicImport(

@@ -5,7 +5,7 @@
 // Metric names in the demo queries. Only these get colored in the editor, so
 // labels like `path` / `service_name` stay the default text color (matching
 // the Figma screens, which highlight only metric identifiers).
-const METRIC_RE = /server_requests?_duration_seconds(?:_sum|_count|_bucket)?|server_requests_total|\bup\b/g;
+const METRIC_RE = /server_requests?_duration_seconds(?:_sum|_count|_bucket|_max)?|server_requests_total|\bup\b/g;
 
 export interface HighlightSegment {
   text: string;
@@ -75,7 +75,11 @@ export function analyzeSection(raw: string, selStart: number, selEnd: number): S
     const inner = raw.slice(m.index, close + 1);
 
     let metric: Section['metric'] = null;
-    const met = inner.match(/server_requests?_duration_seconds(?:_sum|_count|_bucket)?|server_requests_total/);
+    // The last alternative is the scripted typo (missing i in "duration") — it
+    // has to be recognized as the metric so the "fix error" flow can target it.
+    const met = inner.match(
+      /server_requests?_duration_seconds(?:_sum|_count|_bucket|_max)?|server_requests_total|server_requests_duraton_seconds_sum/
+    );
     if (met && met.index !== undefined) {
       metric = { text: met[0], start: m.index + met.index, end: m.index + met.index + met[0].length };
     }

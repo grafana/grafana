@@ -28,6 +28,8 @@ export interface FlowLiteNode {
 export interface PreviewSegment {
   text: string;
   proposed: boolean;
+  /** Proposals default to muted; 'blue' marks a pending, acceptable change. */
+  tone?: 'muted' | 'blue';
 }
 
 // ---- Flow 1 (highlight) --------------------------------------------------

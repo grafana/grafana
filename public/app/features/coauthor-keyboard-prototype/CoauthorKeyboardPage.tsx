@@ -7,19 +7,31 @@ import { Button, Icon, IconButton, useStyles2 } from '@grafana/ui';
 import { MockChart } from '../coauthor-prototype/components/MockChart';
 import { OptionsPane } from '../coauthor-prototype/components/OptionsPane';
 
+import { HighlightMvpPane } from './components/HighlightMvpPane';
+import { HighlightV2Pane } from './components/HighlightV2Pane';
 import { KeyboardQueryPane } from './components/KeyboardQueryPane';
 import { AI_PURPLE } from './logic/flows';
+
+interface Props {
+  /**
+   * 'keyboard' is the original four-flow prototype, 'highlight-v2' the updated
+   * highlight flow, 'mvp' its cut-down v1. All three share this panel-editor
+   * chrome.
+   */
+  variant?: 'keyboard' | 'highlight-v2' | 'mvp';
+}
 
 /**
  * Second coauthor prototype: a keyboard-driven popover in the panel editor.
  * Chromeless, mock data only. Reachable at /coauthor-keyboard.
  */
-export function CoauthorKeyboardPage() {
+export function CoauthorKeyboardPage({ variant = 'keyboard' }: Props) {
   const styles = useStyles2(getStyles);
   // Only the "highlight" flow starts from an existing, already-run panel query;
   // from-scratch and mid-query haven't run yet, so there's no data to show.
   const [flow, setFlow] = useState(1);
   const [assistant, setAssistant] = useState<{ title: string; body: string } | null>(null);
+  const [refIds, setRefIds] = useState(['A']);
   const breadcrumb = [
     'Dashboards',
     'R&D',
@@ -87,15 +99,23 @@ export function CoauthorKeyboardPage() {
                 <div className={styles.railSectionHeader}>
                   Queries &amp; Expressions <Icon name="plus-circle" size="sm" />
                 </div>
-                <div className={styles.railItem}>
-                  <Icon name="calculator-alt" size="sm" /> A
-                </div>
+                {refIds.map((id) => (
+                  <div key={id} className={styles.railItem}>
+                    <Icon name="calculator-alt" size="sm" /> {id}
+                  </div>
+                ))}
                 <div className={styles.railSectionHeader}>
                   Transformations <Icon name="plus-circle" size="sm" />
                 </div>
               </div>
 
-              <KeyboardQueryPane onFlowChange={handleFlow} onOpenAssistant={setAssistant} />
+              {variant === 'mvp' ? (
+                <HighlightMvpPane onOpenAssistant={setAssistant} />
+              ) : variant === 'highlight-v2' ? (
+                <HighlightV2Pane onQueriesChange={setRefIds} />
+              ) : (
+                <KeyboardQueryPane onFlowChange={handleFlow} onOpenAssistant={setAssistant} />
+              )}
             </div>
 
             <div className={styles.footer}>
@@ -117,7 +137,7 @@ export function CoauthorKeyboardPage() {
 
       {/* Mock Grafana Assistant side panel */}
       {assistant && (
-        <div className={styles.assistant}>
+        <div className={styles.assistant} data-coauthor-assistant>
           <div className={styles.assistantHeader}>
             <span className={styles.assistantTitle}>
               <Icon name="ai-sparkle" size="lg" style={{ color: AI_PURPLE }} /> Grafana Assistant
