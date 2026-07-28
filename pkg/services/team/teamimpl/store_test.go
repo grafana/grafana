@@ -32,6 +32,35 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+func TestIntegrationXormStoreUsesTableResolver(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	resolvedTables := []string{}
+	dbHelper := &legacysql.LegacyDatabaseHelper{
+		DB: sqlStore,
+		Table: func(name string) string {
+			resolvedTables = append(resolvedTables, name)
+			return name
+		},
+	}
+	store := &xormStore{
+		sql: func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+			return dbHelper, nil
+		},
+		cfg: cfg,
+	}
+
+	_, err := store.Create(ctx, &team.CreateTeamCommand{OrgID: 1, Name: "table-resolver-test"})
+	require.NoError(t, err)
+	require.Equal(t, []string{"team", "team"}, resolvedTables)
+
+	dbHelper.Table = func(name string) string { return "test_schema." + name }
+	memberCountSQL := getTeamMemberCount(dbHelper, []string{"hidden"})
+	require.Contains(t, memberCountSQL, sqlStore.Quote("test_schema.user"))
+}
+
 func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

@@ -56,9 +56,10 @@ func getFilteredUsers(signedInUser identity.Requester, hiddenUsers map[string]st
 
 func getTeamMemberCount(dbHelper *legacysql.LegacyDatabaseHelper, filteredUsers []string) string {
 	if len(filteredUsers) > 0 {
+		userTable := dbHelper.DB.Quote(dbHelper.Table("user"))
 		return `(SELECT COUNT(*) FROM team_member
-			INNER JOIN ` + dbHelper.DB.GetDialect().Quote("user") + ` ON team_member.user_id = ` + dbHelper.DB.GetDialect().Quote("user") + `.id
-			WHERE team_member.team_id = team.id AND ` + dbHelper.DB.GetDialect().Quote("user") + `.login NOT IN (?` +
+			INNER JOIN ` + userTable + ` ON team_member.user_id = ` + userTable + `.id
+			WHERE team_member.team_id = team.id AND ` + userTable + `.login NOT IN (?` +
 			strings.Repeat(",?", len(filteredUsers)-1) + ")" +
 			`) AS member_count `
 	}
@@ -97,13 +98,13 @@ func (ss *xormStore) Create(ctx context.Context, cmd *team.CreateTeamCommand) (t
 	}
 
 	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if isNameTaken, err := isTeamNameTaken(cmd.OrgID, cmd.Name, 0, sess); err != nil {
+		if isNameTaken, err := isTeamNameTaken(dbHelper.Table("team"), cmd.OrgID, cmd.Name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
 			return team.ErrTeamNameTaken
 		}
 
-		_, err := sess.Insert(&t)
+		_, err := sess.Table(dbHelper.Table("team")).Insert(&t)
 		return err
 	})
 	return t, err
@@ -116,7 +117,7 @@ func (ss *xormStore) Update(ctx context.Context, cmd *team.UpdateTeamCommand) er
 	}
 
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if isNameTaken, err := isTeamNameTaken(cmd.OrgID, cmd.Name, cmd.ID, sess); err != nil {
+		if isNameTaken, err := isTeamNameTaken(dbHelper.Table("team"), cmd.OrgID, cmd.Name, cmd.ID, sess); err != nil {
 			return err
 		} else if isNameTaken {
 			return team.ErrTeamNameTaken
@@ -131,7 +132,7 @@ func (ss *xormStore) Update(ctx context.Context, cmd *team.UpdateTeamCommand) er
 
 		sess.MustCols("email")
 
-		affectedRows, err := sess.ID(cmd.ID).Update(&t)
+		affectedRows, err := sess.Table(dbHelper.Table("team")).ID(cmd.ID).Update(&t)
 
 		if err != nil {
 			return err
@@ -185,9 +186,9 @@ func teamExists(orgID int64, teamID int64, sess *db.Session) (bool, error) {
 	return true, nil
 }
 
-func isTeamNameTaken(orgId int64, name string, existingId int64, sess *db.Session) (bool, error) {
+func isTeamNameTaken(teamTable string, orgId int64, name string, existingId int64, sess *db.Session) (bool, error) {
 	var team team.Team
-	exists, err := sess.Where("org_id=? and name=?", orgId, name).Get(&team)
+	exists, err := sess.Table(teamTable).Where("org_id=? and name=?", orgId, name).Get(&team)
 	if err != nil {
 		return false, nil
 	}
@@ -276,7 +277,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		}
 
 		t := team.Team{}
-		countSess := sess.Table("team")
+		countSess := sess.Table(dbHelper.Table("team"))
 		countSess.Where("team.org_id=?", query.OrgID)
 
 		if query.Query != "" {
@@ -592,7 +593,7 @@ func (ss *xormStore) GetMembers(ctx context.Context, query *team.GetTeamMembersQ
 	// With accesscontrol we filter out users based on the SignedInUser's permissions
 	// Note we assume that checking SignedInUser is allowed to see team members for this team has already been performed
 	// If the signed in user is not set no member will be returned
-	sqlID := fmt.Sprintf("%s.%s", dbHelper.DB.GetDialect().Quote("user"), dbHelper.DB.GetDialect().Quote("id"))
+	sqlID := fmt.Sprintf("%s.%s", dbHelper.DB.Quote(dbHelper.Table("user")), dbHelper.DB.GetDialect().Quote("id"))
 	*acFilter, err = ac.Filter(query.SignedInUser, sqlID, "users:id:", ac.ActionOrgUsersRead)
 	if err != nil {
 		return nil, err
@@ -610,14 +611,15 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 	}
 
 	err = dbHelper.DB.WithDbSession(ctx, func(dbSess *db.Session) error {
-		sess := dbSess.Table("team_member")
-		sess.Join("INNER", dbHelper.DB.GetDialect().Quote("user"),
-			fmt.Sprintf("team_member.user_id=%s.%s", dbHelper.DB.GetDialect().Quote("user"), dbHelper.DB.GetDialect().Quote("id")),
+		userTable := dbHelper.DB.Quote(dbHelper.Table("user"))
+		sess := dbSess.Table(dbHelper.Table("team_member"))
+		sess.Join("INNER", userTable,
+			fmt.Sprintf("team_member.user_id=%s.%s", userTable, dbHelper.DB.GetDialect().Quote("id")),
 		)
-		sess.Join("INNER", "team", "team.id=team_member.team_id")
+		sess.Join("INNER", dbHelper.Table("team"), "team.id=team_member.team_id")
 
 		// explicitly check for serviceaccounts
-		sess.Where(fmt.Sprintf("%s.is_service_account=?", dbHelper.DB.GetDialect().Quote("user")), dbHelper.DB.GetDialect().BooleanValue(false))
+		sess.Where(fmt.Sprintf("%s.is_service_account=?", userTable), dbHelper.DB.GetDialect().BooleanValue(false))
 
 		if acUserFilter != nil {
 			sess.Where(acUserFilter.Where, acUserFilter.Args...)
@@ -630,7 +632,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 			WHERE user_auth.user_id = team_member.user_id
 			ORDER BY user_auth.created DESC ` +
 			dbHelper.DB.GetDialect().Limit(1) + ")"
-		sess.Join("LEFT", "user_auth", authJoinCondition)
+		sess.Join("LEFT", dbHelper.Table("user_auth"), authJoinCondition)
 
 		if query.OrgID != 0 {
 			sess.Where("team_member.org_id=?", query.OrgID)
@@ -658,7 +660,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 			team_member.external,
 			team_member.permission,
 			user_auth.auth_module,
-			team.uid as team_uid`, dbHelper.DB.GetDialect().Quote("user")))
+			team.uid as team_uid`, userTable))
 		sess.Asc("user.login", "user.email")
 
 		err := sess.Find(&queryResult)
