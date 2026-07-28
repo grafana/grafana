@@ -243,7 +243,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,graphiteBackendMode,privatePreview,@grafana/data-sources-plugins,false,false,false
 2025-07-31,azureResourcePickerUpdates,GA,@grafana/data-sources-plugins,false,false,true
 2025-07-31,prometheusTypeMigration,deprecated,@grafana/data-sources-plugins,false,true,false
-2025-07-31,pluginContainers,privatePreview,@grafana/grafana-catalog,false,true,false
 2025-08-29,cdnPluginsLoadFirst,experimental,@grafana/grafana-catalog,false,false,false
 2025-08-29,cdnPluginsUrls,experimental,@grafana/grafana-catalog,false,false,false
 2025-10-24,pluginInstallAPISync,experimental,@grafana/grafana-catalog,false,false,false
@@ -263,7 +262,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-18,ttlPluginInstanceManager,experimental,@grafana/grafana-catalog,false,false,true
 2025-11-21,lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
 2025-11-27,kubernetesAlertingHistorian,experimental,@grafana/alerting-squad,false,true,false
-2026-05-22,plugins.useMTPlugins,experimental,@grafana/grafana-catalog,false,false,true
+2026-05-22,plugins.useMTPlugins,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-22,globalDashboardVariables,experimental,@grafana/dashboards-squad,false,true,false
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
 2026-01-06,secretsManagementAppPlatformAwsKeeper,experimental,@grafana/grafana-operator-experience-squad,false,false,false
@@ -300,7 +299,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,datasourcesApiServerEnableHealthEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,analyticsFramework,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-05-06,grafana.scenesFlickeringFix,GA,@grafana/dashboards-squad,false,false,true
-2026-05-14,grafana.viewPanelPane,experimental,@grafana/dashboards-squad,false,false,true
+2026-05-14,grafana.viewPanelPane,preview,@grafana/dashboards-squad,false,false,true
 2026-05-22,datasourcesApiServerEnableHealthEndpointFrontend,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-05-22,datasourcesApiServerEnableHealthEndpointRedirect,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-05-22,flameGraphWithCallTree,preview,@grafana/observability-traces-and-profiling,false,false,true
@@ -356,9 +355,11 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-30,grafana.dashboardSettingsRedesign,GA,@grafana/dashboards-squad,false,false,true
 2026-07-01,grafana.growthHomepage,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-07-01,kubernetesReporting,experimental,@grafana/grafana-operator-experience-squad,false,true,false
+2026-07-28,reporting.redirectReportsToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-06-26,grafana.onDemandDiagnostics,experimental,@grafana/data-sources,false,false,false
 2026-07-08,grafana.frontendLegacyAPIHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-07-17,features.bulkFlagEvalFiltering,experimental,@grafana/grafana-backend-services-squad,false,false,false
-2026-07-14,grafana.multiTenantNavTree,experimental,@grafana/grafana-frontend-navigation,false,false,true
+2026-07-14,grafana.multiTenantNavTree,experimental,@grafana/grafana-frontend-navigation,false,false,false
 2026-07-20,grafana.exploreMetricsSidebar,experimental,@grafana/datapro,false,false,true
 2026-07-22,grafana.dynamicTraceToLogs,preview,@grafana/observability-logs,false,false,true
+2026-07-21,grafana.thresholdsInterpolation,experimental,@grafana/dashboards-squad,false,false,true

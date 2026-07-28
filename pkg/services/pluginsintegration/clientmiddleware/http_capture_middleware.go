@@ -18,14 +18,6 @@ const harCaptureHeader = "X-Grafana-HAR-Capture"
 
 // NewHTTPCaptureMiddleware creates a backend.HandlerMiddleware that captures HTTP traffic
 // for QueryData calls when a harcapture.Buffer is present in the context.
-//
-// For core (in-process) plugins: injects a capturing RoundTripper as contextual middleware
-// so the existing ContextualMiddleware in the HTTP client chain picks it up.
-//
-// For external gRPC plugins: sets X-Grafana-HAR-Capture on the request headers. NOTE: this is
-// currently inert — the SDK-side middleware that reads this header and emits __har__ response frames
-// is not released yet, so out-of-process plugin traffic is NOT captured until Grafana is bumped to
-// an SDK version that includes it. The header is set now only for forward compatibility.
 func NewHTTPCaptureMiddleware() backend.HandlerMiddleware {
 	return backend.HandlerMiddlewareFunc(func(next backend.Handler) backend.Handler {
 		return &HTTPCaptureMiddleware{BaseHandler: backend.NewBaseHandler(next)}

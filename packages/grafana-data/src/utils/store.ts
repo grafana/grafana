@@ -1,3 +1,4 @@
+/* eslint-disable @grafana/no-direct-local-storage-access */
 type StoreValue = string | number | boolean | null;
 type StoreSubscriber = () => void;
 
@@ -9,11 +10,18 @@ export class Store {
 
   constructor() {
     // Changes from other tabs
-    window.addEventListener('storage', (e) => {
-      if (e.key) {
-        this.notifySubscribers(e.key);
-      }
-    });
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', (e) => {
+        if (e.key) {
+          this.notifySubscribers(e.key);
+        }
+      });
+    }
+  }
+
+  // don't throw on SSR - reads return undefined, writes are dropped
+  private get storage(): Storage | undefined {
+    return typeof window === 'undefined' ? undefined : window.localStorage;
   }
 
   private notifySubscribers(key: string) {
@@ -41,11 +49,13 @@ export class Store {
   }
 
   get(key: string) {
-    return window.localStorage[key];
+    return this.storage?.[key];
   }
 
   set(key: string, value: StoreValue) {
-    window.localStorage[key] = value;
+    if (this.storage) {
+      this.storage[key] = value;
+    }
     this.notifySubscribers(key);
   }
 
@@ -53,7 +63,7 @@ export class Store {
     if (def !== void 0 && !this.exists(key)) {
       return def;
     }
-    return window.localStorage[key] === 'true';
+    return this.storage?.[key] === 'true';
   }
 
   getObject<T = unknown>(key: string): T | undefined;
@@ -61,7 +71,7 @@ export class Store {
   getObject<T = unknown>(key: string, def?: T) {
     let ret = def;
     if (this.exists(key)) {
-      const json = window.localStorage[key];
+      const json = this.storage?.[key];
       try {
         ret = JSON.parse(json);
       } catch (error) {
@@ -93,11 +103,11 @@ export class Store {
   }
 
   exists(key: string) {
-    return window.localStorage[key] !== void 0;
+    return this.storage?.[key] !== void 0;
   }
 
   delete(key: string) {
-    window.localStorage.removeItem(key);
+    this.storage?.removeItem(key);
     this.notifySubscribers(key);
   }
 }

@@ -91,6 +91,8 @@ export const FlagKeys = {
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
   GrafanaStarredFolders: "grafana.starredFolders",
+  /** Enables using dashboard variables in panel threshold values */
+  GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
   /** Replaces the bundled home dashboard with the unified homepage React page */
   GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
@@ -585,6 +587,17 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
 };
 
 /**
+ * Enables using dashboard variables in panel threshold values
+ *
+ * **Details:**
+ * - flag key: `grafana.thresholdsInterpolation`
+ * - default value: `false`
+ */
+export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.thresholdsInterpolation", false, options).value;
+};
+
+/**
  * Replaces the bundled home dashboard with the unified homepage React page
  *
  * **Details:**
@@ -622,10 +635,10 @@ export const useFlagGrafanaVectorSearchCmdk = (options?: ReactFlagEvaluationOpti
  *
  * **Details:**
  * - flag key: `grafana.viewPanelPane`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.viewPanelPane", false, options).value;
+  return useFlag("grafana.viewPanelPane", true, options).value;
 };
 
 /**
