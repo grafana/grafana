@@ -545,6 +545,35 @@ func isHARResponse(refID string) bool {
 	return strings.HasPrefix(refID, harResponseRefIDPrefix)
 }
 
+// NamespaceCaptureRefID rewrites a plugin's BARE capture refId ("__har__") to one namespaced by the
+// datasource it came from ("__har__<uid>"), in place. Call it on a single datasource's responses
+// before they are merged into the flat, refId-keyed response map that a multi-datasource query
+// produces (pkg/services/query).
+//
+// Without this, two externalized datasources in one request both return "__har__" and the second
+// silently overwrites the first, so the bundle ships one datasource's traffic and quietly loses the
+// other's. grafana-plugin-sdk-go namespaces the refId itself as of the commit following v0.293.0,
+// but plugins are built and shipped independently, so Grafana cannot assume every plugin in a
+// request is on a recent SDK. Doing it here fixes the collision for all of them at once.
+//
+// A refId the plugin already namespaced is left untouched; if both forms are present, the bare one
+// is dropped rather than allowed to overwrite the namespaced one.
+func NamespaceCaptureRefID(responses backend.Responses, dsUID string) {
+	if responses == nil || dsUID == "" {
+		return
+	}
+	bare, ok := responses[harResponseRefIDPrefix]
+	if !ok {
+		return
+	}
+	delete(responses, harResponseRefIDPrefix)
+	namespaced := harResponseRefIDPrefix + dsUID
+	if _, taken := responses[namespaced]; taken {
+		return
+	}
+	responses[namespaced] = bare
+}
+
 func queryDataResponseWithoutCaptureFrames(resp *backend.QueryDataResponse) *backend.QueryDataResponse {
 	filtered := backend.NewQueryDataResponse()
 	if resp == nil {

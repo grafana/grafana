@@ -1011,3 +1011,80 @@ func readTarGz(t *testing.T, data []byte) map[string][]byte {
 	}
 	return out
 }
+
+func TestNamespaceCaptureRefID(t *testing.T) {
+	harFrames := func(name string) backend.DataResponse {
+		return backend.DataResponse{Frames: data.Frames{data.NewFrame(name)}}
+	}
+	frameName := func(t *testing.T, dr backend.DataResponse) string {
+		t.Helper()
+		require.Len(t, dr.Frames, 1)
+		return dr.Frames[0].Name
+	}
+
+	t.Run("rewrites a bare capture refId to the datasource-namespaced one", func(t *testing.T) {
+		responses := backend.Responses{
+			"A":                    {},
+			harResponseRefIDPrefix: harFrames("capture"),
+		}
+		NamespaceCaptureRefID(responses, "ds-uid")
+
+		require.NotContains(t, responses, harResponseRefIDPrefix, "the bare refId must not survive the merge")
+		require.Contains(t, responses, harResponseRefIDPrefix+"ds-uid")
+		require.Equal(t, "capture", frameName(t, responses[harResponseRefIDPrefix+"ds-uid"]))
+		require.Contains(t, responses, "A", "real query responses are untouched")
+	})
+
+	t.Run("two datasources no longer collide", func(t *testing.T) {
+		// What the bug looked like: both plugins return the same reserved bare refId, so flattening
+		// them into one map (as executeConcurrentQueries does) dropped whichever arrived first.
+		merged := backend.Responses{}
+		for _, ds := range []struct{ uid, capture string }{{"ds-a", "traffic-a"}, {"ds-b", "traffic-b"}} {
+			sub := backend.Responses{harResponseRefIDPrefix: harFrames(ds.capture)}
+			NamespaceCaptureRefID(sub, ds.uid)
+			for refID, dr := range sub {
+				merged[refID] = dr
+			}
+		}
+
+		require.Len(t, merged, 2, "both datasources' capture frames must survive")
+		require.Equal(t, "traffic-a", frameName(t, merged[harResponseRefIDPrefix+"ds-a"]))
+		require.Equal(t, "traffic-b", frameName(t, merged[harResponseRefIDPrefix+"ds-b"]))
+	})
+
+	t.Run("leaves a refId the plugin already namespaced alone", func(t *testing.T) {
+		// Plugins on a newer SDK namespace it themselves; re-namespacing would double the uid.
+		responses := backend.Responses{harResponseRefIDPrefix + "ds-uid": harFrames("capture")}
+		NamespaceCaptureRefID(responses, "ds-uid")
+
+		require.Len(t, responses, 1)
+		require.Contains(t, responses, harResponseRefIDPrefix+"ds-uid")
+	})
+
+	t.Run("drops the bare refId rather than overwriting a namespaced one", func(t *testing.T) {
+		responses := backend.Responses{
+			harResponseRefIDPrefix:            harFrames("bare"),
+			harResponseRefIDPrefix + "ds-uid": harFrames("namespaced"),
+		}
+		NamespaceCaptureRefID(responses, "ds-uid")
+
+		require.Len(t, responses, 1)
+		require.Equal(t, "namespaced", frameName(t, responses[harResponseRefIDPrefix+"ds-uid"]))
+	})
+
+	t.Run("no-ops without a capture frame, a uid, or a map", func(t *testing.T) {
+		responses := backend.Responses{"A": {}}
+		NamespaceCaptureRefID(responses, "ds-uid")
+		require.Equal(t, backend.Responses{"A": {}}, responses)
+
+		withBare := backend.Responses{harResponseRefIDPrefix: harFrames("capture")}
+		NamespaceCaptureRefID(withBare, "")
+		require.Contains(t, withBare, harResponseRefIDPrefix, "no uid to attribute it to; leave it be")
+
+		require.NotPanics(t, func() { NamespaceCaptureRefID(nil, "ds-uid") })
+	})
+
+	t.Run("namespaced refIds are still recognised as capture responses", func(t *testing.T) {
+		require.True(t, isHARResponse(harResponseRefIDPrefix+"ds-uid"))
+	})
+}

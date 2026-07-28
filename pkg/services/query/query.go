@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/diagnostics"
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -165,7 +166,7 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user identit
 	}
 
 	// Query each datasource concurrently
-	for _, queries := range queriesbyDs {
+	for dsUID, queries := range queriesbyDs {
 		rawQueries := make([]*simplejson.Json, len(queries))
 		for i := 0; i < len(queries); i++ {
 			rawQueries[i] = queries[i].rawQuery
@@ -182,6 +183,10 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user identit
 				if reqCtx != nil {
 					header = reqCtx.Resp.Header()
 				}
+				// Attribute this datasource's diagnostics capture frame to it before the responses
+				// below are flattened into one refId-keyed map: two externalized datasources both
+				// return the same reserved bare refId, and the loser is silently dropped.
+				diagnostics.NamespaceCaptureRefID(subResp.Responses, dsUID)
 				rchan <- splitResponse{subResp.Responses, header}
 			} else {
 				// If there was an error, return an error response for each query for this datasource
