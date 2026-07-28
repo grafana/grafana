@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
 	"google.golang.org/grpc/codes"
@@ -58,6 +59,27 @@ func NewVectorStoreServer(store vector.VectorBackend, emb *embedder.Embedder, ex
 		log:       log.New("vector-store-server"),
 		metrics:   metrics,
 	}
+}
+
+// observe records one RPC observation. Wrap in defer at the top of each
+// handler: defer s.observe("upsert", time.Now(), &retErr).
+func (s *VectorStoreServer) observe(rpc string, start time.Time, errp *error) {
+	if s.metrics == nil {
+		return
+	}
+	code := codes.OK
+	if errp != nil && *errp != nil {
+		code = status.Code(*errp)
+	}
+	s.metrics.WriteDuration.WithLabelValues(rpc, code.String()).Observe(time.Since(start).Seconds())
+}
+
+// countRows adds written/deleted rows for one collection.
+func (s *VectorStoreServer) countRows(rpc, group, resource string, n int64) {
+	if s.metrics == nil || n == 0 {
+		return
+	}
+	s.metrics.WriteRowsTotal.WithLabelValues(rpc, group, resource).Add(float64(n))
 }
 
 // authorize runs the common request prefix: key fields present, token
@@ -156,7 +178,9 @@ func (s *VectorStoreServer) embedInputs(ctx context.Context, namespace string, c
 	return rows, nil
 }
 
-func (s *VectorStoreServer) Upsert(ctx context.Context, req *resourcepb.VectorUpsertRequest) (*resourcepb.VectorUpsertResponse, error) {
+func (s *VectorStoreServer) Upsert(ctx context.Context, req *resourcepb.VectorUpsertRequest) (resp *resourcepb.VectorUpsertResponse, retErr error) {
+	defer s.observe("upsert", time.Now(), &retErr)
+
 	if err := s.authorize(ctx, req.Namespace, req.Group, req.Resource); err != nil {
 		return nil, err
 	}
@@ -178,10 +202,13 @@ func (s *VectorStoreServer) Upsert(ctx context.Context, req *resourcepb.VectorUp
 		s.log.Error("vector store: upsert", "err", err, "group", req.Group, "resource", req.Resource)
 		return nil, status.Error(codes.Internal, "upsert")
 	}
+	s.countRows("upsert", req.Group, req.Resource, int64(len(rows)))
 	return &resourcepb.VectorUpsertResponse{Upserted: int64(len(rows))}, nil
 }
 
-func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourcepb.VectorUpsertSubresourcesRequest) (*resourcepb.VectorUpsertSubresourcesResponse, error) {
+func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourcepb.VectorUpsertSubresourcesRequest) (resp *resourcepb.VectorUpsertSubresourcesResponse, retErr error) {
+	defer s.observe("upsert_subresources", time.Now(), &retErr)
+
 	if err := s.authorize(ctx, req.Namespace, req.Group, req.Resource); err != nil {
 		return nil, err
 	}
@@ -205,7 +232,7 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 		return nil, status.Error(codes.Internal, "provision collection")
 	}
 
-	resp := &resourcepb.VectorUpsertSubresourcesResponse{}
+	resp = &resourcepb.VectorUpsertSubresourcesResponse{}
 	err = s.store.WithEntityLock(ctx, req.Namespace, coll.PartitionKey, req.Uid, func(ctx context.Context) error {
 		stored, _, err := s.store.GetSubresourceContent(ctx, req.Namespace, s.embedder.Model, coll.PartitionKey, req.Uid)
 		if err != nil {
@@ -260,13 +287,16 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 		}
 		return nil, status.Error(codes.Internal, "entity lock")
 	}
+	s.countRows("upsert_subresources", req.Group, req.Resource, resp.Created+resp.Updated+resp.Deleted)
 	return resp, nil
 }
 
 // deleteAllPageSize is one Delete(delete_all) page, per the proto contract.
 const deleteAllPageSize = 10000
 
-func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDeleteRequest) (*resourcepb.VectorDeleteResponse, error) {
+func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDeleteRequest) (resp *resourcepb.VectorDeleteResponse, retErr error) {
+	defer s.observe("delete", time.Now(), &retErr)
+
 	if err := s.authorize(ctx, req.Namespace, req.Group, req.Resource); err != nil {
 		return nil, err
 	}
@@ -310,11 +340,14 @@ func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDe
 		s.log.Error("vector store: delete rows", "err", err, "group", req.Group, "resource", req.Resource)
 		return nil, status.Error(codes.Internal, "delete rows")
 	}
+	s.countRows("delete", req.Group, req.Resource, deleted)
 	return &resourcepb.VectorDeleteResponse{Deleted: deleted, HasMore: hasMore}, nil
 }
 
 // UpdateMetadata ships in PR2 with the metadata filter dialect.
-func (s *VectorStoreServer) UpdateMetadata(ctx context.Context, req *resourcepb.VectorUpdateMetadataRequest) (*resourcepb.VectorUpdateMetadataResponse, error) {
+func (s *VectorStoreServer) UpdateMetadata(ctx context.Context, req *resourcepb.VectorUpdateMetadataRequest) (resp *resourcepb.VectorUpdateMetadataResponse, retErr error) {
+	defer s.observe("update_metadata", time.Now(), &retErr)
+
 	if err := s.authorize(ctx, req.Namespace, req.Group, req.Resource); err != nil {
 		return nil, err
 	}
