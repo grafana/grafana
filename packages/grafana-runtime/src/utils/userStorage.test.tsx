@@ -312,7 +312,7 @@ describe('userStorage', () => {
 
       // Should not make a GET request because cache has the updated data
       expect(request).not.toHaveBeenCalled();
-      expect(value).toBeUndefined();
+      expect(value).toBeNull();
     });
 
     it('verifies other keys remain after deletion', async () => {
@@ -330,7 +330,7 @@ describe('userStorage', () => {
       // Get the deleted key
       request.mockReset();
       const deletedValue = await storage.getItem('key1');
-      expect(deletedValue).toBeUndefined();
+      expect(deletedValue).toBeNull();
 
       // Get another key
       const otherValue = await storage.getItem('key2');

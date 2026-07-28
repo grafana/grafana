@@ -205,7 +205,7 @@ export class UserStorage implements UserStorageType {
         const result = await storageSpec;
         return result?.data[key] ?? null;
       }
-      return storageSpec.data[key];
+      return storageSpec.data[key] ?? null;
     } finally {
       releaseLock();
     }
