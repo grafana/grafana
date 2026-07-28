@@ -1,9 +1,15 @@
-import { createDataFrame, FieldType, getPanelDataSummary, PanelPlugin } from '@grafana/data';
+import { createDataFrame, FieldType, getPanelDataSummary, PanelPlugin, standardEditorsRegistry } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
+import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { plugin } from './module';
+
+// building the plugin's fieldConfigRegistry runs the table useCustomConfig path,
+// which resolves the 'stats-picker' standard editor; initialise the registry so
+// this file does not depend on another test having done so first
+standardEditorsRegistry.setInit(getAllOptionEditors);
 
 function customConfigItem(path: string) {
   const item = plugin.fieldConfigRegistry.list().find((i) => i.path === path);
