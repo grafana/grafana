@@ -94,7 +94,7 @@ describe('getVariablesCompatibility', () => {
         body: new RowsLayoutManager({ rows: [row1, row2] }),
       });
 
-      dashboard.state.editPane.selectObject(sectionVar);
+      dashboard.state.sidebar.selectObject(sectionVar);
 
       const result = getVariablesCompatibility(dashboard);
       const names = result.map((v) => v.name);
@@ -139,7 +139,7 @@ describe('getVariablesCompatibility', () => {
         body: new RowsLayoutManager({ rows: [row] }),
       });
 
-      dashboard.state.editPane.selectObject(queryVar);
+      dashboard.state.sidebar.selectObject(queryVar);
 
       const result = getVariablesCompatibility(dashboard);
       const names = result.map((v) => v.name);
