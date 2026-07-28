@@ -6,8 +6,7 @@ description: Write unit and E2E tests for Grafana visualization panels and DataV
 # Panel testing strategy
 
 Write tests for Grafana visualization code that reviewers on `@grafana/dataviz-squad` will
-accept on the first pass. This encodes the conventions the squad converged on across the
-April–July 2026 coverage effort: **assert concrete behavior, not existence**; keep test
+accept on the first pass. Goals: **assert concrete behavior, not existence**; keep test
 descriptions honest; verify the test actually exercises the target code path; use the
 repo's data-frame and panel-props builders; snapshot canvas panels via the draw-call
 harness; and stabilize the known flake classes. `@grafana/dataviz-squad` is opted into the
