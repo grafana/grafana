@@ -291,7 +291,6 @@ function makeConfig(overrides: Partial<ColumnBuildConfig> = {}): ColumnBuildConf
   const getCellColorInlineStyles = getCellColorInlineStylesFactory(theme);
   return {
     theme,
-    applyToRowBgFn: undefined,
     getCellColorInlineStyles,
     getTextColorForBackground: memoize(getTextColorForBackground, { maxSize: 100 }),
     rowHeight: 36,

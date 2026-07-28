@@ -71,6 +71,7 @@ import {
   canFieldBeColorized,
   displayJsonValue,
   getAlignment,
+  getApplyToRowBgFn,
   type getCellColorInlineStylesFactory,
   getCellOptions,
   getDisplayName,
@@ -144,7 +145,6 @@ export function useDataGridRows(
 // -----------------------------------------------------------------------------
 
 export interface ColumnBuildConfig {
-  applyToRowBgFn: ((rowIdx: number) => Partial<CSSProperties>) | undefined;
   disableKeyboardEvents?: boolean;
   disableSanitizeHtml?: boolean;
   filter: FilterType;
@@ -190,7 +190,6 @@ function buildColumnsFromFields(
 ): FromFieldsResult {
   const {
     theme,
-    applyToRowBgFn,
     getCellColorInlineStyles,
     getTextColorForBackground,
     rowHeight,
@@ -209,6 +208,13 @@ function buildColumnsFromFields(
     showTypeIcons,
     timeRange,
   } = config;
+
+  // Resolve the apply-to-row background function against this frame's own fields.
+  // Nested tables are independent frames: their apply-to-row coloring must read from
+  // the nested field's own values at the nested row's local `__index`, not from the
+  // parent frame. Deriving it here (rather than passing a single top-level closure via
+  // config) keeps `applyToRowBgFn(row.__index)` correct for both flat and nested rows.
+  const applyToRowBgFn = getApplyToRowBgFn(frame.fields, getCellColorInlineStyles) ?? undefined;
 
   const result: FromFieldsResult = {
     columns: [],
