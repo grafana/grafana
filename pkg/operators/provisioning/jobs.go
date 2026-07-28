@@ -45,7 +45,6 @@ func buildDriver(
 	dc driverConfig,
 	jobStore jobs.Store,
 	jobHistoryWriter jobs.HistoryWriter,
-	notifications chan struct{},
 ) (*jobs.ConcurrentJobDriver, error) {
 	workers, metrics, err := buildWorkers(cfg, controllerCfg, registry, tracer, dc.maxSyncWorkers)
 	if err != nil {
@@ -75,7 +74,6 @@ func buildDriver(
 		jobStore,
 		repoGetter,
 		jobHistoryWriter,
-		notifications,
 		registry,
 		metrics,
 		workers...,
