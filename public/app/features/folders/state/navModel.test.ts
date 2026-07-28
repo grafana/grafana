@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -6,13 +7,13 @@ import { type FolderDTO } from 'app/types/folders';
 
 import { buildNavModel, getAlertingTabID, getVariablesTabID } from './navModel';
 
+const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'globalDashboardVariables';
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   config: {
     unifiedAlertingEnabled: true,
-    featureToggles: {
-      globalDashboardVariables: false,
-    },
+    featureToggles: {},
   },
 }));
 
@@ -44,7 +45,11 @@ describe('buildNavModel', () => {
     jest.clearAllMocks();
     (contextSrv.hasPermission as jest.Mock).mockReturnValue(true);
     config.unifiedAlertingEnabled = true;
-    config.featureToggles.globalDashboardVariables = false;
+    setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: false });
+  });
+
+  afterEach(() => {
+    setTestFlags({});
   });
 
   describe('Alerts tab visibility', () => {
@@ -106,7 +111,7 @@ describe('buildNavModel', () => {
     });
 
     it('should show Variables tab when globalDashboardVariables is on', () => {
-      config.featureToggles.globalDashboardVariables = true;
+      setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true });
 
       const navModel = buildNavModel(mockFolder);
       const variablesTab = navModel.children?.find((child) => child.id === getVariablesTabID(mockFolder.uid));
@@ -117,7 +122,7 @@ describe('buildNavModel', () => {
     });
 
     it('should hide Variables tab for Git-synced folders even when the toggle is on', () => {
-      config.featureToggles.globalDashboardVariables = true;
+      setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true });
       const gitSyncedFolder: FolderDTO = {
         ...mockFolder,
         managedBy: ManagerKind.Repo,

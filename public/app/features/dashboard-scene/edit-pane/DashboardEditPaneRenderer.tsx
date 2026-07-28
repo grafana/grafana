@@ -5,11 +5,11 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { useFlagGlobalDashboardVariables, useFlagGrafanaViewPanelPane } from '@grafana/runtime/internal';
 import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
-import { useFlagGrafanaViewPanelPane } from '../../../../../packages/grafana-runtime/src/internal/openFeature/openfeature.gen';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
@@ -45,6 +45,7 @@ export function DashboardEditPaneRenderer({ dashboard }: Props) {
   const selectedObject = editPane.getSelectedObject();
   const sidebarContext = useSidebarContext();
   const viewPanelPane = useFlagGrafanaViewPanelPane();
+  const globalDashboardVariablesEnabled = useFlagGlobalDashboardVariables();
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       editPane.closePane();
@@ -118,7 +119,7 @@ export function DashboardEditPaneRenderer({ dashboard }: Props) {
               onClick={() => editPane.openPane(new DashboardCodePane({}))}
               active={openPane instanceof DashboardCodePane}
             />
-            {config.featureToggles.globalDashboardVariables && (
+            {globalDashboardVariablesEnabled && (
               <Sidebar.Button
                 icon="dollar-alt"
                 onClick={() => editPane.openPane(new DashboardPredefinedVariablesPane({}))}

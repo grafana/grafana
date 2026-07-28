@@ -25,6 +25,7 @@ import {
 } from '@grafana/scenes';
 import { type Dashboard, DashboardCursorSync, type LibraryPanel } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
 import {
@@ -2685,15 +2686,13 @@ describe('DashboardScene', () => {
   });
 
   describe('refreshPredefinedVariables', () => {
-    const originalGlobalDashboardVariables = config.featureToggles.globalDashboardVariables;
-
     beforeEach(() => {
-      config.featureToggles.globalDashboardVariables = true;
+      setTestFlags({ globalDashboardVariables: true });
       mockFetchPredefinedVariables.mockReset();
     });
 
     afterEach(() => {
-      config.featureToggles.globalDashboardVariables = originalGlobalDashboardVariables;
+      setTestFlags({});
     });
 
     it('should ignore stale fetch results when a newer refresh has started', async () => {

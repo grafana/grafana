@@ -1,10 +1,11 @@
 import { http, HttpResponse } from 'msw';
+import { act } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import { render, screen } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { type VariableSpec } from 'app/api/clients/dashboard/v2beta1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -12,6 +13,8 @@ import { AnnoKeyFolder } from 'app/features/apiserver/types';
 
 import BrowseFolderVariablesPage from './BrowseFolderVariablesPage';
 import * as permissions from './permissions';
+
+const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'globalDashboardVariables';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -50,11 +53,10 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
     canSetPermissions: true,
     canDeleteDashboards: true,
   };
-  const originalGlobalDashboardVariables = config.featureToggles.globalDashboardVariables;
 
   beforeEach(() => {
     config.unifiedAlertingEnabled = true;
-    config.featureToggles.globalDashboardVariables = true;
+    setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true });
     server.use(
       http.get('/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/variables', () => {
         return HttpResponse.json({
@@ -70,12 +72,13 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     jest.restoreAllMocks();
-  });
-
-  afterAll(() => {
-    config.featureToggles.globalDashboardVariables = originalGlobalDashboardVariables;
+    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
+    // updates while the component is still mounted (RTL cleanup runs in a separate afterEach).
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
   it('displays the folder title', async () => {

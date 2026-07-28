@@ -1,6 +1,7 @@
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavSubTitle } from 'app/core/utils/navBarItem-translations';
 import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
@@ -71,7 +72,7 @@ export function buildNavModel(
     });
   }
 
-  if (!isProvisioned && config.featureToggles.globalDashboardVariables) {
+  if (!isProvisioned && getFeatureFlagClient().getBooleanValue(FlagKeys.GlobalDashboardVariables, false)) {
     model.children!.push({
       active: false,
       icon: 'brackets-curly',

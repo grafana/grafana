@@ -2,7 +2,7 @@ import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { folderHandlers } from '@grafana/test-utils/unstable';
+import { folderHandlers, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   getAlertingTabID,
@@ -13,6 +13,8 @@ import {
 import { type FolderDTO } from 'app/types/folders';
 
 import { type FolderActiveTab, useNavModel } from './useNavModel';
+
+const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'globalDashboardVariables';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -47,16 +49,18 @@ const renderUseNavModel = (folderDTO: FolderDTO | undefined, tab: FolderActiveTa
 
 describe('useNavModel', () => {
   const originalUnifiedAlerting = config.unifiedAlertingEnabled;
-  const originalGlobalDashboardVariables = config.featureToggles.globalDashboardVariables;
 
   beforeEach(() => {
     config.unifiedAlertingEnabled = true;
-    config.featureToggles.globalDashboardVariables = true;
+    setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true });
+  });
+
+  afterEach(() => {
+    setTestFlags({});
   });
 
   afterAll(() => {
     config.unifiedAlertingEnabled = originalUnifiedAlerting;
-    config.featureToggles.globalDashboardVariables = originalGlobalDashboardVariables;
   });
 
   it('returns undefined when folderDTO is not provided', () => {
