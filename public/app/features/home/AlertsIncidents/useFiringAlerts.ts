@@ -10,7 +10,7 @@ import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/fi
 import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { ALERTING_PATHS, alertListPageLink } from 'app/features/alerting/unified/utils/navigation';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
-import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
+import { type AlertmanagerAlert, type Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
 
@@ -31,6 +31,14 @@ function buildTeamMatchers(teamNames: string[]) {
 
 // Exported so the homepage skeleton reserves the card slot using the same gate.
 export const canViewFiringAlerts = () => contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead);
+
+// Shared with the team dropdown so its unfiltered query hits the same RTK Query
+// cache entry as the card's whenever the card itself is unfiltered.
+export const firingAlertsQueryArgs = (matchers: Matcher[]) => ({
+  amSourceName: GRAFANA_RULES_SOURCE_NAME,
+  filter: { active: true, silenced: false, inhibited: false, matchers },
+  showErrorAlert: false,
+});
 
 export type FiringAlertsData = ReturnType<typeof useFiringAlerts>;
 
@@ -61,20 +69,22 @@ export function useFiringAlerts(selectedTeam?: string) {
   // identity doesn't matter.
   const matchers = selectedTeam ? buildTeamMatchers([selectedTeam]) : hasTeams ? buildTeamMatchers(teamNames) : [];
 
+  // currentData (not data): it's undefined while a request for *different* args is in
+  // flight, so a team switch drops the previous team's rows instead of showing them
+  // as if they belonged to the new selection.
   const {
-    data: alerts,
-    isFetching: alertsLoading,
+    currentData: alerts,
+    isFetching,
     error,
     refetch,
   } = alertmanagerApi.useGetAlertmanagerAlertsQuery(
-    !enabled || teamsLoading
-      ? skipToken
-      : {
-          amSourceName: GRAFANA_RULES_SOURCE_NAME,
-          filter: { active: true, silenced: false, inhibited: false, matchers },
-          showErrorAlert: false,
-        }
+    !enabled || teamsLoading ? skipToken : firingAlertsQueryArgs(matchers)
   );
+
+  // Loading only when there's nothing to show for the current filter: first load and
+  // team switches show the skeleton, while background refetches of the same filter
+  // (tag invalidation, retries) keep the loaded list on screen.
+  const alertsLoading = isFetching && alerts === undefined;
 
   // enabled && ... so the useAsync microtask tick doesn't report loading for gated users
   const loading = enabled && (teamsLoading || alertsLoading);
