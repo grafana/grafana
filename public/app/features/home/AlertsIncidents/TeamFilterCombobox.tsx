@@ -4,6 +4,8 @@ import { t } from '@grafana/i18n';
 import { Combobox, type ComboboxOption } from '@grafana/ui';
 import { useLazySearchTeamsQuery, useSearchTeamsQuery, type SearchTeamsApiArg } from 'app/api/clients/legacy';
 
+import { ALL_TEAMS_VALUE } from './constants';
+
 const DEFAULT_OPTION_VALUE = '';
 
 const TEAMS_PAGE_SIZE = 100;
@@ -24,6 +26,14 @@ const getDefaultOption = (userHasTeams: boolean): ComboboxOption<string> => ({
     ? t('home.alerts-incidents.team-filter-your-teams', 'Your teams')
     : t('home.alerts-incidents.team-filter-all', 'All teams'),
   value: DEFAULT_OPTION_VALUE,
+});
+
+// Explicit org-wide scope for users who do belong to teams; without it they'd have
+// no way back to unfiltered alerts. Users without teams don't need it — their
+// default option already reads "All teams".
+const getAllTeamsOption = (): ComboboxOption<string> => ({
+  label: t('home.alerts-incidents.team-filter-all', 'All teams'),
+  value: ALL_TEAMS_VALUE,
 });
 
 interface Props {
@@ -47,18 +57,24 @@ export function TeamFilterCombobox({ selectedTeam, onChange, userHasTeams }: Pro
   // Async Combobox needs the full option (not just the value) to show a label.
   // Must be memoized: a new object every render makes downshift think the
   // selection changed, which wipes the input while the user is typing.
-  const valueOption = useMemo(
-    () => (selectedTeam ? { label: selectedTeam, value: selectedTeam } : getDefaultOption(userHasTeams)),
-    [selectedTeam, userHasTeams]
-  );
+  const valueOption = useMemo(() => {
+    if (selectedTeam === ALL_TEAMS_VALUE) {
+      // Render the label, never the raw sentinel.
+      return getAllTeamsOption();
+    }
+    return selectedTeam ? { label: selectedTeam, value: selectedTeam } : getDefaultOption(userHasTeams);
+  }, [selectedTeam, userHasTeams]);
 
   const loadOptions = useCallback(
     async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
       // preferCacheValue: reopening with the same input reuses the cached page.
       const result = await searchTeams(searchTeamsArgs(inputValue), true).unwrap();
       const teamOptions = (result.teams ?? []).map((team) => ({ label: team.name, value: team.name }));
-      // The default-scope sentinel only belongs on the unfiltered default list.
-      return inputValue ? teamOptions : [getDefaultOption(userHasTeams), ...teamOptions];
+      // The scope sentinels only belong on the unfiltered default list. "All teams"
+      // is added only for team members — otherwise the default option already says it.
+      return inputValue
+        ? teamOptions
+        : [getDefaultOption(userHasTeams), ...(userHasTeams ? [getAllTeamsOption()] : []), ...teamOptions];
     },
     [searchTeams, userHasTeams]
   );

@@ -14,7 +14,7 @@ import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/type
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
 
-import { HOME_CARD_MAX_ITEMS } from './constants';
+import { ALL_TEAMS_VALUE, HOME_CARD_MAX_ITEMS } from './constants';
 import { severityLevelRank } from './severity';
 
 /** Canonical severity level for an alert, tolerant of a missing severity label so the card never crashes. */
@@ -27,6 +27,21 @@ function buildTeamMatchers(teamNames: string[]) {
     return [];
   }
   return [{ name: 'team', value: teamNames.map(escapeRegExp).join('|'), isRegex: true, isEqual: true }];
+}
+
+/**
+ * Which team matchers to send for the current dropdown selection:
+ * an explicit "All teams" pick means no filter at all, a specific team wins next,
+ * and with no selection we fall back to the user's own teams when they have any.
+ */
+function resolveTeamMatchers(selectedTeam: string | undefined, userTeamNames: string[]) {
+  if (selectedTeam === ALL_TEAMS_VALUE) {
+    return [];
+  }
+  if (selectedTeam) {
+    return buildTeamMatchers([selectedTeam]);
+  }
+  return buildTeamMatchers(userTeamNames);
 }
 
 // Exported so the homepage skeleton reserves the card slot using the same gate.
@@ -56,10 +71,8 @@ export function useFiringAlerts(selectedTeam?: string) {
   const teamNames = (teams ?? []).map((t) => t.name);
   const hasTeams = teamNames.length > 0;
 
-  // An explicit team selection wins; otherwise filter to the user's teams when they
-  // have any. No memo needed: RTK Query serializes query args, so referential
-  // identity doesn't matter.
-  const matchers = selectedTeam ? buildTeamMatchers([selectedTeam]) : hasTeams ? buildTeamMatchers(teamNames) : [];
+  // No memo needed: RTK Query serializes query args, so referential identity doesn't matter.
+  const matchers = resolveTeamMatchers(selectedTeam, teamNames);
 
   const {
     data: alerts,

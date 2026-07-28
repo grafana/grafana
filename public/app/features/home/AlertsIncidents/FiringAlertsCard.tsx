@@ -10,6 +10,7 @@ import { ctaClicked } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
+import { ALL_TEAMS_VALUE } from './constants';
 import { severityLevelColor } from './severity';
 import { canViewFiringAlerts, useFiringAlerts, type FiringAlertsData } from './useFiringAlerts';
 
@@ -40,6 +41,28 @@ function severityLabel(level?: SeverityLevel): string {
     default:
       return t('home.firing-alerts-card.severity-unknown', 'Unknown');
   }
+}
+
+/**
+ * Empty-state copy scoped to the active team filter. The "All teams" sentinel is
+ * checked first so it never leaks into copy; an explicit team selection overrides
+ * the "your teams" default filter, so the copy names that team instead of
+ * claiming it's the user's own.
+ */
+function emptyMessage(selectedTeam: string | undefined, hasTeams: boolean): string {
+  if (selectedTeam === ALL_TEAMS_VALUE) {
+    return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
+  }
+  if (selectedTeam) {
+    return t('home.firing-alerts-card.empty-selected-team', 'No firing alerts for {{team}}.', {
+      team: selectedTeam,
+      interpolation: { escapeValue: false },
+    });
+  }
+  if (hasTeams) {
+    return t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.');
+  }
+  return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
 }
 
 export function FiringAlertsCard() {
@@ -121,18 +144,7 @@ export function FiringAlertsCardView({
             }
           : undefined
       }
-      emptyMessage={
-        // An explicit team selection overrides the "your teams" default filter,
-        // so the copy names that team instead of claiming it's the user's own.
-        selectedTeam
-          ? t('home.firing-alerts-card.empty-selected-team', 'No firing alerts for {{team}}.', {
-              team: selectedTeam,
-              interpolation: { escapeValue: false },
-            })
-          : hasTeams
-            ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
-            : t('home.firing-alerts-card.empty', 'You have no firing alerts.')
-      }
+      emptyMessage={emptyMessage(selectedTeam, hasTeams)}
       items={visibleAlerts}
       getItemKey={({ alert }) => alert.fingerprint}
       renderItem={({ alert, level, startedAt }) => {

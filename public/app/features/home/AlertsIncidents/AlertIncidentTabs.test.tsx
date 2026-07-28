@@ -330,8 +330,12 @@ describe('AlertIncidentTabs', () => {
       expect(requests[0]).toEqual(['team=~"Team A|Team B"']);
 
       await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
-      // This user belongs to teams, so the default option describes that scope.
-      expect(await screen.findByRole('option', { name: 'Your teams' })).toBeInTheDocument();
+      // This user belongs to teams, so the default option describes that scope and
+      // an explicit "All teams" escape hatch follows it, ahead of the teams.
+      const options = await screen.findAllByRole('option');
+      expect(options[0]).toHaveTextContent('Your teams');
+      expect(options[1]).toHaveTextContent('All teams');
+      expect(options[2]).toHaveTextContent('Team A');
       await user.click(await screen.findByRole('option', { name: 'Team C' }));
 
       // Selecting a team issues a new request whose matcher contains only that team.
@@ -368,6 +372,101 @@ describe('AlertIncidentTabs', () => {
 
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
       expect(combobox).toHaveDisplayValue('Your teams');
+    });
+
+    it("shows unfiltered org-wide alerts when a team member selects 'All teams'", async () => {
+      mockTeams([{ name: 'Team A' }]);
+      mockOrgTeams([{ name: 'Team A' }, { name: 'Team C' }]);
+      // Own-teams requests see one alert; the unfiltered request also surfaces an
+      // alert from another team and one with no team label at all.
+      const requests: string[][] = [];
+      server.use(
+        http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+          const filters = new URL(request.url).searchParams.getAll('filter');
+          requests.push(filters);
+          const ownAlert = makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical', team: 'Team A' } });
+          if (filters.length > 0) {
+            return HttpResponse.json([ownAlert]);
+          }
+          return HttpResponse.json([
+            ownAlert,
+            makeAlert({ labels: { alertname: 'Disk Full', severity: 'high', team: 'Team C' } }),
+            makeAlert({ labels: { alertname: 'Unlabeled Alert', severity: 'low' } }),
+          ]);
+        })
+      );
+
+      const { user } = render(<AlertIncidentTabs />);
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      const combobox = await screen.findByRole('combobox', { name: /filter alerts by team/i });
+
+      await user.click(combobox);
+      await user.click(await screen.findByRole('option', { name: 'All teams' }));
+
+      // The explicit all-teams request carries no team matchers at all.
+      await waitFor(() => expect(requests).toHaveLength(2));
+      expect(requests[1]).toEqual([]);
+
+      // Rows include alerts outside the user's teams and without a team label,
+      // and the tab counter reflects the unfiltered total.
+      expect(await screen.findByText('Disk Full')).toBeInTheDocument();
+      expect(screen.getByText('Unlabeled Alert')).toBeInTheDocument();
+      expect(screen.getByText('CPU Critical')).toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /firing alerts/i })).toHaveTextContent('3');
+      expect(combobox).toHaveDisplayValue('All teams');
+    });
+
+    it("shows the generic empty message when 'All teams' is selected and there are no alerts", async () => {
+      mockTeams([{ name: 'Team A' }]);
+      mockOrgTeams([{ name: 'Team A' }, { name: 'Team C' }]);
+      // The user's own teams have a firing alert; the org as a whole has none
+      // (contrived, but isolates the empty copy for the all-teams scope).
+      server.use(
+        http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+          const filters = new URL(request.url).searchParams.getAll('filter');
+          return HttpResponse.json(
+            filters.length === 0 ? [] : [makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]
+          );
+        })
+      );
+
+      const { user } = render(<AlertIncidentTabs />);
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
+      await user.click(await screen.findByRole('option', { name: 'All teams' }));
+
+      // The sentinel never leaks into copy; the generic empty message is used.
+      expect(await screen.findByText('You have no firing alerts.')).toBeInTheDocument();
+      expect(screen.queryByText(/No firing alerts for/)).not.toBeInTheDocument();
+    });
+
+    it("restores the own-teams filter when selecting 'Your teams' after 'All teams'", async () => {
+      mockTeams([{ name: 'Team A' }]);
+      mockOrgTeams([{ name: 'Team A' }, { name: 'Team C' }]);
+      const requests = mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+
+      const { user } = render(<AlertIncidentTabs />);
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      expect(requests[0]).toEqual(['team=~"Team A"']);
+      const combobox = await screen.findByRole('combobox', { name: /filter alerts by team/i });
+
+      await user.click(combobox);
+      await user.click(await screen.findByRole('option', { name: 'All teams' }));
+      await waitFor(() => expect(requests).toHaveLength(2));
+      expect(requests[1]).toEqual([]);
+
+      await user.click(combobox);
+      await user.click(await screen.findByRole('option', { name: 'Your teams' }));
+
+      // Back to the default scope: the request is filtered to the user's own teams again.
+      await waitFor(() => expect(combobox).toHaveDisplayValue('Your teams'));
+      // RTK Query re-serves the cached own-teams entry rather than refetching, so
+      // assert on the requests that were made, not on a new one.
+      expect(requests.every((r) => r.length === 0 || r[0] === 'team=~"Team A"')).toBe(true);
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
     });
 
     it('shows the loading skeleton while the switched team request is in flight, then the filtered alerts', async () => {
@@ -471,8 +570,10 @@ describe('AlertIncidentTabs', () => {
 
       // Default list: the default-scope option plus the first page of teams, fetched
       // without a query and capped at one page. This user belongs to no teams, so the
-      // default scope is unfiltered and the option reads "All teams".
+      // default scope is unfiltered and the option reads "All teams" — exactly once,
+      // with no duplicate from the explicit all-teams option team members get.
       expect(await screen.findByRole('option', { name: 'All teams' })).toBeInTheDocument();
+      expect(screen.getAllByRole('option', { name: 'All teams' })).toHaveLength(1);
       expect(await screen.findByRole('option', { name: 'Team 000' })).toBeInTheDocument();
       expect(teamRequests).toContainEqual({ query: null, perpage: '100' });
       // Sliced out of the first page, so absent from the default list.
