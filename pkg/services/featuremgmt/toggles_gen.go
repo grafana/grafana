@@ -817,4 +817,12 @@ const (
 	// FlagAlertingIgnorePendingForNoDataAndError
 	// Makes NoData and Error alerts fire immediately, without &#39;pending&#39; stage
 	FlagAlertingIgnorePendingForNoDataAndError = "alertingIgnorePendingForNoDataAndError"
+
+	// FlagAuthzListFoldersViaSearch
+	// Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID&#43;parent refs) instead of a full object list, avoiding paged object-list round-trips.
+	FlagAuthzListFoldersViaSearch = "authz.listFoldersViaSearch"
+
+	// FlagLibraryElementsFolderTreeViaSearch
+	// Build the library-elements folder tree by listing folders via the unified-storage search index (lightweight UID&#43;parent refs) instead of a full object list, avoiding paged object-list round-trips on GET /api/library-elements.
+	FlagLibraryElementsFolderTreeViaSearch = "libraryElements.folderTreeViaSearch"
 )

@@ -892,6 +892,20 @@
     },
     {
       "metadata": {
+        "name": "authz.listFoldersViaSearch",
+        "resourceVersion": "1785250398373",
+        "creationTimestamp": "2026-07-28T14:53:18Z"
+      },
+      "spec": {
+        "description": "Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "awsAsyncQueryCaching",
         "resourceVersion": "1764664939750",
         "creationTimestamp": "2023-07-21T15:34:07Z"
@@ -2904,6 +2918,20 @@
         "stage": "experimental",
         "codeowner": "@grafana/search-and-storage",
         "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "libraryElements.folderTreeViaSearch",
+        "resourceVersion": "1785250398373",
+        "creationTimestamp": "2026-07-28T14:53:18Z"
+      },
+      "spec": {
+        "description": "Build the library-elements folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips on GET /api/library-elements.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

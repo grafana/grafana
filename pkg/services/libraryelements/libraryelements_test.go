@@ -308,6 +308,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 		OrgID:      orgID,
 		OrgRole:    role,
 		LastSeenAt: time.Now(),
+		IDToken:    "test-id-token",
 		// Allow user to create folders and library elements
 		Permissions: map[int64]map[string][]string{
 			1: {
@@ -365,7 +366,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 		dashboardsService: dashService,
 		AccessControl:     ac,
 		log:               log.NewNopLogger(),
-		treeCache:         newFolderTreeCache(folderSvc),
+		treeCache:         newFolderTreeCache(folderSvc, false),
 	}
 
 	service.AccessControl.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(&service, folderSvc))
