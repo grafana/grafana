@@ -157,10 +157,10 @@ func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) (retErr 
 	})
 }
 
-func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespace, model, resource, uid string, changed []Vector, desired []string) (retErr error) {
-	// Both empty = no-op; an empty desired must not be read as "delete
+func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespace, model, resource, uid string, changed []Vector, metadataOnly []VectorMeta, desired []string) (retErr error) {
+	// All empty = no-op; an empty desired must not be read as "delete
 	// all" (the reconciler uses Delete for a full wipe).
-	if len(changed) == 0 && len(desired) == 0 {
+	if len(changed) == 0 && len(metadataOnly) == 0 && len(desired) == 0 {
 		return nil
 	}
 	if model == "" {
@@ -188,6 +188,7 @@ func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespa
 	}()
 	span.SetAttributes(
 		attribute.Int("changed_count", len(changed)),
+		attribute.Int("metadata_only_count", len(metadataOnly)),
 		attribute.Int("desired_count", len(desired)),
 		attribute.String("resource", resource),
 		attribute.String("namespace", namespace),
@@ -200,6 +201,11 @@ func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespa
 		if changed[i].Namespace != namespace || changed[i].Model != model ||
 			changed[i].Resource != resource || changed[i].UID != uid {
 			return fmt.Errorf("vector[%d] does not belong to %s/%s/%s/%s", i, namespace, model, resource, uid)
+		}
+	}
+	for i := range metadataOnly {
+		if metadataOnly[i].Title == "" {
+			return fmt.Errorf("metadataOnly[%d]: title must not be empty", i)
 		}
 	}
 
@@ -232,10 +238,27 @@ func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespa
 				return fmt.Errorf("delete stale subresources %s/%s: %w", namespace, uid, err)
 			}
 		}
-		if len(changed) == 0 {
-			return nil
+		if len(changed) > 0 {
+			if err := b.upsertAll(ctx, tx, changed); err != nil {
+				return err
+			}
 		}
-		return b.upsertAll(ctx, tx, changed)
+		for i := range metadataOnly {
+			req := &sqlVectorCollectionRefreshMetaRequest{
+				SQLTemplate: sqltemplate.New(b.dialect),
+				Resource:    resource,
+				Namespace:   namespace,
+				Model:       model,
+				UID:         uid,
+				Subresource: metadataOnly[i].Subresource,
+				Title:       truncateRunes(metadataOnly[i].Title, maxTitleLen),
+				Metadata:    metadataOnly[i].Metadata,
+			}
+			if _, err := dbutil.Exec(ctx, tx, sqlVectorCollectionRefreshMeta, req); err != nil {
+				return fmt.Errorf("refresh metadata %s/%s: %w", uid, metadataOnly[i].Subresource, err)
+			}
+		}
+		return nil
 	})
 }
 

@@ -42,6 +42,21 @@ func TestVectorQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlVectorCollectionRefreshMeta: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCollectionRefreshMetaRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "things_external",
+						Namespace:   "stacks-123",
+						Model:       "text-embedding-005",
+						UID:         "abc-uid",
+						Subresource: "chunk/1",
+						Title:       "Thing One",
+						Metadata:    json.RawMessage(`{"embeddedAt":1750000000}`),
+					},
+				},
+			},
 			sqlVectorCollectionDelete: {
 				{
 					Name: "simple",

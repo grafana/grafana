@@ -100,7 +100,7 @@ func (f *fakeVectorBackend) Search(_ context.Context, namespace, model, resource
 
 // stub the rest of VectorBackend; not exercised by these tests.
 func (f *fakeVectorBackend) Upsert(context.Context, []vector.Vector) error { return nil }
-func (f *fakeVectorBackend) UpsertReplaceSubresources(context.Context, string, string, string, string, []vector.Vector, []string) error {
+func (f *fakeVectorBackend) UpsertReplaceSubresources(context.Context, string, string, string, string, []vector.Vector, []vector.VectorMeta, []string) error {
 	return nil
 }
 func (f *fakeVectorBackend) Delete(context.Context, string, string, string, string) error {

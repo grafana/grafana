@@ -368,7 +368,7 @@ func TestIntegrationVectorUpsertReplaceSubresources(t *testing.T) {
 	err := backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash-a", []Vector{
 		mk("dash-a", "panel/1", "a-1 updated"),
 		mk("dash-a", "panel/4", "a-4 new"),
-	}, []string{"panel/1", "panel/4"})
+	}, nil, []string{"panel/1", "panel/4"})
 	require.NoError(t, err)
 
 	stored, folder, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash-a")
@@ -415,6 +415,7 @@ func TestIntegrationVectorUpsertReplaceSubresources_PartialUpdate(t *testing.T) 
 			mk("dash", "panel/2", "p2 v2"), // changed
 			mk("dash", "panel/9", "p9"),    // new
 		},
+		nil,
 		[]string{"panel/1", "panel/2", "panel/3", "panel/9"},
 	))
 
@@ -449,7 +450,7 @@ func TestIntegrationVectorUpsertReplaceSubresources_DeleteOnlyNoChange(t *testin
 
 	// No changed vectors; desired drops panel/2.
 	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash",
-		nil, []string{"panel/1"}))
+		nil, nil, []string{"panel/1"}))
 
 	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
@@ -469,7 +470,7 @@ func TestIntegrationVectorUpsertReplaceSubresources_EmptyInput(t *testing.T) {
 		Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.5, 0.5), Model: testModel,
 	}}))
 
-	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash", nil, nil))
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash", nil, nil, nil))
 
 	stored, _, err := backend.GetSubresourceContent(ctx, "integration-test", testModel, testResource, "dash")
 	require.NoError(t, err)
@@ -505,7 +506,7 @@ func TestIntegrationVectorUpsertReplaceSubresources_AtomicOnValidationError(t *t
 	err := backend.UpsertReplaceSubresources(ctx, "integration-test", testModel, testResource, "dash", []Vector{
 		mk("dash", "panel/1", "v2"),
 		bad,
-	}, []string{"panel/1", "panel/2"})
+	}, nil, []string{"panel/1", "panel/2"})
 	require.Error(t, err)
 
 	// State is unchanged: panel/1 still has v1 content, panel/2 still present.
@@ -803,4 +804,34 @@ func TestIntegrationVectorCollectionCatalog(t *testing.T) {
 	_, err = backend.Search(ctx, "ns", testModel, "not-provisioned", make([]float32, 3), 5)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported resource")
+}
+
+func TestIntegrationVectorMetadataOnlyRefresh(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	orig := Vector{
+		Namespace: "ns-meta", Resource: testResource, UID: "meta-uid",
+		Title: "Before", Subresource: "chunk/1", Content: "hello",
+		Metadata: json.RawMessage(`{"embeddedAt":1}`), Embedding: makeEmbedding(0.1, 0.1), Model: testModel,
+	}
+	require.NoError(t, backend.Upsert(ctx, []Vector{orig}))
+	// (test lives in package vector, so Vector/VectorMeta are unqualified)
+
+	// metadataOnly rewrite: title+metadata change, embedding and content stay.
+	err := backend.UpsertReplaceSubresources(ctx, "ns-meta", testModel, testResource, "meta-uid",
+		nil,
+		[]VectorMeta{{Subresource: "chunk/1", Title: "After", Metadata: json.RawMessage(`{"embeddedAt":2}`)}},
+		[]string{"chunk/1"})
+	require.NoError(t, err)
+
+	content, _, err := backend.GetSubresourceContent(ctx, "ns-meta", testModel, testResource, "meta-uid")
+	require.NoError(t, err)
+	require.Equal(t, map[string]string{"chunk/1": "hello"}, content, "content untouched")
+
+	// Row-level check: title/metadata updated, embedding unchanged.
+	rows, err := backend.Search(ctx, "ns-meta", testModel, testResource, makeEmbedding(0.1, 0.1), 5)
+	require.NoError(t, err)
+	require.Len(t, rows, 1)
+	require.Equal(t, "After", rows[0].Title)
+	require.JSONEq(t, `{"embeddedAt":2}`, string(rows[0].Metadata))
 }

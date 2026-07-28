@@ -220,7 +220,7 @@ func (f *fakeVector) Upsert(_ context.Context, vs []vector.Vector) error {
 	return f.upsertLocked(vs)
 }
 
-func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res, uid string, changed []vector.Vector, desired []string) error {
+func (f *fakeVector) UpsertReplaceSubresources(_ context.Context, ns, model, res, uid string, changed []vector.Vector, _ []vector.VectorMeta, desired []string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	// Mirror the real backend: delete subresources not in `desired`, then upsert `changed`.

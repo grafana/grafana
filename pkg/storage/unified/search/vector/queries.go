@@ -30,6 +30,7 @@ func mustTemplate(filename string) *template.Template {
 
 var (
 	sqlVectorCollectionUpsert            = mustTemplate("vector_collection_upsert.sql")
+	sqlVectorCollectionRefreshMeta       = mustTemplate("vector_collection_refresh_meta.sql")
 	sqlVectorCollectionDelete            = mustTemplate("vector_collection_delete.sql")
 	sqlVectorCollectionDeleteSubresource = mustTemplate("vector_collection_delete_subresources.sql")
 	sqlVectorNamespaceDeleteEmbeddings   = mustTemplate("vector_namespace_delete_embeddings.sql")
@@ -69,6 +70,27 @@ func (r *sqlVectorCollectionUpsertRequest) Validate() error {
 	}
 	if r.Vector == nil {
 		return fmt.Errorf("missing vector")
+	}
+	return nil
+}
+
+type sqlVectorCollectionRefreshMetaRequest struct {
+	sqltemplate.SQLTemplate
+	Resource    string
+	Namespace   string
+	Model       string
+	UID         string
+	Subresource string
+	Title       string
+	Metadata    json.RawMessage
+}
+
+func (r *sqlVectorCollectionRefreshMetaRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	if r.Title == "" {
+		return fmt.Errorf("missing title")
 	}
 	return nil
 }

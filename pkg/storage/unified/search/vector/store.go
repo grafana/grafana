@@ -38,13 +38,13 @@ type VectorBackend interface {
 
 	Upsert(ctx context.Context, vectors []Vector) error
 
-	// UpsertReplaceSubresources upserts `changed` and deletes any stored
+	// UpsertReplaceSubresources upserts `changed`, rewrites title/metadata
+	// for `metadataOnly` rows (no embedding change), and deletes any stored
 	// subresource of (namespace, model, resource, uid) not listed in
-	// `desired`, in one transaction. `changed` (a subset of `desired`)
-	// holds only the rows that need rewriting; `desired` is the full set
-	// that should remain. Every vector in `changed` must belong to the
-	// given tuple.
-	UpsertReplaceSubresources(ctx context.Context, namespace, model, resource, uid string, changed []Vector, desired []string) error
+	// `desired`, in one transaction. `changed` and `metadataOnly` are
+	// disjoint subsets of `desired`. Every vector in `changed` must belong
+	// to the given tuple.
+	UpsertReplaceSubresources(ctx context.Context, namespace, model, resource, uid string, changed []Vector, metadataOnly []VectorMeta, desired []string) error
 
 	// Delete removes every resource and subresource under `uid`. model must be non-empty.
 	Delete(ctx context.Context, namespace, model, resource, uid string) error
@@ -154,6 +154,16 @@ type Vector struct {
 	Metadata        json.RawMessage
 	Embedding       []float32
 	Model           string
+}
+
+// VectorMeta is a title/metadata-only rewrite of an existing row.
+// UpsertReplaceSubresources applies these without touching the embedding, so
+// callers keep sync markers (e.g. an embeddedAt stamp) fresh without
+// re-embed cost.
+type VectorMeta struct {
+	Subresource string
+	Title       string
+	Metadata    json.RawMessage
 }
 
 func (v *Vector) Validate() error {

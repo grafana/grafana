@@ -113,8 +113,8 @@ func TestPgvectorBackend_UpsertReplaceSubresources_EmptySlice(t *testing.T) {
 	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
 	ctx := testutil.NewDefaultTestContext(t)
 
-	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", nil, nil))
-	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", []Vector{}, []string{}))
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", nil, nil, nil))
+	require.NoError(t, backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", []Vector{}, nil, []string{}))
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
@@ -128,7 +128,7 @@ func TestPgvectorBackend_UpsertReplaceSubresources_InvalidVector_Rejected(t *tes
 
 	err := backend.UpsertReplaceSubresources(ctx, "ns", "m", "dashboards", "dash", []Vector{
 		{Namespace: "ns", Model: "m", Resource: "dashboards", UID: "", Title: "t", Content: "x", Embedding: []float32{0.1}},
-	}, []string{"panel/1"})
+	}, nil, []string{"panel/1"})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "uid must not be empty")
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
@@ -144,7 +144,7 @@ func TestPgvectorBackend_UpsertReplaceSubresources_UnknownResource_Rejected(t *t
 
 	err := backend.UpsertReplaceSubresources(ctx, "ns", "m", "folders", "x", []Vector{
 		{Namespace: "ns", Model: "m", Resource: "folders", UID: "x", Title: "t", Embedding: []float32{0.1}},
-	}, []string{"panel/1"})
+	}, nil, []string{"panel/1"})
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "unsupported resource")
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
