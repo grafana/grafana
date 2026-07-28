@@ -36,7 +36,7 @@ export type { MetricRow as MetricRowModel, MetricType } from './types';
 
 export { deriveMetricType, getMetricTypeLabel, getMetricTypeOptions } from './data/metricType';
 export { useLabelValues } from './data/useLabelValues';
-export { useMetricCatalog } from './data/useMetricCatalog';
+export { useMetricCatalog, type MetricCatalog } from './data/useMetricCatalog';
 export { useMetricDetail } from './data/useMetricDetail';
 
 /**

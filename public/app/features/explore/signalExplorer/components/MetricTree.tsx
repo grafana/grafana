@@ -7,7 +7,7 @@ import { Button, Icon, Text, useStyles2 } from '@grafana/ui';
 import { useDispatch, useSelector } from 'app/types/store';
 
 import { dsKey, rangeKey } from '../data/metricResourceClient';
-import { useMetricCatalog } from '../data/useMetricCatalog';
+import { useMetricCatalog, type MetricCatalog } from '../data/useMetricCatalog';
 import { useMetricDetail } from '../data/useMetricDetail';
 import { detectMetricsInQueries } from '../query/detectMetricsInQueries';
 import { toRefsByMetric } from '../query/toRefsByMetric';
@@ -40,9 +40,26 @@ export interface MetricTreeProps {
    * can be a metric in one and meaningless in another.
    */
   matchQueries?: DataQuery[];
+  /**
+   * The catalog to render, for a host that already holds one — because it shows a count, its own
+   * empty state, or chrome that depends on what loaded. Supplying it means the tree runs no catalog
+   * request of its own, so a shell built this way holds exactly one instance instead of two whose
+   * loading states can disagree.
+   *
+   * Left out, the tree fetches its own from `useMetricCatalog`. A host that supplies one must apply
+   * the same `searchText`/`typeFilter` it reads from the slice, since that is what the tree pages on.
+   */
+  catalog?: MetricCatalog;
 }
 
-export function MetricTree({ exploreId, refId, dsRef, timeRange, matchQueries = NO_QUERIES }: MetricTreeProps) {
+export function MetricTree({
+  exploreId,
+  refId,
+  dsRef,
+  timeRange,
+  matchQueries = NO_QUERIES,
+  catalog,
+}: MetricTreeProps) {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
@@ -59,7 +76,8 @@ export function MetricTree({ exploreId, refId, dsRef, timeRange, matchQueries = 
   const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
   const [expandedLabel, setExpandedLabel] = useState<string | null>(null);
 
-  const { metrics, loading, error } = useMetricCatalog(dsRef, timeRange, { typeFilter, searchText });
+  const ownCatalog = useMetricCatalog(dsRef, timeRange, { typeFilter, searchText }, catalog === undefined);
+  const { metrics, loading, error } = catalog ?? ownCatalog;
 
   // Matching the search/type-filtered catalog rather than the whole one is enough: only the names
   // rendered below can be badged anyway.

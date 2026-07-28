@@ -32,6 +32,29 @@ describe('useMetricCatalog', () => {
     expect(result.current.metrics).toHaveLength(2);
   });
 
+  it('fires nothing while disabled, so a host that owns the catalog is not fetched for twice', async () => {
+    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
+
+    const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range, undefined, false));
+
+    expect(spy).not.toHaveBeenCalled();
+    expect(result.current.loading).toBe(false);
+    expect(result.current.metrics).toEqual([]);
+  });
+
+  it('fetches once enabled', async () => {
+    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
+    const { result, rerender } = renderHook(({ enabled }) => useMetricCatalog({ uid: 'p1' }, range, undefined, enabled), {
+      initialProps: { enabled: false },
+    });
+
+    rerender({ enabled: true });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(result.current.metrics).toHaveLength(2);
+  });
+
   it('applies substring filter and type filter', async () => {
     jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
     const { result } = renderHook(() =>

@@ -7,13 +7,26 @@ import type { MetricRow, MetricType } from '../types';
 import { dsKey, fetchCatalog, rangeKey } from './metricResourceClient';
 import { useMetricCacheGeneration } from './useMetricCacheGeneration';
 
+/** What a catalog reader gets, and what a host must supply to `MetricTree` in place of one. */
+export interface MetricCatalog {
+  metrics: MetricRow[];
+  loading: boolean;
+  error?: Error;
+}
+
 export function useMetricCatalog(
   dsRef: DataSourceRef,
   timeRange: TimeRange,
-  opts?: { typeFilter?: MetricType | null; searchText?: string }
-): { metrics: MetricRow[]; loading: boolean; error?: Error } {
+  opts?: { typeFilter?: MetricType | null; searchText?: string },
+  /**
+   * Off means zero requests, an empty list and `loading: false` — the same gate the label hooks have.
+   * It exists so a component can hold this hook unconditionally while a host that already owns a
+   * catalog supplies one instead, rather than the two of them running a duplicate instance each.
+   */
+  enabled = true
+): MetricCatalog {
   const [all, setAll] = useState<MetricRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState<Error | undefined>(undefined);
 
   // Depend on primitive keys, not `dsRef`/`timeRange` object identity: callers construct these
@@ -32,7 +45,8 @@ export function useMetricCatalog(
   // unchanged, but the cached answer for them is gone, so this must count as a different request.
   const generation = useMetricCacheGeneration(dsRef);
 
-  const requestKey = `${requestDsKey}|${fromTo}|${generation}`;
+  // `null` while disabled: there's no request to key against, so nothing to adjust for.
+  const requestKey = enabled ? `${requestDsKey}|${fromTo}|${generation}` : null;
   const [activeKey, setActiveKey] = useState<string | null>(null);
   if (requestKey !== activeKey) {
     // Adjust state during render, not only in the effect below: passive effects run after the
@@ -44,10 +58,13 @@ export function useMetricCatalog(
     setActiveKey(requestKey);
     setAll([]);
     setError(undefined);
-    setLoading(true);
+    setLoading(requestKey !== null);
   }
 
   useEffect(() => {
+    if (!enabled) {
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     setError(undefined);
@@ -72,7 +89,7 @@ export function useMetricCatalog(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestDsKey, fromTo, generation]);
+  }, [enabled, requestDsKey, fromTo, generation]);
 
   const metrics = useMemo(() => {
     const q = (opts?.searchText ?? '').toLowerCase();

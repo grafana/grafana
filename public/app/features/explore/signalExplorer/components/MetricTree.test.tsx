@@ -15,7 +15,7 @@ import { setSearchText, signalExplorerReducer } from '../state/signalExplorerSli
 import type { MetricRow } from '../types';
 
 import * as MetricRowModule from './MetricRow';
-import { MetricTree } from './MetricTree';
+import { MetricTree, type MetricTreeProps } from './MetricTree';
 
 jest.mock('@grafana/runtime/unstable', () => ({ getDataSourceInstance: jest.fn() }));
 
@@ -24,7 +24,7 @@ const timeRange = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as un
 
 const makeStore = () => configureStore({ reducer: { signalExplorer: signalExplorerReducer } });
 
-function renderTree(props: { matchQueries?: DataQuery[] } = {}, store = makeStore()) {
+function renderTree(props: Partial<MetricTreeProps> = {}, store = makeStore()) {
   render(
     <Provider store={store}>
       <MetricTree exploreId="left" refId="A" dsRef={dsRef} timeRange={timeRange} {...props} />
@@ -636,6 +636,35 @@ describe('MetricTree', () => {
       await userEvent.click(screen.getByRole('button', { name: /sort descending/i }));
 
       expect(valueTexts()).toEqual(['cherry', 'banana', 'apple']);
+    });
+  });
+
+  describe('host-supplied catalog', () => {
+    it('renders the host’s catalog and runs no catalog request of its own', async () => {
+      const lp = makeLanguageProvider();
+      jest.mocked(getDataSourceInstance).mockResolvedValue({ languageProvider: lp } as never);
+
+      renderTree({
+        catalog: { metrics: [{ name: 'host_metric_total', type: 'counter' }], loading: false },
+      });
+
+      expect(await screen.findByText('host_metric_total')).toBeInTheDocument();
+      // The tree's own `useMetricCatalog` would call `start()` on the way to the catalog.
+      expect(lp.start).not.toHaveBeenCalled();
+      // And the datasource's own metrics, which the tree would have fetched, are nowhere.
+      expect(screen.queryByText('up')).not.toBeInTheDocument();
+    });
+
+    it('reports the host catalog’s loading state', () => {
+      renderTree({ catalog: { metrics: [], loading: true } });
+
+      expect(screen.getByText(/loading metrics/i)).toBeInTheDocument();
+    });
+
+    it('reports the host catalog’s error', () => {
+      renderTree({ catalog: { metrics: [], loading: false, error: new Error('boom') } });
+
+      expect(screen.getByText(/failed to load metrics/i)).toBeInTheDocument();
     });
   });
 });
