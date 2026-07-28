@@ -281,6 +281,49 @@ func TestNewJobResourceResult_WithUnmanagedConflictAsWarning(t *testing.T) {
 	assert.NotNil(t, result2.Warning(), "Error wrapping ResourceUnmanagedConflictError should be stored as warning")
 }
 
+func TestNewJobResourceResult_WithManagedByOtherFileAsWarning(t *testing.T) {
+	name := "test-resource"
+	group := "test-group"
+	kind := "test-kind"
+	path := "paidly/pecan-dashboards/amounts-metrics.json"
+	action := repository.FileActionUpdated
+
+	managedByOtherErr := resources.NewResourceManagedByOtherFileError(
+		"pecan-amounts-metrics",
+		"pecan/pecan-dashboards/amounts-metrics.json",
+		path,
+	)
+
+	result := NewResourceResult().
+		WithName(name).
+		WithGroup(group).
+		WithKind(kind).
+		WithPath(path).
+		WithAction(action).
+		WithError(managedByOtherErr).
+		Build()
+
+	assert.Nil(t, result.Error(), "ResourceManagedByOtherFileError should be stored as warning, not error")
+	assert.NotNil(t, result.Warning(), "ResourceManagedByOtherFileError should be stored as warning")
+	assert.Equal(t, managedByOtherErr, result.Warning())
+
+	// The sync loop wraps this with fmt.Errorf(...%w...); errors.As must still
+	// find the typed error through the wrap so it is classified as a warning.
+	wrappedErr := fmt.Errorf("replacing resource from file %s: %w", path, managedByOtherErr)
+
+	result2 := NewResourceResult().
+		WithName(name).
+		WithGroup(group).
+		WithKind(kind).
+		WithPath(path).
+		WithAction(action).
+		WithError(wrappedErr).
+		Build()
+
+	assert.Nil(t, result2.Error(), "Error wrapping ResourceManagedByOtherFileError should be stored as warning, not error")
+	assert.NotNil(t, result2.Warning(), "Error wrapping ResourceManagedByOtherFileError should be stored as warning")
+}
+
 func TestNewJobResourceResult_WithErrorAsRegularError(t *testing.T) {
 	name := "test-resource"
 	group := "test-group"
@@ -369,6 +412,29 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		result := NewResourceResult().WithError(wrapped).Build()
 
 		assert.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
+	})
+
+	t.Run("ResourceManagedByOtherFileError returns ReasonResourceManagedByOther", func(t *testing.T) {
+		managedByOtherErr := resources.NewResourceManagedByOtherFileError(
+			"pecan-amounts-metrics",
+			"pecan/pecan-dashboards/amounts-metrics.json",
+			"paidly/pecan-dashboards/amounts-metrics.json",
+		)
+		result := NewResourceResult().WithError(managedByOtherErr).Build()
+
+		assert.Equal(t, provisioning.ReasonResourceManagedByOther, result.WarningReason())
+	})
+
+	t.Run("wrapped ResourceManagedByOtherFileError returns ReasonResourceManagedByOther", func(t *testing.T) {
+		managedByOtherErr := resources.NewResourceManagedByOtherFileError(
+			"pecan-amounts-metrics",
+			"pecan/pecan-dashboards/amounts-metrics.json",
+			"paidly/pecan-dashboards/amounts-metrics.json",
+		)
+		wrapped := fmt.Errorf("replacing resource from file paidly/pecan-dashboards/amounts-metrics.json: %w", managedByOtherErr)
+		result := NewResourceResult().WithError(wrapped).Build()
+
+		assert.Equal(t, provisioning.ReasonResourceManagedByOther, result.WarningReason())
 	})
 
 	t.Run("explicit WithWarning with QuotaExceededError returns reason", func(t *testing.T) {
@@ -531,6 +597,23 @@ func TestIsNonFailingWarning(t *testing.T) {
 
 	t.Run("ResourceValidationError is not a non-failing warning", func(t *testing.T) {
 		assert.False(t, isNonFailingWarning(resources.NewResourceValidationError(errors.New("invalid"))))
+	})
+
+	t.Run("ResourceManagedByOtherFile is a non-failing warning", func(t *testing.T) {
+		assert.True(t, isNonFailingWarning(&resources.ResourceManagedByOtherFileError{
+			ResourceName: "shared-uid",
+			CurrentPath:  "dir-b/dashboard.json",
+			RequestPath:  "dir-a/dashboard.json",
+		}))
+	})
+
+	t.Run("wrapped ResourceManagedByOtherFile is a non-failing warning", func(t *testing.T) {
+		wrapped := fmt.Errorf("replacing resource from file dir-a/dashboard.json: %w", &resources.ResourceManagedByOtherFileError{
+			ResourceName: "shared-uid",
+			CurrentPath:  "dir-b/dashboard.json",
+			RequestPath:  "dir-a/dashboard.json",
+		})
+		assert.True(t, isNonFailingWarning(wrapped))
 	})
 
 	t.Run("generic error is not a non-failing warning", func(t *testing.T) {

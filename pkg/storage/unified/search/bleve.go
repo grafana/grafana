@@ -822,7 +822,7 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	idx := b.newBleveIndex(key, prepared.index, prepared.indexStorage, fields, allFields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
-	idx.facetFieldByRequestName = facetFieldsForMapping(searchFieldsProvider, key.Group, key.Resource)
+	idx.searchFields = newKindSearchFields(searchFieldsProvider, key.Group, key.Resource, selectableFields)
 
 	if prepared.source.needsBuild() {
 		// Type-convert so buildIndexFromScratch can call updateResourceVersion after the builder returns.
@@ -1236,7 +1236,7 @@ func (b *bleveBackend) promoteBuildIndexToFile(
 	}
 
 	promoted := b.newBleveIndex(key, fileIndex, indexStorageFile, fields, allFields, standardSearchFields, updater, delegate.logger)
-	promoted.facetFieldByRequestName = delegate.facetFieldByRequestName
+	promoted.searchFields = delegate.searchFields
 	promoted.resourceVersion.Store(delegate.resourceVersion.Load())
 	cleanup = false
 
@@ -1482,6 +1482,16 @@ func isPathWithinRoot(path, absoluteRoot string) bool {
 }
 
 // TotalDocs returns the total number of documents across all indices
+// SnapshotCountThreshold returns the snapshot MinDocCount, or 0 when no snapshot
+// store is configured (in which case BuildIndex never uses snapshots and the
+// count is not consumed by that decision).
+func (b *bleveBackend) SnapshotCountThreshold() int64 {
+	if b.opts.Snapshot.Store == nil {
+		return 0
+	}
+	return b.opts.Snapshot.MinDocCount
+}
+
 func (b *bleveBackend) TotalDocs() int64 {
 	var totalDocs int64
 	// We iterate over keys and call getCachedIndex for each index individually.
@@ -1603,9 +1613,9 @@ type bleveIndex struct {
 
 	standard resource.SearchableDocumentFields
 	fields   resource.SearchableDocumentFields
-	// facetFieldByRequestName maps ResourceSearchRequest facet field names to
-	// keyword-analyzed Bleve index field names.
-	facetFieldByRequestName map[string]string
+	// searchFields is what this kind's declarations mean for querying and
+	// indexing, so neither has to consult a hardcoded name list.
+	searchFields kindSearchFields
 
 	indexStorage string // memory or file, used when updating metrics
 
@@ -1691,6 +1701,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 				return fmt.Errorf("missing document")
 			}
 			doc := item.Doc.UpdateCopyFields()
+			populateFieldVariants(doc, b.searchFields.variants)
 
 			// The static fields.* mapping drops values written under an undeclared
 			// name; collect them so the loss is logged, not silent.
@@ -1729,7 +1740,18 @@ func (b *bleveIndex) isDeclaredField(name string) bool {
 	if b.fields != nil && b.fields.Field(name) != nil {
 		return true
 	}
-	return b.standard != nil && b.standard.Field(name) != nil
+	if b.standard != nil && b.standard.Field(name) != nil {
+		return true
+	}
+	// Variant fields are mapped but never named by a document builder, so they
+	// only show up here when a document is indexed twice.
+	bare := strings.TrimPrefix(name, resource.SEARCH_FIELD_PREFIX)
+	for _, v := range b.searchFields.variants {
+		if bare == v.keyword || bare == v.ngram {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *bleveIndex) updateResourceVersion(rv int64) error {
@@ -2101,6 +2123,9 @@ func (b *bleveIndex) Search(
 	}
 
 	response.TotalHits = int64(res.Total)
+	// bleve counts matches exactly, and authz is applied in-searcher here, so the
+	// count is the exact authorized total.
+	response.TotalHitsExact = true
 	response.QueryCost = float64(res.Cost)
 	response.MaxScore = res.MaxScore
 	stats.AddSearchTime(res.Took)
@@ -2209,11 +2234,11 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 
 	facets := bleve.FacetsRequest{}
 	for name, facet := range req.Facet {
-		field, ok := b.facetFieldByRequestName[facet.Field]
-		if !ok {
+		kf, ok := b.keywordFieldFor(facet.Field)
+		if !ok || !kf.facetable {
 			return nil, resource.NewBadRequestError(fmt.Sprintf("field %q does not support faceting", facet.Field))
 		}
-		facets[name] = bleve.NewFacetRequest(field, int(facet.Limit))
+		facets[name] = bleve.NewFacetRequest(kf.name, int(facet.Limit))
 	}
 
 	// Convert resource-specific fields to bleve fields. Any field declared
@@ -2222,10 +2247,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	// Skip inputs that already carry the prefix.
 	fields := make([]string, 0, len(req.Fields))
 	for _, f := range req.Fields {
-		if b.fields != nil && !strings.HasPrefix(f, resource.SEARCH_FIELD_PREFIX) && b.fields.Field(f) != nil {
-			f = resource.SEARCH_FIELD_PREFIX + f
-		}
-		fields = append(fields, f)
+		fields = append(fields, resolveFieldName(b.fields, f))
 	}
 
 	size, err := safeInt64ToInt(req.Limit)
@@ -2265,24 +2287,15 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		searchrequest.From = 0
 	}
 
-	// Everything is combined within an AND query: label/field filters plus the
-	// optional free-text clause.
-	queries, errResult := b.filterQueries(req)
+	// Label/field filters are constraints, not relevance signals, so they go into
+	// the boolean Filter clause (scored "none" by bleve) while the free-text query
+	// scores in Must. This keeps ranking driven by text relevance alone.
+	filters, errResult := b.filterQueries(req)
 	if errResult != nil {
 		return nil, errResult
 	}
-	if q := b.buildTextQuery(searchrequest, req); q != nil {
-		queries = append(queries, q)
-	}
-
-	switch len(queries) {
-	case 0:
-		searchrequest.Query = bleve.NewMatchAllQuery()
-	case 1:
-		searchrequest.Query = queries[0]
-	default:
-		searchrequest.Query = bleve.NewConjunctionQuery(queries...) // AND
-	}
+	textQuery := b.buildTextQuery(searchrequest, req)
+	searchrequest.Query = combineFilterAndTextQueries(filters, textQuery)
 
 	// postFilter applies authorization after ranking in runPostFilterAuthz, so
 	// skip the in-searcher wrapper here and let bleve return unfiltered ranked hits.
@@ -2296,7 +2309,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	// Add the sort fields
-	sorting := getSortFields(req, b.fields)
+	sorting := b.getSortFields(req)
 	searchrequest.SortBy(sorting)
 
 	// When no sort fields are provided, sort by score if there is a query,
@@ -2335,13 +2348,86 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	return searchrequest, nil
 }
 
+// combineFilterAndTextQueries assembles the final bleve query from the filter
+// clauses and the optional free-text query.
+//
+// Filters are non-scoring only when there is a free-text query to rank by: they
+// go in the boolean Filter slot so text relevance alone drives the score, and the
+// text query drives iteration. Without a free-text query the results are ordered
+// by the sort fields (not score), so the filters go straight into the query,
+// which keeps bleve iterating their posting lists instead of scanning every
+// document (a filter-only boolean query wraps a match-all searcher).
+func combineFilterAndTextQueries(filters []query.Query, textQuery query.Query) query.Query {
+	if textQuery == nil {
+		switch len(filters) {
+		case 0:
+			return bleve.NewMatchAllQuery()
+		case 1:
+			return filters[0]
+		default:
+			return bleve.NewConjunctionQuery(filters...)
+		}
+	}
+
+	if len(filters) == 0 {
+		return textQuery
+	}
+
+	bq := bleve.NewBooleanQuery()
+	bq.AddMust(textQuery)
+	if len(filters) == 1 {
+		bq.AddFilter(filters[0])
+	} else {
+		bq.AddFilter(bleve.NewConjunctionQuery(filters...))
+	}
+	return bq
+}
+
+// resolveFieldName maps a public field name to its physical index name. Clients
+// pass public names; only the backend knows that per-kind fields live under the
+// fields.* sub-document. Standard and already-prefixed names are returned as-is.
+func resolveFieldName(fields resource.SearchableDocumentFields, key string) string {
+	if strings.HasPrefix(key, resource.SEARCH_FIELD_PREFIX) ||
+		strings.HasPrefix(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX) {
+		return key
+	}
+	// Leave reserved top-level names as-is so a per-kind set can't shadow them
+	// into fields.* (callers pass physical title variants directly, e.g. the
+	// legacy QueryFields trio).
+	if isReservedTopLevelField(key) {
+		return key
+	}
+	if fields == nil || fields.Field(key) == nil {
+		return key
+	}
+	return resource.SEARCH_FIELD_PREFIX + key
+}
+
+// isReservedTopLevelField reports whether key is a standard field or an internal
+// top-level variant (title_phrase/title_ngram) that must never be prefixed.
+func isReservedTopLevelField(key string) bool {
+	switch key {
+	case resource.SEARCH_FIELD_TITLE_PHRASE, resource.SEARCH_FIELD_TITLE_NGRAM:
+		return true
+	}
+	return resource.StandardSearchFields().Field(key) != nil
+}
+
 // filterQueries builds the label and field filter clauses (the AND terms that
 // are not the free-text query) for a search request.
 func (b *bleveIndex) filterQueries(req *resourcepb.ResourceSearchRequest) ([]query.Query, *resourcepb.ErrorResult) {
 	queries := []query.Query{}
 	if len(req.Options.Labels) > 0 {
 		for _, v := range req.Options.Labels {
-			q, err := requirementQuery(v, "labels.")
+			// Build a fresh requirement rather than mutate the shared one: Search may
+			// re-run this builder (post-rank authz fallback), which would otherwise
+			// double-prefix the label key.
+			rq := &resourcepb.Requirement{
+				Key:      resource.SEARCH_FIELD_LABELS + "." + v.Key,
+				Operator: v.Operator,
+				Values:   v.Values,
+			}
+			q, err := b.requirementQuery(rq)
 			if err != nil {
 				return nil, err
 			}
@@ -2350,17 +2436,24 @@ func (b *bleveIndex) filterQueries(req *resourcepb.ResourceSearchRequest) ([]que
 	}
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
+			// Fresh requirement (not a proto value copy, which trips the lock check)
+			// so re-running the builder stays idempotent.
+			rq := &resourcepb.Requirement{
+				Key:      resolveFieldName(b.fields, v.Key),
+				Operator: v.Operator,
+				Values:   v.Values,
+			}
 			// Temporarily expand a root-folder filter so it matches both the
 			// legacy empty sentinel ("") and the canonical "general" UID. This
 			// keeps results consistent whether the index was written before or
 			// after the apistore started stamping "general" on root-parented
 			// resources. Done here so every caller stays agnostic of the
 			// sentinel used on disk.
-			if v.Key == resource.SEARCH_FIELD_FOLDER &&
-				(v.Operator == string(selection.Equals) || v.Operator == string(selection.In)) {
+			if rq.Key == resource.SEARCH_FIELD_FOLDER &&
+				(rq.Operator == string(selection.Equals) || rq.Operator == string(selection.In)) {
 				expanded := false
-				values := make([]string, 0, len(v.Values)+1)
-				for _, val := range v.Values {
+				values := make([]string, 0, len(rq.Values)+1)
+				for _, val := range rq.Values {
 					if !foldermodel.IsRootFolderUID(val) {
 						values = append(values, val)
 						continue
@@ -2371,13 +2464,12 @@ func (b *bleveIndex) filterQueries(req *resourcepb.ResourceSearchRequest) ([]que
 					}
 				}
 				if expanded {
-					v.Operator = string(selection.In)
-					v.Values = values
+					rq.Operator = string(selection.In)
+					rq.Values = values
 				}
 			}
 
-			// Fields should already have correct prefix (either "fields." or "selectableFields.")
-			q, err := requirementQuery(v, "")
+			q, err := b.requirementQuery(rq)
 			if err != nil {
 				return nil, err
 			}
@@ -2413,7 +2505,7 @@ func (b *bleveIndex) buildTextQuery(searchrequest *bleve.SearchRequest, req *res
 		// When QueryFields is empty, default to title.
 		if len(req.QueryFields) > 0 {
 			for _, field := range req.QueryFields {
-				addWildcardQueries(disjoin, req.Query, field.Name)
+				addWildcardQueries(disjoin, req.Query, resolveFieldName(b.fields, field.Name))
 			}
 		} else {
 			addWildcardQueries(disjoin, req.Query, resource.SEARCH_FIELD_TITLE)
@@ -2423,59 +2515,95 @@ func (b *bleveIndex) buildTextQuery(searchrequest *bleve.SearchRequest, req *res
 
 	// Free-text search uses explicit query fields so each title field can use the query type that matches its analyzer.
 	searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_SCORE)
-	queryFields := req.QueryFields
-	if len(queryFields) == 0 {
-		queryFields = []*resourcepb.ResourceSearchRequest_QueryField{
-			{
-				Name:  resource.SEARCH_FIELD_TITLE_PHRASE,
-				Type:  resourcepb.QueryFieldType_KEYWORD,
-				Boost: 10, // exact title match (case-insensitive via pre-lowered title_phrase)
-			}, {
-				Name:  resource.SEARCH_FIELD_TITLE,
-				Type:  resourcepb.QueryFieldType_TEXT,
-				Boost: 2, // standard analyzer (word-level matching)
-			}, {
-				Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
-				Type:  resourcepb.QueryFieldType_TEXT,
-				Boost: 1, // ngram analyzer (partial/prefix matching)
-			},
-		}
-	}
+	queryFields := b.resolveQueryFields(req.QueryFields)
 
 	for _, field := range queryFields {
-		switch field.Type {
-		case resourcepb.QueryFieldType_TEXT, resourcepb.QueryFieldType_DEFAULT:
+		kind := b.textQueryKindFor(field.Name)
+		switch kind {
+		case textQueryTerm, textQueryTermLowered:
+			// Bleve TermQuery is an exact token lookup: it does not analyze or lowercase the query.
+			term := req.Query
+			if kind == textQueryTermLowered {
+				term = strings.ToLower(term)
+			}
+			q := bleve.NewTermQuery(term)
+			q.SetBoost(float64(field.Boost))
+			q.SetField(field.Name)
+			disjoin.AddQuery(q)
+
+		case textQueryNgram, textQueryStandard:
 			q := bleve.NewMatchQuery(removeSmallTerms(req.Query)) // removeSmallTerms should be part of the analyzer
 			q.SetBoost(float64(field.Boost))
 			q.SetField(field.Name)
-			// Match the analyzer used to index each field: the ngram field
+			// Match the analyzer used to index each field: the ngram variant
 			// must be analyzed with TITLE_ANALYZER, not the standard analyzer
 			// (which splits on punctuation and drops sub-ngram-length fragments).
-			if field.Name == resource.SEARCH_FIELD_TITLE_NGRAM {
+			if kind == textQueryNgram {
 				q.Analyzer = TITLE_ANALYZER
 			} else {
 				q.Analyzer = standard.Name
 			}
 			q.Operator = query.MatchQueryOperatorAnd // all terms must match
 			disjoin.AddQuery(q)
-
-		case resourcepb.QueryFieldType_KEYWORD:
-			// Bleve TermQuery is an exact token lookup: it does not analyze or lowercase the query.
-			q := bleve.NewTermQuery(strings.ToLower(req.Query))
-			q.SetBoost(float64(field.Boost))
-			q.SetField(field.Name)
-			disjoin.AddQuery(q)
-
-		case resourcepb.QueryFieldType_PHRASE:
-			// Bleve phrase queries are different from our title_phrase field: they match adjacent analyzed tokens.
-			q := bleve.NewMatchPhraseQuery(req.Query)
-			q.SetBoost(float64(field.Boost))
-			q.SetField(field.Name)
-			q.Analyzer = standard.Name
-			disjoin.AddQuery(q)
 		}
 	}
 	return disjoin
+}
+
+// textQueryKindFor reports how a physical index field has to be queried.
+func (b *bleveIndex) textQueryKindFor(name string) textQueryKind {
+	if kind, ok := b.searchFields.textQueryKinds[name]; ok {
+		return kind
+	}
+	if strings.HasPrefix(name, referenceFieldPrefix) {
+		return textQueryTerm
+	}
+	// Undeclared fields (dynamically indexed, or named by a client we don't know
+	// about) keep the analyzed default.
+	return textQueryStandard
+}
+
+// titleQueryFields expands a text query on the logical title field across its
+// three physical variants: exact (title_phrase), word-level (title), and partial
+// (title_ngram). The query each variant needs comes from its mapping.
+func titleQueryFields() []*resourcepb.ResourceSearchRequest_QueryField {
+	return []*resourcepb.ResourceSearchRequest_QueryField{
+		{Name: resource.SEARCH_FIELD_TITLE_PHRASE, Boost: 10}, // exact title match (case-insensitive via pre-lowered title_phrase)
+		{Name: resource.SEARCH_FIELD_TITLE, Boost: 2},         // standard analyzer (word-level matching)
+		{Name: resource.SEARCH_FIELD_TITLE_NGRAM, Boost: 1},   // ngram analyzer (partial/prefix matching)
+	}
+}
+
+// resolveQueryFields maps the requested (public-named) text query fields to
+// concrete bleve fields: title fans out to its variants, others resolve to their
+// physical name. An empty request defaults to title.
+func (b *bleveIndex) resolveQueryFields(requested []*resourcepb.ResourceSearchRequest_QueryField) []*resourcepb.ResourceSearchRequest_QueryField {
+	if len(requested) == 0 {
+		return titleQueryFields()
+	}
+	// If the caller already named physical title variants (legacy dashboard
+	// search sends all three), don't re-expand the logical title field, or we'd
+	// duplicate the phrase/ngram clauses and skew scoring.
+	hasTitleVariant := false
+	for _, f := range requested {
+		if f.Name == resource.SEARCH_FIELD_TITLE_PHRASE || f.Name == resource.SEARCH_FIELD_TITLE_NGRAM {
+			hasTitleVariant = true
+			break
+		}
+	}
+	out := make([]*resourcepb.ResourceSearchRequest_QueryField, 0, len(requested))
+	for _, f := range requested {
+		if f.Name == resource.SEARCH_FIELD_TITLE && !hasTitleVariant {
+			out = append(out, titleQueryFields()...)
+			continue
+		}
+		// Type is dropped: the query comes from the field's mapping.
+		out = append(out, &resourcepb.ResourceSearchRequest_QueryField{
+			Name:  resolveFieldName(b.fields, f.Name),
+			Boost: f.Boost,
+		})
+	}
+	return out
 }
 
 func removeSmallTerms(query string) string {
@@ -2665,7 +2793,7 @@ func safeInt64ToInt(i64 int64) (int, error) {
 	return int(i64), nil
 }
 
-func getSortFields(req *resourcepb.ResourceSearchRequest, fields resource.SearchableDocumentFields) []string {
+func (b *bleveIndex) getSortFields(req *resourcepb.ResourceSearchRequest) []string {
 	if len(req.SortBy) == 0 {
 		return nil
 	}
@@ -2673,17 +2801,12 @@ func getSortFields(req *resourcepb.ResourceSearchRequest, fields resource.Search
 	sorting := make([]string, 0, len(req.SortBy)+1)
 	hasNameSort := false
 	for _, sort := range req.SortBy {
-		input := sort.Field
-		if field, ok := textSortFields[input]; ok {
-			input = field
-		}
-
-		// Per-kind sort fields live under the fields.* sub-document, prefix
-		// them by consulting this index's SearchableDocumentFields. Skip
-		// inputs that already carry the prefix (Field() would strip it and
-		// match again, leading to a double prefix).
-		if fields != nil && !strings.HasPrefix(input, resource.SEARCH_FIELD_PREFIX) && fields.Field(input) != nil {
-			input = resource.SEARCH_FIELD_PREFIX + input
+		input := resolveFieldName(b.fields, sort.Field)
+		// Sort on the keyword form, or the analyzed field would order by its first
+		// token instead of the whole value. Those copies are stored lowercased, so
+		// sorting is case-insensitive.
+		if kf, ok := b.keywordFieldFor(input); ok {
+			input = kf.name
 		}
 
 		hasNameSort = hasNameSort || input == resource.SEARCH_FIELD_NAME
@@ -2698,57 +2821,69 @@ func getSortFields(req *resourcepb.ResourceSearchRequest, fields resource.Search
 	return sorting
 }
 
-// fields that we went to sort by the full text
-var textSortFields = map[string]string{
-	resource.SEARCH_FIELD_TITLE: resource.SEARCH_FIELD_TITLE_PHRASE,
-}
-
 const (
 	lowerCase            = "phrase"
 	whitespaceCharacters = " \t\r\n"
 )
 
-// exactTermQueryFields are fields where filters use Bleve TermQuery directly.
-var exactTermQueryFields = []string{
-	resource.SEARCH_FIELD_OWNER_REFERENCES,
-	resource.SEARCH_FIELD_CREATED_BY,
-	// FIXME: special case for login and email to use term query only because those fields are using keyword analyzer
-	// This should be fixed by using the info from the schema
-	"login",
-	"email",
+// keywordFieldFor reports the keyword-analyzed index field backing a filter or
+// sort field, and false when the field has no keyword form.
+func (b *bleveIndex) keywordFieldFor(key string) (keywordField, bool) {
+	fields := b.searchFields.keywordFields
+	if fields == nil {
+		// Index opened without per-kind declarations; standard fields still apply.
+		fields = standardKeywordFields
+	}
+	kf, ok := fields[key]
+	return kf, ok
+}
+
+// usesExactTermFilter reports whether "=" or "in" on key matches the whole value
+// as one token rather than going through the analyzed path. That is what the
+// filter capability means: the field is keyword-analyzed. "==" does not ask,
+// being exact by definition.
+func (b *bleveIndex) usesExactTermFilter(key string) bool {
+	// "=" on title expands across its phrase, token and ngram variants instead,
+	// even though title is filter-capable. "in" on title is exact; see the caller.
+	if key == resource.SEARCH_FIELD_TITLE {
+		return false
+	}
+	// Selectable fields are keyword-mapped even for kinds that declare no search
+	// fields, so the prefix alone settles it.
+	if strings.HasPrefix(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX) {
+		return true
+	}
+	kf, ok := b.keywordFieldFor(key)
+	return ok && kf.filterable
 }
 
 // Convert a "requirement" into a bleve query
-func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, *resourcepb.ErrorResult) {
-	useExactTermQuery := slices.Contains(exactTermQueryFields, req.Key) || strings.HasPrefix(req.Key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)
+func (b *bleveIndex) requirementQuery(req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
+	useExactTermQuery := b.usesExactTermFilter(req.Key)
 	switch selection.Operator(req.Operator) {
 	case selection.DoubleEquals:
 		// DoubleEquals does exact matching via TermQuery (single value only).
-		// For title, route to the pre-lowered title_phrase field.
 		if len(req.Values) == 1 {
-			key := req.Key
-			value := req.Values[0]
-			if key == resource.SEARCH_FIELD_TITLE {
-				key = resource.SEARCH_FIELD_TITLE_PHRASE
-				value = strings.ToLower(value)
-			}
-			return exactFieldTermQuery(key, value, prefix), nil
+			return b.exactFieldValueQuery(req.Key, req.Values[0]), nil
 		}
 
 	case selection.Equals:
 		return allRequirementValuesQuery(req.Values, func(v string) query.Query {
 			if useExactTermQuery {
-				return exactFieldTermQuery(req.Key, v, prefix)
+				return b.exactFieldValueQuery(req.Key, v)
 			}
-			return fieldFilterQuery(req.Key, filterValue(req.Key, v), prefix)
+			return fieldFilterQuery(req.Key, filterValue(req.Key, v))
 		}), nil
 
 	case selection.In:
+		// "in" is set membership: exact for keyword-analyzed fields and for title
+		// (via its populated title_phrase variant); other fields use the analyzed
+		// path, matching legacy behavior.
 		return anyRequirementValueQuery(req.Values, func(v string) query.Query {
-			if useExactTermQuery {
-				return exactFieldTermQuery(req.Key, v, prefix)
+			if useExactTermQuery || req.Key == resource.SEARCH_FIELD_TITLE {
+				return b.exactFieldValueQuery(req.Key, v)
 			}
-			return fieldFilterQuery(req.Key, filterValue(req.Key, v), prefix)
+			return fieldFilterQuery(req.Key, filterValue(req.Key, v))
 		}), nil
 
 	case selection.NotIn:
@@ -2756,7 +2891,17 @@ func requirementQuery(req *resourcepb.Requirement, prefix string) (query.Query, 
 
 		var mustNotQueries []query.Query
 		for _, value := range req.Values {
-			q := fieldFilterQuery(req.Key, filterValue(req.Key, value), prefix)
+			var q query.Query
+			// notin stays on the analyzed path, unlike "=" and "in". On a keyword
+			// field that is already an exact exclusion, and it is what lets a
+			// wildcard value exclude a prefix, or "*" exclude everything. Only a
+			// field with both a text and a keyword form ends up asymmetric with
+			// "in"; title is handled here so the two agree on it.
+			if req.Key == resource.SEARCH_FIELD_TITLE {
+				q = b.exactFieldValueQuery(req.Key, value)
+			} else {
+				q = fieldFilterQuery(req.Key, filterValue(req.Key, value))
+			}
 			mustNotQueries = append(mustNotQueries, q)
 		}
 		boolQuery.AddMustNot(mustNotQueries...)
@@ -2833,55 +2978,66 @@ func addWildcardQueries(disjoin *query.DisjunctionQuery, pattern string, field s
 	}
 }
 
+// exactFieldValueQuery builds an exact term query for one filter value, against
+// the field's keyword form. Where that form is a separate copy (title_phrase, a
+// text field's <name>_keyword) the copy is stored lowercased, so the term has to
+// be lowercased too.
+func (b *bleveIndex) exactFieldValueQuery(key, value string) query.Query {
+	if kf, ok := b.keywordFieldFor(key); ok {
+		return exactFieldTermQuery(kf.name, kf.term(value))
+	}
+	return exactFieldTermQuery(key, value)
+}
+
 // fieldFilterQuery builds the query for one field-filter value after requirementQuery has handled the selector operator.
 // It applies public field semantics, so a title filter can expand to multiple internal title fields.
-func fieldFilterQuery(key string, value string, prefix string) query.Query {
+func fieldFilterQuery(key string, value string) query.Query {
 	if key == resource.SEARCH_FIELD_TITLE {
-		return titleFieldFilterQuery(value, prefix)
+		return titleFieldFilterQuery(value)
 	}
 	if value == "*" {
 		return bleve.NewMatchAllQuery()
 	}
 	if strings.Contains(value, "*") {
-		return fieldWildcardQuery(key, value, prefix)
+		return fieldWildcardQuery(key, value)
 	}
-	return fieldMatchQuery(key, value, prefix)
+	return fieldMatchQuery(key, value)
 }
 
 // titleFieldFilterQuery expands the public title filter across the internal title fields.
-func titleFieldFilterQuery(value string, prefix string) query.Query {
+func titleFieldFilterQuery(value string) query.Query {
 	// Title exact matching and partial matching live in separate index fields,
 	// but the title filter API predates those internal fields.
 	queries := []query.Query{
-		exactFieldTermQuery(resource.SEARCH_FIELD_TITLE_PHRASE, strings.ToLower(value), prefix),
-		titleFieldTokenQuery(value, prefix),
+		exactFieldTermQuery(resource.SEARCH_FIELD_TITLE_PHRASE, strings.ToLower(value)),
+		titleFieldTokenQuery(value),
 	}
 	// Only use title_ngram for single-token title filters. Multi-word filters are handled by title_phrase/title;
 	// adding title_ngram can broaden them after removeSmallTerms drops short words, for example "what\"s up" becomes "what".
 	if !strings.ContainsAny(value, whitespaceCharacters) {
-		queries = append(queries, titleFieldNgramQuery(value, prefix))
+		queries = append(queries, titleFieldNgramQuery(value))
 	}
 	return bleve.NewDisjunctionQuery(queries...)
 }
 
 // titleFieldTokenQuery builds the part of title filtering that targets the standard-analyzed title field.
-func titleFieldTokenQuery(value string, prefix string) query.Query {
+func titleFieldTokenQuery(value string) query.Query {
 	if value == "*" {
 		return bleve.NewMatchAllQuery()
 	}
 	if strings.Contains(value, "*") {
-		return fieldWildcardQuery(resource.SEARCH_FIELD_TITLE, value, prefix)
+		return fieldWildcardQuery(resource.SEARCH_FIELD_TITLE, value)
 	}
 	if delimiter, ok := firstTermSeparator(value); ok {
-		return fieldAllTokensQuery(resource.SEARCH_FIELD_TITLE, strings.Split(value, delimiter), prefix)
+		return fieldAllTokensQuery(resource.SEARCH_FIELD_TITLE, strings.Split(value, delimiter))
 	}
-	return fieldMatchQuery(resource.SEARCH_FIELD_TITLE, value, prefix)
+	return fieldMatchQuery(resource.SEARCH_FIELD_TITLE, value)
 }
 
 // titleFieldNgramQuery builds the partial-match part of title filtering against title_ngram.
-func titleFieldNgramQuery(value string, prefix string) query.Query {
+func titleFieldNgramQuery(value string) query.Query {
 	q := bleve.NewMatchQuery(removeSmallTerms(splitTermCharacters(value)))
-	q.SetField(prefix + resource.SEARCH_FIELD_TITLE_NGRAM)
+	q.SetField(resource.SEARCH_FIELD_TITLE_NGRAM)
 	q.Analyzer = TITLE_ANALYZER
 	q.Operator = query.MatchQueryOperatorAnd
 	return q
@@ -2896,33 +3052,33 @@ func splitTermCharacters(value string) string {
 }
 
 // fieldWildcardQuery builds a wildcard query against one concrete Bleve field.
-func fieldWildcardQuery(key string, value string, prefix string) query.Query {
+func fieldWildcardQuery(key string, value string) query.Query {
 	// wildcard query is expensive - should be used with caution
 	q := bleve.NewWildcardQuery(value)
-	q.SetField(prefix + key)
+	q.SetField(key)
 	return q
 }
 
 // fieldMatchQuery builds an analyzed match query against one concrete Bleve field.
-func fieldMatchQuery(key string, value string, prefix string) query.Query {
+func fieldMatchQuery(key string, value string) query.Query {
 	q := bleve.NewMatchQuery(value)
-	q.SetField(prefix + key)
+	q.SetField(key)
 	return q
 }
 
 // exactFieldTermQuery uses Bleve TermQuery for exact token matching.
 // The input must already match how the field was indexed; TermQuery does not run an analyzer.
-func exactFieldTermQuery(key string, value string, prefix string) query.Query {
+func exactFieldTermQuery(key string, value string) query.Query {
 	// won't match with ending space
 	value = strings.TrimSuffix(value, " ")
 
 	q := bleve.NewTermQuery(value)
-	q.SetField(prefix + key)
+	q.SetField(key)
 	return q
 }
 
 // fieldAllTokensQuery requires every token from a split filter value to match the same concrete Bleve field.
-func fieldAllTokensQuery(key string, tokens []string, prefix string) query.Query {
+func fieldAllTokensQuery(key string, tokens []string) query.Query {
 	cq := bleve.NewConjunctionQuery()
 	for _, token := range tokens {
 		if token == "" {
@@ -2931,11 +3087,11 @@ func fieldAllTokensQuery(key string, tokens []string, prefix string) query.Query
 		_, ok := firstTermSeparator(token)
 		if ok {
 			tq := bleve.NewTermQuery(token)
-			tq.SetField(prefix + key)
+			tq.SetField(key)
 			cq.AddQuery(tq)
 			continue
 		}
-		cq.AddQuery(fieldMatchQuery(key, token, prefix))
+		cq.AddQuery(fieldMatchQuery(key, token))
 	}
 	return cq
 }

@@ -9,16 +9,43 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
+import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
+import { homepageViewed } from './analytics/main';
+
+jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
+  ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
+  useIrmPlugin: jest.fn(),
+}));
+
+jest.mock('./analytics/main', () => ({
+  ctaClicked: jest.fn(),
+  tabChanged: jest.fn(),
+  clearHistoryClicked: jest.fn(),
+  homepageViewed: jest.fn(),
+}));
+
+jest.mock('app/plugins/panel/news/useNewsFeed');
 
 setBackendSrv(backendSrv);
 setupMockServer();
 
+const mockUseIrmPlugin = jest.mocked(useIrmPlugin);
+const useNewsFeedMock = jest.mocked(useNewsFeed);
+
 beforeEach(() => {
+  jest.clearAllMocks();
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+  mockUseIrmPlugin.mockReturnValue({ pluginId: SupportedPlugin.Incident, installed: false, loading: false });
+  useNewsFeedMock.mockReturnValue({
+    state: { loading: false, error: undefined, value: undefined },
+    getNews: jest.fn(),
+  });
 
   // Deny alerting permission so the FiringAlertsCard renders null
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
@@ -171,6 +198,17 @@ describe('HomePage', () => {
 
     expect(await screen.findByTestId('home-page-skeleton')).toBeInTheDocument();
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
+  });
+
+  it('renders a skeleton instead of the page content while incidents plugin is loading', async () => {
+    mockUseIrmPlugin.mockReturnValue({ pluginId: SupportedPlugin.Incident, installed: undefined, loading: true });
+
+    render(<HomePage />);
+
+    expect(await screen.findByTestId('home-page-skeleton')).toBeInTheDocument();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
   });
 
   it('lands on the auto-switched Starred tab once the dashboard fetches settle', async () => {
@@ -179,6 +217,7 @@ describe('HomePage', () => {
     // dashboards load inside DashboardTabs now; the page does not gate reveal on them
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
     expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 
   it('reveals extension tabs together with the built-in tabs', async () => {
@@ -262,6 +301,7 @@ describe('HomePage', () => {
     // and the greeting stays — the suspension must not bubble to the route-level spinner.
     expect(screen.getByRole('heading', { name: /^Good \w+\.$/ })).toBeInTheDocument();
     expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).not.toHaveBeenCalled();
 
     await act(async () => {
       resolveComponent({ default: () => <div>Lazy assistant content</div> });
@@ -273,5 +313,6 @@ describe('HomePage', () => {
     expect(screen.getByText('Lazy assistant content')).toBeInTheDocument();
     expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();
+    expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
   });
 });

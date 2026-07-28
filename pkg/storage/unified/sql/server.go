@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/reconciler"
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
@@ -38,6 +39,7 @@ type ServerOptions struct {
 	Backend          resource.StorageBackend
 	VectorBackend    vector.VectorBackend
 	Embedder         *embedder.Embedder
+	Reranker         *rerank.Reranker
 	OverridesService *resource.OverridesService
 	Cfg              *setting.Cfg
 	Tracer           trace.Tracer
@@ -74,6 +76,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withBackend,
 		withVectorBackend,
 		withEmbedder,
+		withReranker,
 		withVectorMetrics,
 		withVectorIndexers,
 		withQOSQueue,
@@ -112,6 +115,7 @@ func NewUninitializedSearchServer(opts ServerOptions) (resource.SearchServer, er
 		withBackend,
 		withVectorBackend,
 		withEmbedder,
+		withReranker,
 		withVectorMetrics,
 		withSearch,
 	)
@@ -224,6 +228,13 @@ func withEmbedder(opts *ServerOptions, resourceOpts *resource.ResourceServerOpti
 	return nil
 }
 
+// withReranker propagates the optional Reranker through. nil is allowed;
+// HybridSearch then returns RRF ordering and min_relevance is a no-op.
+func withReranker(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.Reranker = opts.Reranker
+	return nil
+}
+
 // withVectorIndexers builds the optional vector backfiller and
 // reconciler. Both providers return (nil, nil) when their feature is
 // off, so nil is normal and propagates through to the resource server
@@ -277,6 +288,8 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
 
 	if opts.VectorBackend != nil {
+		resourceOpts.Search.AllowedInternalCollections = opts.Cfg.VectorAllowedInternalCollections
+		resourceOpts.Search.AllowedExternalCollections = opts.Cfg.VectorAllowedExternalCollections
 		if opts.Cfg.VectorQueryCacheEnabled {
 			if cache, ok := opts.VectorBackend.(vector.QueryEmbeddingCache); ok {
 				resourceOpts.Search.QueryCache = cache

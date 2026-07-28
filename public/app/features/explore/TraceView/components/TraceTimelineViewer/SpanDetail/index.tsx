@@ -44,14 +44,13 @@ import { type SpanLinkFunc } from '../../types/links';
 import { type TraceProcess, type TraceSpan, type TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../../utils/date';
 import { getServiceDisplayName } from '../../utils/service-name';
-import { getSummaryCountBadgeStyle, getSummaryDurationStats } from '../../utils/summary-span';
+import { getSummaryCountBadgeStyle, getSummaryDurationStats, partitionAggregationTags } from '../../utils/summary-span';
 
 import AccordionCategorizedKeyValues from './AccordionCategorizedKeyValues';
 import AccordionKeyValues from './AccordionKeyValues';
 import AccordionLogs from './AccordionLogs';
 import AccordionReferences from './AccordionReferences';
 import type DetailState from './DetailState';
-import { ShareSpanButton } from './ShareSpanButton';
 import { SpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
 
@@ -269,6 +268,7 @@ export type SpanDetailProps = {
   traceToProfilesOptions?: TraceToProfilesOptions;
   timeZone: TimeZone;
   tagsToggle: (spanID: string) => void;
+  summaryAttributesToggle: (spanID: string) => void;
   traceStartTime: number;
   traceDuration: number;
   traceName: string;
@@ -297,6 +297,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     processToggle,
     span,
     tagsToggle,
+    summaryAttributesToggle,
     traceStartTime,
     traceDuration,
     traceName,
@@ -318,6 +319,7 @@ export default function SpanDetail(props: SpanDetailProps) {
   const {
     isTagsOpen,
     isProcessOpen,
+    isSummaryAttributesOpen,
     logs: logsState,
     isWarningsOpen,
     references: referencesState,
@@ -347,6 +349,11 @@ export default function SpanDetail(props: SpanDetailProps) {
   // single figure and surface the group's end time.
   const isSummarySpan = span.aggregation?.isSummary === true;
   const summaryDurationStats = isSummarySpan && span.aggregation ? getSummaryDurationStats(span.aggregation) : null;
+  // On summary spans, present the raw `aggregation.*` tags in their own accordion rather
+  // than mixed into the regular span attributes.
+  const { aggregationTags, otherTags } = isSummarySpan
+    ? partitionAggregationTags(tags)
+    : { aggregationTags: [], otherTags: tags };
   const durationValue = summaryDurationStats
     ? summaryDurationStats.map((stat) => `${stat.value} (${stat.labelLower})`).join(' | ')
     : formatDuration(duration);
@@ -451,9 +458,21 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   const listOfContentCards = [];
 
+  if (isSummarySpan && aggregationTags.length > 0) {
+    listOfContentCards.push(
+      <AccordionKeyValues
+        data={aggregationTags}
+        label={t('explore.span-detail.label-summary-attributes', 'Summary attributes')}
+        isOpen={isSummaryAttributesOpen}
+        linksGetter={resourceLinksGetter}
+        onToggle={() => summaryAttributesToggle(spanID)}
+      />
+    );
+  }
+
   listOfContentCards.push(
     <AccordionCategorizedKeyValues
-      data={tags}
+      data={otherTags}
       sectionType="span"
       label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
       isOpen={isTagsOpen}
@@ -596,7 +615,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             traceToProfilesOptions={traceToProfilesOptions}
             timeRange={timeRange}
             app={app}
-            shareButton={<ShareSpanButton focusSpanLink={focusSpanLink} />}
+            focusSpanLink={focusSpanLink}
           />
         </div>
         <div className={styles.listWrapper}>

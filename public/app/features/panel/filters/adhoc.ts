@@ -31,7 +31,7 @@ export function getGroupedFilters(
 interface FilterByGroupedLabelsOptions {
   /**
    * The timeseries panel's tooltip filtering shipped with `dashboardUnifiedDrilldownControls` (GA) and
-   * must keep working when the experimental `dashboards.filterablePanels` flag is off, so it opts out.
+   * must keep working when the experimental `grafana.filterablePanels` flag is off, so it opts out.
    */
   checkFilterablePanelsFlag?: boolean;
 }
@@ -43,10 +43,7 @@ export function getFilterByGroupedLabels(
   onAddAdHocFilters: ((items: AdHocFilterItem[]) => void) | undefined,
   { checkFilterablePanelsFlag = true }: FilterByGroupedLabelsOptions = {}
 ): FilterByGroupedLabelsModel | undefined {
-  if (
-    checkFilterablePanelsFlag &&
-    !getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardsFilterablePanels, false)
-  ) {
+  if (checkFilterablePanelsFlag && !getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaFilterablePanels, false)) {
     return undefined;
   }
 

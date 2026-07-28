@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { type Field, FieldType } from '@grafana/data';
 import { type Column } from '@grafana/react-data-grid';
@@ -75,6 +76,14 @@ describe('HeaderCell', () => {
   it('does not render a filter button when the field is not filterable', () => {
     render(<HeaderCell {...baseProps} field={makeField()} />);
     expect(screen.queryByLabelText('Filter Field1')).not.toBeInTheDocument();
+  });
+
+  it('exposes the filter popover state via aria-expanded on the filter button', async () => {
+    render(<HeaderCell {...baseProps} field={makeField({ config: { custom: { filterable: true } } })} />);
+    const filterButton = screen.getByLabelText('Filter Field1');
+    expect(filterButton).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(filterButton);
+    expect(filterButton).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('removes a stale filter for a field that is no longer filterable', () => {

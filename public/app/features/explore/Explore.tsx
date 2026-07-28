@@ -12,6 +12,7 @@ import {
   type GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
   LoadingState,
+  matchPluginId,
   type QueryFixAction,
   type RawTimeRange,
   type SplitOpenOptions,
@@ -599,6 +600,11 @@ export class Explore extends PureComponent<Props, ExploreState> {
     } = this.props;
     const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
+    const isPrometheusSelected = datasourceInstance?.meta.mixed
+      ? this.props.queries.some(
+          (q) => q.datasource?.type != null && matchPluginId('prometheus', { id: q.datasource.type })
+        )
+      : !!datasourceInstance && matchPluginId('prometheus', datasourceInstance.meta);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showNoData =
       queryResponse.state === LoadingState.Done &&
@@ -686,7 +692,11 @@ export class Explore extends PureComponent<Props, ExploreState> {
         >
           <div className={styles.wrapper}>
             {contentOutlineVisible && !compact && (
-              <ContentOutline scroller={this.scrollElement} panelId={`content-outline-container-${exploreId}`} />
+              <ContentOutline
+                scroller={this.scrollElement}
+                panelId={`content-outline-container-${exploreId}`}
+                showMetricsExplorer={isPrometheusSelected}
+              />
             )}
             <ScrollContainer
               data-testid={selectors.pages.Explore.General.scrollView}

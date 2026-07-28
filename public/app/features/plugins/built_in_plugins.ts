@@ -1,3 +1,5 @@
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
+
 const cloudwatchPlugin = async () =>
   await import(/* webpackChunkName: "cloudwatchPlugin" */ 'app/plugins/datasource/cloudwatch/module');
 const dashboardDSPlugin = async () =>
@@ -48,6 +50,7 @@ const statusHistoryPanel = async () =>
   await import(/* webpackChunkName: "statusHistoryPanel" */ 'app/plugins/panel/status-history/module');
 const tablePanel = async () => await import(/* webpackChunkName: "tablePanel" */ 'app/plugins/panel/table/module');
 const textPanel = async () => await import(/* webpackChunkName: "textPanel" */ 'app/plugins/panel/text/module');
+const textNGPanel = async () => await import(/* webpackChunkName: "textNGPanel" */ 'app/plugins/panel/textng/module');
 const timeseriesPanel = async () =>
   await import(/* webpackChunkName: "timeseriesPanel" */ 'app/plugins/panel/timeseries/module');
 const tracesPanel = async () => await import(/* webpackChunkName: "tracesPanel" */ 'app/plugins/panel/traces/module');
@@ -74,7 +77,8 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/prometheus': prometheusPlugin,
   'core:plugin/alertmanager': alertmanagerPlugin,
   // panels
-  'core:plugin/text': textPanel,
+  'core:plugin/text': () =>
+    getFeatureFlagClient().getBooleanValue('grafana.newTextPanel', false) ? textNGPanel() : textPanel(),
   'core:plugin/timeseries': timeseriesPanel,
   'core:plugin/trend': trendPanel,
   'core:plugin/state-timeline': stateTimelinePanel,
