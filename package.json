@@ -343,7 +343,7 @@
     "i18next": "^26.3.6",
     "idb": "^8.0.3",
     "immer": "10.2.0",
-    "immutable": "5.1.8",
+    "immutable": "5.1.9",
     "infinite-viewer": "^0.29.1",
     "ix": "^7.0.0",
     "jquery": "3.7.1",
