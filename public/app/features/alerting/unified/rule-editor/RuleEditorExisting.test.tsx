@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { ui } from 'test/helpers/alertingRuleEditor';
-import { render, screen } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles } from 'test/test-utils';
 
 import { contextSrv } from 'app/core/services/context_srv';
 import { setFolderResponse } from 'app/features/alerting/unified/mocks/server/configure';
@@ -9,11 +9,13 @@ import { DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
-import { grantUserPermissions, mockDataSource, mockFolder } from '../mocks';
+import { grantUserPermissions, mockDataSource, mockFolder, mockRulerAlertingRule } from '../mocks';
 import { grafanaRulerRule, mockPreviewApiResponse } from '../mocks/grafanaRulerApi';
+import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from '../mocks/rulerApi';
 import { MIMIR_DATASOURCE_UID } from '../mocks/server/constants';
 import { setupDataSources } from '../testSetup/datasources';
 import { Annotation } from '../utils/constants';
+import * as ruleId from '../utils/rule-id';
 
 import RuleEditor from './RuleEditor';
 
@@ -171,6 +173,8 @@ describe('RuleEditor grafana managed rules', () => {
 });
 
 describe('Data source managed rules', () => {
+  testWithFeatureToggles({ enable: ['alertingDisableDMAinUI'] });
+
   beforeEach(() => {
     jest.clearAllMocks();
     grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleExternalWrite]);
@@ -179,5 +183,36 @@ describe('Data source managed rules', () => {
   it('should show an error if the data source does not exist', async () => {
     renderRuleEditor('cri%24grafana-cloudd%24delete me%24delete me 3%24recording_rule_delete_2%24-476183141');
     expect(await screen.findByText(/not found/i)).toBeInTheDocument();
+  });
+
+  it('should not show the rule type switch when editing a data source-managed alert', async () => {
+    const dataSource = mockDataSource(
+      {
+        name: 'Mimir',
+        uid: MIMIR_DATASOURCE_UID,
+        jsonData: { manageAlerts: true },
+      },
+      { alerting: true, module: 'core:plugin/prometheus' }
+    );
+    const rule = mockRulerAlertingRule({ alert: 'Mimir alert' });
+    const namespace = 'toggle-test';
+    const groupName = 'toggle-test-group';
+
+    setupDataSources(dataSource);
+    mockRulerRulesApiResponse(server, dataSource.name, {
+      [namespace]: [{ name: groupName, interval: '1m', rules: [rule] }],
+    });
+    mockRulerRulesGroupApiResponse(server, dataSource.name, namespace, groupName, {
+      name: groupName,
+      interval: '1m',
+      rules: [rule],
+    });
+
+    renderRuleEditor(ruleId.stringifyIdentifier(ruleId.fromRulerRule(dataSource.name, namespace, groupName, rule)));
+
+    await ui.inputs.name.find();
+
+    expect(screen.queryByText('Rule type')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('rule-type-radio-group')).not.toBeInTheDocument();
   });
 });
