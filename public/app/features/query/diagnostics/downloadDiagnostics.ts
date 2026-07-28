@@ -5,6 +5,8 @@ import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
+import { type PanelDataPayload } from './capturePanelData';
+
 const DIAGNOSTICS_ENDPOINT = '/api/ds/diagnostics';
 const DASHBOARD_DIAGNOSTICS_ENDPOINT = '/api/ds/dashboard-diagnostics';
 
@@ -42,7 +44,9 @@ export async function downloadDiagnosticsForQueries(
   dashboard?: unknown,
   // Optional frames the frontend was holding for this panel, bundled as paneldata.json. Unlike the
   // save models above this is data rather than a definition, so nothing has to be re-run to read it.
-  panelData?: unknown
+  // Typed, unlike those two, so transposing it with one of them is a compile error rather than a panel
+  // definition silently bundled as paneldata.json.
+  panelData?: PanelDataPayload
 ): Promise<void> {
   const visibleQueries = queries.filter((query) => !query.hide);
 

@@ -74,6 +74,23 @@ describe('downloadDiagnosticsForQueries', () => {
     );
   });
 
+  it('includes the captured frontend panel data in the POST body when provided', async () => {
+    const blob = new Blob(['bundle'], { type: 'application/gzip' });
+    const fetch = setupBackendSrv({ data: blob, headers: new Headers() });
+    const panelData = { version: 1, panelKey: 'panel-1', pluginId: 'timeseries', frames: [] };
+
+    await downloadDiagnosticsForQueries([{ refId: 'A' }], '100', '200', undefined, undefined, undefined, panelData);
+
+    expect(fetch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: '/api/ds/diagnostics',
+        method: 'POST',
+        // paneldata.json is bundled server-side from this, and is what querydata.json gets diffed against.
+        data: { from: '100', to: '200', queries: [{ refId: 'A' }], panelData },
+      })
+    );
+  });
+
   it('falls back to a generated filename when no Content-Disposition is returned', async () => {
     const blob = new Blob(['bundle'], { type: 'application/gzip' });
     setupBackendSrv({ data: blob, headers: new Headers() });

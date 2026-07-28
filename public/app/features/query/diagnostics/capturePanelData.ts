@@ -1,8 +1,15 @@
-import { dataFrameToJSON, type DataFrameJSON } from '@grafana/data';
-import { SceneDataTransformer, SceneQueryRunner, type SceneObject, type VizPanel } from '@grafana/scenes';
+import { dataFrameToJSON, LoadingState, type DataFrameJSON } from '@grafana/data';
+import { type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
 
 /** Schema version stamped into paneldata.json so a reader knows how to interpret it. */
 const PANEL_DATA_ARTIFACT_VERSION = 1;
+
+/** Identifies which panel a capture came from, whether it succeeded or failed. */
+interface PanelDataArtifactHeader {
+  version: number;
+  panelKey?: string;
+  pluginId?: string;
+}
 
 /**
  * `paneldata.json`: the data frames the **frontend** was holding for a panel.
@@ -12,10 +19,7 @@ const PANEL_DATA_ARTIFACT_VERSION = 1;
  * (Prometheus, for one, does a lot of it), so frames present in `querydata.json` but missing or altered
  * here localise the loss to the plugin's frontend rather than its backend or the upstream.
  */
-interface PanelDataArtifact {
-  version: number;
-  panelKey?: string;
-  pluginId?: string;
+export interface PanelDataArtifact extends PanelDataArtifactHeader {
   /** LoadingState at capture time (`Done`, `Error`, `Loading`, …), as the query runner reported it. */
   state?: string;
   request?: PanelDataRequestContext;
@@ -23,7 +27,23 @@ interface PanelDataArtifact {
 }
 
 /**
- * The request these frames were produced from, so the `querydata.json` diff can be read correctly.
+ * A capture that threw, recorded in place of the frames.
+ *
+ * Deliberately carries no `frames` key: an empty one would read as "the frontend was holding nothing",
+ * which is the frontend-loss misreading this artifact exists to settle. With this shape an absent
+ * `paneldata.json` means there was nothing to capture — no query runner, or no resolved data — rather
+ * than a capture that broke on the way out.
+ */
+export interface PanelDataCaptureFailure extends PanelDataArtifactHeader {
+  captureError: string;
+}
+
+/** What the drawer sends as `panelData`, either way. */
+export type PanelDataPayload = PanelDataArtifact | PanelDataCaptureFailure;
+
+/**
+ * The request these frames were produced from, so the `querydata.json` diff can be read correctly —
+ * unless `inFlight` is set, in which case they were not.
  */
 interface PanelDataRequestContext {
   /** Epoch ms, matching the units of the `from`/`to` the diagnostics request sends. */
@@ -31,6 +51,15 @@ interface PanelDataRequestContext {
   to: number;
   intervalMs?: number;
   maxDataPoints?: number;
+  /**
+   * Set when this request had returned nothing yet at capture time, so the frames are *not* its output:
+   * `runRequest` emits a loading packet carrying the new request and no series 200ms into every query,
+   * and `preProcessPanelData` then refills those empty series from the panel's previous result. So a
+   * capture taken mid-refresh holds the previous run's frames (or none, on a first load) while the
+   * request describes the run still in flight — this window and resolution must not be used to explain
+   * a difference against `querydata.json`.
+   */
+  inFlight?: true;
 }
 
 /**
@@ -46,17 +75,27 @@ interface PanelDataRequestContext {
  * nor a *rendering* fault is visible here. This artifact answers exactly one question: did the plugin's
  * frontend return what its backend produced?
  *
- * Returns `undefined` when the panel has no query runner or no resolved data, so the caller simply omits
- * the artifact rather than sending an empty one.
+ * One caveat for the diff: core normalises every frame on the way in — `preProcessPanelData` runs each
+ * through `toDataFrame` and `guessFieldTypes` — so a field the backend typed one way and this artifact
+ * types another is core normalising, not the plugin rewriting anything.
+ *
+ * Takes the query runner the caller already resolved rather than walking to it again, so the frames here
+ * are guaranteed to come from the same runner as the queries the caller sends alongside them.
+ *
+ * Returns `undefined` when there is no query runner or no resolved data, so the caller simply omits the
+ * artifact rather than sending an empty one.
  */
-export function capturePanelData(panel: VizPanel): PanelDataArtifact | undefined {
-  const runner = findQueryRunner(panel);
+export function capturePanelData(panel: VizPanel, runner: SceneQueryRunner | undefined): PanelDataArtifact | undefined {
   const data = runner?.state.data;
   if (!data) {
     return undefined;
   }
 
   const request = data.request;
+  // endTime is stamped onto the request when its first response packet arrives, so an unset endTime on a
+  // Loading packet marks exactly the case where the frames and the request come from different runs (see
+  // inFlight). Once a packet has landed, a Loading or Streaming state is this request's own partial output.
+  const inFlight = data.state === LoadingState.Loading && request?.endTime === undefined;
 
   return {
     version: PANEL_DATA_ARTIFACT_VERSION,
@@ -71,6 +110,7 @@ export function capturePanelData(panel: VizPanel): PanelDataArtifact | undefined
           to: request.range.to.valueOf(),
           intervalMs: request.intervalMs,
           maxDataPoints: request.maxDataPoints,
+          inFlight: inFlight ? true : undefined,
         }
       : undefined,
     // Deliberately unbounded, for now. A very large panel makes for a large request body, and past
@@ -86,22 +126,17 @@ export function capturePanelData(panel: VizPanel): PanelDataArtifact | undefined
 }
 
 /**
- * Walks the panel's data chain to its query runner.
+ * Records a capture that failed, so the omission is visible in the bundle.
  *
- * A panel's `$data` is either a `SceneQueryRunner` or a `SceneDataTransformer` wrapping one, and the
- * provider can also live on the parent (repeat clones share it), which is why both are checked —
- * mirroring getQueryRunnerFor in the diagnostics drawers.
+ * Sending nothing would leave a support engineer unable to tell a browser that had no frames to give from
+ * a capture that broke on the way out — the same conflation the backend's `WithPanelData` refuses to make
+ * between an absent payload and an empty one.
  */
-function findQueryRunner(sceneObject: SceneObject | undefined): SceneQueryRunner | undefined {
-  if (!sceneObject) {
-    return undefined;
-  }
-  const provider = sceneObject.state.$data ?? sceneObject.parent?.state.$data;
-  if (provider instanceof SceneQueryRunner) {
-    return provider;
-  }
-  if (provider instanceof SceneDataTransformer) {
-    return findQueryRunner(provider);
-  }
-  return undefined;
+export function capturePanelDataFailure(panel: VizPanel, error: unknown): PanelDataCaptureFailure {
+  return {
+    version: PANEL_DATA_ARTIFACT_VERSION,
+    panelKey: panel.state.key,
+    pluginId: panel.state.pluginId,
+    captureError: error instanceof Error ? error.message : String(error),
+  };
 }

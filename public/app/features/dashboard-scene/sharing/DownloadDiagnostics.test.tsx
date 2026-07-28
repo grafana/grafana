@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
-import { type ScopedVars } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, toDataFrame, type PanelData, type ScopedVars } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { logError, setPluginImportUtils } from '@grafana/runtime';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
@@ -129,6 +129,57 @@ describe('DownloadDiagnostics', () => {
     consoleWarn.mockRestore();
   });
 
+  it('forwards the frames the frontend was holding for the panel', async () => {
+    const runner = new SceneQueryRunner({ queries: [{ refId: 'A' }] });
+    runner.setState({ data: dataWith(toDataFrame({ refId: 'A', name: 'host-a', fields: [] })) });
+    const { tab } = setupScenario(undefined, runner);
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    const [, , , , , , panelData] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    // Bundled as paneldata.json, which is what querydata.json (the backend's frames) gets diffed against.
+    expect(panelData).toMatchObject({
+      version: 1,
+      panelKey: 'panel-1',
+      frames: [expect.objectContaining({ schema: expect.objectContaining({ name: 'host-a' }) })],
+    });
+  });
+
+  it('records a capture failure in the payload instead of sinking the whole download', async () => {
+    // dataFrameToJSON copies field config by reference, so an unserializable frame gets through it and
+    // only blows up in the request's JSON.stringify. That has to be contained here, or one bad frame
+    // costs the user traffic.har and querydata.json too.
+    const consoleWarn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    const runner = new SceneQueryRunner({ queries: [{ refId: 'A' }] });
+    runner.setState({
+      data: dataWith(
+        toDataFrame({ refId: 'A', fields: [{ name: 'value', values: [1], config: { custom: circular } }] })
+      ),
+    });
+    const { tab } = setupScenario(undefined, runner);
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    expect(downloadDiagnosticsForQueries).toHaveBeenCalledTimes(1);
+    const [, , , , , , panelData] = jest.mocked(downloadDiagnosticsForQueries).mock.calls[0];
+    // The failure is recorded rather than dropped: an absent artifact would be indistinguishable from a
+    // panel that had no frames to give. No frames key, which would read as exactly that.
+    expect(panelData).toEqual({
+      version: 1,
+      panelKey: 'panel-1',
+      pluginId: 'table',
+      captureError: expect.stringContaining('circular'),
+    });
+    expect(screen.queryByText('Failed to generate diagnostics')).not.toBeInTheDocument();
+    expect(logError).toHaveBeenCalledWith(expect.any(Error), { panelKey: 'panel-1' });
+    expect(consoleWarn).toHaveBeenCalled();
+    consoleWarn.mockRestore();
+  });
+
   it('fills the runner-level datasource onto queries that lack one', async () => {
     const runner = new SceneQueryRunner({
       datasource: { uid: 'runner-ds', type: 'prometheus' },
@@ -233,6 +284,11 @@ describe('DownloadDiagnostics', () => {
     expect(downloadDiagnosticsForQueries).not.toHaveBeenCalled();
   });
 });
+
+// Resolved query-runner data, as the runner would hold it after a completed query.
+function dataWith(...series: PanelData['series']): PanelData {
+  return { state: LoadingState.Done, series, timeRange: getDefaultTimeRange() };
+}
 
 function setupScenario(
   onDismiss?: () => void,
