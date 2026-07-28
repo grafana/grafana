@@ -2500,15 +2500,15 @@ Use this exporter for support: turn it on, reproduce an issue, then collect and 
 
 #### `path`
 
-The path to the capture file, for example, `/var/lib/grafana/traces/capture.json`. Setting this option turns on the file exporter. The parent directory must already exist and be writable by Grafana. The default value is empty, which turns off the exporter.
+The path to the capture file, for example, `/var/lib/grafana/traces/capture.json`. Setting this option turns on the file exporter. The parent directory must already exist and be writable by Grafana. Default value is empty, which turns off the exporter.
 
 #### `max_file_size_bytes`
 
-The maximum size of the capture file, in bytes. The default value is `104857600` (100 MiB). The value must be greater than `0`.
+The maximum size of the capture file, in bytes. Default value is `104857600` (100 MiB). The value must be greater than `0`.
 
 #### `capture_duration`
 
-How long to capture traces after Grafana starts, expressed as a duration such as `10m`. The default value is `10m`. The value must be greater than `0`.
+How long to capture traces after Grafana starts, expressed as a duration such as `10m`. Default value is `10m`. The value must be greater than `0`.
 
 <hr>
 
