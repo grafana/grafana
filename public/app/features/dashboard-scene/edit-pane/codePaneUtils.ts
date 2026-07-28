@@ -13,10 +13,6 @@ import { type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
 import { DashboardEditActionEvent, DashboardStateChangedEvent } from './events';
 
-export function getDashboardJsonText(dashboard: DashboardScene): string {
-  return JSON.stringify(transformSceneToSaveModelSchemaV2(dashboard), null, 2);
-}
-
 const NEW_DASHBOARD_NAME_PLACEHOLDER = '<dashboard-uid>';
 
 export function getDashboardResourceText(dashboard: DashboardScene, format: SchemaEditorFormat = 'json'): string {
@@ -37,16 +33,73 @@ export function getDashboardResourceText(dashboard: DashboardScene, format: Sche
   return JSON.stringify(resource, null, 2);
 }
 
+// Only spec edits are supported from the resource JSON editors. Validate the envelope so that
+// changes to apiVersion, kind, or metadata fail loudly instead of being silently dropped.
+export function validateDashboardResourceEnvelope(
+  dashboard: DashboardScene,
+  resource: { apiVersion?: string; kind?: string; metadata?: Record<string, unknown> }
+): { success: boolean; error?: string } {
+  const expectedAPIVersion = `dashboard.grafana.app/${getK8sV2DashboardApiConfig().version}`;
+  const { apiVersion, kind, metadata } = resource;
+
+  if (kind && kind !== 'Dashboard') {
+    return {
+      success: false,
+      error: t('dashboard.schema-editor.invalid-kind', "Invalid kind: {{kind}}. Expected 'Dashboard'.", { kind }),
+    };
+  }
+  if (apiVersion && apiVersion !== expectedAPIVersion) {
+    return {
+      success: false,
+      error: t(
+        'dashboard.schema-editor.invalid-api-version',
+        "Invalid apiVersion: {{apiVersion}}. Expected '{{expectedAPIVersion}}'.",
+        { apiVersion, expectedAPIVersion }
+      ),
+    };
+  }
+  // getDashboardResourceText() emits NEW_DASHBOARD_NAME_PLACEHOLDER when the dashboard has no uid yet,
+  // so the editor's own initial JSON must be accepted.
+  const expectedName = dashboard.state.uid ?? NEW_DASHBOARD_NAME_PLACEHOLDER;
+  if (metadata?.name && metadata.name !== expectedName) {
+    return {
+      success: false,
+      error: t('dashboard.schema-editor.identifier-change-unsupported', 'Unable to change identifier from JSON editor'),
+    };
+  }
+  // Only metadata.name is honored when building the DTO; reject any other field so
+  // unsupported metadata edits (e.g. labels) fail loudly rather than being silently dropped.
+  const unsupportedMetadataKeys = Object.keys(metadata ?? {}).filter((key) => key !== 'name');
+  if (unsupportedMetadataKeys.length > 0) {
+    return {
+      success: false,
+      error: t(
+        'dashboard.schema-editor.metadata-edit-unsupported',
+        'Editing dashboard metadata is not yet supported ({{keys}})',
+        { keys: unsupportedMetadataKeys.join(', ') }
+      ),
+    };
+  }
+  return { success: true };
+}
+
 export function applyJsonToDashboard(
   dashboard: DashboardScene,
   jsonText: string
 ): { success: boolean; error?: string } {
   try {
-    const spec = JSON.parse(jsonText);
-    const { meta } = dashboard.state;
+    const expectedAPIVersion = `dashboard.grafana.app/${getK8sV2DashboardApiConfig().version}`;
+    const resource = JSON.parse(jsonText);
+    const { spec } = resource;
 
+    const validation = validateDashboardResourceEnvelope(dashboard, resource);
+    if (!validation.success) {
+      return validation;
+    }
+
+    const { meta } = dashboard.state;
     const dto: DashboardWithAccessInfo<DashboardV2Spec> = {
-      apiVersion: getK8sV2DashboardApiConfig().version,
+      apiVersion: expectedAPIVersion,
       kind: 'DashboardWithAccessInfo',
       metadata: {
         name: dashboard.state.uid ?? '',

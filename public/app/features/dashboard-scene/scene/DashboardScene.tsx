@@ -1359,7 +1359,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   getRawJsonFromEditor(): Dashboard | DashboardV2Spec | undefined {
     if (this.state.editview instanceof JsonModelEditView) {
       try {
-        return JSON.parse(this.state.editview.state.jsonText);
+        // The v2 editor holds a full resource envelope; getEditedSaveModel unwraps it back to the bare spec.
+        return this.state.editview.getEditedSaveModel();
       } catch {
         return undefined;
       }
