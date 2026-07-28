@@ -246,6 +246,81 @@ func TestFacetFieldsForMapping(t *testing.T) {
 	assert.NotContains(t, fields, "labels.region")
 }
 
+func TestTextQueryKindsForMapping(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "example.grafana.app", Version: "v1", Resource: "widgets"}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: {
+			{
+				Name: "panel_title",
+				Type: resource.SearchFieldTypeString,
+				Capabilities: []resource.SearchCapability{
+					resource.SearchCapabilityText,
+					resource.SearchCapabilityPartial,
+				},
+			},
+			{
+				Name:         "team",
+				Type:         resource.SearchFieldTypeString,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter},
+			},
+			{
+				Name:         "summary",
+				Type:         resource.SearchFieldTypeString,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFilter},
+			},
+			{
+				Name:         "linkCount",
+				Type:         resource.SearchFieldTypeInt64,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter},
+			},
+		},
+	}, nil)
+
+	kinds := textQueryKindsForMapping(provider, gvr.Group, gvr.Resource, []string{"spec.slug"})
+
+	// The title trio: each variant gets the query its analyzer needs.
+	assert.Equal(t, textQueryStandard, kinds[resource.SEARCH_FIELD_TITLE])
+	assert.Equal(t, textQueryNgram, kinds[resource.SEARCH_FIELD_TITLE_NGRAM])
+	// title_phrase holds a lowercased copy of the title.
+	assert.Equal(t, textQueryTermLowered, kinds[resource.SEARCH_FIELD_TITLE_PHRASE])
+
+	// Other standard fields.
+	assert.Equal(t, textQueryStandard, kinds[resource.SEARCH_FIELD_DESCRIPTION])
+	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_FIELD_FOLDER])
+	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_FIELD_TAGS])
+
+	// Per-kind fields live under fields.*
+	assert.Equal(t, textQueryStandard, kinds["fields.panel_title"])
+	assert.Equal(t, textQueryNgram, kinds["fields.panel_title_ngram"])
+	// team is keyword-mapped in place, so it keeps the value's case, while
+	// summary_keyword is a lowercased copy of the text field.
+	assert.Equal(t, textQueryTerm, kinds["fields.team"])
+	assert.Equal(t, textQueryStandard, kinds["fields.summary"])
+	assert.Equal(t, textQueryTermLowered, kinds["fields.summary_keyword"])
+
+	// Non-string fields are never analyzed, so they are absent.
+	assert.NotContains(t, kinds, "fields.linkCount")
+
+	// Selectable fields are keyword-mapped.
+	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.slug"])
+
+	// Keyword-mapped sub-document fields, and labels which are not.
+	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_FIELD_MANAGER_KIND])
+	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_FIELD_SOURCE_PATH])
+	assert.NotContains(t, kinds, resource.SEARCH_FIELD_LABELS+".region")
+
+	// An index without per-kind fields still knows the standard ones.
+	assert.Equal(t, textQueryTermLowered, textQueryKindsForMapping(nil, "", "", nil)[resource.SEARCH_FIELD_TITLE_PHRASE])
+}
+
+func TestBleveIndex_textQueryKindFor(t *testing.T) {
+	b := &bleveIndex{textQueryKinds: map[string]textQueryKind{resource.SEARCH_FIELD_TITLE_PHRASE: textQueryTerm}}
+	assert.Equal(t, textQueryTerm, b.textQueryKindFor(resource.SEARCH_FIELD_TITLE_PHRASE))
+	// reference keys are dynamic, so the keyword sub-document is matched by prefix.
+	assert.Equal(t, textQueryTerm, b.textQueryKindFor("reference.datasource"))
+	// Undeclared fields fall back to the analyzed query.
+	assert.Equal(t, textQueryStandard, b.textQueryKindFor(resource.SEARCH_FIELD_LABELS+".region"))
+}
 func TestAddCapabilityFieldMappings_RetrieveOnly_StoreOnly(t *testing.T) {
 	// With no dynamic fallback, a retrieve-only field must be stored explicitly.
 	t.Run("int64", func(t *testing.T) {
@@ -490,11 +565,12 @@ func TestBleveIndex_resolveQueryFields(t *testing.T) {
 	// An explicit title field fans out the same way.
 	assert.Equal(t, titleVariants, names(b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: resource.SEARCH_FIELD_TITLE}})))
 
-	// A per-kind field resolves to fields.* and keeps its requested type/boost.
-	got := b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: "panel_title", Type: resourcepb.QueryFieldType_TEXT, Boost: 3}})
+	// A per-kind field resolves to fields.* and keeps its requested boost. The
+	// requested type is dropped: the backend derives it from the mapping.
+	got := b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: "panel_title", Type: resourcepb.QueryFieldType_KEYWORD, Boost: 3}})
 	require.Len(t, got, 1)
 	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+"panel_title", got[0].Name)
-	assert.Equal(t, resourcepb.QueryFieldType_TEXT, got[0].Type)
+	assert.Equal(t, resourcepb.QueryFieldType_DEFAULT, got[0].Type)
 	assert.Equal(t, float32(3), got[0].Boost)
 
 	// title + per-kind field: title variants first, then the resolved field.

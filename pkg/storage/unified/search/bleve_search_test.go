@@ -767,15 +767,24 @@ func TestPublicFieldNameTextQuery(t *testing.T) {
 		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d2", Title: "Two",
 			Key:    &resourcepb.ResourceKey{Name: "d2", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
 			Fields: map[string]any{"team": "blueteam"}}},
+		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d3", Title: "Three",
+			Key:    &resourcepb.ResourceKey{Name: "d3", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: map[string]any{"team": "GreenTeam"}}},
 	}}))
 
-	req := &resourcepb.ResourceSearchRequest{
-		Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
-		Query:       "redteam",
-		QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "team", Type: resourcepb.QueryFieldType_TEXT, Boost: 1}},
-		Limit:       100000,
+	query := func(text string) *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
+			Query:       text,
+			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "team", Type: resourcepb.QueryFieldType_TEXT, Boost: 1}},
+			Limit:       100000,
+		}
 	}
-	checkSearchQuery(t, index, req, []string{"d1"})
+
+	checkSearchQuery(t, index, query("redteam"), []string{"d1"})
+	// team is keyword-mapped, so its stored value keeps its case and an exact
+	// query has to match it as written.
+	checkSearchQuery(t, index, query("GreenTeam"), []string{"d3"})
 }
 
 func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer resource.BuildFn) resource.ResourceIndex {
