@@ -159,35 +159,48 @@ func searchAs(t *testing.T, h *Handler, callerNS, pathNS string) *httptest.Respo
 	return w
 }
 
-func TestHandler_RejectsCrossNamespaceRequest(t *testing.T) {
-	client := &fakeIndexClient{resp: emptyResponse()}
-	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+func TestHandler_SearchesTheNamespaceFromThePath(t *testing.T) {
+	// Whether the caller may reach the namespace is settled by the apiserver
+	// authorization chain before the handler runs, so the handler searches what
+	// the path asks for. A caller scoped to "*", such as a service identity,
+	// reaches a concrete namespace the same way.
+	for name, callerNS := range map[string]string{
+		"caller scoped to the namespace":   "tenant-b",
+		"caller scoped to every namespace": "*",
+	} {
+		t.Run(name, func(t *testing.T) {
+			client := &fakeIndexClient{resp: emptyResponse()}
+			h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
 
-	w := searchAs(t, h, "tenant-a", "tenant-b")
+			w := searchAs(t, h, callerNS, "tenant-b")
 
-	assert.Equal(t, http.StatusForbidden, w.Code, w.Body.String())
-	assert.Nil(t, client.got, "a cross-namespace request must not reach the backend")
+			require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+			require.NotNil(t, client.got)
+			assert.Equal(t, "tenant-b", client.got.Options.Key.Namespace)
+		})
+	}
 }
 
-func TestHandler_AllowsCallerScopedToEveryNamespace(t *testing.T) {
+func TestHandler_RejectsWildcardNamespace(t *testing.T) {
 	client := &fakeIndexClient{resp: emptyResponse()}
 	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
 
-	// Service identities are scoped to "*" and may reach any namespace, so this
-	// must not be treated as a mismatch.
-	w := searchAs(t, h, "*", "tenant-b")
+	// Searching every namespace at once is not supported, so "*" must be turned
+	// away rather than reaching the backend as a namespace of that name. A caller
+	// scoped to "*" is allowed to exist; it just has to name a namespace.
+	w := searchAs(t, h, "*", "*")
 
-	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
-	require.NotNil(t, client.got)
-	assert.Equal(t, "tenant-b", client.got.Options.Key.Namespace, "the search runs against the requested namespace")
+	assert.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
+	assert.Nil(t, client.got)
 }
 
 func TestHandler_RequiresNamespace(t *testing.T) {
 	client := &fakeIndexClient{resp: emptyResponse()}
 	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
 
-	// A caller scoped to "*" with no namespace in the path has not said which
-	// tenant to search, so this must not fall back to searching "*".
+	// Without a namespace there is nothing to scope the search to, and for a
+	// caller scoped to "*" falling back to its own namespace would mean
+	// searching the literal namespace "*".
 	w := searchAs(t, h, "*", "")
 
 	assert.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())

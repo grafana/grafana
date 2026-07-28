@@ -9,7 +9,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -17,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -28,6 +26,10 @@ import (
 // maxRequestBody bounds the envelope we are willing to parse. Queries are small,
 // so anything larger is a client bug or an attack.
 const maxRequestBody = 1 << 20 // 1 MiB
+
+// wildcardNamespace is what an identity scoped to every namespace carries. It is
+// never a namespace that can be searched.
+const wildcardNamespace = "*"
 
 // kindRef identifies the kind a search endpoint is mounted under. Kind is
 // carried separately because result rows only name the resource.
@@ -108,23 +110,23 @@ func (h *Handler) SearchFor(kind kindRef) http.HandlerFunc {
 	}
 }
 
-// requestNamespace returns the namespace the request targets, once the caller
-// is known to be allowed to reach it. NamespaceMatches carries the shared rule
-// rather than a string comparison, so identities scoped to every namespace
-// still work.
+// requestNamespace returns the namespace the request targets.
+//
+// It does not check whether the caller may reach that namespace. The apiserver
+// authorization chain already decided that before dispatching here, and it
+// knows cases a comparison here would miss, such as Grafana admins reaching
+// another namespace. Repeating the decision here only risks contradicting it.
+// Results are authorized per item against the caller regardless.
 func requestNamespace(r *http.Request) (string, error) {
-	requester, err := identity.GetRequester(r.Context())
-	if err != nil {
-		return "", err
-	}
 	namespace, ok := request.NamespaceFrom(r.Context())
 	if !ok || namespace == "" {
 		return "", apierrors.NewBadRequest("namespace is required")
 	}
-	if !types.NamespaceMatches(requester.GetNamespace(), namespace) {
-		return "", apierrors.NewForbidden(
-			schema.GroupResource{Group: searchv0.GROUP},
-			"", fmt.Errorf("namespace %q is not accessible", namespace))
+	// Searching every namespace at once is not supported. This is about what the
+	// endpoint offers, not about who the caller is: a wildcard here would reach
+	// the backend as a namespace literally named "*".
+	if namespace == wildcardNamespace {
+		return "", apierrors.NewBadRequest("searching across namespaces is not supported")
 	}
 	return namespace, nil
 }
