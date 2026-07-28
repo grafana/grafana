@@ -36,6 +36,7 @@ import {
   isV2StoredVersion,
 } from 'app/features/dashboard/api/utils';
 import { initializeDashboardAnalyticsAggregator } from 'app/features/dashboard/services/DashboardAnalyticsAggregator';
+import { recordDashboardFetchTiming } from 'app/features/dashboard/services/DashboardFetchTiming';
 import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -529,7 +530,11 @@ abstract class DashboardScenePageStateManagerBase<T>
       return await this.loadHomeDashboard();
     }
 
+    // dashboard_view/dashboard_render profiling only starts once the scene exists, i.e. after
+    // this resolves - record it separately so it can be attached to those events later.
+    const fetchStart = performance.now();
     const rsp = await this.fetchDashboard(options);
+    recordDashboardFetchTiming(options.uid || undefined, performance.now() - fetchStart);
 
     if (!rsp) {
       return null;
@@ -934,7 +939,9 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     try {
       this.setState({ isLoading: true });
 
+      const fetchStart = performance.now();
       const rsp = await dashboardLoaderSrv.loadDashboard('db', dashboard.state.meta.slug, uid, queryParams);
+      recordDashboardFetchTiming(uid, performance.now() - fetchStart);
       const fromCache = this.getSceneFromCache(uid);
 
       // check if cached db version is same as both
@@ -1285,7 +1292,9 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     try {
       this.setState({ isLoading: true });
 
+      const fetchStart = performance.now();
       const rsp = await this.dashboardLoader.loadDashboard('db', dashboard.state.meta.slug, uid, queryParams);
+      recordDashboardFetchTiming(uid, performance.now() - fetchStart);
       const fromCache = this.getSceneFromCache(uid);
 
       if (

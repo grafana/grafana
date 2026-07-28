@@ -2,6 +2,7 @@ import { logMeasurement } from '@grafana/runtime';
 import { type performanceUtils } from '@grafana/scenes';
 
 import { DashboardAnalyticsAggregator } from './DashboardAnalyticsAggregator';
+import { recordDashboardFetchTiming } from './DashboardFetchTiming';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -45,6 +46,57 @@ describe('DashboardAnalyticsAggregator', () => {
     jest.spyOn(performance, 'measure').mockReturnValue({ duration: 0 } as PerformanceMeasure);
     aggregator = new DashboardAnalyticsAggregator();
     aggregator.initialize('dash-uid', 'Test dashboard');
+    // Reset the DashboardFetchTiming store to a uid that won't match 'dash-uid', so tests
+    // that don't care about fetch timing aren't affected by leakage across test files.
+    recordDashboardFetchTiming('unrelated-uid', 0);
+  });
+
+  function completeDashboardInteraction() {
+    aggregator.onDashboardInteractionComplete({
+      interactionType: 'dashboard_view',
+      operationId: 'op-1',
+      timestamp: 1000,
+      duration: 250,
+      networkDuration: 120.5,
+      longFramesCount: 0,
+      longFramesTotalTime: 0,
+    });
+  }
+
+  function getDashboardRenderPayloads() {
+    return logMeasurementMock.mock.calls
+      .filter(([event]) => event === 'dashboard_render')
+      .map(([, payload]) => payload);
+  }
+
+  it('includes dashboardFetchDuration when the fetch timing store has a matching uid', () => {
+    recordDashboardFetchTiming('dash-uid', 87.26);
+
+    completeDashboardInteraction();
+
+    expect(getDashboardRenderPayloads()[0]).toMatchObject({ dashboardFetchDuration: 87.3 });
+  });
+
+  it('omits dashboardFetchDuration when the fetch timing store has no matching uid', () => {
+    recordDashboardFetchTiming('some-other-dashboard', 87.26);
+
+    completeDashboardInteraction();
+
+    expect(getDashboardRenderPayloads()[0]).not.toHaveProperty('dashboardFetchDuration');
+  });
+
+  it('consumes the fetch timing once - a second dashboard_render for the same load omits it', () => {
+    recordDashboardFetchTiming('dash-uid', 87.26);
+
+    // First interaction (e.g. the load itself) carries the fetch duration...
+    completeDashboardInteraction();
+    // ...a later interaction on the same dashboard (e.g. a refresh) must not re-report it.
+    completeDashboardInteraction();
+
+    const payloads = getDashboardRenderPayloads();
+    expect(payloads).toHaveLength(2);
+    expect(payloads[0]).toMatchObject({ dashboardFetchDuration: 87.3 });
+    expect(payloads[1]).not.toHaveProperty('dashboardFetchDuration');
   });
 
   it('reports a per-phase duration breakdown alongside total_time on the panel_render event', () => {

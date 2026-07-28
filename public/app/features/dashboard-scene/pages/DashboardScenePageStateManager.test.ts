@@ -16,6 +16,7 @@ import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardVersionError, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { consumeDashboardFetchTiming } from 'app/features/dashboard/services/DashboardFetchTiming';
 import {
   type DashboardLoaderSrv,
   type DashboardLoaderSrvV2,
@@ -469,6 +470,15 @@ describe('DashboardScenePageStateManager v1', () => {
 
       expect(loader.state.dashboard).toBeInstanceOf(DashboardScene);
       expect(loader.state.isLoading).toBe(false);
+    });
+
+    it('should record dashboard fetch timing for the loaded uid', async () => {
+      setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
+
+      const loader = new DashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(consumeDashboardFetchTiming('fake-dash')).toBeGreaterThanOrEqual(0);
     });
 
     it('should use DashboardScene creator to initialize the snapshot scene', async () => {
