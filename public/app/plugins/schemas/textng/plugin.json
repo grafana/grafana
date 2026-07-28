@@ -1,0 +1,19 @@
+{
+  "type": "panel",
+  "name": "Text NG",
+  "id": "text",
+  "suggestions": true,
+  "skipDataQuery": true,
+
+  "info": {
+    "description": "Text panel v2 panel schema.",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-text-panel.svg",
+      "large": "img/icn-text-panel.svg"
+    }
+  }
+}

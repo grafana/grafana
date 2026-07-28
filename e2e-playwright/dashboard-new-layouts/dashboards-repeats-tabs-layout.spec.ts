@@ -256,7 +256,7 @@ test.describe(
       // The tab order is only updated after the drop animation finishes (onDragEnd),
       // so retry the position check until the reorder has been applied
       await expect(async () => {
-        const repeatedTab = await getTabPosition(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.at(0)}`);
+        const repeatedTab = await getTabPosition(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.at(-1)}`); // note: -1 (the last repeated tab) because we have to wait for the whole repeated group to move ;)
         const normalTab = await getTabPosition(dashboardPage, selectors, 'New tab');
         expect(normalTab?.x).toBeLessThan(repeatedTab!.x);
       }).toPass();
