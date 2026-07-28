@@ -395,53 +395,11 @@ func TestInformer_ReconnectTriggersRelist(t *testing.T) {
 	})
 }
 
-// A subscribe failure (e.g. the embedded NATS server not yet started, so no
-// client URL) is not fatal but does gate startup: the informer retries the
-// subscription and only lists / reports HasSynced once it opens, then delivers
-// live events.
-func TestInformer_RetriesSubscribeUntilAvailable(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		sub := newFakeSubscriber()
-		sub.failSubscribes(2) // first two attempts fail, then it succeeds
-		handler := &recordingHandler{}
-
-		list := func(context.Context) ([]runtime.Object, error) { return []runtime.Object{obj("a")}, nil }
-		// Production retryInterval — the fake clock makes the retry cadence free.
-		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
-		_, err := n.AddEventHandler(handler)
-		require.NoError(t, err)
-		stopCh := make(chan struct{})
-		defer func() { close(stopCh); synctest.Wait() }()
-		go n.Run(stopCh)
-
-		// The subscription gates startup: while it keeps failing, the informer neither
-		// subscribes, lists, nor reports HasSynced.
-		synctest.Wait()
-		require.False(t, sub.subscribed(subject()), "must not subscribe while Subscribe fails")
-		require.False(t, n.HasSynced(), "must not sync before the subscription opens")
-
-		// Each retry tick drives another Subscribe; advance the fake clock past the
-		// two failures until the third attempt opens the subscription, after which the
-		// initial list runs and HasSynced follows.
-		for i := 0; i < 5 && !sub.subscribed(subject()); i++ {
-			time.Sleep(defaultSubscribeRetry)
-			synctest.Wait()
-		}
-		require.True(t, sub.subscribed(subject()), "retry must eventually open the subscription")
-		require.True(t, n.HasSynced(), "must sync once subscribed")
-		assert.Equal(t, []string{"a"}, handler.addedNames(), "initial list must be delivered")
-
-		// Live events then flow.
-		sub.publish(t, subject(), event(resourcepb.WatchNotification_ADDED, "fresh"))
-		synctest.Wait()
-		assert.Equal(t, []string{"a", "fresh"}, handler.addedNames())
-	})
-}
-
-// With AllowDegradedStart, a failing subscription no longer gates startup: the
-// informer lists, reports HasSynced, and keeps re-listing while the subscription
-// retries in the background. Once it opens, a gap-closing re-list reconciles
-// whatever was published in between, and live events flow.
+// A failing subscription (e.g. the embedded NATS server not yet started, so no
+// client URL) does not gate startup: the informer lists, reports HasSynced, and
+// keeps re-listing in degraded mode while the subscription retries in the
+// background. Once it opens, a gap-closing re-list reconciles whatever was
+// published in between, and live events flow.
 func TestInformer_DegradedStartListsWithoutSubscription(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		sub := newFakeSubscriber()
@@ -454,7 +412,6 @@ func TestInformer_DegradedStartListsWithoutSubscription(t *testing.T) {
 			return []runtime.Object{obj("a")}, nil
 		}
 		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
-		n.AllowDegradedStart()
 		_, err := n.AddEventHandler(handler)
 		require.NoError(t, err)
 		stopCh := make(chan struct{})
