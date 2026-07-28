@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,6 +26,14 @@ type diagnosticsRequest struct {
 	dtos.MetricRequest
 	Dashboard json.RawMessage `json:"dashboard"`
 	Panel     json.RawMessage `json:"panel"`
+	// Screenshot is a base64 (standard, padded) PNG of the panel as the client rendered it, captured in
+	// the user's browser before these queries re-ran. Base64 rather than multipart so the drawer keeps
+	// posting a single JSON body; the ~33% overhead is immaterial against the 100MiB web.Bind cap.
+	// Optional -- an omitted or unusable screenshot never fails the request.
+	Screenshot string `json:"screenshot"`
+	// PanelData is the frames the client's frontend was holding for this panel, bundled as
+	// paneldata.json. Optional -- an omitted or unusable payload never fails the request.
+	PanelData json.RawMessage `json:"panelData"`
 }
 
 // diagnosticsFeatureClient is a shared OpenFeature client reused across requests. Flags are
@@ -108,7 +117,14 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	if marshalErr != nil {
 		queryRequestJSON = nil
 	}
-	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, marshalErr, bundleErr)
+	// Decoding is an HTTP concern (the wire format is base64), so it happens here and the Bundler is
+	// handed raw bytes. A decode failure is passed along rather than returned: the screenshot is
+	// supporting evidence, and the captured traffic is still worth shipping without it.
+	screenshotPNG, screenshotErr := decodePanelScreenshot(reqDTO.Screenshot)
+
+	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, marshalErr, bundleErr,
+		diagnostics.WithPanelScreenshot(screenshotPNG, screenshotErr),
+		diagnostics.WithPanelData(reqDTO.PanelData))
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to build diagnostics bundle", err)
 	}
@@ -118,6 +134,21 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	header.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
 	header.Set("Content-Type", "application/tar+gzip")
 	return response.CreateNormalResponse(header, bundle, http.StatusOK)
+}
+
+// decodePanelScreenshot decodes the base64 panel screenshot from the request. An empty field means
+// the client sent no screenshot, which is not an error -- capture is best-effort and the drawer omits
+// the field when it fails or when the panel was not visible.
+func decodePanelScreenshot(encoded string) ([]byte, error) {
+	if encoded == "" {
+		return nil, nil
+	}
+	png, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		// The base64 itself is not echoed back: it is client-supplied and megabytes long.
+		return nil, fmt.Errorf("decode base64 panel screenshot (%d chars): %w", len(encoded), err)
+	}
+	return png, nil
 }
 
 // diagnosticsNoCaptureError returns the response to send when a query failed and nothing was

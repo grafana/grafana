@@ -32,7 +32,19 @@ const (
 	// minQueryDataArtifactBytes is the smallest budget worth attempting: below it not even a truncated
 	// artifact (version + omission markers) fits, so the panel's query data is skipped up front.
 	minQueryDataArtifactBytes = 256
+	// maxPanelDataArtifactBytes caps paneldata.json. It carries the same result data as querydata.json
+	// (frames, from the frontend's side of the pipeline), so it gets the same budget.
+	maxPanelDataArtifactBytes = 8 << 20
+	// maxPanelScreenshotBytes caps panel.png. A browser-rendered panel is normally well under a
+	// megabyte, so anything past this is a client bug or an attempt to pad the archive; it is dropped
+	// with a marker rather than truncated, since a partial PNG would not decode.
+	maxPanelScreenshotBytes = 8 << 20
 )
+
+// pngMagic is the 8-byte PNG signature. panel.png arrives as client-supplied bytes, so the signature
+// is checked before it is bundled under a .png name -- a reader (or an image viewer opening the
+// bundle) should not be handed something that isn't a PNG.
+var pngMagic = []byte{0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a}
 
 // queryDataArtifactVersion is the schema version stamped into every querydata.json (including its
 // truncated fallbacks) so a reader can tell how to interpret the artifact.
@@ -43,14 +55,63 @@ func NewBundler() *Bundler {
 	return &Bundler{}
 }
 
+// BuildOption sets optional bundle contents. Options exist so artifacts that only some callers can
+// supply (panel.png needs a browser) can be added without changing Build's signature.
+type BuildOption func(*buildConfig)
+
+type buildConfig struct {
+	screenshotPNG []byte
+	screenshotErr error
+	panelData     json.RawMessage
+}
+
+// WithPanelScreenshot bundles panel.png: the PNG the user's own browser rendered from the panel it
+// was displaying, captured client-side before the diagnostic queries re-ran.
+//
+// This is the one artifact in the bundle that is not reconstructed. panel.json and dashboard.json are
+// definitions a reader must import and re-run, and querydata.json/traffic.har are the data behind the
+// panel -- all of them show what Grafana *would* draw. panel.png shows what the user actually saw, so
+// "the panel looked wrong" can be checked directly instead of inferred.
+//
+// err records a client-side capture or transport failure. It is kept separate from the bytes so a
+// reader can tell a screenshot that failed from one that was never requested; a failure is recorded
+// and never sinks the rest of the bundle.
+func WithPanelScreenshot(png []byte, err error) BuildOption {
+	return func(cfg *buildConfig) {
+		cfg.screenshotPNG = png
+		cfg.screenshotErr = err
+	}
+}
+
+// WithPanelData bundles paneldata.json: the data frames the user's browser was holding for the panel,
+// serialized client-side from already-resolved scene state.
+//
+// This is the frontend counterpart to querydata.json, which holds what the datasource's *backend*
+// returned. Diffing the two is the point: a datasource plugin's frontend code also processes the
+// response, so frames present in querydata.json but missing or altered here pin the loss on the
+// plugin's frontend rather than on its backend or the upstream.
+//
+// Unlike panel.json it is data, not a definition: reading it re-runs no queries and re-applies no
+// transformations.
+func WithPanelData(panelData json.RawMessage) BuildOption {
+	return func(cfg *buildConfig) {
+		cfg.panelData = panelData
+	}
+}
+
 // Build assembles a .tar.gz bundle from the query response, the captured HAR buffer, and the
 // optional panel/dashboard JSON the client supplied. traffic.har is omitted when nothing was
 // captured.
 //
 // Server logs are intentionally omitted because they are not scoped to this request and would leak
 // unrelated activity into a bundle meant for external sharing; they will be tackled in a follow-up.
-func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON, queryRequestJSON json.RawMessage, queryRequestErr, queryErr error) ([]byte, error) {
+func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON, queryRequestJSON json.RawMessage, queryRequestErr, queryErr error, opts ...BuildOption) ([]byte, error) {
 	files := map[string][]byte{}
+
+	cfg := buildConfig{}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
 
 	// queryRequestErr is the caller's failure to serialize the request into queryRequestJSON. Record it
 	// so a support engineer can tell the request JSON was omitted because serialization failed rather
@@ -85,6 +146,9 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 		files["traffic.har"] = har
 	}
 
+	addPanelScreenshot(files, cfg)
+	addPanelData(files, cfg.panelData)
+
 	if len(panelJSON) > 0 {
 		files["panel.json"] = indentJSON(panelJSON)
 	}
@@ -99,6 +163,64 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 	}
 
 	return buildTarGz(files)
+}
+
+// addPanelScreenshot writes panel.png, or panel-png-error.txt explaining why it is absent.
+//
+// Every rejection is recorded rather than silently dropped: a support engineer reading the bundle must
+// be able to tell "the user's browser could not capture the panel" from "no screenshot was requested",
+// because the second is normal and the first is a bug worth chasing.
+func addPanelScreenshot(files map[string][]byte, cfg buildConfig) {
+	if err := panelScreenshotError(cfg); err != nil {
+		files["panel-png-error.txt"] = []byte(err.Error() + "\n")
+		return
+	}
+	if len(cfg.screenshotPNG) > 0 {
+		files["panel.png"] = cfg.screenshotPNG
+	}
+}
+
+// panelScreenshotError reports why a supplied screenshot cannot be bundled, or nil when there is
+// nothing to record (no screenshot requested, or a valid one).
+func panelScreenshotError(cfg buildConfig) error {
+	if cfg.screenshotErr != nil {
+		return fmt.Errorf("capture panel screenshot: %w", cfg.screenshotErr)
+	}
+	if len(cfg.screenshotPNG) == 0 {
+		return nil
+	}
+	if len(cfg.screenshotPNG) > maxPanelScreenshotBytes {
+		return fmt.Errorf("panel screenshot dropped: %d bytes exceeds the %d-byte limit",
+			len(cfg.screenshotPNG), maxPanelScreenshotBytes)
+	}
+	if !bytes.HasPrefix(cfg.screenshotPNG, pngMagic) {
+		return fmt.Errorf("panel screenshot dropped: %d bytes are not a PNG (bad signature)",
+			len(cfg.screenshotPNG))
+	}
+	return nil
+}
+
+// addPanelData writes paneldata.json, or paneldata-error.txt explaining why it is absent.
+//
+// The payload is client-supplied, so it is validated as JSON and size-capped before being bundled
+// under a .json name. A rejection is recorded rather than dropped silently: a reader comparing
+// paneldata.json against querydata.json must be able to tell "the frontend returned fewer frames"
+// from "the artifact never made it into the bundle" -- those lead to opposite conclusions.
+func addPanelData(files map[string][]byte, panelData json.RawMessage) {
+	if len(panelData) == 0 {
+		return
+	}
+	if len(panelData) > maxPanelDataArtifactBytes {
+		files["paneldata-error.txt"] = []byte(fmt.Sprintf(
+			"panel data dropped: %d bytes exceeds the %d-byte limit\n", len(panelData), maxPanelDataArtifactBytes))
+		return
+	}
+	if !json.Valid(panelData) {
+		files["paneldata-error.txt"] = []byte(fmt.Sprintf(
+			"panel data dropped: %d bytes are not valid JSON\n", len(panelData)))
+		return
+	}
+	files["paneldata.json"] = indentJSON(panelData)
 }
 
 type queryDataArtifact struct {
@@ -300,6 +422,13 @@ type DashboardPanel struct {
 	HARBuffer       *harcapture.Buffer         // in-process capture buffer for this panel's queries
 	QueryErr        error                      // top-level error running the panel's queries, if any
 	Skipped         string                     // non-empty => panel was not executed (e.g. non-data panel)
+	// ScreenshotPNG is the PNG the browser rendered for this panel, bundled as <dir>/panel.png.
+	//
+	// Expect it to be absent for some panels even on a healthy dashboard: capture reads the live DOM, so
+	// only panels the user had scrolled into view are painted and capturable. ScreenshotErr carries the
+	// reason, so a reader can tell "was not on screen" from "capture is broken".
+	ScreenshotPNG []byte
+	ScreenshotErr error
 }
 
 // dashboardManifest is manifest.json: a machine-readable summary of what the whole-dashboard bundle
@@ -326,10 +455,15 @@ type manifestPanelEntry struct {
 	// from Error (a query failure) so one unserializable buffer only loses this panel's traffic.har,
 	// not the whole multi-panel bundle.
 	CaptureError string `json:"captureError,omitempty"`
+	// ScreenshotBytes/ScreenshotError summarise <dir>/panel.png so a reader can see which panels the
+	// browser managed to capture without opening every directory -- on a tall dashboard only the panels
+	// the user had scrolled into view will have one.
+	ScreenshotBytes int    `json:"screenshotBytes,omitempty"`
+	ScreenshotError string `json:"screenshotError,omitempty"`
 }
 
 // BuildDashboard assembles a whole-dashboard .tar.gz: a shared dashboard.json and manifest.json plus
-// per-panel panels/<id>-<slug>/{panel.json, querydata.json, traffic.har, query-error.txt}.
+// per-panel panels/<id>-<slug>/{panel.json, panel.png, querydata.json, traffic.har, query-error.txt}.
 //
 // Like Build, captured traffic and error text are recorded VERBATIM -- redaction is intentionally
 // deferred (see the harcapture package doc) -- and server logs are omitted (not request-scoped).
@@ -366,6 +500,16 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 		}
 		if len(panelJSON) > 0 {
 			files[dir+"/panel.json"] = indentJSON(panelJSON)
+		}
+		// Same gates as the single-panel path (size cap, PNG signature), but recorded in the manifest
+		// instead of a per-panel error file: on a multi-panel bundle a reader wants one place to see
+		// which panels have a screenshot and why the rest don't.
+		screenshotCfg := buildConfig{screenshotPNG: p.ScreenshotPNG, screenshotErr: p.ScreenshotErr}
+		if err := panelScreenshotError(screenshotCfg); err != nil {
+			entry.ScreenshotError = err.Error()
+		} else if len(p.ScreenshotPNG) > 0 {
+			files[dir+"/panel.png"] = p.ScreenshotPNG
+			entry.ScreenshotBytes = len(p.ScreenshotPNG)
 		}
 		// A panel can hit more than one query-data problem: an unserializable request still leaves a
 		// response to encode, which can itself fail or exhaust the dashboard budget. Collect them all so

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -342,4 +343,85 @@ func TestQueryDiagnostics_noCapturePerRefIDError_returns400(t *testing.T) {
 
 	// No HAR captured + a per-refID error -> bare 400, no bundle (matches QueryMetricsV2's per-refID handling).
 	require.Equal(t, http.StatusBadRequest, hs.QueryDiagnostics(c).Status())
+}
+
+func TestQueryDiagnostics_bundlesPanelScreenshot(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	fakeQuery := query.NewFakeQueryService(t)
+	returnFreshHARResponse(fakeQuery, "QueryData")
+	hs := &HTTPServer{queryDataService: fakeQuery}
+
+	png := append([]byte{0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a}, []byte("pixel-data")...)
+	c, rec := newDiagReqCtx(t, `{
+		"queries":[{"refId":"A"}],
+		"screenshot":"`+base64.StdEncoding.EncodeToString(png)+`"
+	}`, nil)
+
+	resp := hs.QueryDiagnostics(c)
+	require.Equal(t, http.StatusOK, resp.Status())
+
+	resp.WriteTo(c)
+	files := readTarGzFiles(t, rec.Body.Bytes())
+	// Decoded back to the exact bytes the browser produced -- panel.png is only worth shipping if it is
+	// byte-identical to what the user's browser rendered.
+	require.Equal(t, png, files["panel.png"])
+	require.NotContains(t, files, "panel-png-error.txt")
+}
+
+func TestQueryDiagnostics_undecodableScreenshot_stillBundles(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	fakeQuery := query.NewFakeQueryService(t)
+	returnFreshHARResponse(fakeQuery, "QueryData")
+	hs := &HTTPServer{queryDataService: fakeQuery}
+	c, rec := newDiagReqCtx(t, `{"queries":[{"refId":"A"}],"screenshot":"!!!not-base64!!!"}`, nil)
+
+	resp := hs.QueryDiagnostics(c)
+	require.Equal(t, http.StatusOK, resp.Status(), "a bad screenshot must not fail a request whose traffic was captured")
+
+	resp.WriteTo(c)
+	files := readTarGzFiles(t, rec.Body.Bytes())
+	require.NotContains(t, files, "panel.png")
+	require.Contains(t, string(files["panel-png-error.txt"]), "decode base64")
+	require.Contains(t, string(files["traffic.har"]), "http://x/api", "the captured traffic still ships")
+}
+
+func TestDecodePanelScreenshot(t *testing.T) {
+	t.Run("empty field is not an error", func(t *testing.T) {
+		png, err := decodePanelScreenshot("")
+		require.NoError(t, err)
+		require.Nil(t, png)
+	})
+
+	t.Run("decodes valid base64", func(t *testing.T) {
+		png, err := decodePanelScreenshot(base64.StdEncoding.EncodeToString([]byte("bytes")))
+		require.NoError(t, err)
+		require.Equal(t, []byte("bytes"), png)
+	})
+
+	t.Run("error omits the payload", func(t *testing.T) {
+		_, err := decodePanelScreenshot("!!!secret-looking-payload!!!")
+		require.Error(t, err)
+		require.NotContains(t, err.Error(), "secret-looking-payload", "the client-supplied blob must not be echoed")
+	})
+}
+
+func TestQueryDiagnostics_bundlesPanelData(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	fakeQuery := query.NewFakeQueryService(t)
+	returnFreshHARResponse(fakeQuery, "QueryData")
+	hs := &HTTPServer{queryDataService: fakeQuery}
+	c, rec := newDiagReqCtx(t, `{
+		"queries":[{"refId":"A"}],
+		"panelData":{"version":1,"stages":[{"name":"queryRunner","frames":[{"schema":{"name":"frontend-marker"}}]}]}
+	}`, nil)
+
+	resp := hs.QueryDiagnostics(c)
+	require.Equal(t, http.StatusOK, resp.Status())
+
+	resp.WriteTo(c)
+	files := readTarGzFiles(t, rec.Body.Bytes())
+	// The frontend's frames land in their own artifact, so they can be diffed against querydata.json
+	// (the backend's response) to localise data lost inside the plugin's frontend code.
+	require.Contains(t, string(files["paneldata.json"]), "frontend-marker")
+	require.NotContains(t, string(files["querydata.json"]), "frontend-marker")
 }

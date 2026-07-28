@@ -49,6 +49,10 @@ type panelDiagnosticsSpec struct {
 	ID                 int64           `json:"id"`
 	Title              string          `json:"title"`
 	Panel              json.RawMessage `json:"panel"`
+	// Screenshot is a base64 (standard, padded) PNG of this panel as the client rendered it. Optional,
+	// and expected to be missing for panels the user had not scrolled into view: capture reads the live
+	// DOM, so an off-screen panel has nothing to photograph.
+	Screenshot string `json:"screenshot"`
 }
 
 // ---- async job store (in-memory; mirrors the support-bundle create/pending/complete model) -------
@@ -388,6 +392,9 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 			PanelJSON:   p.Panel,
 			Datasources: panelDatasourceUIDs(p.MetricRequest),
 		}
+		// Decoded per panel so one client-side capture problem costs only that panel its panel.png; the
+		// reason lands in the manifest against this panel rather than failing the archive.
+		panel.ScreenshotPNG, panel.ScreenshotErr = decodePanelScreenshot(p.Screenshot)
 
 		// A single panel's unserializable query request must not abort the whole archive: record it
 		// against this panel (surfaced in the manifest) and carry on, the same way query and capture
