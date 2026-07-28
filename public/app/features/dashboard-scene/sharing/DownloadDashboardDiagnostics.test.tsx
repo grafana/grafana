@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
@@ -184,6 +184,138 @@ describe('DownloadDashboardDiagnostics', () => {
     const [panels] = jest.mocked(startDashboardDiagnostics).mock.calls[0];
     expect(panels.map((p) => p.id)).toEqual([3, 3]);
     expect(panels.map((p) => p.title)).toEqual(['Repeated panel', 'Repeated panel']);
+  });
+});
+
+// Mirror the (unexported) polling constants from DownloadDashboardDiagnostics.tsx so the fake-timer
+// tests advance by the same cadence/cap the component uses.
+const POLL_INTERVAL_MS = 1000;
+const MAX_POLL_ATTEMPTS = 300;
+
+describe('DownloadDashboardDiagnostics async generation (progress / poll-timeout / abort)', () => {
+  beforeEach(() => {
+    jest.mocked(startDashboardDiagnostics).mockReset();
+    jest.mocked(getDashboardDiagnosticsStatus).mockReset();
+    jest.mocked(downloadDashboardDiagnostics).mockReset();
+    interpolateVariablesInQueries.mockClear();
+    interpolateVariablesInQueries.mockImplementation((queries: DataQuery[]) => queries);
+  });
+
+  afterEach(() => {
+    // The tests below opt into fake timers individually; make sure we always hand back real timers so
+    // later suites (and the RTL cleanup) aren't left on a frozen clock.
+    jest.useRealTimers();
+  });
+
+  it('advances the capture progress as the job reports more panels done', async () => {
+    jest.useFakeTimers();
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    jest.mocked(startDashboardDiagnostics).mockResolvedValue('job-1');
+    jest
+      .mocked(getDashboardDiagnosticsStatus)
+      .mockResolvedValueOnce({ uid: 'job-1', state: 'pending', panelsDone: 0, panelsTotal: 2 })
+      .mockResolvedValueOnce({ uid: 'job-1', state: 'pending', panelsDone: 1, panelsTotal: 2 })
+      .mockResolvedValue({ uid: 'job-1', state: 'complete', panelsDone: 2, panelsTotal: 2 });
+    jest.mocked(downloadDashboardDiagnostics).mockResolvedValue(undefined);
+    const { tab } = setupScenario();
+
+    render(<tab.Component model={tab} />);
+    await user.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    // Flush the start + first status poll without firing the 1s inter-poll delay: progress shows the
+    // first reported figure.
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(0);
+    });
+    expect(screen.getByText(/Capturing panel 0 of 2/)).toBeInTheDocument();
+
+    // Next poll reports one more panel done.
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+    });
+    expect(screen.getByText(/Capturing panel 1 of 2/)).toBeInTheDocument();
+
+    // Final poll completes: progress disappears and the completed bundle is downloaded.
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+    });
+    expect(screen.getByRole('button', { name: 'Download diagnostics' })).toBeInTheDocument();
+    expect(screen.queryByText(/Capturing panel/)).not.toBeInTheDocument();
+    expect(downloadDashboardDiagnostics).toHaveBeenCalledWith('job-1', expect.anything());
+  });
+
+  it('gives up with a timeout error after the maximum number of poll attempts', async () => {
+    jest.useFakeTimers();
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    jest.mocked(startDashboardDiagnostics).mockResolvedValue('job-1');
+    // The job never leaves the pending state, so the client-side poll loop must give up on its own.
+    jest
+      .mocked(getDashboardDiagnosticsStatus)
+      .mockResolvedValue({ uid: 'job-1', state: 'pending', panelsDone: 0, panelsTotal: 2 });
+    const { tab } = setupScenario();
+
+    render(<tab.Component model={tab} />);
+    await user.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    // Drive every poll interval past the attempt cap.
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(POLL_INTERVAL_MS * (MAX_POLL_ATTEMPTS + 1));
+    });
+
+    expect(screen.getByText('Timed out waiting for diagnostics generation')).toBeInTheDocument();
+    expect(downloadDashboardDiagnostics).not.toHaveBeenCalled();
+  });
+
+  it('stops polling and never downloads when cancelled mid-generation', async () => {
+    jest.useFakeTimers();
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    jest.mocked(startDashboardDiagnostics).mockResolvedValue('job-1');
+    jest
+      .mocked(getDashboardDiagnosticsStatus)
+      .mockResolvedValue({ uid: 'job-1', state: 'pending', panelsDone: 0, panelsTotal: 2 });
+    const onDismiss = jest.fn();
+    const { tab } = setupScenario({ onDismiss });
+
+    render(<tab.Component model={tab} />);
+    await user.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    // Enter the poll loop, then cancel: cancelling aborts the controller, which rejects the pending
+    // inter-poll delay and unwinds the loop before the download step.
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(0);
+    });
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 3);
+    });
+
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    expect(downloadDashboardDiagnostics).not.toHaveBeenCalled();
+  });
+
+  it('aborts an in-flight generation when the drawer unmounts', async () => {
+    // Park the flow in the interpolation phase (before a job is started) by holding the datasource
+    // lookup, then unmount: the useEffect cleanup must abort the controller created up front so the
+    // flow bails at its aborted-signal check instead of starting a job for a drawer that's gone.
+    let resolveLookup!: () => void;
+    const pendingLookup = new Promise((resolve) => {
+      resolveLookup = () => resolve({ interpolateVariablesInQueries });
+    });
+    jest.mocked(getDataSourceInstance).mockReturnValueOnce(pendingLookup as ReturnType<typeof getDataSourceInstance>);
+    const { tab } = setupScenario();
+
+    const { unmount } = render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+    unmount();
+
+    resolveLookup();
+    // Let the (now-unmounted) flow's promise chain settle so it reaches the aborted-signal check.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(startDashboardDiagnostics).not.toHaveBeenCalled();
+    expect(downloadDashboardDiagnostics).not.toHaveBeenCalled();
   });
 });
 

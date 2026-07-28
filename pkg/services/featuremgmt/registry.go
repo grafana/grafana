@@ -3075,6 +3075,14 @@ var (
 			Generate:        Generate{Go: true, LegacyGo: true},
 		},
 		{
+			Name:        "reporting.redirectReportsToK8SApi",
+			Description: "Redirect legacy report CRUD API endpoints to the Kubernetes reporting API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:        "grafana.onDemandDiagnostics",
 			Description: "Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more",
 			Stage:       FeatureStageExperimental,
