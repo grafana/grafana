@@ -43,9 +43,8 @@ interface PanelDataRequestContext {
  * **Scope, deliberately narrow.** This captures the *query runner's* output — the datasource's frames
  * after the plugin's own frontend processing — and nothing further down the pipeline. Transformations,
  * field config, axis ticks and legend calcs are all applied later, so neither a transform that drops data
- * nor a *rendering* fault is visible here. Transform evidence is a separate artifact
- * (`frontend-processing.json`); this one answers exactly one question: did the plugin's frontend return
- * what its backend produced?
+ * nor a *rendering* fault is visible here. This artifact answers exactly one question: did the plugin's
+ * frontend return what its backend produced?
  *
  * Returns `undefined` when the panel has no query runner or no resolved data, so the caller simply omits
  * the artifact rather than sending an empty one.
@@ -79,9 +78,9 @@ export function capturePanelData(panel: VizPanel): PanelDataArtifact | undefined
     // this artifact. That is accepted at this stage: the feature is experimental, admin-only and
     // on-prem gated, and no bound can be chosen well before we have seen what real bundles weigh. When
     // it is added it belongs here rather than on the backend (which deliberately defers the decision to
-    // this side, see the "oversized payload" row in the backend PR), and it should follow the ladder
-    // frontend-processing.json already uses: drop frames first, keep the identifying fields, and stamp
-    // a truncation marker so a reduced capture is never misread as data the frontend lost.
+    // this side, see the "oversized payload" row in the backend PR), and it should drop frames first,
+    // keep the identifying fields, and stamp a truncation marker so a reduced capture is never misread
+    // as data the frontend lost.
     frames: (data.series ?? []).map((frame) => dataFrameToJSON(frame)),
   };
 }
