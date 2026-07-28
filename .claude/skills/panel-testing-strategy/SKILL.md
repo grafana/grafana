@@ -44,9 +44,9 @@ This is the bar reviewers hold every test to, at every layer. They reject tests 
 prove a function ran. Never land these as the whole test:
 
 ```ts
-expect(result).toBeDefined();        // ❌ proves nothing about correctness
-expect(result).toBeInstanceOf(Foo);  // ❌ (unless the type itself is the contract)
-expect(() => fn(input)).not.toThrow();// ❌ "didn't crash" is not a behavior
+expect(result).toBeDefined(); // ❌ proves nothing about correctness
+expect(result).toBeInstanceOf(Foo); // ❌ (unless the type itself is the contract)
+expect(() => fn(input)).not.toThrow(); // ❌ "didn't crash" is not a behavior
 expect(result).toHaveLength(input.length); // ❌ if it just mirrors the input
 ```
 
@@ -55,8 +55,8 @@ Instead assert the **concrete computed value**, so a failure points at the real 
 ```ts
 // diffperc: 10 -> 20 is a +100% change
 const results = getDisplayValuesForCalcs(/* … */);
-expect(results[0].numeric).toBe(100);           // ✅ assert the math
-expect(results[0].text).toBe('100%');            // (formatting is secondary)
+expect(results[0].numeric).toBe(100); // ✅ assert the math
+expect(results[0].text).toBe('100%'); // (formatting is secondary)
 ```
 
 If the function mostly delegates, assert the delegation with exact arguments (see Step 3).
@@ -74,7 +74,7 @@ This skill exists so AI-proposed tests meet the bar above. The failure mode to a
   without telling you whether behavior actually broke. (Unreadable DOM snapshot tests are the
   classic example — never add them.)
 
-Review AI output *thoroughly* before opening a PR; expect to amend it for
+Review AI output _thoroughly_ before opening a PR; expect to amend it for
 readability/maintainability. If reviewing the AI output costs more than writing the test by
 hand, write it by hand. A test is a specification a teammate — and future-you — must read
 easily; value refactoring for readability over a raw coverage percentage.
@@ -92,7 +92,9 @@ Use a **single canonical builder per file** with a `Partial<>` overrides object,
 bespoke frames per test:
 
 ```ts
-function makeFrame(overrides: Partial<Options> = {}) { /* … */ }
+function makeFrame(overrides: Partial<Options> = {}) {
+  /* … */
+}
 ```
 
 To render a panel component, use the shared panel-props builder instead of hand-rolling props:
@@ -143,7 +145,7 @@ A test that never enters the code you meant to cover is worse than no test. Two 
 ```ts
 const guess = jest.spyOn(mod, 'guessFieldTypes');
 processFrames([frameA, frameB]);
-expect(guess).toHaveBeenCalledTimes(2);              // once per frame — use ≥2 frames
+expect(guess).toHaveBeenCalledTimes(2); // once per frame — use ≥2 frames
 expect(getColor.mock.calls.map((c) => c[1])).toEqual([0, 2]); // skipped null at idx 1
 guess.mockRestore();
 ```
@@ -159,9 +161,19 @@ Panels that draw to canvas (timeseries, heatmap, xychart, timeline, piechart, sp
 are tested by **capturing the ctx draw-call stream**, not by pixel-diffing. Follow the established harness:
 
 ```ts
-import { createGrafanaUiMeasureTextJestMock, installCanvasPath2DShim,
-         removeCanvasTransforms } from '@grafana/test-utils/canvas';
-// see public/app/plugins/panel/timeseries/TimeSeriesPanel.canvasTestUtils.tsx
+// In the harness (public/app/plugins/panel/timeseries/TimeSeriesPanel.canvasTestUtils.tsx):
+import {
+  applyDefaultUPlotAxisMeasureTextMock,
+  installCanvasPath2DShim,
+  removeCanvasTransforms,
+} from '@grafana/test-utils/canvas';
+
+// In each *.canvas.test.tsx, mock grafana-ui's text measurement so layout is deterministic:
+jest.mock('@grafana/ui/src/utils/measureText', () =>
+  require('@grafana/test-utils/canvas').createGrafanaUiMeasureTextJestMock(() =>
+    require('./TimeSeriesPanel.canvasTestUtils').getUPlotInstance()
+  )
+);
 ```
 
 - Split suites by concern: `*.lines.canvas.test.tsx`, `*.fills.…`, `*.annotations.…`,
@@ -169,7 +181,8 @@ import { createGrafanaUiMeasureTextJestMock, installCanvasPath2DShim,
 - Assert with the custom matcher: `expect(events).toMatchCanvasSnapshot(context, { width, height })`.
 - **Keep it deterministic** (this is where flake comes from): fixed `width`/`height`, UTC
   timestamps (`Date.UTC(...)`, `timeZone: 'utc'`), and wait for the renderer to be ready
-  before asserting — `await waitFor(() => uPlotInstance?.status === 1)`.
+  before asserting — `await waitFor(() => expect(uPlotInstance?.status).toBe(1))` (a `waitFor`
+  callback must **throw** to retry, so it needs `expect`, not a bare boolean — see anti-flake #4).
 
 ## Step 5 — E2E for interaction, accessibility, and interaction snapshots
 
@@ -187,9 +200,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 test.describe('Panels test: BarChart render', { tag: ['@panels', '@barchart'] }, () => {
   test('renders without error', async ({ gotoDashboardPage, selectors }) => {
     const page = await gotoDashboardPage({ uid: DASHBOARD_UID }); // provisioned devenv dashboard
-    await expect(
-      page.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'))
-    ).toBeHidden();
+    await expect(page.getByGrafanaSelector(selectors.components.Panels.Panel.headerCornerInfo('error'))).toBeHidden();
   });
 });
 ```
@@ -208,9 +219,7 @@ test.describe('a11y', { tag: ['@a11y'] }, () => {
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ viewPanel: 'panel-4' }),
     });
-    await expect(
-      dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('…'))
-    ).toBeVisible();
+    await expect(dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('…'))).toBeVisible();
     await expect(page.locator('.uplot')).toBeVisible(); // panel has drawn
 
     const report = await scanForA11yViolations({
@@ -237,9 +246,9 @@ filter applied** (table), **series selected**, **panel edit mode**, and **empty 
 
 ```ts
 const panel = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
-await expect(panel).toMatchAriaSnapshot();               // baseline structure
+await expect(panel).toMatchAriaSnapshot(); // baseline structure
 await panel.locator('.uplot').hover({ position: { x: 120, y: 80 } });
-await expect(panel).toMatchAriaSnapshot();               // tooltip-open state
+await expect(panel).toMatchAriaSnapshot(); // tooltip-open state
 expect(await scanForA11yViolations()).toHaveNoA11yViolations(); // a11y holds mid-interaction
 ```
 
@@ -291,8 +300,8 @@ Tie the test layer to the feature-toggle phase:
   ships to prod). Never save tests for the end.
 - **Before Private/Public Preview** — the full diamond in place: E2E + a unit-coverage
   check-up, and **a11y tests alongside the e2es** (Step 5). Adding the e2es as the last step
-  before public preview is fine. Do a **testing review**: confirm coverage is *intentional*,
-  not merely *incidental* — nothing important missing, nothing critical covered only by
+  before public preview is fine. Do a **testing review**: confirm coverage is _intentional_,
+  not merely _incidental_ — nothing important missing, nothing critical covered only by
   accident. Bug-bash fixes each get a regression unit test.
 - **Before GA** — should be low-drama: coverage in place, e2es in place, every bug fix
   already carried a regression test. Consider integration tests and a broader E2E suite.
