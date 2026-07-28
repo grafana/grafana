@@ -107,15 +107,15 @@ describe('DashboardOutline', () => {
     it('should retain expanded/collapsed state when the pane is closed and reopened', async () => {
       const user = userEvent.setup();
       const scene = buildTestScene();
-      const editPane = scene.state.editPane;
-      const outlinePane = editPane.state.outlinePane!;
+      const sidebar = scene.state.editPane;
+      const outlinePane = sidebar.state.outlinePane!;
 
       scene.onEnterEditMode();
-      editPane.enableSelection();
-      editPane.openPane(outlinePane);
+      sidebar.enableSelection();
+      sidebar.openPane(outlinePane);
 
       const { unmount } = render(
-        <ElementSelectionContext.Provider value={editPane.state.selectionContext}>
+        <ElementSelectionContext.Provider value={sidebar.state.selectionContext}>
           <WrapSidebar>
             <outlinePane.Component model={outlinePane} />
           </WrapSidebar>
@@ -128,7 +128,7 @@ describe('DashboardOutline', () => {
       unmount();
 
       render(
-        <ElementSelectionContext.Provider value={editPane.state.selectionContext}>
+        <ElementSelectionContext.Provider value={sidebar.state.selectionContext}>
           <WrapSidebar>
             <outlinePane.Component model={outlinePane} />
           </WrapSidebar>
@@ -156,14 +156,14 @@ describe('DashboardOutline', () => {
     it('should preserve collapsed state after entering and exiting edit mode', async () => {
       const user = userEvent.setup();
       const scene = buildTestScene();
-      const editPane = scene.state.editPane;
-      const outlinePane = editPane.state.outlinePane!;
+      const sidebar = scene.state.editPane;
+      const outlinePane = sidebar.state.outlinePane!;
 
-      editPane.enableSelection();
-      editPane.openPane(outlinePane);
+      sidebar.enableSelection();
+      sidebar.openPane(outlinePane);
 
       const { unmount } = render(
-        <ElementSelectionContext.Provider value={editPane.state.selectionContext}>
+        <ElementSelectionContext.Provider value={sidebar.state.selectionContext}>
           <WrapSidebar>
             <outlinePane.Component model={outlinePane} />
           </WrapSidebar>
@@ -374,15 +374,15 @@ describe('DashboardOutline', () => {
     it('retains search query when the pane is closed and reopened', async () => {
       const user = userEvent.setup();
       const scene = buildTestScene();
-      const editPane = scene.state.editPane;
-      const outlinePane = editPane.state.outlinePane!;
+      const sidebar = scene.state.editPane;
+      const outlinePane = sidebar.state.outlinePane!;
 
       scene.onEnterEditMode();
-      editPane.enableSelection();
-      editPane.openPane(outlinePane);
+      sidebar.enableSelection();
+      sidebar.openPane(outlinePane);
 
       const { unmount } = render(
-        <ElementSelectionContext.Provider value={editPane.state.selectionContext}>
+        <ElementSelectionContext.Provider value={sidebar.state.selectionContext}>
           <WrapSidebar>
             <outlinePane.Component model={outlinePane} />
           </WrapSidebar>
@@ -396,7 +396,7 @@ describe('DashboardOutline', () => {
       unmount();
 
       render(
-        <ElementSelectionContext.Provider value={editPane.state.selectionContext}>
+        <ElementSelectionContext.Provider value={sidebar.state.selectionContext}>
           <WrapSidebar>
             <outlinePane.Component model={outlinePane} />
           </WrapSidebar>
@@ -409,14 +409,14 @@ describe('DashboardOutline', () => {
     it('preserves search query after entering and exiting edit mode', async () => {
       const user = userEvent.setup();
       const scene = buildTestScene();
-      const editPane = scene.state.editPane;
-      const outlinePane = editPane.state.outlinePane!;
+      const sidebar = scene.state.editPane;
+      const outlinePane = sidebar.state.outlinePane!;
 
-      editPane.enableSelection();
-      editPane.openPane(outlinePane);
+      sidebar.enableSelection();
+      sidebar.openPane(outlinePane);
 
       const { unmount } = render(
-        <ElementSelectionContext.Provider value={editPane.state.selectionContext}>
+        <ElementSelectionContext.Provider value={sidebar.state.selectionContext}>
           <WrapSidebar>
             <outlinePane.Component model={outlinePane} />
           </WrapSidebar>

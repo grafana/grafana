@@ -35,7 +35,7 @@ import {
 } from '../settings/variables/utils';
 import { isPredefinedOrigin } from '../utils/predefinedVariables';
 
-import { type DashboardEditPane } from './DashboardEditPane';
+import { type DashboardSidebar } from './DashboardSidebar';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
@@ -48,18 +48,18 @@ export function useEditPaneCollapsed() {
 }
 
 export function getEditableElementForSelection(
-  editPane: DashboardEditPane,
+  sidebar: DashboardSidebar,
   selected: ElementSelectionContextItem[]
 ): EditableDashboardElement | undefined {
   if (selected.length === 1) {
-    const obj = editPane.getSelectedObject(selected[0].id);
+    const obj = sidebar.getSelectedObject(selected[0].id);
     if (obj) {
       return getEditableElementFor(obj);
     }
   }
 
   if (selected.length > 1) {
-    const objects = selected.map((s) => editPane.getSelectedObject(s.id));
+    const objects = selected.map((s) => sidebar.getSelectedObject(s.id));
     const elements: BulkActionElement[] = objects
       .map((obj) => getEditableElementFor(obj))
       .filter((e): e is BulkActionElement => Boolean(e) && isBulkActionElement(e!));

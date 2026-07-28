@@ -8,7 +8,7 @@ import { getNavModel } from 'app/core/selectors/navModel';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
-import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitter';
+import { DashboardSidebarSplitter } from '../edit-pane/DashboardSidebarSplitter';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/SoloPanelContext';
 
 import { type DashboardScene } from './DashboardScene';
@@ -109,7 +109,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
         {editPanel && <editPanel.Component model={editPanel} />}
         {!editPanel && (
-          <DashboardEditPaneSplitter
+          <DashboardSidebarSplitter
             dashboard={model}
             isEditing={isEditing}
             controls={controls && <controls.Component model={controls} />}

@@ -4,7 +4,7 @@ import { type ElementSelectionContextState, type ElementSelectionOnSelectOptions
 import { type DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
 import { type DashboardOutline } from './outline/DashboardOutline';
 
-export interface DashboardEditPaneState extends SceneObjectState {
+export interface DashboardSidebarState extends SceneObjectState {
   selectionContext: ElementSelectionContextState;
 
   undoStack: DashboardEditActionEventPayload[];
@@ -14,18 +14,18 @@ export interface DashboardEditPaneState extends SceneObjectState {
   /** Temp hack for Link and LinkSet that are not part of the scene but need to be selected for now  */
   selectedDisconnectedObject?: SceneObject;
   /** Previous state */
-  previousState?: DashboardEditPaneState;
+  previousState?: DashboardSidebarState;
   /** True when a new element is being added and selected */
   isNewElement: boolean;
   isDocked?: boolean;
 }
 
 /**
- * Subset of DashboardEditPane used by assistant view-mode components
- * so they can avoid importing the full DashboardEditPane (which would
+ * Subset of DashboardSidebar used by assistant view-mode components
+ * so they can avoid importing the full DashboardSidebar (which would
  * create circular dependencies through DashboardScene).
  */
-export interface DashboardEditPaneLike extends SceneObject<DashboardEditPaneState> {
+export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState> {
   enableSelection(): void;
   disableSelection(): void;
   clearSelection(noEvent?: boolean): void;

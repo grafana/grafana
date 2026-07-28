@@ -14,7 +14,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { DashboardEditPaneSplitter } from './DashboardEditPaneSplitter';
+import { DashboardSidebarSplitter } from './DashboardSidebarSplitter';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -74,7 +74,7 @@ export function buildTestScene() {
   return testScene;
 }
 
-describe('DashboardEditPaneRenderer', () => {
+describe('DashboardSidebarRenderer', () => {
   beforeEach(() => {
     config.featureToggles.dashboardNewLayouts = true;
     // Sidebar state is persisted to localStorage — clear between tests so each test
@@ -92,7 +92,7 @@ describe('DashboardEditPaneRenderer', () => {
 
     act(() => activateFullSceneTree(scene));
 
-    render(<DashboardEditPaneSplitter dashboard={scene} />);
+    render(<DashboardSidebarSplitter dashboard={scene} />);
 
     expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
   });
@@ -102,7 +102,7 @@ describe('DashboardEditPaneRenderer', () => {
 
     act(() => activateFullSceneTree(scene));
 
-    render(<DashboardEditPaneSplitter dashboard={scene} isEditing />);
+    render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
 
     act(() => screen.getByLabelText('Outline').click());
 
@@ -124,7 +124,7 @@ describe('DashboardEditPaneRenderer', () => {
 
       act(() => activateFullSceneTree(scene));
 
-      render(<DashboardEditPaneSplitter dashboard={scene} isEditing />);
+      render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
       const outlineButton = screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton);
       await user.click(outlineButton);
       expect(DashboardInteractions.dashboardOutlineClicked).toHaveBeenCalled();
@@ -137,7 +137,7 @@ describe('DashboardEditPaneRenderer', () => {
       scene.setState({ isEditing: false });
       act(() => activateFullSceneTree(scene));
 
-      render(<DashboardEditPaneSplitter dashboard={scene} />);
+      render(<DashboardSidebarSplitter dashboard={scene} />);
 
       const hideButton = await screen.findByTestId(selectors.components.Sidebar.showHideToggle);
       expect(hideButton).toBeInTheDocument();
@@ -147,7 +147,7 @@ describe('DashboardEditPaneRenderer', () => {
       const scene = buildTestScene();
       act(() => activateFullSceneTree(scene));
 
-      render(<DashboardEditPaneSplitter dashboard={scene} isEditing />);
+      render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
 
       const hideButton = await screen.findByTestId(selectors.components.Sidebar.showHideToggle);
       expect(hideButton).toBeInTheDocument();
@@ -158,7 +158,7 @@ describe('DashboardEditPaneRenderer', () => {
       const scene = buildTestScene();
       act(() => activateFullSceneTree(scene));
 
-      render(<DashboardEditPaneSplitter dashboard={scene} isEditing />);
+      render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
 
       // Open the outline pane first
       await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton));
@@ -178,7 +178,7 @@ describe('DashboardEditPaneRenderer', () => {
       const scene = buildTestScene();
       act(() => activateFullSceneTree(scene));
 
-      render(<DashboardEditPaneSplitter dashboard={scene} isEditing />);
+      render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
 
       // Hide the sidebar
       await user.click(screen.getByTestId(selectors.components.Sidebar.showHideToggle));

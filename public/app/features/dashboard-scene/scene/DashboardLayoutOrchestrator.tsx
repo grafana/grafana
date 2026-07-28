@@ -447,7 +447,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
           currentTabSlug: tab.getSlug(),
         });
 
-        // Make sure outline is refreshed in DashboardEditPane
+        // Make sure outline is refreshed in DashboardSidebar
         source.publishEvent(new ObjectsReorderedOnCanvasEvent(source), true);
         destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
 
@@ -461,7 +461,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
         tab.clearParent();
         source.setState({ tabs: prevSourceTabs, currentTabSlug: prevSourceSlug });
 
-        // Make sure outline is refreshed in DashboardEditPane
+        // Make sure outline is refreshed in DashboardSidebar
         source.publishEvent(new ObjectsReorderedOnCanvasEvent(source), true);
         destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
 

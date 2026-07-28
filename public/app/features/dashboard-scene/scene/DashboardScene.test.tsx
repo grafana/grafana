@@ -270,20 +270,20 @@ describe('DashboardScene', () => {
       });
 
       it('activateEditPane activates an inactive edit pane and releases it on exit', () => {
-        const editPane = scene.state.editPane;
-        expect(editPane.isActive).toBe(false);
+        const sidebar = scene.state.editPane;
+        expect(sidebar.isActive).toBe(false);
 
         scene.activateEditPane();
-        expect(editPane.isActive).toBe(true);
+        expect(sidebar.isActive).toBe(true);
 
         scene.exitEditMode({ skipConfirm: true });
-        expect(editPane.isActive).toBe(false);
+        expect(sidebar.isActive).toBe(false);
       });
 
       it('activateEditPane is a no-op when the edit pane is already active', () => {
-        const editPane = scene.state.editPane;
-        const activateSpy = jest.spyOn(editPane, 'activate');
-        editPane.activate();
+        const sidebar = scene.state.editPane;
+        const activateSpy = jest.spyOn(sidebar, 'activate');
+        sidebar.activate();
 
         scene.activateEditPane();
 
@@ -291,17 +291,17 @@ describe('DashboardScene', () => {
       });
 
       it('re-activates the swapped-in edit pane when discarding and keeping edit', () => {
-        const editPane = scene.state.editPane;
+        const sidebar = scene.state.editPane;
         scene.activateEditPane();
-        expect(editPane.isActive).toBe(true);
+        expect(sidebar.isActive).toBe(true);
 
         scene.discardChangesAndKeepEditing();
 
         // The original pane is released, but a fresh clone is swapped in and re-activated so
         // programmatic mutations keep working while we stay in edit mode.
-        expect(editPane.isActive).toBe(false);
+        expect(sidebar.isActive).toBe(false);
         const newEditPane = scene.state.editPane;
-        expect(newEditPane).not.toBe(editPane);
+        expect(newEditPane).not.toBe(sidebar);
         expect(newEditPane.isActive).toBe(true);
       });
 

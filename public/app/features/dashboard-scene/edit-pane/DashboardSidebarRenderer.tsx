@@ -23,7 +23,7 @@ import { ShareExportDashboardButton } from './DashboardExportButton';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
 import { ToggleViewPanePaneEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
-import { type DashboardEditPaneLike, type DashboardSidebarPane } from './types';
+import { type DashboardSidebarLike, type DashboardSidebarPane } from './types';
 
 export interface Props {
   dashboard: DashboardScene;
@@ -32,25 +32,25 @@ export interface Props {
 /**
  * Making the EditPane rendering completely standalone (not using editPane.Component) in order to pass custom react props
  */
-export function DashboardEditPaneRenderer({ dashboard }: Props) {
-  const editPane = dashboard.state.editPane;
-  const { openPane, selectionContext, outlinePane } = useSceneObjectState(editPane, {
+export function DashboardSidebarRenderer({ dashboard }: Props) {
+  const sidebar = dashboard.state.editPane;
+  const { openPane, selectionContext, outlinePane } = useSceneObjectState(sidebar, {
     shouldActivateOrKeepAlive: true,
   });
   const { isEditing, meta, uid, viewPanel } = dashboard.useState();
   const styles = useStyles2(getStyles, isEditing);
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
-  const selectedObject = editPane.getSelectedObject();
+  const selectedObject = sidebar.getSelectedObject();
   const sidebarContext = useSidebarContext();
   const viewPanelPane = useFlagGrafanaViewPanelPane();
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
-      editPane.closePane();
+      sidebar.closePane();
       sidebarContext?.setIsHidden(true);
       e.currentTarget.blur();
     },
-    [editPane, sidebarContext]
+    [sidebar, sidebarContext]
   );
 
   /**
@@ -58,10 +58,10 @@ export function DashboardEditPaneRenderer({ dashboard }: Props) {
    */
   useEffect(() => {
     if (!selectedObject && selectionContext.selected.length > 0) {
-      editPane.fixSelectionOfRemovedObject();
+      sidebar.fixSelectionOfRemovedObject();
       return;
     }
-  }, [selectedObject, selectionContext.selected, editPane]);
+  }, [selectedObject, selectionContext.selected, sidebar]);
 
   return (
     <>
@@ -76,7 +76,7 @@ export function DashboardEditPaneRenderer({ dashboard }: Props) {
             <Sidebar.Button
               icon="plus"
               variant="primary"
-              onClick={() => editPane.openPane(new AddNewEditPane({}))}
+              onClick={() => sidebar.openPane(new AddNewEditPane({}))}
               title={t('dashboard.sidebar.add.title', 'Add')}
               tooltip={t('dashboard.sidebar.add.tooltip', 'Add new element')}
               data-testid={selectors.pages.Dashboard.Sidebar.addButton}
@@ -84,7 +84,7 @@ export function DashboardEditPaneRenderer({ dashboard }: Props) {
             />
             <Sidebar.Button
               icon="cog"
-              onClick={() => editPane.selectObject(dashboard)}
+              onClick={() => sidebar.selectObject(dashboard)}
               title={t('dashboard.sidebar.dashboard-options.title', 'Options')}
               tooltip={t('dashboard.sidebar.dashboard-options.tooltip', 'Dashboard options')}
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
@@ -114,7 +114,7 @@ export function DashboardEditPaneRenderer({ dashboard }: Props) {
               tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
               title={t('dashboard.sidebar.edit-schema.title', 'Code')}
               icon="brackets-curly"
-              onClick={() => editPane.openPane(new DashboardCodePane({}))}
+              onClick={() => sidebar.openPane(new DashboardCodePane({}))}
               active={openPane instanceof DashboardCodePane}
             />
             {config.featureToggles.dashboardUndoRedo && (
@@ -132,7 +132,7 @@ export function DashboardEditPaneRenderer({ dashboard }: Props) {
             icon="list-ui-alt"
             onClick={() => {
               DashboardInteractions.dashboardOutlineClicked();
-              editPane.openPane(outlinePane!);
+              sidebar.openPane(outlinePane!);
             }}
             title={t('dashboard.sidebar.outline.title', 'Outline')}
             tooltip={t('dashboard.sidebar.outline.tooltip', 'Content outline')}
@@ -140,14 +140,14 @@ export function DashboardEditPaneRenderer({ dashboard }: Props) {
             active={openPane instanceof DashboardOutline}
           />
           {config.featureToggles.dashboardNewLayouts && config.featureToggles.dashboardUnifiedDrilldownControls && (
-            <FiltersOverviewButton editPane={editPane} openPane={openPane} />
+            <FiltersOverviewButton sidebar={sidebar} openPane={openPane} />
           )}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
           {renderEnterpriseItems()}
           {viewPanel && viewPanelPane && (
             <Sidebar.Button
               icon="layer-group"
-              onClick={() => editPane.publishEvent(new ToggleViewPanePaneEvent())}
+              onClick={() => sidebar.publishEvent(new ToggleViewPanePaneEvent())}
               title={t('dashboard.sidebar.view-panel.title', 'View panel controls')}
               data-testid={selectors.pages.Dashboard.Sidebar.viewPanelControls}
               active={openPane?.getId() === 'view-panel-pane'}
@@ -176,13 +176,13 @@ export function DashboardEditPaneRenderer({ dashboard }: Props) {
 }
 
 function FiltersOverviewButton({
-  editPane,
+  sidebar,
   openPane,
 }: {
-  editPane: DashboardEditPaneLike;
+  sidebar: DashboardSidebarLike;
   openPane: DashboardSidebarPane | undefined;
 }) {
-  const variables: SceneVariable[] = sceneGraph.getVariables(editPane)?.useState().variables ?? [];
+  const variables: SceneVariable[] = sceneGraph.getVariables(sidebar)?.useState().variables ?? [];
   const hasFilters = variables.some((v) => v.state.type === 'adhoc');
 
   if (!hasFilters) {
@@ -192,7 +192,7 @@ function FiltersOverviewButton({
   return (
     <Sidebar.Button
       icon="filter"
-      onClick={() => editPane.openPane(new DashboardFiltersOverviewPane({}))}
+      onClick={() => sidebar.openPane(new DashboardFiltersOverviewPane({}))}
       title={t('dashboard.sidebar.filters', 'Filters')}
       tooltip={t('dashboard.sidebar.open', 'Filters overview')}
       active={openPane instanceof DashboardFiltersOverviewPane}
@@ -214,8 +214,8 @@ function renderEnterpriseItems() {
 }
 
 function UndoButton({ dashboard }: ToolbarActionProps) {
-  const editPane = dashboard.state.editPane;
-  const { undoStack } = editPane.useState();
+  const sidebar = dashboard.state.editPane;
+  const { undoStack } = sidebar.useState();
   const undoAction = undoStack[undoStack.length - 1];
   const undoWord = t('dashboard.sidebar.undo', 'Undo');
   const tooltip = `${undoWord}${undoAction?.description ? ` ${undoAction.description}` : ''}`;
@@ -224,7 +224,7 @@ function UndoButton({ dashboard }: ToolbarActionProps) {
     <Sidebar.Button
       icon="corner-up-left"
       disabled={undoStack.length === 0}
-      onClick={() => editPane.undoAction()}
+      onClick={() => sidebar.undoAction()}
       title={undoWord}
       tooltip={tooltip}
     />
@@ -232,8 +232,8 @@ function UndoButton({ dashboard }: ToolbarActionProps) {
 }
 
 function RedoButton({ dashboard }: ToolbarActionProps) {
-  const editPane = dashboard.state.editPane;
-  const { redoStack } = editPane.useState();
+  const sidebar = dashboard.state.editPane;
+  const { redoStack } = sidebar.useState();
   const redoAction = redoStack[redoStack.length - 1];
   const redoWord = t('dashboard.sidebar.redo', 'Redo');
   const tooltip = `${redoWord}${redoAction?.description ? ` ${redoAction.description}` : ''}`;
@@ -244,7 +244,7 @@ function RedoButton({ dashboard }: ToolbarActionProps) {
       disabled={redoStack.length === 0}
       title={redoWord}
       tooltip={tooltip}
-      onClick={() => editPane.redoAction()}
+      onClick={() => sidebar.redoAction()}
     />
   );
 }

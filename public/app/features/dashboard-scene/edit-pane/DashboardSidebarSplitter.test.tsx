@@ -13,7 +13,7 @@ import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutM
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 
-import { DashboardEditPaneSplitter } from './DashboardEditPaneSplitter';
+import { DashboardSidebarSplitter } from './DashboardSidebarSplitter';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -27,7 +27,7 @@ const autoLayoutInputs = [
   selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.fillScreen,
 ];
 
-describe('DashboardEditPaneSplitter', () => {
+describe('DashboardSidebarSplitter', () => {
   beforeEach(() => {
     config.featureToggles.dashboardNewLayouts = true;
   });
@@ -36,7 +36,7 @@ describe('DashboardEditPaneSplitter', () => {
     const user = userEvent.setup();
     const scene = buildTestScene();
 
-    render(<DashboardEditPaneSplitter dashboard={scene} />);
+    render(<DashboardSidebarSplitter dashboard={scene} />);
 
     await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.optionsButton));
 
@@ -65,7 +65,7 @@ describe('DashboardEditPaneSplitter', () => {
   it('makes the scroll container keyboard-focusable so arrow/page keys can scroll the dashboard', () => {
     const scene = buildTestScene();
 
-    render(<DashboardEditPaneSplitter dashboard={scene} />);
+    render(<DashboardSidebarSplitter dashboard={scene} />);
 
     const scrollContainer = screen.getByTestId(selectors.components.DashboardEditPaneSplitter.bodyContainer);
     expect(scrollContainer).toHaveAttribute('tabindex', '0');

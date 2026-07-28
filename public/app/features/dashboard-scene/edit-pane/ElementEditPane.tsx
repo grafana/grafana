@@ -5,8 +5,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
 import { ScrollContainer, useStyles2, Box } from '@grafana/ui';
 
-import { DashboardEditPane } from './DashboardEditPane';
-import { EditPaneHeader } from './EditPaneHeader';
+import { DashboardSidebar } from './DashboardSidebar';
+import { ElementEditPaneHeader } from './ElementEditPaneHeader';
 import { getEditableElementForSelection } from './shared';
 
 export class ElementEditPane extends SceneObjectBase {
@@ -21,14 +21,14 @@ export class ElementEditPane extends SceneObjectBase {
 function ElementEditPaneRenderer({ model }: SceneComponentProps<ElementEditPane>) {
   const styles = useStyles2(getStyles);
 
-  const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
-  const selected = editPane.state.selectionContext.selected;
+  const sidebar = sceneGraph.getAncestor(model, DashboardSidebar);
+  const selected = sidebar.state.selectionContext.selected;
 
   const element = useMemo(() => {
-    return getEditableElementForSelection(editPane, selected);
-  }, [editPane, selected]);
+    return getEditableElementForSelection(sidebar, selected);
+  }, [sidebar, selected]);
 
-  const categories = element?.useEditPaneOptions ? element.useEditPaneOptions(editPane.state.isNewElement) : [];
+  const categories = element?.useEditPaneOptions ? element.useEditPaneOptions(sidebar.state.isNewElement) : [];
 
   if (!element) {
     return null;
@@ -36,7 +36,7 @@ function ElementEditPaneRenderer({ model }: SceneComponentProps<ElementEditPane>
 
   return (
     <div className={styles.wrapper}>
-      <EditPaneHeader element={element} editPane={editPane} />
+      <ElementEditPaneHeader element={element} sidebar={sidebar} />
       <ScrollContainer showScrollIndicators={true}>
         <div className={styles.categories}>
           {element.renderTopButton && (

@@ -14,7 +14,7 @@ import addPanelSvg from 'img/dashboards/add-panel.svg';
 import { useClipboardState } from '../../scene/layouts-shared/useClipboardState';
 import { getDashboardSceneLike } from '../../scene/types/dashboard';
 import { DashboardInteractions } from '../../utils/interactions';
-import { DashboardEditPane } from '../DashboardEditPane';
+import { DashboardSidebar } from '../DashboardSidebar';
 
 import { AddAnnotationQuery } from './AddAnnotationQuery';
 import { AddButton } from './AddButton';
@@ -33,12 +33,12 @@ export class AddNewEditPane extends SceneObjectBase {
 }
 
 function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) {
-  const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
+  const sidebar = sceneGraph.getAncestor(model, DashboardSidebar);
   const { hasCopiedPanel } = useClipboardState();
   const styles = useStyles2(getStyles);
   const dashboardScene = getDashboardSceneLike(model);
   const orchestrator = dashboardScene.state.layoutOrchestrator;
-  const selectedObj = editPane.getSelectedObject();
+  const selectedObj = sidebar.getSelectedObject();
 
   const onStartDragging = (result: { draggableId: string }) => {
     const mode = result.draggableId === 'paste-panel-drag' ? 'paste' : 'newPanel';
@@ -46,7 +46,7 @@ function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) 
   };
 
   const pastePanel = () => {
-    editPane.pastePanel(selectedObj);
+    sidebar.pastePanel(selectedObj);
     DashboardInteractions.trackPastePanelClick('sidebar', getLayoutType(selectedObj), 'click');
   };
 
@@ -73,11 +73,11 @@ function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) 
                           {...dragProvided.draggableProps}
                           {...dragProvided.dragHandleProps}
                           className={cx(styles.imageContainer, dragSnapshot.isDragging && styles.dragging)}
-                          onClick={() => editPane.addNewPanel(selectedObj)}
+                          onClick={() => sidebar.addNewPanel(selectedObj)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault();
-                              editPane.addNewPanel(selectedObj);
+                              sidebar.addNewPanel(selectedObj);
                             }
                           }}
                           aria-label={t('dashboard.add.new-panel.title', 'Panel')}

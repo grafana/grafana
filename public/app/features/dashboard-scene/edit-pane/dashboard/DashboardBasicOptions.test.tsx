@@ -8,7 +8,7 @@ import { type DashboardScene } from '../../scene/DashboardScene';
 import { type DashboardSceneState } from '../../scene/types/dashboard';
 import { transformSaveModelToScene } from '../../serialization/transformSaveModelToScene';
 import { activateFullSceneTree } from '../../utils/test-utils';
-import { type DashboardEditPaneLike } from '../types';
+import { type DashboardSidebarLike } from '../types';
 
 import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasicOptions';
 
@@ -50,50 +50,50 @@ async function testDashboardEditableElement(dashboard: DashboardScene, inputElem
     fireEvent.blur(inputElement);
   };
 
-  const editPane = dashboard.state.editPane;
-  expect(editPane.state.undoStack).toHaveLength(0);
-  expect(editPane.state.redoStack).toHaveLength(0);
+  const sidebar = dashboard.state.editPane;
+  expect(sidebar.state.undoStack).toHaveLength(0);
+  expect(sidebar.state.redoStack).toHaveLength(0);
   expect(inputElement).toHaveValue('initial');
 
   await updateInput('first');
   expect(inputElement).toHaveValue('first');
-  expect(editPane.state.undoStack).toHaveLength(1);
-  expect(editPane.state.redoStack).toHaveLength(0);
+  expect(sidebar.state.undoStack).toHaveLength(1);
+  expect(sidebar.state.redoStack).toHaveLength(0);
 
-  undo(editPane);
+  undo(sidebar);
   expect(inputElement).toHaveValue('initial');
-  expect(editPane.state.undoStack).toHaveLength(0);
-  expect(editPane.state.redoStack).toHaveLength(1);
+  expect(sidebar.state.undoStack).toHaveLength(0);
+  expect(sidebar.state.redoStack).toHaveLength(1);
 
   await updateInput('second');
   expect(inputElement).toHaveValue('second');
-  expect(editPane.state.redoStack).toHaveLength(0);
-  expect(editPane.state.undoStack).toHaveLength(1);
+  expect(sidebar.state.redoStack).toHaveLength(0);
+  expect(sidebar.state.undoStack).toHaveLength(1);
 
   await updateInput('third');
   expect(inputElement).toHaveValue('third');
-  expect(editPane.state.redoStack).toHaveLength(0);
-  expect(editPane.state.undoStack).toHaveLength(2);
+  expect(sidebar.state.redoStack).toHaveLength(0);
+  expect(sidebar.state.undoStack).toHaveLength(2);
 
   await updateInput('fourth');
   expect(inputElement).toHaveValue('fourth');
-  expect(editPane.state.redoStack).toHaveLength(0);
-  expect(editPane.state.undoStack).toHaveLength(3);
+  expect(sidebar.state.redoStack).toHaveLength(0);
+  expect(sidebar.state.undoStack).toHaveLength(3);
 
-  undo(editPane);
+  undo(sidebar);
   expect(inputElement).toHaveValue('third');
-  expect(editPane.state.redoStack).toHaveLength(1);
-  expect(editPane.state.undoStack).toHaveLength(2);
+  expect(sidebar.state.redoStack).toHaveLength(1);
+  expect(sidebar.state.undoStack).toHaveLength(2);
 
-  undo(editPane);
+  undo(sidebar);
   expect(inputElement).toHaveValue('second');
-  expect(editPane.state.redoStack).toHaveLength(2);
-  expect(editPane.state.undoStack).toHaveLength(1);
+  expect(sidebar.state.redoStack).toHaveLength(2);
+  expect(sidebar.state.undoStack).toHaveLength(1);
 
-  redo(editPane);
+  redo(sidebar);
   expect(inputElement).toHaveValue('third');
-  expect(editPane.state.redoStack).toHaveLength(1);
-  expect(editPane.state.undoStack).toHaveLength(2);
+  expect(sidebar.state.redoStack).toHaveLength(1);
+  expect(sidebar.state.undoStack).toHaveLength(2);
 }
 
 function setup(overrides?: Partial<DashboardSceneState>) {
@@ -137,14 +137,14 @@ function setup(overrides?: Partial<DashboardSceneState>) {
   return { dashboard, renderTitleInput, renderDescriptionInput };
 }
 
-function undo(editPane: DashboardEditPaneLike) {
+function undo(sidebar: DashboardSidebarLike) {
   act(() => {
-    editPane.undoAction();
+    sidebar.undoAction();
   });
 }
 
-function redo(editPane: DashboardEditPaneLike) {
+function redo(sidebar: DashboardSidebarLike) {
   act(() => {
-    editPane.redoAction();
+    sidebar.redoAction();
   });
 }

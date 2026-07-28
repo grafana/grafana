@@ -18,8 +18,8 @@ import { type EditableDashboardElement } from '../scene/types/EditableDashboardE
 import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { type DashboardEditPane } from './DashboardEditPane';
-import { EditPaneHeader } from './EditPaneHeader';
+import { type DashboardSidebar } from './DashboardSidebar';
+import { ElementEditPaneHeader } from './ElementEditPaneHeader';
 import { getEditableElementFor } from './shared';
 
 setPluginImportUtils({
@@ -35,7 +35,7 @@ jest.mock('../utils/interactions', () => ({
   },
 }));
 
-describe('EditPaneHeader', () => {
+describe('ElementEditPaneHeader', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -81,22 +81,22 @@ function WrapSidebar({ children }: { children: React.ReactElement }) {
   return <Sidebar contextValue={sidebarContext}>{children}</Sidebar>;
 }
 
-const renderEditPaneHeader = (editableElement: EditableDashboardElement, mockEditPane: DashboardEditPane) => {
+const renderEditPaneHeader = (editableElement: EditableDashboardElement, mockEditPane: DashboardSidebar) => {
   render(
     <WrapSidebar>
-      <EditPaneHeader element={editableElement} editPane={mockEditPane} />
+      <ElementEditPaneHeader element={editableElement} sidebar={mockEditPane} />
     </WrapSidebar>
   );
 };
 
 const setup = (
   layout: 'row' | 'tab' | 'panel'
-): { row?: RowItem; tab?: TabItem; panel?: VizPanel; mockEditPane: DashboardEditPane } => {
+): { row?: RowItem; tab?: TabItem; panel?: VizPanel; mockEditPane: DashboardSidebar } => {
   const mockEditPane = {
     state: { selection: null },
     clearSelection: jest.fn(),
     getOnGetBackCallback: () => jest.fn(),
-  } as unknown as DashboardEditPane;
+  } as unknown as DashboardSidebar;
 
   switch (layout) {
     case 'row': {

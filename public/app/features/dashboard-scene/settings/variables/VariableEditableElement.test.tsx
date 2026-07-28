@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { CustomVariable, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
 
-import { DashboardEditPaneRenderer } from '../../edit-pane/DashboardEditPaneRenderer';
+import { DashboardSidebarRenderer } from '../../edit-pane/DashboardSidebarRenderer';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
@@ -166,7 +166,7 @@ function WrapSidebar({ children }: { children: ReactNode }) {
 function renderVariableEditPane(dashboard: DashboardScene) {
   render(
     <WrapSidebar>
-      <DashboardEditPaneRenderer dashboard={dashboard} />
+      <DashboardSidebarRenderer dashboard={dashboard} />
     </WrapSidebar>
   );
 }

@@ -10,14 +10,14 @@ import { useClipboardState } from '../scene/layouts-shared/useClipboardState';
 import { type EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { DashboardInteractions } from '../utils/interactions';
 
-import { type DashboardEditPane } from './DashboardEditPane';
+import { type DashboardSidebar } from './DashboardSidebar';
 
 interface EditPaneHeaderProps {
   element: EditableDashboardElement;
-  editPane: DashboardEditPane;
+  sidebar: DashboardSidebar;
 }
 
-export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
+export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps) {
   const elementInfo = element.getEditableElementInfo();
   const { hasCopiedPanel } = useClipboardState();
 
@@ -76,8 +76,8 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
           fill="text"
           data-testid={selectors.components.EditPaneHeader.paste}
           onClick={() => {
-            const target = editPane.getSelectedObject();
-            editPane.pastePanel(target);
+            const target = sidebar.getSelectedObject();
+            sidebar.pastePanel(target);
             DashboardInteractions.trackPastePanelClick('editPaneHeader', getLayoutType(target), 'click');
           }}
         >

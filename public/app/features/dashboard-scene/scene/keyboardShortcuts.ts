@@ -289,9 +289,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       key: 'p v',
       onTrigger: () => {
         if (scene.state.isEditing && store.exists(LS_PANEL_COPY_KEY)) {
-          const editPane = scene.state.editPane;
-          const selectedObj = editPane.getSelectedObject();
-          editPane.pastePanel(selectedObj);
+          const sidebar = scene.state.editPane;
+          const selectedObj = sidebar.getSelectedObject();
+          sidebar.pastePanel(selectedObj);
 
           DashboardInteractions.trackPastePanelClick('keyboard', getLayoutType(selectedObj), 'keyboard');
         }

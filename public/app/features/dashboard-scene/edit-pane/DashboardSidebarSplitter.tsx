@@ -28,7 +28,7 @@ import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboa
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
-import { DashboardEditPaneRenderer } from './DashboardEditPaneRenderer';
+import { DashboardSidebarRenderer } from './DashboardSidebarRenderer';
 import { type DashboardSidebarPane } from './types';
 
 interface Props {
@@ -38,15 +38,15 @@ interface Props {
   controls?: React.ReactNode;
 }
 
-export function DashboardEditPaneSplitter(props: Props) {
+export function DashboardSidebarSplitter(props: Props) {
   if (config.featureToggles.dashboardNewLayouts) {
-    return <DashboardEditPaneSplitterNewLayouts {...props} />;
+    return <DashboardSidebarSplitterNewLayouts {...props} />;
   } else {
-    return <DashboardEditPaneSplitterLegacy {...props} />;
+    return <DashboardSidebarSplitterLegacy {...props} />;
   }
 }
 
-function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
+function DashboardSidebarSplitterLegacy({ dashboard, body, controls }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -60,7 +60,7 @@ function DashboardEditPaneSplitterLegacy({ dashboard, body, controls }: Props) {
   );
 }
 
-function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, controls }: Props) {
+function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, controls }: Props) {
   const { editPane } = dashboard.state;
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
@@ -103,7 +103,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
   useSidebarPaneMinWidth(openPane, sidebarContext);
 
   /**
-   * Sync docked state to editPane state
+   * Sync docked state to sidebar state
    */
   useEffect(() => {
     editPane.setState({ isDocked: sidebarContext.isDocked });
@@ -159,7 +159,7 @@ function DashboardEditPaneSplitterNewLayouts({ dashboard, isEditing, body, contr
         </div>
 
         <Sidebar contextValue={sidebarContext}>
-          <DashboardEditPaneRenderer dashboard={dashboard} />
+          <DashboardSidebarRenderer dashboard={dashboard} />
         </Sidebar>
       </div>
     );

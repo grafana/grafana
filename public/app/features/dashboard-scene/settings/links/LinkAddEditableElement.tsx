@@ -242,16 +242,16 @@ export class LinkEditEditableElement implements EditableDashboardElement {
 
   public onDelete(): void {
     const dashboard = this.linkEdit.state.dashboardRef.resolve();
-    const editPane = dashboard.state.editPane;
+    const sidebar = dashboard.state.editPane;
     const linkIndex = this.linkEdit.state.linkIndex;
     const currentLinks = dashboard.state.links ?? [];
 
     if (linkIndex < 0 || linkIndex >= currentLinks.length) {
-      editPane.selectObject(dashboard);
+      sidebar.selectObject(dashboard);
       return;
     }
 
     linkEditActions.removeLink({ dashboard, linkIndex });
-    editPane.selectObject(dashboard);
+    sidebar.selectObject(dashboard);
   }
 }

@@ -14,7 +14,7 @@ import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getEditableElementFor } from '../shared';
-import { type DashboardEditPaneLike } from '../types';
+import { type DashboardSidebarLike } from '../types';
 import { useOutlineRename } from '../useOutlineRename';
 
 import { type DashboardOutline } from './DashboardOutline';
@@ -22,7 +22,7 @@ import { DashboardOutlineNodeButtonContent } from './DashboardOutlineNodeButtonC
 
 interface DashboardOutlineNodeProps {
   sceneObject: SceneObject;
-  editPane: DashboardEditPaneLike;
+  sidebar: DashboardSidebarLike;
   outline: DashboardOutline;
   isEditing: boolean | undefined;
   depth: number;
@@ -33,7 +33,7 @@ interface DashboardOutlineNodeProps {
 
 export function DashboardOutlineNode({
   sceneObject,
-  editPane,
+  sidebar,
   outline,
   isEditing,
   depth,
@@ -76,9 +76,9 @@ export function DashboardOutlineNode({
         sceneObject instanceof DashboardFiltersSet ||
         sceneObject instanceof SectionFiltersSet
       ) {
-        // Select directly via editPane.selectObject because these objects are not
+        // Select directly via sidebar.selectObject because these objects are not
         // in the scene graph, so sceneGraph.findByKey (used by onSelect) can't find them.
-        editPane.selectObject(sceneObject);
+        sidebar.selectObject(sceneObject);
       } else {
         onSelect?.(e);
       }
@@ -156,7 +156,7 @@ export function DashboardOutlineNode({
               <DashboardOutlineNode
                 key={child.state.key}
                 sceneObject={child}
-                editPane={editPane}
+                sidebar={sidebar}
                 outline={outline}
                 depth={depth + 1}
                 isEditing={isEditing}

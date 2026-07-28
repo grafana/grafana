@@ -28,10 +28,10 @@ import {
 } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { getEditableElementFor } from './shared';
-import { type DashboardSidebarPane, type DashboardEditPaneLike, type DashboardEditPaneState } from './types';
+import { type DashboardSidebarPane, type DashboardSidebarLike, type DashboardSidebarState } from './types';
 
-export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> implements DashboardEditPaneLike {
-  public constructor(state?: Partial<DashboardEditPaneState>) {
+export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> implements DashboardSidebarLike {
+  public constructor(state?: Partial<DashboardSidebarState>) {
     super({
       selectionContext: {
         enabled: false,
@@ -54,7 +54,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
     this.panelEditAction = editAction;
   }
 
-  public clone(withState: Partial<DashboardEditPaneState>): this {
+  public clone(withState: Partial<DashboardSidebarState>): this {
     // Clone without any undo/redo history
     return super.clone({ ...withState, redoStack: [], undoStack: [] });
   }
@@ -324,7 +324,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> i
       document.activeElement.blur();
     }
 
-    const newState: DashboardEditPaneState = {
+    const newState: DashboardSidebarState = {
       ...this.state,
       selectionContext: { ...this.state.selectionContext, selected },
       openPane: selected.length ? new ElementEditPane({}) : undefined,
@@ -459,9 +459,9 @@ function trySwitchingToSourceTab(source: SceneObject) {
 }
 
 function getStateForPaneHistory(
-  currentState: DashboardEditPaneState | undefined,
-  newState?: DashboardEditPaneState
-): DashboardEditPaneState | undefined {
+  currentState: DashboardSidebarState | undefined,
+  newState?: DashboardSidebarState
+): DashboardSidebarState | undefined {
   if (!currentState || !currentState.openPane) {
     return undefined;
   }

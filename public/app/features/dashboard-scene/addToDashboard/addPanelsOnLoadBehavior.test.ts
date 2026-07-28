@@ -99,7 +99,7 @@ describe('addPanelsOnLoadBehavior', () => {
     });
   });
 
-  it('defers panel addition until editPane activates when it is not yet active', () => {
+  it('defers panel addition until sidebar activates when it is not yet active', () => {
     store.setObject(DASHBOARD_FROM_LS_KEY, buildTestDTO());
     const scene = buildTestScene();
     const addPanelSpy = jest.spyOn(scene, 'addPanel');

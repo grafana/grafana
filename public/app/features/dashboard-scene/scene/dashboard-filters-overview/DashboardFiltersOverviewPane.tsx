@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase, sceneUtils } from '@grafana/scenes';
 import { Box, IconButton, Text, useStyles2 } from '@grafana/ui';
 
-import { DashboardEditPane } from '../../edit-pane/DashboardEditPane';
+import { DashboardSidebar } from '../../edit-pane/DashboardSidebar';
 
 import { DashboardFiltersOverview } from './DashboardFiltersOverview';
 import { DashboardFiltersOverviewSearch } from './DashboardFiltersOverviewSearch';
@@ -21,7 +21,7 @@ export class DashboardFiltersOverviewPane extends SceneObjectBase {
 }
 
 function DashboardFiltersOverviewPaneRenderer({ model }: SceneComponentProps<DashboardFiltersOverviewPane>) {
-  const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
+  const sidebar = sceneGraph.getAncestor(model, DashboardSidebar);
   const styles = useStyles2(getStyles);
   const [searchQuery, setSearchQuery] = useState('');
   const { variables } = sceneGraph.getVariables(model)!.useState();
@@ -34,7 +34,7 @@ function DashboardFiltersOverviewPaneRenderer({ model }: SceneComponentProps<Das
         <IconButton
           name="times"
           size="lg"
-          onClick={() => editPane.closePane()}
+          onClick={() => sidebar.closePane()}
           aria-label={t('dashboard.filters-overview.close', 'Close')}
         />
         <div className={styles.title}>
@@ -46,7 +46,7 @@ function DashboardFiltersOverviewPaneRenderer({ model }: SceneComponentProps<Das
         <DashboardFiltersOverview
           adhocFilters={adHocVar}
           groupByVariable={groupByVar}
-          onClose={() => editPane.closePane()}
+          onClose={() => sidebar.closePane()}
           searchQuery={searchQuery}
         />
       </div>
