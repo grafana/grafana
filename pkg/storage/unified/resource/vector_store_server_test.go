@@ -334,6 +334,96 @@ func TestVectorStore_UpsertSubresourcesValidation(t *testing.T) {
 	assert.Equal(t, codes.InvalidArgument, status.Code(err))
 }
 
+func TestVectorStore_DeleteByUIDs(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: true, deleted: 3}
+	s := newTestVectorStoreServer(store)
+
+	resp, err := s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_Uids{Uids: &resourcepb.StringList{Values: []string{"u1", "u2"}}},
+	})
+	require.NoError(t, err)
+	assert.EqualValues(t, 3, resp.Deleted)
+	assert.False(t, resp.HasMore)
+	require.Len(t, store.deleteCalls, 1)
+	assert.Equal(t, []string{"u1", "u2"}, store.deleteCalls[0].Sel.UIDs)
+	assert.Equal(t, "r_external", store.deleteCalls[0].Resource)
+	assert.Empty(t, store.ensured, "delete must never provision")
+}
+
+func TestVectorStore_DeleteAll(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: true, deleted: 10000, hasMore: true}
+	s := newTestVectorStoreServer(store)
+
+	resp, err := s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_DeleteAll{DeleteAll: true},
+	})
+	require.NoError(t, err)
+	assert.EqualValues(t, 10000, resp.Deleted)
+	assert.True(t, resp.HasMore)
+	require.Len(t, store.deleteCalls, 1)
+	assert.True(t, store.deleteCalls[0].Sel.All)
+	assert.Equal(t, 10000, store.deleteCalls[0].Sel.Limit)
+}
+
+func TestVectorStore_DeleteSelectorValidation(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: true}
+	s := newTestVectorStoreServer(store)
+
+	// No selector.
+	_, err := s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{Namespace: "ns", Group: "g", Resource: "r"})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+
+	// delete_all=false.
+	_, err = s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_DeleteAll{DeleteAll: false},
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+
+	// Empty uids list.
+	_, err = s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_Uids{Uids: &resourcepb.StringList{}},
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+
+	// Too many uids.
+	many := make([]string, 501)
+	for i := range many {
+		many[i] = "u"
+	}
+	_, err = s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_Uids{Uids: &resourcepb.StringList{Values: many}},
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+
+	// Filter selector ships in PR2.
+	_, err = s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_Filter{Filter: []byte(`{}`)},
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Unimplemented, status.Code(err))
+}
+
+func TestVectorStore_DeleteUnprovisionedIsNotFound(t *testing.T) {
+	store := &fakeWriteStore{resolveFound: false}
+	s := newTestVectorStoreServer(store)
+	_, err := s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_Uids{Uids: &resourcepb.StringList{Values: []string{"u"}}},
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.NotFound, status.Code(err))
+}
+
 func TestVectorStore_UpsertSubresourcesNoChangesSkipsEmbed(t *testing.T) {
 	fake := &fakeTextEmbedder{dim: 4}
 	store := &fakeWriteStore{stored: map[string]string{"c": "same"}}

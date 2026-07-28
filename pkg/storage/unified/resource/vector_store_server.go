@@ -263,11 +263,54 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 	return resp, nil
 }
 
+// deleteAllPageSize is one Delete(delete_all) page, per the proto contract.
+const deleteAllPageSize = 10000
+
 func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDeleteRequest) (*resourcepb.VectorDeleteResponse, error) {
 	if err := s.authorize(ctx, req.Namespace, req.Group, req.Resource); err != nil {
 		return nil, err
 	}
-	return nil, status.Error(codes.Unimplemented, "not implemented yet")
+
+	// Deletes never provision: an unknown collection is NOT_FOUND, and
+	// callers treat delete-NOT_FOUND as benign.
+	coll, found, err := s.store.ResolveCollection(ctx, req.Group, req.Resource)
+	if err != nil {
+		s.log.Error("vector store: resolve collection", "err", err, "group", req.Group, "resource", req.Resource)
+		return nil, status.Error(codes.Internal, "resolve collection")
+	}
+	if !found {
+		return nil, status.Errorf(codes.NotFound, "collection %s/%s not found", req.Group, req.Resource)
+	}
+
+	var sel vector.DeleteSelector
+	switch sl := req.Selector.(type) {
+	case *resourcepb.VectorDeleteRequest_Uids:
+		uids := sl.Uids.GetValues()
+		if len(uids) == 0 {
+			return nil, status.Error(codes.InvalidArgument, "uids must not be empty")
+		}
+		if len(uids) > maxWriteBatch {
+			return nil, status.Errorf(codes.InvalidArgument, "too many uids: %d > %d", len(uids), maxWriteBatch)
+		}
+		sel.UIDs = uids
+	case *resourcepb.VectorDeleteRequest_DeleteAll:
+		if !sl.DeleteAll {
+			return nil, status.Error(codes.InvalidArgument, "delete_all must be true when set")
+		}
+		sel.All = true
+		sel.Limit = deleteAllPageSize
+	case *resourcepb.VectorDeleteRequest_Filter:
+		return nil, status.Error(codes.Unimplemented, "filter deletes ship with the metadata filter dialect")
+	default:
+		return nil, status.Error(codes.InvalidArgument, "a selector is required")
+	}
+
+	deleted, hasMore, err := s.store.DeleteRows(ctx, req.Namespace, s.embedder.Model, coll.PartitionKey, sel)
+	if err != nil {
+		s.log.Error("vector store: delete rows", "err", err, "group", req.Group, "resource", req.Resource)
+		return nil, status.Error(codes.Internal, "delete rows")
+	}
+	return &resourcepb.VectorDeleteResponse{Deleted: deleted, HasMore: hasMore}, nil
 }
 
 // UpdateMetadata ships in PR2 with the metadata filter dialect.
