@@ -33,9 +33,7 @@ export function RecommendationsView({ recommendations, startingState }: Recommen
     }
   }, [collapsed]);
 
-  // Anchored by id, not position: probes insert cards in priority order as they settle, and a
-  // late earlier-ordered card must grow the deck without moving the slide the user is reading.
-  const [activeId, setActiveId] = useState<string>();
+  const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
   // Clamp during render so a shrinking list cannot select an undefined entry.
@@ -50,7 +48,7 @@ export function RecommendationsView({ recommendations, startingState }: Recommen
     }
 
     const timeout = setTimeout(() => {
-      setActiveId(nextId);
+      setIndex((safeIndex + 1) % recommendations.length);
     }, 5000);
 
     return () => clearTimeout(timeout);
