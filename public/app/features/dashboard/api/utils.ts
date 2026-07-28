@@ -2,7 +2,12 @@ import { config } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Status, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
-import { AnnoKeyGrantPermissions, type Resource, type ResourceForCreate } from 'app/features/apiserver/types';
+import {
+  AnnoKeyGrantPermissions,
+  type Resource,
+  type ResourceClient,
+  type ResourceForCreate,
+} from 'app/features/apiserver/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -109,4 +114,24 @@ export function failedFromVersion(
 ): boolean {
   const storedVersion = getFailedVersion(item);
   return !!storedVersion && versionPrefixes.some((prefix) => storedVersion.startsWith(prefix));
+}
+
+/**
+ * Fetch a single soft-deleted dashboard through the recently-deleted listing.
+ *
+ * The `find` is load-bearing, not defensive: unified storage drops field selectors on
+ * get-trash listings (only the label survives), so the name is pinned solely by the
+ * apiserver registry collapsing `metadata.name=` into a single-object storage key. If
+ * that ever regresses, this request silently degenerates into the full deleted-dashboards
+ * listing (every item, full specs) — the find keeps the result correct regardless.
+ */
+export async function fetchDeletedDashboard<T>(
+  client: Pick<ResourceClient<T>, 'list'>,
+  name: string
+): Promise<Resource<T> | undefined> {
+  const list = await client.list({
+    labelSelector: 'grafana.app/get-trash=true',
+    fieldSelector: `metadata.name=${name}`,
+  });
+  return list.items.find((item) => item.metadata.name === name);
 }

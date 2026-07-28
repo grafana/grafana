@@ -5,6 +5,7 @@ import {
   type DataQueryRequest,
   type DataQueryResponse,
   DataSourceApi,
+  type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
   DataSourcePlugin,
   type ScopedVars,
@@ -12,11 +13,14 @@ import {
 import { type GetDataSourceListFilters, RuntimeDataSource, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 import {
   ExpressionDatasourceRef,
-  getDataSourceInstanceSettingsList,
   initDataSourceInstanceSettings,
   setExpressionDataSourceInstance,
 } from '@grafana/runtime/internal';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  type GetDataSourceInstanceListFilters,
+  getDataSourceInstanceList,
+  getDataSourceInstanceSettings,
+} from '@grafana/runtime/unstable';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
 
@@ -660,7 +664,7 @@ describe('datasource_srv', () => {
         await dataSourceSrv.reload();
 
         // The new API reflects the freshly fetched datasources...
-        const list = await getDataSourceInstanceSettingsList({ all: true });
+        const list = await getDataSourceInstanceList({ all: true });
         expect(list.some((x) => x.name === 'mmm')).toBe(true);
         // ...the expression built-in still resolves...
         expect((await getDataSourceInstanceSettings('__expr__'))?.uid).toBe('__expr__');
@@ -744,7 +748,7 @@ describe('datasource_srv', () => {
 // sorting and built-in (-- Grafana --/-- Mixed --/-- Dashboard --) ordering. Both impls are
 // seeded with identical data and their outputs compared across a filter matrix. This is the
 // only place both can be imported together (the runtime package can't import core).
-describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceSettingsList', () => {
+describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', () => {
   const DEFAULT_NAME = 'BBB';
 
   // Datasource variables consumed by the `variables: true` filter.
@@ -803,6 +807,34 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceSettings
   const project = (list: DataSourceInstanceSettings[]) =>
     list.map((d) => ({ name: d.name, uid: d.uid, type: d.type, isDefault: d.isDefault ?? false }));
 
+  // The async list returns slim items; project to the same shape as the legacy projection.
+  const projectListItems = (list: DataSourceInstanceListItem[]) =>
+    list.map((d) => ({ name: d.name, uid: d.uid, type: d.type, isDefault: d.isDefault }));
+
+  // Adapt GetDataSourceInstanceListFilters for the legacy getList() call: the slim filter
+  // callback receives a DataSourceInstanceListItem, so wrap it to construct one from the full
+  // DataSourceInstanceSettings. This avoids an `any` cast and stays safe if future cases add
+  // filter callbacks that read uid/type/meta or other DataSourceInstanceListItem fields.
+  const toLegacyFilters = (filters: GetDataSourceInstanceListFilters): GetDataSourceListFilters => {
+    const { filter, ...rest } = filters;
+    if (!filter) {
+      return rest;
+    }
+    return {
+      ...rest,
+      filter: (ds: DataSourceInstanceSettings) =>
+        filter({
+          uid: ds.uid,
+          type: ds.type,
+          apiVersion: ds.apiVersion,
+          name: ds.name,
+          meta: ds.meta,
+          readOnly: ds.readOnly,
+          isDefault: ds.isDefault ?? false,
+        }),
+    };
+  };
+
   let legacySrv: DatasourceSrv;
 
   beforeEach(() => {
@@ -814,7 +846,7 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceSettings
     initDataSourceInstanceSettings(clone() as any, DEFAULT_NAME);
   });
 
-  const cases: Array<{ label: string; filters: GetDataSourceListFilters }> = [
+  const cases: Array<{ label: string; filters: GetDataSourceInstanceListFilters }> = [
     { label: 'no filters', filters: {} },
     { label: 'all: true (includes non-queryable)', filters: { all: true } },
     { label: 'metrics: true', filters: { metrics: true } },
@@ -837,8 +869,8 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceSettings
   ];
 
   it.each(cases)('matches getList for $label', async ({ filters }) => {
-    const legacy = project(legacySrv.getList(filters));
-    const asyncList = project(await getDataSourceInstanceSettingsList(filters));
+    const legacy = project(legacySrv.getList(toLegacyFilters(filters)));
+    const asyncList = projectListItems(await getDataSourceInstanceList(filters));
     expect(asyncList).toEqual(legacy);
   });
 });

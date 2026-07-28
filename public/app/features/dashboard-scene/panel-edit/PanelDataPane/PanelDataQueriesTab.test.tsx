@@ -622,6 +622,22 @@ describe('PanelDataQueriesTab', () => {
 
           expect(panel.state.$timeRange).toBeUndefined();
         });
+
+        it('should preserve compareWith when updating other query options', async () => {
+          const { queriesTab, panel } = await setupScene('panel-1');
+
+          panel.setState({ $timeRange: new PanelTimeRange({ compareWith: '1d' }) });
+
+          queriesTab.onQueryOptionsChange({
+            dataSource: { name: 'grafana-testdata', type: 'grafana-testdata-datasource', default: true },
+            queries: [],
+            maxDataPoints: 100,
+            timeRange: { from: undefined, shift: undefined },
+          });
+
+          expect(panel.state.$timeRange).toBeInstanceOf(PanelTimeRange);
+          expect((panel.state.$timeRange?.state as PanelTimeRangeState).compareWith).toBe('1d');
+        });
       });
 
       describe('max data points and interval', () => {

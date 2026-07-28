@@ -72,6 +72,7 @@ export interface PluginMeta<T extends KeyValue = {}> {
   info: PluginMetaInfo;
   includes?: PluginInclude[];
   state?: PluginState;
+  category?: string;
   aliasIDs?: string[];
 
   // System.load & relative URLS

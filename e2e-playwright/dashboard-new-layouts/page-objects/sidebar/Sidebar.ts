@@ -1,31 +1,32 @@
-import { test, type Page } from '@playwright/test';
+import { test } from '@playwright/test';
 
-import { type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
-
-import { PageObject } from '../PageObject';
+import { PageObject, type PageObjectArgs } from '../PageObject';
 
 import { AddOptions } from './AddOptions';
 import { ContentOutline } from './ContentOutline';
 import { DashboardOptions } from './DashboardOptions';
 import { PanelOptions } from './PanelOptions';
 import { Toolbar } from './Toolbar';
+import { VariableOptions } from './VariableOptions';
 
 // The whole right-side sidebar region: the icon Toolbar plus the open pane that holds
 // dashboard/panel options. Mirrors the @grafana/ui <Sidebar> container that wraps both.
 export class Sidebar extends PageObject {
   public toolbar: Toolbar;
+  public contentOutline: ContentOutline;
   public addOptions: AddOptions;
   public dashboardOptions: DashboardOptions;
+  public variableOptions: VariableOptions;
   public panelOptions: PanelOptions;
-  public contentOutline: ContentOutline;
 
-  constructor(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-    super(page, dashboardPage, selectors);
-    this.toolbar = new Toolbar(page, dashboardPage, selectors);
-    this.addOptions = new AddOptions(page, dashboardPage, selectors);
-    this.dashboardOptions = new DashboardOptions(page, dashboardPage, selectors);
-    this.panelOptions = new PanelOptions(page, dashboardPage, selectors);
-    this.contentOutline = new ContentOutline(page, dashboardPage, selectors);
+  constructor(args: PageObjectArgs) {
+    super(args);
+    this.toolbar = new Toolbar(args);
+    this.contentOutline = new ContentOutline(args);
+    this.addOptions = new AddOptions(args);
+    this.dashboardOptions = new DashboardOptions(args);
+    this.variableOptions = new VariableOptions(args);
+    this.panelOptions = new PanelOptions(args);
   }
 
   getContainer() {

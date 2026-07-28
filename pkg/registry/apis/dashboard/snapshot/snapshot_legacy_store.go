@@ -63,11 +63,11 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 	}
 
 	// Delete the external one first. The stored ExternalDeleteURL may have an outdated
-	// path format, so the new-API branch extracts the domain and rebuilds the URL with
-	// the deleteKey. The legacy-API branch passes the stored URL through to
-	// DeleteExternalDashboardSnapshot, which rebuilds internally.
+	// path format (e.g. created with externalSnapshotsK8SAPIPush in the opposite
+	// state), so each branch extracts the host and rebuilds the URL with the
+	// deleteKey in its own expected format.
 	if snap.ExternalDeleteURL != "" {
-		if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagKubernetesSnapshots, false, openfeature.TransactionContext(ctx)) {
+		if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagExternalSnapshotsK8SAPIPush, false, openfeature.TransactionContext(ctx)) {
 			parsed, err := url.Parse(snap.ExternalDeleteURL)
 			if err != nil || parsed.Scheme == "" || parsed.Host == "" {
 				return nil, false, fmt.Errorf("invalid external delete URL: %w", err)
@@ -78,7 +78,7 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 				return nil, false, err
 			}
 		} else {
-			if err := dashboardsnapshots.DeleteExternalDashboardSnapshot(snap.ExternalDeleteURL); err != nil {
+			if err := deleteExternalSnapshotLegacy(snap.ExternalDeleteURL); err != nil {
 				return nil, false, err
 			}
 		}

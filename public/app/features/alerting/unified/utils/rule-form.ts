@@ -24,7 +24,6 @@ import {
 } from 'app/features/dashboard-scene/utils/utils';
 import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
-import { type LokiQuery } from 'app/plugins/datasource/loki/types';
 import { type RuleWithLocation } from 'app/types/unified-alerting';
 import {
   type AlertDataQuery,
@@ -40,6 +39,7 @@ import {
   type RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
+import { type LokiQuery } from '../../../loki-helpers/types';
 import { EvalFunction } from '../../state/alertDef';
 import { NAMED_ROOT_LABEL_NAME } from '../components/notification-policies/useNotificationPolicyRoute';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
@@ -326,11 +326,6 @@ export function normalizeContactPoints(
 }
 
 function getEditorSettingsFromDTO(ga: GrafanaRuleDefinition) {
-  // we need to check if the feature toggle is enabled as it might be disabled after the rule was created with the feature enabled
-  if (!config.featureToggles.alertingQueryAndExpressionsStepMode) {
-    return undefined;
-  }
-
   if (ga.metadata?.editor_settings) {
     return {
       simplifiedQueryEditor: ga.metadata.editor_settings.simplified_query_and_expressions_section,

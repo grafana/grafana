@@ -1,4 +1,4 @@
-import classNames from 'classnames';
+import classNames from 'clsx';
 import { cloneDeep, filter, uniqBy, uniqueId } from 'lodash';
 import pluralize from 'pluralize';
 import { PureComponent, type ReactNode, type JSX, createRef } from 'react';
@@ -14,6 +14,7 @@ import {
   LoadingState,
   type PanelData,
   type QueryResultMetaNotice,
+  type ScopedVars,
   type TimeRange,
   getDataSourceRef,
   PluginExtensionPoints,
@@ -32,6 +33,8 @@ import {
   QueryOperationRow,
   type QueryOperationRowRenderProps,
 } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { QueryEditorType } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/constants';
+import { trackCardAction } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/tracking';
 
 import { useQueryLibraryContext } from '../../explore/QueryLibrary/QueryLibraryContext';
 import { type OnSelectQueriesType } from '../../explore/QueryLibrary/types';
@@ -75,6 +78,10 @@ export interface Props<TQuery extends DataQuery> {
   queryLibraryRef?: string;
   onCancelQueryLibraryEdit?: () => void;
   isOpen?: boolean;
+  /**
+   * Required to resolve section-scoped (row/tab) datasource variables
+   */
+  scopedVars?: ScopedVars;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -115,7 +122,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
    */
   getInterpolatedDataSourceUID(): string | undefined {
     if (this.props.query.datasource) {
-      const instanceSettings = this.dataSourceSrv.getInstanceSettings(this.props.query.datasource);
+      const instanceSettings = this.dataSourceSrv.getInstanceSettings(
+        this.props.query.datasource,
+        this.props.scopedVars
+      );
       return instanceSettings?.rawRef?.uid ?? instanceSettings?.uid;
     }
 
@@ -244,6 +254,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       });
     }
 
+    trackCardAction(
+      'delete',
+      isExpressionQuery ? QueryEditorType.Expression : QueryEditorType.Query,
+      'content_header',
+      { silent: true }
+    );
+
     onRemoveQuery(query);
 
     if (onQueryRemoved) {
@@ -266,6 +283,13 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   onCopyQuery = () => {
     const { query, onAddQuery, onQueryCopied } = this.props;
+    const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
+    trackCardAction(
+      'duplicate',
+      isExpressionQuery ? QueryEditorType.Expression : QueryEditorType.Query,
+      'content_header',
+      { silent: true }
+    );
     const copy = cloneDeep(query);
     onAddQuery(copy);
 
@@ -276,16 +300,19 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
   onHideQuery = () => {
     const { query, onChange, onRunQuery, onQueryToggled } = this.props;
+    const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
+    trackCardAction(
+      'toggle_hide',
+      isExpressionQuery ? QueryEditorType.Expression : QueryEditorType.Query,
+      'content_header',
+      { silent: true }
+    );
     onChange({ ...query, hide: !query.hide });
     onRunQuery();
 
     if (onQueryToggled) {
       onQueryToggled(query.hide);
     }
-
-    reportInteraction('query_editor_row_hide_query_clicked', {
-      hide: !query.hide,
-    });
   };
 
   onToggleHelp = () => {
@@ -532,7 +559,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         isOpen={isOpen}
         onOpen={onQueryOpenChanged}
       >
-        <div className={rowClasses} id={this.id}>
+        <div
+          className={rowClasses}
+          id={this.id}
+          data-testid={selectors.components.Plugins.queryEditorRow(datasource.type, query.refId)}
+          data-plugin-id={datasource.type}
+        >
           <ErrorBoundaryAlert boundaryName="query-editor-operation-row">
             {showingHelp && DatasourceCheatsheet && (
               <OperationRowHelp>

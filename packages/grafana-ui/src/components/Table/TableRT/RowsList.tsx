@@ -41,6 +41,7 @@ interface RowsListProps {
   headerHeight: number;
   rowHeight: number;
   itemCount: number;
+  noHeader?: boolean;
   pageIndex: number;
   listHeight: number;
   width: number;
@@ -70,6 +71,7 @@ export const RowsList = (props: RowsListProps) => {
     footerPaginationEnabled,
     rowHeight,
     itemCount,
+    noHeader,
     pageIndex,
     tableState,
     prepareRow,
@@ -276,7 +278,12 @@ export const RowsList = (props: RowsListProps) => {
     ({ index, style, rowHighlightIndex }: { index: number; style: CSSProperties; rowHighlightIndex?: number }) => {
       const indexForPagination = rowIndexForPagination(index);
       const row = rows[indexForPagination];
-      let additionalProps: React.HTMLAttributes<HTMLDivElement> = {};
+      const additionalProps: React.HTMLAttributes<HTMLDivElement> = {
+        // ARIA row indexes are 1-based, include the header row and, with pagination,
+        // span all pages. Virtualization only renders the visible rows, so without this
+        // screen readers would announce positions within the rendered subset only.
+        'aria-rowindex': indexForPagination + (noHeader ? 1 : 2),
+      };
       prepareRow(row);
 
       const expandedRowStyle = tableState.expanded[row.id] ? css({ '&:hover': { background: 'inherit' } }) : {};
@@ -284,9 +291,7 @@ export const RowsList = (props: RowsListProps) => {
 
       if (rowHighlightIndex !== undefined && row.index === rowHighlightIndex) {
         style = { ...style, backgroundColor: theme.components.table.rowSelected };
-        additionalProps = {
-          'aria-selected': 'true',
-        };
+        additionalProps['aria-selected'] = 'true';
       }
 
       // Color rows if enabled
@@ -361,6 +366,7 @@ export const RowsList = (props: RowsListProps) => {
     [
       rowIndexForPagination,
       rows,
+      noHeader,
       prepareRow,
       tableState.expanded,
       nestedDataField,

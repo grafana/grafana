@@ -19,8 +19,10 @@ import {
 } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { isRootFolderUID } from 'app/features/search/constants';
 
+import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
-import { withSavedByTrailer } from '../../utils/currentUser';
+import { type CommitTemplateVars } from '../../utils/commitMessage';
+import { getCurrentCommitUser } from '../../utils/currentUser';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { MoveActionAvailableTargetWarning } from '../Shared/MoveActionAvailableTargetWarning';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
@@ -32,6 +34,7 @@ import {
   type BulkActionFormData,
   type BulkActionProvisionResourceProps,
   getBulkActionInitialValues,
+  getSelectedResourceCountSummary,
   getTargetFolderPathInRepo,
   isSameFolderPath,
 } from './utils';
@@ -65,8 +68,28 @@ function FormContent({
     handleSubmit,
     setError,
     clearErrors,
-    formState: { errors },
+    watch,
+    setValue,
+    formState: { errors, dirtyFields },
   } = methods;
+
+  const fallbackMessage = t('browse-dashboards.bulk-move-resources-form.default-commit-message', 'Move resources');
+  // Bulk operations span multiple resources, so `resourceKind` is omitted and `title` is a count
+  // summary rather than a single resource name.
+  const templateVars: CommitTemplateVars = {
+    action: 'move',
+    resourceID: '',
+    title: getSelectedResourceCountSummary(selectedItems),
+    ...getCurrentCommitUser(),
+  };
+  const { locked, message } = useCommitMessageTemplate({
+    repository,
+    vars: templateVars,
+    comment: watch('comment') ?? '',
+    isCommentDirty: Boolean(dirtyFields.comment),
+    setComment: (value) => setValue('comment', value, { shouldDirty: false }),
+    fallbackMessage,
+  });
 
   // Get target folder data
   const { data: targetFolder } = useGetFolderQuery(targetFolderUID ? { name: targetFolderUID } : skipToken);
@@ -121,13 +144,9 @@ function FormContent({
 
     submittedViaBranchWorkflow.current = data.workflow === 'branch';
 
-    // Create the move job spec. The Grafana-saved-by trailer rides through
-    // JobSpec.Message to the resulting git commit.
     const jobSpec: MoveJobSpec = {
       action: 'move',
-      message: withSavedByTrailer(
-        data.comment?.trim() || t('browse-dashboards.bulk-move-resources-form.default-commit-message', 'Move resources')
-      ),
+      message,
       move: {
         ref: data.workflow === 'write' ? undefined : data.ref,
         targetPath: targetFolderPathInRepo,
@@ -201,6 +220,8 @@ function FormContent({
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
                 hiddenFields={['path']}
+                lockComment={locked}
+                commitMessage={message}
               />
 
               <Stack gap={2}>

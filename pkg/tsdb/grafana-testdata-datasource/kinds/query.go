@@ -56,6 +56,7 @@ const (
 	TestDataQueryTypeCsvMetricValues              TestDataQueryType = "csv_metric_values"
 	TestDataQueryTypeDatapointsOutsideRange       TestDataQueryType = "datapoints_outside_range"
 	TestDataQueryTypeErrorWithSource              TestDataQueryType = "error_with_source"
+	TestDataQueryTypeErrorsAndNotices             TestDataQueryType = "errors_and_notices"
 	TestDataQueryTypeFlakyQuery                   TestDataQueryType = "flaky_query"
 	TestDataQueryTypeExponentialHeatmapBucketData TestDataQueryType = "exponential_heatmap_bucket_data"
 	TestDataQueryTypeFlameGraph                   TestDataQueryType = "flame_graph"

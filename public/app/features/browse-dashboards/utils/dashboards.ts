@@ -1,7 +1,8 @@
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type ResourceRef } from 'app/features/provisioning/components/BulkActions/useBulkActionJob';
-import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
+import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
 
 import { type DashboardTreeSelection, type DashboardViewItemWithUIItems } from '../types';
 
@@ -17,6 +18,10 @@ export function isVirtualTeamFolder(uid: string) {
   return uid === TEAM_FOLDERS_UID;
 }
 
+export function isVirtualStarredFolder(uid: string) {
+  return uid === STARRED_FOLDERS_UID;
+}
+
 const TEAM_FOLDER_PREFIX = TEAM_FOLDERS_UID + '/';
 
 export function isUnderTeamFolders(uid: string) {
@@ -27,11 +32,51 @@ export function addTeamFolderPrefix(uid: string) {
   return TEAM_FOLDER_PREFIX + uid;
 }
 
-export function removeTeamFolderPrefix(uid: string): string {
-  if (uid.startsWith(TEAM_FOLDER_PREFIX)) {
-    return uid.slice(TEAM_FOLDER_PREFIX.length);
-  }
-  return uid;
+const STARRED_FOLDER_PREFIX = STARRED_FOLDERS_UID + '/';
+
+export function addStarredFolderPrefix(uid: string) {
+  return STARRED_FOLDER_PREFIX + uid;
+}
+
+// The virtual roots ("Team folders", "Starred folders") prefix their real children's UIDs so the
+// browse tree keeps independent expand/collapse state from the same folder elsewhere in the tree.
+const VIRTUAL_FOLDER_PREFIXES = [TEAM_FOLDER_PREFIX, STARRED_FOLDER_PREFIX];
+
+function virtualFolderPrefixOf(uid: string): string | undefined {
+  return VIRTUAL_FOLDER_PREFIXES.find((prefix) => uid.startsWith(prefix));
+}
+
+export function stripVirtualFolderPrefix(uid: string): string {
+  const prefix = virtualFolderPrefixOf(uid);
+  return prefix ? uid.slice(prefix.length) : uid;
+}
+
+// Re-applies whatever virtual prefix the parent carries to a freshly-fetched (unprefixed) child UID.
+export function reapplyVirtualFolderPrefix(parentUID: string, childUID: string): string {
+  const prefix = virtualFolderPrefixOf(parentUID);
+  return prefix ? prefix + stripVirtualFolderPrefix(childUID) : childUID;
+}
+
+// Virtual roots that must never be selected, plus starred-folder children (the starred view is
+// read-only; the same folders stay selectable under the real "Dashboards" tree).
+export function isNonSelectableVirtualFolder(uid: string): boolean {
+  return (
+    isSharedWithMe(uid) ||
+    isVirtualTeamFolder(uid) ||
+    isVirtualStarredFolder(uid) ||
+    uid.startsWith(STARRED_FOLDER_PREFIX)
+  );
+}
+
+// Single gate for the starred-folders feature: the OpenFeature flag, the hard dependency on the
+// collections stars API (legacy stars are dashboard-only and cannot represent starred folders), and
+// the app-platform folder API (`foldersAppPlatformAPI`), which renders the virtual root in the browse list.
+export function starredFoldersEnabled(): boolean {
+  return (
+    getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaStarredFolders, false) &&
+    Boolean(config.featureToggles.starsFromAPIServer) &&
+    Boolean(config.featureToggles.foldersAppPlatformAPI)
+  );
 }
 
 // Construct folder URL and append orgId to it

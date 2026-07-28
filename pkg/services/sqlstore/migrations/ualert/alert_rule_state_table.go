@@ -27,3 +27,19 @@ func AddAlertRuleStateTable(mg *migrator.Migrator) {
 		migrator.NewAddIndexMigration(alertStateTable, alertStateTable.Indices[0]),
 	)
 }
+
+// AddAlertRuleStateBigIntMigration widens alert_rule_state.id to bigint on PostgreSQL.
+//
+// The migrator maps DB_BigInt with IsAutoIncrement to SERIAL (integer, max 2^31-1)
+// instead of BIGSERIAL (bigint), so the id column and its sequence are only 32-bit.
+// The periodic full-sync (DELETE + re-INSERT) burns through sequence values rapidly,
+// causing the sequence to overflow on busy installations. MySQL and SQLite already
+// store the column as a 64-bit integer, so this only affects PostgreSQL.
+func AddAlertRuleStateBigIntMigration(mg *migrator.Migrator) {
+	// Each statement is its own migration: a raw SQL migration runs as a single Exec,
+	// and PostgreSQL does not support multiple semicolon-separated statements in one Exec.
+	mg.AddMigration("alter alert_rule_state id column to bigint for postgres", migrator.NewRawSQLMigration("").
+		Postgres("ALTER TABLE alert_rule_state ALTER COLUMN id TYPE BIGINT;"))
+	mg.AddMigration("alter alert_rule_state id sequence to bigint for postgres", migrator.NewRawSQLMigration("").
+		Postgres("ALTER SEQUENCE alert_rule_state_id_seq AS BIGINT;"))
+}

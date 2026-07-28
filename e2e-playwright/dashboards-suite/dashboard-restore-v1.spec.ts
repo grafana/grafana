@@ -1,6 +1,38 @@
-import { test, expect } from '@grafana/plugin-e2e';
+import { type Page } from 'playwright-core';
+
+import { test, expect, type DashboardPage, type E2ESelectorGroups, type Components } from '@grafana/plugin-e2e';
+
+import { Sidebar } from '../dashboard-new-layouts/page-objects';
 
 import { makeNewDashboardRequestBody } from './utils/makeDashboard';
+
+// New-layouts has no settings toolbar button; settings open from the dashboard edit-pane
+// "Dashboard options" sidebar button, then the "View all settings" button it reveals.
+async function openDashboardSettings(
+  page: Page,
+  dashboardPage: DashboardPage,
+  selectors: E2ESelectorGroups,
+  components: Components
+) {
+  const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+  const editButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton);
+  const optionsButton = sidebar.toolbar.getButton('Options');
+  // The first edit-button click can be swallowed before the scene is interactive; re-click only
+  // while still in view mode (the button is a toggle) until the Options button appears.
+  await expect(async () => {
+    if (
+      await editButton
+        .getByText('Edit', { exact: true })
+        .isVisible()
+        .catch(() => false)
+    ) {
+      await editButton.click();
+    }
+    await expect(optionsButton).toBeVisible({ timeout: 3000 });
+  }).toPass();
+  await optionsButton.click();
+  await page.getByRole('button', { name: 'View all settings' }).click();
+}
 
 const NAMESPACE = 'stacks-12345';
 const V1_API = `/apis/dashboard.grafana.app/v1/namespaces/${NAMESPACE}/dashboards`;
@@ -20,7 +52,7 @@ function k8sDashboardResource(spec: Record<string, unknown>, folderUid = '') {
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    dashboardNewLayouts: true,
   },
 });
 
@@ -116,15 +148,16 @@ test.describe(
         gotoDashboardPage,
         page,
         selectors,
+        components,
       }) => {
         const dashboardPage = await gotoDashboardPage({ uid: dashboardUID });
 
-        // Enter edit mode then open settings
-        await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-        await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.settingsButton).click();
+        // Enter edit mode then open settings (new-layouts flow)
+        await openDashboardSettings(page, dashboardPage, selectors, components);
 
-        // Click delete dashboard button
-        await page.getByTestId(selectors.pages.Dashboard.Settings.General.deleteDashBoard).click();
+        // Click delete dashboard button (settings-view element — use the grafana selector helper,
+        // not getByTestId, which mis-resolves data-testid-prefixed selector values)
+        await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Settings.General.deleteDashBoard).click();
 
         // Confirm deletion — settings delete modal uses confirmationText="Delete"
         await page.getByTestId(selectors.pages.ConfirmModal.input).fill('Delete');

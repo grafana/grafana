@@ -13,7 +13,6 @@ import {
   type ScopedVars,
   type PanelModel as IPanelModel,
   type DataSourceRef,
-  CoreApp,
   filterFieldConfigOverrides,
   getPanelOptionsWithDefaults,
   isStandardFieldProp,
@@ -34,7 +33,6 @@ import {
 import { type QueryGroupOptions } from 'app/types/query';
 
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { type TimeOverrideResult } from '../utils/panel';
 
 import { getPanelPluginToMigrateTo } from './getPanelPluginToMigrateTo';
 
@@ -46,17 +44,8 @@ export interface GridPos {
   static?: boolean;
 }
 
-type RunPanelQueryOptions = {
-  dashboardUID: string;
-  dashboardTimezone: string;
-  dashboardTitle: string;
-  timeData: TimeOverrideResult;
-  width: number;
-  publicDashboardAccessToken?: string;
-};
 const notPersistedProperties: { [str: string]: boolean } = {
   events: true,
-  isViewing: true,
   isEditing: true,
   isInView: true,
   hasRefreshed: true,
@@ -99,7 +88,6 @@ const mustKeepProps: { [str: string]: boolean } = {
   links: true,
   fullscreen: true,
   isEditing: true,
-  isViewing: true,
   hasRefreshed: true,
   events: true,
   cacheTimeout: true,
@@ -187,7 +175,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   autoMigrateFrom?: string;
 
   // non persisted
-  isViewing = false;
   isEditing = false;
   isInView = false;
   configRev = 0; // increments when configs change
@@ -339,10 +326,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     return model;
   }
 
-  setIsViewing(isViewing: boolean) {
-    this.isViewing = isViewing;
-  }
-
   updateGridPos(newPos: GridPos, manuallyUpdated = true) {
     if (
       newPos.x === this.gridPos.x &&
@@ -363,28 +346,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     // Maybe a bit heavy. Could add a "GridPosChanged" event instead?
     this.render();
-  }
-
-  runAllPanelQueries({ dashboardUID, dashboardTimezone, timeData, width, dashboardTitle }: RunPanelQueryOptions) {
-    this.getQueryRunner().run({
-      datasource: this.datasource,
-      queries: this.targets,
-      panelId: this.id,
-      panelName: this.title,
-      panelPluginId: this.type,
-      dashboardUID: dashboardUID,
-      dashboardTitle: dashboardTitle,
-      timezone: dashboardTimezone,
-      timeRange: timeData.timeRange,
-      timeInfo: timeData.timeInfo,
-      maxDataPoints: this.maxDataPoints || Math.floor(width),
-      minInterval: this.interval,
-      scopedVars: this.scopedVars,
-      cacheTimeout: this.cacheTimeout,
-      queryCachingTTL: this.queryCachingTTL,
-      transformations: this.transformations,
-      app: this.isEditing ? CoreApp.PanelEditor : this.isViewing ? CoreApp.PanelViewer : CoreApp.Dashboard,
-    });
   }
 
   refresh() {
@@ -669,10 +630,6 @@ export class PanelModel implements DataConfigSource, IPanelModel {
    * This is the title used when displaying the title in the UI so it will include any interpolated variables.
    * If you need the raw title without interpolation use title property instead.
    * */
-  getDisplayTitle(): string {
-    return this.replaceVariables(this.title, undefined, 'text');
-  }
-
   initLibraryPanel(libPanel: LibraryPanel) {
     for (const [key, val] of Object.entries(libPanel.model)) {
       switch (key) {

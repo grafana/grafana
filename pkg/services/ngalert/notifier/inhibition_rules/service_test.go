@@ -286,10 +286,7 @@ func createInhibitionRuleSvcSut(enableImported bool) (*Service, *legacy_storage.
 	logger := log.NewNopLogger()
 	var ff featuremgmt.FeatureToggles
 	if enableImported {
-		ff = featuremgmt.WithFeatures(
-			featuremgmt.FlagAlertingMultiplePolicies,
-			featuremgmt.FlagAlertingImportAlertmanagerAPI,
-		)
+		ff = featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 	}
 	return NewService(store, logger, ff, validation.ValidateProvenanceRelaxed), store
 }

@@ -13,9 +13,11 @@ import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequ
 import { type FolderDTO } from 'app/types/folders';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
+import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
+import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
@@ -23,6 +25,7 @@ import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
+import { validateProvisionedFolderName } from '../utils/folderName';
 import { joinPath } from '../utils/path';
 
 interface FormProps extends Props {
@@ -49,7 +52,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
   });
   const { handleSubmit, watch, register, formState } = methods;
 
-  const [workflow] = watch(['workflow']);
+  const [workflow, ref] = watch(['workflow', 'ref']);
 
   const title = watch('title');
   const templateVars: CommitTemplateVars = {
@@ -67,6 +70,16 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
+  const { locked: lockBranch } = useBranchTemplate({
+    repository,
+    vars: templateVars,
+    workflow,
+    value: ref ?? '',
+    setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
+  });
+
+  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+
   const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
     const prUrl = urls?.newPullRequestURL;
     // Fall back to the repository URL if no PR URL is returned, so preview banner link button stay visible
@@ -78,6 +91,9 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     }
     if (info.repoType) {
       params.repo_type = info.repoType;
+    }
+    if (prTitle) {
+      params.pr_title = prTitle;
     }
 
     if (Object.keys(params).length > 0) {
@@ -107,7 +123,6 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     setError(
       getProvisionedRequestError(
         error,
-        'folder',
         t('browse-dashboards.new-provisioned-folder-form.error-saving', 'An error occurred while creating folder.')
       )
     );
@@ -157,6 +172,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
       workflow,
       repositoryName: repoName,
       repositoryType: repository?.type ?? 'unknown',
+      source: 'new-folder-form',
     });
 
     try {
@@ -217,6 +233,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
             hiddenFields={['path']}
             lockComment={locked}
             commitMessage={message}
+            lockBranch={lockBranch}
           />
 
           {prURL && (
@@ -283,22 +300,4 @@ export function NewProvisionedFolderForm({ parentFolder, onDismiss }: Props) {
       )}
     </ProvisionedFormGate>
   );
-}
-
-function validateProvisionedFolderName(folderName: string): string | true {
-  if (!folderName || typeof folderName !== 'string') {
-    return t('browse-dashboards.new-provisioned-folder-form.error-required', 'Folder name is required');
-  }
-
-  // Backend allows: a-zA-Z0-9 _- (no dots, no forward slash for folder names)
-  const invalidCharRegex = /[^a-zA-Z0-9 _-]/;
-
-  if (invalidCharRegex.test(folderName)) {
-    return t(
-      'browse-dashboards.new-provisioned-folder-form.error-invalid-characters',
-      'Folder name contains invalid characters. Only letters, numbers, spaces, underscores, and hyphens are allowed.'
-    );
-  }
-
-  return true; // Valid
 }

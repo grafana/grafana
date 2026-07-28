@@ -17,6 +17,11 @@ describe('TeamDeleteModal', () => {
     ownedFolder: false,
   };
 
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockOnConfirm.mockResolvedValue(undefined);
+  });
+
   it('renders a dialog with the correct title and text', async () => {
     const mockTeam = MOCK_TEAMS[0];
     render(<TeamDeleteModal {...defaultProps} />);
@@ -53,6 +58,21 @@ describe('TeamDeleteModal', () => {
 
     await user.click(await screen.findByRole('button', { name: 'Delete' }));
     expect(mockOnConfirm).toHaveBeenCalled();
+  });
+
+  it('shows the API error and keeps the modal open when deletion fails', async () => {
+    mockOnConfirm.mockRejectedValueOnce({
+      status: 409,
+      data: { message: 'Cannot delete team that owns folders' },
+    });
+    const { user } = render(<TeamDeleteModal {...defaultProps} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Delete' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to delete team');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Cannot delete team that owns folders');
+    expect(screen.getByRole('dialog', { name: 'Delete' })).toBeInTheDocument();
+    expect(mockOnDismiss).not.toHaveBeenCalled();
   });
 
   it('calls onDismiss when clicking the `Cancel` button', async () => {

@@ -1,12 +1,7 @@
 import { css, cx } from '@emotion/css';
-import type BaseLayer from 'ol/layer/Base';
-import { useMemo } from 'react';
-import { useObservable } from 'react-use';
-import { of } from 'rxjs';
 
 import {
   getMinMaxAndDelta,
-  type DataFrame,
   formattedValueToString,
   getFieldColorModeForField,
   type GrafanaTheme2,
@@ -17,47 +12,24 @@ import { useStyles2, type VizLegendItem } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { getThresholdItems } from 'app/core/components/TimelineChart/utils';
-import { type DimensionSupplier } from 'app/features/dimensions/types';
 
 import { type StyleConfigState } from '../style/types';
-import { type MapLayerState } from '../types';
 
 export interface MarkersLegendProps {
-  size?: DimensionSupplier<number>;
   layerName?: string;
   styleConfig?: StyleConfigState;
-  layer?: BaseLayer;
 }
 
-export function MarkersLegend(props: MarkersLegendProps) {
-  const { layerName, styleConfig, layer } = props;
+export function MarkersLegend({ layerName, styleConfig }: MarkersLegendProps) {
   const style = useStyles2(getStyles);
-
-  const hoverEvent = useObservable(((layer as any)?.__state as MapLayerState)?.mouseEvents ?? of(undefined));
-
-  const colorField = styleConfig?.dims?.color?.field;
-  const hoverValue = useMemo(() => {
-    if (!colorField || !hoverEvent) {
-      return undefined;
-    }
-
-    const props = hoverEvent.getProperties();
-    const frame: DataFrame = props.frame;
-
-    if (!frame) {
-      return undefined;
-    }
-
-    const rowIndex: number = props.rowIndex;
-    return colorField.values[rowIndex];
-  }, [hoverEvent, colorField]);
 
   if (!styleConfig) {
     return <></>;
   }
 
-  const { color, opacity } = styleConfig?.base ?? {};
-  const symbol = styleConfig?.config.symbol?.fixed;
+  const colorField = styleConfig.dims?.color?.field;
+  const { color, opacity } = styleConfig.base;
+  const symbol = styleConfig.config.symbol?.fixed;
 
   if (color && symbol && !colorField) {
     return (
@@ -95,15 +67,12 @@ export function MarkersLegend(props: MarkersLegendProps) {
     //   ]
     // })
 
-    const display = colorField.display
-      ? (v: number) => formattedValueToString(colorField.display!(v))
-      : (v: number) => `${v}`;
+    const display = colorField.display ? (v: number) => formattedValueToString(colorField.display!(v)) : undefined;
     return (
       <div className={style.infoWrap}>
         <div className={style.layerName}>{layerName}</div>
         <div className={cx(style.layerBody, style.colorScaleWrapper)}>
           <ColorScale
-            hoverValue={hoverValue}
             colorPalette={colors}
             min={colorRange.min ?? 0}
             max={colorRange.max ?? 100}

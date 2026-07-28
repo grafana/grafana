@@ -1,21 +1,23 @@
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useFlagGrafanaOrgDashboardTemplates } from '@grafana/runtime/internal';
+import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Button, ButtonGroup, Dropdown, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
+import { canManageDashboardTemplates } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/templatePermissions';
+import { CustomDashboardTemplateInteractions } from 'app/features/dashboard-scene/analytics/dashboard-templates/main';
 import { getSaveAsTemplateForm } from 'app/features/dashboard-scene/saving/enterprise-components/SaveAsTemplateFormExtension';
 
 import { type ToolbarActionProps } from '../types';
 
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
-  const { meta, isDirty, uid, editview, editPanel } = dashboard.state;
-  const isDashboardTemplatesFlagEnabled = useFlagGrafanaOrgDashboardTemplates();
+  const { meta, isDirty, uid, editview } = dashboard.state;
+  const isDashboardTemplatesFlagEnabled = useFlagGrafanaCustomDashboardTemplates();
 
   const isNew = !Boolean(uid || dashboard.isManaged());
   const isManaged = dashboard.isManaged();
   // In dashboard settings we still use the nav toolbar for a short while
-  const buttonSize = Boolean(editview) || editPanel ? 'sm' : 'md';
+  const buttonSize = Boolean(editview) ? 'sm' : 'md';
 
   const onSaveAsCopy = () => {
     reportInteraction('grafana_dashboard_save_as_copy_clicked');
@@ -94,15 +96,21 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
               icon="copy"
               onClick={onSaveAsCopy}
             />
-            {isDashboardTemplatesFlagEnabled && meta.canSave && getSaveAsTemplateForm() !== null && (
-              <Menu.Item
-                label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
-                icon="grid"
-                onClick={() => {
-                  dashboard.openSaveDrawer({ saveAsDashboardTemplate: true });
-                }}
-              />
-            )}
+            {isDashboardTemplatesFlagEnabled &&
+              canManageDashboardTemplates() &&
+              meta.canSave &&
+              getSaveAsTemplateForm() !== null && (
+                <Menu.Item
+                  label={t('dashboard.toolbar.save-as-template.label', 'Save as template')}
+                  icon="grid"
+                  onClick={() => {
+                    CustomDashboardTemplateInteractions.saveAsOpened({
+                      dashboardUid: uid ?? '',
+                    });
+                    dashboard.openSaveDrawer({ saveAsDashboardTemplate: true });
+                  }}
+                />
+              )}
           </Menu>
         }
       >

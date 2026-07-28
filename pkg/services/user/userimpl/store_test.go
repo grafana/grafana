@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -39,7 +40,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	ss, cfg := db.InitTestDBWithCfg(t)
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
-	quotaService := quotaimpl.ProvideService(context.Background(), ss, cfgProvider)
+	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(ss), cfgProvider)
 	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
@@ -453,30 +454,6 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	t.Run("GetProfile", func(t *testing.T) {
 		_, err := userStore.GetProfile(context.Background(), &user.GetUserProfileQuery{UserID: 1})
 		require.NoError(t, err)
-	})
-
-	t.Run("Update HelpFlags", func(t *testing.T) {
-		id, err := userStore.Insert(context.Background(), &user.User{
-			Email:      "help@test.com",
-			Name:       "help",
-			Login:      "help",
-			Updated:    time.Now(),
-			Created:    time.Now(),
-			LastSeenAt: time.Now(),
-		})
-		require.NoError(t, err)
-		original, err := userStore.GetByID(context.Background(), id)
-		require.NoError(t, err)
-
-		helpflags := user.HelpFlags1(1)
-		err = userStore.Update(context.Background(), &user.UpdateUserCommand{UserID: id, HelpFlags1: &helpflags})
-		require.NoError(t, err)
-
-		got, err := userStore.GetByID(context.Background(), id)
-		require.NoError(t, err)
-
-		original.HelpFlags1 = helpflags
-		assertEqualUser(t, original, got)
 	})
 
 	t.Run("Testing DB - return list users based on their is_disabled flag", func(t *testing.T) {
@@ -1070,7 +1047,7 @@ func TestIntegrationMetricsUsage(t *testing.T) {
 	userStore := ProvideStore(ss, setting.NewCfg())
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
-	quotaService := quotaimpl.ProvideService(context.Background(), ss, cfgProvider)
+	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(ss), cfgProvider)
 	orgService, err := orgimpl.ProvideService(ss, cfg, quotaService)
 	require.NoError(t, err)
 
@@ -1114,24 +1091,12 @@ func TestIntegrationMetricsUsage(t *testing.T) {
 	})
 }
 
-func assertEqualUser(t *testing.T, expected, got *user.User) {
-	// zero out time fields
-	expected.Updated = time.Time{}
-	expected.Created = time.Time{}
-	expected.LastSeenAt = time.Time{}
-	got.Updated = time.Time{}
-	got.Created = time.Time{}
-	got.LastSeenAt = time.Time{}
-
-	assert.Equal(t, expected, got)
-}
-
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {
 	t.Helper()
 
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
-	quotaService := quotaimpl.ProvideService(context.Background(), store, cfgProvider)
+	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(store), cfgProvider)
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := ProvideService(

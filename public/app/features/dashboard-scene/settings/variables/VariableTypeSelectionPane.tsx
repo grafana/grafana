@@ -17,10 +17,9 @@ import { Box, Card, Sidebar, Stack, useStyles2 } from '@grafana/ui';
 
 import { dashboardEditActions } from '../../edit-pane/shared';
 import { type DashboardSidebarPane } from '../../edit-pane/types';
-import { type DashboardScene } from '../../scene/DashboardScene';
 import { isRowItem, isTabItem } from '../../scene/types/LayoutItemTypeGuards';
+import { getDashboardSceneLike, type DashboardSceneLike } from '../../scene/types/dashboard';
 import { DashboardInteractions } from '../../utils/interactions';
-import { getDashboardSceneFor } from '../../utils/utils';
 
 import {
   type EditableVariableType,
@@ -30,11 +29,11 @@ import {
   getVariableTypeSelectOptions,
 } from './utils';
 
-export function openAddVariablePane(dashboard: DashboardScene) {
+export function openAddVariablePane(dashboard: DashboardSceneLike) {
   dashboard.state.editPane.openPane(new VariableAddPane({ sectionOwner: dashboard.getRef() }));
 }
 
-export function openAddSectionVariablePane(dashboard: DashboardScene, sectionOwner: SceneObject) {
+export function openAddSectionVariablePane(dashboard: DashboardSceneLike, sectionOwner: SceneObject) {
   dashboard.state.editPane.openPane(new VariableAddPane({ sectionOwner: sectionOwner.getRef() }));
 }
 
@@ -54,7 +53,7 @@ export class VariableAddPane extends SceneObjectBase<VariableAddPaneState> imple
 function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>) {
   const onAddVariable = useCallback(
     (type: EditableVariableType) => {
-      const dashboard = getDashboardSceneFor(model);
+      const dashboard = getDashboardSceneLike(model);
       const sectionOwner = model.state.sectionOwner.resolve();
       const existing = sectionOwner.state.$variables;
       const variablesSet = existing instanceof SceneVariableSet ? existing : new SceneVariableSet({ variables: [] });
@@ -105,7 +104,7 @@ export class VariableTypeChangePane
 }
 
 export function openChangeVariableTypePane(variable: SceneVariable) {
-  const dashboard = getDashboardSceneFor(variable);
+  const dashboard = getDashboardSceneLike(variable);
   dashboard.state.editPane.openPane(new VariableTypeChangePane({ variableRef: variable.getRef() }));
 }
 
@@ -115,7 +114,7 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
   const onChangeVariableType = useCallback(
     (type: EditableVariableType) => {
       const variableSet = variable.parent;
-      const dashboard = getDashboardSceneFor(variable);
+      const dashboard = getDashboardSceneLike(variable);
 
       if (!(variableSet instanceof SceneVariableSet)) {
         return;

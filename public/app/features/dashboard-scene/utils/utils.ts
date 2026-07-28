@@ -1,7 +1,7 @@
 import { getDataSourceRef, type IntervalVariableModel, type ScopedVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { useFlagGrafanaScenesFlickeringFix } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient, useFlagGrafanaScenesFlickeringFix } from '@grafana/runtime/internal';
 import {
   type CancelActivationHandler,
   type CustomVariable,
@@ -26,7 +26,7 @@ import { initialIntervalVariableModelState } from 'app/features/variables/interv
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { type DashboardLayoutOrchestrator } from '../scene/DashboardLayoutOrchestrator';
-import { DashboardScene, type DashboardSceneState } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
@@ -39,6 +39,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
 import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
 import { type DashboardLayoutManager, isDashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type DashboardSceneState } from '../scene/types/dashboard';
 
 export const NEW_PANEL_HEIGHT = 8;
 export const NEW_PANEL_WIDTH = 12;
@@ -50,6 +51,13 @@ const V1_PANEL_PROPERTIES = {
 
 export function getVizPanelKeyForPanelId(panelId: number) {
   return `panel-${panelId}`;
+}
+
+/**
+ * Whether the new panel query errors & notices UI (header popover + dedicated inspector tab) is enabled.
+ */
+export function isNewPanelQueryErrorsUIEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPanelQueryErrorsUI, false);
 }
 
 export function getPanelIdForVizPanel(panel: SceneObject): number {
@@ -295,8 +303,7 @@ export function getDefaultVizPanel(): VizPanel {
       $behaviors: [panelMenuBehavior],
     }),
     headerActions: new VizPanelHeaderActions({
-      hideGroupByAction:
-        !config.featureToggles.panelGroupBy && !config.featureToggles.dashboardUnifiedDrilldownControls,
+      hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     $data: datasourceSettings
       ? new SceneDataTransformer({

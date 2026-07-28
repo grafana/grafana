@@ -64,6 +64,11 @@ export interface PanelContext {
    */
   onAddAdHocFilters?: (items: AdHocFilterItem[]) => void;
 
+  /**
+   * Used by the panel header status popover to open the errors and notices view.
+   */
+  onOpenInspector?: () => void;
+
   /** For instance state that can be shared between panel & options UI  */
   instanceState?: any;
 

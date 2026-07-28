@@ -133,6 +133,7 @@ jobs:
         id: create-pr
         with:
           token: '${{ steps.get-github-app-token.outputs.token }}'
+          sign-commits: true
           title:  'Alerting: Update alerting module to ${{ steps.latest-commit.outputs.to_commit }}'
           branch: alerting/update-alerting-module
           delete-branch: true

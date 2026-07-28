@@ -6,10 +6,6 @@ import (
 	"sort"
 	"time"
 
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -18,6 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill")
@@ -376,6 +375,8 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 	}
 	if len(items) == 0 {
 		statusLabel = "skipped_empty_extract"
+		// this shouldn't happen that often. If it does, use this to look up the dashboard json and understand why nothing was extracted.
+		b.log.Info("skipping empty extract", "namespace", namespace, "group", group, "resource", res, "name", name)
 		return nil
 	}
 

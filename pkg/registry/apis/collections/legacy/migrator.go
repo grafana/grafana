@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	collectionsV1 "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
@@ -18,35 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
-
-func StarsMigrationDefinition(migrator StarsMigrator) migrations.MigrationDefinition {
-	starsGR := schema.GroupResource{Group: collectionsV1.APIGroup, Resource: "stars"}
-
-	return migrations.MigrationDefinition{
-		ID:          "stars",
-		MigrationID: "stars migration",
-		Resources: []migrations.ResourceInfo{
-			{GroupResource: starsGR, LockTables: []string{"star", "user"}},
-		},
-		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
-			starsGR: migrator.MigrateStars,
-		},
-		Validators: []migrations.ValidatorFactory{
-			migrations.CountValidation(starsGR, migrations.CountValidationOptions{
-				Table:    "star",
-				Where:    "star.org_id = ?",
-				Distinct: "star.user_id",
-				// Join filters out orphaned stars whose user has been deleted,
-				// matching exactly what MigrateStars processes via sql_list_users.sql.
-				Join: &migrations.CountValidationJoin{
-					Table: []string{"user", "u"},
-					On:    "star.user_id = u.id",
-				},
-			}),
-		},
-		RenameTables: []string{},
-	}
-}
 
 type StarsMigrator interface {
 	MigrateStars(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error

@@ -19,7 +19,6 @@ pkg/kinds/
 pkg/kindsys/
 pkg/registry/schemas/
 grafana-mixin/
-public/app/plugins/datasource/tempo
 public/app/features/explore/TraceView/components
 public/img/icons/solid/
 public/img/icons/unicons/

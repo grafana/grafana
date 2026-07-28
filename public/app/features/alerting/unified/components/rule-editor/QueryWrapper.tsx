@@ -17,7 +17,6 @@ import {
   rangeUtil,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { type GraphThresholdsStyleMode, Icon, InlineField, Input, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { logInfo } from 'app/features/alerting/unified/Analytics';
@@ -85,8 +84,7 @@ export const QueryWrapper = ({
   const defaults = dsInstance?.getDefaultQuery ? dsInstance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
 
   const { getValues } = useFormContext<RuleFormValues>();
-  const isSwitchModeEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
-  const isAdvancedMode = isSwitchModeEnabled ? getValues('editorSettings.simplifiedQueryEditor') !== true : true;
+  const isAdvancedMode = getValues('editorSettings.simplifiedQueryEditor') !== true;
 
   const queryWithDefaults = {
     ...defaults,

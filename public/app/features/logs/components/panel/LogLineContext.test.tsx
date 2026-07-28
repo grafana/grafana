@@ -3,6 +3,7 @@ import { render, screen, waitFor, userEvent } from 'test/test-utils';
 import {
   createDataFrame,
   FieldType,
+  LoadingState,
   LogRowContextQueryDirection,
   LogsSortOrder,
   type SplitOpenOptions,
@@ -18,7 +19,7 @@ import {
   identifyOTelLanguages,
 } from '../otel/formats';
 
-import { DEFAULT_TIME_WINDOW, LogLineContext, PAGE_SIZE } from './LogLineContext';
+import { combineLoadingStates, DEFAULT_TIME_WINDOW, LogLineContext, PAGE_SIZE } from './LogLineContext';
 
 const setBooleanFlags = (flags: Record<string, boolean>) => {
   setTestFlags(flags);
@@ -767,5 +768,27 @@ describe('LogLineContext', () => {
     );
 
     await waitFor(() => expect(getOtelAttributesField).toHaveBeenCalled());
+  });
+});
+
+describe('combineLoadingStates', () => {
+  test('reports in flight while either request is Loading or Streaming', () => {
+    expect(combineLoadingStates(LoadingState.Loading, LoadingState.Done)).toBe(LoadingState.Loading);
+    expect(combineLoadingStates(LoadingState.NotStarted, LoadingState.Loading)).toBe(LoadingState.Loading);
+    // Streaming must count as in flight (preserved), not be mistaken for settled.
+    expect(combineLoadingStates(LoadingState.Streaming, LoadingState.Done)).toBe(LoadingState.Streaming);
+    expect(combineLoadingStates(LoadingState.Loading, LoadingState.Streaming)).toBe(LoadingState.Streaming);
+  });
+
+  test('reports Error when a settled request errored', () => {
+    expect(combineLoadingStates(LoadingState.Error, LoadingState.Done)).toBe(LoadingState.Error);
+    expect(combineLoadingStates(LoadingState.Done, LoadingState.Error)).toBe(LoadingState.Error);
+    // In flight takes precedence over a sibling error (still not settled).
+    expect(combineLoadingStates(LoadingState.Loading, LoadingState.Error)).toBe(LoadingState.Loading);
+  });
+
+  test('reports Done when nothing is in flight or errored', () => {
+    expect(combineLoadingStates(LoadingState.Done, LoadingState.Done)).toBe(LoadingState.Done);
+    expect(combineLoadingStates(LoadingState.NotStarted, LoadingState.NotStarted)).toBe(LoadingState.Done);
   });
 });

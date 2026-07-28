@@ -1,6 +1,6 @@
-import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
+import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
@@ -8,7 +8,7 @@ import { type ScopesSelectorServiceState } from 'app/features/scopes/selector/Sc
 import { useRecentScopes } from 'app/features/scopes/selector/useRecentScopes';
 
 import { type CommandPaletteAction } from '../types';
-import { RECENT_SCOPES_PRIORITY } from '../values';
+import { SECTION_RECENT_SCOPES, RECENT_SCOPES_PRIORITY } from '../values';
 
 const EMPTY_OBSERVABLE = new Observable<ScopesSelectorServiceState>();
 
@@ -42,6 +42,7 @@ export function useRecentScopesActions(): CommandPaletteAction[] {
         name: t('command-palette.section.recent-scopes', 'Recent scopes'),
         priority: RECENT_SCOPES_PRIORITY,
       },
+      sectionId: SECTION_RECENT_SCOPES,
       subtitle: recentScopeSet.parentNodeTitle,
       keywords: keywords,
       priority: RECENT_SCOPES_PRIORITY,

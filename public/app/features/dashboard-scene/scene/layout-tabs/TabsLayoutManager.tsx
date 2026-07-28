@@ -10,7 +10,8 @@ import {
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
+import { ObjectsReorderedOnCanvasEvent } from '../../edit-pane/events';
+import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor, getLegacySlugForRowOrTab } from '../../utils/utils';

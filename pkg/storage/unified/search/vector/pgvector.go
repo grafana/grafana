@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"text/template"
 	"time"
+	"unicode/utf8"
 
 	pgvector "github.com/pgvector/pgvector-go"
 	"go.opentelemetry.io/otel"
@@ -82,10 +84,33 @@ func fitEmbedding(v []float32, dim int) ([]float32, error) {
 	}
 }
 
-// Just dashboards for now
-// TODO dynamically add new partition/table if resource doesnt exist
-func validateResource(resource string) error {
-	if resource != "dashboards" {
+// truncateRunes caps s at max runes, never splitting a multi-byte character
+// (Postgres VARCHAR(n) counts characters, not bytes). When it has to cut, the
+// result ends in "..." to signal truncation and still fits within max. No-op
+// when s already fits.
+func truncateRunes(s string, max int) string {
+	if utf8.RuneCountInString(s) <= max {
+		return s
+	}
+	const ellipsis = "..."
+	if max <= len(ellipsis) {
+		return string([]rune(s)[:max])
+	}
+	return string([]rune(s)[:max-len(ellipsis)]) + ellipsis
+}
+
+// validateResource rejects operations on partition keys that have no
+// catalog entry (unprovisioned — no partition to work with). `resource`
+// here is always the partition key: callers resolve caller-facing resource
+// names (which may contain chars a table name can't, e.g. hyphens) to
+// partition keys via ResolveCollection first; internal callers (reconciler,
+// backfill) work in partition keys directly.
+func (b *pgvectorBackend) validateResource(ctx context.Context, resource string) error {
+	ok, err := b.hasPartitionKey(ctx, resource)
+	if err != nil {
+		return fmt.Errorf("resolve resource %q: %w", resource, err)
+	}
+	if !ok {
 		return fmt.Errorf("unsupported resource %q (no embeddings sub-tree provisioned)", resource)
 	}
 	return nil
@@ -110,10 +135,21 @@ func (b *pgvectorBackend) Upsert(ctx context.Context, vectors []Vector) (retErr 
 		attribute.String("namespace", vectors[0].Namespace),
 	)
 
+	// All validation — including the catalog lookup — happens before the
+	// transaction opens, so no extra DB queries run mid-transaction. A
+	// batch is single-resource, so one string compare per vector and one
+	// catalog lookup for the whole batch.
 	for i := range vectors {
 		if err := vectors[i].Validate(); err != nil {
 			return fmt.Errorf("vector[%d]: %w", i, err)
 		}
+		if vectors[i].Resource != vectors[0].Resource {
+			return fmt.Errorf("vector[%d]: resource %q does not match %q (batches are single-resource)",
+				i, vectors[i].Resource, vectors[0].Resource)
+		}
+	}
+	if err := b.validateResource(ctx, vectors[0].Resource); err != nil {
+		return err
 	}
 
 	return b.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
@@ -130,8 +166,16 @@ func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespa
 	if model == "" {
 		return fmt.Errorf("model must not be empty")
 	}
-	if err := validateResource(resource); err != nil {
+	if err := b.validateResource(ctx, resource); err != nil {
 		return err
+	}
+	// Enforce the documented contract that every changed vector belongs to
+	// the (namespace, model, resource, uid) tuple — cheap string compares,
+	// no catalog lookups. upsertAll does not re-validate per vector.
+	for i := range changed {
+		if changed[i].Resource != resource {
+			return fmt.Errorf("changed[%d]: resource %q does not match %q", i, changed[i].Resource, resource)
+		}
 	}
 
 	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.UpsertReplaceSubresources")
@@ -196,16 +240,15 @@ func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespa
 }
 
 // upsertAll does the per-vector INSERT/UPSERT loop. Caller owns the
-// transaction; called from both Upsert and UpsertReplaceSubresources.
+// transaction and must have validated every vector's resource against the
+// catalog BEFORE opening it — no catalog queries in here.
 func (b *pgvectorBackend) upsertAll(ctx context.Context, tx db.Tx, vectors []Vector) error {
 	for i := range vectors {
-		if err := validateResource(vectors[i].Resource); err != nil {
-			return fmt.Errorf("vector[%d]: %w", i, err)
-		}
 		emb, err := fitEmbedding(vectors[i].Embedding, EmbeddingDim)
 		if err != nil {
 			return fmt.Errorf("vector[%d]: %w", i, err)
 		}
+		vectors[i].Title = truncateRunes(vectors[i].Title, maxTitleLen)
 		req := &sqlVectorCollectionUpsertRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Resource:    vectors[i].Resource,
@@ -245,7 +288,7 @@ func (b *pgvectorBackend) Delete(ctx context.Context, namespace, model, resource
 	if model == "" {
 		return fmt.Errorf("model must not be empty")
 	}
-	if err := validateResource(resource); err != nil {
+	if err := b.validateResource(ctx, resource); err != nil {
 		return err
 	}
 	req := &sqlVectorCollectionDeleteRequest{
@@ -266,7 +309,7 @@ func (b *pgvectorBackend) DeleteSubresources(ctx context.Context, namespace, mod
 	if len(subresources) == 0 {
 		return nil
 	}
-	if err := validateResource(resource); err != nil {
+	if err := b.validateResource(ctx, resource); err != nil {
 		return err
 	}
 	req := &sqlVectorCollectionDeleteSubresourcesRequest{
@@ -281,8 +324,60 @@ func (b *pgvectorBackend) DeleteSubresources(ctx context.Context, namespace, mod
 	return err
 }
 
+func (b *pgvectorBackend) DeleteNamespace(ctx context.Context, namespace string) (deleted int64, retErr error) {
+	if namespace == "" {
+		return 0, fmt.Errorf("namespace must not be empty")
+	}
+
+	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.DeleteNamespace")
+	defer func() {
+		if retErr != nil {
+			span.RecordError(retErr)
+			span.SetStatus(codes.Error, retErr.Error())
+		}
+		span.End()
+	}()
+	span.SetAttributes(attribute.String("namespace", namespace))
+
+	// The four tables are keyed by namespace; wipe them atomically so a tenant
+	// leaves no vector data behind.
+	// ponytail: leaves empty per-tenant partial HNSW indexes
+	// (<resource>_<namespace>_hnsw); near-zero storage with 0 matching rows.
+	// Drop via dynamic catalog SQL in a follow-up if they accumulate.
+	templates := []*template.Template{
+		sqlVectorNamespaceDeleteEmbeddings,
+		sqlVectorNamespaceDeleteQueryCache,
+		sqlVectorNamespaceDeleteRateBuckets,
+		sqlVectorNamespaceDeletePromoted,
+	}
+	err := b.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
+		for i, tmpl := range templates {
+			req := &sqlVectorNamespaceDeleteRequest{
+				SQLTemplate: sqltemplate.New(b.dialect),
+				Namespace:   namespace,
+			}
+			res, err := dbutil.Exec(ctx, tx, tmpl, req)
+			if err != nil {
+				return fmt.Errorf("delete namespace %q (%s): %w", namespace, tmpl.Name(), err)
+			}
+			// Report rows removed from the embeddings table (first template).
+			if i == 0 {
+				if n, err := res.RowsAffected(); err == nil {
+					deleted = n
+				}
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	span.SetAttributes(attribute.Int64("embeddings_deleted", deleted))
+	return deleted, nil
+}
+
 func (b *pgvectorBackend) GetSubresourceContent(ctx context.Context, namespace, model, resource, uid string) (map[string]string, string, error) {
-	if err := validateResource(resource); err != nil {
+	if err := b.validateResource(ctx, resource); err != nil {
 		return nil, "", err
 	}
 	req := &sqlVectorCollectionGetContentRequest{
@@ -309,7 +404,7 @@ func (b *pgvectorBackend) GetSubresourceContent(ctx context.Context, namespace, 
 }
 
 func (b *pgvectorBackend) Exists(ctx context.Context, namespace, model, resource, uid string) (bool, error) {
-	if err := validateResource(resource); err != nil {
+	if err := b.validateResource(ctx, resource); err != nil {
 		return false, err
 	}
 	req := &sqlVectorCollectionExistsRequest{
@@ -345,7 +440,7 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 		attribute.Int("filter_count", len(filters)),
 	)
 
-	if err := validateResource(resource); err != nil {
+	if err := b.validateResource(ctx, resource); err != nil {
 		return nil, err
 	}
 	queryEmb, err := fitEmbedding(embedding, EmbeddingDim)
@@ -371,9 +466,19 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 		case "folder":
 			req.FolderValues = f.Values
 		default:
-			// JSONB containment: metadata @> '{"field":["v1","v2"]}'
-			j, _ := json.Marshal(map[string][]string{f.Field: f.Values})
-			req.MetadataFilters = append(req.MetadataFilters, MetadataFilterEntry{JSON: string(j)})
+			// An empty group would render as "AND ()" — invalid SQL.
+			if len(f.Values) == 0 {
+				continue
+			}
+			// Writers store metadata values as scalars (embed extractor) or
+			// arrays (external collections); match either shape per value.
+			group := MetadataFilterGroup{JSONs: make([]string, 0, 2*len(f.Values))}
+			for _, v := range f.Values {
+				s, _ := json.Marshal(map[string]string{f.Field: v})
+				a, _ := json.Marshal(map[string][]string{f.Field: {v}})
+				group.JSONs = append(group.JSONs, string(s), string(a))
+			}
+			req.MetadataFilterGroups = append(req.MetadataFilterGroups, group)
 		}
 	}
 

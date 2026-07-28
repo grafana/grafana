@@ -6,7 +6,7 @@ const PAGE_UNDER_TEST = 'AejrN1AMz';
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: process.env.FORCE_V2_DASHBOARDS_API === 'true',
+    dashboardNewLayouts: true,
   },
 });
 

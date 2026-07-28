@@ -2,25 +2,7 @@
   "apiVersion": "dashboard.grafana.app/v2",
   "kind": "Dashboard",
   "metadata": {
-    "name": "adzvhzl",
-    "namespace": "default",
-    "uid": "7c57cd85-7444-4ee6-b6e5-b3f89f0feeee",
-    "resourceVersion": "1781038698826016",
-    "generation": 1,
-    "creationTimestamp": "2026-06-09T20:58:18Z",
-    "labels": {
-      "grafana.app/deprecatedInternalID": "1803419725012992"
-    },
-    "annotations": {
-      "grafana.app/createdBy": "access-policy:service",
-      "grafana.app/folder": "ednq5u6zf12wwb",
-      "grafana.app/managedBy": "classic-file-provisioning",
-      "grafana.app/managerId": "gdev dashboards",
-      "grafana.app/sourceChecksum": "f75d253f3e28f5f166bd5c0ae186141e",
-      "grafana.app/sourceTimestamp": "1781038680000",
-      "grafana.app/folderTitle": "gdev dashboards",
-      "grafana.app/folderUrl": "/dashboards/f/ednq5u6zf12wwb/gdev-dashboards"
-    }
+    "name": "adzvhzl"
   },
   "spec": {
     "annotations": [

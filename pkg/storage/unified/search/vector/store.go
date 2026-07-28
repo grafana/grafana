@@ -15,11 +15,24 @@ import (
 // equivalent to running them on the un-padded native vectors.
 const EmbeddingDim = 1024
 
+// maxTitleLen is the width of the `title VARCHAR(1024)` column. Titles are
+// display-only (search results), so an over-long one (e.g. a verbose
+// "Dashboard — Panel" subresource title) is truncated to fit rather than
+// failing the whole transactional upsert.
+const maxTitleLen = 1024
+
 // VectorBackend is vector storage isolated per (namespace, model) so an HNSW
 // never mixes embeddings from different vector spaces.
 type VectorBackend interface {
+	// ResolveCollection maps a (group, resource) pair to its
+	// embedding_collections catalog entry. found=false means the pair is
+	// not provisioned — callers surface NOT_FOUND.
+	ResolveCollection(ctx context.Context, group, resource string) (c Collection, found bool, err error)
+
 	// Search returns top-N nearest neighbors by cosine distance. Query
-	// embedding must come from the same model as stored vectors.
+	// embedding must come from the same model as stored vectors. resource
+	// is the partition key (Collection.PartitionKey), not the resource
+	// name callers send.
 	Search(ctx context.Context, namespace, model, resource string,
 		embedding []float32, limit int, filters ...SearchFilter) ([]VectorSearchResult, error)
 
@@ -39,6 +52,12 @@ type VectorBackend interface {
 	// DeleteSubresources removes specific subresources under `uid`. Empty
 	// slice is a no-op. model must be non-empty.
 	DeleteSubresources(ctx context.Context, namespace, model, resource, uid string, subresources []string) error
+
+	// DeleteNamespace removes every row belonging to a namespace across all
+	// resources and models, plus its cached query embeddings, rate buckets, and
+	// promotion log rows. Used when a tenant is hard-deleted. Returns the number
+	// of embedding rows removed. Not scoped by model/resource/uid, unlike Delete.
+	DeleteNamespace(ctx context.Context, namespace string) (int64, error)
 
 	// GetSubresourceContent returns subresource → stored content and the
 	// resource's stored folder ("" when no rows exist; folder is uniform

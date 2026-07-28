@@ -13,7 +13,7 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
-import { getKindInfoByStatGroup } from '../../utils/resourceKinds';
+import { getKindInfoByStat } from '../../utils/resourceKinds';
 
 export type UseResourceStatsOptions = {
   isHealthy?: boolean; // true only when healthy AND reconciled
@@ -28,7 +28,7 @@ function getManagedCount(managed?: ManagerStats[]) {
     if (manager.kind === ManagerKind.Repo) {
       // Loop through stats inside each manager and sum up the counts for known kinds
       manager.stats.forEach((stat) => {
-        if (getKindInfoByStatGroup(stat.group)) {
+        if (getKindInfoByStat(stat)) {
           totalCount += stat.count;
         }
       });
@@ -43,7 +43,7 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
 
   const addStat = (stat: ResourceCount) => {
     // Only count kinds the UI knows about (folders, dashboards, ...).
-    if (getKindInfoByStatGroup(stat.group)) {
+    if (getKindInfoByStat(stat)) {
       resourceCount += stat.count;
     }
   };

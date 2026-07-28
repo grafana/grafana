@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -13,6 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
@@ -52,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -82,7 +86,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-		authInfoStore, err := authinfoimpl.ProvideStore(sqlStore, secretsService)
+		authInfoStore, err := authinfoimpl.ProvideStore(context.Background(), legacysql.NewDatabaseProvider(sqlStore), secretsService)
 		require.NoError(t, err)
 		srv := authinfoimpl.ProvideService(
 			authInfoStore, remotecache.NewFakeCacheStorage(), secretsService)
@@ -442,6 +446,96 @@ func Test_GetUserByID(t *testing.T) {
 
 			assert.Equal(t, tc.expectedIsGrafanaAdminSynced, resp.IsGrafanaAdminExternallySynced)
 			assert.Equal(t, tc.expectedIsExternallySynced, resp.IsExternallySynced)
+		})
+	}
+}
+
+func forbiddenUserErr() error {
+	return apierrors.NewForbidden(
+		schema.GroupResource{Group: "iam.grafana.app", Resource: "users"},
+		"u123", errors.New("unauthorized request"),
+	)
+}
+
+func Test_GetUserByID_ErrorMapping(t *testing.T) {
+	testcases := []struct {
+		name         string
+		err          error
+		expectedCode int
+	}{
+		{name: "forbidden maps to 403", err: forbiddenUserErr(), expectedCode: http.StatusForbidden},
+		{name: "user not found maps to 404", err: user.ErrUserNotFound, expectedCode: http.StatusNotFound},
+		{name: "other errors map to 500", err: errors.New("error"), expectedCode: http.StatusInternalServerError},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			hs := &HTTPServer{
+				Cfg:         setting.NewCfg(),
+				userService: &usertest.FakeUserService{ExpectedError: tc.err},
+			}
+
+			sc := setupScenarioContext(t, "/api/users/1")
+			sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+				sc.context = c
+				return hs.GetUserByID(c)
+			})
+			sc.m.Get("/api/users/:id", sc.defaultHandler)
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+			require.Equal(t, tc.expectedCode, sc.resp.Code)
+		})
+	}
+}
+
+func Test_GetUserByLoginOrEmail_ErrorMapping(t *testing.T) {
+	testcases := []struct {
+		name         string
+		err          error
+		expectedCode int
+	}{
+		{name: "forbidden maps to 403", err: forbiddenUserErr(), expectedCode: http.StatusForbidden},
+		{name: "user not found maps to 404", err: user.ErrUserNotFound, expectedCode: http.StatusNotFound},
+		{name: "other errors map to 500", err: errors.New("error"), expectedCode: http.StatusInternalServerError},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			hs := &HTTPServer{
+				Cfg:         setting.NewCfg(),
+				userService: &usertest.FakeUserService{ExpectedError: tc.err},
+			}
+
+			sc := setupScenarioContext(t, "/api/users/lookup")
+			sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+				sc.context = c
+				return hs.GetUserByLoginOrEmail(c)
+			})
+			sc.m.Get("/api/users/lookup", sc.defaultHandler)
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": "admin@test.com"}).exec()
+
+			require.Equal(t, tc.expectedCode, sc.resp.Code)
+		})
+	}
+}
+
+func TestMiddlewareUserUIDResolver_ErrorMapping(t *testing.T) {
+	testcases := []struct {
+		name         string
+		err          error
+		expectedCode int
+	}{
+		{name: "forbidden maps to 403", err: forbiddenUserErr(), expectedCode: http.StatusForbidden},
+		{name: "user not found maps to 404", err: user.ErrUserNotFound, expectedCode: http.StatusNotFound},
+		{name: "other errors map to 500", err: errors.New("error"), expectedCode: http.StatusInternalServerError},
+	}
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			userService := &usertest.FakeUserService{ExpectedError: tc.err}
+
+			sc := setupScenarioContext(t, "/api/users/u123")
+			sc.m.Get("/api/users/:id", middlewareUserUIDResolver(userService, ":id"))
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+			require.Equal(t, tc.expectedCode, sc.resp.Code)
 		})
 	}
 }

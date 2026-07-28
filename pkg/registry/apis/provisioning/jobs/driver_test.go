@@ -15,6 +15,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
@@ -40,6 +41,63 @@ func makeTestJob(rv string) *provisioning.Job {
 	}
 }
 
+// TestOnProgress_IncrementsProgressUpdates verifies that each successful progress
+// update bumps the job's ProgressUpdates count, and that the running total is
+// carried forward across the status overwrite that happens on every call.
+func TestOnProgress_IncrementsProgressUpdates(t *testing.T) {
+	store := &MockStore{}
+	driver := &jobProcessor{store: store}
+	driver.currentJob = makeTestJob("1")
+
+	// Echo the job back so the driver's local copy keeps the persisted count.
+	store.EXPECT().Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+			return job.DeepCopy(), nil
+		})
+
+	progressFn := driver.onProgress()
+	status := provisioning.JobStatus{State: provisioning.JobStateWorking, Message: "test"}
+
+	require.NoError(t, progressFn(context.Background(), status))
+	assert.Equal(t, int64(1), driver.currentJob.Status.ProgressUpdates)
+
+	require.NoError(t, progressFn(context.Background(), status))
+	assert.Equal(t, int64(2), driver.currentJob.Status.ProgressUpdates)
+
+	require.NoError(t, progressFn(context.Background(), status))
+	assert.Equal(t, int64(3), driver.currentJob.Status.ProgressUpdates)
+}
+
+// TestOnProgress_FailedWriteDoesNotInflateCount verifies that a failed
+// (non-conflict) status write does not leave an increment behind on the
+// in-memory job. The progress recorder ignores progress errors and keeps
+// going, so a failed write must not bump ProgressUpdates for the next call.
+func TestOnProgress_FailedWriteDoesNotInflateCount(t *testing.T) {
+	store := &MockStore{}
+	driver := &jobProcessor{store: store}
+	driver.currentJob = makeTestJob("1")
+
+	// First write fails with a non-conflict error (no retry).
+	store.EXPECT().Update(mock.Anything, mock.Anything).
+		Return(nil, errors.New("boom")).Once()
+	// Second write succeeds; echo the job back so the persisted count sticks.
+	store.EXPECT().Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+			return job.DeepCopy(), nil
+		}).Once()
+
+	progressFn := driver.onProgress()
+	status := provisioning.JobStatus{State: provisioning.JobStateWorking, Message: "test"}
+
+	require.Error(t, progressFn(context.Background(), status))
+	assert.Equal(t, int64(0), driver.currentJob.Status.ProgressUpdates,
+		"a failed write must not increment the count")
+
+	require.NoError(t, progressFn(context.Background(), status))
+	assert.Equal(t, int64(1), driver.currentJob.Status.ProgressUpdates,
+		"the first successful write is the first counted update")
+}
+
 // TestOnProgress_DeadlockOnConflict verifies that the onProgress callback
 // does not deadlock when Store.Update returns a conflict error.
 //
@@ -48,7 +106,7 @@ func makeTestJob(rv string) *provisioning.Job {
 // goroutine — permanent deadlock since sync.Mutex is non-reentrant.
 func TestOnProgress_DeadlockOnConflict(t *testing.T) {
 	store := &MockStore{}
-	driver := &jobDriver{store: store}
+	driver := &jobProcessor{store: store}
 	driver.currentJob = makeTestJob("100")
 
 	// First Update: conflict triggers retry
@@ -80,7 +138,7 @@ func TestOnProgress_DeadlockOnConflict(t *testing.T) {
 // conflicts, onProgress returns an error without deadlocking or leaking d.mu.
 func TestOnProgress_AllRetriesConflict(t *testing.T) {
 	store := &MockStore{}
-	driver := &jobDriver{store: store}
+	driver := &jobProcessor{store: store}
 	driver.currentJob = makeTestJob("100")
 
 	// All attempts return conflict — the 3rd attempt has attempt < maxRetries-1 == false,
@@ -128,7 +186,7 @@ func TestOnProgress_AllRetriesConflict(t *testing.T) {
 // can acquire it (simulating the main driver thread).
 func TestOnProgress_MutexNotLeakedOnConflict(t *testing.T) {
 	store := &MockStore{}
-	driver := &jobDriver{store: store}
+	driver := &jobProcessor{store: store}
 	driver.currentJob = makeTestJob("100")
 
 	store.EXPECT().Update(mock.Anything, mock.Anything).Return(nil, newConflictError()).Once()
@@ -206,8 +264,8 @@ func newNotFoundError() error {
 	)
 }
 
-func setupDriverForProcessJob(worker *MockWorker, repoGetter *MockRepoGetter) *jobDriver {
-	return &jobDriver{
+func setupDriverForProcessJob(worker *MockWorker, repoGetter *MockRepoGetter) *jobProcessor {
+	return &jobProcessor{
 		workers:    []Worker{worker},
 		repoGetter: repoGetter,
 	}
@@ -421,9 +479,109 @@ func TestProcessJob_OrphanCleanup_RepoRecreated_ReturnsError(t *testing.T) {
 }
 
 func TestProcessJob_NilCurrentJob_ReturnsNil(t *testing.T) {
-	driver := &jobDriver{}
+	driver := &jobProcessor{}
 	recorder := &MockJobProgressRecorder{}
 
 	err := driver.processJob(context.Background(), recorder)
 	require.NoError(t, err)
+}
+
+// TestProcessJobWithLeaseCheck_LeaseExpiry_CancelsAndWaitsForWorker verifies that
+// losing the lease actively cancels the in-flight worker and does not report the
+// abort until the worker has actually stopped. Without this, a reaped-and-re-claimed
+// job could keep running on this pod while another pod runs the same job.
+func TestProcessJobWithLeaseCheck_LeaseExpiry_CancelsAndWaitsForWorker(t *testing.T) {
+	worker := &MockWorker{}
+	repoGetter := &MockRepoGetter{}
+	recorder := &MockJobProgressRecorder{}
+	driver := setupDriverForProcessJob(worker, repoGetter)
+	driver.currentJob = makeTestJob("1")
+
+	repoCfg := makeRepoConfig("test-repo", nil, nil)
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(repoCfg)
+
+	workerStarted := make(chan struct{})
+	workerReturned := make(chan struct{})
+
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").
+		Return(mockRepo, nil)
+	// A well-behaved worker: block until its context is cancelled, then return.
+	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, recorder).
+		RunAndReturn(func(ctx context.Context, _ repository.Repository, _ provisioning.Job, _ JobProgressRecorder) error {
+			close(workerStarted)
+			<-ctx.Done()
+			close(workerReturned)
+			return ctx.Err()
+		})
+
+	leaseExpired := make(chan struct{})
+	done := make(chan error, 1)
+	go func() {
+		done <- driver.processJobWithLeaseCheck(context.Background(), recorder, leaseExpired)
+	}()
+
+	// Wait until the worker is running, then signal that the lease was lost.
+	select {
+	case <-workerStarted:
+	case <-time.After(3 * time.Second):
+		t.Fatal("worker.Process was not invoked")
+	}
+	close(leaseExpired)
+
+	select {
+	case err := <-done:
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "aborted due to lease expiry")
+		// The worker must have observed cancellation and returned before
+		// processJobWithLeaseCheck reported the abort.
+		select {
+		case <-workerReturned:
+		default:
+			t.Fatal("processJobWithLeaseCheck returned before the worker stopped — in-flight work was not cancelled and awaited")
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("processJobWithLeaseCheck did not abort after lease expiry")
+	}
+}
+
+func TestWithJobAuthorSignature(t *testing.T) {
+	tests := []struct {
+		name        string
+		annotations map[string]string
+		expected    *repository.CommitSignature
+	}{
+		{
+			name: "name and email set the signature",
+			annotations: map[string]string{
+				appjobs.AnnoAuthor:      "Test User",
+				appjobs.AnnoAuthorEmail: "test@example.com",
+			},
+			expected: &repository.CommitSignature{Name: "Test User", Email: "test@example.com"},
+		},
+		{
+			name:        "a name without an email keeps the default commit identity",
+			annotations: map[string]string{appjobs.AnnoAuthor: "Test User"},
+			expected:    nil,
+		},
+		{
+			name:        "no author annotations leaves the context untouched",
+			annotations: map[string]string{"unrelated": "value"},
+			expected:    nil,
+		},
+		{
+			name:        "nil annotations leaves the context untouched",
+			annotations: nil,
+			expected:    nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			job := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Annotations: tt.annotations}}
+			ctx := withJobAuthorSignature(context.Background(), job)
+			assert.Equal(t, tt.expected, repository.GetAuthorSignature(ctx))
+		})
+	}
 }

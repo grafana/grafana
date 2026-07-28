@@ -61,6 +61,15 @@ describe('DashboardEditPaneSplitter', () => {
       expect(screen.queryByTestId(testId)).not.toBeInTheDocument();
     });
   });
+
+  it('makes the scroll container keyboard-focusable so arrow/page keys can scroll the dashboard', () => {
+    const scene = buildTestScene();
+
+    render(<DashboardEditPaneSplitter dashboard={scene} />);
+
+    const scrollContainer = screen.getByTestId(selectors.components.DashboardEditPaneSplitter.bodyContainer);
+    expect(scrollContainer).toHaveAttribute('tabindex', '0');
+  });
 });
 
 export function buildTestScene() {

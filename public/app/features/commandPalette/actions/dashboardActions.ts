@@ -9,7 +9,13 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { extractManagerKind } from 'app/features/search/service/utils';
 
 import { type CommandPaletteAction } from '../types';
-import { RECENT_DASHBOARDS_PRIORITY, SEARCH_RESULTS_PRIORITY } from '../values';
+import {
+  SECTION_DASHBOARDS,
+  SECTION_FOLDERS,
+  SECTION_RECENT_DASHBOARDS,
+  RECENT_DASHBOARDS_PRIORITY,
+  SEARCH_RESULTS_PRIORITY,
+} from '../values';
 
 const MAX_SEARCH_RESULTS = 100;
 const MAX_RECENT_DASHBOARDS = 5;
@@ -29,6 +35,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
       id: `recent-dashboards${url}`,
       name: `${name}`,
       section: t('command-palette.section.recent-dashboards', 'Recent dashboards'),
+      sectionId: SECTION_RECENT_DASHBOARDS,
       priority: RECENT_DASHBOARDS_PRIORITY,
       url,
       managedBy: extractManagerKind(managedBy),
@@ -59,6 +66,7 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
         kind === 'dashboard'
           ? t('command-palette.section.dashboard-search-results', 'Dashboards')
           : t('command-palette.section.folder-search-results', 'Folders'),
+      sectionId: kind === 'dashboard' ? SECTION_DASHBOARDS : SECTION_FOLDERS,
       priority: SEARCH_RESULTS_PRIORITY,
       url,
       subtitle: data.view.dataFrame.meta?.custom?.locationInfo[location]?.name,

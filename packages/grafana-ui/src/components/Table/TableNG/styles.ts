@@ -6,7 +6,30 @@ import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 
 import { COLUMN, TABLE } from './constants';
 import { type TableCellStyles } from './types';
-import { getJustifyContent, IS_SAFARI_26, type TextAlign } from './utils';
+
+// TextAlign, getJustifyContent, and IS_SAFARI_26 live here rather than in utils.tsx to avoid a
+// circular dependency: styles.ts → utils.tsx → renderers.tsx → AutoCell/PillCell → styles.ts
+export type TextAlign = 'left' | 'right' | 'center';
+
+export function getJustifyContent(textAlign: TextAlign): Property.JustifyContent {
+  return textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start';
+}
+
+// Safari 26.0 introduced rendering bugs which require us to disable several features of the table.
+// The bugs were later fixed in Safari 26.2.
+export const IS_SAFARI_26 = (() => {
+  if (navigator == null) {
+    return false;
+  }
+  const userAgent = navigator.userAgent;
+  const safariVersionMatch = userAgent.match(/Version\/(\d+)\.(\d+)/);
+  if (!safariVersionMatch) {
+    return false;
+  }
+  const majorVersion = +safariVersionMatch[1];
+  const minorVersion = +safariVersionMatch[2];
+  return majorVersion === 26 && minorVersion <= 1;
+})();
 
 /**
  * @internal
@@ -20,7 +43,11 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
   cacheKey[1].textWrap === key[1].textWrap;
 
 export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: boolean, transparent?: boolean) => {
-  const bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  let bgColor = transparent ? theme.colors.background.canvas : theme.colors.background.primary;
+  if (visualRefreshEnabled) {
+    bgColor = transparent ? theme.colors.background.page : theme.components.panel.background;
+  }
   // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
   // unpredictable for background color cells
   const borderColor = colorManipulator.onBackground(theme.colors.border.weak, bgColor).toHexString();

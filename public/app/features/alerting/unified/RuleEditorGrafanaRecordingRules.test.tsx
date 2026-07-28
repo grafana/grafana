@@ -125,7 +125,7 @@ describe('RuleEditor grafana recording rules', () => {
 
   testCreateGrafanaRR([], 'can create new grafana recording rule with simplified steps feature toggles disabled');
   testCreateGrafanaRR(
-    ['alertingQueryAndExpressionsStepMode', 'alertingNotificationsStepMode'],
+    ['alertingNotificationsStepMode'],
     'can create new grafana recording rule with simplified steps enabled'
   );
 
@@ -134,7 +134,7 @@ describe('RuleEditor grafana recording rules', () => {
     'cannot create new grafana recording rule with invalid metric name with simplified steps feature toggles disabled'
   );
   testCreateGrafanaRRWithInvalidMetricName(
-    ['alertingQueryAndExpressionsStepMode', 'alertingNotificationsStepMode'],
+    ['alertingNotificationsStepMode'],
     'cannot create new grafana recording rule with invalid metric name with simplified steps enabled'
   );
 });

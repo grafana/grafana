@@ -90,12 +90,6 @@ export const silencesPermissions = {
   },
 };
 
-const provisioningPermissions = {
-  read: AccessControlAction.AlertingProvisioningRead,
-  readSecrets: AccessControlAction.AlertingProvisioningReadSecrets,
-  write: AccessControlAction.AlertingProvisioningWrite,
-};
-
 const rulesPermissions = {
   read: {
     grafana: AccessControlAction.AlertingRuleRead,
@@ -127,18 +121,6 @@ export function getInstancesPermissions(rulesSourceName: string) {
     create: instancesPermissions.create[sourceType],
     update: instancesPermissions.update[sourceType],
     delete: instancesPermissions.delete[sourceType],
-  };
-}
-
-export function getNotificationsPermissions(rulesSourceName: string) {
-  const sourceType = getRulesSourceType(rulesSourceName);
-
-  return {
-    read: notificationsPermissions.read[sourceType],
-    create: notificationsPermissions.create[sourceType],
-    update: notificationsPermissions.update[sourceType],
-    delete: notificationsPermissions.delete[sourceType],
-    provisioning: provisioningPermissions,
   };
 }
 

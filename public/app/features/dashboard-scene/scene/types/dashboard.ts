@@ -1,15 +1,16 @@
-import { type SceneObject, type SceneObjectState } from '@grafana/scenes';
+import { type VizPanel, type SceneObject, type SceneObjectState } from '@grafana/scenes';
 import { type DashboardLink } from '@grafana/schema';
 import { type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardMeta } from 'app/types/dashboard';
 
-import { type DashboardEditPane } from '../../edit-pane/DashboardEditPane';
+import { type DashboardEditPaneLike } from '../../edit-pane/types';
 import { type PanelEditor } from '../../panel-edit/PanelEditor';
 import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardControls } from '../DashboardControls';
 import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
 
 import { type DashboardLayoutManager } from './DashboardLayoutManager';
+import { type LayoutParent } from './LayoutParent';
 
 export interface DashboardSceneState extends SceneObjectState {
   /** Dashboard-specific preferences **/
@@ -62,7 +63,7 @@ export interface DashboardSceneState extends SceneObjectState {
   /** How many panels to show per row for search results */
   panelsPerRow?: number;
   /** options pane */
-  editPane: DashboardEditPane;
+  editPane: DashboardEditPaneLike;
   /** Manages dragging/dropping of layout items */
   layoutOrchestrator: DashboardLayoutOrchestrator;
   /** True while default variables from datasources are being loaded */
@@ -75,8 +76,10 @@ interface DashboardScenePreferences {
   defaultLayoutTemplate?: DashboardLayoutManager;
 }
 
-export interface DashboardSceneLike extends SceneObject<DashboardSceneState> {
+export interface DashboardSceneLike extends SceneObject<DashboardSceneState>, LayoutParent {
   isDashboardScene: boolean;
+
+  copyPanel(vizPanel: VizPanel): void;
 }
 
 function isDashboardSceneLike(obj: SceneObject): obj is DashboardSceneLike {

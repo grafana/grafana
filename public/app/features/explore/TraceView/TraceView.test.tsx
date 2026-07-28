@@ -5,13 +5,26 @@ import { Provider } from 'react-redux';
 
 import { type DataFrame, MutableDataFrame } from '@grafana/data';
 import { mockTimeRange } from '@grafana/plugin-ui/test';
-import { type DataSourceSrv, setDataSourceSrv, setPluginLinksHook, setPluginComponentsHook } from '@grafana/runtime';
+import {
+  type DataSourceSrv,
+  setDataSourceSrv,
+  setPluginLinksHook,
+  setPluginComponentsHook,
+  useAppPluginInstalled,
+} from '@grafana/runtime';
 
 import { configureStore } from '../../../store/configureStore';
 
 import { TraceView } from './TraceView';
 import { type TraceData, type TraceSpanData } from './components/types/trace';
 import { transformDataFrames } from './utils/transform';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useAppPluginInstalled: jest.fn(),
+}));
+
+const mockUseAppPluginInstalled = jest.mocked(useAppPluginInstalled);
 
 function getTraceView(frames: DataFrame[]) {
   const store = configureStore();
@@ -47,6 +60,17 @@ function renderTraceViewNew() {
 }
 
 describe('TraceView', () => {
+  beforeEach(() => {
+    mockUseAppPluginInstalled.mockReturnValue({
+      loading: false,
+      error: undefined,
+      value: undefined,
+    });
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
   beforeAll(() => {
     setPluginLinksHook(() => ({
       isLoading: false,
@@ -145,6 +169,66 @@ describe('TraceView', () => {
 
     rerender(getTraceView([frameNew]));
     expect(screen.queryByText(/Resource/)).not.toBeInTheDocument();
+  });
+
+  describe('Adaptive Traces restored banner', () => {
+    const restoredBannerTitle = /Trace restored by Adaptive Traces/;
+
+    it('does not render the banner when no span has the restored attribute', async () => {
+      renderTraceView();
+      expect(screen.queryByText(restoredBannerTitle)).not.toBeInTheDocument();
+    });
+
+    it('does not render the banner when grafana-adaptivetraces-app is not installed', async () => {
+      mockUseAppPluginInstalled.mockReturnValue({
+        loading: false,
+        error: undefined,
+        value: false,
+      });
+      renderTraceView([frameRestoredByAdaptiveTraces]);
+      expect(screen.queryByText(restoredBannerTitle)).not.toBeInTheDocument();
+    });
+
+    it('renders the banner when at least one span has grafana.adaptivetraces.restored=true', async () => {
+      mockUseAppPluginInstalled.mockReturnValue({
+        loading: false,
+        error: undefined,
+        value: true,
+      });
+      renderTraceView([frameRestoredByAdaptiveTraces]);
+      expect(await screen.findByText(restoredBannerTitle)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /documentation/ })).toBeInTheDocument();
+    });
+
+    it('hides the banner after the user dismisses it', async () => {
+      mockUseAppPluginInstalled.mockReturnValue({
+        loading: false,
+        error: undefined,
+        value: true,
+      });
+      renderTraceView([frameRestoredByAdaptiveTraces]);
+      expect(await screen.findByText(restoredBannerTitle)).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
+      expect(screen.queryByText(restoredBannerTitle)).not.toBeInTheDocument();
+    });
+
+    it('shows the banner again after dismiss when navigating directly to a different restored trace', async () => {
+      mockUseAppPluginInstalled.mockReturnValue({
+        loading: false,
+        error: undefined,
+        value: true,
+      });
+      const { rerender } = render(getTraceView([frameRestoredByAdaptiveTraces]));
+      expect(await screen.findByText(restoredBannerTitle)).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
+      expect(screen.queryByText(restoredBannerTitle)).not.toBeInTheDocument();
+
+      // Navigating straight from one restored trace to another must surface the banner again.
+      rerender(getTraceView([frameRestoredByAdaptiveTracesB]));
+      expect(await screen.findByText(restoredBannerTitle)).toBeInTheDocument();
+    });
   });
 });
 
@@ -357,6 +441,48 @@ const frameNew = new MutableDataFrame({
     },
     { name: 'warnings', values: [undefined, undefined] },
     { name: 'stackTraces', values: [undefined, undefined] },
+  ],
+  meta: {
+    preferredVisualisationType: 'trace',
+  },
+});
+
+const restoredResponse: TraceData & { spans: TraceSpanData[] } = {
+  ...response,
+  spans: response.spans.map((span, index) =>
+    index === 0
+      ? {
+          ...span,
+          tags: [...(span.tags ?? []), { key: 'grafana.adaptivetraces.restored', type: 'bool', value: true }],
+        }
+      : span
+  ),
+};
+
+const frameRestoredByAdaptiveTraces = new MutableDataFrame({
+  fields: [
+    {
+      name: 'trace',
+      values: [restoredResponse],
+    },
+  ],
+  meta: {
+    preferredVisualisationType: 'trace',
+  },
+});
+
+const restoredResponseB: TraceData & { spans: TraceSpanData[] } = {
+  ...restoredResponse,
+  traceID: '2bc49126597198db',
+  spans: restoredResponse.spans.map((span) => ({ ...span, traceID: '2bc49126597198db' })),
+};
+
+const frameRestoredByAdaptiveTracesB = new MutableDataFrame({
+  fields: [
+    {
+      name: 'trace',
+      values: [restoredResponseB],
+    },
   ],
   meta: {
     preferredVisualisationType: 'trace',

@@ -3,10 +3,17 @@ import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AdHocFiltersVariable, ConstantVariable, SceneVariableSet, type SceneVariable } from '@grafana/scenes';
+import {
+  AdHocFiltersVariable,
+  ConstantVariable,
+  CustomVariable,
+  SceneVariableSet,
+  type SceneVariable,
+} from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { SnapshotVariable } from '../../serialization/custom-variables/SnapshotVariable';
+import { toControlSourceRef } from '../../utils/predefinedVariables';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import {
@@ -75,6 +82,11 @@ function buildTestVariables() {
     controlsMenuVar1: new ConstantVariable({ name: 'controlsMenuVar1', hide: VariableHide.inControlsMenu }),
     hiddenVar1: new ConstantVariable({ name: 'ninjaVar1', hide: VariableHide.hideVariable }),
     snapshotVar1: new SnapshotVariable({ name: 'snapshotVar1' }),
+    predefinedVar1: new CustomVariable({
+      name: 'globalVar',
+      query: 'a,b',
+      origin: toControlSourceRef({ type: 'global' }),
+    }),
   };
 }
 
@@ -276,5 +288,24 @@ describe('partitionVariablesByEditability()', () => {
 
     expect(editable).toEqual([]);
     expect(nonEditable[0]).toBe(snapshotVar1);
+  });
+
+  test('treats predefined-origin variables as non-editable', () => {
+    const { predefinedVar1 } = buildTestVariables();
+
+    const { editable, nonEditable } = partitionVariablesByEditability([predefinedVar1]);
+
+    expect(editable).toEqual([]);
+    expect(nonEditable).toEqual([predefinedVar1]);
+  });
+});
+
+describe('predefined variables in the edit-pane list', () => {
+  test('does not render a predefined variables section', () => {
+    const { visibleVar1, predefinedVar1 } = buildTestVariables();
+    const { queryByText } = renderVariablesList([visibleVar1, predefinedVar1]);
+
+    expect(queryByText('Predefined variables')).not.toBeInTheDocument();
+    expect(queryByText('globalVar')).not.toBeInTheDocument();
   });
 });

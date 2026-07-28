@@ -77,8 +77,11 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
+		if r.builder.cfg.HandlerOrigin != "" {
+			w.Header().Set("X-Grafana-DS-Apiserver", r.builder.cfg.HandlerOrigin)
+		}
 
-		_, reqSpan := tracing.Start(req.Context(), "datasource.health.request",
+		_, reqSpan := tracing.Start(ctx, "datasource.health.request",
 			attribute.String("namespace", namespace),
 			attribute.String("plugin_id", r.builder.pluginJSON.ID),
 			attribute.String("datasource_uid", name),
@@ -102,7 +105,7 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 			return
 		}
 
-		healthCtx := config.WithGrafanaConfig(req.Context(), pluginCtx.GrafanaConfig)
+		healthCtx := config.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
 		healthCtx = contextualMiddlewares(healthCtx)
 
 		checkHealthCtx, checkHealthSpan := tracing.Start(healthCtx, "datasource.health.pluginClient.CheckHealth")

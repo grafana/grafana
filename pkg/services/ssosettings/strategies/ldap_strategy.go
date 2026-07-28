@@ -23,7 +23,7 @@ func NewLDAPStrategy(cfg *setting.Cfg) *LDAPStrategy {
 	}
 }
 
-func (s *LDAPStrategy) IsMatch(provider string) bool {
+func (s *LDAPStrategy) IsMatch(_ context.Context, provider string) bool {
 	return provider == social.LDAPProviderName
 }
 

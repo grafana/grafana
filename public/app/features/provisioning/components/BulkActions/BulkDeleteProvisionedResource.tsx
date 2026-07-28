@@ -15,15 +15,22 @@ import {
 } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { isRootFolderUID } from 'app/features/search/constants';
 
+import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
-import { withSavedByTrailer } from '../../utils/currentUser';
+import { type CommitTemplateVars } from '../../utils/commitMessage';
+import { getCurrentCommitUser } from '../../utils/currentUser';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getCanPushToConfiguredBranch } from '../defaults';
 
 import { BulkActionJobStatus } from './BulkActionJobStatus';
 import { type DeleteJobSpec, useBulkActionJob } from './useBulkActionJob';
-import { type BulkActionFormData, type BulkActionProvisionResourceProps, getBulkActionInitialValues } from './utils';
+import {
+  type BulkActionFormData,
+  type BulkActionProvisionResourceProps,
+  getBulkActionInitialValues,
+  getSelectedResourceCountSummary,
+} from './utils';
 
 interface FormProps extends BulkActionProvisionResourceProps {
   initialValues: BulkActionFormData;
@@ -41,7 +48,25 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
   // Hooks
   const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
-  const { handleSubmit } = methods;
+  const { handleSubmit, watch, setValue, formState } = methods;
+
+  const fallbackMessage = t('browse-dashboards.bulk-delete-resources-form.default-commit-message', 'Delete resources');
+  // Bulk operations span multiple resources, so `resourceKind` is omitted and `title` is a count
+  // summary rather than a single resource name.
+  const templateVars: CommitTemplateVars = {
+    action: 'delete',
+    resourceID: '',
+    title: getSelectedResourceCountSummary(selectedItems),
+    ...getCurrentCommitUser(),
+  };
+  const { locked, message } = useCommitMessageTemplate({
+    repository,
+    vars: templateVars,
+    comment: watch('comment') ?? '',
+    isCommentDirty: Boolean(formState.dirtyFields.comment),
+    setComment: (value) => setValue('comment', value, { shouldDirty: false }),
+    fallbackMessage,
+  });
 
   const handleSubmitForm = async (data: BulkActionFormData) => {
     setHasSubmitted(true);
@@ -61,14 +86,9 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
 
     submittedViaBranchWorkflow.current = data.workflow === 'branch';
 
-    // Create the delete job spec. The Grafana-saved-by trailer rides through
-    // JobSpec.Message to the resulting git commit.
     const jobSpec: DeleteJobSpec = {
       action: 'delete',
-      message: withSavedByTrailer(
-        data.comment?.trim() ||
-          t('browse-dashboards.bulk-delete-resources-form.default-commit-message', 'Delete resources')
-      ),
+      message,
       delete: {
         ref: data.workflow === 'write' ? undefined : data.ref,
         resources,
@@ -135,6 +155,8 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
                 canPushToConfiguredBranch={canPushToConfiguredBranch}
                 repository={repository}
                 hiddenFields={['path']}
+                lockComment={locked}
+                commitMessage={message}
               />
               <Stack gap={2}>
                 <Button variant="secondary" fill="outline" onClick={onDismiss} disabled={isCreatingJob}>

@@ -37,32 +37,47 @@ func V22(_ context.Context, dashboard map[string]interface{}) error {
 		return nil
 	}
 
-	for _, p := range panels {
-		panel, ok := p.(map[string]interface{})
+	for _, panel := range panels {
+		p, ok := panel.(map[string]interface{})
 		if !ok {
 			continue
 		}
 
-		// Only process table panels
-		panelType, ok := panel["type"].(string)
-		if !ok || panelType != "table" {
+		migrateTableStyles(p)
+
+		// Handle nested panels in collapsed rows
+		if !IsArray(p["panels"]) {
 			continue
 		}
-
-		styles, ok := panel["styles"].([]interface{})
-		if !ok {
-			continue
-		}
-
-		// Update each style to set align to 'auto'
-		for _, s := range styles {
-			style, ok := s.(map[string]interface{})
+		for _, nestedPanel := range p["panels"].([]interface{}) {
+			np, ok := nestedPanel.(map[string]interface{})
 			if !ok {
 				continue
 			}
-			style["align"] = "auto"
+			migrateTableStyles(np)
 		}
 	}
 
 	return nil
+}
+
+// migrateTableStyles sets the align property of every style in a table panel to 'auto'.
+func migrateTableStyles(panel map[string]interface{}) {
+	panelType, ok := panel["type"].(string)
+	if !ok || panelType != "table" {
+		return
+	}
+
+	styles, ok := panel["styles"].([]interface{})
+	if !ok {
+		return
+	}
+
+	for _, s := range styles {
+		style, ok := s.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		style["align"] = "auto"
+	}
 }

@@ -69,9 +69,9 @@ Use the following options to refine your dashboard list visualization.
 | Include current time range | Propagate the time range of the current dashboard to the dashboard list links. When you click a link, the linked dashboard opens with the indicated time range already set. |
 | Include current template variable values | Include template variables that are being used as query parameters in the dashboard list link. When you click the link, any matching templates in the linked dashboard are set to the values from the link. Learn more in [Dashboard URL variables](ref:dashboard-url-variables). |
 | Starred | Display starred dashboards in alphabetical order. |
-| Recently viewed | Display recently viewed dashboards in alphabetical order. |
-| Search | Display dashboards returned by search. You must enter at least one value in the search fields, **Query** or **Tags**. Variable interpolation is supported for both fields. For example, `$my_var` or `${my_var}`. |
-| Show headings | Headings for enabled sections are displayed. Sections are:<ul><li>**Starred**</li><li>**Recently viewed**</li><li>**Search**</li> |
+| Recently viewed | Display recently viewed dashboards in view order, with the most recently viewed dashboards first. |
+| Search | Display dashboards returned by search. Results use the **Query**, **Folder**, and **Tags** filters. An empty **Query** matches all dashboard names. Variable interpolation is supported for **Query** and **Tags**. For example, `$my_var` or `${my_var}`. |
+| Show headings | Headings for enabled sections are displayed. Sections are:<ul><li>**Starred dashboards**</li><li>**Recently viewed dashboards**</li><li>**Search**</li> |
 | Show folder names | Display the name of the folder where the dashboard is located. |
 | Max items | Set the maximum number of items to list per section. If you enter "10" and enable **Starred** and **Recently viewed** dashboards, the panel displays up to 20 total dashboards, 10 in each section. |
 | [Query](#query) | Search by dashboard name. This option is only applied when the **Search** switch is toggled on. |
@@ -95,8 +95,8 @@ This option is only applied when the **Search** switch is toggled on.
 #### Tags
 
 Enter tags by which you want to search. Note that tags don't appear as you type, and they're case sensitive.
-Tag search uses an `OR` condition, so if a dashboard has one of the defined tags, it's included in the list.
+When you specify multiple tags, dashboards must match all tags.
 
-When multiple tags and strings appear, the dashboard list displays those matching _all_ conditions.
+When multiple tags, query strings, and folders appear, the dashboard list displays dashboards matching _all_ conditions.
 
 This option is only applied when the **Search** switch is toggled on.
