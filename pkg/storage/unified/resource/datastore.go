@@ -356,6 +356,12 @@ type ListRequestOptions struct {
 	// ContinueName is the name to continue from.
 	ContinueName    string
 	ResourceVersion int64
+	// Limit is the maximum number of keys to yield. Zero means no limit, which
+	// scans the whole range in a single open-ended statement. Setting it lets
+	// the scan run as bounded pages instead, which matters because the number
+	// of keys read is unrelated to the number of keys yielded: older revisions
+	// and deleted resources are read and dropped.
+	Limit int64
 }
 
 // Validate checks that the ListRequestOptions are valid.
@@ -368,6 +374,83 @@ func (o ListRequestOptions) Validate() error {
 		return fmt.Errorf("continue namespace %q not allowed when request namespace is set to %q", o.ContinueNamespace, o.Key.Namespace)
 	}
 	return nil
+}
+
+const (
+	// minKeyScanPage and maxKeyScanPage bound the size of a single bounded key
+	// scan statement.
+	minKeyScanPage = 100
+	maxKeyScanPage = 10000
+	// revisionsPerResourceEstimate is how many keys a bounded scan expects to
+	// read per key it yields. Only the latest revision of a resource is
+	// yielded, so the rest of its revisions are read and dropped.
+	revisionsPerResourceEstimate = 4
+)
+
+// keyScanPage returns the first page size for a scan that wants limit keys.
+func keyScanPage(limit int64) int64 {
+	return min(max(limit*revisionsPerResourceEstimate, minKeyScanPage), maxKeyScanPage)
+}
+
+// pagedKeys iterates a key range as a series of bounded statements rather than
+// one open-ended one, yielding the same keys in the same order.
+//
+// An open-ended scan is not bounded by what the consumer reads: the SQL has no
+// LIMIT, so the database produces every row in the range, and closing the
+// result set early makes the driver drain the rest of it rather than skip it.
+// A range whose keys are mostly older revisions and tombstones therefore costs
+// the whole range even when the consumer wanted a handful of keys.
+//
+// Pages grow geometrically because a page can legitimately yield nothing - all
+// of its keys may be revisions of resources whose latest revision is a delete -
+// and a fixed page size would then need one statement per page for the entire
+// range.
+func pagedKeys(ctx context.Context, store KV, section string, opts ListOptions, pageSize int64) iter.Seq2[string, error] {
+	return func(yield func(string, error) bool) {
+		pageSize = max(pageSize, minKeyScanPage)
+		var lastKey string
+
+		for {
+			page := opts
+			page.Limit = pageSize
+			if lastKey != "" {
+				// Resume from the last key inclusively and drop the repeat
+				// below. Resuming exclusively would mean synthesising the
+				// successor of a key, which only holds under a byte-ordered
+				// collation.
+				if page.Sort == SortOrderDesc {
+					page.EndKey = lastKey // EndKey is exclusive, so no repeat here
+				} else {
+					page.StartKey = lastKey
+				}
+			}
+
+			var read, fresh int64
+			for key, err := range store.Keys(ctx, section, page) {
+				if err != nil {
+					yield("", err)
+					return
+				}
+				read++
+				if key == lastKey {
+					continue
+				}
+				lastKey = key
+				fresh++
+				if !yield(key, nil) {
+					return
+				}
+			}
+
+			// A short page means the range is exhausted. No fresh keys means
+			// the range only had the resume key left, which would otherwise
+			// repeat forever.
+			if read < pageSize || fresh == 0 {
+				return
+			}
+			pageSize = min(pageSize*2, maxKeyScanPage)
+		}
+	}
 }
 
 // ListLatestResourceKeys returns an iterator over the data keys for the latest versions of resources.
@@ -418,13 +501,32 @@ func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options List
 
 	ctx, span := tracer.Start(ctx, "resource.dataStore.ListResourceKeysAtRevision", trace.WithAttributes(
 		attribute.Int64("resourceVersion", rv),
+		attribute.Int64("limit", options.Limit),
 	))
 
-	// List all keys in the prefix.
-	iter := d.kv.Keys(ctx, dataSection, listOptions)
+	// List the keys in the prefix, in bounded pages when the caller told us how
+	// many keys it wants.
+	keyIter := func() iter.Seq2[string, error] {
+		if options.Limit > 0 {
+			return pagedKeys(ctx, d.kv, dataSection, listOptions, keyScanPage(options.Limit))
+		}
+		return d.kv.Keys(ctx, dataSection, listOptions)
+	}()
 
 	return func(yield func(DataKey, error) bool) {
-		defer span.End()
+		// scanned and yielded diverge by however much of the range is older
+		// revisions and deleted resources. A large gap is what a scan that
+		// costs the whole keyspace to return nothing looks like.
+		var scanned, yielded int64
+		defer func() {
+			span.SetAttributes(
+				attribute.Int64("keys.scanned", scanned),
+				attribute.Int64("keys.yielded", yielded),
+			)
+			d.metrics.recordKeyScan(options.Key.Resource, scanned, yielded)
+			span.End()
+		}()
+
 		var candidateKey *DataKey // The current candidate key we are iterating over
 
 		// yieldCandidate is a helper function to yield results.
@@ -434,14 +536,19 @@ func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options List
 				// Skip because the resource was last deleted.
 				return true
 			}
-			return yield(*candidateKey, nil)
+			yielded++
+			if !yield(*candidateKey, nil) {
+				return false
+			}
+			return options.Limit <= 0 || yielded < options.Limit
 		}
 
-		for key, err := range iter {
+		for key, err := range keyIter {
 			if err != nil {
 				yield(DataKey{}, err)
 				return
 			}
+			scanned++
 
 			dataKey, err := ParseKey(key)
 			if err != nil {

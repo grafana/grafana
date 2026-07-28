@@ -12,10 +12,25 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-// PeriodicListFunc returns every object of one resource kind, read straight from
-// the API. CachelessPeriodicInformer calls it once on start and again on
-// every resync.
-type PeriodicListFunc func(ctx context.Context) ([]runtime.Object, error)
+// PeriodicListFunc delivers every object of one resource kind, read straight
+// from the API, to emit. CachelessPeriodicInformer calls it once on start and
+// again on every resync.
+//
+// It streams rather than returning a slice because the resources this source
+// serves can be numerous - a re-list that materialised all of them would hold
+// the whole set in memory for the length of the pass, to no purpose: this
+// source keeps no cache and only forwards each object once.
+//
+// Streaming makes a pass divisible, so the handlers must be too: a list that
+// fails partway has already emitted a prefix of the resource, and the returned
+// error does not take those objects back. Handlers registered here must
+// therefore act on one object at a time and be safe to re-run - a handler that
+// needs a complete set (a count, or "delete whatever this pass did not
+// mention") cannot be driven by this source, because it would read a prefix as
+// the whole. That is not a new constraint: every pass re-delivers every object
+// as an add, so a handler that could not tolerate repeats never fit here
+// either.
+type PeriodicListFunc func(ctx context.Context, emit func(runtime.Object)) error
 
 const (
 	// defaultPeriodicResync is the fallback re-list cadence for a non-positive interval.
@@ -93,7 +108,9 @@ func (s *CachelessPeriodicInformer) Run(stopCh <-chan struct{}) {
 
 	// Deliver an initial pass promptly, retrying until the first list succeeds so
 	// a transient API error at startup does not defer the first cleanup by a whole
-	// resync interval.
+	// resync interval. A list that keeps failing at the same point re-delivers the
+	// prefix it reached on every retry; that costs the handlers repeated no-op
+	// work, not correctness, because they are idempotent.
 	for {
 		if err := s.relist(ctx); err == nil {
 			break
@@ -121,17 +138,22 @@ func (s *CachelessPeriodicInformer) Run(stopCh <-chan struct{}) {
 // relist reads the full set from the API and delivers every object as an add. The
 // handlers are idempotent, so re-delivering unchanged objects each pass is
 // intended: it is what re-triggers resync-driven work such as age-based cleanup.
+//
+// Objects are dispatched as they arrive, so a list that fails partway through
+// has already delivered what it read. That is the same idempotence at work: the
+// handlers act per object and the next pass re-reads everything, so partial
+// progress is worth more than discarding it.
 func (s *CachelessPeriodicInformer) relist(ctx context.Context) error {
-	objs, err := s.list(ctx)
+	count := 0
+	err := s.list(ctx, func(obj runtime.Object) {
+		count++
+		s.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(obj, false) })
+	})
 	if err != nil {
-		s.log.Warn("periodic lister: list failed", "name", s.name, "error", err)
+		s.log.Warn("periodic lister: list failed", "name", s.name, "error", err, "delivered", count)
 		return err
 	}
-	s.log.Debug("periodic lister re-listed", "name", s.name, "count", len(objs))
-	for _, obj := range objs {
-		o := obj
-		s.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(o, false) })
-	}
+	s.log.Debug("periodic lister re-listed", "name", s.name, "count", count)
 	return nil
 }
 
