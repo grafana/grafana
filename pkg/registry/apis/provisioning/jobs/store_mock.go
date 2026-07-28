@@ -259,65 +259,6 @@ func (_c *MockStore_ListExpiredJobs_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
-// ListUnclaimedJobs provides a mock function with given fields: ctx, limit
-func (_m *MockStore) ListUnclaimedJobs(ctx context.Context, limit int) ([]*v0alpha1.Job, error) {
-	ret := _m.Called(ctx, limit)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListUnclaimedJobs")
-	}
-
-	var r0 []*v0alpha1.Job
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) ([]*v0alpha1.Job, error)); ok {
-		return rf(ctx, limit)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, int) []*v0alpha1.Job); ok {
-		r0 = rf(ctx, limit)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*v0alpha1.Job)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
-		r1 = rf(ctx, limit)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockStore_ListUnclaimedJobs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUnclaimedJobs'
-type MockStore_ListUnclaimedJobs_Call struct {
-	*mock.Call
-}
-
-// ListUnclaimedJobs is a helper method to define mock.On call
-//   - ctx context.Context
-//   - limit int
-func (_e *MockStore_Expecter) ListUnclaimedJobs(ctx interface{}, limit interface{}) *MockStore_ListUnclaimedJobs_Call {
-	return &MockStore_ListUnclaimedJobs_Call{Call: _e.mock.On("ListUnclaimedJobs", ctx, limit)}
-}
-
-func (_c *MockStore_ListUnclaimedJobs_Call) Run(run func(ctx context.Context, limit int)) *MockStore_ListUnclaimedJobs_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int))
-	})
-	return _c
-}
-
-func (_c *MockStore_ListUnclaimedJobs_Call) Return(_a0 []*v0alpha1.Job, _a1 error) *MockStore_ListUnclaimedJobs_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockStore_ListUnclaimedJobs_Call) RunAndReturn(run func(context.Context, int) ([]*v0alpha1.Job, error)) *MockStore_ListUnclaimedJobs_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // RenewLease provides a mock function with given fields: ctx, job
 func (_m *MockStore) RenewLease(ctx context.Context, job *v0alpha1.Job) error {
 	ret := _m.Called(ctx, job)

@@ -1134,10 +1134,10 @@ type GrafanaOpts struct {
 	// (HistoricJob retention + historic-job informer resync). Set it low to
 	// exercise the re-list-driven cleanup quickly. Zero leaves the default (10m).
 	ProvisioningHistoryExpiration time.Duration
-	// ProvisioningJobPollInterval overrides [provisioning] job_poll_interval (job
-	// driver fallback poll). Set it high in NATS tests so a job that completes
-	// quickly can only have been woken by the live notification, not the poll.
-	// Zero leaves the default (30s).
+	// ProvisioningJobPollInterval overrides [provisioning] job_poll_interval, the
+	// jobs informer's resync/re-list interval. Set it high in NATS tests so a job
+	// that is picked up quickly can only have been woken by the live
+	// notification, not the re-list. Zero leaves the default (30s).
 	ProvisioningJobPollInterval time.Duration
 	GrafanaComSSOAPIToken       string
 	LicensePath                 string

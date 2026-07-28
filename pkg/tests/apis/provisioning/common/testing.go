@@ -1571,11 +1571,11 @@ func WithNATS() GrafanaOption {
 		opts.NATSListenAddress = "127.0.0.1"
 		opts.NATSClientPort = natsserver.RANDOM_PORT
 		opts.NATSClusterPort = natsserver.RANDOM_PORT
-		// Push the informer re-list and the job driver's fallback poll far out so
-		// any reconcile/job pickup observed within a test's wait budget can only
-		// have come from a live NATS notification, not the periodic LIST/poll.
-		// Tests that specifically exercise the re-list path (e.g. historic-job
-		// cleanup) override the relevant interval.
+		// Push the informer re-lists (repo/connection and jobs) far out so any
+		// reconcile/job pickup observed within a test's wait budget can only have
+		// come from a live NATS notification, not the periodic LIST. Tests that
+		// specifically exercise the re-list path (e.g. historic-job cleanup)
+		// override the relevant interval.
 		opts.ProvisioningControllerResyncInterval = 10 * time.Minute
 		opts.ProvisioningJobPollInterval = 10 * time.Minute
 	}
@@ -1597,8 +1597,10 @@ func WithNATSReListOnly(resync time.Duration) GrafanaOption {
 		opts.NATSClusterPort = natsserver.RANDOM_PORT
 		// EnableSQLKVBackend stays false: only the KV backend publishes watch
 		// notifications, so leaving it off means the informers never receive a
-		// live event and the re-list is the sole reconcile driver.
+		// live event and the re-list is the sole reconcile driver. The jobs
+		// informer resyncs on its own interval, so pin both to resync.
 		opts.ProvisioningControllerResyncInterval = resync
+		opts.ProvisioningJobPollInterval = resync
 	}
 }
 
