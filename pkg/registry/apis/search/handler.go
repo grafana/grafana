@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -107,24 +108,25 @@ func (h *Handler) SearchFor(kind kindRef) http.HandlerFunc {
 	}
 }
 
-// requestNamespace returns the namespace the request targets. It must match the
-// identity the request authenticated as, so a caller cannot search another
-// tenant.
+// requestNamespace returns the namespace the request targets, once the caller
+// is known to be allowed to reach it. NamespaceMatches carries the shared rule
+// rather than a string comparison, so identities scoped to every namespace
+// still work.
 func requestNamespace(r *http.Request) (string, error) {
 	requester, err := identity.GetRequester(r.Context())
 	if err != nil {
 		return "", err
 	}
-	pathNS, ok := request.NamespaceFrom(r.Context())
-	if !ok || pathNS == "" {
-		return requester.GetNamespace(), nil
+	namespace, ok := request.NamespaceFrom(r.Context())
+	if !ok || namespace == "" {
+		return "", apierrors.NewBadRequest("namespace is required")
 	}
-	if pathNS != requester.GetNamespace() {
+	if !types.NamespaceMatches(requester.GetNamespace(), namespace) {
 		return "", apierrors.NewForbidden(
 			schema.GroupResource{Group: searchv0.GROUP},
-			"", fmt.Errorf("namespace %q does not match the authenticated namespace", pathNS))
+			"", fmt.Errorf("namespace %q is not accessible", namespace))
 	}
-	return pathNS, nil
+	return namespace, nil
 }
 
 func decodeBody(r *http.Request, into any) error {

@@ -64,6 +64,7 @@ func TestIsSearchRequest(t *testing.T) {
 	// A dashboard that happens to be named "search" is only ever reached with a
 	// non-create verb, so it stays a normal object operation.
 	assert.False(t, IsSearchRequest(attributesFor(t, http.MethodGet, searchPath)))
+	assert.False(t, IsSearchRequest(attributesFor(t, http.MethodPut, searchPath)))
 	assert.False(t, IsSearchRequest(attributesFor(t, http.MethodDelete, searchPath)))
 }
 

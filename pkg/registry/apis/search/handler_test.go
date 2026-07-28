@@ -142,19 +142,54 @@ func TestHandler_PropagatesBackendErrorResult(t *testing.T) {
 	assert.Equal(t, http.StatusServiceUnavailable, w.Code, w.Body.String())
 }
 
-func TestHandler_RejectsCrossNamespaceRequest(t *testing.T) {
-	client := &fakeIndexClient{resp: emptyResponse()}
-	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
-
+// searchAs runs a search whose caller is scoped to callerNS against the
+// namespace in the path.
+func searchAs(t *testing.T, h *Handler, callerNS, pathNS string) *httptest.ResponseRecorder {
+	t.Helper()
 	r := httptest.NewRequest(http.MethodPost, "/search", strings.NewReader(`{
 		"apiVersion": "`+searchv0.APIVERSION+`",
 		"kind": "`+searchv0.KindSearchQuery+`"
 	}`))
-	ctx := identity.WithRequester(r.Context(), &identity.StaticRequester{Namespace: "tenant-a"})
-	ctx = request.WithNamespace(ctx, "tenant-b")
+	ctx := identity.WithRequester(r.Context(), &identity.StaticRequester{Namespace: callerNS})
+	if pathNS != "" {
+		ctx = request.WithNamespace(ctx, pathNS)
+	}
 	w := httptest.NewRecorder()
 	h.SearchFor(testKind)(w, r.WithContext(ctx))
+	return w
+}
+
+func TestHandler_RejectsCrossNamespaceRequest(t *testing.T) {
+	client := &fakeIndexClient{resp: emptyResponse()}
+	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+
+	w := searchAs(t, h, "tenant-a", "tenant-b")
 
 	assert.Equal(t, http.StatusForbidden, w.Code, w.Body.String())
 	assert.Nil(t, client.got, "a cross-namespace request must not reach the backend")
+}
+
+func TestHandler_AllowsCallerScopedToEveryNamespace(t *testing.T) {
+	client := &fakeIndexClient{resp: emptyResponse()}
+	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+
+	// Service identities are scoped to "*" and may reach any namespace, so this
+	// must not be treated as a mismatch.
+	w := searchAs(t, h, "*", "tenant-b")
+
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	require.NotNil(t, client.got)
+	assert.Equal(t, "tenant-b", client.got.Options.Key.Namespace, "the search runs against the requested namespace")
+}
+
+func TestHandler_RequiresNamespace(t *testing.T) {
+	client := &fakeIndexClient{resp: emptyResponse()}
+	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+
+	// A caller scoped to "*" with no namespace in the path has not said which
+	// tenant to search, so this must not fall back to searching "*".
+	w := searchAs(t, h, "*", "")
+
+	assert.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
+	assert.Nil(t, client.got)
 }

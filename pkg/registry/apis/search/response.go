@@ -48,12 +48,18 @@ func totalHitsRelation(exact bool) searchv0.TotalHitsRelation {
 // most one extra empty page.
 func continueToken(table *resourcepb.ResourceTable, limit int64, totalIsExact bool) string {
 	rows := table.GetRows()
+	// Translation always resolves a limit, so the zero check is only here to keep
+	// the function honest if it is ever called directly.
 	if limit <= 0 || len(rows) == 0 {
 		return ""
 	}
 	if int64(len(rows)) < limit && totalIsExact {
 		return ""
 	}
+	// The cursor is the last row's sort values. The backend returns them per row
+	// and takes them back as SearchAfter, so the next page resumes at the point
+	// this one stopped, in the same order. A row without them cannot be resumed
+	// from, which happens when the query has no sort to position against.
 	last := rows[len(rows)-1]
 	if len(last.GetSortFields()) == 0 {
 		return ""
