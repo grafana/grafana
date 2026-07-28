@@ -824,6 +824,9 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /.levignore.js @grafana/grafana-frontend-platform
 knip.config.ts @grafana/grafana-frontend-platform
 playwright.config.ts @grafana/grafana-catalog
+
+# Claude Code skills — owned by the squad that maintains each skill
+/.claude/skills/panel-testing-strategy/ @grafana/dataviz-squad
 playwright.storybook.config.ts @grafana/grafana-frontend-platform
 
 # public folder
