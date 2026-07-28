@@ -5,6 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { AnnoKeyIgnorePredefinedVariables } from 'app/features/apiserver/types';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { getProvisionedMeta } from 'app/features/provisioning/components/utils/getProvisionedMeta';
 
@@ -92,6 +93,9 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
     const data = getValues();
 
+    // Same annotation merge as SaveDashboardForm: denylist lives in meta.k8s.annotations
+    // and must be sent on first save / Save As (this form never previously passed k8s).
+    const k8sMeta = dashboard.serializer.getK8SMetadata();
     const result = await onSaveDashboard(dashboard, {
       overwrite,
       folderUid: data.folder.uid,
@@ -103,6 +107,13 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
       copyTags: data.copyTags,
       title: data.title,
       description: data.description,
+      k8s: {
+        ...k8sMeta,
+        annotations: {
+          ...k8sMeta?.annotations,
+          ...dashboard.state.meta.k8s?.annotations,
+        },
+      },
     });
 
     if (result.status === 'success') {
@@ -193,11 +204,22 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
           <FolderPicker
             onChange={async (uid: string | undefined, title: string | undefined) => {
               setValue('folder', { uid, title });
-              const meta = await getProvisionedMeta(uid);
+              const provisionedMeta = await getProvisionedMeta(uid);
+              const ignoreValue = dashboard.state.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+              // Replace folder/provisioned overlay, but keep the editor denylist so a folder
+              // change before first save does not drop ignorePredefinedVariables.
               dashboard.setState({
                 meta: {
-                  ...meta,
+                  ...dashboard.state.meta,
+                  ...provisionedMeta,
                   folderUid: uid,
+                  k8s: {
+                    ...provisionedMeta.k8s,
+                    annotations: {
+                      ...provisionedMeta.k8s?.annotations,
+                      ...(ignoreValue !== undefined ? { [AnnoKeyIgnorePredefinedVariables]: ignoreValue } : {}),
+                    },
+                  },
                 },
               });
               // Re-validate title when folder changes to check for duplicates in new folder

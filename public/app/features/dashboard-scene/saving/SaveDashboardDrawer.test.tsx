@@ -5,12 +5,18 @@ import { byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { ConstantVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
-import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import {
+  AnnoKeyIgnorePredefinedVariables,
+  AnnoKeyManagerKind,
+  DENY_ALL_PREDEFINED,
+  ManagerKind,
+} from 'app/features/apiserver/types';
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { serializeIgnorePredefinedVariables } from '../utils/predefinedVariableDenyList';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import {
@@ -300,6 +306,32 @@ describe('SaveDashboardDrawer', () => {
 
       const dataSent = saveDashboardMutationMock.mock.calls[0][0];
       expect(dataSent.dashboard.uid).toEqual('');
+    });
+
+    it('Should persist predefined-variable denylist annotations', async () => {
+      const denyList = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
+      const { dashboard, openAndRender } = setup();
+      dashboard.setState({
+        meta: {
+          ...dashboard.state.meta,
+          k8s: {
+            ...dashboard.state.meta.k8s,
+            annotations: {
+              ...dashboard.state.meta.k8s?.annotations,
+              [AnnoKeyIgnorePredefinedVariables]: denyList,
+            },
+          },
+        },
+      });
+
+      openAndRender({ saveAsCopy: true });
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      mockSaveDashboard();
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      const dataSent = saveDashboardMutationMock.mock.calls[0][0];
+      expect(dataSent.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables]).toBe(denyList);
     });
   });
 
