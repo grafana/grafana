@@ -58,17 +58,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
-      color: theme.colors.text.secondary,
+      color: theme.colors.text.primary,
     }),
     breadcrumbLink: css({
-      color: theme.colors.text.primary,
+      color: theme.colors.text.secondary,
       '&:hover': {
         textDecoration: 'underline',
+        color: theme.colors.text.link,
       },
     }),
     breadcrumbWrapper: css({
       alignItems: 'center',
-      color: theme.colors.text.primary,
+      color: theme.colors.text.secondary,
       display: 'flex',
       flex: 1,
       gap: theme.spacing(0.5),

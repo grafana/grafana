@@ -205,23 +205,12 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
     opacity: 0.5,
   }),
   wrapperActive: css({
-    backgroundColor: theme.colors.action.selected,
-    borderTopRightRadius: theme.shape.radius.default,
-    borderBottomRightRadius: theme.shape.radius.default,
+    //borderTopRightRadius: theme.shape.radius.default,
+    //borderBottomRightRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.default,
     position: 'relative',
-    color: theme.colors.text.primary,
-
-    '&::before': {
-      backgroundImage: theme.colors.gradients.brandVertical,
-      borderRadius: theme.shape.radius.default,
-      content: '" "',
-      display: 'block',
-      height: '100%',
-      position: 'absolute',
-      transform: 'translateX(-50%)',
-      left: 0,
-      width: theme.spacing(0.25),
-    },
+    color: theme.colors.text.link,
+    backgroundColor: theme.colors.accent.transparent,
   }),
   container: css({
     alignItems: 'center',

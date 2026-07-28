@@ -314,6 +314,7 @@ export function MegaMenuItem({
 const getStyles = (theme: GrafanaTheme2) => ({
   icon: css({
     width: theme.spacing(3),
+    color: theme.colors.accent.text,
   }),
   img: css({
     height: theme.spacing(2),

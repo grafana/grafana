@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { type NavModelItem, type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 import { PageInfo } from '../PageInfo/PageInfo';
 
@@ -28,6 +28,11 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
         <div className={styles.titleInfoContainer}>
           <div className={styles.title}>
             {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
+            {navItem.icon && (
+              <div className={styles.icon}>
+                <Icon name={navItem.icon} title={navItem.text} size="lg" />
+              </div>
+            )}
             {onEditTitle ? (
               <EditableTitle value={navItem.text} onEdit={onEditTitle} />
             ) : renderTitle ? (
@@ -59,6 +64,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'row',
       maxWidth: '100%',
       flex: 1,
+      alignItems: 'center',
       h1: {
         marginBottom: 0,
       },
@@ -93,6 +99,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '32px',
       height: '32px',
       marginRight: theme.spacing(2),
+    }),
+    icon: css({
+      marginRight: theme.spacing(1),
+      color: theme.colors.accent.text,
+      backgroundColor: theme.colors.accent.transparent,
+      border: `1px solid ${theme.colors.accent.border}`,
+      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(1),
+      width: theme.spacing(5),
+      height: theme.spacing(5),
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
     }),
   };
 };

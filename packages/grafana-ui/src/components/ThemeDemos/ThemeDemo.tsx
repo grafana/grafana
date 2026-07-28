@@ -285,6 +285,28 @@ export const ThemeDemo = () => {
                   Disabled
                 </Button>
               </Stack>
+              Outline buttons
+              <Stack wrap="wrap">
+                {allButtonVariants.map((variant) => (
+                  <Button variant={variant} key={variant} fill="outline">
+                    {variant}
+                  </Button>
+                ))}
+                <Button variant="primary" disabled>
+                  Disabled
+                </Button>
+              </Stack>
+              Text buttons
+              <Stack wrap="wrap">
+                {allButtonVariants.map((variant) => (
+                  <Button variant={variant} key={variant} fill="text">
+                    {variant}
+                  </Button>
+                ))}
+                <Button variant="primary" disabled>
+                  Disabled
+                </Button>
+              </Stack>
               <Card noMargin>
                 <Card.Heading>Button inside card</Card.Heading>
                 <Card.Actions>
