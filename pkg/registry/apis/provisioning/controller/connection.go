@@ -151,9 +151,8 @@ func (cc *ConnectionController) process(ctx context.Context, key string) error {
 	if err != nil {
 		// The token references a stored secret that could not be decrypted (e.g. an
 		// orphaned reference whose secret was deleted). Regenerate it from the private
-		// key by clearing the reference on a copy (the rebuild then skips token
-		// decryption and shouldGenerateToken re-mints it). Rebuild on a copy to avoid
-		// mutating the shared informer cache.
+		// key by clearing the reference (the rebuild then skips token decryption and
+		// shouldGenerateToken re-mints it).
 		if errors.Is(err, connection.ErrTokenNotFound) {
 			// If we wrote a token for this connection very recently, its secret may not
 			// be readable from the store yet. Wait for it rather than regenerating, which
@@ -164,7 +163,6 @@ func (cc *ConnectionController) process(ctx context.Context, key string) error {
 				return nil
 			}
 			logger.Warn("connection token secret could not be decrypted, regenerating", "error", err)
-			conn = conn.DeepCopy()
 			conn.Secure.Token = common.InlineSecureValue{}
 			c, err = cc.connectionFactory.Build(ctx, conn)
 		}

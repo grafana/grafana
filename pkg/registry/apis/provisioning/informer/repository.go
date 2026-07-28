@@ -23,8 +23,9 @@ import (
 // under reconciliation, and a namespace-wide list for the quota count — so the
 // source can be swapped without touching the controller.
 //
-// Get must return a current object (the reconcile acts on its spec); List backs
-// the quota count, which tolerates staleness.
+// Get must return a current object (the reconcile acts on its spec) that the
+// caller owns and may mutate freely. List backs the quota count, which
+// tolerates staleness; its items are shared and must be treated as read-only.
 type RepositoryGetter interface {
 	Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error)
 	List(ctx context.Context, namespace string) ([]*provisioningapis.Repository, error)
@@ -75,7 +76,13 @@ type cachedRepositoryGetter struct {
 }
 
 func (g cachedRepositoryGetter) Get(_ context.Context, namespace, name string) (*provisioningapis.Repository, error) {
-	return g.lister.Repositories(namespace).Get(name)
+	repo, err := g.lister.Repositories(namespace).Get(name)
+	if err != nil {
+		return nil, err
+	}
+	// The lister returns the informer's shared cache object; copy it so the
+	// caller can mutate the result without corrupting the cache.
+	return repo.DeepCopy(), nil
 }
 
 func (g cachedRepositoryGetter) List(_ context.Context, namespace string) ([]*provisioningapis.Repository, error) {
@@ -108,7 +115,9 @@ func (g clientGetCachedListRepositoryGetter) Get(ctx context.Context, namespace,
 		return nil, err
 	}
 	g.store.Update(ctx, repo)
-	return repo, nil
+	// The store now holds repo (List reads it for the quota count); hand the
+	// caller its own copy so reconcile mutations cannot leak into the store.
+	return repo.DeepCopy(), nil
 }
 
 func (g clientGetCachedListRepositoryGetter) List(ctx context.Context, namespace string) ([]*provisioningapis.Repository, error) {

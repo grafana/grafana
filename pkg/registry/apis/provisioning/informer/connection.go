@@ -19,6 +19,8 @@ import (
 // ConnectionGetter is the read seam the connection controller reconciles
 // against. It exposes only the single connection under reconciliation, so the
 // source can be swapped without touching the controller.
+//
+// Get must return a current object that the caller owns and may mutate freely.
 type ConnectionGetter interface {
 	Get(ctx context.Context, namespace, name string) (*provisioningapis.Connection, error)
 }
@@ -66,7 +68,13 @@ type cachedConnectionGetter struct {
 }
 
 func (g cachedConnectionGetter) Get(_ context.Context, namespace, name string) (*provisioningapis.Connection, error) {
-	return g.lister.Connections(namespace).Get(name)
+	conn, err := g.lister.Connections(namespace).Get(name)
+	if err != nil {
+		return nil, err
+	}
+	// The lister returns the informer's shared cache object; copy it so the
+	// caller can mutate the result without corrupting the cache.
+	return conn.DeepCopy(), nil
 }
 
 // NewClientConnectionGetter backs a ConnectionGetter with the API client, for
