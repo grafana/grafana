@@ -40,8 +40,12 @@ describe('table module', () => {
 
     // Assert the plugin delegates to tableSuggestionsSupplier by matching the wired supplier's
     // scores; the supplier's own count/score semantics are covered in suggestions.test.ts.
-    const suppliedScores = tableSuggestionsSupplier(dataSummary).map((s) => s.score);
-    expect(plugin.getSuggestions(dataSummary)?.map((s) => s.score)).toEqual(suppliedScores);
+    const supplied = tableSuggestionsSupplier(dataSummary);
+    const pluginSuggestions = plugin.getSuggestions(dataSummary);
+    if (!supplied || !pluginSuggestions) {
+      throw new Error('expected the table plugin and supplier to return suggestions');
+    }
+    expect(pluginSuggestions.map((s) => s.score)).toEqual(supplied.map((s) => s.score));
   });
 
   it('registers the cell-options custom editors', () => {
