@@ -261,3 +261,92 @@ func TestVectorStore_UpsertStorageFailureIsInternal(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, codes.Internal, status.Code(err))
 }
+
+func TestVectorStore_UpsertSubresourcesDiff(t *testing.T) {
+	// Stored: chunk/1 (same content), chunk/2 (old content), chunk/3 (going away).
+	// Inputs: chunk/1 (unchanged -> metadataOnly), chunk/2 (changed -> re-embed), chunk/4 (new -> embed).
+	store := &fakeWriteStore{stored: map[string]string{
+		"chunk/1": "same", "chunk/2": "old", "chunk/3": "gone",
+	}}
+	s := newTestVectorStoreServer(store)
+
+	resp, err := s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
+		Namespace: "ns", Group: "g", Resource: "r", Uid: "ent-1",
+		Inputs: []*resourcepb.EmbeddingInput{
+			{Subresource: "chunk/1", Content: "same", Title: "T1", Metadata: []byte(`{"embeddedAt":2}`)},
+			{Subresource: "chunk/2", Content: "new", Title: "T2"},
+			{Subresource: "chunk/4", Content: "brand", Title: "T4"},
+		},
+	})
+	require.NoError(t, err)
+	assert.EqualValues(t, 1, resp.Created) // chunk/4
+	assert.EqualValues(t, 1, resp.Updated) // chunk/2
+	assert.EqualValues(t, 1, resp.Deleted) // chunk/3
+
+	assert.Equal(t, 1, store.lockCalls, "flow runs under the entity lock")
+	require.Len(t, store.replaceCalls, 1)
+	call := store.replaceCalls[0]
+	assert.Equal(t, "ent-1", call.UID)
+	assert.Equal(t, "r_external", call.Resource)
+	assert.ElementsMatch(t, []string{"chunk/1", "chunk/2", "chunk/4"}, call.Desired)
+	require.Len(t, call.Changed, 2) // chunk/2 + chunk/4 embedded
+	require.Len(t, call.MetadataOnly, 1)
+	assert.Equal(t, "chunk/1", call.MetadataOnly[0].Subresource)
+	assert.JSONEq(t, `{"embeddedAt":2}`, string(call.MetadataOnly[0].Metadata))
+}
+
+func TestVectorStore_UpsertSubresourcesValidation(t *testing.T) {
+	store := &fakeWriteStore{}
+	s := newTestVectorStoreServer(store)
+
+	// Missing uid.
+	_, err := s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Inputs: []*resourcepb.EmbeddingInput{{Subresource: "c", Content: "x", Title: "t"}},
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+
+	// Empty inputs.
+	_, err = s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
+		Namespace: "ns", Group: "g", Resource: "r", Uid: "e",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+
+	// Mismatched input uid.
+	_, err = s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
+		Namespace: "ns", Group: "g", Resource: "r", Uid: "e",
+		Inputs: []*resourcepb.EmbeddingInput{{Uid: "other", Subresource: "c", Content: "x", Title: "t"}},
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+
+	// Duplicate subresource in inputs.
+	_, err = s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
+		Namespace: "ns", Group: "g", Resource: "r", Uid: "e",
+		Inputs: []*resourcepb.EmbeddingInput{
+			{Subresource: "c", Content: "x", Title: "t"},
+			{Subresource: "c", Content: "y", Title: "t"},
+		},
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+}
+
+func TestVectorStore_UpsertSubresourcesNoChangesSkipsEmbed(t *testing.T) {
+	fake := &fakeTextEmbedder{dim: 4}
+	store := &fakeWriteStore{stored: map[string]string{"c": "same"}}
+	s := NewVectorStoreServer(nil, newTestEmbedder(fake), []string{"g/r"}, nil)
+	s.store = store
+
+	resp, err := s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
+		Namespace: "ns", Group: "g", Resource: "r", Uid: "e",
+		Inputs: []*resourcepb.EmbeddingInput{{Subresource: "c", Content: "same", Title: "t", Metadata: []byte(`{"m":1}`)}},
+	})
+	require.NoError(t, err)
+	assert.Zero(t, resp.Created+resp.Updated+resp.Deleted)
+	assert.Empty(t, fake.gotIn.Texts, "nothing embedded")
+	require.Len(t, store.replaceCalls, 1, "metadataOnly still written")
+	assert.Len(t, store.replaceCalls[0].MetadataOnly, 1)
+}

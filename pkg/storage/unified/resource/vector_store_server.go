@@ -185,7 +185,82 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 	if err := s.authorize(ctx, req.Namespace, req.Group, req.Resource); err != nil {
 		return nil, err
 	}
-	return nil, status.Error(codes.Unimplemented, "not implemented yet")
+	if req.Uid == "" {
+		return nil, status.Error(codes.InvalidArgument, "uid is required")
+	}
+	if err := validateInputs(req.Inputs, req.Uid); err != nil {
+		return nil, err
+	}
+	seen := make(map[string]struct{}, len(req.Inputs))
+	for i, in := range req.Inputs {
+		if _, dup := seen[in.Subresource]; dup {
+			return nil, status.Errorf(codes.InvalidArgument, "inputs[%d]: duplicate subresource %q", i, in.Subresource)
+		}
+		seen[in.Subresource] = struct{}{}
+	}
+
+	coll, err := s.store.EnsureCollection(ctx, req.Group, req.Resource, true)
+	if err != nil {
+		s.log.Error("vector store: ensure collection", "err", err, "group", req.Group, "resource", req.Resource)
+		return nil, status.Error(codes.Internal, "provision collection")
+	}
+
+	resp := &resourcepb.VectorUpsertSubresourcesResponse{}
+	err = s.store.WithEntityLock(ctx, req.Namespace, coll.PartitionKey, req.Uid, func(ctx context.Context) error {
+		stored, _, err := s.store.GetSubresourceContent(ctx, req.Namespace, s.embedder.Model, coll.PartitionKey, req.Uid)
+		if err != nil {
+			return status.Error(codes.Internal, "read stored subresources")
+		}
+
+		desired := make([]string, 0, len(req.Inputs))
+		toEmbed := make([]*resourcepb.EmbeddingInput, 0, len(req.Inputs))
+		metadataOnly := make([]vector.VectorMeta, 0, len(req.Inputs))
+		present := make(map[string]struct{}, len(req.Inputs))
+		for _, in := range req.Inputs {
+			desired = append(desired, in.Subresource)
+			prev, ok := stored[in.Subresource]
+			if ok {
+				present[in.Subresource] = struct{}{}
+			}
+			switch {
+			case !ok:
+				resp.Created++
+				toEmbed = append(toEmbed, in)
+			case prev != in.Content:
+				resp.Updated++
+				toEmbed = append(toEmbed, in)
+			default:
+				// Content unchanged: title/metadata still refresh so sync
+				// markers stay current without re-embed cost.
+				metadataOnly = append(metadataOnly, vector.VectorMeta{
+					Subresource: in.Subresource,
+					Title:       in.Title,
+					Metadata:    in.Metadata,
+				})
+			}
+		}
+		resp.Deleted = int64(len(stored) - len(present))
+
+		var changed []vector.Vector
+		if len(toEmbed) > 0 {
+			changed, err = s.embedInputs(ctx, req.Namespace, coll, req.Uid, toEmbed)
+			if err != nil {
+				return err // already a status error
+			}
+		}
+		if err := s.store.UpsertReplaceSubresources(ctx, req.Namespace, s.embedder.Model, coll.PartitionKey, req.Uid, changed, metadataOnly, desired); err != nil {
+			s.log.Error("vector store: replace subresources", "err", err, "group", req.Group, "resource", req.Resource, "uid", req.Uid)
+			return status.Error(codes.Internal, "replace subresources")
+		}
+		return nil
+	})
+	if err != nil {
+		if _, ok := status.FromError(err); ok {
+			return nil, err
+		}
+		return nil, status.Error(codes.Internal, "entity lock")
+	}
+	return resp, nil
 }
 
 func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDeleteRequest) (*resourcepb.VectorDeleteResponse, error) {
