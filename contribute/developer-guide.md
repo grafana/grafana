@@ -111,10 +111,8 @@ After `yarn start` has built the assets, it will continue to do so whenever any 
 If you want to contribute to any of the plugins listed below (that are found within the `public/app/plugins` directory) they require running additional commands to watch and rebuild them.
 
 - azuremonitor
-- grafana-postgresql-datasource
 - grafana-testdata-datasource
 - mysql
-- loki
 
 To build and watch all these plugins you can run the following command. Note this can be quite resource intensive as it will start separate build processes for each plugin.
 
@@ -299,7 +297,7 @@ Installing and configuring databases can be a tricky business. Grafana uses [Doc
 In the root directory of your Grafana repository, run the following command:
 
 ```
-make devenv sources=influxdb,loki
+make devenv sources=influxdb
 ```
 
 The script generates a Docker Compose file with the databases you specify as `sources`, and runs them in the background.

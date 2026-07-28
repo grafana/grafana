@@ -5544,135 +5544,6 @@
       "switch-layout-tab": "Kiosztás váltása",
       "tab-title": "Lap címének módosítása"
     },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "Jegyzetadatforrás módosítása",
-        "choose-panels": "Válassza ki a paneleket",
-        "color": "Szín",
-        "color-description": "A jegyzetesemény-jelölőkhöz használandó szín",
-        "data-source": "Adatforrás",
-        "display": "Jegyzetvezérlők megjelenítése itt:",
-        "display-options": {
-          "above-dashboard": "Irányítópult felett",
-          "controls-menu": "Vezérlőmenü",
-          "controls-menu-description": "Akkor érhető el, ha a vezérlőmenü meg van nyitva",
-          "hidden": "Rejtett",
-          "hidden-description": "Elrejti a kapcsolót a jegyzet be- vagy kikapcsolásához"
-        },
-        "enabled": "Engedélyezve",
-        "enabled-description": "Ha engedélyezve van, a jegyzetlekérdezés az irányítópult minden frissítésekor megjelenik",
-        "name": "Név",
-        "open-query-editor": "Lekérdezésszerkesztő megnyitása",
-        "open-query-editor-tooltip": "A lekérdezésszerkesztő megnyitása a jegyzetlekérdezés konfigurálásához",
-        "panel-filter": {
-          "all-panels": "Minden panel",
-          "all-panels-description": "Jegyzetadatok küldése minden olyan panelnek, amely támogatja a jegyzeteket",
-          "all-panels-except": "Minden panel, kivéve",
-          "all-panels-except-description": "Ne küldjön jegyzetadatokat az alábbi paneleknek",
-          "selected-panels": "Kijelölt panelek",
-          "selected-panels-description": "Jegyzetek küldése a kifejezetten megadott paneleknek"
-        },
-        "query": "Lekérdezés",
-        "query-editor-close": "Bezárás",
-        "query-editor-modal-title": "Jegyzetlekérdezés",
-        "show-in": "Megjelenítés itt:"
-      },
-      "annotations": {
-        "add-annotation": "Jegyzet hozzáadása",
-        "reorder": "Húzza át az átrendezéshez",
-        "select-annotation": "Kiválasztás"
-      },
-      "elements": {
-        "annotation": "Jegyzet",
-        "annotation-set": "Jegyzetek és riasztások",
-        "dashboard": "Irányítópult",
-        "element": "Elem",
-        "filter": "",
-        "filters-set": "",
-        "link-set": "Hivatkozások",
-        "local-variable": "Helyi változó",
-        "multiple-elements": "Több elem",
-        "multiple-elements-delete-text": "Biztosan törli ezeket az elemeket?",
-        "multiple-panels": "Több panel",
-        "multiple-panels-delete-text": "Biztosan törli ezeket a paneleket? Az összes lekérdezés el lesz távolítva.",
-        "objects": "Objektumok",
-        "panel": "Panel",
-        "panels": "Panelek",
-        "row": "Sor",
-        "rows": "Sorok",
-        "section-filters-set": "",
-        "tab": "Lap",
-        "tabs": "Lapok",
-        "variable": "{{type}} változó",
-        "variable-set": "Változók"
-      },
-      "links": {
-        "add-link": "Hivatkozás hozzáadása",
-        "reorder": "Húzza át az átrendezéshez",
-        "select-link": "Kiválasztás",
-        "untitled": "Névtelen hivatkozás"
-      },
-      "row": {
-        "header": {
-          "hide": "Elrejtés",
-          "title": "Sorfejléc"
-        }
-      },
-      "section-filters": {
-        "title": ""
-      },
-      "section-variables": {
-        "title": "Változók"
-      },
-      "variable": {
-        "change-type": "",
-        "change-type-aria-label": "Változótípus módosítása",
-        "custom-options": {
-          "apply": "Alkalmaz",
-          "change-value": "Változóérték módosítása",
-          "discard": "Elvetés",
-          "modal-title": "Egyéni opciók"
-        },
-        "datasource-options": {
-          "name-filter": "Névszűrő",
-          "name-filter-description": "Reguláris kifejezéses szűrő, amelyhez adatforráspéldányokat kell hozzáadni. Hagyja üresen minden esetben.",
-          "name-filter-placeholder": "Példa: /^prod/",
-          "type": "Típus",
-          "type-placeholder": "Válasszon adatforrástípust"
-        },
-        "description": "Leírás",
-        "description-placeholder": "Leírószöveg",
-        "label": "Címke",
-        "label-description": "Opcionális megjelenítendő név",
-        "name": "Név",
-        "open-editor": "Változószerkesztő megnyitása",
-        "open-editor-tooltip": "További változólehetőségekért nyissa meg a változószerkesztőt",
-        "query-options": {
-          "close": "Bezárás",
-          "modal-title": "Lekérdezési változó",
-          "preview": "Előnézet"
-        },
-        "selection-options": {
-          "allow-custom-values": "Egyéni értékek engedélyezése",
-          "allow-custom-values-description": "Lehetővé teszi a felhasználók számára, hogy értékeket adjanak meg",
-          "category": "Kijelölés beállításai",
-          "custom-all-value": "Összes egyedi érték",
-          "custom-all-value-description": "Helyettesítő karakteres reguláris kifejezés vagy más érték, amely az összeset jelöli",
-          "include-all": "Tartalmazza az összes értéket",
-          "include-all-description": "Engedélyez egy olyan opciót, amely az összes értéket képviseli",
-          "multi-value": "Többértékű"
-        },
-        "type-category": "{{type}}-beállítások"
-      },
-      "variables": {
-        "add-variable": "Változó hozzáadása",
-        "change-type": "",
-        "reorder": "Húzza át az átrendezéshez",
-        "select-type": "Válasszon változótípust",
-        "select-type-card-tooltip": "Típus kiválasztása kattintással",
-        "select-variable": "Kijelölés"
-      }
-    },
     "empty": {
       "add-library-panel-body": "Más irányítópultokkal megosztott vizualizációk hozzáadása.",
       "add-library-panel-button": "Könyvtárpanel hozzáadása",
@@ -6192,6 +6063,43 @@
         "title": "Hozzáadás",
         "tooltip": "Új elem hozzáadása"
       },
+      "annotation": {
+        "change-data-source": "Jegyzetadatforrás módosítása",
+        "choose-panels": "Válassza ki a paneleket",
+        "color": "Szín",
+        "color-description": "A jegyzetesemény-jelölőkhöz használandó szín",
+        "data-source": "Adatforrás",
+        "display": "Jegyzetvezérlők megjelenítése itt:",
+        "display-options": {
+          "above-dashboard": "Irányítópult felett",
+          "controls-menu": "Vezérlőmenü",
+          "controls-menu-description": "Akkor érhető el, ha a vezérlőmenü meg van nyitva",
+          "hidden": "Rejtett",
+          "hidden-description": "Elrejti a kapcsolót a jegyzet be- vagy kikapcsolásához"
+        },
+        "enabled": "Engedélyezve",
+        "enabled-description": "Ha engedélyezve van, a jegyzetlekérdezés az irányítópult minden frissítésekor megjelenik",
+        "name": "Név",
+        "open-query-editor": "Lekérdezésszerkesztő megnyitása",
+        "open-query-editor-tooltip": "A lekérdezésszerkesztő megnyitása a jegyzetlekérdezés konfigurálásához",
+        "panel-filter": {
+          "all-panels": "Minden panel",
+          "all-panels-description": "Jegyzetadatok küldése minden olyan panelnek, amely támogatja a jegyzeteket",
+          "all-panels-except": "Minden panel, kivéve",
+          "all-panels-except-description": "Ne küldjön jegyzetadatokat az alábbi paneleknek",
+          "selected-panels": "Kijelölt panelek",
+          "selected-panels-description": "Jegyzetek küldése a kifejezetten megadott paneleknek"
+        },
+        "query": "Lekérdezés",
+        "query-editor-close": "Bezárás",
+        "query-editor-modal-title": "Jegyzetlekérdezés",
+        "show-in": "Megjelenítés itt:"
+      },
+      "annotations": {
+        "add-annotation": "Jegyzet hozzáadása",
+        "reorder": "Húzza át az átrendezéshez",
+        "select-annotation": "Kiválasztás"
+      },
       "dashboard-options": {
         "title": "Beállítások",
         "tooltip": "Irányítópult beállításai"
@@ -6200,20 +6108,110 @@
         "title": "Kód",
         "tooltip": "Szerkesztés kódként"
       },
+      "elements": {
+        "annotation": "Jegyzet",
+        "annotation-set": "Jegyzetek és riasztások",
+        "dashboard": "Irányítópult",
+        "element": "Elem",
+        "filter": "",
+        "filters-set": "",
+        "link-set": "Hivatkozások",
+        "local-variable": "Helyi változó",
+        "multiple-elements": "Több elem",
+        "multiple-elements-delete-text": "Biztosan törli ezeket az elemeket?",
+        "multiple-panels": "Több panel",
+        "multiple-panels-delete-text": "Biztosan törli ezeket a paneleket? Az összes lekérdezés el lesz távolítva.",
+        "objects": "Objektumok",
+        "panel": "Panel",
+        "panels": "Panelek",
+        "row": "Sor",
+        "rows": "Sorok",
+        "section-filters-set": "",
+        "tab": "Lap",
+        "tabs": "Lapok",
+        "variable": "{{type}} változó",
+        "variable-set": "Változók"
+      },
       "export": {
         "title": "Exportálás"
       },
       "filters": "",
+      "links": {
+        "add-link": "Hivatkozás hozzáadása",
+        "reorder": "Húzza át az átrendezéshez",
+        "select-link": "Kiválasztás",
+        "untitled": "Névtelen hivatkozás"
+      },
       "open": "",
       "outline": {
         "title": "Vázlat",
         "tooltip": "Tartalomvázlat"
       },
       "redo": "Újra",
+      "row": {
+        "header": {
+          "hide": "Elrejtés",
+          "title": "Sorfejléc"
+        }
+      },
+      "section-filters": {
+        "title": ""
+      },
+      "section-variables": {
+        "title": "Változók"
+      },
       "snapshot": {
         "tooltip": "Eredeti irányítópult megnyitása"
       },
       "undo": "Visszavonás",
+      "variable": {
+        "change-type": "",
+        "change-type-aria-label": "Változótípus módosítása",
+        "custom-options": {
+          "apply": "Alkalmaz",
+          "change-value": "Változóérték módosítása",
+          "discard": "Elvetés",
+          "modal-title": "Egyéni opciók"
+        },
+        "datasource-options": {
+          "name-filter": "Névszűrő",
+          "name-filter-description": "Reguláris kifejezéses szűrő, amelyhez adatforráspéldányokat kell hozzáadni. Hagyja üresen minden esetben.",
+          "name-filter-placeholder": "Példa: /^prod/",
+          "type": "Típus",
+          "type-placeholder": "Válasszon adatforrástípust"
+        },
+        "description": "Leírás",
+        "description-placeholder": "Leírószöveg",
+        "label": "Címke",
+        "label-description": "Opcionális megjelenítendő név",
+        "name": "Név",
+        "open-editor": "Változószerkesztő megnyitása",
+        "open-editor-tooltip": "További változólehetőségekért nyissa meg a változószerkesztőt",
+        "query-options": {
+          "close": "Bezárás",
+          "modal-title": "Lekérdezési változó",
+          "preview": "Előnézet"
+        },
+        "selection-options": {
+          "allow-custom-values": "Egyéni értékek engedélyezése",
+          "allow-custom-values-description": "Lehetővé teszi a felhasználók számára, hogy értékeket adjanak meg",
+          "category": "Kijelölés beállításai",
+          "custom-all-value": "Összes egyedi érték",
+          "custom-all-value-description": "Helyettesítő karakteres reguláris kifejezés vagy más érték, amely az összeset jelöli",
+          "include-all": "Tartalmazza az összes értéket",
+          "include-all-description": "Engedélyez egy olyan opciót, amely az összes értéket képviseli",
+          "multi-value": "Többértékű"
+        },
+        "type-category": "{{type}}-beállítások"
+      },
+      "variables": {
+        "add-variable": "Változó hozzáadása",
+        "change-type": "",
+        "reorder": "Húzza át az átrendezéshez",
+        "select-type": "Válasszon változótípust",
+        "select-type-card-tooltip": "Típus kiválasztása kattintással",
+        "select-variable": "Kijelölés"
+      },
       "view-panel": {
         "disabled": "",
         "fanout-by-series": "",
@@ -6807,9 +6805,6 @@
       "title-hidden-count_one": "Rejtett ({{count}})",
       "title-hidden-count_other": "Rejtett ({{count}})"
     },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "Visszajelzés küldése az új irányítópult-szerkesztési élményről"
-    },
     "dashboard-link-form": {
       "back-to-list": "Vissza a listához",
       "label-icon": "Ikon",
@@ -6881,6 +6876,9 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Irányítópult-vezérlőelemek"
+    },
+    "dashboard-sidebar-renderer": {
+      "title-feedback-dashboard-editing-experience": "Visszajelzés küldése az új irányítópult-szerkesztési élményről"
     },
     "data-source-variable-form": {
       "data-source-options": "Adatforrás beállításai",

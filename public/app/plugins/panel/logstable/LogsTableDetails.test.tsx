@@ -7,7 +7,7 @@ import { defaultTableOptions } from '@grafana/schema';
 import { type PanelContext, PanelContextProvider } from '@grafana/ui';
 import { createLogLine } from 'app/features/logs/components/mocks/logRow';
 import { type LogListModel } from 'app/features/logs/components/panel/processing';
-import { createLokiDatasource } from 'app/plugins/datasource/loki/mocks/datasource';
+import { createLokiDatasource } from 'app/features/loki-helpers/mocks';
 
 import { emptyContextData, LogDetailsContext, type LogDetailsContextData } from './LogDetailsContext';
 import { getDefaultLogDetailsWidth, LogsTableDetails } from './LogsTableDetails';

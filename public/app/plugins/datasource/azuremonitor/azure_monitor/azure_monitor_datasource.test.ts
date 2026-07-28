@@ -535,6 +535,46 @@ describe('AzureMonitorDatasource', () => {
           expect(results[0].value).toEqual('Azure.ApplicationInsights');
         });
     });
+
+    it('when excludeCustom is specified will omit custom namespaces', () => {
+      // Use a fresh response so this test doesn't depend on mutations made by earlier tests.
+      const freshResponse = {
+        value: [
+          {
+            id: 'custom-id',
+            name: 'Azure.ApplicationInsights',
+            type: 'Microsoft.Insights/metricNamespaces',
+            classification: 'Custom',
+            properties: { metricNamespaceName: 'Azure.ApplicationInsights' },
+          },
+          {
+            id: 'platform-id',
+            name: 'microsoft.insights-components',
+            type: 'Microsoft.Insights/metricNamespaces',
+            classification: 'Platform',
+            properties: { metricNamespaceName: 'microsoft.insights/components' },
+          },
+        ],
+      };
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue(freshResponse);
+
+      return ctx.ds.azureMonitorDatasource
+        .getMetricNamespaces(
+          {
+            resourceUri:
+              '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
+          },
+          true,
+          undefined,
+          false,
+          true
+        )
+        .then((results: Array<{ text: string; value: string }>) => {
+          expect(results.length).toEqual(1);
+          expect(results[0].text).toEqual('microsoft.insights/components');
+          expect(results[0].value).toEqual('microsoft.insights/components');
+        });
+    });
   });
 
   describe('When performing getMetricNames', () => {

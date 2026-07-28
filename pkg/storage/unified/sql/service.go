@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
+	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -52,15 +53,11 @@ type service struct {
 	subservicesMngr    *services.Manager
 	subservicesWatcher *services.FailureWatcher
 
-	// manifestWatcher reloads search fields from the app-platform apiserver when
-	// configured. Created in registerServer (it needs the search registry that
-	// NewSearchOptions builds), started in starting(), nil when unconfigured.
-	manifestWatcher *resource.ManifestWatcher
-
 	// -- Shared Components
 	backend       resource.StorageBackend
 	vectorBackend vector.VectorBackend
 	embedder      *embedder.Embedder
+	reranker      *rerank.Reranker
 	serverStopper resource.ResourceServerStopper
 	cfg           *setting.Cfg
 	features      featuremgmt.FeatureToggles
@@ -122,27 +119,29 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	backend resource.StorageBackend,
 	vectorBackend vector.VectorBackend,
 	embedderInstance *embedder.Embedder,
+	rerankerInstance *rerank.Reranker,
 	provider grpcserver.Provider,
 	opts ...ServiceOption,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, vectorMetrics, searchRing, backend, vectorBackend, embedderInstance, nil)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, nil, indexMetrics, vectorMetrics, searchRing, backend, vectorBackend, embedderInstance, rerankerInstance, nil)
 	for _, opt := range opts {
 		opt(s)
 	}
 	s.searchStandalone = true
 	if cfg.EnableSharding {
-		err := s.withRingLifecycle(memberlistKVConfig, httpServerRouter)
-		if err != nil {
+		if err := s.withRingLifecycle(memberlistKVConfig, httpServerRouter); err != nil {
 			return nil, err
-		}
-		err = s.initializeSubservicesManager()
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 		}
 	}
 
+	// registerServer may add the manifest watcher to subservices, so it must run
+	// before the manager is built.
 	if err := s.registerServer(provider); err != nil {
 		return nil, err
+	}
+
+	if err := s.initializeSubservicesManager(); err != nil {
+		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 	}
 
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.SearchServer)
@@ -163,11 +162,12 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	backend resource.StorageBackend,
 	vectorBackend vector.VectorBackend,
 	embedderInstance *embedder.Embedder,
+	rerankerInstance *rerank.Reranker,
 	searchClient resourcepb.ResourceIndexClient,
 	provider grpcserver.Provider,
 	opts ...ServiceOption,
 ) (resource.UnifiedStorageGrpcService, error) {
-	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, vectorMetrics, searchRing, backend, vectorBackend, embedderInstance, searchClient)
+	s := newService(cfg, features, log, reg, otel.Tracer("unified-storage"), docBuilders, storageMetrics, indexMetrics, vectorMetrics, searchRing, backend, vectorBackend, embedderInstance, rerankerInstance, searchClient)
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -199,12 +199,14 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 		s.subservices = append(s.subservices, s.queue, s.scheduler)
 	}
 
-	if err := s.initializeSubservicesManager(); err != nil {
-		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
-	}
-
+	// registerServer may add the manifest watcher to subservices, so it must run
+	// before the manager is built.
 	if err := s.registerServer(provider); err != nil {
 		return nil, err
+	}
+
+	if err := s.initializeSubservicesManager(); err != nil {
+		return nil, fmt.Errorf("failed to initialize subservices manager: %w", err)
 	}
 
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName(modules.StorageServer)
@@ -225,6 +227,7 @@ func newService(
 	backend resource.StorageBackend,
 	vectorBackend vector.VectorBackend,
 	embedder *embedder.Embedder,
+	reranker *rerank.Reranker,
 	searchClient resourcepb.ResourceIndexClient,
 ) *service {
 	authn := newGrpcAuthenticator(cfg, tracer)
@@ -233,6 +236,7 @@ func newService(
 		backend:            backend,
 		vectorBackend:      vectorBackend,
 		embedder:           embedder,
+		reranker:           reranker,
 		cfg:                cfg,
 		features:           features,
 		authenticator:      authn,
@@ -355,16 +359,6 @@ func (s *service) starting(ctx context.Context) error {
 		}
 	}
 
-	// Start the manifest watcher directly rather than through subservicesMngr,
-	// which is already built by the time registerServer creates the watcher. We
-	// don't wait for it: the initial poll reaches the apiserver and the periodic
-	// rebuild check applies any change afterwards.
-	if s.manifestWatcher != nil {
-		if err := s.manifestWatcher.StartAsync(ctx); err != nil {
-			return fmt.Errorf("failed to start manifest watcher: %w", err)
-		}
-	}
-
 	// TODO: move to standalone mode once we use sharding in search servers
 	if s.cfg.EnableSharding {
 		s.log.Info("waiting until resource server is JOINING in the ring")
@@ -408,15 +402,15 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 		}
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.features, s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex, snapshotStore)
+	searchOptions, err := search.NewSearchOptions(s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex, snapshotStore)
 	if err != nil {
 		return err
 	}
 
-	// Build the manifest watcher here because it reloads into the search registry
-	// that NewSearchOptions just created. registerServer runs at construction time
-	// (from the Provide* constructors), always before the service's starting()
-	// that starts it.
+	// When configured, run the manifest watcher as a subservice. It reloads into
+	// the search registry that NewSearchOptions just created; registerServer runs
+	// before initializeSubservicesManager, so the watcher joins the manager and
+	// its initial poll completes before the index is built.
 	if registry := searchOptions.SearchFields; registry != nil {
 		if mwCfg := resource.NewManifestWatcherConfig(s.cfg); mwCfg != nil {
 			watcher, err := resource.NewManifestWatcher(*mwCfg, func(live []appsdk.Manifest) {
@@ -429,7 +423,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 			if err != nil {
 				return err
 			}
-			s.manifestWatcher = watcher
+			s.subservices = append(s.subservices, watcher)
 		}
 	}
 
@@ -437,6 +431,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 		Backend:        s.backend,
 		VectorBackend:  s.vectorBackend,
 		Embedder:       s.embedder,
+		Reranker:       s.reranker,
 		Cfg:            s.cfg,
 		Tracer:         s.tracing,
 		Reg:            s.reg,
@@ -499,12 +494,6 @@ func (s *service) CheckHealth(ctx context.Context) (bool, error) {
 }
 
 func (s *service) stopping(_ error) error {
-	if s.manifestWatcher != nil {
-		s.manifestWatcher.StopAsync()
-		if err := s.manifestWatcher.AwaitTerminated(context.Background()); err != nil {
-			return fmt.Errorf("failed to stop manifest watcher: %w", err)
-		}
-	}
 	if s.subservicesMngr != nil {
 		err := services.StopManagerAndAwaitStopped(context.Background(), s.subservicesMngr)
 		if err != nil {

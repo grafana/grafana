@@ -86,7 +86,7 @@ describe('getGroupedFilters', () => {
 
 describe('getFilterByGroupedLabels', () => {
   beforeEach(() => {
-    setTestFlags({ [FlagKeys.DashboardsFilterablePanels]: true });
+    setTestFlags({ [FlagKeys.GrafanaFilterablePanels]: true });
   });
 
   afterEach(() => {
@@ -159,13 +159,13 @@ describe('getFilterByGroupedLabels', () => {
   });
 
   it('returns undefined when the filterable panels flag is disabled', () => {
-    setTestFlags({ [FlagKeys.DashboardsFilterablePanels]: false });
+    setTestFlags({ [FlagKeys.GrafanaFilterablePanels]: false });
 
     expect(getFilterByGroupedLabels(filterableFrame, 1, filtersGroupingFn, jest.fn())).toBeUndefined();
   });
 
   it('skips the flag check when checkFilterablePanelsFlag is false', () => {
-    setTestFlags({ [FlagKeys.DashboardsFilterablePanels]: false });
+    setTestFlags({ [FlagKeys.GrafanaFilterablePanels]: false });
 
     const model = getFilterByGroupedLabels(filterableFrame, 1, filtersGroupingFn, jest.fn(), {
       checkFilterablePanelsFlag: false,

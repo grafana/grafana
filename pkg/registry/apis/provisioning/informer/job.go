@@ -19,7 +19,14 @@ import (
 // job controller reads no lister, so callers need only the DeltaSource.
 func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) DeltaSource {
 	if nats.Enabled(subscriber) {
-		return NewJobInformer(subscriber, client, "", resync, usinformer.NewStore())
+		jobInformer := NewJobInformer(subscriber, client, "", resync, usinformer.NewStore())
+		// The informer is the job driver's only feed, so gating the initial list
+		// on the subscription (the default) would stall the whole job queue while
+		// NATS is unavailable — e.g. during startup of the embedded server. In
+		// degraded mode jobs are still picked up at the re-list cadence; only the
+		// live-event latency is lost until the subscription opens.
+		jobInformer.AllowDegradedStart()
+		return jobInformer
 	}
 	return informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Jobs().Informer()
 }
