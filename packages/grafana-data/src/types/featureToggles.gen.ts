@@ -604,7 +604,7 @@ export interface FeatureToggles {
   */
   zanzanaMergeUserPermissions?: boolean;
   /**
-  * Evaluate generic legacy RBAC permissions through Zanzana.
+  * Evaluate legacy RBAC permissions through Zanzana using native and generic representations.
   * @default false
   */
   zanzanaRBACFallbackChecks?: boolean;

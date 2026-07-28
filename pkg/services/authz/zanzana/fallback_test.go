@@ -3,6 +3,7 @@ package zanzana
 import (
 	"testing"
 
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/stretchr/testify/require"
 )
 
@@ -49,6 +50,32 @@ func TestFallbackPermissionProjection(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, tuples, 2)
 	})
+}
+
+func TestRoleToTuplesCanonicalizesK8sDatasourceScope(t *testing.T) {
+	tuples, err := RoleToTuples("test", []*authzextv1.RolePermission{{
+		Action: "alert.instances.external:read",
+		Scope:  "*.datasource.grafana.app/datasources:*",
+	}})
+	require.NoError(t, err)
+	require.Len(t, tuples, 2)
+	require.ElementsMatch(t, []string{
+		FallbackActionObject("alert.instances.external:read"),
+		FallbackPermissionObject("alert.instances.external:read", "datasources:*"),
+	}, []string{tuples[0].Object, tuples[1].Object})
+}
+
+func TestRoleToTuplesCanonicalizesK8sDatasourceAction(t *testing.T) {
+	tuples, err := RoleToTuples("test", []*authzextv1.RolePermission{{
+		Action: "*.datasource.grafana.app/datasources:get",
+		Scope:  "*.datasource.grafana.app/datasources:*",
+	}})
+	require.NoError(t, err)
+	require.Len(t, tuples, 2)
+	require.ElementsMatch(t, []string{
+		FallbackActionObject("datasources:read"),
+		FallbackPermissionObject("datasources:read", "datasources:*"),
+	}, []string{tuples[0].Object, tuples[1].Object})
 }
 
 func TestFallbackScopeCandidates(t *testing.T) {

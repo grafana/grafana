@@ -65,6 +65,27 @@ func IsNativeAction(action string) bool {
 	return false
 }
 
+// ScopelessNativePermissionTuples returns the group-level checks for native
+// actions that are not represented by the shared action-to-List registry.
+func ScopelessNativePermissionTuples(subject, action string) []*openfgav1.TupleKey {
+	switch {
+	case isRoleManagementAction(action):
+		return RoleManagementToTuples(subject, RolePermission{
+			Action: action, Kind: scopeKindRoles, Identifier: scopeIdentifierWildcard,
+		})
+	case isUserManagementAction(action):
+		return UserManagementToTuples(subject, RolePermission{
+			Action: action, Kind: "users", Identifier: scopeIdentifierWildcard,
+		})
+	case isTeamManagementAction(action):
+		return TeamRoleBindingManagementToTuples(subject, RolePermission{
+			Action: action, Kind: "teams", Identifier: scopeIdentifierWildcard,
+		})
+	default:
+		return nil
+	}
+}
+
 // TranslatePermission projects exactly one source model: native permissions
 // emit only resource tuples, while unsupported permissions emit only generic
 // RBAC tuples. Invalid source data is returned as an error so reconciliation

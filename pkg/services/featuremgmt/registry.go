@@ -1208,7 +1208,7 @@ var (
 		},
 		{
 			Name:         "zanzanaRBACFallbackChecks",
-			Description:  "Evaluate generic legacy RBAC permissions through Zanzana.",
+			Description:  "Evaluate legacy RBAC permissions through Zanzana using native and generic representations.",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,

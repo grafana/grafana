@@ -168,14 +168,19 @@ func (a *AccessControl) checkFallbackLeaf(ctx context.Context, user identity.Req
 	if len(scopes) == 0 {
 		scopes = []string{""}
 	}
+	if user.GetAccessToken() != "" {
+		if !permissionMapAllowsLeaf(permissions, action, scopes...) {
+			return false, nil
+		}
+		if !authlib.IsIdentityType(user.GetIdentityType(), authlib.TypeUser, authlib.TypeServiceAccount, authlib.TypeAnonymous) {
+			return true, nil
+		}
+	}
 
-	var nativeScopes, fallbackScopes []string
 	for _, scope := range scopes {
 		if scope == "" {
-			if zanzana.IsNativeAction(action) {
-				nativeScopes = append(nativeScopes, scope)
-			} else {
-				fallbackScopes = append(fallbackScopes, scope)
+			if zanzana.ClassifyPermission(zanzana.RolePermission{Action: action}) == zanzana.Invalid {
+				return false, fmt.Errorf("invalid permission requirement for action %q", action)
 			}
 			continue
 		}
@@ -184,28 +189,10 @@ func (a *AccessControl) checkFallbackLeaf(ctx context.Context, user identity.Req
 		switch zanzana.ClassifyPermission(zanzana.RolePermission{
 			Action: action, Scope: scope, Kind: kind, Attribute: attribute, Identifier: identifier,
 		}) {
-		case zanzana.Native:
-			nativeScopes = append(nativeScopes, scope)
-		case zanzana.Fallback:
-			fallbackScopes = append(fallbackScopes, scope)
+		case zanzana.Native, zanzana.Fallback:
 		case zanzana.Invalid:
 			return false, fmt.Errorf("invalid permission requirement for action %q", action)
 		}
-	}
-
-	if len(nativeScopes) > 0 {
-		var native accesscontrol.Evaluator
-		if len(nativeScopes) == 1 && nativeScopes[0] == "" {
-			native = accesscontrol.EvalPermission(action)
-		} else {
-			native = accesscontrol.EvalPermission(action, nativeScopes...)
-		}
-		if native.Evaluate(permissions) {
-			return true, nil
-		}
-	}
-	if len(fallbackScopes) == 0 {
-		return false, nil
 	}
 
 	namespace := user.GetNamespace()
@@ -213,7 +200,7 @@ func (a *AccessControl) checkFallbackLeaf(ctx context.Context, user identity.Req
 		namespace = authlib.OrgNamespaceFormatter(user.GetOrgID())
 	}
 	if namespace == "" {
-		return false, errors.New("fallback permission check requires a namespace")
+		return false, errors.New("zanzana permission check requires a namespace")
 	}
 
 	res, err := a.checker.CheckPermission(ctx, &authzextv1.CheckPermissionRequest{
@@ -221,11 +208,11 @@ func (a *AccessControl) checkFallbackLeaf(ctx context.Context, user identity.Req
 		Subject:   user.GetUID(),
 		Teams:     user.GetGroups(),
 		Action:    action,
-		Scopes:    fallbackScopes,
+		Scopes:    scopes,
 	})
 	if err != nil {
 		a.metrics.checks.WithLabelValues("error").Inc()
-		return false, fmt.Errorf("zanzana fallback permission check failed: %w", err)
+		return false, fmt.Errorf("zanzana permission check failed: %w", err)
 	}
 	if res.GetAllowed() {
 		a.metrics.checks.WithLabelValues("allow").Inc()
@@ -233,6 +220,16 @@ func (a *AccessControl) checkFallbackLeaf(ctx context.Context, user identity.Req
 	}
 	a.metrics.checks.WithLabelValues("deny").Inc()
 	return false, nil
+}
+
+func permissionMapAllowsLeaf(permissions map[string][]string, action string, scopes ...string) bool {
+	for _, scope := range scopes {
+		if scope == "" {
+			_, allowed := permissions[action]
+			return allowed
+		}
+	}
+	return accesscontrol.EvalPermission(action, scopes...).Evaluate(permissions)
 }
 
 func (a *AccessControl) observeEngine(engine string, fn func() (bool, error)) (bool, error) {
@@ -298,7 +295,7 @@ func (a *AccessControl) recordComparison(ctx context.Context, evaluator accessco
 	if result != "match" {
 		hash := sha256.Sum256([]byte(evaluator.GoString()))
 		if hash[0]&0x0f == 0 {
-			a.log.FromContext(ctx).Warn("Zanzana fallback result does not match RBAC",
+			a.log.FromContext(ctx).Warn("Zanzana result does not match RBAC",
 				"action", evaluator.String(), "scope_hash", fmt.Sprintf("%x", hash[:8]),
 				"rbac_allowed", rbacAllowed, "zanzana_allowed", zanzanaAllowed)
 		}

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -135,22 +136,38 @@ func TestAccessControlFallbackZanzanaPrimary(t *testing.T) {
 		require.False(t, allowed)
 	})
 
-	t.Run("native leaves retain their RBAC behavior", func(t *testing.T) {
-		checker := &fallbackChecker{check: func(*authzextv1.CheckPermissionRequest) (bool, error) {
-			return false, errors.New("must not be called")
+	t.Run("native leaves use Zanzana even when RBAC allows", func(t *testing.T) {
+		checker := &fallbackChecker{check: func(req *authzextv1.CheckPermissionRequest) (bool, error) {
+			require.Equal(t, accesscontrol.ActionTeamsWrite, req.Action)
+			require.Equal(t, []string{"teams:id:one"}, req.Scopes)
+			return false, nil
 		}}
 		ac := newFallbackAccessControl(t, setting.ZanzanaPrimaryEngineZanzana, checker, true)
 		usr := fallbackUser(map[string][]string{accesscontrol.ActionTeamsWrite: {"teams:*"}})
 
 		allowed, err := ac.Evaluate(context.Background(), usr, accesscontrol.EvalPermission(accesscontrol.ActionTeamsWrite, "teams:id:one"))
 		require.NoError(t, err)
+		require.False(t, allowed)
+		require.Equal(t, 1, checker.callCount())
+	})
+
+	t.Run("allows team-derived teams create permission", func(t *testing.T) {
+		checker := &fallbackChecker{check: func(req *authzextv1.CheckPermissionRequest) (bool, error) {
+			require.Equal(t, accesscontrol.ActionTeamsCreate, req.Action)
+			require.Equal(t, []string{"team-one"}, req.Teams)
+			return true, nil
+		}}
+		ac := newFallbackAccessControl(t, setting.ZanzanaPrimaryEngineZanzana, checker, true)
+
+		allowed, err := ac.Evaluate(context.Background(), fallbackUser(nil), accesscontrol.EvalPermission(accesscontrol.ActionTeamsCreate))
+		require.NoError(t, err)
 		require.True(t, allowed)
-		require.Zero(t, checker.callCount())
+		require.Equal(t, 1, checker.callCount())
 	})
 
 	t.Run("mixed-scope leaves OR native and fallback branches", func(t *testing.T) {
 		checker := &fallbackChecker{check: func(req *authzextv1.CheckPermissionRequest) (bool, error) {
-			require.Equal(t, []string{"roles:uid:specific"}, req.Scopes)
+			require.Equal(t, []string{"roles:*", "roles:uid:specific"}, req.Scopes)
 			return true, nil
 		}}
 		ac := newFallbackAccessControl(t, setting.ZanzanaPrimaryEngineZanzana, checker, true)
@@ -212,4 +229,36 @@ func TestAccessControlFallbackCompositionsAndResolvers(t *testing.T) {
 		require.NoError(t, err)
 		require.False(t, allowed)
 	})
+}
+
+func TestAccessControlFallbackTokenRestrictionsApplyPerLeaf(t *testing.T) {
+	checker := &fallbackChecker{check: func(req *authzextv1.CheckPermissionRequest) (bool, error) {
+		return req.Action == "token:second", nil
+	}}
+	ac := newFallbackAccessControl(t, setting.ZanzanaPrimaryEngineZanzana, checker, true)
+	usr := fallbackUser(map[string][]string{"token:first": {"things:uid:one"}})
+	usr.AccessToken = "delegated-token"
+
+	allowed, err := ac.Evaluate(context.Background(), usr, accesscontrol.EvalAny(
+		accesscontrol.EvalPermission("token:first", "things:uid:one"),
+		accesscontrol.EvalPermission("token:second", "things:uid:two"),
+	))
+	require.NoError(t, err)
+	require.False(t, allowed)
+}
+
+func TestAccessControlFallbackTokenDefinedSubjectUsesSignedPermissions(t *testing.T) {
+	checker := &fallbackChecker{check: func(*authzextv1.CheckPermissionRequest) (bool, error) {
+		return false, errors.New("persistent authorization must not be queried")
+	}}
+	ac := newFallbackAccessControl(t, setting.ZanzanaPrimaryEngineZanzana, checker, true)
+	usr := fallbackUser(map[string][]string{"token:allowed": {"things:uid:one"}})
+	usr.UserID = 0
+	usr.FallbackType = authlib.TypeAccessPolicy
+	usr.AccessToken = "service-token"
+
+	allowed, err := ac.Evaluate(context.Background(), usr, accesscontrol.EvalPermission("token:allowed", "things:uid:one"))
+	require.NoError(t, err)
+	require.True(t, allowed)
+	require.Zero(t, checker.callCount())
 }

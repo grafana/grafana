@@ -16,20 +16,20 @@ func newFallbackMetrics(reg prometheus.Registerer) *fallbackMetrics {
 			Namespace: "grafana",
 			Subsystem: "accesscontrol_fallback",
 			Name:      "comparisons_total",
-			Help:      "Comparison outcomes between legacy RBAC and Zanzana fallback evaluation.",
+			Help:      "Comparison outcomes between legacy RBAC and Zanzana permission evaluation.",
 		}, []string{"result"}),
 		duration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: "grafana",
 			Subsystem: "accesscontrol_fallback",
 			Name:      "engine_duration_seconds",
-			Help:      "Evaluation duration for each fallback rollout engine.",
+			Help:      "Evaluation duration for each authorization rollout engine.",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{"engine"}),
 		checks: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "grafana",
 			Subsystem: "accesscontrol_fallback",
 			Name:      "checks_total",
-			Help:      "Generic Zanzana fallback permission checks by outcome.",
+			Help:      "Unified Zanzana legacy permission checks by outcome.",
 		}, []string{"result"}),
 	}
 	if reg != nil {

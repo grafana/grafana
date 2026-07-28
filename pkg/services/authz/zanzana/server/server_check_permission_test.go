@@ -8,6 +8,7 @@ import (
 
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 func TestCheckPermission(t *testing.T) {
@@ -25,6 +26,12 @@ func TestCheckPermission(t *testing.T) {
 		{User: "user:role-user", Relation: zanzana.RelationAssignee, Object: "role:role-one"},
 		{User: "service-account:sa-one", Relation: zanzana.RelationGranted, Object: zanzana.FallbackPermissionObject(action, exactScope)},
 		{User: "anonymous:0", Relation: zanzana.RelationGranted, Object: zanzana.FallbackPermissionObject(action, exactScope)},
+		{User: "team:team-native#member", Relation: zanzana.RelationAssignee, Object: "role:team-creator"},
+		{User: "role:team-creator#assignee", Relation: zanzana.RelationCreate, Object: "group_resource:iam.grafana.app/teams"},
+		common.NewResourceTuple("user:native-dashboard", zanzana.RelationGet, "dashboard.grafana.app", "dashboards", "", "dash-one"),
+		{User: "user:native-roles", Relation: zanzana.RelationGet, Object: "group_resource:iam.grafana.app/roles"},
+		{User: "user:native-roles", Relation: zanzana.RelationGet, Object: "group_resource:iam.grafana.app/globalroles"},
+		{User: "user:specific-role", Relation: zanzana.RelationGranted, Object: zanzana.FallbackPermissionObject("roles:read", "roles:uid:specific")},
 	}
 	srv := setupOpenFGADatabase(t, setupOpenFGAServer(t), theTuples)
 
@@ -66,6 +73,67 @@ func TestCheckPermission(t *testing.T) {
 	})
 	t.Run("anonymous", func(t *testing.T) {
 		require.True(t, check(t, "anonymous:0", nil, []string{exactScope}))
+	})
+	t.Run("native contextual team grant", func(t *testing.T) {
+		res, err := srv.checkPermission(newContextWithNamespace(), &authzextv1.CheckPermissionRequest{
+			Namespace: namespace,
+			Subject:   "user:native-team-user",
+			Teams:     []string{"team-native"},
+			Action:    "teams:create",
+			Scopes:    []string{""},
+		})
+		require.NoError(t, err)
+		require.True(t, res.Allowed)
+	})
+	t.Run("scopeless native action allows when any resource is granted", func(t *testing.T) {
+		res, err := srv.checkPermission(newContextWithNamespace(), &authzextv1.CheckPermissionRequest{
+			Namespace: namespace,
+			Subject:   "user:native-dashboard",
+			Action:    "dashboards:read",
+			Scopes:    []string{""},
+		})
+		require.NoError(t, err)
+		require.True(t, res.Allowed)
+	})
+	t.Run("scoped native action checks the translated resource", func(t *testing.T) {
+		res, err := srv.checkPermission(newContextWithNamespace(), &authzextv1.CheckPermissionRequest{
+			Namespace: namespace,
+			Subject:   "user:native-dashboard",
+			Action:    "dashboards:read",
+			Scopes:    []string{"dashboards:uid:dash-one"},
+		})
+		require.NoError(t, err)
+		require.True(t, res.Allowed)
+	})
+	t.Run("scopeless specialized native action allows from group resource grant", func(t *testing.T) {
+		res, err := srv.checkPermission(newContextWithNamespace(), &authzextv1.CheckPermissionRequest{
+			Namespace: namespace,
+			Subject:   "user:native-roles",
+			Action:    "roles:read",
+			Scopes:    []string{""},
+		})
+		require.NoError(t, err)
+		require.True(t, res.Allowed)
+	})
+	t.Run("mixed native and generic scopes allow through native grant", func(t *testing.T) {
+		res, err := srv.checkPermission(newContextWithNamespace(), &authzextv1.CheckPermissionRequest{
+			Namespace: namespace,
+			Subject:   "user:native-roles",
+			Action:    "roles:read",
+			Scopes:    []string{"roles:*", "roles:uid:specific"},
+		})
+		require.NoError(t, err)
+		require.True(t, res.Allowed)
+	})
+	t.Run("mixed native and generic scopes allow through generic grant", func(t *testing.T) {
+		res, err := srv.checkPermission(newContextWithNamespace(), &authzextv1.CheckPermissionRequest{
+			Namespace: namespace,
+			Subject:   "user:specific-role",
+			Action:    "roles:read",
+			Scopes:    []string{"roles:*", "roles:uid:specific"},
+		})
+		require.NoError(t, err)
+		require.True(t, res.Allowed)
 	})
 	t.Run("denial", func(t *testing.T) {
 		require.False(t, check(t, "user:denied", nil, []string{exactScope}))

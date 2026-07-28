@@ -11,6 +11,7 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
@@ -290,11 +291,20 @@ func RoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*
 	// Convert to RolePermission
 	rolePerms := make([]RolePermission, 0, len(permissions))
 	for _, perm := range permissions {
+		action := perm.Action
+		scope := perm.Scope
+		if legacyAction, ok := datasourcek8s.K8sDSActionToLegacy(action); ok {
+			action = legacyAction
+		}
+		if legacyScope, _, ok := datasourcek8s.K8sDSUIDScopeToLegacy(scope); ok {
+			scope = legacyScope
+		}
+
 		// Split the scope to get kind, attribute, identifier
-		kind, _, identifier := splitScope(perm.Scope)
+		kind, _, identifier := splitScope(scope)
 		rolePerms = append(rolePerms, RolePermission{
-			Action:     perm.Action,
-			Scope:      perm.Scope,
+			Action:     action,
+			Scope:      scope,
 			Kind:       kind,
 			Identifier: identifier,
 		})

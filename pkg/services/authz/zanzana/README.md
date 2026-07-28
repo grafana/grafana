@@ -2,9 +2,9 @@
 
 Zanzana is authorization server and wrapper around OpenFGA. OpenFGA implements Zanzibar authorization model, which is relation-based access control. But it's pretty flexible, so you can use it for implementing various authorization models.
 
-## Generic RBAC fallback checks
+## Unified legacy RBAC checks
 
-Permissions without an exact native Zanzana translation are synchronized through the generic `rbac_action` and `rbac_permission` object types. Their object IDs are opaque, versioned encodings of the RBAC action and scope. The MT reconciler reads IAM `Role` and `RoleBinding` resources and is authoritative for these tuples; the deprecated legacy SQL reconciler remains native-only. Invalid permissions fail MT reconciliation instead of being skipped.
+Permissions with an exact Zanzana translation are synchronized as native resource tuples. Permissions without an exact translation use the generic `rbac_action` and `rbac_permission` object types, whose IDs are opaque, versioned encodings of the RBAC action and scope. The MT reconciler reads IAM `Role` and `RoleBinding` resources and is authoritative for these tuples; the deprecated legacy SQL reconciler remains native-only. Invalid permissions fail MT reconciliation instead of being skipped.
 
 Tuple synchronization is controlled by the existing `zanzana` feature toggle and `[zanzana.reconciler]` mode. Checking is enabled independently:
 
@@ -15,14 +15,18 @@ zanzanaRBACFallbackChecks = true
 
 [zanzana.client]
 # "rbac" keeps RBAC authoritative and shadows Zanzana.
-# "zanzana" makes generic fallback checks authoritative and shadows RBAC.
+# "zanzana" makes unified native/generic checks authoritative and shadows RBAC.
 primary_engine = rbac
 
 [zanzana.reconciler]
 mode = mt
 ```
 
-When Zanzana is authoritative, errors fail closed. Native-translated permissions continue to use their existing authorization behavior. Disable `zanzanaRBACFallbackChecks` for immediate RBAC-only checking without stopping tuple synchronization.
+When Zanzana is authoritative, every legacy evaluator leaf is sent to Zanzana. Zanzana ORs all requested scopes and checks each scope against its native or generic representation; a single action may contain both kinds. Scopeless native requests use native resource enumeration, while scopeless generic requests use the action marker. Errors fail closed.
+
+Access-token-defined permissions remain request constraints rather than persistent Zanzana grants. For delegated user and service-account tokens, the signed permission map is intersected with the Zanzana result per leaf. Non-persistent token subjects are evaluated from the signed permission map alone.
+
+Disable `zanzanaRBACFallbackChecks` for immediate RBAC-only checking without stopping tuple synchronization.
 
 Rollout dashboards should show these metrics without subject or raw-scope labels:
 

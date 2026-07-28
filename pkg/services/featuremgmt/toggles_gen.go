@@ -408,7 +408,7 @@ const (
 	FlagZanzanaMergeUserPermissions = "zanzanaMergeUserPermissions"
 
 	// FlagZanzanaRBACFallbackChecks
-	// Evaluate generic legacy RBAC permissions through Zanzana.
+	// Evaluate legacy RBAC permissions through Zanzana using native and generic representations.
 	FlagZanzanaRBACFallbackChecks = "zanzanaRBACFallbackChecks"
 
 	// FlagReloadDashboardsOnParamsChange

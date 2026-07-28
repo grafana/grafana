@@ -15,7 +15,7 @@ type PermissionChecker interface {
 	CheckPermission(ctx context.Context, req *authzextv1.CheckPermissionRequest) (*authzextv1.CheckPermissionResponse, error)
 }
 
-// PermissionCheckerProxy lets AccessControl depend on the narrow fallback
+// PermissionCheckerProxy lets AccessControl depend on the narrow permission
 // checker without forcing every Wire target that constructs AccessControl to
 // also construct the Zanzana server. The full server graph installs the real
 // client before it starts serving requests.
@@ -39,7 +39,7 @@ func (p *PermissionCheckerProxy) CheckPermission(ctx context.Context, req *authz
 	checker := p.checker
 	p.mu.RUnlock()
 	if checker == nil {
-		return nil, errors.New("zanzana fallback permission checker is not initialized")
+		return nil, errors.New("zanzana permission checker is not initialized")
 	}
 	return checker.CheckPermission(ctx, req)
 }
