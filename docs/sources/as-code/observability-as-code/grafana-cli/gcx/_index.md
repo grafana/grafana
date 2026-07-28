@@ -39,9 +39,13 @@ Among others, `gcx` provides the following benefits:
 
 ## Compatibility
 
-`gcx` is compatible with any agentic coding tool.
+The following applies:
 
-`gcx` works across a wide range of Grafana product offerings. Feature availability depends on your Grafana deployment. For more information, refer to the [Compatibility matrix](https://github.com/grafana/gcx#compatibility).
+- `gcx` is compatible with any agentic coding tool.
+
+- `gcx` works across a wide range of Grafana product offerings. Feature availability depends on your Grafana deployment. For more information, refer to the [Compatibility matrix](https://github.com/grafana/gcx#compatibility).
+
+- `gcx` is available for Grafana Cloud and Grafana OSS/Enterprise v12 or later, and older Grafana versions are not supported.
 
 ## Migrate from `grafanactl`
 
