@@ -80,8 +80,9 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
     const folderUid = locationService.getSearchObject().folderUid;
     const entryFolderUid = typeof folderUid === 'string' ? folderUid : undefined;
 
-    // Dead-ends go back to the folder the drawer resolved from, so switch-back lands on a working Git form
-    const gitMeta = isDeadEnd ? { ...meta, folderUid: entryFolderUid, k8s: undefined } : { ...meta };
+    // Only a Ready repo has a trustworthy folder; anything else restores the entry folder so switch-back lands on a working Git form
+    const gitMeta =
+      repoDataStatus === RepoViewStatus.Ready ? { ...meta } : { ...meta, folderUid: entryFolderUid, k8s: undefined };
     dbSwitchRef.current = { active: true, gitMeta, wasNew: changeInfo.isNew };
 
     // Only an unmanaged folder is a valid database target; provisioned and orphaned ones are rejected.
