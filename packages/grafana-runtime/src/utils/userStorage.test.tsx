@@ -59,14 +59,14 @@ describe('userStorage', () => {
   describe('UserStorageAPI.getItem', () => {
     it('use localStorage if the user is not logged in', async () => {
       config.bootData.user.isSignedIn = false;
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
       await storage.getItem('key');
       expect(getStoreMocks().get).toHaveBeenCalledWith('plugin-id:abc:key');
     });
 
     it('use localStorage if the user storage is not found', async () => {
       request.mockReturnValue(Promise.reject({ status: 404 } as FetchError));
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
       await storage.getItem('key');
       expect(getStoreMocks().get).toHaveBeenCalledWith('plugin-id:abc:key');
     });
@@ -75,7 +75,7 @@ describe('userStorage', () => {
       request.mockReturnValue(
         Promise.resolve({ status: 200, data: { spec: { data: { key: 'value' } } } } as FetchResponse)
       );
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
       const value = await storage.getItem('key');
       expect(value).toBe('value');
     });
@@ -84,7 +84,7 @@ describe('userStorage', () => {
   describe('setItem', () => {
     it('use localStorage if the user is not logged in', async () => {
       config.bootData.user.isSignedIn = false;
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
       await storage.setItem('key', 'value');
       expect(getStoreMocks().set).toHaveBeenCalledWith('plugin-id:abc:key', 'value');
     });
@@ -92,7 +92,7 @@ describe('userStorage', () => {
     it('creates a new user storage if it does not exist', async () => {
       request.mockReturnValueOnce(Promise.reject({ status: 404 } as FetchError));
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
       await storage.setItem('key', 'value');
       expect(request).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -121,7 +121,7 @@ describe('userStorage', () => {
       request.mockReturnValueOnce(Promise.reject({ status: 404 } as FetchError));
       // Create fails with forbidden
       request.mockReturnValueOnce(Promise.reject({ status: 403 } as FetchError));
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
       await storage.setItem('key', 'value');
       expect(getStoreMocks().set).toHaveBeenCalledWith('plugin-id:abc:key', 'value');
     });
@@ -133,7 +133,7 @@ describe('userStorage', () => {
           data: { metadata: { name: 'service:abc' }, spec: { data: { key: 'value' } } },
         } as FetchResponse)
       );
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
       await storage.setItem('key', 'new-value');
       expect(request).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -161,7 +161,7 @@ describe('userStorage', () => {
       request.mockReturnValueOnce(Promise.reject({ status: 404 } as FetchError));
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
 
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
 
       // First, trigger init which will cache null (404)
       await storage.getItem('some-key');
@@ -202,7 +202,7 @@ describe('userStorage', () => {
       );
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
 
-      const storage = usePluginUserStorage();
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
 
       // First, trigger init which will cache the data
       await storage.getItem('key');
@@ -238,8 +238,8 @@ describe('userStorage', () => {
       request.mockReturnValue(
         Promise.resolve({ status: 200, data: { spec: { data: { key: 'value' } } } } as FetchResponse)
       );
-      const storage1 = usePluginUserStorage();
-      const storage2 = usePluginUserStorage();
+      const storage1 = renderHook(() => usePluginUserStorage()).result.current;
+      const storage2 = renderHook(() => usePluginUserStorage()).result.current;
 
       // Both should call getItem concurrently
       const [value1, value2] = await Promise.all([storage1.getItem('key'), storage2.getItem('key')]);
@@ -252,8 +252,8 @@ describe('userStorage', () => {
 
     it('caches 404 responses to avoid multiple requests', async () => {
       request.mockReturnValue(Promise.reject({ status: 404 } as FetchError));
-      const storage1 = usePluginUserStorage();
-      const storage2 = usePluginUserStorage();
+      const storage1 = renderHook(() => usePluginUserStorage()).result.current;
+      const storage2 = renderHook(() => usePluginUserStorage()).result.current;
 
       // Both should call getItem concurrently
       await Promise.all([storage1.getItem('key'), storage2.getItem('key')]);
@@ -267,12 +267,12 @@ describe('userStorage', () => {
       request.mockReturnValueOnce(Promise.reject({ status: 404 } as FetchError));
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
 
-      const storage1 = usePluginUserStorage();
+      const storage1 = renderHook(() => usePluginUserStorage()).result.current;
       await storage1.setItem('key1', 'value1');
 
       // Second instance should use cached data without network request
       request.mockReset();
-      const storage2 = usePluginUserStorage();
+      const storage2 = renderHook(() => usePluginUserStorage()).result.current;
       const value = await storage2.getItem('key1');
 
       // Should not make a GET request because cache has the data
@@ -291,12 +291,12 @@ describe('userStorage', () => {
       // PATCH updates the storage
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
 
-      const storage1 = usePluginUserStorage();
+      const storage1 = renderHook(() => usePluginUserStorage()).result.current;
       await storage1.setItem('key1', 'new-value1');
 
       // Second instance should get updated value from cache
       request.mockReset();
-      const storage2 = usePluginUserStorage();
+      const storage2 = renderHook(() => usePluginUserStorage()).result.current;
       const value = await storage2.getItem('key1');
 
       // Should not make a GET request because cache has the updated data
@@ -312,8 +312,8 @@ describe('userStorage', () => {
 
       request.mockReturnValue(promise);
 
-      const storage1 = usePluginUserStorage();
-      const storage2 = usePluginUserStorage();
+      const storage1 = renderHook(() => usePluginUserStorage()).result.current;
+      const storage2 = renderHook(() => usePluginUserStorage()).result.current;
 
       // Start both getItem calls concurrently
       const promise1 = storage1.getItem('key');
@@ -348,8 +348,8 @@ describe('userStorage', () => {
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
 
-      const storage1 = usePluginUserStorage();
-      const storage2 = usePluginUserStorage();
+      const storage1 = renderHook(() => usePluginUserStorage()).result.current;
+      const storage2 = renderHook(() => usePluginUserStorage()).result.current;
 
       // Call setItem concurrently on different keys
       await Promise.all([storage1.setItem('key1', 'value1'), storage2.setItem('key2', 'value2')]);
@@ -377,8 +377,8 @@ describe('userStorage', () => {
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
       request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
 
-      const storage1 = usePluginUserStorage();
-      const storage2 = usePluginUserStorage();
+      const storage1 = renderHook(() => usePluginUserStorage()).result.current;
+      const storage2 = renderHook(() => usePluginUserStorage()).result.current;
 
       // Call setItem concurrently on the same key
       await Promise.all([storage1.setItem('key1', 'value1'), storage2.setItem('key1', 'value2')]);
