@@ -5,11 +5,11 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { useFlagGlobalDashboardVariables, useFlagGrafanaViewPanelPane } from '@grafana/runtime/internal';
 import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
-import { useFlagGrafanaViewPanelPane } from '../../../../../packages/grafana-runtime/src/internal/openFeature/openfeature.gen';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
@@ -21,6 +21,7 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 import { DashboardCodePane } from './DashboardCodePane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { AddNewEditPane } from './add-new/AddNewEditPane';
+import { DashboardPredefinedVariablesPane } from './dashboard/DashboardPredefinedVariablesPane';
 import { ToggleViewPanePaneEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike, type DashboardSidebarPane } from './types';
@@ -44,6 +45,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const selectedObject = sidebar.getSelectedObject();
   const sidebarContext = useSidebarContext();
   const viewPanelPane = useFlagGrafanaViewPanelPane();
+  const globalDashboardVariablesEnabled = useFlagGlobalDashboardVariables();
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       sidebar.closePane();
@@ -117,6 +119,18 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
               onClick={() => sidebar.openPane(new DashboardCodePane({}))}
               active={openPane instanceof DashboardCodePane}
             />
+            {globalDashboardVariablesEnabled && (
+              <Sidebar.Button
+                icon="dollar-alt"
+                onClick={() => sidebar.openPane(new DashboardPredefinedVariablesPane({}))}
+                title={t('dashboard.sidebar.predefined-variables.title', 'Predefined variables')}
+                tooltip={t(
+                  'dashboard.sidebar.predefined-variables.tooltip',
+                  'Choose which global and folder variables this dashboard receives'
+                )}
+                active={openPane?.getId() === 'predefined-variables'}
+              />
+            )}
             {config.featureToggles.dashboardUndoRedo && (
               <>
                 <Sidebar.Divider />
