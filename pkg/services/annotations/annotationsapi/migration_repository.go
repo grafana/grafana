@@ -61,8 +61,6 @@ func (r *migrationRepository) Find(ctx context.Context, query *annotations.ItemQ
 }
 
 // search lists from the new store and merges in whatever legacy still owns for this query.
-// TODO: the stores order by different keys but share one limit, so a range annotation near the
-// boundary can be dropped after the merge. Tracked for a follow-up PR.
 func (r *migrationRepository) search(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	// The new store filters users by UID, so translate the query's legacy user ID first.
 	r.resolveUserUID(ctx, query)
