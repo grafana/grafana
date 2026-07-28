@@ -28,7 +28,7 @@ type FolderPermissionsService struct {
 
 var ErrFolderUnhandledError = errutil.Internal("folder.unhandled-error", errutil.WithPublicMessage("Unhandled folder error"))
 
-var FolderViewActions = []string{folder.ActionFoldersRead, accesscontrol.ActionAlertingRuleRead, libraryelements.ActionLibraryPanelsRead, accesscontrol.ActionAlertingSilencesRead}
+var FolderViewActions = []string{folder.ActionFoldersRead, accesscontrol.ActionAlertingRuleRead, libraryelements.ActionLibraryPanelsRead, accesscontrol.ActionAlertingSilencesRead, accesscontrol.ActionVariablesRead}
 var FolderEditActions = append(FolderViewActions, []string{
 	folder.ActionFoldersWrite,
 	folder.ActionFoldersDelete,
@@ -41,6 +41,9 @@ var FolderEditActions = append(FolderViewActions, []string{
 	libraryelements.ActionLibraryPanelsCreate,
 	libraryelements.ActionLibraryPanelsWrite,
 	libraryelements.ActionLibraryPanelsDelete,
+	accesscontrol.ActionVariablesCreate,
+	accesscontrol.ActionVariablesWrite,
+	accesscontrol.ActionVariablesDelete,
 }...)
 var FolderAdminActions = append(FolderEditActions, []string{folder.ActionFoldersPermissionsRead, folder.ActionFoldersPermissionsWrite}...)
 

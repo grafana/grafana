@@ -165,6 +165,7 @@ func RegisterAPIService(
 	snapshotService dashboardsnapshots.Service,
 	dashboardActivityChannel live.DashboardActivityChannel,
 	configProvider configprovider.ConfigProvider,
+	folderService folder.Service,
 ) *DashboardsAPIBuilder {
 	cfg, err := configProvider.Get(context.Background())
 	if err != nil {
@@ -211,6 +212,8 @@ func RegisterAPIService(
 		legacy:                   legacy.NewDashboardSQLAccess(dbp, namespacer, provisioning, accessControl),
 		homeDashboard:            home.NewHomeDashboardSupport(cfg),
 	}
+
+	accessControl.RegisterScopeAttributeResolver(VariableUIDScopeResolver(folderService))
 
 	// Opt into the App Platform permission path (lazy ResourcePermission client) when the flag is on.
 	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
@@ -619,7 +622,7 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	if err := b.validateVariableMutationPermissions(ctx, folderUID, false); err != nil {
+	if err := b.validateVariableMutationPermissions(ctx, folderUID, ActionVariablesCreate, false); err != nil {
 		return err
 	}
 
@@ -670,8 +673,9 @@ func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a adm
 		return apierrors.NewBadRequest("folder scope cannot be changed; delete the variable and create a new one")
 	}
 
-	// allowMissingFolder: Editors/Admins can still update variables whose folder was deleted.
-	return b.validateVariableMutationPermissions(ctx, oldAccessor.GetFolder(), true)
+	// allowMissingFolder: users with org-wide (root) variable write can still update
+	// variables whose folder was deleted.
+	return b.validateVariableMutationPermissions(ctx, oldAccessor.GetFolder(), ActionVariablesWrite, true)
 }
 
 func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a admission.Attributes) error {
@@ -689,43 +693,50 @@ func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a adm
 		return fmt.Errorf("error getting variable meta accessor: %w", err)
 	}
 
-	// allowMissingFolder: Editors/Admins can still delete variables whose folder was deleted.
-	return b.validateVariableMutationPermissions(ctx, accessor.GetFolder(), true)
+	// allowMissingFolder: users with org-wide (root) variable delete can still delete
+	// variables whose folder was deleted.
+	return b.validateVariableMutationPermissions(ctx, accessor.GetFolder(), ActionVariablesDelete, true)
 }
 
-// validateVariableMutationPermissions authorizes variable create/update/delete.
-// Global variables (no folder) require org Editor or Admin. Folder-scoped
-// variables require edit access on that folder, including on dry-run (Variables
-// have no user RBAC authorizer; admission is the authz gate).
-// When allowMissingFolder is true (update/delete), org Editors/Admins may still
-// mutate if the folder no longer exists so orphaned variables can be cleaned up.
-func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context, folderUID string, allowMissingFolder bool) error {
+// validateVariableMutationPermissions authorizes variable create/update/delete via
+// variables:* RBAC actions scoped to the target folder (general/root when empty).
+// When allowMissingFolder is true (update/delete) and the folder no longer exists,
+// users who have the action on any scope (e.g. root general.writer / Admin writer)
+// may still mutate so orphaned variables can be cleaned up.
+func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context, folderUID string, action string, allowMissingFolder bool) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
-		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
+		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("valid user is required"))
 	}
 
-	if folderUID == "" {
-		role := requester.GetOrgRole()
-		if role != identity.RoleEditor && role != identity.RoleAdmin {
-			return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
-		}
+	if b.accessControl == nil {
+		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("access control is not configured"))
+	}
+
+	folderScope := variableFolderScope(folderUID)
+	ok, err := b.accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(action, folderScope))
+	if err != nil {
+		return err
+	}
+	if ok {
 		return nil
 	}
 
-	err = b.verifyFolderAccessPermissions(ctx, requester, folderUID)
-	if err == nil {
-		return nil
-	}
-
-	if allowMissingFolder && apierrors.IsNotFound(err) {
-		role := requester.GetOrgRole()
-		if role == identity.RoleEditor || role == identity.RoleAdmin {
-			return nil
+	if allowMissingFolder && folderUID != "" {
+		if _, ferr := b.validateFolderExists(ctx, folderUID, requester.GetOrgID()); apierrors.IsNotFound(ferr) {
+			// Folder gone: allow cleanup if the user has the action on any scope
+			// (Editor root writer or Admin all-folders writer).
+			ok, err = b.accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(action))
+			if err != nil {
+				return err
+			}
+			if ok {
+				return nil
+			}
 		}
 	}
 
-	return err
+	return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("access denied to %s variables", action))
 }
 
 // validateFolderExists checks if a folder exists
@@ -1451,11 +1462,16 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
 	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
+	variableAuthorizer := NewVariableAuthorizer(b.accessControl)
+	variableResource := dashv2beta1.VariableResourceInfo.GroupVersionResource().Resource
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			if attr.IsResourceRequest() && attr.GetResource() == dashv0.SNAPSHOT_RESOURCE {
 				return snapshotAuthorizer.Authorize(ctx, attr)
+			}
+			if attr.IsResourceRequest() && attr.GetResource() == variableResource {
+				return variableAuthorizer.Authorize(ctx, attr)
 			}
 			return serviceAuthorizer.Authorize(ctx, attr)
 		})

@@ -102,6 +102,7 @@ var (
 		"alert.rules:read",
 		"library.panels:read",
 		"alert.silences:read",
+		"variables:read",
 	}
 	folderEditActions = append(append([]string{}, folderViewActions...), []string{
 		"folders:write",
@@ -116,6 +117,9 @@ var (
 		"library.panels:create",
 		"library.panels:write",
 		"library.panels:delete",
+		"variables:create",
+		"variables:write",
+		"variables:delete",
 	}...)
 	folderAdminActions = append(append([]string{}, folderEditActions...), []string{
 		"folders.permissions:read",

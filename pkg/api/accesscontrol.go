@@ -497,6 +497,62 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 		Grants: []string{"Editor"},
 	}
 
+	variablesGeneralReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:variables:general.reader",
+			DisplayName: "Reader (root)",
+			Description: "Read org-wide (root) variables.",
+			Group:       "Variables",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionVariablesRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+			},
+		},
+		Grants: []string{"Viewer"},
+	}
+
+	variablesGeneralWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:variables:general.writer",
+			DisplayName: "Writer (root)",
+			Description: "Create, read, write or delete org-wide (root) variables.",
+			Group:       "Variables",
+			Permissions: ac.ConcatPermissions(variablesGeneralReaderRole.Role.Permissions, []ac.Permission{
+				{Action: ac.ActionVariablesCreate, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: ac.ActionVariablesWrite, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+				{Action: ac.ActionVariablesDelete, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
+			}),
+		},
+		Grants: []string{"Editor"},
+	}
+
+	variablesReaderRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:variables:reader",
+			DisplayName: "Reader",
+			Description: "Read all variables.",
+			Group:       "Variables",
+			Permissions: []ac.Permission{
+				{Action: ac.ActionVariablesRead, Scope: folder.ScopeFoldersAll},
+			},
+		},
+		Grants: []string{"Admin"},
+	}
+
+	variablesWriterRole := ac.RoleRegistration{
+		Role: ac.RoleDTO{
+			Name:        "fixed:variables:writer",
+			DisplayName: "Writer",
+			Description: "Create, read, write or delete all variables.",
+			Group:       "Variables",
+			Permissions: ac.ConcatPermissions(variablesReaderRole.Role.Permissions, []ac.Permission{
+				{Action: ac.ActionVariablesCreate, Scope: folder.ScopeFoldersAll},
+				{Action: ac.ActionVariablesWrite, Scope: folder.ScopeFoldersAll},
+				{Action: ac.ActionVariablesDelete, Scope: folder.ScopeFoldersAll},
+			}),
+		},
+		Grants: []string{"Admin"},
+	}
+
 	publicDashboardsWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:dashboards.public:writer",
@@ -628,6 +684,7 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 		foldersCreatorRole, foldersReaderRole, generalFolderReaderRole, foldersWriterRole,
 		publicDashboardsWriterRole, featuremgmtReaderRole, featuremgmtWriterRole, libraryPanelsCreatorRole,
 		libraryPanelsReaderRole, libraryPanelsWriterRole, libraryPanelsGeneralReaderRole, libraryPanelsGeneralWriterRole,
+		variablesGeneralReaderRole, variablesGeneralWriterRole, variablesReaderRole, variablesWriterRole,
 		snapshotsCreatorRole, snapshotsDeleterRole, snapshotsReaderRole, allAnnotationsReaderRole, allAnnotationsWriterRole,
 		livePushRole}
 }

@@ -194,6 +194,10 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"library.panels:read",   // ActionLibraryPanelsRead
 	"library.panels:write",  // ActionLibraryPanelsWrite
 	"library.panels:delete", // ActionLibraryPanelsDelete
+	"variables:create",      // ActionVariablesCreate
+	"variables:read",        // ActionVariablesRead
+	"variables:write",       // ActionVariablesWrite
+	"variables:delete",      // ActionVariablesDelete
 	"alert.rules:delete",    // ActionAlertingRuleDelete — folder cascade delete removes contained alert rules.
 	"playlists:read",        // playlist.ActionPlaylistsRead
 	"playlists:write",       // playlist.ActionPlaylistsWrite
