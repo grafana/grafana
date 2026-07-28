@@ -125,7 +125,12 @@ export function FiringAlertsCardView({
         // An explicit team selection overrides the "your teams" default filter,
         // so the copy names that team instead of claiming it's the user's own.
         selectedTeam
-          ? t('home.firing-alerts-card.empty-selected-team', 'No firing alerts for {{team}}.', { team: selectedTeam })
+          ? t('home.firing-alerts-card.empty-selected-team', 'No firing alerts for {{team}}.', {
+              team: selectedTeam,
+              // React escapes on render; i18next's default escaping would double-escape
+              // characters like & in team names into visible "&amp;".
+              interpolation: { escapeValue: false },
+            })
           : hasTeams
             ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
             : t('home.firing-alerts-card.empty', 'You have no firing alerts.')

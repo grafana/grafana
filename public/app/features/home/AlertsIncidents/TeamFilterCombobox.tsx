@@ -63,7 +63,9 @@ export function TeamFilterCombobox({ selectedTeam, onChange, userHasTeams }: Pro
   );
 
   // options always contains the default sentinel, so > 1 means real team labels exist.
-  if (isLoading || error || options.length <= 1) {
+  // Never hide while a team filter is applied though: the dropdown is the only way to
+  // clear it, even if the options refetch errored or the team labels disappeared.
+  if (!selectedTeam && (isLoading || error || options.length <= 1)) {
     return null;
   }
 

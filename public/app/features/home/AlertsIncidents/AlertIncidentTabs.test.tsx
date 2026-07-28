@@ -410,18 +410,19 @@ describe('AlertIncidentTabs', () => {
 
     it('shows a team-scoped empty message when the selected team has no alerts', async () => {
       mockTeams([{ name: 'Team A' }]);
-      // Team C's alert resolves between the dropdown loading its options and the
-      // user filtering to it, so the filtered request comes back empty.
+      // The selected team's alert resolves between the dropdown loading its options
+      // and the user filtering to it, so the filtered request comes back empty.
+      // The "R&D" name doubles as a check that the team name isn't HTML-escaped.
       server.use(
         http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
           const filters = new URL(request.url).searchParams.getAll('filter');
-          const isSelectedTeamFilter = filters.some((f) => f.includes('Team C'));
+          const isSelectedTeamFilter = filters.some((f) => f.includes('Team R&D'));
           return HttpResponse.json(
             isSelectedTeamFilter
               ? []
               : [
                   makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical', team: 'Team A' } }),
-                  makeAlert({ labels: { alertname: 'Quota Reached', severity: 'high', team: 'Team C' } }),
+                  makeAlert({ labels: { alertname: 'Quota Reached', severity: 'high', team: 'Team R&D' } }),
                 ]
           );
         })
@@ -431,10 +432,10 @@ describe('AlertIncidentTabs', () => {
 
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
       await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
-      await user.click(await screen.findByRole('option', { name: 'Team C' }));
+      await user.click(await screen.findByRole('option', { name: 'Team R&D' }));
 
       // The empty copy names the selected team instead of claiming "your teams".
-      expect(await screen.findByText('No firing alerts for Team C.')).toBeInTheDocument();
+      expect(await screen.findByText('No firing alerts for Team R&D.')).toBeInTheDocument();
       expect(screen.queryByText('No firing alerts for your teams.')).not.toBeInTheDocument();
     });
 
