@@ -1,7 +1,6 @@
 import type { Completion, CompletionContext, CompletionResult, CompletionSource } from '@codemirror/autocomplete';
 import { type EditorState, type Extension } from '@codemirror/state';
 import { type BasicSetupOptions } from '@uiw/react-codemirror';
-import { type ReactNode } from 'react';
 
 export type CodeMirrorCompletion = Completion;
 export type CodeMirrorCompletionContext = CompletionContext;
@@ -19,7 +18,7 @@ export type CodeMirrorCompletionMode = 'override' | 'merge';
  */
 export type CodeMirrorBasicSetup = boolean | BasicSetupOptions;
 
-export type CodeMirrorEditorLanguage = 'go' | 'html' | 'json' | 'markdown' | 'sql' | 'typescript' | 'xml' | 'yaml';
+export type CodeMirrorEditorLanguage = 'json' | 'sql';
 
 /**
  * SQL dialect used for syntax highlighting and keyword completion when
@@ -161,18 +160,4 @@ export interface CodeMirrorEditorProps {
    * element instead of being captured as indentation (avoids a keyboard trap).
    */
   indentWithTab?: boolean;
-  /**
-   * Rejects all edits while keeping the text selectable.
-   */
-  readOnly?: boolean;
-  /**
-   * Wraps long lines instead of scrolling horizontally.
-   */
-  lineWrapping?: boolean;
-  /**
-   * Rendered while the editor bundle is being lazily loaded. Defaults to a
-   * loading placeholder; pass a styled preview of the content to avoid a
-   * visual flash when the editor appears.
-   */
-  loadingFallback?: ReactNode;
 }
