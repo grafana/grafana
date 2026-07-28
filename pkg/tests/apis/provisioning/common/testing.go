@@ -1022,6 +1022,25 @@ func WithoutExportFeatureFlag(opts *testinfra.GrafanaOpts) {
 	opts.EnableFeatureToggles = filtered
 }
 
+// WithProvisioningWebhookRateLimitRPS sets [provisioning] webhook_rate_limit_rps,
+// enabling the per-client webhook rate limiter at the given sustained rate. The
+// limiter's burst is twice the rate. A value <= 0 leaves the limiter disabled.
+// With no trusted IP header configured the limiter keys on the TCP peer.
+func WithProvisioningWebhookRateLimitRPS(rps int) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningWebhookRateLimitRPS = rps
+	}
+}
+
+// WithProvisioningWebhookTrustedIPHeader sets [provisioning]
+// webhook_trusted_ip_header, naming the header whose value the rate limiter keys
+// on. When unset, the limiter keys on the real TCP peer instead.
+func WithProvisioningWebhookTrustedIPHeader(header string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningWebhookTrustedIPHeader = header
+	}
+}
+
 func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 	return testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
@@ -2385,7 +2404,15 @@ func RunGrafanaWithGitServer(t *testing.T, options ...GrafanaOption) *GitTestHel
 func runGrafanaWithGitServerShared(t *testing.T, options ...GrafanaOption) (*GitTestHelper, func()) {
 	t.Helper()
 
-	ctx := context.Background()
+	// Bind the container lifecycle to a non-cancellable context: the shared server
+	// must outlive the single test that happens to trigger init via sync.Once. If
+	// it inherited that test's cancellation, the context would cancel when that
+	// test finished, dropping the testcontainers reaper connection and letting Ryuk
+	// tear down the Gitea container while later tests still need it (surfacing as
+	// "No such container" on CreateUser). WithoutCancel keeps t.Context()'s values
+	// (deadline aside) while stripping cancellation. Teardown is handled by
+	// shutdown() below.
+	ctx := context.WithoutCancel(t.Context())
 	gitServer, err := gittest.NewServer(ctx, gittest.WithLogger(gittest.NewWriterLogger(os.Stderr)))
 	require.NoError(t, err, "failed to start git server")
 

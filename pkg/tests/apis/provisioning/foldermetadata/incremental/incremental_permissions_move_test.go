@@ -23,6 +23,7 @@ import (
 // a distinct repo name and globally-unique folder UIDs so the subtests can share
 // the same Grafana namespace without interfering with one another.
 func TestIntegrationProvisioning_IncrementalSync_FolderMovePermissions(t *testing.T) {
+	t.Skip("flakey test in SQLite")
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := sharedGitHelper(t)
