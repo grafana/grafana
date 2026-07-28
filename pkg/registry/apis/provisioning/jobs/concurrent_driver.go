@@ -23,6 +23,16 @@ import (
 // resync/re-list re-delivers the key if the job is still unclaimed.
 const maxClaimAttempts = 3
 
+// postClaimCooldown is how long a key is barred from processing after its job
+// failed post-claim: the side effects may already have run, and the rolled-back
+// claim makes the job immediately claimable again. The bar is enforced at
+// dequeue time because enqueue-side filtering cannot cover every path back into
+// the queue — a resync that snapshots the job before the worker's claim lands
+// adds the in-flight key, the queue marks it dirty, and redelivers it the
+// moment Done runs. The duration matches the default resync cadence, so a
+// dropped key is re-added by a later resync once the cooldown has passed.
+const postClaimCooldown = 30 * time.Second
+
 // ConcurrentJobDriver processes provisioning jobs with a pool of worker
 // goroutines fed by a single per-replica work queue of job keys. Keys enter
 // the queue exclusively from the jobs informer (EventHandler): live create
@@ -40,6 +50,12 @@ type ConcurrentJobDriver struct {
 	workers              []Worker
 	metrics              *JobMetrics
 	queue                workqueue.TypedRateLimitingInterface[string]
+
+	// mu guards cooldowns. cooldowns maps a job key to the time its post-claim
+	// cooldown expires (see postClaimCooldown); workers refuse to process a key
+	// before then.
+	mu        sync.Mutex
+	cooldowns map[string]time.Time
 
 	// logger is used by informer event callbacks, which run outside Run's
 	// context and therefore cannot use logging.FromContext.
@@ -85,7 +101,8 @@ func NewConcurrentJobDriver(
 				Name: "provisioningJobDriver",
 			},
 		),
-		logger: logging.DefaultLogger.With("logger", "concurrent-job-driver"),
+		cooldowns: make(map[string]time.Time),
+		logger:    logging.DefaultLogger.With("logger", "concurrent-job-driver"),
 	}, nil
 }
 
@@ -165,6 +182,10 @@ func (c *ConcurrentJobDriver) enqueueCreate(job *provisioning.Job) {
 			"namespace", job.GetNamespace(), "job", job.GetName(), "error", err)
 		return
 	}
+	// Job names are deterministic, so a new job may reuse the key of a
+	// predecessor that failed post-claim. A create event announces a new
+	// incarnation, which must not sit out its predecessor's cooldown.
+	c.clearCooldown(key)
 	// The queue deduplicates keys that are already queued or in flight.
 	c.queue.Add(key)
 	c.logger.Debug("job create event enqueued", "work_key", key, "queue_len", c.queue.Len())
@@ -191,6 +212,44 @@ func (c *ConcurrentJobDriver) enqueueRecovered(job *provisioning.Job) {
 		"job_age", time.Since(job.CreationTimestamp.Time).Round(time.Second),
 		"job_state", job.Status.State,
 		"queue_len", c.queue.Len())
+}
+
+// startCooldown bars key from processing for postClaimCooldown. Expired entries
+// are swept on each insert so keys whose jobs never return (e.g. completed by
+// another worker) do not accumulate; inserts only happen on the rare post-claim
+// failure path, so the sweep is cheap.
+func (c *ConcurrentJobDriver) startCooldown(key string) {
+	now := time.Now()
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for k, until := range c.cooldowns {
+		if now.After(until) {
+			delete(c.cooldowns, k)
+		}
+	}
+	c.cooldowns[key] = now.Add(postClaimCooldown)
+}
+
+// inCooldown reports whether key is still within its post-claim cooldown,
+// pruning the entry once it has expired.
+func (c *ConcurrentJobDriver) inCooldown(key string) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	until, ok := c.cooldowns[key]
+	if !ok {
+		return false
+	}
+	if time.Now().After(until) {
+		delete(c.cooldowns, key)
+		return false
+	}
+	return true
+}
+
+func (c *ConcurrentJobDriver) clearCooldown(key string) {
+	c.mu.Lock()
+	delete(c.cooldowns, key)
+	c.mu.Unlock()
 }
 
 // Run starts the worker pool.
@@ -270,6 +329,16 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 		return true
 	}
 
+	// A key in post-claim cooldown must not be processed regardless of how it
+	// re-entered the queue — most importantly the dirty-key redelivery from a
+	// resync that raced the failed run's claim, which arrives the moment that
+	// run calls Done. A later resync re-adds the key once the cooldown passes.
+	if c.inCooldown(key) {
+		logger.Debug("job key in post-claim cooldown - dropping; a later resync re-adds it")
+		c.queue.Forget(key)
+		return true
+	}
+
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		logger.Error("invalid job key - dropping", "error", err)
@@ -296,9 +365,12 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 	case errors.Is(err, errPostClaim):
 		// The job may already have executed; an immediate retry would re-run its
 		// side effects. Its claim was rolled back, so the informer re-list
-		// re-discovers it at the resync cadence instead.
-		logger.Error("job failed after it was claimed - dropping from queue; the informer re-list re-adds it",
-			"attempt", attempt, "error", err)
+		// re-discovers it at the resync cadence instead. The cooldown makes that
+		// stick: a resync that raced this run's claim may already have marked the
+		// in-flight key dirty, and the queue redelivers it as soon as we return.
+		c.startCooldown(key)
+		logger.Error("job failed after it was claimed - dropping from queue; the informer re-list re-adds it after a cooldown",
+			"attempt", attempt, "cooldown", postClaimCooldown, "error", err)
 		c.queue.Forget(key)
 	case attempt >= maxClaimAttempts:
 		logger.Error("job failed too many times - dropping from queue; the informer re-list re-adds it if still unclaimed",

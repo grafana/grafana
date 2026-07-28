@@ -371,6 +371,99 @@ func TestConcurrentJobDriver_PostClaimFailureDoesNotRerunJob(t *testing.T) {
 	require.NoError(t, <-runDone)
 }
 
+// TestConcurrentJobDriver_CooldownBlocksDirtyRedeliveryAfterPostClaimFailure
+// reproduces the resync-races-claim hazard: a resync that snapshots the job
+// before the worker's claim lands adds the in-flight key, so the queue marks it
+// dirty and redelivers it the moment the failed run returns. The post-claim
+// cooldown must drop that redelivery (no immediate re-run of side effects),
+// while a create event — a new job incarnation reusing the deterministic name —
+// clears the cooldown and processes normally.
+func TestConcurrentJobDriver_CooldownBlocksDirtyRedeliveryAfterPostClaimFailure(t *testing.T) {
+	claimedJob := makeTestJob("1")
+	claimedJob.Labels = map[string]string{
+		LabelJobClaim:      "1000000000000",
+		LabelJobClaimOwner: "owner-A",
+	}
+
+	var claims atomic.Int32
+	completeStarted := make(chan struct{})
+	releaseComplete := make(chan struct{})
+
+	store := &MockStore{}
+	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job").
+		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
+			if claims.Add(1) > 1 {
+				// Later attempts only need to be counted.
+				return nil, nil, ErrAlreadyClaimed
+			}
+			return claimedJob.DeepCopy(), func() {}, nil
+		}).Maybe()
+	store.EXPECT().Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+			return job.DeepCopy(), nil
+		}).Maybe()
+	store.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(claimedJob.DeepCopy(), nil).Maybe()
+	store.EXPECT().RenewLease(mock.Anything, mock.Anything).Return(nil).Maybe()
+	store.EXPECT().Complete(mock.Anything, mock.Anything).
+		RunAndReturn(func(context.Context, *provisioning.Job) error {
+			close(completeStarted)
+			<-releaseComplete
+			return errors.New("transient delete failure")
+		}).Once()
+
+	history := &MockHistoryWriter{}
+	history.EXPECT().WriteJob(mock.Anything, mock.Anything).Return(nil).Maybe()
+
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(makeRepoConfig("test-repo", nil, nil))
+
+	repoGetter := &MockRepoGetter{}
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").Return(mockRepo, nil).Maybe()
+
+	worker := &MockWorker{}
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true).Maybe()
+	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(nil).Maybe()
+
+	metrics := RegisterJobMetrics(prometheus.NewPedanticRegistry())
+	driver := newTestConcurrentDriver(t, 1, store, repoGetter, history, &metrics, worker)
+	handler := driver.EventHandler()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	runDone := make(chan error, 1)
+	go func() { runDone <- driver.Run(ctx) }()
+
+	handler.AddFunc(&provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
+	})
+
+	// While the run is in flight (blocked in Complete), a resync that snapshotted
+	// the job before the claim delivers it as a full unclaimed update. This marks
+	// the in-flight key dirty.
+	<-completeStarted
+	stale := &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job", ResourceVersion: "7"},
+	}
+	handler.UpdateFunc(stale, stale)
+
+	// Complete fails → errPostClaim → cooldown. The dirty redelivery arrives
+	// immediately but must be dropped, not claimed.
+	close(releaseComplete)
+	time.Sleep(300 * time.Millisecond)
+	assert.Equal(t, int32(1), claims.Load(), "the dirty redelivery must sit out the post-claim cooldown")
+
+	// A create event announces a new incarnation on the same deterministic name:
+	// it clears the cooldown and is processed without waiting it out.
+	handler.AddFunc(&provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
+	})
+	require.Eventually(t, func() bool { return claims.Load() == 2 }, 2*time.Second, 10*time.Millisecond,
+		"a new incarnation must not inherit its predecessor's cooldown")
+
+	cancel()
+	require.NoError(t, <-runDone)
+}
+
 // TestConcurrentJobDriver_DuplicateEventsCauseNoDuplicateProcessing verifies
 // that re-adding a key while it is being processed leads to at most one
 // redelivery, whose claim then observes the job as taken.
