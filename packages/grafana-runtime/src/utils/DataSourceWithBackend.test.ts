@@ -20,7 +20,6 @@ import {
   DataSourceWithBackend,
   type HealthCheckResult,
   HealthStatus,
-  isExpressionReference,
   standardStreamOptionsProvider,
   toStreamingDataResponse,
 } from './DataSourceWithBackend';
@@ -75,8 +74,8 @@ const mockGetDataSourceInstanceSettings = jest.fn<{ type: string; uid: string } 
     uid: ref?.uid ?? '<mockuid>',
   })
 );
-jest.mock('./../unstable', () => ({
-  ...jest.requireActual('./../unstable'),
+jest.mock('../services/dataSource/settings', () => ({
+  ...jest.requireActual('../services/dataSource/settings'),
   getDataSourceInstanceSettings: (ref?: DataSourceRef) => mockGetDataSourceInstanceSettings(ref),
 }));
 jest.mock('./publicDashboardQueryHandler');
@@ -731,18 +730,6 @@ describe('DataSourceWithBackend', () => {
         "url": "/api/ds/query?ds_type=dummy&requestId=request-123",
       }
     `);
-  });
-
-  describe('isExpressionReference', () => {
-    test('check all possible expression references', () => {
-      expect(isExpressionReference('__expr__')).toBeTruthy(); // New UID
-      expect(isExpressionReference('-100')).toBeTruthy(); // Legacy UID
-      expect(isExpressionReference('Expression')).toBeTruthy(); // Name
-      expect(isExpressionReference({ type: '__expr__' })).toBeTruthy();
-      expect(isExpressionReference({ type: '-100' })).toBeTruthy();
-      expect(isExpressionReference(null)).toBeFalsy();
-      expect(isExpressionReference(undefined)).toBeFalsy();
-    });
   });
 
   describe('public dashboard scope', () => {
