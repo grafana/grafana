@@ -5,7 +5,7 @@ import {
   FieldType,
   getMinMaxAndDelta,
 } from '@grafana/data';
-import { PromApplication, type PromOptions } from '@grafana/prometheus';
+import { PromApplication } from '@grafana/prometheus';
 import { type DataSourceWithBackend, getDataSourceSrv } from '@grafana/runtime';
 
 import { probeProxyGet, PROBE_TIMEOUT_MS, resolveBackendInstance, withTimeout } from './probeUtils';
@@ -248,8 +248,8 @@ async function fetchDiskHoursToFull(
 async function fetchSeriesSparkline(
   ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
 ): Promise<FieldSparkline | null> {
-  const jsonData = getDataSourceSrv().getInstanceSettings(ds.uid)?.jsonData as PromOptions | undefined;
-  const promType = jsonData?.prometheusType;
+  const jsonData = getDataSourceSrv().getInstanceSettings(ds.uid)?.jsonData;
+  const promType = jsonData && 'prometheusType' in jsonData ? jsonData.prometheusType : undefined;
   if (promType === PromApplication.Mimir || promType === PromApplication.Cortex) {
     return null;
   }
