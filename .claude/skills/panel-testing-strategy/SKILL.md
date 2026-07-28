@@ -1,6 +1,6 @@
 ---
 name: panel-testing-strategy
-description: Write unit and E2E tests for Grafana visualization panels and DataViz-owned code the way the DataViz squad wants them. Use when adding or reviewing tests for panels (barchart, timeseries, table, geomap, xychart, heatmap, canvas, stat, etc.), for grafana-ui viz components (Table, uPlot, VizLegend, VizTooltip, DataLinks), or for grafana-data viz utils; when backfilling test coverage; when a panel test only asserts "it rendered" or "it's defined"; when reviewing AI-proposed/AI-generated panel tests for slop; or when a canvas/rendering test is flaky. Encodes the testing-diamond model, assert-real-behavior conventions, the canvas draw-call snapshot harness, no-AI-slop authoring guidance, and anti-flake rules distilled from DataViz PR reviews.
+description: Write unit and E2E tests for Grafana visualization panels and DataViz-owned code the way the DataViz squad wants them. Use when adding, backfilling, or reviewing tests for panels (barchart, timeseries, table, xychart, heatmap, canvas, etc.), grafana-ui viz components (Table, uPlot, VizLegend, VizTooltip), or grafana-data viz utils; when a panel test only asserts "it rendered" or "it's defined"; when reviewing AI-generated panel tests for slop; or when a canvas/rendering test is flaky.
 ---
 
 # Panel testing strategy
