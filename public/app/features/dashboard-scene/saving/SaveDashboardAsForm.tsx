@@ -93,9 +93,12 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
 
     const data = getValues();
 
-    // Same annotation merge as SaveDashboardForm: denylist lives in meta.k8s.annotations
-    // and must be sent on first save / Save As (this form never previously passed k8s).
-    const k8sMeta = dashboard.serializer.getK8SMetadata();
+    // Only forward the denylist annotation. Spreading full getK8SMetadata() would include
+    // name/resourceVersion and turn Save As into an update of the source dashboard.
+    const ignoreValue =
+      dashboard.state.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables] ??
+      dashboard.serializer.getK8SMetadata()?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+
     const result = await onSaveDashboard(dashboard, {
       overwrite,
       folderUid: data.folder.uid,
@@ -107,13 +110,15 @@ export function SaveDashboardAsForm({ dashboard, changeInfo }: Props) {
       copyTags: data.copyTags,
       title: data.title,
       description: data.description,
-      k8s: {
-        ...k8sMeta,
-        annotations: {
-          ...k8sMeta?.annotations,
-          ...dashboard.state.meta.k8s?.annotations,
-        },
-      },
+      ...(ignoreValue !== undefined
+        ? {
+            k8s: {
+              annotations: {
+                [AnnoKeyIgnorePredefinedVariables]: ignoreValue,
+              },
+            },
+          }
+        : {}),
     });
 
     if (result.status === 'success') {

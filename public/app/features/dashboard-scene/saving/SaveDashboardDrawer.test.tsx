@@ -306,6 +306,7 @@ describe('SaveDashboardDrawer', () => {
 
       const dataSent = saveDashboardMutationMock.mock.calls[0][0];
       expect(dataSent.dashboard.uid).toEqual('');
+      expect(dataSent.k8s).toBeUndefined();
     });
 
     it('Should persist predefined-variable denylist annotations', async () => {
@@ -331,7 +332,10 @@ describe('SaveDashboardDrawer', () => {
       await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
 
       const dataSent = saveDashboardMutationMock.mock.calls[0][0];
-      expect(dataSent.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables]).toBe(denyList);
+      expect(dataSent.k8s).toEqual({
+        annotations: { [AnnoKeyIgnorePredefinedVariables]: denyList },
+      });
+      expect(dataSent.k8s?.name).toBeUndefined();
     });
   });
 
