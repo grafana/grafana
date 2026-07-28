@@ -18,7 +18,19 @@ interface PanelDataArtifact {
   pluginId?: string;
   /** LoadingState at capture time (`Done`, `Error`, `Loading`, …), as the query runner reported it. */
   state?: string;
+  request?: PanelDataRequestContext;
   frames: DataFrameJSON[];
+}
+
+/**
+ * The request these frames were produced from, so the `querydata.json` diff can be read correctly.
+ */
+interface PanelDataRequestContext {
+  /** Epoch ms, matching the units of the `from`/`to` the diagnostics request sends. */
+  from: number;
+  to: number;
+  intervalMs?: number;
+  maxDataPoints?: number;
 }
 
 /**
@@ -45,11 +57,31 @@ export function capturePanelData(panel: VizPanel): PanelDataArtifact | undefined
     return undefined;
   }
 
+  const request = data.request;
+
   return {
     version: PANEL_DATA_ARTIFACT_VERSION,
     panelKey: panel.state.key,
     pluginId: panel.state.pluginId,
     state: data.state,
+    // Omitted rather than sent half-empty when the panel has data but no recorded request (e.g. frames
+    // supplied by a snapshot rather than a query).
+    request: request
+      ? {
+          from: request.range.from.valueOf(),
+          to: request.range.to.valueOf(),
+          intervalMs: request.intervalMs,
+          maxDataPoints: request.maxDataPoints,
+        }
+      : undefined,
+    // Deliberately unbounded, for now. A very large panel makes for a large request body, and past
+    // web.MaxBindBodyBytes (100MiB) web.Bind rejects it and the whole bundle is lost rather than just
+    // this artifact. That is accepted at this stage: the feature is experimental, admin-only and
+    // on-prem gated, and no bound can be chosen well before we have seen what real bundles weigh. When
+    // it is added it belongs here rather than on the backend (which deliberately defers the decision to
+    // this side, see the "oversized payload" row in the backend PR), and it should follow the ladder
+    // frontend-processing.json already uses: drop frames first, keep the identifying fields, and stamp
+    // a truncation marker so a reduced capture is never misread as data the frontend lost.
     frames: (data.series ?? []).map((frame) => dataFrameToJSON(frame)),
   };
 }
