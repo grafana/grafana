@@ -63,10 +63,13 @@ type buildConfig struct {
 // Unlike panel.json it is data, not a definition: reading it re-runs no queries and re-applies no
 // transformations.
 //
-// The payload is stored byte-for-byte as the client sent it: deliberately unvalidated and, unlike the
-// other JSON artifacts, not pretty-printed. Nothing here parses it, so a malformed payload yields a
-// malformed artifact rather than a failed bundle, and indenting would hold a second, larger copy of an
-// unbounded input. This is an experimental, admin-only, on-prem-gated feature.
+// The payload is stored as the client sent it, outer whitespace aside: deliberately unvalidated and,
+// unlike the other JSON artifacts, not pretty-printed. Nothing here parses it, so a malformed payload
+// yields a malformed artifact rather than a failed bundle, and indenting would hold a second, larger
+// copy of an unbounded input. That containment is for direct callers: through the HTTP endpoint
+// web.Bind rejects a syntactically malformed payload before Build runs, so the worst that reaches here
+// is a well-formed payload of the wrong shape. This is an experimental, admin-only, on-prem-gated
+// feature.
 //
 // Size is the one failure this does NOT contain, and it is the client's to bound: web.MaxBindBodyBytes
 // caps the whole REQUEST rather than this field, so a payload past it fails web.Bind before Build runs

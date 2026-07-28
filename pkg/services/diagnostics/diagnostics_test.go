@@ -1020,7 +1020,7 @@ func TestBundler_Build_bundlesPanelData(t *testing.T) {
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
-	require.JSONEq(t, string(panelData), string(files["paneldata.json"]))
+	require.Equal(t, string(panelData), string(files["paneldata.json"]), "stored as sent")
 }
 
 func TestBundler_Build_omitsPanelDataWhenNotSupplied(t *testing.T) {

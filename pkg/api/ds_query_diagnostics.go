@@ -27,10 +27,11 @@ type diagnosticsRequest struct {
 	Panel     json.RawMessage `json:"panel"`
 	// PanelData is the data frames the client's frontend was holding for this panel, bundled as
 	// paneldata.json. Optional: the frontend omits it when it could not be serialized, and an absent
-	// or malformed payload never fails the request. Size is the exception -- web.MaxBindBodyBytes caps
-	// the whole request rather than this field, so a payload past it fails the web.Bind below and costs
-	// the caller the entire bundle, not just this artifact. Bounding it is the client's job; see
-	// diagnostics.WithPanelData.
+	// payload -- or a well-formed one of an unexpected shape -- never fails the request. Two things do,
+	// and both cost the caller the entire bundle rather than just this artifact: a syntactically
+	// malformed payload, because encoding/json validates the bytes it captures into a RawMessage and so
+	// the web.Bind below rejects the whole body; and size, because web.MaxBindBodyBytes caps the whole
+	// request rather than this field. Bounding both is the client's job; see diagnostics.WithPanelData.
 	PanelData json.RawMessage `json:"panelData"`
 }
 
