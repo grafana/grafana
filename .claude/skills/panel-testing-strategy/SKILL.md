@@ -26,7 +26,7 @@ surrounding test file's imports and idiom.
 
 ## Principle 1 — Where each test fits: the (inverted) testing diamond
 
-The squad's model, top to bottom:
+Testing model, top to bottom:
 
 - **E2E** (pinnacle) — validate the system via real user flows; powerful but slow, so keep
   it targeted and few.
