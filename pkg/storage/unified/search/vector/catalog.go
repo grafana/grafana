@@ -37,10 +37,10 @@ func (b *pgvectorBackend) ResolveCollection(ctx context.Context, group, resource
 // derive the partition key, insert the catalog row (race-safe), and create
 // the partition leaf. External keys get "_external" appended so an internal
 // resource can never share a partition with an external one. A resolve hit
-// whose IsExternal disagrees with the caller's isExternal is rejected — this
-// keeps a fat-fingered allowlist entry from letting an external writer touch
-// an internal collection. Only upsert paths call this — deletes resolve
-// only, so they can't create empty collections.
+// whose IsExternal disagrees with the caller's isExternal is rejected — a
+// misconfigured allowlist entry must not let an external writer touch an
+// internal collection. Only upsert paths call this — deletes resolve only,
+// so they can't create empty collections.
 func (b *pgvectorBackend) EnsureCollection(ctx context.Context, group, resource string, isExternal bool) (Collection, error) {
 	if group == "" || resource == "" {
 		return Collection{}, fmt.Errorf("group and resource must not be empty")

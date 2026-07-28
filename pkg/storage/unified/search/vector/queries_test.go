@@ -51,9 +51,10 @@ func TestVectorQueries(t *testing.T) {
 						Namespace:   "stacks-123",
 						Model:       "text-embedding-005",
 						UID:         "abc-uid",
-						Subresource: "chunk/1",
-						Title:       "Thing One",
-						Metadata:    json.RawMessage(`{"embeddedAt":1750000000}`),
+						Rows: []VectorMeta{
+							{Subresource: "chunk/1", Title: "Thing One", Metadata: json.RawMessage(`{"embeddedAt":1750000000}`)},
+							{Subresource: "chunk/2", Title: "Thing Two", Metadata: json.RawMessage(`{"embeddedAt":1750000000}`)},
+						},
 					},
 				},
 			},

@@ -249,19 +249,25 @@ func (b *pgvectorBackend) UpsertReplaceSubresources(ctx context.Context, namespa
 				return err
 			}
 		}
-		for i := range metadataOnly {
+		if len(metadataOnly) > 0 {
+			rows := make([]VectorMeta, len(metadataOnly))
+			for i := range metadataOnly {
+				rows[i] = VectorMeta{
+					Subresource: metadataOnly[i].Subresource,
+					Title:       truncateRunes(metadataOnly[i].Title, maxTitleLen),
+					Metadata:    metadataOnly[i].Metadata,
+				}
+			}
 			req := &sqlVectorCollectionRefreshMetaRequest{
 				SQLTemplate: sqltemplate.New(b.dialect),
 				Resource:    resource,
 				Namespace:   namespace,
 				Model:       model,
 				UID:         uid,
-				Subresource: metadataOnly[i].Subresource,
-				Title:       truncateRunes(metadataOnly[i].Title, maxTitleLen),
-				Metadata:    metadataOnly[i].Metadata,
+				Rows:        rows,
 			}
 			if _, err := dbutil.Exec(ctx, tx, sqlVectorCollectionRefreshMeta, req); err != nil {
-				return fmt.Errorf("refresh metadata %s/%s: %w", uid, metadataOnly[i].Subresource, err)
+				return fmt.Errorf("refresh metadata %s: %w", uid, err)
 			}
 		}
 		return nil
@@ -795,6 +801,9 @@ func (b *pgvectorBackend) TryAcquireReconcilerLock(ctx context.Context) (func(),
 	return release, true, nil
 }
 
+// WithEntityLock serializes concurrent subresource syncs for one entity:
+// the caller's read-diff-embed-write sequence runs under a blocking session
+// advisory lock so two writers can't interleave stale diffs.
 func (b *pgvectorBackend) WithEntityLock(ctx context.Context, namespace, resource, uid string, fn func(context.Context) error) error {
 	conn, err := b.db.SqlDB().Conn(ctx)
 	if err != nil {

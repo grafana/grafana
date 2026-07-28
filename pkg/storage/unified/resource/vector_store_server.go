@@ -24,8 +24,7 @@ const maxWriteBatch = 500
 const maxMetadataBytes = 4096
 
 // vectorWriteStore is the narrow slice of vector.VectorBackend the write
-// service needs — handler tests fake these seven methods, not the whole
-// backend interface.
+// service needs.
 type vectorWriteStore interface {
 	ResolveCollection(ctx context.Context, group, resource string) (vector.Collection, bool, error)
 	EnsureCollection(ctx context.Context, group, resource string, isExternal bool) (vector.Collection, error)
@@ -322,9 +321,6 @@ func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDe
 		s.log.Error("vector store: resolve collection", "err", err, "group", req.Group, "resource", req.Resource)
 		return nil, writeStatusError(ctx, "resolve collection")
 	}
-	// A found-but-internal collection answers identically to unprovisioned:
-	// a fat-fingered allowlist entry must not leak that the internal pair
-	// exists, let alone let an external caller delete its rows.
 	if !found || !coll.IsExternal {
 		return nil, status.Errorf(codes.NotFound, "collection %s/%s not found", req.Group, req.Resource)
 	}

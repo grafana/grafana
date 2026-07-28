@@ -78,21 +78,24 @@ func (r *sqlVectorCollectionUpsertRequest) Validate() error {
 
 type sqlVectorCollectionRefreshMetaRequest struct {
 	sqltemplate.SQLTemplate
-	Resource    string
-	Namespace   string
-	Model       string
-	UID         string
-	Subresource string
-	Title       string
-	Metadata    json.RawMessage
+	Resource  string
+	Namespace string
+	Model     string
+	UID       string
+	Rows      []VectorMeta
 }
 
 func (r *sqlVectorCollectionRefreshMetaRequest) Validate() error {
 	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
 		return fmt.Errorf("missing required fields")
 	}
-	if r.Title == "" {
-		return fmt.Errorf("missing title")
+	if len(r.Rows) == 0 {
+		return fmt.Errorf("rows must not be empty")
+	}
+	for i := range r.Rows {
+		if r.Rows[i].Title == "" {
+			return fmt.Errorf("rows[%d]: missing title", i)
+		}
 	}
 	return nil
 }
