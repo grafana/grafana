@@ -136,7 +136,7 @@ func TestFolderTreeCache_Unit(t *testing.T) {
 		assert.Equal(t, "Folder A", tree.GetTitle("folder-a"))
 		assert.Equal(t, "Folder B", tree.GetTitle("folder-b"))
 		// folder-b's parent (folder-a) is reflected in the tree.
-		parents := make([]string, 0)
+		parents := make([]string, 0, 1)
 		for ancestor := range tree.Ancestors("folder-b") {
 			parents = append(parents, ancestor.UID)
 		}
