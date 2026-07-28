@@ -50,6 +50,8 @@ export function SummaryCard<T>({
   const redesignEnabled = useFlagGrafanaGrowthHomepage();
   const styles = useStyles2(getStyles);
 
+  console.log('emptyMessage', emptyMessage, items);
+
   const countText = countLimit !== undefined && count >= countLimit ? `${countLimit}+` : String(count);
 
   const content = (
@@ -89,7 +91,8 @@ export function SummaryCard<T>({
 
         {!loading && !error && items.length === 0 && (
           <Stack direction="column" grow={1} alignItems="center" justifyContent="center">
-            {emptyAction ?? <Text color="secondary">{emptyMessage}</Text>}
+            {emptyMessage ?? <Text color="secondary">{emptyMessage}</Text>}
+            {emptyAction ?? emptyAction}
           </Stack>
         )}
 

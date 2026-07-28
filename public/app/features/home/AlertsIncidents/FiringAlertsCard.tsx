@@ -144,7 +144,6 @@ export function FiringAlertsCardView({
             }
           : undefined
       }
-      emptyMessage={emptyMessage(selectedTeam, hasTeams)}
       items={visibleAlerts}
       getItemKey={({ alert }) => alert.fingerprint}
       renderItem={({ alert, level, startedAt }) => {
@@ -178,6 +177,7 @@ export function FiringAlertsCardView({
           />
         );
       }}
+      emptyMessage={emptyMessage(selectedTeam, hasTeams)}
       emptyAction={
         canCreate ? (
           <LinkButton
