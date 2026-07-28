@@ -19,15 +19,15 @@ export class MultiSelectedObjectsEditableElement implements EditableDashboardEle
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    return { typeName: t('dashboard.edit-pane.elements.objects', 'Objects'), icon: 'folder', instanceName: '' };
+    return { typeName: t('dashboard.sidebar.elements.objects', 'Objects'), icon: 'folder', instanceName: '' };
   }
 
   public onConfirmDelete() {
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: t('dashboard.edit-pane.elements.multiple-elements', 'Multiple elements'),
+        title: t('dashboard.sidebar.elements.multiple-elements', 'Multiple elements'),
         text: t(
-          'dashboard.edit-pane.elements.multiple-elements-delete-text',
+          'dashboard.sidebar.elements.multiple-elements-delete-text',
           'Are you sure you want to delete these elements?'
         ),
         onConfirm: () => this.onDelete(),

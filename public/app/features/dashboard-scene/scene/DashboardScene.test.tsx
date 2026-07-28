@@ -260,7 +260,7 @@ describe('DashboardScene', () => {
         // Restored state from when edit mode started
         expect(scene.state.title).toBe('hello');
 
-        // Clears edit-panel related state
+        // Clears sidebar related state
         expect(scene.state.editPanel).toBeUndefined();
         expect(scene.state.overlay).toBeUndefined();
 

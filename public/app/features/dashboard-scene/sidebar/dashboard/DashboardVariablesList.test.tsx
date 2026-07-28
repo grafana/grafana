@@ -300,7 +300,7 @@ describe('partitionVariablesByEditability()', () => {
   });
 });
 
-describe('predefined variables in the edit-pane list', () => {
+describe('predefined variables in the sidebar list', () => {
   test('does not render a predefined variables section', () => {
     const { visibleVar1, predefinedVar1 } = buildTestVariables();
     const { queryByText } = renderVariablesList([visibleVar1, predefinedVar1]);

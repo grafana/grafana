@@ -13,7 +13,7 @@ import { DashboardVariablesList } from './dashboard/DashboardVariablesList';
 export function SectionFiltersCategoryTitle() {
   return (
     <Stack direction="row" alignItems="center" gap={1} flex={1}>
-      <span style={{ flexGrow: 1 }}>{t('dashboard.edit-pane.section-filters.title', 'Filters')}</span>
+      <span style={{ flexGrow: 1 }}>{t('dashboard.sidebar.section-filters.title', 'Filters')}</span>
     </Stack>
   );
 }

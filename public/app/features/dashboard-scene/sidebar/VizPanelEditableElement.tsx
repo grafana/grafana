@@ -95,7 +95,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     }
 
     return {
-      typeName: t('dashboard.edit-pane.elements.panel', 'Panel'),
+      typeName: t('dashboard.sidebar.elements.panel', 'Panel'),
       icon: 'chart-line',
       instanceName: sceneGraph.interpolate(this.panel, this.panel.state.title, undefined, 'text'),
       isHidden,

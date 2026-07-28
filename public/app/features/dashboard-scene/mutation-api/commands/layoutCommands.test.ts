@@ -11,7 +11,7 @@ import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
 
-// Mock the edit-pane actions so that perform() is called synchronously
+// Mock the sidebar actions so that perform() is called synchronously
 // instead of publishing an event (which requires a DashboardScene subscriber).
 jest.mock('../../sidebar/shared', () => {
   const actual = jest.requireActual('../../sidebar/shared');

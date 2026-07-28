@@ -73,9 +73,9 @@ export class DashboardFiltersSet extends SceneObjectBase<DashboardFiltersSetStat
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.filters-set', 'Filters'),
+      typeName: t('dashboard.sidebar.elements.filters-set', 'Filters'),
       icon: 'filter',
-      instanceName: t('dashboard.edit-pane.elements.filters-set', 'Filters'),
+      instanceName: t('dashboard.sidebar.elements.filters-set', 'Filters'),
     };
   }
 

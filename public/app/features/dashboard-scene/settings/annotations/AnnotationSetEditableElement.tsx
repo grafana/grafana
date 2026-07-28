@@ -41,9 +41,9 @@ export class AnnotationSetEditableElement implements EditableDashboardElement {
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.annotation-set', 'Annotations & Alerts'),
+      typeName: t('dashboard.sidebar.elements.annotation-set', 'Annotations & Alerts'),
       icon: 'comment-alt',
-      instanceName: t('dashboard.edit-pane.elements.annotation-set', 'Annotations & Alerts'),
+      instanceName: t('dashboard.sidebar.elements.annotation-set', 'Annotations & Alerts'),
       isHidden: this.dataLayerSet.state.annotationLayers.length === 0,
     };
   }

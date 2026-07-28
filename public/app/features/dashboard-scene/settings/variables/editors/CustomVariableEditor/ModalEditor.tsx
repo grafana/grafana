@@ -30,7 +30,7 @@ export function ModalEditor(props: ModalEditorProps) {
 
   return (
     <Modal
-      title={t('dashboard.edit-pane.variable.custom-options.modal-title', 'Custom options')}
+      title={t('dashboard.sidebar.variable.custom-options.modal-title', 'Custom options')}
       isOpen={true}
       onDismiss={onCloseModal}
       closeOnBackdropClick={false}
@@ -68,7 +68,7 @@ export function ModalEditor(props: ModalEditorProps) {
           onClick={onCloseModal}
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.closeButton}
         >
-          <Trans i18nKey="dashboard.edit-pane.variable.custom-options.discard">Discard</Trans>
+          <Trans i18nKey="dashboard.sidebar.variable.custom-options.discard">Discard</Trans>
         </Button>
         <Button
           variant="primary"
@@ -76,7 +76,7 @@ export function ModalEditor(props: ModalEditorProps) {
           disabled={Boolean(queryValidationError)}
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.applyButton}
         >
-          <Trans i18nKey="dashboard.edit-pane.variable.custom-options.apply">Apply</Trans>
+          <Trans i18nKey="dashboard.sidebar.variable.custom-options.apply">Apply</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>

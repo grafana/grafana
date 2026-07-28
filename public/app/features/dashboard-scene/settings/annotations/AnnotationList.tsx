@@ -127,10 +127,7 @@ export function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLa
                     }}
                   >
                     <div {...draggableProvided.dragHandleProps} onPointerDown={onPointerDown}>
-                      <Tooltip
-                        content={t('dashboard.edit-pane.annotations.reorder', 'Drag to reorder')}
-                        placement="top"
-                      >
+                      <Tooltip content={t('dashboard.sidebar.annotations.reorder', 'Drag to reorder')} placement="top">
                         <Icon name="draggabledots" size="md" className={styles.dragHandle} />
                       </Tooltip>
                     </div>
@@ -142,7 +139,7 @@ export function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLa
                   </div>
                   <Stack direction="row" gap={1} alignItems="center">
                     <Button variant="primary" size="sm" fill="outline">
-                      <Trans i18nKey="dashboard.edit-pane.annotations.select-annotation">Select</Trans>
+                      <Trans i18nKey="dashboard.sidebar.annotations.select-annotation">Select</Trans>
                     </Button>
                   </Stack>
                 </div>
@@ -180,7 +177,7 @@ export function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLa
             onClick={onAddAnnotation}
             data-testid={selectors.components.PanelEditor.ElementEditPane.addAnnotationButton}
           >
-            <Trans i18nKey="dashboard.edit-pane.annotations.add-annotation">Add annotation</Trans>
+            <Trans i18nKey="dashboard.sidebar.annotations.add-annotation">Add annotation</Trans>
           </Button>
         </Box>
       )}

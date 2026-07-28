@@ -79,7 +79,7 @@ function VariableAddPaneRenderer({ model }: SceneComponentProps<VariableAddPane>
 
   return (
     <>
-      <Sidebar.PaneHeader title={t('dashboard.edit-pane.variables.select-type', 'Choose variable type')} />
+      <Sidebar.PaneHeader title={t('dashboard.sidebar.variables.select-type', 'Choose variable type')} />
       <Box padding={2}>
         <VariableTypeSelectionUI onSelectType={onAddVariable} />
       </Box>
@@ -144,7 +144,7 @@ function VariableTypeChangePaneRenderer({ model }: SceneComponentProps<VariableT
 
   return (
     <>
-      <Sidebar.PaneHeader title={t('dashboard.edit-pane.variables.change-type', 'Change variable type')} />
+      <Sidebar.PaneHeader title={t('dashboard.sidebar.variables.change-type', 'Change variable type')} />
       <Box padding={2}>
         <VariableTypeSelectionUI onSelectType={onChangeVariableType} />
       </Box>
@@ -165,7 +165,7 @@ function VariableTypeSelectionUI({ onSelectType }: { onSelectType: (type: Editab
             isCompact
             onClick={() => onSelectType(option.value!)}
             key={option.value}
-            title={t('dashboard.edit-pane.variables.select-type-card-tooltip', 'Click to select type')}
+            title={t('dashboard.sidebar.variables.select-type-card-tooltip', 'Click to select type')}
             data-testid={selectors.components.PanelEditor.ElementEditPane.variableType(option.value!)}
           >
             <Card.Heading>{option.label}</Card.Heading>

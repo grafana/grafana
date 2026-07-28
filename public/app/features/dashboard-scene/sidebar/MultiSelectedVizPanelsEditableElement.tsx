@@ -19,7 +19,7 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
   }
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    return { typeName: t('dashboard.edit-pane.elements.panels', 'Panels'), icon: 'folder', instanceName: '' };
+    return { typeName: t('dashboard.sidebar.elements.panels', 'Panels'), icon: 'folder', instanceName: '' };
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
@@ -29,9 +29,9 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
   public onConfirmDelete() {
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: t('dashboard.edit-pane.elements.multiple-panels', 'Multiple panels'),
+        title: t('dashboard.sidebar.elements.multiple-panels', 'Multiple panels'),
         text: t(
-          'dashboard.edit-pane.elements.multiple-panels-delete-text',
+          'dashboard.sidebar.elements.multiple-panels-delete-text',
           'Are you sure you want to delete these panels? All queries will be removed.'
         ),
         onConfirm: () => this.onDelete(),

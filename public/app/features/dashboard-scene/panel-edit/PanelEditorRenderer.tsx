@@ -9,7 +9,7 @@ import { type SceneComponentProps } from '@grafana/scenes';
 import { Button, Spinner, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
-import { useEditPaneCollapsed } from '../sidebar/shared';
+import { useSidebarCollapsed } from '../sidebar/shared';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { LibraryPanelEditModals } from './LibraryPanelEditModals';
@@ -27,7 +27,7 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   const { optionsPane } = model.useState();
   const { controls } = dashboard.useState();
   const styles = useStyles2(getStyles, visualRefreshEnabled);
-  const [isInitiallyCollapsed, setIsCollapsed] = useEditPaneCollapsed();
+  const [isInitiallyCollapsed, setIsCollapsed] = useSidebarCollapsed();
 
   const isScrollingLayout = useScrollReflowLimit();
 

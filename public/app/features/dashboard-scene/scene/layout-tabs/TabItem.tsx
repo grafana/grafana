@@ -99,7 +99,7 @@ export class TabItem
   public getEditableElementInfo(): EditableDashboardElementInfo {
     const isHidden = !this.state.conditionalRendering?.state.result;
     return {
-      typeName: t('dashboard.edit-pane.elements.tab', 'Tab'),
+      typeName: t('dashboard.sidebar.elements.tab', 'Tab'),
       instanceName: interpolateSectionTitle(this, this.state.title),
       icon: 'layers',
       isHidden,

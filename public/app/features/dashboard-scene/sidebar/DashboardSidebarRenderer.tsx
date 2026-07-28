@@ -101,11 +101,11 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
                   )
                 }
                 title={t(
-                  'dashboard-scene.dashboard-edit-pane-renderer.title-feedback-dashboard-editing-experience',
+                  'dashboard-scene.dashboard-sidebar-renderer.title-feedback-dashboard-editing-experience',
                   'Give feedback on the new dashboard editing experience'
                 )}
                 tooltip={t(
-                  'dashboard-scene.dashboard-edit-pane-renderer.title-feedback-dashboard-editing-experience',
+                  'dashboard-scene.dashboard-sidebar-renderer.title-feedback-dashboard-editing-experience',
                   'Give feedback on the new dashboard editing experience'
                 )}
               />

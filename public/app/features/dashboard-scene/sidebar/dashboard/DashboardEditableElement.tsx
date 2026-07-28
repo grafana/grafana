@@ -78,9 +78,9 @@ export class DashboardEditableElement implements EditableDashboardElement {
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
+      typeName: t('dashboard.sidebar.elements.dashboard', 'Dashboard'),
       icon: 'apps',
-      instanceName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
+      instanceName: t('dashboard.sidebar.elements.dashboard', 'Dashboard'),
     };
   }
 

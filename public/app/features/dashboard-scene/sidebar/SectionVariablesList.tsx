@@ -21,7 +21,7 @@ export interface SectionVariablesCategoryTitleProps {
 export function SectionVariablesCategoryTitle(_: SectionVariablesCategoryTitleProps) {
   return (
     <Stack direction="row" alignItems="center" gap={1} flex={1}>
-      <span style={{ flexGrow: 1 }}>{t('dashboard.edit-pane.section-variables.title', 'Variables')}</span>
+      <span style={{ flexGrow: 1 }}>{t('dashboard.sidebar.section-variables.title', 'Variables')}</span>
     </Stack>
   );
 }

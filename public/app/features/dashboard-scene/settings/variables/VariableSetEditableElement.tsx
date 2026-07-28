@@ -50,9 +50,9 @@ export class VariableSetEditableElement implements EditableDashboardElement {
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.variable-set', 'Variables'),
+      typeName: t('dashboard.sidebar.elements.variable-set', 'Variables'),
       icon: 'x',
-      instanceName: t('dashboard.edit-pane.elements.variable-set', 'Variables'),
+      instanceName: t('dashboard.sidebar.elements.variable-set', 'Variables'),
     };
   }
 
@@ -195,7 +195,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
                 >
                   <div className={styles.variableContent}>
                     <div {...draggableProvided.dragHandleProps} onPointerDown={onPointerDown}>
-                      <Tooltip content={t('dashboard.edit-pane.variables.reorder', 'Drag to reorder')} placement="top">
+                      <Tooltip content={t('dashboard.sidebar.variables.reorder', 'Drag to reorder')} placement="top">
                         <Icon name="draggabledots" size="md" className={styles.dragHandle} />
                       </Tooltip>
                     </div>
@@ -209,7 +209,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
                   </div>
                   <Stack direction="row" gap={1} alignItems="center">
                     <Button variant="primary" size="sm" fill="outline">
-                      <Trans i18nKey="dashboard.edit-pane.variables.select-variable">Select</Trans>
+                      <Trans i18nKey="dashboard.sidebar.variables.select-variable">Select</Trans>
                     </Button>
                   </Stack>
                 </div>
@@ -243,7 +243,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
             onClick={onAddVariable}
             data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
           >
-            <Trans i18nKey="dashboard.edit-pane.variables.add-variable">Add variable</Trans>
+            <Trans i18nKey="dashboard.sidebar.variables.add-variable">Add variable</Trans>
           </Button>
         </Box>
       )}

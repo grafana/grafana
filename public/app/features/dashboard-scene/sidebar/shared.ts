@@ -41,10 +41,10 @@ import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { DashboardEditableElement } from './dashboard/DashboardEditableElement';
 import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
 
-export const EDIT_PANE_COLLAPSED_KEY = 'grafana.dashboards.edit-pane.isCollapsed';
+export const SIDEBAR_COLLAPSED_KEY = 'grafana.dashboards.sidebar.isCollapsed';
 
-export function useEditPaneCollapsed() {
-  return useSessionStorage(EDIT_PANE_COLLAPSED_KEY, false);
+export function useSidebarCollapsed() {
+  return useSessionStorage(SIDEBAR_COLLAPSED_KEY, false);
 }
 
 export function getEditableElementForSelection(

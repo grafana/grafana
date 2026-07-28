@@ -99,7 +99,7 @@ export class RowItem
   public getEditableElementInfo(): EditableDashboardElementInfo {
     const isHidden = !this.state.conditionalRendering?.state.result;
     return {
-      typeName: t('dashboard.edit-pane.elements.row', 'Row'),
+      typeName: t('dashboard.sidebar.elements.row', 'Row'),
       instanceName: interpolateSectionTitle(this, this.state.title),
       icon: 'list-ul',
       isHidden,

@@ -62,9 +62,9 @@ export class SectionFiltersSet extends SceneObjectBase<SectionFiltersSetState> i
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.section-filters-set', 'Filters'),
+      typeName: t('dashboard.sidebar.elements.section-filters-set', 'Filters'),
       icon: 'filter',
-      instanceName: t('dashboard.edit-pane.elements.section-filters-set', 'Filters'),
+      instanceName: t('dashboard.sidebar.elements.section-filters-set', 'Filters'),
     };
   }
 

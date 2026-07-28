@@ -32,7 +32,7 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardEditActionEvent } from '../sidebar/events';
-import { EDIT_PANE_COLLAPSED_KEY } from '../sidebar/shared';
+import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
 import { getDashboardSceneFor, getLibraryPanelBehavior, getPanelIdForVizPanel } from '../utils/utils';
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
@@ -102,7 +102,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     dashboard.state.sidebar.clearSelection();
 
     if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
-      const isPaneCollapsed = sessionStorage.getItem(EDIT_PANE_COLLAPSED_KEY) === 'true';
+      const isPaneCollapsed = sessionStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
       if (isPaneCollapsed) {
         panel.changePluginType('timeseries');
       }
