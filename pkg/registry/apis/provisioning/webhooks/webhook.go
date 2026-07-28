@@ -51,7 +51,6 @@ type webhookConnector struct {
 	// replayCache is the process-wide webhook replay cache, shared across every
 	// provider repository the connector dispatches for.
 	replayCache *replayCache
-	rateLimiter RateLimiter
 }
 
 func NewWebhookConnector(
@@ -59,16 +58,15 @@ func NewWebhookConnector(
 	core webhookCore,
 	renderer pullrequest.ScreenshotRenderer,
 	registry prometheus.Registerer,
-	rateLimiter RateLimiter,
 ) *webhookConnector {
+	metrics := registerWebhookMetrics(registry)
 	return &webhookConnector{
 		webhooksEnabled: webhooksEnabled,
 		core:            core,
 		renderer:        renderer,
 		registry:        registry,
-		metrics:         registerWebhookMetrics(registry),
+		metrics:         metrics,
 		replayCache:     newReplayCache(defaultReplayCacheTTL),
-		rateLimiter:     rateLimiter,
 	}
 }
 
@@ -125,12 +123,11 @@ func (s *webhookConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 }
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	namespace := request.NamespaceValue(ctx)
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, span := tracing.Start(r.Context(), "provisioning.webhook.handle")
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, span := tracing.Start(ctx, "provisioning.webhook.handle")
 		defer span.End()
 
+		namespace := request.NamespaceValue(ctx)
 		span.SetAttributes(
 			attribute.String("repository", name),
 			attribute.String("namespace", namespace),
@@ -224,14 +221,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		}
 
 		responder.Object(rsp.Code, rsp)
-	})
-
-	var h http.Handler = handler
-	if s.rateLimiter != nil {
-		h = s.rateLimiter.Wrap(namespace, h)
-	}
-
-	return h, nil
+	}), nil
 }
 
 type webhookResult struct {
