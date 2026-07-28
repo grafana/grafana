@@ -297,10 +297,17 @@ export interface PluginUserStorage extends UserStorageType {}
  */
 export function usePluginUserStorage(): PluginUserStorage {
   const context = usePluginContext();
+  const ref = useRef<[id: string, PluginUserStorage] | undefined>(undefined);
+
   if (!context) {
     throw new Error(`No PluginContext found. The usePluginUserStorage() hook can only be used from a plugin.`);
   }
-  return new UserStorage(context?.meta.id);
+
+  if (!ref.current || ref.current[0] !== context.meta.id) {
+    ref.current = [context.meta.id, new UserStorage(context.meta.id)];
+  }
+
+  return ref.current[1];
 }
 
 /**
