@@ -125,9 +125,13 @@ func (s *CachelessPeriodicInformer) Run(stopCh <-chan struct{}) {
 		case <-ctx.Done():
 			return
 		case <-timer.C:
+			// Re-arm before relisting so a slow LIST is not added to the interval;
+			// this keeps the cadence start-to-start (as the ticker was) rather than
+			// relist-duration + resync. Reset is safe here because the timer has
+			// already fired and C has been drained.
+			timer.Reset(wait.Jitter(s.resync, s.jitterFactor))
 			// Error already logged in relist; the next tick retries.
 			_ = s.relist(ctx)
-			timer.Reset(wait.Jitter(s.resync, s.jitterFactor))
 		}
 	}
 }

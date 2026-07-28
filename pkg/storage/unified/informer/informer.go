@@ -268,9 +268,13 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 		case <-ctx.Done():
 			return
 		case <-resync.C:
+			// Re-arm before relisting so a slow LIST or handler dispatch is not
+			// added to the interval; this keeps the cadence start-to-start (as the
+			// ticker was) rather than relist-duration + resync. Reset is safe here
+			// because the timer has already fired and C has been drained.
+			resync.Reset(wait.Jitter(n.resync, n.jitterFactor))
 			// Error already logged in relist; the next tick retries.
 			_ = n.relist(ctx, false)
-			resync.Reset(wait.Jitter(n.resync, n.jitterFactor))
 		case <-n.reconnect:
 			n.log.Debug("nats reconnected; re-listing", "gvr", n.gvr.String())
 			_ = n.relist(ctx, false)
