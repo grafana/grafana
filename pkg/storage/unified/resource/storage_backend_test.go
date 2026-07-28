@@ -585,17 +585,18 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 	}
 }
 
-// roundTripCountingKV counts the reads issued against the data section, so a
-// test can tell how many storage round trips resolving a set of events took.
-type roundTripCountingKV struct {
+// countingKV wraps a KV and counts the reads issued against the data section,
+// so a test can tell how many storage round trips resolving a set of events
+// took, and how many keys those round trips covered.
+type countingKV struct {
 	KV
 	mu         sync.Mutex
 	roundTrips int
 	keysRead   int
 }
 
-func (k *roundTripCountingKV) count(section string, keys int) {
-	if section != dataSection {
+func (k *countingKV) count(section string, keys int) {
+	if section != kv.DataSection {
 		return
 	}
 	k.mu.Lock()
@@ -604,35 +605,43 @@ func (k *roundTripCountingKV) count(section string, keys int) {
 	k.keysRead += keys
 }
 
-func (k *roundTripCountingKV) stats() (roundTrips, keysRead int) {
+// stats returns the counters so a caller can diff them around an operation,
+// keeping unrelated reads (the write path) out of the measurement.
+func (k *countingKV) stats() (roundTrips, keysRead int) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	return k.roundTrips, k.keysRead
 }
 
-func (k *roundTripCountingKV) Get(ctx context.Context, section string, key string) (io.ReadCloser, error) {
+func (k *countingKV) Get(ctx context.Context, section string, key string) (io.ReadCloser, error) {
 	k.count(section, 1)
 	return k.KV.Get(ctx, section, key)
 }
 
-func (k *roundTripCountingKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+func (k *countingKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
 	k.count(section, len(keys))
 	return k.KV.BatchGet(ctx, section, keys)
 }
 
-// TestKvStorageBackend_emitWriteEvents asserts that a batch of notifications is
-// resolved in a single storage round trip and delivered in ascending resource
-// version order, including when a value has gone missing.
-func TestKvStorageBackend_emitWriteEvents(t *testing.T) {
+// TestKvStorageBackend_WatchWriteEvents_BatchesValueReads verifies that the
+// notifications backing a watch stream are resolved in one storage round trip
+// per batch rather than one per event, and that batching neither reorders the
+// stream nor lets a missing value shift the events around it.
+//
+// The whole stream is not exercised here on purpose: how many notifications land
+// in one batch depends on whether this goroutine wakes before the settle tick
+// has finished handing them over, which no assertion can pin down. Driving
+// emitWriteEvents directly makes the batch boundary explicit.
+func TestKvStorageBackend_WatchWriteEvents_BatchesValueReads(t *testing.T) {
 	const numEvents = 2 * dataBatchSize // spans more than one batched read
 
-	kvStore := &roundTripCountingKV{KV: setupBadgerKV(t)}
+	kvStore := &countingKV{KV: setupBadgerKV(t)}
 	backend := setupTestStorageBackend(t, withKV(kvStore))
 	ctx := t.Context()
 
 	writtenRVs := make([]int64, numEvents)
 	for i := range numEvents {
-		name := fmt.Sprintf("emit-%03d", i)
+		name := fmt.Sprintf("batched-%03d", i)
 		obj, err := createTestObjectWithName(name, appsNamespace, fmt.Sprintf("value-%d", i))
 		require.NoError(t, err)
 		metaAccessor, err := utils.MetaAccessor(obj)
@@ -654,8 +663,9 @@ func TestKvStorageBackend_emitWriteEvents(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	// Take the notifications from the event store so their keys are the ones the
-	// writes actually produced.
+	// Take the notifications from the event store rather than building them by
+	// hand: a DataKey carries the folder and action too, and guessing either makes
+	// the batched read silently miss.
 	batch := make([]Event, 0, numEvents)
 	for event, err := range backend.eventStore.ListSince(ctx, 0, SortOrderAsc) {
 		require.NoError(t, err)
@@ -663,7 +673,8 @@ func TestKvStorageBackend_emitWriteEvents(t *testing.T) {
 	}
 	require.Len(t, batch, numEvents)
 
-	// A missing value must not shift the events around it.
+	// BatchGet omits missing keys instead of erroring, so drop one value to prove
+	// the results are matched back by key rather than by position.
 	const missing = numEvents / 2
 	require.NoError(t, backend.dataStore.Delete(ctx, DataKey{
 		Group:           batch[missing].Group,
@@ -688,8 +699,8 @@ func TestKvStorageBackend_emitWriteEvents(t *testing.T) {
 	assert.Equal(t, slices.Delete(slices.Clone(writtenRVs), missing, missing+1), receivedRVs,
 		"events must be delivered in ascending resource version order, minus the one with no value")
 
-	// dataStore chunks at dataBatchSize, so the whole batch costs len(batch)/dataBatchSize
-	// reads. Resolving one event at a time would cost numEvents.
+	// dataStore chunks at dataBatchSize, so the batch costs one read per chunk.
+	// Resolving one event at a time would cost numEvents reads.
 	tripsAfter, keysAfter := kvStore.stats()
 	assert.Equal(t, numEvents/dataBatchSize, tripsAfter-tripsBefore, "the batch should be resolved in one read per chunk")
 	assert.Equal(t, numEvents, keysAfter-keysBefore, "every event should be read exactly once")
