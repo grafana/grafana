@@ -4,8 +4,8 @@ import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
 
 export function useIsProvisionedNG(dashboard: DashboardScene): boolean {
   const params = new URLSearchParams(window.location.search);
-  const folderName = params.get('folderUid') || undefined;
   const isNewDashboard = !dashboard.state.meta.k8s?.name;
+  const folderName = isNewDashboard ? params.get('folderUid') || undefined : undefined;
 
   const { repository, isInstanceManaged } = useGetResourceRepositoryView({
     folderName,

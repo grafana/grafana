@@ -80,6 +80,17 @@ describe('useIsProvisionedNG', () => {
     });
   });
 
+  it('ignores a stale URL folderUid on an existing dashboard', () => {
+    window.history.replaceState({}, '', '/?folderUid=some-folder');
+
+    renderHook(() => useIsProvisionedNG(createDashboard({ k8sName: 'existing-dashboard-uid' })));
+
+    expect(mockUseGetResourceRepositoryView).toHaveBeenCalledWith({
+      folderName: undefined,
+      includeFolderless: false,
+    });
+  });
+
   it('does not ask for a folderless repo when a folder is already selected', () => {
     window.history.replaceState({}, '', '/?folderUid=some-folder');
 
