@@ -7,7 +7,7 @@ import { alertingApi } from './alertingApi';
 const getProxyApiUrl = (path: string) => `/api/plugins/${SupportedPlugin.Assistant}/resources${path}`;
 
 /** Labels-only alert used for group identity (lookup / RTK cache key). */
-export interface LookupInvestigationAlert {
+interface LookupInvestigationAlert {
   labels: Record<string, string>;
   annotations?: Record<string, string>;
 }
@@ -23,7 +23,7 @@ export interface LookupInvestigationFromAlertRequest {
 }
 
 /** AlertManager-style alert for create — includes delivery / episode timing fields. */
-export interface StartInvestigationAlert extends LookupInvestigationAlert {
+interface StartInvestigationAlert extends LookupInvestigationAlert {
   status?: string;
   startsAt?: string;
   endsAt?: string;

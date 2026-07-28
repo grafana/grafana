@@ -193,7 +193,11 @@ export function useStartInvestigation({
     if (!requestBody) {
       return;
     }
-    const isResolved = alertState === GrafanaAlertState.Normal;
+    // Prefer live state when known. When useInstanceAlertState returns null (loading /
+    // missing datasource), fall back to history: a closed episode (endsAt, no open
+    // startsAt) means resolved — otherwise we would omit endsAt for a resolved alert.
+    const isResolved =
+      alertState === GrafanaAlertState.Normal || (alertState == null && Boolean(alertEndsAt) && !alertStartsAt);
     const status = isResolved ? 'resolved' : 'firing';
     const generatorURL = rule?.uid ? createAbsoluteUrl(`/alerting/grafana/${rule.uid}/view`) : undefined;
     // Prefer state-history resolve time; fall back to now so Assistant always gets
