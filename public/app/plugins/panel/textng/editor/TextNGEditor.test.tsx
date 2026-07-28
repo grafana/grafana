@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
@@ -211,6 +211,20 @@ describe('TextNGEditor', () => {
       expect(onChange).toHaveBeenLastCalledWith('updated');
     });
 
+    it('commits the latest draft when the last change and the blur happen in the same event turn', async () => {
+      const { onChange } = setup('initial', TextMode.Markdown);
+      await enterWriteMode();
+
+      const editor = screen.getByRole('textbox');
+      // One batch: the blur handler runs before React re-renders with the new draft.
+      act(() => {
+        fireEvent.change(editor, { target: { value: 'updated' } });
+        fireEvent.blur(editor);
+      });
+
+      expect(onChange).toHaveBeenCalledWith('updated');
+    });
+
     it('does not commit a pending draft on unmount, so Discard is not overwritten', async () => {
       const onChange = jest.fn();
       const { unmount } = render(
@@ -224,8 +238,7 @@ describe('TextNGEditor', () => {
 
       unmount();
 
-      // The debounce timer is canceled on unmount; the pending draft must not
-      // be flushed (it could overwrite a Discard).
+      // A flush here could overwrite a Discard.
       expect(onChange).not.toHaveBeenCalledWith('updated');
     });
 

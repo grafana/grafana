@@ -40,6 +40,8 @@ export function TextNGEditor({
   const [view, setView] = useState<ViewMode>(() => (content.trim().length === 0 ? 'write' : 'preview'));
 
   const [draft, setDraft] = useState(content);
+  // a blur can fire before React re-renders with the new draft.
+  const draftRef = useRef(content);
   const committedContent = useRef(content);
 
   const [prevContent, setPrevContent] = useState(content);
@@ -47,14 +49,21 @@ export function TextNGEditor({
     setPrevContent(content);
     if (content !== committedContent.current) {
       committedContent.current = content;
+      draftRef.current = content;
       setDraft(content);
     }
   }
 
+  const handleDraftChange = (next: string) => {
+    draftRef.current = next;
+    setDraft(next);
+  };
+
   const commitDraft = () => {
-    if (draft !== committedContent.current) {
-      committedContent.current = draft;
-      onChange(draft);
+    const next = draftRef.current;
+    if (next !== committedContent.current) {
+      committedContent.current = next;
+      onChange(next);
     }
   };
 
@@ -120,7 +129,7 @@ export function TextNGEditor({
           <div className={cx(styles.pane, styles.editorPane)} onBlur={commitDraft}>
             <CodeMirrorEditor
               value={draft}
-              onChange={setDraft}
+              onChange={handleDraftChange}
               language={editorLanguage}
               lineWrapping
               basicSetup={basicSetup}

@@ -104,7 +104,6 @@ datasource/GoogleSheets
 datasource/Graphite
 datasource/InfluxDB
 datasource/JSON
-datasource/Loki
 datasource/MSSQL
 datasource/MySQL
 datasource/OpenSearch

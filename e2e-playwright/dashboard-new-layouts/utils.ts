@@ -12,7 +12,8 @@ export const flows = {
     page: Page,
     dashboardPage: DashboardPage,
     selectors: E2ESelectorGroups,
-    variable: Variable
+    variable: Variable,
+    skipEnterEditMode = false
   ) {
     // Keep the flows signature unchanged for unmigrated callers: build the
     // `components` fixture equivalent from the page context
@@ -20,7 +21,9 @@ export const flows = {
     const controls = new Controls({ page, dashboardPage, selectors, components });
     const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
-    await controls.enterEditMode();
+    if (!skipEnterEditMode) {
+      await controls.enterEditMode();
+    }
 
     await sidebar.toolbar.clickButton('Add');
     await sidebar.addOptions.clickNewVariableButton();
@@ -90,14 +93,16 @@ export async function checkRepeatedPanelTitles(
   options: Array<string | number>,
   expectHidden = false
 ) {
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const panel = new Panel({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+
   for (const option of options) {
-    const titleLocator = dashboardPage.getByGrafanaSelector(
-      selectors.components.Panels.Panel.title(`${title}${option}`)
-    );
     if (expectHidden) {
-      await expect(titleLocator).toBeHidden();
+      await expect(panel.getContainerByTitle(`${title}${option}`)).toBeHidden();
     } else {
-      await expect(titleLocator).toBeVisible();
+      await expect(panel.getContainerByTitle(`${title}${option}`)).toBeVisible();
     }
   }
 }
@@ -382,13 +387,11 @@ export async function fillVariableValue(
   varName: string,
   text: string
 ) {
-  const variable = dashboardPage
-    .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(varName))
-    .locator('..')
-    .locator('input');
-  await variable.click();
-  await variable.clear();
-  await variable.fill(text);
-  await variable.press('Enter');
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const controls = new Controls({ page, dashboardPage, selectors, components });
+
+  await controls.variables.setValue(varName, text);
   await page.waitForLoadState('networkidle');
 }

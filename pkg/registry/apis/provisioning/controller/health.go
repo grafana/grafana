@@ -288,6 +288,10 @@ func (hc *RepositoryHealthChecker) refreshHealth(ctx context.Context, repo repos
 			Message: errorMsgs,
 		}
 
+		// Log why the repository is now considered unhealthy so the reason is
+		// captured at detection time, not only when a later sync is skipped.
+		logger.Warn("repository health check failed, marking repository unhealthy", "messages", errorMsgs)
+
 		return res, healthStatus, nil
 	}
 

@@ -1091,14 +1091,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				syncWorker,
 			)
 
-			// Create JobController to handle job create notifications
-			jobController := appcontroller.NewJobController()
-			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
-			if _, err := jobSource.AddEventHandler(jobController.EventHandler()); err != nil {
-				return fmt.Errorf("add job controller event handler: %w", err)
-			}
-			go jobSource.Run(postStartHookCtx.Done())
-
 			// Add any extra workers
 			workers = append(workers, b.extraWorkers...)
 
@@ -1127,8 +1119,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// considered abandoned.
 			leaseRenewalInterval := jobClaimExpiry / 3
 
-			// Fallback poll for new jobs; the driver is also woken immediately by
-			// the job-create notification. Configurable via [provisioning]
+			// Backstop poll for unclaimed jobs missed by the informer events (one
+			// list per interval per replica). Configurable via [provisioning]
 			// job_poll_interval; <=0 falls back to the default.
 			jobPollInterval := b.jobPollInterval
 			if jobPollInterval <= 0 {
@@ -1139,10 +1131,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,                    // 3 drivers for now
 				20*time.Minute,       // Max time for each job
-				jobPollInterval,      // Periodically look for new jobs
+				jobPollInterval,      // Periodically look for unclaimed jobs
 				leaseRenewalInterval, // Lease renewal interval
 				b.jobs, repoGetter, jobHistoryWriter,
-				jobController.InsertNotifications(),
 				b.registry,
 				&metrics,
 				workers...,
@@ -1150,6 +1141,15 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if err != nil {
 				return err
 			}
+
+			// Feed the driver's work queue from job create events. The handler must
+			// be registered before the informer runs: the NATS-backed source has no
+			// cache to replay for late handlers.
+			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			if _, err := jobSource.AddEventHandler(driver.EventHandler()); err != nil {
+				return fmt.Errorf("add job event handler: %w", err)
+			}
+			go jobSource.Run(postStartHookCtx.Done())
 
 			go func() {
 				if err := driver.Run(postStartHookCtx.Context); err != nil {
