@@ -38,6 +38,15 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 	if nats.Enabled(subscriber) {
 		store := usinformer.NewStore()
 		source := NewRepositoryInformer(subscriber, client, "", resync, store)
+		// The informer is the repository controller's only feed, and everything
+		// that creates provisioning work lives in its reconcile: scheduled syncs,
+		// health checks, webhook create/rotate, quota. Gating the initial list on
+		// the subscription would stall all of it while NATS is unavailable — and
+		// gating buys no safety here, since reconcile reads come fresh from the
+		// API and the re-list (not the live stream) is what keeps a replica
+		// reconciled under round-robin delivery. In degraded mode only the
+		// live-event latency is lost until the subscription opens.
+		source.AllowDegradedStart()
 		return source, NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
