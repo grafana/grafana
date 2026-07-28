@@ -1,5 +1,6 @@
 import { type Labels } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { useFlagAlertingManualAssistantInvestigation } from '@grafana/runtime/internal';
 import { type GrafanaRuleDefinition } from 'app/types/unified-alerting-dto';
 
 import { type StartInvestigationFromAlertRequest } from '../../api/assistantApi';
@@ -10,12 +11,14 @@ import { SupportedPlugin } from '../../types/pluginBridges';
 /** How often to refresh investigation state while a report is still generating. */
 export const ASSISTANT_INVESTIGATION_POLL_INTERVAL_MS = 3000;
 
-/** True when both product toggles for the manual investigation entry point are on. */
-export function isManualAssistantInvestigationEnabled(): boolean {
-  return Boolean(
-    config.featureToggles.alertingEnrichmentAssistantInvestigations &&
-      config.featureToggles.alertingManualAssistantInvestigation
-  );
+/**
+ * True when both product toggles for the manual investigation entry point are on.
+ * Manual start uses GOFF (`alerting.manualAssistantInvestigation`); the sibling
+ * enrichment flag stays on legacy `config.featureToggles` until a follow-up migration.
+ */
+export function useManualAssistantInvestigationEnabled(): boolean {
+  const manualEnabled = useFlagAlertingManualAssistantInvestigation();
+  return Boolean(config.featureToggles.alertingEnrichmentAssistantInvestigations) && manualEnabled;
 }
 
 // Matches Assistant investigation states (api/internal/investigations/model).

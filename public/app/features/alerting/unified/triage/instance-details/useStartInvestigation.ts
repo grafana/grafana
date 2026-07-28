@@ -17,8 +17,8 @@ import {
   isAssistantInvestigationCompleted,
   isAssistantInvestigationFailed,
   isAssistantInvestigationTerminal,
-  isManualAssistantInvestigationEnabled,
   selectAssistantInvestigation,
+  useManualAssistantInvestigationEnabled,
 } from './startInvestigationFromAlert';
 
 export interface UseStartInvestigationArgs {
@@ -62,7 +62,7 @@ export function useStartInvestigation({
   alertEndsAt,
 }: UseStartInvestigationArgs): StartInvestigationViewModel {
   const dispatch = useDispatch();
-  const featureEnabled = isManualAssistantInvestigationEnabled();
+  const featureEnabled = useManualAssistantInvestigationEnabled();
   const { installed } = usePluginBridge(SupportedPlugin.Assistant);
 
   // Wait for rule identity when the instance has no labels, otherwise early

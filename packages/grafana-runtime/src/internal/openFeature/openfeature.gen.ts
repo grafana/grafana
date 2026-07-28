@@ -13,6 +13,8 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Enable manually starting an Assistant investigation from the alert instance drawer. */
+  AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
   AlertingRuleQuality: "alerting.ruleQuality",
   /** Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana */
@@ -144,6 +146,17 @@ export const FlagKeys = {
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
 } as const;
+
+/**
+ * Enable manually starting an Assistant investigation from the alert instance drawer.
+ *
+ * **Details:**
+ * - flag key: `alerting.manualAssistantInvestigation`
+ * - default value: `false`
+ */
+export const useFlagAlertingManualAssistantInvestigation = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.manualAssistantInvestigation", false, options).value;
+};
 
 /**
  * Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.

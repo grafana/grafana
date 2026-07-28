@@ -18,7 +18,7 @@ import { isLocalDevEnv, isOpenSourceEdition, makeLabelBasedSilenceLink } from '.
 
 import { InstanceLocation } from './InstanceDetailsDrawer';
 import { StartInvestigationButton } from './StartInvestigationButton';
-import { isManualAssistantInvestigationEnabled } from './startInvestigationFromAlert';
+import { useManualAssistantInvestigationEnabled } from './startInvestigationFromAlert';
 
 type StateTextState = 'normal' | 'firing' | 'pending' | 'recovering' | 'unknown';
 type StateTextHealth = 'ok' | 'nodata' | 'error';
@@ -80,7 +80,8 @@ export function InstanceDetailsDrawerTitle({
   const { folder } = useFolder(rule?.namespace_uid);
   const { pluginId, installed, settings } = useIrmPlugin(SupportedPlugin.Incident);
   const { installed: assistantInstalled } = usePluginBridge(SupportedPlugin.Assistant);
-  const showStartInvestigation = !hideActions && isManualAssistantInvestigationEnabled() && Boolean(assistantInstalled);
+  const manualInvestigationEnabled = useManualAssistantInvestigationEnabled();
+  const showStartInvestigation = !hideActions && manualInvestigationEnabled && Boolean(assistantInstalled);
   const canCreateSilence = isGranted(
     useGlobalSilenceAbility({ action: SilenceAction.Create, folderUID: rule?.namespace_uid })
   );

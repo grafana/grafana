@@ -31,6 +31,7 @@ declare module "@openfeature/core" {
     | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
+    | "alerting.manualAssistantInvestigation"
     | "alerting.ruleQuality"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
