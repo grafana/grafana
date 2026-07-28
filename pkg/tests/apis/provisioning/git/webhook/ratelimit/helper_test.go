@@ -14,10 +14,14 @@ const webhookRateLimitRPS = 5
 // This package runs in its own shared env so the webhook rate limiter's
 // per-client bucket is not shared with — and drained by — the unrelated webhook
 // tests next door.
+// trustedIPHeader is the header the limiter keys on in this env. Requests that
+// omit it fall back to the TCP peer (loopback), which is what the peer-keyed
+// tests rely on; the header-keyed test sends it explicitly.
+const trustedIPHeader = "X-Real-Ip"
+
 var env = common.NewSharedGitEnv(
-	// No trusted IP header is configured, so the limiter keys on the TCP peer
-	// (loopback) — which is what these tests rely on.
 	common.WithProvisioningWebhookRateLimitRPS(webhookRateLimitRPS),
+	common.WithProvisioningWebhookTrustedIPHeader(trustedIPHeader),
 	// Match the sibling webhook env so the webhook connector is wired the same
 	// way (public root URL makes the endpoint "enabled"; github is registered
 	// alongside git).

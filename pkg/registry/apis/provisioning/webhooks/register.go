@@ -137,6 +137,10 @@ func ProvideWebhooksWithImages(
 	}
 	isPublic := isPublicURL(publicURL)
 
+	// Build the limiter once, outside the ExtraBuilder closure so multiple API versions (v0alpha, v1beta)
+	// will still use the same rate limiter
+	rateLimiter := NewConfiguredRateLimiter(cfg.ProvisioningWebhookRateLimitRPS, cfg.ProvisioningWebhookTrustedIPHeader)
+
 	return &WebhookExtraBuilder{
 		isPublic:    isPublic,
 		urlProvider: urls.Public,
@@ -151,7 +155,7 @@ func ProvideWebhooksWithImages(
 				b,
 				screenshotRenderer,
 				registry,
-				NewConfiguredRateLimiter(cfg.ProvisioningWebhookRateLimitRPS, cfg.ProvisioningWebhookTrustedIPHeader),
+				rateLimiter,
 			)
 
 			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urls, registry)
