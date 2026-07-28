@@ -21,7 +21,7 @@ import {
 import { readScalar, runInstantQueries } from './promQuery';
 
 // "Seen recently" lookback shared by all data probes, tolerating scrape/ingest gaps.
-const DATA_LOOKBACK_HOURS = 24;
+export const DATA_LOOKBACK_HOURS = 24;
 
 /**
  * The first probed healthy candidate datasource of `type` where `hasData` confirms data, or null
