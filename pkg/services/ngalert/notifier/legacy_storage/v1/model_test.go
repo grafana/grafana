@@ -3,6 +3,7 @@ package v1
 import (
 	"testing"
 
+	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -63,7 +64,7 @@ mute_time_intervals:
 		assert.Equal(t, "weekends", cfg.MuteTimeIntervals[0].Name)
 	})
 
-	t.Run("converts receivers to Grafana format", func(t *testing.T) {
+	t.Run("preserves upstream receivers and converts to Grafana format on demand", func(t *testing.T) {
 		const yaml = `
 route:
   receiver: recv1
@@ -79,7 +80,96 @@ receivers:
 		require.Len(t, cfg.Receivers, 1)
 		recv := cfg.Receivers[0]
 		assert.Equal(t, "recv1", recv.Name)
-		require.Len(t, recv.GrafanaManagedReceivers, 1)
-		assert.Equal(t, "webhook", recv.GrafanaManagedReceivers[0].Type)
+		require.Len(t, recv.WebhookConfigs, 1)
 	})
+}
+
+func TestExtraAlertmanagerConfig_ToGrafanaReceivers(t *testing.T) {
+	t.Run("empty receivers", func(t *testing.T) {
+		c := ExtraAlertmanagerConfig{}
+		got, err := c.ToGrafanaReceivers()
+		require.NoError(t, err)
+		assert.Empty(t, got)
+	})
+
+	t.Run("receiver without integrations passes through", func(t *testing.T) {
+		c := ExtraAlertmanagerConfig{Receivers: []config.Receiver{{Name: "recv1"}}}
+		got, err := c.ToGrafanaReceivers()
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+		assert.Equal(t, "recv1", got[0].Name)
+		assert.Empty(t, got[0].GrafanaManagedReceivers)
+	})
+
+	t.Run("Mimir integrations are converted to Grafana receivers", func(t *testing.T) {
+		const yaml = `
+route:
+  receiver: recv1
+receivers:
+  - name: recv1
+    webhook_configs:
+      - url: "http://localhost/"
+`
+		c := ExtraConfiguration{Identifier: "test", AlertmanagerConfig: yaml}
+		cfg, err := c.GetAlertmanagerConfig()
+		require.NoError(t, err)
+
+		got, err := cfg.ToGrafanaReceivers()
+		require.NoError(t, err)
+		require.Len(t, got, 1)
+		assert.Equal(t, "recv1", got[0].Name)
+		require.Len(t, got[0].GrafanaManagedReceivers, 1)
+		assert.Equal(t, "webhook", got[0].GrafanaManagedReceivers[0].Type)
+	})
+}
+
+func TestExtraAlertmanagerConfig_ToGrafanaRoute(t *testing.T) {
+	c := ExtraAlertmanagerConfig{
+		Route: &config.Route{
+			Receiver:          "root",
+			MuteTimeIntervals: []string{"weekends"},
+			Routes: []*config.Route{
+				{Receiver: "child"},
+			},
+		},
+	}
+
+	route := c.ToGrafanaRoute()
+	require.NotNil(t, route)
+	assert.Equal(t, "root", route.Receiver)
+	assert.Equal(t, []string{"weekends"}, route.MuteTimeIntervals)
+	require.Len(t, route.Routes, 1)
+	assert.Equal(t, "child", route.Routes[0].Receiver)
+}
+
+func TestExtraAlertmanagerConfig_ToGrafanaTimeIntervals(t *testing.T) {
+	c := ExtraAlertmanagerConfig{
+		MuteTimeIntervals: []config.MuteTimeInterval{{Name: "weekends"}},
+		TimeIntervals:     []config.TimeInterval{{Name: "business-hours"}},
+	}
+
+	mutes := c.ToGrafanaMuteTimeIntervals()
+	require.Len(t, mutes, 1)
+	assert.Equal(t, "weekends", mutes[0].Name)
+
+	times := c.ToGrafanaTimeIntervals()
+	require.Len(t, times, 1)
+	assert.Equal(t, "business-hours", times[0].Name)
+}
+
+func TestExtraAlertmanagerConfig_ReceiverNameStubs(t *testing.T) {
+	c := ExtraAlertmanagerConfig{
+		Receivers: []config.Receiver{
+			{Name: "recv1", WebhookConfigs: []*config.WebhookConfig{{}}},
+			{Name: "recv2"},
+		},
+	}
+
+	stubs := c.ReceiverNameStubs()
+	require.Len(t, stubs, 2)
+	assert.Equal(t, "recv1", stubs[0].Name)
+	assert.Equal(t, "recv2", stubs[1].Name)
+	// Only names are carried over; receiver contents are dropped.
+	assert.False(t, stubs[0].HasMimirIntegrations())
+	assert.Empty(t, stubs[0].GrafanaManagedReceivers)
 }

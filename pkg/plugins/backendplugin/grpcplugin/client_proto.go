@@ -52,17 +52,10 @@ type ProtoClientOpts struct {
 	ExecutablePath  string
 	ExecutableArgs  []string
 	Env             []string
-	ContainerMode   ContainerModeOpts
 	RunnerFunc      func(l hclog.Logger, cmd *exec.Cmd, tmpDir string) (runner.Runner, error)
 	SkipHostEnvVars bool
 	Logger          log.Logger
 	Tracer          trace.Tracer
-}
-
-type ContainerModeOpts struct {
-	Enabled bool
-	Image   string
-	Tag     string
 }
 
 func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
@@ -73,13 +66,8 @@ func NewProtoClient(opts ProtoClientOpts) (ProtoClient, error) {
 			executablePath:   opts.ExecutablePath,
 			executableArgs:   opts.ExecutableArgs,
 			versionedPlugins: pluginSet,
-			containerMode: containerModeOpts{
-				enabled: opts.ContainerMode.Enabled,
-				image:   opts.ContainerMode.Image,
-				tag:     opts.ContainerMode.Tag,
-			},
-			runnerFunc:      opts.RunnerFunc,
-			skipHostEnvVars: opts.SkipHostEnvVars,
+			runnerFunc:       opts.RunnerFunc,
+			skipHostEnvVars:  opts.SkipHostEnvVars,
 		},
 		opts.Logger,
 		opts.Tracer,

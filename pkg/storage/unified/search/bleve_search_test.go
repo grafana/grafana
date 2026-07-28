@@ -47,6 +47,7 @@ func checkSearchQuery(t *testing.T, index resource.ResourceIndex, query *resourc
 	res, err := index.Search(context.Background(), nil, query, nil, nil)
 	require.NoError(t, err)
 	require.Equal(t, int64(len(orderedExpectedNames)), res.TotalHits)
+	require.True(t, res.TotalHitsExact, "in-searcher authz path reports an exact total")
 	for ix, name := range orderedExpectedNames {
 		require.Equal(t, name, res.Results.Rows[ix].Key.Name)
 	}
@@ -766,15 +767,24 @@ func TestPublicFieldNameTextQuery(t *testing.T) {
 		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d2", Title: "Two",
 			Key:    &resourcepb.ResourceKey{Name: "d2", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
 			Fields: map[string]any{"team": "blueteam"}}},
+		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d3", Title: "Three",
+			Key:    &resourcepb.ResourceKey{Name: "d3", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: map[string]any{"team": "GreenTeam"}}},
 	}}))
 
-	req := &resourcepb.ResourceSearchRequest{
-		Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
-		Query:       "redteam",
-		QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "team", Type: resourcepb.QueryFieldType_TEXT, Boost: 1}},
-		Limit:       100000,
+	query := func(text string) *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
+			Query:       text,
+			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "team", Type: resourcepb.QueryFieldType_TEXT, Boost: 1}},
+			Limit:       100000,
+		}
 	}
-	checkSearchQuery(t, index, req, []string{"d1"})
+
+	checkSearchQuery(t, index, query("redteam"), []string{"d1"})
+	// team is keyword-mapped, so its stored value keeps its case and an exact
+	// query has to match it as written.
+	checkSearchQuery(t, index, query("GreenTeam"), []string{"d3"})
 }
 
 func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer resource.BuildFn) resource.ResourceIndex {
@@ -1308,6 +1318,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Len(t, names, 100, "should return exactly the requested limit")
 		// totalHits stays the unfiltered match count.
 		require.Equal(t, int64(700), res.TotalHits)
+		require.False(t, res.TotalHitsExact, "page filled early -> approximate total")
 		// Early-exit: we must not have authorized all 700 candidates. With a
 		// batch size of 500 the first batch already fills the page of 100.
 		require.LessOrEqual(t, ac.checked, 500)
@@ -1334,6 +1345,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 		require.Empty(t, names, "deny-all -> no authorized hits")
 		require.Equal(t, int64(0), res.TotalHits, "exhausted -> exact authorized total")
+		require.True(t, res.TotalHitsExact, "exhausted scan -> exact total")
 		// Every doc was examined (exhaustion), so candidates == doc count.
 		require.Equal(t, 200, ac.checked)
 		// Growth: far fewer bleve searches than the 20 a constant window-10
@@ -1572,6 +1584,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		p3, r3 := searchNames(t, index, ac, q3)
 		require.Len(t, p3, 5)
 		require.Equal(t, int64(n), r3.TotalHits, "cursor page must report the unfiltered match count, not the tail authorized count")
+		require.False(t, r3.TotalHitsExact, "cursor-page total is approximate, not exact")
 	})
 
 	t.Run("low auth fraction continues past MaxCandidates until first authorized hit", func(t *testing.T) {

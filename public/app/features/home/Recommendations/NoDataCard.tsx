@@ -7,8 +7,9 @@ import { Badge, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 
-import { noDataCtaClicked } from '../analytics/main';
+import { ctaClicked } from '../analytics/main';
 
+import { SYNTHETIC_MONITORING_APP_ID } from './appPluginIds';
 import { KUBERNETES_APP_ID } from './kubernetesData';
 
 interface PopularSolution {
@@ -32,7 +33,7 @@ function getPopularSolutions(): PopularSolution[] {
     },
     {
       id: 'synthetic-monitoring',
-      pluginId: 'grafana-synthetic-monitoring-app',
+      pluginId: SYNTHETIC_MONITORING_APP_ID,
       label: t('home.recommendations.no-data.solution-synthetics', 'Synthetic Monitoring'),
       icon: 'globe',
       appPath: '/home',
@@ -103,7 +104,14 @@ export function NoDataCard() {
                 fill="solid"
                 icon={solution.icon}
                 href={getSolutionHref(solution, availableApps.has(solution.pluginId))}
-                onClick={() => noDataCtaClicked({ cta: 'solution', solution_id: solution.id })}
+                onClick={() =>
+                  ctaClicked({
+                    surface: 'no_data_card',
+                    action: 'open_solution',
+                    placement: 'pill',
+                    solution: solution.id,
+                  })
+                }
                 className={styles.pill}
               >
                 {solution.label}
@@ -121,7 +129,7 @@ export function NoDataCard() {
           icon="arrow-right"
           iconPlacement="right"
           href={locationUtil.assureBaseUrl(CONNECTIONS_ROUTES.AddNewConnection)}
-          onClick={() => noDataCtaClicked({ cta: 'connect_data_source' })}
+          onClick={() => ctaClicked({ surface: 'no_data_card', action: 'connect_data_source', placement: 'card' })}
         >
           <Trans i18nKey="home.recommendations.no-data.connect">Connect a data source</Trans>
         </LinkButton>

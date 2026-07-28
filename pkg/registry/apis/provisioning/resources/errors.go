@@ -76,6 +76,43 @@ func NewResourceUnmanagedConflictError(resourceName string, requestingManager ut
 	}
 }
 
+// ErrResourceManagedByOtherFile is a sentinel for the case where an old resource
+// cannot be deleted during a replace because its source-path annotation now points
+// to a different file in the same repository — another file has taken ownership of
+// that UID. This is a user misconfiguration (duplicate UID across files);
+// provisioning must not delete the resource and surfaces the skip as a warning
+// rather than failing the sync.
+var ErrResourceManagedByOtherFile = errors.New("resource now managed by a different file")
+
+// ResourceManagedByOtherFileError wraps the cross-file ownership conflict so callers
+// can detect it via errors.As / errors.Is.
+type ResourceManagedByOtherFileError struct {
+	ResourceName string
+	CurrentPath  string
+	RequestPath  string
+}
+
+func (e *ResourceManagedByOtherFileError) Error() string {
+	// Keep this message stable — callers and tests string-match on it.
+	return fmt.Sprintf("skipping delete of old resource %s: now managed by %s, not %s",
+		e.ResourceName, e.CurrentPath, e.RequestPath)
+}
+
+func (e *ResourceManagedByOtherFileError) Unwrap() error {
+	return ErrResourceManagedByOtherFile
+}
+
+// NewResourceManagedByOtherFileError builds the error for when the old resource's
+// source-path annotation points to a different file than the one triggering the
+// replace.
+func NewResourceManagedByOtherFileError(resourceName, currentPath, requestPath string) *ResourceManagedByOtherFileError {
+	return &ResourceManagedByOtherFileError{
+		ResourceName: resourceName,
+		CurrentPath:  currentPath,
+		RequestPath:  requestPath,
+	}
+}
+
 // ResourceValidationError represents an error that occurred while validating a resource.
 type ResourceValidationError struct {
 	Err error
