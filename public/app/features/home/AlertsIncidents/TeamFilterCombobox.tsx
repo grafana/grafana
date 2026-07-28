@@ -4,7 +4,7 @@ import { t } from '@grafana/i18n';
 import { Combobox, type ComboboxOption } from '@grafana/ui';
 import { useLazySearchTeamsQuery, useSearchTeamsQuery, type SearchTeamsApiArg } from 'app/api/clients/legacy';
 
-const ALL_TEAMS_VALUE = '';
+const DEFAULT_OPTION_VALUE = '';
 
 const TEAMS_PAGE_SIZE = 100;
 
@@ -16,14 +16,21 @@ const searchTeamsArgs = (query?: string): SearchTeamsApiArg => ({
   sort: 'name-asc',
 });
 
-const getAllTeamsOption = (): ComboboxOption<string> => ({
-  label: t('home.alerts-incidents.team-filter-all', 'All teams'),
-  value: ALL_TEAMS_VALUE,
+// Clearing the selection restores useFiringAlerts' default scope: the user's own
+// teams when they belong to any, otherwise all org alerts. The label mirrors that
+// branch so the option doesn't promise org-wide alerts it won't show.
+const getDefaultOption = (userHasTeams: boolean): ComboboxOption<string> => ({
+  label: userHasTeams
+    ? t('home.alerts-incidents.team-filter-your-teams', 'Your teams')
+    : t('home.alerts-incidents.team-filter-all', 'All teams'),
+  value: DEFAULT_OPTION_VALUE,
 });
 
 interface Props {
   selectedTeam: string | undefined;
   onChange: (team: string | undefined) => void;
+  /** Whether the signed-in user belongs to any teams; decides the default option's wording. */
+  userHasTeams: boolean;
 }
 
 /**
@@ -33,7 +40,7 @@ interface Props {
  * Shows the first page of teams by default; typing searches server-side, so
  * teams beyond the first page are still reachable.
  */
-export function TeamFilterCombobox({ selectedTeam, onChange }: Props) {
+export function TeamFilterCombobox({ selectedTeam, onChange, userHasTeams }: Props) {
   const { data, isLoading, error } = useSearchTeamsQuery(searchTeamsArgs());
   const [searchTeams] = useLazySearchTeamsQuery();
 
@@ -41,8 +48,8 @@ export function TeamFilterCombobox({ selectedTeam, onChange }: Props) {
   // Must be memoized: a new object every render makes downshift think the
   // selection changed, which wipes the input while the user is typing.
   const valueOption = useMemo(
-    () => (selectedTeam ? { label: selectedTeam, value: selectedTeam } : getAllTeamsOption()),
-    [selectedTeam]
+    () => (selectedTeam ? { label: selectedTeam, value: selectedTeam } : getDefaultOption(userHasTeams)),
+    [selectedTeam, userHasTeams]
   );
 
   const loadOptions = useCallback(
@@ -50,10 +57,10 @@ export function TeamFilterCombobox({ selectedTeam, onChange }: Props) {
       // preferCacheValue: reopening with the same input reuses the cached page.
       const result = await searchTeams(searchTeamsArgs(inputValue), true).unwrap();
       const teamOptions = (result.teams ?? []).map((team) => ({ label: team.name, value: team.name }));
-      // The "all teams" sentinel only belongs on the unfiltered default list.
-      return inputValue ? teamOptions : [getAllTeamsOption(), ...teamOptions];
+      // The default-scope sentinel only belongs on the unfiltered default list.
+      return inputValue ? teamOptions : [getDefaultOption(userHasTeams), ...teamOptions];
     },
-    [searchTeams]
+    [searchTeams, userHasTeams]
   );
 
   const teams = data?.teams ?? [];
@@ -68,7 +75,7 @@ export function TeamFilterCombobox({ selectedTeam, onChange }: Props) {
       options={loadOptions}
       value={valueOption}
       onChange={(option) => {
-        const newTeam = option.value === ALL_TEAMS_VALUE ? undefined : option.value;
+        const newTeam = option.value === DEFAULT_OPTION_VALUE ? undefined : option.value;
         // Re-selecting the current value is a no-op so the parent doesn't re-render.
         if (newTeam !== selectedTeam) {
           onChange(newTeam);

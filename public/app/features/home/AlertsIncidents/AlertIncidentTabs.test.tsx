@@ -330,11 +330,44 @@ describe('AlertIncidentTabs', () => {
       expect(requests[0]).toEqual(['team=~"Team A|Team B"']);
 
       await user.click(await screen.findByRole('combobox', { name: /filter alerts by team/i }));
+      // This user belongs to teams, so the default option describes that scope.
+      expect(await screen.findByRole('option', { name: 'Your teams' })).toBeInTheDocument();
       await user.click(await screen.findByRole('option', { name: 'Team C' }));
 
       // Selecting a team issues a new request whose matcher contains only that team.
       await waitFor(() => expect(requests).toHaveLength(2));
       expect(requests[1]).toEqual(['team=~"Team C"']);
+    });
+
+    it("restores the user's own-teams scope when selecting the 'Your teams' option", async () => {
+      mockTeams([{ name: 'Team A' }]);
+      mockOrgTeams([{ name: 'Team A' }, { name: 'Team C' }]);
+      // The user's own teams have a firing alert; the explicitly selected team has none.
+      server.use(
+        http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+          const filters = new URL(request.url).searchParams.getAll('filter');
+          const isSelectedTeamFilter = filters.some((f) => f.includes('Team C'));
+          return HttpResponse.json(
+            isSelectedTeamFilter ? [] : [makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]
+          );
+        })
+      );
+
+      const { user } = render(<AlertIncidentTabs />);
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      const combobox = await screen.findByRole('combobox', { name: /filter alerts by team/i });
+
+      await user.click(combobox);
+      await user.click(await screen.findByRole('option', { name: 'Team C' }));
+      expect(await screen.findByText('No firing alerts for Team C.')).toBeInTheDocument();
+
+      // Picking "Your teams" clears the explicit selection and brings back the default view.
+      await user.click(combobox);
+      await user.click(await screen.findByRole('option', { name: 'Your teams' }));
+
+      expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      expect(combobox).toHaveDisplayValue('Your teams');
     });
 
     it('shows the loading skeleton while the switched team request is in flight, then the filtered alerts', async () => {
@@ -436,9 +469,10 @@ describe('AlertIncidentTabs', () => {
       const combobox = await screen.findByRole('combobox', { name: /filter alerts by team/i });
       await user.click(combobox);
 
-      // Default list: "All teams & services" plus the first page of teams,
-      // fetched without a query and capped at one page.
-      expect(await screen.findByRole('option', { name: 'All teams & services' })).toBeInTheDocument();
+      // Default list: the default-scope option plus the first page of teams, fetched
+      // without a query and capped at one page. This user belongs to no teams, so the
+      // default scope is unfiltered and the option reads "All teams".
+      expect(await screen.findByRole('option', { name: 'All teams' })).toBeInTheDocument();
       expect(await screen.findByRole('option', { name: 'Team 000' })).toBeInTheDocument();
       expect(teamRequests).toContainEqual({ query: null, perpage: '100' });
       // Sliced out of the first page, so absent from the default list.

@@ -47,7 +47,7 @@ function AlertIncidentTabsInner({
   const [selectedTeam, setSelectedTeam] = useState<string | undefined>();
   const alertsData = useFiringAlerts(selectedTeam);
   const incidentsData = useIncidents();
-  const { count, hasAlerts, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
+  const { count, hasAlerts, hasTeams, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
   const {
     loading: incidentsLoading,
     error: incidentsError,
@@ -100,7 +100,7 @@ function AlertIncidentTabsInner({
           {title}
         </Text>
         {canViewAlerts && activeTab === ALERTS_TAB_ID && (
-          <TeamFilterCombobox selectedTeam={selectedTeam} onChange={setSelectedTeam} />
+          <TeamFilterCombobox selectedTeam={selectedTeam} onChange={setSelectedTeam} userHasTeams={hasTeams} />
         )}
       </Stack>
 
