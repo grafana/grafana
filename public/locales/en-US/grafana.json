@@ -10970,23 +10970,21 @@
       "reset": "Reset recent dashboards"
     },
     "recommendations": {
-      "application-observability": {
-        "action": "Enable Application Observability",
-        "context": "Built automatically from your telemetry",
-        "description": "Turn OpenTelemetry data into RED metrics, service maps, and correlated traces automatically.",
-        "setup-action": "Set up Application Observability",
-        "title": "Explore your service map"
-      },
       "carousel-label": "Recommended apps",
       "carousel-roledescription": "carousel",
-      "existing": "Enabled solution",
-      "frontend-observability": {
-        "action": "Enable Frontend Observability",
-        "context": "Connect the browser to your backend traces",
-        "description": "Capture Core Web Vitals and errors from the browser and tie them back to backend traces.",
-        "setup-action": "Set up Frontend Observability",
-        "title": "Measure real user experience"
+      "enable-logs": {
+        "action": "Add Logs",
+        "context": "Correlate spikes with the logs that explain them",
+        "description": "Send logs alongside your metrics to explain anomalies. Use your existing collector or follow a guided connection.",
+        "title": "See the story behind your metrics"
       },
+      "enable-logs-k8s": {
+        "action": "Set up log collection",
+        "context": "Pod logs next to the cluster metrics you already have",
+        "description": "Add pod logs alongside your cluster metrics. If you use the Grafana Kubernetes Monitoring Helm chart, log collection is a single values flag.",
+        "title": "Turn on logs for your clusters"
+      },
+      "existing": "Enabled solution",
       "go-to": "Go to recommendation {{index}}",
       "health": {
         "nodes_one": "{{count}} node not ready",
@@ -11017,6 +11015,13 @@
         "title": "Kubernetes Monitoring",
         "view": "View"
       },
+      "kubernetes-monitoring": {
+        "action": "Enable Kubernetes Monitoring",
+        "context": "Cluster health next to your existing telemetry",
+        "description": "Deploy the Helm chart to get pod, node, and workload health out of the box.",
+        "setup-action": "Set up Kubernetes Monitoring",
+        "title": "Monitor your Kubernetes fleet"
+      },
       "next": "Next",
       "no-data": {
         "badge": "Getting started",
@@ -11035,13 +11040,6 @@
       "show": "Show",
       "switch": "Recommendations follow the selected solution",
       "switchSolution": "Switch solution",
-      "synthetic-monitoring": {
-        "action": "Add Synthetic Monitoring",
-        "context": "Catch outages before your users do",
-        "description": "Probe your endpoints from 20+ global locations before your users notice.",
-        "setup-action": "Set up Synthetic Monitoring",
-        "title": "Watch your cluster from outside"
-      },
       "title": "Recommendations for your stack"
     },
     "starred-dashboards-tab": {
