@@ -29,6 +29,36 @@ func TestCachelessPeriodicInformer_DeliversListedObjects(t *testing.T) {
 	assert.ElementsMatch(t, []string{"a", "b"}, h.addedNames())
 }
 
+func TestCachelessPeriodicInformer_ReListsOnJitteredInterval(t *testing.T) {
+	var mu sync.Mutex
+	calls := 0
+	list := func(_ context.Context) ([]runtime.Object, error) {
+		mu.Lock()
+		calls++
+		mu.Unlock()
+		return []runtime.Object{obj("a")}, nil
+	}
+
+	src := NewCachelessPeriodicInformer("things", 10*time.Millisecond, list)
+	// Pin jitter to 0 so the interval is deterministic and the test is not flaky;
+	// the jittered path is still exercised via wait.Jitter with a zero factor.
+	src.jitterFactor = 0
+	h := &recordingHandler{}
+	_, err := src.AddEventHandler(h)
+	require.NoError(t, err)
+
+	stop := make(chan struct{})
+	defer close(stop)
+	go src.Run(stop)
+
+	// The initial list plus at least two more re-lists means the recurring timer fired.
+	require.Eventually(t, func() bool {
+		mu.Lock()
+		defer mu.Unlock()
+		return calls >= 3
+	}, time.Second, 5*time.Millisecond)
+}
+
 func TestCachelessPeriodicInformer_RetriesInitialListUntilItSucceeds(t *testing.T) {
 	var mu sync.Mutex
 	fail := true

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -22,6 +23,10 @@ const (
 	defaultPeriodicResync = 5 * time.Minute
 	// periodicRetryInterval is how often the initial list is retried while it fails.
 	periodicRetryInterval = 5 * time.Second
+	// defaultResyncJitterFactor spreads the re-list cadence by up to ±10% so that
+	// listers started together (multiple replicas or informers) do not re-list in
+	// lockstep and stampede the API server — the thundering-herd problem.
+	defaultResyncJitterFactor = 0.1
 )
 
 // CachelessPeriodicInformer is the NATS-mode delta source for resources
@@ -46,6 +51,10 @@ type CachelessPeriodicInformer struct {
 	// defaults to periodicRetryInterval.
 	retryInterval time.Duration
 
+	// jitterFactor randomizes each resync interval by up to this fraction to avoid
+	// a thundering herd; defaults to defaultResyncJitterFactor.
+	jitterFactor float64
+
 	mu       sync.Mutex
 	handlers []cache.ResourceEventHandler
 }
@@ -63,6 +72,7 @@ func NewCachelessPeriodicInformer(name string, resync time.Duration, list Period
 		list:          list,
 		log:           log.New("provisioning.informer.periodiclister"),
 		retryInterval: periodicRetryInterval,
+		jitterFactor:  defaultResyncJitterFactor,
 	}
 }
 
@@ -105,15 +115,19 @@ func (s *CachelessPeriodicInformer) Run(stopCh <-chan struct{}) {
 		}
 	}
 
-	ticker := time.NewTicker(s.resync)
-	defer ticker.Stop()
+	// Jitter each interval independently so listers that started together do not
+	// re-list in lockstep. A fresh timer per pass (rather than a fixed ticker) lets
+	// the delay vary every time, spreading load across the whole window.
+	timer := time.NewTimer(wait.Jitter(s.resync, s.jitterFactor))
+	defer timer.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-ticker.C:
+		case <-timer.C:
 			// Error already logged in relist; the next tick retries.
 			_ = s.relist(ctx)
+			timer.Reset(wait.Jitter(s.resync, s.jitterFactor))
 		}
 	}
 }
