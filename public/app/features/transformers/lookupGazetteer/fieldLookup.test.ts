@@ -39,6 +39,24 @@ describe('Lookup gazetteer from the worldmap format', () => {
   });
 });
 
+describe('Lookup gazetteer error handling', () => {
+  it('rejects with an error naming the gazetteer that could not be loaded', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(global, 'fetch').mockRejectedValue(new Error('network down'));
+
+    const data = toDataFrame({
+      fields: [{ name: 'code2letters', type: FieldType.string, values: ['FR'] }],
+    });
+
+    const operator = fieldLookupTransformer.operator(
+      { lookupField: 'code2letters', gazetteer: 'https://example.com/broken.json' },
+      { interpolate: (v) => v }
+    );
+
+    await expect(lastValueFrom(of([data]).pipe(operator))).rejects.toThrow(/broken\.json/);
+  });
+});
+
 describe('Lookup gazetteer', () => {
   it('adds lat/lon based on string field', async () => {
     const cfg = {

@@ -31,7 +31,8 @@ async function doGazetteerXform(frames: DataFrame[], options: FieldLookupOptions
   const gazetteer = await getGazetteer(options?.gazetteer ?? GAZETTEER_OPTIONS.countries.path);
 
   if (!gazetteer.frame) {
-    return Promise.reject('missing frame in gazetteer');
+    const reason = gazetteer.error ?? 'it contains no lookup data';
+    return Promise.reject(new Error(`Could not look up fields in "${gazetteer.path}": ${reason}`));
   }
 
   return addFieldsFromGazetteer(frames, gazetteer, fieldMatches);
