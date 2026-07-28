@@ -49,7 +49,7 @@ export function readSeries(frames: DataFrame[], refId: string): FieldSparkline |
  * whose targets are expressible as DataQuery (Prometheus PromQL, Tempo TraceQL). Throws (surfaced
  * as an error; callers omit the entry) when the query errors or times out.
  */
-export async function runDatasourceQueries(
+async function runDatasourceQueries(
   queries: DataQuery[],
   range: TimeRange,
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
