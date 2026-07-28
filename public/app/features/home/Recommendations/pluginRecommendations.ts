@@ -21,7 +21,7 @@ export interface PluginRecommendationCard extends RecommendationItem {
 }
 
 /** Guided-connection card: never "enabled-but-silent", so no setup variant. */
-export interface ConnectionRecommendationCard extends RecommendationItem {
+interface ConnectionRecommendationCard extends RecommendationItem {
   kind: 'connection';
 }
 
