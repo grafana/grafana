@@ -17,6 +17,7 @@ import {
 } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
+import { capturePanelData } from 'app/features/query/diagnostics/capturePanelData';
 import { downloadDiagnosticsForQueries } from 'app/features/query/diagnostics/downloadDiagnostics';
 import { interpolateDiagnosticsQueries } from 'app/features/query/diagnostics/interpolateQueries';
 
@@ -47,6 +48,8 @@ export class DownloadDiagnostics extends SceneObjectBase<DownloadDiagnosticsStat
 }
 
 const SAVE_MODEL_FAILURE_MESSAGE = 'Download diagnostics: failed to build panel/dashboard JSON, bundling without it';
+const PANEL_DATA_FAILURE_MESSAGE =
+  'Download diagnostics: failed to serialize frontend panel data, bundling without paneldata.json';
 
 // Inlined rather than imported from dashboard-scene/utils/utils: that module transitively reaches
 // DashboardScene, which imports ShareDrawer (which imports this view), creating an import cycle.
@@ -197,13 +200,28 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
       panelModel = undefined;
     }
 
+    // Serialize the frames the frontend is holding. Reads resolved scene state only -- no queries run
+    // and no transformations re-apply -- but a plugin can still hand back an unserializable frame, so
+    // a failure here only costs the bundle paneldata.json.
+    let panelData: unknown;
+    try {
+      panelData = capturePanelData(panel);
+    } catch (error) {
+      console.warn(PANEL_DATA_FAILURE_MESSAGE, error);
+      logError(error instanceof Error ? error : new Error(PANEL_DATA_FAILURE_MESSAGE), {
+        panelKey: panel.state.key ?? '',
+      });
+      panelData = undefined;
+    }
+
     await downloadDiagnosticsForQueries(
       queries,
       String(timeRange.from.valueOf()),
       String(timeRange.to.valueOf()),
       controller.signal,
       panelModel,
-      dashboardModel
+      dashboardModel,
+      panelData
     );
   }, [panelRef, dashboardRef]);
 

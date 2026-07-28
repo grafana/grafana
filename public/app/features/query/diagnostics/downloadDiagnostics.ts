@@ -39,7 +39,10 @@ export async function downloadDiagnosticsForQueries(
   // Optional panel and dashboard save models. When supplied they are bundled as panel.json /
   // dashboard.json (the backend includes them verbatim); omitted keys simply aren't sent.
   panel?: unknown,
-  dashboard?: unknown
+  dashboard?: unknown,
+  // Optional frames the frontend was holding for this panel, bundled as paneldata.json. Unlike the
+  // save models above this is data rather than a definition, so nothing has to be re-run to read it.
+  panelData?: unknown
 ): Promise<void> {
   const visibleQueries = queries.filter((query) => !query.hide);
 
@@ -52,7 +55,7 @@ export async function downloadDiagnosticsForQueries(
       url: DIAGNOSTICS_ENDPOINT,
       method: 'POST',
       responseType: 'blob',
-      data: { from, to, queries: visibleQueries, panel, dashboard },
+      data: { from, to, queries: visibleQueries, panel, dashboard, panelData },
       // Surface failures in the drawer instead of a global toast.
       showErrorAlert: false,
       // Cancelling the drawer aborts the in-flight request.
