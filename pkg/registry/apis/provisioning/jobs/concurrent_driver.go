@@ -102,49 +102,84 @@ func NewConcurrentJobDriver(
 func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
+			job, ok := obj.(*provisioning.Job)
+			if !ok {
+				c.logger.Error("unexpected object type in job create event", "type", fmt.Sprintf("%T", obj))
+				return
+			}
 			// Skip jobs that are already claimed when label data is present (the
 			// apiserver informer and periodic re-lists deliver full objects). NATS
 			// live events carry only namespace/name and always enqueue; the
 			// worker's claim then cheaply skips anything already taken.
-			if job, ok := obj.(*provisioning.Job); ok && job.Labels[LabelJobClaim] != "" {
+			if job.Labels[LabelJobClaim] != "" {
 				c.logger.Debug("skip create event for already-claimed job",
 					"namespace", job.GetNamespace(), "job", job.GetName())
 				return
 			}
-			c.enqueue(obj, "create")
+			c.enqueueCreate(job)
 		},
 		UpdateFunc: func(_, newObj interface{}) {
 			job, ok := newObj.(*provisioning.Job)
 			if !ok {
+				c.logger.Error("unexpected object type in job update event", "type", fmt.Sprintf("%T", newObj))
 				return
 			}
 			// A minimal live event (NATS: namespace+name only, no resource version)
 			// is claim/lease/progress churn from a running job; enqueuing each one
 			// would cost a wasted claim attempt per write. Jobs that return to the
 			// unclaimed state are re-delivered as full objects on the next re-list.
+			// Deliberately not logged: one write per lease renewal and progress
+			// update makes this the hottest path through the handler.
 			if job.ResourceVersion == "" {
 				return
 			}
 			// Full objects (apiserver watch/resync and NATS re-lists) enqueue only
 			// while unclaimed: new jobs the create event missed, rolled-back
-			// claims, and keys dropped after retry exhaustion.
+			// claims, and keys dropped after retry exhaustion. Claimed jobs are
+			// running-job churn; also not logged (one per running job per resync).
 			if job.Labels[LabelJobClaim] != "" {
 				return
 			}
-			c.enqueue(job, "update")
+			c.enqueueRecovered(job)
 		},
 	}
 }
 
-func (c *ConcurrentJobDriver) enqueue(obj interface{}, event string) {
-	key, err := cache.MetaNamespaceKeyFunc(obj)
+// enqueueCreate adds a freshly-created job's key to the work queue. This is the
+// hot path for every job, so it logs at debug.
+func (c *ConcurrentJobDriver) enqueueCreate(job *provisioning.Job) {
+	key, err := cache.MetaNamespaceKeyFunc(job)
 	if err != nil {
-		c.logger.Error("could not build key for job event", "event", event, "error", err)
+		c.logger.Error("could not build key for job create event",
+			"namespace", job.GetNamespace(), "job", job.GetName(), "error", err)
 		return
 	}
 	// The queue deduplicates keys that are already queued or in flight.
 	c.queue.Add(key)
-	c.logger.Debug("job event enqueued", "event", event, "work_key", key, "queue_len", c.queue.Len())
+	c.logger.Debug("job create event enqueued", "work_key", key, "queue_len", c.queue.Len())
+}
+
+// enqueueRecovered adds an unclaimed job delivered by a resync/re-list update.
+// This is the recovery path at work — the job's create event was missed, its
+// claim was rolled back, or its key was dropped after retry exhaustion — so it
+// logs at info with the job's age. Redeliveries right after a creation burst
+// (the resync races the create event) are normal and deduplicated by the queue,
+// but a steady stream of *old* jobs here means live events are being missed and
+// the resync is doing the rescuing.
+func (c *ConcurrentJobDriver) enqueueRecovered(job *provisioning.Job) {
+	key, err := cache.MetaNamespaceKeyFunc(job)
+	if err != nil {
+		c.logger.Error("could not build key for job update event",
+			"namespace", job.GetNamespace(), "job", job.GetName(), "error", err)
+		return
+	}
+	// The queue deduplicates keys that are already queued or in flight.
+	c.queue.Add(key)
+	c.logger.Info("resync enqueued unclaimed job",
+		"work_key", key,
+		"job_age", time.Since(job.CreationTimestamp.Time).Round(time.Second),
+		"job_state", job.Status.State,
+		"queue_len", c.queue.Len())
 }
 
 // Run starts the worker pool.
@@ -231,11 +266,15 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 		return true
 	}
 
-	logger.Debug("process job key", "attempt", c.queue.NumRequeues(key)+1)
+	attempt := c.queue.NumRequeues(key) + 1
+	logger.Debug("process job key", "attempt", attempt)
 
 	err = processor.processKey(ctx, namespace, name)
 	switch {
 	case err == nil:
+		if attempt > 1 {
+			logger.Info("job claim succeeded after retries", "attempts", attempt)
+		}
 		c.queue.Forget(key)
 	case errors.Is(err, ErrAlreadyClaimed):
 		logger.Debug("job already claimed by another worker - dropping from queue")
@@ -247,17 +286,18 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 		// The job may already have executed; an immediate retry would re-run its
 		// side effects. Its claim was rolled back, so the informer re-list
 		// re-discovers it at the resync cadence instead.
-		logger.Error("job failed after it was claimed - dropping from queue", "error", err)
+		logger.Error("job failed after it was claimed - dropping from queue; the informer re-list re-adds it",
+			"attempt", attempt, "error", err)
 		c.queue.Forget(key)
-	case c.queue.NumRequeues(key)+1 >= maxClaimAttempts:
+	case attempt >= maxClaimAttempts:
 		logger.Error("job failed too many times - dropping from queue; the informer re-list re-adds it if still unclaimed",
-			"attempts", c.queue.NumRequeues(key)+1, "error", err)
+			"attempts", attempt, "error", err)
 		c.queue.Forget(key)
 	default:
 		// Only claim-path failures reach here; the job was never claimed by this
 		// worker, so retrying cannot re-run any work.
 		logger.Warn("failed to claim job - will retry",
-			"attempt", c.queue.NumRequeues(key)+1, "error", err)
+			"attempt", attempt, "max_attempts", maxClaimAttempts, "error", err)
 		c.queue.AddRateLimited(key)
 	}
 	return true
