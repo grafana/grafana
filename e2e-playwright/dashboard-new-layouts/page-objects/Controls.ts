@@ -10,9 +10,16 @@ export class Controls extends PageObject {
       .filter({ hasText: label });
   }
 
+  // Exposed for specs that start from a dashboard whose mode isn't known up front
+  // (e.g. a brand new dashboard, which already opens in edit mode) and so have to
+  // branch on whether there is anything to click.
+  getEnterEditModeButton(): Locator {
+    return this.getEditButton(/^Edit$/);
+  }
+
   async enterEditMode() {
     await test.step('Enter edit mode', async () => {
-      await this.getEditButton(/^Edit$/).click();
+      await this.getEnterEditModeButton().click();
     });
   }
 
