@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/authlib/types"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -201,6 +202,13 @@ func (s *APIFolderStore) ListFolders(ctx context.Context, ns types.NamespaceInfo
 func (s *APIFolderStore) listFoldersViaSearch(ctx context.Context, ns types.NamespaceInfo) ([]Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "authz.apistore.ListFolders.search")
 	defer span.End()
+
+	// The folder tree must contain every folder in the namespace; stamp a
+	// service identity so the request is authorized as a service call and
+	// carries a Requester the legacy resource-client interceptor requires
+	// under the default-disabled appPlatformGrpcClientAuth flag (the in-proc
+	// authz channel strips other client context values on the way in).
+	ctx, _ = identity.WithServiceIdentity(ctx, ns.OrgID)
 
 	gvr := folderv1.FolderResourceInfo.GroupVersionResource()
 	req := &resourcepb.ResourceSearchRequest{
