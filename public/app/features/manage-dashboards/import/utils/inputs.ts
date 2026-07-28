@@ -566,18 +566,120 @@ export function isVariableRef(dsName: string | undefined): boolean {
   return dsName?.startsWith('$') ?? false;
 }
 
+/** Extract variable name from `$ds` / `${ds}` datasource refs. */
+function getVariableRefName(dsName: string | undefined): string | undefined {
+  if (!isVariableRef(dsName) || !dsName) {
+    return undefined;
+  }
+  return dsName.startsWith('${') && dsName.endsWith('}') ? dsName.slice(2, -1) : dsName.slice(1);
+}
+
+type ExportLabels = { [key: string]: string } | undefined;
+
+/** Drop grafana.app/export-* keys used only for import pickers. */
+function stripExportOnlyLabels(labels: ExportLabels): ExportLabels {
+  if (!labels) {
+    return undefined;
+  }
+  const remaining = { ...labels };
+  delete remaining[ExportLabel];
+  delete remaining[ExportDatasourceName];
+  return Object.keys(remaining).length > 0 ? remaining : undefined;
+}
+
+/**
+ * Map DatasourceVariable name → export label from labeled $dsVar refs.
+ * DatasourceVariable has no labels field, so import uses these refs to pick the right mapping.
+ */
+function collectDatasourceVariableExportLabels(dashboard: DashboardV2Spec): Map<string, string> {
+  const byVarName = new Map<string, string>();
+
+  const record = (dsName: string | undefined, labels: ExportLabels) => {
+    const varName = getVariableRefName(dsName);
+    const exportLabel = getExportLabel(labels);
+    if (varName && exportLabel && !byVarName.has(varName)) {
+      byVarName.set(varName, exportLabel);
+    }
+  };
+
+  for (const annotation of dashboard.annotations ?? []) {
+    record(annotation.spec.query?.datasource?.name, annotation.spec.query?.labels);
+  }
+
+  const recordVariables = (variables: DashboardV2Spec['variables'] | undefined) => {
+    for (const variable of variables ?? []) {
+      if (variable.kind === 'QueryVariable') {
+        record(variable.spec.query?.datasource?.name, variable.spec.query?.labels);
+      } else if (variable.kind === 'AdhocVariable' || variable.kind === 'GroupByVariable') {
+        record(variable.datasource?.name, variable.labels);
+      }
+    }
+  };
+
+  recordVariables(dashboard.variables);
+  visitDashboardLayoutSections(dashboard.layout, (variables) => {
+    recordVariables(variables);
+  });
+
+  for (const element of Object.values(dashboard.elements ?? {})) {
+    if (element.kind === 'Panel' && element.spec.data?.kind === 'QueryGroup') {
+      for (const query of element.spec.data.spec.queries) {
+        if (query.kind === 'PanelQuery') {
+          record(query.spec.query?.datasource?.name, query.spec.query?.labels);
+        }
+      }
+    }
+  }
+
+  return byVarName;
+}
+
+/**
+ * Resolve a DatasourceVariable mapping without silently picking an arbitrary same-type DS.
+ * Prefer the export label from a labeled $var ref; then exact pluginId key; then only when
+ * there is exactly one mapping of that type.
+ */
+function resolveDatasourceVariableMapping(
+  pluginId: string | undefined,
+  variableName: string,
+  mappings: DatasourceMappings,
+  dsVarExportLabels: Map<string, string>
+): DatasourceMappings[string] | undefined {
+  if (!pluginId) {
+    return undefined;
+  }
+
+  const exportLabel = dsVarExportLabels.get(variableName);
+  if (exportLabel && mappings[exportLabel]) {
+    return mappings[exportLabel];
+  }
+
+  if (mappings[pluginId]) {
+    return mappings[pluginId];
+  }
+
+  const ofType = Object.values(mappings).filter((mapping) => mapping.type === pluginId);
+  if (ofType.length === 1) {
+    return ofType[0];
+  }
+
+  return undefined;
+}
+
 export function replaceDatasourcesInDashboard(
   dashboard: DashboardV2Spec,
   mappings: DatasourceMappings
 ): DashboardV2Spec {
+  const dsVarExportLabels = collectDatasourceVariableExportLabels(dashboard);
+
   return {
     ...dashboard,
     annotations: replaceAnnotationDatasources(dashboard.annotations, mappings),
-    variables: replaceVariableDatasources(dashboard.variables, mappings),
+    variables: replaceVariableDatasources(dashboard.variables, mappings, dsVarExportLabels),
     elements: replaceElementDatasources(dashboard.elements, mappings),
     layout:
       mapDashboardLayoutSections(dashboard.layout, (sectionVariables) =>
-        sectionVariables ? replaceVariableDatasources(sectionVariables, mappings) : sectionVariables
+        sectionVariables ? replaceVariableDatasources(sectionVariables, mappings, dsVarExportLabels) : sectionVariables
       ) ?? dashboard.layout,
   };
 }
@@ -591,15 +693,25 @@ function replaceAnnotationDatasources(
     const dsLabel = getExportLabel(annotation.spec.query.labels);
     const currentDsName = annotation.spec.query?.datasource?.name;
     const ds = dsLabel ? mappings[dsLabel] : dsType ? mappings[dsType] : undefined;
+    const remainingLabels = stripExportOnlyLabels(annotation.spec.query?.labels);
+    const shouldRemap = !isVariableRef(currentDsName) && !!dsType && !!ds;
 
-    if (isVariableRef(currentDsName) || !dsType || !ds) {
-      return annotation;
-    }
+    const { labels: _droppedLabels, ...queryWithoutLabels } = annotation.spec.query ?? {};
 
-    // remove export labels
-    if (annotation.spec.query?.labels) {
-      delete annotation.spec.query.labels[ExportLabel];
-      delete annotation.spec.query.labels[ExportDatasourceName];
+    if (!shouldRemap) {
+      if (!annotation.spec.query?.labels || remainingLabels === annotation.spec.query.labels) {
+        return annotation;
+      }
+      return {
+        ...annotation,
+        spec: {
+          ...annotation.spec,
+          query: {
+            ...queryWithoutLabels,
+            ...(remainingLabels && { labels: remainingLabels }),
+          },
+        },
+      };
     }
 
     return {
@@ -607,9 +719,9 @@ function replaceAnnotationDatasources(
       spec: {
         ...annotation.spec,
         query: {
-          ...annotation.spec.query,
+          ...queryWithoutLabels,
           datasource: { name: ds.uid },
-          ...(Object.keys(annotation.spec.query?.labels ?? {}).length > 0 && { labels: annotation.spec.query.labels }),
+          ...(remainingLabels && { labels: remainingLabels }),
         },
       },
     };
@@ -618,7 +730,8 @@ function replaceAnnotationDatasources(
 
 function replaceVariableDatasources(
   variables: DashboardV2Spec['variables'],
-  mappings: DatasourceMappings
+  mappings: DatasourceMappings,
+  dsVarExportLabels: Map<string, string>
 ): DashboardV2Spec['variables'] {
   return variables?.map((variable) => {
     if (variable.kind === 'QueryVariable') {
@@ -626,15 +739,25 @@ function replaceVariableDatasources(
       const dsLabel = getExportLabel(variable.spec.query.labels);
       const currentDsName = variable.spec.query?.datasource?.name;
       const ds = dsLabel ? mappings[dsLabel] : dsType ? mappings[dsType] : undefined;
+      const remainingLabels = stripExportOnlyLabels(variable.spec.query?.labels);
+      const shouldRemap = !isVariableRef(currentDsName) && !!dsType && !!ds;
 
-      if (isVariableRef(currentDsName) || !dsType || !ds) {
-        return variable;
-      }
+      const { labels: _droppedLabels, ...queryWithoutLabels } = variable.spec.query ?? {};
 
-      // remove export labels
-      if (variable.spec.query?.labels) {
-        delete variable.spec.query.labels[ExportLabel];
-        delete variable.spec.query.labels[ExportDatasourceName];
+      if (!shouldRemap) {
+        if (!variable.spec.query?.labels || remainingLabels === variable.spec.query.labels) {
+          return variable;
+        }
+        return {
+          ...variable,
+          spec: {
+            ...variable.spec,
+            query: {
+              ...queryWithoutLabels,
+              ...(remainingLabels && { labels: remainingLabels }),
+            },
+          },
+        };
       }
 
       return {
@@ -642,9 +765,9 @@ function replaceVariableDatasources(
         spec: {
           ...variable.spec,
           query: {
-            ...variable.spec.query,
+            ...queryWithoutLabels,
             datasource: { name: ds.uid },
-            ...(Object.keys(variable.spec.query?.labels ?? {}).length > 0 && { labels: variable.spec.query.labels }),
+            ...(remainingLabels && { labels: remainingLabels }),
           },
           options: [],
           current: { text: '', value: '' },
@@ -654,13 +777,14 @@ function replaceVariableDatasources(
     }
 
     if (variable.kind === 'DatasourceVariable') {
-      const dsType = variable.spec.pluginId;
-      // Exact pluginId key (from $dsVar query extract) or any export-label of that type.
-      const ds = dsType
-        ? (mappings[dsType] ?? Object.values(mappings).find((mapping) => mapping.type === dsType))
-        : undefined;
+      const ds = resolveDatasourceVariableMapping(
+        variable.spec.pluginId,
+        variable.spec.name,
+        mappings,
+        dsVarExportLabels
+      );
 
-      if (!dsType || !ds) {
+      if (!ds) {
         return variable;
       }
 
@@ -681,21 +805,24 @@ function replaceVariableDatasources(
       const dsLabel = getExportLabel(variable.labels);
       const currentDsName = variable.datasource?.name;
       const ds = dsLabel ? mappings[dsLabel] : dsType ? mappings[dsType] : undefined;
-
-      if (isVariableRef(currentDsName) || !dsType || !ds) {
-        return variable;
-      }
-
-      // Drop export-only labels.
       const { labels, ...variableWithoutLabels } = variable;
-      const remainingLabels = { ...labels };
-      delete remainingLabels[ExportLabel];
-      delete remainingLabels[ExportDatasourceName];
+      const remainingLabels = stripExportOnlyLabels(labels);
+      const shouldRemap = !isVariableRef(currentDsName) && !!dsType && !!ds;
+
+      if (!shouldRemap) {
+        if (remainingLabels === labels) {
+          return variable;
+        }
+        return {
+          ...variableWithoutLabels,
+          ...(remainingLabels ? { labels: remainingLabels } : {}),
+        };
+      }
 
       return {
         ...variableWithoutLabels,
         datasource: { name: ds.uid },
-        ...(Object.keys(remainingLabels).length > 0 && { labels: remainingLabels }),
+        ...(remainingLabels ? { labels: remainingLabels } : {}),
       };
     }
 
@@ -721,15 +848,25 @@ function replaceElementDatasources(
             const queryLabel = getExportLabel(query.spec.query.labels);
             const currentDsName = query.spec.query?.datasource?.name;
             const ds = queryLabel ? mappings[queryLabel] : queryType ? mappings[queryType] : undefined;
+            const remainingLabels = stripExportOnlyLabels(query.spec.query?.labels);
+            const shouldRemap = !isVariableRef(currentDsName) && !!queryType && !!ds;
 
-            if (isVariableRef(currentDsName) || !queryType || !ds) {
-              return query;
-            }
+            const { labels: _droppedLabels, ...queryWithoutLabels } = query.spec.query ?? {};
 
-            // remove export labels
-            if (query.spec.query?.labels) {
-              delete query.spec.query.labels[ExportLabel];
-              delete query.spec.query.labels[ExportDatasourceName];
+            if (!shouldRemap) {
+              if (!query.spec.query?.labels || remainingLabels === query.spec.query.labels) {
+                return query;
+              }
+              return {
+                ...query,
+                spec: {
+                  ...query.spec,
+                  query: {
+                    ...queryWithoutLabels,
+                    ...(remainingLabels && { labels: remainingLabels }),
+                  },
+                },
+              };
             }
 
             return {
@@ -737,9 +874,9 @@ function replaceElementDatasources(
               spec: {
                 ...query.spec,
                 query: {
-                  ...query.spec.query,
+                  ...queryWithoutLabels,
                   datasource: { name: ds.uid },
-                  ...(Object.keys(query.spec.query?.labels ?? {}).length > 0 && { labels: query.spec.query.labels }),
+                  ...(remainingLabels && { labels: remainingLabels }),
                 },
               },
             };

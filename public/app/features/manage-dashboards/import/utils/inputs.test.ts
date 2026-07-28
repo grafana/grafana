@@ -1829,7 +1829,7 @@ describe('replaceDatasourcesInDashboard', () => {
     prometheus: { uid: 'new-prom-uid', type: 'prometheus', name: 'New Prometheus' },
   };
 
-  const createPanelWithQuery = (group: string, datasourceName: string) => ({
+  const createPanelWithQuery = (group: string, datasourceName: string, labels?: Record<string, string>) => ({
     kind: 'Panel' as const,
     spec: {
       id: 1,
@@ -1856,6 +1856,7 @@ describe('replaceDatasourcesInDashboard', () => {
                   group,
                   version: 'v0',
                   datasource: { name: datasourceName },
+                  ...(labels && { labels }),
                   spec: {},
                 },
               },
@@ -1955,7 +1956,7 @@ describe('replaceDatasourcesInDashboard', () => {
   });
 
   describe('query variable', () => {
-    const createQueryVariable = (group: string, datasourceName: string) => ({
+    const createQueryVariable = (group: string, datasourceName: string, labels?: Record<string, string>) => ({
       kind: 'QueryVariable' as const,
       spec: {
         name: 'test_var',
@@ -1974,6 +1975,7 @@ describe('replaceDatasourcesInDashboard', () => {
           group,
           version: 'v0',
           datasource: { name: datasourceName },
+          ...(labels && { labels }),
           spec: {},
         },
       },
@@ -2008,6 +2010,28 @@ describe('replaceDatasourcesInDashboard', () => {
 
       expect(variable?.spec.query?.datasource?.name).toBe('${ds}');
       expect(variable?.spec.options).toEqual([{ text: 'All', value: '$__all' }]);
+    });
+
+    it('strips export-only labels while preserving a $dsVar reference', () => {
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [
+          createQueryVariable('prometheus', '${ds}', {
+            [ExportLabel]: 'prometheus-1',
+            [ExportDatasourceName]: 'Original Prometheus',
+          }),
+        ],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, {
+        'prometheus-1': { uid: 'new-prom-uid', type: 'prometheus', name: 'New Prometheus' },
+      });
+      const updated = getQueryVariable(result);
+
+      expect(updated?.spec.query?.datasource?.name).toBe('${ds}');
+      expect(updated?.spec.query?.labels).toBeUndefined();
+      expect(updated?.spec.options).toEqual([{ text: 'All', value: '$__all' }]);
     });
   });
 
@@ -2044,7 +2068,7 @@ describe('replaceDatasourcesInDashboard', () => {
       expect(variable?.spec.current?.text).toBe('New Prometheus');
     });
 
-    it('uses export-label mapping of the same type when pluginId key is absent', () => {
+    it('uses the sole export-label mapping of the same type when pluginId key is absent', () => {
       // @ts-ignore - using minimal test schema
       const dashboard: DashboardV2Spec = {
         ...baseDashboard,
@@ -2058,6 +2082,68 @@ describe('replaceDatasourcesInDashboard', () => {
 
       expect(variable?.spec.current?.value).toBe('mapped-prom-uid');
       expect(variable?.spec.current?.text).toBe('Mapped Prometheus');
+    });
+
+    it('does not assign an arbitrary same-type mapping when multiple pickers exist', () => {
+      const dsA = createDatasourceVariable('prometheus', 'old-a', 'Old A');
+      dsA.spec.name = 'dsA';
+      const dsB = createDatasourceVariable('prometheus', 'old-b', 'Old B');
+      dsB.spec.name = 'dsB';
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [dsA, dsB],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, {
+        'prometheus-1': { uid: 'prom-uid-1', type: 'prometheus', name: 'Prometheus 1' },
+        'prometheus-2': { uid: 'prom-uid-2', type: 'prometheus', name: 'Prometheus 2' },
+      });
+
+      expect(getDatasourceVariable(result, 0)?.spec.current).toEqual({ text: 'Old A', value: 'old-a' });
+      expect(getDatasourceVariable(result, 1)?.spec.current).toEqual({ text: 'Old B', value: 'old-b' });
+    });
+
+    it('maps DatasourceVariable via export label on a labeled $dsVar query ref', () => {
+      const dsA = createDatasourceVariable('prometheus', '', '');
+      dsA.spec.name = 'dsA';
+      const dsB = createDatasourceVariable('prometheus', '', '');
+      dsB.spec.name = 'dsB';
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [dsA, dsB],
+        elements: {
+          'panel-a': createPanelWithQuery('prometheus', '${dsA}', {
+            [ExportLabel]: 'prometheus-1',
+            [ExportDatasourceName]: 'Prod A',
+          }),
+          'panel-b': createPanelWithQuery('prometheus', '$dsB', {
+            [ExportLabel]: 'prometheus-2',
+            [ExportDatasourceName]: 'Prod B',
+          }),
+        },
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, {
+        'prometheus-1': { uid: 'prom-uid-1', type: 'prometheus', name: 'Prometheus 1' },
+        'prometheus-2': { uid: 'prom-uid-2', type: 'prometheus', name: 'Prometheus 2' },
+      });
+
+      expect(getDatasourceVariable(result, 0)?.spec.current).toEqual({ text: 'Prometheus 1', value: 'prom-uid-1' });
+      expect(getDatasourceVariable(result, 1)?.spec.current).toEqual({ text: 'Prometheus 2', value: 'prom-uid-2' });
+      // $dsVar refs keep their datasource; export labels are stripped
+      expect(getPanelQueryDatasourceName(result, 'panel-a')).toBe('${dsA}');
+      expect(getPanelQueryDatasourceName(result, 'panel-b')).toBe('$dsB');
+      const panelA = result.elements['panel-a'];
+      const panelB = result.elements['panel-b'];
+      if (panelA.kind === 'Panel' && panelA.spec.data?.kind === 'QueryGroup') {
+        expect(panelA.spec.data.spec.queries[0].spec.query?.labels?.[ExportLabel]).toBeUndefined();
+        expect(panelA.spec.data.spec.queries[0].spec.query?.labels?.[ExportDatasourceName]).toBeUndefined();
+      }
+      if (panelB.kind === 'Panel' && panelB.spec.data?.kind === 'QueryGroup') {
+        expect(panelB.spec.data.spec.queries[0].spec.query?.labels?.[ExportLabel]).toBeUndefined();
+      }
     });
   });
 
@@ -2118,7 +2204,7 @@ describe('replaceDatasourcesInDashboard', () => {
         variables: [
           {
             ...variable,
-            labels: { [ExportLabel]: 'loki', [ExportDatasourceName]: 'Original Loki', team: 'observability' },
+            labels: { [ExportLabel]: 'loki', [ExportDatasourceName]: 'Original Loki', custom: 'keep-me' },
           },
         ],
       };
@@ -2126,7 +2212,29 @@ describe('replaceDatasourcesInDashboard', () => {
       const result = replaceDatasourcesInDashboard(dashboard, mappings);
       const updated = getAdhocVariable(result);
 
-      expect(updated?.labels).toEqual({ team: 'observability' });
+      expect(updated?.labels).toEqual({ custom: 'keep-me' });
+    });
+
+    it('strips export-only labels while preserving a $dsVar reference', () => {
+      const variable = createAdhocVariable('loki', '${ds}');
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [
+          {
+            ...variable,
+            labels: { [ExportLabel]: 'loki-1', [ExportDatasourceName]: 'Original Loki' },
+          },
+        ],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, {
+        'loki-1': { uid: 'new-loki-uid', type: 'loki', name: 'New Loki' },
+      });
+      const updated = getAdhocVariable(result);
+
+      expect(updated?.datasource?.name).toBe('${ds}');
+      expect(updated?.labels).toBeUndefined();
     });
   });
 
