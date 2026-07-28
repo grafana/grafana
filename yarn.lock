@@ -32594,7 +32594,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:14.0.0, uuid@npm:^14.0.0":
+"uuid@npm:14.0.0":
   version: 14.0.0
   resolution: "uuid@npm:14.0.0"
   bin:
@@ -32603,7 +32603,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:14.0.1":
+"uuid@npm:14.0.1, uuid@npm:^14.0.0":
   version: 14.0.1
   resolution: "uuid@npm:14.0.1"
   bin:
