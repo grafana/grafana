@@ -425,3 +425,31 @@ func TestQueryDiagnostics_bundlesPanelData(t *testing.T) {
 	require.Contains(t, string(files["paneldata.json"]), "frontend-marker")
 	require.NotContains(t, string(files["querydata.json"]), "frontend-marker")
 }
+
+func TestQueryDiagnostics_recordsClientPanelDataError(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	fakeQuery := query.NewFakeQueryService(t)
+	returnFreshHARResponse(fakeQuery, "QueryData")
+	hs := &HTTPServer{queryDataService: fakeQuery}
+	// A browser that could not serialize its frames sends the reason instead of the payload.
+	c, rec := newDiagReqCtx(t, `{
+		"queries":[{"refId":"A"}],
+		"panelDataError":"capturing panel data threw: converting circular structure to JSON"
+	}`, nil)
+
+	resp := hs.QueryDiagnostics(c)
+	require.Equal(t, http.StatusOK, resp.Status(), "a failed panel-data capture must not fail the request")
+
+	resp.WriteTo(c)
+	files := readTarGzFiles(t, rec.Body.Bytes())
+	require.NotContains(t, files, "paneldata.json")
+	// Recorded rather than left as an absent file: "the frontend held fewer frames" and "the frontend's
+	// frames never reached the bundle" send a reader after opposite culprits.
+	require.Contains(t, string(files["paneldata-error.txt"]), "converting circular structure to JSON")
+	require.Contains(t, string(files["traffic.har"]), "http://x/api", "the captured traffic still ships")
+}
+
+func TestClientReportedError(t *testing.T) {
+	require.NoError(t, clientReportedError(""), "an unreported failure is not a failure")
+	require.EqualError(t, clientReportedError("capture threw"), "capture threw")
+}

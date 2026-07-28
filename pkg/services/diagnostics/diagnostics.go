@@ -35,6 +35,10 @@ const (
 	// maxPanelDataArtifactBytes caps paneldata.json. It carries the same result data as querydata.json
 	// (frames, from the frontend's side of the pipeline), so it gets the same budget.
 	maxPanelDataArtifactBytes = 8 << 20
+	// maxPanelDataErrorBytes caps the client-reported capture failure recorded in paneldata-error.txt.
+	// A reason worth reading is a line or two; the field is client-supplied, so bound it rather than
+	// let an artifact meant to explain an absence become a way to pad the archive.
+	maxPanelDataErrorBytes = 1 << 10
 	// maxPanelScreenshotBytes caps panel.png. A browser-rendered panel is normally well under a
 	// megabyte, so anything past this is a client bug or an attempt to pad the archive; it is dropped
 	// with a marker rather than truncated, since a partial PNG would not decode.
@@ -63,6 +67,7 @@ type buildConfig struct {
 	screenshotPNG []byte
 	screenshotErr error
 	panelData     json.RawMessage
+	panelDataErr  error
 }
 
 // WithPanelScreenshot bundles panel.png: the PNG the user's own browser rendered from the panel it
@@ -93,9 +98,17 @@ func WithPanelScreenshot(png []byte, err error) BuildOption {
 //
 // Unlike panel.json it is data, not a definition: reading it re-runs no queries and re-applies no
 // transformations.
-func WithPanelData(panelData json.RawMessage) BuildOption {
+//
+// err records a client-side capture failure, and exists for the same reason WithPanelScreenshot's
+// does -- more so, in fact. Serializing the panel's frames can fail in the browser, and if that were
+// simply reported as an absent field the bundle would read exactly like one from a client that was
+// never asked for panel data. That is the ambiguity this artifact exists to remove: "the frontend
+// held fewer frames than the backend returned" and "the frontend's frames never reached the bundle"
+// point at opposite culprits, so the two must not look alike.
+func WithPanelData(panelData json.RawMessage, err error) BuildOption {
 	return func(cfg *buildConfig) {
 		cfg.panelData = panelData
+		cfg.panelDataErr = err
 	}
 }
 
@@ -147,7 +160,7 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 	}
 
 	addPanelScreenshot(files, cfg)
-	addPanelData(files, cfg.panelData)
+	addPanelData(files, cfg)
 
 	if len(panelJSON) > 0 {
 		files["panel.json"] = indentJSON(panelJSON)
@@ -206,21 +219,37 @@ func panelScreenshotError(cfg buildConfig) error {
 // under a .json name. A rejection is recorded rather than dropped silently: a reader comparing
 // paneldata.json against querydata.json must be able to tell "the frontend returned fewer frames"
 // from "the artifact never made it into the bundle" -- those lead to opposite conclusions.
-func addPanelData(files map[string][]byte, panelData json.RawMessage) {
-	if len(panelData) == 0 {
+func addPanelData(files map[string][]byte, cfg buildConfig) {
+	if err := panelDataError(cfg); err != nil {
+		files["paneldata-error.txt"] = []byte(err.Error() + "\n")
 		return
 	}
-	if len(panelData) > maxPanelDataArtifactBytes {
-		files["paneldata-error.txt"] = []byte(fmt.Sprintf(
-			"panel data dropped: %d bytes exceeds the %d-byte limit\n", len(panelData), maxPanelDataArtifactBytes))
-		return
+	if len(cfg.panelData) > 0 {
+		files["paneldata.json"] = indentJSON(cfg.panelData)
 	}
-	if !json.Valid(panelData) {
-		files["paneldata-error.txt"] = []byte(fmt.Sprintf(
-			"panel data dropped: %d bytes are not valid JSON\n", len(panelData)))
-		return
+}
+
+// panelDataError reports why supplied panel data cannot be bundled, or nil when there is nothing to
+// record (no panel data requested, or a valid payload). Mirrors panelScreenshotError.
+func panelDataError(cfg buildConfig) error {
+	if cfg.panelDataErr != nil {
+		// Truncated and formatted with %s rather than wrapped with %w: this text originates in the
+		// client (see WithPanelData), so it is length-bounded before it becomes an artifact, and nothing
+		// downstream inspects the chain -- the error's only destination is paneldata-error.txt.
+		return fmt.Errorf("capture panel data: %s",
+			truncateDiagnosticString(cfg.panelDataErr.Error(), maxPanelDataErrorBytes))
 	}
-	files["paneldata.json"] = indentJSON(panelData)
+	if len(cfg.panelData) == 0 {
+		return nil
+	}
+	if len(cfg.panelData) > maxPanelDataArtifactBytes {
+		return fmt.Errorf("panel data dropped: %d bytes exceeds the %d-byte limit",
+			len(cfg.panelData), maxPanelDataArtifactBytes)
+	}
+	if !json.Valid(cfg.panelData) {
+		return fmt.Errorf("panel data dropped: %d bytes are not valid JSON", len(cfg.panelData))
+	}
+	return nil
 }
 
 type queryDataArtifact struct {

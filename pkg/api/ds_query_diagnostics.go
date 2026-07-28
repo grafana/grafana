@@ -34,6 +34,11 @@ type diagnosticsRequest struct {
 	// PanelData is the frames the client's frontend was holding for this panel, bundled as
 	// paneldata.json. Optional -- an omitted or unusable payload never fails the request.
 	PanelData json.RawMessage `json:"panelData"`
+	// PanelDataError is the reason the client could not serialize its panel data, sent in place of
+	// PanelData. Without it an absent payload is indistinguishable from a client that was never asked
+	// for one, and those two readings point at opposite culprits -- so the reason is bundled as
+	// paneldata-error.txt rather than left to be inferred from a missing file. Optional.
+	PanelDataError string `json:"panelDataError"`
 }
 
 // diagnosticsFeatureClient is a shared OpenFeature client reused across requests. Flags are
@@ -124,7 +129,7 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 
 	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, marshalErr, bundleErr,
 		diagnostics.WithPanelScreenshot(screenshotPNG, screenshotErr),
-		diagnostics.WithPanelData(reqDTO.PanelData))
+		diagnostics.WithPanelData(reqDTO.PanelData, clientReportedError(reqDTO.PanelDataError)))
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to build diagnostics bundle", err)
 	}
@@ -149,6 +154,17 @@ func decodePanelScreenshot(encoded string) ([]byte, error) {
 		return nil, fmt.Errorf("decode base64 panel screenshot (%d chars): %w", len(encoded), err)
 	}
 	return png, nil
+}
+
+// clientReportedError turns a failure the client reported in the request body into an error for the
+// bundler, or nil when the client reported none. The text is echoed into the bundle, so the bundler
+// bounds its length; nothing here interprets it, since only the browser knows what went wrong on its
+// side of the wire.
+func clientReportedError(reported string) error {
+	if reported == "" {
+		return nil
+	}
+	return errors.New(reported)
 }
 
 // diagnosticsNoCaptureError returns the response to send when a query failed and nothing was

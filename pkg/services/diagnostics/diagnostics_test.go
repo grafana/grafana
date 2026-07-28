@@ -1131,7 +1131,7 @@ func TestBundler_Build_bundlesPanelData(t *testing.T) {
 	panelData := json.RawMessage(`{"version":1,"stages":[{"name":"queryRunner","frames":[]}]}`)
 
 	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil,
-		WithPanelData(panelData))
+		WithPanelData(panelData, nil))
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -1152,7 +1152,7 @@ func TestBundler_Build_rejectsInvalidPanelData(t *testing.T) {
 	// Client-supplied, so it must not be bundled under a .json name unvalidated. The marker matters:
 	// silently omitting it would read as "the frontend held no frames", the opposite conclusion.
 	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil,
-		WithPanelData(json.RawMessage(`{"version":1,`)))
+		WithPanelData(json.RawMessage(`{"version":1,`), nil))
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -1165,10 +1165,49 @@ func TestBundler_Build_rejectsOversizedPanelData(t *testing.T) {
 	oversized := json.RawMessage(`{"pad":"` + strings.Repeat("x", maxPanelDataArtifactBytes) + `"}`)
 
 	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil,
-		WithPanelData(oversized))
+		WithPanelData(oversized, nil))
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
 	require.NotContains(t, files, "paneldata.json")
 	require.Contains(t, string(files["paneldata-error.txt"]), "exceeds")
+}
+
+func TestBundler_Build_recordsPanelDataError(t *testing.T) {
+	// A client that could not serialize its frames reports why. Recording it is the whole point: an
+	// absent paneldata.json with no marker reads as "the frontend was never asked", which would send a
+	// reader looking at the wrong half of the plugin.
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil,
+		WithPanelData(nil, errors.New("panel data did not settle within 15000ms")))
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.NotContains(t, files, "paneldata.json")
+	require.Contains(t, string(files["paneldata-error.txt"]), "panel data did not settle within 15000ms")
+	require.Contains(t, files, "panel.json", "an unrelated artifact still ships")
+}
+
+func TestBundler_Build_panelDataErrorWinsOverPayload(t *testing.T) {
+	// A client that reports a failure has nothing worth bundling, whatever else it sent: the payload
+	// beside the error is at best partial, and shipping it under paneldata.json would present it as the
+	// frames the frontend held.
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil,
+		WithPanelData(json.RawMessage(`{"version":1}`), errors.New("serializing frames threw")))
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.NotContains(t, files, "paneldata.json")
+	require.Contains(t, string(files["paneldata-error.txt"]), "serializing frames threw")
+}
+
+func TestBundler_Build_truncatesPanelDataError(t *testing.T) {
+	// The reason is client-supplied text copied into the bundle, so it is bounded -- an artifact whose
+	// job is to explain an absence must not become a way to pad the archive.
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil,
+		WithPanelData(nil, errors.New(strings.Repeat("x", maxPanelDataErrorBytes*4))))
+	require.NoError(t, err)
+
+	recorded := string(readTarGz(t, blob)["paneldata-error.txt"])
+	require.Less(t, len(recorded), maxPanelDataErrorBytes*2)
+	require.Contains(t, recorded, "…", "the truncation is visible rather than silent")
 }

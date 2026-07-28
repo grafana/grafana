@@ -395,6 +395,12 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 		// Decoded per panel so one client-side capture problem costs only that panel its panel.png; the
 		// reason lands in the manifest against this panel rather than failing the archive.
 		panel.ScreenshotPNG, panel.ScreenshotErr = decodePanelScreenshot(p.Screenshot)
+		// Release the base64 as soon as it is decoded. reqDTO is captured by the generation goroutine and
+		// stays alive for the whole run, so without this both forms of every panel's screenshot are held
+		// at once -- the encoded string plus the decoded bytes, ~2.3x the payload, for up to
+		// diagnosticsMaxInFlightJobs concurrent runs. p is the loop's copy, so clearing the slice element
+		// drops the only reference that outlives this iteration.
+		reqDTO.Panels[i].Screenshot = ""
 
 		// A single panel's unserializable query request must not abort the whole archive: record it
 		// against this panel (surfaced in the manifest) and carry on, the same way query and capture
