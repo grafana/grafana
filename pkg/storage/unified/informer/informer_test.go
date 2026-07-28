@@ -121,13 +121,27 @@ func (h *recordingHandler) OnDelete(obj interface{}) {
 	h.deletes = append(h.deletes, obj.(*metav1.PartialObjectMetadata))
 }
 
-func (h *recordingHandler) addedNames() []string   { return names(&h.mu, h.adds) }
-func (h *recordingHandler) updatedNames() []string { return names(&h.mu, h.updates) }
-func (h *recordingHandler) deletedNames() []string { return names(&h.mu, h.deletes) }
+// The slice fields must be read under the lock too — reading them in an
+// argument expression before a callee locks would race with a concurrent append.
+func (h *recordingHandler) addedNames() []string {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return names(h.adds)
+}
 
-func names(mu *sync.Mutex, objs []*metav1.PartialObjectMetadata) []string {
-	mu.Lock()
-	defer mu.Unlock()
+func (h *recordingHandler) updatedNames() []string {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return names(h.updates)
+}
+
+func (h *recordingHandler) deletedNames() []string {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return names(h.deletes)
+}
+
+func names(objs []*metav1.PartialObjectMetadata) []string {
 	out := make([]string, len(objs))
 	for i, o := range objs {
 		out[i] = o.Name
@@ -153,6 +167,12 @@ func event(action resourcepb.WatchNotification_Type, name string) *resourcepb.Wa
 		Namespace: testNamespace,
 		Name:      name,
 	}
+}
+
+func eventWithRV(action resourcepb.WatchNotification_Type, name string, rv int64) *resourcepb.WatchNotification {
+	e := event(action, name)
+	e.ResourceVersion = rv
+	return e
 }
 
 func subject() string {
@@ -208,7 +228,8 @@ func TestInformer_InitialListDeliversAdds(t *testing.T) {
 // A live ADDED goes through OnAdd, a MODIFIED through OnUpdate, and a DELETED
 // through OnDelete. The delivered object is the minimal one built from the
 // notification's identity — the controllers re-fetch, so the informer does not
-// read the object.
+// read the object — and it carries the notification's resource version, the
+// floor a re-fetch must reach to be considered fresh.
 func TestInformer_LiveEventsDispatchMinimalObject(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		sub := newFakeSubscriber()
@@ -216,14 +237,19 @@ func TestInformer_LiveEventsDispatchMinimalObject(t *testing.T) {
 		_, stop := start(t, sub, nil, newObjectFunc, handler)
 		defer stop()
 
-		sub.publish(t, subject(), event(resourcepb.WatchNotification_ADDED, "fresh"))
-		sub.publish(t, subject(), event(resourcepb.WatchNotification_MODIFIED, "changed"))
+		sub.publish(t, subject(), eventWithRV(resourcepb.WatchNotification_ADDED, "fresh", 101))
+		sub.publish(t, subject(), eventWithRV(resourcepb.WatchNotification_MODIFIED, "changed", 102))
 		sub.publish(t, subject(), event(resourcepb.WatchNotification_DELETED, "gone"))
 		synctest.Wait()
 
 		assert.Equal(t, []string{"fresh"}, handler.addedNames())
 		assert.Equal(t, []string{"changed"}, handler.updatedNames())
 		assert.Equal(t, []string{"gone"}, handler.deletedNames())
+
+		require.Len(t, handler.adds, 1)
+		assert.Equal(t, "101", handler.adds[0].ResourceVersion, "the add must carry the announced resource version")
+		require.Len(t, handler.updates, 1)
+		assert.Equal(t, "102", handler.updates[0].ResourceVersion, "the update must carry the announced resource version")
 	})
 }
 

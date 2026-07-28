@@ -53,3 +53,22 @@ func TestStore_WriteThrough(t *testing.T) {
 func TestStore_ListEmpty(t *testing.T) {
 	assert.Empty(t, NewStore().List(context.Background()))
 }
+
+// A write-through Update concurrent with a re-list Replace must be safe: the
+// informer replaces on its own goroutine while controller workers write reads
+// through. Run with -race to make a violation fail.
+func TestStore_ConcurrentReplaceAndUpdate(t *testing.T) {
+	s := NewStore()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		for i := 0; i < 200; i++ {
+			s.Update(context.Background(), obj("written-through"))
+		}
+	}()
+	for i := 0; i < 200; i++ {
+		s.Replace([]runtime.Object{obj("a"), obj("b")})
+	}
+	<-done
+	assert.NotEmpty(t, s.List(context.Background()))
+}

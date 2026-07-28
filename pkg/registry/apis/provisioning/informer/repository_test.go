@@ -2,6 +2,8 @@ package informer
 
 import (
 	"context"
+	"strconv"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	k8stesting "k8s.io/client-go/testing"
 	"k8s.io/client-go/tools/cache"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -110,7 +113,7 @@ func TestNewCachedRepositoryGetter(t *testing.T) {
 func TestClientGetCachedListRepositoryGetter_GetWritesThrough(t *testing.T) {
 	client := fake.NewClientset(repo("ns", "fresh"))
 	store := newFakeStore()
-	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
+	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store, nil)
 
 	got, err := g.Get(context.Background(), "ns", "fresh")
 	require.NoError(t, err)
@@ -127,7 +130,7 @@ func TestClientGetCachedListRepositoryGetter_GetWritesThrough(t *testing.T) {
 func TestClientGetCachedListRepositoryGetter_GetNotFoundRemoves(t *testing.T) {
 	client := fake.NewClientset()
 	store := newFakeStore(repo("ns", "stale"))
-	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
+	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store, nil)
 
 	_, err := g.Get(context.Background(), "ns", "stale")
 	require.True(t, apierrors.IsNotFound(err))
@@ -141,11 +144,124 @@ func TestClientGetCachedListRepositoryGetter_GetNotFoundRemoves(t *testing.T) {
 // List reads only the requested namespace out of the store.
 func TestClientGetCachedListRepositoryGetter_ListFiltersNamespace(t *testing.T) {
 	store := newFakeStore(repo("ns-a", "one"), repo("ns-a", "two"), repo("ns-b", "other"))
-	g := NewClientGetCachedListRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store)
+	g := NewClientGetCachedListRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store, nil)
 
 	list, err := g.List(context.Background(), "ns-a")
 	require.NoError(t, err)
 	assert.Len(t, list, 2)
+}
+
+// Realistic snowflake-range resource versions (above the legacy threshold), so
+// the tests exercise the same numeric space production RVs live in.
+const (
+	rvStale = int64(200000000000000000)
+	rvFresh = int64(300000000000000000)
+)
+
+func repoWithRV(namespace, name string, rv int64) *provisioningapis.Repository {
+	r := repo(namespace, name)
+	r.ResourceVersion = strconv.FormatInt(rv, 10)
+	return r
+}
+
+// A reconcile Get below the announced floor is not returned: the getter re-reads
+// until the API serves the announced version, then settles the floor.
+func TestClientGetCachedListRepositoryGetter_WaitsForAnnouncedVersion(t *testing.T) {
+	client := fake.NewClientset()
+	var reads atomic.Int32
+	client.PrependReactor("get", "repositories", func(k8stesting.Action) (bool, runtime.Object, error) {
+		if reads.Add(1) == 1 {
+			return true, repoWithRV("ns", "r", rvStale), nil
+		}
+		return true, repoWithRV("ns", "r", rvFresh), nil
+	})
+
+	floor := NewRVFloor()
+	floor.Raise("ns", "r", rvFresh)
+	store := newFakeStore()
+	g := clientGetCachedListRepositoryGetter{client: client.ProvisioningV0alpha1(), store: store, floor: floor, retries: 3}
+
+	got, err := g.Get(context.Background(), "ns", "r")
+	require.NoError(t, err)
+	assert.Equal(t, strconv.FormatInt(rvFresh, 10), got.ResourceVersion)
+	assert.EqualValues(t, 2, reads.Load(), "the stale first read must be retried")
+	assert.Zero(t, floor.Floor("ns", "r"), "a met floor must settle")
+
+	list, err := g.List(context.Background(), "ns")
+	require.NoError(t, err)
+	require.Len(t, list, 1, "only the fresh read may be written back to the snapshot")
+}
+
+// A read that never catches up to the floor surfaces ErrStaleRead (so the
+// controller requeues the key) instead of handing the reconcile stale state.
+func TestClientGetCachedListRepositoryGetter_StaleReadExhaustsToError(t *testing.T) {
+	client := fake.NewClientset(repoWithRV("ns", "r", rvStale))
+	floor := NewRVFloor()
+	floor.Raise("ns", "r", rvFresh)
+	g := clientGetCachedListRepositoryGetter{client: client.ProvisioningV0alpha1(), store: newFakeStore(), floor: floor, retries: 3}
+
+	_, err := g.Get(context.Background(), "ns", "r")
+	require.ErrorIs(t, err, ErrStaleRead)
+	assert.Equal(t, rvFresh, floor.Floor("ns", "r"), "an unmet floor must stay for the retry")
+}
+
+// A 404 while an event announced the object exists is a stale read, not a
+// delete: the getter must not trust it (or evict the snapshot on it).
+func TestClientGetCachedListRepositoryGetter_NotFoundBelowFloorIsStale(t *testing.T) {
+	client := fake.NewClientset()
+	floor := NewRVFloor()
+	floor.Raise("ns", "r", rvFresh)
+	store := newFakeStore(repoWithRV("ns", "r", rvStale))
+	g := clientGetCachedListRepositoryGetter{client: client.ProvisioningV0alpha1(), store: store, floor: floor, retries: 3}
+
+	_, err := g.Get(context.Background(), "ns", "r")
+	require.ErrorIs(t, err, ErrStaleRead)
+	assert.False(t, apierrors.IsNotFound(err), "the NotFound must not leak through as a trusted delete")
+	assert.Empty(t, store.deleted, "an ambiguous 404 must not evict the snapshot")
+}
+
+// The NATS wiring shares one floor between the delta source and the getter: a
+// notification's resource version becomes the minimum a reconcile read must
+// reach, and the getter unblocks once the API serves it.
+func TestNewRepositoryDeltaSource_EnforcesNotificationVersion(t *testing.T) {
+	// The API serves the stale version until the test flips caughtUp, standing in
+	// for a read path that lags the committed write behind the notification.
+	var caughtUp atomic.Bool
+	client := fake.NewClientset()
+	client.PrependReactor("get", "repositories", func(k8stesting.Action) (bool, runtime.Object, error) {
+		if caughtUp.Load() {
+			return true, repoWithRV(testNamespace, "r", rvFresh), nil
+		}
+		return true, repoWithRV(testNamespace, "r", rvStale), nil
+	})
+	sub := newFakeSubscriber()
+	source, getter := NewRepositoryDeltaSource(sub, client, time.Minute)
+
+	rec := &typeRecorder{}
+	_, err := source.AddEventHandler(rec)
+	require.NoError(t, err)
+	stopCh := make(chan struct{})
+	go source.Run(stopCh)
+	t.Cleanup(func() { close(stopCh) })
+
+	gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
+	subject := resourcewatch.Subject(gvr, "")
+	require.Eventually(t, func() bool { return sub.subscribed(subject) }, 5*time.Second, 5*time.Millisecond)
+
+	// The notification announces a version ahead of what the API serves: the
+	// reconcile read must not return the stale object.
+	sub.publish(t, subject, &resourcepb.WatchNotification{
+		Type: resourcepb.WatchNotification_MODIFIED, Group: gvr.Group, Resource: gvr.Resource,
+		Namespace: testNamespace, Name: "r", ResourceVersion: rvFresh,
+	})
+	_, err = getter.Get(context.Background(), testNamespace, "r")
+	require.ErrorIs(t, err, ErrStaleRead)
+
+	// Once the API catches up, the same floor is met and the read goes through.
+	caughtUp.Store(true)
+	got, err := getter.Get(context.Background(), testNamespace, "r")
+	require.NoError(t, err)
+	assert.Equal(t, strconv.FormatInt(rvFresh, 10), got.ResourceVersion)
 }
 
 // The delta source's getter is client-backed under NATS (reads fresh from the

@@ -104,10 +104,12 @@ func (s *store) Replace(objs []runtime.Object) (added, removed []runtime.Object)
 		}
 	}
 
+	// The diff must run under the lock: once next is published as s.items, a
+	// concurrent write-through Update mutates it, so reading it unlocked races.
 	s.mu.Lock()
+	defer s.mu.Unlock()
 	prev := s.items
 	s.items = next
-	s.mu.Unlock()
 
 	for key, obj := range next {
 		if _, ok := prev[key]; !ok {

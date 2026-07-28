@@ -256,12 +256,16 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 		return true
 	}
 
-	if !apierrors.IsServiceUnavailable(err) {
+	// Retry transient conditions: the service being unavailable, and reads that
+	// are provably staler than the event that triggered them (the write is
+	// committed, the read path just has not caught up — retrying is exactly what
+	// heals it, where dropping the key would defer it to the next re-list).
+	if !apierrors.IsServiceUnavailable(err) && !errors.Is(err, informer.ErrStaleRead) {
 		logger.Info("RepositoryController will not retry")
 		rc.queue.Forget(key)
 		return true
 	} else {
-		logger.Info("RepositoryController will retry as service is unavailable")
+		logger.Info("RepositoryController will retry", "stale_read", errors.Is(err, informer.ErrStaleRead))
 	}
 
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))

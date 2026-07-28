@@ -3,11 +3,13 @@ package informer
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"google.golang.org/protobuf/proto"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
@@ -23,7 +25,10 @@ import (
 // as a signal — they re-fetch the object from the API in their reconcile — so
 // the informer does not read the object itself; it hands the handler the
 // smallest object that carries the queue key. It must be the resource's concrete
-// type, because the handlers key off the type (e.g. *Repository).
+// type, because the handlers key off the type (e.g. *Repository). The informer
+// stamps the notification's resource version onto the built object before
+// dispatch, so a handler that re-fetches knows the minimum version a fresh read
+// must reach (the write is committed before its notification is published).
 //
 // A nil ObjectFunc means the resource is driven only by the periodic re-list of
 // full objects, not by live notifications — for handlers that read the object
@@ -301,6 +306,14 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		n.log.Debug("nats notification received", "subject", subject, "type", evt.Type, "namespace", evt.Namespace, "name", evt.Name, "rv", evt.ResourceVersion)
 
 		obj := n.newObject(evt.Namespace, evt.Name)
+		// Carry the announced resource version: the notification is published only
+		// after the write is committed, so a consumer re-fetching the object can
+		// treat any read below this version as stale rather than current state.
+		if evt.ResourceVersion > 0 {
+			if acc, err := apimeta.Accessor(obj); err == nil {
+				acc.SetResourceVersion(strconv.FormatInt(evt.ResourceVersion, 10))
+			}
+		}
 		// The handlers key off namespace/name and re-fetch the object in their
 		// reconcile, so the minimal object and old == new are both fine.
 		switch evt.Type {
