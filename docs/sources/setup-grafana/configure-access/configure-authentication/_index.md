@@ -21,20 +21,20 @@ Grafana provides many ways to authenticate users. Some authentication integratio
 The following table shows all supported authentication methods and the features available for them. [Team sync](../configure-team-sync/), [active sync](enhanced-ldap/#active-ldap-synchronization), and [SAML](saml/) are available in Grafana Enterprise and Grafana Cloud. They aren't available in Grafana open source.
 
 | Authentication method                | Multi Org Mapping | Enforce Sync | Role Mapping | Grafana Admin Mapping | Team Sync | Allowed groups | Active Sync | Skip OrgRole Sync | Auto Login | Single Logout | SCIM support |
-| :----------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :------------------- | :--------- | :------------ | :----------- |
-| [Anonymous access](anonymous-auth/)  | N/A               | N/A          | N/A          | N/A                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           | N/A          |
-| [Auth Proxy](auth-proxy/)            | no                | yes          | yes          | no                    | yes       | no             | N/A         | no                   | N/A        | N/A           | N/A          |
-| [Entra ID OAuth](azuread/)           | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | N/A          |
-| [Basic auth](grafana/)               | yes               | N/A          | yes          | yes                   | N/A       | N/A            | N/A         | N/A                  | N/A        | N/A           | N/A          |
-| [Generic OAuth](generic-oauth/)      | yes               | yes          | yes          | yes                   | yes       | no             | N/A         | yes                  | yes        | yes           | N/A          |
-| [GitHub OAuth](github/)              | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | N/A          |
-| [GitLab OAuth](gitlab/)              | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | N/A          |
-| [Google OAuth](google/)              | yes               | no           | no           | no                    | yes       | no             | N/A         | no                   | yes        | yes           | N/A          |
-| [Grafana.com OAuth](grafana-cloud/)  | no                | no           | yes          | no                    | N/A       | N/A            | N/A         | yes                  | yes        | yes           | N/A          |
-| [Okta OAuth](okta/)                  | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | N/A          |
-| [SAML](saml/) (Enterprise and Cloud) | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes                  | yes        | yes           | yes          |
-| [LDAP](ldap/)                        | yes               | yes          | yes          | yes                   | yes       | yes            | yes         | no                   | N/A        | N/A           | N/A          |
-| [JWT Proxy](jwt/)                    | no                | yes          | yes          | yes                   | no        | no             | N/A         | no                   | N/A        | N/A           | N/A          |
+| :----------------------------------- | :---------------- | :----------- | :----------- | :-------------------- | :-------- | :------------- | :---------- | :---------------- | :--------- | :------------ | :----------- |
+| [Anonymous access](anonymous-auth/)  | N/A               | N/A          | N/A          | N/A                   | N/A       | N/A            | N/A         | N/A               | N/A        | N/A           | N/A          |
+| [Auth Proxy](auth-proxy/)            | no                | yes          | yes          | no                    | yes       | no             | N/A         | no                | N/A        | N/A           | N/A          |
+| [Entra ID OAuth](azuread/)           | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes               | yes        | yes           | N/A          |
+| [Basic auth](grafana/)               | yes               | N/A          | yes          | yes                   | N/A       | N/A            | N/A         | N/A               | N/A        | N/A           | N/A          |
+| [Generic OAuth](generic-oauth/)      | yes               | yes          | yes          | yes                   | yes       | no             | N/A         | yes               | yes        | yes           | N/A          |
+| [GitHub OAuth](github/)              | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes               | yes        | yes           | N/A          |
+| [GitLab OAuth](gitlab/)              | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes               | yes        | yes           | N/A          |
+| [Google OAuth](google/)              | yes               | no           | no           | no                    | yes       | no             | N/A         | no                | yes        | yes           | N/A          |
+| [Grafana.com OAuth](grafana-cloud/)  | no                | no           | yes          | no                    | N/A       | N/A            | N/A         | yes               | yes        | yes           | N/A          |
+| [Okta OAuth](okta/)                  | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes               | yes        | yes           | N/A          |
+| [SAML](saml/) (Enterprise and Cloud) | yes               | yes          | yes          | yes                   | yes       | yes            | N/A         | yes               | yes        | yes           | yes          |
+| [LDAP](ldap/)                        | yes               | yes          | yes          | yes                   | yes       | yes            | yes         | no                | N/A        | N/A           | N/A          |
+| [JWT Proxy](jwt/)                    | no                | yes          | yes          | yes                   | no        | no             | N/A         | no                | N/A        | N/A           | N/A          |
 
 Fields explanation:
 
