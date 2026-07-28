@@ -247,70 +247,77 @@ function applyCustomFavIcon() {
   favicon.href = customFavIcon;
 }
 
-async function initGrafana() {
-  if (!window.__grafanaReduceBootdataAPI) {
-    // Preserve a mix of values from the initial boot data, and from the backend
-    // - nav tree and user info come from the backend
-    // - merge settings from both. FS settings contains less values
-    // - build info edition comes from the backend
-    const bootData = await loadBootData();
+async function initBootDataFromLegacy() {
+  // Preserve a mix of values from the initial boot data, and from the backend
+  // - nav tree and user info come from the backend
+  // - merge settings from both. FS settings contains less values
+  // - build info edition comes from the backend
+  const bootData = await loadBootData();
 
-    // If the backend wants us to redirect, we reject this promise to avoid booting the rest of the app.
-    if ('redirect' in bootData) {
-      return Promise.reject({ redirect: bootData.redirect });
-    }
-
-    window.grafanaBootData.user = bootData.user;
-    window.grafanaBootData.settings = {
-      ...bootData.settings,
-      ...window.grafanaBootData.settings,
-    };
-    window.grafanaBootData.navTree = bootData.navTree;
-
-    if (bootData.settings?.buildInfo?.edition) {
-      window.grafanaBootData.settings.buildInfo.edition = bootData.settings.buildInfo.edition;
-    }
-
-    // The per-theme CSS still contains some global styles needed
-    // to render the page correctly.
-    const cssLink = document.createElement('link');
-    cssLink.rel = 'stylesheet';
-
-    const theme = window.grafanaBootData.user.theme;
-    if (theme === 'system') {
-      const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      window.grafanaBootData.user.lightTheme = !darkQuery.matches;
-    }
-
-    const isLightTheme = window.grafanaBootData.user.lightTheme;
-    document.body.classList.add(isLightTheme ? 'theme-light' : 'theme-dark');
-
-    const lang = window.grafanaBootData.user.language;
-    if (lang) {
-      document.documentElement.lang = lang;
-    }
-
-    cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
-    document.head.appendChild(cssLink);
-  } else {
-    const display = await fetchUser();
-    if (display) {
-      window.grafanaBootData.user = {
-        ...window.grafanaBootData.user,
-        isSignedIn: true,
-        id: display.internalId ?? 0,
-        uid: display.identity?.name ?? '',
-        name: display.displayName,
-        gravatarUrl: display.avatarURL ?? '',
-      };
-    } else {
-      window.grafanaBootData.user = {
-        ...window.grafanaBootData.user,
-        isSignedIn: false,
-      };
-    }
+  // If the backend wants us to redirect, we reject this promise to avoid booting the rest of the app.
+  if ('redirect' in bootData) {
+    return Promise.reject({ redirect: bootData.redirect });
   }
 
+  window.grafanaBootData.user = bootData.user;
+  window.grafanaBootData.settings = {
+    ...bootData.settings,
+    ...window.grafanaBootData.settings,
+  };
+  window.grafanaBootData.navTree = bootData.navTree;
+
+  if (bootData.settings?.buildInfo?.edition) {
+    window.grafanaBootData.settings.buildInfo.edition = bootData.settings.buildInfo.edition;
+  }
+
+  // The per-theme CSS still contains some global styles needed
+  // to render the page correctly.
+  const cssLink = document.createElement('link');
+  cssLink.rel = 'stylesheet';
+
+  const theme = window.grafanaBootData.user.theme;
+  if (theme === 'system') {
+    const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    window.grafanaBootData.user.lightTheme = !darkQuery.matches;
+  }
+
+  const isLightTheme = window.grafanaBootData.user.lightTheme;
+  document.body.classList.add(isLightTheme ? 'theme-light' : 'theme-dark');
+
+  const lang = window.grafanaBootData.user.language;
+  if (lang) {
+    document.documentElement.lang = lang;
+  }
+
+  cssLink.href = window.grafanaBootData.assets[isLightTheme ? 'light' : 'dark'];
+  document.head.appendChild(cssLink);
+}
+
+async function initBootDataFromMT() {
+  const display = await fetchUser();
+  if (display) {
+    window.grafanaBootData.user = {
+      ...window.grafanaBootData.user,
+      isSignedIn: true,
+      id: display.internalId ?? 0,
+      uid: display.identity?.name ?? '',
+      name: display.displayName,
+      gravatarUrl: display.avatarURL ?? '',
+    };
+  } else {
+    window.grafanaBootData.user = {
+      ...window.grafanaBootData.user,
+      isSignedIn: false,
+    };
+  }
+}
+
+async function initGrafana() {
+  if (window.__grafanaReduceBootdataAPI) {
+    await initBootDataFromMT();
+  } else {
+    await initBootDataFromLegacy();
+  }
   applyCustomFavIcon();
 }
 
