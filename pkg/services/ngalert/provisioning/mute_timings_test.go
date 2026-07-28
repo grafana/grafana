@@ -904,7 +904,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		expectedTimings := slices.DeleteFunc(initialConfig().AlertmanagerConfig.TimeIntervals, func(i v1.TimeInterval) bool {
 			return i.Name == original.Name
 		})
-		expectedTimings = append(expectedTimings, v1.TimeInterval(interval))
+		expectedTimings = append(expectedTimings, interval)
 		assert.EqualValues(t, expectedTimings, revision.Config.AlertmanagerConfig.TimeIntervals)
 		assert.Falsef(t, revision.TimeIntervalUsedByRoutes(expected.Name), "There are still references to the old time interval")
 		assert.Truef(t, revision.TimeIntervalUsedByRoutes(interval.Name), "There are no references to the new time interval")
