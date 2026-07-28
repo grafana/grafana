@@ -366,7 +366,7 @@
     "nanoid": "^5.0.9",
     "node-forge": "^1.4.0",
     "ol": "10.7.0",
-    "ol-ext": "4.0.36",
+    "ol-ext": "4.0.38",
     "ol-mapbox-style": "^13.0.1",
     "pluralize": "^8.0.0",
     "prismjs": "1.30.0",
