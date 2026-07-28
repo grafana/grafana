@@ -72,6 +72,7 @@ func runResourceDbMigrations(ctx context.Context, cfg *setting.Cfg) error {
 	if err != nil {
 		return fmt.Errorf("failed to migrate the resource database: %w", err)
 	}
+	defer func() { _ = resourceDB.SqlDB().Close() }()
 
 	last, err := lastResourceMigration(ctx, resourceDB)
 	if err != nil {
