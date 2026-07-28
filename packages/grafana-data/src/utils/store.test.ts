@@ -82,6 +82,33 @@ describe('Store', () => {
   });
 });
 
+describe('Store without window (SSR)', () => {
+  const originalWindow = window;
+
+  beforeEach(() => {
+    // @ts-expect-error -- simulate a server environment where window is not defined
+    delete global.window;
+  });
+
+  afterEach(() => {
+    global.window = originalWindow;
+  });
+
+  it('does not throw when constructed or used', () => {
+    expect(() => {
+      const ssrStore = new Store();
+      ssrStore.subscribe('key', jest.fn());
+      ssrStore.set('key', 'value');
+      ssrStore.setObject('key', { a: 1 });
+      ssrStore.get('key');
+      ssrStore.getBool('key', true);
+      ssrStore.getObject('key', { a: 1 });
+      ssrStore.exists('key');
+      ssrStore.delete('key');
+    }).not.toThrow();
+  });
+});
+
 /* tests moved here from public/app/core/specs/store.test.ts */
 describe('store', () => {
   it('should store', () => {

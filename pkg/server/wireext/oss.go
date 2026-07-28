@@ -65,6 +65,7 @@ import (
 	search2 "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	embedderprovider "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
+	rerankprovider "github.com/grafana/grafana/pkg/storage/unified/search/rerank/provider"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
@@ -149,10 +150,12 @@ var BasicSet = wire.NewSet(
 	resource.NewGCGate,
 	unified.ProvideUnifiedStorageClient,
 	sql.ProvideStorageBackend,
+	sql.ProvideExperimentalKV,
 	sql.ProvideKV,
 	sql.ProvideResourceDB,
 	vector.ProvideVectorBackend,
 	embedderprovider.ProvideEmbedder,
+	rerankprovider.ProvideReranker,
 	builder.ProvideDefaultBuildHandlerChainFuncFromBuilders,
 	aggregatorrunner.ProvideNoopAggregatorConfigurator,
 	apisregistry.WireSetExts,

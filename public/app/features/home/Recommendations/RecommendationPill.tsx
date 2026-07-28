@@ -24,7 +24,7 @@ export function RecommendationPill({ recommendation }: RecommendationPillProps) 
       onClick={() =>
         ctaClicked({
           surface: 'recommendations',
-          action: 'enable',
+          action: recommendation.cta ?? 'enable',
           placement: 'pill',
           recommendation_id: recommendation.id,
         })
