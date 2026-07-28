@@ -1,4 +1,4 @@
-import { findByText, render, screen } from '@testing-library/react';
+import { act, findByText, render, screen } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 
 import {
@@ -333,6 +333,36 @@ describe('DataSourcePicker', () => {
       await user.click(await screen.findByText('Open advanced data source picker'));
       expect(await screen.findByText('Select data source')); //Data source modal is open
       expect(screen.queryByText('Open advanced data source picker')).toBeNull(); //Drop down is closed
+    });
+  });
+
+  describe('search result announcements', () => {
+    // Fake timers so the tests don't sit through the live region's real debounce
+    let fakeTimerUser: UserEvent;
+
+    beforeEach(() => {
+      fakeTimerUser = userEvent.setup({ delay: null });
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should announce the number of search results', async () => {
+      await setupOpenDropdown(fakeTimerUser, { onChange: jest.fn() });
+
+      await fakeTimerUser.keyboard(mockDS1.name); //Search for a term matching a single data source
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+      expect(screen.getByRole('status')).toHaveTextContent('1 data source found');
+
+      await fakeTimerUser.keyboard('foobarbaz'); //Search for a DS that should not exist
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+      expect(screen.getByRole('status')).toHaveTextContent('No data sources found');
     });
   });
 });
