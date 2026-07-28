@@ -7366,6 +7366,13 @@
       },
       "title-close": "Close"
     },
+    "predefined-variables": {
+      "label-all": "All",
+      "label-custom": "Custom",
+      "label-folder": "Folder",
+      "label-global": "Global",
+      "label-none": "None"
+    },
     "predefined-variables-options": {
       "all": "All",
       "description": "This dashboard receives global and folder-scoped variables by default. Choose which ones to keep.",

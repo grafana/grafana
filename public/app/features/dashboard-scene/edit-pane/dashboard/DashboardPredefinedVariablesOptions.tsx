@@ -38,6 +38,7 @@ function modeFromDenyList(denyList: string[] | undefined): PredefinedVariablesMo
   if (denyList.includes(DENY_ALL_PREDEFINED)) {
     return 'none';
   }
+  // Mode names the bucket to KEEP, so folder:* deny → Global and global:* deny → Folder.
   if (denyList.length === 1 && denyList[0] === DENY_ALL_FOLDER_PREDEFINED) {
     return 'global';
   }
@@ -54,6 +55,7 @@ function denyListFromMode(mode: PredefinedVariablesMode): string[] | undefined {
       return undefined;
     case 'none':
       return [DENY_ALL_PREDEFINED];
+    // Mode names the bucket to KEEP, so we deny the *other* bucket.
     case 'global':
       return [DENY_ALL_FOLDER_PREDEFINED];
     case 'folder':

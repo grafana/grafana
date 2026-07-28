@@ -484,7 +484,7 @@ describe('DashboardScene', () => {
         expect(scene.state.meta).toEqual(prevMeta);
       });
 
-      it('A change to predefined variables allowlist should set isDirty true', () => {
+      it('A change to predefined variables denylist should set isDirty true', () => {
         const prevMeta = { ...scene.state.meta };
         mockResultsOfDetectChangesWorker({ hasChanges: false });
 

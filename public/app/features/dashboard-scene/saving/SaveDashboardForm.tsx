@@ -33,7 +33,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
     folderUid: dashboard.state.meta.folderUid,
     // we need to set the uid here in order to save the dashboard
     // in schema v2 we don't have the uid in the spec
-    // meta.k8s.annotations is the editor source of truth for allowlist / other client annotations
+    // meta.k8s.annotations is the editor source of truth for the denylist / other client annotations
     k8s: {
       ...k8sMeta,
       annotations: {
@@ -44,7 +44,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   });
 
   const onSave = async (overwrite: boolean) => {
-    // Re-merge annotations at save time so allowlist edits after the form mounted still persist.
+    // Re-merge annotations at save time so denylist edits after the form mounted still persist.
     const latestK8s = dashboard.serializer.getK8SMetadata();
     const result = await onSaveDashboard(dashboard, {
       ...options,

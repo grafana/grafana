@@ -17,7 +17,7 @@ interface SaveDashboardDiffProps {
   hasFolderChanges?: boolean;
   oldFolder?: string;
   newFolder?: string;
-  /** Metadata-only allowlist change (not part of Spec JSON). */
+  /** Metadata-only denylist change (not part of Spec JSON). */
   hasPredefinedVariablesChanges?: boolean;
   oldPredefinedVariables?: string;
   newPredefinedVariables?: string;

@@ -4,10 +4,15 @@ import { config, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { folderHandlers } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { getAlertingTabID, getDashboardsTabID, getLibraryPanelsTabID } from 'app/features/folders/state/navModel';
+import {
+  getAlertingTabID,
+  getDashboardsTabID,
+  getLibraryPanelsTabID,
+  getVariablesTabID,
+} from 'app/features/folders/state/navModel';
 import { type FolderDTO } from 'app/types/folders';
 
-import { useNavModel } from './useNavModel';
+import { type FolderActiveTab, useNavModel } from './useNavModel';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -37,18 +42,21 @@ const folder: FolderDTO = {
   version: 1,
 };
 
-const renderUseNavModel = (folderDTO: FolderDTO | undefined, tab: 'dashboards' | 'panels' | 'alerts') =>
+const renderUseNavModel = (folderDTO: FolderDTO | undefined, tab: FolderActiveTab) =>
   renderHook(() => useNavModel(folderDTO, tab), { wrapper: getWrapper({}) });
 
 describe('useNavModel', () => {
   const originalUnifiedAlerting = config.unifiedAlertingEnabled;
+  const originalGlobalDashboardVariables = config.featureToggles.globalDashboardVariables;
 
   beforeEach(() => {
     config.unifiedAlertingEnabled = true;
+    config.featureToggles.globalDashboardVariables = true;
   });
 
   afterAll(() => {
     config.unifiedAlertingEnabled = originalUnifiedAlerting;
+    config.featureToggles.globalDashboardVariables = originalGlobalDashboardVariables;
   });
 
   it('returns undefined when folderDTO is not provided', () => {
@@ -72,6 +80,12 @@ describe('useNavModel', () => {
     const { result } = renderUseNavModel(folder, 'alerts');
     const alertingTab = result.current?.children?.find((c) => c.id === getAlertingTabID(folder.uid));
     expect(alertingTab?.active).toBe(true);
+  });
+
+  it('marks the variables tab as active', () => {
+    const { result } = renderUseNavModel(folder, 'variables');
+    const variablesTab = result.current?.children?.find((c) => c.id === getVariablesTabID(folder.uid));
+    expect(variablesTab?.active).toBe(true);
   });
 
   it('populates tab counters from the folder counts query', async () => {

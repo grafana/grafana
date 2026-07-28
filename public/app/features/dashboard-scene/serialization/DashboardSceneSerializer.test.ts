@@ -112,7 +112,7 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasFolderChanges).toBe(true);
     });
 
-    it('Can detect predefined variables allowlist change', () => {
+    it('Can detect predefined variables denylist change', () => {
       const dashboard = setup();
       dashboard.onEnterEditMode();
 
@@ -555,7 +555,7 @@ describe('DashboardSceneSerializer', () => {
       expect(result.hasFolderChanges).toBe(true);
     });
 
-    it('Can detect predefined variables allowlist change', () => {
+    it('Can detect predefined variables denylist change', () => {
       const dashboard = setupV2();
       dashboard.onEnterEditMode();
 

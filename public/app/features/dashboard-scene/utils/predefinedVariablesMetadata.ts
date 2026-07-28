@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import {
   AnnoKeyIgnorePredefinedVariables,
   DENY_ALL_FOLDER_PREDEFINED,
@@ -29,20 +30,22 @@ export function hasPredefinedVariablesAnnotationChanges(dashboard: DashboardScen
 /** Human-readable label for save-diff UI (metadata is not part of Spec JSON). */
 export function formatPredefinedVariablesAnnotationLabel(annotation: string | undefined): string {
   if (annotation === undefined) {
-    return 'All';
+    return t('dashboard-scene.predefined-variables.label-all', 'All');
   }
   const denyList = parseIgnorePredefinedVariables({ [AnnoKeyIgnorePredefinedVariables]: annotation });
   if (denyList === undefined || denyList.length === 0) {
-    return 'All';
+    return t('dashboard-scene.predefined-variables.label-all', 'All');
   }
   if (denyList.includes(DENY_ALL_PREDEFINED)) {
-    return 'None';
+    return t('dashboard-scene.predefined-variables.label-none', 'None');
   }
   if (denyList.length === 1 && denyList[0] === DENY_ALL_FOLDER_PREDEFINED) {
-    return 'Global';
+    // Mode names the bucket to KEEP, so folder:* deny → Global.
+    return t('dashboard-scene.predefined-variables.label-global', 'Global');
   }
   if (denyList.length === 1 && denyList[0] === DENY_ALL_GLOBAL_PREDEFINED) {
-    return 'Folder';
+    // Mode names the bucket to KEEP, so global:* deny → Folder.
+    return t('dashboard-scene.predefined-variables.label-folder', 'Folder');
   }
-  return 'Custom';
+  return t('dashboard-scene.predefined-variables.label-custom', 'Custom');
 }

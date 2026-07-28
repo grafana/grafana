@@ -361,7 +361,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   /**
-   * Re-resolve global/folder variables from the current allowlist annotation and apply them
+   * Re-resolve global/folder variables from the current denylist annotation and apply them
    * to the live scene (e.g. after save) so a full page reload is not required.
    */
   public async refreshPredefinedVariables(): Promise<void> {
@@ -644,7 +644,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   /**
-   * Serializer annotations are mutated outside scene state when editing the allowlist.
+   * Serializer annotations are mutated outside scene state when editing the denylist.
    * Restore them from the edit-session baseline when discarding.
    */
   private restoreSerializerAnnotationsFromInitialState() {
