@@ -3,7 +3,7 @@ import { type AnnotationVals } from './types';
 
 // AnnotationVals types ids as numbers, but annotations served by the k8s annotations API
 // have string ids (metadata.name), see issue #120097
-function makeAnnoVals(id: number | string | null, dashboardUID: string | null = 'dash-1'): AnnotationVals {
+function makeAnnoVals(id: number | string | null | undefined, dashboardUID: string | null = 'dash-1'): AnnotationVals {
   return {
     time: [1759388895560],
     text: ['annotation text'],
@@ -37,6 +37,9 @@ describe('getAnnotationTooltip', () => {
 
   it.each([
     ['an id of 0 (loki-sourced alert annotation)', 0],
+    // loki-sourced alert annotations actually omit the id key on the wire (int64 zero + json omitempty),
+    // so undefined is what reaches the tooltip for them
+    ['an undefined id (loki-sourced alert annotation)', undefined],
     ['a null id', null],
   ])('disallows editing and deleting with %s', (_desc, id) => {
     const { canEdit, canDelete } = getTooltip(makeAnnoVals(id));
