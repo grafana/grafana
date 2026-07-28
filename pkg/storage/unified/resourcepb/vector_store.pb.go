@@ -105,8 +105,9 @@ func (x *EmbeddingInput) GetTitle() string {
 // Validation errors fail the whole request (INVALID_ARGUMENT, nothing written).
 // Runtime failures the server can attribute to specific inputs are reported
 // per-row in VectorUpsertResponse.failures; failures it cannot attribute
-// (whole-batch embed or storage errors) fail the whole request with a
-// retryable status. Upserts are idempotent — retry the batch.
+// (whole-batch embed or storage errors) fail the whole request (Internal;
+// safe to retry — upserts are idempotent). A dead caller context maps to
+// Canceled/DeadlineExceeded.
 type VectorUpsertRequest struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	Namespace string                 `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"` // required; tenant

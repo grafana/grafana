@@ -404,7 +404,7 @@ func TestVectorStore_DeleteSelectorValidation(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, codes.InvalidArgument, status.Code(err))
 
-	// Filter selector ships in PR2.
+	// Filter selector ships with the metadata filter dialect.
 	_, err = s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
 		Namespace: "ns", Group: "g", Resource: "r",
 		Selector: &resourcepb.VectorDeleteRequest_Filter{Filter: []byte(`{}`)},
@@ -422,6 +422,38 @@ func TestVectorStore_DeleteUnprovisionedIsNotFound(t *testing.T) {
 	})
 	require.Error(t, err)
 	assert.Equal(t, codes.NotFound, status.Code(err))
+}
+
+func TestVectorStore_DeleteInternalCollectionIsNotFound(t *testing.T) {
+	// A fat-fingered vector_allowed_external_collections entry naming an
+	// internal pair must not let external callers delete its rows, nor
+	// learn it exists: same NotFound as an unprovisioned collection.
+	store := &fakeWriteStore{
+		resolveFound: true,
+		collection:   vector.Collection{Group: "g", Resource: "r", PartitionKey: "r", IsExternal: false},
+	}
+	s := newTestVectorStoreServer(store)
+	_, err := s.Delete(vsAuthedCtx(), &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_Uids{Uids: &resourcepb.StringList{Values: []string{"u"}}},
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.NotFound, status.Code(err))
+	assert.Empty(t, store.deleteCalls, "must not delete rows for an internal collection")
+}
+
+func TestVectorStore_DeleteResolveFailureWithCancelledContextIsCanceled(t *testing.T) {
+	store := &fakeWriteStore{resolveErr: errors.New("db down")}
+	s := newTestVectorStoreServer(store)
+	ctx, cancel := context.WithCancel(vsAuthedCtx())
+	cancel()
+
+	_, err := s.Delete(ctx, &resourcepb.VectorDeleteRequest{
+		Namespace: "ns", Group: "g", Resource: "r",
+		Selector: &resourcepb.VectorDeleteRequest_Uids{Uids: &resourcepb.StringList{Values: []string{"u"}}},
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.Canceled, status.Code(err), "a dead caller context wins over the downstream fault")
 }
 
 func TestVectorStore_UpsertSubresourcesNoChangesSkipsEmbed(t *testing.T) {

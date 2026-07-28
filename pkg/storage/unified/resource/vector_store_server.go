@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
@@ -82,6 +83,19 @@ func (s *VectorStoreServer) countRows(rpc, group, resource string, n int64) {
 	s.metrics.WriteRowsTotal.WithLabelValues(rpc, group, resource).Add(float64(n))
 }
 
+// writeStatusError maps a downstream failure to its gRPC status: the
+// caller's dead context wins (Canceled/DeadlineExceeded), anything else is
+// Internal. Mirrors the VectorSearch convention.
+func writeStatusError(ctx context.Context, msg string) error {
+	switch ctx.Err() {
+	case context.Canceled:
+		return status.Error(codes.Canceled, msg)
+	case context.DeadlineExceeded:
+		return status.Error(codes.DeadlineExceeded, msg)
+	}
+	return status.Error(codes.Internal, msg)
+}
+
 // authorize runs the common request prefix: key fields present, token
 // namespace matches, collection allowlisted. Returns nil when the request
 // may proceed to collection resolution.
@@ -152,10 +166,10 @@ func (s *VectorStoreServer) embedInputs(ctx context.Context, namespace string, c
 	})
 	if err != nil {
 		s.log.Error("vector store: embed batch", "err", err, "group", coll.Group, "resource", coll.Resource)
-		return nil, status.Error(codes.Internal, "embed batch")
+		return nil, writeStatusError(ctx, "embed batch")
 	}
 	if len(out.Embeddings) != len(inputs) {
-		return nil, status.Errorf(codes.Internal, "embedder returned %d embeddings for %d inputs", len(out.Embeddings), len(inputs))
+		return nil, writeStatusError(ctx, fmt.Sprintf("embedder returned %d embeddings for %d inputs", len(out.Embeddings), len(inputs)))
 	}
 	rows := make([]vector.Vector, len(inputs))
 	for i, in := range inputs {
@@ -191,7 +205,7 @@ func (s *VectorStoreServer) Upsert(ctx context.Context, req *resourcepb.VectorUp
 	coll, err := s.store.EnsureCollection(ctx, req.Group, req.Resource, true)
 	if err != nil {
 		s.log.Error("vector store: ensure collection", "err", err, "group", req.Group, "resource", req.Resource)
-		return nil, status.Error(codes.Internal, "provision collection")
+		return nil, writeStatusError(ctx, "provision collection")
 	}
 
 	rows, err := s.embedInputs(ctx, req.Namespace, coll, "", req.Inputs)
@@ -200,7 +214,7 @@ func (s *VectorStoreServer) Upsert(ctx context.Context, req *resourcepb.VectorUp
 	}
 	if err := s.store.Upsert(ctx, rows); err != nil {
 		s.log.Error("vector store: upsert", "err", err, "group", req.Group, "resource", req.Resource)
-		return nil, status.Error(codes.Internal, "upsert")
+		return nil, writeStatusError(ctx, "upsert")
 	}
 	s.countRows("upsert", req.Group, req.Resource, int64(len(rows)))
 	return &resourcepb.VectorUpsertResponse{Upserted: int64(len(rows))}, nil
@@ -229,14 +243,14 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 	coll, err := s.store.EnsureCollection(ctx, req.Group, req.Resource, true)
 	if err != nil {
 		s.log.Error("vector store: ensure collection", "err", err, "group", req.Group, "resource", req.Resource)
-		return nil, status.Error(codes.Internal, "provision collection")
+		return nil, writeStatusError(ctx, "provision collection")
 	}
 
 	resp = &resourcepb.VectorUpsertSubresourcesResponse{}
 	err = s.store.WithEntityLock(ctx, req.Namespace, coll.PartitionKey, req.Uid, func(ctx context.Context) error {
 		stored, _, err := s.store.GetSubresourceContent(ctx, req.Namespace, s.embedder.Model, coll.PartitionKey, req.Uid)
 		if err != nil {
-			return status.Error(codes.Internal, "read stored subresources")
+			return writeStatusError(ctx, "read stored subresources")
 		}
 
 		desired := make([]string, 0, len(req.Inputs))
@@ -277,7 +291,7 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 		}
 		if err := s.store.UpsertReplaceSubresources(ctx, req.Namespace, s.embedder.Model, coll.PartitionKey, req.Uid, changed, metadataOnly, desired); err != nil {
 			s.log.Error("vector store: replace subresources", "err", err, "group", req.Group, "resource", req.Resource, "uid", req.Uid)
-			return status.Error(codes.Internal, "replace subresources")
+			return writeStatusError(ctx, "replace subresources")
 		}
 		return nil
 	})
@@ -285,7 +299,7 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 		if _, ok := status.FromError(err); ok {
 			return nil, err
 		}
-		return nil, status.Error(codes.Internal, "entity lock")
+		return nil, writeStatusError(ctx, "entity lock")
 	}
 	s.countRows("upsert_subresources", req.Group, req.Resource, resp.Created+resp.Updated+resp.Deleted)
 	return resp, nil
@@ -306,9 +320,12 @@ func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDe
 	coll, found, err := s.store.ResolveCollection(ctx, req.Group, req.Resource)
 	if err != nil {
 		s.log.Error("vector store: resolve collection", "err", err, "group", req.Group, "resource", req.Resource)
-		return nil, status.Error(codes.Internal, "resolve collection")
+		return nil, writeStatusError(ctx, "resolve collection")
 	}
-	if !found {
+	// A found-but-internal collection answers identically to unprovisioned:
+	// a fat-fingered allowlist entry must not leak that the internal pair
+	// exists, let alone let an external caller delete its rows.
+	if !found || !coll.IsExternal {
 		return nil, status.Errorf(codes.NotFound, "collection %s/%s not found", req.Group, req.Resource)
 	}
 
@@ -338,13 +355,13 @@ func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDe
 	deleted, hasMore, err := s.store.DeleteRows(ctx, req.Namespace, s.embedder.Model, coll.PartitionKey, sel)
 	if err != nil {
 		s.log.Error("vector store: delete rows", "err", err, "group", req.Group, "resource", req.Resource)
-		return nil, status.Error(codes.Internal, "delete rows")
+		return nil, writeStatusError(ctx, "delete rows")
 	}
 	s.countRows("delete", req.Group, req.Resource, deleted)
 	return &resourcepb.VectorDeleteResponse{Deleted: deleted, HasMore: hasMore}, nil
 }
 
-// UpdateMetadata ships in PR2 with the metadata filter dialect.
+// UpdateMetadata ships with the metadata filter dialect.
 func (s *VectorStoreServer) UpdateMetadata(ctx context.Context, req *resourcepb.VectorUpdateMetadataRequest) (resp *resourcepb.VectorUpdateMetadataResponse, retErr error) {
 	defer s.observe("update_metadata", time.Now(), &retErr)
 
