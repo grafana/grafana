@@ -34,9 +34,6 @@ type Store interface {
 	// If err is not nil, the job and rollback values are always nil.
 	Claim(ctx context.Context, namespace, name string) (job *provisioning.Job, rollback func(), err error)
 
-	// ListUnclaimedJobs lists jobs that no worker has claimed yet, up to limit (a single page).
-	ListUnclaimedJobs(ctx context.Context, limit int) ([]*provisioning.Job, error)
-
 	// Complete marks a job as completed and removes it from the active job store.
 	// Callers are responsible for writing the job to history after calling this.
 	Complete(ctx context.Context, job *provisioning.Job) error
@@ -60,8 +57,8 @@ type Store interface {
 // claimed. By then the worker may already have executed the job (e.g. only
 // Complete failed), and the deferred claim rollback returns the job to
 // pending — so retrying the key from the queue would re-run work with side
-// effects. The worker loop drops these keys instead and lets the backstop
-// poll re-discover the job, preserving the pre-queue retry cadence.
+// effects. The worker loop drops these keys instead and lets the informer
+// re-list re-discover the job at the resync cadence.
 var errPostClaim = errors.New("job failed after it was claimed")
 
 // jobProcessor claims and drives a single job at a time to completion.

@@ -15052,12 +15052,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dangerously-set-html-content@npm:1.1.0":
-  version: 1.1.0
-  resolution: "dangerously-set-html-content@npm:1.1.0"
+"dangerously-set-html-content@npm:1.1.1":
+  version: 1.1.1
+  resolution: "dangerously-set-html-content@npm:1.1.1"
   peerDependencies:
-    react: ^18.2.0
-  checksum: 10/6fa055d6e435134d7deeab139d24e61ef05ee8863b1e91f86672f82e7bb3759da7f7d12dbdadf3a4d729ed236c851b2bf93c257fadae07ce285dc008e8a7cd4f
+    react: ">=18.2.0"
+  checksum: 10/857108c451273d9dab39d8444f23036cd47df000d416e54150061905d5c5ba4c749188de9294feea64e465addcf1aac236f4c171bb2fd5deb755292e4de95e10
   languageName: node
   linkType: hard
 
@@ -18780,7 +18780,7 @@ __metadata:
     d3-force: "npm:3.0.0"
     d3-scale: "npm:^4.0.2"
     d3-scale-chromatic: "npm:3.1.0"
-    dangerously-set-html-content: "npm:1.1.0"
+    dangerously-set-html-content: "npm:1.1.1"
     date-fns: "npm:4.1.0"
     debounce-promise: "npm:3.1.2"
     dompurify: "npm:3.4.12"
@@ -18819,7 +18819,7 @@ __metadata:
     i18next-cli: "npm:^1.48.0"
     idb: "npm:^8.0.3"
     immer: "npm:10.2.0"
-    immutable: "npm:5.1.8"
+    immutable: "npm:5.1.9"
     infinite-viewer: "npm:^0.29.1"
     ini: "npm:^5.0.0"
     ix: "npm:^7.0.0"
@@ -18862,7 +18862,7 @@ __metadata:
     node-notifier: "npm:10.0.1"
     nx: "npm:22.5.4"
     ol: "npm:10.7.0"
-    ol-ext: "npm:4.0.36"
+    ol-ext: "npm:4.0.38"
     ol-mapbox-style: "npm:^13.0.1"
     open: "npm:^10.2.0"
     ora: "npm:^9.0.0"
@@ -19722,10 +19722,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"immutable@npm:5.1.8":
-  version: 5.1.8
-  resolution: "immutable@npm:5.1.8"
-  checksum: 10/f6907f3cf932860bf609c635283e3073ba5c978fcdd63e365fe4daa43c34ffef0037db0d3009d8803d9ebc2f1e2a00f06c8cac738250fbe715fb1484c7132f0c
+"immutable@npm:5.1.9, immutable@npm:^5.0.0, immutable@npm:^5.0.2, immutable@npm:^5.1.5":
+  version: 5.1.9
+  resolution: "immutable@npm:5.1.9"
+  checksum: 10/dc61ea6f79897320a048f193dec703dff25ad7bb633c3a0294677d2f258764c88da06e7c2b53d1aa51b6657c98d9f1c7341f49735b9b802fe6e834122cf78dcd
   languageName: node
   linkType: hard
 
@@ -19740,13 +19740,6 @@ __metadata:
   version: 4.3.8
   resolution: "immutable@npm:4.3.8"
   checksum: 10/27a134cec0089ba60c5f50fdd08a0296533c9ce6d112188461c89a6bb3c720368e4363dc5f8d40440c6f9120400867e9cf86bd7463c7d3ee12d4ad44f797d4cc
-  languageName: node
-  linkType: hard
-
-"immutable@npm:^5.0.0, immutable@npm:^5.0.2, immutable@npm:^5.1.5":
-  version: 5.1.9
-  resolution: "immutable@npm:5.1.9"
-  checksum: 10/dc61ea6f79897320a048f193dec703dff25ad7bb633c3a0294677d2f258764c88da06e7c2b53d1aa51b6657c98d9f1c7341f49735b9b802fe6e834122cf78dcd
   languageName: node
   linkType: hard
 
@@ -25311,12 +25304,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-ext@npm:4.0.36":
-  version: 4.0.36
-  resolution: "ol-ext@npm:4.0.36"
+"ol-ext@npm:4.0.38":
+  version: 4.0.38
+  resolution: "ol-ext@npm:4.0.38"
   peerDependencies:
     ol: ">= 5.3.0"
-  checksum: 10/071ce9be427dce8be6fb8e4fbdc972038ace08090c21f6dce7ae0929fe5263518a1a80d7b205e0fd208ac337d49e3782ead805be19f74f0474c291dea8c8d01e
+  checksum: 10/22439618a61d70443235c7a91ef375a1a2bf287526e3b3552f87819c15bce2ddbf2610ee484d64da9c25c23d00ab573f21f83c7246af63623a3da7790289398a
   languageName: node
   linkType: hard
 

@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 	bolterrors "go.etcd.io/bbolt/errors"
 	"go.uber.org/goleak"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
 	authlib "github.com/grafana/authlib/types"
@@ -812,6 +813,10 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 func TestGetSortFields(t *testing.T) {
 	dashboardFields, err := resource.SearchableFieldsFromProvider(DashboardSearchFieldsProviderForTest(), "dashboard.grafana.app", "dashboards")
 	require.NoError(t, err)
+	idx := &bleveIndex{
+		fields:       dashboardFields,
+		searchFields: newKindSearchFields(DashboardSearchFieldsProviderForTest(), "dashboard.grafana.app", "dashboards", nil),
+	}
 
 	t.Run("will prepend 'fields.' to sort fields when they are dashboard fields", func(t *testing.T) {
 		searchReq := &resourcepb.ResourceSearchRequest{
@@ -819,7 +824,7 @@ func TestGetSortFields(t *testing.T) {
 				{Field: "views_total", Desc: false},
 			},
 		}
-		sortFields := getSortFields(searchReq, dashboardFields)
+		sortFields := idx.getSortFields(searchReq)
 		assert.Equal(t, []string{"fields.views_total", resource.SEARCH_FIELD_NAME}, sortFields)
 	})
 	t.Run("will prepend sort fields with a '-' when sort is Desc", func(t *testing.T) {
@@ -828,7 +833,7 @@ func TestGetSortFields(t *testing.T) {
 				{Field: "views_total", Desc: true},
 			},
 		}
-		sortFields := getSortFields(searchReq, dashboardFields)
+		sortFields := idx.getSortFields(searchReq)
 		assert.Equal(t, []string{"-fields.views_total", resource.SEARCH_FIELD_NAME}, sortFields)
 	})
 	t.Run("will not prepend 'fields.' to common fields", func(t *testing.T) {
@@ -837,7 +842,7 @@ func TestGetSortFields(t *testing.T) {
 				{Field: "description", Desc: false},
 			},
 		}
-		sortFields := getSortFields(searchReq, dashboardFields)
+		sortFields := idx.getSortFields(searchReq)
 		assert.Equal(t, []string{"description", resource.SEARCH_FIELD_NAME}, sortFields)
 	})
 	t.Run("will use title_phrase for title and append name as tie-breaker", func(t *testing.T) {
@@ -846,7 +851,7 @@ func TestGetSortFields(t *testing.T) {
 				{Field: resource.SEARCH_FIELD_TITLE, Desc: false},
 			},
 		}
-		sortFields := getSortFields(searchReq, dashboardFields)
+		sortFields := idx.getSortFields(searchReq)
 		assert.Equal(t, []string{resource.SEARCH_FIELD_TITLE_PHRASE, resource.SEARCH_FIELD_NAME}, sortFields)
 	})
 	t.Run("will not append a duplicate name sort", func(t *testing.T) {
@@ -855,15 +860,15 @@ func TestGetSortFields(t *testing.T) {
 				{Field: resource.SEARCH_FIELD_NAME, Desc: true},
 			},
 		}
-		sortFields := getSortFields(searchReq, dashboardFields)
+		sortFields := idx.getSortFields(searchReq)
 		assert.Equal(t, []string{"-" + resource.SEARCH_FIELD_NAME}, sortFields)
 	})
 }
 
 func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 	idx := &bleveIndex{
-		fields:                  resource.StandardSearchFields(),
-		facetFieldByRequestName: facetFieldsForMapping(nil, "", ""),
+		fields:       resource.StandardSearchFields(),
+		searchFields: newKindSearchFields(nil, "", "", nil),
 	}
 
 	t.Run("sorts match-all by title then name", func(t *testing.T) {
@@ -2351,4 +2356,114 @@ func TestBuildIndexReturnsErrorWhenIndexLocked(t *testing.T) {
 
 	// Clean up: close first backend to release the file lock
 	backend1.Stop()
+}
+
+// TestBleveTextFieldFilterAndSort covers a per-kind field that is both searched
+// as text and used for exact filters and sorting. Those three uses need
+// different index fields, and only the keyword copy can answer the last two.
+func TestBleveTextFieldFilterAndSort(t *testing.T) {
+	group, kindResource := "example.grafana.app", "widgets"
+	gvr := schema.GroupVersionResource{Group: group, Version: "v1", Resource: kindResource}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: {{
+			Name: "note",
+			Type: resource.SearchFieldTypeString,
+			Capabilities: []resource.SearchCapability{
+				resource.SearchCapabilityText,
+				resource.SearchCapabilityFilter,
+				resource.SearchCapabilitySort,
+			},
+		}},
+	}, nil)
+
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          t.TempDir(),
+		FileThreshold: 5,
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource(group, kindResource): provider,
+		}),
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	key := &resourcepb.ResourceKey{Namespace: "ns", Group: group, Resource: kindResource}
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+
+	doc := func(name, note string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:     1,
+				Name:   name,
+				Key:    &resourcepb.ResourceKey{Name: name, Namespace: "ns", Group: group, Resource: kindResource},
+				Title:  name,
+				Fields: map[string]any{"note": note},
+			},
+		}
+	}
+	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
+		Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
+	}, 3, "test", func(index resource.ResourceIndex) (int64, error) {
+		if err := index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				doc("one", "Zeta Apple"),
+				doc("two", "beta gamma"),
+				doc("three", "Cherry Tart"),
+			},
+		}); err != nil {
+			return 0, err
+		}
+		return 1, nil
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	names := func(req *resourcepb.ResourceSearchRequest) []string {
+		req.Limit = 100
+		req.Options.Key = key
+		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{kindResource: true}), req, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		out := make([]string, 0, len(rsp.Results.Rows))
+		for _, row := range rsp.Results.Rows {
+			out = append(out, row.Key.Name)
+		}
+		return out
+	}
+
+	t.Run("filter matches the whole value, ignoring case", func(t *testing.T) {
+		got := names(&resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{Fields: []*resourcepb.Requirement{{
+				Key: "note", Operator: string(selection.Equals), Values: []string{"zeta apple"},
+			}}},
+		})
+		assert.Equal(t, []string{"one"}, got)
+	})
+
+	t.Run("filter does not match a single word of the value", func(t *testing.T) {
+		got := names(&resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{Fields: []*resourcepb.Requirement{{
+				Key: "note", Operator: string(selection.Equals), Values: []string{"Zeta"},
+			}}},
+		})
+		assert.Empty(t, got)
+	})
+
+	// Sorting on the analyzed field would order by each value's first token
+	// ("apple" before "beta"), which is not the order a user asked for.
+	t.Run("sort orders by the whole value, ignoring case", func(t *testing.T) {
+		got := names(&resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{},
+			SortBy:  []*resourcepb.ResourceSearchRequest_Sort{{Field: "note"}},
+		})
+		assert.Equal(t, []string{"two", "three", "one"}, got)
+	})
+
+	t.Run("text search still matches single words", func(t *testing.T) {
+		got := names(&resourcepb.ResourceSearchRequest{
+			Options:     &resourcepb.ListOptions{},
+			Query:       "apple",
+			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "fields.note"}},
+		})
+		assert.Equal(t, []string{"one"}, got)
+	})
 }
