@@ -33,6 +33,61 @@ func (b *pgvectorBackend) ResolveCollection(ctx context.Context, group, resource
 	return Collection{}, false, nil
 }
 
+// EnsureCollection resolves (group, resource), provisioning it on first use:
+// derive the partition key, insert the catalog row (race-safe), and create
+// the partition leaf. External keys get "_external" appended so an internal
+// resource can never share a partition with an external one. Only upsert
+// paths call this — deletes resolve only, so they can't create empty
+// collections.
+func (b *pgvectorBackend) EnsureCollection(ctx context.Context, group, resource string, isExternal bool) (Collection, error) {
+	if group == "" || resource == "" {
+		return Collection{}, fmt.Errorf("group and resource must not be empty")
+	}
+	c, found, err := b.ResolveCollection(ctx, group, resource)
+	if err != nil {
+		return Collection{}, err
+	}
+	if found {
+		return c, nil
+	}
+
+	key := sanitizeIdentifier(resource)
+	if isExternal {
+		key += "_external"
+	}
+	if len(key) > maxPartitionKeyLen {
+		return Collection{}, fmt.Errorf("resource name %q too long: derived partition key %q exceeds %d chars", resource, key, maxPartitionKeyLen)
+	}
+
+	_, err = dbutil.Exec(ctx, b.db, sqlVectorCatalogInsert, &sqlVectorCatalogInsertRequest{
+		SQLTemplate:  sqltemplate.New(b.dialect),
+		GroupName:    group,
+		Resource:     resource,
+		PartitionKey: key,
+		IsExternal:   isExternal,
+	})
+	if err != nil {
+		// A UNIQUE(partition_key) violation means a different (group,
+		// resource) already owns this key — surface it for manual fixup.
+		return Collection{}, fmt.Errorf("provision collection %s/%s: %w", group, resource, err)
+	}
+
+	// Re-resolve: ON CONFLICT DO NOTHING means a concurrent provisioner may
+	// have won the insert — either way the row exists now.
+	c, found, err = b.ResolveCollection(ctx, group, resource)
+	if err != nil {
+		return Collection{}, err
+	}
+	if !found {
+		return Collection{}, fmt.Errorf("provision collection %s/%s: catalog row missing after insert (partition key %q taken?)", group, resource, key)
+	}
+
+	if err := b.EnsureResourcePartition(ctx, c.PartitionKey); err != nil {
+		return Collection{}, err
+	}
+	return c, nil
+}
+
 // hasPartitionKey reports whether any catalog row owns the given partition
 // key. Internal callers (reconciler, backfill) work in partition keys
 // directly, so validateResource checks this side of the mapping.

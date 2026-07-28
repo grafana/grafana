@@ -29,6 +29,11 @@ type VectorBackend interface {
 	// not provisioned — callers surface NOT_FOUND.
 	ResolveCollection(ctx context.Context, group, resource string) (c Collection, found bool, err error)
 
+	// EnsureCollection resolves (group, resource), provisioning the catalog
+	// row and partition on first use. isExternal appends "_external" to the
+	// derived partition key. Only upsert paths may call this.
+	EnsureCollection(ctx context.Context, group, resource string, isExternal bool) (Collection, error)
+
 	// Search returns top-N nearest neighbors by cosine distance. Query
 	// embedding must come from the same model as stored vectors. resource
 	// is the partition key (Collection.PartitionKey), not the resource

@@ -86,6 +86,14 @@ func (f *fakeVectorBackend) ResolveCollection(_ context.Context, group, resource
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
 }
 
+func (f *fakeVectorBackend) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
+	key := resource
+	if isExternal {
+		key += "_external"
+	}
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: key, IsExternal: isExternal}, nil
+}
+
 func (f *fakeVectorBackend) Search(_ context.Context, namespace, model, resource string,
 	embedding []float32, limit int, filters ...vector.SearchFilter,
 ) ([]vector.VectorSearchResult, error) {

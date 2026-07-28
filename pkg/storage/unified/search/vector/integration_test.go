@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -878,4 +880,69 @@ func TestIntegrationVectorDeleteRows(t *testing.T) {
 	require.Error(t, err)
 	_, _, err = backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{UIDs: []string{"x"}, All: true})
 	require.Error(t, err)
+}
+
+func TestIntegrationEnsureCollection(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+	t.Cleanup(func() {
+		_, _ = engine.DB().ExecContext(context.Background(),
+			`DELETE FROM embedding_collections WHERE group_name = 'prov.example.com'`)
+		_, _ = engine.DB().ExecContext(context.Background(), `DROP TABLE IF EXISTS embeddings_prov_things_external`)
+	})
+
+	// First call provisions: catalog row + partition + GIN index.
+	c, err := backend.EnsureCollection(ctx, "prov.example.com", "prov-things", true)
+	require.NoError(t, err)
+	require.Equal(t, "prov_things_external", c.PartitionKey)
+	require.True(t, c.IsExternal)
+
+	var ready bool
+	require.NoError(t, engine.DB().QueryRowContext(ctx, `
+		SELECT EXISTS (
+			SELECT 1 FROM pg_inherits i
+			JOIN pg_class c ON c.oid = i.inhrelid
+			JOIN pg_class p ON p.oid = i.inhparent
+			WHERE p.relname = 'embeddings' AND c.relname = 'embeddings_prov_things_external'
+		) AND EXISTS (
+			SELECT 1 FROM pg_class WHERE relname = 'embeddings_prov_things_external_metadata_idx' AND relkind = 'i'
+		)`).Scan(&ready))
+	require.True(t, ready, "partition leaf + GIN index exist")
+
+	// Idempotent.
+	c2, err := backend.EnsureCollection(ctx, "prov.example.com", "prov-things", true)
+	require.NoError(t, err)
+	require.Equal(t, c, c2)
+
+	// Writes to the new collection work end-to-end.
+	require.NoError(t, backend.Upsert(ctx, []Vector{{
+		Namespace: "ns-prov", Resource: c.PartitionKey, UID: "u1", Title: "T",
+		Content: "c", Embedding: makeEmbedding(0.3, 0.3), Model: testModel,
+	}}))
+
+	// Over-long resource names are rejected before any DB write.
+	_, err = backend.EnsureCollection(ctx, "prov.example.com", strings.Repeat("x", 60), true)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "too long")
+
+	// Concurrent provisioning converges on one row.
+	var wg sync.WaitGroup
+	errs := make([]error, 4)
+	for i := range errs {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			_, errs[i] = backend.EnsureCollection(ctx, "prov.example.com", "prov-race", true)
+		}(i)
+	}
+	wg.Wait()
+	for _, e := range errs {
+		require.NoError(t, e)
+	}
+	var n int
+	require.NoError(t, engine.DB().QueryRowContext(ctx,
+		`SELECT count(*) FROM embedding_collections WHERE group_name = 'prov.example.com' AND resource = 'prov-race'`).Scan(&n))
+	require.Equal(t, 1, n)
+	t.Cleanup(func() {
+		_, _ = engine.DB().ExecContext(context.Background(), `DROP TABLE IF EXISTS embeddings_prov_race_external`)
+	})
 }

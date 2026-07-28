@@ -227,6 +227,14 @@ func (f *fakeVector) ResolveCollection(_ context.Context, group, resource string
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
 }
 
+func (f *fakeVector) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
+	key := resource
+	if isExternal {
+		key += "_external"
+	}
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: key, IsExternal: isExternal}, nil
+}
+
 func (f *fakeVector) Search(context.Context, string, string, string, []float32, int, ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	return nil, nil
 }

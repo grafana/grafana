@@ -280,6 +280,18 @@ func TestVectorQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlVectorCatalogInsert: {
+				{
+					Name: "simple",
+					Data: &sqlVectorCatalogInsertRequest{
+						SQLTemplate:  mocks.NewTestingSQLTemplate(),
+						GroupName:    "ext.example.com",
+						Resource:     "my-things",
+						PartitionKey: "my_things_external",
+						IsExternal:   true,
+					},
+				},
+			},
 			sqlVectorCollectionSearch: {
 				{
 					Name: "no filters",

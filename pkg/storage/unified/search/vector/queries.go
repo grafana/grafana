@@ -53,6 +53,7 @@ var (
 	sqlRateBucketIncrement               = mustTemplate("rate_bucket_increment.sql")
 	sqlRateBucketSweep                   = mustTemplate("rate_bucket_sweep.sql")
 	sqlVectorCatalogList                 = mustTemplate("vector_catalog_list.sql")
+	sqlVectorCatalogInsert               = mustTemplate("vector_catalog_insert.sql")
 )
 
 // All queries target `embeddings` and include `resource = $1 AND
@@ -244,6 +245,21 @@ type sqlVectorCatalogListResponse struct {
 	Resource     string
 	PartitionKey string
 	IsExternal   bool
+}
+
+type sqlVectorCatalogInsertRequest struct {
+	sqltemplate.SQLTemplate
+	GroupName    string
+	Resource     string
+	PartitionKey string
+	IsExternal   bool
+}
+
+func (r *sqlVectorCatalogInsertRequest) Validate() error {
+	if r.GroupName == "" || r.Resource == "" || r.PartitionKey == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	return nil
 }
 
 type sqlVectorBackfillJobsCreateRequest struct {
