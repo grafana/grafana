@@ -85,6 +85,24 @@ interface BootApiResponse {
 type FetchBootDataResult = undefined | { redirect: string } | BootApiResponse;
 
 /**
+ * Rotate the session token if it's within the expiry window
+ */
+async function rotateExpiredSession() {
+  try {
+    const sessionExpiration = getSessionExpiration();
+    const now = new Date();
+
+    // If the session has expired, don't continue trying to fetch boot data
+    if (sessionExpiration && now >= sessionExpiration) {
+      await rotateSession();
+    }
+    // Just ignore any errors in session rotation. The user can just log in again.
+  } catch (error) {
+    console.warn('Failed to rotate session', error);
+  }
+}
+
+/**
  * Fetches boot data from the server. If it returns undefined, it should be retried later.
  * Will return a rejected promise on unrecoverable errors.
  **/
@@ -171,18 +189,7 @@ async function fetchBootData(): Promise<FetchBootDataResult> {
 function loadBootData(): Promise<{ redirect: string } | BootApiResponse> {
   return new Promise((resolve, reject) => {
     const attemptFetch = async () => {
-      try {
-        const sessionExpiration = getSessionExpiration();
-        const now = new Date();
-
-        // If the session has expired, don't continue trying to fetch boot data
-        if (sessionExpiration && now >= sessionExpiration) {
-          await rotateSession();
-        }
-      } catch (error) {
-        // Just ignore any errors in session rotation. The user can just log in again.
-        console.warn('Failed to rotate session', error);
-      }
+      await rotateExpiredSession();
 
       try {
         const bootData = await fetchBootData();
@@ -294,6 +301,8 @@ async function initBootDataFromLegacy() {
 }
 
 async function initBootDataFromMT() {
+  await rotateExpiredSession();
+
   const display = await fetchUser();
   if (display) {
     window.grafanaBootData.user = {
