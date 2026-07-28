@@ -1,12 +1,17 @@
 import { createSlice, type PayloadAction, type UnknownAction } from '@reduxjs/toolkit';
 
+import type { DataQuery } from '@grafana/data';
+
 import type { MetricType } from '../types';
 
-// Explore's own pane-removal actions, matched as literals. `explore/state/main.ts` imports this
-// slice to register it, so importing `splitClose`/`clearPanes` back from it would be a require
-// cycle. `signalExplorerSlice.test.ts` asserts these strings still equal the real action types.
+// Explore's own pane- and query-mutation actions, matched as literals. `explore/state/main.ts`
+// imports this slice to register it, so importing the action creators back from it would be a
+// require cycle. `signalExplorerSlice.test.ts` asserts these strings still equal the real action
+// types.
 const SPLIT_CLOSE_TYPE = 'explore/splitClose';
 const CLEAR_PANES_TYPE = 'explore/clearPanes';
+const CHANGE_QUERIES_TYPE = 'explore/changeQueries';
+const SET_QUERIES_TYPE = 'explore/setQueries';
 
 /** What one card's own controls narrow, scoped to that card and nothing else in the pane. */
 export interface CardViewState {
@@ -82,6 +87,35 @@ const slice = createSlice({
       .addMatcher(
         (action: UnknownAction) => action.type === CLEAR_PANES_TYPE,
         () => ({})
+      )
+      // View state has to die with the query it belongs to, for the same reason it dies with the
+      // pane: `getNextRefId` hands out the first *unused* letter, so deleting query B and adding one
+      // makes the new query B too. Left behind, it would open pre-filtered by the deleted query's
+      // search text, with the metadata block describing a metric selected in a query that is gone.
+      //
+      // Matched here rather than exposed as a "tell the slice the queries changed" call, because a
+      // host that forgets to make that call gets a bug with no symptom until a refId is recycled.
+      .addMatcher(
+        (action: UnknownAction): action is PayloadAction<{ exploreId: string; queries: DataQuery[] }> =>
+          action.type === CHANGE_QUERIES_TYPE || action.type === SET_QUERIES_TYPE,
+        (state, action) => {
+          const pane = state[action.payload.exploreId];
+          if (!pane) {
+            return;
+          }
+          const live = new Set(action.payload.queries.map((query) => query.refId));
+          for (const refId of Object.keys(pane.cards)) {
+            if (!live.has(refId)) {
+              delete pane.cards[refId];
+            }
+          }
+          if (pane.selectedMetric && !live.has(pane.selectedMetric.refId)) {
+            pane.selectedMetric = undefined;
+          }
+          if (pane.activeRefId && !live.has(pane.activeRefId)) {
+            pane.activeRefId = undefined;
+          }
+        }
       );
   },
 });

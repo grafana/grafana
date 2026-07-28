@@ -1,4 +1,7 @@
+import type { DataQuery } from '@grafana/data';
+
 import { clearPanes, splitClose } from '../../state/main';
+import { changeQueries, changeQueriesAction, setQueriesAction } from '../../state/query';
 
 import {
   signalExplorerReducer,
@@ -96,6 +99,89 @@ describe('signalExplorerSlice', () => {
 
     it('drops every pane when Explore clears them all', () => {
       expect(signalExplorerReducer(populated(), clearPanes())).toEqual({});
+    });
+  });
+
+  describe('query lifecycle', () => {
+    const query = (refId: string): DataQuery => ({ refId });
+
+    // `getNextRefId` hands out the first *unused* letter, so deleting query B and adding one makes
+    // the new query B as well. Without pruning it would open with the deleted query's search text.
+    const twoCards = () => {
+      let s = signalExplorerReducer(initial, setSearchText({ exploreId: 'left', refId: 'A', searchText: 'node_' }));
+      s = signalExplorerReducer(s, setTypeFilter({ exploreId: 'left', refId: 'B', typeFilter: 'counter' }));
+      s = signalExplorerReducer(s, setSearchText({ exploreId: 'left', refId: 'B', searchText: 'http_' }));
+      s = signalExplorerReducer(s, setActiveRefId({ exploreId: 'left', refId: 'B' }));
+      s = signalExplorerReducer(s, setSelectedMetric({ exploreId: 'left', refId: 'B', metricName: 'up' }));
+      return s;
+    };
+
+    it('matches the action types Explore actually dispatches', () => {
+      expect(changeQueriesAction.type).toBe('explore/changeQueries');
+      expect(setQueriesAction.type).toBe('explore/setQueries');
+    });
+
+    it('drops the card state of a query that no longer exists, so a recycled refId opens unfiltered', () => {
+      const s = signalExplorerReducer(twoCards(), changeQueriesAction({ exploreId: 'left', queries: [query('A')] }));
+
+      expect(s['left'].cards['B']).toBeUndefined();
+      expect(s['left'].cards['A'].searchText).toBe('node_');
+    });
+
+    it('clears the selected metric when its query is gone', () => {
+      const s = signalExplorerReducer(twoCards(), changeQueriesAction({ exploreId: 'left', queries: [query('A')] }));
+
+      expect(s['left'].selectedMetric).toBeUndefined();
+    });
+
+    it('clears the active refId when its query is gone', () => {
+      const s = signalExplorerReducer(twoCards(), changeQueriesAction({ exploreId: 'left', queries: [query('A')] }));
+
+      expect(s['left'].activeRefId).toBeUndefined();
+    });
+
+    it('keeps everything when every refId survives', () => {
+      const before = twoCards();
+      const after = signalExplorerReducer(
+        before,
+        changeQueriesAction({ exploreId: 'left', queries: [query('A'), query('B')] })
+      );
+
+      expect(after).toEqual(before);
+    });
+
+    it('prunes on setQueries too, so a URL sync cannot leave a card behind', () => {
+      const s = signalExplorerReducer(twoCards(), setQueriesAction({ exploreId: 'left', queries: [query('A')] }));
+
+      expect(s['left'].cards['B']).toBeUndefined();
+      expect(s['left'].selectedMetric).toBeUndefined();
+    });
+
+    it('leaves other panes alone', () => {
+      let s = signalExplorerReducer(twoCards(), setSearchText({ exploreId: 'right', refId: 'B', searchText: 'go_' }));
+      s = signalExplorerReducer(s, changeQueriesAction({ exploreId: 'left', queries: [query('A')] }));
+
+      expect(s['right'].cards['B'].searchText).toBe('go_');
+    });
+
+    it('does not create a pane for an exploreId it has no state for', () => {
+      expect(signalExplorerReducer(initial, changeQueriesAction({ exploreId: 'left', queries: [query('A')] }))).toEqual(
+        initial
+      );
+    });
+
+    // `changeQueries` is a thunk with the same type prefix, so its lifecycle actions are
+    // `explore/changeQueries/pending` etc. — same prefix, no `queries` in the payload.
+    it('ignores the thunk lifecycle actions that share the prefix but carry no queries', () => {
+      const before = twoCards();
+
+      expect(
+        signalExplorerReducer(before, {
+          type: changeQueries.pending.type,
+          payload: undefined,
+          meta: { arg: { exploreId: 'left', queries: [] }, requestId: '1', requestStatus: 'pending' },
+        })
+      ).toEqual(before);
     });
   });
 });
