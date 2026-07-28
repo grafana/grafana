@@ -947,6 +947,77 @@ func TestIntegrationEnsureCollection(t *testing.T) {
 	})
 }
 
+// TestIntegrationEnsureCollection_FoundPathEnsuresPartition pins the fix for
+// the wedged-collection bug: a catalog row can exist (e.g. the INSERT half of
+// a prior provision committed) while its partition DDL never ran (transient
+// failure, or a bounced replica racing the retry). Before the fix, the found
+// path returned early and the collection stayed permanently unwritable
+// ("no partition of relation embeddings found for row"). EnsureCollection
+// must create the missing leaf on every call, not just first provision.
+func TestIntegrationEnsureCollection_FoundPathEnsuresPartition(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+	const group, resource, key = "prov.example.com", "prov-wedged", "prov_wedged_external"
+	leaf := "embeddings_" + key
+	t.Cleanup(func() {
+		_, _ = engine.DB().ExecContext(context.Background(),
+			`DELETE FROM embedding_collections WHERE group_name = $1`, group)
+		_, _ = engine.DB().ExecContext(context.Background(), fmt.Sprintf(`DROP TABLE IF EXISTS %s`, leaf))
+	})
+
+	// Simulate the wedge: catalog row present, partition never created.
+	_, err := engine.DB().ExecContext(ctx, `
+		INSERT INTO embedding_collections (group_name, resource, partition_key, is_external)
+		VALUES ($1, $2, $3, true)`, group, resource, key)
+	require.NoError(t, err)
+
+	var existsBefore bool
+	require.NoError(t, engine.DB().QueryRowContext(ctx, `
+		SELECT EXISTS (
+			SELECT 1 FROM pg_inherits i
+			JOIN pg_class c ON c.oid = i.inhrelid
+			JOIN pg_class p ON p.oid = i.inhparent
+			WHERE p.relname = 'embeddings' AND c.relname = $1
+		)`, leaf).Scan(&existsBefore))
+	require.False(t, existsBefore, "partition must not exist yet")
+
+	// The found path must still provision the partition leaf.
+	c, err := backend.EnsureCollection(ctx, group, resource, true)
+	require.NoError(t, err)
+	require.Equal(t, key, c.PartitionKey)
+
+	var existsAfter bool
+	require.NoError(t, engine.DB().QueryRowContext(ctx, `
+		SELECT EXISTS (
+			SELECT 1 FROM pg_inherits i
+			JOIN pg_class c ON c.oid = i.inhrelid
+			JOIN pg_class p ON p.oid = i.inhparent
+			WHERE p.relname = 'embeddings' AND c.relname = $1
+		)`, leaf).Scan(&existsAfter))
+	require.True(t, existsAfter, "found path must create the missing partition leaf")
+
+	// Collection is now actually writable, not permanently wedged.
+	require.NoError(t, backend.Upsert(ctx, []Vector{{
+		Namespace: "ns-wedged", Resource: c.PartitionKey, UID: "u1", Title: "T",
+		Content: "c", Embedding: makeEmbedding(0.4, 0.4), Model: testModel,
+	}}))
+}
+
+// TestIntegrationEnsureCollection_IsExternalMismatch guards against a
+// fat-fingered vector_allowed_external_collections entry: an operator who
+// accidentally lists an internal (group, resource) pair must not have
+// EnsureCollection silently hand back that internal collection for external
+// writes to land in.
+func TestIntegrationEnsureCollection_IsExternalMismatch(t *testing.T) {
+	backend, _, ctx := setupIntegrationTest(t)
+
+	// The migration seeds dashboard.grafana.app/dashboards as internal
+	// (is_external=false). Calling EnsureCollection with isExternal=true
+	// must reject it rather than returning the internal collection.
+	_, err := backend.EnsureCollection(ctx, "dashboard.grafana.app", "dashboards", true)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "is internal, not writable through the external API")
+}
+
 func TestIntegrationWithEntityLock(t *testing.T) {
 	backend, _, ctx := setupIntegrationTest(t)
 

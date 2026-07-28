@@ -36,9 +36,11 @@ func (b *pgvectorBackend) ResolveCollection(ctx context.Context, group, resource
 // EnsureCollection resolves (group, resource), provisioning it on first use:
 // derive the partition key, insert the catalog row (race-safe), and create
 // the partition leaf. External keys get "_external" appended so an internal
-// resource can never share a partition with an external one. Only upsert
-// paths call this — deletes resolve only, so they can't create empty
-// collections.
+// resource can never share a partition with an external one. A resolve hit
+// whose IsExternal disagrees with the caller's isExternal is rejected — this
+// keeps a fat-fingered allowlist entry from letting an external writer touch
+// an internal collection. Only upsert paths call this — deletes resolve
+// only, so they can't create empty collections.
 func (b *pgvectorBackend) EnsureCollection(ctx context.Context, group, resource string, isExternal bool) (Collection, error) {
 	if group == "" || resource == "" {
 		return Collection{}, fmt.Errorf("group and resource must not be empty")
@@ -48,6 +50,19 @@ func (b *pgvectorBackend) EnsureCollection(ctx context.Context, group, resource 
 		return Collection{}, err
 	}
 	if found {
+		if c.IsExternal != isExternal {
+			if isExternal {
+				return Collection{}, fmt.Errorf("collection %s/%s is internal, not writable through the external API", group, resource)
+			}
+			return Collection{}, fmt.Errorf("collection %s/%s is external, not writable through the internal API", group, resource)
+		}
+		// Re-check on every call, not just first provision: a prior insert may
+		// have committed while the partition DDL failed transiently, which
+		// would otherwise wedge the collection forever (resolve keeps
+		// succeeding, DDL never runs again). Cheap once the partition exists.
+		if err := b.EnsureResourcePartition(ctx, c.PartitionKey); err != nil {
+			return Collection{}, err
+		}
 		return c, nil
 	}
 
