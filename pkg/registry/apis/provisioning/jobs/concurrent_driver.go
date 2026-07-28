@@ -18,31 +18,21 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-const (
-	// maxClaimAttempts bounds how many times a job key is retried after transient
-	// errors before it is dropped from the queue. The backstop poll re-adds the
-	// key if the job is still unclaimed.
-	maxClaimAttempts = 3
-
-	// minBackstopListLimit and maxBackstopListLimit bound the page size of the
-	// periodic unclaimed-jobs list. The floor keeps small worker pools from
-	// starving a backlog; the cap keeps a single page cheap. A truncated page
-	// self-corrects: claims shrink the unclaimed set and the next poll picks up
-	// the remainder.
-	minBackstopListLimit = 16
-	maxBackstopListLimit = 1000
-)
+// maxClaimAttempts bounds how many times a job key is retried after transient
+// errors before it is dropped from the queue. The informer's periodic
+// resync/re-list re-delivers the key if the job is still unclaimed.
+const maxClaimAttempts = 3
 
 // ConcurrentJobDriver processes provisioning jobs with a pool of worker
 // goroutines fed by a single per-replica work queue of job keys. Keys enter
-// the queue from informer create events (EventHandler) and from a periodic
-// backstop list of unclaimed jobs, so idle API-server load is one list per
-// jobInterval regardless of the number of workers. Workers claim the specific
-// job behind a key; the claim label remains the cross-replica mutual exclusion.
+// the queue exclusively from the jobs informer (EventHandler): live create
+// events, plus the informer's periodic resync/re-list, which re-delivers
+// unclaimed jobs as updates and is the recovery path for rolled-back claims,
+// dropped keys, and missed notifications. Workers claim the specific job
+// behind a key; the claim label remains the cross-replica mutual exclusion.
 type ConcurrentJobDriver struct {
 	numDrivers           int
 	jobTimeout           time.Duration
-	jobInterval          time.Duration
 	leaseRenewalInterval time.Duration
 	store                Store
 	repoGetter           RepoGetter
@@ -59,7 +49,7 @@ type ConcurrentJobDriver struct {
 // NewConcurrentJobDriver creates a new concurrent job driver that spawns multiple job workers.
 func NewConcurrentJobDriver(
 	numDrivers int,
-	jobTimeout, jobInterval, leaseRenewalInterval time.Duration,
+	jobTimeout, leaseRenewalInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
 	historicJobs HistoryWriter,
@@ -69,11 +59,6 @@ func NewConcurrentJobDriver(
 ) (*ConcurrentJobDriver, error) {
 	if numDrivers <= 0 {
 		return nil, fmt.Errorf("numDrivers must be greater than 0, got %d", numDrivers)
-	}
-	// The backstop poller tickers on jobInterval; time.NewTicker panics on
-	// non-positive intervals, so reject bad config here instead of at runtime.
-	if jobInterval <= 0 {
-		return nil, fmt.Errorf("jobInterval must be greater than 0, got %s", jobInterval)
 	}
 	// Default lease renewal interval to 1/3 of job timeout, minimum 5 seconds
 	if leaseRenewalInterval <= 0 {
@@ -88,7 +73,6 @@ func NewConcurrentJobDriver(
 	return &ConcurrentJobDriver{
 		numDrivers:           numDrivers,
 		jobTimeout:           jobTimeout,
-		jobInterval:          jobInterval,
 		leaseRenewalInterval: leaseRenewalInterval,
 		store:                store,
 		repoGetter:           repoGetter,
@@ -109,9 +93,12 @@ func NewConcurrentJobDriver(
 // Register it with the jobs informer before the informer runs: the NATS-backed
 // source has no cache to replay for late handlers.
 //
-// Only create events enqueue. Updates are claim/lease/progress churn from
-// running jobs, and jobs that return to the unclaimed state (a rolled-back
-// claim) are recovered by the backstop poll instead.
+// Create events enqueue new jobs; the informer's periodic resync/re-list
+// re-delivers every known job as an update, and unclaimed ones re-enter the
+// queue there. That resync path is the driver's only recovery mechanism — for
+// rolled-back claims, keys dropped after retry exhaustion, missed NATS
+// notifications, and the backlog present at startup (the initial list) — so
+// the informer must be wired and running for jobs to be processed.
 func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerFuncs {
 	return cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
@@ -124,18 +111,43 @@ func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerFuncs {
 					"namespace", job.GetNamespace(), "job", job.GetName())
 				return
 			}
-			key, err := cache.MetaNamespaceKeyFunc(obj)
-			if err != nil {
-				c.logger.Error("could not build key for job create event", "error", err)
+			c.enqueue(obj, "create")
+		},
+		UpdateFunc: func(_, newObj interface{}) {
+			job, ok := newObj.(*provisioning.Job)
+			if !ok {
 				return
 			}
-			c.queue.Add(key)
-			c.logger.Debug("job create event enqueued", "work_key", key, "queue_len", c.queue.Len())
+			// A minimal live event (NATS: namespace+name only, no resource version)
+			// is claim/lease/progress churn from a running job; enqueuing each one
+			// would cost a wasted claim attempt per write. Jobs that return to the
+			// unclaimed state are re-delivered as full objects on the next re-list.
+			if job.ResourceVersion == "" {
+				return
+			}
+			// Full objects (apiserver watch/resync and NATS re-lists) enqueue only
+			// while unclaimed: new jobs the create event missed, rolled-back
+			// claims, and keys dropped after retry exhaustion.
+			if job.Labels[LabelJobClaim] != "" {
+				return
+			}
+			c.enqueue(job, "update")
 		},
 	}
 }
 
-// Run starts the backstop poller and the worker pool.
+func (c *ConcurrentJobDriver) enqueue(obj interface{}, event string) {
+	key, err := cache.MetaNamespaceKeyFunc(obj)
+	if err != nil {
+		c.logger.Error("could not build key for job event", "event", event, "error", err)
+		return
+	}
+	// The queue deduplicates keys that are already queued or in flight.
+	c.queue.Add(key)
+	c.logger.Debug("job event enqueued", "event", event, "work_key", key, "queue_len", c.queue.Len())
+}
+
+// Run starts the worker pool.
 // This is a blocking function that will run until the context is canceled.
 //
 // Note: This function intentionally does NOT create a tracing span because it runs indefinitely
@@ -150,17 +162,10 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 
 	logger.Info("start concurrent job driver",
 		"job_timeout", c.jobTimeout,
-		"backstop_poll_interval", c.jobInterval,
 		"lease_renewal_interval", c.leaseRenewalInterval,
 	)
 
 	var wg sync.WaitGroup
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		c.runBackstopPoller(ctx)
-	}()
 
 	for i := 0; i < c.numDrivers; i++ {
 		wg.Add(1)
@@ -192,7 +197,8 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 	<-ctx.Done()
 	logger.Info("shutting down job drivers", "queued_jobs", c.queue.Len())
 	// ShutDown rather than ShutDownWithDrain: each queued key is a full job run,
-	// and unclaimed jobs persist in storage — a live replica's backstop re-adds them.
+	// and unclaimed jobs persist in storage — a live replica's informer re-list
+	// re-adds them.
 	c.queue.ShutDown()
 	wg.Wait()
 	logger.Info("all job drivers gracefully stopped")
@@ -239,12 +245,12 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 		c.queue.Forget(key)
 	case errors.Is(err, errPostClaim):
 		// The job may already have executed; an immediate retry would re-run its
-		// side effects. Its claim was rolled back, so the backstop poll
-		// re-discovers it at the regular poll cadence instead.
+		// side effects. Its claim was rolled back, so the informer re-list
+		// re-discovers it at the resync cadence instead.
 		logger.Error("job failed after it was claimed - dropping from queue", "error", err)
 		c.queue.Forget(key)
 	case c.queue.NumRequeues(key)+1 >= maxClaimAttempts:
-		logger.Error("job failed too many times - dropping from queue; the backstop poll re-adds it if still unclaimed",
+		logger.Error("job failed too many times - dropping from queue; the informer re-list re-adds it if still unclaimed",
 			"attempts", c.queue.NumRequeues(key)+1, "error", err)
 		c.queue.Forget(key)
 	default:
@@ -255,72 +261,4 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 		c.queue.AddRateLimited(key)
 	}
 	return true
-}
-
-// runBackstopPoller periodically feeds unclaimed jobs into the work queue.
-// It is the recovery path for anything the informer events miss: rolled-back
-// claims, keys dropped after retry exhaustion, lost notifications, and the
-// backlog present at startup.
-func (c *ConcurrentJobDriver) runBackstopPoller(ctx context.Context) {
-	logger := logging.FromContext(ctx).With("logger", "job-backstop-poller")
-	ctx = logging.Context(ctx, logger)
-
-	limit := c.numDrivers
-	if limit < minBackstopListLimit {
-		limit = minBackstopListLimit
-	}
-	if limit > maxBackstopListLimit {
-		limit = maxBackstopListLimit
-	}
-
-	logger.Debug("start backstop poller", "interval", c.jobInterval, "list_limit", limit)
-
-	// Enqueue the startup backlog without waiting for the first tick. The
-	// informer's initial list delivers most of these as add events too, but the
-	// driver must not depend on an informer being wired or synced (it may lag,
-	// retry, or be absent). The queue deduplicates the overlap, so the cost is
-	// at most one redelivery for keys already in flight.
-	c.enqueueUnclaimedJobs(ctx, limit)
-
-	ticker := time.NewTicker(c.jobInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			logger.Debug("backstop poller stopped")
-			return
-		case <-ticker.C:
-			c.enqueueUnclaimedJobs(ctx, limit)
-		}
-	}
-}
-
-func (c *ConcurrentJobDriver) enqueueUnclaimedJobs(ctx context.Context, limit int) {
-	logger := logging.FromContext(ctx)
-
-	unclaimed, err := c.store.ListUnclaimedJobs(ctx, limit)
-	if err != nil {
-		logger.Error("failed to list unclaimed jobs", "error", err)
-		return
-	}
-
-	for _, job := range unclaimed {
-		key, err := cache.MetaNamespaceKeyFunc(job)
-		if err != nil {
-			logger.Error("could not build key for job", "namespace", job.GetNamespace(), "job", job.GetName(), "error", err)
-			continue
-		}
-		// The queue deduplicates keys that are already queued or in flight.
-		c.queue.Add(key)
-	}
-
-	// Unclaimed jobs here are normal right after creation bursts (the poll races
-	// the informer event; the queue deduplicates), but a steady stream at an idle
-	// time means events are being missed and the backstop is doing the rescuing.
-	if len(unclaimed) > 0 {
-		logger.Info("backstop poll enqueued unclaimed jobs", "found", len(unclaimed), "queue_len", c.queue.Len())
-	} else {
-		logger.Debug("backstop poll found no unclaimed jobs")
-	}
 }

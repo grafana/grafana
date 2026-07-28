@@ -17,11 +17,11 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
-func newTestConcurrentDriver(t *testing.T, numDrivers int, jobInterval time.Duration, store Store, repoGetter RepoGetter, history HistoryWriter, metrics *JobMetrics, workers ...Worker) *ConcurrentJobDriver {
+func newTestConcurrentDriver(t *testing.T, numDrivers int, store Store, repoGetter RepoGetter, history HistoryWriter, metrics *JobMetrics, workers ...Worker) *ConcurrentJobDriver {
 	t.Helper()
 	driver, err := NewConcurrentJobDriver(
 		numDrivers,
-		time.Minute, jobInterval, 30*time.Second,
+		time.Minute, 30*time.Second,
 		store, repoGetter, history,
 		prometheus.NewRegistry(),
 		metrics,
@@ -32,31 +32,22 @@ func newTestConcurrentDriver(t *testing.T, numDrivers int, jobInterval time.Dura
 }
 
 // TestNewConcurrentJobDriver_RejectsBadConfig verifies that configuration that
-// would panic at runtime (a non-positive backstop interval feeds time.NewTicker)
-// or make no sense (no workers) is rejected at construction time.
+// makes no sense (no workers) is rejected at construction time.
 func TestNewConcurrentJobDriver_RejectsBadConfig(t *testing.T) {
 	_, err := NewConcurrentJobDriver(
 		0,
-		time.Minute, time.Second, 30*time.Second,
+		time.Minute, 30*time.Second,
 		&MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{},
 		prometheus.NewRegistry(), nil,
 	)
 	require.ErrorContains(t, err, "numDrivers")
-
-	_, err = NewConcurrentJobDriver(
-		1,
-		time.Minute, 0, 30*time.Second,
-		&MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{},
-		prometheus.NewRegistry(), nil,
-	)
-	require.ErrorContains(t, err, "jobInterval")
 }
 
 // TestConcurrentJobDriver_EventHandler_Enqueue verifies which informer add
 // events feed the work queue: minimal (NATS-style) objects and unclaimed full
 // objects enqueue, while full objects that already carry a claim are skipped.
 func TestConcurrentJobDriver_EventHandler_Enqueue(t *testing.T) {
-	driver := newTestConcurrentDriver(t, 1, time.Hour, &MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+	driver := newTestConcurrentDriver(t, 1, &MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
 	handler := driver.EventHandler()
 
 	// A claimed full object (apiserver informer initial list) is skipped.
@@ -82,20 +73,60 @@ func TestConcurrentJobDriver_EventHandler_Enqueue(t *testing.T) {
 	assert.Equal(t, 1, driver.queue.Len(), "the queue must deduplicate keys")
 }
 
+// TestConcurrentJobDriver_EventHandler_UpdateEnqueue verifies the resync
+// recovery path: a re-list/resync delivers known jobs as updates, and only
+// full unclaimed objects re-enter the queue. Claimed jobs (running work) and
+// minimal NATS live updates (claim/lease/progress churn) are skipped.
+func TestConcurrentJobDriver_EventHandler_UpdateEnqueue(t *testing.T) {
+	driver := newTestConcurrentDriver(t, 1, &MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+	handler := driver.EventHandler()
+
+	// A minimal object (NATS live MODIFIED: namespace+name only) is churn from
+	// a running job and must not enqueue.
+	minimal := &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "running-job"},
+	}
+	handler.UpdateFunc(minimal, minimal)
+	assert.Equal(t, 0, driver.queue.Len(), "minimal live updates must not enqueue")
+
+	// A full object that carries a claim is a running job.
+	claimed := &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:       "ns1",
+			Name:            "claimed-job",
+			ResourceVersion: "42",
+			Labels:          map[string]string{LabelJobClaim: "1000000000000"},
+		},
+	}
+	handler.UpdateFunc(claimed, claimed)
+	assert.Equal(t, 0, driver.queue.Len(), "claimed jobs must not enqueue")
+
+	// A full unclaimed object (re-list or apiserver resync/watch) enqueues:
+	// this recovers rolled-back claims and previously dropped keys.
+	unclaimed := &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "pending-job", ResourceVersion: "43"},
+	}
+	handler.UpdateFunc(unclaimed, unclaimed)
+	assert.Equal(t, 1, driver.queue.Len(), "full unclaimed updates must enqueue")
+
+	// Repeated resync deliveries of the same key coalesce while queued.
+	handler.UpdateFunc(unclaimed, unclaimed)
+	assert.Equal(t, 1, driver.queue.Len(), "the queue must deduplicate keys")
+}
+
 // TestConcurrentJobDriver_ClaimedElsewhereIsDropped verifies that a key whose
 // job is already claimed by another worker is dropped without retries.
 func TestConcurrentJobDriver_ClaimedElsewhereIsDropped(t *testing.T) {
 	var claims atomic.Int32
 
 	store := &MockStore{}
-	store.EXPECT().ListUnclaimedJobs(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	store.EXPECT().Claim(mock.Anything, "ns1", "job1").
 		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
 			claims.Add(1)
 			return nil, nil, ErrAlreadyClaimed
 		}).Maybe()
 
-	driver := newTestConcurrentDriver(t, 1, time.Hour, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+	driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -118,20 +149,19 @@ func TestConcurrentJobDriver_ClaimedElsewhereIsDropped(t *testing.T) {
 
 // TestConcurrentJobDriver_TransientErrorsRetryUntilDropped verifies that
 // transient claim failures are retried with rate limiting up to
-// maxClaimAttempts, and then the key is dropped (the backstop poll re-adds it
-// if the job is still unclaimed).
+// maxClaimAttempts, and then the key is dropped (the informer re-list re-adds
+// it if the job is still unclaimed).
 func TestConcurrentJobDriver_TransientErrorsRetryUntilDropped(t *testing.T) {
 	var claims atomic.Int32
 
 	store := &MockStore{}
-	store.EXPECT().ListUnclaimedJobs(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	store.EXPECT().Claim(mock.Anything, "ns1", "job1").
 		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
 			claims.Add(1)
 			return nil, nil, errors.New("transient API error")
 		}).Maybe()
 
-	driver := newTestConcurrentDriver(t, 1, time.Hour, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+	driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -152,35 +182,35 @@ func TestConcurrentJobDriver_TransientErrorsRetryUntilDropped(t *testing.T) {
 	require.NoError(t, <-runDone)
 }
 
-// TestConcurrentJobDriver_BackstopEnqueuesAtStartup verifies that the backstop
-// poller feeds unclaimed jobs into the queue immediately at startup, without
-// waiting for the first tick.
-func TestConcurrentJobDriver_BackstopEnqueuesAtStartup(t *testing.T) {
-	unclaimed := []*provisioning.Job{
-		{ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job-a"}},
-		{ObjectMeta: metav1.ObjectMeta{Namespace: "ns2", Name: "job-b"}},
-	}
-
+// TestConcurrentJobDriver_ResyncUpdateRecoversDroppedJob verifies the recovery
+// path end to end: a job whose key is not in the queue (dropped, rolled back,
+// or its create event missed) is picked up again when a resync/re-list
+// delivers it as a full unclaimed update.
+func TestConcurrentJobDriver_ResyncUpdateRecoversDroppedJob(t *testing.T) {
 	var claims atomic.Int32
 
 	store := &MockStore{}
-	store.EXPECT().ListUnclaimedJobs(mock.Anything, mock.Anything).Return(unclaimed, nil).Maybe()
-	store.EXPECT().Claim(mock.Anything, mock.Anything, mock.Anything).
+	store.EXPECT().Claim(mock.Anything, "ns1", "pending-job").
 		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
 			claims.Add(1)
 			return nil, nil, ErrAlreadyClaimed
 		}).Maybe()
 
-	// jobInterval of an hour: any claim can only come from the startup poll.
-	driver := newTestConcurrentDriver(t, 2, time.Hour, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+	driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	runDone := make(chan error, 1)
 	go func() { runDone <- driver.Run(ctx) }()
 
-	require.Eventually(t, func() bool { return claims.Load() >= 2 }, 2*time.Second, 10*time.Millisecond,
-		"both unclaimed jobs should be claimed from the startup poll")
+	// A resync delivers the still-unclaimed job as a full-object update.
+	pending := &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "pending-job", ResourceVersion: "7"},
+	}
+	driver.EventHandler().UpdateFunc(pending, pending)
+
+	require.Eventually(t, func() bool { return claims.Load() == 1 }, 2*time.Second, 10*time.Millisecond,
+		"a resync update for an unclaimed job must reach a worker")
 
 	cancel()
 	require.NoError(t, <-runDone)
@@ -199,7 +229,6 @@ func TestConcurrentJobDriver_ProcessesJobEndToEnd(t *testing.T) {
 	completed := make(chan struct{})
 
 	store := &MockStore{}
-	store.EXPECT().ListUnclaimedJobs(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job").
 		Return(claimedJob, func() { rollbackCalled.Store(true) }, nil).Once()
 	store.EXPECT().Update(mock.Anything, mock.Anything).
@@ -228,7 +257,7 @@ func TestConcurrentJobDriver_ProcessesJobEndToEnd(t *testing.T) {
 	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(nil)
 
 	metrics := RegisterJobMetrics(prometheus.NewPedanticRegistry())
-	driver := newTestConcurrentDriver(t, 1, time.Hour, store, repoGetter, history, &metrics, worker)
+	driver := newTestConcurrentDriver(t, 1, store, repoGetter, history, &metrics, worker)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -258,7 +287,7 @@ func TestConcurrentJobDriver_ProcessesJobEndToEnd(t *testing.T) {
 // failure after the job was claimed and executed (here: Complete fails) does
 // not rate-limit-retry the key. The claim rollback returns the job to pending,
 // so an immediate retry would re-claim it and re-run the worker's side effects;
-// recovery belongs to the backstop poll instead.
+// recovery belongs to the informer re-list instead.
 func TestConcurrentJobDriver_PostClaimFailureDoesNotRerunJob(t *testing.T) {
 	claimedJob := makeTestJob("1")
 	claimedJob.Labels = map[string]string{
@@ -270,7 +299,6 @@ func TestConcurrentJobDriver_PostClaimFailureDoesNotRerunJob(t *testing.T) {
 	completeCalled := make(chan struct{})
 
 	store := &MockStore{}
-	store.EXPECT().ListUnclaimedJobs(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job").
 		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
 			claims.Add(1)
@@ -306,7 +334,7 @@ func TestConcurrentJobDriver_PostClaimFailureDoesNotRerunJob(t *testing.T) {
 	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	metrics := RegisterJobMetrics(prometheus.NewPedanticRegistry())
-	driver := newTestConcurrentDriver(t, 1, time.Hour, store, repoGetter, history, &metrics, worker)
+	driver := newTestConcurrentDriver(t, 1, store, repoGetter, history, &metrics, worker)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -341,7 +369,6 @@ func TestConcurrentJobDriver_DuplicateEventsCauseNoDuplicateProcessing(t *testin
 	var claims atomic.Int32
 
 	store := &MockStore{}
-	store.EXPECT().ListUnclaimedJobs(mock.Anything, mock.Anything).Return(nil, nil).Maybe()
 	store.EXPECT().Claim(mock.Anything, "ns1", "job1").
 		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
 			if claims.Add(1) == 1 {
@@ -351,7 +378,7 @@ func TestConcurrentJobDriver_DuplicateEventsCauseNoDuplicateProcessing(t *testin
 			return nil, nil, ErrAlreadyClaimed
 		}).Maybe()
 
-	driver := newTestConcurrentDriver(t, 1, time.Hour, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+	driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

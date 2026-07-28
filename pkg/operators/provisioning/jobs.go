@@ -30,7 +30,6 @@ import (
 type driverConfig struct {
 	concurrentDrivers    int
 	maxJobTimeout        time.Duration
-	jobInterval          time.Duration
 	leaseRenewalInterval time.Duration
 	maxSyncWorkers       int
 }
@@ -69,7 +68,6 @@ func buildDriver(
 	return jobs.NewConcurrentJobDriver(
 		dc.concurrentDrivers,
 		dc.maxJobTimeout,
-		dc.jobInterval,
 		dc.leaseRenewalInterval,
 		jobStore,
 		repoGetter,

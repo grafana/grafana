@@ -91,11 +91,6 @@ const ProvisioningControllerResyncIntervalDefault = 60 * time.Second
 // of the historic-job informer that feeds that cleanup.
 const ProvisioningHistoryExpirationDefault = 10 * time.Minute
 
-// ProvisioningJobPollIntervalDefault is the default value for the [provisioning]
-// job_poll_interval key. It is how often the job driver polls for new jobs as a
-// fallback to the live watch/NATS notification that wakes it on job creation.
-const ProvisioningJobPollIntervalDefault = 30 * time.Second
-
 var (
 	customInitPath = "conf/custom.ini"
 
@@ -202,7 +197,6 @@ type Cfg struct {
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
 	ProvisioningControllerResyncInterval      time.Duration // informer re-list interval for repo/connection/job controllers; default 60s; <=0 = default
 	ProvisioningHistoryExpiration             time.Duration // HistoricJob retention and historic-job informer resync; default 10m; <=0 = default
-	ProvisioningJobPollInterval               time.Duration // job driver poll interval (fallback to the live job-create notification); default 30s; <=0 = default
 	ProvisioningPublicRootURL                 string        // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
 	DataPath                                  string
 	LogsPath                                  string
@@ -2582,7 +2576,6 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
 	cfg.ProvisioningControllerResyncInterval = iniFile.Section("provisioning").Key("resync_interval").MustDuration(ProvisioningControllerResyncIntervalDefault)
 	cfg.ProvisioningHistoryExpiration = iniFile.Section("provisioning").Key("history_expiration").MustDuration(ProvisioningHistoryExpirationDefault)
-	cfg.ProvisioningJobPollInterval = iniFile.Section("provisioning").Key("job_poll_interval").MustDuration(ProvisioningJobPollIntervalDefault)
 	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
 
 	// Read job history configuration

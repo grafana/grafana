@@ -59,7 +59,6 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 		driverConfig{
 			concurrentDrivers:    controllerCfg.concurrentDrivers,
 			maxJobTimeout:        controllerCfg.maxJobTimeout,
-			jobInterval:          controllerCfg.jobInterval,
 			leaseRenewalInterval: controllerCfg.leaseRenewalInterval,
 			maxSyncWorkers:       controllerCfg.maxSyncWorkers,
 		},
@@ -73,8 +72,10 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	// Jobs informer feeding the driver's work queue with job keys. Under the NATS
 	// watch the source is a NATS-backed informer; otherwise an apiserver-backed
 	// one. Both satisfy DeltaSource, so the rest of the wiring is identical. The
-	// handler must be registered before the informer runs: the NATS-backed source
-	// has no cache to replay for late handlers.
+	// informer's periodic resync/re-list is the driver's only recovery path for
+	// unclaimed jobs (rolled-back claims, dropped keys, missed notifications), so
+	// the handler must be registered before the informer runs: the NATS-backed
+	// source has no cache to replay for late handlers.
 	jobInformer := informer.NewJobDeltaSource(controllerCfg.natsSubscriber, provisioningClient, controllerCfg.ResyncInterval())
 	reg, err := jobInformer.AddEventHandler(driver.EventHandler())
 	if err != nil {
@@ -127,7 +128,6 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 type jobQueueControllerConfig struct {
 	ControllerConfig
 	maxJobTimeout        time.Duration
-	jobInterval          time.Duration
 	leaseRenewalInterval time.Duration
 	concurrentDrivers    int
 	maxSyncWorkers       int
@@ -146,7 +146,6 @@ func setupJobQueueControllerFromConfig(cfg *setting.Cfg, registry prometheus.Reg
 		concurrentDrivers:    operatorSec.Key("concurrent_drivers").MustInt(3),
 		maxSyncWorkers:       operatorSec.Key("max_sync_workers").MustInt(10),
 		maxJobTimeout:        operatorSec.Key("max_job_timeout").MustDuration(20 * time.Minute),
-		jobInterval:          operatorSec.Key("job_interval").MustDuration(30 * time.Second),
 		leaseRenewalInterval: operatorSec.Key("lease_renewal_interval").MustDuration(jobClaimExpiry / 3),
 	}, nil
 }

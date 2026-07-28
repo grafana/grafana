@@ -161,13 +161,12 @@ type APIBuilder struct {
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
 	// controllerResyncInterval is the informer re-list interval for the
-	// repository, connection, and job controllers; historyExpiration is both the
-	// HistoricJob retention and the historic-job informer's resync;
-	// jobPollInterval is the job driver's fallback poll for new jobs. All fall
+	// repository, connection, and job controllers (and the job driver's
+	// recovery cadence for unclaimed jobs); historyExpiration is both the
+	// HistoricJob retention and the historic-job informer's resync. Both fall
 	// back to their defaults when <=0 (see the controller post-start hook).
 	controllerResyncInterval time.Duration
 	historyExpiration        time.Duration
-	jobPollInterval          time.Duration
 
 	// natsSubscriber feeds the controllers' event handlers when NATS is enabled.
 	// Instead of an apiserver-backed informer, each controller's handler is driven
@@ -412,7 +411,6 @@ func RegisterAPIService(
 	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
 	builder.historyExpiration = cfg.ProvisioningHistoryExpiration
-	builder.jobPollInterval = cfg.ProvisioningJobPollInterval
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(builder)
@@ -458,7 +456,6 @@ func RegisterAPIService(
 	v1beta1Builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	v1beta1Builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
 	v1beta1Builder.historyExpiration = cfg.ProvisioningHistoryExpiration
-	v1beta1Builder.jobPollInterval = cfg.ProvisioningJobPollInterval
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	v1beta1Builder.natsSubscriber = natsSubscriber
 	apiregistration.RegisterAPI(v1beta1Builder)
@@ -1119,19 +1116,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// considered abandoned.
 			leaseRenewalInterval := jobClaimExpiry / 3
 
-			// Backstop poll for unclaimed jobs missed by the informer events (one
-			// list per interval per replica). Configurable via [provisioning]
-			// job_poll_interval; <=0 falls back to the default.
-			jobPollInterval := b.jobPollInterval
-			if jobPollInterval <= 0 {
-				jobPollInterval = setting.ProvisioningJobPollIntervalDefault
-			}
-
 			// This is basically our own JobQueue system
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,                    // 3 drivers for now
 				20*time.Minute,       // Max time for each job
-				jobPollInterval,      // Periodically look for unclaimed jobs
 				leaseRenewalInterval, // Lease renewal interval
 				b.jobs, repoGetter, jobHistoryWriter,
 				b.registry,
@@ -1142,8 +1130,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 
-			// Feed the driver's work queue from job create events. The handler must
-			// be registered before the informer runs: the NATS-backed source has no
+			// Feed the driver's work queue from the jobs informer: live create
+			// events plus the periodic resync/re-list, which re-delivers unclaimed
+			// jobs and is the driver's only recovery path. The handler must be
+			// registered before the informer runs: the NATS-backed source has no
 			// cache to replay for late handlers.
 			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
 			if _, err := jobSource.AddEventHandler(driver.EventHandler()); err != nil {

@@ -1552,13 +1552,11 @@ func WithNATS() GrafanaOption {
 		opts.NATSListenAddress = "127.0.0.1"
 		opts.NATSClientPort = natsserver.RANDOM_PORT
 		opts.NATSClusterPort = natsserver.RANDOM_PORT
-		// Push the informer re-list and the job driver's fallback poll far out so
-		// any reconcile/job pickup observed within a test's wait budget can only
-		// have come from a live NATS notification, not the periodic LIST/poll.
-		// Tests that specifically exercise the re-list path (e.g. historic-job
-		// cleanup) override the relevant interval.
+		// Push the informer re-list far out so any reconcile/job pickup observed
+		// within a test's wait budget can only have come from a live NATS
+		// notification, not the periodic LIST. Tests that specifically exercise
+		// the re-list path (e.g. historic-job cleanup) override the interval.
 		opts.ProvisioningControllerResyncInterval = 10 * time.Minute
-		opts.ProvisioningJobPollInterval = 10 * time.Minute
 	}
 }
 
