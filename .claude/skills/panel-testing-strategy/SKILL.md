@@ -270,7 +270,7 @@ only. **Avoid → Do:**
    remains skipped #128389 for this reason)_
 3. **Broad locators.** Avoid `page.locator('.uplot')` — it also matches option-pane preview
    thumbnails. Do scope: `getByGrafanaSelector(Panels.Panel.content).locator('.uplot')`.
-4. **Asserting before the renderer is ready.** Do `await waitFor(() => uPlotInstance?.status === 1)`
+4. **Asserting before the renderer is ready.** Do `waitFor(() => expect(uPlotInstance?.status).toBe(1))`
    before any canvas snapshot/output assertion. _(Sparkline/Heatmap/XYChart #127557)_
 5. **Reading DOM text + regex while state settles.** Avoid `textContent().match(/(\d+) selected/)`
    on a virtualized/animating list. Do assert the container is visible, read a stable source
