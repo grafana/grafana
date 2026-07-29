@@ -104,7 +104,9 @@ const opIn = model.CreateSearchRulesRequestSearchFilterLeafOperatorIn
 // SearchQuery body can be decoded back into the same filters by the legacy
 // backend.
 func TestBuildSearchRequestExtractRoundTrip(t *testing.T) {
-	labelSelector := "team=a"
+	// labelSelector selects on resource metadata labels, so it targets the
+	// controlled group key, not the rules' spec labels.
+	labelSelector := model.GroupLabelKey + "=g1"
 	body := model.CreateSearchRulesRequestBody{
 		Where: andNode(
 			textLeaf("cpu"),
@@ -130,65 +132,81 @@ func TestBuildSearchRequestExtractRoundTrip(t *testing.T) {
 	assert.True(t, *f.paused)
 	assert.Equal(t, fieldTitle, f.sortField)
 	assert.True(t, f.sortDesc)
-	// labelSelector "team=a" and the labels NotIn "!__grafana_origin" both flow
-	// into the indexed labels field.
+	// The labels filter leaf flows into the indexed spec-labels field.
 	assert.ElementsMatch(t, [][]labelMatcher{
-		{{key: "team", value: "a", op: matchEquals}},
 		// NotIn of an existence matcher negates to a not-exists matcher.
 		{{key: "__grafana_origin", op: matchNotExists}},
 	}, f.labelGroups)
+	// The labelSelector on the group metadata label becomes a group filter.
+	assert.Equal(t, []string{"g1"}, f.groupsInclude)
+	assert.Empty(t, f.groupsExclude)
 }
 
-// TestBuildSearchRequest_labelSelectorInIsASet covers a Kubernetes "in (a, b)"
-// selector. Its values are set membership, so they have to reach the backends as
-// one multi-value requirement. Emitted as separate requirements they conjoin,
-// and the selector can never match.
-func TestBuildSearchRequest_labelSelectorInIsASet(t *testing.T) {
+// TestBuildSearchRequest_labelSelector covers the labelSelector lowering onto
+// metadata label requirements: it targets metadata.labels (not the rules' spec
+// labels), only controlled keys are selectable, and a Kubernetes "in (a, b)" is
+// set membership so its values must stay in one multi-value requirement.
+func TestBuildSearchRequest_labelSelector(t *testing.T) {
 	gr := alertrule.ResourceInfo.GroupResource()
-	build := func(selector string) *resourcepb.ResourceSearchRequest {
+	build := func(t *testing.T, selector string) *resourcepb.ResourceSearchRequest {
+		t.Helper()
 		sel := selector
 		req, _, err := buildSearchRequest(
 			model.CreateSearchRulesRequestBody{LabelSelector: &sel}, "default", gr, nil)
 		require.NoError(t, err)
 		return req
 	}
+	buildErr := func(selector string) error {
+		sel := selector
+		_, _, err := buildSearchRequest(
+			model.CreateSearchRulesRequestBody{LabelSelector: &sel}, "default", gr, nil)
+		return err
+	}
 
-	t.Run("multi-value In becomes one requirement", func(t *testing.T) {
-		req := build("team in (a,b)")
-		require.Len(t, req.Options.Fields, 1, "values must stay in one requirement to OR")
-		assert.Equal(t, "in", req.Options.Fields[0].Operator)
-		assert.ElementsMatch(t, []string{"team=a", "team=b"}, req.Options.Fields[0].Values)
-
-		// and the legacy side reads it back as one group, so it disjoins
-		f := extractFilters(req)
-		require.Len(t, f.labelGroups, 1)
-		assert.Len(t, f.labelGroups[0], 2)
-
-		ruleA := &ngmodels.AlertRule{Labels: map[string]string{"team": "a"}}
-		ruleB := &ngmodels.AlertRule{Labels: map[string]string{"team": "b"}}
-		ruleC := &ngmodels.AlertRule{Labels: map[string]string{"team": "c"}}
-		assert.True(t, matchLabels(ruleA, f.labelGroups), "team=a should match in (a,b)")
-		assert.True(t, matchLabels(ruleB, f.labelGroups), "team=b should match in (a,b)")
-		assert.False(t, matchLabels(ruleC, f.labelGroups))
+	t.Run("selects on metadata labels, not spec labels", func(t *testing.T) {
+		req := build(t, model.GroupLabelKey+"=g1")
+		require.Len(t, req.Options.Labels, 1)
+		assert.Empty(t, req.Options.Fields, "must not touch the indexed spec-labels field")
+		assert.Equal(t, model.GroupLabelKey, req.Options.Labels[0].Key)
+		assert.Equal(t, "in", req.Options.Labels[0].Operator)
+		assert.Equal(t, []string{"g1"}, req.Options.Labels[0].Values)
 	})
 
-	t.Run("separate selector requirements still conjoin", func(t *testing.T) {
-		req := build("team in (a,b),env=prod")
-		require.Len(t, req.Options.Fields, 2)
+	t.Run("multi-value In stays one requirement so values OR", func(t *testing.T) {
+		req := build(t, model.GroupLabelKey+" in (g1,g2)")
+		require.Len(t, req.Options.Labels, 1, "values must stay in one requirement to OR")
+		assert.Equal(t, "in", req.Options.Labels[0].Operator)
+		assert.ElementsMatch(t, []string{"g1", "g2"}, req.Options.Labels[0].Values)
 
+		// the legacy side reads both values into the group include filter
 		f := extractFilters(req)
-		require.Len(t, f.labelGroups, 2)
-		both := &ngmodels.AlertRule{Labels: map[string]string{"team": "a", "env": "prod"}}
-		teamOnly := &ngmodels.AlertRule{Labels: map[string]string{"team": "a"}}
-		assert.True(t, matchLabels(both, f.labelGroups))
-		assert.False(t, matchLabels(teamOnly, f.labelGroups), "env=prod must also hold")
+		assert.ElementsMatch(t, []string{"g1", "g2"}, f.groupsInclude)
 	})
 
-	t.Run("single-value forms are unchanged", func(t *testing.T) {
-		for _, sel := range []string{"team=a", "team in (a)", "team!=a", "team", "!team"} {
-			req := build(sel)
-			assert.Len(t, req.Options.Fields, 1, "selector %q", sel)
+	t.Run("NotIn becomes a group exclusion", func(t *testing.T) {
+		req := build(t, model.GroupLabelKey+" notin (g1,g2)")
+		require.Len(t, req.Options.Labels, 1)
+		assert.Equal(t, "notin", req.Options.Labels[0].Operator)
+
+		f := extractFilters(req)
+		assert.ElementsMatch(t, []string{"g1", "g2"}, f.groupsExclude)
+		assert.Empty(t, f.groupsInclude)
+	})
+
+	t.Run("rejects keys that are not selectable", func(t *testing.T) {
+		// A rule spec label is not a metadata label: selecting on it would match
+		// nothing rather than filter by rule label, so it must be rejected.
+		require.Error(t, buildErr("team=a"))
+	})
+
+	t.Run("rejects existence operators", func(t *testing.T) {
+		for _, sel := range []string{model.GroupLabelKey, "!" + model.GroupLabelKey} {
+			require.Error(t, buildErr(sel), "selector %q", sel)
 		}
+	})
+
+	t.Run("rejects a malformed selector", func(t *testing.T) {
+		require.Error(t, buildErr("=="))
 	})
 }
 

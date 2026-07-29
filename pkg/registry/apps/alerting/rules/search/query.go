@@ -365,9 +365,27 @@ func filterOperator(op model.CreateSearchRulesRequestSearchFilterLeafOperator) (
 	}
 }
 
-// applyLabelSelector parses a Kubernetes label selector and appends each
-// requirement to the indexed labels field. Only equality/set membership is
-// mapped; unsupported operators are rejected.
+// selectableLabelKeys are the resource metadata label keys a labelSelector may
+// target. Legacy rules do not carry arbitrary metadata labels (the k8s metadata
+// is synthesized when converting from the ngalert store), so only the controlled
+// keys the legacy backend can filter are accepted. Selecting on any other key is
+// rejected rather than matching nothing on legacy while working on unified.
+var selectableLabelKeys = map[string]struct{}{
+	model.GroupLabelKey: {},
+}
+
+// applyLabelSelector parses a Kubernetes label selector onto the request's
+// metadata label requirements. This is the conventional meaning of
+// labelSelector (it selects on the resource's metadata.labels, mirroring the
+// generic search.grafana.app translation), not on the rules' spec labels: those
+// are filtered through a where filter leaf on the indexed "labels" field.
+//
+// Known limitation on the unified backend: metadata labels are indexed with the
+// default analyzer, so value matching can overmatch on values that share a
+// prefix segment (the same caveat the generic search translator carries).
+// Exact-match label semantics in the backend are the fix; until then, restrict
+// selection to the controlled keys below, whose values are generated and do not
+// collide in practice.
 func applyLabelSelector(req *resourcepb.ResourceSearchRequest, selector *string) error {
 	if selector == nil || *selector == "" {
 		return nil
@@ -378,49 +396,34 @@ func applyLabelSelector(req *resourcepb.ResourceSearchRequest, selector *string)
 	}
 	reqs, _ := sel.Requirements()
 	for _, r := range reqs {
-		matchers, err := labelSelectorRequirementToMatchers(r)
+		if _, ok := selectableLabelKeys[r.Key()]; !ok {
+			return fmt.Errorf("labelSelector key %q is not selectable", r.Key())
+		}
+		op, err := labelSelectorOperator(r)
 		if err != nil {
 			return err
 		}
-		if len(matchers) == 0 {
-			continue
-		}
-		// One requirement per selector requirement, not per matcher. Kubernetes
-		// "in (a, b)" is set membership, so its values must OR; emitting them as
-		// separate requirements would AND them and the selector could never match.
-		req.Options.Fields = append(req.Options.Fields, labelMatchersRequirement(matchers))
+		req.Options.Labels = append(req.Options.Labels, &resourcepb.Requirement{
+			Key:      r.Key(),
+			Operator: op,
+			Values:   r.Values().List(),
+		})
 	}
 	return nil
 }
 
-func labelSelectorRequirementToMatchers(r labels.Requirement) ([]labelMatcher, error) {
-	key := r.Key()
+// labelSelectorOperator maps a selector requirement onto the backend's in/notin
+// operators. Existence operators have no requirement representation, and the
+// legacy backend cannot express them, so they are rejected.
+func labelSelectorOperator(r labels.Requirement) (string, error) {
 	switch r.Operator() {
-	case selection.Equals, selection.DoubleEquals:
-		return []labelMatcher{{key: key, value: valueOf(r), op: matchEquals}}, nil
-	case selection.NotEquals:
-		return []labelMatcher{{key: key, value: valueOf(r), op: matchNotEquals}}, nil
-	case selection.Exists:
-		return []labelMatcher{{key: key, op: matchExists}}, nil
-	case selection.DoesNotExist:
-		return []labelMatcher{{key: key, op: matchNotExists}}, nil
-	case selection.In:
-		out := make([]labelMatcher, 0, r.Values().Len())
-		for _, v := range r.Values().List() {
-			out = append(out, labelMatcher{key: key, value: v, op: matchEquals})
-		}
-		return out, nil
+	case selection.Equals, selection.DoubleEquals, selection.In:
+		return "in", nil
+	case selection.NotEquals, selection.NotIn:
+		return "notin", nil
 	default:
-		return nil, fmt.Errorf("unsupported label selector operator %q", r.Operator())
+		return "", fmt.Errorf("unsupported labelSelector operator %q", r.Operator())
 	}
-}
-
-func valueOf(r labels.Requirement) string {
-	vals := r.Values().List()
-	if len(vals) == 0 {
-		return ""
-	}
-	return vals[0]
 }
 
 // negateMatcher flips a matcher to its complement, so a NotIn labels filter
@@ -475,7 +478,12 @@ type filters struct {
 	// labelGroups holds label matchers grouped by the requirement they came
 	// from. A rule must satisfy at least one matcher in every group: values
 	// within a requirement are a set (OR), separate requirements conjoin (AND).
-	labelGroups         [][]labelMatcher
+	labelGroups [][]labelMatcher
+	// groupsInclude/groupsExclude come from a labelSelector on the controlled
+	// group metadata label, which the legacy backend applies through its
+	// GroupFilter rather than as an indexed field.
+	groupsInclude       []string
+	groupsExclude       []string
 	paused              *bool
 	dashboardUID        string
 	panelID             string
@@ -523,6 +531,19 @@ func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
 			case fieldTargetDatasourceUID:
 				f.targetDatasourceUID = firstValue(r.Values)
 			}
+		}
+		// Metadata label requirements come from the labelSelector. Only the
+		// controlled group label is selectable (see selectableLabelKeys), and the
+		// legacy backend applies it through GroupFilter.
+		for _, r := range opts.Labels {
+			if r.Key != model.GroupLabelKey {
+				continue
+			}
+			if r.Operator == "notin" {
+				f.groupsExclude = append(f.groupsExclude, r.Values...)
+				continue
+			}
+			f.groupsInclude = append(f.groupsInclude, r.Values...)
 		}
 	}
 	if len(req.SortBy) > 0 {

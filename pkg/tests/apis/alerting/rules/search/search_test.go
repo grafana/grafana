@@ -178,8 +178,17 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Empty(t, titles(searchKind(t, "alertrule", newQuery().text("nonexistent"))))
 	})
 
+	// Rule spec labels are filtered through a labels filter leaf. The separate
+	// labelSelector selects on resource metadata labels, not these.
 	t.Run("alert rules: label matcher", func(t *testing.T) {
-		require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, titles(searchKind(t, "alertrule", newQuery().labelSelector("team=a"))))
+		require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, titles(searchKind(t, "alertrule", newQuery().filter("labels", opIn, "team=a"))))
+	})
+
+	// labelSelector targets metadata labels. Selecting a group that no rule is
+	// in must return nothing: were the selector dropped, every rule would match.
+	t.Run("alert rules: metadata labelSelector is applied", func(t *testing.T) {
+		got := searchKind(t, "alertrule", newQuery().labelSelector(v0alpha1.GroupLabelKey+"=no-such-group"))
+		require.Empty(t, got.Items)
 	})
 
 	t.Run("alert rules: source datasource filter", func(t *testing.T) {

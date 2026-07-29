@@ -54,6 +54,7 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	rules, _, _, err := c.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
 		RuleType:                  ruleTypeForRequest(req),
 		RuleUIDs:                  f.names,
+		GroupFilter:               provisioning.ListRuleStringFilter{Include: f.groupsInclude, Exclude: f.groupsExclude},
 		FolderFilter:              includeFilter(f.folders),
 		PausedFilter:              provisioning.ListRuleBoolFilter{Value: f.paused},
 		DashboardFilter:           stringFilter(f.dashboardUID),
