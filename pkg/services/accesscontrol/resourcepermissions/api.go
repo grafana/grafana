@@ -95,20 +95,12 @@ func (a *api) unifiedStorageIsAuthoritative(groupResource string) bool {
 }
 
 // unifiedStorageIsAuthoritative reports whether unified storage is the authoritative
-// backend for the given group resource (Mode4 or Mode5). When true, K8s redirect
-// failures must not fall back to legacy. It's a package helper so the service methods
-// can apply the same rule without depending on the api layer.
+// backend for the given group resource (dualWriterMode > Mode3). When true the legacy
+// tables are not written, so a K8s redirect failure must surface instead of falling back
+// to legacy. It takes cfg explicitly so the service methods can apply the same rule
+// without reaching into the api layer.
 func unifiedStorageIsAuthoritative(cfg *setting.Cfg, groupResource string) bool {
 	return cfg.UnifiedStorageConfig(groupResource).DualWriterMode > grafanarest.Mode3
-}
-
-// teamsRedirectOwnsWrites reports whether the service-level teams membership
-// redirect is the sole writer (redirect enabled and unified storage authoritative).
-// When true the legacy store is never written, so handlers must not count a legacy
-// write in the metrics.
-func (a *api) teamsRedirectOwnsWrites(ctx context.Context) bool {
-	return a.service.teamsMembershipRedirectEnabled(ctx) &&
-		a.unifiedStorageIsAuthoritative(iamv0.TeamResourceInfo.GroupResource().String())
 }
 
 func (a *api) registerEndpoints() {
@@ -436,7 +428,7 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
-	if !a.teamsRedirectOwnsWrites(ctx) {
+	if !a.service.teamsRedirectOwnsWrites(ctx) {
 		metrics.MAccessResourcePermissionsBackend.WithLabelValues("legacy", "set_user", a.service.options.Resource, a.getFallbackStatus(ctx)).Inc()
 	}
 	_, err = a.service.SetUserPermission(c.Req.Context(), c.GetOrgID(), accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
@@ -691,7 +683,7 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
-	if !a.teamsRedirectOwnsWrites(ctx) {
+	if !a.service.teamsRedirectOwnsWrites(ctx) {
 		metrics.MAccessResourcePermissionsBackend.WithLabelValues("legacy", "set_bulk", a.service.options.Resource, a.getFallbackStatus(ctx)).Inc()
 	}
 	_, err := a.service.SetPermissions(c.Req.Context(), c.GetOrgID(), resourceID, cmd.Permissions...)

@@ -11,6 +11,10 @@ import (
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/dynamic"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -1036,60 +1040,85 @@ func TestIntegrationService_SetPermissionsForTeams_Redirect(t *testing.T) {
 	}
 }
 
+// teamObjFor builds the unstructured Team the fake K8s client serves, so the
+// redirect exercises its real read-modify-write against it.
+func teamObjFor(t *testing.T, teamUID string, members ...iamv0.TeamTeamMember) *unstructured.Unstructured {
+	t.Helper()
+	teamObj := iamv0.Team{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
+			Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
+		},
+		ObjectMeta: metav1.ObjectMeta{Name: teamUID, Namespace: "default", ResourceVersion: "42"},
+		Spec:       iamv0.TeamSpec{Members: members},
+	}
+	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&teamObj)
+	require.NoError(t, err)
+	return &unstructured.Unstructured{Object: obj}
+}
+
 // TestIntegrationService_SetUserPermissionForTeams_RedirectWrites covers the
-// outcomes of the K8s membership write itself (stubbed): in unified-authoritative
-// modes the K8s result is final and the legacy store is never touched; in
-// dual-write modes a redirect that actually removed the member skips the legacy
-// membership hook (the dual-write already removed team_member, so re-running the
-// hook would fail and roll back the RBAC write), while adds and no-op removals
-// keep the hook so a genuinely-absent member still surfaces the not-found error.
+// outcomes of the K8s membership write itself: in unified-authoritative modes the
+// K8s result is final and the legacy store is never touched; in dual-write modes a
+// redirect that actually removed the member skips the legacy membership hook (the
+// dual-write already removed team_member, so re-running the hook would fail and roll
+// back the RBAC write), while adds and no-op removals keep the hook so a
+// genuinely-absent member still surfaces the not-found error.
 func TestIntegrationService_SetUserPermissionForTeams_RedirectWrites(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	errK8sUnavailable := errors.New("k8s api unavailable")
 
 	tests := []struct {
-		name           string
-		mode           grafanarest.DualWriterMode
-		permission     string
-		k8sRemoved     bool
-		k8sErr         error
+		name string
+		mode grafanarest.DualWriterMode
+		// permission is the membership written; "" removes it.
+		permission string
+		// initialMembers seeds Team.Spec.Members. The placeholder UID "user" is
+		// replaced with the created user's real UID.
+		initialMembers []iamv0.TeamTeamMember
+		updateErr      error
 		hookErr        error
 		expectErr      error
 		expectHookCall bool
+		expectUpdate   bool
 	}{
 		{
-			name:       "Mode5 writes to k8s only",
-			mode:       grafanarest.Mode5,
-			permission: "Member",
+			name:         "Mode5 writes to k8s only",
+			mode:         grafanarest.Mode5,
+			permission:   "Member",
+			expectUpdate: true,
 		},
 		{
-			name:       "Mode5 surfaces k8s errors",
-			mode:       grafanarest.Mode5,
-			permission: "Member",
-			k8sErr:     errK8sUnavailable,
-			expectErr:  errK8sUnavailable,
+			name:         "Mode5 surfaces k8s errors",
+			mode:         grafanarest.Mode5,
+			permission:   "Member",
+			updateErr:    errK8sUnavailable,
+			expectErr:    errK8sUnavailable,
+			expectUpdate: true,
 		},
 		{
-			name:       "externally-synced members are never mutated",
-			mode:       grafanarest.Mode3,
-			permission: "Member",
-			k8sErr:     ErrExternalTeamMember.Errorf("user %q is externally-synced", "test"),
-			expectErr:  ErrExternalTeamMember,
+			name:           "externally-synced members are never mutated",
+			mode:           grafanarest.Mode3,
+			permission:     "Member",
+			initialMembers: []iamv0.TeamTeamMember{{Kind: "User", Name: "user", Permission: iamv0.TeamTeamPermissionMember, External: true}},
+			expectErr:      ErrExternalTeamMember,
 		},
 		{
 			name:           "Mode3 dual-writes to legacy after k8s",
 			mode:           grafanarest.Mode3,
 			permission:     "Member",
 			expectHookCall: true,
+			expectUpdate:   true,
 		},
 		{
-			name:       "Mode3 skips the hook when the redirect removed the member",
-			mode:       grafanarest.Mode3,
-			permission: "",
-			k8sRemoved: true,
+			name:           "Mode3 skips the hook when the redirect removed the member",
+			mode:           grafanarest.Mode3,
+			permission:     "",
+			initialMembers: []iamv0.TeamTeamMember{{Kind: "User", Name: "user", Permission: iamv0.TeamTeamPermissionMember}},
 			// hookErr would be returned if the hook ran; it must not, so no error surfaces.
-			hookErr: team.ErrTeamMemberNotFound,
+			hookErr:      team.ErrTeamMemberNotFound,
+			expectUpdate: true,
 		},
 		{
 			name:           "Mode3 surfaces not-found when the redirect removed nothing",
@@ -1101,9 +1130,6 @@ func TestIntegrationService_SetUserPermissionForTeams_RedirectWrites(t *testing.
 		},
 	}
 
-	origSetTeamMembership := setTeamMembership
-	t.Cleanup(func() { setTeamMembership = origSetTeamMembership })
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
@@ -1117,12 +1143,6 @@ func TestIntegrationService_SetUserPermissionForTeams_RedirectWrites(t *testing.
 			service.options.OnSetUser = func(_ *db.Session, _ int64, _ accesscontrol.User, _, _ string) error {
 				hookCalled = true
 				return tt.hookErr
-			}
-
-			var k8sCalls int
-			setTeamMembership = func(_ *Service, _ context.Context, _ int64, _ string, _ int64, _ string) (bool, error) {
-				k8sCalls++
-				return tt.k8sRemoved, tt.k8sErr
 			}
 
 			createdUser, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
@@ -1130,14 +1150,123 @@ func TestIntegrationService_SetUserPermissionForTeams_RedirectWrites(t *testing.
 			createdTeam, err := teamSvc.CreateTeam(context.Background(), &team.CreateTeamCommand{Name: "test", Email: "test@test.com", OrgID: 1})
 			require.NoError(t, err)
 
+			members := make([]iamv0.TeamTeamMember, 0, len(tt.initialMembers))
+			for _, m := range tt.initialMembers {
+				if m.Name == "user" {
+					m.Name = createdUser.UID
+				}
+				members = append(members, m)
+			}
+
+			var updateCalls int
+			fr := &fakeResourceInterface{
+				getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+					return teamObjFor(t, createdTeam.UID, members...), nil
+				},
+				updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+					updateCalls++
+					if tt.updateErr != nil {
+						return nil, tt.updateErr
+					}
+					return obj, nil
+				},
+			}
+			service.dynamicClient = func(_ context.Context) (dynamic.Interface, error) {
+				return &fakeDynamicClient{resourceInterface: fr}, nil
+			}
+
 			_, err = service.SetUserPermission(context.Background(), 1, accesscontrol.User{ID: createdUser.ID}, strconv.FormatInt(createdTeam.ID, 10), tt.permission)
 			if tt.expectErr != nil {
 				require.ErrorIs(t, err, tt.expectErr)
 			} else {
 				require.NoError(t, err)
 			}
-			assert.Equal(t, 1, k8sCalls)
 			assert.Equal(t, tt.expectHookCall, hookCalled)
+			if tt.expectUpdate {
+				assert.NotZero(t, updateCalls, "expected a k8s Update")
+			} else {
+				assert.Zero(t, updateCalls, "expected no k8s Update")
+			}
+		})
+	}
+}
+
+// TestIntegrationService_SetUserPermissionForTeams_RedirectExternal covers the
+// team-sync caller: it owns externally-synced members, so its writes must be marked
+// External and must not be rejected by the guard that stops every other caller from
+// mutating them.
+func TestIntegrationService_SetUserPermissionForTeams_RedirectExternal(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	tests := []struct {
+		name            string
+		permission      string
+		seedExternal    bool
+		validateMembers func(t *testing.T, members []iamv0.TeamTeamMember)
+	}{
+		{
+			name:       "team sync adds an external member",
+			permission: "Member",
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				require.Len(t, members, 1)
+				assert.True(t, members[0].External, "team sync adds must be marked External")
+			},
+		},
+		{
+			name:         "team sync removes an external member",
+			permission:   "",
+			seedExternal: true,
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				assert.Empty(t, members)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
+
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures())
+			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: grafanarest.Mode5},
+			}
+
+			createdUser, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test", OrgID: 1})
+			require.NoError(t, err)
+			createdTeam, err := teamSvc.CreateTeam(context.Background(), &team.CreateTeamCommand{Name: "test", Email: "test@test.com", OrgID: 1})
+			require.NoError(t, err)
+
+			var members []iamv0.TeamTeamMember
+			if tt.seedExternal {
+				members = []iamv0.TeamTeamMember{
+					{Kind: "User", Name: createdUser.UID, Permission: iamv0.TeamTeamPermissionMember, External: true},
+				}
+			}
+
+			var lastUpdated *unstructured.Unstructured
+			fr := &fakeResourceInterface{
+				getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+					return teamObjFor(t, createdTeam.UID, members...), nil
+				},
+				updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+					lastUpdated = obj
+					return obj, nil
+				},
+			}
+			service.dynamicClient = func(_ context.Context) (dynamic.Interface, error) {
+				return &fakeDynamicClient{resourceInterface: fr}, nil
+			}
+
+			// IsExternal marks the caller as team-sync.
+			_, err = service.SetUserPermission(context.Background(), 1,
+				accesscontrol.User{ID: createdUser.ID, IsExternal: true},
+				strconv.FormatInt(createdTeam.ID, 10), tt.permission)
+			require.NoError(t, err)
+
+			require.NotNil(t, lastUpdated, "expected a k8s Update")
+			var updated iamv0.Team
+			require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(lastUpdated.Object, &updated))
+			tt.validateMembers(t, updated.Spec.Members)
 		})
 	}
 }
@@ -1145,59 +1274,97 @@ func TestIntegrationService_SetUserPermissionForTeams_RedirectWrites(t *testing.
 // TestIntegrationService_SetPermissionsForTeams_RedirectWrites is the batch
 // counterpart of TestIntegrationService_SetUserPermissionForTeams_RedirectWrites:
 // the whole batch is reconciled through a single atomic K8s write, and the legacy
-// membership hook is skipped only when that write removed a member.
+// membership hook is skipped when that write removed a member.
 func TestIntegrationService_SetPermissionsForTeams_RedirectWrites(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	errK8sUnavailable := errors.New("k8s api unavailable")
 
-	tests := []struct {
-		name           string
-		mode           grafanarest.DualWriterMode
-		permission     string
-		k8sRemoved     bool
-		k8sErr         error
-		hookErr        error
-		expectErr      error
-		expectHookCall bool
-	}{
-		{
-			name:       "Mode5 reconciles the batch via k8s only",
-			mode:       grafanarest.Mode5,
-			permission: "Member",
-		},
-		{
-			name:       "externally-synced members abort the batch",
-			mode:       grafanarest.Mode3,
-			permission: "Member",
-			k8sErr:     ErrExternalTeamMember.Errorf("user %q is externally-synced", "test"),
-			expectErr:  ErrExternalTeamMember,
-		},
-		{
-			name:           "Mode3 falls back to legacy when the redirect fails",
-			mode:           grafanarest.Mode3,
-			permission:     "Member",
-			k8sErr:         errK8sUnavailable,
-			expectHookCall: true,
-		},
-		{
-			name:           "Mode3 runs the hook when the redirect only added",
-			mode:           grafanarest.Mode3,
-			permission:     "Member",
-			expectHookCall: true,
-		},
-		{
-			name:       "Mode3 skips the hook when the redirect removed members",
-			mode:       grafanarest.Mode3,
-			permission: "",
-			k8sRemoved: true,
-			// hookErr would be returned if the hook ran; it must not, so no error surfaces.
-			hookErr: team.ErrTeamMemberNotFound,
-		},
+	// membership is one command in the batch, keyed by which of the two test users
+	// it targets.
+	type membership struct {
+		second     bool
+		permission string
+		seeded     string // seeded permission in Spec.Members; "" means not a member
 	}
 
-	origSetTeamMemberships := setTeamMemberships
-	t.Cleanup(func() { setTeamMemberships = origSetTeamMemberships })
+	tests := []struct {
+		name string
+		mode grafanarest.DualWriterMode
+		// memberships describes the batch and the state it is applied to.
+		memberships  []membership
+		updateErr    error
+		hookErr      error
+		expectErr    error
+		expectUpdate bool
+		// expectHookCalls is the number of users the legacy membership hook runs for.
+		expectHookCalls int
+	}{
+		{
+			name: "Mode5 reconciles the batch via k8s only",
+			mode: grafanarest.Mode5,
+			memberships: []membership{
+				{permission: "Member"},
+				{second: true, permission: "Admin"},
+			},
+			expectUpdate: true,
+		},
+		{
+			name: "externally-synced members abort the batch",
+			mode: grafanarest.Mode3,
+			memberships: []membership{
+				{permission: "Member"},
+				{second: true, permission: "Member", seeded: "external"},
+			},
+			expectErr: ErrExternalTeamMember,
+		},
+		{
+			name: "Mode3 falls back to legacy when the redirect fails",
+			mode: grafanarest.Mode3,
+			memberships: []membership{
+				{permission: "Member"},
+				{second: true, permission: "Member"},
+			},
+			updateErr:       errK8sUnavailable,
+			expectUpdate:    true,
+			expectHookCalls: 2,
+		},
+		{
+			name: "Mode3 runs the hook when the redirect only added",
+			mode: grafanarest.Mode3,
+			memberships: []membership{
+				{permission: "Member"},
+				{second: true, permission: "Member"},
+			},
+			expectUpdate:    true,
+			expectHookCalls: 2,
+		},
+		{
+			// The redirect's K8s write is all-or-nothing, so one removal in the batch
+			// skips the hook for the whole batch. That is safe: the adds in it already
+			// got their legacy team_member row from the same dual-write.
+			name: "Mode3 skips the hook for the whole batch when the redirect removed a member",
+			mode: grafanarest.Mode3,
+			memberships: []membership{
+				{permission: "", seeded: "Member"},
+				{second: true, permission: "Admin"},
+			},
+			// hookErr would be returned if the hook ran; it must not, so no error surfaces.
+			hookErr:      team.ErrTeamMemberNotFound,
+			expectUpdate: true,
+		},
+		{
+			name: "Mode3 skips the hook when the redirect removed every member",
+			mode: grafanarest.Mode3,
+			memberships: []membership{
+				{permission: "", seeded: "Member"},
+				{second: true, permission: "", seeded: "Member"},
+			},
+			// hookErr would be returned if the hook ran; it must not, so no error surfaces.
+			hookErr:      team.ErrTeamMemberNotFound,
+			expectUpdate: true,
+		},
+	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1208,16 +1375,10 @@ func TestIntegrationService_SetPermissionsForTeams_RedirectWrites(t *testing.T) 
 				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: tt.mode},
 			}
 
-			var hookCalled bool
-			service.options.OnSetUser = func(_ *db.Session, _ int64, _ accesscontrol.User, _, _ string) error {
-				hookCalled = true
+			hookedUsers := map[int64]bool{}
+			service.options.OnSetUser = func(_ *db.Session, _ int64, u accesscontrol.User, _, _ string) error {
+				hookedUsers[u.ID] = true
 				return tt.hookErr
-			}
-
-			var k8sCalls int
-			setTeamMemberships = func(_ *Service, _ context.Context, _ int64, _ string, _ []accesscontrol.SetResourcePermissionCommand) (bool, error) {
-				k8sCalls++
-				return tt.k8sRemoved, tt.k8sErr
 			}
 
 			firstUser, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "test1", OrgID: 1})
@@ -1227,18 +1388,55 @@ func TestIntegrationService_SetPermissionsForTeams_RedirectWrites(t *testing.T) 
 			createdTeam, err := teamSvc.CreateTeam(context.Background(), &team.CreateTeamCommand{Name: "test", Email: "test@test.com", OrgID: 1})
 			require.NoError(t, err)
 
-			_, err = service.SetPermissions(context.Background(), 1, strconv.FormatInt(createdTeam.ID, 10),
-				accesscontrol.SetResourcePermissionCommand{UserID: firstUser.ID, Permission: tt.permission},
-				accesscontrol.SetResourcePermissionCommand{UserID: secondUser.ID, Permission: tt.permission},
+			var (
+				members  []iamv0.TeamTeamMember
+				commands []accesscontrol.SetResourcePermissionCommand
 			)
+			for _, m := range tt.memberships {
+				usr := firstUser
+				if m.second {
+					usr = secondUser
+				}
+				commands = append(commands, accesscontrol.SetResourcePermissionCommand{UserID: usr.ID, Permission: m.permission})
+				switch m.seeded {
+				case "":
+				case "external":
+					members = append(members, iamv0.TeamTeamMember{Kind: "User", Name: usr.UID, Permission: iamv0.TeamTeamPermissionMember, External: true})
+				default:
+					members = append(members, iamv0.TeamTeamMember{Kind: "User", Name: usr.UID, Permission: iamv0.TeamTeamPermissionMember})
+				}
+			}
+
+			var updateCalls int
+			fr := &fakeResourceInterface{
+				getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+					return teamObjFor(t, createdTeam.UID, members...), nil
+				},
+				updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+					updateCalls++
+					if tt.updateErr != nil {
+						return nil, tt.updateErr
+					}
+					return obj, nil
+				},
+			}
+			service.dynamicClient = func(_ context.Context) (dynamic.Interface, error) {
+				return &fakeDynamicClient{resourceInterface: fr}, nil
+			}
+
+			_, err = service.SetPermissions(context.Background(), 1, strconv.FormatInt(createdTeam.ID, 10), commands...)
 			if tt.expectErr != nil {
 				require.ErrorIs(t, err, tt.expectErr)
 			} else {
 				require.NoError(t, err)
 			}
-			// The whole batch is reconciled in a single k8s call regardless of size.
-			assert.Equal(t, 1, k8sCalls)
-			assert.Equal(t, tt.expectHookCall, hookCalled)
+			assert.Len(t, hookedUsers, tt.expectHookCalls)
+			if tt.expectUpdate {
+				// The whole batch is reconciled in a single k8s Update regardless of size.
+				assert.Equal(t, 1, updateCalls, "the batch must be applied in a single update")
+			} else {
+				assert.Zero(t, updateCalls, "expected no k8s Update")
+			}
 		})
 	}
 }
