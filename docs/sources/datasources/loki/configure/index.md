@@ -1,8 +1,7 @@
 ---
 aliases:
-  - ../../data-sources/loki/
-  - ../../features/datasources/loki/
   - ../configure-loki-data-source/
+  - ../../data-sources/loki/configure-loki-data-source/
 description: Configure the Loki data source in Grafana
 keywords:
   - grafana
