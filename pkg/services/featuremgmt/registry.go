@@ -3000,6 +3000,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "table.paginationPageSize",
+			Description:  "Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "table.autoColumnWidths",
 			Description:  "Sizes TableNG auto-width columns to fit their content instead of distributing evenly",
 			Stage:        FeatureStageExperimental,
