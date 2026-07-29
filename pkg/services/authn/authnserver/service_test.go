@@ -2,6 +2,7 @@ package authnserver
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
@@ -26,8 +27,10 @@ type mockClient struct {
 	authResult *AuthenticationResult
 	authError  error
 
-	gotTestCtx context.Context
-	gotAuthCtx context.Context
+	gotTestCtx  context.Context
+	gotAuthCtx  context.Context
+	completions []CompletionStatus
+	onComplete  func(CompletionStatus)
 }
 
 func (m *mockClient) Name() string { return m.name }
@@ -42,16 +45,27 @@ func (m *mockClient) Authenticate(ctx context.Context, _ *authnv1.AuthenticateRe
 	return m.authResult, m.authError
 }
 
+func (m *mockClient) AuthenticationCompleted(status CompletionStatus) {
+	m.completions = append(m.completions, status)
+	if m.onComplete != nil {
+		m.onComplete(status)
+	}
+}
+
 type fakeExchanger struct {
 	token   string
 	err     error
 	calls   int
 	lastReq authnlib.TokenExchangeRequest
+	onCall  func()
 }
 
 func (f *fakeExchanger) Exchange(_ context.Context, req authnlib.TokenExchangeRequest) (*authnlib.TokenExchangeResponse, error) {
 	f.calls++
 	f.lastReq = req
+	if f.onCall != nil {
+		f.onCall()
+	}
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -80,6 +94,14 @@ func successfulResult() *AuthenticationResult {
 		},
 		Request: &grafanaauthn.Request{OrgID: 1},
 	}
+}
+
+func assertUnauthorizedBody(t *testing.T, body []byte) {
+	t.Helper()
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal(body, &payload))
+	assert.Equal(t, "Unauthorized", payload["message"])
+	assert.Contains(t, payload, "traceID")
 }
 
 func TestAuthenticateDispatch(t *testing.T) {
@@ -115,14 +137,15 @@ func TestAuthenticateDispatch(t *testing.T) {
 	t.Run("FAILED does not fall through", func(t *testing.T) {
 		exchanger := &fakeExchanger{}
 		svc := newTestService(exchanger)
-		svc.RegisterClient(&mockClient{
+		failedClient := &mockClient{
 			name:       "failed",
 			testResult: true,
 			authResult: &AuthenticationResult{
 				Code:         authnv1.AuthenticateCode_AUTHENTICATE_CODE_FAILED,
 				ResponseBody: []byte("unauthorized"),
 			},
-		})
+		}
+		svc.RegisterClient(failedClient)
 		svc.RegisterClient(&mockClient{name: "backup", testResult: true, authResult: successfulResult()})
 
 		resp, err := svc.Authenticate(context.Background(), req)
@@ -130,6 +153,7 @@ func TestAuthenticateDispatch(t *testing.T) {
 		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_FAILED, resp.Code)
 		assert.Equal(t, []byte("unauthorized"), resp.ResponseBody)
 		assert.Zero(t, exchanger.calls)
+		assert.Empty(t, failedClient.completions)
 	})
 
 	t.Run("client error propagates without fallthrough", func(t *testing.T) {
@@ -193,19 +217,38 @@ func TestSuccessfulAuthenticationRunsHooksAndExchanges(t *testing.T) {
 	req := &authnv1.AuthenticateRequest{Namespace: "stacks-1234"}
 
 	t.Run("identity exchange happens after every post-auth hook", func(t *testing.T) {
-		exchanger := &fakeExchanger{token: "obo-token"}
+		events := make([]string, 0, 4)
+		exchanger := &fakeExchanger{
+			token:  "obo-token",
+			onCall: func() { events = append(events, "exchange") },
+		}
 		svc := newTestService(exchanger)
 		result := successfulResult()
-		result.RequestHeaders = map[string]string{"X-Grafana-OAuth-Access-Token": "oauth-token"}
+		result.RequestHeaders = map[string]string{"X-Static-Header": "static"}
+		result.ResolveRequestHeaders = func(context.Context) map[string]string {
+			events = append(events, "headers")
+			assert.Equal(t, "Enriched Name", result.Identity.Name)
+			return map[string]string{"X-Grafana-OAuth-Access-Token": "oauth-token"}
+		}
 		hookCalls := 0
 		svc.RegisterPostAuthHook(func(_ context.Context, ident *grafanaauthn.Identity, authReq *grafanaauthn.Request) error {
 			hookCalls++
+			events = append(events, "hook")
 			assert.Same(t, result.Identity, ident)
 			assert.Same(t, result.Request, authReq)
 			ident.Name = "Enriched Name"
 			return nil
 		})
-		svc.RegisterClient(&mockClient{name: "session", testResult: true, authResult: result})
+		client := &mockClient{
+			name:       "session",
+			testResult: true,
+			authResult: result,
+			onComplete: func(status CompletionStatus) {
+				events = append(events, "complete")
+				assert.Equal(t, CompletionStatusOK, status)
+			},
+		}
+		svc.RegisterClient(client)
 
 		resp, err := svc.Authenticate(context.Background(), req)
 		require.NoError(t, err)
@@ -214,6 +257,9 @@ func TestSuccessfulAuthenticationRunsHooksAndExchanges(t *testing.T) {
 		assert.Equal(t, "Bearer obo-token", resp.RequestHeaders["X-Access-Token"])
 		assert.Equal(t, "Bearer obo-token", resp.RequestHeaders["Authorization"])
 		assert.Equal(t, "oauth-token", resp.RequestHeaders["X-Grafana-OAuth-Access-Token"])
+		assert.Equal(t, "static", resp.RequestHeaders["X-Static-Header"])
+		assert.Equal(t, []string{"hook", "exchange", "headers", "complete"}, events)
+		assert.Equal(t, []CompletionStatus{CompletionStatusOK}, client.completions)
 		require.NotNil(t, exchanger.lastReq.Subject)
 		assert.Empty(t, exchanger.lastReq.SubjectToken)
 		assert.Equal(t, "user:1", exchanger.lastReq.Subject.Sub)
@@ -251,12 +297,22 @@ func TestSuccessfulAuthenticationRunsHooksAndExchanges(t *testing.T) {
 		svc.RegisterPostAuthHook(func(context.Context, *grafanaauthn.Identity, *grafanaauthn.Request) error {
 			return errors.New("hook failed")
 		})
-		svc.RegisterClient(&mockClient{name: "ext_jwt", testResult: true, authResult: successfulResult()})
+		result := successfulResult()
+		headerCalls := 0
+		result.ResolveRequestHeaders = func(context.Context) map[string]string {
+			headerCalls++
+			return nil
+		}
+		client := &mockClient{name: "ext_jwt", testResult: true, authResult: result}
+		svc.RegisterClient(client)
 
 		resp, err := svc.Authenticate(context.Background(), req)
 		require.NoError(t, err)
 		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_FAILED, resp.Code)
+		assertUnauthorizedBody(t, resp.ResponseBody)
 		assert.Zero(t, exchanger.calls)
+		assert.Zero(t, headerCalls)
+		assert.Equal(t, []CompletionStatus{CompletionStatusPostAuthHookFailed}, client.completions)
 	})
 
 	t.Run("disabled identity fails closed after hooks", func(t *testing.T) {
@@ -264,21 +320,34 @@ func TestSuccessfulAuthenticationRunsHooksAndExchanges(t *testing.T) {
 		svc := newTestService(exchanger)
 		result := successfulResult()
 		result.Identity.IsDisabled = true
-		svc.RegisterClient(&mockClient{name: "session", testResult: true, authResult: result})
+		client := &mockClient{name: "session", testResult: true, authResult: result}
+		svc.RegisterClient(client)
 
 		resp, err := svc.Authenticate(context.Background(), req)
 		require.NoError(t, err)
 		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_FAILED, resp.Code)
+		assertUnauthorizedBody(t, resp.ResponseBody)
 		assert.Zero(t, exchanger.calls)
+		assert.Equal(t, []CompletionStatus{CompletionStatusIdentityDisabled}, client.completions)
 	})
 
 	t.Run("exchange failure is returned as FAILED", func(t *testing.T) {
 		svc := newTestService(&fakeExchanger{err: errors.New("exchange failed")})
-		svc.RegisterClient(&mockClient{name: "session", testResult: true, authResult: successfulResult()})
+		result := successfulResult()
+		headerCalls := 0
+		result.ResolveRequestHeaders = func(context.Context) map[string]string {
+			headerCalls++
+			return nil
+		}
+		client := &mockClient{name: "session", testResult: true, authResult: result}
+		svc.RegisterClient(client)
 
 		resp, err := svc.Authenticate(context.Background(), req)
 		require.NoError(t, err)
 		assert.Equal(t, authnv1.AuthenticateCode_AUTHENTICATE_CODE_FAILED, resp.Code)
+		assertUnauthorizedBody(t, resp.ResponseBody)
+		assert.Zero(t, headerCalls)
+		assert.Equal(t, []CompletionStatus{CompletionStatusTokenExchangeFailed}, client.completions)
 	})
 
 	t.Run("successful result requires identity and hook request", func(t *testing.T) {
@@ -288,11 +357,13 @@ func TestSuccessfulAuthenticationRunsHooksAndExchanges(t *testing.T) {
 		} {
 			t.Run(name, func(t *testing.T) {
 				svc := newTestService(&fakeExchanger{})
-				svc.RegisterClient(&mockClient{name: "broken", testResult: true, authResult: result})
+				client := &mockClient{name: "broken", testResult: true, authResult: result}
+				svc.RegisterClient(client)
 
 				resp, err := svc.Authenticate(context.Background(), req)
 				require.ErrorIs(t, err, errExpectedAuthenticationResult)
 				assert.Nil(t, resp)
+				assert.Equal(t, []CompletionStatus{CompletionStatusInternalError}, client.completions)
 			})
 		}
 	})

@@ -2,8 +2,10 @@ package authnserver
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"slices"
 	"strings"
 
@@ -24,6 +26,18 @@ var (
 	errExpectedAuthenticationResult = errors.New("expected authentication result")
 )
 
+// CompletionStatus describes the terminal outer-loop processing result for an
+// authenticator that returned OK.
+type CompletionStatus int
+
+const (
+	CompletionStatusOK CompletionStatus = iota
+	CompletionStatusPostAuthHookFailed
+	CompletionStatusIdentityDisabled
+	CompletionStatusTokenExchangeFailed
+	CompletionStatusInternalError
+)
+
 // AuthenticationResult is the common result returned by every MT auth client.
 // The service turns successful results into the wire-level AuthenticateResponse
 // after running post-auth hooks and exchanging the authenticated identity.
@@ -40,7 +54,13 @@ type AuthenticationResult struct {
 	// RequestHeaders contains client-specific headers that are added alongside
 	// the access-token headers produced by the outer exchange.
 	RequestHeaders map[string]string
-	ResponseBody   []byte
+
+	// ResolveRequestHeaders defers work that can mutate authentication state,
+	// such as refreshing an OAuth token, until all hooks and token exchange have
+	// succeeded.
+	ResolveRequestHeaders func(context.Context) map[string]string
+
+	ResponseBody []byte
 }
 
 // Client is the interface that MT auth clients implement.
@@ -56,6 +76,13 @@ type Client interface {
 	// May return NOT_HANDLED to signal "not my credentials,
 	// try the next client."
 	Authenticate(ctx context.Context, req *authnv1.AuthenticateRequest) (*AuthenticationResult, error)
+}
+
+// CompletionObserver can be implemented by a client that needs to record the
+// terminal status of common outer-loop processing. The service determines the
+// status; the client only observes it.
+type CompletionObserver interface {
+	AuthenticationCompleted(CompletionStatus)
 }
 
 // Service implements authnv1.AuthnServiceServer by dispatching to
@@ -125,7 +152,12 @@ func (s *Service) Authenticate(ctx context.Context, req *authnv1.AuthenticateReq
 		}
 
 		if result.Code != authnv1.AuthenticateCode_AUTHENTICATE_CODE_NOT_HANDLED {
-			resp, err := s.response(ctx, req, c, result)
+			resp, completionStatus, err := s.response(ctx, req, c, result)
+			if result.Code == authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK {
+				if observer, ok := c.(CompletionObserver); ok {
+					observer.AuthenticationCompleted(completionStatus)
+				}
+			}
 			if err != nil {
 				s.log.Error("Client authentication result error", "client", c.Name(), "error", err)
 				grpclog.AddFields(ctx, grpclog.Fields{"authn.client", c.Name(), "authn.namespace", req.GetNamespace()})
@@ -142,30 +174,31 @@ func (s *Service) Authenticate(ctx context.Context, req *authnv1.AuthenticateReq
 	}, nil
 }
 
-func (s *Service) response(ctx context.Context, req *authnv1.AuthenticateRequest, client Client, result *AuthenticationResult) (*authnv1.AuthenticateResponse, error) {
+func (s *Service) response(ctx context.Context, req *authnv1.AuthenticateRequest, client Client, result *AuthenticationResult) (*authnv1.AuthenticateResponse, CompletionStatus, error) {
 	if result.Code != authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK {
 		return &authnv1.AuthenticateResponse{
 			Code:           result.Code,
 			RequestHeaders: result.RequestHeaders,
 			ResponseBody:   result.ResponseBody,
-		}, nil
+		}, CompletionStatusInternalError, nil
 	}
+
 	if result.Identity == nil || result.Request == nil {
-		return nil, fmt.Errorf("%w from client %q: successful result requires identity and request", errExpectedAuthenticationResult, client.Name())
+		return nil, CompletionStatusInternalError, fmt.Errorf("%w from client %q: successful result requires identity and request", errExpectedAuthenticationResult, client.Name())
 	}
 
 	for _, hook := range s.postAuthHooks {
 		if err := hook(ctx, result.Identity, result.Request); err != nil {
 			s.log.Info("Post-auth hook failed", "client", client.Name(), "error", err)
-			return failedResponse(), nil
+			return failedResponse(ctx), CompletionStatusPostAuthHookFailed, nil
 		}
 	}
 	if result.Identity.IsDisabled {
 		s.log.Info("Authenticated identity is disabled", "client", client.Name(), "identity", result.Identity.GetSubject())
-		return failedResponse(), nil
+		return failedResponse(ctx), CompletionStatusIdentityDisabled, nil
 	}
 	if s.exchanger == nil {
-		return nil, fmt.Errorf("%w from client %q: token exchanger is not configured", errExpectedAuthenticationResult, client.Name())
+		return nil, CompletionStatusInternalError, fmt.Errorf("%w from client %q: token exchanger is not configured", errExpectedAuthenticationResult, client.Name())
 	}
 
 	exchangeReq := authnlib.TokenExchangeRequest{
@@ -181,12 +214,17 @@ func (s *Service) response(ctx context.Context, req *authnv1.AuthenticateRequest
 	exchanged, err := s.exchanger.Exchange(ctx, exchangeReq)
 	if err != nil {
 		s.log.Error("OBO token exchange failed", "client", client.Name(), "error", err)
-		return failedResponse(), nil
+		return failedResponse(ctx), CompletionStatusTokenExchangeFailed, nil
 	}
 
 	headers := make(map[string]string, len(result.RequestHeaders)+2)
 	for name, value := range result.RequestHeaders {
 		headers[name] = value
+	}
+	if result.ResolveRequestHeaders != nil {
+		for name, value := range result.ResolveRequestHeaders(ctx) {
+			headers[name] = value
+		}
 	}
 	bearer := "Bearer " + exchanged.Token
 	headers["X-Access-Token"] = bearer
@@ -195,7 +233,7 @@ func (s *Service) response(ctx context.Context, req *authnv1.AuthenticateRequest
 	return &authnv1.AuthenticateResponse{
 		Code:           authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
 		RequestHeaders: headers,
-	}, nil
+	}, CompletionStatusOK, nil
 }
 
 func identityToSubject(ident *grafanaauthn.Identity, namespace string) *authnlib.TokenExchangeSubject {
@@ -214,9 +252,14 @@ func identityToSubject(ident *grafanaauthn.Identity, namespace string) *authnlib
 	}
 }
 
-func failedResponse() *authnv1.AuthenticateResponse {
+func failedResponse(ctx context.Context) *authnv1.AuthenticateResponse {
+	body, _ := json.Marshal(map[string]any{
+		"traceID": tracing.TraceIDFromContext(ctx, false),
+		"message": http.StatusText(http.StatusUnauthorized),
+	})
 	return &authnv1.AuthenticateResponse{
-		Code: authnv1.AuthenticateCode_AUTHENTICATE_CODE_FAILED,
+		Code:         authnv1.AuthenticateCode_AUTHENTICATE_CODE_FAILED,
+		ResponseBody: body,
 	}
 }
 
