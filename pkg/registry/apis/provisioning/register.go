@@ -1151,7 +1151,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// jobs and is the driver's only recovery path. The handler must be
 			// registered before the informer runs: the NATS-backed source has no
 			// cache to replay for late handlers.
-			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, jobPollInterval)
+			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, jobPollInterval, b.registry)
 			if _, err := jobSource.AddEventHandler(driver.EventHandler()); err != nil {
 				return fmt.Errorf("add job event handler: %w", err)
 			}

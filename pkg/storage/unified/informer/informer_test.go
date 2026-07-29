@@ -263,6 +263,27 @@ func TestInformer_LiveDeleteEvictsFromStore(t *testing.T) {
 	})
 }
 
+// A live ADD writes through to the snapshot — the counterpart to the live DELETE
+// eviction above — so the object is present before the next re-list can diff it.
+func TestInformer_LiveAddWritesToStore(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		handler := &recordingHandler{}
+		n, stop := start(t, sub, nil, newObjectFunc, handler)
+		defer stop()
+
+		sub.publish(t, subject(), event(resourcepb.WatchNotification_ADDED, "fresh"))
+		synctest.Wait()
+
+		snapshot := n.store.List(context.Background())
+		got := make([]string, 0, len(snapshot))
+		for _, o := range snapshot {
+			got = append(got, o.(*metav1.PartialObjectMetadata).Name)
+		}
+		assert.Equal(t, []string{"fresh"}, got)
+	})
+}
+
 // Malformed envelopes and unknown verbs are skipped; a valid notification after
 // them still arrives.
 func TestInformer_SkipsMalformedAndUnknown(t *testing.T) {
@@ -570,4 +591,271 @@ func TestInformer_SignalReconnectDoesNotBlock(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		n.signalReconnect()
 	}
+}
+
+// recordingMetrics captures every Metrics observation the informer makes.
+type recordingMetrics struct {
+	mu           sync.Mutex
+	liveEvents   []observedEvent
+	relistEvents []observedEvent
+	reconnects   int
+	liveSub      []bool
+}
+
+type observedEvent struct {
+	verb string
+	rv   int64
+}
+
+func (m *recordingMetrics) ObserveLiveEvent(verb string, rv int64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.liveEvents = append(m.liveEvents, observedEvent{verb: verb, rv: rv})
+}
+
+func (m *recordingMetrics) ObserveRelistEvent(verb string, rv int64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.relistEvents = append(m.relistEvents, observedEvent{verb: verb, rv: rv})
+}
+
+func (m *recordingMetrics) ObserveReconnect() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.reconnects++
+}
+
+func (m *recordingMetrics) ObserveLiveSubscription(open bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.liveSub = append(m.liveSub, open)
+}
+
+func (m *recordingMetrics) observedLiveEvents() []observedEvent {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]observedEvent(nil), m.liveEvents...)
+}
+
+func (m *recordingMetrics) observedRelistEvents() []observedEvent {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]observedEvent(nil), m.relistEvents...)
+}
+
+func (m *recordingMetrics) liveSubHistory() []bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]bool(nil), m.liveSub...)
+}
+
+func (m *recordingMetrics) reconnectCount() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.reconnects
+}
+
+var _ Metrics = (*recordingMetrics)(nil)
+
+// Live notifications are observed once per event (not per handler) as live
+// events carrying the notification's RV, which dates the change for latency.
+func TestInformer_MetricsObserveLiveEvents(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		m := &recordingMetrics{}
+		list := func(context.Context) ([]runtime.Object, error) { return nil, nil }
+		n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
+		n.SetMetrics(m)
+		// Two handlers: the observation count must stay one per event.
+		_, err := n.AddEventHandler(&recordingHandler{})
+		require.NoError(t, err)
+		_, err = n.AddEventHandler(&recordingHandler{})
+		require.NoError(t, err)
+
+		stopCh := make(chan struct{})
+		defer func() { close(stopCh); synctest.Wait() }()
+		go n.Run(stopCh)
+		synctest.Wait()
+		require.True(t, n.HasSynced())
+
+		for i, typ := range []resourcepb.WatchNotification_Type{
+			resourcepb.WatchNotification_ADDED,
+			resourcepb.WatchNotification_MODIFIED,
+			resourcepb.WatchNotification_DELETED,
+		} {
+			evt := event(typ, "x")
+			evt.ResourceVersion = int64(101 + i)
+			sub.publish(t, subject(), evt)
+		}
+		// Malformed payloads are dropped before dispatch, so nothing is observed.
+		sub.deliver(t, subject(), []byte("not proto"))
+		synctest.Wait()
+
+		assert.Equal(t, []observedEvent{
+			{verb: VerbAdd, rv: 101},
+			{verb: VerbUpdate, rv: 102},
+			{verb: VerbDelete, rv: 103},
+		}, m.observedLiveEvents())
+		assert.Empty(t, m.observedRelistEvents(), "live notifications must not count as relist events")
+	})
+}
+
+// Re-list observations mirror what is dispatched: the reconciled diff (adds with
+// the object's RV to date the recovery, deletes) plus the re-deliveries of
+// retained objects. Only a non-initial add carries an RV — the initial list is
+// not a recovery, and a vanished object's last-known RV predates its delete.
+func TestInformer_MetricsObserveRelist(t *testing.T) {
+	sub := newFakeSubscriber()
+	m := &recordingMetrics{}
+
+	withRV := func(name, rv string) *metav1.PartialObjectMetadata {
+		o := obj(name)
+		o.ResourceVersion = rv
+		return o
+	}
+
+	// list returns [a], then [a, b], then [a] again: b appears on the second
+	// re-list and vanishes on the third.
+	var calls int
+	list := func(context.Context) ([]runtime.Object, error) {
+		calls++
+		switch calls {
+		case 1:
+			return []runtime.Object{withRV("a", "11")}, nil
+		case 2:
+			return []runtime.Object{withRV("a", "11"), withRV("b", "22")}, nil
+		default:
+			return []runtime.Object{withRV("a", "11")}, nil
+		}
+	}
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
+	n.SetMetrics(m)
+	_, err := n.AddEventHandler(&recordingHandler{})
+	require.NoError(t, err)
+
+	require.NoError(t, n.relist(context.Background(), true))
+	require.NoError(t, n.relist(context.Background(), false))
+	require.NoError(t, n.relist(context.Background(), false))
+
+	assert.Equal(t, []observedEvent{
+		{verb: VerbAdd, rv: 0},    // initial: a, no RV
+		{verb: VerbUpdate, rv: 0}, // resync: a retained
+		{verb: VerbAdd, rv: 22},   // resync: b recovered, RV dates it
+		{verb: VerbUpdate, rv: 0}, // resync: a retained
+		{verb: VerbDelete, rv: 0}, // resync: b vanished
+	}, m.observedRelistEvents())
+	assert.Empty(t, m.observedLiveEvents(), "re-list deliveries must not count as live events")
+}
+
+// A live ADD is written to the snapshot, so the next re-list re-delivers the
+// object as a retained update rather than re-reporting a delivered add as a
+// recovery — which would double-count it on relist_events and inflate the
+// recovery latency. Regression test for the live-add miscount.
+func TestInformer_LiveAddNotReCountedAsRelistRecovery(t *testing.T) {
+	sub := newFakeSubscriber()
+	m := &recordingMetrics{}
+	handler := &recordingHandler{}
+
+	// The initial list is empty; "x" first arrives via a live ADD and is then
+	// present on the resync list.
+	var calls int
+	list := func(context.Context) ([]runtime.Object, error) {
+		calls++
+		if calls == 1 {
+			return nil, nil
+		}
+		return []runtime.Object{obj("x")}, nil
+	}
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
+	n.SetMetrics(m)
+	_, err := n.AddEventHandler(handler)
+	require.NoError(t, err)
+
+	require.NoError(t, n.relist(context.Background(), true)) // initial list: empty
+
+	// Deliver a live ADD for "x" straight through the notification handler.
+	evt := event(resourcepb.WatchNotification_ADDED, "x")
+	evt.ResourceVersion = 55
+	data, err := proto.Marshal(evt)
+	require.NoError(t, err)
+	n.onNotification()(subject(), data)
+
+	require.NoError(t, n.relist(context.Background(), false)) // resync: x retained -> update
+
+	assert.Equal(t, []observedEvent{{verb: VerbAdd, rv: 55}}, m.observedLiveEvents())
+	assert.Equal(t, []observedEvent{{verb: VerbUpdate, rv: 0}}, m.observedRelistEvents(),
+		"the live-added object must be a retained update on re-list, not a recovery add")
+	assert.Equal(t, []string{"x"}, handler.addedNames(), "the live ADD is the only add")
+	assert.Equal(t, []string{"x"}, handler.updatedNames(), "the re-list re-delivers it as an update")
+	assert.Empty(t, handler.deletedNames())
+}
+
+// Every reconnect of the live subscription is observed — each one is a window
+// in which published events were lost to this replica.
+func TestInformer_MetricsObserveReconnect(t *testing.T) {
+	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, nil)
+	m := &recordingMetrics{}
+	n.SetMetrics(m)
+
+	n.signalReconnect()
+	n.signalReconnect()
+
+	assert.Equal(t, 2, m.reconnectCount())
+}
+
+// The live-subscription gauge tracks what the informer can see: false until the
+// subscription opens, true once it does — including a degraded start, where the
+// informer lists and serves re-lists while the background retry keeps trying.
+func TestInformer_MetricsObserveLiveSubscription(t *testing.T) {
+	t.Run("normal start flips to open once subscribed", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			sub := newFakeSubscriber()
+			m := &recordingMetrics{}
+			list := func(context.Context) ([]runtime.Object, error) { return nil, nil }
+			n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
+			n.SetMetrics(m)
+			_, err := n.AddEventHandler(&recordingHandler{})
+			require.NoError(t, err)
+
+			stopCh := make(chan struct{})
+			go n.Run(stopCh)
+			synctest.Wait()
+			require.True(t, n.HasSynced())
+			assert.Equal(t, []bool{false, true}, m.liveSubHistory())
+
+			// Stopping the informer closes the subscription for good.
+			close(stopCh)
+			synctest.Wait()
+			assert.Equal(t, []bool{false, true, false}, m.liveSubHistory())
+		})
+	})
+
+	t.Run("degraded start stays closed until the retry succeeds", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			sub := newFakeSubscriber()
+			sub.failSubscribes(1)
+			m := &recordingMetrics{}
+			list := func(context.Context) ([]runtime.Object, error) { return nil, nil }
+			n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+			n.AllowDegradedStart()
+			n.SetMetrics(m)
+			_, err := n.AddEventHandler(&recordingHandler{})
+			require.NoError(t, err)
+
+			stopCh := make(chan struct{})
+			defer func() { close(stopCh); synctest.Wait() }()
+			go n.Run(stopCh)
+
+			// Degraded: synced from the list alone, no subscription open yet.
+			synctest.Wait()
+			require.True(t, n.HasSynced())
+			assert.Equal(t, []bool{false}, m.liveSubHistory())
+
+			// The background retry opens the subscription on its next attempt.
+			time.Sleep(defaultSubscribeRetry)
+			synctest.Wait()
+			require.True(t, sub.subscribed(subject()))
+			assert.Equal(t, []bool{false, true}, m.liveSubHistory())
+		})
+	})
 }
