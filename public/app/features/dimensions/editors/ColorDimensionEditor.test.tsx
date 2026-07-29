@@ -4,25 +4,18 @@ import { FieldType, toDataFrame } from '@grafana/data';
 import { type ColorDimensionConfig } from '@grafana/schema';
 import { mockComboboxRect } from '@grafana/test-utils';
 
+import { type ColorDimensionOptions } from '../types';
+
 import { ColorDimensionEditor } from './ColorDimensionEditor';
+import { makePropsFactory } from './test-utils';
 
-const context = {
-  data: [toDataFrame({ fields: [{ name: 'temp', type: FieldType.number, values: [1, 2, 3] }] })],
-};
-
-function makeProps(value: ColorDimensionConfig, onChange = jest.fn()) {
-  return {
-    props: {
-      value,
-      onChange,
-      context,
-      item: { settings: {} },
-      id: 'color',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any,
-    onChange,
-  };
-}
+const makeProps = makePropsFactory<ColorDimensionConfig, ColorDimensionOptions>(
+  'color',
+  {},
+  {
+    data: [toDataFrame({ fields: [{ name: 'temp', type: FieldType.number, values: [1, 2, 3] }] })],
+  }
+);
 
 beforeEach(() => mockComboboxRect());
 

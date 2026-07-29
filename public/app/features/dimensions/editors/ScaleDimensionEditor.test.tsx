@@ -4,25 +4,18 @@ import { FieldType, toDataFrame } from '@grafana/data';
 import { type ScaleDimensionConfig } from '@grafana/schema';
 import { mockComboboxRect } from '@grafana/test-utils';
 
+import { type ScaleDimensionOptions } from '../types';
+
 import { ScaleDimensionEditor } from './ScaleDimensionEditor';
+import { makePropsFactory } from './test-utils';
 
-const context = {
-  data: [toDataFrame({ fields: [{ name: 'temp', type: FieldType.number, values: [1, 2, 3] }] })],
-};
-
-function makeProps(value: ScaleDimensionConfig, onChange = jest.fn()) {
-  return {
-    props: {
-      value,
-      onChange,
-      context,
-      item: { settings: { min: 0, max: 100 } },
-      id: 'scale',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any,
-    onChange,
-  };
-}
+const makeProps = makePropsFactory<ScaleDimensionConfig, ScaleDimensionOptions>(
+  'scale',
+  { min: 0, max: 100 },
+  {
+    data: [toDataFrame({ fields: [{ name: 'temp', type: FieldType.number, values: [1, 2, 3] }] })],
+  }
+);
 
 beforeEach(() => mockComboboxRect());
 

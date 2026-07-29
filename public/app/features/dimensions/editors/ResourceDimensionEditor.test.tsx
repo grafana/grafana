@@ -2,23 +2,15 @@ import { render, screen } from 'test/test-utils';
 
 import { type ResourceDimensionConfig, ResourceDimensionMode } from '@grafana/schema';
 
-import { MediaType, ResourceFolderName } from '../types';
+import { MediaType, ResourceFolderName, type ResourceDimensionOptions } from '../types';
 
 import { ResourceDimensionEditor } from './ResourceDimensionEditor';
+import { makePropsFactory } from './test-utils';
 
-function makeProps(value: ResourceDimensionConfig, onChange = jest.fn()) {
-  return {
-    props: {
-      value,
-      onChange,
-      context: { data: [] },
-      item: { settings: { resourceType: MediaType.Icon, folderName: ResourceFolderName.Icon } },
-      id: 'resource',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any,
-    onChange,
-  };
-}
+const makeProps = makePropsFactory<ResourceDimensionConfig, ResourceDimensionOptions>('resource', {
+  resourceType: MediaType.Icon,
+  folderName: ResourceFolderName.Icon,
+});
 
 describe('ResourceDimensionEditor', () => {
   it('shows the resource picker in Fixed mode', () => {

@@ -3,21 +3,12 @@ import { render, screen } from 'test/test-utils';
 
 import { ConnectionDirection, type DirectionDimensionConfig, DirectionDimensionMode } from '@grafana/schema';
 
-import { DirectionDimensionEditor } from './DirectionDimensionEditor';
+import { type DirectionDimensionOptions } from '../types';
 
-function makeProps(value: DirectionDimensionConfig, onChange = jest.fn()) {
-  return {
-    props: {
-      value,
-      onChange,
-      context: { data: [] },
-      item: { settings: {} },
-      id: 'direction',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any,
-    onChange,
-  };
-}
+import { DirectionDimensionEditor } from './DirectionDimensionEditor';
+import { makePropsFactory } from './test-utils';
+
+const makeProps = makePropsFactory<DirectionDimensionConfig, DirectionDimensionOptions>('direction', {});
 
 describe('DirectionDimensionEditor', () => {
   it('shows the fixed direction selector in Fixed mode', () => {
