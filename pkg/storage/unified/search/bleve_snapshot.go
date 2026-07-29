@@ -416,7 +416,13 @@ func snapshotTier(v, minVersion, running *semver.Version) int {
 }
 
 // validateDownloadedIndex reads the internal RV + buildInfo from the opened
-// index to confirm the snapshot is well-formed. Returns the RV on success.
+// index to confirm the snapshot is well-formed and safe to serve. Returns the RV
+// on success.
+//
+// Snapshot selection accepts an older Grafana version (see snapshotTier), so
+// this is where a snapshot that would answer incorrectly gets rejected. That
+// costs a download first; recording index features in the snapshot metadata
+// would let selection skip such a snapshot instead. Follow-up.
 func (b *bleveBackend) validateDownloadedIndex(idx bleve.Index) (int64, error) {
 	rv, err := getRV(idx)
 	if err != nil {
@@ -425,8 +431,12 @@ func (b *bleveBackend) validateDownloadedIndex(idx bleve.Index) (int64, error) {
 	if rv <= 0 {
 		return 0, fmt.Errorf("snapshot has non-positive rv: %d", rv)
 	}
-	if _, err := getBuildInfo(idx); err != nil {
+	bi, err := getBuildInfo(idx)
+	if err != nil {
 		return 0, fmt.Errorf("reading build info: %w", err)
+	}
+	if missing := resource.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
+		return 0, fmt.Errorf("snapshot is missing required index features %v", missing)
 	}
 	return rv, nil
 }

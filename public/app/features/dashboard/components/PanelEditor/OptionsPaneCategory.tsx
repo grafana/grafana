@@ -59,13 +59,20 @@ export const OptionsPaneCategory = React.memo(
 
     // Handle opening by forceOpen param or from URL
     useEffect(() => {
-      if ((forceOpen || isOpenFromUrl) && !isExpanded) {
+      if ((forceOpen || isOpenFromUrl) && !isExpanded && !disabledText) {
         setIsExpanded(true);
         setTimeout(() => {
           ref.current?.scrollIntoView();
         }, 200);
       }
-    }, [isExpanded, isOpenFromUrl, forceOpen]);
+    }, [isExpanded, isOpenFromUrl, forceOpen, disabledText]);
+
+    // Close the category when it becomes disabled
+    useEffect(() => {
+      if (disabledText && isExpanded) {
+        setIsExpanded(false);
+      }
+    }, [disabledText, isExpanded]);
 
     // remove effect when feature flag grafana.dashboardSettingsRedesign is removed
     useEffect(() => {
@@ -148,14 +155,14 @@ export const OptionsPaneCategory = React.memo(
           data-testid={selectors.components.OptionsGroup.group(id)}
           ref={ref}
         >
-          <Tooltip interactive={!(typeof disabledText === 'string')} content={disabledText}>
-            <div className={headerStyles}>
-              <h3 id={`button-${id}`} className={cx(styles.title, styles.titleDisabled)}>
-                {renderTitle(isExpanded)}
-              </h3>
+          <div className={headerStyles}>
+            <h3 id={`button-${id}`} className={cx(styles.title, styles.titleDisabled)}>
+              {renderTitle(isExpanded)}
+            </h3>
+            <Tooltip interactive={!(typeof disabledText === 'string')} content={disabledText}>
               <Icon size="sm" name="ban" className={styles.disabledIcon} />
-            </div>
-          </Tooltip>
+            </Tooltip>
+          </div>
         </div>
       );
     }

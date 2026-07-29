@@ -28,8 +28,11 @@ import (
 )
 
 type driverConfig struct {
-	concurrentDrivers    int
-	maxJobTimeout        time.Duration
+	concurrentDrivers int
+	maxJobTimeout     time.Duration
+	// jobInterval is the jobs informer's resync cadence; the driver uses it as
+	// the post-claim cooldown so failed-run recovery tracks the configured
+	// pickup interval.
 	jobInterval          time.Duration
 	leaseRenewalInterval time.Duration
 	maxSyncWorkers       int
@@ -45,7 +48,6 @@ func buildDriver(
 	dc driverConfig,
 	jobStore jobs.Store,
 	jobHistoryWriter jobs.HistoryWriter,
-	notifications chan struct{},
 ) (*jobs.ConcurrentJobDriver, error) {
 	workers, metrics, err := buildWorkers(cfg, controllerCfg, registry, tracer, dc.maxSyncWorkers)
 	if err != nil {
@@ -75,7 +77,6 @@ func buildDriver(
 		jobStore,
 		repoGetter,
 		jobHistoryWriter,
-		notifications,
 		registry,
 		metrics,
 		workers...,

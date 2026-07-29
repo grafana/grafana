@@ -69,9 +69,6 @@ func newStaticContactPointValidator(am *v1.AMConfigV1) staticContactPointValidat
 	}
 
 	availableTimeIntervals := make(map[string]struct{})
-	for _, interval := range am.AlertmanagerConfig.MuteTimeIntervals {
-		availableTimeIntervals[interval.Name] = struct{}{}
-	}
 	for _, interval := range am.AlertmanagerConfig.TimeIntervals {
 		availableTimeIntervals[interval.Name] = struct{}{}
 	}
