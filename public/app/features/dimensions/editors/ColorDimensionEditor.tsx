@@ -1,12 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 
-import {
-  type GrafanaTheme2,
-  type SelectableValue,
-  type StandardEditorProps,
-  type FieldNamePickerBaseNameMode,
-} from '@grafana/data';
+import { type GrafanaTheme2, type SelectableValue, type StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type ColorDimensionConfig } from '@grafana/schema';
 import { Combobox, ColorPicker, useStyles2 } from '@grafana/ui';
