@@ -462,6 +462,8 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 		addCapabilityFieldMappings(mapper, def)
 	}
 
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_IS_DELETED, isDeletedField())
+
 	mapper.AddSubDocumentMapping("manager", managerSubDocumentMapping())
 	mapper.AddSubDocumentMapping("source", sourceSubDocumentMapping())
 
@@ -507,6 +509,24 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 	mapper.AddSubDocumentMapping(strings.TrimSuffix(resource.SEARCH_SELECTABLE_FIELDS_PREFIX, "."), selectableFieldsMapper)
 
 	return mapper
+}
+
+// isDeletedField maps the marker separating deleted documents from live ones.
+// Mapped here rather than declared as a SearchFieldDefinition because the
+// standard definitions feed IndexAffectingHash, and are also what callers may
+// filter and retrieve.
+//
+// Live documents carry no value for it at all: bleve skips the nil pointer, so
+// they are indexed exactly as they were before this field existed.
+func isDeletedField() *mapping.FieldMapping {
+	m := bleve.NewBooleanFieldMapping()
+	m.Store = false
+	m.Index = true
+	m.DocValues = false
+	m.IncludeInAll = false
+	m.IncludeTermVectors = false
+	m.SkipFreqNorm = true
+	return m
 }
 
 // keywordSubField returns a keyword (exact-match) field mapping for use inside

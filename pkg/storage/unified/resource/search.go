@@ -105,8 +105,16 @@ type IndexBuildInfo struct {
 // IndexFeature names a mapping change an older index cannot satisfy.
 type IndexFeature string
 
+// IndexFeatureDeletedMarker means the index maps SEARCH_FIELD_IS_DELETED. An
+// index without it drops the marker, so a deleted document indexed there would
+// look live. Recorded but not required: rather than reindex every existing index
+// to add the mapping, writers check for this feature before marking a document.
+const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
+
 // currentIndexFeatures is recorded in every index this binary builds.
-var currentIndexFeatures = []IndexFeature{}
+var currentIndexFeatures = []IndexFeature{
+	IndexFeatureDeletedMarker,
+}
 
 // requiredIndexFeatures is the subset an index must already have to be used. An
 // index without one of these features is rebuilt before it serves anything, even

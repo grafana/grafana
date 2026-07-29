@@ -11,8 +11,10 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	apischema "k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -2004,4 +2006,180 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		got := pageAllFederated(t, dash, folder, ac, 5)
 		require.Equal(t, want, got, "duplicate titles must page deterministically by _id across the alias")
 	})
+}
+
+// Deleted documents share an index with live ones, so every read path has to pick
+// a side. These cover each path that builds its own query, plus the document with
+// no marker at all, which must stay live without a reindex.
+func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	const folder = "folder-1"
+	manager := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo-x"}
+
+	doc := func(name, title string, deleted *bool) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+					Name:      name,
+				},
+				Title:     title,
+				Folder:    folder,
+				Tags:      []string{"tag-a"},
+				Manager:   &manager,
+				IsDeleted: deleted,
+			},
+		}
+	}
+
+	index := newTestDashboardsIndex(t, threshold, 3, func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			// What every document written before the marker looks like.
+			doc("no-marker", "Alpha one", nil),
+			doc("live", "Alpha two", new(false)),
+			doc("trashed", "Alpha three", new(true)),
+		}})
+	})
+
+	liveNames := []string{"no-marker", "live"}
+
+	t.Run("search leaves deleted documents out", func(t *testing.T) {
+		q := newTestQuery("Alpha")
+		checkSearchQueryUnordered(t, index, q, liveNames)
+	})
+
+	t.Run("search with IsDeleted returns only deleted documents", func(t *testing.T) {
+		q := newTestQuery("Alpha")
+		q.IsDeleted = true
+		checkSearchQueryUnordered(t, index, q, []string{"trashed"})
+	})
+
+	// A query with filters and no text takes the other branch of
+	// combineFilterAndTextQueries, where filters drive iteration.
+	t.Run("filter-only search leaves deleted documents out", func(t *testing.T) {
+		q := newTestQuery("")
+		q.Options.Fields = []*resourcepb.Requirement{{
+			Key:      resource.SEARCH_FIELD_TAGS,
+			Operator: string(selection.In),
+			Values:   []string{"tag-a"},
+		}}
+		checkSearchQueryUnordered(t, index, q, liveNames)
+
+		q.IsDeleted = true
+		checkSearchQueryUnordered(t, index, q, []string{"trashed"})
+	})
+
+	t.Run("facets and total hits ignore deleted documents", func(t *testing.T) {
+		q := newTestQuery("")
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: resource.SEARCH_FIELD_TAGS, Limit: 100},
+		}
+
+		res, err := index.Search(context.Background(), nil, q, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Equal(t, int64(len(liveNames)), res.TotalHits)
+
+		facet, ok := res.Facet["tags"]
+		require.True(t, ok)
+		require.Equal(t, int64(len(liveNames)), facet.Total)
+		require.Len(t, facet.Terms, 1)
+		require.Equal(t, "tag-a", facet.Terms[0].Term)
+		require.Equal(t, int64(len(liveNames)), facet.Terms[0].Count)
+	})
+
+	t.Run("doc counts ignore deleted documents", func(t *testing.T) {
+		all, err := index.DocCount(context.Background(), "", nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(len(liveNames)), all)
+
+		inFolder, err := index.DocCount(context.Background(), folder, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(len(liveNames)), inFolder)
+	})
+
+	// A deleted object provisioning can still see looks like one to keep managing.
+	t.Run("managed object listing and counts ignore deleted documents", func(t *testing.T) {
+		listed, err := index.ListManagedObjects(context.Background(), &resourcepb.ListManagedObjectsRequest{
+			Namespace: key.Namespace,
+			Kind:      string(manager.Kind),
+			Id:        manager.Identity,
+		}, &resource.SearchStats{})
+		require.NoError(t, err)
+		require.Nil(t, listed.Error)
+
+		names := make([]string, 0, len(listed.Items))
+		for _, item := range listed.Items {
+			names = append(names, item.Object.Name)
+		}
+		require.ElementsMatch(t, liveNames, names)
+
+		counts, err := index.CountManagedObjects(context.Background(), &resource.SearchStats{})
+		require.NoError(t, err)
+		require.Len(t, counts, 1)
+		require.Equal(t, int64(len(liveNames)), counts[0].Count)
+	})
+}
+
+// The post-ranking authorization path runs its own search loop, so a leak there
+// would only show up where that path is enabled.
+func TestSearchPostRankAuthzSeparatesDeletedFromLiveDocuments(t *testing.T) {
+	index := newTestDashboardsIndexPostRank(t, 3)
+
+	doc := func(name string, deleted *bool) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: postRankKey.Namespace,
+					Group:     postRankKey.Group,
+					Resource:  postRankKey.Resource,
+					Name:      name,
+				},
+				Title:     name,
+				Folder:    "folder-a",
+				IsDeleted: deleted,
+			},
+		}
+	}
+	indexDocs(t, index, []*resource.BulkIndexItem{
+		doc("no-marker", nil),
+		doc("live", new(false)),
+		doc("trashed", new(true)),
+	})
+
+	ac := &countingAccessClient{allowAll: true}
+
+	names, res := searchNames(t, index, ac, listQuery(100))
+	require.ElementsMatch(t, []string{"no-marker", "live"}, names)
+	require.Equal(t, int64(2), res.TotalHits)
+
+	q := listQuery(100)
+	q.IsDeleted = true
+	names, res = searchNames(t, index, ac, q)
+	require.Equal(t, []string{"trashed"}, names)
+	require.Equal(t, int64(1), res.TotalHits)
+}
+
+// checkSearchQueryUnordered asserts on the set of names, where order is not under
+// test.
+func checkSearchQueryUnordered(t *testing.T, index resource.ResourceIndex, query *resourcepb.ResourceSearchRequest, expectedNames []string) {
+	t.Helper()
+	res, err := index.Search(context.Background(), nil, query, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, res.Error)
+	require.Equal(t, int64(len(expectedNames)), res.TotalHits)
+
+	names := make([]string, 0, len(res.Results.Rows))
+	for _, row := range res.Results.Rows {
+		names = append(names, row.Key.Name)
+	}
+	require.ElementsMatch(t, expectedNames, names)
 }

@@ -9,6 +9,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	blevesearch "github.com/blevesearch/bleve/v2/search"
+	"github.com/blevesearch/bleve/v2/search/query"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -2546,4 +2548,115 @@ func TestBleveTextFieldFilterAndSort(t *testing.T) {
 		})
 		assert.Equal(t, []string{"one"}, got)
 	})
+}
+
+// TestIsDeletedMarkerIndexing pins how the marker reaches the index. A document
+// that does not carry it must leave no trace under that field, which is what
+// lets documents written before the marker existed count as live.
+func TestIsDeletedMarkerIndexing(t *testing.T) {
+	const group, kindResource = "example.test", "widgets"
+	key := resource.NamespacedResource{Namespace: "default", Group: group, Resource: kindResource}
+
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          t.TempDir(),
+		FileThreshold: 5, // stay in memory
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	doc := func(name string, deleted *bool) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key:       &resourcepb.ResourceKey{Namespace: key.Namespace, Group: group, Resource: kindResource, Name: name},
+				Title:     name,
+				IsDeleted: deleted,
+			},
+		}
+	}
+
+	index, err := backend.BuildIndex(t.Context(), key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				doc("live-unset", nil),
+				doc("live-explicit", new(false)),
+				doc("trashed", new(true)),
+			},
+		})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	bi, ok := index.(*bleveIndex)
+	require.True(t, ok)
+
+	markerHits := func(t *testing.T, value bool) []string {
+		t.Helper()
+		q := bleve.NewBoolFieldQuery(value)
+		q.SetField(resource.SEARCH_FIELD_IS_DELETED)
+		res, err := bi.index.Search(bleve.NewSearchRequest(q))
+		require.NoError(t, err)
+		names := make([]string, 0, len(res.Hits))
+		for _, hit := range res.Hits {
+			names = append(names, hit.ID)
+		}
+		slices.Sort(names)
+		return names
+	}
+
+	assert.Equal(t, []string{"default/example.test/widgets/trashed"}, markerHits(t, true))
+	assert.Equal(t, []string{"default/example.test/widgets/live-explicit"}, markerHits(t, false))
+
+	// The marker is not a declared field, so callers cannot ask for it and it
+	// stays out of the hash that forces reindexing.
+	assert.Nil(t, resource.StandardSearchFields().Field(resource.SEARCH_FIELD_IS_DELETED))
+	assert.False(t, bi.isDeclaredField(resource.SEARCH_FIELD_IS_DELETED))
+}
+
+// TestScopeQueryKeepsScores guards ranking against the exclusion clause: bleve
+// scores a boolean query with one Must clause exactly as that clause alone, and
+// MustNot adds nothing. A future scopeQuery that used Should or a boost would
+// quietly reweight every search.
+func TestScopeQueryKeepsScores(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "example.test", Resource: "widgets"}
+
+	backend, err := NewBleveBackend(BleveOptions{Root: t.TempDir(), FileThreshold: 5}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	titles := map[string]string{
+		"a": "hello world",
+		"b": "hello hello world of hello",
+		"c": "world of warcraft",
+		"d": "hello",
+	}
+	index, err := backend.BuildIndex(t.Context(), key, 5, "test", func(index resource.ResourceIndex) (int64, error) {
+		items := make([]*resource.BulkIndexItem, 0, len(titles))
+		for name, title := range titles {
+			items = append(items, &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+				Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name},
+				Title: title,
+			}})
+		}
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: items})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	bi, ok := index.(*bleveIndex)
+	require.True(t, ok)
+
+	textQuery := bleve.NewMatchQuery("hello")
+	textQuery.SetField(resource.SEARCH_FIELD_TITLE)
+
+	scores := func(q query.Query) []string {
+		req := bleve.NewSearchRequest(q)
+		req.Size = 10
+		res, err := bi.index.Search(req)
+		require.NoError(t, err)
+		out := make([]string, 0, len(res.Hits))
+		for _, hit := range res.Hits {
+			out = append(out, fmt.Sprintf("%s=%.6f", hit.ID, hit.Score))
+		}
+		return out
+	}
+
+	assert.Equal(t, scores(textQuery), scores(scopeQuery(textQuery, false)))
 }
