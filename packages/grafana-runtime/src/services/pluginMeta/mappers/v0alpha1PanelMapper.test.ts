@@ -70,6 +70,27 @@ describe('v0alpha1PanelMapper', () => {
       expect(result[pluginId].suggestions).toEqual(panels[pluginId].suggestions);
     });
 
+    it('should default adHocTransforms to false when plugin.json omits it', () => {
+      const result = v0alpha1PanelMapper(v0alpha1Response);
+
+      expect(result[pluginId].adHocTransforms).toBe(false);
+    });
+
+    it('should map adHocTransforms property correctly', () => {
+      const response = {
+        ...v0alpha1Response,
+        items: v0alpha1Response.items.map((item) =>
+          item.spec.pluginJson.id === pluginId
+            ? { ...item, spec: { ...item.spec, pluginJson: { ...item.spec.pluginJson, adHocTransforms: true } } }
+            : item
+        ),
+      };
+
+      const result = v0alpha1PanelMapper(response);
+
+      expect(result[pluginId].adHocTransforms).toBe(true);
+    });
+
     it('should map state property correctly', () => {
       const result = v0alpha1PanelMapper(v0alpha1Response);
 

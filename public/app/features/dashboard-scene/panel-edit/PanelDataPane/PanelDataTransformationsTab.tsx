@@ -20,6 +20,8 @@ import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui'
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 import { ExpressionQueryType } from 'app/features/expressions/types';
 
+import { withEditorOrigin } from '../../scene/adHocTransformations';
+import { useRunPanelTransformations } from '../../utils/runPanelTransformations';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { TRANSFORMATION_EDIT_INTERACTION_THROTTLE_TIME } from '../PanelEditNext/constants';
 
@@ -81,7 +83,11 @@ export class PanelDataTransformationsTab
 export function PanelDataTransformationsTabRendered({ model }: SceneComponentProps<PanelDataTransformationsTab>) {
   const styles = useStyles2(getStyles);
   const sourceData = model.getQueryRunner().useState();
-  const { data, transformations: transformsWrongType } = model.getDataTransformer().useState();
+  const transformer = model.getDataTransformer();
+  const { data: transformerData, transformations: transformsWrongType } = transformer.useState();
+  // A panel that owns its own pipeline leaves the transformer as a pass-through, so the output
+  // preview has to be computed here rather than read off the transformer.
+  const data = useRunPanelTransformations(transformer, transformerData);
 
   // Type guard to ensure transformations are DataTransformerConfig[]
   const transformations = useMemo<DataTransformerConfig[]>(() => {
@@ -131,7 +137,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
 
   const onAddTransformation = useCallback(
     (transformationId: string) => {
-      model.onChangeTransformations([...transformations, { id: transformationId, options: {} }]);
+      model.onChangeTransformations([...transformations, withEditorOrigin({ id: transformationId, options: {} })]);
     },
     [model, transformations]
   );
@@ -147,7 +153,7 @@ export function PanelDataTransformationsTabRendered({ model }: SceneComponentPro
         if (selected.value === undefined) {
           return;
         }
-        model.onChangeTransformations([...transformations, { id: selected.value, options: {} }]);
+        model.onChangeTransformations([...transformations, withEditorOrigin({ id: selected.value, options: {} })]);
         closeDrawer();
       }}
       isOpen={drawerOpen}

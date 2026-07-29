@@ -693,6 +693,24 @@ describe('transformSceneToSaveModel', () => {
         uid: 'abc',
       });
     });
+
+    it('Given panel with a transformation created by the visualization', () => {
+      const panel = buildGridItemFromPanelSchema({
+        transformations: [
+          {
+            id: 'organize',
+            options: { excludeByName: { value: true } },
+            origin: { source: 'panel', pluginId: 'table' },
+          },
+        ],
+        targets: [{ refId: 'A' }],
+      });
+
+      const result = gridItemToPanel(panel);
+
+      expect(result.transformations?.[0].origin).toEqual({ source: 'panel', pluginId: 'table' });
+    });
+
     it('Given panel with shared query', () => {
       const panel = buildGridItemFromPanelSchema({
         datasource: {

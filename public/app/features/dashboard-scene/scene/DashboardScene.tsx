@@ -113,6 +113,7 @@ import { createMutationClient } from './DashboardMutationClientSetter';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { syncSkipTransformationsBehavior } from './adHocTransformations';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
@@ -1109,6 +1110,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
             queries: [{ refId: 'A' }],
           }),
           transformations: [],
+          $behaviors: [syncSkipTransformationsBehavior],
         }),
       });
     }

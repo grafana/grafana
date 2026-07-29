@@ -8,7 +8,9 @@ import {
   type DataLinkPostProcessor,
   type EventBus,
   EventBusSrv,
+  type PanelData,
 } from '@grafana/data';
+import { type DataTransformerConfig } from '@grafana/schema';
 
 import { type AdHocFilterItem } from '../Table/types';
 
@@ -63,6 +65,54 @@ export interface PanelContext {
    * Used to apply multiple filters at once
    */
   onAddAdHocFilters?: (items: AdHocFilterItem[]) => void;
+
+  /**
+   * True when this panel declares `adHocTransforms` in its plugin.json and the host has handed
+   * the transformation pipeline over to it. When true `PanelProps.data` is untransformed and the
+   * panel is responsible for applying the pipeline itself.
+   *
+   * @alpha -- experimental
+   */
+  isAdHocTransformsEnabled?: () => boolean;
+
+  /**
+   * The panel's transformation pipeline, in execution order, with template variables already
+   * interpolated. Custom (function) transform operators are omitted since a panel cannot render
+   * or persist them. The returned array keeps a stable identity while its contents are unchanged,
+   * so it is safe to use as a hook dependency.
+   *
+   * @alpha -- experimental
+   */
+  getTransformations?: () => DataTransformerConfig[];
+
+  /**
+   * Replaces the panel's transformation pipeline verbatim. Persisted to the dashboard.
+   *
+   * @alpha -- experimental
+   */
+  setTransformations?: (configs: DataTransformerConfig[]) => void;
+
+  /**
+   * Source data as it left the query runner: before the transformation pipeline and before
+   * field config was applied. Only useful to panels that own the pipeline.
+   *
+   * @alpha -- experimental
+   */
+  getUntransformedData?: () => PanelData | undefined;
+
+  /**
+   * Applies the panel's field config and overrides to arbitrary data. Pure — it holds no cache,
+   * so callers must memoize. Intended for panels that transform data themselves and therefore
+   * need field config applied after their transforms rather than before.
+   *
+   * Only ever pass data that has NOT already been through field config: panel default data links
+   * are appended to whatever the frame carries, so applying this to already-processed frames
+   * accumulates a duplicate link per call. Start from `getUntransformedData()`, not
+   * `PanelProps.data`.
+   *
+   * @alpha -- experimental
+   */
+  applyFieldConfig?: (data: PanelData) => PanelData;
 
   /**
    * Used by the panel header status popover to open the errors and notices view.

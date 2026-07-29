@@ -14,6 +14,7 @@ import { InspectTab } from 'app/features/inspector/types';
 import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { InspectDataTab as InspectDataTabOld } from '../../inspector/InspectDataTab';
+import { useRunPanelTransformations } from '../utils/runPanelTransformations';
 
 export interface InspectDataTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -43,33 +44,38 @@ export class InspectDataTab extends SceneObjectBase<InspectDataTabState> {
     this.setState({ options });
   };
 
-  static Component = ({ model }: SceneComponentProps<InspectDataTab>) => {
-    const { options } = model.useState();
-    const panel = model.state.panelRef.resolve();
-    const dataProvider = sceneGraph.getData(panel);
-    const { data } = getDataProviderToSubscribeTo(dataProvider, options.withTransforms).useState();
-    const timeRange = sceneGraph.getTimeRange(panel);
+  static Component = InspectDataTabRendered;
+}
 
-    if (!data) {
-      <div>
-        <Trans i18nKey="dashboard-scene.inspect-data-tab.no-data-found">No data found</Trans>
-      </div>;
-    }
+function InspectDataTabRendered({ model }: SceneComponentProps<InspectDataTab>) {
+  const { options } = model.useState();
+  const panel = model.state.panelRef.resolve();
+  const dataProvider = sceneGraph.getData(panel);
+  const { data: providerData } = getDataProviderToSubscribeTo(dataProvider, options.withTransforms).useState();
+  const timeRange = sceneGraph.getTimeRange(panel);
+  // A panel that owns its own pipeline leaves the transformer as a pass-through, so
+  // "Apply panel transformations" has to run the pipeline here or it would be a no-op.
+  const data = useRunPanelTransformations(options.withTransforms ? dataProvider : undefined, providerData);
 
-    return (
-      <InspectDataTabOld
-        isLoading={data?.state === LoadingState.Loading}
-        data={data?.series}
-        options={options}
-        hasTransformations={hasTransformations(dataProvider)}
-        timeZone={timeRange.getTimeZone()}
-        panelPluginId={panel.state.pluginId}
-        dataName={sceneGraph.interpolate(panel, panel.state.title)}
-        fieldConfig={panel.state.fieldConfig}
-        onOptionsChange={model.onOptionsChange}
-      />
-    );
-  };
+  if (!data) {
+    <div>
+      <Trans i18nKey="dashboard-scene.inspect-data-tab.no-data-found">No data found</Trans>
+    </div>;
+  }
+
+  return (
+    <InspectDataTabOld
+      isLoading={data?.state === LoadingState.Loading}
+      data={data?.series}
+      options={options}
+      hasTransformations={hasTransformations(dataProvider)}
+      timeZone={timeRange.getTimeZone()}
+      panelPluginId={panel.state.pluginId}
+      dataName={sceneGraph.interpolate(panel, panel.state.title)}
+      fieldConfig={panel.state.fieldConfig}
+      onOptionsChange={model.onOptionsChange}
+    />
+  );
 }
 
 function hasTransformations(dataProvider: SceneDataProvider) {

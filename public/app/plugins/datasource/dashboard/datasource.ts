@@ -1,4 +1,16 @@
-import { type Observable, debounce, debounceTime, defer, filter, finalize, first, interval, map, of } from 'rxjs';
+import {
+  type Observable,
+  debounce,
+  debounceTime,
+  defer,
+  filter,
+  finalize,
+  first,
+  interval,
+  map,
+  of,
+  switchMap,
+} from 'rxjs';
 
 import {
   DataSourceApi,
@@ -28,6 +40,7 @@ import {
   SceneDataTransformer,
   type SceneObject,
 } from '@grafana/scenes';
+import { runPanelTransformations } from 'app/features/dashboard-scene/utils/runPanelTransformations';
 import {
   activateSceneObjectAndParentTree,
   findVizPanelByKey,
@@ -141,6 +154,13 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
           const sourceRange = sceneGraph.getTimeRange(sourceDataProvider!).state.value;
           return isSameRange(upstreamRange, sourceRange);
         }),
+        // When the source panel owns its own transformation pipeline the transformer only passes
+        // data through, so "use transformed data" has to run that pipeline here instead.
+        switchMap((result) =>
+          query.withTransforms
+            ? runPanelTransformations(sourceDataProvider, result.data).pipe(map((data) => ({ ...result, data })))
+            : of(result)
+        ),
         map((result) => {
           return {
             data: this.getDataFramesForQueryTopic(result.data, query, adHocFilters),

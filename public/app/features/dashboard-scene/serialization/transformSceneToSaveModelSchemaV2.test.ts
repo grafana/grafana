@@ -1,5 +1,6 @@
 import {
   VariableRefresh,
+  type DataTransformerConfig,
   type PanelData,
   LoadingState,
   toDataFrame,
@@ -1233,6 +1234,49 @@ describe('getVizPanelQueries', () => {
       expect(result[0].spec.query.spec.snapshot).toHaveLength(1);
       // Verify it gets data from the nested $data (SceneDataNode) not the transformer
       expect(result[0].spec.query.spec.snapshot[0].schema?.fields).toBeDefined();
+    });
+  });
+
+  describe('transformation origin', () => {
+    function panelWithTransformations(transformations: DataTransformerConfig[]) {
+      return new VizPanel({
+        key: 'panel-1',
+        pluginId: 'table',
+        $data: new SceneDataTransformer({
+          $data: new SceneDataNode({
+            data: { series: [], state: LoadingState.Done, timeRange: getDefaultTimeRange() },
+          }),
+          transformations,
+        }),
+      });
+    }
+
+    // TransformationSpec is built field by field, so origin has to be carried explicitly.
+    it('serializes a panel-authored origin', () => {
+      const vizPanel = panelWithTransformations([
+        { id: 'organize', options: { excludeByName: { a: true } }, origin: { source: 'panel', pluginId: 'table' } },
+      ]);
+
+      const result = vizPanelToSchemaV2(vizPanel);
+
+      expect(result.spec.data.spec.transformations[0].spec.origin).toEqual({ source: 'panel', pluginId: 'table' });
+    });
+
+    it('serializes an editor-authored origin', () => {
+      const vizPanel = panelWithTransformations([{ id: 'organize', options: {}, origin: { source: 'editor' } }]);
+
+      const result = vizPanelToSchemaV2(vizPanel);
+
+      expect(result.spec.data.spec.transformations[0].spec.origin).toEqual({ source: 'editor' });
+    });
+
+    // An absent origin already means "editor", so nothing should be invented.
+    it('omits origin when the transformation has none', () => {
+      const vizPanel = panelWithTransformations([{ id: 'organize', options: {} }]);
+
+      const result = vizPanelToSchemaV2(vizPanel);
+
+      expect(result.spec.data.spec.transformations[0].spec).not.toHaveProperty('origin');
     });
   });
 });
