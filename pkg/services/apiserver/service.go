@@ -367,6 +367,10 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.AuditBackend = s.auditBackend
 	serverConfig.AuditPolicyRuleEvaluator = s.auditPolicyRuleProvider.PolicyRuleProvider(builder.EvaluatorPolicyRuleFromBuilders(s.builders))
 
+	// Built once and used twice: the routes have to reach both the OpenAPI spec
+	// and the served WebServices, or the endpoint works but is undiscoverable.
+	searchRoutes := searchroutes.Build(s.cfg, s.tracing, s.unified, builders, s.appInstallers)
+
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
 		s.scheme,
@@ -378,6 +382,7 @@ func (s *service) start(ctx context.Context) error {
 		defGetters,
 		s.metrics,
 		apiResourceConfig,
+		searchRoutes...,
 	)
 	if err != nil {
 		return err
@@ -437,7 +442,6 @@ func (s *service) start(ctx context.Context) error {
 	// Augment existing WebServices with custom routes from builders
 	// This directly adds routes to existing WebServices using the OpenAPI specs from builders
 	if server.Handler != nil && server.Handler.GoRestfulContainer != nil {
-		searchRoutes := searchroutes.Build(s.cfg, s.tracing, s.unified, builders, s.appInstallers)
 		if err := builder.AugmentWebServicesWithCustomRoutes(
 			server.Handler.GoRestfulContainer,
 			builders,
