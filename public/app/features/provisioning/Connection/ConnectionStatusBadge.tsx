@@ -2,6 +2,8 @@ import { t } from '@grafana/i18n';
 import { Badge, type IconName } from '@grafana/ui';
 import { type ConnectionStatus } from 'app/api/clients/provisioning/v0alpha1';
 
+import { isConnectionPending } from '../utils/connectionStatus';
+
 interface Props {
   status?: ConnectionStatus;
 }
@@ -13,8 +15,8 @@ interface BadgeConfig {
 }
 
 function getBadgeConfig(status?: ConnectionStatus): BadgeConfig {
-  // If no conditions exist or conditions array is empty, show pending state
-  if (!status?.conditions || status.conditions.length === 0) {
+  // If no conditions exist or authorization completed after the last health check, show pending state
+  if (isConnectionPending(status)) {
     return {
       color: 'darkgrey',
       text: t('provisioning.connections.status-pending', 'Pending'),
@@ -22,7 +24,7 @@ function getBadgeConfig(status?: ConnectionStatus): BadgeConfig {
     };
   }
 
-  const readyCondition = status.conditions.find((c) => c.type === 'Ready');
+  const readyCondition = status?.conditions?.find((c) => c.type === 'Ready');
 
   // If no Ready condition exists, show pending state
   if (!readyCondition) {

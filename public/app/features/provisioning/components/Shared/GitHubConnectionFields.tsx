@@ -5,7 +5,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Field, Input, SecretTextArea, Stack } from '@grafana/ui';
 
-import { type GitHubBasedConnectionType } from '../../Wizard/types';
 import { type ConnectionFormData } from '../../types';
 import { validateNoHiddenCharacters } from '../../utils/validators';
 
@@ -17,12 +16,10 @@ export interface GitHubConnectionFieldsProps {
   onNewConnectionCreation?: () => void;
   /** Whether the connection is currently being created */
   isCreating?: boolean;
-  type: GitHubBasedConnectionType;
 }
 
 export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
-  ({ required = true, privateKeyConfigured = false, onNewConnectionCreation, isCreating = false, type }) => {
-    const isEnterprise = type === 'githubEnterprise';
+  ({ required = true, privateKeyConfigured = false, onNewConnectionCreation, isCreating = false }) => {
     const [isPrivateKeyConfigured, setIsPrivateKeyConfigured] = useState(privateKeyConfigured);
     const {
       register,
@@ -37,66 +34,6 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
 
     return (
       <Stack direction="column" gap={2}>
-        <Field
-          noMargin
-          label={t('provisioning.connection-form.label-title', 'Title')}
-          description={t('provisioning.connection-form.description-title', 'A human-readable name for this connection')}
-          error={errors?.title?.message}
-          invalid={!!errors.title}
-          required={required}
-        >
-          <Input
-            id="title"
-            data-testid={selectors.pages.Provisioning.ConnectionForm.titleInput}
-            {...register('title', {
-              required: requiredValidation,
-            })}
-            placeholder={t('provisioning.connection-form.placeholder-title', 'My GitHub App')}
-          />
-        </Field>
-
-        <Field
-          noMargin
-          label={t('provisioning.connection-form.label-description', 'Description')}
-          description={t(
-            'provisioning.connection-form.description-description',
-            'Optional description for this connection'
-          )}
-          error={errors?.description?.message}
-          invalid={!!errors.description}
-        >
-          <Input
-            id="description"
-            data-testid={selectors.pages.Provisioning.ConnectionForm.descriptionInput}
-            {...register('description')}
-            placeholder={t('provisioning.connection-form.placeholder-description', 'Optional description')}
-          />
-        </Field>
-
-        {isEnterprise && (
-          <Field
-            noMargin
-            label={t('provisioning.github-enterprise.server-url-label', 'Custom server URL')}
-            description={t(
-              'provisioning.github-enterprise.server-url-description',
-              'The custom server URL where your GitHub Enterprise is hosted'
-            )}
-            invalid={!!errors.serverUrl}
-            error={errors.serverUrl?.message}
-            required={required}
-          >
-            <Input
-              id="serverUrl"
-              data-testid={selectors.pages.Provisioning.ConnectionForm.serverUrlInput}
-              {...register('serverUrl', {
-                required: requiredValidation,
-              })}
-              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-              placeholder="https://your-enterprise-url.com or https://<enterprise-slug>.ghe.com"
-            />
-          </Field>
-        )}
-
         <Field
           noMargin
           label={t('provisioning.connection-form.label-app-id', 'GitHub App ID')}
