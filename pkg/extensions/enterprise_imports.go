@@ -15,7 +15,6 @@ import (
 	_ "github.com/beevik/etree"
 	_ "github.com/blugelabs/bluge"
 	_ "github.com/blugelabs/bluge_segment_api"
-	_ "github.com/crewjam/saml"
 	_ "github.com/go-jose/go-jose/v3"
 	_ "github.com/gobwas/glob"
 	_ "github.com/googleapis/gax-go/v2"
@@ -37,4 +36,5 @@ import (
 	_ "github.com/grafana/e2e"
 	_ "github.com/grafana/gofpdf"
 	_ "github.com/grafana/gomemcache/memcache"
+	_ "github.com/grafana/saml"
 )
