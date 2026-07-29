@@ -20,7 +20,7 @@ import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
-import { getOriginFiltersRenderMode } from '../scene/pinned-filters/pinnedFilters';
+import { getOriginFiltersRenderMode, splitAdHocVariableFilters } from '../scene/pinned-filters/pinnedFilters';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { migrateGroupByVariablesV1 } from '../serialization/groupByMigration';
 import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
@@ -116,6 +116,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
       try {
         // for adhoc we are using the AdHocFiltersVariable from scenes becuase of its complexity
         if (v.type === 'adhoc') {
+          const { originFilters, filters } = splitAdHocVariableFilters(v.filters);
           return new AdHocFiltersVariable({
             name: v.name,
             label: v.label,
@@ -125,7 +126,8 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             hide: v.hide,
             datasource: v.datasource,
             applyMode: 'auto',
-            filters: v.filters ?? [],
+            filters,
+            originFilters,
             baseFilters: v.baseFilters ?? [],
             defaultKeys: v.defaultKeys,
             useQueriesAsFilterForOptions: true,
@@ -213,9 +215,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
     origin: variable.origin,
   };
   if (variable.type === 'adhoc') {
-    const originFilters: AdHocVariableFilter[] = [];
-    const filters: AdHocVariableFilter[] = [];
-    variable.filters?.forEach((filter) => (filter.origin ? originFilters.push(filter) : filters.push(filter)));
+    const { originFilters, filters } = splitAdHocVariableFilters(variable.filters);
 
     return new AdHocFiltersVariable({
       ...commonProperties,

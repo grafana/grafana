@@ -1,9 +1,34 @@
 import { type AdHocVariableFilter, type AdHocVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type Dashboard, type VariableModel } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { adHocVariableFiltersEqual, getRawDashboardChanges, getRawDashboardV2Changes } from './getDashboardChanges';
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: jest.fn(),
+}));
+
+const mockGetFeatureFlagClient = jest.mocked(getFeatureFlagClient);
+const getBooleanValueFn = jest.fn();
+
+function stubPinnedFiltersEnabled(enabled: boolean) {
+  getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
+    key === FlagKeys.GrafanaPinnedFilters ? enabled : defaultValue
+  );
+}
+
+beforeAll(() => {
+  mockGetFeatureFlagClient.mockReturnValue({
+    getBooleanValue: getBooleanValueFn,
+  } as unknown as ReturnType<typeof getFeatureFlagClient>);
+});
+
+beforeEach(() => {
+  stubPinnedFiltersEnabled(false);
+});
 
 describe('adHocVariableFiltersEqual', () => {
   it('should compare empty filters', () => {
@@ -452,6 +477,7 @@ describe('getDashboardChanges with dashboardUnifiedDrilldownControls', () => {
 
   afterEach(() => {
     config.featureToggles.dashboardUnifiedDrilldownControls = false;
+    stubPinnedFiltersEnabled(false);
   });
 
   describe('when feature flag is enabled', () => {
@@ -555,6 +581,45 @@ describe('getDashboardChanges with dashboardUnifiedDrilldownControls', () => {
 
       const savedFilters = (changed.templating!.list![0] as AdHocVariableModel).filters;
       expect(savedFilters).toEqual([{ key: 'a', operator: '=', value: '1' }]);
+    });
+  });
+
+  describe('when pinned filters is enabled without drilldown controls', () => {
+    beforeEach(() => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      stubPinnedFiltersEnabled(true);
+    });
+
+    it('should preserve origin filters and restore runtime filters when saveVariables is false', () => {
+      const initial = makeDashboardWithAdhoc([{ key: 'env', operator: '=', value: 'prod' }]);
+      const changed = makeDashboardWithAdhoc([
+        { key: 'slice', operator: '=~', value: '.*', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'staging' },
+      ]);
+
+      getRawDashboardChanges(initial, changed, false, false, false);
+
+      const savedFilters = (changed.templating!.list![0] as AdHocVariableModel).filters;
+      expect(savedFilters).toEqual([
+        { key: 'slice', operator: '=~', value: '.*', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'prod' },
+      ]);
+    });
+
+    it('should keep both origin and runtime filters when saveVariables is true', () => {
+      const initial = makeDashboardWithAdhoc([]);
+      const changed = makeDashboardWithAdhoc([
+        { key: 'slice', operator: '=~', value: '.*', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'prod' },
+      ]);
+
+      getRawDashboardChanges(initial, changed, false, true, false);
+
+      const savedFilters = (changed.templating!.list![0] as AdHocVariableModel).filters;
+      expect(savedFilters).toEqual([
+        { key: 'slice', operator: '=~', value: '.*', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'prod' },
+      ]);
     });
   });
 });

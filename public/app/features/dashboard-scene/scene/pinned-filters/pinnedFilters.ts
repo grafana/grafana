@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type AdHocFiltersVariable, type AdHocFilterWithLabels, isGroupByFilter } from '@grafana/scenes';
 import { type ComboboxOption } from '@grafana/ui';
@@ -29,6 +30,51 @@ export function isMatchAllFilter(filter: AdHocFilterWithLabels): boolean {
 
 export function isPinnedFilter(filter: AdHocFilterWithLabels): boolean {
   return filter.origin === PINNED_FILTER_ORIGIN && !isGroupByFilter(filter);
+}
+
+/**
+ * Origin filters authored in the dashboard JSON (pinned defaults or drilldown defaults) are
+ * persisted separately from ephemeral runtime filters when either feature is active.
+ */
+export function shouldPreserveOriginFiltersOnSave(): boolean {
+  return config.featureToggles.dashboardUnifiedDrilldownControls || isPinnedFiltersEnabled();
+}
+
+function stripFilterOrigin(filter: AdHocFilterWithLabels): AdHocFilterWithLabels {
+  const { origin: _origin, ...rest } = filter;
+  return rest;
+}
+
+/**
+ * Splits persisted ad hoc filters into runtime vs dashboard-origin collections.
+ * When pinned filters is off, pinned-style origin filters are flattened into runtime
+ * filters so rollback does not leave dashboards in a hybrid origin-filter state.
+ */
+export function splitAdHocVariableFilters(allFilters: AdHocFilterWithLabels[] | undefined): {
+  originFilters: AdHocFilterWithLabels[];
+  filters: AdHocFilterWithLabels[];
+} {
+  const originFilters: AdHocFilterWithLabels[] = [];
+  const filters: AdHocFilterWithLabels[] = [];
+
+  allFilters?.forEach((filter) => {
+    if (filter.origin) {
+      originFilters.push(filter);
+    } else {
+      filters.push(filter);
+    }
+  });
+
+  if (!isPinnedFiltersEnabled()) {
+    const drilldownOriginFilters = originFilters.filter((f) => !isPinnedFilter(f));
+    const flattenedPinned = originFilters.filter(isPinnedFilter).map(stripFilterOrigin);
+    return {
+      originFilters: drilldownOriginFilters,
+      filters: [...filters, ...flattenedPinned],
+    };
+  }
+
+  return { originFilters, filters };
 }
 
 export function getPinnedFilters(originFilters: AdHocFilterWithLabels[] | undefined): AdHocFilterWithLabels[] {

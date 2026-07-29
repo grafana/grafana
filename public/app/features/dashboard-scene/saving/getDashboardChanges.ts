@@ -12,6 +12,7 @@ import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
+import { shouldPreserveOriginFiltersOnSave } from '../scene/pinned-filters/pinnedFilters';
 import { validateFiltersOrigin } from '../serialization/sceneVariablesSetToVariables';
 import { jsonDiff } from '../settings/version-history/utils';
 
@@ -302,10 +303,10 @@ function applyVariableKindListChanges(
       variable.kind === 'AdhocVariable' &&
       original.kind === 'AdhocVariable' &&
       !adHocVariableFiltersEqual(
-        config.featureToggles.dashboardUnifiedDrilldownControls
+        shouldPreserveOriginFiltersOnSave()
           ? variable.spec.filters.filter((f) => !f.origin)
           : variable.spec.filters,
-        config.featureToggles.dashboardUnifiedDrilldownControls
+        shouldPreserveOriginFiltersOnSave()
           ? original.spec.filters.filter((f) => !f.origin)
           : original.spec.filters
       )
@@ -323,7 +324,7 @@ function applyVariableKindListChanges(
 
     if (!saveVariables) {
       if (variable.kind === 'AdhocVariable' && original.kind === 'AdhocVariable') {
-        if (config.featureToggles.dashboardUnifiedDrilldownControls) {
+        if (shouldPreserveOriginFiltersOnSave()) {
           const originFilters = (variable.spec.filters ?? []).filter((f) => f.origin);
           const originalRuntimeFilters = (original.spec.filters ?? []).filter((f) => !f.origin);
           variable.spec.filters = [...originFilters, ...originalRuntimeFilters];
@@ -430,7 +431,7 @@ function applyVariableChanges(saveModel: Dashboard, originalSaveModel: Dashboard
       const typed = variable as TypedVariableModel;
 
       if (typed.type === 'adhoc') {
-        if (config.featureToggles.dashboardUnifiedDrilldownControls) {
+        if (shouldPreserveOriginFiltersOnSave()) {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const changedFilters = (typed as AdHocVariableModel).filters ?? [];
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

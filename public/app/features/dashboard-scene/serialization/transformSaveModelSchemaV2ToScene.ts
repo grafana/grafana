@@ -79,7 +79,7 @@ import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
-import { getOriginFiltersRenderMode } from '../scene/pinned-filters/pinnedFilters';
+import { getOriginFiltersRenderMode, splitAdHocVariableFilters } from '../scene/pinned-filters/pinnedFilters';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
@@ -372,10 +372,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       variable.group
     );
 
-    // Separate filters by origin - filters with origin go to originFilters, others go to filters
-    const originFilters: AdHocFilterWithLabels[] = [];
-    const filters: AdHocFilterWithLabels[] = [];
-    variable.spec.filters?.forEach((filter) => (filter.origin ? originFilters.push(filter) : filters.push(filter)));
+    const { originFilters, filters } = splitAdHocVariableFilters(variable.spec.filters);
 
     const adhocVariableState: AdHocFiltersVariable['state'] = {
       ...commonProperties,

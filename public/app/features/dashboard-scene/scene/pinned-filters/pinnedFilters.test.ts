@@ -1,4 +1,5 @@
 import { setTemplateSrv } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type AdHocFilterWithLabels } from '@grafana/scenes';
 
 import { initTemplateSrv } from '../../../../../test/helpers/initTemplateSrv';
@@ -9,10 +10,32 @@ import {
   getPinnedFilterSelectedValues,
   isMatchAllFilter,
   isPinnedFilter,
+  splitAdHocVariableFilters,
 } from './pinnedFilters';
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: jest.fn(),
+}));
+
+const mockGetFeatureFlagClient = jest.mocked(getFeatureFlagClient);
+const getBooleanValueFn = jest.fn();
+
+function stubPinnedFiltersEnabled(enabled: boolean) {
+  getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
+    key === FlagKeys.GrafanaPinnedFilters ? enabled : defaultValue
+  );
+}
 
 beforeAll(() => {
   setTemplateSrv(initTemplateSrv('key', []));
+  mockGetFeatureFlagClient.mockReturnValue({
+    getBooleanValue: getBooleanValueFn,
+  } as unknown as ReturnType<typeof getFeatureFlagClient>);
+});
+
+beforeEach(() => {
+  stubPinnedFiltersEnabled(false);
 });
 
 describe('pinnedFilters utils', () => {
@@ -90,6 +113,38 @@ describe('pinnedFilters utils', () => {
 
       expect(getPinnedFilters(filters).map((f) => f.key)).toEqual(['region']);
       expect(getPinnedFilters(undefined)).toEqual([]);
+    });
+  });
+
+  describe('splitAdHocVariableFilters', () => {
+    it('keeps pinned origin filters when the feature is enabled', () => {
+      stubPinnedFiltersEnabled(true);
+
+      const result = splitAdHocVariableFilters([
+        { key: 'slice', operator: '=~', value: '.*', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'prod' },
+      ]);
+
+      expect(result.originFilters).toEqual([{ key: 'slice', operator: '=~', value: '.*', origin: 'dashboard' }]);
+      expect(result.filters).toEqual([{ key: 'env', operator: '=', value: 'prod' }]);
+    });
+
+    it('flattens pinned origin filters into runtime filters when the feature is disabled', () => {
+      stubPinnedFiltersEnabled(false);
+
+      const result = splitAdHocVariableFilters([
+        { key: 'slice', operator: '=~', value: '.*', origin: 'dashboard' },
+        { key: 'cluster', operator: 'groupBy', value: '', origin: 'dashboard' },
+        { key: 'env', operator: '=', value: 'prod' },
+      ]);
+
+      expect(result.originFilters).toEqual([
+        { key: 'cluster', operator: 'groupBy', value: '', origin: 'dashboard' },
+      ]);
+      expect(result.filters).toEqual([
+        { key: 'env', operator: '=', value: 'prod' },
+        { key: 'slice', operator: '=~', value: '.*' },
+      ]);
     });
   });
 });
