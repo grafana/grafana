@@ -1404,8 +1404,12 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 	// The search API is mounted under every served version, so a client can use
 	// the same version it uses for the rest of the kind.
 	if b.searchAPI != nil {
-		routes.Namespace = append(routes.Namespace, b.searchAPI.SearchRoute(
-			gv.Group, gv.Version, dashv0.DASHBOARD_RESOURCE, "Dashboard"))
+		r := b.searchAPI.SearchRoute(gv.Group, gv.Version, dashv0.DASHBOARD_RESOURCE, "Dashboard")
+		routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
+			Path:    r.Path,
+			Spec:    r.Spec,
+			Handler: r.Handler,
+		})
 	}
 
 	if gv.Version == dashv0.VERSION {

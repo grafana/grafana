@@ -6,7 +6,7 @@ import { useLocalStorage } from 'react-use';
 import { getDragStyles, useStyles2, useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
-import { useEditPaneCollapsed } from '../../edit-pane/shared';
+import { useSidebarCollapsed } from '../../sidebar/shared';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { type PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
@@ -134,7 +134,7 @@ export function usePanelEditorShell(model: PanelEditor) {
   const { optionsPane } = model.useState();
   // Subscribe to controls so the controls row appears/updates if it's set after mount.
   const { controls } = dashboard.useState();
-  const [isInitiallyCollapsed, setIsCollapsed] = useEditPaneCollapsed();
+  const [isInitiallyCollapsed, setIsCollapsed] = useSidebarCollapsed();
   const isScrollingLayout = useScrollReflowLimit();
   const theme = useTheme2();
   const panePadding = parseFloat(theme.spacing(2));
