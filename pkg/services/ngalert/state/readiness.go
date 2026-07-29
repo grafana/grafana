@@ -1,11 +1,16 @@
 package state
 
 import (
+	"errors"
 	"sync/atomic"
 	"time"
 
 	"github.com/benbjohnson/clock"
 )
+
+// ErrNotReady is returned by ProcessEvalResults when the state cache is not ready and within its
+// grace window; the caller should treat it as a skipped, not a failed, evaluation.
+var ErrNotReady = errors.New("state cache is not ready")
 
 // Readiness reports whether a consumer may proceed.
 type Readiness int

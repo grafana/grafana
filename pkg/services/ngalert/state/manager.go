@@ -344,6 +344,18 @@ func (st *Manager) ProcessEvalResults(
 	extraLabels data.Labels,
 	send Sender,
 ) (StateTransitions, error) {
+	logger := st.log.FromContext(ctx)
+
+	// Don't apply results to a cold cache, or we write spurious transitions to state history.
+	switch st.readiness.Ready() {
+	case Ready:
+		// Cache is warm (or gating is disabled) — process normally.
+	case NotReady:
+		return nil, ErrNotReady
+	case TimedOut:
+		logger.Warn("Processing evaluation results before the state cache is ready; readiness grace period elapsed")
+	}
+
 	utcTick := evaluatedAt.UTC().Format(time.RFC3339Nano)
 	ctx, span := st.tracer.Start(ctx, "alert rule state calculation", trace.WithAttributes(
 		attribute.String("rule_uid", alertRule.UID),
@@ -352,8 +364,6 @@ func (st *Manager) ProcessEvalResults(
 		attribute.String("tick", utcTick),
 		attribute.Int("results", len(results))))
 	defer span.End()
-
-	logger := st.log.FromContext(ctx)
 
 	// lazy evaluation of takeImage only once and only if it is requested.
 	var fn takeImageFn

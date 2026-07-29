@@ -9,6 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
 
@@ -23,6 +26,8 @@ func newReadinessManager(t *testing.T, clk clock.Clock, requireWarm bool, timeou
 	cfg := state.ManagerCfg{
 		Clock:           clk,
 		Log:             log.NewNopLogger(),
+		Tracer:          tracing.InitializeTracerForTest(),
+		Images:          &state.NoopImageService{},
 		RequireWarm:     requireWarm,
 		WarmGateTimeout: timeout,
 	}
@@ -75,4 +80,61 @@ func TestManager_Readiness_ClearCacheResets(t *testing.T) {
 
 	mgr.ClearCache()
 	require.Equal(t, state.NotReady, mgr.Ready())
+}
+
+// processResults applies a single Alerting result for a generated rule.
+func processResults(t *testing.T, mgr *state.Manager, now time.Time) (*models.AlertRule, state.StateTransitions, error) {
+	t.Helper()
+	rule := models.RuleGen.GenerateRef()
+	results := eval.Results{eval.ResultGen(eval.WithState(eval.Alerting), eval.WithEvaluatedAt(now))()}
+	transitions, err := mgr.ProcessEvalResults(context.Background(), now, rule, results, nil, nil)
+	return rule, transitions, err
+}
+
+func TestManager_ProcessEvalResults_Readiness(t *testing.T) {
+	t.Run("returns ErrNotReady and applies nothing while gated", func(t *testing.T) {
+		clk := clock.NewMock()
+		mgr := newReadinessManager(t, clk, true, time.Minute)
+
+		rule, transitions, err := processResults(t, mgr, clk.Now())
+
+		require.ErrorIs(t, err, state.ErrNotReady)
+		require.Empty(t, transitions)
+		require.Empty(t, mgr.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID),
+			"no state should be written to a cold cache")
+	})
+
+	t.Run("applies results once warmed", func(t *testing.T) {
+		clk := clock.NewMock()
+		mgr := newReadinessManager(t, clk, true, time.Minute)
+		warm(t, mgr)
+
+		rule, transitions, err := processResults(t, mgr, clk.Now())
+
+		require.NoError(t, err)
+		require.NotEmpty(t, transitions)
+		require.NotEmpty(t, mgr.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
+	})
+
+	t.Run("applies results once the grace window elapses", func(t *testing.T) {
+		clk := clock.NewMock()
+		mgr := newReadinessManager(t, clk, true, time.Minute)
+		clk.Add(time.Minute)
+
+		rule, transitions, err := processResults(t, mgr, clk.Now())
+
+		require.NoError(t, err, "a timed-out probe must not block processing")
+		require.NotEmpty(t, transitions)
+		require.NotEmpty(t, mgr.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
+	})
+
+	t.Run("never gates when a warm is not required", func(t *testing.T) {
+		clk := clock.NewMock()
+		mgr := newReadinessManager(t, clk, false, time.Minute)
+
+		_, transitions, err := processResults(t, mgr, clk.Now())
+
+		require.NoError(t, err)
+		require.NotEmpty(t, transitions)
+	})
 }
