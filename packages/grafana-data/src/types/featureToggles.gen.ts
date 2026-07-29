@@ -1181,11 +1181,6 @@ export interface FeatureToggles {
   */
   kubernetesAlertingHistorian?: boolean;
   /**
-  * Enables support for section level variables (rows and tabs)
-  * @default true
-  */
-  dashboardSectionVariables?: boolean;
-  /**
   * Enables the ASAP smoothing transformation for time series data
   * @default false
   */

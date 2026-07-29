@@ -121,13 +121,28 @@ func (h *recordingHandler) OnDelete(obj interface{}) {
 	h.deletes = append(h.deletes, obj.(*metav1.PartialObjectMetadata))
 }
 
-func (h *recordingHandler) addedNames() []string   { return names(&h.mu, h.adds) }
-func (h *recordingHandler) updatedNames() []string { return names(&h.mu, h.updates) }
-func (h *recordingHandler) deletedNames() []string { return names(&h.mu, h.deletes) }
+// The slice fields must be read under the lock too: passing e.g. h.adds as an
+// argument would read the slice header before the callee could acquire it,
+// racing a concurrent append.
+func (h *recordingHandler) addedNames() []string {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return names(h.adds)
+}
 
-func names(mu *sync.Mutex, objs []*metav1.PartialObjectMetadata) []string {
-	mu.Lock()
-	defer mu.Unlock()
+func (h *recordingHandler) updatedNames() []string {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return names(h.updates)
+}
+
+func (h *recordingHandler) deletedNames() []string {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return names(h.deletes)
+}
+
+func names(objs []*metav1.PartialObjectMetadata) []string {
 	out := make([]string, len(objs))
 	for i, o := range objs {
 		out[i] = o.Name
@@ -415,6 +430,53 @@ func TestInformer_RetriesSubscribeUntilAvailable(t *testing.T) {
 		require.True(t, sub.subscribed(subject()), "retry must eventually open the subscription")
 		require.True(t, n.HasSynced(), "must sync once subscribed")
 		assert.Equal(t, []string{"a"}, handler.addedNames(), "initial list must be delivered")
+
+		// Live events then flow.
+		sub.publish(t, subject(), event(resourcepb.WatchNotification_ADDED, "fresh"))
+		synctest.Wait()
+		assert.Equal(t, []string{"a", "fresh"}, handler.addedNames())
+	})
+}
+
+// With AllowDegradedStart, a failing subscription no longer gates startup: the
+// informer lists, reports HasSynced, and keeps re-listing while the subscription
+// retries in the background. Once it opens, a gap-closing re-list reconciles
+// whatever was published in between, and live events flow.
+func TestInformer_DegradedStartListsWithoutSubscription(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		sub.failSubscribes(2) // first two attempts fail, then it succeeds
+		handler := &recordingHandler{}
+
+		var calls atomic.Int64
+		list := func(context.Context) ([]runtime.Object, error) {
+			calls.Add(1)
+			return []runtime.Object{obj("a")}, nil
+		}
+		n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+		n.AllowDegradedStart()
+		_, err := n.AddEventHandler(handler)
+		require.NoError(t, err)
+		stopCh := make(chan struct{})
+		defer func() { close(stopCh); synctest.Wait() }()
+		go n.Run(stopCh)
+
+		// The failed subscription does not gate startup: the initial list runs and
+		// HasSynced reports true while the informer is re-list-only.
+		synctest.Wait()
+		require.False(t, sub.subscribed(subject()), "the subscription is still failing")
+		require.True(t, n.HasSynced(), "degraded start must sync from the initial list")
+		assert.Equal(t, []string{"a"}, handler.addedNames(), "initial list must be delivered")
+
+		// The background retry eventually opens the subscription, and the reconnect
+		// signal forces a re-list to cover events published while it was down.
+		before := calls.Load()
+		for i := 0; i < 5 && !sub.subscribed(subject()); i++ {
+			time.Sleep(defaultSubscribeRetry)
+			synctest.Wait()
+		}
+		require.True(t, sub.subscribed(subject()), "background retry must eventually open the subscription")
+		assert.Greater(t, calls.Load(), before, "opening the subscription must trigger a gap-closing re-list")
 
 		// Live events then flow.
 		sub.publish(t, subject(), event(resourcepb.WatchNotification_ADDED, "fresh"))
