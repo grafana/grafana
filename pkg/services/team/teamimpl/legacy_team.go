@@ -8,7 +8,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -25,8 +24,7 @@ type LegacyService struct {
 	tracer tracing.Tracer
 }
 
-func NewLegacyService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
-	sql := legacysql.NewDatabaseProvider(db)
+func NewLegacyService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
 	store := &xormStore{sql: sql, cfg: cfg, deleteRenderers: []team.DeleteQueryRenderer{}}
 
 	return &LegacyService{
