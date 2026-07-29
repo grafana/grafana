@@ -748,14 +748,6 @@ func (a *api) listTeamMemberPermissions(c *contextmodel.ReqContext, dynamicClien
 	return dto, nil
 }
 
-func (a *api) setUserPermissionInTeamMembers(c *contextmodel.ReqContext, namespace string, resourceID string, userID int64, permission string) (bool, error) {
-	dynamicClient, err := a.getDynamicClient(c)
-	if err != nil {
-		return false, err
-	}
-	return a.service.setTeamMember(c.Req.Context(), dynamicClient, c.GetOrgID(), namespace, resourceID, userID, permission)
-}
-
 // setTeamMember reconciles a single team membership in Team.Spec.Members via the
 // K8s API. It's a thin wrapper over setTeamMembers so the single-member HTTP
 // handler path and the batch path share one read-modify-write implementation. The

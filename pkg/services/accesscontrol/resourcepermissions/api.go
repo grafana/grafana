@@ -102,6 +102,15 @@ func unifiedStorageIsAuthoritative(cfg *setting.Cfg, groupResource string) bool 
 	return cfg.UnifiedStorageConfig(groupResource).DualWriterMode > grafanarest.Mode3
 }
 
+// teamsRedirectOwnsWrites reports whether the service-level teams membership
+// redirect is the sole writer (redirect enabled and unified storage authoritative).
+// When true the legacy store is never written, so handlers must not count a legacy
+// write in the metrics.
+func (a *api) teamsRedirectOwnsWrites(ctx context.Context) bool {
+	return a.service.teamsMembershipRedirectEnabled(ctx) &&
+		a.unifiedStorageIsAuthoritative(iamv0.TeamResourceInfo.GroupResource().String())
+}
+
 func (a *api) registerEndpoints() {
 	auth := accesscontrol.Middleware(a.ac)
 	licenseMW := a.service.options.LicenseMW
@@ -404,37 +413,9 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
-	// teamsRedirectRemovedMember records that the K8s teams redirect below actually removed an
-	// existing member. In dual-write modes (Mode1-3) legacy is the primary target of that write,
-	// so the legacy fallback further down then finds the row already gone. A no-op redirect (the
-	// member wasn't there) leaves this false, so a genuinely-absent member still returns 404.
-	teamsRedirectRemovedMember := false
-
-	// Teams-specific redirect: write the membership to Team.Spec.Members via the K8s API.
-	if a.service.options.Resource == "teams" && ofClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx)) {
-		removed, err := a.setUserPermissionInTeamMembers(c, c.Namespace, resourceID, userID, cmd.Permission)
-		if errors.Is(err, ErrExternalTeamMember) {
-			return response.Err(err)
-		}
-		if err != nil {
-			span.RecordError(err)
-			a.logger.Warn("Failed to set user permission via team members k8s API", "error", err, "resourceID", resourceID)
-		} else {
-			teamsRedirectRemovedMember = removed
-			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "success").Inc()
-		}
-
-		// In Mode4/5 unified storage is authoritative: return the K8s result and do not fall
-		// back to legacy (which would fail for identities that exist only in unified storage).
-		// In Mode0-3 we dual-write, so continue to the legacy path below.
-		if a.unifiedStorageIsAuthoritative(iamv0.TeamResourceInfo.GroupResource().String()) {
-			if err != nil {
-				metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", a.service.options.Resource, "error").Inc()
-				return response.Err(err)
-			}
-			return permissionSetResponse(cmd)
-		}
-	}
+	// Teams membership writes are redirected to Team.Spec.Members inside
+	// service.SetUserPermission, so every caller (HTTP and in-process) shares a
+	// single redirect; there is no teams-specific K8s path in this handler.
 
 	if a.service.options.Resource != "teams" && a.shouldUseK8sAPIs(ctx) {
 		err := a.setUserPermissionToK8s(c, c.Namespace, resourceID, userID, cmd.Permission)
@@ -455,14 +436,11 @@ func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
-	metrics.MAccessResourcePermissionsBackend.WithLabelValues("legacy", "set_user", a.service.options.Resource, a.getFallbackStatus(ctx)).Inc()
+	if !a.teamsRedirectOwnsWrites(ctx) {
+		metrics.MAccessResourcePermissionsBackend.WithLabelValues("legacy", "set_user", a.service.options.Resource, a.getFallbackStatus(ctx)).Inc()
+	}
 	_, err = a.service.SetUserPermission(c.Req.Context(), c.GetOrgID(), accesscontrol.User{ID: userID}, resourceID, cmd.Permission)
 	if err != nil {
-		// The teams redirect above already removed the member (and, in dual-write modes, the
-		// legacy team_member row), so this legacy removal finds nothing.
-		if teamsRedirectRemovedMember && errors.Is(err, team.ErrTeamMemberNotFound) {
-			return permissionSetResponse(cmd)
-		}
 		if errors.Is(err, team.ErrTeamMemberNotFound) {
 			return response.Error(http.StatusNotFound, "Team member not found", nil)
 		}
@@ -713,7 +691,9 @@ func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 		}
 	}
 
-	metrics.MAccessResourcePermissionsBackend.WithLabelValues("legacy", "set_bulk", a.service.options.Resource, a.getFallbackStatus(ctx)).Inc()
+	if !a.teamsRedirectOwnsWrites(ctx) {
+		metrics.MAccessResourcePermissionsBackend.WithLabelValues("legacy", "set_bulk", a.service.options.Resource, a.getFallbackStatus(ctx)).Inc()
+	}
 	_, err := a.service.SetPermissions(c.Req.Context(), c.GetOrgID(), resourceID, cmd.Permissions...)
 	if err != nil {
 		return response.Err(err)
