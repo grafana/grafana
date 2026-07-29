@@ -901,6 +901,123 @@ func TestAddTraceDataLinksToFields_EmptyResources(t *testing.T) {
 	}
 }
 
+func TestAddDataLinksToFields_TraceExemplar(t *testing.T) {
+	dsInfo := types.DatasourceInfo{
+		DatasourceUID:  "azure-monitor",
+		DatasourceName: "Azure Monitor",
+		Services: map[string]types.DatasourceService{
+			"Azure Monitor": {},
+		},
+	}
+
+	jsonResource := "/subscriptions/sub"
+	resolvedResource := "/subscriptions/sub/resourceGroups/rg/providers/Microsoft.Insights/components/app"
+	traceExploreQuery := "union isfuzzy=true AppTraces | where operation_Id == TraceId"
+	parentExploreQuery := "union isfuzzy=true AppTraces | where operation_Id == TraceId | where id == ParentId"
+	logsExploreQuery := "union isfuzzy=true AppTraces | where operation_Id == TraceId | project *"
+
+	newExemplarQuery := func(resultFormat dataquery.ResultFormat) *AzureLogAnalyticsQuery {
+		queryJSON := fmt.Sprintf(`{
+			"queryType": "traceql",
+			"azureTraces": {
+				"resources": [%q],
+				"resultFormat": %q,
+				"operationId": "trace-id"
+			}
+		}`, jsonResource, resultFormat)
+		return &AzureLogAnalyticsQuery{
+			JSON:                    []byte(queryJSON),
+			QueryType:               dataquery.AzureQueryTypeTraceExemplar,
+			ResultFormat:            resultFormat,
+			Resources:               []string{resolvedResource},
+			TraceExploreQuery:       traceExploreQuery,
+			TraceParentExploreQuery: parentExploreQuery,
+			TraceLogsExploreQuery:   logsExploreQuery,
+		}
+	}
+
+	newTraceFrame := func() *data.Frame {
+		return data.NewFrame("trace",
+			data.NewField("traceID", nil, []string{"trace-id"}),
+			data.NewField("spanID", nil, []string{"span-id"}),
+			data.NewField("operationName", nil, []string{"GET /"}),
+			data.NewField("serviceName", nil, []string{"frontend"}),
+			data.NewField("duration", nil, []float64{1.2}),
+		)
+	}
+
+	t.Run("trace format does not attach portal query links to every field", func(t *testing.T) {
+		frame := newTraceFrame()
+		err := addDataLinksToFields(newExemplarQuery(dataquery.ResultFormatTrace), "https://portal.azure.com", frame, dsInfo, "https://portal.azure.com/query")
+		require.NoError(t, err)
+
+		require.Equal(t, 0, countFieldLinksByTitle(frame, "View query in Azure Portal"))
+		require.Equal(t, 1, countFieldLinksByTitle(frame, "Explore Trace Logs"))
+	})
+
+	t.Run("explore links use Azure Traces query type and resolved resources", func(t *testing.T) {
+		frame := newTraceFrame()
+		err := addDataLinksToFields(newExemplarQuery(dataquery.ResultFormatTable), "https://portal.azure.com", frame, dsInfo, "https://portal.azure.com/query")
+		require.NoError(t, err)
+
+		exploreTrace := findInternalAzureQueryByLinkTitle(t, frame, "Explore Trace: ${__data.fields.traceID}")
+		require.NotNil(t, exploreTrace.QueryType)
+		require.Equal(t, string(dataquery.AzureQueryTypeAzureTraces), *exploreTrace.QueryType)
+		require.NotNil(t, exploreTrace.AzureTraces)
+		require.Equal(t, []string{resolvedResource}, exploreTrace.AzureTraces.Resources)
+		require.NotNil(t, exploreTrace.AzureTraces.Query)
+		require.Equal(t, traceExploreQuery, *exploreTrace.AzureTraces.Query)
+
+		exploreParent := findInternalAzureQueryByLinkTitle(t, frame, "Explore Parent Span: ${__data.fields.parentSpanID}")
+		require.NotNil(t, exploreParent.QueryType)
+		require.Equal(t, string(dataquery.AzureQueryTypeAzureTraces), *exploreParent.QueryType)
+		require.NotNil(t, exploreParent.AzureTraces)
+		require.Equal(t, []string{resolvedResource}, exploreParent.AzureTraces.Resources)
+		require.NotNil(t, exploreParent.AzureTraces.Query)
+		require.Equal(t, parentExploreQuery, *exploreParent.AzureTraces.Query)
+
+		exploreLogs := findInternalAzureQueryByLinkTitle(t, frame, "Explore Trace Logs")
+		require.NotNil(t, exploreLogs.QueryType)
+		require.Equal(t, string(dataquery.AzureQueryTypeLogAnalytics), *exploreLogs.QueryType)
+		require.NotNil(t, exploreLogs.AzureLogAnalytics)
+		require.Equal(t, []string{resolvedResource}, exploreLogs.AzureLogAnalytics.Resources)
+	})
+}
+
+func countFieldLinksByTitle(frame *data.Frame, title string) int {
+	count := 0
+	for _, field := range frame.Fields {
+		if field.Config == nil {
+			continue
+		}
+		for _, link := range field.Config.Links {
+			if link.Title == title {
+				count++
+			}
+		}
+	}
+	return count
+}
+
+func findInternalAzureQueryByLinkTitle(t *testing.T, frame *data.Frame, title string) dataquery.AzureMonitorQuery {
+	t.Helper()
+	for _, field := range frame.Fields {
+		if field.Config == nil {
+			continue
+		}
+		for _, link := range field.Config.Links {
+			if link.Title != title || link.Internal == nil {
+				continue
+			}
+			query, ok := link.Internal.Query.(dataquery.AzureMonitorQuery)
+			require.True(t, ok, "expected AzureMonitorQuery on link %q", title)
+			return query
+		}
+	}
+	require.FailNow(t, "link not found", "title %q", title)
+	return dataquery.AzureMonitorQuery{}
+}
+
 func decodeEncodedQuery(t *testing.T, encoded string) string {
 	t.Helper()
 	gzipped, err := base64.StdEncoding.DecodeString(encoded)
