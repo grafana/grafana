@@ -261,7 +261,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -356,7 +355,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	cloudwatchService := cloudwatch.ProvideService()
 	graphiteService := graphite.ProvideService(httpclientProvider, tracer)
 	influxdbService := influxdb.ProvideService(httpclientProvider)
-	prometheusService := prometheus.ProvideService(httpclientProvider)
 	testdatasourceService := testdatasource.ProvideService()
 	mysqlService := mysql.ProvideService()
 	systemUsers := store.ProvideSystemUsersService()
@@ -365,7 +363,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	grafanadsService := grafanads.ProvideService(storageService, featureToggles)
-	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, graphiteService, influxdbService, prometheusService, testdatasourceService, mysqlService, grafanadsService)
+	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, graphiteService, influxdbService, testdatasourceService, mysqlService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
 	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
@@ -1118,7 +1116,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	cloudwatchService := cloudwatch.ProvideService()
 	graphiteService := graphite.ProvideService(httpclientProvider, tracer)
 	influxdbService := influxdb.ProvideService(httpclientProvider)
-	prometheusService := prometheus.ProvideService(httpclientProvider)
 	testdatasourceService := testdatasource.ProvideService()
 	mysqlService := mysql.ProvideService()
 	systemUsers := store.ProvideSystemUsersService()
@@ -1127,7 +1124,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	grafanadsService := grafanads.ProvideService(storageService, featureToggles)
-	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, graphiteService, influxdbService, prometheusService, testdatasourceService, mysqlService, grafanadsService)
+	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, graphiteService, influxdbService, testdatasourceService, mysqlService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
 	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)

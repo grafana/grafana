@@ -746,6 +746,27 @@ func runTestKVBatchGet(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 		}
 	})
 
+	t.Run("batch get retains request order beyond ten keys", func(t *testing.T) {
+		// The SQL backend rebuilds the request order from an index column. Three
+		// keys cannot tell a numeric ordering from a lexicographic one, so use
+		// enough that 10 would sort before 2 if the index were compared as text.
+		const numKeys = 20
+		names := make([]string, numKeys)
+		for i := range numKeys {
+			names[i] = fmt.Sprintf("ordered-key-%d", i)
+			saveKVHelper(t, kv, ctx, testSection, namespacedKey(nsPrefix, names[i]), strings.NewReader(fmt.Sprintf("value-%d", i)))
+		}
+
+		keys := namespacedKeys(nsPrefix, names)
+		actualKeys := make([]string, 0, numKeys)
+		for item, err := range kv.BatchGet(ctx, testSection, keys) {
+			require.NoError(t, err)
+			require.NoError(t, item.Value.Close())
+			actualKeys = append(actualKeys, item.Key)
+		}
+		assert.Equal(t, keys, actualKeys, "BatchGet must return keys in request order")
+	})
+
 	t.Run("batch get with empty section", func(t *testing.T) {
 		var kvs []kvpkg.KeyValue
 		var errs []error
