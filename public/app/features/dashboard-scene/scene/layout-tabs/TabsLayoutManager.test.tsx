@@ -16,6 +16,8 @@ import { TabItem } from './TabItem';
 import { getTabsLayoutUrlKeysToTry, TabsLayoutManager } from './TabsLayoutManager';
 
 let lastUndo: (() => void) | undefined;
+let lastEditPerform: (() => void) | undefined;
+let lastEditUndo: (() => void) | undefined;
 
 jest.mock('../../sidebar/shared', () => ({
   dashboardEditActions: {
@@ -31,8 +33,10 @@ jest.mock('../../sidebar/shared', () => ({
       perform();
       lastUndo = undo;
     }),
-    edit: jest.fn(({ perform }) => {
+    edit: jest.fn(({ perform, undo }) => {
       perform();
+      lastEditPerform = perform;
+      lastEditUndo = undo;
     }),
   },
   ObjectsReorderedOnCanvasEvent: jest.fn().mockImplementation(() => ({})),
@@ -680,6 +684,8 @@ describe('TabsLayoutManager', () => {
     let publishSpy: jest.SpyInstance;
 
     beforeEach(() => {
+      lastEditPerform = undefined;
+      lastEditUndo = undefined;
       publishSpy = jest.spyOn(appEvents, 'publish').mockImplementation(() => {});
     });
 
@@ -742,6 +748,37 @@ describe('TabsLayoutManager', () => {
 
       expect(publishSpy).not.toHaveBeenCalled();
       expect(scene.state.body).toBeInstanceOf(RowsLayoutManager);
+      expect(scene.state.$variables?.state.variables).toContain(variable);
+    });
+
+    it('should redo the hoist after undo by re-installing the resulting layout', () => {
+      const variable = new ConstantVariable({ name: 'env', value: 'prod' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Rows tab',
+          layout: new RowsLayoutManager({ rows: [new RowItem({ title: 'Row 1' })] }),
+          $variables: new SceneVariableSet({ variables: [variable] }),
+        }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.ungroupTabs();
+
+      const layoutAfterUngroup = scene.state.body;
+      expect(layoutAfterUngroup).toBeInstanceOf(RowsLayoutManager);
+      expect(scene.state.$variables?.state.variables).toContain(variable);
+
+      // Undo detaches the hoisted layout and re-installs a clone of the pre-hoist state
+      lastEditUndo!();
+
+      expect(scene.state.body).toBeInstanceOf(TabsLayoutManager);
+      expect(scene.state.body).not.toBe(tabsLayoutManager);
+      expect(scene.state.$variables?.state.variables ?? []).not.toContain(variable);
+
+      // Redo must re-install the hoist result instead of re-running it on the detached original
+      lastEditPerform!();
+
+      expect(scene.state.body).toBe(layoutAfterUngroup);
       expect(scene.state.$variables?.state.variables).toContain(variable);
     });
   });

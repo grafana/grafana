@@ -6,6 +6,8 @@ import {
   type SceneObjectState,
   SceneObjectUrlSyncConfig,
   type SceneObjectUrlValues,
+  type SceneVariable,
+  type SceneVariables,
   SceneVariableSet,
   type VizPanel,
 } from '@grafana/scenes';
@@ -357,7 +359,7 @@ export class TabsLayoutManager
     });
   }
 
-  private _wrapUngroupInEdit(perform: () => void) {
+  private _wrapUngroupInEdit(performUngroup: () => void) {
     const parent = this.parent;
     if (!parent || !isLayoutParent(parent)) {
       throw new Error('Ungroup tabs failed: parent is not a layout container');
@@ -371,12 +373,33 @@ export class TabsLayoutManager
       previousVariableSet instanceof SceneVariableSet ? [...previousVariableSet.state.variables] : undefined;
     const scene = getDashboardSceneFor(this);
 
+    // Undo replaces this layout with a detached clone, so redo cannot run the ungroup again
+    // (it would mutate this detached original while leaking variables into the live parent).
+    // Instead, the result of the first run is captured and redo re-installs it.
+    let nextLayout: DashboardLayoutManager | undefined;
+    let nextVariableSet: SceneVariables | undefined;
+    let nextVariables: SceneVariable[] | undefined;
+
     dashboardEditActions.edit({
       description: t('dashboard.tabs-layout.edit.ungroup-tabs', 'Ungroup tabs'),
       source: scene,
-      perform,
+      perform: () => {
+        if (nextLayout) {
+          parent.switchLayout(nextLayout, true);
+          if (nextVariableSet instanceof SceneVariableSet && nextVariables) {
+            nextVariableSet.setState({ variables: nextVariables });
+          }
+          parent.setState({ $variables: nextVariableSet });
+          return;
+        }
+
+        performUngroup();
+        nextLayout = parent.getLayout();
+        nextVariableSet = parent.state.$variables;
+        nextVariables = nextVariableSet instanceof SceneVariableSet ? [...nextVariableSet.state.variables] : undefined;
+      },
       undo: () => {
-        parent.switchLayout(previousLayout);
+        parent.switchLayout(previousLayout, true);
         if (previousVariableSet instanceof SceneVariableSet && previousVariables) {
           previousVariableSet.setState({ variables: previousVariables });
         }

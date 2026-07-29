@@ -16,6 +16,8 @@ import { RowItem } from './RowItem';
 import { RowsLayoutManager } from './RowsLayoutManager';
 
 let lastUndo: (() => void) | undefined;
+let lastEditPerform: (() => void) | undefined;
+let lastEditUndo: (() => void) | undefined;
 let ungroupLayoutCalled = false;
 
 jest.mock('../../sidebar/shared', () => ({
@@ -28,8 +30,10 @@ jest.mock('../../sidebar/shared', () => ({
       perform();
       lastUndo = undo;
     }),
-    edit: jest.fn(({ perform }) => {
+    edit: jest.fn(({ perform, undo }) => {
       perform();
+      lastEditPerform = perform;
+      lastEditUndo = undo;
     }),
   },
 }));
@@ -355,6 +359,8 @@ describe('RowsLayoutManager', () => {
 
     beforeEach(() => {
       jest.clearAllMocks();
+      lastEditPerform = undefined;
+      lastEditUndo = undefined;
       publishSpy = jest.spyOn(appEvents, 'publish').mockImplementation(() => {});
     });
 
@@ -455,6 +461,40 @@ describe('RowsLayoutManager', () => {
       rowsLayoutManager.ungroupRows();
 
       expect(publishSpy).not.toHaveBeenCalled();
+      expect(scene.state.$variables?.state.variables).toContain(variable);
+    });
+
+    it('should redo the hoist after undo by re-installing the resulting layout', () => {
+      const innerRow = new RowItem({ title: 'Inner row' });
+      const variable = new ConstantVariable({ name: 'env', value: 'prod' });
+      const rowsLayoutManager = buildRowsLayoutManager([
+        new RowItem({
+          title: 'Outer',
+          layout: new RowsLayoutManager({ rows: [innerRow] }),
+          $variables: new SceneVariableSet({ variables: [variable] }),
+        }),
+      ]);
+      const scene = rowsLayoutManager.parent as DashboardScene;
+
+      rowsLayoutManager.ungroupRows();
+
+      expect(rowsLayoutManager.state.rows).toHaveLength(1);
+      expect(rowsLayoutManager.state.rows[0]).toBe(innerRow);
+      expect(scene.state.$variables?.state.variables).toContain(variable);
+
+      // Undo detaches the hoisted layout and re-installs a clone of the pre-hoist state
+      lastEditUndo!();
+
+      expect(scene.state.body).not.toBe(rowsLayoutManager);
+      expect(scene.state.body).toBeInstanceOf(RowsLayoutManager);
+      expect(scene.state.$variables?.state.variables ?? []).not.toContain(variable);
+
+      // Redo must re-install the hoist result instead of re-running it on the detached original
+      lastEditPerform!();
+
+      expect(scene.state.body).toBe(rowsLayoutManager);
+      expect(rowsLayoutManager.state.rows).toHaveLength(1);
+      expect(rowsLayoutManager.state.rows[0]).toBe(innerRow);
       expect(scene.state.$variables?.state.variables).toContain(variable);
     });
   });
