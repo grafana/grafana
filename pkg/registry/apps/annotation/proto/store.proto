@@ -135,8 +135,12 @@ message ListTagsRequest {
 }
 
 message TagListOptions {
-  string prefix = 1;
+  // Deprecated: use match. Only honoured when match is empty, so that a new
+  // client talking to an old server still filters, if only by prefix.
+  string prefix = 1 [deprecated = true];
   int32 limit = 2;
+  // match filters tags containing this substring, case-insensitively.
+  string match = 3;
 }
 
 message ListTagsResponse {

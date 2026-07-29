@@ -49,7 +49,10 @@ func newTagsHandler(
 		opts := TagListOptions{}
 		queryParams := request.URL.Query()
 
-		if v := queryParams.Get("prefix"); v != "" {
+		// prefer the newer "tag" query param over the deprecated "prefix" param, for backwards compatibility
+		if v := queryParams.Get("tag"); v != "" {
+			opts.Match = v
+		} else if v := queryParams.Get("prefix"); v != "" {
 			opts.Prefix = v
 		}
 

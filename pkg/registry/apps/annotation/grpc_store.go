@@ -196,8 +196,10 @@ func fromProtoListOptions(opts *storev1.ListOptions) ListOptions {
 
 // toProtoTagListOptions converts TagListOptions to proto TagListOptions
 func toProtoTagListOptions(opts TagListOptions) *storev1.TagListOptions {
+	match := opts.match()
 	return &storev1.TagListOptions{
-		Prefix: opts.Prefix,
+		Match:  match,
+		Prefix: match, //nolint:staticcheck // SA1019: retained for older servers.
 		Limit:  int32(opts.Limit),
 	}
 }
@@ -209,7 +211,8 @@ func fromProtoTagListOptions(opts *storev1.TagListOptions) TagListOptions {
 	}
 
 	return TagListOptions{
-		Prefix: opts.Prefix,
+		Match:  opts.Match,
+		Prefix: opts.Prefix, //nolint:staticcheck // SA1019: honored for older clients.
 		Limit:  int(opts.Limit),
 	}
 }

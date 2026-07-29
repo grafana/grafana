@@ -72,8 +72,10 @@ func tagCacheKey(namespace, prefix string, limit int) string {
 // ListTags implements the TagProvider interface.
 // We use a cache here because tag queries can be expensive, and they don't change frequently.
 func (s *PostgreSQLStore) ListTags(ctx context.Context, namespace string, opts TagListOptions) ([]Tag, error) {
+	match := opts.match()
+
 	// Try cache first
-	cacheKey := tagCacheKey(namespace, opts.Prefix, opts.Limit)
+	cacheKey := tagCacheKey(namespace, match, opts.Limit)
 	if cached, ok := s.tagCache.get(cacheKey); ok {
 		if s.metrics != nil {
 			s.metrics.TagCacheHits.Inc()
@@ -94,10 +96,10 @@ func (s *PostgreSQLStore) ListTags(ctx context.Context, namespace string, opts T
 	args := []any{namespace}
 	argNum := 2
 
-	// Add prefix filter if specified
-	if opts.Prefix != "" {
-		query += fmt.Sprintf(" AND tag LIKE $%d", argNum)
-		args = append(args, opts.Prefix+"%")
+	// Match anywhere in the tag, case-insensitive
+	if match != "" {
+		query += fmt.Sprintf(" AND tag ILIKE '%%' || $%d || '%%'", argNum)
+		args = append(args, match)
 		argNum++
 	}
 

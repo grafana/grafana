@@ -122,6 +122,37 @@ func TestIntegrationTagsHandler(t *testing.T) {
 			expectedTags: map[string]int64{},
 		},
 		{
+			name:      "Tag matches anywhere in the tag, not just its start",
+			namespace: metav1.NamespaceDefault,
+			queryParams: url.Values{
+				"tag": []string{"prod"},
+			},
+			expectedTags: map[string]int64{
+				"env-prod": 2,
+			},
+		},
+		{
+			name:      "Tag matches case-insensitively",
+			namespace: metav1.NamespaceDefault,
+			queryParams: url.Values{
+				"tag": []string{"INCIDENT"},
+			},
+			expectedTags: map[string]int64{
+				"incident": 1,
+			},
+		},
+		{
+			name:      "Tag takes precedence over the deprecated prefix",
+			namespace: metav1.NamespaceDefault,
+			queryParams: url.Values{
+				"tag":    []string{"incident"},
+				"prefix": []string{"env-"},
+			},
+			expectedTags: map[string]int64{
+				"incident": 1,
+			},
+		},
+		{
 			name:      "Limit to 2 results",
 			namespace: metav1.NamespaceDefault,
 			queryParams: url.Values{
