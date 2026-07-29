@@ -230,6 +230,15 @@ async function fetchUser(): Promise<Display | undefined> {
   return resp.json();
 }
 
+async function fetchInitialUserPermissions(): Promise<Record<string, boolean> | undefined> {
+  const response = await fetch('/api/access-control/user/actions');
+  if (!response.ok){
+    console.warn(`Failed to fetch user permissions: ${response.status}`);
+    return undefined;
+  }
+  return response.json();
+}
+
 function applyCustomFavIcon() {
   // @ts-ignore - enterprise only setting.
   const customFavIcon = window.grafanaBootData.settings.whitelabeling?.favIcon;
@@ -303,7 +312,8 @@ async function initBootDataFromLegacy() {
 async function initBootDataFromMT() {
   await rotateExpiredSession();
 
-  const display = await fetchUser();
+  const [display, permissions] = await Promise.all([fetchUser(), fetchInitialUserPermissions()]);
+
   if (display) {
     window.grafanaBootData.user = {
       ...window.grafanaBootData.user,
@@ -312,6 +322,7 @@ async function initBootDataFromMT() {
       uid: display.identity?.name ?? '',
       name: display.displayName,
       gravatarUrl: display.avatarURL ?? '',
+      permissions,
     };
   } else {
     window.grafanaBootData.user = {
