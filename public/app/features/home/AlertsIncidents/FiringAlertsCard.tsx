@@ -3,6 +3,7 @@ import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Badge, LinkButton, Stack, Tooltip } from '@grafana/ui';
 import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 import { type SeverityLevel } from 'app/features/alerting/unified/triage/scene/filters/severity';
+import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
@@ -10,7 +11,6 @@ import { ctaClicked } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
-import { ALL_TEAMS_VALUE } from './constants';
 import { severityLevelColor } from './severity';
 import { canViewFiringAlerts, useFiringAlerts, type FiringAlertsData } from './useFiringAlerts';
 
@@ -50,7 +50,7 @@ function severityLabel(level?: SeverityLevel): string {
  * claiming it's the user's own.
  */
 function emptyMessage(selectedTeam: string | undefined, hasTeams: boolean): string {
-  if (selectedTeam === ALL_TEAMS_VALUE) {
+  if (selectedTeam === ALL_VARIABLE_VALUE) {
     return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
   }
   if (selectedTeam) {

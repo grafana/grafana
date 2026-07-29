@@ -10,11 +10,11 @@ import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/fi
 import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { ALERTING_PATHS, alertListPageLink } from 'app/features/alerting/unified/utils/navigation';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
+import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
 
-import { ALL_TEAMS_VALUE, HOME_CARD_MAX_ITEMS } from './constants';
 import { severityLevelRank } from './severity';
 
 /** Canonical severity level for an alert, tolerant of a missing severity label so the card never crashes. */
@@ -62,7 +62,7 @@ function buildTolerantTeamMatchers(teamNames: string[]) {
  * and with no selection we fall back to the user's own teams when they have any.
  */
 function resolveTeamMatchers(selectedTeam: string | undefined, userTeamNames: string[]) {
-  if (selectedTeam === ALL_TEAMS_VALUE) {
+  if (selectedTeam === ALL_VARIABLE_VALUE) {
     return [];
   }
   if (selectedTeam) {

@@ -6,8 +6,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Combobox, type ComboboxOption } from '@grafana/ui';
 import { fetchTagValues } from 'app/features/alerting/unified/triage/scene/tagKeysProviders';
-
-import { ALL_TEAMS_VALUE } from './constants';
+import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 const DEFAULT_OPTION_VALUE = '';
 
@@ -28,7 +27,7 @@ const getDefaultOption = (userHasTeams: boolean): ComboboxOption<string> => ({
 // default option already reads "All teams".
 const getAllTeamsOption = (): ComboboxOption<string> => ({
   label: t('home.alerts-incidents.team-filter-all', 'All teams'),
-  value: ALL_TEAMS_VALUE,
+  value: ALL_VARIABLE_VALUE,
 });
 
 interface Props {
@@ -67,7 +66,7 @@ export function TeamFilterCombobox({ selectedTeam, onChange, userHasTeams }: Pro
   // Must be memoized: a new object every render makes downshift think the
   // selection changed, which wipes the input while the user is typing.
   const valueOption = useMemo(() => {
-    if (selectedTeam === ALL_TEAMS_VALUE) {
+    if (selectedTeam === ALL_VARIABLE_VALUE) {
       // Render the label, never the raw sentinel.
       return getAllTeamsOption();
     }
