@@ -1,6 +1,26 @@
 import type { MetricType } from '../types';
 
+// Which suffixes mean "this series is one part of a classic (non-native) histogram or summary".
 const CLASSIC_HISTOGRAM_SUFFIXES = ['_bucket', '_sum', '_count'];
+
+// Which suffixes a series may carry that its *family* metadata does not. A superset of the above:
+// `_total` belongs here because an OpenMetrics counter is exposed as `foo_total` with metadata keyed
+// `foo`, but it must NOT reach the classic/native split above — a counter's `_total` is not a bucket.
+const FAMILY_NAME_SUFFIXES = [...CLASSIC_HISTOGRAM_SUFFIXES, '_total'];
+
+/**
+ * The metric family a series belongs to: `foo_bucket` → `foo`.
+ *
+ * `/api/v1/metadata` is keyed by the family name while the catalog lists the series, and the two often
+ * differ: a classic histogram or summary contributes only `_bucket`/`_sum`/`_count` and never the bare
+ * family name, and an OpenMetrics counter appears as `foo_total`. Looking metadata up by series name
+ * alone misses all of them — measured against a real Prometheus, that left 62% of the catalog typed
+ * `unknown` and meant the histogram branch below never ran once.
+ */
+export function baseMetricName(name: string): string {
+  const suffix = FAMILY_NAME_SUFFIXES.find((candidate) => name.endsWith(candidate));
+  return suffix ? name.slice(0, -suffix.length) : name;
+}
 
 // The only two types worth guessing from prose: a metric that describes itself as a histogram or a
 // summary almost always is one, and nothing else is described that reliably.

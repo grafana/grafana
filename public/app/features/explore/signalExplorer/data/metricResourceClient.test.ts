@@ -45,6 +45,84 @@ describe('metricResourceClient', () => {
     ]);
   });
 
+  // Prometheus keys `/api/v1/metadata` by the BASE metric name, but the catalog lists the series. A
+  // classic histogram or summary is only ever `<base>_bucket`/`_sum`/`_count` in the catalog, so
+  // looking metadata up by the series name misses every one of them. Measured against
+  // gdev-prometheus, that typed 624 of 1031 metrics `unknown` and meant the histogram branch of
+  // `deriveMetricType` never fired at all.
+  describe('metadata for classic histogram and summary series', () => {
+    const withMetadata = (names: string[], meta: Record<string, { type?: string; help?: string; unit?: string }>) => {
+      const lp = makeLP();
+      lp.retrieveMetrics.mockReturnValue(names);
+      lp.retrieveMetricsMetadata.mockReturnValue(meta);
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+    };
+
+    it('types a histogram series from the base metric’s metadata', async () => {
+      withMetadata(
+        ['go_gc_pauses_seconds_bucket', 'go_gc_pauses_seconds_sum', 'go_gc_pauses_seconds_count'],
+        { go_gc_pauses_seconds: { type: 'histogram', help: 'GC pause distribution' } }
+      );
+
+      const rows = await fetchCatalog({ uid: 'h1' }, range);
+
+      expect(rows.map((row) => row.type)).toEqual(['histogram', 'histogram', 'histogram']);
+      // The help text describes the family, so it is the best answer for a member of it.
+      expect(rows[0].help).toBe('GC pause distribution');
+    });
+
+    it('types a summary series from the base metric’s metadata', async () => {
+      withMetadata(['request_duration_seconds_sum'], {
+        request_duration_seconds: { type: 'summary', help: 'request duration' },
+      });
+
+      await expect(fetchCatalog({ uid: 'h2' }, range)).resolves.toEqual([
+        { name: 'request_duration_seconds_sum', type: 'summary', help: 'request duration', unit: undefined },
+      ]);
+    });
+
+    it('prefers a series’ own metadata over the base name’s', async () => {
+      withMetadata(['http_requests_count'], {
+        http_requests_count: { type: 'counter', help: 'own' },
+        http_requests: { type: 'histogram', help: 'base' },
+      });
+
+      const [row] = await fetchCatalog({ uid: 'h3' }, range);
+
+      expect(row.type).toBe('counter');
+      expect(row.help).toBe('own');
+    });
+
+    // An OpenMetrics counter is exposed as `foo_total` while its metadata is keyed `foo`. 194 of
+    // gdev-prometheus's names are like this, every one of them a counter.
+    it('types an OpenMetrics counter series from its family metadata', async () => {
+      withMetadata(['deprecated_flags_inuse_total'], {
+        deprecated_flags_inuse: { type: 'counter', help: 'in-use deprecated flags' },
+      });
+
+      const [row] = await fetchCatalog({ uid: 'h5' }, range);
+
+      expect(row.type).toBe('counter');
+    });
+
+    // `_total` must not reach the classic/native histogram split: a counter's `_total` is not a bucket.
+    it('does not treat a `_total` series as a classic histogram member', async () => {
+      withMetadata(['odd_total'], { odd: { type: 'histogram', help: 'h' } });
+
+      const [row] = await fetchCatalog({ uid: 'h6' }, range);
+
+      expect(row.type).toBe('native histogram');
+    });
+
+    it('leaves a metric with no suffix and no metadata as unknown', async () => {
+      withMetadata(['mystery_metric'], {});
+
+      await expect(fetchCatalog({ uid: 'h4' }, range)).resolves.toEqual([
+        { name: 'mystery_metric', type: 'unknown', help: undefined, unit: undefined },
+      ]);
+    });
+  });
+
   it('is single-flight: two concurrent calls resolve one start()', async () => {
     const lp = makeLP();
     (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });

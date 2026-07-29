@@ -4,7 +4,7 @@ import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
 import type { MetricRow } from '../types';
 
-import { deriveMetricType } from './metricType';
+import { baseMetricName, deriveMetricType } from './metricType';
 
 /**
  * The part of the Prometheus language provider this module calls — derived from the real interface
@@ -173,12 +173,18 @@ export function fetchCatalog(dsRef: DataSourceRef, timeRange: TimeRange): Promis
     await lp.start(timeRange);
     const names = lp.retrieveMetrics() ?? [];
     const meta = lp.retrieveMetricsMetadata() ?? {};
-    return names.map<MetricRow>((name) => ({
-      name,
-      type: deriveMetricType(name, meta[name]),
-      help: meta[name]?.help,
-      unit: meta[name]?.unit,
-    }));
+    return names.map<MetricRow>((name) => {
+      // Metadata is keyed by the metric family, so a classic histogram or summary series has none of
+      // its own; fall back to its family's. Own entry first, in case a metric really is named with
+      // one of those suffixes.
+      const entry = meta[name] ?? meta[baseMetricName(name)];
+      return {
+        name,
+        type: deriveMetricType(name, entry),
+        help: entry?.help,
+        unit: entry?.unit,
+      };
+    });
   });
 }
 
