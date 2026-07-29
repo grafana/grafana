@@ -22,39 +22,61 @@ const (
 
 // informerMetrics measures event delivery into the provisioning controllers'
 // delta sources, on the same series for both sources so NATS and the apiserver
-// watch compare directly: how many events arrived (by delivery: live vs the
-// periodic re-list/resync) and how long after the change was written. Events a
-// replica missed live cannot be counted here — under the round-robin queue
-// group each notification reaches one replica, so a per-replica gap measures
-// routing, not loss. Missed NATS events are the cluster-wide difference between
-// the publisher's storage_server_watch_notifications_published_total and
-// events_total{source="nats",delivery="live"} summed across replicas.
+// watch compare directly: how many events arrived — live vs recovered by the
+// periodic re-list/resync, as separate metric families — and how long after the
+// change was written. Events a replica missed live cannot be counted here —
+// under the round-robin queue group each notification reaches one replica, so a
+// per-replica gap measures routing, not loss. Missed NATS events are the
+// cluster-wide difference between the publisher's
+// storage_server_watch_notifications_published_total and live_events_total
+// summed across replicas.
 type informerMetrics struct {
-	events     *prometheus.CounterVec
-	latency    *prometheus.HistogramVec
-	reconnects *prometheus.CounterVec
+	liveEvents       *prometheus.CounterVec
+	relistEvents     *prometheus.CounterVec
+	liveLatency      *prometheus.HistogramVec
+	relistLatency    *prometheus.HistogramVec
+	reconnects       *prometheus.CounterVec
+	liveSubscription *prometheus.GaugeVec
 }
 
 // newInformerMetrics builds the delivery metrics on reg, reusing collectors
 // already registered there so every delta source in the process shares one set.
 // A nil reg leaves the collectors unregistered.
 func newInformerMetrics(reg prometheus.Registerer) *informerMetrics {
-	return &informerMetrics{
-		events: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_provisioning_informer_events_total",
-			Help: "Events delivered to provisioning informer handlers, by resource, source (nats, apiserver), delivery (live, relist) and verb. Relist adds and deletes are changes recovered by the periodic re-list; relist updates are its re-deliveries of unchanged objects.",
-		}, []string{"resource", "source", "delivery", "verb"})),
-		latency: registerOrReuse(reg, prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "grafana_provisioning_informer_event_latency_seconds",
-			Help:                            "Time from a change's resource version being issued to its event reaching the informer handlers. Recorded for live events and for relist-recovered adds (where it is the recovery delay); re-deliveries of unchanged objects carry no latency.",
+	latencyOpts := func(name, help string) prometheus.HistogramOpts {
+		return prometheus.HistogramOpts{
+			Name:                            name,
+			Help:                            help,
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
-		}, []string{"resource", "source", "delivery"})),
+		}
+	}
+	return &informerMetrics{
+		liveEvents: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_provisioning_informer_live_events_total",
+			Help: "Events delivered live to provisioning informer handlers, by resource, source (nats, apiserver) and verb.",
+		}, []string{"resource", "source", "verb"})),
+		relistEvents: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_provisioning_informer_relist_events_total",
+			Help: "Events delivered by the periodic re-list/resync to provisioning informer handlers, by resource, source (nats, apiserver) and verb. Adds and deletes are changes the live stream did not deliver here; updates are re-deliveries of unchanged objects.",
+		}, []string{"resource", "source", "verb"})),
+		liveLatency: registerOrReuse(reg, prometheus.NewHistogramVec(latencyOpts(
+			"grafana_provisioning_informer_live_event_latency_seconds",
+			"Time from a change's resource version being issued to its live event reaching the informer handlers.",
+		), []string{"resource", "source"})),
+		relistLatency: registerOrReuse(reg, prometheus.NewHistogramVec(latencyOpts(
+			"grafana_provisioning_informer_relist_event_latency_seconds",
+			"Time from a change's resource version being issued to its recovery by a re-list, for adds the live stream did not deliver. Re-deliveries of unchanged objects carry no latency.",
+		), []string{"resource", "source"})),
 		reconnects: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_provisioning_informer_nats_reconnects_total",
 			Help: "Times an informer's NATS subscription was (re)established after a gap. Live events published during the gap never reach this replica; the informer forces a re-list to recover them.",
+		}, []string{"resource"})),
+		liveSubscription: registerOrReuse(reg, prometheus.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "grafana_provisioning_informer_live_subscription",
+			Help: "Whether the informer holds an open live NATS subscription (1) or runs re-list-only (0): before the subscription first opens, or in degraded-start mode. Mid-run connection outages are reported by grafana_nats_subscriber_connection_status instead — the subscription itself resumes transparently on reconnect.",
 		}, []string{"resource"})),
 	}
 }
@@ -78,15 +100,19 @@ func registerOrReuse[C prometheus.Collector](reg prometheus.Registerer, c C) C {
 }
 
 func (m *informerMetrics) observe(source, resourceName, delivery, verb string, rv int64) {
-	m.events.WithLabelValues(resourceName, source, delivery, verb).Inc()
+	events, latency := m.liveEvents, m.liveLatency
+	if delivery == usinformer.DeliveryRelist {
+		events, latency = m.relistEvents, m.relistLatency
+	}
+	events.WithLabelValues(resourceName, source, verb).Inc()
 	if rv <= 0 {
 		return
 	}
 	// The RV embeds the write's timestamp (snowflake or microsecond epoch);
 	// negative results mean clock skew, not delivery, so they are dropped.
-	latency := time.Since(resource.ResourceVersionTime(rv)).Seconds()
-	if latency > 0 {
-		m.latency.WithLabelValues(resourceName, source, delivery).Observe(latency)
+	seconds := time.Since(resource.ResourceVersionTime(rv)).Seconds()
+	if seconds > 0 {
+		latency.WithLabelValues(resourceName, source).Observe(seconds)
 	}
 }
 
@@ -107,14 +133,22 @@ func (r natsRecorder) ObserveReconnect() {
 	r.metrics.reconnects.WithLabelValues(r.resourceName).Inc()
 }
 
+func (r natsRecorder) ObserveLiveSubscription(open bool) {
+	v := 0.0
+	if open {
+		v = 1
+	}
+	r.metrics.liveSubscription.WithLabelValues(r.resourceName).Set(v)
+}
+
 // apiServerMeter observes deliveries from an apiserver-backed
 // SharedIndexInformer under source=apiserver, on the same series the NATS
 // recorder writes. Register it as one extra event handler so each event is
 // counted once however many controller handlers the informer has. The informer
 // has no live/relist distinction of its own, so the meter derives it: initial-
 // list adds and resync re-deliveries (same RV on both sides of an update) and
-// re-list-detected deletes (DeletedFinalStateUnknown) are delivery=relist,
-// everything else came from the watch and is delivery=live.
+// re-list-detected deletes (DeletedFinalStateUnknown) count as relist,
+// everything else came from the watch and counts as live.
 type apiServerMeter struct {
 	metrics      *informerMetrics
 	resourceName string

@@ -577,6 +577,7 @@ type recordingMetrics struct {
 	mu         sync.Mutex
 	events     []observedEvent
 	reconnects int
+	liveSub    []bool
 }
 
 type observedEvent struct {
@@ -597,10 +598,22 @@ func (m *recordingMetrics) ObserveReconnect() {
 	m.reconnects++
 }
 
+func (m *recordingMetrics) ObserveLiveSubscription(open bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.liveSub = append(m.liveSub, open)
+}
+
 func (m *recordingMetrics) observedEvents() []observedEvent {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return append([]observedEvent(nil), m.events...)
+}
+
+func (m *recordingMetrics) liveSubHistory() []bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]bool(nil), m.liveSub...)
 }
 
 func (m *recordingMetrics) reconnectCount() int {
@@ -710,4 +723,61 @@ func TestInformer_MetricsObserveReconnect(t *testing.T) {
 	n.signalReconnect()
 
 	assert.Equal(t, 2, m.reconnectCount())
+}
+
+// The live-subscription gauge tracks what the informer can see: false until the
+// subscription opens, true once it does — including a degraded start, where the
+// informer lists and serves re-lists while the background retry keeps trying.
+func TestInformer_MetricsObserveLiveSubscription(t *testing.T) {
+	t.Run("normal start flips to open once subscribed", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			sub := newFakeSubscriber()
+			m := &recordingMetrics{}
+			list := func(context.Context) ([]runtime.Object, error) { return nil, nil }
+			n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
+			n.SetMetrics(m)
+			_, err := n.AddEventHandler(&recordingHandler{})
+			require.NoError(t, err)
+
+			stopCh := make(chan struct{})
+			go n.Run(stopCh)
+			synctest.Wait()
+			require.True(t, n.HasSynced())
+			assert.Equal(t, []bool{false, true}, m.liveSubHistory())
+
+			// Stopping the informer closes the subscription for good.
+			close(stopCh)
+			synctest.Wait()
+			assert.Equal(t, []bool{false, true, false}, m.liveSubHistory())
+		})
+	})
+
+	t.Run("degraded start stays closed until the retry succeeds", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			sub := newFakeSubscriber()
+			sub.failSubscribes(1)
+			m := &recordingMetrics{}
+			list := func(context.Context) ([]runtime.Object, error) { return nil, nil }
+			n := NewInformer(sub, testGVR, testNamespace, time.Hour, testQueueGroup, NewStore(), newObjectFunc, list)
+			n.AllowDegradedStart()
+			n.SetMetrics(m)
+			_, err := n.AddEventHandler(&recordingHandler{})
+			require.NoError(t, err)
+
+			stopCh := make(chan struct{})
+			defer func() { close(stopCh); synctest.Wait() }()
+			go n.Run(stopCh)
+
+			// Degraded: synced from the list alone, no subscription open yet.
+			synctest.Wait()
+			require.True(t, n.HasSynced())
+			assert.Equal(t, []bool{false}, m.liveSubHistory())
+
+			// The background retry opens the subscription on its next attempt.
+			time.Sleep(defaultSubscribeRetry)
+			synctest.Wait()
+			require.True(t, sub.subscribed(subject()))
+			assert.Equal(t, []bool{false, true}, m.liveSubHistory())
+		})
+	})
 }

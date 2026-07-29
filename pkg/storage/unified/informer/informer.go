@@ -62,10 +62,18 @@ const (
 // live events published during the gap were dropped, and the informer forces
 // a re-list to recover them.
 //
+// ObserveLiveSubscription reports whether the informer holds an open live
+// subscription (true) or is running re-list-only (false): before the
+// subscription first opens, throughout degraded-start mode, and once the
+// informer stops. It cannot see mid-run connection outages — the subscription
+// exposes no disconnect callback and the client resumes it transparently —
+// so a connection-level status metric is what reports those.
+//
 // Implementations must not block: observations are made on the delivery path.
 type Metrics interface {
 	ObserveEvent(delivery, verb string, rv int64)
 	ObserveReconnect()
+	ObserveLiveSubscription(open bool)
 }
 
 // defaultResync is the fallback re-list cadence when a caller passes a
@@ -272,6 +280,13 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 	// a disabled subscriber means the informer is re-list-only, so there is no
 	// subscription to wait for.
 	if n.newObject != nil && nats.Enabled(n.subscriber) {
+		// The gauge covers only what this informer can see: no subscription yet
+		// (or degraded mode) vs an open one. A mid-run connection outage is
+		// invisible here — the subscription has no disconnect callback and the
+		// client resumes it transparently — and is reported by the subscriber's
+		// connection-status metric instead.
+		n.observeLiveSubscription(false)
+		defer n.observeLiveSubscription(false)
 		subject := resourcewatch.Subject(n.gvr, n.namespace)
 		// Re-list on reconnect: a round-robin subscription can miss events
 		// published while the connection was down, so reconcile from a fresh list.
@@ -283,6 +298,7 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 		switch {
 		case err == nil:
 			sub = s
+			n.observeLiveSubscription(true)
 			n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
 		case n.degradedStart:
 			n.log.Warn("nats informer: subscribe failed; starting in re-list-only degraded mode",
@@ -299,6 +315,7 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 				s, err = n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
 				if err == nil {
 					sub = s
+					n.observeLiveSubscription(true)
 					n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
 					break
 				}
@@ -373,6 +390,7 @@ func (n *Informer) retrySubscribe(ctx context.Context, subject string, opts []na
 			n.log.Warn("nats informer: subscribe failed, will retry", "subject", subject, "error", err)
 			continue
 		}
+		n.observeLiveSubscription(true)
 		n.log.Info("nats informer: subscription opened; leaving re-list-only degraded mode",
 			"subject", subject, "gvr", n.gvr.String())
 		n.signalReconnect()
@@ -510,6 +528,12 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 func (n *Informer) observeEvent(delivery, verb string, rv int64) {
 	if n.metrics != nil {
 		n.metrics.ObserveEvent(delivery, verb, rv)
+	}
+}
+
+func (n *Informer) observeLiveSubscription(open bool) {
+	if n.metrics != nil {
+		n.metrics.ObserveLiveSubscription(open)
 	}
 }
 
