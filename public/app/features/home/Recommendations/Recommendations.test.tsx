@@ -143,6 +143,7 @@ beforeEach(() => {
   mockFetchMetricsActivity.mockReset();
   mockFetchMetricsActivity.mockResolvedValue({
     series: null,
+    dataPointsPerMinute: null,
     names: null,
     hosts: null,
     seriesSparkline: null,
@@ -178,6 +179,7 @@ describe('Recommendations', () => {
     setSolutionState({ metrics: 'active', logs: 'active' }, { prometheus: prometheusDatasource, loki: lokiDatasource });
     mockFetchMetricsActivity.mockResolvedValue({
       series: 4_200_000,
+      dataPointsPerMinute: null,
       names: null,
       hosts: 12,
       seriesSparkline: null,
@@ -229,7 +231,14 @@ describe('Recommendations', () => {
     await screen.findByTestId('recommended-card-skeleton');
     expect(screen.queryByRole('region', { name: 'Recommended apps' })).not.toBeInTheDocument();
 
-    resolveMetrics({ series: 4, names: null, hosts: null, seriesSparkline: null, disk: null });
+    resolveMetrics({
+      series: 4,
+      dataPointsPerMinute: null,
+      names: null,
+      hosts: null,
+      seriesSparkline: null,
+      disk: null,
+    });
 
     const region = await carouselRegion();
     const titles = within(region)
@@ -729,6 +738,7 @@ describe('Recommendations', () => {
       );
       mockFetchMetricsActivity.mockResolvedValue({
         series: 4_200_000,
+        dataPointsPerMinute: null,
         names: null,
         hosts: null,
         seriesSparkline: null,
