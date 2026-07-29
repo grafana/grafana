@@ -56,8 +56,8 @@ async function navigateToConnectionStep(
     url?: string;
   }
 ) {
-  if (type === 'github' || type === 'githubEnterprise') {
-    // Select PAT option (GitHub App is the default)
+  if (type !== 'local' && type !== 'git') {
+    // Select PAT option (app-based auth is the default)
     await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
   }
 
@@ -727,8 +727,20 @@ describe('ProvisioningWizard', () => {
       expect(screen.queryByRole('button', { name: /Synchronize with external storage/i })).not.toBeInTheDocument();
     });
 
+    it('should render choose auth type step initially for GitLab', async () => {
+      setup(<ProvisioningWizard type="gitlab" />);
+
+      expect(await screen.findByRole('heading', { name: /Connect/i })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: /Connect with OAuth App/i })).toBeChecked();
+      expect(screen.getByRole('radio', { name: /Connect with Personal Access Token/i })).toBeInTheDocument();
+      expect(screen.queryByRole('radio', { name: /Connect with GitHub App/i })).not.toBeInTheDocument();
+    });
+
     it('should render GitLab-specific fields', async () => {
       const { user } = setup(<ProvisioningWizard type="gitlab" />);
+
+      // Select PAT option (OAuth App is the default)
+      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       // Auth step fields
       expect(screen.getByText('Project Access Token *')).toBeInTheDocument();
@@ -745,6 +757,9 @@ describe('ProvisioningWizard', () => {
 
     it('should render Bitbucket-specific fields', async () => {
       const { user } = setup(<ProvisioningWizard type="bitbucket" />);
+
+      // Select PAT option (OAuth App is the default)
+      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       // Auth step fields
       expect(screen.getByText('API Token *')).toBeInTheDocument();
@@ -795,6 +810,7 @@ describe('ProvisioningWizard', () => {
     it('should accept tokenUser input for Bitbucket provider', async () => {
       const { user } = setup(<ProvisioningWizard type="bitbucket" />);
 
+      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
       await typeIntoTokenField(user, 'ATATTxxxxxxxxxxxxxxxx', 'test-token');
       await pasteIntoInput(user, screen.getByPlaceholderText('username'), 'test-user');
       await pasteIntoInput(

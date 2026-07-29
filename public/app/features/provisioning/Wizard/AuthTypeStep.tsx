@@ -7,12 +7,12 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, Field, RadioButtonGroup, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
-import { isGitHubBased } from '../utils/repositoryTypes';
+import { isGitHubBased, supportsConnections } from '../utils/repositoryTypes';
 
-import { GitHubAppFields } from './GitHubAppFields';
+import { AppConnectionFields } from './AppConnectionFields';
 import { RepositoryField } from './components/RepositoryField';
 import { RepositoryTokenInput } from './components/RepositoryTokenInput';
-import { type ConnectionCreationResult, type GitHubAuthType, type WizardFormData } from './types';
+import { type ConnectionCreationResult, type GitHubAuthType, type RepoType, type WizardFormData } from './types';
 
 interface AuthTypeOption {
   id: GitHubAuthType;
@@ -25,42 +25,68 @@ interface AuthTypeStepProps {
   onGitHubAppSubmit: (result: ConnectionCreationResult) => void;
 }
 
-const getAuthTypeOptions = (): AuthTypeOption[] => [
-  {
-    id: 'github-app',
-    label: t('provisioning.wizard.auth-type-github-app-label', 'Connect with GitHub App'),
+const getAuthTypeOptions = (repoType?: RepoType): AuthTypeOption[] => {
+  const oauthAppOption: AuthTypeOption = {
+    id: 'oauth-app',
+    label: t('provisioning.wizard.auth-type-oauth-app-label', 'Connect with OAuth App'),
     description: t(
-      'provisioning.wizard.auth-type-github-app-description',
-      'Use a GitHub App for enhanced security and team collaboration. Recommended for production environments.'
-    ),
-    icon: 'github',
-  },
-  {
-    id: 'pat',
-    label: t('provisioning.wizard.auth-type-pat-label', 'Connect with Personal Access Token'),
-    description: t(
-      'provisioning.wizard.auth-type-pat-description',
-      'Use a personal access token to authenticate with GitHub. Suitable for individual use and testing.'
+      'provisioning.wizard.auth-type-oauth-app-description',
+      'Use an OAuth application shared through a connection. Recommended for production environments.'
     ),
     icon: 'key-skeleton-alt',
-  },
-];
+  };
+
+  return isGitHubBased(repoType)
+    ? [
+        {
+          id: 'github-app',
+          label: t('provisioning.wizard.auth-type-github-app-label', 'Connect with GitHub App'),
+          description: t(
+            'provisioning.wizard.auth-type-github-app-description',
+            'Use a GitHub App for enhanced security and team collaboration. Recommended for production environments.'
+          ),
+          icon: 'github',
+        },
+        oauthAppOption,
+        {
+          id: 'pat',
+          label: t('provisioning.wizard.auth-type-pat-label', 'Connect with Personal Access Token'),
+          description: t(
+            'provisioning.wizard.auth-type-pat-description',
+            'Use a personal access token to authenticate with GitHub. Suitable for individual use and testing.'
+          ),
+          icon: 'key-skeleton-alt',
+        },
+      ]
+    : [
+        oauthAppOption,
+        {
+          id: 'pat',
+          label: t('provisioning.wizard.auth-type-pat-label', 'Connect with Personal Access Token'),
+          description: t(
+            'provisioning.wizard.auth-type-pat-description-generic',
+            'Use a personal access token to authenticate. Suitable for individual use and testing.'
+          ),
+          icon: 'key-skeleton-alt',
+        },
+      ];
+};
 
 export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
   const styles = useStyles2(getStyles);
-  const { control, watch } = useFormContext<WizardFormData>();
+  const { control, watch, setValue } = useFormContext<WizardFormData>();
   const [githubAuthType, githubAppMode, githubAppConnectionName, repoType] = watch([
     'githubAuthType',
     'githubAppMode',
     'githubApp.connectionName',
     'repository.type',
   ]);
-  const authTypeOptions = useMemo(() => getAuthTypeOptions(), []);
-  const shouldShowRepositories = githubAuthType !== 'github-app' || githubAppMode !== 'new';
-  const isGitHubBasedRepo = isGitHubBased(repoType);
+  const authTypeOptions = useMemo(() => getAuthTypeOptions(repoType), [repoType]);
+  const shouldShowRepositories = githubAuthType === 'pat' || githubAppMode !== 'new';
+  const isConnectionSupportedRepo = supportsConnections(repoType);
 
   const { isConnected: isSelectedConnectionReady } = useConnectionStatus(
-    githubAuthType === 'github-app' ? githubAppConnectionName : undefined
+    githubAuthType !== 'pat' ? githubAppConnectionName : undefined
   );
 
   const isGit = repoType === 'git';
@@ -90,15 +116,22 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
         </Alert>
       )}
 
-      {/* PAT & Github App Switch - only for GitHub / GitHub Enterprise repositories */}
-      {isGitHubBasedRepo && (
+      {/* PAT & app-based auth switch - only for providers that support connections */}
+      {isConnectionSupportedRepo && (
         <Field
           noMargin
           label={t('provisioning.wizard.auth-type-label', 'Authentication method')}
-          description={t(
-            'provisioning.wizard.auth-type-description',
-            'Both methods provide secure access to your GitHub repositories. Choose the one that best fits your workflow and security requirements.'
-          )}
+          description={
+            isGitHubBased(repoType)
+              ? t(
+                  'provisioning.wizard.auth-type-description',
+                  'All methods provide secure access to your GitHub repositories. Choose the one that best fits your workflow and security requirements.'
+                )
+              : t(
+                  'provisioning.wizard.auth-type-description-generic',
+                  'Both methods provide secure access to your repositories. Choose the one that best fits your workflow and security requirements.'
+                )
+          }
         >
           <Controller
             name="githubAuthType"
@@ -107,7 +140,10 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
               <RadioButtonGroup<GitHubAuthType>
                 className={styles.authTypeRadios}
                 value={value}
-                onChange={onChange}
+                onChange={(nextValue) => {
+                  onChange(nextValue);
+                  setValue('githubApp.connectionName', undefined);
+                }}
                 options={authTypeOptions.map((option) => ({
                   label: option.label,
                   value: option.id,
@@ -119,9 +155,13 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
         </Field>
       )}
 
-      {isGitHubBased(repoType) && githubAuthType === 'github-app' ? (
+      {supportsConnections(repoType) && githubAuthType !== 'pat' ? (
         <>
-          <GitHubAppFields connectionType={repoType} onGitHubAppSubmit={onGitHubAppSubmit} />
+          <AppConnectionFields
+            provider={repoType}
+            kind={githubAuthType === 'github-app' ? 'app' : 'oauth'}
+            onGitHubAppSubmit={onGitHubAppSubmit}
+          />
           {shouldShowRepositories && <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />}
         </>
       ) : (

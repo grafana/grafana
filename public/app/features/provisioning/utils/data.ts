@@ -2,7 +2,7 @@ import { type CommitOptions, type InlineSecureValue, type RepositorySpec } from 
 
 import { type RepositoryFormData } from '../types';
 
-import { isGitHubBased } from './repositoryTypes';
+import { supportsConnections } from './repositoryTypes';
 
 // Template field names across the git-convention option groups.
 type TemplateFieldKey = 'singleResourceMessageTemplate' | 'nameTemplate' | 'titleTemplate';
@@ -166,10 +166,10 @@ export const dataToSpec = (data: RepositoryFormData, connectionName?: string): R
       break;
   }
 
-  // Add connection reference at spec level when using GitHub App (github and
-  // githubEnterprise). The connection name is only available for the app flow;
+  // Add connection reference at spec level for providers that support app
+  // connections. The connection name is only available for the app flows;
   // prefer data.connectionName over the parameter for consistency.
-  if (isGitHubBased(data.type)) {
+  if (supportsConnections(data.type)) {
     const finalConnectionName = data.connectionName || connectionName;
     if (finalConnectionName) {
       spec.connection = { name: finalConnectionName };
