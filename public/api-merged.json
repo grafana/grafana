@@ -14094,7 +14094,7 @@
           }
         },
         "timeRange": {
-          "$ref": "#/definitions/TimeRange"
+          "$ref": "#/definitions/CorrelationTimeRange"
         },
         "transformations": {
           "$ref": "#/definitions/Transformations"
@@ -14122,7 +14122,7 @@
           }
         },
         "timeRange": {
-          "$ref": "#/definitions/TimeRange"
+          "$ref": "#/definitions/CorrelationTimeRange"
         },
         "transformations": {
           "description": "Source data transformations",
@@ -14140,6 +14140,31 @@
               "variable": "name"
             }
           ]
+        }
+      }
+    },
+    "CorrelationRelativeTimeRange": {
+      "description": "the ints represent time in seconds from the time read from Field",
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "to": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "CorrelationTimeRange": {
+      "type": "object",
+      "properties": {
+        "field": {
+          "type": "string"
+        },
+        "range": {
+          "$ref": "#/definitions/CorrelationRelativeTimeRange"
         }
       }
     },
@@ -19885,16 +19910,14 @@
       }
     },
     "RelativeTimeRange": {
-      "description": "the ints represent time in seconds from the time read from Field",
+      "description": "RelativeTimeRange is the per query start and end time\nfor requests.",
       "type": "object",
       "properties": {
         "from": {
-          "type": "integer",
-          "format": "int64"
+          "$ref": "#/definitions/Duration"
         },
         "to": {
-          "type": "integer",
-          "format": "int64"
+          "$ref": "#/definitions/Duration"
         }
       }
     },
