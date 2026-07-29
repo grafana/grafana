@@ -185,10 +185,10 @@ function exceedsRowsIntoRowDepth(items: SceneObject[], container: RowsLayoutMana
 /**
  * Whether the current selection can be grouped into a new row or tab.
  *
- * Grouping inserts one new layout manager (the row/tab group) above the selection, so the
- * nesting limits are evaluated against the deepest grids in the selection — exactly the rules
- * the canvas "Group" actions use (max nesting depth, no tabs inside tabs) via the shared
- * `getNestingRestrictions`.
+ * Grouping inserts one new layout manager (the row/tab group) above the selection, following the
+ * rules the canvas "Group" actions use (max nesting depth, no tabs inside tabs) via the shared
+ * `getNestingRestrictions`: the depth limit is evaluated against the deepest grids in the
+ * selection, while the tab restrictions are evaluated at the container the new group replaces.
  */
 export function canGroupSelection(items: SceneObject[], target: GroupTarget): GroupingResult {
   const info = getSelectionInfo(items);
@@ -227,8 +227,7 @@ export function canGroupSelection(items: SceneObject[], target: GroupTarget): Gr
   // Fall back to the container when the selection has no panels yet (e.g. empty rows/tabs).
   const grids = getLeafGrids(items, info.kind);
   const nodes = grids.length > 0 ? grids : [info.container];
-  const restrictions = nodes.map(getNestingRestrictions);
-  const disableGrouping = restrictions.some((r) => r.disableGrouping);
+  const disableGrouping = nodes.some((node) => getNestingRestrictions(node).disableGrouping);
 
   if (disableGrouping) {
     return {
@@ -238,7 +237,10 @@ export function canGroupSelection(items: SceneObject[], target: GroupTarget): Gr
   }
 
   if (target === 'tab') {
-    const disableTabsReason = restrictions.find((r) => r.disableTabsReason !== undefined)?.disableTabsReason;
+    // Grouping replaces the container with the new tabs layout (see buildGroupEdit), so the tab
+    // restrictions (no tabs directly inside tabs, max depth) apply at the container's position —
+    // the leaf grids' nearest group is the container itself, which would mask a tab above it.
+    const { disableTabsReason } = getNestingRestrictions(info.container);
 
     if (disableTabsReason !== undefined) {
       return {
