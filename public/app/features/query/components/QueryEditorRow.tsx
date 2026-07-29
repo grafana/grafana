@@ -309,14 +309,6 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
   };
 
-  onCancelQueryLibraryEdit = () => {
-    const { query } = this.props;
-    reportInteraction('query_library-update_query_from_explore_cancelled', {
-      datasourceType: query.datasource?.type,
-    });
-    this.props.onExitQueryLibraryEdit?.();
-  };
-
   onExitQueryLibraryEditingMode = () => {
     this.props.onExitQueryLibraryEdit?.();
   };
@@ -651,7 +643,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             app={app}
             editSavedQueryRef={editSavedQueryRef}
             mode={addingSavedQuery ? 'add' : 'edit'}
-            onCancelEdit={addingSavedQuery ? onCancelAddSavedQuery : this.onCancelQueryLibraryEdit}
+            onCancelEdit={addingSavedQuery ? onCancelAddSavedQuery : this.onExitQueryLibraryEditingMode}
             onUpdateSuccess={this.onSavedQueryModeSuccess}
             onSelectQuery={this.onSelectQueryFromLibrary}
           />
