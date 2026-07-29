@@ -4775,7 +4775,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/lr@npm:1.4.8, @lezer/lr@npm:^1.0.0":
+"@lezer/lr@npm:1.4.10, @lezer/lr@npm:^1.0.0":
+  version: 1.4.10
+  resolution: "@lezer/lr@npm:1.4.10"
+  dependencies:
+    "@lezer/common": "npm:^1.0.0"
+  checksum: 10/f8615c755dbbc44aa77f018d81d941cb9afc6bf7c59d78d099dadf2b15c5971bd6cbe38930c0ec143d1b4b3ee7f05da758f72e4980849c9b3eeb19f4af6f34f8
+  languageName: node
+  linkType: hard
+
+"@lezer/lr@npm:1.4.8":
   version: 1.4.8
   resolution: "@lezer/lr@npm:1.4.8"
   dependencies:
@@ -18476,7 +18485,7 @@ __metadata:
     "@kusto/monaco-kusto": "npm:^10.0.0"
     "@leeoniya/ufuzzy": "npm:1.0.19"
     "@lezer/common": "npm:1.5.2"
-    "@lezer/lr": "npm:1.4.8"
+    "@lezer/lr": "npm:1.4.10"
     "@locker/near-membrane-dom": "npm:0.14.0"
     "@locker/near-membrane-shared": "npm:0.14.0"
     "@manypkg/get-packages": "npm:^3.0.0"
