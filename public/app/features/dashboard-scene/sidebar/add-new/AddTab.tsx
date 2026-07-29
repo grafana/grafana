@@ -6,6 +6,7 @@ import { type SceneObject } from '@grafana/scenes';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { addNewTabTo } from '../../scene/layouts-shared/addNew';
 import { getDisableTabsMessage, useNestingRestrictions } from '../../scene/layouts-shared/nestingRestrictions';
+import { useIsLayoutEmpty } from '../../scene/layouts-shared/useIsLayoutEmpty';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
@@ -25,14 +26,16 @@ export function AddTab({ dashboardScene, selectedElement }: AddTabProps) {
   }, [dashboardScene, selectedElement]);
 
   const { disableTabs, disableTabsReason } = useNestingRestrictions(layout);
+  const isLayoutEmpty = useIsLayoutEmpty(layout);
 
   const label = useMemo(() => {
-    if (layout instanceof TabsLayoutManager) {
+    // With no panels there is nothing to group, so present the action as a plain "add"
+    if (layout instanceof TabsLayoutManager || isLayoutEmpty) {
       return t('dashboard-scene.add-tab.add-label', 'Add tab');
     }
 
     return t('dashboard-scene.add-tab.group-label', 'Group into tabs');
-  }, [layout]);
+  }, [layout, isLayoutEmpty]);
 
   const disabledTooltip = useMemo(() => getDisableTabsMessage(disableTabsReason), [disableTabsReason]);
 
