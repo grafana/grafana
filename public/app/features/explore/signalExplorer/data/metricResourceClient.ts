@@ -185,7 +185,11 @@ export function fetchCatalog(dsRef: DataSourceRef, timeRange: TimeRange): Promis
 export function fetchLabelKeys(dsRef: DataSourceRef, timeRange: TimeRange, metric: string): Promise<string[]> {
   return once(labelKeysCache, `lk:${dsKey(dsRef)}:${rangeKey(timeRange)}:${metric}`, async () => {
     const lp = await getLP(dsRef);
-    return lp.queryLabelKeys(timeRange, selector(metric));
+    const keys = await lp.queryLabelKeys(timeRange, selector(metric));
+    // `__name__` comes back because the selector matches on it, and the language provider returns the
+    // endpoint's answer verbatim. It is an artifact of how we asked, not a label of the metric: its
+    // only value is the metric name we already have.
+    return keys.filter((key) => key !== '__name__');
   });
 }
 

@@ -68,6 +68,16 @@ describe('metricResourceClient', () => {
     expect(lp.queryLabelKeys).toHaveBeenCalledWith(range, '{__name__="http_requests_total"}');
   });
 
+  // Verified against gdev-prometheus: the labels endpoint really does return `__name__`, and
+  // `@grafana/prometheus`'s `queryLabelKeys` passes it straight through (`res.slice().sort()`).
+  it('drops `__name__` from a metric’s label keys, which the selector already pins to that metric', async () => {
+    const lp = makeLP();
+    lp.queryLabelKeys.mockResolvedValue(['__name__', 'instance', 'job']);
+    (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+
+    await expect(fetchLabelKeys({ uid: 'p1' }, range, 'up')).resolves.toEqual(['instance', 'job']);
+  });
+
   it('scopes label values by the metric selector and label key', async () => {
     const lp = makeLP();
     (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
