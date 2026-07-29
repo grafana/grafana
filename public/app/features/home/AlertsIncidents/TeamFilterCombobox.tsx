@@ -77,7 +77,7 @@ export function TeamFilterCombobox({ selectedTeam, onChange, userHasTeams }: Pro
     async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
       const query = inputValue.toLowerCase();
       const teamOptions = (teamValues ?? [])
-        .filter((team) => team.toLowerCase().includes(query))
+        .filter((team) => team.toLowerCase().includes(query.toLowerCase()))
         .map((team) => ({ label: team, value: team }));
       // The scope sentinels only belong on the unfiltered default list. "All teams"
       // is added only for team members — otherwise the default option already says it.
