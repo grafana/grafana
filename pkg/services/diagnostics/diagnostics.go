@@ -21,7 +21,10 @@ import (
 )
 
 // Bundler assembles diagnostic bundles.
-type Bundler struct{}
+type Bundler struct {
+	// Written as environment.json by both bundle shapes; nil omits the artifact.
+	env *Environment
+}
 
 // Query responses can contain substantially more data than the diagnostic traffic itself. Keep
 // their uncompressed JSON bounded independently so adding querydata.json cannot multiply a large
@@ -38,9 +41,20 @@ const (
 // truncated fallbacks) so a reader can tell how to interpret the artifact.
 const queryDataArtifactVersion = 1
 
-// NewBundler returns a Bundler.
-func NewBundler() *Bundler {
-	return &Bundler{}
+// NewBundler returns a Bundler that writes env as environment.json into the bundles it assembles.
+func NewBundler(env *Environment) *Bundler {
+	return &Bundler{env: env}
+}
+
+// addEnvironment writes environment.json, if there is one. A marshal failure drops this artifact
+// alone rather than the captured traffic with it, as for manifest.json.
+func (b *Bundler) addEnvironment(files map[string][]byte) {
+	if b == nil || b.env == nil {
+		return
+	}
+	if data, err := json.MarshalIndent(b.env, "", "  "); err == nil {
+		files["environment.json"] = data
+	}
 }
 
 // BuildOption sets optional bundle contents. An option, rather than another parameter on Build, because
@@ -101,6 +115,7 @@ func WithPanelData(panelData json.RawMessage) BuildOption {
 // unrelated activity into a bundle meant for external sharing; they will be tackled in a follow-up.
 func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON, queryRequestJSON json.RawMessage, queryRequestErr, queryErr error, opts ...BuildOption) ([]byte, error) {
 	files := map[string][]byte{}
+	b.addEnvironment(files)
 
 	cfg := buildConfig{}
 	for _, opt := range opts {
@@ -360,6 +375,7 @@ type DashboardPanel struct {
 	// unserializable request only costs this panel its request JSON, not the whole multi-panel bundle.
 	QueryRequestErr error
 	Datasources     []string                   // datasource UIDs the panel references (for the manifest)
+	PluginIDs       []string                   // plugin IDs the panel references (datasource + viz), for the manifest
 	Resp            *backend.QueryDataResponse // query response, carries external plugins' __har__ frames
 	HARBuffer       *harcapture.Buffer         // in-process capture buffer for this panel's queries
 	QueryErr        error                      // top-level error running the panel's queries, if any
@@ -376,10 +392,12 @@ type dashboardManifest struct {
 }
 
 type manifestPanelEntry struct {
-	ID                 int64    `json:"id"`
-	Title              string   `json:"title"`
-	Dir                string   `json:"dir,omitempty"`
-	Datasources        []string `json:"datasources,omitempty"`
+	ID          int64    `json:"id"`
+	Title       string   `json:"title"`
+	Dir         string   `json:"dir,omitempty"`
+	Datasources []string `json:"datasources,omitempty"`
+	// The plugins this panel used, keying into environment.json (which holds the versions).
+	PluginIDs          []string `json:"pluginIds,omitempty"`
 	HARBytes           int      `json:"harBytes,omitempty"`
 	QueryDataBytes     int      `json:"queryDataBytes,omitempty"`
 	QueryDataTruncated bool     `json:"queryDataTruncated,omitempty"`
@@ -404,6 +422,7 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 	}
 
 	files := map[string][]byte{}
+	b.addEnvironment(files)
 	if len(dashboardJSON) > 0 {
 		files["dashboard.json"] = indentJSON(dashboardJSON)
 	}
@@ -412,7 +431,7 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 	queryDataBytesRemaining := maxDashboardQueryDataBytes
 	panelJSONByID := indexPanelJSON(dashboardJSON)
 	for _, p := range panels {
-		entry := manifestPanelEntry{ID: p.ID, Title: p.Title, Datasources: p.Datasources}
+		entry := manifestPanelEntry{ID: p.ID, Title: p.Title, Datasources: p.Datasources, PluginIDs: p.PluginIDs}
 
 		if p.Skipped != "" {
 			entry.Skipped = p.Skipped
