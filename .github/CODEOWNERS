@@ -273,7 +273,10 @@
 /devenv/dev-dashboards/datasource-influxdb/ @grafana/data-sources-plugins
 /devenv/dev-dashboards/datasource-loki/ @grafana/grafana-catalog
 /devenv/dev-dashboards/datasource-testdata/ @grafana/grafana-catalog
+/devenv/dev-dashboards/datasource-mssql/ @grafana/data-sources-plugins
 /devenv/dev-dashboards/datasource-mysql/ @grafana/data-sources-plugins
+/devenv/dev-dashboards/datasource-opentsdb/ @grafana/data-sources-plugins
+/devenv/dev-dashboards/datasource-postgres/ @grafana/data-sources-plugins
 
 /devenv/dev-dashboards/e2e-repeats/ @grafana/grafana-frontend-platform
 /devenv/dev-dashboards/panel-text @grafana/grafana-frontend-platform
@@ -316,6 +319,16 @@
 /devenv/docker/blocks/prometheus_random_data/ @grafana/data-sources-plugins
 /devenv/docker/blocks/prometheus_high_card/ @grafana/data-sources-plugins
 /devenv/docker/blocks/prometheus_utf8/ @grafana/data-sources-plugins
+/devenv/docker/blocks/jaeger/ @grafana/data-sources-plugins
+/devenv/docker/blocks/mssql/ @grafana/data-sources-plugins
+/devenv/docker/blocks/mssql_arm64/ @grafana/data-sources-plugins
+/devenv/docker/blocks/mssql_tests/ @grafana/data-sources-plugins
+/devenv/docker/blocks/mssql_tls/ @grafana/data-sources-plugins
+/devenv/docker/blocks/opentsdb/ @grafana/data-sources-plugins
+/devenv/docker/blocks/postgres/ @grafana/data-sources-plugins
+/devenv/docker/blocks/pyroscope/ @grafana/data-sources-plugins
+/devenv/docker/blocks/tempo/ @grafana/data-sources-plugins
+/devenv/docker/blocks/zipkin/ @grafana/data-sources-plugins
 /devenv/docker/blocks/redis/ @bergquist
 /devenv/docker/blocks/sensugo/ @grafana/grafana-backend-group
 /devenv/docker/blocks/slow_proxy/ @bergquist
