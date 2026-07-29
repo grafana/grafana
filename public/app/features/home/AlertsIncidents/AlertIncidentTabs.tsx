@@ -99,8 +99,12 @@ function AlertIncidentTabsInner({
         <Text element="h2" variant="h5">
           {title}
         </Text>
-        {canViewAlerts && activeTab === ALERTS_TAB_ID && (
-          <TeamFilterCombobox selectedTeam={selectedTeam} onChange={setSelectedTeam} userHasTeams={hasTeams} />
+        {canViewAlerts && (
+          // Hidden rather than unmounted on the Incidents tab, so the combobox keeps
+          // its fetched team values instead of refetching them on every tab switch.
+          <div hidden={activeTab !== ALERTS_TAB_ID}>
+            <TeamFilterCombobox selectedTeam={selectedTeam} onChange={setSelectedTeam} userHasTeams={hasTeams} />
+          </div>
         )}
       </Stack>
 

@@ -68,7 +68,11 @@ function mockTeams(teams: Array<{ name: string }>) {
 
 /** `team` label values the dropdown fetches from the state-history Prometheus datasource. */
 function mockTeamLabelValues(values: string[]) {
-  jest.mocked(fetchTagValues).mockResolvedValue(values.map((value) => ({ text: value, value })));
+  // Cleared so per-test call-count assertions aren't polluted by earlier tests.
+  jest
+    .mocked(fetchTagValues)
+    .mockClear()
+    .mockResolvedValue(values.map((value) => ({ text: value, value })));
 }
 
 /** Mocks the alertmanager alerts endpoint; returns the `filter` query params of each request received. */
@@ -319,8 +323,15 @@ describe('AlertIncidentTabs', () => {
 
       await user.click(screen.getByRole('tab', { name: /incidents/i }));
 
+      // Hidden from the accessibility tree, but kept mounted so its fetched values survive.
       expect(await screen.findByText('Database outage')).toBeInTheDocument();
       expect(screen.queryByRole('combobox', { name: /filter alerts by team/i })).not.toBeInTheDocument();
+
+      // Switching back shows the dropdown again without refetching the team values.
+      await user.click(screen.getByRole('tab', { name: /firing alerts/i }));
+
+      expect(await screen.findByRole('combobox', { name: /filter alerts by team/i })).toBeInTheDocument();
+      expect(fetchTagValues).toHaveBeenCalledTimes(1);
     });
 
     it('refetches alerts filtered to only the selected team', async () => {
