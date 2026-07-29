@@ -194,10 +194,10 @@ var keywordSubDocumentFields = []string{
 // are resource kinds, so they cannot be enumerated up front.
 const referenceFieldPrefix = "reference."
 
-// storedFacetFieldsForMapping returns the stored Bleve field that post-rank
-// authorization can load for each facet-capable API field. Facet capability
-// implies the canonical field is stored (see addCapabilityFieldMappings), so
-// every facetable field has a stored form the app-side aggregator can read.
+// storedFacetFieldsForMapping returns the stored keyword field that post-rank
+// authorization can load for each facet-capable API field. Facet terms come
+// from the keyword variant even when a field also declares text, so loading
+// this form preserves native Bleve facet casing and term boundaries.
 func storedFacetFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string) map[string]string {
 	fields := make(map[string]string)
 	add := func(def resource.SearchFieldDefinition, prefix string) {
@@ -206,11 +206,7 @@ func storedFacetFieldsForMapping(provider resource.SearchFieldsProvider, group, 
 		}
 
 		logicalName := prefix + def.Name
-		storedName := logicalName
-		if !def.HasCapability(resource.SearchCapabilityText) {
-			storedName = prefix + keywordVariantName(def.Name, false)
-		}
-		fields[logicalName] = storedName
+		fields[logicalName] = prefix + keywordVariantName(def.Name, def.HasCapability(resource.SearchCapabilityText))
 	}
 
 	for _, def := range resource.StandardSearchFieldDefinitions() {
@@ -287,9 +283,9 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 		m.IncludeTermVectors = false
 		m.SkipFreqNorm = true
 		m.DocValues = hasSort
-		// Canonical field for storage is the keyword variant only when no text
-		// mapping will also be created.
-		m.Store = (hasRetrieve || hasFacet) && !hasText
+		// Facets aggregate from the keyword variant after post-rank authz, even
+		// when the canonical text field is also stored for retrieval.
+		m.Store = hasFacet || (hasRetrieve && !hasText)
 		m.IncludeInAll = false
 		parent.AddFieldMappingsAt(keywordName, m)
 	}

@@ -241,11 +241,17 @@ func (b *bleveIndex) runPostFilterAuthz(
 	cfg := b.postRankAuthz
 	wantFacets := len(req.Facet) > 0
 
-	agg, aggregateFacetsInPageScan, facetAuthorized, facetExhausted, err := b.prepareFacetAggregation(
+	agg, facetAuthorized, facetExhausted, err := b.prepareFacetAggregation(
 		ctx, access, req, index, firstReq, resources, stats,
 	)
 	if err != nil {
 		return nil, err
+	}
+	// Facets always use a separate scan starting at the top of the query. The
+	// page scan must retain its normal fetch window, otherwise the facet sample
+	// size can unnecessarily shorten pages for sparse-access users.
+	if wantFacets {
+		firstReq.Size = cfg.windowSize(limit)
 	}
 
 	extractFn := func(info docInfo) authz.BatchCheckItem {
@@ -265,12 +271,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 	var authorized int64
 	var exhausted bool
 	var firstRes *bleve.SearchResult
-	// Facet scans sample to FacetSampleSize; page-fill scans use the larger
-	// MaxCandidates budget so low authorized fractions can still fill the page.
 	maxCandidates := int64(cfg.MaxCandidates)
-	if aggregateFacetsInPageScan {
-		maxCandidates = int64(cfg.FacetSampleSize)
-	}
 
 	// SearchBefore is a reversed-sort SearchAfter (mirrors bleve's native
 	// SearchBefore): reverse the whole Sort once so the SortDocID tie-breaker
@@ -290,13 +291,13 @@ func (b *bleveIndex) runPostFilterAuthz(
 			stats.AddTotalHits(int(res.Total))
 		}
 
-		// Authorize this window's hits in rank order. Facet scans stop at the
-		// sample budget; page-fill scans keep going past MaxCandidates until at
-		// least one row is found, so sparse users don't get an empty first page.
+		// Authorize this window's hits in rank order. Page-fill scans keep going
+		// past MaxCandidates until at least one row is found, so sparse users
+		// don't get an empty first page.
 		windowHits := res.Hits
 		candidateSeq := func(yield func(docInfo) bool) {
 			for _, hit := range windowHits {
-				if candidates >= maxCandidates && (aggregateFacetsInPageScan || len(page) > 0) {
+				if candidates >= maxCandidates && len(page) > 0 {
 					return
 				}
 				info, ok := parseHitDocInfo(hit, resources)
@@ -316,16 +317,12 @@ func (b *bleveIndex) runPostFilterAuthz(
 				return nil, err
 			}
 			authorized++
-			if aggregateFacetsInPageScan {
-				agg.add(info.doc)
-			}
 			// Skip the first `offset` authorized hits, then fill the page.
 			if authorized > int64(offset) && len(page) < limit {
 				page = append(page, info.doc)
 			}
-			// Page-fill: stop as soon as the page is full (early-exit). Facet
-			// scans never early-exit — they walk the whole sample budget.
-			if !aggregateFacetsInPageScan && len(page) >= limit {
+			// Stop as soon as the page is full (early-exit).
+			if len(page) >= limit {
 				stop = true
 				break
 			}
@@ -333,12 +330,11 @@ func (b *bleveIndex) runPostFilterAuthz(
 		if stop {
 			break
 		}
-		// Candidate budget exhausted. For page-fill scans, only enforce the
-		// budget after the first authorized row; otherwise keep scanning so a
-		// sparse user does not get an empty first page just because the first
-		// authorized hit sorted beyond MaxCandidates. Facet scans always honor
-		// the FacetSampleSize budget.
-		if candidates >= maxCandidates && (aggregateFacetsInPageScan || len(page) > 0) {
+		// Candidate budget exhausted. Only enforce the budget after the first
+		// authorized row; otherwise keep scanning so a sparse user does not get
+		// an empty first page just because the first authorized hit sorted beyond
+		// MaxCandidates.
+		if candidates >= maxCandidates && len(page) > 0 {
 			break
 		}
 		// Window returned fewer hits than requested -> no more matches: every
@@ -356,16 +352,11 @@ func (b *bleveIndex) runPostFilterAuthz(
 		// Page on a shallow copy of the current request: only the cursor and
 		// the window Size change between windows; query, sort (already reversed
 		// once for SearchBefore), and fields are identical. Page-fill windows
-		// grow geometrically (capped at MaxWindow); facet windows stay fixed
-		// (they need a stable sample).
+		// grow geometrically (capped at MaxWindow).
 		next := *windowReq
 		next.SearchAfter = cursor
 		next.SearchBefore = nil
-		if aggregateFacetsInPageScan {
-			next.Size = cfg.facetWindowSize()
-		} else {
-			next.Size = cfg.growWindow(cfg.windowSize(limit), window+1)
-		}
+		next.Size = cfg.growWindow(cfg.windowSize(limit), window+1)
 		windowReq = &next
 	}
 
@@ -373,8 +364,10 @@ func (b *bleveIndex) runPostFilterAuthz(
 		attribute.Int64("search.candidates", candidates),
 		attribute.Int64("search.authorized", authorized),
 	)
-	if wantFacets && !aggregateFacetsInPageScan {
-		authorized = facetAuthorized
+	if wantFacets {
+		// The independent facet scan defines exactness, but a returned page may
+		// observe more authorized hits than a capped top sample.
+		authorized = max(authorized, facetAuthorized)
 		exhausted = facetExhausted
 	}
 	return response, b.finalizePostFilter(ctx, response, page, selectFields, firstReq.Sort, req, firstRes,
@@ -389,14 +382,9 @@ func (b *bleveIndex) prepareFacetAggregation(
 	firstReq *bleve.SearchRequest,
 	resources map[string]string,
 	stats *resource.SearchStats,
-) (*facetAggregator, bool, int64, bool, error) {
+) (*facetAggregator, int64, bool, error) {
 	if len(req.Facet) == 0 {
-		return nil, false, 0, false, nil
-	}
-
-	agg := newFacetAggregator(req.Facet, b.searchFields.storedFacetFields)
-	if len(req.SearchAfter) == 0 && len(req.SearchBefore) == 0 {
-		return agg, true, 0, false, nil
+		return nil, 0, false, nil
 	}
 
 	extractFn := func(info docInfo) authz.BatchCheckItem {
@@ -412,7 +400,7 @@ func (b *bleveIndex) prepareFacetAggregation(
 	agg, authorized, exhausted, err := b.aggregateFacetsFromTop(
 		ctx, access, index, firstReq, resources, extractFn, req.Facet, stats,
 	)
-	return agg, false, authorized, exhausted, err
+	return agg, authorized, exhausted, err
 }
 
 func (b *bleveIndex) aggregateFacetsFromTop(

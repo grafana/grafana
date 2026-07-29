@@ -1765,6 +1765,41 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	// --- Facets on the postFilter path (aggregated app-side over authorized hits) ---
 
+	t.Run("facets use a top sample without shortening sparse pages", func(t *testing.T) {
+		// The top facet sample contains no authorized docs, but the page scan
+		// must continue with its independent MaxCandidates budget to fill the
+		// requested page from later ranked hits.
+		cfg := search.PostRankAuthzConfig{
+			OverFetchFactor: 1,
+			MaxWindow:       20,
+			MaxCandidates:   100,
+			FacetSampleSize: 10,
+		}
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		docs := make([]*resource.BulkIndexItem, 0, 30)
+		for i := 0; i < 30; i++ {
+			folder := "denied"
+			if i >= 20 {
+				folder = "allowed"
+			}
+			docs = append(docs, newDocWithTags(fmt.Sprintf("doc-%02d", i), folder, []string{"visible"}))
+		}
+		indexDocs(t, index, docs)
+
+		q := listQuery(3)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+		names, res := searchNames(t, index, &countingAccessClient{
+			allowedFolders: map[string]bool{"allowed": true},
+		}, q)
+
+		require.Equal(t, []string{"doc-20", "doc-21", "doc-22"}, names)
+		require.Empty(t, res.Facet["tags"].Terms, "facets remain tied to the top sample")
+		require.Equal(t, int64(3), res.TotalHits, "returned authorized rows raise the sampled total")
+		require.False(t, res.TotalHitsExact, "the top facet sample was capped")
+	})
+
 	t.Run("exhausted tag facets match the in-searcher path", func(t *testing.T) {
 		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
 		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
