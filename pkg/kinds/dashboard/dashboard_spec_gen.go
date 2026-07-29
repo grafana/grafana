@@ -351,6 +351,9 @@ type DataTransformerConfig struct {
 	// Options to be passed to the transformer
 	// Valid options depend on the transformer id
 	Options any `json:"options"`
+	// Records how this transformation was created. Absent means it was authored in the
+	// transformations editor; transformations saved before this field existed have no origin.
+	Origin *DashboardDataTransformerConfigOrigin `json:"origin,omitempty"`
 }
 
 // NewDataTransformerConfig creates a new DataTransformerConfig object.
@@ -1153,6 +1156,16 @@ func NewDashboardSpecTemplating() *DashboardSpecTemplating {
 	return &DashboardSpecTemplating{}
 }
 
+type DashboardDataTransformerConfigOrigin struct {
+	Source   DashboardDataTransformerConfigOriginSource `json:"source"`
+	PluginId *string                                    `json:"pluginId,omitempty"`
+}
+
+// NewDashboardDataTransformerConfigOrigin creates a new DashboardDataTransformerConfigOrigin object.
+func NewDashboardDataTransformerConfigOrigin() *DashboardDataTransformerConfigOrigin {
+	return &DashboardDataTransformerConfigOrigin{}
+}
+
 type DashboardFieldConfigSourceOverrides struct {
 	Matcher    MatcherConfig        `json:"matcher"`
 	Properties []DynamicConfigValue `json:"properties"`
@@ -1247,6 +1260,13 @@ const (
 	VariableModelStaticOptionsOrderBefore VariableModelStaticOptionsOrder = "before"
 	VariableModelStaticOptionsOrderAfter  VariableModelStaticOptionsOrder = "after"
 	VariableModelStaticOptionsOrderSorted VariableModelStaticOptionsOrder = "sorted"
+)
+
+type DashboardDataTransformerConfigOriginSource string
+
+const (
+	DashboardDataTransformerConfigOriginSourcePanel  DashboardDataTransformerConfigOriginSource = "panel"
+	DashboardDataTransformerConfigOriginSourceEditor DashboardDataTransformerConfigOriginSource = "editor"
 )
 
 type ValueMapOrRangeMapOrRegexMapOrSpecialValueMap struct {

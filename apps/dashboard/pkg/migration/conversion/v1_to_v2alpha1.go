@@ -2365,11 +2365,34 @@ func transformPanelTransformations(panelMap map[string]interface{}) []dashv2alph
 				transformationKind.Spec.Filter = &mc
 			}
 
+			// Extract origin if present. Absent means the transformation was authored in the
+			// transformations editor.
+			if originMap, ok := tMap["origin"].(map[string]interface{}); ok {
+				transformationKind.Spec.Origin = buildTransformationOrigin(originMap)
+			}
+
 			result = append(result, transformationKind)
 		}
 	}
 
 	return result
+}
+
+// buildTransformationOrigin converts a v1 transformation `origin` object. Only the two known
+// source values round-trip; anything else is dropped rather than persisted as an invalid enum.
+func buildTransformationOrigin(originMap map[string]interface{}) *dashv2alpha1.DashboardTransformationOrigin {
+	source := schemaversion.GetStringValue(originMap, "source")
+	if source != "panel" && source != "editor" {
+		return nil
+	}
+
+	origin := &dashv2alpha1.DashboardTransformationOrigin{
+		Source: dashv2alpha1.DashboardTransformationOriginSource(source),
+	}
+	if pluginId := schemaversion.GetStringValue(originMap, "pluginId"); pluginId != "" {
+		origin.PluginId = &pluginId
+	}
+	return origin
 }
 
 func buildQueryOptions(panelMap map[string]interface{}) dashv2alpha1.DashboardQueryOptionsSpec {

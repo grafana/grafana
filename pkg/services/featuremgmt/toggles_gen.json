@@ -4503,6 +4503,19 @@
     },
     {
       "metadata": {
+        "name": "panelAdHocTransformations",
+        "resourceVersion": "1785295316580",
+        "creationTimestamp": "2026-07-29T03:21:56Z"
+      },
+      "spec": {
+        "description": "Allow panels that declare adHocTransforms to run the transformation pipeline themselves",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "panelFilterVariable",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2023-11-03T12:15:54Z",

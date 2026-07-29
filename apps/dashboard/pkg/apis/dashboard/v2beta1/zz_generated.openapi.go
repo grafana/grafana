@@ -116,6 +116,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardTimeRangeOption{}.OpenAPIModelName():                                            schema_pkg_apis_dashboard_v2beta1_DashboardTimeRangeOption(ref),
 		DashboardTimeSettingsSpec{}.OpenAPIModelName():                                           schema_pkg_apis_dashboard_v2beta1_DashboardTimeSettingsSpec(ref),
 		DashboardTransformationKind{}.OpenAPIModelName():                                         schema_pkg_apis_dashboard_v2beta1_DashboardTransformationKind(ref),
+		DashboardTransformationOrigin{}.OpenAPIModelName():                                       schema_pkg_apis_dashboard_v2beta1_DashboardTransformationOrigin(ref),
 		DashboardV2beta1ActionStyle{}.OpenAPIModelName():                                         schema_pkg_apis_dashboard_v2beta1_DashboardV2beta1ActionStyle(ref),
 		DashboardV2beta1AdhocVariableKindDatasource{}.OpenAPIModelName():                         schema_pkg_apis_dashboard_v2beta1_DashboardV2beta1AdhocVariableKindDatasource(ref),
 		DashboardV2beta1DataQueryKindDatasource{}.OpenAPIModelName():                             schema_pkg_apis_dashboard_v2beta1_DashboardV2beta1DataQueryKindDatasource(ref),
@@ -179,6 +180,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		NotebookTimeRangeOption{}.OpenAPIModelName():                                             schema_pkg_apis_dashboard_v2beta1_NotebookTimeRangeOption(ref),
 		NotebookTimeSettingsSpec{}.OpenAPIModelName():                                            schema_pkg_apis_dashboard_v2beta1_NotebookTimeSettingsSpec(ref),
 		NotebookTransformationKind{}.OpenAPIModelName():                                          schema_pkg_apis_dashboard_v2beta1_NotebookTransformationKind(ref),
+		NotebookTransformationOrigin{}.OpenAPIModelName():                                        schema_pkg_apis_dashboard_v2beta1_NotebookTransformationOrigin(ref),
 		NotebookV2beta1ActionStyle{}.OpenAPIModelName():                                          schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1ActionStyle(ref),
 		NotebookV2beta1DataQueryKindDatasource{}.OpenAPIModelName():                              schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1DataQueryKindDatasource(ref),
 		NotebookV2beta1FieldConfigSourceOverrides{}.OpenAPIModelName():                           schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1FieldConfigSourceOverrides(ref),
@@ -1923,12 +1925,18 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardDataTransformerConfig(ref common
 							Format:      "",
 						},
 					},
+					"origin": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Records how this transformation was created. Absent means it was authored in the transformations editor; transformations saved before this field existed have no origin.",
+							Ref:         ref(DashboardTransformationOrigin{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"id", "options"},
 			},
 		},
 		Dependencies: []string{
-			DashboardMatcherConfig{}.OpenAPIModelName()},
+			DashboardMatcherConfig{}.OpenAPIModelName(), DashboardTransformationOrigin{}.OpenAPIModelName()},
 	}
 }
 
@@ -4990,6 +4998,33 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardTransformationKind(ref common.Re
 	}
 }
 
+func schema_pkg_apis_dashboard_v2beta1_DashboardTransformationOrigin(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Records how a transformation was created, so a visualization that renders its own transformation UI can tell its own entries apart from editor-authored ones.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"source": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"pluginId": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"source"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_dashboard_v2beta1_DashboardV2beta1ActionStyle(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -5961,12 +5996,18 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookDataTransformerConfig(ref common.
 							Format:      "",
 						},
 					},
+					"origin": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Records how this transformation was created. Absent means it was authored in the transformations editor; transformations saved before this field existed have no origin.",
+							Ref:         ref(NotebookTransformationOrigin{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"id", "options"},
 			},
 		},
 		Dependencies: []string{
-			NotebookMatcherConfig{}.OpenAPIModelName()},
+			NotebookMatcherConfig{}.OpenAPIModelName(), NotebookTransformationOrigin{}.OpenAPIModelName()},
 	}
 }
 
@@ -7508,6 +7549,33 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookTransformationKind(ref common.Ref
 		},
 		Dependencies: []string{
 			NotebookDataTransformerConfig{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_dashboard_v2beta1_NotebookTransformationOrigin(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Records how a transformation was created, so a visualization that renders its own transformation UI can tell its own entries apart from editor-authored ones.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"source": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"pluginId": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"source"},
+			},
+		},
 	}
 }
 

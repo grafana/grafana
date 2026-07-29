@@ -117,6 +117,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DashboardTimeRangeOption{}.OpenAPIModelName():                               schema_pkg_apis_dashboard_v2_DashboardTimeRangeOption(ref),
 		DashboardTimeSettingsSpec{}.OpenAPIModelName():                              schema_pkg_apis_dashboard_v2_DashboardTimeSettingsSpec(ref),
 		DashboardTransformationKind{}.OpenAPIModelName():                            schema_pkg_apis_dashboard_v2_DashboardTransformationKind(ref),
+		DashboardTransformationOrigin{}.OpenAPIModelName():                          schema_pkg_apis_dashboard_v2_DashboardTransformationOrigin(ref),
 		DashboardTransformationSpec{}.OpenAPIModelName():                            schema_pkg_apis_dashboard_v2_DashboardTransformationSpec(ref),
 		DashboardV2ActionStyle{}.OpenAPIModelName():                                 schema_pkg_apis_dashboard_v2_DashboardV2ActionStyle(ref),
 		DashboardV2AdhocVariableKindDatasource{}.OpenAPIModelName():                 schema_pkg_apis_dashboard_v2_DashboardV2AdhocVariableKindDatasource(ref),
@@ -4934,6 +4935,33 @@ func schema_pkg_apis_dashboard_v2_DashboardTransformationKind(ref common.Referen
 	}
 }
 
+func schema_pkg_apis_dashboard_v2_DashboardTransformationOrigin(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Records how a transformation was created, so a visualization that renders its own transformation UI can tell its own entries apart from editor-authored ones.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"source": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"pluginId": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"source"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_dashboard_v2_DashboardTransformationSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -4968,12 +4996,18 @@ func schema_pkg_apis_dashboard_v2_DashboardTransformationSpec(ref common.Referen
 							Format:      "",
 						},
 					},
+					"origin": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Records how this transformation was created. Absent means it was authored in the transformations editor; transformations saved before this field existed have no origin.",
+							Ref:         ref(DashboardTransformationOrigin{}.OpenAPIModelName()),
+						},
+					},
 				},
 				Required: []string{"options"},
 			},
 		},
 		Dependencies: []string{
-			DashboardMatcherConfig{}.OpenAPIModelName()},
+			DashboardMatcherConfig{}.OpenAPIModelName(), DashboardTransformationOrigin{}.OpenAPIModelName()},
 	}
 }
 

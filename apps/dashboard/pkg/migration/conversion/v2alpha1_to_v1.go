@@ -1156,6 +1156,14 @@ func convertPanelKindToV1(panelKind *dashv2alpha1.DashboardPanelKind, panel map[
 			if t.Spec.Filter != nil {
 				transformation["filter"] = matcherConfigToMap(*t.Spec.Filter)
 			}
+			// Add origin if set
+			if t.Spec.Origin != nil {
+				origin := map[string]interface{}{"source": string(t.Spec.Origin.Source)}
+				if t.Spec.Origin.PluginId != nil {
+					origin["pluginId"] = *t.Spec.Origin.PluginId
+				}
+				transformation["origin"] = origin
+			}
 			transformations = append(transformations, transformation)
 		}
 		panel["transformations"] = transformations

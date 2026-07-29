@@ -402,6 +402,7 @@ func (hs *HTTPServer) getFSPanels(c *contextmodel.ReqContext, availablePanels ma
 			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
 			BaseURL:         panel.BaseURL,
 			SkipDataQuery:   panel.SkipDataQuery,
+			AdHocTransforms: panel.AdHocTransforms,
 			Suggestions:     panel.Suggestions,
 			HideFromList:    panel.HideFromList,
 			ReleaseState:    string(panel.State),

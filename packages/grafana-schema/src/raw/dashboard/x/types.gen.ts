@@ -806,6 +806,14 @@ export interface DataTransformerConfig {
    */
   options: unknown;
   /**
+   * Records how this transformation was created. Absent means it was authored in the
+   * transformations editor; transformations saved before this field existed have no origin.
+   */
+  origin?: {
+    source: ('panel' | 'editor');
+    pluginId?: string;
+  };
+  /**
    * Where to pull DataFrames from as input to transformation
    */
   topic?: ('series' | 'annotations' | 'alertStates'); // replaced with common.DataTopic

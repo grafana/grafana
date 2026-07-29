@@ -412,6 +412,9 @@ type NotebookDataTransformerConfig struct {
 	// Options to be passed to the transformer
 	// Valid options depend on the transformer id
 	Options interface{} `json:"options"`
+	// Records how this transformation was created. Absent means it was authored in the
+	// transformations editor; transformations saved before this field existed have no origin.
+	Origin *NotebookTransformationOrigin `json:"origin,omitempty"`
 }
 
 // NewNotebookDataTransformerConfig creates a new NotebookDataTransformerConfig object.
@@ -477,6 +480,24 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for NotebookDataTopic.
 func (NotebookDataTopic) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookDataTopic"
+}
+
+// Records how a transformation was created, so a visualization that renders its own
+// transformation UI can tell its own entries apart from editor-authored ones.
+// +k8s:openapi-gen=true
+type NotebookTransformationOrigin struct {
+	Source   NotebookTransformationOriginSource `json:"source"`
+	PluginId *string                            `json:"pluginId,omitempty"`
+}
+
+// NewNotebookTransformationOrigin creates a new NotebookTransformationOrigin object.
+func NewNotebookTransformationOrigin() *NotebookTransformationOrigin {
+	return &NotebookTransformationOrigin{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for NotebookTransformationOrigin.
+func (NotebookTransformationOrigin) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookTransformationOrigin"
 }
 
 // +k8s:openapi-gen=true
@@ -1408,6 +1429,19 @@ const (
 // OpenAPIModelName returns the OpenAPI model name for NotebookTimeSettingsSpecWeekStart.
 func (NotebookTimeSettingsSpecWeekStart) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookTimeSettingsSpecWeekStart"
+}
+
+// +k8s:openapi-gen=true
+type NotebookTransformationOriginSource string
+
+const (
+	NotebookTransformationOriginSourcePanel  NotebookTransformationOriginSource = "panel"
+	NotebookTransformationOriginSourceEditor NotebookTransformationOriginSource = "editor"
+)
+
+// OpenAPIModelName returns the OpenAPI model name for NotebookTransformationOriginSource.
+func (NotebookTransformationOriginSource) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookTransformationOriginSource"
 }
 
 // +k8s:openapi-gen=true
