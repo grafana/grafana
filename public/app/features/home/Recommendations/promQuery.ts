@@ -18,9 +18,8 @@ import { type PromQuery } from '@grafana/prometheus';
 import { createQueryRunner } from '@grafana/runtime';
 
 export function readScalar(frames: DataFrame[], refId: string): number | null {
-  const field = frames.find((f) => f.refId === refId)?.fields.find((f) => f.type === FieldType.number);
-  const v = field && field.values.length ? field.values[field.values.length - 1] : undefined;
-  return typeof v === 'number' && Number.isFinite(v) ? v : null;
+  // '' is never a label key, so this shares readLabeledScalar's lookup with the label discarded.
+  return readLabeledScalar(frames, refId, '')?.value ?? null;
 }
 
 /** Last sample of the `refId` instant vector plus one identifying label off its number field. */
