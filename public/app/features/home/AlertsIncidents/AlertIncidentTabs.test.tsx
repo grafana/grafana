@@ -54,16 +54,16 @@ function mockAlerts(alerts: AlertmanagerAlert[]) {
   server.use(http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json(alerts)));
 }
 
-/** Report the Incident/IRM plugins as absent so the component only shows the alerts tab. */
-function mockNoIncidentPlugin() {
+/** Report the IRM plugin as absent so the component only shows the alerts tab. */
+function mockNoIrmPlugin() {
   server.use(http.get('/api/plugins/:pluginId/settings', () => HttpResponse.json({ enabled: false })));
 }
 
-/** Install the Incident plugin (IRM stays absent) with optional page includes for access gating. */
-function mockIncidentPlugin(settings?: Partial<PluginMeta>) {
+/** Install the IRM plugin with optional page includes for access gating. */
+function mockIrmPlugin(settings?: Partial<PluginMeta>) {
   server.use(
-    http.get(`/api/plugins/${SupportedPlugin.Incident}/settings`, () =>
-      HttpResponse.json({ ...pluginMeta[SupportedPlugin.Incident], includes: [], ...settings })
+    http.get(`/api/plugins/${SupportedPlugin.Irm}/settings`, () =>
+      HttpResponse.json({ ...pluginMeta[SupportedPlugin.Irm], includes: [], ...settings })
     )
   );
 }
@@ -91,9 +91,9 @@ beforeEach(async () => {
     .mockImplementation((action: string) => action === AccessControlAction.AlertingInstanceRead);
   mockTeams([]);
   mockAlerts([]);
-  // The component probes the IRM/Incident plugin settings; absent by default.
-  // Tests that need the incidents tab layer mockIncidentPlugin() on top.
-  mockNoIncidentPlugin();
+  // The component probes the IRM plugin settings; absent by default.
+  // Tests that need the incidents tab layer mockIrmPlugin() on top.
+  mockNoIrmPlugin();
   // AlertIncidentTabs only ships in the growth-homepage redesign, which is flag-gated,
   // so exercise it in the same flag state it renders in production.
   await act(async () => {
@@ -150,7 +150,7 @@ describe('AlertIncidentTabs', () => {
 
   it("shows '50+' on the Incidents tab counter when the server reports more incidents beyond the query limit", async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-    mockIncidentPlugin();
+    mockIrmPlugin();
     const fullPage: IncidentPreview[] = Array.from({ length: ACTIVE_INCIDENTS_QUERY_LIMIT }, (_, i) => ({
       incidentID: String(i),
       title: `Incident ${i}`,
@@ -167,7 +167,7 @@ describe('AlertIncidentTabs', () => {
 
   it('shows the exact count on the Incidents tab counter when a full page has nothing beyond it', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-    mockIncidentPlugin();
+    mockIrmPlugin();
     const fullPage: IncidentPreview[] = Array.from({ length: ACTIVE_INCIDENTS_QUERY_LIMIT }, (_, i) => ({
       incidentID: String(i),
       title: `Incident ${i}`,
@@ -185,7 +185,7 @@ describe('AlertIncidentTabs', () => {
 
   it('defaults to the Incidents tab for a user without alerting permission when the plugin is installed', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-    mockIncidentPlugin();
+    mockIrmPlugin();
     mockIncidents([activeIncident]);
 
     render(<AlertIncidentTabs />);
@@ -198,7 +198,7 @@ describe('AlertIncidentTabs', () => {
 
   it('switches to the Incidents tab and renders incident content', async () => {
     mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
-    mockIncidentPlugin();
+    mockIrmPlugin();
     mockIncidents([activeIncident]);
 
     const { user } = render(<AlertIncidentTabs />);
@@ -216,7 +216,7 @@ describe('AlertIncidentTabs', () => {
   it('shows the incidents footer actions when the user can declare and access incidents', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     // No page includes to gate on, so canDeclare/canAccess both resolve to true.
-    mockIncidentPlugin({ includes: [] });
+    mockIrmPlugin({ includes: [] });
     mockIncidents([activeIncident]);
 
     render(<AlertIncidentTabs />);
@@ -228,19 +228,19 @@ describe('AlertIncidentTabs', () => {
 
   it('hides the incidents footer actions when the user lacks the plugin page permissions', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-    mockIncidentPlugin({
+    mockIrmPlugin({
       includes: [
         {
           type: PluginIncludeType.page,
           name: 'Incidents',
-          path: '/a/grafana-incident-app/incidents',
-          action: 'grafana-incident-app.incidents:read',
+          path: '/a/grafana-irm-app/incidents',
+          action: 'grafana-irm-app.incidents:read',
         },
         {
           type: PluginIncludeType.page,
           name: 'Declare incident',
-          path: '/a/grafana-incident-app/incidents/declare',
-          action: 'grafana-incident-app.incidents:write',
+          path: '/a/grafana-irm-app/incidents/declare',
+          action: 'grafana-irm-app.incidents:write',
         },
       ],
     });
