@@ -600,6 +600,9 @@ export class Explore extends PureComponent<Props, ExploreState> {
     } = this.props;
     const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
+    // Prometheus is the only datasource with an explorer to offer, so the whole sidebar
+    // waits for one instead of showing cards that cannot be opened. Mixed panes count if
+    // any query uses it.
     const isPrometheusSelected = datasourceInstance?.meta.mixed
       ? this.props.queries.some((q) => isPrometheusType(q.datasource?.type))
       : !!datasourceInstance && isPrometheusPlugin(datasourceInstance.meta);

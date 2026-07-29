@@ -120,6 +120,9 @@ export function SignalExplorer({ queries, paneDatasource, scroller, toggleButton
       <div className={styles.sectionLabel}>{t('explore.signal-explorer.section-label-queries', 'Queries')}</div>
       <ScrollContainer>
         <div className={styles.cards}>
+          {/* Explore always hands over at least one query today, because the sidebar is
+              gated on a Prometheus datasource being present. Kept because an empty list
+              is a legal input to this component. */}
           {cards.length === 0 ? (
             <div className={styles.emptyText}>
               {t('explore.signal-explorer.empty-text', 'Add a query to browse its datasource.')}
