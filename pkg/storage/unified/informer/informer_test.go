@@ -571,3 +571,143 @@ func TestInformer_SignalReconnectDoesNotBlock(t *testing.T) {
 		n.signalReconnect()
 	}
 }
+
+// recordingMetrics captures every Metrics observation the informer makes.
+type recordingMetrics struct {
+	mu         sync.Mutex
+	events     []observedEvent
+	reconnects int
+}
+
+type observedEvent struct {
+	delivery string
+	verb     string
+	rv       int64
+}
+
+func (m *recordingMetrics) ObserveEvent(delivery, verb string, rv int64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.events = append(m.events, observedEvent{delivery: delivery, verb: verb, rv: rv})
+}
+
+func (m *recordingMetrics) ObserveReconnect() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.reconnects++
+}
+
+func (m *recordingMetrics) observedEvents() []observedEvent {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]observedEvent(nil), m.events...)
+}
+
+func (m *recordingMetrics) reconnectCount() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.reconnects
+}
+
+var _ Metrics = (*recordingMetrics)(nil)
+
+// Live notifications are observed once per event (not per handler) as
+// delivery=live with the notification's RV, which dates the change for latency.
+func TestInformer_MetricsObserveLiveEvents(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		m := &recordingMetrics{}
+		list := func(context.Context) ([]runtime.Object, error) { return nil, nil }
+		n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
+		n.SetMetrics(m)
+		// Two handlers: the observation count must stay one per event.
+		_, err := n.AddEventHandler(&recordingHandler{})
+		require.NoError(t, err)
+		_, err = n.AddEventHandler(&recordingHandler{})
+		require.NoError(t, err)
+
+		stopCh := make(chan struct{})
+		defer func() { close(stopCh); synctest.Wait() }()
+		go n.Run(stopCh)
+		synctest.Wait()
+		require.True(t, n.HasSynced())
+
+		for i, typ := range []resourcepb.WatchNotification_Type{
+			resourcepb.WatchNotification_ADDED,
+			resourcepb.WatchNotification_MODIFIED,
+			resourcepb.WatchNotification_DELETED,
+		} {
+			evt := event(typ, "x")
+			evt.ResourceVersion = int64(101 + i)
+			sub.publish(t, subject(), evt)
+		}
+		// Malformed payloads are dropped before dispatch, so nothing is observed.
+		sub.deliver(t, subject(), []byte("not proto"))
+		synctest.Wait()
+
+		assert.Equal(t, []observedEvent{
+			{delivery: DeliveryLive, verb: VerbAdd, rv: 101},
+			{delivery: DeliveryLive, verb: VerbUpdate, rv: 102},
+			{delivery: DeliveryLive, verb: VerbDelete, rv: 103},
+		}, m.observedEvents())
+	})
+}
+
+// Re-list observations mirror what is dispatched: the reconciled diff (adds with
+// the object's RV to date the recovery, deletes) plus the re-deliveries of
+// retained objects. Only a non-initial add carries an RV — the initial list is
+// not a recovery, and a vanished object's last-known RV predates its delete.
+func TestInformer_MetricsObserveRelist(t *testing.T) {
+	sub := newFakeSubscriber()
+	m := &recordingMetrics{}
+
+	withRV := func(name, rv string) *metav1.PartialObjectMetadata {
+		o := obj(name)
+		o.ResourceVersion = rv
+		return o
+	}
+
+	// list returns [a], then [a, b], then [a] again: b appears on the second
+	// re-list and vanishes on the third.
+	var calls int
+	list := func(context.Context) ([]runtime.Object, error) {
+		calls++
+		switch calls {
+		case 1:
+			return []runtime.Object{withRV("a", "11")}, nil
+		case 2:
+			return []runtime.Object{withRV("a", "11"), withRV("b", "22")}, nil
+		default:
+			return []runtime.Object{withRV("a", "11")}, nil
+		}
+	}
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
+	n.SetMetrics(m)
+	_, err := n.AddEventHandler(&recordingHandler{})
+	require.NoError(t, err)
+
+	require.NoError(t, n.relist(context.Background(), true))
+	require.NoError(t, n.relist(context.Background(), false))
+	require.NoError(t, n.relist(context.Background(), false))
+
+	assert.Equal(t, []observedEvent{
+		{delivery: DeliveryRelist, verb: VerbAdd, rv: 0},    // initial: a, no RV
+		{delivery: DeliveryRelist, verb: VerbUpdate, rv: 0}, // resync: a retained
+		{delivery: DeliveryRelist, verb: VerbAdd, rv: 22},   // resync: b recovered, RV dates it
+		{delivery: DeliveryRelist, verb: VerbUpdate, rv: 0}, // resync: a retained
+		{delivery: DeliveryRelist, verb: VerbDelete, rv: 0}, // resync: b vanished
+	}, m.observedEvents())
+}
+
+// Every reconnect of the live subscription is observed — each one is a window
+// in which published events were lost to this replica.
+func TestInformer_MetricsObserveReconnect(t *testing.T) {
+	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, nil)
+	m := &recordingMetrics{}
+	n.SetMetrics(m)
+
+	n.signalReconnect()
+	n.signalReconnect()
+
+	assert.Equal(t, 2, m.reconnectCount())
+}

@@ -130,9 +130,11 @@ type kvStorageBackend struct {
 }
 
 type kvBackendMetrics struct {
-	ConflictErrors      *prometheus.CounterVec
-	EventEmitFailures   *prometheus.CounterVec
-	NatsNotifierDropped *prometheus.CounterVec
+	ConflictErrors                   *prometheus.CounterVec
+	EventEmitFailures                *prometheus.CounterVec
+	NatsNotifierDropped              *prometheus.CounterVec
+	WatchNotificationsPublished      *prometheus.CounterVec
+	WatchNotificationPublishFailures *prometheus.CounterVec
 }
 
 func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
@@ -151,6 +153,14 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 			Name: "storage_server_nats_notifier_dropped_events_total",
 			Help: "Notifications dropped by the NATS notifier before delivery, by reason (unmarshal_error, unknown_type, buffer_full).",
 		}, []string{"reason"}),
+		WatchNotificationsPublished: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_watch_notifications_published_total",
+			Help: "Watch notifications successfully published to NATS, by group, resource, and action. The denominator for consumer delivery completeness: compare against the consumers' live-received totals to measure events missed in flight.",
+		}, []string{"group", "resource", "action"}),
+		WatchNotificationPublishFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "storage_server_watch_notifications_publish_failures_total",
+			Help: "Watch notifications that failed to marshal or publish to NATS. Each one is an event live consumers never receive; they recover it on their next re-list.",
+		}, []string{"group", "resource"}),
 	}
 }
 
@@ -166,6 +176,20 @@ func (m *kvBackendMetrics) recordEventEmitFailure(event WriteEvent) {
 		return
 	}
 	m.EventEmitFailures.WithLabelValues(event.Key.Resource, event.Type.String()).Inc()
+}
+
+func (m *kvBackendMetrics) recordWatchNotificationPublished(event Event) {
+	if m == nil {
+		return
+	}
+	m.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
+}
+
+func (m *kvBackendMetrics) recordWatchNotificationPublishFailure(event Event) {
+	if m == nil {
+		return
+	}
+	m.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource).Inc()
 }
 
 var _ KVBackend = &kvStorageBackend{}
@@ -2378,7 +2402,7 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 			Value:           data,
 			ResourceVersion: event.ResourceVersion,
 			PreviousRV:      event.PreviousRV,
-			Timestamp:       resourceVersionTime(event.ResourceVersion).Unix(),
+			Timestamp:       ResourceVersionTime(event.ResourceVersion).Unix(),
 		}:
 		case <-ctx.Done():
 			return false

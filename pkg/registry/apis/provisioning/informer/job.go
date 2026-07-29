@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
@@ -16,8 +17,12 @@ import (
 
 // NewJobDeltaSource returns the job delta source: a NATS-backed informer when the
 // subscriber is enabled, otherwise an apiserver-backed SharedIndexInformer. The
-// job controller reads no lister, so callers need only the DeltaSource.
-func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) DeltaSource {
+// job controller reads no lister, so callers need only the DeltaSource. Either
+// source reports its event deliveries on the informer delivery metrics,
+// registered on reg (nil disables them).
+func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, reg prometheus.Registerer) DeltaSource {
+	metrics := newInformerMetrics(reg)
+	resourceName := provisioningapis.JobResourceInfo.GroupVersionResource().Resource
 	if nats.Enabled(subscriber) {
 		jobInformer := NewJobInformer(subscriber, client, "", resync, usinformer.NewStore())
 		// The informer is the job driver's only feed, so gating the initial list
@@ -26,9 +31,14 @@ func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, r
 		// degraded mode jobs are still picked up at the re-list cadence; only the
 		// live-event latency is lost until the subscription opens.
 		jobInformer.AllowDegradedStart()
+		jobInformer.SetMetrics(natsRecorder{metrics: metrics, resourceName: resourceName})
 		return jobInformer
 	}
-	return informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Jobs().Informer()
+	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Jobs().Informer()
+	// One metering handler observes each delivery once, however many controller
+	// handlers register. AddEventHandler cannot fail on a not-yet-started informer.
+	_, _ = inf.AddEventHandler(apiServerMeter{metrics: metrics, resourceName: resourceName})
+	return inf
 }
 
 // NewJobInformer builds an Informer for jobs.

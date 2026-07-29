@@ -3,12 +3,14 @@ package informer
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/grafana/dskit/backoff"
 	"google.golang.org/protobuf/proto"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -39,6 +41,32 @@ type ObjectFunc func(namespace, name string) runtime.Object
 // round-robin delivery: an event routed to another replica, or a hard delete
 // that is never announced, is reconciled on the next list.
 type ListFunc func(ctx context.Context) ([]runtime.Object, error)
+
+// Delivery and verb values passed to Metrics.ObserveEvent.
+const (
+	DeliveryLive   = "live"
+	DeliveryRelist = "relist"
+
+	VerbAdd    = "add"
+	VerbUpdate = "update"
+	VerbDelete = "delete"
+)
+
+// Metrics receives one observation per event the informer delivers to its
+// handlers (per event, not per handler). rv is the resource version whose
+// embedded timestamp dates the change, so an implementation can derive
+// delivery latency; it is 0 when the event carries no meaningful issue time:
+// relist re-deliveries of retained objects, relist-detected deletes (the
+// last-known RV predates the delete), and the initial list. ObserveReconnect
+// is called each time the live subscription is (re)established after a gap —
+// live events published during the gap were dropped, and the informer forces
+// a re-list to recover them.
+//
+// Implementations must not block: observations are made on the delivery path.
+type Metrics interface {
+	ObserveEvent(delivery, verb string, rv int64)
+	ObserveReconnect()
+}
 
 // defaultResync is the fallback re-list cadence when a caller passes a
 // non-positive interval.
@@ -92,6 +120,10 @@ type Informer struct {
 	// jitterFactor randomizes each resync interval by up to this fraction to avoid
 	// a thundering herd; defaults to defaultResyncJitterFactor.
 	jitterFactor float64
+
+	// metrics observes delivered events and reconnects; nil disables observation.
+	// See SetMetrics.
+	metrics Metrics
 
 	// reconnect signals the run loop to re-list after a NATS reconnect, since a
 	// round-robin subscription can miss events published while it was down.
@@ -176,6 +208,10 @@ func (n *Informer) HasSynced() bool { return n.synced.Load() }
 // gating suits controllers that prefer not to start against a snapshot with no
 // live updates. Call before Run.
 func (n *Informer) AllowDegradedStart() { n.degradedStart = true }
+
+// SetMetrics registers the observer for delivered events and reconnects; a nil
+// observer (the default) disables observation. Call before Run.
+func (n *Informer) SetMetrics(m Metrics) { n.metrics = m }
 
 // registration implements cache.ResourceEventHandlerRegistration by deferring to
 // the informer's sync state, so a NATS informer registration is interchangeable
@@ -352,6 +388,9 @@ func (n *Informer) retrySubscribe(ctx context.Context, subject string, opts []na
 // the WithOnReconnect callback, so it must not block: the send is non-blocking
 // and a pending signal coalesces additional reconnects into the next re-list.
 func (n *Informer) signalReconnect() {
+	if n.metrics != nil {
+		n.metrics.ObserveReconnect()
+	}
 	select {
 	case n.reconnect <- struct{}{}:
 	default:
@@ -385,6 +424,7 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		// reconcile, so the minimal object and old == new are both fine.
 		switch evt.Type {
 		case resourcepb.WatchNotification_ADDED:
+			n.observeEvent(DeliveryLive, VerbAdd, evt.ResourceVersion)
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(obj, false) })
 		case resourcepb.WatchNotification_DELETED:
 			// A DELETED notification is published only once the object is actually
@@ -398,8 +438,10 @@ func (n *Informer) onNotification() nats.MessageHandler {
 			// staleness-tolerant reader (e.g. a quota count) stops counting it without
 			// waiting for the next re-list.
 			n.store.Delete(context.Background(), evt.Namespace, evt.Name)
+			n.observeEvent(DeliveryLive, VerbDelete, evt.ResourceVersion)
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(obj) })
 		default: // MODIFIED
+			n.observeEvent(DeliveryLive, VerbUpdate, evt.ResourceVersion)
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(obj, obj) })
 		}
 	}
@@ -441,17 +483,48 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 		o := obj
 		key, _ := cache.MetaNamespaceKeyFunc(o)
 		if _, isNew := addedKeys[key]; isNew {
+			// A key first seen on a periodic re-list is a change the live stream
+			// did not deliver here, so its RV timestamp dates the recovery latency.
+			// The initial list is not a recovery — its objects may be arbitrarily
+			// old — so it carries no RV for latency.
+			rv := int64(0)
+			if !initial {
+				rv = objectResourceVersion(o)
+			}
+			n.observeEvent(DeliveryRelist, VerbAdd, rv)
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(o, initial) })
 		} else {
+			n.observeEvent(DeliveryRelist, VerbUpdate, 0)
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(o, o) })
 		}
 	}
 
 	for _, obj := range removed {
 		o := obj
+		n.observeEvent(DeliveryRelist, VerbDelete, 0)
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(o) })
 	}
 	return nil
+}
+
+func (n *Informer) observeEvent(delivery, verb string, rv int64) {
+	if n.metrics != nil {
+		n.metrics.ObserveEvent(delivery, verb, rv)
+	}
+}
+
+// objectResourceVersion parses an object's resource version as the int64
+// unified storage issues; 0 when absent or not numeric (no latency sample).
+func objectResourceVersion(obj runtime.Object) int64 {
+	acc, err := meta.Accessor(obj)
+	if err != nil {
+		return 0
+	}
+	rv, err := strconv.ParseInt(acc.GetResourceVersion(), 10, 64)
+	if err != nil {
+		return 0
+	}
+	return rv
 }
 
 func (n *Informer) dispatch(fn func(cache.ResourceEventHandler)) {
