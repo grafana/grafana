@@ -72,17 +72,19 @@ export function SignalExplorer({ queries, paneDatasource, scroller, toggleButton
     // eslint-disable-next-line react-hooks/exhaustive-deps -- cardsKey covers the parts of `queries` the cards read.
   }, [cardsKey, paneDatasource]);
 
-  // Deleting a query has to drop its expanded state, because Explore hands out the
-  // lowest unused refId when a query is added: keeping it would make the next query in
-  // that slot render already expanded.
+  // A card's expanded state has to go away with the card's ability to expand:
+  // - a deleted query, because Explore hands out the lowest unused refId when a query is
+  //   added, so the next query in that slot would render already expanded;
+  // - a query that moved to a datasource with no explorer, because the card collapses on
+  //   screen and would otherwise reopen by itself if the query moved back.
   useEffect(() => {
     setExpandedRefIds((prev) => {
       if (prev.size === 0) {
         return prev;
       }
 
-      const live = new Set(cards.map((card) => card.refId));
-      const next = new Set([...prev].filter((refId) => live.has(refId)));
+      const expandable = new Set(cards.filter((card) => card.isExpandable).map((card) => card.refId));
+      const next = new Set([...prev].filter((refId) => expandable.has(refId)));
 
       // Returning the previous set lets React skip the extra render.
       return next.size === prev.size ? prev : next;

@@ -219,6 +219,18 @@ describe('<SignalExplorer />', () => {
     expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
   });
 
+  it('forgets an expanded card when its query moves to a datasource with no explorer', async () => {
+    const { user, rerender } = setup([promQuery('A')]);
+
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+
+    rerender(explorer([{ refId: 'A', datasource: { uid: 'loki-uid', type: 'loki' } }]));
+    rerender(explorer([promQuery('A')]));
+
+    expect(screen.getByRole('button', { name: 'Expand datasource explorer for query A' })).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+  });
+
   it('keeps the remaining cards expanded when another query is deleted', async () => {
     const { user, rerender } = setup([promQuery('A'), promQuery('B'), promQuery('C')]);
 

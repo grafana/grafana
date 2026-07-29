@@ -35,7 +35,13 @@ describe('<SignalCard />', () => {
 
     expect(screen.getByText('A')).toBeInTheDocument();
     expect(screen.queryByText('gdev-prometheus')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toBeInTheDocument();
+    // The card is named by its refId text, so a `title` alone would lose to it in a
+    // browser. Assert the label itself rather than trusting Testing Library, whose
+    // accessible name implementation still falls back to the tooltip.
+    expect(screen.getByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toHaveAttribute(
+      'aria-label',
+      'Jump to query A (gdev-prometheus)'
+    );
   });
 
   it('jumps to the query when the card is clicked', async () => {
