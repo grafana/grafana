@@ -55,9 +55,4 @@ export { useMetricDetail } from './data/useMetricDetail';
  */
 export { dsKey, invalidateMetricCache, rangeKey } from './data/metricResourceClient';
 
-// `detectMetricsInQueries` produces `{ refId: metricNames[] }` and a metric row badges off
-// `{ metricName: refIds[] }`; `toRefsByMetric` is the adapter between them, so it ships with them.
-export { detectMetricsInQueries } from './query/detectMetricsInQueries';
-export { toRefsByMetric } from './query/toRefsByMetric';
-
 export { INITIAL_BATCH, useVisibleBatch } from './hooks/useVisibleBatch';

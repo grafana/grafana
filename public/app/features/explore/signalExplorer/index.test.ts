@@ -12,11 +12,9 @@ describe('signalExplorer public surface', () => {
     expect(Object.keys(signalExplorer).sort()).toEqual([
       'INITIAL_BATCH',
       'deriveMetricType',
-      'detectMetricsInQueries',
       'dsKey',
       'invalidateMetricCache',
       'rangeKey',
-      'toRefsByMetric',
       'useLabelValues',
       'useMetricCatalog',
       'useMetricDetail',
@@ -27,11 +25,9 @@ describe('signalExplorer public surface', () => {
   it('exports every helper and hook as a function', () => {
     for (const name of [
       'deriveMetricType',
-      'detectMetricsInQueries',
       'dsKey',
       'invalidateMetricCache',
       'rangeKey',
-      'toRefsByMetric',
       'useLabelValues',
       'useMetricCatalog',
       'useMetricDetail',
