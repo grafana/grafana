@@ -11,6 +11,8 @@ type fallbackMetrics struct {
 }
 
 func newFallbackMetrics(reg prometheus.Registerer) *fallbackMetrics {
+	// Labels are intentionally restricted to fixed engine/result enums. Actions,
+	// scopes, and subjects would make these metrics both high-cardinality and sensitive.
 	m := &fallbackMetrics{
 		comparisons: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "grafana",

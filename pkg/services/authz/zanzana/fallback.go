@@ -100,6 +100,8 @@ func TranslatePermission(subject string, permission RolePermission) (PermissionT
 	}
 
 	scope := permission.CanonicalScope()
+	// Every fallback grant gets an action marker, including scoped grants. Legacy
+	// scopeless checks mean "has this action on anything" and cannot name the object.
 	tuples := []*openfgav1.TupleKey{
 		{
 			User:     subject,
@@ -134,6 +136,8 @@ func validateRolePermission(permission RolePermission) error {
 }
 
 func nativePermissionTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
+	// IAM management actions use dedicated group-resource mappings because their
+	// legacy scope shapes do not fit the shared resource translation registry.
 	if isRoleManagementAction(permission.Action) {
 		return RoleManagementToTuples(subject, permission)
 	}
@@ -150,6 +154,8 @@ func nativePermissionTuples(subject string, permission RolePermission) []*openfg
 }
 
 func fallbackEncode(value string) string {
+	// Encoding keeps legacy delimiters out of OpenFGA object IDs. The versioned
+	// prefix above allows a future encoding migration without ambiguous objects.
 	return base64.RawURLEncoding.EncodeToString([]byte(value))
 }
 
@@ -214,6 +220,8 @@ func FallbackScopeCandidates(scopes ...string) ([]string, error) {
 		}
 
 		prefixLen := len(prefix)
+		// Legacy scopes may contain slash-delimited descendants. Add wildcards only
+		// at delimiter boundaries so "a/*" can never match a sibling such as "ab/...".
 		for i := prefixLen; i < len(scope); i++ {
 			if scope[i] == '/' {
 				seen[scope[:i+1]+"*"] = struct{}{}

@@ -26,6 +26,8 @@ func (s *Server) CheckPermission(ctx context.Context, r *authzextv1.CheckPermiss
 	}
 	defer release()
 
+	// A permission check may be the first request observed for a namespace. Ensure
+	// its store exists; newly created stores are reconciled before this returns.
 	if err := s.mtReconciler.EnsureNamespace(ctx, r.GetNamespace()); err != nil {
 		return nil, fmt.Errorf("failed to reconcile namespace: %w", err)
 	}
@@ -33,12 +35,16 @@ func (s *Server) CheckPermission(ctx context.Context, r *authzextv1.CheckPermiss
 	res, err := s.checkPermission(ctx, r)
 	if err != nil {
 		s.logger.Error("failed to perform legacy permission check", "error", err, "namespace", r.GetNamespace(), "action", r.GetAction())
+		// Keep translation and OpenFGA details server-side. Grafana only needs an
+		// error so the configured primary-engine policy can fail closed.
 		return nil, errors.New("failed to perform legacy permission check")
 	}
 	return res, nil
 }
 
 func (s *Server) checkPermission(ctx context.Context, r *authzextv1.CheckPermissionRequest) (*authzextv1.CheckPermissionResponse, error) {
+	// Authorize the caller for the namespace before validating request details so
+	// an unauthorized caller cannot probe another tenant's permission model.
 	if err := authorize(ctx, r.GetNamespace(), s.cfg); err != nil {
 		return nil, err
 	}
@@ -65,6 +71,8 @@ func (s *Server) checkPermission(ctx context.Context, r *authzextv1.CheckPermiss
 	if err != nil {
 		return nil, fmt.Errorf("failed to get contextual tuples: %w", err)
 	}
+	// Native scoped grants do not emit generic action markers. A scopeless native
+	// check must therefore ask whether any native object is reachable for the action.
 	if hasScopelessPermission(r.GetScopes()) && zanzana.IsNativeAction(r.GetAction()) {
 		allowed, supported, err := s.checkScopelessNativePermission(ctx, store, contextuals, r)
 		if err != nil {
@@ -73,6 +81,8 @@ func (s *Server) checkPermission(ctx context.Context, r *authzextv1.CheckPermiss
 		if supported && allowed {
 			return &authzextv1.CheckPermissionResponse{Allowed: true}, nil
 		}
+		// A native deny is not final: another role may grant the same action through
+		// the generic compatibility model, whose action marker is checked below.
 	}
 
 	checks, err := buildPermissionChecks(r.GetSubject(), r.GetAction(), r.GetScopes())
@@ -87,6 +97,8 @@ func (s *Server) checkPermission(ctx context.Context, r *authzextv1.CheckPermiss
 	if err != nil {
 		return nil, err
 	}
+	// Multiple scopes on one legacy permission are alternatives, so any successful
+	// native or fallback check satisfies the evaluator leaf.
 	for _, result := range results {
 		if result.GetError() != nil {
 			return nil, fmt.Errorf("openfga fallback check failed: %s", result.GetError().GetMessage())
@@ -172,6 +184,8 @@ func buildPermissionChecks(subject, action string, requestedScopes []string) ([]
 	}
 
 	checks := make([]*openfgav1.BatchCheckItem, 0, len(scopes))
+	// Alternative scopes and native mappings can converge on the same tuple.
+	// Deduplicate before BatchCheck while retaining condition context in the key.
 	seen := make(map[string]struct{})
 	add := func(relation, object string, checkContext *structpb.Struct) {
 		key := relation + "\x00" + object
@@ -201,6 +215,8 @@ func buildPermissionChecks(subject, action string, requestedScopes []string) ([]
 		}
 
 		if translation.Kind == zanzana.Native {
+			// Native permissions are checked only through their Kubernetes/OpenFGA
+			// representation; emitting a fallback check as well would create two truths.
 			for _, tuple := range translation.Tuples {
 				checkContext, err := nativePermissionCheckContext(tuple)
 				if err != nil {
@@ -212,6 +228,8 @@ func buildPermissionChecks(subject, action string, requestedScopes []string) ([]
 		}
 
 		if scope == "" {
+			// The fallback action marker represents legacy "has this action anywhere"
+			// semantics without requiring the caller to know a concrete scope.
 			add(zanzana.RelationGranted, zanzana.FallbackActionObject(action), nil)
 			continue
 		}
@@ -219,6 +237,8 @@ func buildPermissionChecks(subject, action string, requestedScopes []string) ([]
 		if err != nil {
 			return nil, err
 		}
+		// Check the exact scope and every legal containing wildcard because a legacy
+		// wildcard grant satisfies requests for its descendants.
 		for _, candidate := range candidates {
 			add(zanzana.RelationGranted, zanzana.FallbackPermissionObject(action, candidate), nil)
 		}
@@ -236,6 +256,8 @@ func nativePermissionCheckContext(tuple *openfgav1.TupleKey) (*structpb.Struct, 
 		return nil, nil
 	}
 
+	// Translation tuples carry write-side condition values. OpenFGA checks need the
+	// corresponding request-side field instead of copying that context verbatim.
 	switch condition.GetName() {
 	case "group_filter":
 		groupResource := condition.GetContext().GetFields()["group_resource"].GetStringValue()

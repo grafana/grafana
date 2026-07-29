@@ -62,6 +62,8 @@ type AccessControl struct {
 	metrics   *fallbackMetrics
 }
 
+// fallbackShadowTimeout bounds comparison work that intentionally outlives the
+// primary request so a slow shadow engine cannot accumulate goroutines.
 const fallbackShadowTimeout = 5 * time.Second
 
 func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
@@ -84,6 +86,7 @@ func (a *AccessControl) evaluate(ctx context.Context, user identity.Requester, e
 		return false, nil
 	}
 
+	// If the user is in no organization, then the evaluation must happen based on the user's global permissions
 	permissions := permissionsForUser(user)
 	//nolint:staticcheck // rollout is intentionally using the legacy feature-toggle API.
 	fallbackEnabled := a.features != nil && a.features.IsEnabledGlobally(featuremgmt.FlagZanzanaRBACFallbackChecks)
@@ -91,12 +94,16 @@ func (a *AccessControl) evaluate(ctx context.Context, user identity.Requester, e
 		return a.evaluateRBAC(ctx, user, evaluator, permissions)
 	}
 
+	// The primary engine is the only synchronous authority. The other engine runs
+	// after the decision for comparison and must never change the returned result.
 	if a.primary == setting.ZanzanaPrimaryEngineZanzana {
 		allowed, err := a.observeEngine("zanzana", func() (bool, error) {
 			return a.evaluateFallback(ctx, user, evaluator, permissions)
 		})
 		if err != nil {
 			a.metrics.comparisons.WithLabelValues("zanzana_error").Inc()
+			// Do not return a potentially stale RBAC allow when the configured
+			// authority fails. The detached RBAC run is diagnostic only.
 			a.shadowRBAC(ctx, user, evaluator, permissions)
 			return false, err
 		}
@@ -147,6 +154,9 @@ func (a *AccessControl) evaluateWithResolvers(
 	check func(accesscontrol.Evaluator) (bool, error),
 ) (bool, error) {
 	a.debug(ctx, user, "Evaluating permissions", evaluator)
+	// Test evaluation without scope resolver first, this will prevent 403 for wildcard scopes when resource does not exist
+	// Resolving may require loading the referenced object, which is unnecessary when
+	// the unresolved evaluator already matches a wildcard grant.
 	allowed, err := check(evaluator)
 	if err != nil || allowed {
 		return allowed, err
@@ -169,14 +179,20 @@ func (a *AccessControl) checkFallbackLeaf(ctx context.Context, user identity.Req
 		scopes = []string{""}
 	}
 	if user.GetAccessToken() != "" {
+		// A delegated token is a ceiling on the persistent subject's grants. Zanzana
+		// may know more permissions for the user than the token is allowed to use.
 		if !permissionMapAllowsLeaf(permissions, action, scopes...) {
 			return false, nil
 		}
+		// Token-defined identities such as access policies have no persistent
+		// Zanzana subject; their signed permission map is the authority.
 		if !authlib.IsIdentityType(user.GetIdentityType(), authlib.TypeUser, authlib.TypeServiceAccount, authlib.TypeAnonymous) {
 			return true, nil
 		}
 	}
 
+	// Validate every alternative scope before sending the leaf. Otherwise a mixed
+	// evaluator could hide malformed permission requirements behind a valid allow.
 	for _, scope := range scopes {
 		if scope == "" {
 			if zanzana.ClassifyPermission(zanzana.RolePermission{Action: action}) == zanzana.Invalid {
@@ -196,6 +212,8 @@ func (a *AccessControl) checkFallbackLeaf(ctx context.Context, user identity.Req
 	}
 
 	namespace := user.GetNamespace()
+	// Legacy HTTP identities may predate explicit namespaces. Their positive org ID
+	// still provides an unambiguous namespace for the Zanzana request.
 	if namespace == "" && user.GetOrgID() > 0 {
 		namespace = authlib.OrgNamespaceFormatter(user.GetOrgID())
 	}
@@ -203,6 +221,8 @@ func (a *AccessControl) checkFallbackLeaf(ctx context.Context, user identity.Req
 		return false, errors.New("zanzana permission check requires a namespace")
 	}
 
+	// GetGroups is the effective group set used by forward authorization. Do not
+	// union another team source here or contextual tuples could broaden the grant.
 	res, err := a.checker.CheckPermission(ctx, &authzextv1.CheckPermissionRequest{
 		Namespace: namespace,
 		Subject:   user.GetUID(),
@@ -225,6 +245,8 @@ func (a *AccessControl) checkFallbackLeaf(ctx context.Context, user identity.Req
 func permissionMapAllowsLeaf(permissions map[string][]string, action string, scopes ...string) bool {
 	for _, scope := range scopes {
 		if scope == "" {
+			// Legacy scopeless semantics ask whether the action exists at all; the
+			// concrete scopes stored under it are deliberately ignored.
 			_, allowed := permissions[action]
 			return allowed
 		}
@@ -240,6 +262,8 @@ func (a *AccessControl) observeEngine(engine string, fn func() (bool, error)) (b
 
 func (a *AccessControl) shadowZanzanaComparison(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator, permissions map[string][]string, rbacAllowed bool) {
 	go func() {
+		// The HTTP request may finish as soon as the primary returns, so detach its
+		// cancellation while retaining a strict timeout for comparison work.
 		shadowCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), fallbackShadowTimeout)
 		defer cancel()
 		allowed, err := a.observeEngine("zanzana", func() (bool, error) {
@@ -293,6 +317,8 @@ func (a *AccessControl) recordComparison(ctx context.Context, evaluator accessco
 	}
 	a.metrics.comparisons.WithLabelValues(result).Inc()
 	if result != "match" {
+		// Count every mismatch, but sample logs deterministically by evaluator. This
+		// bounds volume and avoids placing raw scopes or subjects in log fields.
 		hash := sha256.Sum256([]byte(evaluator.GoString()))
 		if hash[0]&0x0f == 0 {
 			a.log.FromContext(ctx).Warn("Zanzana result does not match RBAC",

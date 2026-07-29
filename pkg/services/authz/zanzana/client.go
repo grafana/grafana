@@ -11,6 +11,8 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
+// PermissionChecker is the narrow extension used by legacy action/scope
+// evaluators; it avoids coupling AccessControl to the full Zanzana client.
 type PermissionChecker interface {
 	CheckPermission(ctx context.Context, req *authzextv1.CheckPermissionRequest) (*authzextv1.CheckPermissionResponse, error)
 }
@@ -29,6 +31,8 @@ func ProvidePermissionCheckerProxy() *PermissionCheckerProxy {
 }
 
 func (p *PermissionCheckerProxy) Set(checker PermissionChecker) {
+	// The selected embedded, remote, or no-op client is installed during server
+	// construction, while AccessControl may already hold the proxy from Wire.
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.checker = checker

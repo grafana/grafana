@@ -50,6 +50,8 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Serv
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 		client := zClient.NewNoopClient()
+		// Install every selected client into the proxy so AccessControl observes the
+		// same Zanzana mode as the Kubernetes-style authorization client.
 		checker.Set(client)
 		return client, nil
 	}
