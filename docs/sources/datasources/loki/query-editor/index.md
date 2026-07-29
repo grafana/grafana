@@ -14,7 +14,8 @@ labels:
     - oss
 menuTitle: Query editor
 title: Loki query editor
-weight: 300
+weight: 200
+review_date: 2026-07-29
 ---
 
 # Loki query editor
@@ -165,13 +166,15 @@ For more information about log queries and LogQL, refer to the [Loki log queries
 
 ### Show log context
 
-In Explore, you can can retrieve the context surrounding your log results by clicking the `Show Context` button. You'll be able to investigate the logs from the same log stream that came before and after the log message you're interested in.
+In Explore, you can retrieve the context surrounding your log results by clicking the **Show context** button. You can then investigate the logs from the same log stream that came before and after the log message you're interested in.
 
-The initial log context query is created from all labels defining the stream for the selected log line. You can use the log context query editor to widen the search by removing one or more of the label filters from log stream. Additionally, if you used a parser in your original query, you can refine your search by using extracted labels filters.
+The initial log context query is created from all labels defining the stream for the selected log line. You can use the log context query editor to widen the search by removing one or more of the label filters from the log stream. If you used a parser in your original query, you can refine your search by using extracted label filters.
 
-To reduce the repetition of selecting and removing the same labels when examining multiple log context windows, Grafana stores your selected labels and applies them to each open context window. This lets you seamlessly navigate through various log context windows without having to reapply your filters.
+You can also adjust the size of the time window that the log context loads, so you can expand or narrow the range of surrounding logs without leaving the context view.
 
-To reset filters and use the initial log context query, click the `Revert to initial query` button next to the query preview.
+To reduce the repetition of selecting and removing the same labels when examining multiple log context windows, Grafana stores your selected labels and applies them to each open context window. This lets you navigate through various log context windows without having to reapply your filters.
+
+To reset filters and use the initial log context query, click the **Revert to initial query** button next to the query preview.
 
 ### Tail live logs
 
@@ -235,11 +238,14 @@ You can use LogQL to wrap a log query with functions that create metrics from yo
 
 For more information about metric queries, refer to the [Loki metric queries documentation](https://grafana.com/docs/loki/latest/logql/metric_queries/).
 
+## Query splitting
+
+To keep large queries responsive, Grafana automatically splits Loki queries that cover a long time range into a series of smaller sub-queries. Grafana runs the sub-queries and merges the results, and the query progresses incrementally so you see partial results as they arrive. Query splitting applies to both log and metric queries and requires no configuration.
+
+## Structured metadata
+
+Loki stores three types of labels: indexed labels, parsed fields, and structured metadata. The query editor and log details treat all three types as labels you can filter on and use in [derived fields](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure/#derived-fields). For more information, refer to the [Loki structured metadata documentation](https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/).
+
 ## Apply annotations
 
-[Annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) overlay rich event information on top of graphs.
-You can add annotation queries by clicking the **Add new element** icon (blue plus sign) in the dashboard toolbar and selecting **Annotation query**.
-
-You can only use log queries as a source for annotations.
-Grafana automatically uses log content as annotation text and your log stream labels as tags.
-You don't need to create any additional mapping.
+You can use Loki log queries as a source for dashboard annotations. For details, refer to [Loki annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/annotations/).

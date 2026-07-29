@@ -17,6 +17,7 @@ labels:
 menuTitle: Template variables
 title: Loki template variables
 weight: 300
+review_date: 2026-07-29
 ---
 
 # Loki template variables
@@ -40,13 +41,11 @@ The form has these options:
 | Label values | `label`       |                         | Label values for `label`.                                        |
 | Label values | `label`       | `log stream selector`   | Label values for `label` in the specified `log stream selector`. |
 
-## Use filters
+## Use ad hoc filters
 
-Loki supports the **Filter and Group by** feature.
-You can use this filters to specify any number of key/value filters, and Grafana applies them automatically to all of your Loki queries.
-The group by function allows you to then group data by keys, letting you split it up.
+Loki supports ad hoc filters. Use them to specify any number of key/value filters that Grafana applies automatically to all of your Loki queries, without editing each query.
 
-For more information, refer to the [Filter and Group by documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/).
+For more information, refer to [Add ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
 
 ## Use $\_\_auto variable for Loki metric queries
 
@@ -56,26 +55,20 @@ For more information about variables, refer to [Global built-in variables](https
 
 ## Label extraction and indexing in Loki
 
-Labels play a fundamental role in Loki's log aggregation and querying capabilities. When logs are ingested into Loki, they are often accompanied by metadata called `labels`, which provide contextual information about the log entries. These labels consist of `key-value` pairs and are essential for organizing, filtering, and searching log data efficiently.
+Labels are key to how Loki aggregates and queries logs. Labels are `key-value` pairs that add contextual information to log entries, and Loki uses them to organize, filter, and search log data efficiently.
 
 ### Label extraction
 
-During the ingestion process, Loki performs label extraction from log lines. Loki's approach to label extraction is based on `regular expressions`, allowing users to specify custom patterns for parsing log lines and extracting relevant label key-value pairs. This flexibility enables Loki to adapt to various log formats and schemas.
+When it ingests logs, Loki extracts labels from log lines using regular expressions, so you can define custom patterns that match your log formats. For example, given a log line like the following:
 
-For example, suppose you have log lines in the following format:
+```text
+2023-07-25 12:34:56 INFO: Request from IP A.B.C.D to endpoint /api/data
+```
 
-**2023-07-25 12:34:56 INFO: Request from IP A.B.C.D to endpoint /api/data**
+You can define a regular expression that extracts the log level (`INFO`), IP address (`A.B.C.D`), and endpoint (`/api/data`) as labels. You can then use those labels to filter and aggregate log entries.
 
-To extract labels from this log format, you could define a regular expression to extract the log level ("INFO"), IP address ("A.B.C.D"), and endpoint ("/api/data") as labels. These labels can later be used to filter and aggregate log entries.
+### Index labels
 
-### Indexing labels
+Loki indexes the extracted labels. The index maps labels to their log entries, so Loki can retrieve logs by label without scanning the entire dataset. For example, if a `job` label represents the services in your application, Loki indexes each job's logs separately, so you can query a single job quickly.
 
-Once labels are extracted, Loki efficiently indexes them. The index serves as a lookup mechanism that maps labels to the corresponding log entries. This indexing process enables faster retrieval of logs based on specific label criteria, significantly enhancing query performance.
-
-For instance, if you have a label "job" that represents different services in your application, Loki will index the logs for each job separately. This indexing allows you to quickly query and analyze logs for individual jobs without the need to scan the entire log dataset.
-
-By effectively extracting and indexing labels, Loki enables users to perform complex and targeted log queries without compromising on query speed and resource consumption.
-
-Utilizing Loki's indexed labels in combination with Grafana's template variables provides a powerful way to interactively explore and visualize log data. Template variables allow users to create dynamic queries, selecting and filtering logs based on various labels, such as job names, instance IDs, severity levels, or any other contextual information attached to the log entries.
-
-In conclusion, Loki's label extraction and indexing mechanisms are key components that contribute to its ability to handle vast amounts of log data efficiently. By making use of labels and template variables, users can easily gain valuable insights from their log data and troubleshoot issues effectively.
+Combine Loki's indexed labels with Grafana template variables to build dynamic queries. Use template variables to select and filter logs by labels such as job names, instance IDs, or severity levels, so you can explore and visualize your log data interactively.
