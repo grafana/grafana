@@ -213,10 +213,13 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			if cmd.Config.Target != nil {
 				correlation.Config.Target = *cmd.Config.Target
 			}
-			if cmd.Config.TimeRange.Field != nil || cmd.Config.TimeRange.Range != nil {
-				correlation.Config.TimeRange = cmd.Config.TimeRange
-			} else {
-				correlation.Config.TimeRange = TimeRange{}
+			// if the whole object is nil, it won't be updated
+			if cmd.Config.TimeRange != nil {
+				if cmd.Config.TimeRange.Field != nil || cmd.Config.TimeRange.Range != nil {
+					correlation.Config.TimeRange = *cmd.Config.TimeRange
+				} else {
+					correlation.Config.TimeRange = TimeRange{}
+				}
 			}
 			if cmd.Config.Transformations != nil {
 				correlation.Config.Transformations = cmd.Config.Transformations

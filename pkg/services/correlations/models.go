@@ -237,7 +237,7 @@ type CorrelationConfigUpdateDTO struct {
 	// Source data transformations
 	// example: [{"type": "logfmt"},{"type":"regex","expression":"(Superman|Batman)", "variable":"name"}]
 	Transformations []Transformation `json:"transformations"`
-	TimeRange       TimeRange        `json:"timeRange"`
+	TimeRange       *TimeRange       `json:"timeRange"`
 }
 
 // UpdateCorrelationCommand is the command for updating a correlation
@@ -261,7 +261,7 @@ type UpdateCorrelationCommand struct {
 }
 
 func (c UpdateCorrelationCommand) Validate() error {
-	if c.Label == nil && c.Description == nil && c.Type == nil && (c.Config == nil || (c.Config.Field == nil && c.Config.Target == nil)) {
+	if c.Label == nil && c.Description == nil && c.Type == nil && (c.Config == nil || (c.Config.Field == nil && c.Config.Target == nil && c.Config.Transformations == nil && c.Config.TimeRange.Field == nil && c.Config.TimeRange.Range == nil)) {
 		return ErrUpdateCorrelationEmptyParams
 	}
 

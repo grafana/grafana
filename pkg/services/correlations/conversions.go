@@ -156,7 +156,7 @@ func ToUpdateCorrelationCommand(obj *correlationsV0.Correlation) (*UpdateCorrela
 			Field:           &tmp.Config.Field,
 			Target:          &tmp.Config.Target,
 			Transformations: tmp.Config.Transformations,
-			TimeRange:       tmp.Config.TimeRange,
+			TimeRange:       &tmp.Config.TimeRange,
 		},
 	}, nil
 }
