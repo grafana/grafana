@@ -1,4 +1,6 @@
-import { isPrometheusPlugin, isPrometheusType } from './prometheus';
+import { matchPluginId } from '@grafana/data';
+
+import { isPrometheusType } from './prometheus';
 
 describe('isPrometheusType', () => {
   it.each(['prometheus', 'grafana-amazonprometheus-datasource', 'grafana-azureprometheus-datasource'])(
@@ -20,15 +22,17 @@ describe('isPrometheusType', () => {
   });
 });
 
-describe('isPrometheusPlugin', () => {
+// Explore checks the pane datasource with `matchPluginId` and full plugin meta, and each
+// Mixed query with `isPrometheusType` and a bare type. These pin that the two agree.
+describe('agreement with matchPluginId', () => {
   it.each(['prometheus', 'grafana-amazonprometheus-datasource', 'loki'])(
-    'agrees with isPrometheusType for %s, so a type-only query ref and full plugin meta cannot diverge',
+    'gives the same answer for %s as full plugin meta does',
     (id) => {
-      expect(isPrometheusPlugin({ id })).toBe(isPrometheusType(id));
+      expect(isPrometheusType(id)).toBe(matchPluginId('prometheus', { id }));
     }
   );
 
   it('ignores aliasIDs, which is why a bare type id is a safe substitute for plugin meta', () => {
-    expect(isPrometheusPlugin({ id: 'some-datasource', aliasIDs: ['prometheus'] })).toBe(false);
+    expect(matchPluginId('prometheus', { id: 'some-datasource', aliasIDs: ['prometheus'] })).toBe(false);
   });
 });

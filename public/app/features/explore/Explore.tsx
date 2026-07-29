@@ -12,6 +12,7 @@ import {
   type GrafanaTheme2,
   hasToggleableQueryFiltersSupport,
   LoadingState,
+  matchPluginId,
   type QueryFixAction,
   type RawTimeRange,
   type SplitOpenOptions,
@@ -70,7 +71,7 @@ import {
 } from './state/query';
 import { isSplit, selectExploreDSMaps } from './state/selectors';
 import { updateTimeRange } from './state/time';
-import { isPrometheusPlugin, isPrometheusType } from './utils/prometheus';
+import { isPrometheusType } from './utils/prometheus';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -605,7 +606,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
     // any query uses it.
     const isPrometheusSelected = datasourceInstance?.meta.mixed
       ? this.props.queries.some((q) => isPrometheusType(q.datasource?.type))
-      : !!datasourceInstance && isPrometheusPlugin(datasourceInstance.meta);
+      : !!datasourceInstance && matchPluginId('prometheus', datasourceInstance.meta);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showNoData =
       queryResponse.state === LoadingState.Done &&
