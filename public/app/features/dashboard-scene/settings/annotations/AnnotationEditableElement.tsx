@@ -78,7 +78,7 @@ function useEditPaneOptions(this: AnnotationEditableElement, isNewElement: boole
 
   const queryOptions = useMemo(() => {
     return new OptionsPaneCategoryDescriptor({
-      title: t('dashboard.edit-pane.annotation.query', 'Query'),
+      title: t('dashboard.sidebar.annotation.query', 'Query'),
       id: queryCategoryId,
     }).addItem(
       new OptionsPaneItemDescriptor({
@@ -99,7 +99,7 @@ export class AnnotationEditableElement implements EditableDashboardElement {
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.annotation', 'Annotation'),
+      typeName: t('dashboard.sidebar.elements.annotation', 'Annotation'),
       icon: 'comment-alt',
       instanceName: this.layer.state.name,
       isHidden: this.layer.state.isHidden,

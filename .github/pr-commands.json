@@ -119,15 +119,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/prometheus/**/*",
-      "pkg/tsdb/prometheus/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Prometheus"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/features/variables/**/*",
       "public/app/features/templating/**/*"
     ],

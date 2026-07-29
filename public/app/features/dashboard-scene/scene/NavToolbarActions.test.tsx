@@ -147,7 +147,7 @@ describe('NavToolbarActions', () => {
       ).not.toBeInTheDocument();
     });
     describe('edit dashboard button tracking', () => {
-      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is undefined', async () => {
+      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.sidebar.outline.collapsed is undefined', async () => {
         setup();
         await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
         expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({
@@ -156,8 +156,8 @@ describe('NavToolbarActions', () => {
         });
       });
 
-      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is false', async () => {
-        localStorageMock.setItem('grafana.dashboard.edit-pane.outline.collapsed', 'false');
+      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.sidebar.outline.collapsed is false', async () => {
+        localStorageMock.setItem('grafana.dashboard.sidebar.outline.collapsed', 'false');
         setup();
         await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
         expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({
@@ -166,8 +166,8 @@ describe('NavToolbarActions', () => {
         });
       });
 
-      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:false if grafana.dashboard.edit-pane.outline.collapsed is true', async () => {
-        localStorageMock.setItem('grafana.dashboard.edit-pane.outline.collapsed', 'true');
+      it('should call DashboardInteractions.editButtonClicked with outlineExpanded:false if grafana.dashboard.sidebar.outline.collapsed is true', async () => {
+        localStorageMock.setItem('grafana.dashboard.sidebar.outline.collapsed', 'true');
         setup();
         await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
         expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({

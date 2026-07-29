@@ -96,8 +96,6 @@ export const CodeEditor = memo(function CodeEditor({
   theme: themeOverride,
   basicSetup,
   indentWithTab = true,
-  readOnly = false,
-  lineWrapping = false,
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
   const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
@@ -109,18 +107,9 @@ export const CodeEditor = memo(function CodeEditor({
       ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
       ...(languageExtension ? [languageExtension] : []),
       ...getCompletionExtensions(completionSources, completionMode),
-      ...(lineWrapping ? [EditorView.lineWrapping] : []),
       ...(additionalExtensions ?? []),
     ],
-    [
-      ariaLabel,
-      ariaLabelledby,
-      languageExtension,
-      completionSources,
-      completionMode,
-      lineWrapping,
-      additionalExtensions,
-    ]
+    [ariaLabel, ariaLabelledby, languageExtension, completionSources, completionMode, additionalExtensions]
   );
   return (
     <>
@@ -140,7 +129,6 @@ export const CodeEditor = memo(function CodeEditor({
         onChange={onChange}
         basicSetup={basicSetup}
         indentWithTab={indentWithTab}
-        readOnly={readOnly}
       />
     </>
   );
