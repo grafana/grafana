@@ -9,22 +9,24 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 var _ auth.ExternalSessionStore = (*store)(nil)
 
 type store struct {
-	sqlStore       db.DB
+	// sql resolves qualified table names and the shared database.
+	sql            legacysql.LegacyDatabaseProvider
 	secretsService secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	tracer         tracing.Tracer
 }
 
-func provideExternalSessionStore(sqlStore db.DB,
+func provideExternalSessionStore(sql legacysql.LegacyDatabaseProvider,
 	secretService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	tracer tracing.Tracer,
 ) auth.ExternalSessionStore {
 	return &store{
-		sqlStore:       sqlStore,
+		sql:            sql,
 		secretsService: secretService,
 		tracer:         tracer,
 	}
@@ -34,10 +36,15 @@ func (s *store) Get(ctx context.Context, ID int64) (*auth.ExternalSession, error
 	ctx, span := s.tracer.Start(ctx, "externalsession.Get")
 	defer span.End()
 
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	externalSession := &auth.ExternalSession{ID: ID}
 
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		found, err := sess.Get(externalSession)
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		found, err := sess.Table(dbHelper.Table("user_external_session")).Get(externalSession)
 		if err != nil {
 			return err
 		}
@@ -87,9 +94,14 @@ func (s *store) List(ctx context.Context, query *auth.ListExternalSessionQuery) 
 		externalSession.NameIDHash = base64.RawStdEncoding.EncodeToString(hash.Sum(nil))
 	}
 
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	queryResult := make([]*auth.ExternalSession, 0)
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		return sess.Desc("id").Find(&queryResult, externalSession)
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(dbHelper.Table("user_external_session")).Desc("id").Find(&queryResult, externalSession)
 	})
 	if err != nil {
 		return nil, err
@@ -148,8 +160,13 @@ func (s *store) Create(ctx context.Context, extSession *auth.ExternalSession) er
 		return err
 	}
 
-	err = s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Insert(clone)
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Table(dbHelper.Table("user_external_session")).Insert(clone)
 		return err
 	})
 	if err != nil {
@@ -187,8 +204,13 @@ func (s *store) Update(ctx context.Context, ID int64, cmd *auth.UpdateExternalSe
 
 	externalSession.ExpiresAt = cmd.Token.Expiry
 
-	err = s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.ID(ID).Cols("access_token", "refresh_token", "id_token", "expires_at").Update(externalSession)
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return err
+	}
+
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Table(dbHelper.Table("user_external_session")).ID(ID).Cols("access_token", "refresh_token", "id_token", "expires_at").Update(externalSession)
 		return err
 	})
 	if err != nil {
@@ -202,9 +224,14 @@ func (s *store) Delete(ctx context.Context, ID int64) error {
 	ctx, span := s.tracer.Start(ctx, "externalsession.Delete")
 	defer span.End()
 
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return err
+	}
+
 	externalSession := &auth.ExternalSession{ID: ID}
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Delete(externalSession)
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Table(dbHelper.Table("user_external_session")).Delete(externalSession)
 		return err
 	})
 	return err
@@ -214,9 +241,14 @@ func (s *store) DeleteExternalSessionsByUserID(ctx context.Context, userID int64
 	ctx, span := s.tracer.Start(ctx, "externalsession.DeleteExternalSessionsByUserID")
 	defer span.End()
 
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return err
+	}
+
 	externalSession := &auth.ExternalSession{UserID: userID}
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Delete(externalSession)
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Table(dbHelper.Table("user_external_session")).Delete(externalSession)
 		return err
 	})
 	return err
@@ -226,9 +258,14 @@ func (s *store) BatchDeleteExternalSessionsByUserIDs(ctx context.Context, userID
 	ctx, span := s.tracer.Start(ctx, "externalsession.BatchDeleteExternalSessionsByUserIDs")
 	defer span.End()
 
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return err
+	}
+
 	externalSession := &auth.ExternalSession{}
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.In("user_id", userIDs).Delete(externalSession)
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Table(dbHelper.Table("user_external_session")).In("user_id", userIDs).Delete(externalSession)
 		return err
 	})
 	return err

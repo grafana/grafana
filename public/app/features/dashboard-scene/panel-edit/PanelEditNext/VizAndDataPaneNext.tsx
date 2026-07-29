@@ -25,11 +25,6 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
 
   return (
     <div ref={containerRef} className={styles.pageContainer} style={layout.gridStyles}>
-      {scene.controls && (
-        <div className={styles.controlsWrapper}>
-          <scene.controls.Component model={scene.controls} />
-        </div>
-      )}
       <div className={cx(styles.viz, { [styles.fixedSizeViz]: layout.isScrollingLayout })}>
         <PanelEditPanelWrapper panel={scene.panel} tableView={scene.tableView} dashboard={scene.dashboard} />
         {nextDataPane && (
@@ -81,6 +76,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
   return {
     pageContainer: css({
       display: 'grid',
+      width: '100%',
       gap: theme.spacing(2),
       overflow: 'hidden',
       paddingBottom: theme.spacing(2),
@@ -118,14 +114,6 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       gridArea: 'data-pane',
       overflow: 'hidden',
       minHeight: 0,
-    }),
-    controlsWrapper: css({
-      gridArea: 'controls',
-      display: 'flex',
-      flexDirection: 'column',
-      ...(sidebarSize === SidebarSize.Mini && {
-        paddingLeft: theme.spacing(2),
-      }),
     }),
     fixedSizeViz: css({
       height: '100vh',

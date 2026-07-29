@@ -42,7 +42,7 @@ export function RecommendationCard({ recommendation }: RecommendationCardProps) 
           onClick={() =>
             ctaClicked({
               surface: 'recommendations',
-              action: 'enable',
+              action: recommendation.cta ?? 'enable',
               placement: 'card',
               recommendation_id: recommendation.id,
             })
