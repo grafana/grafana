@@ -1,0 +1,13 @@
+SELECT
+  team.id as id,
+  team.uid,
+  team.org_id,
+  team.name as name,
+  team.email as email,
+  team.external_uid as external_uid,
+  team.is_provisioned as is_provisioned,
+  (SELECT COUNT(*) FROM "test_schema"."team_member" WHERE team_member.team_id = team.id) AS member_count
+FROM "test_schema"."team" as team
+INNER JOIN "test_schema"."team_member" on team.id = team_member.team_id
+WHERE team.org_id = ? and team_member.user_id = ?
+ and (1 = 1)

@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -641,7 +642,7 @@ func TestIntegrationApi_setUserPermission_dualWriterModeFallback(t *testing.T) {
 				featuremgmt.FlagKubernetesAuthzResourcePermissionApis:      true,
 			})
 
-			service, usrSvc, _, cfg := setupTestEnvironmentWithCfg(t, testOptions, featuremgmt.WithFeatures())
+			service, usrSvc, _, cfg, _ := setupTestEnvironmentWithCfg(t, testOptions, featuremgmt.WithFeatures())
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.ResourcePermissionInfo.GroupResource().String(): {DualWriterMode: tt.mode},
 			}
@@ -695,7 +696,7 @@ func TestIntegrationApi_getPermissions_dualWriterModeFallback(t *testing.T) {
 				featuremgmt.FlagKubernetesAuthzResourcePermissionApis:      true,
 			})
 
-			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptions, featuremgmt.WithFeatures())
+			service, usrSvc, teamSvc, cfg, _ := setupTestEnvironmentWithCfg(t, testOptions, featuremgmt.WithFeatures())
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.ResourcePermissionInfo.GroupResource().String(): {DualWriterMode: tt.mode},
 			}
@@ -742,7 +743,7 @@ func TestIntegrationApi_setUserPermissionForTeams_dualWriterModeFallback(t *test
 			// The teams redirect is gated on the kubernetesTeamsRedirect toggle.
 			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
 
-			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures())
+			service, usrSvc, teamSvc, cfg, _ := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures())
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: tt.mode},
 			}
@@ -795,6 +796,9 @@ func TestIntegrationApi_setUserPermissionForTeams_removeMemberDualWrite(t *testi
 			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
 
 			// Wire the production OnSetUser hook so a removal actually runs RemoveTeamMemberHook.
+			// dbHelper is resolved once the test database exists (below) and read
+			// at request time by the hook for qualified table names.
+			var dbHelper *legacysql.LegacyDatabaseHelper
 			opts := testOptionsForTeams
 			opts.OnSetUser = func(session *db.Session, orgID int64, usr accesscontrol.User, resourceID, permission string) error {
 				teamID, err := strconv.ParseInt(resourceID, 10, 64)
@@ -802,9 +806,9 @@ func TestIntegrationApi_setUserPermissionForTeams_removeMemberDualWrite(t *testi
 					return err
 				}
 				if permission == "" {
-					return teamimpl.RemoveTeamMemberHook(session, &team.RemoveTeamMemberCommand{OrgID: orgID, UserID: usr.ID, TeamID: teamID})
+					return teamimpl.RemoveTeamMemberHook(dbHelper, session, &team.RemoveTeamMemberCommand{OrgID: orgID, UserID: usr.ID, TeamID: teamID})
 				}
-				return teamimpl.AddOrUpdateTeamMemberHook(session, usr.ID, orgID, teamID, usr.IsExternal, team.PermissionTypeMember)
+				return teamimpl.AddOrUpdateTeamMemberHook(dbHelper, session, usr.ID, orgID, teamID, usr.IsExternal, team.PermissionTypeMember)
 			}
 
 			// memberUID is filled in once the user exists; the K8s stub reads it at request time.
@@ -828,7 +832,9 @@ func TestIntegrationApi_setUserPermissionForTeams_removeMemberDualWrite(t *testi
 				opts.RestConfigProvider = &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
 			}
 
-			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, opts, featuremgmt.WithFeatures())
+			service, usrSvc, teamSvc, cfg, sqlDB := setupTestEnvironmentWithCfg(t, opts, featuremgmt.WithFeatures())
+			dbHelper, err := legacysql.NewDatabaseProvider(sqlDB)(context.Background())
+			require.NoError(t, err)
 			// Mode1 is non-authoritative, so the request dual-writes and falls through to legacy.
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: grafanarest.Mode1},
