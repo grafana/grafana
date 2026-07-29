@@ -9,7 +9,11 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT, type IncidentPreview } from 'app/features/alerting/unified/api/incidentsApi';
-import { pluginMeta } from 'app/features/alerting/unified/testSetup/plugins';
+import {
+  installAppPluginMeta,
+  pluginMeta,
+  uninstallAppPluginMeta,
+} from 'app/features/alerting/unified/testSetup/plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -56,11 +60,15 @@ function mockAlerts(alerts: AlertmanagerAlert[]) {
 
 /** Report the Incident/IRM plugins as absent so the component only shows the alerts tab. */
 function mockNoIncidentPlugin() {
+  uninstallAppPluginMeta(SupportedPlugin.Incident);
+  uninstallAppPluginMeta(SupportedPlugin.Irm);
   server.use(http.get('/api/plugins/:pluginId/settings', () => HttpResponse.json({ enabled: false })));
 }
 
 /** Install the Incident plugin (IRM stays absent) with optional page includes for access gating. */
 function mockIncidentPlugin(settings?: Partial<PluginMeta>) {
+  // the bridge checks bootdata before requesting settings, so the app has to be registered there too
+  installAppPluginMeta(pluginMeta[SupportedPlugin.Incident]);
   server.use(
     http.get(`/api/plugins/${SupportedPlugin.Incident}/settings`, () =>
       HttpResponse.json({ ...pluginMeta[SupportedPlugin.Incident], includes: [], ...settings })
@@ -113,11 +121,12 @@ afterEach(async () => {
 });
 
 describe('AlertIncidentTabs', () => {
-  it('renders nothing when the user lacks AlertingInstanceRead permission', () => {
+  it('renders nothing when the user lacks AlertingInstanceRead permission', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     const { container } = render(<AlertIncidentTabs />);
-    expect(container).toBeEmptyDOMElement();
+    // the plugin bridge settles asynchronously, so let it before asserting nothing appeared
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
   it('renders a single Firing alerts heading and tab when permitted', async () => {
