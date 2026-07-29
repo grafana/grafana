@@ -13,14 +13,18 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
+	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	healthv1pb "google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/keepalive"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	clientrest "k8s.io/client-go/rest"
 
@@ -60,6 +64,7 @@ func ProvideZanzanaClient(cfg *setting.Cfg, db db.DB, zanzanaServer zanzana.Serv
 			TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
 			TokenNamespace:   cfg.ZanzanaClient.TokenNamespace,
 			ServerCertFile:   cfg.ZanzanaClient.ServerCertFile,
+			KeepaliveTime:    cfg.ZanzanaClient.KeepaliveTime,
 		}
 		return NewRemoteZanzanaClient(zanzanaConfig, reg)
 
@@ -237,6 +242,7 @@ func ProvideStandaloneZanzanaClient(cfg *setting.Cfg, features featuremgmt.Featu
 		TokenExchangeURL: cfg.ZanzanaClient.TokenExchangeURL,
 		TokenNamespace:   cfg.ZanzanaClient.TokenNamespace,
 		ServerCertFile:   cfg.ZanzanaClient.ServerCertFile,
+		KeepaliveTime:    cfg.ZanzanaClient.KeepaliveTime,
 	}
 
 	return NewRemoteZanzanaClient(zanzanaConfig, reg)
@@ -248,6 +254,22 @@ type ZanzanaClientConfig struct {
 	TokenExchangeURL string
 	TokenNamespace   string
 	ServerCertFile   string
+	KeepaliveTime    time.Duration
+}
+
+// defaultCallTimeout is applied to unary calls whose context carries no deadline. It spans
+// all retry attempts, so it must comfortably exceed the retry interceptor's total backoff.
+const defaultCallTimeout = 30 * time.Second
+
+func unaryDefaultTimeout(timeout time.Duration) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, timeout)
+			defer cancel()
+		}
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
 }
 
 // NewRemoteZanzanaClient creates a new Zanzana client that connects to remote Zanzana server.
@@ -277,13 +299,45 @@ func NewRemoteZanzanaClient(cfg ZanzanaClientConfig, reg prometheus.Registerer) 
 	}, []string{"operation", "status_code"})
 	unaryInterceptors, streamInterceptors := instrument(authzRequestDuration, middleware.ReportGRPCStatusOption)
 
+	// Retry transient failures so in-flight calls survive server pod restarts (e.g. GOAWAY on shutdown).
+	retryInterceptor := grpc_retry.UnaryClientInterceptor(
+		grpc_retry.WithMax(3),
+		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.5)),
+		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.Aborted),
+	)
+
+	// Background callers (reconcilers, hooks) may pass contexts without deadlines; a default
+	// deadline prevents calls from blocking indefinitely on an unresponsive connection.
+	timeoutInterceptor := unaryDefaultTimeout(defaultCallTimeout)
+
 	dialOptions := []grpc.DialOption{
 		grpc.WithTransportCredentials(transportCredentials),
 		grpc.WithPerRPCCredentials(
 			NewGRPCTokenAuth(AuthzServiceAudience, cfg.TokenNamespace, tokenClient),
 		),
-		grpc.WithChainUnaryInterceptor(unaryInterceptors...),
+		grpc.WithChainUnaryInterceptor(append([]grpc.UnaryClientInterceptor{timeoutInterceptor, retryInterceptor}, unaryInterceptors...)...),
 		grpc.WithChainStreamInterceptor(streamInterceptors...),
+		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
+		// Fast connection backoff for quicker recovery from transient failures (e.g. during pod
+		// restarts). Default gRPC backoff waits up to 120s between reconnect attempts.
+		grpc.WithConnectParams(grpc.ConnectParams{
+			Backoff: backoff.Config{
+				BaseDelay:  100 * time.Millisecond,
+				Multiplier: 1.6,
+				Jitter:     0.2,
+				MaxDelay:   10 * time.Second,
+			},
+			MinConnectTimeout: 5 * time.Second,
+		}),
+	}
+
+	// Keepalive pings detect silently dead connections (e.g. an unresponsive server pod)
+	// that would otherwise block calls until the peer is torn down externally.
+	if cfg.KeepaliveTime > 0 {
+		dialOptions = append(dialOptions, grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:    cfg.KeepaliveTime,
+			Timeout: 10 * time.Second,
+		}))
 	}
 
 	conn, err := grpc.NewClient(cfg.Addr, dialOptions...)
