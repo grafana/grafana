@@ -11,7 +11,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { ASSISTANT_PLUGIN_ID, SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { isOnPrem } from 'app/core/utils/isOnPrem';
 
-import { useIrmPlugin } from '../alerting/unified/hooks/usePluginBridge';
+import { usePluginBridge } from '../alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from '../alerting/unified/types/pluginBridges';
 
 import { AlertIncidentTabs } from './AlertsIncidents/AlertIncidentTabs';
@@ -69,7 +69,7 @@ export default function HomePage() {
     extensionPointId: PluginExtensionPoints.HomepageTabs,
   });
 
-  const irm = useIrmPlugin(SupportedPlugin.Incident);
+  const irm = usePluginBridge(SupportedPlugin.Irm);
 
   const isWaitingForTabs = !redesignEnabled && isLoadingTabs;
   const isWaitingForIRM = !redesignEnabled && irm.loading;

@@ -1620,8 +1620,6 @@ github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 
 github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79/go.mod h1:wc6Hbh3K2TgCUSfBC/BOzabItujtHMESZeFk5ZhdxhQ=
 github.com/grafana/grafana-plugin-sdk-go v0.292.2 h1:6xrNZpe905vzX1pY33Fyet7Oxw5xULcAHm2b8dvNZNY=
 github.com/grafana/grafana-plugin-sdk-go v0.292.2/go.mod h1:MPviZeixuZDc5T3f62FBCCPSOJ51/JocZH5+ZiQ1DmM=
-github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.11 h1:dN402Jd/FsSi6lvfCJR5lXiv7j2ucbPV/ZJCjOX4+zc=
-github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.11/go.mod h1:rmYghozhFPZ5p+o8erXoCQ3BuSVDOuT5Y8dXWBUIXjs=
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 h1:/5LKSYgLmAhwA4m6iGUD4w1YkydEWWjazn9qxCFT8W0=
 github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000/go.mod h1:/ZklAgE1i4f3Z8uriXwESmCr1VLF8lBGaJspuaGuf78=
 github.com/grafana/memberlist v0.3.1-0.20251126142931-6f9f62ab6f86 h1:aTwfQuroOmOr//QEn9J1MtC4R4CPR9/IbUd8hZrbWKo=
@@ -1638,8 +1636,8 @@ github.com/grafana/pyroscope-go/godeltaprof v0.1.12 h1:X6OemT2WcLtxdmNukEQuIp0c+
 github.com/grafana/pyroscope-go/godeltaprof v0.1.12/go.mod h1:aNSXN1bn1VHAd06EiepmwhAabHsMc67gx8itecdF2c8=
 github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 h1:cLN4IBkmkYZNnk7EAJ0BHIethd+J6LqxFNw5mSiI2bM=
 github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853/go.mod h1:+JKpmjMGhpgPL+rXZ5nsZieVzvarn86asRlBg4uNGnk=
-github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56 h1:SDGrP81Vcd102L3UJEryRd1eestRw73wt+b8vnVEFe0=
-github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56/go.mod h1:S4+611dxnKt8z/ulbvaJzcgSHsuhjVc1QHNTcr1R7Fw=
+github.com/grafana/saml v0.4.15-0.20251017092131-c91c4e045805 h1:eE5H7yF7ajvPapPmTWQyQebd3OB3xp1xZqhX/7LNMfs=
+github.com/grafana/saml v0.4.15-0.20251017092131-c91c4e045805/go.mod h1:khX5Ekq41SxfbF2s7wniq/id0SP90GQl2QLnTDV9B/0=
 github.com/grafana/schemads v0.2.2 h1:3vXluclcfHpisR5bF9jjLwtfAUgfSGT4iI5ba/wii1I=
 github.com/grafana/schemads v0.2.2/go.mod h1:TX0YfoMxJ8dl1ONXTa+rFk1y3sw1khGwQjB8dKKfzds=
 github.com/grafana/sqlds/v5 v5.3.0 h1:wQoI9x0ACedTwsnD6PWcwMEue836QwLJcTNirAVIw3M=
