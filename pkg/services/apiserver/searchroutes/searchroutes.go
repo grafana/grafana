@@ -22,15 +22,12 @@ const namespacedScope = "Namespaced"
 
 // allowed lists the kinds that expose the search API, as (group, resource).
 //
-// Temporary, and deliberately one kind for now. Every namespaced kind is a
-// candidate, but a kind can only be added once its authorizer restates a search
-// request as the read it performs: the endpoint is a POST, so Kubernetes parses
-// it as a create, and a kind that does not restate would demand create
-// permission to search. Dashboards do this in their own authorizer today. Moving
-// that to the authorization chain, which means both the single-tenant and
-// multi-tenant chains, is what unblocks widening this set.
+// Temporary. Every namespaced kind is a candidate, but turning them all on at
+// once would expose endpoints on kinds nobody has looked at yet, so the set is
+// widened deliberately. A manifest opt-out replaces this.
 var allowed = map[groupResource]bool{
 	{group: "dashboard.grafana.app", resource: "dashboards"}: true,
+	{group: "folder.grafana.app", resource: "folders"}:       true,
 }
 
 type groupResource struct {

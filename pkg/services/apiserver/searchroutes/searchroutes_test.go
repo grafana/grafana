@@ -69,9 +69,7 @@ func TestBuild_MountsAllowedKinds(t *testing.T) {
 	got := paths(Build(enabledCfg(t, true), nil, nil, []builder.APIGroupBuilder{b}, nil))
 
 	assert.Equal(t, []string{"dashboards/search"}, got["dashboard.grafana.app/v1"])
-	// Folders are served and namespaced but not allowed yet: their authorizer
-	// would treat a search as a create.
-	assert.NotContains(t, got, "folder.grafana.app/v1")
+	assert.Equal(t, []string{"folders/search"}, got["folder.grafana.app/v1"])
 }
 
 // A manifest describes kinds this process may not serve, so the served group
@@ -91,7 +89,6 @@ func TestBuild_SkipsKindsNotAllowed(t *testing.T) {
 		{Group: "secret.grafana.app", Version: "v1beta1"},
 		{Group: "iam.grafana.app", Version: "v0alpha1"},
 		{Group: "playlist.grafana.app", Version: "v0alpha1"},
-		{Group: "folder.grafana.app", Version: "v1"},
 	}
 	b := &fakeBuilder{gvs: notAllowed}
 
