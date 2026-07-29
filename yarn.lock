@@ -5610,9 +5610,9 @@ __metadata:
   linkType: hard
 
 "@openfeature/core@npm:^1.10.0":
-  version: 1.10.0
-  resolution: "@openfeature/core@npm:1.10.0"
-  checksum: 10/62e0289b9e9e86fcc56e6ee972ffb2e0de9511e58fdc6d01f4f9c2dc312b4c43a95ad266984f63b89f7faacfc5ece214e484c308edbd491be0053a94f60bd6b7
+  version: 1.11.0
+  resolution: "@openfeature/core@npm:1.11.0"
+  checksum: 10/d1c28b8e461b8ea8008f731c5cca8cb0a7717fbce388e51c6f2b2aeb5ea69eb8dc41a2a99a01d84d043f3879f4805c18a7db0d93dd57f049d5a39d4ff3b7071a
   languageName: node
   linkType: hard
 
