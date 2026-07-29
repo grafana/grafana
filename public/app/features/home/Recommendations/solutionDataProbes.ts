@@ -23,6 +23,10 @@ import { readScalar, runInstantQueries } from './promQuery';
 // "Seen recently" lookback shared by all data probes, tolerating scrape/ingest gaps.
 export const DATA_LOOKBACK_HOURS = 24;
 
+// Span metrics prove App Observability is in use, under both supported emitter namings:
+// the spanmetrics connector emits traces_spanmetrics_*, OTel/Alloy emits traces_span_metrics_*.
+export const SPAN_METRICS_PROBE = `count(last_over_time(traces_spanmetrics_calls_total[${DATA_LOOKBACK_HOURS}h])) or count(last_over_time(traces_span_metrics_calls_total[${DATA_LOOKBACK_HOURS}h]))`;
+
 /**
  * The first probed healthy candidate datasource of `type` where `hasData` confirms data, or null
  * when no candidate confirmed data. Rejects only when listing datasources fails.
@@ -76,15 +80,7 @@ const probesBySolution: Record<string, { get(): Promise<boolean>; reset(): void 
     () => prometheusHasMetric(`count(last_over_time(sm_check_info[${DATA_LOOKBACK_HOURS}h]))`),
     PROBE_TTL_MS
   ),
-  // Application Observability span metrics arrive under two supported naming schemes:
-  // the spanmetrics connector emits traces_spanmetrics_*, OTel/Alloy emits traces_span_metrics_*.
-  [APP_OBSERVABILITY_APP_ID]: createTtlCachedPromise(
-    () =>
-      prometheusHasMetric(
-        `count(last_over_time(traces_spanmetrics_calls_total[${DATA_LOOKBACK_HOURS}h])) or count(last_over_time(traces_span_metrics_calls_total[${DATA_LOOKBACK_HOURS}h]))`
-      ),
-    PROBE_TTL_MS
-  ),
+  [APP_OBSERVABILITY_APP_ID]: createTtlCachedPromise(() => prometheusHasMetric(SPAN_METRICS_PROBE), PROBE_TTL_MS),
   [HOSTED_TRACES_APP_ID]: createTtlCachedPromise(() => probeFound('tempo', tempoHasTraces).then(Boolean), PROBE_TTL_MS),
   [FRONTEND_OBSERVABILITY_APP_ID]: createTtlCachedPromise(hasFrontendObservabilityData, PROBE_TTL_MS),
 };

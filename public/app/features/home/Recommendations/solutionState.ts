@@ -9,11 +9,8 @@ import {
   withTimeout,
 } from './probeUtils';
 import { readScalar, runInstantQueries } from './promQuery';
-import { DATA_LOOKBACK_HOURS, probeFound, tempoHasTraces } from './solutionDataProbes';
+import { DATA_LOOKBACK_HOURS, probeFound, SPAN_METRICS_PROBE, tempoHasTraces } from './solutionDataProbes';
 import { type SignalStatus, type SolutionState } from './solutionsMatrix';
-
-// Span metrics prove App O11y is in use; both emitter namings (spanmetrics connector, OTel/Alloy).
-const SPAN_METRICS_PROBE = `count(last_over_time(traces_spanmetrics_calls_total[${DATA_LOOKBACK_HOURS}h])) or count(last_over_time(traces_span_metrics_calls_total[${DATA_LOOKBACK_HOURS}h]))`;
 
 // Platform telemetry, never the org's product data: excluded unconditionally.
 const CLOUD_UTILITY_PROM_DATASOURCE_UIDS: ReadonlySet<string> = new Set([
