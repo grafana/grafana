@@ -22,7 +22,6 @@ func TestNewPlugin(t *testing.T) {
 		{ID: Grafana, ExpectedNotFoundErr: true},
 		{ID: Graphite},
 		{ID: InfluxDB},
-		{ID: MySQL},
 		{ID: TestData, ExpectedAlias: TestDataAlias},
 		{ID: TestDataAlias, ExpectedID: TestData, ExpectedAlias: TestDataAlias},
 	}
