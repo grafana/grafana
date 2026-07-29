@@ -42,7 +42,7 @@ export const removeTabCommand: MutationCommand<RemoveTabPayload> = {
         throw new Error(`Path "${path}" does not point to a tab`);
       }
 
-      const { parent, segment } = resolveParentPath(scene.state.body, path);
+      const { parent } = resolveParentPath(scene.state.body, path);
       if (!(parent instanceof TabsLayoutManager)) {
         throw new Error(`Parent of "${path}" is not a TabsLayoutManager`);
       }
@@ -55,10 +55,7 @@ export const removeTabCommand: MutationCommand<RemoveTabPayload> = {
         }
       }
 
-      // Remove the tab
-      const currentTabs = [...parent.state.tabs];
-      currentTabs.splice(segment.index, 1);
-      parent.setState({ tabs: currentTabs });
+      parent.removeTab(resolved.item, true);
 
       return {
         success: true,

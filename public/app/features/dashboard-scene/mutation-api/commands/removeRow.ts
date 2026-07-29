@@ -43,7 +43,7 @@ export const removeRowCommand: MutationCommand<RemoveRowPayload> = {
         throw new Error(`Path "${path}" does not point to a row`);
       }
 
-      const { parent, segment } = resolveParentPath(scene.state.body, path);
+      const { parent } = resolveParentPath(scene.state.body, path);
       if (!(parent instanceof RowsLayoutManager)) {
         throw new Error(`Parent of "${path}" is not a RowsLayoutManager`);
       }
@@ -56,10 +56,7 @@ export const removeRowCommand: MutationCommand<RemoveRowPayload> = {
         }
       }
 
-      // Remove the row
-      const currentRows = [...parent.state.rows];
-      currentRows.splice(segment.index, 1);
-      parent.setState({ rows: currentRows });
+      parent.removeRow(resolved.item, true);
 
       return {
         success: true,
