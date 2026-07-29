@@ -122,28 +122,6 @@ jobs:
             // release branch (e.g. release-13.0.0#patched -> release-13.0.0).
             let enterpriseRef = REF.replace(/#patched$/, '');
 
-            // If the +security branch doesn't exist in grafana-enterprise yet, fall back to
-            // the base release branch (e.g. release-13.0.0+security-01 -> release-13.0.0).
-            // This covers the case where a security branch is cut from a not-yet-released
-            // version whose enterprise counterpart only has the plain release branch.
-            if (enterpriseRef.includes('+security-')) {
-              try {
-                await github.rest.repos.getBranch({
-                  owner: 'grafana',
-                  repo: 'grafana-enterprise',
-                  branch: enterpriseRef,
-                });
-              } catch (e) {
-                if (e.status === 404) {
-                  const fallback = enterpriseRef.replace(/\+security-[0-9]+$/, '');
-                  core.info(`Enterprise branch ${enterpriseRef} not found; falling back to ${fallback}`);
-                  enterpriseRef = fallback;
-                } else {
-                  throw e;
-                }
-              }
-            }
-
             let workflow = 'release-build-enterprise.yml';
 
             if (REF == 'main' && SOURCE_EVENT == 'push') {
@@ -170,6 +148,33 @@ jobs:
               // upstream-run-id is used with the github actions API and `gh run watch` to ensure coupled workflows
               // fail together.
               inputs["upstream-run-id"] = String(BUILD_ID);
+            }
+
+            // If the +security branch doesn't exist in grafana-enterprise yet, fall back to
+            // the base release branch (e.g. release-13.0.0+security-01 -> release-13.0.0).
+            // We probe by attempting the dispatch itself so no extra permission beyond
+            // actions:write is needed — a separate repos.getBranch call would require
+            // contents:read which the dispatch token does not have.
+            if (enterpriseRef.includes('+security-')) {
+              try {
+                await github.rest.actions.createWorkflowDispatch({
+                  owner: 'grafana',
+                  repo: 'grafana-enterprise',
+                  workflow_id: workflow,
+                  ref: enterpriseRef,
+                  inputs,
+                });
+                return;
+              } catch (e) {
+                // GitHub returns 422 "No ref found for <ref>" when the branch doesn't exist.
+                if (e.status === 422 && String(e.message).includes('No ref found')) {
+                  const fallback = enterpriseRef.replace(/\+security-[0-9]+$/, '');
+                  core.info(`Enterprise branch ${enterpriseRef} not found; falling back to ${fallback}`);
+                  enterpriseRef = fallback;
+                } else {
+                  throw e;
+                }
+              }
             }
 
             await github.rest.actions.createWorkflowDispatch({
