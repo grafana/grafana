@@ -21,7 +21,7 @@ review_date: 2026-07-29
 
 # Loki data source
 
-Grafana Loki is a horizontally scalable, highly available log aggregation system by Grafana Labs. Unlike other logging systems, Loki indexes only metadata about your logs in the form of labels, the same label model used by Prometheus. Loki compresses and stores the log content itself in chunks in object stores such as Amazon S3 or Google Cloud Storage, or on a local filesystem. The Loki data source in Grafana lets you query and visualize those logs, and correlate them with metrics, traces, and other data in unified dashboards.
+Grafana Loki is a horizontally scalable, highly available, multi-tenant log aggregation system by Grafana Labs. Unlike other logging systems, Loki indexes only metadata about your logs in the form of labels, the same label model used by Prometheus. Loki compresses and stores the log content itself in chunks in object stores such as Amazon S3 or Google Cloud Storage, or on a local filesystem. The Loki data source in Grafana lets you query and visualize those logs, and correlate them with metrics, traces, and other data in unified dashboards.
 
 Grafana includes built-in support for Loki, so you don't need to install a plugin.
 
@@ -34,12 +34,6 @@ Grafana includes built-in support for Loki, so you don't need to install a plugi
 | Traces      | No                                                         |
 | Alerting    | Yes                                                        |
 | Annotations | Yes                                                        |
-
-## Supported Loki versions
-
-This data source supports these versions of Loki:
-
-- v2.9+
 
 ## Get started
 
