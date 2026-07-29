@@ -93,7 +93,7 @@ require (
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // @grafana/grafana-app-platform-squad
 	github.com/grafana/alerting v0.0.0-20260721133051-bf8d0237d7c6 // @grafana/alerting-backend
-	github.com/grafana/alerting/apps/historian v0.0.0-20260723102039-6b4af415aaa0 // @grafana/alerting-backend
+	github.com/grafana/alerting/apps/historian v0.0.0-20260728085903-34a493964372 // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20260715184607-1dffa9543b9f // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
@@ -237,10 +237,6 @@ require (
 
 // Internal module references (every entry should also have a replace in the section below)
 require (
-	// This needs to be here for other projects that import grafana/grafana
-	// For local development grafana/grafana will always use the local files
-	// Check go.work file for details
-	github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.11 // @grafana/data-sources-plugins
 	github.com/grafana/grafana/apps/advisor v0.0.0 // @grafana/grafana-catalog
 	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0 // @grafana/alerting-backend
@@ -488,7 +484,6 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/go-secure-stdlib/parseutil v0.2.0 // indirect
-	github.com/hashicorp/go-secure-stdlib/plugincontainer v0.5.0 // indirect
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.7 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
@@ -511,7 +506,6 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/joshlf/go-acl v0.0.0-20200411065538-eae00ae38531 // indirect
 	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/jszwedko/go-datemath v0.1.1-0.20260113213115-7f666eef0523 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect

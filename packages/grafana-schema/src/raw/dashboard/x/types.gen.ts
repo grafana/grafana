@@ -620,6 +620,10 @@ export interface Threshold {
    * Nulls currently appear here when serializing -Infinity to JSON.
    */
   value: (number | null);
+  /**
+   * Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+   */
+  valueExpr?: string;
 }
 
 /**

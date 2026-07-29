@@ -43,11 +43,10 @@
     "@emotion/css": "^11.13.5",
     "@grafana/data": "13.2.0-pre",
     "@grafana/e2e-selectors": "13.2.0-pre",
-    "@grafana/plugin-ui": "^0.13.1",
+    "@grafana/plugin-ui": "^0.17.3",
     "@grafana/runtime": "13.2.0-pre",
     "@grafana/ui": "13.2.0-pre",
-    "react-use": "^17.6.1",
-    "rxjs": "^7.8.2"
+    "react-use": "^17.6.1"
   },
   "devDependencies": {
     "@rollup/plugin-dynamic-import-vars": "2.1.5",

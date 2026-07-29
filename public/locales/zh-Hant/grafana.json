@@ -5511,135 +5511,6 @@
       "switch-layout-tab": "切換版面配置",
       "tab-title": "變更分頁標題"
     },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "變更註解資料來源",
-        "choose-panels": "選擇面板",
-        "color": "色彩",
-        "color-description": "用於註解事件標記的顏色",
-        "data-source": "資料來源",
-        "display": "在以下方地方顯示註解控制項",
-        "display-options": {
-          "above-dashboard": "儀表板上方",
-          "controls-menu": "控制選單",
-          "controls-menu-description": "開啟控制選單時可以存取",
-          "hidden": "隱藏",
-          "hidden-description": "隱藏開啟或關閉此註解的切換"
-        },
-        "enabled": "已啟用",
-        "enabled-description": "啟用後，每次儀表板重新整理時都會發出註解查詢",
-        "name": "名稱",
-        "open-query-editor": "開啟查詢編輯器",
-        "open-query-editor-tooltip": "開啟查詢編輯器以設定註解查詢",
-        "panel-filter": {
-          "all-panels": "所有面板",
-          "all-panels-description": "將註釋資料傳送至所有支援註解的面板",
-          "all-panels-except": "所有面板，以下除外",
-          "all-panels-except-description": "不要將註解資料傳送至以下面板",
-          "selected-panels": "選取的面板",
-          "selected-panels-description": "將註解傳送至明確列出的面板"
-        },
-        "query": "查詢",
-        "query-editor-close": "關閉",
-        "query-editor-modal-title": "註解查詢",
-        "show-in": "顯示在"
-      },
-      "annotations": {
-        "add-annotation": "新增註解",
-        "reorder": "拖曳以重新排序",
-        "select-annotation": "選取"
-      },
-      "elements": {
-        "annotation": "註解",
-        "annotation-set": "註解與警示",
-        "dashboard": "儀表板",
-        "element": "元件",
-        "filter": "",
-        "filters-set": "",
-        "link-set": "連結",
-        "local-variable": "本機變數",
-        "multiple-elements": "多個元素",
-        "multiple-elements-delete-text": "確定要刪除這些元素嗎？",
-        "multiple-panels": "多個面板",
-        "multiple-panels-delete-text": "確定要刪除這些面板嗎？將移除所有查詢。",
-        "objects": "對象",
-        "panel": "面板",
-        "panels": "面板",
-        "row": "列",
-        "rows": "列",
-        "section-filters-set": "",
-        "tab": "分頁",
-        "tabs": "分頁",
-        "variable": "{{type}}變數",
-        "variable-set": "變量"
-      },
-      "links": {
-        "add-link": "新增連結",
-        "reorder": "拖曳以重新排序",
-        "select-link": "選取",
-        "untitled": "無標題連結"
-      },
-      "row": {
-        "header": {
-          "hide": "隱藏",
-          "title": "行標題"
-        }
-      },
-      "section-filters": {
-        "title": ""
-      },
-      "section-variables": {
-        "title": "變數"
-      },
-      "variable": {
-        "change-type": "",
-        "change-type-aria-label": "變更變數類型",
-        "custom-options": {
-          "apply": "套用",
-          "change-value": "變更變數值",
-          "discard": "捨棄",
-          "modal-title": "自訂選項"
-        },
-        "datasource-options": {
-          "name-filter": "名稱篩選",
-          "name-filter-description": "用 Regex 篩選欲納入的資料來源執行個體。全部留空。",
-          "name-filter-placeholder": "範例：/^prod/",
-          "type": "類型",
-          "type-placeholder": "選擇資料來源類型"
-        },
-        "description": "說明",
-        "description-placeholder": "描述性文字",
-        "label": "標籤",
-        "label-description": "可選的顯示名稱",
-        "name": "名稱（名字）",
-        "open-editor": "開啟變數編輯器",
-        "open-editor-tooltip": "如需更多變數選項，請開啟變數編輯器",
-        "query-options": {
-          "close": "關閉",
-          "modal-title": "查詢變數",
-          "preview": "預覽"
-        },
-        "selection-options": {
-          "allow-custom-values": "允許自訂值",
-          "allow-custom-values-description": "允許使用者輸入數值",
-          "category": "選擇選項",
-          "custom-all-value": "自訂所有數值",
-          "custom-all-value-description": "一個通配符正則表達式或其他表示「所有」的值",
-          "include-all": "包含所有數值",
-          "include-all-description": "啟用代表所有數值的單一選項",
-          "multi-value": "多值"
-        },
-        "type-category": "{{type}}選項"
-      },
-      "variables": {
-        "add-variable": "新增變數",
-        "change-type": "",
-        "reorder": "拖曳以重新排序",
-        "select-type": "選擇變數類型",
-        "select-type-card-tooltip": "按一下以選取類型",
-        "select-variable": "選取"
-      }
-    },
     "empty": {
       "add-library-panel-body": "新增與其他儀表板共用的可視化工具。",
       "add-library-panel-button": "新增資料庫面板",
@@ -6158,6 +6029,43 @@
         "title": "新增",
         "tooltip": "新增元素"
       },
+      "annotation": {
+        "change-data-source": "變更註解資料來源",
+        "choose-panels": "選擇面板",
+        "color": "色彩",
+        "color-description": "用於註解事件標記的顏色",
+        "data-source": "資料來源",
+        "display": "在以下方地方顯示註解控制項",
+        "display-options": {
+          "above-dashboard": "儀表板上方",
+          "controls-menu": "控制選單",
+          "controls-menu-description": "開啟控制選單時可以存取",
+          "hidden": "隱藏",
+          "hidden-description": "隱藏開啟或關閉此註解的切換"
+        },
+        "enabled": "已啟用",
+        "enabled-description": "啟用後，每次儀表板重新整理時都會發出註解查詢",
+        "name": "名稱",
+        "open-query-editor": "開啟查詢編輯器",
+        "open-query-editor-tooltip": "開啟查詢編輯器以設定註解查詢",
+        "panel-filter": {
+          "all-panels": "所有面板",
+          "all-panels-description": "將註釋資料傳送至所有支援註解的面板",
+          "all-panels-except": "所有面板，以下除外",
+          "all-panels-except-description": "不要將註解資料傳送至以下面板",
+          "selected-panels": "選取的面板",
+          "selected-panels-description": "將註解傳送至明確列出的面板"
+        },
+        "query": "查詢",
+        "query-editor-close": "關閉",
+        "query-editor-modal-title": "註解查詢",
+        "show-in": "顯示在"
+      },
+      "annotations": {
+        "add-annotation": "新增註解",
+        "reorder": "拖曳以重新排序",
+        "select-annotation": "選取"
+      },
       "dashboard-options": {
         "title": "選項",
         "tooltip": "儀表板選項"
@@ -6166,20 +6074,110 @@
         "title": "代碼",
         "tooltip": "編輯為程式碼"
       },
+      "elements": {
+        "annotation": "註解",
+        "annotation-set": "註解與警示",
+        "dashboard": "儀表板",
+        "element": "元件",
+        "filter": "",
+        "filters-set": "",
+        "link-set": "連結",
+        "local-variable": "本機變數",
+        "multiple-elements": "多個元素",
+        "multiple-elements-delete-text": "確定要刪除這些元素嗎？",
+        "multiple-panels": "多個面板",
+        "multiple-panels-delete-text": "確定要刪除這些面板嗎？將移除所有查詢。",
+        "objects": "對象",
+        "panel": "面板",
+        "panels": "面板",
+        "row": "列",
+        "rows": "列",
+        "section-filters-set": "",
+        "tab": "分頁",
+        "tabs": "分頁",
+        "variable": "{{type}}變數",
+        "variable-set": "變量"
+      },
       "export": {
         "title": "匯出"
       },
       "filters": "",
+      "links": {
+        "add-link": "新增連結",
+        "reorder": "拖曳以重新排序",
+        "select-link": "選取",
+        "untitled": "無標題連結"
+      },
       "open": "",
       "outline": {
         "title": "外框",
         "tooltip": "內容大綱"
       },
       "redo": "重做",
+      "row": {
+        "header": {
+          "hide": "隱藏",
+          "title": "行標題"
+        }
+      },
+      "section-filters": {
+        "title": ""
+      },
+      "section-variables": {
+        "title": "變數"
+      },
       "snapshot": {
         "tooltip": "開啟原始儀表板"
       },
       "undo": "還原",
+      "variable": {
+        "change-type": "",
+        "change-type-aria-label": "變更變數類型",
+        "custom-options": {
+          "apply": "套用",
+          "change-value": "變更變數值",
+          "discard": "捨棄",
+          "modal-title": "自訂選項"
+        },
+        "datasource-options": {
+          "name-filter": "名稱篩選",
+          "name-filter-description": "用 Regex 篩選欲納入的資料來源執行個體。全部留空。",
+          "name-filter-placeholder": "範例：/^prod/",
+          "type": "類型",
+          "type-placeholder": "選擇資料來源類型"
+        },
+        "description": "說明",
+        "description-placeholder": "描述性文字",
+        "label": "標籤",
+        "label-description": "可選的顯示名稱",
+        "name": "名稱（名字）",
+        "open-editor": "開啟變數編輯器",
+        "open-editor-tooltip": "如需更多變數選項，請開啟變數編輯器",
+        "query-options": {
+          "close": "關閉",
+          "modal-title": "查詢變數",
+          "preview": "預覽"
+        },
+        "selection-options": {
+          "allow-custom-values": "允許自訂值",
+          "allow-custom-values-description": "允許使用者輸入數值",
+          "category": "選擇選項",
+          "custom-all-value": "自訂所有數值",
+          "custom-all-value-description": "一個通配符正則表達式或其他表示「所有」的值",
+          "include-all": "包含所有數值",
+          "include-all-description": "啟用代表所有數值的單一選項",
+          "multi-value": "多值"
+        },
+        "type-category": "{{type}}選項"
+      },
+      "variables": {
+        "add-variable": "新增變數",
+        "change-type": "",
+        "reorder": "拖曳以重新排序",
+        "select-type": "選擇變數類型",
+        "select-type-card-tooltip": "按一下以選取類型",
+        "select-variable": "選取"
+      },
       "view-panel": {
         "disabled": "",
         "fanout-by-series": "",
@@ -6769,9 +6767,6 @@
       "title-controls-menu-count_other": "控制選單 ({{count}})",
       "title-hidden-count_other": "隱藏 ({{count}})"
     },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "提供有關新儀表板編輯體驗的意見回饋"
-    },
     "dashboard-link-form": {
       "back-to-list": "返回清單",
       "label-icon": "圖示",
@@ -6843,6 +6838,9 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "儀表板控制項"
+    },
+    "dashboard-sidebar-renderer": {
+      "title-feedback-dashboard-editing-experience": "提供有關新儀表板編輯體驗的意見回饋"
     },
     "data-source-variable-form": {
       "data-source-options": "資料來源選項",
