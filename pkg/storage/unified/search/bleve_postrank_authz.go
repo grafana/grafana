@@ -241,6 +241,13 @@ func (b *bleveIndex) runPostFilterAuthz(
 	cfg := b.postRankAuthz
 	wantFacets := len(req.Facet) > 0
 
+	agg, aggregateFacetsInPageScan, facetAuthorized, facetExhausted, err := b.prepareFacetAggregation(
+		ctx, access, req, index, firstReq, resources, stats,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	extractFn := func(info docInfo) authz.BatchCheckItem {
 		return authz.BatchCheckItem{
 			Name:      info.name,
@@ -253,23 +260,6 @@ func (b *bleveIndex) runPostFilterAuthz(
 	}
 
 	page := make(search.DocumentMatchCollection, 0, limit)
-	var agg *facetAggregator
-	if wantFacets {
-		agg = newFacetAggregator(req.Facet, b.searchFields.storedFacetFields)
-	}
-	aggregateFacetsInPageScan := wantFacets
-	var facetAuthorized int64
-	var facetExhausted bool
-	if wantFacets && (len(req.SearchAfter) > 0 || len(req.SearchBefore) > 0) {
-		var err error
-		agg, facetAuthorized, facetExhausted, err = b.aggregateFacetsFromTop(
-			ctx, access, index, firstReq, resources, extractFn, req.Facet, stats,
-		)
-		if err != nil {
-			return nil, err
-		}
-		aggregateFacetsInPageScan = false
-	}
 
 	var candidates int64
 	var authorized int64
@@ -389,6 +379,40 @@ func (b *bleveIndex) runPostFilterAuthz(
 	}
 	return response, b.finalizePostFilter(ctx, response, page, selectFields, firstReq.Sort, req, firstRes,
 		authorized, exhausted, reverseSort, wantFacets, agg, stats)
+}
+
+func (b *bleveIndex) prepareFacetAggregation(
+	ctx context.Context,
+	access authlib.AccessClient,
+	req *resourcepb.ResourceSearchRequest,
+	index bleve.Index,
+	firstReq *bleve.SearchRequest,
+	resources map[string]string,
+	stats *resource.SearchStats,
+) (*facetAggregator, bool, int64, bool, error) {
+	if len(req.Facet) == 0 {
+		return nil, false, 0, false, nil
+	}
+
+	agg := newFacetAggregator(req.Facet, b.searchFields.storedFacetFields)
+	if len(req.SearchAfter) == 0 && len(req.SearchBefore) == 0 {
+		return agg, true, 0, false, nil
+	}
+
+	extractFn := func(info docInfo) authz.BatchCheckItem {
+		return authz.BatchCheckItem{
+			Name:      info.name,
+			Folder:    info.folder,
+			Verb:      info.verb,
+			Group:     info.group,
+			Resource:  info.resourceType,
+			Namespace: info.namespace,
+		}
+	}
+	agg, authorized, exhausted, err := b.aggregateFacetsFromTop(
+		ctx, access, index, firstReq, resources, extractFn, req.Facet, stats,
+	)
+	return agg, false, authorized, exhausted, err
 }
 
 func (b *bleveIndex) aggregateFacetsFromTop(

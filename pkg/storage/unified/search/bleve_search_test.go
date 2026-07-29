@@ -1311,6 +1311,7 @@ func pageAll(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient
 	return all
 }
 
+//nolint:gocyclo // The subtests share post-rank fixtures and helpers.
 func TestSearchPostRankAuthz(t *testing.T) {
 	t.Run("stops checking once the page is full", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
