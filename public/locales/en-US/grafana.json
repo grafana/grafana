@@ -10623,6 +10623,10 @@
           "count": "Count"
         }
       },
+      "header-cell": {
+        "column-options": "Column options",
+        "hide-column": "Hide column"
+      },
       "inspect-drawer-title": "Inspect value",
       "nested-table": {
         "expander-column-name": "Expand nested rows",
