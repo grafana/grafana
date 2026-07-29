@@ -113,8 +113,10 @@ func newJobProcessor(
 
 // processKey claims the job namespace/name and drives it to completion.
 // Returns ErrAlreadyClaimed or a NotFound API error when the job is not ours
-// to process; both mean the key can be dropped.
-func (d *jobProcessor) processKey(ctx context.Context, namespace, name string) error {
+// to process; both mean the key can be dropped. trigger records what enqueued
+// the key so the start of processing can be attributed to a live event, a
+// re-list, or the initial list.
+func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, trigger claimTrigger) error {
 	ctx, span := tracing.Start(ctx, "provisioning.jobs.claim_and_process_one_job")
 	defer span.End()
 
@@ -131,6 +133,13 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string) e
 	// Ensure that the job is cleaned up if we fail to complete it.
 	// The rollback function does not care about cancellations.
 	defer rollback()
+
+	// The claim is the cluster-wide exactly-once gate, so this is the point that
+	// attributes each processed job to what enqueued its key. errPostClaim
+	// outcomes still count — processing did start; the execution outcome remains
+	// the job of grafana_provisioning_jobs_processed_total. Mirrors the
+	// claim-time RecordWaitTime precedent.
+	d.metrics.RecordEventProcessed(trigger)
 
 	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace, "repository", claimedJob.Spec.Repository, "action", claimedJob.Spec.Action)
 	ctx = logging.Context(ctx, logger)

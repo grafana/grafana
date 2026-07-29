@@ -46,6 +46,12 @@ type ConcurrentJobDriver struct {
 	metrics              *JobMetrics
 	queue                workqueue.TypedRateLimitingInterface[string]
 
+	// natsBacked reports whether the jobs informer feeding this driver is the
+	// NATS-backed source. It disambiguates a full-RV non-initial add: under NATS
+	// that is a re-list recovery of a key never delivered live here, but under the
+	// apiserver watch it is a live add. See EventHandler's classifier.
+	natsBacked bool
+
 	// postClaimCooldown is how long a key is barred from processing after its
 	// job failed post-claim: the side effects may already have run, and the
 	// rolled-back claim makes the job immediately claimable again. The bar is
@@ -57,10 +63,14 @@ type ConcurrentJobDriver struct {
 	// the first resync after the cooldown passes re-adds the key.
 	postClaimCooldown time.Duration
 
-	// mu guards cooldowns. cooldowns maps a job key to the time its post-claim
-	// cooldown expires; workers refuse to process a key before then.
+	// mu guards cooldowns and triggers. cooldowns maps a job key to the time its
+	// post-claim cooldown expires; workers refuse to process a key before then.
+	// triggers maps a queued key to what enqueued it, so the moment processing
+	// begins can be attributed to a live event, a re-list, or the initial list.
+	// Entries live only between enqueue and Forget.
 	mu        sync.Mutex
 	cooldowns map[string]time.Time
+	triggers  map[string]claimTrigger
 
 	// logger is used by informer event callbacks, which run outside Run's
 	// context and therefore cannot use logging.FromContext.
@@ -79,6 +89,7 @@ func NewConcurrentJobDriver(
 	historicJobs HistoryWriter,
 	registry prometheus.Registerer,
 	metrics *JobMetrics,
+	natsBacked bool,
 	workers ...Worker,
 ) (*ConcurrentJobDriver, error) {
 	if numDrivers <= 0 {
@@ -107,6 +118,7 @@ func NewConcurrentJobDriver(
 		historicJobs:         historicJobs,
 		workers:              workers,
 		metrics:              metrics,
+		natsBacked:           natsBacked,
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
 			workqueue.TypedRateLimitingQueueConfig[string]{
@@ -114,6 +126,7 @@ func NewConcurrentJobDriver(
 			},
 		),
 		cooldowns: make(map[string]time.Time),
+		triggers:  make(map[string]claimTrigger),
 		logger:    logging.DefaultLogger.With("logger", "concurrent-job-driver"),
 	}, nil
 }
@@ -128,9 +141,9 @@ func NewConcurrentJobDriver(
 // rolled-back claims, keys dropped after retry exhaustion, missed NATS
 // notifications, and the backlog present at startup (the initial list) — so
 // the informer must be wired and running for jobs to be processed.
-func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
+func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
+	return cache.ResourceEventHandlerDetailedFuncs{
+		AddFunc: func(obj interface{}, isInInitialList bool) {
 			job, ok := obj.(*provisioning.Job)
 			if !ok {
 				c.logger.Error("unexpected object type in job create event", "type", fmt.Sprintf("%T", obj))
@@ -145,7 +158,22 @@ func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerFuncs {
 					"namespace", job.GetNamespace(), "job", job.GetName())
 				return
 			}
-			c.enqueueCreate(job)
+			// Attribute the enqueue. NATS live events are minimal objects (no
+			// resource version, no labels); list-delivered objects are full. A
+			// full-RV non-initial add is a re-list recovery under NATS but a live
+			// watch add under the apiserver, disambiguated by natsBacked.
+			var trigger claimTrigger
+			switch {
+			case job.ResourceVersion == "":
+				trigger = triggerLive // NATS minimal live event
+			case isInInitialList:
+				trigger = triggerInitial
+			case c.natsBacked:
+				trigger = triggerRelist // re-list recovered a key never delivered live here
+			default:
+				trigger = triggerLive // apiserver live watch add
+			}
+			c.enqueueCreate(job, trigger)
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			job, ok := newObj.(*provisioning.Job)
@@ -186,8 +214,9 @@ func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerFuncs {
 }
 
 // enqueueCreate adds a freshly-created job's key to the work queue. This is the
-// hot path for every job, so it logs at debug.
-func (c *ConcurrentJobDriver) enqueueCreate(job *provisioning.Job) {
+// hot path for every job, so it logs at debug. trigger records what delivered
+// the key for the processing-level metrics.
+func (c *ConcurrentJobDriver) enqueueCreate(job *provisioning.Job, trigger claimTrigger) {
 	key, err := cache.MetaNamespaceKeyFunc(job)
 	if err != nil {
 		c.logger.Error("could not build key for job create event",
@@ -198,6 +227,9 @@ func (c *ConcurrentJobDriver) enqueueCreate(job *provisioning.Job) {
 	// predecessor that failed post-claim. A create event announces a new
 	// incarnation, which must not sit out its predecessor's cooldown.
 	c.clearCooldown(key)
+	// Attribute the key before the enqueue so a worker that dequeues immediately
+	// sees it.
+	c.setTrigger(key, trigger)
 	// The queue deduplicates keys that are already queued or in flight.
 	c.queue.Add(key)
 	c.logger.Debug("job create event enqueued", "work_key", key, "queue_len", c.queue.Len())
@@ -217,6 +249,9 @@ func (c *ConcurrentJobDriver) enqueueRecovered(job *provisioning.Job) {
 			"namespace", job.GetNamespace(), "job", job.GetName(), "error", err)
 		return
 	}
+	// A resync/re-list redelivery is always relist-attributed. Set only if
+	// absent so a queued live enqueue is never downgraded.
+	c.setTrigger(key, triggerRelist)
 	// The queue deduplicates keys that are already queued or in flight.
 	c.queue.Add(key)
 	c.logger.Info("resync enqueued unclaimed job",
@@ -261,6 +296,37 @@ func (c *ConcurrentJobDriver) inCooldown(key string) bool {
 func (c *ConcurrentJobDriver) clearCooldown(key string) {
 	c.mu.Lock()
 	delete(c.cooldowns, key)
+	c.mu.Unlock()
+}
+
+// setTrigger records what enqueued key. The write policy is per class, not
+// first-wins: a live NATS event never enters the informer snapshot, so a job
+// delivered live but still unclaimed at the next re-list comes back as a
+// relist-classified add on the same replica — downgrading it would misattribute
+// the pickup. So triggerLive overwrites unconditionally (a live create
+// announces a new incarnation of a deterministic job name, mirroring
+// clearCooldown), while triggerRelist/triggerInitial set only if absent so a
+// queued live enqueue is never downgraded.
+func (c *ConcurrentJobDriver) setTrigger(key string, trigger claimTrigger) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if trigger == triggerLive {
+		c.triggers[key] = trigger
+		return
+	}
+	if _, ok := c.triggers[key]; !ok {
+		c.triggers[key] = trigger
+	}
+}
+
+// forget removes key from the queue and drops its trigger attribution. It
+// replaces bare queue.Forget calls so the triggers map never outlives a key.
+// Retries (AddRateLimited) deliberately do not call this: they keep the
+// original attribution across attempts.
+func (c *ConcurrentJobDriver) forget(key string) {
+	c.queue.Forget(key)
+	c.mu.Lock()
+	delete(c.triggers, key)
 	c.mu.Unlock()
 }
 
@@ -337,7 +403,7 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 	// empty; skip them so workers exit promptly instead of claiming jobs mid-shutdown.
 	if ctx.Err() != nil {
 		logger.Debug("discard queued job during shutdown")
-		c.queue.Forget(key)
+		c.forget(key)
 		return true
 	}
 
@@ -347,33 +413,44 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 	// run calls Done. A later resync re-adds the key once the cooldown passes.
 	if c.inCooldown(key) {
 		logger.Debug("job key in post-claim cooldown - dropping; a later resync re-adds it")
-		c.queue.Forget(key)
+		c.forget(key)
 		return true
 	}
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		logger.Error("invalid job key - dropping", "error", err)
-		c.queue.Forget(key)
+		c.forget(key)
 		return true
+	}
+
+	// Read (do not delete) the attribution: a retried key re-enters here and must
+	// keep its original trigger. A missing entry is only reachable via workqueue
+	// dirty-redelivery after a Forget cleared it; fall back to relist so
+	// live+relist+initial always sums to total processed.
+	c.mu.Lock()
+	trigger, ok := c.triggers[key]
+	c.mu.Unlock()
+	if !ok {
+		trigger = triggerRelist
 	}
 
 	attempt := c.queue.NumRequeues(key) + 1
 	logger.Debug("process job key", "attempt", attempt)
 
-	err = processor.processKey(ctx, namespace, name)
+	err = processor.processKey(ctx, namespace, name, trigger)
 	switch {
 	case err == nil:
 		if attempt > 1 {
 			logger.Info("job claim succeeded after retries", "attempts", attempt)
 		}
-		c.queue.Forget(key)
+		c.forget(key)
 	case errors.Is(err, ErrAlreadyClaimed):
 		logger.Debug("job already claimed by another worker - dropping from queue")
-		c.queue.Forget(key)
+		c.forget(key)
 	case apierrors.IsNotFound(err):
 		logger.Debug("job no longer exists - dropping from queue")
-		c.queue.Forget(key)
+		c.forget(key)
 	case errors.Is(err, errPostClaim):
 		// The job may already have executed; an immediate retry would re-run its
 		// side effects. Its claim was rolled back, so the informer re-list
@@ -383,11 +460,11 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 		c.startCooldown(key)
 		logger.Error("job failed after it was claimed - dropping from queue; the informer re-list re-adds it after a cooldown",
 			"attempt", attempt, "cooldown", c.postClaimCooldown, "error", err)
-		c.queue.Forget(key)
+		c.forget(key)
 	case attempt >= maxClaimAttempts:
 		logger.Error("job failed too many times - dropping from queue; the informer re-list re-adds it if still unclaimed",
 			"attempts", attempt, "error", err)
-		c.queue.Forget(key)
+		c.forget(key)
 	default:
 		// Only claim-path failures reach here; the job was never claimed by this
 		// worker, so retrying cannot re-run any work.

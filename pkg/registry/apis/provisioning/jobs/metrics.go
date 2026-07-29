@@ -21,7 +21,40 @@ type JobMetrics struct {
 	syncDurationHist                 *prometheus.HistogramVec // total sync durations
 
 	resourceOpsTotal *prometheus.CounterVec // per-resource outcome counter
+
+	// Processing-level event-delivery counters. Job pickup goes through a
+	// cluster-wide exactly-once gate (the claim), so attributing each start of
+	// processing to what enqueued the work-queue key gives an exact cluster-wide
+	// measure of how work reached the workers. These pair with the informer-level
+	// delivery families to measure missed live events under NATS (see
+	// RecordEventProcessed).
+	liveEventsProcessed    *prometheus.CounterVec
+	relistEventsProcessed  *prometheus.CounterVec
+	initialEventsProcessed *prometheus.CounterVec
 }
+
+// claimTrigger records what enqueued the work-queue key that a worker is now
+// processing. It is deliberately generic (no jobs-only vocabulary) so other
+// provisioning controllers/operators can emit the same series with a different
+// resource label later.
+type claimTrigger string
+
+const (
+	// triggerLive: the key was enqueued by a live event (NATS notification or
+	// apiserver watch add).
+	triggerLive claimTrigger = "live"
+	// triggerRelist: the key was enqueued only by the periodic re-list. Under
+	// NATS this is the cluster-wide missed/late-live-event signal; under the
+	// apiserver watch it is local recovery (rolled-back claims, dropped keys).
+	triggerRelist claimTrigger = "relist"
+	// triggerInitial: the key came from the informer's initial list (startup
+	// backlog), kept separate so restarts do not pollute the relist signal.
+	triggerInitial claimTrigger = "initial"
+)
+
+// resourceLabelJobs is the resource label value the driver emits on the
+// processing-level counters.
+const resourceLabelJobs = "jobs"
 
 type QueueMetrics struct {
 	queueSize     *prometheus.GaugeVec
@@ -137,6 +170,33 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 		)
 		registry.MustRegister(resourceOpsTotal)
 
+		liveEventsProcessed := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_live_events_processed_total",
+				Help: "Processing started for a work-queue key enqueued by a live event.",
+			},
+			[]string{"resource"},
+		)
+		registry.MustRegister(liveEventsProcessed)
+
+		relistEventsProcessed := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_relist_events_processed_total",
+				Help: "Processing started for a work-queue key enqueued only by the periodic re-list. Under NATS this is the cluster-wide missed/late-live-event signal; under the apiserver watch it is local recovery.",
+			},
+			[]string{"resource"},
+		)
+		registry.MustRegister(relistEventsProcessed)
+
+		initialEventsProcessed := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_initial_events_processed_total",
+				Help: "Processing started for a work-queue key from the informer's initial list (startup backlog).",
+			},
+			[]string{"resource"},
+		)
+		registry.MustRegister(initialEventsProcessed)
+
 		jobMetrics = JobMetrics{
 			registry:                         registry,
 			processedTotal:                   processedTotal,
@@ -145,6 +205,9 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 			fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
 			syncDurationHist:                 syncDurationHist,
 			resourceOpsTotal:                 resourceOpsTotal,
+			liveEventsProcessed:              liveEventsProcessed,
+			relistEventsProcessed:            relistEventsProcessed,
+			initialEventsProcessed:           initialEventsProcessed,
 		}
 	})
 	return jobMetrics
@@ -156,6 +219,23 @@ func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountCh
 	// only record duration when the job was successful. otherwise resource count will be incorrect
 	if outcome == utils.SuccessOutcome {
 		m.durationHist.WithLabelValues(jobAction, utils.GetResourceCountBucket(resourceCountChanged)).Observe(duration)
+	}
+}
+
+// RecordEventProcessed counts the start of processing for a work-queue key,
+// attributed to what enqueued it. It is nil-safe: several driver call sites
+// construct the driver with a nil *JobMetrics.
+func (m *JobMetrics) RecordEventProcessed(trigger claimTrigger) {
+	if m == nil {
+		return
+	}
+	switch trigger {
+	case triggerLive:
+		m.liveEventsProcessed.WithLabelValues(resourceLabelJobs).Inc()
+	case triggerRelist:
+		m.relistEventsProcessed.WithLabelValues(resourceLabelJobs).Inc()
+	case triggerInitial:
+		m.initialEventsProcessed.WithLabelValues(resourceLabelJobs).Inc()
 	}
 }
 
