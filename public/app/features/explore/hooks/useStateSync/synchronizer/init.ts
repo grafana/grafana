@@ -37,7 +37,7 @@ export function initializeFromURL(
 
   // Seeding it at init (rather than a post-navigation dispatch) is what lets the "Editing from saved queries" banner render
   // on the first, cold Explore mount. First pane only, mirroring addingSavedQuery.
-  const queryLibraryRef = location.getSearch().get('queryLibraryRef') ?? undefined;
+  const editSavedQueryRef = location.getSearch().get('editSavedQueryRef') ?? undefined;
 
   Promise.all(
     Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState, compact }]) => {
@@ -88,7 +88,7 @@ export function initializeFromURL(
             eventBridge: new EventBusSrv(),
             compact: !!compact,
             addingSavedQuery: index === 0 ? addingSavedQuery : undefined,
-            queryLibraryRef: index === 0 ? queryLibraryRef : undefined,
+            editSavedQueryRef: index === 0 ? editSavedQueryRef : undefined,
           })
         ).unwrap();
       })

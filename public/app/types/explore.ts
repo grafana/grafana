@@ -154,10 +154,10 @@ export interface ExploreItemState {
    */
   initialized: boolean;
   /**
-   * Query library reference identifier when editing a query from the query library
-   *
+   * UID of the saved query being edited in this pane (from "Edit in Explore").
+   * Seeded from the `?editSavedQueryRef=` URL param; not persisted in panes JSON.
    */
-  queryLibraryRef?: string;
+  editSavedQueryRef?: string;
   /**
    * True when this pane was opened to compose and save a brand-new saved query (no existing
    * query to reference). Drives the "Adding a new saved query" banner above the query editor.

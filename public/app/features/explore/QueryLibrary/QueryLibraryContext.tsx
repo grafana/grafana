@@ -77,7 +77,7 @@ export type QueryLibraryContextType = {
    * used in places like Explore
    * @param query
    * @param app
-   * @param queryLibraryRef
+   * @param editSavedQueryRef
    * @param onCancelEdit
    * @param onUpdateSuccess
    * @param onSelectQuery
@@ -86,7 +86,7 @@ export type QueryLibraryContextType = {
   renderQueryLibraryEditingHeader: (
     query: DataQuery,
     app?: CoreApp,
-    queryLibraryRef?: string,
+    editSavedQueryRef?: string,
     onCancelEdit?: () => void,
     onUpdateSuccess?: () => void,
     onSelectQuery?: (query: DataQuery) => void,

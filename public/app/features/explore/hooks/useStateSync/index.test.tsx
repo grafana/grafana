@@ -12,7 +12,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { configureStore } from 'app/store/configureStore';
 
 import { makeDatasourceSetup } from '../../spec/helper/setup';
-import { updateQueryLibraryRefAction } from '../../state/explorePane';
+import { updateEditSavedQueryRefAction } from '../../state/explorePane';
 import { splitClose, splitOpen } from '../../state/main';
 
 import { useStateSync } from './';
@@ -586,7 +586,7 @@ describe('useStateSync', () => {
     });
   });
 
-  it('should keep queryLibraryRef in state but not in URL', async () => {
+  it('should keep editSavedQueryRef in state but not in URL', async () => {
     const { store, location } = setup({
       queryParams: {
         panes: JSON.stringify({
@@ -604,19 +604,19 @@ describe('useStateSync', () => {
     });
 
     act(() => {
-      store.dispatch(updateQueryLibraryRefAction({ exploreId: 'one', queryLibraryRef: 'library-query-456' }));
+      store.dispatch(updateEditSavedQueryRefAction({ exploreId: 'one', editSavedQueryRef: 'library-query-456' }));
     });
 
     await waitFor(() => {
-      expect(store.getState().explore.panes['one']?.queryLibraryRef).toBe('library-query-456');
+      expect(store.getState().explore.panes['one']?.editSavedQueryRef).toBe('library-query-456');
 
       const search = location.getSearchObject();
       const panes = search.panes && typeof search.panes === 'string' ? JSON.parse(search.panes) : {};
-      expect(panes.one?.queryLibraryRef).toBeUndefined();
+      expect(panes.one?.editSavedQueryRef).toBeUndefined();
     });
   });
 
-  it('seeds queryLibraryRef onto the first pane from the ?queryLibraryRef URL param at init', async () => {
+  it('seeds editSavedQueryRef onto the first pane from the ?editSavedQueryRef URL param at init', async () => {
     const { store } = setup({
       queryParams: {
         panes: JSON.stringify({
@@ -626,12 +626,12 @@ describe('useStateSync', () => {
           },
         }),
         schemaVersion: 1,
-        queryLibraryRef: 'library-query-789',
+        editSavedQueryRef: 'library-query-789',
       },
     });
 
     await waitFor(() => {
-      expect(store.getState().explore.panes['one']?.queryLibraryRef).toBe('library-query-789');
+      expect(store.getState().explore.panes['one']?.editSavedQueryRef).toBe('library-query-789');
     });
   });
 

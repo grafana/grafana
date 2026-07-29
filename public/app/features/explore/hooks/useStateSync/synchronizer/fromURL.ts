@@ -7,7 +7,7 @@ import {
   changePanelsStateAction,
   initializeExplore,
   setAddingSavedQueryAction,
-  updateQueryLibraryRefAction,
+  updateEditSavedQueryRefAction,
 } from 'app/features/explore/state/explorePane';
 import { splitClose, syncTimesAction } from 'app/features/explore/state/main';
 import { cancelQueries, runQueries, setQueriesAction } from 'app/features/explore/state/query';
@@ -27,10 +27,10 @@ export function syncFromURL(
   dispatch: ThunkDispatch,
   location: LocationService
 ) {
-  // Saved query being edited via "Edit in Explore" (?queryLibraryRef=<uid>). Read here too — not just at
+  // Saved query being edited via "Edit in Explore" (?editSavedQueryRef=<uid>). Read here too — not just at
   // init — so the "Editing from saved queries" banner also shows when navigating from within Explore
   // (e.g. the Saved Queries modal), which goes through this sync path rather than a cold init.
-  const queryLibraryRef = location.getSearch().get('queryLibraryRef') ?? undefined;
+  const editSavedQueryRef = location.getSearch().get('editSavedQueryRef') ?? undefined;
   // Same for "Add to saved queries" (?createSavedQuery=true): in-Explore navigations mint a new pane id
   // and go through sync rather than cold init, so we must seed add mode here too.
   const addingSavedQuery = location.getSearch().get('createSavedQuery') === 'true';
@@ -51,8 +51,8 @@ export function syncFromURL(
     if (paneState !== undefined) {
       // First pane only, mirroring the init path. Only set when present so ordinary history navigation
       // doesn't clobber an in-place editing session.
-      if (i === 0 && queryLibraryRef && paneState.queryLibraryRef !== queryLibraryRef) {
-        dispatch(updateQueryLibraryRefAction({ exploreId, queryLibraryRef }));
+      if (i === 0 && editSavedQueryRef && paneState.editSavedQueryRef !== editSavedQueryRef) {
+        dispatch(updateEditSavedQueryRefAction({ exploreId, editSavedQueryRef }));
       }
       if (i === 0 && addingSavedQuery && !paneState.addingSavedQuery) {
         dispatch(setAddingSavedQueryAction({ exploreId, addingSavedQuery: true }));
@@ -100,7 +100,7 @@ export function syncFromURL(
           compact: !!urlPane.compact,
           position: i,
           eventBridge: new EventBusSrv(),
-          queryLibraryRef: i === 0 ? queryLibraryRef : undefined,
+          editSavedQueryRef: i === 0 ? editSavedQueryRef : undefined,
           addingSavedQuery: i === 0 ? addingSavedQuery : undefined,
         })
       );

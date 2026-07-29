@@ -597,7 +597,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
       showQueryInspector,
       setShowQueryInspector,
       compact,
-      queryLibraryRef,
+      editSavedQueryRef,
       addingSavedQuery,
     } = this.props;
     const { contentOutlineVisible } = this.state;
@@ -736,7 +736,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           addQueryRowButtonDisabled={
                             isLive ||
                             (isCorrelationsEditorMode && datasourceInstance.meta.mixed) ||
-                            !!queryLibraryRef ||
+                            !!editSavedQueryRef ||
                             !!addingSavedQuery
                           }
                           // We cannot show multiple traces at the same time right now so we do not show add query button.
@@ -859,7 +859,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     supplementaryQueries,
     correlationEditorHelperData,
     compact,
-    queryLibraryRef,
+    editSavedQueryRef,
     addingSavedQuery,
     queriesChangedIndexAtRun,
   } = item;
@@ -895,7 +895,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     correlationEditorHelperData,
     correlationEditorDetails: explore.correlationEditorDetails,
     exploreActiveDS: selectExploreDSMaps(state),
-    queryLibraryRef,
+    editSavedQueryRef,
     addingSavedQuery,
     queriesChangedIndexAtRun,
   };

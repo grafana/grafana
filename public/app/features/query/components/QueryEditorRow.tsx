@@ -76,7 +76,7 @@ export interface Props<TQuery extends DataQuery> {
   onQueryReplacedFromLibrary?: () => void;
   collapsable?: boolean;
   hideRefId?: boolean;
-  queryLibraryRef?: string;
+  editSavedQueryRef?: string;
   onExitQueryLibraryEdit?: () => void;
   addingSavedQuery?: boolean;
   onCancelAddSavedQuery?: () => void;
@@ -484,7 +484,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const {
       query,
       hideHideQueryButton: hideHideQueryButton = false,
-      queryLibraryRef,
+      editSavedQueryRef,
       addingSavedQuery,
       app,
     } = this.props;
@@ -494,7 +494,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
     // Both "editing an existing saved query" and "adding a new saved query" hide the per-row
     // save/duplicate/remove action
-    const isEditingQueryLibrary = queryLibraryRef !== undefined || !!addingSavedQuery;
+    const isEditingQueryLibrary = editSavedQueryRef !== undefined || !!addingSavedQuery;
     const isUnifiedAlerting = app === CoreApp.UnifiedAlerting;
     const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
 
@@ -585,7 +585,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       isOpen,
       onQueryOpenChanged,
       app,
-      queryLibraryRef,
+      editSavedQueryRef,
       addingSavedQuery,
       onCancelAddSavedQuery,
     } = this.props;
@@ -593,7 +593,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const isHidden = query.hide;
     // Both saved-query flows (editing an existing one and adding a new one) show the banner above the
     // editor and wrap it in the highlighted container.
-    const inSavedQueryMode = queryLibraryRef !== undefined || !!addingSavedQuery;
+    const inSavedQueryMode = editSavedQueryRef !== undefined || !!addingSavedQuery;
     const error =
       data?.error && data.error.refId === query.refId ? data.error : data?.errors?.find((e) => e.refId === query.refId);
     const rowClasses = classNames('query-editor-row', {
@@ -649,7 +649,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           <MaybeQueryLibraryEditingHeader
             query={query}
             app={app}
-            queryLibraryRef={queryLibraryRef}
+            editSavedQueryRef={editSavedQueryRef}
             mode={addingSavedQuery ? 'add' : 'edit'}
             onCancelEdit={addingSavedQuery ? onCancelAddSavedQuery : this.onCancelQueryLibraryEdit}
             onUpdateSuccess={this.onSavedQueryModeSuccess}
@@ -732,7 +732,7 @@ function SavedQueryButtons(props: {
 function MaybeQueryLibraryEditingHeader(props: {
   query: DataQuery;
   app?: CoreApp;
-  queryLibraryRef?: string;
+  editSavedQueryRef?: string;
   mode?: 'edit' | 'add';
   onCancelEdit?: () => void;
   onUpdateSuccess?: () => void;
@@ -742,7 +742,7 @@ function MaybeQueryLibraryEditingHeader(props: {
   return renderQueryLibraryEditingHeader(
     props.query,
     props.app,
-    props.queryLibraryRef,
+    props.editSavedQueryRef,
     props.onCancelEdit,
     props.onUpdateSuccess,
     props.onSelectQuery,

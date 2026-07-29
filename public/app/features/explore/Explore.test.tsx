@@ -114,7 +114,7 @@ const dummyProps: Props = {
   changeDatasource: jest.fn(),
   compact: false,
   changeCompactMode: jest.fn(),
-  queryLibraryRef: undefined,
+  editSavedQueryRef: undefined,
   addingSavedQuery: undefined,
   queriesChangedIndexAtRun: 0,
 };
@@ -291,8 +291,8 @@ describe('Explore', () => {
   });
 
   describe('Saved Queries Integration', () => {
-    it('should enable add query buttons when queryLibraryRef is undefined', async () => {
-      setup({ queryLibraryRef: undefined });
+    it('should enable add query buttons when editSavedQueryRef is undefined', async () => {
+      setup({ editSavedQueryRef: undefined });
 
       // Wait for the Explore component to render
       await screen.findByTestId(selectors.components.DataSourcePicker.container);
@@ -301,8 +301,8 @@ describe('Explore', () => {
       expect(addQueryButton).toBeEnabled();
     });
 
-    it('should disable add query buttons when queryLibraryRef is set (editing from library)', async () => {
-      setup({ queryLibraryRef: 'library-query-123' });
+    it('should disable add query buttons when editSavedQueryRef is set (editing from library)', async () => {
+      setup({ editSavedQueryRef: 'library-query-123' });
 
       // Wait for the Explore component to render
       await screen.findByTestId(selectors.components.DataSourcePicker.container);
@@ -320,7 +320,7 @@ describe('Explore', () => {
           },
         },
       });
-      const exploreProps = { ...dummyProps, queryLibraryRef: 'library-query-123' };
+      const exploreProps = { ...dummyProps, editSavedQueryRef: 'library-query-123' };
 
       render(
         <TestProvider store={store}>

@@ -559,9 +559,9 @@ describe('QueryEditorRow', () => {
       };
     });
 
-    it('should render query library editing header when queryLibraryRef is provided', async () => {
+    it('should render query library editing header when editSavedQueryRef is provided', async () => {
       render(
-        <QueryEditorRow {...props(testData)} queryLibraryRef="test-ref" onExitQueryLibraryEdit={mockOnExitEdit} />
+        <QueryEditorRow {...props(testData)} editSavedQueryRef="test-ref" onExitQueryLibraryEdit={mockOnExitEdit} />
       );
 
       // Wait for async datasource loading and component rendering
@@ -569,7 +569,7 @@ describe('QueryEditorRow', () => {
         expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalledWith(
           expect.objectContaining({ refId: 'B' }),
           undefined, // app
-          'test-ref', // queryLibraryRef
+          'test-ref', // editSavedQueryRef
           expect.any(Function), // onCancelEdit
           expect.any(Function), // onUpdateSuccess
           expect.any(Function), // onSelectQuery
@@ -580,7 +580,7 @@ describe('QueryEditorRow', () => {
 
     it('routes both cancelling and saving to the single exit callback, with analytics only on cancel', async () => {
       render(
-        <QueryEditorRow {...props(testData)} queryLibraryRef="test-ref" onExitQueryLibraryEdit={mockOnExitEdit} />
+        <QueryEditorRow {...props(testData)} editSavedQueryRef="test-ref" onExitQueryLibraryEdit={mockOnExitEdit} />
       );
 
       await waitFor(() => {
@@ -606,7 +606,7 @@ describe('QueryEditorRow', () => {
       });
     });
 
-    it('should render the add-mode header when addingSavedQuery is set without a queryLibraryRef', async () => {
+    it('should render the add-mode header when addingSavedQuery is set without an editSavedQueryRef', async () => {
       const mockOnCancelAdd = jest.fn();
       render(<QueryEditorRow {...props(testData)} addingSavedQuery={true} onCancelAddSavedQuery={mockOnCancelAdd} />);
 
@@ -614,7 +614,7 @@ describe('QueryEditorRow', () => {
         expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalledWith(
           expect.objectContaining({ refId: 'B' }),
           undefined, // app
-          undefined, // queryLibraryRef (none for a brand-new query)
+          undefined, // editSavedQueryRef (none for a brand-new query)
           mockOnCancelAdd, // onCancelEdit → exits add mode
           expect.any(Function), // onUpdateSuccess
           expect.any(Function), // onSelectQuery
@@ -623,7 +623,7 @@ describe('QueryEditorRow', () => {
       });
     });
 
-    it('should not render query library editing header when queryLibraryRef is not provided', async () => {
+    it('should not render query library editing header when editSavedQueryRef is not provided', async () => {
       render(<QueryEditorRow {...props(testData)} />);
 
       await waitFor(() => {

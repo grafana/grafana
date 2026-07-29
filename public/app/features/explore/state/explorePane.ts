@@ -89,12 +89,12 @@ export const changeCorrelationHelperData = createAction<ChangeCorrelationHelperD
   'explore/changeCorrelationHelperData'
 );
 
-export interface UpdateQueryLibraryRefPayload {
+export interface UpdateEditSavedQueryRefPayload {
   exploreId: string;
-  queryLibraryRef?: string;
+  editSavedQueryRef?: string;
 }
 
-export const updateQueryLibraryRefAction = createAction<UpdateQueryLibraryRefPayload>('explore/updateQueryLibraryRef');
+export const updateEditSavedQueryRefAction = createAction<UpdateEditSavedQueryRefPayload>('explore/updateEditSavedQueryRef');
 
 export interface SetAddingSavedQueryPayload {
   exploreId: string;
@@ -115,7 +115,7 @@ interface InitializeExplorePayload {
   datasourceInstance?: DataSourceApi;
   compact: boolean;
   eventBridge: EventBusExtended;
-  queryLibraryRef?: string;
+  editSavedQueryRef?: string;
   addingSavedQuery?: boolean;
 }
 
@@ -149,7 +149,7 @@ export interface InitializeExploreOptions {
   correlationHelperData?: ExploreCorrelationHelperData;
   position?: number;
   eventBridge: EventBusExtended;
-  queryLibraryRef?: string;
+  editSavedQueryRef?: string;
   addingSavedQuery?: boolean;
   compact: boolean;
 }
@@ -174,7 +174,7 @@ export const initializeExplore = createAsyncThunk(
       compact,
       correlationHelperData,
       eventBridge,
-      queryLibraryRef,
+      editSavedQueryRef,
       addingSavedQuery,
     }: InitializeExploreOptions,
     { dispatch, getState, fulfillWithValue }
@@ -198,7 +198,7 @@ export const initializeExplore = createAsyncThunk(
         history,
         compact,
         eventBridge,
-        queryLibraryRef,
+        editSavedQueryRef,
         addingSavedQuery,
       })
     );
@@ -269,10 +269,10 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     };
   }
 
-  if (updateQueryLibraryRefAction.match(action)) {
+  if (updateEditSavedQueryRefAction.match(action)) {
     return {
       ...state,
-      queryLibraryRef: action.payload.queryLibraryRef,
+      editSavedQueryRef: action.payload.editSavedQueryRef,
     };
   }
 
@@ -284,7 +284,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   }
 
   if (initializeExploreAction.match(action)) {
-    const { queries, range, datasourceInstance, history, eventBridge, compact, queryLibraryRef, addingSavedQuery } =
+    const { queries, range, datasourceInstance, history, eventBridge, compact, editSavedQueryRef, addingSavedQuery } =
       action.payload;
 
     return {
@@ -299,7 +299,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       queryResponse: createEmptyQueryResponse(),
       cache: [],
       correlations: [],
-      queryLibraryRef,
+      editSavedQueryRef,
       addingSavedQuery,
       compact,
     };

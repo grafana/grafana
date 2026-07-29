@@ -12,7 +12,7 @@ import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
 import { ContentOutlineItem, QUERIES_PANEL_ID } from './ContentOutline/ContentOutlineItem';
 import { changeDatasource } from './state/datasource';
-import { setAddingSavedQueryAction, updateQueryLibraryRefAction } from './state/explorePane';
+import { setAddingSavedQueryAction, updateEditSavedQueryRefAction } from './state/explorePane';
 import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
@@ -33,7 +33,7 @@ const makeSelectors = (exploreId: string) => {
       exploreItemSelector,
       (s: ExploreItemState | undefined) => getDatasourceSrv().getInstanceSettings(s!.datasourceInstance?.uid)!
     ),
-    getQueryLibraryRef: createSelector(exploreItemSelector, (s) => s!.queryLibraryRef),
+    getEditSavedQueryRef: createSelector(exploreItemSelector, (s) => s!.editSavedQueryRef),
     getAddingSavedQuery: createSelector(exploreItemSelector, (s) => s!.addingSavedQuery),
   };
 };
@@ -46,7 +46,7 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
     getQueryResponse,
     getHistory,
     getEventBridge,
-    getQueryLibraryRef,
+    getEditSavedQueryRef,
     getAddingSavedQuery,
   } = useMemo(() => makeSelectors(exploreId), [exploreId]);
 
@@ -55,7 +55,7 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
   const queryResponse = useSelector(getQueryResponse);
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
-  const queryLibraryRef = useSelector(getQueryLibraryRef);
+  const editSavedQueryRef = useSelector(getEditSavedQueryRef);
   const addingSavedQuery = useSelector(getAddingSavedQuery);
 
   const onRunQueries = useCallback(() => {
@@ -100,7 +100,7 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
   };
 
   const onExitQueryLibraryEdit = useCallback(
-    () => dispatch(updateQueryLibraryRefAction({ exploreId, queryLibraryRef: undefined })),
+    () => dispatch(updateEditSavedQueryRefAction({ exploreId, editSavedQueryRef: undefined })),
     [dispatch, exploreId]
   );
 
@@ -131,7 +131,7 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
-      queryLibraryRef={queryLibraryRef}
+      editSavedQueryRef={editSavedQueryRef}
       onExitQueryLibraryEdit={onExitQueryLibraryEdit}
       addingSavedQuery={addingSavedQuery}
       onCancelAddSavedQuery={onCancelAddSavedQuery}
