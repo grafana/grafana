@@ -57,8 +57,8 @@ func histogramSamples(t *testing.T, reg *prometheus.Registry, name string, label
 }
 
 // The NATS recorder counts live and re-list deliveries on their own metric
-// families under source=nats, derives latency from the RV's embedded timestamp
-// (rv=0 means no sample), and drives the live-subscription gauge.
+// families, derives latency from the RV's embedded timestamp (rv=0 means no
+// sample), and drives the live-subscription gauge.
 func TestNATSRecorder(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	m := newInformerMetrics(reg)
@@ -69,19 +69,19 @@ func TestNATSRecorder(t *testing.T) {
 	r.ObserveRelistEvent(usinformer.VerbUpdate, 0)
 	r.ObserveReconnect()
 
-	assert.Equal(t, 1.0, testutil.ToFloat64(m.liveEvents.WithLabelValues("jobs", "nats", "add")))
-	assert.Equal(t, 1.0, testutil.ToFloat64(m.relistEvents.WithLabelValues("jobs", "nats", "add")))
-	assert.Equal(t, 1.0, testutil.ToFloat64(m.relistEvents.WithLabelValues("jobs", "nats", "update")))
+	assert.Equal(t, 1.0, testutil.ToFloat64(m.liveEvents.WithLabelValues("jobs", "add")))
+	assert.Equal(t, 1.0, testutil.ToFloat64(m.relistEvents.WithLabelValues("jobs", "add")))
+	assert.Equal(t, 1.0, testutil.ToFloat64(m.relistEvents.WithLabelValues("jobs", "update")))
 	assert.Equal(t, 1.0, testutil.ToFloat64(m.reconnects.WithLabelValues("jobs")))
 
-	natsLabels := map[string]string{"resource": "jobs", "source": "nats"}
-	assert.EqualValues(t, 1, histogramSamples(t, reg, "grafana_provisioning_informer_live_event_latency_seconds", natsLabels),
+	labels := map[string]string{"resource": "jobs"}
+	assert.EqualValues(t, 1, histogramSamples(t, reg, "grafana_provisioning_informer_live_event_latency_seconds", labels),
 		"a live event with an RV must produce a live latency sample")
-	assert.EqualValues(t, 1, histogramSamples(t, reg, "grafana_provisioning_informer_relist_event_latency_seconds", natsLabels),
+	assert.EqualValues(t, 1, histogramSamples(t, reg, "grafana_provisioning_informer_relist_event_latency_seconds", labels),
 		"a relist-recovered add with an RV must produce a relist latency sample")
 
 	r.ObserveLiveEvent(usinformer.VerbDelete, 0)
-	assert.EqualValues(t, 1, histogramSamples(t, reg, "grafana_provisioning_informer_live_event_latency_seconds", natsLabels),
+	assert.EqualValues(t, 1, histogramSamples(t, reg, "grafana_provisioning_informer_live_event_latency_seconds", labels),
 		"rv=0 must not produce a latency sample")
 
 	r.ObserveLiveSubscription(true)
@@ -109,14 +109,14 @@ func TestAPIServerMeter(t *testing.T) {
 	h.OnDelete(cache.DeletedFinalStateUnknown{Key: "default/d", Obj: objWithRV("d", recentRV())}) // re-list-detected delete
 
 	for _, verb := range []string{"add", "update", "delete"} {
-		assert.Equal(t, 1.0, testutil.ToFloat64(m.liveEvents.WithLabelValues("jobs", "apiserver", verb)), "live_events{verb=%s}", verb)
-		assert.Equal(t, 1.0, testutil.ToFloat64(m.relistEvents.WithLabelValues("jobs", "apiserver", verb)), "relist_events{verb=%s}", verb)
+		assert.Equal(t, 1.0, testutil.ToFloat64(m.liveEvents.WithLabelValues("jobs", verb)), "live_events{verb=%s}", verb)
+		assert.Equal(t, 1.0, testutil.ToFloat64(m.relistEvents.WithLabelValues("jobs", verb)), "relist_events{verb=%s}", verb)
 	}
 
-	apiLabels := map[string]string{"resource": "jobs", "source": "apiserver"}
-	assert.EqualValues(t, 3, histogramSamples(t, reg, "grafana_provisioning_informer_live_event_latency_seconds", apiLabels),
+	labels := map[string]string{"resource": "jobs"}
+	assert.EqualValues(t, 3, histogramSamples(t, reg, "grafana_provisioning_informer_live_event_latency_seconds", labels),
 		"live add, update and delete must each produce a latency sample")
-	assert.EqualValues(t, 0, histogramSamples(t, reg, "grafana_provisioning_informer_relist_event_latency_seconds", apiLabels),
+	assert.EqualValues(t, 0, histogramSamples(t, reg, "grafana_provisioning_informer_relist_event_latency_seconds", labels),
 		"initial adds, resync re-deliveries and stale deletes carry no latency")
 }
 
@@ -127,10 +127,10 @@ func TestNewInformerMetrics_SharesCollectorsAcrossSources(t *testing.T) {
 	first := newInformerMetrics(reg)
 	second := newInformerMetrics(reg)
 
-	first.liveEvents.WithLabelValues("jobs", "nats", "add").Inc()
-	second.liveEvents.WithLabelValues("jobs", "nats", "add").Inc()
+	first.liveEvents.WithLabelValues("jobs", "add").Inc()
+	second.liveEvents.WithLabelValues("jobs", "add").Inc()
 
-	assert.Equal(t, 2.0, testutil.ToFloat64(first.liveEvents.WithLabelValues("jobs", "nats", "add")),
+	assert.Equal(t, 2.0, testutil.ToFloat64(first.liveEvents.WithLabelValues("jobs", "add")),
 		"both instances must write the same series")
 }
 
@@ -138,6 +138,6 @@ func TestNewInformerMetrics_SharesCollectorsAcrossSources(t *testing.T) {
 // caller without a registry needs no special casing.
 func TestNewInformerMetrics_NilRegisterer(t *testing.T) {
 	m := newInformerMetrics(nil)
-	m.observeLive(sourceNATS, "jobs", usinformer.VerbAdd, recentRV())
-	assert.Equal(t, 1.0, testutil.ToFloat64(m.liveEvents.WithLabelValues("jobs", "nats", "add")))
+	m.observeLive("jobs", usinformer.VerbAdd, recentRV())
+	assert.Equal(t, 1.0, testutil.ToFloat64(m.liveEvents.WithLabelValues("jobs", "add")))
 }

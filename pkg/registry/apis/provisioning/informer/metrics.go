@@ -14,15 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// Source label values: which delta source delivered the event.
-const (
-	sourceNATS      = "nats"
-	sourceAPIServer = "apiserver"
-)
-
 // informerMetrics measures event delivery into the provisioning controllers'
-// delta sources, on the same series for both sources so NATS and the apiserver
-// watch compare directly: how many events arrived — live vs recovered by the
+// delta source — the NATS-backed informer or the apiserver watch, whichever the
+// process runs. It records how many events arrived — live vs recovered by the
 // periodic re-list/resync, as separate metric families — and how long after the
 // change was written. Events a replica missed live cannot be counted here —
 // under the round-robin queue group each notification reaches one replica, so a
@@ -56,20 +50,20 @@ func newInformerMetrics(reg prometheus.Registerer) *informerMetrics {
 	return &informerMetrics{
 		liveEvents: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_provisioning_informer_live_events_total",
-			Help: "Events delivered live to provisioning informer handlers, by resource, source (nats, apiserver) and verb.",
-		}, []string{"resource", "source", "verb"})),
+			Help: "Events delivered live to provisioning informer handlers, by resource and verb.",
+		}, []string{"resource", "verb"})),
 		relistEvents: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_provisioning_informer_relist_events_total",
-			Help: "Events delivered by the periodic re-list/resync to provisioning informer handlers, by resource, source (nats, apiserver) and verb. Adds and deletes are changes the live stream did not deliver here; updates are re-deliveries of unchanged objects.",
-		}, []string{"resource", "source", "verb"})),
+			Help: "Events delivered by the periodic re-list/resync to provisioning informer handlers, by resource and verb. Adds and deletes are changes the live stream did not deliver here; updates are re-deliveries of unchanged objects.",
+		}, []string{"resource", "verb"})),
 		liveLatency: registerOrReuse(reg, prometheus.NewHistogramVec(latencyOpts(
 			"grafana_provisioning_informer_live_event_latency_seconds",
 			"Time from a change's resource version being issued to its live event reaching the informer handlers.",
-		), []string{"resource", "source"})),
+		), []string{"resource"})),
 		relistLatency: registerOrReuse(reg, prometheus.NewHistogramVec(latencyOpts(
 			"grafana_provisioning_informer_relist_event_latency_seconds",
 			"Time from a change's resource version being issued to its recovery by a re-list, for adds the live stream did not deliver. Re-deliveries of unchanged objects carry no latency.",
-		), []string{"resource", "source"})),
+		), []string{"resource"})),
 		reconnects: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_provisioning_informer_nats_reconnects_total",
 			Help: "Times an informer's NATS subscription was (re)established after a gap. Live events published during the gap never reach this replica; the informer forces a re-list to recover them.",
@@ -99,17 +93,17 @@ func registerOrReuse[C prometheus.Collector](reg prometheus.Registerer, c C) C {
 	return c
 }
 
-func (m *informerMetrics) observeLive(source, resourceName, verb string, rv int64) {
-	m.liveEvents.WithLabelValues(resourceName, source, verb).Inc()
-	m.observeLatency(m.liveLatency, source, resourceName, rv)
+func (m *informerMetrics) observeLive(resourceName, verb string, rv int64) {
+	m.liveEvents.WithLabelValues(resourceName, verb).Inc()
+	m.observeLatency(m.liveLatency, resourceName, rv)
 }
 
-func (m *informerMetrics) observeRelist(source, resourceName, verb string, rv int64) {
-	m.relistEvents.WithLabelValues(resourceName, source, verb).Inc()
-	m.observeLatency(m.relistLatency, source, resourceName, rv)
+func (m *informerMetrics) observeRelist(resourceName, verb string, rv int64) {
+	m.relistEvents.WithLabelValues(resourceName, verb).Inc()
+	m.observeLatency(m.relistLatency, resourceName, rv)
 }
 
-func (m *informerMetrics) observeLatency(latency *prometheus.HistogramVec, source, resourceName string, rv int64) {
+func (m *informerMetrics) observeLatency(latency *prometheus.HistogramVec, resourceName string, rv int64) {
 	if rv <= 0 {
 		return
 	}
@@ -117,12 +111,12 @@ func (m *informerMetrics) observeLatency(latency *prometheus.HistogramVec, sourc
 	// negative results mean clock skew, not delivery, so they are dropped.
 	seconds := time.Since(resource.ResourceVersionTime(rv)).Seconds()
 	if seconds > 0 {
-		latency.WithLabelValues(resourceName, source).Observe(seconds)
+		latency.WithLabelValues(resourceName).Observe(seconds)
 	}
 }
 
 // natsRecorder adapts informerMetrics to the NATS informer's metrics hook,
-// labelling everything it observes with source=nats and one resource.
+// labelling everything it observes with one resource.
 type natsRecorder struct {
 	metrics      *informerMetrics
 	resourceName string
@@ -131,11 +125,11 @@ type natsRecorder struct {
 var _ usinformer.Metrics = natsRecorder{}
 
 func (r natsRecorder) ObserveLiveEvent(verb string, rv int64) {
-	r.metrics.observeLive(sourceNATS, r.resourceName, verb, rv)
+	r.metrics.observeLive(r.resourceName, verb, rv)
 }
 
 func (r natsRecorder) ObserveRelistEvent(verb string, rv int64) {
-	r.metrics.observeRelist(sourceNATS, r.resourceName, verb, rv)
+	r.metrics.observeRelist(r.resourceName, verb, rv)
 }
 
 func (r natsRecorder) ObserveReconnect() {
@@ -151,13 +145,13 @@ func (r natsRecorder) ObserveLiveSubscription(open bool) {
 }
 
 // apiServerMeter observes deliveries from an apiserver-backed
-// SharedIndexInformer under source=apiserver, on the same series the NATS
-// recorder writes. Register it as one extra event handler so each event is
-// counted once however many controller handlers the informer has. The informer
-// has no live/relist distinction of its own, so the meter derives it: initial-
-// list adds and resync re-deliveries (same RV on both sides of an update) and
-// re-list-detected deletes (DeletedFinalStateUnknown) count as relist,
-// everything else came from the watch and counts as live.
+// SharedIndexInformer on the same series the NATS recorder writes. Register it
+// as one extra event handler so each event is counted once however many
+// controller handlers the informer has. The informer has no live/relist
+// distinction of its own, so the meter derives it: initial-list adds and resync
+// re-deliveries (same RV on both sides of an update) and re-list-detected
+// deletes (DeletedFinalStateUnknown) count as relist, everything else came from
+// the watch and counts as live.
 type apiServerMeter struct {
 	metrics      *informerMetrics
 	resourceName string
@@ -168,30 +162,30 @@ var _ cache.ResourceEventHandler = apiServerMeter{}
 func (h apiServerMeter) OnAdd(obj any, isInInitialList bool) {
 	if isInInitialList {
 		// Initial-list objects may be arbitrarily old: no latency sample.
-		h.metrics.observeRelist(sourceAPIServer, h.resourceName, usinformer.VerbAdd, 0)
+		h.metrics.observeRelist(h.resourceName, usinformer.VerbAdd, 0)
 		return
 	}
-	h.metrics.observeLive(sourceAPIServer, h.resourceName, usinformer.VerbAdd, objectRV(obj))
+	h.metrics.observeLive(h.resourceName, usinformer.VerbAdd, objectRV(obj))
 }
 
 func (h apiServerMeter) OnUpdate(oldObj, newObj any) {
 	// A resync replays the store's object against itself; a live update always
 	// carries a new RV.
 	if objectRVString(oldObj) == objectRVString(newObj) {
-		h.metrics.observeRelist(sourceAPIServer, h.resourceName, usinformer.VerbUpdate, 0)
+		h.metrics.observeRelist(h.resourceName, usinformer.VerbUpdate, 0)
 		return
 	}
-	h.metrics.observeLive(sourceAPIServer, h.resourceName, usinformer.VerbUpdate, objectRV(newObj))
+	h.metrics.observeLive(h.resourceName, usinformer.VerbUpdate, objectRV(newObj))
 }
 
 func (h apiServerMeter) OnDelete(obj any) {
 	if _, missedDelete := obj.(cache.DeletedFinalStateUnknown); missedDelete {
 		// The delete was detected by a re-list; the carried object's RV predates
 		// the delete, so it cannot date it.
-		h.metrics.observeRelist(sourceAPIServer, h.resourceName, usinformer.VerbDelete, 0)
+		h.metrics.observeRelist(h.resourceName, usinformer.VerbDelete, 0)
 		return
 	}
-	h.metrics.observeLive(sourceAPIServer, h.resourceName, usinformer.VerbDelete, objectRV(obj))
+	h.metrics.observeLive(h.resourceName, usinformer.VerbDelete, objectRV(obj))
 }
 
 func objectRVString(obj any) string {
