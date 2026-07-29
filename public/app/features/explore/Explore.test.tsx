@@ -127,20 +127,7 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({
     get: () => Promise.resolve({}),
     getList: () => [],
-    // Anything that renders a query row needs real-looking settings back; the uid/type follow the
-    // query's own ref so a pane with two datasources still resolves to two of them.
-    getInstanceSettings: (ref?: { uid?: string; type?: string } | string) => {
-      const uid = typeof ref === 'string' ? ref : ref?.uid;
-      const type = (typeof ref === 'object' ? ref?.type : undefined) ?? 'prometheus';
-      return {
-        uid: uid ?? 'test-uid',
-        type,
-        name: `Datasource ${uid ?? 'test-uid'}`,
-        // meta.id must follow the ref's type too, or the fixture asserts "everything is
-        // Prometheus" and any card-level isPrometheus check passes for every datasource.
-        meta: { id: type, mixed: false, info: { logos: { small: '' } } },
-      };
-    },
+    getInstanceSettings: () => {},
   }),
   usePluginLinks: jest.fn(() => ({ links: [] })),
 }));
@@ -172,9 +159,7 @@ const setup = (overrideProps?: Partial<Props>) => {
     explore: {
       ...initialExploreState,
       panes: {
-        // The queries live on the pane as well as on the props: components that read them from the
-        // store (the signal explorer rail) would otherwise see an empty pane.
-        left: makeExplorePaneState({ queries: overrideProps?.queries ?? [] }),
+        left: makeExplorePaneState(),
       },
     },
   });
@@ -276,21 +261,17 @@ describe('Explore', () => {
       getBoolMock.mockRestore();
     });
 
-    it('shows the signal explorer rail when a Mixed datasource contains a managed Prometheus flavor query', async () => {
+    it('shows the metrics explorer when a Mixed datasource contains a managed Prometheus flavor query', async () => {
       setTestFlags({ 'grafana.exploreMetricsSidebar': true });
       setup({
         datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
         queries: [{ refId: 'A', datasource: { type: 'grafana-amazonprometheus-datasource', uid: 'amp-uid' } }],
       });
 
-      expect(await screen.findByText('Datasource explorer')).toBeInTheDocument();
-      expect(screen.getByTestId('signal-explorer-rail')).toBeInTheDocument();
-      // The rail renders its root even with zero cards, so assert it actually resolved the query
-      // to a card rather than just mounting.
-      expect(screen.getByTestId('signal-explorer-datasource-card')).toBeInTheDocument();
+      expect(await screen.findByPlaceholderText('Search metrics')).toBeInTheDocument();
     });
 
-    it('does not show the signal explorer rail for a non-Prometheus Mixed datasource query', async () => {
+    it('does not show the metrics explorer for a non-Prometheus Mixed datasource query', async () => {
       setTestFlags({ 'grafana.exploreMetricsSidebar': true });
       setup({
         datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
@@ -298,20 +279,7 @@ describe('Explore', () => {
       });
 
       await screen.findByTestId(selectors.components.DataSourcePicker.container);
-      expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('signal-explorer-rail')).not.toBeInTheDocument();
-    });
-
-    it('does not show the signal explorer rail when the feature flag is off', async () => {
-      setup({
-        datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
-        queries: [{ refId: 'A', datasource: { type: 'grafana-amazonprometheus-datasource', uid: 'amp-uid' } }],
-      });
-
-      await screen.findByTestId(selectors.components.DataSourcePicker.container);
-      expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('signal-explorer-rail')).not.toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Collapse outline' })).toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
     });
   });
 

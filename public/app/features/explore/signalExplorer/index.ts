@@ -1,38 +1,37 @@
 /**
- * Public surface of the signal explorer.
+ * Public surface of the signal explorer's data layer.
  *
- * `SignalExplorerRail` is one arrangement of these pieces — the leaf components, hooks and state
- * below it are exported so an alternative shell can be composed from the same parts. Anything not
- * listed here is an implementation detail of that arrangement and may change without notice; the
- * resource client is published in part, and only in part: `dsKey`, `rangeKey` and
- * `invalidateMetricCache` are contract, while its `fetch*` functions are not — a host reaches data
- * through the hooks, which own the loading and cancellation rules that go with it.
+ * This module is the "what can this datasource tell us" half of the datasource explorer sidebar;
+ * the UI half lives in `explore/ContentOutline/SignalExplorer/`. Nothing here renders anything, and
+ * nothing here reads Explore's store — every function and hook takes a `DataSourceRef` and a
+ * `TimeRange` as plain arguments, so a caller cannot reach the wrong datasource by construction.
+ * That matters most in a Mixed pane, where each card resolves a different one.
  *
- * ## Shared state
+ * Anything not listed here is an implementation detail and may change without notice. The resource
+ * client is published in part, and only in part: `dsKey`, `rangeKey` and `invalidateMetricCache` are
+ * contract, while its `fetch*` functions are not — a caller reaches data through the hooks, which
+ * own the loading, cancellation and staleness rules that go with it.
  *
- * Lives at `state.signalExplorer[exploreId]` — a top-level store key, NOT nested under `explore`,
- * because `exploreReducer` is hand-written and routes any action carrying an `exploreId` into the
- * pane reducers.
+ * ## State
  *
- * Per pane: `activeRefId` and `selectedMetric`. These are the genuinely cross-card concepts — which
- * card is active, and which metric the one shared metadata block is describing.
+ * Deliberately none. Nothing in here holds view state, and there is no reducer to register: which
+ * card is open and what is typed in its search box are local `useState` in the components that own
+ * them, because unmounting is what keeps that state honest. Explore hands out the lowest unused
+ * refId when a query is added, so state that outlives its query gets inherited by the next one —
+ * `SignalExplorer` collapses a card whose query is gone, which unmounts the body and takes its state
+ * with it. Store-backed state would survive that and need pruning by hand.
  *
- * Per card: `cards[refId].searchText` and `cards[refId].typeFilter`, so `selectSearchText` and
- * `selectTypeFilter` take `(state, exploreId, refId)` while the pane-level selectors take
- * `(state, exploreId)`. They are per-card because nothing constrains a pane to one open card: a
- * mixed pane with two Prometheus queries shows two trees at once, and one pane-wide search box
- * would re-filter both from whichever one was typed in. A card that has never been touched reads
- * as unfiltered rather than absent, so a host need not seed the slice before rendering.
+ * ## Batching is not optional
  *
- * Deliberately NOT here: a row's or label's own expand/collapse. That is local `useState` in
- * `MetricTree`, because mounting is what makes the label and value fetches lazy — a collapsed row
- * cannot fetch even by accident.
+ * Every list fed from here is unbounded in production: a Prometheus catalog runs to tens of thousands
+ * of names and a high-cardinality label to thousands of values. `useVisibleBatch` is the shared cap
+ * on how much of one reaches the DOM. Rendering a filtered catalog straight into the tree is the
+ * defect this module exists to have already solved.
  */
 
 /* eslint-disable no-barrel-files/no-barrel-files -- this file is the module's published surface, not an import shortcut; code inside the module imports from the leaf files directly */
 
-// `MetricRow` the data shape is aliased so the `MetricRow` component keeps its own name here.
-export type { MetricRow as MetricRowModel, MetricType } from './types';
+export type { MetricRow, MetricType } from './types';
 
 export { deriveMetricType, getMetricTypeLabel, getMetricTypeOptions } from './data/metricType';
 export { useLabelValues } from './data/useLabelValues';
@@ -47,66 +46,15 @@ export { useMetricDetail } from './data/useMetricDetail';
  * `now-1h` is deliberately the same key.
  *
  * `invalidateMetricCache` is the way to force fresh data before the entries expire on their own —
- * the action behind a shell's refresh control. It drops the cached entries *and* makes every mounted
- * hook re-request. Entries also expire on their own after a few minutes, but that is a floor on
- * staleness rather than a refresh: nothing re-runs until something asks again.
+ * the action behind a refresh control. It drops the cached entries *and* makes every mounted hook
+ * re-request. Entries also expire on their own after a few minutes, but that is a floor on staleness
+ * rather than a refresh: nothing re-runs until something asks again.
  */
 export { dsKey, invalidateMetricCache, rangeKey } from './data/metricResourceClient';
 
-// `detectMetricsInQueries` produces `{ refId: metricNames[] }` and the metric rows badge off
+// `detectMetricsInQueries` produces `{ refId: metricNames[] }` and a metric row badges off
 // `{ metricName: refIds[] }`; `toRefsByMetric` is the adapter between them, so it ships with them.
 export { detectMetricsInQueries } from './query/detectMetricsInQueries';
 export { toRefsByMetric } from './query/toRefsByMetric';
-export { resolveCards, type CardModel } from './query/resolveCards';
 
-export {
-  clearExploreState,
-  clearSelectedMetric,
-  setActiveRefId,
-  setSearchText,
-  setSelectedMetric,
-  setTypeFilter,
-  signalExplorerReducer,
-  type CardViewState,
-  type PaneViewState,
-  type SignalExplorerState,
-} from './state/signalExplorerSlice';
-export {
-  selectActiveRefId,
-  selectCardViewState,
-  selectSearchText,
-  selectSelectedMetric,
-  selectSignalExplorerState,
-  selectTypeFilter,
-} from './state/selectors';
-
-export { DatasourceCard, type DatasourceCardProps } from './components/DatasourceCard';
-export { LabelValuesBlock, type LabelValuesBlockProps } from './components/LabelValuesBlock';
-export { MetricRow, type MetricRowProps } from './components/MetricRow';
-export { MetricTree, type MetricTreeProps } from './components/MetricTree';
-export { SignalExplorerRail, type SignalExplorerRailProps } from './components/SignalExplorerRail';
-
-// `getMetricTypeBadgeColor` ships with the block that uses it: the colours are not arbitrary, each
-// one was measured against the foreground `getContrastText` derives from it so the badge clears
-// WCAG AA in both themes. A second, hand-picked palette elsewhere would not.
-export {
-  MetricMetadataBlock,
-  getMetricTypeBadgeColor,
-  type MetricMetadataBlockProps,
-} from './components/MetricMetadataBlock';
-
-/**
- * Every list here is fed by a Prometheus resource call and so is unbounded in production — a catalog
- * runs to tens of thousands of names. Capping what reaches the DOM is a requirement, not a
- * refinement, and this is the shared implementation of it: a host building its own list uses this
- * rather than deciding again how much to render.
- */
-export { INITIAL_BATCH, useVisibleBatch } from './components/useVisibleBatch';
-
-/**
- * Exported without a consumer inside this module, deliberately. The card's own type filter was
- * removed from the design, but `cards[refId].typeFilter` and `useMetricCatalog`'s `typeFilter` option
- * both remain, so this is the control for them wherever a shell decides that filter belongs. It is
- * not dead code awaiting deletion.
- */
-export { MetricTypeFilter, type MetricTypeFilterProps } from './components/MetricTypeFilter';
+export { INITIAL_BATCH, useVisibleBatch } from './hooks/useVisibleBatch';

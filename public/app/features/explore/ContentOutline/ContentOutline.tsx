@@ -8,10 +8,9 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, PanelContainer, ScrollContainer } from '@grafana/ui';
 
-import { SignalExplorerRail } from '../signalExplorer/components/SignalExplorerRail';
-
 import { type ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
+import { MetricsExplorer } from './MetricsExplorer';
 
 function scrollableChildren(item: ContentOutlineItemContextProps) {
   return item.children?.filter((child) => child.type !== 'filter') || [];
@@ -44,15 +43,13 @@ export const CONTENT_OUTLINE_LOCAL_STORAGE_KEYS = {
 };
 
 export function ContentOutline({
-  exploreId,
   scroller,
   panelId,
-  showSignalExplorer = false,
+  showMetricsExplorer = false,
 }: {
-  exploreId: string;
   scroller: HTMLElement | undefined;
   panelId: string;
-  showSignalExplorer?: boolean;
+  showMetricsExplorer?: boolean;
 }) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(
     store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, true)
@@ -61,8 +58,8 @@ export function ContentOutline({
     suspendUntilReady: false,
     suspendWhileReconciling: false,
   });
-  const signalExplorerVisible = metricsSidebarEnabled && showSignalExplorer && contentOutlineExpanded;
-  const styles = useStyles2(getStyles, contentOutlineExpanded, signalExplorerVisible);
+  const metricsExplorerVisible = metricsSidebarEnabled && showMetricsExplorer && contentOutlineExpanded;
+  const styles = useStyles2(getStyles, contentOutlineExpanded, metricsExplorerVisible);
   const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
@@ -190,7 +187,7 @@ export function ContentOutline({
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
-      {signalExplorerVisible && (
+      {metricsExplorerVisible && (
         <>
           <div className={styles.header}>
             <span className={styles.headerTitle}>
@@ -198,16 +195,14 @@ export function ContentOutline({
             </span>
             <div className={styles.toggleWrapper}>{toggleButton}</div>
           </div>
-          <div className={styles.railSection}>
-            <SignalExplorerRail exploreId={exploreId} />
-          </div>
+          <MetricsExplorer />
         </>
       )}
 
       <div className={styles.outlineSection}>
         <ScrollContainer>
           <div className={styles.content}>
-            {!signalExplorerVisible && toggleButton}
+            {!metricsExplorerVisible && toggleButton}
             {outlineItems.map((item) => {
               return (
                 <Fragment key={item.id}>
@@ -284,8 +279,8 @@ export function ContentOutline({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, expanded: boolean, signalExplorerVisible: boolean) => {
-  const expandedWidth = signalExplorerVisible ? '300px' : '160px';
+const getStyles = (theme: GrafanaTheme2, expanded: boolean, metricsExplorerVisible: boolean) => {
+  const expandedWidth = metricsExplorerVisible ? '300px' : '160px';
 
   return {
     wrapper: css({
@@ -328,19 +323,12 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, signalExplorerVisibl
       flex: '0 0 auto',
       width: theme.spacing(4),
     }),
-    railSection: css({
-      label: 'rail-section',
-      display: 'flex',
-      flexDirection: 'column',
-      flex: '1 1 auto',
-      minHeight: 0,
-    }),
     outlineSection: css({
       label: 'outline-section',
       display: 'flex',
       flexDirection: 'column',
       minHeight: 0,
-      ...(signalExplorerVisible
+      ...(metricsExplorerVisible
         ? {
             // Shrinkable so a tall outline scrolls (via ScrollContainer) instead of
             // clipping against the wrapper, while still sizing to content and sitting
