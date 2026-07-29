@@ -80,9 +80,9 @@ interface CmdkItemBase {
 
   // list of tags, for example dashboard tags when showing a dashboard
   tags?: string[];
-  // a smaller text under the title
+  // a smaller text shown next to the title
   subtitle?: string;
-  // addtional small text items that will be displayed next to a subtitle in single line.
+  // additional small text items that will be displayed next to the subtitle in single line.
   subtitleItems?: string[];
 
   // actions that can be performed on the item. The will be shown as pills on the right edge of the item. These will be executed if the shortcut is pressed when focus is on the item.

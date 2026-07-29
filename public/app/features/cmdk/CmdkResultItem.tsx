@@ -37,21 +37,23 @@ export function CmdkResultItem({ item, active, id, onSelect, onAdditionalAction,
     onSelect(item);
   };
 
+  // Items that can be drilled down into a subscope get an ellipsis, like the old palette marked actions with
+  // children.
+  const canDrillDown =
+    item.type === 'subscope' || Boolean(item.additionalActions?.some((action) => action.type === 'subscope'));
+  const title = canDrillDown && !item.title.endsWith('...') ? `${item.title}...` : item.title;
+
   const content = (
     <>
-      <div className={styles.mainColumn}>
-        <div className={styles.titleRow}>
-          <span className={styles.title}>{item.title}</span>
-          {item.rightSubtitle && <span className={styles.rightSubtitle}>{item.rightSubtitle}</span>}
-        </div>
-        {(item.subtitle || item.subtitleItems?.length) && (
-          <div className={styles.subtitleRow}>
-            {item.subtitle && <span>{item.subtitle}</span>}
-            {item.subtitleItems?.map((subtitleItem, index) => (
-              <span key={index}>{subtitleItem}</span>
-            ))}
-          </div>
-        )}
+      <div className={styles.mainRow}>
+        <span className={styles.title}>{title}</span>
+        {item.subtitle && <span className={styles.subtitleText}>{item.subtitle}</span>}
+        {item.subtitleItems?.map((subtitleItem, index) => (
+          <span key={index} className={styles.subtitleText}>
+            {subtitleItem}
+          </span>
+        ))}
+        {item.rightSubtitle && <span className={styles.rightSubtitle}>{item.rightSubtitle}</span>}
       </div>
       {item.tags && item.tags.length > 0 && <TagList tags={item.tags} className={styles.tags} />}
       {item.additionalActions && item.additionalActions.length > 0 && (
@@ -143,11 +145,9 @@ const getStyles = (theme: GrafanaTheme2) => {
         backgroundImage: theme.colors.gradients.brandVertical,
       },
     }),
-    mainColumn: css({
+    mainRow: css({
       flexGrow: 1,
       minWidth: 0,
-    }),
-    titleRow: css({
       display: 'flex',
       alignItems: 'baseline',
       gap: theme.spacing(1),
@@ -157,20 +157,20 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     }),
-    rightSubtitle: css({
+    subtitleText: css({
       ...theme.typography.bodySmall,
       color: theme.colors.text.secondary,
-      marginLeft: 'auto',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     }),
-    subtitleRow: css({
+    rightSubtitle: css({
       ...theme.typography.bodySmall,
       color: theme.colors.text.secondary,
-      display: 'flex',
-      gap: theme.spacing(1),
+      marginLeft: 'auto',
+      flexShrink: 0,
       overflow: 'hidden',
+      textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     }),
     tags: css({

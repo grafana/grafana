@@ -172,7 +172,8 @@ describe('Cmdk', () => {
     registerSource(makeSource(jest.fn().mockResolvedValue([item])));
 
     const { user } = setup();
-    await screen.findByText('Item A');
+    // Items that can drill down into a subscope get an ellipsis suffix
+    await screen.findByText('Item A...');
 
     await user.keyboard('{Shift>}{Enter}{/Shift}');
 
@@ -205,18 +206,18 @@ describe('Cmdk', () => {
     registerSource(makeSource(jest.fn().mockResolvedValue([item])));
 
     const { user } = setup();
-    await screen.findByText('Dive into dashboards');
+    await screen.findByText('Dive into dashboards...');
 
     await user.keyboard('{Enter}');
 
     // Subscope pill is shown and only the subscope source is queried
     expect(await screen.findByText('Dashboards')).toBeInTheDocument();
     expect(await screen.findByText('Subscope item')).toBeInTheDocument();
-    expect(screen.queryByText('Dive into dashboards')).not.toBeInTheDocument();
+    expect(screen.queryByText('Dive into dashboards...')).not.toBeInTheDocument();
 
     await user.keyboard('{Backspace}');
 
-    expect(await screen.findByText('Dive into dashboards')).toBeInTheDocument();
+    expect(await screen.findByText('Dive into dashboards...')).toBeInTheDocument();
     expect(screen.queryByText('Dashboards')).not.toBeInTheDocument();
   });
 
