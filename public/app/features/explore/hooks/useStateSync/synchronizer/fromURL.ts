@@ -6,6 +6,7 @@ import { changeDatasource } from 'app/features/explore/state/datasource';
 import {
   changePanelsStateAction,
   initializeExplore,
+  setAddingSavedQueryAction,
   updateQueryLibraryRefAction,
 } from 'app/features/explore/state/explorePane';
 import { splitClose, syncTimesAction } from 'app/features/explore/state/main';
@@ -30,6 +31,9 @@ export function syncFromURL(
   // init — so the "Editing from saved queries" banner also shows when navigating from within Explore
   // (e.g. the Saved Queries modal), which goes through this sync path rather than a cold init.
   const queryLibraryRef = location.getSearch().get('queryLibraryRef') ?? undefined;
+  // Same for "Add to saved queries" (?createSavedQuery=true): in-Explore navigations mint a new pane id
+  // and go through sync rather than cold init, so we must seed add mode here too.
+  const addingSavedQuery = location.getSearch().get('createSavedQuery') === 'true';
   // if navigating the history causes one of the time range to not being equal to all the other ones,
   // we set syncedTimes to false to avoid inconsistent UI state.
   // Ideally `syncedTimes` should be saved in the URL.
@@ -49,6 +53,9 @@ export function syncFromURL(
       // doesn't clobber an in-place editing session.
       if (i === 0 && queryLibraryRef && paneState.queryLibraryRef !== queryLibraryRef) {
         dispatch(updateQueryLibraryRefAction({ exploreId, queryLibraryRef }));
+      }
+      if (i === 0 && addingSavedQuery && !paneState.addingSavedQuery) {
+        dispatch(setAddingSavedQueryAction({ exploreId, addingSavedQuery: true }));
       }
 
       const update = urlDiff(urlPane, getUrlStateFromPaneState(paneState));
@@ -94,6 +101,7 @@ export function syncFromURL(
           position: i,
           eventBridge: new EventBusSrv(),
           queryLibraryRef: i === 0 ? queryLibraryRef : undefined,
+          addingSavedQuery: i === 0 ? addingSavedQuery : undefined,
         })
       );
     }
