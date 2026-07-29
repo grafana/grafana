@@ -8,7 +8,6 @@ import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import TileSource from 'ol/source/Tile';
 import VectorSource from 'ol/source/Vector';
 
-import { getTemplateSrv } from '@grafana/runtime';
 
 // Mock the config module to avoid undefined panels error
 jest.mock('@grafana/runtime', () => ({
@@ -34,10 +33,25 @@ jest.mock('app/plugins/datasource/grafana/datasource', () => ({
   getGrafanaDatasource: jest.fn(),
 }));
 
+
+import { createTheme } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
+import { getColorDimension } from 'app/features/dimensions/color';
+import { getScalarDimension } from 'app/features/dimensions/scalar';
+import { getScaledDimension } from 'app/features/dimensions/scale';
+import { getTextDimension } from 'app/features/dimensions/text';
+
 import { type GeomapPanel } from '../GeomapPanel';
+import { defaultStyleConfig, type StyleConfig, type StyleConfigState } from '../style/types';
 import { type MapLayerState } from '../types';
 
-import { hasVariableDependencies, hasLayerData, isSegmentVisible, getNextLayerName } from './utils';
+import {
+  hasVariableDependencies,
+  hasLayerData,
+  isSegmentVisible,
+  getNextLayerName,
+  getStyleDimension,
+} from './utils';
 
 // Test fixtures
 const createTestFeature = () => new Feature(new Point([0, 0]));
@@ -245,5 +259,61 @@ describe('isSegmentVisible', () => {
     },
   ])('$name', ({ pixelTolerance, start, end, expected }) => {
     expect(isSegmentVisible(map, pixelTolerance, start, end)).toBe(expected);
+  });
+});
+
+describe('getStyleDimension', () => {
+  const theme = createTheme();
+  const frame = undefined;
+
+  // getStyleDimension only reads style.config and style.fields
+  const styleState = (fields?: StyleConfigState['fields']): StyleConfigState =>
+    ({ config: defaultStyleConfig, fields }) as unknown as StyleConfigState;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('builds color, size and rotation (but not text) from a custom style config', () => {
+    const custom = { color: defaultStyleConfig.color } as StyleConfig;
+
+    const dims = getStyleDimension(frame, styleState(), theme, custom);
+
+    expect(getColorDimension).toHaveBeenCalledTimes(1);
+    expect(getScaledDimension).toHaveBeenCalledTimes(1);
+    expect(getScalarDimension).toHaveBeenCalledTimes(1);
+    expect(getTextDimension).not.toHaveBeenCalled();
+    expect(dims.text).toBeUndefined();
+  });
+
+  it.each([
+    { desc: 'fixed value', text: { fixed: 'hi' }, called: true },
+    { desc: 'field binding', text: { field: 'label' }, called: true },
+    { desc: 'neither field nor fixed', text: {}, called: false },
+  ])('includes a text dimension for a custom config only with a $desc', ({ text, called }) => {
+    const custom = { color: defaultStyleConfig.color, text } as unknown as StyleConfig;
+
+    getStyleDimension(frame, styleState(), theme, custom);
+
+    expect(getTextDimension).toHaveBeenCalledTimes(called ? 1 : 0);
+  });
+
+  it('builds only the dimensions flagged in style.fields when there is no custom config', () => {
+    getStyleDimension(frame, styleState({ color: true, rotation: true }), theme);
+
+    expect(getColorDimension).toHaveBeenCalledTimes(1);
+    expect(getScalarDimension).toHaveBeenCalledTimes(1);
+    expect(getScaledDimension).not.toHaveBeenCalled();
+    expect(getTextDimension).not.toHaveBeenCalled();
+  });
+
+  it('builds no dimensions when style.fields is undefined and there is no custom config', () => {
+    const dims = getStyleDimension(frame, styleState(undefined), theme);
+
+    expect(getColorDimension).not.toHaveBeenCalled();
+    expect(getScaledDimension).not.toHaveBeenCalled();
+    expect(getScalarDimension).not.toHaveBeenCalled();
+    expect(getTextDimension).not.toHaveBeenCalled();
+    expect(dims).toEqual({});
   });
 });
