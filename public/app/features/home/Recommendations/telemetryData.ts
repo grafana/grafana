@@ -210,6 +210,8 @@ const FS_USED = `(1 - node_filesystem_avail_bytes{${FS_EXCLUDE}} / node_filesyst
 async function fetchActiveSeries(instance: DataSourceWithBackend): Promise<number | null> {
   const cardinality = await getResource<{ series_count_total?: unknown }>(instance, 'api/v1/cardinality/label_values', {
     'label_names[]': '__name__',
+    // Mimir defaults count_method to inmemory, which also counts stale series held in open TSDB heads.
+    count_method: 'active',
   })
     .then((res) => Number(res?.series_count_total))
     .catch(() => null);
@@ -293,8 +295,9 @@ async function resolveUsageQueries(): Promise<UsageQueries | null> {
   }
   return {
     ds: { uid: usage.uid, type: usage.type },
-    activeSeries: `sum(grafanacloud_instance_active_series{stack_id="${stackId}"})`,
-    dataPointsPerMinute: `60 * sum(grafanacloud_instance_samples_per_second{stack_id="${stackId}"})`,
+    // max by (id) dedupes HA-duplicate usage series before the stack-wide sum.
+    activeSeries: `sum(max by (id) (grafanacloud_instance_active_series{stack_id="${stackId}"}))`,
+    dataPointsPerMinute: `60 * sum(max by (id) (grafanacloud_instance_samples_per_second{stack_id="${stackId}"}))`,
   };
 }
 

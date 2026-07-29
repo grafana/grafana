@@ -331,6 +331,11 @@ describe('fetchMetricsActivity', () => {
 
     const end = Math.floor(Date.now() / 1000);
     expect(getResource).toHaveBeenCalledWith(
+      'api/v1/cardinality/label_values',
+      { 'label_names[]': '__name__', count_method: 'active' },
+      { showErrorAlert: false }
+    );
+    expect(getResource).toHaveBeenCalledWith(
       'api/v1/label/__name__/values',
       { start: end - METRICS_STATS_LOOKBACK_DAYS * 24 * 3600, end },
       { showErrorAlert: false }
@@ -403,15 +408,15 @@ describe('fetchMetricsActivity', () => {
 
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
       {
-        activeSeries: 'sum(grafanacloud_instance_active_series{stack_id="12345"})',
-        dataPointsPerMinute: '60 * sum(grafanacloud_instance_samples_per_second{stack_id="12345"})',
+        activeSeries: 'sum(max by (id) (grafanacloud_instance_active_series{stack_id="12345"}))',
+        dataPointsPerMinute: '60 * sum(max by (id) (grafanacloud_instance_samples_per_second{stack_id="12345"}))',
       },
       { uid: 'grafanacloud-usage', type: 'prometheus' }
     );
     // The trend works on Cloud via usage metrics even though the product datasource is Mimir-typed.
     expect(mockRunRangeQuery).toHaveBeenCalledWith(
       'series',
-      'sum(grafanacloud_instance_active_series{stack_id="12345"})',
+      'sum(max by (id) (grafanacloud_instance_active_series{stack_id="12345"}))',
       DATA_LOOKBACK_HOURS,
       { uid: 'grafanacloud-usage', type: 'prometheus' }
     );
