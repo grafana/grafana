@@ -373,11 +373,6 @@ export function getRowWrapper(dashboardPage: DashboardPage, selectors: E2ESelect
   return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper(rowTitle)).first();
 }
 
-export async function addNewPanelFromSidebar(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.addButton).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
-}
-
 export async function fillVariableValue(
   page: Page,
   dashboardPage: DashboardPage,
