@@ -77,10 +77,17 @@ interface SetupOptions {
   transformations?: DataTransformerConfig[];
   source?: PanelData;
   applyFieldConfig?: jest.Mock;
+  splitTrailing?: number;
 }
 
 function setup(input: PanelData, options: SetupOptions = {}) {
-  const { enabled = true, transformations = [], source, applyFieldConfig = jest.fn((d: PanelData) => d) } = options;
+  const {
+    enabled = true,
+    transformations = [],
+    source,
+    applyFieldConfig = jest.fn((d: PanelData) => d),
+    splitTrailing,
+  } = options;
 
   const context: PanelContext = {
     eventsScope: 'test',
@@ -98,7 +105,7 @@ function setup(input: PanelData, options: SetupOptions = {}) {
     <PanelContextProvider value={context}>{children}</PanelContextProvider>
   );
 
-  const { result, rerender } = renderHook((props: PanelData) => useTransformedData(props), {
+  const { result, rerender } = renderHook((props: PanelData) => useTransformedData(props, { splitTrailing }), {
     wrapper,
     initialProps: input,
   });
@@ -187,6 +194,50 @@ describe('useTransformedData', () => {
 
     await waitFor(() => expect(result.current.data.series).toHaveLength(1));
     expect(applyFieldConfig).toHaveBeenCalledTimes(1);
+  });
+
+  describe('splitTrailing', () => {
+    const dropKeepThenDropOther: DataTransformerConfig[] = [
+      { id: 'dropFields', options: { exclude: ['drop'] } },
+      { id: 'dropFields', options: { exclude: ['keep'] } },
+    ];
+
+    it('is not computed unless asked for', async () => {
+      const { result } = setup(makeData(), { transformations: dropKeepThenDropOther });
+
+      await waitFor(() => expect(result.current.isTransforming).toBe(false));
+      expect(result.current.dataBeforeTrailing).toBeUndefined();
+    });
+
+    // A column picker needs the fields that were available before the panel's own trailing
+    // transformation selected a subset of them.
+    it('returns the data as of before the trailing transformations', async () => {
+      const { result } = setup(makeData(), { transformations: dropKeepThenDropOther, splitTrailing: 1 });
+
+      await waitFor(() => expect(result.current.isTransforming).toBe(false));
+
+      expect(result.current.data.series[0].fields.map((f) => f.name)).toEqual([]);
+      expect(result.current.dataBeforeTrailing?.series[0].fields.map((f) => f.name)).toEqual(['keep']);
+    });
+
+    it('applies field config to both stages', async () => {
+      const { result, applyFieldConfig } = setup(makeData(), {
+        transformations: dropKeepThenDropOther,
+        splitTrailing: 1,
+      });
+
+      await waitFor(() => expect(result.current.isTransforming).toBe(false));
+      expect(applyFieldConfig).toHaveBeenCalledTimes(2);
+    });
+
+    it('treats a split larger than the pipeline as splitting off everything', async () => {
+      const input = makeData();
+      const { result } = setup(input, { transformations: excludeDropField, splitTrailing: 5 });
+
+      await waitFor(() => expect(result.current.isTransforming).toBe(false));
+
+      expect(result.current.dataBeforeTrailing?.series[0].fields.map((f) => f.name)).toEqual(['keep', 'drop']);
+    });
   });
 
   it('keeps structureRev stable while the frame structure is unchanged', async () => {

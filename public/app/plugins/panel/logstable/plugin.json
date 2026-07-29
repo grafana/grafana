@@ -3,6 +3,7 @@
   "name": "Logs Table",
   "id": "logstable",
   "suggestions": true,
+  "adHocTransforms": true,
   "state": "beta",
   "hideFromList": true,
   "info": {

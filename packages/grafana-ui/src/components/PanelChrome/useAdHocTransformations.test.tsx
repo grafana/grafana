@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { type ReactNode } from 'react';
 
 import { EventBusSrv, type PanelPluginMeta, PluginContextProvider, PluginType } from '@grafana/data';
@@ -56,24 +56,44 @@ function setup({ enabled = true, transformations = [] }: SetupOptions = {}) {
 }
 
 describe('useAdHocTransformations', () => {
-  it('is disabled when the panel does not own the pipeline', () => {
-    const { result } = setup({ enabled: false });
+  it('does not read the host pipeline when the panel does not own it', () => {
+    const { result } = setup({ enabled: false, transformations: [{ id: 'editor', options: {} }] });
 
     expect(result.current.enabled).toBe(false);
     expect(result.current.transformations).toEqual([]);
   });
 
-  it('is disabled when the host provides no transformation members at all', () => {
-    const wrapper = ({ children }: { children: ReactNode }) => (
-      <PanelContextProvider value={{ eventsScope: 'test', eventBus: new EventBusSrv() }}>
-        {children}
-      </PanelContextProvider>
-    );
-    const { result } = renderHook(() => useAdHocTransformations(), { wrapper });
+  describe('without a host pipeline', () => {
+    function setupWithoutHost() {
+      const wrapper = ({ children }: { children: ReactNode }) => (
+        <PluginContextProvider meta={pluginMeta}>
+          <PanelContextProvider value={{ eventsScope: 'test', eventBus: new EventBusSrv() }}>
+            {children}
+          </PanelContextProvider>
+        </PluginContextProvider>
+      );
 
-    expect(result.current.enabled).toBe(false);
-    // Mutators must be safe no-ops rather than throwing.
-    expect(() => result.current.add({ id: 'organize', options: {} })).not.toThrow();
+      return renderHook(() => useAdHocTransformations(), { wrapper });
+    }
+
+    it('reports itself disabled so persistence-implying UI can be hidden', () => {
+      const { result } = setupWithoutHost();
+
+      expect(result.current.enabled).toBe(false);
+    });
+
+    // Explore and a bare PanelRenderer provide no pipeline. Keeping one in component state is what
+    // lets a panel run the same transformation code in every host.
+    it('keeps the pipeline in component state instead of dropping writes', () => {
+      const { result } = setupWithoutHost();
+
+      act(() => result.current.add({ id: 'organize', options: { excludeByName: { a: true } } }));
+
+      expect(result.current.transformations).toEqual([
+        { id: 'organize', options: { excludeByName: { a: true } }, origin: { source: 'panel', pluginId: 'table' } },
+      ]);
+      expect(result.current.adHocTransformations).toHaveLength(1);
+    });
   });
 
   it('exposes the whole pipeline', () => {
@@ -157,6 +177,36 @@ describe('useAdHocTransformations', () => {
       const { result, setTransformations } = setup();
 
       result.current.replaceAdHoc([{ id: 'organize', options: {} }]);
+
+      expect(setTransformations.mock.calls[0][0][0].origin).toEqual({ source: 'panel', pluginId: 'table' });
+    });
+
+    // A panel whose first transformation prepares the data the user then transforms, and whose last
+    // shapes the output, needs its entries on both sides of the editor's.
+    it('straddles editor entries when given before and after', () => {
+      const { result, setTransformations } = setup({
+        transformations: [
+          { id: 'old-panel', options: {}, origin: { source: 'panel' } },
+          { id: 'editor', options: {} },
+        ],
+      });
+
+      result.current.replaceAdHoc({
+        before: [{ id: 'extractFields', options: {} }],
+        after: [{ id: 'organize', options: {} }],
+      });
+
+      expect(setTransformations.mock.calls[0][0].map((t: DataTransformerConfig) => t.id)).toEqual([
+        'extractFields',
+        'editor',
+        'organize',
+      ]);
+    });
+
+    it('stamps both positions', () => {
+      const { result, setTransformations } = setup();
+
+      result.current.replaceAdHoc({ before: [{ id: 'extractFields', options: {} }], after: [] });
 
       expect(setTransformations.mock.calls[0][0][0].origin).toEqual({ source: 'panel', pluginId: 'table' });
     });
