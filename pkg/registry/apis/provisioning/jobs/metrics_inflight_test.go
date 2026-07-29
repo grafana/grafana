@@ -56,27 +56,55 @@ func TestJobMetrics_InFlightNilSafe(t *testing.T) {
 	})
 }
 
-func TestQueueMetrics_RecordClaim(t *testing.T) {
-	m := &QueueMetrics{
-		claimTotal: prometheus.NewCounterVec(
-			prometheus.CounterOpts{Name: "test_jobs_claim_total"},
-			[]string{"outcome"},
-		),
+func TestJobMetrics_RecordBusySeconds(t *testing.T) {
+	m := &JobMetrics{
+		busySeconds: prometheus.NewCounterVec(
+			prometheus.CounterOpts{Name: "test_jobs_busy_seconds"}, []string{"driver_id", "action"}),
 	}
-	m.RecordClaim(ClaimOutcomeClaimed)
-	m.RecordClaim(ClaimOutcomeClaimed)
-	m.RecordClaim(ClaimOutcomeEmpty)
+	m.RecordBusySeconds("0", "pull", 2.5)
+	m.RecordBusySeconds("0", "pull", 1.5)
+	require.Equal(t, 4.0, testutil.ToFloat64(m.busySeconds.WithLabelValues("0", "pull")))
 
-	require.Equal(t, 2.0, testutil.ToFloat64(m.claimTotal.WithLabelValues(ClaimOutcomeClaimed)))
-	require.Equal(t, 1.0, testutil.ToFloat64(m.claimTotal.WithLabelValues(ClaimOutcomeEmpty)))
-	require.Equal(t, 0.0, testutil.ToFloat64(m.claimTotal.WithLabelValues(ClaimOutcomeContended)))
+	var nilMetrics *JobMetrics
+	require.NotPanics(t, func() { nilMetrics.RecordBusySeconds("0", "pull", 1) })
+	require.NotPanics(t, func() { (&JobMetrics{}).RecordBusySeconds("0", "pull", 1) })
 }
 
-// TestQueueMetrics_RecordClaimNilSafe covers stores built without a registered claim
-// counter (e.g. QueueMetrics{queueWaitTime: nil} in tests).
+func TestQueueMetrics_RecordClaim(t *testing.T) {
+	m := &QueueMetrics{
+		claimed:         prometheus.NewCounterVec(prometheus.CounterOpts{Name: "test_claimed"}, []string{"driver_id"}),
+		claimConflicts:  prometheus.NewCounterVec(prometheus.CounterOpts{Name: "test_claim_conflicts"}, []string{"driver_id"}),
+		claimErrors:     prometheus.NewCounterVec(prometheus.CounterOpts{Name: "test_claim_errors"}, []string{"driver_id"}),
+		claimRoundsCont: prometheus.NewCounterVec(prometheus.CounterOpts{Name: "test_claim_rounds"}, []string{"driver_id"}),
+		claimCandidates: prometheus.NewGauge(prometheus.GaugeOpts{Name: "test_claim_candidates"}),
+	}
+
+	m.RecordClaimWon("0")
+	m.RecordClaimWon("0")
+	m.RecordClaimConflict("0")
+	m.RecordClaimError("1")
+	m.RecordClaimRoundContended("1")
+	m.SetClaimCandidates(7)
+
+	require.Equal(t, 2.0, testutil.ToFloat64(m.claimed.WithLabelValues("0")))
+	require.Equal(t, 1.0, testutil.ToFloat64(m.claimConflicts.WithLabelValues("0")))
+	require.Equal(t, 0.0, testutil.ToFloat64(m.claimed.WithLabelValues("1")))
+	require.Equal(t, 1.0, testutil.ToFloat64(m.claimErrors.WithLabelValues("1")))
+	require.Equal(t, 1.0, testutil.ToFloat64(m.claimRoundsCont.WithLabelValues("1")))
+	require.Equal(t, 7.0, testutil.ToFloat64(m.claimCandidates))
+}
+
+// TestQueueMetrics_RecordClaimNilSafe covers stores built without registered claim
+// metrics (zero-value QueueMetrics) — the recorders must not panic.
 func TestQueueMetrics_RecordClaimNilSafe(t *testing.T) {
-	zero := &QueueMetrics{} // claimTotal is nil
-	require.NotPanics(t, func() { zero.RecordClaim(ClaimOutcomeClaimed) })
+	zero := &QueueMetrics{}
+	require.NotPanics(t, func() {
+		zero.RecordClaimWon("0")
+		zero.RecordClaimConflict("0")
+		zero.RecordClaimError("0")
+		zero.RecordClaimRoundContended("0")
+		zero.SetClaimCandidates(3)
+	})
 }
 
 // TestJobMetrics_RecordJobDurationOnAllOutcomes verifies duration is observed for

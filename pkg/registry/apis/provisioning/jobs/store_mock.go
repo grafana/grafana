@@ -23,9 +23,9 @@ func (_m *MockStore) EXPECT() *MockStore_Expecter {
 	return &MockStore_Expecter{mock: &_m.Mock}
 }
 
-// Claim provides a mock function with given fields: ctx, namespace, name
-func (_m *MockStore) Claim(ctx context.Context, namespace string, name string) (*v0alpha1.Job, func(), error) {
-	ret := _m.Called(ctx, namespace, name)
+// Claim provides a mock function with given fields: ctx, namespace, name, driverID
+func (_m *MockStore) Claim(ctx context.Context, namespace string, name string, driverID string) (*v0alpha1.Job, func(), error) {
+	ret := _m.Called(ctx, namespace, name, driverID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Claim")
@@ -34,27 +34,27 @@ func (_m *MockStore) Claim(ctx context.Context, namespace string, name string) (
 	var r0 *v0alpha1.Job
 	var r1 func()
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v0alpha1.Job, func(), error)); ok {
-		return rf(ctx, namespace, name)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*v0alpha1.Job, func(), error)); ok {
+		return rf(ctx, namespace, name, driverID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v0alpha1.Job); ok {
-		r0 = rf(ctx, namespace, name)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *v0alpha1.Job); ok {
+		r0 = rf(ctx, namespace, name, driverID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*v0alpha1.Job)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) func()); ok {
-		r1 = rf(ctx, namespace, name)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) func()); ok {
+		r1 = rf(ctx, namespace, name, driverID)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(func())
 		}
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, string, string) error); ok {
-		r2 = rf(ctx, namespace, name)
+	if rf, ok := ret.Get(2).(func(context.Context, string, string, string) error); ok {
+		r2 = rf(ctx, namespace, name, driverID)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -71,13 +71,14 @@ type MockStore_Claim_Call struct {
 //   - ctx context.Context
 //   - namespace string
 //   - name string
-func (_e *MockStore_Expecter) Claim(ctx interface{}, namespace interface{}, name interface{}) *MockStore_Claim_Call {
-	return &MockStore_Claim_Call{Call: _e.mock.On("Claim", ctx, namespace, name)}
+//   - driverID string
+func (_e *MockStore_Expecter) Claim(ctx interface{}, namespace interface{}, name interface{}, driverID interface{}) *MockStore_Claim_Call {
+	return &MockStore_Claim_Call{Call: _e.mock.On("Claim", ctx, namespace, name, driverID)}
 }
 
-func (_c *MockStore_Claim_Call) Run(run func(ctx context.Context, namespace string, name string)) *MockStore_Claim_Call {
+func (_c *MockStore_Claim_Call) Run(run func(ctx context.Context, namespace string, name string, driverID string)) *MockStore_Claim_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[1].(string))
 	})
 	return _c
 }
@@ -87,7 +88,7 @@ func (_c *MockStore_Claim_Call) Return(job *v0alpha1.Job, rollback func(), err e
 	return _c
 }
 
-func (_c *MockStore_Claim_Call) RunAndReturn(run func(context.Context, string, string) (*v0alpha1.Job, func(), error)) *MockStore_Claim_Call {
+func (_c *MockStore_Claim_Call) RunAndReturn(run func(context.Context, string, string, string) (*v0alpha1.Job, func(), error)) *MockStore_Claim_Call {
 	_c.Call.Return(run)
 	return _c
 }

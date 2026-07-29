@@ -119,7 +119,7 @@ func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry
 // API error if the job no longer exists (completed and deleted).
 //
 // If err is not nil, the job and rollback values are always nil.
-func (s *persistentStore) Claim(ctx context.Context, namespace, name string) (job *provisioning.Job, rollback func(), err error) {
+func (s *persistentStore) Claim(ctx context.Context, namespace, name string, driverID string) (job *provisioning.Job, rollback func(), err error) {
 	ctx, span := tracing.Start(ctx, "provisioning.jobs.claim")
 	defer func() {
 		if err != nil && !errors.Is(err, ErrAlreadyClaimed) && !apierrors.IsNotFound(err) {
@@ -165,7 +165,7 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string) (jo
 			continue
 		}
 		if err != nil {
-			s.queueMetrics.RecordClaim(ClaimOutcomeError)
+			s.queueMetrics.RecordClaimError(driverID)
 			return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s': %w", name, namespace, err)
 		}
 
@@ -187,7 +187,7 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string) (jo
 		// conflicting worker (handled above with continue) must not count, or racing
 		// losers would each record a wait for a job they never claimed.
 		s.queueMetrics.RecordWaitTime(string(updatedJob.Spec.Action), s.clock().Sub(updatedJob.CreationTimestamp.Time).Seconds())
-		s.queueMetrics.RecordClaim(ClaimOutcomeClaimed)
+		s.queueMetrics.RecordClaimWon(driverID)
 
 		return updatedJob.DeepCopy(), func() {
 			// Rolling back does not need to care about the parent's cancellation state.
@@ -234,9 +234,9 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string) (jo
 		}, nil
 	}
 
-	// Every attempt conflicted; treat the job as claimed by someone else. If it is in fact
-	// still unclaimed, the informer re-list re-discovers it.
-	s.queueMetrics.RecordClaim(ClaimOutcomeContended)
+	// We failed to claim any jobs: candidates existed (len > 0 above) but every one was
+	// claimed by another worker first — a fully contended round.
+	s.queueMetrics.RecordClaimRoundContended(driverID)
 	logger.Debug("job claim conflicted repeatedly - treating as claimed by another worker")
 	return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s' after %d conflicts: %w", name, namespace, claimConflictRetries, ErrAlreadyClaimed)
 }

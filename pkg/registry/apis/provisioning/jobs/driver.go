@@ -33,7 +33,7 @@ type Store interface {
 	// API error if the job no longer exists.
 	//
 	// If err is not nil, the job and rollback values are always nil.
-	Claim(ctx context.Context, namespace, name string) (job *provisioning.Job, rollback func(), err error)
+	Claim(ctx context.Context, namespace, name string, driverID string) (job *provisioning.Job, rollback func(), err error)
 
 	// Complete marks a job as completed and removes it from the active job store.
 	// Callers are responsible for writing the job to history after calling this.
@@ -138,7 +138,7 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	logger := logging.FromContext(ctx)
 
 	// Claim the job to work on.
-	claimedJob, rollback, err := d.store.Claim(ctx, namespace, name)
+	claimedJob, rollback, err := d.store.Claim(ctx, namespace, name, d.driverID)
 	if err != nil {
 		if !errors.Is(err, ErrAlreadyClaimed) && !apierrors.IsNotFound(err) {
 			span.RecordError(err)
@@ -247,6 +247,7 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 			resourceChangeCount(d.currentJob.Spec.Action, d.currentJob.Status.Summary),
 			duration.Seconds(),
 		)
+		d.metrics.RecordBusySeconds(d.driverID, string(d.currentJob.Spec.Action), duration.Seconds())
 	}
 	defer func() {
 		d.currentJob = nil
