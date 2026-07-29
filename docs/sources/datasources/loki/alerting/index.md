@@ -127,9 +127,26 @@ Verify your query returns numeric data before you create an alert:
 1. Run the LogQL metric query you plan to use for alerting.
 1. Confirm the result is numeric and suitable for threshold evaluation.
 
-### Handle no data conditions
+### Reduce a time series to a single value
 
-Configure how the rule behaves when no data is returned under **Configure no data and error handling**. Choose **No Data**, **Alerting**, or **OK** based on whether missing data should be treated as a problem.
+A Grafana-managed rule evaluates a single number against the threshold. A `range` query returns a time series with many points, which the rule can't evaluate directly. Either set the query **Type** to `instant`, or add a **Reduce** expression, such as **Last** or **Mean**, between the query and the **Threshold** expression. Without one of these, the rule can evaluate incorrectly.
+
+### Set a pending period to avoid false positives
+
+A transient condition, such as a brief network blip or a momentary spike in errors, can cross the threshold for a single evaluation. Set a pending period so the rule fires only after the condition holds for a sustained duration. A pending period of a few evaluation intervals reduces false positives from short-lived conditions.
+
+### Handle no data versus zero results
+
+A LogQL metric query returns _no series_ when no log lines match, rather than returning a value of `0`. Grafana evaluates a rule that receives no series as **No Data**, not **Normal**, which can cause an alert to enter the No Data state instead of resolving.
+
+To avoid unexpected No Data states:
+
+- Apply the threshold in the alert condition rather than writing a query so restrictive that it returns nothing. For example, query the error rate and compare it in a **Threshold** expression, instead of writing a query that only returns lines above the threshold.
+- Set the No Data behavior under **Configure no data and error handling** to the state you want. The options are **No Data**, **Alerting**, **Normal**, and **Keep Last State**. Choose **Normal** if the absence of matching logs isn't a problem.
+
+{{< admonition type="note" >}}
+Editing and saving an alert rule resets its state to **Normal**. The rule re-enters **Pending** or **Alerting** on the next evaluation if the condition is still met. This is standard [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) behavior and isn't specific to the Loki data source.
+{{< /admonition >}}
 
 ## Troubleshoot alerting
 
@@ -140,6 +157,16 @@ If your Loki alerts don't work as expected, use the following sections to diagno
 - Confirm the query is a LogQL metric query that returns numeric data in Explore.
 - Ensure the evaluation interval allows enough time for data to be available.
 - Review the alert rule's health and any error messages in the Alerting UI.
+
+### Alert enters No Data unexpectedly
+
+- The query returned no series because no log lines matched. A LogQL metric query returns no series rather than `0` when nothing matches. Set the No Data behavior under **Configure no data and error handling**, or restructure the query so it returns a value that you compare with a threshold.
+- Confirm logs exist for the query and time range in Explore.
+
+### Alert fires on brief spikes
+
+- Add or increase the pending period so the rule fires only when the condition holds over several evaluations.
+- Widen the range in the metric query, for example from `[1m]` to `[5m]`, so short-lived spikes have less effect.
 
 ### Data source-managed rules don't appear
 

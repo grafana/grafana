@@ -66,9 +66,15 @@ The first options set the name of your connection:
 
 Configure how Grafana connects to your Loki server.
 
-| Setting | Description                                                                                                                                                                           |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **URL** | The URL of your Loki server. If Loki runs locally, use `http://localhost:3100`. If Loki runs on a networked server, use its URL and port, for example `http://loki.example.com:3100`. |
+| Setting | Description                                                                                                                                                                                |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **URL** | The base URL of your Loki server. If Loki runs locally, use `http://localhost:3100`. If Loki runs on a networked server, use its URL and port, for example `http://loki.example.com:3100`. |
+
+{{< admonition type="note" >}}
+Enter only the base URL. Don't append API paths such as `/loki/api/v1/push`. That endpoint sends logs to Loki with an agent like Grafana Alloy; it isn't used to query Loki from the data source.
+
+If your Grafana instance runs on Grafana Cloud, a `localhost` or private network address refers to Grafana's servers rather than your network, so it can't reach a self-hosted Loki. Use [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) to query Loki on a private network.
+{{< /admonition >}}
 
 ### Authentication
 
@@ -83,6 +89,10 @@ Configure how Grafana authenticates with your Loki server. Select an authenticat
 | **With CA cert**           | Toggle on to verify a self-signed TLS certificate. Follow the instructions from your certificate authority (CA) to obtain the certificate file. |
 | **Skip TLS verify**        | Toggle on to bypass TLS certificate verification. Skipping verification isn't recommended unless absolutely necessary or for testing.           |
 
+{{< admonition type="note" >}}
+For Grafana Cloud–hosted Loki, use **Basic authentication** with your Grafana Cloud user ID as the user name and a Cloud Access Policy token as the password. The token's [access policy](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/) must include the `logs:read` scope. Create tokens in the Grafana Cloud Portal. A token's value is shown only once, so copy it when you create it.
+{{< /admonition >}}
+
 #### Custom HTTP headers
 
 Add custom HTTP headers to pass values that your Loki instance requires.
@@ -91,6 +101,8 @@ Add custom HTTP headers to pass values that your Loki instance requires.
 | ---------- | ------------------------------ |
 | **Header** | The name of the custom header. |
 | **Value**  | The value of the header.       |
+
+For a multi-tenant Loki, one configured with `auth_enabled: true`, add the `X-Scope-OrgID` header with your tenant ID so Loki knows which tenant to query. Without it, queries against a multi-tenant Loki fail with an authentication error or return no data.
 
 ### Additional settings
 
@@ -145,7 +157,7 @@ Each derived field has the following options:
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Name**                     | The field name. Displayed as a label in the log details.                                                                                                                                                                                   |
 | **Type**                     | The type of the derived field. Choose **Regex in log line** to parse a value from the log content, or **Label** to match a label key.                                                                                                      |
-| **Regex**                    | When the type is **Regex in log line**, a regular expression that parses part of the log message and captures it as the value of the new field. The expression can contain only one capture group.                                         |
+| **Regex**                    | When the type is **Regex in log line**, a regular expression that parses part of the log message. Include a capture group; Grafana uses the first captured group as the field value.                                                       |
 | **Label**                    | When the type is **Label**, the input matches as a regular expression against label keys, so a pattern like `trace[_]?id` matches variations such as `traceid` and `trace_id`. Matches any label: indexed, parsed, or structured metadata. |
 | **URL/query**                | The full link URL for external links, or a query for the target data source for internal links. Interpolate the field value with the `${__value.raw}` macro.                                                                               |
 | **URL Label**                | _Optional._ A custom display label for the link. Overrides the default label, which is the full external URL or the name of the linked internal data source.                                                                               |
@@ -155,6 +167,12 @@ Each derived field has the following options:
 
 {{< admonition type="caution" >}}
 Using complex regular expressions in either type can affect browser performance when processing large volumes of logs. Use simpler patterns when possible.
+{{< /admonition >}}
+
+{{< admonition type="note" >}}
+A derived field produces a single value per log line, so you can't combine multiple labels or capture groups into one field or link.
+
+For an internal link, the derived field only builds a link to the target data source using the extracted value. The trace must already be ingested into the target data source, such as Tempo, for the link to resolve. If a matching trace doesn't exist, the link opens the target data source but returns no trace.
 {{< /admonition >}}
 
 ##### Troubleshoot interpolation

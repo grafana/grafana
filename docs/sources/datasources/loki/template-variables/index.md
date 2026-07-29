@@ -61,6 +61,29 @@ When a variable has **Multi-value** or **Include All** enabled, Grafana joins th
 {app=~"$app"}
 ```
 
+## Format variable values
+
+By default, the Loki data source formats variable values based on the variable's settings:
+
+- A single-value variable is inserted as-is, without escaping.
+- A **Multi-value** or **Include All** variable has each value escaped for use in a regular expression and joined with `|`, for example `payments|checkout`.
+
+This default suits the regex match operator `=~`, but it can produce unexpected results when a custom or static value contains characters that Grafana escapes, or when you insert a value into a context that isn't a regular expression. To control the formatting, use a [format option](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options) in the variable syntax:
+
+| Syntax         | Result                                                                                                     |
+| -------------- | ---------------------------------------------------------------------------------------------------------- |
+| `${app:raw}`   | Inserts the value with no escaping. Use this for custom or static values that must pass through unchanged. |
+| `${app:pipe}`  | Joins multiple values with `\|` without regex escaping.                                                    |
+| `${app:regex}` | Escapes the values for a regular expression and joins them with `\|`.                                      |
+
+For example, to use a raw custom value in an exact-match selector:
+
+```logql
+{app="${app:raw}"}
+```
+
+For the complete list of format options, refer to [Advanced variable format options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options).
+
 ## Use ad hoc filters
 
 Loki supports ad hoc filters. Use them to specify any number of key/value filters that Grafana applies automatically to all of your Loki queries, without editing each query.
@@ -79,7 +102,18 @@ Use it as the range in a range aggregation:
 sum(rate({app="payments"} |= `error` [$__auto]))
 ```
 
+{{< admonition type="note" >}}
+Prefer `$__auto` over `$__range` for the range in a metric query. The `$__range` variable resolves to the entire selected time range, so using it as a range vector, such as `[$__range]`, makes each data point aggregate over the whole window. This can scan far more data and extend the effective lookback beyond what you intend.
+{{< /admonition >}}
+
 For more information about variables, refer to [Global built-in variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables).
+
+## Known limitations
+
+Keep the following limitations in mind when you use template variables with the Loki data source:
+
+- **Only indexed labels are available for label variable queries.** A _Query_ variable of type **Label values** returns the values of indexed stream labels. Values that exist only as parsed fields or [structured metadata](https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/) aren't available, because the variable query doesn't run a log pipeline to extract them.
+- **Long time ranges can return incomplete values.** Label and label-value variable queries run over the dashboard's selected time range. Over a long range with high log volume, the query can time out or hit Loki's limits and return an incomplete list of values. Narrow the time range, or add a stream selector to the variable query, so it scans less data.
 
 ## Label extraction and indexing in Loki
 
