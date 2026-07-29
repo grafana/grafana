@@ -6,9 +6,9 @@ import {
   FieldType,
   getMinMaxAndDelta,
 } from '@grafana/data';
-import { PromApplication } from '@grafana/prometheus';
 import { type DataSourceWithBackend } from '@grafana/runtime';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { PromApplication } from 'app/types/unified-alerting-dto';
 
 import { probeProxyGet, PROBE_TIMEOUT_MS, resolveBackendInstance, withTimeout } from './probeUtils';
 import { readLabeledScalar, readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
