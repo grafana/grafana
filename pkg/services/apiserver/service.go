@@ -42,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -436,11 +437,13 @@ func (s *service) start(ctx context.Context) error {
 	// Augment existing WebServices with custom routes from builders
 	// This directly adds routes to existing WebServices using the OpenAPI specs from builders
 	if server.Handler != nil && server.Handler.GoRestfulContainer != nil {
+		searchRoutes := searchroutes.Build(s.cfg, s.tracing, s.unified, builders, s.appInstallers)
 		if err := builder.AugmentWebServicesWithCustomRoutes(
 			server.Handler.GoRestfulContainer,
 			builders,
 			s.metrics,
 			serverConfig.MergedResourceConfig,
+			searchRoutes...,
 		); err != nil {
 			return fmt.Errorf("failed to augment web services with custom routes: %w", err)
 		}
