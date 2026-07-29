@@ -90,9 +90,9 @@
     },
     "contrastThreshold": 4.5,
     "action": {
-      "selected": "hsl(from palette.ink100 h s l / 0.12)",
-      "hover": "hsl(from palette.ink100 h s l / 0.09)",
-      "focus": "hsl(from palette.ink100 h s l / 0.09)",
+      "selected": "hsl(from palette.ink100 h s l / 0.10)",
+      "hover": "hsl(from palette.ink100 h s l / 0.08)",
+      "focus": "hsl(from palette.ink100 h s l / 0.08)",
       "selectedBorder": "palette.orange500"
     }
   },
