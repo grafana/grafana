@@ -10973,6 +10973,9 @@
     "alerts-incidents": {
       "alert-tab-label": "Firing alerts",
       "incident-tab-label": "Incidents",
+      "team-filter-all": "All teams",
+      "team-filter-label": "Filter alerts by team",
+      "team-filter-your-teams": "Your teams",
       "title": "Alerts & incidents",
       "title-alerts": "Alerts",
       "title-incidents": "Incidents"
@@ -10995,6 +10998,7 @@
       "critical-count_one": "{{count}} critical",
       "critical-count_other": "{{count}} critical",
       "empty": "You have no firing alerts.",
+      "empty-selected-team": "No firing alerts for {{team}}.",
       "empty-teams": "No firing alerts for your teams.",
       "error-title": "Could not load firing alerts",
       "high-count_one": "{{count}} high",
@@ -13473,7 +13477,7 @@
       "button-saving": "Saving...",
       "description-commit-message-template": "The commit message used when someone saves, moves, renames, or deletes a resource and leaves the Comment field blank. Placeholders, filled in per operation: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}} (unique resource ID), {{titleVar}}, {{userNameVar}} (display name), {{userLoginVar}} (username), {{userEmailVar}}. Leave blank to use the built-in default messages.",
       "description-connection": "Select the GitHub App connection to use",
-      "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
+      "description-enabled": "Once automatic pulling is enabled, the target type below cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-title": "A human-readable name for the config",
       "error-connection-required": "Connection is required",
@@ -15905,7 +15909,24 @@
     "name-show-mini-map": "Show mini map"
   },
   "textng": {
-    "placeholder": "New text panel"
+    "category-text": "Text",
+    "code-view": {
+      "aria-label-code-content": "Code content"
+    },
+    "editor": {
+      "aria-label-content": "Text content",
+      "view-preview": "Preview",
+      "view-split": "Split",
+      "view-write": "Write"
+    },
+    "mode-options": {
+      "label-code": "Code",
+      "label-html": "HTML",
+      "label-markdown": "Markdown"
+    },
+    "name-language": "Language",
+    "name-mode": "Mode",
+    "name-show-line-numbers": "Show line numbers"
   },
   "theme-playground": {
     "label-base-theme": "Base theme",

@@ -168,14 +168,16 @@ describe('FiringAlertsCard', () => {
 
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
 
-    // Verify that the request included a team filter matcher
+    // Verify that the request included a case-insensitive matcher with a
+    // tolerant pattern per team (both names are single letter/digit runs).
     const lastReq = capturedRequests[capturedRequests.length - 1];
     const url = new URL(lastReq.url);
     const filters = url.searchParams.getAll('filter');
-    expect(filters.some((f) => f.includes('team') && f.includes('platform|infra'))).toBe(true);
+    expect(filters.some((f) => f.includes('team=~') && f.includes('(?i)') && f.includes('platform'))).toBe(true);
+    expect(filters.some((f) => f.includes('infra'))).toBe(true);
   });
 
-  it('escapes regex metacharacters in team names', async () => {
+  it('matches punctuation in team names as separator gaps instead of literally', async () => {
     const capturedRequests: Request[] = [];
     mockTeams([{ name: 'team.one' }]);
 
@@ -190,10 +192,11 @@ describe('FiringAlertsCard', () => {
 
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
 
-    // buildTeamMatchers escapes the '.' to '\.', then quoteWithEscape doubles the backslash on the wire
+    // The '.' becomes a separator gap between the runs; quoteWithEscape doubles
+    // the pattern's backslashes on the wire.
     const lastReq = capturedRequests[capturedRequests.length - 1];
     const filters = new URL(lastReq.url).searchParams.getAll('filter');
-    expect(filters.some((f) => f.includes('team\\\\.one'))).toBe(true);
+    expect(filters.some((f) => f.includes('team[^\\\\p{L}\\\\p{N}]*one'))).toBe(true);
   });
 
   it('shows team-scoped empty state when team-filtered result is empty', async () => {
@@ -272,7 +275,7 @@ describe('FiringAlertsCard', () => {
       'href',
       '/alerting/new/alerting'
     );
-    expect(screen.queryByText('You have no firing alerts.')).not.toBeInTheDocument();
+    expect(screen.getByText('You have no firing alerts.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /view all alert rules/i })).toBeInTheDocument();
   });
 

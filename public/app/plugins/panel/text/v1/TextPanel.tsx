@@ -13,7 +13,7 @@ import {
 import { CodeEditor, ScrollContainer, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 
-import { defaultCodeOptions, type Options, TextMode } from './panelcfg.gen';
+import { defaultCodeOptions, type Options, TextMode } from '../panelcfg.gen';
 
 export interface Props extends PanelProps<Options> {}
 
