@@ -396,24 +396,6 @@ func (a *alertRule) Run() error {
 	}
 }
 
-// readyToProcessState reports whether this evaluation's results may be applied to the state cache.
-// It returns false only while the cache is cold and within the grace window (logging and counting
-// the skip); after the grace elapses it returns true but logs the cold read. Checked after eval so
-// the query gives the cache time to warm; gating is off in vanilla Grafana, on in the ruler.
-func (a *alertRule) readyToProcessState(logger log.Logger, e *Evaluation) bool {
-	switch a.stateManager.Ready() {
-	case state.Ready:
-		// Cache is warm (or gating is disabled) — process normally.
-	case state.NotReady:
-		logger.Warn("Skip processing evaluation results because the state cache is not warmed yet")
-		a.metrics.EvaluationMissed.WithLabelValues(fmt.Sprint(a.key.OrgID), e.rule.Title, "state_not_warmed").Inc()
-		return false
-	case state.TimedOut:
-		logger.Warn("Processing evaluation results before the state cache is warmed; readiness grace period elapsed")
-	}
-	return true
-}
-
 func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span, retry bool, logger log.Logger) error {
 	orgID := fmt.Sprint(a.key.OrgID)
 	evalAttemptTotal := a.metrics.EvalAttemptTotal.WithLabelValues(orgID)
@@ -490,13 +472,8 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 			attribute.Int64("results", int64(len(results))),
 		))
 	}
-	// Don't apply results to a cold cache, or we write spurious transitions to state history.
-	if !a.readyToProcessState(logger, e) {
-		return nil
-	}
-
 	start = a.clock.Now()
-	_, _ = a.stateManager.ProcessEvalResults(
+	_, procErr := a.stateManager.ProcessEvalResults(
 		ctx,
 		e.scheduledAt,
 		e.rule,
@@ -511,6 +488,11 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 			sendDuration.Observe(a.clock.Now().Sub(start).Seconds())
 		},
 	)
+	if errors.Is(procErr, state.ErrNotReady) {
+		logger.Warn("Skip processing evaluation results because the state cache is not ready")
+		a.metrics.EvaluationMissed.WithLabelValues(fmt.Sprint(a.key.OrgID), e.rule.Title, "state_not_warmed").Inc()
+		return nil
+	}
 	processDuration.Observe(a.clock.Now().Sub(start).Seconds())
 
 	return nil
