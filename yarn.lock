@@ -2473,7 +2473,7 @@ __metadata:
     "@emotion/css": "npm:^11.13.5"
     "@grafana/data": "npm:13.2.0-pre"
     "@grafana/e2e-selectors": "npm:13.2.0-pre"
-    "@grafana/plugin-ui": "npm:^0.13.1"
+    "@grafana/plugin-ui": "npm:^0.17.3"
     "@grafana/runtime": "npm:13.2.0-pre"
     "@grafana/ui": "npm:13.2.0-pre"
     "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
@@ -2491,7 +2491,6 @@ __metadata:
     react: "npm:18.3.1"
     react-use: "npm:^17.6.1"
     rollup: "npm:^4.60.1"
-    rxjs: "npm:^7.8.2"
     typescript: "npm:6.0.2"
   peerDependencies:
     react: ^18.0.0
@@ -2612,6 +2611,36 @@ __metadata:
     react: ">=18.2.0"
     react-dom: ">=18.2.0"
   checksum: 10/6d39184464b95d4b62a0fdbfb9df67d2ccd3ef6c7e3b670d1492e46e9cb8ac0ada3ef0998980dfccb5df516ee891b5dcc7a3c34a6c98edefcb3825757f7f2faa
+  languageName: node
+  linkType: hard
+
+"@grafana/plugin-ui@npm:^0.17.3":
+  version: 0.17.3
+  resolution: "@grafana/plugin-ui@npm:0.17.3"
+  dependencies:
+    "@emotion/css": "npm:11.13.5"
+    "@hello-pangea/dnd": "npm:17.0.0"
+    "@marcbachmann/cel-js": "npm:7.6.1"
+    "@react-awesome-query-builder/ui": "npm:6.6.15"
+    lodash: "npm:4.18.1"
+    prismjs: "npm:1.30.0"
+    react-calendar: "npm:4.8.0"
+    react-popper-tooltip: "npm:4.4.2"
+    react-use: "npm:17.6.1"
+    react-virtualized-auto-sizer: "npm:1.0.26"
+    sql-formatter: "npm:15.8.2"
+    uuid: "npm:14.0.1"
+  peerDependencies:
+    "@grafana/data": ^13.0.0
+    "@grafana/e2e-selectors": ^13.0.0
+    "@grafana/runtime": ^13.0.0
+    "@grafana/ui": ^13.0.0
+    "@testing-library/jest-dom": ^6.9.1
+    "@testing-library/react": ^16.3.2
+    "@testing-library/user-event": ^14.6.1
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+  checksum: 10/059f1ae8216bd7a640306c3ee64f7c53955cf3cd499732f38c58010007c73b10a94e9425b8b20e0fcecc225c28a70b8ee8b19cbc0ca9e266d2036d1a3cec6460
   languageName: node
   linkType: hard
 
@@ -2772,13 +2801,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:8.13.4":
-  version: 8.13.4
-  resolution: "@grafana/scenes-react@npm:8.13.4"
+"@grafana/scenes-react@npm:8.13.5":
+  version: 8.13.5
+  resolution: "@grafana/scenes-react@npm:8.13.5"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
-    "@grafana/scenes": "npm:8.13.4"
+    "@grafana/scenes": "npm:8.13.5"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
@@ -2792,13 +2821,13 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/a5f3f560daef5fbfd9763979329ca0b53d60077a2adb4b38dee07def4a6f148bcf4e443b45076c01933aee673cbd6cbd7b601cc017981aa657078db901410f29
+  checksum: 10/9f2817a04c26945202611422cbd4058ab8414969e872a7cebcd862d4ccd7bb04798666cc0fac3a7e6df65227057285ede4e21786715f4149aaf73661a1ac2a37
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:8.13.4":
-  version: 8.13.4
-  resolution: "@grafana/scenes@npm:8.13.4"
+"@grafana/scenes@npm:8.13.5":
+  version: 8.13.5
+  resolution: "@grafana/scenes@npm:8.13.5"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
@@ -2823,7 +2852,7 @@ __metadata:
     react-dom: ^18.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/b1ec84ced84cd1cd83369df47da3afd56a6d63908e953f5860f020212a8a43197ab3a94904f79f51384572fdd8ff93244cab57e3c4fa6460447f886c93a120ab
+  checksum: 10/a38b415c498fe7cd7f2f1aa9c91b55df6d89a1cec168bf577af25c2b55643bba69a658406e6c051fbf2a79368b3eb0d0bf97e035d8cbafbeb856afece3e0d34d
   languageName: node
   linkType: hard
 
@@ -2851,7 +2880,7 @@ __metadata:
     "@grafana/data": "npm:13.2.0-pre"
     "@grafana/e2e-selectors": "npm:13.2.0-pre"
     "@grafana/i18n": "npm:13.2.0-pre"
-    "@grafana/plugin-ui": "npm:^0.13.1"
+    "@grafana/plugin-ui": "npm:^0.17.3"
     "@grafana/ui": "npm:13.2.0-pre"
     "@react-awesome-query-builder/ui": "npm:^6.6.15"
     "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
@@ -4900,6 +4929,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@marcbachmann/cel-js@npm:7.6.1":
+  version: 7.6.1
+  resolution: "@marcbachmann/cel-js@npm:7.6.1"
+  bin:
+    cel-evaluate: bin/cel-evaluate.js
+  checksum: 10/322587e1c31ece7cc5c6b418a0a00a4c5472287d307a2a1806effe1e4797593b4c17ffc6672eaa2e4a74ee4c2844217a5aaa312b9c72a2ecdddceeb82d9938e7
+  languageName: node
+  linkType: hard
+
 "@marijn/find-cluster-break@npm:^1.0.0":
   version: 1.0.2
   resolution: "@marijn/find-cluster-break@npm:1.0.2"
@@ -5684,21 +5722,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/api@npm:1.9.0, @opentelemetry/api@npm:^1.3.0, @opentelemetry/api@npm:^1.4.0, @opentelemetry/api@npm:^1.9.0":
-  version: 1.9.0
-  resolution: "@opentelemetry/api@npm:1.9.0"
-  checksum: 10/a607f0eef971893c4f2ee2a4c2069aade6ec3e84e2a1f5c2aac19f65c5d9eeea41aa72db917c1029faafdd71789a1a040bdc18f40d63690e22ccae5d7070f194
+"@opentelemetry/api@npm:1.9.1, @opentelemetry/api@npm:^1.3.0, @opentelemetry/api@npm:^1.4.0, @opentelemetry/api@npm:^1.9.0":
+  version: 1.9.1
+  resolution: "@opentelemetry/api@npm:1.9.1"
+  checksum: 10/b26032739d3c54ca99b5a2920844a1fbd4c3ee383cacbb0915e8c706a2626fe91e96feaa6e893397abe0545dc8d0a765b220aa18a31b1773176eeaf3a225e10e
   languageName: node
   linkType: hard
 
-"@opentelemetry/core@npm:2.8.0":
-  version: 2.8.0
-  resolution: "@opentelemetry/core@npm:2.8.0"
+"@opentelemetry/core@npm:2.10.0":
+  version: 2.10.0
+  resolution: "@opentelemetry/core@npm:2.10.0"
   dependencies:
     "@opentelemetry/semantic-conventions": "npm:^1.29.0"
   peerDependencies:
     "@opentelemetry/api": ">=1.0.0 <1.10.0"
-  checksum: 10/47f1a492d02c1f468390ce9ee45d55bbc940e96ec26d5356abd9903f6c332adddd23ed1a6a6c8871b54efc1536f235b7d5304c83e5dfeb459ae5ab980dc67c70
+  checksum: 10/b95d912461d878a23e092317a98eb593b2316e0e63bb0618f351aba8fcb92253553ba8d4ceac3f575b4152325a85da2cf39f4e68123088ef47429f7328c971e5
   languageName: node
   linkType: hard
 
@@ -18475,8 +18513,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.13.1"
     "@grafana/prometheus": "npm:13.1.2"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:8.13.4"
-    "@grafana/scenes-react": "npm:8.13.4"
+    "@grafana/scenes": "npm:8.13.5"
+    "@grafana/scenes-react": "npm:8.13.5"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -18494,7 +18532,7 @@ __metadata:
     "@npmcli/package-json": "npm:^6.0.0"
     "@openfeature/react-sdk": "npm:^1.3.0"
     "@openfeature/web-sdk": "npm:^1.8.0"
-    "@opentelemetry/api": "npm:1.9.0"
+    "@opentelemetry/api": "npm:1.9.1"
     "@opentelemetry/exporter-collector": "npm:0.25.0"
     "@playwright/test": "npm:1.56.1"
     "@popperjs/core": "npm:2.11.8"
@@ -22454,12 +22492,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"linkify-it@npm:5.0.0":
-  version: 5.0.0
-  resolution: "linkify-it@npm:5.0.0"
+"linkify-it@npm:5.0.1":
+  version: 5.0.1
+  resolution: "linkify-it@npm:5.0.1"
   dependencies:
     uc.micro: "npm:^2.0.0"
-  checksum: 10/ef3b7609dda6ec0c0be8a7b879cea195f0d36387b0011660cd6711bba0ad82137f59b458b7e703ec74f11d88e7c1328e2ad9b855a8500c0ded67461a8c4519e6
+  checksum: 10/47933d11cda495fd31e3bb3c086358305362f4413ffa289500d1e48164acb221b3be6bde6404b86dba93b7fe701c95f318bee285f7613092cd7f28a9e97261e7
   languageName: node
   linkType: hard
 
@@ -30150,6 +30188,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"sql-formatter@npm:15.8.2":
+  version: 15.8.2
+  resolution: "sql-formatter@npm:15.8.2"
+  dependencies:
+    argparse: "npm:^2.0.1"
+    nearley: "npm:^2.20.1"
+  bin:
+    sql-formatter: bin/sql-formatter-cli.cjs
+  checksum: 10/c61e97674e328b13f52b48dce14e98c96fe2d39e0234d792223e83b58ad5cbefcc6a556702011bdb92b052af0813ce5a27d15fb3366032c16d8ddc62faad3068
+  languageName: node
+  linkType: hard
+
 "sqlstring@npm:^2.3.3":
   version: 2.3.3
   resolution: "sqlstring@npm:2.3.3"
@@ -32352,12 +32402,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:14.0.0, uuid@npm:^14.0.0":
+"uuid@npm:14.0.0":
   version: 14.0.0
   resolution: "uuid@npm:14.0.0"
   bin:
     uuid: dist-node/bin/uuid
   checksum: 10/8ee9b98f9650e25555515f7a28d3c3ae9364e72f7bb19b9e08b681bc135338beba5509b2830f6ae1cfaba4d45401da0d16d4d109b977097bc3d6ba0c5583341b
+  languageName: node
+  linkType: hard
+
+"uuid@npm:14.0.1, uuid@npm:^14.0.0":
+  version: 14.0.1
+  resolution: "uuid@npm:14.0.1"
+  bin:
+    uuid: dist-node/bin/uuid
+  checksum: 10/0f978fd5b0269d7acb615342aeb131f0b8d85eeb8ec34f2915d906baa3befcc14a079a430d0f8116aec6fd20c850cbfab65d1b3d1643fa81ed373c0cf9574f18
   languageName: node
   linkType: hard
 
