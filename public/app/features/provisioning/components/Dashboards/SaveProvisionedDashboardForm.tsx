@@ -212,14 +212,14 @@ export function SaveProvisionedDashboardForm({
   );
 
   const handleDismiss = useCallback(
-    (wrapper: ResourceWrapper) => {
+    async (wrapper: ResourceWrapper) => {
       // Baseline against exactly what was committed. On the update path that is the
       // change-trimmed model; getSaveModel() would re-include values the toggles
       // omitted, so change detection would treat them as already saved until reload.
       const model = savedSpecRef.current ?? dashboard.getSaveModel();
       const resourceData = wrapper.resource.upsert || wrapper.resource.dryRun;
       const saveResponse = createSaveResponseFromResource(resourceData);
-      dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
+      await dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
       dashboardWatcher.clearIgnoreSave();
     },
     [dashboard, defaultValues.folder?.uid]

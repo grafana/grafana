@@ -5544,135 +5544,6 @@
       "switch-layout-tab": "Düzeni değiştir",
       "tab-title": "Sekme başlığını değiştir"
     },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "Ek açıklama veri kaynağını değiştir",
-        "choose-panels": "Panel seçin",
-        "color": "Renk",
-        "color-description": "Ek açıklama olay işaretçileri için kullanılacak renk",
-        "data-source": "Veri kaynağı",
-        "display": "Ek açıklama denetimlerini şurada göster:",
-        "display-options": {
-          "above-dashboard": "Panonun üstünde",
-          "controls-menu": "Denetim menüsü",
-          "controls-menu-description": "Denetim menüsü açıkken erişilebilir",
-          "hidden": "Gizli",
-          "hidden-description": "Bu ek açıklamayı açma/kapatma düğmesini gizler"
-        },
-        "enabled": "Etkin",
-        "enabled-description": "Etkinleştirildiğinde her pano yenilemesinde açıklama sorgusu çalıştırılır",
-        "name": "Ad",
-        "open-query-editor": "Sorgu düzenleyicisini aç",
-        "open-query-editor-tooltip": "Ek açıklama sorgusunu yapılandırmak için sorgu düzenleyiciyi açın",
-        "panel-filter": {
-          "all-panels": "Tüm paneller",
-          "all-panels-description": "Ek açıklama verilerini, ek açıklamaları destekleyen tüm panellere gönder",
-          "all-panels-except": "Şunlar hariç tüm paneller",
-          "all-panels-except-description": "Ek açıklama verilerini aşağıdaki panellere gönderme",
-          "selected-panels": "Seçili paneller",
-          "selected-panels-description": "Ek açıklamaları açıkça listelenen panellere gönder"
-        },
-        "query": "Sorgu",
-        "query-editor-close": "Kapat",
-        "query-editor-modal-title": "Ek Açıklama Sorgusu",
-        "show-in": "Şurada göster:"
-      },
-      "annotations": {
-        "add-annotation": "Ek açıklama ekle",
-        "reorder": "Yeniden sıralamak için sürükleyin",
-        "select-annotation": "Seçin"
-      },
-      "elements": {
-        "annotation": "Ek açıklama",
-        "annotation-set": "Ek açıklamalar ve uyarılar",
-        "dashboard": "Pano",
-        "element": "Bileşen",
-        "filter": "",
-        "filters-set": "",
-        "link-set": "Bağlantılar",
-        "local-variable": "Yerel değişken",
-        "multiple-elements": "Birden çok öge",
-        "multiple-elements-delete-text": "Bu ögeleri silmek istediğinize emin misiniz?",
-        "multiple-panels": "Birden çok panel",
-        "multiple-panels-delete-text": "Bu panelleri silmek istediğinizden emin misiniz? Tüm sorgular kaldırılacak.",
-        "objects": "Nesneler",
-        "panel": "Panel",
-        "panels": "Paneller",
-        "row": "Satır",
-        "rows": "Satırlar",
-        "section-filters-set": "",
-        "tab": "Sekme",
-        "tabs": "Sekmeler",
-        "variable": "{{type}} değişkeni",
-        "variable-set": "Değişkenler"
-      },
-      "links": {
-        "add-link": "Bağlantı ekle",
-        "reorder": "Yeniden sıralamak için sürükleyin",
-        "select-link": "Seçin",
-        "untitled": "Başlıksız bağlantı"
-      },
-      "row": {
-        "header": {
-          "hide": "Gizle",
-          "title": "Satır başlığı"
-        }
-      },
-      "section-filters": {
-        "title": ""
-      },
-      "section-variables": {
-        "title": "Değişkenler"
-      },
-      "variable": {
-        "change-type": "",
-        "change-type-aria-label": "Değişken türünü değiştir",
-        "custom-options": {
-          "apply": "Uygula",
-          "change-value": "Değişken değerini değiştir",
-          "discard": "Vazgeç",
-          "modal-title": "Özel seçenekler"
-        },
-        "datasource-options": {
-          "name-filter": "Ad filtresi",
-          "name-filter-description": "Hangi veri kaynağı örneklerinin dâhil edileceğini belirlemek için düzenli ifade filtresi. Tümü için boş bırakın.",
-          "name-filter-placeholder": "Örnek: /^prod/",
-          "type": "Tür",
-          "type-placeholder": "Veri kaynağı türü seçin"
-        },
-        "description": "Açıklama",
-        "description-placeholder": "Açıklayıcı metin",
-        "label": "Etiket",
-        "label-description": "İsteğe bağlı görünen ad",
-        "name": "Ad",
-        "open-editor": "Değişken düzenleyicisini aç",
-        "open-editor-tooltip": "Daha fazla değişken seçeneği için değişken düzenleyicisini açın",
-        "query-options": {
-          "close": "Kapat",
-          "modal-title": "Sorgu Değişkeni",
-          "preview": "Ön izleme"
-        },
-        "selection-options": {
-          "allow-custom-values": "Özel değer girişine izin ver",
-          "allow-custom-values-description": "Kullanıcıların değer girmesine izin verir",
-          "category": "Seçim ayarları",
-          "custom-all-value": "Özel tüm değer",
-          "custom-all-value-description": "Tümünü temsil etmek için bir joker karakterli regex (düzenli ifade) veya başka bir değer",
-          "include-all": "Tümünü Dâhil Et değeri",
-          "include-all-description": "Tüm değerleri temsil eden tek bir seçeneği etkinleştirir",
-          "multi-value": "Çoklu değer"
-        },
-        "type-category": "{{type}} seçenekleri"
-      },
-      "variables": {
-        "add-variable": "Değişken ekle",
-        "change-type": "",
-        "reorder": "Yeniden sıralamak için sürükleyin",
-        "select-type": "Değişken türünü seçin",
-        "select-type-card-tooltip": "Türü seçmek için tıklayın",
-        "select-variable": "Seçin"
-      }
-    },
     "empty": {
       "add-library-panel-body": "Diğer panolarla paylaşılan görselleştirmeleri ekleyin.",
       "add-library-panel-button": "Kütüphane paneli ekle",
@@ -6192,6 +6063,43 @@
         "title": "Ekle",
         "tooltip": "Yeni öge ekle"
       },
+      "annotation": {
+        "change-data-source": "Ek açıklama veri kaynağını değiştir",
+        "choose-panels": "Panel seçin",
+        "color": "Renk",
+        "color-description": "Ek açıklama olay işaretçileri için kullanılacak renk",
+        "data-source": "Veri kaynağı",
+        "display": "Ek açıklama denetimlerini şurada göster:",
+        "display-options": {
+          "above-dashboard": "Panonun üstünde",
+          "controls-menu": "Denetim menüsü",
+          "controls-menu-description": "Denetim menüsü açıkken erişilebilir",
+          "hidden": "Gizli",
+          "hidden-description": "Bu ek açıklamayı açma/kapatma düğmesini gizler"
+        },
+        "enabled": "Etkin",
+        "enabled-description": "Etkinleştirildiğinde her pano yenilemesinde açıklama sorgusu çalıştırılır",
+        "name": "Ad",
+        "open-query-editor": "Sorgu düzenleyicisini aç",
+        "open-query-editor-tooltip": "Ek açıklama sorgusunu yapılandırmak için sorgu düzenleyiciyi açın",
+        "panel-filter": {
+          "all-panels": "Tüm paneller",
+          "all-panels-description": "Ek açıklama verilerini, ek açıklamaları destekleyen tüm panellere gönder",
+          "all-panels-except": "Şunlar hariç tüm paneller",
+          "all-panels-except-description": "Ek açıklama verilerini aşağıdaki panellere gönderme",
+          "selected-panels": "Seçili paneller",
+          "selected-panels-description": "Ek açıklamaları açıkça listelenen panellere gönder"
+        },
+        "query": "Sorgu",
+        "query-editor-close": "Kapat",
+        "query-editor-modal-title": "Ek Açıklama Sorgusu",
+        "show-in": "Şurada göster:"
+      },
+      "annotations": {
+        "add-annotation": "Ek açıklama ekle",
+        "reorder": "Yeniden sıralamak için sürükleyin",
+        "select-annotation": "Seçin"
+      },
       "dashboard-options": {
         "title": "Seçenekler",
         "tooltip": "Pano seçenekleri"
@@ -6200,20 +6108,110 @@
         "title": "Kod",
         "tooltip": "Kod olarak düzenle"
       },
+      "elements": {
+        "annotation": "Ek açıklama",
+        "annotation-set": "Ek açıklamalar ve uyarılar",
+        "dashboard": "Pano",
+        "element": "Bileşen",
+        "filter": "",
+        "filters-set": "",
+        "link-set": "Bağlantılar",
+        "local-variable": "Yerel değişken",
+        "multiple-elements": "Birden çok öge",
+        "multiple-elements-delete-text": "Bu ögeleri silmek istediğinize emin misiniz?",
+        "multiple-panels": "Birden çok panel",
+        "multiple-panels-delete-text": "Bu panelleri silmek istediğinizden emin misiniz? Tüm sorgular kaldırılacak.",
+        "objects": "Nesneler",
+        "panel": "Panel",
+        "panels": "Paneller",
+        "row": "Satır",
+        "rows": "Satırlar",
+        "section-filters-set": "",
+        "tab": "Sekme",
+        "tabs": "Sekmeler",
+        "variable": "{{type}} değişkeni",
+        "variable-set": "Değişkenler"
+      },
       "export": {
         "title": "Dışa aktar"
       },
       "filters": "",
+      "links": {
+        "add-link": "Bağlantı ekle",
+        "reorder": "Yeniden sıralamak için sürükleyin",
+        "select-link": "Seçin",
+        "untitled": "Başlıksız bağlantı"
+      },
       "open": "",
       "outline": {
         "title": "Ana hat",
         "tooltip": "İçerik taslağı"
       },
       "redo": "Yinele",
+      "row": {
+        "header": {
+          "hide": "Gizle",
+          "title": "Satır başlığı"
+        }
+      },
+      "section-filters": {
+        "title": ""
+      },
+      "section-variables": {
+        "title": "Değişkenler"
+      },
       "snapshot": {
         "tooltip": "Orijinal panoyu aç"
       },
       "undo": "Geri al",
+      "variable": {
+        "change-type": "",
+        "change-type-aria-label": "Değişken türünü değiştir",
+        "custom-options": {
+          "apply": "Uygula",
+          "change-value": "Değişken değerini değiştir",
+          "discard": "Vazgeç",
+          "modal-title": "Özel seçenekler"
+        },
+        "datasource-options": {
+          "name-filter": "Ad filtresi",
+          "name-filter-description": "Hangi veri kaynağı örneklerinin dâhil edileceğini belirlemek için düzenli ifade filtresi. Tümü için boş bırakın.",
+          "name-filter-placeholder": "Örnek: /^prod/",
+          "type": "Tür",
+          "type-placeholder": "Veri kaynağı türü seçin"
+        },
+        "description": "Açıklama",
+        "description-placeholder": "Açıklayıcı metin",
+        "label": "Etiket",
+        "label-description": "İsteğe bağlı görünen ad",
+        "name": "Ad",
+        "open-editor": "Değişken düzenleyicisini aç",
+        "open-editor-tooltip": "Daha fazla değişken seçeneği için değişken düzenleyicisini açın",
+        "query-options": {
+          "close": "Kapat",
+          "modal-title": "Sorgu Değişkeni",
+          "preview": "Ön izleme"
+        },
+        "selection-options": {
+          "allow-custom-values": "Özel değer girişine izin ver",
+          "allow-custom-values-description": "Kullanıcıların değer girmesine izin verir",
+          "category": "Seçim ayarları",
+          "custom-all-value": "Özel tüm değer",
+          "custom-all-value-description": "Tümünü temsil etmek için bir joker karakterli regex (düzenli ifade) veya başka bir değer",
+          "include-all": "Tümünü Dâhil Et değeri",
+          "include-all-description": "Tüm değerleri temsil eden tek bir seçeneği etkinleştirir",
+          "multi-value": "Çoklu değer"
+        },
+        "type-category": "{{type}} seçenekleri"
+      },
+      "variables": {
+        "add-variable": "Değişken ekle",
+        "change-type": "",
+        "reorder": "Yeniden sıralamak için sürükleyin",
+        "select-type": "Değişken türünü seçin",
+        "select-type-card-tooltip": "Türü seçmek için tıklayın",
+        "select-variable": "Seçin"
+      },
       "view-panel": {
         "disabled": "",
         "fanout-by-series": "",
@@ -6807,9 +6805,6 @@
       "title-hidden-count_one": "Gizli ({{count}})",
       "title-hidden-count_other": "Gizli ({{count}})"
     },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "Yeni pano düzenleme deneyimi hakkında geri bildirimde bulunun"
-    },
     "dashboard-link-form": {
       "back-to-list": "Listeye geri dön",
       "label-icon": "Simge",
@@ -6881,6 +6876,9 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Pano kontrolleri"
+    },
+    "dashboard-sidebar-renderer": {
+      "title-feedback-dashboard-editing-experience": "Yeni pano düzenleme deneyimi hakkında geri bildirimde bulunun"
     },
     "data-source-variable-form": {
       "data-source-options": "Veri kaynağı seçenekleri",

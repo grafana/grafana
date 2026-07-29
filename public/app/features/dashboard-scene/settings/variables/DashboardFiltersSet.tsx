@@ -14,13 +14,13 @@ import {
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { AddFilterButton, DashboardFiltersList } from '../../edit-pane/dashboard/DashboardFiltersList';
-import { partitionVariablesByDisplay } from '../../edit-pane/dashboard/DashboardVariablesList';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
+import { AddFilterButton, DashboardFiltersList } from '../../sidebar/dashboard/DashboardFiltersList';
+import { partitionVariablesByDisplay } from '../../sidebar/dashboard/DashboardVariablesList';
 
 export interface DashboardFiltersSetState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -73,9 +73,9 @@ export class DashboardFiltersSet extends SceneObjectBase<DashboardFiltersSetStat
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.filters-set', 'Filters'),
+      typeName: t('dashboard.sidebar.elements.filters-set', 'Filters'),
       icon: 'filter',
-      instanceName: t('dashboard.edit-pane.elements.filters-set', 'Filters'),
+      instanceName: t('dashboard.sidebar.elements.filters-set', 'Filters'),
     };
   }
 
