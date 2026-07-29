@@ -144,6 +144,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       transformOrigin: 'left top',
       top: '6px',
       left: '6px',
+      // disable interactions in the preview card
+      pointerEvents: 'none',
       '&& *': { scrollbarWidth: 'none' },
     }),
   };

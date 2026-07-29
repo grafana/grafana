@@ -301,9 +301,6 @@ func (rev *ConfigRevision) validateReceiverReferences(route v1.Route) error {
 
 func (rev *ConfigRevision) validateTimeIntervalReferences(route v1.Route) error {
 	timeIntervals := map[string]struct{}{}
-	for _, mt := range rev.Config.AlertmanagerConfig.MuteTimeIntervals {
-		timeIntervals[mt.Name] = struct{}{}
-	}
 	for _, mt := range rev.Config.AlertmanagerConfig.TimeIntervals {
 		timeIntervals[mt.Name] = struct{}{}
 	}

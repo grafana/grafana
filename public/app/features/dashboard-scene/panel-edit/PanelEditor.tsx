@@ -25,14 +25,14 @@ import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/d
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
 
-import { DashboardEditActionEvent } from '../edit-pane/events';
-import { EDIT_PANE_COLLAPSED_KEY } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
+import { DashboardEditActionEvent } from '../sidebar/events';
+import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
 import { getDashboardSceneFor, getLibraryPanelBehavior, getPanelIdForVizPanel } from '../utils/utils';
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
@@ -99,10 +99,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     // Clear any panel selection when entering panel edit mode.
     // Need to clear selection here since selection is activated when panel edit mode is entered through the panel actions menu. This causes sidebar panel editor to be open when exiting panel edit mode
-    dashboard.state.editPane.clearSelection();
+    dashboard.state.sidebar.clearSelection();
 
     if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
-      const isPaneCollapsed = sessionStorage.getItem(EDIT_PANE_COLLAPSED_KEY) === 'true';
+      const isPaneCollapsed = sessionStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
       if (isPaneCollapsed) {
         panel.changePluginType('timeseries');
       }
@@ -165,7 +165,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // is not active while panel edit is active so we have to let the edit pane (which owns undo/redo)
     // publish this event when it activates
     const dashboard = getDashboardSceneFor(this);
-    dashboard.state.editPane.setPanelEditAction(editAction);
+    dashboard.state.sidebar.setPanelEditAction(editAction);
   }
 
   public waitForPlugin(retry = 0) {
