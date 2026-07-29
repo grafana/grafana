@@ -5708,11 +5708,11 @@ __metadata:
   linkType: hard
 
 "@openfeature/web-sdk@npm:^1.8.0":
-  version: 1.8.0
-  resolution: "@openfeature/web-sdk@npm:1.8.0"
+  version: 1.9.0
+  resolution: "@openfeature/web-sdk@npm:1.9.0"
   peerDependencies:
-    "@openfeature/core": ^1.10.0
-  checksum: 10/fc69cf51fc37a18aeef816d9d4d10594f59b5476f2b74216b7cc7604b109c3ac732b99607f0c6ecac4ec7ec66d179020e239d06511d92eb304fe1f90131edc98
+    "@openfeature/core": ^1.11.0
+  checksum: 10/44c98436ee31fcaf08f9655bec374f4e0dc471224c3a2d873ffcff33f060af786710cab74bbb5dc3af734e64c1078658c1ce687bb22d750a1785a5fe809fc8b3
   languageName: node
   linkType: hard
 
