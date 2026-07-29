@@ -25,14 +25,14 @@ export class Canvas extends PageObject {
     });
   }
 
-  // No scoping parameter yet because there are no migrated spec needed one, we'll add it when needed
+  // No scoping parameter yet because no migrated spec needs one yet
   async addTab() {
     await test.step('Add tab from canvas', async () => {
       await this.dashboardPage.getByGrafanaSelector(this.selectors.components.CanvasGridAddActions.addTab).click();
     });
   }
 
-  // No scoping parameter yet because there are no migrated spec needed one, we'll add it when needed
+  // No scoping parameter yet because no migrated spec needs one yet
   async addRow() {
     await test.step('Add row from canvas', async () => {
       await this.dashboardPage.getByGrafanaSelector(this.selectors.components.CanvasGridAddActions.addRow).click();
@@ -57,8 +57,9 @@ export class Canvas extends PageObject {
       // click to the hovered container to target the one that was just revealed.
       await container.getByTestId(this.selectors.components.CanvasGridAddActions.groupPanels).click();
 
-      await this.dashboardPage
-        .getByGrafanaSelector(
+      await this.page
+        .getByRole('menu')
+        .getByTestId(
           targetLayout === 'row'
             ? this.selectors.components.CanvasGridAddActions.addRow
             : this.selectors.components.CanvasGridAddActions.addTab
