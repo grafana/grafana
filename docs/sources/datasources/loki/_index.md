@@ -58,6 +58,7 @@ To learn more about Loki itself, refer to the following Loki documentation:
 After configuring the Loki data source, you can:
 
 - Use [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) to query and live tail logs without building a dashboard.
+- Use [Grafana Logs Drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/logs/) to explore your Loki logs without writing LogQL queries.
 - Create a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/).
 - Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/) to manipulate query results.
 - Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) on your logs.
