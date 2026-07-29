@@ -68,11 +68,13 @@ jest.mock('../services', () => ({
     };
   },
 }));
-const mockGetDataSourceInstanceSettings = jest.fn<{ type: string; uid: string } | undefined, [DataSourceRef?]>(
-  (ref) => ({
-    type: ref?.type ?? '<mocktype>',
-    uid: ref?.uid ?? '<mockuid>',
-  })
+type MockSettings = { type: string; uid: string } | undefined;
+const defaultInstanceSettings = (ref?: DataSourceRef): MockSettings => ({
+  type: ref?.type ?? '<mocktype>',
+  uid: ref?.uid ?? '<mockuid>',
+});
+const mockGetDataSourceInstanceSettings = jest.fn<MockSettings | Promise<MockSettings>, [DataSourceRef?]>(
+  defaultInstanceSettings
 );
 jest.mock('../services/dataSource/settings', () => ({
   ...jest.requireActual('../services/dataSource/settings'),
@@ -192,6 +194,54 @@ describe('DataSourceWithBackend', () => {
         } as DataQueryRequest)
       )
     ).rejects.toThrow('Unknown Datasource');
+  });
+
+  test('does not prepare the request until the observable is subscribed to', async () => {
+    const { mock, ds } = createMockDatasource();
+
+    const observable = ds.query({
+      maxDataPoints: 10,
+      intervalMs: 5000,
+      targets: [{ refId: 'A', datasource: { type: 'sample', uid: 'sample' } }],
+      range: getDefaultTimeRange(),
+    } as DataQueryRequest);
+
+    expect(mockGetDataSourceInstanceSettings).not.toHaveBeenCalled();
+    expect(mock.calls.length).toBe(0);
+
+    await firstValueFrom(observable);
+
+    expect(mockGetDataSourceInstanceSettings).toHaveBeenCalled();
+    expect(mock.calls.length).toBe(1);
+  });
+
+  test('keeps the routing headers in query order when the settings lookups resolve out of order', async () => {
+    const { mock, ds } = createMockDatasource();
+    mockGetDataSourceInstanceSettings.mockImplementation(async (ref) => {
+      if (ref?.uid === 'slow') {
+        // yield a few times so this lookup settles after the one for the second query
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+      }
+      return defaultInstanceSettings(ref);
+    });
+
+    await firstValueFrom(
+      ds.query({
+        maxDataPoints: 10,
+        intervalMs: 5000,
+        targets: [
+          { refId: 'A', datasource: { type: 'slow-type', uid: 'slow' } },
+          { refId: 'B', datasource: { type: 'fast-type', uid: 'fast' } },
+        ],
+        range: getDefaultTimeRange(),
+      } as DataQueryRequest)
+    );
+
+    const args = mock.calls[0][0];
+    expect(args.headers?.['X-Datasource-Uid']).toBe('slow, fast');
+    expect(args.headers?.['X-Plugin-Id']).toBe('slow-type, fast-type');
   });
 
   test('correctly passes datasource headers', async () => {
@@ -846,6 +896,11 @@ describe('DataSourceWithBackend', () => {
         [{ refId: 'A' }, { refId: 'B', datasource: loki }],
         ['dummy', 'loki'],
       ],
+      [
+        'handle a mix of query and no-query data source references, per-query first',
+        [{ refId: 'A', datasource: loki }, { refId: 'B' }],
+        ['loki', 'dummy'],
+      ],
     ])('%s', async (_, targets, expectedTypes) => {
       const { ds } = createMockDatasource();
 
@@ -879,6 +934,7 @@ function createMockDatasource() {
 
   mockDatasourceRequest.mockReset();
   mockDatasourceRequest.mockReturnValue(Promise.resolve({} as FetchResponse));
+  mockGetDataSourceInstanceSettings.mockReset().mockImplementation(defaultInstanceSettings);
 
   const ds = new MyDataSource(settings);
   return { ds, mock: mockDatasourceRequest.mock };

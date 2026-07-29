@@ -1,4 +1,4 @@
-import { from, lastValueFrom, merge, type Observable, of } from 'rxjs';
+import { defer, lastValueFrom, merge, type Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import {
@@ -11,6 +11,7 @@ import {
   DataSourceApi,
   type DataSourceInstanceSettings,
   type DataSourceJsonData,
+  type DataSourceRef,
   getDataSourceRef,
   makeClassES5Compatible,
   parseLiveChannelAddress,
@@ -123,6 +124,15 @@ function toHealthCheckResult(v: DatasourcesV0HealthCheckResult): HealthCheckResu
   };
 }
 
+interface PreparedQuery {
+  query: DataQuery;
+  /** Absent for expression queries, which are not backed by a data source instance. */
+  resolved?: {
+    settings: DataSourceInstanceSettings;
+    ref: DataSourceRef;
+  };
+}
+
 /**
  * Extend this class to implement a data source plugin that is depending on the Grafana
  * backend API.
@@ -147,10 +157,7 @@ class DataSourceWithBackend<
     let targets = request.targets;
 
     let hasExpr = false;
-    const pluginIDs = new Set<string>();
-    const dsUIDs = new Set<string>();
-    const datasources: DataSourceInstanceSettings[] = [];
-    const queries: DataQuery[] = await Promise.all(
+    const prepared: PreparedQuery[] = await Promise.all(
       targets.map(async (q) => {
         let datasource = this.getRef();
         let datasourceId = this.id;
@@ -159,10 +166,15 @@ class DataSourceWithBackend<
         if (isExpressionReference(q.datasource)) {
           hasExpr = true;
           return {
-            ...q,
-            datasource: ExpressionDatasourceRef,
+            query: {
+              ...q,
+              datasource: ExpressionDatasourceRef,
+            },
           };
         }
+
+        // if there is no per-query datasource, we use the implicit datasource
+        let settings: DataSourceInstanceSettings = this.datasourceInstanceSettings;
 
         if (q.datasource) {
           const ds = await getDataSourceInstanceSettings(q.datasource, request.scopedVars);
@@ -171,7 +183,7 @@ class DataSourceWithBackend<
             throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
           }
 
-          datasources.push(ds);
+          settings = ds;
 
           const dsRef = ds.rawRef ?? getDataSourceRef(ds);
           const dsId = ds.id;
@@ -182,27 +194,44 @@ class DataSourceWithBackend<
             // instance (async) and apply the template variables but it seems it's not necessary for now.
             shouldApplyTemplateVariables = false;
           }
-        } else {
-          // if there is no per-query datasource, we use the implicit datasource
-          datasources.push(this.datasourceInstanceSettings);
-        }
-        if (datasource.type?.length) {
-          pluginIDs.add(datasource.type);
-        }
-        if (datasource.uid?.length) {
-          dsUIDs.add(datasource.uid);
         }
 
         return {
-          ...(shouldApplyTemplateVariables ? this.applyTemplateVariables(q, request.scopedVars, request.filters) : q),
-          datasource,
-          datasourceId, // deprecated!
-          intervalMs,
-          maxDataPoints,
-          queryCachingTTL,
+          query: {
+            ...(shouldApplyTemplateVariables ? this.applyTemplateVariables(q, request.scopedVars, request.filters) : q),
+            datasource,
+            datasourceId, // deprecated!
+            intervalMs,
+            maxDataPoints,
+            queryCachingTTL,
+          },
+          resolved: { settings, ref: datasource },
         };
       })
     );
+
+    // Collected after the fan-out rather than inside it: the settings lookups resolve in an
+    // arbitrary order, so accumulating from within the callbacks would make the routing header
+    // values and the query-service decision depend on resolution order instead of query order.
+    const pluginIDs = new Set<string>();
+    const dsUIDs = new Set<string>();
+    const datasources: DataSourceInstanceSettings[] = [];
+    const queries: DataQuery[] = [];
+
+    for (const { query, resolved } of prepared) {
+      queries.push(query);
+      if (!resolved) {
+        // an expression query is not backed by a datasource instance
+        continue;
+      }
+      datasources.push(resolved.settings);
+      if (resolved.ref.type?.length) {
+        pluginIDs.add(resolved.ref.type);
+      }
+      if (resolved.ref.uid?.length) {
+        dsUIDs.add(resolved.ref.uid);
+      }
+    }
 
     const body = {
       queries,
@@ -284,7 +313,10 @@ class DataSourceWithBackend<
       return of({ data: [] });
     }
 
-    return from(this.createBackendRequest(request)).pipe(
+    // defer keeps the observable cold: without it the request preparation would start when
+    // query() is called rather than when it is subscribed to, and a rejection (e.g. an unknown
+    // datasource) on a never-subscribed observable would surface as an unhandled rejection.
+    return defer(() => this.createBackendRequest(request)).pipe(
       switchMap(([req, queries]) =>
         getBackendSrv()
           .fetch<BackendDataSourceResponse>(req)
@@ -297,9 +329,10 @@ class DataSourceWithBackend<
               }
               return of(rsp);
             }),
-            // Only fetch responses are turned into a response object here. toDataQueryResponse cannot
-            // map a plain thrown Error (e.g. an unknown datasource from createBackendRequest) and would
-            // silently produce an empty success, so those errors must propagate to the caller instead.
+            // Scoped to the fetch chain on purpose: toDataQueryResponse can only map fetch-shaped
+            // errors, and would turn a plain thrown Error (e.g. the unknown-datasource throw in
+            // createBackendRequest) into a silent empty success. Those errors are left to reach the
+            // subscriber, where runRequest turns them into a query error.
             catchError((err) => {
               return of(toDataQueryResponse(err));
             })
