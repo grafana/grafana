@@ -8,7 +8,6 @@ import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import TileSource from 'ol/source/Tile';
 import VectorSource from 'ol/source/Vector';
 
-
 // Mock the config module to avoid undefined panels error
 jest.mock('@grafana/runtime', () => ({
   getTemplateSrv: jest.fn(),
@@ -33,7 +32,6 @@ jest.mock('app/plugins/datasource/grafana/datasource', () => ({
   getGrafanaDatasource: jest.fn(),
 }));
 
-
 import { createTheme } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { getColorDimension } from 'app/features/dimensions/color';
@@ -45,13 +43,7 @@ import { type GeomapPanel } from '../GeomapPanel';
 import { defaultStyleConfig, type StyleConfig, type StyleConfigState } from '../style/types';
 import { type MapLayerState } from '../types';
 
-import {
-  hasVariableDependencies,
-  hasLayerData,
-  isSegmentVisible,
-  getNextLayerName,
-  getStyleDimension,
-} from './utils';
+import { hasVariableDependencies, hasLayerData, isSegmentVisible, getNextLayerName, getStyleDimension } from './utils';
 
 // Test fixtures
 const createTestFeature = () => new Feature(new Point([0, 0]));
@@ -299,7 +291,8 @@ describe('getStyleDimension', () => {
   });
 
   it('builds only the dimensions flagged in style.fields when there is no custom config', () => {
-    getStyleDimension(frame, styleState({ color: true, rotation: true }), theme);
+    // StyleConfigFields values are the driving field names (truthy strings), not booleans
+    getStyleDimension(frame, styleState({ color: 'metric', rotation: 'metric' }), theme);
 
     expect(getColorDimension).toHaveBeenCalledTimes(1);
     expect(getScalarDimension).toHaveBeenCalledTimes(1);

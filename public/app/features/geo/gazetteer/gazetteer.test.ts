@@ -144,7 +144,7 @@ describe('frameAsGazetter', () => {
       });
       const latField = frame.fields.find((f) => f.name === latName)!;
       const lngField = frame.fields.find((f) => f.name === lngName)!;
-      const expected = pointFieldFromLonLat(lngField, latField).values[0]!.getCoordinates();
+      const expected = (pointFieldFromLonLat(lngField, latField).values[0] as Point).getCoordinates();
 
       const gaz = frameAsGazetter(frame, { path: 't' });
       expect(gaz.find('a')!.point()!.getCoordinates()).toEqual(expected);
@@ -158,7 +158,7 @@ describe('frameAsGazetter', () => {
         ],
       });
       const geohashField = frame.fields.find((f) => f.name === 'geohash')!;
-      const expected = pointFieldFromGeohash(geohashField).values[0]!.getCoordinates();
+      const expected = (pointFieldFromGeohash(geohashField).values[0] as Point).getCoordinates();
 
       const gaz = frameAsGazetter(frame, { path: 't' });
       expect(gaz.find('g')!.point()!.getCoordinates()).toEqual(expected);
