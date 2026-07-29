@@ -370,9 +370,6 @@
 /pkg/tsdb/cloudwatch/ @grafana/data-sources-plugins
 /pkg/tsdb/azuremonitor/ @grafana/data-sources-plugins
 
-# OSS Big Tent backend code
-/pkg/tsdb/sqlmacro/ @grafana/data-sources-plugins
-
 # Partner Datasources backend code
 /pkg/tsdb/influxdb/ @grafana/data-sources-plugins
 /pkg/tsdb/graphite/ @grafana/data-sources-plugins
