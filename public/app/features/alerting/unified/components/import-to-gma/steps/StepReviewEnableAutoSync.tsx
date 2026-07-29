@@ -2,7 +2,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { Badge, Box, Button, Stack, Text } from '@grafana/ui';
+import { Badge, Box, Button, Stack, Text, Tooltip } from '@grafana/ui';
 
 import { trackImportToGMAError, trackImportToGMASuccess } from '../../../Analytics';
 import { alertListPageLink } from '../../../utils/navigation';
@@ -26,10 +26,14 @@ interface StepReviewEnableAutoSyncProps {
 export function StepReviewEnableAutoSync({ onCancel }: StepReviewEnableAutoSyncProps) {
   const { watch } = useFormContext<ImportFormValues>();
   const { setActiveStep } = useStepperState();
-  const { save, isPending, mimirCortexDatasources } = useAutoSyncConfiguration();
+  const { save, isPending, isReady, mimirCortexDatasources } = useAutoSyncConfiguration();
 
   const selectedUid = watch('autosyncDatasourceUID') ?? '';
   const dataSourceName = mimirCortexDatasources.find((ds) => ds.uid === selectedUid)?.name ?? selectedUid;
+  const notReadyTooltip = t(
+    'alerting.import-to-gma.autosync-review.enable-not-ready',
+    'Grafana is still setting up auto-sync for this organization. Try again in a moment.'
+  );
 
   const handleEnable = async () => {
     const enabled = await save(selectedUid);
@@ -81,9 +85,22 @@ export function StepReviewEnableAutoSync({ onCancel }: StepReviewEnableAutoSyncP
           <Button variant="secondary" icon="arrow-left" onClick={() => setActiveStep(StepKey.Method)}>
             {t('alerting.import-to-gma.autosync-review.back', 'Add method')}
           </Button>
-          <Button variant="primary" icon="sync" disabled={!selectedUid || isPending} onClick={handleEnable}>
-            {t('alerting.import-to-gma.autosync-review.enable', 'Enable auto-sync')}
-          </Button>
+          {/* Gate on isReady, not on loading: selectedUid comes from the form so it is already set on
+              mount, and save() cannot write until the worker has seeded the Config singleton. Without
+              this the button is clickable while that read is in flight — or indefinitely when it
+              resolved to nothing — and the click reports a false "still initializing" failure. */}
+          <Tooltip content={notReadyTooltip} show={isReady ? false : undefined}>
+            <Box display="inline-block">
+              <Button
+                variant="primary"
+                icon="sync"
+                disabled={!selectedUid || isPending || !isReady}
+                onClick={handleEnable}
+              >
+                {t('alerting.import-to-gma.autosync-review.enable', 'Enable auto-sync')}
+              </Button>
+            </Box>
+          </Tooltip>
         </Stack>
         <CancelButton onCancel={onCancel} />
       </Stack>

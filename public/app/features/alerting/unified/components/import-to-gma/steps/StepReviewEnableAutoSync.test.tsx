@@ -1,20 +1,21 @@
 import { FormProvider, useForm } from 'react-hook-form';
-import { render, screen, waitFor } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { grantUserRole } from 'app/features/alerting/unified/mocks';
-import {
-  type AdminConfigPostState,
-  setupAdminConfigPost,
-  setupAlertmanagersStatus,
-  setupStatefulAdminConfig,
-} from 'app/features/alerting/unified/mocks/server/configure/admin_config';
+import { grantUserPermissions, grantUserRole } from 'app/features/alerting/unified/mocks';
+import { setupAlertmanagersStatus } from 'app/features/alerting/unified/mocks/server/configure/alertmanagers';
 import {
   mimirAlertmanagerDataSourcePayload,
   setupDatasourcesEndpoint,
 } from 'app/features/alerting/unified/mocks/server/configure/datasources';
+import {
+  setupAutoSyncConfigAbsent,
+  setupAutoSyncConfigWriteError,
+  setupStatefulAutoSyncConfig,
+} from 'app/features/alerting/unified/mocks/server/handlers/k8s/config.k8s';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { type ImportFormValues } from '../ImportToGMA';
 import { StepperStateProvider, useStepperState } from '../Wizard/StepperState';
@@ -33,18 +34,23 @@ const server = setupMswServer();
 const MIMIR_DS_UID = 'mimir-uid';
 const MIMIR_DS_NAME = 'Test Mimir Alertmanager';
 
-const postState: AdminConfigPostState = { lastPayload: null };
-
 const mockReportInteraction = jest.mocked(reportInteraction);
 
+/** Set by beforeEach so each test asserts against its own stateful Config handler. */
+let getStored: () => { spec: { externalAlertmanagerSync?: { datasourceUid?: string } } };
+
+// This step is only reachable with the flag on, and useAutoSyncConfiguration skips its Config query
+// without it.
+testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
+
 beforeEach(() => {
-  postState.lastPayload = null;
   mockReportInteraction.mockClear();
   // Known baseline so the "did not navigate" assertion is meaningful across tests.
   locationService.push('/');
   grantUserRole('Admin');
+  grantUserPermissions([AccessControlAction.ActionAlertingNotificationsConfigRead]);
   setupAlertmanagersStatus(server);
-  setupStatefulAdminConfig(server, postState);
+  ({ getStored } = setupStatefulAutoSyncConfig(server));
   setupDatasourcesEndpoint(server, [mimirAlertmanagerDataSourcePayload({ uid: MIMIR_DS_UID, name: MIMIR_DS_NAME })]);
 });
 
@@ -90,7 +96,7 @@ describe('StepReviewEnableAutoSync', () => {
     await waitFor(() => expect(ui.enableButton.get()).toBeEnabled());
     await user.click(ui.enableButton.get());
 
-    await waitFor(() => expect(postState.lastPayload).toEqual({ external_alertmanager_uid: MIMIR_DS_UID }));
+    await waitFor(() => expect(getStored().spec.externalAlertmanagerSync).toEqual({ datasourceUid: MIMIR_DS_UID }));
     await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/list'), { timeout: 3000 });
 
     expect(mockReportInteraction).toHaveBeenCalledWith('grafana_alerting_import_to_gma_success', {
@@ -98,9 +104,39 @@ describe('StepReviewEnableAutoSync', () => {
     });
   });
 
+  it('keeps Enable disabled until the Config singleton has loaded, so a fast click cannot report a false failure', async () => {
+    renderStep();
+
+    // The UID comes from the form, so it is already set on mount. Ungated, the button is clickable
+    // while the Config GET is in flight, and save() rejects the click as "still initializing" — a
+    // false error toast plus a bogus import-error event.
+    //
+    // Asserted synchronously and without a click: userEvent awaits internally, which lets the read
+    // settle before the pointer event lands. The click is exercised in the unseeded case below, where
+    // the not-ready state is stable.
+    expect(ui.enableButton.get()).toBeDisabled();
+
+    await waitFor(() => expect(ui.enableButton.get()).toBeEnabled());
+  });
+
+  it('keeps Enable disabled, and reports nothing when clicked, while the Config singleton is unseeded', async () => {
+    // The read settles with nothing rather than staying pending, so a loading-only gate would hand
+    // the user an enabled button that can only fail. The tooltip explains the wait instead.
+    setupAutoSyncConfigAbsent(server);
+    const { user } = renderStep();
+
+    expect(await screen.findByText(MIMIR_DS_NAME)).toBeInTheDocument();
+    expect(ui.enableButton.get()).toBeDisabled();
+
+    await user.click(ui.enableButton.get());
+
+    expect(mockReportInteraction).not.toHaveBeenCalled();
+    expect(locationService.getLocation().pathname).not.toContain('/alerting/list');
+  });
+
   it('tracks an import error and stays on the step when enabling fails', async () => {
     // Genuine failure — save() rejects, the shared hook shows its own error toast and resolves false.
-    setupAdminConfigPost(server, postState, 500);
+    setupAutoSyncConfigWriteError(server, { code: 500, message: 'failed to save the configuration' });
     const { user } = renderStep();
 
     await waitFor(() => expect(ui.enableButton.get()).toBeEnabled());

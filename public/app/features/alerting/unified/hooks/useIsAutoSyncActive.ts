@@ -1,13 +1,10 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
-import { useGetConfigQuery } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-// The per-org alerting Config resource is a singleton at this fixed name (backend
-// ConfigSingletonName).
-const CONFIG_SINGLETON_NAME = 'default';
+import { CONFIG_SINGLETON_NAME, configApi } from '../api/configApi';
 
 interface AutoSyncState {
   isActive: boolean;
@@ -16,21 +13,31 @@ interface AutoSyncState {
 
 // Reports whether external (Mimir/Cortex) Alertmanager sync is actively running for the org.
 //
-// Sourced from spec.externalAlertmanagerSync on the per-org Config resource
-// (notifications.alerting.grafana.app). We read spec (the desired configuration), not status: status
-// holds the last sync attempt and lags — it stays populated after sync is disabled + restarted, so it
-// reports active when it isn't. Gated on the ActionAlertingNotificationsConfigRead permission so
-// non-admins who legitimately hold it are also blocked while sync is active. Fail-open: while loading
-// or on a 404/403 (resource absent or no read access) data is undefined, so isActive is false; when
-// the query is skipped (flag off or no read access) isLoading is also false.
+// Sourced from the per-org Config resource (notifications.alerting.grafana.app), from two places:
 //
-// Known gap: spec does not reflect an ini-configured sync (unified_alerting.external_alertmanager_uid),
-// which surfaces only in status with origin='ini'. The backend convert endpoint's
-// IsExternalAMSyncConfiguredForOrg check is the real safety net; covering the ini case in the frontend
-// would require exposing the setting through frontend settings (a separate backend change).
+//   - spec.externalAlertmanagerSync.datasourceUid — the desired configuration, for API-managed orgs.
+//     We deliberately do not read status.externalAlertmanagerSync for this case: status holds the
+//     last sync attempt and lags, staying populated after sync is disabled, so it would report
+//     active when it isn't.
+//   - status.externalAlertmanagerSync with origin='ini' — an operator-configured sync
+//     (unified_alerting.external_alertmanager_uid). spec is dormant for those orgs, so status is the
+//     only surface, and the lag concern doesn't apply: the ini key can only change with a restart.
+//
+// Gated on the ActionAlertingNotificationsConfigRead permission so non-admins who legitimately hold
+// it are also blocked while sync is active. Fail-open: while loading or on a 404/403 (resource absent
+// or no read access) data is undefined, so isActive is false; when the query is skipped (flag off or
+// no read access) isLoading is also false. The backend convert endpoint's
+// IsExternalAMSyncConfiguredForOrg check remains the real safety net.
 export function useIsAutoSyncActive(): AutoSyncState {
   const flagOn = config.featureToggles['alerting.syncExternalAlertmanager'] === true;
   const canReadConfig = contextSrv.hasPermission(AccessControlAction.ActionAlertingNotificationsConfigRead);
-  const { data, isLoading } = useGetConfigQuery(flagOn && canReadConfig ? { name: CONFIG_SINGLETON_NAME } : skipToken);
-  return { isActive: Boolean(data?.spec?.externalAlertmanagerSync?.datasourceUid), isLoading };
+  const { data, isLoading } = configApi.useGetConfigQuery(
+    flagOn && canReadConfig ? { name: CONFIG_SINGLETON_NAME } : skipToken
+  );
+
+  const observedSync = data?.status?.externalAlertmanagerSync;
+  const iniUid = observedSync?.origin === 'ini' ? observedSync.datasourceUid : undefined;
+  const specUid = data?.spec?.externalAlertmanagerSync?.datasourceUid;
+
+  return { isActive: Boolean(iniUid || specUid), isLoading };
 }

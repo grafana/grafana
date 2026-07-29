@@ -1,15 +1,22 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo, useState } from 'react';
 
 import { type DataSourceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { contextSrv } from 'app/core/services/context_srv';
 import {
   type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
 } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types/accessControl';
+import { useDispatch } from 'app/types/store';
 
-import { alertmanagerApi } from '../../api/alertmanagerApi';
+import { ALERTMANAGER_PROVIDED_ENTITY_TAGS, alertmanagerApi } from '../../api/alertmanagerApi';
+import { CONFIG_SINGLETON_NAME, configApi } from '../../api/configApi';
 import { dataSourcesApi } from '../../api/dataSourcesApi';
+import { isNotFoundError } from '../../api/util';
 import { isAlertmanagerDataSource } from '../../utils/datasource';
 import { stringifyErrorLike } from '../../utils/misc';
 
@@ -31,6 +38,13 @@ export interface UseAutoSyncConfigurationResult {
   disableSync: () => Promise<boolean>;
   isPending: boolean;
   isLoading: boolean;
+  /**
+   * Whether `save`/`disableSync` can do anything: humans cannot create the Config singleton, so a
+   * write needs it to already exist. False while the read is in flight and also when it resolved to
+   * nothing (404 before the worker's first tick, or the query was skipped), which `isLoading` alone
+   * cannot express. Gate write affordances on this.
+   */
+  isReady: boolean;
 }
 
 const MIMIR_CORTEX_IMPLEMENTATIONS: AlertManagerImplementation[] = [
@@ -52,23 +66,32 @@ export function isOperatorManaged(state: AutoSyncState): state is Extract<AutoSy
 }
 
 export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
-  const { currentData: configuration, isLoading: isLoadingConfig } =
-    alertmanagerApi.endpoints.getGrafanaAlertingConfiguration.useQuery();
+  // Gated exactly like useIsAutoSyncActive: without the read permission the request is a guaranteed
+  // 403. Every render path is already flag-and-Admin gated, so this is defence in depth.
+  const flagOn = config.featureToggles['alerting.syncExternalAlertmanager'] === true;
+  const canReadConfig = contextSrv.hasPermission(AccessControlAction.ActionAlertingNotificationsConfigRead);
+  const { currentData: configResource, isLoading: isLoadingConfig } = configApi.useGetConfigQuery(
+    flagOn && canReadConfig ? { name: CONFIG_SINGLETON_NAME } : skipToken
+  );
   const { currentData: allDatasources, isLoading: isLoadingDatasources } =
     dataSourcesApi.endpoints.getAllDataSourceSettings.useQuery(undefined, {
       refetchOnMountOrArgChange: true,
     });
-  const [updateConfiguration, updateConfigurationState] =
-    alertmanagerApi.endpoints.updateGrafanaAlertingConfiguration.useMutation();
-
-  const [operatorManagedUid, setOperatorManagedUid] = useState<string | null>(null);
+  const [updateConfig, updateConfigState] = configApi.useUpdateConfigMutation();
 
   const mimirCortexDatasources = useMemo(
     () => (allDatasources ?? []).filter(isAlertmanagerDataSource).filter(isMimirOrCortex),
     [allDatasources]
   );
 
-  const configuredUid = configuration?.external_alertmanager_uid ?? '';
+  const observedSync = configResource?.status?.externalAlertmanagerSync;
+  // origin='ini' means the operator's grafana.ini key is authoritative for this org: spec is dormant
+  // and admission rejects UID writes. Reading it here makes the state correct on load, where the
+  // legacy API only revealed it via a 409 on a failed POST.
+  const isIniManaged = observedSync?.origin === 'ini';
+  const configuredUid = isIniManaged
+    ? (observedSync?.datasourceUid ?? '')
+    : (configResource?.spec?.externalAlertmanagerSync?.datasourceUid ?? '');
   const hasMatchingDatasource = mimirCortexDatasources.some((ds) => ds.uid === configuredUid);
 
   // Track user-edited selection separately from the saved value so a background refetch
@@ -77,7 +100,7 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
   const selectedUid = selectedOverride ?? configuredUid;
 
   const state: AutoSyncState = useMemo(() => {
-    if (configuredUid && operatorManagedUid === configuredUid) {
+    if (isIniManaged && configuredUid) {
       return { kind: 'operator-managed', uid: configuredUid };
     }
     if (configuredUid && hasMatchingDatasource) {
@@ -90,16 +113,53 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
       return { kind: 'no-datasources' };
     }
     return { kind: 'unconfigured' };
-  }, [operatorManagedUid, configuredUid, hasMatchingDatasource, mimirCortexDatasources.length]);
+  }, [isIniManaged, configuredUid, hasMatchingDatasource, mimirCortexDatasources.length]);
 
   const notify = useAppNotification();
+  const dispatch = useDispatch();
+
+  const notifyNotReady = () =>
+    notify.error(
+      t('alerting.settings.auto-sync.not-ready-title', 'Auto-sync is still initializing'),
+      t(
+        'alerting.settings.auto-sync.not-ready-body',
+        'Grafana has not finished setting up auto-sync for this organization. Try again in a moment.'
+      )
+    );
 
   const persist = async (uid: string): Promise<boolean> => {
+    // Humans cannot create the singleton — create is denied to non-service identities, and a PUT to
+    // a missing object is re-authorized as create — so until the sync worker seeds it on its first
+    // tick there is nothing to write into.
+    if (!configResource) {
+      notifyNotReady();
+      return false;
+    }
+
     try {
-      await updateConfiguration({
-        external_alertmanager_uid: uid,
-        notificationOptions: { showErrorAlert: false },
+      await updateConfig({
+        name: CONFIG_SINGLETON_NAME,
+        // JSON Patch scoped to spec, NOT a whole-object PUT. The sync worker writes only `status`
+        // (via the /status subresource) on every poll tick — roughly once a minute — so a PUT
+        // carrying metadata.resourceVersion gets rejected with a 409 whenever a tick lands between
+        // page load and save, even though nothing the user cares about actually changed. A
+        // spec-scoped patch cannot conflict with a status write at all.
+        //
+        // `add` replaces the key when it already exists, so this is idempotent; patching the whole
+        // sub-object (rather than .../datasourceUid) avoids failing when the parent path is absent,
+        // which it is on a freshly seeded singleton.
+        patch: [
+          {
+            op: 'add',
+            path: '/spec/externalAlertmanagerSync',
+            value: uid ? { datasourceUid: uid } : {},
+          },
+        ],
       }).unwrap();
+      // updateConfig only invalidates 'Config', and it lives in a different RTKQ slice than
+      // alertmanagerApi. Toggling sync rewrites the Alertmanager entities the worker imports, so
+      // reproduce the tag set the legacy admin_config mutation invalidated.
+      dispatch(alertmanagerApi.util.invalidateTags([...ALERTMANAGER_PROVIDED_ENTITY_TAGS]));
       notify.success(
         uid
           ? t('alerting.settings.auto-sync.save-success', 'Mimir Alertmanager auto-sync enabled')
@@ -108,10 +168,9 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
       setSelectedOverride(null);
       return true;
     } catch (err) {
-      // 409 means the operator-level ini key is authoritative for this org; the request will
-      // never succeed via the UI, and the user needs to be told via the operator-managed state.
-      if (isStatusCode(err, 409)) {
-        setOperatorManagedUid(configuredUid || uid);
+      // The singleton disappeared between load and save (or was never seeded).
+      if (isNotFoundError(err)) {
+        notifyNotReady();
         return false;
       }
       notify.error(
@@ -128,13 +187,11 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
     selectedUid,
     setSelectedUid: (uid: string) => setSelectedOverride(uid),
     save: (uidOverride?: string) => persist(uidOverride ?? selectedUid),
-    // Backend convention: empty string clears the configured UID.
+    // Clearing the UID is the disable path: delete is denied on the singleton, and the admission
+    // validator explicitly permits clearing even while the ini override is set.
     disableSync: () => persist(''),
-    isPending: updateConfigurationState.isLoading,
+    isPending: updateConfigState.isLoading,
     isLoading: isLoadingConfig || isLoadingDatasources,
+    isReady: Boolean(configResource),
   };
-}
-
-function isStatusCode(err: unknown, status: number): boolean {
-  return typeof err === 'object' && err !== null && 'status' in err && err.status === status;
 }

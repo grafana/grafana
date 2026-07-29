@@ -1,23 +1,23 @@
 import { screen, waitFor } from '@testing-library/react';
-import { render } from 'test/test-utils';
+import { render, testWithFeatureToggles } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
 import {
   type AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
-  AlertmanagerChoice,
 } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
-import { grantUserRole, mockDataSource } from '../../mocks';
-import {
-  type AdminConfigPostState,
-  setupAdminConfigGet,
-  setupAdminConfigPost,
-  setupAlertmanagersStatus,
-  setupStatefulAdminConfig,
-} from '../../mocks/server/configure/admin_config';
+import { grantUserPermissions, grantUserRole, mockDataSource } from '../../mocks';
+import { setupAlertmanagersStatus } from '../../mocks/server/configure/alertmanagers';
 import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
+import {
+  setupAutoSyncConfig,
+  setupAutoSyncConfigAbsent,
+  setupAutoSyncConfigWriteError,
+  setupStatefulAutoSyncConfig,
+} from '../../mocks/server/handlers/k8s/config.k8s';
 import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
 
@@ -36,6 +36,12 @@ const MIMIR_DS_PAYLOAD = {
   type: 'alertmanager',
   url: 'http://localhost:9009',
   jsonData: { implementation: 'mimir' },
+};
+
+/** A Config whose status reports the configured UID as the last sync target. */
+const SYNCED = {
+  specUid: MIMIR_DS_UID,
+  statusUid: MIMIR_DS_UID,
 };
 
 function registerMimirDataSources(datasources: Array<typeof MIMIR_DS_PAYLOAD> = [MIMIR_DS_PAYLOAD]) {
@@ -59,11 +65,11 @@ function registerMimirDataSources(datasources: Array<typeof MIMIR_DS_PAYLOAD> = 
   );
 }
 
-const postState: AdminConfigPostState = { lastPayload: null };
+testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
 
 beforeEach(() => {
-  postState.lastPayload = null;
   grantUserRole('Admin');
+  grantUserPermissions([AccessControlAction.ActionAlertingNotificationsConfigRead]);
   setupAlertmanagersStatus(server);
 });
 
@@ -86,7 +92,7 @@ const edgeUi = {
 
 describe('AutoSyncConfiguration — basic states (cases 1–3)', () => {
   it('case 1: unconfigured — renders "Not configured" badge and disables Save until a selection is made', async () => {
-    setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+    setupAutoSyncConfig(server);
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
 
@@ -98,8 +104,8 @@ describe('AutoSyncConfiguration — basic states (cases 1–3)', () => {
     expect(ui.disableSyncButton.query()).not.toBeInTheDocument();
   });
 
-  it('case 2: save success — sends correct payload and badge flips to Active once the config refetches', async () => {
-    setupStatefulAdminConfig(server, postState);
+  it('case 2: save success — writes the UID to spec and the badge flips to Active once the Config refetches', async () => {
+    const { getStored } = setupStatefulAutoSyncConfig(server);
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
 
@@ -113,17 +119,13 @@ describe('AutoSyncConfiguration — basic states (cases 1–3)', () => {
     await waitFor(() => expect(ui.saveButton.get()).toBeEnabled());
     await user.click(ui.saveButton.get());
 
-    await waitFor(() => expect(postState.lastPayload).toEqual({ external_alertmanager_uid: MIMIR_DS_UID }));
+    await waitFor(() => expect(getStored().spec.externalAlertmanagerSync).toEqual({ datasourceUid: MIMIR_DS_UID }));
     expect(await ui.activeBadge.find()).toBeInTheDocument();
   });
 
-  it('case 3: configured — Disable sync opens a confirm modal and POSTs an empty string only after confirmation', async () => {
-    setupAdminConfigGet(server, {
-      alertmanagersChoice: AlertmanagerChoice.Internal,
-      external_alertmanager_uid: MIMIR_DS_UID,
-    });
+  it('case 3: configured — Disable sync opens a confirm modal and clears the UID only after confirmation', async () => {
+    const { patchSpy, getStored } = setupStatefulAutoSyncConfig(server, SYNCED);
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
-    setupAdminConfigPost(server, postState, 200);
     registerMimirDataSources();
 
     const { user } = render(<AutoSyncConfiguration />);
@@ -134,45 +136,37 @@ describe('AutoSyncConfiguration — basic states (cases 1–3)', () => {
 
     await user.click(ui.disableSyncButton.get());
 
-    // Confirm modal must appear; nothing has been POSTed yet.
+    // Confirm modal must appear; nothing has been written yet.
     const dialog = await ui.confirmDialog.find();
     expect(dialog).toBeInTheDocument();
-    expect(postState.lastPayload).toBeNull();
+    expect(patchSpy).not.toHaveBeenCalled();
 
     await user.click(ui.confirmDialogDisableButton.get(dialog));
 
-    await waitFor(() => expect(postState.lastPayload).toEqual({ external_alertmanager_uid: '' }));
+    // Cleared, not deleted: delete is unconditionally denied on the singleton.
+    await waitFor(() => expect(getStored().spec.externalAlertmanagerSync).toEqual({}));
   });
 });
 
-describe('AutoSyncConfiguration — edge-case states (cases 5–8)', () => {
-  it('case 5: when POST returns 409, UI transitions to operator-managed (badge + info callout)', async () => {
-    // The 409 transition needs configuredUid !== '' so the operator-managed marker matches.
-    // Save is hidden once configured, so trigger the POST via Disable sync instead.
-    setupAdminConfigGet(server, {
-      alertmanagersChoice: AlertmanagerChoice.Internal,
-      external_alertmanager_uid: MIMIR_DS_UID,
-    });
+describe('AutoSyncConfiguration — edge-case states', () => {
+  it('case 5: operator-managed is detected on load from status origin=ini (badge + info callout)', async () => {
+    // Previously this state was only reachable after a save failed with 409. Reading it from status
+    // means the picker is correctly locked before the user attempts anything.
+    setupAutoSyncConfig(server, { statusUid: MIMIR_DS_UID, origin: 'ini' });
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
-    setupAdminConfigPost(server, postState, 409, { message: 'managed by operator' });
     registerMimirDataSources();
 
-    const { user } = render(<AutoSyncConfiguration />);
-
-    expect(await ui.activeBadge.find()).toBeInTheDocument();
-
-    await user.click(ui.disableSyncButton.get());
-    const dialog = await ui.confirmDialog.find();
-    await user.click(ui.confirmDialogDisableButton.get(dialog));
+    render(<AutoSyncConfiguration />);
 
     expect(await edgeUi.operatorManagedCallout.find()).toBeInTheDocument();
     expect(ui.activeBadge.query()).not.toBeInTheDocument();
+    expect(await ui.picker.find()).toBeDisabled();
   });
 
-  it('case 6: POST 400 — error toast shown, state does not change', async () => {
-    setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+  it('case 6: rejected write — state does not change and operator-managed is not inferred', async () => {
+    setupStatefulAutoSyncConfig(server);
+    setupAutoSyncConfigWriteError(server, { code: 403, message: 'datasource must be of type alertmanager' });
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
-    setupAdminConfigPost(server, postState, 400, { message: 'invalid datasource' });
     registerMimirDataSources();
 
     const { user } = render(<AutoSyncConfiguration />);
@@ -184,14 +178,12 @@ describe('AutoSyncConfiguration — edge-case states (cases 5–8)', () => {
     await waitFor(() => expect(ui.saveButton.get()).toBeEnabled());
     await user.click(ui.saveButton.get());
 
-    await waitFor(() => expect(postState.lastPayload).toEqual({ external_alertmanager_uid: MIMIR_DS_UID }));
-
-    expect(ui.notConfiguredBadge.get()).toBeInTheDocument();
+    expect(await ui.notConfiguredBadge.find()).toBeInTheDocument();
     expect(edgeUi.operatorManagedCallout.query()).not.toBeInTheDocument();
   });
 
   it('case 7: no Mimir/Cortex datasources — empty message and "Add Mimir datasource" link rendered', async () => {
-    setupAdminConfigGet(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+    setupAutoSyncConfig(server);
     setupDatasourcesEndpoint(server, []);
     setupDataSources();
 
@@ -203,10 +195,7 @@ describe('AutoSyncConfiguration — edge-case states (cases 5–8)', () => {
   });
 
   it('case 8: orphan UID — warning callout + Disable sync action visible, Save remains available for recovery', async () => {
-    setupAdminConfigGet(server, {
-      alertmanagersChoice: AlertmanagerChoice.Internal,
-      external_alertmanager_uid: 'missing-uid',
-    });
+    setupAutoSyncConfig(server, { specUid: 'missing-uid' });
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
 
@@ -216,5 +205,16 @@ describe('AutoSyncConfiguration — edge-case states (cases 5–8)', () => {
     expect(ui.disableSyncButton.get()).toBeInTheDocument();
     // Save stays visible in orphan-uid so the admin can recover by picking a real datasource.
     expect(ui.saveButton.get()).toBeInTheDocument();
+  });
+
+  it('case 10: unseeded singleton — reads as unconfigured so the page still renders', async () => {
+    // The sync worker seeds the singleton on its first tick; humans cannot create it.
+    setupAutoSyncConfigAbsent(server);
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    render(<AutoSyncConfiguration />);
+
+    expect(await ui.notConfiguredBadge.find()).toBeInTheDocument();
   });
 });
