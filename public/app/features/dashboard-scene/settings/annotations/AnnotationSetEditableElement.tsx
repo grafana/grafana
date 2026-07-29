@@ -5,12 +5,12 @@ import { type SceneObject } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { partitionAnnotationsByDisplay } from '../../edit-pane/dashboard/DashboardAnnotationsList';
 import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
+import { partitionAnnotationsByDisplay } from '../../sidebar/dashboard/DashboardAnnotationsList';
 
 import { AnnotationList } from './AnnotationList';
 
@@ -41,9 +41,9 @@ export class AnnotationSetEditableElement implements EditableDashboardElement {
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.annotation-set', 'Annotations & Alerts'),
+      typeName: t('dashboard.sidebar.elements.annotation-set', 'Annotations & Alerts'),
       icon: 'comment-alt',
-      instanceName: t('dashboard.edit-pane.elements.annotation-set', 'Annotations & Alerts'),
+      instanceName: t('dashboard.sidebar.elements.annotation-set', 'Annotations & Alerts'),
       isHidden: this.dataLayerSet.state.annotationLayers.length === 0,
     };
   }

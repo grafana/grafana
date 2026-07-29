@@ -54,7 +54,7 @@ export const MegaMenu = memo(
       isSaving,
     } = useNavCustomization();
 
-    const styles = useStyles2(getStyles, canCustomise);
+    const styles = useStyles2(getStyles, canCustomise, visualRefreshEnabled);
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -279,7 +279,7 @@ export const MegaMenu = memo(
 
 MegaMenu.displayName = 'MegaMenu';
 
-const getStyles = (theme: GrafanaTheme2, canCustomise: boolean) => {
+const getStyles = (theme: GrafanaTheme2, canCustomise: boolean, visualRefreshEnabled: boolean) => {
   return {
     content: css({
       display: 'flex',
@@ -315,13 +315,14 @@ const getStyles = (theme: GrafanaTheme2, canCustomise: boolean) => {
     }),
     // Subtle grey box around the pinned items. Left inset (margin-left + padding-left = 1.5) matches
     // the nav row icon inset (itemList padding-left 1 + label padding-left 0.5) so the breadcrumb leaf
-    // icons line up with the nav section icons.
+    // icons line up with the nav section icons. A slightly tighter gap below than around the other
+    // sides, so the nav list sits closer beneath. Under visual refresh, mirror the page content pane:
+    // flush at the top, matching the page background token and radius.
     pinnedBox: css({
-      backgroundColor: theme.colors.background.secondary,
+      backgroundColor: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.secondary,
       border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
-      // Slightly tighter gap below than around the other sides, so the nav list sits closer beneath.
-      margin: theme.spacing(1, 1, 0.5, 1),
+      borderRadius: visualRefreshEnabled ? theme.shape.radius.lg : theme.shape.radius.default,
+      margin: visualRefreshEnabled ? theme.spacing(0, 1, 0.5, 1) : theme.spacing(1, 1, 0.5, 1),
       padding: theme.spacing(1),
     }),
     // "Pinned" heading row — a small section label (the medium-weight secondary Text below reads as

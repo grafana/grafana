@@ -2208,14 +2208,14 @@ func TestApiGetSnapshots(t *testing.T) {
 			Location: &timeinterval.Location{Location: location},
 		}
 	}
-	cfg.AlertmanagerConfig.MuteTimeIntervals = append(cfg.AlertmanagerConfig.MuteTimeIntervals,
-		v1.MuteTimeInterval{
+	cfg.AlertmanagerConfig.TimeIntervals = append(cfg.AlertmanagerConfig.TimeIntervals,
+		v1.TimeInterval{
 			Name: "MuteTimeIntervalA",
 			TimeIntervals: []timeinterval.TimeInterval{
 				timeIntervalExample(),
 			},
 		},
-		v1.MuteTimeInterval{
+		v1.TimeInterval{
 			Name: "MuteTimeIntervalB",
 			TimeIntervals: []timeinterval.TimeInterval{
 				timeIntervalExample(),
