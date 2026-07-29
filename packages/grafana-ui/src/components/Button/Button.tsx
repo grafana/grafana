@@ -13,8 +13,15 @@ import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { type PopoverContent, type TooltipPlacement } from '../Tooltip/types';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'destructive' | 'success';
-export const allButtonVariants: ButtonVariant[] = ['primary', 'secondary', 'accent', 'destructive', 'success'];
+export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'destructive' | 'success' | 'tertiary';
+export const allButtonVariants: ButtonVariant[] = [
+  'primary',
+  'secondary',
+  'accent',
+  'destructive',
+  'success',
+  'tertiary',
+];
 export type ButtonFill = 'solid' | 'outline' | 'text';
 export const allButtonFills: ButtonFill[] = ['solid', 'outline', 'text'];
 
@@ -469,6 +476,9 @@ export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVar
 
     case 'accent':
       return getButtonVariantStyles(theme, theme.colors.accent, fill);
+
+    case 'tertiary':
+      return getButtonVariantStyles(theme, theme.colors.tertiary, fill);
 
     case 'primary':
     default:
