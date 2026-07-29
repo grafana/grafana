@@ -19,6 +19,7 @@ declare module "@openfeature/core" {
     | "provisioning.readmes"
     | "provisioning.gitConventions"
     | "provisioning.userAttribution"
+    | "libraryelements.kubernetesLibraryPanels"
     | "grafana.kubernetesAnnotationsClient"
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
