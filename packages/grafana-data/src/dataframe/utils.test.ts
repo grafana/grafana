@@ -225,6 +225,7 @@ describe('alignTimeRangeCompareData', () => {
   // #126189 acceptance criteria — "compare is dashed, current is solid".
   // The compare frame is the only one passed through alignTimeRangeCompareData; the current-period frame
   // never gets a lineStyle, so leaving the current frame's config untouched is what keeps it solid.
+  // Assert on the returned frame — alignTimeRangeCompareData is non-mutating (#128796).
   describe('dashed styling for comparison series (#126189)', () => {
     const DASH_LINE_STYLE = { fill: 'dash', dash: [1, 5, 4, 5] };
 
@@ -238,9 +239,9 @@ describe('alignTimeRangeCompareData', () => {
           ],
         });
 
-        alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+        const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
 
-        expect(frame.fields[1].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+        expect(result.fields[1].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
       }
     );
 
@@ -252,9 +253,9 @@ describe('alignTimeRangeCompareData', () => {
         ],
       });
 
-      alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+      const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
 
-      expect(frame.fields[0].config.custom?.lineStyle).toBeUndefined();
+      expect(result.fields[0].config.custom?.lineStyle).toBeUndefined();
     });
 
     it('does not add a lineStyle to string fields', () => {
@@ -266,10 +267,10 @@ describe('alignTimeRangeCompareData', () => {
         ],
       });
 
-      alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+      const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
 
-      expect(frame.fields[1].config.custom?.lineStyle).toBeUndefined();
-      expect(frame.fields[2].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+      expect(result.fields[1].config.custom?.lineStyle).toBeUndefined();
+      expect(result.fields[2].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
     });
 
     it('preserves an existing lineStyle-adjacent custom config while adding the dash', () => {
@@ -285,10 +286,10 @@ describe('alignTimeRangeCompareData', () => {
         ],
       });
 
-      alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+      const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
 
-      expect(frame.fields[1].config.custom?.lineWidth).toBe(2);
-      expect(frame.fields[1].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+      expect(result.fields[1].config.custom?.lineWidth).toBe(2);
+      expect(result.fields[1].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
     });
   });
 });
