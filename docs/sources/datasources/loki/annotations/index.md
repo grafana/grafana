@@ -51,12 +51,31 @@ To add a Loki annotation to a dashboard:
 
 The annotation query editor provides the following fields:
 
-| Field     | Description                                                                                                                                          |
-| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Query** | The LogQL log query that selects the log lines to annotate.                                                                                          |
-| **Title** | _Optional._ A template for the annotation title. Reference stream labels with `{{label}}`, for example `{{level}}`.                                  |
-| **Tags**  | _Optional._ A comma-separated list of label keys to use as annotation tags. When empty, Grafana uses the log stream labels as tags.                  |
-| **Text**  | _Optional._ A template for the annotation text. Reference stream labels with `{{label}}`. When empty, Grafana uses the log line content as the text. |
+| Field     | Description                                                                                                                                                       |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Query** | The LogQL log query that selects the log lines to annotate.                                                                                                       |
+| **Title** | _Optional._ A literal name or a template for the annotation title. Reference labels with `{{label}}`, for example `{{level}}`.                                    |
+| **Tags**  | _Optional._ A comma-separated list of label keys to use as annotation tags, for example `app,level`. When empty, Grafana uses the log stream labels as tags.      |
+| **Text**  | _Optional._ A literal string or a template for the annotation text. Reference labels with `{{label}}`. When empty, Grafana uses the log line content as the text. |
+
+Template fields resolve against the labels on each returned log line, including parsed fields. To reference a value that isn't an indexed label, add a parser such as `logfmt` or `json` to your query so the field is available.
+
+### Example
+
+To annotate deployment events, configure the annotation query with the following values:
+
+| Field     | Value                               |
+| --------- | ----------------------------------- |
+| **Query** | `{app="deploy-bot"} \|= "deployed"` |
+| **Title** | `{{app}} deployed`                  |
+| **Tags**  | `app,env`                           |
+| **Text**  | `{{message}}`                       |
+
+Each matching log line becomes an annotation titled with the deploying app, tagged with the `app` and `env` labels, and described with the parsed `message` field. Because the **Text** template references a parsed field, the query needs a parser, for example:
+
+```logql
+{app="deploy-bot"} |= `deployed` | logfmt
+```
 
 ## Troubleshoot annotations
 
