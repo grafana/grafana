@@ -23,7 +23,7 @@ import (
 
 func TestBundler_Build(t *testing.T) {
 	// No HAR captured (empty buffer, nil response) -> traffic.har omitted; only panel.json present.
-	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil)
+	blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -37,7 +37,7 @@ func TestBundler_Build(t *testing.T) {
 
 func TestBundler_Build_recordsQueryError(t *testing.T) {
 	// A failed query must still produce a bundle, with the error recorded (capture is not discarded).
-	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, errors.New("datasource timeout"))
+	blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, errors.New("datasource timeout"))
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -51,7 +51,7 @@ func TestBundler_Build_recordsQueryDataMarshalError(t *testing.T) {
 	// error is recorded and the other artifacts still ship, mirroring the per-panel dashboard path.
 	buf := bufferWithEntry(t, "http://ds/1")
 
-	blob, err := NewBundler().Build(nil, buf, nil, nil, json.RawMessage(`{invalid`), nil, nil)
+	blob, err := NewBundler(nil).Build(nil, buf, nil, nil, json.RawMessage(`{invalid`), nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -67,7 +67,7 @@ func TestBundler_Build_recordsQueryRequestSerializeError(t *testing.T) {
 	// mirroring how the per-panel dashboard path surfaces the same failure via manifest.queryDataError.
 	buf := bufferWithEntry(t, "http://ds/1")
 
-	blob, err := NewBundler().Build(nil, buf, nil, nil, nil, errors.New("unsupported value: +Inf"), nil)
+	blob, err := NewBundler(nil).Build(nil, buf, nil, nil, nil, errors.New("unsupported value: +Inf"), nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -84,7 +84,7 @@ func TestBundler_Build_recordsQueryDataResponse(t *testing.T) {
 		"A": {Frames: data.Frames{frame}},
 	}}
 
-	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	blob, err := NewBundler(nil).Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -96,7 +96,7 @@ func TestBundler_Build_recordsQueryDataResponse(t *testing.T) {
 func TestBundler_Build_recordsQueryDataRequest(t *testing.T) {
 	request := json.RawMessage(`{"from":"now-1h","to":"now","queries":[{"refId":"A","expr":"up"}]}`)
 
-	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, request, nil, nil)
+	blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, request, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -114,7 +114,7 @@ func TestBundler_Build_excludesCaptureFramesFromQueryData(t *testing.T) {
 		"__har__ds": {Frames: data.Frames{capture}},
 	}}
 
-	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	blob, err := NewBundler(nil).Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -128,7 +128,7 @@ func TestBundler_Build_boundsOversizedQueryData(t *testing.T) {
 		"A": {Frames: data.Frames{frame}},
 	}}
 
-	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	blob, err := NewBundler(nil).Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -143,7 +143,7 @@ func TestBundler_Build_boundsOversizedRequestWithoutResponse(t *testing.T) {
 	// An oversized request with no response must truncate without claiming a response was omitted.
 	request := json.RawMessage(`{"expr":"` + strings.Repeat("x", maxQueryDataArtifactBytes) + `"}`)
 
-	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, request, nil, nil)
+	blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, request, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -171,7 +171,7 @@ func TestBundler_Build_preservesUpstreamAndPluginResultsForComparison(t *testing
 	queryResp := &backend.QueryDataResponse{Responses: backend.Responses{
 		"A": {Frames: data.Frames{pluginFrame}},
 	}}
-	blob, err := NewBundler().Build(queryResp, buf, nil, nil, nil, nil, nil)
+	blob, err := NewBundler(nil).Build(queryResp, buf, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -308,7 +308,7 @@ func TestCollectHAR_nilBuffer_noPanic(t *testing.T) {
 	require.Nil(t, out)
 
 	// A nil buffer must also flow through Build without panicking.
-	bundle, err := NewBundler().Build(nil, nil, nil, nil, nil, nil, nil)
+	bundle, err := NewBundler(nil).Build(nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, bundle)
 }
@@ -531,7 +531,7 @@ func TestBuildDashboard(t *testing.T) {
 		{ID: 1, Title: "CPU Usage", PanelJSON: json.RawMessage(`{"id":1}`), Datasources: []string{"prom"}, HARBuffer: bufferWithEntry(t, "http://ds/1")},
 		{ID: 2, Title: "Text panel", Skipped: "no queries (non-data panel)"},
 	}
-	blob, err := NewBundler().BuildDashboard(json.RawMessage(`{"title":"My dash"}`), panels)
+	blob, err := NewBundler(nil).BuildDashboard(json.RawMessage(`{"title":"My dash"}`), panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -566,7 +566,7 @@ func TestBuildDashboard_recordsQueryDataPerPanel(t *testing.T) {
 		}},
 	}}
 
-	blob, err := NewBundler().BuildDashboard(nil, panels)
+	blob, err := NewBundler(nil).BuildDashboard(nil, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -588,7 +588,7 @@ func TestBuildDashboard_boundsAggregateQueryData(t *testing.T) {
 		})
 	}
 
-	blob, err := NewBundler().BuildDashboard(nil, panels)
+	blob, err := NewBundler(nil).BuildDashboard(nil, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -620,7 +620,7 @@ func TestBuildDashboard_resolvesPanelJSONFromDashboardModel(t *testing.T) {
 		{ID: 1, Title: "CPU Usage", HARBuffer: bufferWithEntry(t, "http://ds/1")},
 		{ID: 2, Title: "Logs", HARBuffer: bufferWithEntry(t, "http://ds/2")},
 	}
-	blob, err := NewBundler().BuildDashboard(dashboardJSON, panels)
+	blob, err := NewBundler(nil).BuildDashboard(dashboardJSON, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -648,7 +648,7 @@ func TestBuildDashboard_resolvesPanelJSONFromDashboardV2Model(t *testing.T) {
 		{ID: 3, Title: "CPU Usage", HARBuffer: bufferWithEntry(t, "http://ds/3")},
 		{ID: 4, Title: "Shared Errors", HARBuffer: bufferWithEntry(t, "http://ds/4")},
 	}
-	blob, err := NewBundler().BuildDashboard(dashboardJSON, panels)
+	blob, err := NewBundler(nil).BuildDashboard(dashboardJSON, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -672,7 +672,7 @@ func TestBuildDashboard_recordsPanelQueryError(t *testing.T) {
 	panels := []DashboardPanel{
 		{ID: 7, Title: "Broken", QueryErr: errors.New("datasource exploded")},
 	}
-	blob, err := NewBundler().BuildDashboard(nil, panels)
+	blob, err := NewBundler(nil).BuildDashboard(nil, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -691,7 +691,7 @@ func TestBuildDashboard_dirCollision(t *testing.T) {
 		{ID: 3, Title: "Same", HARBuffer: bufferWithEntry(t, "http://ds/a")},
 		{ID: 3, Title: "Same", HARBuffer: bufferWithEntry(t, "http://ds/b")},
 	}
-	blob, err := NewBundler().BuildDashboard(nil, panels)
+	blob, err := NewBundler(nil).BuildDashboard(nil, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -710,7 +710,7 @@ func TestBuildDashboard_recordsQueryRequestError(t *testing.T) {
 		{ID: 1, Title: "Broken request", QueryRequestErr: errors.New("unsupported value: NaN")},
 		{ID: 2, Title: "CPU Usage", HARBuffer: bufferWithEntry(t, "http://ds/2")},
 	}
-	blob, err := NewBundler().BuildDashboard(nil, panels)
+	blob, err := NewBundler(nil).BuildDashboard(nil, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -735,7 +735,7 @@ func TestBuildDashboard_joinsQueryDataErrors(t *testing.T) {
 		QueryRequestErr: errors.New("request: unsupported value: +Inf"),
 		Resp:            &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}},
 	}}
-	blob, err := NewBundler().BuildDashboard(nil, panels)
+	blob, err := NewBundler(nil).BuildDashboard(nil, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -761,7 +761,7 @@ func TestBundler_Build_keepsRequestWhenResponseEncodingFails(t *testing.T) {
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
 	request := json.RawMessage(`{"queries":[{"refId":"A","expr":"up"}]}`)
 
-	blob, err := NewBundler().Build(resp, &harcapture.Buffer{}, nil, nil, request, nil, nil)
+	blob, err := NewBundler(nil).Build(resp, &harcapture.Buffer{}, nil, nil, request, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -785,7 +785,7 @@ func TestBuildDashboard_keepsRequestWhenResponseEncodingFails(t *testing.T) {
 		QueryRequest: json.RawMessage(`{"queries":[{"refId":"A","expr":"up"}]}`),
 		Resp:         &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}},
 	}}
-	blob, err := NewBundler().BuildDashboard(nil, panels)
+	blob, err := NewBundler(nil).BuildDashboard(nil, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -1015,7 +1015,7 @@ func readTarGz(t *testing.T, data []byte) map[string][]byte {
 func TestBundler_Build_bundlesPanelData(t *testing.T) {
 	panelData := json.RawMessage(`{"version":1,"frames":[{"schema":{"name":"frontend-frames"}}]}`)
 
-	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil,
+	blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil,
 		WithPanelData(panelData))
 	require.NoError(t, err)
 
@@ -1024,7 +1024,7 @@ func TestBundler_Build_bundlesPanelData(t *testing.T) {
 }
 
 func TestBundler_Build_omitsPanelDataWhenNotSupplied(t *testing.T) {
-	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	require.NotContains(t, readTarGz(t, blob), "paneldata.json")
@@ -1034,7 +1034,7 @@ func TestBundler_Build_omitsPanelDataWhenNull(t *testing.T) {
 	// A client that sends "panelData": null supplied nothing, so no artifact: one whose whole content is
 	// `null` reads as "the frontend was holding no frames", which is a frontend loss that never happened.
 	for _, payload := range []string{`null`, ` null `, ``} {
-		blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil,
+		blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil,
 			WithPanelData(json.RawMessage(payload)))
 		require.NoError(t, err)
 
@@ -1047,7 +1047,7 @@ func TestBundler_Build_unparseablePanelDataDoesNotSinkTheBundle(t *testing.T) {
 	// bundle nothing else: every other artifact still ships. Unreachable through the HTTP endpoint --
 	// web.Bind rejects a body that isn't valid JSON before Build runs, so the worst that arrives there is
 	// a well-formed payload of the wrong shape -- this pins the contract for direct callers.
-	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil,
+	blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil,
 		WithPanelData(json.RawMessage(`{"version":1,`)))
 	require.NoError(t, err)
 
