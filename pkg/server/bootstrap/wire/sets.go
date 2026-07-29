@@ -154,6 +154,7 @@ import (
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	serviceaccountsproxy "github.com/grafana/grafana/pkg/services/serviceaccounts/proxy"
 	serviceaccountsretriever "github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
+	satokenprovider "github.com/grafana/grafana/pkg/services/serviceaccounts/token/provider"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
 	"github.com/grafana/grafana/pkg/services/signingkeys"
@@ -471,7 +472,8 @@ var Basic = wire.NewSet(
 	satokenmigrator.NewWithEngine,
 	satokendatabase.ProvideDatabase,
 	wire.Bind(new(satokencontracts.Database), new(*satokendatabase.Database)),
-	satoken.ProvideStorage,
+	satoken.ProvideEmbeddedStorage,
+	satokenprovider.ProvideStorage,
 	satoken.ProvideValidator,
 	// Unified storage
 	resource.ProvideStorageMetrics,

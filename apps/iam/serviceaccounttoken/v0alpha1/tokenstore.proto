@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package serviceaccounttokenv0alpha1;
+
+option go_package = "github.com/grafana/grafana/apps/iam/serviceaccounttoken/v0alpha1;serviceaccounttokenv0alpha1";
+
+// Token is a service account token as exposed by the token store. The hashed key
+// is never returned on read paths.
+message Token {
+    string id = 1;
+    string namespace = 2;
+    string name = 3;
+    string service_account_name = 4;
+
+    // Unix seconds.
+    int64 created = 5;
+    // Unix seconds.
+    int64 updated = 6;
+    // Unix seconds. 0 means the token has never been used.
+    int64 last_used_at = 7;
+
+    bool is_revoked = 8;
+
+    // Unix seconds. 0 means the token never expires.
+    int64 expires = 9;
+}
+
+message CreateTokenRequest {
+    string namespace = 1;
+    string service_account_name = 2;
+    string name = 3;
+
+    // Already a hash, never the plaintext token.
+    string key = 4;
+
+    // 0 means the token never expires.
+    int64 seconds_to_live = 5;
+}
+
+message CreateTokenResponse {
+    Token token = 1;
+}
+
+message GetTokenRequest {
+    string namespace = 1;
+    string service_account_name = 2;
+    string name = 3;
+}
+
+message GetTokenResponse {
+    Token token = 1;
+}
+
+message ListTokensRequest {
+    string namespace = 1;
+    string service_account_name = 2;
+    int64 limit = 3;
+    int64 continue_token = 4;
+}
+
+message ListTokensResponse {
+    repeated Token items = 1;
+
+    // 0 means there are no more pages.
+    int64 continue_token = 2;
+}
+
+message DeleteTokenRequest {
+    string namespace = 1;
+    string service_account_name = 2;
+    string name = 3;
+}
+
+message DeleteTokenResponse {}
+
+message GetTokenByHashRequest {
+    string namespace = 1;
+    string hash = 2;
+}
+
+message GetTokenByHashResponse {
+    Token token = 1;
+}
+
+message UpdateTokenLastUsedDateRequest {
+    string namespace = 1;
+    string id = 2;
+}
+
+message UpdateTokenLastUsedDateResponse {}
+
+service ServiceAccountTokenStore {
+    rpc CreateToken(CreateTokenRequest) returns (CreateTokenResponse);
+    rpc GetToken(GetTokenRequest) returns (GetTokenResponse);
+    rpc ListTokens(ListTokensRequest) returns (ListTokensResponse);
+    rpc DeleteToken(DeleteTokenRequest) returns (DeleteTokenResponse);
+    rpc GetTokenByHash(GetTokenByHashRequest) returns (GetTokenByHashResponse);
+    rpc UpdateTokenLastUsedDate(UpdateTokenLastUsedDateRequest) returns (UpdateTokenLastUsedDateResponse);
+}

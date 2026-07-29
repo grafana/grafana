@@ -416,6 +416,13 @@ type Cfg struct {
 
 	// Service Accounts
 	SATokenExpirationDayLimit int
+	// Which backend owns service account tokens: "embedded" or "mt".
+	// Values match token.StoreType, which cannot be referenced here because that
+	// package already depends on this one.
+	SATokenStoreType string
+	// Address of the iam.grafana.app token store service. Empty with
+	// SATokenStoreType "mt" uses an in-process server.
+	SATokenStoreGrpcAddress string
 
 	// Annotations
 	AnnotationCleanupJobBatchSize      int64
@@ -2259,6 +2266,8 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 func readServiceAccountSettings(iniFile *ini.File, cfg *Cfg) error {
 	serviceAccount := iniFile.Section("service_accounts")
 	cfg.SATokenExpirationDayLimit = serviceAccount.Key("token_expiration_day_limit").MustInt(-1)
+	cfg.SATokenStoreType = valueAsString(serviceAccount, "token_store_type", "embedded")
+	cfg.SATokenStoreGrpcAddress = valueAsString(serviceAccount, "token_store_grpc_address", "")
 	return nil
 }
 

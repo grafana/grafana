@@ -470,6 +470,13 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 
+	if opts.ServiceAccountTokenStoreType != "" {
+		saSect, err := cfg.NewSection("service_accounts")
+		require.NoError(t, err)
+		_, err = saSect.NewKey("token_store_type", opts.ServiceAccountTokenStoreType)
+		require.NoError(t, err)
+	}
+
 	if opts.LicensePath != "" {
 		section, err := cfg.NewSection("enterprise")
 		require.NoError(t, err)
@@ -1126,17 +1133,20 @@ type GrafanaOpts struct {
 	// Zero leaves the default (30s).
 	ProvisioningJobPollInterval time.Duration
 	GrafanaComSSOAPIToken       string
-	LicensePath                 string
-	EnableRecordingRules        bool
-	EnableSCIM                  bool
-	RBACSingleOrganization      bool
-	GlobalRoleSeedingEnabled    bool
-	APIServerRuntimeConfig      string
-	DisableControllers          bool
-	DisableDBCleanup            bool
-	MigrationParquetBuffer      bool
-	MigrationChunkMaxBytes      int64
-	EnableSQLKVBackend          bool
+	// ServiceAccountTokenStoreType sets [service_accounts] token_store_type
+	// ("embedded" or "mt"). Empty leaves the ini default (embedded).
+	ServiceAccountTokenStoreType string
+	LicensePath                  string
+	EnableRecordingRules         bool
+	EnableSCIM                   bool
+	RBACSingleOrganization       bool
+	GlobalRoleSeedingEnabled     bool
+	APIServerRuntimeConfig       string
+	DisableControllers           bool
+	DisableDBCleanup             bool
+	MigrationParquetBuffer       bool
+	MigrationChunkMaxBytes       int64
+	EnableSQLKVBackend           bool
 	// NATSEnabled starts an embedded Core NATS bus ([nats] enabled=true,
 	// mode=embedded). Provisioning controllers then consume resource-change
 	// notifications through the NATS-backed informer instead of the apiserver

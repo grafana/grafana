@@ -23,7 +23,7 @@ type store struct {
 	tracer  trace.Tracer
 }
 
-func ProvideStorage(db contracts.Database, tracer trace.Tracer) (Storage, error) {
+func ProvideEmbeddedStorage(db contracts.Database, tracer trace.Tracer) (EmbeddedStorage, error) {
 	return &store{
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
@@ -31,7 +31,9 @@ func ProvideStorage(db contracts.Database, tracer trace.Tracer) (Storage, error)
 	}, nil
 }
 
-func ProvideValidator(storage Storage) Validator {
+// ProvideValidator is deliberately bound to EmbeddedStorage: token validation must
+// always hit the database, never a remote token store.
+func ProvideValidator(storage EmbeddedStorage) Validator {
 	return storage
 }
 

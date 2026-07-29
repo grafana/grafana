@@ -79,6 +79,140 @@ func TestIntegrationServiceAccountTokens(t *testing.T) {
 	}
 }
 
+// TestIntegrationServiceAccountTokensMTStore exercises the token endpoints when
+// [service_accounts] token_store_type = mt, so writes and reads go through the
+// iam.grafana.app token store gRPC service instead of the Grafana database.
+func TestIntegrationServiceAccountTokensMTStore(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:            false,
+		DisableAnonymous:             true,
+		APIServerStorageType:         "unified",
+		ServiceAccountTokenStoreType: "mt",
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"serviceaccounts.iam.grafana.app": {
+				DualWriterMode: rest.Mode1,
+			},
+		},
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+			featuremgmt.FlagKubernetesServiceAccountsApi,
+			featuremgmt.FlagKubernetesServiceAccountTokensApi,
+		},
+	})
+
+	ns := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+	saName := createServiceAccount(t, helper)
+
+	t.Run("should create a token through the gRPC store", func(t *testing.T) {
+		body, err := json.Marshal(createTokenRequest{
+			TokenName:        "mt-token-1",
+			ExpiresInSeconds: 3600,
+		})
+		require.NoError(t, err)
+
+		var res createTokenResponse
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodPost,
+			Path:   tokensPath(ns, saName),
+			Body:   body,
+		}, &res)
+
+		require.Equal(t, http.StatusCreated, rsp.Response.StatusCode)
+		require.NotEmpty(t, res.Token, "plaintext token should be returned")
+		require.Equal(t, "mt-token-1", res.ServiceAccountTokenName)
+	})
+
+	t.Run("should read the token back from the gRPC store", func(t *testing.T) {
+		var res getTokenResponse
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   tokenPath(ns, saName, "mt-token-1"),
+		}, &res)
+
+		require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
+		require.Equal(t, "mt-token-1", res.Body.Title)
+		require.Greater(t, res.Body.Expires, int64(0))
+		require.Greater(t, res.Body.Created, int64(0))
+	})
+
+	t.Run("should list the token from the gRPC store", func(t *testing.T) {
+		var res listTokensResponse
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   tokensPath(ns, saName),
+		}, &res)
+
+		require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
+		require.Len(t, res.Items, 1)
+		require.Equal(t, "mt-token-1", res.Items[0].Title)
+	})
+
+	t.Run("should return 404 for a token the gRPC store does not have", func(t *testing.T) {
+		var res getTokenResponse
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   tokenPath(ns, saName, "does-not-exist"),
+		}, &res)
+
+		require.Equal(t, http.StatusNotFound, rsp.Response.StatusCode)
+	})
+
+	t.Run("should still write the token to the legacy api_key table", func(t *testing.T) {
+		// Legacy remains the source of truth for authentication, so the fail-open
+		// dual-write must not be skipped in mt mode. A duplicate create therefore
+		// still conflicts on the legacy unique constraint.
+		body, err := json.Marshal(createTokenRequest{
+			TokenName:        "mt-token-1",
+			ExpiresInSeconds: 3600,
+		})
+		require.NoError(t, err)
+
+		var res createTokenResponse
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodPost,
+			Path:   tokensPath(ns, saName),
+			Body:   body,
+		}, &res)
+
+		require.Equal(t, http.StatusConflict, rsp.Response.StatusCode)
+	})
+
+	t.Run("should delete the token through the gRPC store", func(t *testing.T) {
+		var res deleteTokenResponse
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodDelete,
+			Path:   tokenPath(ns, saName, "mt-token-1"),
+		}, &res)
+
+		require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
+
+		var get getTokenResponse
+		getRsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   tokenPath(ns, saName, "mt-token-1"),
+		}, &get)
+		require.Equal(t, http.StatusNotFound, getRsp.Response.StatusCode)
+
+		var list listTokensResponse
+		listRsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodGet,
+			Path:   tokensPath(ns, saName),
+		}, &list)
+		require.Equal(t, http.StatusOK, listRsp.Response.StatusCode)
+		require.Empty(t, list.Items)
+	})
+}
+
 // createServiceAccount is a test helper that creates a SA and returns its k8s name (UID).
 func createServiceAccount(t *testing.T, helper *apis.K8sTestHelper) string {
 	t.Helper()

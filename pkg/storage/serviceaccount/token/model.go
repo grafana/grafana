@@ -61,3 +61,9 @@ type Storage interface {
 	Delete(ctx context.Context, namespace, serviceAccountName, name string) error
 	ListByServiceAccount(ctx context.Context, namespace, serviceAccountName string, limit, continueToken int64) (*ListResult, error)
 }
+
+// EmbeddedStorage is the SQL-backed Storage. It is a distinct type so the store
+// selector can be injected a specific implementation rather than itself.
+type EmbeddedStorage interface {
+	Storage
+}

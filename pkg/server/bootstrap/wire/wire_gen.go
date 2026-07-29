@@ -219,6 +219,7 @@ import (
 	manager2 "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/proxy"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
+	provider3 "github.com/grafana/grafana/pkg/services/serviceaccounts/token/provider"
 	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeysimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -939,7 +940,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	externalGroupReconciler := _wireNoopExternalGroupReconcilerValue
 	mappersRegistry := resourcepermission.ProvideMappersRegistry()
 	database5 := database4.ProvideDatabase(sqlStore, tracer)
-	storage, err := token.ProvideStorage(database5, tracer)
+	embeddedStorage, err := token.ProvideEmbeddedStorage(database5, tracer)
+	if err != nil {
+		return nil, err
+	}
+	storage, err := provider3.ProvideStorage(cfg, embeddedStorage, tracer)
 	if err != nil {
 		return nil, err
 	}
@@ -1700,7 +1705,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	externalGroupReconciler := _wireNoopExternalGroupReconcilerValue
 	mappersRegistry := resourcepermission.ProvideMappersRegistry()
 	database5 := database4.ProvideDatabase(sqlStore, tracer)
-	storage, err := token.ProvideStorage(database5, tracer)
+	embeddedStorage, err := token.ProvideEmbeddedStorage(database5, tracer)
+	if err != nil {
+		return nil, err
+	}
+	storage, err := provider3.ProvideStorage(cfg, embeddedStorage, tracer)
 	if err != nil {
 		return nil, err
 	}

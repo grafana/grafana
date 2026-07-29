@@ -19,7 +19,7 @@ func setupStore(t *testing.T) token.Storage {
 
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	tracer := noop.NewTracerProvider().Tracer("test")
-	store, err := token.ProvideStorage(database.ProvideDatabase(testDB, tracer), tracer)
+	store, err := token.ProvideEmbeddedStorage(database.ProvideDatabase(testDB, tracer), tracer)
 	require.NoError(t, err)
 	return store
 }
