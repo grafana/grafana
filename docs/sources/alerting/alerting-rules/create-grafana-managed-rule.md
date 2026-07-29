@@ -207,6 +207,8 @@ If you prefer to always use advanced configuration, you can disable the **Defaul
 
 Define a query to get the data you want to measure and a condition that needs to be met before an alert rule fires.
 
+Depending on the data source, the query editor offers a **Builder** and a **Code** option. **Builder** helps you construct a query with a visual interface. The **Builder** option is useful if you have limited experience with the query language, while **Code** lets you write the query directly for more control. Switch between them using the **Builder** and **Code** tabs on the query editor toolbar.
+
 The **Default** option allows to configure one query and one alert condition. The **Advanced** option allows multiple queries and expressions for more complex rule definitions.
 
 {{< collapse title="Default options" >}}

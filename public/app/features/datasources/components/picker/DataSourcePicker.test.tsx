@@ -1,4 +1,4 @@
-import { findByText, render, screen } from '@testing-library/react';
+import { act, findByText, render, screen } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 
 import {
@@ -131,7 +131,7 @@ describe('DataSourcePicker', () => {
         </ModalsProvider>
       );
 
-      const searchBox = await screen.findByRole('textbox');
+      const searchBox = await screen.findByRole('combobox');
       expect(searchBox).toBeInTheDocument();
 
       getListMock.mockClear();
@@ -271,6 +271,35 @@ describe('DataSourcePicker', () => {
       expect(screen.queryByText(mockDS1.name, { selector: 'span' })).toBeNull();
     });
 
+    it('should announce the keyboard-highlighted item via aria-activedescendant', async () => {
+      await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS1.name });
+
+      const searchBox = screen.getByRole('combobox');
+      expect(searchBox).toHaveAttribute('aria-expanded', 'true');
+
+      const activeOption = () => {
+        const id = searchBox.getAttribute('aria-activedescendant');
+        expect(id).toBeTruthy();
+        return document.getElementById(id!);
+      };
+
+      // On open, the first item is highlighted
+      let option = activeOption();
+      expect(option).toHaveAccessibleName(mockDS1.name);
+      expect(option).toHaveAttribute('aria-posinset', '1');
+      expect(option).toHaveAttribute('aria-setsize', String(mockDSList.length));
+
+      await user.keyboard('[ArrowDown]');
+      option = activeOption();
+      expect(option).toHaveAccessibleName(mockDS2.name);
+      expect(option).toHaveAttribute('aria-posinset', '2');
+
+      // aria-selected marks the current data source, not the keyboard highlight,
+      // so it must not have moved with the arrow key
+      const selected = screen.getByRole('option', { selected: true });
+      expect(selected).toHaveAccessibleName(mockDS1.name);
+    });
+
     it('should be searchable', async () => {
       await setupOpenDropdown(user, { onChange: jest.fn() });
 
@@ -298,12 +327,42 @@ describe('DataSourcePicker', () => {
         </ModalsProvider>
       );
 
-      const searchBox = await screen.findByRole('textbox');
+      const searchBox = await screen.findByRole('combobox');
       expect(searchBox).toBeInTheDocument();
       await user.click(searchBox!);
       await user.click(await screen.findByText('Open advanced data source picker'));
       expect(await screen.findByText('Select data source')); //Data source modal is open
       expect(screen.queryByText('Open advanced data source picker')).toBeNull(); //Drop down is closed
+    });
+  });
+
+  describe('search result announcements', () => {
+    // Fake timers so the tests don't sit through the live region's real debounce
+    let fakeTimerUser: UserEvent;
+
+    beforeEach(() => {
+      fakeTimerUser = userEvent.setup({ delay: null });
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should announce the number of search results', async () => {
+      await setupOpenDropdown(fakeTimerUser, { onChange: jest.fn() });
+
+      await fakeTimerUser.keyboard(mockDS1.name); //Search for a term matching a single data source
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+      expect(screen.getByRole('status')).toHaveTextContent('1 data source found');
+
+      await fakeTimerUser.keyboard('foobarbaz'); //Search for a DS that should not exist
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+      expect(screen.getByRole('status')).toHaveTextContent('No data sources found');
     });
   });
 });

@@ -24079,6 +24079,9 @@
           "404": {
             "$ref": "#/components/responses/notFoundError"
           },
+          "409": {
+            "$ref": "#/components/responses/conflictError"
+          },
           "500": {
             "$ref": "#/components/responses/internalServerError"
           }

@@ -8,10 +8,10 @@ import { setPluginLinksHook } from '@grafana/runtime';
 import { CustomVariable, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
 
-import { DashboardEditPaneRenderer } from '../../edit-pane/DashboardEditPaneRenderer';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
+import { DashboardSidebarRenderer } from '../../sidebar/DashboardSidebarRenderer';
 import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
@@ -151,7 +151,7 @@ describe('VariableEditableElement', () => {
     renderVariableEditPane(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
-    expect(dashboard.state.editPane.state.openPane).toBeInstanceOf(VariableTypeChangePane);
+    expect(dashboard.state.sidebar.state.openPane).toBeInstanceOf(VariableTypeChangePane);
     expect(screen.getByText('Change variable type')).toBeInTheDocument();
   });
 });
@@ -169,7 +169,7 @@ function WrapSidebar({ children }: { children: ReactNode }) {
 function renderVariableEditPane(dashboard: DashboardScene) {
   render(
     <WrapSidebar>
-      <DashboardEditPaneRenderer dashboard={dashboard} />
+      <DashboardSidebarRenderer dashboard={dashboard} />
     </WrapSidebar>
   );
 }
@@ -191,7 +191,7 @@ function buildDashboardVariableScene() {
   });
 
   activateFullSceneTree(dashboard);
-  dashboard.state.editPane.selectObject(variable, { force: true });
+  dashboard.state.sidebar.selectObject(variable, { force: true });
 
   return { dashboard, variableSet };
 }

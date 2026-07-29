@@ -322,11 +322,15 @@ func (b *bleveIndex) finalizePostFilter(
 	// runner only authorizes hits returned after the cursor, so `authorized`
 	// on exhaustion is the tail count, not the whole-query total — fall back
 	// to the unfiltered firstRes.Total.
-	if exhausted && req.Limit > 0 && len(req.SearchAfter) == 0 {
+	exact := exhausted && req.Limit > 0 && len(req.SearchAfter) == 0
+	if exact {
 		response.TotalHits = authorized
 	} else {
+		// Approximate: report the pre-authz match count (an over-count of the
+		// authorized total) instead of paying for a full scan.
 		response.TotalHits = int64(firstRes.Total)
 	}
+	response.TotalHitsExact = exact
 	response.QueryCost = float64(firstRes.Cost)
 	response.MaxScore = firstRes.MaxScore
 	stats.AddReturnedDocuments(len(page))

@@ -113,7 +113,11 @@ const mockFetchPredefinedVariables = jest.fn();
 jest.mock('../utils/predefinedVariables', () => ({
   ...jest.requireActual('../utils/predefinedVariables'),
   // Default to no predefined variables so unrelated tests are unaffected.
-  fetchPredefinedVariables: (...args: unknown[]) => mockFetchPredefinedVariables(...args) ?? Promise.resolve([]),
+  fetchPredefinedVariables: (...args: unknown[]) => {
+    const result = mockFetchPredefinedVariables(...args);
+    // Preserve null (fetch failure); only default when the mock is unset.
+    return result === undefined ? Promise.resolve([]) : result;
+  },
 }));
 
 const createTestStore = () =>
@@ -820,14 +824,12 @@ describe('DashboardScenePageStateManager v2', () => {
     });
 
     describe('predefined variables', () => {
-      const originalGlobalDashboardVariables = config.featureToggles.globalDashboardVariables;
-
       beforeEach(() => {
-        config.featureToggles.globalDashboardVariables = true;
+        setTestFlags({ globalDashboardVariables: true });
       });
 
       afterEach(() => {
-        config.featureToggles.globalDashboardVariables = originalGlobalDashboardVariables;
+        setTestFlags({});
       });
 
       const predefinedVariable = {
