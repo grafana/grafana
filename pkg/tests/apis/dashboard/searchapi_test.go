@@ -169,6 +169,31 @@ func TestIntegrationSearchAPI(t *testing.T) {
 		assert.Equal(t, http.StatusUnprocessableEntity, code)
 	})
 
+	// Folders declare no search fields of their own, so this exercises a kind that
+	// has only the standard set.
+	t.Run("searches folders too", func(t *testing.T) {
+		folderGVR := schema.GroupVersionResource{
+			Group:    "folder.grafana.app",
+			Version:  "v1beta1",
+			Resource: "folders",
+		}
+		results, code := search(t, ctx, helper.Org1.Admin, folderGVR, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{
+				Text: &searchV0.TextPredicate{Value: "Search API folder"},
+			},
+			Fields: []string{"title"},
+			Limit:  10,
+		})
+		require.Equal(t, http.StatusOK, code)
+		require.NotEmpty(t, results.Items, "the folder created above should be found")
+
+		item := results.Items[0]
+		assert.Equal(t, "folder.grafana.app", item.Resource.Group)
+		assert.Equal(t, "folders", item.Resource.Resource)
+		assert.Equal(t, "Folder", item.Resource.Kind)
+		assert.Equal(t, folderUID, item.Resource.Name)
+	})
+
 	// A malformed body cannot be validated at all, so it is a bad request.
 	t.Run("rejects an unknown top-level field", func(t *testing.T) {
 		code := postRaw(t, ctx, helper.Org1.Admin, gvr,
