@@ -731,6 +731,35 @@ describe('JOIN Transformer', () => {
       });
     });
 
+    it('forwards the bystander when only one frame has the join field', async () => {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
+        id: DataTransformerID.joinByField,
+        options: { byField: 'GA', mode: JoinMode.outer, keepUnjoinedFrames: true },
+      };
+
+      // only the fact table has GA, so the join has a single participant
+      await expect(transformDataFrame([cfg], [fact, lookupPA])).toEmitValuesWith((received) => {
+        const data = received[0];
+        expect(data).toHaveLength(2);
+        expect(data[0].fields.map((f) => f.name)).toEqual(['GA', 'PA', 'Val']);
+        expect(data[1]).toBe(lookupPA);
+      });
+    });
+
+    it('does not rename the input frame when there is a single participant', async () => {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
+        id: DataTransformerID.joinByField,
+        options: { byField: 'GA', mode: JoinMode.outer, keepUnjoinedFrames: true },
+      };
+
+      // joinDataFrames returns the frame itself when given one frame, so naming the
+      // result must not write through to the caller's input
+      await expect(transformDataFrame([cfg], [fact, lookupPA])).toEmitValuesWith((received) => {
+        expect(received[0][0].refId).toBe('joinByField-A');
+        expect(fact.refId).toBe('A');
+      });
+    });
+
     it('returns the input untouched when no frame has the join field', async () => {
       const cfg: DataTransformerConfig<JoinByFieldOptions> = {
         id: DataTransformerID.joinByField,

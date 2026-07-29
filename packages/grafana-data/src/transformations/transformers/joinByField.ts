@@ -70,8 +70,10 @@ export const joinByFieldTransformer: SynchronousDataTransformerInfo<JoinByFieldO
 
         const joined = joinDataFrames({ frames, joinBy, mode: options.mode });
         if (joined) {
-          joined.refId = `${DataTransformerID.joinByField}-${frames.map((frame) => frame.refId).join('-')}`;
-          return [joined, ...unjoined];
+          const refId = `${DataTransformerID.joinByField}-${frames.map((frame) => frame.refId).join('-')}`;
+          // With a single participant joinDataFrames returns the input frame itself, so copy
+          // before naming it rather than renaming a frame the caller still holds.
+          return [{ ...joined, refId }, ...unjoined];
         }
       }
       return data;
