@@ -182,8 +182,10 @@ export {
   usePanelContext,
   useAdHocTransformations,
   type AdHocTransformationsApi,
+  type AdHocTransformationPositions,
   useTransformedData,
   type TransformedPanelData,
+  type UseTransformedDataOptions,
 } from './components/PanelChrome';
 export {
   VizLayout,

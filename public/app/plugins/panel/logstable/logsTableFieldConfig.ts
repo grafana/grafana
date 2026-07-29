@@ -10,8 +10,9 @@ import { type FieldConfig as TableFieldConfig } from '../table/panelcfg.gen';
 
 /**
  * Shared field config for the Logs Table panel. Used by module.tsx (`useFieldConfig`)
- * and by useExtractFields (`applyFieldOverrides`) so overrides like `custom.width` resolve
- * without importing `module.tsx` (avoids cycle: module → LogsTable → useExtractFields).
+ * and by useLogsTableTransformations (`applyFieldOverrides`) so overrides like `custom.width`
+ * resolve without importing `module.tsx` (avoids cycle: module → LogsTable →
+ * useLogsTableTransformations).
  */
 export const logsTablePanelFieldConfig: SetFieldConfigOptionsArgs<TableFieldConfig> = {
   standardOptions: {

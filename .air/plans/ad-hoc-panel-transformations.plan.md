@@ -121,6 +121,21 @@ Another, more realistic demonstration. Pull in the `FieldSelector` component as 
 
 Replace the current tranforms ran locally in the `logstable` panel hooks. The extract fields transform should always be prepended into the transformation array, so any user added transformations happen after the extract fields. OrganizeFields should be ran at the end, after any user transformations
 
+**Status: implemented** on `gtk-grafana/dataviz/ad-hoc-transforms-poc__4-logstable-adoption`. Adopting a panel with real transformation needs (rather than the table's empty-by-default pipeline) surfaced four gaps in the Phase 3 hooks. See [Phase 6 findings](#phase-6-findings--upstream-changes-the-logstable-adoption-forced) for what had to change outside the panel and what is still outstanding.
+
+| File                                                                        | Action     | Change                                                                                                                             |
+| --------------------------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/grafana-ui/src/components/PanelChrome/useAdHocTransformations.ts` | Modify     | Local-state fallback when the host provides no pipeline; `replaceAdHoc({ before, after })`                                         |
+| `packages/grafana-ui/src/components/PanelChrome/useTransformedData.ts`      | Modify     | `transformations`, `splitTrailing` (+ `dataBeforeTrailing`) and `applyFieldConfig` options; run whenever the pipeline is non-empty |
+| `public/app/plugins/panel/logstable/plugin.json`                            | Modify     | `"adHocTransforms": true`                                                                                                          |
+| `public/app/plugins/panel/logstable/hooks/useLogsTableTransformations.ts`   | **Create** | Derives both configs, syncs them idempotently via `replaceAdHoc({ before, after })`, runs the pipeline, returns both stages        |
+| `public/app/plugins/panel/logstable/hooks/useDecorateFields.tsx`            | **Create** | The field config that cannot be a transformation: level pills, time column width, `filterable`, `inspect`, the React cell renderer |
+| `public/app/plugins/panel/logstable/hooks/useExtractFields.ts`              | **Delete** | Replaced                                                                                                                           |
+| `public/app/plugins/panel/logstable/hooks/useOrganizeFields.tsx`            | **Delete** | Replaced                                                                                                                           |
+| `public/app/plugins/panel/logstable/LogsTable.tsx`                          | Modify     | Wire both hooks; the field selector now reads `availableFieldsFrame`                                                               |
+
+`transforms/extractLogsFieldsTransform.ts` and `transforms/organizeLogsFieldsTransform.ts` are unchanged — they were already pure config builders, which is why they drop straight into a pipeline.
+
 ## Implementation Steps
 
 ### Task 0 — `@grafana/scenes` (PR 0, separate repo)
@@ -369,5 +384,98 @@ Enable `panelAdHocTransformations` in `conf/custom.ini`. Build a table panel on 
 - Upstream `skipFieldConfig` on `VizPanel` to remove the redundant field-config pass and restore strict query → transform → field config ordering.
 - A panel-edit badge on rows with `origin.source === 'panel'` ("added by the visualization").
 - `PanelContext.onTransformationError` so the panel chrome header surfaces transform errors.
-- Migrate `logstable`'s `useOrganizeFields` / `useExtractFields` onto the shared hooks — its manual `merge({}, fieldConfig.defaults, field.config)` loop is exactly the gap `applyFieldConfig` closes.
+- ~~Migrate `logstable`'s `useOrganizeFields` / `useExtractFields` onto the shared hooks~~ — done in Phase 6. The manual `merge({}, fieldConfig.defaults, field.config)` loop is gone, though `applyFieldConfig` turned out **not** to be the thing that closed the gap; see finding 4 below.
 - `PanelDataPaneNext` calls `runQueries()` after transformation edits instead of `reprocessTransformations()`; wasteful under bypass.
+
+## Phase 6 findings — upstream changes the logstable adoption forced
+
+The table panel (Phase 4) is a weak test of the hooks: its pipeline is empty by default, so `useTransformedData` is a no-op until a user hides a column, and it needs nothing from the pipeline it did not put there. `logstable` is the opposite — it **cannot render at all** without its two transformations, it needs them on both sides of the user's, and it needs to see an intermediate stage. Four gaps followed. All four are additive and none change existing behaviour for the table panel.
+
+### 1. `replaceAdHoc` could only append — ordering had to become expressible
+
+Phase 3 decided panel entries always run last (`replaceAdHoc` keeps editor entries first, then appends). That is right for "hide this column" but cannot express what logstable needs:
+
+```
+extractFields (panel)  →  whatever the user added  →  organize (panel)
+```
+
+Extracting first is the whole point: today a user transformation runs against the raw frame, so it cannot reference a label column, and `organize`'s `includeByName` would drop any field it created. Organizing last is what makes user-created fields selectable in the sidebar.
+
+`replaceAdHoc` now accepts `{ before, after }` alongside the array form. Positions do **not** need persisting — the panel recomputes both entries from its own state on every data change and writes them in one call, so it never reads a position back. That kept `origin` out of it and avoided a schema change.
+
+### 2. Non-dashboard hosts got no pipeline at all — the hooks now degrade
+
+`ExploreLogsTable.tsx:167` renders `LogsTable` **directly as a React component** with a hand-rolled `PanelContextProvider` (`:159-166`) containing only `eventBus` / `onAddAdHocFilter` / `app`. There are also context-free hosts: `PanelRenderer` wraps only `ErrorBoundaryAlert` + `PluginContextProvider` (`PanelRenderer.tsx:94-116`), which viz-suggestion previews and Explore's `CustomContainer` go through.
+
+With Phase 3's `enabled && transformations.length > 0` gate, logstable in Explore would render a raw `labels` JSON blob with every column at once. The alternative — keeping a second, local copy of the transformation code for those hosts — doubles the panel and undercuts the point.
+
+So `useAdHocTransformations` now keeps the pipeline in component state when the host provides none, and `useTransformedData` runs whenever the pipeline is non-empty rather than only when the host handed it over. A panel gets **one code path**; the difference between hosts is only whether the pipeline is persisted and visible in the transformations editor.
+
+`enabled` deliberately kept its old meaning — "the host owns the pipeline" — so UI that implies persistence still gates correctly. The table's "Hide column" item does not appear in Explore, which is right.
+
+**Consequence worth knowing:** with the feature toggle off, or on a dashboard whose panel does not declare `adHocTransforms`, `enabled` is false, the host executes the editor pipeline as usual, and the panel applies its own entries locally on top of already-transformed data. That is exactly today's behaviour, and nothing is written to the dashboard. `LogsTable.test.tsx` mounts in precisely that shape and passes unchanged.
+
+**Caveat:** two instances of `useAdHocTransformations` in the same panel each hold their own fallback state. `useTransformedData` therefore grew a `transformations` option so a panel that calls both hooks can pass the one it actually wrote to. A shared fallback store would remove the footgun; deliberately not built, because the only clean options are a new context provider or mutating the host's `PanelContext` object.
+
+### 3. The trailing transformation starved the sidebar — hence `splitTrailing`
+
+The field selector enumerates available columns from the frame it is given. Two independent consumers break on the post-`organize` frame:
+
+- `buildColumnsWithMeta.ts:42-59` builds its whole key set by iterating `dataFrame.fields`. Non-displayed fields simply cease to exist, so a label you deselect can never be re-selected. `LogsTable.test.tsx:252-260` asserts against exactly this.
+- `getFieldsWithStats.ts:11-22` calls `parseLogsFrame` (returns `null` without a time **and** string body field, `logsFrame.ts:74-76`) and reads label keys out of the `labels` column. `organize` drops that column, so `uniqueLabels` collapses to `[]`.
+
+`filterFieldsByName` also drops frames with no surviving fields (`filter.ts:67-69`), so this is a hard failure, not degraded output.
+
+`useTransformedData(input, { splitTrailing: n })` now also returns `dataBeforeTrailing` — the data as of before the last `n` transformations, with field config applied. Both stages come from a **single** pass (`transformPanelData(head) → switchMap → transformPanelData(tail)`), so the expensive `extractFields` JSON parse still happens once. Opt-in, so the table panel pays nothing.
+
+This generalises rather than being logstable-specific: **Phase 5's table sidebar needs the identical thing.** Any panel that appends a column-selection transformation has to know what was available to select from.
+
+### 4. `context.applyFieldConfig` was not usable by this panel
+
+The plan expected `applyFieldConfig` to close logstable's `merge({}, fieldConfig.defaults, field.config)` gap. The merge loop did go away — but because field config now runs _after_ the transformations, not because the host helper was used. The helper could not be:
+
+- It applies `vizPanel.state.fieldConfig`, but the panel synthesizes `custom.filterable: true` and `custom.wrapText` into its own copy first (`LogsTable.tsx:203-216`). `filterable` has **no** schema default (`defaultTableFieldOptions`, `common.types.ts:43-50`), so losing that augmentation silently disables every column filter. Forcing it after the fact instead would override a per-field override that disables it — a parity break, not a cosmetic one.
+- It uses `plugin.fieldConfigRegistry`, which is unreachable in Explore, where no host implementation exists at all.
+
+`useTransformedData` therefore takes an `applyFieldConfig` override, and the panel passes the `applyFieldOverrides` call it already had. This is strictly more capable than adding a `fieldConfig` argument to `PanelContext.applyFieldConfig`, which would still have needed an Explore fallback. `context.applyFieldConfig` remains the right default for panels without a custom registry.
+
+### Incidental fix: field config is no longer applied twice in a dashboard
+
+Worth calling out because it validates the "start from pre-field-config data" rule in the Approach section. `useExtractFields` used to call `applyFieldOverrides` on `props.data.series[frameIndex]`, which `VizPanel.applyFieldConfig()` had **already** processed — two passes, so `setFieldConfigDefaults` appended the panel's default data links a second time (`fieldOverrides.ts:423-425` pushes rather than replaces). Sourcing from `getUntransformedData()` means exactly one pass in a dashboard, so panel data links stop duplicating.
+
+`merge({}, fieldConfig.defaults, field.config)` turned out not to be load-bearing: `setFieldConfigDefaults` merges per registry property and only fills nulls (`fieldOverrides.ts:445-466`), so it never shallow-overwrites `custom`. Non-dashboard hosts still get two passes if the host field-configs its data first, which is unchanged from before.
+
+### Accepted trade-offs
+
+| Trade-off                                                                                                                                                                                                                                                                                                                     | Why it is acceptable                                                                                                                                                                                                                                                                                                                                                                        |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dirty on first edit-mode open.** Both entries are derived, so the panel writes them on mount. Any non-`data` `SceneDataTransformer` update trips the change tracker (`DashboardSceneChangeTracker.ts:75-79`) and `transformations` is serialized verbatim, so an existing dashboard shows unsaved changes until saved once. | Self-healing: after one save the derived configs equal what is in JSON, `pipelineKey` matches, and no write happens. Stage B is gated on `isEditing`, so view mode never dirties. The write is also gated on data having arrived, so it fires once rather than on every render.                                                                                                             |
+| **`organize` applies to every frame.** Today the panel splices only `series[frameIndex]`; in a pipeline all frames are transformed and `includeByName` drops frames with none of the named fields (`filter.ts:67-69`). A logs frame plus a non-logs frame in one panel loses the second from the frame selector.              | `includeByName` derived only from `displayedFields` keeps the persisted config compact, stable, and diff-friendly. The `excludeByName` alternative (computable now that `dataBeforeTrailing` exists) would preserve other frames but make the persisted config data-derived, so every new label rewrites it. `organize`'s own `isApplicable` already reports multi-frame as `NotPossible`.  |
+| **Panel entries cannot be deleted or reordered from the editor.** The sync compares the whole pipeline against the arrangement `replaceAdHoc` would produce, so deleting either row — or dragging a user row past one of them — is undone on the next render.                                                                 | They are derived from `options.displayedFields` and the data shape; the sidebar is the way to change them. Restoring beats a table whose columns disagree with its own sidebar, or an `organize` that runs before the transformation whose fields it is meant to select from. Comparing the full pipeline rather than only the panel's own entries is also what makes the check idempotent. |
+| **Field names containing `$` or `[[`.** `getTransformations` interpolates the whole pipeline as one JSON string when any entry looks variable-ish (`adHocTransformations.ts:134-139`), so a label literally named `foo$bar` would be mangled.                                                                                 | Pre-existing for any panel-authored transformation, not introduced here. Worth a follow-up: interpolate per entry, or skip entries with `origin.source === 'panel'`.                                                                                                                                                                                                                        |
+| **Two `applyFieldOverrides` passes** when `splitTrailing` is used, one per stage.                                                                                                                                                                                                                                             | Keeps the documented contract — each stage gets field config exactly once, from unprocessed frames — instead of applying it mid-pipeline. Memoized on the frames, so it is per data change, not per render. `VizPanel`'s own discarded pass is the bigger waste, and the `skipFieldConfig` follow-up above covers it.                                                                       |
+
+### Trying it out
+
+`logstable` sets `hideFromList: true`, so it is not in the viz picker. Use the existing fixture instead:
+
+```bash
+make run && yarn start                      # enable panelAdHocTransformations in conf/custom.ini
+# open devenv/dev-dashboards/panel-logstable/logs-table.json
+```
+
+What to look for, in order of how much it exercises the new code:
+
+1. Panel edit → Transformations shows **Extract fields** and **Organize fields** rows the panel wrote. Toggling a column in the sidebar rewrites the `organize` row live.
+2. Add a transformation between them — e.g. **Filter data by values** on an extracted label. This is the capability that did not exist before: user transformations used to run against the raw frame, so no label column was reachable.
+3. Add a transformation that **creates** a field (e.g. **Add field from calculation**). It appears in the sidebar's available list, because the sidebar reads `dataBeforeTrailing`, and becomes selectable.
+4. Inspect → Data now shows extracted columns rather than a raw `labels` JSON blob, via `runPanelTransformations`.
+5. Switch the viz to Table and back; confirm the pipeline survives and the panel re-derives its entries.
+6. Repeat 1–3 in Explore (needs the `logsTablePanelNG` flag). Everything works except that the transformations are not persisted and there is no editor to see them in — that is the local-fallback path from finding 2.
+
+### Phase 6 follow-ups
+
+- Share the fallback pipeline between hook instances, so passing `transformations` explicitly is not required.
+- Interpolate transformation configs per entry so field names containing `$` survive.
+- Revisit `excludeByName` for `organize` once there is a real multi-frame logs case to test against.
+- `useDecorateFields` still rebuilds the first column's cell renderer whenever options change. It is memoized, but a serialisable cell-options descriptor would let even this be a transformation.

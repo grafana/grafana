@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { usePluginContext } from '@grafana/data';
 import { type DataTransformerConfig } from '@grafana/schema';
@@ -13,12 +13,29 @@ function isAdHoc(config: DataTransformerConfig): boolean {
 }
 
 /**
+ * Where panel-created transformations sit relative to editor-authored ones. `before` entries run
+ * ahead of the whole editor pipeline, `after` entries run last.
+ *
+ * @alpha -- experimental
+ */
+export interface AdHocTransformationPositions {
+  before?: DataTransformerConfig[];
+  after?: DataTransformerConfig[];
+}
+
+/**
  * @alpha -- experimental
  */
 export interface AdHocTransformationsApi {
   /**
-   * False when the host does not support ad-hoc transformations, or the panel plugin has not
-   * declared `adHocTransforms` in its plugin.json. All mutators are no-ops when false.
+   * True when the host handed this panel its transformation pipeline, which means reads and writes
+   * go to the dashboard: they persist, and they show up in the transformations editor.
+   *
+   * False in hosts that provide no pipeline (Explore, a bare `PanelRenderer`) and when the panel
+   * plugin has not declared `adHocTransforms`. The pipeline still works in that case — it is just
+   * held in component state, so it lasts only as long as the panel is mounted. Gate *UI* that
+   * implies persistence (a "hide this column for good" menu item) on this flag; do not gate the
+   * transformations themselves, which `useTransformedData` applies either way.
    */
   enabled: boolean;
 
@@ -37,10 +54,14 @@ export interface AdHocTransformationsApi {
   add: (config: DataTransformerConfig) => void;
 
   /**
-   * Replaces every panel-created entry with `configs`, keeping editor-authored entries in their
-   * existing order first. Panel-created transformations therefore always run last.
+   * Replaces every panel-created entry, keeping editor-authored entries in their existing order.
+   *
+   * Pass an array to put them all last, or `{ before, after }` to straddle the editor's entries —
+   * which is what a panel needs when one of its transformations prepares the data the user then
+   * transforms (extracting fields out of a JSON column) and another shapes the final output
+   * (selecting and ordering columns).
    */
-  replaceAdHoc: (configs: DataTransformerConfig[]) => void;
+  replaceAdHoc: (configs: DataTransformerConfig[] | AdHocTransformationPositions) => void;
 
   /** Removes panel-created entries — all of them, or just those matching `predicate`. */
   clearAdHoc: (predicate?: (config: DataTransformerConfig) => boolean) => void;
@@ -53,9 +74,8 @@ export interface AdHocTransformationsApi {
  * Read and write the panel's transformation pipeline from inside a panel plugin, so the
  * visualization can offer its own transformation UI.
  *
- * Only meaningful for panels that declare `adHocTransforms: true` in their plugin.json. Such a
- * panel receives untransformed data and is responsible for applying the pipeline itself — see
- * `useTransformedData`.
+ * A panel that declares `adHocTransforms: true` in its plugin.json receives untransformed data in
+ * a dashboard and is responsible for applying the pipeline itself — see `useTransformedData`.
  *
  * @alpha -- experimental
  */
@@ -65,7 +85,13 @@ export function useAdHocTransformations(): AdHocTransformationsApi {
   const pluginId = pluginContext?.meta.id;
 
   const enabled = Boolean(isAdHocTransformsEnabled?.() && getTransformations && setTransformations);
-  const transformations = (enabled && getTransformations?.()) || EMPTY;
+
+  // Hosts other than the dashboard hand the panel no pipeline at all. Holding one in component
+  // state there means a panel has a single code path everywhere instead of reimplementing its
+  // transformations for the hosts that cannot persist them.
+  const [localTransformations, setLocalTransformations] = useState<DataTransformerConfig[]>(EMPTY);
+
+  const transformations = (enabled ? getTransformations?.() : localTransformations) || EMPTY;
 
   const adHocTransformations = useMemo(() => transformations.filter(isAdHoc), [transformations]);
 
@@ -73,6 +99,8 @@ export function useAdHocTransformations(): AdHocTransformationsApi {
     (configs: DataTransformerConfig[]) => {
       if (enabled) {
         setTransformations?.(configs);
+      } else {
+        setLocalTransformations(configs);
       }
     },
     [enabled, setTransformations]
@@ -92,7 +120,13 @@ export function useAdHocTransformations(): AdHocTransformationsApi {
   );
 
   const replaceAdHoc = useCallback(
-    (configs: DataTransformerConfig[]) => set([...transformations.filter((t) => !isAdHoc(t)), ...configs.map(stamp)]),
+    (configs: DataTransformerConfig[] | AdHocTransformationPositions) => {
+      const positions = Array.isArray(configs) ? { after: configs } : configs;
+      const before = positions.before ?? EMPTY;
+      const after = positions.after ?? EMPTY;
+
+      set([...before.map(stamp), ...transformations.filter((t) => !isAdHoc(t)), ...after.map(stamp)]);
+    },
     [set, stamp, transformations]
   );
 

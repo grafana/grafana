@@ -34,7 +34,11 @@ export {
 } from './LoadingIndicator';
 
 export { usePanelContext, PanelContextProvider, type PanelContext, PanelContextRoot } from './PanelContext';
-export { useAdHocTransformations, type AdHocTransformationsApi } from './useAdHocTransformations';
-export { useTransformedData, type TransformedPanelData } from './useTransformedData';
+export {
+  useAdHocTransformations,
+  type AdHocTransformationsApi,
+  type AdHocTransformationPositions,
+} from './useAdHocTransformations';
+export { useTransformedData, type TransformedPanelData, type UseTransformedDataOptions } from './useTransformedData';
 
 export * from './types';

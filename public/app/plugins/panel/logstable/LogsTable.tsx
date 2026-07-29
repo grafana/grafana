@@ -35,8 +35,8 @@ import { getDefaultLogDetailsWidth, LogsTableDetails } from './LogsTableDetails'
 import { TableNGWrap } from './TableNGWrap';
 import { LogsTableFields } from './fieldSelector/LogsTableFields';
 import { detectLevelField } from './fields/logs';
-import { useExtractFields } from './hooks/useExtractFields';
-import { useOrganizeFields } from './hooks/useOrganizeFields';
+import { useDecorateFields } from './hooks/useDecorateFields';
+import { useLogsTableTransformations } from './hooks/useLogsTableTransformations';
 import { copyLogsTableDashboardUrl } from './links/copyDashboardUrl';
 import { getDisplayedFields } from './options/getDisplayedFields';
 import { onSortOrderChange } from './options/onSortOrderChange';
@@ -215,38 +215,32 @@ export const LogsTable = ({
     [fieldConfigProp, wrapText]
   );
 
-  // Extract fields transform
-  const { extractedFrame } = useExtractFields({
+  // Extract fields and organize fields run in the panel's transformation pipeline, so anything the
+  // user adds in the transformations editor sits between them.
+  const { data: transformedData, availableFieldsFrame } = useLogsTableTransformations({
+    data,
     rawTableFrame,
+    frameIndex,
     fieldConfig,
     timeZone,
     replaceVariables,
-    loadingState: data.state,
-  });
-
-  // Organize fields transform
-  const { organizedFrame } = useOrganizeFields({
-    extractedFrame,
+    options,
     timeFieldName,
     levelFieldName,
     bodyFieldName,
+  });
+
+  const panelData: PanelData = useDecorateFields({
+    data: transformedData,
+    frameIndex,
+    timeFieldName,
+    levelFieldName,
+    bodyFieldName,
+    options,
     logsFrame,
     supportsPermalink: supportsPermalink(),
     onPermalinkClick: isBuildLinkToLogLine(options.buildLinkToLogLine) ? options.buildLinkToLogLine : onPermalinkClick,
-    options,
-    fieldConfig,
   });
-
-  // Build panel data
-  const panelData: PanelData | null = useMemo(() => {
-    if (organizedFrame) {
-      const series = [...data.series];
-      series.splice(frameIndex, 1, organizedFrame);
-      return { ...data, series, frameIndex };
-    }
-
-    return data;
-  }, [organizedFrame, data, frameIndex]);
 
   const tableOptions = useMemo(
     () => ({
@@ -301,8 +295,9 @@ export const LogsTable = ({
     );
   }
 
-  // Don't render the table if we don't have the required data to show the visualization
-  const renderTable = timeFieldName && bodyFieldName && logsFrame && organizedFrame && extractedFrame;
+  // Don't render the table if we don't have the required data to show the visualization.
+  // availableFieldsFrame is only set once the transformation pipeline has produced a result.
+  const renderTable = timeFieldName && bodyFieldName && logsFrame && availableFieldsFrame;
 
   return (
     <div className={styles.wrapper} ref={containerRef}>
@@ -317,7 +312,7 @@ export const LogsTable = ({
             timeFieldName={timeFieldName}
             levelFieldName={levelFieldName}
             bodyFieldName={bodyFieldName}
-            dataFrame={extractedFrame}
+            dataFrame={availableFieldsFrame}
             onDisplayedFieldsChange={(displayedFields: string[]) =>
               handleLogsTableOptionChange({ displayedFields: transformDisplayedFields(displayedFields) })
             }
