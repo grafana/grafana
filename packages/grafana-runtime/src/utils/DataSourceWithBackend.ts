@@ -38,7 +38,6 @@ import { isQueryServiceCompatible } from './qscheck';
 import { type BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 import { UserStorage } from './userStorage';
 
-
 export class HealthCheckError extends Error {
   details: HealthCheckResultDetails;
 
