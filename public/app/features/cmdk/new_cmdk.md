@@ -14,7 +14,7 @@ Filtering happens only inside the source — each source decides whether to filt
 
 The query function will return a promise with items. While the promise is not resolved the section defined by the providedSections, can show separate loading status. Having the providedSections also means we can show the sections beforehand. To prevent flicker, old results are kept visible until the new ones arrive. For now query errors are ignored and treated as no results. Each query function will also take an abortSignal to allow the CmdkSources to cancel the query when signalled (on query change or on cmdk closing).
 
-The results from the query of each source will be then grouped by their section and rendered in a single list. Some known sections have hardcoded ordering; otherwise sections are ordered by registration order for now. Sections with no results stay visible, showing a single "<section name>: no results" line.
+The results from the query of each source will be then grouped by their section and rendered in a single list. Some known sections have hardcoded ordering; otherwise sections are ordered by registration order for now. Sections with no results are hidden, though a section stays visible with a loading indicator while its source is still loading.
 
 The UI is a split view: results list on the left, detail of the focused item (renderDetail) on the right — similar to how the current command palette works with deep search.
 

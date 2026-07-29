@@ -24,6 +24,13 @@ describe('buildSectionResults', () => {
     expect(result).toEqual([{ section: { id: 'nav', title: 'Navigation' }, items: [], loading: true }]);
   });
 
+  it('hides sections that finished loading with no items', () => {
+    const source = makeSource([{ id: 'nav', title: 'Navigation' }]);
+    const result = buildSectionResults([source], states([[source, { items: [], loading: false }]]));
+
+    expect(result).toEqual([]);
+  });
+
   it('merges items from multiple sources into the same section, first registered title wins', () => {
     const sourceA = makeSource([{ id: 'dash', title: 'Dashboards' }]);
     const sourceB = makeSource([{ id: 'dash', title: 'Other title' }]);
@@ -84,8 +91,8 @@ describe('buildSectionResults', () => {
     const result = buildSectionResults(
       [sourceA, sourceB],
       states([
-        [sourceA, { items: [], loading: false }],
-        [sourceB, { items: [], loading: false }],
+        [sourceA, { items: [makeItem('a', 'other')], loading: false }],
+        [sourceB, { items: [makeItem('b', 'nav')], loading: false }],
       ]),
       ['nav']
     );

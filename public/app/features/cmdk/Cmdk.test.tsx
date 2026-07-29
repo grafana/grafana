@@ -96,13 +96,14 @@ describe('Cmdk', () => {
     expect(screen.getByText('Item A')).toBeInTheDocument();
   });
 
-  it('shows a no results line for a section with no items', async () => {
+  it('hides a section with no items and shows the empty state', async () => {
     const query = jest.fn().mockResolvedValue([]);
     registerSource(makeSource(query));
 
     setup();
 
-    expect(await screen.findByText('Test section: no results')).toBeInTheDocument();
+    expect(await screen.findByText('No results found')).toBeInTheDocument();
+    expect(screen.queryByText('Test section')).not.toBeInTheDocument();
   });
 
   it('runs an action item on enter and closes', async () => {
@@ -228,7 +229,7 @@ describe('Cmdk', () => {
     registerSource(makeSource(query));
 
     const { user } = setup();
-    await screen.findByText('Test section: no results');
+    await screen.findByText('No results found');
 
     await user.type(screen.getByRole('combobox'), 'a');
 

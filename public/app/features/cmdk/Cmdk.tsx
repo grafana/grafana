@@ -196,11 +196,6 @@ function CmdkModal() {
                       onActivate={() => setActiveIndex(flatItems.indexOf(item))}
                     />
                   ))}
-                  {items.length === 0 && !loading && (
-                    <div className={styles.noResults}>
-                      {t('cmdk.section.no-results', '{{sectionTitle}}: no results', { sectionTitle: section.title })}
-                    </div>
-                  )}
                 </Fragment>
               ))}
             </div>
@@ -283,11 +278,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.secondary,
-    }),
-    noResults: css({
-      ...theme.typography.bodySmall,
-      color: theme.colors.text.disabled,
-      padding: theme.spacing(0.5, 2),
     }),
     detail: css({
       flex: '0 0 50%',

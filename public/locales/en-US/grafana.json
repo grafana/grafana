@@ -4965,9 +4965,6 @@
     },
     "search": {
       "placeholder": "Search or jump to..."
-    },
-    "section": {
-      "no-results": "{{sectionTitle}}: no results"
     }
   },
   "combobox": {

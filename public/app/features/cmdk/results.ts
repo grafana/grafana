@@ -55,12 +55,16 @@ export function buildSectionResults(
     ...[...sections.keys()].filter((id) => !knownSectionOrder.includes(id)),
   ];
 
-  return orderedIds.map((id) => {
-    const section = sections.get(id);
-    if (!section) {
-      throw new Error(`Unknown cmdk section id: ${id}`);
-    }
-    const items = [...(itemsBySection.get(id) ?? [])].sort((a, b) => b.priority - a.priority);
-    return { section, items, loading: loadingBySection.get(id) ?? false };
-  });
+  return orderedIds
+    .map((id) => {
+      const section = sections.get(id);
+      if (!section) {
+        throw new Error(`Unknown cmdk section id: ${id}`);
+      }
+      const items = [...(itemsBySection.get(id) ?? [])].sort((a, b) => b.priority - a.priority);
+      return { section, items, loading: loadingBySection.get(id) ?? false };
+    })
+    // Empty sections are hidden, but a still-loading section stays visible so its header and spinner can show
+    // before the results arrive.
+    .filter((sectionResult) => sectionResult.items.length > 0 || sectionResult.loading);
 }
