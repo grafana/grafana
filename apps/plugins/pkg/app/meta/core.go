@@ -126,13 +126,23 @@ func (p *CoreProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, err
 	return nil, ErrMetaNotFound
 }
 
+// corePluginPaths provides the list of core plugin file system paths to scan.
+// It mirrors the single-tenant core sources so we only pick up genuine core
+// plugins (datasources and panels) and not other plugin.json files nested under
+// app/plugins (e.g. schema-only directories).
+func corePluginPaths(staticRootPath string) []string {
+	return []string{
+		filepath.Join(staticRootPath, "app", "plugins", "datasource"),
+		filepath.Join(staticRootPath, "app", "plugins", "panel"),
+	}
+}
+
 // loadPlugins discovers and caches all core plugins by fully loading them.
 // Returns an error if the plugins path cannot be found or if plugin loading fails.
 // This error will be handled gracefully by GetMeta, which will return ErrMetaNotFound
 // to allow other providers to handle the request.
 func (p *CoreProvider) loadPlugins(ctx context.Context) error {
-	pluginsPath := filepath.Join(p.staticRootPath, "app", "plugins")
-	src := sources.NewLocalSource(plugins.ClassCore, []string{pluginsPath})
+	src := sources.NewLocalSource(plugins.ClassCore, corePluginPaths(p.staticRootPath))
 	loadedPlugins, err := p.loader.Load(ctx, src)
 	if err != nil {
 		return err
