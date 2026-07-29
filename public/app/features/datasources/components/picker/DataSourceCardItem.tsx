@@ -30,12 +30,20 @@ export function DataSourceCardItem({
       {...(enableKeyboardNavigation && {
         'data-role': 'keyboardSelectableItem',
         'data-selecteditem': isSelected ? 'true' : 'false',
+        // Hide the card internals from screen readers so the wrapping option's aria-label
+        // is all that gets announced
+        'aria-hidden': 'true',
       })}
       ds={ds}
-      onClick={() => {
-        pushRecentlyUsedDataSource(ds);
-        onChange(ds);
-      }}
+      // In keyboard navigation mode the wrapping option element handles the click instead
+      onClick={
+        enableKeyboardNavigation
+          ? undefined
+          : () => {
+              pushRecentlyUsedDataSource(ds);
+              onChange(ds);
+            }
+      }
       selected={isDataSourceMatch(ds, current)}
       isFavorite={favoriteDataSources.enabled ? favoriteDataSources.isFavoriteDatasource(ds.uid) : undefined}
       onToggleFavorite={

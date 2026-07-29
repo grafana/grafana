@@ -16,7 +16,7 @@ interface DashboardControlsChromeProps {
  * Shared chrome for the dashboard controls bar on the scrolling dashboard canvas (view + edit). It
  * does two canvas-specific jobs: pins the bar below the fixed app header while the canvas scrolls
  * beneath it, and paints an opaque background over the canvas clip-bleed strip (see scrollContainer
- * in DashboardEditPaneSplitter).
+ * in DashboardSidebarSplitter).
  *
  * Surfaces without those two concerns don't use it. Panel edit is a self-contained editor that
  * manages its own scrolling (including the short-viewport reflow layout) and has no clip-bleed
@@ -44,7 +44,7 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
       {
         label: 'dashboard-controls-chrome',
         // The dashboard canvas extends its scroll clip box up under this bar (clip-bleed, see
-        // scrollContainer in DashboardEditPaneSplitter), so the bar must paint over that strip on
+        // scrollContainer in DashboardSidebarSplitter), so the bar must paint over that strip on
         // every viewport: opaque background plus its own paint order.
         position: 'relative',
         zIndex: 1,

@@ -120,14 +120,9 @@ func (c *ExtraAlertmanagerConfig) ToGrafanaRoute() *Route {
 	return RouteToModel(definition.AsGrafanaRoute(c.Route))
 }
 
-// ToGrafanaMuteTimeIntervals converts the imported mute time intervals to Grafana's type.
-func (c *ExtraAlertmanagerConfig) ToGrafanaMuteTimeIntervals() []MuteTimeInterval {
-	return MuteTimeIntervalsToModel(c.MuteTimeIntervals)
-}
-
 // ToGrafanaTimeIntervals converts the imported time intervals to Grafana's type.
 func (c *ExtraAlertmanagerConfig) ToGrafanaTimeIntervals() []TimeInterval {
-	return TimeIntervalsToModel(c.TimeIntervals)
+	return TimeIntervalsToModel(c.MuteTimeIntervals, c.TimeIntervals)
 }
 
 // ReceiverNameStubs returns the imported receivers as Grafana receivers populated with only
@@ -281,10 +276,6 @@ func (c *PostableApiAlertingConfig) GetReceivers() []*PostableApiReceiver {
 	return c.Receivers
 }
 
-func (c *PostableApiAlertingConfig) GetMuteTimeIntervals() []MuteTimeInterval {
-	return c.MuteTimeIntervals
-}
-
 func (c *PostableApiAlertingConfig) GetTimeIntervals() []TimeInterval { return c.TimeIntervals }
 
 func (c *PostableApiAlertingConfig) GetRoute() *Route {
@@ -341,10 +332,11 @@ type Config struct {
 	Route        *Route
 	InhibitRules []config.InhibitRule
 
-	// MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.
-	MuteTimeIntervals []MuteTimeInterval
-	TimeIntervals     []TimeInterval
-	Templates         []string
+	// TimeIntervals holds both the deprecated mute_time_intervals and time_intervals stored in the
+	// database, folded into one list with the mute intervals first. The split is not preserved: on
+	// save everything is written back as time_intervals.
+	TimeIntervals []TimeInterval
+	Templates     []string
 }
 
 type ObjectMatchers labels.Matchers
@@ -509,22 +501,17 @@ func (r *Route) ResourceID() string {
 
 type Provenance string
 
-type MuteTimeInterval struct {
-	Name          string
-	TimeIntervals []timeinterval.TimeInterval
-}
-
-func (mt *MuteTimeInterval) ResourceType() string {
-	return "muteTimeInterval"
-}
-
-func (mt *MuteTimeInterval) ResourceID() string {
-	return mt.Name
-}
-
 type TimeInterval struct {
 	Name          string
 	TimeIntervals []timeinterval.TimeInterval
+}
+
+func (mt *TimeInterval) ResourceType() string {
+	return "muteTimeInterval" // Intentionally kept as-is for backwards compatibility.
+}
+
+func (mt *TimeInterval) ResourceID() string {
+	return mt.Name
 }
 
 type PostableApiReceiver struct {

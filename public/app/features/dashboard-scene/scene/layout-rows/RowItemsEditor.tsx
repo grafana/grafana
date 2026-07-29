@@ -9,7 +9,7 @@ export function getEditOptions(model: RowItems): OptionsPaneCategoryDescriptor[]
   const categoryId = 'rows-options';
   const options = new OptionsPaneCategoryDescriptor({ title: '', id: categoryId }).addItem(
     new OptionsPaneItemDescriptor({
-      title: t('dashboard.edit-pane.row.header.title', 'Row header'),
+      title: t('dashboard.sidebar.row.header.title', 'Row header'),
       id: `${categoryId}-row-header`,
       render: () => <RowHeaderCheckboxMulti model={model} />,
     })
@@ -35,7 +35,7 @@ function RowHeaderCheckboxMulti({ model }: { model: RowItems }) {
 
   return (
     <Checkbox
-      label={t('dashboard.edit-pane.row.header.hide', 'Hide')}
+      label={t('dashboard.sidebar.row.header.hide', 'Hide')}
       value={value}
       indeterminate={indeterminate}
       onChange={() => model.onHeaderHiddenToggle(value, indeterminate)}

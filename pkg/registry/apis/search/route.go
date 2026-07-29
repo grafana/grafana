@@ -1,6 +1,7 @@
 package search
 
 import (
+	"net/http"
 	"strings"
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -8,7 +9,6 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
 
 // ConfigSection and ConfigKey name the ini setting that turns these endpoints
@@ -21,15 +21,25 @@ const (
 // searchPathSegment is the last segment of the search endpoint path.
 const searchPathSegment = "search"
 
+// Route is an endpoint to mount, described in terms the caller's apiserver
+// wiring can consume. Deliberately not Grafana's builder.APIRouteHandler: the
+// same handler is mounted by more than one host, so the mapping to any one
+// host's route type belongs to that host.
+type Route struct {
+	Path    string
+	Spec    *spec3.PathProps
+	Handler http.HandlerFunc
+}
+
 // SearchRoute returns the namespaced route for a kind's search endpoint,
 // mounted at .../namespaces/{namespace}/{resource}/search.
 //
 // POST is deliberate: it carries a request body, and it does not collide with
 // the standard verbs, where create is a POST on the collection and object
 // operations are GET/PUT/PATCH/DELETE on .../{resource}/{name}.
-func (h *Handler) SearchRoute(group, version, resourceName, kindName string) builder.APIRouteHandler {
+func (h *Handler) SearchRoute(group, version, resourceName, kindName string) Route {
 	kind := kindRef{group: group, version: version, resource: resourceName, kind: kindName}
-	return builder.APIRouteHandler{
+	return Route{
 		Path:    resourceName + "/" + searchPathSegment,
 		Spec:    searchRouteSpec(kindName, version),
 		Handler: h.SearchFor(kind),

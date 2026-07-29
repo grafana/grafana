@@ -5544,135 +5544,6 @@
       "switch-layout-tab": "Indeling wisselen",
       "tab-title": "Tabbladtitel wijzigen"
     },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "Annotatiegegevensbron wijzigen",
-        "choose-panels": "Panelen kiezen",
-        "color": "Kleur",
-        "color-description": "Te gebruiken kleur voor het markeren van gebeurtenisannotaties",
-        "data-source": "Databron",
-        "display": "Annotatiebesturingselementen weergeven in",
-        "display-options": {
-          "above-dashboard": "Boven dashboard",
-          "controls-menu": "Besturingsmenu",
-          "controls-menu-description": "Kan worden geopend wanneer het besturingsmenu open is",
-          "hidden": "Verborgen",
-          "hidden-description": "Verbergt de schakelaar voor het in- of uitschakelen van deze annotatie"
-        },
-        "enabled": "Ingeschakeld",
-        "enabled-description": "Wanneer ingeschakeld, wordt de annotatiequery elke dashboardvernieuwing uitgegeven",
-        "name": "Naam",
-        "open-query-editor": "Query-editor openen",
-        "open-query-editor-tooltip": "De query-editor openen om de annotatiequery te configureren",
-        "panel-filter": {
-          "all-panels": "Alle panelen",
-          "all-panels-description": "Stuur de annotatiegegevens naar alle panelen die annotaties ondersteunen",
-          "all-panels-except": "Alle panelen behalve",
-          "all-panels-except-description": "Stuur geen annotatiegegevens naar de volgende panelen",
-          "selected-panels": "Geselecteerde panelen",
-          "selected-panels-description": "Stuur de annotaties naar de expliciet vermelde panelen"
-        },
-        "query": "Query",
-        "query-editor-close": "Sluiten",
-        "query-editor-modal-title": "Annotatiequery",
-        "show-in": "Weergeven in"
-      },
-      "annotations": {
-        "add-annotation": "Annotatie toevoegen",
-        "reorder": "Verslepen om de volgorde te wijzigen",
-        "select-annotation": "Selecteren"
-      },
-      "elements": {
-        "annotation": "Annotatie",
-        "annotation-set": "Annotaties en waarschuwingen",
-        "dashboard": "Dashboard",
-        "element": "Element",
-        "filter": "",
-        "filters-set": "",
-        "link-set": "Links",
-        "local-variable": "Lokale variabele",
-        "multiple-elements": "Meerdere elementen",
-        "multiple-elements-delete-text": "Weet je zeker dat je deze elementen wilt verwijderen?",
-        "multiple-panels": "Meerdere panelen",
-        "multiple-panels-delete-text": "Weet je zeker dat je deze panelen wilt verwijderen? Alle query's worden verwijderd.",
-        "objects": "Objecten",
-        "panel": "Paneel",
-        "panels": "Panelen",
-        "row": "Rij",
-        "rows": "Rijen",
-        "section-filters-set": "",
-        "tab": "Tabblad",
-        "tabs": "Tabbladen",
-        "variable": "{{type}}variabele",
-        "variable-set": "Variabelen"
-      },
-      "links": {
-        "add-link": "Link toevoegen",
-        "reorder": "Verslepen om de volgorde te wijzigen",
-        "select-link": "Selecteren",
-        "untitled": "Link zonder titel"
-      },
-      "row": {
-        "header": {
-          "hide": "Verbergen",
-          "title": "Rijkoptekst"
-        }
-      },
-      "section-filters": {
-        "title": ""
-      },
-      "section-variables": {
-        "title": "Variabelen"
-      },
-      "variable": {
-        "change-type": "",
-        "change-type-aria-label": "Type variabele wijzigen",
-        "custom-options": {
-          "apply": "Toepassen",
-          "change-value": "Variabele waarde wijzigen",
-          "discard": "Negeren",
-          "modal-title": "Aangepaste opties"
-        },
-        "datasource-options": {
-          "name-filter": "Filter een naam geven",
-          "name-filter-description": "Regex-filter voor welke gegevensbroninstanties moeten worden opgenomen. Laat leeg voor alles.",
-          "name-filter-placeholder": "Voorbeeld: /^prod/",
-          "type": "Type",
-          "type-placeholder": "Kies een type gegevensbron"
-        },
-        "description": "Beschrijving",
-        "description-placeholder": "Omschrijving",
-        "label": "Label",
-        "label-description": "Optionele weergavenaam",
-        "name": "Naam",
-        "open-editor": "Open variabelebewerker",
-        "open-editor-tooltip": "Open de variabelebewerker voor meer opties voor variabelen",
-        "query-options": {
-          "close": "Sluiten",
-          "modal-title": "Queryvariabele",
-          "preview": "Voorbeeld"
-        },
-        "selection-options": {
-          "allow-custom-values": "Aangepaste waarden toestaan",
-          "allow-custom-values-description": "Stelt gebruikers in staat om waarden in te voeren",
-          "category": "Selectiemogelijkheden",
-          "custom-all-value": "Alle aangepaste waarde",
-          "custom-all-value-description": "Een wildcard regex of een andere waarde om Alles weer te geven",
-          "include-all": "Waarde Alles opnemen",
-          "include-all-description": "Schakelt een enkele optie in die alle waarden vertegenwoordigt",
-          "multi-value": "Meerdere waarden"
-        },
-        "type-category": "Opties voor {{type}}"
-      },
-      "variables": {
-        "add-variable": "Variabele toevoegen",
-        "change-type": "",
-        "reorder": "Verslepen om de volgorde te wijzigen",
-        "select-type": "Kies type variabele",
-        "select-type-card-tooltip": "Klik om te selecteren",
-        "select-variable": "Selecteren"
-      }
-    },
     "empty": {
       "add-library-panel-body": "Voeg visualisaties toe die worden gedeeld met andere dashboards.",
       "add-library-panel-button": "Bibliotheekpaneel toevoegen",
@@ -6192,6 +6063,43 @@
         "title": "Toevoegen",
         "tooltip": "Nieuw element toevoegen"
       },
+      "annotation": {
+        "change-data-source": "Annotatiegegevensbron wijzigen",
+        "choose-panels": "Panelen kiezen",
+        "color": "Kleur",
+        "color-description": "Te gebruiken kleur voor het markeren van gebeurtenisannotaties",
+        "data-source": "Databron",
+        "display": "Annotatiebesturingselementen weergeven in",
+        "display-options": {
+          "above-dashboard": "Boven dashboard",
+          "controls-menu": "Besturingsmenu",
+          "controls-menu-description": "Kan worden geopend wanneer het besturingsmenu open is",
+          "hidden": "Verborgen",
+          "hidden-description": "Verbergt de schakelaar voor het in- of uitschakelen van deze annotatie"
+        },
+        "enabled": "Ingeschakeld",
+        "enabled-description": "Wanneer ingeschakeld, wordt de annotatiequery elke dashboardvernieuwing uitgegeven",
+        "name": "Naam",
+        "open-query-editor": "Query-editor openen",
+        "open-query-editor-tooltip": "De query-editor openen om de annotatiequery te configureren",
+        "panel-filter": {
+          "all-panels": "Alle panelen",
+          "all-panels-description": "Stuur de annotatiegegevens naar alle panelen die annotaties ondersteunen",
+          "all-panels-except": "Alle panelen behalve",
+          "all-panels-except-description": "Stuur geen annotatiegegevens naar de volgende panelen",
+          "selected-panels": "Geselecteerde panelen",
+          "selected-panels-description": "Stuur de annotaties naar de expliciet vermelde panelen"
+        },
+        "query": "Query",
+        "query-editor-close": "Sluiten",
+        "query-editor-modal-title": "Annotatiequery",
+        "show-in": "Weergeven in"
+      },
+      "annotations": {
+        "add-annotation": "Annotatie toevoegen",
+        "reorder": "Verslepen om de volgorde te wijzigen",
+        "select-annotation": "Selecteren"
+      },
       "dashboard-options": {
         "title": "Opties",
         "tooltip": "Dashboardopties"
@@ -6200,20 +6108,110 @@
         "title": "Code",
         "tooltip": "Bewerken als code"
       },
+      "elements": {
+        "annotation": "Annotatie",
+        "annotation-set": "Annotaties en waarschuwingen",
+        "dashboard": "Dashboard",
+        "element": "Element",
+        "filter": "",
+        "filters-set": "",
+        "link-set": "Links",
+        "local-variable": "Lokale variabele",
+        "multiple-elements": "Meerdere elementen",
+        "multiple-elements-delete-text": "Weet je zeker dat je deze elementen wilt verwijderen?",
+        "multiple-panels": "Meerdere panelen",
+        "multiple-panels-delete-text": "Weet je zeker dat je deze panelen wilt verwijderen? Alle query's worden verwijderd.",
+        "objects": "Objecten",
+        "panel": "Paneel",
+        "panels": "Panelen",
+        "row": "Rij",
+        "rows": "Rijen",
+        "section-filters-set": "",
+        "tab": "Tabblad",
+        "tabs": "Tabbladen",
+        "variable": "{{type}}variabele",
+        "variable-set": "Variabelen"
+      },
       "export": {
         "title": "Exporteren"
       },
       "filters": "",
+      "links": {
+        "add-link": "Link toevoegen",
+        "reorder": "Verslepen om de volgorde te wijzigen",
+        "select-link": "Selecteren",
+        "untitled": "Link zonder titel"
+      },
       "open": "",
       "outline": {
         "title": "Overzicht",
         "tooltip": "Inhoudsoverzicht"
       },
       "redo": "Opnieuw uitvoeren",
+      "row": {
+        "header": {
+          "hide": "Verbergen",
+          "title": "Rijkoptekst"
+        }
+      },
+      "section-filters": {
+        "title": ""
+      },
+      "section-variables": {
+        "title": "Variabelen"
+      },
       "snapshot": {
         "tooltip": "Origineel dashboard openen"
       },
       "undo": "Ongedaan maken",
+      "variable": {
+        "change-type": "",
+        "change-type-aria-label": "Type variabele wijzigen",
+        "custom-options": {
+          "apply": "Toepassen",
+          "change-value": "Variabele waarde wijzigen",
+          "discard": "Negeren",
+          "modal-title": "Aangepaste opties"
+        },
+        "datasource-options": {
+          "name-filter": "Filter een naam geven",
+          "name-filter-description": "Regex-filter voor welke gegevensbroninstanties moeten worden opgenomen. Laat leeg voor alles.",
+          "name-filter-placeholder": "Voorbeeld: /^prod/",
+          "type": "Type",
+          "type-placeholder": "Kies een type gegevensbron"
+        },
+        "description": "Beschrijving",
+        "description-placeholder": "Omschrijving",
+        "label": "Label",
+        "label-description": "Optionele weergavenaam",
+        "name": "Naam",
+        "open-editor": "Open variabelebewerker",
+        "open-editor-tooltip": "Open de variabelebewerker voor meer opties voor variabelen",
+        "query-options": {
+          "close": "Sluiten",
+          "modal-title": "Queryvariabele",
+          "preview": "Voorbeeld"
+        },
+        "selection-options": {
+          "allow-custom-values": "Aangepaste waarden toestaan",
+          "allow-custom-values-description": "Stelt gebruikers in staat om waarden in te voeren",
+          "category": "Selectiemogelijkheden",
+          "custom-all-value": "Alle aangepaste waarde",
+          "custom-all-value-description": "Een wildcard regex of een andere waarde om Alles weer te geven",
+          "include-all": "Waarde Alles opnemen",
+          "include-all-description": "Schakelt een enkele optie in die alle waarden vertegenwoordigt",
+          "multi-value": "Meerdere waarden"
+        },
+        "type-category": "Opties voor {{type}}"
+      },
+      "variables": {
+        "add-variable": "Variabele toevoegen",
+        "change-type": "",
+        "reorder": "Verslepen om de volgorde te wijzigen",
+        "select-type": "Kies type variabele",
+        "select-type-card-tooltip": "Klik om te selecteren",
+        "select-variable": "Selecteren"
+      },
       "view-panel": {
         "disabled": "",
         "fanout-by-series": "",
@@ -6807,9 +6805,6 @@
       "title-hidden-count_one": "Verborgen ({{count}})",
       "title-hidden-count_other": "Verborgen ({{count}})"
     },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "Geef feedback op de nieuwe ervaring voor het bewerken van dashboards"
-    },
     "dashboard-link-form": {
       "back-to-list": "Terug naar lijst",
       "label-icon": "Pictogram",
@@ -6881,6 +6876,9 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Dashboardbesturingselementen"
+    },
+    "dashboard-sidebar-renderer": {
+      "title-feedback-dashboard-editing-experience": "Geef feedback op de nieuwe ervaring voor het bewerken van dashboards"
     },
     "data-source-variable-form": {
       "data-source-options": "Opties voor gegevensbronnen",
