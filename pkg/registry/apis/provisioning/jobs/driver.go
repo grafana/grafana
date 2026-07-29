@@ -115,8 +115,10 @@ func newJobProcessor(
 // Returns ErrAlreadyClaimed or a NotFound API error when the job is not ours
 // to process; both mean the key can be dropped. trigger records what enqueued
 // the key so the start of processing can be attributed to a live event, a
-// re-list, or the initial list.
-func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, trigger claimTrigger) error {
+// re-list, or the initial list. enqueuedAt is when the key joined the work
+// queue, used to record how late the event arrived once the claim confirms this
+// is a genuine (non-duplicate) pickup.
+func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, trigger claimTrigger, enqueuedAt time.Time) error {
 	ctx, span := tracing.Start(ctx, "provisioning.jobs.claim_and_process_one_job")
 	defer span.End()
 
@@ -140,6 +142,13 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	// the job of grafana_provisioning_jobs_processed_total. Mirrors the
 	// claim-time RecordWaitTime precedent.
 	d.metrics.RecordEventProcessed(trigger)
+	// The claim confirms this is a genuine pickup (a job claimed elsewhere returns
+	// ErrAlreadyClaimed above, before here), so record how late the event reached
+	// the queue: from job creation (the event's origin) to when it was enqueued.
+	// This excludes the time the key then waited in the queue for a worker.
+	if !enqueuedAt.IsZero() {
+		d.metrics.RecordDeliveryLatency(enqueuedAt.Sub(claimedJob.CreationTimestamp.Time).Seconds())
+	}
 
 	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace, "repository", claimedJob.Spec.Repository, "action", claimedJob.Spec.Action)
 	ctx = logging.Context(ctx, logger)

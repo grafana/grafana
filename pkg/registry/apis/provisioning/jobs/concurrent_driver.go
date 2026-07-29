@@ -19,6 +19,14 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
 
+// queuedEvent is what the driver remembers about a queued key between enqueue
+// and pickup: what delivered it, and when it joined the work queue (for the
+// delivery-latency measurement).
+type queuedEvent struct {
+	trigger  claimTrigger
+	enqueued time.Time
+}
+
 // maxClaimAttempts bounds how many times a job key is retried after transient
 // errors before it is dropped from the queue. The informer's periodic
 // resync/re-list re-delivers the key if the job is still unclaimed.
@@ -66,12 +74,12 @@ type ConcurrentJobDriver struct {
 
 	// mu guards cooldowns and triggers. cooldowns maps a job key to the time its
 	// post-claim cooldown expires; workers refuse to process a key before then.
-	// triggers maps a queued key to what enqueued it, so the moment processing
-	// begins can be attributed to a live event, a re-list, or the initial list.
-	// Entries live only between enqueue and Forget.
+	// triggers maps a queued key to how it was enqueued — what delivered it and
+	// when it joined the queue — so processing can be attributed and its delivery
+	// latency measured. Entries live only between enqueue and pickup.
 	mu        sync.Mutex
 	cooldowns map[string]time.Time
-	triggers  map[string]claimTrigger
+	triggers  map[string]queuedEvent
 
 	// logger is used by informer event callbacks, which run outside Run's
 	// context and therefore cannot use logging.FromContext.
@@ -127,7 +135,7 @@ func NewConcurrentJobDriver(
 			},
 		),
 		cooldowns: make(map[string]time.Time),
-		triggers:  make(map[string]claimTrigger),
+		triggers:  make(map[string]queuedEvent),
 		logger:    logging.DefaultLogger.With("logger", "concurrent-job-driver"),
 	}, nil
 }
@@ -216,7 +224,7 @@ func (c *ConcurrentJobDriver) enqueueCreate(job *provisioning.Job, trigger claim
 	c.clearCooldown(key)
 	// Attribute the key before the enqueue so a worker that dequeues immediately
 	// sees it.
-	c.setTrigger(key, trigger)
+	c.setQueued(key, trigger, time.Now())
 	// The queue deduplicates keys that are already queued or in flight.
 	c.queue.Add(key)
 	c.logger.Debug("job create event enqueued", "work_key", key, "queue_len", c.queue.Len())
@@ -238,7 +246,7 @@ func (c *ConcurrentJobDriver) enqueueRecovered(job *provisioning.Job) {
 	}
 	// A resync/re-list redelivery is always relist-attributed. Set only if
 	// absent so a queued live enqueue is never downgraded.
-	c.setTrigger(key, triggerRelist)
+	c.setQueued(key, triggerRelist, time.Now())
 	// The queue deduplicates keys that are already queued or in flight.
 	c.queue.Add(key)
 	c.logger.Info("resync enqueued unclaimed job",
@@ -286,40 +294,43 @@ func (c *ConcurrentJobDriver) clearCooldown(key string) {
 	c.mu.Unlock()
 }
 
-// setTrigger records what enqueued key. The write policy is per class, not
-// first-wins: a live NATS event never enters the informer snapshot, so a job
+// setQueued records how key was enqueued. The trigger write policy is per class,
+// not first-wins: a live NATS event never enters the informer snapshot, so a job
 // delivered live but still unclaimed at the next re-list comes back as a
 // relist-classified add on the same replica — downgrading it would misattribute
-// the pickup. So triggerLive overwrites unconditionally (a live create
-// announces a new incarnation of a deterministic job name, mirroring
-// clearCooldown), while triggerRelist/triggerInitial set only if absent so a
-// queued live enqueue is never downgraded.
-func (c *ConcurrentJobDriver) setTrigger(key string, trigger claimTrigger) {
+// the pickup. So triggerLive overwrites the trigger unconditionally (a live
+// create announces a new incarnation of a deterministic job name, mirroring
+// clearCooldown), while triggerRelist/triggerInitial leave an existing entry
+// alone so a queued live enqueue is never downgraded. The enqueue time is kept
+// from the first enqueue (earliest join), so it survives coalescing and retries.
+func (c *ConcurrentJobDriver) setQueued(key string, trigger claimTrigger, enqueued time.Time) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if trigger == triggerLive {
-		c.triggers[key] = trigger
+	existing, ok := c.triggers[key]
+	if !ok {
+		c.triggers[key] = queuedEvent{trigger: trigger, enqueued: enqueued}
 		return
 	}
-	if _, ok := c.triggers[key]; !ok {
-		c.triggers[key] = trigger
+	if trigger == triggerLive {
+		existing.trigger = triggerLive
+		c.triggers[key] = existing // keep the earliest enqueue time
 	}
 }
 
-// popTrigger reads and removes key's attribution. Each pickup pops its own entry
-// up front, so the entry never outlives the key however the pickup ends, and a
+// popQueued reads and removes key's entry. Each pickup pops its own entry up
+// front, so the entry never outlives the key however the pickup ends, and a
 // concurrent enqueue that races an in-flight key (setting a fresh entry and
 // marking the key dirty) keeps its attribution for the redelivery — a terminal
-// queue.Forget must not clobber it. A retry re-sets the popped trigger before
-// re-queuing so later attempts keep the original attribution.
-func (c *ConcurrentJobDriver) popTrigger(key string) (claimTrigger, bool) {
+// queue.Forget must not clobber it. A retry re-sets the popped entry before
+// re-queuing so later attempts keep the original attribution and enqueue time.
+func (c *ConcurrentJobDriver) popQueued(key string) (queuedEvent, bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	trigger, ok := c.triggers[key]
+	qe, ok := c.triggers[key]
 	if ok {
 		delete(c.triggers, key)
 	}
-	return trigger, ok
+	return qe, ok
 }
 
 // Run starts the worker pool.
@@ -391,15 +402,16 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 
 	logger := logging.FromContext(ctx).With("work_key", key)
 
-	// Pop this pickup's attribution up front so the entry is cleared however the
-	// key leaves this function, without a terminal Forget clobbering a newer
-	// attribution set by a concurrent enqueue while the key was in flight. A
-	// missing entry (only reachable via a dirty redelivery after a Forget) falls
-	// back to relist so live+relist+initial always sums to total processed.
-	trigger, ok := c.popTrigger(key)
+	// Pop this pickup's entry up front so it is cleared however the key leaves
+	// this function, without a terminal Forget clobbering a newer entry set by a
+	// concurrent enqueue while the key was in flight. A missing entry (only
+	// reachable via a dirty redelivery after a Forget) falls back to relist so
+	// live+relist+initial always sums to total processed.
+	queued, ok := c.popQueued(key)
 	if !ok {
-		trigger = triggerRelist
+		queued.trigger = triggerRelist
 	}
+	trigger := queued.trigger
 
 	// After shutdown begins, Get keeps returning queued keys until the queue is
 	// empty; skip them so workers exit promptly instead of claiming jobs mid-shutdown.
@@ -429,7 +441,7 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 	attempt := c.queue.NumRequeues(key) + 1
 	logger.Debug("process job key", "attempt", attempt)
 
-	err = processor.processKey(ctx, namespace, name, trigger)
+	err = processor.processKey(ctx, namespace, name, trigger, queued.enqueued)
 	switch {
 	case err == nil:
 		if attempt > 1 {
@@ -463,7 +475,7 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 		// newer one).
 		logger.Warn("failed to claim job - will retry",
 			"attempt", attempt, "max_attempts", maxClaimAttempts, "error", err)
-		c.setTrigger(key, trigger)
+		c.setQueued(key, queued.trigger, queued.enqueued)
 		c.queue.AddRateLimited(key)
 	}
 	return true

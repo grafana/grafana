@@ -1,6 +1,11 @@
 package informer
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"time"
+
+	"github.com/grafana/dskit/instrument"
+	"github.com/prometheus/client_golang/prometheus"
+)
 
 // ProcessTrigger records what enqueued the work-queue key that a consumer
 // (the jobs driver, the repository or connection controller) is now processing.
@@ -31,10 +36,11 @@ const (
 // replica and each reconciles it, so their relist counter measures
 // resync-driven reconcile volume rather than missed events.
 type ProcessedMetrics struct {
-	resource string
-	live     *prometheus.CounterVec
-	relist   *prometheus.CounterVec
-	initial  *prometheus.CounterVec
+	resource        string
+	live            *prometheus.CounterVec
+	relist          *prometheus.CounterVec
+	initial         *prometheus.CounterVec
+	deliveryLatency *prometheus.HistogramVec
 }
 
 // NewProcessedMetrics builds the processing counters on reg for the given
@@ -55,6 +61,14 @@ func NewProcessedMetrics(reg prometheus.Registerer, resource string) *ProcessedM
 		initial: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_provisioning_initial_events_processed_total",
 			Help: "Processing started for a work-queue key from the informer's initial list (the startup backlog), by resource.",
+		}, []string{"resource"})),
+		deliveryLatency: registerOrReuse(reg, prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "grafana_provisioning_event_delivery_latency_seconds",
+			Help:                            "Time from an event being issued (its resource version, in the DB/NATS) to it entering the work queue, sampled only for events that lead to genuine processing (not duplicates or ignored). Excludes the time the key then waits in the queue to be picked up.",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"resource"})),
 	}
 }
@@ -101,4 +115,15 @@ func (m *ProcessedMetrics) RecordProcessed(trigger ProcessTrigger) {
 	case TriggerInitial:
 		m.initial.WithLabelValues(m.resource).Inc()
 	}
+}
+
+// ObserveDeliveryLatency records the delay from an event's generation to it
+// entering the work queue, for an event that led to genuine processing. It is
+// nil-safe and ignores a negative sample (clock skew, or a generation time that
+// is unknown/zero).
+func (m *ProcessedMetrics) ObserveDeliveryLatency(seconds float64) {
+	if m == nil || seconds < 0 {
+		return
+	}
+	m.deliveryLatency.WithLabelValues(m.resource).Observe(seconds)
 }

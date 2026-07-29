@@ -37,8 +37,8 @@ func newClassifierDriver(t *testing.T, natsBacked bool) *ConcurrentJobDriver {
 func triggerFor(driver *ConcurrentJobDriver, key string) (claimTrigger, bool) {
 	driver.mu.Lock()
 	defer driver.mu.Unlock()
-	trigger, ok := driver.triggers[key]
-	return trigger, ok
+	queued, ok := driver.triggers[key]
+	return queued.trigger, ok
 }
 
 // TestEventHandler_Classifies covers how each informer delivery shape is
@@ -266,12 +266,94 @@ func TestConcurrentJobDriver_AlreadyClaimedNotAttributed(t *testing.T) {
 	assert.Equal(t, 0.0, after.initial-before.initial)
 }
 
+// TestConcurrentJobDriver_RecordsDeliveryLatency verifies that a genuine pickup
+// records the delay from the job's creation to it entering the work queue (and
+// not the time it then waited for a worker).
+func TestConcurrentJobDriver_RecordsDeliveryLatency(t *testing.T) {
+	// A job created two seconds ago, so the delivery latency is roughly that.
+	claimedJob := makeTestJob("1")
+	claimedJob.CreationTimestamp = metav1.NewTime(time.Now().Add(-2 * time.Second))
+	claimedJob.Labels = map[string]string{LabelJobClaim: "1000000000000", LabelJobClaimOwner: "owner-A"}
+
+	completed := make(chan struct{})
+	store := &MockStore{}
+	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job").Return(claimedJob, func() {}, nil).Once()
+	store.EXPECT().Update(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) { return job.DeepCopy(), nil }).Maybe()
+	store.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(claimedJob.DeepCopy(), nil).Maybe()
+	store.EXPECT().RenewLease(mock.Anything, mock.Anything).Return(nil).Maybe()
+	store.EXPECT().Complete(mock.Anything, mock.Anything).
+		RunAndReturn(func(context.Context, *provisioning.Job) error { close(completed); return nil }).Once()
+
+	history := &MockHistoryWriter{}
+	history.EXPECT().WriteJob(mock.Anything, mock.Anything).Return(nil).Once()
+	mockRepo := &repository.MockRepository{}
+	mockRepo.On("Config").Return(makeRepoConfig("test-repo", nil, nil))
+	repoGetter := &MockRepoGetter{}
+	repoGetter.EXPECT().GetRepository(mock.Anything, "test-ns", "test-repo").Return(mockRepo, nil)
+	worker := &MockWorker{}
+	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
+	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(nil)
+
+	m := RegisterJobMetrics(prometheus.NewPedanticRegistry())
+	driver, err := NewConcurrentJobDriver(1, time.Minute, 30*time.Second, 30*time.Second,
+		store, repoGetter, history, prometheus.NewRegistry(), &m, false, worker)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	runDone := make(chan error, 1)
+	go func() { runDone <- driver.Run(ctx) }()
+
+	beforeCount, beforeSum := deliveryLatency(t)
+	driver.EventHandler().AddFunc(&provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
+	}, false)
+
+	select {
+	case <-completed:
+	case <-time.After(5 * time.Second):
+		t.Fatal("job was not completed")
+	}
+	cancel()
+	require.NoError(t, <-runDone)
+
+	afterCount, afterSum := deliveryLatency(t)
+	assert.Equal(t, 1.0, afterCount-beforeCount, "exactly one delivery-latency sample")
+	delta := afterSum - beforeSum
+	assert.Greater(t, delta, 1.0, "delivery latency is roughly the job's age")
+	assert.Less(t, delta, 30.0, "delivery latency excludes any queue wait and is not wildly off")
+}
+
 // --- helpers ---
 
 type processedSnapshot struct {
 	live    float64
 	relist  float64
 	initial float64
+}
+
+// deliveryLatency returns the jobs-labelled delivery-latency histogram's sample
+// count and sum from testRegistry.
+func deliveryLatency(t *testing.T) (count, sum float64) {
+	t.Helper()
+	families, err := testRegistry.Gather()
+	require.NoError(t, err)
+	mf := findMetric(families, "grafana_provisioning_event_delivery_latency_seconds")
+	if mf == nil {
+		return 0, 0
+	}
+	jobsKey := labelKey(map[string]string{"resource": resourceLabelJobs})
+	for _, metric := range mf.GetMetric() {
+		labels := make(map[string]string)
+		for _, lp := range metric.GetLabel() {
+			labels[lp.GetName()] = lp.GetValue()
+		}
+		if labelKey(labels) == jobsKey {
+			return float64(metric.GetHistogram().GetSampleCount()), metric.GetHistogram().GetSampleSum()
+		}
+	}
+	return 0, 0
 }
 
 // processedCounts reads the current jobs-labelled processing counters. The
