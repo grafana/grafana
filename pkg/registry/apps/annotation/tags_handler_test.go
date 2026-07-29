@@ -153,6 +153,76 @@ func TestIntegrationTagsHandler(t *testing.T) {
 			maxResults: 1,
 		},
 		{
+			name:      "Substring match finds a term in the middle of a tag",
+			namespace: metav1.NamespaceDefault,
+			queryParams: url.Values{
+				"prefix": []string{"prod"},
+				"match":  []string{"substring"},
+			},
+			expectedTags: map[string]int64{
+				"env-prod": 2,
+			},
+		},
+		{
+			name:      "Substring match finds a term at the end of a tag",
+			namespace: metav1.NamespaceDefault,
+			queryParams: url.Values{
+				"prefix": []string{"ment"},
+				"match":  []string{"substring"},
+			},
+			expectedTags: map[string]int64{
+				"deployment": 3,
+			},
+		},
+		{
+			name:      "Substring match still matches a prefix",
+			namespace: metav1.NamespaceDefault,
+			queryParams: url.Values{
+				"prefix": []string{"env-"},
+				"match":  []string{"substring"},
+			},
+			expectedTags: map[string]int64{
+				"env-prod":    2,
+				"env-staging": 1,
+			},
+		},
+		{
+			name:      "Prefix match does not find a term in the middle of a tag",
+			namespace: metav1.NamespaceDefault,
+			queryParams: url.Values{
+				"prefix": []string{"prod"},
+			},
+			expectedTags: map[string]int64{},
+		},
+		{
+			name:      "Unrecognized match mode falls back to prefix",
+			namespace: metav1.NamespaceDefault,
+			queryParams: url.Values{
+				"prefix": []string{"prod"},
+				"match":  []string{"fuzzy"},
+			},
+			expectedTags: map[string]int64{},
+		},
+		{
+			name:      "LIKE wildcards in the term are matched literally",
+			namespace: metav1.NamespaceDefault,
+			queryParams: url.Values{
+				"prefix": []string{"%"},
+				"match":  []string{"substring"},
+			},
+			expectedTags: map[string]int64{},
+		},
+		{
+			name:      "Substring match with a limit",
+			namespace: metav1.NamespaceDefault,
+			queryParams: url.Values{
+				"prefix": []string{"e"},
+				"match":  []string{"substring"},
+				"limit":  []string{"2"},
+			},
+			maxResults: 2,
+		},
+		{
 			name:        "Namespace isolation - namespace1 only sees its own tags",
 			namespace:   "namespace1",
 			queryParams: url.Values{},

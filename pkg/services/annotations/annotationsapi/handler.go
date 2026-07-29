@@ -161,8 +161,8 @@ func Merge(newItems, legacyItems []*annotations.ItemDTO, limit int64) []*annotat
 
 // FindTags fetches org-wide tag counts from the new store.
 //
-// The new /tags route matches the query term as a prefix, while legacy matches it anywhere
-// in the tag, so a substring query returns fewer tags here than legacy would.
+// The new store matches the term against the whole tag, so for a `key:value` tag a term that
+// straddles the separator matches here but not in legacy, which matches each part separately.
 func (h *MigrationProxy) FindTags(ctx context.Context, orgID int64, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	tags, err := h.client.ListTags(ctx, orgID, query)
 	if err != nil {

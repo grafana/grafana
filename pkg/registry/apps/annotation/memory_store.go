@@ -237,6 +237,17 @@ func (m *memoryStore) Delete(ctx context.Context, namespace, name string) error 
 	return nil
 }
 
+// matchesTagTerm reports whether tag satisfies the search term in opts.
+func matchesTagTerm(tag string, opts TagListOptions) bool {
+	if opts.Prefix == "" {
+		return true
+	}
+	if opts.Match == TagMatchSubstring {
+		return strings.Contains(tag, opts.Prefix)
+	}
+	return strings.HasPrefix(tag, opts.Prefix)
+}
+
 func (m *memoryStore) ListTags(ctx context.Context, namespace string, opts TagListOptions) ([]Tag, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -251,7 +262,7 @@ func (m *memoryStore) ListTags(ctx context.Context, namespace string, opts TagLi
 			continue
 		}
 		for _, tag := range anno.Spec.Tags {
-			if opts.Prefix == "" || strings.HasPrefix(tag, opts.Prefix) {
+			if matchesTagTerm(tag, opts) {
 				tagCounts[tag]++
 			}
 		}

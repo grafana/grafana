@@ -3,6 +3,7 @@ package annotation
 import (
 	"context"
 	"net"
+	"sort"
 	"testing"
 	"time"
 
@@ -475,6 +476,33 @@ func TestGRPCStore_ListTags(t *testing.T) {
 	assert.Equal(t, int64(2), tagMap["error"])
 	assert.Equal(t, int64(1), tagMap["warning"])
 	assert.Equal(t, int64(1), tagMap["dev"])
+
+	names := func(tags []Tag) []string {
+		out := make([]string, 0, len(tags))
+		for _, tag := range tags {
+			out = append(out, tag.Name)
+		}
+		sort.Strings(out)
+		return out
+	}
+
+	t.Run("prefix match is the default over the wire", func(t *testing.T) {
+		tags, err := grpcStore.ListTags(ctx, namespace, TagListOptions{Prefix: "rro"})
+		require.NoError(t, err)
+		assert.Empty(t, tags, "rro is inside error but is not a prefix of it")
+	})
+
+	t.Run("substring match is carried over the wire", func(t *testing.T) {
+		tags, err := grpcStore.ListTags(ctx, namespace, TagListOptions{Prefix: "rro", Match: TagMatchSubstring})
+		require.NoError(t, err)
+		assert.Equal(t, []string{"error"}, names(tags))
+	})
+
+	t.Run("substring match still matches a prefix", func(t *testing.T) {
+		tags, err := grpcStore.ListTags(ctx, namespace, TagListOptions{Prefix: "pro", Match: TagMatchSubstring})
+		require.NoError(t, err)
+		assert.Equal(t, []string{"prod"}, names(tags))
+	})
 }
 
 func TestGRPCStore_ErrorCases(t *testing.T) {

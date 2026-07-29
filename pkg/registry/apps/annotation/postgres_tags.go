@@ -3,6 +3,7 @@ package annotation
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -65,15 +66,29 @@ func (c *tagCache) set(key string, tags []Tag) {
 }
 
 // cacheKey generates a cache key for tag queries
-func tagCacheKey(namespace, prefix string, limit int) string {
-	return fmt.Sprintf("%s:%s:%d", namespace, prefix, limit)
+func tagCacheKey(namespace, prefix string, limit int, match TagMatch) string {
+	return fmt.Sprintf("%s:%s:%d:%d", namespace, prefix, limit, match)
+}
+
+// escapeLikeTerm escapes the LIKE wildcards in a user-supplied search term so they match
+// literally. Callers must pair it with an ESCAPE '\' clause.
+func escapeLikeTerm(term string) string {
+	var b strings.Builder
+	b.Grow(len(term))
+	for _, r := range term {
+		if r == '%' || r == '_' || r == '\\' {
+			b.WriteByte('\\')
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
 }
 
 // ListTags implements the TagProvider interface.
 // We use a cache here because tag queries can be expensive, and they don't change frequently.
 func (s *PostgreSQLStore) ListTags(ctx context.Context, namespace string, opts TagListOptions) ([]Tag, error) {
 	// Try cache first
-	cacheKey := tagCacheKey(namespace, opts.Prefix, opts.Limit)
+	cacheKey := tagCacheKey(namespace, opts.Prefix, opts.Limit, opts.Match)
 	if cached, ok := s.tagCache.get(cacheKey); ok {
 		if s.metrics != nil {
 			s.metrics.TagCacheHits.Inc()
@@ -94,10 +109,15 @@ func (s *PostgreSQLStore) ListTags(ctx context.Context, namespace string, opts T
 	args := []any{namespace}
 	argNum := 2
 
-	// Add prefix filter if specified
+	// Add the term filter if specified. The term is escaped so a tag containing LIKE
+	// wildcards is matched literally rather than broadening the search.
 	if opts.Prefix != "" {
-		query += fmt.Sprintf(" AND tag LIKE $%d", argNum)
-		args = append(args, opts.Prefix+"%")
+		query += fmt.Sprintf(" AND tag LIKE $%d ESCAPE '\\'", argNum)
+		pattern := escapeLikeTerm(opts.Prefix) + "%"
+		if opts.Match == TagMatchSubstring {
+			pattern = "%" + pattern
+		}
+		args = append(args, pattern)
 		argNum++
 	}
 

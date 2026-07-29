@@ -34,6 +34,9 @@ func TestMain(m *testing.M) {
 type fakeRepo struct {
 	items     []*annotations.ItemDTO
 	lastQuery *annotations.ItemQuery
+
+	tags         []*annotations.TagsDTO
+	lastTagQuery *annotations.TagsQuery
 }
 
 func newFakeRepo() *fakeRepo {
@@ -93,7 +96,67 @@ func (f *fakeRepo) Delete(ctx context.Context, params *annotations.DeleteParams)
 }
 
 func (f *fakeRepo) FindTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	return annotations.FindTagsResult{}, nil
+	f.lastTagQuery = query
+	return annotations.FindTagsResult{Tags: f.tags}, nil
+}
+
+func TestSQLAdapter_ListTags(t *testing.T) {
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{OrgID: 1})
+
+	// The legacy store always substring-matches, so it returns env-prod for the term "prod"
+	// even when the caller asked for a prefix match.
+	newAdapter := func() (*fakeRepo, TagProvider) {
+		repo := newFakeRepo()
+		repo.tags = []*annotations.TagsDTO{
+			{Tag: "prod", Count: 2},
+			{Tag: "env-prod", Count: 3},
+		}
+		return repo, NewSQLAdapter(repo, nil, annotations.CleanupSettings{})
+	}
+
+	t.Run("prefix match drops tags that only match as a substring", func(t *testing.T) {
+		repo, adapter := newAdapter()
+
+		tags, err := adapter.ListTags(ctx, "default", TagListOptions{Prefix: "prod"})
+		require.NoError(t, err)
+		assert.Equal(t, []Tag{{Name: "prod", Count: 2}}, tags)
+		assert.Equal(t, "prod", repo.lastTagQuery.Tag, "the term is still pushed down to the legacy query")
+	})
+
+	t.Run("substring match keeps everything the legacy store matched", func(t *testing.T) {
+		_, adapter := newAdapter()
+
+		tags, err := adapter.ListTags(ctx, "default", TagListOptions{Prefix: "prod", Match: TagMatchSubstring})
+		require.NoError(t, err)
+		assert.Equal(t, []Tag{{Name: "prod", Count: 2}, {Name: "env-prod", Count: 3}}, tags)
+	})
+
+	t.Run("an empty term keeps every tag", func(t *testing.T) {
+		_, adapter := newAdapter()
+
+		tags, err := adapter.ListTags(ctx, "default", TagListOptions{})
+		require.NoError(t, err)
+		assert.Len(t, tags, 2)
+	})
+}
+
+func TestEscapeLikeTerm(t *testing.T) {
+	tests := []struct {
+		term string
+		want string
+	}{
+		{term: "plain", want: "plain"},
+		{term: "50%", want: `50\%`},
+		{term: "a_b", want: `a\_b`},
+		{term: `back\slash`, want: `back\\slash`},
+		{term: "", want: ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.term, func(t *testing.T) {
+			assert.Equal(t, tt.want, escapeLikeTerm(tt.term))
+		})
+	}
 }
 
 func TestSQLAdapter_QueriesExcludeAlertAnnotations(t *testing.T) {

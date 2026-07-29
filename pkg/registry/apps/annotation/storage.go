@@ -73,7 +73,16 @@ type TagProvider interface {
 type TagListOptions struct {
 	Prefix string
 	Limit  int
+	Match  TagMatch
 }
+
+// TagMatch controls how TagListOptions.Prefix is matched against a tag.
+type TagMatch int
+
+const (
+	TagMatchPrefix    TagMatch = iota // tag starts with the term (zero value)
+	TagMatchSubstring                 // term appears anywhere in the tag
+)
 
 type Tag struct {
 	Name  string

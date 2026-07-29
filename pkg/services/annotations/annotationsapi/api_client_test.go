@@ -311,7 +311,8 @@ func TestAnnotationAPIClient_Requests(t *testing.T) {
 		assert.Equal(t, url.Values{
 			"prefix": {"out"},
 			"limit":  {"25"},
-		}, req.query, "the legacy tag term becomes a prefix match")
+			"match":  {"substring"},
+		}, req.query, "substring is requested explicitly to match how legacy matches the term")
 	})
 
 	t.Run("ListTags omits parameters the query leaves unset", func(t *testing.T) {

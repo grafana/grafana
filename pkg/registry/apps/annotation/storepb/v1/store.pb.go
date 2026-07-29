@@ -21,9 +21,6 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// DeletedFilter controls whether soft-deleted annotations (tombstones, with
-// deleted_at set) are included in a list. A server that does not soft-delete
-// treats DELETED_INCLUDE and DELETED_ONLY as best-effort.
 type DeletedFilter int32
 
 const (
@@ -71,6 +68,53 @@ func (x DeletedFilter) Number() protoreflect.EnumNumber {
 // Deprecated: Use DeletedFilter.Descriptor instead.
 func (DeletedFilter) EnumDescriptor() ([]byte, []int) {
 	return file_store_proto_rawDescGZIP(), []int{0}
+}
+
+// TagMatch controls how the prefix field is matched against a tag.
+type TagMatch int32
+
+const (
+	TagMatch_TAG_MATCH_PREFIX    TagMatch = 0
+	TagMatch_TAG_MATCH_SUBSTRING TagMatch = 1
+)
+
+// Enum value maps for TagMatch.
+var (
+	TagMatch_name = map[int32]string{
+		0: "TAG_MATCH_PREFIX",
+		1: "TAG_MATCH_SUBSTRING",
+	}
+	TagMatch_value = map[string]int32{
+		"TAG_MATCH_PREFIX":    0,
+		"TAG_MATCH_SUBSTRING": 1,
+	}
+)
+
+func (x TagMatch) Enum() *TagMatch {
+	p := new(TagMatch)
+	*p = x
+	return p
+}
+
+func (x TagMatch) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (TagMatch) Descriptor() protoreflect.EnumDescriptor {
+	return file_store_proto_enumTypes[1].Descriptor()
+}
+
+func (TagMatch) Type() protoreflect.EnumType {
+	return &file_store_proto_enumTypes[1]
+}
+
+func (x TagMatch) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use TagMatch.Descriptor instead.
+func (TagMatch) EnumDescriptor() ([]byte, []int) {
+	return file_store_proto_rawDescGZIP(), []int{1}
 }
 
 // Annotation represents a simplified annotation for CRUD operations
@@ -407,6 +451,7 @@ type ListOptions struct {
 	ScopesMatchAny bool                   `protobuf:"varint,10,opt,name=scopes_match_any,json=scopesMatchAny,proto3" json:"scopes_match_any,omitempty"`
 	CreatedBy      string                 `protobuf:"bytes,11,opt,name=created_by,json=createdBy,proto3" json:"created_by,omitempty"`
 	// deleted controls whether soft-deleted annotations are included.
+	// A server that does not soft-delete ignores it.
 	Deleted       DeletedFilter `protobuf:"varint,12,opt,name=deleted,proto3,enum=annotation.store.v1.DeletedFilter" json:"deleted,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -991,6 +1036,7 @@ type TagListOptions struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Prefix        string                 `protobuf:"bytes,1,opt,name=prefix,proto3" json:"prefix,omitempty"`
 	Limit         int32                  `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
+	Match         TagMatch               `protobuf:"varint,3,opt,name=match,proto3,enum=annotation.store.v1.TagMatch" json:"match,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1037,6 +1083,13 @@ func (x *TagListOptions) GetLimit() int32 {
 		return x.Limit
 	}
 	return 0
+}
+
+func (x *TagListOptions) GetMatch() TagMatch {
+	if x != nil {
+		return x.Match
+	}
+	return TagMatch_TAG_MATCH_PREFIX
 }
 
 type ListTagsResponse struct {
@@ -1253,23 +1306,30 @@ var file_store_proto_rawDesc = string([]byte{
 	0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x23,
 	0x2e, 0x61, 0x6e, 0x6e, 0x6f, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x73, 0x74, 0x6f, 0x72,
 	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x61, 0x67, 0x4c, 0x69, 0x73, 0x74, 0x4f, 0x70, 0x74, 0x69,
-	0x6f, 0x6e, 0x73, 0x52, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x3e, 0x0a, 0x0e,
+	0x6f, 0x6e, 0x73, 0x52, 0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x22, 0x73, 0x0a, 0x0e,
 	0x54, 0x61, 0x67, 0x4c, 0x69, 0x73, 0x74, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x16,
 	0x0a, 0x06, 0x70, 0x72, 0x65, 0x66, 0x69, 0x78, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06,
 	0x70, 0x72, 0x65, 0x66, 0x69, 0x78, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18,
-	0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x22, 0x40, 0x0a, 0x10,
-	0x4c, 0x69, 0x73, 0x74, 0x54, 0x61, 0x67, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x2c, 0x0a, 0x04, 0x74, 0x61, 0x67, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x18,
-	0x2e, 0x61, 0x6e, 0x6e, 0x6f, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x73, 0x74, 0x6f, 0x72,
-	0x65, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x61, 0x67, 0x52, 0x04, 0x74, 0x61, 0x67, 0x73, 0x22, 0x2f,
-	0x0a, 0x03, 0x54, 0x61, 0x67, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x63, 0x6f, 0x75,
-	0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2a,
-	0x4b, 0x0a, 0x0d, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72,
-	0x12, 0x13, 0x0a, 0x0f, 0x44, 0x45, 0x4c, 0x45, 0x54, 0x45, 0x44, 0x5f, 0x45, 0x58, 0x43, 0x4c,
-	0x55, 0x44, 0x45, 0x10, 0x00, 0x12, 0x13, 0x0a, 0x0f, 0x44, 0x45, 0x4c, 0x45, 0x54, 0x45, 0x44,
-	0x5f, 0x49, 0x4e, 0x43, 0x4c, 0x55, 0x44, 0x45, 0x10, 0x01, 0x12, 0x10, 0x0a, 0x0c, 0x44, 0x45,
-	0x4c, 0x45, 0x54, 0x45, 0x44, 0x5f, 0x4f, 0x4e, 0x4c, 0x59, 0x10, 0x02, 0x32, 0xd0, 0x04, 0x0a,
+	0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x12, 0x33, 0x0a, 0x05,
+	0x6d, 0x61, 0x74, 0x63, 0x68, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1d, 0x2e, 0x61, 0x6e,
+	0x6e, 0x6f, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76,
+	0x31, 0x2e, 0x54, 0x61, 0x67, 0x4d, 0x61, 0x74, 0x63, 0x68, 0x52, 0x05, 0x6d, 0x61, 0x74, 0x63,
+	0x68, 0x22, 0x40, 0x0a, 0x10, 0x4c, 0x69, 0x73, 0x74, 0x54, 0x61, 0x67, 0x73, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2c, 0x0a, 0x04, 0x74, 0x61, 0x67, 0x73, 0x18, 0x01, 0x20,
+	0x03, 0x28, 0x0b, 0x32, 0x18, 0x2e, 0x61, 0x6e, 0x6e, 0x6f, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x61, 0x67, 0x52, 0x04, 0x74,
+	0x61, 0x67, 0x73, 0x22, 0x2f, 0x0a, 0x03, 0x54, 0x61, 0x67, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61,
+	0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x14,
+	0x0a, 0x05, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x63,
+	0x6f, 0x75, 0x6e, 0x74, 0x2a, 0x4b, 0x0a, 0x0d, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x46,
+	0x69, 0x6c, 0x74, 0x65, 0x72, 0x12, 0x13, 0x0a, 0x0f, 0x44, 0x45, 0x4c, 0x45, 0x54, 0x45, 0x44,
+	0x5f, 0x45, 0x58, 0x43, 0x4c, 0x55, 0x44, 0x45, 0x10, 0x00, 0x12, 0x13, 0x0a, 0x0f, 0x44, 0x45,
+	0x4c, 0x45, 0x54, 0x45, 0x44, 0x5f, 0x49, 0x4e, 0x43, 0x4c, 0x55, 0x44, 0x45, 0x10, 0x01, 0x12,
+	0x10, 0x0a, 0x0c, 0x44, 0x45, 0x4c, 0x45, 0x54, 0x45, 0x44, 0x5f, 0x4f, 0x4e, 0x4c, 0x59, 0x10,
+	0x02, 0x2a, 0x39, 0x0a, 0x08, 0x54, 0x61, 0x67, 0x4d, 0x61, 0x74, 0x63, 0x68, 0x12, 0x14, 0x0a,
+	0x10, 0x54, 0x41, 0x47, 0x5f, 0x4d, 0x41, 0x54, 0x43, 0x48, 0x5f, 0x50, 0x52, 0x45, 0x46, 0x49,
+	0x58, 0x10, 0x00, 0x12, 0x17, 0x0a, 0x13, 0x54, 0x41, 0x47, 0x5f, 0x4d, 0x41, 0x54, 0x43, 0x48,
+	0x5f, 0x53, 0x55, 0x42, 0x53, 0x54, 0x52, 0x49, 0x4e, 0x47, 0x10, 0x01, 0x32, 0xd0, 0x04, 0x0a,
 	0x0f, 0x41, 0x6e, 0x6e, 0x6f, 0x74, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x53, 0x74, 0x6f, 0x72, 0x65,
 	0x12, 0x48, 0x0a, 0x03, 0x47, 0x65, 0x74, 0x12, 0x1f, 0x2e, 0x61, 0x6e, 0x6e, 0x6f, 0x74, 0x61,
 	0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x73, 0x74, 0x6f, 0x72, 0x65, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65,
@@ -1327,61 +1387,63 @@ func file_store_proto_rawDescGZIP() []byte {
 	return file_store_proto_rawDescData
 }
 
-var file_store_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_store_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
 var file_store_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_store_proto_goTypes = []any{
 	(DeletedFilter)(0),       // 0: annotation.store.v1.DeletedFilter
-	(*Annotation)(nil),       // 1: annotation.store.v1.Annotation
-	(*AnnotationSpec)(nil),   // 2: annotation.store.v1.AnnotationSpec
-	(*GetRequest)(nil),       // 3: annotation.store.v1.GetRequest
-	(*GetResponse)(nil),      // 4: annotation.store.v1.GetResponse
-	(*ListRequest)(nil),      // 5: annotation.store.v1.ListRequest
-	(*ListOptions)(nil),      // 6: annotation.store.v1.ListOptions
-	(*ListResponse)(nil),     // 7: annotation.store.v1.ListResponse
-	(*CreateRequest)(nil),    // 8: annotation.store.v1.CreateRequest
-	(*CreateResponse)(nil),   // 9: annotation.store.v1.CreateResponse
-	(*UpdateRequest)(nil),    // 10: annotation.store.v1.UpdateRequest
-	(*UpdateResponse)(nil),   // 11: annotation.store.v1.UpdateResponse
-	(*DeleteRequest)(nil),    // 12: annotation.store.v1.DeleteRequest
-	(*DeleteResponse)(nil),   // 13: annotation.store.v1.DeleteResponse
-	(*CleanupRequest)(nil),   // 14: annotation.store.v1.CleanupRequest
-	(*CleanupResponse)(nil),  // 15: annotation.store.v1.CleanupResponse
-	(*ListTagsRequest)(nil),  // 16: annotation.store.v1.ListTagsRequest
-	(*TagListOptions)(nil),   // 17: annotation.store.v1.TagListOptions
-	(*ListTagsResponse)(nil), // 18: annotation.store.v1.ListTagsResponse
-	(*Tag)(nil),              // 19: annotation.store.v1.Tag
+	(TagMatch)(0),            // 1: annotation.store.v1.TagMatch
+	(*Annotation)(nil),       // 2: annotation.store.v1.Annotation
+	(*AnnotationSpec)(nil),   // 3: annotation.store.v1.AnnotationSpec
+	(*GetRequest)(nil),       // 4: annotation.store.v1.GetRequest
+	(*GetResponse)(nil),      // 5: annotation.store.v1.GetResponse
+	(*ListRequest)(nil),      // 6: annotation.store.v1.ListRequest
+	(*ListOptions)(nil),      // 7: annotation.store.v1.ListOptions
+	(*ListResponse)(nil),     // 8: annotation.store.v1.ListResponse
+	(*CreateRequest)(nil),    // 9: annotation.store.v1.CreateRequest
+	(*CreateResponse)(nil),   // 10: annotation.store.v1.CreateResponse
+	(*UpdateRequest)(nil),    // 11: annotation.store.v1.UpdateRequest
+	(*UpdateResponse)(nil),   // 12: annotation.store.v1.UpdateResponse
+	(*DeleteRequest)(nil),    // 13: annotation.store.v1.DeleteRequest
+	(*DeleteResponse)(nil),   // 14: annotation.store.v1.DeleteResponse
+	(*CleanupRequest)(nil),   // 15: annotation.store.v1.CleanupRequest
+	(*CleanupResponse)(nil),  // 16: annotation.store.v1.CleanupResponse
+	(*ListTagsRequest)(nil),  // 17: annotation.store.v1.ListTagsRequest
+	(*TagListOptions)(nil),   // 18: annotation.store.v1.TagListOptions
+	(*ListTagsResponse)(nil), // 19: annotation.store.v1.ListTagsResponse
+	(*Tag)(nil),              // 20: annotation.store.v1.Tag
 }
 var file_store_proto_depIdxs = []int32{
-	2,  // 0: annotation.store.v1.Annotation.spec:type_name -> annotation.store.v1.AnnotationSpec
-	1,  // 1: annotation.store.v1.GetResponse.annotation:type_name -> annotation.store.v1.Annotation
-	6,  // 2: annotation.store.v1.ListRequest.options:type_name -> annotation.store.v1.ListOptions
+	3,  // 0: annotation.store.v1.Annotation.spec:type_name -> annotation.store.v1.AnnotationSpec
+	2,  // 1: annotation.store.v1.GetResponse.annotation:type_name -> annotation.store.v1.Annotation
+	7,  // 2: annotation.store.v1.ListRequest.options:type_name -> annotation.store.v1.ListOptions
 	0,  // 3: annotation.store.v1.ListOptions.deleted:type_name -> annotation.store.v1.DeletedFilter
-	1,  // 4: annotation.store.v1.ListResponse.items:type_name -> annotation.store.v1.Annotation
-	1,  // 5: annotation.store.v1.CreateRequest.annotation:type_name -> annotation.store.v1.Annotation
-	1,  // 6: annotation.store.v1.CreateResponse.annotation:type_name -> annotation.store.v1.Annotation
-	1,  // 7: annotation.store.v1.UpdateRequest.annotation:type_name -> annotation.store.v1.Annotation
-	1,  // 8: annotation.store.v1.UpdateResponse.annotation:type_name -> annotation.store.v1.Annotation
-	17, // 9: annotation.store.v1.ListTagsRequest.options:type_name -> annotation.store.v1.TagListOptions
-	19, // 10: annotation.store.v1.ListTagsResponse.tags:type_name -> annotation.store.v1.Tag
-	3,  // 11: annotation.store.v1.AnnotationStore.Get:input_type -> annotation.store.v1.GetRequest
-	5,  // 12: annotation.store.v1.AnnotationStore.List:input_type -> annotation.store.v1.ListRequest
-	8,  // 13: annotation.store.v1.AnnotationStore.Create:input_type -> annotation.store.v1.CreateRequest
-	10, // 14: annotation.store.v1.AnnotationStore.Update:input_type -> annotation.store.v1.UpdateRequest
-	12, // 15: annotation.store.v1.AnnotationStore.Delete:input_type -> annotation.store.v1.DeleteRequest
-	14, // 16: annotation.store.v1.AnnotationStore.Cleanup:input_type -> annotation.store.v1.CleanupRequest
-	16, // 17: annotation.store.v1.AnnotationStore.ListTags:input_type -> annotation.store.v1.ListTagsRequest
-	4,  // 18: annotation.store.v1.AnnotationStore.Get:output_type -> annotation.store.v1.GetResponse
-	7,  // 19: annotation.store.v1.AnnotationStore.List:output_type -> annotation.store.v1.ListResponse
-	9,  // 20: annotation.store.v1.AnnotationStore.Create:output_type -> annotation.store.v1.CreateResponse
-	11, // 21: annotation.store.v1.AnnotationStore.Update:output_type -> annotation.store.v1.UpdateResponse
-	13, // 22: annotation.store.v1.AnnotationStore.Delete:output_type -> annotation.store.v1.DeleteResponse
-	15, // 23: annotation.store.v1.AnnotationStore.Cleanup:output_type -> annotation.store.v1.CleanupResponse
-	18, // 24: annotation.store.v1.AnnotationStore.ListTags:output_type -> annotation.store.v1.ListTagsResponse
-	18, // [18:25] is the sub-list for method output_type
-	11, // [11:18] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	2,  // 4: annotation.store.v1.ListResponse.items:type_name -> annotation.store.v1.Annotation
+	2,  // 5: annotation.store.v1.CreateRequest.annotation:type_name -> annotation.store.v1.Annotation
+	2,  // 6: annotation.store.v1.CreateResponse.annotation:type_name -> annotation.store.v1.Annotation
+	2,  // 7: annotation.store.v1.UpdateRequest.annotation:type_name -> annotation.store.v1.Annotation
+	2,  // 8: annotation.store.v1.UpdateResponse.annotation:type_name -> annotation.store.v1.Annotation
+	18, // 9: annotation.store.v1.ListTagsRequest.options:type_name -> annotation.store.v1.TagListOptions
+	1,  // 10: annotation.store.v1.TagListOptions.match:type_name -> annotation.store.v1.TagMatch
+	20, // 11: annotation.store.v1.ListTagsResponse.tags:type_name -> annotation.store.v1.Tag
+	4,  // 12: annotation.store.v1.AnnotationStore.Get:input_type -> annotation.store.v1.GetRequest
+	6,  // 13: annotation.store.v1.AnnotationStore.List:input_type -> annotation.store.v1.ListRequest
+	9,  // 14: annotation.store.v1.AnnotationStore.Create:input_type -> annotation.store.v1.CreateRequest
+	11, // 15: annotation.store.v1.AnnotationStore.Update:input_type -> annotation.store.v1.UpdateRequest
+	13, // 16: annotation.store.v1.AnnotationStore.Delete:input_type -> annotation.store.v1.DeleteRequest
+	15, // 17: annotation.store.v1.AnnotationStore.Cleanup:input_type -> annotation.store.v1.CleanupRequest
+	17, // 18: annotation.store.v1.AnnotationStore.ListTags:input_type -> annotation.store.v1.ListTagsRequest
+	5,  // 19: annotation.store.v1.AnnotationStore.Get:output_type -> annotation.store.v1.GetResponse
+	8,  // 20: annotation.store.v1.AnnotationStore.List:output_type -> annotation.store.v1.ListResponse
+	10, // 21: annotation.store.v1.AnnotationStore.Create:output_type -> annotation.store.v1.CreateResponse
+	12, // 22: annotation.store.v1.AnnotationStore.Update:output_type -> annotation.store.v1.UpdateResponse
+	14, // 23: annotation.store.v1.AnnotationStore.Delete:output_type -> annotation.store.v1.DeleteResponse
+	16, // 24: annotation.store.v1.AnnotationStore.Cleanup:output_type -> annotation.store.v1.CleanupResponse
+	19, // 25: annotation.store.v1.AnnotationStore.ListTags:output_type -> annotation.store.v1.ListTagsResponse
+	19, // [19:26] is the sub-list for method output_type
+	12, // [12:19] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_store_proto_init() }
@@ -1396,7 +1458,7 @@ func file_store_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_store_proto_rawDesc), len(file_store_proto_rawDesc)),
-			NumEnums:      1,
+			NumEnums:      2,
 			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,

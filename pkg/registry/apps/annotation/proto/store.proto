@@ -137,6 +137,13 @@ message ListTagsRequest {
 message TagListOptions {
   string prefix = 1;
   int32 limit = 2;
+  TagMatch match = 3;
+}
+
+// TagMatch controls how the prefix field is matched against a tag.
+enum TagMatch {
+  TAG_MATCH_PREFIX = 0;
+  TAG_MATCH_SUBSTRING = 1;
 }
 
 message ListTagsResponse {

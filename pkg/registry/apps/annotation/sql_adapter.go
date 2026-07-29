@@ -214,9 +214,14 @@ func (a *sqlAdapter) ListTags(ctx context.Context, namespace string, opts TagLis
 		return nil, err
 	}
 
-	tags := make([]Tag, len(result.Tags))
-	for i, t := range result.Tags {
-		tags[i] = Tag{Name: t.Tag, Count: t.Count}
+	// The legacy query always matches the term as a substring, so narrow the result here
+	// when the caller asked for a prefix match.
+	tags := make([]Tag, 0, len(result.Tags))
+	for _, t := range result.Tags {
+		if !matchesTagTerm(t.Tag, opts) {
+			continue
+		}
+		tags = append(tags, Tag{Name: t.Tag, Count: t.Count})
 	}
 	return tags, nil
 }

@@ -199,6 +199,7 @@ func toProtoTagListOptions(opts TagListOptions) *storev1.TagListOptions {
 	return &storev1.TagListOptions{
 		Prefix: opts.Prefix,
 		Limit:  int32(opts.Limit),
+		Match:  storev1.TagMatch(opts.Match),
 	}
 }
 
@@ -211,6 +212,7 @@ func fromProtoTagListOptions(opts *storev1.TagListOptions) TagListOptions {
 	return TagListOptions{
 		Prefix: opts.Prefix,
 		Limit:  int(opts.Limit),
+		Match:  TagMatch(opts.Match),
 	}
 }
 

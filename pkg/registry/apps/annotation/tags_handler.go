@@ -53,6 +53,11 @@ func newTagsHandler(
 			opts.Prefix = v
 		}
 
+		// Substring is opt-in: it cannot use an index on tag, so a prefix match stays the default.
+		if queryParams.Get("match") == "substring" {
+			opts.Match = TagMatchSubstring
+		}
+
 		opts.Limit = 100 // default limit
 		if v := queryParams.Get("limit"); v != "" {
 			if limit, err := strconv.Atoi(v); err == nil && limit > 0 {

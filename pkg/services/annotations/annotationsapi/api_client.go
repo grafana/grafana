@@ -200,15 +200,14 @@ func (s *annotationAPIClient) Search(ctx context.Context, orgID int64, query *an
 
 // ListTags calls the /tags custom route, which aggregates tag counts across the org.
 //
-// The new route filters by prefix only, whereas legacy matches the term anywhere in the
-// tag, so the caller must not rely on this for substring matches.
+// It asks for a substring match because that is how the legacy API matches the term.
 func (s *annotationAPIClient) ListTags(ctx context.Context, orgID int64, query *annotations.TagsQuery) ([]annotationV0.GetTagsV0alpha1BodyTags, error) {
 	req := s.client.Get().
 		Namespace(s.nsMapper(orgID)).
 		Resource("tags")
 
 	if query.Tag != "" {
-		req = req.Param("prefix", query.Tag)
+		req = req.Param("prefix", query.Tag).Param("match", "substring")
 	}
 	if query.Limit != 0 {
 		req = req.Param("limit", strconv.FormatInt(query.Limit, 10))
