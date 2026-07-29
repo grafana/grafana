@@ -14,6 +14,12 @@ interface RenderParams<T = ActionImpl | string> {
   active: boolean;
 }
 
+interface ItemInfo {
+  label: string | null;
+  posInSet: number;
+  setSize: number;
+}
+
 interface KBarResultsProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   items: any[];
@@ -51,32 +57,32 @@ export const KBarResults = (props: KBarResultsProps) => {
   // A11y: Pre-compute the group label and set position/size for each item so
   // that option items can announce their section and "x of y" even when the
   // virtualizer has removed the section header (or sibling options) from the DOM.
+  // Options are only emitted once the group ends, since setSize isn't known until then.
   const itemGroupInfo = React.useMemo(() => {
-    const info: Array<{ label: string | null; posInSet: number; setSize: number }> = props.items.map(() => ({
-      // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-      label: null,
-      posInSet: 0,
-      setSize: 0,
-    }));
-    let currentGroup: string | null = null;
-    let groupIndices: number[] = [];
+    const results: ItemInfo[] = [];
+    let groupLabel: string | null = null;
+    let groupSize = 0;
+
+    // commit the current group to the info array
     const flushGroup = () => {
-      for (const [pos, itemIndex] of groupIndices.entries()) {
-        info[itemIndex] = { label: currentGroup, posInSet: pos + 1, setSize: groupIndices.length };
+      for (let pos = 1; pos <= groupSize; pos++) {
+        results.push({ label: groupLabel, posInSet: pos, setSize: groupSize });
       }
-      groupIndices = [];
+      groupSize = 0;
     };
-    for (const [index, item] of props.items.entries()) {
+
+    for (const item of props.items) {
       if (typeof item === 'string') {
+        // new group, flush the previous one (if any) and start counting the new one
         flushGroup();
-        currentGroup = item;
-        info[index].label = item;
+        groupLabel = item;
+        results.push({ label: item, posInSet: 0, setSize: 0 });
       } else {
-        groupIndices.push(index);
+        groupSize++;
       }
     }
     flushGroup();
-    return info;
+    return results;
   }, [props.items]);
 
   const rowVirtualizer = useVirtual({
