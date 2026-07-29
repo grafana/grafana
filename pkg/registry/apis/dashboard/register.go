@@ -48,7 +48,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
-	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -1460,9 +1459,6 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			if attr.IsResourceRequest() && attr.GetResource() == dashv0.SNAPSHOT_RESOURCE {
 				return snapshotAuthorizer.Authorize(ctx, attr)
-			}
-			if searchapi.IsSearchRequest(attr) {
-				attr = searchapi.AsReadAttributes(attr)
 			}
 			return serviceAuthorizer.Authorize(ctx, attr)
 		})
