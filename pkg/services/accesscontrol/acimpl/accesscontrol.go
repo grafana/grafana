@@ -86,7 +86,6 @@ func (a *AccessControl) evaluate(ctx context.Context, user identity.Requester, e
 		return false, nil
 	}
 
-	// If the user is in no organization, then the evaluation must happen based on the user's global permissions
 	permissions := permissionsForUser(user)
 	//nolint:staticcheck // rollout is intentionally using the legacy feature-toggle API.
 	fallbackEnabled := a.features != nil && a.features.IsEnabledGlobally(featuremgmt.FlagZanzanaRBACFallbackChecks)
@@ -123,6 +122,7 @@ func (a *AccessControl) evaluate(ctx context.Context, user identity.Requester, e
 }
 
 func permissionsForUser(user identity.Requester) map[string][]string {
+	// If the user is in no organization, then the evaluation must happen based on the user's global permissions
 	if user.GetOrgID() == accesscontrol.NoOrgID {
 		return user.GetGlobalPermissions()
 	}
