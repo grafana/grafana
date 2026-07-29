@@ -84,18 +84,42 @@ To access the query editor:
 1. Expand the **Options** section to view the available query options.
    ![Options section](/media/docs/pyroscope/query-editor/options-section.png 'Options section')
 
+### Label selector syntax
+
+The label selector uses a syntax similar to Prometheus. Enclose one or more label matchers in curly braces, separated by commas. Each matcher combines a label name, an operator, and a value in double quotes.
+
+The label selector supports the following operators.
+
+| Operator | Description                                             |
+| -------- | ------------------------------------------------------- |
+| `=`      | Selects labels that exactly match the value.           |
+| `!=`     | Selects labels that don't match the value.             |
+| `=~`     | Selects labels that match the regular expression.      |
+| `!~`     | Selects labels that don't match the regular expression. |
+
+The following examples show common label selectors:
+
+```
+{service_name="my-service"}
+{service_name="my-service", namespace="production"}
+{service_name=~"cart.*"}
+{service_name="checkout", namespace!="staging"}
+```
+
+Leave the label selector empty, or set it to `{}`, to query all profiles for the selected profile type without filtering by labels.
+
 ### Query options
 
 The **Options** section provides the following settings.
 
-| Option           | Description                                                                                                                                                                                                                                            |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Query Type**   | Sets the type of data the query returns: **Profile** for flame graph data, **Metrics** for time-series data, or **Both**. You can only select **Both** in Explore. Panels on dashboards allow only one visualization.                                    |
-| **Group by**     | Groups metric data by one or more labels. Without a **Group by** label, metric data aggregates over all labels into a single time series. **Group by** only affects metric data and doesn't change the profile data results.                             |
-| **Limit**        | Sets the maximum number of time series returned by the data source when **Group by** is set. The series returned are always ordered by descending value for the total aggregated data over the time period.                                              |
-| **Max Nodes**    | Sets the maximum number of nodes rendered in the flame graph. Lower values improve performance for large profiles by aggregating smaller nodes. The default is `16384`.                                                                                  |
-| **Span ID**      | Filters profile data to one or more span IDs so you can view the profile associated with a specific trace span. This option supports the Trace to profiles integration.                                                                                  |
-| **Annotations**  | Includes profiling annotations, such as sampling and throttling events, on time-series results. Use these annotations to identify when Pyroscope reduced or limited ingestion for a service.                                                             |
+| Option          | Description                                                                                                                                                                                                                 |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Query Type**  | Sets the type of data the query returns: **Profile** for flame graph data, **Metric** for time-series data, or **Both**. You can only select **Both** in Explore. Panels on dashboards allow only one visualization.        |
+| **Group by**    | Groups metric data by one or more labels. Without a **Group by** label, metric data aggregates over all labels into a single time series. **Group by** applies only to metric data and doesn't change the profile results.    |
+| **Limit**       | Sets the maximum number of time series returned when **Group by** is set. The series returned are always ordered by descending value for the total aggregated data over the time period. Doesn't apply to profile queries.    |
+| **Span ID**     | Sets the span ID from which to search for profiles, so you can view the profile associated with a specific trace span. This option supports the Trace to profiles integration, for example, `64f170a95f537095`.               |
+| **Max Nodes**   | Sets the maximum number of nodes rendered in the flame graph. Lower values improve performance for large profiles by aggregating smaller nodes. The field placeholder shows the default value, `16384`.                       |
+| **Annotations** | Includes profiling annotations, such as sampling and throttling events, on time-series results. Use these annotations to identify when Pyroscope reduced or limited ingestion for a service.                                 |
 
 Select a query type to return the profile data. Data is shown in the [Flame Graph](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/), metric data visualized in a graph, or both.
 
@@ -118,8 +142,8 @@ The heatmap visualizes the distribution of profile samples over time, which help
 
 When you enable **Heatmap**, use the **Heatmap Type** option to choose how samples are aggregated:
 
-- **Individual**: Aggregates individual profile samples.
-- **Span**: Aggregates samples by span, for use with the Trace to profiles integration.
+- **Individual**: Shows individual profile samples.
+- **Span**: Aggregates samples by span duration, for use with the Trace to profiles integration.
 
 {{< admonition type="note" >}}
 The `profilesHeatmap` feature is experimental. Experimental features are subject to change and may be removed in a future release. Enable it using the `profilesHeatmap` feature toggle.
@@ -131,6 +155,42 @@ When the `pyroscopeUTF8LabelNames` feature is enabled, the label selector suppor
 Enclose label names that contain characters such as dots in double quotes, for example, `{"k8s.namespace"="production"}`.
 
 The `pyroscopeUTF8LabelNames` feature is in public preview and enabled by default.
+
+### Query examples
+
+The following examples show common ways to build queries in the query editor. Each example lists the profile type to select and the label selector to enter.
+
+**Investigate high CPU usage for a service:**
+
+Select the `process_cpu:cpu:nanoseconds:cpu:nanoseconds` profile type and filter to the affected service:
+
+```
+{service_name="checkout"}
+```
+
+Set **Query Type** to **Both** in Explore to view the CPU flame graph alongside a time series of CPU usage.
+
+**Compare memory allocations across environments:**
+
+Select the `memory:alloc_space:bytes:space:bytes` profile type, set **Query Type** to **Metric**, and set **Group by** to `namespace`:
+
+```
+{service_name="cart"}
+```
+
+The metrics graph shows a separate time series for each namespace, which lets you compare allocation behavior between environments such as `production` and `staging`.
+
+**Analyze goroutine growth:**
+
+Select the `goroutine:goroutine:count:goroutine:count` profile type to inspect the number of goroutines and where they're created:
+
+```
+{service_name=~"api.*"}
+```
+
+**View the profile for a specific trace span:**
+
+Select a profile type, set **Query Type** to **Profile**, and enter the span ID in the **Span ID** field, for example, `64f170a95f537095`. The flame graph then shows only the profile data associated with that span. This example supports the [Trace to profiles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure-traces-to-profiles/) integration.
 
 ### Profiles query results
 
