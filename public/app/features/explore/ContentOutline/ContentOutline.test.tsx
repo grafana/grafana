@@ -237,6 +237,20 @@ describe('<ContentOutline />', () => {
       expect(screen.getByText('up')).toBeInTheDocument();
     });
 
+    it('hides the explorer when the outline is collapsed', async () => {
+      useBooleanFlagValueMock.mockReturnValue(true);
+      setup(false, true, promQueries);
+      expect(screen.getByTestId('signal-card-A')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Collapse outline' }));
+
+      expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('signal-card-A')).not.toBeInTheDocument();
+      // The collapsed rail keeps its own copy of the toggle, so the explorer going away
+      // must not take the way back with it.
+      expect(screen.getByRole('button', { name: 'Expand outline' })).toBeInTheDocument();
+    });
+
     it('does not render the query cards or header title when the toggle is enabled but Prometheus is not selected', () => {
       useBooleanFlagValueMock.mockReturnValue(true);
       setup(false, false, promQueries);
