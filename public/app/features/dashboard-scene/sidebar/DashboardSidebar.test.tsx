@@ -76,6 +76,27 @@ describe('DashboardSidebar', () => {
       expect(sidebar.getSelectedObject()).toBe(panel1);
     });
 
+    it('keeps panels selected after grouping them', () => {
+      const panel1 = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'P1' });
+      const panel2 = new VizPanel({ key: 'panel-2', pluginId: 'text', title: 'P2' });
+      const layout = new AutoGridLayoutManager({
+        layout: new AutoGridLayout({
+          children: [new AutoGridItem({ body: panel1 }), new AutoGridItem({ body: panel2 })],
+        }),
+      });
+      const dashboard = new DashboardScene({ isEditing: true, body: layout });
+      config.featureToggles.dashboardNewLayouts = true;
+      activateFullSceneTree(dashboard);
+
+      const sidebar = dashboard.state.sidebar;
+      sidebar.selectObject(panel1, { force: true });
+      sidebar.selectObject(panel2, { multi: true });
+
+      layout.groupSelectionInto([panel1, panel2], 'tab');
+
+      expect(sidebar.state.selectionContext.selected).toEqual([{ id: 'panel-1' }, { id: 'panel-2' }]);
+    });
+
     it('Clear selection should select dashboard when docked', () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
