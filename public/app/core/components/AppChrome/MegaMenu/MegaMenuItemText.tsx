@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, IconButton, Link, Stack, useTheme2 } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 
 export interface Props {
@@ -242,17 +243,14 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], visualRefr
       position: 'relative',
       flex: 1,
       minWidth: 0,
+      borderRadius: theme.shape.radius.default,
 
       '&:hover span, &:focus-visible span': {
         color: theme.colors.text.primary,
         textDecoration: 'underline',
       },
 
-      '&:focus-visible': {
-        boxShadow: 'none',
-        outline: `2px solid ${theme.colors.accent.main}`,
-        outlineOffset: '-2px',
-      },
+      '&:focus-visible': getFocusStyles(theme),
     }),
     linkContent: css({
       alignItems: 'center',
