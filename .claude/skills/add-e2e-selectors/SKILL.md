@@ -127,11 +127,11 @@ MyComponent: {
     `MenuItem` with `url`/`href`); use the matching role for inputs, checkboxes, etc. A suffix that
     contradicts the markup — or one carried over from a differently-rendered element nearby — is
     the defect. A single menu can legitimately contain both buttons and links, so their keys
-    *should* differ (`newDashboardLink` next to `newFolderButton`); that is correct, not an
+    _should_ differ (`newDashboardLink` next to `newFolderButton`); that is correct, not an
     inconsistency to flatten.
   - **Same markup ⇒ same name, everywhere in the run — not just within one group.** Two controls
     with the same markup/role are the same kind of thing and must be named identically wherever
-    they appear, across sibling keys *and* across groups. Two dropdown-trigger buttons must both be
+    they appear, across sibling keys _and_ across groups. Two dropdown-trigger buttons must both be
     `triggerButton` — not `triggerButton` in one group and `button` (or `createNewButton`) in
     another; two action `MenuItem`s must both be `…Button` — not `moveButton` next to bare
     `managePermissions`. The usual cause of a violation is naming each group in isolation and
