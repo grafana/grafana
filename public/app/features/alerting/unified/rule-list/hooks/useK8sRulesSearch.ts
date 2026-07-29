@@ -7,7 +7,10 @@ import {
   useLazyGetSearchRulesQuery,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
+import { logWarning } from '../../Analytics';
 import { type RulesFilter } from '../../search/rulesSearchParser';
+import { getDatasourceAPIUid } from '../../utils/datasource';
+import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 
 /** The `type` discriminant used by the k8s `/search` endpoint's rule hits. */
 export enum GrafanaRuleType {
@@ -42,9 +45,11 @@ function toGrafanaRuleType(ruleType: RulesFilter['ruleType']): GrafanaRuleType |
 }
 
 /**
- * Maps the definition-compatible subset of `RulesFilter` to `/search` query args.
- * Datasource, state and health filters are dropped — the search endpoint is
- * definition-only and has no server-side concept of them.
+ * Maps the definition-compatible subset of `RulesFilter` to `/search` query args — every filter v3
+ * offers is applied server-side. State and health filters are dropped (the search endpoint is
+ * definition-only). The folder/namespace filter is not yet forwarded: `/search`'s `folders` param
+ * matches folder UIDs, but `RulesFilter.namespace` holds a folder name — that resolution needs a
+ * pure-k8s, uid-valued folder options source that doesn't exist yet.
  */
 export function buildSearchArgs(
   filterState: RulesFilter,
@@ -54,14 +59,45 @@ export function buildSearchArgs(
 
   return {
     q,
-    labels: toApiArgArray(filterState.labels),
+    labels: toApiArgArray(buildLabelMatchers(filterState)),
     groups: toApiArgArray(filterState.groupName ? [filterState.groupName] : []),
     type: toGrafanaRuleType(filterState.ruleType),
     receiver: filterState.contactPoint ?? undefined,
+    routingTree: filterState.policy ?? undefined,
     dashboardUid: filterState.dashboardUid,
+    datasourceUiDs: toApiArgArray(resolveDatasourceUids(filterState.dataSourceNames)),
     sort: 'title',
     limit: String(limit),
   };
+}
+
+/**
+ * Label matchers forwarded to `/search`. The "hide plugin-provided rules" filter (`plugins: 'hide'`)
+ * is really a label filter: plugin-authored rules carry the `__grafana_origin` label, so hiding them
+ * is a not-exists matcher on that label — expressed server-side, not client-side.
+ */
+function buildLabelMatchers(filterState: RulesFilter): string[] {
+  const labels = [...filterState.labels];
+  if (filterState.plugins === 'hide') {
+    labels.push(`!${GRAFANA_ORIGIN_LABEL}`);
+  }
+  return labels;
+}
+
+/**
+ * The datasource filter matches rules by their *queried* datasources; `RulesFilter` stores datasource
+ * names, but `/search` expects UIDs. Names that don't resolve (e.g. a since-deleted datasource) are
+ * skipped rather than failing the whole search.
+ */
+function resolveDatasourceUids(dataSourceNames: string[]): string[] {
+  return dataSourceNames.flatMap((name) => {
+    try {
+      return [getDatasourceAPIUid(name)];
+    } catch {
+      logWarning('Ignoring datasource filter value that could not be resolved to a UID', { dataSourceName: name });
+      return [];
+    }
+  });
 }
 
 /**

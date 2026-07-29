@@ -349,8 +349,8 @@ export function trackFolderBulkActionsUnpauseFail() {
 
 export function trackAlertRuleFilterEvent(
   payload:
-    | { filterMethod: 'search-input'; filter: RulesFilter; filterVariant: 'v1' | 'v2' }
-    | { filterMethod: 'filter-component'; filter: keyof RulesFilter; filterVariant: 'v1' | 'v2' }
+    | { filterMethod: 'search-input'; filter: RulesFilter; filterVariant: 'v1' | 'v2' | 'v3' }
+    | { filterMethod: 'filter-component'; filter: keyof RulesFilter; filterVariant: 'v1' | 'v2' | 'v3' }
 ) {
   const variant = payload.filterVariant;
   if (payload.filterMethod === 'search-input') {
