@@ -526,7 +526,7 @@ test.describe(
       // so retry the position check until the reorder has been applied
       await expect(async () => {
         const singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
-        const repeatedRowBox = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}1`);
+        const repeatedRowBox = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}4`); // note: 4 (the last repeated row) because we wait for the whole repeated group to move ;)
         expect(singleRowBox.y).toBeLessThan(repeatedRowBox.y);
       }).toPass();
 

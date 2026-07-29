@@ -47,7 +47,7 @@ func newManifestBackedProvider(manifests []app.Manifest) (SearchFieldsProvider, 
 				gvr := schema.GroupVersionResource{
 					Group:    group,
 					Version:  version.Name,
-					Resource: manifestResourceName(kind),
+					Resource: ManifestResourceName(kind),
 				}
 				fields[gvr] = manifestSearchFieldsToDefinitions(kind.SearchFields)
 
@@ -65,10 +65,10 @@ func newManifestBackedProvider(manifests []app.Manifest) (SearchFieldsProvider, 
 	return newMapProvider(fields, preferred)
 }
 
-// manifestResourceName returns the lower-cased resource (plural) name for a
+// ManifestResourceName returns the lower-cased resource (plural) name for a
 // kind, defaulting to the kind name plus "s" when the manifest omits the
 // plural, which mirrors the app-sdk default.
-func manifestResourceName(kind app.ManifestVersionKind) string {
+func ManifestResourceName(kind app.ManifestVersionKind) string {
 	plural := kind.Plural
 	if plural == "" {
 		plural = kind.Kind + "s"
@@ -113,7 +113,7 @@ func manifestDeclaredKindKeys(manifests []app.Manifest) map[LowerGroupResource]b
 				if len(kind.SearchFields) == 0 {
 					continue
 				}
-				keys[NewLowerGroupResource(m.ManifestData.Group, manifestResourceName(kind))] = true
+				keys[NewLowerGroupResource(m.ManifestData.Group, ManifestResourceName(kind))] = true
 			}
 		}
 	}
@@ -237,7 +237,7 @@ func warnDuplicateKindsWithinSource(src []app.Manifest) {
 		for _, v := range m.ManifestData.Versions {
 			for _, k := range v.Kinds {
 				if declaresSearchFields(k) {
-					declared[NewLowerGroupResource(group, manifestResourceName(k))] = true
+					declared[NewLowerGroupResource(group, ManifestResourceName(k))] = true
 				}
 			}
 		}
@@ -288,7 +288,7 @@ func pruneClaimedKinds(m app.Manifest, claimedBy map[LowerGroupResource]kindClai
 				anyKind = true
 				continue
 			}
-			key := NewLowerGroupResource(group, manifestResourceName(k))
+			key := NewLowerGroupResource(group, ManifestResourceName(k))
 			if declaredVersions[key] == nil {
 				declaredVersions[key] = map[string]bool{}
 			}

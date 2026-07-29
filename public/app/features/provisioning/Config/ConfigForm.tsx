@@ -265,6 +265,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                         id={'token'}
                         placeholder={gitFields.tokenConfig.placeholder}
                         isConfigured={tokenConfigured}
+                        revealable
                         onReset={() => {
                           setValue('token', '');
                           setTokenConfigured(false);
@@ -479,7 +480,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 label={t('provisioning.config-form.label-enabled', 'Enabled')}
                 description={t(
                   'provisioning.config-form.description-enabled',
-                  'Once automatic pulling is enabled, the target cannot be changed.'
+                  'Once automatic pulling is enabled, the target type below cannot be changed.'
                 )}
               >
                 <Switch {...register('sync.enabled')} id={'sync.enabled'} />

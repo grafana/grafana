@@ -138,6 +138,37 @@ func TestIntegrationDiagnosticsSinglePanel(t *testing.T) {
 		assert.Contains(t, memberNames(members), "panel.json")
 		assert.Contains(t, memberNames(members), "dashboard.json")
 
+		// environment.json records the running Grafana build and the versions of the plugins this panel
+		// used -- the single-panel bundle has no manifest.json, so this is the only place they land.
+		envRaw, ok := members["environment.json"]
+		require.True(t, ok, "bundle members: %v", memberNames(members))
+		var env environmentArtifact
+		require.NoError(t, json.Unmarshal(envRaw, &env))
+		assert.Equal(t, 1, env.Version)
+		assert.Contains(t, []string{"Open Source", "Enterprise"}, env.Grafana.Edition)
+
+		// The recorded build must be the build that served the request. Asserted against what Grafana
+		// itself reports rather than a literal: the version and commit are injected via ldflags at build
+		// time, so BOTH are empty in a `go test` binary -- an assertion on a non-empty string would only
+		// pass in a packaged build, while this equality holds either way and is what actually matters.
+		healthVersion, healthCommit := serverBuildInfo(t, addr)
+		assert.Equal(t, healthVersion, env.Grafana.Version, "environment.json must report the running build")
+		assert.Equal(t, healthCommit, env.Grafana.Commit)
+
+		// The queried datasource resolves UID -> plugin ID -> that plugin's entry.
+		require.Equal(t, map[string]string{dsUID: testDataSourceType}, env.Datasources)
+		ds, ok := env.Plugins[testDataSourceType]
+		require.True(t, ok, "plugins: %v", env.Plugins)
+		assert.Equal(t, "datasource", ds.Type)
+		assert.Equal(t, "core", ds.Class)
+		assert.Empty(t, ds.Version, "a core plugin ships no version of its own; read grafana.version instead")
+		assert.False(t, ds.NotInstalled)
+
+		// The panel's viz plugin is recorded too, read from the posted panel JSON ("type":"timeseries").
+		viz, ok := env.Plugins["timeseries"]
+		require.True(t, ok, "plugins: %v", env.Plugins)
+		assert.Equal(t, "panel", viz.Type)
+
 		// testdata makes no HTTP calls, so nothing is captured on the wire: no traffic.har here.
 		assert.NotContains(t, memberNames(members), "traffic.har")
 	})
@@ -240,27 +271,51 @@ func TestIntegrationDiagnosticsDashboard(t *testing.T) {
 	require.Contains(t, names, "dashboard.json")
 	require.Contains(t, names, "manifest.json")
 
+	require.Contains(t, names, "environment.json")
+
 	// Manifest: 2 panels total, exactly one ran successfully, and panel 2 carries an error string.
 	var manifest struct {
 		PanelsTotal int `json:"panelsTotal"`
 		PanelsRun   int `json:"panelsRun"`
 		Panels      []struct {
-			ID    int64  `json:"id"`
-			Dir   string `json:"dir"`
-			Error string `json:"error"`
+			ID        int64    `json:"id"`
+			Dir       string   `json:"dir"`
+			Error     string   `json:"error"`
+			PluginIDs []string `json:"pluginIds"`
 		} `json:"panels"`
 	}
 	require.NoError(t, json.Unmarshal(members["manifest.json"], &manifest))
 	assert.Equal(t, 2, manifest.PanelsTotal)
 	assert.Equal(t, 1, manifest.PanelsRun, "only the success panel should count as run")
 
-	byID := map[int64]struct{ dir, err string }{}
+	byID := map[int64]struct {
+		dir, err  string
+		pluginIDs []string
+	}{}
 	for _, p := range manifest.Panels {
-		byID[p.ID] = struct{ dir, err string }{p.Dir, p.Error}
+		byID[p.ID] = struct {
+			dir, err  string
+			pluginIDs []string
+		}{p.Dir, p.Error, p.PluginIDs}
 	}
 	require.Len(t, byID, 2, "manifest should carry one entry per panel: %s", string(members["manifest.json"]))
 	assert.Empty(t, byID[1].err, "success panel should have no error")
 	assert.NotEmpty(t, byID[2].err, "error panel should record its datasource error")
+
+	// Each panel names its plugins; the versions themselves live once in environment.json, keyed by
+	// these IDs, rather than being repeated per panel.
+	assert.ElementsMatch(t, []string{testDataSourceType, "timeseries"}, byID[1].pluginIDs)
+	var env environmentArtifact
+	require.NoError(t, json.Unmarshal(members["environment.json"], &env))
+	// See TestIntegrationDiagnosticsSinglePanel: the build stanza is checked against what the server
+	// reports, because version/commit are ldflags-injected and empty in a test binary.
+	healthVersion, _ := serverBuildInfo(t, addr)
+	assert.Equal(t, healthVersion, env.Grafana.Version)
+	for _, id := range byID[1].pluginIDs {
+		assert.Contains(t, env.Plugins, id, "every plugin id in the manifest must resolve in environment.json")
+	}
+	assert.Equal(t, map[string]string{dsUID: testDataSourceType}, env.Datasources,
+		"both panels query the same datasource, recorded once")
 
 	// Per-panel directories, resolved from the manifest rather than guessed from a name prefix -- that
 	// also checks each manifest dir pointer actually resolves to members in the archive.
@@ -300,6 +355,42 @@ type queryDataArtifact struct {
 	Version  int             `json:"version"`
 	Request  json.RawMessage `json:"request"`
 	Response json.RawMessage `json:"response"`
+}
+
+// environmentArtifact mirrors the shape written to environment.json. Declared here rather than
+// reusing diagnostics.Environment so the test asserts on the JSON contract a support engineer reads,
+// not on the producing struct -- a renamed field would otherwise pass silently.
+type environmentArtifact struct {
+	Version int `json:"version"`
+	Grafana struct {
+		Version string `json:"version"`
+		Commit  string `json:"commit"`
+		Edition string `json:"edition"`
+	} `json:"grafana"`
+	Plugins map[string]struct {
+		Type         string `json:"type"`
+		Version      string `json:"version"`
+		Class        string `json:"class"`
+		NotInstalled bool   `json:"notInstalled"`
+	} `json:"plugins"`
+	Datasources map[string]string `json:"datasources"`
+}
+
+// serverBuildInfo returns the version and commit the running server reports via /api/health, so a
+// test can check environment.json against Grafana's own answer instead of a hardcoded string.
+func serverBuildInfo(t *testing.T, addr string) (version, commit string) {
+	t.Helper()
+	resp, err := http.Get(fmt.Sprintf("http://%s/api/health", addr)) //nolint:gosec // test-local address
+	require.NoError(t, err)
+	defer func() { require.NoError(t, resp.Body.Close()) }()
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+
+	var health struct {
+		Version string `json:"version"`
+		Commit  string `json:"commit"`
+	}
+	require.NoError(t, json.NewDecoder(resp.Body).Decode(&health))
+	return health.Version, health.Commit
 }
 
 func addTestDataSource(t *testing.T, ctx context.Context, testEnv *server.TestEnv, uid string) string {
