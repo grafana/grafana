@@ -139,7 +139,6 @@ As an experimental feature, on-demand data source diagnostics currently has the 
 
 - **Large responses might be trimmed, and generation of large bundles might fail.** `querydata.json` is limited to 8 MiB for a single panel and 32 MiB across a whole-dashboard bundle. Query data above that limit is replaced by a summary that records what was left out, rather than being dropped without trace. If a dashboard bundle uses up its budget, the remaining panels' query data is skipped and the reason is recorded in `manifest.json`. Nevertheless, large bundles might still be generated, for example if the faulty plugin is unintentionally duplicating data, and the generation might fail. If a bundle hits these limits or issues, reproduce the problem on a small, temporary test dashboard or panel and generate the bundle from that instead.
 
-
 ## Related documentation
 
 - [Send a panel to Grafana Labs support](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/troubleshooting/send-panel-to-grafana-support/)
