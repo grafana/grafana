@@ -241,7 +241,7 @@ describe('RecommendationExisting', () => {
 
     expect(await screen.findByRole('heading', { name: 'Hosted Traces' })).toBeInTheDocument();
     expect(screen.getByText('via grafanacloud-traces')).toBeInTheDocument();
-    expect(await screen.findByText('4.8M spans')).toBeInTheDocument();
+    expect(await screen.findByText('4.80 Mil spans')).toBeInTheDocument();
     expect(screen.getByText('traced · 24h · 34 services')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Open Traces Drilldown/ })).toHaveAttribute(
       'href',
@@ -302,7 +302,7 @@ describe('RecommendationExisting', () => {
 
     expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
     expect(screen.getByText('via grafanacloud-prom')).toBeInTheDocument();
-    expect(await screen.findByText('4.2M series')).toBeInTheDocument();
+    expect(await screen.findByText('4.20 Mil series')).toBeInTheDocument();
     expect(screen.getByText('active · 12 hosts')).toBeInTheDocument();
     expect(screen.getByText('3 hosts above 90% disk')).toBeInTheDocument();
     // Scrape port stripped from the worst host; the rounded ETA rides along.
@@ -329,7 +329,7 @@ describe('RecommendationExisting', () => {
     render(<RecommendationExisting />);
 
     expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
-    expect(await screen.findByText('1.2K metrics')).toBeInTheDocument();
+    expect(await screen.findByText('1.20 K metrics')).toBeInTheDocument();
     // No host count: the secondary degrades to the bare qualifier, and no alert row renders.
     expect(screen.getByText('active')).toBeInTheDocument();
     expect(screen.queryByText(/above 90% disk/)).not.toBeInTheDocument();

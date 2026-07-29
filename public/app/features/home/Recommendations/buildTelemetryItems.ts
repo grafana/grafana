@@ -6,8 +6,7 @@ import { HOSTED_TRACES_APP_ID, LOGS_DRILLDOWN_APP_ID, METRICS_DRILLDOWN_APP_ID }
 import { type MetricsDiskPressure } from './telemetryData';
 import { type ExistingItem } from './types';
 
-// Browser locale is the deliberate choice: the homepage number format follows the user's environment.
-const compactFormatter = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
+const formatUsageNumber = getValueFormat('short');
 
 export interface LogsItemParts {
   bytes: number | null;
@@ -79,7 +78,7 @@ export function buildTracesItem(parts: TracesItemParts): ExistingItem {
         ? {
             primary: t('home.recommendations.traces.spans', '', {
               count: Math.ceil(spans),
-              value: compactFormatter.format(Math.ceil(spans)),
+              value: formattedValueToString(formatUsageNumber(Math.ceil(spans))),
               defaultValue_one: '{{value}} span',
               defaultValue_other: '{{value}} spans',
             }),
@@ -135,7 +134,7 @@ export function buildMetricsItem(parts: MetricsItemParts): ExistingItem {
     stats = {
       primary: t('home.recommendations.metrics.series', '', {
         count: Math.ceil(series),
-        value: compactFormatter.format(Math.ceil(series)),
+        value: formattedValueToString(formatUsageNumber(Math.ceil(series))),
         defaultValue_one: '{{value}} series',
         defaultValue_other: '{{value}} series',
       }),
@@ -146,7 +145,7 @@ export function buildMetricsItem(parts: MetricsItemParts): ExistingItem {
     stats = {
       primary: t('home.recommendations.metrics.names', '', {
         count: Math.ceil(names),
-        value: compactFormatter.format(Math.ceil(names)),
+        value: formattedValueToString(formatUsageNumber(Math.ceil(names))),
         defaultValue_one: '{{value}} metric',
         defaultValue_other: '{{value}} metrics',
       }),
