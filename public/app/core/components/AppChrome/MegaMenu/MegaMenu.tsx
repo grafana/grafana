@@ -5,9 +5,9 @@ import { memo, forwardRef, useId } from 'react';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { Icon, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
+import { Icon, ScrollContainer, Text, useStyles2, Button } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 
@@ -154,10 +154,12 @@ export const MegaMenu = memo(
         <>
           <div className={styles.pinnedBox}>
             <div className={styles.pinnedHeading} id={pinnedHeadingId}>
-              <Icon className={styles.pinnedHeadingIcon} name="gf-pin-filled" size="md" />
+              {/* <Icon className={styles.pinnedHeadingIcon} name="gf-pin-filled" size="md" /> */}
+              <div className={styles.pinnedHeadingLine} />
               <Text variant="bodySmall" color="secondary" weight="medium">
                 {pinnedListLabel}
               </Text>
+              <div className={styles.pinnedHeadingLine} />
             </div>
             {editMode ? (
               <DragDropContext onDragEnd={onPinnedDragEnd}>
@@ -254,21 +256,22 @@ export const MegaMenu = memo(
           </div>
           {/* Hidden until preferences have loaded: entering edit mode early would start from an empty
               pinned list and pressing Done before the pins arrive would overwrite them with []. */}
-          {canCustomise && !editMode && !isLoading && (
-            <button type="button" className={styles.customiseButton} onClick={onEnterEditMode}>
-              <Icon name="sliders-v-alt" size="lg" />
-              <Text color="secondary">{t('navigation.megamenu.customise', 'Customise navigation')}</Text>
-            </button>
-          )}
-          {editMode && (
+          {canCustomise && !isLoading && (
             <div className={styles.editFooter}>
-              <MegaMenuCustomiseControls
-                canReset={canReset}
-                onResetToDefault={onResetToDefault}
-                onCancelEdit={onCancelEdit}
-                onSaveEdit={onSaveEdit}
-                saving={isSaving}
-              />
+              {editMode && (
+                <MegaMenuCustomiseControls
+                  canReset={canReset}
+                  onResetToDefault={onResetToDefault}
+                  onCancelEdit={onCancelEdit}
+                  onSaveEdit={onSaveEdit}
+                  saving={isSaving}
+                />
+              )}
+              {!editMode && (
+                <Button variant="secondary" onClick={onEnterEditMode} size="sm" icon="sliders-v-alt">
+                  <Trans i18nKey="navigation.megamenu.customise">Customize navigation</Trans>
+                </Button>
+              )}
             </div>
           )}
         </nav>
@@ -315,11 +318,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
     // Under visual refresh, mirror the page content pane: flush at the top, matching the page
     // background token and radius. Off refresh, keep the raised secondary card.
     pinnedBox: css({
-      backgroundColor: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.secondary,
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: visualRefreshEnabled ? theme.shape.radius.lg : theme.shape.radius.default,
       margin: visualRefreshEnabled ? theme.spacing(0, 1, 0, 1) : theme.spacing(1, 1, 0, 1),
-      padding: theme.spacing(1),
     }),
     // "Pinned" heading row — a small section label (the medium-weight secondary Text below reads as
     // a heading, distinct from the pinned item rows). The icon column matches the item rows so it
@@ -328,7 +327,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       alignItems: 'center',
       color: theme.colors.text.secondary,
       display: 'flex',
-      gap: theme.spacing(0.5),
+      gap: theme.spacing(1),
       height: theme.spacing(3.5),
       // Matches the item rows' label inset so the heading icon lines up with the pinned item icons.
       paddingLeft: theme.spacing(0.5),
@@ -337,11 +336,16 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       flexShrink: 0,
       width: theme.spacing(3),
     }),
+    pinnedHeadingLine: css({
+      flexGrow: 1,
+      height: '1px',
+      backgroundColor: theme.colors.border.weak,
+    }),
     // Divider separating the pinned box from the rest of the nav, with a 16px gap above it.
     pinnedDivider: css({
       border: 'none',
       borderTop: `1px solid ${theme.colors.border.weak}`,
-      margin: theme.spacing(2, 2, 0, 2),
+      margin: theme.spacing(1, 1, 0, 1),
     }),
     // Customise entry point, pinned to the bottom of the menu as a footer button.
     customiseButton: css({
