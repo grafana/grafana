@@ -408,7 +408,10 @@ export function createDashboardSceneFromDashboardModel(
       uid,
       description: oldModel.description,
       editable: oldModel.editable,
-      preload: dto.preload ?? false,
+      // Keep preload undefined when the dashboard JSON omits it, so getIsLazy can fall back to
+      // the instance-wide default. Baking in `false` here would ignore [dashboards] default_preload
+      // and would persist an explicit `false` on the next save.
+      preload: dto.preload,
       isDirty: false,
       links: [...(options?.defaultLinks ?? []), ...(oldModel.links ?? [])],
       meta: oldModel.meta,
