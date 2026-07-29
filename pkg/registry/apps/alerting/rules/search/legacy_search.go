@@ -63,6 +63,8 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 		RoutingTreeFilter:         stringFilter(f.routingTree),
 		MetricFilter:              stringFilter(f.metric),
 		TargetDatasourceUIDFilter: stringFilter(f.targetDatasourceUID),
+		DatasourceUIDs:            f.datasourceUIDs,
+		SearchTitle:               f.title,
 	})
 	if err != nil {
 		return nil, err
@@ -70,7 +72,7 @@ func (c *legacyClient) Search(ctx context.Context, req *resourcepb.ResourceSearc
 
 	filtered := rules[:0]
 	for _, r := range rules {
-		if !matchText(r, f.text) || !matchLabels(r, f.labelGroups) || !matchDatasources(r, f.datasourceUIDs) {
+		if !matchLabels(r, f.labelGroups) {
 			continue
 		}
 		filtered = append(filtered, r)
@@ -237,7 +239,7 @@ func sourceDatasourceUIDs(r *ngmodels.AlertRule) []string {
 	seen := map[string]struct{}{}
 	var out []string
 	for _, q := range r.Data {
-		if _, server := serverSideDatasourceUIDs[q.DatasourceUID]; server || q.DatasourceUID == "" {
+		if !isQueryDatasource(q.DatasourceUID) {
 			continue
 		}
 		if _, ok := seen[q.DatasourceUID]; ok {

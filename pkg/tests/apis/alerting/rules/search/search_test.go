@@ -154,6 +154,30 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.ElementsMatch(t, []string{"cpu usage high", "memory usage high"}, titles(searchKind(t, "alertrule", newQuery().text("usage"))))
 	})
 
+	// A text leaf searches the title and only the title on both backends: the
+	// handler rejects a per-field text leaf, legacy pushes it into a LIKE on the
+	// title column, and unified defaults its query fields to title.
+	//
+	// Legacy pushes it down as a sequential-word LIKE, so the words must appear
+	// in order but need not be adjacent. That differs from the plain substring
+	// match this used to do in memory, and the difference is invisible to a
+	// single-word query, so pin it explicitly.
+	t.Run("alert rules: title text spans non-adjacent words", func(t *testing.T) {
+		require.Equal(t, []string{"cpu usage high"}, titles(searchKind(t, "alertrule", newQuery().text("cpu high"))))
+	})
+
+	t.Run("alert rules: title text is order-sensitive", func(t *testing.T) {
+		require.Empty(t, titles(searchKind(t, "alertrule", newQuery().text("high cpu"))))
+	})
+
+	t.Run("alert rules: title text is case-insensitive", func(t *testing.T) {
+		require.ElementsMatch(t, []string{"cpu usage high", "memory usage high"}, titles(searchKind(t, "alertrule", newQuery().text("USAGE"))))
+	})
+
+	t.Run("alert rules: title text matches nothing when no title contains it", func(t *testing.T) {
+		require.Empty(t, titles(searchKind(t, "alertrule", newQuery().text("nonexistent"))))
+	})
+
 	t.Run("alert rules: label matcher", func(t *testing.T) {
 		require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, titles(searchKind(t, "alertrule", newQuery().labelSelector("team=a"))))
 	})

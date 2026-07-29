@@ -261,12 +261,41 @@ func applyFilter(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearch
 		return nil
 	}
 
+	values := leaf.Values
+	if leaf.Field == fieldDatasourceUIDs {
+		// Synthetic expression datasources are never indexed as query
+		// datasources — the unified builder skips them (appendSourceUID) and the
+		// result column is built the same way. The legacy backend pushes this
+		// filter into a LIKE over the stored query JSON, which does contain the
+		// expression nodes, so drop the values here to keep the two agreeing.
+		//
+		// Dropping every value leaves the filter with nothing to match, so the
+		// leaf is skipped entirely rather than sent as an empty requirement,
+		// which both backends would read as "match anything".
+		values = queryDatasourceUIDs(values)
+		if len(values) == 0 {
+			return nil
+		}
+	}
+
 	req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
 		Key:      leaf.Field,
 		Operator: op,
-		Values:   leaf.Values,
+		Values:   values,
 	})
 	return nil
+}
+
+// queryDatasourceUIDs keeps only the UIDs that name a datasource a user queries,
+// dropping the synthetic expression nodes.
+func queryDatasourceUIDs(uids []string) []string {
+	out := make([]string, 0, len(uids))
+	for _, uid := range uids {
+		if isQueryDatasource(uid) {
+			out = append(out, uid)
+		}
+	}
+	return out
 }
 
 // legacyUnsupportedFilterFields are declared in the kinds' searchFields (so the
@@ -436,7 +465,10 @@ func trimSortPrefix(s string) string {
 // legacy backend. The handler encodes these into the request; the legacy and
 // unified backends each decode the request in their own way.
 type filters struct {
-	text           string
+	// title is the free-text query: a word search over the rule title, pushed
+	// down as SearchTitle. A title filter leaf is rejected (see
+	// legacyUnsupportedFilterFields), so there is no exact-match counterpart.
+	title          string
 	names          []string
 	folders        []string
 	datasourceUIDs []string
@@ -457,7 +489,7 @@ type filters struct {
 }
 
 func extractFilters(req *resourcepb.ResourceSearchRequest) filters {
-	f := filters{text: req.Query}
+	f := filters{title: req.Query}
 	opts := req.Options
 	if opts != nil {
 		for _, r := range opts.Fields {
@@ -602,13 +634,6 @@ func requirementToLabelMatchers(r *resourcepb.Requirement) []labelMatcher {
 	return out
 }
 
-func matchText(r *ngmodels.AlertRule, text string) bool {
-	if text == "" {
-		return true
-	}
-	return strings.Contains(strings.ToLower(r.Title), strings.ToLower(text))
-}
-
 // matchLabels returns true when every group is satisfied by at least one of its
 // matchers: a conjunction of groups, each group a disjunction of its matchers.
 func matchLabels(r *ngmodels.AlertRule, groups [][]labelMatcher) bool {
@@ -645,33 +670,14 @@ func matchLabel(r *ngmodels.AlertRule, m labelMatcher) bool {
 	return false
 }
 
-// serverSideDatasourceUIDs are the synthetic datasources used for expression
-// nodes; they are never user-facing query datasources.
-var serverSideDatasourceUIDs = map[string]struct{}{
-	expr.DatasourceUID:    {},
-	expr.OldDatasourceUID: {},
-	expr.MLDatasourceUID:  {},
-}
-
-// matchDatasources returns true when the rule references any of the requested
-// source datasources in its query expressions.
-func matchDatasources(r *ngmodels.AlertRule, uids []string) bool {
-	if len(uids) == 0 {
-		return true
-	}
-	have := make(map[string]struct{}, len(r.Data))
-	for _, q := range r.Data {
-		if _, server := serverSideDatasourceUIDs[q.DatasourceUID]; server || q.DatasourceUID == "" {
-			continue
-		}
-		have[q.DatasourceUID] = struct{}{}
-	}
-	for _, want := range uids {
-		if _, ok := have[want]; ok {
-			return true
-		}
-	}
-	return false
+// isQueryDatasource reports whether a UID names a datasource a user actually
+// queries, as opposed to a synthetic node: the __expr__/-100 command nodes and
+// the __ml__ node are not. expr.NodeTypeFromDatasourceUID is the single source
+// of truth, so a synthetic UID added to pkg/expr is covered here without this
+// needing to change. The unified document builder classifies them the same way
+// (see appendSourceUID in search/builders/alertingrules.go).
+func isQueryDatasource(uid string) bool {
+	return uid != "" && expr.NodeTypeFromDatasourceUID(uid) == expr.TypeDatasourceNode
 }
 
 func sortRules(rules []*ngmodels.AlertRule, field string, desc bool) {

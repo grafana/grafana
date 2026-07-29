@@ -67,19 +67,6 @@ func TestMatchLabels(t *testing.T) {
 	assert.True(t, matchLabels(rule, [][]labelMatcher{{}}))
 }
 
-func TestMatchDatasources(t *testing.T) {
-	rule := &ngmodels.AlertRule{Data: []ngmodels.AlertQuery{
-		{DatasourceUID: "ds1"},
-		{DatasourceUID: expr.DatasourceUID},
-	}}
-
-	assert.True(t, matchDatasources(rule, nil))
-	assert.True(t, matchDatasources(rule, []string{"ds1"}))
-	assert.True(t, matchDatasources(rule, []string{"other", "ds1"}))
-	assert.False(t, matchDatasources(rule, []string{"other"}))
-	assert.False(t, matchDatasources(rule, []string{expr.DatasourceUID}))
-}
-
 func TestSortRules(t *testing.T) {
 	rules := []*ngmodels.AlertRule{
 		{Title: "b", UID: "u2"},
@@ -135,7 +122,7 @@ func TestBuildSearchRequestExtractRoundTrip(t *testing.T) {
 	assert.Zero(t, offset)
 
 	f := extractFilters(req)
-	assert.Equal(t, "cpu", f.text)
+	assert.Equal(t, "cpu", f.title)
 	assert.Equal(t, []string{"f1", "f2"}, f.folders)
 	assert.Equal(t, []string{"ds1", "ds2"}, f.datasourceUIDs)
 	assert.Equal(t, "slack", f.receiver)
@@ -342,6 +329,42 @@ func TestBuildSearchRequest_filterLeafValidation(t *testing.T) {
 	t.Run("scalar field accepts single value", func(t *testing.T) {
 		require.NoError(t, build(filterLeaf(fieldPanelID, opIn, "1")))
 	})
+	// Synthetic expression UIDs are never indexed as query datasources, so they
+	// are dropped from the filter rather than rejected — matching what the
+	// in-memory pass used to do when it built the rule's datasource set.
+	t.Run("datasourceUIDs drops synthetic expression UIDs", func(t *testing.T) {
+		gr := alertrule.ResourceInfo.GroupResource()
+		reqFor := func(vals ...string) *resourcepb.ResourceSearchRequest {
+			body := model.CreateSearchRulesRequestBody{Where: &model.CreateSearchRulesRequestSearchWhereNode{
+				Filter: &model.CreateSearchRulesRequestSearchFilterLeaf{Field: fieldDatasourceUIDs, Operator: opIn, Values: vals},
+			}}
+			req, _, err := buildSearchRequest(body, "default", gr, nil)
+			require.NoError(t, err)
+			return req
+		}
+
+		t.Run("mixed with a real UID keeps only the real one", func(t *testing.T) {
+			req := reqFor("ds1", expr.DatasourceUID, expr.OldDatasourceUID, expr.MLDatasourceUID)
+			require.Len(t, req.Options.Fields, 1)
+			assert.Equal(t, []string{"ds1"}, req.Options.Fields[0].Values)
+			assert.Equal(t, []string{"ds1"}, extractFilters(req).datasourceUIDs)
+		})
+
+		// An empty requirement reads as "match anything" on both backends, so the
+		// leaf has to be dropped instead of sent with no values.
+		t.Run("all synthetic drops the requirement", func(t *testing.T) {
+			req := reqFor(expr.DatasourceUID)
+			assert.Empty(t, req.Options.Fields)
+			assert.Empty(t, extractFilters(req).datasourceUIDs)
+		})
+
+		t.Run("real UIDs pass through untouched", func(t *testing.T) {
+			req := reqFor("ds1", "ds2")
+			require.Len(t, req.Options.Fields, 1)
+			assert.Equal(t, []string{"ds1", "ds2"}, req.Options.Fields[0].Values)
+		})
+	})
+
 	t.Run("paused rejects non-boolean", func(t *testing.T) {
 		require.Error(t, build(filterLeaf(fieldPaused, opIn, "yes")))
 	})
