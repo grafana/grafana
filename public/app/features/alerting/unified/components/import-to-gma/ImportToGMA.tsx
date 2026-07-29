@@ -3,9 +3,9 @@ import { isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   Alert,
   Box,
@@ -21,6 +21,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { contextSrv } from 'app/core/services/context_srv';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import {
@@ -34,16 +35,17 @@ import {
   trackImportToGMAWizardStepSkipped,
 } from '../../Analytics';
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
+import { useIsAutoSyncActive } from '../../hooks/useIsAutoSyncActive';
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { ALERTING_SETTINGS_URL } from '../../settings/navigation';
 import { type Folder } from '../../types/rule-form';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
 import { stringifyErrorLike } from '../../utils/misc';
-import { createListFilterLink } from '../../utils/navigation';
+import { ALERTING_PATHS, createListFilterLink } from '../../utils/navigation';
+import { createRelativeUrl } from '../../utils/url';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertingPageWrapper } from '../AlertingPageWrapper';
 import { useGetRulerRules } from '../rule-editor/useAlertRuleSuggestions';
-import { hasConfiguredUid, useAutoSyncConfiguration } from '../settings/useAutoSyncConfiguration';
 
 import { RenamedResourcesList } from './CollapsibleRenameList';
 import { PolicyTreeNameHelp } from './PolicyTreeNameHelp';
@@ -55,7 +57,7 @@ import { getPauseRulesLabel } from './Wizard/steps';
 import { type ImportMethod, StepKey } from './Wizard/types';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
-import { StepImportMethod, isAutoSyncSegmentEnabled } from './steps/StepImportMethod';
+import { StepImportMethod } from './steps/StepImportMethod';
 import { StepReviewEnableAutoSync } from './steps/StepReviewEnableAutoSync';
 import { type DryRunValidationResult, type PromoteStatsSummary } from './types';
 import { useCanImportToGMA } from './useCanImportToGMA';
@@ -127,37 +129,55 @@ function Wizard() {
   );
 }
 
-// Blocks the whole import flow while auto-sync is active
+// Blocks the whole import flow while auto-sync is active. Mirrors how the menu entry point (useImportEntrypointState) gates the same action.
 export function ImportWizardGate() {
-  if (!isAutoSyncSegmentEnabled()) {
-    return <Wizard />;
-  }
-  return <ImportWizardAutoSyncGuard />;
-}
-
-function ImportWizardAutoSyncGuard() {
-  const { state, isLoading } = useAutoSyncConfiguration();
+  const { isActive, isLoading } = useIsAutoSyncActive();
 
   if (isLoading) {
     return <LoadingPlaceholder text={t('alerting.import-to-gma.loading', 'Loading…')} />;
   }
-  if (hasConfiguredUid(state)) {
+  if (isActive) {
     return <AutoSyncActiveBlock />;
   }
   return <Wizard />;
 }
 
 function AutoSyncActiveBlock() {
+  // Both the Alerting settings route and its nav entry are gated on the Org Admin role, so linking
+  // anyone else there would bounce them to the home page. Rule import stays available to every user
+  // who can reach the wizard: the sync worker mirrors only the Alertmanager configuration, and the
+  // convert endpoint rejects notification imports alone.
+  const canManageAutoSync = contextSrv.hasRole(OrgRole.Admin);
+  const isRulesImportEnabled = Boolean(config.featureToggles.alertingMigrationUI);
+
   return (
     <Alert severity="warning" title={t('alerting.import-to-gma.autosync-active-block.title', 'Auto-sync is enabled')}>
       <Stack direction="column" gap={1} alignItems="flex-start">
-        <Trans i18nKey="alerting.import-to-gma.autosync-active-block.description">
-          Grafana is continuously syncing alert configuration from a data source, so the configuration is a read-only
-          mirror and cannot be imported into. To import, disable auto-sync in Alerting settings first.
-        </Trans>
-        <TextLink href={ALERTING_SETTINGS_URL} icon="cog">
-          {t('alerting.import-to-gma.autosync-active-block.go-to-settings', 'Go to Alerting settings')}
-        </TextLink>
+        <Text>
+          <Trans i18nKey="alerting.import-to-gma.autosync-active-block.description">
+            Grafana is continuously syncing alert configuration from a data source, so notification resources are a
+            read-only mirror and cannot be imported into. You can still import alert rules.
+          </Trans>
+        </Text>
+        {canManageAutoSync && (
+          <Text>
+            <Trans i18nKey="alerting.import-to-gma.autosync-active-block.disable-sync">
+              To import notification resources, disable auto-sync in Alerting settings first.
+            </Trans>
+          </Text>
+        )}
+        <Stack direction="row" gap={2} alignItems="center" wrap="wrap">
+          {isRulesImportEnabled && (
+            <TextLink href={createRelativeUrl(ALERTING_PATHS.IMPORT_DATASOURCE_MANAGED_RULES)} icon="upload">
+              {t('alerting.import-to-gma.autosync-active-block.import-rules', 'Import alert rules')}
+            </TextLink>
+          )}
+          {canManageAutoSync && (
+            <TextLink href={ALERTING_SETTINGS_URL} icon="cog">
+              {t('alerting.import-to-gma.autosync-active-block.go-to-settings', 'Go to Alerting settings')}
+            </TextLink>
+          )}
+        </Stack>
       </Stack>
     </Alert>
   );
