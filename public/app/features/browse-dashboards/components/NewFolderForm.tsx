@@ -74,6 +74,7 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
           <Input
             data-testid={selectors.pages.BrowseDashboards.NewFolderForm.nameInput}
             id="folder-name-input"
+            autoFocus
             defaultValue={initialFormModel.folderName}
             {...register('folderName', {
               required: translatedFolderNameRequiredPhrase,
@@ -83,7 +84,7 @@ export function NewFolderForm({ onCancel, onConfirm, parentFolder }: Props) {
         </Field>
         {showFolderOwnerSelector && (
           <>
-            <Box>
+            <Box display="flex" alignItems="center" gap={1}>
               <Checkbox
                 value={createTeamFolder}
                 label={t(
