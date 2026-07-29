@@ -111,6 +111,13 @@ type APIRouteHandler struct {
 	Handler http.HandlerFunc // when Level = resource, the resource will be available in context
 }
 
+// GroupVersionRoutes are routes the caller mounts itself, for an endpoint that
+// belongs to no single builder.
+type GroupVersionRoutes struct {
+	GroupVersion schema.GroupVersion
+	Routes       *APIRoutes
+}
+
 // APIRoutes define explicit HTTP handlers in an apiserver
 // TBD: is this actually necessary -- there may be more k8s native options for this
 type APIRoutes struct {

@@ -48,7 +48,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
-	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -67,7 +66,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -121,7 +119,6 @@ type DashboardsAPIBuilder struct {
 	resourcePermissionsSvc   *dynamic.NamespaceableResourceInterface
 	scheme                   *runtime.Scheme
 	search                   *SearchHandler
-	searchAPI                *searchapi.Handler // nil unless the search API is enabled in config
 	QuotaService             quota.Service
 	ProvisioningService      provisioning.ProvisioningService
 	minRefreshInterval       string
@@ -198,7 +195,6 @@ func RegisterAPIService(
 		accessClient:             accessClient,
 		unified:                  unified,
 		search:                   NewSearchHandler(tracing, unified, features),
-		searchAPI:                newSearchAPIHandler(cfg, tracing, unified),
 		QuotaService:             quotaService,
 		ProvisioningService:      provisioning,
 		minRefreshInterval:       cfg.MinRefreshInterval,
@@ -389,7 +385,7 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		case admission.Update:
 			return b.validateVariableUpdate(ctx, a)
 		case admission.Delete:
-			return b.validateVariableDelete(ctx)
+			return b.validateVariableDelete(ctx, a)
 		case admission.Connect:
 			return nil
 		}
@@ -604,10 +600,6 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 }
 
 func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a admission.Attributes) error {
-	if err := b.validateVariableMutationPermissions(ctx); err != nil {
-		return err
-	}
-
 	variable, ok := a.GetObject().(*dashv2beta1.Variable)
 	if !ok {
 		return fmt.Errorf("unsupported variable version: %T", a.GetObject())
@@ -622,21 +614,22 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 		return fmt.Errorf("error getting variable meta accessor: %w", err)
 	}
 
-	if err := validateVariableMetadataName(variable.GetName(), getVariableName(variable.Spec), accessor.GetFolder()); err != nil {
+	folderUID := accessor.GetFolder()
+	if err := validateVariableMetadataName(variable.GetName(), getVariableName(variable.Spec), folderUID); err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	if !a.IsDryRun() && accessor.GetFolder() != "" {
+	if err := b.validateVariableMutationPermissions(ctx, folderUID, false); err != nil {
+		return err
+	}
+
+	if !a.IsDryRun() && folderUID != "" {
 		id, err := identity.GetRequester(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting requester: %w", err)
 		}
 
-		if err := b.verifyFolderAccessPermissions(ctx, id, accessor.GetFolder()); err != nil {
-			return err
-		}
-
-		if _, err := b.validateFolderExists(ctx, accessor.GetFolder(), id.GetOrgID()); err != nil {
+		if _, err := b.validateFolderExists(ctx, folderUID, id.GetOrgID()); err != nil {
 			return err
 		}
 	}
@@ -645,10 +638,6 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 }
 
 func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a admission.Attributes) error {
-	if err := b.validateVariableMutationPermissions(ctx); err != nil {
-		return err
-	}
-
 	newVariable, ok := a.GetObject().(*dashv2beta1.Variable)
 	if !ok {
 		return fmt.Errorf("unsupported variable version: %T", a.GetObject())
@@ -681,25 +670,62 @@ func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a adm
 		return apierrors.NewBadRequest("folder scope cannot be changed; delete the variable and create a new one")
 	}
 
-	return nil
+	// allowMissingFolder: Editors/Admins can still update variables whose folder was deleted.
+	return b.validateVariableMutationPermissions(ctx, oldAccessor.GetFolder(), true)
 }
 
-func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context) error {
-	return b.validateVariableMutationPermissions(ctx)
+func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a admission.Attributes) error {
+	obj := a.GetOldObject()
+	if obj == nil {
+		obj = a.GetObject()
+	}
+	variable, ok := obj.(*dashv2beta1.Variable)
+	if !ok {
+		return fmt.Errorf("unsupported variable version: %T", obj)
+	}
+
+	accessor, err := utils.MetaAccessor(variable)
+	if err != nil {
+		return fmt.Errorf("error getting variable meta accessor: %w", err)
+	}
+
+	// allowMissingFolder: Editors/Admins can still delete variables whose folder was deleted.
+	return b.validateVariableMutationPermissions(ctx, accessor.GetFolder(), true)
 }
 
-func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context) error {
+// validateVariableMutationPermissions authorizes variable create/update/delete.
+// Global variables (no folder) require org Editor or Admin. Folder-scoped
+// variables require edit access on that folder, including on dry-run (Variables
+// have no user RBAC authorizer; admission is the authz gate).
+// When allowMissingFolder is true (update/delete), org Editors/Admins may still
+// mutate if the folder no longer exists so orphaned variables can be cleaned up.
+func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context, folderUID string, allowMissingFolder bool) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
 	}
 
-	role := requester.GetOrgRole()
-	if role != identity.RoleEditor && role != identity.RoleAdmin {
-		return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
+	if folderUID == "" {
+		role := requester.GetOrgRole()
+		if role != identity.RoleEditor && role != identity.RoleAdmin {
+			return apierrors.NewForbidden(dashv2beta1.VariableResourceInfo.GroupResource(), "", fmt.Errorf("variable mutation requires editor or admin role"))
+		}
+		return nil
 	}
 
-	return nil
+	err = b.verifyFolderAccessPermissions(ctx, requester, folderUID)
+	if err == nil {
+		return nil
+	}
+
+	if allowMissingFolder && apierrors.IsNotFound(err) {
+		role := requester.GetOrgRole()
+		if role == identity.RoleEditor || role == identity.RoleAdmin {
+			return nil
+		}
+	}
+
+	return err
 }
 
 // validateFolderExists checks if a folder exists
@@ -1401,17 +1427,6 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	routes := &builder.APIRoutes{}
 
-	// The search API is mounted under every served version, so a client can use
-	// the same version it uses for the rest of the kind.
-	if b.searchAPI != nil {
-		r := b.searchAPI.SearchRoute(gv.Group, gv.Version, dashv0.DASHBOARD_RESOURCE, "Dashboard")
-		routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
-			Path:    r.Path,
-			Spec:    r.Spec,
-			Handler: r.Handler,
-		})
-	}
-
 	if gv.Version == dashv0.VERSION {
 		defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 		legacySearchRoutes := b.search.GetAPIRoutes(defs)
@@ -1429,17 +1444,6 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 	return routes
 }
 
-// newSearchAPIHandler returns the search API handler, or nil when the endpoint
-// is disabled. Search fields come from the compiled-in app manifests, the same
-// declarations the index mapping is built from.
-func newSearchAPIHandler(cfg *setting.Cfg, tracer tracing.Tracer, unified resource.ResourceClient) *searchapi.Handler {
-	if !cfg.SectionWithEnvOverrides(searchapi.ConfigSection).Key(searchapi.ConfigKey).MustBool(false) {
-		return nil
-	}
-	provider := resource.NewManifestBackedProvider(resource.AppManifests())
-	return searchapi.NewHandler(unified, provider, tracer)
-}
-
 // GetPolicyRuleEvaluator defines the rules for logging auditing events from the API server.
 func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvaluator {
 	return auditing.NewDefaultGrafanaPolicyRuleEvaluator()
@@ -1455,9 +1459,6 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
 			if attr.IsResourceRequest() && attr.GetResource() == dashv0.SNAPSHOT_RESOURCE {
 				return snapshotAuthorizer.Authorize(ctx, attr)
-			}
-			if searchapi.IsSearchRequest(attr) {
-				attr = searchapi.AsReadAttributes(attr)
 			}
 			return serviceAuthorizer.Authorize(ctx, attr)
 		})
