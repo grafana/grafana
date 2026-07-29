@@ -1,18 +1,28 @@
 import type { DataSourceApi, DataSourceRef, TimeRange } from '@grafana/data';
+import type { PrometheusLanguageProviderInterface } from '@grafana/prometheus';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
 import type { MetricRow } from '../types';
 
 import { deriveMetricType } from './metricType';
 
-// Minimal shape we rely on from the Prometheus language provider (see @grafana/prometheus dist types).
-interface PromLanguageProvider {
-  start(timeRange?: TimeRange): Promise<unknown[]>;
-  retrieveMetrics(): string[];
-  retrieveMetricsMetadata(): Record<string, { type?: string; help?: string; unit?: string }>;
-  queryLabelKeys(timeRange: TimeRange, match?: string, limit?: number): Promise<string[]>;
-  queryLabelValues(timeRange: TimeRange, labelKey: string, match?: string, limit?: number): Promise<string[]>;
-}
+/**
+ * The part of the Prometheus language provider this module calls — derived from the real interface
+ * with `Pick`, not restated here.
+ *
+ * A hand-written copy of this shape is what every test in this module mocks, so if upstream renamed
+ * `retrieveMetrics` or re-signed `queryLabelValues`, the copy and the mocks would agree with each
+ * other, the suite would stay green, and only production would break. `Pick` fails to compile
+ * instead: an absent key is an error, and a changed signature propagates straight into the call
+ * sites below.
+ *
+ * `import type` is erased at build time, so this costs nothing at runtime even though the Prometheus
+ * datasource is no longer a core plugin.
+ */
+type PromLanguageProvider = Pick<
+  PrometheusLanguageProviderInterface,
+  'start' | 'retrieveMetrics' | 'retrieveMetricsMetadata' | 'queryLabelKeys' | 'queryLabelValues'
+>;
 
 /**
  * How long a resolved entry is served from cache. A relative range (`now-1h`/`now`) is one cache key
