@@ -1473,6 +1473,22 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Empty(t, names)
 	})
 
+	t.Run("count-only request returns an unfiltered approximate total", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("doc-0", "allowed"),
+			newDoc("doc-1", "denied"),
+		})
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		names, res := searchNames(t, index, ac, listQuery(0))
+
+		require.Empty(t, names)
+		require.Equal(t, int64(2), res.TotalHits, "the count includes unauthorized matches")
+		require.False(t, res.TotalHitsExact)
+		require.Zero(t, ac.checked, "count-only does not authorize individual documents")
+	})
+
 	t.Run("limit larger than total returns everything authorized", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		indexDocs(t, index, []*resource.BulkIndexItem{

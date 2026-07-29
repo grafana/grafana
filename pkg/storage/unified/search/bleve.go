@@ -2106,9 +2106,9 @@ func (b *bleveIndex) Search(
 	// covers normal paginated search, federated queries, facet queries, and
 	// SearchBefore: bleve ranks, the runner authorizes app-side in rank order,
 	// and stops once the page is full (page-fill) or the sample budget is hit
-	// (facets). Pure count-only (Limit==0, no facets) stays on the in-searcher
-	// path for an exact total.
-	postRank := b.postRankAuthzEnabled && access != nil && (req.Limit > 0 || len(req.Facet) > 0)
+	// (facets). A count-only request (Limit==0, no facets) returns Bleve's
+	// unfiltered count with TotalHitsExact=false, avoiding a full authz scan.
+	postRank := b.postRankAuthzEnabled && access != nil && req.Limit >= 0
 
 	conversionStarts := time.Now()
 	// convert protobuf request to bleve request
