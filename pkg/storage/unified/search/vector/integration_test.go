@@ -875,6 +875,14 @@ func TestIntegrationVectorDeleteRows(t *testing.T) {
 	require.EqualValues(t, 1, n)
 	require.False(t, more)
 
+	// Exact-boundary page: collection holds exactly `limit` rows, so the
+	// full page is also the last one — has_more must be false.
+	require.NoError(t, backend.Upsert(ctx, []Vector{mk("u6", ""), mk("u7", "")}))
+	n, more, err = backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{All: true, Limit: 2})
+	require.NoError(t, err)
+	require.EqualValues(t, 2, n)
+	require.False(t, more)
+
 	// Selector validation.
 	_, _, err = backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{})
 	require.Error(t, err)

@@ -367,7 +367,19 @@ func (b *pgvectorBackend) DeleteRows(ctx context.Context, namespace, model, reso
 	if err != nil {
 		return 0, false, err
 	}
-	return n, n == int64(limit), nil
+	// A full page doesn't prove more rows remain (the collection may hold
+	// exactly `limit` rows) — check instead of over-reporting has_more.
+	hasMore := false
+	if n == int64(limit) {
+		if err := b.db.QueryRowContext(ctx, `
+			SELECT EXISTS (
+				SELECT 1 FROM embeddings
+				WHERE resource = $1 AND namespace = $2 AND model = $3
+			)`, resource, namespace, model).Scan(&hasMore); err != nil {
+			return n, false, fmt.Errorf("check remaining rows: %w", err)
+		}
+	}
+	return n, hasMore, nil
 }
 
 func (b *pgvectorBackend) DeleteSubresources(ctx context.Context, namespace, model, resource, uid string, subresources []string) error {

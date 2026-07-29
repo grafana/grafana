@@ -472,3 +472,18 @@ func TestVectorStore_UpsertSubresourcesNoChangesSkipsEmbed(t *testing.T) {
 	require.Len(t, store.replaceCalls, 1, "metadataOnly still written")
 	assert.Len(t, store.replaceCalls[0].MetadataOnly, 1)
 }
+
+func TestVectorStore_UpsertEmbedQuotaErrorKeepsRetryableCode(t *testing.T) {
+	// A provider error already carrying a retryable gRPC code must pass
+	// through so client retry policies keyed on ResourceExhausted work.
+	store := &fakeWriteStore{}
+	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{
+		dim: 4, wantErr: status.Error(codes.ResourceExhausted, "provider quota"),
+	}), []string{"g/r"}, nil)
+	s.store = store
+
+	_, err := s.Upsert(vsAuthedCtx(), validUpsertReq())
+	require.Error(t, err)
+	assert.Equal(t, codes.ResourceExhausted, status.Code(err))
+	assert.Empty(t, store.upserts)
+}
