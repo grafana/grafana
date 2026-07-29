@@ -282,6 +282,14 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     this.props.onExitQueryLibraryEdit?.();
   };
 
+  onSavedQueryModeSuccess = () => {
+    if (this.props.addingSavedQuery) {
+      this.props.onCancelAddSavedQuery?.();
+      return;
+    }
+    this.onExitQueryLibraryEditingMode();
+  };
+
   onCopyQuery = () => {
     const { query, onAddQuery, onQueryCopied } = this.props;
     const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
@@ -605,7 +613,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             queryLibraryRef={queryLibraryRef}
             mode={addingSavedQuery ? 'add' : 'edit'}
             onCancelEdit={addingSavedQuery ? onCancelAddSavedQuery : this.onCancelQueryLibraryEdit}
-            onUpdateSuccess={this.onExitQueryLibraryEditingMode}
+            onUpdateSuccess={this.onSavedQueryModeSuccess}
             onSelectQuery={this.onSelectQueryFromLibrary}
           />
         )}

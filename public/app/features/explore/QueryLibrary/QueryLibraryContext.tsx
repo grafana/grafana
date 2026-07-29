@@ -58,8 +58,9 @@ export type QueryLibraryContextType = {
   /**
    * @param isSelectingQuery Selection flow — affects close analytics.
    * @param closedToEditInExplore e.g. "Edit in Explore" — resets details form and emits explore-specific analytics.
+   * @returns false when a close guard blocked the close (e.g. dirty form); true or void when the drawer closed.
    */
-  closeDrawer: (isSelectingQuery?: boolean, closedToEditInExplore?: boolean) => void;
+  closeDrawer: (isSelectingQuery?: boolean, closedToEditInExplore?: boolean) => boolean | void;
   /** Call after the user confirmed leaving unsaved edits so closeDrawer is not blocked by the stale guard. */
   clearCloseGuard: () => void;
   isDrawerOpen: boolean;
