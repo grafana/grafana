@@ -80,7 +80,7 @@ func TestPublishWatchNotification(t *testing.T) {
 		backend.publishWatchNotification(context.Background(), event)
 
 		assert.Equal(t, 1.0, testutil.ToFloat64(metrics.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action))))
-		assert.Equal(t, 0.0, testutil.ToFloat64(metrics.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource)))
+		assert.Equal(t, 0.0, testutil.ToFloat64(metrics.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action))))
 	})
 
 	t.Run("counts a failed publish as a failure, not as published", func(t *testing.T) {
@@ -91,7 +91,7 @@ func TestPublishWatchNotification(t *testing.T) {
 		backend.publishWatchNotification(context.Background(), event)
 
 		assert.Equal(t, 0.0, testutil.ToFloat64(metrics.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action))))
-		assert.Equal(t, 1.0, testutil.ToFloat64(metrics.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource)))
+		assert.Equal(t, 1.0, testutil.ToFloat64(metrics.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action))))
 	})
 
 	t.Run("does nothing when the publisher is disabled", func(t *testing.T) {

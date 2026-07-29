@@ -159,8 +159,8 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 		}, []string{"group", "resource", "action"}),
 		WatchNotificationPublishFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "storage_server_watch_notifications_publish_failures_total",
-			Help: "Watch notifications that failed to marshal or publish to NATS. Each one is an event live consumers never receive; they recover it on their next re-list.",
-		}, []string{"group", "resource"}),
+			Help: "Watch notifications that failed to marshal or publish to NATS, by group, resource, and action. Each one is an event live consumers never receive; they recover it on their next re-list.",
+		}, []string{"group", "resource", "action"}),
 	}
 }
 
@@ -189,7 +189,7 @@ func (m *kvBackendMetrics) recordWatchNotificationPublishFailure(event Event) {
 	if m == nil {
 		return
 	}
-	m.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource).Inc()
+	m.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
 }
 
 var _ KVBackend = &kvStorageBackend{}
