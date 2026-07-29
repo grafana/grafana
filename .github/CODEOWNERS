@@ -1059,6 +1059,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/plugins/panel/text/ @grafana/dataviz-squad
 /public/app/plugins/panel/textng/ @grafana/dataviz-squad
 /public/app/plugins/panel/welcome/ @grafana/grafana-frontend-navigation
+/public/app/plugins/schemas/ @grafana/dataviz-squad
 /public/app/plugins/panel/xychart/ @grafana/dataviz-squad
 /public/app/routes/ @grafana/grafana-frontend-navigation
 /public/app/store/ @grafana/grafana-frontend-platform
@@ -1095,10 +1096,10 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/app.ts @grafana/grafana-frontend-platform
 /public/app/dev.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/metrics.ts @grafana/grafana-catalog
-/public/app/index.ts @grafana/frontend-ops
+/public/app/index.ts @grafana/grafana-frontend-platform
 /public/app/legacyAPIHandling* @grafana/grafana-frontend-platform
-/public/app/initApp.ts @grafana/frontend-ops
-/public/app/AppWrapper.tsx @grafana/frontend-ops
+/public/app/initApp.ts @grafana/grafana-frontend-platform
+/public/app/AppWrapper.tsx @grafana/grafana-frontend-platform
 
 /scripts/benchmark-access-control.sh @grafana/access-squad
 /scripts/build-deb.sh @grafana/grafana-backend-services-squad
