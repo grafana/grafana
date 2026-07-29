@@ -4,6 +4,7 @@ import { config } from '@grafana/runtime';
 import { useAppPluginMetas } from '@grafana/runtime/internal';
 
 import { isDatabaseAttribute } from '../attributeCategories';
+
 import { getAttributePluginPromos, useAttributePluginPromoGetter } from './attributePluginPromos';
 
 jest.mock('@grafana/runtime/internal', () => ({
