@@ -12,6 +12,7 @@ The migration system transfers resources from legacy SQL tables to Grafana's uni
 |----------|-----------|--------------|
 | Folders | `folder.grafana.app` | `dashboard` |
 | Dashboards | `dashboard.grafana.app` | `dashboard` |
+| Library panels | `dashboard.grafana.app` | `library_element` |
 | Playlists | `playlist.grafana.app` | `playlist` |
 | Short URLs | `shorturl.grafana.app` | `short_url` |
 | Datasources | `*.datasource.grafana.app` | `data_source` |
