@@ -1,8 +1,9 @@
 import { type RenderResult, screen } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
-import { render } from 'test/test-utils';
+import { render, userEvent } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
+import { type GrafanaConfig, locationUtil } from '@grafana/data';
+import { config, locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import * as api from 'app/features/datasources/api';
 import { getMockDataSources } from 'app/features/datasources/mocks/dataSourcesMocks';
@@ -113,6 +114,62 @@ describe('Connections', () => {
     expect(screen.queryByText('Collector')).not.toBeInTheDocument();
     expect(screen.queryByText('Integrations')).not.toBeInTheDocument();
     expect(screen.queryByText('Private data source connect')).not.toBeInTheDocument();
+  });
+
+  describe('when Grafana is served under a subpath', () => {
+    // The backend prefixes every nav url with appSubUrl
+    // (navtree.go: baseUrl := s.cfg.AppSubURL + "/connections"), so the landing page
+    // cards receive subpath-prefixed urls.
+    const SUB_PATH = '/grafana';
+
+    const initLocationUtil = (appSubUrl: string) =>
+      locationUtil.initialize({
+        config: { appSubUrl } as GrafanaConfig,
+        getVariablesUrlParams: jest.fn(),
+        getTimeRangeForUrl: jest.fn(),
+      });
+
+    const subPathStore = () =>
+      configureStore({
+        navIndex: {
+          ...navIndex,
+          connections: {
+            ...navIndex.connections,
+            children: [
+              {
+                id: 'connections-add-new-connection',
+                text: 'Add new connection',
+                url: `${SUB_PATH}/connections/add-new-connection`,
+              },
+              { id: 'connections-datasources', text: 'Data sources', url: `${SUB_PATH}/connections/datasources` },
+            ],
+          },
+        },
+        plugins: getPluginsStateMock([]),
+      });
+
+    beforeEach(() => initLocationUtil(SUB_PATH));
+    afterEach(() => initLocationUtil(''));
+
+    test('navigates to a path relative to the router basename', async () => {
+      const user = userEvent.setup();
+      renderPage(ROUTES.Base, subPathStore());
+
+      await user.click(await screen.findByRole('button', { name: /^Data sources/i }));
+
+      // The router basename is the subpath, so pushing a prefixed path would repeat it.
+      expect(locationService.getLocation().pathname).toBe('/connections/datasources');
+    });
+
+    test('still resolves card metadata for subpath-prefixed nav urls', async () => {
+      config.pluginAdminExternalManageEnabled = false;
+      renderPage(ROUTES.Base, subPathStore());
+
+      // CardMetadata is keyed on the unprefixed path, so an unnormalized url
+      // silently falls back to the raw nav text and subtitle.
+      expect(await screen.findByText('View configured data sources')).toBeVisible();
+      expect(await screen.findByText('Connect to a new data source')).toBeVisible();
+    });
   });
 
   test('renders the correct tab even if accessing it with a "sub-url"', async () => {

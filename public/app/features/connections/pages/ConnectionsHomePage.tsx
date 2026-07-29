@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, type IconName, isIconName } from '@grafana/data';
+import { type GrafanaTheme2, type IconName, isIconName, locationUtil } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
@@ -31,9 +31,13 @@ export default function ConnectionsHomePage() {
   const cardsData = (navIndex['connections']?.children ?? [])
     .filter((item) => item.url)
     .map((item) => {
-      const meta = cardMetadata[item.url!];
+      // Nav urls carry appSubUrl, but cardMetadata is keyed on the unprefixed path and
+      // locationService expects paths relative to the router basename.
+      const url = locationUtil.stripBaseFromUrl(item.url!);
+      const meta = cardMetadata[url];
       return {
         ...item,
+        url,
         text: meta?.text ?? item.text,
         icon: resolveIcon(meta?.icon, item.icon),
         subTitle: meta?.subTitle ?? item.subTitle ?? '',
