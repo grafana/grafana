@@ -306,15 +306,20 @@ func (c *ConcurrentJobDriver) setTrigger(key string, trigger claimTrigger) {
 	}
 }
 
-// forget removes key from the queue and drops its trigger attribution. It
-// replaces bare queue.Forget calls so the triggers map never outlives a key.
-// Retries (AddRateLimited) deliberately do not call this: they keep the
-// original attribution across attempts.
-func (c *ConcurrentJobDriver) forget(key string) {
-	c.queue.Forget(key)
+// popTrigger reads and removes key's attribution. Each pickup pops its own entry
+// up front, so the entry never outlives the key however the pickup ends, and a
+// concurrent enqueue that races an in-flight key (setting a fresh entry and
+// marking the key dirty) keeps its attribution for the redelivery — a terminal
+// queue.Forget must not clobber it. A retry re-sets the popped trigger before
+// re-queuing so later attempts keep the original attribution.
+func (c *ConcurrentJobDriver) popTrigger(key string) (claimTrigger, bool) {
 	c.mu.Lock()
-	delete(c.triggers, key)
-	c.mu.Unlock()
+	defer c.mu.Unlock()
+	trigger, ok := c.triggers[key]
+	if ok {
+		delete(c.triggers, key)
+	}
+	return trigger, ok
 }
 
 // Run starts the worker pool.
@@ -386,11 +391,21 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 
 	logger := logging.FromContext(ctx).With("work_key", key)
 
+	// Pop this pickup's attribution up front so the entry is cleared however the
+	// key leaves this function, without a terminal Forget clobbering a newer
+	// attribution set by a concurrent enqueue while the key was in flight. A
+	// missing entry (only reachable via a dirty redelivery after a Forget) falls
+	// back to relist so live+relist+initial always sums to total processed.
+	trigger, ok := c.popTrigger(key)
+	if !ok {
+		trigger = triggerRelist
+	}
+
 	// After shutdown begins, Get keeps returning queued keys until the queue is
 	// empty; skip them so workers exit promptly instead of claiming jobs mid-shutdown.
 	if ctx.Err() != nil {
 		logger.Debug("discard queued job during shutdown")
-		c.forget(key)
+		c.queue.Forget(key)
 		return true
 	}
 
@@ -400,26 +415,15 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 	// run calls Done. A later resync re-adds the key once the cooldown passes.
 	if c.inCooldown(key) {
 		logger.Debug("job key in post-claim cooldown - dropping; a later resync re-adds it")
-		c.forget(key)
+		c.queue.Forget(key)
 		return true
 	}
 
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		logger.Error("invalid job key - dropping", "error", err)
-		c.forget(key)
+		c.queue.Forget(key)
 		return true
-	}
-
-	// Read (do not delete) the attribution: a retried key re-enters here and must
-	// keep its original trigger. A missing entry is only reachable via workqueue
-	// dirty-redelivery after a Forget cleared it; fall back to relist so
-	// live+relist+initial always sums to total processed.
-	c.mu.Lock()
-	trigger, ok := c.triggers[key]
-	c.mu.Unlock()
-	if !ok {
-		trigger = triggerRelist
 	}
 
 	attempt := c.queue.NumRequeues(key) + 1
@@ -431,13 +435,13 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 		if attempt > 1 {
 			logger.Info("job claim succeeded after retries", "attempts", attempt)
 		}
-		c.forget(key)
+		c.queue.Forget(key)
 	case errors.Is(err, ErrAlreadyClaimed):
 		logger.Debug("job already claimed by another worker - dropping from queue")
-		c.forget(key)
+		c.queue.Forget(key)
 	case apierrors.IsNotFound(err):
 		logger.Debug("job no longer exists - dropping from queue")
-		c.forget(key)
+		c.queue.Forget(key)
 	case errors.Is(err, errPostClaim):
 		// The job may already have executed; an immediate retry would re-run its
 		// side effects. Its claim was rolled back, so the informer re-list
@@ -447,16 +451,19 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 		c.startCooldown(key)
 		logger.Error("job failed after it was claimed - dropping from queue; the informer re-list re-adds it after a cooldown",
 			"attempt", attempt, "cooldown", c.postClaimCooldown, "error", err)
-		c.forget(key)
+		c.queue.Forget(key)
 	case attempt >= maxClaimAttempts:
 		logger.Error("job failed too many times - dropping from queue; the informer re-list re-adds it if still unclaimed",
 			"attempts", attempt, "error", err)
-		c.forget(key)
+		c.queue.Forget(key)
 	default:
 		// Only claim-path failures reach here; the job was never claimed by this
-		// worker, so retrying cannot re-run any work.
+		// worker, so retrying cannot re-run any work. Re-set the attribution the
+		// pickup popped so the retry keeps it (unless a concurrent enqueue set a
+		// newer one).
 		logger.Warn("failed to claim job - will retry",
 			"attempt", attempt, "max_attempts", maxClaimAttempts, "error", err)
+		c.setTrigger(key, trigger)
 		c.queue.AddRateLimited(key)
 	}
 	return true

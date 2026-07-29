@@ -276,13 +276,21 @@ func (rc *RepositoryController) setTrigger(key string, trigger informer.ProcessT
 	}
 }
 
-// forget removes key from the queue and drops its trigger attribution, so the
-// map never outlives a key. Retries (AddRateLimited) keep the entry.
-func (rc *RepositoryController) forget(key string) {
-	rc.queue.Forget(key)
+// popTrigger reads and removes key's attribution. Each pickup pops its own entry
+// up front, so the entry never outlives the key however the pickup ends, and a
+// concurrent enqueue that races an in-flight reconcile (setting a fresh entry
+// and marking the key dirty — e.g. a status update the reconcile itself
+// produced) keeps its attribution for the redelivery, which a terminal
+// queue.Forget must not clobber. A retry re-sets the popped trigger before
+// re-queuing so later attempts keep the original attribution.
+func (rc *RepositoryController) popTrigger(key string) (informer.ProcessTrigger, bool) {
 	rc.triggersMu.Lock()
-	delete(rc.triggers, key)
-	rc.triggersMu.Unlock()
+	defer rc.triggersMu.Unlock()
+	trigger, ok := rc.triggers[key]
+	if ok {
+		delete(rc.triggers, key)
+	}
+	return trigger, ok
 }
 
 // processNextWorkItem deals with one key off the queue.
@@ -298,25 +306,27 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "repository", name)
 	logger.Info("RepositoryController processing key")
 
+	// Pop this pickup's attribution up front so the entry is cleared however the
+	// key leaves this function, without a terminal Forget clobbering a newer
+	// attribution set by a concurrent enqueue while the key was in flight. A
+	// missing entry (only reachable via a dirty redelivery after a Forget) falls
+	// back to relist.
+	trigger, ok := rc.popTrigger(key)
+	if !ok {
+		trigger = informer.TriggerRelist
+	}
+
 	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
 	attempts := rc.queue.NumRequeues(key) + 1
-	// Count the start of processing once per pickup, attributed to what enqueued
-	// the key; retries keep the same attribution and are not recounted. A missing
-	// entry is only reachable via a dirty redelivery after a Forget, so fall back
-	// to relist.
+	// Count the start of processing once per pickup; retries keep the same
+	// attribution and are not recounted.
 	if attempts == 1 {
-		rc.triggersMu.Lock()
-		trigger, ok := rc.triggers[key]
-		rc.triggersMu.Unlock()
-		if !ok {
-			trigger = informer.TriggerRelist
-		}
 		rc.processed.RecordProcessed(trigger)
 	}
 
 	err := rc.processFn(key)
 	if err == nil {
-		rc.forget(key)
+		rc.queue.Forget(key)
 		return true
 	}
 
@@ -325,19 +335,22 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 	if attempts >= maxAttempts {
 		logger.Error("RepositoryController failed too many times")
-		rc.forget(key)
+		rc.queue.Forget(key)
 		return true
 	}
 
 	if !apierrors.IsServiceUnavailable(err) {
 		logger.Info("RepositoryController will not retry")
-		rc.forget(key)
+		rc.queue.Forget(key)
 		return true
 	} else {
 		logger.Info("RepositoryController will retry as service is unavailable")
 	}
 
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
+	// Re-set the attribution the pickup popped so the retry keeps it (unless a
+	// concurrent enqueue set a newer one).
+	rc.setTrigger(key, trigger)
 	rc.queue.AddRateLimited(key)
 
 	return true

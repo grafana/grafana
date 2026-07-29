@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -129,6 +130,50 @@ func TestRepositoryController_RecordsProcessingByTrigger(t *testing.T) {
 			assertOnlyProcessedTrigger(t, reg, "repositories", tt.wantTrigger)
 		})
 	}
+}
+
+// TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger reproduces the race a
+// live event (e.g. a status update the reconcile itself produces) that arrives
+// while the key is in flight: it marks the key dirty and records a fresh live
+// attribution, which the completing reconcile's queue.Forget must not clobber.
+// So the redelivery is counted as live, not misattributed to relist.
+func TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+
+	rc := &RepositoryController{
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-dirty"},
+		),
+		logger:     logging.DefaultLogger.With("logger", "test"),
+		processed:  informer.NewProcessedMetrics(reg, "repositories"),
+		natsBacked: false,
+		keyFunc:    repoKeyFunc,
+	}
+	rc.enqueueRepository = rc.enqueue
+
+	var enqueuedDuringFlight atomic.Bool
+	rc.processFn = func(string) error {
+		// On the first reconcile, a live update (bumped RV) arrives while the key
+		// is in flight — the classic self-induced status update — marking it dirty.
+		if enqueuedDuringFlight.CompareAndSwap(false, true) {
+			rc.EventHandler().UpdateFunc(
+				&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: "5"}},
+				&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: "6"}},
+			)
+		}
+		return nil
+	}
+
+	// Initial live add (apiserver watch, full RV, non-initial).
+	rc.EventHandler().AddFunc(&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: "5"}}, false)
+
+	ctx := context.Background()
+	require.True(t, rc.processNextWorkItem(ctx)) // first pickup: live; enqueues the dirty live update
+	require.True(t, rc.processNextWorkItem(ctx)) // dirty redelivery: must stay live
+
+	assert.Equal(t, 2.0, processedCounterValue(t, reg, "grafana_provisioning_live_events_processed_total", "repositories"), "both pickups are live")
+	assert.Equal(t, 0.0, processedCounterValue(t, reg, "grafana_provisioning_relist_events_processed_total", "repositories"), "no pickup falls back to relist")
 }
 
 // TestConnectionController_RecordsProcessingByTrigger verifies the connection
