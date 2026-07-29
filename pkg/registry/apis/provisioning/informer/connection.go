@@ -29,6 +29,11 @@ type ConnectionGetter interface {
 func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) (DeltaSource, ConnectionGetter) {
 	if nats.Enabled(subscriber) {
 		source := NewConnectionInformer(subscriber, client, "", resync, usinformer.NewStore())
+		// Same as the repository informer: the controller's only feed, with
+		// connection health checks driven by the re-list, so it must keep
+		// operating at the re-list cadence while NATS is unavailable rather
+		// than gate on the subscription.
+		source.AllowDegradedStart()
 		return source, NewClientConnectionGetter(client.ProvisioningV0alpha1())
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Connections()
