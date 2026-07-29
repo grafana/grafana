@@ -1,5 +1,5 @@
 import { config } from '@grafana/runtime';
-import { CustomVariable, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { CustomVariable, SceneObjectBase, type SceneObjectState, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -8,6 +8,8 @@ import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import type { DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import type { LayoutParent } from '../../scene/types/LayoutParent';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
 
@@ -65,125 +67,53 @@ function mockSerializer(elementMap: Record<string, number> = {}) {
   };
 }
 
+interface TestLayoutParentState extends SceneObjectState {
+  body: DashboardLayoutManager;
+}
+
+class TestLayoutParent extends SceneObjectBase<TestLayoutParentState> implements LayoutParent {
+  public constructor(
+    state: TestLayoutParentState,
+    private _onSwitchLayout: (layout: DashboardLayoutManager) => void
+  ) {
+    super(state);
+  }
+
+  public getLayout(): DashboardLayoutManager {
+    return this.state.body;
+  }
+
+  public switchLayout(newLayout: DashboardLayoutManager) {
+    this.setState({ body: newLayout });
+    this._onSwitchLayout(newLayout);
+  }
+}
+
 function buildRowsScene(rowTitles: string[] = ['Row A', 'Row B']): DashboardScene {
-  const rows = rowTitles.map(
-    (title) =>
-      new RowItem({
-        title,
-        layout: DefaultGridLayoutManager.fromVizPanels([]),
-      })
-  );
+  const rows = rowTitles.map((title) => new RowItem({ title, layout: DefaultGridLayoutManager.fromVizPanels([]) }));
 
-  const body = new RowsLayoutManager({ rows });
-
-  const state: Record<string, unknown> = {
-    uid: 'test-dash',
-    isEditing: false,
-    body,
-  };
-
-  const scene = {
-    state,
-    serializer: mockSerializer(),
-    canEditDashboard: jest.fn(() => true),
-    onEnterEditMode: jest.fn(() => {
-      state.isEditing = true;
-    }),
-    activateEditPane: jest.fn(),
-    forceRender: jest.fn(),
-    setState: jest.fn((partial: Record<string, unknown>) => {
-      Object.assign(state, partial);
-    }),
-  };
-
-  currentTestScene = scene;
-
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return scene as unknown as DashboardScene;
+  return buildSceneWithLayoutParent(new RowsLayoutManager({ rows }));
 }
 
 function buildTabsScene(tabTitles: string[] = ['Tab A', 'Tab B']): DashboardScene {
-  const tabs = tabTitles.map(
-    (title) =>
-      new TabItem({
-        title,
-        layout: DefaultGridLayoutManager.fromVizPanels([]),
-      })
-  );
+  const tabs = tabTitles.map((title) => new TabItem({ title, layout: DefaultGridLayoutManager.fromVizPanels([]) }));
 
-  const body = new TabsLayoutManager({ tabs });
-
-  const state: Record<string, unknown> = {
-    uid: 'test-dash',
-    isEditing: false,
-    body,
-  };
-
-  const scene = {
-    state,
-    serializer: mockSerializer(),
-    canEditDashboard: jest.fn(() => true),
-    onEnterEditMode: jest.fn(() => {
-      state.isEditing = true;
-    }),
-    activateEditPane: jest.fn(),
-    forceRender: jest.fn(),
-    setState: jest.fn((partial: Record<string, unknown>) => {
-      Object.assign(state, partial);
-    }),
-  };
-
-  currentTestScene = scene;
-
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return scene as unknown as DashboardScene;
+  return buildSceneWithLayoutParent(new TabsLayoutManager({ tabs }));
 }
 
 function buildRowsSceneWithPanels(): DashboardScene {
   const panelA = new VizPanel({ key: 'panel-1', title: 'Panel A', pluginId: 'timeseries' });
   const panelB = new VizPanel({ key: 'panel-2', title: 'Panel B', pluginId: 'timeseries' });
 
-  const row1 = new RowItem({
-    title: 'Row 1',
-    layout: DefaultGridLayoutManager.fromVizPanels([panelA]),
-  });
-  const row2 = new RowItem({
-    title: 'Row 2',
-    layout: DefaultGridLayoutManager.fromVizPanels([panelB]),
-  });
+  const row1 = new RowItem({ title: 'Row 1', layout: DefaultGridLayoutManager.fromVizPanels([panelA]) });
+  const row2 = new RowItem({ title: 'Row 2', layout: DefaultGridLayoutManager.fromVizPanels([panelB]) });
 
-  const body = new RowsLayoutManager({ rows: [row1, row2] });
-
-  const state: Record<string, unknown> = {
-    uid: 'test-dash',
-    isEditing: false,
-    body,
-  };
-
-  const scene = {
-    state,
-    serializer: mockSerializer({ 'elem-a': 1, 'elem-b': 2 }),
-    canEditDashboard: jest.fn(() => true),
-    onEnterEditMode: jest.fn(() => {
-      state.isEditing = true;
-    }),
-    activateEditPane: jest.fn(),
-    forceRender: jest.fn(),
-    setState: jest.fn((partial: Record<string, unknown>) => {
-      Object.assign(state, partial);
-    }),
-  };
-
-  currentTestScene = scene;
-
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  return scene as unknown as DashboardScene;
+  return buildSceneWithLayoutParent(
+    new RowsLayoutManager({ rows: [row1, row2] }),
+    mockSerializer({ 'elem-a': 1, 'elem-b': 2 })
+  );
 }
 
-/**
- * Builds a scene with a LayoutParent mock on the body, enabling
- * layout conversion tests (e.g., grid -> tabs, rows -> tabs).
- */
 function buildSceneWithLayoutParent(
   body: DefaultGridLayoutManager | RowsLayoutManager | TabsLayoutManager | AutoGridLayoutManager,
   serializer = mockSerializer()
@@ -194,14 +124,11 @@ function buildSceneWithLayoutParent(
     body,
   };
 
-  const mockLayoutParent = {
-    switchLayout: jest.fn((newLayout: unknown) => {
-      state.body = newLayout;
-    }),
-    publishEvent: jest.fn(),
-  };
+  const layoutParent = new TestLayoutParent({ body }, (newLayout) => {
+    state.body = newLayout;
+  });
 
-  (body as unknown as { _parent: unknown })._parent = mockLayoutParent;
+  (body as unknown as { _parent: unknown })._parent = layoutParent;
 
   const scene = {
     state,
@@ -354,6 +281,20 @@ describe('Layout mutation commands', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('same path');
+    });
+
+    it('collapses the layout into a grid when the last row is removed', async () => {
+      const row = new RowItem({ title: 'Only', layout: DefaultGridLayoutManager.fromVizPanels([]) });
+      const scene = buildSceneWithLayoutParent(new RowsLayoutManager({ rows: [row] }));
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'REMOVE_ROW',
+        payload: { path: '/rows/0' },
+      });
+
+      expect(result.success).toBe(true);
+      expect(scene.state.body).toBeInstanceOf(AutoGridLayoutManager);
     });
   });
 
@@ -619,6 +560,20 @@ describe('Layout mutation commands', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('same path');
+    });
+
+    it('collapses the layout into a grid when the last tab is removed', async () => {
+      const tab = new TabItem({ title: 'Only', layout: DefaultGridLayoutManager.fromVizPanels([]) });
+      const scene = buildSceneWithLayoutParent(new TabsLayoutManager({ tabs: [tab] }));
+      const executor = new DashboardMutationClient(scene);
+
+      const result = await executor.execute({
+        type: 'REMOVE_TAB',
+        payload: { path: '/tabs/0' },
+      });
+
+      expect(result.success).toBe(true);
+      expect(scene.state.body).toBeInstanceOf(AutoGridLayoutManager);
     });
   });
 
@@ -1979,20 +1934,7 @@ describe('Layout mutation commands', () => {
         layout: DefaultGridLayoutManager.fromVizPanels([]),
       });
       const body = new RowsLayoutManager({ rows: [row1, row2] });
-      const state: Record<string, unknown> = { uid: 'test', isEditing: false, body };
-      const scene = {
-        state,
-        serializer: mockSerializer(),
-        canEditDashboard: jest.fn(() => true),
-        onEnterEditMode: jest.fn(() => {
-          state.isEditing = true;
-        }),
-        activateEditPane: jest.fn(),
-        forceRender: jest.fn(),
-        setState: jest.fn((partial: Record<string, unknown>) => {
-          Object.assign(state, partial);
-        }),
-      } as unknown as DashboardScene;
+      const scene = buildSceneWithLayoutParent(body);
 
       const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
@@ -2022,20 +1964,7 @@ describe('Layout mutation commands', () => {
         layout: DefaultGridLayoutManager.fromVizPanels([]),
       });
       const body = new RowsLayoutManager({ rows: [row1, row2] });
-      const state: Record<string, unknown> = { uid: 'test', isEditing: false, body };
-      const scene = {
-        state,
-        serializer: mockSerializer(),
-        canEditDashboard: jest.fn(() => true),
-        onEnterEditMode: jest.fn(() => {
-          state.isEditing = true;
-        }),
-        activateEditPane: jest.fn(),
-        forceRender: jest.fn(),
-        setState: jest.fn((partial: Record<string, unknown>) => {
-          Object.assign(state, partial);
-        }),
-      } as unknown as DashboardScene;
+      const scene = buildSceneWithLayoutParent(body);
 
       const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
@@ -2068,20 +1997,7 @@ describe('Layout mutation commands', () => {
         layout: DefaultGridLayoutManager.fromVizPanels([]),
       });
       const body = new TabsLayoutManager({ tabs: [tab0, tab1] });
-      const state: Record<string, unknown> = { uid: 'test', isEditing: false, body };
-      const scene = {
-        state,
-        serializer: mockSerializer(),
-        canEditDashboard: jest.fn(() => true),
-        onEnterEditMode: jest.fn(() => {
-          state.isEditing = true;
-        }),
-        activateEditPane: jest.fn(),
-        forceRender: jest.fn(),
-        setState: jest.fn((partial: Record<string, unknown>) => {
-          Object.assign(state, partial);
-        }),
-      } as unknown as DashboardScene;
+      const scene = buildSceneWithLayoutParent(body);
 
       const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
@@ -2111,20 +2027,7 @@ describe('Layout mutation commands', () => {
         }),
       });
       const body = new TabsLayoutManager({ tabs: [tab0, tab1] });
-      const state: Record<string, unknown> = { uid: 'test', isEditing: false, body };
-      const scene = {
-        state,
-        serializer: mockSerializer(),
-        canEditDashboard: jest.fn(() => true),
-        onEnterEditMode: jest.fn(() => {
-          state.isEditing = true;
-        }),
-        activateEditPane: jest.fn(),
-        forceRender: jest.fn(),
-        setState: jest.fn((partial: Record<string, unknown>) => {
-          Object.assign(state, partial);
-        }),
-      } as unknown as DashboardScene;
+      const scene = buildSceneWithLayoutParent(body);
 
       const executor = new DashboardMutationClient(scene);
       const result = await executor.execute({
