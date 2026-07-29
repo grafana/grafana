@@ -2108,7 +2108,7 @@ func (b *bleveIndex) Search(
 	// and stops once the page is full (page-fill) or the sample budget is hit
 	// (facets). A count-only request (Limit==0, no facets) returns Bleve's
 	// unfiltered count with TotalHitsExact=false, avoiding a full authz scan.
-	postRank := b.postRankAuthzEnabled && access != nil && req.Limit >= 0
+	postRank := b.postRankAuthzEnabled && access != nil
 
 	conversionStarts := time.Now()
 	// convert protobuf request to bleve request
