@@ -48,12 +48,11 @@ export class VariableOptions extends PageObject {
   readonly datasource = {
     selectType: async (dsType: string) => {
       await test.step(`Select variable datasource type "${dsType}"`, async () => {
-        await this.dashboardPage
-          .getByGrafanaSelector(
-            this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
-          )
-          .click();
-        await this.page.getByRole('option', { name: dsType, exact: true }).click();
+        const datasourceSelect = this.dashboardPage.getByGrafanaSelector(
+          this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
+        );
+        await datasourceSelect.fill(dsType);
+        await datasourceSelect.press('Enter');
       });
     },
     setNameFilter: async (filter: string) => {
@@ -116,7 +115,7 @@ export class VariableOptions extends PageObject {
           .click();
 
         await this.page.keyboard.type(dataSource);
-        await this.page.getByRole('button', { name: dataSource }).click();
+        await this.page.getByRole('option', { name: dataSource }).click();
       });
     },
   };
@@ -131,7 +130,7 @@ export class VariableOptions extends PageObject {
           .click();
 
         await this.page.keyboard.type(dataSource);
-        await this.page.getByRole('button', { name: dataSource }).click();
+        await this.page.getByRole('option', { name: dataSource }).click();
 
         await this.page
           .getByRole('alert', { name: /this data source does not support filters/ })
@@ -150,13 +149,13 @@ export class VariableOptions extends PageObject {
           .click();
       });
     },
-    selectDatasource: async (dataSource: string) => {
-      await test.step(`Select query datasource "${dataSource}"`, async () => {
+    selectTargetDatasource: async (dataSource: string) => {
+      await test.step(`Select target datasource "${dataSource}"`, async () => {
         await this.components.dataSourcePicker.set(dataSource);
       });
     },
-    setQuery: async (query: string) => {
-      await test.step(`Set variable query to "${query}"`, async () => {
+    setTestDataQuery: async (query: string) => {
+      await test.step(`Set TestData query to "${query}"`, async () => {
         await this.dashboardPage
           .getByGrafanaSelector(
             this.selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput

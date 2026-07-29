@@ -121,6 +121,21 @@
     },
     {
       "metadata": {
+        "name": "alerting.manualAssistantInvestigation",
+        "resourceVersion": "1785243477586",
+        "creationTimestamp": "2026-07-28T12:57:57Z"
+      },
+      "spec": {
+        "description": "Enable manually starting an Assistant investigation from the alert instance drawer.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.notificationsAPIV1Beta1",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -456,6 +471,21 @@
         "stage": "preview",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingManualAssistantInvestigation",
+        "resourceVersion": "1784541144107",
+        "creationTimestamp": "2026-07-20T09:52:24Z",
+        "deletionTimestamp": "2026-07-28T12:57:57Z"
+      },
+      "spec": {
+        "description": "Enable manually starting an Assistant investigation from the alert instance drawer.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -1090,6 +1120,20 @@
     },
     {
       "metadata": {
+        "name": "authz.listFoldersViaSearch",
+        "resourceVersion": "1782267268333",
+        "creationTimestamp": "2026-06-24T02:14:28Z"
+      },
+      "spec": {
+        "description": "Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "awsAssumeRolePerDatasourceExternalId",
         "resourceVersion": "1784056946678",
         "creationTimestamp": "2026-07-14T19:22:26Z"
@@ -1583,7 +1627,8 @@
       "metadata": {
         "name": "dashboardDefaultLayoutSelector",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-22T11:26:27Z"
       },
       "spec": {
         "description": "Enables default layout selector in dashboard settings",
@@ -1689,7 +1734,8 @@
       "metadata": {
         "name": "dashboardSectionVariables",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-22T18:53:33Z"
       },
       "spec": {
         "description": "Enables support for section level variables (rows and tabs)",
@@ -2870,14 +2916,16 @@
     {
       "metadata": {
         "name": "grafana.multiTenantNavTree",
-        "resourceVersion": "1784042116563",
-        "creationTimestamp": "2026-07-14T15:15:16Z"
+        "resourceVersion": "1784635043218",
+        "creationTimestamp": "2026-07-14T15:15:16Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-21 11:57:23.218354 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Builds the navigation tree client-side instead of reading it from /bootdata",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
-        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -3066,6 +3114,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.thresholdsInterpolation",
+        "resourceVersion": "1784639663172",
+        "creationTimestamp": "2026-07-21T13:14:23Z",
+        "deletionTimestamp": "2026-07-27T09:35:58Z"
+      },
+      "spec": {
+        "description": "Enables using dashboard variables in panel threshold values",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.unifiedHomepage",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -3113,16 +3176,19 @@
     {
       "metadata": {
         "name": "grafana.viewPanelPane",
-        "resourceVersion": "1778761195995",
-        "creationTimestamp": "2026-05-14T12:19:55Z"
+        "resourceVersion": "1784896787869",
+        "creationTimestamp": "2026-05-14T12:19:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-24 12:39:47.869351 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the sidebar pane with new toggles and options in panel view mode",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3946,6 +4012,20 @@
     },
     {
       "metadata": {
+        "name": "libraryElements.folderTreeViaSearch",
+        "resourceVersion": "1782273749340",
+        "creationTimestamp": "2026-06-24T04:02:29Z"
+      },
+      "spec": {
+        "description": "Build the library-elements folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips on GET /api/library-elements.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "libraryelements.kubernetesLibraryPanels",
         "resourceVersion": "1784652846634",
         "creationTimestamp": "2026-07-21T16:54:06Z"
@@ -4292,15 +4372,18 @@
     {
       "metadata": {
         "name": "newSavedQueriesExperience",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1784725458981",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-22 13:04:18.981698 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new Saved queries (query library) modal experience",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4695,14 +4778,16 @@
     {
       "metadata": {
         "name": "plugins.useMTPlugins",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1784801546639",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-23 10:12:26.639861 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables plugins decoupling from bootdata",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-catalog",
-        "frontend": true,
         "hideFromDocs": true,
         "expression": "false"
       }
@@ -5092,15 +5177,18 @@
     {
       "metadata": {
         "name": "queryLibrary",
-        "resourceVersion": "1779440584464",
+        "resourceVersion": "1784725239984",
         "creationTimestamp": "2022-10-07T18:31:45Z",
-        "deletionTimestamp": "2023-03-20T16:00:14Z"
+        "deletionTimestamp": "2023-03-20T16:00:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-22 13:00:39.984125 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Saved queries (query library) feature",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5353,6 +5441,33 @@
     },
     {
       "metadata": {
+        "name": "reporting.redirectReportsToK8SApi",
+        "resourceVersion": "1785214026884",
+        "creationTimestamp": "2026-07-28T04:47:06Z"
+      },
+      "spec": {
+        "description": "Redirect legacy report CRUD API endpoints to the Kubernetes reporting API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "reporting.redirectReportsToK8sApi",
+        "resourceVersion": "1785213945476",
+        "creationTimestamp": "2026-07-28T04:45:45Z",
+        "deletionTimestamp": "2026-07-28T04:47:06Z"
+      },
+      "spec": {
+        "description": "Redirect legacy report CRUD API endpoints to the Kubernetes reporting API",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "reportingFooterSettings",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -5440,14 +5555,17 @@
     {
       "metadata": {
         "name": "savedQueriesRBAC",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1784725458981",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-22 13:04:18.981698 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Saved queries (query library) RBAC permissions",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5773,6 +5891,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "table.autoColumnWidths",
+        "resourceVersion": "1784908309843",
+        "creationTimestamp": "2026-07-24T15:51:49Z"
+      },
+      "spec": {
+        "description": "Sizes TableNG auto-width columns to fit their content instead of distributing evenly",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

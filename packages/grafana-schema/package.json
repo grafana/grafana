@@ -135,12 +135,6 @@
       "import": "./dist/esm/raw/composable/logstable/panelcfg/x/types.gen.mjs",
       "require": "./dist/cjs/raw/composable/logstable/panelcfg/x/types.gen.cjs"
     },
-    "./dist/esm/raw/composable/loki/dataquery/x/LokiDataQuery_types.gen": {
-      "@grafana-app/source": "./src/raw/composable/loki/dataquery/x/types.gen.ts",
-      "types": "./dist/types/raw/composable/loki/dataquery/x/types.gen.d.ts",
-      "import": "./dist/esm/raw/composable/loki/dataquery/x/types.gen.mjs",
-      "require": "./dist/cjs/raw/composable/loki/dataquery/x/types.gen.cjs"
-    },
     "./dist/esm/raw/composable/newgauge/panelcfg/x/NewGaugePanelCfg_types.gen": {
       "@grafana-app/source": "./src/raw/composable/newgauge/panelcfg/x/types.gen.ts",
       "types": "./dist/types/raw/composable/newgauge/panelcfg/x/types.gen.d.ts",
@@ -248,12 +242,13 @@
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "16.0.1",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "esbuild": "0.25.8",
     "rimraf": "6.0.1",
     "rollup": "^4.60.1",
     "rollup-plugin-copy": "3.5.0",
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
-    "typescript": "6.0.2"
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   }
 }
