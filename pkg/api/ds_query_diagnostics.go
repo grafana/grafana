@@ -25,16 +25,6 @@ type diagnosticsRequest struct {
 	dtos.MetricRequest
 	Dashboard json.RawMessage `json:"dashboard"`
 	Panel     json.RawMessage `json:"panel"`
-	// PanelData is the data frames the client's frontend was holding for this panel, bundled as
-	// paneldata.json. Optional: the frontend omits it when it had nothing to capture, and sends a
-	// {version, captureError} record in place of the frames when the capture itself failed -- so an
-	// absent artifact means "nothing to capture" rather than "the capture broke". An absent payload --
-	// or a well-formed one of an unexpected shape -- never fails the request. Two things do, and both
-	// cost the caller the entire bundle rather than just this artifact: a syntactically malformed
-	// payload, because encoding/json validates the bytes it captures into a RawMessage and so the
-	// web.Bind below rejects the whole body; and size, because web.MaxBindBodyBytes caps the whole
-	// request (at 100MiB) rather than this field. Bounding both is the client's job; see
-	// diagnostics.WithPanelData.
 	PanelData json.RawMessage `json:"panelData"`
 }
 
