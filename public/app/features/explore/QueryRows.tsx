@@ -10,7 +10,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
-import { ContentOutlineItem } from './ContentOutline/ContentOutlineItem';
+import { ContentOutlineItem, QUERIES_PANEL_ID } from './ContentOutline/ContentOutlineItem';
 import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { changeDatasource } from './state/datasource';
 import { updateQueryLibraryRefAction } from './state/explorePane';
@@ -148,7 +148,7 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
           title={refId}
           icon="arrow"
           key={refId}
-          panelId="Queries"
+          panelId={QUERIES_PANEL_ID}
           customTopOffset={-10}
           level="child"
         >

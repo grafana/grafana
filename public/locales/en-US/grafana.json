@@ -8497,7 +8497,6 @@
       "open-in-new-tab": "Open in new tab"
     },
     "content-outline": {
-      "title-datasource-explorer": "Datasource explorer",
       "tooltip-collapse-outline": "Collapse outline",
       "tooltip-expand-outline": "Expand outline"
     },
@@ -8725,9 +8724,8 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
     },
-    "metrics-explorer": {
-      "search-placeholder": "Search metrics",
-      "title-metrics": "Metrics"
+    "metrics-list": {
+      "search-placeholder": "Search metrics"
     },
     "next-prev-result": {
       "aria-label-next": "Next result button",
@@ -8905,6 +8903,17 @@
       "recent-queries-button-aria-label": "Recent queries"
     },
     "show-all-spans": "Show all spans",
+    "signal-card": {
+      "collapse-aria-label": "Collapse datasource explorer for query {{refId}}",
+      "expand-aria-label": "Expand datasource explorer for query {{refId}}",
+      "jump-to-query-label": "Jump to query {{refId}} ({{datasourceName}})"
+    },
+    "signal-explorer": {
+      "empty-text": "Add a query to browse its datasource.",
+      "section-label-queries": "Queries",
+      "title-datasource-explorer": "Datasource explorer",
+      "unknown-datasource": "Unknown datasource"
+    },
     "span-bar": {
       "tooltip-critical-path": "A segment on the <1>critical path</1> of the overall trace / request / workflow."
     },
