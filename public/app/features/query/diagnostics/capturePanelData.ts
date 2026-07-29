@@ -4,6 +4,14 @@ import { type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
 /** Schema version stamped into paneldata.json so a reader knows how to interpret it. */
 const PANEL_DATA_ARTIFACT_VERSION = 1;
 
+/**
+ * How much of an exception's stack to keep. Ten frames of a bundled stack land well inside this, so the
+ * cap only bites on a runaway recursion — where the frames past it are repeats of the ones before.
+ * Capped rather than dropped because the stack is the one field that says *where* the frontend lost the
+ * data, and truncated rather than elided from the far end because the throw site comes first.
+ */
+const MAX_ERROR_STACK_CHARS = 4096;
+
 /** Identifies which panel a capture came from, whether it succeeded or failed. */
 interface PanelDataArtifactHeader {
   version: number;
@@ -41,6 +49,12 @@ export interface PanelDataArtifact extends PanelDataArtifactHeader {
  * type suggests — it can be a fetch/axios error carrying a circular `config` or `request`. Spreading it
  * would push captures that are otherwise fine into `captureError`, losing the frames to salvage the
  * explanation for why they are missing.
+ *
+ * That same looseness is why `stack` is worth taking: when the thrown object is a real `Error` it is the
+ * only field in the whole bundle that says *which frame* of the plugin's frontend dropped the data, and
+ * it is a plain string, so the circularity above does not apply to it. It adds no class of content the
+ * capture did not already carry either — a stack opens with the `message` recorded beside it, and the
+ * rest is code locations from Grafana's own bundle.
  */
 interface PanelDataError {
   refId?: string;
@@ -51,6 +65,11 @@ interface PanelDataError {
   type?: string;
   /** `data.error`: the server's detailed message, populated only when Grafana runs in development mode. */
   detail?: string;
+  /**
+   * The exception's own stack, when one was thrown, capped at `MAX_ERROR_STACK_CHARS` and marked where
+   * it was cut. Absent for a server-reported query error, which never had one.
+   */
+  stack?: string;
 }
 
 /**
@@ -63,6 +82,13 @@ interface PanelDataError {
  */
 export interface PanelDataCaptureFailure extends PanelDataArtifactHeader {
   captureError: string;
+  /**
+   * The stack of whatever the capture threw, on the same terms as `PanelDataError.stack` — capped and
+   * marked where it was cut. Named apart from that field because it localises a fault in *this* code
+   * rather than in the plugin's frontend: it says which line of the capture broke, not where data was
+   * lost. Absent when the throw brought no stack.
+   */
+  captureStack?: string;
 }
 
 /** What the drawer sends as `panelData`, either way. */
@@ -89,6 +115,33 @@ interface PanelDataRequestContext {
   inFlight?: true;
 }
 
+/**
+ * The stack of the object that was thrown, if it brought one, capped at `MAX_ERROR_STACK_CHARS`.
+ *
+ * Duck-typed off `unknown` rather than narrowed to `Error`, because neither caller is handed an `Error`:
+ * `DataQueryError` does not declare `stack` at all (the field is there because `toDataQueryError` hands
+ * back the thrown object itself), and a capture failure is whatever a `throw` produced. So the check is a
+ * runtime one, and an object that carries a stack without extending `Error` still gets read.
+ */
+function captureStack(error: unknown): string | undefined {
+  if (typeof error !== 'object' || error === null || !('stack' in error)) {
+    return undefined;
+  }
+
+  const { stack } = error;
+  if (typeof stack !== 'string' || !stack) {
+    return undefined;
+  }
+
+  if (stack.length <= MAX_ERROR_STACK_CHARS) {
+    return stack;
+  }
+
+  // Marked, so a support engineer reading a stack that stops mid-frame knows the capture cut it and no
+  // deeper frame is implied to be absent.
+  return `${stack.slice(0, MAX_ERROR_STACK_CHARS)}\n… [stack truncated at ${MAX_ERROR_STACK_CHARS} characters]`;
+}
+
 function captureErrors(data: PanelData): PanelDataError[] | undefined {
   // errors[] is the modern field, but runRequest's catchError sets only the deprecated singular error --
   // which is exactly the plugin-frontend-threw case this is here for. Read both.
@@ -105,6 +158,7 @@ function captureErrors(data: PanelData): PanelDataError[] | undefined {
     traceId: error.traceId,
     type: error.type,
     detail: error.data?.error,
+    stack: captureStack(error),
   }));
 }
 
@@ -189,6 +243,11 @@ export function capturePanelData(panel: VizPanel, runner: SceneQueryRunner | und
  * Sending nothing would leave a support engineer unable to tell a browser that had no frames to give from
  * a capture that broke on the way out — the same conflation the backend's `WithPanelData` refuses to make
  * between an absent payload and an empty one.
+ *
+ * The stack comes along for the same reason it does on a query error: the message alone says a capture
+ * broke, and every candidate for breaking it — a frame that will not serialise, a scene shape this does
+ * not expect — is a line in this file or the one that calls it. Nothing else in the bundle records a
+ * browser-side throw, so without the stack the next person has one sentence and a re-read of the source.
  */
 export function capturePanelDataFailure(panel: VizPanel, error: unknown): PanelDataCaptureFailure {
   return {
@@ -196,5 +255,6 @@ export function capturePanelDataFailure(panel: VizPanel, error: unknown): PanelD
     panelKey: panel.state.key,
     pluginId: panel.state.pluginId,
     captureError: error instanceof Error ? error.message : String(error),
+    captureStack: captureStack(error),
   };
 }

@@ -174,6 +174,9 @@ describe('DownloadDiagnostics', () => {
       panelKey: 'panel-1',
       pluginId: 'table',
       captureError: expect.stringContaining('circular'),
+      // The stack of the throw, which is the part that says which line of the capture broke. Matched
+      // loosely: the frames come from whichever engine ran the serialization guard.
+      captureStack: expect.any(String),
     });
     expect(screen.queryByText('Failed to generate diagnostics')).not.toBeInTheDocument();
     expect(logError).toHaveBeenCalledWith(expect.any(Error), { panelKey: 'panel-1' });
