@@ -2612,6 +2612,23 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 	assert.False(t, bi.isDeclaredField(resource.SEARCH_FIELD_IS_DELETED))
 }
 
+// TestScopeQueryTrashBrowseDrivesOffTheMarker pins the shape for a trash browse
+// with nothing to match on. Bleve only ever drives iteration from the Must side,
+// so wrapping match-all in Must and filtering by the marker would read every
+// document in the index to find the few deleted ones.
+func TestScopeQueryTrashBrowseDrivesOffTheMarker(t *testing.T) {
+	scoped := scopeQuery(bleve.NewMatchAllQuery(), true)
+
+	marker, ok := scoped.(*query.BoolFieldQuery)
+	require.True(t, ok, "expected the marker query itself, got %T", scoped)
+	assert.True(t, marker.Bool)
+	assert.Equal(t, resource.SEARCH_FIELD_IS_DELETED, marker.FieldVal)
+
+	// Live browsing has to read every document regardless, so it keeps the wrapper.
+	_, ok = scopeQuery(bleve.NewMatchAllQuery(), false).(*query.BooleanQuery)
+	assert.True(t, ok)
+}
+
 // TestScopeQueryKeepsScores pins both scopes to the unscoped query's scores. The
 // marker has to sit in a non-scoring position, or absolute scores move with the
 // amount of trash in the index.

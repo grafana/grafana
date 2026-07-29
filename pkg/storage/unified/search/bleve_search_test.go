@@ -2061,6 +2061,13 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 		checkSearchQueryUnordered(t, index, q, []string{"trashed"})
 	})
 
+	// Browsing trash with no query at all takes its own path in scopeQuery.
+	t.Run("browsing trash with no query returns only deleted documents", func(t *testing.T) {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		checkSearchQueryUnordered(t, index, q, []string{"trashed"})
+	})
+
 	// A query with filters and no text takes the other branch of
 	// combineFilterAndTextQueries, where filters drive iteration.
 	t.Run("filter-only search leaves deleted documents out", func(t *testing.T) {
