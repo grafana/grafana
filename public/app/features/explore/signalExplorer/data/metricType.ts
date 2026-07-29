@@ -1,5 +1,3 @@
-import { t } from '@grafana/i18n';
-
 import type { MetricType } from '../types';
 
 const CLASSIC_HISTOGRAM_SUFFIXES = ['_bucket', '_sum', '_count'];
@@ -46,28 +44,4 @@ function isKnownType(type: string): boolean {
 function fromHelpText(help?: string): string {
   const lowered = help?.toLowerCase() ?? '';
   return HELP_TEXT_TYPES.find((type) => lowered.includes(type)) ?? '';
-}
-
-/**
- * One thunk per type, keyed for lookup. `t()` cannot run at module level, so a label has to be
- * produced on demand — but the previous shape rebuilt the whole list to read one entry, translating
- * all six labels once per rendered row. Insertion order is the order the filter offers them in, and
- * `metricType.test.ts` asserts a label exists for every member of `MetricType`.
- */
-const METRIC_TYPE_LABELS = new Map<MetricType, () => string>([
-  ['counter', () => t('explore.signal-explorer.type.counter', 'Counter')],
-  ['gauge', () => t('explore.signal-explorer.type.gauge', 'Gauge')],
-  ['histogram', () => t('explore.signal-explorer.type.histogram', 'Histogram')],
-  ['native histogram', () => t('explore.signal-explorer.type.native-histogram', 'Native histogram')],
-  ['summary', () => t('explore.signal-explorer.type.summary', 'Summary')],
-  ['unknown', () => t('explore.signal-explorer.type.unknown', 'Unknown')],
-]);
-
-/** The translated label for one metric type, falling back to the raw value rather than throwing. */
-export function getMetricTypeLabel(type: MetricType): string {
-  return METRIC_TYPE_LABELS.get(type)?.() ?? type;
-}
-
-export function getMetricTypeOptions(): Array<{ value: MetricType; label: string }> {
-  return [...METRIC_TYPE_LABELS].map(([value, label]) => ({ value, label: label() }));
 }

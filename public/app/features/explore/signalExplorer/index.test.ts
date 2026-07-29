@@ -14,8 +14,6 @@ describe('signalExplorer public surface', () => {
       'deriveMetricType',
       'detectMetricsInQueries',
       'dsKey',
-      'getMetricTypeLabel',
-      'getMetricTypeOptions',
       'invalidateMetricCache',
       'rangeKey',
       'toRefsByMetric',
@@ -31,8 +29,6 @@ describe('signalExplorer public surface', () => {
       'deriveMetricType',
       'detectMetricsInQueries',
       'dsKey',
-      'getMetricTypeLabel',
-      'getMetricTypeOptions',
       'invalidateMetricCache',
       'rangeKey',
       'toRefsByMetric',
@@ -59,11 +55,8 @@ describe('signalExplorer public surface', () => {
     expect(Number.isInteger(signalExplorer.INITIAL_BATCH)).toBe(true);
   });
 
-  it('derives a metric type and a label for it', () => {
-    const type = signalExplorer.deriveMetricType('http_requests_total', { type: 'counter' });
-
-    expect(type).toBe('counter');
-    expect(signalExplorer.getMetricTypeLabel(type)).toBe('Counter');
+  it('derives a metric type from its metadata', () => {
+    expect(signalExplorer.deriveMetricType('http_requests_total', { type: 'counter' })).toBe('counter');
   });
 });
 

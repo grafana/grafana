@@ -3,9 +3,10 @@
  *
  * This module is the "what can this datasource tell us" half of the datasource explorer sidebar;
  * the UI half lives in `explore/ContentOutline/SignalExplorer/`. Nothing here renders anything, and
- * nothing here reads Explore's store — every function and hook takes a `DataSourceRef` and a
- * `TimeRange` as plain arguments, so a caller cannot reach the wrong datasource by construction.
- * That matters most in a Mixed pane, where each card resolves a different one.
+ * nothing here reads Explore's store, and nothing here holds a translated string — every function and
+ * hook takes a `DataSourceRef` and a `TimeRange` as plain arguments, so a caller cannot reach the
+ * wrong datasource by construction. That matters most in a Mixed pane, where each card resolves a
+ * different one.
  *
  * Anything not listed here is an implementation detail and may change without notice. The resource
  * client is published in part, and only in part: `dsKey`, `rangeKey` and `invalidateMetricCache` are
@@ -33,7 +34,9 @@
 
 export type { MetricRow, MetricType } from './types';
 
-export { deriveMetricType, getMetricTypeLabel, getMetricTypeOptions } from './data/metricType';
+// The derivation only — a metric's type, not a label for it. Translated labels are presentation, so
+// they belong to whatever renders the badge rather than shipping from here with nothing to render.
+export { deriveMetricType } from './data/metricType';
 export { useLabelValues } from './data/useLabelValues';
 export { useMetricCatalog, type MetricCatalog } from './data/useMetricCatalog';
 export { useMetricDetail } from './data/useMetricDetail';
