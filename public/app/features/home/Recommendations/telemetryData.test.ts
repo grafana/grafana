@@ -1,11 +1,12 @@
-import { createDataFrame, type DataSourceInstanceListItem, FieldType } from '@grafana/data';
+import { getAPINamespace } from '@grafana/api-clients';
 import {
-  type BackendSrv,
-  type DataSourceSrv,
-  type DataSourceWithBackend,
-  getBackendSrv,
-  getDataSourceSrv,
-} from '@grafana/runtime';
+  createDataFrame,
+  type DataSourceInstanceListItem,
+  type DataSourceInstanceSettings,
+  FieldType,
+} from '@grafana/data';
+import { type BackendSrv, type DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { resolveBackendInstance } from './probeUtils';
 import { runInstantQueries, runRangeQuery } from './promQuery';
@@ -35,11 +36,22 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn(),
+}));
+
+jest.mock('@grafana/api-clients', () => ({
+  ...jest.requireActual('@grafana/api-clients'),
+  getAPINamespace: jest.fn(),
+}));
+
 const mockResolveBackendInstance = jest.mocked(resolveBackendInstance);
 const mockRunInstantQueries = jest.mocked(runInstantQueries);
 const mockRunRangeQuery = jest.mocked(runRangeQuery);
 const mockProxyGet = jest.fn();
-const mockGetInstanceSettings = jest.fn();
+const mockGetDataSourceInstanceSettings = jest.mocked(getDataSourceInstanceSettings);
+const mockGetAPINamespace = jest.mocked(getAPINamespace);
 
 const DATA_LOOKBACK_HOURS = 24;
 const NS_IN_MS = 1e6;
@@ -61,10 +73,10 @@ beforeEach(() => {
   mockRunRangeQuery.mockReset();
   mockRunRangeQuery.mockResolvedValue([]);
   jest.mocked(getBackendSrv).mockReturnValue({ get: mockProxyGet } as unknown as BackendSrv);
-  mockGetInstanceSettings.mockReset();
-  jest.mocked(getDataSourceSrv).mockReturnValue({
-    getInstanceSettings: mockGetInstanceSettings,
-  } as unknown as DataSourceSrv);
+  mockGetDataSourceInstanceSettings.mockReset();
+  mockGetDataSourceInstanceSettings.mockResolvedValue(undefined);
+  mockGetAPINamespace.mockReset();
+  mockGetAPINamespace.mockReturnValue('default');
 });
 
 afterEach(() => {
@@ -260,6 +272,7 @@ describe('fetchTracesActivity', () => {
 
 describe('fetchMetricsActivity', () => {
   const prom = { uid: 'prom-uid', type: 'prometheus' };
+  const usageSettings = { uid: 'grafanacloud-usage', type: 'prometheus' } as unknown as DataSourceInstanceSettings;
 
   const scalarFrame = (refId: string, value: number, labels?: Record<string, string>) =>
     createDataFrame({ refId, fields: [{ name: 'Value', type: FieldType.number, values: [value], labels }] });
@@ -327,7 +340,9 @@ describe('fetchMetricsActivity', () => {
   });
 
   it('skips the head-series sparkline on Mimir/Cortex-backed datasources', async () => {
-    mockGetInstanceSettings.mockReturnValue({ jsonData: { prometheusType: 'Mimir' } });
+    mockGetDataSourceInstanceSettings.mockResolvedValue({
+      jsonData: { prometheusType: 'Mimir' },
+    } as unknown as DataSourceInstanceSettings);
     const getResource = jest.fn(async (path: string) => {
       if (path === 'api/v1/cardinality/label_values') {
         return { series_count_total: 4_200_000 };
@@ -344,6 +359,140 @@ describe('fetchMetricsActivity', () => {
     expect(activity.series).toBe(4_200_000);
     expect(activity.seriesSparkline).toBeNull();
     expect(mockRunRangeQuery).not.toHaveBeenCalled();
+  });
+
+  it('sources series, sparkline, and ingest rate from the usage datasource on a Cloud stack', async () => {
+    mockGetAPINamespace.mockReturnValue('stacks-12345');
+    mockGetDataSourceInstanceSettings.mockImplementation(async (ref) =>
+      ref === 'grafanacloud-usage'
+        ? usageSettings
+        : ({ jsonData: { prometheusType: 'Mimir' } } as unknown as DataSourceInstanceSettings)
+    );
+    const getResource = jest.fn(async (path: string) => {
+      if (path === 'api/v1/cardinality/label_values') {
+        return { series_count_total: 4_200_000 };
+      }
+      return { data: ['up'] };
+    });
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockRunInstantQueries.mockImplementation(async (queries, ds) =>
+      ds.uid === 'grafanacloud-usage'
+        ? [scalarFrame('activeSeries', 9_900_000), scalarFrame('dataPointsPerMinute', 5_160_000)]
+        : [scalarFrame('hosts', 12)]
+    );
+    mockRunRangeQuery.mockResolvedValue([
+      createDataFrame({
+        refId: 'series',
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1_000, 2_000] },
+          { name: 'Value', type: FieldType.number, values: [30, 40] },
+        ],
+      }),
+    ]);
+
+    const activity = await fetchMetricsActivity(prom);
+
+    expect(mockRunInstantQueries).toHaveBeenCalledWith(
+      {
+        activeSeries: 'sum(grafanacloud_instance_active_series{stack_id="12345"})',
+        dataPointsPerMinute: '60 * sum(grafanacloud_instance_samples_per_second{stack_id="12345"})',
+      },
+      { uid: 'grafanacloud-usage', type: 'prometheus' }
+    );
+    // The trend works on Cloud via usage metrics even though the product datasource is Mimir-typed.
+    expect(mockRunRangeQuery).toHaveBeenCalledWith(
+      'series',
+      'sum(grafanacloud_instance_active_series{stack_id="12345"})',
+      DATA_LOOKBACK_HOURS,
+      { uid: 'grafanacloud-usage', type: 'prometheus' }
+    );
+    expect(activity.series).toBe(9_900_000);
+    expect(activity.dataPointsPerMinute).toBe(5_160_000);
+    expect(activity.seriesSparkline?.y.values).toEqual([30, 40]);
+  });
+
+  it('never queries the usage datasource outside a Cloud stack', async () => {
+    mockGetDataSourceInstanceSettings.mockResolvedValue({
+      jsonData: { prometheusType: 'Mimir' },
+    } as unknown as DataSourceInstanceSettings);
+    const getResource = jest.fn(async () => ({ data: ['up'] }));
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockRunInstantQueries.mockResolvedValue([scalarFrame('hosts', 12)]);
+
+    const activity = await fetchMetricsActivity(prom);
+
+    expect(mockGetDataSourceInstanceSettings).not.toHaveBeenCalledWith('grafanacloud-usage');
+    expect(mockRunInstantQueries).toHaveBeenCalledTimes(1);
+    expect(mockRunInstantQueries).toHaveBeenCalledWith(expect.not.objectContaining({ dpm: expect.anything() }), prom);
+    expect(activity.dataPointsPerMinute).toBeNull();
+  });
+
+  it('reads the ingest rate from Prometheus self-monitoring on vanilla datasources', async () => {
+    const getResource = jest.fn(async () => ({ data: ['up'] }));
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockRunInstantQueries.mockResolvedValue([scalarFrame('hosts', 12), scalarFrame('dpm', 250_000)]);
+
+    const activity = await fetchMetricsActivity(prom);
+
+    expect(mockRunInstantQueries).toHaveBeenCalledWith(
+      expect.objectContaining({ dpm: '60 * sum(rate(prometheus_tsdb_head_samples_appended_total[5m]))' }),
+      prom
+    );
+    expect(activity.dataPointsPerMinute).toBe(250_000);
+  });
+
+  it('keeps the prom path when the stack has no usage datasource', async () => {
+    mockGetAPINamespace.mockReturnValue('stacks-12345');
+    const getResource = jest.fn(async (path: string) => {
+      if (path === 'api/v1/cardinality/label_values') {
+        return { series_count_total: 4_200_000 };
+      }
+      return { data: ['up'] };
+    });
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+
+    const activity = await fetchMetricsActivity(prom);
+
+    expect(activity.series).toBe(4_200_000);
+    expect(mockRunRangeQuery).toHaveBeenCalledWith(
+      'series',
+      'sum(prometheus_tsdb_head_series)',
+      DATA_LOOKBACK_HOURS,
+      prom
+    );
+    expect(mockRunInstantQueries).toHaveBeenCalledTimes(1);
+    expect(mockRunInstantQueries).toHaveBeenCalledWith(
+      expect.objectContaining({ hosts: 'count(node_uname_info)' }),
+      prom
+    );
+  });
+
+  it('falls back to the per-datasource values when usage queries fail', async () => {
+    mockGetAPINamespace.mockReturnValue('stacks-12345');
+    mockGetDataSourceInstanceSettings.mockImplementation(async (ref) =>
+      ref === 'grafanacloud-usage' ? usageSettings : undefined
+    );
+    const getResource = jest.fn(async (path: string) => {
+      if (path === 'api/v1/cardinality/label_values') {
+        return { series_count_total: 4_200_000 };
+      }
+      return { data: ['up'] };
+    });
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockRunInstantQueries.mockImplementation(async (queries, ds) => {
+      if (ds.uid === 'grafanacloud-usage') {
+        throw new Error('usage unavailable');
+      }
+      return [scalarFrame('hosts', 12)];
+    });
+    mockRunRangeQuery.mockRejectedValue(new Error('usage unavailable'));
+
+    const activity = await fetchMetricsActivity(prom);
+
+    expect(activity.series).toBe(4_200_000);
+    expect(activity.dataPointsPerMinute).toBeNull();
+    expect(activity.seriesSparkline).toBeNull();
+    expect(activity.hosts).toBe(12);
   });
 
   it('falls back to TSDB head stats when the cardinality API is unavailable', async () => {
@@ -417,6 +566,7 @@ describe('fetchMetricsActivity', () => {
 
     await expect(fetchMetricsActivity(prom)).resolves.toEqual({
       series: null,
+      dataPointsPerMinute: null,
       names: null,
       hosts: null,
       seriesSparkline: null,

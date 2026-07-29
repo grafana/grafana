@@ -1,3 +1,4 @@
+import { getAPINamespace } from '@grafana/api-clients';
 import {
   type DataSourceInstanceListItem,
   type Field,
@@ -6,7 +7,8 @@ import {
   getMinMaxAndDelta,
 } from '@grafana/data';
 import { PromApplication } from '@grafana/prometheus';
-import { type DataSourceWithBackend, getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourceWithBackend } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { probeProxyGet, PROBE_TIMEOUT_MS, resolveBackendInstance, withTimeout } from './probeUtils';
 import { readLabeledScalar, readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
@@ -183,6 +185,8 @@ interface MetricsDiskPressure {
 export interface MetricsActivity {
   /** Active series (cardinality API / TSDB head stats). */
   series: number | null;
+  /** Ingest rate (stack-scoped usage metrics, else Prometheus self-monitoring). */
+  dataPointsPerMinute: number | null;
   /** Distinct metric names over the stats window (fallback primary). */
   names: number | null;
   /** node_exporter host count. */
@@ -245,17 +249,52 @@ async function fetchDiskHoursToFull(
 // remote-write backends (Mimir/Cortex — every Grafana Cloud hosted datasource) any such
 // series was ingested from other Prometheus servers, so the trend would chart a foreign
 // population; skip rather than mislabel it. Vanilla/untyped datasources keep the query.
+async function isMimirOrCortex(ds: Pick<DataSourceInstanceListItem, 'uid'>): Promise<boolean> {
+  const jsonData = (await getDataSourceInstanceSettings(ds.uid))?.jsonData;
+  const promType = jsonData && 'prometheusType' in jsonData ? jsonData.prometheusType : undefined;
+  return promType === PromApplication.Mimir || promType === PromApplication.Cortex;
+}
+
 async function fetchSeriesSparkline(
   ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
 ): Promise<FieldSparkline | null> {
-  const jsonData = getDataSourceSrv().getInstanceSettings(ds.uid)?.jsonData;
-  const promType = jsonData && 'prometheusType' in jsonData ? jsonData.prometheusType : undefined;
-  if (promType === PromApplication.Mimir || promType === PromApplication.Cortex) {
+  if (await isMimirOrCortex(ds)) {
     return null;
   }
   return runRangeQuery('series', 'sum(prometheus_tsdb_head_series)', DATA_LOOKBACK_HOURS, ds)
     .then((frames) => readSeries(frames, 'series'))
     .catch(() => null);
+}
+
+const CLOUD_USAGE_DATASOURCE_UID = 'grafanacloud-usage';
+// Same self-monitoring trust story as prometheus_tsdb_head_series: skip on Mimir/Cortex.
+const PROM_DPM_QUERY = '60 * sum(rate(prometheus_tsdb_head_samples_appended_total[5m]))';
+
+interface UsageQueries {
+  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>;
+  activeSeries: string;
+  dataPointsPerMinute: string;
+}
+
+/**
+ * Stack-scoped usage queries when this Grafana is a Cloud stack with the usage datasource;
+ * never query the shared usage datasource without a stack scope.
+ */
+async function resolveUsageQueries(): Promise<UsageQueries | null> {
+  const namespace = getAPINamespace();
+  const stackId = namespace.startsWith('stacks-') ? namespace.slice('stacks-'.length) : '';
+  if (!stackId) {
+    return null;
+  }
+  const usage = await getDataSourceInstanceSettings(CLOUD_USAGE_DATASOURCE_UID);
+  if (!usage || usage.type !== 'prometheus') {
+    return null;
+  }
+  return {
+    ds: { uid: usage.uid, type: usage.type },
+    activeSeries: `sum(grafanacloud_instance_active_series{stack_id="${stackId}"})`,
+    dataPointsPerMinute: `60 * sum(grafanacloud_instance_samples_per_second{stack_id="${stackId}"})`,
+  };
 }
 
 /**
@@ -267,29 +306,57 @@ async function fetchSeriesSparkline(
 export async function fetchMetricsActivity(
   ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
 ): Promise<MetricsActivity> {
-  const empty: MetricsActivity = { series: null, names: null, hosts: null, seriesSparkline: null, disk: null };
+  const empty: MetricsActivity = {
+    series: null,
+    dataPointsPerMinute: null,
+    names: null,
+    hosts: null,
+    seriesSparkline: null,
+    disk: null,
+  };
   const instance = await resolveBackendInstance(ds.uid);
   if (!instance) {
     return empty;
   }
+  const [usage, mimir] = await Promise.all([resolveUsageQueries(), isMimirOrCortex(ds)]);
   // Prometheus resource calls take epoch seconds (unlike Loki's nanoseconds above).
   const end = Math.floor(Date.now() / 1000);
   const start = end - METRICS_STATS_LOOKBACK_DAYS * 24 * 3600;
-  const [series, names, seriesSparkline, healthFrames] = await Promise.all([
+  const [series, names, seriesSparkline, healthFrames, usageStats] = await Promise.all([
     fetchActiveSeries(instance),
     getResource<{ data?: unknown }>(instance, 'api/v1/label/__name__/values', { start, end })
       .then((res) => (Array.isArray(res?.data) ? res.data.length : null))
       .catch(() => null),
-    fetchSeriesSparkline(ds),
+    usage
+      ? runRangeQuery('series', usage.activeSeries, DATA_LOOKBACK_HOURS, usage.ds)
+          .then((frames) => readSeries(frames, 'series'))
+          .catch(() => null)
+      : fetchSeriesSparkline(ds),
     runInstantQueries(
       {
+        ...(mimir ? {} : { dpm: PROM_DPM_QUERY }),
         hosts: 'count(node_uname_info)',
         diskHosts: `count(max by (instance) (${FS_USED}) > ${DISK_PRESSURE_RATIO})`,
         diskWorst: `topk(1, max by (instance) (${FS_USED}))`,
       },
       ds
     ).catch(() => null),
+    usage
+      ? runInstantQueries(
+          { activeSeries: usage.activeSeries, dataPointsPerMinute: usage.dataPointsPerMinute },
+          usage.ds
+        )
+          .then((frames) => ({
+            series: readScalar(frames, 'activeSeries'),
+            dpm: readScalar(frames, 'dataPointsPerMinute'),
+          }))
+          .catch(() => null)
+      : Promise.resolve(null),
   ]);
+  const usageSeries = usageStats?.series != null && usageStats.series > 0 ? usageStats.series : null;
+  const promDpm = healthFrames ? readScalar(healthFrames, 'dpm') : null;
+  const usageDpm = usageStats?.dpm != null && usageStats.dpm > 0 ? usageStats.dpm : null;
+  const dataPointsPerMinute = usageDpm ?? (promDpm != null && promDpm > 0 ? promDpm : null);
   const hosts = healthFrames ? readScalar(healthFrames, 'hosts') : null;
   // Empty diskHosts vector (nobody above threshold) reads as null — zero here.
   const hostsAbove = healthFrames ? (readScalar(healthFrames, 'diskHosts') ?? 0) : 0;
@@ -304,5 +371,5 @@ export async function fetchMetricsActivity(
       hoursToFull: worstInstance ? await fetchDiskHoursToFull(worstInstance, ds) : null,
     };
   }
-  return { series, names, hosts, seriesSparkline, disk };
+  return { series: usageSeries ?? series, dataPointsPerMinute, names, hosts, seriesSparkline, disk };
 }
