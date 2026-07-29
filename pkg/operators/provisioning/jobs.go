@@ -28,8 +28,11 @@ import (
 )
 
 type driverConfig struct {
-	concurrentDrivers    int
-	maxJobTimeout        time.Duration
+	concurrentDrivers int
+	maxJobTimeout     time.Duration
+	// jobInterval is the jobs informer's resync cadence; the driver uses it as
+	// the post-claim cooldown so failed-run recovery tracks the configured
+	// pickup interval.
 	jobInterval          time.Duration
 	leaseRenewalInterval time.Duration
 	maxSyncWorkers       int

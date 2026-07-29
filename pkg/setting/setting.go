@@ -79,10 +79,11 @@ const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
 const ProvisioningSyncResourceTimeoutDefault = 30 * time.Second
 
 // ProvisioningControllerResyncIntervalDefault is the default value for the
-// [provisioning] resync_interval key. It sets how often the
-// provisioning controllers' informers re-list (repository, connection, job) as
-// a fallback to the live watch/NATS notifications. A shorter value reconciles
-// stale state sooner at the cost of more full LISTs.
+// [provisioning] resync_interval key. It sets how often the provisioning
+// controllers' informers re-list (repository, connection) as a fallback to the
+// live watch/NATS notifications. A shorter value reconciles stale state sooner
+// at the cost of more full LISTs. The jobs informer resyncs on
+// job_poll_interval instead.
 const ProvisioningControllerResyncIntervalDefault = 60 * time.Second
 
 // ProvisioningHistoryExpirationDefault is the default value for the
@@ -92,8 +93,10 @@ const ProvisioningControllerResyncIntervalDefault = 60 * time.Second
 const ProvisioningHistoryExpirationDefault = 10 * time.Minute
 
 // ProvisioningJobPollIntervalDefault is the default value for the [provisioning]
-// job_poll_interval key. It is how often the job driver polls for new jobs as a
-// fallback to the live watch/NATS notification that wakes it on job creation.
+// job_poll_interval key: the jobs informer's resync/re-list interval, which is
+// how often unclaimed jobs missed by the live watch/NATS notifications are
+// picked up. The key predates the informer-driven job queue (it used to be a
+// poll loop) and keeps its name and default so existing config keeps its meaning.
 const ProvisioningJobPollIntervalDefault = 30 * time.Second
 
 var (
@@ -200,10 +203,12 @@ type Cfg struct {
 	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
 	ProvisioningSyncResourceTimeout           time.Duration // per-resource apply timeout during sync; default 30s; <=0 = default
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
-	ProvisioningControllerResyncInterval      time.Duration // informer re-list interval for repo/connection/job controllers; default 60s; <=0 = default
+	ProvisioningControllerResyncInterval      time.Duration // informer re-list interval for the repo/connection controllers (jobs use ProvisioningJobPollInterval); default 60s; <=0 = default
 	ProvisioningHistoryExpiration             time.Duration // HistoricJob retention and historic-job informer resync; default 10m; <=0 = default
-	ProvisioningJobPollInterval               time.Duration // job driver poll interval (fallback to the live job-create notification); default 30s; <=0 = default
+	ProvisioningJobPollInterval               time.Duration // jobs informer resync/re-list interval (recovery for jobs missed by live notifications); default 30s; <=0 = default
 	ProvisioningPublicRootURL                 string        // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
+	ProvisioningWebhookTrustedIPHeader        string        // name of the proxy-set header carrying the real client IP for webhook rate-limiting; empty falls back to the real TCP peer
+	ProvisioningWebhookRateLimitRPS           int           // sustained requests per second allowed per client by the webhook rate limiter; <= 0 disables rate limiting
 	DataPath                                  string
 	LogsPath                                  string
 	EnterpriseLicensePath                     string
@@ -2584,6 +2589,8 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningHistoryExpiration = iniFile.Section("provisioning").Key("history_expiration").MustDuration(ProvisioningHistoryExpirationDefault)
 	cfg.ProvisioningJobPollInterval = iniFile.Section("provisioning").Key("job_poll_interval").MustDuration(ProvisioningJobPollIntervalDefault)
 	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
+	cfg.ProvisioningWebhookTrustedIPHeader = iniFile.Section("provisioning").Key("webhook_trusted_ip_header").MustString("")
+	cfg.ProvisioningWebhookRateLimitRPS = iniFile.Section("provisioning").Key("webhook_rate_limit_rps").MustInt(0)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

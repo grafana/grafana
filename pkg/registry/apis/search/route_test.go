@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -83,6 +84,21 @@ func TestAsReadAttributes(t *testing.T) {
 	assert.Equal(t, "dashboards", read.GetResource())
 	assert.Equal(t, "default", read.GetNamespace())
 	assert.True(t, read.IsResourceRequest())
+}
+
+func TestSearchRoute(t *testing.T) {
+	h := NewHandler(&fakeIndexClient{resp: emptyResponse()}, testProvider(), noop.NewTracerProvider().Tracer(""))
+	r := h.SearchRoute("dashboard.grafana.app", "v0alpha1", "dashboards", "Dashboard")
+
+	// Relative to the group-version root the caller mounts under, so the served
+	// path ends up .../namespaces/{namespace}/dashboards/search.
+	assert.Equal(t, "dashboards/search", r.Path)
+	require.NotNil(t, r.Handler)
+
+	require.NotNil(t, r.Spec)
+	require.NotNil(t, r.Spec.Post, "search is a POST, so no other method should be described")
+	assert.Nil(t, r.Spec.Get)
+	assert.Equal(t, "listDashboardSearchV0alpha1", r.Spec.Post.OperationId)
 }
 
 func TestSearchOperationID(t *testing.T) {
