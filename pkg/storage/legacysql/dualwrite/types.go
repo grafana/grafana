@@ -39,6 +39,10 @@ type Service interface {
 	// Create a managed k8s storage instance
 	NewStorage(gr schema.GroupResource, legacy grafanarest.Storage, storage grafanarest.Storage) (grafanarest.Storage, error)
 
+	// ValidateServedVersions returns an error when a resource's migrated apiVersion is
+	// not among the versions the apiserver serves.
+	ValidateServedVersions(ctx context.Context, gr schema.GroupResource, served []schema.GroupVersion) error
+
 	// Check if the dual writes is reading from unified storage (mode3++)
 	ReadFromUnified(ctx context.Context, gr schema.GroupResource) (bool, error)
 

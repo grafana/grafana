@@ -95,7 +95,6 @@ type ControllerConfig struct {
 // dashboards_server_url =
 // folders_server_url =
 // aggregated_server_url =
-// folders_api_version =
 // tls_insecure =
 // tls_cert_file =
 // tls_key_file =
@@ -604,7 +603,14 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
 			if provisioningAppURL != "" {
-				webhook = webhooks.ProvideWebhooks(provisioningAppURL, c.Registry())
+				webhook = webhooks.ProvideWebhooks(
+					provisioningAppURL,
+					c.Registry(),
+					webhooks.NewConfiguredRateLimiter(
+						provisioningSec.Key("webhook_rate_limit_rps").MustInt(0),
+						provisioningSec.Key("webhook_trusted_ip_header").MustString(""),
+					),
+				)
 			}
 			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure))
 		case provisioning.LocalRepositoryType:

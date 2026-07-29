@@ -2084,9 +2084,8 @@ func TestApiContactPointExportSnapshot(t *testing.T) {
 }
 
 func TestApiNotificationPolicyExportSnapshot(t *testing.T) {
-	// These tests are focused on exports using featuremgmt.FlagAlertingMultiplePolicies.
+	// These tests are focused on exports of named notification policies.
 	env := createTestEnv(t, testConfig) // testConfig should be unused here, we're overriding the policy service.
-	env.features = featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies)
 
 	sut := createProvisioningSrvSutFromEnv(t, &env)
 	rev := legacy_storage.ConfigRevision{
@@ -2209,14 +2208,14 @@ func TestApiGetSnapshots(t *testing.T) {
 			Location: &timeinterval.Location{Location: location},
 		}
 	}
-	cfg.AlertmanagerConfig.MuteTimeIntervals = append(cfg.AlertmanagerConfig.MuteTimeIntervals,
-		v1.MuteTimeInterval{
+	cfg.AlertmanagerConfig.TimeIntervals = append(cfg.AlertmanagerConfig.TimeIntervals,
+		v1.TimeInterval{
 			Name: "MuteTimeIntervalA",
 			TimeIntervals: []timeinterval.TimeInterval{
 				timeIntervalExample(),
 			},
 		},
-		v1.MuteTimeInterval{
+		v1.TimeInterval{
 			Name: "MuteTimeIntervalB",
 			TimeIntervals: []timeinterval.TimeInterval{
 				timeIntervalExample(),

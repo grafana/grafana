@@ -112,6 +112,23 @@ func TestTranslateGitHubError(t *testing.T) {
 			},
 			expectedMsgContains: "GitHub API error (HTTP 500: Internal server error)",
 		},
+		{
+			name: "422 surfaces the error detail alongside the generic message",
+			inputErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusUnprocessableEntity},
+				Message:  "Validation Failed",
+				Errors:   []github.Error{{Resource: "Hook", Code: "custom", Message: "Hook already exists on this repository"}},
+			},
+			expectedMsgContains: "GitHub API error (HTTP 422: Validation Failed: Hook already exists on this repository)",
+		},
+		{
+			name: "422 without error details keeps the generic message",
+			inputErr: &github.ErrorResponse{
+				Response: &http.Response{StatusCode: http.StatusUnprocessableEntity},
+				Message:  "Validation Failed",
+			},
+			expectedMsgContains: "GitHub API error (HTTP 422: Validation Failed)",
+		},
 	}
 
 	for _, tt := range tests {
@@ -156,4 +173,52 @@ func TestTranslateGitHubError_PreservesErrorChain(t *testing.T) {
 	// The error message should contain both the descriptive text and the wrapped error
 	assert.Contains(t, result.Error(), "authentication token has expired")
 	assert.Contains(t, result.Error(), "authentication failed")
+}
+
+func TestFormatGitHubErrorDetails(t *testing.T) {
+	tests := []struct {
+		name string
+		errs []github.Error
+		want string
+	}{
+		{
+			name: "no errors",
+			errs: nil,
+			want: "",
+		},
+		{
+			name: "message is preferred",
+			errs: []github.Error{{Resource: "Hook", Code: "custom", Message: "Hook already exists on this repository"}},
+			want: "Hook already exists on this repository",
+		},
+		{
+			name: "field and code when message is empty",
+			errs: []github.Error{{Resource: "Hook", Field: "config", Code: "invalid"}},
+			want: "config invalid",
+		},
+		{
+			name: "code only when field and message are empty",
+			errs: []github.Error{{Resource: "Hook", Code: "missing_field"}},
+			want: "missing_field",
+		},
+		{
+			name: "empty error contributes nothing",
+			errs: []github.Error{{Resource: "Hook"}},
+			want: "",
+		},
+		{
+			name: "multiple errors are joined",
+			errs: []github.Error{
+				{Message: "Hook already exists on this repository"},
+				{Field: "config", Code: "invalid"},
+			},
+			want: "Hook already exists on this repository; config invalid",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, formatGitHubErrorDetails(tt.errs))
+		})
+	}
 }

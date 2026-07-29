@@ -146,6 +146,21 @@ func merge(defaults preferences.PreferencesSpec, items []preferences.Preferences
 		}
 		sources = append(sources, item.Name)
 	}
+
+	// Home precedence, highest first (matches legacy GetHomeDashboard):
+	//  1. HomeDashboardUID from preferences (user > team > org)
+	//  2. home_page from settings
+	//  3. custom home dashboard JSON from settings (home.DASHBOARD_NAME)
+	preferenceHome := p.Spec.HomeDashboardUID != nil && *p.Spec.HomeDashboardUID != ""
+	homePage := defaults.HomeURL != nil && *defaults.HomeURL != ""
+	configHome := defaults.HomeDashboardUID != nil && *defaults.HomeDashboardUID == home.DASHBOARD_NAME
+	switch {
+	case preferenceHome:
+		defaults.HomeURL = nil
+	case configHome && homePage:
+		defaults.HomeDashboardUID = nil
+	}
+
 	if err := mergo.Merge(&p.Spec, defaults); err != nil {
 		return nil, err
 	}

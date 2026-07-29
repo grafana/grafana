@@ -147,13 +147,22 @@ func TestSearchHandler(t *testing.T) {
 			expectedNames: []string{"a-4"},
 		},
 		{
-			name: "Soft-deleted annotations are included with includeDeleted=true",
+			name: "Soft-deleted annotations are included with deleted=include",
 			queryParams: url.Values{
-				"tag":            []string{"tag1"},
-				"includeDeleted": []string{"true"},
+				"tag":     []string{"tag1"},
+				"deleted": []string{"include"},
 			},
 			deleteFirst:   []string{"a-1"},
 			expectedNames: []string{"a-1", "a-4"},
+		},
+		{
+			name: "Only soft-deleted annotations are returned with deleted=only",
+			queryParams: url.Values{
+				"tag":     []string{"tag1"},
+				"deleted": []string{"only"},
+			},
+			deleteFirst:   []string{"a-1"},
+			expectedNames: []string{"a-1"},
 		},
 	}
 

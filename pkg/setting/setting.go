@@ -78,6 +78,27 @@ const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
 // timeout used by the provisioning files write API.
 const ProvisioningSyncResourceTimeoutDefault = 30 * time.Second
 
+// ProvisioningControllerResyncIntervalDefault is the default value for the
+// [provisioning] resync_interval key. It sets how often the provisioning
+// controllers' informers re-list (repository, connection) as a fallback to the
+// live watch/NATS notifications. A shorter value reconciles stale state sooner
+// at the cost of more full LISTs. The jobs informer resyncs on
+// job_poll_interval instead.
+const ProvisioningControllerResyncIntervalDefault = 60 * time.Second
+
+// ProvisioningHistoryExpirationDefault is the default value for the
+// [provisioning] history_expiration key. It is both how long a HistoricJob is
+// retained before the resync-driven cleanup removes it and the resync interval
+// of the historic-job informer that feeds that cleanup.
+const ProvisioningHistoryExpirationDefault = 10 * time.Minute
+
+// ProvisioningJobPollIntervalDefault is the default value for the [provisioning]
+// job_poll_interval key: the jobs informer's resync/re-list interval, which is
+// how often unclaimed jobs missed by the live watch/NATS notifications are
+// picked up. The key predates the informer-driven job queue (it used to be a
+// poll loop) and keeps its name and default so existing config keeps its meaning.
+const ProvisioningJobPollIntervalDefault = 30 * time.Second
+
 var (
 	customInitPath = "conf/custom.ini"
 
@@ -178,15 +199,20 @@ type Cfg struct {
 	ProvisioningLokiTenantID                  string
 	ProvisioningMaxResourcesPerRepository     int64         // 0 = unlimited
 	ProvisioningMaxRepositories               int64         // default 10, 0 in config = unlimited (converted to -1 internally)
-	ProvisioningFolderAPIVersion              string        // "v1" (default for on-prem) or "v1beta1"
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
 	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
 	ProvisioningSyncResourceTimeout           time.Duration // per-resource apply timeout during sync; default 30s; <=0 = default
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
+	ProvisioningControllerResyncInterval      time.Duration // informer re-list interval for the repo/connection controllers (jobs use ProvisioningJobPollInterval); default 60s; <=0 = default
+	ProvisioningHistoryExpiration             time.Duration // HistoricJob retention and historic-job informer resync; default 10m; <=0 = default
+	ProvisioningJobPollInterval               time.Duration // jobs informer resync/re-list interval (recovery for jobs missed by live notifications); default 30s; <=0 = default
 	ProvisioningPublicRootURL                 string        // public-facing root URL of this Grafana instance for provisioning consumers (webhooks, screenshots); falls back to AppURL when empty
+	ProvisioningWebhookTrustedIPHeader        string        // name of the proxy-set header carrying the real client IP for webhook rate-limiting; empty falls back to the real TCP peer
+	ProvisioningWebhookRateLimitRPS           int           // sustained requests per second allowed per client by the webhook rate limiter; <= 0 disables rate limiting
 	DataPath                                  string
 	LogsPath                                  string
 	EnterpriseLicensePath                     string
+	MarketplaceLicenseDirectory               string
 	// PluginsPaths: list of paths where Grafana will look for plugins.
 	// Order is important, if multiple paths contain the same plugin, only the first one will be used.
 	PluginsPaths []string
@@ -742,17 +768,21 @@ type Cfg struct {
 	SearchPostRankAuthzMaxCandidates   int
 
 	// Vector storage
-	EnableVectorBackend      bool
-	VectorDBHost             string
-	VectorDBPort             string
-	VectorDBName             string
-	VectorDBUser             string
-	VectorDBPassword         string
-	VectorDBSSLMode          string
-	VectorIndexingEnabled    bool          // run the embedding backfiller and reconciler
-	VectorReconcilerInterval time.Duration // reconciler tick interval; default 60s
-	VectorPromotionThreshold int           // row count per tenant to trigger promotion
-	VectorPromoterInterval   time.Duration // promoter tick interval; 0 disables
+	EnableVectorBackend bool
+	// Vector API collection allowlists: "group/resource" entries. Internal
+	// defaults to dashboards; external defaults to none.
+	VectorAllowedInternalCollections []string
+	VectorAllowedExternalCollections []string
+	VectorDBHost                     string
+	VectorDBPort                     string
+	VectorDBName                     string
+	VectorDBUser                     string
+	VectorDBPassword                 string
+	VectorDBSSLMode                  string
+	VectorIndexingEnabled            bool          // run the embedding backfiller and reconciler
+	VectorReconcilerInterval         time.Duration // reconciler tick interval; default 60s
+	VectorPromotionThreshold         int           // row count per tenant to trigger promotion
+	VectorPromoterInterval           time.Duration // promoter tick interval; 0 disables
 
 	// VectorSearch per-tenant query-embedding cache (DB-backed, FIFO).
 	VectorQueryCacheEnabled      bool
@@ -781,6 +811,16 @@ type Cfg struct {
 	AzureDimensions    int    // requested output dimensionality; default 1024 (text-embedding-3-small reduced from native 1536)
 	AzureBatchSize     int    // texts per Azure embeddings call; default 50
 
+	// Rerank provider for the HybridSearch RPC ([vector_reranker] section).
+	// Empty = disabled (RRF ordering is returned as-is, min_relevance is a
+	// no-op).
+	RerankProvider        string
+	RerankVertexProjectID string
+	RerankVertexLocation  string
+	RerankVertexModel     string
+	RerankBedrockRegion   string
+	RerankBedrockModel    string
+
 	// Overrides/Quotas
 	OverridesFilePath             string
 	OverridesReloadInterval       time.Duration
@@ -796,6 +836,8 @@ type Cfg struct {
 	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
 	LogSQLBackendCalls                bool
 	EnableKVLeases                    bool
+	KVLeaseTTL                        time.Duration
+	KVLeaseAutoRenew                  bool
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration
@@ -827,6 +869,11 @@ type Cfg struct {
 	TenantDeleterDryRun           bool
 	TenantDeleterInterval         time.Duration
 
+	ManifestApiServerAddress        string
+	ManifestWatcherAllowInsecureTLS bool
+	ManifestWatcherCAFile           string
+	ManifestWatcherPollInterval     time.Duration
+
 	// Secrets Management
 	SecretsManagement SecretsManagerSettings
 
@@ -836,6 +883,9 @@ type Cfg struct {
 
 	// Enable CAP token based authentication in grafana's embedded kube-aggregator
 	EnableKubernetesAggregatorCapTokenAuth bool
+
+	// Enable playlist reconciler
+	EnablePlaylistsReconciler bool
 }
 
 type UnifiedStorageConfig struct {
@@ -1102,7 +1152,7 @@ func (cfg *Cfg) readAnnotationSettings() error {
 	section := cfg.Raw.Section("annotations")
 	cfg.AnnotationCleanupJobBatchSize = section.Key("cleanupjob_batchsize").MustInt64(100)
 	cfg.AnnotationMaximumTagsLength = section.Key("tags_length").MustInt64(500)
-	annotationAppPlatformSettings, err := loadAnnotationAppPlatformSettings(cfg.Raw)
+	annotationAppPlatformSettings, err := loadAnnotationAppPlatformSettings(cfg)
 	if err != nil {
 		return err
 	}
@@ -1746,6 +1796,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	enterprise := iniFile.Section("enterprise")
 	cfg.EnterpriseLicensePath = valueAsString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))
+	marketplace := iniFile.Section("marketplace")
+	cfg.MarketplaceLicenseDirectory = valueAsString(marketplace, "license_directory", cfg.DataPath)
 
 	geomapSection := iniFile.Section("geomap")
 	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
@@ -1794,6 +1846,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
 
+	cfg.readStartupParams(iniFile)
 	return nil
 }
 
@@ -1884,6 +1937,12 @@ func (cfg *Cfg) initLogging(file *ini.File) error {
 	return log.ReadLoggingConfig(logModes, cfg.LogsPath, file)
 }
 
+func (cfg *Cfg) readStartupParams(iniFile *ini.File) {
+	cfg.EnablePlaylistsReconciler = iniFile.Section("playlists").Key("enable_playlists_reconciler").MustBool(false)
+
+	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
+	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
+}
 func (cfg *Cfg) LogConfigSources() {
 	var text bytes.Buffer
 
@@ -2509,8 +2568,6 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	if !cfg.DisableControllers {
 		cfg.DisableControllers = iniFile.Section("grafana-apiserver").Key("disable_controllers").MustBool(false)
 	}
-	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
-	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
 	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
 	if len(cfg.ProvisioningAllowedTargets) == 0 {
 		cfg.ProvisioningAllowedTargets = []string{"folder", "folderless"}
@@ -2524,12 +2581,16 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
 	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
-	cfg.ProvisioningFolderAPIVersion = iniFile.Section("provisioning").Key("folders_api_version").MustString("v1")
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
 	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
 	cfg.ProvisioningSyncResourceTimeout = iniFile.Section("provisioning").Key("sync_resource_timeout").MustDuration(ProvisioningSyncResourceTimeoutDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
+	cfg.ProvisioningControllerResyncInterval = iniFile.Section("provisioning").Key("resync_interval").MustDuration(ProvisioningControllerResyncIntervalDefault)
+	cfg.ProvisioningHistoryExpiration = iniFile.Section("provisioning").Key("history_expiration").MustDuration(ProvisioningHistoryExpirationDefault)
+	cfg.ProvisioningJobPollInterval = iniFile.Section("provisioning").Key("job_poll_interval").MustDuration(ProvisioningJobPollIntervalDefault)
 	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
+	cfg.ProvisioningWebhookTrustedIPHeader = iniFile.Section("provisioning").Key("webhook_trusted_ip_header").MustString("")
+	cfg.ProvisioningWebhookRateLimitRPS = iniFile.Section("provisioning").Key("webhook_rate_limit_rps").MustInt(0)
 
 	// Read job history configuration
 	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")

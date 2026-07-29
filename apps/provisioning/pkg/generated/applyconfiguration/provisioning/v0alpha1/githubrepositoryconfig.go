@@ -13,6 +13,7 @@ type GitHubRepositoryConfigApplyConfiguration struct {
 	Branch *string `json:"branch,omitempty"`
 	// Whether we should show dashboard previews for pull requests.
 	// By default, this is false (i.e. we will not create previews).
+	// TODO: deprecate this field in favor of PullRequestOptions.GenerateDashboardPreviews once all Github repositories have been backfilled.
 	GenerateDashboardPreviews *bool `json:"generateDashboardPreviews,omitempty"`
 	// Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository.
 	// This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed.

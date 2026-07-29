@@ -2,6 +2,7 @@ package nats
 
 import (
 	"context"
+	"fmt"
 
 	authnlib "github.com/grafana/authlib/authn"
 	natsclient "github.com/nats-io/nats.go"
@@ -26,7 +27,7 @@ func newConfig(cfg setting.NATSSettings, server *Server) *Config {
 		cfg:    cfg,
 		server: server,
 	}
-	if cfg.Auth.TokenExchangeEnabled() {
+	if cfg.Auth.Mode == setting.NATSAuthModeTokenExchange && cfg.Auth.TokenExchangeEnabled() {
 		// NewTokenExchangeClient only errors when the token or URL is empty, and
 		// TokenExchangeEnabled has already established both are set.
 		c.tokenExchanger, _ = authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
@@ -52,18 +53,17 @@ func (c *Config) TLS() setting.NATSTLSSettings { return c.cfg.TLS }
 // Token returns the shared auth token, if any.
 func (c *Config) Token() string { return c.cfg.Auth.Token }
 
-// TokenExchangeConfigured reports whether a connection should present a minted
-// access token: the exchanger was built successfully and at least one audience is
-// configured to request.
-func (c *Config) TokenExchangeConfigured() bool {
-	return c.tokenExchanger != nil && len(c.cfg.Auth.TokenExchangeAudiences) > 0
-}
+// AuthMode reports the explicitly selected connection auth mechanism.
+func (c *Config) AuthMode() setting.NATSAuthMode { return c.cfg.Auth.Mode }
 
 // exchangeAccessToken mints a fresh access token scoped to the configured
 // audiences. Callers present the returned token as the NATS connect token; an
 // external auth-callout service verifies it and grants the connection's
 // permissions.
 func (c *Config) exchangeAccessToken(ctx context.Context) (string, error) {
+	if c.tokenExchanger == nil {
+		return "", fmt.Errorf("nats token exchange is not configured")
+	}
 	resp, err := c.tokenExchanger.Exchange(ctx, authnlib.TokenExchangeRequest{
 		Namespace: c.cfg.Auth.TokenExchangeNamespace,
 		Audiences: c.cfg.Auth.TokenExchangeAudiences,

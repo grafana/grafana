@@ -75,6 +75,40 @@ test.describe('View panel', { tag: ['@dashboards'] }, () => {
     const headerTitles = await Promise.all(headers.map((header) => header.innerText()));
 
     expect(headerTitles).toEqual(['method=GET', 'method=POST']);
+
+    // Verify url is updated
+    await expect(page).toHaveURL((url) => {
+      const params = url.searchParams;
+      return params.get('fanout') === '$__by_label__method';
+    });
+  });
+
+  test('Can fan-out by label based on url sync', async ({ gotoDashboardPage, selectors, page }) => {
+    const dashboardPage = await gotoDashboardPage({
+      uid: DASHBOARD_UID,
+      queryParams: new URLSearchParams({ viewPanel: 'panel-1', fanout: '$__by_label__method' }),
+    });
+
+    await expect(dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.headerTitle)).toContainText(
+      'View panel'
+    );
+
+    await page.waitForTimeout(1000);
+
+    const headers = await dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Panel.headerContainer)
+      .locator('h2')
+      .all();
+
+    const headerTitles = await Promise.all(headers.map((header) => header.innerText()));
+
+    expect(headerTitles).toEqual(['method=GET', 'method=POST']);
+
+    // Go back to dashboard
+    await dashboardPage.getByGrafanaSelector(selectors.components.ViewPanelSidePane.goBackButton).click();
+
+    // Verify fanout param is removed
+    await expect(page).toHaveURL((url) => url.searchParams.has('fanout') === false);
   });
 });
 

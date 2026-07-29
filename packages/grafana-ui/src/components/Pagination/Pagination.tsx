@@ -4,7 +4,7 @@ import { useMemo, type JSX } from 'react';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
-import { Button, type ButtonVariant } from '../Button/Button';
+import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 
 export interface Props {
@@ -44,17 +44,25 @@ export const Pagination = ({
     const pages = [...new Array(numberOfPages).keys()];
 
     const condensePages = numberOfPages > pageLengthToCondense;
-    const getListItem = (page: number, variant: 'primary' | 'secondary') => (
-      <li key={page} className={styles.item}>
-        <Button size="sm" variant={variant} onClick={() => onNavigate(page)}>
-          {page}
-        </Button>
-      </li>
-    );
+    const getListItem = (page: number, isCurrentPage: boolean) => {
+      const variant = isCurrentPage ? 'primary' : 'secondary';
+      return (
+        <li key={page} className={styles.item}>
+          <Button
+            aria-current={isCurrentPage ? 'page' : undefined}
+            size="sm"
+            variant={variant}
+            onClick={() => onNavigate(page)}
+          >
+            {page}
+          </Button>
+        </li>
+      );
+    };
 
     return pages.reduce<JSX.Element[]>((pagesToRender, pageIndex) => {
       const page = pageIndex + 1;
-      const variant: ButtonVariant = page === currentPage ? 'primary' : 'secondary';
+      const isCurrentPage = page === currentPage;
 
       // The indexes at which to start and stop condensing pages
       const lowerBoundIndex = pageLengthToCondense;
@@ -82,7 +90,7 @@ export const Pagination = ({
           (currentPageIsBetweenBounds && page >= currentPage - pageOffset && page <= currentPage + pageOffset)
         ) {
           // Renders a button for the page
-          pagesToRender.push(getListItem(page, variant));
+          pagesToRender.push(getListItem(page, isCurrentPage));
         } else if (
           (page === lowerBoundIndex && currentPage < lowerBoundIndex) ||
           (page === upperBoundIndex && currentPage > upperBoundIndex) ||
@@ -97,7 +105,7 @@ export const Pagination = ({
           );
         }
       } else {
-        pagesToRender.push(getListItem(page, variant));
+        pagesToRender.push(getListItem(page, isCurrentPage));
       }
       return pagesToRender;
     }, []);

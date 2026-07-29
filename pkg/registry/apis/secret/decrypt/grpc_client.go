@@ -146,6 +146,17 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 		authnlib.WithClientInterceptorAudience([]string{secretv1beta1.APIGroup}),
 	}
 
+	// Forward an access token from an access policy if exists to craft an OBO token and keep chain of request identity.
+	// If there's a user in the flow, skip doing this as users can't decrypt secrets.
+	if authInfo, ok := types.AuthInfoFrom(ctx); ok && authInfo != nil {
+		isAccessPolicy := types.IsIdentityType(authInfo.GetIdentityType(), types.TypeAccessPolicy)
+		id := authInfo.GetIDToken()
+		at := authInfo.GetAccessToken()
+		if isAccessPolicy && id == "" && at != "" {
+			opts = append(opts, authnlib.WithClientInterceptorSubjectToken(at))
+		}
+	}
+
 	tokenExchangerInterceptor := authnlib.NewGrpcClientInterceptor(
 		g.tokenExchanger,
 		opts...,

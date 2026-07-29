@@ -8,6 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type RuleNamespace } from '../../../types/unified-alerting';
 import { type RulerRulesConfigDTO } from '../../../types/unified-alerting-dto';
 
+import { type ImportMethod } from './components/import-to-gma/Wizard/types';
 import { type Origin } from './components/rule-viewer/tabs/version-history/ConfirmVersionRestoreModal';
 import { type FilterType } from './components/rules/central-state-history/EventListSceneObject';
 import { type RulesFilter } from './search/rulesSearchParser';
@@ -250,18 +251,20 @@ export const trackDeletedRuleRestoreFail = async () => {
 };
 
 export const trackImportToGMASuccess = async (payload: {
+  importMethod?: ImportMethod;
   notificationsSource?: 'yaml' | 'datasource';
   rulesSource?: 'yaml' | 'datasource';
-  isRootFolder: boolean;
+  isRootFolder?: boolean;
   namespace?: string;
   ruleGroup?: string;
-  pauseRecordingRules: boolean;
-  pauseAlertingRules: boolean;
+  pauseRecordingRules?: boolean;
+  pauseAlertingRules?: boolean;
 }) => {
   reportInteraction('grafana_alerting_import_to_gma_success', { ...payload });
 };
 
 export const trackImportToGMAError = async (payload: {
+  importMethod?: ImportMethod;
   notificationsSource?: 'yaml' | 'datasource';
   rulesSource?: 'yaml' | 'datasource';
 }) => {

@@ -1,26 +1,27 @@
-import { act, getWrapper, render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { HttpResponse } from 'msw';
+import { act, render, screen, testWithFeatureToggles, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setBackendSrv } from '@grafana/runtime';
+import { reportInteraction, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   customGetUserPreferencesHandler,
+  customPatchUserPreferencesHandler,
   getFolderFixtures,
   mockUserPreferences,
   setMockStarredDashboards,
+  setMockStarredFolders,
   setMockUserPreferences,
   setTestFlags,
 } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { configureStore } from 'app/store/configureStore';
-
-import { AppChromeService } from '../AppChromeService';
 
 import { MegaMenu } from './MegaMenu';
 import { customisableNavTree, nestedNavTree } from './__mocks__/fixtures';
+import { HIDDEN_ITEMS_STORAGE_KEY, SECTION_ORDER_STORAGE_KEY } from './hooks';
 
 // The org switcher fetches user orgs on mount when signed in, which is irrelevant here.
 jest.mock('../OrganizationSwitcher/OrganizationSwitcher', () => ({
@@ -30,14 +31,27 @@ jest.mock('../OrganizationSwitcher/OrganizationSwitcher', () => ({
 // The searcher resolves starred UIDs to nav rows but has no MSW path, so stub it.
 jest.mock('app/features/search/service/searcher');
 
-// The starred dashboard the tests pin to: the stars fixture is seeded with its UID and the searcher
-// resolves that UID to this row, so the synced Starred section is populated deterministically.
-const [, { dashbdE }] = getFolderFixtures();
-const STARRED_DASHBOARD = { uid: dashbdE.item.uid, name: dashbdE.item.title, url: `/d/${dashbdE.item.uid}` };
+// Spy on analytics so we can assert a failed save isn't recorded as a successful save.
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
-const setupSearcher = (dashboards = [STARRED_DASHBOARD]) => {
+// The starred dashboard the tests use: the stars fixture is seeded with its UID and the searcher
+// resolves that UID to this row, so the synced Starred section is populated deterministically.
+const [, { dashbdE, folderB }] = getFolderFixtures();
+const STARRED_DASHBOARD = {
+  uid: dashbdE.item.uid,
+  name: dashbdE.item.title,
+  url: `/d/${dashbdE.item.uid}`,
+  kind: 'dashboard',
+};
+
+// Resolves starred uids to nav rows. Accepts a combined dashboard+folder list ({uid,name,url,kind})
+// and filters by the requested `name`, so folders and dashboards both round-trip through one searcher.
+const setupSearcher = (items = [STARRED_DASHBOARD]) => {
   const search = jest.fn(({ name }: { name: string[] }) => {
-    const rows = dashboards.filter((d) => name.includes(d.uid));
+    const rows = items.filter((d) => name.includes(d.uid));
     return Promise.resolve({ view: { length: rows.length, get: (i: number) => rows[i] } });
   });
   jest.mocked(getGrafanaSearcher).mockReturnValue({ search } as unknown as ReturnType<typeof getGrafanaSearcher>);
@@ -46,20 +60,29 @@ const setupSearcher = (dashboards = [STARRED_DASHBOARD]) => {
 setBackendSrv(backendSrv);
 setupMockServer();
 
-// Seed the stateful preferences fixture with the pinned (bookmark) urls before rendering. The
-// preferences handlers read this fixture and persist PATCHes back into it, so pin/unpin updates
-// survive the refetch the patch's cache invalidation triggers. The fixture is reset between tests
-// by setupMockServer's resetFixtures().
 const seedBookmarks = (bookmarkUrls: string[] = []) => {
   setMockUserPreferences({ navbar: { bookmarkUrls } });
 };
 
 const CUSTOMISE_FLAG = 'grafana.customizableMegaMenu';
+const getStoredHiddenItems = () => JSON.parse(window.localStorage.getItem(HIDDEN_ITEMS_STORAGE_KEY) ?? '[]');
 
 const renderMegaMenu = ({
   navBarTree = customisableNavTree,
+  hiddenItemIds = [],
   bookmarkUrls = [],
-}: { navBarTree?: NavModelItem[]; bookmarkUrls?: string[] } = {}) => {
+  sectionOrder,
+}: {
+  navBarTree?: NavModelItem[];
+  hiddenItemIds?: string[];
+  bookmarkUrls?: string[];
+  sectionOrder?: string[];
+} = {}) => {
+  // Hidden state + section order are read from localStorage; pins come from preferences.
+  window.localStorage.setItem(HIDDEN_ITEMS_STORAGE_KEY, JSON.stringify(hiddenItemIds));
+  if (sectionOrder) {
+    window.localStorage.setItem(SECTION_ORDER_STORAGE_KEY, JSON.stringify(sectionOrder));
+  }
   seedBookmarks(bookmarkUrls);
 
   return render(<MegaMenu onClose={() => {}} />, { preloadedState: { navBarTree } });
@@ -82,6 +105,7 @@ describe('MegaMenu', () => {
     });
     jest.clearAllMocks();
   });
+
   it('should render component', async () => {
     renderMegaMenu({ navBarTree: nestedNavTree });
 
@@ -131,7 +155,15 @@ describe('MegaMenu', () => {
       contextSrv.user.isSignedIn = false;
     });
 
-    it('shows a loading skeleton until preferences have loaded, instead of the un-customised menu', async () => {
+    it('does not show the customise control when the feature flag is off', async () => {
+      setTestFlags({ [CUSTOMISE_FLAG]: false });
+      renderMegaMenu();
+
+      expect(await screen.findByRole('link', { name: 'Explore' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Customise navigation' })).not.toBeInTheDocument();
+    });
+
+    it('shows a loading skeleton until preferences have loaded', async () => {
       // Keep the preferences request pending so the query stays in its loading state.
       server.use(customGetUserPreferencesHandler(() => new Promise(() => {})));
 
@@ -139,302 +171,449 @@ describe('MegaMenu', () => {
 
       const list = await screen.findByRole('list', { name: 'Navigation' });
       expect(list).toHaveAttribute('aria-busy', 'true');
-      // The real items aren't rendered yet (so there's no reflow once preferences arrive)
       expect(screen.queryByRole('link', { name: 'Explore' })).not.toBeInTheDocument();
     });
 
-    describe('pinned items', () => {
-      const pinnedRegion = () => within(screen.getByRole('list', { name: 'Pinned' }));
+    it('hides the customise entry point until preferences have loaded, so pins are not cleared', async () => {
+      // Hold the preferences GET pending. Entering edit mode now would start from an empty pinned
+      // list, and pressing Done before preferences arrive would overwrite the user's saved pins with
+      // []. The entry point must stay hidden until loading finishes.
+      server.use(customGetUserPreferencesHandler(() => new Promise(() => {})));
 
-      it('surfaces a pinned child under its parent in the pinned area, with no Bookmarks section', async () => {
-        renderMegaMenu({ bookmarkUrls: ['/playlists'] });
+      renderMegaMenu({ bookmarkUrls: ['/playlists'] });
 
-        await screen.findByRole('list', { name: 'Pinned' });
-        // The pinned child brings along its parent
-        expect(pinnedRegion().getByRole('link', { name: 'Playlists' })).toBeInTheDocument();
-        expect(pinnedRegion().getByRole('link', { name: 'Dashboards' })).toBeInTheDocument();
-        // No dedicated Bookmarks section
-        expect(screen.queryByRole('link', { name: 'Bookmarks' })).not.toBeInTheDocument();
-      });
+      // The nav still renders (skeleton), but there's no way into edit mode while preferences load.
+      await screen.findByRole('list', { name: 'Navigation' });
+      expect(screen.queryByRole('button', { name: 'Customise navigation' })).not.toBeInTheDocument();
+    });
 
-      it('moves the pinned child out of its normal location', async () => {
-        renderMegaMenu({ bookmarkUrls: ['/playlists'] });
+    describe('reordering top-level sections', () => {
+      it('renders the top-level sections in the stored order', async () => {
+        renderMegaMenu({ sectionOrder: ['cfg', 'explore'] });
 
-        await screen.findByRole('list', { name: 'Pinned' });
-        // Playlists exists only in the pinned area (moved, not duplicated)
-        expect(screen.getAllByRole('link', { name: 'Playlists' })).toHaveLength(1);
-        expect(pinnedRegion().getByRole('link', { name: 'Playlists' })).toBeInTheDocument();
-      });
-
-      it('keeps a partially-pinned parent in the normal nav too', async () => {
-        renderMegaMenu({ bookmarkUrls: ['/playlists'] });
-
-        await screen.findByRole('list', { name: 'Pinned' });
-        // Dashboards appears both in the pinned area (as the parent of Playlists) and in the
-        // normal nav (still holding Snapshots)
-        expect(screen.getAllByRole('link', { name: 'Dashboards' })).toHaveLength(2);
-      });
-
-      it('removes a fully-pinned section from the normal nav', async () => {
-        // Administration has a single child; pinning it pins the whole section
-        renderMegaMenu({ bookmarkUrls: ['/admin/settings'] });
-
-        await screen.findByRole('list', { name: 'Pinned' });
-        expect(pinnedRegion().getByRole('link', { name: 'Administration' })).toBeInTheDocument();
-        expect(pinnedRegion().getByRole('link', { name: 'Settings' })).toBeInTheDocument();
-        // Only the pinned copy of Administration remains
-        expect(screen.getAllByRole('link', { name: 'Administration' })).toHaveLength(1);
-      });
-
-      it('places the pinned block at the top, above the other sections', async () => {
-        renderMegaMenu({ bookmarkUrls: ['/admin/settings'] });
-
-        await screen.findByRole('list', { name: 'Pinned' });
-        // Home is reached via the logo, not listed, so the pinned block leads the menu
-        expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
-        const names = screen.getAllByRole('link').map((el) => el.textContent);
-        expect(names.indexOf('Administration')).toBe(0);
+        // Wait for the real list (past the loading skeleton), then read the section order
+        await screen.findByRole('link', { name: 'Administration' });
+        const nav = within(screen.getByRole('list', { name: 'Navigation' }));
+        const names = nav.getAllByRole('link').map((el) => el.textContent);
         expect(names.indexOf('Administration')).toBeLessThan(names.indexOf('Explore'));
       });
 
-      it('pins a whole section by its own url and shows its children', async () => {
+      it('offers a drag handle on each top-level section while editing', async () => {
         const { user } = renderMegaMenu();
 
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        expect(screen.getByRole('button', { name: 'Reorder Explore' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Reorder Dashboards' })).toBeInTheDocument();
+      });
+    });
+
+    describe('hiding top-level sections', () => {
+      it('hides a top-level section, but shows it (greyed) while editing', async () => {
+        const { user } = renderMegaMenu({ hiddenItemIds: ['explore'] });
+
+        expect(screen.queryByRole('link', { name: 'Explore' })).not.toBeInTheDocument();
+        expect(await screen.findByRole('link', { name: 'Alerting' })).toBeInTheDocument();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        expect(await screen.findByRole('link', { name: 'Explore' })).toBeInTheDocument();
+        expect(await screen.findByRole('button', { name: 'Show Explore' })).toBeInTheDocument();
+      });
+
+      it('offers the hide toggle on sections and children, but not protected/create items', async () => {
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        expect(await screen.findByRole('button', { name: 'Hide Explore' })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Hide Home' })).not.toBeInTheDocument();
+
+        // Children are hideable too, but create actions (New dashboard) are not.
+        await user.click(await screen.findByRole('button', { name: 'Expand section: Dashboards' }));
+        expect(await screen.findByRole('button', { name: 'Hide Playlists' })).toBeInTheDocument();
+        const labels = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
+        expect(labels).not.toContain('Hide New');
+      });
+
+      it('hides a child item — greyed while editing, removed from the nav after Done', async () => {
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        await user.click(await screen.findByRole('button', { name: 'Expand section: Dashboards' }));
+        await user.click(await screen.findByRole('button', { name: 'Hide Playlists' }));
+
+        // Hiding reports an interaction (path = the item's url).
+        expect(reportInteraction).toHaveBeenCalledWith(
+          'grafana_nav_item_hidden',
+          expect.objectContaining({ path: '/playlists' })
+        );
+
+        // While editing it stays visible (greyed) and the control flips to a Show toggle.
+        await user.click(await screen.findByRole('button', { name: 'Show Playlists' }));
+
+        // Revealing flips the control back — the item is no longer marked hidden.
+        await user.click(await screen.findByRole('button', { name: 'Hide Playlists' }));
+        expect(await screen.findByRole('button', { name: 'Show Playlists' })).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Done' }));
+        expect(getStoredHiddenItems()).toEqual(['dashboards/playlists']);
+        // Dashboards stays expanded: the hidden child is gone but its siblings remain.
+        expect(screen.queryByRole('link', { name: 'Playlists' })).not.toBeInTheDocument();
+        expect(await screen.findByRole('link', { name: 'Snapshots' })).toBeInTheDocument();
+      });
+
+      it('persists hidden sections to localStorage on Done (pins untouched)', async () => {
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        await user.click(await screen.findByRole('button', { name: 'Hide Explore' }));
+        await user.click(await screen.findByRole('button', { name: 'Hide Alerting' }));
+        await user.click(await screen.findByRole('button', { name: 'Done' }));
+
+        expect(getStoredHiddenItems()).toEqual(['explore', 'alerting']);
+        await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual([]));
+      });
+
+      it('discards changes on Cancel', async () => {
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        await user.click(await screen.findByRole('button', { name: 'Hide Explore' }));
+        await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+        expect(await screen.findByRole('link', { name: 'Explore' })).toBeInTheDocument();
+      });
+    });
+
+    describe('pinning', () => {
+      const pinnedRegion = () => within(screen.getByRole('list', { name: 'Pinned' }));
+
+      it('shows a pinned child as a breadcrumb in the grey box, and keeps it in the nav', async () => {
+        const { user } = renderMegaMenu({ bookmarkUrls: ['/playlists'] });
+
+        await screen.findByRole('list', { name: 'Pinned' });
+        // The box shows the breadcrumb "Dashboards › Playlists" as a single link with an ancestor crumb.
+        expect(pinnedRegion().getByRole('link', { name: /Playlists/ })).toBeInTheDocument();
+        expect(pinnedRegion().getByText('Dashboards')).toBeInTheDocument();
+        // No dedicated Bookmarks section
+        expect(screen.queryByRole('link', { name: 'Bookmarks' })).not.toBeInTheDocument();
+
+        // Pinning didn't remove it from the nav — expand Dashboards and it's still there (now 2 copies)
+        await user.click(screen.getByRole('button', { name: 'Expand section: Dashboards' }));
+        expect(screen.getAllByText('Playlists')).toHaveLength(2);
+      });
+
+      it('does not render the pinned box when nothing is pinned', async () => {
+        renderMegaMenu();
+
+        await screen.findByRole('link', { name: 'Explore' });
+        expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument();
+      });
+
+      it('pins a child from the nav into the box, staged and persisted on Done', async () => {
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        await user.click(await screen.findByRole('button', { name: 'Expand section: Dashboards' }));
+        const pin = screen
+          .getAllByRole('button', { hidden: true })
+          .find((button) => button.getAttribute('aria-label') === 'Pin Playlists');
+        await user.click(pin!);
+
+        expect(
+          within(await screen.findByRole('list', { name: 'Pinned' })).getByRole('link', { name: /Playlists/ })
+        ).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Done' }));
+        await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/playlists']));
+      });
+
+      it('does not offer a pin control outside edit mode', async () => {
+        renderMegaMenu();
+
+        // The Dashboards children render, but no pin control is available until customising.
+        await screen.findByRole('link', { name: 'Explore' });
+        const labels = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
+        expect(labels.some((l) => l?.startsWith('Pin '))).toBe(false);
+      });
+
+      it('offers a pin control on all top-level sections, including parents', async () => {
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         await screen.findByRole('link', { name: 'Dashboards' });
-        // The pin control in the normal nav is hover-only (visibility:hidden), so select it by label
-        const pinButton = screen
+        const labels = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
+        // Parent sections are pinnable as a quick-link (as well as their children being pinnable).
+        expect(labels).toContain('Pin Dashboards');
+        expect(labels).toContain('Pin Administration');
+        // Childless top-level sections (Explore) are pinnable too.
+        expect(labels).toContain('Pin Explore');
+      });
+
+      it('pins a top-level parent section as a quick-link and keeps it in the nav', async () => {
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        const pin = screen
           .getAllByRole('button', { hidden: true })
           .find((button) => button.getAttribute('aria-label') === 'Pin Dashboards');
-        await user.click(pinButton!);
+        await user.click(pin!);
+        await user.click(screen.getByRole('button', { name: 'Done' }));
 
-        // The section is pinned by its own url (not by enumerating children)
         await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/dashboards']));
-        // ...and shows up in the pinned area with its children, and no longer in the normal nav
+        // Shows in the box as a single breadcrumb quick-link…
         const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
         expect(pinned.getByRole('link', { name: 'Dashboards' })).toBeInTheDocument();
-        expect(pinned.getByRole('link', { name: 'Playlists' })).toBeInTheDocument();
-        expect(screen.getAllByRole('link', { name: 'Dashboards' })).toHaveLength(1);
+        // …and still appears in the nav below (pinning duplicates, it doesn't move).
+        expect(screen.getAllByRole('link', { name: 'Dashboards' }).length).toBeGreaterThanOrEqual(2);
       });
 
-      it('keeps a section with children pinned by its own url (e.g. Starred)', async () => {
-        // A section pinned in its own right must stay in the pinned area and keep showing its
-        // children even though it has children — the case that broke when starring a dashboard
-        // gave the pinned "Starred" section children.
-        renderMegaMenu({ bookmarkUrls: ['/dashboards'] });
-
-        const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
-        expect(pinned.getByRole('link', { name: 'Dashboards' })).toBeInTheDocument();
-        expect(pinned.getByRole('link', { name: 'Playlists' })).toBeInTheDocument();
-        expect(pinned.getByRole('link', { name: 'Snapshots' })).toBeInTheDocument();
-        // The whole section moved out of the normal nav
-        expect(screen.getAllByRole('link', { name: 'Dashboards' })).toHaveLength(1);
-      });
-
-      it('offers an unpin control on the section and every pinned child', async () => {
-        renderMegaMenu({ bookmarkUrls: ['/dashboards'] });
-
-        const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
-        const labels = pinned.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
-        expect(labels).toContain('Unpin Dashboards');
-        expect(labels).toContain('Unpin Playlists');
-        expect(labels).toContain('Unpin Snapshots');
-      });
-
-      it('unpinning the top-level section removes the whole group', async () => {
-        const { user } = renderMegaMenu({ bookmarkUrls: ['/dashboards'] });
-
-        const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
-        const sectionUnpin = pinned
-          .getAllByRole('button', { hidden: true })
-          .find((button) => button.getAttribute('aria-label') === 'Unpin Dashboards');
-        await user.click(sectionUnpin!);
-
-        await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual([]));
-        await waitFor(() => expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument());
-      });
-
-      it('unpinning one child of a whole-pinned section expands to the remaining siblings', async () => {
-        const { user } = renderMegaMenu({ bookmarkUrls: ['/dashboards'] });
-
-        const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
-        const childUnpin = pinned
-          .getAllByRole('button', { hidden: true })
-          .find((button) => button.getAttribute('aria-label') === 'Unpin Playlists');
-        await user.click(childUnpin!);
-
-        // The section is replaced by its remaining (still-pinned) sibling
-        await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/snapshots']));
-      });
-
-      it('unpins from the pinned area and restores the item', async () => {
-        const { user } = renderMegaMenu({ bookmarkUrls: ['/admin/settings'] });
-
-        // The unpin control is hover-only (visibility:hidden), so select it by label
-        const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
-        const unpinButton = pinned
-          .getAllByRole('button', { hidden: true })
-          .find((button) => button.getAttribute('aria-label') === 'Unpin Settings');
-        await user.click(unpinButton!);
-
-        await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual([]));
-        await waitFor(() => expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument());
-      });
-
-      it('highlights a pinned item that matches the current page', async () => {
-        seedBookmarks(['/explore']);
-
-        // Current page is Explore, which is pinned, so the pinned Explore row is the current page
-        const chrome = new AppChromeService();
-        chrome.update({
-          sectionNav: { node: { id: 'explore', text: 'Explore', url: '/explore' }, main: { text: '' } },
-        });
-
-        const wrapper = getWrapper({
-          store: configureStore({ navBarTree: customisableNavTree }),
-          grafanaContext: { chrome },
-          renderWithRouter: true,
-          historyOptions: { initialEntries: ['/explore'] },
-        });
-        render(<MegaMenu onClose={() => {}} />, { wrapper });
-
-        const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
-        expect(pinned.getByRole('link', { name: 'Explore' })).toHaveAttribute('aria-current', 'page');
-      });
-
-      it('highlights only the matching pinned row when the active page is under a pinned section', async () => {
-        seedBookmarks(['/dashboards']);
-
-        // Current page is "Playlists", which lives under the (fully pinned) Dashboards section
-        const chrome = new AppChromeService();
-        chrome.update({
-          sectionNav: {
-            node: {
-              id: 'dashboards/playlists',
-              text: 'Playlists',
-              url: '/playlists',
-              parentItem: {
-                id: 'dashboards',
-                text: 'Dashboards',
-                url: '/dashboards',
-                parentItem: { id: 'home', text: 'Home', url: '/' },
-              },
-            },
-            main: { text: '' },
-          },
-        });
-
-        const wrapper = getWrapper({
-          store: configureStore({ navBarTree: customisableNavTree }),
-          grafanaContext: { chrome },
-          renderWithRouter: true,
-          historyOptions: { initialEntries: ['/playlists'] },
-        });
-        render(<MegaMenu onClose={() => {}} />, { wrapper });
-
-        const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
-        expect(pinned.getByRole('link', { name: 'Playlists' })).toHaveAttribute('aria-current', 'page');
-        // Only the matching pinned row is current — an ancestor section isn't highlighted in its place
-        expect(pinned.getByRole('link', { name: 'Dashboards' })).not.toHaveAttribute('aria-current', 'page');
-      });
-
-      it('does not offer a pin control on individual starred items, only the Starred section', async () => {
+      it('offers a pin control on the Starred section (special case) but not its dashboards', async () => {
         const { user } = renderMegaMenu();
 
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
         expect(await screen.findByRole('link', { name: STARRED_DASHBOARD.name })).toBeInTheDocument();
 
-        const pinButtons = screen
-          .getAllByRole('button', { hidden: true })
-          .map((button) => button.getAttribute('aria-label'));
-        // The starred dashboard cannot be pinned
-        expect(pinButtons).not.toContain(`Pin ${STARRED_DASHBOARD.name}`);
-        // ...but the Starred section itself can
-        expect(pinButtons).toContain('Pin Starred');
+        const labels = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
+        expect(labels).toContain('Pin Starred'); // the Starred section itself is pinnable
+        expect(labels).not.toContain(`Pin ${STARRED_DASHBOARD.name}`); // but its sub-dashboards are not
       });
 
-      it('keeps the collapsible Bookmarks section when the flag is off', async () => {
+      it('pins the top-level Starred section, listing its dashboards in the box', async () => {
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        const pin = screen
+          .getAllByRole('button', { hidden: true })
+          .find((button) => button.getAttribute('aria-label') === 'Pin Starred');
+        await user.click(pin!);
+        await user.click(screen.getByRole('button', { name: 'Done' }));
+
+        await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/dashboards?starred']));
+        // The box expands the pin into one breadcrumb line per starred dashboard ("Starred › <name>").
+        const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
+        expect(await pinned.findByRole('link', { name: new RegExp(STARRED_DASHBOARD.name) })).toBeInTheDocument();
+        expect(pinned.getByText('Starred')).toBeInTheDocument();
+      });
+
+      it('makes Starred pinnable rather than hideable', async () => {
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        await screen.findByRole('link', { name: 'Starred' });
+        const labels = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
+        expect(labels).toContain('Pin Starred');
+        expect(labels).not.toContain('Hide Starred');
+      });
+
+      it('offers an unpin control on the pinned endpoint, not the ancestor', async () => {
+        const { user } = renderMegaMenu({ bookmarkUrls: ['/playlists'] });
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        const labels = pinnedRegion()
+          .getAllByRole('button', { hidden: true })
+          .map((b) => b.getAttribute('aria-label'));
+        expect(labels).toContain('Unpin Playlists');
+        expect(labels).not.toContain('Unpin Dashboards'); // ancestor is context only
+      });
+
+      it('unpins from the box on Done', async () => {
+        const { user } = renderMegaMenu({ bookmarkUrls: ['/playlists'] });
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        const unpin = pinnedRegion()
+          .getAllByRole('button', { hidden: true })
+          .find((button) => button.getAttribute('aria-label') === 'Unpin Playlists');
+        await user.click(unpin!);
+        await user.click(screen.getByRole('button', { name: 'Done' }));
+
+        await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual([]));
+        await waitFor(() => expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument());
+      });
+
+      it('keeps the collapsible Bookmarks section when the flag is off, skipping orphaned urls', async () => {
         setTestFlags({ [CUSTOMISE_FLAG]: false });
-        renderMegaMenu({ bookmarkUrls: ['/explore'] });
+        // The second url matches no nav item, so it's safely skipped when building the section.
+        renderMegaMenu({ bookmarkUrls: ['/explore', '/orphaned-not-in-nav'] });
 
         expect(await screen.findByRole('button', { name: 'Expand section: Bookmarks' })).toBeInTheDocument();
       });
 
-      it('keeps the legacy bookmark control on regular and starred items when the flag is off', async () => {
+      it('keeps the legacy bookmark control when the flag is off', async () => {
         setTestFlags({ [CUSTOMISE_FLAG]: false });
         const { user } = renderMegaMenu();
 
         await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
         await screen.findByRole('link', { name: STARRED_DASHBOARD.name });
 
-        // With customisation off the new pin restrictions don't apply — every signed-in item
-        // (except the Bookmarks section) keeps the legacy bookmark control, as on main.
         const labels = screen
           .getAllByRole('button', { hidden: true })
           .map((button) => button.getAttribute('aria-label'));
         expect(labels).toContain('Bookmark Explore');
         expect(labels).toContain(`Bookmark ${STARRED_DASHBOARD.name}`);
-        // ...and a bookmarked item keeps the legacy "Bookmark" tooltip, not "Unpin"
-        expect(labels).not.toContain('Unpin Explore');
+      });
+
+      it('toggles a bookmark from the legacy control when the flag is off', async () => {
+        setTestFlags({ [CUSTOMISE_FLAG]: false });
+        const { user } = renderMegaMenu();
+
+        const bookmark = (await screen.findAllByRole('button', { hidden: true })).find(
+          (b) => b.getAttribute('aria-label') === 'Bookmark Explore'
+        );
+        await user.click(bookmark!);
+
+        // The legacy path persists via the bookmark urls and populates the Bookmarks section.
+        await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/explore']));
+        expect(await screen.findByRole('button', { name: 'Expand section: Bookmarks' })).toBeInTheDocument();
       });
     });
 
-    describe('collapsing the non-pinned items', () => {
-      it('does not offer the collapse toggle when nothing is pinned', async () => {
-        renderMegaMenu();
-
-        expect(await screen.findByRole('link', { name: 'Alerting' })).toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: 'Hide unpinned items' })).not.toBeInTheDocument();
-        expect(screen.queryByRole('button', { name: 'Show unpinned items' })).not.toBeInTheDocument();
-      });
-
-      it('collapses and expands the non-pinned items while keeping pinned items visible', async () => {
+    describe('edit-mode controls', () => {
+      it('offers the unpin control only while editing', async () => {
         const { user } = renderMegaMenu({ bookmarkUrls: ['/playlists'] });
 
-        // Expanded by default — other items are visible
-        expect(await screen.findByRole('link', { name: 'Alerting' })).toBeInTheDocument();
+        await screen.findByRole('list', { name: 'Pinned' });
+        // Outside edit mode the box is read-only — no unpin control.
+        const before = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
+        expect(before).not.toContain('Unpin Playlists');
 
-        // The toggle is wired to the unpinned list for a11y (aria-controls + aria-expanded)
-        const toggle = screen.getByRole('button', { name: 'Hide unpinned items' });
-        const controlledId = toggle.getAttribute('aria-controls');
-        expect(controlledId).toBeTruthy();
-        expect(toggle).toHaveAttribute('aria-expanded', 'true');
-        expect(document.getElementById(controlledId!)).toContainElement(screen.getByRole('link', { name: 'Alerting' }));
+        await user.click(screen.getByRole('button', { name: 'Customise navigation' }));
+        const after = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
+        expect(after).toContain('Unpin Playlists');
+      });
 
-        // Collapse: the non-pinned items disappear but the pinned ones remain
-        await user.click(toggle);
-        expect(screen.queryByRole('link', { name: 'Alerting' })).not.toBeInTheDocument();
+      it('does not show reset to default until something is customised', async () => {
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         expect(
-          within(screen.getByRole('list', { name: 'Pinned' })).getByRole('link', { name: 'Playlists' })
-        ).toBeInTheDocument();
-
-        // Expand again
-        await user.click(screen.getByRole('button', { name: 'Show unpinned items' }));
-        expect(await screen.findByRole('link', { name: 'Alerting' })).toBeInTheDocument();
+          screen.queryByRole('button', { name: 'Reset navigation - show all items, unpin all and reset order' })
+        ).not.toBeInTheDocument();
       });
 
-      it('resets the collapse when all items are unpinned, so re-pinning starts expanded', async () => {
-        const { user } = renderMegaMenu({ bookmarkUrls: ['/explore'] });
+      it('stages a reset and only persists it on Done', async () => {
+        const { user } = renderMegaMenu({ hiddenItemIds: ['explore'], bookmarkUrls: ['/playlists'] });
 
-        // Collapse the rest
-        await user.click(await screen.findByRole('button', { name: 'Hide unpinned items' }));
-        expect(screen.queryByRole('link', { name: 'Alerting' })).not.toBeInTheDocument();
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        expect(screen.getByRole('list', { name: 'Pinned' })).toBeInTheDocument();
 
-        // Unpin everything
-        const unpin = within(screen.getByRole('list', { name: 'Pinned' }))
-          .getAllByRole('button', { hidden: true })
-          .find((button) => button.getAttribute('aria-label') === 'Unpin Explore');
-        await user.click(unpin!);
-        await waitFor(() => expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument());
+        await user.click(
+          await screen.findByRole('button', { name: 'Reset navigation - show all items, unpin all and reset order' })
+        );
+        // Staged, not saved — the box clears in the preview but the stored pins are untouched
+        expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/playlists']);
+        expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument();
 
-        // Re-pin — the menu must not still be collapsed
-        const rePin = screen
-          .getAllByRole('button', { hidden: true })
-          .find((button) => button.getAttribute('aria-label') === 'Pin Explore');
-        await user.click(rePin!);
-
-        expect(await screen.findByRole('list', { name: 'Pinned' })).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Alerting' })).toBeInTheDocument();
+        await user.click(screen.getByRole('button', { name: 'Done' }));
+        expect(getStoredHiddenItems()).toEqual([]);
+        await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual([]));
       });
+
+      it('shows a saving state on Done while the pins are being persisted', async () => {
+        // Hold the preferences PATCH pending so the saving state stays observable
+        server.use(customPatchUserPreferencesHandler(() => new Promise(() => {})));
+
+        const { user } = renderMegaMenu();
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        await user.click(await screen.findByRole('button', { name: 'Expand section: Dashboards' }));
+        const pin = screen
+          .getAllByRole('button', { hidden: true })
+          .find((button) => button.getAttribute('aria-label') === 'Pin Playlists');
+        await user.click(pin!);
+        await user.click(screen.getByRole('button', { name: 'Done' }));
+
+        const saving = await screen.findByRole('button', { name: 'Saving…' });
+        expect(saving).toBeDisabled();
+        expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+
+        // All editing controls are disabled while the save is in flight, so edits made against the
+        // in-flight snapshot can't be silently overwritten when it resolves. Playlists is now pinned,
+        // so it has an unpin control in both the pinned box and the nav — both must be disabled.
+        const unpins = screen
+          .getAllByRole('button', { hidden: true })
+          .filter((button) => button.getAttribute('aria-label') === 'Unpin Playlists');
+        expect(unpins.length).toBeGreaterThanOrEqual(2);
+        unpins.forEach((button) => expect(button).toBeDisabled());
+      });
+
+      it('stays in edit mode and persists nothing when the save fails', async () => {
+        // Make the preferences PATCH fail so the save errors out.
+        server.use(customPatchUserPreferencesHandler(() => HttpResponse.json({ message: 'nope' }, { status: 500 })));
+
+        const { user } = renderMegaMenu();
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        await user.click(await screen.findByRole('button', { name: 'Expand section: Dashboards' }));
+        const pin = screen
+          .getAllByRole('button', { hidden: true })
+          .find((button) => button.getAttribute('aria-label') === 'Pin Playlists');
+        await user.click(pin!);
+        await user.click(screen.getByRole('button', { name: 'Done' }));
+
+        // The save failed: we stay in edit mode (Done/Cancel remain) and nothing is persisted.
+        expect(await screen.findByRole('button', { name: 'Done' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+        expect(mockUserPreferences.navbar?.bookmarkUrls ?? []).toEqual([]);
+        // A failed save must not be recorded as a successful one.
+        expect(reportInteraction).not.toHaveBeenCalledWith('grafana_nav_customise_saved', expect.anything());
+      });
+
+      it('reports a successful save only once the pins have persisted', async () => {
+        const { user } = renderMegaMenu();
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        await user.click(await screen.findByRole('button', { name: 'Expand section: Dashboards' }));
+        const pin = screen
+          .getAllByRole('button', { hidden: true })
+          .find((button) => button.getAttribute('aria-label') === 'Pin Playlists');
+        await user.click(pin!);
+        await user.click(screen.getByRole('button', { name: 'Done' }));
+
+        await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/playlists']));
+        // objectContaining: the event also carries the A/B experiment variant stamp.
+        expect(reportInteraction).toHaveBeenCalledWith(
+          'grafana_nav_customise_saved',
+          expect.objectContaining({ hiddenCount: 0, pinnedCount: 1 })
+        );
+      });
+    });
+  });
+
+  describe('when starredFolders is enabled', () => {
+    testWithFeatureToggles({ enable: ['starsFromAPIServer', 'foldersAppPlatformAPI'] });
+
+    // Flag cleanup is handled by the outer afterEach (act-wrapped, since setTestFlags fires
+    // OpenFeature events into the still-mounted menu).
+    beforeEach(() => {
+      setTestFlags({ 'grafana.starredFolders': true });
+    });
+
+    it('renders a starred folder and a same-named starred dashboard as two distinct, per-kind-iconed rows', async () => {
+      const dashUid = dashbdE.item.uid;
+      const folderUid = folderB.item.uid;
+      // A folder and a dashboard that share a display name — only the icon tells them apart.
+      setMockStarredDashboards([dashUid]);
+      setMockStarredFolders([folderUid]);
+      setupSearcher([
+        { uid: dashUid, name: 'Shared Name', url: `/d/${dashUid}`, kind: 'dashboard' },
+        { uid: folderUid, name: 'Shared Name', url: `/dashboards/f/${folderUid}`, kind: 'folder' },
+      ]);
+
+      const { user } = renderMegaMenu();
+
+      await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
+
+      // The real sync replaces the placeholder Starred child with both starred items.
+      const starredSection = () => within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
+      await waitFor(() => {
+        expect(starredSection().getAllByRole('link', { name: 'Shared Name' })).toHaveLength(2);
+      });
+
+      // Same name, but the per-kind icons make the two rows distinguishable.
+      expect(starredSection().getByTestId('icon-apps')).toBeInTheDocument();
+      expect(starredSection().getByTestId('icon-folder')).toBeInTheDocument();
+
+      // The icons also expose the kind as an accessible title (which lifts Icon's aria-hidden),
+      // so screen readers don't hear the two rows as identical links.
+      expect(starredSection().getByTitle('Dashboard')).toBe(starredSection().getByTestId('icon-apps'));
+      expect(starredSection().getByTitle('Folder')).toBe(starredSection().getByTestId('icon-folder'));
     });
   });
 });

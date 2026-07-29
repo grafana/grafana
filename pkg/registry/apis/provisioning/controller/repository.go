@@ -102,7 +102,6 @@ func NewRepositoryController(
 	quotaGetter quotas.QuotaGetter,
 	quotaChecker *RepositoryQuotaChecker,
 	incrementalPolicy repository.IncrementalSyncPolicy,
-	folderAPIVersion string,
 	webhookSecretRotationInterval time.Duration,
 ) *RepositoryController {
 	finalizerMetrics := registerFinalizerMetrics(registry)
@@ -123,11 +122,11 @@ func NewRepositoryController(
 		quotaChecker:      quotaChecker,
 		statusPatcher:     statusPatcher,
 		finalizer: &finalizer{
-			lister:           resourceLister,
-			clientFactory:    clients,
-			metrics:          &finalizerMetrics,
-			maxWorkers:       parallelOperations,
-			folderAPIVersion: folderAPIVersion,
+			lister:        resourceLister,
+			clientFactory: clients,
+			jobs:          jobs,
+			metrics:       &finalizerMetrics,
+			maxWorkers:    parallelOperations,
 		},
 		jobs:                          jobs,
 		logger:                        logging.DefaultLogger.With("logger", loggerName),
@@ -419,40 +418,48 @@ func (rc *RepositoryController) determineSyncStrategy(
 
 	switch {
 	case !obj.Spec.Sync.Enabled:
-		logger.Info("skip sync as it's disabled")
+		logger.Info("skip sync as it's disabled in the repository spec")
 		return nil
 	case isBlocked:
-		logger.Info("skip sync for repository over quota")
+		logger.Info("skip sync as the repository is blocked for exceeding its namespace quota")
 		return nil
 	case !healthStatus.Healthy:
-		logger.Info("skip sync for unhealthy repository")
+		// Surface why the repository is unhealthy so operators can act without
+		// having to inspect the repository status separately. The health error
+		// type and messages are the same ones exposed on /status/health.
+		logger.Info("skip sync as the repository is unhealthy",
+			"health_error", healthStatus.Error,
+			"health_messages", healthStatus.Message,
+			"health_checked", time.UnixMilli(healthStatus.Checked))
 		return nil
 	case healthStatus.Healthy != obj.Status.Health.Healthy:
-		logger.Info("repository became healthy, full resync")
+		logger.Info("full resync as the repository recovered from an unhealthy state")
 		return &provisioning.SyncJobOptions{}
 	case obj.Status.ObservedGeneration < 1:
-		logger.Info("full sync for new repository")
+		logger.Info("full sync as this is the first sync for a new repository")
 		return &provisioning.SyncJobOptions{}
 	case obj.Generation != obj.Status.ObservedGeneration:
-		logger.Info("full sync for spec change")
+		logger.Info("full sync as the repository spec changed",
+			"generation", obj.Generation, "observed_generation", obj.Status.ObservedGeneration)
 		return &provisioning.SyncJobOptions{}
 	case shouldResync:
 		// Continue to see if we could skip for other reasons
 		versioned, ok := repo.(repository.Versioned)
 		// If the repository is not versioned, we don't have a way to check for incremental updates
 		if !ok {
-			logger.Info("full sync on interval for non-versioned repository")
+			logger.Info("full sync on interval as the repository is not versioned and cannot be diffed incrementally")
 			return &provisioning.SyncJobOptions{}
 		}
 		latestRef, err := versioned.LatestRef(ctx)
 		if err != nil {
-			logger.Warn("incremental sync on interval without knowing if ref has actually changed", "error", err)
+			logger.Warn("falling back to incremental sync on interval as the latest ref could not be resolved to detect changes", "error", err)
 			return &provisioning.SyncJobOptions{Incremental: true}
 		}
 
 		// Only resync if the latest ref is different from the last synced ref
 		if latestRef == obj.Status.Sync.LastRef {
-			logger.Info("skip incremental sync as reference is the same")
+			logger.Info("skip sync on interval as the latest ref matches the last synced ref",
+				"ref", latestRef)
 			return nil
 		}
 
@@ -462,11 +469,13 @@ func (rc *RepositoryController) determineSyncStrategy(
 		// was deleted in git) or when the diff size reaches/exceeds max_incremental_changes.
 		incremental, err := shouldUseIncrementalSync(ctx, versioned, obj, latestRef, rc.incrementalPolicy)
 		if err != nil {
-			logger.Warn("unable to compare files for incremental sync, doing full sync", "error", err)
+			logger.Warn("falling back to full sync on interval as files could not be compared for an incremental sync",
+				"error", err, "from_ref", obj.Status.Sync.LastRef, "to_ref", latestRef)
 			return &provisioning.SyncJobOptions{}
 		}
 
-		logger.Info("sync on interval", "incremental", incremental)
+		logger.Info("sync on interval as the latest ref changed",
+			"incremental", incremental, "from_ref", obj.Status.Sync.LastRef, "to_ref", latestRef)
 		return &provisioning.SyncJobOptions{Incremental: incremental}
 	default:
 		return nil
@@ -662,7 +671,7 @@ func (rc *RepositoryController) process(key string) error {
 		logger.Info("repository token needs to be generated", "connection", obj.Spec.Connection.Name)
 	case hasQuotaChanged:
 		logger.Info("quota changed", "quota", newQuota)
-	case len(obj.Spec.Workflows) > 0 && (obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0):
+	case len(obj.Spec.Workflows) > 0 && repository.GetID(obj.Status.Webhook).IsEmpty():
 		logger.Info("webhook missing, reconciling")
 	case shouldRotateWebhookSecret:
 		logger.Info("webhook secret rotation due")
@@ -714,7 +723,47 @@ func (rc *RepositoryController) process(key string) error {
 
 	repo, err := rc.repoFactory.Build(ctx, obj)
 	if err != nil {
-		return fmt.Errorf("unable to create repository from configuration: %w", err)
+		// The token references a stored secret that could not be decrypted (e.g. an
+		// orphaned reference whose secret was deleted). When the token is minted from a
+		// connection, regenerate it and rebuild rather than failing the reconcile forever.
+		// shouldGenerateToken being false guarantees we did not already mint one this pass.
+		if errors.Is(err, repository.ErrTokenNotFound) && !shouldGenerateToken &&
+			obj.Spec.Connection != nil && obj.Spec.Connection.Name != "" {
+			// If we wrote a token for this repository very recently, its secret may not be
+			// readable from the store yet. Wait for it rather than regenerating, which would
+			// delete it and can loop under secret-store read-after-write lag.
+			if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
+				logger.Info("repository token secret not yet readable after recent write; will retry", "error", err)
+				rc.queue.AddAfter(key, tokenWriteRetryDelay)
+				return nil
+			}
+
+			logger.Warn("repository token secret could not be decrypted, regenerating from connection",
+				"connection", obj.Spec.Connection.Name, "error", err)
+
+			c, cerr := rc.client.Connections(obj.Namespace).Get(ctx, obj.Spec.Connection.Name, v1.GetOptions{})
+			if cerr != nil {
+				return fmt.Errorf("retrieving connection to regenerate token: %w", cerr)
+			}
+
+			token, tokenOps, gerr := rc.generateRepositoryToken(ctx, obj, c)
+			if gerr != nil {
+				return fmt.Errorf("regenerating repository token: %w", gerr)
+			}
+
+			if len(tokenOps) > 0 {
+				patchOperations = append(patchOperations, tokenOps...)
+			}
+			// Work on a copy so we don't mutate the shared informer-cache object, and
+			// overwrite the whole value so the stale reference name is cleared too.
+			obj = obj.DeepCopy()
+			obj.Secure.Token = common.InlineSecureValue{Create: token}
+
+			repo, err = rc.repoFactory.Build(ctx, obj)
+		}
+		if err != nil {
+			return fmt.Errorf("unable to create repository from configuration: %w", err)
+		}
 	}
 
 	// Handle hooks - may return early if hooks fail
@@ -833,7 +882,7 @@ func (rc *RepositoryController) process(key string) error {
 // Returns hook operations, whether processing should continue, and any error
 func (rc *RepositoryController) processHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, bool, error) {
 	webhookMissing := len(obj.Spec.Workflows) > 0 &&
-		(obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0)
+		repository.GetID(obj.Status.Webhook).IsEmpty()
 
 	shouldRunHooks := (obj.Generation != obj.Status.ObservedGeneration) || webhookMissing
 
@@ -871,7 +920,7 @@ func (rc *RepositoryController) shouldRotateWebhookSecret(obj *provisioning.Repo
 	if len(obj.Spec.Workflows) == 0 {
 		return false
 	}
-	if obj.Status.Webhook == nil || obj.Status.Webhook.ID == 0 {
+	if repository.GetID(obj.Status.Webhook).IsEmpty() {
 		return false
 	}
 	if obj.Status.Webhook.LastRotated == 0 {

@@ -32,6 +32,8 @@ import {
   rulerRuleType,
 } from './rules';
 
+const collator = new Intl.Collator();
+
 export function fromRulerRule(
   ruleSourceName: string,
   namespace: string,
@@ -356,7 +358,7 @@ export function hashQuery(query: string) {
 }
 
 function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
-  return JSON.stringify(Object.entries(item || {}).sort((a, b) => a[0].localeCompare(b[0])));
+  return JSON.stringify(Object.entries(item || {}).sort((a, b) => collator.compare(a[0], b[0])));
 }
 
 export function ruleIdentifierToRuleSourceName(identifier: RuleIdentifier): string {

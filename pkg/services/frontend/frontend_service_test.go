@@ -213,10 +213,10 @@ func TestFrontendService_LoginErrorCookie(t *testing.T) {
 		service.registerRoutes(mux)
 
 		req := httptest.NewRequest("GET", "/", nil)
-		// Set the login_error cookie (with some encrypted-looking value)
+		// Valid hex string simulates the encrypted cookie written by OSS trySetEncryptedCookie.
 		req.AddCookie(&http.Cookie{
 			Name:  "login_error",
-			Value: "abc123encryptedvalue",
+			Value: "deadbeef0123456789abcdef",
 		})
 		recorder := httptest.NewRecorder()
 
@@ -288,7 +288,7 @@ func TestFrontendService_LoginErrorCookie(t *testing.T) {
 		req := httptest.NewRequest("GET", "/", nil)
 		req.AddCookie(&http.Cookie{
 			Name:  "login_error",
-			Value: "abc123encryptedvalue",
+			Value: "deadbeef0123456789abcdef",
 		})
 		recorder := httptest.NewRecorder()
 
@@ -299,6 +299,30 @@ func TestFrontendService_LoginErrorCookie(t *testing.T) {
 
 		// Check that the custom error message is used
 		assert.Contains(t, body, "Oh no a boo-boo happened!", "Should use custom OAuth error message from config")
+	})
+
+	t.Run("should use plain-text cookie value from multi-tenant authn-service", func(t *testing.T) {
+		service := createTestService(t, cfg)
+
+		mux := web.New()
+		service.addMiddlewares(mux)
+		service.registerRoutes(mux)
+
+		req := httptest.NewRequest("GET", "/", nil)
+		// Non-hex value simulates the plain-text cookie written by the authn-service.
+		req.AddCookie(&http.Cookie{
+			Name:  "login_error",
+			Value: "login provider denied login request",
+		})
+		recorder := httptest.NewRecorder()
+
+		mux.ServeHTTP(recorder, req)
+
+		assert.Equal(t, 200, recorder.Code)
+		body := recorder.Body.String()
+
+		assert.Contains(t, body, "login provider denied login request",
+			"Should use the plain-text error from the cookie")
 	})
 }
 

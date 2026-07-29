@@ -42,6 +42,12 @@ func (c *LegacyTeamBindingSearchClient) VectorSearch(_ context.Context, _ *resou
 	return nil, fmt.Errorf("vector search not supported on legacy team binding store")
 }
 
+// HybridSearch is not supported on the legacy team binding store; hybrid
+// search only exists on the unified storage path.
+func (c *LegacyTeamBindingSearchClient) HybridSearch(_ context.Context, _ *resourcepb.HybridSearchRequest, _ ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+	return nil, fmt.Errorf("hybrid search not supported on legacy team binding store")
+}
+
 func (c *LegacyTeamBindingSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := c.tracer.Start(ctx, "teambinding.legacysearch")
 	defer span.End()
@@ -183,11 +189,13 @@ func getFieldValueFromRequirements(reqs []*resourcepb.Requirement, key string) s
 	return ""
 }
 
+var teamBindingColumnDefs = resource.TableColumnsByName(builders.TeamBindingSearchFields)
+
 func teamBindingColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
 	cols := make([]*resourcepb.ResourceTableColumnDefinition, 0, len(fields))
 	for _, f := range fields {
 		name := strings.TrimPrefix(f, resource.SEARCH_FIELD_PREFIX)
-		if col, ok := builders.TeamBindingTableColumnDefinitions[name]; ok {
+		if col, ok := teamBindingColumnDefs[name]; ok {
 			cols = append(cols, col)
 		}
 	}

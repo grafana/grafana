@@ -5610,135 +5610,6 @@
       "switch-layout-tab": "Přepnout rozvržení",
       "tab-title": "Změnit název karty"
     },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "Změnit zdroj dat vysvětlivek",
-        "choose-panels": "Vybrat panely",
-        "color": "Barva",
-        "color-description": "Barva, která bude použita pro značky vysvětlivek události",
-        "data-source": "Zdroj dat",
-        "display": "Zobrazit ovládací prvky vysvětlivek v",
-        "display-options": {
-          "above-dashboard": "Nad nástěnkou",
-          "controls-menu": "Nabídka ovládacích prvků",
-          "controls-menu-description": "Přístup je možný, když je otevřena nabídka ovládacích prvků",
-          "hidden": "Skryté",
-          "hidden-description": "Skryje přepínač pro zapnutí nebo vypnutí této vysvětlivky"
-        },
-        "enabled": "Povoleno",
-        "enabled-description": "Je-li povoleno, při každém obnovení nástěnky bude aktivován dotaz na vysvětlivky",
-        "name": "Název",
-        "open-query-editor": "Otevřít editor dotazů",
-        "open-query-editor-tooltip": "Otevřít editor dotazů a nakonfigurovat dotaz na vysvětlivky",
-        "panel-filter": {
-          "all-panels": "Všechny panely",
-          "all-panels-description": "Odeslat data vysvětlivek do všech panelů, které podporují vysvětlivky",
-          "all-panels-except": "Všechny panely kromě",
-          "all-panels-except-description": "Neposílat data vysvětlivek do následujících panelů",
-          "selected-panels": "Vybrané panely",
-          "selected-panels-description": "Odeslat vysvětlivky do výslovně uvedených panelů"
-        },
-        "query": "Dotaz",
-        "query-editor-close": "Zavřít",
-        "query-editor-modal-title": "Dotaz na vysvětlivky",
-        "show-in": "Zobrazit v"
-      },
-      "annotations": {
-        "add-annotation": "Přidat vysvětlivku",
-        "reorder": "Přetažením změníte pořadí",
-        "select-annotation": "Vybrat"
-      },
-      "elements": {
-        "annotation": "Vysvětlivky",
-        "annotation-set": "Vysvětlivky a výstrahy",
-        "dashboard": "Nástěnka",
-        "element": "Prvek",
-        "filter": "",
-        "filters-set": "",
-        "link-set": "Odkazy",
-        "local-variable": "Lokální proměnná",
-        "multiple-elements": "Více prvků",
-        "multiple-elements-delete-text": "Opravdu chcete odstranit tyto prvky?",
-        "multiple-panels": "Více panelů",
-        "multiple-panels-delete-text": "Opravdu chcete odstranit tyto panely? Všechny dotazy budou odebrány.",
-        "objects": "Objekty",
-        "panel": "Panel",
-        "panels": "Panely",
-        "row": "Řádek",
-        "rows": "Řádky",
-        "section-filters-set": "",
-        "tab": "Karta",
-        "tabs": "Karty",
-        "variable": "{{type}} proměnná",
-        "variable-set": "Proměnné"
-      },
-      "links": {
-        "add-link": "Přidat odkaz",
-        "reorder": "Přetažením změníte pořadí",
-        "select-link": "Vybrat",
-        "untitled": "Odkaz bez názvu"
-      },
-      "row": {
-        "header": {
-          "hide": "Skrýt",
-          "title": "Záhlaví řádku"
-        }
-      },
-      "section-filters": {
-        "title": ""
-      },
-      "section-variables": {
-        "title": "Proměnné"
-      },
-      "variable": {
-        "change-type": "",
-        "change-type-aria-label": "Změnit typ proměnné",
-        "custom-options": {
-          "apply": "Použít",
-          "change-value": "Změnit hodnotu proměnné",
-          "discard": "Zahodit",
-          "modal-title": "Vlastní možnosti"
-        },
-        "datasource-options": {
-          "name-filter": "Filtr názvu",
-          "name-filter-description": "Filtr regulárních výrazů, pro které chcete zahrnout instance zdroje dat. Ponechte prázdné pro vše.",
-          "name-filter-placeholder": "Příklad: /^prod/",
-          "type": "Typ",
-          "type-placeholder": "Vyberte typ zdroje dat"
-        },
-        "description": "Popis",
-        "description-placeholder": "Popisný text",
-        "label": "Štítek",
-        "label-description": "Nepovinné zobrazované jméno",
-        "name": "Název",
-        "open-editor": "Otevřít editor proměnných",
-        "open-editor-tooltip": "Pro další možnosti proměnných otevřete editor proměnných",
-        "query-options": {
-          "close": "Zavřít",
-          "modal-title": "Proměnná dotazu",
-          "preview": "Náhled"
-        },
-        "selection-options": {
-          "allow-custom-values": "Povolit vlastní hodnoty",
-          "allow-custom-values-description": "Umožňuje uživatelům zadávat hodnoty",
-          "category": "Možnosti výběru",
-          "custom-all-value": "Vlastní hodnota všeho",
-          "custom-all-value-description": "Zástupný regulární výraz nebo jiná hodnota reprezentující vše",
-          "include-all": "Zahrnout hodnotu Vše",
-          "include-all-description": "Povolí jednu možnost, která představuje všechny hodnoty",
-          "multi-value": "Vícehodnotové"
-        },
-        "type-category": "Možnosti {{type}}"
-      },
-      "variables": {
-        "add-variable": "Přidat proměnnou",
-        "change-type": "",
-        "reorder": "Přetažením změníte pořadí",
-        "select-type": "Vyberte typ proměnné",
-        "select-type-card-tooltip": "Klikněte pro výběr typu",
-        "select-variable": "Vybrat"
-      }
-    },
     "empty": {
       "add-library-panel-body": "Přidejte vizualizace, které jsou sdíleny s ostatními nástěnkami.",
       "add-library-panel-button": "Přidat panel knihovny",
@@ -6260,6 +6131,43 @@
         "title": "Přidat",
         "tooltip": "Přidat nový prvek"
       },
+      "annotation": {
+        "change-data-source": "Změnit zdroj dat vysvětlivek",
+        "choose-panels": "Vybrat panely",
+        "color": "Barva",
+        "color-description": "Barva, která bude použita pro značky vysvětlivek události",
+        "data-source": "Zdroj dat",
+        "display": "Zobrazit ovládací prvky vysvětlivek v",
+        "display-options": {
+          "above-dashboard": "Nad nástěnkou",
+          "controls-menu": "Nabídka ovládacích prvků",
+          "controls-menu-description": "Přístup je možný, když je otevřena nabídka ovládacích prvků",
+          "hidden": "Skryté",
+          "hidden-description": "Skryje přepínač pro zapnutí nebo vypnutí této vysvětlivky"
+        },
+        "enabled": "Povoleno",
+        "enabled-description": "Je-li povoleno, při každém obnovení nástěnky bude aktivován dotaz na vysvětlivky",
+        "name": "Název",
+        "open-query-editor": "Otevřít editor dotazů",
+        "open-query-editor-tooltip": "Otevřít editor dotazů a nakonfigurovat dotaz na vysvětlivky",
+        "panel-filter": {
+          "all-panels": "Všechny panely",
+          "all-panels-description": "Odeslat data vysvětlivek do všech panelů, které podporují vysvětlivky",
+          "all-panels-except": "Všechny panely kromě",
+          "all-panels-except-description": "Neposílat data vysvětlivek do následujících panelů",
+          "selected-panels": "Vybrané panely",
+          "selected-panels-description": "Odeslat vysvětlivky do výslovně uvedených panelů"
+        },
+        "query": "Dotaz",
+        "query-editor-close": "Zavřít",
+        "query-editor-modal-title": "Dotaz na vysvětlivky",
+        "show-in": "Zobrazit v"
+      },
+      "annotations": {
+        "add-annotation": "Přidat vysvětlivku",
+        "reorder": "Přetažením změníte pořadí",
+        "select-annotation": "Vybrat"
+      },
       "dashboard-options": {
         "title": "Možnosti",
         "tooltip": "Možnosti nástěnky"
@@ -6268,20 +6176,110 @@
         "title": "Kód",
         "tooltip": "Upravit jako kód"
       },
+      "elements": {
+        "annotation": "Vysvětlivky",
+        "annotation-set": "Vysvětlivky a výstrahy",
+        "dashboard": "Nástěnka",
+        "element": "Prvek",
+        "filter": "",
+        "filters-set": "",
+        "link-set": "Odkazy",
+        "local-variable": "Lokální proměnná",
+        "multiple-elements": "Více prvků",
+        "multiple-elements-delete-text": "Opravdu chcete odstranit tyto prvky?",
+        "multiple-panels": "Více panelů",
+        "multiple-panels-delete-text": "Opravdu chcete odstranit tyto panely? Všechny dotazy budou odebrány.",
+        "objects": "Objekty",
+        "panel": "Panel",
+        "panels": "Panely",
+        "row": "Řádek",
+        "rows": "Řádky",
+        "section-filters-set": "",
+        "tab": "Karta",
+        "tabs": "Karty",
+        "variable": "{{type}} proměnná",
+        "variable-set": "Proměnné"
+      },
       "export": {
         "title": "Exportovat"
       },
       "filters": "",
+      "links": {
+        "add-link": "Přidat odkaz",
+        "reorder": "Přetažením změníte pořadí",
+        "select-link": "Vybrat",
+        "untitled": "Odkaz bez názvu"
+      },
       "open": "",
       "outline": {
         "title": "Osnova",
         "tooltip": "Osnova obsahu"
       },
       "redo": "Opakovat",
+      "row": {
+        "header": {
+          "hide": "Skrýt",
+          "title": "Záhlaví řádku"
+        }
+      },
+      "section-filters": {
+        "title": ""
+      },
+      "section-variables": {
+        "title": "Proměnné"
+      },
       "snapshot": {
         "tooltip": "Otevřít původní nástěnku"
       },
       "undo": "Zpět",
+      "variable": {
+        "change-type": "",
+        "change-type-aria-label": "Změnit typ proměnné",
+        "custom-options": {
+          "apply": "Použít",
+          "change-value": "Změnit hodnotu proměnné",
+          "discard": "Zahodit",
+          "modal-title": "Vlastní možnosti"
+        },
+        "datasource-options": {
+          "name-filter": "Filtr názvu",
+          "name-filter-description": "Filtr regulárních výrazů, pro které chcete zahrnout instance zdroje dat. Ponechte prázdné pro vše.",
+          "name-filter-placeholder": "Příklad: /^prod/",
+          "type": "Typ",
+          "type-placeholder": "Vyberte typ zdroje dat"
+        },
+        "description": "Popis",
+        "description-placeholder": "Popisný text",
+        "label": "Štítek",
+        "label-description": "Nepovinné zobrazované jméno",
+        "name": "Název",
+        "open-editor": "Otevřít editor proměnných",
+        "open-editor-tooltip": "Pro další možnosti proměnných otevřete editor proměnných",
+        "query-options": {
+          "close": "Zavřít",
+          "modal-title": "Proměnná dotazu",
+          "preview": "Náhled"
+        },
+        "selection-options": {
+          "allow-custom-values": "Povolit vlastní hodnoty",
+          "allow-custom-values-description": "Umožňuje uživatelům zadávat hodnoty",
+          "category": "Možnosti výběru",
+          "custom-all-value": "Vlastní hodnota všeho",
+          "custom-all-value-description": "Zástupný regulární výraz nebo jiná hodnota reprezentující vše",
+          "include-all": "Zahrnout hodnotu Vše",
+          "include-all-description": "Povolí jednu možnost, která představuje všechny hodnoty",
+          "multi-value": "Vícehodnotové"
+        },
+        "type-category": "Možnosti {{type}}"
+      },
+      "variables": {
+        "add-variable": "Přidat proměnnou",
+        "change-type": "",
+        "reorder": "Přetažením změníte pořadí",
+        "select-type": "Vyberte typ proměnné",
+        "select-type-card-tooltip": "Klikněte pro výběr typu",
+        "select-variable": "Vybrat"
+      },
       "view-panel": {
         "disabled": "",
         "fanout-by-series": "",
@@ -6883,9 +6881,6 @@
       "title-hidden-count_many": "Skryté ({{count}})",
       "title-hidden-count_other": "Skryté ({{count}})"
     },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "Poskytněte zpětnou vazbu k nové zkušenosti s úpravami nástěnky"
-    },
     "dashboard-link-form": {
       "back-to-list": "Zpět na seznam",
       "label-icon": "Ikona",
@@ -6957,6 +6952,9 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Ovládací prvky nástěnky"
+    },
+    "dashboard-sidebar-renderer": {
+      "title-feedback-dashboard-editing-experience": "Poskytněte zpětnou vazbu k nové zkušenosti s úpravami nástěnky"
     },
     "data-source-variable-form": {
       "data-source-options": "Možnosti zdroje dat",

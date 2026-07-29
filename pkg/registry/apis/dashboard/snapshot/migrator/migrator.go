@@ -38,13 +38,30 @@ type SnapshotMigrator interface {
 
 // snapshotMigrator handles migrating dashboard snapshots from legacy SQL storage.
 type snapshotMigrator struct {
-	sql     legacysql.LegacyDatabaseProvider
-	secrets secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	sql legacysql.LegacyDatabaseProvider
+	// decrypt turns a legacy envelope-encrypted dashboard body into plaintext JSON.
+	// It is the OSS-vs-cloud seam: OSS wraps the legacy secrets service, while the
+	// cloud controller supplies its own source via NewSnapshotMigrator. Keeping the
+	// legacy dependency behind this closure avoids a legacy-database import in the
+	// shared, multi-tenant migration path.
+	decrypt func(ctx context.Context, payload []byte) ([]byte, error)
 }
 
 // ProvideSnapshotMigrator creates a snapshotMigrator for use in wire DI.
-func ProvideSnapshotMigrator(sql legacysql.LegacyDatabaseProvider, secretsSvc secrets.Service) SnapshotMigrator { //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
-	return &snapshotMigrator{sql: sql, secrets: secretsSvc}
+func ProvideSnapshotMigrator(sql legacysql.LegacyDatabaseProvider, secretsSvc secrets.Service) SnapshotMigrator { //nolint:staticcheck // SA1019: legacy envelope decryption of pre-existing single-tenant snapshot bodies
+	return &snapshotMigrator{
+		sql: sql,
+		decrypt: func(ctx context.Context, payload []byte) ([]byte, error) {
+			return secretsSvc.Decrypt(ctx, payload)
+		},
+	}
+}
+
+// NewSnapshotMigrator creates a snapshotMigrator with a caller-supplied decrypt
+// function. This is used by the cloud controller, where snapshot bodies do not
+// come from the legacy single-tenant secrets service.
+func NewSnapshotMigrator(sql legacysql.LegacyDatabaseProvider, decrypt func(ctx context.Context, payload []byte) ([]byte, error)) SnapshotMigrator {
+	return &snapshotMigrator{sql: sql, decrypt: decrypt}
 }
 
 // MigrateSnapshots handles the snapshot migration logic.
@@ -135,7 +152,7 @@ func (m *snapshotMigrator) MigrateSnapshots(ctx context.Context, orgId int64, op
 					snap.Spec.ExternalUrl = &row.externalURL.String
 				}
 			} else if len(row.dashboardEncrypted) > 0 {
-				plain, err := m.secrets.Decrypt(ctx, row.dashboardEncrypted)
+				plain, err := m.decrypt(ctx, row.dashboardEncrypted)
 				if err != nil {
 					return fmt.Errorf("decrypt snapshot %q: %w", row.key, err)
 				}

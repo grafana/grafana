@@ -105,11 +105,11 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:hover': {
         background: theme.colors.background.secondary,
-        borderColor: theme.colors.primary.border,
+        borderColor: theme.colors.accent.main,
       },
     }),
     selected: css({
-      borderColor: theme.colors.primary.border,
+      borderColor: theme.colors.accent.main,
       background: theme.colors.background.secondary,
     }),
     imgBox: css({
@@ -144,6 +144,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       transformOrigin: 'left top',
       top: '6px',
       left: '6px',
+      // disable interactions in the preview card
+      pointerEvents: 'none',
       '&& *': { scrollbarWidth: 'none' },
     }),
   };

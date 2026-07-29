@@ -37,6 +37,11 @@ type MockResourceIndex struct {
 
 	buildInfo IndexBuildInfo
 	docCount  int64
+
+	// Optional configured results for the managed-object RPCs. When nil the
+	// methods return an error, matching the default "not expected" behaviour.
+	managedObjects *resourcepb.ListManagedObjectsResponse
+	managedCounts  []*resourcepb.CountManagedObjectsResponse_ResourceCount
 }
 
 func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
@@ -52,6 +57,9 @@ func (m *MockResourceIndex) Search(_ context.Context, _ types.AccessClient, _ *r
 }
 
 func (m *MockResourceIndex) CountManagedObjects(_ context.Context, _ *SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
+	if m.managedCounts != nil {
+		return m.managedCounts, nil
+	}
 	return nil, fmt.Errorf("not expected")
 }
 
@@ -60,6 +68,9 @@ func (m *MockResourceIndex) DocCount(_ context.Context, _ string, _ *SearchStats
 }
 
 func (m *MockResourceIndex) ListManagedObjects(_ context.Context, _ *resourcepb.ListManagedObjectsRequest, _ *SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
+	if m.managedObjects != nil {
+		return m.managedObjects, nil
+	}
 	return nil, fmt.Errorf("not expected")
 }
 
@@ -85,6 +96,9 @@ type mockStorageBackend struct {
 	resourceStats   []ResourceStats
 	lastImportTimes []ResourceLastImportTime
 	statsCalls      atomic.Int32
+	listStoredCalls atomic.Int32
+	listStoredErr   error
+	lastCountLimit  atomic.Int64
 }
 
 func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr NamespacedResource, minCount int) ([]ResourceStats, error) {
@@ -97,6 +111,38 @@ func (m *mockStorageBackend) GetResourceStats(ctx context.Context, nsr Namespace
 		}
 	}
 	return result, nil
+}
+
+// ListStoredResources reports the distinct group/resource identities in the
+// namespace, derived from the configured resourceStats. It is the discovery
+// primitive the search server uses instead of counting via GetResourceStats.
+func (m *mockStorageBackend) ListStoredResources(_ context.Context, filter NamespacedResource) ([]NamespacedResource, error) {
+	m.listStoredCalls.Add(1)
+	if m.listStoredErr != nil {
+		return nil, m.listStoredErr
+	}
+	if filter.Namespace == "" {
+		return nil, fmt.Errorf("namespace is required")
+	}
+	var result []NamespacedResource
+	for _, stat := range m.resourceStats {
+		if stat.Namespace != filter.Namespace {
+			continue
+		}
+		if filter.Group != "" && stat.Group != filter.Group {
+			continue
+		}
+		if filter.Resource != "" && stat.Resource != filter.Resource {
+			continue
+		}
+		result = append(result, stat.NamespacedResource)
+	}
+	return result, nil
+}
+
+func (m *mockStorageBackend) GetResourceStatsWithLimit(ctx context.Context, nsr NamespacedResource, minCount, countLimit int) ([]ResourceStats, error) {
+	m.lastCountLimit.Store(int64(countLimit))
+	return m.GetResourceStats(ctx, nsr, minCount)
 }
 
 func (m *mockStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (int64, error) {
@@ -141,10 +187,15 @@ func (m *mockStorageBackend) GetResourceLastImportTimes(ctx context.Context) ite
 type mockSearchBackend struct {
 	openIndexes []NamespacedResource
 
-	mu              sync.Mutex
-	buildIndexCalls []buildIndexCall
-	cache           map[NamespacedResource]ResourceIndex
-	stopCalls       atomic.Int32
+	mu                sync.Mutex
+	buildIndexCalls   []buildIndexCall
+	cache             map[NamespacedResource]ResourceIndex
+	stopCalls         atomic.Int32
+	snapshotThreshold int64
+}
+
+func (m *mockSearchBackend) SnapshotCountThreshold() int64 {
+	return m.snapshotThreshold
 }
 
 type buildIndexCall struct {
@@ -154,6 +205,37 @@ type buildIndexCall struct {
 
 func (m *mockSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration) ([]ResourceStats, error) {
 	return nil, nil
+}
+
+// TestStartupIndexStatsCountLimit checks the cap the startup prebuild passes to
+// the backend: init min size + 1, raised to the snapshot threshold + 1 when
+// snapshots are enabled.
+func TestStartupIndexStatsCountLimit(t *testing.T) {
+	cases := []struct {
+		name              string
+		initMinCount      int
+		snapshotThreshold int64 // 0 means no active snapshot store
+		wantLimit         int64
+	}{
+		{"no snapshot store", 5, 0, 6},
+		{"snapshot threshold higher", 5, 100, 101},
+		{"init min higher", 50, 10, 51},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			storage := &mockStorageBackend{}
+			server, err := newSearchServer(SearchOptions{
+				Backend:      &mockSearchBackend{snapshotThreshold: tc.snapshotThreshold},
+				Resources:    &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
+				InitMinCount: tc.initMinCount,
+			}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+			require.NoError(t, err)
+
+			_, err = server.startupIndexStats(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, tc.wantLimit, storage.lastCountLimit.Load())
+		})
+	}
 }
 
 func (m *mockSearchBackend) WriteOpenIndexStats(_ time.Time) error {
@@ -239,7 +321,7 @@ func TestBuildIndexesUsesOpenIndexStats(t *testing.T) {
 		Backend:      search,
 		Resources:    supplier,
 		InitMinCount: 10,
-	}, storage, nil, nil, nil, nil, nil, nil, nil)
+	}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	built, err := support.buildIndexes(t.Context())
@@ -266,7 +348,7 @@ func TestBuildIndexesFallsBackToResourceStats(t *testing.T) {
 		Backend:      search,
 		Resources:    supplier,
 		InitMinCount: 10,
-	}, storage, nil, nil, nil, nil, nil, nil, nil)
+	}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	built, err := support.buildIndexes(t.Context())
@@ -300,7 +382,7 @@ func TestBuildIndexesAppliesOwnershipToOpenIndexStats(t *testing.T) {
 	support, err := newSearchServer(SearchOptions{
 		Backend:   search,
 		Resources: supplier,
-	}, storage, nil, nil, nil, nil, nil, nil, ownsIndexFn)
+	}, storage, nil, nil, nil, nil, nil, nil, nil, ownsIndexFn)
 	require.NoError(t, err)
 
 	built, err := support.buildIndexes(t.Context())
@@ -320,7 +402,7 @@ func TestSearchServerStopStopsBackend(t *testing.T) {
 	support, err := newSearchServer(SearchOptions{
 		Backend:   search,
 		Resources: supplier,
-	}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil)
+	}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	support.bgTaskCancel = func() {}
 
@@ -348,7 +430,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -405,7 +487,7 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 	}
 
 	// Enable searchAfterWrite
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -453,7 +535,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -554,6 +636,15 @@ func TestCombineBuildRequests(t *testing.T) {
 	}
 }
 
+// TestRequiredIndexFeaturesAreCurrent guards the invariant that makes required
+// features safe: requiring a feature this binary never records would rebuild
+// every index on every check, forever.
+func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
+	for _, required := range RequiredIndexFeatures() {
+		require.Contains(t, CurrentIndexFeatures(), required)
+	}
+}
+
 func TestShouldRebuildIndex(t *testing.T) {
 	type testcase struct {
 		buildInfo                IndexBuildInfo
@@ -563,145 +654,171 @@ func TestShouldRebuildIndex(t *testing.T) {
 		maxBuildVersion          *semver.Version
 		selectableFields         []string
 		expectedSearchFieldsHash string
+		requiredFeatures         []IndexFeature
 
-		expected bool
+		expectedRebuild bool
 	}
 
 	now := time.Now()
 
 	for name, tc := range map[string]testcase{
 		"empty build info, with no rebuild conditions": {
-			buildInfo: IndexBuildInfo{},
-			expected:  false,
+			buildInfo:       IndexBuildInfo{},
+			expectedRebuild: false,
 		},
 		"empty build info, with minTime": {
-			buildInfo: IndexBuildInfo{},
-			minTime:   now,
-			expected:  true,
+			buildInfo:       IndexBuildInfo{},
+			minTime:         now,
+			expectedRebuild: true,
 		},
 		"empty build info, with lastImportTime": {
-			buildInfo:      IndexBuildInfo{},
-			lastImportTime: now,
-			expected:       true,
+			buildInfo:       IndexBuildInfo{},
+			lastImportTime:  now,
+			expectedRebuild: true,
 		},
 		"empty build info, with minVersion": {
 			buildInfo:       IndexBuildInfo{},
 			minBuildVersion: semver.MustParse("10.15.20"),
-			expected:        true,
+			expectedRebuild: true,
 		},
 		"build time before min time": {
-			buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
-			minTime:   now,
-			expected:  true,
+			buildInfo:       IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
+			minTime:         now,
+			expectedRebuild: true,
 		},
 		"build time after min time": {
-			buildInfo: IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
-			minTime:   now,
-			expected:  false,
+			buildInfo:       IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
+			minTime:         now,
+			expectedRebuild: false,
 		},
 		"build time before last import time": {
-			buildInfo:      IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
-			lastImportTime: now,
-			expected:       true,
+			buildInfo:       IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
+			lastImportTime:  now,
+			expectedRebuild: true,
 		},
 		"build time after last import time": {
-			buildInfo:      IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
-			lastImportTime: now,
-			expected:       false,
+			buildInfo:       IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
+			lastImportTime:  now,
+			expectedRebuild: false,
 		},
 		"build version before min version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("10.15.19")},
 			minBuildVersion: semver.MustParse("10.15.20"),
-			expected:        true,
+			expectedRebuild: true,
 		},
 		"build version after min version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("11.0.0")},
 			minBuildVersion: semver.MustParse("10.15.20"),
-			expected:        false,
+			expectedRebuild: false,
 		},
 		"build version newer than running version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("12.0.0")},
 			maxBuildVersion: semver.MustParse("11.0.0"),
-			expected:        true,
+			expectedRebuild: true,
 		},
 		"build version same as running version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("11.0.0")},
 			maxBuildVersion: semver.MustParse("11.0.0"),
-			expected:        false,
+			expectedRebuild: false,
 		},
 		"build version older than running version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("10.0.0")},
 			maxBuildVersion: semver.MustParse("11.0.0"),
-			expected:        false,
+			expectedRebuild: false,
 		},
 		"no index build version with maxBuildVersion set": {
 			buildInfo:       IndexBuildInfo{},
 			maxBuildVersion: semver.MustParse("11.0.0"),
-			expected:        false,
+			expectedRebuild: false,
 		},
 		"index with no previous selectable fields, and no new selectable fields": {
 			buildInfo:        IndexBuildInfo{},
 			selectableFields: nil,
-			expected:         false,
+			expectedRebuild:  false,
 		},
 		"index with no previous selectable fields, with new selectable fields": {
 			buildInfo:        IndexBuildInfo{},
 			selectableFields: []string{"title"},
-			expected:         true,
+			expectedRebuild:  true,
 		},
 		"index with existing fields, and no new selectable fields": {
 			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
 			selectableFields: nil,
-			expected:         false,
+			expectedRebuild:  false,
 		},
 		"index with existing fields, and subset of fields": {
 			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
 			selectableFields: []string{"title"},
-			expected:         false,
+			expectedRebuild:  false,
 		},
 		"index with existing fields, and same selectable fields": {
 			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
 			selectableFields: []string{"title", "team"},
-			expected:         false,
+			expectedRebuild:  false,
 		},
 		"index with existing fields, and different selectable fields": {
 			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
 			selectableFields: []string{"new.title", "new.team"},
-			expected:         true,
+			expectedRebuild:  true,
 		},
 		"index with existing fields, and additional selectable fields": {
 			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
 			selectableFields: []string{"title", "team", "new.field"},
-			expected:         true,
+			expectedRebuild:  true,
 		},
 		"no expected hash, no stored hash": {
-			buildInfo: IndexBuildInfo{},
-			expected:  false,
+			buildInfo:       IndexBuildInfo{},
+			expectedRebuild: false,
 		},
 		"no expected hash, stored hash present": {
 			buildInfo:                IndexBuildInfo{SearchFieldsHash: "abc"},
 			expectedSearchFieldsHash: "",
-			expected:                 false,
+			expectedRebuild:          false,
 		},
 		"expected hash present, no stored hash": {
 			buildInfo:                IndexBuildInfo{},
 			expectedSearchFieldsHash: "abc",
-			expected:                 true,
+			expectedRebuild:          true,
 		},
 		"expected hash matches stored hash": {
 			buildInfo:                IndexBuildInfo{SearchFieldsHash: "abc"},
 			expectedSearchFieldsHash: "abc",
-			expected:                 false,
+			expectedRebuild:          false,
 		},
 		"expected hash differs from stored hash": {
 			buildInfo:                IndexBuildInfo{SearchFieldsHash: "abc"},
 			expectedSearchFieldsHash: "def",
-			expected:                 true,
+			expectedRebuild:          true,
+		},
+		"no features on the index, none required": {
+			buildInfo:       IndexBuildInfo{},
+			expectedRebuild: false,
+		},
+		"index has the required feature": {
+			buildInfo:        IndexBuildInfo{Features: []IndexFeature{"alpha"}},
+			requiredFeatures: []IndexFeature{"alpha"},
+			expectedRebuild:  false,
+		},
+		"index is missing a required feature": {
+			buildInfo:        IndexBuildInfo{Features: []IndexFeature{"alpha"}},
+			requiredFeatures: []IndexFeature{"alpha", "beta"},
+			expectedRebuild:  true,
+		},
+		// An index from a newer binary has features this one does not know. That is
+		// the build version check's business, not this one's.
+		"index has a feature this binary does not require": {
+			buildInfo:       IndexBuildInfo{Features: []IndexFeature{"alpha", "beta"}},
+			expectedRebuild: false,
+		},
+		"index built before features existed, one required": {
+			buildInfo:        IndexBuildInfo{},
+			requiredFeatures: []IndexFeature{"alpha"},
+			expectedRebuild:  true,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.maxBuildVersion, tc.minTime, tc.lastImportTime, tc.selectableFields, tc.expectedSearchFieldsHash, nil)
-			require.Equal(t, tc.expected, res)
+			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.maxBuildVersion, tc.minTime, tc.lastImportTime, tc.selectableFields, tc.expectedSearchFieldsHash, tc.requiredFeatures, nil)
+			require.Equal(t, tc.expectedRebuild, res)
 		})
 	}
 }
@@ -802,7 +919,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		BuildVersion:         semver.MustParse("6.5.0"), // Running version
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -879,7 +996,7 @@ func TestRebuildIndexes(t *testing.T) {
 		Resources: supplier,
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -971,7 +1088,7 @@ func TestRebuildIndexes(t *testing.T) {
 			InitMinCount: 1,
 		}
 
-		support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+		support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, support)
 
@@ -1084,7 +1201,7 @@ func TestRebuildIndexesForResource(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -1165,7 +1282,7 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchServer(opts, nil, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -1274,7 +1391,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 		MinBuildVersion: semver.MustParse("5.0.0"),
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -1285,7 +1402,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	require.Equal(t, numIndexes, len(chsNoJitter))
 
 	// Create a second server with the same config to get a fresh rebuild queue.
-	support2, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support2, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	// With jitter: some indexes get extra tolerance, so fewer should be queued.
@@ -1345,7 +1462,7 @@ func TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated(t *testing.T) {
 	}
 
 	opts := SearchOptions{Backend: search, Resources: supplier}
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	// Fire the first rebuild. It will claim the in-flight slot and block
@@ -1478,7 +1595,7 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 		GroupsResources: map[string]string{"group": "res"},
 	}
 	opts := SearchOptions{Backend: search, Resources: supplier}
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	done := make(chan struct{})

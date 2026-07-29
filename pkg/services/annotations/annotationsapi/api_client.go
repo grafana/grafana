@@ -6,11 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
 
 	authnlib "github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,13 +24,24 @@ import (
 	"k8s.io/client-go/rest"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
-	annotationpkg "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const annotationServerAudience = "annotation.grafana.app"
+
+// annotationClient defines the interface for interacting with the annotation API server.
+type annotationClient interface {
+	Create(ctx context.Context, orgID int64, anno *annotationV0.Annotation) (*annotationV0.Annotation, error)
+	Update(ctx context.Context, orgID int64, anno *annotationV0.Annotation) (*annotationV0.Annotation, error)
+	Delete(ctx context.Context, orgID int64, name string) error
+	GetByLegacyID(ctx context.Context, orgID int64, annotationID int64) (*annotationV0.Annotation, error)
+	GetUsersFromMeta(ctx context.Context, usersMeta []string) (map[string]*user.User, error)
+	Search(ctx context.Context, orgID int64, query *annotations.ItemQuery) ([]*annotationV0.Annotation, error)
+}
+
+var _ annotationClient = (*annotationAPIClient)(nil)
 
 // TODO: consider replacing k8sClient with a rest.RESTClient built from restCfg for consistency -
 // CRUD ops (Create, Update, Delete, also GetByLegacyID) currently go through k8sClient (dynamic),
@@ -48,11 +62,12 @@ func newAnnotationAPIClient(cfg *setting.Cfg, userSvc user.Service, exchanger au
 		return nil
 	}
 
-	restCfg := buildRESTConfig(url, exchanger, cfg.Env == setting.Dev)
+	nsMapper := request.GetNamespaceMapper(cfg)
+	restCfg := buildRESTConfig(url, exchanger, nsMapper, cfg.AnnotationAppPlatform.TLSClientConfig)
 
 	return &annotationAPIClient{
 		k8sClient: client.NewK8sHandler(
-			request.GetNamespaceMapper(cfg),
+			nsMapper,
 			annotationV0.AnnotationKind().GroupVersionResource(),
 			func(_ context.Context) (*rest.Config, error) { return restCfg, nil },
 			userSvc,
@@ -111,19 +126,46 @@ func (s *annotationAPIClient) Delete(ctx context.Context, orgID int64, name stri
 	return s.k8sClient.Delete(ctx, name, orgID, v1.DeleteOptions{})
 }
 
+// GetByLegacyID fetches an annotation by its legacy ID, including the tombstone if it has
+// been soft-deleted, so callers can tell a deleted record from a missing one.
+//
 // TODO: expensive — the legacyID index does not cover the time partition, so this scans
 // every partition. Carrying the annotation time to the call sites would let us prune them.
 func (s *annotationAPIClient) GetByLegacyID(ctx context.Context, orgID int64, annotationID int64) (*annotationV0.Annotation, error) {
-	list, err := s.k8sClient.List(ctx, orgID, v1.ListOptions{
-		LabelSelector: fmt.Sprintf("%s=%d", annotationpkg.LabelKeyLegacyID, annotationID),
-	})
+	rc, err := s.getRESTClient()
 	if err != nil {
 		return nil, err
+	}
+
+	namespace := s.k8sClient.GetNamespace(orgID)
+	raw, err := rc.Get().
+		AbsPath("apis", annotationV0.APIGroup, annotationV0.APIVersion, "namespaces", namespace, "search").
+		Param("legacyID", strconv.FormatInt(annotationID, 10)).
+		Param("deleted", "include"). // include the tombstone so we can distinguish between deleted and missing
+		DoRaw(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var list annotationV0.AnnotationList
+	if err := json.Unmarshal(raw, &list); err != nil {
+		return nil, fmt.Errorf("decode search response: %w", err)
 	}
 	if len(list.Items) == 0 {
 		return nil, ErrNotFound
 	}
-	return fromUnstructured(&list.Items[0])
+
+	// Return the newest live annotation, or the tombstone if all are deleted.
+	live := slices.DeleteFunc(slices.Clone(list.Items), func(a annotationV0.Annotation) bool {
+		return a.GetDeletionTimestamp() != nil
+	})
+	if len(live) > 0 {
+		newest := slices.MaxFunc(live, func(a, b annotationV0.Annotation) int {
+			return a.GetCreationTimestamp().Compare(b.GetCreationTimestamp().Time)
+		})
+		return &newest, nil
+	}
+	return &list.Items[0], nil
 }
 
 func (s *annotationAPIClient) GetUsersFromMeta(ctx context.Context, usersMeta []string) (map[string]*user.User, error) {
@@ -237,26 +279,45 @@ func newTokenExchangeClient(token, tokenExchangeURL string, allowInsecure bool) 
 	return tc, nil
 }
 
-func buildRESTConfig(url string, exchanger authnlib.TokenExchanger, allowInsecure bool) *rest.Config {
+func buildRESTConfig(url string, exchanger authnlib.TokenExchanger, nsMapper request.NamespaceMapper, tlsConfig rest.TLSClientConfig) *rest.Config {
 	return &rest.Config{
-		Host:          url,
-		WrapTransport: newBearerTokenExchangeWrapper(exchanger),
-		TLSClientConfig: rest.TLSClientConfig{
-			Insecure: allowInsecure,
-		},
+		Host:            url,
+		WrapTransport:   newBearerTokenExchangeWrapper(exchanger, nsMapper),
+		TLSClientConfig: tlsConfig,
 	}
 }
 
 type bearerTokenExchangeRT struct {
 	exchanger authnlib.TokenExchanger
+	nsMapper  request.NamespaceMapper
 	next      http.RoundTripper
 }
 
 func (rt *bearerTokenExchangeRT) RoundTrip(req *http.Request) (*http.Response, error) {
-	resp, err := rt.exchanger.Exchange(req.Context(), authnlib.TokenExchangeRequest{
+	ctx := req.Context()
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("resolving requester for token exchange: %w", err)
+	}
+
+	namespace := rt.nsMapper(requester.GetOrgID())
+
+	exchangeReq := authnlib.TokenExchangeRequest{
 		Audiences: []string{annotationServerAudience},
-		Namespace: "*",
-	})
+		Namespace: namespace,
+	}
+
+	// Authenticate with OBO, when possible, so the new API properly attributes annotations.
+	if requester.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		exchangeReq.Subject = &authnlib.TokenExchangeSubject{
+			Sub:        requester.GetSubject(),
+			Identifier: requester.GetIdentifier(),
+			Type:       string(requester.GetIdentityType()),
+			Namespace:  namespace,
+		}
+	}
+
+	resp, err := rt.exchanger.Exchange(ctx, exchangeReq)
 	if err != nil {
 		return nil, fmt.Errorf("exchanging token: %w", err)
 	}
@@ -265,8 +326,8 @@ func (rt *bearerTokenExchangeRT) RoundTrip(req *http.Request) (*http.Response, e
 	return rt.next.RoundTrip(req)
 }
 
-func newBearerTokenExchangeWrapper(exchanger authnlib.TokenExchanger) func(http.RoundTripper) http.RoundTripper {
+func newBearerTokenExchangeWrapper(exchanger authnlib.TokenExchanger, nsMapper request.NamespaceMapper) func(http.RoundTripper) http.RoundTripper {
 	return func(rt http.RoundTripper) http.RoundTripper {
-		return &bearerTokenExchangeRT{exchanger: exchanger, next: rt}
+		return &bearerTokenExchangeRT{exchanger: exchanger, nsMapper: nsMapper, next: rt}
 	}
 }

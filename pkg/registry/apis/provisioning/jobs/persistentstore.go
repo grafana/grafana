@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
+	"maps"
 	"strconv"
 	"time"
 
@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
+	appjobs "github.com/grafana/grafana/apps/provisioning/pkg/jobs"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/util"
@@ -47,19 +48,17 @@ const (
 // sees this must stop processing immediately so two workers do not run the same job.
 var ErrLeaseLost = errors.New("job lease lost: claimed by another worker")
 
-var ErrNoJobs = &apierrors.StatusError{
-	ErrStatus: metav1.Status{
-		Status:  metav1.StatusFailure,
-		Reason:  metav1.StatusReasonConflict,
-		Message: "no jobs are available to claim, try again later",
-		Code:    http.StatusNoContent,
-		Details: &metav1.StatusDetails{
-			Group:             provisioning.GROUP,
-			Kind:              provisioning.JobResourceInfo.GetName(),
-			RetryAfterSeconds: 3,
-		},
-	},
-}
+// ErrAlreadyClaimed indicates the job is currently claimed by another worker.
+// Callers should skip the job: the claim label is the mutual exclusion, and
+// abandoned claims are recovered by the cleanup controller, not by re-claiming.
+var ErrAlreadyClaimed = errors.New("job is already claimed by another worker")
+
+// claimConflictRetries bounds how many times Claim re-reads a job after an
+// update conflict. A conflict means the job changed between our Get and
+// Update: usually another worker claimed it, but a concurrent non-claim write
+// (e.g. a rolled-back claim) also bumps the resource version, so retry with
+// fresh state before giving up.
+const claimConflictRetries = 3
 
 // Queue is a job queue abstraction.
 //
@@ -71,6 +70,12 @@ type Queue interface {
 	//
 	// This saves it if it is a new job, or fails with `apierrors.IsAlreadyExists(err) == true` if one already exists.
 	Insert(ctx context.Context, namespace string, spec provisioning.JobSpec) (*provisioning.Job, error)
+
+	// CleanupQueue deletes all queued jobs for the repository that are not
+	// currently being executed by a worker, clearing the repository's queue.
+	// Jobs already claimed by a worker are left to finish. Returns the number
+	// of jobs deleted.
+	CleanupQueue(ctx context.Context, namespace, repository string) (int, error)
 }
 
 var (
@@ -108,75 +113,64 @@ func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry
 	}, nil
 }
 
-// Claim takes a job from storage, marks it as ours, and returns it.
+// Claim attempts to claim the job namespace/name for this worker.
 //
-// Any job which has not been claimed by another worker is fair game.
+// Returns ErrAlreadyClaimed if another worker holds the claim, and a NotFound
+// API error if the job no longer exists (completed and deleted).
 //
 // If err is not nil, the job and rollback values are always nil.
-// The err may be ErrNoJobs if there are no jobs to claim.
-func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rollback func(), err error) {
+func (s *persistentStore) Claim(ctx context.Context, namespace, name string) (job *provisioning.Job, rollback func(), err error) {
 	ctx, span := tracing.Start(ctx, "provisioning.jobs.claim")
 	defer func() {
-		if err != nil && !errors.Is(err, ErrNoJobs) {
+		if err != nil && !errors.Is(err, ErrAlreadyClaimed) && !apierrors.IsNotFound(err) {
 			span.RecordError(err)
 		}
 		span.End()
 	}()
 
-	logger := logging.FromContext(ctx).With("operation", "claim")
+	logger := logging.FromContext(ctx).With("operation", "claim", "namespace", namespace, "job", name)
 
-	requirement, err := labels.NewRequirement(LabelJobClaim, selection.DoesNotExist, nil)
+	// Set up the provisioning identity for this namespace
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
-		return nil, nil, apifmt.Errorf("could not create requirement: %w", err)
+		return nil, nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
 	}
 
-	jobs, err := s.client.Jobs("").List(ctx, metav1.ListOptions{
-		LabelSelector: labels.NewSelector().Add(*requirement).String(),
-		Limit:         16,
-	})
-	if err != nil {
-		return nil, nil, apifmt.Errorf("failed to list jobs: %w", err)
-	}
-
-	if len(jobs.Items) == 0 {
-		logger.Debug("no jobs available to claim")
-		return nil, nil, ErrNoJobs
-	}
-
-	logger.Debug("found jobs available", "count", len(jobs.Items))
-
-	for _, job := range jobs.Items {
-		if job.Labels == nil {
-			job.Labels = make(map[string]string)
-		}
-		job.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
-		job.Labels[LabelJobClaimOwner] = util.GenerateShortUID()
-		s.queueMetrics.RecordWaitTime(string(job.Spec.Action), s.clock().Sub(job.CreationTimestamp.Time).Seconds())
-
-		// Set up the provisioning identity for this namespace
-		ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
+	for attempt := 0; attempt < claimConflictRetries; attempt++ {
+		current, err := s.client.Jobs(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
-			// This should never happen, as it is already a valid namespace from the job existing... but better be safe.
-			return nil, nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
+			// NotFound propagates as-is: the job was completed and deleted before we got here.
+			if apierrors.IsNotFound(err) {
+				return nil, nil, err
+			}
+			return nil, nil, apifmt.Errorf("failed to get job '%s' in '%s' for claiming: %w", name, namespace, err)
+		}
+		if current.Labels[LabelJobClaim] != "" {
+			return nil, nil, ErrAlreadyClaimed
 		}
 
-		// This relies on the resource version being updated for us.
-		// If the resource version we pass in via the current job is not the same as the one currently in the store, it will fail with Conflict.
+		claimed := current.DeepCopy()
+		if claimed.Labels == nil {
+			claimed.Labels = make(map[string]string)
+		}
+		claimed.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
+		claimed.Labels[LabelJobClaimOwner] = util.GenerateShortUID()
+
+		// This relies on the resource version from the Get above.
+		// If the job changed in the store since then, the Update fails with Conflict.
 		// This is the desired behavior, as it ensures that claims are atomic.
-		updatedJob, err := s.client.Jobs(job.GetNamespace()).Update(ctx, &job, metav1.UpdateOptions{})
+		updatedJob, err := s.client.Jobs(namespace).Update(ctx, claimed, metav1.UpdateOptions{})
 		if apierrors.IsConflict(err) {
-			// On conflict: another worker claimed the job before us.
-			// On would create: the job was completed and deleted before we could claim it.
-			// We'll just move on to the next job.
+			// Re-read and re-evaluate: another worker probably claimed it first.
 			continue
 		}
 		if err != nil {
-			return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+			return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s': %w", name, namespace, err)
 		}
 
+		s.queueMetrics.RecordWaitTime(string(updatedJob.Spec.Action), s.clock().Sub(updatedJob.CreationTimestamp.Time).Seconds())
+
 		logger.Info("job claim complete",
-			"job", updatedJob.GetName(),
-			"namespace", updatedJob.GetNamespace(),
 			"repository", updatedJob.Spec.Repository,
 			"action", updatedJob.Spec.Action,
 		)
@@ -190,8 +184,8 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 
 		return updatedJob.DeepCopy(), func() {
 			// Rolling back does not need to care about the parent's cancellation state.
-			// This will also use the parent context (i.e. from the for loop!), ensuring we have permissions to do this.
-			ctx = context.WithoutCancel(ctx)
+			// Keep the identity-augmented context so we have permissions to do this.
+			ctx := context.WithoutCancel(ctx)
 
 			logger := logging.FromContext(ctx).With("namespace", updatedJob.GetNamespace(), "job", updatedJob.GetName())
 
@@ -233,9 +227,10 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 		}, nil
 	}
 
-	// We failed to claim any jobs.
-	logger.Debug("no jobs claimed - all already claimed by others")
-	return nil, nil, ErrNoJobs
+	// Every attempt conflicted; treat the job as claimed by someone else. If it is in fact
+	// still unclaimed, the informer re-list re-discovers it.
+	logger.Debug("job claim conflicted repeatedly - treating as claimed by another worker")
+	return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s' after %d conflicts: %w", name, namespace, claimConflictRetries, ErrAlreadyClaimed)
 }
 
 // Update saves the job back to the store.
@@ -534,19 +529,19 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		return nil, err
 	}
 
-	// Set up the provisioning identity for this namespace
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
-	if err != nil {
-		span.RecordError(err)
-		return nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
-	}
-
+	// The job is created with the caller's identity so that the admission
+	// mutator can attribute it to the acting user (see AdmissionMutator).
+	// Unlike the other store operations, Insert does not switch to the
+	// provisioning identity: user-triggered flows keep the requesting user in
+	// context, while background callers (repository controller, webhooks)
+	// establish the provisioning identity themselves before calling Insert.
 	job := &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Labels: map[string]string{
 				LabelRepository: spec.Repository,
 			},
+			Annotations: webhookAttributionFromContext(ctx),
 		},
 		Spec: spec,
 	}
@@ -575,6 +570,96 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 	return created, nil
 }
 
+// CleanupQueue deletes the pending jobs for the repository, effectively clearing
+// the repository's queue. Returns the number of jobs deleted.
+//
+// A job is skipped (left in place) when it is:
+//   - executing: a worker has claimed it (it carries the LabelJobClaim label),
+//     so it is left to finish and archive itself;
+//   - an orphan-cleanup action (releaseResources/deleteResources): an admin may
+//     enqueue these against a terminating repository as a recovery path, and
+//     this method runs on every reconcile while the repository terminates, so
+//     removing them would defeat that recovery.
+//
+// Jobs are matched on spec.Repository rather than the repository label so that
+// jobs created directly through the jobs resource — which are valid and claimable
+// without the label — are not silently left behind.
+func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repository string) (int, error) {
+	ctx, span := tracing.Start(ctx, "provisioning.jobs.cleanup_queue")
+	defer span.End()
+
+	logger := logging.FromContext(ctx).With(
+		"operation", "cleanup_queue",
+		"namespace", namespace,
+		"repository", repository,
+	)
+
+	span.SetAttributes(
+		attribute.String("job.namespace", namespace),
+		attribute.String("job.repository", repository),
+	)
+
+	// Set up the provisioning identity for this namespace.
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
+	if err != nil {
+		span.RecordError(err)
+		return 0, apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
+	}
+
+	// Only unclaimed jobs are candidates: a claimed job (LabelJobClaim present)
+	// is executing and must be left alone. This selector is repository-agnostic;
+	// the repository match is done on spec.Repository below so unlabeled jobs are
+	// still covered.
+	claimReq, err := labels.NewRequirement(LabelJobClaim, selection.DoesNotExist, nil)
+	if err != nil {
+		span.RecordError(err)
+		return 0, apifmt.Errorf("could not create claim requirement: %w", err)
+	}
+
+	list, err := s.client.Jobs(namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: labels.NewSelector().Add(*claimReq).String(),
+	})
+	if err != nil {
+		span.RecordError(err)
+		return 0, apifmt.Errorf("failed to list jobs in '%s': %w", namespace, err)
+	}
+
+	var deleted int
+	for i := range list.Items {
+		job := &list.Items[i]
+		if job.Spec.Repository != repository || IsOrphanCleanupAction(job.Spec.Action) {
+			continue
+		}
+
+		// Guard against the race where a worker claims the job between the List
+		// and the Delete: the ResourceVersion precondition makes the delete fail
+		// with a conflict if the job changed, so an executing job is never removed.
+		rv := job.ResourceVersion
+		err := s.client.Jobs(namespace).Delete(ctx, job.GetName(), metav1.DeleteOptions{
+			Preconditions: &metav1.Preconditions{ResourceVersion: &rv},
+		})
+		switch {
+		case apierrors.IsNotFound(err):
+			// Already completed and removed by a worker; nothing to do.
+			continue
+		case apierrors.IsConflict(err):
+			// Claimed after we listed it; leave it for the worker to finish.
+			logger.Debug("skipping job claimed during queue clean-up", "job", job.GetName())
+			continue
+		case err != nil:
+			span.RecordError(err)
+			return deleted, apifmt.Errorf("failed to delete job '%s' in '%s': %w", job.GetName(), namespace, err)
+		}
+
+		s.queueMetrics.DecreaseQueueSize(string(job.Spec.Action))
+		deleted++
+	}
+
+	span.SetAttributes(attribute.Int("jobs_deleted", deleted))
+	logger.Info("cleanup queue complete", "deleted", deleted)
+	return deleted, nil
+}
+
 // generateJobName creates and updates the job's name to one that fits it.
 func generateJobName(job *provisioning.Job) {
 	switch job.Spec.Action {
@@ -588,6 +673,11 @@ func generateJobName(job *provisioning.Job) {
 		}
 		// There may be multiple pull requests at the same time. They need different names.
 		job.Name = fmt.Sprintf("%s-pr-%d", job.Spec.Repository, pr)
+	case provisioning.JobActionTest:
+		// Test jobs exist to generate concurrent load, so many must be queued
+		// against the same repository at once. A unique suffix avoids the
+		// already-exists collision a deterministic name would cause.
+		job.Name = fmt.Sprintf("%s-test-%s", job.Spec.Repository, util.GenerateShortUID())
 	default:
 		job.Name = fmt.Sprintf("%s-%s", job.Spec.Repository, job.Spec.Action)
 	}
@@ -616,4 +706,41 @@ func mutateJobAction(job *provisioning.Job) error {
 		return apierrors.NewBadRequest("multiple job types found")
 	}
 	return nil
+}
+
+type webhookAttributionCtxKey struct{}
+
+// WebhookAttribution identifies the webhook sender a job should be attributed
+// to: the provider account name and ID, and the provider it came from.
+type WebhookAttribution struct {
+	Sender   string
+	SenderID string
+	Origin   string
+}
+
+// WithWebhookAttribution attaches the webhook request's identity to the
+// context. Insert stamps it onto the created job as annotations.
+func WithWebhookAttribution(ctx context.Context, attribution WebhookAttribution) context.Context {
+	annotations := map[string]string{}
+	if attribution.Sender != "" {
+		annotations[appjobs.AnnoAuthor] = attribution.Sender
+	}
+	if attribution.SenderID != "" {
+		annotations[appjobs.AnnoAuthorID] = attribution.SenderID
+	}
+	if attribution.Origin != "" {
+		annotations[appjobs.AnnoAuthorOrigin] = attribution.Origin
+	}
+	if len(annotations) == 0 {
+		return ctx
+	}
+	return context.WithValue(ctx, webhookAttributionCtxKey{}, annotations)
+}
+
+// webhookAttributionFromContext returns a copy of the attribution annotations:
+// the same context serves every Insert, so callers must not be able to mutate
+// the stored map through a job's annotations.
+func webhookAttributionFromContext(ctx context.Context) map[string]string {
+	annotations, _ := ctx.Value(webhookAttributionCtxKey{}).(map[string]string)
+	return maps.Clone(annotations)
 }

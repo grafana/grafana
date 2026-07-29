@@ -4,6 +4,7 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Badge, Box, Button, Stack, Text } from '@grafana/ui';
 
+import { trackImportToGMAError, trackImportToGMASuccess } from '../../../Analytics';
 import { alertListPageLink } from '../../../utils/navigation';
 import { useAutoSyncConfiguration } from '../../settings/useAutoSyncConfiguration';
 import { type ImportFormValues } from '../ImportToGMA';
@@ -33,8 +34,11 @@ export function StepReviewEnableAutoSync({ onCancel }: StepReviewEnableAutoSyncP
   const handleEnable = async () => {
     const enabled = await save(selectedUid);
     if (enabled) {
+      trackImportToGMASuccess({ importMethod: 'autosync' });
       // No list filters are applied for auto-sync.
       locationService.push(alertListPageLink({}, { skipSubPath: true }));
+    } else {
+      trackImportToGMAError({ importMethod: 'autosync' });
     }
   };
 

@@ -503,16 +503,17 @@ test.describe(
     // bypassing CSP to ensure the Save button is correctly updated
     test.use({ contextOptions: { bypassCSP: true } });
 
-    test.skip('moves repeated rows', async ({ dashboardPage, selectors, page }) => {
+    test('moves repeated rows', async ({ dashboardPage, selectors, page }) => {
       // collapse rows so it's easier to move them without simulating scrolling
-      const dashboardWithCollapsedRows = V2DashWithRowRepeats;
+      // clone to avoid mutating V2DashWithRowRepeats, which is shared with the other tests in this file
+      const dashboardWithCollapsedRows = structuredClone(V2DashWithRowRepeats);
       dashboardWithCollapsedRows.spec.layout.spec.rows[0].spec.collapse = true;
 
       await importTestDashboard(
         page,
         selectors,
         'Row layout repeats - move repeated rows',
-        JSON.stringify(V2DashWithRowRepeats),
+        JSON.stringify(dashboardWithCollapsedRows),
         // there are no panels to show, since all rows are collapsed
         { checkPanelsVisible: false }
       );
@@ -521,9 +522,13 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await moveRow(dashboardPage, page, selectors, `${repeatTitleBase}1`, singleRowTitle);
 
-      let singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
-      const repeatedRowBox = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}1`);
-      expect(singleRowBox.y).toBeLessThan(repeatedRowBox.y || 0);
+      // The row order is only updated after the drop animation finishes (onDragEnd),
+      // so retry the position check until the reorder has been applied
+      await expect(async () => {
+        const singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
+        const repeatedRowBox = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}4`); // note: 4 (the last repeated row) because we wait for the whole repeated group to move ;)
+        expect(singleRowBox.y).toBeLessThan(repeatedRowBox.y);
+      }).toPass();
 
       // Wait for save button to be active (indicates changes have been applied)
       // since we cannot verify that changes have been applied by checking the JSON diff we have to check the Save button state
@@ -535,7 +540,7 @@ test.describe(
 
       await page.reload();
 
-      singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
+      const singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
       for (let i = 1; i <= repeatOptions.length; i++) {
         // verify move by row position
         const repeatedRow = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}${i}`);
