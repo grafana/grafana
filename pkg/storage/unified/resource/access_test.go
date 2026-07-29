@@ -13,10 +13,17 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+func newTestAuthzClient(t *testing.T, client authlib.AccessClient, opts AuthzOptions) authlib.AccessClient {
+	t.Helper()
+	wrapped, err := NewAuthzLimitedClient(client, opts)
+	require.NoError(t, err)
+	return wrapped
+}
+
 func TestAuthzLimitedClient_BatchCheck(t *testing.T) {
 	t.Run("RBAC compatible resources should use underlying client", func(t *testing.T) {
 		mockClient := authlib.FixedAccessClient(false)
-		client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
+		client := newTestAuthzClient(t, mockClient, AuthzOptions{})
 
 		req := authlib.BatchCheckRequest{
 			Namespace: "stacks-1",
@@ -35,7 +42,7 @@ func TestAuthzLimitedClient_BatchCheck(t *testing.T) {
 
 	t.Run("non-RBAC compatible resources should be allowed", func(t *testing.T) {
 		mockClient := authlib.FixedAccessClient(false)
-		client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
+		client := newTestAuthzClient(t, mockClient, AuthzOptions{})
 
 		req := authlib.BatchCheckRequest{
 			Namespace: "stacks-1",
@@ -54,7 +61,7 @@ func TestAuthzLimitedClient_BatchCheck(t *testing.T) {
 
 	t.Run("mixed resources - some RBAC compatible, some not", func(t *testing.T) {
 		mockClient := authlib.FixedAccessClient(false)
-		client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
+		client := newTestAuthzClient(t, mockClient, AuthzOptions{})
 
 		req := authlib.BatchCheckRequest{
 			Namespace: "stacks-1",
@@ -78,7 +85,7 @@ func TestAuthzLimitedClient_BatchCheck(t *testing.T) {
 
 	t.Run("RBAC compatible resources with allowed client", func(t *testing.T) {
 		mockClient := authlib.FixedAccessClient(true)
-		client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
+		client := newTestAuthzClient(t, mockClient, AuthzOptions{})
 
 		req := authlib.BatchCheckRequest{
 			Namespace: "stacks-1",
@@ -96,7 +103,7 @@ func TestAuthzLimitedClient_BatchCheck(t *testing.T) {
 
 func TestAuthzLimitedClient_Check(t *testing.T) {
 	mockClient := authlib.FixedAccessClient(false)
-	client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
+	client := newTestAuthzClient(t, mockClient, AuthzOptions{})
 
 	tests := []struct {
 		group    string
@@ -123,7 +130,7 @@ func TestAuthzLimitedClient_Check(t *testing.T) {
 
 func TestAuthzLimitedClient_Compile(t *testing.T) {
 	mockClient := authlib.FixedAccessClient(false)
-	client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
+	client := newTestAuthzClient(t, mockClient, AuthzOptions{})
 
 	tests := []struct {
 		group    string
@@ -156,7 +163,7 @@ func TestAuthzLimitedClient_Compile(t *testing.T) {
 func TestNamespaceMatching(t *testing.T) {
 	// Create a mock client that always returns allowed=true
 	mockClient := authlib.FixedAccessClient(true)
-	client := NewAuthzLimitedClient(mockClient, AuthzOptions{})
+	client := newTestAuthzClient(t, mockClient, AuthzOptions{})
 
 	// Create a context with fallback disabled
 	ctx := context.Background()
@@ -238,6 +245,80 @@ func TestNamespaceMatching(t *testing.T) {
 				assert.NoError(t, checkErr, "Check should not return error when namespaces match")
 				assert.NoError(t, compileErr, "Compile should not return error when namespaces match")
 			}
+		})
+	}
+}
+
+func TestNewAuthzLimitedClientValidation(t *testing.T) {
+	for _, value := range []string{"", "group", "/resource", "group/", "group/resource/extra", "group/*"} {
+		t.Run("rejects malformed exemption "+value, func(t *testing.T) {
+			_, err := NewAuthzLimitedClient(authlib.FixedAccessClient(true), AuthzOptions{
+				ExemptResources: []string{value},
+			})
+			require.ErrorContains(t, err, "invalid unified storage authz exemption")
+		})
+	}
+
+	for _, value := range []string{
+		"dashboard.grafana.app/dashboards",
+		"folder.grafana.app/folders",
+		"iam.grafana.app/users",
+		"iam.grafana.app/teams",
+		"iam.grafana.app/serviceaccounts",
+		"plugin.ext.grafana.app/widgets",
+	} {
+		t.Run("rejects already enforced exemption "+value, func(t *testing.T) {
+			_, err := NewAuthzLimitedClient(authlib.FixedAccessClient(true), AuthzOptions{
+				ExemptResources: []string{value},
+			})
+			require.ErrorContains(t, err, "it is already enforced")
+		})
+	}
+
+	t.Run("deduplicates exact exemptions", func(t *testing.T) {
+		client, err := NewAuthzLimitedClient(authlib.FixedAccessClient(true), AuthzOptions{
+			ExemptResources: []string{"example.grafana.app/widgets", "example.grafana.app/widgets"},
+		})
+		require.NoError(t, err)
+		wrapped := client.(*authzLimitedClient)
+		require.Len(t, wrapped.exemptions, 1)
+		require.Len(t, wrapped.exemptions["example.grafana.app"], 1)
+	})
+}
+
+func TestAuthzLimitedClientExemptionGate(t *testing.T) {
+	exempted := AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{"example.grafana.app/widgets"}}
+
+	tests := []struct {
+		name       string
+		opts       AuthzOptions
+		group      string
+		resource   string
+		isEnforced bool
+	}{
+		{"disabled enforces allowlist resource", AuthzOptions{}, "dashboard.grafana.app", "dashboards", true},
+		{"disabled enforces extension group", AuthzOptions{}, "plugin.ext.grafana.app", "widgets", true},
+		{"disabled bypasses unknown resource", AuthzOptions{}, "example.grafana.app", "widgets", false},
+		{"disabled ignores exemptions", AuthzOptions{ExemptResources: exempted.ExemptResources}, "example.grafana.app", "widgets", false},
+		{"enabled without exemptions enforces unknown resource", AuthzOptions{ExemptionEnabled: true}, "example.grafana.app", "widgets", true},
+		{"enabled enforces dashboards", AuthzOptions{ExemptionEnabled: true}, "dashboard.grafana.app", "dashboards", true},
+		{"enabled enforces folders", AuthzOptions{ExemptionEnabled: true}, "folder.grafana.app", "folders", true},
+		{"enabled enforces iam", AuthzOptions{ExemptionEnabled: true}, "iam.grafana.app", "users", true},
+		{"enabled enforces extension group", AuthzOptions{ExemptionEnabled: true}, "plugin.ext.grafana.app", "widgets", true},
+		{"enabled bypasses exact exemption", exempted, "example.grafana.app", "widgets", false},
+		{"enabled enforces sibling of exemption", exempted, "example.grafana.app", "gadgets", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := newTestAuthzClient(t, authlib.FixedAccessClient(false), tt.opts)
+
+			// The underlying client denies everything, so an allowed response means the check was bypassed.
+			check, err := client.Check(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, authlib.CheckRequest{
+				Group: tt.group, Resource: tt.resource, Verb: utils.VerbGet, Namespace: "stacks-1", Name: "one",
+			}, "")
+			require.NoError(t, err)
+			assert.Equal(t, !tt.isEnforced, check.Allowed)
 		})
 	}
 }

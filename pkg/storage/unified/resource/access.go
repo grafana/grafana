@@ -77,38 +77,78 @@ func newMetrics(reg prometheus.Registerer) *accessMetrics {
 	return m
 }
 
+// rbacAllowlist is a map of group to resources that are compatible with RBAC.
+var rbacAllowlist = groupResource{
+	"dashboard.grafana.app": map[string]interface{}{"dashboards": nil},
+	"folder.grafana.app":    map[string]interface{}{"folders": nil},
+	"iam.grafana.app":       map[string]interface{}{"users": nil, "teams": nil, "serviceaccounts": nil},
+}
+
 // authzLimitedClient is a client that enforces RBAC for the limited number of groups and resources.
 // This is a temporary solution until the authz service is fully implemented.
 // The authz service will be responsible for enforcing RBAC.
 // For now, it makes one call to the authz service for each list items. This is known to be inefficient.
 type authzLimitedClient struct {
 	client claims.AccessClient
-	// allowlist is a map of group to resources that are compatible with RBAC.
-	allowlist groupResource
-	logger    log.Logger
-	metrics   *accessMetrics
+	// exemptionEnabled inverts the gate: every group and resource is enforced,
+	// except the exemptions below. Temporary, until every resource is mapped.
+	exemptionEnabled bool
+	exemptions       groupResource
+	logger           log.Logger
+	metrics          *accessMetrics
 }
 
 type AuthzOptions struct {
-	Registry prometheus.Registerer
+	Registry         prometheus.Registerer
+	ExemptionEnabled bool
+	ExemptResources  []string
 }
 
 // NewAuthzLimitedClient creates a new authzLimitedClient.
-func NewAuthzLimitedClient(client claims.AccessClient, opts AuthzOptions) claims.AccessClient {
+func NewAuthzLimitedClient(client claims.AccessClient, opts AuthzOptions) (claims.AccessClient, error) {
 	logger := log.New("limited-authz-client")
 	if opts.Registry == nil {
 		opts.Registry = prometheus.DefaultRegisterer
 	}
-	return &authzLimitedClient{
-		client: client,
-		allowlist: groupResource{
-			"dashboard.grafana.app": map[string]interface{}{"dashboards": nil},
-			"folder.grafana.app":    map[string]interface{}{"folders": nil},
-			"iam.grafana.app":       map[string]interface{}{"users": nil, "teams": nil, "serviceaccounts": nil},
-		},
-		logger:  logger,
-		metrics: newMetrics(opts.Registry),
+	exemptions, err := parseAuthzExemptions(opts.ExemptResources)
+	if err != nil {
+		return nil, err
 	}
+	return &authzLimitedClient{
+		client:           client,
+		exemptionEnabled: opts.ExemptionEnabled,
+		exemptions:       exemptions,
+		logger:           logger,
+		metrics:          newMetrics(opts.Registry),
+	}, nil
+}
+
+// parseAuthzExemptions validates the configured exemptions, whether or not the
+// exemption gate is enabled, so a bad value never silently drops enforcement.
+func parseAuthzExemptions(values []string) (groupResource, error) {
+	exemptions := make(groupResource)
+	for _, value := range values {
+		group, resource, _ := strings.Cut(value, "/")
+		if strings.Count(value, "/") != 1 || strings.Contains(value, "*") || group == "" || resource == "" {
+			return nil, fmt.Errorf("invalid unified storage authz exemption %q: expecting an exact group/resource", value)
+		}
+		if alwaysEnforced(group, resource) {
+			return nil, fmt.Errorf("invalid unified storage authz exemption %q: it is already enforced", value)
+		}
+		if exemptions[group] == nil {
+			exemptions[group] = make(map[string]interface{})
+		}
+		exemptions[group][resource] = nil
+	}
+	return exemptions, nil
+}
+
+func alwaysEnforced(group, resource string) bool {
+	if strings.HasSuffix(group, ".ext.grafana.app") {
+		return true
+	}
+	_, ok := rbacAllowlist[group][resource]
+	return ok
 }
 
 // Check implements claims.AccessClient.
@@ -190,15 +230,14 @@ func (c authzLimitedClient) IsCompatibleWithRBAC(group, resource string) bool {
 	// for K8s-native CRDs. This mirrors narrowing in
 	// rbac.Service.checkPermission and keeps folder/dashboard/iam flow on the
 	// existing allow-list path.
-	if strings.HasSuffix(group, ".ext.grafana.app") {
+	if alwaysEnforced(group, resource) {
 		return true
 	}
-	if _, ok := c.allowlist[group]; ok {
-		if _, ok := c.allowlist[group][resource]; ok {
-			return true
-		}
+	if !c.exemptionEnabled {
+		return false
 	}
-	return false
+	_, exempt := c.exemptions[group][resource]
+	return !exempt
 }
 
 func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
