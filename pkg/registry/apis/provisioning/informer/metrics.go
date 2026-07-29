@@ -99,12 +99,17 @@ func registerOrReuse[C prometheus.Collector](reg prometheus.Registerer, c C) C {
 	return c
 }
 
-func (m *informerMetrics) observe(source, resourceName, delivery, verb string, rv int64) {
-	events, latency := m.liveEvents, m.liveLatency
-	if delivery == usinformer.DeliveryRelist {
-		events, latency = m.relistEvents, m.relistLatency
-	}
-	events.WithLabelValues(resourceName, source, verb).Inc()
+func (m *informerMetrics) observeLive(source, resourceName, verb string, rv int64) {
+	m.liveEvents.WithLabelValues(resourceName, source, verb).Inc()
+	m.observeLatency(m.liveLatency, source, resourceName, rv)
+}
+
+func (m *informerMetrics) observeRelist(source, resourceName, verb string, rv int64) {
+	m.relistEvents.WithLabelValues(resourceName, source, verb).Inc()
+	m.observeLatency(m.relistLatency, source, resourceName, rv)
+}
+
+func (m *informerMetrics) observeLatency(latency *prometheus.HistogramVec, source, resourceName string, rv int64) {
 	if rv <= 0 {
 		return
 	}
@@ -125,8 +130,12 @@ type natsRecorder struct {
 
 var _ usinformer.Metrics = natsRecorder{}
 
-func (r natsRecorder) ObserveEvent(delivery, verb string, rv int64) {
-	r.metrics.observe(sourceNATS, r.resourceName, delivery, verb, rv)
+func (r natsRecorder) ObserveLiveEvent(verb string, rv int64) {
+	r.metrics.observeLive(sourceNATS, r.resourceName, verb, rv)
+}
+
+func (r natsRecorder) ObserveRelistEvent(verb string, rv int64) {
+	r.metrics.observeRelist(sourceNATS, r.resourceName, verb, rv)
 }
 
 func (r natsRecorder) ObserveReconnect() {
@@ -159,30 +168,30 @@ var _ cache.ResourceEventHandler = apiServerMeter{}
 func (h apiServerMeter) OnAdd(obj any, isInInitialList bool) {
 	if isInInitialList {
 		// Initial-list objects may be arbitrarily old: no latency sample.
-		h.metrics.observe(sourceAPIServer, h.resourceName, usinformer.DeliveryRelist, usinformer.VerbAdd, 0)
+		h.metrics.observeRelist(sourceAPIServer, h.resourceName, usinformer.VerbAdd, 0)
 		return
 	}
-	h.metrics.observe(sourceAPIServer, h.resourceName, usinformer.DeliveryLive, usinformer.VerbAdd, objectRV(obj))
+	h.metrics.observeLive(sourceAPIServer, h.resourceName, usinformer.VerbAdd, objectRV(obj))
 }
 
 func (h apiServerMeter) OnUpdate(oldObj, newObj any) {
 	// A resync replays the store's object against itself; a live update always
 	// carries a new RV.
 	if objectRVString(oldObj) == objectRVString(newObj) {
-		h.metrics.observe(sourceAPIServer, h.resourceName, usinformer.DeliveryRelist, usinformer.VerbUpdate, 0)
+		h.metrics.observeRelist(sourceAPIServer, h.resourceName, usinformer.VerbUpdate, 0)
 		return
 	}
-	h.metrics.observe(sourceAPIServer, h.resourceName, usinformer.DeliveryLive, usinformer.VerbUpdate, objectRV(newObj))
+	h.metrics.observeLive(sourceAPIServer, h.resourceName, usinformer.VerbUpdate, objectRV(newObj))
 }
 
 func (h apiServerMeter) OnDelete(obj any) {
 	if _, missedDelete := obj.(cache.DeletedFinalStateUnknown); missedDelete {
 		// The delete was detected by a re-list; the carried object's RV predates
 		// the delete, so it cannot date it.
-		h.metrics.observe(sourceAPIServer, h.resourceName, usinformer.DeliveryRelist, usinformer.VerbDelete, 0)
+		h.metrics.observeRelist(sourceAPIServer, h.resourceName, usinformer.VerbDelete, 0)
 		return
 	}
-	h.metrics.observe(sourceAPIServer, h.resourceName, usinformer.DeliveryLive, usinformer.VerbDelete, objectRV(obj))
+	h.metrics.observeLive(sourceAPIServer, h.resourceName, usinformer.VerbDelete, objectRV(obj))
 }
 
 func objectRVString(obj any) string {

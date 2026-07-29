@@ -64,9 +64,9 @@ func TestNATSRecorder(t *testing.T) {
 	m := newInformerMetrics(reg)
 	r := natsRecorder{metrics: m, resourceName: "jobs"}
 
-	r.ObserveEvent(usinformer.DeliveryLive, usinformer.VerbAdd, recentRV())
-	r.ObserveEvent(usinformer.DeliveryRelist, usinformer.VerbAdd, recentRV())
-	r.ObserveEvent(usinformer.DeliveryRelist, usinformer.VerbUpdate, 0)
+	r.ObserveLiveEvent(usinformer.VerbAdd, recentRV())
+	r.ObserveRelistEvent(usinformer.VerbAdd, recentRV())
+	r.ObserveRelistEvent(usinformer.VerbUpdate, 0)
 	r.ObserveReconnect()
 
 	assert.Equal(t, 1.0, testutil.ToFloat64(m.liveEvents.WithLabelValues("jobs", "nats", "add")))
@@ -80,7 +80,7 @@ func TestNATSRecorder(t *testing.T) {
 	assert.EqualValues(t, 1, histogramSamples(t, reg, "grafana_provisioning_informer_relist_event_latency_seconds", natsLabels),
 		"a relist-recovered add with an RV must produce a relist latency sample")
 
-	r.ObserveEvent(usinformer.DeliveryLive, usinformer.VerbDelete, 0)
+	r.ObserveLiveEvent(usinformer.VerbDelete, 0)
 	assert.EqualValues(t, 1, histogramSamples(t, reg, "grafana_provisioning_informer_live_event_latency_seconds", natsLabels),
 		"rv=0 must not produce a latency sample")
 
@@ -138,6 +138,6 @@ func TestNewInformerMetrics_SharesCollectorsAcrossSources(t *testing.T) {
 // caller without a registry needs no special casing.
 func TestNewInformerMetrics_NilRegisterer(t *testing.T) {
 	m := newInformerMetrics(nil)
-	m.observe(sourceNATS, "jobs", usinformer.DeliveryLive, usinformer.VerbAdd, recentRV())
+	m.observeLive(sourceNATS, "jobs", usinformer.VerbAdd, recentRV())
 	assert.Equal(t, 1.0, testutil.ToFloat64(m.liveEvents.WithLabelValues("jobs", "nats", "add")))
 }

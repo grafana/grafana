@@ -574,22 +574,28 @@ func TestInformer_SignalReconnectDoesNotBlock(t *testing.T) {
 
 // recordingMetrics captures every Metrics observation the informer makes.
 type recordingMetrics struct {
-	mu         sync.Mutex
-	events     []observedEvent
-	reconnects int
-	liveSub    []bool
+	mu           sync.Mutex
+	liveEvents   []observedEvent
+	relistEvents []observedEvent
+	reconnects   int
+	liveSub      []bool
 }
 
 type observedEvent struct {
-	delivery string
-	verb     string
-	rv       int64
+	verb string
+	rv   int64
 }
 
-func (m *recordingMetrics) ObserveEvent(delivery, verb string, rv int64) {
+func (m *recordingMetrics) ObserveLiveEvent(verb string, rv int64) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.events = append(m.events, observedEvent{delivery: delivery, verb: verb, rv: rv})
+	m.liveEvents = append(m.liveEvents, observedEvent{verb: verb, rv: rv})
+}
+
+func (m *recordingMetrics) ObserveRelistEvent(verb string, rv int64) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.relistEvents = append(m.relistEvents, observedEvent{verb: verb, rv: rv})
 }
 
 func (m *recordingMetrics) ObserveReconnect() {
@@ -604,10 +610,16 @@ func (m *recordingMetrics) ObserveLiveSubscription(open bool) {
 	m.liveSub = append(m.liveSub, open)
 }
 
-func (m *recordingMetrics) observedEvents() []observedEvent {
+func (m *recordingMetrics) observedLiveEvents() []observedEvent {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return append([]observedEvent(nil), m.events...)
+	return append([]observedEvent(nil), m.liveEvents...)
+}
+
+func (m *recordingMetrics) observedRelistEvents() []observedEvent {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]observedEvent(nil), m.relistEvents...)
 }
 
 func (m *recordingMetrics) liveSubHistory() []bool {
@@ -624,8 +636,8 @@ func (m *recordingMetrics) reconnectCount() int {
 
 var _ Metrics = (*recordingMetrics)(nil)
 
-// Live notifications are observed once per event (not per handler) as
-// delivery=live with the notification's RV, which dates the change for latency.
+// Live notifications are observed once per event (not per handler) as live
+// events carrying the notification's RV, which dates the change for latency.
 func TestInformer_MetricsObserveLiveEvents(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		sub := newFakeSubscriber()
@@ -659,10 +671,11 @@ func TestInformer_MetricsObserveLiveEvents(t *testing.T) {
 		synctest.Wait()
 
 		assert.Equal(t, []observedEvent{
-			{delivery: DeliveryLive, verb: VerbAdd, rv: 101},
-			{delivery: DeliveryLive, verb: VerbUpdate, rv: 102},
-			{delivery: DeliveryLive, verb: VerbDelete, rv: 103},
-		}, m.observedEvents())
+			{verb: VerbAdd, rv: 101},
+			{verb: VerbUpdate, rv: 102},
+			{verb: VerbDelete, rv: 103},
+		}, m.observedLiveEvents())
+		assert.Empty(t, m.observedRelistEvents(), "live notifications must not count as relist events")
 	})
 }
 
@@ -704,12 +717,13 @@ func TestInformer_MetricsObserveRelist(t *testing.T) {
 	require.NoError(t, n.relist(context.Background(), false))
 
 	assert.Equal(t, []observedEvent{
-		{delivery: DeliveryRelist, verb: VerbAdd, rv: 0},    // initial: a, no RV
-		{delivery: DeliveryRelist, verb: VerbUpdate, rv: 0}, // resync: a retained
-		{delivery: DeliveryRelist, verb: VerbAdd, rv: 22},   // resync: b recovered, RV dates it
-		{delivery: DeliveryRelist, verb: VerbUpdate, rv: 0}, // resync: a retained
-		{delivery: DeliveryRelist, verb: VerbDelete, rv: 0}, // resync: b vanished
-	}, m.observedEvents())
+		{verb: VerbAdd, rv: 0},    // initial: a, no RV
+		{verb: VerbUpdate, rv: 0}, // resync: a retained
+		{verb: VerbAdd, rv: 22},   // resync: b recovered, RV dates it
+		{verb: VerbUpdate, rv: 0}, // resync: a retained
+		{verb: VerbDelete, rv: 0}, // resync: b vanished
+	}, m.observedRelistEvents())
+	assert.Empty(t, m.observedLiveEvents(), "re-list deliveries must not count as live events")
 }
 
 // Every reconnect of the live subscription is observed — each one is a window

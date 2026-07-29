@@ -42,25 +42,25 @@ type ObjectFunc func(namespace, name string) runtime.Object
 // that is never announced, is reconciled on the next list.
 type ListFunc func(ctx context.Context) ([]runtime.Object, error)
 
-// Delivery and verb values passed to Metrics.ObserveEvent.
+// Verb values passed to the Metrics event observations.
 const (
-	DeliveryLive   = "live"
-	DeliveryRelist = "relist"
-
 	VerbAdd    = "add"
 	VerbUpdate = "update"
 	VerbDelete = "delete"
 )
 
 // Metrics receives one observation per event the informer delivers to its
-// handlers (per event, not per handler). rv is the resource version whose
-// embedded timestamp dates the change, so an implementation can derive
-// delivery latency; it is 0 when the event carries no meaningful issue time:
-// relist re-deliveries of retained objects, relist-detected deletes (the
-// last-known RV predates the delete), and the initial list. ObserveReconnect
-// is called each time the live subscription is (re)established after a gap —
-// live events published during the gap were dropped, and the informer forces
-// a re-list to recover them.
+// handlers (per event, not per handler): ObserveLiveEvent for a live
+// notification, ObserveRelistEvent for a delivery from the periodic re-list.
+// rv is the resource version whose embedded timestamp dates the change, so an
+// implementation can derive delivery latency; it is 0 when the event carries
+// no meaningful issue time: relist re-deliveries of retained objects,
+// relist-detected deletes (the last-known RV predates the delete), and the
+// initial list.
+//
+// ObserveReconnect is called each time the live subscription is
+// (re)established after a gap — live events published during the gap were
+// dropped, and the informer forces a re-list to recover them.
 //
 // ObserveLiveSubscription reports whether the informer holds an open live
 // subscription (true) or is running re-list-only (false): before the
@@ -71,7 +71,8 @@ const (
 //
 // Implementations must not block: observations are made on the delivery path.
 type Metrics interface {
-	ObserveEvent(delivery, verb string, rv int64)
+	ObserveLiveEvent(verb string, rv int64)
+	ObserveRelistEvent(verb string, rv int64)
 	ObserveReconnect()
 	ObserveLiveSubscription(open bool)
 }
@@ -442,7 +443,7 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		// reconcile, so the minimal object and old == new are both fine.
 		switch evt.Type {
 		case resourcepb.WatchNotification_ADDED:
-			n.observeEvent(DeliveryLive, VerbAdd, evt.ResourceVersion)
+			n.observeLiveEvent(VerbAdd, evt.ResourceVersion)
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(obj, false) })
 		case resourcepb.WatchNotification_DELETED:
 			// A DELETED notification is published only once the object is actually
@@ -456,10 +457,10 @@ func (n *Informer) onNotification() nats.MessageHandler {
 			// staleness-tolerant reader (e.g. a quota count) stops counting it without
 			// waiting for the next re-list.
 			n.store.Delete(context.Background(), evt.Namespace, evt.Name)
-			n.observeEvent(DeliveryLive, VerbDelete, evt.ResourceVersion)
+			n.observeLiveEvent(VerbDelete, evt.ResourceVersion)
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(obj) })
 		default: // MODIFIED
-			n.observeEvent(DeliveryLive, VerbUpdate, evt.ResourceVersion)
+			n.observeLiveEvent(VerbUpdate, evt.ResourceVersion)
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(obj, obj) })
 		}
 	}
@@ -509,25 +510,31 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 			if !initial {
 				rv = objectResourceVersion(o)
 			}
-			n.observeEvent(DeliveryRelist, VerbAdd, rv)
+			n.observeRelistEvent(VerbAdd, rv)
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(o, initial) })
 		} else {
-			n.observeEvent(DeliveryRelist, VerbUpdate, 0)
+			n.observeRelistEvent(VerbUpdate, 0)
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(o, o) })
 		}
 	}
 
 	for _, obj := range removed {
 		o := obj
-		n.observeEvent(DeliveryRelist, VerbDelete, 0)
+		n.observeRelistEvent(VerbDelete, 0)
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(o) })
 	}
 	return nil
 }
 
-func (n *Informer) observeEvent(delivery, verb string, rv int64) {
+func (n *Informer) observeLiveEvent(verb string, rv int64) {
 	if n.metrics != nil {
-		n.metrics.ObserveEvent(delivery, verb, rv)
+		n.metrics.ObserveLiveEvent(verb, rv)
+	}
+}
+
+func (n *Informer) observeRelistEvent(verb string, rv int64) {
+	if n.metrics != nil {
+		n.metrics.ObserveRelistEvent(verb, rv)
 	}
 }
 
