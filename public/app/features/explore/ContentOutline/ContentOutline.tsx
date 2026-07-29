@@ -3,14 +3,16 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
-import { type GrafanaTheme2, store } from '@grafana/data';
+import { type DataSourceApi, type GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 import { useStyles2, PanelContainer, ScrollContainer } from '@grafana/ui';
 
 import { type ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
-import { MetricsExplorer } from './MetricsExplorer';
+import { SignalExplorer } from './SignalExplorer/SignalExplorer';
+import { scrollOutlineItemIntoView } from './scrollIntoView';
 
 function scrollableChildren(item: ContentOutlineItemContextProps) {
   return item.children?.filter((child) => child.type !== 'filter') || [];
@@ -45,11 +47,15 @@ export const CONTENT_OUTLINE_LOCAL_STORAGE_KEYS = {
 export function ContentOutline({
   scroller,
   panelId,
-  showMetricsExplorer = false,
+  showSignalExplorer = false,
+  queries = [],
+  paneDatasource,
 }: {
   scroller: HTMLElement | undefined;
   panelId: string;
-  showMetricsExplorer?: boolean;
+  showSignalExplorer?: boolean;
+  queries?: DataQuery[];
+  paneDatasource?: DataSourceApi | null;
 }) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(
     store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, true)
@@ -58,8 +64,8 @@ export function ContentOutline({
     suspendUntilReady: false,
     suspendWhileReconciling: false,
   });
-  const metricsExplorerVisible = metricsSidebarEnabled && showMetricsExplorer && contentOutlineExpanded;
-  const styles = useStyles2(getStyles, contentOutlineExpanded, metricsExplorerVisible);
+  const signalExplorerVisible = metricsSidebarEnabled && showSignalExplorer && contentOutlineExpanded;
+  const styles = useStyles2(getStyles, contentOutlineExpanded, signalExplorerVisible);
   const scrollerRef = useRef(scroller || null);
   const { y: verticalScroll } = useScroll(scrollerRef);
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
@@ -79,25 +85,6 @@ export function ContentOutline({
     }, {});
   });
 
-  const scrollIntoView = (ref: HTMLElement | null, customOffsetTop = 0) => {
-    let scrollValue = 0;
-    let el: HTMLElement | null | undefined = ref;
-
-    if (!el) {
-      return;
-    }
-
-    do {
-      scrollValue += el?.offsetTop || 0;
-      el = el?.offsetParent instanceof HTMLElement ? el.offsetParent : undefined;
-    } while (el && el !== scroller);
-
-    scroller?.scroll({
-      top: scrollValue + customOffsetTop,
-      behavior: 'smooth',
-    });
-  };
-
   const handleItemClicked = (item: ContentOutlineItemContextProps) => {
     if (item.level === 'child' && item.type === 'filter') {
       const activeParent = outlineItems.find((parent) => {
@@ -105,10 +92,10 @@ export function ContentOutline({
       });
 
       if (activeParent) {
-        scrollIntoView(activeParent.ref, activeParent.customTopOffset);
+        scrollOutlineItemIntoView(scroller, activeParent.ref, activeParent.customTopOffset);
       }
     } else {
-      scrollIntoView(item.ref, item.customTopOffset);
+      scrollOutlineItemIntoView(scroller, item.ref, item.customTopOffset);
       reportInteraction('explore_toolbar_contentoutline_clicked', {
         item: 'select_section',
         type: item.panelId,
@@ -187,22 +174,19 @@ export function ContentOutline({
 
   return (
     <PanelContainer className={styles.wrapper} id={panelId}>
-      {metricsExplorerVisible && (
-        <>
-          <div className={styles.header}>
-            <span className={styles.headerTitle}>
-              {t('explore.content-outline.title-datasource-explorer', 'Datasource explorer')}
-            </span>
-            <div className={styles.toggleWrapper}>{toggleButton}</div>
-          </div>
-          <MetricsExplorer />
-        </>
+      {signalExplorerVisible && (
+        <SignalExplorer
+          queries={queries}
+          paneDatasource={paneDatasource}
+          scroller={scroller}
+          toggleButton={toggleButton}
+        />
       )}
 
       <div className={styles.outlineSection}>
         <ScrollContainer>
           <div className={styles.content}>
-            {!metricsExplorerVisible && toggleButton}
+            {!signalExplorerVisible && toggleButton}
             {outlineItems.map((item) => {
               return (
                 <Fragment key={item.id}>
@@ -279,8 +263,8 @@ export function ContentOutline({
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, expanded: boolean, metricsExplorerVisible: boolean) => {
-  const expandedWidth = metricsExplorerVisible ? '300px' : '160px';
+const getStyles = (theme: GrafanaTheme2, expanded: boolean, signalExplorerVisible: boolean) => {
+  const expandedWidth = signalExplorerVisible ? '300px' : '160px';
 
   return {
     wrapper: css({
@@ -295,40 +279,12 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, metricsExplorerVisib
       width: expanded ? expandedWidth : undefined,
       minWidth: expanded ? expandedWidth : undefined,
     }),
-    header: css({
-      label: 'content-outline-header',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: expanded ? 'space-between' : 'center',
-      gap: theme.spacing(1),
-      flex: '0 0 auto',
-      padding: expanded ? theme.spacing(1, 1, 0.5, 1) : theme.spacing(1, 0.5),
-    }),
-    headerTitle: css({
-      label: 'content-outline-header-title',
-      flex: '1 1 auto',
-      minWidth: 0,
-      fontSize: theme.typography.h6.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.text.primary,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-    }),
-    toggleWrapper: css({
-      label: 'content-outline-toggle-wrapper',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flex: '0 0 auto',
-      width: theme.spacing(4),
-    }),
     outlineSection: css({
       label: 'outline-section',
       display: 'flex',
       flexDirection: 'column',
       minHeight: 0,
-      ...(metricsExplorerVisible
+      ...(signalExplorerVisible
         ? {
             // Shrinkable so a tall outline scrolls (via ScrollContainer) instead of
             // clipping against the wrapper, while still sizing to content and sitting

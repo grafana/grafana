@@ -124,6 +124,7 @@ func SetupConfig(
 	additionalOpenAPIDefGetters []common.GetOpenAPIDefinitions,
 	reg prometheus.Registerer,
 	apiResourceConfig *serverstorage.ResourceConfig,
+	extraRoutes ...GroupVersionRoutes,
 ) error {
 	serverConfig.AdmissionControl = NewAdmissionFromBuilders(builders)
 	defsGetter := GetOpenAPIDefinitions(builders, additionalOpenAPIDefGetters...)
@@ -136,7 +137,7 @@ func SetupConfig(
 		openapinamer.NewDefinitionNamer(scheme, k8sscheme.Scheme))
 
 	// Add the custom routes to service discovery
-	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders, gvs, apiResourceConfig)
+	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders, gvs, apiResourceConfig, extraRoutes)
 	serverConfig.OpenAPIV3Config.GetOperationIDAndTagsFromRoute = func(r common.Route) (string, []string, error) {
 		meta := r.Metadata()
 		kind := ""

@@ -1,4 +1,14 @@
-import { groupAttributesByCategory, SERVICE_CATEGORY_ID } from './attributeCategories';
+import { groupAttributesByCategory, isDatabaseAttribute, SERVICE_CATEGORY_ID } from './attributeCategories';
+
+describe('isDatabaseAttribute', () => {
+  it.each(['db.system', 'db.statement', 'db_name', 'DB.operation'])('matches %s', (key) => {
+    expect(isDatabaseAttribute(key)).toBe(true);
+  });
+
+  it.each(['http.method', 'service.name', 'dbc.something', 'database.system'])('does not match %s', (key) => {
+    expect(isDatabaseAttribute(key)).toBe(false);
+  });
+});
 
 describe('groupAttributesByCategory', () => {
   it('groups resource attributes by semantic namespace', () => {

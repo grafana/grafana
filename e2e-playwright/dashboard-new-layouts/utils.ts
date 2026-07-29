@@ -1,6 +1,5 @@
 import { type Locator, type Page } from '@playwright/test';
 
-import { selectors } from '@grafana/e2e-selectors';
 import { Components, type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
@@ -186,7 +185,7 @@ export async function importTestDashboard(
   await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
   if (options.requiresDataSourceSelection) {
     await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
-    await page.locator('div[data-testid="data-source-card"]').first().click();
+    await page.locator('div[data-testid^="data-testid data source card"]').first().click();
   }
   await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
   const undockMenuButton = page.locator('[aria-label="Undock menu"]');
@@ -345,13 +344,12 @@ export async function checkRepeatedRowTitles(
   }
 }
 
-export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage) {
-  await page.getByLabel('layout-selection-option-Auto').click();
-  // confirm layout change if applicable
-  const confirmModal = dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete);
-  if (confirmModal) {
-    await confirmModal.click();
-  }
+export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage, confirm = true) {
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const sidebar = new Sidebar({ page, dashboardPage, selectors: dashboardPage.ctx.selectors, components });
+  await sidebar.dashboardOptions.switchLayout('auto', { confirm });
 }
 
 export async function selectRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {

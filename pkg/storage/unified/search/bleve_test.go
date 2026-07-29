@@ -1142,6 +1142,86 @@ func withSearchFields(reg *resource.SearchFieldsRegistry) setupOption {
 		options.SearchFields = reg
 	}
 }
+
+func withRequiredIndexFeatures(features ...resource.IndexFeature) setupOption {
+	return func(options *BleveOptions) {
+		options.RequiredIndexFeatures = features
+	}
+}
+
+// TestBuildIndexReuseChecksRequiredFeatures covers an on-disk index built before
+// a mapping change: a binary requiring an index feature the index lacks rebuilds
+// rather than serve wrong answers, and reuses the index when it requires none.
+func TestBuildIndexReuseChecksRequiredFeatures(t *testing.T) {
+	ns := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+
+	const (
+		firstIndexDocsCount  = 10
+		secondIndexDocsCount = 20
+	)
+
+	for _, tc := range []struct {
+		name             string
+		required         []resource.IndexFeature
+		expectedDocCount int64
+	}{
+		{
+			name:             "no required feature reuses the index",
+			expectedDocCount: firstIndexDocsCount,
+		},
+		{
+			name:             "newly required feature rebuilds the index",
+			required:         []resource.IndexFeature{"beta"},
+			expectedDocCount: secondIndexDocsCount,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+
+			backend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir))
+			_, err := backend.BuildIndex(t.Context(), ns, firstIndexDocsCount, "test", indexTestDocs(ns, firstIndexDocsCount, 100), nil, false, time.Time{}, 0)
+			require.NoError(t, err)
+			backend.Stop()
+
+			newBackend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir), withRequiredIndexFeatures(tc.required...))
+			idx, err := newBackend.BuildIndex(t.Context(), ns, secondIndexDocsCount, "test", indexTestDocs(ns, secondIndexDocsCount, 100), nil, false, time.Time{}, 0)
+			require.NoError(t, err)
+
+			cnt, err := idx.DocCount(t.Context(), "", nil)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedDocCount, cnt)
+		})
+	}
+}
+
+// TestValidateDownloadedIndexChecksRequiredFeatures covers the other way an
+// outdated index arrives: a snapshot from an older binary, which snapshot
+// selection accepts on version alone.
+func TestValidateDownloadedIndexChecksRequiredFeatures(t *testing.T) {
+	newIndexWithoutFeatures := func(t *testing.T) bleve.Index {
+		t.Helper()
+		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = idx.Close() })
+		require.NoError(t, setRV(idx, 42))
+		return idx
+	}
+
+	t.Run("accepted when no feature is required", func(t *testing.T) {
+		backend, _ := setupBleveBackend(t, withRootDir(t.TempDir()))
+
+		rv, err := backend.validateDownloadedIndex(newIndexWithoutFeatures(t))
+		require.NoError(t, err)
+		require.Equal(t, int64(42), rv)
+	})
+
+	t.Run("rejected when it lacks a required feature", func(t *testing.T) {
+		backend, _ := setupBleveBackend(t, withRootDir(t.TempDir()), withRequiredIndexFeatures("alpha"))
+
+		_, err := backend.validateDownloadedIndex(newIndexWithoutFeatures(t))
+		require.ErrorContains(t, err, "missing required index features [alpha]")
+	})
+}
 func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
 	mapper, err := GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)

@@ -6,6 +6,7 @@ import { type SceneObject } from '@grafana/scenes';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { addNewRowTo } from '../../scene/layouts-shared/addNew';
 import { getNestingRestrictionMessage, useNestingRestrictions } from '../../scene/layouts-shared/nestingRestrictions';
+import { useIsLayoutEmpty } from '../../scene/layouts-shared/useIsLayoutEmpty';
 import { isLayoutParent } from '../../scene/types/LayoutParent';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
@@ -26,14 +27,16 @@ export function AddRow({ dashboardScene, selectedElement }: AddRowProps) {
   }, [dashboardScene, selectedElement]);
 
   const { disableGrouping } = useNestingRestrictions(layout);
+  const isLayoutEmpty = useIsLayoutEmpty(layout);
 
   const label = useMemo(() => {
-    if (layout instanceof RowsLayoutManager) {
+    // With no panels there is nothing to group, so present the action as a plain "add"
+    if (layout instanceof RowsLayoutManager || isLayoutEmpty) {
       return t('dashboard-scene.add-row.add-label', 'Add row');
     }
 
     return t('dashboard-scene.add-row.group-label', 'Group into rows');
-  }, [layout]);
+  }, [layout, isLayoutEmpty]);
 
   const onAddRowClick = useCallback(() => {
     addNewRowTo(layout);
