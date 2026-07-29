@@ -10,10 +10,21 @@ import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
+import {
+  type DashboardLayoutManager,
+  type GroupTarget,
+  type GroupingResult,
+  isDashboardLayoutManager,
+} from '../types/DashboardLayoutManager';
 import { isLayoutParent, type LayoutParent } from '../types/LayoutParent';
 
-import { getDisableTabsMessage, getNestingRestrictionMessage, getNestingRestrictions } from './nestingRestrictions';
+import {
+  getDisableTabsMessage,
+  getGroupDepth,
+  getNestingRestrictionMessage,
+  getNestingRestrictions,
+  MAX_NESTING_DEPTH,
+} from './nestingRestrictions';
 import { generateUniqueTitle } from './utils';
 
 type SelectionKind = 'rows' | 'tabs' | 'panels';
@@ -151,6 +162,26 @@ function getLeafGrids(items: SceneObject[], kind: SelectionKind): DashboardLayou
   return Array.from(grids);
 }
 
+function exceedsRowsIntoRowDepth(items: SceneObject[], container: RowsLayoutManager): boolean {
+  let ancestorGroups = 0;
+  let parent = container.parent;
+
+  while (parent) {
+    if (isDashboardLayoutManager(parent)) {
+      ancestorGroups++;
+    }
+    parent = parent.parent;
+  }
+
+  const selectedRowsDepth = Math.max(
+    0,
+    ...items.map((item) => (item instanceof RowItem ? getGroupDepth(item.getLayout()) : 0))
+  );
+
+  // The existing rows container remains and buildRowsIntoRow inserts another rows layer beneath it.
+  return ancestorGroups + 2 + selectedRowsDepth > MAX_NESTING_DEPTH;
+}
+
 /**
  * Whether the current selection can be grouped into a new row or tab.
  *
@@ -178,6 +209,18 @@ export function canGroupSelection(items: SceneObject[], target: GroupTarget): Gr
     return {
       enabled: false,
       reason: getDisableTabsMessage('nested-tabs'),
+    };
+  }
+
+  if (
+    target === 'row' &&
+    info.kind === 'rows' &&
+    info.container instanceof RowsLayoutManager &&
+    exceedsRowsIntoRowDepth(items, info.container)
+  ) {
+    return {
+      enabled: false,
+      reason: getNestingRestrictionMessage(),
     };
   }
 
@@ -276,7 +319,6 @@ function cloneTabsSubset(
 
 interface BuiltLayout {
   newLayout: DashboardLayoutManager;
-  selectedGroup: RowItem | TabItem;
 }
 
 function wrapLayouts(
@@ -303,7 +345,7 @@ function wrapLayouts(
       tabs.push(new TabItem({ title: nextTitle(), layout: restLayout }));
     }
 
-    return { newLayout: new TabsLayoutManager({ tabs }), selectedGroup: tabs[0] };
+    return { newLayout: new TabsLayoutManager({ tabs }) };
   }
 
   const rows = [new RowItem({ title: nextTitle(), layout: selectedLayout })];
@@ -312,7 +354,7 @@ function wrapLayouts(
     rows.push(new RowItem({ title: nextTitle(), layout: restLayout }));
   }
 
-  return { newLayout: new RowsLayoutManager({ rows }), selectedGroup: rows[0] };
+  return { newLayout: new RowsLayoutManager({ rows }) };
 }
 
 /**
@@ -354,7 +396,7 @@ function buildRowsIntoRow(rows: RowsLayoutManager, selectedKeys: Set<string | un
     finalRows.push(row);
   }
 
-  return { newLayout: new RowsLayoutManager({ rows: finalRows }), selectedGroup: newParentRow };
+  return { newLayout: new RowsLayoutManager({ rows: finalRows }) };
 }
 
 function buildGroupedLayout(items: SceneObject[], info: SelectionInfo, target: GroupTarget): BuiltLayout | undefined {
@@ -396,7 +438,6 @@ function buildGroupedLayout(items: SceneObject[], info: SelectionInfo, target: G
 
 export interface GroupEdit {
   description: string;
-  addedObject: RowItem | TabItem;
   perform: () => void;
   undo: () => void;
 }
@@ -434,7 +475,6 @@ export function buildGroupEdit(items: SceneObject[], target: GroupTarget): Group
       target === 'row'
         ? t('dashboard.edit-actions.group-into-row', 'Group into row')
         : t('dashboard.edit-actions.group-into-tab', 'Group into tab'),
-    addedObject: built.selectedGroup,
     perform: () => info.parent.switchLayout(built.newLayout, true),
     undo: () => info.parent.switchLayout(previousLayout, true),
   };

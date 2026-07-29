@@ -229,6 +229,32 @@ describe('groupSelectedInto', () => {
 });
 
 describe('canGroupSelection', () => {
+  it('disables grouping empty rows into a parent row at maximum nesting depth', () => {
+    const r1 = new RowItem({ title: 'R1' });
+    const r2 = new RowItem({ title: 'R2' });
+    const selectedRows = new RowsLayoutManager({ rows: [r1, r2] });
+    new DashboardScene({
+      body: new RowsLayoutManager({
+        rows: [
+          new RowItem({
+            layout: new RowsLayoutManager({
+              rows: [
+                new RowItem({
+                  layout: new RowsLayoutManager({ rows: [new RowItem({ layout: selectedRows })] }),
+                }),
+              ],
+            }),
+          }),
+        ],
+      }),
+    });
+
+    const result = canGroupSelection([r1, r2], 'row');
+
+    expect(result.enabled).toBe(false);
+    expect(result.reason).toBeTruthy();
+  });
+
   it('disables the tab target when the rows live inside a tab (one level of tabs)', () => {
     const r1 = new RowItem({ title: 'R1' });
     const r2 = new RowItem({ title: 'R2' });
