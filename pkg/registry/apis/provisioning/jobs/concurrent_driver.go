@@ -293,26 +293,22 @@ func (c *ConcurrentJobDriver) clearCooldown(key string) {
 	c.mu.Unlock()
 }
 
-// setQueued records how key was enqueued. The trigger write policy is per class,
-// not first-wins: a live NATS event never enters the informer snapshot, so a job
-// delivered live but still unclaimed at the next re-list comes back as a
-// relist-classified add on the same replica — downgrading it would misattribute
-// the pickup. So triggerLive overwrites the trigger unconditionally (a live
-// create announces a new incarnation of a deterministic job name, mirroring
-// clearCooldown), while triggerRelist/triggerInitial leave an existing entry
-// alone so a queued live enqueue is never downgraded. The enqueue time is kept
-// from the first enqueue (earliest join), so it survives coalescing and retries.
+// setQueued records how key was enqueued, first-wins: the enqueue that first
+// queued the key owns the attribution and the enqueue time, and later
+// deliveries that coalesce onto the still-queued key (or a retry re-set) leave
+// it alone. First-wins is what the metric wants — the source that actually
+// caused the pickup. In particular, if a re-list recovers a job before its
+// late live event arrives, the pickup stays attributed to relist (the
+// missed/late-live signal), not overwritten to live. A genuinely new job
+// incarnation reusing a deterministic name does not collide here: the
+// predecessor's entry is popped when it is picked up, so the new incarnation's
+// live enqueue finds the key absent and is recorded as live. The map entry lives
+// only between enqueue and pickup.
 func (c *ConcurrentJobDriver) setQueued(key string, trigger claimTrigger, enqueued time.Time) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	existing, ok := c.triggers[key]
-	if !ok {
+	if _, ok := c.triggers[key]; !ok {
 		c.triggers[key] = queuedEvent{trigger: trigger, enqueued: enqueued}
-		return
-	}
-	if trigger == triggerLive {
-		existing.trigger = triggerLive
-		c.triggers[key] = existing // keep the earliest enqueue time
 	}
 }
 

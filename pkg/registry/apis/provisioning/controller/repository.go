@@ -253,21 +253,16 @@ func (rc *RepositoryController) enqueue(obj interface{}, trigger usinformer.Proc
 	rc.queue.Add(key)
 }
 
-// setTrigger records what enqueued key. Live overwrites unconditionally (a live
-// event never enters the informer snapshot, so a key delivered live but still
-// pending at the next re-list would otherwise be downgraded to relist);
-// relist/initial set only if absent so a queued live enqueue is never
-// downgraded. The map is lazily created so tests that build the controller as a
-// struct literal need not initialize it.
+// setTrigger records what enqueued key, first-wins: the enqueue that first
+// queued the key owns the attribution, and later deliveries that coalesce onto
+// the still-queued key (or a retry re-set) leave it alone — the source that
+// actually caused the pickup. The map is lazily created so tests that build the
+// controller as a struct literal need not initialize it.
 func (rc *RepositoryController) setTrigger(key string, trigger usinformer.ProcessTrigger) {
 	rc.triggersMu.Lock()
 	defer rc.triggersMu.Unlock()
 	if rc.triggers == nil {
 		rc.triggers = make(map[string]usinformer.ProcessTrigger)
-	}
-	if trigger == usinformer.TriggerLive {
-		rc.triggers[key] = trigger
-		return
 	}
 	if _, ok := rc.triggers[key]; !ok {
 		rc.triggers[key] = trigger
@@ -306,19 +301,19 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 	// Pop this pickup's attribution up front so the entry is cleared however the
 	// key leaves this function, without a terminal Forget clobbering a newer
-	// attribution set by a concurrent enqueue while the key was in flight. A
-	// missing entry (only reachable via a dirty redelivery after a Forget) falls
-	// back to relist.
+	// attribution set by a concurrent enqueue while the key was in flight.
 	trigger, ok := rc.popTrigger(key)
-	if !ok {
-		trigger = usinformer.TriggerRelist
-	}
 
 	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
 	attempts := rc.queue.NumRequeues(key) + 1
-	// Count the start of processing once per pickup; retries keep the same
-	// attribution and are not recounted.
-	if attempts == 1 {
+	// Count the start of processing once per pickup, but only for a pickup that
+	// corresponds to an informer delivery (a present entry). A missing entry is
+	// an internal re-schedule with no informer event behind it — the token
+	// read-after-write AddAfter below re-adds the key without an entry — so it
+	// must not be counted, or it would masquerade as a relist recovery. Retries
+	// keep the entry (re-set below) but bump NumRequeues, so they are not
+	// recounted.
+	if ok && attempts == 1 {
 		rc.processed.RecordProcessed(trigger)
 	}
 
@@ -347,8 +342,11 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
 	// Re-set the attribution the pickup popped so the retry keeps it (unless a
-	// concurrent enqueue set a newer one).
-	rc.setTrigger(key, trigger)
+	// concurrent enqueue set a newer one). Only if this pickup had one: an
+	// internal re-schedule carries no attribution and must not fabricate one.
+	if ok {
+		rc.setTrigger(key, trigger)
+	}
 	rc.queue.AddRateLimited(key)
 
 	return true

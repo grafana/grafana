@@ -176,6 +176,53 @@ func TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger(t *testing.T) {
 	assert.Equal(t, 0.0, processedCounterValue(t, reg, "repositories", "relist"), "no pickup falls back to relist")
 }
 
+// TestRepositoryController_InternalRescheduleNotCounted verifies that a pickup
+// with no informer-set attribution — an internal re-schedule such as the token
+// read-after-write AddAfter, which re-adds the key directly — records nothing,
+// rather than masquerading as a relist recovery.
+func TestRepositoryController_InternalRescheduleNotCounted(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	processedDone := make(chan struct{})
+
+	rc := &RepositoryController{
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-internal"},
+		),
+		logger:    logging.DefaultLogger.With("logger", "test"),
+		processed: usinformer.NewProcessedMetrics(reg, "repositories", false),
+		keyFunc:   repoKeyFunc,
+		processFn: func(string) error {
+			close(processedDone)
+			return nil
+		},
+	}
+	rc.enqueueRepository = rc.enqueue
+
+	// Queue the key directly, as the token read-after-write AddAfter does — no
+	// informer event, no trigger entry.
+	rc.queue.Add("ns/repo")
+
+	ctx, cancel := context.WithCancel(context.Background())
+	runDone := make(chan struct{})
+	go func() {
+		rc.Run(ctx, 1, func() {}, func() {})
+		close(runDone)
+	}()
+
+	select {
+	case <-processedDone:
+	case <-time.After(5 * time.Second):
+		t.Fatal("key was not processed")
+	}
+	cancel()
+	<-runDone
+
+	for _, source := range []string{"live", "relist", "initial"} {
+		assert.Equal(t, 0.0, processedCounterValue(t, reg, "repositories", source), "%s must not be recorded for an internal re-schedule", source)
+	}
+}
+
 // TestConnectionController_RecordsProcessingByTrigger verifies the connection
 // controller counts the start of each reconcile under resource="connections".
 func TestConnectionController_RecordsProcessingByTrigger(t *testing.T) {

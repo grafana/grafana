@@ -103,10 +103,11 @@ func TestEventHandler_Classifies(t *testing.T) {
 	})
 }
 
-// TestEventHandler_TriggerPrecedence verifies the per-class write policy: a live
-// enqueue must never be downgraded by a later relist delivery, but a live
-// delivery overwrites an earlier relist attribution (a live create announces a
-// new incarnation of the deterministic job name).
+// TestEventHandler_TriggerPrecedence verifies the first-wins write policy: the
+// enqueue that first queues a key owns the attribution, and a later coalescing
+// delivery does not overwrite it — so the source reflects what actually caused
+// the pickup. In particular a re-list that recovers a key before its late live
+// event arrives stays attributed to relist (the missed/late-live signal).
 func TestEventHandler_TriggerPrecedence(t *testing.T) {
 	const key = "ns1/job1"
 
@@ -122,13 +123,13 @@ func TestEventHandler_TriggerPrecedence(t *testing.T) {
 		assert.Equal(t, triggerLive, got)
 	})
 
-	t.Run("relist then live becomes live", func(t *testing.T) {
+	t.Run("relist then live stays relist", func(t *testing.T) {
 		driver := newClassifierDriver(t, true)
 		driver.EventHandler().UpdateFunc(relist, relist)
 		driver.EventHandler().AddFunc(live, false)
 		got, ok := triggerFor(driver, key)
 		require.True(t, ok)
-		assert.Equal(t, triggerLive, got)
+		assert.Equal(t, triggerRelist, got, "relist recovered the key first; a late live event must not overwrite it")
 	})
 }
 
