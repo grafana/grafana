@@ -543,6 +543,7 @@ func TestRuleRoutine_GatedUntilWarmed(t *testing.T) {
 
 func blankRuleForTests(ctx context.Context, key models.AlertRuleKeyWithGroup) *alertRule {
 	managerCfg := state.ManagerCfg{
+		Clock:     clock.NewMock(),
 		Historian: &state.FakeHistorian{},
 		Log:       log.NewNopLogger(),
 	}

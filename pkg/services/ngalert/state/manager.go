@@ -122,11 +122,6 @@ type ManagerCfg struct {
 }
 
 func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
-	// Default the clock so readiness bookkeeping has a time source (some tests leave it unset).
-	if cfg.Clock == nil {
-		cfg.Clock = clock.New()
-	}
-
 	// Metrics for the cache use a collector, so they need access to the register directly.
 	c := newCache()
 	// Only expose the metrics if this grafana server does execute alerts.
