@@ -37,6 +37,7 @@ const esModules = [
   'uuid',
   '@react-hookz/web',
   '@ver0/deep-equal',
+  '@marcbachmann/cel-js',
 ].join('|');
 
 module.exports = {

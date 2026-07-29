@@ -238,6 +238,11 @@ var adminCommands = []*cli.Command{
 		Usage:  "Run schema migrations against the database configured in --config.",
 		Action: runDbCommand(logLastMigration),
 	},
+	{
+		Name:   "resource-db-migrate",
+		Usage:  "Run the unified storage resource schema migrations against the database configured in --config. ",
+		Action: resourceDbMigrateCommand,
+	},
 }
 
 var Commands = []*cli.Command{
