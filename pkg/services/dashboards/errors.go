@@ -57,7 +57,7 @@ var (
 		StatusCode: 400,
 	}
 	ErrDashboardTagTooLong = dashboardaccess.DashboardErr{
-		Reason:     "dashboard tag too long, max 50 characters",
+		Reason:     "dashboard tag too long, max 100 characters",
 		StatusCode: 400,
 		Status:     "tag-too-long",
 	}
