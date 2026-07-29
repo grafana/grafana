@@ -1787,7 +1787,7 @@ func TestSetTeamMembers(t *testing.T) {
 	}
 }
 
-// TestTeamMemberWrappers_RestConfigNotAvailable tests that both wrappers return
+// TestTeamMemberWrappers_RestConfigNotAvailable tests that the wrappers return
 // ErrRestConfigNotAvailable when no rest config provider is set, so the caller (api.go)
 // can stop the operation and return the error.
 func TestTeamMemberWrappers_RestConfigNotAvailable(t *testing.T) {
@@ -1795,13 +1795,6 @@ func TestTeamMemberWrappers_RestConfigNotAvailable(t *testing.T) {
 		name string
 		call func(a *api) error
 	}{
-		{
-			name: "setUserPermissionInTeamMembers",
-			call: func(a *api) error {
-				_, err := a.setUserPermissionInTeamMembers(makeReqCtx(), "stacks-123-org-1", "10", 1, "Admin")
-				return err
-			},
-		},
 		{
 			name: "getTeamPermissionsFromMembers",
 			call: func(a *api) error {

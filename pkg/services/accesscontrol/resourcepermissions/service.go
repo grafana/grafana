@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
@@ -248,8 +249,12 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		if errors.Is(k8sErr, ErrExternalTeamMember) {
 			return nil, k8sErr
 		}
+		if k8sErr == nil {
+			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", s.options.Resource, "success").Inc()
+		}
 		if s.unifiedTeamStorageIsAuthoritative() {
 			if k8sErr != nil {
+				metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", s.options.Resource, "error").Inc()
 				return nil, k8sErr
 			}
 			s.clearUserPermissionCache(orgID, user.ID)
@@ -431,8 +436,12 @@ func (s *Service) SetPermissions(
 		if errors.Is(k8sErr, ErrExternalTeamMember) {
 			return nil, k8sErr
 		}
+		if k8sErr == nil {
+			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_bulk", s.options.Resource, "success").Inc()
+		}
 		if s.unifiedTeamStorageIsAuthoritative() {
 			if k8sErr != nil {
+				metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_bulk", s.options.Resource, "error").Inc()
 				return nil, k8sErr
 			}
 			s.clearUserPermissionCaches(orgID, commands)
