@@ -41,15 +41,43 @@ The form has these options:
 | Label values | `label`       |                         | Label values for `label`.                                        |
 | Label values | `label`       | `log stream selector`   | Label values for `label` in the specified `log stream selector`. |
 
+### Query variable example
+
+To create a variable that lists the values of the `app` label:
+
+1. Add a new variable of type _Query_ and select the Loki data source.
+1. Set **Query type** to **Label values** and **Label** to `app`.
+1. Optionally, enter a **Stream selector** such as `{namespace="$namespace"}` to return only the values that appear within another variable's selection. This creates a chained variable that updates when the parent variable changes.
+
+Reference the variable in a query with its name, prefixed by `$`. For a single-value variable, use an exact match:
+
+```logql
+{app="$app"}
+```
+
+When a variable has **Multi-value** or **Include All** enabled, Grafana joins the selected values into a regular expression, such as `payments|checkout`. Use the regex match operator `=~` so the query matches any of the selected values:
+
+```logql
+{app=~"$app"}
+```
+
 ## Use ad hoc filters
 
 Loki supports ad hoc filters. Use them to specify any number of key/value filters that Grafana applies automatically to all of your Loki queries, without editing each query.
+
+For example, if you add an ad hoc filter for `level = error`, Grafana appends the matcher to the stream selector of every Loki query on the dashboard, so a query like `{app="payments"}` runs as `{app="payments", level="error"}`.
 
 For more information, refer to [Add ad hoc filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters).
 
 ## Use $\_\_auto variable for Loki metric queries
 
 Consider using the `$__auto` variable in your Loki metric queries, which will automatically be substituted with the [step value](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/query-editor/#options) for range queries, and with the selected time range's value (computed from the starting and ending times) for instant queries.
+
+Use it as the range in a range aggregation:
+
+```logql
+sum(rate({app="payments"} |= `error` [$__auto]))
+```
 
 For more information about variables, refer to [Global built-in variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#global-variables).
 
