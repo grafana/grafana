@@ -4,7 +4,7 @@ import { type MouseEvent, useEffect, useRef } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { TagList, useStyles2 } from '@grafana/ui';
 
-import { type CmdkItem } from './types';
+import { type CmdkAction, type CmdkItem } from './types';
 
 interface Props {
   item: CmdkItem;
@@ -12,11 +12,13 @@ interface Props {
   // DOM id so the input can point at the row via aria-activedescendant.
   id: string;
   onSelect: (item: CmdkItem) => void;
+  // Additional actions are routed through the palette so they can also push subscopes.
+  onAdditionalAction: (action: CmdkAction) => void;
   // Called when the mouse moves over the row so hover and keyboard share one highlight.
   onActivate: () => void;
 }
 
-export function CmdkResultItem({ item, active, id, onSelect, onActivate }: Props) {
+export function CmdkResultItem({ item, active, id, onSelect, onAdditionalAction, onActivate }: Props) {
   const styles = useStyles2(getStyles);
   const ref = useRef<HTMLElement | null>(null);
 
@@ -62,7 +64,7 @@ export function CmdkResultItem({ item, active, id, onSelect, onActivate }: Props
               onClick={(event) => {
                 event.stopPropagation();
                 event.preventDefault();
-                action.action();
+                onAdditionalAction(action);
               }}
             >
               {action.title}
@@ -91,7 +93,13 @@ export function CmdkResultItem({ item, active, id, onSelect, onActivate }: Props
 
   if (item.type === 'navigation') {
     return (
-      <a {...sharedProps} ref={setRef} href={item.href}>
+      <a
+        {...sharedProps}
+        ref={setRef}
+        href={item.href}
+        target={item.target}
+        rel={item.target === '_blank' ? 'noreferrer' : undefined}
+      >
         {content}
       </a>
     );

@@ -40,7 +40,31 @@ type CmdkSection = {
   id: string;
 };
 
-type CmdkItem = CmdkItemAction | CmdkItemNavigation | CmdkItemSubscope;
+// The behavior part shared by items and additional actions: what happens when they are triggered.
+interface CmdkActionBehavior {
+  type: 'action';
+
+  // Executed when triggered.
+  action: () => void;
+}
+
+interface CmdkNavigationBehavior {
+  type: 'navigation';
+
+  // Navigates to the href when triggered.
+  href: string;
+  // Optional link target, e.g. '_blank' to open in a new tab.
+  target?: LinkTarget;
+}
+
+interface CmdkSubscopeBehavior {
+  type: 'subscope';
+
+  // Pushes the returned source onto the subscope stack when triggered, allowing for faceted UI in the cmdk.
+  getScope: () => CmdkSource;
+}
+
+type CmdkItem = CmdkItemBase & (CmdkActionBehavior | CmdkNavigationBehavior | CmdkSubscopeBehavior);
 
 interface CmdkItemBase {
   // Unique id, used for React keys, focus tracking across re-queries and deduping.
@@ -68,35 +92,15 @@ interface CmdkItemBase {
   renderDetail?: () => ReactNode;
 }
 
-interface CmdkItemAction extends CmdkItemBase {
-  type: 'action';
-
-  // Action to be performed when the item is selected.
-  action: () => void;
-}
-
-interface CmdkItemNavigation extends CmdkItemBase {
-  type: 'navigation';
-
-  // Selecting this item will navigate to the href.
-  href: string;
-}
-
-// This type of item will allow scoping the items and diving deeper into a section allowing for faceted UI in the cmdk.
-interface CmdkItemSubscope extends CmdkItemBase {
-  type: 'subscope';
-
-  // This will return a source that will be added to the subscope stack of the cmdk.
-  getScope: () => CmdkSource;
-}
-
-interface CmdkAction {
+interface CmdkActionBase {
   title: string;
   shortcut: string;
-
-  // Executed when the pill is clicked or the shortcut is pressed while the owning item is focused.
-  action: () => void;
 }
+
+// Additional actions on an item, shown as pills. Triggered when the pill is clicked or the shortcut is pressed
+// while the owning item is focused. The subscope behavior lets an item both navigate on select and offer diving
+// into its children, e.g. a nav item with subpages.
+type CmdkAction = CmdkActionBase & (CmdkActionBehavior | CmdkSubscopeBehavior);
 ```
 
 ### scoping

@@ -4957,6 +4957,9 @@
   "cloud-enterprise-feature-badge": "Cloud & Enterprise",
   "cloud-feature-badge": "Cloud",
   "cmdk": {
+    "action": {
+      "browse-children": "Browse"
+    },
     "empty-state": {
       "message": "No results found"
     },

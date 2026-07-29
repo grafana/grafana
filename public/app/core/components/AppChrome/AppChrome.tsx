@@ -13,7 +13,7 @@ import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles
 import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashScreenModal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
-import { Cmdk } from 'app/features/cmdk/Cmdk';
+import { CmdkRoot } from 'app/features/cmdk/CmdkRoot';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
 
@@ -223,7 +223,7 @@ export function AppChrome({ children }: Props) {
         </div>
       </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
-      {!state.chromeless && (newCmdkEnabled ? <Cmdk /> : <CommandPalette />)}
+      {!state.chromeless && (newCmdkEnabled ? <CmdkRoot /> : <CommandPalette />)}
       {!state.chromeless && isSplashScreenEnabled && <SplashScreenModal />}
       {!state.chromeless && <FeatureControlFloating />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (

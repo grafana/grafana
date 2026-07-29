@@ -13,7 +13,7 @@ import { EmptyState, Icon, Portal, Spinner, useStyles2 } from '@grafana/ui';
 import { CmdkResultItem } from './CmdkResultItem';
 import { useCmdkSources } from './registry';
 import { matchesShortcut } from './shortcuts';
-import { type CmdkItem, type CmdkSource } from './types';
+import { type CmdkAction, type CmdkItem, type CmdkSource } from './types';
 import { useCmdkResults } from './useCmdkResults';
 import { closeCmdk, toggleCmdk, useCmdkVisible } from './visibility';
 
@@ -78,6 +78,12 @@ function CmdkModal() {
   const { overlayProps } = useOverlay({ isOpen: true, isDismissable: true, onClose: closeCmdk }, ref);
   const { dialogProps } = useDialog({}, ref);
 
+  const pushSubscope = (scope: CmdkSource) => {
+    setSubscopeStack((stack) => [...stack, scope]);
+    setSearchQuery('');
+    setActiveIndex(0);
+  };
+
   const selectItem = (item: CmdkItem) => {
     switch (item.type) {
       case 'action':
@@ -85,7 +91,9 @@ function CmdkModal() {
         closeCmdk();
         break;
       case 'navigation':
-        if (/^https?:\/\//.test(item.href)) {
+        if (item.target === '_blank') {
+          window.open(item.href, '_blank', 'noreferrer');
+        } else if (/^https?:\/\//.test(item.href)) {
           window.location.assign(item.href);
         } else {
           locationService.push(item.href);
@@ -93,10 +101,16 @@ function CmdkModal() {
         closeCmdk();
         break;
       case 'subscope':
-        setSubscopeStack((stack) => [...stack, item.getScope()]);
-        setSearchQuery('');
-        setActiveIndex(0);
+        pushSubscope(item.getScope());
         break;
+    }
+  };
+
+  const runAdditionalAction = (action: CmdkAction) => {
+    if (action.type === 'subscope') {
+      pushSubscope(action.getScope());
+    } else {
+      action.action();
     }
   };
 
@@ -114,7 +128,7 @@ function CmdkModal() {
     const matchedAction = activeItem?.additionalActions?.find((action) => matchesShortcut(event, action.shortcut));
     if (matchedAction) {
       event.preventDefault();
-      matchedAction.action();
+      runAdditionalAction(matchedAction);
       return;
     }
     if (matchesShortcut(event, 'enter') && activeItem) {
@@ -178,6 +192,7 @@ function CmdkModal() {
                       id={itemDomId(item)}
                       active={item === activeItem}
                       onSelect={selectItem}
+                      onAdditionalAction={runAdditionalAction}
                       onActivate={() => setActiveIndex(flatItems.indexOf(item))}
                     />
                   ))}

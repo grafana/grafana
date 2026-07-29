@@ -4,7 +4,7 @@ import { locationService } from '@grafana/runtime';
 
 import { Cmdk } from './Cmdk';
 import { registerCmdkSource } from './registry';
-import { type CmdkItem, type CmdkItemAction, type CmdkSource } from './types';
+import { type CmdkActionCallback, type CmdkItem, type CmdkItemAction, type CmdkSource } from './types';
 import { closeCmdk, openCmdk } from './visibility';
 
 const SECTION = { id: 'test-section', title: 'Test section' };
@@ -139,7 +139,13 @@ describe('Cmdk', () => {
   });
 
   it('runs an additional action when its shortcut is pressed on the focused item', async () => {
-    const additionalAction = { title: 'Open in new tab', shortcut: 'shift+enter', action: jest.fn() };
+    const action = jest.fn();
+    const additionalAction: CmdkActionCallback = {
+      type: 'action',
+      title: 'Open in new tab',
+      shortcut: 'shift+enter',
+      action,
+    };
     const item = actionItem('Item A', { additionalActions: [additionalAction] });
     registerSource(makeSource(jest.fn().mockResolvedValue([item])));
 
@@ -148,7 +154,37 @@ describe('Cmdk', () => {
 
     await user.keyboard('{Shift>}{Enter}{/Shift}');
 
-    expect(additionalAction.action).toHaveBeenCalledTimes(1);
+    expect(action).toHaveBeenCalledTimes(1);
+    expect(item.action).not.toHaveBeenCalled();
+  });
+
+  it('pushes a subscope from an additional action, via shortcut and pill click', async () => {
+    const subscopeSource = makeSource(
+      jest.fn().mockResolvedValue([actionItem('Child item', { sectionId: 'sub-section' })]),
+      { providedSections: [{ id: 'sub-section', title: 'Sub section' }], subscopeName: 'Children' }
+    );
+    const item = actionItem('Item A', {
+      additionalActions: [
+        { type: 'subscope', title: 'Browse', shortcut: 'shift+enter', getScope: () => subscopeSource },
+      ],
+    });
+    registerSource(makeSource(jest.fn().mockResolvedValue([item])));
+
+    const { user } = setup();
+    await screen.findByText('Item A');
+
+    await user.keyboard('{Shift>}{Enter}{/Shift}');
+
+    // Item itself was not selected, the palette dove into the subscope instead
+    expect(item.action).not.toHaveBeenCalled();
+    expect(await screen.findByText('Children')).toBeInTheDocument();
+    expect(await screen.findByText('Child item')).toBeInTheDocument();
+
+    // Backspace pops back out, then the pill click dives in again
+    await user.keyboard('{Backspace}');
+    await user.click(await screen.findByRole('button', { name: /Browse/ }));
+
+    expect(await screen.findByText('Child item')).toBeInTheDocument();
     expect(item.action).not.toHaveBeenCalled();
   });
 
