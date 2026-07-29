@@ -51,7 +51,7 @@ type QueueMetrics struct {
 	claimed         *prometheus.CounterVec // won a CAS race — this driver now owns the job
 	claimConflicts  *prometheus.CounterVec // lost a CAS race — another worker updated the job first
 	claimErrors     *prometheus.CounterVec // the claiming update failed with a non-conflict error (not identity/read)
-	claimRoundsCont *prometheus.CounterVec // exhausted the CAS retries — the job was claimed by another worker
+	claimRoundsCont *prometheus.CounterVec // lost to another worker — job already claimed, or all CAS retries exhausted
 }
 
 // durationBucketUnknown is the resources_changed_bucket used when a job did not
@@ -118,7 +118,7 @@ func RegisterQueueMetrics(registry prometheus.Registerer) QueueMetrics {
 		claimRoundsCont := prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_jobs_claim_rounds_contended_total",
-				Help: "Claims that exhausted their CAS retries because the job was taken by another worker, by driver",
+				Help: "Claim attempts lost to another worker — the job was already claimed, or all CAS retries were exhausted, by driver",
 			},
 			[]string{"driver_id"},
 		)

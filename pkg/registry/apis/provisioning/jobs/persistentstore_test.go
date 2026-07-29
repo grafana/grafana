@@ -87,6 +87,35 @@ func TestClaim_AlreadyClaimed(t *testing.T) {
 	assert.Equal(t, "owner-B", after.Labels[LabelJobClaimOwner], "the existing claim must be left untouched")
 }
 
+// TestClaim_RecordsContendedWhenAlreadyClaimed verifies that finding the job already
+// held by another worker records claim_rounds_contended (the common contention loss),
+// not just the rare retry-exhaustion tail.
+func TestClaim_RecordsContendedWhenAlreadyClaimed(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := newStoreWithFreshQueueMetrics(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-job",
+			Namespace: "stacks-123",
+			Labels: map[string]string{
+				LabelJobClaim:      "1000000000000",
+				LabelJobClaimOwner: "owner-B",
+			},
+		},
+		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	_, _, err = store.Claim(ctx, "stacks-123", "test-job", "0")
+	require.ErrorIs(t, err, ErrAlreadyClaimed)
+	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimRoundsCont.WithLabelValues("0")))
+	require.Equal(t, 0.0, testutil.ToFloat64(store.queueMetrics.claimed.WithLabelValues("0")))
+}
+
 // TestClaim_NotFound verifies that claiming a job that no longer exists (e.g.
 // completed and deleted before we got to it) reports NotFound so callers drop it.
 func TestClaim_NotFound(t *testing.T) {

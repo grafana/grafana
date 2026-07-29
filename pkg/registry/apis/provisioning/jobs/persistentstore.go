@@ -146,6 +146,8 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string, dri
 			return nil, nil, apifmt.Errorf("failed to get job '%s' in '%s' for claiming: %w", name, namespace, err)
 		}
 		if current.Labels[LabelJobClaim] != "" {
+			// Another worker already holds the claim — the common contention outcome.
+			s.queueMetrics.RecordClaimRoundContended(driverID)
 			return nil, nil, ErrAlreadyClaimed
 		}
 
@@ -186,9 +188,8 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string, dri
 			attribute.String("job.action", string(updatedJob.Spec.Action)),
 		)
 
-		// Record the wait only now that the claim succeeded: a candidate we lost to a
-		// conflicting worker (handled above with continue) must not count, or racing
-		// losers would each record a wait for a job they never claimed.
+		// Record the wait only now that the claim succeeded: a conflicting attempt that
+		// retried (the continue above) must not record a wait for a claim it never won.
 		s.queueMetrics.RecordWaitTime(string(updatedJob.Spec.Action), s.clock().Sub(updatedJob.CreationTimestamp.Time).Seconds())
 		s.queueMetrics.RecordClaimWon(driverID)
 
@@ -237,8 +238,10 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string, dri
 		}, nil
 	}
 
-	// We failed to claim any jobs: candidates existed (len > 0 above) but every one was
-	// claimed by another worker first — a fully contended round.
+	// Every attempt hit a CAS conflict (the job kept changing under us) and the retries
+	// are now exhausted. Like the already-claimed case above, this counts as contended
+	// (lost to another worker); each individual lost race is also counted by
+	// claim_conflicts_total.
 	s.queueMetrics.RecordClaimRoundContended(driverID)
 	logger.Debug("job claim conflicted repeatedly - treating as claimed by another worker")
 	return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s' after %d conflicts: %w", name, namespace, claimConflictRetries, ErrAlreadyClaimed)
