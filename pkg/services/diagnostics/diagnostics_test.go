@@ -1011,3 +1011,47 @@ func readTarGz(t *testing.T, data []byte) map[string][]byte {
 	}
 	return out
 }
+
+func TestBundler_Build_bundlesPanelData(t *testing.T) {
+	panelData := json.RawMessage(`{"version":1,"frames":[{"schema":{"name":"frontend-frames"}}]}`)
+
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil,
+		WithPanelData(panelData))
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Equal(t, string(panelData), string(files["paneldata.json"]), "stored as sent")
+}
+
+func TestBundler_Build_omitsPanelDataWhenNotSupplied(t *testing.T) {
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	require.NotContains(t, readTarGz(t, blob), "paneldata.json")
+}
+
+func TestBundler_Build_omitsPanelDataWhenNull(t *testing.T) {
+	// A client that sends "panelData": null supplied nothing, so no artifact: one whose whole content is
+	// `null` reads as "the frontend was holding no frames", which is a frontend loss that never happened.
+	for _, payload := range []string{`null`, ` null `, ``} {
+		blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil,
+			WithPanelData(json.RawMessage(payload)))
+		require.NoError(t, err)
+
+		require.NotContains(t, readTarGz(t, blob), "paneldata.json", "payload %q", payload)
+	}
+}
+
+func TestBundler_Build_unparseablePanelDataDoesNotSinkTheBundle(t *testing.T) {
+	// Build stores the payload as sent and parses none of it, so a payload it could not parse costs the
+	// bundle nothing else: every other artifact still ships. Unreachable through the HTTP endpoint --
+	// web.Bind rejects a body that isn't valid JSON before Build runs, so the worst that arrives there is
+	// a well-formed payload of the wrong shape -- this pins the contract for direct callers.
+	blob, err := NewBundler().Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil,
+		WithPanelData(json.RawMessage(`{"version":1,`)))
+	require.NoError(t, err)
+
+	files := readTarGz(t, blob)
+	require.Contains(t, files, "panel.json")
+	require.Equal(t, `{"version":1,`, string(files["paneldata.json"]), "stored as sent")
+}
