@@ -326,8 +326,13 @@ export const useNavCustomization = () => {
   }, [variant]);
 
   // Edit mode lives on the chrome service so it can be entered from outside the menu (e.g. the command
-  // palette) and observed by the page-level layout (the de-emphasis overlay).
-  const editMode = state.megaMenuCustomising ?? false;
+  // palette) and observed by the page-level layout (the de-emphasis overlay). Gate it on the pinned
+  // prefs having loaded: the command palette flips the flag before the query resolves, and treating
+  // the menu as editing before then would let Done commit an empty draft and wipe saved pins (the
+  // in-menu button avoids this by being hidden until !isLoading). Once loaded, editMode flips
+  // false→true and the draft-seed effect below seeds the draft from the loaded pins.
+  const { isLoading: pinnedPrefsLoading } = usePinnedItems();
+  const editMode = (state.megaMenuCustomising ?? false) && !pinnedPrefsLoading;
   // Set while the Save (Done) preferences write is in flight, so the control can show a spinner.
   const [isSaving, setIsSaving] = useState(false);
 

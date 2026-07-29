@@ -33,12 +33,14 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
   return (
     <div className={styles.header}>
       <Stack alignItems="center" minWidth={0} gap={1}>
-        <div className={cx(customising && styles.disabled)}>
+        {/* `inert` (not just pointer-events) so the links are also removed from the tab order and can't
+            be reached/activated by keyboard while customising. Object-spread form is the React 18 way. */}
+        <div className={cx(customising && styles.disabled)} {...(customising && { inert: '' })}>
           <HomeLogo homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />
         </div>
         {/* Wrap the switcher itself, not its child: with multiple orgs it renders a dropdown instead of
             the passed HomeTitle, so this is what disables the org dropdown while customising. */}
-        <div className={cx(customising && styles.disabled)}>
+        <div className={cx(customising && styles.disabled)} {...(customising && { inert: '' })}>
           <OrganizationSwitcher>
             <HomeTitle homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />
           </OrganizationSwitcher>
