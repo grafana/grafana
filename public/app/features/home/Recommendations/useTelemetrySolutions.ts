@@ -49,6 +49,7 @@ export function useTelemetrySolutions(): TelemetrySolutions {
               loading: false,
               item: buildMetricsItem({
                 series: activity.series,
+                dataPointsPerMinute: activity.dataPointsPerMinute,
                 names: activity.names,
                 hosts: activity.hosts,
                 seriesSparkline: activity.seriesSparkline,

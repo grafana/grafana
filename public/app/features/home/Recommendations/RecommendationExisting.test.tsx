@@ -180,6 +180,7 @@ beforeEach(() => {
   mockFetchMetricsActivity.mockReset();
   mockFetchMetricsActivity.mockResolvedValue({
     series: null,
+    dataPointsPerMinute: null,
     names: null,
     hosts: null,
     seriesSparkline: null,
@@ -207,6 +208,7 @@ describe('RecommendationExisting', () => {
     mockActiveLogs();
     mockFetchMetricsActivity.mockResolvedValue({
       series: 4_200_000,
+      dataPointsPerMinute: null,
       names: null,
       hosts: null,
       seriesSparkline: null,
@@ -287,6 +289,7 @@ describe('RecommendationExisting', () => {
     setSolutionState({ metrics: 'active' }, { prometheus: prometheusDatasource });
     mockFetchMetricsActivity.mockResolvedValue({
       series: 4_200_000,
+      dataPointsPerMinute: null,
       names: 1_200,
       hosts: 12,
       seriesSparkline: null,
@@ -315,11 +318,32 @@ describe('RecommendationExisting', () => {
     );
   });
 
+  it('shows the ingest rate as the metrics secondary when available', async () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    setSolutionState({ metrics: 'active' }, { prometheus: prometheusDatasource });
+    mockFetchMetricsActivity.mockResolvedValue({
+      series: 4_200_000,
+      dataPointsPerMinute: 5_160_000,
+      names: null,
+      hosts: 12,
+      seriesSparkline: null,
+      disk: null,
+    });
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
+    expect(await screen.findByText(/data points\/min/)).toBeInTheDocument();
+    // The ingest rate replaces the whole 'active · N hosts' secondary.
+    expect(screen.queryByText(/^active/)).not.toBeInTheDocument();
+  });
+
   it('falls back to the name count and Explore when no active-series source responded', async () => {
     mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
     setSolutionState({ metrics: 'active' }, { prometheus: prometheusDatasource });
     mockFetchMetricsActivity.mockResolvedValue({
       series: null,
+      dataPointsPerMinute: null,
       names: 1_200,
       hosts: null,
       seriesSparkline: null,
@@ -346,6 +370,7 @@ describe('RecommendationExisting', () => {
     // Hosts alone are secondary content — they cannot carry the card.
     mockFetchMetricsActivity.mockResolvedValue({
       series: null,
+      dataPointsPerMinute: null,
       names: null,
       hosts: 12,
       seriesSparkline: null,

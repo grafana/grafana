@@ -109,6 +109,7 @@ export function buildTracesItem(parts: TracesItemParts): ExistingItem {
 
 export interface MetricsItemParts {
   series: number | null;
+  dataPointsPerMinute: number | null;
   names: number | null;
   hosts: number | null;
   seriesSparkline: FieldSparkline | null;
@@ -122,13 +123,17 @@ export function buildMetricsItem(parts: MetricsItemParts): ExistingItem {
   const { series, names, hosts, disk } = parts;
   const drilldown = parts.drilldownAvailable;
   const secondary =
-    hosts != null
-      ? t('home.recommendations.metrics.stats-hosts', '', {
-          count: hosts,
-          defaultValue_one: 'active · {{count}} host',
-          defaultValue_other: 'active · {{count}} hosts',
+    parts.dataPointsPerMinute != null
+      ? t('home.recommendations.metrics.data-points-per-minute', '{{value}} data points/min', {
+          value: formattedValueToString(formatUsageNumber(Math.ceil(parts.dataPointsPerMinute))),
         })
-      : t('home.recommendations.metrics.stats', 'active');
+      : hosts != null
+        ? t('home.recommendations.metrics.stats-hosts', '', {
+            count: hosts,
+            defaultValue_one: 'active · {{count}} host',
+            defaultValue_other: 'active · {{count}} hosts',
+          })
+        : t('home.recommendations.metrics.stats', 'active');
   let stats: ExistingItem['stats'];
   if (series != null) {
     stats = {
