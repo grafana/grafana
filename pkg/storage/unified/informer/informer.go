@@ -443,6 +443,15 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		// reconcile, so the minimal object and old == new are both fine.
 		switch evt.Type {
 		case resourcepb.WatchNotification_ADDED:
+			// Write the add through to the snapshot, the counterpart to the Delete
+			// below: without it the object is absent until the next re-list, whose
+			// diff would then re-report a delivered live add as a recovery — inflating
+			// the relist metrics and re-dispatching OnAdd. MODIFIED is deliberately not
+			// written through: it carries only namespace/name, so a soft-delete
+			// (delivered as MODIFIED with a deletionTimestamp) would overwrite the
+			// stored object's real deletionTimestamp with a nil one and mislead the
+			// staleness-tolerant readers of the snapshot (the repository quota count).
+			n.store.Update(context.Background(), obj)
 			n.observeLiveEvent(VerbAdd, evt.ResourceVersion)
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(obj, false) })
 		case resourcepb.WatchNotification_DELETED:

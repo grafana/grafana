@@ -263,6 +263,27 @@ func TestInformer_LiveDeleteEvictsFromStore(t *testing.T) {
 	})
 }
 
+// A live ADD writes through to the snapshot — the counterpart to the live DELETE
+// eviction above — so the object is present before the next re-list can diff it.
+func TestInformer_LiveAddWritesToStore(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		handler := &recordingHandler{}
+		n, stop := start(t, sub, nil, newObjectFunc, handler)
+		defer stop()
+
+		sub.publish(t, subject(), event(resourcepb.WatchNotification_ADDED, "fresh"))
+		synctest.Wait()
+
+		snapshot := n.store.List(context.Background())
+		got := make([]string, 0, len(snapshot))
+		for _, o := range snapshot {
+			got = append(got, o.(*metav1.PartialObjectMetadata).Name)
+		}
+		assert.Equal(t, []string{"fresh"}, got)
+	})
+}
+
 // Malformed envelopes and unknown verbs are skipped; a valid notification after
 // them still arrives.
 func TestInformer_SkipsMalformedAndUnknown(t *testing.T) {
@@ -724,6 +745,49 @@ func TestInformer_MetricsObserveRelist(t *testing.T) {
 		{verb: VerbDelete, rv: 0}, // resync: b vanished
 	}, m.observedRelistEvents())
 	assert.Empty(t, m.observedLiveEvents(), "re-list deliveries must not count as live events")
+}
+
+// A live ADD is written to the snapshot, so the next re-list re-delivers the
+// object as a retained update rather than re-reporting a delivered add as a
+// recovery — which would double-count it on relist_events and inflate the
+// recovery latency. Regression test for the live-add miscount.
+func TestInformer_LiveAddNotReCountedAsRelistRecovery(t *testing.T) {
+	sub := newFakeSubscriber()
+	m := &recordingMetrics{}
+	handler := &recordingHandler{}
+
+	// The initial list is empty; "x" first arrives via a live ADD and is then
+	// present on the resync list.
+	var calls int
+	list := func(context.Context) ([]runtime.Object, error) {
+		calls++
+		if calls == 1 {
+			return nil, nil
+		}
+		return []runtime.Object{obj("x")}, nil
+	}
+	n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
+	n.SetMetrics(m)
+	_, err := n.AddEventHandler(handler)
+	require.NoError(t, err)
+
+	require.NoError(t, n.relist(context.Background(), true)) // initial list: empty
+
+	// Deliver a live ADD for "x" straight through the notification handler.
+	evt := event(resourcepb.WatchNotification_ADDED, "x")
+	evt.ResourceVersion = 55
+	data, err := proto.Marshal(evt)
+	require.NoError(t, err)
+	n.onNotification()(subject(), data)
+
+	require.NoError(t, n.relist(context.Background(), false)) // resync: x retained -> update
+
+	assert.Equal(t, []observedEvent{{verb: VerbAdd, rv: 55}}, m.observedLiveEvents())
+	assert.Equal(t, []observedEvent{{verb: VerbUpdate, rv: 0}}, m.observedRelistEvents(),
+		"the live-added object must be a retained update on re-list, not a recovery add")
+	assert.Equal(t, []string{"x"}, handler.addedNames(), "the live ADD is the only add")
+	assert.Equal(t, []string{"x"}, handler.updatedNames(), "the re-list re-delivers it as an update")
+	assert.Empty(t, handler.deletedNames())
 }
 
 // Every reconnect of the live subscription is observed — each one is a window
