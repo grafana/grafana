@@ -1196,12 +1196,21 @@ func TestSchedule_deleteAlertRule(t *testing.T) {
 }
 
 type schedulerOpts struct {
-	clock clock.Clock
+	clock           clock.Clock
+	gateUntilWarm   bool
+	warmGateTimeout time.Duration
 }
 
 func withSchedulerClock(clock clock.Clock) func(opts *schedulerOpts) {
 	return func(opts *schedulerOpts) {
 		opts.clock = clock
+	}
+}
+
+func withStateGatingUntilWarm(timeout time.Duration) func(opts *schedulerOpts) {
+	return func(opts *schedulerOpts) {
+		opts.gateUntilWarm = true
+		opts.warmGateTimeout = timeout
 	}
 }
 
@@ -1309,6 +1318,9 @@ func setupScheduler(
 		Tracer:                  testTracer,
 		Log:                     log.New("ngalert.state.manager"),
 		MaxStateSaveConcurrency: 1,
+
+		GateEvaluationUntilWarmed: opts.gateUntilWarm,
+		WarmGateTimeout:           opts.warmGateTimeout,
 	}
 	syncStatePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.perist"), managerCfg)
 	st := state.NewManager(managerCfg, syncStatePersister)
