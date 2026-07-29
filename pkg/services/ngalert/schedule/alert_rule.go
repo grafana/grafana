@@ -401,14 +401,14 @@ func (a *alertRule) Run() error {
 // the skip); after the grace elapses it returns true but logs the cold read. Checked after eval so
 // the query gives the cache time to warm; gating is off in vanilla Grafana, on in the ruler.
 func (a *alertRule) readyToProcessState(logger log.Logger, e *Evaluation) bool {
-	switch a.stateManager.EvaluationReadiness(e.rule) {
-	case state.ReadinessWarmed:
+	switch a.stateManager.Ready() {
+	case state.Ready:
 		// Cache is warm (or gating is disabled) — process normally.
-	case state.ReadinessNotWarmed:
+	case state.NotReady:
 		logger.Warn("Skip processing evaluation results because the state cache is not warmed yet")
 		a.metrics.EvaluationMissed.WithLabelValues(fmt.Sprint(a.key.OrgID), e.rule.Title, "state_not_warmed").Inc()
 		return false
-	case state.ReadinessTimedOut:
+	case state.TimedOut:
 		logger.Warn("Processing evaluation results before the state cache is warmed; readiness grace period elapsed")
 	}
 	return true

@@ -511,7 +511,7 @@ func TestRuleRoutine_GatedUntilWarmed(t *testing.T) {
 			withSchedulerClock(clock.NewMock()), withStateGatingUntilWarm(time.Minute))
 		sch.evalAppliedFunc = func(_ models.AlertRuleKey, tm time.Time) { evalAppliedChan <- tm }
 
-		require.False(t, sch.stateManager.IsWarmed(), "manager must start not-warmed")
+		require.Equal(t, state.NotReady, sch.stateManager.Ready(), "manager must start not-warmed")
 
 		rule := gen.With(withQueryForState(t, eval.Alerting)).GenerateRef()
 		ruleStore.PutRule(context.Background(), rule)

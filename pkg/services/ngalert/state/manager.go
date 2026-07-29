@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/url"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -61,29 +60,9 @@ type Manager struct {
 
 	ignorePendingForNoDataAndError bool
 
-	// ready reports whether the cache is warm enough to evaluate against. Set at construction (true
-	// unless gating is requested) and by a successful Warm.
-	ready atomic.Bool
-	// notReadySince marks when readiness gating began; it bounds the warm grace window.
-	notReadySince time.Time
-	// warmGateTimeout is the grace window before gated evaluation proceeds anyway.
-	warmGateTimeout time.Duration
+	// readiness gates whether evaluation results may be applied before the cache is warmed.
+	readiness ReadinessProbe
 }
-
-// EvalReadiness reports whether a rule's results are safe to apply to the state cache.
-type EvalReadiness int
-
-const (
-	// ReadinessWarmed means the cache is warm (or gating is off) — apply results normally.
-	ReadinessWarmed EvalReadiness = iota
-	// ReadinessNotWarmed means the cache is cold and within the grace window — skip processing.
-	ReadinessNotWarmed
-	// ReadinessTimedOut means the cache is cold but the grace window elapsed — apply anyway.
-	ReadinessTimedOut
-)
-
-// defaultWarmGateTimeout is used when gating is enabled without an explicit WarmGateTimeout.
-const defaultWarmGateTimeout = 2 * time.Minute
 
 type ManagerCfg struct {
 	Metrics       *metrics.State
@@ -114,9 +93,9 @@ type ManagerCfg struct {
 
 	IgnorePendingForNoDataAndError bool // TODO: Remove
 
-	// GateEvaluationUntilWarmed skips applying evaluation results until the cache is warmed. Off by
-	// default (vanilla Grafana warms before evaluating); the ruler enables it as it warms async.
-	GateEvaluationUntilWarmed bool
+	// RequireWarm gates evaluation until the cache is warmed. Off by default; the ruler sets it
+	// because it warms asynchronously after (re)assignment.
+	RequireWarm bool
 	// WarmGateTimeout is the grace window before gated evaluation proceeds anyway. 0 uses the default.
 	WarmGateTimeout time.Duration
 }
@@ -129,9 +108,11 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		c.RegisterMetrics(cfg.Metrics.Registerer())
 	}
 
-	warmGateTimeout := cfg.WarmGateTimeout
-	if warmGateTimeout <= 0 {
-		warmGateTimeout = defaultWarmGateTimeout
+	// Vanilla Grafana warms before evaluating, so it never needs to gate; the ruler warms
+	// asynchronously and sets RequireWarm to gate until the cache is warmed.
+	var readiness ReadinessProbe = AlwaysReady{}
+	if cfg.RequireWarm {
+		readiness = newGatedProbe(cfg.Clock, cfg.WarmGateTimeout)
 	}
 
 	m := &Manager{
@@ -151,36 +132,20 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 
 		ignorePendingForNoDataAndError: cfg.IgnorePendingForNoDataAndError,
 
-		notReadySince:   cfg.Clock.Now(),
-		warmGateTimeout: warmGateTimeout,
+		readiness: readiness,
 	}
-	// Start ready unless gating is requested, so vanilla Grafana is never gated.
-	m.ready.Store(!cfg.GateEvaluationUntilWarmed)
 
 	return m
 }
 
-// EvaluationReadiness reports whether the rule's results may be applied to the state cache: warmed
-// (or gating off), not-warmed (within the grace window, skip), or timed-out (grace elapsed, apply
-// anyway). The rule is accepted for future per-rule scoping but is unused today.
-func (st *Manager) EvaluationReadiness(_ *ngModels.AlertRule) EvalReadiness {
-	if st.ready.Load() {
-		return ReadinessWarmed
-	}
-	if st.clock.Since(st.notReadySince) >= st.warmGateTimeout {
-		return ReadinessTimedOut
-	}
-	return ReadinessNotWarmed
-}
-
-// IsWarmed reports whether a Warm has succeeded (or gating is off). It ignores the grace timeout so
-// callers can decide whether to retry warming.
-func (st *Manager) IsWarmed() bool {
-	return st.ready.Load()
+// Ready reports whether results may be applied to the state cache.
+func (st *Manager) Ready() Readiness {
+	return st.readiness.Ready()
 }
 
 func (st *Manager) ClearCache() {
 	st.cache.reset()
+	st.readiness.Reset()
 }
 
 func (st *Manager) Run(ctx context.Context) error {
@@ -191,12 +156,26 @@ func (st *Manager) Run(ctx context.Context) error {
 func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader RuleReader, instanceReader InstanceReader) {
 	logger := st.log.FromContext(ctx)
 
+	var success bool
+	startTime := time.Now()
+	rulesCount := 0
+	statesCount := 0
+	defer func() {
+		// TODO this is how it works since the inception. This needs to be reviewed and changed because it has an implication for state history.
+		// Mark ready regardless of the outcome.
+		st.readiness.MarkReady()
+		if !success {
+			logger.Warn("State cache initialization finished with errors. Continue with empty state")
+			return
+		}
+		logger.Info("State cache has been initialized", "rules", rulesCount, "states", statesCount, "duration", time.Since(startTime))
+	}()
+
 	if orgReader == nil || rulesReader == nil || instanceReader == nil {
 		logger.Error("Unable to warm state cache, missing required store readers")
 		return
 	}
 
-	startTime := time.Now()
 	logger.Info("Warming state cache for startup")
 
 	orgIds, err := orgReader.FetchOrgIds(ctx)
@@ -205,7 +184,6 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 		return
 	}
 
-	statesCount := 0
 	for _, orgId := range orgIds {
 		// Get Rules
 		ruleCmd := ngModels.ListAlertRulesQuery{
@@ -213,8 +191,10 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 		}
 		alertRules, err := rulesReader.ListAlertRules(ctx, &ruleCmd)
 		if err != nil {
-			logger.Error("Unable to fetch previous state", "error", err)
+			logger.Error("Unable to fetch rules", "error", err)
+			continue
 		}
+		rulesCount += len(alertRules)
 
 		ruleByUID := make(map[string]*ngModels.AlertRule, len(alertRules))
 		groupSizes := make(map[string]int64)
@@ -242,13 +222,13 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 		}
 		alertInstances, err := instanceReader.ListAlertInstances(ctx, &cmd)
 		if err != nil {
-			logger.Error("Unable to fetch previous state", "error", err)
+			logger.Error("Unable to fetch previous state.", "error", err)
+			continue
 		}
 
 		for _, entry := range alertInstances {
 			ruleForEntry, ok := ruleByUID[entry.RuleUID]
 			if !ok {
-				// TODO Should we delete the orphaned state from the db?
 				continue
 			}
 
@@ -266,12 +246,6 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 			statesCount++
 		}
 	}
-
-	// Mark warmed only after the cache is fully populated; the early error returns above leave it
-	// unset so evaluation stays gated.
-	st.ready.Store(true)
-
-	logger.Info("State cache has been initialized", "states", statesCount, "duration", time.Since(startTime))
 }
 
 func (st *Manager) Get(orgID int64, alertRuleUID string, stateId data.Fingerprint) *State {

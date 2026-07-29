@@ -1319,8 +1319,8 @@ func setupScheduler(
 		Log:                     log.New("ngalert.state.manager"),
 		MaxStateSaveConcurrency: 1,
 
-		GateEvaluationUntilWarmed: opts.gateUntilWarm,
-		WarmGateTimeout:           opts.warmGateTimeout,
+		RequireWarm:     opts.gateUntilWarm,
+		WarmGateTimeout: opts.warmGateTimeout,
 	}
 	syncStatePersister := state.NewSyncStatePersisiter(log.New("ngalert.state.manager.perist"), managerCfg)
 	st := state.NewManager(managerCfg, syncStatePersister)
