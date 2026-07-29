@@ -24,7 +24,7 @@ func TestUnaryDefaultTimeout(t *testing.T) {
 	t.Run("adds deadline when context has none", func(t *testing.T) {
 		deadline, ok := invoke(context.Background())
 		require.True(t, ok)
-		require.WithinDuration(t, time.Now().Add(defaultCallTimeout), deadline, time.Minute)
+		require.WithinDuration(t, time.Now().Add(defaultCallTimeout), deadline, 5*time.Second)
 	})
 
 	t.Run("keeps existing deadline", func(t *testing.T) {
@@ -33,6 +33,6 @@ func TestUnaryDefaultTimeout(t *testing.T) {
 
 		deadline, ok := invoke(ctx)
 		require.True(t, ok)
-		require.WithinDuration(t, time.Now().Add(time.Second), deadline, time.Minute)
+		require.WithinDuration(t, time.Now().Add(time.Second), deadline, 5*time.Second)
 	})
 }
