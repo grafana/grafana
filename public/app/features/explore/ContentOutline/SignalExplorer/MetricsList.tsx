@@ -1,11 +1,15 @@
 import { css } from '@emotion/css';
-import { memo, useState } from 'react';
+import { memo, useCallback, useId, useState } from 'react';
 
 import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, FilterInput, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
 
 import { dsKey, rangeKey, useMetricCatalog, useVisibleBatch } from '../../signalExplorer';
+
+import { MetricLabels } from './MetricLabels';
+import { MetricRow } from './MetricRow';
+import { blockId } from './blockId';
 
 interface Props {
   /**
@@ -26,10 +30,34 @@ interface Props {
  * Only a batch of the list reaches the DOM at a time — a real catalog runs to tens of thousands of
  * names. Searching is the catalog hook's job, not this component's: the list being searched is the
  * whole datasource's catalog, which this component never holds.
+ *
+ * A row expands to its label keys and a label key to its values. One metric and one label at a time:
+ * every open row holds a request open, and both lists are unbounded.
  */
 export const MetricsList = memo(function MetricsList({ dsUid, dsType, timeRange }: Props) {
   const styles = useStyles2(getStyles);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Per instance, because a Mixed pane renders one list per card and two cards can offer the same
+  // metric name — ids derived from the name alone would be duplicated across the document.
+  const listId = useId();
+
+  // Expansion is high-frequency, unshared and worthless to persist, so it stays local. It also means
+  // a card collapsing takes this state with it, which is what keeps a recycled refId from inheriting
+  // the expansion of the query it replaced.
+  const [expandedMetric, setExpandedMetric] = useState<string | null>(null);
+  const [expandedLabel, setExpandedLabel] = useState<string | null>(null);
+
+  const toggleMetric = useCallback((name: string) => {
+    setExpandedMetric((current) => (current === name ? null : name));
+    // Forget the open label too: re-expanding a metric should open collapsed rather than restore a
+    // label the user closed the row on.
+    setExpandedLabel(null);
+  }, []);
+
+  const toggleLabel = useCallback((labelKey: string) => {
+    setExpandedLabel((current) => (current === labelKey ? null : labelKey));
+  }, []);
 
   const dsRef = { uid: dsUid, type: dsType };
   const { metrics, loading, error } = useMetricCatalog(dsRef, timeRange, { searchText: searchTerm });
@@ -64,11 +92,27 @@ export const MetricsList = memo(function MetricsList({ dsUid, dsType, timeRange 
       )}
       <ScrollContainer>
         <ul className={styles.list}>
-          {visible.map((metric) => (
-            <li key={metric.name} className={styles.listItem} title={metric.name}>
-              {metric.name}
-            </li>
-          ))}
+          {visible.map((metric) => {
+            const expanded = metric.name === expandedMetric;
+            const labelsId = blockId(listId, 'labels', metric.name);
+
+            return (
+              <li key={metric.name}>
+                <MetricRow name={metric.name} expanded={expanded} labelsId={labelsId} onToggle={toggleMetric} />
+                {expanded && (
+                  <MetricLabels
+                    id={labelsId}
+                    dsUid={dsUid}
+                    dsType={dsType}
+                    timeRange={timeRange}
+                    metric={metric.name}
+                    expandedLabel={expandedLabel}
+                    onToggleLabel={toggleLabel}
+                  />
+                )}
+              </li>
+            );
+          })}
         </ul>
         {/* Inside the scroll region on purpose: it belongs to the end of the list, not to the card. */}
         {metrics.length > visible.length && (
@@ -96,22 +140,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       listStyle: 'none',
       margin: 0,
       padding: 0,
-    }),
-    listItem: css({
-      display: 'block',
-      padding: theme.spacing(0.5, 0.5),
-      borderRadius: theme.shape.radius.default,
-      color: theme.colors.text.secondary,
-      fontSize: theme.typography.bodySmall.fontSize,
-      fontFamily: theme.typography.fontFamilyMonospace,
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      cursor: 'pointer',
-      '&:hover': {
-        backgroundColor: theme.colors.background.secondary,
-        color: theme.colors.text.primary,
-      },
     }),
     showMore: css({
       alignSelf: 'flex-start',
