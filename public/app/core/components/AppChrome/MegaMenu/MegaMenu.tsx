@@ -299,7 +299,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       listStyleType: 'none',
       // Left padding is tuned so the nav row icons line up with the pinned box's content (which is
       // inset by the box margin + its own padding).
-      padding: theme.spacing(1, 1, 2, 1.5),
+      padding: theme.spacing(1, 1, 2, 1),
       [theme.breakpoints.up('md')]: {
         width: MENU_WIDTH,
       },

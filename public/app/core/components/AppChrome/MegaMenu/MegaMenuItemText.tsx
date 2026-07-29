@@ -4,6 +4,7 @@ import * as React from 'react';
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, IconButton, Link, Stack, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -50,7 +51,8 @@ export function MegaMenuItemText({
 }: Props) {
   const theme = useTheme2();
 
-  const styles = getStyles(theme, isActive);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const styles = getStyles(theme, isActive, visualRefreshEnabled);
   const LinkComponent = !target && url.startsWith('/') ? Link : 'a';
 
   // Flag on: pin/unpin wording. Flag off: the legacy "Bookmark" wording.
@@ -158,53 +160,8 @@ export function MegaMenuItemText({
 
 MegaMenuItemText.displayName = 'MegaMenuItemText';
 
-const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
-  wrapper: css({
-    display: 'flex',
-    alignItems: 'center',
-    color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
-    width: '100%',
-    height: '100%',
-    // The pin control shows on hover/focus (both the legacy bookmark and, outside edit mode, the
-    // customisation pin); the edit-mode pin and hide controls are always shown.
-    '.pin-icon': {
-      visibility: 'hidden',
-    },
-    '.customise-icon, .visibility-icon': {
-      visibility: 'visible',
-    },
-    '&:hover, &:focus-within': {
-      '.pin-icon': {
-        visibility: 'visible',
-      },
-    },
-  }),
-  // Subtle hover/focus highlight for normal browsing (not while customising).
-  hoverable: css({
-    borderRadius: theme.shape.radius.default,
-    '&:hover, &:focus-within': {
-      backgroundColor: theme.colors.action.hover,
-      color: theme.colors.text.primary,
-    },
-  }),
-  // Fixed control columns (pin, hide) so each control type lines up vertically across rows.
-  controls: css({
-    display: 'flex',
-    flexShrink: 0,
-  }),
-  // One fixed-width, centred column per control (pin, hide) so each control type lines up vertically
-  // across rows regardless of which controls a given row shows.
-  controlSlot: css({
-    alignItems: 'center',
-    display: 'flex',
-    flexShrink: 0,
-    justifyContent: 'center',
-    width: theme.spacing(3),
-  }),
-  hiddenInEdit: css({
-    opacity: 0.5,
-  }),
-  wrapperActive: css({
+const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], visualRefreshEnabled: boolean) => {
+  const wrapperActiveOld = css({
     backgroundColor: theme.colors.action.selected,
     borderTopRightRadius: theme.shape.radius.default,
     borderBottomRightRadius: theme.shape.radius.default,
@@ -222,32 +179,88 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive']) => ({
       left: 0,
       width: theme.spacing(0.25),
     },
-  }),
-  container: css({
-    alignItems: 'center',
-    color: 'inherit',
-    height: '100%',
+  });
+
+  const wrapperActiveVisualRefresh = css({
+    color: theme.colors.accent.text,
+    backgroundColor: theme.colors.accent.transparent,
     position: 'relative',
-    flex: 1,
-    minWidth: 0,
+    borderRadius: theme.shape.radius.default,
+  });
 
-    '&:hover span, &:focus-visible span': {
-      color: theme.colors.text.primary,
-      textDecoration: 'underline',
-    },
+  return {
+    wrapper: css({
+      display: 'flex',
+      alignItems: 'center',
+      color: isActive ? theme.colors.text.primary : theme.colors.text.secondary,
+      width: '100%',
+      height: '100%',
+      // The pin control shows on hover/focus (both the legacy bookmark and, outside edit mode, the
+      // customisation pin); the edit-mode pin and hide controls are always shown.
+      '.pin-icon': {
+        visibility: 'hidden',
+      },
+      '.customise-icon, .visibility-icon': {
+        visibility: 'visible',
+      },
+      '&:hover, &:focus-within': {
+        '.pin-icon': {
+          visibility: 'visible',
+        },
+      },
+    }),
+    // Subtle hover/focus highlight for normal browsing (not while customising).
+    hoverable: css({
+      borderRadius: theme.shape.radius.default,
+      '&:hover, &:focus-within': {
+        backgroundColor: theme.colors.action.hover,
+        color: theme.colors.text.primary,
+      },
+    }),
+    // Fixed control columns (pin, hide) so each control type lines up vertically across rows.
+    controls: css({
+      display: 'flex',
+      flexShrink: 0,
+    }),
+    // One fixed-width, centred column per control (pin, hide) so each control type lines up vertically
+    // across rows regardless of which controls a given row shows.
+    controlSlot: css({
+      alignItems: 'center',
+      display: 'flex',
+      flexShrink: 0,
+      justifyContent: 'center',
+      width: theme.spacing(3),
+    }),
+    hiddenInEdit: css({
+      opacity: 0.5,
+    }),
+    wrapperActive: visualRefreshEnabled ? wrapperActiveVisualRefresh : wrapperActiveOld,
+    container: css({
+      alignItems: 'center',
+      color: 'inherit',
+      height: '100%',
+      position: 'relative',
+      flex: 1,
+      minWidth: 0,
 
-    '&:focus-visible': {
-      boxShadow: 'none',
-      outline: `2px solid ${theme.colors.accent.main}`,
-      outlineOffset: '-2px',
-    },
-  }),
-  linkContent: css({
-    alignItems: 'center',
-    display: 'flex',
-    gap: '0.5rem',
-    height: '100%',
-    width: '100%',
-    justifyContent: 'space-between',
-  }),
-});
+      '&:hover span, &:focus-visible span': {
+        color: theme.colors.text.primary,
+        textDecoration: 'underline',
+      },
+
+      '&:focus-visible': {
+        boxShadow: 'none',
+        outline: `2px solid ${theme.colors.accent.main}`,
+        outlineOffset: '-2px',
+      },
+    }),
+    linkContent: css({
+      alignItems: 'center',
+      display: 'flex',
+      gap: '0.5rem',
+      height: '100%',
+      width: '100%',
+      justifyContent: 'space-between',
+    }),
+  };
+};
