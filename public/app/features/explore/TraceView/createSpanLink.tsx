@@ -97,9 +97,7 @@ export function createSpanLinkFactory({
         const shouldCreatePyroscopeLink = hasConfiguredPyroscopeDS && hasPyroscopeProfile;
 
         let links: ExploreFieldLinkModel[] = [];
-        // Debug: Processing fields for span links
-        
-        fields.forEach((field, fieldIndex) => {
+        fields.forEach((field) => {
           const fieldLinksForExplore = getFieldLinksForExplore({
             field,
             rowIndex: span.dataFrameRowIndex!,
@@ -108,14 +106,12 @@ export function createSpanLinkFactory({
             dataFrame,
             vars: scopedVars,
           });
-          // Debug: Field generated links
           links = links.concat(fieldLinksForExplore);
         });
 
         // Deduplicate identical links to fix Issue #128810: Multiple "View Query in Azure Portal" links
         // This occurs when multiple fields in the dataFrame have the same link configuration
         const uniqueLinks = uniqBy(links, (link) => `${link.href}|${link.title}`);
-        // Debug: Deduplication applied - removed duplicates
 
         const newSpanLinks: SpanLinkDef[] = uniqueLinks.map((link) => {
           return {
@@ -128,8 +124,6 @@ export function createSpanLinkFactory({
             target: link.target,
           };
         });
-
-        // Debug: Final span links ready
 
         spanLinks.push.apply(spanLinks, newSpanLinks);
       } catch (error) {
