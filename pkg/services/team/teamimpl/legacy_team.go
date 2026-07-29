@@ -25,7 +25,7 @@ type LegacyService struct {
 	tracer tracing.Tracer
 }
 
-func NewLegacyService(ctx context.Context, db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
+func NewLegacyService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
 	sql := legacysql.NewDatabaseProvider(db)
 	store := &xormStore{sql: sql, cfg: cfg, deletes: []string{}}
 

@@ -66,7 +66,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 
 	t.Run("Testing Team commands and queries", func(t *testing.T) {
 		sqlStore, cfg := db.InitTestDBWithCfg(t)
-		teamSvc, err := ProvideService(context.Background(), sqlStore, cfg, tracing.InitializeTracerForTest(), nil)
+		teamSvc, err := ProvideService(sqlStore, cfg, tracing.InitializeTracerForTest(), nil)
 		require.NoError(t, err)
 		testUser := &user.SignedInUser{
 			OrgID: 1,
@@ -623,7 +623,7 @@ func TestIntegrationSQLStore_SearchTeams(t *testing.T) {
 	}
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
-	teamSvc, err := ProvideService(context.Background(), store, cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
 
 	// Seed 10 teams
@@ -664,7 +664,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 	// Seed 2 teams with 2 members
 	setup := func(store db.DB, cfg *setting.Cfg) {
-		teamSvc, err := ProvideService(context.Background(), store, cfg, tracing.InitializeTracerForTest(), nil)
+		teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest(), nil)
 		require.NoError(t, err)
 
 		team1Cmd := team.CreateTeamCommand{
@@ -725,7 +725,7 @@ func TestIntegrationSQLStore_GetTeamMembers_ACFilter(t *testing.T) {
 
 	store, cfg := db.InitTestDBWithCfg(t, db.InitTestDBOpt{})
 	setup(store, cfg)
-	teamSvc, err := ProvideService(context.Background(), store, cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := ProvideService(store, cfg, tracing.InitializeTracerForTest(), nil)
 	require.NoError(t, err)
 
 	type getTeamMembersTestCase struct {
