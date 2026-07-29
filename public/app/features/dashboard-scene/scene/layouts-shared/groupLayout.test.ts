@@ -324,6 +324,30 @@ describe('canGroupSelection', () => {
     expect(canGroupSelection([r1, r2], 'tab').enabled).toBe(false);
   });
 
+  it('disables the tab target when rows with panels live inside a tab (one level of tabs)', () => {
+    const buildGridWith = (panel: VizPanel) =>
+      new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [new DashboardGridItem({ body: panel, x: 0, y: 0, width: 12, height: 8 })],
+        }),
+      });
+
+    const r1 = new RowItem({ title: 'R1', layout: buildGridWith(buildPanel('panel-1')) });
+    const r2 = new RowItem({ title: 'R2', layout: buildGridWith(buildPanel('panel-2')) });
+    const rows = new RowsLayoutManager({ rows: [r1, r2] });
+    const tabs = new TabsLayoutManager({ tabs: [new TabItem({ title: 'T1', layout: rows })] });
+    new DashboardScene({ body: tabs });
+
+    expect(canGroupSelection([r1, r2], 'row').enabled).toBe(true);
+
+    const result = canGroupSelection([r1, r2], 'tab');
+    expect(result.enabled).toBe(false);
+    expect(result.reason).toBeTruthy();
+
+    // The perform path must be blocked too — otherwise it would nest tabs directly inside a tab.
+    expect(buildGroupEdit([r1, r2], 'tab')).toBeUndefined();
+  });
+
   it('never offers the tab target for a tabs selection', () => {
     const t1 = new TabItem({ title: 'T1' });
     const t2 = new TabItem({ title: 'T2' });
