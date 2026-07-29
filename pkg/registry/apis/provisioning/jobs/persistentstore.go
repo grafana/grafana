@@ -161,15 +161,15 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string, dri
 		// This is the desired behavior, as it ensures that claims are atomic.
 		updatedJob, err := s.client.Jobs(namespace).Update(ctx, claimed, metav1.UpdateOptions{})
 		if apierrors.IsConflict(err) {
-			// Re-read and re-evaluate: another worker probably claimed it first.
+			// Lost the CAS race; another worker updated the job first. Record it and
+			// re-read/re-evaluate on the next attempt.
+			s.queueMetrics.RecordClaimConflict(driverID)
 			continue
 		}
 		if err != nil {
 			s.queueMetrics.RecordClaimError(driverID)
 			return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s': %w", name, namespace, err)
 		}
-
-		s.queueMetrics.RecordWaitTime(string(updatedJob.Spec.Action), s.clock().Sub(updatedJob.CreationTimestamp.Time).Seconds())
 
 		logger.Info("job claim complete",
 			"repository", updatedJob.Spec.Repository,

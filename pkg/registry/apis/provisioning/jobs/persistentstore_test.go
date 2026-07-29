@@ -403,15 +403,12 @@ func newStoreWithFreshQueueMetrics(client provisioningv0alpha1.ProvisioningV0alp
 				prometheus.CounterOpts{Name: "test_claim_errors"}, []string{"driver_id"}),
 			claimRoundsCont: prometheus.NewCounterVec(
 				prometheus.CounterOpts{Name: "test_claim_rounds"}, []string{"driver_id"}),
-			claimCandidates: prometheus.NewGauge(
-				prometheus.GaugeOpts{Name: "test_claim_candidates"}),
 		},
 	}
 }
 
-// TestClaim_RecordsClaimMetrics verifies the per-driver claim metrics: an empty poll
-// sets the candidates gauge to 0 and records no win; a successful claim records a win
-// and sets candidates to 1.
+// TestClaim_RecordsClaimMetrics verifies the per-driver claim win counter: claiming a
+// job that exists records a win for the calling driver.
 func TestClaim_RecordsClaimMetrics(t *testing.T) {
 	fakeClient := newTestClientset()
 	store := newStoreWithFreshQueueMetrics(fakeClient)
@@ -419,13 +416,12 @@ func TestClaim_RecordsClaimMetrics(t *testing.T) {
 	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
 	require.NoError(t, err)
 
-	// Empty store: nothing to claim -> candidates gauge 0, no win.
+	// Claiming a job that does not exist returns an error and records no win.
 	_, _, err = store.Claim(ctx, "stacks-123", "job-1", "0")
 	require.Error(t, err)
-	require.Equal(t, 0.0, testutil.ToFloat64(store.queueMetrics.claimCandidates))
 	require.Equal(t, 0.0, testutil.ToFloat64(store.queueMetrics.claimed.WithLabelValues("0")))
 
-	// A job is available: claim succeeds -> claimed_total{driver=0} = 1, candidates = 1.
+	// The job exists: claim succeeds -> claimed_total{driver=0} = 1.
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "stacks-123"},
 		Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
@@ -437,7 +433,6 @@ func TestClaim_RecordsClaimMetrics(t *testing.T) {
 	require.NotNil(t, claimed)
 	defer rollback()
 	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimed.WithLabelValues("0")))
-	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimCandidates))
 }
 
 // TestClaim_WaitRecordedOnlyOnSuccessfulClaim verifies queue-wait is recorded once —
@@ -449,31 +444,29 @@ func TestClaim_WaitRecordedOnlyOnSuccessfulClaim(t *testing.T) {
 	cs.PrependReactor("update", "jobs", func(action k8stesting.Action) (bool, runtime.Object, error) {
 		updates++
 		if updates == 1 {
-			// First candidate loses the race to another worker.
+			// First CAS attempt loses the race; Claim re-reads and retries.
 			return true, nil, apierrors.NewConflict(provisioning.JobResourceInfo.GroupResource(), "", errors.New("claimed by another worker"))
 		}
-		return false, nil, nil // let the tracker perform the real update for the next candidate
+		return false, nil, nil // let the tracker perform the real update on the retry
 	})
 	store := newStoreWithFreshQueueMetrics(cs.ProvisioningV0alpha1())
 
 	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
 	require.NoError(t, err)
 
-	for _, name := range []string{"job-a", "job-b"} {
-		_, err := cs.ProvisioningV0alpha1().Jobs("stacks-123").Create(ctx, &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "stacks-123"},
-			Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
-		}, metav1.CreateOptions{})
-		require.NoError(t, err)
-	}
+	_, err = cs.ProvisioningV0alpha1().Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "job-a", Namespace: "stacks-123"},
+		Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
 
 	claimed, rollback, err := store.Claim(ctx, "stacks-123", "job-a", "0")
 	require.NoError(t, err)
 	require.NotNil(t, claimed)
 	defer rollback()
-	require.Equal(t, 2, updates, "both candidates should have been attempted")
+	require.Equal(t, 2, updates, "expected one conflicting attempt then a successful retry")
 
-	// Exactly one wait observation despite the first candidate conflicting.
+	// Exactly one wait observation despite the first attempt conflicting.
 	require.Equal(t, uint64(1), histSampleCount(t, store.queueMetrics.queueWaitTime, "pull"))
 	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimed.WithLabelValues("0")))
 	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimConflicts.WithLabelValues("0")))

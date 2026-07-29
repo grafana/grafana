@@ -45,14 +45,13 @@ type QueueMetrics struct {
 	queueSize     *prometheus.GaugeVec
 	queueWaitTime *prometheus.HistogramVec
 
-	// Claim metrics, per driver_id. These count per CAS (compare-and-swap) attempt on
-	// a candidate, not per claim round, so contention is directly visible: a round
-	// that loses several races before winning records each loss.
-	claimed         *prometheus.CounterVec // won a CAS race — this driver now owns a job
-	claimConflicts  *prometheus.CounterVec // lost a CAS race — another worker was faster
-	claimErrors     *prometheus.CounterVec // claim path failed (list, identity, or non-conflict update)
-	claimRoundsCont *prometheus.CounterVec // a whole round listed candidates but won none
-	claimCandidates prometheus.Gauge       // candidates seen by the most recent claim poll
+	// Claim metrics, per driver_id. These count per CAS (compare-and-swap) attempt on a
+	// job, so contention is directly visible: a claim that loses several races before
+	// winning records each loss.
+	claimed         *prometheus.CounterVec // won a CAS race — this driver now owns the job
+	claimConflicts  *prometheus.CounterVec // lost a CAS race — another worker updated the job first
+	claimErrors     *prometheus.CounterVec // claim path failed (identity or non-conflict update error)
+	claimRoundsCont *prometheus.CounterVec // exhausted the CAS retries — the job was claimed by another worker
 }
 
 // durationBucketUnknown is the resources_changed_bucket used when a job did not
@@ -110,7 +109,7 @@ func RegisterQueueMetrics(registry prometheus.Registerer) QueueMetrics {
 		claimErrors := prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_jobs_claim_errors_total",
-				Help: "Claim attempts that failed with a list, identity, or non-conflict update error, by driver",
+				Help: "Claim attempts that failed with an identity or non-conflict update error, by driver",
 			},
 			[]string{"driver_id"},
 		)
@@ -119,24 +118,11 @@ func RegisterQueueMetrics(registry prometheus.Registerer) QueueMetrics {
 		claimRoundsCont := prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_jobs_claim_rounds_contended_total",
-				Help: "Claim rounds that listed candidates but won none (all lost to other workers), by driver",
+				Help: "Claims that exhausted their CAS retries because the job was taken by another worker, by driver",
 			},
 			[]string{"driver_id"},
 		)
 		registry.MustRegister(claimRoundsCont)
-
-		claimCandidates := prometheus.NewGauge(
-			prometheus.GaugeOpts{
-				Name: "grafana_provisioning_jobs_claim_candidates_received",
-				// NOTE: this is the number of unclaimed candidates returned by the most
-				// recent claim poll, not the queue depth. It is capped at the claim list
-				// limit (16) and is subject to claim starvation (the list limit is applied
-				// before the in-memory unclaimed filter), so it can read 0 while a backlog
-				// hides behind claimed rows. Gate autoscaler scale-down on low in_flight too.
-				Help: "Unclaimed candidates seen by the most recent claim poll (capped at the list limit; not queue depth)",
-			},
-		)
-		registry.MustRegister(claimCandidates)
 
 		queueMetrics = QueueMetrics{
 			queueSize:       queueSize,
@@ -145,7 +131,6 @@ func RegisterQueueMetrics(registry prometheus.Registerer) QueueMetrics {
 			claimConflicts:  claimConflicts,
 			claimErrors:     claimErrors,
 			claimRoundsCont: claimRoundsCont,
-			claimCandidates: claimCandidates,
 		}
 	})
 	return queueMetrics
@@ -196,14 +181,6 @@ func (m *QueueMetrics) RecordClaimRoundContended(driverID string) {
 		return
 	}
 	m.claimRoundsCont.WithLabelValues(driverID).Inc()
-}
-
-// SetClaimCandidates records how many unclaimed candidates the latest claim poll saw.
-func (m *QueueMetrics) SetClaimCandidates(n int) {
-	if m.claimCandidates == nil {
-		return
-	}
-	m.claimCandidates.Set(float64(n))
 }
 
 func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
