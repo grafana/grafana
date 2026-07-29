@@ -103,7 +103,7 @@ export function buildDisplayPrompt(args: {
   return parts.join('\n\n');
 }
 
-function formatDatasources(datasources: WizardDatasource[]): string {
+export function formatDatasources(datasources: WizardDatasource[]): string {
   const maxListed = 50;
   const lines = datasources
     .slice(0, maxListed)
