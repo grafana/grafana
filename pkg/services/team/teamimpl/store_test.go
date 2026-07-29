@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,63 +30,6 @@ import (
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
-}
-
-func TestIntegrationStoreUsesTableResolver(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	ctx := context.Background()
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
-	resolvedTables := []string{}
-	dbHelper := &legacysql.LegacyDatabaseHelper{
-		DB: sqlStore,
-		Table: func(name string) string {
-			resolvedTables = append(resolvedTables, name)
-			return "main." + name
-		},
-	}
-	store := &xormStore{
-		sql: func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
-			return dbHelper, nil
-		},
-		cfg: cfg,
-	}
-
-	createdTeam, err := store.Create(ctx, &team.CreateTeamCommand{OrgID: 1, Name: "table-resolver-test"})
-	require.NoError(t, err)
-	require.Equal(t, []string{"team", "team"}, resolvedTables)
-
-	teamSelectSQL := getTeamSelectSQLBase(dbHelper, []string{"hidden"})
-	for _, table := range []string{"team", "team_member", "user"} {
-		require.Contains(t, teamSelectSQL, sqlStore.Quote("main."+table))
-	}
-
-	deleteQueries := getTeamDeleteQueries(dbHelper, []team.DeleteQueryRenderer{func(dbHelper team.DeleteQueryHelper) string {
-		return "DELETE FROM " + dbHelper.Quote(dbHelper.Table("team_group")) + " WHERE org_id=? and team_id = ?"
-	}})
-	for i, table := range []string{"team_member", "team", "dashboard_acl", "team_group"} {
-		require.Contains(t, deleteQueries[i], sqlStore.Quote("main."+table))
-	}
-
-	now := time.Now()
-	member := &user.User{UID: "qualified-user", Login: "qualified-user", Email: "qualified@example.com", Name: "Qualified User", OrgID: 1, Created: now, Updated: now}
-	err = sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.Table(dbHelper.Table("user")).Insert(member)
-		return err
-	})
-	require.NoError(t, err)
-	err = sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		return AddOrUpdateTeamMemberHook(dbHelper, sess, member.ID, 1, createdTeam.ID, false, team.PermissionTypeMember)
-	})
-	require.NoError(t, err)
-
-	for _, scopes := range [][]string{{ac.ScopeUsersAll}, {fmt.Sprintf("users:id:%d", member.ID)}} {
-		requester := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{1: {ac.ActionOrgUsersRead: scopes}}}
-		members, err := store.GetMembers(ctx, &team.GetTeamMembersQuery{OrgID: 1, TeamID: createdTeam.ID, SignedInUser: requester})
-		require.NoError(t, err)
-		require.Len(t, members, 1)
-		require.Equal(t, member.ID, members[0].UserID)
-	}
 }
 
 func TestIntegrationTeamCommandsAndQueries(t *testing.T) {

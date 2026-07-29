@@ -161,7 +161,7 @@ func (ss *xormStore) Update(ctx context.Context, cmd *team.UpdateTeamCommand) er
 }
 
 func getTeamDeleteQueries(dbHelper *legacysql.LegacyDatabaseHelper, renderers []team.DeleteQueryRenderer) []string {
-	deletes := []string{
+	deletes := []string{ //nolint:prealloc
 		"DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("team_member")) + " WHERE org_id=? and team_id = ?",
 		"DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("team")) + " WHERE org_id=? and id = ?",
 		"DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("dashboard_acl")) + " WHERE org_id=? and team_id = ?",
@@ -597,13 +597,17 @@ func (ss *xormStore) RemoveUsersMemberships(ctx context.Context, userID int64) e
 // If external is specified, only memberships provided by an external auth provider will be listed
 // This function doesn't perform any accesscontrol filtering.
 func (ss *xormStore) GetMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error) {
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	query := &team.GetTeamMembersQuery{
 		OrgID:    orgID,
 		UserID:   userID,
 		External: external,
 	}
-	queryResult, err := ss.getTeamMembers(ctx, query, nil)
-	return queryResult, err
+	return ss.getTeamMembers(ctx, dbHelper, query, nil)
 }
 
 // GetTeamMembers return a list of members for the specified team filtered based on the user's permissions
@@ -623,18 +627,14 @@ func (ss *xormStore) GetMembers(ctx context.Context, query *team.GetTeamMembersQ
 		return nil, err
 	}
 
-	return ss.getTeamMembers(ctx, query, acFilter)
+	return ss.getTeamMembers(ctx, dbHelper, query, acFilter)
 }
 
 // getTeamMembers return a list of members for the specified team
-func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery, acUserFilter *ac.SQLFilter) ([]*team.TeamMemberDTO, error) {
+func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, query *team.GetTeamMembersQuery, acUserFilter *ac.SQLFilter) ([]*team.TeamMemberDTO, error) {
 	queryResult := make([]*team.TeamMemberDTO, 0)
-	dbHelper, err := ss.sql(ctx)
-	if err != nil {
-		return nil, err
-	}
 
-	err = dbHelper.DB.WithDbSession(ctx, func(dbSess *db.Session) error {
+	err := dbHelper.DB.WithDbSession(ctx, func(dbSess *db.Session) error {
 		userTable := dbHelper.DB.Quote(dbHelper.Table("user"))
 		teamTable := dbHelper.DB.Quote(dbHelper.Table("team"))
 		userAuthTable := dbHelper.DB.Quote(dbHelper.Table("user_auth"))
