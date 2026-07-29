@@ -2612,10 +2612,9 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 	assert.False(t, bi.isDeclaredField(resource.SEARCH_FIELD_IS_DELETED))
 }
 
-// TestScopeQueryKeepsScores guards ranking against the exclusion clause: bleve
-// scores a boolean query with one Must clause exactly as that clause alone, and
-// MustNot adds nothing. A future scopeQuery that used Should or a boost would
-// quietly reweight every search.
+// TestScopeQueryKeepsScores pins both scopes to the unscoped query's scores. The
+// marker has to sit in a non-scoring position, or absolute scores move with the
+// amount of trash in the index.
 func TestScopeQueryKeepsScores(t *testing.T) {
 	key := resource.NamespacedResource{Namespace: "default", Group: "example.test", Resource: "widgets"}
 
@@ -2623,19 +2622,27 @@ func TestScopeQueryKeepsScores(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
 
-	titles := map[string]string{
-		"a": "hello world",
-		"b": "hello hello world of hello",
-		"c": "world of warcraft",
-		"d": "hello",
+	docs := []struct {
+		name    string
+		title   string
+		deleted bool
+	}{
+		{name: "live-1", title: "hello world"},
+		{name: "live-2", title: "hello hello world of hello"},
+		{name: "trashed-1", title: "hello there", deleted: true},
+		{name: "trashed-2", title: "hello hello there", deleted: true},
 	}
 	index, err := backend.BuildIndex(t.Context(), key, 5, "test", func(index resource.ResourceIndex) (int64, error) {
-		items := make([]*resource.BulkIndexItem, 0, len(titles))
-		for name, title := range titles {
-			items = append(items, &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
-				Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name},
-				Title: title,
-			}})
+		items := make([]*resource.BulkIndexItem, 0, len(docs))
+		for _, d := range docs {
+			doc := &resource.IndexableDocument{
+				Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: d.name},
+				Title: d.title,
+			}
+			if d.deleted {
+				doc.IsDeleted = new(true)
+			}
+			items = append(items, &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: doc})
 		}
 		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: items})
 	}, nil, false, time.Time{}, 0)
@@ -2646,17 +2653,30 @@ func TestScopeQueryKeepsScores(t *testing.T) {
 	textQuery := bleve.NewMatchQuery("hello")
 	textQuery.SetField(resource.SEARCH_FIELD_TITLE)
 
-	scores := func(q query.Query) []string {
+	scores := func(q query.Query) map[string]float64 {
 		req := bleve.NewSearchRequest(q)
 		req.Size = 10
 		res, err := bi.index.Search(req)
 		require.NoError(t, err)
-		out := make([]string, 0, len(res.Hits))
+		out := map[string]float64{}
 		for _, hit := range res.Hits {
-			out = append(out, fmt.Sprintf("%s=%.6f", hit.ID, hit.Score))
+			out[hit.ID] = hit.Score
 		}
 		return out
 	}
 
-	assert.Equal(t, scores(textQuery), scores(scopeQuery(textQuery, false)))
+	id := func(name string) string { return key.Namespace + "/" + key.Group + "/" + key.Resource + "/" + name }
+
+	unscoped := scores(textQuery)
+	require.Len(t, unscoped, len(docs))
+
+	assert.Equal(t, map[string]float64{
+		id("live-1"): unscoped[id("live-1")],
+		id("live-2"): unscoped[id("live-2")],
+	}, scores(scopeQuery(textQuery, false)))
+
+	assert.Equal(t, map[string]float64{
+		id("trashed-1"): unscoped[id("trashed-1")],
+		id("trashed-2"): unscoped[id("trashed-2")],
+	}, scores(scopeQuery(textQuery, true)))
 }

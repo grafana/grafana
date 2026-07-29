@@ -102,7 +102,10 @@ type IndexBuildInfo struct {
 	Features         []IndexFeature  // Index features the index was built with. Empty on indexes built before index features existed.
 }
 
-// IndexFeature names a mapping change an older index cannot satisfy.
+// IndexFeature names a mapping change an older index cannot satisfy. Only for
+// changes no declared search field describes, such as an internal marker: a
+// declared field already moves IndexAffectingHash. Choosing wrong is silent — no
+// rebuild, missing data, no error.
 type IndexFeature string
 
 // IndexFeatureDeletedMarker means the index maps SEARCH_FIELD_IS_DELETED. An

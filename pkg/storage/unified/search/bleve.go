@@ -2406,13 +2406,15 @@ func scopeQuery(q query.Query, deleted bool) query.Query {
 	marked := bleve.NewBoolFieldQuery(true)
 	marked.SetField(resource.SEARCH_FIELD_IS_DELETED)
 
-	if deleted {
-		return bleve.NewConjunctionQuery(q, marked)
-	}
-
 	scoped := bleve.NewBooleanQuery()
 	scoped.AddMust(q)
-	scoped.AddMustNot(marked)
+	if deleted {
+		// Filter, not Must: a scoring clause would tie absolute scores to how much
+		// trash the index holds. MustNot never scores.
+		scoped.AddFilter(marked)
+	} else {
+		scoped.AddMustNot(marked)
+	}
 	return scoped
 }
 
