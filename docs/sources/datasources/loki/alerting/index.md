@@ -35,7 +35,7 @@ Before you create alert rules with Loki data, ensure you have:
 - A [configured Loki data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure/).
 - Permissions to create alert rules in Grafana.
 - Familiarity with [Grafana Alerting concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/).
-- For data source-managed rules, a Loki deployment with the ruler enabled, and the **Manage alert rules in Alerting UI** setting turned on in the data source configuration. Optionally, select an Alertmanager data source to handle the resulting alerts.
+- For data source-managed rules, a Loki deployment with the ruler enabled, and the **Manage alert rules in Alerting UI** setting turned on in the data source configuration. To route the resulting alerts, add a separate [Alertmanager data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/alertmanager/).
 
 ## Supported queries for alerting
 
@@ -44,6 +44,32 @@ Alert rules require queries that return numeric data that Grafana can evaluate a
 {{< admonition type="note" >}}
 Use a metric query for alerting, not a plain log query. A log query returns log lines, which Grafana can't evaluate against a threshold.
 {{< /admonition >}}
+
+The following queries are common starting points for alerting. Replace the label matchers with values from your own logs.
+
+Rate of error lines per second:
+
+```logql
+sum(rate({app="my-app"} |= `error` [5m]))
+```
+
+Error rate broken down by status code, to alert per endpoint or service:
+
+```logql
+sum by (status) (rate({app="nginx"} | logfmt | status=~`5..` [5m]))
+```
+
+Count of slow requests, for a latency alert:
+
+```logql
+sum(count_over_time({app="my-app"} | logfmt | duration > 1s [5m]))
+```
+
+Detect a service that stopped logging by alerting when the count drops to zero:
+
+```logql
+sum(count_over_time({app="my-app"} [10m]))
+```
 
 ## Create a Grafana-managed alert rule
 
@@ -86,7 +112,7 @@ This example fires when the rate of log lines that contain `error` exceeds a thr
 
 When you turn on **Manage alert rules in Alerting UI** for the Loki data source, you can create and edit alert and recording rules that the Loki ruler stores and evaluates. These rules appear in the Grafana Alerting UI alongside your Grafana-managed rules, grouped under the Loki data source.
 
-To route the resulting alerts, select an Alertmanager data source in the Loki data source configuration. For more information, refer to [Configure the Loki data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure/#alerting) and [Data source-managed alert rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/).
+The Loki data source configuration doesn't include Alertmanager routing. To route the resulting alerts, add a separate [Alertmanager data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/alertmanager/). For more information, refer to [Configure the Loki data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/configure/#alerting) and [Data source-managed alert rules](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/).
 
 ## Best practices
 
