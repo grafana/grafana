@@ -350,36 +350,26 @@ func TestBuildSearchRequest_filterLeafValidation(t *testing.T) {
 	// Synthetic expression UIDs are never indexed as query datasources, so they
 	// are dropped from the filter rather than rejected — matching what the
 	// in-memory pass used to do when it built the rule's datasource set.
-	t.Run("datasourceUIDs drops synthetic expression UIDs", func(t *testing.T) {
+	t.Run("rejects synthetic datasourceUIDs", func(t *testing.T) {
 		gr := alertrule.ResourceInfo.GroupResource()
-		reqFor := func(vals ...string) *resourcepb.ResourceSearchRequest {
+		reqFor := func(vals ...string) (*resourcepb.ResourceSearchRequest, error) {
 			body := model.CreateSearchRulesRequestBody{Where: &model.CreateSearchRulesRequestSearchWhereNode{
 				Filter: &model.CreateSearchRulesRequestSearchFilterLeaf{Field: fieldDatasourceUIDs, Operator: opIn, Values: vals},
 			}}
 			req, _, err := buildSearchRequest(body, "default", gr, nil)
-			require.NoError(t, err)
-			return req
+			return req, err
 		}
 
-		t.Run("mixed with a real UID keeps only the real one", func(t *testing.T) {
-			req := reqFor("ds1", expr.DatasourceUID, expr.OldDatasourceUID, expr.MLDatasourceUID)
+		t.Run("accepts real datasources", func(t *testing.T) {
+			req, err := reqFor("ds1", "ds2", "ds3")
+			require.NoError(t, err)
 			require.Len(t, req.Options.Fields, 1)
-			assert.Equal(t, []string{"ds1"}, req.Options.Fields[0].Values)
-			assert.Equal(t, []string{"ds1"}, extractFilters(req).datasourceUIDs)
+			assert.Equal(t, []string{"ds1", "ds2", "ds3"}, req.Options.Fields[0].Values)
 		})
 
-		// An empty requirement reads as "match anything" on both backends, so the
-		// leaf has to be dropped instead of sent with no values.
-		t.Run("all synthetic drops the requirement", func(t *testing.T) {
-			req := reqFor(expr.DatasourceUID)
-			assert.Empty(t, req.Options.Fields)
-			assert.Empty(t, extractFilters(req).datasourceUIDs)
-		})
-
-		t.Run("real UIDs pass through untouched", func(t *testing.T) {
-			req := reqFor("ds1", "ds2")
-			require.Len(t, req.Options.Fields, 1)
-			assert.Equal(t, []string{"ds1", "ds2"}, req.Options.Fields[0].Values)
+		t.Run("rejects synethic datasources", func(t *testing.T) {
+			_, err := reqFor(expr.DatasourceUID)
+			require.Error(t, err)
 		})
 	})
 

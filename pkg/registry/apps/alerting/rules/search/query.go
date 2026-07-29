@@ -263,18 +263,10 @@ func applyFilter(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearch
 
 	values := leaf.Values
 	if leaf.Field == fieldDatasourceUIDs {
-		// Synthetic expression datasources are never indexed as query
-		// datasources — the unified builder skips them (appendSourceUID) and the
-		// result column is built the same way. The legacy backend pushes this
-		// filter into a LIKE over the stored query JSON, which does contain the
-		// expression nodes, so drop the values here to keep the two agreeing.
-		//
-		// Dropping every value leaves the filter with nothing to match, so the
-		// leaf is skipped entirely rather than sent as an empty requirement,
-		// which both backends would read as "match anything".
-		values = queryDatasourceUIDs(values)
-		if len(values) == 0 {
-			return nil
+		for _, v := range values {
+			if expr.NodeTypeFromDatasourceUID(v) != expr.TypeDatasourceNode {
+				return fmt.Errorf("string value %q is reserved and cannot be filtered on", v)
+			}
 		}
 	}
 
@@ -284,18 +276,6 @@ func applyFilter(req *resourcepb.ResourceSearchRequest, leaf *model.CreateSearch
 		Values:   values,
 	})
 	return nil
-}
-
-// queryDatasourceUIDs keeps only the UIDs that name a datasource a user queries,
-// dropping the synthetic expression nodes.
-func queryDatasourceUIDs(uids []string) []string {
-	out := make([]string, 0, len(uids))
-	for _, uid := range uids {
-		if isQueryDatasource(uid) {
-			out = append(out, uid)
-		}
-	}
-	return out
 }
 
 // legacyUnsupportedFilterFields are declared in the kinds' searchFields (so the
