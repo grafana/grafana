@@ -77,7 +77,7 @@ func TestClaim_AlreadyClaimed(t *testing.T) {
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	claimed, rollback, err := store.Claim(ctx, "stacks-123", "test-job")
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "test-job", "0")
 	require.ErrorIs(t, err, ErrAlreadyClaimed)
 	assert.Nil(t, claimed)
 	assert.Nil(t, rollback)
@@ -96,7 +96,7 @@ func TestClaim_NotFound(t *testing.T) {
 	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
 	require.NoError(t, err)
 
-	claimed, rollback, err := store.Claim(ctx, "stacks-123", "no-such-job")
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "no-such-job", "0")
 	require.Error(t, err)
 	assert.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
 	assert.Nil(t, claimed)
@@ -130,7 +130,7 @@ func TestClaim_RetriesOnConflict(t *testing.T) {
 		return false, nil, nil
 	})
 
-	claimed, rollback, err := store.Claim(ctx, "stacks-123", "test-job")
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "test-job", "0")
 	require.NoError(t, err, "a transient conflict on a still-unclaimed job should be retried")
 	require.NotNil(t, claimed)
 	defer rollback()
@@ -185,7 +185,7 @@ func TestClaim_ConflictThenClaimedByOther(t *testing.T) {
 		return true, nil, apierrors.NewConflict(provisioning.JobResourceInfo.GroupResource(), "test-job", errors.New("simulated conflict"))
 	})
 
-	claimed, rollback, err := store.Claim(ctx, "stacks-123", "test-job")
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "test-job", "0")
 	require.ErrorIs(t, err, ErrAlreadyClaimed)
 	assert.Nil(t, claimed)
 	assert.Nil(t, rollback)
@@ -420,8 +420,8 @@ func TestClaim_RecordsClaimMetrics(t *testing.T) {
 	require.NoError(t, err)
 
 	// Empty store: nothing to claim -> candidates gauge 0, no win.
-	_, _, err = store.Claim(ctx, "0")
-	require.ErrorIs(t, err, ErrNoJobs)
+	_, _, err = store.Claim(ctx, "stacks-123", "job-1", "0")
+	require.Error(t, err)
 	require.Equal(t, 0.0, testutil.ToFloat64(store.queueMetrics.claimCandidates))
 	require.Equal(t, 0.0, testutil.ToFloat64(store.queueMetrics.claimed.WithLabelValues("0")))
 
@@ -432,7 +432,7 @@ func TestClaim_RecordsClaimMetrics(t *testing.T) {
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	claimed, rollback, err := store.Claim(ctx, "0")
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "job-1", "0")
 	require.NoError(t, err)
 	require.NotNil(t, claimed)
 	defer rollback()
@@ -467,7 +467,7 @@ func TestClaim_WaitRecordedOnlyOnSuccessfulClaim(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	claimed, rollback, err := store.Claim(ctx, "0")
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "job-a", "0")
 	require.NoError(t, err)
 	require.NotNil(t, claimed)
 	defer rollback()
@@ -497,7 +497,7 @@ func TestClaim_RecordsErrorOnUpdateFailure(t *testing.T) {
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	_, _, err = store.Claim(ctx, "0")
+	_, _, err = store.Claim(ctx, "stacks-123", "job-1", "0")
 	require.Error(t, err)
 	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimErrors.WithLabelValues("0")))
 }
