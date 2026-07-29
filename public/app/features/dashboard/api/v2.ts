@@ -36,7 +36,7 @@ import {
   type ListDashboardHistoryOptions,
   type ListDeletedDashboardsOptions,
 } from './types';
-import { buildRestorePayload, isV0V1StoredVersion } from './utils';
+import { buildRestorePayload, fetchDeletedDashboard, isV0V1StoredVersion } from './utils';
 
 export function getK8sV2DashboardApiConfig() {
   return {
@@ -255,6 +255,10 @@ export class K8sDashboardV2API
 
   async listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse> {
     return this.client.listAsTable({ ...options, labelSelector: 'grafana.app/get-trash=true' });
+  }
+
+  async getDeletedDashboard(name: string): Promise<Resource<DashboardV2Spec> | undefined> {
+    return fetchDeletedDashboard(this.client, name);
   }
 
   async getDashboard(name: string, params?: Record<string, unknown>): Promise<Resource<DashboardV2Spec>> {

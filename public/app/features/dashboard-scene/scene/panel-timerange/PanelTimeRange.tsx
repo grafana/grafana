@@ -9,15 +9,18 @@ import {
   rangeUtil,
   type TimeRange,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   type ExtraQueryDescriptor,
+  getCompareSeriesRefId,
   type SceneComponentProps,
   type SceneDataQuery,
   sceneGraph,
   type SceneTimeRangeLike,
   type SceneTimeRangeState,
   SceneTimeRangeTransformerBase,
+  timeShiftAlignmentProcessor,
   VariableDependencyConfig,
   VizPanel,
 } from '@grafana/scenes';
@@ -26,8 +29,8 @@ import { type TimeOverrideResult } from 'app/features/dashboard/utils/panel';
 
 import { getDashboardSceneFor } from '../../utils/utils';
 
-import { DEFAULT_COMPARE_OPTIONS, PanelTimeRangeDrawer, type PanelTimeRangeZoomBehavior } from './PanelTimeRangeDrawer';
-import { getCompareSeriesRefId, getCompareTimeRange, timeShiftAlignmentProcessor } from './utils';
+import { getCompareOptions, PanelTimeRangeDrawer, type PanelTimeRangeZoomBehavior } from './PanelTimeRangeDrawer';
+import { getCompareTimeRange } from './utils';
 
 export interface PanelTimeRangeState extends SceneTimeRangeState {
   enabled?: boolean;
@@ -235,8 +238,12 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
     }
 
     if (compareWith) {
-      const option = DEFAULT_COMPARE_OPTIONS.find((x) => x.value === compareWith);
-      const text = option ? `compared to ${option.label.toLowerCase()}` : '';
+      const option = getCompareOptions().find((x) => x.value === compareWith);
+      const text = option
+        ? t('dashboard.panel.time-range-settings.compared-to', 'compared to {{option}}', {
+            option: option.label.toLowerCase(),
+          })
+        : '';
       infoBlocks.push(text);
     }
 

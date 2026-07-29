@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 	bolterrors "go.etcd.io/bbolt/errors"
 	"go.uber.org/goleak"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
 	authlib "github.com/grafana/authlib/types"
@@ -52,14 +53,11 @@ func TestBleveBackend(t *testing.T) {
 
 	// Register the dashboard provider so the static fields.* mapping is built
 	// from declared fields, as in production; without it custom fields drop.
-	dashInfo, err := builders.DashboardBuilder(nil)
-	require.NoError(t, err)
-
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): dashInfo.SearchFieldsProvider,
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): DashboardSearchFieldsProviderForTest(),
 		}),
 	}, nil)
 	require.NoError(t, err)
@@ -74,14 +72,11 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 
 	// Register the dashboard provider so the index is built from declared
 	// fields, as in production.
-	dashInfo, err := builders.DashboardBuilder(nil)
-	require.NoError(t, err)
-
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): dashInfo.SearchFieldsProvider,
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): DashboardSearchFieldsProviderForTest(),
 		}),
 	}, nil)
 	require.NoError(t, err)
@@ -816,10 +811,12 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 }
 
 func TestGetSortFields(t *testing.T) {
-	dashboardInfo, err := builders.DashboardBuilder(nil)
+	dashboardFields, err := resource.SearchableFieldsFromProvider(DashboardSearchFieldsProviderForTest(), "dashboard.grafana.app", "dashboards")
 	require.NoError(t, err)
-	dashboardFields, err := resource.SearchableFieldsFromProvider(dashboardInfo.SearchFieldsProvider, dashboardInfo.GroupResource.Group, dashboardInfo.GroupResource.Resource)
-	require.NoError(t, err)
+	idx := &bleveIndex{
+		fields:       dashboardFields,
+		searchFields: newKindSearchFields(DashboardSearchFieldsProviderForTest(), "dashboard.grafana.app", "dashboards", nil),
+	}
 
 	t.Run("will prepend 'fields.' to sort fields when they are dashboard fields", func(t *testing.T) {
 		searchReq := &resourcepb.ResourceSearchRequest{
@@ -827,7 +824,7 @@ func TestGetSortFields(t *testing.T) {
 				{Field: "views_total", Desc: false},
 			},
 		}
-		sortFields := getSortFields(searchReq, dashboardFields)
+		sortFields := idx.getSortFields(searchReq)
 		assert.Equal(t, []string{"fields.views_total", resource.SEARCH_FIELD_NAME}, sortFields)
 	})
 	t.Run("will prepend sort fields with a '-' when sort is Desc", func(t *testing.T) {
@@ -836,7 +833,7 @@ func TestGetSortFields(t *testing.T) {
 				{Field: "views_total", Desc: true},
 			},
 		}
-		sortFields := getSortFields(searchReq, dashboardFields)
+		sortFields := idx.getSortFields(searchReq)
 		assert.Equal(t, []string{"-fields.views_total", resource.SEARCH_FIELD_NAME}, sortFields)
 	})
 	t.Run("will not prepend 'fields.' to common fields", func(t *testing.T) {
@@ -845,7 +842,7 @@ func TestGetSortFields(t *testing.T) {
 				{Field: "description", Desc: false},
 			},
 		}
-		sortFields := getSortFields(searchReq, dashboardFields)
+		sortFields := idx.getSortFields(searchReq)
 		assert.Equal(t, []string{"description", resource.SEARCH_FIELD_NAME}, sortFields)
 	})
 	t.Run("will use title_phrase for title and append name as tie-breaker", func(t *testing.T) {
@@ -854,7 +851,7 @@ func TestGetSortFields(t *testing.T) {
 				{Field: resource.SEARCH_FIELD_TITLE, Desc: false},
 			},
 		}
-		sortFields := getSortFields(searchReq, dashboardFields)
+		sortFields := idx.getSortFields(searchReq)
 		assert.Equal(t, []string{resource.SEARCH_FIELD_TITLE_PHRASE, resource.SEARCH_FIELD_NAME}, sortFields)
 	})
 	t.Run("will not append a duplicate name sort", func(t *testing.T) {
@@ -863,15 +860,15 @@ func TestGetSortFields(t *testing.T) {
 				{Field: resource.SEARCH_FIELD_NAME, Desc: true},
 			},
 		}
-		sortFields := getSortFields(searchReq, dashboardFields)
+		sortFields := idx.getSortFields(searchReq)
 		assert.Equal(t, []string{"-" + resource.SEARCH_FIELD_NAME}, sortFields)
 	})
 }
 
 func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 	idx := &bleveIndex{
-		fields:                  resource.StandardSearchFields(),
-		facetFieldByRequestName: facetFieldsForMapping(nil, "", ""),
+		fields:       resource.StandardSearchFields(),
+		searchFields: newKindSearchFields(nil, "", "", nil),
 	}
 
 	t.Run("sorts match-all by title then name", func(t *testing.T) {
@@ -1144,6 +1141,86 @@ func withSearchFields(reg *resource.SearchFieldsRegistry) setupOption {
 	return func(options *BleveOptions) {
 		options.SearchFields = reg
 	}
+}
+
+func withRequiredIndexFeatures(features ...resource.IndexFeature) setupOption {
+	return func(options *BleveOptions) {
+		options.RequiredIndexFeatures = features
+	}
+}
+
+// TestBuildIndexReuseChecksRequiredFeatures covers an on-disk index built before
+// a mapping change: a binary requiring an index feature the index lacks rebuilds
+// rather than serve wrong answers, and reuses the index when it requires none.
+func TestBuildIndexReuseChecksRequiredFeatures(t *testing.T) {
+	ns := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+
+	const (
+		firstIndexDocsCount  = 10
+		secondIndexDocsCount = 20
+	)
+
+	for _, tc := range []struct {
+		name             string
+		required         []resource.IndexFeature
+		expectedDocCount int64
+	}{
+		{
+			name:             "no required feature reuses the index",
+			expectedDocCount: firstIndexDocsCount,
+		},
+		{
+			name:             "newly required feature rebuilds the index",
+			required:         []resource.IndexFeature{"beta"},
+			expectedDocCount: secondIndexDocsCount,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+
+			backend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir))
+			_, err := backend.BuildIndex(t.Context(), ns, firstIndexDocsCount, "test", indexTestDocs(ns, firstIndexDocsCount, 100), nil, false, time.Time{}, 0)
+			require.NoError(t, err)
+			backend.Stop()
+
+			newBackend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir), withRequiredIndexFeatures(tc.required...))
+			idx, err := newBackend.BuildIndex(t.Context(), ns, secondIndexDocsCount, "test", indexTestDocs(ns, secondIndexDocsCount, 100), nil, false, time.Time{}, 0)
+			require.NoError(t, err)
+
+			cnt, err := idx.DocCount(t.Context(), "", nil)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedDocCount, cnt)
+		})
+	}
+}
+
+// TestValidateDownloadedIndexChecksRequiredFeatures covers the other way an
+// outdated index arrives: a snapshot from an older binary, which snapshot
+// selection accepts on version alone.
+func TestValidateDownloadedIndexChecksRequiredFeatures(t *testing.T) {
+	newIndexWithoutFeatures := func(t *testing.T) bleve.Index {
+		t.Helper()
+		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = idx.Close() })
+		require.NoError(t, setRV(idx, 42))
+		return idx
+	}
+
+	t.Run("accepted when no feature is required", func(t *testing.T) {
+		backend, _ := setupBleveBackend(t, withRootDir(t.TempDir()))
+
+		rv, err := backend.validateDownloadedIndex(newIndexWithoutFeatures(t))
+		require.NoError(t, err)
+		require.Equal(t, int64(42), rv)
+	})
+
+	t.Run("rejected when it lacks a required feature", func(t *testing.T) {
+		backend, _ := setupBleveBackend(t, withRootDir(t.TempDir()), withRequiredIndexFeatures("alpha"))
+
+		_, err := backend.validateDownloadedIndex(newIndexWithoutFeatures(t))
+		require.ErrorContains(t, err, "missing required index features [alpha]")
+	})
 }
 func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
 	mapper, err := GetBleveMappings(nil, "", "", nil)
@@ -2359,4 +2436,114 @@ func TestBuildIndexReturnsErrorWhenIndexLocked(t *testing.T) {
 
 	// Clean up: close first backend to release the file lock
 	backend1.Stop()
+}
+
+// TestBleveTextFieldFilterAndSort covers a per-kind field that is both searched
+// as text and used for exact filters and sorting. Those three uses need
+// different index fields, and only the keyword copy can answer the last two.
+func TestBleveTextFieldFilterAndSort(t *testing.T) {
+	group, kindResource := "example.grafana.app", "widgets"
+	gvr := schema.GroupVersionResource{Group: group, Version: "v1", Resource: kindResource}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: {{
+			Name: "note",
+			Type: resource.SearchFieldTypeString,
+			Capabilities: []resource.SearchCapability{
+				resource.SearchCapabilityText,
+				resource.SearchCapabilityFilter,
+				resource.SearchCapabilitySort,
+			},
+		}},
+	}, nil)
+
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          t.TempDir(),
+		FileThreshold: 5,
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource(group, kindResource): provider,
+		}),
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	key := &resourcepb.ResourceKey{Namespace: "ns", Group: group, Resource: kindResource}
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+
+	doc := func(name, note string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:     1,
+				Name:   name,
+				Key:    &resourcepb.ResourceKey{Name: name, Namespace: "ns", Group: group, Resource: kindResource},
+				Title:  name,
+				Fields: map[string]any{"note": note},
+			},
+		}
+	}
+	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
+		Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
+	}, 3, "test", func(index resource.ResourceIndex) (int64, error) {
+		if err := index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				doc("one", "Zeta Apple"),
+				doc("two", "beta gamma"),
+				doc("three", "Cherry Tart"),
+			},
+		}); err != nil {
+			return 0, err
+		}
+		return 1, nil
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	names := func(req *resourcepb.ResourceSearchRequest) []string {
+		req.Limit = 100
+		req.Options.Key = key
+		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{kindResource: true}), req, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		out := make([]string, 0, len(rsp.Results.Rows))
+		for _, row := range rsp.Results.Rows {
+			out = append(out, row.Key.Name)
+		}
+		return out
+	}
+
+	t.Run("filter matches the whole value, ignoring case", func(t *testing.T) {
+		got := names(&resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{Fields: []*resourcepb.Requirement{{
+				Key: "note", Operator: string(selection.Equals), Values: []string{"zeta apple"},
+			}}},
+		})
+		assert.Equal(t, []string{"one"}, got)
+	})
+
+	t.Run("filter does not match a single word of the value", func(t *testing.T) {
+		got := names(&resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{Fields: []*resourcepb.Requirement{{
+				Key: "note", Operator: string(selection.Equals), Values: []string{"Zeta"},
+			}}},
+		})
+		assert.Empty(t, got)
+	})
+
+	// Sorting on the analyzed field would order by each value's first token
+	// ("apple" before "beta"), which is not the order a user asked for.
+	t.Run("sort orders by the whole value, ignoring case", func(t *testing.T) {
+		got := names(&resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{},
+			SortBy:  []*resourcepb.ResourceSearchRequest_Sort{{Field: "note"}},
+		})
+		assert.Equal(t, []string{"two", "three", "one"}, got)
+	})
+
+	t.Run("text search still matches single words", func(t *testing.T) {
+		got := names(&resourcepb.ResourceSearchRequest{
+			Options:     &resourcepb.ListOptions{},
+			Query:       "apple",
+			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "fields.note"}},
+		})
+		assert.Equal(t, []string{"one"}, got)
+	})
 }

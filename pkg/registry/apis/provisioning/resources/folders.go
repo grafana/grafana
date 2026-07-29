@@ -597,6 +597,13 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, tree Folder
 			p = p + "/" // trailing slash indicates folder
 		}
 
+		// Folder titles are not sanitized; reject any unsafe path (traversal,
+		// absolute, too deep) before it reaches the backend, using the same
+		// validation enforced on the import side.
+		if err := IsPathSupported(p); err != nil {
+			return opts.OnFolder(folder, false, fmt.Errorf("unsafe folder path %q: %w", p, err))
+		}
+
 		_, err := fm.repo.Read(ctx, p, opts.Ref)
 		if err != nil && (!errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err)) {
 			return opts.OnFolder(folder, false, fmt.Errorf("check if folder exists before writing: %w", err))

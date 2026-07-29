@@ -3,10 +3,15 @@ package ssosettingstests
 import context "context"
 
 type FakeFallbackStrategy struct {
-	ExpectedIsMatch bool
-	ExpectedConfigs map[string]map[string]any
+	ExpectedIsMatch          bool
+	ExpectedConfigs          map[string]map[string]any
+	ExpectedServesMTSettings bool
 
 	ExpectedError error
+}
+
+func (f *FakeFallbackStrategy) ServesMTSettings() bool {
+	return f.ExpectedServesMTSettings
 }
 
 func NewFakeFallbackStrategy() *FakeFallbackStrategy {

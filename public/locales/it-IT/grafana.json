@@ -5544,135 +5544,6 @@
       "switch-layout-tab": "Cambia layout",
       "tab-title": "Modifica il titolo della scheda"
     },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "Modifica origine dati delle annotazioni",
-        "choose-panels": "Scegli i pannelli",
-        "color": "Colore",
-        "color-description": "Colore da utilizzare per gli indicatori degli eventi di annotazione",
-        "data-source": "Origine dei dati",
-        "display": "Mostra i comandi delle annotazioni in",
-        "display-options": {
-          "above-dashboard": "Sopra la dashboard",
-          "controls-menu": "Menu comandi",
-          "controls-menu-description": "È possibile accedervi quando il menu dei comandi è aperto",
-          "hidden": "Nascosto",
-          "hidden-description": "Nasconde l'interruttore per attivare o disattivare questa annotazione"
-        },
-        "enabled": "Abilitata",
-        "enabled-description": "Se abilitata, la query di annotazione viene emessa a ogni aggiornamento della dashboard",
-        "name": "Nome",
-        "open-query-editor": "Apri l'editor delle query",
-        "open-query-editor-tooltip": "Apri l'editor delle query per configurare la query di annotazione",
-        "panel-filter": {
-          "all-panels": "Tutti i pannelli",
-          "all-panels-description": "Invia i dati di annotazione a tutti i pannelli che supportano le annotazioni",
-          "all-panels-except": "Tutti i pannelli tranne",
-          "all-panels-except-description": "Non inviare dati di annotazione ai seguenti pannelli",
-          "selected-panels": "Pannelli selezionati",
-          "selected-panels-description": "Invia le annotazioni ai pannelli elencati esplicitamente"
-        },
-        "query": "Query",
-        "query-editor-close": "Chiudi",
-        "query-editor-modal-title": "Query di annotazione",
-        "show-in": "Mostra in"
-      },
-      "annotations": {
-        "add-annotation": "Aggiungi annotazione",
-        "reorder": "Trascina per riordinare",
-        "select-annotation": "Seleziona"
-      },
-      "elements": {
-        "annotation": "Annotazione",
-        "annotation-set": "Annotazioni e avvisi",
-        "dashboard": "Dashboard",
-        "element": "Elemento",
-        "filter": "",
-        "filters-set": "",
-        "link-set": "Collegamenti",
-        "local-variable": "Variabile locale",
-        "multiple-elements": "Elementi multipli",
-        "multiple-elements-delete-text": "Desideri davvero eliminare questi elementi?",
-        "multiple-panels": "Pannelli multipli",
-        "multiple-panels-delete-text": "Desideri davvero eliminare questi pannelli? Tutte le query saranno rimosse.",
-        "objects": "Oggetti",
-        "panel": "Pannello",
-        "panels": "Pannelli",
-        "row": "Riga",
-        "rows": "Righe",
-        "section-filters-set": "",
-        "tab": "Scheda",
-        "tabs": "Schede",
-        "variable": "{{type}} variabile",
-        "variable-set": "Variabili"
-      },
-      "links": {
-        "add-link": "Aggiungi link",
-        "reorder": "Trascina per riordinare",
-        "select-link": "Seleziona",
-        "untitled": "Link senza titolo"
-      },
-      "row": {
-        "header": {
-          "hide": "Nascondi",
-          "title": "Intestazione di riga"
-        }
-      },
-      "section-filters": {
-        "title": ""
-      },
-      "section-variables": {
-        "title": "Variabili"
-      },
-      "variable": {
-        "change-type": "",
-        "change-type-aria-label": "Modifica il tipo di variabile",
-        "custom-options": {
-          "apply": "Applica",
-          "change-value": "Modifica il valore variabile",
-          "discard": "Annulla",
-          "modal-title": "Opzioni personalizzate"
-        },
-        "datasource-options": {
-          "name-filter": "Filtro nome",
-          "name-filter-description": "Filtro Regex per le istanze dell'origine dei dati da includere. Lascia vuoto per tutti.",
-          "name-filter-placeholder": "Esempio: /^prod/",
-          "type": "Tipo",
-          "type-placeholder": "Scegli un tipo di sorgente dati"
-        },
-        "description": "Descrizione",
-        "description-placeholder": "Testo descrittivo",
-        "label": "Etichetta",
-        "label-description": "Nome visualizzato facoltativo",
-        "name": "Nome",
-        "open-editor": "Apri l'editor delle variabili",
-        "open-editor-tooltip": "Per ulteriori opzioni sulle variabili, apri l'editor delle variabili",
-        "query-options": {
-          "close": "Chiudi",
-          "modal-title": "Query variabile",
-          "preview": "Anteprima"
-        },
-        "selection-options": {
-          "allow-custom-values": "Consenti valori personalizzati",
-          "allow-custom-values-description": "Consente agli utenti di inserire valori",
-          "category": "Seleziona opzioni",
-          "custom-all-value": "Personalizza tutti i valori",
-          "custom-all-value-description": "Un'espressione regolare con carattere jolly o un altro valore che sta per Tutti",
-          "include-all": "Includi tutti i valori",
-          "include-all-description": "Abilita una singola opzione che rappresenta tutti i valori",
-          "multi-value": "Valori multipli"
-        },
-        "type-category": "Opzioni di {{type}}"
-      },
-      "variables": {
-        "add-variable": "Aggiungi variabile",
-        "change-type": "",
-        "reorder": "Trascina per riordinare",
-        "select-type": "Scegli il tipo di variabile",
-        "select-type-card-tooltip": "Fai clic per selezionare il tipo",
-        "select-variable": "Seleziona"
-      }
-    },
     "empty": {
       "add-library-panel-body": "Aggiungi visualizzazioni condivise con altri dashboard.",
       "add-library-panel-button": "Aggiungi pannello della libreria",
@@ -6192,6 +6063,43 @@
         "title": "Aggiungi",
         "tooltip": "Aggiungi nuovo elemento"
       },
+      "annotation": {
+        "change-data-source": "Modifica origine dati delle annotazioni",
+        "choose-panels": "Scegli i pannelli",
+        "color": "Colore",
+        "color-description": "Colore da utilizzare per gli indicatori degli eventi di annotazione",
+        "data-source": "Origine dei dati",
+        "display": "Mostra i comandi delle annotazioni in",
+        "display-options": {
+          "above-dashboard": "Sopra la dashboard",
+          "controls-menu": "Menu comandi",
+          "controls-menu-description": "È possibile accedervi quando il menu dei comandi è aperto",
+          "hidden": "Nascosto",
+          "hidden-description": "Nasconde l'interruttore per attivare o disattivare questa annotazione"
+        },
+        "enabled": "Abilitata",
+        "enabled-description": "Se abilitata, la query di annotazione viene emessa a ogni aggiornamento della dashboard",
+        "name": "Nome",
+        "open-query-editor": "Apri l'editor delle query",
+        "open-query-editor-tooltip": "Apri l'editor delle query per configurare la query di annotazione",
+        "panel-filter": {
+          "all-panels": "Tutti i pannelli",
+          "all-panels-description": "Invia i dati di annotazione a tutti i pannelli che supportano le annotazioni",
+          "all-panels-except": "Tutti i pannelli tranne",
+          "all-panels-except-description": "Non inviare dati di annotazione ai seguenti pannelli",
+          "selected-panels": "Pannelli selezionati",
+          "selected-panels-description": "Invia le annotazioni ai pannelli elencati esplicitamente"
+        },
+        "query": "Query",
+        "query-editor-close": "Chiudi",
+        "query-editor-modal-title": "Query di annotazione",
+        "show-in": "Mostra in"
+      },
+      "annotations": {
+        "add-annotation": "Aggiungi annotazione",
+        "reorder": "Trascina per riordinare",
+        "select-annotation": "Seleziona"
+      },
       "dashboard-options": {
         "title": "Opzioni",
         "tooltip": "Opzioni della dashboard"
@@ -6200,20 +6108,110 @@
         "title": "Codice",
         "tooltip": "Modifica come codice"
       },
+      "elements": {
+        "annotation": "Annotazione",
+        "annotation-set": "Annotazioni e avvisi",
+        "dashboard": "Dashboard",
+        "element": "Elemento",
+        "filter": "",
+        "filters-set": "",
+        "link-set": "Collegamenti",
+        "local-variable": "Variabile locale",
+        "multiple-elements": "Elementi multipli",
+        "multiple-elements-delete-text": "Desideri davvero eliminare questi elementi?",
+        "multiple-panels": "Pannelli multipli",
+        "multiple-panels-delete-text": "Desideri davvero eliminare questi pannelli? Tutte le query saranno rimosse.",
+        "objects": "Oggetti",
+        "panel": "Pannello",
+        "panels": "Pannelli",
+        "row": "Riga",
+        "rows": "Righe",
+        "section-filters-set": "",
+        "tab": "Scheda",
+        "tabs": "Schede",
+        "variable": "{{type}} variabile",
+        "variable-set": "Variabili"
+      },
       "export": {
         "title": "Esporta"
       },
       "filters": "",
+      "links": {
+        "add-link": "Aggiungi link",
+        "reorder": "Trascina per riordinare",
+        "select-link": "Seleziona",
+        "untitled": "Link senza titolo"
+      },
       "open": "",
       "outline": {
         "title": "Schema",
         "tooltip": "Schema dei contenuti"
       },
       "redo": "Ripeti",
+      "row": {
+        "header": {
+          "hide": "Nascondi",
+          "title": "Intestazione di riga"
+        }
+      },
+      "section-filters": {
+        "title": ""
+      },
+      "section-variables": {
+        "title": "Variabili"
+      },
       "snapshot": {
         "tooltip": "Apri la dashboard originale"
       },
       "undo": "Annulla",
+      "variable": {
+        "change-type": "",
+        "change-type-aria-label": "Modifica il tipo di variabile",
+        "custom-options": {
+          "apply": "Applica",
+          "change-value": "Modifica il valore variabile",
+          "discard": "Annulla",
+          "modal-title": "Opzioni personalizzate"
+        },
+        "datasource-options": {
+          "name-filter": "Filtro nome",
+          "name-filter-description": "Filtro Regex per le istanze dell'origine dei dati da includere. Lascia vuoto per tutti.",
+          "name-filter-placeholder": "Esempio: /^prod/",
+          "type": "Tipo",
+          "type-placeholder": "Scegli un tipo di sorgente dati"
+        },
+        "description": "Descrizione",
+        "description-placeholder": "Testo descrittivo",
+        "label": "Etichetta",
+        "label-description": "Nome visualizzato facoltativo",
+        "name": "Nome",
+        "open-editor": "Apri l'editor delle variabili",
+        "open-editor-tooltip": "Per ulteriori opzioni sulle variabili, apri l'editor delle variabili",
+        "query-options": {
+          "close": "Chiudi",
+          "modal-title": "Query variabile",
+          "preview": "Anteprima"
+        },
+        "selection-options": {
+          "allow-custom-values": "Consenti valori personalizzati",
+          "allow-custom-values-description": "Consente agli utenti di inserire valori",
+          "category": "Seleziona opzioni",
+          "custom-all-value": "Personalizza tutti i valori",
+          "custom-all-value-description": "Un'espressione regolare con carattere jolly o un altro valore che sta per Tutti",
+          "include-all": "Includi tutti i valori",
+          "include-all-description": "Abilita una singola opzione che rappresenta tutti i valori",
+          "multi-value": "Valori multipli"
+        },
+        "type-category": "Opzioni di {{type}}"
+      },
+      "variables": {
+        "add-variable": "Aggiungi variabile",
+        "change-type": "",
+        "reorder": "Trascina per riordinare",
+        "select-type": "Scegli il tipo di variabile",
+        "select-type-card-tooltip": "Fai clic per selezionare il tipo",
+        "select-variable": "Seleziona"
+      },
       "view-panel": {
         "disabled": "",
         "fanout-by-series": "",
@@ -6807,9 +6805,6 @@
       "title-hidden-count_one": "Nascosto ({{count}})",
       "title-hidden-count_other": "Nascosti ({{count}})"
     },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "Lascia un feedback sulla nuova esperienza di modifica della dashboard"
-    },
     "dashboard-link-form": {
       "back-to-list": "Torna all'elenco",
       "label-icon": "Icona",
@@ -6881,6 +6876,9 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Controlli della dashboard"
+    },
+    "dashboard-sidebar-renderer": {
+      "title-feedback-dashboard-editing-experience": "Lascia un feedback sulla nuova esperienza di modifica della dashboard"
     },
     "data-source-variable-form": {
       "data-source-options": "Opzioni dell'origine dei dati",

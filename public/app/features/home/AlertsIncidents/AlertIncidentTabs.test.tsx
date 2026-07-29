@@ -1,22 +1,30 @@
 import { http, HttpResponse } from 'msw';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
+import { PluginIncludeType, type PluginMeta } from '@grafana/data';
 import { setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
+import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { ACTIVE_INCIDENTS_QUERY_LIMIT, type IncidentPreview } from 'app/features/alerting/unified/api/incidentsApi';
+import {
+  installAppPluginMeta,
+  pluginMeta,
+  uninstallAppPluginMeta,
+} from 'app/features/alerting/unified/testSetup/plugins';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertIncidentTabs } from './AlertIncidentTabs';
 
 jest.mock('../analytics/main', () => ({
-  alertsCardClicked: jest.fn(),
-  incidentsCardClicked: jest.fn(),
+  ctaClicked: jest.fn(),
   tabChanged: jest.fn(),
   clearHistoryClicked: jest.fn(),
-  emptyCtaClicked: jest.fn(),
+  homepageViewed: jest.fn(),
 }));
 
 setBackendSrv(backendSrv);
@@ -50,6 +58,38 @@ function mockAlerts(alerts: AlertmanagerAlert[]) {
   server.use(http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json(alerts)));
 }
 
+/** Report the IRM plugin as absent so the component only shows the alerts tab. */
+function mockNoIrmPlugin() {
+  uninstallAppPluginMeta(SupportedPlugin.Irm);
+  server.use(http.get('/api/plugins/:pluginId/settings', () => HttpResponse.json({ enabled: false })));
+}
+
+/** Install the IRM plugin with optional page includes for access gating. */
+function mockIrmPlugin(settings?: Partial<PluginMeta>) {
+  // the bridge checks bootdata before requesting settings, so the app has to be registered there too
+  installAppPluginMeta(pluginMeta[SupportedPlugin.Irm]);
+  server.use(
+    http.get(`/api/plugins/${SupportedPlugin.Irm}/settings`, () =>
+      HttpResponse.json({ ...pluginMeta[SupportedPlugin.Irm], includes: [], ...settings })
+    )
+  );
+}
+
+function mockIncidents(incidents: IncidentPreview[], { hasMore = false } = {}) {
+  server.use(
+    http.post('/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews', () =>
+      HttpResponse.json({ incidentPreviews: incidents, cursor: { hasMore, nextValue: hasMore ? 'next' : '' } })
+    )
+  );
+}
+
+const activeIncident: IncidentPreview = {
+  incidentID: '101',
+  title: 'Database outage',
+  severityLabel: 'Critical',
+  createdTime: '2024-01-02T10:00:00Z',
+};
+
 beforeEach(async () => {
   setPluginComponentsHook(() => ({ components: [], isLoading: false }));
   // Grant alerting permission by default
@@ -58,6 +98,9 @@ beforeEach(async () => {
     .mockImplementation((action: string) => action === AccessControlAction.AlertingInstanceRead);
   mockTeams([]);
   mockAlerts([]);
+  // The component probes the IRM plugin settings; absent by default.
+  // Tests that need the incidents tab layer mockIrmPlugin() on top.
+  mockNoIrmPlugin();
   // AlertIncidentTabs only ships in the growth-homepage redesign, which is flag-gated,
   // so exercise it in the same flag state it renders in production.
   await act(async () => {
@@ -71,14 +114,18 @@ afterEach(async () => {
     setTestFlags({});
   });
   jest.restoreAllMocks();
+  // getPluginSettings memoizes per plugin ID at module scope; clear it so each
+  // test's plugin-settings handler actually gets hit.
+  invalidateCachedPromisesCache();
 });
 
 describe('AlertIncidentTabs', () => {
-  it('renders nothing when the user lacks AlertingInstanceRead permission', () => {
+  it('renders nothing when the user lacks AlertingInstanceRead permission', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 
     const { container } = render(<AlertIncidentTabs />);
-    expect(container).toBeEmptyDOMElement();
+    // the plugin bridge settles asynchronously, so let it before asserting nothing appeared
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 
   it('renders a single Firing alerts heading and tab when permitted', async () => {
@@ -89,7 +136,8 @@ describe('AlertIncidentTabs', () => {
     // Wait for the alert to load so the card content is rendered.
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
     // In the redesign the inner card header is hidden, so only the section heading remains.
-    expect(screen.getByRole('heading', { name: 'Alerts & incidents' })).toBeInTheDocument();
+    // The Incident plugin is absent here, so the heading drops the "& incidents" half.
+    expect(screen.getByRole('heading', { name: 'Alerts' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /firing alerts/i })).toBeInTheDocument();
     // The severity breakdown badge lives in the card header, which the redesign hides.
     expect(screen.queryByText(/1 critical/i)).not.toBeInTheDocument();
@@ -106,5 +154,110 @@ describe('AlertIncidentTabs', () => {
     // Counter is undefined while loading, so wait until it reflects the loaded count.
     const tab = await screen.findByRole('tab', { name: /firing alerts/i });
     await waitFor(() => expect(tab).toHaveTextContent('2'));
+  });
+
+  it("shows '50+' on the Incidents tab counter when the server reports more incidents beyond the query limit", async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    mockIrmPlugin();
+    const fullPage: IncidentPreview[] = Array.from({ length: ACTIVE_INCIDENTS_QUERY_LIMIT }, (_, i) => ({
+      incidentID: String(i),
+      title: `Incident ${i}`,
+      severityLabel: 'Critical',
+      createdTime: '2024-01-02T10:00:00Z',
+    }));
+    mockIncidents(fullPage, { hasMore: true });
+
+    render(<AlertIncidentTabs />);
+
+    const tab = await screen.findByRole('tab', { name: /incidents/i });
+    await waitFor(() => expect(tab).toHaveTextContent(`${ACTIVE_INCIDENTS_QUERY_LIMIT}+`));
+  });
+
+  it('shows the exact count on the Incidents tab counter when a full page has nothing beyond it', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    mockIrmPlugin();
+    const fullPage: IncidentPreview[] = Array.from({ length: ACTIVE_INCIDENTS_QUERY_LIMIT }, (_, i) => ({
+      incidentID: String(i),
+      title: `Incident ${i}`,
+      severityLabel: 'Critical',
+      createdTime: '2024-01-02T10:00:00Z',
+    }));
+    mockIncidents(fullPage, { hasMore: false });
+
+    render(<AlertIncidentTabs />);
+
+    const tab = await screen.findByRole('tab', { name: /incidents/i });
+    await waitFor(() => expect(tab).toHaveTextContent(String(ACTIVE_INCIDENTS_QUERY_LIMIT)));
+    expect(tab).not.toHaveTextContent(`${ACTIVE_INCIDENTS_QUERY_LIMIT}+`);
+  });
+
+  it('defaults to the Incidents tab for a user without alerting permission when the plugin is installed', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    mockIrmPlugin();
+    mockIncidents([activeIncident]);
+
+    render(<AlertIncidentTabs />);
+
+    expect(await screen.findByText('Database outage')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /incidents/i })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('heading', { name: 'Incidents' })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /firing alerts/i })).not.toBeInTheDocument();
+  });
+
+  it('switches to the Incidents tab and renders incident content', async () => {
+    mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
+    mockIrmPlugin();
+    mockIncidents([activeIncident]);
+
+    const { user } = render(<AlertIncidentTabs />);
+
+    // Alerts tab is active by default.
+    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Alerts & incidents' })).toBeInTheDocument();
+
+    await user.click(await screen.findByRole('tab', { name: /incidents/i }));
+
+    expect(await screen.findByText('Database outage')).toBeInTheDocument();
+    expect(screen.queryByText('CPU Critical')).not.toBeInTheDocument();
+  });
+
+  it('shows the incidents footer actions when the user can declare and access incidents', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    // No page includes to gate on, so canDeclare/canAccess both resolve to true.
+    mockIrmPlugin({ includes: [] });
+    mockIncidents([activeIncident]);
+
+    render(<AlertIncidentTabs />);
+
+    expect(await screen.findByText('Database outage')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /view all incidents/i })).toBeInTheDocument();
+  });
+
+  it('hides the incidents footer actions when the user lacks the plugin page permissions', async () => {
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    mockIrmPlugin({
+      includes: [
+        {
+          type: PluginIncludeType.page,
+          name: 'Incidents',
+          path: '/a/grafana-irm-app/incidents',
+          action: 'grafana-irm-app.incidents:read',
+        },
+        {
+          type: PluginIncludeType.page,
+          name: 'Declare incident',
+          path: '/a/grafana-irm-app/incidents/declare',
+          action: 'grafana-irm-app.incidents:write',
+        },
+      ],
+    });
+    mockIncidents([activeIncident]);
+
+    render(<AlertIncidentTabs />);
+
+    expect(await screen.findByText('Database outage')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /declare an incident/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /view all incidents/i })).not.toBeInTheDocument();
   });
 });

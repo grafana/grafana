@@ -3,7 +3,7 @@ import { useMemo, useRef, useState } from 'react';
 
 import { DashboardCursorSync, type PanelProps, type TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { type ScaleDistributionConfig } from '@grafana/schema';
+import { type LegendPlacement, type ScaleDistributionConfig } from '@grafana/schema';
 import {
   EventBusPlugin,
   TooltipDisplayMode,
@@ -173,14 +173,25 @@ const HeatmapPanelViz = ({
       return null;
     }
 
+    let placement: LegendPlacement = options.legend.placement ?? 'bottom';
+
+    // VizLayout forces bottom placement on narrow screens; mirror that here so
+    // we don't render a full-height vertical scale into a bottom strip
+    if (document.body.clientWidth < theme.breakpoints.values.lg) {
+      placement = 'bottom';
+    }
+
+    const isRight = placement === 'right';
+
     return (
-      <VizLayout.Legend placement="bottom" maxHeight="20%">
-        <div className={styles.colorScaleWrapper}>
+      <VizLayout.Legend placement={placement} width={isRight ? options.legend.width : undefined} maxHeight="20%">
+        <div className={isRight ? styles.colorScaleWrapperVertical : styles.colorScaleWrapper}>
           <ColorScale
             colorPalette={info.heatmapColors.palette}
             min={info.heatmapColors.minValue}
             max={info.heatmapColors.maxValue}
             display={info.display}
+            orientation={isRight ? 'vertical' : 'horizontal'}
           />
         </div>
       </VizLayout.Legend>
@@ -264,5 +275,15 @@ const getStyles = () => ({
     marginLeft: '25px',
     padding: '10px 0',
     maxWidth: '300px',
+  }),
+  // vertical analog of the horizontal wrapper above; VizLayout's legend scroll
+  // container is a full-height flex column, so auto margins center the capped
+  // scale vertically while content hugs the left edge (extra configured legend
+  // width becomes empty space to the right of the values)
+  colorScaleWrapperVertical: css({
+    height: '100%',
+    maxHeight: '300px',
+    margin: 'auto 0',
+    padding: '10px 8px',
   }),
 });

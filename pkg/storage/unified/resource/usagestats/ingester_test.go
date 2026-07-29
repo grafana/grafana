@@ -3,6 +3,7 @@ package usagestats
 import (
 	"context"
 	"errors"
+	"iter"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -291,7 +292,7 @@ func TestIngesterGetResourceDailyStats(t *testing.T) {
 		// store; buffered events are intentionally not read here.
 		require.NoError(t, ing.RecordEvent(ctx, dashKey("a"), []*resourcepb.ResourceEvent{{Metric: "views", Value: 2}}))
 
-		days, err := ing.GetResourceDailyStats(ctx, dashKey("a"), "", "")
+		days, err := collectDailyStats(ing.GetResourceDailyStats(ctx, dashKey("a"), "", ""))
 		require.NoError(t, err)
 
 		// Sorted ascending, overflow excluded, today absent (still buffered).
@@ -301,18 +302,18 @@ func TestIngesterGetResourceDailyStats(t *testing.T) {
 
 		// After a flush, today's bucket becomes visible.
 		require.NoError(t, ing.flush(ctx))
-		days, err = ing.GetResourceDailyStats(ctx, dashKey("a"), "", "")
+		days, err = collectDailyStats(ing.GetResourceDailyStats(ctx, dashKey("a"), "", ""))
 		require.NoError(t, err)
 		require.Equal(t, []string{"2026-06-20", "2026-06-22", day}, daysList(days))
 		require.Equal(t, uint64(2), metricsFor(days, day)["views"])
 
 		// Range filter restricts the result.
-		days, err = ing.GetResourceDailyStats(ctx, dashKey("a"), "2026-06-21", "2026-06-22")
+		days, err = collectDailyStats(ing.GetResourceDailyStats(ctx, dashKey("a"), "2026-06-21", "2026-06-22"))
 		require.NoError(t, err)
 		require.Equal(t, []string{"2026-06-22"}, daysList(days))
 
 		// Untracked resource returns nothing.
-		days, err = ing.GetResourceDailyStats(ctx, &resourcepb.ResourceKey{Group: "x", Resource: "y", Namespace: "default", Name: "z"}, "", "")
+		days, err = collectDailyStats(ing.GetResourceDailyStats(ctx, &resourcepb.ResourceKey{Group: "x", Resource: "y", Namespace: "default", Name: "z"}, "", ""))
 		require.NoError(t, err)
 		require.Nil(t, days)
 	})
@@ -381,6 +382,17 @@ func TestIngesterStartStopFinalFlush(t *testing.T) {
 	daily, err := store.ReadDailyForObject(ctx, objectRefFromKey(dashKey("a")))
 	require.NoError(t, err)
 	require.Equal(t, uint64(4), daily[day]["views"])
+}
+
+func collectDailyStats(seq iter.Seq2[*resourcepb.DailyStat, error]) ([]*resourcepb.DailyStat, error) {
+	var out []*resourcepb.DailyStat
+	for d, err := range seq {
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, d)
+	}
+	return out, nil
 }
 
 func daysList(days []*resourcepb.DailyStat) []string {
