@@ -611,6 +611,154 @@ describe('JOIN Transformer', () => {
     });
   });
 
+  describe('keepUnjoinedFrames', () => {
+    // Star schema: one fact table holding two foreign keys, one lookup table per key.
+    const fact = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'GA', type: FieldType.string, values: ['a'] },
+        { name: 'PA', type: FieldType.string, values: ['x'] },
+        { name: 'Val', type: FieldType.number, values: [1] },
+      ],
+    });
+
+    const lookupGA = toDataFrame({
+      refId: 'B',
+      fields: [
+        { name: 'GA', type: FieldType.string, values: ['a'] },
+        { name: 'GA_TEXT', type: FieldType.string, values: ['Alpha'] },
+      ],
+    });
+
+    const lookupPA = toDataFrame({
+      refId: 'C',
+      fields: [
+        { name: 'PA', type: FieldType.string, values: ['x'] },
+        { name: 'PA_TEXT', type: FieldType.string, values: ['Ex'] },
+      ],
+    });
+
+    const modes = [JoinMode.outer, JoinMode.outerTabular, JoinMode.inner];
+
+    it.each(modes)('passes frames without the join field through untouched (%s)', async (mode) => {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
+        id: DataTransformerID.joinByField,
+        options: { byField: 'GA', mode, keepUnjoinedFrames: true },
+      };
+
+      await expect(transformDataFrame([cfg], [fact, lookupGA, lookupPA])).toEmitValuesWith((received) => {
+        const data = received[0];
+        expect(data).toHaveLength(2);
+        // joined result comes first so panels default to it
+        expect(data[0].fields.map((f) => f.name)).toEqual(['GA', 'PA', 'Val', 'GA_TEXT']);
+        // the bystander is forwarded as-is
+        expect(data[1]).toBe(lookupPA);
+      });
+    });
+
+    it.each(modes)('supports chaining two joins on different fields (%s)', async (mode) => {
+      const cfgs: Array<DataTransformerConfig<JoinByFieldOptions>> = [
+        {
+          id: DataTransformerID.joinByField,
+          options: { byField: 'GA', mode, keepUnjoinedFrames: true },
+        },
+        {
+          id: DataTransformerID.joinByField,
+          options: { byField: 'PA', mode },
+        },
+      ];
+
+      await expect(transformDataFrame(cfgs, [fact, lookupGA, lookupPA])).toEmitValuesWith((received) => {
+        const data = received[0];
+        expect(data).toHaveLength(1);
+        // the join field is hoisted to the front, so PA leads rather than GA
+        expect(data[0].fields.map((f) => f.name)).toEqual(['PA', 'GA', 'Val', 'GA_TEXT', 'PA_TEXT']);
+        expect(data[0].fields.map((f) => f.values[0])).toEqual(['x', 'a', 1, 'Alpha', 'Ex']);
+      });
+    });
+
+    it('drops frames without the join field when not enabled', async () => {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
+        id: DataTransformerID.joinByField,
+        options: { byField: 'GA', mode: JoinMode.outer },
+      };
+
+      await expect(transformDataFrame([cfg], [fact, lookupGA, lookupPA])).toEmitValuesWith((received) => {
+        const data = received[0];
+        expect(data).toHaveLength(1);
+        expect(data[0].fields.map((f) => f.name)).toEqual(['GA', 'PA', 'Val', 'GA_TEXT']);
+      });
+    });
+
+    it('is a no-op when every frame has the join field', async () => {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
+        id: DataTransformerID.joinByField,
+        options: { byField: 'GA', mode: JoinMode.outer, keepUnjoinedFrames: true },
+      };
+
+      await expect(transformDataFrame([cfg], [fact, lookupGA])).toEmitValuesWith((received) => {
+        const data = received[0];
+        expect(data).toHaveLength(1);
+        expect(data[0].fields.map((f) => f.name)).toEqual(['GA', 'PA', 'Val', 'GA_TEXT']);
+      });
+    });
+
+    it('has no effect without an explicit byField, since the join field is inferred', async () => {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
+        id: DataTransformerID.joinByField,
+        options: { mode: JoinMode.outer, keepUnjoinedFrames: true },
+      };
+
+      const a = toDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'left', type: FieldType.number, values: [1, 2] },
+        ],
+      });
+      const b = toDataFrame({
+        refId: 'B',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'right', type: FieldType.number, values: [3, 4] },
+        ],
+      });
+
+      await expect(transformDataFrame([cfg], [a, b])).toEmitValuesWith((received) => {
+        const data = received[0];
+        expect(data).toHaveLength(1);
+        expect(data[0].fields.map((f) => f.name)).toEqual(['time', 'left', 'right']);
+      });
+    });
+
+    it('returns the input untouched when no frame has the join field', async () => {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
+        id: DataTransformerID.joinByField,
+        options: { byField: 'nonexistent', mode: JoinMode.outer, keepUnjoinedFrames: true },
+      };
+
+      await expect(transformDataFrame([cfg], [fact, lookupGA, lookupPA])).toEmitValuesWith((received) => {
+        const data = received[0];
+        expect(data).toHaveLength(3);
+        expect(data[0]).toBe(fact);
+        expect(data[1]).toBe(lookupGA);
+        expect(data[2]).toBe(lookupPA);
+      });
+    });
+
+    it('names the joined frame after the participating frames only', async () => {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
+        id: DataTransformerID.joinByField,
+        options: { byField: 'GA', mode: JoinMode.outer, keepUnjoinedFrames: true },
+      };
+
+      await expect(transformDataFrame([cfg], [fact, lookupGA, lookupPA])).toEmitValuesWith((received) => {
+        const data = received[0];
+        expect(data[0].refId).toBe('joinByField-A-B');
+      });
+    });
+  });
+
   describe('inner join', () => {
     const seriesA = toDataFrame({
       name: 'A',
