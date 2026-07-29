@@ -190,7 +190,10 @@ func TestPanelPluginID(t *testing.T) {
 		{"v1 panel", `{"id":1,"type":"timeseries"}`, "timeseries"},
 		{"v2 stable element", `{"kind":"Panel","spec":{"id":1,"vizConfig":{"kind":"VizConfig","group":"timeseries"}}}`, "timeseries"},
 		{"v2alpha1 element carries the plugin id in kind", `{"kind":"Panel","spec":{"id":1,"vizConfig":{"kind":"timeseries"}}}`, "timeseries"},
-		{"v2 library panel", `{"kind":"LibraryPanel","spec":{"id":1,"vizConfig":{"kind":"VizConfig","group":"table"}}}`, "table"},
+		// Neither save model names a library panel's viz plugin, so both must yield nothing rather than
+		// a sentinel the plugin store would report as uninstalled.
+		{"v1 library panel carries a sentinel type", `{"id":1,"title":"Shared","libraryPanel":{"uid":"abc","name":"Shared"},"type":"library-panel-ref"}`, ""},
+		{"v2 library panel carries no vizConfig", `{"kind":"LibraryPanel","spec":{"id":1,"title":"Shared","libraryPanel":{"uid":"abc","name":"Shared"}}}`, ""},
 		{"v2 element with no group never yields the literal VizConfig", `{"kind":"Panel","spec":{"id":1,"vizConfig":{"kind":"VizConfig"}}}`, ""},
 		{"v2 element with no vizConfig", `{"kind":"Panel","spec":{"id":1}}`, ""},
 		{"malformed", `{not json`, ""},
@@ -207,10 +210,11 @@ func TestPanelPluginIDs(t *testing.T) {
 	v1 := json.RawMessage(`{"panels":[
 		{"id":1,"type":"timeseries"},
 		{"id":2,"type":"row","panels":[{"id":3,"type":"table"}]},
-		{"id":4}
+		{"id":4},
+		{"id":5,"libraryPanel":{"uid":"abc","name":"Shared"},"type":"library-panel-ref"}
 	]}`)
 	require.Equal(t, map[int64]string{1: "timeseries", 2: "row", 3: "table"}, PanelPluginIDs(v1),
-		"collapsed row children are indexed too; a panel with no type is omitted")
+		"collapsed row children are indexed too; a panel with no type, and a library panel's sentinel type, are omitted")
 
 	v2 := json.RawMessage(`{"elements":{
 		"a":{"kind":"Panel","spec":{"id":1,"vizConfig":{"kind":"VizConfig","group":"timeseries"}}}

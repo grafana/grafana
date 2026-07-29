@@ -1,6 +1,7 @@
 // Package diagnostics assembles on-demand datasource diagnostic bundles: captured HTTP traffic
-// (HAR), QueryData request/results, and the panel/dashboard JSON. The HTTP handler in pkg/api runs
-// the queries with capture active and delegates bundle assembly here.
+// (HAR), QueryData request/results, the panel/dashboard JSON, and the Grafana build and plugin
+// versions that produced them. The HTTP handler in pkg/api runs the queries with capture active and
+// delegates bundle assembly here.
 package diagnostics
 
 import (

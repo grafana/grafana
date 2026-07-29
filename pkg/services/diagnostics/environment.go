@@ -218,7 +218,12 @@ func PanelPluginID(panelJSON json.RawMessage) string {
 	if err := json.Unmarshal(panelJSON, &doc); err != nil {
 		return ""
 	}
-	if doc.Kind == "Panel" || doc.Kind == "LibraryPanel" {
+	// A library panel names no viz plugin in either v1 or v2 save model; v1 writes this sentinel type
+	// in its place (see transformSceneToSaveModel.ts).
+	if doc.Kind == "LibraryPanel" || doc.Type == "library-panel-ref" {
+		return ""
+	}
+	if doc.Kind == "Panel" {
 		if group := doc.Spec.VizConfig.Group; group != "" {
 			return group
 		}

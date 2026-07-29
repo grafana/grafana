@@ -22,6 +22,7 @@ import (
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
@@ -479,4 +480,42 @@ func TestPanelDatasourceUIDs(t *testing.T) {
 	require.Equal(t, []string{"prom", "loki"}, panelDatasourceUIDs(req))
 
 	require.Empty(t, panelDatasourceUIDs(dtos.MetricRequest{}))
+}
+
+func TestPanelEnvironmentRefs(t *testing.T) {
+	q := func(uid, dsType string) *simplejson.Json {
+		j := simplejson.New()
+		j.SetPath([]string{"datasource", "uid"}, uid)
+		j.SetPath([]string{"datasource", "type"}, dsType)
+		return j
+	}
+
+	t.Run("collects the datasource types and the viz plugin", func(t *testing.T) {
+		req := dtos.MetricRequest{Queries: []*simplejson.Json{q("P1", "prometheus"), nil}}
+		refs := panelEnvironmentRefs(req, json.RawMessage(`{"id":1,"type":"timeseries"}`))
+
+		require.Equal(t, map[string]string{"P1": "prometheus"}, refs.DatasourcesByUID)
+		require.Equal(t, []string{"prometheus", "timeseries"}, refs.PluginIDs())
+	})
+
+	t.Run("expression and ML nodes are recorded without a plugin id", func(t *testing.T) {
+		// pkg/expr serves these, so resolving their type against the plugin store would report a
+		// phantom uninstalled plugin in environment.json.
+		req := dtos.MetricRequest{Queries: []*simplejson.Json{
+			q("P1", "prometheus"),
+			q(expr.DatasourceUID, expr.DatasourceType),
+			q(expr.OldDatasourceUID, expr.DatasourceType),
+			q(expr.MLDatasourceUID, "__ml__"),
+		}}
+		refs := panelEnvironmentRefs(req, nil)
+
+		// Still present as UIDs, so every UID the manifest lists resolves in environment.json.
+		require.Equal(t, map[string]string{
+			"P1":                  "prometheus",
+			expr.DatasourceUID:    "",
+			expr.OldDatasourceUID: "",
+			expr.MLDatasourceUID:  "",
+		}, refs.DatasourcesByUID)
+		require.Equal(t, []string{"prometheus"}, refs.PluginIDs(), "only real plugins are looked up")
+	})
 }

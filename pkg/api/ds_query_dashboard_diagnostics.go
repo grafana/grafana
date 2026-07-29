@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -448,7 +449,15 @@ func panelEnvironmentRefs(req dtos.MetricRequest, panelJSON json.RawMessage) dia
 			continue
 		}
 		ds := q.Get("datasource")
-		refs.AddDatasource(ds.Get("uid").MustString(), ds.Get("type").MustString())
+		uid := ds.Get("uid").MustString()
+		pluginID := ds.Get("type").MustString()
+		// Expression and ML nodes are served by pkg/expr, not by a plugin, so recording their type
+		// would have the plugin store report a phantom uninstalled plugin. Recorded with no plugin ID
+		// rather than dropped, so every UID in the manifest still resolves in environment.json.
+		if expr.IsDataSource(uid) || uid == expr.MLDatasourceUID {
+			pluginID = ""
+		}
+		refs.AddDatasource(uid, pluginID)
 	}
 	refs.AddPanelPluginID(diagnostics.PanelPluginID(panelJSON))
 	return refs
