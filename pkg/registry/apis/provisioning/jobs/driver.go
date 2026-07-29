@@ -147,7 +147,7 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	// the queue: from job creation (the event's origin) to when it was enqueued.
 	// This excludes the time the key then waited in the queue for a worker.
 	if !enqueuedAt.IsZero() {
-		d.metrics.RecordDeliveryLatency(enqueuedAt.Sub(claimedJob.CreationTimestamp.Time).Seconds())
+		d.metrics.RecordDeliveryLatency(trigger, enqueuedAt.Sub(claimedJob.CreationTimestamp.Time).Seconds())
 	}
 
 	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace, "repository", claimedJob.Spec.Repository, "action", claimedJob.Spec.Action)

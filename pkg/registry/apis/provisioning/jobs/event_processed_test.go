@@ -343,17 +343,18 @@ func deliveryLatency(t *testing.T) (count, sum float64) {
 	if mf == nil {
 		return 0, 0
 	}
-	jobsKey := labelKey(map[string]string{"resource": resourceLabelJobs})
+	// Aggregate over source for resource=jobs.
 	for _, metric := range mf.GetMetric() {
 		labels := make(map[string]string)
 		for _, lp := range metric.GetLabel() {
 			labels[lp.GetName()] = lp.GetValue()
 		}
-		if labelKey(labels) == jobsKey {
-			return float64(metric.GetHistogram().GetSampleCount()), metric.GetHistogram().GetSampleSum()
+		if labels["resource"] == resourceLabelJobs {
+			count += float64(metric.GetHistogram().GetSampleCount())
+			sum += metric.GetHistogram().GetSampleSum()
 		}
 	}
-	return 0, 0
+	return count, sum
 }
 
 // processedCounts reads the current jobs-labelled processing counters. The
@@ -363,18 +364,17 @@ func processedCounts(t *testing.T) processedSnapshot {
 	t.Helper()
 	families, err := testRegistry.Gather()
 	require.NoError(t, err)
-	jobsKey := labelKey(map[string]string{"resource": resourceLabelJobs})
-	counter := func(name string) float64 {
-		mf := findMetric(families, name)
+	mf := findMetric(families, "grafana_provisioning_events_processed_total")
+	bySource := func(source string) float64 {
 		if mf == nil {
 			return 0
 		}
-		return counterValues(mf)[jobsKey]
+		return counterValues(mf)[labelKey(map[string]string{"resource": resourceLabelJobs, "source": source})]
 	}
 	return processedSnapshot{
-		live:    counter("grafana_provisioning_live_events_processed_total"),
-		relist:  counter("grafana_provisioning_relist_events_processed_total"),
-		initial: counter("grafana_provisioning_initial_events_processed_total"),
+		live:    bySource("live"),
+		relist:  bySource("relist"),
+		initial: bySource("initial"),
 	}
 }
 

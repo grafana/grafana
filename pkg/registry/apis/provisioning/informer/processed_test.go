@@ -59,19 +59,20 @@ func TestProcessedMetrics_RecordProcessed(t *testing.T) {
 	m.RecordProcessed(TriggerRelist)
 	m.RecordProcessed(TriggerInitial)
 
-	assert.Equal(t, 1.0, testutil.ToFloat64(m.live.WithLabelValues("jobs")))
-	assert.Equal(t, 2.0, testutil.ToFloat64(m.relist.WithLabelValues("jobs")))
-	assert.Equal(t, 1.0, testutil.ToFloat64(m.initial.WithLabelValues("jobs")))
+	assert.Equal(t, 1.0, testutil.ToFloat64(m.processed.WithLabelValues("jobs", "live")))
+	assert.Equal(t, 2.0, testutil.ToFloat64(m.processed.WithLabelValues("jobs", "relist")))
+	assert.Equal(t, 1.0, testutil.ToFloat64(m.processed.WithLabelValues("jobs", "initial")))
 
-	// An unknown trigger (e.g. the zero value carried by a non-classified queue
+	// An unknown source (e.g. the zero value carried by a non-classified queue
 	// item) records nothing.
 	m.RecordProcessed(ProcessTrigger(""))
-	assert.Equal(t, 1.0, testutil.ToFloat64(m.live.WithLabelValues("jobs")))
+	assert.Equal(t, 1.0, testutil.ToFloat64(m.processed.WithLabelValues("jobs", "live")))
 }
 
 func TestProcessedMetrics_NilSafe(t *testing.T) {
 	var m *ProcessedMetrics
 	assert.NotPanics(t, func() { m.RecordProcessed(TriggerLive) })
+	assert.NotPanics(t, func() { m.ObserveDeliveryLatency(TriggerLive, 1.0) })
 }
 
 // TestProcessedMetrics_SharedAcrossResources verifies that several consumers on
@@ -86,6 +87,6 @@ func TestProcessedMetrics_SharedAcrossResources(t *testing.T) {
 	reposM.RecordProcessed(TriggerRelist)
 	reposM.RecordProcessed(TriggerRelist)
 
-	assert.Equal(t, 1.0, testutil.ToFloat64(jobsM.relist.WithLabelValues("jobs")))
-	assert.Equal(t, 2.0, testutil.ToFloat64(reposM.relist.WithLabelValues("repositories")))
+	assert.Equal(t, 1.0, testutil.ToFloat64(jobsM.processed.WithLabelValues("jobs", "relist")))
+	assert.Equal(t, 2.0, testutil.ToFloat64(reposM.processed.WithLabelValues("repositories", "relist")))
 }

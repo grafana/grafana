@@ -18,20 +18,23 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
 
-// processedCounterValue reads a processing counter's value for a resource label.
-func processedCounterValue(t *testing.T, reg *prometheus.Registry, name, resource string) float64 {
+// processedCounterValue reads grafana_provisioning_events_processed_total for a
+// resource and source.
+func processedCounterValue(t *testing.T, reg *prometheus.Registry, resource, source string) float64 {
 	t.Helper()
 	families, err := reg.Gather()
 	require.NoError(t, err)
 	for _, mf := range families {
-		if mf.GetName() != name {
+		if mf.GetName() != "grafana_provisioning_events_processed_total" {
 			continue
 		}
 		for _, m := range mf.GetMetric() {
+			labels := map[string]string{}
 			for _, l := range m.GetLabel() {
-				if l.GetName() == "resource" && l.GetValue() == resource {
-					return m.GetCounter().GetValue()
-				}
+				labels[l.GetName()] = l.GetValue()
+			}
+			if labels["resource"] == resource && labels["source"] == source {
+				return m.GetCounter().GetValue()
 			}
 		}
 	}
@@ -42,13 +45,12 @@ func processedCounterValue(t *testing.T, reg *prometheus.Registry, name, resourc
 // resource, the others staying at 0.
 func assertOnlyProcessedTrigger(t *testing.T, reg *prometheus.Registry, resource, wantTrigger string) {
 	t.Helper()
-	for _, trigger := range []string{"live", "relist", "initial"} {
+	for _, source := range []string{"live", "relist", "initial"} {
 		want := 0.0
-		if trigger == wantTrigger {
+		if source == wantTrigger {
 			want = 1.0
 		}
-		name := "grafana_provisioning_" + trigger + "_events_processed_total"
-		assert.Equal(t, want, processedCounterValue(t, reg, name, resource), "%s counter", trigger)
+		assert.Equal(t, want, processedCounterValue(t, reg, resource, source), "%s counter", source)
 	}
 }
 
@@ -172,8 +174,8 @@ func TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger(t *testing.T) {
 	require.True(t, rc.processNextWorkItem(ctx)) // first pickup: live; enqueues the dirty live update
 	require.True(t, rc.processNextWorkItem(ctx)) // dirty redelivery: must stay live
 
-	assert.Equal(t, 2.0, processedCounterValue(t, reg, "grafana_provisioning_live_events_processed_total", "repositories"), "both pickups are live")
-	assert.Equal(t, 0.0, processedCounterValue(t, reg, "grafana_provisioning_relist_events_processed_total", "repositories"), "no pickup falls back to relist")
+	assert.Equal(t, 2.0, processedCounterValue(t, reg, "repositories", "live"), "both pickups are live")
+	assert.Equal(t, 0.0, processedCounterValue(t, reg, "repositories", "relist"), "no pickup falls back to relist")
 }
 
 // TestConnectionController_RecordsProcessingByTrigger verifies the connection

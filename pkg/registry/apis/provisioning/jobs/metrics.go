@@ -193,13 +193,13 @@ func (m *JobMetrics) RecordEventProcessed(trigger claimTrigger) {
 	m.processed.RecordProcessed(trigger)
 }
 
-// RecordDeliveryLatency records how long a genuinely-processed event took to
-// reach the work queue after it was generated. Nil-safe.
-func (m *JobMetrics) RecordDeliveryLatency(seconds float64) {
+// RecordDeliveryLatency records, by source, how long a genuinely-processed event
+// took to reach the work queue after it was generated. Nil-safe.
+func (m *JobMetrics) RecordDeliveryLatency(trigger claimTrigger, seconds float64) {
 	if m == nil {
 		return
 	}
-	m.processed.ObserveDeliveryLatency(seconds)
+	m.processed.ObserveDeliveryLatency(trigger, seconds)
 }
 
 func (m *JobMetrics) RecordIncrementalSyncPhase(phase IncrementalSyncPhase, duration time.Duration) {
