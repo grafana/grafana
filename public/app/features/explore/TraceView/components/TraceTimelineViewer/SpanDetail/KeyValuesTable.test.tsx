@@ -239,6 +239,22 @@ describe('KeyValuesTable tests', () => {
     });
 
     expect(screen.getByRole('link', { name: 'View Query Details' })).toBeInTheDocument();
-    expect(screen.queryByText('Find slow queries faster')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('attribute-plugin-promo-trigger')).not.toBeInTheDocument();
+  });
+
+  it('does not wrap values that are auto-linkified urls', () => {
+    setup({
+      data: [{ key: 'db.connection_string', value: 'https://example.com/db' }],
+      promoGetter: () => ({
+        pluginId: 'grafana-dbo11y-app',
+        icon: 'database-observability',
+        title: 'Find slow queries faster',
+        body: 'body',
+        match: () => true,
+      }),
+    });
+
+    expect(screen.getByRole('link', { name: 'https://example.com/db' })).toBeInTheDocument();
+    expect(screen.queryByTestId('attribute-plugin-promo-trigger')).not.toBeInTheDocument();
   });
 });

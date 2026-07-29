@@ -268,7 +268,10 @@ export default function KeyValuesTable(props: KeyValuesTableProps) {
                 jsonTable
               );
 
-            const promo = links.length === 0 ? promoGetter?.(row.key) : undefined;
+            // Skip promo when value markup already has an anchor (jsonMarkup auto-linkifies
+            // http(s) strings) to avoid nesting interactive content inside the promo <button>.
+            const promo =
+              links.length === 0 && !html.includes('<a ') ? promoGetter?.(row.key) : undefined;
             if (promo) {
               valueMarkup = <AttributePluginPromoTip promo={promo}>{valueMarkup}</AttributePluginPromoTip>;
             }
