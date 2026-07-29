@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type KeyboardEvent, type ReactNode, useId } from 'react';
+import { type ReactNode, useId } from 'react';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -48,42 +48,22 @@ export function SignalCard({
     datasourceName,
   });
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    // Keydowns from the nested chevron bubble up here. Claiming them would
-    // preventDefault the chevron's own activation, so it could never be toggled by
-    // keyboard - it would scroll to the query instead.
-    if (e.target !== e.currentTarget) {
-      return;
-    }
-
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      onJumpToQuery();
-    }
-  };
-
   return (
     <div className={cx(styles.card, expanded && styles.cardExpanded)} data-testid={`signal-card-${refId}`}>
+      {/* Siblings rather than a jump target wrapping the chevron: WebKit treats the
+          content of a button as presentational, so a nested control is invisible to
+          VoiceOver, and nesting would make the two fight over clicks and keydowns. */}
       <div
         className={cx(
           styles.cardHeader,
           isExpandable && styles.cardHeaderExpandable,
           expanded && styles.cardHeaderExpanded
         )}
-        role="button"
-        tabIndex={0}
-        // `title` only names an element that has no other name, and this one is named by
-        // its refId text, so the label has to be explicit or the datasource name is lost.
-        aria-label={jumpLabel}
-        title={jumpLabel}
-        onClick={onJumpToQuery}
-        onKeyDown={handleKeyDown}
       >
         {isExpandable && (
           <button
             type="button"
-            className={cx(styles.cardChevron, expanded && styles.cardChevronVisible)}
-            data-chevron
+            className={styles.cardChevron}
             aria-expanded={expanded}
             aria-controls={expanded ? bodyId : undefined}
             aria-label={
@@ -95,21 +75,27 @@ export function SignalCard({
                     refId,
                   })
             }
-            onClick={(e) => {
-              // The card itself jumps to the query, so the chevron must not bubble.
-              e.stopPropagation();
-              onToggleExpanded();
-            }}
+            onClick={onToggleExpanded}
           >
             <Icon name={expanded ? 'angle-down' : 'angle-right'} />
           </button>
         )}
-        {datasourceLogo ? (
-          <img src={datasourceLogo} alt="" className={styles.datasourceLogo} />
-        ) : (
-          <Icon name="database" className={styles.datasourceLogoFallback} />
-        )}
-        <span className={styles.cardTitle}>{refId}</span>
+        <button
+          type="button"
+          className={styles.jumpButton}
+          // `title` only names an element that has no other name, and this one is named by
+          // its refId text, so the label has to be explicit or the datasource name is lost.
+          aria-label={jumpLabel}
+          title={jumpLabel}
+          onClick={onJumpToQuery}
+        >
+          {datasourceLogo ? (
+            <img src={datasourceLogo} alt="" className={styles.datasourceLogo} />
+          ) : (
+            <Icon name="database" className={styles.datasourceLogoFallback} />
+          )}
+          <span className={styles.cardTitle}>{refId}</span>
+        </button>
       </div>
       {expanded && (
         <div className={styles.cardBody} id={bodyId}>
@@ -133,7 +119,71 @@ const CARD_HEIGHT = 30;
 const EXPANDED_BODY_MAX_HEIGHT = 360;
 
 const getStyles = (theme: GrafanaTheme2) => {
+  // Room the revealed chevron needs, so it never sits on top of the datasource logo.
+  const chevronGutter = theme.spacing(3.5);
+
+  const cardChevron = css({
+    label: 'signal-card-chevron',
+    position: 'absolute',
+    left: theme.spacing(1),
+    top: '50%',
+    transform: 'translateY(-50%)',
+    display: 'flex',
+    alignItems: 'center',
+    padding: 0,
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    color: theme.colors.text.secondary,
+    opacity: 0,
+    '&:hover': {
+      color: theme.colors.text.primary,
+    },
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['opacity'], {
+        duration: theme.transitions.duration.shortest,
+      }),
+    },
+  });
+
+  const jumpButton = css({
+    label: 'signal-card-jump-button',
+    // Fills the header so clicking anywhere outside the chevron jumps to the query.
+    flex: '1 1 auto',
+    minWidth: 0,
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    minHeight: CARD_HEIGHT,
+    padding: theme.spacing(0.5, 1, 0.5, 1.25),
+    background: 'transparent',
+    border: 'none',
+    color: 'inherit',
+    font: 'inherit',
+    textAlign: 'left',
+    cursor: 'pointer',
+    overflow: 'hidden',
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: theme.transitions.create(['padding-left'], {
+        duration: theme.transitions.duration.shortest,
+      }),
+    },
+  });
+
+  // The hidden chevron still sits over the logo, so anything that makes it clickable has
+  // to shift the jump button's content clear of it in the same breath.
+  const chevronRevealed = {
+    [`.${cardChevron}`]: {
+      opacity: 1,
+    },
+    [`.${jumpButton}`]: {
+      paddingLeft: chevronGutter,
+    },
+  };
+
   return {
+    cardChevron,
+    jumpButton,
     card: css({
       label: 'signal-card',
       position: 'relative',
@@ -164,13 +214,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
       display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(1),
       width: '100%',
       minHeight: CARD_HEIGHT,
       flexShrink: 0,
-      padding: theme.spacing(0.5, 1, 0.5, 1.25),
-      cursor: 'pointer',
-      textAlign: 'left',
       overflow: 'hidden',
       minWidth: 0,
       '&:hover': {
@@ -179,56 +225,21 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     // The chevron takes no layout space at rest so logos and query names sit flush
     // left; revealing it shifts the content right to make room. Keying the reveal
-    // off :focus-visible rather than :focus-within stops it from staying open
-    // after a mouse click, while `:has` keeps the room reserved once the chevron
-    // itself takes keyboard focus.
+    // off :focus-visible rather than :focus-within stops it from staying open after a
+    // mouse click, and `:has` reveals it for whichever of the two controls has
+    // keyboard focus.
     cardHeaderExpandable: css({
       label: 'signal-card-header-expandable',
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['padding-left'], {
-          duration: theme.transitions.duration.shortest,
-        }),
-      },
-      '&:hover, &:focus-visible, &:has([data-chevron]:focus-visible)': {
-        paddingLeft: theme.spacing(3.5),
-      },
-      '&:hover [data-chevron], &:focus-visible [data-chevron], & [data-chevron]:focus-visible': {
-        opacity: 1,
-      },
+      '&:hover, &:has(:focus-visible)': chevronRevealed,
+      // A pointer that cannot hover would never reveal the chevron, so show it
+      // upfront there and keep its gutter reserved.
+      '@media (hover: none)': chevronRevealed,
     }),
-    // An open card keeps the room, since its chevron stays visible.
+    // An open card keeps its chevron and gutter, so the control that closes it doesn't
+    // disappear once the pointer leaves.
     cardHeaderExpanded: css({
       label: 'signal-card-header-expanded',
-      paddingLeft: theme.spacing(3.5),
-    }),
-    cardChevron: css({
-      label: 'signal-card-chevron',
-      position: 'absolute',
-      left: theme.spacing(1),
-      top: '50%',
-      transform: 'translateY(-50%)',
-      display: 'flex',
-      alignItems: 'center',
-      padding: 0,
-      background: 'transparent',
-      border: 'none',
-      cursor: 'pointer',
-      color: theme.colors.text.secondary,
-      opacity: 0,
-      '&:hover': {
-        color: theme.colors.text.primary,
-      },
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['opacity'], {
-          duration: theme.transitions.duration.shortest,
-        }),
-      },
-    }),
-    // An open card keeps its chevron so the control that closes it doesn't
-    // disappear once the pointer leaves.
-    cardChevronVisible: css({
-      label: 'signal-card-chevron-visible',
-      opacity: 1,
+      ...chevronRevealed,
     }),
     datasourceLogo: css({
       label: 'signal-card-datasource-logo',

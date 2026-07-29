@@ -44,6 +44,18 @@ describe('<SignalCard />', () => {
     );
   });
 
+  // WebKit treats the content of a button as presentational, so a chevron nested in the
+  // jump target would never be announced to VoiceOver.
+  it('keeps the expand control outside the jump target', () => {
+    setup();
+
+    const jumpTarget = screen.getByRole('button', { name: /^Jump to query A/ });
+    const chevron = screen.getByRole('button', { name: 'Expand datasource explorer for query A' });
+
+    expect(jumpTarget.tagName).toBe('BUTTON');
+    expect(jumpTarget).not.toContainElement(chevron);
+  });
+
   it('jumps to the query when the card is clicked', async () => {
     const { user } = setup();
 
@@ -74,9 +86,8 @@ describe('<SignalCard />', () => {
     expect(onJumpToQuery).not.toHaveBeenCalled();
   });
 
-  // The chevron sits inside the card's own role="button", so its keydowns bubble to
-  // the card. If the card claimed them it would preventDefault the chevron's
-  // activation and scroll to the query instead of expanding.
+  // The chevron and the jump target are siblings, so activating one must never reach
+  // the other.
   it.each([
     ['Enter', '{Enter}'],
     ['Space', ' '],
