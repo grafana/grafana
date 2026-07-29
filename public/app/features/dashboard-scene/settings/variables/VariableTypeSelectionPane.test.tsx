@@ -4,6 +4,7 @@ import { type ReactNode } from 'react';
 import { getWrapper } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { CustomVariable, SceneGridLayout, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
 
@@ -25,6 +26,8 @@ const defaultDsSettings = {
 };
 
 const Wrapper = getWrapper({ renderWithRouter: true });
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
