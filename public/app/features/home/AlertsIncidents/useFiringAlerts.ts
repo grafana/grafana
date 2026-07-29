@@ -15,6 +15,7 @@ import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/type
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
 
+import { HOME_CARD_MAX_ITEMS } from './constants';
 import { severityLevelRank } from './severity';
 
 /** Canonical severity level for an alert, tolerant of a missing severity label so the card never crashes. */

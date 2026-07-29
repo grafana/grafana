@@ -1,6 +1,5 @@
 import { type Locator, type Page } from '@playwright/test';
 
-import { selectors } from '@grafana/e2e-selectors';
 import { Components, type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
@@ -93,14 +92,16 @@ export async function checkRepeatedPanelTitles(
   options: Array<string | number>,
   expectHidden = false
 ) {
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const panel = new Panel({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+
   for (const option of options) {
-    const titleLocator = dashboardPage.getByGrafanaSelector(
-      selectors.components.Panels.Panel.title(`${title}${option}`)
-    );
     if (expectHidden) {
-      await expect(titleLocator).toBeHidden();
+      await expect(panel.getContainerByTitle(`${title}${option}`)).toBeHidden();
     } else {
-      await expect(titleLocator).toBeVisible();
+      await expect(panel.getContainerByTitle(`${title}${option}`)).toBeVisible();
     }
   }
 }
@@ -343,13 +344,12 @@ export async function checkRepeatedRowTitles(
   }
 }
 
-export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage) {
-  await page.getByLabel('layout-selection-option-Auto').click();
-  // confirm layout change if applicable
-  const confirmModal = dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete);
-  if (confirmModal) {
-    await confirmModal.click();
-  }
+export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage, confirm = true) {
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const sidebar = new Sidebar({ page, dashboardPage, selectors: dashboardPage.ctx.selectors, components });
+  await sidebar.dashboardOptions.switchLayout('auto', { confirm });
 }
 
 export async function selectRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
@@ -385,13 +385,11 @@ export async function fillVariableValue(
   varName: string,
   text: string
 ) {
-  const variable = dashboardPage
-    .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels(varName))
-    .locator('..')
-    .locator('input');
-  await variable.click();
-  await variable.clear();
-  await variable.fill(text);
-  await variable.press('Enter');
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const controls = new Controls({ page, dashboardPage, selectors, components });
+
+  await controls.variables.setValue(varName, text);
   await page.waitForLoadState('networkidle');
 }

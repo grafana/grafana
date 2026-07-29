@@ -275,7 +275,7 @@ describe('FiringAlertsCard', () => {
       'href',
       '/alerting/new/alerting'
     );
-    expect(screen.queryByText('You have no firing alerts.')).not.toBeInTheDocument();
+    expect(screen.getByText('You have no firing alerts.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /view all alert rules/i })).toBeInTheDocument();
   });
 
