@@ -86,6 +86,8 @@ func TestIntegrationResourceDbMigrateSkipMigrations(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	cfg, engine := newEmptyResourceDB(t)
+	// skip_migrations only disables main Grafana schema migrations; resource
+	// migrations must still run when it is enabled.
 	_, err := cfg.Raw.Section("database").NewKey("skip_migrations", "true")
 	require.NoError(t, err)
 
@@ -94,6 +96,12 @@ func TestIntegrationResourceDbMigrateSkipMigrations(t *testing.T) {
 	exists, err := engine.IsTableExist("resource_history")
 	require.NoError(t, err)
 	require.True(t, exists)
+
+	for _, table := range []string{"migration_log", "user", "dashboard", "org"} {
+		exists, err := engine.IsTableExist(table)
+		require.NoError(t, err)
+		require.False(t, exists, "table %s should not have been created", table)
+	}
 }
 
 func TestRunResourceDbMigrationsErrors(t *testing.T) {
