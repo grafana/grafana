@@ -2,7 +2,7 @@ import { type CommitOptions, type InlineSecureValue, type RepositorySpec } from 
 
 import { type RepositoryFormData } from '../types';
 
-import { isGitHubBased, supportsConnections } from './repositoryTypes';
+import { supportsConnections } from './repositoryTypes';
 
 // Template field names across the git-convention option groups.
 type TemplateFieldKey = 'singleResourceMessageTemplate' | 'nameTemplate' | 'titleTemplate';

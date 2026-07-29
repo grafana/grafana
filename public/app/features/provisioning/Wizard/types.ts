@@ -13,7 +13,7 @@ export type GitHubAuthType = 'pat' | 'github-app';
 
 export type GitHubAppMode = 'existing' | 'new';
 
-export type GitHubAppKind = 'app' | 'oauth';
+type GitHubAppKind = 'app' | 'oauth';
 
 interface MigrateFormData {
   history: boolean;

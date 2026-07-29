@@ -2,15 +2,14 @@ import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Combobox, Field, RadioButtonGroup, Stack } from '@grafana/ui';
+import { Alert, Field, RadioButtonGroup, Stack } from '@grafana/ui';
 import { extractErrorMessage } from 'app/api/utils';
 
-import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
-import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { type OAuthConnectionType } from '../types';
 
 import { NewOAuthConnectionFields } from './NewOAuthConnectionFields';
+import { ConnectionSelect } from './components/ConnectionSelect';
 import { type WizardFormData } from './types';
 
 interface OAuthAppFieldsProps {
@@ -40,8 +39,7 @@ export function OAuthAppFields({ connectionType }: OAuthAppFieldsProps) {
     }
   }, [hasNoConnections, setValue]);
 
-  const [mode, connectionName] = watch(['githubAppMode', 'githubApp.connectionName']);
-  const { connection: selectedConnection } = useConnectionStatus(connectionName);
+  const mode = watch('githubAppMode');
 
   return (
     <Stack direction="column" gap={2}>
@@ -100,32 +98,10 @@ export function OAuthAppFields({ connectionType }: OAuthAppFieldsProps) {
           error={errors?.githubApp?.connectionName?.message}
           invalid={Boolean(errors?.githubApp?.connectionName?.message)}
         >
-          <Controller
-            name="githubApp.connectionName"
-            control={control}
-            rules={{
-              required: t('provisioning.wizard.oauth-app-error-required', 'Connection is required'),
-            }}
-            render={({ field: { onChange, value } }) => (
-              <Stack direction="column" gap={1}>
-                <Combobox
-                  options={connectionOptions}
-                  onChange={(option) => onChange(option?.value ?? '')}
-                  value={value}
-                  invalid={Boolean(errors?.githubApp?.connectionName?.message)}
-                  loading={isLoading}
-                  disabled={isLoading}
-                  placeholder={t('provisioning.wizard.oauth-app-select-connection', 'Select a connection')}
-                />
-
-                {selectedConnection && (
-                  <Stack>
-                    <Trans i18nKey="provisioning.wizard.oauth-app-connection-status">Connection status:</Trans>
-                    <ConnectionStatusBadge status={selectedConnection.status} />
-                  </Stack>
-                )}
-              </Stack>
-            )}
+          <ConnectionSelect
+            options={connectionOptions}
+            isLoading={isLoading}
+            placeholder={t('provisioning.wizard.oauth-app-select-connection', 'Select a connection')}
           />
         </Field>
       )}

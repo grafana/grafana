@@ -23,8 +23,8 @@ export function OAuthAppInstruction({ type }: { type: OAuthConnectionType }) {
       <Text element="p" color="secondary">
         {type === 'githubOAuth' || type === 'githubEnterpriseOAuth' ? (
           <Trans i18nKey="provisioning.oauth-app.help-instructions-github">
-            In GitHub, go to your developer settings and create an OAuth app with the callback URL below, then paste
-            its client ID and a generated client secret here.{' '}
+            In GitHub, go to your developer settings and create an OAuth app with the callback URL below, then paste its
+            client ID and a generated client secret here.{' '}
             <TextLink external href={docsUrls.githubOAuth}>
               View step-by-step instructions
             </TextLink>

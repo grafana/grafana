@@ -105,11 +105,11 @@ export default function ConnectionFormPage() {
                   label={
                     availableReposQuery.isLoading
                       ? t('provisioning.connection-form.available-repositories-loading', 'Loading repositories...')
-                      : t(
-                          'provisioning.connection-form.available-repositories-count',
-                          'This connection has access to {{count}} repositories',
-                          { count: availableRepos.length }
-                        )
+                      : t('provisioning.connection-form.available-repositories-count', '', {
+                          count: availableRepos.length,
+                          defaultValue_one: 'This connection has access to {{count}} repository',
+                          defaultValue_other: 'This connection has access to {{count}} repositories',
+                        })
                   }
                   loading={availableReposQuery.isLoading}
                   isOpen={availableReposOpen && !availableReposQuery.isLoading}

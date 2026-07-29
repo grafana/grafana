@@ -7,21 +7,26 @@ import { useLazyGetConnectionRepositoriesQuery } from 'app/api/clients/provision
 
 import { type GitHubBasedConnectionType } from '../Wizard/types';
 import { type ExternalRepository, type OAuthConnectionType } from '../types';
+import { isOAuthConnectionType, oauthConnectionRepoType } from '../utils/connectionOAuth';
 import { isConnectionReady } from '../utils/connectionStatus';
 import { formatRepoUrl } from '../utils/git';
 
 import { useConnectionList } from './useConnectionList';
 
-export function useConnectionOptions(enabled: boolean, connectionType?: GitHubBasedConnectionType | OAuthConnectionType) {
+export function useConnectionOptions(
+  enabled: boolean,
+  connectionType?: GitHubBasedConnectionType | OAuthConnectionType
+) {
   const [connections, connectionsLoading, error, refetch] = useConnectionList(enabled ? {} : skipToken);
   const githubConnections = useMemo(
     () =>
-      connections?.filter(
-        (c) =>
-          c.spec?.type === connectionType ||
-          (connectionType === 'github' && c.spec?.type === 'githubOAuth') ||
-          (connectionType === 'githubEnterprise' && c.spec?.type === 'githubEnterpriseOAuth')
-      ) ?? [],
+      connections?.filter((c) => {
+        const specType = c.spec?.type;
+        return (
+          specType === connectionType ||
+          (isOAuthConnectionType(specType) && oauthConnectionRepoType(specType) === connectionType)
+        );
+      }) ?? [],
     [connections, connectionType]
   );
 

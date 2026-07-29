@@ -106,10 +106,10 @@ describe('ConnectionForm', () => {
       expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
     });
 
-    it('should have Provider field disabled', () => {
+    it('should have Provider field enabled', () => {
       setup();
 
-      expect(screen.getByLabelText(/^Provider/)).toBeDisabled();
+      expect(screen.getByLabelText(/^Provider/)).toBeEnabled();
     });
   });
 

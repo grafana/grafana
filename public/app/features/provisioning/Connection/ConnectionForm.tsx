@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -14,10 +14,11 @@ import { OAuthConnectionFields } from '../components/Shared/OAuthConnectionField
 import { WebhookDisabledField } from '../components/Shared/WebhookDisabledField';
 import { CONNECTIONS_TAB_URL, CONNECTIONS_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
+import { useOAuthAuthorizeFlow } from '../hooks/useOAuthAuthorizeFlow';
 import { type ConnectionFormData } from '../types';
-import { buildOAuthAuthorizeUrl, isOAuthConnectionType, onOAuthAuthorizationComplete } from '../utils/connectionOAuth';
-import { extractFormErrors, getConnectionFormErrors } from '../utils/getFormErrors';
-import { isGitHubBased } from '../utils/repositoryTypes';
+import { connectionFormToSpec, connectionToFormData } from '../utils/connectionData';
+import { isOAuthConnectionType } from '../utils/connectionOAuth';
+import { extractFormErrors, getConnectionFormErrors, setConnectionFormErrors } from '../utils/getFormErrors';
 
 import { DeleteConnectionButton } from './DeleteConnectionButton';
 
@@ -58,38 +59,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   ];
 
   const formMethods = useForm<ConnectionFormData>({
-    defaultValues:
-      isOAuthConnectionType(data?.spec?.type)
-        ? {
-            type: data.spec.type,
-            title: data?.spec?.title || '',
-            description: data?.spec?.description || '',
-            clientID: data.spec.oauth?.clientID || '',
-            clientSecret: '',
-            workspace: data.spec.bitbucket?.workspace || '',
-            serverUrl: data.spec.githubEnterpriseOAuth?.serverUrl || '',
-            webhookDisabled: data?.spec?.webhook?.disabled ?? false,
-          }
-        : data?.spec?.type === 'githubEnterprise'
-        ? {
-            type: 'githubEnterprise',
-            title: data?.spec?.title || '',
-            description: data?.spec?.description || '',
-            appID: data?.spec?.githubEnterprise?.appID || '',
-            installationID: data?.spec?.githubEnterprise?.installationID || '',
-            privateKey: '',
-            webhookDisabled: data?.spec?.webhook?.disabled ?? false,
-            serverUrl: data?.spec?.githubEnterprise?.serverUrl || '',
-          }
-        : {
-            type: 'github',
-            title: data?.spec?.title || '',
-            description: data?.spec?.description || '',
-            appID: data?.spec?.github?.appID || '',
-            installationID: data?.spec?.github?.installationID || '',
-            privateKey: '',
-            webhookDisabled: data?.spec?.webhook?.disabled ?? false,
-          },
+    defaultValues: connectionToFormData(data),
   });
 
   const {
@@ -105,19 +75,9 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
 
   const selectedType = watch('type');
 
-  const authTabRef = useRef<Window | null>(null);
-  const [pendingAuthorizeName, setPendingAuthorizeName] = useState<string>();
-
-  useEffect(() => {
-    if (!pendingAuthorizeName) {
-      return;
-    }
-    return onOAuthAuthorizationComplete((name) => {
-      if (name === pendingAuthorizeName) {
-        navigate(`${CONNECTIONS_URL}/${name}/edit`);
-      }
-    });
-  }, [pendingAuthorizeName, navigate]);
+  const { openAuthTab, closeAuthTab, authorize } = useOAuthAuthorizeFlow(
+    useCallback((name: string) => navigate(`${CONNECTIONS_URL}/${name}/edit`), [navigate])
+  );
 
   useEffect(() => {
     if (request.isSuccess) {
@@ -134,27 +94,17 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       if (isOAuthConnectionType(formData.type) && (!isEdit || formData.clientSecret)) {
         const name = connectionName ?? request.data?.metadata?.name;
         if (name && formData.clientID) {
-          const url = buildOAuthAuthorizeUrl(formData.type, formData.clientID, name, formData.serverUrl, {
-            popup: true,
-          });
-          if (authTabRef.current) {
-            authTabRef.current.location.href = url;
-            authTabRef.current = null;
-          } else {
-            window.open(url, '_blank');
-          }
-          setPendingAuthorizeName(name);
+          authorize(formData.type, formData.clientID, name, formData.serverUrl);
           return;
         }
       }
 
-      authTabRef.current?.close();
-      authTabRef.current = null;
+      closeAuthTab();
 
       // use timeout to ensure the form resets before navigating
       setTimeout(() => navigate(CONNECTIONS_TAB_URL), 300);
     }
-  }, [request.isSuccess, request.data, reset, getValues, connectionName, navigate, isEdit]);
+  }, [request.isSuccess, request.data, reset, getValues, connectionName, navigate, isEdit, authorize, closeAuthTab]);
 
   useEffect(() => {
     if (isEdit && data?.status?.fieldErrors?.length) {
@@ -179,63 +129,24 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   const handleReauthorize = () => {
     const formData = getValues();
     if (connectionName && formData.clientID && isOAuthConnectionType(formData.type)) {
-      const url = buildOAuthAuthorizeUrl(formData.type, formData.clientID, connectionName, formData.serverUrl, {
-        popup: true,
-      });
-      window.open(url, '_blank');
-      setPendingAuthorizeName(connectionName);
+      authorize(formData.type, formData.clientID, connectionName, formData.serverUrl);
     }
   };
 
   const onSubmit = async (form: ConnectionFormData) => {
     setSubmitError(undefined);
-    // Open the tab synchronously so popup blockers allow it; navigate it once
-    // the connection is saved.
     if (isOAuthConnectionType(form.type) && (!isEdit || form.clientSecret) && form.clientID) {
-      authTabRef.current = window.open('', '_blank');
+      openAuthTab();
     }
     try {
-      const spec = {
-        title: form.title,
-        type: form.type,
-        ...(form.description && { description: form.description }),
-        ...(form.webhookDisabled ? { webhook: { disabled: true } } : {}),
-        ...(form.type === 'githubEnterprise'
-          ? {
-              githubEnterprise: {
-                appID: form.appID ?? '',
-                installationID: form.installationID ?? '',
-                serverUrl: form.serverUrl,
-              },
-            }
-          : form.type === 'github'
-            ? {
-                github: {
-                  appID: form.appID ?? '',
-                  installationID: form.installationID ?? '',
-                },
-              }
-            : {
-                oauth: { clientID: form.clientID ?? '' },
-                ...(form.type === 'githubEnterpriseOAuth' ? { githubEnterpriseOAuth: { serverUrl: form.serverUrl ?? '' } } : {}),
-                ...(form.type === 'bitbucket' ? { bitbucket: { workspace: form.workspace ?? '' } } : {}),
-              }),
-      };
-
-      await submitData(spec, form.privateKey, form.clientSecret);
+      await submitData(connectionFormToSpec(form), form.privateKey, form.clientSecret);
     } catch (err) {
-      authTabRef.current?.close();
-      authTabRef.current = null;
+      closeAuthTab();
+      if (setConnectionFormErrors(err, setError)) {
+        return;
+      }
+
       if (isFetchError(err)) {
-        const errors = getConnectionFormErrors(err.data);
-
-        if (errors.length > 0) {
-          for (const [field, errorMessage] of errors) {
-            setError(field, errorMessage);
-          }
-          return;
-        }
-
         // Show unmapped error details as a top-level form error
         const allErrors = extractFormErrors(err.data);
         const detail = allErrors.find((e) => e.detail)?.detail;
@@ -291,7 +202,7 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
             />
           </Field>
 
-          {isGitHubBased(selectedType) && (
+          {!isOAuthConnectionType(selectedType) && (
             <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} type={selectedType} />
           )}
 

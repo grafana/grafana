@@ -4,22 +4,20 @@ import { Controller, FormProvider, useForm, useFormContext } from 'react-hook-fo
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
-import { Alert, Combobox, Field, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
-import { type ConnectionSpec } from 'app/api/clients/provisioning/v0alpha1';
+import { Alert, Field, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
 import { extractErrorMessage } from 'app/api/utils';
 
-import { ConnectionStatusBadge } from '../Connection/ConnectionStatusBadge';
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
 import { WebhookDisabledField } from '../components/Shared/WebhookDisabledField';
 import { useConnectionOptions } from '../hooks/useConnectionOptions';
-import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { type ConnectionFormData } from '../types';
-import { getConnectionFormErrors } from '../utils/getFormErrors';
+import { connectionFormToSpec, getDefaultConnectionFormData } from '../utils/connectionData';
+import { setConnectionFormErrors } from '../utils/getFormErrors';
 
 import { NewOAuthConnectionFields } from './NewOAuthConnectionFields';
 import { useStepStatus } from './StepStatusContext';
+import { ConnectionSelect } from './components/ConnectionSelect';
 import { GithubAppStepInstruction } from './components/GithubAppStepInstruction';
 import { type ConnectionCreationResult, type GitHubBasedConnectionType, type WizardFormData } from './types';
 
@@ -40,27 +38,7 @@ export function GitHubAppFields({ connectionType, onGitHubAppSubmit }: GitHubApp
 
   // GH app form
   const credentialForm = useForm<ConnectionFormData>({
-    defaultValues:
-      connectionType === 'githubEnterprise'
-        ? {
-            type: 'githubEnterprise',
-            title: '',
-            description: '',
-            appID: '',
-            installationID: '',
-            privateKey: '',
-            webhookDisabled: false,
-            serverUrl: '',
-          }
-        : {
-            type: 'github',
-            title: '',
-            description: '',
-            appID: '',
-            installationID: '',
-            privateKey: '',
-            webhookDisabled: false,
-          },
+    defaultValues: getDefaultConnectionFormData(connectionType),
   });
 
   const [createConnection, connectionRequest] = useCreateOrUpdateConnection();
@@ -79,75 +57,37 @@ export function GitHubAppFields({ connectionType, onGitHubAppSubmit }: GitHubApp
     }
   }, [hasNoConnections, setValue]);
 
-  const [githubAppMode, githubAppKind = 'app', githubAppConnectionName] = watch([
-    'githubAppMode',
-    'githubAppKind',
-    'githubApp.connectionName',
-  ]);
-  const { connection: selectedConnection } = useConnectionStatus(githubAppConnectionName);
+  const [githubAppMode, githubAppKind = 'app'] = watch(['githubAppMode', 'githubAppKind']);
 
   const handleCreateConnection = async () => {
     // Reset any existing step errors
     setStepStatusInfo({ status: 'idle' });
-    const isValid = await credentialForm.trigger();
-    if (!isValid) {
-      const validationError = t('provisioning.wizard.github-app-creation-default-error', 'Failed to create connection');
-      onGitHubAppSubmit({ success: false, error: validationError });
-      return;
-    }
-
-    const form = credentialForm.getValues();
-    const baseSpec = {
-      title: form.title,
-      ...(form.description && { description: form.description }),
-      ...(form.webhookDisabled ? { webhook: { disabled: true } } : {}),
-    };
-    const spec: ConnectionSpec =
-      form.type === 'githubEnterprise'
-        ? {
-            ...baseSpec,
-            type: 'githubEnterprise',
-            githubEnterprise: { appID: form.appID, installationID: form.installationID, serverUrl: form.serverUrl },
-          }
-        : {
-            ...baseSpec,
-            type: 'github',
-            github: { appID: form.appID, installationID: form.installationID },
-          };
-
     const defaultErrorMessage = t(
       'provisioning.wizard.github-app-creation-default-error',
       'Failed to create connection'
     );
+    const isValid = await credentialForm.trigger();
+    if (!isValid) {
+      onGitHubAppSubmit({ success: false, error: defaultErrorMessage });
+      return;
+    }
 
-    // Returns true if form errors were set (caller should return early)
-    const handleFormErrors = (error: unknown): boolean => {
-      if (isFetchError(error)) {
-        const formErrors = getConnectionFormErrors(error.data);
-        if (formErrors.length > 0) {
-          for (const [field, errorMessage] of formErrors) {
-            credentialForm.setError(field, errorMessage);
-          }
-          return true;
-        }
-      }
-      return false;
-    };
+    const form = credentialForm.getValues();
 
     try {
-      const result = await createConnection(spec, form.privateKey);
+      const result = await createConnection(connectionFormToSpec(form), form.privateKey);
       if (result.data?.metadata?.name) {
         credentialForm.reset();
         onGitHubAppSubmit({ success: true, connectionName: result.data.metadata.name });
         return;
       } else if (result.error) {
-        if (handleFormErrors(result.error)) {
+        if (setConnectionFormErrors(result.error, credentialForm.setError)) {
           return;
         }
         onGitHubAppSubmit({ success: false, error: extractErrorMessage(result.error) || defaultErrorMessage });
       }
     } catch (error) {
-      if (handleFormErrors(error)) {
+      if (setConnectionFormErrors(error, credentialForm.setError)) {
         return;
       }
       onGitHubAppSubmit({ success: false, error: extractErrorMessage(error) || defaultErrorMessage });
@@ -208,37 +148,10 @@ export function GitHubAppFields({ connectionType, onGitHubAppSubmit }: GitHubApp
             </Alert>
           )}
           {githubConnections.length > 0 && (
-            <Controller
-              name="githubApp.connectionName"
-              control={control}
-              rules={{
-                required:
-                  githubAppMode === 'existing' &&
-                  t('provisioning.wizard.github-app-error-required', 'Connection is required'),
-              }}
-              render={({ field: { onChange, value } }) => (
-                <Stack direction="column" gap={1}>
-                  <Combobox
-                    options={connectionOptions}
-                    onChange={(option) => onChange(option?.value ?? '')}
-                    value={value}
-                    invalid={Boolean(errors?.githubApp?.connectionName?.message)}
-                    loading={isLoading}
-                    disabled={isLoading}
-                    placeholder={t(
-                      'provisioning.wizard.github-app-select-connection',
-                      'Select a GitHub App connection'
-                    )}
-                  />
-
-                  {selectedConnection && (
-                    <Stack>
-                      <Trans i18nKey="provisioning.wizard.github-app-connection-status">Connection status:</Trans>
-                      <ConnectionStatusBadge status={selectedConnection.status} />
-                    </Stack>
-                  )}
-                </Stack>
-              )}
+            <ConnectionSelect
+              options={connectionOptions}
+              isLoading={isLoading}
+              placeholder={t('provisioning.wizard.github-app-select-connection', 'Select a GitHub App connection')}
             />
           )}
         </Stack>
