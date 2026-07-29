@@ -365,7 +365,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * to the live scene (e.g. after save) so a full page reload is not required.
    */
   public async refreshPredefinedVariables(): Promise<void> {
-    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GlobalDashboardVariables, false)) {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardGlobalVariables, false)) {
       return;
     }
 

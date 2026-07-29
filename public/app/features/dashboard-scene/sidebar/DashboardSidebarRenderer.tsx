@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { useFlagGlobalDashboardVariables, useFlagGrafanaViewPanelPane } from '@grafana/runtime/internal';
+import { useFlagGrafanaDashboardGlobalVariables, useFlagGrafanaViewPanelPane } from '@grafana/runtime/internal';
 import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -46,7 +46,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const selectedObject = sidebar.getSelectedObject();
   const sidebarContext = useSidebarContext();
   const viewPanelPane = useFlagGrafanaViewPanelPane();
-  const globalDashboardVariablesEnabled = useFlagGlobalDashboardVariables();
+  const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
       sidebar.closePane();

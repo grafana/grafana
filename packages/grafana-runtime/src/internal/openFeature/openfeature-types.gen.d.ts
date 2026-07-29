@@ -42,7 +42,7 @@ declare module "@openfeature/core" {
     | "grafana.starredFolders"
     | "grafana.newTextPanel"
     | "plugins.useMTPlugins"
-    | "globalDashboardVariables"
+    | "grafana.dashboardGlobalVariables"
     | "queryEditorNext"
     | "managedPluginsV2"
     | "analyticsFramework"

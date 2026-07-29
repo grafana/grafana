@@ -25,7 +25,7 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		DisableAnonymous:     true,
-		EnableFeatureToggles: []string{"globalDashboardVariables"},
+		EnableFeatureToggles: []string{"grafana.dashboardGlobalVariables"},
 	})
 	t.Cleanup(helper.Shutdown)
 
