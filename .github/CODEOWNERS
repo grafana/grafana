@@ -357,6 +357,9 @@
 /pkg/tsdb/cloudwatch/ @grafana/data-sources-plugins
 /pkg/tsdb/azuremonitor/ @grafana/data-sources-plugins
 
+# Observability backend code
+/pkg/tsdb/prometheus/ @grafana/data-sources-plugins
+
 # OSS Big Tent backend code
 /pkg/tsdb/mysql/ @grafana/data-sources-plugins
 /pkg/tsdb/sqlmacro/ @grafana/data-sources-plugins
@@ -1094,7 +1097,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/dev.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/metrics.ts @grafana/grafana-catalog
 /public/app/index.ts @grafana/grafana-frontend-platform
-/public/app/legacyAPIHandling* @grafana/grafana-frontend-platform
+/public/app/legacyAPIHandling.ts @grafana/grafana-frontend-platform
 /public/app/initApp.ts @grafana/grafana-frontend-platform
 /public/app/AppWrapper.tsx @grafana/grafana-frontend-platform
 
@@ -1154,6 +1157,7 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/influxdb/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
 /public/app/plugins/datasource/mysql/ @grafana/data-sources-plugins
+/public/app/plugins/datasource/prometheus/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
 # Grafana Sharing Squad
