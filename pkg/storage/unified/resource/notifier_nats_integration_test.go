@@ -194,11 +194,8 @@ func startNatsRoundTrip(t *testing.T) (context.Context, *nats.PublisherService, 
 		Enabled:       true,
 		Mode:          setting.NATSModeEmbedded,
 		ListenAddress: "127.0.0.1",
-		// Let NATS bind ephemeral ports atomically so parallel or repeated runs —
-		// and a dev Grafana already holding 4222 — don't collide. A zero ClusterPort
-		// would leave ClusterAddr() nil, which the server dereferences.
-		ClientPort:  natsserver.RANDOM_PORT,
-		ClusterPort: natsserver.RANDOM_PORT,
+		ClientPort:    natsserver.RANDOM_PORT,
+		ClusterPort:   natsserver.RANDOM_PORT,
 	}
 
 	server, err := nats.ProvideServer(cfg, nil, prometheus.NewRegistry())
