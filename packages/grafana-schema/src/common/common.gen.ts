@@ -1052,6 +1052,10 @@ export interface TableOptions {
    */
   maxRowHeight?: number;
   /**
+   * When pagination is enabled, sets a fixed number of rows per page. When unset, the page size is derived from the panel height.
+   */
+  pageSize?: number;
+  /**
    * Controls whether the panel should show the header
    */
   showHeader: boolean;

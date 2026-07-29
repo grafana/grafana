@@ -132,6 +132,7 @@ export function LegacyTableNG(props: TableNGProps) {
     frozenColumns: _frozenColumns = 0,
     getActions = () => [],
     height,
+    pageSize,
     maxRowHeight: _maxRowHeight,
     noHeader,
     noValue,
@@ -391,6 +392,7 @@ export function LegacyTableNG(props: TableNGProps) {
     headerHeight: hasHeader ? headerHeight : 0,
     rowHeight,
     hasNestedFrames,
+    pageSize,
   });
 
   const showPagination = enablePagination && numRows > 0;

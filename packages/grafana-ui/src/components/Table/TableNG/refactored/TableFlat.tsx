@@ -62,6 +62,7 @@ export function TableFlat(props: TableNGProps) {
     frozenColumns: _frozenColumns = 0,
     getActions = () => [],
     height,
+    pageSize,
     maxRowHeight: _maxRowHeight,
     noHeader,
     noValue,
@@ -220,6 +221,7 @@ export function TableFlat(props: TableNGProps) {
     footerHeight,
     headerHeight: hasHeader ? headerHeight : 0,
     rowHeight,
+    pageSize,
   });
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {

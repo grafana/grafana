@@ -74,6 +74,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     enableVirtualization,
     getActions = () => [],
     height,
+    pageSize,
     maxRowHeight: _maxRowHeight,
     nestedFramesField,
     noHeader,
@@ -300,6 +301,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     headerHeight: hasHeader ? headerHeight : 0,
     rowHeight,
     hasNestedFrames: true,
+    pageSize,
   });
 
   const showPagination = enablePagination && numRows > 0;

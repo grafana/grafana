@@ -218,6 +218,24 @@ describe('useCommonTableProps', () => {
     expect(result.current.nestedRefactorEnabled).toBe(true);
   });
 
+  it('passes pageSize through when the pagination-page-size flag is on', () => {
+    setTestFlags({ [FlagKeys.TablePaginationPageSize]: true });
+    const { result } = renderHook(() => useCommonTableProps({ ...options, pageSize: 25 }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.pageSize).toBe(25);
+  });
+
+  it('drops pageSize when the pagination-page-size flag is off', () => {
+    setTestFlags({ [FlagKeys.TablePaginationPageSize]: false });
+    const { result } = renderHook(() => useCommonTableProps({ ...options, pageSize: 25 }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+
+    expect(result.current.pageSize).toBeUndefined();
+  });
+
   it('returns a stable reference when inputs do not change', () => {
     const { result, rerender } = renderHook(() => useCommonTableProps(options, fieldConfig), {
       wrapper: FeatureFlagsProvider,
