@@ -13,6 +13,7 @@ import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, getLayoutOrchestratorFor } from '../../utils/utils';
 import { dashboardCanvasAddButtonHoverStyles, getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
+import { useIsMultiSelection } from '../layouts-shared/useIsMultiSelection';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { TabItem } from './TabItem';
@@ -32,6 +33,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const { hasCopiedTab } = useClipboardState();
   const isNestedInTab = useMemo(() => model.parent instanceof TabItem, [model.parent]);
   const soloPanelContext = useSoloPanelContext();
+  const isMultiSelection = useIsMultiSelection();
 
   const { scrollRef, scrollEl, canScrollLeft, canScrollRight, scrollBy } = useHorizontalOverflow();
 
@@ -150,7 +152,14 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
               )}
             </div>
             {isEditing && !isClone && (
-              <div className={cx(styles.tabControls, layoutControlsStyles.controls, 'dashboard-canvas-controls')}>
+              <div
+                className={cx(
+                  styles.tabControls,
+                  layoutControlsStyles.controls,
+                  'dashboard-canvas-controls',
+                  isMultiSelection && layoutControlsStyles.controlsHidden
+                )}
+              >
                 <Button
                   icon="plus"
                   variant="secondary"
