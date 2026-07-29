@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	"k8s.io/client-go/dynamic"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -122,6 +123,7 @@ func New(cfg *setting.Cfg,
 		userService:  userService,
 		actionSetSvc: actionSetService,
 	}
+	s.dynamicClient = s.dynamicClientForContext
 
 	s.api = newApi(cfg, ac, router, s, features, s.options.RestConfigProvider)
 
@@ -152,6 +154,10 @@ type Service struct {
 	teamService  team.Service
 	userService  user.Service
 	actionSetSvc ActionSetService
+
+	// dynamicClient builds the K8s client the teams membership redirect writes
+	// through. A field rather than a direct call so tests can inject a fake client.
+	dynamicClient func(ctx context.Context) (dynamic.Interface, error)
 }
 
 func (s *Service) GetPermissions(ctx context.Context, user identity.Requester, resourceID string) ([]accesscontrol.ResourcePermission, error) {
@@ -239,20 +245,21 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 	}
 
 	// Teams-specific redirect: write the membership to Team.Spec.Members via the
-	// K8s API. The HTTP handler (api.setUserPermission) already does this, but
-	// callers that invoke the service directly (not through the handler) need the
-	// same redirect, so it lives here too. In unified-authoritative modes (Mode4/5)
-	// the legacy team_member table has no row to write, so we must not fall back to it.
+	// K8s API. It lives here rather than in api.setUserPermission so that every
+	// caller shares it — HTTP requests reach it through this method, and so do the
+	// in-process callers (SCIM, team-sync, the team-members API) that never touch the
+	// handler. In unified-authoritative modes (Mode4/5) the legacy team_member table
+	// has no row to write, so we must not fall back to it.
 	redirectRemovedMember := false
 	if s.teamsMembershipRedirectEnabled(ctx) {
-		removed, k8sErr := setTeamMembership(s, ctx, orgID, resourceID, user.ID, permission)
+		removed, k8sErr := s.setTeamMemberViaK8s(ctx, orgID, resourceID, user.ID, permission, user.IsExternal)
 		if errors.Is(k8sErr, ErrExternalTeamMember) {
 			return nil, k8sErr
 		}
 		if k8sErr == nil {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", s.options.Resource, "success").Inc()
 		}
-		if s.unifiedTeamStorageIsAuthoritative() {
+		if unifiedStorageIsAuthoritative(s.cfg, iamv0.TeamResourceInfo.GroupResource().String()) {
 			if k8sErr != nil {
 				metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_user", s.options.Resource, "error").Inc()
 				return nil, k8sErr
@@ -432,14 +439,14 @@ func (s *Service) SetPermissions(
 	// the all-or-nothing semantics of the legacy SQL transaction below.
 	redirectRemovedMember := false
 	if s.teamsMembershipRedirectEnabled(ctx) {
-		removed, k8sErr := setTeamMemberships(s, ctx, orgID, resourceID, commands)
+		removed, k8sErr := s.setTeamMembersViaK8s(ctx, orgID, resourceID, commands)
 		if errors.Is(k8sErr, ErrExternalTeamMember) {
 			return nil, k8sErr
 		}
 		if k8sErr == nil {
 			metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_bulk", s.options.Resource, "success").Inc()
 		}
-		if s.unifiedTeamStorageIsAuthoritative() {
+		if unifiedStorageIsAuthoritative(s.cfg, iamv0.TeamResourceInfo.GroupResource().String()) {
 			if k8sErr != nil {
 				metrics.MAccessResourcePermissionsBackend.WithLabelValues("k8s", "set_bulk", s.options.Resource, "error").Inc()
 				return nil, k8sErr
@@ -456,7 +463,8 @@ func (s *Service) SetPermissions(
 
 	// See SetUserPermission: when the redirect removed a member it also removed the
 	// legacy team_member row, so skip the membership hook to avoid rolling back the
-	// RBAC permission writes. Adds and no-op removals keep the hook.
+	// RBAC permission writes. The batch is all-or-nothing, so this covers the whole
+	// batch; the adds in it already have their team_member row from the dual-write.
 	userHook := s.options.OnSetUser
 	if redirectRemovedMember {
 		userHook = nil
@@ -490,72 +498,58 @@ func (s *Service) clearUserPermissionCaches(orgID int64, commands []accesscontro
 
 // teamsMembershipRedirectEnabled reports whether team membership writes for this
 // service should be routed to Team.Spec.Members via the K8s API instead of the
-// legacy team_member table. It mirrors the gate used by the HTTP handlers
-// (api.setUserPermission) so direct service callers behave identically.
+// legacy team_member table. It is the only gate on that redirect: the HTTP handlers
+// no longer check the toggle themselves, so every caller enters through here.
 func (s *Service) teamsMembershipRedirectEnabled(ctx context.Context) bool {
 	return s.options.Resource == "teams" &&
 		ofClient.Boolean(ctx, featuremgmt.FlagKubernetesTeamsRedirect, false, openfeature.TransactionContext(ctx))
 }
 
-// unifiedTeamStorageIsAuthoritative reports whether unified storage is the
-// authoritative backend for teams (dualWriterMode > Mode3). When true, the legacy
-// team_member table is not written, so team membership must succeed against the
-// K8s API and callers must not fall back to legacy.
-func (s *Service) unifiedTeamStorageIsAuthoritative() bool {
-	return unifiedStorageIsAuthoritative(s.cfg, iamv0.TeamResourceInfo.GroupResource().String())
+// teamsRedirectOwnsWrites reports whether the teams membership redirect is the sole
+// writer (redirect enabled and unified storage authoritative). When true the legacy
+// store is never written, so handlers must not count a legacy write in the metrics.
+func (s *Service) teamsRedirectOwnsWrites(ctx context.Context) bool {
+	return s.teamsMembershipRedirectEnabled(ctx) &&
+		unifiedStorageIsAuthoritative(s.cfg, iamv0.TeamResourceInfo.GroupResource().String())
 }
 
-// setTeamMembership writes a single team membership to Team.Spec.Members via the
-// K8s API. The bool reports whether an existing member was removed.
-//
-// Stubbable by tests.
-var setTeamMembership = func(s *Service, ctx context.Context, orgID int64, resourceID string, userID int64, permission string) (bool, error) {
-	return s.setTeamMemberViaK8s(ctx, orgID, resourceID, userID, permission)
+// dynamicClientForContext builds the K8s client the teams membership redirect
+// writes through, using the ReqContext the contexthandler middleware stored on
+// ctx. Callers with no request context (background jobs) cannot reach the K8s
+// APIs, so they get ErrRestConfigNotAvailable and fall back to legacy wherever
+// that is still allowed. Mirrors teamk8s.TeamK8sService.getDynamicClient.
+func (s *Service) dynamicClientForContext(ctx context.Context) (dynamic.Interface, error) {
+	reqCtx := contexthandler.FromContext(ctx)
+	if reqCtx == nil {
+		return nil, ErrRestConfigNotAvailable
+	}
+	return newDynamicClient(s.options.RestConfigProvider, reqCtx)
 }
 
 // setTeamMemberViaK8s writes a single team membership to Team.Spec.Members via the
-// K8s API for callers that invoke the service directly (not through the HTTP
-// handler). It reuses the same read-modify-write helper as the HTTP teams redirect,
-// building the client from the ReqContext the contexthandler middleware stored on
-// ctx and deriving the namespace from orgID the same way the team K8s service does.
-// The bool reports whether an existing member was removed.
-func (s *Service) setTeamMemberViaK8s(ctx context.Context, orgID int64, resourceID string, userID int64, permission string) (bool, error) {
-	reqCtx := contexthandler.FromContext(ctx)
-	if reqCtx == nil {
-		return false, ErrRestConfigNotAvailable
-	}
-	dynamicClient, err := newDynamicClient(s.options.RestConfigProvider, reqCtx)
+// K8s API, deriving the namespace from orgID the same way the team K8s service does.
+// external marks the caller as team-sync. The bool reports whether an existing member
+// was removed.
+func (s *Service) setTeamMemberViaK8s(ctx context.Context, orgID int64, resourceID string, userID int64, permission string, external bool) (bool, error) {
+	dynamicClient, err := s.dynamicClient(ctx)
 	if err != nil {
 		return false, err
 	}
 	namespace := request.GetNamespaceMapper(s.cfg)(orgID)
-	return s.setTeamMember(ctx, dynamicClient, orgID, namespace, resourceID, userID, permission)
-}
-
-// setTeamMemberships reconciles a batch of team memberships against
-// Team.Spec.Members via the K8s API. The whole batch is applied in a single Team
-// update so it commits or fails atomically. Only user commands are routed. The
-// bool reports whether any existing member was removed.
-//
-// Stubbable by tests.
-var setTeamMemberships = func(s *Service, ctx context.Context, orgID int64, resourceID string, commands []accesscontrol.SetResourcePermissionCommand) (bool, error) {
-	return s.setTeamMembersViaK8s(ctx, orgID, resourceID, commands)
+	return s.setTeamMember(ctx, dynamicClient, orgID, namespace, resourceID, userID, permission, external)
 }
 
 // setTeamMembersViaK8s is the batch counterpart of setTeamMemberViaK8s: it applies
-// every user command in the batch to Team.Spec.Members in one read-modify-write.
+// every user command in the batch to Team.Spec.Members in one read-modify-write. Only
+// the single-member path has a team-sync caller, so the batch is never external.
 // The bool reports whether any existing member was removed.
 func (s *Service) setTeamMembersViaK8s(ctx context.Context, orgID int64, resourceID string, commands []accesscontrol.SetResourcePermissionCommand) (bool, error) {
-	reqCtx := contexthandler.FromContext(ctx)
-	if reqCtx == nil {
-		return false, ErrRestConfigNotAvailable
-	}
-	dynamicClient, err := newDynamicClient(s.options.RestConfigProvider, reqCtx)
+	dynamicClient, err := s.dynamicClient(ctx)
 	if err != nil {
 		return false, err
 	}
 	namespace := request.GetNamespaceMapper(s.cfg)(orgID)
-	return s.setTeamMembers(ctx, dynamicClient, orgID, namespace, resourceID, commands)
+	return s.setTeamMembers(ctx, dynamicClient, orgID, namespace, resourceID, commands, false)
 }
 
 func (s *Service) MapActions(permission accesscontrol.ResourcePermission) string {

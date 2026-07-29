@@ -1264,6 +1264,7 @@ func TestSetTeamMember(t *testing.T) {
 		name            string
 		permission      string
 		userID          int64
+		external        bool
 		userSvc         func() *usertest.MockService
 		fakeResource    func(t *testing.T) *fakeResourceInterface
 		expectedErrMsg  string
@@ -1517,6 +1518,60 @@ func TestSetTeamMember(t *testing.T) {
 			},
 		},
 		{
+			// Team sync owns externally-synced members, so it is the one caller allowed
+			// to write them and its adds must be marked External.
+			name:       "team sync adds an external member",
+			permission: "Member",
+			userID:     1,
+			external:   true,
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t), nil
+					},
+					updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return obj, nil
+					},
+				}
+			},
+			expectUpdate: true,
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				require.Len(t, members, 1)
+				assert.True(t, members[0].External, "team sync adds must be marked External")
+			},
+		},
+		{
+			name:       "team sync removes an external member",
+			permission: "",
+			userID:     1,
+			external:   true,
+			userSvc: func() *usertest.MockService {
+				svc := &usertest.MockService{}
+				svc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: int64(1)}).Return(testUser, nil)
+				return svc
+			},
+			fakeResource: func(t *testing.T) *fakeResourceInterface {
+				return &fakeResourceInterface{
+					getFunc: func(_ context.Context, _ string, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return makeTeamObj(t, iamv0.TeamTeamMember{Kind: "User", Name: "user-uid-1", Permission: iamv0.TeamTeamPermissionMember, External: true}), nil
+					},
+					updateFunc: func(_ context.Context, obj *unstructured.Unstructured, _ metav1.UpdateOptions, _ ...string) (*unstructured.Unstructured, error) {
+						return obj, nil
+					},
+				}
+			},
+			expectUpdate:  true,
+			expectRemoved: true,
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				assert.Empty(t, members)
+			},
+		},
+		{
 			name:       "accepts lowercase permission",
 			permission: "admin",
 			userID:     1,
@@ -1613,7 +1668,7 @@ func TestSetTeamMember(t *testing.T) {
 				options:     Options{Resource: "teams"},
 			}
 
-			removed, err := svc.setTeamMember(context.Background(), fakeClient, 1, "stacks-123-org-1", "10", tt.userID, tt.permission)
+			removed, err := svc.setTeamMember(context.Background(), fakeClient, 1, "stacks-123-org-1", "10", tt.userID, tt.permission, tt.external)
 
 			if tt.expectedErrMsg != "" {
 				require.Error(t, err)
@@ -1717,6 +1772,26 @@ func TestSetTeamMembers(t *testing.T) {
 			},
 		},
 		{
+			// Only the removed member is reported, so the caller keeps running the legacy
+			// membership hook for the rest of the batch.
+			name: "reports only the removed member of a mixed batch",
+			commands: []accesscontrol.SetResourcePermissionCommand{
+				{UserID: 1, Permission: ""},
+				{UserID: 2, Permission: "Admin"},
+			},
+			initialMembers: []iamv0.TeamTeamMember{
+				{Kind: "User", Name: "user-uid-1", Permission: iamv0.TeamTeamPermissionMember},
+				{Kind: "User", Name: "user-uid-2", Permission: iamv0.TeamTeamPermissionMember},
+			},
+			expectUpdate:  true,
+			expectRemoved: true,
+			validateMembers: func(t *testing.T, members []iamv0.TeamTeamMember) {
+				require.Len(t, members, 1)
+				assert.Equal(t, "user-uid-2", members[0].Name)
+				assert.Equal(t, iamv0.TeamTeamPermissionAdmin, members[0].Permission)
+			},
+		},
+		{
 			name: "aborts the whole batch on an external member without updating",
 			commands: []accesscontrol.SetResourcePermissionCommand{
 				{UserID: 1, Permission: "Member"},
@@ -1762,7 +1837,7 @@ func TestSetTeamMembers(t *testing.T) {
 				options:     Options{Resource: "teams"},
 			}
 
-			removed, err := svc.setTeamMembers(context.Background(), fakeClient, 1, "stacks-123-org-1", "10", tt.commands)
+			removed, err := svc.setTeamMembers(context.Background(), fakeClient, 1, "stacks-123-org-1", "10", tt.commands, false)
 
 			if tt.expectedErrMsg != "" {
 				require.Error(t, err)

@@ -749,24 +749,25 @@ func (a *api) listTeamMemberPermissions(c *contextmodel.ReqContext, dynamicClien
 }
 
 // setTeamMember reconciles a single team membership in Team.Spec.Members via the
-// K8s API. It's a thin wrapper over setTeamMembers so the single-member HTTP
-// handler path and the batch path share one read-modify-write implementation. The
-// bool reports whether an existing member was removed.
-func (s *Service) setTeamMember(ctx context.Context, dynamicClient dynamic.Interface, orgID int64, namespace string, resourceID string, userID int64, permission string) (bool, error) {
+// K8s API. It's a thin wrapper over setTeamMembers so the single-member path and the
+// batch path share one read-modify-write implementation. The bool reports whether an
+// existing member was removed.
+func (s *Service) setTeamMember(ctx context.Context, dynamicClient dynamic.Interface, orgID int64, namespace string, resourceID string, userID int64, permission string, external bool) (bool, error) {
 	return s.setTeamMembers(ctx, dynamicClient, orgID, namespace, resourceID, []accesscontrol.SetResourcePermissionCommand{
 		{UserID: userID, Permission: permission},
-	})
+	}, external)
 }
 
 // setTeamMembers reconciles a batch of user membership changes in Team.Spec.Members
 // via the K8s API in a single read-modify-write, so the whole batch commits or fails
-// atomically. It's a service method (not an api method) so both the HTTP handlers and
-// direct in-process callers share one implementation; the deps it needs (team/user
-// services) live on the service. Only user commands are applied; non-user commands
-// are ignored. External members are owned by team-sync, so any command targeting one
-// aborts the batch with ErrExternalTeamMember without persisting a partial update.
-// The bool reports whether any existing member was removed.
-func (s *Service) setTeamMembers(ctx context.Context, dynamicClient dynamic.Interface, orgID int64, namespace string, resourceID string, commands []accesscontrol.SetResourcePermissionCommand) (bool, error) {
+// atomically. It's a service method (not an api method) because every caller now
+// reaches it through the service rather than the handler, and the deps it needs
+// (team/user services) live there. Only user commands are applied; non-user commands are
+// ignored. External members are owned by team-sync, so external marks the caller as
+// team-sync: every other caller aborts the batch with ErrExternalTeamMember, without
+// persisting a partial update, as soon as a command targets one. The bool reports
+// whether any existing member was removed.
+func (s *Service) setTeamMembers(ctx context.Context, dynamicClient dynamic.Interface, orgID int64, namespace string, resourceID string, commands []accesscontrol.SetResourcePermissionCommand, external bool) (bool, error) {
 	teamID, err := strconv.ParseInt(resourceID, 10, 64)
 	if err != nil {
 		return false, fmt.Errorf("invalid team resource ID: %w", err)
@@ -840,9 +841,10 @@ func (s *Service) setTeamMembers(ctx context.Context, dynamicClient dynamic.Inte
 				return m.Kind == subjectKindUser && m.Name == mc.uid
 			})
 
-			// External members are owned by team-sync and must not be mutated. Abort
-			// the whole batch (before any Update) rather than partially applying it.
-			if idx >= 0 && t.Spec.Members[idx].External {
+			// External members are owned by team-sync, so only team-sync itself may
+			// mutate them. Abort the whole batch (before any Update) rather than
+			// partially applying it.
+			if idx >= 0 && t.Spec.Members[idx].External && !external {
 				return ErrExternalTeamMember.Errorf("user %q is externally-synced", mc.uid)
 			}
 
@@ -854,6 +856,8 @@ func (s *Service) setTeamMembers(ctx context.Context, dynamicClient dynamic.Inte
 				removedAny = true
 				changed = true
 			case idx >= 0:
+				// External is immutable on update (see the Team admission validation),
+				// so an existing member keeps whichever flag it was created with.
 				if t.Spec.Members[idx].Permission != mc.permission {
 					t.Spec.Members[idx].Permission = mc.permission
 					changed = true
@@ -863,7 +867,7 @@ func (s *Service) setTeamMembers(ctx context.Context, dynamicClient dynamic.Inte
 					Kind:       subjectKindUser,
 					Name:       mc.uid,
 					Permission: mc.permission,
-					External:   false,
+					External:   external,
 				})
 				changed = true
 			}
