@@ -101,7 +101,7 @@ func (s *LegacyService) GetTeamIDsByUser(ctx context.Context, query *team.GetTea
 }
 
 func (s *LegacyService) IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error) {
-	_, span := s.tracer.Start(ctx, "team.IsTeamMember", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "team.IsTeamMember", trace.WithAttributes(
 		attribute.Int64("orgID", orgId),
 		attribute.Int64("teamID", teamId),
 		attribute.Int64("userID", userId),
