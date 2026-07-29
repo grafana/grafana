@@ -94,7 +94,9 @@ export interface UpdateEditSavedQueryRefPayload {
   editSavedQueryRef?: string;
 }
 
-export const updateEditSavedQueryRefAction = createAction<UpdateEditSavedQueryRefPayload>('explore/updateEditSavedQueryRef');
+export const updateEditSavedQueryRefAction = createAction<UpdateEditSavedQueryRefPayload>(
+  'explore/updateEditSavedQueryRef'
+);
 
 export interface SetAddingSavedQueryPayload {
   exploreId: string;
