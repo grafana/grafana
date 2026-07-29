@@ -35,6 +35,10 @@ const (
 type connectionQueueItem struct {
 	key      string
 	attempts int
+	// trigger records what enqueued this item, for the processing-level metrics.
+	// It rides the item so retries (which re-add the same item) keep the
+	// attribution.
+	trigger informer.ProcessTrigger
 }
 
 // ConnectionStatusPatcher defines the interface for updating connection status.
@@ -54,6 +58,11 @@ type ConnectionController struct {
 	connectionFactory connection.Factory
 	tokenMetrics      *connectionTokenMetrics
 
+	// natsBacked disambiguates a full-RV non-initial add for the processing
+	// metrics; processed counts the start of each reconcile by what enqueued it.
+	natsBacked bool
+	processed  *informer.ProcessedMetrics
+
 	// To allow injection for testing.
 	processFn func(ctx context.Context, item *connectionQueueItem) error
 
@@ -71,9 +80,12 @@ func NewConnectionController(
 	resyncInterval time.Duration,
 	drainTimeout time.Duration,
 	registry prometheus.Registerer,
+	natsBacked bool,
 ) *ConnectionController {
 	cc := &ConnectionController{
-		conns: conns,
+		conns:      conns,
+		natsBacked: natsBacked,
+		processed:  informer.NewProcessedMetrics(registry, "connections"),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
 			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{
@@ -96,22 +108,33 @@ func NewConnectionController(
 
 // EventHandler returns the informer event handlers for the controller. Register
 // it with the Connection informer to enqueue connections on add and update.
-func (cc *ConnectionController) EventHandler() cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: cc.enqueue,
+func (cc *ConnectionController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
+	return cache.ResourceEventHandlerDetailedFuncs{
+		AddFunc: func(obj interface{}, isInInitialList bool) {
+			cc.enqueue(obj, informer.ClassifyAdd(connectionResourceVersion(obj), isInInitialList, cc.natsBacked))
+		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			cc.enqueue(newObj)
+			cc.enqueue(newObj, informer.ClassifyUpdate(connectionResourceVersion(oldObj), connectionResourceVersion(newObj), cc.natsBacked))
 		},
 	}
 }
 
-func (cc *ConnectionController) enqueue(obj interface{}) {
+func (cc *ConnectionController) enqueue(obj interface{}, trigger informer.ProcessTrigger) {
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err != nil {
 		cc.logger.Error("failed to get key for object", "error", err)
 		return
 	}
-	cc.queue.Add(&connectionQueueItem{key: key})
+	cc.queue.Add(&connectionQueueItem{key: key, trigger: trigger})
+}
+
+// connectionResourceVersion returns the resource version of a delivered
+// Connection, or "" for a minimal NATS live event or a delete tombstone.
+func connectionResourceVersion(obj any) string {
+	if conn, ok := obj.(*provisioning.Connection); ok {
+		return conn.ResourceVersion
+	}
+	return ""
 }
 
 // Run starts the ConnectionController. The onStarted callback is invoked once
@@ -168,6 +191,13 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	namespace, name, _ := cache.SplitMetaNamespaceKey(item.key)
 	logger := logging.FromContext(ctx).With("work_key", item.key, "namespace", namespace, "connection", name)
 	logger.Info("ConnectionController processing key")
+
+	// Count the start of processing once per pickup, attributed to what enqueued
+	// the item. Retries re-add the same item (attempts already bumped) and are not
+	// recounted.
+	if item.attempts == 0 {
+		cc.processed.RecordProcessed(item.trigger)
+	}
 
 	err := cc.processFn(ctx, item)
 	if err == nil {

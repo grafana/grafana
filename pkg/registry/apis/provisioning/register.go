@@ -1198,6 +1198,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				controller.NewRepositoryQuotaChecker(reconcileRepoGetter),
 				b.incrementalPolicy,
 				webhookSecretRotationInterval,
+				nats.Enabled(b.natsSubscriber),
 			)
 			repoReg, err := repoSource.AddEventHandler(repoController.EventHandler())
 			if err != nil {
@@ -1228,6 +1229,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				informerFactoryResyncInterval,
 				30*time.Second,
 				b.registry,
+				nats.Enabled(b.natsSubscriber),
 			)
 			connReg, err := connSource.AddEventHandler(connController.EventHandler())
 			if err != nil {

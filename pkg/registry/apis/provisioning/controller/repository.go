@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -63,13 +64,23 @@ type RepositoryController struct {
 	quotaChecker      *RepositoryQuotaChecker
 	// To allow injection for testing.
 	processFn         func(key string) error
-	enqueueRepository func(obj any)
+	enqueueRepository func(obj any, trigger informer.ProcessTrigger)
 	keyFunc           func(obj any) (string, error)
 
 	queue           workqueue.TypedRateLimitingInterface[string]
 	resyncInterval  time.Duration
 	minSyncInterval time.Duration
 	drainTimeout    time.Duration
+
+	// natsBacked reports whether the repository informer is the NATS-backed
+	// source; it disambiguates a full-RV non-initial add for the processing
+	// metrics. processed counts the start of each reconcile by what enqueued the
+	// key. triggers carries that attribution from enqueue to dequeue, guarded by
+	// triggersMu (entries live only between enqueue and Forget).
+	natsBacked bool
+	processed  *informer.ProcessedMetrics
+	triggersMu sync.Mutex
+	triggers   map[string]informer.ProcessTrigger
 
 	registry                      prometheus.Registerer
 	tracer                        tracing.Tracer
@@ -103,13 +114,17 @@ func NewRepositoryController(
 	quotaChecker *RepositoryQuotaChecker,
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	webhookSecretRotationInterval time.Duration,
+	natsBacked bool,
 ) *RepositoryController {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
 
 	rc := &RepositoryController{
-		client: provisioningClient,
-		repos:  repos,
+		client:     provisioningClient,
+		repos:      repos,
+		natsBacked: natsBacked,
+		processed:  informer.NewProcessedMetrics(registry, "repositories"),
+		triggers:   make(map[string]informer.ProcessTrigger),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
 			workqueue.TypedRateLimitingQueueConfig[string]{
@@ -150,11 +165,13 @@ func NewRepositoryController(
 
 // EventHandler returns the informer event handlers for the controller. Register
 // it with the Repository informer to enqueue repositories on add and update.
-func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: rc.enqueue,
+func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
+	return cache.ResourceEventHandlerDetailedFuncs{
+		AddFunc: func(obj interface{}, isInInitialList bool) {
+			rc.enqueueRepository(obj, informer.ClassifyAdd(objectResourceVersion(obj), isInInitialList, rc.natsBacked))
+		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			rc.enqueue(newObj)
+			rc.enqueueRepository(newObj, informer.ClassifyUpdate(objectResourceVersion(oldObj), objectResourceVersion(newObj), rc.natsBacked))
 		},
 	}
 }
@@ -165,6 +182,15 @@ func repoKeyFunc(obj any) (string, error) {
 		return "", fmt.Errorf("expected a Repository but got %T", obj)
 	}
 	return cache.DeletionHandlingMetaNamespaceKeyFunc(repo)
+}
+
+// objectResourceVersion returns the resource version of a delivered Repository,
+// or "" for a minimal NATS live event or a delete tombstone.
+func objectResourceVersion(obj any) string {
+	if repo, ok := obj.(*provisioning.Repository); ok {
+		return repo.ResourceVersion
+	}
+	return ""
 }
 
 // Run starts the RepositoryController.
@@ -217,13 +243,46 @@ func (rc *RepositoryController) runWorker(ctx context.Context) {
 	}
 }
 
-func (rc *RepositoryController) enqueue(obj interface{}) {
+func (rc *RepositoryController) enqueue(obj interface{}, trigger informer.ProcessTrigger) {
 	key, err := rc.keyFunc(obj)
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("couldn't get key for object: %v", err))
 		return
 	}
+	// Attribute the key before the enqueue so a worker that dequeues immediately
+	// sees it.
+	rc.setTrigger(key, trigger)
 	rc.queue.Add(key)
+}
+
+// setTrigger records what enqueued key. Live overwrites unconditionally (a live
+// event never enters the informer snapshot, so a key delivered live but still
+// pending at the next re-list would otherwise be downgraded to relist);
+// relist/initial set only if absent so a queued live enqueue is never
+// downgraded. The map is lazily created so tests that build the controller as a
+// struct literal need not initialize it.
+func (rc *RepositoryController) setTrigger(key string, trigger informer.ProcessTrigger) {
+	rc.triggersMu.Lock()
+	defer rc.triggersMu.Unlock()
+	if rc.triggers == nil {
+		rc.triggers = make(map[string]informer.ProcessTrigger)
+	}
+	if trigger == informer.TriggerLive {
+		rc.triggers[key] = trigger
+		return
+	}
+	if _, ok := rc.triggers[key]; !ok {
+		rc.triggers[key] = trigger
+	}
+}
+
+// forget removes key from the queue and drops its trigger attribution, so the
+// map never outlives a key. Retries (AddRateLimited) keep the entry.
+func (rc *RepositoryController) forget(key string) {
+	rc.queue.Forget(key)
+	rc.triggersMu.Lock()
+	delete(rc.triggers, key)
+	rc.triggersMu.Unlock()
 }
 
 // processNextWorkItem deals with one key off the queue.
@@ -239,26 +298,40 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "repository", name)
 	logger.Info("RepositoryController processing key")
 
+	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
+	attempts := rc.queue.NumRequeues(key) + 1
+	// Count the start of processing once per pickup, attributed to what enqueued
+	// the key; retries keep the same attribution and are not recounted. A missing
+	// entry is only reachable via a dirty redelivery after a Forget, so fall back
+	// to relist.
+	if attempts == 1 {
+		rc.triggersMu.Lock()
+		trigger, ok := rc.triggers[key]
+		rc.triggersMu.Unlock()
+		if !ok {
+			trigger = informer.TriggerRelist
+		}
+		rc.processed.RecordProcessed(trigger)
+	}
+
 	err := rc.processFn(key)
 	if err == nil {
-		rc.queue.Forget(key)
+		rc.forget(key)
 		return true
 	}
 
-	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
-	attempts := rc.queue.NumRequeues(key) + 1
 	logger = logger.With("error", err, "attempts", attempts)
 	logger.Error("RepositoryController failed to process key")
 
 	if attempts >= maxAttempts {
 		logger.Error("RepositoryController failed too many times")
-		rc.queue.Forget(key)
+		rc.forget(key)
 		return true
 	}
 
 	if !apierrors.IsServiceUnavailable(err) {
 		logger.Info("RepositoryController will not retry")
-		rc.queue.Forget(key)
+		rc.forget(key)
 		return true
 	} else {
 		logger.Info("RepositoryController will retry as service is unavailable")

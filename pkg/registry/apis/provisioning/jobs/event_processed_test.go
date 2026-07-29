@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -138,12 +137,12 @@ func TestEventHandler_TriggerPrecedence(t *testing.T) {
 func TestRecordEventProcessed(t *testing.T) {
 	m := RegisterJobMetrics(prometheus.NewPedanticRegistry())
 
-	before := processedCounts(&m)
+	before := processedCounts(t)
 	m.RecordEventProcessed(triggerLive)
 	m.RecordEventProcessed(triggerRelist)
 	m.RecordEventProcessed(triggerRelist)
 	m.RecordEventProcessed(triggerInitial)
-	after := processedCounts(&m)
+	after := processedCounts(t)
 
 	assert.Equal(t, 1.0, after.live-before.live)
 	assert.Equal(t, 2.0, after.relist-before.relist)
@@ -195,14 +194,14 @@ func TestConcurrentJobDriver_ProcessingAttributed(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			driver, m, completed := newSuccessfulJobDriver(t, tt.natsBacked)
+			driver, _, completed := newSuccessfulJobDriver(t, tt.natsBacked)
 
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			runDone := make(chan error, 1)
 			go func() { runDone <- driver.Run(ctx) }()
 
-			before := processedCounts(m)
+			before := processedCounts(t)
 			handler := driver.EventHandler()
 			tt.feed(handler)
 
@@ -215,7 +214,7 @@ func TestConcurrentJobDriver_ProcessingAttributed(t *testing.T) {
 			cancel()
 			require.NoError(t, <-runDone)
 
-			after := processedCounts(m)
+			after := processedCounts(t)
 			assertOnlyTriggerAdvanced(t, tt.want, before, after)
 
 			// The attribution entry must not outlive the key.
@@ -249,7 +248,7 @@ func TestConcurrentJobDriver_AlreadyClaimedNotAttributed(t *testing.T) {
 	runDone := make(chan error, 1)
 	go func() { runDone <- driver.Run(ctx) }()
 
-	before := processedCounts(&m)
+	before := processedCounts(t)
 	driver.EventHandler().AddFunc(&provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
 	}, false)
@@ -261,7 +260,7 @@ func TestConcurrentJobDriver_AlreadyClaimedNotAttributed(t *testing.T) {
 	cancel()
 	require.NoError(t, <-runDone)
 
-	after := processedCounts(&m)
+	after := processedCounts(t)
 	assert.Equal(t, 0.0, after.live-before.live)
 	assert.Equal(t, 0.0, after.relist-before.relist)
 	assert.Equal(t, 0.0, after.initial-before.initial)
@@ -275,11 +274,25 @@ type processedSnapshot struct {
 	initial float64
 }
 
-func processedCounts(m *JobMetrics) processedSnapshot {
+// processedCounts reads the current jobs-labelled processing counters. The
+// counters are shared, registered on testRegistry via the RegisterJobMetrics
+// singleton (see metrics_test.go), so tests assert deltas around an action.
+func processedCounts(t *testing.T) processedSnapshot {
+	t.Helper()
+	families, err := testRegistry.Gather()
+	require.NoError(t, err)
+	jobsKey := labelKey(map[string]string{"resource": resourceLabelJobs})
+	counter := func(name string) float64 {
+		mf := findMetric(families, name)
+		if mf == nil {
+			return 0
+		}
+		return counterValues(mf)[jobsKey]
+	}
 	return processedSnapshot{
-		live:    testutil.ToFloat64(m.liveEventsProcessed.WithLabelValues(resourceLabelJobs)),
-		relist:  testutil.ToFloat64(m.relistEventsProcessed.WithLabelValues(resourceLabelJobs)),
-		initial: testutil.ToFloat64(m.initialEventsProcessed.WithLabelValues(resourceLabelJobs)),
+		live:    counter("grafana_provisioning_live_events_processed_total"),
+		relist:  counter("grafana_provisioning_relist_events_processed_total"),
+		initial: counter("grafana_provisioning_initial_events_processed_total"),
 	}
 }
 

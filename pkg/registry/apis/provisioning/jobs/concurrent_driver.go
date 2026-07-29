@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 )
 
 // maxClaimAttempts bounds how many times a job key is retried after transient
@@ -158,22 +159,8 @@ func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerDetailedF
 					"namespace", job.GetNamespace(), "job", job.GetName())
 				return
 			}
-			// Attribute the enqueue. NATS live events are minimal objects (no
-			// resource version, no labels); list-delivered objects are full. A
-			// full-RV non-initial add is a re-list recovery under NATS but a live
-			// watch add under the apiserver, disambiguated by natsBacked.
-			var trigger claimTrigger
-			switch {
-			case job.ResourceVersion == "":
-				trigger = triggerLive // NATS minimal live event
-			case isInInitialList:
-				trigger = triggerInitial
-			case c.natsBacked:
-				trigger = triggerRelist // re-list recovered a key never delivered live here
-			default:
-				trigger = triggerLive // apiserver live watch add
-			}
-			c.enqueueCreate(job, trigger)
+			// Attribute the enqueue for the processing-level metrics.
+			c.enqueueCreate(job, informer.ClassifyAdd(job.ResourceVersion, isInInitialList, c.natsBacked))
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			job, ok := newObj.(*provisioning.Job)
