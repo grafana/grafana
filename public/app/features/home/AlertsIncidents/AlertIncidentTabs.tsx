@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { t } from '@grafana/i18n';
 import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
-import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN } from '../DashboardTabs/types';
@@ -21,7 +21,7 @@ const ALERTS_TAB_ID = 'firing-alerts';
 const INCIDENTS_TAB_ID = 'incidents';
 
 export function AlertIncidentTabs() {
-  const { installed, loading } = useIrmPlugin(SupportedPlugin.Incident);
+  const { installed, loading } = usePluginBridge(SupportedPlugin.Irm);
   const canViewIncidents = Boolean(installed && !loading);
   const canViewAlerts = canViewFiringAlerts();
 

@@ -58,11 +58,11 @@ func histogramSamples(t *testing.T, reg *prometheus.Registry, name string, label
 
 // The NATS recorder counts live and re-list deliveries on their own metric
 // families, derives latency from the RV's embedded timestamp (rv=0 means no
-// sample), and drives the live-subscription gauge.
+// sample), and drives the active-subscriptions gauge.
 func TestNATSRecorder(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	m := newInformerMetrics(reg)
-	r := natsRecorder{metrics: m, resourceName: "jobs"}
+	r := newNATSRecorder(m, "jobs")
 
 	r.ObserveLiveEvent(usinformer.VerbAdd, recentRV())
 	r.ObserveRelistEvent(usinformer.VerbAdd, recentRV())
@@ -84,10 +84,15 @@ func TestNATSRecorder(t *testing.T) {
 	assert.EqualValues(t, 1, histogramSamples(t, reg, "grafana_provisioning_informer_live_event_latency_seconds", labels),
 		"rv=0 must not produce a latency sample")
 
-	r.ObserveLiveSubscription(true)
-	assert.Equal(t, 1.0, testutil.ToFloat64(m.liveSubscription.WithLabelValues("jobs")))
+	// The gauge counts each informer once: the pre-subscribe false is a no-op,
+	// opening increments, repeat opens are idempotent, and closing decrements.
 	r.ObserveLiveSubscription(false)
-	assert.Equal(t, 0.0, testutil.ToFloat64(m.liveSubscription.WithLabelValues("jobs")))
+	assert.Equal(t, 0.0, testutil.ToFloat64(m.natsSubscriptions), "a close before any open must not go negative")
+	r.ObserveLiveSubscription(true)
+	r.ObserveLiveSubscription(true)
+	assert.Equal(t, 1.0, testutil.ToFloat64(m.natsSubscriptions), "an open counts once, repeat opens are idempotent")
+	r.ObserveLiveSubscription(false)
+	assert.Equal(t, 0.0, testutil.ToFloat64(m.natsSubscriptions))
 }
 
 // The apiserver meter classifies deliveries the informer does not label itself:
@@ -132,6 +137,36 @@ func TestNewInformerMetrics_SharesCollectorsAcrossSources(t *testing.T) {
 
 	assert.Equal(t, 2.0, testutil.ToFloat64(first.liveEvents.WithLabelValues("jobs", "add")),
 		"both instances must write the same series")
+}
+
+// The re-list request counter counts one LIST request per page, so a snapshot
+// that spans several pages records several increments.
+func TestInformerMetrics_RelistRequests(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := newInformerMetrics(reg)
+
+	m.observeRelistRequest("jobs")
+	m.observeRelistRequest("jobs")
+	m.observeRelistRequest("jobs")
+
+	assert.Equal(t, 3.0, testutil.ToFloat64(m.relistRequests.WithLabelValues("jobs")))
+}
+
+// The subscription gauge totals across informers: each recorder owns its own
+// dedupe state but shares the collector, so concurrently-open subscriptions add
+// up and each closes independently.
+func TestNATSRecorder_SubscriptionGaugeTotalsAcrossInformers(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := newInformerMetrics(reg)
+	jobs := newNATSRecorder(m, "jobs")
+	repos := newNATSRecorder(m, "repositories")
+
+	jobs.ObserveLiveSubscription(true)
+	repos.ObserveLiveSubscription(true)
+	assert.Equal(t, 2.0, testutil.ToFloat64(m.natsSubscriptions), "both open subscriptions count")
+
+	jobs.ObserveLiveSubscription(false)
+	assert.Equal(t, 1.0, testutil.ToFloat64(m.natsSubscriptions), "closing one leaves the other")
 }
 
 // A nil registerer disables registration but the collectors stay usable, so a

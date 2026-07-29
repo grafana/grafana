@@ -1,25 +1,24 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { MetricsExplorer } from './MetricsExplorer';
+import { MetricsList } from './MetricsList';
 
-describe('<MetricsExplorer />', () => {
-  it('renders the metrics title and search input', () => {
-    render(<MetricsExplorer />);
+describe('<MetricsList />', () => {
+  it('renders the search input', () => {
+    render(<MetricsList />);
 
-    expect(screen.getByText('Metrics')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
   });
 
   it('renders the stub metric list', () => {
-    render(<MetricsExplorer />);
+    render(<MetricsList />);
 
     expect(screen.getByText('up')).toBeInTheDocument();
     expect(screen.getByText('node_cpu_seconds_total')).toBeInTheDocument();
   });
 
   it('filters the metric list by the search term', async () => {
-    render(<MetricsExplorer />);
+    render(<MetricsList />);
 
     await userEvent.type(screen.getByPlaceholderText('Search metrics'), 'node_cpu');
 
@@ -28,7 +27,7 @@ describe('<MetricsExplorer />', () => {
   });
 
   it('shows no metrics when the search term matches nothing', async () => {
-    render(<MetricsExplorer />);
+    render(<MetricsList />);
 
     await userEvent.type(screen.getByPlaceholderText('Search metrics'), 'no_such_metric');
 

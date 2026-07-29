@@ -1614,8 +1614,10 @@
       "additional-settings": "Additional settings",
       "alert-rules": "Alert rules",
       "autosync-active-block": {
-        "description": "Grafana is continuously syncing alert configuration from a data source, so the configuration is a read-only mirror and cannot be imported into. To import, disable auto-sync in Alerting settings first.",
+        "description": "Grafana is continuously syncing alert configuration from a data source, so notification resources are a read-only mirror and cannot be imported into. You can still import alert rules.",
+        "disable-sync": "To import notification resources, disable auto-sync in Alerting settings first.",
         "go-to-settings": "Go to Alerting settings",
+        "import-rules": "Import alert rules",
         "title": "Auto-sync is enabled"
       },
       "autosync-review": {
@@ -3287,8 +3289,21 @@
         "save-success": "Mimir Alertmanager auto-sync enabled",
         "title": "Auto-sync configuration"
       },
+      "import": {
+        "empty-body": "Import an Alertmanager configuration to stage it here as a safe, reversible copy. Review what it contains, then promote it into your live Grafana Alertmanager when you're ready.",
+        "empty-cta": "Import Alertmanager configuration",
+        "empty-learn-more": "Learn more about importing configurations",
+        "empty-title": "No configuration imported yet",
+        "error-body": "The request to the Alerting API failed. Check your connection and try again.",
+        "error-retry": "Retry",
+        "error-title": "Couldn't load imported configurations",
+        "loading": "Loading imported configurations…",
+        "staged-description": "A read-only, reversible copy of an imported Alertmanager config. Promote it to merge into your live config, or revert to remove it.",
+        "staged-title": "Staged configuration"
+      },
       "tabs": {
-        "alert-managers": "Alert managers"
+        "alert-managers": "Alert managers",
+        "import": "Import"
       }
     },
     "settings-content": {
@@ -8482,7 +8497,6 @@
       "open-in-new-tab": "Open in new tab"
     },
     "content-outline": {
-      "title-datasource-explorer": "Datasource explorer",
       "tooltip-collapse-outline": "Collapse outline",
       "tooltip-expand-outline": "Expand outline"
     },
@@ -8710,9 +8724,8 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
     },
-    "metrics-explorer": {
-      "search-placeholder": "Search metrics",
-      "title-metrics": "Metrics"
+    "metrics-list": {
+      "search-placeholder": "Search metrics"
     },
     "next-prev-result": {
       "aria-label-next": "Next result button",
@@ -8890,6 +8903,17 @@
       "recent-queries-button-aria-label": "Recent queries"
     },
     "show-all-spans": "Show all spans",
+    "signal-card": {
+      "collapse-aria-label": "Collapse datasource explorer for query {{refId}}",
+      "expand-aria-label": "Expand datasource explorer for query {{refId}}",
+      "jump-to-query-label": "Jump to query {{refId}} ({{datasourceName}})"
+    },
+    "signal-explorer": {
+      "empty-text": "Add a query to browse its datasource.",
+      "section-label-queries": "Queries",
+      "title-datasource-explorer": "Datasource explorer",
+      "unknown-datasource": "Unknown datasource"
+    },
     "span-bar": {
       "tooltip-critical-path": "A segment on the <1>critical path</1> of the overall trace / request / workflow."
     },
@@ -9034,6 +9058,13 @@
         "title": "Trace restored by Adaptive Traces"
       },
       "aria-label-copy": "Copy to clipboard",
+      "attribute-plugin-promo": {
+        "learn-more": "Learn more"
+      },
+      "database-observability-promo": {
+        "body": "Database Observability surfaces visual explain plans, wait events, and query samples — helping you diagnose issues beyond trace spans.",
+        "title": "Find slow queries faster"
+      },
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
     },

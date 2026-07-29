@@ -504,6 +504,33 @@ describe('QueryEditorRow', () => {
       expect(pinScrollIntoView).toHaveBeenCalledTimes(1);
     });
 
+    it('cancels the pin when the scroll is retargeted at another row', async () => {
+      const onScrollIntoView = jest.fn();
+      const initialProps = props(data);
+      const { rerender } = render(
+        <QueryEditorRow {...initialProps} scrollIntoView onScrollIntoView={onScrollIntoView} />
+      );
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+
+      rerender(<QueryEditorRow {...initialProps} scrollIntoView={false} onScrollIntoView={onScrollIntoView} />);
+      fireEvent.wheel(window);
+
+      // The pin is gone, so the row neither re-scrolls nor reports back — reporting would clear the
+      // owner's new scroll target.
+      expect(onScrollIntoView).not.toHaveBeenCalled();
+    });
+
+    it('pins again if the row is retargeted later', async () => {
+      const initialProps = props(data);
+      const { rerender } = render(<QueryEditorRow {...initialProps} scrollIntoView />);
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+
+      rerender(<QueryEditorRow {...initialProps} scrollIntoView={false} />);
+      rerender(<QueryEditorRow {...initialProps} scrollIntoView />);
+
+      expect(pinScrollIntoView).toHaveBeenCalledTimes(2);
+    });
+
     it('does not scroll when the flag is not set', async () => {
       render(<QueryEditorRow {...props(data)} />);
 
