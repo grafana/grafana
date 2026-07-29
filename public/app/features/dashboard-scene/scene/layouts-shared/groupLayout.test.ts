@@ -43,6 +43,7 @@ function groupSelectedInto(items: SceneObject[], target: 'row' | 'tab') {
   const edit = buildGroupEdit(items, target);
   edit?.perform();
   lastUndo = edit?.undo;
+  return edit;
 }
 
 function buildPanel(key: string): VizPanel {
@@ -77,7 +78,7 @@ describe('groupSelectedInto', () => {
     it('groups selected rows into tabs and partitions the rest into a second tab', () => {
       const { scene, r1, r3 } = buildRowsScene();
 
-      groupSelectedInto([r1, r3], 'tab');
+      const edit = groupSelectedInto([r1, r3], 'tab');
 
       const body = scene.state.body;
       expect(body).toBeInstanceOf(TabsLayoutManager);
@@ -86,9 +87,21 @@ describe('groupSelectedInto', () => {
         throw new Error('expected tabs layout');
       }
 
+      // The new tab wrapping the selection is reported as addedObject so the sidebar selects it.
+      expect(edit?.addedObject === body.state.tabs[0]).toBe(true);
+
       expect(body.state.tabs).toHaveLength(2);
       expect(rowTitles(body.state.tabs[0].getLayout())).toEqual(['R1', 'R3']);
       expect(rowTitles(body.state.tabs[1].getLayout())).toEqual(['R2']);
+
+      // The live layout must contain the very instances that were selected — the edit pane
+      // keeps references to them, so replacing them with clones would orphan the selection.
+      const groupedLayout = body.state.tabs[0].getLayout();
+      if (!(groupedLayout instanceof RowsLayoutManager)) {
+        throw new Error('expected rows layout');
+      }
+      expect(groupedLayout.state.rows[0] === r1).toBe(true);
+      expect(groupedLayout.state.rows[1] === r3).toBe(true);
 
       lastUndo?.();
 
@@ -98,9 +111,9 @@ describe('groupSelectedInto', () => {
     });
 
     it('groups selected rows into a parent row and leaves the rest as siblings', () => {
-      const { scene, r1, r3 } = buildRowsScene();
+      const { scene, r1, r2, r3 } = buildRowsScene();
 
-      groupSelectedInto([r1, r3], 'row');
+      const edit = groupSelectedInto([r1, r3], 'row');
 
       const body = scene.state.body;
       expect(body).toBeInstanceOf(RowsLayoutManager);
@@ -109,9 +122,22 @@ describe('groupSelectedInto', () => {
         throw new Error('expected rows layout');
       }
 
+      // The new parent row wrapping the selection is reported as addedObject so the sidebar selects it.
+      expect(edit?.addedObject === body.state.rows[0]).toBe(true);
+
       expect(body.state.rows).toHaveLength(2);
       expect(rowTitles(body.state.rows[0].getLayout())).toEqual(['R1', 'R3']);
       expect(body.state.rows[1].state.title).toBe('R2');
+
+      // The live layout must contain the very instances that were selected — the edit pane
+      // keeps references to them, so replacing them with clones would orphan the selection.
+      const groupedLayout = body.state.rows[0].getLayout();
+      if (!(groupedLayout instanceof RowsLayoutManager)) {
+        throw new Error('expected rows layout');
+      }
+      expect(groupedLayout.state.rows[0] === r1).toBe(true);
+      expect(groupedLayout.state.rows[1] === r3).toBe(true);
+      expect(body.state.rows[1] === r2).toBe(true);
 
       lastUndo?.();
 
@@ -144,7 +170,7 @@ describe('groupSelectedInto', () => {
       const tabs = new TabsLayoutManager({ tabs: [t1, t2, t3] });
       const scene = new DashboardScene({ body: tabs });
 
-      groupSelectedInto([t1, t3], 'row');
+      const edit = groupSelectedInto([t1, t3], 'row');
 
       const body = scene.state.body;
       expect(body).toBeInstanceOf(RowsLayoutManager);
@@ -153,9 +179,21 @@ describe('groupSelectedInto', () => {
         throw new Error('expected rows layout');
       }
 
+      // The new row wrapping the selection is reported as addedObject so the sidebar selects it.
+      expect(edit?.addedObject === body.state.rows[0]).toBe(true);
+
       expect(body.state.rows).toHaveLength(2);
       expect(tabTitles(body.state.rows[0].getLayout())).toEqual(['T1', 'T3']);
       expect(tabTitles(body.state.rows[1].getLayout())).toEqual(['T2']);
+
+      // The live layout must contain the very instances that were selected — the edit pane
+      // keeps references to them, so replacing them with clones would orphan the selection.
+      const groupedLayout = body.state.rows[0].getLayout();
+      if (!(groupedLayout instanceof TabsLayoutManager)) {
+        throw new Error('expected tabs layout');
+      }
+      expect(groupedLayout.state.tabs[0] === t1).toBe(true);
+      expect(groupedLayout.state.tabs[1] === t3).toBe(true);
 
       lastUndo?.();
 
@@ -181,7 +219,7 @@ describe('groupSelectedInto', () => {
       });
       const scene = new DashboardScene({ body: grid });
 
-      groupSelectedInto([p1, p3], 'row');
+      const edit = groupSelectedInto([p1, p3], 'row');
 
       const body = scene.state.body;
       expect(body).toBeInstanceOf(RowsLayoutManager);
@@ -190,9 +228,19 @@ describe('groupSelectedInto', () => {
         throw new Error('expected rows layout');
       }
 
+      // The new row wrapping the selection is reported as addedObject so the sidebar selects it.
+      expect(edit?.addedObject === body.state.rows[0]).toBe(true);
+
       expect(body.state.rows).toHaveLength(2);
       expect(panelKeys(body.state.rows[0].getLayout())).toEqual(['panel-1', 'panel-3']);
       expect(panelKeys(body.state.rows[1].getLayout())).toEqual(['panel-2']);
+
+      // The live layout must contain the very instances that were selected — the edit pane
+      // keeps references to them, so replacing them with clones would orphan the selection.
+      const [selectedFirst, selectedSecond] = body.state.rows[0].getLayout().getVizPanels();
+      expect(selectedFirst === p1).toBe(true);
+      expect(selectedSecond === p3).toBe(true);
+      expect(body.state.rows[1].getLayout().getVizPanels()[0] === p2).toBe(true);
 
       lastUndo?.();
 
@@ -212,7 +260,7 @@ describe('groupSelectedInto', () => {
       });
       const scene = new DashboardScene({ body: grid });
 
-      groupSelectedInto([p1, p2], 'tab');
+      const edit = groupSelectedInto([p1, p2], 'tab');
 
       const body = scene.state.body;
       expect(body).toBeInstanceOf(TabsLayoutManager);
@@ -221,9 +269,19 @@ describe('groupSelectedInto', () => {
         throw new Error('expected tabs layout');
       }
 
+      // The new tab wrapping the selection is reported as addedObject so the sidebar selects it.
+      expect(edit?.addedObject === body.state.tabs[0]).toBe(true);
+
       expect(body.state.tabs).toHaveLength(2);
       expect(panelKeys(body.state.tabs[0].getLayout())).toEqual(['panel-1', 'panel-2']);
       expect(panelKeys(body.state.tabs[1].getLayout())).toEqual(['panel-3']);
+
+      // The live layout must contain the very instances that were selected — the edit pane
+      // keeps references to them, so replacing them with clones would orphan the selection.
+      const [selectedFirst, selectedSecond] = body.state.tabs[0].getLayout().getVizPanels();
+      expect(selectedFirst === p1).toBe(true);
+      expect(selectedSecond === p2).toBe(true);
+      expect(body.state.tabs[1].getLayout().getVizPanels()[0] === p3).toBe(true);
     });
   });
 });

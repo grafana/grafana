@@ -256,30 +256,37 @@ function cloneGridWithPanels(
   selectedKeys: Set<string | undefined>,
   keepSelected: boolean
 ): DashboardLayoutManager {
+  // Clone only for the grid options; the children are the real (moved) grid items. The edit
+  // pane and selection hold references to the original panels, so the live layout must keep
+  // those exact instances — clones would leave the selection pointing at orphaned objects.
+  // `buildGroupEdit` snapshots the original container for undo before this runs, so detaching
+  // the real items here is safe.
   const clone = grid.clone();
 
-  if (clone instanceof DefaultGridLayoutManager) {
-    clone.state.grid.setState({
-      children: clone.state.grid.state.children.filter((child) => {
-        const isSelected =
-          child instanceof DashboardGridItem &&
-          child.state.body instanceof VizPanel &&
-          selectedKeys.has(child.state.body.state.key);
+  if (grid instanceof DefaultGridLayoutManager && clone instanceof DefaultGridLayoutManager) {
+    const children = grid.state.grid.state.children.filter((child) => {
+      const isSelected =
+        child instanceof DashboardGridItem &&
+        child.state.body instanceof VizPanel &&
+        selectedKeys.has(child.state.body.state.key);
 
-        return keepSelected ? isSelected : !isSelected;
-      }),
+      return keepSelected ? isSelected : !isSelected;
     });
-  } else if (clone instanceof AutoGridLayoutManager) {
-    clone.state.layout.setState({
-      children: clone.state.layout.state.children.filter((child) => {
-        const isSelected =
-          child instanceof AutoGridItem &&
-          child.state.body instanceof VizPanel &&
-          selectedKeys.has(child.state.body.state.key);
 
-        return keepSelected ? isSelected : !isSelected;
-      }),
+    children.forEach((child) => child.clearParent());
+    clone.state.grid.setState({ children });
+  } else if (grid instanceof AutoGridLayoutManager && clone instanceof AutoGridLayoutManager) {
+    const children = grid.state.layout.state.children.filter((child) => {
+      const isSelected =
+        child instanceof AutoGridItem &&
+        child.state.body instanceof VizPanel &&
+        selectedKeys.has(child.state.body.state.key);
+
+      return keepSelected ? isSelected : !isSelected;
     });
+
+    children.forEach((child) => child.clearParent());
+    clone.state.layout.setState({ children });
   }
 
   return clone;
@@ -319,6 +326,8 @@ function cloneTabsSubset(
 
 interface BuiltLayout {
   newLayout: DashboardLayoutManager;
+  /** The new row/tab wrapping the selection — reported as `addedObject` so the sidebar selects it. */
+  groupItem: RowItem | TabItem;
 }
 
 function wrapLayouts(
@@ -345,7 +354,7 @@ function wrapLayouts(
       tabs.push(new TabItem({ title: nextTitle(), layout: restLayout }));
     }
 
-    return { newLayout: new TabsLayoutManager({ tabs }) };
+    return { newLayout: new TabsLayoutManager({ tabs }), groupItem: tabs[0] };
   }
 
   const rows = [new RowItem({ title: nextTitle(), layout: selectedLayout })];
@@ -354,21 +363,23 @@ function wrapLayouts(
     rows.push(new RowItem({ title: nextTitle(), layout: restLayout }));
   }
 
-  return { newLayout: new RowsLayoutManager({ rows }) };
+  return { newLayout: new RowsLayoutManager({ rows }), groupItem: rows[0] };
 }
 
 /**
  * rows -> row: wrap only the selected rows in a new parent row; unselected rows stay as siblings.
  */
 function buildRowsIntoRow(rows: RowsLayoutManager, selectedKeys: Set<string | undefined>): BuiltLayout {
-  const clone = rows.clone();
-  const cloneRows = clone.state.rows;
+  // Move the real rows into the new layout. The edit pane and selection hold references to the
+  // original rows, so the live layout must keep those exact instances. `buildGroupEdit`
+  // snapshots the original container for undo before this runs, so detaching them here is safe.
+  const allRows = rows.state.rows;
 
-  const selectedClones = cloneRows.filter((row) => selectedKeys.has(row.state.key));
-  selectedClones.forEach((row) => row.clearParent());
+  const selectedRows = allRows.filter((row) => selectedKeys.has(row.state.key));
+  selectedRows.forEach((row) => row.clearParent());
 
   const existingTitles = new Set(
-    cloneRows
+    allRows
       .filter((row) => !selectedKeys.has(row.state.key))
       .map((row) => row.state.title)
       .filter((title): title is string => title !== undefined)
@@ -376,13 +387,13 @@ function buildRowsIntoRow(rows: RowsLayoutManager, selectedKeys: Set<string | un
 
   const newParentRow = new RowItem({
     title: generateUniqueTitle(t('dashboard.rows-layout.row.new', 'New row'), existingTitles),
-    layout: new RowsLayoutManager({ rows: selectedClones }),
+    layout: new RowsLayoutManager({ rows: selectedRows }),
   });
 
   const finalRows: RowItem[] = [];
   let inserted = false;
 
-  for (const row of cloneRows) {
+  for (const row of allRows) {
     if (selectedKeys.has(row.state.key)) {
       if (!inserted) {
         finalRows.push(newParentRow);
@@ -396,7 +407,7 @@ function buildRowsIntoRow(rows: RowsLayoutManager, selectedKeys: Set<string | un
     finalRows.push(row);
   }
 
-  return { newLayout: new RowsLayoutManager({ rows: finalRows }) };
+  return { newLayout: new RowsLayoutManager({ rows: finalRows }), groupItem: newParentRow };
 }
 
 function buildGroupedLayout(items: SceneObject[], info: SelectionInfo, target: GroupTarget): BuiltLayout | undefined {
@@ -438,6 +449,9 @@ function buildGroupedLayout(items: SceneObject[], info: SelectionInfo, target: G
 
 export interface GroupEdit {
   description: string;
+  /** The new row/tab wrapping the selection. The sidebar selects it after perform (offering the
+   * rename affordance, like the canvas group actions) and clears the selection on undo. */
+  addedObject: SceneObject;
   perform: () => void;
   undo: () => void;
 }
@@ -475,6 +489,7 @@ export function buildGroupEdit(items: SceneObject[], target: GroupTarget): Group
       target === 'row'
         ? t('dashboard.edit-actions.group-into-row', 'Group into row')
         : t('dashboard.edit-actions.group-into-tab', 'Group into tab'),
+    addedObject: built.groupItem,
     perform: () => info.parent.switchLayout(built.newLayout, true),
     undo: () => info.parent.switchLayout(previousLayout, true),
   };
