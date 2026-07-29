@@ -13,18 +13,13 @@ import (
 // interpret the artifact.
 const environmentArtifactVersion = 1
 
-// Environment is environment.json: which Grafana build ran the queries and which plugin versions
-// were installed. Nothing else in the bundle records either -- panel.json's pluginVersion is the
-// version at last save, which drives migrations rather than describing what ran.
-//
+// Environment is environment.json, which describes the Grafana build and the plugins that were installed.
 // One per bundle, not one per panel: Grafana runs a single version of a plugin per install (see
 // pluginstore.Store.Plugin), so per-panel copies would all be identical.
 type Environment struct {
 	Version int          `json:"version"`
 	Grafana GrafanaBuild `json:"grafana"`
-	// Only the plugins this bundle's panels reference, keyed by plugin ID.
 	Plugins map[string]PluginVersion `json:"plugins,omitempty"`
-	// Referenced datasource UID -> plugin ID, joining manifest.panels[].datasources to Plugins.
 	Datasources map[string]string `json:"datasources,omitempty"`
 }
 
@@ -45,9 +40,7 @@ type GrafanaBuild struct {
 // PluginVersion is one referenced plugin's installed version and provenance.
 type PluginVersion struct {
 	Type string `json:"type,omitempty"`
-	// Empty for core plugins, which declare no version of their own (the loader blanks the
-	// "%VERSION%" placeholder): with class "core" that means "shipped with this build", so read
-	// Grafana.Version instead.
+	// Empty for core plugins, which declare no version of their own.
 	Version       string `json:"version"`
 	Class         string `json:"class,omitempty"`
 	Backend       bool   `json:"backend,omitempty"`
@@ -62,7 +55,6 @@ type PluginVersion struct {
 // EnvironmentRefs is the set of plugins one bundle touches, filled by the caller from the query and
 // panel JSON it already holds.
 type EnvironmentRefs struct {
-	// Datasource UID -> plugin ID (a datasource's "type").
 	DatasourcesByUID map[string]string
 	PanelPluginIDs   []string
 }
@@ -134,23 +126,20 @@ type PluginVersionSource interface {
 }
 
 // CollectEnvironment snapshots the Grafana build and the installed versions of the plugins in refs.
-// Returns nil when cfg is nil, so the bundle omits the artifact rather than carrying an empty build
-// stanza that reads as "version unknown". A nil store records the plugin IDs without versions.
+// Returns nil when cfg is nil, so the bundle omits the artifact rather than carrying an empty build.
+// Nil also for plugin IDs without versions.
 func CollectEnvironment(ctx context.Context, cfg *setting.Cfg, store PluginVersionSource, refs EnvironmentRefs) *Environment {
 	if cfg == nil {
 		return nil
 	}
 
-	// Edition describes the binary, so it comes from the build flag rather than the licensing service:
-	// an Enterprise binary running unlicensed is still the Enterprise binary. May therefore differ
-	// from the edition in the UI footer.
+	// Edition describes the binary, so it comes from the build flag rather than the licensing service.
 	edition := "Open Source"
 	if cfg.IsEnterprise {
 		edition = "Enterprise"
 	}
 
-	// An OSS build sets this to the "NA" placeholder rather than leaving it empty; drop it so the
-	// artifact doesn't report a non-value as a commit (as setting.go does before publishing it).
+	// An OSS build sets this to the "NA" placeholder
 	enterpriseCommit := cfg.EnterpriseBuildCommit
 	if enterpriseCommit == "NA" {
 		enterpriseCommit = ""
@@ -210,10 +199,8 @@ func CollectEnvironment(ctx context.Context, cfg *setting.Cfg, store PluginVersi
 	return env
 }
 
-// PanelPluginID returns the viz plugin ID a panel save model names, or "" if undeterminable. It
-// handles both shapes panel.json can take (see indexPanelJSON): v1's "type", and a v2 element's
-// spec.vizConfig.group, falling back to spec.vizConfig.kind for v2alpha1. Mirrors readV2PanelSpec in
-// pkg/services/store/kind/dashboard.
+// PanelPluginID returns the viz plugin ID (table, timeseries, etc.) of a panel.
+// It handles both v1 and v2 panel types (see indexPanelJSON).
 func PanelPluginID(panelJSON json.RawMessage) string {
 	if len(panelJSON) == 0 {
 		return ""
