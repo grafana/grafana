@@ -96,6 +96,33 @@ describe('listProbeCandidates', () => {
     getDataSourceInstanceListMock.mockResolvedValue([listItem({ name: 'grafanacloud-usage' })]);
 
     await expect(listProbeCandidates('prometheus')).resolves.toEqual([listItem({ name: 'grafanacloud-usage' })]);
+
+    getDataSourceInstanceListMock.mockResolvedValue([listItem({ name: 'grafanacloud-acme-usage-insights' })]);
+
+    await expect(listProbeCandidates('loki')).resolves.toEqual([
+      listItem({ name: 'grafanacloud-acme-usage-insights' }),
+    ]);
+  });
+
+  it('skips stack-prefixed Cloud utility Loki datasources by name', async () => {
+    getDataSourceInstanceListMock.mockResolvedValue([
+      listItem({ uid: 'abc123', name: 'grafanacloud-acme-usage-insights' }),
+      listItem({ uid: 'def456', name: 'grafanacloud-acme-alert-state-history' }),
+      listItem({ uid: 'loki-main', name: 'grafanacloud-acme-logs' }),
+    ]);
+
+    const candidates = await listProbeCandidates('loki');
+
+    expect(candidates.map((ds) => ds.uid)).toEqual(['loki-main']);
+  });
+
+  it('skips the unprefixed utility Loki name form beside a product datasource', async () => {
+    getDataSourceInstanceListMock.mockResolvedValue([
+      listItem({ name: 'grafanacloud-usage-insights' }),
+      listItem({ name: 'product' }),
+    ]);
+
+    await expect(listProbeCandidates('loki')).resolves.toEqual([listItem({ name: 'product' })]);
   });
 
   it('puts the default datasource first and applies the cap', async () => {

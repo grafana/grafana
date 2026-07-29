@@ -178,6 +178,30 @@ describe('resolveSolutionState', () => {
     expect(instantQueriesMock).not.toHaveBeenCalled();
   });
 
+  it('never probes a stack-prefixed utility Loki even when its uid escapes the exclusion set', async () => {
+    // Hypothetical provisioning that gives the query-log store an unlisted uid while keeping the
+    // stack-prefixed name: the name layer must keep it out of the probe pool, so the (empty)
+    // product Loki settles logs inactive.
+    setupFixture({
+      prometheus: [listItem('prometheus', { uid: 'grafanacloud-usage', name: 'grafanacloud-usage' })],
+      loki: [
+        listItem('loki', { uid: 'rand0m01', name: 'grafanacloud-acme-usage-insights' }),
+        listItem('loki', { uid: 'loki-main', name: 'grafanacloud-acme-logs' }),
+      ],
+      tempo: [],
+      instances: {
+        'loki-main': backendInstance(emptyLokiResource()),
+      },
+    });
+    tempoHasTracesMock.mockResolvedValue(false);
+    kubernetesMock.mockResolvedValue(null);
+
+    const resolution = await resolveSolutionState();
+
+    expect(resolution.state.logs).toBe('inactive');
+    expect(instanceMock).not.toHaveBeenCalledWith({ uid: 'rand0m01' });
+  });
+
   it('reports active with the winning datasource when a probe finds data', async () => {
     const { lokiResource } = freshCloudFixture();
     lokiResource.mockResolvedValue({ data: ['job', 'service_name'] });

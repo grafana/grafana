@@ -19,11 +19,18 @@ const HEALTH_CHECK_TIMEOUT_MS = 3000;
 // them while the region shows its skeleton. 3 attempts total.
 const RETRY_DELAYS_MS = [500, 1500];
 
-// Exact names of Grafana Cloud's utility Prometheus datasources (billing/ML) — never where product data lives.
+// Grafana Cloud's utility datasources — never where product data lives. Prometheus utilities
+// (billing/ML) carry exact unprefixed names; Loki utilities (query logs, alert history) are
+// provisioned with stack-prefixed names (grafanacloud-<slug>-usage-insights) over stable
+// unprefixed uids, so the name check matches both forms.
 const CLOUD_UTILITY_DATASOURCE_NAMES: Record<string, true> = {
   'grafanacloud-usage': true,
   'grafanacloud-ml-metrics': true,
 };
+const CLOUD_UTILITY_LOKI_NAME_PATTERN = /^grafanacloud-(.+-)?(usage-insights|alert-state-history)$/;
+function isCloudUtilityDatasourceName(name: string): boolean {
+  return Boolean(CLOUD_UTILITY_DATASOURCE_NAMES[name]) || CLOUD_UTILITY_LOKI_NAME_PATTERN.test(name);
+}
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -113,7 +120,7 @@ export async function listProbeCandidates(
     filter: (ds) => ds.meta.id !== 'grafana',
   });
   const eligible = excludeUids ? list.filter((ds) => !excludeUids.has(ds.uid)) : list;
-  const preferred = eligible.filter((ds) => !CLOUD_UTILITY_DATASOURCE_NAMES[ds.name]);
+  const preferred = eligible.filter((ds) => !isCloudUtilityDatasourceName(ds.name));
   const pool = preferred.length > 0 ? preferred : eligible;
   const def = pool.find((ds) => ds.isDefault);
   const ordered = def ? [def, ...pool.filter((ds) => ds !== def)] : [...pool];
