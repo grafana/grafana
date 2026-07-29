@@ -129,6 +129,27 @@ func TestStore_ReaderDeleteLeavesNoTombstone(t *testing.T) {
 	assert.Equal(t, []string{"a"}, storeNames(added), "a reader delete must not suppress a legitimate re-list")
 }
 
+// A non-positive listRV disables RV reconciliation and does a plain wholesale
+// swap, as documented: an object the snapshot omits is removed even though its
+// cached RV is positive (an older server or unparseable list metadata must not
+// pin deleted objects in the cache forever), and no tombstone lingers.
+func TestStore_ZeroListRVDoesWholesaleSwap(t *testing.T) {
+	s := NewStore()
+	ctx := context.Background()
+	s.Replace([]runtime.Object{objRV("a", 100), objRV("b", 200)}, 0)
+
+	added, updated, removed := s.Replace([]runtime.Object{objRV("a", 100)}, 0)
+	assert.Empty(t, added)
+	assert.Equal(t, []string{"a"}, storeNames(updated))
+	assert.Equal(t, []string{"b"}, storeNames(removed), "listRV 0 must remove a vanished object regardless of its RV")
+	assert.Equal(t, []string{"a"}, storeNames(s.List(ctx)))
+
+	// A live delete leaves no tombstone able to suppress a later wholesale swap.
+	s.DeleteAt(ctx, testNamespace, "a", 300)
+	added, _, _ = s.Replace([]runtime.Object{objRV("a", 100)}, 0)
+	assert.Equal(t, []string{"a"}, storeNames(added), "listRV 0 must not suppress via a tombstone")
+}
+
 func TestStore_ListEmpty(t *testing.T) {
 	assert.Empty(t, NewStore().List(context.Background()))
 }

@@ -157,6 +157,15 @@ func (s *store) Replace(objs []runtime.Object, listRV int64) (added, updated, re
 	prev := s.items
 	prevTomb := s.tombstones
 
+	// listRV dates the snapshot so we can reconcile it against live write-throughs
+	// that raced the LIST. A non-positive listRV means the caller could not date
+	// the snapshot (an older server, or unparseable list metadata); honor the
+	// documented fallback and do a plain wholesale swap rather than compare against
+	// it — every positive object/tombstone RV would otherwise read as newer than a
+	// zero snapshot, so an authoritative list could never remove a deleted object
+	// and tombstones would never expire.
+	reconcile := listRV > 0
+
 	// result is the snapshot we install: objs, minus resurrections we suppress,
 	// plus live writes newer than the snapshot we carry forward.
 	result := make(map[string]entry, len(next))
@@ -184,9 +193,11 @@ func (s *store) Replace(objs []runtime.Object, listRV int64) (added, updated, re
 		// New to the snapshot. Suppress it when a live delete newer than the
 		// snapshot already evicted it: the snapshot predates that delete, so
 		// re-adding would resurrect a just-deleted object as a spurious add.
-		if trv, ok := prevTomb[key]; ok && trv > listRV && e.rv < trv {
-			delete(result, key)
-			continue
+		if reconcile {
+			if trv, ok := prevTomb[key]; ok && trv > listRV && e.rv < trv {
+				delete(result, key)
+				continue
+			}
 		}
 		added = append(added, e.obj)
 	}
@@ -199,7 +210,7 @@ func (s *store) Replace(objs []runtime.Object, listRV int64) (added, updated, re
 		// write that landed after the LIST read its snapshot, so the snapshot's
 		// silence about it is stale — carry it forward instead of reporting a
 		// spurious delete (and dropping a live-added object).
-		if e.rv > listRV {
+		if reconcile && e.rv > listRV {
 			result[key] = e
 			continue
 		}
@@ -208,16 +219,19 @@ func (s *store) Replace(objs []runtime.Object, listRV int64) (added, updated, re
 
 	// Keep tombstones the snapshot does not yet reflect (rv > listRV) and that no
 	// present object supersedes; drop the rest, so a tombstone cannot suppress an
-	// object forever once a snapshot postdating the delete confirms the removal.
+	// object forever once a snapshot postdating the delete confirms the removal. A
+	// wholesale swap (no reconciliation) makes no dated claim, so it drops them all.
 	newTomb := make(map[string]int64, len(prevTomb))
-	for key, trv := range prevTomb {
-		if trv <= listRV {
-			continue
+	if reconcile {
+		for key, trv := range prevTomb {
+			if trv <= listRV {
+				continue
+			}
+			if _, present := result[key]; present {
+				continue
+			}
+			newTomb[key] = trv
 		}
-		if _, present := result[key]; present {
-			continue
-		}
-		newTomb[key] = trv
 	}
 
 	s.items = result
