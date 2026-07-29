@@ -9036,6 +9036,13 @@
         "title": "Trace restored by Adaptive Traces"
       },
       "aria-label-copy": "Copy to clipboard",
+      "attribute-plugin-promo": {
+        "learn-more": "Learn more"
+      },
+      "database-observability-promo": {
+        "body": "Database Observability surfaces visual explain plans, wait events, and query samples — helping you diagnose issues beyond trace spans.",
+        "title": "Find slow queries faster"
+      },
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
     },
