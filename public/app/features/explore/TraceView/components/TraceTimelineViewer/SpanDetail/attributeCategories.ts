@@ -225,6 +225,11 @@ function getAttributeCategories(sectionType: AttributeSectionType): AttributeCat
   return orderAttributeCategories(buildAttributeCategories(), SECTION_CATEGORY_PRIORITY[sectionType]);
 }
 
+/** Returns true when an attribute key matches the OpenTelemetry `db.*` / `db_*` namespace. */
+export function isDatabaseAttribute(key: string): boolean {
+  return matchesPrefixes(key, ['db']);
+}
+
 export function groupAttributesByCategory(
   attributes: TraceKeyValuePair[],
   sectionType: AttributeSectionType
