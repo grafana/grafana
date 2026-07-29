@@ -69,6 +69,9 @@ interface LogLineContextProps {
 }
 
 export const PAGE_SIZE = 100;
+// Context queries are anchored on a timestamp and cannot skip rows, so the only way past a
+// burst sharing one timestamp is a bigger request. One per size: 4 requests, 800 rows max.
+const CONTEXT_PAGE_SIZES = [PAGE_SIZE, PAGE_SIZE * 2, PAGE_SIZE * 4, PAGE_SIZE * 8];
 export const DEFAULT_TIME_WINDOW = 7200000;
 
 // Merge the above/below context request states into one for InfiniteScroll, preserving Streaming/Error.
@@ -169,20 +172,41 @@ export const LogLineContext = memo(
 
     const getContextLogs = useCallback(
       async (place: 'above' | 'below', refLog: LogRowModel, timeWindowMs?: number): Promise<LogRowModel[]> => {
-        const result = await getRowContext(normalizeLogRefId(refLog), {
-          limit: PAGE_SIZE,
-          direction: getLoadMoreDirection(place, sortOrder),
-          // Only on the initial request
-          timeWindowMs,
-        });
+        const direction = getLoadMoreDirection(place, sortOrder);
+        const requestRow = direction === LogRowContextQueryDirection.Forward ? withPrecedingNanosecond(refLog) : refLog;
+        let usableLogs: LogRowModel[] = [];
 
-        const newLogs = dataFrameToLogsModel(result.data).rows;
-        if (sortOrder === LogsSortOrder.Ascending) {
-          newLogs.reverse();
+        for (const limit of CONTEXT_PAGE_SIZES) {
+          const result = await getRowContext(normalizeLogRefId(requestRow), {
+            limit,
+            direction,
+            // Only on the initial request
+            timeWindowMs,
+          });
+
+          const newLogs = dataFrameToLogsModel(result.data).rows;
+          if (sortOrder === LogsSortOrder.Ascending) {
+            newLogs.reverse();
+          }
+          usableLogs = newLogs.filter(
+            (r) =>
+              !containsRow(allLogs, r) &&
+              // Rows sharing the anchor's timestamp belong to neither side, so they are kept on
+              // the forward one only, or a data source returning them in both shows them twice.
+              (direction === LogRowContextQueryDirection.Forward || r.timeEpochNs !== log.timeEpochNs)
+          );
+          // A full page on one timestamp is stuck inside a burst: the same request would return
+          // an arbitrary subset of the same rows, so try the next size rather than paging on.
+          const stuckInsideOneTimestamp =
+            newLogs.length >= limit && newLogs.every((r) => r.timeEpochNs === newLogs[0].timeEpochNs);
+          if ((usableLogs.length > 0 && !stuckInsideOneTimestamp) || newLogs.length < limit) {
+            break;
+          }
         }
-        return newLogs.filter((r) => !containsRow(allLogs, r));
+
+        return usableLogs;
       },
-      [allLogs, getRowContext, sortOrder]
+      [allLogs, getRowContext, log.timeEpochNs, sortOrder]
     );
 
     const loadMore = useCallback(
@@ -195,9 +219,21 @@ export const LogLineContext = memo(
             // apply the original row's searchWords to all the rows for highlighting
             !r.searchWords || !r.searchWords?.length ? { ...r, searchWords: log.searchWords } : r
           );
-          const [older, newer] = partition(newLogs, (newRow) => newRow.timeEpochNs > log.timeEpochNs);
+          const [sameTimestamp, differentTimestamp] = partition(
+            newLogs,
+            (newRow) => newRow.timeEpochNs === log.timeEpochNs
+          );
+          const [older, newer] = partition(differentTimestamp, (newRow) => newRow.timeEpochNs > log.timeEpochNs);
           const newAbove = sortOrder === LogsSortOrder.Ascending ? newer : older;
           const newBelow = sortOrder === LogsSortOrder.Ascending ? older : newer;
+
+          // getContextLogs only keeps same-timestamp rows from the forward request, and the
+          // side that issues it is this `place`, so they belong here.
+          if (place === 'above') {
+            newAbove.push(...sameTimestamp);
+          } else {
+            newBelow.push(...sameTimestamp);
+          }
 
           setAboveLogs((aboveLogs: LogRowModel[]) => {
             return newAbove.length > 0 ? sortLogRows([...newAbove, ...aboveLogs], sortOrder) : aboveLogs;
@@ -612,6 +648,15 @@ const normalizeLogRefId = (log: LogRowModel): LogRowModel => {
       refId: `context_${log.uid ?? log.dataFrame.refId ?? log.timeEpochMs}`,
     },
   };
+};
+
+// Forward context ranges start one nanosecond after the reference row, excluding every other
+// row sharing it. Asking a nanosecond earlier reaches them. BigInt: epoch ns is a string.
+const withPrecedingNanosecond = (log: LogRowModel): LogRowModel => {
+  if (!/^\d+$/.test(log.timeEpochNs)) {
+    return log;
+  }
+  return { ...log, timeEpochNs: (BigInt(log.timeEpochNs) - BigInt(1)).toString() };
 };
 
 const containsRow = (rows: LogRowModel[], row: LogRowModel) => {

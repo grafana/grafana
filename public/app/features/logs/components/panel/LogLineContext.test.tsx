@@ -78,6 +78,21 @@ const dfAfter = createDataFrame({
   ],
 });
 
+// Rows of a burst of logs sharing a timestamp, as [milliseconds, log line] pairs.
+type BurstRow = [number, string];
+const BURST_MS = 1700000000000;
+const burstFrame = (rows: BurstRow[], refId: string) =>
+  createDataFrame({
+    // Row uids are derived from the refId, and duplicated uids break rendering.
+    refId,
+    fields: [
+      { name: 'time', type: FieldType.time, values: rows.map(([ms]) => ms) },
+      { name: 'message', type: FieldType.string, values: rows.map(([, line]) => line) },
+      // Nanoseconds are strings: epoch nanoseconds do not fit in a JS number.
+      { name: 'tsNs', type: FieldType.string, values: rows.map(([ms]) => `${ms}000000`) },
+    ],
+  });
+
 let getRowContext = jest.fn();
 const dispatchMock = jest.fn();
 jest.mock('app/types/store', () => ({
@@ -312,6 +327,160 @@ describe('LogLineContext', () => {
     await waitFor(() => {
       expect(screen.getAllByText('foo123').length).toBe(3);
     });
+  });
+
+  test('should render rows sharing the selected row timestamp once', async () => {
+    const selected = dataFrameToLogsModel([burstFrame([[BURST_MS, 'selected']], 'anchor')]).rows[0];
+    const getRowContext = jest.fn().mockImplementation(async (_, options) => ({
+      data: [
+        burstFrame(
+          // A data source with an end-inclusive range returns the burst in both directions.
+          options.direction === LogRowContextQueryDirection.Forward
+            ? [
+                [BURST_MS, 'selected'],
+                [BURST_MS, 'burst 1'],
+                [BURST_MS, 'burst 2'],
+              ]
+            : [
+                [BURST_MS, 'selected'],
+                [BURST_MS, 'burst 1'],
+                [BURST_MS, 'burst 2'],
+                [BURST_MS - 1, 'before the burst'],
+              ],
+          `context-${options.direction}`
+        ),
+      ],
+    }));
+
+    render(
+      <LogLineContext
+        log={selected}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        sortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('before the burst')).toBeInTheDocument();
+    });
+    expect(screen.getAllByText('burst 1')).toHaveLength(1);
+    expect(screen.getAllByText('burst 2')).toHaveLength(1);
+    expect(screen.getAllByText('selected')).toHaveLength(1);
+  });
+
+  test('should ask the forward request from one nanosecond before the selected row', async () => {
+    const selected = dataFrameToLogsModel([burstFrame([[BURST_MS, 'selected']], 'anchor')]).rows[0];
+    const getRowContext = jest.fn().mockResolvedValue({ data: [] });
+
+    render(
+      <LogLineContext
+        log={selected}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        sortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    await waitFor(() => expect(getRowContext).toHaveBeenCalledTimes(2));
+    const rowFor = (direction: LogRowContextQueryDirection) =>
+      getRowContext.mock.calls.find(([, options]) => options.direction === direction)?.[0];
+
+    // Forward ranges exclude the reference nanosecond, hiding every row sharing it.
+    // Values are spelled out because epoch nanoseconds exceed Number.MAX_SAFE_INTEGER.
+    expect(`${BURST_MS}000000`).toBe('1700000000000000000');
+    expect(rowFor(LogRowContextQueryDirection.Forward).timeEpochNs).toBe('1699999999999999999');
+    expect(rowFor(LogRowContextQueryDirection.Backward).timeEpochNs).toBe('1700000000000000000');
+  });
+
+  test('should request more logs when a full page is entirely one timestamp', async () => {
+    const selected = dataFrameToLogsModel([burstFrame([[BURST_MS, 'selected']], 'anchor')]).rows[0];
+    // The page is full and entirely on the selected row's timestamp, so a bigger request is the
+    // only way out even though this page did bring new rows.
+    const insideBurst: BurstRow[] = Array.from({ length: PAGE_SIZE }, (_, i) => [BURST_MS, `burst ${i}`]);
+    const pastBurst: BurstRow[] = [[BURST_MS + 1, 'after the burst']];
+    const getRowContext = jest.fn().mockImplementation(async (_, options) => {
+      if (options.direction === LogRowContextQueryDirection.Backward) {
+        return { data: [burstFrame([[BURST_MS - 1, 'before the burst']], 'context-backward')] };
+      }
+      return {
+        data: [
+          burstFrame(
+            options.limit > PAGE_SIZE ? [...insideBurst, ...pastBurst] : insideBurst,
+            `context-forward-${options.limit}`
+          ),
+        ],
+      };
+    });
+
+    render(
+      <LogLineContext
+        log={selected}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        sortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    await waitFor(() => {
+      expect(getRowContext).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ limit: PAGE_SIZE * 2, direction: LogRowContextQueryDirection.Forward })
+      );
+    });
+    await waitFor(() => {
+      expect(screen.getAllByText(/^burst \d+$/).length).toBeGreaterThan(0);
+    });
+  });
+
+  test('should request more logs when a full page holds nothing new', async () => {
+    const selected = dataFrameToLogsModel([burstFrame([[BURST_MS, 'selected']], 'anchor')]).rows[0];
+    // Data sources anchor the context query on a timestamp and cannot skip rows, so the
+    // first page of a burst bigger than PAGE_SIZE only repeats the rows already displayed.
+    const firstPage: BurstRow[] = Array.from({ length: PAGE_SIZE }, () => [BURST_MS, 'selected']);
+    const secondPage: BurstRow[] = Array.from({ length: PAGE_SIZE }, (_, i) => [BURST_MS, `burst ${i}`]);
+    const getRowContext = jest.fn().mockImplementation(async (_, options) => {
+      if (options.direction === LogRowContextQueryDirection.Backward) {
+        return { data: [burstFrame([[BURST_MS - 1, 'before the burst']], 'context-backward')] };
+      }
+      return {
+        data: [
+          burstFrame(
+            options.limit > PAGE_SIZE ? [...firstPage, ...secondPage] : firstPage,
+            `context-forward-${options.limit}`
+          ),
+        ],
+      };
+    });
+
+    render(
+      <LogLineContext
+        log={selected}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        sortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    await waitFor(() => {
+      expect(getRowContext).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ limit: PAGE_SIZE * 2, direction: LogRowContextQueryDirection.Forward })
+      );
+    });
+    // Only the rows next to the selected one are rendered, so match any of the burst.
+    await waitFor(() => {
+      expect(screen.getAllByText(/^burst \d+$/).length).toBeGreaterThan(0);
+    });
+    expect(screen.queryByText('No more logs available.')).not.toBeInTheDocument();
   });
 
   test('Should highlight the same `foo123` searchwords', async () => {
