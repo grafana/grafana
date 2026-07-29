@@ -9,6 +9,7 @@ import {
   createTheme,
   type DataSourceApi,
   EventBusSrv,
+  getDefaultTimeRange,
   LoadingState,
   PluginExtensionTypes,
   store,
@@ -116,6 +117,7 @@ const dummyProps: Props = {
   changeCompactMode: jest.fn(),
   queryLibraryRef: undefined,
   queriesChangedIndexAtRun: 0,
+  range: getDefaultTimeRange(),
 };
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

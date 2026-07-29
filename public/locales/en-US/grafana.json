@@ -8725,7 +8725,11 @@
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
     },
     "metrics-list": {
-      "search-placeholder": "Search metrics"
+      "error": "Failed to load metrics",
+      "loading": "Loading metrics…",
+      "no-metrics": "No metrics found",
+      "search-placeholder": "Search metrics",
+      "show-more": "Show more"
     },
     "next-prev-result": {
       "aria-label-next": "Next result button",

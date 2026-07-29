@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type DataSourceInstanceSettings, store } from '@grafana/data';
+import { type DataSourceInstanceSettings, type TimeRange, store } from '@grafana/data';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
@@ -28,6 +28,8 @@ const promSettings = {
   name: 'gdev-prometheus',
   meta: { id: 'prometheus', info: { logos: { small: 'prometheus.svg' } } },
 } as unknown as DataSourceInstanceSettings;
+
+const timeRange = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 
 const setup = (mergeSingleChild = false, showSignalExplorer = false, queries: DataQuery[] = []) => {
   HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
@@ -94,6 +96,7 @@ const setup = (mergeSingleChild = false, showSignalExplorer = false, queries: Da
       panelId="content-outline-container-1"
       showSignalExplorer={showSignalExplorer}
       queries={queries}
+      timeRange={timeRange}
     />
   );
 };
@@ -233,8 +236,9 @@ describe('<ContentOutline />', () => {
 
       await userEvent.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
 
+      // Only that the list mounted: its contents come from the datasource now, which this test does
+      // not stand up. `MetricsList.test.tsx` covers what the list does with a catalog.
       expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
-      expect(screen.getByText('up')).toBeInTheDocument();
     });
 
     it('hides the explorer when the outline is collapsed', async () => {

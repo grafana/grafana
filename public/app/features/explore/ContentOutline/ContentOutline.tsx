@@ -3,7 +3,7 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
-import { type DataSourceApi, type GrafanaTheme2, store } from '@grafana/data';
+import { type DataSourceApi, type GrafanaTheme2, type TimeRange, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
@@ -50,12 +50,19 @@ export function ContentOutline({
   showSignalExplorer = false,
   queries = [],
   paneDatasource,
+  timeRange,
 }: {
   scroller: HTMLElement | undefined;
   panelId: string;
   showSignalExplorer?: boolean;
   queries?: DataQuery[];
   paneDatasource?: DataSourceApi | null;
+  /**
+   * The pane's range, which scopes every lookup the signal explorer makes. Required, unlike
+   * `queries`: an empty query list is a legal input to the explorer, an absent range is not, and
+   * `signalExplorerVisible` already widens this panel on the assumption it can render.
+   */
+  timeRange: TimeRange;
 }) {
   const [contentOutlineExpanded, toggleContentOutlineExpanded] = useToggle(
     store.getBool(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded, true)
@@ -178,6 +185,7 @@ export function ContentOutline({
         <SignalExplorer
           queries={queries}
           paneDatasource={paneDatasource}
+          timeRange={timeRange}
           scroller={scroller}
           toggleButton={toggleButton}
         />
