@@ -13,14 +13,15 @@ export function patchFetchForLegacyAPIMode() {
     const url = new URL(rawUrl, window.location.href);
     const isLegacyAPICall = url.origin === window.location.origin && url.pathname.startsWith('/api/');
 
-    if (isLegacyAPICall) {
-      if (mode === 'block') {
-        return Promise.reject(new Error(`Request to legacy api ${url.pathname} blocked`));
-      }
-
-      console.warn(`Request made to legacy api ${url.pathname}`);
+    if (!isLegacyAPICall) {
+      return originalFetch(input, init);
     }
 
+    if (mode === 'block') {
+      return Promise.reject(new Error(`Request to legacy api ${url.pathname} blocked`));
+    }
+
+    console.warn(`Request made to legacy api ${url.pathname}`);
     return originalFetch(input, init);
   };
 }
