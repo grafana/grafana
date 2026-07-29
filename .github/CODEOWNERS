@@ -1094,6 +1094,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/metrics.ts @grafana/grafana-catalog
 /public/app/index.ts @grafana/grafana-frontend-platform
 /public/app/legacyAPIHandling.ts @grafana/grafana-frontend-platform
+/public/app/legacyAPIHandling.test.ts @grafana/grafana-frontend-platform
 /public/app/initApp.ts @grafana/grafana-frontend-platform
 /public/app/AppWrapper.tsx @grafana/grafana-frontend-platform
 

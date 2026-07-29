@@ -1614,8 +1614,10 @@
       "additional-settings": "Additional settings",
       "alert-rules": "Alert rules",
       "autosync-active-block": {
-        "description": "Grafana is continuously syncing alert configuration from a data source, so the configuration is a read-only mirror and cannot be imported into. To import, disable auto-sync in Alerting settings first.",
+        "description": "Grafana is continuously syncing alert configuration from a data source, so notification resources are a read-only mirror and cannot be imported into. You can still import alert rules.",
+        "disable-sync": "To import notification resources, disable auto-sync in Alerting settings first.",
         "go-to-settings": "Go to Alerting settings",
+        "import-rules": "Import alert rules",
         "title": "Auto-sync is enabled"
       },
       "autosync-review": {
