@@ -50,8 +50,6 @@ export function SummaryCard<T>({
   const redesignEnabled = useFlagGrafanaGrowthHomepage();
   const styles = useStyles2(getStyles);
 
-  console.log('emptyMessage', emptyMessage, items);
-
   const countText = countLimit !== undefined && count >= countLimit ? `${countLimit}+` : String(count);
 
   const content = (
