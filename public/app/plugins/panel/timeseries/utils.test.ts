@@ -359,6 +359,22 @@ describe('getCompareSeriesIdentityKey', () => {
     const key = getCompareSeriesIdentityKey({ name: 'Value', type: FieldType.number, config: {}, values: [] });
     expect(key).toBe('Value');
   });
+
+  it('strips the compare refId infix from TestData-style field names', () => {
+    const frame = toDataFrame({
+      refId: 'A-compare',
+      fields: [{ name: 'A-compare-series1', type: FieldType.number, values: [] }],
+    });
+    expect(getCompareSeriesIdentityKey(frame.fields[0], frame)).toBe('A-series1');
+  });
+
+  it('does not alter field names on current-period frames', () => {
+    const frame = toDataFrame({
+      refId: 'A',
+      fields: [{ name: 'A-series1', type: FieldType.number, values: [] }],
+    });
+    expect(getCompareSeriesIdentityKey(frame.fields[0], frame)).toBe('A-series1');
+  });
 });
 
 describe('setClassicPaletteIdxs', () => {
@@ -526,6 +542,48 @@ describe('setClassicPaletteIdxs', () => {
     expect(main2.fields[1].state?.seriesIndex).toBe(1);
     expect(compare1.fields[1].state?.seriesIndex).toBe(0);
     expect(compare2.fields[1].state?.seriesIndex).toBe(1);
+  });
+
+  // TestData random walk names fields `{refId}-series{N}` (see frameNameForQuery). The compare
+  // query uses refId `A-compare`, so names become `A-compare-series` vs current `A-series`.
+  it('pairs TestData random-walk names that embed the compare refId', () => {
+    const main0 = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'A-series', type: FieldType.number, values: [10, 20] },
+      ],
+    });
+    const main1 = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'A-series1', type: FieldType.number, values: [30, 40] },
+      ],
+    });
+    const compare0 = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'A-compare-series', type: FieldType.number, values: [5, 15] },
+      ],
+    });
+    const compare1 = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, timeShift: '1d' } },
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 2] },
+        { name: 'A-compare-series1', type: FieldType.number, values: [25, 35] },
+      ],
+    });
+
+    setClassicPaletteIdxs([main0, main1, compare0, compare1], createTheme(), 0);
+
+    expect(main0.fields[1].state?.seriesIndex).toBe(0);
+    expect(main1.fields[1].state?.seriesIndex).toBe(1);
+    expect(compare0.fields[1].state?.seriesIndex).toBe(0);
+    expect(compare1.fields[1].state?.seriesIndex).toBe(1);
   });
 
   it('does not assign seriesIndex to string or time fields', () => {

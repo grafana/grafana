@@ -24,9 +24,19 @@ type ScaleKey = string;
  * them because it's often a shared, un-interpolated template that collapses all series.
  */
 export function getCompareSeriesIdentityKey(field: Field, frame?: DataFrame): string {
+  // The compare request runs under a distinct `<refId>-compare` refId (see PanelTimeRange.getExtraQueries)
+  // so query caches/panels don't collide. Datasources that embed the refId in the series name (e.g. TestData)
+  // then emit compare names like `A-compare-series1` while the current period is `A-series1`. Strip that
+  // infix so a compare series still pairs with its current-period counterpart. Label-based datasources
+  // (e.g. Prometheus) are unaffected since their names don't start with the refId.
+  const refId = frame?.refId ?? '';
+  const baseRefId = refId.replace(/-compare$/, '');
+  const name =
+    baseRefId !== refId && field.name.startsWith(refId) ? `${baseRefId}${field.name.slice(refId.length)}` : field.name;
+
   const labels = field.labels ? formatLabels(field.labels) : '';
   if (labels) {
-    return `${field.name} ${labels}`;
+    return `${name} ${labels}`;
   }
   if (field.config?.displayName) {
     return field.config.displayName;
@@ -35,9 +45,9 @@ export function getCompareSeriesIdentityKey(field: Field, frame?: DataFrame): st
     return field.config.displayNameFromDS;
   }
   if (frame?.name) {
-    return `${frame.name} ${field.name}`;
+    return `${frame.name} ${name}`;
   }
-  return field.name;
+  return name;
 }
 
 // this will re-enumerate all enum fields on the same scale to create one ordinal progression
