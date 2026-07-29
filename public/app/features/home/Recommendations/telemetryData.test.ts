@@ -102,6 +102,7 @@ describe('fetchLogsActivity', () => {
       if (path === 'index/volume_range') {
         return {
           data: {
+            // Prod aggregateBy=labels collapses this to one total series; two here pin the defensive cross-series sum.
             result: [
               {
                 metric: { service_name: 'a' },
@@ -195,6 +196,14 @@ describe('fetchLogsActivity', () => {
 
   it('reports nulls when no usable label exists', async () => {
     const getResource = jest.fn(async () => ({ data: ['__stream_shard__'] }));
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+
+    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, sources: null, series: null });
+    expect(getResource).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports nulls when the labels lookup itself fails', async () => {
+    const getResource = jest.fn().mockRejectedValue(new Error('labels 403'));
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
     await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, sources: null, series: null });

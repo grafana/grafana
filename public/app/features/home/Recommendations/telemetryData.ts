@@ -83,7 +83,7 @@ export async function fetchLogsActivity(ds: Pick<DataSourceInstanceListItem, 'ui
   }
   const end = Date.now() * NS_IN_MS;
   const statsStart = end - LOGS_STATS_LOOKBACK_DAYS * 24 * 3600 * NS_IN_S;
-  const label = await resolveLogsLabel(instance, statsStart, end);
+  const label = await resolveLogsLabel(instance, statsStart, end).catch(() => null);
   if (!label) {
     return empty;
   }
@@ -256,9 +256,10 @@ async function isMimirOrCortex(ds: Pick<DataSourceInstanceListItem, 'uid'>): Pro
 }
 
 async function fetchSeriesSparkline(
-  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
+  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>,
+  mimir: boolean
 ): Promise<FieldSparkline | null> {
-  if (await isMimirOrCortex(ds)) {
+  if (mimir) {
     return null;
   }
   return runRangeQuery('series', 'sum(prometheus_tsdb_head_series)', DATA_LOOKBACK_HOURS, ds)
@@ -331,7 +332,7 @@ export async function fetchMetricsActivity(
       ? runRangeQuery('series', usage.activeSeries, DATA_LOOKBACK_HOURS, usage.ds)
           .then((frames) => readSeries(frames, 'series'))
           .catch(() => null)
-      : fetchSeriesSparkline(ds),
+      : fetchSeriesSparkline(ds, mimir),
     runInstantQueries(
       {
         ...(mimir ? {} : { dpm: PROM_DPM_QUERY }),
