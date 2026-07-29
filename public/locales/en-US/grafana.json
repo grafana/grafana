@@ -6175,21 +6175,6 @@
         "query-editor-modal-title": "Annotation Query",
         "show-in": "Show in"
       },
-      "annotations": {
-        "add-annotation": "Add annotation",
-        "add-annotation-query": "Add annotation query",
-        "name-builtin": "{{annoName}} (Built-in)",
-        "name-disabled": "(Disabled) {{annoName}}",
-        "reorder": "Drag to reorder",
-        "reorder-description": "Reorder annotations list",
-        "select-annotation": "Select",
-        "title-above-dashboard-count_one": "Above dashboard ({{count}})",
-        "title-above-dashboard-count_other": "Above dashboard ({{count}})",
-        "title-controls-menu-count_one": "Controls menu ({{count}})",
-        "title-controls-menu-count_other": "Controls menu ({{count}})",
-        "title-hidden-count_one": "Hidden ({{count}})",
-        "title-hidden-count_other": "Hidden ({{count}})"
-      },
       "dashboard-options": {
         "annotations": "Annotations",
         "description": "Description",
@@ -6252,31 +6237,8 @@
       "export": {
         "title": "Export"
       },
-      "feedback-title": "Give feedback on the new dashboard editing experience",
-      "filters": {
-        "add-filter": "Add filter",
-        "reorder-description": "Reorder filters list",
-        "title": "Filters",
-        "title-above-dashboard_one": "Above dashboard ({{count}})",
-        "title-above-dashboard_other": "Above dashboard ({{count}})",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "title-hidden_one": "Hidden ({{count}})",
-        "title-hidden_other": "Hidden ({{count}})",
-        "tooltip": "Filters overview"
-      },
-      "links": {
-        "add-link": "Add link",
-        "new-link": "New link",
-        "reorder": "Drag to reorder",
-        "reorder-description": "Reorder links list",
-        "select-link": "Select",
-        "title-above-dashboard_one": "Above dashboard ({{count}})",
-        "title-above-dashboard_other": "Above dashboard ({{count}})",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "untitled": "Untitled link"
-      },
+      "filters": "Filters",
+      "open": "Filters overview",
       "outline": {
         "pane-header": "Content outline",
         "repeated-item": "Repeat",
@@ -6369,20 +6331,11 @@
         "type-category": "{{type}} options"
       },
       "variables": {
-        "add-variable": "Add variable",
         "change-type": "Change variable type",
         "reorder": "Drag to reorder",
         "reorder-description": "Reorder variables list",
         "select-type": "Choose variable type",
-        "select-type-card-tooltip": "Click to select type",
-        "select-variable": "Select",
-        "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "title-hidden_one": "Hidden ({{count}})",
-        "title-hidden_other": "Hidden ({{count}})",
-        "title-top-placement_one": "{{placement}} ({{count}})",
-        "title-top-placement_other": "{{placement}} ({{count}})",
-        "top-placement-default": "Above dashboard"
+        "select-type-card-tooltip": "Click to select type"
       },
       "view-panel": {
         "disabled": "Disabled",
@@ -6813,11 +6766,6 @@
       "delete-text": "Are you sure you want to delete: {{name}}?",
       "delete-title": "Delete annotation query"
     },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "Annotation"
-      }
-    },
     "annotation-query-library-dropdown": {
       "use-saved-query": "Use saved query"
     },
@@ -7240,11 +7188,6 @@
       "delete-text": "Are you sure you want to delete: {{name}}?",
       "delete-title": "Delete link",
       "unnamed": "Unnamed link"
-    },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "Link"
-      }
     },
     "link-options": {
       "icon": "Icon",

@@ -26,14 +26,18 @@ describe('getOutlineSettingsTarget', () => {
     it('maps the variable set to the dashboard variables category', () => {
       const dashboard = buildDashboard({ $variables: new SceneVariableSet({ variables: [] }) });
 
-      expect(getOutlineSettingsTarget(dashboard.state.$variables!)?.categoryId).toBe(SidebarCategoryType.DashboardVariables);
+      expect(getOutlineSettingsTarget(dashboard.state.$variables!)?.categoryId).toBe(
+        SidebarCategoryType.DashboardVariables
+      );
       expect(getOutlineSettingsTarget(dashboard.state.$variables!)?.parent).toBe(dashboard);
     });
 
     it('maps the annotation data layer set to the dashboard annotations category', () => {
       const dashboard = buildDashboard({ $data: new DashboardDataLayerSet({ annotationLayers: [] }) });
 
-      expect(getOutlineSettingsTarget(dashboard.state.$data as DashboardDataLayerSet)?.categoryId).toBe(SidebarCategoryType.DashboardAnnotations);
+      expect(getOutlineSettingsTarget(dashboard.state.$data as DashboardDataLayerSet)?.categoryId).toBe(
+        SidebarCategoryType.DashboardAnnotations
+      );
       expect(getOutlineSettingsTarget(dashboard.state.$data as DashboardDataLayerSet)?.parent).toBe(dashboard);
     });
 
