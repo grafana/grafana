@@ -103,6 +103,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       position: 'fixed',
       top: `${getChromeHeaderLevelHeight()}px`,
       backgroundColor: visualRefreshEnabled ? theme.colors.background.canvas : theme.colors.background.primary,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
       flex: '1 1 0',
 
       [theme.breakpoints.up('md')]: {
