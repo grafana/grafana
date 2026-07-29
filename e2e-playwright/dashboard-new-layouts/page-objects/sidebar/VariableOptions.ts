@@ -48,12 +48,11 @@ export class VariableOptions extends PageObject {
   readonly datasource = {
     selectType: async (dsType: string) => {
       await test.step(`Select variable datasource type "${dsType}"`, async () => {
-        await this.dashboardPage
-          .getByGrafanaSelector(
-            this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
-          )
-          .click();
-        await this.page.getByRole('option', { name: dsType, exact: true }).click();
+        const datasourceSelect = this.dashboardPage.getByGrafanaSelector(
+          this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
+        );
+        await datasourceSelect.fill(dsType);
+        await datasourceSelect.press('Enter');
       });
     },
     setNameFilter: async (filter: string) => {
