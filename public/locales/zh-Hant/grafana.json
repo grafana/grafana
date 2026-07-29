@@ -5198,6 +5198,8 @@
       "open-settings": ""
     },
     "add": {
+      "dashboard-controls": "儀表板控制項",
+      "group-layouts": "群組版面",
       "new-panel": {
         "button": "新增面板按鈕",
         "description": "拖曳或點選以新增面板",
@@ -6579,9 +6581,6 @@
       "label-link": "連結",
       "tooltip": "新增指向其他儀表板或外部網站的連結"
     },
-    "add-new-edit-pane": {
-      "group-layouts": "群組版面"
-    },
     "add-row": {
       "add-label": "新增列",
       "group-label": "分組為列"
@@ -6835,9 +6834,6 @@
       "message": {
         "dashboard-not-found": "找不到儀表板"
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "儀表板控制項"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "提供有關新儀表板編輯體驗的意見回饋"

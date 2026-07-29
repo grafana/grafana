@@ -5198,6 +5198,8 @@
       "open-settings": ""
     },
     "add": {
+      "dashboard-controls": "数据面板控件",
+      "group-layouts": "分组布局",
       "new-panel": {
         "button": "添加新面板按钮",
         "description": "拖动或单击以添加面板",
@@ -6579,9 +6581,6 @@
       "label-link": "链接",
       "tooltip": "添加指向另一个数据面板或外部网站的链接"
     },
-    "add-new-edit-pane": {
-      "group-layouts": "分组布局"
-    },
     "add-row": {
       "add-label": "添加行",
       "group-label": "分组成行"
@@ -6835,9 +6834,6 @@
       "message": {
         "dashboard-not-found": "找不到数据面板"
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "数据面板控件"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "提供有关新数据面板编辑体验的反馈"

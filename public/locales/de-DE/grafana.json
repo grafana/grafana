@@ -5231,6 +5231,8 @@
       "open-settings": ""
     },
     "add": {
+      "dashboard-controls": "Dashboard-Steuerelemente",
+      "group-layouts": "Gruppenlayouts",
       "new-panel": {
         "button": "Schaltfläche „Neues Panel hinzufügen“",
         "description": "Ziehen oder klicken Sie, um ein Panel hinzuzufügen",
@@ -6614,9 +6616,6 @@
       "label-link": "Link",
       "tooltip": "Link zu einem anderen Dashboard oder einer externen Seite hinzufügen"
     },
-    "add-new-edit-pane": {
-      "group-layouts": "Gruppenlayouts"
-    },
     "add-row": {
       "add-label": "Zeile hinzufügen",
       "group-label": "In Zeilen gruppieren"
@@ -6873,9 +6872,6 @@
       "message": {
         "dashboard-not-found": "Dashboard nicht gefunden"
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Dashboard-Steuerelemente"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "Feedback zur neuen Dashboard-Bearbeitungsoberfläche geben"

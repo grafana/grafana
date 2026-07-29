@@ -5198,6 +5198,8 @@
       "open-settings": ""
     },
     "add": {
+      "dashboard-controls": "대시보드 컨트롤",
+      "group-layouts": "그룹 레이아웃",
       "new-panel": {
         "button": "새 패널 버튼 추가",
         "description": "드래그하거나 클릭하여 패널 추가",
@@ -6579,9 +6581,6 @@
       "label-link": "링크",
       "tooltip": "다른 대시보드 또는 외부 사이트로 연결되는 링크 추가"
     },
-    "add-new-edit-pane": {
-      "group-layouts": "그룹 레이아웃"
-    },
     "add-row": {
       "add-label": "행 추가",
       "group-label": "행으로 그룹화"
@@ -6835,9 +6834,6 @@
       "message": {
         "dashboard-not-found": "대시보드를 찾을 수 없습니다."
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "대시보드 컨트롤"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "새 대시보드 편집 경험에 대한 피드백을 제공해 주세요"

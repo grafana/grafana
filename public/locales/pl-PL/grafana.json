@@ -5297,6 +5297,8 @@
       "open-settings": ""
     },
     "add": {
+      "dashboard-controls": "Opcje pulpitu",
+      "group-layouts": "Grupuj układy",
       "new-panel": {
         "button": "Dodaj nowy przycisk panelu",
         "description": "Przeciągnij lub kliknij, aby dodać panel",
@@ -6684,9 +6686,6 @@
       "label-link": "Link",
       "tooltip": "Dodaj link do innego pulpitu lub witryny zewnętrznej"
     },
-    "add-new-edit-pane": {
-      "group-layouts": "Grupuj układy"
-    },
     "add-row": {
       "add-label": "Dodaj wiersz",
       "group-label": "Grupuj w wierszach"
@@ -6949,9 +6948,6 @@
       "message": {
         "dashboard-not-found": "Nie znaleziono pulpitu"
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Opcje pulpitu"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "Przekaż opinię na temat nowego interfejsu edycji pulpitu"

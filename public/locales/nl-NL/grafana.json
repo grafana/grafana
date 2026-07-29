@@ -5231,6 +5231,8 @@
       "open-settings": ""
     },
     "add": {
+      "dashboard-controls": "Dashboardbesturingselementen",
+      "group-layouts": "Indelingen van groepen",
       "new-panel": {
         "button": "Nieuwe paneelknop toevoegen",
         "description": "Sleep of klik om een paneel toe te voegen",
@@ -6614,9 +6616,6 @@
       "label-link": "Link",
       "tooltip": "Link naar een ander dashboard of een externe site toevoegen"
     },
-    "add-new-edit-pane": {
-      "group-layouts": "Indelingen van groepen"
-    },
     "add-row": {
       "add-label": "Rij toevoegen",
       "group-label": "Groeperen in rijen"
@@ -6873,9 +6872,6 @@
       "message": {
         "dashboard-not-found": "Dashboard niet gevonden"
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Dashboardbesturingselementen"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "Geef feedback op de nieuwe ervaring voor het bewerken van dashboards"

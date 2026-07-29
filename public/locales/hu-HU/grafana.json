@@ -5231,6 +5231,8 @@
       "open-settings": ""
     },
     "add": {
+      "dashboard-controls": "Irányítópult-vezérlőelemek",
+      "group-layouts": "Csoportelrendezések",
       "new-panel": {
         "button": "Új panel hozzáadása gomb",
         "description": "Húzza át, vagy kattintson a panel hozzáadásához",
@@ -6614,9 +6616,6 @@
       "label-link": "Hivatkozás",
       "tooltip": "Hivatkozás hozzáadása egy másik irányítópulthoz vagy külső webhelyhez"
     },
-    "add-new-edit-pane": {
-      "group-layouts": "Csoportelrendezések"
-    },
     "add-row": {
       "add-label": "Sor hozzáadása",
       "group-label": "Csoportosítás sorokba"
@@ -6873,9 +6872,6 @@
       "message": {
         "dashboard-not-found": "Az irányítópult nem található"
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Irányítópult-vezérlőelemek"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "Visszajelzés küldése az új irányítópult-szerkesztési élményről"

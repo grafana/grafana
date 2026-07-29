@@ -25,14 +25,14 @@ import { AddRow } from './AddRow';
 import { AddTab } from './AddTab';
 import { AddVariable } from './AddVariable';
 
-export class AddNewEditPane extends SceneObjectBase {
-  public static Component = AddNewEditPaneRenderer;
+export class AddNewPane extends SceneObjectBase {
+  public static Component = AddNewPaneRenderer;
   public getId() {
     return 'add' as const;
   }
 }
 
-function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) {
+function AddNewPaneRenderer({ model }: SceneComponentProps<AddNewPane>) {
   const sidebar = sceneGraph.getAncestor(model, DashboardSidebar);
   const { hasCopiedPanel } = useClipboardState();
   const styles = useStyles2(getStyles);
@@ -129,11 +129,11 @@ function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) 
             </Droppable>
           </DragDropContext>
         </AddNewSection>
-        <AddNewSection title={t('dashboard-scene.add-new-edit-pane.group-layouts', 'Group layouts')}>
+        <AddNewSection title={t('dashboard.add.group-layouts', 'Group layouts')}>
           <AddRow dashboardScene={dashboardScene} selectedElement={selectedObj} />
           <AddTab dashboardScene={dashboardScene} selectedElement={selectedObj} />
         </AddNewSection>
-        <AddNewSection title={t('dashboard-scene.dashboard-side-pane-new.dashboard-controls', 'Dashboard controls')}>
+        <AddNewSection title={t('dashboard.add.dashboard-controls', 'Dashboard controls')}>
           {config.featureToggles.dashboardUnifiedDrilldownControls && <AddFilters dashboardScene={dashboardScene} />}
           <AddVariable dashboardScene={dashboardScene} selectedElement={selectedObj} />
           <AddAnnotationQuery dashboardScene={dashboardScene} />

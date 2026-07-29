@@ -48,7 +48,7 @@ export function linkSelectionId(linkIndex: number) {
   return `dashboard-link-${linkIndex}`;
 }
 
-export function openLinkEditPane(dashboard: DashboardSceneLike, linkIndex: number) {
+export function openEditLinkPane(dashboard: DashboardSceneLike, linkIndex: number) {
   const element = createLinkEdit(dashboard, linkIndex);
   dashboard.state.sidebar.selectObject(element, { force: true, multi: false });
 }
@@ -67,7 +67,7 @@ function useLinkTypeShowIf(linkEdit: LinkEdit, type: 'dashboards' | 'link') {
   return link?.type === type;
 }
 
-function useEditPaneOptions(
+function useSidebarOptions(
   this: LinkEditEditableElement,
   linkEdit: LinkEdit,
   isNewElement: boolean
@@ -207,7 +207,7 @@ export class LinkEditEditableElement implements EditableDashboardElement {
     };
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this, this.linkEdit);
+  public useSidebarOptions = useSidebarOptions.bind(this, this.linkEdit);
 
   public onDuplicate() {
     const dashboard = this.linkEdit.state.dashboardRef.resolve();
@@ -218,7 +218,7 @@ export class LinkEditEditableElement implements EditableDashboardElement {
     const linkEdit = createLinkEdit(dashboard, this.linkEdit.state.linkIndex);
 
     linkEditActions.addLink({ dashboard, link, addedObject: linkEdit });
-    openLinkEditPane(dashboard, links.length);
+    openEditLinkPane(dashboard, links.length);
   }
 
   public onConfirmDelete(): void {

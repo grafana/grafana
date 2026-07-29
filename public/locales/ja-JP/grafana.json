@@ -5198,6 +5198,8 @@
       "open-settings": ""
     },
     "add": {
+      "dashboard-controls": "ダッシュボードのコントロール",
+      "group-layouts": "グループレイアウト",
       "new-panel": {
         "button": "新しいパネルボタンを追加",
         "description": "ドラッグまたはクリックしてパネルを追加",
@@ -6579,9 +6581,6 @@
       "label-link": "リンク",
       "tooltip": "別のダッシュボードまたは外部サイトへのリンクを追加"
     },
-    "add-new-edit-pane": {
-      "group-layouts": "グループレイアウト"
-    },
     "add-row": {
       "add-label": "行を追加",
       "group-label": "行にグループ化"
@@ -6835,9 +6834,6 @@
       "message": {
         "dashboard-not-found": "ダッシュボードが見つかりません"
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "ダッシュボードのコントロール"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "新しいダッシュボード編集体験に関するフィードバックをご提供ください"

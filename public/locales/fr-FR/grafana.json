@@ -5231,6 +5231,8 @@
       "open-settings": ""
     },
     "add": {
+      "dashboard-controls": "Commandes du tableau de bord",
+      "group-layouts": "Dispositions du groupe",
       "new-panel": {
         "button": "Bouton d’ajout d’un nouveau panneau",
         "description": "Faites glisser ou cliquez pour ajouter un panneau",
@@ -6614,9 +6616,6 @@
       "label-link": "Lien",
       "tooltip": "Ajouter un lien vers un autre tableau de bord ou un site externe"
     },
-    "add-new-edit-pane": {
-      "group-layouts": "Dispositions du groupe"
-    },
     "add-row": {
       "add-label": "Ajouter une ligne",
       "group-label": "Regrouper sur des lignes"
@@ -6873,9 +6872,6 @@
       "message": {
         "dashboard-not-found": "Tableau de bord introuvable"
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Commandes du tableau de bord"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "Donner votre avis sur la nouvelle expérience d’édition des tableaux de bord"

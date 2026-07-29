@@ -98,17 +98,17 @@ test.describe(
       ).toBeHidden();
     });
 
-    test('can update repeats in edit pane', async ({ dashboardPage, selectors, page }) => {
+    test('can update repeats in sidebar', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
-        'Custom grid repeats - update through edit pane',
+        'Custom grid repeats - update through sidebar',
         JSON.stringify(testV2DashWithRepeats)
       );
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      // select first/original repeat panel to activate edit pane
+      // select first/original repeat panel to activate sidebar
       await dashboardPage
         .getByGrafanaSelector(selectors.components.Panels.Panel.title(`${repeatTitleBase}${repeatOptions.at(0)}`))
         .getByTestId(selectors.components.Panels.Panel.headerContainer)
@@ -146,7 +146,7 @@ test.describe(
       await page.keyboard.press('e');
 
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardSidebarSplitter.primaryBody)
       ).toBeHidden(); // verifying that panel editor loaded
 
       // verify original repeat panel is loaded
@@ -174,7 +174,7 @@ test.describe(
       await page.keyboard.press('Escape');
 
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardSidebarSplitter.primaryBody)
       ).toBeVisible(); // verifying that dashboard loaded
 
       await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);
@@ -197,7 +197,7 @@ test.describe(
       await page.goto(`${page.url()}&editPanel=1`);
 
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardSidebarSplitter.primaryBody)
       ).toBeHidden(); // verifying that panel editor loaded
 
       await expect(
@@ -224,7 +224,7 @@ test.describe(
       await page.keyboard.press('Escape');
 
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardSidebarSplitter.primaryBody)
       ).toBeVisible(); // verifying that dashboard loaded
 
       await checkRepeatedPanelTitles(dashboardPage, selectors, newTitleBase, repeatOptions);

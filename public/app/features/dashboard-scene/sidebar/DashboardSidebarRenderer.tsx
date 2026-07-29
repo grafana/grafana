@@ -21,7 +21,7 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 import { DashboardCodePane } from './DashboardCodePane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
-import { AddNewEditPane } from './add-new/AddNewEditPane';
+import { AddNewPane } from './add-new/AddNewPane';
 import { DashboardPredefinedVariablesPane } from './dashboard/DashboardPredefinedVariablesPane';
 import { ToggleViewPanePaneEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
@@ -32,7 +32,7 @@ export interface Props {
 }
 
 /**
- * Making the Sidebar rendering completely standalone (not using editPane.Component) in order to pass custom react props
+ * Making the Sidebar rendering completely standalone (not using sidebar.Component) in order to pass custom react props
  */
 export function DashboardSidebarRenderer({ dashboard }: Props) {
   const sidebar = dashboard.state.sidebar;
@@ -79,11 +79,11 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             <Sidebar.Button
               icon="plus"
               variant="primary"
-              onClick={() => sidebar.openPane(new AddNewEditPane({}))}
+              onClick={() => sidebar.openPane(new AddNewPane({}))}
               title={t('dashboard.sidebar.add.title', 'Add')}
               tooltip={t('dashboard.sidebar.add.tooltip', 'Add new element')}
               data-testid={selectors.pages.Dashboard.Sidebar.addButton}
-              active={openPane instanceof AddNewEditPane}
+              active={openPane instanceof AddNewPane}
             />
             <Sidebar.Button
               icon="cog"

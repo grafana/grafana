@@ -26,7 +26,7 @@ import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 import { openAddVariablePane } from './VariableTypeSelectionPane';
 import { isVariableEditable } from './utils';
 
-function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
+function useSidebarOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
   const variableListId = useId();
   const options = useMemo(() => {
     return new OptionsPaneCategoryDescriptor({ title: '', id: 'variables' }).addItem(
@@ -80,7 +80,7 @@ export class VariableSetEditableElement implements EditableDashboardElement {
     }
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this, this.set);
+  public useSidebarOptions = useSidebarOptions.bind(this, this.set);
 }
 
 export function VariableList({ set }: { set: SceneVariableSet }) {

@@ -5231,6 +5231,8 @@
       "open-settings": ""
     },
     "add": {
+      "dashboard-controls": "Pano kontrolleri",
+      "group-layouts": "Grup düzenleri",
       "new-panel": {
         "button": "Yeni panel düğmesi ekle",
         "description": "Panel eklemek için sürükleyin veya tıklayın",
@@ -6614,9 +6616,6 @@
       "label-link": "Bağlantı",
       "tooltip": "Başka bir panoya veya haricî bir siteye bağlantı ekle"
     },
-    "add-new-edit-pane": {
-      "group-layouts": "Grup düzenleri"
-    },
     "add-row": {
       "add-label": "Satır ekle",
       "group-label": "Satırlar hâlinde grupla"
@@ -6873,9 +6872,6 @@
       "message": {
         "dashboard-not-found": "Pano bulunamadı"
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Pano kontrolleri"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "Yeni pano düzenleme deneyimi hakkında geri bildirimde bulunun"

@@ -5231,6 +5231,8 @@
       "open-settings": ""
     },
     "add": {
+      "dashboard-controls": "Controlos do painel de controlo",
+      "group-layouts": "Disposições do grupo",
       "new-panel": {
         "button": "Adicionar novo botão de painel",
         "description": "Arraste ou clique para adicionar um painel",
@@ -6614,9 +6616,6 @@
       "label-link": "Link",
       "tooltip": "Adicionar link para outro painel de controlo ou site externo"
     },
-    "add-new-edit-pane": {
-      "group-layouts": "Disposições do grupo"
-    },
     "add-row": {
       "add-label": "Adicionar linha",
       "group-label": "Agrupar em linhas"
@@ -6873,9 +6872,6 @@
       "message": {
         "dashboard-not-found": "Painel de controlo não encontrado"
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Controlos do painel de controlo"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "Dê feedback sobre a nova experiência de edição do painel de controlo"

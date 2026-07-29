@@ -5231,6 +5231,8 @@
       "open-settings": ""
     },
     "add": {
+      "dashboard-controls": "Kontroller för instrumentpanel",
+      "group-layouts": "Gruppera layouter",
       "new-panel": {
         "button": "Lägg till ny panelknapp",
         "description": "Dra eller klicka för att lägga till en panel",
@@ -6614,9 +6616,6 @@
       "label-link": "Länk",
       "tooltip": "Lägg till en länk till en annan instrumentpanel eller extern webbplats"
     },
-    "add-new-edit-pane": {
-      "group-layouts": "Gruppera layouter"
-    },
     "add-row": {
       "add-label": "Lägg till rad",
       "group-label": "Gruppera i rader"
@@ -6873,9 +6872,6 @@
       "message": {
         "dashboard-not-found": "Instrumentpanelen hittades inte"
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Kontroller för instrumentpanel"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "Ge feedback om den nya upplevelsen av att redigera instrumentpanelen"

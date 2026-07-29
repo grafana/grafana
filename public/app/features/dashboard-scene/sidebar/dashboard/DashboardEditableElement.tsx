@@ -25,16 +25,13 @@ import { AddFilterButton, DashboardFiltersList } from './DashboardFiltersList';
 import { AddLinkButton, DashboardLinksList } from './DashboardLinksList';
 import { AddVariableButton, DashboardVariablesList } from './DashboardVariablesList';
 
-function useEditPaneOptions(
-  this: DashboardEditableElement,
-  dashboard: DashboardScene
-): OptionsPaneCategoryDescriptor[] {
+function useSidebarOptions(this: DashboardEditableElement, dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
   const { body } = dashboard.useState();
   const dashboardTitleInputId = useId();
   const dashboardDescriptionInputId = useId();
 
   const dashboardOptions = useMemo(() => {
-    const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })
+    return new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.options.title-option', 'Title'),
@@ -49,8 +46,6 @@ function useEditPaneOptions(
           render: () => <DashboardDescriptionInput id={dashboardDescriptionInputId} dashboard={dashboard} />,
         })
       );
-
-    return editPaneHeaderOptions;
   }, [dashboard, dashboardDescriptionInputId, dashboardTitleInputId]);
 
   const layoutCategory = useLayoutCategory(body);
@@ -112,7 +107,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
     ];
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this, this.dashboard);
+  public useSidebarOptions = useSidebarOptions.bind(this, this.dashboard);
 
   public renderTopButton(): ReactNode {
     return (

@@ -5,11 +5,11 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 
-export interface EditPaneInputAutoFocusProps {
+export interface SidebarInputAutoFocusProps {
   autoFocus?: boolean;
 }
 
-export function useEditPaneInputAutoFocus({ autoFocus }: EditPaneInputAutoFocusProps = {}) {
+export function useSidebarInputAutoFocus({ autoFocus }: SidebarInputAutoFocusProps = {}) {
   const ref = useRef<HTMLInputElement>(null);
 
   useEffect(() => {

@@ -7,7 +7,7 @@ import { type DashboardLink, type DashboardLinkPlacement } from '@grafana/schema
 import { Box, Button } from '@grafana/ui';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { openAddLinkPane, openLinkEditPane } from '../../settings/links/LinkAddEditableElement';
+import { openAddLinkPane, openEditLinkPane } from '../../settings/links/LinkAddEditableElement';
 import { DashboardInteractions } from '../../utils/interactions';
 import { dashboardEditActions } from '../shared';
 
@@ -27,7 +27,7 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
 
   const onClickLink = useCallback(
     (link: PseudoSceneLink) => {
-      openLinkEditPane(dashboard, Number(link.state.key));
+      openEditLinkPane(dashboard, Number(link.state.key));
     },
     [dashboard]
   );

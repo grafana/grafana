@@ -5297,6 +5297,8 @@
       "open-settings": ""
     },
     "add": {
+      "dashboard-controls": "Ovládací prvky nástěnky",
+      "group-layouts": "Rozvržení skupin",
       "new-panel": {
         "button": "Přidat nové tlačítko panelu",
         "description": "Přetažením nebo kliknutím přidáte panel",
@@ -6684,9 +6686,6 @@
       "label-link": "Odkaz",
       "tooltip": "Přidat odkaz na jinou nástěnku nebo externí stránku"
     },
-    "add-new-edit-pane": {
-      "group-layouts": "Rozvržení skupin"
-    },
     "add-row": {
       "add-label": "Přidat řádek",
       "group-label": "Seskupit do řádků"
@@ -6949,9 +6948,6 @@
       "message": {
         "dashboard-not-found": "Nástěnka nebyla nalezena"
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Ovládací prvky nástěnky"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "Poskytněte zpětnou vazbu k nové zkušenosti s úpravami nástěnky"

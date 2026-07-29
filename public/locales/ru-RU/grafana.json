@@ -5297,6 +5297,8 @@
       "open-settings": ""
     },
     "add": {
+      "dashboard-controls": "Управление дашбордами",
+      "group-layouts": "Макеты групп",
       "new-panel": {
         "button": "Кнопка добавления новой панели",
         "description": "Перетащите или нажмите, чтобы добавить панель",
@@ -6684,9 +6686,6 @@
       "label-link": "Ссылка",
       "tooltip": "Добавьте ссылку на другой дашборд или внешний сайт"
     },
-    "add-new-edit-pane": {
-      "group-layouts": "Макеты групп"
-    },
     "add-row": {
       "add-label": "Добавить строку",
       "group-label": "Группировать в строки"
@@ -6949,9 +6948,6 @@
       "message": {
         "dashboard-not-found": "Дашборд не найден"
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Управление дашбордами"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "Оставьте отзыв о новой функции редактирования дашбордов"

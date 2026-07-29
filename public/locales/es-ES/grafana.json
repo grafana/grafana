@@ -5231,6 +5231,8 @@
       "open-settings": ""
     },
     "add": {
+      "dashboard-controls": "Controles del dashboard",
+      "group-layouts": "Diseños de grupo",
       "new-panel": {
         "button": "Añadir nuevo botón de panel",
         "description": "Arrastra o haz clic para añadir un panel",
@@ -6614,9 +6616,6 @@
       "label-link": "Enlace",
       "tooltip": "Añade un enlace a otro dashboard o a un sitio externo."
     },
-    "add-new-edit-pane": {
-      "group-layouts": "Diseños de grupo"
-    },
     "add-row": {
       "add-label": "Añadir fila",
       "group-label": "Agrupar en filas"
@@ -6873,9 +6872,6 @@
       "message": {
         "dashboard-not-found": "Dashboard no encontrado"
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Controles del dashboard"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "Enviar comentarios sobre la nueva experiencia de edición del dashboard"

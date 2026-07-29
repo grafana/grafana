@@ -5198,6 +5198,8 @@
       "open-settings": ""
     },
     "add": {
+      "dashboard-controls": "Kontrol dasbor",
+      "group-layouts": "Tata letak grup",
       "new-panel": {
         "button": "Tambahkan tombol panel baru",
         "description": "Tarik atau klik untuk menambahkan panel",
@@ -6579,9 +6581,6 @@
       "label-link": "Tautan",
       "tooltip": "Tambahkan tautan ke dasbor lain atau situs eksternal"
     },
-    "add-new-edit-pane": {
-      "group-layouts": "Tata letak grup"
-    },
     "add-row": {
       "add-label": "Tambah baris",
       "group-label": "Kelompokkan ke dalam baris"
@@ -6835,9 +6834,6 @@
       "message": {
         "dashboard-not-found": "Dasbor tidak ditemukan"
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Kontrol dasbor"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "Berikan umpan balik tentang pengalaman pengeditan dasbor baru"

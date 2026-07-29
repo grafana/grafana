@@ -5366,6 +5366,8 @@
       "open-settings": "View all settings"
     },
     "add": {
+      "dashboard-controls": "Dashboard controls",
+      "group-layouts": "Group layouts",
       "new-panel": {
         "button": "Add new panel button",
         "description": "Drag or click to add a panel",
@@ -6708,9 +6710,6 @@
       "label-link": "Link",
       "tooltip": "Add link to another dashboard or external site"
     },
-    "add-new-edit-pane": {
-      "group-layouts": "Group layouts"
-    },
     "add-row": {
       "add-label": "Add row",
       "group-label": "Group into rows"
@@ -6983,9 +6982,6 @@
         "description-moved": "Variable settings have moved to the dashboard's sidebar.",
         "title-moved": "Looking for variable settings?"
       }
-    },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Dashboard controls"
     },
     "dashboard-sidebar-renderer": {
       "title-feedback-dashboard-editing-experience": "Give feedback on the new dashboard editing experience"
