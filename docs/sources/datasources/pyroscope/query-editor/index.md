@@ -117,7 +117,7 @@ The **Options** section provides the following settings.
 | **Query Type**  | Sets the type of data the query returns: **Profile** for flame graph data, **Metric** for time-series data, or **Both**. You can only select **Both** in Explore. Panels on dashboards allow only one visualization.        |
 | **Group by**    | Groups metric data by one or more labels. Without a **Group by** label, metric data aggregates over all labels into a single time series. **Group by** applies only to metric data and doesn't change the profile results.    |
 | **Limit**       | Sets the maximum number of time series returned when **Group by** is set. The series returned are always ordered by descending value for the total aggregated data over the time period. Doesn't apply to profile queries.    |
-| **Span ID**     | Sets the span ID from which to search for profiles, so you can view the profile associated with a specific trace span. This option supports the Trace to profiles integration, for example, `64f170a95f537095`.               |
+| **Span ID**     | Sets the span ID from which to search for profiles, so you can view the profile associated with a specific trace span. This option supports Trace to profiles, for example, `64f170a95f537095`.               |
 | **Max Nodes**   | Sets the maximum number of nodes rendered in the flame graph. Lower values improve performance for large profiles by aggregating smaller nodes. The field placeholder shows the default value, `16384`.                       |
 | **Annotations** | Includes profiling annotations, such as sampling and throttling events, on time-series results. Use these annotations to identify when Pyroscope reduced or limited ingestion for a service.                                 |
 
@@ -143,7 +143,7 @@ The heatmap visualizes the distribution of profile samples over time, which help
 When you enable **Heatmap**, use the **Heatmap Type** option to choose how samples are aggregated:
 
 - **Individual**: Shows individual profile samples.
-- **Span**: Aggregates samples by span duration, for use with the Trace to profiles integration.
+- **Span**: Aggregates samples by span duration, for use with Trace to profiles.
 
 {{< admonition type="note" >}}
 The `profilesHeatmap` feature is experimental. Experimental features are subject to change and may be removed in a future release. Enable it using the `profilesHeatmap` feature toggle.
@@ -190,7 +190,7 @@ Select the `goroutine:goroutine:count:goroutine:count` profile type to inspect t
 
 **View the profile for a specific trace span:**
 
-Select a profile type, set **Query Type** to **Profile**, and enter the span ID in the **Span ID** field, for example, `64f170a95f537095`. The flame graph then shows only the profile data associated with that span. This example supports the [Trace to profiles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure-traces-to-profiles/) integration.
+Select a profile type, set **Query Type** to **Profile**, and enter the span ID in the **Span ID** field, for example, `64f170a95f537095`. The flame graph then shows only the profile data associated with that span. This example supports [Trace to profiles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure-traces-to-profiles/).
 
 ### Profiles query results
 

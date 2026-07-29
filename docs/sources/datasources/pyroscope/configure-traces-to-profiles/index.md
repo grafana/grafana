@@ -1,7 +1,7 @@
 ---
 title: Configure traces to profiles
 menuTitle: Configure traces to profiles
-description: Learn how to configure the traces to profiles integration in Grafana and Grafana Cloud.
+description: Learn how to configure Trace to profiles in Grafana and Grafana Cloud.
 weight: 300
 keywords:
   - continuous profiling
@@ -18,7 +18,7 @@ review_date: 2026-07-08
 
 # Configure Trace to profiles
 
-Trace to profiles lets you navigate from a trace span directly to the profiling data for that span. You configure the integration in the Tempo data source, which connects your tracing data in Tempo with your profiling data in Pyroscope.
+Trace to profiles lets you navigate from a trace span directly to the profiling data for that span. You configure it in the Tempo data source, which connects your tracing data in Tempo with your profiling data in Pyroscope.
 
 {{< admonition type="note" >}}
 Your application must be instrumented for profiles and traces. For more information, refer to [Link traces to profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/trace-span-profiles/).
@@ -28,9 +28,9 @@ Your application must be instrumented for profiles and traces. For more informat
 
 {{< docs/shared source="grafana" lookup="datasources/tempo-traces-to-profiles.md" version="<GRAFANA_VERSION>" >}}
 
-## Verify the integration
+## Verify the connection
 
-After you configure the Tempo data source and instrument your application, verify that the integration works.
+After you configure the Tempo data source and instrument your application, verify that Trace to profiles works.
 
 1. Open a trace in **Explore** using your Tempo data source.
 1. Expand a span to view its details.
@@ -41,7 +41,7 @@ If the span attribute `pyroscope.profile.id` isn't present on the span, the Open
 
 ## Troubleshoot trace to profiles
 
-Use the following checklist to diagnose common issues with the Trace to profiles integration.
+Use the following checklist to diagnose common issues with Trace to profiles.
 
 ### No "Profiles for this span" button appears
 
