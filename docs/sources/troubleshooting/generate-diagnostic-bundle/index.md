@@ -137,9 +137,8 @@ As an experimental feature, on-demand data source diagnostics currently has the 
 
 - **Data beyond the data source isn't captured.** Server-side expressions and panel transformations are recorded as configuration in `panel.json`, not as the data flowing between them. If `querydata.json` looks correct but the panel doesn't, the cause lies in that configuration.
 
-- **Query data is capped, and oversized query data is summarized.** `querydata.json` is limited to 8 MiB for a single panel and 32 MiB across a whole-dashboard bundle. Query data above that limit is replaced by a summary that records what was left out, rather than being dropped without trace. If a dashboard bundle uses up its budget, the remaining panels' query data is skipped and the reason is recorded in `manifest.json`.
+- **Large responses might be trimmed, and generation of large bundles might fail.** `querydata.json` is limited to 8 MiB for a single panel and 32 MiB across a whole-dashboard bundle. Query data above that limit is replaced by a summary that records what was left out, rather than being dropped without trace. If a dashboard bundle uses up its budget, the remaining panels' query data is skipped and the reason is recorded in `manifest.json`. Nevertheless, large bundles might still be generated, for example if the faulty plugin is unintentionally duplicating data, and the generation might fail. If a bundle hits these limits or issues, reproduce the problem on a small, temporary test dashboard or panel and generate the bundle from that instead.
 
-- **Captured traffic is capped for plugin data sources.** For data sources that run as plugins, Grafana captures at most 8 MiB per request or response body, and 32 MiB of body text across the whole capture. A body that exceeded the per-body limit is recorded with a size of `-1`, and once the total is reached, later bodies are stored empty. An empty body in `traffic.har` therefore doesn't always mean the response was empty. If a bundle hits these limits, reproduce the problem on a small, temporary test dashboard or panel and generate the bundle from that instead.
 
 ## Related documentation
 
