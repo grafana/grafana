@@ -1105,7 +1105,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       panel.setState({
         $data: new SceneDataTransformer({
           $data: new SceneQueryRunner({
-            datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined, // @TODO - fixes new text panel query editor error
+            // The query editor needs the datasource type, which config.defaultDatasource does not provide.
+            datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined,
             queries: [{ refId: 'A' }],
           }),
           transformations: [],
