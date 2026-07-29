@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
-import { getDefaultTimeRange } from '@grafana/data';
+import { rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Combobox, type ComboboxOption } from '@grafana/ui';
@@ -9,12 +9,10 @@ import { fetchTagValues } from 'app/features/alerting/unified/triage/scene/tagKe
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 const DEFAULT_OPTION_VALUE = '';
+const TEAM_VALUES_TIME_RANGE = { from: 'now-7d', to: 'now' };
 
 const collator = new Intl.Collator();
 
-// Clearing the selection restores useFiringAlerts' default scope: the user's own
-// teams when they belong to any, otherwise all org alerts. The label mirrors that
-// branch so the option doesn't promise org-wide alerts it won't show.
 const getDefaultOption = (userHasTeams: boolean): ComboboxOption<string> => ({
   label: userHasTeams
     ? t('home.alerts-incidents.team-filter-your-teams', 'Your teams')
@@ -58,7 +56,8 @@ export function TeamFilterCombobox({ selectedTeam, onChange, userHasTeams }: Pro
     if (!datasourceConfigured) {
       return [];
     }
-    const values = await fetchTagValues(getDefaultTimeRange(), 'team');
+    // Fetch the team values for the last 7 days
+    const values = await fetchTagValues(rangeUtil.convertRawToRange(TEAM_VALUES_TIME_RANGE), 'team');
     return values.map((v) => String(v.value ?? v.text)).sort((a, b) => collator.compare(a, b));
   }, [datasourceConfigured]);
 
