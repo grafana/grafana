@@ -29,13 +29,25 @@ type store interface {
 	IsMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error)
 	GetMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error)
 	GetMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error)
-	RegisterDelete(query string)
+	RegisterDelete(renderer team.DeleteQueryRenderer)
 }
 
 type xormStore struct {
-	sql     legacysql.LegacyDatabaseProvider
-	cfg     *setting.Cfg
-	deletes []string
+	sql             legacysql.LegacyDatabaseProvider
+	cfg             *setting.Cfg
+	deleteRenderers []team.DeleteQueryRenderer
+}
+
+type deleteQueryHelper struct {
+	dbHelper *legacysql.LegacyDatabaseHelper
+}
+
+func (h deleteQueryHelper) Table(name string) string {
+	return h.dbHelper.Table(name)
+}
+
+func (h deleteQueryHelper) Quote(identifier string) string {
+	return h.dbHelper.DB.Quote(identifier)
 }
 
 func getFilteredUsers(signedInUser identity.Requester, hiddenUsers map[string]struct{}) []string {
@@ -55,19 +67,21 @@ func getFilteredUsers(signedInUser identity.Requester, hiddenUsers map[string]st
 }
 
 func getTeamMemberCount(dbHelper *legacysql.LegacyDatabaseHelper, filteredUsers []string) string {
+	teamMemberTable := dbHelper.DB.Quote(dbHelper.Table("team_member"))
 	if len(filteredUsers) > 0 {
 		userTable := dbHelper.DB.Quote(dbHelper.Table("user"))
-		return `(SELECT COUNT(*) FROM team_member
+		return `(SELECT COUNT(*) FROM ` + teamMemberTable + ` AS team_member
 			INNER JOIN ` + userTable + ` ON team_member.user_id = ` + userTable + `.id
 			WHERE team_member.team_id = team.id AND ` + userTable + `.login NOT IN (?` +
 			strings.Repeat(",?", len(filteredUsers)-1) + ")" +
 			`) AS member_count `
 	}
 
-	return "(SELECT COUNT(*) FROM team_member WHERE team_member.team_id = team.id) AS member_count "
+	return "(SELECT COUNT(*) FROM " + teamMemberTable + " AS team_member WHERE team_member.team_id = team.id) AS member_count "
 }
 
 func getTeamSelectSQLBase(dbHelper *legacysql.LegacyDatabaseHelper, filteredUsers []string) string {
+	teamTable := dbHelper.DB.Quote(dbHelper.Table("team"))
 	return `SELECT
 		team.id as id,
 		team.uid,
@@ -77,7 +91,7 @@ func getTeamSelectSQLBase(dbHelper *legacysql.LegacyDatabaseHelper, filteredUser
 		team.external_uid as external_uid,
 		team.is_provisioned as is_provisioned, ` +
 		getTeamMemberCount(dbHelper, filteredUsers) +
-		` FROM team as team `
+		` FROM ` + teamTable + ` AS team `
 }
 
 func (ss *xormStore) Create(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
@@ -146,6 +160,20 @@ func (ss *xormStore) Update(ctx context.Context, cmd *team.UpdateTeamCommand) er
 	})
 }
 
+func getTeamDeleteQueries(dbHelper *legacysql.LegacyDatabaseHelper, renderers []team.DeleteQueryRenderer) []string {
+	deletes := []string{
+		"DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("team_member")) + " WHERE org_id=? and team_id = ?",
+		"DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("team")) + " WHERE org_id=? and id = ?",
+		"DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("dashboard_acl")) + " WHERE org_id=? and team_id = ?",
+	}
+
+	for _, render := range renderers {
+		deletes = append(deletes, render(deleteQueryHelper{dbHelper: dbHelper}))
+	}
+
+	return deletes
+}
+
 // DeleteTeam will delete a team, its member and any permissions connected to the team
 func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) error {
 	dbHelper, err := ss.sql(ctx)
@@ -154,19 +182,11 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 	}
 
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if _, err := teamExists(cmd.OrgID, cmd.ID, sess); err != nil {
+		if _, err := teamExists(dbHelper, cmd.OrgID, cmd.ID, sess); err != nil {
 			return err
 		}
 
-		deletes := []string{ //nolint:prealloc
-			"DELETE FROM team_member WHERE org_id=? and team_id = ?",
-			"DELETE FROM team WHERE org_id=? and id = ?",
-			"DELETE FROM dashboard_acl WHERE org_id=? and team_id = ?",
-		}
-
-		deletes = append(deletes, ss.deletes...)
-
-		for _, sql := range deletes {
+		for _, sql := range getTeamDeleteQueries(dbHelper, ss.deleteRenderers) {
 			_, err := sess.Exec(sql, cmd.OrgID, cmd.ID)
 			if err != nil {
 				return err
@@ -176,8 +196,9 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 	})
 }
 
-func teamExists(orgID int64, teamID int64, sess *db.Session) (bool, error) {
-	if res, err := sess.Query("SELECT 1 from team WHERE org_id=? and id=?", orgID, teamID); err != nil {
+func teamExists(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, teamID int64, sess *db.Session) (bool, error) {
+	query := "SELECT 1 FROM " + dbHelper.DB.Quote(dbHelper.Table("team")) + " WHERE org_id=? and id=?"
+	if res, err := sess.Query(query, orgID, teamID); err != nil {
 		return false, err
 	} else if len(res) != 1 {
 		return false, team.ErrTeamNotFound
@@ -377,7 +398,7 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 		params = append(params, query.OrgID, query.UserID)
 
 		sql.WriteString(getTeamSelectSQLBase(dbHelper, []string{}))
-		sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
+		sql.WriteString(` INNER JOIN ` + dbHelper.DB.Quote(dbHelper.Table("team_member")) + ` AS team_member on team.id = team_member.team_id`)
 		sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
 
 		acFilter, err := ac.Filter(query.SignedInUser, "team.id", "teams:id:", ac.ActionTeamsRead)
@@ -407,9 +428,11 @@ func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByU
 	}
 
 	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		teamMemberTable := dbHelper.DB.Quote(dbHelper.Table("team_member"))
+		teamTable := dbHelper.DB.Quote(dbHelper.Table("team"))
 		rows, err := sess.QueryRows(`SELECT tm.team_id, team.uid
-			FROM team_member as tm
-			JOIN team ON team.id = tm.team_id
+			FROM `+teamMemberTable+` AS tm
+			JOIN `+teamTable+` AS team ON team.id = tm.team_id
 			WHERE tm.user_id=? AND tm.org_id=?
 			ORDER BY tm.team_id asc`, query.UserID, query.OrgID)
 		if err != nil {
@@ -436,8 +459,8 @@ func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByU
 	return ids, uids, nil
 }
 
-func getTeamMember(sess *db.Session, orgId int64, teamId int64, userId int64) (team.TeamMember, error) {
-	rawSQL := `SELECT * FROM team_member WHERE org_id=? and team_id=? and user_id=?`
+func getTeamMember(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgId int64, teamId int64, userId int64) (team.TeamMember, error) {
+	rawSQL := `SELECT * FROM ` + dbHelper.DB.Quote(dbHelper.Table("team_member")) + ` WHERE org_id=? and team_id=? and user_id=?`
 	var member team.TeamMember
 	exists, err := sess.SQL(rawSQL, orgId, teamId, userId).Get(&member)
 
@@ -461,15 +484,16 @@ func (ss *xormStore) IsMember(ctx context.Context, orgId int64, teamId int64, us
 
 	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
-		isMember, err = isTeamMember(sess, orgId, teamId, userId)
+		isMember, err = isTeamMember(dbHelper, sess, orgId, teamId, userId)
 		return err
 	})
 
 	return isMember, err
 }
 
-func isTeamMember(sess *db.Session, orgId int64, teamId int64, userId int64) (bool, error) {
-	if res, err := sess.Query("SELECT 1 FROM team_member WHERE org_id=? and team_id=? and user_id=?", orgId, teamId, userId); err != nil {
+func isTeamMember(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgId int64, teamId int64, userId int64) (bool, error) {
+	query := "SELECT 1 FROM " + dbHelper.DB.Quote(dbHelper.Table("team_member")) + " WHERE org_id=? and team_id=? and user_id=?"
+	if res, err := sess.Query(query, orgId, teamId, userId); err != nil {
 		return false, err
 	} else if len(res) != 1 {
 		return false, nil
@@ -480,23 +504,23 @@ func isTeamMember(sess *db.Session, orgId int64, teamId int64, userId int64) (bo
 
 // AddOrUpdateTeamMemberHook is called from team resource permission service
 // it adds user to a team or updates user permissions in a team within the given transaction session
-func AddOrUpdateTeamMemberHook(sess *db.Session, userID, orgID, teamID int64, isExternal bool, permission team.PermissionType) error {
-	isMember, err := isTeamMember(sess, orgID, teamID, userID)
+func AddOrUpdateTeamMemberHook(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, userID, orgID, teamID int64, isExternal bool, permission team.PermissionType) error {
+	isMember, err := isTeamMember(dbHelper, sess, orgID, teamID, userID)
 	if err != nil {
 		return err
 	}
 
 	if isMember {
-		err = updateTeamMember(sess, orgID, teamID, userID, permission)
+		err = updateTeamMember(dbHelper, sess, orgID, teamID, userID, permission)
 	} else {
-		err = addTeamMember(sess, orgID, teamID, userID, isExternal, permission)
+		err = addTeamMember(dbHelper, sess, orgID, teamID, userID, isExternal, permission)
 	}
 
 	return err
 }
 
-func addTeamMember(sess *db.Session, orgID, teamID, userID int64, isExternal bool, permission team.PermissionType) error {
-	if _, err := teamExists(orgID, teamID, sess); err != nil {
+func addTeamMember(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID, teamID, userID int64, isExternal bool, permission team.PermissionType) error {
+	if _, err := teamExists(dbHelper, orgID, teamID, sess); err != nil {
 		return err
 	}
 
@@ -511,12 +535,12 @@ func addTeamMember(sess *db.Session, orgID, teamID, userID int64, isExternal boo
 		Permission: permission,
 	}
 
-	_, err := sess.Insert(&entity)
+	_, err := sess.Table(dbHelper.Table("team_member")).Insert(&entity)
 	return err
 }
 
-func updateTeamMember(sess *db.Session, orgID, teamID, userID int64, permission team.PermissionType) error {
-	member, err := getTeamMember(sess, orgID, teamID, userID)
+func updateTeamMember(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID, teamID, userID int64, permission team.PermissionType) error {
+	member, err := getTeamMember(dbHelper, sess, orgID, teamID, userID)
 	if err != nil {
 		return err
 	}
@@ -526,22 +550,22 @@ func updateTeamMember(sess *db.Session, orgID, teamID, userID int64, permission 
 	}
 
 	member.Permission = permission
-	_, err = sess.Cols("permission").Where("org_id=? and team_id=? and user_id=?", orgID, teamID, userID).Update(member)
+	_, err = sess.Table(dbHelper.Table("team_member")).Cols("permission").Where("org_id=? and team_id=? and user_id=?", orgID, teamID, userID).Update(member)
 	return err
 }
 
 // RemoveTeamMemberHook is called from team resource permission service
 // it removes a member from a team within the given transaction session
-func RemoveTeamMemberHook(sess *db.Session, cmd *team.RemoveTeamMemberCommand) error {
-	return removeTeamMember(sess, cmd)
+func RemoveTeamMemberHook(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, cmd *team.RemoveTeamMemberCommand) error {
+	return removeTeamMember(dbHelper, sess, cmd)
 }
 
-func removeTeamMember(sess *db.Session, cmd *team.RemoveTeamMemberCommand) error {
-	if _, err := teamExists(cmd.OrgID, cmd.TeamID, sess); err != nil {
+func removeTeamMember(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, cmd *team.RemoveTeamMemberCommand) error {
+	if _, err := teamExists(dbHelper, cmd.OrgID, cmd.TeamID, sess); err != nil {
 		return err
 	}
 
-	var rawSQL = "DELETE FROM team_member WHERE org_id=? and team_id=? and user_id=?"
+	var rawSQL = "DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("team_member")) + " WHERE org_id=? and team_id=? and user_id=?"
 	res, err := sess.Exec(rawSQL, cmd.OrgID, cmd.TeamID, cmd.UserID)
 	if err != nil {
 		return err
@@ -563,7 +587,7 @@ func (ss *xormStore) RemoveUsersMemberships(ctx context.Context, userID int64) e
 	}
 
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = "DELETE FROM team_member WHERE user_id = ?"
+		var rawSQL = "DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("team_member")) + " WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)
 		return err
 	})
@@ -612,11 +636,13 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 
 	err = dbHelper.DB.WithDbSession(ctx, func(dbSess *db.Session) error {
 		userTable := dbHelper.DB.Quote(dbHelper.Table("user"))
+		teamTable := dbHelper.DB.Quote(dbHelper.Table("team"))
+		userAuthTable := dbHelper.DB.Quote(dbHelper.Table("user_auth"))
 		sess := dbSess.Table(dbHelper.Table("team_member"))
 		sess.Join("INNER", userTable,
 			fmt.Sprintf("team_member.user_id=%s.%s", userTable, dbHelper.DB.GetDialect().Quote("id")),
 		)
-		sess.Join("INNER", dbHelper.Table("team"), "team.id=team_member.team_id")
+		sess.Join("INNER", teamTable, "team.id=team_member.team_id")
 
 		// explicitly check for serviceaccounts
 		sess.Where(fmt.Sprintf("%s.is_service_account=?", userTable), dbHelper.DB.GetDialect().BooleanValue(false))
@@ -628,11 +654,11 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 		// Join with only most recent auth module
 		authJoinCondition := `user_auth.id=(
 			SELECT id
-			FROM user_auth
+			FROM ` + userAuthTable + ` AS user_auth
 			WHERE user_auth.user_id = team_member.user_id
 			ORDER BY user_auth.created DESC ` +
 			dbHelper.DB.GetDialect().Limit(1) + ")"
-		sess.Join("LEFT", dbHelper.Table("user_auth"), authJoinCondition)
+		sess.Join("LEFT", userAuthTable, authJoinCondition)
 
 		if query.OrgID != 0 {
 			sess.Where("team_member.org_id=?", query.OrgID)
@@ -672,7 +698,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, query *team.GetTeamMemb
 	return queryResult, nil
 }
 
-// RegisterDelete registers a delete query to be executed when the transaction is committed
-func (ss *xormStore) RegisterDelete(query string) {
-	ss.deletes = append(ss.deletes, query)
+// RegisterDelete registers a query to run when a team is deleted.
+func (ss *xormStore) RegisterDelete(renderer team.DeleteQueryRenderer) {
+	ss.deleteRenderers = append(ss.deleteRenderers, renderer)
 }

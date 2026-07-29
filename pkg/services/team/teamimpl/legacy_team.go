@@ -27,7 +27,7 @@ type LegacyService struct {
 
 func NewLegacyService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
 	sql := legacysql.NewDatabaseProvider(db)
-	store := &xormStore{sql: sql, cfg: cfg, deletes: []string{}}
+	store := &xormStore{sql: sql, cfg: cfg, deleteRenderers: []team.DeleteQueryRenderer{}}
 
 	return &LegacyService{
 		cache:  localcache.New(defaultCacheDuration, 2*defaultCacheDuration),
@@ -159,6 +159,6 @@ func (s *LegacyService) GetTeamMembers(ctx context.Context, query *team.GetTeamM
 	return s.store.GetMembers(ctx, query)
 }
 
-func (s *LegacyService) RegisterDelete(query string) {
-	s.store.RegisterDelete(query)
+func (s *LegacyService) RegisterDelete(renderer team.DeleteQueryRenderer) {
+	s.store.RegisterDelete(renderer)
 }

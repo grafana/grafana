@@ -11,6 +11,13 @@ import (
 
 type TeamUIDCtxKey struct{}
 
+type DeleteQueryHelper interface {
+	Table(name string) string
+	Quote(identifier string) string
+}
+
+type DeleteQueryRenderer func(dbHelper DeleteQueryHelper) string
+
 type Service interface {
 	CreateTeam(ctx context.Context, cmd *CreateTeamCommand) (Team, error)
 	UpdateTeam(ctx context.Context, cmd *UpdateTeamCommand) error
@@ -23,7 +30,7 @@ type Service interface {
 	RemoveUsersMemberships(tx context.Context, userID int64) error
 	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*TeamMemberDTO, error)
 	GetTeamMembers(ctx context.Context, query *GetTeamMembersQuery) ([]*TeamMemberDTO, error)
-	RegisterDelete(query string)
+	RegisterDelete(renderer DeleteQueryRenderer)
 }
 
 func UIDToIDHandler(teamService Service) func(ctx context.Context, orgID int64, resourceID string) (string, error) {

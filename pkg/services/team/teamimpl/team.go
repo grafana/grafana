@@ -184,13 +184,13 @@ func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembers
 	return s.legacyService.GetTeamMembers(ctx, query)
 }
 
-func (s *Service) RegisterDelete(query string) {
+func (s *Service) RegisterDelete(renderer team.DeleteQueryRenderer) {
 	// Always register with legacy service since it manages SQL cleanup queries.
 	// The k8s service implementation is a no-op (k8s handles cascading deletes
 	// via its own mechanisms), so there is no need to gate on the feature flag.
 	// This is called at init time (Wire providers) where no request context
 	// exists, making feature flag evaluation with context.Background() unreliable.
-	s.legacyService.RegisterDelete(query)
+	s.legacyService.RegisterDelete(renderer)
 }
 
 // isK8sRedirectEnabled gates team operations on the k8s apiserver path.

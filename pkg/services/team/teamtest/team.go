@@ -67,7 +67,7 @@ func (s *FakeService) GetTeamMembers(ctx context.Context, query *team.GetTeamMem
 	return s.ExpectedMembers, s.ExpectedError
 }
 
-func (s *FakeService) RegisterDelete(query string) {
+func (s *FakeService) RegisterDelete(renderer team.DeleteQueryRenderer) {
 }
 
 func (s *FakeService) GetTeamIDsByUser(ctx context.Context, query *team.GetTeamIDsByUserQuery) ([]int64, []string, error) {
