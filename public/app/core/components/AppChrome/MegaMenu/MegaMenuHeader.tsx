@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { IconButton, Stack, useStyles2 } from '@grafana/ui';
+import { Box, IconButton, Stack, useStyles2, Text } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useHomeNav } from 'app/core/hooks/useHomeNav';
 
@@ -29,9 +29,16 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
   return (
     <div className={styles.header}>
       <Stack alignItems="center" minWidth={0} gap={1}>
-        <HomeLogo homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />
+        {state.megaMenuDocked && <HomeLogo homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />}
         <OrganizationSwitcher>
-          <HomeTitle homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />
+          {state.megaMenuDocked && <HomeTitle homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />}
+          {!state.megaMenuDocked && (
+            <Box paddingLeft={2}>
+              <Text color="secondary">
+                <Trans i18nKey="navigation.megamenu.header-title">Navigation</Trans>
+              </Text>
+            </Box>
+          )}
         </OrganizationSwitcher>
       </Stack>
       <div className={styles.flexGrow} />
