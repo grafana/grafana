@@ -6,14 +6,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/apis/example"
+	k8srest "k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 )
 
 var now = time.Now()
@@ -358,4 +362,151 @@ func TestMode1_Update(t *testing.T) {
 			require.NotEqual(t, obj, anotherObj)
 		})
 	}
+}
+
+func TestMode1_UpdateBackgroundAuthorizationOutlivesRequest(t *testing.T) {
+	legacy := &fakeStorage{}
+	legacy.onUpdate(exampleObj, nil)
+
+	unified := &blockingUpdateStorage{
+		fakeStorage: &fakeStorage{},
+		started:     make(chan struct{}),
+		release:     make(chan struct{}),
+		result:      make(chan backgroundUpdateResult, 1),
+	}
+
+	dw, err := newStorage(kind, rest.Mode1, legacy, unified)
+	require.NoError(t, err)
+	inner, ok := dw.(storewrapper.K8sStorage)
+	require.True(t, ok)
+
+	authz := &requestLifecycleAuthorizer{result: make(chan authorizationResult, 1)}
+	storage := storewrapper.New(inner, kind, authz)
+
+	requestCtx, cancelRequest := context.WithCancel(identity.WithRequester(
+		context.Background(),
+		&identity.StaticRequester{UserUID: "fake-user-uid", Type: types.TypeUser, Namespace: "fake-namespace"},
+	))
+
+	obj, _, err := storage.Update(
+		requestCtx,
+		"foo",
+		updatedObjInfoObj{},
+		func(context.Context, runtime.Object) error { return nil },
+		func(context.Context, runtime.Object, runtime.Object) error { return nil },
+		false,
+		&metav1.UpdateOptions{},
+	)
+	require.NoError(t, err)
+	require.Equal(t, exampleObj, obj)
+
+	select {
+	case <-unified.started:
+	case <-time.After(time.Second):
+		t.Fatal("background unified update did not start")
+	}
+
+	cancelRequest()
+	close(unified.release)
+
+	select {
+	case got := <-authz.result:
+		require.NoError(t, got.contextErr)
+		require.NoError(t, got.identityErr)
+		require.Equal(t, "user:fake-user-uid", got.uid)
+		require.True(t, got.authInfoOK)
+		require.Equal(t, "fake-namespace", got.namespace)
+	case <-time.After(time.Second):
+		t.Fatal("background authorization did not complete")
+	}
+
+	select {
+	case got := <-unified.result:
+		require.NoError(t, got.contextErr)
+		require.NoError(t, got.updateErr)
+	case <-time.After(time.Second):
+		t.Fatal("background unified update did not complete")
+	}
+}
+
+type blockingUpdateStorage struct {
+	*fakeStorage
+	started chan struct{}
+	release chan struct{}
+	result  chan backgroundUpdateResult
+}
+
+type backgroundUpdateResult struct {
+	contextErr error
+	updateErr  error
+}
+
+func (s *blockingUpdateStorage) Update(
+	ctx context.Context,
+	_ string,
+	objInfo k8srest.UpdatedObjectInfo,
+	_ k8srest.ValidateObjectFunc,
+	_ k8srest.ValidateObjectUpdateFunc,
+	_ bool,
+	_ *metav1.UpdateOptions,
+) (runtime.Object, bool, error) {
+	close(s.started)
+	<-s.release
+
+	_, err := objInfo.UpdatedObject(ctx, exampleObj)
+	s.result <- backgroundUpdateResult{contextErr: ctx.Err(), updateErr: err}
+	return anotherObj, false, err
+}
+
+type requestLifecycleAuthorizer struct {
+	result chan authorizationResult
+}
+
+type authorizationResult struct {
+	contextErr  error
+	identityErr error
+	uid         string
+	authInfoOK  bool
+	namespace   string
+}
+
+func (a *requestLifecycleAuthorizer) BeforeCreate(context.Context, runtime.Object) error {
+	return nil
+}
+
+func (a *requestLifecycleAuthorizer) BeforeUpdate(ctx context.Context, _, _ runtime.Object) error {
+	user, identityErr := identity.GetRequester(ctx)
+	uid := ""
+	if identityErr == nil {
+		uid = user.GetUID()
+	}
+	authInfo, authInfoOK := types.AuthInfoFrom(ctx)
+	namespace := ""
+	if authInfoOK {
+		namespace = authInfo.GetNamespace()
+	}
+	a.result <- authorizationResult{
+		contextErr:  ctx.Err(),
+		identityErr: identityErr,
+		uid:         uid,
+		authInfoOK:  authInfoOK,
+		namespace:   namespace,
+	}
+	return ctx.Err()
+}
+
+func (a *requestLifecycleAuthorizer) BeforeDelete(context.Context, runtime.Object) error {
+	return nil
+}
+
+func (a *requestLifecycleAuthorizer) AfterGet(context.Context, runtime.Object) error {
+	return nil
+}
+
+func (a *requestLifecycleAuthorizer) FilterList(_ context.Context, list runtime.Object) (runtime.Object, error) {
+	return list, nil
+}
+
+func (a *requestLifecycleAuthorizer) WatchFilter(context.Context) (storewrapper.WatchEventFilter, error) {
+	return storewrapper.PassThroughWatchFilter, nil
 }

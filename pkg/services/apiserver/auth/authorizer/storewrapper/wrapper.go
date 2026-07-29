@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
@@ -395,7 +396,7 @@ func (w *Wrapper) Update(
 	wrappedObjInfo := &authorizedUpdateInfo{
 		inner:      objInfo,
 		authorizer: w.authorizer,
-		userCtx:    ctx, // Keep original context for authorization
+		userCtx:    ctx, // Keep the original user values for authorization.
 		tracer:     w.tracer,
 		observer:   w.observer,
 		resource:   w.resource,
@@ -428,8 +429,12 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 		return nil, err
 	}
 
-	// Enforce authorization using the original user context
-	authzCtx, span := startSpan(a.userCtx, a.tracer, a.resource, "UpdateAuthz")
+	// The inner store may execute UpdatedObject after the request has returned,
+	// for example when a dual writer replicates an update in the background.
+	// Keep the execution context's lifetime while restoring the original user
+	// identity that storeCtx replaced with a service identity.
+	authzCtx := authorizationContext(ctx, a.userCtx)
+	authzCtx, span := startSpan(authzCtx, a.tracer, a.resource, "UpdateAuthz")
 	defer func() {
 		recordSpanError(span, err)
 		span.End()
@@ -445,6 +450,16 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 	}
 
 	return updatedObj, nil
+}
+
+func authorizationContext(ctx, userCtx context.Context) context.Context {
+	if user, err := identity.GetRequester(userCtx); err == nil {
+		ctx = identity.WithRequester(ctx, user)
+	}
+	if authInfo, ok := types.AuthInfoFrom(userCtx); ok {
+		ctx = types.WithAuthInfo(ctx, authInfo)
+	}
+	return ctx
 }
 
 func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (result watch.Interface, err error) {
