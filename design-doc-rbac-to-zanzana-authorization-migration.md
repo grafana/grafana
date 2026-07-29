@@ -783,7 +783,7 @@ The test must not call private projector helpers to manufacture the decision-sid
 
 ## Implementation validation
 
-The branch was built and run as Grafana Enterprise using the standard Enterprise-to-OSS overlay and a valid development license. No Enterprise-specific source changes were required. Focused Go tests for `pkg/services/accesscontrol/acimpl` and `pkg/services/authz/zanzana/...` passed 620 tests across ten packages.
+The branch was built and run as Grafana Enterprise using the standard Enterprise-to-OSS overlay and a valid development license. No Enterprise-specific source changes were required. Focused Go tests for `pkg/services/accesscontrol/acimpl` and `pkg/services/authz/zanzana/...` passed 683 tests across ten packages.
 
 The manual fixture contained:
 
