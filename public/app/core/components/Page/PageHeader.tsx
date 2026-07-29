@@ -32,7 +32,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
             {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
             {navItem.icon && visualRefreshEnabled && (
               <div className={styles.icon}>
-                <Icon name={navItem.icon} title={navItem.text} size="lg" />
+                <Icon name={navItem.icon} size="lg" />
               </div>
             )}
             {onEditTitle ? (
