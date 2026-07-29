@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { EmptyState, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -24,7 +26,8 @@ interface Props {
 }
 
 export function RecentDashboardsTab({ dashboards, loading, error, retry, foldersByUid, onStarChange, density }: Props) {
-  const styles = useStyles2(getStyles);
+  const redesignEnabled = useFlagGrafanaGrowthHomepage();
+  const styles = useStyles2(getStyles, redesignEnabled);
 
   if (loading) {
     return <PageLoader text={t('home.recent-dashboards-tab.loading', 'Loading recently viewed dashboards...')} />;
@@ -106,10 +109,10 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
   );
 }
 
-const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2, redesign: boolean) => ({
   list: css({
     listStyle: 'none',
-    padding: 0,
+    padding: theme.spacing(0, redesign ? 0 : 0.5),
     margin: 0,
   }),
 });

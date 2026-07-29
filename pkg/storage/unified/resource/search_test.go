@@ -636,6 +636,15 @@ func TestCombineBuildRequests(t *testing.T) {
 	}
 }
 
+// TestRequiredIndexFeaturesAreCurrent guards the invariant that makes required
+// features safe: requiring a feature this binary never records would rebuild
+// every index on every check, forever.
+func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
+	for _, required := range RequiredIndexFeatures() {
+		require.Contains(t, CurrentIndexFeatures(), required)
+	}
+}
+
 func TestShouldRebuildIndex(t *testing.T) {
 	type testcase struct {
 		buildInfo                IndexBuildInfo
@@ -645,145 +654,171 @@ func TestShouldRebuildIndex(t *testing.T) {
 		maxBuildVersion          *semver.Version
 		selectableFields         []string
 		expectedSearchFieldsHash string
+		requiredFeatures         []IndexFeature
 
-		expected bool
+		expectedRebuild bool
 	}
 
 	now := time.Now()
 
 	for name, tc := range map[string]testcase{
 		"empty build info, with no rebuild conditions": {
-			buildInfo: IndexBuildInfo{},
-			expected:  false,
+			buildInfo:       IndexBuildInfo{},
+			expectedRebuild: false,
 		},
 		"empty build info, with minTime": {
-			buildInfo: IndexBuildInfo{},
-			minTime:   now,
-			expected:  true,
+			buildInfo:       IndexBuildInfo{},
+			minTime:         now,
+			expectedRebuild: true,
 		},
 		"empty build info, with lastImportTime": {
-			buildInfo:      IndexBuildInfo{},
-			lastImportTime: now,
-			expected:       true,
+			buildInfo:       IndexBuildInfo{},
+			lastImportTime:  now,
+			expectedRebuild: true,
 		},
 		"empty build info, with minVersion": {
 			buildInfo:       IndexBuildInfo{},
 			minBuildVersion: semver.MustParse("10.15.20"),
-			expected:        true,
+			expectedRebuild: true,
 		},
 		"build time before min time": {
-			buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
-			minTime:   now,
-			expected:  true,
+			buildInfo:       IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
+			minTime:         now,
+			expectedRebuild: true,
 		},
 		"build time after min time": {
-			buildInfo: IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
-			minTime:   now,
-			expected:  false,
+			buildInfo:       IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
+			minTime:         now,
+			expectedRebuild: false,
 		},
 		"build time before last import time": {
-			buildInfo:      IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
-			lastImportTime: now,
-			expected:       true,
+			buildInfo:       IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
+			lastImportTime:  now,
+			expectedRebuild: true,
 		},
 		"build time after last import time": {
-			buildInfo:      IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
-			lastImportTime: now,
-			expected:       false,
+			buildInfo:       IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
+			lastImportTime:  now,
+			expectedRebuild: false,
 		},
 		"build version before min version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("10.15.19")},
 			minBuildVersion: semver.MustParse("10.15.20"),
-			expected:        true,
+			expectedRebuild: true,
 		},
 		"build version after min version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("11.0.0")},
 			minBuildVersion: semver.MustParse("10.15.20"),
-			expected:        false,
+			expectedRebuild: false,
 		},
 		"build version newer than running version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("12.0.0")},
 			maxBuildVersion: semver.MustParse("11.0.0"),
-			expected:        true,
+			expectedRebuild: true,
 		},
 		"build version same as running version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("11.0.0")},
 			maxBuildVersion: semver.MustParse("11.0.0"),
-			expected:        false,
+			expectedRebuild: false,
 		},
 		"build version older than running version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("10.0.0")},
 			maxBuildVersion: semver.MustParse("11.0.0"),
-			expected:        false,
+			expectedRebuild: false,
 		},
 		"no index build version with maxBuildVersion set": {
 			buildInfo:       IndexBuildInfo{},
 			maxBuildVersion: semver.MustParse("11.0.0"),
-			expected:        false,
+			expectedRebuild: false,
 		},
 		"index with no previous selectable fields, and no new selectable fields": {
 			buildInfo:        IndexBuildInfo{},
 			selectableFields: nil,
-			expected:         false,
+			expectedRebuild:  false,
 		},
 		"index with no previous selectable fields, with new selectable fields": {
 			buildInfo:        IndexBuildInfo{},
 			selectableFields: []string{"title"},
-			expected:         true,
+			expectedRebuild:  true,
 		},
 		"index with existing fields, and no new selectable fields": {
 			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
 			selectableFields: nil,
-			expected:         false,
+			expectedRebuild:  false,
 		},
 		"index with existing fields, and subset of fields": {
 			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
 			selectableFields: []string{"title"},
-			expected:         false,
+			expectedRebuild:  false,
 		},
 		"index with existing fields, and same selectable fields": {
 			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
 			selectableFields: []string{"title", "team"},
-			expected:         false,
+			expectedRebuild:  false,
 		},
 		"index with existing fields, and different selectable fields": {
 			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
 			selectableFields: []string{"new.title", "new.team"},
-			expected:         true,
+			expectedRebuild:  true,
 		},
 		"index with existing fields, and additional selectable fields": {
 			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
 			selectableFields: []string{"title", "team", "new.field"},
-			expected:         true,
+			expectedRebuild:  true,
 		},
 		"no expected hash, no stored hash": {
-			buildInfo: IndexBuildInfo{},
-			expected:  false,
+			buildInfo:       IndexBuildInfo{},
+			expectedRebuild: false,
 		},
 		"no expected hash, stored hash present": {
 			buildInfo:                IndexBuildInfo{SearchFieldsHash: "abc"},
 			expectedSearchFieldsHash: "",
-			expected:                 false,
+			expectedRebuild:          false,
 		},
 		"expected hash present, no stored hash": {
 			buildInfo:                IndexBuildInfo{},
 			expectedSearchFieldsHash: "abc",
-			expected:                 true,
+			expectedRebuild:          true,
 		},
 		"expected hash matches stored hash": {
 			buildInfo:                IndexBuildInfo{SearchFieldsHash: "abc"},
 			expectedSearchFieldsHash: "abc",
-			expected:                 false,
+			expectedRebuild:          false,
 		},
 		"expected hash differs from stored hash": {
 			buildInfo:                IndexBuildInfo{SearchFieldsHash: "abc"},
 			expectedSearchFieldsHash: "def",
-			expected:                 true,
+			expectedRebuild:          true,
+		},
+		"no features on the index, none required": {
+			buildInfo:       IndexBuildInfo{},
+			expectedRebuild: false,
+		},
+		"index has the required feature": {
+			buildInfo:        IndexBuildInfo{Features: []IndexFeature{"alpha"}},
+			requiredFeatures: []IndexFeature{"alpha"},
+			expectedRebuild:  false,
+		},
+		"index is missing a required feature": {
+			buildInfo:        IndexBuildInfo{Features: []IndexFeature{"alpha"}},
+			requiredFeatures: []IndexFeature{"alpha", "beta"},
+			expectedRebuild:  true,
+		},
+		// An index from a newer binary has features this one does not know. That is
+		// the build version check's business, not this one's.
+		"index has a feature this binary does not require": {
+			buildInfo:       IndexBuildInfo{Features: []IndexFeature{"alpha", "beta"}},
+			expectedRebuild: false,
+		},
+		"index built before features existed, one required": {
+			buildInfo:        IndexBuildInfo{},
+			requiredFeatures: []IndexFeature{"alpha"},
+			expectedRebuild:  true,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.maxBuildVersion, tc.minTime, tc.lastImportTime, tc.selectableFields, tc.expectedSearchFieldsHash, nil)
-			require.Equal(t, tc.expected, res)
+			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.maxBuildVersion, tc.minTime, tc.lastImportTime, tc.selectableFields, tc.expectedSearchFieldsHash, tc.requiredFeatures, nil)
+			require.Equal(t, tc.expectedRebuild, res)
 		})
 	}
 }

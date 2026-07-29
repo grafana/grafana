@@ -20,7 +20,7 @@ export function AnnotationNameInput({ layer, autoFocus }: { layer: AnnotationLay
   const inputRef = useEditPaneInputAutoFocus({ autoFocus });
 
   return (
-    <Field label={t('dashboard.edit-pane.annotation.name', 'Name')} noMargin>
+    <Field label={t('dashboard.sidebar.annotation.name', 'Name')} noMargin>
       <Input
         ref={inputRef}
         value={name}
@@ -55,9 +55,9 @@ export function AnnotationEnabledCheckbox({ layer }: { layer: AnnotationLayer })
 
   return (
     <Field
-      label={t('dashboard.edit-pane.annotation.enabled', 'Enabled')}
+      label={t('dashboard.sidebar.annotation.enabled', 'Enabled')}
       description={t(
-        'dashboard.edit-pane.annotation.enabled-description',
+        'dashboard.sidebar.annotation.enabled-description',
         'When enabled the annotation query is issued every dashboard refresh'
       )}
       noMargin
@@ -85,11 +85,8 @@ export function AnnotationColorPicker({ layer }: { layer: AnnotationLayer }) {
 
   return (
     <Field
-      label={t('dashboard.edit-pane.annotation.color', 'Color')}
-      description={t(
-        'dashboard.edit-pane.annotation.color-description',
-        'Color to use for the annotation event markers'
-      )}
+      label={t('dashboard.sidebar.annotation.color', 'Color')}
+      description={t('dashboard.sidebar.annotation.color-description', 'Color to use for the annotation event markers')}
       noMargin
     >
       <Stack>
@@ -126,21 +123,21 @@ export function AnnotationControlsDisplayPicker({ layer }: { layer: AnnotationLa
     () => [
       {
         value: AnnotationControlsDisplay.AboveDashboard,
-        label: t('dashboard.edit-pane.annotation.display-options.above-dashboard', 'Above dashboard'),
+        label: t('dashboard.sidebar.annotation.display-options.above-dashboard', 'Above dashboard'),
       },
       {
         value: AnnotationControlsDisplay.InControlsMenu,
-        label: t('dashboard.edit-pane.annotation.display-options.controls-menu', 'Controls menu'),
+        label: t('dashboard.sidebar.annotation.display-options.controls-menu', 'Controls menu'),
         description: t(
-          'dashboard.edit-pane.annotation.display-options.controls-menu-description',
+          'dashboard.sidebar.annotation.display-options.controls-menu-description',
           'Can be accessed when the controls menu is open'
         ),
       },
       {
         value: AnnotationControlsDisplay.Hidden,
-        label: t('dashboard.edit-pane.annotation.display-options.hidden', 'Hidden'),
+        label: t('dashboard.sidebar.annotation.display-options.hidden', 'Hidden'),
         description: t(
-          'dashboard.edit-pane.annotation.display-options.hidden-description',
+          'dashboard.sidebar.annotation.display-options.hidden-description',
           'Hides the toggle for turning this annotation on or off'
         ),
       },
@@ -159,7 +156,7 @@ export function AnnotationControlsDisplayPicker({ layer }: { layer: AnnotationLa
   }, [isHidden, placement]);
 
   return (
-    <Field label={t('dashboard.edit-pane.annotation.display', 'Show annotation controls in')} noMargin>
+    <Field label={t('dashboard.sidebar.annotation.display', 'Show annotation controls in')} noMargin>
       <Combobox options={options} value={currentValue} onChange={onChange} width="auto" minWidth={100} />
     </Field>
   );
@@ -182,7 +179,7 @@ export function AnnotationPanelFilterPicker({ layer }: { layer: AnnotationLayer 
   } = useAnnotationPanelFilterPicker(layer);
 
   return (
-    <Field label={t('dashboard.edit-pane.annotation.show-in', 'Show in')} noMargin>
+    <Field label={t('dashboard.sidebar.annotation.show-in', 'Show in')} noMargin>
       <Stack direction="column" gap={1}>
         <Combobox
           // hack to force re-render when undoing to "All panels" (value=0)
@@ -199,7 +196,7 @@ export function AnnotationPanelFilterPicker({ layer }: { layer: AnnotationLayer 
             value={selectedPanels}
             onChange={onSelectedPanelsChange}
             isClearable={true}
-            placeholder={t('dashboard.edit-pane.annotation.choose-panels', 'Choose panels')}
+            placeholder={t('dashboard.sidebar.annotation.choose-panels', 'Choose panels')}
           />
         )}
       </Stack>
@@ -244,26 +241,26 @@ function useAnnotationPanelFilterPicker(layer: AnnotationLayer) {
   const panelFilterOptions = useMemo(
     () => [
       {
-        label: t('dashboard.edit-pane.annotation.panel-filter.all-panels', 'All panels'),
+        label: t('dashboard.sidebar.annotation.panel-filter.all-panels', 'All panels'),
         value: PanelFilterType.AllPanels,
         description: t(
-          'dashboard.edit-pane.annotation.panel-filter.all-panels-description',
+          'dashboard.sidebar.annotation.panel-filter.all-panels-description',
           'Send the annotation data to all panels that support annotations'
         ),
       },
       {
-        label: t('dashboard.edit-pane.annotation.panel-filter.selected-panels', 'Selected panels'),
+        label: t('dashboard.sidebar.annotation.panel-filter.selected-panels', 'Selected panels'),
         value: PanelFilterType.IncludePanels,
         description: t(
-          'dashboard.edit-pane.annotation.panel-filter.selected-panels-description',
+          'dashboard.sidebar.annotation.panel-filter.selected-panels-description',
           'Send the annotations to the explicitly listed panels'
         ),
       },
       {
-        label: t('dashboard.edit-pane.annotation.panel-filter.all-panels-except', 'All panels except'),
+        label: t('dashboard.sidebar.annotation.panel-filter.all-panels-except', 'All panels except'),
         value: PanelFilterType.ExcludePanels,
         description: t(
-          'dashboard.edit-pane.annotation.panel-filter.all-panels-except-description',
+          'dashboard.sidebar.annotation.panel-filter.all-panels-except-description',
           'Do not send annotation data to the following panels'
         ),
       },

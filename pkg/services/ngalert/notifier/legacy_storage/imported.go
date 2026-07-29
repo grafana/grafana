@@ -12,7 +12,7 @@ import (
 type ImportedConfigRevision struct {
 	identifier     string
 	rev            *ConfigRevision
-	importedConfig *v1.PostableApiAlertingConfig
+	importedConfig *v1.ExtraAlertmanagerConfig
 }
 
 func (rev *ConfigRevision) Imported() (ImportedConfigRevision, error) {
@@ -37,8 +37,12 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 	if e.importedConfig == nil {
 		return nil, nil
 	}
+	imported, err := e.importedConfig.ToGrafanaReceivers()
+	if err != nil {
+		return nil, err
+	}
 	original := e.rev.Config.AlertmanagerConfig.GetReceivers()
-	merged, _, _ := merge.Receivers(original, e.importedConfig.GetReceivers(), e.identifier)
+	merged, _, _ := merge.Receivers(original, imported, e.identifier)
 
 	capacity := len(uids)
 	if capacity == 0 {
@@ -60,29 +64,21 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 	return result, nil
 }
 
-func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]v1.MuteTimeInterval, error) {
+func (e ImportedConfigRevision) GetTimeIntervals() ([]v1.TimeInterval, error) {
 	if e.importedConfig == nil {
 		return nil, nil
 	}
 
 	// Get original imported intervals (before deduplication)
-	importedMute := e.importedConfig.GetMuteTimeIntervals()
-	importedTime := e.importedConfig.GetTimeIntervals()
-
-	if len(importedMute) == 0 && len(importedTime) == 0 {
+	imported := e.importedConfig.ToGrafanaTimeIntervals()
+	if len(imported) == 0 {
 		return nil, nil
 	}
 
-	// Get Grafana time intervals for merge
-	grafanaMute := e.rev.Config.AlertmanagerConfig.MuteTimeIntervals
-	grafanaTime := e.rev.Config.AlertmanagerConfig.TimeIntervals
-
 	// Merge to get the renames map (only renamed if name collision occurs)
 	timeIntervals, _, added := merge.TimeIntervals(
-		grafanaMute,
-		grafanaTime,
-		importedMute,
-		importedTime,
+		e.rev.Config.AlertmanagerConfig.TimeIntervals,
+		imported,
 		e.identifier,
 	)
 
@@ -92,13 +88,12 @@ func (e ImportedConfigRevision) GetMuteTimeIntervals() ([]v1.MuteTimeInterval, e
 	}
 
 	// Filter to imported intervals
-	result := make([]v1.MuteTimeInterval, 0, len(added))
+	result := make([]v1.TimeInterval, 0, len(added))
 	for _, ti := range timeIntervals {
 		if _, ok := importedTitles[ti.Name]; !ok {
 			continue
 		}
-
-		result = append(result, v1.MuteTimeInterval(ti))
+		result = append(result, ti)
 	}
 
 	return result, nil
@@ -110,8 +105,8 @@ func (e ImportedConfigRevision) ReceiverUseByName() map[string]int {
 		return nil
 	}
 	m := make(map[string]int)
-	receiverUseCounts([]*v1.Route{e.importedConfig.Route}, m)
-	_, renames, _ := merge.Receivers(e.rev.Config.AlertmanagerConfig.GetReceivers(), e.importedConfig.GetReceivers(), e.identifier)
+	receiverUseCounts([]*v1.Route{e.importedConfig.ToGrafanaRoute()}, m)
+	_, renames, _ := merge.Receivers(e.rev.Config.AlertmanagerConfig.GetReceivers(), e.importedConfig.ReceiverNameStubs(), e.identifier)
 	for original, renamed := range renames {
 		if cnt, ok := m[original]; ok {
 			delete(m, original)
@@ -126,11 +121,13 @@ func (e ImportedConfigRevision) GetManagedRoute() (*ManagedRoute, error) {
 		return nil, nil
 	}
 
+	route := e.importedConfig.ToGrafanaRoute()
+
 	renamed := merge.DeduplicateResources(e.rev.Config.AlertmanagerConfig, *e.importedConfig, e.identifier)
 
-	merge.RenameResourceUsagesInRoutes([]*v1.Route{e.importedConfig.Route}, renamed)
+	merge.RenameResourceUsagesInRoutes([]*v1.Route{route}, renamed)
 
-	mr := NewManagedRoute(e.identifier, e.importedConfig.Route)
+	mr := NewManagedRoute(e.identifier, route)
 	mr.Provenance = models.ProvenanceConvertedPrometheus
 	mr.Origin = models.ResourceOriginImported
 	return mr, nil
