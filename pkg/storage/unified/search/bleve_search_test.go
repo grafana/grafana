@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"slices"
 	"testing"
 	"time"
 
@@ -2110,6 +2111,54 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 		inFolder, err := index.DocCount(context.Background(), folder, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(len(liveNames)), inFolder)
+	})
+
+	// An object that was provisioned when it was deleted comes back from its
+	// repository, not from trash, so trash must not return it.
+	t.Run("trash leaves out objects that were provisioned when deleted", func(t *testing.T) {
+		provisioned := &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key:           &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "trashed-from-repo"},
+				Title:         "Alpha four",
+				Folder:        folder,
+				IsDeleted:     new(true),
+				IsProvisioned: new(true),
+			},
+		}
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{provisioned}}))
+
+		trashQuery := newTestQuery("Alpha")
+		trashQuery.IsDeleted = true
+		checkSearchQueryUnordered(t, index, trashQuery, []string{"trashed"})
+
+		// It is still absent from live search: it is deleted, after all.
+		checkSearchQueryUnordered(t, index, newTestQuery("Alpha"), liveNames)
+	})
+
+	// Restoring an object reindexes it without the marker, which has to put it back
+	// into live results and take it out of trash.
+	t.Run("reindexing without the marker restores the document", func(t *testing.T) {
+		restored := &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "trashed"},
+				Title:  "Alpha three",
+				Folder: folder,
+			},
+		}
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{restored}}))
+		t.Cleanup(func() {
+			// Put it back in the trash for the other subtests.
+			restored.Doc.IsDeleted = new(true)
+			require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{restored}}))
+		})
+
+		checkSearchQueryUnordered(t, index, newTestQuery("Alpha"), append(slices.Clone(liveNames), "trashed"))
+
+		trashQuery := newTestQuery("Alpha")
+		trashQuery.IsDeleted = true
+		checkSearchQueryUnordered(t, index, trashQuery, nil)
 	})
 
 	// A deleted object provisioning can still see looks like one to keep managing.

@@ -2564,13 +2564,14 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
 
-	doc := func(name string, deleted *bool) *resource.BulkIndexItem {
+	doc := func(name string, deleted, provisioned *bool) *resource.BulkIndexItem {
 		return &resource.BulkIndexItem{
 			Action: resource.ActionIndex,
 			Doc: &resource.IndexableDocument{
-				Key:       &resourcepb.ResourceKey{Namespace: key.Namespace, Group: group, Resource: kindResource, Name: name},
-				Title:     name,
-				IsDeleted: deleted,
+				Key:           &resourcepb.ResourceKey{Namespace: key.Namespace, Group: group, Resource: kindResource, Name: name},
+				Title:         name,
+				IsDeleted:     deleted,
+				IsProvisioned: provisioned,
 			},
 		}
 	}
@@ -2578,9 +2579,9 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 	index, err := backend.BuildIndex(t.Context(), key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
 		return 1, index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
-				doc("live-unset", nil),
-				doc("live-explicit", new(false)),
-				doc("trashed", new(true)),
+				doc("live-unset", nil, nil),
+				doc("live-explicit", new(false), nil),
+				doc("trashed", new(true), new(true)),
 			},
 		})
 	}, nil, false, time.Time{}, 0)
@@ -2589,10 +2590,10 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 	bi, ok := index.(*bleveIndex)
 	require.True(t, ok)
 
-	markerHits := func(t *testing.T, value bool) []string {
+	markerHits := func(t *testing.T, field string, value bool) []string {
 		t.Helper()
 		q := bleve.NewBoolFieldQuery(value)
-		q.SetField(resource.SEARCH_FIELD_IS_DELETED)
+		q.SetField(field)
 		res, err := bi.index.Search(bleve.NewSearchRequest(q))
 		require.NoError(t, err)
 		names := make([]string, 0, len(res.Hits))
@@ -2603,30 +2604,68 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 		return names
 	}
 
-	assert.Equal(t, []string{"default/example.test/widgets/trashed"}, markerHits(t, true))
-	assert.Equal(t, []string{"default/example.test/widgets/live-explicit"}, markerHits(t, false))
+	assert.Equal(t, []string{"default/example.test/widgets/trashed"}, markerHits(t, resource.SEARCH_FIELD_IS_DELETED, true))
+	assert.Equal(t, []string{"default/example.test/widgets/trashed"}, markerHits(t, resource.SEARCH_FIELD_IS_PROVISIONED, true))
+	assert.Equal(t, []string{"default/example.test/widgets/live-explicit"}, markerHits(t, resource.SEARCH_FIELD_IS_DELETED, false))
 
 	// The marker is not a declared field, so callers cannot ask for it and it
 	// stays out of the hash that forces reindexing.
-	assert.Nil(t, resource.StandardSearchFields().Field(resource.SEARCH_FIELD_IS_DELETED))
-	assert.False(t, bi.isDeclaredField(resource.SEARCH_FIELD_IS_DELETED))
+	for _, field := range []string{resource.SEARCH_FIELD_IS_DELETED, resource.SEARCH_FIELD_IS_PROVISIONED} {
+		assert.Nil(t, resource.StandardSearchFields().Field(field))
+		assert.False(t, bi.isDeclaredField(field))
+	}
 }
 
 // TestScopeQueryTrashBrowseDrivesOffTheMarker pins the shape for a trash browse
 // with nothing to match on. Bleve only ever drives iteration from the Must side,
-// so wrapping match-all in Must and filtering by the marker would read every
+// so leaving match-all there and testing the marker as a Filter would read every
 // document in the index to find the few deleted ones.
 func TestScopeQueryTrashBrowseDrivesOffTheMarker(t *testing.T) {
-	scoped := scopeQuery(bleve.NewMatchAllQuery(), true)
+	scoped, ok := scopeQuery(bleve.NewMatchAllQuery(), true).(*query.BooleanQuery)
+	require.True(t, ok)
 
-	marker, ok := scoped.(*query.BoolFieldQuery)
-	require.True(t, ok, "expected the marker query itself, got %T", scoped)
-	assert.True(t, marker.Bool)
-	assert.Equal(t, resource.SEARCH_FIELD_IS_DELETED, marker.FieldVal)
+	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.Must),
+		"the marker has to drive iteration, not sit in Filter")
+	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_PROVISIONED}, boolFieldsOf(t, scoped.MustNot))
+	assert.Nil(t, scoped.Filter)
 
-	// Live browsing has to read every document regardless, so it keeps the wrapper.
-	_, ok = scopeQuery(bleve.NewMatchAllQuery(), false).(*query.BooleanQuery)
-	assert.True(t, ok)
+	// A real query drives iteration itself, so the marker moves to Filter where it
+	// does not score.
+	textQuery := bleve.NewMatchQuery("hello")
+	scoped, ok = scopeQuery(textQuery, true).(*query.BooleanQuery)
+	require.True(t, ok)
+	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.Filter))
+	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_PROVISIONED}, boolFieldsOf(t, scoped.MustNot))
+
+	// Live searches only exclude the marker; provisioning is irrelevant to them.
+	scoped, ok = scopeQuery(bleve.NewMatchAllQuery(), false).(*query.BooleanQuery)
+	require.True(t, ok)
+	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.MustNot))
+	assert.Nil(t, scoped.Filter)
+}
+
+// boolFieldsOf returns the fields of the boolean-field queries in a clause,
+// looking through the conjunction or disjunction bleve wraps clauses in.
+func boolFieldsOf(t *testing.T, clause query.Query) []string {
+	t.Helper()
+	var fields []string
+	var walk func(query.Query)
+	walk = func(q query.Query) {
+		switch typed := q.(type) {
+		case *query.BoolFieldQuery:
+			fields = append(fields, typed.FieldVal)
+		case *query.ConjunctionQuery:
+			for _, sub := range typed.Conjuncts {
+				walk(sub)
+			}
+		case *query.DisjunctionQuery:
+			for _, sub := range typed.Disjuncts {
+				walk(sub)
+			}
+		}
+	}
+	walk(clause)
+	return fields
 }
 
 // TestScopeQueryKeepsScores pins both scopes to the unscoped query's scores. The

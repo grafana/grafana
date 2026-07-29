@@ -462,7 +462,8 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 		addCapabilityFieldMappings(mapper, def)
 	}
 
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_IS_DELETED, isDeletedField())
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_IS_DELETED, internalBoolField())
+	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_IS_PROVISIONED, internalBoolField())
 
 	mapper.AddSubDocumentMapping("manager", managerSubDocumentMapping())
 	mapper.AddSubDocumentMapping("source", sourceSubDocumentMapping())
@@ -511,14 +512,13 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 	return mapper
 }
 
-// isDeletedField maps the marker separating deleted documents from live ones.
-// Mapped here rather than declared as a SearchFieldDefinition because the
-// standard definitions feed IndexAffectingHash, and are also what callers may
-// filter and retrieve.
+// internalBoolField maps a marker the trash scope reads. Mapped here rather than
+// declared as a SearchFieldDefinition because the standard definitions feed
+// IndexAffectingHash, and are also what callers may filter and retrieve.
 //
-// Live documents carry no value for it at all: bleve skips the nil pointer, so
-// they are indexed exactly as they were before this field existed.
-func isDeletedField() *mapping.FieldMapping {
+// Live documents carry no value for these at all: bleve skips the nil pointer, so
+// they are indexed exactly as they were before the fields existed.
+func internalBoolField() *mapping.FieldMapping {
 	m := bleve.NewBooleanFieldMapping()
 	m.Store = false
 	m.Index = true

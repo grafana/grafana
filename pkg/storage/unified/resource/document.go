@@ -146,6 +146,11 @@ type IndexableDocument struct {
 	// live document for nothing to read. Nil means live, which is also what every
 	// document written before this field looks like.
 	IsDeleted *bool `json:"_deleted,omitempty"`
+
+	// Set on a deleted document that was provisioned when it was deleted. Trash
+	// never returns those, and a deleted document keeps no manager fields to work
+	// it out later. Pointer for the same reason as IsDeleted.
+	IsProvisioned *bool `json:"_provisioned,omitempty"`
 }
 
 func (m *IndexableDocument) UpdateCopyFields() *IndexableDocument {
@@ -510,10 +515,11 @@ const (
 	SEARCH_FIELD_ALL_FIELDS         = "_all_columns"      // sentinel: return all known columns in search results (deliberately distinct from bleve's "_all" composite field)
 	SEARCH_SELECTABLE_FIELDS_PREFIX = "selectableFields." // Prefix for searching selectable fields.
 
-	// Internal marker for deleted documents. Kept out of
-	// StandardSearchFieldDefinitions so it does not change IndexAffectingHash for
-	// every kind, and so live search callers cannot filter on it themselves.
-	SEARCH_FIELD_IS_DELETED = "_deleted"
+	// Internal markers on deleted documents. Kept out of
+	// StandardSearchFieldDefinitions so they do not change IndexAffectingHash for
+	// every kind, and so live search callers cannot filter on them themselves.
+	SEARCH_FIELD_IS_DELETED     = "_deleted"
+	SEARCH_FIELD_IS_PROVISIONED = "_provisioned"
 )
 
 var standardSearchFieldsInit sync.Once

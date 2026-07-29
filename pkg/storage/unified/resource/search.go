@@ -108,10 +108,12 @@ type IndexBuildInfo struct {
 // rebuild, missing data, no error.
 type IndexFeature string
 
-// IndexFeatureDeletedMarker means the index maps SEARCH_FIELD_IS_DELETED. An
-// index without it drops the marker, so a deleted document indexed there would
-// look live. Recorded but not required: rather than reindex every existing index
-// to add the mapping, writers check for this feature before marking a document.
+// IndexFeatureDeletedMarker means the index maps the markers on deleted
+// documents, SEARCH_FIELD_IS_DELETED and SEARCH_FIELD_IS_PROVISIONED. An index
+// without them drops the values, so a deleted document indexed there would look
+// live, and a provisioned one would show up in trash. Recorded but not required:
+// rather than reindex every existing index to add the mapping, writers check for
+// this feature before keeping a deleted document.
 const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
 
 // currentIndexFeatures is recorded in every index this binary builds.

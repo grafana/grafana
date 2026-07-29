@@ -2406,23 +2406,33 @@ func scopeQuery(q query.Query, deleted bool) query.Query {
 	marked := bleve.NewBoolFieldQuery(true)
 	marked.SetField(resource.SEARCH_FIELD_IS_DELETED)
 
-	// Bleve drives iteration from the Must clause and uses Filter only to test the
-	// documents that clause produced. With nothing to match on, the marker is the
-	// query, so trash comes off its own (small) posting list instead of a walk over
-	// every document. Nothing ranks these results, so scoring it costs nothing.
-	if _, matchAll := q.(*query.MatchAllQuery); matchAll && deleted {
-		return marked
+	scoped := bleve.NewBooleanQuery()
+	if !deleted {
+		scoped.AddMust(q)
+		scoped.AddMustNot(marked)
+		return scoped
 	}
 
-	scoped := bleve.NewBooleanQuery()
-	scoped.AddMust(q)
-	if deleted {
-		// Filter, not Must: a scoring clause would tie absolute scores to how much
-		// trash the index holds. MustNot never scores.
-		scoped.AddFilter(marked)
-	} else {
-		scoped.AddMustNot(marked)
+	// An object that was provisioned when it was deleted is never returned from
+	// trash: it comes back from its repository instead.
+	provisioned := bleve.NewBoolFieldQuery(true)
+	provisioned.SetField(resource.SEARCH_FIELD_IS_PROVISIONED)
+	scoped.AddMustNot(provisioned)
+
+	// Bleve drives iteration from the Must clause and uses Filter only to test the
+	// documents that clause produced. With nothing to match on, the marker becomes
+	// the Must clause, so trash comes off its own (small) posting list instead of a
+	// walk over every document. Nothing ranks these results, so scoring it costs
+	// nothing.
+	if _, matchAll := q.(*query.MatchAllQuery); matchAll {
+		scoped.AddMust(marked)
+		return scoped
 	}
+
+	// Filter, not Must: a scoring clause would tie absolute scores to how much
+	// trash the index holds. MustNot never scores either.
+	scoped.AddMust(q)
+	scoped.AddFilter(marked)
 	return scoped
 }
 

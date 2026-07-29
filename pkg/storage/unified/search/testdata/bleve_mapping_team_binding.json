@@ -18,6 +18,17 @@
           }
         ]
       },
+      "_provisioned": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "boolean",
+            "index": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
       "created": {
         "enabled": true,
         "dynamic": true,
