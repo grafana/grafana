@@ -3,6 +3,7 @@ package informer
 import (
 	"errors"
 	"strconv"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/dskit/instrument"
@@ -25,12 +26,12 @@ import (
 // storage_server_watch_notifications_published_total and live_events_total
 // summed across replicas.
 type informerMetrics struct {
-	liveEvents       *prometheus.CounterVec
-	relistEvents     *prometheus.CounterVec
-	liveLatency      *prometheus.HistogramVec
-	relistLatency    *prometheus.HistogramVec
-	reconnects       *prometheus.CounterVec
-	liveSubscription *prometheus.GaugeVec
+	liveEvents        *prometheus.CounterVec
+	relistEvents      *prometheus.CounterVec
+	liveLatency       *prometheus.HistogramVec
+	relistLatency     *prometheus.HistogramVec
+	reconnects        *prometheus.CounterVec
+	natsSubscriptions prometheus.Gauge
 }
 
 // newInformerMetrics builds the delivery metrics on reg, reusing collectors
@@ -68,10 +69,10 @@ func newInformerMetrics(reg prometheus.Registerer) *informerMetrics {
 			Name: "grafana_provisioning_informer_nats_reconnects_total",
 			Help: "Times an informer's NATS subscription was (re)established after a gap. Live events published during the gap never reach this replica; the informer forces a re-list to recover them.",
 		}, []string{"resource"})),
-		liveSubscription: registerOrReuse(reg, prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name: "grafana_provisioning_informer_live_subscription",
-			Help: "Whether the informer holds an open live NATS subscription (1) or runs re-list-only (0): before the subscription first opens, or in degraded-start mode. Mid-run connection outages are reported by grafana_nats_subscriber_connection_status instead — the subscription itself resumes transparently on reconnect.",
-		}, []string{"resource"})),
+		natsSubscriptions: registerOrReuse(reg, prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "grafana_provisioning_informer_nats_subscriptions",
+			Help: "Number of provisioning informers currently holding an open live NATS subscription. Below the running informer count means some run re-list-only — before their subscription first opens, or in degraded-start mode. Mid-run connection outages are reported by grafana_nats_subscriber_connection_status instead — the subscription itself resumes transparently on reconnect. Always 0 on the apiserver watch path, which has no NATS subscription.",
+		})),
 	}
 }
 
@@ -120,6 +121,16 @@ func (m *informerMetrics) observeLatency(latency *prometheus.HistogramVec, resou
 type natsRecorder struct {
 	metrics      *informerMetrics
 	resourceName string
+	// subscribed dedupes the informer's open/close notifications so this recorder
+	// moves the shared natsSubscriptions gauge by at most one, however many times
+	// the informer reports the same state.
+	subscribed *atomic.Bool
+}
+
+// newNATSRecorder builds a recorder for one informer. Each recorder owns its own
+// subscribed state; they share metrics so the gauge totals across informers.
+func newNATSRecorder(metrics *informerMetrics, resourceName string) natsRecorder {
+	return natsRecorder{metrics: metrics, resourceName: resourceName, subscribed: &atomic.Bool{}}
 }
 
 var _ usinformer.Metrics = natsRecorder{}
@@ -137,11 +148,15 @@ func (r natsRecorder) ObserveReconnect() {
 }
 
 func (r natsRecorder) ObserveLiveSubscription(open bool) {
-	v := 0.0
 	if open {
-		v = 1
+		if r.subscribed.CompareAndSwap(false, true) {
+			r.metrics.natsSubscriptions.Inc()
+		}
+		return
 	}
-	r.metrics.liveSubscription.WithLabelValues(r.resourceName).Set(v)
+	if r.subscribed.CompareAndSwap(true, false) {
+		r.metrics.natsSubscriptions.Dec()
+	}
 }
 
 // apiServerMeter observes deliveries from an apiserver-backed

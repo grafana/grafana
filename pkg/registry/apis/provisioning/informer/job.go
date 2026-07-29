@@ -31,7 +31,7 @@ func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, r
 		// degraded mode jobs are still picked up at the re-list cadence; only the
 		// live-event latency is lost until the subscription opens.
 		jobInformer.AllowDegradedStart()
-		jobInformer.SetMetrics(natsRecorder{metrics: metrics, resourceName: resourceName})
+		jobInformer.SetMetrics(newNATSRecorder(metrics, resourceName))
 		return jobInformer
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Jobs().Informer()
