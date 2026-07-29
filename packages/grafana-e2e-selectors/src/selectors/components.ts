@@ -1086,6 +1086,9 @@ export const versionedComponents = {
       '10.1.0': 'data-testid add transformation button',
       [MIN_GRAFANA_VERSION]: 'add transformation button',
     },
+    addTransformationBelowButton: {
+      '13.2.0': (afterId: string) => `data-testid add transformation below ${afterId}`,
+    },
     goToQueriesButton: {
       '10.4.0': 'data-testid go to queries button',
       [MIN_GRAFANA_VERSION]: 'go to queries button',

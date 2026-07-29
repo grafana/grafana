@@ -157,7 +157,11 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
       <button
         className={styles.button}
         data-add-button={!alwaysVisible || undefined}
-        data-testid={alwaysVisible && !afterId ? selectors.components.Transforms.addTransformationButton : undefined}
+        data-testid={
+          afterId
+            ? selectors.components.Transforms.addTransformationBelowButton(afterId)
+            : selectors.components.Transforms.addTransformationButton
+        }
         type="button"
         aria-label={ariaLabel}
         onClick={handleTransformationClick}
