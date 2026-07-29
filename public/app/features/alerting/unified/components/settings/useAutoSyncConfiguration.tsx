@@ -12,10 +12,12 @@ import { CONFIG_SINGLETON_NAME, configApi, useAutoSyncConfigQuery } from '../../
 import { dataSourcesApi } from '../../api/dataSourcesApi';
 import { isNotFoundError } from '../../api/util';
 import {
+  type AutoSyncHealth,
   type AutoSyncState,
   autoSyncInitializingMessage,
   deriveAutoSyncState,
   deriveReadiness,
+  deriveSyncHealth,
   deriveSyncSource,
   filterMimirCortexDatasources,
 } from '../../utils/autoSync';
@@ -24,6 +26,8 @@ import { stringifyErrorLike } from '../../utils/misc';
 
 export interface UseAutoSyncConfigurationResult {
   state: AutoSyncState;
+  /** Health of the last sync attempt, for the status badge and the failure and merge callouts. */
+  syncHealth: AutoSyncHealth;
   mimirCortexDatasources: Array<DataSourceSettings<AlertManagerDataSourceJsonData>>;
   selectedUid: string;
   setSelectedUid: (uid: string) => void;
@@ -66,6 +70,8 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
 
   const state = useMemo(() => deriveAutoSyncState(source, mimirCortexDatasources), [source, mimirCortexDatasources]);
   const { isReady, notReadyMessage, readErrorMessage, readErrorStatus } = deriveReadiness(configResource, configError);
+
+  const syncHealth = useMemo(() => deriveSyncHealth(configResource, source.uid), [configResource, source.uid]);
 
   const notify = useAppNotification();
   const dispatch = useDispatch();
@@ -141,6 +147,7 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
 
   return {
     state,
+    syncHealth,
     mimirCortexDatasources,
     selectedUid,
     setSelectedUid: (uid: string) => setSelectedOverride(uid),
