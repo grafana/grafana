@@ -62,7 +62,7 @@ export const OptionsPaneCategory = React.memo(
       if ((forceOpen || isOpenFromUrl) && !isExpanded && !disabledText) {
         setIsExpanded(true);
         setTimeout(() => {
-          ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 200);
       }
     }, [isExpanded, isOpenFromUrl, forceOpen, disabledText]);
@@ -92,7 +92,7 @@ export const OptionsPaneCategory = React.memo(
       }
 
       const scrollTimeout = window.setTimeout(() => {
-        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 200);
 
       const highlightTimeout = window.setTimeout(() => {
