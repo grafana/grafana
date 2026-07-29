@@ -363,15 +363,16 @@ func (s *Storage) Delete(
 	// surfacing the conflict; explicit preconditions are re-checked against
 	// the fresh read each attempt. This mirrors the upstream etcd3
 	// conditionalDelete retry loop.
-	for attempt := 1; ; attempt++ {
+	k, err := s.getKey(key)
+	if err != nil {
+		return storage.NewKeyNotFoundError(key, 0)
+	}
+
+	for attempt := 1; attempt <= MaxUpdateAttempts; attempt++ {
 		if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
 			return err
 		}
 
-		k, err := s.getKey(key)
-		if err != nil {
-			return err
-		}
 		cmd := &resourcepb.DeleteRequest{Key: k}
 
 		if preconditions != nil {
@@ -418,6 +419,8 @@ func (s *Storage) Delete(
 
 		return s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion))
 	}
+
+	return nil
 }
 
 // This version is not yet passing the watch tests
