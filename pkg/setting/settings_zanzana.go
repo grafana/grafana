@@ -50,6 +50,11 @@ type ZanzanaClientSettings struct {
 	// PrimaryEngine selects which engine is on the hot path when the shadow
 	// client is active. Accepted values: "rbac" (default) and "zanzana".
 	PrimaryEngine ZanzanaPrimaryEngine
+	// KeepaliveTime is the gRPC client keepalive ping interval, used to detect dead
+	// connections. Must exceed the server's keepalive enforcement min_time (gRPC default
+	// is 5m) or the server closes the connection. Zero disables keepalive pings.
+	// Only used when mode is set to client.
+	KeepaliveTime time.Duration
 }
 
 type ZanzanaReconcilerMode string
@@ -300,6 +305,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 
 	zc.Addr = clientSec.Key("address").MustString("")
 	zc.ServerCertFile = clientSec.Key("tls_cert").MustString("")
+	zc.KeepaliveTime = clientSec.Key("grpc_client_keepalive_time").MustDuration(6 * time.Minute)
 
 	grpcClientAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
 	zc.Token = grpcClientAuthSection.Key("token").MustString("")

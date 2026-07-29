@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -13,6 +14,10 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 )
+
+// defaultWriteTimeout bounds Zanzana writes; callers (e.g. delete hooks) may pass a context
+// without a deadline, which would otherwise block indefinitely if Zanzana is unreachable.
+const defaultWriteTimeout = 15 * time.Second
 
 // PermissionStore interface for managing folder permissions
 type PermissionStore interface {
@@ -43,6 +48,9 @@ func (c *ZanzanaPermissionStore) SetFolderParent(ctx context.Context, namespace,
 		),
 	)
 	defer span.End()
+
+	ctx, cancel := context.WithTimeout(ctx, defaultWriteTimeout)
+	defer cancel()
 
 	if err := c.zanzanaClient.Mutate(ctx, &authzextv1.MutateRequest{
 		Namespace: namespace,
@@ -120,6 +128,9 @@ func (c *ZanzanaPermissionStore) DeleteFolderParents(ctx context.Context, namesp
 		),
 	)
 	defer span.End()
+
+	ctx, cancel := context.WithTimeout(ctx, defaultWriteTimeout)
+	defer cancel()
 
 	if err := c.zanzanaClient.Mutate(ctx, &authzextv1.MutateRequest{
 		Namespace: namespace,
