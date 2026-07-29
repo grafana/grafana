@@ -32,6 +32,7 @@ type informerMetrics struct {
 	relistLatency     *prometheus.HistogramVec
 	reconnects        *prometheus.CounterVec
 	natsSubscriptions prometheus.Gauge
+	relistRequests    *prometheus.CounterVec
 }
 
 // newInformerMetrics builds the delivery metrics on reg, reusing collectors
@@ -73,6 +74,10 @@ func newInformerMetrics(reg prometheus.Registerer) *informerMetrics {
 			Name: "grafana_provisioning_informer_nats_subscriptions",
 			Help: "Number of provisioning informers currently holding an open live NATS subscription. Below the running informer count means some run re-list-only — before their subscription first opens, or in degraded-start mode. Mid-run connection outages are reported by grafana_nats_subscriber_connection_status instead — the subscription itself resumes transparently on reconnect. Always 0 on the apiserver watch path, which has no NATS subscription.",
 		})),
+		relistRequests: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_provisioning_informer_relist_requests_total",
+			Help: "LIST API requests the re-list issued, one per page followed (unified storage caps a page at 500 items / 2 MB). Divided by the number of re-lists it is the average page count per snapshot; a rising ratio means the resource is outgrowing a single page. Recorded on the NATS informer path only — the apiserver watch lists via client-go internally.",
+		}, []string{"resource"})),
 	}
 }
 
@@ -102,6 +107,10 @@ func (m *informerMetrics) observeLive(resourceName, verb string, rv int64) {
 func (m *informerMetrics) observeRelist(resourceName, verb string, rv int64) {
 	m.relistEvents.WithLabelValues(resourceName, verb).Inc()
 	m.observeLatency(m.relistLatency, resourceName, rv)
+}
+
+func (m *informerMetrics) observeRelistRequest(resourceName string) {
+	m.relistRequests.WithLabelValues(resourceName).Inc()
 }
 
 func (m *informerMetrics) observeLatency(latency *prometheus.HistogramVec, resourceName string, rv int64) {

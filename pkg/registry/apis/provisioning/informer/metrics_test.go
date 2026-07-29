@@ -139,6 +139,19 @@ func TestNewInformerMetrics_SharesCollectorsAcrossSources(t *testing.T) {
 		"both instances must write the same series")
 }
 
+// The re-list request counter counts one LIST request per page, so a snapshot
+// that spans several pages records several increments.
+func TestInformerMetrics_RelistRequests(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := newInformerMetrics(reg)
+
+	m.observeRelistRequest("jobs")
+	m.observeRelistRequest("jobs")
+	m.observeRelistRequest("jobs")
+
+	assert.Equal(t, 3.0, testutil.ToFloat64(m.relistRequests.WithLabelValues("jobs")))
+}
+
 // The subscription gauge totals across informers: each recorder owns its own
 // dedupe state but shares the collector, so concurrently-open subscriptions add
 // up and each closes independently.

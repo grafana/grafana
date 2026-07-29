@@ -24,7 +24,8 @@ func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, r
 	metrics := newInformerMetrics(reg)
 	resourceName := provisioningapis.JobResourceInfo.GroupVersionResource().Resource
 	if nats.Enabled(subscriber) {
-		jobInformer := NewJobInformer(subscriber, client, "", resync, usinformer.NewStore())
+		onRequest := func() { metrics.observeRelistRequest(resourceName) }
+		jobInformer := NewJobInformer(subscriber, client, "", resync, usinformer.NewStore(), onRequest)
 		// The informer is the job driver's only feed, so gating the initial list
 		// on the subscription (the default) would stall the whole job queue while
 		// NATS is unavailable — e.g. during startup of the embedded server. In
@@ -41,14 +42,19 @@ func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, r
 	return inf
 }
 
-// NewJobInformer builds an Informer for jobs.
-func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store) *usinformer.Informer {
+// NewJobInformer builds an Informer for jobs. onRequest, when non-nil, is called
+// once per LIST request the re-list issues (one per page), so callers can meter
+// pagination.
+func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, onRequest func()) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Job{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
 	}
 	list := func(ctx context.Context) ([]runtime.Object, error) {
 		return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+			if onRequest != nil {
+				onRequest()
+			}
 			return c.Jobs(namespace).List(ctx, opts)
 		})
 	}
