@@ -195,6 +195,15 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       this.setState({ data: dataFilteredByRefId });
     }
 
+    // The owner retargeted the scroll (e.g. a second expression added before this pin settled).
+    // Drop this row's pin so it stops fighting the new target — cancelling rather than finishing,
+    // since finishing would report back and clear the target the owner just set.
+    if (prevProps.scrollIntoView && !this.props.scrollIntoView) {
+      this.cancelScrollPin?.();
+      this.cancelScrollPin = undefined;
+      this.hasStartedScrollIntoView = false;
+    }
+
     this.scrollIntoViewIfNeeded();
 
     // check if we need to load another datasource
