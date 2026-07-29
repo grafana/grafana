@@ -93,7 +93,7 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
 
   let preferences: Preferences | undefined = undefined;
 
-  if (config.featureToggles.dashboardDefaultLayoutSelector && sceneDash.preferences?.defaultLayoutTemplate) {
+  if (sceneDash.preferences?.defaultLayoutTemplate) {
     const template = sceneDash.preferences.defaultLayoutTemplate;
     const serialized = template.serialize();
     if (serialized.kind === 'AutoGridLayout' || serialized.kind === 'GridLayout') {

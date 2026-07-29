@@ -1,4 +1,4 @@
-import { FALLBACK_COLOR, type FieldDisplay } from '@grafana/data';
+import { colorManipulator, FALLBACK_COLOR, type FieldDisplay } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
@@ -36,7 +36,7 @@ export function RadialBar({
 }: RadialBarProps) {
   const theme = useTheme2();
   const colorProps = gradient ? { gradient } : { color: fieldDisplay.display.color ?? FALLBACK_COLOR };
-  const trackColor = theme.colors.secondary.main;
+  const trackColor = colorManipulator.emphasize(theme.components.panel.background, 0.07);
 
   return (
     <>
