@@ -15,7 +15,7 @@ test.use({
   },
 });
 
-// New-layouts has no settings toolbar button; settings open from the dashboard edit-pane
+// New-layouts has no settings toolbar button; settings open from the dashboard sidebar
 // "Dashboard options" sidebar button, then the "View all settings" button it reveals.
 async function openDashboardSettings(
   page: Page,
@@ -53,7 +53,7 @@ test.describe(
   },
   () => {
     test('Tests dashboard time zone scenarios', async ({ page, gotoDashboardPage, selectors, components }) => {
-      // Opening settings twice via the new-layouts edit-pane flow takes longer than the default budget.
+      // Opening settings twice via the new-layouts sidebar flow takes longer than the default budget.
       test.slow();
       const dashboardPage = await gotoDashboardPage({ uid: TIMEZONE_DASHBOARD_UID });
 

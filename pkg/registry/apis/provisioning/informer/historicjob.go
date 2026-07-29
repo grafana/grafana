@@ -38,15 +38,9 @@ func NewHistoricJobDeltaSource(natsEnabled bool, client versioned.Interface, res
 func NewHistoricJobPeriodicInformer(client versioned.Interface, namespace string, resync time.Duration) *usinformer.CachelessPeriodicInformer {
 	c := client.ProvisioningV0alpha1()
 	list := func(ctx context.Context) ([]runtime.Object, error) {
-		l, err := c.HistoricJobs(namespace).List(ctx, metav1.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
-		out := make([]runtime.Object, len(l.Items))
-		for i := range l.Items {
-			out[i] = &l.Items[i]
-		}
-		return out, nil
+		return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+			return c.HistoricJobs(namespace).List(ctx, opts)
+		})
 	}
 	return usinformer.NewCachelessPeriodicInformer(provisioningapis.HistoricJobResourceInfo.GroupVersionResource().Resource, resync, list)
 }

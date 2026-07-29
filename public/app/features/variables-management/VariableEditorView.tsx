@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -53,9 +54,13 @@ export interface VariableEditorViewProps {
 export function VariableEditorView({ source, existingNames = [], onBack }: VariableEditorViewProps) {
   const styles = useStyles2(getStyles);
   const isNew = !source;
+  const [searchParams] = useSearchParams();
   // '' represents the root Dashboards folder (global scope), matching the
   // FolderPicker's uid for its root item so it renders as selected.
-  const [folderUid, setFolderUid] = useState<string>(source ? (getVariableFolderUid(source) ?? '') : '');
+  // New variables may preselect a folder via ?folderUid= from the folder Variables tab.
+  const [folderUid, setFolderUid] = useState<string>(() =>
+    source ? (getVariableFolderUid(source) ?? '') : (searchParams.get('folderUid') ?? '')
+  );
   const [sceneVariable, setSceneVariable] = useState<SceneVariable>(() =>
     source
       ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions

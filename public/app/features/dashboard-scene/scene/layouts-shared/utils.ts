@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 
+import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -63,8 +64,11 @@ export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: Dashb
 }
 
 export function getIsLazy(preload: boolean | undefined): boolean {
+  // When a dashboard does not explicitly set preload, fall back to the instance-wide default.
+  // Nullish coalescing keeps an explicit `false` authoritative - only undefined defers to the config default.
+  const shouldPreload = preload ?? config.dashboardDefaultPreload;
   // We don't want to lazy load panels in the case of image renderer
-  return !(preload || (contextSrv.user && contextSrv.user.authenticatedBy === 'render'));
+  return !(shouldPreload || (contextSrv.user && contextSrv.user.authenticatedBy === 'render'));
 }
 
 export enum GridLayoutType {

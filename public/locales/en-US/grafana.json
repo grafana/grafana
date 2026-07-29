@@ -1614,8 +1614,10 @@
       "additional-settings": "Additional settings",
       "alert-rules": "Alert rules",
       "autosync-active-block": {
-        "description": "Grafana is continuously syncing alert configuration from a data source, so the configuration is a read-only mirror and cannot be imported into. To import, disable auto-sync in Alerting settings first.",
+        "description": "Grafana is continuously syncing alert configuration from a data source, so notification resources are a read-only mirror and cannot be imported into. You can still import alert rules.",
+        "disable-sync": "To import notification resources, disable auto-sync in Alerting settings first.",
         "go-to-settings": "Go to Alerting settings",
+        "import-rules": "Import alert rules",
         "title": "Auto-sync is enabled"
       },
       "autosync-review": {
@@ -3287,8 +3289,21 @@
         "save-success": "Mimir Alertmanager auto-sync enabled",
         "title": "Auto-sync configuration"
       },
+      "import": {
+        "empty-body": "Import an Alertmanager configuration to stage it here as a safe, reversible copy. Review what it contains, then promote it into your live Grafana Alertmanager when you're ready.",
+        "empty-cta": "Import Alertmanager configuration",
+        "empty-learn-more": "Learn more about importing configurations",
+        "empty-title": "No configuration imported yet",
+        "error-body": "The request to the Alerting API failed. Check your connection and try again.",
+        "error-retry": "Retry",
+        "error-title": "Couldn't load imported configurations",
+        "loading": "Loading imported configurations…",
+        "staged-description": "A read-only, reversible copy of an imported Alertmanager config. Promote it to merge into your live config, or revert to remove it.",
+        "staged-title": "Staged configuration"
+      },
       "tabs": {
-        "alert-managers": "Alert managers"
+        "alert-managers": "Alert managers",
+        "import": "Import"
       }
     },
     "settings-content": {
@@ -4354,6 +4369,9 @@
       "title-folder-not-found": "Folder not found",
       "title-ruler-namespace-error": "Cannot load rules"
     },
+    "browse-folder-variables-page": {
+      "title-folder-not-found": "Folder not found"
+    },
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
@@ -4472,10 +4490,16 @@
       "team-folders-error-title": "Error loading team folders",
       "unknown-error": "Unknown error"
     },
+    "folder-variables": {
+      "empty": "No folder-scoped variables in this folder yet.",
+      "list-heading": "Folder variables",
+      "new": "New folder variable"
+    },
     "manage-folder-nav": {
       "alert-rules": "Alert rules",
       "dashboards": "Dashboards",
-      "panels": "Panels"
+      "panels": "Panels",
+      "variables": "Variables"
     },
     "my-team-folders": "My team folders",
     "name-cell": {
@@ -5651,134 +5675,6 @@
       "switch-layout-tab": "Switch layout",
       "tab-title": "Change tab title"
     },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "Change annotation data source",
-        "choose-panels": "Choose panels",
-        "color": "Color",
-        "color-description": "Color to use for the annotation event markers",
-        "data-source": "Data source",
-        "display": "Show annotation controls in",
-        "display-options": {
-          "above-dashboard": "Above dashboard",
-          "controls-menu": "Controls menu",
-          "controls-menu-description": "Can be accessed when the controls menu is open",
-          "hidden": "Hidden",
-          "hidden-description": "Hides the toggle for turning this annotation on or off"
-        },
-        "enabled": "Enabled",
-        "enabled-description": "When enabled the annotation query is issued every dashboard refresh",
-        "name": "Name",
-        "open-query-editor": "Open query editor",
-        "open-query-editor-tooltip": "Open the query editor to configure the annotation query",
-        "panel-filter": {
-          "all-panels": "All panels",
-          "all-panels-description": "Send the annotation data to all panels that support annotations",
-          "all-panels-except": "All panels except",
-          "all-panels-except-description": "Do not send annotation data to the following panels",
-          "selected-panels": "Selected panels",
-          "selected-panels-description": "Send the annotations to the explicitly listed panels"
-        },
-        "query": "Query",
-        "query-editor-close": "Close",
-        "query-editor-modal-title": "Annotation Query",
-        "show-in": "Show in"
-      },
-      "annotations": {
-        "add-annotation": "Add annotation",
-        "reorder": "Drag to reorder",
-        "select-annotation": "Select"
-      },
-      "elements": {
-        "annotation": "Annotation",
-        "annotation-set": "Annotations & Alerts",
-        "dashboard": "Dashboard",
-        "element": "Element",
-        "filter": "Filter",
-        "filters-set": "Filters",
-        "link-set": "Links",
-        "local-variable": "Local variable",
-        "multiple-elements": "Multiple elements",
-        "multiple-elements-delete-text": "Are you sure you want to delete these elements?",
-        "multiple-panels": "Multiple panels",
-        "multiple-panels-delete-text": "Are you sure you want to delete these panels? All queries will be removed.",
-        "objects": "Objects",
-        "panel": "Panel",
-        "panels": "Panels",
-        "row": "Row",
-        "rows": "Rows",
-        "section-filters-set": "Filters",
-        "tab": "Tab",
-        "tabs": "Tabs",
-        "variable": "{{type}} variable",
-        "variable-set": "Variables"
-      },
-      "links": {
-        "add-link": "Add link",
-        "reorder": "Drag to reorder",
-        "select-link": "Select",
-        "untitled": "Untitled link"
-      },
-      "row": {
-        "header": {
-          "hide": "Hide",
-          "title": "Row header"
-        }
-      },
-      "section-filters": {
-        "title": "Filters"
-      },
-      "section-variables": {
-        "title": "Variables"
-      },
-      "variable": {
-        "change-type": "Change type",
-        "change-type-aria-label": "Change variable type",
-        "custom-options": {
-          "apply": "Apply",
-          "discard": "Discard",
-          "modal-title": "Custom options"
-        },
-        "datasource-options": {
-          "name-filter": "Name filter",
-          "name-filter-description": "Regex filter for which data source instances to include. Leave empty for all.",
-          "name-filter-placeholder": "Example: /^prod/",
-          "type": "Type",
-          "type-placeholder": "Choose data source type"
-        },
-        "description": "Description",
-        "description-placeholder": "Descriptive text",
-        "label": "Label",
-        "label-description": "Optional display name",
-        "name": "Name",
-        "open-editor": "Open variable editor",
-        "open-editor-tooltip": "For more variable options open variable editor",
-        "query-options": {
-          "close": "Close",
-          "old-modal-title": "Query Variable",
-          "preview": "Preview"
-        },
-        "selection-options": {
-          "allow-custom-values": "Allow custom values",
-          "allow-custom-values-description": "Enables users to enter values",
-          "category": "Selection options",
-          "custom-all-value": "Custom all value",
-          "custom-all-value-description": "A wildcard regex or other value to represent All",
-          "include-all": "Include All value",
-          "include-all-description": "Enables a single option that represent all values",
-          "multi-value": "Multi-value"
-        },
-        "type-category": "{{type}} options"
-      },
-      "variables": {
-        "add-variable": "Add variable",
-        "change-type": "Change variable type",
-        "reorder": "Drag to reorder",
-        "select-type": "Choose variable type",
-        "select-type-card-tooltip": "Click to select type",
-        "select-variable": "Select"
-      }
-    },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",
@@ -6110,6 +6006,9 @@
     "panel-not-supported": {
       "go-back-to-queries": "Go back to Queries"
     },
+    "predefined-variables-pane": {
+      "title": "Predefined variables"
+    },
     "public-dashboard-not-available": {
       "does-not-exist": "The dashboard you are trying to access does not exist",
       "paused": "This dashboard has been paused by the administrator",
@@ -6212,7 +6111,8 @@
       "full-json-diff": "Full JSON diff",
       "no-changes-in-the-dashboard-json": "No changes in the dashboard JSON",
       "title-because-dashboard-migrated-grafana-format": "The diff is hard to read because the dashboard has been migrated to the new Grafana dashboard format",
-      "title-folder": "folder"
+      "title-folder": "folder",
+      "title-predefined-variables": "predefined variables"
     },
     "save-dashboard-drawer": {
       "label-changes": "Changes",
@@ -6261,6 +6161,43 @@
         "title": "Add",
         "tooltip": "Add new element"
       },
+      "annotation": {
+        "change-data-source": "Change annotation data source",
+        "choose-panels": "Choose panels",
+        "color": "Color",
+        "color-description": "Color to use for the annotation event markers",
+        "data-source": "Data source",
+        "display": "Show annotation controls in",
+        "display-options": {
+          "above-dashboard": "Above dashboard",
+          "controls-menu": "Controls menu",
+          "controls-menu-description": "Can be accessed when the controls menu is open",
+          "hidden": "Hidden",
+          "hidden-description": "Hides the toggle for turning this annotation on or off"
+        },
+        "enabled": "Enabled",
+        "enabled-description": "When enabled the annotation query is issued every dashboard refresh",
+        "name": "Name",
+        "open-query-editor": "Open query editor",
+        "open-query-editor-tooltip": "Open the query editor to configure the annotation query",
+        "panel-filter": {
+          "all-panels": "All panels",
+          "all-panels-description": "Send the annotation data to all panels that support annotations",
+          "all-panels-except": "All panels except",
+          "all-panels-except-description": "Do not send annotation data to the following panels",
+          "selected-panels": "Selected panels",
+          "selected-panels-description": "Send the annotations to the explicitly listed panels"
+        },
+        "query": "Query",
+        "query-editor-close": "Close",
+        "query-editor-modal-title": "Annotation Query",
+        "show-in": "Show in"
+      },
+      "annotations": {
+        "add-annotation": "Add annotation",
+        "reorder": "Drag to reorder",
+        "select-annotation": "Select"
+      },
       "dashboard-options": {
         "title": "Options",
         "tooltip": "Dashboard options"
@@ -6269,20 +6206,113 @@
         "title": "Code",
         "tooltip": "Edit as code"
       },
+      "elements": {
+        "annotation": "Annotation",
+        "annotation-set": "Annotations & Alerts",
+        "dashboard": "Dashboard",
+        "element": "Element",
+        "filter": "Filter",
+        "filters-set": "Filters",
+        "link-set": "Links",
+        "local-variable": "Local variable",
+        "multiple-elements": "Multiple elements",
+        "multiple-elements-delete-text": "Are you sure you want to delete these elements?",
+        "multiple-panels": "Multiple panels",
+        "multiple-panels-delete-text": "Are you sure you want to delete these panels? All queries will be removed.",
+        "objects": "Objects",
+        "panel": "Panel",
+        "panels": "Panels",
+        "row": "Row",
+        "rows": "Rows",
+        "section-filters-set": "Filters",
+        "tab": "Tab",
+        "tabs": "Tabs",
+        "variable": "{{type}} variable",
+        "variable-set": "Variables"
+      },
       "export": {
         "title": "Export"
       },
       "filters": "Filters",
+      "links": {
+        "add-link": "Add link",
+        "reorder": "Drag to reorder",
+        "select-link": "Select",
+        "untitled": "Untitled link"
+      },
       "open": "Filters overview",
       "outline": {
         "title": "Outline",
         "tooltip": "Content outline"
       },
+      "predefined-variables": {
+        "title": "Predefined variables",
+        "tooltip": "Choose which global and folder variables this dashboard receives"
+      },
       "redo": "Redo",
+      "row": {
+        "header": {
+          "hide": "Hide",
+          "title": "Row header"
+        }
+      },
+      "section-filters": {
+        "title": "Filters"
+      },
+      "section-variables": {
+        "title": "Variables"
+      },
       "snapshot": {
         "tooltip": "Open original dashboard"
       },
       "undo": "Undo",
+      "variable": {
+        "change-type": "Change type",
+        "change-type-aria-label": "Change variable type",
+        "custom-options": {
+          "apply": "Apply",
+          "discard": "Discard",
+          "modal-title": "Custom options"
+        },
+        "datasource-options": {
+          "name-filter": "Name filter",
+          "name-filter-description": "Regex filter for which data source instances to include. Leave empty for all.",
+          "name-filter-placeholder": "Example: /^prod/",
+          "type": "Type",
+          "type-placeholder": "Choose data source type"
+        },
+        "description": "Description",
+        "description-placeholder": "Descriptive text",
+        "label": "Label",
+        "label-description": "Optional display name",
+        "name": "Name",
+        "open-editor": "Open variable editor",
+        "open-editor-tooltip": "For more variable options open variable editor",
+        "query-options": {
+          "close": "Close",
+          "old-modal-title": "Query Variable",
+          "preview": "Preview"
+        },
+        "selection-options": {
+          "allow-custom-values": "Allow custom values",
+          "allow-custom-values-description": "Enables users to enter values",
+          "category": "Selection options",
+          "custom-all-value": "Custom all value",
+          "custom-all-value-description": "A wildcard regex or other value to represent All",
+          "include-all": "Include All value",
+          "include-all-description": "Enables a single option that represent all values",
+          "multi-value": "Multi-value"
+        },
+        "type-category": "{{type}} options"
+      },
+      "variables": {
+        "add-variable": "Add variable",
+        "change-type": "Change variable type",
+        "reorder": "Drag to reorder",
+        "select-type": "Choose variable type",
+        "select-type-card-tooltip": "Click to select type",
+        "select-variable": "Select"
+      },
       "view-panel": {
         "disabled": "Disabled",
         "fanout-by-series": "By series",
@@ -6635,8 +6665,7 @@
         "last-update": "Last Update",
         "published-by": "Published By",
         "view-on-grafana-com": "View on Grafana.com"
-      },
-      "no-description": "No description available"
+      }
     },
     "grafana-dashboard-template-modal": {
       "no-results-found": "No template dashboards found"
@@ -6882,9 +6911,6 @@
       "title-hidden-count_one": "Hidden ({{count}})",
       "title-hidden-count_other": "Hidden ({{count}})"
     },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "Give feedback on the new dashboard editing experience"
-    },
     "dashboard-link-form": {
       "back-to-list": "Back to list",
       "label-icon": "Icon",
@@ -6973,6 +6999,9 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Dashboard controls"
+    },
+    "dashboard-sidebar-renderer": {
+      "title-feedback-dashboard-editing-experience": "Give feedback on the new dashboard editing experience"
     },
     "dashboard-template-edit-banner": {
       "body": "Edits made will update this template. <2>If you wish to use this template to create a dashboard, click here</2>",
@@ -7373,6 +7402,21 @@
         }
       },
       "title-close": "Close"
+    },
+    "predefined-variables": {
+      "label-all": "All",
+      "label-custom": "Custom",
+      "label-folder": "Folder",
+      "label-global": "Global",
+      "label-none": "None"
+    },
+    "predefined-variables-options": {
+      "all": "All",
+      "description": "This dashboard receives global and folder-scoped variables by default. Choose which ones to keep.",
+      "folder": "Folder",
+      "global": "Global",
+      "label": "Predefined variables",
+      "none": "None"
     },
     "provisioned-controls-section": {
       "label": "Provisioned by data source",
@@ -8453,7 +8497,6 @@
       "open-in-new-tab": "Open in new tab"
     },
     "content-outline": {
-      "title-datasource-explorer": "Datasource explorer",
       "tooltip-collapse-outline": "Collapse outline",
       "tooltip-expand-outline": "Expand outline"
     },
@@ -8681,9 +8724,8 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
     },
-    "metrics-explorer": {
-      "search-placeholder": "Search metrics",
-      "title-metrics": "Metrics"
+    "metrics-list": {
+      "search-placeholder": "Search metrics"
     },
     "next-prev-result": {
       "aria-label-next": "Next result button",
@@ -8861,6 +8903,17 @@
       "recent-queries-button-aria-label": "Recent queries"
     },
     "show-all-spans": "Show all spans",
+    "signal-card": {
+      "collapse-aria-label": "Collapse datasource explorer for query {{refId}}",
+      "expand-aria-label": "Expand datasource explorer for query {{refId}}",
+      "jump-to-query-label": "Jump to query {{refId}} ({{datasourceName}})"
+    },
+    "signal-explorer": {
+      "empty-text": "Add a query to browse its datasource.",
+      "section-label-queries": "Queries",
+      "title-datasource-explorer": "Datasource explorer",
+      "unknown-datasource": "Unknown datasource"
+    },
     "span-bar": {
       "tooltip-critical-path": "A segment on the <1>critical path</1> of the overall trace / request / workflow."
     },
@@ -9005,6 +9058,13 @@
         "title": "Trace restored by Adaptive Traces"
       },
       "aria-label-copy": "Copy to clipboard",
+      "attribute-plugin-promo": {
+        "learn-more": "Learn more"
+      },
+      "database-observability-promo": {
+        "body": "Database Observability surfaces visual explain plans, wait events, and query samples — helping you diagnose issues beyond trace spans.",
+        "title": "Find slow queries faster"
+      },
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
     },
@@ -10509,6 +10569,10 @@
     },
     "secret-form-field": {
       "reset": "Reset"
+    },
+    "secret-input": {
+      "hide": "Hide secret",
+      "show": "Show secret"
     },
     "secret-text-area": {
       "hide-content": "Hide secret content",
@@ -13409,7 +13473,7 @@
       "button-saving": "Saving...",
       "description-commit-message-template": "The commit message used when someone saves, moves, renames, or deletes a resource and leaves the Comment field blank. Placeholders, filled in per operation: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}} (unique resource ID), {{titleVar}}, {{userNameVar}} (display name), {{userLoginVar}} (username), {{userEmailVar}}. Leave blank to use the built-in default messages.",
       "description-connection": "Select the GitHub App connection to use",
-      "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
+      "description-enabled": "Once automatic pulling is enabled, the target type below cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-title": "A human-readable name for the config",
       "error-connection-required": "Connection is required",
