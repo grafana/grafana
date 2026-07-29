@@ -295,7 +295,7 @@
     "@kusto/monaco-kusto": "^10.0.0",
     "@leeoniya/ufuzzy": "1.0.19",
     "@lezer/common": "1.5.2",
-    "@lezer/lr": "1.4.8",
+    "@lezer/lr": "1.4.10",
     "@locker/near-membrane-dom": "0.14.0",
     "@locker/near-membrane-shared": "0.14.0",
     "@msagl/core": "^1.1.19",
