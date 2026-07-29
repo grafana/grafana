@@ -16,6 +16,12 @@ interface RenderParams<T = ActionImpl | string> {
   active: boolean;
 }
 
+interface ItemInfo {
+  label: string | null;
+  posInSet: number;
+  setSize: number;
+}
+
 interface KBarResultsProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   items: any[];
@@ -32,19 +38,36 @@ export const KBarResults = (props: KBarResultsProps) => {
   const itemsRef = React.useRef(props.items);
   itemsRef.current = props.items;
 
-  // A11y: Pre-compute the group label for each item so that option items can
-  // announce their section even when the section header has scrolled out of
-  // the virtual window and is no longer in the DOM.
-  const itemGroupLabels = React.useMemo(() => {
-    const labels: Array<string | null> = [];
-    let currentGroup: string | null = null;
+  // A11y: Pre-compute the group label and set position/size for each item so
+  // that option items can announce their section and "x of y" even when the
+  // virtualizer has removed the section header (or sibling options) from the DOM.
+  // Options are only emitted once the group ends, since setSize isn't known until then.
+  const itemGroupInfo = React.useMemo(() => {
+    const results: ItemInfo[] = [];
+    let groupLabel: string | null = null;
+    let groupSize = 0;
+
+    // commit the current group to the info array
+    const flushGroup = () => {
+      for (let pos = 1; pos <= groupSize; pos++) {
+        results.push({ label: groupLabel, posInSet: pos, setSize: groupSize });
+      }
+      groupSize = 0;
+    };
+
     for (const item of props.items) {
       if (typeof item === 'string') {
-        currentGroup = item;
+        // new group, flush the previous one (if any) and start counting the new one
+        flushGroup();
+        groupLabel = item;
+        results.push({ label: item, posInSet: 0, setSize: 0 });
+      } else {
+        groupSize++;
       }
-      labels.push(currentGroup);
     }
-    return labels;
+    // flush the last group
+    flushGroup();
+    return results;
   }, [props.items]);
 
   const rowVirtualizer = useVirtual({
@@ -192,7 +215,7 @@ export const KBarResults = (props: KBarResultsProps) => {
           // so our url property is secretly there, but completely untyped
           // Preferably this change is upstreamed and ActionImpl has this
           const { target, url } = item;
-          const groupLabel = itemGroupLabels[virtualRow.index];
+          const { label: groupLabel, posInSet, setSize } = itemGroupInfo[virtualRow.index];
 
           const handlers = !isStringItem && {
             onPointerMove: () =>
@@ -209,6 +232,8 @@ export const KBarResults = (props: KBarResultsProps) => {
                   id: getListboxItemId(virtualRow.index),
                   role: 'option',
                   'aria-selected': active,
+                  'aria-setsize': setSize,
+                  'aria-posinset': posInSet,
                 }),
             style: {
               position: 'absolute',
