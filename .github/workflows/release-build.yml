@@ -120,7 +120,30 @@ jobs:
             const {REF, VERSION, BUILD_ID, BUCKET, GRAFANA_COMMIT, PUBLIC_COMMIT, SOURCE_EVENT, REPO} = process.env;
             // grafana-enterprise has no #patched branches, so dispatch it on the plain
             // release branch (e.g. release-13.0.0#patched -> release-13.0.0).
-            const enterpriseRef = REF.replace(/#patched$/, '');
+            let enterpriseRef = REF.replace(/#patched$/, '');
+
+            // If the +security branch doesn't exist in grafana-enterprise yet, fall back to
+            // the base release branch (e.g. release-13.0.0+security-01 -> release-13.0.0).
+            // This covers the case where a security branch is cut from a not-yet-released
+            // version whose enterprise counterpart only has the plain release branch.
+            if (enterpriseRef.includes('+security-')) {
+              try {
+                await github.rest.repos.getBranch({
+                  owner: 'grafana',
+                  repo: 'grafana-enterprise',
+                  branch: enterpriseRef,
+                });
+              } catch (e) {
+                if (e.status === 404) {
+                  const fallback = enterpriseRef.replace(/\+security-[0-9]+$/, '');
+                  core.info(`Enterprise branch ${enterpriseRef} not found; falling back to ${fallback}`);
+                  enterpriseRef = fallback;
+                } else {
+                  throw e;
+                }
+              }
+            }
+
             let workflow = 'release-build-enterprise.yml';
 
             if (REF == 'main' && SOURCE_EVENT == 'push') {
