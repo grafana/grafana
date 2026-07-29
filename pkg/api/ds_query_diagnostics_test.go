@@ -343,3 +343,60 @@ func TestQueryDiagnostics_noCapturePerRefIDError_returns400(t *testing.T) {
 	// No HAR captured + a per-refID error -> bare 400, no bundle (matches QueryMetricsV2's per-refID handling).
 	require.Equal(t, http.StatusBadRequest, hs.QueryDiagnostics(c).Status())
 }
+
+func TestQueryDiagnostics_bundlesPanelData(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+	fakeQuery := query.NewFakeQueryService(t)
+	returnFreshHARResponse(fakeQuery, "QueryData")
+	hs := &HTTPServer{queryDataService: fakeQuery}
+	c, rec := newDiagReqCtx(t, `{
+		"queries":[{"refId":"A"}],
+		"panelData":{"version":1,"frames":[{"schema":{"name":"frontend-marker"}}]}
+	}`, nil)
+
+	resp := hs.QueryDiagnostics(c)
+	require.Equal(t, http.StatusOK, resp.Status())
+
+	resp.WriteTo(c)
+	files := readTarGzFiles(t, rec.Body.Bytes())
+	// The frontend's frames land in their own artifact, so they can be diffed against querydata.json
+	// (the backend's response) to localise data lost inside the plugin's frontend code.
+	require.Contains(t, string(files["paneldata.json"]), "frontend-marker")
+	// Anchored: without this, the assertion below passes vacuously if querydata.json ever stops being
+	// written -- the missing key yields an empty string, which contains nothing.
+	require.Contains(t, files, "querydata.json")
+	require.NotContains(t, string(files["querydata.json"]), "frontend-marker")
+}
+
+// TestQueryDiagnostics_wrongShapedPanelDataDoesNotSinkTheBundle pins the containment claim on the
+// PanelData field that is actually REACHABLE here. The bundler's own test covers a syntactically
+// malformed payload and notes in the same breath that web.Bind rejects it before Build runs -- so the
+// worst that survives binding is a well-formed payload of an unexpected shape, and that is the case
+// the field comment promises costs the caller nothing else. Nothing asserted it until now.
+func TestQueryDiagnostics_wrongShapedPanelDataDoesNotSinkTheBundle(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagGrafanaOnDemandDiagnostics, true)
+
+	// Every JSON kind a RawMessage will accept in place of the expected object. A scalar is the shape a
+	// caller is likeliest to arrive with by accident; an array is the one likeliest to come from
+	// serializing the frames without their envelope.
+	for _, payload := range []string{`42`, `"not-an-object"`, `[]`, `{"unexpected":true}`} {
+		t.Run(payload, func(t *testing.T) {
+			fakeQuery := query.NewFakeQueryService(t)
+			returnFreshHARResponse(fakeQuery, "QueryData")
+			hs := &HTTPServer{queryDataService: fakeQuery}
+			c, rec := newDiagReqCtx(t, `{"queries":[{"refId":"A"}],"panelData":`+payload+`}`, nil)
+
+			resp := hs.QueryDiagnostics(c)
+			require.Equal(t, http.StatusOK, resp.Status(), "an unexpected shape must not fail the request")
+
+			resp.WriteTo(c)
+			files := readTarGzFiles(t, rec.Body.Bytes())
+			// Stored as sent: nothing on this side parses the payload, so its shape is not the bundler's
+			// business -- a reader keying off the frontend's version stamp decides what to make of it.
+			require.Equal(t, payload, string(files["paneldata.json"]))
+			// The point of the test: the rest of the bundle is untouched.
+			require.Contains(t, files, "querydata.json")
+			require.Contains(t, files, "traffic.har")
+		})
+	}
+}

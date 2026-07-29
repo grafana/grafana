@@ -1,5 +1,6 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -262,17 +263,21 @@ describe('Explore', () => {
       getBoolMock.mockRestore();
     });
 
-    it('shows the metrics explorer when a Mixed datasource contains a managed Prometheus flavor query', async () => {
+    it('shows an expandable query card when a Mixed datasource contains a managed Prometheus flavor query', async () => {
       setTestFlags({ 'grafana.exploreMetricsSidebar': true });
       setup({
         datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
         queries: [{ refId: 'A', datasource: { type: 'grafana-amazonprometheus-datasource', uid: 'amp-uid' } }],
       });
 
-      expect(await screen.findByPlaceholderText('Search metrics')).toBeInTheDocument();
+      expect(await screen.findByTestId('signal-card-A')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+
+      expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
     });
 
-    it('does not show the metrics explorer for a non-Prometheus Mixed datasource query', async () => {
+    it('does not show the query cards for a non-Prometheus Mixed datasource query', async () => {
       setTestFlags({ 'grafana.exploreMetricsSidebar': true });
       setup({
         datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
@@ -280,6 +285,7 @@ describe('Explore', () => {
       });
 
       await screen.findByTestId(selectors.components.DataSourcePicker.container);
+      expect(screen.queryByTestId('signal-card-A')).not.toBeInTheDocument();
       expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
     });
   });

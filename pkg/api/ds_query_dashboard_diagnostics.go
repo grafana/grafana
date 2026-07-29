@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -374,6 +375,10 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 		queryData = hs.queryDataService.QueryDataNew
 	}
 
+	// Fallback for panels the client posts without inline JSON (it sends the dashboard once instead).
+	vizPluginIDByPanelID := diagnostics.PanelPluginIDs(reqDTO.Dashboard)
+	var envRefs diagnostics.EnvironmentRefs
+
 	panels := make([]diagnostics.DashboardPanel, 0, len(reqDTO.Panels))
 	for i, p := range reqDTO.Panels {
 		// ctx is detachedCtx (see QueryDashboardDiagnostics), derived from context.WithoutCancel, so
@@ -388,6 +393,14 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 			PanelJSON:   p.Panel,
 			Datasources: panelDatasourceUIDs(p.MetricRequest),
 		}
+
+		// Recorded before the skip below: a non-data panel still has a viz plugin worth naming.
+		panelRefs := panelEnvironmentRefs(p.MetricRequest, p.Panel)
+		if len(panelRefs.PanelPluginIDs) == 0 {
+			panelRefs.AddPanelPluginID(vizPluginIDByPanelID[p.ID])
+		}
+		panel.PluginIDs = panelRefs.PluginIDs()
+		envRefs.Merge(panelRefs)
 
 		// A single panel's unserializable query request must not abort the whole archive: record it
 		// against this panel (surfaced in the manifest) and carry on, the same way query and capture
@@ -423,7 +436,31 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 		dashboardDiagnosticsJobs.setProgress(jobUID, i+1)
 	}
 
-	return diagnostics.NewBundler().BuildDashboard(reqDTO.Dashboard, panels)
+	env := diagnostics.CollectEnvironment(ctx, hs.Cfg, hs.pluginStore, envRefs)
+	return diagnostics.NewBundler(env).BuildDashboard(reqDTO.Dashboard, panels)
+}
+
+// panelEnvironmentRefs collects the plugins one panel referenced, from the payload the client
+// already posted: each query's datasource type, plus the panel's viz plugin ID.
+func panelEnvironmentRefs(req dtos.MetricRequest, panelJSON json.RawMessage) diagnostics.EnvironmentRefs {
+	var refs diagnostics.EnvironmentRefs
+	for _, q := range req.Queries {
+		if q == nil {
+			continue
+		}
+		ds := q.Get("datasource")
+		uid := ds.Get("uid").MustString()
+		pluginID := ds.Get("type").MustString()
+		// Expression and ML nodes are served by pkg/expr, not by a plugin, so recording their type
+		// would have the plugin store report a phantom uninstalled plugin. Recorded with no plugin ID
+		// rather than dropped, so every UID in the manifest still resolves in environment.json.
+		if expr.IsDataSource(uid) || uid == expr.MLDatasourceUID {
+			pluginID = ""
+		}
+		refs.AddDatasource(uid, pluginID)
+	}
+	refs.AddPanelPluginID(diagnostics.PanelPluginID(panelJSON))
+	return refs
 }
 
 // panelDatasourceUIDs returns the unique datasource UIDs referenced by a panel's queries.
