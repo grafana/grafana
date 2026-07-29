@@ -104,7 +104,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginRight: theme.spacing(1.5),
       color: theme.colors.accent.text,
       backgroundColor: theme.colors.accent.transparent,
-      border: `1px solid ${theme.colors.accent.border}`,
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(1),
       width: theme.spacing(5),
