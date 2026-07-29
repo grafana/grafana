@@ -17,10 +17,10 @@ const environmentArtifactVersion = 1
 // One per bundle, not one per panel: Grafana runs a single version of a plugin per install (see
 // pluginstore.Store.Plugin), so per-panel copies would all be identical.
 type Environment struct {
-	Version int          `json:"version"`
-	Grafana GrafanaBuild `json:"grafana"`
-	Plugins map[string]PluginVersion `json:"plugins,omitempty"`
-	Datasources map[string]string `json:"datasources,omitempty"`
+	Version     int                      `json:"version"`
+	Grafana     GrafanaBuild             `json:"grafana"`
+	Plugins     map[string]PluginVersion `json:"plugins,omitempty"`
+	Datasources map[string]string        `json:"datasources,omitempty"`
 }
 
 // GrafanaBuild identifies the Grafana build that produced the bundle.
