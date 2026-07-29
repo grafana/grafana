@@ -8891,7 +8891,7 @@
     "signal-card": {
       "collapse-aria-label": "Collapse datasource explorer for query {{refId}}",
       "expand-aria-label": "Expand datasource explorer for query {{refId}}",
-      "jump-to-query-tooltip": "Jump to query {{refId}} ({{datasourceName}})"
+      "jump-to-query-label": "Jump to query {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
       "empty-text": "Add a query to browse its datasource.",

@@ -40,6 +40,13 @@ export function SignalCard({
   // refIds are user-editable, so deriving the id from one risks characters that make
   // aria-controls unresolvable, or collisions with another card in a split pane.
   const bodyId = useId();
+  // The datasource name is not rendered inline (the logo covers the type and long query
+  // names need the room), so name the card with it to disambiguate two instances of the
+  // same datasource type in Mixed mode.
+  const jumpLabel = t('explore.signal-card.jump-to-query-label', 'Jump to query {{refId}} ({{datasourceName}})', {
+    refId,
+    datasourceName,
+  });
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     // Keydowns from the nested chevron bubble up here. Claiming them would
@@ -65,13 +72,10 @@ export function SignalCard({
         )}
         role="button"
         tabIndex={0}
-        // The datasource name is not rendered inline (the logo covers the type and
-        // long query names need the room), so surface it here for disambiguation
-        // between two instances of the same datasource type in Mixed mode.
-        title={t('explore.signal-card.jump-to-query-tooltip', 'Jump to query {{refId}} ({{datasourceName}})', {
-          refId,
-          datasourceName,
-        })}
+        // `title` only names an element that has no other name, and this one is named by
+        // its refId text, so the label has to be explicit or the datasource name is lost.
+        aria-label={jumpLabel}
+        title={jumpLabel}
         onClick={onJumpToQuery}
         onKeyDown={handleKeyDown}
       >
