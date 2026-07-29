@@ -10973,6 +10973,9 @@
     "alerts-incidents": {
       "alert-tab-label": "Firing alerts",
       "incident-tab-label": "Incidents",
+      "team-filter-all": "All teams",
+      "team-filter-label": "Filter alerts by team",
+      "team-filter-your-teams": "Your teams",
       "title": "Alerts & incidents",
       "title-alerts": "Alerts",
       "title-incidents": "Incidents"
@@ -10995,6 +10998,7 @@
       "critical-count_one": "{{count}} critical",
       "critical-count_other": "{{count}} critical",
       "empty": "You have no firing alerts.",
+      "empty-selected-team": "No firing alerts for {{team}}.",
       "empty-teams": "No firing alerts for your teams.",
       "error-title": "Could not load firing alerts",
       "high-count_one": "{{count}} high",
@@ -15905,6 +15909,24 @@
     "name-show-mini-map": "Show mini map"
   },
   "textng": {
+    "category-text": "Text",
+    "code-view": {
+      "aria-label-code-content": "Code content"
+    },
+    "editor": {
+      "aria-label-content": "Text content",
+      "view-preview": "Preview",
+      "view-split": "Split",
+      "view-write": "Write"
+    },
+    "mode-options": {
+      "label-code": "Code",
+      "label-html": "HTML",
+      "label-markdown": "Markdown"
+    },
+    "name-language": "Language",
+    "name-mode": "Mode",
+    "name-show-line-numbers": "Show line numbers"
     "category-text": "Text",
     "code-view": {
       "aria-label-code-content": "Code content"
