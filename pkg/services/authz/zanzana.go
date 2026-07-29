@@ -257,6 +257,21 @@ type ZanzanaClientConfig struct {
 	KeepaliveTime    time.Duration
 }
 
+// defaultCallTimeout is applied to unary calls whose context carries no deadline. It spans
+// all retry attempts, so it must comfortably exceed the retry interceptor's total backoff.
+const defaultCallTimeout = 30 * time.Second
+
+func unaryDefaultTimeout(timeout time.Duration) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		if _, hasDeadline := ctx.Deadline(); !hasDeadline {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, timeout)
+			defer cancel()
+		}
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+}
+
 // NewRemoteZanzanaClient creates a new Zanzana client that connects to remote Zanzana server.
 func NewRemoteZanzanaClient(cfg ZanzanaClientConfig, reg prometheus.Registerer) (zanzana.Client, error) {
 	tokenClient, err := authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
@@ -291,12 +306,16 @@ func NewRemoteZanzanaClient(cfg ZanzanaClientConfig, reg prometheus.Registerer) 
 		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.Aborted),
 	)
 
+	// Background callers (reconcilers, hooks) may pass contexts without deadlines; a default
+	// deadline prevents calls from blocking indefinitely on an unresponsive connection.
+	timeoutInterceptor := unaryDefaultTimeout(defaultCallTimeout)
+
 	dialOptions := []grpc.DialOption{
 		grpc.WithTransportCredentials(transportCredentials),
 		grpc.WithPerRPCCredentials(
 			NewGRPCTokenAuth(AuthzServiceAudience, cfg.TokenNamespace, tokenClient),
 		),
-		grpc.WithChainUnaryInterceptor(append([]grpc.UnaryClientInterceptor{retryInterceptor}, unaryInterceptors...)...),
+		grpc.WithChainUnaryInterceptor(append([]grpc.UnaryClientInterceptor{timeoutInterceptor, retryInterceptor}, unaryInterceptors...)...),
 		grpc.WithChainStreamInterceptor(streamInterceptors...),
 		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
 		// Fast connection backoff for quicker recovery from transient failures (e.g. during pod
