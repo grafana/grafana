@@ -230,19 +230,21 @@ export default function VariablesManagementPage() {
         {isError ? (
           <LoadVariablesError error={error} />
         ) : isEmpty ? (
-          <EmptyState
-            variant="call-to-action"
-            message={t('variables-management.page.empty-title', "You haven't created any variables yet")}
-            button={
-              <Button icon="plus" size="lg" onClick={() => locationService.push(`${LIST_URL}/new`)}>
-                <Trans i18nKey="variables-management.page.empty-cta">New variable</Trans>
-              </Button>
-            }
-          >
-            <Trans i18nKey="variables-management.page.empty-body">
-              Variables created here can be shared across dashboards, either globally or scoped to a folder.
-            </Trans>
-          </EmptyState>
+          <div className={styles.content}>
+            <EmptyState
+              variant="call-to-action"
+              message={t('variables-management.page.empty-title', "You haven't created any variables yet")}
+              button={
+                <Button icon="plus" size="lg" onClick={() => locationService.push(`${LIST_URL}/new`)}>
+                  <Trans i18nKey="variables-management.page.empty-cta">New variable</Trans>
+                </Button>
+              }
+            >
+              <Trans i18nKey="variables-management.page.empty-body">
+                Variables created here can be shared across dashboards, either globally or scoped to a folder.
+              </Trans>
+            </EmptyState>
+          </div>
         ) : (
           <div className={styles.content}>
             {selected.size > 0 && (

@@ -216,36 +216,137 @@ func TestAddCapabilityFieldMappings_FacetOnly(t *testing.T) {
 	assert.False(t, m.Store)
 }
 
-func TestFacetFieldsForMapping(t *testing.T) {
+func TestKeywordFieldsForMapping(t *testing.T) {
 	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
 	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
 		gvr: {
+			// Same shape as the IAM user kind's login/email.
+			{Name: "login", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+			{Name: "summary", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFilter}},
+			{Name: "category", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFacet}},
+			{Name: "panel_title", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText}},
+			{Name: "views", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilitySort}},
+		},
+	}, nil)
+
+	fields := keywordFieldsForMapping(provider, gvr.Group, gvr.Resource, []string{"spec.login"})
+
+	// Filter-only per-kind fields are keyword-analyzed under their own name.
+	assert.Equal(t, keywordField{name: "fields.login", filterable: true}, fields["fields.login"])
+	// A text field's keyword form is a separate, lowercased variant.
+	assert.Equal(t, keywordField{name: "fields.summary_keyword", lowered: true, filterable: true}, fields["fields.summary"])
+	// tags is both filterable and facetable; managedBy is facet-only.
+	assert.Equal(t, keywordField{name: resource.SEARCH_FIELD_TAGS, filterable: true, facetable: true}, fields[resource.SEARCH_FIELD_TAGS])
+	// A facet-only field has a keyword form, but filtering it is not declared.
+	assert.Equal(t, keywordField{name: "fields.category", facetable: true}, fields["fields.category"])
+	// Standard fields.
+	assert.Equal(t, keywordField{name: resource.SEARCH_FIELD_TITLE_PHRASE, lowered: true, filterable: true}, fields[resource.SEARCH_FIELD_TITLE])
+	assert.Equal(t, keywordField{name: resource.SEARCH_FIELD_CREATED_BY, filterable: true}, fields[resource.SEARCH_FIELD_CREATED_BY])
+	assert.Equal(t, keywordField{name: resource.SEARCH_FIELD_OWNER_REFERENCES, filterable: true}, fields[resource.SEARCH_FIELD_OWNER_REFERENCES])
+	assert.Equal(t, keywordField{name: resource.SEARCH_FIELD_MANAGED_BY, facetable: true}, fields[resource.SEARCH_FIELD_MANAGED_BY])
+	assert.Equal(t, keywordField{name: resource.SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.login", filterable: true}, fields[resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.login"])
+
+	// Facet requests may name a per-kind field with or without the prefix.
+	assert.Equal(t, fields["fields.summary"], fields["summary"])
+	assert.Equal(t, fields["fields.category"], fields["category"])
+
+	// Fields with no keyword form: text-only, and a non-string field.
+	assert.NotContains(t, fields, "fields.panel_title")
+	assert.NotContains(t, fields, "fields.views")
+	assert.NotContains(t, fields, resource.SEARCH_FIELD_DESCRIPTION)
+	// Labels have no keyword analyzer.
+	assert.NotContains(t, fields, "labels.login")
+}
+
+func TestKeywordFieldsForMapping_StandardNameWins(t *testing.T) {
+	// A per-kind field named like a standard one must not take over the bare
+	// name: resolveFieldName keeps standard fields top-level, so a filter on
+	// "tags" has to reach the standard field.
+	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: {{Name: resource.SEARCH_FIELD_TAGS, Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}}},
+	}, nil)
+
+	fields := keywordFieldsForMapping(provider, gvr.Group, gvr.Resource, nil)
+	assert.Equal(t, resource.SEARCH_FIELD_TAGS, fields[resource.SEARCH_FIELD_TAGS].name)
+	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_TAGS, fields[resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_TAGS].name)
+}
+
+func TestTextQueryKindsForMapping(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "example.grafana.app", Version: "v1", Resource: "widgets"}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: {
 			{
-				Name: "summary",
+				Name: "panel_title",
 				Type: resource.SearchFieldTypeString,
 				Capabilities: []resource.SearchCapability{
 					resource.SearchCapabilityText,
-					resource.SearchCapabilityFacet,
+					resource.SearchCapabilityPartial,
 				},
 			},
 			{
-				Name:         "category",
+				Name:         "team",
 				Type:         resource.SearchFieldTypeString,
-				Capabilities: []resource.SearchCapability{resource.SearchCapabilityFacet},
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter},
+			},
+			{
+				Name:         "summary",
+				Type:         resource.SearchFieldTypeString,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFilter},
+			},
+			{
+				Name:         "linkCount",
+				Type:         resource.SearchFieldTypeInt64,
+				Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter},
 			},
 		},
 	}, nil)
 
-	fields := facetFieldsForMapping(provider, gvr.Group, gvr.Resource)
-	assert.Equal(t, resource.SEARCH_FIELD_TAGS, fields[resource.SEARCH_FIELD_TAGS])
-	assert.Equal(t, resource.SEARCH_FIELD_MANAGED_BY, fields[resource.SEARCH_FIELD_MANAGED_BY])
-	assert.Equal(t, "fields.summary_keyword", fields["summary"])
-	assert.Equal(t, "fields.summary_keyword", fields["fields.summary"])
-	assert.Equal(t, "fields.category", fields["category"])
-	assert.NotContains(t, fields, resource.SEARCH_FIELD_FOLDER)
-	assert.NotContains(t, fields, "labels.region")
+	kinds := textQueryKindsForMapping(provider, gvr.Group, gvr.Resource, []string{"spec.slug"})
+
+	// The title trio: each variant gets the query its analyzer needs.
+	assert.Equal(t, textQueryStandard, kinds[resource.SEARCH_FIELD_TITLE])
+	assert.Equal(t, textQueryNgram, kinds[resource.SEARCH_FIELD_TITLE_NGRAM])
+	// title_phrase holds a lowercased copy of the title.
+	assert.Equal(t, textQueryTermLowered, kinds[resource.SEARCH_FIELD_TITLE_PHRASE])
+
+	// Other standard fields.
+	assert.Equal(t, textQueryStandard, kinds[resource.SEARCH_FIELD_DESCRIPTION])
+	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_FIELD_FOLDER])
+	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_FIELD_TAGS])
+
+	// Per-kind fields live under fields.*
+	assert.Equal(t, textQueryStandard, kinds["fields.panel_title"])
+	assert.Equal(t, textQueryNgram, kinds["fields.panel_title_ngram"])
+	// team is keyword-mapped in place, so it keeps the value's case, while
+	// summary_keyword is a lowercased copy of the text field.
+	assert.Equal(t, textQueryTerm, kinds["fields.team"])
+	assert.Equal(t, textQueryStandard, kinds["fields.summary"])
+	assert.Equal(t, textQueryTermLowered, kinds["fields.summary_keyword"])
+
+	// Non-string fields are never analyzed, so they are absent.
+	assert.NotContains(t, kinds, "fields.linkCount")
+
+	// Selectable fields are keyword-mapped.
+	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.slug"])
+
+	// Keyword-mapped sub-document fields, and labels which are not.
+	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_FIELD_MANAGER_KIND])
+	assert.Equal(t, textQueryTerm, kinds[resource.SEARCH_FIELD_SOURCE_PATH])
+	assert.NotContains(t, kinds, resource.SEARCH_FIELD_LABELS+".region")
+
+	// An index without per-kind fields still knows the standard ones.
+	assert.Equal(t, textQueryTermLowered, textQueryKindsForMapping(nil, "", "", nil)[resource.SEARCH_FIELD_TITLE_PHRASE])
 }
 
+func TestBleveIndex_textQueryKindFor(t *testing.T) {
+	b := &bleveIndex{searchFields: kindSearchFields{textQueryKinds: map[string]textQueryKind{resource.SEARCH_FIELD_TITLE_PHRASE: textQueryTerm}}}
+	assert.Equal(t, textQueryTerm, b.textQueryKindFor(resource.SEARCH_FIELD_TITLE_PHRASE))
+	// reference keys are dynamic, so the keyword sub-document is matched by prefix.
+	assert.Equal(t, textQueryTerm, b.textQueryKindFor("reference.datasource"))
+	// Undeclared fields fall back to the analyzed query.
+	assert.Equal(t, textQueryStandard, b.textQueryKindFor(resource.SEARCH_FIELD_LABELS+".region"))
+}
 func TestAddCapabilityFieldMappings_RetrieveOnly_StoreOnly(t *testing.T) {
 	// With no dynamic fallback, a retrieve-only field must be stored explicitly.
 	t.Run("int64", func(t *testing.T) {
@@ -329,15 +430,26 @@ func TestResolveFieldName(t *testing.T) {
 	assert.Equal(t, resource.SEARCH_FIELD_TITLE_NGRAM, resolveFieldName(reserved, resource.SEARCH_FIELD_TITLE_NGRAM))
 }
 
-func TestBleveIndex_exactFieldValueQuery(t *testing.T) {
-	fields, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(
-		[]resource.SearchFieldDefinition{
-			{Name: "note", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFilter}},
-			{Name: "tag", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
-		},
-	))
+// customFieldsIndex returns an index whose per-kind declarations are the given
+// definitions, wired the way openIndex does it.
+func customFieldsIndex(t *testing.T, defs ...resource.SearchFieldDefinition) *bleveIndex {
+	t.Helper()
+	fields, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(defs))
 	require.NoError(t, err)
-	b := &bleveIndex{fields: fields, standard: resource.StandardSearchFields()}
+	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{gvr: defs}, nil)
+	return &bleveIndex{
+		fields:       fields,
+		standard:     resource.StandardSearchFields(),
+		searchFields: newKindSearchFields(provider, gvr.Group, gvr.Resource, nil),
+	}
+}
+
+func TestBleveIndex_exactFieldValueQuery(t *testing.T) {
+	b := customFieldsIndex(t,
+		resource.SearchFieldDefinition{Name: "note", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFilter}},
+		resource.SearchFieldDefinition{Name: "tag", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
+	)
 
 	termOf := func(q query.Query) *query.TermQuery {
 		tq, ok := q.(*query.TermQuery)
@@ -350,23 +462,26 @@ func TestBleveIndex_exactFieldValueQuery(t *testing.T) {
 	assert.Equal(t, resource.SEARCH_FIELD_TITLE_PHRASE, title.Field())
 	assert.Equal(t, "foo bar", title.Term)
 
-	// Custom fields match on their indexed name (their <name>_keyword variant is
-	// not populated at index time), value unchanged. This holds for text+filter
-	// and filter-only fields alike.
-	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+"note", termOf(b.exactFieldValueQuery(resource.SEARCH_FIELD_PREFIX+"note", "Exact")).Field())
-	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+"tag", termOf(b.exactFieldValueQuery(resource.SEARCH_FIELD_PREFIX+"tag", "x")).Field())
+	// A text field's keyword form lives in a separate variant, which stores
+	// lowercased values.
+	note := termOf(b.exactFieldValueQuery(resource.SEARCH_FIELD_PREFIX+"note", "Exact"))
+	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+"note_keyword", note.Field())
+	assert.Equal(t, "exact", note.Term)
+
+	// A filter-only field is keyword-analyzed under its own name, value unchanged.
+	tag := termOf(b.exactFieldValueQuery(resource.SEARCH_FIELD_PREFIX+"tag", "X"))
+	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+"tag", tag.Field())
+	assert.Equal(t, "X", tag.Term)
+
 	// A standard non-text field is unchanged.
 	assert.Equal(t, resource.SEARCH_FIELD_FOLDER, termOf(b.exactFieldValueQuery(resource.SEARCH_FIELD_FOLDER, "x")).Field())
 }
 
 func TestRequirementQuery_TextFilterDispatch(t *testing.T) {
-	fields, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(
-		[]resource.SearchFieldDefinition{
-			{Name: "note", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFilter}},
-		},
-	))
-	require.NoError(t, err)
-	b := &bleveIndex{fields: fields, standard: resource.StandardSearchFields()}
+	b := customFieldsIndex(t,
+		resource.SearchFieldDefinition{Name: "note", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFilter}},
+		resource.SearchFieldDefinition{Name: "panel_title", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText}},
+	)
 
 	// title has a populated keyword variant, so "in" dispatches an exact TermQuery
 	// against title_phrase.
@@ -377,39 +492,112 @@ func TestRequirementQuery_TextFilterDispatch(t *testing.T) {
 	assert.Equal(t, resource.SEARCH_FIELD_TITLE_PHRASE, tq.Field())
 	assert.Equal(t, "foo bar", tq.Term)
 
-	// A custom text+filter field has no populated keyword variant, so "in" stays
-	// on the analyzed indexed field (exact set-membership for such fields is a
-	// tracked follow-up that needs index-time keyword population).
+	// A custom text+filter field is filtered on its populated keyword variant.
 	note := resource.SEARCH_FIELD_PREFIX + "note" // resolved physical name, as filterQueries passes it
 	q, errRes = b.requirementQuery(&resourcepb.Requirement{Key: note, Operator: "in", Values: []string{"Foo Bar"}})
 	require.Nil(t, errRes)
+	tq, ok = q.(*query.TermQuery)
+	require.True(t, ok, "in on a custom text+filter field should build an exact TermQuery")
+	assert.Equal(t, note+"_keyword", tq.Field())
+	assert.Equal(t, "foo bar", tq.Term)
+
+	// A text-only field has no keyword form, so it stays on the analyzed path.
+	panelTitle := resource.SEARCH_FIELD_PREFIX + "panel_title"
+	q, errRes = b.requirementQuery(&resourcepb.Requirement{Key: panelTitle, Operator: "in", Values: []string{"Foo Bar"}})
+	require.Nil(t, errRes)
 	mq, ok := q.(*query.MatchQuery)
-	require.True(t, ok, "in on a custom text field should build an analyzed MatchQuery")
+	require.True(t, ok, "in on a text-only field should build an analyzed MatchQuery")
+	assert.Equal(t, panelTitle, mq.Field())
+
+	// notin is deliberately not symmetric with in: it excludes on the analyzed
+	// field, so it also excludes documents that merely contain the value. Making
+	// it exact has been tried and reverted; change it only on purpose.
+	q, errRes = b.requirementQuery(&resourcepb.Requirement{Key: note, Operator: "notin", Values: []string{"Foo"}})
+	require.Nil(t, errRes)
+	bq, ok := q.(*query.BooleanQuery)
+	require.True(t, ok)
+	mustNot, ok := bq.MustNot.(*query.DisjunctionQuery)
+	require.True(t, ok)
+	require.Len(t, mustNot.Disjuncts, 1)
+	mq, ok = mustNot.Disjuncts[0].(*query.MatchQuery)
+	require.True(t, ok, "notin on a text+filter field should stay on the analyzed field")
 	assert.Equal(t, note, mq.Field())
 }
 
-func TestFilterQueries_LabelExactTermAllowlist(t *testing.T) {
+func TestRequirementQuery_ExactPathFromCapabilities(t *testing.T) {
+	b := customFieldsIndex(t,
+		resource.SearchFieldDefinition{Name: "category", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
+		resource.SearchFieldDefinition{Name: "summary", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText}},
+		resource.SearchFieldDefinition{Name: "kind", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFacet}},
+	)
+
+	// A filter-only field is keyword-analyzed, so "=" matches the whole value as
+	// one token. Nothing about the field's name says so: the capability does.
+	category := resource.SEARCH_FIELD_PREFIX + "category"
+	q, errRes := b.requirementQuery(&resourcepb.Requirement{Key: category, Operator: "=", Values: []string{"Two Words"}})
+	require.Nil(t, errRes)
+	tq, ok := q.(*query.TermQuery)
+	require.True(t, ok, "= on a filter-capable field should build an exact TermQuery")
+	assert.Equal(t, category, tq.Field())
+	assert.Equal(t, "Two Words", tq.Term)
+
+	// The same kind's text-only field is analyzed, so it takes the match path.
+	summary := resource.SEARCH_FIELD_PREFIX + "summary"
+	q, errRes = b.requirementQuery(&resourcepb.Requirement{Key: summary, Operator: "=", Values: []string{"Two Words"}})
+	require.Nil(t, errRes)
+	_, ok = q.(*query.MatchQuery)
+	assert.True(t, ok, "= on a text-only field should build an analyzed MatchQuery")
+
+	// A facet-only field is keyword-mapped, but it never declared that it can be
+	// filtered, so filtering it keeps the analyzed path.
+	kind := resource.SEARCH_FIELD_PREFIX + "kind"
+	q, errRes = b.requirementQuery(&resourcepb.Requirement{Key: kind, Operator: "=", Values: []string{"x"}})
+	require.Nil(t, errRes)
+	_, ok = q.(*query.MatchQuery)
+	assert.True(t, ok, "= on a facet-only field should build an analyzed MatchQuery")
+
+	// An undeclared field cannot be shown to be keyword-analyzed, so it keeps the
+	// analyzed path.
+	q, errRes = b.requirementQuery(&resourcepb.Requirement{Key: resource.SEARCH_FIELD_PREFIX + "unknown", Operator: "=", Values: []string{"x"}})
+	require.Nil(t, errRes)
+	_, ok = q.(*query.MatchQuery)
+	assert.True(t, ok, "= on an undeclared field should build an analyzed MatchQuery")
+}
+
+func TestRequirementQuery_StandardExactFields(t *testing.T) {
+	// createdBy and ownerReferences are declared filter-capable standard fields:
+	// they stay exact without being named anywhere in the query path.
 	b := &bleveIndex{standard: resource.StandardSearchFields()}
-	// A label whose key is in the exact-term allowlist keeps its TermQuery
-	// semantics even though it is hoisted to labels.<key> for the physical query
-	// (labels are standard-analyzed, so the analyzed path would tokenize the value).
+	for _, key := range []string{resource.SEARCH_FIELD_CREATED_BY, resource.SEARCH_FIELD_OWNER_REFERENCES} {
+		q, errRes := b.requirementQuery(&resourcepb.Requirement{Key: key, Operator: "=", Values: []string{"user:abc"}})
+		require.Nil(t, errRes)
+		tq, ok := q.(*query.TermQuery)
+		require.True(t, ok, "= on %s should build an exact TermQuery", key)
+		assert.Equal(t, key, tq.Field())
+		assert.Equal(t, "user:abc", tq.Term)
+	}
+}
+
+func TestFilterQueries_LabelsUseAnalyzedPath(t *testing.T) {
+	b := &bleveIndex{standard: resource.StandardSearchFields()}
+	// Labels are standard-analyzed, so every label filter goes through the
+	// analyzed path. "login" used to be an exception, hardcoded back when the
+	// exact-term decision was a name list.
 	req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
 		Labels: []*resourcepb.Requirement{{Key: "login", Operator: "in", Values: []string{"foo-bar"}}},
 	}}
 	queries, e := b.filterQueries(req)
 	require.Nil(t, e)
 	require.Len(t, queries, 1)
-	tq, ok := queries[0].(*query.TermQuery)
-	require.True(t, ok, "login label filter should use an exact TermQuery")
-	assert.Equal(t, resource.SEARCH_FIELD_LABELS+".login", tq.Field())
-	assert.Equal(t, "foo-bar", tq.Term)
+	mq, ok := queries[0].(*query.MatchQuery)
+	require.True(t, ok, "label filter should use an analyzed MatchQuery")
+	assert.Equal(t, resource.SEARCH_FIELD_LABELS+".login", mq.Field())
+	assert.Equal(t, "foo-bar", mq.Match)
 }
 
 func TestFilterQueries_LabelNotInUsesAnalyzedPath(t *testing.T) {
 	b := &bleveIndex{standard: resource.StandardSearchFields()}
-	// notin keeps the legacy analyzed path even for an allowlist label key: only
-	// "="/"in" consult the exact-term allowlist, and title is the sole notin exact
-	// case. A raw TermQuery here would fail to exclude standard-analyzed labels.
+	// A raw TermQuery here would fail to exclude standard-analyzed labels.
 	req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
 		Labels: []*resourcepb.Requirement{{Key: "login", Operator: "notin", Values: []string{"foo-bar"}}},
 	}}
@@ -443,28 +631,30 @@ func TestFilterQueries_DoesNotMutateRequest(t *testing.T) {
 }
 
 func TestGetSortFields_ResolvesPhysicalNames(t *testing.T) {
-	fields, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(
-		[]resource.SearchFieldDefinition{
-			{Name: "note", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilitySort}},
-			{Name: "num", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilitySort}},
-		},
-	))
+	defs := []resource.SearchFieldDefinition{
+		{Name: "note", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilitySort}},
+		{Name: "num", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilitySort}},
+	}
+	fields, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(defs))
 	require.NoError(t, err)
+	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{gvr: defs}, nil)
+	b := &bleveIndex{fields: fields, searchFields: newKindSearchFields(provider, gvr.Group, gvr.Resource, nil)}
 
 	req := &resourcepb.ResourceSearchRequest{SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 		{Field: resource.SEARCH_FIELD_TITLE},           // standard title -> populated title_phrase
-		{Field: "note"},                                // text field -> indexed name (no _keyword)
+		{Field: "note"},                                // text field -> doc-valued keyword variant
 		{Field: "num"},                                 // numeric sort field -> its indexed name
-		{Field: resource.SEARCH_FIELD_PREFIX + "note"}, // already-prefixed text-only name is preserved
+		{Field: resource.SEARCH_FIELD_PREFIX + "note"}, // already-prefixed name resolves the same way
 	}}
 	// name is appended as a stable tie-breaker.
 	assert.Equal(t, []string{
 		resource.SEARCH_FIELD_TITLE_PHRASE,
-		resource.SEARCH_FIELD_PREFIX + "note",
+		resource.SEARCH_FIELD_PREFIX + "note_keyword",
 		resource.SEARCH_FIELD_PREFIX + "num",
-		resource.SEARCH_FIELD_PREFIX + "note",
+		resource.SEARCH_FIELD_PREFIX + "note_keyword",
 		resource.SEARCH_FIELD_NAME,
-	}, getSortFields(req, fields))
+	}, b.getSortFields(req))
 }
 
 func TestBleveIndex_resolveQueryFields(t *testing.T) {
@@ -490,11 +680,12 @@ func TestBleveIndex_resolveQueryFields(t *testing.T) {
 	// An explicit title field fans out the same way.
 	assert.Equal(t, titleVariants, names(b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: resource.SEARCH_FIELD_TITLE}})))
 
-	// A per-kind field resolves to fields.* and keeps its requested type/boost.
-	got := b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: "panel_title", Type: resourcepb.QueryFieldType_TEXT, Boost: 3}})
+	// A per-kind field resolves to fields.* and keeps its requested boost. The
+	// requested type is dropped: the backend derives it from the mapping.
+	got := b.resolveQueryFields([]*resourcepb.ResourceSearchRequest_QueryField{{Name: "panel_title", Type: resourcepb.QueryFieldType_KEYWORD, Boost: 3}})
 	require.Len(t, got, 1)
 	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+"panel_title", got[0].Name)
-	assert.Equal(t, resourcepb.QueryFieldType_TEXT, got[0].Type)
+	assert.Equal(t, resourcepb.QueryFieldType_DEFAULT, got[0].Type)
 	assert.Equal(t, float32(3), got[0].Boost)
 
 	// title + per-kind field: title variants first, then the resolved field.

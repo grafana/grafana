@@ -1,0 +1,298 @@
+import {
+  closestIdx,
+  type DataFrame,
+  DataFrameType,
+  type DataQueryResponse,
+  type DataQueryResponseData,
+  type Field,
+  FieldType,
+  LoadingState,
+  type QueryResultMetaNotice,
+  type QueryResultMetaStat,
+  shallowCompare,
+} from '@grafana/data';
+
+function getFrameKey(frame: DataFrame): string | undefined {
+  // Metric range query data
+  if (frame.meta?.type === DataFrameType.TimeSeriesMulti) {
+    const field = frame.fields.find((f) => f.type === FieldType.number);
+    if (!field) {
+      throw new Error(`Unable to find number field on sharded dataframe!`);
+    }
+    let key = '';
+    if (frame.refId) {
+      key += frame.refId;
+    }
+    if (frame.name) {
+      key += frame.name;
+    }
+    if (field.labels) {
+      key += JSON.stringify(field.labels);
+    }
+    return key !== '' ? key : undefined;
+  }
+  return frame.refId ?? frame.name;
+}
+
+/**
+ * @todo test new response is error, current response is not
+ * @param currentResponse
+ * @param newResponse
+ */
+export function combineResponses(currentResponse: DataQueryResponse | null, newResponse: DataQueryResponse) {
+  if (!currentResponse) {
+    return cloneQueryResponse(newResponse);
+  }
+
+  const currentResponseLabelsMap = new Map<string, DataFrame>();
+  currentResponse.data.forEach((frame: DataFrame) => {
+    const key = getFrameKey(frame);
+    // It is expected that all frames contain a refId or a name, but since the type allows for it
+    // we need to account for possibly undefined cases.
+    if (key) {
+      currentResponseLabelsMap.set(key, frame);
+    }
+  });
+
+  newResponse.data.forEach((newFrame: DataFrame) => {
+    let currentFrame: DataFrame | undefined = undefined;
+    const key = getFrameKey(newFrame);
+    if (key !== undefined && currentResponseLabelsMap.has(key)) {
+      currentFrame = currentResponseLabelsMap.get(key);
+      mergeFrames(currentFrame!, newFrame);
+    } else {
+      currentResponse.data.push(cloneDataFrame(newFrame));
+    }
+  });
+
+  const mergedErrors = [...(currentResponse.errors ?? []), ...(newResponse.errors ?? [])];
+  if (mergedErrors.length > 0) {
+    currentResponse.errors = mergedErrors;
+    currentResponse.state = LoadingState.Error;
+  }
+
+  // the `.error` attribute is obsolete now,
+  // but we have to maintain it, otherwise
+  // some grafana parts do not behave well.
+  // we just choose the old error, if it exists,
+  // otherwise the new error, if it exists.
+  const mergedError = currentResponse.error ?? newResponse.error;
+  if (mergedError != null) {
+    currentResponse.error = mergedError;
+    currentResponse.state = LoadingState.Error;
+  }
+
+  const mergedTraceIds = [...(currentResponse.traceIds ?? []), ...(newResponse.traceIds ?? [])];
+  if (mergedTraceIds.length > 0) {
+    currentResponse.traceIds = mergedTraceIds;
+  }
+
+  return currentResponse;
+}
+
+/**
+ * Given two data frames, merge their values. Overlapping values will be added together.
+ */
+function mergeFrames(dest: DataFrame, source: DataFrame) {
+  const destTimeField = dest.fields.find((field) => field.type === FieldType.time);
+  const destIdField = dest.fields.find((field) => field.type === FieldType.string && field.name === 'id');
+  const sourceTimeField = source.fields.find((field) => field.type === FieldType.time);
+  const sourceIdField = source.fields.find((field) => field.type === FieldType.string && field.name === 'id');
+
+  if (!destTimeField || !sourceTimeField) {
+    console.error(new Error(`Time fields not found in the data frames`));
+    return;
+  }
+
+  const sourceTimeValues = sourceTimeField?.values.slice(0) ?? [];
+  const totalFields = Math.max(dest.fields.length, source.fields.length);
+
+  for (let i = 0; i < sourceTimeValues.length; i++) {
+    const destIdx = resolveIdx(destTimeField, sourceTimeField, i);
+
+    const entryExistsInDest = compareEntries(destTimeField, destIdField, destIdx, sourceTimeField, sourceIdField, i);
+
+    for (let f = 0; f < totalFields; f++) {
+      // For now, skip undefined fields that exist in the new frame
+      if (!dest.fields[f]) {
+        continue;
+      }
+      // Index is not reliable when frames have disordered fields, or an extra/missing field, so we find them by name.
+      // If the field has no name, we fallback to the old index version.
+      const sourceField = findSourceField(dest.fields[f], source.fields, f);
+      if (!sourceField) {
+        continue;
+      }
+      // Same value, accumulate
+      if (entryExistsInDest) {
+        if (dest.fields[f].type === FieldType.time) {
+          // Time already exists, skip
+          continue;
+        } else if (dest.fields[f].type === FieldType.number) {
+          // Number, add
+          dest.fields[f].values[destIdx] = (dest.fields[f].values[destIdx] ?? 0) + sourceField.values[i];
+        } else if (dest.fields[f].type === FieldType.other) {
+          // Possibly labels, combine
+          if (typeof sourceField.values[i] === 'object') {
+            dest.fields[f].values[destIdx] = {
+              ...dest.fields[f].values[destIdx],
+              ...sourceField.values[i],
+            };
+          } else if (sourceField.values[i]) {
+            dest.fields[f].values[destIdx] = sourceField.values[i];
+          }
+        } else {
+          // Replace value
+          dest.fields[f].values[destIdx] = sourceField.values[i];
+        }
+      } else if (sourceField.values[i] !== undefined) {
+        // Insert in the `destIdx` position
+        dest.fields[f].values.splice(destIdx, 0, sourceField.values[i]);
+        if (sourceField.nanos) {
+          dest.fields[f].nanos = dest.fields[f].nanos ?? new Array(dest.fields[f].values.length - 1).fill(0);
+          dest.fields[f].nanos?.splice(destIdx, 0, sourceField.nanos[i]);
+        } else if (dest.fields[f].nanos) {
+          dest.fields[f].nanos?.splice(destIdx, 0, 0);
+        }
+      }
+    }
+  }
+
+  dest.length = dest.fields[0].values.length;
+
+  dest.meta = {
+    ...dest.meta,
+    stats: getCombinedMetadataStats(dest.meta?.stats ?? [], source.meta?.stats ?? []),
+    notices: getCombinedNotices(dest.meta?.notices ?? [], source.meta?.notices ?? []),
+  };
+}
+
+function resolveIdx(destField: Field, sourceField: Field, index: number) {
+  const idx = closestIdx(sourceField.values[index], destField.values);
+  if (idx < 0) {
+    return 0;
+  }
+  if (sourceField.values[index] === destField.values[idx] && sourceField.nanos && destField.nanos) {
+    return sourceField.nanos[index] > destField.nanos[idx] ? idx + 1 : idx;
+  }
+  if (sourceField.values[index] > destField.values[idx]) {
+    return idx + 1;
+  }
+  return idx;
+}
+
+function compareEntries(
+  destTimeField: Field,
+  destIdField: Field | undefined,
+  destIndex: number,
+  sourceTimeField: Field,
+  sourceIdField: Field | undefined,
+  sourceIndex: number
+) {
+  const sameTimestamp = compareNsTimestamps(destTimeField, destIndex, sourceTimeField, sourceIndex);
+  if (!sameTimestamp) {
+    return false;
+  }
+  if (!destIdField || !sourceIdField) {
+    return true;
+  }
+  // Log frames, check indexes
+  return (
+    destIdField.values[destIndex] !== undefined && destIdField.values[destIndex] === sourceIdField.values[sourceIndex]
+  );
+}
+
+function compareNsTimestamps(destField: Field, destIndex: number, sourceField: Field, sourceIndex: number) {
+  if (destField.nanos && sourceField.nanos) {
+    return (
+      destField.values[destIndex] !== undefined &&
+      destField.values[destIndex] === sourceField.values[sourceIndex] &&
+      destField.nanos[destIndex] !== undefined &&
+      destField.nanos[destIndex] === sourceField.nanos[sourceIndex]
+    );
+  }
+  return destField.values[destIndex] !== undefined && destField.values[destIndex] === sourceField.values[sourceIndex];
+}
+
+function findSourceField(referenceField: Field, sourceFields: Field[], index: number) {
+  const candidates = sourceFields.filter((f) => f.name === referenceField.name);
+
+  if (candidates.length === 1) {
+    return candidates[0];
+  }
+
+  if (referenceField.labels) {
+    return candidates.find((candidate) => shallowCompare(referenceField.labels ?? {}, candidate.labels ?? {}));
+  }
+
+  return sourceFields[index];
+}
+
+const TOTAL_BYTES_STAT = 'Summary: total bytes processed';
+const EXEC_TIME_STAT = 'Summary: exec time';
+// This is specific for Loki
+function getCombinedMetadataStats(
+  destStats: QueryResultMetaStat[],
+  sourceStats: QueryResultMetaStat[]
+): QueryResultMetaStat[] {
+  // in the current approach, we only handle a single stat
+  const stats: QueryResultMetaStat[] = [];
+  for (const stat of [TOTAL_BYTES_STAT, EXEC_TIME_STAT]) {
+    const destStat = destStats.find((s) => s.displayName === stat);
+    const sourceStat = sourceStats.find((s) => s.displayName === stat);
+
+    if (sourceStat != null && destStat != null) {
+      stats.push({ value: sourceStat.value + destStat.value, displayName: stat, unit: destStat.unit });
+      continue;
+    }
+
+    // maybe one of them exist
+    const eitherStat = sourceStat ?? destStat;
+    if (eitherStat != null) {
+      stats.push(eitherStat);
+    }
+  }
+  return stats;
+}
+
+function getCombinedNotices(
+  destNotices: QueryResultMetaNotice[],
+  sourceNotices: QueryResultMetaNotice[]
+): QueryResultMetaNotice[] {
+  // Combine notices from both frames and filter out null/undefined values
+  const allNotices = [...destNotices, ...sourceNotices].filter(
+    (notice): notice is QueryResultMetaNotice => notice != null
+  );
+
+  // Deduplicate notices based on text to avoid showing the same warning twice
+  const uniqueNotices = allNotices.reduce((acc: QueryResultMetaNotice[], notice) => {
+    const exists = acc.some((n) => n.severity === notice.severity && n.text === notice.text);
+    if (!exists) {
+      acc.push(notice);
+    }
+    return acc;
+  }, []);
+
+  return uniqueNotices;
+}
+
+/**
+ * Deep clones a DataQueryResponse
+ */
+function cloneQueryResponse(response: DataQueryResponse): DataQueryResponse {
+  const newResponse = {
+    ...response,
+    data: response.data.map(cloneDataFrame),
+  };
+  return newResponse;
+}
+
+function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
+  return {
+    ...frame,
+    fields: frame.fields.map((field: Field) => ({
+      ...field,
+      values: field.values,
+    })),
+  };
+}

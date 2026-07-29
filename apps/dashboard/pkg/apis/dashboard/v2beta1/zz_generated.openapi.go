@@ -4765,6 +4765,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardThreshold(ref common.ReferenceCa
 							Format:      "double",
 						},
 					},
+					"valueExpr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"color": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -7277,6 +7284,13 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookThreshold(ref common.ReferenceCal
 							Description: "Value null means -Infinity",
 							Type:        []string{"number"},
 							Format:      "double",
+						},
+					},
+					"valueExpr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"color": {

@@ -12,7 +12,7 @@ export class RowItems implements EditableDashboardElement {
   public constructor(private _rows: RowItem[]) {}
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
-    return { typeName: t('dashboard.edit-pane.elements.rows', 'Rows'), icon: 'folder', instanceName: '' };
+    return { typeName: t('dashboard.sidebar.elements.rows', 'Rows'), icon: 'folder', instanceName: '' };
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
