@@ -1649,8 +1649,7 @@ describe('dataFrame links', () => {
     expect(links![2].type).toBe(SpanLinkType.Unknown);
   });
 
-  // REPRODUCTION TEST FOR GITHUB ISSUE #128810: DUPLICATE AZURE MONITOR LINKS
-  describe('should handle duplicate links correctly (Issue #128810)', () => {
+  describe('should handle duplicate links correctly', () => {
     beforeAll(() => {
       setDataSourceSrv({
         getInstanceSettings() {
@@ -1662,7 +1661,7 @@ describe('dataFrame links', () => {
       setTemplateSrv(new TemplateSrv());
     });
 
-    it('should deduplicate identical links from multiple fields (reproduces exemplar bug)', () => {
+    it('should deduplicate identical links from multiple fields', () => {
       // Create a dataFrame that simulates the Azure Monitor trace scenario from Prometheus exemplars
       // This reproduces the case where multiple fields have the same link configuration
       const duplicateLinksDataFrame = createDataFrame({
@@ -1717,8 +1716,6 @@ describe('dataFrame links', () => {
 
       const links = createLink!(createTraceSpan());
 
-      // BEFORE FIX: This would fail because we get 3 identical links
-      // AFTER FIX: This should pass because duplicates are removed
       expect(links).toBeDefined();
       
       // We should have only 1 unique link, not 3 duplicates
