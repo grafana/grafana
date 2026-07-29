@@ -6650,8 +6650,7 @@
         "last-update": "Last Update",
         "published-by": "Published By",
         "view-on-grafana-com": "View on Grafana.com"
-      },
-      "no-description": "No description available"
+      }
     },
     "grafana-dashboard-template-modal": {
       "no-results-found": "No template dashboards found"
@@ -10539,6 +10538,10 @@
     },
     "secret-form-field": {
       "reset": "Reset"
+    },
+    "secret-input": {
+      "hide": "Hide secret",
+      "show": "Show secret"
     },
     "secret-text-area": {
       "hide-content": "Hide secret content",
