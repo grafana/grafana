@@ -356,11 +356,6 @@ func (s *Storage) Delete(
 		return errors.New("missing auth info")
 	}
 
-	k, err := s.getKey(key)
-	if err != nil {
-		return err
-	}
-
 	// The delete is conditional on the resource version read here, so a
 	// concurrent write (e.g. a controller status update) between the read and
 	// the delete produces a conflict. Callers of an unconditional delete never
@@ -373,6 +368,10 @@ func (s *Storage) Delete(
 			return err
 		}
 
+		k, err := s.getKey(key)
+		if err != nil {
+			return err
+		}
 		cmd := &resourcepb.DeleteRequest{Key: k}
 
 		if preconditions != nil {
