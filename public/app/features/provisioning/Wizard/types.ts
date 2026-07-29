@@ -13,6 +13,8 @@ export type GitHubAuthType = 'pat' | 'github-app';
 
 export type GitHubAppMode = 'existing' | 'new';
 
+export type GitHubAppKind = 'app' | 'oauth';
+
 interface MigrateFormData {
   history: boolean;
   identifier: boolean;
@@ -25,6 +27,7 @@ export interface WizardFormData {
   repositoryName?: string;
   githubAuthType?: GitHubAuthType;
   githubAppMode?: GitHubAppMode;
+  githubAppKind?: GitHubAppKind;
   githubApp?: {
     connectionName?: string;
   };

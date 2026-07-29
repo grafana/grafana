@@ -101,6 +101,12 @@ export const isGitHubBased = (type?: RepoType): type is 'github' | 'githubEnterp
 };
 
 // Providers whose repositories can register and receive webhooks.
+export const supportsConnections = (
+  type?: RepoType
+): type is 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' => {
+  return type === 'github' || type === 'githubEnterprise' || type === 'gitlab' || type === 'bitbucket';
+};
+
 export const supportsWebhooks = (type?: RepoType): type is 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' => {
   return type === 'github' || type === 'githubEnterprise' || type === 'gitlab' || type === 'bitbucket';
 };

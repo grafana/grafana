@@ -10,10 +10,12 @@ import { extractErrorMessage } from 'app/api/utils';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
+import { OAuthConnectionFields } from '../components/Shared/OAuthConnectionFields';
 import { WebhookDisabledField } from '../components/Shared/WebhookDisabledField';
 import { CONNECTIONS_TAB_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { type ConnectionFormData } from '../types';
+import { isOAuthConnectionType, startOAuthAuthorization } from '../utils/connectionOAuth';
 import { extractFormErrors, getConnectionFormErrors } from '../utils/getFormErrors';
 import { isGitHubBased } from '../utils/repositoryTypes';
 
@@ -35,15 +37,40 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   const providerOptions = [
     // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
     { value: 'github', label: 'GitHub' },
+    // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+    { value: 'githubOAuth', label: 'GitHub OAuth App' },
     ...(availableTypes.includes('githubEnterprise')
+      ? [
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+          { value: 'githubEnterprise', label: 'GitHub Enterprise' },
+          // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+          { value: 'githubEnterpriseOAuth', label: 'GitHub Enterprise OAuth App' },
+        ]
+      : []),
+    ...(availableTypes.includes('gitlab')
       ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        [{ value: 'githubEnterprise', label: 'GitHub Enterprise' }]
+        [{ value: 'gitlab', label: 'GitLab' }]
+      : []),
+    ...(availableTypes.includes('bitbucket')
+      ? // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        [{ value: 'bitbucket', label: 'Bitbucket' }]
       : []),
   ];
 
   const formMethods = useForm<ConnectionFormData>({
     defaultValues:
-      data?.spec?.type === 'githubEnterprise'
+      isOAuthConnectionType(data?.spec?.type)
+        ? {
+            type: data.spec.type,
+            title: data?.spec?.title || '',
+            description: data?.spec?.description || '',
+            clientID: data.spec.oauth?.clientID || '',
+            clientSecret: '',
+            workspace: data.spec.bitbucket?.workspace || '',
+            serverUrl: data.spec.githubEnterpriseOAuth?.serverUrl || '',
+            webhookDisabled: data?.spec?.webhook?.disabled ?? false,
+          }
+        : data?.spec?.type === 'githubEnterprise'
         ? {
             type: 'githubEnterprise',
             title: data?.spec?.title || '',
@@ -88,10 +115,20 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       });
 
       reset(formData);
+
+      // OAuth app connections need the user to authorize the app before tokens can be issued
+      if (isOAuthConnectionType(formData.type) && (!isEdit || formData.clientSecret)) {
+        const name = connectionName ?? request.data?.metadata?.name;
+        if (name && formData.clientID) {
+          startOAuthAuthorization(formData.type, formData.clientID, name, formData.serverUrl);
+          return;
+        }
+      }
+
       // use timeout to ensure the form resets before navigating
       setTimeout(() => navigate(CONNECTIONS_TAB_URL), 300);
     }
-  }, [request.isSuccess, reset, getValues, connectionName, navigate]);
+  }, [request.isSuccess, request.data, reset, getValues, connectionName, navigate, isEdit]);
 
   useEffect(() => {
     if (isEdit && data?.status?.fieldErrors?.length) {
@@ -104,6 +141,22 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
 
   const [submitError, setSubmitError] = useState<string>();
 
+  const needsReauthorization =
+    isEdit &&
+    isOAuthConnectionType(data?.spec?.type) &&
+    Boolean(
+      data?.status?.conditions?.some(
+        (c) => c.type === 'Ready' && c.status === 'False' && c.reason === 'AuthenticationFailed'
+      )
+    );
+
+  const handleReauthorize = () => {
+    const formData = getValues();
+    if (connectionName && formData.clientID && isOAuthConnectionType(formData.type)) {
+      startOAuthAuthorization(formData.type, formData.clientID, connectionName, formData.serverUrl);
+    }
+  };
+
   const onSubmit = async (form: ConnectionFormData) => {
     setSubmitError(undefined);
     try {
@@ -115,20 +168,26 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
         ...(form.type === 'githubEnterprise'
           ? {
               githubEnterprise: {
-                appID: form.appID,
-                installationID: form.installationID,
+                appID: form.appID ?? '',
+                installationID: form.installationID ?? '',
                 serverUrl: form.serverUrl,
               },
             }
-          : {
-              github: {
-                appID: form.appID,
-                installationID: form.installationID,
-              },
-            }),
+          : form.type === 'github'
+            ? {
+                github: {
+                  appID: form.appID ?? '',
+                  installationID: form.installationID ?? '',
+                },
+              }
+            : {
+                oauth: { clientID: form.clientID ?? '' },
+                ...(form.type === 'githubEnterpriseOAuth' ? { githubEnterpriseOAuth: { serverUrl: form.serverUrl ?? '' } } : {}),
+                ...(form.type === 'bitbucket' ? { bitbucket: { workspace: form.workspace ?? '' } } : {}),
+              }),
       };
 
-      await submitData(spec, form.privateKey);
+      await submitData(spec, form.privateKey, form.clientSecret);
     } catch (err) {
       if (isFetchError(err)) {
         const errors = getConnectionFormErrors(err.data);
@@ -161,6 +220,19 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
         <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
         <Stack direction="column" gap={2}>
           {submitError && <Alert severity="error" title={submitError} />}
+          {needsReauthorization && (
+            <Alert
+              severity="warning"
+              title={t('provisioning.connection-form.reauthorize-title', 'Authorization expired')}
+              buttonContent={t('provisioning.connection-form.reauthorize-button', 'Reauthorize')}
+              onRemove={handleReauthorize}
+            >
+              {t(
+                'provisioning.connection-form.reauthorize-body',
+                'The provider rejected the connection credentials. Reauthorize to restore access.'
+              )}
+            </Alert>
+          )}
           <Field
             noMargin
             htmlFor="type"
@@ -184,6 +256,14 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
 
           {isGitHubBased(selectedType) && (
             <GitHubConnectionFields required={!isEdit} privateKeyConfigured={Boolean(privateKey)} type={selectedType} />
+          )}
+
+          {isOAuthConnectionType(selectedType) && (
+            <OAuthConnectionFields
+              required={!isEdit}
+              clientSecretConfigured={Boolean(data?.secure?.clientSecret)}
+              type={selectedType}
+            />
           )}
 
           <WebhookDisabledField

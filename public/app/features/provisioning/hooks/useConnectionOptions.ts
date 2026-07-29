@@ -6,16 +6,22 @@ import { t } from '@grafana/i18n';
 import { useLazyGetConnectionRepositoriesQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type GitHubBasedConnectionType } from '../Wizard/types';
-import { type ExternalRepository } from '../types';
+import { type ExternalRepository, type OAuthConnectionType } from '../types';
 import { isConnectionReady } from '../utils/connectionStatus';
 import { formatRepoUrl } from '../utils/git';
 
 import { useConnectionList } from './useConnectionList';
 
-export function useConnectionOptions(enabled: boolean, connectionType?: GitHubBasedConnectionType) {
+export function useConnectionOptions(enabled: boolean, connectionType?: GitHubBasedConnectionType | OAuthConnectionType) {
   const [connections, connectionsLoading, error, refetch] = useConnectionList(enabled ? {} : skipToken);
   const githubConnections = useMemo(
-    () => connections?.filter((c) => c.spec?.type === connectionType) ?? [],
+    () =>
+      connections?.filter(
+        (c) =>
+          c.spec?.type === connectionType ||
+          (connectionType === 'github' && c.spec?.type === 'githubOAuth') ||
+          (connectionType === 'githubEnterprise' && c.spec?.type === 'githubEnterpriseOAuth')
+      ) ?? [],
     [connections, connectionType]
   );
 
