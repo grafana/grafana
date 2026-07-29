@@ -75,7 +75,7 @@ func PostableAPIConfigToNotificationsConfiguration(
 	return alertingNotify.NotificationsConfiguration{
 		RoutingTree:   RouteToAPI(cfg.AlertmanagerConfig.Route),
 		InhibitRules:  append(inhibitionRules, cfg.AlertmanagerConfig.InhibitRules...),
-		TimeIntervals: ModelToTimeIntervals(cfg.AlertmanagerConfig.TimeIntervals, cfg.AlertmanagerConfig.MuteTimeIntervals),
+		TimeIntervals: ModelToTimeIntervals(cfg.AlertmanagerConfig.TimeIntervals),
 		Templates:     ModelToTemplateDefinitions(cfg.SortedTemplates()), // templates are already merged.
 		Receivers:     receivers,
 		Limits:        limits,
@@ -109,15 +109,8 @@ func ModelToReceiverConfig(r *v1.PostableApiReceiver) (alertingModels.ReceiverCo
 	return result, nil
 }
 
-func ModelToTimeIntervals(in []v1.TimeInterval, mute []v1.MuteTimeInterval) []alertingNotify.TimeInterval {
-	// go with mute intervals first, in the case of collision in the alertmanager, the last will will, which is expected behavior.
-	out := make([]alertingNotify.TimeInterval, 0, len(in)+len(mute))
-	for _, t := range mute {
-		out = append(out, config.TimeInterval{
-			Name:          t.Name,
-			TimeIntervals: t.TimeIntervals,
-		})
-	}
+func ModelToTimeIntervals(in []v1.TimeInterval) []alertingNotify.TimeInterval {
+	out := make([]alertingNotify.TimeInterval, 0, len(in))
 	for _, t := range in {
 		out = append(out, config.TimeInterval{
 			Name:          t.Name,

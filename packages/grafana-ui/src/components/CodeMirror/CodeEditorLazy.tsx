@@ -21,11 +21,7 @@ export function CodeMirrorEditor(props: CodeMirrorEditorProps) {
       style="page"
     >
       <Suspense
-        fallback={
-          props.loadingFallback ?? (
-            <LoadingPlaceholder text={t('grafana-ui.code-mirror.loading-placeholder', 'Loading editor')} />
-          )
-        }
+        fallback={<LoadingPlaceholder text={t('grafana-ui.code-mirror.loading-placeholder', 'Loading editor')} />}
       >
         <CodeEditor {...props} />
       </Suspense>

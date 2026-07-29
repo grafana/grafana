@@ -75,10 +75,10 @@ export function clearPredefinedVariablesCache() {
  * Fetches the predefined (global + folder-scoped) variables applicable to a dashboard,
  * tagged with their origin and with folder-over-global name precedence applied.
  *
- * Fails open: any fetch error resolves to an empty list so the dashboard still loads
- * with its local variables only.
+ * Returns `null` on fetch failure so callers can choose fail-open (initial load) vs
+ * keep-current (refresh). An empty array means a successful fetch with no variables.
  */
-export async function fetchPredefinedVariables(folderUid?: string): Promise<VariableKind[]> {
+export async function fetchPredefinedVariables(folderUid?: string): Promise<VariableKind[] | null> {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GlobalDashboardVariables, false)) {
     return [];
   }
@@ -100,7 +100,7 @@ export async function fetchPredefinedVariables(folderUid?: string): Promise<Vari
     return variables;
   } catch (err) {
     console.warn('Failed to load predefined dashboard variables', err);
-    return [];
+    return null;
   }
 }
 

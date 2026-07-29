@@ -42,7 +42,7 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
 
 export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
   DashboardInteractions.editButtonClicked({
-    outlineExpanded: !store.getBool('grafana.dashboard.edit-pane.outline.collapsed', false),
+    outlineExpanded: !store.getBool('grafana.dashboard.sidebar.outline.collapsed', false),
     dashboardUid,
   });
 };
