@@ -14,6 +14,18 @@ export function getMarkdownStyles(theme: GrafanaTheme2) {
         marginBottom: theme.spacing(2),
       },
 
+      // GFM task lists get no class to hook on, so the checkbox stands in for the marker.
+      'li:has(> input[type="checkbox"])': {
+        listStyleType: 'none',
+      },
+
+      // Pull into the marker gutter so labels line up with sibling list items.
+      'li > input[type="checkbox"]': {
+        marginLeft: '-1.25em',
+        marginRight: '0.25em',
+        verticalAlign: 'middle',
+      },
+
       table: {
         marginBottom: theme.spacing(2),
         'td, th': {

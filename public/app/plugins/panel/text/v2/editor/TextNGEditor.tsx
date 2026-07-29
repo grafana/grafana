@@ -13,6 +13,8 @@ import { CodeLanguage, TextMode } from '../../panelcfg.gen';
 import { TextNGCodeView } from '../TextNGCodeView';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
+import { TextNGFormatToolbar } from './TextNGFormatToolbar';
+
 type ViewMode = 'write' | 'split' | 'preview';
 
 export const PREVIEW_TEST_ID = 'TextNGEditor-preview';
@@ -27,6 +29,9 @@ export interface TextNGEditorProps {
 }
 
 const COMMIT_DEBOUNCE_MS = 250;
+// Markdown, sanitization and the innerHTML reparse cost tens of milliseconds on
+// a large document, so the preview trails typing.
+const PREVIEW_DEBOUNCE_MS = 150;
 
 export function TextNGEditor({
   content,
@@ -43,6 +48,10 @@ export function TextNGEditor({
   // a blur can fire before React re-renders with the new draft.
   const draftRef = useRef(content);
   const committedContent = useRef(content);
+  const editorContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Trails `draft`, except where waiting would show something stale.
+  const [previewSource, setPreviewSource] = useState(content);
 
   const [prevContent, setPrevContent] = useState(content);
   if (content !== prevContent) {
@@ -51,7 +60,14 @@ export function TextNGEditor({
       committedContent.current = content;
       draftRef.current = content;
       setDraft(content);
+      setPreviewSource(content);
     }
+  }
+
+  const [prevView, setPrevView] = useState(view);
+  if (prevView !== view) {
+    setPrevView(view);
+    setPreviewSource(draftRef.current);
   }
 
   const handleDraftChange = (next: string) => {
@@ -71,8 +87,15 @@ export function TextNGEditor({
   // overwrite externally reverted options (e.g. Discard).
   useDebounce(commitDraft, COMMIT_DEBOUNCE_MS, [draft]);
 
+  useDebounce(() => setPreviewSource(draftRef.current), PREVIEW_DEBOUNCE_MS, [draft]);
+
   const format = getInterpolateFormat(codeLanguage);
-  const interpolatedContent = view === 'write' ? '' : replaceVariables(draft, {}, format);
+  const showPreview = view !== 'write';
+
+  const interpolatedContent = useMemo(
+    () => (showPreview ? replaceVariables(previewSource, {}, format) : ''),
+    [showPreview, replaceVariables, previewSource, format]
+  );
 
   const previewHtml = useMemo(
     () => (mode === TextMode.Code ? '' : transformContent(mode, interpolatedContent, config.disableSanitizeHtml)),
@@ -100,7 +123,6 @@ export function TextNGEditor({
   ];
 
   const showEditor = view !== 'preview';
-  const showPreview = view !== 'write';
 
   const renderOutput = (testId: string) =>
     mode === TextMode.Code ? (
@@ -120,13 +142,14 @@ export function TextNGEditor({
     <div className={styles.wrapper} data-testid="TextNGEditor">
       <div className={styles.toolbar}>
         <RadioButtonGroup options={viewOptions} value={view} onChange={setView} size="sm" />
+        {showEditor && <TextNGFormatToolbar mode={mode} editorContainerRef={editorContainerRef} />}
       </div>
 
       <div className={cx(styles.body, view === 'split' && styles.splitBody)}>
         {showEditor && (
           // Outside interactions (Save, Apply, Back) blur the editor on mousedown,
           // so a pending draft is committed before anything reads the options.
-          <div className={cx(styles.pane, styles.editorPane)} onBlur={commitDraft}>
+          <div ref={editorContainerRef} className={cx(styles.pane, styles.editorPane)} onBlur={commitDraft}>
             <CodeMirrorEditor
               value={draft}
               onChange={handleDraftChange}
@@ -155,7 +178,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   toolbar: css({
     display: 'flex',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
     marginBottom: theme.spacing(1),
+    // Reserve the format toolbar's height so Preview view does not shift the panes.
+    minHeight: theme.spacing(theme.components.height.md),
   }),
   body: css({
     display: 'flex',

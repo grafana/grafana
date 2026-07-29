@@ -7,6 +7,7 @@ import config from 'app/core/config';
 import { CodeLanguage, TextMode } from '../../panelcfg.gen';
 
 import { PREVIEW_TEST_ID, TextNGEditor } from './TextNGEditor';
+import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
@@ -176,14 +177,6 @@ describe('TextNGEditor', () => {
       expect(screen.getByRole('textbox')).toHaveValue('# Data center = $datacenter');
     });
 
-    it('does not render a formatting toolbar', async () => {
-      setup('hello', TextMode.Markdown);
-      await enterWriteMode();
-
-      expect(screen.queryByRole('button', { name: 'Insert variable' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Bold' })).not.toBeInTheDocument();
-    });
-
     it('forwards editor changes via a debounced onChange', async () => {
       const { onChange } = setup('initial', TextMode.Markdown);
       await enterWriteMode();
@@ -249,6 +242,102 @@ describe('TextNGEditor', () => {
       // Matches the panel render path, which keys the interpolation format off
       // code.language alone.
       expect(replaceVariables).toHaveBeenCalledWith('# Hello', {}, 'json');
+    });
+  });
+
+  describe('content that renders to nothing', () => {
+    // Deleting everything and pressing enter in Split view: markdown renders a
+    // lone newline to '', which DangerouslySetHtmlContent throws on.
+    it.each(['\n', '\n\n', '   \n  ', '<!-- just a comment -->'])(
+      'does not crash the preview for %j',
+      async (content) => {
+        setup('# Hello', TextMode.Markdown);
+        await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+
+        // fireEvent, because userEvent.type() does not reproduce a value that is
+        // only whitespace. A throw here fails the test.
+        fireEvent.change(screen.getByRole('textbox'), { target: { value: content } });
+
+        // The throw would happen in the debounced re-render.
+        await waitFor(() => expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).not.toContain('<h1'));
+      }
+    );
+  });
+
+  describe('preview updates', () => {
+    it('re-renders the preview once typing settles', async () => {
+      setup('# Hello', TextMode.Markdown);
+      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: '## Updated' } });
+
+      // Still the old preview: the update is debounced.
+      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
+      await waitFor(() => expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h2'));
+    });
+
+    it('shows the current draft immediately when switching view, without waiting for the debounce', async () => {
+      setup('# Hello', TextMode.Markdown);
+      await enterWriteMode();
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: '## Updated' } });
+      await userEvent.click(screen.getByRole('radio', { name: 'Preview' }));
+
+      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h2');
+    });
+
+    it('shows externally replaced content immediately, e.g. after a discard', async () => {
+      const { rerender } = render(
+        <TextNGEditor
+          content="# Hello"
+          mode={TextMode.Markdown}
+          showLineNumbers={false}
+          replaceVariables={(value: string) => value}
+          onChange={jest.fn()}
+        />
+      );
+
+      rerender(
+        <TextNGEditor
+          content="## Reverted"
+          mode={TextMode.Markdown}
+          showLineNumbers={false}
+          replaceVariables={(value: string) => value}
+          onChange={jest.fn()}
+        />
+      );
+
+      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h2');
+    });
+  });
+
+  describe('formatting toolbar', () => {
+    it('renders alongside the editor in Write view', async () => {
+      setup('hello', TextMode.Markdown);
+      await enterWriteMode();
+
+      expect(screen.getByTestId(FORMAT_TOOLBAR_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('renders in Split view', async () => {
+      setup('hello', TextMode.Markdown);
+
+      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+
+      expect(screen.getByTestId(FORMAT_TOOLBAR_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('is hidden in Preview view, where there is nothing to format', () => {
+      setup('hello', TextMode.Markdown);
+
+      expect(screen.queryByTestId(FORMAT_TOOLBAR_TEST_ID)).not.toBeInTheDocument();
+    });
+
+    it('is not rendered in Code mode', async () => {
+      setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+      await enterWriteMode();
+
+      expect(screen.queryByTestId(FORMAT_TOOLBAR_TEST_ID)).not.toBeInTheDocument();
     });
   });
 

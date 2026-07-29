@@ -61,6 +61,19 @@ describe('TextNGPanel', () => {
     expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML.trim()).toBe('');
   });
 
+  // Markdown renders these to '', which DangerouslySetHtmlContent throws on.
+  it.each(['\n', '\n\n', '   \n  ', '<!-- just a comment -->'])(
+    'should not throw for markdown content that renders to nothing: %j',
+    (content) => {
+      replaceVariablesMock.mockReturnValueOnce(content);
+      const props = Object.assign({}, defaultProps, {
+        options: { content, mode: TextMode.Markdown },
+      });
+
+      expect(() => setup(props)).not.toThrow();
+    }
+  );
+
   it('sanitizes content in html mode', () => {
     const contentTest = '<form><p>Form tags are sanitized.</p></form>\n<script>Script tags are sanitized.</script>';
     replaceVariablesMock.mockReturnValueOnce(contentTest);
