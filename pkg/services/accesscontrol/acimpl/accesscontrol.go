@@ -178,16 +178,23 @@ func (a *AccessControl) checkFallbackLeaf(ctx context.Context, user identity.Req
 	if len(scopes) == 0 {
 		scopes = []string{""}
 	}
-	if user.GetAccessToken() != "" {
-		// A delegated token is a ceiling on the persistent subject's grants. Zanzana
-		// may know more permissions for the user than the token is allowed to use.
-		if !permissionMapAllowsLeaf(permissions, action, scopes...) {
-			return false, nil
-		}
+	hasAccessToken := user.GetAccessToken() != ""
+	persistentSubject := authlib.IsIdentityType(
+		user.GetIdentityType(),
+		authlib.TypeUser,
+		authlib.TypeServiceAccount,
+		authlib.TypeAnonymous,
+	)
+	if hasAccessToken && !persistentSubject {
 		// Token-defined identities such as access policies have no persistent
 		// Zanzana subject; their signed permission map is the authority.
-		if !authlib.IsIdentityType(user.GetIdentityType(), authlib.TypeUser, authlib.TypeServiceAccount, authlib.TypeAnonymous) {
-			return true, nil
+		return permissionMapAllowsLeaf(permissions, action, scopes...), nil
+	}
+	if hasAccessToken && len(user.GetTokenDelegatedPermissions()) > 0 {
+		// Delegated permissions are a ceiling on the persistent subject's grants.
+		// A raw access token alone does not imply delegation or downscoping.
+		if !permissionMapAllowsLeaf(permissions, action, scopes...) {
+			return false, nil
 		}
 	}
 

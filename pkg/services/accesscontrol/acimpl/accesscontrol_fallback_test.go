@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	authnlib "github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 
@@ -238,6 +239,9 @@ func TestAccessControlFallbackTokenRestrictionsApplyPerLeaf(t *testing.T) {
 	ac := newFallbackAccessControl(t, setting.ZanzanaPrimaryEngineZanzana, checker, true)
 	usr := fallbackUser(map[string][]string{"token:first": {"things:uid:one"}})
 	usr.AccessToken = "delegated-token"
+	usr.AccessTokenClaims = &authnlib.Claims[authnlib.AccessTokenClaims]{
+		Rest: authnlib.AccessTokenClaims{DelegatedPermissions: []string{"token:first"}},
+	}
 
 	allowed, err := ac.Evaluate(context.Background(), usr, accesscontrol.EvalAny(
 		accesscontrol.EvalPermission("token:first", "things:uid:one"),
@@ -245,6 +249,36 @@ func TestAccessControlFallbackTokenRestrictionsApplyPerLeaf(t *testing.T) {
 	))
 	require.NoError(t, err)
 	require.False(t, allowed)
+}
+
+func TestAccessControlFallbackOrdinaryUserAccessTokenUsesZanzana(t *testing.T) {
+	checker := &fallbackChecker{check: func(*authzextv1.CheckPermissionRequest) (bool, error) {
+		return true, nil
+	}}
+	ac := newFallbackAccessControl(t, setting.ZanzanaPrimaryEngineZanzana, checker, true)
+	usr := fallbackUser(nil)
+	usr.AccessToken = "ordinary-token"
+
+	allowed, err := ac.Evaluate(context.Background(), usr, accesscontrol.EvalPermission("kubernetes:only", "things:uid:one"))
+	require.NoError(t, err)
+	require.True(t, allowed)
+	require.Equal(t, 1, checker.callCount())
+}
+
+func TestAccessControlFallbackOrdinaryServiceAccountAccessTokenUsesZanzana(t *testing.T) {
+	checker := &fallbackChecker{check: func(req *authzextv1.CheckPermissionRequest) (bool, error) {
+		require.Equal(t, "service-account:user-one", req.Subject)
+		return true, nil
+	}}
+	ac := newFallbackAccessControl(t, setting.ZanzanaPrimaryEngineZanzana, checker, true)
+	usr := fallbackUser(nil)
+	usr.IsServiceAccount = true
+	usr.AccessToken = "ordinary-token"
+
+	allowed, err := ac.Evaluate(context.Background(), usr, accesscontrol.EvalPermission("kubernetes:only", "things:uid:one"))
+	require.NoError(t, err)
+	require.True(t, allowed)
+	require.Equal(t, 1, checker.callCount())
 }
 
 func TestAccessControlFallbackTokenDefinedSubjectUsesSignedPermissions(t *testing.T) {

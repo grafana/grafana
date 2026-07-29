@@ -44,6 +44,12 @@ func TestFallbackPermissionProjection(t *testing.T) {
 		require.Equal(t, Invalid, translation.Kind)
 	})
 
+	t.Run("partial-prefix wildcard grants fail projection", func(t *testing.T) {
+		translation, err := TranslatePermission("role:test#assignee", RolePermission{Action: "plugins.app:read", Scope: "plugins:id:foo*"})
+		require.Error(t, err)
+		require.Equal(t, Invalid, translation.Kind)
+	})
+
 	t.Run("duplicate fallback permissions are deduplicated", func(t *testing.T) {
 		permission := RolePermission{Action: "plugins.app:read", Scope: "plugins:id:one", Kind: "plugins", Attribute: "id", Identifier: "one"}
 		tuples, err := ProjectRolePermissionsToTuples("test", []RolePermission{permission, permission})

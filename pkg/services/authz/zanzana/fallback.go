@@ -201,8 +201,9 @@ func DecodeFallbackPermissionObject(object string) (string, string, error) {
 }
 
 // FallbackScopeCandidates returns the exact requested scopes and every legacy
-// wildcard grant that can contain them. Slash-delimited descendants are kept
-// delimiter-bounded so a grant for "a/*" cannot match "ab/...".
+// wildcard grant that can contain them. Legacy validation permits a trailing
+// wildcard only after ':' or '/', which keeps the candidate set delimiter-bounded
+// and prevents a grant for "a/*" from matching "ab/...".
 func FallbackScopeCandidates(scopes ...string) ([]string, error) {
 	seen := make(map[string]struct{})
 	for _, scope := range scopes {
