@@ -50,7 +50,7 @@ type QueueMetrics struct {
 	// winning records each loss.
 	claimed         *prometheus.CounterVec // won a CAS race — this driver now owns the job
 	claimConflicts  *prometheus.CounterVec // lost a CAS race — another worker updated the job first
-	claimErrors     *prometheus.CounterVec // claim path failed (identity or non-conflict update error)
+	claimErrors     *prometheus.CounterVec // the claiming update failed with a non-conflict error (not identity/read)
 	claimRoundsCont *prometheus.CounterVec // exhausted the CAS retries — the job was claimed by another worker
 }
 
@@ -109,7 +109,7 @@ func RegisterQueueMetrics(registry prometheus.Registerer) QueueMetrics {
 		claimErrors := prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "grafana_provisioning_jobs_claim_errors_total",
-				Help: "Claim attempts that failed with an identity or non-conflict update error, by driver",
+				Help: "Claim attempts whose claiming update failed with a non-conflict error, by driver (identity/read failures are not counted)",
 			},
 			[]string{"driver_id"},
 		)

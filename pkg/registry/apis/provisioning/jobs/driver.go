@@ -145,6 +145,20 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 		}
 		return apifmt.Errorf("failed to claim job: %w", err)
 	}
+	// Mark this worker slot busy for the whole claim->release window — including job
+	// completion and rollback. This release defer is registered BEFORE the rollback
+	// defer below so LIFO runs rollback first: the slot stays busy (and busy_seconds
+	// keeps accruing) until rollback actually finishes, which matters when the storage
+	// API is slow. busy_seconds thus measures full slot occupancy, not just the worker's
+	// processing time. Metrics methods are nil-safe for drivers built without metrics.
+	inFlightAction := string(claimedJob.Spec.Action)
+	slotStart := time.Now()
+	d.metrics.IncInFlight(d.driverID, inFlightAction)
+	defer func() {
+		d.metrics.DecInFlight(d.driverID, inFlightAction)
+		d.metrics.RecordBusySeconds(d.driverID, inFlightAction, time.Since(slotStart).Seconds())
+	}()
+
 	// Ensure that the job is cleaned up if we fail to complete it.
 	// The rollback function does not care about cancellations.
 	defer rollback()
@@ -162,14 +176,6 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	if !enqueuedAt.IsZero() {
 		d.processed.ObserveDeliveryLatency(trigger, enqueuedAt.Sub(claimedJob.CreationTimestamp.Time).Seconds())
 	}
-
-	// Mark this worker slot busy for the whole claim->complete duration. The Inc and
-	// the deferred Dec run on the same goroutine, so the gauge stays balanced across
-	// every return path (timeout, lease loss, shutdown, completion). Methods are
-	// nil-safe for drivers built without metrics in tests.
-	inFlightAction := string(claimedJob.Spec.Action)
-	d.metrics.IncInFlight(d.driverID, inFlightAction)
-	defer d.metrics.DecInFlight(d.driverID, inFlightAction)
 
 	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace, "repository", claimedJob.Spec.Repository, "action", claimedJob.Spec.Action)
 	ctx = logging.Context(ctx, logger)
@@ -247,7 +253,6 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 			resourceChangeCount(d.currentJob.Spec.Action, d.currentJob.Status.Summary),
 			duration.Seconds(),
 		)
-		d.metrics.RecordBusySeconds(d.driverID, string(d.currentJob.Spec.Action), duration.Seconds())
 	}
 	defer func() {
 		d.currentJob = nil

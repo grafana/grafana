@@ -167,6 +167,9 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string, dri
 			continue
 		}
 		if err != nil {
+			// This records only the failure of the claim itself (the atomic Update that
+			// takes the job). Earlier failures — identity setup and the job Get — return
+			// before this point and are intentionally not counted here.
 			s.queueMetrics.RecordClaimError(driverID)
 			return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s': %w", name, namespace, err)
 		}

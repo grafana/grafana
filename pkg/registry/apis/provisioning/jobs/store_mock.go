@@ -78,7 +78,7 @@ func (_e *MockStore_Expecter) Claim(ctx interface{}, namespace interface{}, name
 
 func (_c *MockStore_Claim_Call) Run(run func(ctx context.Context, namespace string, name string, driverID string)) *MockStore_Claim_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[1].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
 	})
 	return _c
 }
