@@ -5,6 +5,7 @@ import { base64UrlEncode } from '@grafana/alerting';
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Button, Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { type AlertmanagerConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { makeEditContactPointLink, makeEditTimeIntervalLink } from '../../utils/misc';
@@ -14,7 +15,9 @@ import {
   type StagedExtraConfig,
   encodeRouteMatchersQuery,
   getReceiverIntegrationTypes,
+  getTimeIntervalNames,
   parseStagedAlertmanagerConfig,
+  resolveMergedNames,
   summarizeMatchRecord,
   summarizeRouteMatchers,
   summarizeStagedConfig,
@@ -39,9 +42,17 @@ function makeViewTemplatesLink(): string {
   return createRelativeUrl('/alerting/notifications/templates', GRAFANA_AM);
 }
 
-/** Filter the notification policies tree to a policy by its matchers; unfiltered when there are none. */
-function makeViewPolicyLink(matchers: string): string {
-  return createRelativeUrl('/alerting/routes', matchers ? { ...GRAFANA_AM, queryString: matchers } : GRAFANA_AM);
+/**
+ * Filter the notification policies page to the staged config's own routing tree — the staged import is
+ * exposed as a managed tree named after the config identifier — and, when there are matchers, to a single
+ * policy within it. Without `includeTree` the page lists every tree, live ones included.
+ */
+function makeViewPolicyLink(treeName: string, matchers: string): string {
+  return createRelativeUrl('/alerting/routes', {
+    ...GRAFANA_AM,
+    includeTree: treeName,
+    ...(matchers ? { queryString: matchers } : {}),
+  });
 }
 
 interface AccordionSection {
@@ -54,9 +65,14 @@ interface AccordionSection {
 
 interface Props {
   stagedConfig: StagedExtraConfig;
+  /**
+   * The live Grafana Alertmanager config the staged one is merged against. Needed to work out which staged
+   * resources the backend renames on a name collision, so their View links address the staged copy.
+   */
+  liveConfig?: AlertmanagerConfig;
 }
 
-export function StagedConfiguration({ stagedConfig }: Props) {
+export function StagedConfiguration({ stagedConfig, liveConfig }: Props) {
   const styles = useStyles2(getStyles);
   const config = parseStagedAlertmanagerConfig(stagedConfig.alertmanager_config);
 
@@ -78,6 +94,19 @@ export function StagedConfiguration({ stagedConfig }: Props) {
   const childRoutes = config.route?.routes ?? [];
   const inhibitRules = config.inhibit_rules ?? [];
 
+  // Link targets, which are the post-merge names — they differ from the labels below (the staged config's
+  // own names) whenever a staged resource collides with a live one.
+  const receiverLinkNames = resolveMergedNames(
+    summary.receivers,
+    (liveConfig?.receivers ?? []).map((receiver) => receiver.name),
+    stagedConfig.identifier
+  );
+  const timeIntervalLinkNames = resolveMergedNames(
+    summary.timeIntervals,
+    liveConfig ? getTimeIntervalNames(liveConfig) : [],
+    stagedConfig.identifier
+  );
+
   const sections: AccordionSection[] = [];
 
   if (receivers.length > 0) {
@@ -86,12 +115,12 @@ export function StagedConfiguration({ stagedConfig }: Props) {
       icon: 'comment-alt',
       label: t('alerting.settings.import.section.contact-points', 'Contact points'),
       count: receivers.length,
-      content: receivers.map((receiver) => (
+      content: receivers.map((receiver, index) => (
         <ResourceRow
-          key={receiver.name}
+          key={receiverLinkNames[index]}
           label={receiver.name}
           meta={getReceiverIntegrationTypes(receiver).join(', ')}
-          href={makeViewContactPointLink(receiver.name)}
+          href={makeViewContactPointLink(receiverLinkNames[index])}
         />
       )),
     });
@@ -110,7 +139,7 @@ export function StagedConfiguration({ stagedConfig }: Props) {
             label={t('alerting.settings.import.default-policy', 'Default policy')}
             plainLabel
             meta={config.route?.receiver ?? undefined}
-            href={makeViewPolicyLink('')}
+            href={makeViewPolicyLink(stagedConfig.identifier, '')}
           />
           {childRoutes.map((route, index) => {
             const matchers = summarizeRouteMatchers(route);
@@ -119,7 +148,7 @@ export function StagedConfiguration({ stagedConfig }: Props) {
                 key={`${matchers}|${route.receiver ?? ''}|${index}`}
                 label={matchers || t('alerting.settings.import.no-matchers', '(no matchers)')}
                 meta={route.receiver ? `→ ${route.receiver}` : undefined}
-                href={makeViewPolicyLink(encodeRouteMatchersQuery(route))}
+                href={makeViewPolicyLink(stagedConfig.identifier, encodeRouteMatchersQuery(route))}
               />
             );
           })}
@@ -144,8 +173,12 @@ export function StagedConfiguration({ stagedConfig }: Props) {
       icon: 'history',
       label: t('alerting.settings.import.section.time-intervals', 'Time intervals'),
       count: summary.timeIntervals.length,
-      content: summary.timeIntervals.map((name) => (
-        <ResourceRow key={name} label={name} href={makeViewTimeIntervalLink(name)} />
+      content: summary.timeIntervals.map((name, index) => (
+        <ResourceRow
+          key={timeIntervalLinkNames[index]}
+          label={name}
+          href={makeViewTimeIntervalLink(timeIntervalLinkNames[index])}
+        />
       )),
     });
   }

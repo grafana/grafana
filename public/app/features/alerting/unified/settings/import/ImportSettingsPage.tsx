@@ -123,7 +123,9 @@ function StagedConfigurationSection() {
         </EmptyState>
       )}
 
-      {!isLoading && !isError && stagedConfig && <StagedConfiguration stagedConfig={stagedConfig} />}
+      {!isLoading && !isError && stagedConfig && (
+        <StagedConfiguration stagedConfig={stagedConfig} liveConfig={data?.alertmanager_config} />
+      )}
     </Stack>
   );
 }

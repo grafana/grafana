@@ -102,14 +102,45 @@ describe('StagedConfiguration', () => {
       true
     );
     // Notification policies filter the routes tree by matcher query string, pinned to the Grafana
-    // Alertmanager so the link always opens the staged config (not whichever AM is in localStorage).
-    const routeHrefs = hrefs.filter((href) => href?.includes('/alerting/routes'));
+    // Alertmanager so the link always opens the staged config (not whichever AM is in localStorage),
+    // and to the staged config's own routing tree so live trees are not listed alongside it.
+    // Matched on the trailing "?" so the /alerting/routes/mute-timing/edit link is not picked up here.
+    const routeHrefs = hrefs.filter((href) => href?.includes('/alerting/routes?'));
     expect(routeHrefs.length).toBeGreaterThan(0);
-    routeHrefs.forEach((href) => expect(href).toContain('alertmanager=grafana'));
+    routeHrefs.forEach((href) => {
+      expect(href).toContain('alertmanager=grafana');
+      expect(href).toContain('includeTree=prometheus-prod');
+    });
     // The child route's matcher value is quoted so the routes filter parses it back intact.
     const childPolicyHref = routeHrefs.find((href) => href?.includes('queryString'));
     const policyParams = new URLSearchParams(childPolicyHref?.split('?')[1]);
     expect(policyParams.get('queryString')).toBe('team="platform"');
+  });
+
+  it('links resources renamed by the merge under their post-merge name', async () => {
+    // "default" and "weekends" are already taken in the live config, so the backend addresses the staged
+    // copies as "<name>_<identifier>". "slack-platform" is free and keeps its name.
+    const { user } = render(
+      <StagedConfiguration
+        stagedConfig={stagedConfig}
+        liveConfig={{ receivers: [{ name: 'default' }], time_intervals: [{ name: 'weekends', time_intervals: [] }] }}
+      />
+    );
+
+    await user.click(ui.expandAll.get());
+
+    const hrefs = screen.getAllByRole('link', { name: /view/i }).map((link) => link.getAttribute('href'));
+
+    expect(hrefs).toContainEqual(
+      expect.stringContaining(`/receivers/${base64UrlEncode('default_prometheus-prod')}/edit`)
+    );
+    expect(hrefs).not.toContainEqual(expect.stringContaining(`/receivers/${base64UrlEncode('default')}/edit`));
+    expect(hrefs).toContainEqual(expect.stringContaining('muteName=weekends_prometheus-prod'));
+    // Unaffected resources keep their original name.
+    expect(hrefs).toContainEqual(expect.stringContaining(`/receivers/${base64UrlEncode('slack-platform')}/edit`));
+    // The labels still show the staged config's own names — only the link targets are the merged ones.
+    expect(screen.queryByText('default_prometheus-prod')).not.toBeInTheDocument();
+    expect(screen.queryByText('weekends_prometheus-prod')).not.toBeInTheDocument();
   });
 
   it('shows inhibition rule details inline (no link)', async () => {

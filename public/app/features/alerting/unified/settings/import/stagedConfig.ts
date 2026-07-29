@@ -95,14 +95,51 @@ export function parseStagedAlertmanagerConfig(yamlConfig: string | undefined): S
   }
 }
 
+/** Time interval names in an Alertmanager config; they can arrive under either of two fields. */
+export function getTimeIntervalNames(config: {
+  time_intervals?: MuteTimeInterval[];
+  mute_time_intervals?: MuteTimeInterval[];
+}): string[] {
+  return [...(config.time_intervals ?? []), ...(config.mute_time_intervals ?? [])].map((interval) => interval.name);
+}
+
+/**
+ * The names the backend addresses staged resources under. A staged name already owned by the live config — or
+ * by an earlier staged resource of the same kind — gets suffixed with `_<identifier>` (then `_<identifier>_NN`),
+ * and the staged copy is only reachable under that suffixed name. Mirrors the backend merge so deep links
+ * open the staged resource rather than the live one it collided with.
+ *
+ * Names are returned positionally so callers can pair them with the staged resources they render.
+ */
+export function resolveMergedNames(staged: string[], live: string[], identifier: string): string[] {
+  // Who owns each name: -1 for the live config, otherwise the index of the staged resource holding it.
+  const owner = new Map<string, number>();
+  live.forEach((name) => owner.set(name, -1));
+  staged.forEach((name, index) => {
+    if (!owner.has(name)) {
+      owner.set(name, index);
+    }
+  });
+
+  return staged.map((name, index) => {
+    if (owner.get(name) === index) {
+      return name;
+    }
+    let candidate = `${name}_${identifier}`;
+    for (let attempt = 1; owner.has(candidate); attempt++) {
+      candidate = `${name}_${identifier}_${String(attempt).padStart(2, '0')}`;
+    }
+    owner.set(candidate, index);
+    return candidate;
+  });
+}
+
 export function summarizeStagedConfig(
   config: StagedAlertmanagerConfig,
   templateFiles?: Record<string, string>
 ): StagedConfigSummary {
   const receivers = (config.receivers ?? []).map((receiver) => receiver.name);
-  const timeIntervals = [...(config.time_intervals ?? []), ...(config.mute_time_intervals ?? [])].map(
-    (interval) => interval.name
-  );
+  const timeIntervals = getTimeIntervalNames(config);
   // Grafana template groups are the imported `template_files` entries; the AM config's `templates`
   // field is only a list of file globs, so prefer the file names and fall back to the globs.
   const templateFileNames = Object.keys(templateFiles ?? {});

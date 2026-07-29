@@ -6,6 +6,7 @@ import {
   encodeRouteMatchersQuery,
   getReceiverIntegrationTypes,
   parseStagedAlertmanagerConfig,
+  resolveMergedNames,
   summarizeMatchRecord,
   summarizeRouteMatchers,
   summarizeStagedConfig,
@@ -24,6 +25,33 @@ describe('parseStagedAlertmanagerConfig', () => {
   it('parses a valid config', () => {
     const config = parseStagedAlertmanagerConfig('route:\n  receiver: default\nreceivers:\n  - name: default');
     expect(config?.receivers?.[0].name).toBe('default');
+  });
+});
+
+describe('resolveMergedNames', () => {
+  it('keeps names the live config does not already own', () => {
+    expect(resolveMergedNames(['slack', 'pagerduty'], ['email'], 'prom-prod')).toEqual(['slack', 'pagerduty']);
+  });
+
+  it('suffixes names that collide with the live config', () => {
+    expect(resolveMergedNames(['default', 'slack'], ['default'], 'prom-prod')).toEqual(['default_prom-prod', 'slack']);
+  });
+
+  it('appends a counter when the suffixed name is also taken', () => {
+    expect(resolveMergedNames(['default'], ['default', 'default_prom-prod'], 'prom-prod')).toEqual([
+      'default_prom-prod_01',
+    ]);
+    expect(
+      resolveMergedNames(['default'], ['default', 'default_prom-prod', 'default_prom-prod_01'], 'prom-prod')
+    ).toEqual(['default_prom-prod_02']);
+  });
+
+  it('renames only the later of two staged resources sharing a name', () => {
+    expect(resolveMergedNames(['dupe', 'dupe'], [], 'prom-prod')).toEqual(['dupe', 'dupe_prom-prod']);
+  });
+
+  it('returns names unchanged when there is no live config to collide with', () => {
+    expect(resolveMergedNames(['a', 'b'], [], 'prom-prod')).toEqual(['a', 'b']);
   });
 });
 
