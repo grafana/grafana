@@ -2473,7 +2473,7 @@ __metadata:
     "@emotion/css": "npm:^11.13.5"
     "@grafana/data": "npm:13.2.0-pre"
     "@grafana/e2e-selectors": "npm:13.2.0-pre"
-    "@grafana/plugin-ui": "npm:^0.13.1"
+    "@grafana/plugin-ui": "npm:^0.17.3"
     "@grafana/runtime": "npm:13.2.0-pre"
     "@grafana/ui": "npm:13.2.0-pre"
     "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
@@ -2491,7 +2491,6 @@ __metadata:
     react: "npm:18.3.1"
     react-use: "npm:^17.6.1"
     rollup: "npm:^4.60.1"
-    rxjs: "npm:^7.8.2"
     typescript: "npm:6.0.2"
   peerDependencies:
     react: ^18.0.0
@@ -2612,6 +2611,36 @@ __metadata:
     react: ">=18.2.0"
     react-dom: ">=18.2.0"
   checksum: 10/6d39184464b95d4b62a0fdbfb9df67d2ccd3ef6c7e3b670d1492e46e9cb8ac0ada3ef0998980dfccb5df516ee891b5dcc7a3c34a6c98edefcb3825757f7f2faa
+  languageName: node
+  linkType: hard
+
+"@grafana/plugin-ui@npm:^0.17.3":
+  version: 0.17.3
+  resolution: "@grafana/plugin-ui@npm:0.17.3"
+  dependencies:
+    "@emotion/css": "npm:11.13.5"
+    "@hello-pangea/dnd": "npm:17.0.0"
+    "@marcbachmann/cel-js": "npm:7.6.1"
+    "@react-awesome-query-builder/ui": "npm:6.6.15"
+    lodash: "npm:4.18.1"
+    prismjs: "npm:1.30.0"
+    react-calendar: "npm:4.8.0"
+    react-popper-tooltip: "npm:4.4.2"
+    react-use: "npm:17.6.1"
+    react-virtualized-auto-sizer: "npm:1.0.26"
+    sql-formatter: "npm:15.8.2"
+    uuid: "npm:14.0.1"
+  peerDependencies:
+    "@grafana/data": ^13.0.0
+    "@grafana/e2e-selectors": ^13.0.0
+    "@grafana/runtime": ^13.0.0
+    "@grafana/ui": ^13.0.0
+    "@testing-library/jest-dom": ^6.9.1
+    "@testing-library/react": ^16.3.2
+    "@testing-library/user-event": ^14.6.1
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+  checksum: 10/059f1ae8216bd7a640306c3ee64f7c53955cf3cd499732f38c58010007c73b10a94e9425b8b20e0fcecc225c28a70b8ee8b19cbc0ca9e266d2036d1a3cec6460
   languageName: node
   linkType: hard
 
@@ -2851,7 +2880,7 @@ __metadata:
     "@grafana/data": "npm:13.2.0-pre"
     "@grafana/e2e-selectors": "npm:13.2.0-pre"
     "@grafana/i18n": "npm:13.2.0-pre"
-    "@grafana/plugin-ui": "npm:^0.13.1"
+    "@grafana/plugin-ui": "npm:^0.17.3"
     "@grafana/ui": "npm:13.2.0-pre"
     "@react-awesome-query-builder/ui": "npm:^6.6.15"
     "@rollup/plugin-dynamic-import-vars": "npm:2.1.5"
@@ -4897,6 +4926,15 @@ __metadata:
     gl-style-migrate: dist/gl-style-migrate.mjs
     gl-style-validate: dist/gl-style-validate.mjs
   checksum: 10/72493afafdde916704494f4ecbecb7e8c16f515393e5a2304d898b2884cd03540806eabd809ce2229d5bc89bbdbe480f4e3802be040fd1ca910e7c9abdcbe3da
+  languageName: node
+  linkType: hard
+
+"@marcbachmann/cel-js@npm:7.6.1":
+  version: 7.6.1
+  resolution: "@marcbachmann/cel-js@npm:7.6.1"
+  bin:
+    cel-evaluate: bin/cel-evaluate.js
+  checksum: 10/322587e1c31ece7cc5c6b418a0a00a4c5472287d307a2a1806effe1e4797593b4c17ffc6672eaa2e4a74ee4c2844217a5aaa312b9c72a2ecdddceeb82d9938e7
   languageName: node
   linkType: hard
 
@@ -30150,6 +30188,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"sql-formatter@npm:15.8.2":
+  version: 15.8.2
+  resolution: "sql-formatter@npm:15.8.2"
+  dependencies:
+    argparse: "npm:^2.0.1"
+    nearley: "npm:^2.20.1"
+  bin:
+    sql-formatter: bin/sql-formatter-cli.cjs
+  checksum: 10/c61e97674e328b13f52b48dce14e98c96fe2d39e0234d792223e83b58ad5cbefcc6a556702011bdb92b052af0813ce5a27d15fb3366032c16d8ddc62faad3068
+  languageName: node
+  linkType: hard
+
 "sqlstring@npm:^2.3.3":
   version: 2.3.3
   resolution: "sqlstring@npm:2.3.3"
@@ -32352,12 +32402,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:14.0.0, uuid@npm:^14.0.0":
+"uuid@npm:14.0.0":
   version: 14.0.0
   resolution: "uuid@npm:14.0.0"
   bin:
     uuid: dist-node/bin/uuid
   checksum: 10/8ee9b98f9650e25555515f7a28d3c3ae9364e72f7bb19b9e08b681bc135338beba5509b2830f6ae1cfaba4d45401da0d16d4d109b977097bc3d6ba0c5583341b
+  languageName: node
+  linkType: hard
+
+"uuid@npm:14.0.1, uuid@npm:^14.0.0":
+  version: 14.0.1
+  resolution: "uuid@npm:14.0.1"
+  bin:
+    uuid: dist-node/bin/uuid
+  checksum: 10/0f978fd5b0269d7acb615342aeb131f0b8d85eeb8ec34f2915d906baa3befcc14a079a430d0f8116aec6fd20c850cbfab65d1b3d1643fa81ed373c0cf9574f18
   languageName: node
   linkType: hard
 
