@@ -159,7 +159,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
           )}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
           {renderEnterpriseItems()}
-          <DashboardSidebarExtensionPoint dashboardUid={uid} />
+          <DashboardSidebarExtensionPoint />
           {viewPanel && viewPanelPane && (
             <Sidebar.Button
               icon="layer-group"

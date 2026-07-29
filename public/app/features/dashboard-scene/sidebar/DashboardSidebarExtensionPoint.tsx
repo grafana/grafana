@@ -2,18 +2,16 @@ import { PluginExtensionPoints } from '@grafana/data';
 import { locationService, usePluginLinks } from '@grafana/runtime';
 import { Sidebar } from '@grafana/ui';
 
-export interface DashboardSidebarExtensionPointProps {
-  dashboardUid?: string;
-}
+const LINKS_LIMIT_PER_PLUGIN = 1;
 
 /**
  * Extension point for plugins to add buttons to the dashboard sidebar.
  * Link-based so core owns the button chrome — plugins only provide title, icon and a path or onClick.
  */
-export function DashboardSidebarExtensionPoint({ dashboardUid }: DashboardSidebarExtensionPointProps) {
+export function DashboardSidebarExtensionPoint() {
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.DashboardSidebar,
-    context: { dashboardUid },
+    limitPerPlugin: LINKS_LIMIT_PER_PLUGIN,
   });
 
   return (
@@ -23,7 +21,7 @@ export function DashboardSidebarExtensionPoint({ dashboardUid }: DashboardSideba
           key={link.id}
           icon={link.icon ?? 'plug'}
           title={link.title}
-          tooltip={link.description}
+          tooltip={link.description || undefined}
           onClick={(e) => {
             if (link.onClick) {
               link.onClick(e);
