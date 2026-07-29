@@ -2856,6 +2856,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.newCmdk",
+        "resourceVersion": "1784812186008",
+        "creationTimestamp": "2026-07-23T13:09:46Z"
+      },
+      "spec": {
+        "description": "Enables the new command palette architecture",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.newPanelQueryErrorsUI",
         "resourceVersion": "1781775898347",
         "creationTimestamp": "2026-06-18T09:44:58Z"
