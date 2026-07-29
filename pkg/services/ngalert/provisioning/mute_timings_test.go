@@ -27,7 +27,7 @@ func TestGetMuteTimings(t *testing.T) {
 		Config: &v1.AMConfigV1{
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
-					MuteTimeIntervals: []v1.MuteTimeInterval{
+					TimeIntervals: []v1.TimeInterval{
 						{
 							Name:          "Test1",
 							TimeIntervals: nil,
@@ -36,8 +36,6 @@ func TestGetMuteTimings(t *testing.T) {
 							Name:          "Test2",
 							TimeIntervals: nil,
 						},
-					},
-					TimeIntervals: []v1.TimeInterval{
 						{
 							Name:          "Test3",
 							TimeIntervals: nil,
@@ -64,7 +62,7 @@ func TestGetMuteTimings(t *testing.T) {
 		result, err := sut.GetMuteTimings(context.Background(), 1)
 
 		require.NoError(t, err)
-		require.Len(t, result, len(revision.Config.AlertmanagerConfig.MuteTimeIntervals)+len(revision.Config.AlertmanagerConfig.TimeIntervals))
+		require.Len(t, result, len(revision.Config.AlertmanagerConfig.TimeIntervals))
 		require.Equal(t, "Test1", result[0].Name)
 		require.EqualValues(t, provenances["Test1"], result[0].Provenance)
 		require.NotEmpty(t, result[0].Version)
@@ -127,10 +125,10 @@ func TestGetMuteTimings(t *testing.T) {
 	})
 
 	t.Run("with imported intervals", func(t *testing.T) {
-		grafanaIntervals := []v1.MuteTimeInterval{
+		grafanaIntervals := []v1.TimeInterval{
 			{Name: "grafana-interval"},
 		}
-		importedIntervals := []v1.MuteTimeInterval{
+		importedIntervals := []v1.TimeInterval{
 			{Name: "imported-interval"},
 		}
 		revision := createConfigWithImportedIntervals(grafanaIntervals, importedIntervals)
@@ -219,13 +217,11 @@ func TestGetMuteTimingByName(t *testing.T) {
 		Config: &v1.AMConfigV1{
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
-					MuteTimeIntervals: []v1.MuteTimeInterval{
+					TimeIntervals: []v1.TimeInterval{
 						{
 							Name:          "Test1",
 							TimeIntervals: nil,
 						},
-					},
-					TimeIntervals: []v1.TimeInterval{
 						{
 							Name:          "Test2",
 							TimeIntervals: nil,
@@ -306,13 +302,11 @@ func TestGetMuteTimingByUID(t *testing.T) {
 		Config: &v1.AMConfigV1{
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
-					MuteTimeIntervals: []v1.MuteTimeInterval{
+					TimeIntervals: []v1.TimeInterval{
 						{
 							Name:          "Test1",
 							TimeIntervals: nil,
 						},
-					},
-					TimeIntervals: []v1.TimeInterval{
 						{
 							Name:          "Test2",
 							TimeIntervals: nil,
@@ -383,12 +377,10 @@ func TestCreateMuteTimings(t *testing.T) {
 			Templates: nil,
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
-					MuteTimeIntervals: []v1.MuteTimeInterval{
+					TimeIntervals: []v1.TimeInterval{
 						{
 							Name: "TEST",
 						},
-					},
-					TimeIntervals: []v1.TimeInterval{
 						{
 							Name: "TEST2",
 						},
@@ -438,7 +430,7 @@ func TestCreateMuteTimings(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
-		existing := initialConfig().AlertmanagerConfig.MuteTimeIntervals[0]
+		existing := initialConfig().AlertmanagerConfig.TimeIntervals[0]
 		timing := definitions.MuteTimeInterval{
 			MuteTimeInterval: definitions.AmMuteTimeInterval(existing),
 			Provenance:       definitions.Provenance(models.ProvenanceFile),
@@ -448,7 +440,7 @@ func TestCreateMuteTimings(t *testing.T) {
 
 		require.Truef(t, ErrTimeIntervalExists.Is(err), "expected ErrTimeIntervalExists but got %s", err)
 
-		existing = v1.MuteTimeInterval(initialConfig().AlertmanagerConfig.TimeIntervals[0])
+		existing = initialConfig().AlertmanagerConfig.TimeIntervals[1]
 		timing = definitions.MuteTimeInterval{
 			MuteTimeInterval: definitions.AmMuteTimeInterval(existing),
 			Provenance:       definitions.Provenance(models.ProvenanceFile),
@@ -554,7 +546,7 @@ func TestCreateMuteTimings(t *testing.T) {
 func TestUpdateMuteTimings(t *testing.T) {
 	orgID := int64(1)
 
-	original := v1.MuteTimeInterval{
+	original := v1.TimeInterval{
 		Name: "Test",
 	}
 	originalVersion := calculateMuteTimeIntervalFingerprint(original)
@@ -563,10 +555,8 @@ func TestUpdateMuteTimings(t *testing.T) {
 			Templates: nil,
 			AlertmanagerConfig: v1.PostableApiAlertingConfig{
 				Config: v1.Config{
-					MuteTimeIntervals: []v1.MuteTimeInterval{
-						original,
-					},
 					TimeIntervals: []v1.TimeInterval{
+						original,
 						{
 							Name: "Test2",
 						},
@@ -584,7 +574,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		}
 	}
 
-	expected := v1.MuteTimeInterval{
+	expected := v1.TimeInterval{
 		Name: "Test",
 		TimeIntervals: []timeinterval.TimeInterval{
 			{
@@ -755,7 +745,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.Equal(t, orgID, store.Calls[1].Args[2])
 		revision := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 
-		require.EqualValues(t, []v1.MuteTimeInterval{expected}, revision.Config.AlertmanagerConfig.MuteTimeIntervals)
+		require.EqualValues(t, []v1.TimeInterval{expected, {Name: "Test2"}}, revision.Config.AlertmanagerConfig.TimeIntervals)
 
 		prov.AssertCalled(t, "SetProvenance", mock.Anything, &timing, orgID, expectedProvenance)
 
@@ -778,7 +768,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 				Version:    "",
 				Provenance: definitions.Provenance(expectedProvenance),
 			}
-			expectedVersion := calculateMuteTimeIntervalFingerprint(v1.MuteTimeInterval(timing.MuteTimeInterval))
+			expectedVersion := calculateMuteTimeIntervalFingerprint(v1.TimeInterval(timing.MuteTimeInterval))
 
 			result, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
 			require.NoError(t, err)
@@ -791,7 +781,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 			require.Equal(t, orgID, store.Calls[1].Args[2])
 			revision := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 
-			require.EqualValues(t, []v1.MuteTimeInterval{v1.MuteTimeInterval(timing.MuteTimeInterval)}, revision.Config.AlertmanagerConfig.MuteTimeIntervals)
+			require.EqualValues(t, []v1.TimeInterval{v1.TimeInterval(timing.MuteTimeInterval), {Name: "Test2"}}, revision.Config.AlertmanagerConfig.TimeIntervals)
 		})
 	})
 
@@ -811,7 +801,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 				return nil
 			})
 
-		original := v1.MuteTimeInterval(initialConfig().AlertmanagerConfig.TimeIntervals[0])
+		original := initialConfig().AlertmanagerConfig.TimeIntervals[1]
 
 		expected := expected
 		expected.Name = original.Name
@@ -836,7 +826,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 		require.Equal(t, orgID, store.Calls[1].Args[2])
 		revision := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 
-		require.EqualValues(t, []v1.TimeInterval{v1.TimeInterval(expected)}, revision.Config.AlertmanagerConfig.TimeIntervals)
+		require.EqualValues(t, []v1.TimeInterval{{Name: "Test"}, expected}, revision.Config.AlertmanagerConfig.TimeIntervals)
 
 		prov.AssertCalled(t, "SetProvenance", mock.Anything, &timing, orgID, expectedProvenance)
 	})
@@ -911,7 +901,11 @@ func TestUpdateMuteTimings(t *testing.T) {
 		assert.Equal(t, orgID, store.Calls[1].Args[2])
 
 		revision := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
-		assert.EqualValues(t, append(initialConfig().AlertmanagerConfig.TimeIntervals, v1.TimeInterval(interval)), revision.Config.AlertmanagerConfig.TimeIntervals)
+		expectedTimings := slices.DeleteFunc(initialConfig().AlertmanagerConfig.TimeIntervals, func(i v1.TimeInterval) bool {
+			return i.Name == original.Name
+		})
+		expectedTimings = append(expectedTimings, interval)
+		assert.EqualValues(t, expectedTimings, revision.Config.AlertmanagerConfig.TimeIntervals)
 		assert.Falsef(t, revision.TimeIntervalUsedByRoutes(expected.Name), "There are still references to the old time interval")
 		assert.Truef(t, revision.TimeIntervalUsedByRoutes(interval.Name), "There are no references to the new time interval")
 	})
@@ -1087,7 +1081,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 func TestDeleteMuteTimings(t *testing.T) {
 	orgID := int64(1)
 
-	timingToDelete := v1.MuteTimeInterval{Name: "unused-timing"}
+	timingToDelete := v1.TimeInterval{Name: "unused-timing"}
 	correctVersion := calculateMuteTimeIntervalFingerprint(timingToDelete)
 	usedMuteTiming := "used-timing"
 	usedActiveTiming := "used-active-timing"
@@ -1102,7 +1096,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 						MuteTimeIntervals:   []string{usedMuteTiming},
 						ActiveTimeIntervals: []string{usedActiveTiming},
 					},
-					MuteTimeIntervals: []v1.MuteTimeInterval{
+					TimeIntervals: []v1.TimeInterval{
 						{
 							Name: usedMuteTiming,
 						},
@@ -1110,8 +1104,6 @@ func TestDeleteMuteTimings(t *testing.T) {
 						{
 							Name: managedRouteMuteTiming,
 						},
-					},
-					TimeIntervals: []v1.TimeInterval{
 						{
 							Name: usedActiveTiming,
 						},
@@ -1190,7 +1182,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
-		version := calculateMuteTimeIntervalFingerprint(v1.MuteTimeInterval{Name: managedRouteMuteTiming})
+		version := calculateMuteTimeIntervalFingerprint(v1.TimeInterval{Name: managedRouteMuteTiming})
 		err := sut.DeleteMuteTiming(context.Background(), managedRouteMuteTiming, orgID, definitions.Provenance(models.ProvenanceAPI), version)
 
 		require.Len(t, store.Calls, 1)
@@ -1206,7 +1198,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 		}
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceAPI, nil)
 
-		version := calculateMuteTimeIntervalFingerprint(v1.MuteTimeInterval{Name: managedRouteActiveTiming})
+		version := calculateMuteTimeIntervalFingerprint(v1.TimeInterval{Name: managedRouteActiveTiming})
 		err := sut.DeleteMuteTiming(context.Background(), managedRouteActiveTiming, orgID, definitions.Provenance(models.ProvenanceAPI), version)
 
 		require.Len(t, store.Calls, 1)
@@ -1291,10 +1283,10 @@ func TestDeleteMuteTimings(t *testing.T) {
 		require.Equal(t, orgID, store.Calls[1].Args[2])
 		revision := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 
-		expectedMuteTimings := slices.DeleteFunc(initialConfig().AlertmanagerConfig.MuteTimeIntervals, func(interval v1.MuteTimeInterval) bool {
+		expectedMuteTimings := slices.DeleteFunc(initialConfig().AlertmanagerConfig.TimeIntervals, func(interval v1.TimeInterval) bool {
 			return interval.Name == timingToDelete.Name
 		})
-		require.EqualValues(t, expectedMuteTimings, revision.Config.AlertmanagerConfig.MuteTimeIntervals)
+		require.EqualValues(t, expectedMuteTimings, revision.Config.AlertmanagerConfig.TimeIntervals)
 
 		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, &timingToDelete, orgID)
 
@@ -1307,10 +1299,10 @@ func TestDeleteMuteTimings(t *testing.T) {
 			require.Equal(t, orgID, store.Calls[1].Args[2])
 			revision := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 
-			expectedMuteTimings := slices.DeleteFunc(initialConfig().AlertmanagerConfig.MuteTimeIntervals, func(interval v1.MuteTimeInterval) bool {
+			expectedMuteTimings := slices.DeleteFunc(initialConfig().AlertmanagerConfig.TimeIntervals, func(interval v1.TimeInterval) bool {
 				return interval.Name == timingToDelete.Name
 			})
-			require.EqualValues(t, expectedMuteTimings, revision.Config.AlertmanagerConfig.MuteTimeIntervals)
+			require.EqualValues(t, expectedMuteTimings, revision.Config.AlertmanagerConfig.TimeIntervals)
 
 			prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(mt models.Provisionable) bool { return mt.ResourceID() == timingToDelete.ResourceID() }), orgID)
 		})
@@ -1332,8 +1324,8 @@ func TestDeleteMuteTimings(t *testing.T) {
 				return nil
 			})
 
-		timingToDelete := initialConfig().AlertmanagerConfig.TimeIntervals[1]
-		correctVersion := calculateMuteTimeIntervalFingerprint(v1.MuteTimeInterval(timingToDelete))
+		timingToDelete := initialConfig().AlertmanagerConfig.TimeIntervals[4]
+		correctVersion := calculateMuteTimeIntervalFingerprint(timingToDelete)
 
 		err := sut.DeleteMuteTiming(context.Background(), timingToDelete.Name, orgID, "", correctVersion)
 		require.NoError(t, err)
@@ -1350,7 +1342,6 @@ func TestDeleteMuteTimings(t *testing.T) {
 			return interval.Name == timingToDelete.Name
 		})
 		require.EqualValues(t, expectedMuteTimings, revision.Config.AlertmanagerConfig.TimeIntervals)
-		require.EqualValues(t, initialConfig().AlertmanagerConfig.MuteTimeIntervals, revision.Config.AlertmanagerConfig.MuteTimeIntervals)
 
 		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(mt models.Provisionable) bool { return mt.ResourceID() == timingToDelete.Name }), orgID)
 	})
@@ -1384,10 +1375,10 @@ func TestDeleteMuteTimings(t *testing.T) {
 		require.Equal(t, orgID, store.Calls[1].Args[2])
 		revision := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision)
 
-		expectedMuteTimings := slices.DeleteFunc(initialConfig().AlertmanagerConfig.MuteTimeIntervals, func(interval v1.MuteTimeInterval) bool {
+		expectedMuteTimings := slices.DeleteFunc(initialConfig().AlertmanagerConfig.TimeIntervals, func(interval v1.TimeInterval) bool {
 			return interval.Name == timingToDelete.Name
 		})
-		require.EqualValues(t, expectedMuteTimings, revision.Config.AlertmanagerConfig.MuteTimeIntervals)
+		require.EqualValues(t, expectedMuteTimings, revision.Config.AlertmanagerConfig.TimeIntervals)
 
 		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(mt models.Provisionable) bool { return mt.ResourceID() == timingToDelete.ResourceID() }), orgID)
 	})
@@ -1469,7 +1460,7 @@ func createMuteTimingSvcSut() (*MuteTimingService, *legacy_storage.AlertmanagerC
 // buildMimirAMConfigWithTimeIntervals creates a Mimir alertmanager config YAML string
 // containing the provided time intervals for use in ExtraConfigs.
 // This generates a minimal but valid Prometheus alertmanager config with a route and receiver.
-func buildMimirAMConfigWithTimeIntervals(intervals []v1.MuteTimeInterval) string {
+func buildMimirAMConfigWithTimeIntervals(intervals []v1.TimeInterval) string {
 	if len(intervals) == 0 {
 		return ""
 	}
@@ -1514,11 +1505,11 @@ func buildMimirAMConfigWithTimeIntervals(intervals []v1.MuteTimeInterval) string
 
 // createConfigWithImportedIntervals creates a ConfigRevision with both Grafana and imported
 // Mimir time intervals for testing.
-func createConfigWithImportedIntervals(grafanaIntervals []v1.MuteTimeInterval, importedIntervals []v1.MuteTimeInterval) *legacy_storage.ConfigRevision {
+func createConfigWithImportedIntervals(grafanaIntervals []v1.TimeInterval, importedIntervals []v1.TimeInterval) *legacy_storage.ConfigRevision {
 	cfg := &v1.AMConfigV1{
 		AlertmanagerConfig: v1.PostableApiAlertingConfig{
 			Config: v1.Config{
-				MuteTimeIntervals: grafanaIntervals,
+				TimeIntervals: grafanaIntervals,
 			},
 		},
 	}

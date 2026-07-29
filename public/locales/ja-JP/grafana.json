@@ -5511,135 +5511,6 @@
       "switch-layout-tab": "レイアウトを切り替える",
       "tab-title": "タブのタイトルを変更"
     },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "注釈データソースを変更",
-        "choose-panels": "パネルを選択",
-        "color": "色",
-        "color-description": "注釈イベントマーカーに使用する色",
-        "data-source": "データソース",
-        "display": "注釈コントロールの表示場所",
-        "display-options": {
-          "above-dashboard": "ダッシュボード上部",
-          "controls-menu": "コントロールメニュー",
-          "controls-menu-description": "コントロールメニューが開いているときにアクセスできます",
-          "hidden": "非表示",
-          "hidden-description": "この注釈のオン/オフを切り替えるためのトグルを非表示にします"
-        },
-        "enabled": "有効",
-        "enabled-description": "有効にすると、ダッシュボードの更新ごとに注釈クエリが発行されます",
-        "name": "名前",
-        "open-query-editor": "クエリエディターを開く",
-        "open-query-editor-tooltip": "クエリエディターを開いて注釈クエリを設定する",
-        "panel-filter": {
-          "all-panels": "すべてのパネル",
-          "all-panels-description": "注釈をサポートするすべてのパネルに注釈データを送信",
-          "all-panels-except": "次を除くすべてのパネル",
-          "all-panels-except-description": "次のパネルに注釈データを送信しない",
-          "selected-panels": "選択したパネル",
-          "selected-panels-description": "明示的にリストされたパネルに注釈を送信"
-        },
-        "query": "クエリ",
-        "query-editor-close": "閉じる",
-        "query-editor-modal-title": "注釈クエリ",
-        "show-in": "表示先"
-      },
-      "annotations": {
-        "add-annotation": "注釈を追加",
-        "reorder": "ドラッグして並べ替え",
-        "select-annotation": "選択"
-      },
-      "elements": {
-        "annotation": "注釈",
-        "annotation-set": "注釈とアラート",
-        "dashboard": "ダッシュボード",
-        "element": "要素",
-        "filter": "",
-        "filters-set": "",
-        "link-set": "リンク",
-        "local-variable": "ローカル変数",
-        "multiple-elements": "複数の要素",
-        "multiple-elements-delete-text": "これらの要素を削除してもよろしいですか？",
-        "multiple-panels": "複数のパネル",
-        "multiple-panels-delete-text": "これらのパネルを削除してもよろしいですか？すべてのクエリが削除されます。",
-        "objects": "オブジェクト",
-        "panel": "パネル",
-        "panels": "パネル",
-        "row": "行",
-        "rows": "行",
-        "section-filters-set": "",
-        "tab": "タブ",
-        "tabs": "タブ",
-        "variable": "{{type}}変数",
-        "variable-set": "変数"
-      },
-      "links": {
-        "add-link": "リンクを追加",
-        "reorder": "ドラッグして並べ替え",
-        "select-link": "選択",
-        "untitled": "無題のリンク"
-      },
-      "row": {
-        "header": {
-          "hide": "非表示",
-          "title": "行ヘッダー"
-        }
-      },
-      "section-filters": {
-        "title": ""
-      },
-      "section-variables": {
-        "title": "変数"
-      },
-      "variable": {
-        "change-type": "",
-        "change-type-aria-label": "変数タイプを変更",
-        "custom-options": {
-          "apply": "適用",
-          "change-value": "変数の値を変更",
-          "discard": "破棄",
-          "modal-title": "カスタムオプション"
-        },
-        "datasource-options": {
-          "name-filter": "名前フィルター",
-          "name-filter-description": "含めるデータソースインスタンスの正規表現フィルター。すべてを含める場合は空欄のままにしてください。",
-          "name-filter-placeholder": "例：/^prod/",
-          "type": "種類",
-          "type-placeholder": "データソースの種類を選択"
-        },
-        "description": "説明",
-        "description-placeholder": "説明用のテキスト",
-        "label": "ラベル",
-        "label-description": "表示名（任意）",
-        "name": "名前",
-        "open-editor": "変数エディタを開く",
-        "open-editor-tooltip": "その他の変数オプションは変数エディタで設定できます",
-        "query-options": {
-          "close": "閉じる",
-          "modal-title": "クエリ変数",
-          "preview": "プレビュー"
-        },
-        "selection-options": {
-          "allow-custom-values": "カスタム値を許可",
-          "allow-custom-values-description": "ユーザーが値を入力できるようにします",
-          "category": "選択オプション",
-          "custom-all-value": "「すべて」を表すカスタム値",
-          "custom-all-value-description": "「すべて」を表すワイルドカードの正規表現またはその他の値",
-          "include-all": "すべての値を含める",
-          "include-all-description": "すべての値を表す単一オプションを有効にします",
-          "multi-value": "複数値"
-        },
-        "type-category": "{{type}}オプション"
-      },
-      "variables": {
-        "add-variable": "変数を追加",
-        "change-type": "",
-        "reorder": "ドラッグして並べ替え",
-        "select-type": "変数タイプを選択",
-        "select-type-card-tooltip": "クリックして種類を選択",
-        "select-variable": "選択"
-      }
-    },
     "empty": {
       "add-library-panel-body": "他のダッシュボードと共有されている視覚化を追加します。",
       "add-library-panel-button": "ライブラリパネルを追加",
@@ -6158,6 +6029,43 @@
         "title": "追加",
         "tooltip": "新しい要素を追加"
       },
+      "annotation": {
+        "change-data-source": "注釈データソースを変更",
+        "choose-panels": "パネルを選択",
+        "color": "色",
+        "color-description": "注釈イベントマーカーに使用する色",
+        "data-source": "データソース",
+        "display": "注釈コントロールの表示場所",
+        "display-options": {
+          "above-dashboard": "ダッシュボード上部",
+          "controls-menu": "コントロールメニュー",
+          "controls-menu-description": "コントロールメニューが開いているときにアクセスできます",
+          "hidden": "非表示",
+          "hidden-description": "この注釈のオン/オフを切り替えるためのトグルを非表示にします"
+        },
+        "enabled": "有効",
+        "enabled-description": "有効にすると、ダッシュボードの更新ごとに注釈クエリが発行されます",
+        "name": "名前",
+        "open-query-editor": "クエリエディターを開く",
+        "open-query-editor-tooltip": "クエリエディターを開いて注釈クエリを設定する",
+        "panel-filter": {
+          "all-panels": "すべてのパネル",
+          "all-panels-description": "注釈をサポートするすべてのパネルに注釈データを送信",
+          "all-panels-except": "次を除くすべてのパネル",
+          "all-panels-except-description": "次のパネルに注釈データを送信しない",
+          "selected-panels": "選択したパネル",
+          "selected-panels-description": "明示的にリストされたパネルに注釈を送信"
+        },
+        "query": "クエリ",
+        "query-editor-close": "閉じる",
+        "query-editor-modal-title": "注釈クエリ",
+        "show-in": "表示先"
+      },
+      "annotations": {
+        "add-annotation": "注釈を追加",
+        "reorder": "ドラッグして並べ替え",
+        "select-annotation": "選択"
+      },
       "dashboard-options": {
         "title": "オプション",
         "tooltip": "ダッシュボードオプション"
@@ -6166,20 +6074,110 @@
         "title": "コード",
         "tooltip": "コードとして編集"
       },
+      "elements": {
+        "annotation": "注釈",
+        "annotation-set": "注釈とアラート",
+        "dashboard": "ダッシュボード",
+        "element": "要素",
+        "filter": "",
+        "filters-set": "",
+        "link-set": "リンク",
+        "local-variable": "ローカル変数",
+        "multiple-elements": "複数の要素",
+        "multiple-elements-delete-text": "これらの要素を削除してもよろしいですか？",
+        "multiple-panels": "複数のパネル",
+        "multiple-panels-delete-text": "これらのパネルを削除してもよろしいですか？すべてのクエリが削除されます。",
+        "objects": "オブジェクト",
+        "panel": "パネル",
+        "panels": "パネル",
+        "row": "行",
+        "rows": "行",
+        "section-filters-set": "",
+        "tab": "タブ",
+        "tabs": "タブ",
+        "variable": "{{type}}変数",
+        "variable-set": "変数"
+      },
       "export": {
         "title": "エクスポート"
       },
       "filters": "",
+      "links": {
+        "add-link": "リンクを追加",
+        "reorder": "ドラッグして並べ替え",
+        "select-link": "選択",
+        "untitled": "無題のリンク"
+      },
       "open": "",
       "outline": {
         "title": "概要",
         "tooltip": "コンテンツ概要"
       },
       "redo": "やり直し",
+      "row": {
+        "header": {
+          "hide": "非表示",
+          "title": "行ヘッダー"
+        }
+      },
+      "section-filters": {
+        "title": ""
+      },
+      "section-variables": {
+        "title": "変数"
+      },
       "snapshot": {
         "tooltip": "元のダッシュボードを開く"
       },
       "undo": "元に戻す",
+      "variable": {
+        "change-type": "",
+        "change-type-aria-label": "変数タイプを変更",
+        "custom-options": {
+          "apply": "適用",
+          "change-value": "変数の値を変更",
+          "discard": "破棄",
+          "modal-title": "カスタムオプション"
+        },
+        "datasource-options": {
+          "name-filter": "名前フィルター",
+          "name-filter-description": "含めるデータソースインスタンスの正規表現フィルター。すべてを含める場合は空欄のままにしてください。",
+          "name-filter-placeholder": "例：/^prod/",
+          "type": "種類",
+          "type-placeholder": "データソースの種類を選択"
+        },
+        "description": "説明",
+        "description-placeholder": "説明用のテキスト",
+        "label": "ラベル",
+        "label-description": "表示名（任意）",
+        "name": "名前",
+        "open-editor": "変数エディタを開く",
+        "open-editor-tooltip": "その他の変数オプションは変数エディタで設定できます",
+        "query-options": {
+          "close": "閉じる",
+          "modal-title": "クエリ変数",
+          "preview": "プレビュー"
+        },
+        "selection-options": {
+          "allow-custom-values": "カスタム値を許可",
+          "allow-custom-values-description": "ユーザーが値を入力できるようにします",
+          "category": "選択オプション",
+          "custom-all-value": "「すべて」を表すカスタム値",
+          "custom-all-value-description": "「すべて」を表すワイルドカードの正規表現またはその他の値",
+          "include-all": "すべての値を含める",
+          "include-all-description": "すべての値を表す単一オプションを有効にします",
+          "multi-value": "複数値"
+        },
+        "type-category": "{{type}}オプション"
+      },
+      "variables": {
+        "add-variable": "変数を追加",
+        "change-type": "",
+        "reorder": "ドラッグして並べ替え",
+        "select-type": "変数タイプを選択",
+        "select-type-card-tooltip": "クリックして種類を選択",
+        "select-variable": "選択"
+      },
       "view-panel": {
         "disabled": "",
         "fanout-by-series": "",
@@ -6769,9 +6767,6 @@
       "title-controls-menu-count_other": "コントロールメニュー（{{count}}）",
       "title-hidden-count_other": "非表示（{{count}}）"
     },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "新しいダッシュボード編集体験に関するフィードバックをご提供ください"
-    },
     "dashboard-link-form": {
       "back-to-list": "一覧に戻る",
       "label-icon": "アイコン",
@@ -6843,6 +6838,9 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "ダッシュボードのコントロール"
+    },
+    "dashboard-sidebar-renderer": {
+      "title-feedback-dashboard-editing-experience": "新しいダッシュボード編集体験に関するフィードバックをご提供ください"
     },
     "data-source-variable-form": {
       "data-source-options": "データソースオプション",
