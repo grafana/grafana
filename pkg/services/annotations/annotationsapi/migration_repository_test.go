@@ -25,9 +25,10 @@ type fakeLegacy struct {
 	deleteParams []*annotations.DeleteParams
 	deleteErr    error
 
-	findTagsResult annotations.FindTagsResult
-	findTagsErr    error
-	findTagsCalls  []*annotations.TagsQuery
+	findTagsResult        annotations.FindTagsResult
+	findTagsResultsByType map[string]annotations.FindTagsResult
+	findTagsErr           error
+	findTagsCalls         []*annotations.TagsQuery
 }
 
 func (f *fakeLegacy) Find(_ context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
@@ -46,6 +47,9 @@ func (f *fakeLegacy) Delete(_ context.Context, params *annotations.DeleteParams)
 }
 func (f *fakeLegacy) FindTags(_ context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
 	f.findTagsCalls = append(f.findTagsCalls, query)
+	if f.findTagsResultsByType != nil {
+		return f.findTagsResultsByType[query.Type], f.findTagsErr
+	}
 	return f.findTagsResult, f.findTagsErr
 }
 
@@ -527,20 +531,38 @@ func TestMigrationRepository_FindTags(t *testing.T) {
 		return result
 	}
 
-	for _, phase := range []string{"proxy-writes", "proxy-all"} {
-		t.Run("merges new store and legacy tags in "+phase, func(t *testing.T) {
-			legacy := &fakeLegacy{findTagsResult: tags("alert", 3, "shared", 1)}
-			proxy := &fakeProxy{findTagsResult: tags("shared", 2, "new", 4)}
-			repo := newTestRepo(t, phase, legacy, proxy, usertest.NewUserServiceFake())
+	t.Run("merges the full legacy tag set in proxy-writes", func(t *testing.T) {
+		legacy := &fakeLegacy{findTagsResult: tags("alert", 3, "shared", 1)}
+		proxy := &fakeProxy{findTagsResult: tags("shared", 2, "new", 4)}
+		repo := newTestRepo(t, "proxy-writes", legacy, proxy, usertest.NewUserServiceFake())
 
-			result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{OrgID: 1})
-			require.NoError(t, err)
-			assert.Equal(t, tags("alert", 3, "new", 4, "shared", 3).Tags, result.Tags,
-				"legacy still owns alert annotations in every phase, so its tags are always merged in")
-			require.Len(t, proxy.findTagsCalls, 1)
-			require.Len(t, legacy.findTagsCalls, 1)
-		})
-	}
+		result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{OrgID: 1})
+		require.NoError(t, err)
+		assert.Equal(t, tags("alert", 3, "new", 4, "shared", 3).Tags, result.Tags,
+			"legacy still holds pre-migration annotations, so every legacy tag is merged in")
+
+		require.Len(t, proxy.findTagsCalls, 1)
+		require.Len(t, legacy.findTagsCalls, 1)
+		assert.Empty(t, legacy.findTagsCalls[0].Type, "all legacy tags count in this phase")
+	})
+
+	t.Run("merges only legacy alert tags in proxy-all", func(t *testing.T) {
+		legacy := &fakeLegacy{findTagsResultsByType: map[string]annotations.FindTagsResult{
+			"":      tags("alert", 3, "shared", 9),
+			"alert": tags("alert", 3),
+		}}
+		proxy := &fakeProxy{findTagsResult: tags("shared", 2, "new", 4)}
+		repo := newTestRepo(t, "proxy-all", legacy, proxy, usertest.NewUserServiceFake())
+
+		result, err := repo.FindTags(context.Background(), &annotations.TagsQuery{OrgID: 1})
+		require.NoError(t, err)
+		assert.Equal(t, tags("alert", 3, "new", 4, "shared", 2).Tags, result.Tags,
+			"the shared tag keeps the new store's count only")
+
+		require.Len(t, proxy.findTagsCalls, 1)
+		require.Len(t, legacy.findTagsCalls, 1)
+		assert.Equal(t, "alert", legacy.findTagsCalls[0].Type)
+	})
 
 	t.Run("applies the query limit to the merged result", func(t *testing.T) {
 		legacy := &fakeLegacy{findTagsResult: tags("c", 1, "d", 1)}
