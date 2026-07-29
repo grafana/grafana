@@ -81,6 +81,7 @@ export const KBarResults = (props: KBarResultsProps) => {
         groupSize++;
       }
     }
+    // flush the last group
     flushGroup();
     return results;
   }, [props.items]);
