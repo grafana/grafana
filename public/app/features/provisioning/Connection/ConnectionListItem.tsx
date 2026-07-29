@@ -21,7 +21,12 @@ export function ConnectionListItem({ connection, isSelected, onClick }: Props) {
   const title = spec?.title || name;
   const description = spec?.description;
   const url = spec?.url;
-  const providerType: RepoType = spec?.type ?? 'github';
+  const providerType: RepoType =
+    spec?.type === 'githubOAuth'
+      ? 'github'
+      : spec?.type === 'githubEnterpriseOAuth'
+        ? 'githubEnterprise'
+        : (spec?.type ?? 'github');
   return (
     <Card noMargin key={name} isSelected={isSelected} onClick={onClick}>
       <Card.Figure>

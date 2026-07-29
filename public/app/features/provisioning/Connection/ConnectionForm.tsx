@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
@@ -12,10 +12,10 @@ import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
 import { OAuthConnectionFields } from '../components/Shared/OAuthConnectionFields';
 import { WebhookDisabledField } from '../components/Shared/WebhookDisabledField';
-import { CONNECTIONS_TAB_URL } from '../constants';
+import { CONNECTIONS_TAB_URL, CONNECTIONS_URL } from '../constants';
 import { useCreateOrUpdateConnection } from '../hooks/useCreateOrUpdateConnection';
 import { type ConnectionFormData } from '../types';
-import { isOAuthConnectionType, startOAuthAuthorization } from '../utils/connectionOAuth';
+import { buildOAuthAuthorizeUrl, isOAuthConnectionType, onOAuthAuthorizationComplete } from '../utils/connectionOAuth';
 import { extractFormErrors, getConnectionFormErrors } from '../utils/getFormErrors';
 import { isGitHubBased } from '../utils/repositoryTypes';
 
@@ -105,6 +105,20 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
 
   const selectedType = watch('type');
 
+  const authTabRef = useRef<Window | null>(null);
+  const [pendingAuthorizeName, setPendingAuthorizeName] = useState<string>();
+
+  useEffect(() => {
+    if (!pendingAuthorizeName) {
+      return;
+    }
+    return onOAuthAuthorizationComplete((name) => {
+      if (name === pendingAuthorizeName) {
+        navigate(`${CONNECTIONS_URL}/${name}/edit`);
+      }
+    });
+  }, [pendingAuthorizeName, navigate]);
+
   useEffect(() => {
     if (request.isSuccess) {
       const formData = getValues();
@@ -120,10 +134,22 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       if (isOAuthConnectionType(formData.type) && (!isEdit || formData.clientSecret)) {
         const name = connectionName ?? request.data?.metadata?.name;
         if (name && formData.clientID) {
-          startOAuthAuthorization(formData.type, formData.clientID, name, formData.serverUrl);
+          const url = buildOAuthAuthorizeUrl(formData.type, formData.clientID, name, formData.serverUrl, {
+            popup: true,
+          });
+          if (authTabRef.current) {
+            authTabRef.current.location.href = url;
+            authTabRef.current = null;
+          } else {
+            window.open(url, '_blank');
+          }
+          setPendingAuthorizeName(name);
           return;
         }
       }
+
+      authTabRef.current?.close();
+      authTabRef.current = null;
 
       // use timeout to ensure the form resets before navigating
       setTimeout(() => navigate(CONNECTIONS_TAB_URL), 300);
@@ -153,12 +179,21 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   const handleReauthorize = () => {
     const formData = getValues();
     if (connectionName && formData.clientID && isOAuthConnectionType(formData.type)) {
-      startOAuthAuthorization(formData.type, formData.clientID, connectionName, formData.serverUrl);
+      const url = buildOAuthAuthorizeUrl(formData.type, formData.clientID, connectionName, formData.serverUrl, {
+        popup: true,
+      });
+      window.open(url, '_blank');
+      setPendingAuthorizeName(connectionName);
     }
   };
 
   const onSubmit = async (form: ConnectionFormData) => {
     setSubmitError(undefined);
+    // Open the tab synchronously so popup blockers allow it; navigate it once
+    // the connection is saved.
+    if (isOAuthConnectionType(form.type) && (!isEdit || form.clientSecret) && form.clientID) {
+      authTabRef.current = window.open('', '_blank');
+    }
     try {
       const spec = {
         title: form.title,
@@ -189,6 +224,8 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
 
       await submitData(spec, form.privateKey, form.clientSecret);
     } catch (err) {
+      authTabRef.current?.close();
+      authTabRef.current = null;
       if (isFetchError(err)) {
         const errors = getConnectionFormErrors(err.data);
 

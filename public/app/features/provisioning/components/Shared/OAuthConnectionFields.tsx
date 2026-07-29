@@ -152,19 +152,29 @@ export const OAuthConnectionFields = memo<OAuthConnectionFieldsProps>(
             rules={{
               required: requiredValidation,
             }}
-            render={({ field: { ref, ...field } }) => (
-              <SecretInput
-                {...field}
-                id="clientSecret"
-                value={field.value ?? ''}
-                invalid={!!errors.clientSecret}
-                isConfigured={isClientSecretConfigured}
-                onReset={() => {
-                  setValue('clientSecret', '');
-                  setIsClientSecretConfigured(false);
-                }}
-              />
-            )}
+            render={({ field: { ref, ...field } }) =>
+              isClientSecretConfigured ? (
+                <SecretInput
+                  {...field}
+                  id="clientSecret"
+                  value={field.value ?? ''}
+                  invalid={!!errors.clientSecret}
+                  isConfigured
+                  onReset={() => {
+                    setValue('clientSecret', '');
+                    setIsClientSecretConfigured(false);
+                  }}
+                />
+              ) : (
+                <Input
+                  {...field}
+                  id="clientSecret"
+                  value={field.value ?? ''}
+                  invalid={!!errors.clientSecret}
+                  autoComplete="off"
+                />
+              )
+            }
           />
         </Field>
 
