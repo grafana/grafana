@@ -34,7 +34,7 @@ describe('textPanelMigrationHandler', () => {
       expect(result.mode).toEqual(TextMode.Markdown);
     });
 
-    it('then should not throw when options are missing', () => {
+    it('then should keep content and mode when options are missing', () => {
       const panel = {
         content: '<span>Hello World<span>',
         mode: 'html',

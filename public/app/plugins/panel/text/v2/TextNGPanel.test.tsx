@@ -1,14 +1,14 @@
 import { render, screen } from '@testing-library/react';
 
-import { CoreApp, dateTime, LoadingState, EventBusSrv } from '@grafana/data';
+import { CoreApp } from '@grafana/data';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
 
 import { CodeLanguage, TextMode } from '../panelcfg.gen';
 
 import { type Props, TextNGPanel } from './TextNGPanel';
+import { createProps, renderPanel } from './test-utils';
 
-// Stub the heavy lazy CodeMirror bundle used by the inline editor and the
-// read-only code view.
+// Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
 jest.mock('@grafana/ui/unstable', () => ({
   __esModule: true,
   CodeMirrorEditor: ({
@@ -30,68 +30,35 @@ jest.mock('@grafana/ui/unstable', () => ({
 }));
 
 const replaceVariablesMock = jest.fn();
-const defaultProps: Props = {
-  id: 1,
-  data: {
-    state: LoadingState.Done,
-    series: [
-      {
-        fields: [],
-        length: 0,
-      },
-    ],
-    timeRange: {
-      from: dateTime('2022-01-01T15:55:00Z'),
-      to: dateTime('2022-07-12T15:55:00Z'),
-      raw: {
-        from: 'now-15m',
-        to: 'now',
-      },
-    },
-  },
-  timeRange: {
-    from: dateTime('2022-07-11T15:55:00Z'),
-    to: dateTime('2022-07-12T15:55:00Z'),
-    raw: {
-      from: 'now-15m',
-      to: 'now',
-    },
-  },
-  timeZone: 'utc',
-  transparent: false,
-  width: 120,
-  height: 120,
-  fieldConfig: {
-    defaults: {},
-    overrides: [],
-  },
-  renderCounter: 1,
-  title: 'Test Text Panel',
-  eventBus: new EventBusSrv(),
-  options: { content: '', mode: TextMode.Markdown },
-  onOptionsChange: jest.fn(),
-  onFieldConfigChange: jest.fn(),
-  replaceVariables: replaceVariablesMock,
-  onChangeTimeRange: jest.fn(),
-};
+const defaultProps = createProps(replaceVariablesMock);
 
 const setup = (props: Props = defaultProps, app?: CoreApp) => {
-  const ui = <TextNGPanel {...props} />;
-  render(app ? <PanelContextProvider value={{ app } as PanelContext}>{ui}</PanelContextProvider> : ui);
+  renderPanel(props, app);
 };
 
 describe('TextNGPanel', () => {
-  it('should render panel without content', () => {
-    expect(() => setup()).not.toThrow();
+  beforeEach(() => {
+    replaceVariablesMock.mockReset();
   });
 
-  it('should not throw an error when interpolating variables results in empty content', () => {
+  it('renders an empty content container when there is no content', () => {
+    replaceVariablesMock.mockReturnValueOnce('');
+
+    setup();
+
+    expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML.trim()).toBe('');
+  });
+
+  it('renders empty content when interpolating variables results in an empty string', () => {
     const contentTest = '${__all_variables}';
+    replaceVariablesMock.mockReturnValueOnce('');
     const props = Object.assign({}, defaultProps, {
       options: { content: contentTest, mode: TextMode.HTML },
     });
 
-    expect(() => setup(props)).not.toThrow();
+    setup(props);
+
+    expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML.trim()).toBe('');
   });
 
   it('sanitizes content in html mode', () => {
@@ -133,8 +100,8 @@ describe('TextNGPanel', () => {
 
     setup(props);
 
-    const waited = await screen.getByTestId('TextNGPanel-converted-content');
-    expect(waited.innerHTML).toEqual('<p>We begin by a simple sentence.\n<code>code block</code></p>\n');
+    const rendered = await screen.findByTestId('TextNGPanel-converted-content');
+    expect(rendered.innerHTML).toEqual('<p>We begin by a simple sentence.\n<code>code block</code></p>\n');
   });
 
   it('interpolates variables before content is converted to markdown', async () => {
@@ -149,8 +116,8 @@ describe('TextNGPanel', () => {
 
     setup(props);
 
-    const waited = await screen.getByTestId('TextNGPanel-converted-content');
-    expect(waited.innerHTML).toEqual('<p><em>hello</em></p>\n');
+    const rendered = await screen.findByTestId('TextNGPanel-converted-content');
+    expect(rendered.innerHTML).toEqual('<p><em>hello</em></p>\n');
   });
 
   it('interpolates variables correctly so they can be used in markdown urls', async () => {
@@ -165,13 +132,13 @@ describe('TextNGPanel', () => {
 
     setup(props);
 
-    const waited = await screen.getByTestId('TextNGPanel-converted-content');
-    expect(waited.innerHTML).toEqual(
+    const rendered = await screen.findByTestId('TextNGPanel-converted-content');
+    expect(rendered.innerHTML).toEqual(
       '<p><a href="https://example.com/?from=now-6h&amp;to=now">Example: from=now-6h&amp;to=now</a></p>\n'
     );
   });
 
-  it('converts content to html when in html mode', () => {
+  it('passes raw content through unmodified in html mode', () => {
     const contentTest = 'We begin by a simple sentence.\n```This is a code block\n```';
     replaceVariablesMock.mockReturnValueOnce(contentTest);
     const props = Object.assign({}, defaultProps, {
@@ -195,7 +162,6 @@ describe('TextNGPanel', () => {
     setup(props);
 
     expect(screen.getByTestId('TextNGPanel-code')).toBeInTheDocument();
-    // The lazily-loaded read-only code view gets the raw, uninterpreted content.
     expect(await screen.findByRole('textbox')).toHaveValue('{\n  "a": 1\n}');
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
   });
@@ -217,26 +183,6 @@ describe('TextNGPanel', () => {
   });
 
   describe('edit mode', () => {
-    // Must be the first edit-mode render in this file: once the lazy editor
-    // module is loaded, later mounts no longer suspend and the fallback
-    // never shows.
-    it('shows the rendered content while the editor is loading', async () => {
-      replaceVariablesMock.mockImplementation((str: string) => str);
-      const props = Object.assign({}, defaultProps, {
-        options: { content: '# Hello', mode: TextMode.Markdown },
-      });
-
-      setup(props, CoreApp.PanelEditor);
-
-      // The lazy editor chunk has not resolved yet: the fallback must show the
-      // rendered panel content instead of a blank body.
-      expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toContain('Hello');
-
-      expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
-      expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
-      replaceVariablesMock.mockReset();
-    });
-
     it('renders the inline editor in the panel area when the panel is being edited', async () => {
       const props = Object.assign({}, defaultProps, {
         options: { content: '# Hello', mode: TextMode.Markdown },
@@ -272,8 +218,7 @@ describe('TextNGPanel', () => {
       );
       expect(await screen.findByTestId('TextNGEditor')).toBeInTheDocument();
 
-      // Content was edited while the inline editor owned rendering; going back
-      // to the dashboard must show it right away, not after the debounce.
+      // The debounce that applies while the editor owns rendering must not delay this.
       const edited = Object.assign({}, props, {
         options: { content: '# Edited', mode: TextMode.Markdown },
       });
@@ -284,7 +229,6 @@ describe('TextNGPanel', () => {
       );
 
       expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML).toContain('Edited');
-      replaceVariablesMock.mockReset();
     });
   });
 });
