@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/url"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -59,7 +60,30 @@ type Manager struct {
 	persister StatePersister
 
 	ignorePendingForNoDataAndError bool
+
+	// ready reports whether the cache is warm enough to evaluate against. Set at construction (true
+	// unless gating is requested) and by a successful Warm.
+	ready atomic.Bool
+	// notReadySince marks when readiness gating began; it bounds the warm grace window.
+	notReadySince time.Time
+	// warmGateTimeout is the grace window before gated evaluation proceeds anyway.
+	warmGateTimeout time.Duration
 }
+
+// EvalReadiness reports whether a rule's results are safe to apply to the state cache.
+type EvalReadiness int
+
+const (
+	// ReadinessWarmed means the cache is warm (or gating is off) — apply results normally.
+	ReadinessWarmed EvalReadiness = iota
+	// ReadinessNotWarmed means the cache is cold and within the grace window — skip processing.
+	ReadinessNotWarmed
+	// ReadinessTimedOut means the cache is cold but the grace window elapsed — apply anyway.
+	ReadinessTimedOut
+)
+
+// defaultWarmGateTimeout is used when gating is enabled without an explicit WarmGateTimeout.
+const defaultWarmGateTimeout = 2 * time.Minute
 
 type ManagerCfg struct {
 	Metrics       *metrics.State
@@ -89,14 +113,30 @@ type ManagerCfg struct {
 	Log    log.Logger
 
 	IgnorePendingForNoDataAndError bool // TODO: Remove
+
+	// GateEvaluationUntilWarmed skips applying evaluation results until the cache is warmed. Off by
+	// default (vanilla Grafana warms before evaluating); the ruler enables it as it warms async.
+	GateEvaluationUntilWarmed bool
+	// WarmGateTimeout is the grace window before gated evaluation proceeds anyway. 0 uses the default.
+	WarmGateTimeout time.Duration
 }
 
 func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
+	// Default the clock so readiness bookkeeping has a time source (some tests leave it unset).
+	if cfg.Clock == nil {
+		cfg.Clock = clock.New()
+	}
+
 	// Metrics for the cache use a collector, so they need access to the register directly.
 	c := newCache()
 	// Only expose the metrics if this grafana server does execute alerts.
 	if cfg.Metrics != nil && !cfg.DisableExecution {
 		c.RegisterMetrics(cfg.Metrics.Registerer())
+	}
+
+	warmGateTimeout := cfg.WarmGateTimeout
+	if warmGateTimeout <= 0 {
+		warmGateTimeout = defaultWarmGateTimeout
 	}
 
 	m := &Manager{
@@ -115,9 +155,33 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		tracer:                 cfg.Tracer,
 
 		ignorePendingForNoDataAndError: cfg.IgnorePendingForNoDataAndError,
+
+		notReadySince:   cfg.Clock.Now(),
+		warmGateTimeout: warmGateTimeout,
 	}
+	// Start ready unless gating is requested, so vanilla Grafana is never gated.
+	m.ready.Store(!cfg.GateEvaluationUntilWarmed)
 
 	return m
+}
+
+// EvaluationReadiness reports whether the rule's results may be applied to the state cache: warmed
+// (or gating off), not-warmed (within the grace window, skip), or timed-out (grace elapsed, apply
+// anyway). The rule is accepted for future per-rule scoping but is unused today.
+func (st *Manager) EvaluationReadiness(_ *ngModels.AlertRule) EvalReadiness {
+	if st.ready.Load() {
+		return ReadinessWarmed
+	}
+	if st.clock.Since(st.notReadySince) >= st.warmGateTimeout {
+		return ReadinessTimedOut
+	}
+	return ReadinessNotWarmed
+}
+
+// IsWarmed reports whether a Warm has succeeded (or gating is off). It ignores the grace timeout so
+// callers can decide whether to retry warming.
+func (st *Manager) IsWarmed() bool {
+	return st.ready.Load()
 }
 
 func (st *Manager) ClearCache() {
@@ -207,6 +271,10 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 			statesCount++
 		}
 	}
+
+	// Mark warmed only after the cache is fully populated; the early error returns above leave it
+	// unset so evaluation stays gated.
+	st.ready.Store(true)
 
 	logger.Info("State cache has been initialized", "states", statesCount, "duration", time.Since(startTime))
 }
