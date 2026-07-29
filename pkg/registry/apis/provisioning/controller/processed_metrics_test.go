@@ -15,7 +15,7 @@ import (
 	"k8s.io/client-go/util/workqueue"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // processedCounterValue reads grafana_provisioning_events_processed_total for a
@@ -102,8 +102,7 @@ func TestRepositoryController_RecordsProcessingByTrigger(t *testing.T) {
 				),
 				logger:       logging.DefaultLogger.With("logger", "test"),
 				drainTimeout: 5 * time.Second,
-				processed:    informer.NewProcessedMetrics(reg, "repositories"),
-				natsBacked:   tt.natsBacked,
+				processed:    usinformer.NewProcessedMetrics(reg, "repositories", tt.natsBacked),
 				keyFunc:      repoKeyFunc,
 				processFn: func(string) error {
 					close(processedDone)
@@ -147,10 +146,9 @@ func TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger(t *testing.T) {
 			workqueue.DefaultTypedControllerRateLimiter[string](),
 			workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-dirty"},
 		),
-		logger:     logging.DefaultLogger.With("logger", "test"),
-		processed:  informer.NewProcessedMetrics(reg, "repositories"),
-		natsBacked: false,
-		keyFunc:    repoKeyFunc,
+		logger:    logging.DefaultLogger.With("logger", "test"),
+		processed: usinformer.NewProcessedMetrics(reg, "repositories", false),
+		keyFunc:   repoKeyFunc,
 	}
 	rc.enqueueRepository = rc.enqueue
 
@@ -219,8 +217,7 @@ func TestConnectionController_RecordsProcessingByTrigger(t *testing.T) {
 				),
 				logger:       logging.DefaultLogger.With("logger", "test"),
 				drainTimeout: 5 * time.Second,
-				processed:    informer.NewProcessedMetrics(reg, "connections"),
-				natsBacked:   tt.natsBacked,
+				processed:    usinformer.NewProcessedMetrics(reg, "connections", tt.natsBacked),
 				processFn: func(context.Context, *connectionQueueItem) error {
 					close(processedDone)
 					return nil

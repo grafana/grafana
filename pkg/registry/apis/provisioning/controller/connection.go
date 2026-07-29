@@ -19,6 +19,7 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 const connectionLoggerName = "provisioning-connection-controller"
@@ -38,7 +39,7 @@ type connectionQueueItem struct {
 	// trigger records what enqueued this item, for the processing-level metrics.
 	// It rides the item so retries (which re-add the same item) keep the
 	// attribution.
-	trigger informer.ProcessTrigger
+	trigger usinformer.ProcessTrigger
 }
 
 // ConnectionStatusPatcher defines the interface for updating connection status.
@@ -58,10 +59,9 @@ type ConnectionController struct {
 	connectionFactory connection.Factory
 	tokenMetrics      *connectionTokenMetrics
 
-	// natsBacked disambiguates a full-RV non-initial add for the processing
-	// metrics; processed counts the start of each reconcile by what enqueued it.
-	natsBacked bool
-	processed  *informer.ProcessedMetrics
+	// processed classifies each delivery (encapsulating the NATS/apiserver
+	// backend) and counts the start of each reconcile by what enqueued it.
+	processed *usinformer.ProcessedMetrics
 
 	// To allow injection for testing.
 	processFn func(ctx context.Context, item *connectionQueueItem) error
@@ -83,9 +83,8 @@ func NewConnectionController(
 	natsBacked bool,
 ) *ConnectionController {
 	cc := &ConnectionController{
-		conns:      conns,
-		natsBacked: natsBacked,
-		processed:  informer.NewProcessedMetrics(registry, "connections"),
+		conns:     conns,
+		processed: usinformer.NewProcessedMetrics(registry, "connections", natsBacked),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
 			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{
@@ -111,15 +110,15 @@ func NewConnectionController(
 func (cc *ConnectionController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
 	return cache.ResourceEventHandlerDetailedFuncs{
 		AddFunc: func(obj interface{}, isInInitialList bool) {
-			cc.enqueue(obj, informer.ClassifyAdd(connectionResourceVersion(obj), isInInitialList, cc.natsBacked))
+			cc.enqueue(obj, cc.processed.ClassifyAdd(connectionResourceVersion(obj), isInInitialList))
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			cc.enqueue(newObj, informer.ClassifyUpdate(connectionResourceVersion(oldObj), connectionResourceVersion(newObj), cc.natsBacked))
+			cc.enqueue(newObj, cc.processed.ClassifyUpdate(connectionResourceVersion(oldObj), connectionResourceVersion(newObj)))
 		},
 	}
 }
 
-func (cc *ConnectionController) enqueue(obj interface{}, trigger informer.ProcessTrigger) {
+func (cc *ConnectionController) enqueue(obj interface{}, trigger usinformer.ProcessTrigger) {
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err != nil {
 		cc.logger.Error("failed to get key for object", "error", err)

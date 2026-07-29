@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // queuedEvent is what the driver remembers about a queued key between enqueue
@@ -55,11 +55,10 @@ type ConcurrentJobDriver struct {
 	metrics              *JobMetrics
 	queue                workqueue.TypedRateLimitingInterface[string]
 
-	// natsBacked reports whether the jobs informer feeding this driver is the
-	// NATS-backed source. It disambiguates a full-RV non-initial add: under NATS
-	// that is a re-list recovery of a key never delivered live here, but under the
-	// apiserver watch it is a live add. See EventHandler's classifier.
-	natsBacked bool
+	// processed classifies each delivery and records the processing metrics. It
+	// encapsulates the delivery backend (natsBacked) and the resource label, so
+	// the driver passes only raw event facts.
+	processed *usinformer.ProcessedMetrics
 
 	// postClaimCooldown is how long a key is barred from processing after its
 	// job failed post-claim: the side effects may already have run, and the
@@ -127,7 +126,7 @@ func NewConcurrentJobDriver(
 		historicJobs:         historicJobs,
 		workers:              workers,
 		metrics:              metrics,
-		natsBacked:           natsBacked,
+		processed:            usinformer.NewProcessedMetrics(registry, resourceLabelJobs, natsBacked),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
 			workqueue.TypedRateLimitingQueueConfig[string]{
@@ -168,7 +167,7 @@ func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerDetailedF
 				return
 			}
 			// Attribute the enqueue for the processing-level metrics.
-			c.enqueueCreate(job, informer.ClassifyAdd(job.ResourceVersion, isInInitialList, c.natsBacked))
+			c.enqueueCreate(job, c.processed.ClassifyAdd(job.ResourceVersion, isInInitialList))
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			job, ok := newObj.(*provisioning.Job)
@@ -370,6 +369,7 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 				c.repoGetter,
 				c.historicJobs,
 				c.metrics,
+				c.processed,
 				c.workers...,
 			)
 

@@ -132,26 +132,6 @@ func TestEventHandler_TriggerPrecedence(t *testing.T) {
 	})
 }
 
-// TestRecordEventProcessed verifies each trigger increments its own counter and
-// that the method is nil-safe.
-func TestRecordEventProcessed(t *testing.T) {
-	m := RegisterJobMetrics(prometheus.NewPedanticRegistry())
-
-	before := processedCounts(t)
-	m.RecordEventProcessed(triggerLive)
-	m.RecordEventProcessed(triggerRelist)
-	m.RecordEventProcessed(triggerRelist)
-	m.RecordEventProcessed(triggerInitial)
-	after := processedCounts(t)
-
-	assert.Equal(t, 1.0, after.live-before.live)
-	assert.Equal(t, 2.0, after.relist-before.relist)
-	assert.Equal(t, 1.0, after.initial-before.initial)
-
-	var nilMetrics *JobMetrics
-	assert.NotPanics(t, func() { nilMetrics.RecordEventProcessed(triggerLive) })
-}
-
 // TestConcurrentJobDriver_ProcessingAttributed drives a job end to end for each
 // delivery class and asserts exactly the matching processing counter advances.
 func TestConcurrentJobDriver_ProcessingAttributed(t *testing.T) {
@@ -194,14 +174,14 @@ func TestConcurrentJobDriver_ProcessingAttributed(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			driver, _, completed := newSuccessfulJobDriver(t, tt.natsBacked)
+			driver, reg, completed := newSuccessfulJobDriver(t, tt.natsBacked)
 
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			runDone := make(chan error, 1)
 			go func() { runDone <- driver.Run(ctx) }()
 
-			before := processedCounts(t)
+			before := processedCounts(t, reg)
 			handler := driver.EventHandler()
 			tt.feed(handler)
 
@@ -214,7 +194,7 @@ func TestConcurrentJobDriver_ProcessingAttributed(t *testing.T) {
 			cancel()
 			require.NoError(t, <-runDone)
 
-			after := processedCounts(t)
+			after := processedCounts(t, reg)
 			assertOnlyTriggerAdvanced(t, tt.want, before, after)
 
 			// The attribution entry must not outlive the key.
@@ -240,15 +220,17 @@ func TestConcurrentJobDriver_AlreadyClaimedNotAttributed(t *testing.T) {
 			return nil, nil, ErrAlreadyClaimed
 		}).Maybe()
 
-	m := RegisterJobMetrics(prometheus.NewPedanticRegistry())
-	driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, &m)
+	reg := prometheus.NewRegistry()
+	driver, err := NewConcurrentJobDriver(1, time.Minute, 30*time.Second, 30*time.Second,
+		store, &MockRepoGetter{}, &MockHistoryWriter{}, reg, nil, false)
+	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	runDone := make(chan error, 1)
 	go func() { runDone <- driver.Run(ctx) }()
 
-	before := processedCounts(t)
+	before := processedCounts(t, reg)
 	driver.EventHandler().AddFunc(&provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
 	}, false)
@@ -260,7 +242,7 @@ func TestConcurrentJobDriver_AlreadyClaimedNotAttributed(t *testing.T) {
 	cancel()
 	require.NoError(t, <-runDone)
 
-	after := processedCounts(t)
+	after := processedCounts(t, reg)
 	assert.Equal(t, 0.0, after.live-before.live)
 	assert.Equal(t, 0.0, after.relist-before.relist)
 	assert.Equal(t, 0.0, after.initial-before.initial)
@@ -295,9 +277,9 @@ func TestConcurrentJobDriver_RecordsDeliveryLatency(t *testing.T) {
 	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
 	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(nil)
 
-	m := RegisterJobMetrics(prometheus.NewPedanticRegistry())
+	reg := prometheus.NewRegistry()
 	driver, err := NewConcurrentJobDriver(1, time.Minute, 30*time.Second, 30*time.Second,
-		store, repoGetter, history, prometheus.NewRegistry(), &m, false, worker)
+		store, repoGetter, history, reg, nil, false, worker)
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -305,7 +287,7 @@ func TestConcurrentJobDriver_RecordsDeliveryLatency(t *testing.T) {
 	runDone := make(chan error, 1)
 	go func() { runDone <- driver.Run(ctx) }()
 
-	beforeCount, beforeSum := deliveryLatency(t)
+	beforeCount, beforeSum := deliveryLatency(t, reg)
 	driver.EventHandler().AddFunc(&provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
 	}, false)
@@ -318,7 +300,7 @@ func TestConcurrentJobDriver_RecordsDeliveryLatency(t *testing.T) {
 	cancel()
 	require.NoError(t, <-runDone)
 
-	afterCount, afterSum := deliveryLatency(t)
+	afterCount, afterSum := deliveryLatency(t, reg)
 	assert.Equal(t, 1.0, afterCount-beforeCount, "exactly one delivery-latency sample")
 	delta := afterSum - beforeSum
 	assert.Greater(t, delta, 1.0, "delivery latency is roughly the job's age")
@@ -334,10 +316,10 @@ type processedSnapshot struct {
 }
 
 // deliveryLatency returns the jobs-labelled delivery-latency histogram's sample
-// count and sum from testRegistry.
-func deliveryLatency(t *testing.T) (count, sum float64) {
+// count and sum from reg.
+func deliveryLatency(t *testing.T, reg *prometheus.Registry) (count, sum float64) {
 	t.Helper()
-	families, err := testRegistry.Gather()
+	families, err := reg.Gather()
 	require.NoError(t, err)
 	mf := findMetric(families, "grafana_provisioning_event_delivery_latency_seconds")
 	if mf == nil {
@@ -357,12 +339,11 @@ func deliveryLatency(t *testing.T) (count, sum float64) {
 	return count, sum
 }
 
-// processedCounts reads the current jobs-labelled processing counters. The
-// counters are shared, registered on testRegistry via the RegisterJobMetrics
-// singleton (see metrics_test.go), so tests assert deltas around an action.
-func processedCounts(t *testing.T) processedSnapshot {
+// processedCounts reads the jobs-labelled processing counters from reg. Tests
+// assert deltas around an action.
+func processedCounts(t *testing.T, reg *prometheus.Registry) processedSnapshot {
 	t.Helper()
-	families, err := testRegistry.Gather()
+	families, err := reg.Gather()
 	require.NoError(t, err)
 	mf := findMetric(families, "grafana_provisioning_events_processed_total")
 	bySource := func(source string) float64 {
@@ -393,9 +374,10 @@ func boolToFloat(b bool) float64 {
 }
 
 // newSuccessfulJobDriver builds a driver whose single job claims and completes
-// successfully, returning the singleton metrics and a channel closed on
-// completion. It mirrors the setup in TestConcurrentJobDriver_ProcessesJobEndToEnd.
-func newSuccessfulJobDriver(t *testing.T, natsBacked bool) (*ConcurrentJobDriver, *JobMetrics, chan struct{}) {
+// successfully, returning the registry its processing metrics are on and a
+// channel closed on completion. It mirrors the setup in
+// TestConcurrentJobDriver_ProcessesJobEndToEnd.
+func newSuccessfulJobDriver(t *testing.T, natsBacked bool) (*ConcurrentJobDriver, *prometheus.Registry, chan struct{}) {
 	t.Helper()
 
 	claimedJob := makeTestJob("1")
@@ -434,16 +416,16 @@ func newSuccessfulJobDriver(t *testing.T, natsBacked bool) (*ConcurrentJobDriver
 	worker.EXPECT().IsSupported(mock.Anything, mock.Anything).Return(true)
 	worker.EXPECT().Process(mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(nil)
 
-	m := RegisterJobMetrics(prometheus.NewPedanticRegistry())
+	reg := prometheus.NewRegistry()
 	driver, err := NewConcurrentJobDriver(
 		1,
 		time.Minute, 30*time.Second, 30*time.Second,
 		store, repoGetter, history,
-		prometheus.NewRegistry(),
-		&m,
+		reg,
+		nil,
 		natsBacked,
 		worker,
 	)
 	require.NoError(t, err)
-	return driver, &m, completed
+	return driver, reg, completed
 }

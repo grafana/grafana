@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -64,7 +65,7 @@ type RepositoryController struct {
 	quotaChecker      *RepositoryQuotaChecker
 	// To allow injection for testing.
 	processFn         func(key string) error
-	enqueueRepository func(obj any, trigger informer.ProcessTrigger)
+	enqueueRepository func(obj any, trigger usinformer.ProcessTrigger)
 	keyFunc           func(obj any) (string, error)
 
 	queue           workqueue.TypedRateLimitingInterface[string]
@@ -72,15 +73,13 @@ type RepositoryController struct {
 	minSyncInterval time.Duration
 	drainTimeout    time.Duration
 
-	// natsBacked reports whether the repository informer is the NATS-backed
-	// source; it disambiguates a full-RV non-initial add for the processing
-	// metrics. processed counts the start of each reconcile by what enqueued the
-	// key. triggers carries that attribution from enqueue to dequeue, guarded by
+	// processed classifies each delivery (encapsulating the NATS/apiserver
+	// backend) and records the processing metrics by what enqueued the key.
+	// triggers carries that attribution from enqueue to dequeue, guarded by
 	// triggersMu (entries live only between enqueue and Forget).
-	natsBacked bool
-	processed  *informer.ProcessedMetrics
+	processed  *usinformer.ProcessedMetrics
 	triggersMu sync.Mutex
-	triggers   map[string]informer.ProcessTrigger
+	triggers   map[string]usinformer.ProcessTrigger
 
 	registry                      prometheus.Registerer
 	tracer                        tracing.Tracer
@@ -120,11 +119,10 @@ func NewRepositoryController(
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
 
 	rc := &RepositoryController{
-		client:     provisioningClient,
-		repos:      repos,
-		natsBacked: natsBacked,
-		processed:  informer.NewProcessedMetrics(registry, "repositories"),
-		triggers:   make(map[string]informer.ProcessTrigger),
+		client:    provisioningClient,
+		repos:     repos,
+		processed: usinformer.NewProcessedMetrics(registry, "repositories", natsBacked),
+		triggers:  make(map[string]usinformer.ProcessTrigger),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
 			workqueue.TypedRateLimitingQueueConfig[string]{
@@ -168,10 +166,10 @@ func NewRepositoryController(
 func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
 	return cache.ResourceEventHandlerDetailedFuncs{
 		AddFunc: func(obj interface{}, isInInitialList bool) {
-			rc.enqueueRepository(obj, informer.ClassifyAdd(objectResourceVersion(obj), isInInitialList, rc.natsBacked))
+			rc.enqueueRepository(obj, rc.processed.ClassifyAdd(objectResourceVersion(obj), isInInitialList))
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			rc.enqueueRepository(newObj, informer.ClassifyUpdate(objectResourceVersion(oldObj), objectResourceVersion(newObj), rc.natsBacked))
+			rc.enqueueRepository(newObj, rc.processed.ClassifyUpdate(objectResourceVersion(oldObj), objectResourceVersion(newObj)))
 		},
 	}
 }
@@ -243,7 +241,7 @@ func (rc *RepositoryController) runWorker(ctx context.Context) {
 	}
 }
 
-func (rc *RepositoryController) enqueue(obj interface{}, trigger informer.ProcessTrigger) {
+func (rc *RepositoryController) enqueue(obj interface{}, trigger usinformer.ProcessTrigger) {
 	key, err := rc.keyFunc(obj)
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("couldn't get key for object: %v", err))
@@ -261,13 +259,13 @@ func (rc *RepositoryController) enqueue(obj interface{}, trigger informer.Proces
 // relist/initial set only if absent so a queued live enqueue is never
 // downgraded. The map is lazily created so tests that build the controller as a
 // struct literal need not initialize it.
-func (rc *RepositoryController) setTrigger(key string, trigger informer.ProcessTrigger) {
+func (rc *RepositoryController) setTrigger(key string, trigger usinformer.ProcessTrigger) {
 	rc.triggersMu.Lock()
 	defer rc.triggersMu.Unlock()
 	if rc.triggers == nil {
-		rc.triggers = make(map[string]informer.ProcessTrigger)
+		rc.triggers = make(map[string]usinformer.ProcessTrigger)
 	}
-	if trigger == informer.TriggerLive {
+	if trigger == usinformer.TriggerLive {
 		rc.triggers[key] = trigger
 		return
 	}
@@ -283,7 +281,7 @@ func (rc *RepositoryController) setTrigger(key string, trigger informer.ProcessT
 // produced) keeps its attribution for the redelivery, which a terminal
 // queue.Forget must not clobber. A retry re-sets the popped trigger before
 // re-queuing so later attempts keep the original attribution.
-func (rc *RepositoryController) popTrigger(key string) (informer.ProcessTrigger, bool) {
+func (rc *RepositoryController) popTrigger(key string) (usinformer.ProcessTrigger, bool) {
 	rc.triggersMu.Lock()
 	defer rc.triggersMu.Unlock()
 	trigger, ok := rc.triggers[key]
@@ -313,7 +311,7 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	// back to relist.
 	trigger, ok := rc.popTrigger(key)
 	if !ok {
-		trigger = informer.TriggerRelist
+		trigger = usinformer.TriggerRelist
 	}
 
 	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.

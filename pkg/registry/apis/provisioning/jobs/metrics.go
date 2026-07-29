@@ -8,8 +8,8 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 type JobMetrics struct {
@@ -22,28 +22,21 @@ type JobMetrics struct {
 	syncDurationHist                 *prometheus.HistogramVec // total sync durations
 
 	resourceOpsTotal *prometheus.CounterVec // per-resource outcome counter
-
-	// processed counts, per trigger, the start of processing for a work-queue
-	// key. Job pickup goes through a cluster-wide exactly-once gate (the claim),
-	// so its relist counter is the cluster-wide missed/late-live-event signal
-	// under NATS. Shared with the repository/connection controllers, which emit
-	// the same series under different resource labels.
-	processed *informer.ProcessedMetrics
 }
 
 // claimTrigger records what enqueued the work-queue key that a worker is now
-// processing. It aliases the shared informer type so the driver's local
-// vocabulary and the controllers' emit the same series.
-type claimTrigger = informer.ProcessTrigger
+// processing. It aliases the shared unified-informer type so the driver's local
+// vocabulary matches the metric's source label.
+type claimTrigger = usinformer.ProcessTrigger
 
 const (
-	triggerLive    = informer.TriggerLive
-	triggerRelist  = informer.TriggerRelist
-	triggerInitial = informer.TriggerInitial
+	triggerLive    = usinformer.TriggerLive
+	triggerRelist  = usinformer.TriggerRelist
+	triggerInitial = usinformer.TriggerInitial
 )
 
 // resourceLabelJobs is the resource label value the driver emits on the
-// processing-level counters.
+// processing metrics.
 const resourceLabelJobs = "jobs"
 
 type QueueMetrics struct {
@@ -168,7 +161,6 @@ func RegisterJobMetrics(registry prometheus.Registerer) JobMetrics {
 			fullSyncPhaseDurationHist:        fullSyncPhaseDurationHist,
 			syncDurationHist:                 syncDurationHist,
 			resourceOpsTotal:                 resourceOpsTotal,
-			processed:                        informer.NewProcessedMetrics(registry, resourceLabelJobs),
 		}
 	})
 	return jobMetrics
@@ -181,25 +173,6 @@ func (m *JobMetrics) RecordJob(jobAction string, outcome string, resourceCountCh
 	if outcome == utils.SuccessOutcome {
 		m.durationHist.WithLabelValues(jobAction, utils.GetResourceCountBucket(resourceCountChanged)).Observe(duration)
 	}
-}
-
-// RecordEventProcessed counts the start of processing for a work-queue key,
-// attributed to what enqueued it. It is nil-safe: several driver call sites
-// construct the driver with a nil *JobMetrics.
-func (m *JobMetrics) RecordEventProcessed(trigger claimTrigger) {
-	if m == nil {
-		return
-	}
-	m.processed.RecordProcessed(trigger)
-}
-
-// RecordDeliveryLatency records, by source, how long a genuinely-processed event
-// took to reach the work queue after it was generated. Nil-safe.
-func (m *JobMetrics) RecordDeliveryLatency(trigger claimTrigger, seconds float64) {
-	if m == nil {
-		return
-	}
-	m.processed.ObserveDeliveryLatency(trigger, seconds)
 }
 
 func (m *JobMetrics) RecordIncrementalSyncPhase(phase IncrementalSyncPhase, duration time.Duration) {

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestClassifyAdd(t *testing.T) {
+func TestProcessedMetrics_ClassifyAdd(t *testing.T) {
 	tests := []struct {
 		name            string
 		resourceVersion string
@@ -24,12 +24,13 @@ func TestClassifyAdd(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, ClassifyAdd(tt.resourceVersion, tt.isInInitialList, tt.natsBacked))
+			m := NewProcessedMetrics(nil, "jobs", tt.natsBacked)
+			assert.Equal(t, tt.want, m.ClassifyAdd(tt.resourceVersion, tt.isInInitialList))
 		})
 	}
 }
 
-func TestClassifyUpdate(t *testing.T) {
+func TestProcessedMetrics_ClassifyUpdate(t *testing.T) {
 	tests := []struct {
 		name       string
 		oldRV      string
@@ -45,14 +46,15 @@ func TestClassifyUpdate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, ClassifyUpdate(tt.oldRV, tt.newRV, tt.natsBacked))
+			m := NewProcessedMetrics(nil, "jobs", tt.natsBacked)
+			assert.Equal(t, tt.want, m.ClassifyUpdate(tt.oldRV, tt.newRV))
 		})
 	}
 }
 
 func TestProcessedMetrics_RecordProcessed(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
-	m := NewProcessedMetrics(reg, "jobs")
+	m := NewProcessedMetrics(reg, "jobs", false)
 
 	m.RecordProcessed(TriggerLive)
 	m.RecordProcessed(TriggerRelist)
@@ -80,8 +82,8 @@ func TestProcessedMetrics_NilSafe(t *testing.T) {
 // distinct series per resource label.
 func TestProcessedMetrics_SharedAcrossResources(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
-	jobsM := NewProcessedMetrics(reg, "jobs")
-	reposM := NewProcessedMetrics(reg, "repositories")
+	jobsM := NewProcessedMetrics(reg, "jobs", false)
+	reposM := NewProcessedMetrics(reg, "repositories", false)
 
 	jobsM.RecordProcessed(TriggerRelist)
 	reposM.RecordProcessed(TriggerRelist)
