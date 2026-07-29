@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FilterInput, ScrollContainer, useStyles2 } from '@grafana/ui';
 
 // Static stub list of Prometheus metric names. This is intentionally not fetched
-// from a datasource - it only exists to render the Metrics Explorer UI.
+// from a datasource - it only exists to render the UI.
 const STUB_METRICS = [
   'http_server_requests_seconds_bucket',
   'http_server_requests_seconds_count',
@@ -28,7 +28,14 @@ const STUB_METRICS = [
   'alertmanager_notifications_total',
 ];
 
-export function MetricsExplorer() {
+/**
+ * Searchable list of a Prometheus datasource's metric names, rendered as the body
+ * of an expanded SignalCard.
+ *
+ * Memoized: the explorer above re-renders on every keystroke in a query editor, and
+ * this list takes no props, so it should never re-render because of that.
+ */
+export const MetricsList = memo(function MetricsList() {
   const styles = useStyles2(getStyles);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -42,12 +49,11 @@ export function MetricsExplorer() {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.title}>{t('explore.metrics-explorer.title-metrics', 'Metrics')}</div>
       <FilterInput
         value={searchTerm}
         onChange={setSearchTerm}
         escapeRegex={false}
-        placeholder={t('explore.metrics-explorer.search-placeholder', 'Search metrics')}
+        placeholder={t('explore.metrics-list.search-placeholder', 'Search metrics')}
       />
       <ScrollContainer>
         <ul className={styles.list}>
@@ -60,23 +66,18 @@ export function MetricsExplorer() {
       </ScrollContainer>
     </div>
   );
-}
+});
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
-      label: 'metrics-explorer',
+      label: 'metrics-list',
       display: 'flex',
       flexDirection: 'column',
       flex: '1 1 auto',
       minHeight: 0,
       gap: theme.spacing(1),
-      padding: theme.spacing(0.5, 1, 1, 1),
-    }),
-    title: css({
-      fontSize: theme.typography.body.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.text.secondary,
+      padding: theme.spacing(1, 1, 1, 1.5),
     }),
     list: css({
       listStyle: 'none',

@@ -40,7 +40,7 @@ test.describe(
       await page.getByTestId(selectors.components.DashboardImportPage.submit).click();
       await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
       await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
-      await page.locator('div[data-testid="data-source-card"]').first().click();
+      await page.locator('div[data-testid^="data-testid data source card"]').first().click();
       await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
     }
 
