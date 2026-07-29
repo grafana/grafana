@@ -124,10 +124,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
 
         dashboardEditActions.edit({
           source: set,
-          description: t(
-            'dashboard-scene.variable-list.create-drag-end-handler.description.reorder-variables-list',
-            'Reorder variables list'
-          ),
+          description: t('dashboard.sidebar.variables.reorder-description', 'Reorder variables list'),
           perform: () => {
             if (!result.destination || result.destination.index === result.source.index) {
               return;

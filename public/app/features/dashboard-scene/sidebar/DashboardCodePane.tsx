@@ -56,33 +56,36 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
       icon="copy"
       getText={getResourceText}
       tooltip={t(
-        'dashboard.code-pane.copy-as-resource-tooltip',
+        'dashboard.sidebar.edit-schema.copy-as-resource-tooltip',
         'Copy dashboard as resource (with apiVersion, kind and metadata) for use in provisioning files'
       )}
     >
-      {t('dashboard.code-pane.copy-as-resource', 'Copy as resource')}
+      {t('dashboard.sidebar.edit-schema.copy-as-resource', 'Copy as resource')}
     </ClipboardButton>
   );
 
   const applyTooltip =
     editorFormat === 'yaml'
       ? t(
-          'dashboard.schema-editor.apply-button-disabled-tooltip-yaml',
+          'dashboard.sidebar.edit-schema.apply-button-disabled-tooltip-yaml',
           'Document has validation errors. Switch to JSON to see inline error details.'
         )
-      : t('dashboard.schema-editor.apply-button-disabled-tooltip', 'Fix validation errors before applying changes');
+      : t(
+          'dashboard.sidebar.edit-schema.apply-button-disabled-tooltip',
+          'Fix validation errors before applying changes'
+        );
 
   const applyButton = (
     <Tooltip content={applyTooltip} placement="top" show={hasValidationErrors ? undefined : false}>
       <Button onClick={handleApply} disabled={hasValidationErrors} size="sm">
-        {t('dashboard.schema-editor.apply-button', 'Apply changes')}
+        {t('dashboard.sidebar.edit-schema.apply-button', 'Apply changes')}
       </Button>
     </Tooltip>
   );
 
   const errorAlert = applyError ? (
     <Alert
-      title={t('dashboard.schema-editor.apply-error-title', 'Failed to apply changes')}
+      title={t('dashboard.sidebar.edit-schema.apply-error-title', 'Failed to apply changes')}
       severity="error"
       topSpacing={0}
       bottomSpacing={0}
@@ -101,7 +104,7 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
 
   return (
     <div className={styles.wrapper}>
-      <Sidebar.PaneHeader title={t('dashboard.code-pane.header', 'Edit as code')} />
+      <Sidebar.PaneHeader title={t('dashboard.sidebar.edit-schema.pane-header', 'Edit as code')} />
       <div className={styles.content}>
         {errorAlert}
         <div className={styles.editorContainer}>
@@ -115,7 +118,7 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
           <IconButton
             name="expand-arrows"
             size="sm"
-            tooltip={t('dashboard.code-pane.expand', 'Expand editor')}
+            tooltip={t('dashboard.sidebar.edit-schema.expand', 'Expand editor')}
             onClick={() => setIsExpanded(true)}
           />
         </div>
@@ -123,7 +126,7 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
 
       {isExpanded && (
         <Modal
-          title={t('dashboard.code-pane.modal-title', 'Edit dashboard as code')}
+          title={t('dashboard.sidebar.edit-schema.modal-title', 'Edit dashboard as code')}
           isOpen
           onDismiss={() => setIsExpanded(false)}
           className={styles.modal}
@@ -142,7 +145,7 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
               <IconButton
                 name="compress-arrows"
                 size="sm"
-                tooltip={t('dashboard.code-pane.collapse', 'Collapse editor')}
+                tooltip={t('dashboard.sidebar.edit-schema.collapse', 'Collapse editor')}
                 onClick={() => setIsExpanded(false)}
               />
             </div>

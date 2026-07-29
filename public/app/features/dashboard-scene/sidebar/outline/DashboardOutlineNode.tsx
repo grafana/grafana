@@ -48,7 +48,7 @@ export function DashboardOutlineNode({
   const isCloned = useMemo(() => isRepeatCloneOrChildOf(sceneObject), [sceneObject]);
   const editableElement = useMemo(() => getEditableElementFor(sceneObject)!, [sceneObject]);
 
-  const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
+  const noTitleText = t('dashboard.sidebar.outline.tree-item.no-title', '<no title>');
 
   const elementInfo = editableElement.getEditableElementInfo();
   const instanceName = elementInfo.instanceName || noTitleText;
@@ -176,7 +176,7 @@ export function DashboardOutlineNode({
               <div className={styles.row}>
                 <div className={styles.indentation}></div>
                 <Text color="secondary" italic>
-                  <Trans i18nKey="dashboard.outline.tree-item.empty">(empty)</Trans>
+                  <Trans i18nKey="dashboard.sidebar.outline.tree-item.empty">(empty)</Trans>
                 </Text>
               </div>
             </li>

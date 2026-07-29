@@ -5293,19 +5293,6 @@
     }
   },
   "dashboard": {
-    "actions": {
-      "open-settings": ""
-    },
-    "add": {
-      "dashboard-controls": "Управление дашбордами",
-      "group-layouts": "Макеты групп",
-      "new-panel": {
-        "button": "Кнопка добавления новой панели",
-        "description": "Перетащите или нажмите, чтобы добавить панель",
-        "title": "Панель"
-      },
-      "pane-header": "Добавить"
-    },
     "add-menu": {
       "import": "Импорт из библиотеки",
       "paste-panel": "Вставить панель",
@@ -5375,12 +5362,6 @@
       }
     },
     "canvas-actions": {
-      "add": {
-        "paste": {
-          "description": "Нажмите или перетащите, чтобы вставить панель",
-          "title": "Вставьте панель"
-        }
-      },
       "add-panel": "Добавить панель",
       "disabled-child-contains-tabs": "Невозможно переключиться на вкладки, поскольку строка уже их содержит",
       "disabled-nested-grouping": "Группировка ограничена 3 уровнями",
@@ -5395,14 +5376,6 @@
       "paste-tab": "Вставить вкладку",
       "ungroup-rows": "Разгруппировать строки",
       "ungroup-tabs": "Разгруппировать вкладки"
-    },
-    "code-pane": {
-      "collapse": "Свернуть редактор",
-      "copy-as-resource": "",
-      "copy-as-resource-tooltip": "",
-      "expand": "Развернуть редактор",
-      "header": "Отредактируйте как код",
-      "modal-title": "Отредактируйте дашборд как код"
     },
     "conditional-rendering": {
       "conditions": {
@@ -5580,9 +5553,6 @@
         "title": "Параметры строки"
       }
     },
-    "description": {
-      "action": "Изменить описание дашборда"
-    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Удалить свойство"
@@ -5591,6 +5561,8 @@
     "edit-actions": {
       "add": "Добавить {{typeName}}",
       "add-conditional-rule": "Добавить {{ruleDescription}} правило",
+      "dashboard-description": "Изменить описание дашборда",
+      "dashboard-title": "Изменить заголовок дашборда",
       "duplicate-panel": "Дублировать панель",
       "edit-query-result-rule": "Изменить правило результата запроса",
       "edit-template-variable-rule": "Изменить правило переменной шаблона",
@@ -5610,7 +5582,12 @@
       "switch-layout": "Переключить макет",
       "switch-layout-row": "Переключить макет",
       "switch-layout-tab": "Переключить макет",
-      "tab-title": "Измените заголовок вкладки"
+      "tab-title": "Измените заголовок вкладки",
+      "variable-description": "Изменить описание переменной",
+      "variable-hide": "Изменить параметр скрытия переменной",
+      "variable-label": "Изменить метку переменной",
+      "variable-name": "Изменить имя переменной",
+      "variable-type": "Изменить тип переменной"
     },
     "empty": {
       "add-library-panel-body": "Добавьте визуализации, которые используются совместно с другими дашбордами.",
@@ -5857,12 +5834,7 @@
     "layout": {
       "cancel": "Отмена",
       "common": {
-        "copy": "Копировать",
-        "copy-tooltip": "",
-        "delete": "Удалить",
-        "duplicate": "Дублировать",
-        "layout": "Расположение",
-        "paste": "Вставить"
+        "layout": "Расположение"
       },
       "continue": "Продолжить",
       "panel": {
@@ -5890,7 +5862,6 @@
     },
     "new-panel": {
       "aria-label": "Панель без конфигурации. Нажмите Tab, чтобы просмотреть доступные параметры.",
-      "configure-button": "",
       "configure-button-menu": "Переключить меню",
       "configure-visualization": "Настроить визуализацию",
       "empty-state-message": "Выполните запрос, чтобы запустить визуализацию здесь, или перейдите ко всем визуализациям, чтобы добавить другие типы панелей",
@@ -5912,10 +5883,6 @@
         }
       }
     },
-    "options": {
-      "description": "Описание",
-      "title-option": "Название"
-    },
     "options-pane-category": {
       "aria-label-collapse": "Свернуть категорию «{{title}}»",
       "aria-label-expand": "Развернуть категорию «{{title}}»"
@@ -5927,14 +5894,6 @@
       "title-matched_few": "Совпадение: {{count}}/{{totalCount}} параметров",
       "title-matched_many": "Совпадение: {{count}}/{{totalCount}} параметров",
       "title-matched_other": "Совпадение: {{count}}/{{totalCount}} параметра"
-    },
-    "outline": {
-      "pane-header": "Структура содержимого",
-      "repeated-item": "Повторить",
-      "tree-item": {
-        "empty": "(пусто)",
-        "no-title": "<нет заголовка>"
-      }
     },
     "override-category-title": {
       "aria-label-remove-override": "Удалить переопределение",
@@ -6115,13 +6074,6 @@
       "save-json-to-file": "Сохранить модель JSON в файл",
       "see-docs": "Подробнее о подготовке см. в <2>документации</2>."
     },
-    "schema-editor": {
-      "apply-button": "Применить изменения",
-      "apply-button-disabled-tooltip": "Исправьте ошибки проверки перед применением изменений",
-      "apply-button-disabled-tooltip-yaml": "В документе обнаружены ошибки проверки. Перейдите в формат JSON для просмотра сведений об ошибках непосредственно в файле.",
-      "apply-error-title": "Не удалось применить изменения",
-      "undo-title": "Редактирование схемы"
-    },
     "search-panel": {
       "no-match": "Нет совпадающих панелей"
     },
@@ -6130,8 +6082,42 @@
     },
     "sidebar": {
       "add": {
+        "annotation-query": {
+          "description": "Добавьте данные событий в графы",
+          "label": "Запрос аннотаций"
+        },
+        "dashboard-controls": "Управление дашбордами",
+        "filters": {
+          "label": "Фильтровать и группировать по"
+        },
+        "group-layouts": "Макеты групп",
+        "link": {
+          "label": "Ссылка",
+          "tooltip": "Добавьте ссылку на другой дашборд или внешний сайт"
+        },
+        "new-panel": {
+          "button": "Кнопка добавления новой панели",
+          "description": "Перетащите или нажмите, чтобы добавить панель",
+          "title": "Панель"
+        },
+        "pane-header": "Добавить",
+        "paste-panel": {
+          "description": "Нажмите или перетащите, чтобы вставить панель",
+          "title": "Вставьте панель"
+        },
+        "row": {
+          "add-label": "Добавить строку",
+          "group-label": "Группировать в строки"
+        },
+        "tab": {
+          "add-label": "Добавить вкладку",
+          "group-label": "Группировать во вкладки"
+        },
         "title": "Добавить",
-        "tooltip": "Добавьте новый элемент"
+        "tooltip": "Добавьте новый элемент",
+        "variable": {
+          "label": "Переменная"
+        }
       },
       "annotation": {
         "change-data-source": "Изменить источник данных для аннотаций",
@@ -6167,16 +6153,58 @@
       },
       "annotations": {
         "add-annotation": "Добавить аннотацию",
+        "add-annotation-query": "Добавить запрос аннотаций",
+        "name-builtin": "{{annoName}} (встроена)",
+        "name-disabled": "{{annoName}} (отключена)",
         "reorder": "Перетащите для изменения порядка",
-        "select-annotation": "Выбрать"
+        "reorder-description": "Изменить порядок списка аннотаций",
+        "select-annotation": "Выбрать",
+        "title-above-dashboard-count_few": "Над дашбордом ({{count}})",
+        "title-above-dashboard-count_many": "Над дашбордом ({{count}})",
+        "title-above-dashboard-count_one": "Над дашбордом ({{count}})",
+        "title-above-dashboard-count_other": "Над дашбордом ({{count}})",
+        "title-controls-menu-count_few": "Меню управления ({{count}})",
+        "title-controls-menu-count_many": "Меню управления ({{count}})",
+        "title-controls-menu-count_one": "Меню управления ({{count}})",
+        "title-controls-menu-count_other": "Меню управления ({{count}})",
+        "title-hidden-count_few": "Скрыто ({{count}})",
+        "title-hidden-count_many": "Скрыто ({{count}})",
+        "title-hidden-count_one": "Скрыто ({{count}})",
+        "title-hidden-count_other": "Скрыто ({{count}})"
       },
       "dashboard-options": {
+        "annotations": "Аннотации",
+        "description": "Описание",
+        "filters": "",
+        "links": "Ссылки",
+        "open-settings": "",
         "title": "Параметры",
-        "tooltip": "Параметры дашборда"
+        "title-option": "Название",
+        "tooltip": "Параметры дашборда",
+        "variables": "Переменные"
       },
+      "drag-to-reorder": "Перетащите для изменения порядка",
       "edit-schema": {
+        "apply-button": "Применить изменения",
+        "apply-button-disabled-tooltip": "Исправьте ошибки проверки перед применением изменений",
+        "apply-button-disabled-tooltip-yaml": "В документе обнаружены ошибки проверки. Перейдите в формат JSON для просмотра сведений об ошибках непосредственно в файле.",
+        "apply-error-title": "Не удалось применить изменения",
+        "collapse": "Свернуть редактор",
+        "copy-as-resource": "",
+        "copy-as-resource-tooltip": "",
+        "expand": "Развернуть редактор",
+        "modal-title": "Отредактируйте дашборд как код",
+        "pane-header": "Отредактируйте как код",
         "title": "Код",
-        "tooltip": "Отредактируйте как код"
+        "tooltip": "Отредактируйте как код",
+        "undo-title": "Редактирование схемы"
+      },
+      "element-actions": {
+        "copy": "Копировать",
+        "copy-tooltip": "",
+        "delete": "Удалить",
+        "duplicate": "Дублировать",
+        "paste": "Вставить"
       },
       "elements": {
         "annotation": "Аннотация",
@@ -6185,6 +6213,7 @@
         "element": "Элемент",
         "filter": "",
         "filters-set": "",
+        "link": "Ссылка",
         "link-set": "Ссылки",
         "local-variable": "Локальная переменная",
         "multiple-elements": "Несколько элементов",
@@ -6205,17 +6234,50 @@
       "export": {
         "title": "Экспорт"
       },
-      "filters": "",
+      "feedback-title": "Оставьте отзыв о новой функции редактирования дашбордов",
+      "filters": {
+        "add-filter": "",
+        "reorder-description": "",
+        "title": "",
+        "title-above-dashboard_few": "",
+        "title-above-dashboard_many": "",
+        "title-above-dashboard_one": "",
+        "title-above-dashboard_other": "",
+        "title-controls-menu_few": "",
+        "title-controls-menu_many": "",
+        "title-controls-menu_one": "",
+        "title-controls-menu_other": "",
+        "title-hidden_few": "",
+        "title-hidden_many": "",
+        "title-hidden_one": "",
+        "title-hidden_other": "",
+        "tooltip": ""
+      },
       "links": {
         "add-link": "Добавить ссылку",
+        "new-link": "Новая ссылка",
         "reorder": "Перетащите для изменения порядка",
+        "reorder-description": "Изменить порядок списка ссылок",
         "select-link": "Выбрать",
+        "title-above-dashboard_few": "Над дашбордом ({{count}})",
+        "title-above-dashboard_many": "Над дашбордом ({{count}})",
+        "title-above-dashboard_one": "Над дашбордом ({{count}})",
+        "title-above-dashboard_other": "Над дашбордом ({{count}})",
+        "title-controls-menu_few": "Меню управления ({{count}})",
+        "title-controls-menu_many": "Меню управления ({{count}})",
+        "title-controls-menu_one": "Меню управления ({{count}})",
+        "title-controls-menu_other": "Меню управления ({{count}})",
         "untitled": "Ссылка без имени"
       },
-      "open": "",
       "outline": {
+        "pane-header": "Структура содержимого",
+        "repeated-item": "Повторить",
         "title": "Структура",
-        "tooltip": "Структура содержимого"
+        "tooltip": "Структура содержимого",
+        "tree-item": {
+          "empty": "(пусто)",
+          "no-title": "<нет заголовка>"
+        }
       },
       "redo": "Повторить",
       "row": {
@@ -6230,7 +6292,9 @@
       "section-variables": {
         "title": "Переменные"
       },
+      "select": "Выбрать",
       "snapshot": {
+        "title": "Источник",
         "tooltip": "Открытие исходного дашборда"
       },
       "undo": "Отменить",
@@ -6252,6 +6316,15 @@
         },
         "description": "Описание",
         "description-placeholder": "Поясняющий текст",
+        "display": "Отобразить",
+        "display-options": {
+          "controls-menu": "Меню элементов управления",
+          "controls-menu-description": "Отображается при открытом меню управления",
+          "hidden": "Скрыто",
+          "hidden-description": "Отображается только в режиме редактирования",
+          "label-hidden": "",
+          "label-hidden-description": ""
+        },
         "label": "Метка",
         "label-description": "Отображаемое имя (необязательно)",
         "name": "Имя",
@@ -6278,9 +6351,23 @@
         "add-variable": "Добавление переменной",
         "change-type": "",
         "reorder": "Перетащите для изменения порядка",
+        "reorder-description": "Измените порядок в списке переменных",
         "select-type": "Выберите тип переменной",
         "select-type-card-tooltip": "Нажмите, чтобы выбрать тип",
-        "select-variable": "Выбрать"
+        "select-variable": "Выбрать",
+        "title-controls-menu_few": "Меню управления ({{count}})",
+        "title-controls-menu_many": "Меню управления ({{count}})",
+        "title-controls-menu_one": "Меню управления ({{count}})",
+        "title-controls-menu_other": "Меню управления ({{count}})",
+        "title-hidden_few": "Скрыто ({{count}})",
+        "title-hidden_many": "Скрыто ({{count}})",
+        "title-hidden_one": "Скрыто ({{count}})",
+        "title-hidden_other": "Скрыто ({{count}})",
+        "title-top-placement_few": "",
+        "title-top-placement_many": "",
+        "title-top-placement_one": "",
+        "title-top-placement_other": "",
+        "top-placement-default": ""
       },
       "view-panel": {
         "disabled": "",
@@ -6291,6 +6378,18 @@
         "pane-header": "",
         "quick-toggles": "",
         "title": ""
+      },
+      "viz-panel": {
+        "configure-button": "",
+        "delete-panel-text": "Удаление этой панели также приведет к удалению всех запросов. Действительно продолжить?",
+        "delete-panel-title": "Удалить панель?",
+        "delete-panel-yes": "Удалить",
+        "options": {
+          "configure-button-tooltip": "Редактировать запросы и параметры визуализации",
+          "description": "Описание",
+          "title-option": "Название",
+          "transparent-background": "Прозрачный фон"
+        }
       }
     },
     "source-link": {
@@ -6348,9 +6447,6 @@
       "tab-warning": {
         "title-not-unique": "Заголовок не является уникальным"
       }
-    },
-    "title": {
-      "action": "Изменить заголовок дашборда"
     },
     "toolbar": {
       "add": "Добавить",
@@ -6442,9 +6538,6 @@
       "save-library-panel": "Сохранить панель библиотеки",
       "settings": "Параметры дашборда",
       "share-button": "Общий доступ",
-      "snapshot": {
-        "title": "Источник"
-      },
       "star-add-error": "Не удалось добавить в избранное",
       "star-added": "Добавлено в избранное",
       "star-remove-error": "Не удалось удалить из избранного",
@@ -6514,22 +6607,7 @@
       "tags-expected-strings": "ожидаемый массив строк тегов"
     },
     "variable": {
-      "description": {
-        "action": "Изменить описание переменной"
-      },
-      "description-tooltip": "Описание переменной",
-      "hide": {
-        "action": "Изменить параметр скрытия переменной"
-      },
-      "label": {
-        "action": "Изменить метку переменной"
-      },
-      "name": {
-        "action": "Изменить имя переменной"
-      },
-      "type": {
-        "action": "Изменить тип переменной"
-      }
+      "description-tooltip": "Описание переменной"
     },
     "version-history-comparison": {
       "button-restore": "Восстановить до версии {{version}} ",
@@ -6552,17 +6630,6 @@
     "view-panel": {
       "back-to-dashboard": "",
       "not-found": "Панель не найдена"
-    },
-    "viz-panel": {
-      "delete-panel-text": "Удаление этой панели также приведет к удалению всех запросов. Действительно продолжить?",
-      "delete-panel-title": "Удалить панель?",
-      "delete-panel-yes": "Удалить",
-      "options": {
-        "configure-button-tooltip": "Редактировать запросы и параметры визуализации",
-        "description": "Описание",
-        "title-option": "Название",
-        "transparent-background": "Прозрачный фон"
-      }
     }
   },
   "dashboard-import": {
@@ -6678,22 +6745,6 @@
       "name-allow-custom-values": "Разрешить пользовательские значения",
       "name-enable-group-by": "Включить группировку по"
     },
-    "add-filters": {
-      "label": "Фильтровать и группировать по"
-    },
-    "add-link": {
-      "inline-instance-name": "Новая ссылка",
-      "label-link": "Ссылка",
-      "tooltip": "Добавьте ссылку на другой дашборд или внешний сайт"
-    },
-    "add-row": {
-      "add-label": "Добавить строку",
-      "group-label": "Группировать в строки"
-    },
-    "add-tab": {
-      "add-label": "Добавить вкладку",
-      "group-label": "Группировать во вкладки"
-    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Не удалось перейти к выбранному дашборду. Повторите попытку.",
@@ -6722,19 +6773,12 @@
         "new-panel": "Новая панель"
       }
     },
-    "add-variable": {
-      "label-variable": "Переменная"
-    },
     "adhoc-origin-filters-controller": {
       "input-placeholder": "Добавить фильтр по умолчанию..."
     },
     "adhoc-origin-filters-editor": {
       "description": "Фильтры, предварительно выбранные по умолчанию.",
       "label": "Фильтры по умолчанию"
-    },
-    "annotation-control": {
-      "description-add-event-data-to-graphs": "Добавьте данные событий в графы",
-      "label-annotation-query": "Запрос аннотаций"
     },
     "annotation-edit-actions": {
       "description": {
@@ -6751,11 +6795,6 @@
       "delete-title": "Удалить запрос аннотаций"
     },
     "annotation-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-annotations-list": "Изменить порядок списка аннотаций"
-        }
-      },
       "render-list": {
         "aria-label-annotation": "Аннотация"
       }
@@ -6801,15 +6840,6 @@
       "query-name": "Название запроса",
       "tooltip-move-down": "Вниз",
       "tooltip-move-up": "Вверх"
-    },
-    "annotations-list": {
-      "drag-end": {
-        "description": "Изменить порядок списка аннотаций"
-      }
-    },
-    "annotations-section": {
-      "name-builtin": "{{annoName}} (встроена)",
-      "name-disabled": "{{annoName}} (отключена)"
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Не может содержать недопустимые символы: «~», «^», «:», «?», «*», «[», «\\\\» или «]».",
@@ -6865,21 +6895,6 @@
       "name-values-separated-comma": "Значения, разделенные запятыми",
       "selection-options": "Параметры выбора"
     },
-    "dashboard-annotations-list": {
-      "add-annotation-query": "Добавить запрос аннотаций",
-      "title-above-dashboard-count_one": "Над дашбордом ({{count}})",
-      "title-above-dashboard-count_few": "Над дашбордом ({{count}})",
-      "title-above-dashboard-count_many": "Над дашбордом ({{count}})",
-      "title-above-dashboard-count_other": "Над дашбордом ({{count}})",
-      "title-controls-menu-count_one": "Меню управления ({{count}})",
-      "title-controls-menu-count_few": "Меню управления ({{count}})",
-      "title-controls-menu-count_many": "Меню управления ({{count}})",
-      "title-controls-menu-count_other": "Меню управления ({{count}})",
-      "title-hidden-count_one": "Скрыто ({{count}})",
-      "title-hidden-count_few": "Скрыто ({{count}})",
-      "title-hidden-count_many": "Скрыто ({{count}})",
-      "title-hidden-count_other": "Скрыто ({{count}})"
-    },
     "dashboard-link-form": {
       "back-to-list": "Назад к списку",
       "label-icon": "Значок",
@@ -6910,9 +6925,6 @@
       "tooltip-move-link-down": "Переместить ссылку вниз",
       "tooltip-move-link-up": "Переместить ссылку вверх",
       "type": "Тип"
-    },
-    "dashboard-links-list": {
-      "add-link": "Добавить ссылку"
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Ошибка при загрузке дашборда"
@@ -6949,9 +6961,6 @@
         "dashboard-not-found": "Дашборд не найден"
       }
     },
-    "dashboard-sidebar-renderer": {
-      "title-feedback-dashboard-editing-experience": "Оставьте отзыв о новой функции редактирования дашбордов"
-    },
     "data-source-variable-form": {
       "data-source-options": "Параметры источника данных",
       "description-instance-name-filter": "Фильтр регулярных выражений для выбора экземпляров источников данных в списке значений переменных. Оставьте пустым для всех.",
@@ -6985,12 +6994,6 @@
     "description-label": {
       "description": "Описание"
     },
-    "draggable-item": {
-      "drag-to-reorder": "Перетащите для изменения порядка"
-    },
-    "draggable-items-list": {
-      "select": "Выбрать"
-    },
     "edit-link-view": {
       "edit-link-page-nav": {
         "text": {
@@ -7013,22 +7016,6 @@
       "show-more": "Показать еще",
       "sql-name": "Преобразование с помощью SQL",
       "sql-transformation-description": "Обрабатывайте данные с использованием синтаксиса MySQL"
-    },
-    "filters-list": {
-      "add-filter": "",
-      "reorder-description": "",
-      "title-above-dashboard_one": "",
-      "title-above-dashboard_few": "",
-      "title-above-dashboard_many": "",
-      "title-above-dashboard_other": "",
-      "title-controls-menu_one": "",
-      "title-controls-menu_few": "",
-      "title-controls-menu_many": "",
-      "title-controls-menu_other": "",
-      "title-hidden_one": "",
-      "title-hidden_few": "",
-      "title-hidden_many": "",
-      "title-hidden_other": ""
     },
     "general-settings-edit-view": {
       "default_grid_options": {
@@ -7203,11 +7190,6 @@
       "unnamed": "Ссылка без имени"
     },
     "link-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-links-list": "Изменить порядок списка ссылок"
-        }
-      },
       "render-list": {
         "aria-label-link": "Ссылка"
       }
@@ -7224,17 +7206,6 @@
       "type-dashboards": "Дашборды",
       "type-link": "Ссылка",
       "with-tags": "С тегами"
-    },
-    "links-list": {
-      "drag-end-description": "Изменить порядок списка ссылок",
-      "title-above-dashboard_one": "Над дашбордом ({{count}})",
-      "title-above-dashboard_few": "Над дашбордом ({{count}})",
-      "title-above-dashboard_many": "Над дашбордом ({{count}})",
-      "title-above-dashboard_other": "Над дашбордом ({{count}})",
-      "title-controls-menu_one": "Меню управления ({{count}})",
-      "title-controls-menu_few": "Меню управления ({{count}})",
-      "title-controls-menu_many": "Меню управления ({{count}})",
-      "title-controls-menu_other": "Меню управления ({{count}})"
     },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "",
@@ -7510,9 +7481,6 @@
       "new-alert-rule": "Новое правило оповещения",
       "title-no-alerting-capable-query-found": "Не найдены запросы, способные генерировать оповещения"
     },
-    "section-filters-list": {
-      "add-filter": ""
-    },
     "section-placement": {
       "top-row": "",
       "top-tab": ""
@@ -7601,31 +7569,10 @@
       "save-dashboard": "Сохранить дашборд",
       "title-unsaved-changes": "Несохраненные изменения"
     },
-    "use-annotations-category": {
-      "category": {
-        "title": {
-          "annotations": "Аннотации"
-        }
-      }
-    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Параметры"
-        }
-      }
-    },
-    "use-filters-category": {
-      "category": {
-        "title": {
-          "filters": ""
-        }
-      }
-    },
-    "use-links-category": {
-      "category": {
-        "title": {
-          "links": "Ссылки"
         }
       }
     },
@@ -7637,13 +7584,6 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Дашборд сохранен"
     },
-    "use-variables-category": {
-      "category": {
-        "title": {
-          "variables": "Переменные"
-        }
-      }
-    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "На эту переменную не ссылается ни одна переменная или дашборд",
       "aria-label-variable-referenced-other-variables-dashboard": "На эту переменную ссылаются другие переменные или дашборд",
@@ -7652,23 +7592,6 @@
     },
     "variable-controls": {
       "add-variable": "Добавить переменную"
-    },
-    "variable-display-select": {
-      "label": "Отобразить",
-      "options": {
-        "controls-menu": {
-          "description": "Отображается при открытом меню управления",
-          "label": "Меню элементов управления"
-        },
-        "hidden": {
-          "description": "Отображается только в режиме редактирования",
-          "label": "Скрыто"
-        },
-        "top-placement-hidden-label": {
-          "description": "",
-          "label": ""
-        }
-      }
     },
     "variable-editable-element": {
       "delete-confirm": "Удалить переменную",
@@ -7720,13 +7643,6 @@
       },
       "label": "Скрыть"
     },
-    "variable-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Измените порядок в списке переменных"
-        }
-      }
-    },
     "variable-multi-prop-static-options-form": {
       "aria-label-static-options": "Статические параметры"
     },
@@ -7743,29 +7659,6 @@
       "preview-of-values_few": "Просмотр значений ({{count}})",
       "preview-of-values_many": "Просмотр значений ({{count}})",
       "preview-of-values_other": "Просмотр значений ({{count}})"
-    },
-    "variables-list": {
-      "add-variable": "Добавить переменную",
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Измените порядок в списке переменных"
-        }
-      },
-      "top-placement": {
-        "default": ""
-      },
-      "title-controls-menu_one": "Меню управления ({{count}})",
-      "title-controls-menu_few": "Меню управления ({{count}})",
-      "title-controls-menu_many": "Меню управления ({{count}})",
-      "title-controls-menu_other": "Меню управления ({{count}})",
-      "title-hidden_one": "Скрыто ({{count}})",
-      "title-hidden_few": "Скрыто ({{count}})",
-      "title-hidden_many": "Скрыто ({{count}})",
-      "title-hidden_other": "Скрыто ({{count}})",
-      "title-top-placement_one": "",
-      "title-top-placement_few": "",
-      "title-top-placement_many": "",
-      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {

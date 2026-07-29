@@ -103,14 +103,8 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
                     '_blank'
                   )
                 }
-                title={t(
-                  'dashboard-scene.dashboard-sidebar-renderer.title-feedback-dashboard-editing-experience',
-                  'Give feedback on the new dashboard editing experience'
-                )}
-                tooltip={t(
-                  'dashboard-scene.dashboard-sidebar-renderer.title-feedback-dashboard-editing-experience',
-                  'Give feedback on the new dashboard editing experience'
-                )}
+                title={t('dashboard.sidebar.feedback-title', 'Give feedback on the new dashboard editing experience')}
+                tooltip={t('dashboard.sidebar.feedback-title', 'Give feedback on the new dashboard editing experience')}
               />
             )}
             <Sidebar.Button
@@ -173,7 +167,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             <Sidebar.Button
               data-testid="button-snapshot"
               tooltip={t('dashboard.sidebar.snapshot.tooltip', 'Open original dashboard')}
-              title={t('dashboard.toolbar.snapshot.title', 'Source')}
+              title={t('dashboard.sidebar.snapshot.title', 'Source')}
               icon="link"
               onClick={() => onOpenSnapshotOriginalDashboard(dashboard.getSnapshotUrl())}
             />
@@ -209,8 +203,8 @@ function FiltersOverviewButton({
     <Sidebar.Button
       icon="filter"
       onClick={() => sidebar.openPane(new DashboardFiltersOverviewPane({}))}
-      title={t('dashboard.sidebar.filters', 'Filters')}
-      tooltip={t('dashboard.sidebar.open', 'Filters overview')}
+      title={t('dashboard.sidebar.filters.title', 'Filters')}
+      tooltip={t('dashboard.sidebar.filters.tooltip', 'Filters overview')}
       active={openPane instanceof DashboardFiltersOverviewPane}
     />
   );

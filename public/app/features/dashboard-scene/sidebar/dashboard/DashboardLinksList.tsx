@@ -60,7 +60,7 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
 
       dashboardEditActions.edit({
         source: dashboard,
-        description: t('dashboard-scene.links-list.drag-end-description', 'Reorder links list'),
+        description: t('dashboard.sidebar.links.reorder-description', 'Reorder links list'),
         perform: () => {
           const reorderedLinks = [...lists[ID_VISIBLE_LIST], ...lists[ID_CONTROLS_MENU_LIST]].map((l) => {
             const { state: _, ...link } = l;
@@ -82,7 +82,7 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
       <DraggableList
         items={visible}
         droppableId={ID_VISIBLE_LIST}
-        title={t('dashboard-scene.links-list.title-above-dashboard', '', {
+        title={t('dashboard.sidebar.links.title-above-dashboard', '', {
           count: visible.length,
           defaultValue_one: 'Above dashboard ({{count}})',
           defaultValue_other: 'Above dashboard ({{count}})',
@@ -93,7 +93,7 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
       <DraggableList
         items={controlsMenu}
         droppableId={ID_CONTROLS_MENU_LIST}
-        title={t('dashboard-scene.links-list.title-controls-menu', '', {
+        title={t('dashboard.sidebar.links.title-controls-menu', '', {
           count: controlsMenu.length,
           defaultValue_one: 'Controls menu ({{count}})',
           defaultValue_other: 'Controls menu ({{count}})',
@@ -123,7 +123,7 @@ export function AddLinkButton({ dashboard }: { dashboard: DashboardScene }) {
         onClick={onAddLink}
         data-testid={selectors.components.PanelEditor.ElementEditPane.addLinkButton}
       >
-        <Trans i18nKey="dashboard-scene.dashboard-links-list.add-link">Add link</Trans>
+        <Trans i18nKey="dashboard.sidebar.links.add-link">Add link</Trans>
       </Button>
     </Box>
   );

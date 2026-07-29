@@ -199,9 +199,9 @@ export class LinkEditEditableElement implements EditableDashboardElement {
     const dashboard = this.linkEdit.state.dashboardRef.resolve();
     const links = dashboard.state.links ?? [];
     const link = links[this.linkEdit.state.linkIndex];
-    const instanceName = link?.title ?? t('dashboard-scene.add-link.inline-instance-name', 'New link');
+    const instanceName = link?.title ?? t('dashboard.sidebar.links.new-link', 'New link');
     return {
-      typeName: t('dashboard-scene.add-link.label-link', 'Link'),
+      typeName: t('dashboard.sidebar.elements.link', 'Link'),
       icon: 'external-link-alt',
       instanceName,
     };

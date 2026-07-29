@@ -56,10 +56,7 @@ export function LinkList({ dashboard }: { dashboard: DashboardScene }) {
 
         dashboardEditActions.edit({
           source: dashboard,
-          description: t(
-            'dashboard-scene.link-list.create-drag-end-handler.description.reorder-links-list',
-            'Reorder links list'
-          ),
+          description: t('dashboard.sidebar.links.reorder-description', 'Reorder links list'),
           perform: () => {
             if (!result.destination || result.destination.index === result.source.index) {
               return;
