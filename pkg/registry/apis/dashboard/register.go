@@ -67,7 +67,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -121,7 +120,6 @@ type DashboardsAPIBuilder struct {
 	resourcePermissionsSvc   *dynamic.NamespaceableResourceInterface
 	scheme                   *runtime.Scheme
 	search                   *SearchHandler
-	searchAPI                *searchapi.Handler // nil unless the search API is enabled in config
 	QuotaService             quota.Service
 	ProvisioningService      provisioning.ProvisioningService
 	minRefreshInterval       string
@@ -198,7 +196,6 @@ func RegisterAPIService(
 		accessClient:             accessClient,
 		unified:                  unified,
 		search:                   NewSearchHandler(tracing, unified, features),
-		searchAPI:                newSearchAPIHandler(cfg, tracing, unified),
 		QuotaService:             quotaService,
 		ProvisioningService:      provisioning,
 		minRefreshInterval:       cfg.MinRefreshInterval,
@@ -1402,13 +1399,6 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	routes := &builder.APIRoutes{}
 
-	// The search API is mounted under every served version, so a client can use
-	// the same version it uses for the rest of the kind.
-	if b.searchAPI != nil {
-		routes.Namespace = append(routes.Namespace, b.searchAPI.SearchRoute(
-			gv.Group, gv.Version, dashv0.DASHBOARD_RESOURCE, "Dashboard"))
-	}
-
 	if gv.Version == dashv0.VERSION {
 		defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 		legacySearchRoutes := b.search.GetAPIRoutes(defs)
@@ -1424,17 +1414,6 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 		return nil
 	}
 	return routes
-}
-
-// newSearchAPIHandler returns the search API handler, or nil when the endpoint
-// is disabled. Search fields come from the compiled-in app manifests, the same
-// declarations the index mapping is built from.
-func newSearchAPIHandler(cfg *setting.Cfg, tracer tracing.Tracer, unified resource.ResourceClient) *searchapi.Handler {
-	if !cfg.SectionWithEnvOverrides(searchapi.ConfigSection).Key(searchapi.ConfigKey).MustBool(false) {
-		return nil
-	}
-	provider := resource.NewManifestBackedProvider(resource.AppManifests())
-	return searchapi.NewHandler(unified, provider, tracer)
 }
 
 // GetPolicyRuleEvaluator defines the rules for logging auditing events from the API server.

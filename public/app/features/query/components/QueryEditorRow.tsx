@@ -44,6 +44,7 @@ import { type QueryActionComponent, RowActionComponents } from './QueryActionCom
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
 import { QueryErrorAlert } from './QueryErrorAlert';
 import { QueryLibraryEditingContainer } from './QueryLibraryEditingContainer';
+import { pinScrollIntoView } from './pinScrollIntoView';
 
 export interface Props<TQuery extends DataQuery> {
   data: PanelData;
@@ -82,6 +83,14 @@ export interface Props<TQuery extends DataQuery> {
    * Required to resolve section-scoped (row/tab) datasource variables
    */
   scopedVars?: ScopedVars;
+  /**
+   * When true, scrolls the row into view once it first renders. The row renders nothing until its
+   * datasource loads, so the scroll fires whenever the DOM node actually appears rather than after
+   * a fixed delay.
+   */
+  scrollIntoView?: boolean;
+  /** Called after the scroll happens so the owner can clear the flag. */
+  onScrollIntoView?: () => void;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -98,6 +107,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   dataSourceSrv = getDataSourceSrv();
   id = '';
   editorRef = createRef<HTMLDivElement>();
+  private hasStartedScrollIntoView = false;
+  private cancelScrollPin?: () => void;
 
   state: State<TQuery> = {
     datasource: null,
@@ -113,6 +124,23 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     this.setState({ data: dataFilteredByRefId });
 
     this.loadDatasource();
+    this.scrollIntoViewIfNeeded();
+  }
+
+  private scrollIntoViewIfNeeded() {
+    if (this.props.scrollIntoView && !this.hasStartedScrollIntoView && this.editorRef.current) {
+      this.hasStartedScrollIntoView = true;
+      // A single scroll is not enough: the other rows' editors load asynchronously and push this
+      // row away as they grow, so keep it pinned until the layout settles or the user scrolls.
+      this.cancelScrollPin = pinScrollIntoView(this.editorRef.current, () => {
+        this.cancelScrollPin = undefined;
+        this.props.onScrollIntoView?.();
+      });
+    }
+  }
+
+  componentWillUnmount() {
+    this.cancelScrollPin?.();
   }
 
   /**
@@ -166,6 +194,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
       this.setState({ data: dataFilteredByRefId });
     }
+
+    this.scrollIntoViewIfNeeded();
 
     // check if we need to load another datasource
     if (datasource && queriedDataSourceIdentifier !== this.getInterpolatedDataSourceUID()) {

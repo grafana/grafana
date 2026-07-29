@@ -87,6 +87,11 @@ type BleveOptions struct {
 	// May be nil in tests.
 	SearchFields *resource.SearchFieldsRegistry
 
+	// RequiredIndexFeatures overrides the index features an existing index must
+	// already have to be reused; nil means resource.RequiredIndexFeatures. Only
+	// tests set it. New indexes always record resource.CurrentIndexFeatures.
+	RequiredIndexFeatures []resource.IndexFeature
+
 	// Snapshot configures remote index snapshot download at build time.
 	// If Snapshot.Store is nil, the feature is disabled and BuildIndex behaves exactly as before.
 	Snapshot SnapshotOptions
@@ -182,6 +187,9 @@ type bleveBackend struct {
 
 	fields *resource.SearchFieldsRegistry
 
+	// Index features an existing index must have to be reused. See BleveOptions.
+	requiredFeatures []resource.IndexFeature
+
 	// Parsed opts.BuildVersion for snapshot tier comparisons. Nil if BuildVersion
 	// is empty. Guaranteed non-nil when opts.Snapshot.Store is set.
 	runningBuildVersion *semver.Version
@@ -259,6 +267,11 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		fields = resource.NewSearchFieldsRegistry(nil, nil, nil)
 	}
 
+	requiredFeatures := opts.RequiredIndexFeatures
+	if requiredFeatures == nil {
+		requiredFeatures = resource.RequiredIndexFeatures()
+	}
+
 	be := &bleveBackend{
 		log:                     l,
 		cache:                   map[resource.NamespacedResource]*bleveIndex{},
@@ -266,6 +279,7 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		ownsIndexFn:             ownFn,
 		indexMetrics:            indexMetrics,
 		fields:                  fields,
+		requiredFeatures:        requiredFeatures,
 		runningBuildVersion:     runningBuildVersion,
 		maxSupportedIndexFormat: maxSupportedFormat,
 		lastUploadTime:          map[resource.NamespacedResource]time.Time{},
@@ -646,6 +660,7 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 		BuildVersion:     buildVersion,
 		SelectableFields: selectableFields,
 		SearchFieldsHash: searchFieldsHash,
+		Features:         resource.CurrentIndexFeatures(),
 	}
 
 	biBytes, err := json.Marshal(bi)
@@ -662,10 +677,23 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 }
 
 type buildInfo struct {
-	BuildTime        int64    `json:"build_time"`                   // Unix seconds timestamp of time when the index was built
-	BuildVersion     string   `json:"build_version"`                // Grafana version used when building the index
-	SelectableFields []string `json:"selectable_fields,omitempty"`  // List of selectable fields used when index was created.
-	SearchFieldsHash string   `json:"search_fields_hash,omitempty"` // Hash over the SearchFieldDefinition slices registered for (group, resource) at build time, across every version. Empty when no SearchFieldsProvider was in use.
+	// Unix seconds timestamp of time when the index was built.
+	BuildTime int64 `json:"build_time"`
+
+	// Grafana version used when building the index.
+	BuildVersion string `json:"build_version"`
+
+	// List of selectable fields used when index was created.
+	SelectableFields []string `json:"selectable_fields,omitempty"`
+
+	// Hash over the SearchFieldDefinition slices registered for (group, resource)
+	// at build time, across every version. Empty when no SearchFieldsProvider was
+	// in use.
+	SearchFieldsHash string `json:"search_fields_hash,omitempty"`
+
+	// Index features the index was built with. Absent on indexes built before
+	// index features existed.
+	Features []resource.IndexFeature `json:"features,omitempty"`
 }
 
 type buildIndexSource int
@@ -1044,7 +1072,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 
 func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time.Time, logger log.Logger) (bleve.Index, string, int64, error) {
 	idx, name, rv, err := b.findPreviousFileBasedIndex(resourceDir)
-	if err != nil || idx == nil || lastImportTime.IsZero() {
+	if err != nil || idx == nil {
 		return idx, name, rv, err
 	}
 
@@ -1053,16 +1081,26 @@ func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time
 		logger.Warn("failed to get build info from existing index", "error", err)
 		return idx, name, rv, nil
 	}
-	if bi.BuildTime <= 0 {
+
+	indexBuildTime := time.Time{}
+	if bi.BuildTime > 0 {
+		indexBuildTime = time.Unix(bi.BuildTime, 0)
+	}
+
+	// Opening an outdated index is deliberate: startup stays fast and the rebuild
+	// scan replaces it shortly after. Only an index that would answer incorrectly
+	// is rejected. An index with no build time counts as older than any import.
+	reason := ""
+	if missing := resource.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
+		reason = fmt.Sprintf("index is missing required features %v", missing)
+	} else if !lastImportTime.IsZero() && indexBuildTime.Before(lastImportTime) {
+		reason = "index was built before the last import"
+	}
+	if reason == "" {
 		return idx, name, rv, nil
 	}
 
-	indexBuildTime := time.Unix(bi.BuildTime, 0)
-	if !indexBuildTime.Before(lastImportTime) {
-		return idx, name, rv, nil
-	}
-
-	logger.Info("File-based index needs rebuild before opening", "buildTime", indexBuildTime, "lastImportTime", lastImportTime)
+	logger.Info("File-based index needs rebuild before opening", "reason", reason, "buildTime", indexBuildTime, "lastImportTime", lastImportTime)
 	_ = idx.Close()
 	// Release the registration findPreviousFileBasedIndex installed on this
 	// directory: we are discarding the reused index, so cleanOldIndexes is
@@ -1859,7 +1897,13 @@ func (b *bleveIndex) BuildInfo() (resource.IndexBuildInfo, error) {
 	if err != nil {
 		return resource.IndexBuildInfo{}, err
 	}
+	return bi.resourceBuildInfo(), nil
+}
 
+// resourceBuildInfo converts the persisted form into the one the rebuild and
+// reuse checks consume. An unparseable build version reads as unknown, so it
+// cannot make an index look newer than it is.
+func (bi buildInfo) resourceBuildInfo() resource.IndexBuildInfo {
 	bt := time.Time{}
 	if bi.BuildTime > 0 {
 		bt = time.Unix(bi.BuildTime, 0)
@@ -1878,7 +1922,8 @@ func (b *bleveIndex) BuildInfo() (resource.IndexBuildInfo, error) {
 		BuildVersion:     bv,
 		SelectableFields: bi.SelectableFields,
 		SearchFieldsHash: bi.SearchFieldsHash,
-	}, nil
+		Features:         bi.Features,
+	}
 }
 
 func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest, stats *resource.SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
