@@ -48,11 +48,6 @@ export function SignalExplorer({ queries, paneDatasource, scroller, toggleButton
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
   const [expandedRefIds, setExpandedRefIds] = useState<Set<string>>(new Set());
 
-  // The `queries` array is replaced on every keystroke in a query editor, but the cards
-  // only depend on refIds and datasource refs. Key the memo on just those so typing an
-  // expression doesn't rebuild the cards and re-resolve datasource settings per character.
-  const cardsKey = JSON.stringify(queries.map((query) => [query.refId, query.datasource?.uid, query.datasource?.type]));
-
   const cards: CardDescriptor[] = useMemo(() => {
     const paneRef = paneDatasource?.uid ? { uid: paneDatasource.uid, type: paneDatasource.type } : undefined;
 
@@ -69,8 +64,7 @@ export function SignalExplorer({ queries, paneDatasource, scroller, toggleButton
         isExpandable: isPrometheusType(type),
       };
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- cardsKey covers the parts of `queries` the cards read.
-  }, [cardsKey, paneDatasource]);
+  }, [queries, paneDatasource]);
 
   // A card's expanded state has to go away with the card's ability to expand:
   // - a deleted query, because Explore hands out the lowest unused refId when a query is
