@@ -387,7 +387,8 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
             >
               <Switch
                 id="preload-panels-dashboards-toggle"
-                value={dashboard.state.preload}
+                // Reflect the effective value: when the dashboard has no explicit preload, show the instance default.
+                value={dashboard.state.preload ?? config.dashboardDefaultPreload}
                 onChange={(e) => model.onPreloadChange(e.currentTarget.checked)}
               />
             </Field>
