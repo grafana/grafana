@@ -27,8 +27,11 @@ import {
   type LocalPlugin,
   type InstancePlugin,
   type ProvisionedPlugin,
+  type PluginCatalogStoreState,
   PluginStatus,
 } from '../types';
+
+import { selectByIdOrAlias } from './selectors';
 
 // Fetches
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
@@ -157,14 +160,14 @@ export const fetchRemotePlugins = createAsyncThunk<RemotePlugin[], void, { rejec
   }
 );
 
-export const fetchDetails = createAsyncThunk<Update<CatalogPlugin, string>, string>(
+export const fetchDetails = createAsyncThunk<Update<CatalogPlugin, string>, string, { state: PluginCatalogStoreState }>(
   `${STATE_PREFIX}/fetchDetails`,
   async (id, thunkApi) => {
     try {
-      const details = await getPluginDetails(id);
-
+      const canonicalId = selectByIdOrAlias(thunkApi.getState(), id)?.id ?? id;
+      const details = await getPluginDetails(canonicalId);
       return {
-        id,
+        id: canonicalId,
         changes: { details },
       };
     } catch (e) {
@@ -173,21 +176,23 @@ export const fetchDetails = createAsyncThunk<Update<CatalogPlugin, string>, stri
   }
 );
 
-export const fetchPluginInsights = createAsyncThunk<Update<CatalogPlugin, string>, { id: string; version?: string }>(
-  `${STATE_PREFIX}/fetchPluginInsights`,
-  async ({ id, version }, thunkApi) => {
-    try {
-      const insights = await getPluginInsights(id, version);
+export const fetchPluginInsights = createAsyncThunk<
+  Update<CatalogPlugin, string>,
+  { id: string; version?: string },
+  { state: PluginCatalogStoreState }
+>(`${STATE_PREFIX}/fetchPluginInsights`, async ({ id, version }, thunkApi) => {
+  try {
+    const canonicalId = selectByIdOrAlias(thunkApi.getState(), id)?.id ?? id;
+    const insights = await getPluginInsights(canonicalId, version);
 
-      return {
-        id,
-        changes: { insights },
-      };
-    } catch (e) {
-      return thunkApi.rejectWithValue('Unknown error.');
-    }
+    return {
+      id: canonicalId,
+      changes: { insights },
+    };
+  } catch (e) {
+    return thunkApi.rejectWithValue('Unknown error.');
   }
-);
+});
 
 export const addPlugins = createAction<CatalogPlugin[]>(`${STATE_PREFIX}/addPlugins`);
 

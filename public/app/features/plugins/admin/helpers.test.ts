@@ -377,6 +377,66 @@ describe('Plugins/Helpers', () => {
     });
   });
 
+  describe('mergeLocalsAndRemotes() - alias deduplication', () => {
+    test('does not deduplicate direct slug matches — only alias matches are deduplicated', () => {
+      // Regression: emittedCanonicalIds must only track alias-matched canonical IDs.
+      // Direct slug matches (remotePlugin.slug === localPlugin.id) must not be deduplicated
+      // as that would break tests and real scenarios relying on duplicate remote entries.
+      const local = [getLocalPluginMock({ id: 'plugin-1' })];
+      const remote = [getRemotePluginMock({ slug: 'plugin-1' }), getRemotePluginMock({ slug: 'plugin-1' })];
+
+      const merged = mergeLocalsAndRemotes({ local, remote });
+      expect(merged).toHaveLength(2);
+      expect(merged.every(({ id }) => id === 'plugin-1')).toBe(true);
+    });
+
+    test('deduplicates when both alias slug and canonical slug appear in remote for same local plugin', () => {
+      const local = [getLocalPluginMock({ id: 'grafana-canvas-panel', aliasIDs: ['canvas'] })];
+      const remote = [getRemotePluginMock({ slug: 'canvas' }), getRemotePluginMock({ slug: 'grafana-canvas-panel' })];
+
+      const merged = mergeLocalsAndRemotes({ local, remote });
+      expect(merged).toHaveLength(1);
+      expect(merged[0].id).toBe('grafana-canvas-panel');
+    });
+
+    test('uses canonical ID when remote slug is an alias', () => {
+      const local = [getLocalPluginMock({ id: 'grafana-canvas-panel', aliasIDs: ['canvas'] })];
+      const remote = [getRemotePluginMock({ slug: 'canvas' })];
+
+      const merged = mergeLocalsAndRemotes({ local, remote });
+      expect(merged).toHaveLength(1);
+      expect(merged[0].id).toBe('grafana-canvas-panel');
+    });
+
+    test('attaches error keyed by canonical ID when remote slug is an alias', () => {
+      const local = [getLocalPluginMock({ id: 'grafana-canvas-panel', aliasIDs: ['canvas'] })];
+      const remote = [getRemotePluginMock({ slug: 'canvas' })];
+      const pluginErrors = [
+        { pluginId: 'grafana-canvas-panel', errorCode: PluginErrorCode.invalidSignature, pluginType: PluginType.panel },
+      ];
+
+      const merged = mergeLocalsAndRemotes({ local, remote, pluginErrors });
+      expect(merged).toHaveLength(1);
+      expect(merged[0].error).toBe(PluginErrorCode.invalidSignature);
+    });
+
+    test('resolves provisioned status by canonical ID when remote slug is an alias', () => {
+      const oldPluginAdminExternalManageEnabled = config.pluginAdminExternalManageEnabled;
+      config.pluginAdminExternalManageEnabled = true;
+
+      const local = [getLocalPluginMock({ id: 'grafana-canvas-panel', aliasIDs: ['canvas'] })];
+      const remote = [getRemotePluginMock({ slug: 'canvas' })];
+      const provisioned = [{ slug: 'grafana-canvas-panel' }];
+
+      const merged = mergeLocalsAndRemotes({ local, remote, provisioned });
+      expect(merged).toHaveLength(1);
+      expect(merged[0].id).toBe('grafana-canvas-panel');
+      expect(merged[0].isProvisioned).toBe(true);
+
+      config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
+    });
+  });
+
   describe('mapLocalToCatalog()', () => {
     test('maps local response to PluginCatalog', () => {
       expect(mapLocalToCatalog(localPlugin)).toEqual({
@@ -432,6 +492,15 @@ describe('Plugins/Helpers', () => {
       const pluginWithDev = { ...localPlugin, dev: true };
       expect(mapLocalToCatalog(pluginWithoutDev).isDev).toBe(false);
       expect(mapLocalToCatalog(pluginWithDev).isDev).toBe(true);
+    });
+
+    test('propagates aliasIDs when present', () => {
+      const pluginWithAliases = { ...localPlugin, aliasIDs: ['canvas', 'old-canvas'] };
+      expect(mapLocalToCatalog(pluginWithAliases).aliasIDs).toEqual(['canvas', 'old-canvas']);
+    });
+
+    test('aliasIDs is undefined when not set on local plugin', () => {
+      expect(mapLocalToCatalog(localPlugin).aliasIDs).toBeUndefined();
     });
   });
 
@@ -931,6 +1000,45 @@ describe('Plugins/Helpers', () => {
         config.pluginAdminExternalManageEnabled = oldPluginAdminExternalManageEnabled;
         setTestFlags({});
       });
+    });
+  });
+
+  describe('mapToCatalogPlugin() - alias matching', () => {
+    const localWithAlias = getLocalPluginMock({
+      id: 'grafana-canvas-panel',
+      aliasIDs: ['canvas'],
+    });
+    const remoteWithAliasSlug = getRemotePluginMock({ slug: 'canvas', internal: true });
+
+    test('uses canonical local ID when remote slug matches an aliasID', () => {
+      const result = mapToCatalogPlugin(localWithAlias, remoteWithAliasSlug);
+      expect(result.id).toBe('grafana-canvas-panel');
+    });
+
+    test('uses local logos when matched via alias', () => {
+      const result = mapToCatalogPlugin(localWithAlias, remoteWithAliasSlug);
+      expect(result.info.logos).toEqual(localWithAlias.info.logos);
+    });
+
+    test('does not inherit isCore from remote internal flag when matched via alias', () => {
+      const result = mapToCatalogPlugin(localWithAlias, remoteWithAliasSlug);
+      expect(result.isCore).toBe(false);
+    });
+
+    test('propagates aliasIDs from local plugin', () => {
+      const result = mapToCatalogPlugin(localWithAlias, remoteWithAliasSlug);
+      expect(result.aliasIDs).toEqual(['canvas']);
+    });
+
+    test('uses remote slug as ID when no alias match', () => {
+      const result = mapToCatalogPlugin(localPlugin, remotePlugin);
+      expect(result.id).toBe(remotePlugin.slug);
+    });
+
+    test('inherits isCore from remote internal flag when not an alias match', () => {
+      const internalRemote = getRemotePluginMock({ internal: true });
+      const result = mapToCatalogPlugin(undefined, internalRemote);
+      expect(result.isCore).toBe(true);
     });
   });
 

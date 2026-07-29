@@ -35,7 +35,10 @@ export function mergeLocalsAndRemotes({
   const errorByPluginId = groupErrorsByPluginId(errors);
 
   const remoteSet = new Set<string>(remote?.map((plugin) => plugin.slug));
-  const localMap = new Map<string, LocalPlugin>(local.map((plugin) => [plugin.id, plugin]));
+  const localMap = new Map<string, LocalPlugin>([
+    ...local.map((plugin): [string, LocalPlugin] => [plugin.id, plugin]),
+    ...local.flatMap((plugin) => (plugin.aliasIDs ?? []).map((alias): [string, LocalPlugin] => [alias, plugin])),
+  ]);
   const instancesMap = new Map<string, InstancePlugin>(instance?.map((plugin) => [plugin.pluginSlug, plugin]));
   const provisionedSet = new Set<string>(provisioned?.map((plugin) => plugin.slug));
 
@@ -43,7 +46,7 @@ export function mergeLocalsAndRemotes({
   local.forEach((localPlugin) => {
     const error = errorByPluginId[localPlugin.id];
 
-    if (!remoteSet.has(localPlugin.id)) {
+    if (!remoteSet.has(localPlugin.id) && !localPlugin.aliasIDs?.some((alias) => remoteSet.has(alias))) {
       let catalogPlugin = mergeLocalAndRemote(localPlugin, undefined, error);
       if (config.pluginAdminExternalManageEnabled) {
         catalogPlugin = mergeCloudState(
@@ -57,21 +60,30 @@ export function mergeLocalsAndRemotes({
     }
   });
 
+  const seenAliasCanonicalIds = new Set<string>();
+
   // add remote
   remote.forEach((remotePlugin) => {
     const localCounterpart = localMap.get(remotePlugin.slug);
-    const error = errorByPluginId[remotePlugin.slug];
-    const shouldSkip = remotePlugin.status === RemotePluginStatus.Deprecated && !localCounterpart; // We are only listing deprecated plugins in case they are installed.
+    const canonicalId = localCounterpart?.id ?? remotePlugin.slug;
+    const error = errorByPluginId[canonicalId] ?? errorByPluginId[remotePlugin.slug];
+    const isAliasMatch = Boolean(localCounterpart && localCounterpart.id !== remotePlugin.slug);
+    const isUninstalledDeprecatedPlugin = remotePlugin.status === RemotePluginStatus.Deprecated && !localCounterpart;
+    const shouldSkip = isUninstalledDeprecatedPlugin || seenAliasCanonicalIds.has(canonicalId);
 
     if (!shouldSkip) {
       let catalogPlugin = mergeLocalAndRemote(localCounterpart, remotePlugin, error);
       if (config.pluginAdminExternalManageEnabled) {
+        const pluginKey = isAliasMatch ? canonicalId : remotePlugin.slug;
         catalogPlugin = mergeCloudState(
           catalogPlugin,
           instancesMap,
-          provisionedSet.has(remotePlugin.slug),
-          localMap.has(remotePlugin.slug)
+          provisionedSet.has(pluginKey),
+          localMap.has(pluginKey)
         );
+      }
+      if (isAliasMatch) {
+        seenAliasCanonicalIds.add(canonicalId);
       }
       catalogPlugins.push(catalogPlugin);
     }
@@ -212,6 +224,7 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     accessControl: accessControl,
     angularDetected,
     isFullyInstalled: true,
+    aliasIDs: plugin.aliasIDs,
     iam: plugin.iam,
     latestVersion: plugin.latestVersion,
     managed: {
@@ -225,7 +238,8 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
 // TODO: change the signature by removing the optionals for local and remote.
 export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, error?: PluginError): CatalogPlugin {
   const installedVersion = local?.info.version;
-  const id = remote?.slug || local?.id || '';
+  const matchedViaAlias = remote && local && local.aliasIDs?.includes(remote.slug);
+  const id = matchedViaAlias ? local.id : remote?.slug || local?.id || '';
   const type = local?.type || remote?.typeCode;
   const isDisabled = !!error;
   const keywords = remote?.keywords || local?.info.keywords || [];
@@ -235,12 +249,15 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     large: `/public/build/img/icn-${type}.svg`,
   };
 
-  if (remote) {
+  if (matchedViaAlias && local.info.logos) {
+    logos = local.info.logos;
+  } else if (remote) {
+    const remoteSlug = remote.slug || id;
     logos = {
-      small: `${config.appSubUrl}/api/gnet/plugins/${id}/versions/${remote.version}/logos/small`,
-      large: `${config.appSubUrl}/api/gnet/plugins/${id}/versions/${remote.version}/logos/large`,
+      small: `${config.appSubUrl}/api/gnet/plugins/${remoteSlug}/versions/${remote.version}/logos/small`,
+      large: `${config.appSubUrl}/api/gnet/plugins/${remoteSlug}/versions/${remote.version}/logos/large`,
     };
-  } else if (local && local.info.logos) {
+  } else if (local?.info.logos) {
     logos = local.info.logos;
   }
 
@@ -251,11 +268,14 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     downloads: remote?.downloads || 0,
     hasUpdate: local?.hasUpdate || false,
     id,
+    aliasIDs: local?.aliasIDs,
     info: {
       logos,
       keywords,
     },
-    isCore: Boolean(remote?.internal || local?.signature === PluginSignatureStatus.internal),
+    isCore: matchedViaAlias
+      ? local?.signature === PluginSignatureStatus.internal
+      : Boolean(remote?.internal || local?.signature === PluginSignatureStatus.internal),
     isDev: Boolean(local?.dev),
     isEnterprise: remote?.status === RemotePluginStatus.Enterprise,
     isInstalled: Boolean(local) || isDisabled,

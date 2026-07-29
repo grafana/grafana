@@ -27,7 +27,8 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
     getLocalPluginChangelog(id),
   ]);
 
-  const local = localPlugins.find((p) => p.id === id);
+  const matchesIdOrAlias = (p: LocalPlugin) => p.id === id || p.aliasIDs?.includes(id);
+  const local = localPlugins.find(matchesIdOrAlias);
   const dependencies = local?.dependencies || remote?.json?.dependencies;
 
   // Add installed version to the list if it's missing (could be deprecated/deleted)

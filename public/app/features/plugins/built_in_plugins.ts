@@ -1,4 +1,4 @@
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
+import { getFeatureFlagClient, getPanelPluginMetasMapSync } from '@grafana/runtime/internal';
 
 const cloudwatchPlugin = async () =>
   await import(/* webpackChunkName: "cloudwatchPlugin" */ 'app/plugins/datasource/cloudwatch/module');
@@ -83,7 +83,6 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/candlestick': candlestickPanel,
   'core:plugin/xychart': xychartPanel,
   'core:plugin/geomap': geomapPanel,
-  'core:plugin/canvas': canvasPanel,
   'core:plugin/dashlist': dashListPanel,
   'core:plugin/alertlist': alertListPanel,
   'core:plugin/annolist': annoListPanel,
@@ -106,6 +105,15 @@ const builtInPlugins: Record<string, System.Module | (() => Promise<System.Modul
   'core:plugin/nodeGraph': nodeGraph,
   'core:plugin/histogram': histogramPanel,
 };
+
+Object.defineProperty(builtInPlugins, 'core:plugin/canvas', {
+  get() {
+    const isExternal = Object.values(getPanelPluginMetasMapSync()).some((p) => p.aliasIDs?.includes('canvas'));
+    return isExternal ? undefined : canvasPanel;
+  },
+  enumerable: true,
+  configurable: true,
+});
 
 export function isBuiltinPluginPath(path: string): path is keyof typeof builtInPlugins {
   return Boolean(builtInPlugins[path]);
