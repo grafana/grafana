@@ -39,9 +39,9 @@ export const FinishStep = memo(function FinishStep() {
 
   const isGitBased = isGitProvider(type);
 
-  const [connections] = useConnectionList(githubAuthType === 'github-app' ? {} : skipToken);
+  const [connections] = useConnectionList(githubAuthType !== 'pat' ? {} : skipToken);
   const connectionWebhookDisabled = useMemo(() => {
-    if (githubAuthType !== 'github-app' || !wizardConnectionName || !connections) {
+    if (githubAuthType === 'pat' || !wizardConnectionName || !connections) {
       return false;
     }
     const conn = connections.find((c) => c.metadata?.name === wizardConnectionName);

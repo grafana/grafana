@@ -1,7 +1,12 @@
 import { type skipToken } from '@reduxjs/toolkit/query';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
-import { type ListConnectionApiArg, useListConnectionQuery } from 'app/api/clients/provisioning/v0alpha1';
+import {
+  type ListConnectionApiArg,
+  provisioningAPIv0alpha1,
+  useListConnectionQuery,
+} from 'app/api/clients/provisioning/v0alpha1';
+import { useDispatch } from 'app/types/store';
 
 // Sort connections alphabetically by name
 export function useConnectionList(options: ListConnectionApiArg | typeof skipToken = {}) {
@@ -17,4 +22,13 @@ export function useConnectionList(options: ListConnectionApiArg | typeof skipTok
   }, [query.data?.items]);
 
   return [sortedItems, query.isLoading, query.error, query.refetch] as const;
+}
+
+// Returns a callback that refetches every connection list in the app
+export function useInvalidateConnectionList() {
+  const dispatch = useDispatch();
+
+  return useCallback(() => {
+    dispatch(provisioningAPIv0alpha1.util.invalidateTags([{ type: 'Connection', id: 'LIST' }]));
+  }, [dispatch]);
 }
