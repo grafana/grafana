@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
@@ -12,6 +13,7 @@ import (
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -29,7 +31,7 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
-			"kubernetesLibraryPanels",
+			featuremgmt.FlagLibraryelementsKubernetesLibraryPanels,
 		},
 	})
 	ctx := createTestContext(t, helper, helper.Org1)
@@ -87,8 +89,7 @@ func TestIntegrationLibraryElementPermissions(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
-			"kubernetesLibraryPanels",
-			"grafanaAPIServerWithExperimentalAPIs", // needed until we move it to v0beta1 at least (currently v0alpha1)
+			featuremgmt.FlagLibraryelementsKubernetesLibraryPanels,
 		},
 	})
 	ctx := createTestContext(t, helper, helper.Org1)
@@ -225,6 +226,113 @@ func runLibraryElementCrossOrgTests(t *testing.T, org1Ctx, org2Ctx TestContext) 
 	})
 }
 
+// exercises the legacy /api/library-elements surface while requests are routed through
+// the k8s /apis endpoints, to ensure the responses keep the legacy contract
+func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagLibraryelementsKubernetesLibraryPanels,
+		},
+	})
+	ctx := createTestContext(t, helper, helper.Org1)
+
+	// create: the display title and properties without a typed spec field (e.g.
+	// transformations) must survive the conversion round trip
+	created, err := postHelper(t, &ctx, "/api/library-elements", map[string]interface{}{
+		"kind": 1,
+		"name": "CRUDPanel",
+		"model": map[string]interface{}{
+			"type":            "text",
+			"title":           "CRUD panel display title",
+			"description":     "some description",
+			"transformations": []interface{}{map[string]interface{}{"id": "reduce"}},
+		},
+	}, ctx.AdminUser)
+	require.NoError(t, err)
+	result := created["result"].(map[string]interface{})
+	uid := result["uid"].(string)
+	require.NotEmpty(t, uid)
+	require.Equal(t, "CRUDPanel", result["name"])
+	require.Equal(t, float64(1), result["version"])
+	createdModel := result["model"].(map[string]interface{})
+	require.Equal(t, "CRUD panel display title", createdModel["title"])
+	require.Contains(t, createdModel, "transformations")
+	require.Equal(t, "some description", createdModel["description"])
+
+	// get by uid
+	got, err := getDashboardViaHTTP(t, &ctx, fmt.Sprintf("/api/library-elements/%s", uid), ctx.AdminUser)
+	require.NoError(t, err)
+	gotResult := got["result"].(map[string]interface{})
+	require.Equal(t, uid, gotResult["uid"])
+	gotModel := gotResult["model"].(map[string]interface{})
+	require.Equal(t, "CRUD panel display title", gotModel["title"])
+	require.Contains(t, gotModel, "transformations")
+
+	// get all, with and without a matching search string
+	all, err := getDashboardViaHTTP(t, &ctx, "/api/library-elements", ctx.AdminUser)
+	require.NoError(t, err)
+	require.Equal(t, float64(1), all["result"].(map[string]interface{})["totalCount"])
+	require.Len(t, all["result"].(map[string]interface{})["elements"], 1)
+
+	filtered, err := getDashboardViaHTTP(t, &ctx, "/api/library-elements?searchString=crudpanel", ctx.AdminUser)
+	require.NoError(t, err)
+	require.Equal(t, float64(1), filtered["result"].(map[string]interface{})["totalCount"])
+
+	empty, err := getDashboardViaHTTP(t, &ctx, "/api/library-elements?searchString=doesnotmatch", ctx.AdminUser)
+	require.NoError(t, err)
+	require.Equal(t, float64(0), empty["result"].(map[string]interface{})["totalCount"])
+
+	// get by name
+	byName, err := getDashboardViaHTTP(t, &ctx, "/api/library-elements/name/CRUDPanel", ctx.AdminUser)
+	require.NoError(t, err)
+	require.Len(t, byName["result"], 1)
+
+	// patch with a stale version must fail the optimistic concurrency check
+	staleBody, err := json.Marshal(map[string]interface{}{"kind": 1, "name": "CRUDPanelRenamed", "version": 99})
+	require.NoError(t, err)
+	staleResp := apis.DoRequest(ctx.Helper, apis.RequestParams{
+		User:        ctx.AdminUser,
+		Method:      http.MethodPatch,
+		Path:        fmt.Sprintf("/api/library-elements/%s", uid),
+		Body:        staleBody,
+		ContentType: "application/json",
+	}, &struct{}{})
+	require.Equal(t, http.StatusPreconditionFailed, staleResp.Response.StatusCode)
+
+	// patch: rename keeps the model and bumps the version
+	patchBody, err := json.Marshal(map[string]interface{}{"kind": 1, "name": "CRUDPanelRenamed", "version": 1})
+	require.NoError(t, err)
+	patchResp := apis.DoRequest(ctx.Helper, apis.RequestParams{
+		User:        ctx.AdminUser,
+		Method:      http.MethodPatch,
+		Path:        fmt.Sprintf("/api/library-elements/%s", uid),
+		Body:        patchBody,
+		ContentType: "application/json",
+	}, &struct{}{})
+	require.Equal(t, http.StatusOK, patchResp.Response.StatusCode)
+	var patched map[string]interface{}
+	require.NoError(t, json.Unmarshal(patchResp.Body, &patched))
+	patchedResult := patched["result"].(map[string]interface{})
+	require.Equal(t, "CRUDPanelRenamed", patchedResult["name"])
+	require.Equal(t, float64(2), patchedResult["version"])
+	patchedModel := patchedResult["model"].(map[string]interface{})
+	require.Equal(t, "CRUD panel display title", patchedModel["title"])
+	require.Contains(t, patchedModel, "transformations")
+
+	// delete, then a get must return 404
+	err = deleteLibraryElement(t, ctx, ctx.AdminUser, uid)
+	require.NoError(t, err)
+	getResp := apis.DoRequest(ctx.Helper, apis.RequestParams{
+		User:   ctx.AdminUser,
+		Method: http.MethodGet,
+		Path:   fmt.Sprintf("/api/library-elements/%s", uid),
+	}, &struct{}{})
+	require.Equal(t, http.StatusNotFound, getResp.Response.StatusCode)
+}
+
 func getLibraryElementGVR() schema.GroupVersionResource {
 	return schema.GroupVersionResource{
 		Group:    dashboardV0.APIGroup,
@@ -284,7 +392,7 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
-			"kubernetesLibraryPanels",
+			featuremgmt.FlagLibraryelementsKubernetesLibraryPanels,
 		},
 	})
 	ctx := createTestContext(t, helper, helper.Org1)
@@ -498,7 +606,7 @@ func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
 	opts := testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
-			"kubernetesLibraryPanels",
+			featuremgmt.FlagLibraryelementsKubernetesLibraryPanels,
 		},
 		DisableAuthZClientCache: true,
 	}

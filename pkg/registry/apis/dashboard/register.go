@@ -125,7 +125,6 @@ type DashboardsAPIBuilder struct {
 	dualWriter               dualwrite.Service
 	folderClientProvider     client.K8sHandlerProvider
 	libraryPanels            libraryelements.Service // for legacy library panels
-	libraryPanelsEnabled     bool
 	publicDashboardService   publicdashboards.Service
 	snapshotService          dashboardsnapshots.Service
 	snapshotOptions          dashv0.SnapshotSharingOptions
@@ -203,7 +202,6 @@ func RegisterAPIService(
 		dashboardK8sClient:       dashboardClient,
 		folderClientProvider:     newSimpleClientProvider(folderClient),
 		libraryPanels:            libraryPanels,
-		libraryPanelsEnabled:     features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs), // nolint:staticcheck
 		publicDashboardService:   publicDashboardService,
 		snapshotService:          snapshotService,
 		snapshotOptions:          snapshotOptions,
@@ -876,14 +874,11 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// EnableFolderSupport=false and any folder-scoped write (e.g. provisioning syncing a panel
 	// into a managed folder) is rejected with "folders are not supported". The folder is
 	// optional (panels may live at the root), so RequireFolder stays false.
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.libraryPanelsEnabled {
-		opts.StorageOptsRegister(dashv0.LibraryPanelResourceInfo.GroupResource(), apistore.StorageOptions{
-			Scheme:              opts.Scheme,
-			Index:               b.unified,
-			EnableFolderSupport: true,
-		})
-	}
+	opts.StorageOptsRegister(dashv0.LibraryPanelResourceInfo.GroupResource(), apistore.StorageOptions{
+		Scheme:              opts.Scheme,
+		Index:               b.unified,
+		EnableFolderSupport: true,
+	})
 
 	// v0alpha1
 	if err := b.storageForVersion(apiGroupInfo, opts,
@@ -1083,6 +1078,15 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			return err
 		}
 
+		// Standalone mode has no legacy SQL, so library panels are served from
+		// unified storage directly (no dual writer).
+		if libraryPanels != nil {
+			storage[libraryPanels.StoragePath()], err = grafanaregistry.NewRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
+			if err != nil {
+				return err
+			}
+		}
+
 		return nil
 	}
 
@@ -1107,9 +1111,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		return err
 	}
 
-	// Expose read library panels
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if libraryPanels != nil && b.libraryPanelsEnabled {
+	// Library panels - only v0alpha1
+	if libraryPanels != nil {
 		legacyLibraryStore := &LibraryPanelStore{
 			Access:       b.legacy,
 			ResourceInfo: *libraryPanels,
