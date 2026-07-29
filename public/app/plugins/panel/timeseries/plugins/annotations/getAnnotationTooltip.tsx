@@ -22,9 +22,10 @@ export function getAnnotationTooltip(
   const timeEnd = annoVals.timeEnd?.[annoIdx];
   const isRegion = annoVals.isRegion?.[annoIdx] && timeEnd != null;
 
-  // grafana can be configured to load alert rules from loki. Those annotations cannot be edited or deleted. A missing id (undefined,
-  // or 0) is the best indicator the annotation came from loki.
-  // Annotations served by the k8s annotations API have non-numeric string ids, so any truthy id is editable.
+  // Grafana can be configured to load alert rules from Loki; those annotations cannot be
+  // edited or deleted, and a falsy id (0 from the legacy API, or absent) is the best
+  // signal. k8s annotations carry non-numeric string ids; so falsy - not `> 0`
+  // This matches the `if (!annotation.id)` guard in the annotation API client.
   const canUpdateAnno = dashboardUID !== undefined && Boolean(annoId);
   const canEdit = canUpdateAnno && canEditAnnotations(dashboardUID);
   const canDelete = canUpdateAnno && canDeleteAnnotations(dashboardUID) && onAnnotationDelete != null;

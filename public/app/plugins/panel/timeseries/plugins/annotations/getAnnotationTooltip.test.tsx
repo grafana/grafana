@@ -13,12 +13,14 @@ function makeAnnoVals(id: number | string | null | undefined, dashboardUID: stri
 }
 
 describe('getAnnotationTooltip', () => {
-  const canEditAnnotations = jest.fn(() => true);
-  const canDeleteAnnotations = jest.fn(() => true);
+  const canEditAnnotations = jest.fn();
+  const canDeleteAnnotations = jest.fn();
   const onAnnotationDelete = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
+    canEditAnnotations.mockReturnValue(true);
+    canDeleteAnnotations.mockReturnValue(true);
   });
 
   function getTooltip(annoVals: AnnotationVals) {
