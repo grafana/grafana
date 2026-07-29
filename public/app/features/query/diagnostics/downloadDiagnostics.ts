@@ -5,6 +5,8 @@ import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
+import { type PanelDataPayload } from './capturePanelData';
+
 const DIAGNOSTICS_ENDPOINT = '/api/ds/diagnostics';
 const DASHBOARD_DIAGNOSTICS_ENDPOINT = '/api/ds/dashboard-diagnostics';
 
@@ -25,22 +27,40 @@ function fileNameFromContentDisposition(header: string | null): string | undefin
 }
 
 /**
+ * One panel diagnostics request.
+ */
+export interface DiagnosticsRequest {
+  queries: DataQuery[];
+  /** Epoch ms as a string, matching what the endpoint expects. */
+  from: string;
+  to: string;
+  /** Cancelling the drawer aborts the in-flight request. */
+  signal?: AbortSignal;
+  /** Panel and dashboard save models, bundled as panel.json / dashboard.json (the backend includes
+   * them verbatim); omitted keys simply aren't sent. */
+  panel?: unknown;
+  dashboard?: unknown;
+  /** Frames the frontend was holding for this panel, bundled as paneldata.json. Unlike the save models
+   * above this is data rather than a definition, so nothing has to be re-run to read it. */
+  panelData?: PanelDataPayload;
+}
+
+/**
  * Requests a diagnostic bundle for the given panel queries from the backend and downloads it.
  *
  * The bundle is generated server-side by `POST /api/ds/diagnostics`. That endpoint is not available
  * yet (it lands in a separate backend PR); until then this call fails and the drawer surfaces the
  * error. The request/response contract and this download flow are final.
  */
-export async function downloadDiagnosticsForQueries(
-  queries: DataQuery[],
-  from: string,
-  to: string,
-  signal?: AbortSignal,
-  // Optional panel and dashboard save models. When supplied they are bundled as panel.json /
-  // dashboard.json (the backend includes them verbatim); omitted keys simply aren't sent.
-  panel?: unknown,
-  dashboard?: unknown
-): Promise<void> {
+export async function downloadDiagnosticsForQueries({
+  queries,
+  from,
+  to,
+  signal,
+  panel,
+  dashboard,
+  panelData,
+}: DiagnosticsRequest): Promise<void> {
   const visibleQueries = queries.filter((query) => !query.hide);
 
   if (visibleQueries.length === 0) {
@@ -52,7 +72,7 @@ export async function downloadDiagnosticsForQueries(
       url: DIAGNOSTICS_ENDPOINT,
       method: 'POST',
       responseType: 'blob',
-      data: { from, to, queries: visibleQueries, panel, dashboard },
+      data: { from, to, queries: visibleQueries, panel, dashboard, panelData },
       // Surface failures in the drawer instead of a global toast.
       showErrorAlert: false,
       // Cancelling the drawer aborts the in-flight request.

@@ -549,7 +549,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/graphite"
 	_ "github.com/grafana/grafana/pkg/tsdb/influxdb"
 	_ "github.com/grafana/grafana/pkg/tsdb/mysql"
-	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
 	_ "github.com/grafana/grafana/pkg/util"
 	_ "github.com/grafana/grafana/pkg/util/errhttp"
 	_ "github.com/grafana/grafana/pkg/util/retryer"
