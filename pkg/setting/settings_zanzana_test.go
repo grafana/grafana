@@ -5,7 +5,50 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 )
+
+func TestReadZanzanaReconcilerSettings(t *testing.T) {
+	tests := []struct {
+		name    string
+		raw     string
+		want    ZanzanaReconcilerMode
+		wantErr string
+	}{
+		{
+			name: "defaults to MT",
+			want: ZanzanaReconcilerModeMT,
+		},
+		{
+			name: "accepts disabled",
+			raw:  "[zanzana.reconciler]\nmode = disabled\n",
+			want: ZanzanaReconcilerModeDisabled,
+		},
+		{
+			name:    "rejects legacy",
+			raw:     "[zanzana.reconciler]\nmode = legacy\n",
+			wantErr: `migrate legacy deployments to "mt"`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := NewCfg()
+			file, err := ini.Load([]byte(tt.raw))
+			require.NoError(t, err)
+			cfg.Raw = file
+
+			err = cfg.readZanzanaSettings()
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tt.want, cfg.ZanzanaReconciler.Mode)
+		})
+	}
+}
 
 func TestReadZanzanaSettings_Rollout(t *testing.T) {
 	t.Run("parses valid percentages", func(t *testing.T) {

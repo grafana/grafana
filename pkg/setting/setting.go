@@ -1636,7 +1636,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.readRBACSettings()
 
-	cfg.readZanzanaSettings()
+	if err := cfg.readZanzanaSettings(); err != nil {
+		return err
+	}
 
 	cfg.readRenderingSettings(iniFile)
 

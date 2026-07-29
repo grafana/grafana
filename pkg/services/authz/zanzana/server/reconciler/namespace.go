@@ -39,8 +39,7 @@ const (
 	anonymousSettingKeyEnabled       = "enabled"
 	anonymousSettingKeyOrgRole       = "org_role"
 
-	// anonymousUserID matches the identifier used for the anonymous subject at check time
-	// (and by the legacy reconciler): anonymous:0.
+	// anonymousUserID matches the identifier used for the anonymous subject at check time: anonymous:0.
 	anonymousUserID = "0"
 	// anonymousDefaultOrgRole mirrors the [auth.anonymous] org_role ini default.
 	anonymousDefaultOrgRole = "Viewer"
