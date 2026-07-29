@@ -61,8 +61,8 @@ message ResourceStatsResponse {
   repeated Stats stats = 2;
 }
 
-// This controls what query and analyzers are applied to the specified field
-// See: https://blevesearch.com/docs/Analyzers/
+// Obsolete: the server derives the query and analyzer from how the field is
+// mapped, so this is ignored. Goes away once no client sends it.
 enum QueryFieldType {
   // Picks a reasonable analyzer given the input.  Currently this always uses TEXT
   // In the future, it may change to depend on the indexed field type
@@ -96,6 +96,7 @@ message ResourceSearchRequest {
     // The field name in the index to query
     string name = 1;
 
+    // Obsolete: ignored by the server. Kept because older clients still set it.
     QueryFieldType type = 2;
 
     // Boost value for this field
@@ -139,9 +140,10 @@ message ResourceSearchRequest {
   int64 permission = 12;
 
   // Optionally specify which fields are included in the query.
-  // For non-wildcard queries, type and boost control how each field is searched.
+  // For non-wildcard queries, boost weights how much each field contributes to
+  // the score; the query type comes from the field's mapping.
   // For wildcard queries (containing '*'), only the field name is used;
-  // type and boost are ignored because bleve wildcards don't support analyzers
+  // boost is ignored because bleve wildcards don't support analyzers
   // or meaningful relevance scoring.
   repeated QueryField query_fields = 13;
 

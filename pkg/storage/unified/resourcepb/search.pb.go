@@ -21,8 +21,8 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// This controls what query and analyzers are applied to the specified field
-// See: https://blevesearch.com/docs/Analyzers/
+// Obsolete: the server derives the query and analyzer from how the field is
+// mapped, so this is ignored. Goes away once no client sends it.
 type QueryFieldType int32
 
 const (
@@ -233,9 +233,10 @@ type ResourceSearchRequest struct {
 	Page       int64 `protobuf:"varint,11,opt,name=page,proto3" json:"page,omitempty"`
 	Permission int64 `protobuf:"varint,12,opt,name=permission,proto3" json:"permission,omitempty"`
 	// Optionally specify which fields are included in the query.
-	// For non-wildcard queries, type and boost control how each field is searched.
+	// For non-wildcard queries, boost weights how much each field contributes to
+	// the score; the query type comes from the field's mapping.
 	// For wildcard queries (containing '*'), only the field name is used;
-	// type and boost are ignored because bleve wildcards don't support analyzers
+	// boost is ignored because bleve wildcards don't support analyzers
 	// or meaningful relevance scoring.
 	QueryFields []*ResourceSearchRequest_QueryField `protobuf:"bytes,13,rep,name=query_fields,json=queryFields,proto3" json:"query_fields,omitempty"`
 	// Sort values for SearchAfter pagination.
@@ -1357,7 +1358,8 @@ func (x *ResourceSearchRequest_Facet) GetLimit() int64 {
 type ResourceSearchRequest_QueryField struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The field name in the index to query
-	Name string         `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Obsolete: ignored by the server. Kept because older clients still set it.
 	Type QueryFieldType `protobuf:"varint,2,opt,name=type,proto3,enum=resource.QueryFieldType" json:"type,omitempty"`
 	// Boost value for this field
 	Boost         float32 `protobuf:"fixed32,3,opt,name=boost,proto3" json:"boost,omitempty"`

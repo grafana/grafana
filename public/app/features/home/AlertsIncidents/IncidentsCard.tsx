@@ -3,10 +3,8 @@ import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Badge, LinkButton, Tooltip } from '@grafana/ui';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
-import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/filters/severity';
-import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
 import { ctaClicked } from '../analytics/main';
@@ -17,22 +15,6 @@ import { severityLevelColor } from './severity';
 import { useIncidents, type IncidentsData } from './useIncidents';
 
 export function IncidentsCard() {
-  const { installed, loading } = useIrmPlugin(SupportedPlugin.Incident);
-
-  // Hide the card whenever the Incident/IRM plugin isn't available — including while the
-  // settings probe is in flight, so the card never flashes in before disappearing.
-  if (loading || !installed) {
-    return null;
-  }
-
-  return <IncidentsCardInner />;
-}
-
-/**
- * Inner component avoids calling hooks conditionally —
- * the availability gate lives in the parent wrapper.
- */
-function IncidentsCardInner() {
   const data = useIncidents();
   return <IncidentsCardView data={data} />;
 }

@@ -40,8 +40,6 @@ const mockFetchInventory = jest.mocked(fetchKubernetesInventory);
 const mockFetchHealth = jest.mocked(fetchKubernetesHealth);
 const mockFetchCpuSeries = jest.mocked(fetchClusterCpuSeries);
 
-const compactFormatter = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
-
 const settings = { id: 'grafana-k8s-app' } as PluginMeta<{}>;
 const datasource: DataSourceInstanceListItem = {
   uid: 'k8s-uid',
@@ -255,14 +253,12 @@ describe('RecommendationExisting', () => {
     expect(screen.queryByTestId('kubernetes-stats-skeleton')).not.toBeInTheDocument();
   });
 
-  it('compact-formats large pod counts', async () => {
-    const pods = 311101;
-    mockResolvedKubernetes({ clusters: 17, pods });
+  it('uses the standard short format for large pod counts', async () => {
+    mockResolvedKubernetes({ clusters: 17, pods: 311101 });
 
     render(<RecommendationExisting />);
 
-    const expectedPods = compactFormatter.format(pods);
-    expect(await screen.findByText(`${expectedPods} pods`)).toBeInTheDocument();
+    expect(await screen.findByText('311 K pods')).toBeInTheDocument();
   });
 
   it('shows stub stats without skeletons when switching away while Kubernetes data is pending', async () => {
