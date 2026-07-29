@@ -1,8 +1,20 @@
 package informer
 
 import (
+	"errors"
+
 	"k8s.io/client-go/tools/cache"
 )
+
+// ErrNotObserved signals that a reconcile read did not find the object. It is
+// deliberately distinct from an authoritative apierrors NotFound served by an
+// informer's cache lister: it comes from the NATS read seam's fresh API read,
+// which is decoupled from the notification that enqueued the key, so a miss is
+// usually a read-after-write race on a just-created or just-updated object rather
+// than a real deletion. Controllers retry it (bounded) instead of dropping the
+// key until the next resync. The apiserver-backed getters never return it — their
+// lister cache is authoritative, so their NotFound means the object is gone.
+var ErrNotObserved = errors.New("object not yet observed by the read seam")
 
 // DeltaSource is the subset of cache.SharedIndexInformer the controllers use to
 // receive events: register a handler (whose registration reports HasSynced) and

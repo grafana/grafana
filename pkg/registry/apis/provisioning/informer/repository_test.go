@@ -122,15 +122,18 @@ func TestClientGetCachedListRepositoryGetter_GetWritesThrough(t *testing.T) {
 	assert.Equal(t, "fresh", list[0].Name, "the fresh Get must be reflected in the store")
 }
 
-// A reconcile Get for a vanished object returns NotFound and removes it from the
-// store, so the count drops it without waiting for a re-list.
+// A reconcile Get for an object the API does not return yields ErrNotObserved
+// (not an authoritative NotFound: the fresh read is decoupled from the event that
+// enqueued it, so the controller retries rather than dropping the key) and
+// removes it from the store, so the count drops it without waiting for a re-list.
 func TestClientGetCachedListRepositoryGetter_GetNotFoundRemoves(t *testing.T) {
 	client := fake.NewClientset()
 	store := newFakeStore(repo("ns", "stale"))
 	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
 
 	_, err := g.Get(context.Background(), "ns", "stale")
-	require.True(t, apierrors.IsNotFound(err))
+	require.ErrorIs(t, err, ErrNotObserved)
+	require.False(t, apierrors.IsNotFound(err), "must not surface as an authoritative NotFound")
 	assert.Equal(t, []string{"ns/stale"}, store.deleted)
 
 	list, err := g.List(context.Background(), "ns")

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/util/workqueue"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -824,7 +826,9 @@ func TestConnectionController_process(t *testing.T) {
 			errorContains: "failed to update connection status",
 		},
 		{
-			name: "connection not found",
+			// The cache lister is authoritative, so a NotFound means the connection
+			// was deleted: nothing to reconcile, no error, no retry.
+			name: "connection not found (authoritative delete)",
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{}
 
@@ -836,7 +840,7 @@ func TestConnectionController_process(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			expectError: true,
+			expectError: false,
 		},
 		{
 			name: "build connection error",
@@ -1516,3 +1520,46 @@ var _ listers.ConnectionLister = (*mockConnectionLister)(nil)
 
 // Ensure mockConnectionNamespaceLister implements listers.ConnectionNamespaceLister
 var _ listers.ConnectionNamespaceLister = (*mockConnectionNamespaceLister)(nil)
+
+// TestConnectionController_NotObservedRetriesUpToMaxAttempts verifies that an
+// ErrNotObserved from the read seam (a read-after-write race under the NATS
+// informer, where the reconcile read is decoupled from the notification that
+// enqueued the key) is requeued and bounded at maxNotObservedAttempts, rather
+// than dropped on the first attempt — which would leave a just-created connection
+// unreconciled until the next resync — or retried forever.
+func TestConnectionController_NotObservedRetriesUpToMaxAttempts(t *testing.T) {
+	var processCount atomic.Int32
+	allAttemptsDone := make(chan struct{})
+
+	cc := &ConnectionController{
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
+			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{Name: "test-not-observed"},
+		),
+		logger:                logging.DefaultLogger.With("logger", "test"),
+		drainTimeout:          5 * time.Second,
+		notObservedRetryDelay: 0, // requeue immediately in the test
+	}
+
+	cc.processFn = func(_ context.Context, _ *connectionQueueItem) error {
+		if processCount.Add(1) == maxNotObservedAttempts {
+			close(allAttemptsDone)
+		}
+		return fmt.Errorf("%w: test", informer.ErrNotObserved)
+	}
+
+	cc.queue.Add(&connectionQueueItem{key: "test/conn"})
+
+	ctx, cancel := context.WithCancel(t.Context())
+	runDone := make(chan struct{})
+	go func() {
+		cc.Run(ctx, 1, func() {}, func() {})
+		close(runDone)
+	}()
+
+	<-allAttemptsDone
+	cancel()
+	<-runDone
+	assert.Equal(t, int32(maxNotObservedAttempts), processCount.Load(),
+		"ErrNotObserved should retry exactly maxNotObservedAttempts times then give up")
+}

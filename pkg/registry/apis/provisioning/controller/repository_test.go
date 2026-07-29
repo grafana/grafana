@@ -2006,3 +2006,84 @@ func TestRepositoryController_NonRetryableErrorIsNotRetried(t *testing.T) {
 	<-runDone
 	assert.Equal(t, int32(1), processCount.Load(), "non-retryable errors must not be retried")
 }
+
+// stubRepositoryGetter is a RepositoryGetter whose Get returns a fixed error, to
+// drive the controller's read-seam handling in process().
+type stubRepositoryGetter struct {
+	getErr error
+}
+
+func (g stubRepositoryGetter) Get(context.Context, string, string) (*provisioning.Repository, error) {
+	return nil, g.getErr
+}
+
+func (g stubRepositoryGetter) List(context.Context, string) ([]*provisioning.Repository, error) {
+	return nil, nil
+}
+
+// TestRepositoryController_NotObservedRetriesUpToMaxAttempts verifies that an
+// ErrNotObserved from the read seam (a read-after-write race under the NATS
+// informer, where the reconcile read is decoupled from the notification that
+// enqueued the key) is requeued and bounded at maxNotObservedAttempts, rather
+// than dropped on the first attempt — which would leave a just-created repository
+// unreconciled until the next resync — or retried forever.
+func TestRepositoryController_NotObservedRetriesUpToMaxAttempts(t *testing.T) {
+	var processCount atomic.Int32
+	allAttemptsDone := make(chan struct{})
+
+	rc := &RepositoryController{
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-not-observed"},
+		),
+		logger:                logging.DefaultLogger.With("logger", "test"),
+		drainTimeout:          5 * time.Second,
+		notObservedRetryDelay: 0, // requeue immediately in the test
+	}
+
+	rc.processFn = func(key string) error {
+		if processCount.Add(1) == maxNotObservedAttempts {
+			close(allAttemptsDone)
+		}
+		return fmt.Errorf("%w: test", informer.ErrNotObserved)
+	}
+
+	rc.queue.Add("test/repo")
+
+	ctx, cancel := context.WithCancel(t.Context())
+	runDone := make(chan struct{})
+	go func() {
+		rc.Run(ctx, 1, func() {}, func() {})
+		close(runDone)
+	}()
+
+	<-allAttemptsDone
+	cancel()
+	<-runDone
+	assert.Equal(t, int32(maxNotObservedAttempts), processCount.Load(),
+		"ErrNotObserved should retry exactly maxNotObservedAttempts times then give up")
+}
+
+// TestRepositoryController_process_ReadSeamNotFound verifies the two read-seam
+// outcomes: an authoritative NotFound (apiserver cache lister) is a no-op that
+// returns nil so the key is forgotten with no error, while an ErrNotObserved
+// (NATS fresh read) is propagated so processNextWorkItem requeues it.
+func TestRepositoryController_process_ReadSeamNotFound(t *testing.T) {
+	t.Run("authoritative NotFound returns nil", func(t *testing.T) {
+		rc := &RepositoryController{
+			repos:  stubRepositoryGetter{getErr: apierrors.NewNotFound(schema.GroupResource{Resource: "repositories"}, "gone")},
+			logger: logging.DefaultLogger.With("logger", "test"),
+		}
+		assert.NoError(t, rc.process("ns/gone"))
+	})
+
+	t.Run("ErrNotObserved is propagated", func(t *testing.T) {
+		rc := &RepositoryController{
+			repos:  stubRepositoryGetter{getErr: fmt.Errorf("%w: ns/new", informer.ErrNotObserved)},
+			logger: logging.DefaultLogger.With("logger", "test"),
+		}
+		err := rc.process("ns/new")
+		require.Error(t, err)
+		assert.ErrorIs(t, err, informer.ErrNotObserved)
+	})
+}

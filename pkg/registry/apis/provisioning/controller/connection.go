@@ -30,11 +30,25 @@ const (
 	// repository whose token secret was written recently but is not yet readable from
 	// the secret store. It is shared by the connection and repository controllers.
 	tokenWriteRetryDelay = 2 * time.Second
+
+	// notObservedRetryDelay is how long to wait before re-checking an object the
+	// reconcile read has not observed yet (informer.ErrNotObserved) — a
+	// read-after-write race under the NATS read seam, where the read is decoupled
+	// from the notification that enqueued the key. maxNotObservedAttempts bounds
+	// those retries; beyond it the key is dropped and left for the next resync, so
+	// delay*attempts is the visibility window tolerated before falling back to
+	// resync. Both are shared by the connection and repository controllers.
+	notObservedRetryDelay  = 500 * time.Millisecond
+	maxNotObservedAttempts = 6
 )
 
 type connectionQueueItem struct {
 	key      string
 	attempts int
+	// notObservedAttempts counts consecutive ErrNotObserved retries so the
+	// read-after-write requeue stays bounded. The same item is re-added on each
+	// retry to carry the count forward.
+	notObservedAttempts int
 }
 
 // ConnectionStatusPatcher defines the interface for updating connection status.
@@ -60,6 +74,9 @@ type ConnectionController struct {
 	queue          workqueue.TypedRateLimitingInterface[*connectionQueueItem]
 	resyncInterval time.Duration
 	drainTimeout   time.Duration
+	// notObservedRetryDelay is the backoff before an ErrNotObserved requeue;
+	// injectable so tests need not wait the production delay.
+	notObservedRetryDelay time.Duration
 }
 
 // NewConnectionController creates a new ConnectionController.
@@ -80,13 +97,14 @@ func NewConnectionController(
 				Name: "provisioningConnectionController",
 			},
 		),
-		statusPatcher:     statusPatcher,
-		healthChecker:     healthChecker,
-		connectionFactory: connectionFactory,
-		tokenMetrics:      registerConnectionTokenMetrics(registry),
-		logger:            logging.DefaultLogger.With("logger", connectionLoggerName),
-		resyncInterval:    resyncInterval,
-		drainTimeout:      drainTimeout,
+		statusPatcher:         statusPatcher,
+		healthChecker:         healthChecker,
+		connectionFactory:     connectionFactory,
+		tokenMetrics:          registerConnectionTokenMetrics(registry),
+		logger:                logging.DefaultLogger.With("logger", connectionLoggerName),
+		resyncInterval:        resyncInterval,
+		drainTimeout:          drainTimeout,
+		notObservedRetryDelay: notObservedRetryDelay,
 	}
 
 	cc.processFn = cc.process
@@ -175,6 +193,25 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 		return true
 	}
 
+	// The reconcile read has not observed the connection yet. Under the NATS read
+	// seam the read is decoupled from the notification that enqueued this key, so
+	// this is typically a read-after-write race on a just-created or just-updated
+	// connection. Requeue the same item (carrying its retry count) with a fixed
+	// short delay (bounded) to let the write become visible, rather than dropping
+	// it until the next resync; a genuinely deleted connection exhausts the
+	// retries and is then forgotten.
+	if errors.Is(err, informer.ErrNotObserved) {
+		item.notObservedAttempts++
+		if item.notObservedAttempts >= maxNotObservedAttempts {
+			logger.With("attempts", item.notObservedAttempts).Info("ConnectionController: connection still not observed after retries; leaving for the next resync")
+			cc.queue.Forget(item)
+			return true
+		}
+		logger.With("attempts", item.notObservedAttempts).Debug("ConnectionController: connection not yet observed, requeuing")
+		cc.queue.AddAfter(item, cc.notObservedRetryDelay)
+		return true
+	}
+
 	item.attempts++
 	logger = logger.With("error", err, "attempts", item.attempts)
 	logger.Error("ConnectionController failed to process key")
@@ -212,8 +249,15 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	// fresh is the informer.ConnectionGetter's concern, not the controller's.
 	conn, err := cc.conns.Get(ctx, namespace, name)
 	switch {
+	case errors.Is(err, informer.ErrNotObserved):
+		// Retryable: the read seam has not observed the connection yet (a NATS
+		// read-after-write race). processNextWorkItem requeues it with backoff.
+		return err
 	case apierrors.IsNotFound(err):
-		return errors.New("connection not found")
+		// Authoritative delete from the apiserver cache lister: the connection is
+		// gone, so there is nothing to reconcile.
+		logger.Debug("connection not found; already deleted, nothing to reconcile")
+		return nil
 	case err != nil:
 		logger.Error("getting connection", "error", err)
 		return err
