@@ -103,12 +103,7 @@ export function createTtlCachedPromise<T>(fn: () => Promise<T>, ttlMs: number): 
   };
 }
 
-/**
- * Candidate datasources of `type` for a data-existence probe: `excludeUids` are dropped
- * unconditionally (never re-admitted by any fallback), cloud utility datasources are
- * skipped (unless they are all there is), the default datasource leads, capped for fan-out.
- * Pass an Infinity `cap` when the caller reorders before capping itself.
- */
+/** Probe candidates of `type`. Cloud utilities and `excludeUids` never qualify, even as the only candidates: platform telemetry must not settle a product-data probe. */
 export async function listProbeCandidates(
   type: string,
   cap = MAX_PROBED_DATASOURCES,
@@ -119,9 +114,7 @@ export async function listProbeCandidates(
     // Reject the -- Grafana -- builtin by meta.id; a ds.type check would drop alias datasources.
     filter: (ds) => ds.meta.id !== 'grafana',
   });
-  const eligible = excludeUids ? list.filter((ds) => !excludeUids.has(ds.uid)) : list;
-  const preferred = eligible.filter((ds) => !isCloudUtilityDatasourceName(ds.name));
-  const pool = preferred.length > 0 ? preferred : eligible;
+  const pool = list.filter((ds) => !excludeUids?.has(ds.uid) && !isCloudUtilityDatasourceName(ds.name));
   const def = pool.find((ds) => ds.isDefault);
   const ordered = def ? [def, ...pool.filter((ds) => ds !== def)] : [...pool];
   return ordered.slice(0, cap);

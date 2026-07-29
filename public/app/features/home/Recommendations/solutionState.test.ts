@@ -202,6 +202,44 @@ describe('resolveSolutionState', () => {
     expect(instanceMock).not.toHaveBeenCalledWith({ uid: 'rand0m01' });
   });
 
+  it('never settles logs from a lone utility Loki whose uid escapes the exclusion set', async () => {
+    const utilityLokiResource = jest.fn().mockResolvedValue({ data: ['job', 'service_name'] });
+    setupFixture({
+      prometheus: [listItem('prometheus', { uid: 'grafanacloud-usage', name: 'grafanacloud-usage' })],
+      loki: [listItem('loki', { uid: 'rand0m01', name: 'grafanacloud-acme-usage-insights' })],
+      tempo: [],
+      instances: { rand0m01: backendInstance(utilityLokiResource) },
+    });
+    tempoHasTracesMock.mockResolvedValue(false);
+    kubernetesMock.mockResolvedValue(null);
+
+    const resolution = await resolveSolutionState();
+
+    expect(resolution.state.logs).toBe('inactive');
+    expect(resolution.lokiDatasource).toBeNull();
+    expect(utilityLokiResource).not.toHaveBeenCalled();
+    expect(instanceMock).not.toHaveBeenCalled();
+  });
+
+  it('never settles metrics from a lone utility Prometheus whose uid escapes the exclusion set', async () => {
+    const utilityPromResource = jest.fn().mockResolvedValue({ data: ['__name__', 'instance'] });
+    setupFixture({
+      prometheus: [listItem('prometheus', { uid: 'rand0m02', name: 'grafanacloud-usage' })],
+      loki: [],
+      tempo: [],
+      instances: { rand0m02: backendInstance(utilityPromResource) },
+    });
+    tempoHasTracesMock.mockResolvedValue(false);
+    kubernetesMock.mockResolvedValue(null);
+
+    const resolution = await resolveSolutionState();
+
+    expect(resolution.state.metrics).toBe('inactive');
+    expect(resolution.prometheusDatasource).toBeNull();
+    expect(utilityPromResource).not.toHaveBeenCalled();
+    expect(instanceMock).not.toHaveBeenCalled();
+  });
+
   it('reports active with the winning datasource when a probe finds data', async () => {
     const { lokiResource } = freshCloudFixture();
     lokiResource.mockResolvedValue({ data: ['job', 'service_name'] });

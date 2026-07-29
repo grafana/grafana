@@ -66,26 +66,13 @@ describe('listProbeCandidates', () => {
     expect(candidates.map((ds) => ds.uid)).toEqual(['kept']);
   });
 
-  it('never re-admits excluded uids through the utility-name fallback', async () => {
-    // Every datasource is a cloud utility by name: the name fallback re-admits them, but an
-    // excluded uid must stay out even then.
-    getDataSourceInstanceListMock.mockResolvedValue([
-      listItem({ uid: 'usage', name: 'grafanacloud-usage' }),
-      listItem({ uid: 'ml', name: 'grafanacloud-ml-metrics' }),
-    ]);
-
-    const candidates = await listProbeCandidates('prometheus', undefined, new Set(['usage']));
-
-    expect(candidates.map((ds) => ds.uid)).toEqual(['ml']);
-  });
-
   it('returns empty when exclusions empty the list', async () => {
     getDataSourceInstanceListMock.mockResolvedValue([listItem({ uid: 'only', name: 'grafanacloud-usage' })]);
 
     await expect(listProbeCandidates('prometheus', undefined, new Set(['only']))).resolves.toEqual([]);
   });
 
-  it('skips cloud utility datasources unless they are all there is', async () => {
+  it('never probes cloud utility datasources, even as the only candidates', async () => {
     getDataSourceInstanceListMock.mockResolvedValue([
       listItem({ name: 'grafanacloud-usage' }),
       listItem({ name: 'product' }),
@@ -95,13 +82,11 @@ describe('listProbeCandidates', () => {
 
     getDataSourceInstanceListMock.mockResolvedValue([listItem({ name: 'grafanacloud-usage' })]);
 
-    await expect(listProbeCandidates('prometheus')).resolves.toEqual([listItem({ name: 'grafanacloud-usage' })]);
+    await expect(listProbeCandidates('prometheus')).resolves.toEqual([]);
 
     getDataSourceInstanceListMock.mockResolvedValue([listItem({ name: 'grafanacloud-acme-usage-insights' })]);
 
-    await expect(listProbeCandidates('loki')).resolves.toEqual([
-      listItem({ name: 'grafanacloud-acme-usage-insights' }),
-    ]);
+    await expect(listProbeCandidates('loki')).resolves.toEqual([]);
   });
 
   it('skips stack-prefixed Cloud utility Loki datasources by name', async () => {
