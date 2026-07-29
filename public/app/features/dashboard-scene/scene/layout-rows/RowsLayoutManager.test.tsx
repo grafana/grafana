@@ -1,7 +1,7 @@
 import { VariableHide } from '@grafana/data';
 import { ConstantVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
-import { dashboardEditActions } from '../../edit-pane/shared';
+import { dashboardEditActions } from '../../sidebar/shared';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
@@ -13,7 +13,7 @@ import { RowsLayoutManager } from './RowsLayoutManager';
 let lastUndo: (() => void) | undefined;
 let ungroupLayoutCalled = false;
 
-jest.mock('../../edit-pane/shared', () => ({
+jest.mock('../../sidebar/shared', () => ({
   dashboardEditActions: {
     addElement: jest.fn(({ perform, undo }) => {
       perform();

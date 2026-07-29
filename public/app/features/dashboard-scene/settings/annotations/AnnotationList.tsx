@@ -8,10 +8,10 @@ import { t, Trans } from '@grafana/i18n';
 import { type SceneDataLayerProvider } from '@grafana/scenes';
 import { Box, Button, Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { partitionAnnotationsByDisplay } from '../../edit-pane/dashboard/DashboardAnnotationsList';
-import { dashboardEditActions } from '../../edit-pane/shared';
 import { type DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
+import { partitionAnnotationsByDisplay } from '../../sidebar/dashboard/DashboardAnnotationsList';
+import { dashboardEditActions } from '../../sidebar/shared';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 
@@ -24,8 +24,8 @@ export function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLa
 
   const onSelectAnnotation = useCallback(
     (layer: SceneDataLayerProvider) => {
-      const { editPane } = getDashboardSceneFor(dataLayerSet).state;
-      editPane.selectObject(layer);
+      const { sidebar } = getDashboardSceneFor(dataLayerSet).state;
+      sidebar.selectObject(layer);
     },
     [dataLayerSet]
   );
@@ -127,10 +127,7 @@ export function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLa
                     }}
                   >
                     <div {...draggableProvided.dragHandleProps} onPointerDown={onPointerDown}>
-                      <Tooltip
-                        content={t('dashboard.edit-pane.annotations.reorder', 'Drag to reorder')}
-                        placement="top"
-                      >
+                      <Tooltip content={t('dashboard.sidebar.annotations.reorder', 'Drag to reorder')} placement="top">
                         <Icon name="draggabledots" size="md" className={styles.dragHandle} />
                       </Tooltip>
                     </div>
@@ -142,7 +139,7 @@ export function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLa
                   </div>
                   <Stack direction="row" gap={1} alignItems="center">
                     <Button variant="primary" size="sm" fill="outline">
-                      <Trans i18nKey="dashboard.edit-pane.annotations.select-annotation">Select</Trans>
+                      <Trans i18nKey="dashboard.sidebar.annotations.select-annotation">Select</Trans>
                     </Button>
                   </Stack>
                 </div>
@@ -180,7 +177,7 @@ export function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLa
             onClick={onAddAnnotation}
             data-testid={selectors.components.PanelEditor.ElementEditPane.addAnnotationButton}
           >
-            <Trans i18nKey="dashboard.edit-pane.annotations.add-annotation">Add annotation</Trans>
+            <Trans i18nKey="dashboard.sidebar.annotations.add-annotation">Add annotation</Trans>
           </Button>
         </Box>
       )}

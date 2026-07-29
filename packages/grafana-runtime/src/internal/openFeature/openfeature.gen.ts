@@ -13,6 +13,8 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Enable manually starting an Assistant investigation from the alert instance drawer. */
+  AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
   AlertingRuleQuality: "alerting.ruleQuality",
   /** Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana */
@@ -31,8 +33,6 @@ export const FlagKeys = {
   DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
   DashboardVectorSearch: "dashboard.vectorSearch",
-  /** Enables support for section level variables (rows and tabs) */
-  DashboardSectionVariables: "dashboardSectionVariables",
   /** Enables the Assistant button in the dashboard templates card */
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
@@ -160,6 +160,17 @@ export const FlagKeys = {
 } as const;
 
 /**
+ * Enable manually starting an Assistant investigation from the alert instance drawer.
+ *
+ * **Details:**
+ * - flag key: `alerting.manualAssistantInvestigation`
+ * - default value: `false`
+ */
+export const useFlagAlertingManualAssistantInvestigation = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.manualAssistantInvestigation", false, options).value;
+};
+
+/**
  * Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
  *
  * **Details:**
@@ -256,17 +267,6 @@ export const useFlagDashboardNotebooks = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagDashboardVectorSearch = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboard.vectorSearch", false, options).value;
-};
-
-/**
- * Enables support for section level variables (rows and tabs)
- *
- * **Details:**
- * - flag key: `dashboardSectionVariables`
- * - default value: `true`
- */
-export const useFlagDashboardSectionVariables = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboardSectionVariables", true, options).value;
 };
 
 /**

@@ -148,13 +148,10 @@ func TestExtraAlertmanagerConfig_ToGrafanaTimeIntervals(t *testing.T) {
 		TimeIntervals:     []config.TimeInterval{{Name: "business-hours"}},
 	}
 
-	mutes := c.ToGrafanaMuteTimeIntervals()
-	require.Len(t, mutes, 1)
-	assert.Equal(t, "weekends", mutes[0].Name)
-
 	times := c.ToGrafanaTimeIntervals()
-	require.Len(t, times, 1)
-	assert.Equal(t, "business-hours", times[0].Name)
+	require.Len(t, times, 2)
+	assert.Equal(t, "weekends", times[0].Name)
+	assert.Equal(t, "business-hours", times[1].Name)
 }
 
 func TestExtraAlertmanagerConfig_ReceiverNameStubs(t *testing.T) {
