@@ -9,16 +9,11 @@ import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { isPrometheusType } from '../../utils/prometheus';
 import { useContentOutlineContext } from '../ContentOutlineContext';
+import { QUERIES_PANEL_ID } from '../ContentOutlineItem';
 import { scrollOutlineItemIntoView } from '../scrollIntoView';
 
 import { MetricsList } from './MetricsList';
 import { SignalCard } from './SignalCard';
-
-/**
- * Panel id that query rows register themselves under in the content outline.
- * @see QueryRows
- */
-const QUERIES_PANEL_ID = 'Queries';
 
 interface CardDescriptor {
   refId: string;

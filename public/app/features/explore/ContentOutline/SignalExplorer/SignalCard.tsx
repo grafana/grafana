@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type ReactNode, useId } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -40,6 +40,11 @@ export function SignalCard({
   // refIds are user-editable, so deriving the id from one risks characters that make
   // aria-controls unresolvable, or collisions with another card in a split pane.
   const bodyId = useId();
+  // A logo can be missing at runtime even when the plugin declares one, for example when the
+  // plugin failed to load. Remember the url that failed so the fallback icon is used instead
+  // of a broken image, and so a later datasource change gets a fresh attempt.
+  const [brokenLogo, setBrokenLogo] = useState<string>();
+  const logo = datasourceLogo === brokenLogo ? undefined : datasourceLogo;
   // The datasource name is not rendered inline (the logo covers the type and long query
   // names need the room), so name the card with it to disambiguate two instances of the
   // same datasource type in Mixed mode.
@@ -89,8 +94,8 @@ export function SignalCard({
           title={jumpLabel}
           onClick={onJumpToQuery}
         >
-          {datasourceLogo ? (
-            <img src={datasourceLogo} alt="" className={styles.datasourceLogo} />
+          {logo ? (
+            <img src={logo} alt="" className={styles.datasourceLogo} onError={() => setBrokenLogo(logo)} />
           ) : (
             <Icon name="database" className={styles.datasourceLogoFallback} />
           )}

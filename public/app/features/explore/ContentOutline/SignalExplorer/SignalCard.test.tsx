@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { SignalCard } from './SignalCard';
@@ -99,6 +99,20 @@ describe('<SignalCard />', () => {
 
     expect(onToggleExpanded).toHaveBeenCalledTimes(1);
     expect(onJumpToQuery).not.toHaveBeenCalled();
+  });
+
+  // A `fireEvent` because no user action can make an image fail to load.
+  it('falls back to the datasource icon when the logo fails to load', () => {
+    const { container } = setup({ datasourceLogo: 'public/plugins/gone/img/logo.svg' });
+    const logo = container.querySelector('img');
+
+    expect(logo).toBeInTheDocument();
+    expect(screen.queryByTestId('icon-database')).not.toBeInTheDocument();
+
+    fireEvent.error(logo!);
+
+    expect(container.querySelector('img')).not.toBeInTheDocument();
+    expect(screen.getByTestId('icon-database')).toBeInTheDocument();
   });
 
   it('renders the body only when expanded', () => {
