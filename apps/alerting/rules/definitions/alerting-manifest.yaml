@@ -48,6 +48,11 @@ spec:
           - Pending
           - Recovering
           type: string
+        AlertRuleStateReason:
+          enum:
+          - Normal
+          - KeepLast
+          type: string
         DatasourceUID:
           pattern: ^[a-zA-Z0-9_-]+$
           type: string
@@ -284,6 +289,8 @@ spec:
               type: object
             state:
               $ref: '#/components/schemas/AlertRuleState'
+            stateReason:
+              $ref: '#/components/schemas/AlertRuleStateReason'
           type: object
       scope: Namespaced
       searchFields:

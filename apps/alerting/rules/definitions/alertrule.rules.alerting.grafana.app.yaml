@@ -222,6 +222,11 @@ spec:
                 - Pending
                 - Recovering
                 type: string
+              stateReason:
+                enum:
+                - Normal
+                - KeepLast
+                type: string
             type: object
         required:
         - spec

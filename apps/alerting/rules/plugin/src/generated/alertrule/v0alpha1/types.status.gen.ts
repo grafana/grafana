@@ -21,6 +21,13 @@ export enum AlertRuleState {
 
 export const defaultAlertRuleState = (): AlertRuleState => (AlertRuleState.Inactive);
 
+export enum AlertRuleStateReason {
+	Normal = "Normal",
+	KeepLast = "KeepLast",
+}
+
+export const defaultAlertRuleStateReason = (): AlertRuleStateReason => (AlertRuleStateReason.Normal);
+
 export interface OperatorState {
 	// lastEvaluation is the ResourceVersion last evaluated
 	lastEvaluation: string;
@@ -41,6 +48,7 @@ export const defaultOperatorState = (): OperatorState => ({
 export interface Status {
 	health?: AlertRuleHealth;
 	state?: AlertRuleState;
+	stateReason?: AlertRuleStateReason;
 	lastEvaluationTime?: string;
 	evaluationDuration?: number;
 	// operatorStates is a map of operator ID to operator state evaluations.

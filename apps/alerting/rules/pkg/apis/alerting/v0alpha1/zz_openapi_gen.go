@@ -538,6 +538,12 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref common.ReferenceCallb
 							Format: "",
 						},
 					},
+					"stateReason": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"lastEvaluationTime": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
