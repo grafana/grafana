@@ -88,7 +88,6 @@ This example shows memory profiles alongside panels for logs and metrics, which 
 ## Visualize traces and profiles data using Traces to profiles
 
 You can link profile and tracing data using your Pyroscope data source with the Tempo data source.
-To learn more about how profiles and tracing can work together, refer to [How profiling and tracing work together](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/profiling-and-tracing/).
 
 Combined traces and profiles let you see granular line-level detail when available for a trace span. This allows you to pinpoint the exact function that's causing a bottleneck in your application as well as a specific request.
 
@@ -98,24 +97,12 @@ For more information, refer to [Configure Trace to profiles](https://grafana.com
 
 {{< youtube id="AG8VzfFMLxo" >}}
 
-## Provision the Pyroscope data source
+## Related Pyroscope documentation
 
-You can modify the Grafana configuration files to provision the Pyroscope data source.
-To learn more, and to view the available provisioning settings, refer to [provisioning documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
+For more information about Pyroscope beyond the data source, refer to the following Pyroscope product documentation:
 
-Here is an example configuration:
-
-```yaml
-apiVersion: 1
-
-datasources:
-  - name: Grafana Pyroscope
-    type: grafana-pyroscope-datasource
-    url: http://localhost:4040
-    jsonData:
-      minStep: '15s'
-```
-
-## Troubleshoot
-
-If you encounter issues when configuring or using the Pyroscope data source, refer to [Troubleshoot the Pyroscope data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/troubleshooting/) for solutions to common problems.
+- [Introduction to Pyroscope](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/introduction/): Understand continuous profiling and how Pyroscope works.
+- [Configure the client to send profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/): Instrument your application to send profiling data to Pyroscope.
+- [Link traces to profiles with span profiles](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-client/trace-span-profiles/): Correlate trace spans with profiling data.
+- [Deploy Pyroscope](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/deploy-kubernetes/): Deploy and run a self-managed Pyroscope backend.
+- [Configure the Pyroscope server](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/configure-server/): Reference the available server configuration parameters.

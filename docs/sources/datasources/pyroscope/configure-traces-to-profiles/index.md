@@ -1,4 +1,6 @@
 ---
+aliases:
+  - ../profiling-and-tracing/ # /docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/profiling-and-tracing/
 title: Configure traces to profiles
 menuTitle: Configure traces to profiles
 description: Learn how to configure Trace to profiles in Grafana and Grafana Cloud.

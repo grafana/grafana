@@ -125,3 +125,60 @@ Adjusting this option can help prevent gaps when you zoom in to profiling data.
 After you configure the data source, select **Save & test** to verify the connection.
 When the connection is successful, Grafana displays a **Data source is working** message.
 If the test fails, Grafana displays the error returned by the Pyroscope backend. For help resolving connection errors, refer to [Troubleshoot the Pyroscope data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/troubleshooting/).
+
+## Provision the data source
+
+You can provision the Pyroscope data source using YAML configuration files or Terraform, as part of the Grafana provisioning system.
+For more information about provisioning and available configuration options, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
+
+### YAML provisioning example
+
+The following example provisions a Pyroscope data source:
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Grafana Pyroscope
+    type: grafana-pyroscope-datasource
+    url: http://localhost:4040
+    jsonData:
+      minStep: '15s'
+```
+
+### Terraform example
+
+To provision the data source with Terraform, use the [`grafana_data_source` resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/data_source):
+
+```hcl
+resource "grafana_data_source" "pyroscope" {
+  type = "grafana-pyroscope-datasource"
+  name = "Grafana Pyroscope"
+  url  = "http://localhost:4040"
+
+  json_data_encoded = jsonencode({
+    minStep = "15s"
+  })
+}
+```
+
+To provision with basic authentication:
+
+```hcl
+resource "grafana_data_source" "pyroscope" {
+  type                = "grafana-pyroscope-datasource"
+  name                = "Grafana Pyroscope"
+  url                 = "http://localhost:4040"
+  basic_auth_enabled  = true
+  basic_auth_username = "<USERNAME>"
+
+  secure_json_data_encoded = jsonencode({
+    basicAuthPassword = "<PASSWORD>"
+  })
+}
+```
+
+Replace the following:
+
+- `<USERNAME>`: Your Pyroscope username.
+- `<PASSWORD>`: Your Pyroscope password.
