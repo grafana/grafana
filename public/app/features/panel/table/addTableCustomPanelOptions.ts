@@ -67,7 +67,6 @@ export const addTableCustomPanelOptions = <O extends TableOptions>(builder: Pane
         min: 1,
         integer: true,
       },
-      // React-only feature toggle, so it is not on config.featureToggles and must be read via the OpenFeature client
       showIf: (opts) =>
         Boolean(opts.enablePagination) &&
         getFeatureFlagClient().getBooleanValue(FlagKeys.TablePaginationPageSize, false),
