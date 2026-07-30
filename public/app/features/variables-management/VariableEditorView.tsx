@@ -237,7 +237,7 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
         className={styles.folderField}
         label={t('variables-management.editor.folder-label', 'Folder')}
         description={
-          allowGlobalScope
+          allowGlobalScope || !isNew
             ? t(
                 'variables-management.editor.folder-description',
                 'Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)'
@@ -249,9 +249,12 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
         }
       >
         <FolderPicker
-          showRootFolder={allowGlobalScope}
+          // Create: non-editors must pick an editable folder (hide root).
+          // Edit: always show the current scope, including root/global and view-only folders.
+          showRootFolder={allowGlobalScope || !isNew}
+          permission={isNew ? 'edit' : 'view'}
           value={folderUid}
-          onChange={(uid) => setFolderUid(allowGlobalScope ? (uid ?? '') : uid)}
+          onChange={(uid) => setFolderUid(allowGlobalScope || !isNew ? (uid ?? '') : uid)}
           excludeUIDs={getVariableFolderPickerExcludeUIDs()}
         />
       </Field>

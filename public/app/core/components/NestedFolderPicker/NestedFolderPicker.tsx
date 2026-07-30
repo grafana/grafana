@@ -116,7 +116,7 @@ export function NestedFolderPicker({
     teamFolderTreeItems,
     teamFolderOwnersByUid,
     error: teamFoldersError,
-  } = useTeamFolders(foldersOpenState, value, onChange);
+  } = useTeamFolders(foldersOpenState, value, onChange, showRootFolder);
 
   const { starredFolderTreeItems, error: starredFoldersError } = useStarredFolders(foldersOpenState, permission);
 
@@ -409,7 +409,8 @@ export function NestedFolderPicker({
 function useTeamFolders(
   foldersOpenState: Record<string, boolean>,
   value?: string,
-  onChange?: (folderUID: string | undefined, folderName: string | undefined) => void
+  onChange?: (folderUID: string | undefined, folderName: string | undefined) => void,
+  showRootFolder = true
 ) {
   const { foldersByTeam, error } = useGetTeamFolders();
   const teamFolders = useMemo(() => foldersByTeam.flatMap(({ folders }) => folders), [foldersByTeam]);
@@ -464,11 +465,15 @@ function useTeamFolders(
 
   const preselectDidRun = useRef(false);
   useEffect(() => {
+    // When root is shown, value '' means the Dashboards root — do not overwrite it.
+    if (showRootFolder) {
+      return;
+    }
     if (value === '' && firstTeamFolder && onChange && !preselectDidRun.current) {
       preselectDidRun.current = true;
       onChange(firstTeamFolder.name, firstTeamFolder.title);
     }
-  }, [value, firstTeamFolder, onChange]);
+  }, [value, firstTeamFolder, onChange, showRootFolder]);
 
   return {
     teamFolderTreeItems,
