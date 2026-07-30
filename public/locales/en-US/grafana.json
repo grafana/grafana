@@ -6321,6 +6321,7 @@
       },
       "undo": "Undo",
       "variable": {
+        "add-variable": "Add variable",
         "change-type": "Change type",
         "change-type-aria-label": "Change variable type",
         "custom-options": {
