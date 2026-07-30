@@ -190,4 +190,71 @@ describe('KeyValuesTable tests', () => {
     expect(values[0].innerHTML).toBe('"&lt;img src=x onerror=alert(1)&gt;":');
     expect(values[1].innerHTML).toBe('"&lt;img src=x onerror=alert(1)&gt;"');
   });
+
+  it('wraps matching values with the attribute plugin promo tip', async () => {
+    const user = userEvent.setup();
+    setup({
+      data: [
+        { key: 'db.system', value: 'postgresql' },
+        { key: 'http.method', value: 'GET' },
+      ],
+      promoGetter: (key) =>
+        key.startsWith('db.')
+          ? {
+              pluginId: 'grafana-dbo11y-app',
+              icon: 'database-observability',
+              title: 'Find slow queries faster',
+              body: 'Database Observability surfaces visual explain plans, wait events, and query samples.',
+              match: () => true,
+            }
+          : undefined,
+    });
+
+    expect(screen.getByText('"postgresql"')).toBeInTheDocument();
+    expect(screen.getByTestId('attribute-plugin-promo-trigger')).toBeInTheDocument();
+    expect(screen.queryByText('Find slow queries faster')).not.toBeInTheDocument();
+
+    await user.click(screen.getByTestId('attribute-plugin-promo-trigger'));
+    expect(await screen.findByText('Find slow queries faster')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /learn more/i })).toBeInTheDocument();
+  });
+
+  it('does not wrap values when they already have a plugin link', () => {
+    setup({
+      data: [{ key: 'db.query.text', value: 'SELECT 1' }],
+      promoGetter: () => ({
+        pluginId: 'grafana-dbo11y-app',
+        icon: 'database-observability',
+        title: 'Find slow queries faster',
+        body: 'body',
+        match: () => true,
+      }),
+      linksGetter: () => [
+        {
+          path: '/a/grafana-dbo11y-app/overview',
+          title: 'View Query Details',
+          icon: 'database',
+        },
+      ],
+    });
+
+    expect(screen.getByRole('link', { name: 'View Query Details' })).toBeInTheDocument();
+    expect(screen.queryByTestId('attribute-plugin-promo-trigger')).not.toBeInTheDocument();
+  });
+
+  it('does not wrap values that are auto-linkified urls', () => {
+    setup({
+      data: [{ key: 'db.connection_string', value: 'https://example.com/db' }],
+      promoGetter: () => ({
+        pluginId: 'grafana-dbo11y-app',
+        icon: 'database-observability',
+        title: 'Find slow queries faster',
+        body: 'body',
+        match: () => true,
+      }),
+    });
+
+    expect(screen.getByRole('link', { name: 'https://example.com/db' })).toBeInTheDocument();
+    expect(screen.queryByTestId('attribute-plugin-promo-trigger')).not.toBeInTheDocument();
+  });
 });

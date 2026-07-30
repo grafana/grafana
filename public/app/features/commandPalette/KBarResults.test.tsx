@@ -129,6 +129,51 @@ describe('KBarResults', () => {
       expect(options[1]).toHaveAttribute('aria-selected', 'true');
     });
 
+    it('sets aria-posinset and aria-setsize scoped to each group', () => {
+      render(
+        <KBarResults
+          items={[
+            'Dashboards',
+            createAction({ id: 'home', name: 'Home' }),
+            createAction({ id: 'explore', name: 'Explore' }),
+            'Folders',
+            createAction({ id: 'folder-1', name: 'My Folder' }),
+          ]}
+          onRender={renderItem}
+        />
+      );
+
+      const options = screen.getAllByRole('option');
+      expect(options[0]).toHaveAttribute('aria-posinset', '1');
+      expect(options[0]).toHaveAttribute('aria-setsize', '2');
+      expect(options[1]).toHaveAttribute('aria-posinset', '2');
+      expect(options[1]).toHaveAttribute('aria-setsize', '2');
+      expect(options[2]).toHaveAttribute('aria-posinset', '1');
+      expect(options[2]).toHaveAttribute('aria-setsize', '1');
+    });
+
+    it('counts ungrouped leading items as their own set', () => {
+      render(
+        <KBarResults
+          items={[
+            createAction({ id: 'home', name: 'Home' }),
+            createAction({ id: 'explore', name: 'Explore' }),
+            'Folders',
+            createAction({ id: 'folder-1', name: 'My Folder' }),
+          ]}
+          onRender={renderItem}
+        />
+      );
+
+      const options = screen.getAllByRole('option');
+      expect(options[0]).toHaveAttribute('aria-posinset', '1');
+      expect(options[0]).toHaveAttribute('aria-setsize', '2');
+      expect(options[1]).toHaveAttribute('aria-posinset', '2');
+      expect(options[1]).toHaveAttribute('aria-setsize', '2');
+      expect(options[2]).toHaveAttribute('aria-posinset', '1');
+      expect(options[2]).toHaveAttribute('aria-setsize', '1');
+    });
+
     it('renders as an anchor tag when the item has a URL', () => {
       render(<KBarResults items={[createAction({ name: 'Home', url: '/dashboard/home' })]} onRender={renderItem} />);
 

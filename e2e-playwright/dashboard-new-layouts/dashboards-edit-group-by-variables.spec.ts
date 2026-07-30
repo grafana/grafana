@@ -35,25 +35,14 @@ test.describe(
       };
 
       await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
-      await sidebar.variableOptions.groupby.selectDatasource('gdev-loki');
+      await sidebar.variableOptions.groupby.selectDatasource('gdev-e2etestdatasource');
 
       // Assert the variable dropdown is visible with correct label
       const variableLabel = controls.variables.getLabel(variable.label!);
       await expect(variableLabel).toBeVisible();
       await expect(variableLabel).toContainText(variable.label!);
 
-      // mock the API call to get the labels
       const labels = ['label1', 'label2'];
-      await page.route('**/resources/labels*', async (route) => {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            status: 'success',
-            data: labels,
-          }),
-        });
-      });
 
       // choose the label, then close the dropdown
       await controls.variables.selectOption(variable.label!, labels[1]);

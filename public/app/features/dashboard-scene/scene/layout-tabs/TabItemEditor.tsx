@@ -11,16 +11,16 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
-import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../edit-pane/SectionFiltersList';
-import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../edit-pane/SectionVariablesList';
-import { dashboardEditActions } from '../../edit-pane/shared';
+import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../sidebar/SectionFiltersList';
+import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../sidebar/SectionVariablesList';
+import { dashboardEditActions } from '../../sidebar/shared';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
-import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
+import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 
 import { type TabItem } from './TabItem';
 
-export function useEditOptions(this: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+export function useSidebarOptions(this: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const model = this;
   const { layout } = model.useState();
 
@@ -124,7 +124,7 @@ function TabTitleInput({ tab, isNewElement, id }: { tab: TabItem; isNewElement: 
   const { title } = tab.useState();
   const prevTitle = useRef('');
 
-  const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
+  const ref = useSidebarInputAutoFocus({ autoFocus: isNewElement });
   const hasUniqueTitle = tab.hasUniqueTitle();
 
   return (

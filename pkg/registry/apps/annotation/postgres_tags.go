@@ -103,7 +103,7 @@ func (s *PostgreSQLStore) ListTags(ctx context.Context, namespace string, opts T
 
 	query += `
 		GROUP BY tag
-		ORDER BY count DESC, tag
+		ORDER BY tag
 	`
 
 	// Add limit

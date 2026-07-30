@@ -13,8 +13,6 @@ import { VariablesUnknownButton } from './VariablesUnknownButton';
 import { type UsagesToNetwork } from './types';
 import { getUnknownsNetwork } from './utils';
 
-export const SLOW_VARIABLES_EXPANSION_THRESHOLD = 1000;
-
 export interface VariablesUnknownTableProps {
   variables: BaseVariableModel[];
   dashboard: DashboardModel | null;
@@ -29,13 +27,7 @@ export function VariablesUnknownTable({ variables, dashboard }: VariablesUnknown
   const { loading } = useAsync(async () => {
     if (open && changed > 0) {
       // make sure we only fetch when opened and variables or dashboard have changed
-      const start = Date.now();
       const unknownsNetwork = await getUnknownsNetwork(variables, dashboard);
-      const stop = Date.now();
-      const elapsed = stop - start;
-      if (elapsed >= SLOW_VARIABLES_EXPANSION_THRESHOLD) {
-        reportInteraction('Slow unknown variables expansion', { elapsed });
-      }
       setChanged(0);
       setUsages(unknownsNetwork);
       return unknownsNetwork;

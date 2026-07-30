@@ -1060,7 +1060,8 @@ Paths are positional and shift after add/remove operations. Re-read the layout b
 
 ## Nesting rules
 
-- Maximum two layers of group nesting (root group + one nested group).
-- No same-type nesting (rows inside rows, tabs inside tabs).
+- Maximum four layers of group nesting.
+- Tabs cannot be nested directly inside tabs. Deeper nesting (e.g. tabs > rows > tabs) is allowed.
+- Rows can be nested inside both rows and tabs.
 
-For example, tabs containing rows is valid. Tabs containing tabs is rejected.
+For example, tabs containing rows is valid, and rows containing rows is valid. Tabs directly containing tabs is rejected.

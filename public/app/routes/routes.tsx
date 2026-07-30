@@ -554,6 +554,24 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboards/f/:uid/:slug/variables',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "FolderVariablesPage"*/ 'app/features/browse-dashboards/BrowseFolderVariablesPage'
+          )
+      ),
+    },
+    {
+      path: '/dashboards/f/:uid/variables',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "FolderVariablesPage"*/ 'app/features/browse-dashboards/BrowseFolderVariablesPage'
+          )
+      ),
+    },
+    {
       path: '/library-panels',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')

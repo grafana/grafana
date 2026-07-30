@@ -9,14 +9,12 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 
 	authnlib "github.com/grafana/authlib/authn"
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/client-go/dynamic"
@@ -24,11 +22,7 @@ import (
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/apiserver/client"
-	"github.com/grafana/grafana/pkg/services/user"
 )
-
-const annotationServerAudience = "annotation.grafana.app"
 
 // annotationClient defines the interface for interacting with the annotation API server.
 type annotationClient interface {
@@ -36,44 +30,37 @@ type annotationClient interface {
 	Update(ctx context.Context, orgID int64, anno *annotationV0.Annotation) (*annotationV0.Annotation, error)
 	Delete(ctx context.Context, orgID int64, name string) error
 	GetByLegacyID(ctx context.Context, orgID int64, annotationID int64) (*annotationV0.Annotation, error)
-	GetUsersFromMeta(ctx context.Context, usersMeta []string) (map[string]*user.User, error)
 	Search(ctx context.Context, orgID int64, query *annotations.ItemQuery) ([]*annotationV0.Annotation, error)
+	ListTags(ctx context.Context, orgID int64, query *annotations.TagsQuery) ([]annotationV0.GetTagsV0alpha1BodyTags, error)
 }
 
 var _ annotationClient = (*annotationAPIClient)(nil)
 
-// TODO: consider replacing k8sClient with a rest.RESTClient built from restCfg for consistency -
-// CRUD ops (Create, Update, Delete, also GetByLegacyID) currently go through k8sClient (dynamic),
-// while Search uses rest.RESTClient directly.
 type annotationAPIClient struct {
-	k8sClient client.K8sHandler
-	restCfg   *rest.Config
-
-	mu         sync.Mutex
-	restClient *rest.RESTClient
+	client   *rest.RESTClient
+	nsMapper request.NamespaceMapper
 }
 
 // newAnnotationAPIClient returns a client for the new annotation API server.
 // It returns nil when APIServerURL is empty (proxy disabled).
-func newAnnotationAPIClient(cfg *setting.Cfg, userSvc user.Service, exchanger authnlib.TokenExchanger) *annotationAPIClient {
+func newAnnotationAPIClient(cfg *setting.Cfg, exchanger authnlib.TokenExchanger) (*annotationAPIClient, error) {
 	url := strings.TrimSpace(cfg.AnnotationAppPlatform.APIServerURL)
 	if url == "" {
-		return nil
+		return nil, fmt.Errorf("annotation proxy: api_server_url must be set")
 	}
 
 	nsMapper := request.GetNamespaceMapper(cfg)
 	restCfg := buildRESTConfig(url, exchanger, nsMapper, cfg.AnnotationAppPlatform.TLSClientConfig)
 
-	return &annotationAPIClient{
-		k8sClient: client.NewK8sHandler(
-			nsMapper,
-			annotationV0.AnnotationKind().GroupVersionResource(),
-			func(_ context.Context) (*rest.Config, error) { return restCfg, nil },
-			userSvc,
-			nil,
-		),
-		restCfg: restCfg,
+	client, err := rest.RESTClientFor(restCfg)
+	if err != nil {
+		return nil, fmt.Errorf("annotation proxy: creating REST client: %w", err)
 	}
+
+	return &annotationAPIClient{
+		client:   client,
+		nsMapper: nsMapper,
+	}, nil
 }
 
 // ProvideTokenExchanger returns a TokenExchanger for the annotation API server, or nil if the proxy is disabled.
@@ -98,31 +85,41 @@ func ProvideTokenExchanger(cfg *setting.Cfg) (authnlib.TokenExchanger, error) {
 }
 
 func (s *annotationAPIClient) Create(ctx context.Context, orgID int64, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
-	obj, err := toUnstructured(anno)
+	body, err := json.Marshal(anno)
+	if err != nil {
+		return nil, fmt.Errorf("encode annotation: %w", err)
+	}
+
+	raw, err := s.collection(http.MethodPost, orgID).
+		SetHeader("Content-Type", runtime.ContentTypeJSON).
+		Body(body).
+		DoRaw(ctx)
 	if err != nil {
 		return nil, err
 	}
-	result, err := s.k8sClient.Create(ctx, obj, orgID, v1.CreateOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return fromUnstructured(result)
+
+	return decodeAnnotation(raw)
 }
 
 func (s *annotationAPIClient) Update(ctx context.Context, orgID int64, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
-	obj, err := toUnstructured(anno)
+	body, err := json.Marshal(anno)
+	if err != nil {
+		return nil, fmt.Errorf("encode annotation: %w", err)
+	}
+
+	raw, err := s.named(http.MethodPut, orgID, anno.GetName()).
+		SetHeader("Content-Type", runtime.ContentTypeJSON).
+		Body(body).
+		DoRaw(ctx)
 	if err != nil {
 		return nil, err
 	}
-	result, err := s.k8sClient.Update(ctx, obj, orgID, v1.UpdateOptions{})
-	if err != nil {
-		return nil, err
-	}
-	return fromUnstructured(result)
+
+	return decodeAnnotation(raw)
 }
 
 func (s *annotationAPIClient) Delete(ctx context.Context, orgID int64, name string) error {
-	return s.k8sClient.Delete(ctx, name, orgID, v1.DeleteOptions{})
+	return s.named(http.MethodDelete, orgID, name).Do(ctx).Error()
 }
 
 // GetByLegacyID fetches an annotation by its legacy ID, including the tombstone if it has
@@ -131,31 +128,22 @@ func (s *annotationAPIClient) Delete(ctx context.Context, orgID int64, name stri
 // TODO: expensive — the legacyID index does not cover the time partition, so this scans
 // every partition. Carrying the annotation time to the call sites would let us prune them.
 func (s *annotationAPIClient) GetByLegacyID(ctx context.Context, orgID int64, annotationID int64) (*annotationV0.Annotation, error) {
-	rc, err := s.getRESTClient()
-	if err != nil {
-		return nil, err
-	}
-
-	namespace := s.k8sClient.GetNamespace(orgID)
-	raw, err := rc.Get().
-		AbsPath("apis", annotationV0.APIGroup, annotationV0.APIVersion, "namespaces", namespace, "search").
+	req := s.client.Get().
+		Namespace(s.nsMapper(orgID)).
+		Resource("search").
 		Param("legacyID", strconv.FormatInt(annotationID, 10)).
-		Param("deleted", "include"). // include the tombstone so we can distinguish between deleted and missing
-		DoRaw(ctx)
+		Param("deleted", "include") // include the tombstone so we can distinguish between deleted and missing
+
+	list, err := doSearch(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-
-	var list annotationV0.AnnotationList
-	if err := json.Unmarshal(raw, &list); err != nil {
-		return nil, fmt.Errorf("decode search response: %w", err)
-	}
-	if len(list.Items) == 0 {
+	if len(list) == 0 {
 		return nil, ErrNotFound
 	}
 
 	// Return the newest live annotation, or the tombstone if all are deleted.
-	live := slices.DeleteFunc(slices.Clone(list.Items), func(a annotationV0.Annotation) bool {
+	live := slices.DeleteFunc(slices.Clone(list), func(a annotationV0.Annotation) bool {
 		return a.GetDeletionTimestamp() != nil
 	})
 	if len(live) > 0 {
@@ -164,22 +152,14 @@ func (s *annotationAPIClient) GetByLegacyID(ctx context.Context, orgID int64, an
 		})
 		return &newest, nil
 	}
-	return &list.Items[0], nil
-}
-
-func (s *annotationAPIClient) GetUsersFromMeta(ctx context.Context, usersMeta []string) (map[string]*user.User, error) {
-	return s.k8sClient.GetUsersFromMeta(ctx, usersMeta)
+	return &list[0], nil
 }
 
 // Search calls the /search custom route, which handles all filtering server-side including tags.
 func (s *annotationAPIClient) Search(ctx context.Context, orgID int64, query *annotations.ItemQuery) ([]*annotationV0.Annotation, error) {
-	rc, err := s.getRESTClient()
-	if err != nil {
-		return nil, err
-	}
-
-	namespace := s.k8sClient.GetNamespace(orgID)
-	req := rc.Get().AbsPath("apis", annotationV0.APIGroup, annotationV0.APIVersion, "namespaces", namespace, "search")
+	req := s.client.Get().
+		Namespace(s.nsMapper(orgID)).
+		Resource("search")
 
 	if query.DashboardUID != "" {
 		req = req.Param("dashboardUID", query.DashboardUID)
@@ -206,6 +186,57 @@ func (s *annotationAPIClient) Search(ctx context.Context, orgID int64, query *an
 		req = req.Param("createdBy", query.UserUID)
 	}
 
+	list, err := doSearch(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*annotationV0.Annotation, len(list))
+	for i := range list {
+		result[i] = &list[i]
+	}
+	return result, nil
+}
+
+// ListTags calls the /tags custom route, which aggregates tag counts across the org.
+func (s *annotationAPIClient) ListTags(ctx context.Context, orgID int64, query *annotations.TagsQuery) ([]annotationV0.GetTagsV0alpha1BodyTags, error) {
+	req := s.client.Get().
+		Namespace(s.nsMapper(orgID)).
+		Resource("tags")
+
+	if query.Tag != "" {
+		req = req.Param("prefix", query.Tag)
+	}
+	if query.Limit != 0 {
+		req = req.Param("limit", strconv.FormatInt(query.Limit, 10))
+	}
+
+	raw, err := req.DoRaw(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var body annotationV0.GetTagsBody
+	if err := json.Unmarshal(raw, &body); err != nil {
+		return nil, fmt.Errorf("decode tags response: %w", err)
+	}
+	return body.Tags, nil
+}
+
+// collection builds a request against the namespaced annotations collection for orgID.
+func (s *annotationAPIClient) collection(verb string, orgID int64) *rest.Request {
+	return s.client.Verb(verb).
+		Namespace(s.nsMapper(orgID)).
+		Resource(annotationV0.AnnotationKind().Plural())
+}
+
+// named builds a request against a single annotation by its resource name.
+func (s *annotationAPIClient) named(verb string, orgID int64, name string) *rest.Request {
+	return s.collection(verb, orgID).Name(name)
+}
+
+// doSearch runs a request against the /search custom route and decodes the matching annotations.
+func doSearch(ctx context.Context, req *rest.Request) ([]annotationV0.Annotation, error) {
 	raw, err := req.DoRaw(ctx)
 	if err != nil {
 		return nil, err
@@ -215,47 +246,15 @@ func (s *annotationAPIClient) Search(ctx context.Context, orgID int64, query *an
 	if err := json.Unmarshal(raw, &list); err != nil {
 		return nil, fmt.Errorf("decode search response: %w", err)
 	}
-
-	result := make([]*annotationV0.Annotation, len(list.Items))
-	for i := range list.Items {
-		result[i] = &list.Items[i]
-	}
-	return result, nil
+	return list.Items, nil
 }
 
-func toUnstructured(anno *annotationV0.Annotation) (*unstructured.Unstructured, error) {
-	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(anno)
-	if err != nil {
-		return nil, fmt.Errorf("annotation to unstructured: %w", err)
-	}
-	return &unstructured.Unstructured{Object: obj}, nil
-}
-
-func fromUnstructured(obj *unstructured.Unstructured) (*annotationV0.Annotation, error) {
+func decodeAnnotation(raw []byte) (*annotationV0.Annotation, error) {
 	var anno annotationV0.Annotation
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &anno); err != nil {
-		return nil, fmt.Errorf("unstructured to annotation: %w", err)
+	if err := json.Unmarshal(raw, &anno); err != nil {
+		return nil, fmt.Errorf("decode annotation response: %w", err)
 	}
 	return &anno, nil
-}
-
-// getRESTClient returns a cached REST client for calling custom routes.
-// Pattern from pkg/services/user/userk8s: dynamic.ConfigFor sets JSON content negotiation,
-// GroupVersion scopes the client to the annotation API group.
-func (s *annotationAPIClient) getRESTClient() (*rest.RESTClient, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.restClient != nil {
-		return s.restClient, nil
-	}
-	dynCfg := dynamic.ConfigFor(s.restCfg)
-	dynCfg.GroupVersion = &annotationV0.GroupVersion
-	rc, err := rest.RESTClientFor(dynCfg)
-	if err != nil {
-		return nil, fmt.Errorf("create REST client: %w", err)
-	}
-	s.restClient = rc
-	return rc, nil
 }
 
 func newTokenExchangeClient(token, tokenExchangeURL string, allowInsecure bool) (authnlib.TokenExchanger, error) {
@@ -279,11 +278,14 @@ func newTokenExchangeClient(token, tokenExchangeURL string, allowInsecure bool) 
 }
 
 func buildRESTConfig(url string, exchanger authnlib.TokenExchanger, nsMapper request.NamespaceMapper, tlsConfig rest.TLSClientConfig) *rest.Config {
-	return &rest.Config{
+	cfg := dynamic.ConfigFor(&rest.Config{
 		Host:            url,
 		WrapTransport:   newBearerTokenExchangeWrapper(exchanger, nsMapper),
 		TLSClientConfig: tlsConfig,
-	}
+	})
+	cfg.APIPath = "apis"
+	cfg.GroupVersion = &annotationV0.GroupVersion
+	return cfg
 }
 
 type bearerTokenExchangeRT struct {
@@ -299,10 +301,24 @@ func (rt *bearerTokenExchangeRT) RoundTrip(req *http.Request) (*http.Response, e
 		return nil, fmt.Errorf("resolving requester for token exchange: %w", err)
 	}
 
-	resp, err := rt.exchanger.Exchange(ctx, authnlib.TokenExchangeRequest{
-		Audiences: []string{annotationServerAudience},
-		Namespace: rt.nsMapper(requester.GetOrgID()),
-	})
+	namespace := rt.nsMapper(requester.GetOrgID())
+
+	exchangeReq := authnlib.TokenExchangeRequest{
+		Audiences: []string{annotationV0.APIGroup},
+		Namespace: namespace,
+	}
+
+	// Authenticate with OBO, when possible, so the new API properly attributes annotations.
+	if requester.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		exchangeReq.Subject = &authnlib.TokenExchangeSubject{
+			Sub:        requester.GetSubject(),
+			Identifier: requester.GetIdentifier(),
+			Type:       string(requester.GetIdentityType()),
+			Namespace:  namespace,
+		}
+	}
+
+	resp, err := rt.exchanger.Exchange(ctx, exchangeReq)
 	if err != nil {
 		return nil, fmt.Errorf("exchanging token: %w", err)
 	}
