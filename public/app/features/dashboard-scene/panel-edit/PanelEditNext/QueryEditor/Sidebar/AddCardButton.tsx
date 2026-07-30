@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
 import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config as grafanaConfig } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
@@ -156,6 +157,11 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
       <button
         className={styles.button}
         data-add-button={!alwaysVisible || undefined}
+        data-testid={
+          afterId
+            ? selectors.components.Transforms.addTransformationBelowButton(afterId)
+            : selectors.components.Transforms.addTransformationButton
+        }
         type="button"
         aria-label={ariaLabel}
         onClick={handleTransformationClick}

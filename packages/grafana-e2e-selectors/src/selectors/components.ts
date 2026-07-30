@@ -57,6 +57,14 @@ export const versionedComponents = {
       '13.0.0': 'data-testid Card heading',
     },
   },
+  CreateNewButton: {
+    newButton: {
+      '13.2.0': 'data-testid CreateNewButton New button',
+    },
+    newDashboardLink: {
+      '13.2.0': 'data-testid CreateNewButton New dashboard link',
+    },
+  },
   /**
    * @deprecated use DashboardSidebarSplitter instead
    */
@@ -689,6 +697,11 @@ export const versionedComponents = {
       },
     },
   },
+  UnconfiguredPanel: {
+    actionButton: {
+      '13.2.0': (key: string) => `data-testid UnconfiguredPanel action-button ${key}`,
+    },
+  },
   PanelEditor: {
     General: {
       content: {
@@ -1022,6 +1035,17 @@ export const versionedComponents = {
     disableTransformationButton: {
       '10.4.0': 'data-testid Disable transformation button',
     },
+    FilterByValue: {
+      addConditionButton: {
+        '13.2.0': 'data-testid Transforms FilterByValue add-condition-button',
+      },
+      fieldSelect: {
+        '13.2.0': (index: string) => `data-testid Transforms FilterByValue field-select ${index}`,
+      },
+      matchSelect: {
+        '13.2.0': (index: string) => `data-testid Transforms FilterByValue match-select ${index}`,
+      },
+    },
     Reduce: {
       modeLabel: {
         '10.2.3': 'data-testid Transform mode label',
@@ -1092,6 +1116,9 @@ export const versionedComponents = {
     addTransformationButton: {
       '10.1.0': 'data-testid add transformation button',
       [MIN_GRAFANA_VERSION]: 'add transformation button',
+    },
+    addTransformationBelowButton: {
+      '13.2.0': (afterId: string) => `data-testid add transformation below ${afterId}`,
     },
     goToQueriesButton: {
       '10.4.0': 'data-testid go to queries button',
