@@ -31,7 +31,6 @@ interface Props {
 export function GenerateDashboardModal({ onDismiss, seed }: Props) {
   const styles = useStyles2(getStyles);
 
-  const [freeText, setFreeText] = useState('');
   const [contextItems, setContextItems] = useState<ChatContextItem[]>([]);
 
   const allDatasources = useMemo(() => {
@@ -63,26 +62,25 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
     setContextItems((prev) => prev.filter((existing) => existing.node.id !== item.node.id));
   };
 
-  /** The user's free text plus any entry-point hint, as sent to the assistant. */
-  const composeRequest = () => {
-    const written = freeText.trim();
-    return seed?.promptHint ? `${written}\n\nWhere this request came from:\n${seed.promptHint}` : written;
-  };
+  /** The user's prompt plus any entry-point hint, as sent to the assistant. */
+  const composeRequest = (prompt: string) =>
+    seed?.promptHint ? `${prompt}\n\nWhere this request came from:\n${seed.promptHint}` : prompt;
 
   /**
    * Hands the prompt to the assistant sidebar for planning: the user lands in
    * the new-dashboard editor and the conversation takes it from there.
    */
-  const handleSubmitPrompt = () => {
-    if (freeText.trim() === '') {
+  const handleSubmitPrompt = (prompt: string) => {
+    const written = prompt.trim();
+    if (written === '') {
       return;
     }
 
     reportInteraction('dashboard_wizard_planning_started', { contextItems: contextItems.length });
 
     startPlanningInAssistant({
-      request: composeRequest(),
-      displayPrompt: freeText.trim(),
+      request: composeRequest(written),
+      displayPrompt: written,
       contextItems,
       datasources,
     });
@@ -98,12 +96,11 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
       className={styles.modal}
     >
       <PromptStep
-        freeText={freeText}
-        onFreeTextChange={setFreeText}
         contextItems={contextItems}
         onAddContextItem={handleAddContextItem}
         onRemoveContextItem={handleRemoveContextItem}
-        onSubmit={handleSubmitPrompt}
+        onSubmitPrompt={handleSubmitPrompt}
+        onDismiss={onDismiss}
       />
     </Modal>
   );

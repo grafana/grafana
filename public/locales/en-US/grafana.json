@@ -7920,7 +7920,6 @@
       "title": "Let's build a dashboard"
     },
     "prompt-step": {
-      "build-it": "Build it",
       "description": "Describe it in your own words — mention the services, data, or questions you care about.",
       "placeholder": "e.g. Error rates and latency for my checkout service, broken down by environment",
       "title": "What do you want to monitor?"

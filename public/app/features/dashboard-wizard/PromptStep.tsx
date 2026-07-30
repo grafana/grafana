@@ -1,71 +1,65 @@
 import { css } from '@emotion/css';
 
-import { type ChatContextItem } from '@grafana/assistant';
+import { AssistantPromptCardView, type ChatContextItem } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Field, Stack, TextArea, useStyles2 } from '@grafana/ui';
+import { Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { WizardContextPicker } from './WizardContextPicker';
+import { WIZARD_ORIGIN } from './prompts';
 
 interface Props {
-  freeText: string;
-  onFreeTextChange: (value: string) => void;
   contextItems: ChatContextItem[];
   onAddContextItem: (item: ChatContextItem) => void;
   onRemoveContextItem: (item: ChatContextItem) => void;
-  onSubmit: () => void;
+  /** Receives the prompt as typed; the modal composes the request and hands it off. */
+  onSubmitPrompt: (prompt: string) => void;
+  /** Escape inside the prompt card closes the wizard. */
+  onDismiss: () => void;
 }
 
-/** First wizard screen: describe the dashboard and hand it to the assistant. */
-export function PromptStep({
-  freeText,
-  onFreeTextChange,
-  contextItems,
-  onAddContextItem,
-  onRemoveContextItem,
-  onSubmit,
-}: Props) {
+/** First wizard screen: describe the dashboard, attach context, hand off to the sidebar. */
+export function PromptStep({ contextItems, onAddContextItem, onRemoveContextItem, onSubmitPrompt, onDismiss }: Props) {
   const styles = useStyles2(getStyles);
-
-  const canSubmit = freeText.trim() !== '';
 
   return (
     <div className={styles.container}>
-      <Field
-        label={t('dashboard-wizard.prompt-step.title', 'What do you want to monitor?')}
-        description={t(
-          'dashboard-wizard.prompt-step.description',
-          'Describe it in your own words — mention the services, data, or questions you care about.'
-        )}
-        noMargin
-      >
-        <TextArea
-          value={freeText}
-          onChange={(e) => onFreeTextChange(e.currentTarget.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              if (canSubmit) {
-                onSubmit();
-              }
-            }
-          }}
-          placeholder={t(
-            'dashboard-wizard.prompt-step.placeholder',
-            'e.g. Error rates and latency for my checkout service, broken down by environment'
+      <Stack direction="column" gap={0.5}>
+        <Text element="h4" variant="h5">
+          {t('dashboard-wizard.prompt-step.title', 'What do you want to monitor?')}
+        </Text>
+        <Text color="secondary">
+          {t(
+            'dashboard-wizard.prompt-step.description',
+            'Describe it in your own words — mention the services, data, or questions you care about.'
           )}
-          rows={4}
-        />
-      </Field>
+        </Text>
+      </Stack>
 
       {/* Point the assistant at specific datasources, metrics, or dashboards. */}
       <WizardContextPicker items={contextItems} onAdd={onAddContextItem} onRemove={onRemoveContextItem} />
 
-      <Stack justifyContent="flex-end" alignItems="center" gap={1}>
-        <Button onClick={onSubmit} disabled={!canSubmit} icon="ai-sparkle">
-          {t('dashboard-wizard.prompt-step.build-it', 'Build it')}
-        </Button>
-      </Stack>
+      {/*
+       * The SDK card owns the input and its submit affordance. We use the View
+       * variant so its `openAssistant` is ours: the wizard hands off through
+       * `startPlanningInAssistant`, which navigates to the new-dashboard editor
+       * and attaches the planning instructions before opening the sidebar.
+       */}
+      <AssistantPromptCardView
+        origin={WIZARD_ORIGIN}
+        mode="dashboarding"
+        placeholder={t(
+          'dashboard-wizard.prompt-step.placeholder',
+          'e.g. Error rates and latency for my checkout service, broken down by environment'
+        )}
+        examplePrompts={[]}
+        openAssistant={({ prompt }) => {
+          if (prompt) {
+            onSubmitPrompt(prompt);
+          }
+        }}
+        onClose={onDismiss}
+      />
     </div>
   );
 }

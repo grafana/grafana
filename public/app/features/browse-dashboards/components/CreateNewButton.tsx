@@ -2,7 +2,6 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { lazy, Suspense, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { useAssistant } from '@grafana/assistant';
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
@@ -16,6 +15,7 @@ import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { useDashboardGenerationAvailable } from 'app/features/dashboard-wizard/useDashboardGenerationAvailable';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { NewProvisionedFolderForm } from 'app/features/provisioning/components/Folders/NewProvisionedFolderForm';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
@@ -63,9 +63,7 @@ export default function CreateNewButton({
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: renderPreBuiltDashboardAction } = useTemplateDashboardsAvailability();
-  const { isAvailable: isAssistantAvailable } = useAssistant();
-  const renderGenerateDashboardAction =
-    Boolean(config.featureToggles.dashboardGenerationWizard) && isAssistantAvailable;
+  const renderGenerateDashboardAction = useDashboardGenerationAvailable();
 
   const theme = useTheme2();
 
