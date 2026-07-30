@@ -1338,7 +1338,8 @@ func TestKvStorageBackend_ListIterator_Success(t *testing.T) {
 }
 
 func TestKvStorageBackend_ListIterator_StreamsKeysInBatches(t *testing.T) {
-	const numResources = 2*dataBatchSize + 1
+	// Span more than one key page so the page-bounded scan is observable.
+	const numResources = keyPageSize + 2*dataBatchSize + 1
 
 	for name, setup := range map[string]func(*testing.T) KV{
 		"badger": setupBadgerKV,
@@ -1390,6 +1391,8 @@ func TestKvStorageBackend_ListIterator_StreamsKeysInBatches(t *testing.T) {
 			listedAfter := kvStore.listed()
 			assert.Equal(t, 1, tripsAfter-tripsBefore)
 			assert.Equal(t, dataBatchSize, keysReadAfter-keysReadBefore)
+			assert.Equal(t, keyPageSize, listedAfter-listedBefore,
+				"the key scan must materialize at most one page, not the whole list")
 			assert.Less(t, listedAfter-listedBefore, numResources,
 				"stopping the consumer must stop the key scan before all keys are materialized")
 		})
