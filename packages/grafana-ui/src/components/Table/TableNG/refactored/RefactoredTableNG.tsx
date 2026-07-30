@@ -20,10 +20,22 @@ function Safari26Wrapper(props: { children: React.ReactNode }) {
   return <div className={className}>{props.children}</div>;
 }
 
-// The debounce costs a frame of staleness on every resize, so it lives in a wrapper we only mount
-// for the layouts which are expensive to re-apply. Tables without one don't run the timer at all.
-function DebouncedWidth({ width, children }: { width: number; children: (width: number) => React.ReactNode }) {
-  return <>{children(useDebouncedNumber(width, RESIZE_WIDTH_DEBOUNCE_MS))}</>;
+// The debounce costs a frame of staleness on every resize, so we only feed the debounced width to
+// layouts which are expensive to re-apply; everything else gets the live width. This wrapper is
+// always mounted (regardless of `enabled`) so toggling debounce — e.g. when wrap text or a cell type
+// changes field width-sensitivity — doesn't change the fiber tree and remount the table, which would
+// reset local state like filters, pagination, expanded rows, and column resize.
+function DebouncedWidth({
+  width,
+  enabled,
+  children,
+}: {
+  width: number;
+  enabled: boolean;
+  children: (width: number) => React.ReactNode;
+}) {
+  const debounced = useDebouncedNumber(width, RESIZE_WIDTH_DEBOUNCE_MS);
+  return <>{children(enabled ? debounced : width)}</>;
 }
 
 export function RefactoredTableNG(props: TableNGProps) {
@@ -45,7 +57,11 @@ export function RefactoredTableNG(props: TableNGProps) {
       <TableFlat {...props} width={tableWidth} />
     );
 
-  const inner = needsDebounce ? <DebouncedWidth width={width}>{renderTable}</DebouncedWidth> : renderTable(width);
+  const inner = (
+    <DebouncedWidth width={width} enabled={needsDebounce}>
+      {renderTable}
+    </DebouncedWidth>
+  );
   const rendered = IS_SAFARI_26 ? <Safari26Wrapper>{inner}</Safari26Wrapper> : inner;
 
   if (!tableHasGeoCell) {

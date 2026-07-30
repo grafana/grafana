@@ -1523,10 +1523,12 @@ describe('TableNG utils', () => {
         ];
       });
 
-      // 2 lines @ 20px (123,456), 10px vertical padding. when we did this before, 'longer one here' would win, making it 70px.
-      // the `estimate` function is picking `123456` as the longer one now (6 lines), then the `measure` function is used
-      // to calculate the height (2 lines). this is a very forced case, but we just want to prove that it actually works.
+      // the `estimate` function picks `123456` as the tallest (6 lines), then the `measure` function is
+      // used to calculate its true height (2 lines). measurers[0] is forced to a single short line so it
+      // doesn't set the row-height floor — this test is only about the estimate-then-remeasure selection.
+      // 2 lines @ 20px (123,456) + 10px vertical padding = 50.
       it('uses the estimate value rather than the precise value to select the row height', () => {
+        jest.mocked(measurers[0].measure).mockReturnValue(20);
         expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(50);
       });
 
@@ -1549,6 +1551,19 @@ describe('TableNG utils', () => {
         jest.mocked(measurers[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD + thresholdOffset);
 
         expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(50);
+      });
+
+      // measurers[0] has no estimate, so it runs precisely in the first pass (like a pill column).
+      // measurers[1] over-estimates and wins the pass, but its precise remeasure comes back shorter
+      // than measurers[0]'s precise height. The row must stay tall enough for measurers[0] rather
+      // than adopting the shrunken winner height and clipping that column.
+      it('does not discard a precise measurer height when the estimated winner remeasures shorter', () => {
+        jest.mocked(measurers[0].measure).mockReturnValue(60); // precise height of the non-estimating column
+        jest.mocked(measurers[1].estimate!).mockReturnValue(100); // over-estimate wins the first pass
+        jest.mocked(measurers[1].measure).mockReturnValue(30); // true height of the winner is short
+
+        // max(remeasured winner 30, precise 60) = 60, + 10px vertical padding = 70
+        expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(70);
       });
     });
 

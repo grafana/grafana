@@ -2374,8 +2374,8 @@ describe.each(IMPLEMENTATIONS)('TableNG (%s)', (_impl, TableNG) => {
   });
 });
 
-// Only the refactored implementation hoists the width debounce into a wrapper it mounts on demand,
-// so these assert against it directly rather than through the shared parity suite above.
+// Only the refactored implementation hoists the width debounce into a wrapper that gates the debounce
+// on a prop, so these assert against it directly rather than through the shared parity suite above.
 describe('RefactoredTableNG width debouncing', () => {
   let origResizeObserver = global.ResizeObserver;
 
@@ -2455,6 +2455,28 @@ describe('RefactoredTableNG width debouncing', () => {
 
     act(() => jest.advanceTimersByTime(RESIZE_WIDTH_DEBOUNCE_MS));
     expect(columnTemplate(container)).toBe('450px 450px');
+  });
+
+  // Toggling width-sensitivity (here by turning on text wrapping) flips whether the debounce is active.
+  // The debounce wrapper stays mounted regardless, so the table must not remount — a remount would
+  // recreate the grid DOM node and wipe local state like filters, pagination, and column resize.
+  it('does not remount the table when width-sensitivity toggles', () => {
+    const gridNode = (container: HTMLElement) => container.querySelector('[role="grid"], [role="treegrid"]');
+
+    const insensitive = frameWithFields([
+      { name: 'Name', type: FieldType.string, values: ['a', 'b'], config: {} },
+      valueField,
+    ]);
+    const sensitive = frameWithFields([
+      { name: 'Name', type: FieldType.string, values: ['a', 'b'], config: { custom: { wrapText: true } } },
+      valueField,
+    ]);
+
+    const { container, rerender } = renderAtWidth(insensitive, 400);
+    const gridBefore = gridNode(container);
+
+    rerender(<RefactoredTableNG enableVirtualization={false} data={sensitive} width={400} height={300} />);
+    expect(gridNode(container)).toBe(gridBefore);
   });
 
   it('applies width changes immediately when the pill column has a configured width', () => {

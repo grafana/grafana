@@ -466,6 +466,11 @@ export function getRowHeight(
   let maxWidth = 0;
   let maxField: Field | undefined;
   let preciseMeasurer: MeasureCellHeight | undefined;
+  // Tallest height from measurers that already ran precisely (pills, data links). The estimated
+  // winner is remeasured below and can shrink beneath one of these, so we clamp back up to it —
+  // otherwise an over-estimating Auto column could beat a precise pill height and then discard it,
+  // sizing the row too short and clipping the pills.
+  let maxPreciseHeight = -1;
 
   for (const { estimate, measure, fieldIdxs } of measurers) {
     // for some of the cell height measurers, getting the precise height is expensive. those entries set
@@ -489,6 +494,9 @@ export function getRowHeight(
             : cellValueRaw;
         const colWidth = columnWidths[fieldIdx];
         const estimatedHeight = measurer(cellValueForMeasuring, colWidth, field, row.__index, lineHeight);
+        if (!isEstimating && estimatedHeight > maxPreciseHeight) {
+          maxPreciseHeight = estimatedHeight;
+        }
         if (estimatedHeight > maxHeight) {
           maxHeight = estimatedHeight;
           maxValue = cellValueForMeasuring;
@@ -507,9 +515,10 @@ export function getRowHeight(
   }
 
   // if we finished this row height loop with an estimate, we need to call
-  // the `preciseMeasurer` method to get the exact line count.
+  // the `preciseMeasurer` method to get the exact line count. the remeasured winner can come back
+  // shorter than a column we already measured precisely, so never drop below that height.
   if (preciseMeasurer !== undefined) {
-    maxHeight = preciseMeasurer(maxValue, maxWidth, maxField, row.__index, lineHeight);
+    maxHeight = Math.max(preciseMeasurer(maxValue, maxWidth, maxField, row.__index, lineHeight), maxPreciseHeight);
   }
 
   // adjust for vertical padding, and clamp to a minimum default height
