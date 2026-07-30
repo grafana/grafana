@@ -61,7 +61,8 @@ export function createDeepSearchSource(): CmdkSource {
 
       let results;
       try {
-        results = await getDeepSearchResults(query, abortSignal);
+        // No snippet cap — the detail pane has room to show every matched panel.
+        results = await getDeepSearchResults(query, abortSignal, Number.POSITIVE_INFINITY);
       } catch (error) {
         if (abortSignal.aborted) {
           return [];
@@ -81,7 +82,7 @@ export function createDeepSearchSource(): CmdkSource {
           priority: DEEP_SEARCH_PRIORITY,
           href: result.url,
           subtitle: result.folderTitle,
-          tags: result.tags,
+          // Tags are intentionally not on the list item to keep the row compact; they show in the detail.
           renderDetail: () => <DeepSearchItemDetail result={result} />,
         })
       );
@@ -111,14 +112,7 @@ function DeepSearchItemDetail({ result }: { result: DeepSearchDashboardResult })
         return (
           <div key={index} className={styles.snippetCard}>
             <div className={styles.snippetTitle}>{title}</div>
-            {description && (
-              <>
-                <div className={styles.descriptionLabel}>
-                  {t('cmdk.deep-search.description-label', 'Description')}
-                </div>
-                <div className={styles.snippetDescription}>{description}</div>
-              </>
-            )}
+            {description && <div className={styles.snippetDescription}>{description}</div>}
           </div>
         );
       })}

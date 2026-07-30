@@ -118,7 +118,10 @@ function relativeToBestCutoff(scores: number[]): number {
  * relative-to-best over all matched panels (best + margin). Dashboard disappears
  * if its best panel is more than a margin past the overall best.
  */
-export function groupDeepSearchResults(results: DeepSearchPanelResult[]): DeepSearchDashboardResult[] {
+export function groupDeepSearchResults(
+  results: DeepSearchPanelResult[],
+  maxSnippetsPerDashboard = MAX_SNIPPETS_PER_DASHBOARD
+): DeepSearchDashboardResult[] {
   const matched = results.filter((result) => result.dashboardUid);
   const globalCutoff = relativeToBestCutoff(matched.map((result) => result.score));
 
@@ -149,7 +152,7 @@ export function groupDeepSearchResults(results: DeepSearchPanelResult[]): DeepSe
       }))
       .filter((snippet) => snippet.text)
       .sort((a, b) => a.score - b.score)
-      .slice(0, MAX_SNIPPETS_PER_DASHBOARD);
+      .slice(0, maxSnippetsPerDashboard);
 
     groups.push({
       dashboardUid: best.dashboardUid,
@@ -197,7 +200,8 @@ async function resolveFolderTitles(results: DeepSearchPanelResult[]): Promise<De
 
 export async function getDeepSearchResults(
   query: string,
-  abortSignal?: AbortSignal
+  abortSignal?: AbortSignal,
+  maxSnippetsPerDashboard?: number
 ): Promise<DeepSearchDashboardResult[]> {
   if (query.trim().length === 0) {
     return [];
@@ -205,7 +209,7 @@ export async function getDeepSearchResults(
 
   const results = await searchDashboardVector(query, { limit: DEEP_SEARCH_FETCH_LIMIT, abortSignal });
   const withFolderTitles = await resolveFolderTitles(results);
-  return groupDeepSearchResults(withFolderTitles);
+  return groupDeepSearchResults(withFolderTitles, maxSnippetsPerDashboard);
 }
 
 interface UseDeepSearchResultsOptions {

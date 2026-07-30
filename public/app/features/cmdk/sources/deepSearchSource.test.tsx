@@ -55,7 +55,6 @@ describe('deepSearchSource', () => {
         priority: 0,
         href: '/d/dash-1',
         subtitle: undefined,
-        tags: ['monitoring', 'prod'],
         renderDetail: expect.any(Function),
       },
       expect.objectContaining({ id: 'deep-search/dash-2', title: 'Other dashboard' }),
@@ -83,9 +82,9 @@ describe('deepSearchSource', () => {
     expect(screen.getByText('Shows the CPU usage')).toBeInTheDocument();
     expect(screen.getByText('Memory panel')).toBeInTheDocument();
     expect(screen.getByText('Disk panel')).toBeInTheDocument();
-    // Only 3 snippets are shown, the fourth matched panel is summarized
-    expect(screen.queryByText('Network panel')).not.toBeInTheDocument();
-    expect(screen.getByText('1 more matched panel')).toBeInTheDocument();
+    // All matched panels are shown, there is nothing left to summarize
+    expect(screen.getByText('Network panel')).toBeInTheDocument();
+    expect(screen.queryByText(/more matched panel/)).not.toBeInTheDocument();
     expect(screen.getByText('monitoring')).toBeInTheDocument();
   });
 
