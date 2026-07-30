@@ -179,7 +179,7 @@ func TestClientGetCachedListRepositoryGetter_WaitsForAnnouncedVersion(t *testing
 	require.NoError(t, err)
 	assert.Equal(t, strconv.FormatInt(rvFresh, 10), got.ResourceVersion)
 	assert.EqualValues(t, 2, reads.Load(), "the stale first read must be retried")
-	assert.Zero(t, floor.Floor("ns", "r"), "a met floor must settle")
+	assert.Equal(t, rvFresh, floor.Floor("ns", "r"), "the floor persists as the observed watermark")
 
 	list, err := g.List(context.Background(), "ns")
 	require.NoError(t, err)

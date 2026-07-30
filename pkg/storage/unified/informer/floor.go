@@ -24,15 +24,17 @@ import (
 var ErrStaleRead = errors.New("read is staler than the announced resource version")
 
 const (
-	// floorTTL bounds how long an unmet floor is remembered. A floor normally
-	// clears when a read meets it or a delete event forgets it, but a hard delete
-	// round-robined to another replica for an object that never entered a re-list
-	// snapshot would leave its floor orphaned forever; by TTL time the periodic
-	// re-list has long since delivered the truth, so dropping it is safe. Expiry
-	// is enforced at both touch points: Floor drops an expired entry rather than
-	// return it (so an orphan cannot outlive the TTL just because no event
-	// traffic triggers a sweep), and Raise amortizes a full sweep over the event
-	// stream to bound memory for keys nobody reads again.
+	// floorTTL bounds how long a floor is remembered after its last raise. A
+	// floor normally clears when a dated delete or re-list settles it, but a
+	// hard delete round-robined to another replica for an object that never
+	// entered a re-list snapshot would leave its floor orphaned forever — and
+	// floors double as per-key read watermarks, so quiet keys hold an entry
+	// until it ages out; by TTL time the periodic re-list has long since
+	// delivered the truth. Expiry is enforced at both touch points: reads drop
+	// an expired entry rather than return it (so an orphan cannot outlive the
+	// TTL just because no event traffic triggers a sweep), and Raise amortizes a
+	// full sweep over the event stream to bound memory for keys nobody reads
+	// again.
 	floorTTL = 15 * time.Minute
 	// sweepInterval is how often Raise scans for expired floors, so expiry cost
 	// is amortized over the event stream instead of paid per call.
@@ -48,10 +50,14 @@ const (
 )
 
 // RVFloor tracks, per object, the highest resource version any informer event
-// has announced — the freshness floor a reconcile read must reach before its
-// result can be trusted as current. Notifications carry the version of a
-// committed write, so a subsequent read returning less is a stale replica, not
-// truth.
+// has announced or any fresh read has observed — the freshness floor a
+// reconcile read must reach before its result can be trusted as current.
+// Notifications carry the version of a committed write, so a subsequent read
+// returning less is a stale replica, not truth; and once a read has observed a
+// version, a later read (a retry of a failed reconcile, an internal
+// re-schedule) below it is equally stale. Floors therefore drop only against
+// dated informer evidence (Settle from a delete or a re-list) or the TTL —
+// never because a read met them.
 //
 // Versions are normalized to snowflake form on the way in (Raise/Settle), so
 // wire versions (always snowflake) and read versions (possibly legacy
@@ -97,7 +103,27 @@ func (f *RVFloor) Raise(namespace, name string, rv int64) {
 func (f *RVFloor) Floor(namespace, name string) int64 {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	key := floorKey(namespace, name)
+	return f.currentLocked(floorKey(namespace, name))
+}
+
+// Below reports whether rv is evidence of a stale read: a positive version
+// strictly under the key's outstanding floor. No floor, or rv at/above it (or
+// unparseable, rv <= 0), reports false — absence of a floor never indicts a
+// read.
+func (f *RVFloor) Below(namespace, name string, rv int64) bool {
+	if rv <= 0 {
+		return false
+	}
+	rv = resource.ToSnowflakeRV(rv)
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	floor := f.currentLocked(floorKey(namespace, name))
+	return floor > 0 && rv < floor
+}
+
+// currentLocked returns the key's floor, dropping (and reporting absent) an
+// entry past its TTL. Callers hold f.mu.
+func (f *RVFloor) currentLocked(key string) int64 {
 	e, ok := f.floors[key]
 	if !ok {
 		return 0
@@ -161,11 +187,15 @@ func NewFreshReader(floor *RVFloor) FreshReader {
 // GetFresh fetches an object until the read is at least as fresh as the key's
 // floor, so a reconcile never acts on state older than the event that woke it.
 //
-//   - a read at or above the floor settles it and is returned;
-//   - a read below it — or a NotFound while a floor says the object exists — is
-//     a visibility lag: re-read up to Retries times, then return ErrStaleRead
-//     (which deliberately does not wrap the NotFound, so callers don't mistake a
-//     stale 404 for a trusted delete);
+//   - a read at or above the floor is returned, and the floor is raised to the
+//     read's version: the reconcile attempt may still fail and be retried, and
+//     the retry must not accept anything older than this attempt already saw
+//     (a lagging replica could otherwise serve older state, or a 404 that would
+//     read as a trusted delete);
+//   - a read below the floor — or a NotFound while a floor says the object
+//     exists — is a visibility lag: re-read up to Retries times, then return
+//     ErrStaleRead (which deliberately does not wrap the NotFound, so callers
+//     don't mistake a stale 404 for a trusted delete);
 //   - a NotFound with no floor outstanding is trusted and returned as is;
 //   - an object whose version does not parse fails open: enforcement cannot
 //     apply, so it is returned rather than spun on.
@@ -189,8 +219,8 @@ func GetFresh[T runtime.Object](ctx context.Context, r FreshReader, namespace, n
 		case err == nil:
 			rv := objectRV(obj)
 			if floor == 0 || rv == 0 || rv >= floor {
-				if r.Floor != nil {
-					r.Floor.Settle(namespace, name, rv)
+				if r.Floor != nil && rv > 0 {
+					r.Floor.Raise(namespace, name, rv)
 				}
 				return obj, nil
 			}

@@ -137,7 +137,49 @@ func TestGetFresh_WaitsForFloor(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, formatRV(rvFresh), got.ResourceVersion)
 	assert.Equal(t, 2, fetches, "the stale first read must be retried")
-	assert.Zero(t, floor.Floor(testNamespace, "r"), "a met floor must settle")
+	assert.Equal(t, rvFresh, floor.Floor(testNamespace, "r"), "the floor persists as the observed watermark")
+}
+
+// A met floor is not settled by the read: the reconcile attempt may still fail
+// and be retried, and the retry must not accept a read below what the first
+// attempt already observed.
+func TestGetFresh_RetainsFloorAcrossAttempts(t *testing.T) {
+	floor := NewRVFloor()
+	floor.Raise(testNamespace, "r", rvFresh)
+	reader := FreshReader{Floor: floor, Retries: 2}
+
+	// First attempt reads fresh state.
+	_, err := GetFresh(context.Background(), reader, testNamespace, "r",
+		func(context.Context) (*metav1.PartialObjectMetadata, error) {
+			return objWithRV("r", rvFresh), nil
+		})
+	require.NoError(t, err)
+
+	// The retry lands on a lagging replica: the watermark must reject it.
+	_, err = GetFresh(context.Background(), reader, testNamespace, "r",
+		func(context.Context) (*metav1.PartialObjectMetadata, error) {
+			return objWithRV("r", rvStale), nil
+		})
+	require.ErrorIs(t, err, ErrStaleRead)
+
+	// A stale 404 on the retry must not read as a trusted delete either.
+	_, err = GetFresh(context.Background(), reader, testNamespace, "r",
+		func(context.Context) (*metav1.PartialObjectMetadata, error) {
+			return nil, notFound("r")
+		})
+	require.ErrorIs(t, err, ErrStaleRead)
+	assert.False(t, apierrors.IsNotFound(err))
+}
+
+func TestRVFloor_Below(t *testing.T) {
+	f := NewRVFloor()
+	assert.False(t, f.Below("ns", "r", rvStale), "no floor indicts no read")
+
+	f.Raise("ns", "r", rvFresh)
+	assert.True(t, f.Below("ns", "r", rvStale))
+	assert.False(t, f.Below("ns", "r", rvFresh))
+	assert.False(t, f.Below("ns", "r", rvFresh+1))
+	assert.False(t, f.Below("ns", "r", 0), "an unparseable version fails open")
 }
 
 // A read that never catches up surfaces ErrStaleRead and keeps the floor, so
