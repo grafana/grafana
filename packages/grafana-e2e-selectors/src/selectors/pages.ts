@@ -195,6 +195,9 @@ export const versionedPages = {
       addButton: {
         '12.4.0': 'data-testid Dashboard Sidebar new button',
       },
+      codeButton: {
+        '13.2.0': 'data-testid Dashboard Sidebar code button',
+      },
       viewPanelControls: {
         '13.0.0': 'data-testid Dashboard Sidebar view panel controls',
       },

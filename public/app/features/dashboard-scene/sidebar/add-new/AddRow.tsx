@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
@@ -46,6 +47,7 @@ export function AddRow({ dashboardScene, selectedElement }: AddRowProps) {
     <AddButton
       icon="list-ul"
       label={label}
+      testId={selectors.components.Sidebar.addNewRowButton}
       onClick={onAddRowClick}
       disabled={disableGrouping}
       tooltip={disableGrouping ? getNestingRestrictionMessage() : undefined}
