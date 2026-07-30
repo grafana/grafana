@@ -41,11 +41,11 @@ interface TableContainerProps {
   ariaLabel?: string;
 }
 
-function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
+export function mapStateToProps(state: StoreState, { exploreId }: TableContainerProps) {
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
   const { tableResult, range } = item;
-  const loadingInState = selectIsWaitingForData(exploreId);
+  const loadingInState = selectIsWaitingForData(exploreId)(state);
   const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
   const hasTempoStreamingProgressTable = tableResult?.some((f) => f.refId === TEMPO_STREAMING_PROGRESS_REF_ID);
   return {

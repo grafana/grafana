@@ -1,10 +1,20 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type DataFrame, FieldType, getDefaultTimeRange, InternalTimeZones, toDataFrame } from '@grafana/data';
+import {
+  type DataFrame,
+  FieldType,
+  getDefaultTimeRange,
+  InternalTimeZones,
+  LoadingState,
+  toDataFrame,
+} from '@grafana/data';
 import { setPanelRenderer } from '@grafana/runtime/internal';
 
-import { TableContainer } from './TableContainer';
+import { configureStore } from '../../../store/configureStore';
+import { createEmptyQueryResponse, makeExplorePaneState } from '../state/utils';
+
+import { mapStateToProps, TableContainer } from './TableContainer';
 
 const mockRenderedSeries: DataFrame[][] = [];
 
@@ -171,6 +181,36 @@ describe('TableContainer', () => {
       rendered.fields.forEach((field) => {
         expect(field.config.custom?.hideFrom?.viz).toBe(false);
       });
+    });
+  });
+
+  describe('mapStateToProps', () => {
+    const ownProps = {
+      exploreId: 'left',
+      width: 800,
+      timeZone: InternalTimeZones.utc,
+      splitOpenFn: () => {},
+    };
+
+    function makeState(queryState: LoadingState, tableResult: DataFrame[] | null) {
+      const store = configureStore();
+      const state = store.getState();
+      state.explore.panes = {
+        left: {
+          ...makeExplorePaneState(),
+          tableResult,
+          queryResponse: { ...createEmptyQueryResponse(), state: queryState },
+        },
+      };
+      return state;
+    }
+
+    it('is not loading when the query has settled without any data', () => {
+      expect(mapStateToProps(makeState(LoadingState.Done, null), ownProps).loading).toBe(false);
+    });
+
+    it('is loading while a query is running and no data has arrived yet', () => {
+      expect(mapStateToProps(makeState(LoadingState.Loading, null), ownProps).loading).toBe(true);
     });
   });
 
