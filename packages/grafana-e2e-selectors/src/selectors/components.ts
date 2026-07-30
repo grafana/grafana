@@ -64,6 +64,17 @@ export const versionedComponents = {
     newDashboardLink: {
       '13.2.0': 'data-testid CreateNewButton New dashboard link',
     },
+    newTemplateDashboardLink: {
+      '13.2.0': 'data-testid CreateNewButton New template dashboard link',
+    },
+  },
+  BuildDashboardButton: {
+    triggerButton: {
+      '13.2.0': 'data-testid BuildDashboardButton trigger button',
+    },
+    fromSuggestionsButton: {
+      '13.2.0': 'data-testid BuildDashboardButton from suggestions button',
+    },
   },
   /**
    * @deprecated use DashboardSidebarSplitter instead
@@ -697,6 +708,11 @@ export const versionedComponents = {
       },
     },
   },
+  Modal: {
+    closeButton: {
+      '13.2.0': 'data-testid Modal close button',
+    },
+  },
   UnconfiguredPanel: {
     actionButton: {
       '13.2.0': (key: string) => `data-testid UnconfiguredPanel action-button ${key}`,
@@ -1220,6 +1236,11 @@ export const versionedComponents = {
     },
   },
 
+  PageActionBar: {
+    searchInput: {
+      '13.2.0': 'data-testid PageActionBar search input',
+    },
+  },
   PageToolbar: {
     container: { [MIN_GRAFANA_VERSION]: () => '.page-toolbar' },
     item: {
@@ -1332,6 +1353,9 @@ export const versionedComponents = {
     },
     input: {
       '10.4.0': 'data-testid folder-picker-input',
+    },
+    triggerButton: {
+      '13.2.0': 'data-testid folder-picker-trigger-button',
     },
   },
   ReadonlyFolderPicker: {
