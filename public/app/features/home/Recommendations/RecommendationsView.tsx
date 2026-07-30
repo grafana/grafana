@@ -51,8 +51,9 @@ export function RecommendationsView({
   const selectionPending = activeSolution === undefined;
   const items = activeSolution != null ? recommendationsBySolution[activeSolution] : recommendations;
 
-  // A solution switch restarts the carousel: the point of the swap is the new leading card.
-  useEffect(() => {
+  // A solution switch restarts the carousel; layout effect so the reset lands in the same
+  // pre-paint pass as the selection commit and the new order never flashes at the old index.
+  useLayoutEffect(() => {
     setIndex(0);
   }, [activeSolution]);
 
