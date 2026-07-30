@@ -929,3 +929,79 @@ func TestBundleBudget_completeBundleIsUnmarked(t *testing.T) {
 	require.NotContains(t, readTarGz(t, archive), "bundle-limit.txt",
 		"a bundle that dropped nothing must carry no limit note")
 }
+
+func TestQueryDataLowerBoundBytes(t *testing.T) {
+	t.Run("nil and empty responses cost nothing", func(t *testing.T) {
+		require.Zero(t, queryDataLowerBoundBytes(nil))
+		require.Zero(t, queryDataLowerBoundBytes(backend.NewQueryDataResponse()))
+	})
+
+	t.Run("numeric fields are floored at one byte per value", func(t *testing.T) {
+		frame := data.NewFrame("cpu",
+			data.NewField("a", nil, []float64{1, 2, 3}),
+			data.NewField("b", nil, []int64{1, 2, 3}),
+		)
+		resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+		require.Equal(t, 6, queryDataLowerBoundBytes(resp), "two fields of three values")
+	})
+
+	t.Run("string fields count their bytes plus quotes", func(t *testing.T) {
+		frame := data.NewFrame("logs", data.NewField("line", nil, []string{"hello", "hi"}))
+		resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+		require.Equal(t, len(`"hello"`)+len(`"hi"`), queryDataLowerBoundBytes(resp))
+	})
+
+	t.Run("HAR frames are excluded, as the artifact excludes them", func(t *testing.T) {
+		payload := data.NewFrame("har", data.NewField("line", nil, []string{strings.Repeat("x", 1000)}))
+		resp := &backend.QueryDataResponse{Responses: backend.Responses{
+			harResponseRefIDPrefix + "abc": {Frames: data.Frames{payload}},
+		}}
+		require.Zero(t, queryDataLowerBoundBytes(resp),
+			"counting bytes the artifact won't contain is the one way this could overestimate")
+	})
+
+	// The whole point: the floor must never exceed the real encoding, or a response that would have fitted
+	// gets declined and its evidence is lost.
+	t.Run("the floor never exceeds the real encoded size", func(t *testing.T) {
+		for _, tc := range []struct {
+			name  string
+			frame *data.Frame
+		}{
+			{"numbers", data.NewFrame("n", data.NewField("v", nil, []float64{1.5, -2.25, 3}))},
+			{"strings", data.NewFrame("s", data.NewField("v", nil, []string{"", "a", "hello world"}))},
+			{"nullable strings", data.NewFrame("ns", data.NewField("v", nil, []*string{nil, ptr("x")}))},
+			{"mixed", data.NewFrame("m",
+				data.NewField("t", nil, []time.Time{time.Unix(0, 0)}),
+				data.NewField("v", nil, []string{"payload"}),
+			)},
+			{"empty frame", data.NewFrame("e", data.NewField("v", nil, []float64{}))},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{tc.frame}}}}
+				encoded, err := marshalQueryDataArtifact(nil, resp)
+				require.NoError(t, err)
+				require.LessOrEqual(t, queryDataLowerBoundBytes(resp), len(encoded),
+					"the floor must be a lower bound on the real artifact")
+			})
+		}
+	})
+}
+
+func ptr[T any](v T) *T { return &v }
+
+func TestBundler_Build_declinesQueryDataItCannotFit(t *testing.T) {
+	// A string field larger than the whole budget: the floor alone exceeds it, so the response must never
+	// be marshalled -- avoiding the allocation is the reason the check exists.
+	huge := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", MaxBundleBytes+1)}))
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{huge}}}}
+
+	archive, result, err := NewBundler(nil).Build(resp, nil, nil, nil, json.RawMessage(`{"q":1}`), nil, nil)
+	require.NoError(t, err)
+	require.True(t, result.Partial())
+
+	files := readTarGz(t, archive)
+	require.NotContains(t, files, "querydata.json")
+	require.Contains(t, string(files["bundle-limit.txt"]), "not built",
+		"the reader must be able to tell it was declined rather than absent")
+	require.Contains(t, string(files["querydata-error.txt"]), "larger than the bundle size limit")
+}

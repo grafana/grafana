@@ -17,6 +17,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
 )
@@ -35,11 +36,15 @@ type Bundler struct {
 // It is a memory figure, not a disk one. Assembly holds every artifact in a map, gzips them into a
 // second in-memory buffer, and the dashboard job store retains the result.
 //
-// What it does and does not promise: the artifact total is honoured exactly, and dashboard generation
-// stops adding panels once its captures reach this much. Peak process memory is still not held to it,
-// because a panel's response and capture are resident before either check can weigh them, and
-// marshalling a response allocates its full JSON. Bounding peak memory too needs a cap on the
-// in-process capture itself, plus the archive spooled to a temp file rather than assembled in RAM.
+// The artifact total is honoured exactly; dashboard generation stops adding panels once its captures
+// reach this much; and a response whose JSON provably could not fit is never marshalled (see
+// queryDataLowerBoundBytes), so that allocation is bounded by this number too rather than by the
+// response.
+//
+// Peak process memory is still not held to it, because a panel's response and capture are resident
+// before any of those checks can weigh them, and a response that passes the floor check still allocates
+// its full JSON once. Bounding peak memory as well needs a cap on the in-process capture itself, plus
+// the archive spooled to a temp file rather than assembled in RAM.
 const MaxBundleBytes = 1 << 30 // 1 GiB
 
 // bundleBudget accumulates a bundle's artifacts against MaxBundleBytes.
@@ -72,6 +77,17 @@ func (b *bundleBudget) add(name string, data []byte) bool {
 	b.remaining -= len(data)
 	b.files[name] = data
 	return true
+}
+
+// fits reports whether an artifact of at least atLeast bytes could still be added, recording the drop
+// if it could not. For artifacts expensive to produce: it lets a caller decline to build one that
+// provably will not fit, instead of allocating it only to have add() reject it.
+func (b *bundleBudget) fits(name string, atLeast int) bool {
+	if atLeast <= b.remaining {
+		return true
+	}
+	b.dropped = append(b.dropped, fmt.Sprintf("%s (not built: at least %d bytes, %d remaining)", name, atLeast, b.remaining))
+	return false
 }
 
 // finish records what the ceiling cost, then assembles the archive. bundle-limit.txt is written
@@ -190,7 +206,13 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 		queryDataErr = fmt.Errorf("serialize query request: %w", queryRequestErr)
 	}
 	var queryData []byte
-	if resp != nil || len(queryRequestJSON) > 0 {
+	// Weighed before marshalling, not after: encoding a response allocates the whole document, so a
+	// response that cannot fit must be declined rather than built and rejected. The floor is charged
+	// against the full budget because the bulk artifacts have not been added yet.
+	switch {
+	case resp != nil && !budget.fits("querydata.json", queryDataLowerBoundBytes(resp)):
+		queryDataErr = errors.Join(queryDataErr, errors.New("query data not serialized: larger than the bundle size limit"))
+	case resp != nil || len(queryRequestJSON) > 0:
 		var err error
 		queryData, err = marshalQueryDataArtifact(queryRequestJSON, resp)
 		if err != nil {
@@ -291,6 +313,60 @@ func marshalQueryDataArtifact(request json.RawMessage, resp *backend.QueryDataRe
 		artifact.Response = responseJSON
 	}
 	return json.MarshalIndent(artifact, "", "  ")
+}
+
+// queryDataLowerBoundBytes returns a floor on the JSON size of resp: a byte count the encoded
+// querydata.json cannot come in under. It exists so a response that provably cannot fit the bundle
+// budget is never marshalled at all.
+//
+// It must stay a floor: erring low only costs a marshal that add() then rejects, while erring high
+// declines an artifact that would have fitted.
+//
+// Deliberately loose in two ways. It counts no separators, braces, field names or frame metadata, all of
+// which the real document pays for. And it walks values without copying any: string lengths are read
+// from their headers, so this stays far cheaper than the marshal it may avoid.
+//
+// HAR responses are skipped because queryDataResponseWithoutCaptureFrames strips them, and counting
+// bytes the artifact will not contain is the one way this could overestimate.
+func queryDataLowerBoundBytes(resp *backend.QueryDataResponse) int {
+	if resp == nil {
+		return 0
+	}
+	total := 0
+	for refID, response := range resp.Responses {
+		if isHARResponse(refID) {
+			continue
+		}
+		for _, frame := range response.Frames {
+			if frame == nil {
+				continue
+			}
+			for _, field := range frame.Fields {
+				if field == nil {
+					continue
+				}
+				switch field.Type() {
+				case data.FieldTypeString, data.FieldTypeNullableString:
+					// Strings are the only values whose JSON size isn't bounded below by a constant, and the
+					// case that matters: a few rows of log lines outweigh millions of numbers.
+					for i := 0; i < field.Len(); i++ {
+						if v, ok := field.ConcreteAt(i); ok {
+							if s, isString := v.(string); isString {
+								total += len(s) + len(`""`)
+								continue
+							}
+						}
+						total++ // a null, which costs 4; counting 1 keeps this a floor
+					}
+				default:
+					// Every other value encodes to at least one character (a single digit, or `0` for a
+					// null-free numeric), so the row count is a floor for the whole field.
+					total += field.Len()
+				}
+			}
+		}
+	}
+	return total
 }
 
 func summarizeQueryDataResponse(resp *backend.QueryDataResponse) map[string]queryDataResponseSummary {
@@ -445,7 +521,13 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 			queryDataErrs = append(queryDataErrs, "serialize query request: "+p.QueryRequestErr.Error())
 		}
 		var queryData []byte
-		if p.Resp != nil || len(p.QueryRequest) > 0 {
+		// As in Build: decline a response that provably cannot fit rather than allocating its JSON to
+		// find out. Here the floor is weighed against what earlier panels have already spent.
+		switch {
+		case p.Resp != nil && !budget.fits(dir+"/querydata.json", queryDataLowerBoundBytes(p.Resp)):
+			entry.QueryDataTruncated = true
+			queryDataErrs = append(queryDataErrs, "not serialized: larger than the remaining bundle size limit")
+		case p.Resp != nil || len(p.QueryRequest) > 0:
 			var err error
 			queryData, err = marshalQueryDataArtifact(p.QueryRequest, p.Resp)
 			if err != nil {
