@@ -1308,8 +1308,7 @@ func TestConnectionController_process(t *testing.T) {
 				resyncInterval:    5 * time.Minute,
 			}
 
-			item := &connectionQueueItem{key: tt.conn.Namespace + "/" + tt.conn.Name}
-			err := cc.process(context.Background(), item)
+			err := cc.process(context.Background(), tt.conn.Namespace+"/"+tt.conn.Name)
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -1473,10 +1472,7 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 			}
 
 			// Process the connection
-			item := &connectionQueueItem{
-				key: "default/test-conn",
-			}
-			err := cc.process(ctx, item)
+			err := cc.process(ctx, "default/test-conn")
 			require.NoError(t, err, "process should succeed")
 		})
 	}

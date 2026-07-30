@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -14,11 +13,9 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/retry"
-	"k8s.io/client-go/util/workqueue"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
@@ -36,10 +33,6 @@ import (
 )
 
 const loggerName = "provisioning-repository-controller"
-
-const (
-	maxAttempts = 3
-)
 
 //go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock.go --with-expecter
 type finalizerProcessor interface {
@@ -68,18 +61,14 @@ type RepositoryController struct {
 	enqueueRepository func(obj any, trigger usinformer.ProcessTrigger)
 	keyFunc           func(obj any) (string, error)
 
-	queue           workqueue.TypedRateLimitingInterface[string]
+	runner          *appcontroller.Runner
 	resyncInterval  time.Duration
 	minSyncInterval time.Duration
-	drainTimeout    time.Duration
 
 	// processed classifies each delivery (encapsulating the NATS/apiserver
-	// backend) and records the processing metrics by what enqueued the key.
-	// triggers carries that attribution from enqueue to dequeue, guarded by
-	// triggersMu (entries live only between enqueue and Forget).
-	processed  *usinformer.ProcessedMetrics
-	triggersMu sync.Mutex
-	triggers   map[string]usinformer.ProcessTrigger
+	// backend) and records the processing metrics by what enqueued the key;
+	// the runner carries the attribution from enqueue to pickup.
+	processed *usinformer.ProcessedMetrics
 
 	registry                      prometheus.Registerer
 	tracer                        tracing.Tracer
@@ -119,16 +108,9 @@ func NewRepositoryController(
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
 
 	rc := &RepositoryController{
-		client:    provisioningClient,
-		repos:     repos,
-		processed: usinformer.NewProcessedMetrics(registry, "repositories", natsBacked),
-		triggers:  make(map[string]usinformer.ProcessTrigger),
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name: "provisioningRepositoryController",
-			},
-		),
+		client:            provisioningClient,
+		repos:             repos,
+		processed:         usinformer.NewProcessedMetrics(registry, "repositories", natsBacked),
 		repoFactory:       repoFactory,
 		connectionFactory: connectionFactory,
 		healthChecker:     healthChecker,
@@ -147,7 +129,6 @@ func NewRepositoryController(
 		tracer:                        tracer,
 		resyncInterval:                resyncInterval,
 		minSyncInterval:               minSyncInterval,
-		drainTimeout:                  drainTimeout,
 		quotaGetter:                   quotaGetter,
 		tokenMetrics:                  repoTokenMetrics,
 		incrementalPolicy:             incrementalPolicy,
@@ -157,8 +138,29 @@ func NewRepositoryController(
 	rc.processFn = rc.process
 	rc.enqueueRepository = rc.enqueue
 	rc.keyFunc = repoKeyFunc
+	rc.runner = rc.newRunner(drainTimeout)
 
 	return rc
+}
+
+// newRunner wires the shared runner for this controller. Split from the
+// constructor so tests that build the controller as a struct literal can reuse
+// the exact production wiring.
+func (rc *RepositoryController) newRunner(drainTimeout time.Duration) *appcontroller.Runner {
+	return appcontroller.NewRunner(appcontroller.RunnerConfig{
+		Name:         "provisioningRepositoryController",
+		Logger:       rc.logger,
+		DrainTimeout: drainTimeout,
+		// The runner-provided context is ignored: process builds its own from
+		// context.Background() so an in-flight reconcile can finish during the
+		// shutdown drain rather than being canceled with it.
+		Process: func(_ context.Context, key string) error {
+			return rc.processFn(key)
+		},
+		RecordProcessed: func(trigger string) {
+			rc.processed.RecordProcessed(usinformer.ProcessTrigger(trigger))
+		},
+	})
 }
 
 // EventHandler returns the informer event handlers for the controller. Register
@@ -196,49 +198,8 @@ func objectResourceVersion(obj any) string {
 // The onStarted callback is invoked once all workers have been launched.
 // The onShutdown callback is invoked immediately when context cancellation is
 // detected, before draining in-flight work.
-//
-// Note: This function intentionally does NOT create a tracing span because it runs indefinitely
-// until shutdown. Individual processing operations already have their own spans.
 func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStarted func(), onShutdown func()) {
-	defer utilruntime.HandleCrash()
-	defer rc.queue.ShutDown()
-
-	logger := rc.logger
-	ctx = logging.Context(ctx, logger)
-	logger.Info("Starting RepositoryController")
-	defer logger.Info("Shutting down RepositoryController")
-
-	logger.Info("Starting workers", "count", workerCount)
-	for i := 0; i < workerCount; i++ {
-		workerCtx := logging.Context(ctx, logger.With("worker_id", i))
-		go wait.UntilWithContext(workerCtx, rc.runWorker, time.Second)
-	}
-
-	logger.Info("Started workers")
-	onStarted()
-
-	<-ctx.Done()
-	onShutdown()
-	logger.Info("Shutting down workers, draining queue")
-
-	drainDone := make(chan struct{})
-	go func() {
-		rc.queue.ShutDownWithDrain()
-		close(drainDone)
-	}()
-
-	select {
-	case <-drainDone:
-		logger.Info("Queue drained successfully")
-	case <-time.After(rc.drainTimeout):
-		logger.Warn("Drain timeout exceeded, forcing shutdown")
-		rc.queue.ShutDown()
-	}
-}
-
-func (rc *RepositoryController) runWorker(ctx context.Context) {
-	for rc.processNextWorkItem(ctx) {
-	}
+	rc.runner.Run(ctx, workerCount, onStarted, onShutdown)
 }
 
 func (rc *RepositoryController) enqueue(obj interface{}, trigger usinformer.ProcessTrigger) {
@@ -247,109 +208,7 @@ func (rc *RepositoryController) enqueue(obj interface{}, trigger usinformer.Proc
 		utilruntime.HandleError(fmt.Errorf("couldn't get key for object: %v", err))
 		return
 	}
-	// Attribute the key before the enqueue so a worker that dequeues immediately
-	// sees it.
-	rc.setTrigger(key, trigger)
-	rc.queue.Add(key)
-}
-
-// setTrigger records what enqueued key, first-wins: the enqueue that first
-// queued the key owns the attribution, and later deliveries that coalesce onto
-// the still-queued key (or a retry re-set) leave it alone — the source that
-// actually caused the pickup. The map is lazily created so tests that build the
-// controller as a struct literal need not initialize it.
-func (rc *RepositoryController) setTrigger(key string, trigger usinformer.ProcessTrigger) {
-	rc.triggersMu.Lock()
-	defer rc.triggersMu.Unlock()
-	if rc.triggers == nil {
-		rc.triggers = make(map[string]usinformer.ProcessTrigger)
-	}
-	if _, ok := rc.triggers[key]; !ok {
-		rc.triggers[key] = trigger
-	}
-}
-
-// popTrigger reads and removes key's attribution. Each pickup pops its own entry
-// up front, so the entry never outlives the key however the pickup ends, and a
-// concurrent enqueue that races an in-flight reconcile (setting a fresh entry
-// and marking the key dirty — e.g. a status update the reconcile itself
-// produced) keeps its attribution for the redelivery, which a terminal
-// queue.Forget must not clobber. A retry re-sets the popped trigger before
-// re-queuing so later attempts keep the original attribution.
-func (rc *RepositoryController) popTrigger(key string) (usinformer.ProcessTrigger, bool) {
-	rc.triggersMu.Lock()
-	defer rc.triggersMu.Unlock()
-	trigger, ok := rc.triggers[key]
-	if ok {
-		delete(rc.triggers, key)
-	}
-	return trigger, ok
-}
-
-// processNextWorkItem deals with one key off the queue.
-// It returns false when it's time to quit.
-func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
-	key, quit := rc.queue.Get()
-	if quit {
-		return false
-	}
-	defer rc.queue.Done(key)
-
-	namespace, name, _ := cache.SplitMetaNamespaceKey(key)
-	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "repository", name)
-	logger.Info("RepositoryController processing key")
-
-	// Pop this pickup's attribution up front so the entry is cleared however the
-	// key leaves this function, without a terminal Forget clobbering a newer
-	// attribution set by a concurrent enqueue while the key was in flight.
-	trigger, ok := rc.popTrigger(key)
-
-	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
-	attempts := rc.queue.NumRequeues(key) + 1
-	// Count the start of processing once per pickup, but only for a pickup that
-	// corresponds to an informer delivery (a present entry). A missing entry is
-	// an internal re-schedule with no informer event behind it — the token
-	// read-after-write AddAfter below re-adds the key without an entry — so it
-	// must not be counted, or it would masquerade as a relist recovery. Retries
-	// keep the entry (re-set below) but bump NumRequeues, so they are not
-	// recounted.
-	if ok && attempts == 1 {
-		rc.processed.RecordProcessed(trigger)
-	}
-
-	err := rc.processFn(key)
-	if err == nil {
-		rc.queue.Forget(key)
-		return true
-	}
-
-	logger = logger.With("error", err, "attempts", attempts)
-	logger.Error("RepositoryController failed to process key")
-
-	if attempts >= maxAttempts {
-		logger.Error("RepositoryController failed too many times")
-		rc.queue.Forget(key)
-		return true
-	}
-
-	if !apierrors.IsServiceUnavailable(err) {
-		logger.Info("RepositoryController will not retry")
-		rc.queue.Forget(key)
-		return true
-	} else {
-		logger.Info("RepositoryController will retry as service is unavailable")
-	}
-
-	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
-	// Re-set the attribution the pickup popped so the retry keeps it (unless a
-	// concurrent enqueue set a newer one). Only if this pickup had one: an
-	// internal re-schedule carries no attribution and must not fabricate one.
-	if ok {
-		rc.setTrigger(key, trigger)
-	}
-	rc.queue.AddRateLimited(key)
-
-	return true
+	rc.runner.EnqueueWithTrigger(key, string(trigger))
 }
 
 func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provisioning.Repository) error {
@@ -816,7 +675,7 @@ func (rc *RepositoryController) process(key string) error {
 			// delete it and can loop under secret-store read-after-write lag.
 			if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
 				logger.Info("repository token secret not yet readable after recent write; will retry", "error", err)
-				rc.queue.AddAfter(key, tokenWriteRetryDelay)
+				rc.runner.EnqueueAfter(key, tokenWriteRetryDelay)
 				return nil
 			}
 
@@ -836,9 +695,7 @@ func (rc *RepositoryController) process(key string) error {
 			if len(tokenOps) > 0 {
 				patchOperations = append(patchOperations, tokenOps...)
 			}
-			// Work on a copy so we don't mutate the shared informer-cache object, and
-			// overwrite the whole value so the stale reference name is cleared too.
-			obj = obj.DeepCopy()
+			// Overwrite the whole value so the stale reference name is cleared too.
 			obj.Secure.Token = common.InlineSecureValue{Create: token}
 
 			repo, err = rc.repoFactory.Build(ctx, obj)

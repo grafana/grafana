@@ -104,6 +104,22 @@ func TestNewCachedRepositoryGetter(t *testing.T) {
 	assert.Len(t, list, 2, "List must be scoped to the namespace")
 }
 
+// Get returns a copy of the cached object: reconcile mutations on the result
+// must not corrupt the informer cache that later reconciles read.
+func TestNewCachedRepositoryGetter_GetReturnsCopy(t *testing.T) {
+	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
+	require.NoError(t, indexer.Add(repo(testNamespace, "a")))
+	getter := NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
+
+	got, err := getter.Get(context.Background(), testNamespace, "a")
+	require.NoError(t, err)
+	got.Spec.Title = "mutated"
+
+	again, err := getter.Get(context.Background(), testNamespace, "a")
+	require.NoError(t, err)
+	assert.Empty(t, again.Spec.Title, "mutating the returned object must not corrupt the cache")
+}
+
 // A successful reconcile Get returns the fresh object and writes it back into the
 // store, so a later List (the quota count) reflects it without waiting for a
 // re-list.
@@ -120,6 +136,23 @@ func TestClientGetCachedListRepositoryGetter_GetWritesThrough(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, list, 1)
 	assert.Equal(t, "fresh", list[0].Name, "the fresh Get must be reflected in the store")
+}
+
+// The object Get returns is the caller's to mutate: the reference the store
+// keeps for the List count must not alias it.
+func TestClientGetCachedListRepositoryGetter_GetReturnsCopy(t *testing.T) {
+	client := fake.NewClientset(repo("ns", "fresh"))
+	store := newFakeStore()
+	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
+
+	got, err := g.Get(context.Background(), "ns", "fresh")
+	require.NoError(t, err)
+	got.Spec.Title = "mutated"
+
+	list, err := g.List(context.Background(), "ns")
+	require.NoError(t, err)
+	require.Len(t, list, 1)
+	assert.Empty(t, list[0].Spec.Title, "mutating the returned object must not leak into the store")
 }
 
 // A reconcile Get for a vanished object returns NotFound and removes it from the

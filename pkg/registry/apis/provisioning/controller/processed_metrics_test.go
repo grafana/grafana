@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/cache"
-	"k8s.io/client-go/util/workqueue"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
@@ -96,20 +95,16 @@ func TestRepositoryController_RecordsProcessingByTrigger(t *testing.T) {
 			processedDone := make(chan struct{})
 
 			rc := &RepositoryController{
-				queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-					workqueue.DefaultTypedControllerRateLimiter[string](),
-					workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-processed"},
-				),
-				logger:       logging.DefaultLogger.With("logger", "test"),
-				drainTimeout: 5 * time.Second,
-				processed:    usinformer.NewProcessedMetrics(reg, "repositories", tt.natsBacked),
-				keyFunc:      repoKeyFunc,
+				logger:    logging.DefaultLogger.With("logger", "test"),
+				processed: usinformer.NewProcessedMetrics(reg, "repositories", tt.natsBacked),
+				keyFunc:   repoKeyFunc,
 				processFn: func(string) error {
 					close(processedDone)
 					return nil
 				},
 			}
 			rc.enqueueRepository = rc.enqueue
+			rc.runner = rc.newRunner(5 * time.Second)
 
 			tt.feed(rc.EventHandler())
 
@@ -140,17 +135,15 @@ func TestRepositoryController_RecordsProcessingByTrigger(t *testing.T) {
 // So the redelivery is counted as live, not misattributed to relist.
 func TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
+	processCalls := make(chan struct{}, 2)
 
 	rc := &RepositoryController{
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-dirty"},
-		),
 		logger:    logging.DefaultLogger.With("logger", "test"),
 		processed: usinformer.NewProcessedMetrics(reg, "repositories", false),
 		keyFunc:   repoKeyFunc,
 	}
 	rc.enqueueRepository = rc.enqueue
+	rc.runner = rc.newRunner(5 * time.Second)
 
 	var enqueuedDuringFlight atomic.Bool
 	rc.processFn = func(string) error {
@@ -162,15 +155,32 @@ func TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger(t *testing.T) {
 				&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: "6"}},
 			)
 		}
+		processCalls <- struct{}{}
 		return nil
 	}
 
 	// Initial live add (apiserver watch, full RV, non-initial).
 	rc.EventHandler().AddFunc(&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: "5"}}, false)
 
-	ctx := context.Background()
-	require.True(t, rc.processNextWorkItem(ctx)) // first pickup: live; enqueues the dirty live update
-	require.True(t, rc.processNextWorkItem(ctx)) // dirty redelivery: must stay live
+	ctx, cancel := context.WithCancel(t.Context())
+	runDone := make(chan struct{})
+	go func() {
+		rc.Run(ctx, 1, func() {}, func() {})
+		close(runDone)
+	}()
+
+	// First pickup (live) enqueues the dirty live update; the second pickup is
+	// the redelivery. RecordProcessed happens before processFn runs, so both
+	// counts are final once the second call is observed.
+	for range 2 {
+		select {
+		case <-processCalls:
+		case <-time.After(5 * time.Second):
+			t.Fatal("key was not processed twice")
+		}
+	}
+	cancel()
+	<-runDone
 
 	assert.Equal(t, 2.0, processedCounterValue(t, reg, "repositories", "live"), "both pickups are live")
 	assert.Equal(t, 0.0, processedCounterValue(t, reg, "repositories", "relist"), "no pickup falls back to relist")
@@ -178,17 +188,13 @@ func TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger(t *testing.T) {
 
 // TestRepositoryController_InternalRescheduleNotCounted verifies that a pickup
 // with no informer-set attribution — an internal re-schedule such as the token
-// read-after-write AddAfter, which re-adds the key directly — records nothing,
-// rather than masquerading as a relist recovery.
+// read-after-write EnqueueAfter, which re-adds the key directly — records
+// nothing, rather than masquerading as a relist recovery.
 func TestRepositoryController_InternalRescheduleNotCounted(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	processedDone := make(chan struct{})
 
 	rc := &RepositoryController{
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-internal"},
-		),
 		logger:    logging.DefaultLogger.With("logger", "test"),
 		processed: usinformer.NewProcessedMetrics(reg, "repositories", false),
 		keyFunc:   repoKeyFunc,
@@ -198,10 +204,11 @@ func TestRepositoryController_InternalRescheduleNotCounted(t *testing.T) {
 		},
 	}
 	rc.enqueueRepository = rc.enqueue
+	rc.runner = rc.newRunner(5 * time.Second)
 
-	// Queue the key directly, as the token read-after-write AddAfter does — no
-	// informer event, no trigger entry.
-	rc.queue.Add("ns/repo")
+	// Queue the key directly, as the token read-after-write EnqueueAfter does —
+	// no informer event, no trigger entry.
+	rc.runner.Enqueue("ns/repo")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	runDone := make(chan struct{})
@@ -258,18 +265,14 @@ func TestConnectionController_RecordsProcessingByTrigger(t *testing.T) {
 			processedDone := make(chan struct{})
 
 			cc := &ConnectionController{
-				queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-					workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
-					workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{Name: "test-processed"},
-				),
-				logger:       logging.DefaultLogger.With("logger", "test"),
-				drainTimeout: 5 * time.Second,
-				processed:    usinformer.NewProcessedMetrics(reg, "connections", tt.natsBacked),
-				processFn: func(context.Context, *connectionQueueItem) error {
+				logger:    logging.DefaultLogger.With("logger", "test"),
+				processed: usinformer.NewProcessedMetrics(reg, "connections", tt.natsBacked),
+				processFn: func(context.Context, string) error {
 					close(processedDone)
 					return nil
 				},
 			}
+			cc.runner = cc.newRunner(5 * time.Second)
 
 			tt.feed(cc.EventHandler())
 
