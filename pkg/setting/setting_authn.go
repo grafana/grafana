@@ -3,6 +3,9 @@ package setting
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
@@ -31,6 +34,10 @@ func (cfg *Cfg) ApplyAuthnSettings(iniFile *ini.File) error {
 	if err := readSessionAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
+	readOAuthSettings(iniFile, cfg)
+	readCookieSecuritySettings(iniFile, cfg)
+	readServerURLSettings(iniFile, cfg)
+	readGrafanaComSettings(iniFile, cfg)
 	return readUserLastSeenUpdateInterval(iniFile, cfg)
 }
 
@@ -62,6 +69,54 @@ func readSessionAuthSettings(iniFile *ini.File, cfg *Cfg) error {
 		cfg.TokenRotationIntervalMinutes = 2
 	}
 	return nil
+}
+
+func readOAuthSettings(iniFile *ini.File, cfg *Cfg) {
+	auth := iniFile.Section("auth")
+	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
+}
+
+func readCookieSecuritySettings(iniFile *ini.File, cfg *Cfg) {
+	security := iniFile.Section("security")
+	cfg.CookieSecure = security.Key("cookie_secure").MustBool(false)
+
+	samesiteString := valueAsString(security, "cookie_samesite", "lax")
+	if samesiteString == "disabled" {
+		cfg.CookieSameSiteDisabled = true
+	} else {
+		validSameSiteValues := map[string]http.SameSite{
+			"lax":    http.SameSiteLaxMode,
+			"strict": http.SameSiteStrictMode,
+			"none":   http.SameSiteNoneMode,
+		}
+		if samesite, ok := validSameSiteValues[samesiteString]; ok {
+			cfg.CookieSameSiteMode = samesite
+		} else {
+			cfg.CookieSameSiteMode = http.SameSiteLaxMode
+		}
+	}
+}
+
+func readServerURLSettings(iniFile *ini.File, cfg *Cfg) {
+	server := iniFile.Section("server")
+	appURL := valueAsString(server, "root_url", "http://localhost:3000/")
+	if appURL[len(appURL)-1] != '/' {
+		appURL += "/"
+	}
+	cfg.AppURL = appURL
+
+	if parsed, err := url.Parse(appURL); err == nil {
+		cfg.AppSubURL = strings.TrimSuffix(parsed.Path, "/")
+	}
+}
+
+func readGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {
+	grafanaComURL := valueAsString(iniFile.Section("grafana_net"), "url", "")
+	if grafanaComURL == "" {
+		grafanaComURL = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
+	}
+	cfg.GrafanaComURL = grafanaComURL
+	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComURL+"/api")
 }
 
 func readUserLastSeenUpdateInterval(iniFile *ini.File, cfg *Cfg) error {
