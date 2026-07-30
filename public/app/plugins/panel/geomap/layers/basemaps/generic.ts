@@ -26,10 +26,10 @@ export const defaultXYZConfig: XYZConfig = {
 };
 
 /**
- * Saved panel options are only ever partial, so fill in the gaps once here and let everything
- * downstream work with a complete config.
+ * Saved panel options are only ever partial, so fill in the gaps once here with defaults if needed
+ * and let everything downstream work with a complete config.
  */
-export function resolveXYZConfig(config: Partial<XYZConfig> = {}): XYZConfig {
+export function resolveXYZConfig<T extends Partial<XYZConfig>>(config: T): T & XYZConfig {
   if (!config.url) {
     return {
       ...config,
@@ -92,7 +92,7 @@ export const xyzTiles: MapLayerRegistryItem<Partial<XYZConfig>> = {
     theme: GrafanaTheme2
   ) => ({
     init: () => {
-      const cfg = resolveXYZConfig(options.config);
+      const cfg = resolveXYZConfig(options.config ?? {});
       const noRepeat = options.noRepeat ?? false;
       const interpolatedUrl = textUtil.sanitizeUrl(getTemplateSrv().replace(cfg.url));
       const interpolatedAttribution = textUtil.sanitizeTextPanelContent(getTemplateSrv().replace(cfg.attribution));

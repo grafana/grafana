@@ -10,7 +10,7 @@ import {
   type PanelOptionsEditorBuilder,
 } from '@grafana/data';
 
-import { xyzTiles, defaultXYZConfig, type XYZConfig } from './generic';
+import { xyzTiles, defaultXYZConfig, resolveXYZConfig, type XYZConfig } from './generic';
 
 interface PublicServiceItem extends RegistryItem {
   slug: string;
@@ -58,9 +58,9 @@ const publicServiceRegistry = new Registry<PublicServiceItem>(() => [
   },
 ]);
 
-export interface ESRIXYZConfig extends XYZConfig {
+export type ESRIXYZConfig = Partial<XYZConfig> & {
   server?: string;
-}
+};
 
 const registerOptionsUI = (builder: PanelOptionsEditorBuilder<MapLayerOptions<ESRIXYZConfig>>) => {
   builder
@@ -102,7 +102,7 @@ const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
     eventBus: EventBus,
     theme: GrafanaTheme2
   ) => {
-    const cfg = { ...options.config };
+    const cfg = resolveXYZConfig<ESRIXYZConfig>(options.config ?? {});
     const svc = publicServiceRegistry.getIfExists(cfg.server ?? DEFAULT_SERVICE)!;
     if (svc.id !== CUSTOM_SERVICE) {
       const base = 'https://services.arcgisonline.com/ArcGIS/rest/services/';
