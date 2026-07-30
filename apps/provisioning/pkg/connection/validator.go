@@ -105,6 +105,12 @@ func (v *AdmissionValidator) validateRuntime(ctx context.Context, conn *provisio
 		)
 	}
 
+	// An OAuth connection has no token until the user completes the authorization
+	// flow after creation; skip the runtime test so it can be saved in that state.
+	if _, ok := connection.(OAuthConnection); ok && conn.Secure.Token.IsZero() {
+		return nil
+	}
+
 	// Run runtime validation via Test() method
 	testResults, err := connection.Test(ctx)
 	if err != nil {
