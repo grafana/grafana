@@ -128,9 +128,13 @@ export function addRow(dataFrame: DataFrame, row: Record<string, unknown> | unkn
 
 type ShiftedTimeValues = {
   offset: number;
-  // Source length and last value detect in-place mutation of the same array object: query paths that
+  // Length plus both endpoints detect in-place mutation of the same array object: query paths that
   // accumulate append to it, and live/streaming ring buffers slide values without changing the length.
+  // Checking only the length and the last value would miss a slide whose new point repeats the previous
+  // last timestamp. Timestamps ascend within a frame, so a slide always moves at least one endpoint;
+  // an interior-only edit that preserves the length and both endpoints would still read as unchanged.
   sourceLength: number;
+  sourceFirst: number;
   sourceLast: number;
   shifted: number[];
 };
@@ -149,6 +153,7 @@ function shiftTimeValues(values: number[], offset: number): number[] {
     cached !== undefined &&
     cached.offset === offset &&
     cached.sourceLength === values.length &&
+    cached.sourceFirst === values[0] &&
     cached.sourceLast === values[values.length - 1]
   ) {
     return cached.shifted;
@@ -163,6 +168,7 @@ function shiftTimeValues(values: number[], offset: number): number[] {
   shiftedTimeValuesCache.set(values, {
     offset,
     sourceLength: values.length,
+    sourceFirst: values[0],
     sourceLast: values[values.length - 1],
     shifted,
   });

@@ -265,6 +265,19 @@ describe('alignTimeRangeCompareData', () => {
       expect(after.fields[0].values).toEqual([ONE_DAY_MS + 1000, ONE_DAY_MS + 2000, ONE_DAY_MS + 3000]);
     });
 
+    it('re-shifts when a sliding buffer repeats the previous last timestamp', () => {
+      // A same-millisecond update slides the buffer while leaving the length and the trailing
+      // timestamp untouched, so those two signals alone would report the array as unchanged.
+      const timeValues = [1000, 2000, 3000];
+      alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [1, 2, 3]), ONE_DAY_MS, theme);
+
+      timeValues.shift();
+      timeValues.push(3000);
+      const after = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [2, 3, 3]), ONE_DAY_MS, theme);
+
+      expect(after.fields[0].values).toEqual([ONE_DAY_MS + 2000, ONE_DAY_MS + 3000, ONE_DAY_MS + 3000]);
+    });
+
     it('re-shifts when a fixed-length buffer slides', () => {
       // Live streaming keeps a fixed-size ring buffer, so the length alone cannot detect new data.
       const timeValues = [1000, 2000];
