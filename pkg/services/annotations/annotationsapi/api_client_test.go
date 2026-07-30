@@ -295,6 +295,36 @@ func TestAnnotationAPIClient_Requests(t *testing.T) {
 		assert.ErrorIs(t, err, ErrNotFound)
 	})
 
+	t.Run("ListTags maps the tags query onto the tags route's parameters", func(t *testing.T) {
+		c, seen := newClient(t, respondJSON(`{"tags":[{"tag":"outage","count":3}]}`))
+
+		tags, err := c.ListTags(ctx, 1, &annotations.TagsQuery{OrgID: 1, Tag: "out", Limit: 25})
+		require.NoError(t, err)
+		require.Len(t, tags, 1)
+		assert.Equal(t, "outage", tags[0].Tag)
+		assert.Equal(t, float64(3), tags[0].Count)
+
+		require.Len(t, *seen, 1)
+		req := (*seen)[0]
+		assert.Equal(t, http.MethodGet, req.method)
+		assert.Equal(t, base+"/tags", req.path, "tags hangs off the namespace, not the annotations collection")
+		assert.Equal(t, url.Values{
+			"prefix": {"out"},
+			"limit":  {"25"},
+		}, req.query, "the legacy tag term becomes a prefix match")
+	})
+
+	t.Run("ListTags omits parameters the query leaves unset", func(t *testing.T) {
+		c, seen := newClient(t, respondJSON(`{"tags":[]}`))
+
+		tags, err := c.ListTags(ctx, 1, &annotations.TagsQuery{OrgID: 1})
+		require.NoError(t, err)
+		assert.Empty(t, tags)
+
+		require.Len(t, *seen, 1)
+		assert.Empty(t, (*seen)[0].query, "the server applies its own default limit")
+	})
+
 	t.Run("requests are scoped to the org's namespace", func(t *testing.T) {
 		c, seen := newClient(t, respondJSON(`{"items":[]}`))
 
