@@ -47,14 +47,16 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
         // scrollContainer in DashboardSidebarSplitter), so the bar must paint over that strip on
         // every viewport: opaque background plus its own paint order.
         position: 'relative',
-        // Above the docked dashboard Sidebar (zIndex navBarFixed) and above the canvas. The time
-        // picker and the variable pickers render their overlays inside this wrapper, so whatever
-        // z-index it carries is the one they compete with: leaving it at 1 on narrow viewports
-        // traps those overlays in a low stacking context and the panels paint over them.
-        zIndex: theme.zIndex.sidemenu,
+        // The canvas wrapper next to us is also z-index 1 and comes later in DOM order, so it wins the
+        // tie and paints over the time picker and variable overlays, which render inside this wrapper.
+        // Enough to clear it, and low enough to stay under the fixed app top bar that the controls row
+        // scrolls past on narrow viewports.
+        zIndex: 2,
         background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
         [theme.breakpoints.up('md')]: {
           position: 'sticky',
+          // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.
+          zIndex: theme.zIndex.sidemenu,
           top: headerHeight,
         },
       },
