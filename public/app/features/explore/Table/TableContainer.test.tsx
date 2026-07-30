@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import {
   type DataFrame,
@@ -14,12 +15,14 @@ import { setPanelRenderer } from '@grafana/runtime/internal';
 import { configureStore } from '../../../store/configureStore';
 import { createEmptyQueryResponse, makeExplorePaneState } from '../state/utils';
 
-import { mapStateToProps, TableContainer } from './TableContainer';
+import ConnectedTableContainer, { mapStateToProps, TableContainer } from './TableContainer';
 
 const mockRenderedSeries: DataFrame[][] = [];
+const mockRenderedStates: Array<LoadingState | undefined> = [];
 
 setPanelRenderer((props) => {
   mockRenderedSeries.push(props.data?.series ?? []);
+  mockRenderedStates.push(props.data?.state);
   return <div>PanelRenderer</div>;
 });
 
@@ -29,6 +32,14 @@ function getPanels(): HTMLElement[] {
 
 function getLastRenderedFrame(): DataFrame {
   return mockRenderedSeries[mockRenderedSeries.length - 1][0];
+}
+
+function getLastRenderedState(): LoadingState | undefined {
+  return mockRenderedStates[mockRenderedStates.length - 1];
+}
+
+function queryLoadingBars(): HTMLElement[] {
+  return screen.queryAllByLabelText('Panel loading bar');
 }
 
 const dataFrame = toDataFrame({
@@ -72,6 +83,7 @@ const defaultProps = {
 describe('TableContainer', () => {
   beforeEach(() => {
     mockRenderedSeries.length = 0;
+    mockRenderedStates.length = 0;
   });
 
   describe('With one main frame', () => {
@@ -211,6 +223,62 @@ describe('TableContainer', () => {
 
     it('is loading while a query is running and no data has arrived yet', () => {
       expect(mapStateToProps(makeState(LoadingState.Loading, null), ownProps).loading).toBe(true);
+    });
+  });
+
+  describe('loading indicator', () => {
+    const emptyFrame: DataFrame = { name: 'A', fields: [], length: 0 };
+
+    function setup(queryState: LoadingState, tableResult: DataFrame[] | null) {
+      const store = configureStore();
+      store.getState().explore.panes = {
+        left: {
+          ...makeExplorePaneState(),
+          tableResult,
+          queryResponse: { ...createEmptyQueryResponse(), state: queryState },
+        },
+      };
+
+      render(
+        <TestProvider store={store}>
+          <ConnectedTableContainer
+            exploreId="left"
+            width={800}
+            timeZone={InternalTimeZones.utc}
+            splitOpenFn={() => {}}
+          />
+        </TestProvider>
+      );
+    }
+
+    it('shows no loading indicator once a query has settled with rows', () => {
+      setup(LoadingState.Done, [dataFrame]);
+      expect(queryLoadingBars()).toHaveLength(0);
+      expect(getLastRenderedState()).toBe(LoadingState.Done);
+    });
+
+    it('shows a loading indicator over previous rows while a query is running', () => {
+      setup(LoadingState.Loading, [dataFrame]);
+      expect(queryLoadingBars()).toHaveLength(1);
+      expect(getLastRenderedState()).toBe(LoadingState.Loading);
+    });
+
+    it('shows no loading indicator once a query has settled with zero rows', () => {
+      setup(LoadingState.Done, [emptyFrame]);
+      expect(screen.getByText('0 series returned')).toBeInTheDocument();
+      expect(queryLoadingBars()).toHaveLength(0);
+    });
+
+    it('shows a loading indicator while a query is running and has returned zero rows so far', () => {
+      setup(LoadingState.Loading, [emptyFrame]);
+      expect(queryLoadingBars()).toHaveLength(1);
+    });
+
+    it('shows the streaming indicator rather than a loading bar while a query is streaming', () => {
+      setup(LoadingState.Streaming, [dataFrame]);
+      expect(screen.getByTestId('panel-streaming')).toBeInTheDocument();
+      expect(queryLoadingBars()).toHaveLength(0);
+      expect(getLastRenderedState()).toBe(LoadingState.Streaming);
     });
   });
 

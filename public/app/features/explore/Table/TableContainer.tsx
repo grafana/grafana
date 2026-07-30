@@ -45,8 +45,7 @@ export function mapStateToProps(state: StoreState, { exploreId }: TableContainer
   const explore = state.explore;
   const item: ExploreItemState = explore.panes[exploreId]!;
   const { tableResult, range } = item;
-  const loadingInState = selectIsWaitingForData(exploreId)(state);
-  const loading = tableResult && tableResult.length > 0 ? false : loadingInState;
+  const loading = selectIsWaitingForData(exploreId)(state);
   const hasTempoStreamingProgressTable = tableResult?.some((f) => f.refId === TEMPO_STREAMING_PROGRESS_REF_ID);
   return {
     loading,
@@ -101,6 +100,14 @@ export const TableContainer = memo(function TableContainer({
     return name
       ? t('explore.table.title-with-name', 'Table - {{name}}', { name, interpolation: { escapeValue: false } })
       : t('explore.table.title', 'Table');
+  }
+
+  // PanelChrome renders a loading bar for Loading and a streaming indicator for Streaming. Gate both
+  // on a query actually being in flight, so a leftover Tempo streaming-progress frame cannot pin the
+  // streaming indicator on after the query has finished.
+  let panelLoadingState: LoadingState | undefined;
+  if (loading) {
+    panelLoadingState = queryStreaming ? LoadingState.Streaming : LoadingState.Loading;
   }
 
   let dataFrames = hasDeprecatedParentRowIndex(tableResult)
@@ -161,7 +168,12 @@ export const TableContainer = memo(function TableContainer({
   return (
     <>
       {frames && frames.length === 0 && (
-        <PanelChrome title={t('explore.table.title', 'Table')} width={width} height={200}>
+        <PanelChrome
+          title={t('explore.table.title', 'Table')}
+          width={width}
+          height={200}
+          loadingState={panelLoadingState}
+        >
           {() => <MetaInfoText metaItems={[{ value: t('explore.table.no-data', '0 series returned') }]} />}
         </PanelChrome>
       )}
@@ -191,7 +203,7 @@ export const TableContainer = memo(function TableContainer({
               ]}
               width={width}
               height={getTableHeight(data.length, hasSubFrames(data), queryStreaming)}
-              loadingState={loading ? LoadingState.Loading : undefined}
+              loadingState={panelLoadingState}
             >
               {(innerWidth, innerHeight) => (
                 <DataLinksContext.Provider value={{ dataLinkPostProcessor }}>
@@ -205,7 +217,7 @@ export const TableContainer = memo(function TableContainer({
                     <PanelRenderer
                       data={{
                         series: [data],
-                        state: loading ? LoadingState.Loading : LoadingState.Done,
+                        state: panelLoadingState ?? LoadingState.Done,
                         timeRange: range,
                       }}
                       pluginId={'table'}
