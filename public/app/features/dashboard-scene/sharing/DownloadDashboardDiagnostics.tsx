@@ -159,6 +159,7 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
   const styles = useStyles2(getStyles);
   const abortRef = useRef<AbortController | null>(null);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [warning, setWarning] = useState('');
 
   // Abort any in-flight request if the drawer unmounts.
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -173,6 +174,7 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
     // null ref and let backend generation start after the UI is gone.
     const controller = new AbortController();
     abortRef.current = controller;
+    setWarning('');
 
     const panels = await collectDashboardPanels(dashboard);
     if (controller.signal.aborted) {
@@ -190,6 +192,7 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
       const status = await getDashboardDiagnosticsStatus(uid, controller.signal);
       setProgress({ done: status.panelsDone, total: status.panelsTotal });
       if (status.state === 'complete') {
+        setWarning(status.warning ?? '');
         break;
       }
       if (status.state === 'error') {
@@ -219,6 +222,17 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
       </p>
 
       <Alert
+        severity="info"
+        title={t('dashboard.diagnostics.large-dashboard-title', 'Consider a smaller dashboard')}
+      >
+        <Trans i18nKey="dashboard.diagnostics.large-dashboard-body">
+          Every panel is re-queried and its traffic captured, so a large dashboard produces a large bundle and can
+          reach the size limit, leaving later panels out. If you already know which panel misbehaves, a dashboard
+          holding just that panel gives a smaller bundle and a clearer one.
+        </Trans>
+      </Alert>
+
+      <Alert
         severity="warning"
         title={t('dashboard.diagnostics.sensitive-warning-title', 'May contain sensitive data')}
       >
@@ -239,6 +253,12 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
       {error && (
         <Alert severity="error" title={t('dashboard.diagnostics.error-title', 'Failed to generate diagnostics')}>
           {diagnosticsErrorMessage(error)}
+        </Alert>
+      )}
+
+      {warning && (
+        <Alert severity="warning" title={t('dashboard.diagnostics.partial-bundle-title', 'The bundle is incomplete')}>
+          {warning}
         </Alert>
       )}
 

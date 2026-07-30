@@ -103,6 +103,46 @@ describe('DownloadDashboardDiagnostics', () => {
     expect(interpolateVariablesInQueries.mock.calls[0][1]?.__sceneObject).toBeDefined();
   });
 
+  it('advises using a smaller dashboard before anything is generated', () => {
+    const { tab } = setupScenario();
+
+    render(<tab.Component model={tab} />);
+
+    // Shown up front, not after the fact: it is meant to change whether the button is pressed at all.
+    expect(screen.getByText('Consider a smaller dashboard')).toBeInTheDocument();
+  });
+
+  it('surfaces the job warning as a warning, still downloading the bundle', async () => {
+    jest.mocked(startDashboardDiagnostics).mockResolvedValue('job-1');
+    jest.mocked(getDashboardDiagnosticsStatus).mockResolvedValue({
+      uid: 'job-1',
+      state: 'complete',
+      panelsDone: 2,
+      panelsTotal: 2,
+      warning: 'bundle size limit reached: 2 artifact(s) omitted, see bundle-limit.txt',
+    });
+    const { tab } = setupScenario();
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    expect(await screen.findByText(/2 artifact\(s\) omitted/)).toBeInTheDocument();
+    expect(screen.getByText('The bundle is incomplete')).toBeInTheDocument();
+    // Unlike the error path, the bundle exists and is worth having.
+    expect(downloadDashboardDiagnostics).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('Failed to generate diagnostics')).not.toBeInTheDocument();
+  });
+
+  it('says nothing about the size limit when the job reports no warning', async () => {
+    const { tab } = setupScenario();
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    expect(await screen.findByText('Consider a smaller dashboard')).toBeInTheDocument();
+    expect(screen.queryByText('The bundle is incomplete')).not.toBeInTheDocument();
+  });
+
   it('shows the generation-failed alert when the job errors out', async () => {
     jest.mocked(startDashboardDiagnostics).mockResolvedValue('job-1');
     jest

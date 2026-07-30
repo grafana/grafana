@@ -103,6 +103,30 @@ describe('downloadDiagnosticsForQueries', () => {
   });
 });
 
+describe('partial-bundle reporting', () => {
+  const args = { queries: [{ refId: 'A' }] as DataQuery[], from: '1', to: '2' };
+
+  it('reports the artifacts the size limit dropped', async () => {
+    setupBackendSrv({ data: new Blob(['x']), headers: new Headers({ 'X-Diagnostics-Dropped-Artifacts': '2' }) });
+
+    await expect(downloadDiagnosticsForQueries(args)).resolves.toEqual({ droppedArtifacts: 2 });
+  });
+
+  it('reports a complete bundle when the header is absent', async () => {
+    setupBackendSrv({ data: new Blob(['x']), headers: new Headers() });
+
+    await expect(downloadDiagnosticsForQueries(args)).resolves.toEqual({ droppedArtifacts: 0 });
+  });
+
+  // A header we can't parse must not become a warning: the bundle downloaded either way, and a spurious
+  // "incomplete" notice would send a support engineer looking for artifacts that are all present.
+  it.each([['not-a-number'], ['0'], ['-1'], ['']])('treats %p as a complete bundle', async (value) => {
+    setupBackendSrv({ data: new Blob(['x']), headers: new Headers({ 'X-Diagnostics-Dropped-Artifacts': value }) });
+
+    await expect(downloadDiagnosticsForQueries(args)).resolves.toEqual({ droppedArtifacts: 0 });
+  });
+});
+
 describe('dashboard diagnostics', () => {
   beforeEach(() => {
     jest.mocked(saveAs).mockClear();

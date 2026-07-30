@@ -45,6 +45,9 @@ setPluginImportUtils({
 describe('DownloadDiagnostics', () => {
   beforeEach(() => {
     jest.mocked(downloadDiagnosticsForQueries).mockClear();
+    // The drawer reads the result to decide whether to warn about a trimmed bundle, so the mock has to
+    // resolve to one; a bare jest.fn() resolves undefined and the drawer would report a failed download.
+    jest.mocked(downloadDiagnosticsForQueries).mockResolvedValue({ droppedArtifacts: 0 });
     jest.mocked(logError).mockClear();
     interpolateVariablesInQueries.mockClear();
     interpolateVariablesInQueries.mockImplementation((queries: DataQuery[]) => queries);
@@ -57,6 +60,29 @@ describe('DownloadDiagnostics', () => {
 
     expect(screen.getByText('May contain sensitive data')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Download diagnostics' })).toBeInTheDocument();
+  });
+
+  it('warns that the bundle is incomplete when the size limit dropped artifacts', async () => {
+    jest.mocked(downloadDiagnosticsForQueries).mockResolvedValue({ droppedArtifacts: 2 });
+    const { tab } = setupScenario();
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    // A warning, not an error: the bundle downloaded and what it holds is still worth reading.
+    expect(await screen.findByText('The bundle is incomplete')).toBeInTheDocument();
+    expect(screen.getByText(/2 artifacts were left out/)).toBeInTheDocument();
+    expect(screen.queryByText('Failed to generate diagnostics')).not.toBeInTheDocument();
+  });
+
+  it('says nothing about the size limit for a complete bundle', async () => {
+    const { tab } = setupScenario();
+
+    render(<tab.Component model={tab} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Download diagnostics' }));
+
+    expect(downloadDiagnosticsForQueries).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('The bundle is incomplete')).not.toBeInTheDocument();
   });
 
   it('passes the panel visible queries and time range when downloading', async () => {

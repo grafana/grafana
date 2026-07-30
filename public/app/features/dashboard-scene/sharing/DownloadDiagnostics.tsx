@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -141,6 +141,7 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
   const { onDismiss, panelRef, dashboardRef } = model.useState();
   const styles = useStyles2(getStyles);
   const abortRef = useRef<AbortController | null>(null);
+  const [droppedArtifacts, setDroppedArtifacts] = useState(0);
 
   // Abort any in-flight request if the drawer unmounts.
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -166,6 +167,7 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
     // and let the download start after the UI is gone.
     const controller = new AbortController();
     abortRef.current = controller;
+    setDroppedArtifacts(0);
 
     // Interpolate template and scoped variables so the captured request matches the request the
     // panel actually ran; scopedVars carries the panel so scene variables (including a repeated
@@ -228,7 +230,7 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
       panelData = capturePanelDataFailure(panel, error);
     }
 
-    await downloadDiagnosticsForQueries({
+    const { droppedArtifacts: dropped } = await downloadDiagnosticsForQueries({
       queries,
       from: String(timeRange.from.valueOf()),
       to: String(timeRange.to.valueOf()),
@@ -237,6 +239,7 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
       dashboard: dashboardModel,
       panelData,
     });
+    setDroppedArtifacts(dropped);
   }, [panelRef, dashboardRef]);
 
   const handleDismiss = () => {
@@ -269,6 +272,18 @@ function DownloadDiagnosticsRenderer({ model }: SceneComponentProps<DownloadDiag
       {error && (
         <Alert severity="error" title={t('dashboard.diagnostics.error-title', 'Failed to generate diagnostics')}>
           {diagnosticsErrorMessage(error)}
+        </Alert>
+      )}
+
+      {droppedArtifacts > 0 && (
+        <Alert severity="warning" title={t('dashboard.diagnostics.partial-bundle-title', 'The bundle is incomplete')}>
+          {t('dashboard.diagnostics.partial-bundle-body', '', {
+            count: droppedArtifacts,
+            defaultValue_one:
+              '{{count}} artifact was left out because the bundle reached its size limit. The download holds everything that fitted, and bundle-limit.txt inside it names what was dropped.',
+            defaultValue_other:
+              '{{count}} artifacts were left out because the bundle reached its size limit. The download holds everything that fitted, and bundle-limit.txt inside it names what was dropped.',
+          })}
         </Alert>
       )}
 

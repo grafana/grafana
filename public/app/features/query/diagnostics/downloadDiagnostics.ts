@@ -19,6 +19,18 @@ function fallbackFileName(prefix = 'diagnostics'): string {
   return `${prefix}-${stamp}.tar.gz`;
 }
 
+/** Names how many artifacts the backend's bundle size limit dropped. Absent means the bundle is
+ * complete; the names of the dropped artifacts are in the bundle's own bundle-limit.txt. */
+const DROPPED_ARTIFACTS_HEADER = 'X-Diagnostics-Dropped-Artifacts';
+
+/** How many artifacts the size limit dropped, or 0 when the bundle is complete. A malformed or absent
+ * header reads as complete: the bundle downloaded either way, and inventing a warning from a header we
+ * could not parse would be worse than staying quiet. */
+function droppedArtifactsFrom(headers: Headers): number {
+  const parsed = Number(headers.get(DROPPED_ARTIFACTS_HEADER));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
 /** Extracts the filename from a Content-Disposition header, if present. */
 function fileNameFromContentDisposition(header: string | null): string | undefined {
   // Stop at a closing quote or the next parameter (;), so an unquoted filename followed by other
@@ -45,12 +57,21 @@ export interface DiagnosticsRequest {
   panelData?: PanelDataPayload;
 }
 
+/** What a completed download can tell the caller about the bundle it just saved. */
+export interface DiagnosticsDownloadResult {
+  /** Artifacts the backend's size limit dropped; 0 when the bundle is complete. */
+  droppedArtifacts: number;
+}
+
 /**
  * Requests a diagnostic bundle for the given panel queries from the backend and downloads it.
  *
  * The bundle is generated server-side by `POST /api/ds/diagnostics`. That endpoint is not available
  * yet (it lands in a separate backend PR); until then this call fails and the drawer surfaces the
  * error. The request/response contract and this download flow are final.
+ *
+ * A bundle the size limit trimmed is still a bundle worth having, so that arrives as a result rather
+ * than an error: the response body is the archive itself, so the backend reports it in a header.
  */
 export async function downloadDiagnosticsForQueries({
   queries,
@@ -60,11 +81,11 @@ export async function downloadDiagnosticsForQueries({
   panel,
   dashboard,
   panelData,
-}: DiagnosticsRequest): Promise<void> {
+}: DiagnosticsRequest): Promise<DiagnosticsDownloadResult> {
   const visibleQueries = queries.filter((query) => !query.hide);
 
   if (visibleQueries.length === 0) {
-    return;
+    return { droppedArtifacts: 0 };
   }
 
   const response = await lastValueFrom(
@@ -82,6 +103,7 @@ export async function downloadDiagnosticsForQueries({
 
   const filename = fileNameFromContentDisposition(response.headers.get('Content-Disposition')) ?? fallbackFileName();
   saveAs(response.data, filename);
+  return { droppedArtifacts: droppedArtifactsFrom(response.headers) };
 }
 
 /** One panel's diagnostics input for a whole-dashboard request: its resolved queries and time range
@@ -102,6 +124,9 @@ export interface DashboardDiagnosticsStatus {
   panelsTotal: number;
   panelsDone: number;
   error?: string;
+  /** A bundle that generated but is incomplete -- currently only the size limit dropping artifacts.
+   * Distinct from error, which means there is no bundle to download at all. */
+  warning?: string;
 }
 
 /**
