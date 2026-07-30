@@ -448,8 +448,8 @@ func TestWrapper_UpdateFailsClosedWithoutOriginalIdentity(t *testing.T) {
 			require.ErrorIs(t, err, ErrUnauthenticated)
 			assert.Nil(t, result)
 			assert.False(t, updated)
-			mockStore.AssertNotCalled(t, "Update")
-			mockAuth.AssertNotCalled(t, "BeforeUpdate")
+			mockStore.AssertNumberOfCalls(t, "Update", 0)
+			mockAuth.AssertNumberOfCalls(t, "BeforeUpdate", 0)
 		})
 	}
 }
