@@ -105,14 +105,16 @@ type AuthzOptions struct {
 }
 
 // NewAuthzLimitedClient creates a new authzLimitedClient.
-func NewAuthzLimitedClient(client claims.AccessClient, opts AuthzOptions) (claims.AccessClient, error) {
+func NewAuthzLimitedClient(client claims.AccessClient, opts AuthzOptions) claims.AccessClient {
 	logger := log.New("limited-authz-client")
 	if opts.Registry == nil {
 		opts.Registry = prometheus.DefaultRegisterer
 	}
 	exemptions, err := parseAuthzExemptions(opts.ExemptResources)
 	if err != nil {
-		return nil, err
+		// Callers validate with ValidateAuthzOptions first. Drop the whole list
+		// rather than apply part of one that did not parse.
+		logger.Error("Ignoring unified storage authz exemptions", "error", err)
 	}
 	return &authzLimitedClient{
 		client:           client,
@@ -120,7 +122,14 @@ func NewAuthzLimitedClient(client claims.AccessClient, opts AuthzOptions) (claim
 		exemptions:       exemptions,
 		logger:           logger,
 		metrics:          newMetrics(opts.Registry),
-	}, nil
+	}
+}
+
+// ValidateAuthzOptions reports exemptions the client would refuse to apply, so
+// startup fails instead of running with a list that is silently ignored.
+func ValidateAuthzOptions(opts AuthzOptions) error {
+	_, err := parseAuthzExemptions(opts.ExemptResources)
+	return err
 }
 
 // parseAuthzExemptions validates the configured exemptions, whether or not the
