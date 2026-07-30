@@ -13,8 +13,10 @@ import { grantUserPermissions, grantUserRole, mockDataSource } from '../../mocks
 import { setupAlertmanagersStatus } from '../../mocks/server/configure/alertmanagers';
 import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
 import {
+  CONFIG_READ_FAILURE_MESSAGE,
   setupAutoSyncConfig,
   setupAutoSyncConfigAbsent,
+  setupAutoSyncConfigReadError,
   setupAutoSyncConfigWriteError,
   setupStatefulAutoSyncConfig,
 } from '../../mocks/server/handlers/k8s/config.k8s';
@@ -86,6 +88,7 @@ const ui = {
 };
 
 const edgeUi = {
+  initializingTooltip: byText(/Grafana has not finished setting up auto-sync/i),
   operatorManagedCallout: byText(/key in grafana\.ini and cannot be changed from the UI/i),
   orphanWarning: byText(/is not available\. Disable sync or restore the datasource to continue/i),
   noDatasourcesMessage: byText(/no mimir or cortex datasources available/i),
@@ -228,5 +231,43 @@ describe('AutoSyncConfiguration — edge-case states', () => {
     // wrong reason: the placeholder is only replaced once the picker holds a value.
     expect(ui.pickerPlaceholder.query()).not.toBeInTheDocument();
     expect(ui.saveButton.get()).toBeDisabled();
+  });
+
+  it('case 11: unseeded singleton — the Save tooltip tells the admin the wait is temporary', async () => {
+    setupAutoSyncConfigAbsent(server);
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    const { user } = render(<AutoSyncConfiguration />);
+
+    expect(await ui.notConfiguredBadge.find()).toBeInTheDocument();
+    // Absent until hovered, so the assertion below cannot pass on always-rendered copy.
+    expect(edgeUi.initializingTooltip.query()).not.toBeInTheDocument();
+
+    await user.hover(ui.saveButton.get());
+
+    expect(await edgeUi.initializingTooltip.find()).toBeInTheDocument();
+  });
+
+  it('case 12: failed Config read — the Save tooltip carries the reason instead of promising a wait', async () => {
+    // Waiting fixes a 404, not a 500, and nothing else surfaces this one: the k8s base query raises no
+    // error alert of its own. Asserting the whole string also proves the quoted resource name survived
+    // i18n interpolation instead of arriving as `&quot;default&quot;`.
+    setupAutoSyncConfigReadError(server, { code: 500 });
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    const { user } = render(<AutoSyncConfiguration />);
+
+    expect(await ui.notConfiguredBadge.find()).toBeInTheDocument();
+    expect(ui.saveButton.get()).toBeDisabled();
+    expect(screen.queryByText(/could not load the auto-sync configuration/i)).not.toBeInTheDocument();
+
+    await user.hover(ui.saveButton.get());
+
+    expect(
+      await screen.findByText(`Could not load the auto-sync configuration: ${CONFIG_READ_FAILURE_MESSAGE}`)
+    ).toBeInTheDocument();
+    expect(edgeUi.initializingTooltip.query()).not.toBeInTheDocument();
   });
 });

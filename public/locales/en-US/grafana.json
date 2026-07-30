@@ -1620,7 +1620,6 @@
         "badge": "Will sync continuously",
         "card-title": "Auto-sync",
         "enable": "Enable auto-sync",
-        "enable-not-ready": "Grafana is still setting up auto-sync for this organization. Try again in a moment.",
         "heading": "Review & enable auto-sync",
         "scope": "Scope",
         "scope-value": "Contact points, notification policies, templates, mute timings, and alert rules",
@@ -3282,8 +3281,9 @@
         "picker-empty": "No Mimir or Cortex datasources available",
         "picker-label": "Datasource",
         "picker-placeholder": "Select a Mimir or Cortex Alertmanager datasource…",
+        "read-error-message": "Could not load the auto-sync configuration: {{-error}}",
+        "read-error-title": "Could not load the auto-sync configuration",
         "save-disabled-no-selection": "Select a Mimir or Cortex Alertmanager datasource to enable saving.",
-        "save-disabled-not-ready": "Grafana is still setting up auto-sync for this organization. Try again in a moment.",
         "save-error": "Failed to save Mimir Alertmanager auto-sync",
         "save-success": "Mimir Alertmanager auto-sync enabled",
         "title": "Auto-sync configuration"

@@ -11,7 +11,9 @@ import {
   setupDatasourcesEndpoint,
 } from 'app/features/alerting/unified/mocks/server/configure/datasources';
 import {
+  CONFIG_READ_FAILURE_MESSAGE,
   setupAutoSyncConfigAbsent,
+  setupAutoSyncConfigReadError,
   setupAutoSyncConfigWriteError,
   setupStatefulAutoSyncConfig,
 } from 'app/features/alerting/unified/mocks/server/handlers/k8s/config.k8s';
@@ -121,6 +123,24 @@ describe('StepReviewEnableAutoSync', () => {
 
     expect(mockReportInteraction).not.toHaveBeenCalled();
     expect(locationService.getLocation().pathname).not.toContain('/alerting/list');
+  });
+
+  it('explains a failed Config read on the Enable tooltip instead of promising the wait is temporary', async () => {
+    // Same gate as the unseeded case above, but a 500 is not something waiting out fixes, so the
+    // tooltip has to say what actually happened.
+    setupAutoSyncConfigReadError(server, { code: 500 });
+    const { user } = renderStep();
+
+    expect(await screen.findByText(MIMIR_DS_NAME)).toBeInTheDocument();
+    expect(ui.enableButton.get()).toBeDisabled();
+    // Absent until hovered, so the assertion below cannot pass on always-rendered copy.
+    expect(screen.queryByText(/could not load the auto-sync configuration/i)).not.toBeInTheDocument();
+
+    await user.hover(ui.enableButton.get());
+
+    expect(
+      await screen.findByText(`Could not load the auto-sync configuration: ${CONFIG_READ_FAILURE_MESSAGE}`)
+    ).toBeInTheDocument();
   });
 
   it('tracks an import error and stays on the step when enabling fails', async () => {

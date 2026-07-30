@@ -19,7 +19,7 @@ export function AutoSyncConfiguration() {
     disableSync,
     isPending,
     isLoading,
-    isReady,
+    notReadyMessage,
   } = useAutoSyncConfiguration();
 
   const [showDisableConfirm, setShowDisableConfirm] = useState(false);
@@ -39,7 +39,7 @@ export function AutoSyncConfiguration() {
   const showSave = state.kind === 'unconfigured' || state.kind === 'orphan-uid';
   const savedUid = hasConfiguredUid(state) ? state.uid : '';
 
-  const saveDisabledReason = getSaveDisabledReason({ isReady, selectedUid, savedUid });
+  const saveDisabledReason = getSaveDisabledReason({ notReadyMessage, selectedUid, savedUid });
 
   const handleDisableConfirm = async () => {
     setShowDisableConfirm(false);
@@ -188,19 +188,18 @@ export function AutoSyncConfiguration() {
 }
 
 function getSaveDisabledReason({
-  isReady,
+  notReadyMessage,
   selectedUid,
   savedUid,
 }: {
-  isReady: boolean;
+  notReadyMessage: string | undefined;
   selectedUid: string;
   savedUid: string;
 }): string | undefined {
-  if (!isReady) {
-    return t(
-      'alerting.settings.auto-sync.save-disabled-not-ready',
-      'Grafana is still setting up auto-sync for this organization. Try again in a moment.'
-    );
+  // Set exactly when the hook is not ready, and already distinguishes an unseeded singleton from a
+  // failed read — the second is not something waiting fixes.
+  if (notReadyMessage) {
+    return notReadyMessage;
   }
   if (!selectedUid || selectedUid === savedUid) {
     return t(

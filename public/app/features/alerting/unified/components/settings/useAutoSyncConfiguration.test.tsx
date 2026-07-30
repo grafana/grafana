@@ -5,17 +5,21 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { logError } from '../../Analytics';
 import { ALERTMANAGER_PROVIDED_ENTITY_TAGS, alertmanagerApi } from '../../api/alertmanagerApi';
 import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { setupAlertmanagersStatus } from '../../mocks/server/configure/alertmanagers';
 import { setupDatasourcesEndpoint } from '../../mocks/server/configure/datasources';
 import {
+  CONFIG_READ_FAILURE_MESSAGE,
   setupAutoSyncConfig,
   setupAutoSyncConfigAbsent,
+  setupAutoSyncConfigReadError,
   setupAutoSyncConfigWriteError,
   setupStatefulAutoSyncConfig,
 } from '../../mocks/server/handlers/k8s/config.k8s';
+import { AUTO_SYNC_CONFIG_POLL_INTERVAL_MS } from '../../utils/constants';
 
 import { useAutoSyncConfiguration } from './useAutoSyncConfiguration';
 
@@ -27,6 +31,17 @@ const wrapper = () => getWrapper({ renderWithRouter: true });
 jest.mock('app/core/copy/appNotification');
 const notifyError = jest.fn();
 const notifySuccess = jest.fn();
+
+// A failed Config read is reported to Faro and nowhere else visible, so the sink has to be spied on.
+jest.mock('../../Analytics', () => ({
+  ...jest.requireActual('../../Analytics'),
+  logError: jest.fn(),
+}));
+const mockLogError = jest.mocked(logError);
+
+/** The copy the hook uses for a not-ready state that waiting actually resolves. */
+const INITIALIZING_MESSAGE =
+  'Grafana has not finished setting up auto-sync for this organization. Try again in a moment.';
 
 const MIMIR_DS = {
   id: 1,
@@ -88,6 +103,7 @@ testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
 beforeEach(() => {
   notifyError.mockClear();
   notifySuccess.mockClear();
+  mockLogError.mockClear();
   jest.mocked(useAppNotification).mockReturnValue({
     success: notifySuccess,
     error: notifyError,
@@ -96,6 +112,11 @@ beforeEach(() => {
   });
   grantUserPermissions([AccessControlAction.ActionAlertingNotificationsConfigRead]);
   setupAlertmanagersStatus(server);
+});
+
+// Only the polling test fakes timers; leaving them faked would stall every test after it.
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 describe('useAutoSyncConfiguration — state resolution', () => {
@@ -208,6 +229,102 @@ describe('useAutoSyncConfiguration — state resolution', () => {
     expect(result.current.state.kind).toBe('unconfigured');
     // Nothing was read, so there is nothing to write into either.
     expect(result.current.isReady).toBe(false);
+  });
+});
+
+describe('useAutoSyncConfiguration — not-ready reason', () => {
+  it('presents an unseeded singleton as transient', async () => {
+    setupAutoSyncConfigAbsent(server);
+    setupDatasourcesEndpoint(server, [MIMIR_DS]);
+
+    const { result } = renderAutoSyncHook();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isReady).toBe(false);
+    expect(result.current.notReadyMessage).toBe(INITIALIZING_MESSAGE);
+  });
+
+  it('presents a failed read as a failure, not as initialization', async () => {
+    // Waiting does not fix a 500, and the k8s base query raises no error alert of its own, so this
+    // message is the only signal the admin gets.
+    setupAutoSyncConfigReadError(server, { code: 500 });
+    setupDatasourcesEndpoint(server, [MIMIR_DS]);
+
+    const { result } = renderAutoSyncHook();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.isReady).toBe(false);
+    expect(result.current.notReadyMessage).toBe(
+      `Could not load the auto-sync configuration: ${CONFIG_READ_FAILURE_MESSAGE}`
+    );
+  });
+
+  it('reports a failed read to Faro once per distinct failure, not on every poll tick', async () => {
+    // Faro is the only trace this leaves besides a tooltip nobody has to hover, so a broken read left
+    // polling for an hour must not push 120 identical logs.
+    jest.useFakeTimers();
+    setupAutoSyncConfigReadError(server, { code: 500 });
+    setupDatasourcesEndpoint(server, [MIMIR_DS]);
+
+    const { result } = renderAutoSyncHook();
+    await waitFor(() => expect(result.current.notReadyMessage).toContain(CONFIG_READ_FAILURE_MESSAGE));
+
+    expect(mockLogError).toHaveBeenCalledWith(expect.objectContaining({ message: CONFIG_READ_FAILURE_MESSAGE }), {
+      operation: 'getAutoSyncConfig',
+      status: '500',
+    });
+    expect(mockLogError).toHaveBeenCalledTimes(1);
+
+    // The same failure again on the next tick — nothing observable changes, so it cannot be waited on
+    // directly.
+    setupAutoSyncConfigReadError(server, { code: 500 });
+    await act(async () => {
+      jest.advanceTimersByTime(AUTO_SYNC_CONFIG_POLL_INTERVAL_MS);
+    });
+
+    // A different failure after it. Waiting for this one to surface is the barrier that proves the
+    // repeat above was processed, not merely requested — the request spy fires before the store
+    // updates, so it cannot carry that weight.
+    const OTHER_FAILURE = 'Internal error occurred: dial tcp: lookup apiserver: no such host';
+    setupAutoSyncConfigReadError(server, { code: 503, message: OTHER_FAILURE });
+    await act(async () => {
+      jest.advanceTimersByTime(AUTO_SYNC_CONFIG_POLL_INTERVAL_MS);
+    });
+    await waitFor(() => expect(result.current.notReadyMessage).toContain(OTHER_FAILURE));
+
+    // Three failing polls, two distinct failures.
+    expect(mockLogError).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports no reason once the singleton has been read', async () => {
+    setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
+    setupDatasourcesEndpoint(server, [MIMIR_DS]);
+
+    const { result } = renderAutoSyncHook();
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
+    expect(result.current.notReadyMessage).toBeUndefined();
+  });
+
+  it('keeps the page usable when a poll fails after a successful read', async () => {
+    // RTKQ retains the last good `currentData` on a rejected refetch, so a mid-session blip must not
+    // disable the write affordances or start claiming auto-sync is initializing.
+    jest.useFakeTimers();
+    setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
+    setupDatasourcesEndpoint(server, [MIMIR_DS]);
+
+    const { result } = renderAutoSyncHook();
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+
+    const { requestSpy } = setupAutoSyncConfigReadError(server, { code: 500 });
+    await act(async () => {
+      jest.advanceTimersByTime(AUTO_SYNC_CONFIG_POLL_INTERVAL_MS);
+    });
+    await waitFor(() => expect(requestSpy).toHaveBeenCalled());
+
+    expect(result.current.isReady).toBe(true);
+    expect(result.current.notReadyMessage).toBeUndefined();
+    expect(result.current.state).toEqual({ kind: 'configured', uid: 'mimir-uid' });
   });
 });
 
@@ -356,6 +473,29 @@ describe('useAutoSyncConfiguration — save / disable', () => {
     expect(result.current.isReady).toBe(false);
   });
 
+  it('becomes ready without a remount once the sync worker seeds the singleton', async () => {
+    // The promise the not-ready copy makes: "try again in a moment" has to come true for someone who
+    // waits on the page. A 404 caches as a rejection with nothing to invalidate it, so only the poll
+    // can clear it.
+    jest.useFakeTimers();
+    setupAutoSyncConfigAbsent(server);
+    setupDatasourcesEndpoint(server, [MIMIR_DS]);
+
+    const { result } = renderAutoSyncHook();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.isReady).toBe(false);
+
+    // The worker's first tick lands: the singleton now exists, with no help from the UI.
+    setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
+
+    await act(async () => {
+      jest.advanceTimersByTime(AUTO_SYNC_CONFIG_POLL_INTERVAL_MS);
+    });
+
+    await waitFor(() => expect(result.current.isReady).toBe(true));
+    expect(result.current.state).toEqual({ kind: 'configured', uid: 'mimir-uid' });
+  });
+
   it('refuses to save when the singleton has not been seeded yet', async () => {
     setupAutoSyncConfigAbsent(server);
     setupDatasourcesEndpoint(server, [MIMIR_DS]);
@@ -368,10 +508,21 @@ describe('useAutoSyncConfiguration — save / disable', () => {
     });
 
     expect(result.current.state).toEqual({ kind: 'unconfigured' });
-    expect(notifyError).toHaveBeenCalledWith(
-      'Auto-sync is still initializing',
-      'Grafana has not finished setting up auto-sync for this organization. Try again in a moment.'
-    );
+    expect(notifyError).toHaveBeenCalledWith('Auto-sync is still initializing', INITIALIZING_MESSAGE);
+  });
+
+  it('notifies the read failure rather than "initializing" when a save is attempted anyway', async () => {
+    setupAutoSyncConfigReadError(server, { code: 500 });
+    setupDatasourcesEndpoint(server, [MIMIR_DS]);
+
+    const { result } = renderAutoSyncHook();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await expect(result.current.save('mimir-uid')).resolves.toBe(false);
+    });
+
+    expect(notifyError).toHaveBeenCalledWith('Could not load the auto-sync configuration', CONFIG_READ_FAILURE_MESSAGE);
   });
 
   it('invalidates the Alertmanager entity caches after a successful save', async () => {

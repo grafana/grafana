@@ -26,14 +26,10 @@ interface StepReviewEnableAutoSyncProps {
 export function StepReviewEnableAutoSync({ onCancel }: StepReviewEnableAutoSyncProps) {
   const { watch } = useFormContext<ImportFormValues>();
   const { setActiveStep } = useStepperState();
-  const { save, isPending, isReady, mimirCortexDatasources } = useAutoSyncConfiguration();
+  const { save, isPending, isReady, notReadyMessage, mimirCortexDatasources } = useAutoSyncConfiguration();
 
   const selectedUid = watch('autosyncDatasourceUID') ?? '';
   const dataSourceName = mimirCortexDatasources.find((ds) => ds.uid === selectedUid)?.name ?? selectedUid;
-  const notReadyTooltip = t(
-    'alerting.import-to-gma.autosync-review.enable-not-ready',
-    'Grafana is still setting up auto-sync for this organization. Try again in a moment.'
-  );
 
   const handleEnable = async () => {
     const enabled = await save(selectedUid);
@@ -85,9 +81,7 @@ export function StepReviewEnableAutoSync({ onCancel }: StepReviewEnableAutoSyncP
           <Button variant="secondary" icon="arrow-left" onClick={() => setActiveStep(StepKey.Method)}>
             {t('alerting.import-to-gma.autosync-review.back', 'Add method')}
           </Button>
-          {/* isReady, not isLoading: selectedUid comes from the form, so a loading-only gate leaves
-              the button clickable while the singleton read is unresolved. */}
-          <Tooltip content={notReadyTooltip} show={isReady ? false : undefined}>
+          <Tooltip content={notReadyMessage ?? ''} show={notReadyMessage ? undefined : false}>
             <Box display="inline-block">
               <Button
                 variant="primary"

@@ -90,6 +90,38 @@ export function setupAutoSyncConfigAbsent(server: SetupServer) {
   return { requestSpy };
 }
 
+/**
+ * A realistic apimachinery message for a read failure. It quotes the resource name on purpose: those
+ * quotes are what catch i18next's default escaping when the message is interpolated into translated
+ * copy, so tests asserting the message reaches the user unmangled should keep them.
+ */
+export const CONFIG_READ_FAILURE_MESSAGE =
+  'Internal error occurred: failed to read config "default": etcdserver: request timed out';
+
+/**
+ * Make the Config GET fail with something other than a 404. The UI must not present this as "still
+ * initializing": no amount of waiting seeds a singleton whose read is broken.
+ *
+ * Returns a `requestSpy` so a test that installs this mid-flight can confirm the failing read
+ * actually landed before asserting on what the UI did with it.
+ */
+export function setupAutoSyncConfigReadError(
+  server: SetupServer,
+  { code, message = CONFIG_READ_FAILURE_MESSAGE }: { code: number; message?: string }
+) {
+  const requestSpy = jest.fn();
+  server.use(
+    http.get<{ namespace: string; name: string }>(CONFIG_URL, () => {
+      requestSpy();
+      return HttpResponse.json(
+        { kind: 'Status', apiVersion: 'v1', metadata: {}, status: 'Failure', reason: 'InternalError', code, message },
+        { status: code }
+      );
+    })
+  );
+  return { requestSpy };
+}
+
 /** A single JSON Patch operation, as the UI sends them. */
 interface PatchOperation {
   op: string;
