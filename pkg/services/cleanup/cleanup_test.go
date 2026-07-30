@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -25,6 +27,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func withKubeSnapshotsEnabled(t *testing.T) {
+	t.Helper()
+	err := openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagSnapshotsKubernetesSnapshots: {
+			Key:            featuremgmt.FlagSnapshotsKubernetesSnapshots,
+			DefaultVariant: "enabled",
+			Variants:       map[string]any{"enabled": true, "disabled": false},
+		},
+	}))
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
+	})
+}
 
 func TestCleanUpTmpFiles(t *testing.T) {
 	cfg := setting.Cfg{}
@@ -88,6 +105,8 @@ func TestDeleteExpiredSnapshots_LegacyMode(t *testing.T) {
 }
 
 func TestDeleteExpiredSnapshots_KubernetesMode(t *testing.T) {
+	withKubeSnapshotsEnabled(t)
+
 	t.Run("deletes expired snapshots across multiple orgs", func(t *testing.T) {
 		// Create expired snapshots - one per org
 		expiredTime := time.Now().Add(-time.Hour).UnixMilli()
@@ -143,10 +162,8 @@ func TestDeleteExpiredSnapshots_KubernetesMode(t *testing.T) {
 
 	t.Run("handles REST config error", func(t *testing.T) {
 		service := &CleanUpService{
-			log: log.New("cleanup"),
-			Cfg: &setting.Cfg{
-				KubernetesSnapshotsEnabled: true,
-			},
+			log:                  log.New("cleanup"),
+			Cfg:                  &setting.Cfg{},
 			clientConfigProvider: apiserver.WithoutRestConfig,
 		}
 
@@ -224,9 +241,7 @@ func createK8sCleanupService(t *testing.T, mockDynClient *mockDynamicClient) *Cl
 
 	return &CleanUpService{
 		log: log.New("cleanup"),
-		Cfg: &setting.Cfg{
-			KubernetesSnapshotsEnabled: true,
-		},
+		Cfg: &setting.Cfg{},
 		clientConfigProvider: apiserver.RestConfigProviderFunc(func(ctx context.Context) (*rest.Config, error) {
 			return &rest.Config{}, nil
 		}),
