@@ -120,6 +120,10 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Connection'],
       }),
+      createConnectionAuthorize: build.mutation<CreateConnectionAuthorizeApiResponse, CreateConnectionAuthorizeApiArg>({
+        query: (queryArg) => ({ url: `/connections/${queryArg.name}/authorize`, method: 'POST', body: queryArg.body }),
+        invalidatesTags: ['Connection'],
+      }),
       getConnectionRepositories: build.query<GetConnectionRepositoriesApiResponse, GetConnectionRepositoriesApiArg>({
         query: (queryArg) => ({ url: `/connections/${queryArg.name}/repositories` }),
         providesTags: ['Connection'],
@@ -722,6 +726,20 @@ export type UpdateConnectionApiArg = {
   /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
   force?: boolean;
   patch: Patch;
+};
+export type CreateConnectionAuthorizeApiResponse = /** status 200 OK */ ConnectionAuthorizeRequest;
+export type CreateConnectionAuthorizeApiArg = {
+  /** name of the ConnectionAuthorizeRequest */
+  name: string;
+  body: {
+    /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+    apiVersion?: string;
+    /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+    kind?: string;
+    metadata?: any;
+    spec: any;
+    status?: any;
+  };
 };
 export type GetConnectionRepositoriesApiResponse = /** status 200 OK */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1455,8 +1473,8 @@ export type ConnectionSecure = {
   token?: InlineSecureValue;
 };
 export type BitbucketConnectionConfig = {
-  /** App client ID */
-  clientID: string;
+  /** The workspace the OAuth consumer belongs to */
+  workspace: string;
 };
 export type GitHubConnectionConfig = {
   /** GitHub App ID */
@@ -1472,8 +1490,8 @@ export type GitHubEnterpriseConnectionConfig = {
   /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
   serverUrl: string;
 };
-export type GitlabConnectionConfig = {
-  /** App client ID */
+export type ConnectionOAuthConfig = {
+  /** The OAuth app client ID */
   clientID: string;
 };
 export type ConnectionWebhookConfig = {
@@ -1489,8 +1507,8 @@ export type ConnectionSpec = {
   github?: GitHubConnectionConfig;
   /** GitHub Enterprise Server connection configuration Only applicable when provider is "githubEnterprise" */
   githubEnterprise?: GitHubEnterpriseConnectionConfig;
-  /** Gitlab connection configuration Only applicable when provider is "gitlab" */
-  gitlab?: GitlabConnectionConfig;
+  /** OAuth app configuration shared by all OAuth app providers */
+  oauth?: ConnectionOAuthConfig;
   /** The connection display name (shown in the UI) */
   title: string;
   /** The connection provider type
@@ -1635,6 +1653,25 @@ export type Status = {
   status?: string;
 };
 export type Patch = object;
+export type ConnectionAuthorizeRequestSpec = {
+  /** The authorization code returned by the provider */
+  code: string;
+  /** The redirect URI used in the authorization request */
+  redirectURI?: string;
+};
+export type ConnectionAuthorizeRequestStatus = {
+  /** Whether the connection has been authorized */
+  authorized: boolean;
+};
+export type ConnectionAuthorizeRequest = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ObjectMeta;
+  spec: ConnectionAuthorizeRequestSpec;
+  status?: ConnectionAuthorizeRequestStatus;
+};
 export type ResourceRef = {
   /** Group is the group of the resource, such as "dashboard.grafana.app". */
   group?: string;
@@ -2290,6 +2327,7 @@ export const {
   useReplaceConnectionMutation,
   useDeleteConnectionMutation,
   useUpdateConnectionMutation,
+  useCreateConnectionAuthorizeMutation,
   useGetConnectionRepositoriesQuery,
   useLazyGetConnectionRepositoriesQuery,
   useGetConnectionStatusQuery,

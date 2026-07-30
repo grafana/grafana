@@ -768,6 +768,88 @@
         }
       ]
     },
+    "/apis/provisioning.grafana.app/v1beta1/namespaces/{namespace}/connections/{name}/authorize": {
+      "post": {
+        "tags": [
+          "Connection"
+        ],
+        "description": "Complete the OAuth authorization of this connection by exchanging an authorization code",
+        "operationId": "createConnectionAuthorize",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "description": "ConnectionAuthorizeRequest completes the OAuth authorization of a connection by exchanging an authorization code for tokens. It is the request and response body of the connection authorize subresource.",
+                "type": "object",
+                "required": [
+                  "spec"
+                ],
+                "properties": {
+                  "apiVersion": {
+                    "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+                    "type": "string"
+                  },
+                  "kind": {
+                    "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                    "type": "string"
+                  },
+                  "metadata": {
+                    "default": {}
+                  },
+                  "spec": {
+                    "default": {}
+                  },
+                  "status": {
+                    "default": {}
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ConnectionAuthorizeRequest"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v1beta1",
+          "kind": "ConnectionAuthorizeRequest"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the ConnectionAuthorizeRequest",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
     "/apis/provisioning.grafana.app/v1beta1/namespaces/{namespace}/connections/{name}/repositories": {
       "get": {
         "tags": [
@@ -4029,11 +4111,11 @@
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.BitbucketConnectionConfig": {
         "type": "object",
         "required": [
-          "clientID"
+          "workspace"
         ],
         "properties": {
-          "clientID": {
-            "description": "App client ID",
+          "workspace": {
+            "description": "The workspace the OAuth consumer belongs to",
             "type": "string",
             "default": ""
           }
@@ -4152,6 +4234,69 @@
           }
         ]
       },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ConnectionAuthorizeRequest": {
+        "description": "ConnectionAuthorizeRequest completes the OAuth authorization of a connection by exchanging an authorization code for tokens. It is the request and response body of the connection authorize subresource.",
+        "type": "object",
+        "required": [
+          "spec"
+        ],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "metadata": {
+            "default": {}
+          },
+          "spec": {
+            "default": {}
+          },
+          "status": {
+            "default": {}
+          }
+        },
+        "x-kubernetes-group-version-kind": [
+          {
+            "group": "provisioning.grafana.app",
+            "kind": "ConnectionAuthorizeRequest",
+            "version": "v1beta1"
+          }
+        ]
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ConnectionAuthorizeRequestSpec": {
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "description": "The authorization code returned by the provider",
+            "type": "string",
+            "default": ""
+          },
+          "redirectURI": {
+            "description": "The redirect URI used in the authorization request",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ConnectionAuthorizeRequestStatus": {
+        "type": "object",
+        "required": [
+          "authorized"
+        ],
+        "properties": {
+          "authorized": {
+            "description": "Whether the connection has been authorized",
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ConnectionInfo": {
         "type": "object",
         "required": [
@@ -4187,6 +4332,19 @@
           },
           "metadata": {
             "default": {}
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.ConnectionOAuthConfig": {
+        "type": "object",
+        "required": [
+          "clientID"
+        ],
+        "properties": {
+          "clientID": {
+            "description": "The OAuth app client ID",
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -4227,8 +4385,8 @@
           "githubEnterprise": {
             "description": "GitHub Enterprise Server connection configuration Only applicable when provider is \"githubEnterprise\""
           },
-          "gitlab": {
-            "description": "Gitlab connection configuration Only applicable when provider is \"gitlab\""
+          "oauth": {
+            "description": "OAuth app configuration shared by all OAuth app providers"
           },
           "title": {
             "description": "The connection display name (shown in the UI)",
@@ -4645,19 +4803,6 @@
           "url": {
             "description": "The repository URL (e.g. `https://github.com/example/test`).",
             "type": "string"
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.GitlabConnectionConfig": {
-        "type": "object",
-        "required": [
-          "clientID"
-        ],
-        "properties": {
-          "clientID": {
-            "description": "App client ID",
-            "type": "string",
-            "default": ""
           }
         }
       },

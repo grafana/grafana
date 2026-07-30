@@ -21,8 +21,12 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		BranchOptions{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_BranchOptions(ref),
 		CommitOptions{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_CommitOptions(ref),
 		Connection{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_Connection(ref),
+		ConnectionAuthorizeRequest{}.OpenAPIModelName():       schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequest(ref),
+		ConnectionAuthorizeRequestSpec{}.OpenAPIModelName():   schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequestSpec(ref),
+		ConnectionAuthorizeRequestStatus{}.OpenAPIModelName(): schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequestStatus(ref),
 		ConnectionInfo{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref),
 		ConnectionList{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref),
+		ConnectionOAuthConfig{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_ConnectionOAuthConfig(ref),
 		ConnectionSecure{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref),
 		ConnectionSpec{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref),
 		ConnectionStatus{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref),
@@ -41,7 +45,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		GitHubRepositoryConfig{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
 		GitLabRepositoryConfig{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref),
 		GitRepositoryConfig{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref),
-		GitlabConnectionConfig{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_GitlabConnectionConfig(ref),
 		HealthStatus{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref),
 		HistoricJob{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref),
 		HistoricJobList{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref),
@@ -130,16 +133,16 @@ func schema_pkg_apis_provisioning_v0alpha1_BitbucketConnectionConfig(ref common.
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"clientID": {
+					"workspace": {
 						SchemaProps: spec.SchemaProps{
-							Description: "App client ID",
+							Description: "The workspace the OAuth consumer belongs to",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 				},
-				Required: []string{"clientID"},
+				Required: []string{"workspace"},
 			},
 		},
 	}
@@ -335,6 +338,103 @@ func schema_pkg_apis_provisioning_v0alpha1_Connection(ref common.ReferenceCallba
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequest(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "ConnectionAuthorizeRequest completes the OAuth authorization of a connection by exchanging an authorization code for tokens. It is the request and response body of the connection authorize subresource.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(ConnectionAuthorizeRequestSpec{}.OpenAPIModelName()),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(ConnectionAuthorizeRequestStatus{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"spec"},
+			},
+		},
+		Dependencies: []string{
+			ConnectionAuthorizeRequestSpec{}.OpenAPIModelName(), ConnectionAuthorizeRequestStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequestSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"code": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The authorization code returned by the provider",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"redirectURI": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The redirect URI used in the authorization request",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"code"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ConnectionAuthorizeRequestStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"authorized": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Whether the connection has been authorized",
+							Default:     false,
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"authorized"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -405,6 +505,27 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref common.ReferenceCa
 		},
 		Dependencies: []string{
 			Connection{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_provisioning_v0alpha1_ConnectionOAuthConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"clientID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The OAuth app client ID",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"clientID"},
+			},
+		},
 	}
 }
 
@@ -498,10 +619,10 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 							Ref:         ref(BitbucketConnectionConfig{}.OpenAPIModelName()),
 						},
 					},
-					"gitlab": {
+					"oauth": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Gitlab connection configuration Only applicable when provider is \"gitlab\"",
-							Ref:         ref(GitlabConnectionConfig{}.OpenAPIModelName()),
+							Description: "OAuth app configuration shared by all OAuth app providers",
+							Ref:         ref(ConnectionOAuthConfig{}.OpenAPIModelName()),
 						},
 					},
 					"webhook": {
@@ -515,7 +636,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			BitbucketConnectionConfig{}.OpenAPIModelName(), ConnectionWebhookConfig{}.OpenAPIModelName(), GitHubConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseConnectionConfig{}.OpenAPIModelName(), GitlabConnectionConfig{}.OpenAPIModelName()},
+			BitbucketConnectionConfig{}.OpenAPIModelName(), ConnectionOAuthConfig{}.OpenAPIModelName(), ConnectionWebhookConfig{}.OpenAPIModelName(), GitHubConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseConnectionConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -1211,27 +1332,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref common.Refere
 					},
 				},
 				Required: []string{"branch"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_GitlabConnectionConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"clientID": {
-						SchemaProps: spec.SchemaProps{
-							Description: "App client ID",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"clientID"},
 			},
 		},
 	}

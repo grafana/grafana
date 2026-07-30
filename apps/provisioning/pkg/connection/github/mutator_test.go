@@ -113,7 +113,7 @@ func TestMutate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GitlabConnectionType,
-					Gitlab: &provisioning.GitlabConnectionConfig{
+					OAuth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "client-id",
 					},
 				},
