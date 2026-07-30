@@ -420,9 +420,8 @@ func TestCreateDashboardSnapshotPublicModeWithKubernetesSnapshots(t *testing.T) 
 				hs.dashboardsnapshotsService = dashSnapSvc
 				hs.clientConfigProvider = kubeMock
 			})
-
-			res := sendPostRequest(t, server, nil)
-			assert.Equal(t, tt.expectedStatus, res.StatusCode)
+			status := sendPostRequest(t, server, nil)
+			assert.Equal(t, tt.expectedStatus, status)
 		})
 	}
 }
@@ -454,7 +453,7 @@ func TestCreateDashboardSnapshot_DispatchSwitchesAtRuntime(t *testing.T) {
 	assert.Contains(t, kubeMock.lastServedPath, "/apis/dashboard.grafana.app")
 }
 
-func sendPostRequest(t *testing.T, server *webtest.Server, usr *user.SignedInUser) *http.Response {
+func sendPostRequest(t *testing.T, server *webtest.Server, usr *user.SignedInUser) int {
 	t.Helper()
 
 	body := strings.NewReader(`{"dashboard":{"uid":"x","title":"t"}}`)
@@ -465,9 +464,9 @@ func sendPostRequest(t *testing.T, server *webtest.Server, usr *user.SignedInUse
 	}
 	res, err := server.Send(req)
 	require.NoError(t, err)
+	defer func() { _ = res.Body.Close() }()
 
-	t.Cleanup(func() { _ = res.Body.Close() })
-	return res
+	return res.StatusCode
 }
 
 func buildHttpServer(d dashboardsnapshots.Service, snapshotEnabled bool) *HTTPServer {
