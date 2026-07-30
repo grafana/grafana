@@ -47,10 +47,9 @@ var _ store = (*xormStore)(nil)
 // quoted, because XORM quotes them itself. Call dbHelper.Table directly there.
 // Locals holding a quoted name are prefixed with q.
 //
-// Queries below reference columns as team.x and team_member.x, which needs no
-// alias even when the resolved name is qualified: the correlation name of a
-// qualified table reference is its unqualified table name. Joined tables are
-// aliased only because the join predicates name them explicitly.
+// In raw SQL, columns reference tables by their unqualified name (team.x,
+// team_member.x) without a self-alias: a qualified reference already exposes
+// its unqualified name as the correlation name.
 func quoteTable(dbHelper *legacysql.LegacyDatabaseHelper, name string) string {
 	return dbHelper.DB.Quote(dbHelper.Table(name))
 }
@@ -76,14 +75,14 @@ func getTeamMemberCount(dbHelper *legacysql.LegacyDatabaseHelper, filteredUsers 
 	if len(filteredUsers) > 0 {
 		qUser := quoteTable(dbHelper, "user")
 		userRef := dbHelper.DB.GetDialect().Quote("user")
-		return `(SELECT COUNT(*) FROM ` + qTeamMember + ` AS team_member
-			INNER JOIN ` + qUser + ` AS ` + userRef + ` ON team_member.user_id = ` + userRef + `.id
+		return `(SELECT COUNT(*) FROM ` + qTeamMember + `
+			INNER JOIN ` + qUser + ` ON team_member.user_id = ` + userRef + `.id
 			WHERE team_member.team_id = team.id AND ` + userRef + `.login NOT IN (?` +
 			strings.Repeat(",?", len(filteredUsers)-1) + ")" +
 			`) AS member_count `
 	}
 
-	return "(SELECT COUNT(*) FROM " + qTeamMember + " AS team_member WHERE team_member.team_id = team.id) AS member_count "
+	return "(SELECT COUNT(*) FROM " + qTeamMember + " WHERE team_member.team_id = team.id) AS member_count "
 }
 
 func getTeamSelectSQLBase(dbHelper *legacysql.LegacyDatabaseHelper, filteredUsers []string) string {
@@ -406,7 +405,7 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 		params = append(params, query.OrgID, query.UserID)
 
 		sql.WriteString(getTeamSelectSQLBase(dbHelper, []string{}))
-		sql.WriteString(` INNER JOIN ` + quoteTable(dbHelper, "team_member") + ` AS team_member on team.id = team_member.team_id`)
+		sql.WriteString(` INNER JOIN ` + quoteTable(dbHelper, "team_member") + ` on team.id = team_member.team_id`)
 		sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
 
 		acFilter, err := ac.Filter(query.SignedInUser, "team.id", "teams:id:", ac.ActionTeamsRead)
@@ -440,7 +439,7 @@ func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByU
 		qTeam := quoteTable(dbHelper, "team")
 		rows, err := sess.QueryRows(`SELECT tm.team_id, team.uid
 			FROM `+qTeamMember+` AS tm
-			JOIN `+qTeam+` AS team ON team.id = tm.team_id
+			JOIN `+qTeam+` ON team.id = tm.team_id
 			WHERE tm.user_id=? AND tm.org_id=?
 			ORDER BY tm.team_id asc`, query.UserID, query.OrgID)
 		if err != nil {
