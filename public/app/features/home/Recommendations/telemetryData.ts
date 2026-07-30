@@ -89,8 +89,7 @@ export async function fetchLogsActivity(ds: Pick<DataSourceInstanceListItem, 'ui
     return empty;
   }
   const query = `{${label}=~".+"}`;
-  // aggregateBy=labels collapses both volume responses to one server-side total series, so the
-  // per-query series limit cannot truncate what we present as a complete number.
+  // aggregateBy=labels totals by label NAME, not value — one series; Loki's series limit cannot truncate it.
   const aggregate = { aggregateBy: 'labels', targetLabels: label };
   const [volume, values, volumeRange] = await Promise.all([
     getResource<LokiVolumeResponse>(instance, 'index/volume', { query, start: statsStart, end, ...aggregate }).catch(
