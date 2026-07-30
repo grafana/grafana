@@ -25,7 +25,7 @@ const LoginPage = () => {
   return (
     <Page layout={PageLayoutType.Custom}>
       <LoginCtrl>
-        {({
+        {{
           loginHint,
           passwordHint,
           disableLoginForm,
@@ -55,7 +55,7 @@ const LoginPage = () => {
                     isLoggingIn={isLoggingIn}
                   >
                     <Stack justifyContent="flex-end">
-                      {!config.auth.disableLogin && (
+                      {!config.auth.disableLogin && !config.disableForgotPassword && (
                         <LinkButton
                           className={styles.forgottenPassword}
                           fill="text"

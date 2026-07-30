@@ -238,6 +238,7 @@ export interface GrafanaConfig {
   externalUserUpgradeLinkUrl: string;
   allowOrgCreate: boolean;
   disableLoginForm: boolean;
+  disableForgotPassword: boolean;
   defaultDatasource: string;
   defaultDatasourceManageAlertsUIToggle: boolean;
   defaultAllowRecordingRulesTargetAlertsUIToggle: boolean;

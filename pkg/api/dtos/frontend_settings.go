@@ -126,7 +126,6 @@ type FrontendSettingsLicensingDTO struct {
 	UsageBilling           *bool   `json:"usageBilling,omitempty"`
 	ActiveAdminsAndEditors *int64  `json:"activeAdminsAndEditors,omitempty"`
 	ActiveViewers          *int64  `json:"activeViewers,omitempty"`
-	ActiveUsers            *int64  `json:"ActiveUsers,omitempty"`
 }
 
 // Enterprise-only
@@ -224,6 +223,7 @@ type FrontendSettingsDTO struct {
 	ApplicationInsightsAutoRouteTracking bool                `json:"applicationInsightsAutoRouteTracking"`
 	DisableLoginForm                     bool                `json:"disableLoginForm"`
 	DisableUserSignUp                    bool                `json:"disableUserSignUp"`
+	DisableForgotPassword                bool                `json:"disableForgotPassword"`
 	LoginHint                            string              `json:"loginHint"`
 	PasswordHint                         string              `json:"passwordHint"`
 	ExternalUserMngInfo                  string              `json:"externalUserMngInfo"`
