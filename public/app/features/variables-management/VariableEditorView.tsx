@@ -120,9 +120,12 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
     !sourceFolderUid || (needsSeparateSourceFolder ? sourceFolderMatches : selectedFolderMatches);
 
   // Non-editors may only save folder-scoped variables (root/global requires Editor/Admin),
-  // and only into folders they can edit.
+  // and only into folders they can edit. Edit also requires source-scope rights so rename/move
+  // (create-then-delete) cannot leave a duplicate when the original cannot be deleted.
   const hasValidFolderScope = allowGlobalScope || Boolean(folderUid);
   const canManageSelectedScope = canManageVariableScope(folderUid, selectedFolderCanEdit, allowGlobalScope);
+  const canManageSourceScope =
+    sourceScopeReady && canManageVariableScope(sourceFolderUid ?? '', sourceFolderCanEdit, allowGlobalScope);
   const canSave =
     !isBusy &&
     !hasNameError &&
@@ -130,13 +133,11 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
     !isCheckingName &&
     hasValidFolderScope &&
     selectedScopeReady &&
-    canManageSelectedScope;
-  // Match Save: viewers can open a variable but cannot delete it without scope edit rights.
-  const canDelete =
-    !isBusy &&
-    Boolean(source) &&
-    sourceScopeReady &&
-    canManageVariableScope(sourceFolderUid ?? '', sourceFolderCanEdit, allowGlobalScope);
+    canManageSelectedScope &&
+    (isNew || canManageSourceScope);
+  const canDelete = !isBusy && Boolean(source) && canManageSourceScope;
+  // Viewers can open unmanageable scopes to inspect them, but must not relocate (copy-as-move).
+  const canChangeFolder = isNew || canManageSourceScope;
 
   const scene = useMemo(
     () =>
@@ -258,6 +259,7 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
           showRootFolder={allowGlobalScope || !isNew}
           permission={isNew ? 'edit' : 'view'}
           value={folderUid}
+          disabled={!canChangeFolder}
           onChange={(uid) => setFolderUid(allowGlobalScope || !isNew ? (uid ?? '') : uid)}
           excludeUIDs={getVariableFolderPickerExcludeUIDs()}
         />

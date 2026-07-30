@@ -61,6 +61,9 @@ export interface NestedFolderPickerProps {
 
   /* HTML ID for the button element for form labels */
   id?: string;
+
+  /* Disable opening the picker (still shows the selected folder label) */
+  disabled?: boolean;
 }
 
 const debouncedSearch = debounce(getSearchResults, 300);
@@ -88,6 +91,7 @@ export function NestedFolderPicker({
   permission = 'edit',
   onChange,
   id,
+  disabled = false,
 }: NestedFolderPickerProps) {
   const styles = useStyles2(getStyles);
   const getSelectedFolderResult = useGetFolderQueryFacade(value);
@@ -330,7 +334,7 @@ export function NestedFolderPicker({
             : undefined
         }
         {...getReferenceProps()}
-        disabled={isForbidden}
+        disabled={disabled || isForbidden}
       />
     );
   }
