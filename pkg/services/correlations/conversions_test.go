@@ -87,8 +87,9 @@ func TestConversion(t *testing.T) {
 				SourceUID:   "source",
 				Description: new("A test correlation"),
 				Config: &CorrelationConfigUpdateDTO{
-					Field:  new("test-field"),
-					Target: &map[string]any{},
+					Field:     new("test-field"),
+					Target:    &map[string]any{},
+					TimeRange: &CorrelationTimeRange{},
 				},
 			},
 		},
