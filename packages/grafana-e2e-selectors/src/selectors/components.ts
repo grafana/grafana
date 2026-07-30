@@ -17,6 +17,16 @@ export const versionedComponents = {
     container: {
       '10.2.3': 'data-testid radio-button',
     },
+    /**
+     * Identifies one option of a RadioButtonGroup by its `value`, so the selector does not depend
+     * on the option's translated label.
+     *
+     * Unique **within a group, not across a page** — generic values collide, and `true`/`false`
+     * are used by a dozen different groups. Always scope it to the group, either via the group's
+     * own `data-testid` prop or `RadioGroup.container`:
+     *
+     *     `${RadioGroup.container} ${RadioButton.option('code')}`
+     */
     option: {
       '13.2.0': (value: string) => `data-testid radio-button-option ${value}`,
     },
