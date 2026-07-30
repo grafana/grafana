@@ -55,6 +55,10 @@ type ZanzanaClientSettings struct {
 	// is 5m) or the server closes the connection. Zero disables keepalive pings.
 	// Only used when mode is set to client.
 	KeepaliveTime time.Duration
+	// CallTimeout is the deadline applied to calls whose context has none, so background
+	// callers cannot block indefinitely on an unresponsive connection. It spans all retry
+	// attempts. Zero disables the default deadline. Only used when mode is set to client.
+	CallTimeout time.Duration
 }
 
 type ZanzanaReconcilerMode string
@@ -306,6 +310,7 @@ func (cfg *Cfg) readZanzanaSettings() {
 	zc.Addr = clientSec.Key("address").MustString("")
 	zc.ServerCertFile = clientSec.Key("tls_cert").MustString("")
 	zc.KeepaliveTime = clientSec.Key("grpc_client_keepalive_time").MustDuration(6 * time.Minute)
+	zc.CallTimeout = clientSec.Key("grpc_client_timeout").MustDuration(30 * time.Second)
 
 	grpcClientAuthSection := cfg.SectionWithEnvOverrides("grpc_client_authentication")
 	zc.Token = grpcClientAuthSection.Key("token").MustString("")

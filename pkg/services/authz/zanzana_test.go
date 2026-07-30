@@ -10,7 +10,8 @@ import (
 )
 
 func TestUnaryDefaultTimeout(t *testing.T) {
-	interceptor := unaryDefaultTimeout(defaultCallTimeout)
+	callTimeout := 30 * time.Second
+	interceptor := unaryDefaultTimeout(callTimeout)
 
 	invoke := func(ctx context.Context) (deadline time.Time, ok bool) {
 		invoker := func(ctx context.Context, _ string, _, _ any, _ *grpc.ClientConn, _ ...grpc.CallOption) error {
@@ -24,7 +25,7 @@ func TestUnaryDefaultTimeout(t *testing.T) {
 	t.Run("adds deadline when context has none", func(t *testing.T) {
 		deadline, ok := invoke(context.Background())
 		require.True(t, ok)
-		require.WithinDuration(t, time.Now().Add(defaultCallTimeout), deadline, 5*time.Second)
+		require.WithinDuration(t, time.Now().Add(callTimeout), deadline, 5*time.Second)
 	})
 
 	t.Run("keeps existing deadline", func(t *testing.T) {
