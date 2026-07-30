@@ -295,6 +295,7 @@ type searchServer struct {
 
 	injectFailuresPercent     int
 	indexModificationCacheTTL time.Duration
+	indexDeletedDocuments     bool
 
 	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
 }
@@ -373,6 +374,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		requiredFeatures:          RequiredIndexFeatures(),
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
+		indexDeletedDocuments:     opts.IndexDeletedDocuments,
 
 		queryCache:             opts.QueryCache,
 		queryCacheMaxPerTenant: opts.QueryCacheMaxPerTenant,
@@ -1978,7 +1980,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			calledAt = lastCalledAt
 		}
 
-		keepDeleted := indexKeepsDeletedDocuments(index, logger)
+		keepDeleted := s.keepsDeletedDocuments(index, logger)
 
 		listModifiedTime := time.Now()
 		rv, it := s.storage.ListModifiedSince(ctx, NamespacedResource{
@@ -2128,10 +2130,14 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	return index, err
 }
 
-// indexKeepsDeletedDocuments reports whether an index maps the markers a deleted
-// document needs. When it does not, keeping the document would serve it as live,
-// so it is removed instead until the index is rebuilt.
-func indexKeepsDeletedDocuments(index ResourceIndex, logger log.Logger) bool {
+// keepsDeletedDocuments reports whether deleted objects should stay in this
+// index. They do not when the feature is switched off, or when the index predates
+// the marker mappings and would serve a marked document as live. Either way the
+// document is removed instead, as it was before trash search existed.
+func (s *searchServer) keepsDeletedDocuments(index ResourceIndex, logger log.Logger) bool {
+	if !s.indexDeletedDocuments {
+		return false
+	}
 	info, err := index.BuildInfo()
 	if err != nil {
 		logger.Warn("cannot read index features, removing deleted documents instead of keeping them", "err", err)
@@ -2153,9 +2159,9 @@ func (s *searchServer) indexTrash(ctx context.Context, nsr NamespacedResource, i
 	ctx, span := tracer.Start(ctx, "resource.searchServer.indexTrash")
 	defer span.End()
 
-	// Nothing to do for an index that cannot hold the markers: the documents would
-	// be dropped, so listing trash and building them would be wasted work.
-	if !indexKeepsDeletedDocuments(index, logger) {
+	// Nothing to do when deleted objects are not kept: listing trash and building
+	// documents that get dropped would be wasted work.
+	if !s.keepsDeletedDocuments(index, logger) {
 		return nil
 	}
 
