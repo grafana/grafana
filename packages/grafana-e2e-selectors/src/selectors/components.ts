@@ -1287,11 +1287,13 @@ export const versionedComponents = {
   },
   ButtonSelect: {
     /**
-     * Identifies one option of a ButtonSelect menu by its `value`, so the selector does not
-     * depend on the option's translated label. Only rendered for scalar option values.
+     * Identifies one option of a ButtonSelect menu, keyed on the option's `value` when it is
+     * scalar so the selector does not depend on the option's translated label. Options whose
+     * values have no meaningful string form (objects, undefined) render the bare selector.
      */
     option: {
-      '13.2.0': (value: string) => `data-testid ButtonSelect option ${value}`,
+      '13.2.0': (value?: string) =>
+        value === undefined ? 'data-testid ButtonSelect option' : `data-testid ButtonSelect option ${value}`,
     },
   },
   Select: {

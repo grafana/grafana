@@ -38,7 +38,8 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
       <ScrollContainer maxHeight="100vh">
         {options.map((item) => {
           // Keyed on the option's value, not its label, so the selector survives translation.
-          // Skipped for objects and undefined, which have no meaningful string form.
+          // Objects and undefined have no meaningful string form, so those options get the
+          // bare selector without a disambiguator.
           const testIdValue =
             typeof item.value === 'string' || typeof item.value === 'number' || typeof item.value === 'boolean'
               ? String(item.value)
@@ -47,7 +48,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
           return (
             <MenuItem
               key={`${item.value}`}
-              testId={testIdValue === undefined ? undefined : selectors.components.ButtonSelect.option(testIdValue)}
+              testId={selectors.components.ButtonSelect.option(testIdValue)}
               label={item.label ?? String(item.value)}
               onClick={() => onChange(item)}
               active={item.value === value?.value}
