@@ -17,6 +17,9 @@ export const versionedComponents = {
     container: {
       '10.2.3': 'data-testid radio-button',
     },
+    option: {
+      '13.2.0': (value: string) => `data-testid radio-button-option ${value}`,
+    },
   },
   Breadcrumbs: {
     breadcrumb: {
