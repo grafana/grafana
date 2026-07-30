@@ -15,8 +15,9 @@ import { reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaNewPreferencesPage } from '@grafana/runtime/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { useNavTree } from 'app/core/navtree/useNavTree';
 import { setBookmark } from 'app/core/reducers/navBarTree';
-import { useDispatch, useSelector } from 'app/types/store';
+import { useDispatch } from 'app/types/store';
 
 import { contextSrv } from '../../../services/context_srv';
 
@@ -304,7 +305,9 @@ const useSectionOrdering = ({
  * and the derived nav structures, keeping `MegaMenu` a thin renderer.
  */
 export const useNavCustomization = () => {
-  const navTree = useSelector((state) => state.navBarTree);
+  // The nav tree layer: server or client-built tree plus its (plugin nav)
+  // load state, which folds into this hook's overall loading/error surface.
+  const { data: navTree, isLoading: navTreeLoading, isError: navTreeError } = useNavTree();
   const location = useLocation();
   const { chrome } = useGrafana();
   const state = chrome.useState();
@@ -367,9 +370,10 @@ export const useNavCustomization = () => {
     commit: commitOrdering,
   } = useSectionOrdering({ editMode, baseItems });
 
-  // Render a skeleton until the customisation state has loaded on first visit, so the menu doesn't
-  // render then reflow (pins appearing). Cached after that.
-  const isLoading = canCustomise && (pinningLoading || hidingLoading || orderingLoading);
+  // Render a skeleton until the customisation state has loaded on first visit (so the menu doesn't
+  // render then reflow) and, with the client-built nav tree, until plugin nav has fetched (static
+  // items aren't guaranteed to sort above plugin items). Cached after that.
+  const isLoading = (canCustomise && (pinningLoading || hidingLoading || orderingLoading)) || navTreeLoading;
 
   // Pinned box: one breadcrumb entry per pinned url (in the user's order). Pinning duplicates items
   // here; the main nav below is never pruned. Leaf items are enriched so clicks are tracked.
@@ -470,6 +474,7 @@ export const useNavCustomization = () => {
   return {
     canCustomise,
     isLoading,
+    navTreeError,
     navItems,
     pinnedEntries,
     activeItem,

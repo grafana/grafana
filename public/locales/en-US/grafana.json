@@ -12642,6 +12642,7 @@
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
       "pinned-list-label": "Pinned items",
+      "plugin-nav-failed": "Some navigation items couldn't be loaded",
       "undock": "Undock menu"
     },
     "megamenu-item": {

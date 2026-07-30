@@ -53,6 +53,13 @@ export function updateNavById(
   });
 }
 
+/** Returns a new tree without the matching node (at any depth) */
+export function removeNavById(nodes: NavModelItem[], id: string): NavModelItem[] {
+  return nodes
+    .filter((node) => node.id !== id)
+    .map((node) => (node.children ? { ...node, children: removeNavById(node.children, id) } : node));
+}
+
 /**
  * Prefixes every absolute url in the tree with the app sub url, so individual
  * items are declared sub-url agnostic. Anchor-only and relative urls (Help's
