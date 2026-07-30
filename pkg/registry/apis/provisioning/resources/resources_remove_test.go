@@ -269,7 +269,7 @@ func TestRenameResourceFile(t *testing.T) {
 		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
-	t.Run("different name deletes old then creates new", func(t *testing.T) {
+	t.Run("different name, failed new write leaves old resource intact", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)
 		mockParser := NewMockParser(t)
 		mockClient := &MockDynamicResourceInterface{}
@@ -300,7 +300,8 @@ func TestRenameResourceFile(t *testing.T) {
 		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
 
 		// writeResourceFromParsed reuses newParsed directly — no second parse.
-		// Client is nil so Run returns an error, isolating the delete behaviour.
+		// Client is nil so the new write fails, exercising the write-before-delete
+		// ordering: the old resource must NOT be deleted when the write is rejected.
 		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
 			Obj:  newObj,
 			Meta: newMeta,
@@ -311,8 +312,8 @@ func TestRenameResourceFile(t *testing.T) {
 		grafanaObj := managedGrafanaObj("old-uid", "default", map[string]any{
 			utils.AnnoKeyFolder: "src-folder",
 		})
+		// The delete dry-run fetches the old resource; the real delete never runs.
 		mockClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
-		mockClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
 
 		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
 		_, folderName, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
@@ -321,6 +322,63 @@ func TestRenameResourceFile(t *testing.T) {
 		require.Contains(t, err.Error(), "failed to write resource")
 		require.Equal(t, "src-folder", folderName, "should return the previous folder for cleanup")
 
+		mockClient.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("different name, successful new write deletes old resource", func(t *testing.T) {
+		repo := repository.NewMockReaderWriter(t)
+		mockParser := NewMockParser(t)
+		mockClient := &MockDynamicResourceInterface{}
+
+		oldFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "old-path/dash.json"}
+		repo.On("Read", mock.Anything, "old-path/dash.json", "old-ref").Return(oldFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, oldFileInfo).Return(&ParsedResource{
+			Obj: &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "dashboard.grafana.app/v0alpha1",
+				"kind":       "Dashboard",
+				"metadata":   map[string]any{"name": "old-uid"},
+			}},
+			GVK:    dashboardGVK,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		newObj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v0alpha1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "new-uid"},
+		}}
+		newMeta, err := utils.MetaAccessor(newObj)
+		require.NoError(t, err)
+		newFileInfo := &repository.FileInfo{Data: []byte(`{}`), Path: "new-path/dash.json"}
+		repo.On("Read", mock.Anything, "new-path/dash.json", "new-ref").Return(newFileInfo, nil)
+		mockParser.On("Parse", mock.Anything, newFileInfo).Return(&ParsedResource{
+			Obj:    newObj,
+			Meta:   newMeta,
+			GVK:    dashboardGVK,
+			Client: mockClient,
+			Repo:   testRepoInfo(),
+		}, nil)
+
+		grafanaObj := managedGrafanaObj("old-uid", "default", map[string]any{
+			utils.AnnoKeyFolder: "src-folder",
+		})
+		mockClient.On("Get", mock.Anything, "old-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
+		// The new UID is free, so the new write creates it (Run tries update first,
+		// gets NotFound, then falls back to create), then the old is deleted.
+		mockClient.On("Get", mock.Anything, "new-uid", metav1.GetOptions{}, mock.Anything).
+			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "new-uid"))
+		mockClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, apierrors.NewNotFound(schema.GroupResource{}, "new-uid"))
+		mockClient.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(newObj, nil)
+		mockClient.On("Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything).Return(nil)
+
+		mgr := NewResourcesManager(repo, nil, mockParser, emptyClients(t))
+		newName, _, _, err := mgr.RenameResourceFile(context.Background(), "old-path/dash.json", "old-ref", "new-path/dash.json", "new-ref")
+
+		require.NoError(t, err)
+		require.Equal(t, "new-uid", newName)
+		mockClient.AssertCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 		mockClient.AssertCalled(t, "Delete", mock.Anything, "old-uid", metav1.DeleteOptions{}, mock.Anything)
 	})
 

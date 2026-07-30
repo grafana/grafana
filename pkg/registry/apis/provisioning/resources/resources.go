@@ -237,7 +237,6 @@ type WriteResourceOption func(*writeResourceConfig)
 
 type writeResourceConfig struct {
 	existingHash string
-	previousName string
 }
 
 // WithExistingHash provides the content hash of the resource as it currently
@@ -246,17 +245,6 @@ type writeResourceConfig struct {
 func WithExistingHash(hash string) WriteResourceOption {
 	return func(cfg *writeResourceConfig) {
 		cfg.existingHash = hash
-	}
-}
-
-// WithPreviousName provides the UID (metadata.name) this file already owned
-// before the write. When it equals the new content's UID, the write is a pure
-// in-place update — the resource is already owned by this path, so the
-// cross-file duplicate probe is skipped. Leave unset for creates and
-// identity-changing updates so the probe still runs.
-func WithPreviousName(name string) WriteResourceOption {
-	return func(cfg *writeResourceConfig) {
-		cfg.previousName = name
 	}
 }
 
@@ -293,10 +281,10 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 		parsed.SkipStrictValidation = true
 	}
 
-	return r.writeResourceFromParsed(ctx, path, ref, parsed, cfg.previousName)
+	return r.writeResourceFromParsed(ctx, path, ref, parsed)
 }
 
-func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, ref string, parsed *ParsedResource, previousName string, folderOpts ...EnsurePathOption) (string, schema.GroupVersionKind, error) {
+func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, ref string, parsed *ParsedResource, folderOpts ...EnsurePathOption) (string, schema.GroupVersionKind, error) {
 	if parsed.Obj.GetName() == "" {
 		return "", schema.GroupVersionKind{}, NewResourceValidationError(ErrMissingName)
 	}
@@ -320,20 +308,19 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 	// A resource with this UID may already exist owned by a DIFFERENT file (e.g. a
 	// file unchanged since a previous sync, so absent from the in-run lookup).
 	// Writing here would upsert it in place and silently flip its sourcePath to
-	// this file, turning the original owner into an invisible zombie. Probe for
-	// that, skipping only a pure in-place update that keeps its own UID
-	// (previousName == name), where the owner is already this path and no hijack
-	// is possible.
-	if previousName != parsed.Obj.GetName() {
-		owner, dup, err := r.accidentalDuplicateOwner(ctx, path, ref, parsed)
-		if err != nil {
-			return "", parsed.GVK, err
-		}
-		if dup {
-			return "", parsed.GVK, NewResourceValidationError(
-				fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, owner, ErrDuplicateName),
-			)
-		}
+	// this file, turning the original owner into an invisible zombie. The probe
+	// re-reads the owning file to distinguish an accidental duplicate (owner still
+	// declares this UID → reject) from a legitimate move/re-home (owner gone) or
+	// takeover (owner now declares a different UID), so it is a no-op for genuine
+	// in-place updates (owner == this path).
+	owner, dup, err := r.accidentalDuplicateOwner(ctx, path, ref, parsed)
+	if err != nil {
+		return "", parsed.GVK, err
+	}
+	if dup {
+		return "", parsed.GVK, NewResourceValidationError(
+			fmt.Errorf("duplicate resource name: %s, %s and %s: %w", parsed.Obj.GetName(), path, owner, ErrDuplicateName),
+		)
 	}
 
 	// Atomically claim the UID for this run. Only the goroutine that wins the
@@ -369,7 +356,7 @@ func (r *ResourcesManager) writeResourceFromParsed(ctx context.Context, path, re
 	parsed.Meta.SetResourceVersion("")
 
 	runCtx, runSpan := tracing.Start(ctx, "provisioning.resources.write_resource_from_file.run_resource")
-	err := parsed.Run(runCtx)
+	err = parsed.Run(runCtx)
 	if err != nil {
 		runSpan.RecordError(err)
 		// Wrap resource validation errors (like dashboard refresh interval) as warnings
@@ -403,7 +390,14 @@ func (r *ResourcesManager) accidentalDuplicateOwner(ctx context.Context, path, r
 		return "", false, nil
 	}
 
-	existing, err := parsed.Client.Get(ctx, name, metav1.GetOptions{})
+	// Look up the existing resource under the provisioning identity, the same one
+	// parsed.Run writes with — a sync write ctx may not carry it, and without it
+	// the Get can fail with RBAC or a false NotFound.
+	idCtx, _, err := identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
+	if err != nil {
+		return "", false, err
+	}
+	existing, err := parsed.Client.Get(idCtx, name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return "", false, nil // no existing resource → no collision
@@ -422,7 +416,7 @@ func (r *ResourcesManager) accidentalDuplicateOwner(ctx context.Context, path, r
 	// it still declares this UID are both files accidentally claiming it.
 	info, err := r.repo.Read(ctx, owner, ref)
 	if err != nil {
-		if apierrors.IsNotFound(err) {
+		if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
 			return "", false, nil // owner moved or was deleted → re-home
 		}
 		return "", false, fmt.Errorf("reading owning file %s: %w", owner, err)
@@ -443,9 +437,6 @@ func (r *ResourcesManager) accidentalDuplicateOwner(ctx context.Context, path, r
 // changed compared to oldName, deletes the old resource to prevent orphans.
 // Used by full sync where the old identity is known from Changes().Existing.
 func (r *ResourcesManager) ReplaceResourceFromFile(ctx context.Context, path, ref string, oldName string, oldGVR schema.GroupVersionResource, opts ...WriteResourceOption) (string, schema.GroupVersionKind, error) {
-	// The old identity is known, so the cross-file duplicate probe can be skipped
-	// when the UID is unchanged (in-place update); it still runs on an identity change.
-	opts = append(opts, WithPreviousName(oldName))
 	newName, gvk, err := r.WriteResourceFromFile(ctx, path, ref, opts...)
 	if err != nil || oldName == "" || oldName == newName {
 		return newName, gvk, err
@@ -474,9 +465,6 @@ func (r *ResourcesManager) ReplaceResourceFromFileByRef(ctx context.Context, pat
 	if oldInfo.Hash != "" {
 		opts = append(opts, WithExistingHash(oldInfo.Hash))
 	}
-	// The old identity is known, so the cross-file duplicate probe can be skipped
-	// when the UID is unchanged (in-place update); it still runs on an identity change.
-	opts = append(opts, WithPreviousName(oldParsed.Obj.GetName()))
 	newName, gvk, writeErr := r.WriteResourceFromFile(ctx, path, ref, opts...)
 	if writeErr != nil {
 		return newName, gvk, writeErr
@@ -557,41 +545,44 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		return "", "", schema.GroupVersionKind{}, fmt.Errorf("failed to parse new file: %w", err)
 	}
 
-	// Delete the old resource when the identity changed (name or resource kind).
-	// When both match, writeResourceFromParsed will update in place.
-	if !oldParsed.SameIdentity(newParsed) {
-		oldParsed.Action = provisioning.ResourceActionDelete
-		if err := oldParsed.Run(ctx); err != nil {
-			return oldParsed.Obj.GetName(), oldParsed.ExistingFolder(), oldParsed.GVK, fmt.Errorf("failed to delete old resource: %w", err)
-		}
-	} else {
-		// Delete dry-run fetches the existing object (with ownership validation)
-		// without mutating it, populating oldParsed.Existing for identity comparison.
-		oldParsed.Action = provisioning.ResourceActionDelete
-		if err := oldParsed.DryRun(ctx); err != nil {
-			return "", "", schema.GroupVersionKind{}, err
-		}
-		// Pure path-only rename (git blob hash unchanged): the file content is
-		// byte-identical, so the UPDATE we are about to send carries the same
-		// spec the cluster already accepted. Skip strict schema validation so
-		// a path/folder change is not blocked by stricter rules introduced
-		// after the resource was first persisted (e.g. legacy dashboards
-		// saved before the CUE validator was enforced).
-		// Rename-with-edits (different hashes) keeps strict validation: the
-		// new content is a real change and any validation failure must be
-		// surfaced rather than silently admitted.
-		if oldInfo.Hash != "" && oldInfo.Hash == newInfo.Hash {
-			newParsed.SkipStrictValidation = true
-		}
+	// Dry-run the delete: fetch the existing object (with ownership validation)
+	// without mutating it, populating oldParsed.Existing for the folder lookup and
+	// so a later real delete can reuse it. Crucially, the old resource is NOT
+	// deleted yet — a rename whose new UID is rejected as a cross-file duplicate
+	// must leave the original resource intact rather than orphan the file.
+	oldParsed.Action = provisioning.ResourceActionDelete
+	if err := oldParsed.DryRun(ctx); err != nil {
+		return "", "", schema.GroupVersionKind{}, err
+	}
+
+	// Pure path-only rename (same identity, git blob hash unchanged): the file
+	// content is byte-identical, so the UPDATE we are about to send carries the
+	// same spec the cluster already accepted. Skip strict schema validation so a
+	// path/folder change is not blocked by stricter rules introduced after the
+	// resource was first persisted (e.g. legacy dashboards saved before the CUE
+	// validator was enforced). Rename-with-edits keeps strict validation.
+	if oldParsed.SameIdentity(newParsed) && oldInfo.Hash != "" && oldInfo.Hash == newInfo.Hash {
+		newParsed.SkipStrictValidation = true
 	}
 
 	oldFolderName := oldParsed.ExistingFolder()
 
-	// A same-identity rename keeps its own UID, so the cross-file duplicate probe
-	// is skipped; a rename that also changes the UID (SameIdentity false) still probes.
-	newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, oldParsed.Obj.GetName(), folderOpts...)
+	// Write the new resource first. If it is rejected (e.g. its UID collides with
+	// a third file), the old resource is still present — never delete before the
+	// replacement is committed.
+	newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
 	if err != nil {
 		return oldParsed.Obj.GetName(), oldFolderName, gvk, fmt.Errorf("failed to write resource: %w", err)
+	}
+
+	// Identity changed (name or kind): the old resource is now orphaned, so delete
+	// it now that the new one is committed. When the identity matched,
+	// writeResourceFromParsed updated it in place and there is nothing to delete.
+	if !oldParsed.SameIdentity(newParsed) {
+		oldParsed.Action = provisioning.ResourceActionDelete
+		if err := oldParsed.Run(ctx); err != nil {
+			return newName, oldFolderName, gvk, fmt.Errorf("failed to delete old resource: %w", err)
+		}
 	}
 
 	// When the resource's parent folder didn't change (e.g. the entire
