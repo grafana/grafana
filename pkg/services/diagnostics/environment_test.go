@@ -3,7 +3,6 @@ package diagnostics
 import (
 	"context"
 	"encoding/json"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -229,7 +228,7 @@ func TestBundler_Build_writesEnvironment(t *testing.T) {
 	refs.AddDatasource("P123", "grafana-mongodb-datasource")
 	env := CollectEnvironment(context.Background(), testCfg(), pluginstore.NewFakePluginStore(externalPlugin()), refs)
 
-	blob, err := NewBundler(env).Build(nil, nil, json.RawMessage(`{"id":1,"type":"timeseries"}`), nil, nil, nil, nil)
+	blob, _, err := NewBundler(env).Build(nil, nil, json.RawMessage(`{"id":1,"type":"timeseries"}`), nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -245,7 +244,7 @@ func TestBundler_Build_writesEnvironment(t *testing.T) {
 }
 
 func TestBundler_Build_omitsEnvironmentWhenUnavailable(t *testing.T) {
-	blob, err := NewBundler(nil).Build(nil, nil, json.RawMessage(`{"id":1}`), nil, nil, nil, nil)
+	blob, _, err := NewBundler(nil).Build(nil, nil, json.RawMessage(`{"id":1}`), nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotContains(t, readTarGz(t, blob), "environment.json")
 }
@@ -263,7 +262,7 @@ func TestBundler_BuildDashboard_writesEnvironmentAndPanelPluginIDs(t *testing.T)
 		PluginIDs:   []string{"grafana-mongodb-datasource", "timeseries"},
 	}}
 
-	blob, err := NewBundler(env).BuildDashboard(json.RawMessage(`{"title":"My dash"}`), panels)
+	blob, _, err := NewBundler(env).BuildDashboard(json.RawMessage(`{"title":"My dash"}`), panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -283,17 +282,4 @@ func TestBundler_BuildDashboard_writesEnvironmentAndPanelPluginIDs(t *testing.T)
 	// Versions are recorded ONCE at instance level, not repeated per panel.
 	require.NotContains(t, string(files["manifest.json"]), "1.4.2")
 	require.Contains(t, string(files["environment.json"]), "1.4.2")
-}
-
-func TestCollectEnvironment_boundsPluginError(t *testing.T) {
-	broken := externalPlugin()
-	broken.Error = &plugins.Error{PluginID: strings.Repeat("x", 4096), ErrorCode: plugins.ErrorCodeSignatureModified}
-
-	var refs EnvironmentRefs
-	refs.AddDatasource("P123", broken.ID)
-
-	env := CollectEnvironment(context.Background(), testCfg(), pluginstore.NewFakePluginStore(broken), refs)
-	require.NotNil(t, env)
-	require.LessOrEqual(t, len(env.Plugins[broken.ID].Error), 1024+len("…"),
-		"environment.json is otherwise fixed-size; a plugin-authored error must not blow that up")
 }

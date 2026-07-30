@@ -8,6 +8,8 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -275,4 +277,22 @@ func (r *partialThenErrorReader) Read(p []byte) (int, error) {
 		return n, nil
 	}
 	return 0, r.err
+}
+
+func TestBuffer_RetainedBytes(t *testing.T) {
+	buf := &Buffer{}
+	require.Zero(t, buf.RetainedBytes(), "an empty buffer retains nothing")
+
+	body := strings.Repeat("x", 4096)
+	req := httptest.NewRequest(http.MethodPost, "http://example.com/api", strings.NewReader(body))
+	resp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header{"Content-Type": []string{"application/json"}},
+		Body:       io.NopCloser(strings.NewReader(body)),
+	}
+	buf.AddEntry(req, resp, nil, time.Now(), time.Millisecond)
+
+	// Bodies only, so the count tracks the request plus the response and ignores headers and URLs.
+	require.GreaterOrEqual(t, buf.RetainedBytes(), 2*len(body),
+		"both bodies must be counted so a caller can see what it has accumulated")
 }

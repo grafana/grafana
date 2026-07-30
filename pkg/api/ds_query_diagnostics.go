@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -111,7 +112,7 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	}
 	refs := panelEnvironmentRefs(reqDTO.MetricRequest, reqDTO.Panel)
 	env := diagnostics.CollectEnvironment(ctx, hs.Cfg, hs.pluginStore, refs)
-	bundle, err := diagnostics.NewBundler(env).Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, marshalErr, bundleErr,
+	bundle, result, err := diagnostics.NewBundler(env).Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, marshalErr, bundleErr,
 		diagnostics.WithPanelData(reqDTO.PanelData))
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to build diagnostics bundle", err)
@@ -121,8 +122,18 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	header := http.Header{}
 	header.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
 	header.Set("Content-Type", "application/tar+gzip")
+	// The body is a download, so a partial bundle cannot be reported in it: the drawer would have to
+	// unpack the archive to find bundle-limit.txt. A header carries it instead, on the same response as
+	// the bundle the caller is already receiving. The bundle still ships -- what fitted is worth having.
+	if result.Partial() {
+		header.Set(diagnosticsPartialHeader, strconv.Itoa(len(result.Dropped)))
+	}
 	return response.CreateNormalResponse(header, bundle, http.StatusOK)
 }
+
+// diagnosticsPartialHeader names how many artifacts the bundle size limit dropped. Absent means the
+// bundle is complete; the names are in the bundle's own bundle-limit.txt.
+const diagnosticsPartialHeader = "X-Diagnostics-Dropped-Artifacts"
 
 // diagnosticsNoCaptureError returns the response to send when a query failed and nothing was
 // captured — there is no traffic to diagnose, so surface the failure with the same status

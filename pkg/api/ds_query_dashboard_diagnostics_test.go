@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/diagnostics"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -177,7 +178,7 @@ func TestBuildDashboardDiagnosticsArchive_recordsPerRefIDQueryError(t *testing.T
 		}},
 	}
 
-	archive, err := hs.buildDashboardDiagnosticsArchive(context.Background(), &user.SignedInUser{OrgID: 1, UserUID: "u1"}, false, false, reqDTO, "job-1")
+	archive, _, err := hs.buildDashboardDiagnosticsArchive(context.Background(), &user.SignedInUser{OrgID: 1, UserUID: "u1"}, false, false, reqDTO, "job-1")
 	require.NoError(t, err)
 
 	files := readTarGzFiles(t, archive)
@@ -204,7 +205,7 @@ func TestBuildDashboardDiagnosticsArchive_recordsSubmittedQueryRequest(t *testin
 		}},
 	}
 
-	archive, err := hs.buildDashboardDiagnosticsArchive(context.Background(), &user.SignedInUser{OrgID: 1, UserUID: "u1"}, false, false, reqDTO, "job-querydata")
+	archive, _, err := hs.buildDashboardDiagnosticsArchive(context.Background(), &user.SignedInUser{OrgID: 1, UserUID: "u1"}, false, false, reqDTO, "job-querydata")
 	require.NoError(t, err)
 
 	files := readTarGzFiles(t, archive)
@@ -231,7 +232,7 @@ func TestBuildDashboardDiagnosticsArchive_queryV2Dispatch(t *testing.T) {
 		}},
 	}
 
-	_, err := hs.buildDashboardDiagnosticsArchive(context.Background(), &user.SignedInUser{OrgID: 1, UserUID: "u1"}, false, true, reqDTO, "job-2")
+	_, _, err := hs.buildDashboardDiagnosticsArchive(context.Background(), &user.SignedInUser{OrgID: 1, UserUID: "u1"}, false, true, reqDTO, "job-2")
 	require.NoError(t, err)
 }
 
@@ -277,7 +278,7 @@ func TestDiagnosticsJobStore_lifecycle(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, jobPending, state)
 
-	s.complete(job.UID, []byte("archive-bytes"))
+	s.complete(job.UID, []byte("archive-bytes"), diagnostics.BundleResult{})
 	archive, state, ok := s.archiveOf(job.UID, creator)
 	require.True(t, ok)
 	require.Equal(t, jobComplete, state)
@@ -310,7 +311,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 	t.Run("evicts terminal jobs past the retention TTL", func(t *testing.T) {
 		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 		stale, _ := s.create(1, creator)
-		s.complete(stale.UID, []byte("done"))
+		s.complete(stale.UID, []byte("done"), diagnostics.BundleResult{})
 		// Retention is measured from finishedAt, so age that (not CreatedAt).
 		s.jobs[stale.UID].finishedAt = time.Now().Add(-diagnosticsJobRetention - time.Minute)
 
@@ -327,7 +328,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
 		slow, _ := s.create(1, creator)
 		s.jobs[slow.UID].CreatedAt = time.Now().Add(-diagnosticsJobRetention - time.Hour) // long run
-		s.complete(slow.UID, []byte("done"))                                              // finishedAt = now
+		s.complete(slow.UID, []byte("done"), diagnostics.BundleResult{})                  // finishedAt = now
 
 		s.create(1, creator) // triggers pruneLocked
 		_, ok := s.snapshot(slow.UID, creator)
@@ -354,7 +355,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 		var oldest string
 		for i := 0; i < diagnosticsJobMaxEntries; i++ {
 			j, _ := s.create(1, creator)
-			s.complete(j.UID, nil) // only terminal jobs count against the cap
+			s.complete(j.UID, nil, diagnostics.BundleResult{}) // only terminal jobs count against the cap
 			// Age them deterministically so eviction order is well-defined.
 			s.jobs[j.UID].CreatedAt = base.Add(time.Duration(i) * time.Second)
 			if i == 0 {
@@ -366,7 +367,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 		// One more terminal job pushes over the cap and must evict exactly the oldest. complete()
 		// itself prunes, so no external sweep is needed.
 		newest, _ := s.create(1, creator)
-		s.complete(newest.UID, nil)
+		s.complete(newest.UID, nil, diagnostics.BundleResult{})
 		require.Len(t, s.jobs, diagnosticsJobMaxEntries)
 		_, ok := s.snapshot(oldest, creator)
 		require.False(t, ok, "oldest terminal job should have been evicted")
@@ -422,7 +423,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 
 		// Completing it makes it terminal, pushing terminal jobs one over the cap; complete()'s own
 		// prune must bring the store back down without any create() being called.
-		s.complete("pending", nil)
+		s.complete("pending", nil, diagnostics.BundleResult{})
 		require.Len(t, s.jobs, diagnosticsJobMaxEntries, "complete() must evict down to the cap on its own")
 		require.Contains(t, s.jobs, "pending", "the just-completed job is the newest by finishedAt and must survive")
 	})
@@ -445,7 +446,7 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 		require.Len(t, s.jobs, diagnosticsMaxInFlightJobs, "a rejected create must not add a job")
 
 		// Finishing one frees a slot, so a new create succeeds again.
-		s.complete(last.UID, nil)
+		s.complete(last.UID, nil, diagnostics.BundleResult{})
 		_, ok = s.create(1, creator)
 		require.True(t, ok, "a slot frees up once an in-flight job finishes")
 	})

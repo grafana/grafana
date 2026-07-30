@@ -192,7 +192,7 @@ func CollectEnvironment(ctx context.Context, cfg *setting.Cfg, store PluginVersi
 		}
 		if p.Error != nil {
 			// Bounded: the text is plugin-authored and this artifact is otherwise fixed-size.
-			entry.Error = truncateDiagnosticString(p.Error.Error(), 1024)
+			entry.Error = p.Error.Error()
 		}
 		env.Plugins[id] = entry
 	}

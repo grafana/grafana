@@ -74,6 +74,31 @@ func (b *Buffer) Len() int {
 	return len(b.entries)
 }
 
+// RetainedBytes returns roughly how much body text this buffer holds: the sum of captured request and
+// response bodies. Thread-safe.
+//
+// An estimate, deliberately. It counts the bodies, which dominate, and ignores headers, URLs and
+// timings; nor is it the length of the serialized HAR, which JSON escaping and base64 inflate. It
+// exists so a caller running many captures can learn how much it has accumulated WITHOUT serializing
+// each one -- serializing to find out would allocate the very copy such a caller is trying to avoid.
+func (b *Buffer) RetainedBytes() int {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	total := 0
+	for _, e := range b.entries {
+		if e == nil {
+			continue
+		}
+		if e.Request != nil && e.Request.PostData != nil {
+			total += len(e.Request.PostData.Text)
+		}
+		if e.Response != nil && e.Response.Content != nil {
+			total += len(e.Response.Content.Text)
+		}
+	}
+	return total
+}
+
 // ToHAR serializes the captured entries to HAR 1.2 JSON. The entry types come from
 // github.com/chromedp/cdproto/har -- the same library the plugin SDK's e2e HAR storage uses -- so
 // the output stays replay-compatible with that fixture format.

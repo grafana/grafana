@@ -73,7 +73,10 @@ type diagnosticsJob struct {
 	PanelsTotal int
 	PanelsDone  int
 	Err         string
-	archive     []byte
+	// Warning reports a bundle that was generated but is incomplete -- currently only the size limit
+	// dropping artifacts. Distinct from Err, which means no bundle exists to download.
+	Warning string
+	archive []byte
 
 	// createdByOrgID/createdByUID scope status/download to the identity that started the run. Jobs
 	// may hold verbatim captured HTTP traffic (see the harcapture package doc), so this is enforced
@@ -100,6 +103,7 @@ type diagnosticsJobSnapshot struct {
 	PanelsTotal int
 	PanelsDone  int
 	Err         string
+	Warning     string
 	CreatedAt   time.Time
 }
 
@@ -207,11 +211,14 @@ func (s *diagnosticsJobStore) setProgress(uid string, done int) {
 	s.mu.Unlock()
 }
 
-func (s *diagnosticsJobStore) complete(uid string, archive []byte) {
+func (s *diagnosticsJobStore) complete(uid string, archive []byte, result diagnostics.BundleResult) {
 	s.mu.Lock()
 	if j := s.jobs[uid]; j != nil {
 		j.State = jobComplete
 		j.archive = archive
+		if result.Partial() {
+			j.Warning = fmt.Sprintf("bundle size limit reached: %d artifact(s) omitted, see bundle-limit.txt", len(result.Dropped))
+		}
 		j.finishedAt = time.Now()
 		// Prune here too, not only on create: a job going terminal is when its archive bytes
 		// materialize and when it starts counting against the cap, and there may be no further
@@ -243,7 +250,7 @@ func (s *diagnosticsJobStore) snapshot(uid string, requester identity.Requester)
 	if j == nil || !jobOwnedBy(j, requester) {
 		return diagnosticsJobSnapshot{}, false
 	}
-	return diagnosticsJobSnapshot{j.UID, j.State, j.PanelsTotal, j.PanelsDone, j.Err, j.CreatedAt}, true
+	return diagnosticsJobSnapshot{j.UID, j.State, j.PanelsTotal, j.PanelsDone, j.Err, j.Warning, j.CreatedAt}, true
 }
 
 // archiveOf returns uid's archive, scoped to requester the same way snapshot is.
@@ -312,12 +319,12 @@ func (hs *HTTPServer) QueryDashboardDiagnostics(c *contextmodel.ReqContext) resp
 			}
 		}()
 
-		archive, err := hs.buildDashboardDiagnosticsArchive(detachedCtx, user, skipDSCache, useQueryDataNew, req, uid)
+		archive, result, err := hs.buildDashboardDiagnosticsArchive(detachedCtx, user, skipDSCache, useQueryDataNew, req, uid)
 		if err != nil {
 			dashboardDiagnosticsJobs.fail(uid, err)
 			return
 		}
-		dashboardDiagnosticsJobs.complete(uid, archive)
+		dashboardDiagnosticsJobs.complete(uid, archive, result)
 	}(job.UID, user, skipDSCache, useQueryDataNew, reqDTO)
 
 	return response.JSON(http.StatusAccepted, map[string]any{"uid": job.UID, "state": jobPending})
@@ -339,7 +346,10 @@ func (hs *HTTPServer) GetDashboardDiagnosticsStatus(c *contextmodel.ReqContext) 
 		"panelsTotal": snap.PanelsTotal,
 		"panelsDone":  snap.PanelsDone,
 		"error":       snap.Err,
-		"createdAt":   snap.CreatedAt.UTC().Format(time.RFC3339),
+		// A complete-but-incomplete bundle: downloadable, so not an error, but the caller should be told
+		// before reading it as a full picture of the dashboard.
+		"warning":   snap.Warning,
+		"createdAt": snap.CreatedAt.UTC().Format(time.RFC3339),
 	})
 }
 
@@ -369,7 +379,14 @@ func (hs *HTTPServer) DownloadDashboardDiagnostics(c *contextmodel.ReqContext) r
 // buildDashboardDiagnosticsArchive runs each panel's queries with independent HAR capture, updating
 // job progress as panels complete, then delegates archive assembly to the diagnostics service. A
 // non-data panel (no queries) is recorded as skipped rather than run.
-func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user identity.Requester, skipDSCache, useQueryDataNew bool, reqDTO dashboardDiagnosticsRequest, jobUID string) ([]byte, error) {
+//
+// It stops running panels once the captures accumulated so far reach the bundle size limit. That stop
+// has to live here rather than in assembly: this loop holds every panel's capture buffer and response
+// simultaneously until the last panel finishes, so by the time the bundler could weigh them the memory
+// has already been spent. A dashboard big enough to matter would exhaust the process before assembly
+// ran at all. The remaining panels are recorded as skipped, so the manifest says what was not attempted
+// rather than leaving a short bundle that reads like the dashboard had fewer panels.
+func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user identity.Requester, skipDSCache, useQueryDataNew bool, reqDTO dashboardDiagnosticsRequest, jobUID string) ([]byte, diagnostics.BundleResult, error) {
 	queryData := hs.queryDataService.QueryData
 	if useQueryDataNew {
 		queryData = hs.queryDataService.QueryDataNew
@@ -379,13 +396,14 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 	vizPluginIDByPanelID := diagnostics.PanelPluginIDs(reqDTO.Dashboard)
 	var envRefs diagnostics.EnvironmentRefs
 
+	capturedBytes := 0
 	panels := make([]diagnostics.DashboardPanel, 0, len(reqDTO.Panels))
 	for i, p := range reqDTO.Panels {
 		// ctx is detachedCtx (see QueryDashboardDiagnostics), derived from context.WithoutCancel, so
 		// this never fires today -- there is no per-run timeout yet (MVP scope, see the NOTE above).
 		// Kept so this loop bails out for free once that follow-up wires up a cancelable context.
 		if err := ctx.Err(); err != nil {
-			return nil, err
+			return nil, diagnostics.BundleResult{}, err
 		}
 		panel := diagnostics.DashboardPanel{
 			ID:          p.ID,
@@ -418,6 +436,15 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 			continue
 		}
 
+		// Checked before running rather than after: once a panel's queries execute, its capture is already
+		// in memory and the ceiling has been passed, not enforced.
+		if capturedBytes >= diagnostics.MaxBundleBytes {
+			panel.Skipped = fmt.Sprintf("not run: bundle size limit reached (%d bytes captured)", capturedBytes)
+			panels = append(panels, panel)
+			dashboardDiagnosticsJobs.setProgress(jobUID, i+1)
+			continue
+		}
+
 		pctx, harBuffer := harcapture.WithCapture(ctx) // capture each panel independently
 		resp, err := queryData(pctx, user, skipDSCache, p.MetricRequest)
 		panel.HARBuffer = harBuffer
@@ -432,6 +459,11 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 			panel.QueryErr = errors.Join(diagnostics.ResponseError(resp), diagnostics.PluginCaptureError(resp))
 		}
 
+		// RetainedBytes rather than serializing the HAR: serializing to find out the size would allocate
+		// the very copy this accounting exists to avoid. It undercounts (bodies only, before JSON
+		// escaping), so the stop lands a little late -- acceptable, since one panel's overshoot is bounded
+		// by that panel's capture, while running the remaining panels is not.
+		capturedBytes += harBuffer.RetainedBytes()
 		panels = append(panels, panel)
 		dashboardDiagnosticsJobs.setProgress(jobUID, i+1)
 	}

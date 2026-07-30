@@ -23,7 +23,7 @@ import (
 
 func TestBundler_Build(t *testing.T) {
 	// No HAR captured (empty buffer, nil response) -> traffic.har omitted; only panel.json present.
-	blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil)
+	blob, _, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -37,7 +37,7 @@ func TestBundler_Build(t *testing.T) {
 
 func TestBundler_Build_recordsQueryError(t *testing.T) {
 	// A failed query must still produce a bundle, with the error recorded (capture is not discarded).
-	blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, errors.New("datasource timeout"))
+	blob, _, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, errors.New("datasource timeout"))
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -51,7 +51,7 @@ func TestBundler_Build_recordsQueryDataMarshalError(t *testing.T) {
 	// error is recorded and the other artifacts still ship, mirroring the per-panel dashboard path.
 	buf := bufferWithEntry(t, "http://ds/1")
 
-	blob, err := NewBundler(nil).Build(nil, buf, nil, nil, json.RawMessage(`{invalid`), nil, nil)
+	blob, _, err := NewBundler(nil).Build(nil, buf, nil, nil, json.RawMessage(`{invalid`), nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -67,7 +67,7 @@ func TestBundler_Build_recordsQueryRequestSerializeError(t *testing.T) {
 	// mirroring how the per-panel dashboard path surfaces the same failure via manifest.queryDataError.
 	buf := bufferWithEntry(t, "http://ds/1")
 
-	blob, err := NewBundler(nil).Build(nil, buf, nil, nil, nil, errors.New("unsupported value: +Inf"), nil)
+	blob, _, err := NewBundler(nil).Build(nil, buf, nil, nil, nil, errors.New("unsupported value: +Inf"), nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -84,7 +84,7 @@ func TestBundler_Build_recordsQueryDataResponse(t *testing.T) {
 		"A": {Frames: data.Frames{frame}},
 	}}
 
-	blob, err := NewBundler(nil).Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	blob, _, err := NewBundler(nil).Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -96,7 +96,7 @@ func TestBundler_Build_recordsQueryDataResponse(t *testing.T) {
 func TestBundler_Build_recordsQueryDataRequest(t *testing.T) {
 	request := json.RawMessage(`{"from":"now-1h","to":"now","queries":[{"refId":"A","expr":"up"}]}`)
 
-	blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, request, nil, nil)
+	blob, _, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, request, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -114,44 +114,12 @@ func TestBundler_Build_excludesCaptureFramesFromQueryData(t *testing.T) {
 		"__har__ds": {Frames: data.Frames{capture}},
 	}}
 
-	blob, err := NewBundler(nil).Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	blob, _, err := NewBundler(nil).Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
 	require.NotContains(t, string(files["querydata.json"]), "__har__")
 	require.Contains(t, string(files["querydata.json"]), `"A"`)
-}
-
-func TestBundler_Build_boundsOversizedQueryData(t *testing.T) {
-	frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", maxQueryDataArtifactBytes)}))
-	resp := &backend.QueryDataResponse{Responses: backend.Responses{
-		"A": {Frames: data.Frames{frame}},
-	}}
-
-	blob, err := NewBundler(nil).Build(resp, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
-	require.NoError(t, err)
-
-	files := readTarGz(t, blob)
-	queryData := files["querydata.json"]
-	require.LessOrEqual(t, len(queryData), maxQueryDataArtifactBytes)
-	require.Contains(t, string(queryData), `"truncated": true`)
-	require.Contains(t, string(queryData), `"rows": 1`)
-	require.Contains(t, string(queryData), `"refId": "A"`)
-}
-
-func TestBundler_Build_boundsOversizedRequestWithoutResponse(t *testing.T) {
-	// An oversized request with no response must truncate without claiming a response was omitted.
-	request := json.RawMessage(`{"expr":"` + strings.Repeat("x", maxQueryDataArtifactBytes) + `"}`)
-
-	blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, request, nil, nil)
-	require.NoError(t, err)
-
-	files := readTarGz(t, blob)
-	queryData := files["querydata.json"]
-	require.LessOrEqual(t, len(queryData), maxQueryDataArtifactBytes)
-	require.Contains(t, string(queryData), `"truncated": true`)
-	require.Contains(t, string(queryData), `"requestOmitted": true`)
-	require.NotContains(t, string(queryData), `"responseOmitted"`)
 }
 
 func TestBundler_Build_preservesUpstreamAndPluginResultsForComparison(t *testing.T) {
@@ -171,7 +139,7 @@ func TestBundler_Build_preservesUpstreamAndPluginResultsForComparison(t *testing
 	queryResp := &backend.QueryDataResponse{Responses: backend.Responses{
 		"A": {Frames: data.Frames{pluginFrame}},
 	}}
-	blob, err := NewBundler(nil).Build(queryResp, buf, nil, nil, nil, nil, nil)
+	blob, _, err := NewBundler(nil).Build(queryResp, buf, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -308,7 +276,7 @@ func TestCollectHAR_nilBuffer_noPanic(t *testing.T) {
 	require.Nil(t, out)
 
 	// A nil buffer must also flow through Build without panicking.
-	bundle, err := NewBundler(nil).Build(nil, nil, nil, nil, nil, nil, nil)
+	bundle, _, err := NewBundler(nil).Build(nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, bundle)
 }
@@ -531,7 +499,7 @@ func TestBuildDashboard(t *testing.T) {
 		{ID: 1, Title: "CPU Usage", PanelJSON: json.RawMessage(`{"id":1}`), Datasources: []string{"prom"}, HARBuffer: bufferWithEntry(t, "http://ds/1")},
 		{ID: 2, Title: "Text panel", Skipped: "no queries (non-data panel)"},
 	}
-	blob, err := NewBundler(nil).BuildDashboard(json.RawMessage(`{"title":"My dash"}`), panels)
+	blob, _, err := NewBundler(nil).BuildDashboard(json.RawMessage(`{"title":"My dash"}`), panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -566,40 +534,13 @@ func TestBuildDashboard_recordsQueryDataPerPanel(t *testing.T) {
 		}},
 	}}
 
-	blob, err := NewBundler(nil).BuildDashboard(nil, panels)
+	blob, _, err := NewBundler(nil).BuildDashboard(nil, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
 	require.Contains(t, files, "panels/1-cpu-usage/querydata.json")
 	require.Contains(t, string(files["panels/1-cpu-usage/querydata.json"]), `"refId": "A"`)
 	require.Contains(t, string(files["panels/1-cpu-usage/querydata.json"]), `42`)
-}
-
-func TestBuildDashboard_boundsAggregateQueryData(t *testing.T) {
-	panels := make([]DashboardPanel, 0, 5)
-	for i := 1; i <= 5; i++ {
-		frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", maxQueryDataArtifactBytes-4096)}))
-		panels = append(panels, DashboardPanel{
-			ID:    int64(i),
-			Title: "Logs",
-			Resp: &backend.QueryDataResponse{Responses: backend.Responses{
-				"A": {Frames: data.Frames{frame}},
-			}},
-		})
-	}
-
-	blob, err := NewBundler(nil).BuildDashboard(nil, panels)
-	require.NoError(t, err)
-
-	files := readTarGz(t, blob)
-	queryDataBytes := 0
-	for name, contents := range files {
-		if strings.HasSuffix(name, "/querydata.json") {
-			queryDataBytes += len(contents)
-		}
-	}
-	require.LessOrEqual(t, queryDataBytes, maxDashboardQueryDataBytes)
-	require.Contains(t, string(files["manifest.json"]), `"queryDataTruncated": true`)
 }
 
 // The whole-dashboard client posts the dashboard save model once instead of each panel's JSON, so
@@ -620,7 +561,7 @@ func TestBuildDashboard_resolvesPanelJSONFromDashboardModel(t *testing.T) {
 		{ID: 1, Title: "CPU Usage", HARBuffer: bufferWithEntry(t, "http://ds/1")},
 		{ID: 2, Title: "Logs", HARBuffer: bufferWithEntry(t, "http://ds/2")},
 	}
-	blob, err := NewBundler(nil).BuildDashboard(dashboardJSON, panels)
+	blob, _, err := NewBundler(nil).BuildDashboard(dashboardJSON, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -648,7 +589,7 @@ func TestBuildDashboard_resolvesPanelJSONFromDashboardV2Model(t *testing.T) {
 		{ID: 3, Title: "CPU Usage", HARBuffer: bufferWithEntry(t, "http://ds/3")},
 		{ID: 4, Title: "Shared Errors", HARBuffer: bufferWithEntry(t, "http://ds/4")},
 	}
-	blob, err := NewBundler(nil).BuildDashboard(dashboardJSON, panels)
+	blob, _, err := NewBundler(nil).BuildDashboard(dashboardJSON, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -672,7 +613,7 @@ func TestBuildDashboard_recordsPanelQueryError(t *testing.T) {
 	panels := []DashboardPanel{
 		{ID: 7, Title: "Broken", QueryErr: errors.New("datasource exploded")},
 	}
-	blob, err := NewBundler(nil).BuildDashboard(nil, panels)
+	blob, _, err := NewBundler(nil).BuildDashboard(nil, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -691,7 +632,7 @@ func TestBuildDashboard_dirCollision(t *testing.T) {
 		{ID: 3, Title: "Same", HARBuffer: bufferWithEntry(t, "http://ds/a")},
 		{ID: 3, Title: "Same", HARBuffer: bufferWithEntry(t, "http://ds/b")},
 	}
-	blob, err := NewBundler(nil).BuildDashboard(nil, panels)
+	blob, _, err := NewBundler(nil).BuildDashboard(nil, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -710,7 +651,7 @@ func TestBuildDashboard_recordsQueryRequestError(t *testing.T) {
 		{ID: 1, Title: "Broken request", QueryRequestErr: errors.New("unsupported value: NaN")},
 		{ID: 2, Title: "CPU Usage", HARBuffer: bufferWithEntry(t, "http://ds/2")},
 	}
-	blob, err := NewBundler(nil).BuildDashboard(nil, panels)
+	blob, _, err := NewBundler(nil).BuildDashboard(nil, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -735,7 +676,7 @@ func TestBuildDashboard_joinsQueryDataErrors(t *testing.T) {
 		QueryRequestErr: errors.New("request: unsupported value: +Inf"),
 		Resp:            &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}},
 	}}
-	blob, err := NewBundler(nil).BuildDashboard(nil, panels)
+	blob, _, err := NewBundler(nil).BuildDashboard(nil, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -761,7 +702,7 @@ func TestBundler_Build_keepsRequestWhenResponseEncodingFails(t *testing.T) {
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
 	request := json.RawMessage(`{"queries":[{"refId":"A","expr":"up"}]}`)
 
-	blob, err := NewBundler(nil).Build(resp, &harcapture.Buffer{}, nil, nil, request, nil, nil)
+	blob, _, err := NewBundler(nil).Build(resp, &harcapture.Buffer{}, nil, nil, request, nil, nil)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -785,7 +726,7 @@ func TestBuildDashboard_keepsRequestWhenResponseEncodingFails(t *testing.T) {
 		QueryRequest: json.RawMessage(`{"queries":[{"refId":"A","expr":"up"}]}`),
 		Resp:         &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}},
 	}}
-	blob, err := NewBundler(nil).BuildDashboard(nil, panels)
+	blob, _, err := NewBundler(nil).BuildDashboard(nil, panels)
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
@@ -797,27 +738,6 @@ func TestBuildDashboard_keepsRequestWhenResponseEncodingFails(t *testing.T) {
 	require.NoError(t, json.Unmarshal(files["manifest.json"], &m))
 	require.Contains(t, m.Panels[0].QueryDataError, "unsupported value: NaN")
 	require.NotZero(t, m.Panels[0].QueryDataBytes, "the surviving artifact is accounted for in the manifest")
-}
-
-func TestMarshalQueryDataArtifactWithLimit_encodeFailureFitsMinimumBudget(t *testing.T) {
-	// The BuildDashboard budget gate assumes the smallest artifact fits in minQueryDataArtifactBytes.
-	// An encode failure adds responseError, which must not push the floor past that assumption --
-	// otherwise a panel reaching the gate with a near-exhausted budget loses everything again.
-	resp := &backend.QueryDataResponse{Responses: backend.Responses{
-		"A": {Frames: data.Frames{frameWithUnencodableMeta(longMarshalError)}},
-	}}
-	request := json.RawMessage(`{"queries":[{"refId":"A","expr":"` + strings.Repeat("x", 4096) + `"}]}`)
-
-	out, _, err := marshalQueryDataArtifactWithLimit(request, resp, minQueryDataArtifactBytes)
-	require.Error(t, err, "the response still fails to encode")
-	require.NotEmpty(t, out, "a floor artifact is produced rather than nothing")
-	require.LessOrEqual(t, len(out), minQueryDataArtifactBytes)
-
-	var artifact queryDataArtifact
-	require.NoError(t, json.Unmarshal(out, &artifact), "the floor artifact is valid JSON")
-	require.Equal(t, queryDataArtifactVersion, artifact.Version)
-	require.True(t, artifact.ResponseOmitted)
-	require.True(t, artifact.RequestOmitted)
 }
 
 // longMarshalError stands in for a plugin whose own MarshalJSON fails with a verbose message: the
@@ -858,12 +778,12 @@ func TestSummarizeQueryDataResponse(t *testing.T) {
 		badRows := data.NewFrame("", data.NewField("a", nil, []int64{1, 2}), data.NewField("b", nil, []int64{1}))
 		resp := backend.NewQueryDataResponse()
 		resp.Responses["A"] = backend.DataResponse{
-			Error:  errors.New(strings.Repeat("e", 2000)),
+			Error:  errors.New(strings.Repeat("e", 8192)),
 			Frames: data.Frames{namedFrame, badRows},
 		}
 
 		a := summarizeQueryDataResponse(resp)["A"]
-		require.Len(t, a.Error, 1024+len("…"), "error must be truncated to 1024 bytes + ellipsis")
+		require.Len(t, a.Error, 8192, "errors are recorded whole -- the bundle budget is what bounds them now")
 		require.Len(t, a.Frames[0].Name, 256+len("…"), "frame name must be truncated to 256 bytes + ellipsis")
 		require.Len(t, a.Frames[0].RefID, 256+len("…"), "frame refId must be truncated to 256 bytes + ellipsis")
 		require.Equal(t, -1, a.Frames[1].Rows, "a frame whose RowLen() errors must record rows = -1")
@@ -892,86 +812,6 @@ func TestTruncateDiagnosticString(t *testing.T) {
 	got := truncateDiagnosticString("世界", 4)
 	require.True(t, utf8.ValidString(got), "truncation must not split a rune")
 	require.Equal(t, "世…", got)
-}
-
-func TestMarshalQueryDataArtifactWithLimit_reportsTruncation(t *testing.T) {
-	frame := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", maxQueryDataArtifactBytes)}))
-	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
-
-	_, truncated, err := marshalQueryDataArtifactWithLimit(nil, resp, maxQueryDataArtifactBytes)
-	require.NoError(t, err)
-	require.True(t, truncated, "an oversized response must report truncated=true")
-
-	small := &backend.QueryDataResponse{Responses: backend.Responses{
-		"A": {Frames: data.Frames{data.NewFrame("cpu", data.NewField("value", nil, []float64{42}))}},
-	}}
-	_, truncated, err = marshalQueryDataArtifactWithLimit(nil, small, maxQueryDataArtifactBytes)
-	require.NoError(t, err)
-	require.False(t, truncated, "a response that fits must report truncated=false")
-}
-
-func TestMarshalQueryDataArtifactWithLimit_truncationTiers(t *testing.T) {
-	// A request large enough that neither the full artifact nor the (request + summary) tier fits,
-	// forcing the ladder past tier 1.
-	bigRequest := json.RawMessage(`{"pad":"` + strings.Repeat("q", 4096) + `"}`)
-
-	t.Run("tier 2 drops the request but keeps the per-refID summary", func(t *testing.T) {
-		resp := backend.NewQueryDataResponse()
-		resp.Responses["A"] = backend.DataResponse{
-			Status: backend.StatusOK,
-			Frames: data.Frames{data.NewFrame("cpu", data.NewField("v", nil, []float64{1, 2, 3}))},
-		}
-		out, _, err := marshalQueryDataArtifactWithLimit(bigRequest, resp, 800)
-		require.NoError(t, err)
-		require.LessOrEqual(t, len(out), 800)
-
-		var art queryDataArtifact
-		require.NoError(t, json.Unmarshal(out, &art))
-		require.True(t, art.Truncated)
-		require.True(t, art.RequestOmitted)
-		require.True(t, art.ResponseOmitted)
-		require.Empty(t, art.Request, "the oversized request must be dropped at tier 2")
-		require.Contains(t, art.ResponseSummary, "A", "the per-refID summary must survive tier 2")
-	})
-
-	t.Run("tier 3 falls back to metadata only when even the summary is too big", func(t *testing.T) {
-		resp := backend.NewQueryDataResponse()
-		resp.Responses["A"] = backend.DataResponse{Error: errors.New(strings.Repeat("e", 4096))}
-		out, _, err := marshalQueryDataArtifactWithLimit(bigRequest, resp, 300)
-		require.NoError(t, err)
-		require.LessOrEqual(t, len(out), 300)
-
-		var art queryDataArtifact
-		require.NoError(t, json.Unmarshal(out, &art))
-		require.True(t, art.Truncated)
-		require.True(t, art.RequestOmitted)
-		require.True(t, art.ResponseOmitted)
-		require.Empty(t, art.Request)
-		require.Empty(t, art.ResponseSummary, "tier 3 drops even the per-refID summary")
-		require.Equal(t, 300, art.LimitBytes)
-		require.Positive(t, art.OriginalBytes)
-	})
-
-	// The two omission markers are how a reader tells "this was dropped to fit the cap" from "this was
-	// never supplied", so neither may claim a drop that didn't happen.
-	t.Run("omission markers only flag content that was actually dropped", func(t *testing.T) {
-		bigError := backend.NewQueryDataResponse()
-		bigError.Responses["A"] = backend.DataResponse{Error: errors.New(strings.Repeat("e", 4096))}
-
-		out, _, err := marshalQueryDataArtifactWithLimit(nil, bigError, 300)
-		require.NoError(t, err)
-		var noRequest queryDataArtifact
-		require.NoError(t, json.Unmarshal(out, &noRequest))
-		require.False(t, noRequest.RequestOmitted, "no request was supplied, so none was dropped")
-		require.True(t, noRequest.ResponseOmitted)
-
-		out, _, err = marshalQueryDataArtifactWithLimit(bigRequest, nil, 300)
-		require.NoError(t, err)
-		var noResponse queryDataArtifact
-		require.NoError(t, json.Unmarshal(out, &noResponse))
-		require.True(t, noResponse.RequestOmitted)
-		require.False(t, noResponse.ResponseOmitted, "no response was supplied, so none was dropped")
-	})
 }
 
 func TestPanelTitleSlug(t *testing.T) {
@@ -1015,7 +855,7 @@ func readTarGz(t *testing.T, data []byte) map[string][]byte {
 func TestBundler_Build_bundlesPanelData(t *testing.T) {
 	panelData := json.RawMessage(`{"version":1,"frames":[{"schema":{"name":"frontend-frames"}}]}`)
 
-	blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil,
+	blob, _, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil,
 		WithPanelData(panelData))
 	require.NoError(t, err)
 
@@ -1024,7 +864,7 @@ func TestBundler_Build_bundlesPanelData(t *testing.T) {
 }
 
 func TestBundler_Build_omitsPanelDataWhenNotSupplied(t *testing.T) {
-	blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
+	blob, _, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	require.NotContains(t, readTarGz(t, blob), "paneldata.json")
@@ -1034,7 +874,7 @@ func TestBundler_Build_omitsPanelDataWhenNull(t *testing.T) {
 	// A client that sends "panelData": null supplied nothing, so no artifact: one whose whole content is
 	// `null` reads as "the frontend was holding no frames", which is a frontend loss that never happened.
 	for _, payload := range []string{`null`, ` null `, ``} {
-		blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil,
+		blob, _, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, nil, nil, nil, nil, nil,
 			WithPanelData(json.RawMessage(payload)))
 		require.NoError(t, err)
 
@@ -1047,11 +887,45 @@ func TestBundler_Build_unparseablePanelDataDoesNotSinkTheBundle(t *testing.T) {
 	// bundle nothing else: every other artifact still ships. Unreachable through the HTTP endpoint --
 	// web.Bind rejects a body that isn't valid JSON before Build runs, so the worst that arrives there is
 	// a well-formed payload of the wrong shape -- this pins the contract for direct callers.
-	blob, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil,
+	blob, _, err := NewBundler(nil).Build(nil, &harcapture.Buffer{}, json.RawMessage(`{"id":1}`), nil, nil, nil, nil,
 		WithPanelData(json.RawMessage(`{"version":1,`)))
 	require.NoError(t, err)
 
 	files := readTarGz(t, blob)
 	require.Contains(t, files, "panel.json")
 	require.Equal(t, `{"version":1,`, string(files["paneldata.json"]), "stored as sent")
+}
+
+func TestBundleBudget_dropsOversizedArtifactsWhole(t *testing.T) {
+	budget := newBundleBudget()
+
+	require.True(t, budget.add("small.json", []byte("{}")))
+	require.False(t, budget.add("huge.har", make([]byte, MaxBundleBytes+1)),
+		"an artifact larger than the whole budget must not fit")
+	require.True(t, budget.add("also-small.txt", []byte("still room")),
+		"a rejected artifact must not consume budget, so later ones still fit")
+
+	archive, result, err := budget.finish()
+	require.NoError(t, err)
+	require.True(t, result.Partial())
+	require.Len(t, result.Dropped, 1)
+	require.Contains(t, result.Dropped[0], "huge.har")
+
+	files := readTarGz(t, archive)
+	require.Contains(t, files, "small.json")
+	require.Contains(t, files, "also-small.txt")
+	require.NotContains(t, files, "huge.har", "an over-budget artifact must be dropped whole, not clipped")
+	require.Contains(t, string(files["bundle-limit.txt"]), "huge.har",
+		"a dropped artifact must be named, so its absence isn't read as nothing-to-capture")
+}
+
+func TestBundleBudget_completeBundleIsUnmarked(t *testing.T) {
+	budget := newBundleBudget()
+	require.True(t, budget.add("traffic.har", []byte(`{"log":{}}`)))
+
+	archive, result, err := budget.finish()
+	require.NoError(t, err)
+	require.False(t, result.Partial())
+	require.NotContains(t, readTarGz(t, archive), "bundle-limit.txt",
+		"a bundle that dropped nothing must carry no limit note")
 }
