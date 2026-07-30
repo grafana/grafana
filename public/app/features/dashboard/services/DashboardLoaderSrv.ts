@@ -5,7 +5,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { type DashboardDTO } from 'app/types/dashboard';
+import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { appEvents } from '../../../core/app_events';
 import { ResponseTransformers } from '../api/ResponseTransformers';
@@ -15,7 +15,13 @@ import { DashboardVersionError, type DashboardWithAccessInfo } from '../api/type
 import { getDashboardSrv } from './DashboardSrv';
 import { getDashboardSnapshotSrv } from './SnapshotSrv';
 
-type ScriptedDashboardExecution = { data: unknown };
+type ScriptedDashboardExecution = { data: DashboardDataDTO };
+
+// Scripted dashboards are arbitrary user code, so nothing has validated what they return.
+// Accept any object and let the rest of the loading pipeline deal with the details.
+function isDashboardData(value: unknown): value is DashboardDataDTO {
+  return typeof value === 'object' && value !== null;
+}
 
 interface DashboardLoaderSrvLike<T> {
   loadDashboard(
@@ -36,7 +42,7 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
 
   abstract loadSnapshot(slug: string): Promise<T>;
 
-  protected loadScriptedDashboard(file: string) {
+  protected loadScriptedDashboard(file: string): Promise<DashboardDTO> {
     const url = 'public/dashboards/' + file.replace(/\.(?!js)/, '/') + '?' + new Date().getTime();
 
     return getBackendSrv()
@@ -106,11 +112,20 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
 
     // Handle async dashboard scripts
     if (typeof scriptResult === 'function') {
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         scriptResult((dashboard: unknown) => {
+          if (!isDashboardData(dashboard)) {
+            reject(new Error('Scripted dashboard did not return a dashboard'));
+            return;
+          }
+
           resolve({ data: dashboard });
         });
       });
+    }
+
+    if (!isDashboardData(scriptResult)) {
+      throw new Error('Scripted dashboard did not return a dashboard');
     }
 
     return { data: scriptResult };
