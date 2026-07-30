@@ -42,7 +42,7 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
       {element.renderActions && element.renderActions()}
       {onDuplicate && (
         <Button
-          tooltip={t('dashboard.layout.common.duplicate', 'Duplicate')}
+          tooltip={t('dashboard.sidebar.element-actions.duplicate', 'Duplicate')}
           tooltipPlacement="bottom"
           variant="secondary"
           size="sm"
@@ -51,7 +51,7 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
           data-testid={selectors.components.EditPaneHeader.duplicate}
           onClick={onDuplicate}
         >
-          <Trans i18nKey="dashboard.layout.common.duplicate">Duplicate</Trans>
+          <Trans i18nKey="dashboard.sidebar.element-actions.duplicate">Duplicate</Trans>
         </Button>
       )}
       {onCopy && (
@@ -62,10 +62,10 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
           fill="text"
           data-testid={selectors.components.EditPaneHeader.copy}
           onClick={onCopy}
-          tooltip={t('dashboard.layout.common.copy-tooltip', 'Copy')}
+          tooltip={t('dashboard.sidebar.element-actions.copy-tooltip', 'Copy')}
           tooltipPlacement="bottom"
         >
-          <Trans i18nKey="dashboard.layout.common.copy">Copy</Trans>
+          <Trans i18nKey="dashboard.sidebar.element-actions.copy">Copy</Trans>
         </Button>
       )}
       {canPaste && hasCopiedPanel && (
@@ -81,7 +81,7 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
             DashboardInteractions.trackPastePanelClick('editPaneHeader', getLayoutType(target), 'click');
           }}
         >
-          <Trans i18nKey="dashboard.layout.common.paste">Paste</Trans>
+          <Trans i18nKey="dashboard.sidebar.element-actions.paste">Paste</Trans>
         </Button>
       )}
       {(onDelete || onConfirmDelete) && (
@@ -94,9 +94,9 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
             icon="trash-alt"
             fill="text"
             data-testid={selectors.components.EditPaneHeader.deleteButton}
-            tooltip={t('dashboard.layout.common.delete', 'Delete')}
+            tooltip={t('dashboard.sidebar.element-actions.delete', 'Delete')}
           >
-            <Trans i18nKey="dashboard.layout.common.delete">Delete</Trans>
+            <Trans i18nKey="dashboard.sidebar.element-actions.delete">Delete</Trans>
           </Button>
         </>
       )}

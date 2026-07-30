@@ -62,7 +62,7 @@ export function DashboardOutlineNodeButtonContent({
       </div>
       {isCloned && (
         <span>
-          <Trans i18nKey="dashboard.outline.repeated-item">Repeat</Trans>
+          <Trans i18nKey="dashboard.sidebar.outline.repeated-item">Repeat</Trans>
         </span>
       )}
     </>

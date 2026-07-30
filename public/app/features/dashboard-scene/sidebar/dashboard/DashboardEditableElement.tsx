@@ -25,32 +25,27 @@ import { AddFilterButton, DashboardFiltersList } from './DashboardFiltersList';
 import { AddLinkButton, DashboardLinksList } from './DashboardLinksList';
 import { AddVariableButton, DashboardVariablesList } from './DashboardVariablesList';
 
-function useEditPaneOptions(
-  this: DashboardEditableElement,
-  dashboard: DashboardScene
-): OptionsPaneCategoryDescriptor[] {
+function useSidebarOptions(this: DashboardEditableElement, dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
   const { body } = dashboard.useState();
   const dashboardTitleInputId = useId();
   const dashboardDescriptionInputId = useId();
 
   const dashboardOptions = useMemo(() => {
-    const editPaneHeaderOptions = new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })
+    return new OptionsPaneCategoryDescriptor({ title: '', id: 'dashboard-options' })
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.options.title-option', 'Title'),
+          title: t('dashboard.sidebar.dashboard-options.title-option', 'Title'),
           id: dashboardTitleInputId,
           render: () => <DashboardTitleInput id={dashboardTitleInputId} dashboard={dashboard} />,
         })
       )
       .addItem(
         new OptionsPaneItemDescriptor({
-          title: t('dashboard.options.description', 'Description'),
+          title: t('dashboard.sidebar.dashboard-options.description', 'Description'),
           id: dashboardDescriptionInputId,
           render: () => <DashboardDescriptionInput id={dashboardDescriptionInputId} dashboard={dashboard} />,
         })
       );
-
-    return editPaneHeaderOptions;
   }, [dashboard, dashboardDescriptionInputId, dashboardTitleInputId]);
 
   const layoutCategory = useLayoutCategory(body);
@@ -112,7 +107,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
     ];
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this, this.dashboard);
+  public useSidebarOptions = useSidebarOptions.bind(this, this.dashboard);
 
   public renderTopButton(): ReactNode {
     return (
@@ -123,7 +118,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
         icon="sliders-v-alt"
         fullWidth
       >
-        <Trans i18nKey="dashboard.actions.open-settings">View all settings</Trans>
+        <Trans i18nKey="dashboard.sidebar.dashboard-options.open-settings">View all settings</Trans>
       </Button>
     );
   }
@@ -140,7 +135,7 @@ function useFiltersCategory(dashboard: DashboardScene): OptionsPaneCategoryDescr
     }
 
     const category = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard-scene.use-filters-category.category.title.filters', 'Filters'),
+      title: t('dashboard.sidebar.dashboard-options.filters', 'Filters'),
       id: 'dashboard-filters',
     });
 
@@ -178,7 +173,7 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
 
   return useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard-scene.use-variables-category.category.title.variables', 'Variables'),
+      title: t('dashboard.sidebar.dashboard-options.variables', 'Variables'),
       id: 'dashboard-variables',
     });
 
@@ -228,7 +223,7 @@ function useAnnotationsCategory(dataLayerSet: DashboardDataLayerSet): OptionsPan
 
   return useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard-scene.use-annotations-category.category.title.annotations', 'Annotations'),
+      title: t('dashboard.sidebar.dashboard-options.annotations', 'Annotations'),
       id: 'dashboard-annotations',
     });
 
@@ -252,7 +247,7 @@ function useLinksCategory(dashboard: DashboardScene): OptionsPaneCategoryDescrip
 
   return useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
-      title: t('dashboard-scene.use-links-category.category.title.links', 'Links'),
+      title: t('dashboard.sidebar.dashboard-options.links', 'Links'),
       id: 'dashboard-links',
     });
 

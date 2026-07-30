@@ -10,7 +10,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { type AutoGridColumnWidth, type AutoGridRowHeight, type AutoGridLayoutManager } from './AutoGridLayoutManager';
 
-export function getEditOptions(layoutManager: AutoGridLayoutManager): OptionsPaneItemDescriptor[] {
+export function getSidebarOptions(layoutManager: AutoGridLayoutManager): OptionsPaneItemDescriptor[] {
   const options: OptionsPaneItemDescriptor[] = [];
 
   options.push(

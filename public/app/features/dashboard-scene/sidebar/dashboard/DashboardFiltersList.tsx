@@ -47,7 +47,7 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
         visible,
         controlsMenu,
         hidden,
-        t('dashboard-scene.filters-list.reorder-description', 'Reorder filters list'),
+        t('dashboard.sidebar.filters.reorder-description', 'Reorder filters list'),
         DROPPABLE_TO_HIDE
       ),
     [variableSet, visible, controlsMenu, hidden]
@@ -58,7 +58,7 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
       <DraggableList
         items={visible}
         droppableId={ID_FILTERS_VISIBLE_LIST}
-        title={t('dashboard-scene.filters-list.title-above-dashboard', '', {
+        title={t('dashboard.sidebar.filters.title-above-dashboard', '', {
           count: visible.length,
           defaultValue_one: 'Above dashboard ({{count}})',
           defaultValue_other: 'Above dashboard ({{count}})',
@@ -69,7 +69,7 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
       <DraggableList
         items={controlsMenu}
         droppableId={ID_FILTERS_CONTROLS_MENU_LIST}
-        title={t('dashboard-scene.filters-list.title-controls-menu', '', {
+        title={t('dashboard.sidebar.filters.title-controls-menu', '', {
           count: controlsMenu.length,
           defaultValue_one: 'Controls menu ({{count}})',
           defaultValue_other: 'Controls menu ({{count}})',
@@ -80,7 +80,7 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
       <DraggableList
         items={hidden}
         droppableId={ID_FILTERS_HIDDEN_LIST}
-        title={t('dashboard-scene.filters-list.title-hidden', '', {
+        title={t('dashboard.sidebar.filters.title-hidden', '', {
           count: hidden.length,
           defaultValue_one: 'Hidden ({{count}})',
           defaultValue_other: 'Hidden ({{count}})',
@@ -103,7 +103,7 @@ export function AddFilterButton({ dashboard }: { dashboard: DashboardScene }) {
   return (
     <Box display="flex" paddingTop={1} paddingBottom={1}>
       <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={onAddFilter}>
-        <Trans i18nKey="dashboard-scene.filters-list.add-filter">Add filter</Trans>
+        <Trans i18nKey="dashboard.sidebar.filters.add-filter">Add filter</Trans>
       </Button>
     </Box>
   );

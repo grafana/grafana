@@ -39,7 +39,7 @@ export function buildTestScene() {
 
 describe('VariableList', () => {
   describe('tracking add variable button', () => {
-    it('should call DashboardInteractions.trackAddVariableButtonClicked with source edit_pane when onAdd is clicked in edit pane variable list', async () => {
+    it('should call DashboardInteractions.trackAddVariableButtonClicked with source edit_pane when onAdd is clicked in sidebar variable list', async () => {
       const user = userEvent.setup();
       buildTestScene();
       render(<VariableList set={variables} />);

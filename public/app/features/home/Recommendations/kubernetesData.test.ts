@@ -64,8 +64,9 @@ let probeHangUids: Set<string>;
 // Probe queries against these uids emit LoadingState.Error for the first N attempts.
 let probeFailuresByUid: Record<string, number>;
 let probeAttempts: Record<string, number>;
-// Non-probe query batches: always emit LoadingState.Error.
+// Non-probe batches containing these refIds emit LoadingState.Error; sibling refIds' frames survive.
 let queryErrorRefIds: Set<string>;
+let lastErrorData: PanelData | undefined;
 let valuesByRefId: Record<string, number>;
 
 type CapturedRun = { datasource: { uid: string }; queries: Array<{ refId: string; expr: string }> };
@@ -91,6 +92,7 @@ beforeEach(() => {
   probeFailuresByUid = {};
   probeAttempts = {};
   queryErrorRefIds = new Set();
+  lastErrorData = undefined;
   valuesByRefId = {};
   mockCreateQueryRunner.mockImplementation(() => {
     // Per-runner capture: parallel probes each get their own runner, so a shared variable would race.
@@ -112,10 +114,19 @@ beforeEach(() => {
             return of({ state: LoadingState.Error, series: [] as DataFrame[], timeRange: {} } as PanelData);
           }
         }
-        if (!isProbe && captured?.queries.some((q) => queryErrorRefIds.has(q.refId))) {
-          return of({ state: LoadingState.Error, series: [] as DataFrame[], timeRange: {} } as PanelData);
-        }
         const count = dataByUid[uid] ?? 0;
+        if (!isProbe && captured?.queries.some((q) => queryErrorRefIds.has(q.refId))) {
+          // Runner partial-error shape: erroring targets drop out, sibling frames survive.
+          const survivors = captured.queries
+            .filter((q) => !queryErrorRefIds.has(q.refId))
+            .map((q) =>
+              numberFrame(q.refId, [
+                valuesByRefId[q.refId] ?? (q.refId === 'clusters' || q.refId === 'pods' ? count : 0),
+              ])
+            );
+          lastErrorData = { state: LoadingState.Error, series: survivors, timeRange: {} } as PanelData;
+          return of(lastErrorData);
+        }
         let series: DataFrame[] = [];
         if (isProbe && count > 0) {
           series = [numberFrame('namespaces', [count])];
@@ -292,15 +303,12 @@ describe('Kubernetes Prometheus resolution', () => {
     expect(probedUids).not.toContain('ml-uid');
   });
 
-  it('still probes and picks a lone utility-named datasource', async () => {
+  it('never probes a lone utility-named datasource', async () => {
     setDataSources([{ uid: 'usage-uid', name: 'grafanacloud-usage' }]);
     dataByUid = { 'usage-uid': 1 };
 
-    const inventory = await fetchKubernetesInventory();
-    await fetchKubernetesHealth();
-
-    expect(inventoryCalls()[0][0].datasource.uid).toBe('usage-uid');
-    expect(inventory.clusters).toBe(1);
+    await expect(fetchKubernetesInventory()).rejects.toThrow('No Prometheus datasource with Kubernetes data');
+    expect(probeCalls()).toHaveLength(0);
   });
 
   it('keeps a user datasource whose name merely contains "usage" (exact-match skip)', async () => {
@@ -519,12 +527,14 @@ describe('Kubernetes Prometheus resolution', () => {
     }
   });
 
-  it('rejects when the inventory query fails', async () => {
+  it('rejects when one inventory query errors even though the sibling frame survives', async () => {
     setDataSources([{ uid: 'k8s-uid', name: 'k8s-prom', isDefault: true }]);
     dataByUid = { 'k8s-uid': 2 };
     queryErrorRefIds = new Set(['clusters']);
 
-    await expect(fetchKubernetesInventory()).rejects.toThrow();
+    await expect(fetchKubernetesInventory()).rejects.toThrow('Prometheus query failed');
+    // Pin the scenario: the pods frame really survived and was discarded — not an empty error.
+    expect(lastErrorData?.series.map((f) => f.refId)).toEqual(['pods']);
     expect(inventoryCalls()).toHaveLength(1);
   });
 

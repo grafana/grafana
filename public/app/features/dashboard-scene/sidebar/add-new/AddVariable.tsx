@@ -32,7 +32,7 @@ export function AddVariable({
     <AddButton
       icon="brackets-curly"
       testId={selectors.components.Sidebar.addNewVariableButton}
-      label={t('dashboard-scene.add-variable.label-variable', 'Variable')}
+      label={t('dashboard.sidebar.add.variable.label', 'Variable')}
       onClick={onAddVariableClick}
     />
   );
