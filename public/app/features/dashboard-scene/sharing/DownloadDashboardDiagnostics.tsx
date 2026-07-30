@@ -221,14 +221,11 @@ function DownloadDashboardDiagnosticsRenderer({ model }: SceneComponentProps<Dow
         </Trans>
       </p>
 
-      <Alert
-        severity="info"
-        title={t('dashboard.diagnostics.large-dashboard-title', 'Consider a smaller dashboard')}
-      >
+      <Alert severity="info" title={t('dashboard.diagnostics.large-dashboard-title', 'Consider a smaller dashboard')}>
         <Trans i18nKey="dashboard.diagnostics.large-dashboard-body">
-          Every panel is re-queried and its traffic captured, so a large dashboard produces a large bundle and can
-          reach the size limit, leaving later panels out. If you already know which panel misbehaves, a dashboard
-          holding just that panel gives a smaller bundle and a clearer one.
+          Every panel is re-queried and its traffic captured, so a large dashboard produces a large bundle and can reach
+          the size limit, leaving later panels out. If you already know which panel misbehaves, a dashboard holding just
+          that panel gives a smaller bundle and a clearer one.
         </Trans>
       </Alert>
 
