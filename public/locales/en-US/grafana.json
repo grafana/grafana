@@ -12249,6 +12249,9 @@
       "subtitle": "See grouped alerts with active notifications",
       "title": "Active notifications"
     },
+    "alerting-history": {
+      "title": "History"
+    },
     "alerting-home": {
       "title": "Home"
     },
@@ -12258,6 +12261,10 @@
     "alerting-list": {
       "subtitle": "Rules that determine whether an alert will fire",
       "title": "Alert rules"
+    },
+    "alerting-notification-config": {
+      "subtitle": "Manage contact points, notification policies, templates, and time intervals",
+      "title": "Notification configuration"
     },
     "alerting-receivers": {
       "subtitle": "Choose how to notify your contact points when an alert instance fires",
@@ -12288,6 +12295,10 @@
     },
     "authentication": {
       "title": "Authentication"
+    },
+    "banner-settings": {
+      "subtitle": "Show important updates and information at the top of every page",
+      "title": "Announcement banner"
     },
     "bookmarks": {
       "title": "Bookmarks"
@@ -12328,6 +12339,7 @@
       "title": "Create"
     },
     "create-alert": {
+      "subtitle": "Create an alert rule",
       "title": "New alert rule"
     },
     "create-dashboard": {
@@ -12492,6 +12504,10 @@
     },
     "search-dashboards": {
       "title": "Search dashboards"
+    },
+    "secrets-management": {
+      "subtitle": "Manage secrets for your Grafana instance",
+      "title": "Secrets Management"
     },
     "server-settings": {
       "subtitle": "View the settings defined in your Grafana config",

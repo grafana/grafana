@@ -2,15 +2,15 @@ import { type AnyAction, createAction } from '@reduxjs/toolkit';
 import { cloneDeep } from 'lodash';
 
 import { type NavIndex, type NavModel, type NavModelItem } from '@grafana/data';
-import config from 'app/core/config';
 
+import { getInitialNavTree } from '../navtree/buildStaticNavTree';
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
 export const HOME_NAV_ID = 'home';
 
 export function buildInitialState(): NavIndex {
   const navIndex: NavIndex = {};
-  const rootNodes = cloneDeep(config.bootData.navTree);
+  const rootNodes = cloneDeep(getInitialNavTree());
   const homeNav = rootNodes.find((node) => node.id === HOME_NAV_ID);
   const otherRootNodes = rootNodes.filter((node) => node.id !== HOME_NAV_ID);
 

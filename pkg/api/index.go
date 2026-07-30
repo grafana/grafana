@@ -114,13 +114,15 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	grafanaAssetSriChecks, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaAssetSriChecks, false, openfeature.TransactionContext(ctx))
 	newPreferencesPage, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaNewPreferencesPage, false, openfeature.TransactionContext(ctx))
 
-	// With the client-built nav tree the frontend only needs the items it cannot
-	// know about (enterprise index-data hooks add theirs to the empty root below,
-	// and the client grafts them in) — skip building the full tree. The
-	// conditions must mirror isClientNavTreeEnabled (buildStaticNavTree.ts):
-	// the frontend falls back to the bootdata tree unless both flags are
-	// enabled, so skipping on a different set here would leave it with an
-	// empty tree.
+	// With the client-built nav tree the frontend declares every nav item
+	// itself (enterprise items register through the frontend's nav entry
+	// registry) — skip building the full tree. The index-data hooks still run
+	// below for their non-nav side effects (licence settings, body class);
+	// their nav portions look up parent sections by id and no-op on the empty
+	// root. The conditions must mirror isClientNavTreeEnabled
+	// (buildStaticNavTree.ts): the frontend falls back to the bootdata tree
+	// unless both flags are enabled, so skipping on a different set here
+	// would leave it with an empty tree.
 	multiTenantNavTree, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagGrafanaMultiTenantNavTree, false, openfeature.TransactionContext(ctx))
 	useMTPlugins, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagPluginsUseMTPlugins, false, openfeature.TransactionContext(ctx))
 	clientNavTree := multiTenantNavTree && useMTPlugins
