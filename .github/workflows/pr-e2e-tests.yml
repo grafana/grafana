@@ -398,6 +398,7 @@ jobs:
 
   publish-metrics:
     name: Publish metrics
+    needs: build-frontend # bundle size metrics are read from the built assets manifests
     # Run on `grafana/grafana` main branch only
     if: github.event_name == 'push' && github.repository == 'grafana/grafana' && github.ref_name == 'main'
     permissions:
@@ -420,6 +421,11 @@ jobs:
           cache: 'false' # Don't use setup-node's built in caching, we'll handle it in the yarn-install step
       - name: Install yarn dependencies
         uses: ./.github/actions/yarn-install
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: grafana-frontend
+          path: public
       - name: Extract and publish metrics
         run: ./scripts/ci-frontend-metrics.sh | node --experimental-strip-types .github/workflows/scripts/publish-frontend-metrics.mts
         env:

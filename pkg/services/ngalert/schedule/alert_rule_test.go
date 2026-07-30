@@ -731,7 +731,7 @@ func TestRuleRoutine(t *testing.T) {
 			sender := NewSyncAlertsSenderMock()
 			sch, _, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
 
-			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
+			_, _ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
 			expectedStates := sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 			require.NotEmpty(t, expectedStates)
 
@@ -756,7 +756,7 @@ func TestRuleRoutine(t *testing.T) {
 			sender := NewSyncAlertsSenderMock()
 			sch, _, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
 
-			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
+			_, _ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
 			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
 
 			factory := ruleFactoryFromScheduler(sch)
@@ -780,7 +780,7 @@ func TestRuleRoutine(t *testing.T) {
 			sender.EXPECT().Send(mock.Anything, mock.Anything, mock.Anything).Times(1)
 			sch, _, _, _ := createSchedule(make(chan time.Time), sender, clock.NewMock())
 
-			_ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
+			_, _ = sch.stateManager.ProcessEvalResults(context.Background(), sch.clock.Now(), rule, genEvalResults(sch.clock.Now()), nil, nil)
 			require.NotEmpty(t, sch.stateManager.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID))
 
 			factory := ruleFactoryFromScheduler(sch)

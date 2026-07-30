@@ -27,10 +27,6 @@ type LegacyService struct {
 func NewLegacyService(db db.DB, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
 	store := &xormStore{db: db, cfg: cfg, deletes: []string{}}
 
-	if err := store.teamMemberUidMigration(); err != nil {
-		return nil, err
-	}
-
 	return &LegacyService{
 		cache:  localcache.New(defaultCacheDuration, 2*defaultCacheDuration),
 		store:  store,

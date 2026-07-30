@@ -4,6 +4,10 @@ import { PageObject } from './PageObject';
 
 // Controls above the dashboard: timepicker, refresh button, edit button, save button
 export class Controls extends PageObject {
+  getContainer(): Locator {
+    return this.dashboardPage.getByGrafanaSelector(this.selectors.pages.Dashboard.Controls);
+  }
+
   private getEditButton(label: RegExp): Locator {
     return this.dashboardPage
       .getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.editButton)
@@ -38,9 +42,33 @@ export class Controls extends PageObject {
     });
   }
 
+  async setTimeRange(from: string, to: string) {
+    await test.step(`Set time range from "${from}" to "${to}"`, async () => {
+      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.openButton).click();
+      const fromField = this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.fromField);
+      await fromField.click();
+      await fromField.fill(from);
+      const toField = this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.toField);
+      await toField.click();
+      await toField.fill(to);
+      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.applyTimeRange).click();
+    });
+  }
+
   async openControlsMenu() {
     await test.step('Open controls menu', async () => {
       await this.dashboardPage.getByGrafanaSelector(this.selectors.pages.Dashboard.ControlsButton).click();
+    });
+  }
+
+  async openShareSnapshotDrawer() {
+    await test.step('Open share snapshot drawer', async () => {
+      await this.dashboardPage
+        .getByGrafanaSelector(this.selectors.pages.Dashboard.DashNav.newShareButton.arrowMenu)
+        .click();
+      await this.dashboardPage
+        .getByGrafanaSelector(this.selectors.pages.Dashboard.DashNav.newShareButton.menu.shareSnapshot)
+        .click();
     });
   }
 
@@ -75,6 +103,15 @@ export class Controls extends PageObject {
     getInput: (variableLabel: string): Locator => {
       // the input has no selector of its own: like the dropdown trigger, it lives in the label's next sibling
       return this.variables.getLabel(variableLabel).locator('+ *').locator('input');
+    },
+    setValue: async (variableLabel: string, text: string) => {
+      await test.step(`Set value of variable "${variableLabel}" to "${text}"`, async () => {
+        const input = this.variables.getInput(variableLabel);
+        await input.click();
+        await input.clear();
+        await input.fill(text);
+        await input.press('Enter');
+      });
     },
   };
 }

@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Badge, Card, Grid, Stack, useStyles2 } from '@grafana/ui';
@@ -88,6 +89,7 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
           noMargin
           className={styles.card}
           href={item.url}
+          data-testid={selectors.pages.Connections.AddNewConnection.pluginCard(item.name)}
           onClick={(e) => {
             if (onClickItem) {
               onClickItem(e, item);

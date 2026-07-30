@@ -209,6 +209,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         <InlineField labelWidth={14} label="Scenario">
           <Select
             inputId={`test-data-scenario-select-${query.refId}`}
+            aria-label={selectors.scenarioSelect}
             options={options}
             value={options.find((item) => item.value === query.scenarioId)}
             onChange={onScenarioChange}
@@ -280,6 +281,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             <Input
               width={32}
               id={`labels-${query.refId}`}
+              data-testid={selectors.labelsInput(query.refId)}
               name="labels"
               onChange={onInputChange}
               value={query?.labels}
