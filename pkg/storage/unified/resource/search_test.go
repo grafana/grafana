@@ -640,9 +640,24 @@ func TestCombineBuildRequests(t *testing.T) {
 // features safe: requiring a feature this binary never records would rebuild
 // every index on every check, forever.
 func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
-	for _, required := range RequiredIndexFeatures() {
-		require.Contains(t, CurrentIndexFeatures(), required)
+	for _, postRankAuthz := range []bool{false, true} {
+		for _, required := range RequiredIndexFeatures(postRankAuthz) {
+			require.Contains(t, CurrentIndexFeatures(), required)
+		}
 	}
+}
+
+// TestRequiredIndexFeaturesStoredFacets covers the gating that keeps the stored
+// facet mapping from rebuilding indexes where post-rank authorization is off.
+func TestRequiredIndexFeaturesStoredFacets(t *testing.T) {
+	require.NotContains(t, RequiredIndexFeatures(false), IndexFeatureStoredFacets)
+	require.Contains(t, RequiredIndexFeatures(true), IndexFeatureStoredFacets)
+
+	// An index built before the stored facet mapping is reused with the option
+	// off, and rebuilt once it is on.
+	buildInfo := IndexBuildInfo{Features: []IndexFeature{IndexFeatureDeletedMarker}}
+	require.Empty(t, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
+	require.Equal(t, []IndexFeature{IndexFeatureStoredFacets}, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(true)))
 }
 
 func TestShouldRebuildIndex(t *testing.T) {

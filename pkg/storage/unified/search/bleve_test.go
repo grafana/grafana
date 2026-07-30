@@ -1151,6 +1151,22 @@ func withRequiredIndexFeatures(features ...resource.IndexFeature) setupOption {
 	}
 }
 
+func withPostRankAuthzEnabled() setupOption {
+	return func(options *BleveOptions) {
+		options.PostRankAuthzEnabled = true
+	}
+}
+
+// TestRequiredIndexFeaturesFollowPostRankAuthz covers the gate that keeps the
+// stored facet mapping from rebuilding indexes that serve facets from bleve.
+func TestRequiredIndexFeaturesFollowPostRankAuthz(t *testing.T) {
+	nativeFacets, _ := setupBleveBackend(t)
+	require.NotContains(t, nativeFacets.requiredFeatures, resource.IndexFeatureStoredFacets)
+
+	postRank, _ := setupBleveBackend(t, withPostRankAuthzEnabled())
+	require.Contains(t, postRank.requiredFeatures, resource.IndexFeatureStoredFacets)
+}
+
 // TestBuildIndexReuseChecksRequiredFeatures covers an on-disk index built before
 // a mapping change: a binary requiring an index feature the index lacks rebuilds
 // rather than serve wrong answers, and reuses the index when it requires none.

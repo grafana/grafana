@@ -88,8 +88,9 @@ type BleveOptions struct {
 	SearchFields *resource.SearchFieldsRegistry
 
 	// RequiredIndexFeatures overrides the index features an existing index must
-	// already have to be reused; nil means resource.RequiredIndexFeatures. Only
-	// tests set it. New indexes always record resource.CurrentIndexFeatures.
+	// already have to be reused; nil derives them from PostRankAuthzEnabled via
+	// resource.RequiredIndexFeatures. Only tests set it. New indexes always
+	// record resource.CurrentIndexFeatures.
 	RequiredIndexFeatures []resource.IndexFeature
 
 	// Snapshot configures remote index snapshot download at build time.
@@ -269,7 +270,7 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 
 	requiredFeatures := opts.RequiredIndexFeatures
 	if requiredFeatures == nil {
-		requiredFeatures = resource.RequiredIndexFeatures()
+		requiredFeatures = resource.RequiredIndexFeatures(opts.PostRankAuthzEnabled)
 	}
 
 	be := &bleveBackend{

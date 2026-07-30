@@ -140,6 +140,7 @@ func NewSearchOptions(
 			IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 			IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
 			InjectFailuresPercent:     cfg.SearchInjectFailuresPercent,
+			PostRankAuthzEnabled:      cfg.SearchPostRankAuthz,
 
 			IndexSnapshotEnabled:            cfg.IndexSnapshotEnabled,
 			IndexSnapshotBucketURL:          cfg.IndexSnapshotBucketURL,
