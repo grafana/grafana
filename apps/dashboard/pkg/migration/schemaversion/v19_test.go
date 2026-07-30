@@ -303,6 +303,52 @@ func TestV19(t *testing.T) {
 			},
 		},
 		{
+			name: "migrates panel links for panels nested in collapsed rows",
+			input: map[string]interface{}{
+				"title":         "V19 Nested Panel Links Migration Test Dashboard",
+				"schemaVersion": 18,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id": 1,
+								"links": []interface{}{
+									map[string]interface{}{
+										"url":      "http://example.com",
+										"keepTime": true,
+										"title":    "KeepTime Link",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"title":         "V19 Nested Panel Links Migration Test Dashboard",
+				"schemaVersion": 19,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"type":      "row",
+						"collapsed": true,
+						"panels": []interface{}{
+							map[string]interface{}{
+								"id": 1,
+								"links": []interface{}{
+									map[string]interface{}{
+										"url":   "http://example.com?$__url_time_range",
+										"title": "KeepTime Link",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "dashboard with no panels remains unchanged",
 			input: map[string]interface{}{
 				"title":         "V19 No Panels Migration Test Dashboard",

@@ -1,10 +1,12 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 
 import {
+  type FieldConfig,
   type FieldConfigSource,
   type FieldDisplay,
+  FieldColorModeId,
   toDataFrame,
   FieldType,
   VizOrientation,
@@ -16,7 +18,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
 import { PieChartPanel, comparePieChartItemsByValue } from './PieChartPanel';
-import { type Options, PieChartType, PieChartLegendValues } from './panelcfg.gen';
+import {
+  type Options,
+  type PieChartLegendOptions,
+  PieChartType,
+  PieChartLegendValues,
+  PieChartLabels,
+} from './panelcfg.gen';
 
 jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
@@ -321,6 +329,142 @@ describe('PieChartPanel', () => {
       });
     });
   });
+
+  describe('display labels', () => {
+    it('renders name, value, and percent text for each slice', () => {
+      setup({
+        options: buildOptions({ displayLabels: [PieChartLabels.Name, PieChartLabels.Value, PieChartLabels.Percent] }),
+        data: { series: defaultSliceSeries },
+      });
+      const labels = screen.getAllByTestId(selectors.components.Panels.Visualization.PieChart.svgLabel);
+
+      // Labels follow descending sort. Each label is name+value+percent joined without a separator.
+      expect(labels).toHaveLength(2);
+      expect(labels[0]).toHaveTextContent('Chrome6060%');
+      expect(labels[1]).toHaveTextContent('Firefox4040%');
+    });
+
+    it('picks black or white label text for readability when gradientFills is active', () => {
+      // Color must be set on field.config directly; the panel reads pre-resolved config,
+      // it does not apply fieldConfig defaults itself (applyFieldOverrides does that in prod).
+      const gradientColor = { mode: FieldColorModeId.Gradient, fixedColor: '#00ff00', gradientColorTo: '#ff0000' };
+      const seriesWithGradientColor = makeSeries([
+        { name: 'Chrome', value: 60, config: { color: gradientColor } },
+        { name: 'Firefox', value: 40, config: { color: gradientColor } },
+      ]);
+      setup({
+        options: buildOptions({ displayLabels: [PieChartLabels.Name] }),
+        data: { series: seriesWithGradientColor },
+      });
+      const labels = screen.getAllByTestId(selectors.components.Panels.Visualization.PieChart.svgLabel);
+      const labelFillColors = labels.map((el) => el.getAttribute('fill')?.toLowerCase());
+
+      // Gradient mode picks black or white for contrast; any other color means it didn't run.
+      expect(labelFillColors).toHaveLength(2);
+      labelFillColors.forEach((color) => expect(['#ffffff', '#000000']).toContain(color));
+    });
+
+    it('suppresses the label for a slice too small to fit one (< 0.3 rad)', () => {
+      // Tiny is ~1% of the total, well under the 0.3 rad label threshold.
+      const seriesWithTinySlice = makeSeries([
+        { name: 'Big', value: 990 },
+        { name: 'Tiny', value: 10 },
+      ]);
+      setup({
+        options: buildOptions({ displayLabels: [PieChartLabels.Name] }),
+        data: { series: seriesWithTinySlice },
+      });
+      // Both slices render; only the Tiny label is dropped.
+      expect(screen.getAllByTestId('data testid Pie Chart Slice')).toHaveLength(2);
+      const labels = screen.getAllByTestId(selectors.components.Panels.Visualization.PieChart.svgLabel);
+      expect(labels).toHaveLength(1);
+      expect(labels[0]).toHaveTextContent('Big');
+    });
+  });
+
+  describe('tooltip modes', () => {
+    it('shows only the hovered series in single mode, not the whole series list', async () => {
+      setup({
+        options: buildOptions({ tooltip: { mode: TooltipDisplayMode.Single, sort: SortOrder.Ascending } }),
+        data: { series: defaultSliceSeries },
+      });
+      // Descending sort makes Chrome the first slice. Single mode shows only the hovered row.
+      await userEvent.hover(screen.getAllByTestId('data testid Pie Chart Slice')[0]);
+
+      const rows = screen.getAllByTestId('SeriesTableRow');
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toHaveTextContent('Chrome');
+      expect(rows[0]).toHaveTextContent('60');
+    });
+
+    it('filters zero-value series from multi tooltip when hideZeros is enabled', async () => {
+      const seriesWithZero = makeSeries([
+        { name: 'Chrome', value: 60 },
+        { name: 'Zero', value: 0 },
+      ]);
+      setup({
+        options: buildOptions({
+          tooltip: { mode: TooltipDisplayMode.Multi, sort: SortOrder.Ascending, hideZeros: true },
+        }),
+        data: { series: seriesWithZero },
+      });
+      await userEvent.hover(screen.getAllByTestId('data testid Pie Chart Slice')[0]);
+
+      // Chrome stays; the zero-valued Zero series is not among the tooltip rows.
+      const rows = screen.getAllByTestId('SeriesTableRow');
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toHaveTextContent('Chrome');
+      expect(rows.some((row) => row.textContent?.includes('Zero'))).toBe(false);
+    });
+
+    it('hides the tooltip on mouseout after hover', async () => {
+      setup({ data: { series: defaultSliceSeries } });
+      const slices = screen.getAllByTestId('data testid Pie Chart Slice');
+
+      // Multi mode (the default) shows a row per slice.
+      await userEvent.hover(slices[0]);
+      expect(screen.getAllByTestId('SeriesTableRow')).toHaveLength(2);
+
+      fireEvent.mouseOut(slices[0]);
+      expect(screen.queryAllByTestId('SeriesTableRow')).toHaveLength(0);
+    });
+  });
+
+  describe('panel states', () => {
+    it('renders the error view instead of a chart when there are no data frames', () => {
+      setup({ data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] } });
+
+      // No chart: neither the viz layout nor any slice is rendered.
+      expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
+      expect(screen.queryAllByTestId('data testid Pie Chart Slice')).toHaveLength(0);
+    });
+
+    it('does not render the legend when showLegend is false', () => {
+      setup({
+        options: buildOptions({ legend: buildLegend({ showLegend: false }) }),
+        data: { series: defaultSliceSeries },
+      });
+
+      // Slices still render, but the legend region is not.
+      expect(screen.getAllByTestId('data testid Pie Chart Slice')).toHaveLength(2);
+      expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
+    });
+
+    it('shows the raw value in the legend when legend values include Value', () => {
+      // Table mode renders the value column; List mode would only show names.
+      setup({
+        options: buildOptions({
+          legend: buildLegend({ displayMode: LegendDisplayMode.Table, values: [PieChartLegendValues.Value] }),
+        }),
+        data: { series: defaultSliceSeries },
+      });
+
+      // Scope to the legend so the value is tied to it, not to a slice label.
+      const legend = screen.getByTestId(selectors.components.VizLayout.legend);
+      expect(within(legend).getByText('Chrome')).toBeInTheDocument();
+      expect(within(legend).getByText('60')).toBeInTheDocument();
+    });
+  });
 });
 
 describe('comparePieChartItemsByValue', () => {
@@ -368,35 +512,56 @@ describe('comparePieChartItemsByValue', () => {
   });
 });
 
+const defaultHideFrom = { legend: false, viz: false, tooltip: false };
+
+// Builds one frame of numeric fields. Fields default to a visible config; pass config to override.
+const makeSeries = (slices: Array<{ name: string; value: number; config?: FieldConfig }>) => [
+  toDataFrame({
+    fields: slices.map(({ name, value, config }) => ({
+      name,
+      type: FieldType.number,
+      values: [value],
+      config: config ?? { custom: { hideFrom: defaultHideFrom } },
+    })),
+  }),
+];
+
+const defaultSliceSeries = makeSeries([
+  { name: 'Chrome', value: 60 },
+  { name: 'Firefox', value: 40 },
+]);
+
+const buildLegend = (overrides: Partial<PieChartLegendOptions> = {}): PieChartLegendOptions => ({
+  displayMode: LegendDisplayMode.List,
+  showLegend: true,
+  placement: 'right',
+  calcs: [],
+  values: [PieChartLegendValues.Percent],
+  ...overrides,
+});
+
+const buildOptions = (overrides: Partial<Options> = {}): Options => ({
+  pieType: PieChartType.Pie,
+  sort: SortOrder.Descending,
+  displayLabels: [],
+  legend: buildLegend(),
+  reduceOptions: { calcs: [] },
+  orientation: VizOrientation.Auto,
+  tooltip: { mode: TooltipDisplayMode.Multi, sort: SortOrder.Ascending },
+  ...overrides,
+});
+
 const setup = (propsOverrides?: {}) => {
   const fieldConfig: FieldConfigSource = {
     defaults: {},
     overrides: [],
   };
 
-  const options: Options = {
-    pieType: PieChartType.Pie,
-    sort: SortOrder.Descending,
-    displayLabels: [],
-    legend: {
-      displayMode: LegendDisplayMode.List,
-      showLegend: true,
-      placement: 'right',
-      calcs: [],
-      values: [PieChartLegendValues.Percent],
-    },
-    reduceOptions: {
-      calcs: [],
-    },
-    orientation: VizOrientation.Auto,
-    tooltip: { mode: TooltipDisplayMode.Multi, sort: SortOrder.Ascending },
-  };
-
   const props: PieChartPanelProps = {
     id: 1,
     data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: [] },
     timeZone: 'utc',
-    options: options,
+    options: buildOptions(),
     fieldConfig: fieldConfig,
     width: 532,
     height: 250,

@@ -1,8 +1,8 @@
-import { test } from '@playwright/test';
+import { type Locator, test } from '@playwright/test';
 
 import { PageObject } from '../PageObject';
 
-// The edit pane shown after adding or selecting a variable — variable type,
+// The sidebar after adding or selecting a variable — variable type,
 // name/label inputs, plus type-specific options (e.g. datasource variables)
 export class VariableOptions extends PageObject {
   async selectVariableType(type: string) {
@@ -35,15 +35,24 @@ export class VariableOptions extends PageObject {
     });
   }
 
+  async selectDisplay(displayLabel: string) {
+    await test.step(`Select variable display "${displayLabel}"`, async () => {
+      await this.dashboardPage
+        .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect)
+        .click();
+      // the option also renders a description so we can't just use getByRole('option', {name,exact})
+      await this.page.getByRole('option').getByText(displayLabel, { exact: true }).click();
+    });
+  }
+
   readonly datasource = {
     selectType: async (dsType: string) => {
       await test.step(`Select variable datasource type "${dsType}"`, async () => {
-        await this.dashboardPage
-          .getByGrafanaSelector(
-            this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
-          )
-          .click();
-        await this.page.getByRole('option', { name: dsType, exact: true }).click();
+        const datasourceSelect = this.dashboardPage.getByGrafanaSelector(
+          this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
+        );
+        await datasourceSelect.fill(dsType);
+        await datasourceSelect.press('Enter');
       });
     },
     setNameFilter: async (filter: string) => {
@@ -51,6 +60,49 @@ export class VariableOptions extends PageObject {
         await this.dashboardPage
           .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.nameFilter)
           .fill(filter);
+      });
+    },
+  };
+
+  readonly custom = {
+    openEditor: async () => {
+      await test.step('Open custom variable editor', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.optionsOpenButton)
+          .click();
+      });
+    },
+    selectFormat: async (format: 'CSV' | 'JSON') => {
+      await test.step(`Select "${format}" format`, async () => {
+        const modal = this.page.getByRole('dialog');
+        await this.dashboardPage
+          // <RadioButtonGroup /> auto-applies the RadioGroup container testid; we scope it to the modal
+          .getByGrafanaSelector(this.selectors.components.RadioGroup.container, { root: modal })
+          .getByRole('radio', { name: format, exact: true })
+          .check();
+      });
+    },
+    setValues: async (valuesInSelectedFormat: string) => {
+      await test.step('Fill custom variable options', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput)
+          .fill(valuesInSelectedFormat);
+      });
+    },
+    getPreviewOfValues: (): Locator =>
+      this.dashboardPage.getByGrafanaSelector(
+        this.selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption
+      ),
+    getPreviewTable: (): Locator =>
+      // shown instead of the plain values preview when options carry properties beyond value/text
+      this.dashboardPage.getByGrafanaSelector(
+        this.selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.previewTable
+      ),
+    clickApplyButton: async () => {
+      await test.step('Apply variable changes', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.applyButton)
+          .click();
       });
     },
   };
@@ -63,7 +115,7 @@ export class VariableOptions extends PageObject {
           .click();
 
         await this.page.keyboard.type(dataSource);
-        await this.page.getByRole('button', { name: dataSource }).click();
+        await this.page.getByRole('option', { name: dataSource }).click();
       });
     },
   };
@@ -78,11 +130,93 @@ export class VariableOptions extends PageObject {
           .click();
 
         await this.page.keyboard.type(dataSource);
-        await this.page.getByRole('button', { name: dataSource }).click();
+        await this.page.getByRole('option', { name: dataSource }).click();
 
         await this.page
           .getByRole('alert', { name: /this data source does not support filters/ })
           .waitFor({ state: 'detached' });
+      });
+    },
+  };
+
+  readonly query = {
+    openEditor: async () => {
+      await test.step('Open query variable editor', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(
+            this.selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsOpenButton
+          )
+          .click();
+      });
+    },
+    selectTargetDatasource: async (dataSource: string) => {
+      await test.step(`Select target datasource "${dataSource}"`, async () => {
+        await this.components.dataSourcePicker.set(dataSource);
+      });
+    },
+    setTestDataQuery: async (query: string) => {
+      await test.step(`Set TestData query to "${query}"`, async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(
+            this.selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput
+          )
+          .fill(query);
+      });
+    },
+    runQuery: async () => {
+      await test.step('Run query', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton)
+          .click();
+      });
+    },
+    getPreviewOfValues: (): Locator =>
+      this.dashboardPage.getByGrafanaSelector(
+        this.selectors.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption
+      ),
+    clickApplyButton: async () => {
+      await test.step('Apply variable changes', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.applyButton)
+          .click();
+      });
+    },
+  };
+
+  readonly constant = {
+    setValue: async (value: string) => {
+      await test.step(`Set constant variable value to "${value}"`, async () => {
+        const valueInput = this.dashboardPage
+          .getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('variable-type Value'))
+          .locator('input');
+
+        await valueInput.fill(value);
+        await valueInput.blur();
+      });
+    },
+  };
+
+  readonly textbox = {
+    setValue: async (value: string) => {
+      await test.step(`Set textbox variable value to "${value}"`, async () => {
+        const valueInput = this.dashboardPage
+          .getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('variable-type Value'))
+          .locator('input');
+
+        await valueInput.fill(value);
+        await valueInput.blur();
+      });
+    },
+  };
+
+  readonly interval = {
+    toggleAuto: async () => {
+      await test.step('Toggle auto option for interval variable', async () => {
+        await this.dashboardPage
+          .getByGrafanaSelector(this.selectors.components.Sidebar.container)
+          // there's a checkbox input in the DOM with a proper data-testid, but it's hidden (opacity 0) so Playwright cannot check it
+          .getByText('Auto option')
+          .click();
       });
     },
   };

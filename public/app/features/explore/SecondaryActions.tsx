@@ -64,6 +64,7 @@ export function SecondaryActions({
         <>
           <ToolbarButton
             variant="canvas"
+            data-testid={selectors.pages.Explore.General.addQueryRow}
             aria-label={t('explore.secondary-actions.query-add-button-aria-label', 'Add query')}
             onClick={onClickAddQueryRowButton}
             disabled={addQueryRowButtonDisabled}

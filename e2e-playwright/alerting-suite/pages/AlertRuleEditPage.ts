@@ -67,7 +67,7 @@ export class AlertRuleEditPage {
     // whose accessible name combines the DS name with badges/tags
     // (e.g. "gdev-testdata Tags TestData") — match by prefix.
     await this.page
-      .getByRole('button', { name: new RegExp(`^${dataSourceName}\\b`, 'i') })
+      .getByRole('option', { name: new RegExp(`^${dataSourceName}\\b`, 'i') })
       .first()
       .click();
   }

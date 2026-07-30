@@ -9,17 +9,16 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { alertsCardClicked } from '../analytics/main';
+import { ctaClicked } from '../analytics/main';
 
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { HOME_CARD_MAX_ITEMS } from './constants';
 
 jest.mock('../analytics/main', () => ({
-  alertsCardClicked: jest.fn(),
-  incidentsCardClicked: jest.fn(),
+  ctaClicked: jest.fn(),
   tabChanged: jest.fn(),
   clearHistoryClicked: jest.fn(),
-  emptyCtaClicked: jest.fn(),
+  homepageViewed: jest.fn(),
 }));
 
 setBackendSrv(backendSrv);
@@ -120,7 +119,7 @@ describe('FiringAlertsCard', () => {
 
     render(<FiringAlertsCard />);
 
-    expect(await screen.findByRole('link', { name: 'Linked alert' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /^Linked alert/ })).toHaveAttribute(
       'href',
       '/alerting/grafana/abc123/view?orgId=1'
     );
@@ -169,14 +168,16 @@ describe('FiringAlertsCard', () => {
 
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
 
-    // Verify that the request included a team filter matcher
+    // Verify that the request included a case-insensitive matcher with a
+    // tolerant pattern per team (both names are single letter/digit runs).
     const lastReq = capturedRequests[capturedRequests.length - 1];
     const url = new URL(lastReq.url);
     const filters = url.searchParams.getAll('filter');
-    expect(filters.some((f) => f.includes('team') && f.includes('platform|infra'))).toBe(true);
+    expect(filters.some((f) => f.includes('team=~') && f.includes('(?i)') && f.includes('platform'))).toBe(true);
+    expect(filters.some((f) => f.includes('infra'))).toBe(true);
   });
 
-  it('escapes regex metacharacters in team names', async () => {
+  it('matches punctuation in team names as separator gaps instead of literally', async () => {
     const capturedRequests: Request[] = [];
     mockTeams([{ name: 'team.one' }]);
 
@@ -191,10 +192,11 @@ describe('FiringAlertsCard', () => {
 
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
 
-    // buildTeamMatchers escapes the '.' to '\.', then quoteWithEscape doubles the backslash on the wire
+    // The '.' becomes a separator gap between the runs; quoteWithEscape doubles
+    // the pattern's backslashes on the wire.
     const lastReq = capturedRequests[capturedRequests.length - 1];
     const filters = new URL(lastReq.url).searchParams.getAll('filter');
-    expect(filters.some((f) => f.includes('team\\\\.one'))).toBe(true);
+    expect(filters.some((f) => f.includes('team[^\\\\p{L}\\\\p{N}]*one'))).toBe(true);
   });
 
   it('shows team-scoped empty state when team-filtered result is empty', async () => {
@@ -273,7 +275,7 @@ describe('FiringAlertsCard', () => {
       'href',
       '/alerting/new/alerting'
     );
-    expect(screen.queryByText('You have no firing alerts.')).not.toBeInTheDocument();
+    expect(screen.getByText('You have no firing alerts.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /view all alert rules/i })).toBeInTheDocument();
   });
 
@@ -356,12 +358,12 @@ describe('FiringAlertsCard', () => {
 
       const { user } = render(<FiringAlertsCard />);
 
-      await user.click(await screen.findByRole('link', { name: 'Linked alert' }));
+      await user.click(await screen.findByRole('link', { name: /^Linked alert/ }));
 
-      expect(jest.mocked(alertsCardClicked)).toHaveBeenCalledWith({
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
         action: 'alert_detail',
         placement: 'list',
-        severity: 'critical',
       });
     });
 
@@ -379,7 +381,8 @@ describe('FiringAlertsCard', () => {
 
       await user.click(await screen.findByRole('link', { name: /create an alert rule/i }));
 
-      expect(jest.mocked(alertsCardClicked)).toHaveBeenCalledWith({
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
         action: 'create_rule',
         placement: 'empty_state',
       });
@@ -398,13 +401,15 @@ describe('FiringAlertsCard', () => {
       const { user } = render(<FiringAlertsCard />);
 
       await user.click(await screen.findByRole('link', { name: /create an alert rule/i }));
-      expect(jest.mocked(alertsCardClicked)).toHaveBeenCalledWith({
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
         action: 'create_rule',
         placement: 'footer',
       });
 
       await user.click(screen.getByRole('link', { name: /view all firing alerts/i }));
-      expect(jest.mocked(alertsCardClicked)).toHaveBeenCalledWith({
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
         action: 'view_all_alerts',
         placement: 'footer',
       });
@@ -418,7 +423,8 @@ describe('FiringAlertsCard', () => {
 
       await user.click(await screen.findByRole('link', { name: /view all alert rules/i }));
 
-      expect(jest.mocked(alertsCardClicked)).toHaveBeenCalledWith({
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
         action: 'view_all_rules',
         placement: 'footer',
       });
