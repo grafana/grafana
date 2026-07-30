@@ -1,8 +1,9 @@
+import { css, cx } from '@emotion/css';
 import { memo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Input, SecretInput, Stack } from '@grafana/ui';
+import { Button, Field, IconButton, Input, SecretInput, Stack, useStyles2 } from '@grafana/ui';
 
 import { type ConnectionFormData, type OAuthConnectionType } from '../../types';
 
@@ -21,7 +22,12 @@ export interface OAuthConnectionFieldsProps {
 
 export const OAuthConnectionFields = memo<OAuthConnectionFieldsProps>(
   ({ required = true, clientSecretConfigured = false, type, onNewConnectionCreation, isCreating = false }) => {
+    const styles = useStyles2(getStyles);
     const [isClientSecretConfigured, setIsClientSecretConfigured] = useState(clientSecretConfigured);
+    const [secretVisible, setSecretVisible] = useState(false);
+    const toggleLabel = secretVisible
+      ? t('provisioning.connection-form.hide-client-secret', 'Hide secret content')
+      : t('provisioning.connection-form.show-client-secret', 'Show secret content');
     const {
       register,
       control,
@@ -169,9 +175,22 @@ export const OAuthConnectionFields = memo<OAuthConnectionFieldsProps>(
                 <Input
                   {...field}
                   id="clientSecret"
+                  className={cx(!secretVisible && styles.maskedInput)}
                   value={field.value ?? ''}
                   invalid={!!errors.clientSecret}
                   autoComplete="off"
+                  data-1p-ignore
+                  data-lpignore="true"
+                  data-bwignore="true"
+                  data-form-type="other"
+                  suffix={
+                    <IconButton
+                      name={secretVisible ? 'eye-slash' : 'eye'}
+                      aria-label={toggleLabel}
+                      tooltip={toggleLabel}
+                      onClick={() => setSecretVisible(!secretVisible)}
+                    />
+                  }
                 />
               )
             }
@@ -194,3 +213,12 @@ export const OAuthConnectionFields = memo<OAuthConnectionFieldsProps>(
   }
 );
 OAuthConnectionFields.displayName = 'OAuthConnectionFields';
+
+// Mask the secret without type="password" so password managers leave the field alone.
+const getStyles = () => ({
+  maskedInput: css({
+    input: {
+      WebkitTextSecurity: 'disc',
+    },
+  }),
+});

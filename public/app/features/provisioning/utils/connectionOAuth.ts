@@ -1,6 +1,6 @@
 import { store } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
-import { getAPINamespace } from 'app/api/utils';
+import { extractErrorMessage, getAPINamespace } from 'app/api/utils';
 
 import { type RepoType } from '../Wizard/types';
 import { CONNECTIONS_URL } from '../constants';
@@ -16,7 +16,9 @@ const AUTHORIZE_URLS: Record<Exclude<OAuthConnectionType, 'githubEnterpriseOAuth
 // authorization tab, which does not share session storage.
 const STATE_STORAGE_KEY = 'grafana.provisioning.oauth.states';
 const STATE_TTL_MS = 60 * 60 * 1000;
-const COMPLETION_CHANNEL = 'grafana.provisioning.oauth';
+// Completion is signaled through a localStorage write: the storage event fires
+// reliably in the other tabs even when the callback tab closes itself right after.
+const COMPLETION_KEY = 'grafana.provisioning.oauth.completed';
 
 interface StoredAuthorizeState {
   name: string;
@@ -78,7 +80,7 @@ export function buildOAuthAuthorizeUrl(
 export async function completeOAuthAuthorization(
   code: string,
   state: string
-): Promise<{ name: string; popup?: boolean }> {
+): Promise<{ name: string; popup?: boolean; error?: string }> {
   const states = readAuthorizeStates();
   const entry = states[state];
   if (!entry) {
@@ -88,36 +90,51 @@ export async function completeOAuthAuthorization(
   store.setObject(STATE_STORAGE_KEY, states);
 
   const { name, redirectUri, popup } = entry;
-  await getBackendSrv().post(
-    `/apis/provisioning.grafana.app/v0alpha1/namespaces/${getAPINamespace()}/connections/${name}/authorize`,
-    {
-      apiVersion: 'provisioning.grafana.app/v0alpha1',
-      kind: 'ConnectionAuthorizeRequest',
-      spec: { code, redirectURI: redirectUri },
-    }
-  );
+  try {
+    await getBackendSrv().post(
+      `/apis/provisioning.grafana.app/v0alpha1/namespaces/${getAPINamespace()}/connections/${name}/authorize`,
+      {
+        apiVersion: 'provisioning.grafana.app/v0alpha1',
+        kind: 'ConnectionAuthorizeRequest',
+        spec: { code, redirectURI: redirectUri },
+      }
+    );
+  } catch (err) {
+    const error = extractErrorMessage(err) ?? '';
+    postCompletion({ name, error });
+    return { name, popup, error };
+  }
 
-  const channel = new BroadcastChannel(COMPLETION_CHANNEL);
-  channel.postMessage({ name });
-  channel.close();
-
+  postCompletion({ name });
   return { name, popup };
 }
 
 // Subscribes to authorization completions from the callback tab. Returns an unsubscribe function.
-export function onOAuthAuthorizationComplete(callback: (connectionName: string) => void) {
-  const channel = new BroadcastChannel(COMPLETION_CHANNEL);
-  channel.onmessage = (event) => {
-    if (typeof event.data?.name === 'string') {
-      callback(event.data.name);
+export function onOAuthAuthorizationComplete(callback: (connectionName: string, error?: string) => void) {
+  const listener = (event: StorageEvent) => {
+    if (event.key !== COMPLETION_KEY || !event.newValue) {
+      return;
     }
+    try {
+      const { name, error } = JSON.parse(event.newValue);
+      if (typeof name === 'string') {
+        callback(name, typeof error === 'string' ? error : undefined);
+      }
+    } catch {}
   };
-  return () => channel.close();
+  window.addEventListener('storage', listener);
+  return () => window.removeEventListener('storage', listener);
 }
 
 export function getOAuthCallbackUri() {
   const subUrl = config.appSubUrl ?? '';
   return `${window.location.origin}${subUrl}${CONNECTIONS_URL}/oauth-callback`;
+}
+
+// Include a timestamp so repeated completions for the same connection still
+// change the stored value and fire the storage event.
+function postCompletion(message: { name: string; error?: string }) {
+  store.set(COMPLETION_KEY, JSON.stringify({ ...message, ts: Date.now() }));
 }
 
 // Abandoned flows never consume their state entry, so drop expired ones on read.

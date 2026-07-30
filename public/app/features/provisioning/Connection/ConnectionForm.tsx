@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
-import { t } from '@grafana/i18n';
+import { Trans, t } from '@grafana/i18n';
 import { isFetchError, reportInteraction } from '@grafana/runtime';
 import { Alert, Button, Combobox, Field, Stack } from '@grafana/ui';
 import { type Connection, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
@@ -75,36 +75,19 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
 
   const selectedType = watch('type');
 
-  const { openAuthTab, closeAuthTab, authorize } = useOAuthAuthorizeFlow(
-    useCallback((name: string) => navigate(`${CONNECTIONS_URL}/${name}/edit`), [navigate])
+  const [justAuthorized, setJustAuthorized] = useState(false);
+  const [authorizeName, setAuthorizeName] = useState<string>();
+  const { authorize, cancelAuthorization, pendingName, authorizeError } = useOAuthAuthorizeFlow(
+    useCallback(
+      (name: string) => {
+        setJustAuthorized(true);
+        setAuthorizeName(undefined);
+        // use timeout to let the redirect blocker disarm before navigating
+        setTimeout(() => navigate(`${CONNECTIONS_URL}/${name}/edit`), 300);
+      },
+      [navigate]
+    )
   );
-
-  useEffect(() => {
-    if (request.isSuccess) {
-      const formData = getValues();
-
-      reportInteraction('grafana_provisioning_connection_saved', {
-        connectionName: connectionName ?? 'unknown',
-        connectionType: formData.type,
-      });
-
-      reset(formData);
-
-      // OAuth app connections need the user to authorize the app before tokens can be issued
-      if (isOAuthConnectionType(formData.type) && (!isEdit || formData.clientSecret)) {
-        const name = connectionName ?? request.data?.metadata?.name;
-        if (name && formData.clientID) {
-          authorize(formData.type, formData.clientID, name, formData.serverUrl);
-          return;
-        }
-      }
-
-      closeAuthTab();
-
-      // use timeout to ensure the form resets before navigating
-      setTimeout(() => navigate(CONNECTIONS_TAB_URL), 300);
-    }
-  }, [request.isSuccess, request.data, reset, getValues, connectionName, navigate, isEdit, authorize, closeAuthTab]);
 
   useEffect(() => {
     if (isEdit && data?.status?.fieldErrors?.length) {
@@ -118,6 +101,9 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
   const [submitError, setSubmitError] = useState<string>();
 
   const needsReauthorization =
+    !justAuthorized &&
+    !authorizeName &&
+    !pendingName &&
     isEdit &&
     isOAuthConnectionType(data?.spec?.type) &&
     Boolean(
@@ -126,54 +112,109 @@ export function ConnectionForm({ data }: ConnectionFormProps) {
       )
     );
 
-  const handleReauthorize = () => {
+  const handleAuthorize = (name: string) => {
     const formData = getValues();
-    if (connectionName && formData.clientID && isOAuthConnectionType(formData.type)) {
-      authorize(formData.type, formData.clientID, connectionName, formData.serverUrl);
+    if (formData.clientID && isOAuthConnectionType(formData.type)) {
+      authorize(formData.type, formData.clientID, name, formData.serverUrl);
     }
   };
 
   const onSubmit = async (form: ConnectionFormData) => {
     setSubmitError(undefined);
-    if (isOAuthConnectionType(form.type) && (!isEdit || form.clientSecret) && form.clientID) {
-      openAuthTab();
-    }
     try {
-      await submitData(connectionFormToSpec(form), form.privateKey, form.clientSecret);
-    } catch (err) {
-      closeAuthTab();
-      if (setConnectionFormErrors(err, setError)) {
+      const result = await submitData(connectionFormToSpec(form), form.privateKey, form.clientSecret);
+      if (result.error) {
+        handleSubmitError(result.error);
         return;
       }
 
-      if (isFetchError(err)) {
-        // Show unmapped error details as a top-level form error
-        const allErrors = extractFormErrors(err.data);
-        const detail = allErrors.find((e) => e.detail)?.detail;
-        if (detail) {
-          setSubmitError(detail);
+      reportInteraction('grafana_provisioning_connection_saved', {
+        connectionName: connectionName ?? 'unknown',
+        connectionType: form.type,
+      });
+
+      reset(form);
+
+      // OAuth app connections need the user to authorize the app before tokens can be issued
+      if (isOAuthConnectionType(form.type)) {
+        const credentialsChanged =
+          !isEdit || Boolean(form.clientSecret) || form.clientID !== data?.spec?.oauth?.clientID;
+        const name = connectionName ?? result.data?.metadata?.name;
+        if (credentialsChanged && name && form.clientID) {
+          setAuthorizeName(name);
+          authorize(form.type, form.clientID, name, form.serverUrl);
           return;
         }
       }
 
-      setSubmitError(
-        extractErrorMessage(err) || t('provisioning.connection-form.error-submit', 'Failed to save connection')
-      );
+      // use timeout to ensure the form resets before navigating
+      setTimeout(() => navigate(CONNECTIONS_TAB_URL), 300);
+    } catch (err) {
+      handleSubmitError(err);
     }
+  };
+
+  const handleSubmitError = (err: unknown) => {
+    if (setConnectionFormErrors(err, setError)) {
+      return;
+    }
+
+    if (isFetchError(err)) {
+      // Show unmapped error details as a top-level form error
+      const allErrors = extractFormErrors(err.data);
+      const detail = allErrors.find((e) => e.detail)?.detail;
+      if (detail) {
+        setSubmitError(detail);
+        return;
+      }
+    }
+
+    setSubmitError(
+      extractErrorMessage(err) || t('provisioning.connection-form.error-submit', 'Failed to save connection')
+    );
   };
 
   return (
     <FormProvider {...formMethods}>
       <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
-        <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
+        <FormPrompt onDiscard={reset} confirmRedirect={isDirty || Boolean(authorizeName) || Boolean(pendingName)} />
         <Stack direction="column" gap={2}>
           {submitError && <Alert severity="error" title={submitError} />}
-          {needsReauthorization && (
+          {authorizeError !== undefined && (
+            <Alert severity="error" title={t('provisioning.connection-form.authorize-failed', 'Authorization failed')}>
+              {authorizeError && <div>{authorizeError}</div>}
+              <Trans i18nKey="provisioning.connection-form.authorize-failed-hint">
+                Check the client ID and client secret, then try again.
+              </Trans>
+            </Alert>
+          )}
+          {authorizeName && !pendingName && (
+            <Alert
+              severity="info"
+              title={t('provisioning.connection-form.authorize-title', 'Authorization required')}
+              buttonContent={t('provisioning.connection-form.authorize-button', 'Authorize')}
+              onRemove={() => handleAuthorize(authorizeName)}
+            >
+              {t('provisioning.connection-form.authorize-body', 'Connection saved. Authorize the app to grant access.')}
+            </Alert>
+          )}
+          {pendingName && (
+            <Alert
+              severity="info"
+              title={t(
+                'provisioning.connection-form.authorize-waiting',
+                'Waiting for authorization in the other tab...'
+              )}
+              buttonContent={t('provisioning.connection-form.authorize-waiting-cancel', 'Cancel')}
+              onRemove={cancelAuthorization}
+            />
+          )}
+          {needsReauthorization && connectionName && (
             <Alert
               severity="warning"
               title={t('provisioning.connection-form.reauthorize-title', 'Authorization expired')}
               buttonContent={t('provisioning.connection-form.reauthorize-button', 'Reauthorize')}
-              onRemove={handleReauthorize}
+              onRemove={() => handleAuthorize(connectionName)}
             >
               {t(
                 'provisioning.connection-form.reauthorize-body',

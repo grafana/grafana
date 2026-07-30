@@ -36,7 +36,14 @@ export default function ConnectionOAuthCallbackPage() {
     }
 
     completeOAuthAuthorization(code, state)
-      .then(({ name, popup }) => {
+      .then(({ name, popup, error }) => {
+        if (error !== undefined) {
+          setError(error || t('provisioning.oauth-callback.error-authorize', 'Failed to complete authorization'));
+          if (popup) {
+            window.close();
+          }
+          return;
+        }
         if (popup) {
           setDone(true);
           window.close();
