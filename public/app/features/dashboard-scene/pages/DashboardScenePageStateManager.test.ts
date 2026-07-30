@@ -1050,7 +1050,7 @@ describe('DashboardScenePageStateManager v2', () => {
       try {
         await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
         expect(getDashSpy).toHaveBeenCalledTimes(1);
-        expect(initializeReportRenderReadinessObserver as jest.Mock).toHaveBeenCalled();
+        expect(initializeReportRenderReadinessObserver as jest.Mock).toHaveBeenCalledWith(expect.any(DashboardScene));
       } finally {
         contextSrv.user.authenticatedBy = originalAuthBy;
       }

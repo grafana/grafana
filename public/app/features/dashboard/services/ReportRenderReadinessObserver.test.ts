@@ -1,4 +1,5 @@
 import { performanceUtils } from '@grafana/scenes';
+import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import {
   ReportRenderReadinessObserver,
@@ -82,7 +83,8 @@ describe('ReportRenderReadinessObserver', () => {
     });
 
     it('should register the observer with the performance tracker', () => {
-      initializeReportRenderReadinessObserver();
+      const dashboard = new DashboardScene({});
+      initializeReportRenderReadinessObserver(dashboard);
 
       expect(addObserverSpy).toHaveBeenCalledWith(expect.any(ReportRenderReadinessObserver));
     });

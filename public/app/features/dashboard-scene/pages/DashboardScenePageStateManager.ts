@@ -479,7 +479,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       if (renderTarget) {
         // Register the report render readiness observer so the image renderer can detect
         // when the dashboard has fully rendered (queries + transforms + fieldConfig + render)
-        initializeReportRenderReadinessObserver();
+        initializeReportRenderReadinessObserver(dashboard);
       }
 
       // Start dashboard_view profiling (both services are now guaranteed to be listening)
