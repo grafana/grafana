@@ -166,14 +166,6 @@ func (ss *xormStore) Update(ctx context.Context, cmd *team.UpdateTeamCommand) er
 	})
 }
 
-func getTeamDeleteQueries(dbHelper *legacysql.LegacyDatabaseHelper) []string {
-	return []string{
-		"DELETE FROM " + quoteTable(dbHelper, "team_member") + " WHERE org_id=? and team_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "team") + " WHERE org_id=? and id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "dashboard_acl") + " WHERE org_id=? and team_id = ?",
-	}
-}
-
 // DeleteTeam will delete a team, its member and any permissions connected to the team
 func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) error {
 	dbHelper, err := ss.sql(ctx)
@@ -186,7 +178,13 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 			return err
 		}
 
-		for _, sql := range getTeamDeleteQueries(dbHelper) {
+		deletes := []string{
+			"DELETE FROM " + quoteTable(dbHelper, "team_member") + " WHERE org_id=? and team_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "team") + " WHERE org_id=? and id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "dashboard_acl") + " WHERE org_id=? and team_id = ?",
+		}
+
+		for _, sql := range deletes {
 			_, err := sess.Exec(sql, cmd.OrgID, cmd.ID)
 			if err != nil {
 				return err
