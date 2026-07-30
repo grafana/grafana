@@ -64,6 +64,25 @@ export function AppWrapper({ context }: AppWrapperProps) {
   const [ready, setReady] = useState(false);
   const [registries, setRegistries] = useState<PluginExtensionRegistries | undefined>(undefined);
 
+  // Client-built nav tree: app plugin routes are derived from navIndex
+  // (getAppPluginRoutes reads it imperatively), which only gains plugin
+  // entries once the async metas merge lands. Re-render once at that point so
+  // the routes are recomputed; this sits above the redux Provider so a manual
+  // subscription is used instead of useSelector.
+  const [, setPluginNavMerged] = useState(false);
+  useEffect(() => {
+    if (store.getState().pluginNavStatus !== 'loading') {
+      return;
+    }
+    const unsubscribe = store.subscribe(() => {
+      if (store.getState().pluginNavStatus === 'loaded') {
+        setPluginNavMerged(true);
+        unsubscribe();
+      }
+    });
+    return unsubscribe;
+  }, []);
+
   useEffect(() => {
     async function init() {
       const regs = await getPluginExtensionRegistries();
