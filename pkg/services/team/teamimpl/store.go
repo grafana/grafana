@@ -59,9 +59,10 @@ func getTeamMemberCount(dbHelper *legacysql.LegacyDatabaseHelper, filteredUsers 
 	teamMemberTable := dbHelper.DB.Quote(dbHelper.Table("team_member"))
 	if len(filteredUsers) > 0 {
 		userTable := dbHelper.DB.Quote(dbHelper.Table("user"))
+		userRef := dbHelper.DB.GetDialect().Quote("user")
 		return `(SELECT COUNT(*) FROM ` + teamMemberTable + ` AS team_member
-			INNER JOIN ` + userTable + ` ON team_member.user_id = ` + userTable + `.id
-			WHERE team_member.team_id = team.id AND ` + userTable + `.login NOT IN (?` +
+			INNER JOIN ` + userTable + ` AS ` + userRef + ` ON team_member.user_id = ` + userRef + `.id
+			WHERE team_member.team_id = team.id AND ` + userRef + `.login NOT IN (?` +
 			strings.Repeat(",?", len(filteredUsers)-1) + ")" +
 			`) AS member_count `
 	}
@@ -291,7 +292,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		}
 
 		t := team.Team{}
-		countSess := sess.Table(dbHelper.Table("team"))
+		countSess := sess.Table(dbHelper.Table("team")).Alias("team")
 		countSess.Where("team.org_id=?", query.OrgID)
 
 		if query.Query != "" {
@@ -628,17 +629,19 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.Leg
 	queryResult := make([]*team.TeamMemberDTO, 0)
 
 	err := dbHelper.DB.WithDbSession(ctx, func(dbSess *db.Session) error {
-		userTable := dbHelper.DB.Quote(dbHelper.Table("user"))
-		teamTable := dbHelper.DB.Quote(dbHelper.Table("team"))
-		userAuthTable := dbHelper.DB.Quote(dbHelper.Table("user_auth"))
-		sess := dbSess.Table(dbHelper.Table("team_member"))
-		sess.Join("INNER", userTable,
-			fmt.Sprintf("team_member.user_id=%s.%s", userTable, dbHelper.DB.GetDialect().Quote("id")),
+		teamMemberTable := dbHelper.Table("team_member")
+		userTable := dbHelper.Table("user")
+		teamTable := dbHelper.Table("team")
+		userAuthTable := dbHelper.Table("user_auth")
+		userRef := dbHelper.DB.GetDialect().Quote("user")
+		sess := dbSess.Table(teamMemberTable).Alias("team_member")
+		sess.Join("INNER", []string{userTable, "user"},
+			fmt.Sprintf("team_member.user_id=%s.%s", userRef, dbHelper.DB.GetDialect().Quote("id")),
 		)
-		sess.Join("INNER", teamTable, "team.id=team_member.team_id")
+		sess.Join("INNER", []string{teamTable, "team"}, "team.id=team_member.team_id")
 
 		// explicitly check for serviceaccounts
-		sess.Where(fmt.Sprintf("%s.is_service_account=?", userTable), dbHelper.DB.GetDialect().BooleanValue(false))
+		sess.Where(fmt.Sprintf("%s.is_service_account=?", userRef), dbHelper.DB.GetDialect().BooleanValue(false))
 
 		if acUserFilter != nil {
 			sess.Where(acUserFilter.Where, acUserFilter.Args...)
@@ -647,11 +650,11 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.Leg
 		// Join with only most recent auth module
 		authJoinCondition := `user_auth.id=(
 			SELECT id
-			FROM ` + userAuthTable + ` AS user_auth
+			FROM ` + dbHelper.DB.Quote(userAuthTable) + ` AS user_auth
 			WHERE user_auth.user_id = team_member.user_id
 			ORDER BY user_auth.created DESC ` +
 			dbHelper.DB.GetDialect().Limit(1) + ")"
-		sess.Join("LEFT", userAuthTable, authJoinCondition)
+		sess.Join("LEFT", []string{userAuthTable, "user_auth"}, authJoinCondition)
 
 		if query.OrgID != 0 {
 			sess.Where("team_member.org_id=?", query.OrgID)
@@ -679,7 +682,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.Leg
 			team_member.external,
 			team_member.permission,
 			user_auth.auth_module,
-			team.uid as team_uid`, dbHelper.DB.GetDialect().Quote("user")))
+			team.uid as team_uid`, userRef))
 		sess.Asc("user.login", "user.email")
 
 		err := sess.Find(&queryResult)
