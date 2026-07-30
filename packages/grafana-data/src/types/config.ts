@@ -216,7 +216,6 @@ export interface GrafanaConfig {
   publicDashboardAccessToken: string;
   publicDashboardsEnabled: boolean;
   snapshotEnabled: boolean;
-  kubernetesSnapshotsEnabled: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   /** @deprecated it will be removed in a future release */
   panels: { [key: string]: PanelPluginMeta };

@@ -5701,6 +5701,19 @@
     },
     {
       "metadata": {
+        "name": "snapshots.kubernetesSnapshots",
+        "resourceVersion": "1785421660642",
+        "creationTimestamp": "2026-07-30T14:27:40Z"
+      },
+      "spec": {
+        "description": "Routes snapshot requests from /api to the /apis endpoint",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "splashScreen",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

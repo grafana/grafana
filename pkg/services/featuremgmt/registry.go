@@ -399,6 +399,14 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "snapshots.kubernetesSnapshots",
+			Description: "Routes snapshot requests from /api to the /apis endpoint",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true, React: true},
+		},
+		{
 			Name:        "libraryelements.kubernetesLibraryPanels",
 			Description: "Routes library panel requests from /api to the /apis endpoint",
 			Stage:       FeatureStageExperimental,
