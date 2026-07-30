@@ -76,6 +76,8 @@ Your Grafana Cloud instance automatically includes a fully provisioned data sour
 
 If you are running a self-managed Grafana instance or need to configure an additional Pyroscope data source pointing to Grafana Cloud Profiles, you can find the Pyroscope URL under the **Manage your stack** section for your organization.
 
+To authenticate against Grafana Cloud Profiles, enable **Basic auth** and enter your numeric instance ID as the username and an access policy token as the password. The token must belong to an access policy that includes the `profiles:read` scope and targets the correct stack. For more information, refer to [Grafana Cloud access policies](https://grafana.com/docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-policies/).
+
 **Self-managed Pyroscope backend**
 
 The connection URL for a self-managed Pyroscope backend depends on how Pyroscope is deployed.

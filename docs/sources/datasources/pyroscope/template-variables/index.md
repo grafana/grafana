@@ -98,6 +98,25 @@ When **Multi-value** or **Include All** is enabled for the variable, the value b
 {service_name=~"$service"}
 ```
 
+## Where you can use template variables
+
+The Pyroscope data source interpolates template variables in only some parts of the query editor. The following table lists which fields support variables.
+
+| Query editor field | Supports template variables |
+| ------------------ | --------------------------- |
+| Profile type       | Yes                         |
+| Label selector     | Yes                         |
+| Group by           | No                          |
+| Span ID            | No                          |
+| Max Nodes          | No                          |
+| Limit              | No                          |
+
+Query variable definitions also support variables. You can reference one variable in another to chain **Label** and **Label value** queries, as shown in [Chain dependent variables](#query-variable-examples).
+
+{{< admonition type="note" >}}
+Fields other than the profile type and label selector don't interpolate template variables. If you enter a variable such as `$group` in the **Group by**, **Span ID**, **Max Nodes**, or **Limit** fields, Grafana passes the literal text to the backend instead of the variable's value.
+{{< /admonition >}}
+
 ## Filters variable
 
 The Pyroscope data source supports the [Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters) variable type, which lets dashboard viewers add label filters without editing queries.
