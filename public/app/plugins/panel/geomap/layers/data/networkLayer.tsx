@@ -17,6 +17,8 @@ import {
   type EventBus,
   type DataFrame,
   type Field,
+  type PanelOptionsEditorBuilder,
+  type StandardEditorContext,
 } from '@grafana/data';
 import { TextDimensionMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
@@ -46,6 +48,61 @@ const defaultOptions: NetworkConfig = {
 };
 
 const NETWORK_LAYER_ID = 'network';
+
+// Marker overlay options
+const registerOptionsUI = (
+  builder: PanelOptionsEditorBuilder<MapLayerOptions<NetworkConfig>>,
+  context: StandardEditorContext<MapLayerOptions<NetworkConfig>>
+) => {
+  const networkFrames = getGraphFrame(context.data);
+  const frameNodes = networkFrames.nodes[0];
+  const frameEdges = networkFrames.edges[0];
+
+  builder
+    .addCustomEditor({
+      id: 'config.style',
+      category: ['Node Styles'],
+      path: 'config.style',
+      name: 'Node Styles',
+      editor: StyleEditor,
+      settings: {
+        displayRotation: true,
+        frameMatcher: (frame: DataFrame) => frame === frameNodes,
+      },
+      defaultValue: defaultOptions.style,
+    })
+    .addCustomEditor({
+      id: 'config.edgeStyle',
+      category: ['Edge Styles'],
+      path: 'config.edgeStyle',
+      name: 'Edge Styles',
+      editor: StyleEditor,
+      settings: {
+        hideSymbol: true,
+        frameMatcher: (frame: DataFrame) => frame === frameEdges,
+      },
+      defaultValue: defaultOptions.style,
+    })
+    .addRadio({
+      path: 'config.arrow',
+      name: 'Arrow',
+      settings: {
+        options: [
+          { label: 'None', value: 0 },
+          { label: 'Forward', value: 1 },
+          { label: 'Reverse', value: -1 },
+          { label: 'Both', value: 2 },
+        ],
+      },
+      defaultValue: defaultOptions.arrow,
+    })
+    .addBooleanSwitch({
+      path: 'config.showLegend',
+      name: 'Show legend',
+      description: 'Show map legend',
+      defaultValue: defaultOptions.showLegend,
+    });
+};
 
 /**
  * Map layer configuration for network overlay
@@ -215,57 +272,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
         }
       },
 
-      // Marker overlay options
-      registerOptionsUI: (builder, context) => {
-        const networkFrames = getGraphFrame(context.data);
-        const frameNodes = networkFrames.nodes[0];
-        const frameEdges = networkFrames.edges[0];
-
-        builder
-          .addCustomEditor({
-            id: 'config.style',
-            category: ['Node Styles'],
-            path: 'config.style',
-            name: 'Node Styles',
-            editor: StyleEditor,
-            settings: {
-              displayRotation: true,
-              frameMatcher: (frame: DataFrame) => frame === frameNodes,
-            },
-            defaultValue: defaultOptions.style,
-          })
-          .addCustomEditor({
-            id: 'config.edgeStyle',
-            category: ['Edge Styles'],
-            path: 'config.edgeStyle',
-            name: 'Edge Styles',
-            editor: StyleEditor,
-            settings: {
-              hideSymbol: true,
-              frameMatcher: (frame: DataFrame) => frame === frameEdges,
-            },
-            defaultValue: defaultOptions.style,
-          })
-          .addRadio({
-            path: 'config.arrow',
-            name: 'Arrow',
-            settings: {
-              options: [
-                { label: 'None', value: 0 },
-                { label: 'Forward', value: 1 },
-                { label: 'Reverse', value: -1 },
-                { label: 'Both', value: 2 },
-              ],
-            },
-            defaultValue: defaultOptions.arrow,
-          })
-          .addBooleanSwitch({
-            path: 'config.showLegend',
-            name: 'Show legend',
-            description: 'Show map legend',
-            defaultValue: defaultOptions.showLegend,
-          });
-      },
+      registerOptionsUI,
     };
   },
 

@@ -14,10 +14,11 @@ import {
   type MapLayerOptions,
   type PanelData,
   type GrafanaTheme2,
-  type EventBus
+  type EventBus,
+  type PanelOptionsEditorBuilder
 } from '@grafana/data';
 
-enum ShowTime {
+export enum ShowTime {
   From = 'from',
   To = 'to',
 }
@@ -170,7 +171,8 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
       },
 
       // Marker overlay options
-      registerOptionsUI: (builder) => {
+      // backfills the layer options it edits, so it cannot be hoisted out of create()
+      registerOptionsUI: (builder: PanelOptionsEditorBuilder<MapLayerOptions<DayNightConfig>>) => {
         if (!options.config?.nightColor) {
           options.config = { ...defaultConfig, ...options.config };
         }

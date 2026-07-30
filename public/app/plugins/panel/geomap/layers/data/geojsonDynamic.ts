@@ -16,6 +16,7 @@ import {
   PluginState,
   type EventBus,
   type DataFrame,
+  type PanelOptionsEditorBuilder,
 } from '@grafana/data';
 import { findField } from 'app/features/dimensions/utils';
 
@@ -186,7 +187,8 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
         }
         vectorLayer.changed();
       },
-      registerOptionsUI: (builder) => {
+      // depends on the features loaded by this layer, so it cannot be hoisted out of create()
+      registerOptionsUI: (builder: PanelOptionsEditorBuilder<MapLayerOptions<DynamicGeoJSONMapperConfig>>) => {
         // get properties for first feature to use as ui options
         const layerInfo = features.pipe(
           first(),

@@ -21,6 +21,7 @@ import {
   FieldType,
   colorManipulator,
   type MapLayerOptions,
+  type PanelOptionsEditorBuilder,
 } from '@grafana/data';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
@@ -56,6 +57,33 @@ enum mapIndex {
 }
 
 const crosshairColor = '#607D8B';
+
+// Route layer options
+const registerOptionsUI = (builder: PanelOptionsEditorBuilder<MapLayerOptions<RouteConfig>>) => {
+  builder
+    .addCustomEditor({
+      id: 'config.style',
+      path: 'config.style',
+      name: 'Style',
+      editor: StyleEditor,
+      settings: {
+        simpleFixedValues: false,
+      },
+      defaultValue: defaultOptions.style,
+    })
+    .addRadio({
+      path: 'config.arrow',
+      name: 'Arrow',
+      settings: {
+        options: [
+          { label: 'None', value: 0 },
+          { label: 'Forward', value: 1 },
+          { label: 'Reverse', value: -1 },
+        ],
+      },
+      defaultValue: defaultOptions.arrow,
+    });
+};
 
 /**
  * Map layer configuration for circle overlay
@@ -334,32 +362,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
         }
       },
 
-      // Route layer options
-      registerOptionsUI: (builder) => {
-        builder
-          .addCustomEditor({
-            id: 'config.style',
-            path: 'config.style',
-            name: 'Style',
-            editor: StyleEditor,
-            settings: {
-              simpleFixedValues: false,
-            },
-            defaultValue: defaultOptions.style,
-          })
-          .addRadio({
-            path: 'config.arrow',
-            name: 'Arrow',
-            settings: {
-              options: [
-                { label: 'None', value: 0 },
-                { label: 'Forward', value: 1 },
-                { label: 'Reverse', value: -1 },
-              ],
-            },
-            defaultValue: defaultOptions.arrow,
-          });
-      },
+      registerOptionsUI,
     };
   },
 

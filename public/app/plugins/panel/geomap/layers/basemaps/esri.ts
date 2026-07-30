@@ -7,6 +7,7 @@ import {
   type RegistryItem,
   Registry,
   type EventBus,
+  type PanelOptionsEditorBuilder,
 } from '@grafana/data';
 
 import { xyzTiles, defaultXYZConfig, type XYZConfig } from './generic';
@@ -57,9 +58,37 @@ const publicServiceRegistry = new Registry<PublicServiceItem>(() => [
   },
 ]);
 
-interface ESRIXYZConfig extends XYZConfig {
-  server: string;
+export interface ESRIXYZConfig extends Partial<XYZConfig> {
+  server?: string;
 }
+
+const registerOptionsUI = (builder: PanelOptionsEditorBuilder<MapLayerOptions<ESRIXYZConfig>>) => {
+  builder
+    .addSelect({
+      path: 'config.server',
+      name: 'Server instance',
+      settings: {
+        options: publicServiceRegistry.selectOptions().options,
+      },
+    })
+    .addTextInput({
+      path: 'config.url',
+      name: 'URL template',
+      description: 'Must include {x}, {y} or {-y}, and {z} placeholders',
+      settings: {
+        placeholder: defaultXYZConfig.url,
+      },
+      showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
+    })
+    .addTextInput({
+      path: 'config.attribution',
+      name: 'Attribution',
+      settings: {
+        placeholder: defaultXYZConfig.attribution,
+      },
+      showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
+    });
+};
 
 const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
   id: 'esri-xyz',
@@ -80,37 +109,10 @@ const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
       cfg.url = `${base}${svc.slug}/MapServer/tile/{z}/{y}/{x}`;
       cfg.attribution = `Tiles © <a href="${base}${svc.slug}/MapServer">ArcGIS</a>`;
     }
-    const opts = { ...options, config: cfg as XYZConfig };
-    return xyzTiles.create(map, opts, eventBus, theme).then((xyz) => {
-      xyz.registerOptionsUI = (builder) => {
-        builder
-          .addSelect({
-            path: 'config.server',
-            name: 'Server instance',
-            settings: {
-              options: publicServiceRegistry.selectOptions().options,
-            },
-          })
-          .addTextInput({
-            path: 'config.url',
-            name: 'URL template',
-            description: 'Must include {x}, {y} or {-y}, and {z} placeholders',
-            settings: {
-              placeholder: defaultXYZConfig.url,
-            },
-            showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
-          })
-          .addTextInput({
-            path: 'config.attribution',
-            name: 'Attribution',
-            settings: {
-              placeholder: defaultXYZConfig.attribution,
-            },
-            showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
-          });
-      };
-      return xyz;
-    });
+    const opts = { ...options, config: cfg };
+    const xyz = await xyzTiles.create(map, opts, eventBus, theme);
+
+    return { ...xyz, registerOptionsUI };
   },
 
   defaultOptions: {

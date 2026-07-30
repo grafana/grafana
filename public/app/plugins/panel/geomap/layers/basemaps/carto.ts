@@ -2,7 +2,13 @@ import type OpenLayersMap from 'ol/Map';
 import TileLayer from 'ol/layer/Tile';
 import XYZ from 'ol/source/XYZ';
 
-import { type MapLayerRegistryItem, type MapLayerOptions, type GrafanaTheme2, type EventBus } from '@grafana/data';
+import {
+  type MapLayerRegistryItem,
+  type MapLayerOptions,
+  type GrafanaTheme2,
+  type EventBus,
+  type PanelOptionsEditorBuilder,
+} from '@grafana/data';
 
 // https://carto.com/help/building-maps/basemap-list/
 
@@ -20,6 +26,28 @@ export interface CartoConfig {
 const defaultCartoConfig: CartoConfig = {
   theme: LayerTheme.Auto,
   showLabels: true,
+};
+
+const registerOptionsUI = (builder: PanelOptionsEditorBuilder<MapLayerOptions<CartoConfig>>) => {
+  builder
+    .addRadio({
+      path: 'config.theme',
+      name: 'Theme',
+      settings: {
+        options: [
+          { value: LayerTheme.Auto, label: 'Auto', description: 'Match grafana theme' },
+          { value: LayerTheme.Light, label: 'Light' },
+          { value: LayerTheme.Dark, label: 'Dark' },
+        ],
+      },
+      defaultValue: defaultCartoConfig.theme!,
+    })
+    .addBooleanSwitch({
+      path: 'config.showLabels',
+      name: 'Show labels',
+      description: '',
+      defaultValue: defaultCartoConfig.showLabels,
+    });
 };
 
 export const carto: MapLayerRegistryItem<CartoConfig> = {
@@ -62,27 +90,7 @@ export const carto: MapLayerRegistryItem<CartoConfig> = {
       });
     },
 
-    registerOptionsUI: (builder) => {
-      builder
-        .addRadio({
-          path: 'config.theme',
-          name: 'Theme',
-          settings: {
-            options: [
-              { value: LayerTheme.Auto, label: 'Auto', description: 'Match grafana theme' },
-              { value: LayerTheme.Light, label: 'Light' },
-              { value: LayerTheme.Dark, label: 'Dark' },
-            ],
-          },
-          defaultValue: defaultCartoConfig.theme!,
-        })
-        .addBooleanSwitch({
-          path: 'config.showLabels',
-          name: 'Show labels',
-          description: '',
-          defaultValue: defaultCartoConfig.showLabels,
-        });
-    },
+    registerOptionsUI,
   }),
 };
 

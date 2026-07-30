@@ -52,6 +52,27 @@ export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
   tooltip: true,
 };
 
+// Marker overlay options
+const registerOptionsUI = (builder: PanelOptionsEditorBuilder<MapLayerOptions<MarkersConfig>>) => {
+  builder
+    .addCustomEditor({
+      id: 'config.style',
+      path: 'config.style',
+      name: t('geomap.markers-layer.name-styles', 'Styles'),
+      editor: StyleEditor,
+      settings: {
+        displayRotation: true,
+      },
+      defaultValue: defaultOptions.style,
+    })
+    .addBooleanSwitch({
+      path: 'config.showLegend',
+      name: t('geomap.markers-layer.name-show-legend', 'Show legend'),
+      description: t('geomap.markers-layer.description-show-legend', 'Show map legend'),
+      defaultValue: defaultOptions.showLegend,
+    });
+};
+
 /**
  * Map layer configuration for circle overlay
  */
@@ -219,26 +240,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         }
       },
 
-      // Marker overlay options
-      registerOptionsUI: (builder: PanelOptionsEditorBuilder<MapLayerOptions<MarkersConfig>>) => {
-        builder
-          .addCustomEditor({
-            id: 'config.style',
-            path: 'config.style',
-            name: t('geomap.markers-layer.name-styles', 'Styles'),
-            editor: StyleEditor,
-            settings: {
-              displayRotation: true,
-            },
-            defaultValue: defaultOptions.style,
-          })
-          .addBooleanSwitch({
-            path: 'config.showLegend',
-            name: t('geomap.markers-layer.name-show-legend', 'Show legend'),
-            description: t('geomap.markers-layer.description-show-legend', 'Show map legend'),
-            defaultValue: defaultOptions.showLegend,
-          });
-      },
+      registerOptionsUI,
     };
   },
 

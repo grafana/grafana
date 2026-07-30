@@ -10,6 +10,7 @@ import {
   type MapLayerOptions,
   type MapLayerRegistryItem,
   type PanelData,
+  type PanelOptionsEditorBuilder,
 } from '@grafana/data';
 import { type ScaleDimensionConfig } from '@grafana/schema';
 import { ScaleDimensionEditor } from 'app/features/dimensions/editors/ScaleDimensionEditor';
@@ -32,6 +33,51 @@ const defaultOptions: HeatmapConfig = {
   },
   blur: 15,
   radius: 5,
+};
+
+// Heatmap overlay options
+const registerOptionsUI = (builder: PanelOptionsEditorBuilder<MapLayerOptions<HeatmapConfig>>) => {
+  builder
+    .addCustomEditor({
+      id: 'config.weight',
+      path: 'config.weight',
+      name: 'Weight values',
+      description: 'Scale the distribution for each row',
+      editor: ScaleDimensionEditor,
+      settings: {
+        min: 0, // no contribution
+        max: 1,
+        hideRange: true, // Don't show the scale factor
+      },
+      defaultValue: {
+        // Configured values
+        fixed: 1,
+        min: 0,
+        max: 1,
+      },
+    })
+    .addSliderInput({
+      path: 'config.radius',
+      description: 'Configures the size of clusters',
+      name: 'Radius',
+      defaultValue: defaultOptions.radius,
+      settings: {
+        min: 1,
+        max: 50,
+        step: 1,
+      },
+    })
+    .addSliderInput({
+      path: 'config.blur',
+      description: 'Configures the amount of blur of clusters',
+      name: 'Blur',
+      defaultValue: defaultOptions.blur,
+      settings: {
+        min: 1,
+        max: 50,
+        step: 1,
+      },
+    });
 };
 
 /**
@@ -100,50 +146,7 @@ export const heatmapLayer: MapLayerRegistryItem<HeatmapConfig> = {
         vectorLayer.setGradient(colors);
       },
 
-      // Heatmap overlay options
-      registerOptionsUI: (builder) => {
-        builder
-          .addCustomEditor({
-            id: 'config.weight',
-            path: 'config.weight',
-            name: 'Weight values',
-            description: 'Scale the distribution for each row',
-            editor: ScaleDimensionEditor,
-            settings: {
-              min: 0, // no contribution
-              max: 1,
-              hideRange: true, // Don't show the scale factor
-            },
-            defaultValue: {
-              // Configured values
-              fixed: 1,
-              min: 0,
-              max: 1,
-            },
-          })
-          .addSliderInput({
-            path: 'config.radius',
-            description: 'Configures the size of clusters',
-            name: 'Radius',
-            defaultValue: defaultOptions.radius,
-            settings: {
-              min: 1,
-              max: 50,
-              step: 1,
-            },
-          })
-          .addSliderInput({
-            path: 'config.blur',
-            description: 'Configures the amount of blur of clusters',
-            name: 'Blur',
-            defaultValue: defaultOptions.blur,
-            settings: {
-              min: 1,
-              max: 50,
-              step: 1,
-            },
-          });
-      },
+      registerOptionsUI,
     };
   },
   // fill in the default values
