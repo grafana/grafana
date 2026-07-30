@@ -21,8 +21,8 @@ export function getMarkdownStyles(theme: GrafanaTheme2) {
 
       // Pull into the marker gutter so labels line up with sibling list items.
       'li > input[type="checkbox"]': {
-        marginLeft: '-1.25em',
-        marginRight: '0.25em',
+        marginLeft: theme.spacing(-2.5),
+        marginRight: theme.spacing(0.5),
         verticalAlign: 'middle',
       },
 
