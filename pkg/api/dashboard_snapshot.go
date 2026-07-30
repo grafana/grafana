@@ -54,7 +54,7 @@ func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
 			return
 		}
 		c.Req.URL.Path = "/apis/dashboard.grafana.app/v0alpha1/namespaces/" +
-			namespaceMapper(c.SignedInUser.GetOrgID()) + "/snapshots/create"
+			namespaceMapper(c.GetOrgID()) + "/snapshots/create"
 		hs.clientConfigProvider.DirectlyServeHTTP(c.Resp, c.Req)
 	}
 }
