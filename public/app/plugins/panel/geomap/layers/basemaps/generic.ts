@@ -20,7 +20,7 @@ export interface XYZConfig {
 }
 
 const sampleURL = 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer';
-const defaultXYZConfig: XYZConfig = {
+export const defaultXYZConfig: XYZConfig = {
   url: sampleURL + '/tile/{z}/{y}/{x}',
   attribution: `Tiles © <a href="${sampleURL}">ArcGIS</a>`,
 };
