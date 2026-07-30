@@ -32,7 +32,6 @@ import {
   useRowCompiler,
   useRowHeight,
   useScrollbarWidth,
-  useDebouncedNumber,
   useSortedRows,
 } from '../hooks';
 import { getGridStyles, IS_SAFARI_26 } from '../styles';
@@ -195,14 +194,9 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   // nested tables don't support frozen columns; subtract expander column width
   const frozenColumns = 0;
   const numFrozenColsFullyInView = 0;
-  // Debounce only the panel width (the value that storms during a resize drag). scrollbarWidth is
-  // applied live so a scrollbar appearing/disappearing re-sizes columns immediately instead of
-  // lagging behind the debounce.
-  const debouncedWidth = useDebouncedNumber(width);
-  const availableWidth = useMemo(
-    () => debouncedWidth - COLUMN.EXPANDER_WIDTH - scrollbarWidth,
-    [debouncedWidth, scrollbarWidth]
-  );
+  // `width` may already be debounced by RefactoredTableNG. scrollbarWidth never is, so a scrollbar
+  // appearing/disappearing re-sizes columns immediately instead of lagging behind that debounce.
+  const availableWidth = useMemo(() => width - COLUMN.EXPANDER_WIDTH - scrollbarWidth, [width, scrollbarWidth]);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const applyToRowBgFn = useMemo(

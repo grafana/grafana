@@ -18,7 +18,6 @@ import {
   useManagedSort,
   usePaginatedRows,
   useScrollbarWidth,
-  useDebouncedNumber,
   useSortedRows,
   useRowCompiler,
 } from '../hooks';
@@ -140,11 +139,9 @@ export function TableFlat(props: TableNGProps) {
 
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
-  // Debounce only the panel width (the value that storms during a resize drag). scrollbarWidth is
-  // applied live so a scrollbar appearing/disappearing re-sizes columns immediately instead of
-  // lagging behind the debounce.
-  const debouncedWidth = useDebouncedNumber(width);
-  const availableWidth = useMemo(() => debouncedWidth - scrollbarWidth, [debouncedWidth, scrollbarWidth]);
+  // `width` may already be debounced by RefactoredTableNG. scrollbarWidth never is, so a scrollbar
+  // appearing/disappearing re-sizes columns immediately instead of lagging behind that debounce.
+  const availableWidth = useMemo(() => width - scrollbarWidth, [width, scrollbarWidth]);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const applyToRowBgFn = useMemo(
