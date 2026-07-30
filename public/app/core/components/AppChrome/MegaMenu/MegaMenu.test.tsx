@@ -19,6 +19,8 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
+import { AppChromeService } from '../AppChromeService';
+
 import { MegaMenu } from './MegaMenu';
 import { customisableNavTree, nestedNavTree } from './__mocks__/fixtures';
 import { HIDDEN_ITEMS_STORAGE_KEY, SECTION_ORDER_STORAGE_KEY } from './hooks';
@@ -72,11 +74,13 @@ const renderMegaMenu = ({
   hiddenItemIds = [],
   bookmarkUrls = [],
   sectionOrder,
+  chrome,
 }: {
   navBarTree?: NavModelItem[];
   hiddenItemIds?: string[];
   bookmarkUrls?: string[];
   sectionOrder?: string[];
+  chrome?: AppChromeService;
 } = {}) => {
   // Hidden state + section order are read from localStorage; pins come from preferences.
   window.localStorage.setItem(HIDDEN_ITEMS_STORAGE_KEY, JSON.stringify(hiddenItemIds));
@@ -85,7 +89,10 @@ const renderMegaMenu = ({
   }
   seedBookmarks(bookmarkUrls);
 
-  return render(<MegaMenu onClose={() => {}} />, { preloadedState: { navBarTree } });
+  return render(<MegaMenu onClose={() => {}} />, {
+    preloadedState: { navBarTree },
+    ...(chrome ? { grafanaContext: { chrome } } : {}),
+  });
 };
 
 describe('MegaMenu', () => {
@@ -187,6 +194,45 @@ describe('MegaMenu', () => {
       expect(screen.queryByRole('button', { name: 'Customise navigation' })).not.toBeInTheDocument();
     });
 
+    it('entering customise from outside the menu before prefs load does not wipe pins', async () => {
+      // The command palette flips the customise flag directly (no !isLoading gate like the in-menu
+      // button). Gate the prefs GET so we can enter customise while it's still pending, then release it.
+      let releasePrefs!: () => void;
+      const prefsGate = new Promise<void>((resolve) => {
+        releasePrefs = resolve;
+      });
+      server.use(
+        customGetUserPreferencesHandler(async () => {
+          await prefsGate;
+          return HttpResponse.json({
+            metadata: {},
+            items: [{ metadata: { name: 'user' }, spec: mockUserPreferences }],
+          });
+        })
+      );
+
+      const chrome = new AppChromeService();
+      const { user } = renderMegaMenu({ chrome, bookmarkUrls: ['/playlists'] });
+
+      // Enter customise while prefs are still loading, as the command palette does.
+      act(() => chrome.setMegaMenuCustomising(true));
+
+      // Edit mode must not be active yet — no Done to commit an empty draft with.
+      await screen.findByRole('list', { name: 'Navigation' });
+      expect(screen.queryByRole('button', { name: 'Done' })).not.toBeInTheDocument();
+
+      // Once prefs arrive, edit mode activates with the draft seeded from the loaded pins.
+      releasePrefs();
+      expect(await screen.findByRole('button', { name: 'Done' })).toBeInTheDocument();
+      expect(
+        within(screen.getByRole('list', { name: 'Pinned' })).getByRole('link', { name: /Playlists/ })
+      ).toBeInTheDocument();
+
+      // Saving preserves the pins rather than overwriting them with [].
+      await user.click(screen.getByRole('button', { name: 'Done' }));
+      await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/playlists']));
+    });
+
     describe('reordering top-level sections', () => {
       it('renders the top-level sections in the stored order', async () => {
         renderMegaMenu({ sectionOrder: ['cfg', 'explore'] });
@@ -204,6 +250,41 @@ describe('MegaMenu', () => {
         await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
         expect(screen.getByRole('button', { name: 'Reorder Explore' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Reorder Dashboards' })).toBeInTheDocument();
+      });
+    });
+
+    describe('locking the rest of the menu while customising', () => {
+      it('disables the close control until customising ends', async () => {
+        const { user } = renderMegaMenu();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        expect(screen.getByRole('button', { name: 'Close menu' })).toBeDisabled();
+
+        await user.click(screen.getByRole('button', { name: 'Cancel' }));
+        expect(screen.getByRole('button', { name: 'Close menu' })).toBeEnabled();
+      });
+
+      it('takes nav item links out of the tab order so they cannot navigate', async () => {
+        const { user } = renderMegaMenu();
+
+        // Outside edit mode the link is a normal navigation target.
+        const exploreLink = await screen.findByRole('link', { name: 'Explore' });
+        expect(exploreLink).not.toHaveAttribute('tabindex', '-1');
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        expect(screen.getByRole('link', { name: 'Explore' })).toHaveAttribute('tabindex', '-1');
+      });
+
+      it('makes the header home controls inert (not just unclickable) while customising', async () => {
+        const { user } = renderMegaMenu();
+
+        const homeLogo = await screen.findByTestId(selectors.components.Breadcrumbs.breadcrumb('Home'));
+        expect(homeLogo.parentElement).not.toHaveAttribute('inert');
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        // inert removes the whole subtree from the tab order + interaction, so the home links can't be
+        // reached by keyboard either.
+        expect(homeLogo.parentElement).toHaveAttribute('inert');
       });
     });
 
@@ -281,6 +362,19 @@ describe('MegaMenu', () => {
 
         expect(await screen.findByRole('link', { name: 'Explore' })).toBeInTheDocument();
       });
+
+      it('toggles the chrome customising flag on enter and exit (drives the page de-emphasis overlay)', async () => {
+        const chrome = new AppChromeService();
+        const { user } = renderMegaMenu({ chrome });
+
+        expect(chrome.state.getValue().megaMenuCustomising).toBeFalsy();
+
+        await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
+        expect(chrome.state.getValue().megaMenuCustomising).toBe(true);
+
+        await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+        expect(chrome.state.getValue().megaMenuCustomising).toBe(false);
+      });
     });
 
     describe('pinning', () => {
@@ -306,6 +400,13 @@ describe('MegaMenu', () => {
 
         await screen.findByRole('link', { name: 'Explore' });
         expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument();
+      });
+
+      it('does not render a divider between the pinned box and the nav', async () => {
+        renderMegaMenu({ bookmarkUrls: ['/playlists'] });
+
+        await screen.findByRole('list', { name: 'Pinned' });
+        expect(screen.queryByRole('separator')).not.toBeInTheDocument();
       });
 
       it('pins a child from the nav into the box, staged and persisted on Done', async () => {

@@ -30,9 +30,14 @@ export function AppChromeMenu({}: Props) {
   const isOpen = state.megaMenuOpen && !state.megaMenuDocked;
   const onClose = () => chrome.setMegaMenuOpen(false);
 
+  // While customising, the menu is locked to its edit controls (Cancel/Done) — don't let a backdrop
+  // click or Escape dismiss it, which would clear the customise flag and drop in-progress edits.
+  const customising = state.megaMenuCustomising ?? false;
+
   const { overlayProps, underlayProps } = useOverlay(
     {
-      isDismissable: true,
+      isDismissable: !customising,
+      isKeyboardDismissDisabled: customising,
       isOpen: true,
       onClose,
       shouldCloseOnInteractOutside: (element) => {

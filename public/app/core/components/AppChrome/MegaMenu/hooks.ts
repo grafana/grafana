@@ -325,7 +325,14 @@ export const useNavCustomization = () => {
     reportNavExperimentViewOnce(variant);
   }, [variant]);
 
-  const [editMode, setEditMode] = useState(false);
+  // Edit mode lives on the chrome service so it can be entered from outside the menu (e.g. the command
+  // palette) and observed by the page-level layout (the de-emphasis overlay). Gate it on the pinned
+  // prefs having loaded: the command palette flips the flag before the query resolves, and treating
+  // the menu as editing before then would let Done commit an empty draft and wipe saved pins (the
+  // in-menu button avoids this by being hidden until !isLoading). Once loaded, editMode flips
+  // false→true and the draft-seed effect below seeds the draft from the loaded pins.
+  const { isLoading: pinnedPrefsLoading } = usePinnedItems();
+  const editMode = (state.megaMenuCustomising ?? false) && !pinnedPrefsLoading;
   // Set while the Save (Done) preferences write is in flight, so the control can show a spinner.
   const [isSaving, setIsSaving] = useState(false);
 
@@ -427,13 +434,23 @@ export const useNavCustomization = () => {
 
   const onEnterEditMode = useCallback(() => {
     syncDraftsFromApplied();
-    setEditMode(true);
-  }, [syncDraftsFromApplied]);
+    chrome.setMegaMenuCustomising(true);
+  }, [syncDraftsFromApplied, chrome]);
+
+  // Entering via the command palette flips the chrome flag without going through onEnterEditMode, so
+  // seed the drafts on any false→true transition. The button path double-syncs harmlessly.
+  const wasEditing = useRef(editMode);
+  useEffect(() => {
+    if (editMode && !wasEditing.current) {
+      syncDraftsFromApplied();
+    }
+    wasEditing.current = editMode;
+  }, [editMode, syncDraftsFromApplied]);
 
   const onCancelEdit = useCallback(() => {
     syncDraftsFromApplied();
-    setEditMode(false);
-  }, [syncDraftsFromApplied]);
+    chrome.setMegaMenuCustomising(false);
+  }, [syncDraftsFromApplied, chrome]);
 
   const onSaveEdit = useCallback(async () => {
     // Pins persist to preferences (async) — keep editing and show the saving state until it lands.
@@ -453,8 +470,8 @@ export const useNavCustomization = () => {
       pinnedCount: draftPinnedUrls.length,
       ...getNavExperimentPayload(),
     });
-    setEditMode(false);
-  }, [commitPinning, commitHiding, commitOrdering, draftHiddenIds, draftPinnedUrls]);
+    chrome.setMegaMenuCustomising(false);
+  }, [commitPinning, commitHiding, commitOrdering, draftHiddenIds, draftPinnedUrls, chrome]);
 
   // Only offer a reset when there is something staged to reset.
   const canReset = draftPinnedUrls.length > 0 || draftHiddenIds.length > 0 || draftSectionOrder.length > 0;

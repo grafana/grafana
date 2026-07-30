@@ -20,6 +20,7 @@ export interface AppChromeState {
   breadcrumbActions?: React.ReactNode;
   megaMenuOpen: boolean;
   megaMenuDocked: boolean;
+  megaMenuCustomising?: boolean;
   kioskMode: KioskMode | null;
   fullscreenWorkspace?: boolean;
   layout: PageLayoutType;
@@ -148,7 +149,13 @@ export class AppChromeService {
     });
     this.update({
       megaMenuOpen: newOpenState,
+      // A dismissed menu must never reopen mid-edit, so clear the customise flag on close.
+      ...(newOpenState ? {} : { megaMenuCustomising: false }),
     });
+  };
+
+  public setMegaMenuCustomising = (customising: boolean) => {
+    this.update({ megaMenuCustomising: customising });
   };
 
   public setMegaMenuDocked = (newDockedState: boolean, updatePersistedState = true) => {

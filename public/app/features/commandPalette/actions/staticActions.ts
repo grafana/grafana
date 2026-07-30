@@ -4,12 +4,13 @@ import { useMemo } from 'react';
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
-import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
+import { useFlagGrafanaCustomDashboardTemplates, useFlagGrafanaCustomizableMegaMenu } from '@grafana/runtime/internal';
 import { getEnrichedHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import {
   shouldRenderInviteUserButton,
   performInviteUserClick,
 } from 'app/core/components/AppChrome/TopBar/InviteUserButtonUtils';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
 import { changeTheme } from 'app/core/services/theme';
 import { currentMockApiState, toggleMockApiAndReload, togglePseudoLocale } from 'app/dev-utils';
@@ -163,6 +164,8 @@ export function useStaticActions(): CommandPaletteAction[] {
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
   const { queryLibraryEnabled, openDrawer } = useQueryLibraryContext();
+  const isCustomizableMegaMenu = useFlagGrafanaCustomizableMegaMenu();
+  const { chrome } = useGrafana();
 
   return useMemo(() => {
     let navBarActions = navTreeToActions(navBarTree);
@@ -230,6 +233,20 @@ export function useStaticActions(): CommandPaletteAction[] {
       });
     }
 
+    if (isCustomizableMegaMenu && contextSrv.isSignedIn) {
+      navBarActions.push({
+        id: 'customise-navigation',
+        name: t('navigation.megamenu.customise', 'Customise navigation'),
+        section: t('command-palette.section.actions', 'Actions'),
+        sectionId: SECTION_ACTIONS,
+        priority: ACTIONS_PRIORITY,
+        perform: () => {
+          chrome.setMegaMenuOpen(true);
+          chrome.setMegaMenuCustomising(true);
+        },
+      });
+    }
+
     return [...getGlobalActions(), ...navBarActions];
   }, [
     isAnalyticsFrameworkEnabled,
@@ -238,5 +255,7 @@ export function useStaticActions(): CommandPaletteAction[] {
     navBarTree,
     queryLibraryEnabled,
     openDrawer,
+    isCustomizableMegaMenu,
+    chrome,
   ]);
 }
