@@ -31,7 +31,7 @@ Scenes can overlap, so the client is replaced rather than cleared when one dashb
 ```typescript
 isAvailable(): boolean
 getAvailableCommands(): string[]
-canExecute(commands: string | string[]): DashboardMutationPermission
+canExecute(commands: string | string[]): { allowed: true } | { allowed: false; blocked: Array<{ command: string; reason: string }> }
 onAvailabilityChange(listener: (isAvailable: boolean) => void): () => void
 ```
 
