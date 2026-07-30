@@ -6,9 +6,10 @@ import { type CmdkItem, type CmdkSource } from './types';
 /**
  * Queries all active sources with the current query (including the initial empty query for static sources) and
  * groups the results into sections. Previous results of a source are kept visible while its new query is in flight
- * to prevent flicker. Query errors are treated as no results for now.
+ * to prevent flicker. Query errors are treated as no results for now. Bumping refreshToken re-queries the sources
+ * with the same query, for actions that mutate state the items depend on (like selecting scopes).
  */
-export function useCmdkResults(sources: CmdkSource[], searchQuery: string): CmdkSectionResults[] {
+export function useCmdkResults(sources: CmdkSource[], searchQuery: string, refreshToken = 0): CmdkSectionResults[] {
   const [states, setStates] = useState<ReadonlyMap<CmdkSource, SourceQueryState>>(new Map());
 
   useEffect(() => {
@@ -47,7 +48,7 @@ export function useCmdkResults(sources: CmdkSource[], searchQuery: string): Cmdk
     return () => {
       controller.abort();
     };
-  }, [sources, searchQuery]);
+  }, [sources, searchQuery, refreshToken]);
 
   return useMemo(() => buildSectionResults(sources, states), [sources, states]);
 }

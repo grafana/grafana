@@ -33,6 +33,13 @@ interface CmdkSource {
 
   // Used in subscope stack to show it to the user in the input field.
   subscopeName?: string;
+
+  // Rendered as a row under the search input while the palette is open (only for registered sources, not for
+  // sources living in the subscope stack, so the row stays mounted while the user dives into subscopes). Used
+  // for example by scopes to show the current selection with an apply button. Return null when there is nothing
+  // to show. The refresh callback re-queries the active sources, for when the header mutates state the items
+  // depend on.
+  renderHeader?: (context: { refresh: () => void }) => ReactNode;
 }
 
 type CmdkSection = {
@@ -46,6 +53,10 @@ interface CmdkActionBehavior {
 
   // Executed when triggered.
   action: () => void;
+
+  // When true the palette stays open after the action runs and the active sources are re-queried. Used for
+  // multi-select style actions (like selecting scopes) that change what the sources will return.
+  keepOpen?: boolean;
 }
 
 interface CmdkNavigationBehavior {

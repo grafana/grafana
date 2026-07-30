@@ -3,7 +3,15 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { mergeProps } from '@react-aria/utils';
-import { Fragment, type KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Fragment,
+  type KeyboardEvent as ReactKeyboardEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -67,7 +75,11 @@ function CmdkModal() {
     [subscopeStack, registeredSources]
   );
 
-  const sectionResults = useCmdkResults(activeSources, searchQuery);
+  // Bumped by keepOpen actions and source headers to re-query the active sources with the same query.
+  const [refreshToken, setRefreshToken] = useState(0);
+  const refresh = useCallback(() => setRefreshToken((token) => token + 1), []);
+
+  const sectionResults = useCmdkResults(activeSources, searchQuery, refreshToken);
   const flatItems = useMemo(() => sectionResults.flatMap((sectionResult) => sectionResult.items), [sectionResults]);
 
   // Keep the highlight on a valid row when results change without eagerly resetting state.
@@ -88,7 +100,11 @@ function CmdkModal() {
     switch (item.type) {
       case 'action':
         item.action();
-        closeCmdk();
+        if (item.keepOpen) {
+          refresh();
+        } else {
+          closeCmdk();
+        }
         break;
       case 'navigation':
         if (item.target === '_blank') {
@@ -111,6 +127,9 @@ function CmdkModal() {
       pushSubscope(action.getScope());
     } else {
       action.action();
+      if (action.keepOpen) {
+        refresh();
+      }
     }
   };
 
@@ -174,6 +193,9 @@ function CmdkModal() {
               aria-activedescendant={activeItem ? itemDomId(activeItem) : undefined}
             />
           </div>
+          {registeredSources.map((source, index) =>
+            source.renderHeader ? <Fragment key={index}>{source.renderHeader({ refresh })}</Fragment> : null
+          )}
           <div className={styles.columns}>
             <div className={styles.results} role="listbox" id={LIST_DOM_ID}>
               {sectionResults.length === 0 && (

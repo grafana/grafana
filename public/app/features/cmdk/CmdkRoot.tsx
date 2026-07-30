@@ -1,6 +1,7 @@
 import { Cmdk } from './Cmdk';
 import { useRegisterDashboardSearchSource } from './sources/dashboardSearchSource';
 import { useRegisterRecentDashboardsSource } from './sources/recentDashboardsSource';
+import { useRegisterScopesSource } from './sources/scopesSource';
 import { useRegisterStaticActionsSource } from './sources/staticActionsSource';
 
 /**
@@ -11,6 +12,7 @@ export function CmdkRoot() {
   useRegisterStaticActionsSource();
   useRegisterRecentDashboardsSource();
   useRegisterDashboardSearchSource();
+  useRegisterScopesSource();
 
   return <Cmdk />;
 }

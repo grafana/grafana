@@ -1,4 +1,4 @@
-import { act, render, screen } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
 
@@ -104,6 +104,48 @@ describe('Cmdk', () => {
 
     expect(await screen.findByText('No results found')).toBeInTheDocument();
     expect(screen.queryByText('Test section')).not.toBeInTheDocument();
+  });
+
+  it('keeps the palette open and re-queries after a keepOpen action', async () => {
+    let queryCount = 0;
+    const item = actionItem('Item A', { keepOpen: true });
+    const query = jest.fn().mockImplementation(async () => {
+      queryCount++;
+      return [item];
+    });
+    registerSource(makeSource(query));
+
+    const { user } = setup();
+    await screen.findByText('Item A');
+    const countBefore = queryCount;
+
+    await user.keyboard('{Enter}');
+
+    expect(item.action).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    await waitFor(() => expect(queryCount).toBeGreaterThan(countBefore));
+  });
+
+  it('renders source headers under the input and refresh re-queries', async () => {
+    const query = jest.fn().mockResolvedValue([]);
+    registerSource(
+      makeSource(query, {
+        renderHeader: ({ refresh }) => (
+          <button type="button" onClick={refresh}>
+            Header refresh
+          </button>
+        ),
+      })
+    );
+
+    const { user } = setup();
+    const header = await screen.findByRole('button', { name: 'Header refresh' });
+    const callsBefore = query.mock.calls.length;
+
+    await user.click(header);
+
+    await waitFor(() => expect(query.mock.calls.length).toBeGreaterThan(callsBefore));
+    expect(screen.getByRole('combobox')).toBeInTheDocument();
   });
 
   it('runs an action item on enter and closes', async () => {

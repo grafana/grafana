@@ -12,9 +12,16 @@ export interface CmdkSectionResults {
 }
 
 // Sections with a known id are always ordered first, in this order. Any other section follows in source
-// registration order. Mirrors the priority driven order of the old palette (recent dashboards > actions >
-// pages > preferences).
-export const KNOWN_SECTION_ORDER: string[] = ['recent-dashboards', 'actions', 'pages', 'preferences'];
+// registration order. Mirrors the priority driven order of the old palette (recent scopes > scopes > recent
+// dashboards > actions > pages > preferences).
+export const KNOWN_SECTION_ORDER: string[] = [
+  'recent-scopes',
+  'scopes',
+  'recent-dashboards',
+  'actions',
+  'pages',
+  'preferences',
+];
 
 /**
  * Groups the per-source query results into ordered sections. Sections come from the sources' providedSections
@@ -33,11 +40,15 @@ export function buildSectionResults(
 
   for (const source of sources) {
     const state = states.get(source);
+    // A source without a state entry is about to be queried for the first time (the effect starting the query
+    // runs one render after the sources change). Treating it as loaded-and-empty would flash the empty state
+    // for a frame when navigating subscopes, so treat it as loading.
+    const loading = state === undefined || state.loading;
     for (const section of source.providedSections) {
       if (!sections.has(section.id)) {
         sections.set(section.id, section);
       }
-      if (state?.loading) {
+      if (loading) {
         loadingBySection.set(section.id, true);
       }
     }

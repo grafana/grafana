@@ -31,6 +31,13 @@ describe('buildSectionResults', () => {
     expect(result).toEqual([]);
   });
 
+  it('treats a source without a state entry as loading, so sections do not flash out on subscope changes', () => {
+    const source = makeSource([{ id: 'nav', title: 'Navigation' }]);
+    const result = buildSectionResults([source], states([]));
+
+    expect(result).toEqual([{ section: { id: 'nav', title: 'Navigation' }, items: [], loading: true }]);
+  });
+
   it('merges items from multiple sources into the same section, first registered title wins', () => {
     const sourceA = makeSource([{ id: 'dash', title: 'Dashboards' }]);
     const sourceB = makeSource([{ id: 'dash', title: 'Other title' }]);
