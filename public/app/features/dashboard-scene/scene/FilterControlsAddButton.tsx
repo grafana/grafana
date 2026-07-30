@@ -41,10 +41,37 @@ async function getDsIfFilterCapable(uid: string | undefined): Promise<DataSource
   }
 }
 
+const NO_CAPABILITY: FilterCapability = {
+  orgHasCapableDs: false,
+  dashboardUsesCapableDs: false,
+  isEmptyDashboard: false,
+};
+
+// Sync pre-check: with no datasource service (test environments) or no configured
+// datasources, the org gate is closed and no async probe should be scheduled
+function hasDataSourcesToProbe(): boolean {
+  try {
+    const list = getDataSourceSrv()?.getList?.({ mixed: false });
+    return Array.isArray(list) && list.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 // Prototype note: loading datasource instances to probe for getTagKeys is fine locally,
 // but a real implementation should expose filter support on DataSourceInstanceSettings
 // so this becomes a sync check over getList().
 async function detectFilterCapability(dashboard: DashboardScene): Promise<FilterCapability> {
+  try {
+    return await detectFilterCapabilityInner(dashboard);
+  } catch {
+    // No datasource service (e.g. test environments) or probe failure: fail closed,
+    // the button simply doesn't render
+    return NO_CAPABILITY;
+  }
+}
+
+async function detectFilterCapabilityInner(dashboard: DashboardScene): Promise<FilterCapability> {
   const isEmptyDashboard = sceneGraph.findAllObjects(dashboard, (o) => o instanceof VizPanel).length === 0;
 
   // Datasources referenced by panel queries; undefined uid means the default datasource
@@ -83,15 +110,23 @@ export function AddFilterButton({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
   const { editview, editPanel, isEditing, viewPanel } = dashboard.useState();
   const { variables } = sceneGraph.getVariables(dashboard).useState();
-  const [capability, setCapability] = useState<FilterCapability | null>(null);
+  const [capability, setCapability] = useState<FilterCapability | null>(() =>
+    hasDataSourcesToProbe() ? null : NO_CAPABILITY
+  );
 
   useEffect(() => {
+    if (!hasDataSourcesToProbe()) {
+      return;
+    }
     let cancelled = false;
-    detectFilterCapability(dashboard).then((c) => {
-      if (!cancelled) {
-        setCapability(c);
-      }
-    });
+    detectFilterCapability(dashboard).then(
+      (c) => {
+        if (!cancelled) {
+          setCapability(c);
+        }
+      },
+      () => {}
+    );
     return () => {
       cancelled = true;
     };
