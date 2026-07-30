@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -102,9 +101,11 @@ func (g cachedRepositoryGetter) List(_ context.Context, namespace string) ([]*pr
 // for the reconcile — and List with the NATS informer's snapshot (a
 // unified-storage informer Cache). The quota count is the only List caller and
 // tolerates the snapshot's staleness (as stale as the resync interval), so
-// reading it avoids an API LIST on every quota check. Each reconcile Get is
-// written back into the store (or removed on NotFound), keeping the count warm
-// between re-lists rather than only as fresh as the last resync.
+// reading it avoids an API LIST on every quota check. Each successful reconcile
+// Get is written back into the store, keeping the count warm between re-lists
+// rather than only as fresh as the last resync; a NotFound writes nothing —
+// eviction belongs to the informer (a dated DeleteAt on a live delete, or the
+// next re-list), and the count's tolerance covers the gap.
 //
 // floor is the freshness floor the informer events raise; Get refuses to return
 // a read below it (retrying briefly, then usinformer.ErrStaleRead). A nil floor
@@ -123,14 +124,6 @@ func (g clientGetCachedListRepositoryGetter) Get(ctx context.Context, namespace,
 	repo, err := usinformer.GetFresh(ctx, g.reader, namespace, name, func(ctx context.Context) (*provisioningapis.Repository, error) {
 		return g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
 	})
-	if apierrors.IsNotFound(err) {
-		// GetFresh returns a raw NotFound only when no floor is outstanding, so
-		// the 404 is trusted: drop the object from the snapshot so the quota count
-		// stops counting it without waiting for the next re-list. (A stale 404
-		// surfaces as ErrStaleRead instead and must not evict anything.)
-		g.store.Delete(ctx, namespace, name)
-		return nil, err
-	}
 	if err != nil {
 		return nil, err
 	}

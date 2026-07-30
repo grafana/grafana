@@ -30,8 +30,7 @@ func repo(namespace, name string) *provisioningapis.Repository {
 // fakeStore is a minimal usinformer.Cache for asserting the client getter's
 // write-through behaviour.
 type fakeStore struct {
-	objs    map[string]runtime.Object
-	deleted []string
+	objs map[string]runtime.Object
 }
 
 func newFakeStore(objs ...*provisioningapis.Repository) *fakeStore {
@@ -53,12 +52,6 @@ func (s *fakeStore) List(_ context.Context) []runtime.Object {
 func (s *fakeStore) Update(_ context.Context, obj runtime.Object) {
 	r := obj.(*provisioningapis.Repository)
 	s.objs[r.Namespace+"/"+r.Name] = r
-}
-
-func (s *fakeStore) Delete(_ context.Context, namespace, name string) {
-	key := namespace + "/" + name
-	delete(s.objs, key)
-	s.deleted = append(s.deleted, key)
 }
 
 // A live repository notification is delivered as the concrete *Repository the
@@ -125,20 +118,20 @@ func TestClientGetCachedListRepositoryGetter_GetWritesThrough(t *testing.T) {
 	assert.Equal(t, "fresh", list[0].Name, "the fresh Get must be reflected in the store")
 }
 
-// A reconcile Get for a vanished object returns NotFound and removes it from the
-// store, so the count drops it without waiting for a re-list.
-func TestClientGetCachedListRepositoryGetter_GetNotFoundRemoves(t *testing.T) {
+// A reconcile Get for a vanished object propagates the NotFound and leaves the
+// snapshot alone: eviction is the informer's job (a dated live delete or the
+// next re-list), and the quota count tolerates the gap.
+func TestClientGetCachedListRepositoryGetter_GetNotFoundLeavesSnapshot(t *testing.T) {
 	client := fake.NewClientset()
 	store := newFakeStore(repo("ns", "stale"))
 	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store, nil)
 
 	_, err := g.Get(context.Background(), "ns", "stale")
 	require.True(t, apierrors.IsNotFound(err))
-	assert.Equal(t, []string{"ns/stale"}, store.deleted)
 
 	list, err := g.List(context.Background(), "ns")
 	require.NoError(t, err)
-	assert.Empty(t, list, "the vanished object must be removed from the store")
+	assert.Len(t, list, 1, "the getter must not evict on a NotFound it cannot date")
 }
 
 // List reads only the requested namespace out of the store.
@@ -206,7 +199,7 @@ func TestClientGetCachedListRepositoryGetter_NotFoundBelowFloorIsStale(t *testin
 	_, err := g.Get(context.Background(), "ns", "r")
 	require.ErrorIs(t, err, usinformer.ErrStaleRead)
 	assert.False(t, apierrors.IsNotFound(err), "the NotFound must not leak through as a trusted delete")
-	assert.Empty(t, store.deleted, "an ambiguous 404 must not evict the snapshot")
+	assert.Len(t, store.List(context.Background()), 1, "an ambiguous 404 must not touch the snapshot")
 }
 
 // The NATS wiring shares one floor between the delta source and the getter: a
