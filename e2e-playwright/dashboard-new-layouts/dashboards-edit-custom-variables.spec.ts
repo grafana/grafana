@@ -97,7 +97,7 @@ test.describe(
       await sidebar.variableOptions.custom.setValues('first value, second label : second value, fourth value');
       await sidebar.variableOptions.custom.clickApplyButton();
 
-      // make sure the variable is deselected in order to ba able interact with the content outline item
+      // make sure the variable is deselected in order to be able to interact with the content outline item
       // if not, the item is selected and does not receive click events
       await sidebar.clickCloseButton();
 

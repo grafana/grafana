@@ -1,4 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useId, useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -12,16 +11,16 @@ import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constan
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
-import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../edit-pane/SectionFiltersList';
-import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../edit-pane/SectionVariablesList';
-import { dashboardEditActions } from '../../edit-pane/shared';
+import { SectionFiltersCategoryTitle, SectionFiltersList } from '../../sidebar/SectionFiltersList';
+import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../sidebar/SectionVariablesList';
+import { dashboardEditActions } from '../../sidebar/shared';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
-import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
+import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 
 import { type RowItem } from './RowItem';
 
-export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+export function useSidebarOptions(this: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const model = this;
   const { layout } = model.useState();
 
@@ -75,12 +74,6 @@ export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPan
 
   const layoutCategory = useLayoutCategory(layout);
 
-  // OpenFeature is not initialized for anonymous users, so fall back to
-  // the static feature toggle to ensure section variables work without auth.
-  const sectionVariablesEnabled = useBooleanFlagValue(
-    'dashboardSectionVariables',
-    Boolean(config.featureToggles.dashboardSectionVariables)
-  );
   const sectionVariablesCategory = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
       title: t('dashboard.rows-layout.row-options.section-variables.title', 'Variables'),
@@ -123,15 +116,13 @@ export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPan
     return category;
   }, [model]);
 
-  const editOptions = sectionVariablesEnabled
-    ? [
-        rowCategory,
-        ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [sectionFiltersCategory] : []),
-        sectionVariablesCategory,
-        ...layoutCategory,
-        repeatCategory,
-      ]
-    : [rowCategory, ...layoutCategory, repeatCategory];
+  const editOptions = [
+    rowCategory,
+    ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [sectionFiltersCategory] : []),
+    sectionVariablesCategory,
+    ...layoutCategory,
+    repeatCategory,
+  ];
 
   const conditionalRenderingCategory = useMemo(
     () => useConditionalRenderingEditor(model.state.conditionalRendering),
@@ -149,7 +140,7 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
   const { title } = row.useState();
   const prevTitle = useRef('');
 
-  const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
+  const ref = useSidebarInputAutoFocus({ autoFocus: isNewElement });
   const hasUniqueTitle = row.hasUniqueTitle();
 
   return (

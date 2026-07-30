@@ -12,7 +12,7 @@ import {
 } from 'app/features/dashboard/components/SubMenu/DashboardLinksDashboard';
 import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
 
-import { linkSelectionId, openLinkEditPane } from '../settings/links/LinkAddEditableElement';
+import { linkSelectionId, openEditLinkPane } from '../settings/links/LinkAddEditableElement';
 import { linkEditActions } from '../settings/links/actions';
 import { LINK_ICON_MAP } from '../settings/links/utils';
 
@@ -34,7 +34,7 @@ export function DashboardLinkRenderer({ link, dashboardUID, inMenu, linkIndex, d
   const { isSelected, isSelectable } = useElementSelection(selectionId);
 
   const onClickEditLink = useCallback(() => {
-    openLinkEditPane(dashboard, Number(linkIndex));
+    openEditLinkPane(dashboard, Number(linkIndex));
   }, [dashboard, linkIndex]);
 
   const onClickDeleteLink = useCallback(() => {

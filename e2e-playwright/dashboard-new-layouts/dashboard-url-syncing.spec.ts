@@ -1,10 +1,9 @@
-import { type Page } from '@playwright/test';
-
 import { selectors } from '@grafana/e2e-selectors';
-import { test, expect, type E2ESelectorGroups } from '@grafana/plugin-e2e';
+import { test, expect } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/V2DashboardWithTabsForSlugTest.json';
 
+import { Rows, Tabs } from './page-objects';
 import { importTestDashboard } from './utils';
 
 test.use({
@@ -19,12 +18,6 @@ function buildDashboardPathWithSearch(dashboardUid: string, searchParams: Record
     base.searchParams.set(key, value);
   }
   return `${base.pathname}${base.search}`;
-}
-
-function getTabInRow(page: Page, selectors: E2ESelectorGroups, rowTitle: string, tabTitle: string) {
-  return page
-    .getByTestId(selectors.components.DashboardRow.wrapper(rowTitle))
-    .getByTestId(selectors.components.Tab.title(tabTitle));
 }
 
 const testCases: Array<{
@@ -114,12 +107,15 @@ test.describe(
     });
 
     for (const testCase of testCases) {
-      test(testCase.description, async ({ selectors, page }) => {
+      test(testCase.description, async ({ dashboardPage, selectors, page, components }) => {
+        const tabs = new Tabs({ page, dashboardPage, selectors, components });
+        const rows = new Rows({ page, dashboardPage, selectors, components });
+
         await page.goto(buildDashboardPathWithSearch(dashboardUid, testCase.searchParams));
 
         const tabLocator = testCase.rowTitle
-          ? getTabInRow(page, selectors, testCase.rowTitle, testCase.expectedSelectedTab)
-          : page.getByTestId(selectors.components.Tab.title(testCase.expectedSelectedTab));
+          ? tabs.getTab(testCase.expectedSelectedTab, rows.getWrapper(testCase.rowTitle))
+          : tabs.getTab(testCase.expectedSelectedTab);
 
         await expect(tabLocator).toHaveAttribute('aria-selected', 'true');
       });

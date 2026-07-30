@@ -18,7 +18,7 @@ export function PaneItem({ variable }: { variable: QueryVariable }) {
       <Box display="flex" direction="column" paddingBottom={1}>
         <Button
           tooltip={t(
-            'dashboard.edit-pane.variable.open-editor-tooltip',
+            'dashboard.sidebar.variable.open-editor-tooltip',
             'For more variable options open variable editor'
           )}
           onClick={() => setIsOpen(true)}
@@ -26,7 +26,7 @@ export function PaneItem({ variable }: { variable: QueryVariable }) {
           fullWidth
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsOpenButton}
         >
-          <Trans i18nKey="dashboard.edit-pane.variable.open-editor">Open variable editor</Trans>
+          <Trans i18nKey="dashboard.sidebar.variable.open-editor">Open variable editor</Trans>
         </Button>
       </Box>
       {isOpen && newQueryVarEditorEnabled && <ModalEditor variable={variable} onClose={() => setIsOpen(false)} />}
@@ -42,7 +42,7 @@ function OldModal({ variable, onClose }: { variable: QueryVariable; onClose: () 
 
   return (
     <Modal
-      title={t('dashboard.edit-pane.variable.query-options.old-modal-title', 'Query Variable')}
+      title={t('dashboard.sidebar.variable.query-options.old-modal-title', 'Query Variable')}
       isOpen={true}
       onDismiss={onClose}
       closeOnBackdropClick={false}
@@ -56,7 +56,7 @@ function OldModal({ variable, onClose }: { variable: QueryVariable; onClose: () 
           onClick={onRunQuery}
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.previewButton}
         >
-          <Trans i18nKey="dashboard.edit-pane.variable.query-options.preview">Preview</Trans>
+          <Trans i18nKey="dashboard.sidebar.variable.query-options.preview">Preview</Trans>
         </Button>
         <Button
           variant="secondary"
@@ -64,7 +64,7 @@ function OldModal({ variable, onClose }: { variable: QueryVariable; onClose: () 
           onClick={onClose}
           data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.closeButton}
         >
-          <Trans i18nKey="dashboard.edit-pane.variable.query-options.close">Close</Trans>
+          <Trans i18nKey="dashboard.sidebar.variable.query-options.close">Close</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>

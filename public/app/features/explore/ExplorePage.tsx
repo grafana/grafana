@@ -84,7 +84,7 @@ function ExplorePageContent(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
           maxSize={MIN_PANE_WIDTH * -1}
           primary="second"
           splitVisible={hasSplit}
-          parentStyle={showCorrelationEditorBar ? { height: `calc(100% - ${theme.spacing(6)}` } : {}} // button = 4, padding = 1 x 2
+          parentStyle={showCorrelationEditorBar ? { height: `calc(100% - ${theme.spacing(6)})` } : {}} // button = 4, padding = 1 x 2
           paneStyle={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}
           onDragFinished={(size) => size && updateSplitSize(size)}
         >

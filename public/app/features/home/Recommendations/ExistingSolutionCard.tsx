@@ -5,6 +5,8 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack, Text, useStyles2 } from '@grafana/ui';
 
+import { ctaClicked } from '../analytics/main';
+
 import { SolutionSparkline } from './SolutionSparkline';
 import { type ExistingItem } from './types';
 
@@ -32,7 +34,18 @@ export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingS
                     key={item.title}
                     label={item.title}
                     icon={item.icon}
-                    onClick={() => onSelect(item.title)}
+                    onClick={() => {
+                      // Re-picking the current solution is a no-op, not a switch.
+                      if (item.id !== selected.id) {
+                        ctaClicked({
+                          surface: 'existing_solution',
+                          action: 'switch_solution',
+                          placement: 'card',
+                          solution: item.id,
+                        });
+                      }
+                      onSelect(item.title);
+                    }}
                     component={item.title === selected.title ? SelectedCheck : undefined}
                   />
                 ))}
@@ -139,6 +152,14 @@ export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingS
                 icon="angle-right"
                 iconPlacement="right"
                 href={selected.alert.href}
+                onClick={() =>
+                  ctaClicked({
+                    surface: 'existing_solution',
+                    action: 'view_alerts',
+                    placement: 'card',
+                    solution: selected.id,
+                  })
+                }
               >
                 {selected.alert.action}
               </LinkButton>
@@ -155,6 +176,14 @@ export function ExistingSolutionCard({ existing, selected, onSelect }: ExistingS
           icon="arrow-right"
           iconPlacement="right"
           href={selected.href}
+          onClick={() =>
+            ctaClicked({
+              surface: 'existing_solution',
+              action: 'open_solution',
+              placement: 'card',
+              solution: selected.id,
+            })
+          }
         >
           {selected.action}
         </LinkButton>

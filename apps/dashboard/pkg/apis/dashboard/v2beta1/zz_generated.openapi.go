@@ -3429,9 +3429,16 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPanelSpec(ref common.ReferenceCa
 					},
 					"description": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Shown in a info icon tooltip next to panel title",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"subtitle": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Shown in a sub header below the title.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"links": {
@@ -3466,7 +3473,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPanelSpec(ref common.ReferenceCa
 						},
 					},
 				},
-				Required: []string{"id", "title", "description", "links", "data", "vizConfig"},
+				Required: []string{"id", "title", "links", "data", "vizConfig"},
 			},
 		},
 		Dependencies: []string{
@@ -4756,6 +4763,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardThreshold(ref common.ReferenceCa
 							Description: "Value null means -Infinity",
 							Type:        []string{"number"},
 							Format:      "double",
+						},
+					},
+					"valueExpr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"color": {
@@ -6916,9 +6930,16 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookPanelSpec(ref common.ReferenceCal
 					},
 					"description": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Shown in a info icon tooltip next to panel title",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"subtitle": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Shown in a sub header below the title.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"links": {
@@ -6953,7 +6974,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookPanelSpec(ref common.ReferenceCal
 						},
 					},
 				},
-				Required: []string{"id", "title", "description", "links", "data", "vizConfig"},
+				Required: []string{"id", "title", "links", "data", "vizConfig"},
 			},
 		},
 		Dependencies: []string{
@@ -7263,6 +7284,13 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookThreshold(ref common.ReferenceCal
 							Description: "Value null means -Infinity",
 							Type:        []string{"number"},
 							Format:      "double",
+						},
+					},
+					"valueExpr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"color": {

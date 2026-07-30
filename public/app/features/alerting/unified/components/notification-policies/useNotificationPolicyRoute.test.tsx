@@ -1,6 +1,8 @@
 import { HttpResponse, http } from 'msw';
-import { getWrapper, renderHook, waitFor } from 'test/test-utils';
+import { type PropsWithChildren } from 'react';
+import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
+import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '@grafana/alerting';
 import {
   API_GROUP,
   API_VERSION,
@@ -8,15 +10,19 @@ import {
   type RoutingTreeRoute,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { MatcherOperator, ROUTES_META_SYMBOL, type Route } from 'app/plugins/datasource/alertmanager/types';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../mockApi';
+import { grantUserPermissions } from '../../mocks';
 import {
   getRoutingTree,
   presentDefaultRoutingTreeAs,
   resetRoutingTreeMap,
 } from '../../mocks/server/entities/k8s/routingtrees';
 import { ALERTING_API_SERVER_BASE_URL } from '../../mocks/server/utils';
+import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { KnownProvenance } from '../../types/knownProvenance';
+import { addUniqueIdentifierToRoute } from '../../utils/amroutes';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { ROOT_ROUTE_NAME } from '../../utils/k8s/constants';
 
@@ -28,6 +34,7 @@ import {
   k8sSubRouteToRoute,
   parseAmConfigRoute,
   routeToK8sSubRoute,
+  useDeleteNotificationPolicy,
   useNotificationPolicyRoute,
 } from './useNotificationPolicyRoute';
 
@@ -319,3 +326,127 @@ describe.each(['user-defined', 'default'])('send side stays user-defined (backen
     expect(requestedNames).toEqual(['user-defined']);
   });
 });
+
+describe('read side canonicalizes the requested routing tree name', () => {
+  // Capture every name the GET-by-name handler is asked for; the payload doesn't matter here, only the name.
+  const captureRequestedNames = () => {
+    const requestedNames: string[] = [];
+    server.use(
+      http.get(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees/:name`, ({ params }) => {
+        requestedNames.push(String(params.name));
+        return HttpResponse.json(getRoutingTree(ROOT_ROUTE_NAME));
+      })
+    );
+    return requestedNames;
+  };
+
+  it.each([USER_DEFINED_TREE_NAME, DEFAULT_ROUTING_TREE_NAME_ALIAS])(
+    'GETs the default tree as user-defined when a caller addresses it as %p',
+    async (alias) => {
+      resetRoutingTreeMap();
+      const requestedNames = captureRequestedNames();
+
+      renderHook(() => useNotificationPolicyRoute({ alertmanager: GRAFANA_RULES_SOURCE_NAME }, alias), {
+        wrapper: getWrapper({ renderWithRouter: true }),
+      });
+
+      await waitFor(() => expect(requestedNames.length).toBeGreaterThan(0));
+      expect(requestedNames).toEqual([ROOT_ROUTE_NAME]);
+    }
+  );
+
+  it('GETs a named tree under its own name', async () => {
+    resetRoutingTreeMap();
+    const requestedNames = captureRequestedNames();
+
+    renderHook(() => useNotificationPolicyRoute({ alertmanager: GRAFANA_RULES_SOURCE_NAME }, 'team-backend'), {
+      wrapper: getWrapper({ renderWithRouter: true }),
+    });
+
+    await waitFor(() => expect(requestedNames.length).toBeGreaterThan(0));
+    expect(requestedNames).toEqual(['team-backend']);
+  });
+});
+
+describe.each(['user-defined', 'default'])(
+  'mutations keep addressing the default tree as user-defined (backend emits %s)',
+  (backendName) => {
+    // A default (root) routing tree the backend presents under `backendName`, carrying one child route to mutate.
+    const defaultTreeNamed = (name: string): RoutingTree => ({
+      apiVersion: `${API_GROUP}/${API_VERSION}`,
+      kind: 'RoutingTree',
+      metadata: { name, resourceVersion: '1' },
+      spec: {
+        defaults: { receiver: 'grafana-default-email' },
+        routes: [
+          {
+            continue: false,
+            receiver: 'child-receiver',
+            matchers: [{ label: 'team', type: MatcherOperator.equal, value: 'backend' }],
+          },
+        ],
+      },
+    });
+
+    it('deletes a child route without echoing the backend name back to the API', async () => {
+      resetRoutingTreeMap();
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsWrite,
+      ]);
+      const tree = defaultTreeNamed(backendName);
+
+      const putNames: string[] = [];
+      const putBodyNames: string[] = [];
+      server.use(
+        http.get(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees/:name`, () =>
+          HttpResponse.json(tree)
+        ),
+        http.put(
+          `${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/routingtrees/:name`,
+          async ({ params, request }) => {
+            putNames.push(String(params.name));
+            const body = (await request.json()) as RoutingTree;
+            putBodyNames.push(String(body.metadata.name));
+            return HttpResponse.json(body);
+          }
+        )
+      );
+
+      const BaseWrapper = getWrapper({ renderWithRouter: true });
+      const wrapper = ({ children }: PropsWithChildren) => (
+        <BaseWrapper>
+          <AlertmanagerProvider accessType="instance" alertmanagerSourceName={GRAFANA_RULES_SOURCE_NAME}>
+            {children}
+          </AlertmanagerProvider>
+        </BaseWrapper>
+      );
+
+      const { result } = renderHook(
+        () => ({
+          read: useNotificationPolicyRoute({ alertmanager: GRAFANA_RULES_SOURCE_NAME }),
+          deletePolicy: useDeleteNotificationPolicy({ alertmanager: GRAFANA_RULES_SOURCE_NAME }),
+        }),
+        { wrapper }
+      );
+
+      await waitFor(() => expect(result.current.read.data).toBeTruthy());
+
+      // The exact child the UI hands to the delete action (PoliciesTree assigns the same identifiers).
+      const child = addUniqueIdentifierToRoute(result.current.read.data!).routes?.[0];
+      if (!child) {
+        throw new Error('expected the default tree to expose a child route to delete');
+      }
+
+      const [deleteActions] = result.current.deletePolicy;
+      await act(async () => {
+        await deleteActions.execute(child);
+      });
+
+      // The tree must be addressed by ROOT_ROUTE_NAME on the wire (URL path) and in the payload, never the alias.
+      await waitFor(() => expect(putNames.length).toBeGreaterThan(0));
+      expect(putNames).toEqual([ROOT_ROUTE_NAME]);
+      expect(putBodyNames).toEqual([ROOT_ROUTE_NAME]);
+    });
+  }
+);

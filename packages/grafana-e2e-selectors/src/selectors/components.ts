@@ -57,11 +57,26 @@ export const versionedComponents = {
       '13.0.0': 'data-testid Card heading',
     },
   },
+  /**
+   * @deprecated use DashboardSidebarSplitter instead
+   */
   DashboardEditPaneSplitter: {
     primaryBody: {
+      '13.2.0': 'data-testid DashboardSidebarSplitter primary body',
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
     },
     bodyContainer: {
+      '13.2.0': 'data-testid DashboardSidebarSplitter body container',
+      '12.4.0': 'data-testid DashboardEditPaneSplitter body container',
+    },
+  },
+  DashboardSidebarSplitter: {
+    primaryBody: {
+      '13.2.0': 'data-testid DashboardSidebarSplitter primary body',
+      '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
+    },
+    bodyContainer: {
+      '13.2.0': 'data-testid DashboardSidebarSplitter body container',
       '12.4.0': 'data-testid DashboardEditPaneSplitter body container',
     },
   },
@@ -88,9 +103,11 @@ export const versionedComponents = {
       '12.4.0': 'data-testid sidebar add new panel',
     },
     configurePanelButton: {
+      '13.2.0': 'data-testid sidebar configure panel button',
       '13.1.0': 'data-testid edit pane configure panel button',
     },
     addNewVariableButton: {
+      '13.2.0': 'data-testid sidebar add new variable button',
       '13.1.0': 'data-testid edit pane add new variable button',
     },
   },
@@ -185,6 +202,9 @@ export const versionedComponents = {
     absoluteTimeRangeTitle: {
       [MIN_GRAFANA_VERSION]: 'data-testid-absolute-time-range-narrow',
     },
+    timeRangeOption: {
+      '13.2.0': (from: string, to: string) => `data-testid TimePicker time range option ${from} to ${to}`,
+    },
   },
   DataSourcePermissions: {
     form: { '9.5.0': () => 'form[name="addPermission"]' },
@@ -204,6 +224,11 @@ export const versionedComponents = {
       '10.2.3': 'data-testid date-time-input',
     },
   },
+  AddToDashboard: {
+    confirmButton: {
+      '13.2.0': 'data-testid Add to dashboard confirm button',
+    },
+  },
   DataSource: {
     TestData: {
       QueryTab: {
@@ -212,6 +237,9 @@ export const versionedComponents = {
         },
         scenarioSelect: {
           [MIN_GRAFANA_VERSION]: 'Test Data Query scenario select',
+        },
+        labelsInput: {
+          '13.2.0': (refId: string) => `data-testid Test Data Query labels input ${refId}`,
         },
         max: {
           [MIN_GRAFANA_VERSION]: 'TestData max',
@@ -1154,6 +1182,16 @@ export const versionedComponents = {
       },
     },
   },
+  CommandPalette: {
+    searchInput: {
+      '13.2.0': 'data-testid Command palette search input',
+    },
+  },
+  SearchField: {
+    searchInput: {
+      '13.2.0': 'data-testid Search field input',
+    },
+  },
 
   PageToolbar: {
     container: { [MIN_GRAFANA_VERSION]: () => '.page-toolbar' },
@@ -1285,6 +1323,11 @@ export const versionedComponents = {
     },
     dataSourceList: {
       '10.4.0': 'data-testid Data source list dropdown',
+    },
+    dataSourceCard: {
+      '13.2.0': (name: string) => `data-testid data source card ${name}`,
+      // Before 13.2.0 the card carried a hardcoded, non-parameterized testid.
+      [MIN_GRAFANA_VERSION]: (_name: string) => 'data-source-card',
     },
     advancedModal: {
       dataSourceList: {
