@@ -70,6 +70,7 @@ export const versionedPages = {
       [MIN_GRAFANA_VERSION]: '/datasources',
     },
     dataSources: {
+      '13.2.0': (dataSourceName: string) => `data-testid Data source list item ${dataSourceName}`,
       [MIN_GRAFANA_VERSION]: (dataSourceName: string) => `Data source list item ${dataSourceName}`,
     },
     dataSourceAddButton: {
@@ -95,6 +96,16 @@ export const versionedPages = {
       '13.1.0': (pluginName: string) => `data-testid Add new data source ${pluginName}`,
       '9.3.1': (pluginName: string) => `Add new data source ${pluginName}`,
       [MIN_GRAFANA_VERSION]: (pluginName: string) => `Data source plugin item ${pluginName}`,
+    },
+  },
+  Connections: {
+    AddNewConnection: {
+      url: {
+        '13.2.0': '/connections/add-new-connection',
+      },
+      pluginCard: {
+        '13.2.0': (name: string) => `data-testid Connections plugin card ${name}`,
+      },
     },
   },
   ConfirmModal: {
@@ -1044,6 +1055,9 @@ export const versionedPages = {
       addTo: {
         '12.4.0': 'data-testid explore-toolbar-add-dropdown-button',
       },
+      addToDashboardButton: {
+        '13.2.0': 'data-testid explore-toolbar-add-to-dashboard-button',
+      },
       share: {
         '12.4.0': 'data-testid explore-toolbar-share-button',
       },
@@ -1113,6 +1127,9 @@ export const versionedPages = {
     },
   },
   BrowseDashboards: {
+    searchInput: {
+      '13.2.0': 'data-testid Browse dashboards search input',
+    },
     table: {
       body: {
         '10.2.0': 'data-testid browse-dashboards-table',

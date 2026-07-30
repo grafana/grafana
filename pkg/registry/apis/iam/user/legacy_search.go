@@ -30,14 +30,15 @@ const (
 )
 
 var (
-	_                resourcepb.ResourceIndexClient = (*UserLegacySearchClient)(nil)
-	fieldLogin                                      = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LOGIN)
-	fieldEmail                                      = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_EMAIL)
-	fieldLastSeenAt                                 = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LAST_SEEN_AT)
-	fieldRole                                       = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_ROLE)
-	fieldDisabled                                   = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_DISABLED)
-	legacyIDField                                   = resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID
-	wildcardsMatcher                                = regexp.MustCompile(`[\*\?\\]`)
+	_                        resourcepb.ResourceIndexClient = (*UserLegacySearchClient)(nil)
+	fieldLogin                                              = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LOGIN)
+	fieldEmail                                              = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_EMAIL)
+	fieldLastSeenAt                                         = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_LAST_SEEN_AT)
+	fieldRole                                               = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_ROLE)
+	fieldDisabled                                           = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_DISABLED)
+	fieldExternalAuthModules                                = fmt.Sprintf("%s%s", resource.SEARCH_FIELD_PREFIX, builders.USER_EXTERNAL_AUTH_MODULES)
+	legacyIDField                                           = resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID
+	wildcardsMatcher                                        = regexp.MustCompile(`[\*\?\\]`)
 
 	userSortFieldMapping = map[string]string{
 		fieldLastSeenAt:             "lastSeenAtAge",

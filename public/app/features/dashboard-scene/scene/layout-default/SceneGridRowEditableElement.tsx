@@ -59,7 +59,7 @@ export class SceneGridRowEditableElement implements EditableDashboardElement, Bu
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.row', 'Row'),
+      typeName: t('dashboard.sidebar.elements.row', 'Row'),
       instanceName: sceneGraph.interpolate(this._row, this._row.state.title, undefined, 'text'),
       icon: 'list-ul',
     };

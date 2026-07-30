@@ -1,8 +1,6 @@
-import { type FeatureLike } from 'ol/Feature';
 import type OpenLayersMap from 'ol/Map';
 import { type Units } from 'ol/control/ScaleLine';
 import type BaseLayer from 'ol/layer/Base';
-import { type Subject } from 'rxjs';
 
 import { type MapLayerHandler, type MapLayerOptions } from '@grafana/data';
 import { type ComparisonOperation } from '@grafana/schema';
@@ -50,5 +48,4 @@ export interface MapLayerState<TConfig = unknown> extends LayerElement {
   layer: BaseLayer; // the openlayers instance
   onChange: (cfg: MapLayerOptions<TConfig>) => void;
   isBasemap?: boolean;
-  mouseEvents: Subject<FeatureLike | undefined>;
 }

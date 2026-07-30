@@ -2021,6 +2021,93 @@ describe.each(IMPLEMENTATIONS)('TableNG (%s)', (_impl, TableNG) => {
         expect(cellStyle.backgroundColor).toBe('rgb(255, 0, 0)');
       }
     });
+
+    it('colors the entire row using the first column when multiple columns enable applyToRow', () => {
+      // Reproduces the global-cell-type case: every column is ColorBackground + applyToRow
+      // with its own color. The whole row should take the first (leftmost) column's color,
+      // rather than each cell painting its own color.
+      const frame = createBasicDataFrame();
+      frame.fields[0].config.custom = {
+        ...frame.fields[0].config.custom,
+        cellOptions: {
+          type: TableCellDisplayMode.ColorBackground,
+          applyToRow: true,
+          mode: TableCellBackgroundDisplayMode.Basic,
+        },
+      };
+      frame.fields[1].config.custom = {
+        ...frame.fields[1].config.custom,
+        cellOptions: {
+          type: TableCellDisplayMode.ColorBackground,
+          applyToRow: true,
+          mode: TableCellBackgroundDisplayMode.Basic,
+        },
+      };
+
+      const origA = frame.fields[0].display;
+      frame.fields[0].display = (value: unknown) => ({
+        ...(origA ? origA(value) : { text: String(value), numeric: 0 }),
+        color: '#ff0000', // first column: red
+      });
+      const origB = frame.fields[1].display;
+      frame.fields[1].display = (value: unknown) => ({
+        ...(origB ? origB(value) : { text: String(value), numeric: 0 }),
+        color: '#0000ff', // second column: blue, should be ignored in favor of the row color
+      });
+
+      const { container } = render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+
+      const rows = container.querySelectorAll('[role="row"]');
+      const cells = rows[1].querySelectorAll('[role="gridcell"]'); // Skip header row
+      expect(cells.length).toBeGreaterThan(1);
+      for (const cell of cells) {
+        expect(window.getComputedStyle(cell).backgroundColor).toBe('rgb(255, 0, 0)');
+      }
+    });
+
+    it('applies the row color from a column that is hidden via an override', () => {
+      // The color-determining column is hidden (hideFrom.viz). The visible column also uses
+      // ColorBackground + applyToRow (global cell type) with its own color, but it should
+      // defer to the hidden (first) column's color for the whole row.
+      const frame = createBasicDataFrame();
+      frame.fields[0].config.custom = {
+        ...frame.fields[0].config.custom,
+        hideFrom: { viz: true, legend: false, tooltip: false },
+        cellOptions: {
+          type: TableCellDisplayMode.ColorBackground,
+          applyToRow: true,
+          mode: TableCellBackgroundDisplayMode.Basic,
+        },
+      };
+      frame.fields[1].config.custom = {
+        ...frame.fields[1].config.custom,
+        cellOptions: {
+          type: TableCellDisplayMode.ColorBackground,
+          applyToRow: true,
+          mode: TableCellBackgroundDisplayMode.Basic,
+        },
+      };
+
+      const origA = frame.fields[0].display;
+      frame.fields[0].display = (value: unknown) => ({
+        ...(origA ? origA(value) : { text: String(value), numeric: 0 }),
+        color: '#ff0000', // hidden column drives the row color
+      });
+      const origB = frame.fields[1].display;
+      frame.fields[1].display = (value: unknown) => ({
+        ...(origB ? origB(value) : { text: String(value), numeric: 0 }),
+        color: '#0000ff', // visible column's own color, should defer to the hidden column
+      });
+
+      const { container } = render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+
+      const rows = container.querySelectorAll('[role="row"]');
+      const cells = rows[1].querySelectorAll('[role="gridcell"]'); // Skip header row
+      expect(cells.length).toBeGreaterThan(0);
+      for (const cell of cells) {
+        expect(window.getComputedStyle(cell).backgroundColor).toBe('rgb(255, 0, 0)');
+      }
+    });
   });
 
   describe('Row hover functionality for shared crosshair', () => {

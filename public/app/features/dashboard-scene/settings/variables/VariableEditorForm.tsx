@@ -226,7 +226,7 @@ export function VariableEditorForm({
                   text={t('dashboard-scene.variable-editor-form.text-running-query', 'Running query...')}
                 />
               ) : (
-                <Trans i18nKey="dashboard.edit-pane.variable.query-options.preview">Preview</Trans>
+                <Trans i18nKey="dashboard.sidebar.variable.query-options.preview">Preview</Trans>
               )}
             </Button>
           )}
