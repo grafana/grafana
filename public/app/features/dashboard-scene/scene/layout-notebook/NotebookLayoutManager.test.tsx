@@ -2,6 +2,7 @@ import { screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { SceneTimeRange } from '@grafana/scenes';
+import { type NotebookLayoutKind } from '@grafana/schema/apis/notebook/v2beta1';
 
 import { DashboardScene } from '../DashboardScene';
 
@@ -49,5 +50,18 @@ describe('NotebookLayoutManager', () => {
     expect(await screen.findByText('Hello notebook')).toBeInTheDocument();
     // The collapsed cell renders only its element name, not its content.
     expect(screen.getByText('hidden-panel')).toBeInTheDocument();
+  });
+
+  it('serializes to the notebook layout kind, not a dashboard layout kind', () => {
+    const manager = new NotebookLayoutManager({
+      cells: [new NotebookCellItem({ elementName: 'md1', source: 'assistant' })],
+    });
+
+    // The annotation is the assertion here: serialize() is typed as returning the notebook's own
+    // kind, so this line stops compiling if the return type is ever widened back to the dashboard
+    // layout union and laundered through a cast.
+    const result: NotebookLayoutKind = manager.serialize();
+
+    expect(result.kind).toBe('NotebookLayout');
   });
 });
