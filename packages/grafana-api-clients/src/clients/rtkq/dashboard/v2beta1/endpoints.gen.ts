@@ -1100,6 +1100,8 @@ export type DashboardThreshold = {
   color: string;
   /** Value null means -Infinity */
   value: number;
+  /** Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number. */
+  valueExpr?: string;
 };
 export type DashboardThresholdsConfig = {
   mode: string;
@@ -1180,9 +1182,12 @@ export type DashboardVizConfigKind = {
 };
 export type DashboardPanelSpec = {
   data: DashboardQueryGroupKind;
-  description: string;
+  /** Shown in a info icon tooltip next to panel title */
+  description?: string;
   id: number;
   links: DashboardDataLink[];
+  /** Shown in a sub header below the title. */
+  subtitle?: string;
   title: string;
   transparent?: boolean;
   vizConfig: DashboardVizConfigKind;
@@ -2008,6 +2013,8 @@ export type NotebookThreshold = {
   color: string;
   /** Value null means -Infinity */
   value: number;
+  /** Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number. */
+  valueExpr?: string;
 };
 export type NotebookThresholdsConfig = {
   mode: string;
@@ -2088,9 +2095,12 @@ export type NotebookVizConfigKind = {
 };
 export type NotebookPanelSpec = {
   data: NotebookQueryGroupKind;
-  description: string;
+  /** Shown in a info icon tooltip next to panel title */
+  description?: string;
   id: number;
   links: NotebookDataLink[];
+  /** Shown in a sub header below the title. */
+  subtitle?: string;
   title: string;
   transparent?: boolean;
   vizConfig: NotebookVizConfigKind;

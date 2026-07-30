@@ -35,6 +35,7 @@ export const StateTimelineTooltip = ({
   maxHeight,
   replaceVariables,
   dataLinks,
+  filterByGroupedLabels,
 }: StateTimelineTooltipProps) => {
   const pluginContext = usePluginContext();
   const xField = series.fields[0];
@@ -83,7 +84,14 @@ export const StateTimelineTooltip = ({
       const dataIdx = dataIdxs[seriesIdx]!;
       const actions = getFieldActions(series, field, replaceVariables!, dataIdx, visualizationType);
 
-      footer = <VizTooltipFooter dataLinks={dataLinks} actions={actions} annotate={annotate} />;
+      footer = (
+        <VizTooltipFooter
+          dataLinks={dataLinks}
+          actions={actions}
+          annotate={annotate}
+          filterByGroupedLabels={filterByGroupedLabels}
+        />
+      );
     }
   }
 

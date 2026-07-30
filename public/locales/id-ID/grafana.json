@@ -5511,135 +5511,6 @@
       "switch-layout-tab": "Ganti tata letak",
       "tab-title": "Ubah judul tab"
     },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "Ubah sumber data anotasi",
-        "choose-panels": "Pilih panel",
-        "color": "Warna",
-        "color-description": "Warna yang akan digunakan untuk penanda peristiwa anotasi",
-        "data-source": "Sumber data",
-        "display": "Tampilkan kontrol anotasi di",
-        "display-options": {
-          "above-dashboard": "Di atas dasbor",
-          "controls-menu": "Menu kontrol",
-          "controls-menu-description": "Dapat diakses saat menu kontrol terbuka",
-          "hidden": "Tersembunyi",
-          "hidden-description": "Menyembunyikan tombol geser untuk mengaktifkan atau menonaktifkan anotasi ini"
-        },
-        "enabled": "Diaktifkan",
-        "enabled-description": "Ketika diaktifkan, kueri anotasi dikeluarkan setiap memuat ulang dasbor",
-        "name": "Nama",
-        "open-query-editor": "Buka editor kueri",
-        "open-query-editor-tooltip": "Buka editor kueri untuk mengonfigurasi kueri anotasi",
-        "panel-filter": {
-          "all-panels": "Semua panel",
-          "all-panels-description": "Kirim data anotasi ke semua panel yang mendukung anotasi",
-          "all-panels-except": "Semua panel kecuali",
-          "all-panels-except-description": "Jangan kirim data anotasi ke panel berikut",
-          "selected-panels": "Panel yang dipilih",
-          "selected-panels-description": "Kirim anotasi ke panel yang tercantum secara eksplisit"
-        },
-        "query": "Kueri",
-        "query-editor-close": "Tutup",
-        "query-editor-modal-title": "Kueri Anotasi",
-        "show-in": "Tampilkan di"
-      },
-      "annotations": {
-        "add-annotation": "Tambahkan anotasi",
-        "reorder": "Seret untuk menyusun ulang",
-        "select-annotation": "Pilih"
-      },
-      "elements": {
-        "annotation": "Anotasi",
-        "annotation-set": "Anotasi & Peringatan",
-        "dashboard": "Dasbor",
-        "element": "Elemen",
-        "filter": "",
-        "filters-set": "",
-        "link-set": "Tautan",
-        "local-variable": "Variabel lokal",
-        "multiple-elements": "Beberapa elemen",
-        "multiple-elements-delete-text": "Anda yakin ingin menghapus elemen ini?",
-        "multiple-panels": "Beberapa panel",
-        "multiple-panels-delete-text": "Anda yakin ingin menghapus panel ini? Semua kueri akan dihapus.",
-        "objects": "Objek",
-        "panel": "Panel",
-        "panels": "Panel",
-        "row": "Baris",
-        "rows": "Baris",
-        "section-filters-set": "",
-        "tab": "Tab",
-        "tabs": "Tab",
-        "variable": "variabel {{type}}",
-        "variable-set": "Variabel"
-      },
-      "links": {
-        "add-link": "Tambahkan tautan",
-        "reorder": "Seret untuk menyusun ulang",
-        "select-link": "Pilih",
-        "untitled": "Tautan tanpa judul"
-      },
-      "row": {
-        "header": {
-          "hide": "Sembunyikan",
-          "title": "Header baris"
-        }
-      },
-      "section-filters": {
-        "title": ""
-      },
-      "section-variables": {
-        "title": "Variabel"
-      },
-      "variable": {
-        "change-type": "",
-        "change-type-aria-label": "Ubah jenis variabel",
-        "custom-options": {
-          "apply": "Terapkan",
-          "change-value": "Ubah nilai variabel",
-          "discard": "Buang",
-          "modal-title": "Opsi kustom"
-        },
-        "datasource-options": {
-          "name-filter": "Filter nama",
-          "name-filter-description": "Filter regex untuk instance sumber data yang akan disertakan. Biarkan kosong untuk semua.",
-          "name-filter-placeholder": "Contoh: /^prod/",
-          "type": "Jenis",
-          "type-placeholder": "Pilih jenis sumber data"
-        },
-        "description": "Deskripsi",
-        "description-placeholder": "Teks deskriptif",
-        "label": "Label",
-        "label-description": "Nama tampilan opsional",
-        "name": "Nama",
-        "open-editor": "Buka editor variabel",
-        "open-editor-tooltip": "Untuk opsi variabel lainnya, buka editor variabel",
-        "query-options": {
-          "close": "Tutup",
-          "modal-title": "Variabel Kueri",
-          "preview": "Pratinjau"
-        },
-        "selection-options": {
-          "allow-custom-values": "Izinkan nilai kustom",
-          "allow-custom-values-description": "Memungkinkan pengguna untuk memasukkan nilai",
-          "category": "Opsi pemilihan",
-          "custom-all-value": "Nilai kustom untuk semua",
-          "custom-all-value-description": "Regex wildcard atau nilai lainnya untuk merepresentsaikan Semua",
-          "include-all": "Sertakan Semua nilai",
-          "include-all-description": "Mengaktifkan satu opsi yang mewakili semua nilai",
-          "multi-value": "Multi-nilai"
-        },
-        "type-category": "Opsi {{type}}"
-      },
-      "variables": {
-        "add-variable": "Tambah variabel",
-        "change-type": "",
-        "reorder": "Seret untuk menyusun ulang",
-        "select-type": "Pilih jenis variabel",
-        "select-type-card-tooltip": "Klik untuk memilih jenis",
-        "select-variable": "Pilih"
-      }
-    },
     "empty": {
       "add-library-panel-body": "Tambahkan visualisasi yang dibagikan dengan dasbor lain.",
       "add-library-panel-button": "Tambahkan panel pustaka",
@@ -6158,6 +6029,43 @@
         "title": "Tambahkan",
         "tooltip": "Tambahkan elemen baru"
       },
+      "annotation": {
+        "change-data-source": "Ubah sumber data anotasi",
+        "choose-panels": "Pilih panel",
+        "color": "Warna",
+        "color-description": "Warna yang akan digunakan untuk penanda peristiwa anotasi",
+        "data-source": "Sumber data",
+        "display": "Tampilkan kontrol anotasi di",
+        "display-options": {
+          "above-dashboard": "Di atas dasbor",
+          "controls-menu": "Menu kontrol",
+          "controls-menu-description": "Dapat diakses saat menu kontrol terbuka",
+          "hidden": "Tersembunyi",
+          "hidden-description": "Menyembunyikan tombol geser untuk mengaktifkan atau menonaktifkan anotasi ini"
+        },
+        "enabled": "Diaktifkan",
+        "enabled-description": "Ketika diaktifkan, kueri anotasi dikeluarkan setiap memuat ulang dasbor",
+        "name": "Nama",
+        "open-query-editor": "Buka editor kueri",
+        "open-query-editor-tooltip": "Buka editor kueri untuk mengonfigurasi kueri anotasi",
+        "panel-filter": {
+          "all-panels": "Semua panel",
+          "all-panels-description": "Kirim data anotasi ke semua panel yang mendukung anotasi",
+          "all-panels-except": "Semua panel kecuali",
+          "all-panels-except-description": "Jangan kirim data anotasi ke panel berikut",
+          "selected-panels": "Panel yang dipilih",
+          "selected-panels-description": "Kirim anotasi ke panel yang tercantum secara eksplisit"
+        },
+        "query": "Kueri",
+        "query-editor-close": "Tutup",
+        "query-editor-modal-title": "Kueri Anotasi",
+        "show-in": "Tampilkan di"
+      },
+      "annotations": {
+        "add-annotation": "Tambahkan anotasi",
+        "reorder": "Seret untuk menyusun ulang",
+        "select-annotation": "Pilih"
+      },
       "dashboard-options": {
         "title": "Opsi",
         "tooltip": "Opsi dasbor"
@@ -6166,20 +6074,110 @@
         "title": "Kode",
         "tooltip": "Edit sebagai kode"
       },
+      "elements": {
+        "annotation": "Anotasi",
+        "annotation-set": "Anotasi & Peringatan",
+        "dashboard": "Dasbor",
+        "element": "Elemen",
+        "filter": "",
+        "filters-set": "",
+        "link-set": "Tautan",
+        "local-variable": "Variabel lokal",
+        "multiple-elements": "Beberapa elemen",
+        "multiple-elements-delete-text": "Anda yakin ingin menghapus elemen ini?",
+        "multiple-panels": "Beberapa panel",
+        "multiple-panels-delete-text": "Anda yakin ingin menghapus panel ini? Semua kueri akan dihapus.",
+        "objects": "Objek",
+        "panel": "Panel",
+        "panels": "Panel",
+        "row": "Baris",
+        "rows": "Baris",
+        "section-filters-set": "",
+        "tab": "Tab",
+        "tabs": "Tab",
+        "variable": "variabel {{type}}",
+        "variable-set": "Variabel"
+      },
       "export": {
         "title": "Ekspor"
       },
       "filters": "",
+      "links": {
+        "add-link": "Tambahkan tautan",
+        "reorder": "Seret untuk menyusun ulang",
+        "select-link": "Pilih",
+        "untitled": "Tautan tanpa judul"
+      },
       "open": "",
       "outline": {
         "title": "Garis besar",
         "tooltip": "Garis besar konten"
       },
       "redo": "Ulangi",
+      "row": {
+        "header": {
+          "hide": "Sembunyikan",
+          "title": "Header baris"
+        }
+      },
+      "section-filters": {
+        "title": ""
+      },
+      "section-variables": {
+        "title": "Variabel"
+      },
       "snapshot": {
         "tooltip": "Buka dasbor asli"
       },
       "undo": "Batalkan",
+      "variable": {
+        "change-type": "",
+        "change-type-aria-label": "Ubah jenis variabel",
+        "custom-options": {
+          "apply": "Terapkan",
+          "change-value": "Ubah nilai variabel",
+          "discard": "Buang",
+          "modal-title": "Opsi kustom"
+        },
+        "datasource-options": {
+          "name-filter": "Filter nama",
+          "name-filter-description": "Filter regex untuk instance sumber data yang akan disertakan. Biarkan kosong untuk semua.",
+          "name-filter-placeholder": "Contoh: /^prod/",
+          "type": "Jenis",
+          "type-placeholder": "Pilih jenis sumber data"
+        },
+        "description": "Deskripsi",
+        "description-placeholder": "Teks deskriptif",
+        "label": "Label",
+        "label-description": "Nama tampilan opsional",
+        "name": "Nama",
+        "open-editor": "Buka editor variabel",
+        "open-editor-tooltip": "Untuk opsi variabel lainnya, buka editor variabel",
+        "query-options": {
+          "close": "Tutup",
+          "modal-title": "Variabel Kueri",
+          "preview": "Pratinjau"
+        },
+        "selection-options": {
+          "allow-custom-values": "Izinkan nilai kustom",
+          "allow-custom-values-description": "Memungkinkan pengguna untuk memasukkan nilai",
+          "category": "Opsi pemilihan",
+          "custom-all-value": "Nilai kustom untuk semua",
+          "custom-all-value-description": "Regex wildcard atau nilai lainnya untuk merepresentsaikan Semua",
+          "include-all": "Sertakan Semua nilai",
+          "include-all-description": "Mengaktifkan satu opsi yang mewakili semua nilai",
+          "multi-value": "Multi-nilai"
+        },
+        "type-category": "Opsi {{type}}"
+      },
+      "variables": {
+        "add-variable": "Tambah variabel",
+        "change-type": "",
+        "reorder": "Seret untuk menyusun ulang",
+        "select-type": "Pilih jenis variabel",
+        "select-type-card-tooltip": "Klik untuk memilih jenis",
+        "select-variable": "Pilih"
+      },
       "view-panel": {
         "disabled": "",
         "fanout-by-series": "",
@@ -6769,9 +6767,6 @@
       "title-controls-menu-count_other": "Menu kontrol ({{count}})",
       "title-hidden-count_other": "Tersembunyi ({{count}})"
     },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "Berikan umpan balik tentang pengalaman pengeditan dasbor baru"
-    },
     "dashboard-link-form": {
       "back-to-list": "Kembali ke daftar",
       "label-icon": "Ikon",
@@ -6843,6 +6838,9 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Kontrol dasbor"
+    },
+    "dashboard-sidebar-renderer": {
+      "title-feedback-dashboard-editing-experience": "Berikan umpan balik tentang pengalaman pengeditan dasbor baru"
     },
     "data-source-variable-form": {
       "data-source-options": "Opsi sumber data",

@@ -192,15 +192,17 @@ describe('Browse list of plugins', () => {
       expect(queryByText('Plugin 3')).not.toBeInTheDocument();
     });
 
-    test('Show request data source and roadmap links', async () => {
+    test('Does not show request data source and roadmap links', async () => {
       const { queryByText } = renderBrowse('/plugins', [
         getCatalogPluginMock({ id: 'plugin-1', name: 'Plugin 1', type: PluginType.datasource }),
         getCatalogPluginMock({ id: 'plugin-2', name: 'Plugin 2', type: PluginType.panel }),
         getCatalogPluginMock({ id: 'plugin-3', name: 'Plugin 3', type: PluginType.datasource }),
       ]);
 
-      expect(queryByText('Request a new data source')).toBeInTheDocument();
-      expect(queryByText('View roadmap')).toBeInTheDocument();
+      await waitFor(() => expect(queryByText('Plugin 1')).toBeInTheDocument());
+
+      expect(queryByText('Request a new data source')).not.toBeInTheDocument();
+      expect(queryByText('View roadmap')).not.toBeInTheDocument();
     });
   });
 

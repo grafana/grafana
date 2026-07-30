@@ -4,15 +4,23 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	rulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+// rulesManifests is the rule kinds' manifest; the tests derive the rule search
+// fields from it the way the shared registry does in production.
+var rulesManifests = []app.Manifest{rulesmanifest.LocalManifest()}
+
+var rulesSearchFieldsProvider = resource.NewManifestBackedProvider(rulesManifests)
 
 // Field names as declared in apps/alerting/rules/kinds/{alertRule,recordingRule}.cue.
 // Only type, labels, annotations and datasourceUIDs remain as Go constants in
@@ -50,9 +58,18 @@ func recordingRuleKey(name string) *resourcepb.ResourceKey {
 	}
 }
 
+// rulesTestRegistry seeds a registry with the rule kinds' fields so the
+// registry-backed builders extract them, as they do in production.
+func rulesTestRegistry(t *testing.T) *resource.SearchFieldsRegistry {
+	t.Helper()
+	sel, hashes, providers, err := resource.SearchFieldsForManifests(rulesManifests)
+	require.NoError(t, err)
+	return resource.NewSearchFieldsRegistry(sel, hashes, providers)
+}
+
 func buildAlertRuleDoc(t *testing.T, value string) *resource.IndexableDocument {
 	t.Helper()
-	info, err := GetAlertRuleSearchBuilder()
+	info, err := GetAlertRuleSearchBuilder(rulesTestRegistry(t))
 	require.NoError(t, err)
 	doc, err := info.Builder.BuildDocument(context.Background(), alertRuleKey("r1"), 1, []byte(value))
 	require.NoError(t, err)
@@ -61,7 +78,7 @@ func buildAlertRuleDoc(t *testing.T, value string) *resource.IndexableDocument {
 
 func buildRecordingRuleDoc(t *testing.T, value string) *resource.IndexableDocument {
 	t.Helper()
-	info, err := GetRecordingRuleSearchBuilder()
+	info, err := GetRecordingRuleSearchBuilder(rulesTestRegistry(t))
 	require.NoError(t, err)
 	doc, err := info.Builder.BuildDocument(context.Background(), recordingRuleKey("r1"), 1, []byte(value))
 	require.NoError(t, err)
@@ -214,21 +231,20 @@ func TestRecordingRuleBuilder_extracts_and_computes_fields(t *testing.T) {
 	assert.ElementsMatch(t, []string{"team", "team=obs"}, doc.Fields[ruleSearchLabels])
 }
 
-// TestRuleSearchFields_derivedFromManifest verifies the builders expose the
-// manifest-declared search fields and that the column-definition view derived
-// from them (the same view the search backend uses) matches the declared
-// types and capabilities.
+// TestRuleSearchFields_derivedFromManifest verifies the rule kinds' manifest
+// declares the search fields and that the column-definition view derived from
+// them (the same view the search backend uses) matches the declared types and
+// capabilities.
 func TestRuleSearchFields_derivedFromManifest(t *testing.T) {
-	info, err := GetAlertRuleSearchBuilder()
+	info, err := GetAlertRuleSearchBuilder(nil)
 	require.NoError(t, err)
-	require.NotNil(t, info.SearchFieldsProvider)
 
 	gvr := schema.GroupVersionResource{
 		Group:    info.GroupResource.Group,
 		Version:  rulesv0alpha1.AlertRuleKind().GroupVersionResource().Version,
 		Resource: info.GroupResource.Resource,
 	}
-	fields := info.SearchFieldsProvider.Fields(gvr)
+	fields := rulesSearchFieldsProvider.Fields(gvr)
 	require.NotEmpty(t, fields, "alert rule search fields should be declared in the manifest")
 
 	cols := resource.SearchFieldDefinitionsToTableColumns(fields)
@@ -258,17 +274,17 @@ func TestRuleSearchFields_derivedFromManifest(t *testing.T) {
 	assert.True(t, labels.IsArray)
 }
 
-func TestRuleSearchBuilders_expose_search_fields_hash(t *testing.T) {
-	alertInfo, err := GetAlertRuleSearchBuilder()
+// TestRuleSearchFields_hashDiffersPerKind verifies the manifest declares a
+// non-empty search-fields hash for each rule kind and that the two kinds differ.
+func TestRuleSearchFields_hashDiffersPerKind(t *testing.T) {
+	alertInfo, err := GetAlertRuleSearchBuilder(nil)
 	require.NoError(t, err)
-	require.NotNil(t, alertInfo.SearchFieldsProvider)
 
-	recordingInfo, err := GetRecordingRuleSearchBuilder()
+	recordingInfo, err := GetRecordingRuleSearchBuilder(nil)
 	require.NoError(t, err)
-	require.NotNil(t, recordingInfo.SearchFieldsProvider)
 
-	alertHash := alertInfo.SearchFieldsProvider.IndexAffectingHash(alertInfo.GroupResource.Group, alertInfo.GroupResource.Resource)
-	recordingHash := recordingInfo.SearchFieldsProvider.IndexAffectingHash(recordingInfo.GroupResource.Group, recordingInfo.GroupResource.Resource)
+	alertHash := rulesSearchFieldsProvider.IndexAffectingHash(alertInfo.GroupResource.Group, alertInfo.GroupResource.Resource)
+	recordingHash := rulesSearchFieldsProvider.IndexAffectingHash(recordingInfo.GroupResource.Group, recordingInfo.GroupResource.Resource)
 	assert.NotEmpty(t, alertHash)
 	assert.NotEmpty(t, recordingHash)
 

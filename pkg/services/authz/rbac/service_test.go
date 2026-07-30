@@ -265,6 +265,143 @@ func TestService_checkPermission(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "should allow a folder-scoped any check if user has permission on an ancestor folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "parent"},
+				{UID: "child", ParentUID: new("parent")},
+			},
+			check: checkRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "child",
+				Verb:         utils.VerbList,
+			},
+			expected: true,
+		},
+		{
+			name: "should deny a folder-scoped any check if user only has permission on an unrelated folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards:read",
+					Scope:      "folders:uid:other",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "other",
+				},
+			},
+			folders: []store.Folder{
+				{UID: "parent"},
+				{UID: "child", ParentUID: new("parent")},
+				{UID: "other"},
+			},
+			check: checkRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "child",
+				Verb:         utils.VerbList,
+			},
+			expected: false,
+		},
+		{
+			name: "should allow a folder-scoped any check if user has a wildcard folder permission",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:    "dashboards:read",
+					Scope:     "folders:*",
+					Kind:      "folders",
+					Attribute: "*",
+				},
+			},
+			folders: []store.Folder{{UID: "parent"}},
+			check: checkRequest{
+				Action:       "dashboards:read",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "parent",
+				Verb:         utils.VerbList,
+			},
+			expected: true,
+		},
+		{
+			name: "should allow a folder-scoped set_permissions any check only via the folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards.permissions:write",
+					Scope:      "folders:uid:parent",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "parent",
+				},
+			},
+			folders: []store.Folder{{UID: "parent"}},
+			check: checkRequest{
+				Action:       "dashboards.permissions:write",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "parent",
+				Verb:         utils.VerbSetPermissions,
+			},
+			expected: true,
+		},
+		{
+			name: "should deny a folder-scoped set_permissions any check if the grant is on another folder",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "dashboards.permissions:write",
+					Scope:      "folders:uid:other",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "other",
+				},
+			},
+			folders: []store.Folder{{UID: "parent"}, {UID: "other"}},
+			check: checkRequest{
+				Action:       "dashboards.permissions:write",
+				Group:        "dashboard.grafana.app",
+				Resource:     "dashboards",
+				Name:         "",
+				ParentFolder: "parent",
+				Verb:         utils.VerbSetPermissions,
+			},
+			expected: false,
+		},
+		{
+			name: "should keep capabilities semantics for any check with a folder on a non folder-supporting resource",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "teams:read",
+					Scope:      "teams:uid:some_team",
+					Kind:       "teams",
+					Attribute:  "uid",
+					Identifier: "some_team",
+				},
+			},
+			check: checkRequest{
+				Action:       "teams:read",
+				Group:        "iam.grafana.app",
+				Resource:     "teams",
+				Name:         "",
+				ParentFolder: "some_folder",
+				Verb:         utils.VerbList,
+			},
+			expected: true,
+		},
+		{
 			name: "should return true if user has annotation create permission on dashboard (subresource)",
 			permissions: []accesscontrol.Permission{
 				{
@@ -1580,6 +1717,17 @@ func TestService_Check(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "should allow rendering to list plugin metas",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "plugins.grafana.app",
+				Resource:  "metas",
+				Verb:      "list",
+			},
+			expected: true,
+		},
+		{
 			// Unregistered groups fall back to the K8s-native mapping. The renderer has no
 			// permissions for K8s-native actions, so the check is denied without an error.
 			name: "should deny rendering access to unregistered app resources",
@@ -1647,7 +1795,7 @@ func TestService_K8sNativeFallback(t *testing.T) {
 		assert.False(t, resp.Allowed)
 	})
 
-	t.Run("Check: unregistered group denied with stack-role grant and no folder (wildcard access)", func(t *testing.T) {
+	t.Run("Check: unregistered group allowed with stack-role grant and no folder (folder verification is on storage layer)", func(t *testing.T) {
 		s := setup([]accesscontrol.Permission{
 			{Action: "unregistered.grafana.app/widgets:get", Scope: ""},
 			{Action: "folders:read", Scope: "folders:*"},
@@ -1660,8 +1808,8 @@ func TestService_K8sNativeFallback(t *testing.T) {
 			Verb:      "get",
 			Name:      "w1",
 		})
-		require.Error(t, err)
-		assert.False(t, resp.Allowed)
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed)
 	})
 
 	t.Run("Check: unregistered group denied with resource-scoped grant but no stack role", func(t *testing.T) {
@@ -2298,6 +2446,19 @@ func TestService_List(t *testing.T) {
 				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 				Verb:      "get",
+			},
+			expected: &authzv1.ListResponse{
+				All: true,
+			},
+		},
+		{
+			name: "should list plugin metas for rendering",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "plugins.grafana.app",
+				Resource:  "metas",
+				Verb:      "list",
 			},
 			expected: &authzv1.ListResponse{
 				All: true,

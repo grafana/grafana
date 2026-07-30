@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // Store is an abstraction for the storage API.
@@ -26,13 +27,13 @@ import (
 //
 //go:generate mockery --name Store --structname MockStore --inpackage --filename store_mock.go --with-expecter
 type Store interface {
-	// Claim takes a job from storage, marks it as ours, and returns it.
+	// Claim attempts to claim the job namespace/name, marks it as ours, and returns it.
 	//
-	// Any job which has not been claimed by another worker is fair game.
+	// Returns ErrAlreadyClaimed if another worker holds the claim, and a NotFound
+	// API error if the job no longer exists.
 	//
 	// If err is not nil, the job and rollback values are always nil.
-	// The err may be ErrNoJobs if there are no jobs to claim.
-	Claim(ctx context.Context) (job *provisioning.Job, rollback func(), err error)
+	Claim(ctx context.Context, namespace, name string) (job *provisioning.Job, rollback func(), err error)
 
 	// Complete marks a job as completed and removes it from the active job store.
 	// Callers are responsible for writing the job to history after calling this.
@@ -53,15 +54,20 @@ type Store interface {
 	ListExpiredJobs(ctx context.Context, expiredBefore time.Time, limit int) ([]*provisioning.Job, error)
 }
 
-// jobDriver drives jobs to completion and manages the job queue.
-// There may be multiple jobDrivers running in parallel.
-// The jobDriver processes jobs but does not handle cleanup - that's handled by ConcurrentJobDriver.
-type jobDriver struct {
+// errPostClaim marks failures that happened after the job was successfully
+// claimed. By then the worker may already have executed the job (e.g. only
+// Complete failed), and the deferred claim rollback returns the job to
+// pending — so retrying the key from the queue would re-run work with side
+// effects. The worker loop drops these keys instead and lets the informer
+// re-list re-discover the job at the resync cadence.
+var errPostClaim = errors.New("job failed after it was claimed")
+
+// jobProcessor claims and drives a single job at a time to completion.
+// Each worker goroutine of the ConcurrentJobDriver owns one jobProcessor:
+// its per-job state (currentJob) must never be shared across goroutines.
+type jobProcessor struct {
 	// Timeout for processing a job. This must be less than a claim expiry.
 	jobTimeout time.Duration
-
-	// JobInterval is the time between job ticks. This should be relatively low.
-	jobInterval time.Duration
 
 	// LeaseRenewalInterval is how often to renew job leases.
 	leaseRenewalInterval time.Duration
@@ -78,11 +84,12 @@ type jobDriver struct {
 	// Only the first worker who supports the job will process it; the rest are ignored.
 	workers []Worker
 
-	// notifications channel for job create events
-	notifications chan struct{}
-
 	// metrics for recording job-level Prometheus metrics (warnings, operations, etc.)
 	metrics *JobMetrics
+
+	// processed records the event-processing metrics (source counts + delivery
+	// latency) once a claim confirms a genuine pickup.
+	processed *usinformer.ProcessedMetrics
 
 	// Mutex to protect concurrent access to job processing
 	mu sync.Mutex
@@ -90,89 +97,44 @@ type jobDriver struct {
 	currentJob *provisioning.Job
 }
 
-func NewJobDriver(
-	jobTimeout, jobInterval, leaseRenewalInterval time.Duration,
+func newJobProcessor(
+	jobTimeout, leaseRenewalInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
 	historicJobs HistoryWriter,
-	notifications chan struct{},
 	metrics *JobMetrics,
+	processed *usinformer.ProcessedMetrics,
 	workers ...Worker,
-) (*jobDriver, error) {
-	return &jobDriver{
+) *jobProcessor {
+	return &jobProcessor{
 		jobTimeout:           jobTimeout,
-		jobInterval:          jobInterval,
 		leaseRenewalInterval: leaseRenewalInterval,
 		store:                store,
 		repoGetter:           repoGetter,
 		historicJobs:         historicJobs,
 		workers:              workers,
-		notifications:        notifications,
 		metrics:              metrics,
-	}, nil
-}
-
-// Run drives jobs to completion. This is a blocking function.
-// It will run until the context is canceled or an error occurs.
-// This is a thread-safe function; it may be called from multiple goroutines.
-//
-// Note: This function intentionally does NOT create a tracing span because it runs indefinitely
-// until shutdown. Individual job processing operations already have their own spans.
-func (d *jobDriver) Run(ctx context.Context) error {
-	jobTicker := time.NewTicker(d.jobInterval)
-	defer jobTicker.Stop()
-
-	logger := logging.FromContext(ctx).With("logger", "job-driver")
-	ctx = logging.Context(ctx, logger)
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, "*") // "*" grants us access to all namespaces.
-	if err != nil {
-		return apifmt.Errorf("failed to grant provisioning identity: %w", err)
-	}
-
-	// Drive without waiting on startup.
-	d.processJobsUntilDoneOrError(ctx)
-
-	for {
-		select {
-		case <-ctx.Done():
-			logger.Info("job driver stopped")
-			return nil // Context cancellation is expected during shutdown
-		case <-jobTicker.C:
-			d.processJobsUntilDoneOrError(ctx)
-		case <-d.notifications:
-			d.processJobsUntilDoneOrError(ctx)
-		}
+		processed:            processed,
 	}
 }
 
-// This will keep processing jobs until there are none left (or we hit an error)
-func (d *jobDriver) processJobsUntilDoneOrError(ctx context.Context) {
-	for {
-		// Check if context is cancelled before attempting to claim jobs
-		if ctx.Err() != nil {
-			return
-		}
-
-		err := d.claimAndProcessOneJob(ctx)
-		if err != nil {
-			if !errors.Is(err, ErrNoJobs) {
-				logging.FromContext(ctx).Error("failed to drive jobs", "error", err)
-			}
-			return
-		}
-	}
-}
-
-func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
+// processKey claims the job namespace/name and drives it to completion.
+// Returns ErrAlreadyClaimed or a NotFound API error when the job is not ours
+// to process; both mean the key can be dropped. trigger records what enqueued
+// the key so the start of processing can be attributed to a live event, a
+// re-list, or the initial list. enqueuedAt is when the key joined the work
+// queue, used to record how late the event arrived once the claim confirms this
+// is a genuine (non-duplicate) pickup.
+func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, trigger claimTrigger, enqueuedAt time.Time) error {
 	ctx, span := tracing.Start(ctx, "provisioning.jobs.claim_and_process_one_job")
 	defer span.End()
 
 	logger := logging.FromContext(ctx)
 
-	// Claim a job to work on.
-	claimedJob, rollback, err := d.store.Claim(ctx)
+	// Claim the job to work on.
+	claimedJob, rollback, err := d.store.Claim(ctx, namespace, name)
 	if err != nil {
-		if !errors.Is(err, ErrNoJobs) {
+		if !errors.Is(err, ErrAlreadyClaimed) && !apierrors.IsNotFound(err) {
 			span.RecordError(err)
 		}
 		return apifmt.Errorf("failed to claim job: %w", err)
@@ -181,7 +143,20 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	// The rollback function does not care about cancellations.
 	defer rollback()
 
-	namespace := claimedJob.GetNamespace()
+	// The claim is the cluster-wide exactly-once gate, so this is the point that
+	// attributes each processed job to what enqueued its key. errPostClaim
+	// outcomes still count — processing did start; the execution outcome remains
+	// the job of grafana_provisioning_jobs_processed_total. Mirrors the
+	// claim-time RecordWaitTime precedent.
+	d.processed.RecordProcessed(trigger)
+	// The claim confirms this is a genuine pickup (a job claimed elsewhere returns
+	// ErrAlreadyClaimed above, before here), so record how late the event reached
+	// the queue: from job creation (the event's origin) to when it was enqueued.
+	// This excludes the time the key then waited in the queue for a worker.
+	if !enqueuedAt.IsZero() {
+		d.processed.ObserveDeliveryLatency(trigger, enqueuedAt.Sub(claimedJob.CreationTimestamp.Time).Seconds())
+	}
+
 	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace, "repository", claimedJob.Spec.Repository, "action", claimedJob.Spec.Action)
 	ctx = logging.Context(ctx, logger)
 	d.currentJob = claimedJob
@@ -198,7 +173,7 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	ctx = request.WithNamespace(ctx, namespace)
 	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
-		return apifmt.Errorf("failed to grant provisioning identity: %w", err)
+		return errors.Join(errPostClaim, apifmt.Errorf("failed to grant provisioning identity: %w", err))
 	}
 
 	jobctx, cancel := context.WithTimeout(ctx, d.jobTimeout)
@@ -236,18 +211,50 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	// Record job processing error on span
 	if err != nil {
 		span.RecordError(err)
-		logger.Error("job failed", "duration", duration, "error", err)
-	} else {
-		logger.Info("job complete", "duration", duration)
 	}
 
 	// Complete the job
 	d.mu.Lock()
+	// recorder.Complete builds a fresh status, so carry the running progress-update
+	// count forward and bump it for this final write -- otherwise the count
+	// accumulated during processing would be lost on the historic job.
+	progressUpdates := d.currentJob.Status.ProgressUpdates
 	d.currentJob.Status = recorder.Complete(ctx, err)
+	d.currentJob.Status.ProgressUpdates = progressUpdates + 1
 	defer func() {
 		d.currentJob = nil
 		d.mu.Unlock()
 	}()
+
+	// Log completion keyed off the final job state so that per-file errors that
+	// promoted the job to an error/warning state (without a top-level err) are
+	// still visible. The per-file breakdown stays at Debug to avoid noise at Info.
+	status := d.currentJob.Status
+	logFields := []any{
+		"duration", duration,
+		"state", status.State,
+		"errorCount", len(status.Errors),
+		"warningCount", len(status.Warnings),
+		"message", status.Message,
+	}
+	switch {
+	case err != nil:
+		logger.Error("job failed", append(logFields, "error", err)...)
+	case status.State == provisioning.JobStateError:
+		logger.Error("job completed with errors", logFields...)
+	case status.State == provisioning.JobStateWarning:
+		logger.Warn("job completed with warnings", logFields...)
+	default:
+		logger.Info("job complete", logFields...)
+	}
+
+	if len(status.Errors) > 0 || len(status.Warnings) > 0 {
+		logger.Debug("job completion details",
+			"errors", status.Errors,
+			"warnings", status.Warnings,
+			"reasons", recorder.ResultReasons(),
+		)
+	}
 
 	// Save the finished job
 	if err = d.historicJobs.WriteJob(ctx, d.currentJob.DeepCopy()); err != nil {
@@ -259,7 +266,7 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	// Mark the job as completed.
 	if err := d.store.Complete(ctx, d.currentJob); err != nil {
 		span.RecordError(err)
-		return apifmt.Errorf("failed to complete job '%s' in '%s': %w", d.currentJob.GetName(), d.currentJob.GetNamespace(), err)
+		return errors.Join(errPostClaim, apifmt.Errorf("failed to complete job '%s' in '%s': %w", d.currentJob.GetName(), d.currentJob.GetNamespace(), err))
 	}
 
 	return nil
@@ -270,7 +277,7 @@ func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 //
 // Note: This function intentionally does NOT create a tracing span because it runs indefinitely
 // for the lifetime of a job. Individual RenewLease calls already have their own spans.
-func (d *jobDriver) leaseRenewalLoop(ctx context.Context, logger logging.Logger, leaseExpired chan struct{}) {
+func (d *jobProcessor) leaseRenewalLoop(ctx context.Context, logger logging.Logger, leaseExpired chan struct{}) {
 	ticker := time.NewTicker(d.leaseRenewalInterval)
 	defer ticker.Stop()
 
@@ -333,7 +340,7 @@ func (d *jobDriver) leaseRenewalLoop(ctx context.Context, logger logging.Logger,
 }
 
 // processJobWithLeaseCheck processes a job but aborts if the lease expires or context is cancelled.
-func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, recorder JobProgressRecorder, leaseExpired <-chan struct{}) error {
+func (d *jobProcessor) processJobWithLeaseCheck(ctx context.Context, recorder JobProgressRecorder, leaseExpired <-chan struct{}) error {
 	// Derive a cancellable context for the worker so that losing the lease actively
 	// stops the in-flight work, rather than leaving the goroutine running until the
 	// caller's deferred cancel fires much later. Otherwise two pods could execute the
@@ -370,19 +377,21 @@ func (d *jobDriver) processJobWithLeaseCheck(ctx context.Context, recorder JobPr
 }
 
 // withJobAuthorSignature carries the job's recorded author into ctx as the git
-// commit signature when present. The author annotations are set at creation time
-// by the job admission mutator, which is where the user-attribution feature flag
-// is enforced; the driver simply applies whatever was recorded on the job.
+// commit signature. The author annotations are set at creation time by the job
+// admission mutator, which is where the user-attribution feature flag is
+// enforced; the driver simply applies whatever was recorded on the job. An
+// email is required: webhook attribution carries none, so webhook-created jobs
+// keep the default Grafana commit identity.
 func withJobAuthorSignature(ctx context.Context, job *provisioning.Job) context.Context {
 	name := job.Annotations[appjobs.AnnoAuthor]
 	email := job.Annotations[appjobs.AnnoAuthorEmail]
-	if name == "" && email == "" {
+	if email == "" {
 		return ctx
 	}
 	return repository.WithAuthorSignature(ctx, repository.CommitSignature{Name: name, Email: email})
 }
 
-func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder) error {
+func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecorder) error {
 	ctx, span := tracing.Start(ctx, "provisioning.jobs.process_job")
 	defer span.End()
 
@@ -466,7 +475,7 @@ func (d *jobDriver) processJob(ctx context.Context, recorder JobProgressRecorder
 	return err
 }
 
-func (d *jobDriver) onProgress() ProgressFn {
+func (d *jobProcessor) onProgress() ProgressFn {
 	return func(ctx context.Context, status provisioning.JobStatus) error {
 		ctx, span := tracing.Start(ctx, "provisioning.jobs.update_progress")
 		defer span.End()
@@ -497,10 +506,15 @@ func (d *jobDriver) onProgress() ProgressFn {
 				*d.currentJob = *latest
 			}
 
-			job := d.currentJob
-			// Update status on the current job
-			job.Status = status
-			updated, err := d.store.Update(ctx, job)
+			// Build the candidate on a copy so a failed write never mutates our
+			// in-memory job: the recorder ignores progress errors and keeps going,
+			// so leaving an increment behind would count writes that never persisted.
+			// The incoming status replaces the whole status object, so carry the
+			// progress-update count forward and bump it for this write.
+			candidate := d.currentJob.DeepCopy()
+			candidate.Status = status
+			candidate.Status.ProgressUpdates = d.currentJob.Status.ProgressUpdates + 1
+			updated, err := d.store.Update(ctx, candidate)
 			if err != nil {
 				if apierrors.IsConflict(err) && attempt < maxRetries-1 {
 					d.mu.Unlock()
@@ -511,7 +525,7 @@ func (d *jobDriver) onProgress() ProgressFn {
 				return apifmt.Errorf("failed to update job progress: %w", err)
 			}
 
-			// Update succeeded, update our local copy
+			// Update succeeded, commit the persisted state to our local copy.
 			*d.currentJob = *updated
 			d.mu.Unlock()
 
