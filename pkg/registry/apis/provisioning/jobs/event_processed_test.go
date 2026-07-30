@@ -211,7 +211,7 @@ func TestConcurrentJobDriver_ProcessingAttributed(t *testing.T) {
 func TestConcurrentJobDriver_AlreadyClaimedNotAttributed(t *testing.T) {
 	store := &MockStore{}
 	claimed := make(chan struct{})
-	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job", "driver-1").
+	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job", "0").
 		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
 			select {
 			case <-claimed:
@@ -260,7 +260,7 @@ func TestConcurrentJobDriver_RecordsDeliveryLatency(t *testing.T) {
 
 	completed := make(chan struct{})
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job", "driver-1").Return(claimedJob, func() {}, nil).Once()
+	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job", "0").Return(claimedJob, func() {}, nil).Once()
 	store.EXPECT().Update(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) { return job.DeepCopy(), nil }).Maybe()
 	store.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).Return(claimedJob.DeepCopy(), nil).Maybe()
@@ -390,7 +390,7 @@ func newSuccessfulJobDriver(t *testing.T, natsBacked bool) (*ConcurrentJobDriver
 	completed := make(chan struct{})
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job", "driver-1").
+	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job", "0").
 		Return(claimedJob, func() {}, nil).Once()
 	store.EXPECT().Update(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) {
