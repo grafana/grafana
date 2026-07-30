@@ -11,125 +11,112 @@ informed: (TBD)
 
 ## Background
 
-Grafana currently has two authorization models in active use:
+Grafana currently uses two authorization systems:
 
-- **Legacy RBAC** represents a permission as an action and optional scope, stores roles, permissions, and assignments in SQL tables, materializes effective permissions onto the authenticated identity, and evaluates requests against that in-memory permission map.
-- **Zanzana** is Grafana's authorization service around OpenFGA. It consumes Kubernetes-style IAM resources, translates them into relationship tuples, and answers `Check`, `BatchCheck`, and `List` requests against those tuples.
+- **Legacy RBAC** stores roles, permissions, and role assignments in SQL. A permission has an action and an optional scope. Grafana loads a user's permissions into memory and checks requests against that map.
+- **Zanzana** is Grafana's authorization service built on OpenFGA. It reads authorization data from Kubernetes APIs, turns that data into relationship tuples, and answers authorization checks.
 
-The long-term direction is to make Kubernetes APIs the permission-management interface, Zanzana the authoritative decision engine, and OpenFGA the authorization datastore. This lets Grafana remove the legacy RBAC permission tables and their associated synchronization, caching, query, and migration code.
+The long-term goal is:
 
-The migration cannot be atomic. Some Grafana APIs still express requirements as legacy action/scope checks, some permissions already have native Kubernetes/OpenFGA translations, and other permissions need a compatibility representation until a native resource model exists. Some permissions have already moved out of the legacy permission tables, so the current RBAC engine merges permissions reverse-listed from Zanzana back into its effective legacy permission map.
+1. Kubernetes APIs are the place where Grafana writes and reads permission rules.
+2. Zanzana makes authorization decisions.
+3. OpenFGA stores the data used for those decisions.
+4. Grafana removes the old SQL authorization tables and the code that maintains them.
 
-This document separates three concerns which can move independently:
+We cannot make this change all at once. Many Grafana endpoints still ask for legacy actions and scopes. Some of those permissions already have a direct Kubernetes and OpenFGA form. Others need a generic form until we add a direct mapping.
 
-1. **Storage authority:** where roles, assignments, teams, and resource permissions are written and persisted.
-2. **Decision authority:** which engine's allow or deny result controls a request.
-3. **Compatibility read model:** how legacy action/scope permission lists are produced for the legacy evaluator, frontend capability maps, and permission-inspection APIs.
+Some permissions already exist only in Kubernetes and Zanzana. Today, Grafana copies the supported native permissions back into the legacy in-memory map so RBAC can still allow them. This is useful during the migration, but it does not cover every permission.
 
-Treating these as separate cutovers allows Grafana to migrate storage before decisions, decisions before all callers are rewritten, and native permission models incrementally without losing legacy semantics.
+The migration has three separate parts:
 
-**Relevant implementation areas:**
+1. **Storage:** where roles, assignments, teams, and resource permissions are saved.
+2. **Decisions:** whether RBAC or Zanzana controls the allow or deny result.
+3. **Compatibility reads:** how Grafana builds the old action-to-scopes map for the UI, inspection APIs, and the RBAC shadow check.
+
+These parts should move separately. This lets us change storage before decision authority, and decision authority before every old caller has been rewritten.
+
+**Main code areas:**
 
 - [Legacy RBAC permission queries](pkg/services/accesscontrol/database/database.go)
-- [Authentication-time permission materialization](pkg/services/authn/authnimpl/sync/rbac_sync.go)
-- [Legacy action/scope evaluator](pkg/services/accesscontrol/evaluator.go)
+- [Authentication permission loading](pkg/services/authn/authnimpl/sync/rbac_sync.go)
+- [Legacy action and scope evaluator](pkg/services/accesscontrol/evaluator.go)
 - [Kubernetes IAM APIs](apps/iam/pkg/apis/iam/v0alpha1)
-- [MT Kubernetes-to-Zanzana reconciler](pkg/services/authz/zanzana/server/reconciler)
+- [Kubernetes-to-Zanzana reconciler](pkg/services/authz/zanzana/server/reconciler)
 - [OpenFGA schema](pkg/services/authz/zanzana/schema)
-- [Native and generic permission projection](pkg/services/authz/zanzana/fallback.go)
-- [Current access-control engine selection](pkg/services/accesscontrol/acimpl/accesscontrol.go)
-- [Current transitional Zanzana-to-RBAC merge resolver](pkg/services/accesscontrol/acimpl/zanzana_resolver.go)
+- [Native and generic translation](pkg/services/authz/zanzana/fallback.go)
+- [Primary and shadow selection](pkg/services/accesscontrol/acimpl/accesscontrol.go)
+- [Current Zanzana-to-RBAC merge](pkg/services/accesscontrol/acimpl/zanzana_resolver.go)
 
-### Terminology
+### Terms used in this document
 
-| Term                             | Meaning in this document                                                                                                                |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| Legacy permission                | A Grafana RBAC action plus an optional scope, such as `teams:create` or `dashboards:read` on `dashboards:uid:abc`.                      |
-| Native permission                | A legacy permission with an exact Kubernetes/OpenFGA resource, verb, relation, and object translation.                                  |
-| Generic compatibility permission | A legacy action/scope stored as an opaque `rbac_action` or `rbac_permission` OpenFGA object because no exact native translation exists. |
-| Legacy evaluator                 | The `accesscontrol.Evaluator` action/scope composition API. This interface can remain after SQL RBAC is removed.                        |
-| Legacy engine                    | Evaluation against a materialized `map[action][]scope`.                                                                                 |
-| Zanzana engine                   | Direct authorization against Zanzana/OpenFGA tuples.                                                                                    |
-| Effective-permission projection  | Reverse-listing Zanzana grants and reconstructing the legacy action/scope view.                                                         |
-| Primary engine                   | The engine whose result is returned to the caller.                                                                                      |
-| Shadow engine                    | The engine evaluated for comparison only. Its result does not affect the request.                                                       |
+| Term                 | Plain meaning                                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------------------------- |
+| Legacy permission    | An action and optional scope, such as `teams:create` or `dashboards:read` on `dashboards:uid:abc`.      |
+| Native permission    | A legacy permission that has a direct Kubernetes and OpenFGA mapping.                                   |
+| Generic permission   | A legacy action and scope stored as an encoded OpenFGA object because it has no direct mapping yet.     |
+| Legacy evaluator     | The `accesscontrol.Evaluator` API used by Grafana callers. We can keep this API after SQL RBAC is gone. |
+| RBAC engine          | The code that checks a request against `map[action][]scope`.                                            |
+| Zanzana engine       | The code that checks Zanzana and OpenFGA directly.                                                      |
+| Local permission map | The action-to-scopes map attached to the signed-in identity.                                            |
+| Primary engine       | The engine whose result controls the request.                                                           |
+| Shadow engine        | The engine that runs only for comparison. Its result does not affect the request.                       |
+| Projection           | Turning Kubernetes authorization data into OpenFGA tuples.                                              |
 
-### Existing legacy RBAC architecture
+### How legacy RBAC works today
 
-Legacy RBAC stores normalized authorization data in Grafana's SQL database:
+Legacy RBAC stores authorization data in these SQL tables:
 
-- `role` identifies fixed, basic, managed, plugin, and custom roles.
-- `permission` stores action/scope rows for each role.
-- `user_role` assigns roles directly to users or service accounts.
-- `team_role` assigns roles to teams; `team_member` expands team membership.
-- `builtin_role` connects Grafana Admin, Admin, Editor, Viewer, and None to RBAC roles.
+- `role` stores fixed, basic, managed, plugin, and custom roles.
+- `permission` stores each role's actions and scopes.
+- `user_role` assigns roles to users and service accounts.
+- `team_role` assigns roles to teams.
+- `team_member` stores team membership.
+- `builtin_role` connects basic roles such as Admin, Editor, Viewer, and None to RBAC roles.
 - `org_user` stores organization membership and the basic organization role.
 
-`GetUserPermissions` joins these tables for the current organization, user, teams, and basic roles. During authentication, `SyncPermissionsHook` groups the returned rows by action and places them in `Identity.Permissions[orgID]`. Middleware and services normally call `AccessControl.Evaluate`, which evaluates the request against this materialized map.
+For a normal request:
 
-**Current-state architecture:**
+1. Authentication calls `GetUserPermissions`.
+2. That query joins the user's direct roles, team roles, and basic role.
+3. `SyncPermissionsHook` groups the result by action.
+4. Grafana stores the result in `Identity.Permissions[orgID]`.
+5. `AccessControl.Evaluate` checks the request against that map.
 
 ```mermaid
 flowchart LR
-  subgraph Writers[Permission writers]
-    HTTP[Legacy HTTP APIs]
-    Seeder[Fixed and basic role seeders]
-    Plugins[Plugin and provisioning writers]
-  end
-
-  subgraph SQL[Grafana SQL]
-    Role[role]
-    Permission[permission]
-    Assignments[user_role / team_role / builtin_role]
-    Membership[team_member / org_user]
-  end
-
-  subgraph Request[Request path]
-    AuthN[Authentication]
-    Load[GetUserPermissions]
-    Identity[SignedInUser.Permissions]
-    Eval[Legacy action/scope evaluator]
-    Endpoint[Grafana endpoint]
-  end
-
-  HTTP --> SQL
-  Seeder --> SQL
-  Plugins --> SQL
-  Role --> Load
-  Permission --> Load
-  Assignments --> Load
-  Membership --> Load
-  AuthN --> Load
-  Load --> Identity
-  Identity --> Eval
-  Eval -->|allow or deny| Endpoint
+  Writers[Legacy APIs, seeders, and plugins] --> SQL[(Legacy RBAC SQL tables)]
+  SQL --> Load[GetUserPermissions]
+  Auth[Authentication] --> Load
+  Load --> Map[Local permission map]
+  Map --> Eval[RBAC evaluator]
+  Eval --> Result[Allow or deny]
 ```
 
-Legacy RBAC has several properties that the migration must preserve:
+The migration must preserve these rules:
 
-- Permissions from direct user assignments, team assignments, basic roles, service accounts, and anonymous access participate in the same decision.
-- A scoped evaluator allows when any requested scope matches any granted scope.
-- Wildcards are delimiter-aware and may represent all resources, all resources of a kind, or descendants under a path.
-- A scopeless evaluator means the subject has at least one grant for the action.
-- `EvalAny` and `EvalAll` compose permission leaves using Boolean OR and AND.
-- Scope resolvers can retry a decision after translating an internal numeric ID into a Kubernetes UID or after deriving parent-resource scopes.
-- Token-defined and delegated identities may restrict the permissions of the underlying subject. Local permission union must never broaden those restrictions.
+- Direct user roles, team roles, basic roles, service accounts, and anonymous access all affect decisions.
+- If a request has several allowed scopes, one matching scope is enough.
+- Wildcards can cover all resources, one resource kind, or child paths.
+- A request with no scope asks whether the subject has any permission for that action.
+- `EvalAny` means OR. `EvalAll` means AND.
+- Scope resolvers can turn numeric IDs into UIDs or add parent scopes, then retry.
+- A delegated token can reduce a user's permissions. Combining permissions must never make that token less restrictive.
 
-### Existing Zanzana and Kubernetes IAM architecture
+### How Zanzana and the Kubernetes APIs work
 
-The Kubernetes IAM APIs provide structured resources used to derive authorization tuples:
+The Kubernetes IAM APIs contain the authorization rules:
 
-- `Role` contains legacy action/scope permissions and optional references to global roles.
-- `GlobalRole` contains cluster-scoped permission definitions.
+- `Role` and `GlobalRole` contain permissions.
 - `RoleBinding` assigns a role to a user, service account, or team.
-- `ResourcePermission` grants a resource-level verb or action set to a user, service account, team, or basic role.
-- `Team` contains stored team membership and team-admin relationships.
-- `User` and `ServiceAccount` carry organization-role information.
-- `Folder` provides the hierarchy used by inherited resource authorization.
+- `ResourcePermission` grants access to a specific resource.
+- `Team` contains members and team admins.
+- `User` and `ServiceAccount` contain basic-role information.
+- `Folder` contains the hierarchy used for inherited access.
+- Settings contain the anonymous user's basic role.
 
-The MT reconciler lists these resources per namespace, computes the full expected tuple set, diffs it against Zanzana, and adds or deletes tuples. Mutation hooks can also update Zanzana on individual Kubernetes API changes, while periodic reconciliation repairs drift. OpenFGA stores relationships between subjects, roles, teams, group resources, folders, and individual resources.
+The MT reconciler reads these resources for each namespace. It builds the full set of expected OpenFGA tuples, compares that set with Zanzana, and adds or removes tuples. Mutation hooks can update tuples sooner. Periodic reconciliation fixes missed updates and removes old tuples.
 
-Examples of native tuples include:
+Native tuples look like this:
 
 ```text
 user:alice       assignee  role:basic_editor
@@ -140,145 +127,152 @@ user:alice       member    team:ops
 folder:child     parent    folder:parent
 ```
 
-When a legacy permission cannot be represented exactly in the native resource model, the compatibility projector stores an opaque, versioned object:
+When there is no direct native mapping, Zanzana stores an encoded generic object:
 
 ```text
 role:plugin_reader#assignee granted rbac_action:v1.<encoded-action>
 role:plugin_reader#assignee granted rbac_permission:v1.<encoded-action>.<encoded-scope>
 ```
 
-The action object preserves scopeless “has any permission for this action” checks. The permission object preserves exact and wildcard scope semantics. Subjects can reach either representation through direct assignment, basic-role assignment, role inheritance, or contextual team membership.
+The action object supports checks with no scope. The permission object supports exact scopes and wildcards.
 
-Zanzana's standard Kubernetes authorization path accepts a namespace, canonical subject, effective teams, group, resource, verb, name, folder, and subresource. It checks broad group-resource grants, folder inheritance, and exact typed or generic resources. `List` provides the inverse view used to enumerate accessible resources.
+### What this branch does today
 
-### Current hybrid behavior
+This branch has three migration features:
 
-The repository contains three hybrid mechanisms:
+1. **Native permission merge.** With `zanzanaMergeUserPermissions`, Grafana lists supported native grants from Zanzana and adds them to the SQL-based local map. Generic permissions are not added.
+2. **One Zanzana check for legacy permissions.** `CheckPermission` accepts one legacy action and zero or more scopes. It checks native and generic forms and allows if any requested scope is allowed.
+3. **Primary and shadow routing.** With `zanzanaRBACFallbackChecks`, Grafana runs the full evaluator through the primary engine and runs the other engine in the background. `primary_engine` chooses `rbac` or `zanzana`.
 
-1. **Kubernetes-to-legacy permission merge.** When `zanzanaMergeUserPermissions` is enabled, `GetUserPermissions` reverse-lists the native permission families supported by `ZanzanaPermissionResolver` and merges them with SQL permissions. This keeps the legacy map correct for supported native grants already removed from legacy tables. It does not enumerate generic compatibility permissions.
-2. **Unified legacy-permission check.** The `CheckPermission` extension RPC accepts a canonical subject, namespace, effective teams, one action, and zero or more scopes. It evaluates each requested scope through its native or generic representation and ORs the results.
-3. **Primary/shadow legacy evaluator routing.** When `zanzanaRBACFallbackChecks` is enabled, `AccessControl.Evaluate` runs the complete evaluator through the configured primary engine and runs the other engine asynchronously for comparison. `[zanzana.client] primary_engine` selects `rbac` or `zanzana`.
+The branch fixes the main team-permission bug. When Zanzana is primary, Grafana sends every permission leaf to Zanzana. It does not deny a native permission only because that permission is missing from the local map.
 
-This branch closes the original decision gap: when Zanzana is primary, every evaluator leaf is sent to `CheckPermission`, including native leaves such as `teams:create`. The local permission map is used only for RBAC evaluation and for token restrictions. Native leaves no longer short-circuit against `SignedInUser.Permissions`.
+For example, `teams:create` maps to `create` on the teams group resource. A user can receive that permission through a team binding in Zanzana even when `SignedInUser.Permissions` does not contain `teams:create`.
 
-For example, `teams:create` translates to `create` on the teams group resource. A team-derived grant can therefore authorize `POST /api/teams/` through contextual team membership even when `GetUserPermissions` does not include that team permission.
+One important gap remains. The UI, permission-inspection APIs, and an RBAC primary or shadow still need a complete local permission map. The current native merge is not complete because it cannot list generic grants. Therefore, this branch does not yet allow us to remove the legacy authorization tables.
 
-The remaining dependency is compatibility enumeration. RBAC-primary decisions, frontend capability maps, and permission-inspection APIs still depend on SQL permissions plus the incomplete native Zanzana merge. A Kubernetes-derived compatibility resolver has not been implemented by this branch, so the legacy authorization tables cannot yet be removed.
+In a legacy-primary or dual-write IAM storage mode, Kubernetes API writes may also be present in the legacy authorization tables. That can make the local map look complete during a normal rollback test. It does not prove that compatibility reads work after SQL is removed; unified-only mode must be tested with grants created after the mirror is disabled.
 
 ## Problem
 
-Grafana cannot remove the legacy RBAC tables while authorization decisions still depend on a permission map derived from those tables. Moving only the storage or translation side to Kubernetes and Zanzana produces incomplete identities and false denials. Conversely, falling back to legacy RBAC after a Zanzana error would make SQL a permanent availability dependency and could produce stale allows after a revocation.
+Grafana cannot remove the legacy RBAC tables while requests or compatibility APIs still depend on a map built from those tables.
 
-The migration must solve the following dimensions:
+Moving only writes to Kubernetes causes false denials when RBAC cannot see a Kubernetes-only grant. Falling back to RBAC when Zanzana fails is also unsafe. RBAC may have stale data and could allow a permission that was already revoked in Zanzana.
 
-- **Complete storage:** every existing legacy action/scope must have a lossless Zanzana representation before its SQL row can be removed.
-- **Complete decisions:** every action/scope evaluator leaf must be answerable directly by Zanzana, regardless of whether its stored representation is native or generic.
-- **Complete identities:** direct users, service accounts, basic roles, custom roles, global roles, teams, external groups, anonymous access, and delegated identities must preserve their current semantics.
-- **Complete enumeration:** frontend capability maps and permission-inspection APIs still need an effective legacy action/scope view during the migration.
-- **Consistent writes and revocations:** a successful permission mutation must not be followed by an authorization decision against a stale representation.
-- **Safe rollout:** RBAC and Zanzana decisions must be comparable before authority changes, and authority changes must be immediately reversible without changing stored permission intent.
-- **Mixed representations:** translation is determined per action/scope pair, so different scopes for the same action can use different representations. Scoped and scopeless checks must preserve legacy OR semantics across every applicable representation.
-- **Deployment variants:** embedded and standalone Zanzana, OSS and Enterprise IAM APIs, and namespaced versus global permissions do not all expose the same resource set.
-- **Security context:** token restrictions and delegated permissions must constrain the relation-based result rather than being accidentally replaced by the subject's full Zanzana grants.
+The migration must provide:
+
+- **Complete storage:** every legacy action and scope can be stored in Zanzana without changing its meaning.
+- **Complete decisions:** Zanzana can answer every legacy permission check.
+- **All identity types:** users, service accounts, basic roles, custom roles, global roles, teams, external groups, anonymous users, and delegated identities keep their current behavior.
+- **Complete compatibility reads:** the UI and inspection APIs can still obtain the old action-to-scopes view without SQL authorization tables.
+- **Safe updates:** grants and revocations reach the decision store within a measured time.
+- **Safe rollout:** we can compare RBAC and Zanzana before changing authority, and switch back quickly without changing stored rules.
+- **Mixed permissions:** one action may have a native scope and a generic scope. The check must consider both and allow if either matches.
+- **Token safety:** delegated token limits must still apply on top of Zanzana permissions.
+- **Deployment support:** embedded and standalone Zanzana, OSS and Enterprise, and global and namespaced permissions must have clear behavior.
 
 ## Goals
 
-1. Make Kubernetes IAM APIs the authoritative write interface for permission intent.
-2. Store every existing legacy action/scope losslessly in Zanzana, using native tuples where an exact mapping exists and generic compatibility tuples otherwise.
-3. Make Zanzana authoritative for all legacy action/scope decisions, including callers that continue using `AccessControl.Evaluate`.
-4. Preserve legacy scope matching, Boolean composition, scope resolution, team inheritance, role inheritance, and token downscoping.
-5. Preserve a complete effective-permission read model for compatibility APIs and frontend capability maps without using legacy permission tables.
-6. Support RBAC-primary and Zanzana-primary shadow modes with full-decision comparison.
-7. Define measurable promotion and rollback gates for each migration phase.
-8. Remove reads and writes to the legacy `role`, `permission`, `user_role`, `team_role`, and `builtin_role` authorization paths after all gates pass.
-9. Eventually replace generic compatibility tuples with native Kubernetes/OpenFGA translations for every supported Grafana permission.
+1. Use Kubernetes IAM APIs as the source of permission rules.
+2. Store every permission in Zanzana: native when possible, generic when needed.
+3. Make Zanzana control every legacy action and scope decision.
+4. Keep legacy wildcard, Boolean, resolver, inheritance, and token behavior.
+5. Build the compatibility permission map from Kubernetes APIs instead of legacy SQL.
+6. Support full RBAC-primary and Zanzana-primary comparison modes.
+7. Define clear promotion and rollback checks.
+8. Remove the old authorization-table reads and writes after the rollout is safe.
+9. Replace generic permissions with native mappings over time.
 
 ### Non-goals
 
-- Rewriting every Grafana endpoint to use Kubernetes request types in one change.
-- Changing the public meaning of existing actions or scopes during the storage migration.
-- Allowing an authorization request to fall back to a secondary engine after the primary engine returns an error.
-- Using the frontend permission map as a security boundary.
-- Defining the final native resource model for every currently generic permission in this document.
-- Removing user, team, organization, or service-account domain data that is not exclusively legacy authorization storage.
-- Selecting final numerical mismatch, latency, or availability thresholds; owners must approve those thresholds before rollout.
+- Rewrite every Grafana endpoint in one change.
+- Change the public meaning of current actions or scopes.
+- Fall back to another engine when the primary engine returns an error.
+- Treat the frontend permission map as a security boundary.
+- Define a native model for every permission in this document.
+- Remove user, team, organization, or service-account data that is not authorization-only data.
+- Pick the final numeric rollout thresholds. Owners must approve those before production rollout.
 
 ## Proposals
 
-### Proposal 0: Do nothing
+### Proposal 0: Keep the current design
 
-Continue using SQL RBAC as the authoritative legacy action/scope engine and use Zanzana only for Kubernetes-native authorization paths and partial shadowing.
+Keep SQL RBAC as the authority for legacy checks. Use Zanzana only for Kubernetes-style checks and partial shadowing.
 
-This preserves current behavior but prevents removal of the legacy authorization tables. Every permission moved exclusively to Kubernetes requires reverse-listing and merging into the legacy permission map. The merge becomes increasingly complex as more resource kinds and identity relationships move, and any omission can deny valid requests.
+This avoids short-term change, but it prevents removal of the SQL authorization tables. Every permission moved to Kubernetes must also be copied back into the local RBAC map. Missing one translation causes a false denial.
 
-#### Pros
+#### Benefits
 
-- No near-term migration risk.
-- Existing legacy authorization behavior remains unchanged.
-- Existing SQL inspection and debugging tools continue to work.
+- Lowest short-term migration risk.
+- Current RBAC behavior and SQL debugging tools remain available.
 
-#### Cons
+#### Costs
 
-- SQL remains an authoritative permission datastore and availability dependency.
-- Every new Kubernetes-native permission requires a reverse translation into legacy scopes.
-- Zanzana shadow comparisons remain incomplete for legacy-only actions.
-- Permission intent can drift among SQL, Kubernetes resources, the identity permission map, and OpenFGA tuples.
-- The project cannot achieve its storage-decommissioning goal.
+- SQL stays an authorization datastore and availability dependency.
+- Every new native permission needs a reverse translation.
+- Shadow comparisons remain incomplete.
+- SQL, Kubernetes resources, the local map, and OpenFGA can drift apart.
+- We cannot finish the storage migration.
 
-### Proposal 1: Mirror every permission into generic compatibility tuples
+### Proposal 1: Store a generic copy of every permission
 
-Write a generic `rbac_action` marker and, when scoped, a generic `rbac_permission` object for every role permission, including permissions that also have native tuples. Continue writing native tuples for Kubernetes authorization. Route all legacy action/scope checks through the generic objects.
+For every permission, write both:
+
+- its native tuples when a native mapping exists; and
+- generic action and scope objects for legacy checks.
+
+All legacy checks would use the generic copy. Kubernetes-style checks would use native tuples.
 
 **Architecture diagram:**
 
 ```mermaid
 flowchart LR
-  K8s[Kubernetes IAM resources] --> Projector[Permission projector]
-  Projector --> Native[Native resource tuples]
-  Projector --> Generic[Generic action and scope tuples]
-  Native --> K8sCheck[Kubernetes Check/List]
-  Generic --> LegacyCheck[Legacy action/scope Check]
-  K8sCaller[Kubernetes API caller] --> K8sCheck
-  LegacyCaller[Legacy evaluator caller] --> LegacyCheck
-  K8sCheck --> Decision[Authorization decision]
-  LegacyCheck --> Decision
+  K8s[Kubernetes IAM resources] --> Project[Project permissions]
+  Project --> Native[Native tuples]
+  Project --> Generic[Generic copies]
+  Native --> K8sCheck[Kubernetes-style checks]
+  Generic --> LegacyCheck[Legacy action and scope checks]
+  K8sCheck --> Result[Allow or deny]
+  LegacyCheck --> Result
 ```
 
-#### Authorization behavior
+#### How checks work
 
-- Legacy checks never need to translate a requested action/scope into a native Kubernetes request.
-- Generic objects preserve exact legacy action/scope semantics and wildcard matching.
-- Native tuples remain available for Kubernetes-style request authorization.
-- Scopeless checks query the action marker.
-- Scoped checks query the exact scope and its legal wildcard candidates.
+- A legacy check never needs to translate to a Kubernetes request.
+- Generic objects keep exact legacy scopes and wildcard behavior.
+- A no-scope check uses the generic action object.
+- A scoped check uses the exact object and its valid wildcard candidates.
 
-#### Required extensions
+#### Extra work required
 
-Native role permissions are not the only source of native tuples. `ResourcePermission` resources produce tuples directly from resource verbs and subjects. To make the generic model complete, the system would also have to derive equivalent legacy action/scope objects from every `ResourcePermission`, basic-role resource grant, inherited folder grant, and future native permission source.
+`Role` permissions are not the only source of native tuples. `ResourcePermission`, basic roles, folder inheritance, and future native sources also create grants. The system would need to create generic copies for all of them.
 
-Every write and delete would have to keep both representations synchronized, and reconciliation would have to detect and repair divergence between them.
+Every update and delete would have to keep the native and generic copies in sync. Reconciliation would need to find and repair differences.
 
-#### Pros
+#### Benefits
 
-- Simple and exact legacy check implementation.
-- Scopeless action checks are efficient.
-- Provides a straightforward effective legacy permission enumeration model.
-- Can be introduced as a tactical bridge before a unified native request translator is complete.
+- Legacy checks are simple and exact.
+- Permission enumeration is straightforward.
+- It could work as a short-term bridge.
 
-#### Cons
+#### Costs
 
-- Duplicates most authorization tuples and increases write, reconciliation, storage, and cache costs.
-- Creates two representations whose behavior can drift.
-- Does not automatically cover native tuples written outside the role-permission projector.
-- Legacy checks do not exercise the native model used by Kubernetes APIs, weakening parity validation.
-- Native translation bugs can remain hidden until callers migrate away from legacy checks.
-- Cleanup requires proving that no legacy consumer depends on the generic mirror.
+- Most tuples are duplicated.
+- Writes, reconciliation, storage, and caches cost more.
+- Native and generic copies can disagree.
+- Legacy checks do not test the native model used by Kubernetes callers.
+- Native translation bugs can stay hidden.
+- Removing the generic copy later requires another careful migration.
 
-This proposal is viable as a temporary acceleration mechanism, but it is not recommended as the target architecture.
+This proposal may help as a temporary bridge, but it is not the recommended final design.
 
-### Proposal 2: Unified Zanzana decision over native and generic tuples
+### Proposal 2: One Zanzana check over native and generic permissions
 
-Store each permission in its best representation and make a unified Zanzana endpoint responsible for answering legacy action/scope checks. Native permissions use the normal Kubernetes/OpenFGA resource check path; permissions without an exact native representation use generic compatibility objects. The caller does not inspect the local permission map or choose an engine per scope.
+Store each permission in its best form:
+
+- use native tuples when the mapping is exact;
+- use a generic object when there is no exact mapping.
+
+One Zanzana endpoint answers all legacy action and scope checks. The caller does not inspect the local map and does not choose native or generic handling.
 
 This is the recommended proposal.
 
@@ -286,55 +280,48 @@ This is the recommended proposal.
 
 ```mermaid
 flowchart LR
-  Caller[Legacy or Kubernetes caller]
-  Eval[Legacy evaluator composition]
-  Unified[Unified Zanzana permission check]
-  Classify[Classify each action and scope]
-  Native[Native Check or List]
-  Generic[Generic compatibility Check]
-  FGA[(OpenFGA tuples)]
-  Decision[Allow or deny]
-
-  Caller --> Eval
-  Eval -->|permission leaf| Unified
-  Unified --> Classify
-  Classify -->|exact native mapping| Native
-  Classify -->|no exact mapping| Generic
-  Native --> FGA
+  Caller[Grafana evaluator] --> Unified[Zanzana CheckPermission]
+  Unified --> Classify[Classify each action and scope]
+  Classify -->|native| Native[Native Check or List]
+  Classify -->|generic| Generic[Generic Check]
+  Native --> FGA[(OpenFGA)]
   Generic --> FGA
-  FGA --> Native
-  FGA --> Generic
-  Native -->|OR across scopes| Decision
-  Generic -->|OR across scopes| Decision
-  Decision --> Eval
+  Native --> Result[OR the scope results]
+  Generic --> Result
+  Result --> Caller
 ```
 
 #### Storage model
 
-Permission intent is stored in Kubernetes IAM resources. The reconciler projects each source object into OpenFGA:
+Kubernetes IAM resources hold the permission rules. The reconciler creates these tuples:
 
-| Kubernetes source                                          | Zanzana projection                                                                          |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `Role` or `GlobalRole` permission with an exact mapping    | Native group-resource, folder, typed-resource, generic-resource, user, team, or role tuple. |
-| `Role` or `GlobalRole` permission without an exact mapping | Generic action marker and optional action/scope object.                                     |
-| `RoleBinding`                                              | Subject-to-role `assignee` relation. Team subjects use `team:<uid>#member`.                 |
-| `ResourcePermission`                                       | Direct or basic-role native relation on a resource.                                         |
-| `Team`                                                     | User/service-account membership and admin relations.                                        |
-| `User` or `ServiceAccount`                                 | Basic-role assignment relation.                                                             |
-| `Folder`                                                   | Parent relation used for inherited checks.                                                  |
-| Anonymous settings                                         | Anonymous subject to basic-role assignment.                                                 |
+| Kubernetes source                          | Zanzana result                                                       |
+| ------------------------------------------ | -------------------------------------------------------------------- |
+| Mapped `Role` or `GlobalRole` permission   | Native tuple.                                                        |
+| Unmapped `Role` or `GlobalRole` permission | Generic action object and, when scoped, a generic permission object. |
+| `RoleBinding`                              | Subject-to-role assignment. Team bindings use `team:<uid>#member`.   |
+| `ResourcePermission`                       | Direct native relation on a resource.                                |
+| `Team`                                     | Member and admin relations.                                          |
+| `User` or `ServiceAccount`                 | Basic-role assignment.                                               |
+| `Folder`                                   | Parent relation for inherited access.                                |
+| Anonymous settings                         | Anonymous subject-to-basic-role assignment.                          |
 
-The projector must satisfy an exact-one invariant for each role permission: a valid permission yields either its exact native representation or its generic representation, never neither.
+Each valid role permission must produce one form: native or generic. It must not produce zero forms or both forms.
 
-Translation is determined per action/scope pair. Consequently, different scopes for the same action may be stored in different representations: some as native relations and others as generic compatibility permissions. Authorization must check all applicable representations and preserve legacy OR semantics. For example, `roles:read` on `roles:*` can use a native group-resource relation while `roles:read` on `roles:uid:specific` uses a generic compatibility object.
+The choice is made for each action and scope pair, not only for the action. This means one action can use both forms. For example:
 
-Invalid permission data must fail reconciliation rather than being silently dropped or broadened.
+- `roles:read` on `roles:*` can be native.
+- `roles:read` on `roles:uid:specific` can be generic.
 
-`RoleToTuples` first canonicalizes Kubernetes datasource actions and scopes through the shared datasource translation helpers. For example, `*.datasource.grafana.app/datasources:get` becomes `datasources:read`, and `*.datasource.grafana.app/datasources:*` becomes `datasources:*`. This is required before native/generic classification; without it, existing datasource-related role permissions fail MT reconciliation or produce objects that cannot satisfy legacy checks.
+When a request has both scopes, Zanzana checks both forms and allows if either scope is allowed. This is what “mixed native and generic scopes” means.
 
-#### Unified check contract
+Bad permission data must stop reconciliation. It must not be silently skipped or changed into a broader grant.
 
-The branch implements the existing extension RPC as the general legacy-permission decision API. The protobuf contract remains:
+Datasource actions and scopes need one extra step. `RoleToTuples` first converts their Kubernetes form into the normal legacy form. For example, `*.datasource.grafana.app/datasources:get` becomes `datasources:read`. Classification happens after that conversion.
+
+#### Check API
+
+The branch uses the existing extension RPC:
 
 ```protobuf
 message CheckPermissionRequest {
@@ -350,52 +337,45 @@ message CheckPermissionResponse {
 }
 ```
 
-The request context includes:
+The request contains the subject, namespace, effective teams, one action, and zero or more scopes.
 
-- Canonical subject type and UID.
-- Effective stored teams or externally supplied groups according to authentication configuration.
-- Organization or stack namespace.
-- Anonymous or service-account identity type.
+Delegated token permissions are request limits, not stored grants. Grafana requires both the token and Zanzana to allow each permission leaf. A non-persistent token identity, such as an access-policy service identity, uses only its signed permission map.
 
-Token restrictions are not persisted authorization intent. Grafana intersects a delegated token's signed permission map with the Zanzana result for each evaluator leaf. Non-persistent token subjects, such as access-policy service identities, continue to use only their signed permission map.
+The server supports users, service accounts, and anonymous subjects. It validates the action and scopes, ensures that the namespace exists, and returns only `allowed`. Detailed errors stay in server logs. If Zanzana is primary and returns an error, Grafana denies the request. It does not use the RBAC shadow result.
 
-The server accepts canonical user, service-account, and anonymous subjects. `AccessControl` derives `org-<id>` when the requester has no explicit namespace, validates each action/scope leaf, and calls the RPC once per evaluator leaf. The response contains only `allowed`; it does not expose raw tuples or sensitive identity data.
+#### How a permission leaf is checked
 
-The exported server method calls `EnsureNamespace` before evaluation. Detailed translation and OpenFGA errors are logged server-side and returned to Grafana as a generic check error. When Zanzana is primary, Grafana returns an error and denies rather than using the RBAC shadow result.
+| Request type                                          | Zanzana behavior                                                               |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Native action with no scope, such as `teams:create`   | Check the native group-resource relation.                                      |
+| No-scope check for an action that normally has scopes | Ask whether any native object exists and also check the generic action marker. |
+| Native exact scope                                    | Run the normal Kubernetes-style resource check.                                |
+| Native wildcard                                       | Check the mapped group-resource or wildcard relation.                          |
+| Generic exact scope                                   | Check the encoded action and scope object.                                     |
+| Generic wildcard                                      | Check the exact request and every valid wildcard candidate.                    |
+| Several scopes                                        | Allow if any native or generic scope is allowed.                               |
+| Invalid action or scope                               | Reject it. Never turn invalid input into an allow.                             |
 
-#### Decision dispatch
+`EvalAny` and `EvalAll` stay in Grafana. Each leaf calls Zanzana. Scope candidates for one leaf are deduplicated and batch checked. Batching several evaluator leaves is not part of this branch.
 
-The server validates the action and every requested scope, then handles the following cases:
+The wildcard candidate builder keeps every form accepted by `ValidateScope`. A trailing `*` is valid only after `:` or `/`. A partial-prefix form such as `plugins:id:foo*` is invalid and projection rejects it.
 
-| Requirement                                            | Zanzana behavior                                                                                                                                                                                          |
-| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Native unscoped action such as `teams:create`          | Translate action metadata to the group, resource, and verb, then check the group-resource relation.                                                                                                       |
-| Scopeless check for an ordinarily scoped native action | Determine whether the subject has any native object for the action using `List` or an equivalent existence query. Also check the generic action marker because the action may have generic-shaped grants. |
-| Native exact scope                                     | Translate to a Kubernetes-style check and use normal group-resource, folder, typed-resource, or generic-resource semantics.                                                                               |
-| Native wildcard scope                                  | Check the corresponding group-resource or translated wildcard relation.                                                                                                                                   |
-| Generic exact scope                                    | Check the encoded action/scope object.                                                                                                                                                                    |
-| Generic wildcard scope                                 | Check the requested scope plus each valid wildcard candidate.                                                                                                                                             |
-| Multiple scopes                                        | OR the native and generic results, preserving `EvalPermission` semantics.                                                                                                                                 |
-| Invalid action or scope                                | Reject it before the RPC in `AccessControl`; the inner server checker also treats it as invalid. Never convert it into an allow.                                                                          |
+#### Scope resolvers
 
-`EvalAny` and `EvalAll` remain in the Grafana process and call the unified checker for each leaf. This preserves existing composition without forcing Zanzana to understand Grafana-specific evaluator trees. Scope candidates within one leaf are deduplicated and sent through one OpenFGA batch check. Batching multiple evaluator leaves is not implemented.
+The existing evaluator can retry after changing a scope. The Zanzana path keeps that behavior.
 
-#### Scope resolution
+Examples:
 
-The current evaluator first checks the supplied scopes and, after denial, can mutate scopes through registered resolvers and retry. The unified design retains that behavior.
+- turn `teams:id:12` into `teams:uid:<uid>`;
+- turn a numeric user ID into a user UID;
+- add a parent folder scope; or
+- leave a wildcard unchanged without looking up a resource.
 
-Typical cases include:
-
-- Translating `teams:id:<numeric-id>` to `teams:uid:<uid>`.
-- Translating `users:id:<numeric-id>` to a user UID.
-- Adding parent folder or resource scopes.
-- Preserving wildcard scopes without looking up a resource that may not exist.
-
-The classification used by the write-side projector and the request-side dispatcher must share the same translation metadata. Separate mapping tables would eventually drift.
+The write path and request path must use the same translation metadata. Two mapping tables would drift over time.
 
 #### Team permissions
 
-Role bindings assigned to a team are stored using the `team:<uid>#member` userset. A request supplies effective team UIDs as contextual tuples connecting the subject to those teams. OpenFGA then follows:
+A team role binding uses the `team:<uid>#member` userset. The request sends the user's effective team UIDs as context. OpenFGA follows this chain:
 
 ```text
 user:alice member team:ops
@@ -403,15 +383,17 @@ team:ops#member assignee role:team-creators
 role:team-creators#assignee create group_resource:iam.grafana.app/teams
 ```
 
-For `teams:create`, the unified native check asks whether `user:alice` has `create` on the teams group resource. It does not depend on `SignedInUser.Permissions` containing `teams:create`.
+For `teams:create`, Zanzana checks whether Alice can create the teams group resource. It does not require `SignedInUser.Permissions` to contain `teams:create`.
 
-The effective groups sent to Zanzana must follow the same configuration as ID-token group claims. When external groups are authoritative, the request must use the external group set rather than unioning stored teams and accidentally broadening access.
+An ordinary user or service-account access token only proves the identity. It is not automatically a downscope. Zanzana must still check the persistent identity. Only a genuinely delegated token uses its permission map as an extra limit.
 
-#### Worked example: `POST /api/teams/`
+If external groups are configured as the source of team context, use those groups. Do not also add stored teams unless the product rules explicitly require that union.
 
-The endpoint declares `EvalPermission("teams:create")`. Assume `user:alice` belongs to `team:ops`, `team:ops` is bound to `role:team-creators`, and that role grants `teams:create`.
+#### Example: `POST /api/teams/`
 
-The stored native relationship chain is:
+The endpoint asks for `teams:create`. Alice is in `team:ops`, and that team has a role that grants `teams:create`.
+
+The stored relationship is:
 
 ```text
 user:alice member team:ops
@@ -419,507 +401,550 @@ team:ops#member assignee role:team-creators
 role:team-creators#assignee create group_resource:iam.grafana.app/teams
 ```
 
-The interaction changes by phase:
+The result by migration stage is:
 
-1. **SQL/RBAC primary:** authentication queries the SQL assignment and permission tables, materializes `teams:create` in Alice's permission map, and the legacy evaluator allows the middleware check.
-2. **Partial Kubernetes migration with RBAC primary:** the role or assignment may exist only in Kubernetes/Zanzana. `GetUserPermissions` must reverse-list the native group-resource grant and merge `teams:create` into the legacy map. If that projection is missing, RBAC incorrectly denies even though Zanzana has the grant.
-3. **Implemented shadow mode:** RBAC returns the result from its current SQL map plus the optional native Zanzana merge. In parallel, the unified Zanzana checker translates `teams:create` to `create` on the teams group resource, supplies Alice's effective team context, and records whether the decisions match. Generic or unsupported native grants can legitimately mismatch until the Phase 2 resolver exists.
-4. **Zanzana primary:** the unified native check controls the request. The local permission map is not consulted for persistent authorization. RBAC evaluates the current map only in the background for comparison; after Phase 2, that shadow map comes from Kubernetes APIs.
-5. **End state after legacy removal:** the endpoint may continue declaring `EvalPermission("teams:create")`, but that evaluator is an adapter whose leaf calls Zanzana. Neither SQL permission rows nor a materialized map are required for the authorization decision.
+1. **RBAC from SQL:** SQL loads `teams:create` into Alice's local map. RBAC allows.
+2. **Kubernetes storage with RBAC primary:** the role may exist only in Kubernetes. RBAC needs the native merge. Without it, RBAC denies even though Zanzana has the grant.
+3. **RBAC primary with Zanzana shadow:** RBAC returns its result. Zanzana checks the team relationship in the background and records whether the results match.
+4. **Zanzana primary:** Zanzana controls the request. The local map is not used to authorize a persistent user. RBAC uses the map only for shadow comparison.
+5. **After SQL removal:** the endpoint may still call `EvalPermission("teams:create")`, but that evaluator leaf calls Zanzana. No SQL permission row is needed.
 
-This example illustrates why repairing only the permission merge is insufficient: the merge is required for the legacy engine and compatibility consumers, while the Zanzana engine must check the stored native relationship directly.
+Fixing only the native merge is not enough. The merge helps RBAC and compatibility consumers. The final decision path must check the stored relationship directly.
 
-#### Kubernetes-derived compatibility read model
+#### Compatibility permission map
 
-Direct authorization and permission enumeration are different operations. `GetUserPermissions` remains necessary for frontend capability maps, navigation, permission-inspection APIs, and the shadow legacy engine, but it must not be authoritative when Zanzana is primary.
+Direct authorization and permission listing are different jobs.
 
-This Kubernetes-derived resolver is a required follow-up and is **not implemented in this branch**. The implemented `ZanzanaPermissionResolver` reverse-lists only registered native action/resource translations. With `zanzanaMergeUserPermissions`, those results are unioned into the SQL-derived permission map. Generic action/scope objects are intentionally not enumerated, so this merge cannot become the final compatibility model.
+The UI, navigation, permission-inspection APIs, and RBAC shadow still need an action-to-scopes map. When Zanzana is primary, this map is not allowed to control backend authorization.
 
-The compatibility resolver reads permission intent from the Kubernetes IAM APIs rather than reconstructing it from OpenFGA. It must:
+The final compatibility resolver is **not implemented in this branch**. The current `ZanzanaPermissionResolver` lists only supported native grants and merges them with SQL permissions. It does not list generic grants.
 
-1. Read the subject's `RoleBinding` objects, including bindings for effective teams and the subject's basic organization role.
-2. Resolve referenced `Role` and `GlobalRole` objects, including global-role inheritance and omitted permissions.
-3. Return the action/scope pairs stored in those roles without translating them through OpenFGA.
-4. Include direct `ResourcePermission` grants for the subject, effective teams, and basic role, translating their native resource form to legacy action/scope only for compatibility consumers.
-5. Convert resource UIDs to legacy numeric-ID scopes only where a compatibility caller still requires them.
-6. Union and deduplicate results by action and scope.
-7. Apply token and delegated-permission restrictions before returning the result.
+The future resolver should read Kubernetes IAM resources, not OpenFGA. It must:
 
-The first Kubernetes-derived implementation should not add a cache. Existing API and storage caching remains unchanged until measurements show that another cache is needed.
+1. Find role bindings for the user, effective teams, and basic role.
+2. Read the referenced roles and global roles.
+3. Return the action and scope pairs stored in those roles.
+4. Include direct resource permissions for the user, teams, and basic role.
+5. Convert UIDs to numeric-ID scopes only where an old caller still needs that form.
+6. Remove duplicates.
+7. Apply delegated token limits before returning the map.
 
-While RBAC is primary, its effective map is:
+Start without a new cache. Measure the real cost first.
 
-```text
-legacy SQL permissions + existing reverse-listed native Zanzana permissions
-```
-
-After Kubernetes storage becomes authoritative and before the legacy evaluator is removed, the map becomes:
+The map changes like this:
 
 ```text
-Kubernetes-derived compatibility permissions only
+Before Phase 2: SQL permissions + current native Zanzana merge
+After Phase 2:  Kubernetes-derived compatibility permissions only
 ```
 
-When Zanzana is primary, this map is a compatibility read model and RBAC-shadow input only. It must not influence the direct decision. No paginated Zanzana `ListPermissions` RPC is added: Kubernetes is the intended source for permission enumeration, while Zanzana remains optimized for authorization decisions.
+We do not add a paginated Zanzana `ListPermissions` RPC. Kubernetes contains the original permission rules and is the right source for listing them. Zanzana remains focused on allow and deny decisions.
 
-#### Primary and shadow engine behavior
+#### Primary and shadow engines
 
-The implementation evaluates the same Grafana evaluator tree through both engines, but their current data sources are different:
+Today the two engines use different inputs:
 
 ```text
-RBAC decision = evaluator over SignedInUser.Permissions (SQL plus the optional native Zanzana merge)
-Zanzana decision = evaluator whose leaves call the unified Zanzana checker
+RBAC: evaluator over the local permission map
+Zanzana: evaluator whose leaves call CheckPermission
 ```
 
-| Configuration                            | Returned decision        | Background comparison    |
-| ---------------------------------------- | ------------------------ | ------------------------ |
-| `zanzanaRBACFallbackChecks=false`        | Legacy RBAC decision     | None                     |
-| Checks enabled, `primary_engine=rbac`    | Legacy RBAC decision     | Unified Zanzana decision |
-| Checks enabled, `primary_engine=zanzana` | Unified Zanzana decision | Legacy RBAC decision     |
+| Configuration                       | Returned result | Background result |
+| ----------------------------------- | --------------- | ----------------- |
+| `zanzanaRBACFallbackChecks=false`   | RBAC            | None              |
+| Checks on, `primary_engine=rbac`    | RBAC            | Zanzana           |
+| Checks on, `primary_engine=zanzana` | Zanzana         | RBAC              |
 
-The shadow evaluation runs asynchronously with a five-second timeout and does not inherit cancellation from the completed HTTP request. Comparisons are recorded at the complete evaluator result. Until the Kubernetes compatibility resolver exists, K8s-only generic grants and native grants unsupported by the merge are expected to appear as Zanzana-allow/RBAC-deny mismatches; these are evidence of an incomplete RBAC read model rather than incorrect Zanzana authorization.
+The shadow runs in the background with a five-second timeout. It compares the complete evaluator result. It does not change the request.
 
-Native leaves must not bypass Zanzana when it is primary. Generic leaves are evaluated normally by RBAC when RBAC is primary or shadow; they are not specially reconstructed into the local permission map.
+Until the Kubernetes compatibility resolver exists, some mismatches are expected. A Kubernetes-only generic grant can let Zanzana allow while RBAC denies because the local map cannot list that grant.
 
-If the primary engine errors, the request follows that engine's failure policy. It does not synchronously fall back to the shadow engine. Zanzana-primary authorization fails closed.
+If the primary engine returns an error, Grafana follows that engine's failure rule. It does not use the shadow result as a per-request fallback. Zanzana primary fails closed.
 
-#### Reconciliation and initial consistency model
+#### Reconciliation and consistency
 
-The first implementation uses the existing mutation hooks and MT reconciler. Kubernetes IAM APIs are the source of permission intent; Zanzana is their derived decision store. A missing namespace is initialized through `EnsureNamespace`, mutation hooks update affected tuples, and periodic reconciliation repairs drift and prunes orphan tuples.
+The first version uses the existing mutation hooks and MT reconciler. Kubernetes IAM APIs contain the rules. Zanzana is the derived decision store.
 
-This design initially accepts the existing eventual-consistency window. It does not add resource-version propagation, authorization revisions, freshness watermarks, or a second authoritative projection. Revocation delay and reconciliation lag must be measured during shadow rollout. A stronger read-after-write contract can be designed later if production evidence requires it.
+This design accepts the current short delay between a Kubernetes change and the matching Zanzana tuple update. We will measure grant and revocation delay during rollout. We are not adding revisions, freshness watermarks, or another projection system before measurements show they are needed.
 
-#### Failure modes
+#### Failures
 
-| Failure                                | RBAC-primary behavior                                                                                                   | Zanzana-primary behavior                                                                     |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Zanzana check timeout or error         | Return RBAC result; record shadow error.                                                                                | Fail closed; do not return shadow RBAC result.                                               |
-| Legacy SQL error                       | Fail according to current RBAC behavior.                                                                                | Does not affect the primary decision; may affect shadow comparison until SQL is retired.     |
-| Effective-permission enumeration error | RBAC cannot produce a complete primary map; fail the authorization setup rather than silently omitting migrated grants. | Direct checks continue; compatibility UI/read APIs return an error or explicitly stale data. |
-| Reconciliation lag                     | Continue using the configured primary and record reconciliation health.                                                 | The existing eventual-consistency window applies; operators can roll authority back.         |
-| Invalid permission translation         | Block reconciliation and surface the invalid object.                                                                    | Do not silently omit the grant.                                                              |
-| Shadow timeout                         | No user-facing effect; record timeout metric.                                                                           | No user-facing effect; record timeout metric.                                                |
-| Team context unavailable               | Deny team-derived grants and emit a diagnostic metric.                                                                  | Deny team-derived grants and emit a diagnostic metric.                                       |
+| Failure                  | RBAC primary                                         | Zanzana primary                                                                |
+| ------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Zanzana timeout or error | Return RBAC; record the shadow error.                | Deny; never use the RBAC shadow result.                                        |
+| Legacy SQL error         | Follow current RBAC failure behavior.                | Primary decision still works; RBAC shadow may fail.                            |
+| Compatibility map error  | Fail setup instead of silently dropping permissions. | Direct checks work; compatibility reads return an error or clear stale result. |
+| Reconciliation delay     | Keep using the chosen primary and report health.     | Existing delay applies; operators can change authority back to RBAC.           |
+| Invalid permission       | Stop reconciliation and report the bad object.       | Never silently omit the grant.                                                 |
+| Shadow timeout           | No user-facing effect; record a metric.              | No user-facing effect; record a metric.                                        |
+| Missing team context     | Deny team-derived access and report it.              | Deny team-derived access and report it.                                        |
 
-#### Security considerations
+#### Security
 
-- **Fail closed:** Zanzana errors must never become allows when it is primary.
-- **Namespace isolation:** every request, store, and tuple operation must include the canonical organization or stack namespace.
-- **Delegation:** a subject relation must be intersected with token or delegated restrictions. The system must not treat a token as the unrestricted user.
-- **External groups:** use exactly one configured effective group source. Do not union external and stored groups unless product semantics explicitly require it.
-- **Revocation safety:** stale grants are more severe than stale denials; measure mutation and reconciliation lag and keep authority rollback independent from stored intent.
-- **Invalid scopes:** reject malformed wildcards, control characters, ambiguous encodings, and noncanonical subjects.
-- **Observability privacy:** metrics must not use raw subject, action, or scope as labels. Logs containing them must be sampled and access controlled.
-- **Global permissions:** Grafana Admin and no-organization permissions need an explicit global namespace/store strategy or an intentionally separate authority boundary before SQL removal.
+- Zanzana-primary errors fail closed.
+- Every request and tuple operation uses the correct organization or stack namespace.
+- Delegated token limits are combined with, not replaced by, the subject's Zanzana result.
+- Use one configured source for effective groups. Do not accidentally union stored and external groups.
+- Measure revocation delay. A stale allow is more dangerous than a stale deny.
+- Reject bad wildcards, control characters, encoded values, and subject formats.
+- Do not put subjects, raw actions, or raw scopes in metric labels.
+- Define a clear global namespace strategy for Grafana Admin and `NoOrgID` permissions before removing SQL.
 
-#### Performance and scaling
+#### Performance
 
-The unified checker adds a remote or in-process decision for legacy evaluator leaves. The implementation should:
-
-- Batch leaves from `EvalAny` and `EvalAll` where possible.
-- Deduplicate scope and wildcard candidates before issuing OpenFGA checks.
+- Deduplicate scopes and wildcard candidates before OpenFGA checks.
 - Reuse namespace store and model metadata.
-- Bound shadow execution independently of the primary request.
-- Avoid using full effective-permission enumeration on the hot authorization path.
-- Measure native, generic, mixed, and scopeless decision latency separately without high-cardinality labels.
+- Give shadow work its own timeout.
+- Do not list all effective permissions on the hot decision path.
+- Measure native, generic, mixed, and no-scope checks with bounded labels.
+- Batch evaluator leaves later if measurements show it is needed.
 
-The generic compatibility model increases tuple count only for permissions that lack native translations. Tracking generic tuple and decision volume gives a measurable burn-down metric as native coverage increases.
+Only permissions without a native mapping add generic tuples. Generic tuple and check counts show how much migration work remains.
 
-#### Pros
+#### Benefits
 
-- Makes Zanzana authoritative for every decision without duplicating every native permission.
-- Uses the same native tuples for Kubernetes and legacy callers.
-- Covers direct `ResourcePermission` tuples as well as role-derived tuples.
-- Continuously validates native translation semantics through full shadow decisions.
-- Keeps legacy action/scope callers working while their storage and decision engine change underneath them.
-- Provides a clear end state where generic compatibility objects can be removed incrementally.
+- Zanzana can control every decision without copying every native grant.
+- Kubernetes and legacy callers test the same native tuples.
+- Direct resource permissions are included.
+- Full shadow checks expose translation mistakes.
+- Old action and scope callers keep working during the migration.
+- Generic objects can be removed one permission family at a time.
 
-#### Cons
+#### Costs
 
-- Requires a robust legacy action/scope-to-native-check translator.
-- Scopeless checks over ordinarily scoped native actions may require an existence/List operation.
-- Mixed native and generic scopes make batching and diagnostics more complex.
-- Requires a complete Kubernetes-derived compatibility resolver for permission-list consumers.
-- Initially retains the existing eventual-consistency window, which must be measured during rollout.
+- The action-and-scope translator must be correct and shared by writes and checks.
+- No-scope checks for a normally scoped action may need a list or existence query.
+- Mixed native and generic scopes add some check and debug complexity.
+- The UI and inspection APIs still need the future Kubernetes compatibility resolver.
+- The first version keeps the current reconciliation delay.
 
 ## Migration prerequisite
 
-This plan assumes the Kubernetes IAM APIs are already a complete and usable contract for authorization data. `Role`, `GlobalRole`, `RoleBinding`, `ResourcePermission`, `Team`, `User`, `ServiceAccount`, folder, and anonymous-setting data can be read through those APIs. Whether an API is backed by legacy SQL, unified storage, dual write, or another internal mode is outside this plan. Zanzana and Grafana consumers depend only on the Kubernetes API contract.
+This plan assumes the Kubernetes IAM APIs can already return all authorization data that Zanzana needs. The internal storage mode does not matter to this plan.
 
-There is therefore no Kubernetes API rollout phase here. The remaining migration is to complete Zanzana projection and decisions, move compatibility reads to Kubernetes, change decision authority, and then remove legacy implementation details.
+The APIs must provide roles, global roles, role bindings, resource permissions, teams, users, service accounts, folders, and anonymous settings. Zanzana and Grafana consumers use that API contract instead of depending on the backing database.
+
+There is no Kubernetes API rollout phase in this design. The remaining work is Zanzana projection, full checks, Kubernetes-based compatibility reads, authority changes, and old-code removal.
 
 ## Existing rollout controls
 
-The branch reuses existing controls; it does not add a new feature flag.
+This branch uses existing controls and adds no new feature flag.
 
-| Control                           | Implemented purpose                                                                                                                                                                                                                                                                                                |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `zanzana`                         | Enables the Zanzana service/client and tuple synchronization. It does not by itself change `AccessControl.Evaluate` authority.                                                                                                                                                                                     |
-| `[zanzana.reconciler] mode = mt`  | Makes Zanzana build tuples from the Kubernetes IAM APIs. The API backing mode is intentionally opaque.                                                                                                                                                                                                             |
-| `zanzanaMergeUserPermissions`     | Reverse-lists supported native Zanzana actions and merges them into the SQL-derived legacy permission map. It does not enumerate generic compatibility permissions.                                                                                                                                                |
-| `zanzanaRBACFallbackChecks`       | Enables the unified native/generic `CheckPermission` path and primary/shadow evaluator routing. When disabled, `AccessControl.Evaluate` is RBAC-only even if `primary_engine` is set to `zanzana`.                                                                                                                 |
-| `[zanzana.client] primary_engine` | With unified checks enabled, selects `rbac` or `zanzana` as the returned decision while the other evaluator runs asynchronously in shadow.                                                                                                                                                                         |
-| `zanzanaNoLegacyClient`           | Makes the Kubernetes-style authorization client providers in `pkg/services/authz/rbac.go` return the Zanzana client instead of the legacy RBAC client. It does not select `AccessControl.Evaluate` authority, replace `GetUserPermissions`, disable the SQL permission store, or remove the RBAC shadow evaluator. |
+| Control                           | What it does                                                                                                                                                       |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `zanzana`                         | Starts Zanzana and tuple sync. It does not change `AccessControl.Evaluate` by itself.                                                                              |
+| `[zanzana.reconciler] mode = mt`  | Builds tuples from Kubernetes IAM APIs.                                                                                                                            |
+| `zanzanaMergeUserPermissions`     | Adds supported native Zanzana grants to the SQL-based local map. It does not add generic grants.                                                                   |
+| `zanzanaRBACFallbackChecks`       | Enables `CheckPermission` and primary/shadow routing. When off, legacy evaluation is RBAC-only even if `primary_engine=zanzana`.                                   |
+| `[zanzana.client] primary_engine` | Chooses `rbac` or `zanzana` as the returned decision when checks are enabled.                                                                                      |
+| `zanzanaNoLegacyClient`           | Makes Kubernetes-style authorization client providers use Zanzana. It does not choose the legacy evaluator's primary engine, replace the local map, or remove SQL. |
 
-Stored intent and tuple synchronization are independent from decision routing. Changing `primary_engine` or disabling `zanzanaRBACFallbackChecks` must not delete or stop reconciling tuples.
+Decision routing and tuple sync are separate. Changing `primary_engine` or turning off fallback checks must not delete stored rules or stop reconciliation.
 
-The future Kubernetes-derived compatibility resolver needs an explicit rollout decision. This design does not overload `zanzanaNoLegacyClient` with that responsibility because the current implementation gives the flag a narrower, already deployed meaning.
+The future Kubernetes compatibility resolver needs its own rollout control. Do not reuse `zanzanaNoLegacyClient`; that flag already has a narrower meaning.
 
-## Implementation status in this branch
+## What is implemented in this branch
 
-| Area                                               | Status                                                                                                                                                                                  |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Native-or-generic role projection                  | Implemented by `TranslatePermission` and `RoleToTuples`; Kubernetes datasource action/scope forms are canonicalized first.                                                              |
-| Kubernetes resource projection                     | Implemented by the MT reconciler for folders, roles/global-role composition, role bindings, resource permissions, teams, users, service accounts, and per-namespace anonymous settings. |
-| Unified legacy action/scope decision               | Implemented by `CheckPermission`, including native, generic, mixed-scope, wildcard, scopeless, and contextual-team checks.                                                              |
-| Grafana evaluator integration                      | Implemented for `EvalPermission`, `EvalAny`, `EvalAll`, resolver retries, primary/shadow routing, and token restrictions.                                                               |
-| Rollout metrics and sampled mismatch logs          | Implemented with bounded Prometheus labels and deterministic sampled logs.                                                                                                              |
-| Existing Zanzana-to-RBAC native merge              | Retained as a transition mechanism; generic permissions remain absent from the merged map.                                                                                              |
-| Kubernetes-derived compatibility resolver          | Not implemented.                                                                                                                                                                        |
-| Removal of legacy authorization-table reads/writes | Not implemented.                                                                                                                                                                        |
-| Enterprise-specific source changes                 | None required; the shared implementation runs with the Enterprise overlay and license.                                                                                                  |
+| Area                                      | Status                                                                                                                                                |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Native-or-generic role translation        | Implemented. Datasource actions and scopes are normalized first.                                                                                      |
+| Kubernetes resource projection            | Implemented for folders, roles, global-role composition, role bindings, resource permissions, teams, users, service accounts, and anonymous settings. |
+| Legacy action and scope checks in Zanzana | Implemented for native, generic, mixed, wildcard, no-scope, and team checks.                                                                          |
+| Grafana evaluator integration             | Implemented for permission leaves, `EvalAny`, `EvalAll`, resolver retries, primary/shadow routing, and token limits.                                  |
+| Metrics and sampled mismatch logs         | Implemented.                                                                                                                                          |
+| Current native merge into RBAC            | Kept for migration. Generic permissions are still missing from that map.                                                                              |
+| Kubernetes compatibility resolver         | Not implemented.                                                                                                                                      |
+| Removal of legacy authorization tables    | Not implemented.                                                                                                                                      |
+| Enterprise-only code changes              | None needed. The shared code works with the Enterprise overlay and license.                                                                           |
 
 ## Migration plan
 
 ```mermaid
 flowchart TD
-  P0[Phase 0: Kubernetes data contract available]
-  P1[Phase 1: Complete Zanzana projection and shadow decisions]
-  P2[Phase 2: Kubernetes-derived RBAC compatibility]
-  P3[Phase 3: Zanzana decision authority]
-  P4[Phase 4: Disable legacy Kubernetes authorization client]
-  P5[Phase 5: Remove legacy authorization tables]
-  P6[Phase 6: Burn down generic tuples]
+  P0[0. Check the Kubernetes API contract]
+  P1[1. Complete Zanzana checks and shadowing]
+  P2[2. Build the RBAC map from Kubernetes]
+  P3[3. Make Zanzana primary]
+  P4[4. Stop using the legacy Kubernetes auth client]
+  P5[5. Remove legacy authorization code and tables]
+  P6[6. Replace generic permissions with native ones]
 
   P0 --> P1 --> P2 --> P3 --> P4 --> P5 --> P6
-  P3 -. primary-engine rollback .-> P2
+  P3 -. decision rollback .-> P2
 ```
 
-### Phase 0: Kubernetes API prerequisite
+### Phase 0: Check the Kubernetes API contract
 
-**Permission data interface:** Kubernetes IAM APIs.
+**Data source:** Kubernetes IAM APIs.
 
-**Decision authority:** legacy RBAC.
+**Decision authority:** RBAC.
 
-Confirm that every identity, role, assignment, permission, direct resource grant, team relation, folder relation, and anonymous setting needed by Zanzana is readable through the Kubernetes APIs. This is contract validation, not a rollout or storage-mode project.
+Confirm that Zanzana can read every required identity, role, binding, permission, team relation, folder relation, and anonymous setting through the Kubernetes APIs.
 
-The existing legacy RBAC permission map remains SQL-derived and continues to merge reverse-listed Zanzana permissions for grants that no longer exist in legacy permission tables. This merge is necessary until Phase 2; it is not part of the final design.
+The RBAC map still comes from SQL plus the current native merge. That merge is temporary.
 
-**Exit gate:** the MT reconciler can obtain every required source object through Kubernetes APIs for representative namespaces.
+**Done when:** the MT reconciler can read all required objects for representative namespaces.
 
-**Implementation status:** the branch assumes this contract and the manual Enterprise run successfully reconciled representative roles, role bindings, teams, users, service accounts, folders, resource permissions, and anonymous settings through the Kubernetes APIs.
+**Branch status:** assumed by the design and covered by the Enterprise manual run.
 
-### Phase 1: Complete Zanzana projection and full shadow decisions
+### Phase 1: Complete Zanzana checks and shadowing
 
-**Permission data interface:** Kubernetes IAM APIs.
+**Data source:** Kubernetes IAM APIs.
 
-**Decision authority:** legacy RBAC map.
+**Decision authority:** RBAC.
 
-**Configuration:** `zanzana=true`, MT reconciler, `zanzanaRBACFallbackChecks=true`, `primary_engine=rbac`.
+**Config:** `zanzana=true`, MT reconciler, `zanzanaRBACFallbackChecks=true`, `primary_engine=rbac`.
 
-Actions:
+Work:
 
-1. Project each `Role` and `GlobalRole` permission to exactly one representation: native when exact, generic otherwise.
-2. Reconcile role bindings, direct resource permissions, teams, basic roles, users, service accounts, folders, and anonymous assignment tuples from Kubernetes resources.
-3. Send every legacy evaluator leaf to the unified Zanzana checker; do not locally short-circuit native leaves.
-4. Support native, generic, mixed-scope, wildcard, scopeless, team-derived, service-account, anonymous, and resolver-retry checks.
-5. Intersect delegated token permissions with Zanzana per leaf. Evaluate non-persistent token subjects from signed claims only.
-6. Compare complete evaluator results and record errors, mismatches, and latency using bounded labels.
-7. Continue the existing `zanzanaMergeUserPermissions` behavior so RBAC remains a complete baseline while it is primary.
+1. Store every valid role permission as exactly one native or generic form.
+2. Reconcile all supported Kubernetes authorization resources.
+3. Send every legacy evaluator leaf to Zanzana in shadow. Do not skip native leaves.
+4. Cover native, generic, mixed, wildcard, no-scope, team, service-account, anonymous, and resolver cases.
+5. Apply delegated token limits per leaf. Use signed claims only for non-persistent token subjects.
+6. Record complete-result matches, mismatches, errors, and latency.
+7. Keep the current native merge so RBAC remains usable while it is primary.
 
 ```text
-request -> SQL + current Zanzana merge -> RBAC evaluator -> authoritative result
-       \-> unified native/generic Zanzana evaluator -> shadow result
+request -> SQL + native merge -> RBAC -> returned result
+       \-> Kubernetes tuples -> Zanzana -> shadow result
 ```
 
-**Rollback:** disable `zanzanaRBACFallbackChecks`; reconciliation remains enabled.
+**Rollback:** turn off `zanzanaRBACFallbackChecks`. Tuple sync stays on.
 
-**Exit gate:** all legacy permission leaves are eligible for comparison, the required identity and permission contract tests pass, and mismatch/error/latency measurements meet the rollout gate.
+**Done when:** all permission and identity tests pass and the approved shadow metrics are healthy.
 
-**Implementation status:** implemented in this branch. Production promotion remains gated on representative reconciliation coverage and an approved shadow soak.
+**Branch status:** implemented. Production still needs a shadow soak.
 
-### Phase 2: Kubernetes-derived RBAC compatibility
+### Phase 2: Build the RBAC compatibility map from Kubernetes
 
-**Permission data interface:** Kubernetes IAM APIs.
+**Data source:** Kubernetes IAM APIs.
 
-**Decision authority:** legacy RBAC evaluator.
+**Decision authority:** RBAC.
 
-**Configuration:** keep full Zanzana shadowing. The resolver-selection rollout mechanism is not implemented or selected by this branch.
+Build the future compatibility resolver. It reads role bindings, roles, global roles, basic roles, team bindings, and resource permissions from Kubernetes and returns `map[action][]scope`.
 
-Implement a Kubernetes compatibility resolver that builds `map[action][]scope` from role bindings, effective roles/global roles, basic-role assignment, team bindings, and direct resource permissions. Use it for authentication-time materialization, frontend capability maps, permission inspection, and the RBAC shadow engine. Do not add a Zanzana permission-enumeration RPC.
+Use this map for authentication, UI capability checks, permission inspection, and the RBAC shadow. Do not add a Zanzana permission-list RPC.
 
-During rollout, compare the Kubernetes-derived map with the current SQL-plus-Zanzana-merge map. Once a cohort selects the Kubernetes resolver, that request path must not query legacy authorization tables and must not union the old map back in. A missing Kubernetes read is an error, not an empty permission set.
+During rollout, compare the Kubernetes map with the current SQL-plus-native-merge map. Once a cohort uses the Kubernetes resolver, do not query or union the SQL authorization map for that cohort. A failed Kubernetes read is an error, not an empty map.
 
 ```text
-Kubernetes IAM APIs -> compatibility map -> RBAC evaluator -> authoritative result
-Kubernetes IAM APIs -> Zanzana tuples -> unified checker -> shadow result
+Kubernetes APIs -> compatibility map -> RBAC -> returned result
+Kubernetes APIs -> Zanzana tuples -> Zanzana -> shadow result
 ```
 
-**Rollback:** switch the cohort back to the SQL-plus-native-merge resolver while legacy table mirrors still exist. The control that selects the compatibility resolver is future work; the current `zanzanaNoLegacyClient` flag must not be used for this purpose. Decision semantics do not change.
+**Rollback:** return the cohort to the SQL-plus-native-merge resolver while the SQL mirror still exists. This needs a future flag; do not use `zanzanaNoLegacyClient`.
 
-**Exit gate:** RBAC primary runs for the required soak period using only Kubernetes-derived permissions, including frontend and inspection consumers, and the current Zanzana-to-RBAC merge is no longer needed.
+**Done when:** RBAC and all compatibility consumers run for the required soak using only the Kubernetes-derived map.
 
-**Implementation status:** not implemented.
+**Branch status:** not implemented.
 
-### Phase 3: Zanzana decision authority
+### Phase 3: Make Zanzana the decision authority
 
-**Permission data interface:** Kubernetes IAM APIs.
+**Data source:** Kubernetes IAM APIs.
 
-**Decision authority:** unified Zanzana checker.
+**Decision authority:** Zanzana.
 
-**Configuration:** `zanzanaRBACFallbackChecks=true`, `primary_engine=zanzana`.
+**Config:** `zanzanaRBACFallbackChecks=true`, `primary_engine=zanzana`.
 
-Zanzana allows and denies control every legacy evaluator leaf. Errors fail closed. The RBAC evaluator runs only as a shadow over the Kubernetes-derived compatibility map. Promotion can be namespace- or cohort-based using existing rollout configuration.
+Zanzana controls every legacy evaluator leaf. Errors deny. RBAC runs only as a shadow using the Kubernetes-derived compatibility map.
 
 ```text
-request -> unified native/generic Zanzana evaluator -> authoritative result
-       \-> Kubernetes-derived map -> RBAC evaluator -> shadow result
+request -> Zanzana -> returned result
+       \-> Kubernetes compatibility map -> RBAC -> shadow result
 ```
 
-**Rollback:** set `primary_engine=rbac`. This changes only decision routing; Kubernetes intent and Zanzana reconciliation continue.
+**Rollback:** set `primary_engine=rbac`. Stored Kubernetes rules and tuple sync do not change.
 
-**Exit gate:** all cohorts complete the approved soak, no decision depends on legacy authorization tables, and no security-relevant caller bypasses the unified checker.
+**Done when:** all cohorts finish the approved soak and no security check bypasses the unified Zanzana path.
 
-**Implementation status:** primary-engine selection and authoritative Zanzana evaluation are implemented and manually exercised. Production promotion remains sequenced after Phase 2 so RBAC shadow and compatibility consumers no longer depend on an incomplete SQL/native-merge map.
+**Branch status:** primary selection and Zanzana authority are implemented and manually tested. Production rollout should still follow Phase 2.
 
-### Phase 4: Disable the legacy Kubernetes-style authorization client
+### Phase 4: Stop using the legacy Kubernetes authorization client
 
-**Permission data interface:** Kubernetes IAM APIs.
+**Data source:** Kubernetes IAM APIs.
 
-**Decision authority:** unified Zanzana checker for legacy evaluators; Zanzana client for Kubernetes-style `Check`, `BatchCheck`, and `List` callers.
+**Decision authority:** Zanzana for both legacy evaluator leaves and Kubernetes-style clients.
 
-**Configuration:** enable `zanzanaNoLegacyClient` with `zanzana=true` after the applicable Kubernetes-style client paths have completed their soak.
+**Config:** `zanzana=true`, `zanzanaNoLegacyClient=true`.
 
-This flag changes the client returned by `pkg/services/authz/rbac.go`. It does not remove SQL authorization-table access or the compatibility map. It can therefore be tested independently from physical storage removal.
+This changes the client returned by `pkg/services/authz/rbac.go`. It does not remove SQL or the compatibility map.
 
-**Rollback:** disable `zanzanaNoLegacyClient`; stored Kubernetes intent and Zanzana tuples remain unchanged.
+**Rollback:** turn off `zanzanaNoLegacyClient`.
 
-**Implementation status:** implemented and manually exercised. No Enterprise-specific source changes were required.
+**Branch status:** implemented and manually tested. No Enterprise-only code was needed.
 
-### Phase 5: Remove legacy authorization implementation
+### Phase 5: Remove legacy authorization code and tables
 
-Remove reads and writes specific to `role`, `permission`, `user_role`, `team_role`, and `builtin_role`; remove the old Zanzana-to-RBAC merge, SQL permission caches, seed/migration jobs, and the legacy Kubernetes-style RBAC client. Keep `AccessControl.Evaluate` as a compatibility adapter to Zanzana and keep the Kubernetes-derived map only for non-authoritative UI/inspection contracts until those callers migrate.
+Remove authorization reads and writes for `role`, `permission`, `user_role`, `team_role`, and `builtin_role`. Also remove the native merge, SQL permission caches, old seed and migration jobs, and the legacy Kubernetes-style RBAC client.
 
-Physical schema removal is a separate reviewed database migration after logical dependencies have soaked and downgrade constraints are understood.
+Keep `AccessControl.Evaluate` as an adapter whose leaves call Zanzana. Keep the Kubernetes-derived map only for UI and inspection callers that still need it.
 
-**Implementation status:** not implemented.
+Drop the physical SQL tables in a separate database migration after logical use has stopped and downgrade rules are clear.
 
-### Phase 6: Burn down generic compatibility permissions
+**Branch status:** not implemented.
 
-Add exact native models permission family by permission family. For one family at a time, compare its native and generic decisions, switch classification to native after parity, and reconcile away obsolete generic tuples. Generic compatibility may remain for plugin-defined actions only if that is an explicit product contract.
+### Phase 6: Replace generic permissions with native ones
 
-**Implementation status:** generic compatibility projection and decisions are implemented; family-by-family removal is future work.
+Move one permission family at a time. Compare native and generic results, switch to native after they match, then remove the old generic tuples.
 
-## Authorization interaction matrix
+Generic permissions may remain for plugin-defined actions if we choose that as a product contract.
 
-| Phase | Permission data interface                                      | Primary decision | RBAC map source                     | Zanzana role                                       | Legacy authorization tables  |
-| ----- | -------------------------------------------------------------- | ---------------- | ----------------------------------- | -------------------------------------------------- | ---------------------------- |
-| 0     | Kubernetes APIs available; legacy implementation still present | RBAC             | SQL + optional native Zanzana merge | Partial projection                                 | Required                     |
-| 1     | Kubernetes APIs                                                | RBAC             | SQL + optional native Zanzana merge | Complete full-decision shadow                      | Required for RBAC baseline   |
-| 2     | Kubernetes APIs                                                | RBAC             | Kubernetes compatibility resolver   | Complete shadow                                    | Not read by migrated cohorts |
-| 3     | Kubernetes APIs                                                | Zanzana          | Kubernetes resolver, shadow/UI only | Authoritative for legacy evaluator leaves          | Not required for decisions   |
-| 4     | Kubernetes APIs                                                | Zanzana          | Kubernetes resolver, shadow/UI only | Also serves Kubernetes-style authorization clients | Not required for decisions   |
-| 5     | Kubernetes APIs                                                | Zanzana          | Compatibility consumers only        | Sole decision engine                               | Remove                       |
-| 6     | Kubernetes APIs                                                | Zanzana          | Compatibility consumers only        | Native-first                                       | Removed                      |
+**Branch status:** generic checks work now; removal is future work.
 
-## Testing strategy
+## Authorization matrix
 
-### Projection and decision contract
+| Phase | Primary decision | RBAC map source                   | Zanzana use                           | Legacy authorization tables  |
+| ----- | ---------------- | --------------------------------- | ------------------------------------- | ---------------------------- |
+| 0     | RBAC             | SQL + optional native merge       | Partial projection                    | Required                     |
+| 1     | RBAC             | SQL + optional native merge       | Full shadow                           | Required for RBAC            |
+| 2     | RBAC             | Kubernetes compatibility resolver | Full shadow                           | Not read by migrated cohorts |
+| 3     | Zanzana          | Kubernetes map for shadow and UI  | Primary for legacy evaluator leaves   | Not needed for decisions     |
+| 4     | Zanzana          | Kubernetes map for shadow and UI  | Also used by Kubernetes-style clients | Not needed for decisions     |
+| 5     | Zanzana          | Compatibility callers only        | Only decision engine                  | Remove                       |
+| 6     | Zanzana          | Compatibility callers only        | Native first                          | Removed                      |
 
-For every supported permission fixture:
+## Testing
 
-1. Create its Kubernetes source object.
+### Permission contract test
+
+For each permission fixture:
+
+1. Create the Kubernetes source object.
 2. Reconcile it into Zanzana.
-3. Assert the expected native or generic tuple shape.
+3. Check the expected native or generic tuple.
 4. Bind it to each supported subject type.
-5. Assert the unified public decision API allows the intended request.
-6. Delete or revoke the source object.
-7. Wait for the existing reconciliation path and assert the same API denies.
+5. Call the public check API and expect allow.
+6. Remove the grant.
+7. Wait for reconciliation and expect deny.
 
-The test must not call private projector helpers to manufacture the decision-side expectation; otherwise write and read paths can share the same bug.
+Do not create the expected decision by calling the same private translator used by the write path. That could hide a shared bug.
 
-### Required identity matrix
+### Identity cases
 
-- Direct user role binding.
-- Team role binding with stored membership.
-- Team role binding with configured external groups.
+- Direct user binding.
+- Team binding with stored membership.
+- Team binding with external groups.
 - Basic organization role.
-- Custom and global role composition.
+- Custom and global roles.
 - Service account.
-- Anonymous subject.
-- Token-defined or delegated identity with restrictions narrower than the subject's full grants.
+- Anonymous user.
+- Delegated token that is narrower than the subject's stored grants.
 
-### Required permission matrix
+### Permission cases
 
-- Native unscoped action such as `teams:create`.
-- Native exact and wildcard resource scopes.
-- Folder-inherited dashboard and folder permissions.
-- Direct `ResourcePermission` grants.
-- Generic scopeless action.
-- Generic exact, kind wildcard, global wildcard, and descendant wildcard scopes.
+- Native no-scope action such as `teams:create`.
+- Native exact and wildcard scopes.
+- Folder inheritance.
+- Direct resource permission.
+- Generic no-scope action.
+- Generic exact, kind wildcard, global wildcard, and child-path wildcard scopes, plus rejection of invalid partial-prefix wildcards.
 - One action with both native and generic scopes.
-- Numeric-ID scope that requires UID resolution.
-- `EvalAny`, `EvalAll`, and nested compositions.
-- Invalid actions, malformed scopes, invalid subjects, and empty namespaces.
+- Numeric ID that needs UID resolution.
+- `EvalAny`, `EvalAll`, and nested evaluators.
+- Bad actions, scopes, subjects, and namespaces.
 
-### Reconciliation and consistency tests
+### Reconciliation cases
 
-- Initial namespace reconciliation.
-- Existing namespace freshness after process restart.
-- Concurrent mutation and periodic reconciliation.
-- Add, update, and revoke visibility within the measured reconciliation window.
-- Orphan tuple pruning.
-- Partial batch failure leaves the previous complete decision state intact.
-- Leader changes and multiple Grafana/Zanzana replicas.
-- Cache invalidation after role, permission, team, external-group, and token changes.
+- First namespace sync.
+- Restart with existing data.
+- Mutation plus periodic reconciliation.
+- Grant, update, and revoke delay.
+- Old tuple cleanup.
+- Partial batch failure.
+- Leader changes and multiple replicas.
+- Cache invalidation after identity or permission changes.
 
-### Rollout tests
+### Rollout cases
 
-- RBAC-primary returns RBAC while recording the full Zanzana decision.
-- Zanzana-primary returns Zanzana while recording the full RBAC decision.
-- Shadow timeouts do not delay or change primary results beyond their independent budget.
-- Zanzana-primary errors fail closed.
-- Authority rollback changes only routing, not stored intent.
-- SQL-disabled RBAC compatibility mode obtains its complete map from the Kubernetes IAM APIs.
+- RBAC primary returns RBAC and records the Zanzana result.
+- Zanzana primary returns Zanzana and records the RBAC result.
+- Shadow timeouts do not change the primary result.
+- Zanzana-primary errors deny.
+- Changing authority does not change stored permission rules.
+- RBAC can use only the Kubernetes compatibility map after SQL reads are disabled.
 
-## Implementation validation
+## Validation completed on this branch
 
-The branch was built and run as Grafana Enterprise using the standard Enterprise-to-OSS overlay and a valid development license. No Enterprise-specific source changes were required. Focused Go tests for `pkg/services/accesscontrol/acimpl` and `pkg/services/authz/zanzana/...` passed 683 tests across ten packages.
+The branch was built and run as Grafana Enterprise with the standard Enterprise
+overlay and a development license. No Enterprise-only source changes were needed.
+The following focused Go test executions all passed:
 
-The manual fixture contained:
+- 617 tests in `accesscontrol/acimpl`, `authz/zanzana`, and `setting`;
+- 816 tests in `authz/zanzana/server`, `authz/rbac`, and
+  `accesscontrol/dualwrite`; and
+- 427 Enterprise-tagged tests in `accesscontrol/acimpl` and
+  `authz/zanzana/server`.
 
-- A user with a legacy team-derived `teams:read` permission.
-- A separate Kubernetes `Team`, `Role`, and `RoleBinding` granting native `teams:create`, scoped `dashboards:read`, generic `plugins.app:access`, and mixed native/generic `roles:read` permissions.
-- A Viewer without the custom team binding, used to verify negative controls and unchanged basic-role access.
+The main manual fixture used the three rollout states from the test guide. Its IAM
+storage mode kept the current SQL compatibility mirror available. The fixture had:
 
-The observed HTTP decisions were:
+- a user with one legacy `teams:read` grant;
+- a Kubernetes IAM team, role, and binding with native `teams:create`,
+  `teams:write`, scoped `dashboards:read`, generic `plugins.app:access`, and mixed
+  `roles:read`;
+- a service account with the same Kubernetes IAM role;
+- a no-role user; and
+- a Viewer used as a stable control.
 
-| Request                                  | RBAC only | RBAC primary + shadow | RBAC primary + native merge | Zanzana primary | Zanzana primary + no legacy client |
-| ---------------------------------------- | --------: | --------------------: | --------------------------: | --------------: | ---------------------------------: |
-| Anonymous team search                    |       401 |                   401 |                         401 |             401 |                                401 |
-| Team user: team search                   |       200 |                   200 |                         200 |             200 |                                200 |
-| Team user: create team                   |       403 |                   403 |                         200 |             200 |                                200 |
-| Team user: scoped dashboard read         |       403 |                   403 |                         200 |             200 |                                200 |
-| Team user: generic plugin access         |       403 |                   403 |                         403 |             200 |                                200 |
-| Team user: mixed role list/get           |       403 |                   403 |                         403 |             200 |                                200 |
-| Viewer: team search/create               |       403 |                   403 |                         403 |             403 |                                403 |
-| Viewer: existing plugin/dashboard access |       200 |                   200 |                         200 |             200 |                                200 |
+Observed API results:
 
-This validates the intended boundaries:
+| Request                               | RBAC only | RBAC + shadow | Zanzana primary |
+| ------------------------------------- | --------: | ------------: | --------------: |
+| Anonymous team search                 |       401 |           401 |             401 |
+| Main user: team search and create     |       200 |           200 |             200 |
+| Main user: dashboard read             |       200 |           200 |             200 |
+| Main user: generic plugin access      |       200 |           200 |             200 |
+| Main user: mixed role list and get    |       200 |           200 |             200 |
+| No-role user: protected requests      |       403 |           403 |             403 |
+| Viewer: dashboard read                |       200 |           200 |             200 |
+| Kubernetes-style dashboard request    |       200 |           200 |             200 |
+| Service account: dashboard and plugin |       200 |           200 |             200 |
 
-- Shadow mode does not change the returned RBAC decision.
-- `zanzanaMergeUserPermissions` reconstructs supported native grants but does not reconstruct generic or mixed grants.
-- Zanzana-primary evaluation authorizes native, scoped, generic, and mixed permissions from their stored tuples.
-- `zanzanaNoLegacyClient` does not change legacy-evaluator decisions once Zanzana is primary.
-- Disabling all migration decision flags restores RBAC-only behavior without changing stored Kubernetes intent.
+The rendered UI showed the dashboard, team list, new-team control, and Assistant
+app for the main user in all three states. The no-role user received Forbidden
+responses and had no Assistant navigation. The Viewer kept dashboard access. This
+checkout has no standalone Roles page, so role behavior was verified through the
+API.
 
-The team-permission failure that motivated this work was also isolated. After temporarily removing the user from the explicit Kubernetes grant team, Zanzana still allowed team search from the separately stored legacy team permission, while team creation, plugin access, dashboard access, and role reads were denied. Restoring the Kubernetes team membership restored those K8s-derived grants. Therefore, authoritative Zanzana decisions no longer require the team permission to be present in `SignedInUser.Permissions`.
+The first team-create pass exposed a supporting permission that the fixture was
+missing. The handler creates a Team and then updates it to add the persistent user
+as an administrator. `teams:create` authorizes the create and `teams:write` on all
+teams authorizes the update. After adding both permissions, the final request in
+each state returned 200, logged no follow-up authorization error, and stored the
+creator as a Team admin.
 
-The initial Enterprise reconciliation exposed a datasource translation defect: Kubernetes-form datasource actions and scopes were passed directly into legacy classification. Canonicalizing both forms before `RoleToTuples` projection fixed reconciliation, and regression tests cover the action and scope forms.
+Shadow and Zanzana-primary requests produced fallback comparison metrics. The
+normal three-state fixture produced matches, and RBAC-only produced no fallback
+checks. An isolated ordinary service-account token request increased both the
+Zanzana allow counter and the match counter, confirming that an ordinary token is
+not treated as a delegated permission ceiling. Valid namespaces repeatedly
+reported `inSync=true` with no tuple changes or batch failures.
 
-### Observed follow-up issues
+A separate diagnostic forced IAM Roles and RoleBindings to unified-only mode and
+created fresh grants that could not have been mirrored into the legacy tables:
 
-- A discovered `org-0` Zanzana store causes the MT reconciler to repeatedly fail its ResourcePermission list with `invalid org id`. Valid `default` and `stacks-11` namespaces continue reconciling successfully, but production rollout must prevent, remap, or remove invalid global namespaces.
-- `grafana_zanzana_reconcile_last_success_timestamp_seconds` remains zero in MT mode while the per-namespace reconciler success metrics increase. Dashboards must use the per-namespace metrics until the global gauge is made MT-aware or removed.
-- Creating a user through the redirected Kubernetes Users API succeeded, but password login using the supplied create payload failed. This is a user-provisioning compatibility question rather than a `CheckPermission` decision failure, but migration fixtures and operational tooling must not assume password creation semantics that the API does not provide.
+- Zanzana primary allowed a native service-account `teams:create` grant, while
+  RBAC only had no such local-map entry and returned 403.
+- For a generic plugin grant, RBAC-primary shadow returned 403 and recorded
+  `zanzana_allow_rbac_deny`; Zanzana primary returned 200 for the same token and
+  request.
 
-## Observability and rollout gates
+This diagnostic confirms both sides of the migration boundary. Direct Zanzana
+authorization works with Kubernetes-only IAM data. RBAC, UI capability checks, and
+permission-inspection APIs still need the Phase 2 Kubernetes compatibility map
+before the legacy authorization tables can be removed.
 
-The branch implements these decision metrics:
+The manual run also verified that a partial-prefix scope such as
+`plugins:id:foo*` is rejected by the current scope validator. Valid wildcards must
+end after `:` or `/`. The focused fallback tests cover that rejection.
 
-- `grafana_accesscontrol_fallback_comparisons_total`, with `match`, both mismatch directions, `zanzana_error`, `rbac_error`, and `shadow_timeout` results.
-- `grafana_accesscontrol_fallback_engine_duration_seconds`, labeled only by `rbac` or `zanzana`.
-- `grafana_accesscontrol_fallback_checks_total`, with `allow`, `deny`, and `error` results for unified Zanzana leaves.
+### Known follow-up issues
 
-Existing reconciler metrics cover namespace-reconcile status, expected tuple counts, add/delete diffs, CRD fetch duration, batch failures, leader state, work-queue depth, and error phase. Reconciler logs include the namespace, expected tuple count, tuple additions/deletions, and `inSync` state.
+- An `org-0` Zanzana store makes the MT reconciler fail a ResourcePermission list
+  with `invalid org id`. Valid namespaces still reconcile. Production must
+  prevent, remap, or remove invalid global namespaces.
+- `grafana_zanzana_reconcile_last_success_timestamp_seconds` stays at zero in MT
+  mode even while namespace metrics show success. Use namespace metrics until the
+  global gauge is fixed or removed.
+- The SQL-independent Kubernetes compatibility resolver is not implemented. This
+  is the main blocker for removing the authorization tables.
 
-Decision mismatches are always counted. Logs are deterministically sampled at approximately one in sixteen evaluator hashes and contain the evaluator action string, an eight-byte scope/evaluator hash, and both decisions. They do not include the subject or raw scope. These logs remain access controlled because action names can still reveal endpoint intent.
+## Metrics and rollout gates
 
-The following observability remains future work or depends on future components:
+The branch adds these decision metrics:
 
-- Native, generic, mixed, and scopeless check volume by a bounded translation-kind label.
-- Kubernetes compatibility resolver latency, errors, and result cardinality.
-- Generic tuple count and generic decision volume as migration burn-down indicators.
-- An MT-aware global reconciliation-success timestamp or removal of the current zero-valued legacy gauge.
-- A bounded signal that distinguishes invalid namespaces such as `org-0` from ordinary CRD fetch errors.
+- `grafana_accesscontrol_fallback_comparisons_total` for matches, both mismatch directions, errors, and shadow timeouts.
+- `grafana_accesscontrol_fallback_engine_duration_seconds` for RBAC and Zanzana latency.
+- `grafana_accesscontrol_fallback_checks_total` for Zanzana leaf allows, denies, and errors.
 
-Metrics must avoid subject, raw action, and raw scope labels. Bounded resource-family or translation-kind labels are acceptable after cardinality review.
+Existing reconciler metrics show namespace status, expected tuples, add and delete counts, fetch time, batch errors, leader state, queue depth, and error phase.
 
-In the final manual no-legacy-client run, the decision metrics reported 19 matches and three Zanzana-allow/RBAC-deny comparisons across 22 evaluations per engine. Those three mismatches corresponded to K8s-only generic/mixed grants that the current RBAC map cannot enumerate. The valid test namespace repeatedly reconciled 1,492 tuples with zero additions, zero deletions, `inSync=true`, and zero batch-write failures.
+Every mismatch is counted. About one in sixteen evaluator hashes is logged. The log contains the action, a short evaluator hash, and both results. It does not contain the subject or raw scope.
 
-Promotion gates should include:
+Future metrics should cover:
 
-1. Complete reconciliation coverage and freshness for the cohort.
-2. No unexplained decision mismatches for the approved observation window.
-3. Zanzana availability and latency within the approved budgets.
-4. Successful grant and revocation propagation probes within the approved window.
-5. Complete compatibility enumeration for frontend and API consumers.
-6. Confirmed rollback behavior under load.
-7. Security review of identity context, delegation, namespace isolation, and failure policy.
+- native, generic, mixed, and no-scope check volume;
+- Kubernetes compatibility resolver latency and errors;
+- generic tuple and decision counts;
+- an MT-aware global success timestamp; and
+- a clear invalid-namespace signal.
 
-## Alternatives considered
+Metric labels must not contain a subject, raw action, or raw scope.
 
-### Call `GetUserPermissions` before every legacy check
+In the normal three-state run, expected comparisons were matches. The explicit unified-only diagnostic produced the expected `zanzana_allow_rbac_deny` result for a generic grant that the current local map cannot list. Valid namespaces repeatedly reconciled with `inSync=true` and no batch failures.
 
-This would refresh the materialized permission map, including Zanzana-native grants, before evaluation. It is not recommended because reverse enumeration is more expensive than a direct decision, remains cache-sensitive, and can still omit generic, contextual, or newly introduced permission sources.
+Before promotion, require:
+
+1. Complete and fresh reconciliation for the cohort.
+2. No unexplained decision mismatch during the agreed observation period.
+3. Approved Zanzana availability and latency.
+4. Grant and revoke probes within the agreed time.
+5. Complete compatibility reads for UI and API callers.
+6. Rollback tested under load.
+7. Security review of identities, tokens, namespaces, and failure behavior.
+
+## Other options considered
+
+### Reload permissions before every RBAC check
+
+This is too expensive and still cannot guarantee generic or contextual grants are present.
 
 ### Special-case missing native actions
 
-Routing only `teams:create` or selected native actions through the generic checker does not work reliably. Native permissions do not necessarily emit generic tuples, and the next migrated permission would create the same problem.
+Fixing only `teams:create` moves the bug. The next migrated action would fail in the same way.
 
-### Fall back to RBAC when Zanzana errors
+### Use RBAC when Zanzana errors
 
-This improves apparent availability but makes SQL and the legacy evaluator permanent hidden authorities. It can also allow a request from stale RBAC data after a Zanzana-side revocation. Shadow engines are for comparison and rollback decisions, not per-request fallback.
+This makes stale SQL data a hidden authority and can allow a revoked grant. Use shadow mode for comparison and an explicit rollout rollback instead.
 
-### Rewrite all callers to native Kubernetes checks first
+### Rewrite every caller first
 
-This provides a clean final interface but requires coordinating a very large number of endpoints before storage migration can proceed. Keeping the legacy evaluator interface as a Zanzana adapter decouples caller migration from authority migration.
+That would require changing too many endpoints before the storage migration can move. Keeping `AccessControl.Evaluate` as an adapter separates caller migration from decision migration.
 
 ## Open questions
 
-1. **Global authorization:** which namespace and store own Grafana Admin and permissions evaluated with `NoOrgID`, and how should invalid derived namespaces such as the observed `org-0` store be prevented or remapped?
-2. **Delegated identities:** should the current per-leaf intersection remain in Grafana, or eventually move into a standard `authlib.AuthInfo` authorization context?
-3. **OSS role resources:** OSS currently omits some Role and RoleBinding resources from the default MT CRD set. What is the canonical Kubernetes API source for fixed/basic role definitions in every deployment variant?
-4. **Generic end state:** after native coverage is complete for core Grafana permissions, should generic compatibility remain supported for plugin-defined actions?
-5. **Compatibility resolver rollout:** which control selects the future Kubernetes-derived permission map without overloading `zanzanaNoLegacyClient`?
+1. Which namespace owns Grafana Admin and `NoOrgID` permissions? How do we avoid invalid names such as `org-0`?
+2. Should delegated-token intersection stay in Grafana or later move into a standard authorization context?
+3. What Kubernetes source provides all fixed and basic roles in OSS deployments?
+4. Should generic permission support remain for plugin-defined actions after core permissions are native?
+5. Which future flag selects the Kubernetes compatibility resolver?
 
-## Consensus
+## Recommendation
 
-TBD — to be filled after review and discussion.
+Use Proposal 2: store each permission as native or generic, and use one Zanzana check for every legacy action and scope decision.
 
-The proposed recommendation is Proposal 2: exact native-or-generic storage with a unified Zanzana decision endpoint, while treating effective legacy permission maps as a temporary compatibility read model.
+Treat the local permission map as a temporary compatibility view. Build it from Kubernetes APIs before removing the SQL authorization tables.
 
-## Other notes
+## References and implementation notes
 
 ### References
 
 - [Legacy access-control service](pkg/services/accesscontrol/acimpl/service.go)
 - [Legacy access-control SQL store](pkg/services/accesscontrol/database/database.go)
-- [Authentication permission synchronization](pkg/services/authn/authnimpl/sync/rbac_sync.go)
-- [Access-control evaluator semantics](pkg/services/accesscontrol/evaluator.go)
-- [Legacy evaluator primary/shadow integration](pkg/services/accesscontrol/acimpl/accesscontrol.go)
-- [Primary/shadow decision metrics](pkg/services/accesscontrol/acimpl/fallback_metrics.go)
-- [Legacy Kubernetes access-client adapter](pkg/services/accesscontrol/authorizer.go)
+- [Authentication permission loading](pkg/services/authn/authnimpl/sync/rbac_sync.go)
+- [Evaluator behavior](pkg/services/accesscontrol/evaluator.go)
+- [Primary and shadow integration](pkg/services/accesscontrol/acimpl/accesscontrol.go)
+- [Decision metrics](pkg/services/accesscontrol/acimpl/fallback_metrics.go)
 - [Kubernetes IAM API types](apps/iam/pkg/apis/iam/v0alpha1)
-- [Zanzana service documentation](pkg/services/authz/zanzana/README.md)
-- [Zanzana translation table](pkg/services/authz/zanzana/common/translations.go)
-- [Native and generic permission projection](pkg/services/authz/zanzana/fallback.go)
-- [Zanzana OpenFGA schemas](pkg/services/authz/zanzana/schema)
+- [Zanzana documentation](pkg/services/authz/zanzana/README.md)
+- [Translation table](pkg/services/authz/zanzana/common/translations.go)
+- [Native and generic checks](pkg/services/authz/zanzana/fallback.go)
+- [OpenFGA schemas](pkg/services/authz/zanzana/schema)
 - [MT reconciler](pkg/services/authz/zanzana/server/reconciler)
-- [Zanzana native Check implementation](pkg/services/authz/zanzana/server/server_check.go)
-- [Unified legacy permission Check implementation](pkg/services/authz/zanzana/server/server_check_permission.go)
-- [Role permission projection and datasource canonicalization](pkg/services/authz/zanzana/tuple_helpers.go)
-- [Current transitional Zanzana-to-RBAC merge resolver](pkg/services/accesscontrol/acimpl/zanzana_resolver.go)
-- [Kubernetes-style RBAC-primary shadow client](pkg/services/authz/zanzana/client/shadow_client.go)
-- [Kubernetes-style Zanzana-primary shadow client](pkg/services/authz/zanzana/client/shadow_rbac_client.go)
+- [Native check implementation](pkg/services/authz/zanzana/server/server_check.go)
+- [Legacy permission check implementation](pkg/services/authz/zanzana/server/server_check_permission.go)
+- [Role projection](pkg/services/authz/zanzana/tuple_helpers.go)
+- [Current native merge](pkg/services/accesscontrol/acimpl/zanzana_resolver.go)
 
 ### Implementation notes
 
-- Historical `fallback` names remain in the feature flag, Prometheus subsystem, and some internal identifiers for rollout compatibility. User-facing behavior and documentation call the path the unified legacy permission checker.
-- Keep engine selection independent from tuple synchronization so authority can roll back without stopping writes or reconciliation.
-- Keep role projection and request-side classification on `TranslatePermission`; datasource-shaped Kubernetes actions/scopes must be canonicalized before classification. Action enumeration still uses the existing bounded `TranslateActionToListParams` registry.
-- Preserve `WithoutResolvers` engine configuration and checker dependencies.
-- Treat effective-permission enumeration errors differently from direct authorization errors; enumeration is a read-model concern after Zanzana becomes primary.
-- Avoid adding subjects, actions, or scopes to Prometheus labels.
-- Make physical SQL table removal a separate migration after logical dependency removal and downgrade-policy review.
-- Keep the implemented regression coverage for team-derived `teams:create`, native/generic mixed scopes, token restrictions, and Kubernetes datasource action/scope canonicalization in the unified checker contract suite.
-- No Enterprise-specific code fork is needed for this design; Enterprise validation uses the normal overlay and shared OSS implementation.
+- Some internal names still use `fallback` for compatibility. User-facing text should call this primary and shadow checking.
+- Keep decision routing separate from tuple sync.
+- Use `TranslatePermission` on both write and request paths. Normalize datasource actions and scopes before classification.
+- Keep `WithoutResolvers` behavior and resolver retries.
+- Treat compatibility-map errors differently from direct decision errors.
+- Never add subjects, raw actions, or raw scopes to metric labels.
+- Remove physical SQL tables only after all logical use has stopped and downgrade rules are clear.
+- Keep regression tests for team grants, mixed scopes, valid delimiter-bounded wildcards, rejected partial-prefix wildcards, token limits, and datasource normalization.
+- The Enterprise build uses the shared OSS implementation; no Enterprise fork is needed.
