@@ -307,6 +307,31 @@ export const versionedComponents = {
         [MIN_GRAFANA_VERSION]: 'Trace ID',
       },
     },
+    InfluxDB: {
+      configPage: {
+        urlInput: {
+          '13.2.0': 'data-testid influxdb-v2-config-url-input',
+          [MIN_GRAFANA_VERSION]: 'influxdb-v2-config-url-input',
+        },
+        productSelect: {
+          '13.2.0': 'data-testid influxdb-v2-config-product-select',
+          [MIN_GRAFANA_VERSION]: 'influxdb-v2-config-product-select',
+        },
+        queryLanguageSelect: {
+          '13.2.0': 'data-testid influxdb-v2-config-query-language-select',
+          [MIN_GRAFANA_VERSION]: 'influxdb-v2-config-query-language-select',
+        },
+        organizationInput: {
+          '13.2.0': 'data-testid influxdb-v2-config-organization-input',
+        },
+        defaultBucketInput: {
+          '13.2.0': 'data-testid influxdb-v2-config-default-bucket-input',
+        },
+        tokenInput: {
+          '13.2.0': 'data-testid influxdb-v2-config-token-input',
+        },
+      },
+    },
     Prometheus: {
       configPage: {
         connectionSettings: {
