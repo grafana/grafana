@@ -601,6 +601,7 @@ type countingKV struct {
 	mu         sync.Mutex
 	roundTrips int
 	keysRead   int
+	keysListed int
 }
 
 func (k *countingKV) count(section string, keys int) {
@@ -619,6 +620,31 @@ func (k *countingKV) stats() (roundTrips, keysRead int) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	return k.roundTrips, k.keysRead
+}
+
+func (k *countingKV) listed() int {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	return k.keysListed
+}
+
+func (k *countingKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
+	keys := k.KV.Keys(ctx, section, opt)
+	if section != kv.DataSection {
+		return keys
+	}
+	return func(yield func(string, error) bool) {
+		for key, err := range keys {
+			if err == nil {
+				k.mu.Lock()
+				k.keysListed++
+				k.mu.Unlock()
+			}
+			if !yield(key, err) {
+				return
+			}
+		}
+	}
 }
 
 func (k *countingKV) Get(ctx context.Context, section string, key string) (io.ReadCloser, error) {
@@ -1311,6 +1337,65 @@ func TestKvStorageBackend_ListIterator_Success(t *testing.T) {
 	require.Equal(t, []string{"resource-1", "resource-2"}, names)
 }
 
+func TestKvStorageBackend_ListIterator_StreamsKeysInBatches(t *testing.T) {
+	const numResources = 2*dataBatchSize + 1
+
+	for name, setup := range map[string]func(*testing.T) KV{
+		"badger": setupBadgerKV,
+		"sql":    setupSqlKV,
+	} {
+		t.Run(name, func(t *testing.T) {
+			kvStore := &countingKV{KV: setup(t)}
+			backend := setupTestStorageBackend(t, withKV(kvStore))
+			ctx := t.Context()
+
+			for i := range numResources {
+				resourceName := fmt.Sprintf("resource-%03d", i)
+				testObj, err := createTestObjectWithName(resourceName, appsNamespace, fmt.Sprintf("data-%d", i))
+				require.NoError(t, err)
+				metaAccessor, err := utils.MetaAccessor(testObj)
+				require.NoError(t, err)
+
+				_, err = backend.WriteEvent(ctx, WriteEvent{
+					Type: resourcepb.WatchEvent_ADDED,
+					Key: &resourcepb.ResourceKey{
+						Namespace: appsNamespace.Namespace,
+						Group:     appsNamespace.Group,
+						Resource:  appsNamespace.Resource,
+						Name:      resourceName,
+					},
+					Value:      objectToJSONBytes(t, testObj),
+					Object:     metaAccessor,
+					PreviousRV: 0,
+				})
+				require.NoError(t, err)
+			}
+
+			listedBefore := kvStore.listed()
+			tripsBefore, keysReadBefore := kvStore.stats()
+
+			_, err := backend.ListIterator(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Namespace: appsNamespace.Namespace,
+					Group:     appsNamespace.Group,
+					Resource:  appsNamespace.Resource,
+				}},
+			}, func(iter ListIterator) error {
+				require.True(t, iter.Next())
+				return iter.Error()
+			})
+			require.NoError(t, err)
+
+			tripsAfter, keysReadAfter := kvStore.stats()
+			listedAfter := kvStore.listed()
+			assert.Equal(t, 1, tripsAfter-tripsBefore)
+			assert.Equal(t, dataBatchSize, keysReadAfter-keysReadBefore)
+			assert.Less(t, listedAfter-listedBefore, numResources,
+				"stopping the consumer must stop the key scan before all keys are materialized")
+		})
+	}
+}
+
 func TestKvStorageBackend_ListIterator_WithPagination(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
@@ -1429,7 +1514,20 @@ func TestKvStorageBackend_ListIterator_WithPagination(t *testing.T) {
 	require.Equal(t, 1, len(thirdPageItems))
 	require.Equal(t, []string{"resource-5"}, thirdPageItems)
 	require.Empty(t, continueToken3)
+
+	// Limit belongs to the consumer; the backend continues while it is being consumed.
+	listReq.NextPageToken = ""
+	var allItems []string
+	_, err = backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
+		for iter.Next() {
+			allItems = append(allItems, iter.Name())
+		}
+		return iter.Error()
+	})
+	require.NoError(t, err)
+	require.Equal(t, []string{"resource-1", "resource-2", "resource-3", "resource-4", "resource-5"}, allItems)
 }
+
 func TestKvStorageBackend_ListIterator_EmptyResult(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()

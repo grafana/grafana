@@ -1507,24 +1507,7 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		listRV = listOptions.ResourceVersion
 	}
 
-	// Fetch the latest objects.
-	// TODO: stream keys into BatchGet instead of materializing the whole list.
-	// For unbounded list calls (e.g. index build with req.Limit == 0) at 1M
-	// rows this allocates ~250 MB of DataKey before any reads start. Pipe
-	// ListResourceKeysAtRevision through a bounded channel into BatchGet so
-	// memory is O(chunk), not O(N).
-	keys := make([]DataKey, 0, min(defaultListBufferSize, req.Limit+1))
-	for dataKey, err := range k.dataStore.ListResourceKeysAtRevision(ctx, listOptions) {
-		if err != nil {
-			return 0, err
-		}
-
-		keys = append(keys, dataKey)
-		// Only fetch the first limit items + 1 to get the next token.
-		if req.Limit > 0 && len(keys) >= int(req.Limit+1) {
-			break
-		}
-	}
+	keys := k.dataStore.ListResourceKeysAtRevision(ctx, listOptions)
 	iter := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "")
 	defer iter.stop()
 
@@ -1535,14 +1518,46 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	return listRV, nil
 }
 
-// newKvListIterator builds a kvListIterator over dataStore.BatchGet(keys).
-func newKvListIterator(ctx context.Context, ds *dataStore, keys []DataKey, listRV int64, isCrossNamespace bool) *kvListIterator {
-	next, stopFn := iter.Pull2(ds.BatchGet(ctx, keys))
+// newKvListIterator builds a kvListIterator that reads keys in bounded batches.
+func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, isCrossNamespace bool) *kvListIterator {
+	next, stopFn := iter.Pull2(batchGetResourceKeys(ctx, ds, keys))
 	return &kvListIterator{
 		listRV:           listRV,
 		isCrossNamespace: isCrossNamespace,
 		next:             next,
 		stopFn:           stopFn,
+	}
+}
+
+func batchGetResourceKeys(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error]) iter.Seq2[DataObj, error] {
+	return func(yield func(DataObj, error) bool) {
+		batch := make([]DataKey, 0, dataBatchSize)
+
+		flush := func() bool {
+			for obj, err := range ds.BatchGet(ctx, batch) {
+				if !yield(obj, err) || err != nil {
+					return false
+				}
+			}
+			batch = batch[:0]
+			return true
+		}
+
+		for key, err := range keys {
+			if err != nil {
+				yield(DataObj{}, err)
+				return
+			}
+
+			batch = append(batch, key)
+			if len(batch) == dataBatchSize && !flush() {
+				return
+			}
+		}
+
+		if len(batch) > 0 {
+			flush()
+		}
 	}
 }
 

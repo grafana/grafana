@@ -1907,7 +1907,6 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.String("reason", indexBuildReason)))
 
 		listRV, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
-			Limit: listEverything,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Group:     nsr.Group,
