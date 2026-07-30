@@ -93,6 +93,10 @@ describe('StepReviewEnableAutoSync', () => {
   it('enables auto-sync by posting the selected source, tracks success and navigates to the alert rules list', async () => {
     const { user } = renderStep();
 
+    // The UID comes from the form, so it is set on mount: without the isReady gate the button would
+    // already be clickable here, while the Config read is still in flight.
+    expect(ui.enableButton.get()).toBeDisabled();
+
     await waitFor(() => expect(ui.enableButton.get()).toBeEnabled());
     await user.click(ui.enableButton.get());
 
@@ -104,24 +108,9 @@ describe('StepReviewEnableAutoSync', () => {
     });
   });
 
-  it('keeps Enable disabled until the Config singleton has loaded, so a fast click cannot report a false failure', async () => {
-    renderStep();
-
-    // The UID comes from the form, so it is already set on mount. Ungated, the button is clickable
-    // while the Config GET is in flight, and save() rejects the click as "still initializing" — a
-    // false error toast plus a bogus import-error event.
-    //
-    // Asserted synchronously and without a click: userEvent awaits internally, which lets the read
-    // settle before the pointer event lands. The click is exercised in the unseeded case below, where
-    // the not-ready state is stable.
-    expect(ui.enableButton.get()).toBeDisabled();
-
-    await waitFor(() => expect(ui.enableButton.get()).toBeEnabled());
-  });
-
-  it('keeps Enable disabled, and reports nothing when clicked, while the Config singleton is unseeded', async () => {
-    // The read settles with nothing rather than staying pending, so a loading-only gate would hand
-    // the user an enabled button that can only fail. The tooltip explains the wait instead.
+  it('never enables Enable while the Config singleton is unseeded, so a click cannot report a false failure', async () => {
+    // Unlike the in-flight case above, the read settles with nothing, so a loading-only gate would
+    // hand the user a permanently enabled button that can only fail. The tooltip explains the wait.
     setupAutoSyncConfigAbsent(server);
     const { user } = renderStep();
 

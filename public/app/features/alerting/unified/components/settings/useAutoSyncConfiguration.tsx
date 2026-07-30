@@ -71,7 +71,9 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
   const flagOn = config.featureToggles['alerting.syncExternalAlertmanager'] === true;
   const canReadConfig = contextSrv.hasPermission(AccessControlAction.ActionAlertingNotificationsConfigRead);
   const { currentData: configResource, isLoading: isLoadingConfig } = configApi.useGetConfigQuery(
-    flagOn && canReadConfig ? { name: CONFIG_SINGLETON_NAME } : skipToken
+    flagOn && canReadConfig ? { name: CONFIG_SINGLETON_NAME } : skipToken,
+    // A 404 means the sync worker has not seeded the singleton yet, and RTKQ caches that rejection with nothing to retry it. Refetching gives a recovery path without reload
+    { refetchOnMountOrArgChange: true }
   );
   const { currentData: allDatasources, isLoading: isLoadingDatasources } =
     dataSourcesApi.endpoints.getAllDataSourceSettings.useQuery(undefined, {
@@ -139,15 +141,11 @@ export function useAutoSyncConfiguration(): UseAutoSyncConfigurationResult {
     try {
       await updateConfig({
         name: CONFIG_SINGLETON_NAME,
-        // JSON Patch scoped to spec, NOT a whole-object PUT. The sync worker writes only `status`
-        // (via the /status subresource) on every poll tick — roughly once a minute — so a PUT
-        // carrying metadata.resourceVersion gets rejected with a 409 whenever a tick lands between
-        // page load and save, even though nothing the user cares about actually changed. A
-        // spec-scoped patch cannot conflict with a status write at all.
-        //
-        // `add` replaces the key when it already exists, so this is idempotent; patching the whole
-        // sub-object (rather than .../datasourceUid) avoids failing when the parent path is absent,
-        // which it is on a freshly seeded singleton.
+        // JSON Patch scoped to spec, NOT a whole-object PUT: the sync worker writes `status` on
+        // every poll tick, so a PUT carrying metadata.resourceVersion 409s whenever a tick lands
+        // between page load and save. Patching the whole sub-object rather than
+        // .../datasourceUid also survives the parent path being absent, which it is on a freshly
+        // seeded singleton.
         patch: [
           {
             op: 'add',

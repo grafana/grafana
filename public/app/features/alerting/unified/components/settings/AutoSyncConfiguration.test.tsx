@@ -79,6 +79,8 @@ const ui = {
   saveButton: byRole('button', { name: /^save$/i }),
   disableSyncButton: byRole('button', { name: /^disable sync$/i }),
   picker: byLabelText(/^datasource$/i),
+  // Anchored so it cannot also match the save-disabled tooltip, which shares its opening words.
+  pickerPlaceholder: byText(/^Select a Mimir or Cortex Alertmanager datasource…$/),
   confirmDialog: byRole('dialog', { name: /disable mimir alertmanager auto-sync/i }),
   confirmDialogDisableButton: byRole('button', { name: /^disable sync$/i }),
 };
@@ -207,14 +209,24 @@ describe('AutoSyncConfiguration — edge-case states', () => {
     expect(ui.saveButton.get()).toBeInTheDocument();
   });
 
-  it('case 10: unseeded singleton — reads as unconfigured so the page still renders', async () => {
-    // The sync worker seeds the singleton on its first tick; humans cannot create it.
+  it('case 10: unseeded singleton — reads as unconfigured and keeps Save disabled even once a datasource is picked', async () => {
+    // The sync worker seeds the singleton on its first tick; humans cannot create it. Save must stay
+    // disabled until then, otherwise the click fails with a "still initializing" toast.
     setupAutoSyncConfigAbsent(server);
     setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
     registerMimirDataSources();
 
-    render(<AutoSyncConfiguration />);
+    const { user } = render(<AutoSyncConfiguration />);
 
     expect(await ui.notConfiguredBadge.find()).toBeInTheDocument();
+    expect(ui.pickerPlaceholder.get()).toBeInTheDocument();
+
+    await user.click(ui.picker.get());
+    await user.click(await screen.findByText(MIMIR_DS_NAME));
+
+    // Prove the selection landed before checking the disabled state, so this cannot pass for the
+    // wrong reason: the placeholder is only replaced once the picker holds a value.
+    expect(ui.pickerPlaceholder.query()).not.toBeInTheDocument();
+    expect(ui.saveButton.get()).toBeDisabled();
   });
 });

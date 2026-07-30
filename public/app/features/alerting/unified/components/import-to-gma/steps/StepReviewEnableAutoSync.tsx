@@ -85,10 +85,8 @@ export function StepReviewEnableAutoSync({ onCancel }: StepReviewEnableAutoSyncP
           <Button variant="secondary" icon="arrow-left" onClick={() => setActiveStep(StepKey.Method)}>
             {t('alerting.import-to-gma.autosync-review.back', 'Add method')}
           </Button>
-          {/* Gate on isReady, not on loading: selectedUid comes from the form so it is already set on
-              mount, and save() cannot write until the worker has seeded the Config singleton. Without
-              this the button is clickable while that read is in flight — or indefinitely when it
-              resolved to nothing — and the click reports a false "still initializing" failure. */}
+          {/* isReady, not isLoading: selectedUid comes from the form, so a loading-only gate leaves
+              the button clickable while the singleton read is unresolved. */}
           <Tooltip content={notReadyTooltip} show={isReady ? false : undefined}>
             <Box display="inline-block">
               <Button
