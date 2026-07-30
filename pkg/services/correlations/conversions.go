@@ -145,6 +145,16 @@ func ToUpdateCorrelationCommand(obj *correlationsV0.Correlation) (*UpdateCorrela
 	if tmp.Config.Target == nil {
 		tmp.Config.Target = map[string]any{} // replace it
 	}
+	cfg := &CorrelationConfigUpdateDTO{
+		Field:           &tmp.Config.Field,
+		Target:          &tmp.Config.Target,
+		Transformations: tmp.Config.Transformations,
+	}
+
+	if tmp.Config.TimeRange.Field != nil || tmp.Config.TimeRange.Range != nil {
+		cfg.TimeRange = &tmp.Config.TimeRange
+	}
+
 	return &UpdateCorrelationCommand{
 		UID:         tmp.UID,
 		OrgId:       tmp.OrgID,
@@ -152,12 +162,7 @@ func ToUpdateCorrelationCommand(obj *correlationsV0.Correlation) (*UpdateCorrela
 		Label:       &tmp.Label,
 		Description: &tmp.Description,
 		Type:        &tmp.Type,
-		Config: &CorrelationConfigUpdateDTO{
-			Field:           &tmp.Config.Field,
-			Target:          &tmp.Config.Target,
-			Transformations: tmp.Config.Transformations,
-			TimeRange:       &tmp.Config.TimeRange,
-		},
+		Config:      cfg,
 	}, nil
 }
 
