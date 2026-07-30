@@ -49,7 +49,7 @@ func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
 			return
 		}
 
-		if c.SignedInUser == nil {
+		if !c.IsSignedIn {
 			c.JsonApiErr(http.StatusUnauthorized, "Unauthorized", nil)
 			return
 		}
