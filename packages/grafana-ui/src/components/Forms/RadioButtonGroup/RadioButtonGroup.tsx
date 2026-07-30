@@ -104,9 +104,11 @@ export function RadioButtonGroup<T>({
         const hasNonIconPart = Boolean(opt.imgUrl || opt.label || opt.component);
         const labelTitle = typeof opt.label === 'string' ? opt.label : undefined;
         // Keyed on the option's value, not its label, so the selector survives translation.
-        // Skipped for non-primitive values, which have no meaningful string form.
+        // Skipped for objects and undefined, which have no meaningful string form.
         const testIdValue =
-          typeof opt.value === 'string' || typeof opt.value === 'number' ? String(opt.value) : undefined;
+          typeof opt.value === 'string' || typeof opt.value === 'number' || typeof opt.value === 'boolean'
+            ? String(opt.value)
+            : undefined;
 
         return (
           <RadioButton
