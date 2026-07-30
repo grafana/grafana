@@ -242,6 +242,12 @@ describe('fetchTracesServices', () => {
       { showErrorAlert: false }
     );
   });
+
+  it('propagates a proxy rejection (callers fail soft)', async () => {
+    mockProxyGet.mockRejectedValue(new Error('tempo 404'));
+
+    await expect(fetchTracesServices(tempo)).rejects.toThrow('tempo 404');
+  });
 });
 
 describe('fetchTracesActivity', () => {

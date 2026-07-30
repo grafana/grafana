@@ -62,7 +62,8 @@ function toSparkline(points: Array<[number, number]>, name: string): FieldSparkl
   return { x, y: { ...y, state: { range: getMinMaxAndDelta(y) } } };
 }
 
-// Loki rejects matcher-less queries; pick the label the org's streams actually carry.
+// Loki rejects matcher-less queries. service_name/job cover conventional setups; otherwise
+// best effort — streams missing the fallback label drop out of the totals.
 async function resolveLogsLabel(instance: DataSourceWithBackend, start: number, end: number): Promise<string | null> {
   const res = await getResource<{ data?: unknown }>(instance, 'labels', { start, end });
   const labels = Array.isArray(res?.data)
@@ -123,8 +124,9 @@ export async function fetchLogsActivity(ds: Pick<DataSourceInstanceListItem, 'ui
 }
 
 /**
- * Distinct services seen by Tempo in the lookback, or null when the lookup fails. Uses the
- * datasource proxy: Tempo's resource router 404s these paths on cloud stacks.
+ * Distinct services seen by Tempo in the lookback, or null when the response is unusable;
+ * rejections propagate (callers fail soft). Uses the datasource proxy: Tempo's resource router
+ * 404s these paths on cloud stacks.
  */
 export async function fetchTracesServices(ds: Pick<DataSourceInstanceListItem, 'uid'>): Promise<number | null> {
   const end = Math.floor(Date.now() / 1000);

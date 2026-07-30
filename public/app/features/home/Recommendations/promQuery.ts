@@ -59,8 +59,8 @@ export function readSeries(frames: DataFrame[], refId: string): FieldSparkline |
 /**
  * Run queries through the shared {@link createQueryRunner | QueryRunner} against `ds` — core
  * plumbing owns request building, interval math, and frame conversion. Works for any datasource
- * whose targets are expressible as DataQuery (Prometheus PromQL, Tempo TraceQL). Throws (surfaced
- * as an error; callers omit the entry) when the query errors or times out.
+ * whose targets are expressible as DataQuery (Prometheus PromQL, Tempo TraceQL). Throws only when
+ * the request yields no frames; surviving frames are returned and missing refIds read as null.
  */
 export async function runDatasourceQueries(
   queries: DataQuery[],
@@ -86,7 +86,8 @@ export async function runDatasourceQueries(
         timeout(timeoutMs)
       )
     );
-    if (data.state === LoadingState.Error) {
+    // Partial failure keeps the surviving targets' frames; only a request that produced nothing throws.
+    if (data.state === LoadingState.Error && data.series.length === 0) {
       throw new Error(data.errors?.[0]?.message ?? data.error?.message ?? 'Prometheus query failed');
     }
     return data.series;
