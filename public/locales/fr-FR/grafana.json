@@ -5227,17 +5227,6 @@
     }
   },
   "dashboard": {
-    "actions": {
-      "open-settings": ""
-    },
-    "add": {
-      "new-panel": {
-        "button": "Bouton d’ajout d’un nouveau panneau",
-        "description": "Faites glisser ou cliquez pour ajouter un panneau",
-        "title": "Panneau"
-      },
-      "pane-header": "Ajouter"
-    },
     "add-menu": {
       "import": "Importer depuis la bibliothèque",
       "paste-panel": "Coller le panneau",
@@ -5307,12 +5296,6 @@
       }
     },
     "canvas-actions": {
-      "add": {
-        "paste": {
-          "description": "Cliquer ou faire glisser pour coller le panneau",
-          "title": "Coller le panneau"
-        }
-      },
       "add-panel": "Ajouter un panneau",
       "disabled-child-contains-tabs": "Impossible de passer aux onglets car une ligne contient déjà des onglets",
       "disabled-nested-grouping": "Le regroupement est limité à 3 niveaux",
@@ -5327,14 +5310,6 @@
       "paste-tab": "Coller l’onglet",
       "ungroup-rows": "Dissocier les lignes",
       "ungroup-tabs": "Dissocier les onglets"
-    },
-    "code-pane": {
-      "collapse": "Réduire l’éditeur",
-      "copy-as-resource": "",
-      "copy-as-resource-tooltip": "",
-      "expand": "Développer l’éditeur",
-      "header": "Modifier en tant que code",
-      "modal-title": "Modifier le tableau de bord en tant que code"
     },
     "conditional-rendering": {
       "conditions": {
@@ -5512,9 +5487,6 @@
         "title": "Options de ligne"
       }
     },
-    "description": {
-      "action": "Modifier la description du tableau de bord"
-    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Supprimer la propriété"
@@ -5523,6 +5495,8 @@
     "edit-actions": {
       "add": "Ajouter {{typeName}}",
       "add-conditional-rule": "Ajouter la règle {{ruleDescription}}",
+      "dashboard-description": "Modifier la description du tableau de bord",
+      "dashboard-title": "Modifier le titre du tableau de bord",
       "duplicate-panel": "Dupliquer le panneau",
       "edit-query-result-rule": "Modifier la règle de résultat de requête",
       "edit-template-variable-rule": "Modifier la règle de variable de modèle",
@@ -5542,136 +5516,12 @@
       "switch-layout": "Changer la disposition",
       "switch-layout-row": "Changer de mise en page",
       "switch-layout-tab": "Changer de mise en page",
-      "tab-title": "Modifier le titre de l’onglet"
-    },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "Modifier la source de données de l’annotation",
-        "choose-panels": "Choisir des panneaux",
-        "color": "Couleur",
-        "color-description": "Couleur à utiliser pour les marqueurs d’événement d’annotation",
-        "data-source": "Source de données",
-        "display": "Afficher les contrôles d’annotation dans",
-        "display-options": {
-          "above-dashboard": "Au-dessus du tableau de bord",
-          "controls-menu": "Menu des commandes",
-          "controls-menu-description": "Accessible lorsque le menu des commandes est ouvert",
-          "hidden": "Masqué",
-          "hidden-description": "Masque l’interrupteur permettant d’activer ou de désactiver cette annotation"
-        },
-        "enabled": "Activé",
-        "enabled-description": "Lorsque cette option est activée, la requête d’annotation est émise à chaque actualisation du tableau de bord",
-        "name": "Nom",
-        "open-query-editor": "Ouvrir l’éditeur de requêtes",
-        "open-query-editor-tooltip": "Ouvrez l’éditeur de requêtes pour configurer la requête d’annotation",
-        "panel-filter": {
-          "all-panels": "Tous les panneaux",
-          "all-panels-description": "Envoyer les données d’annotation à tous les panneaux compatibles",
-          "all-panels-except": "Tous les panneaux sauf",
-          "all-panels-except-description": "Ne pas envoyer les données d’annotation aux panneaux suivants",
-          "selected-panels": "Panneaux sélectionnés",
-          "selected-panels-description": "Envoyer les annotations uniquement aux panneaux spécifiés"
-        },
-        "query": "Requête",
-        "query-editor-close": "Fermer",
-        "query-editor-modal-title": "Requête d’annotation",
-        "show-in": "Afficher dans"
-      },
-      "annotations": {
-        "add-annotation": "Ajouter une annotation",
-        "reorder": "Faire glisser pour réorganiser",
-        "select-annotation": "Sélectionner"
-      },
-      "elements": {
-        "annotation": "Annotation",
-        "annotation-set": "Annotations et alertes",
-        "dashboard": "Tableau de bord",
-        "element": "Élément",
-        "filter": "",
-        "filters-set": "",
-        "link-set": "Liens",
-        "local-variable": "Variable locale",
-        "multiple-elements": "Éléments multiples",
-        "multiple-elements-delete-text": "Voulez-vous vraiment supprimer ces éléments ?",
-        "multiple-panels": "Panneaux multiples",
-        "multiple-panels-delete-text": "Voulez-vous vraiment supprimer ces panneaux ? Toutes les requêtes seront supprimées.",
-        "objects": "Objets",
-        "panel": "Panneau",
-        "panels": "Panneaux",
-        "row": "Ligne",
-        "rows": "Lignes",
-        "section-filters-set": "",
-        "tab": "Onglet",
-        "tabs": "Onglets",
-        "variable": "Variable {{type}}",
-        "variable-set": "Variables"
-      },
-      "links": {
-        "add-link": "Ajouter un lien",
-        "reorder": "Faire glisser pour réorganiser",
-        "select-link": "Sélectionner",
-        "untitled": "Lien sans titre"
-      },
-      "row": {
-        "header": {
-          "hide": "Masquer",
-          "title": "En-tête de ligne"
-        }
-      },
-      "section-filters": {
-        "title": ""
-      },
-      "section-variables": {
-        "title": "Variables"
-      },
-      "variable": {
-        "change-type": "",
-        "change-type-aria-label": "Modifier le type de variable",
-        "custom-options": {
-          "apply": "Appliquer",
-          "change-value": "Modifier la valeur de la variable",
-          "discard": "Abandonner",
-          "modal-title": "Personnaliser les options"
-        },
-        "datasource-options": {
-          "name-filter": "Nom du filtre",
-          "name-filter-description": "Filtre d’expression régulière pour les instances de source de données à inclure. Laisser vide pour tout.",
-          "name-filter-placeholder": "Exemple : /^prod/",
-          "type": "Type",
-          "type-placeholder": "Choisir un type de source de données"
-        },
-        "description": "Description",
-        "description-placeholder": "Texte de description",
-        "label": "Étiquette",
-        "label-description": "Nom d’affichage facultatif",
-        "name": "Nom",
-        "open-editor": "Ouvrir l’éditeur de variables",
-        "open-editor-tooltip": "Pour plus d’options de variables, ouvrez l’éditeur de variables",
-        "query-options": {
-          "close": "Fermer",
-          "modal-title": "Variable de requête",
-          "preview": "Aperçu"
-        },
-        "selection-options": {
-          "allow-custom-values": "Permettra des valeurs personnalisées",
-          "allow-custom-values-description": "Permet aux utilisateurs de saisir des valeurs",
-          "category": "Options de sélection",
-          "custom-all-value": "Personnaliser toutes les valeurs",
-          "custom-all-value-description": "Un caractère générique regex ou une autre valeur pour représenter Tout",
-          "include-all": "Inclure la valeur Tout",
-          "include-all-description": "Active une seule option qui représente toutes les valeurs",
-          "multi-value": "Multi-valeur"
-        },
-        "type-category": "{{type}} options"
-      },
-      "variables": {
-        "add-variable": "Ajouter une variable",
-        "change-type": "",
-        "reorder": "Faire glisser pour réorganiser",
-        "select-type": "Choisir le type de variable",
-        "select-type-card-tooltip": "Cliquer pour sélectionner le type",
-        "select-variable": "Sélectionner"
-      }
+      "tab-title": "Modifier le titre de l’onglet",
+      "variable-description": "Modifier la description de la variable",
+      "variable-hide": "Modifier l’option de masquage de la variable",
+      "variable-label": "Modifier l’étiquette de la variable",
+      "variable-name": "Modifier le nom de la variable",
+      "variable-type": "Modifier le type de variable"
     },
     "empty": {
       "add-library-panel-body": "Ajoutez des visualisations partagées avec d'autres tableaux de bord.",
@@ -5918,12 +5768,7 @@
     "layout": {
       "cancel": "Annuler",
       "common": {
-        "copy": "Copier",
-        "copy-tooltip": "",
-        "delete": "Supprimer",
-        "duplicate": "Dupliquer",
-        "layout": "Mise en page",
-        "paste": "Coller"
+        "layout": "Mise en page"
       },
       "continue": "Continuer",
       "panel": {
@@ -5951,7 +5796,6 @@
     },
     "new-panel": {
       "aria-label": "Panneau non configuré. Appuyez sur la touche Tab pour afficher les options de configuration.",
-      "configure-button": "",
       "configure-button-menu": "Afficher/Masquer le menu",
       "configure-visualization": "Configurer la visualisation",
       "empty-state-message": "Exécutez une requête pour la visualiser ici ou accédez à toutes les visualisations, afin d’ajouter d’autres types de panneaux",
@@ -5973,10 +5817,6 @@
         }
       }
     },
-    "options": {
-      "description": "Description",
-      "title-option": "Titre"
-    },
     "options-pane-category": {
       "aria-label-collapse": "Replier la catégorie {{title}}",
       "aria-label-expand": "Développer la catégorie {{title}}"
@@ -5986,14 +5826,6 @@
       "Recent options-title-recent-options": "Options récentes",
       "title-matched_one": "{{count}} option(s)/{{totalCount}} mise(s) en correspondance",
       "title-matched_other": "{{count}} option(s)/{{totalCount}} mise(s) en correspondance"
-    },
-    "outline": {
-      "pane-header": "Plan du contenu",
-      "repeated-item": "Répéter",
-      "tree-item": {
-        "empty": "(vide)",
-        "no-title": "<sans titre>"
-      }
     },
     "override-category-title": {
       "aria-label-remove-override": "Retirer le remplacement",
@@ -6174,13 +6006,6 @@
       "save-json-to-file": "Enregistrer le fichier JSON",
       "see-docs": "Consultez la <2>documentation</2> pour en savoir plus sur la mise en service."
     },
-    "schema-editor": {
-      "apply-button": "Appliquer les modifications",
-      "apply-button-disabled-tooltip": "Corrigez les erreurs de validation avant d’appliquer les modifications",
-      "apply-button-disabled-tooltip-yaml": "Le document contient des erreurs de validation. Passez en JSON pour voir les détails des erreurs dans les lignes.",
-      "apply-error-title": "Échec de l’application des modifications",
-      "undo-title": "Édition du schéma"
-    },
     "search-panel": {
       "no-match": ""
     },
@@ -6189,31 +6014,271 @@
     },
     "sidebar": {
       "add": {
+        "annotation-query": {
+          "description": "Ajouter des données d’événements aux graphiques",
+          "label": "Requête d’annotation"
+        },
+        "dashboard-controls": "Commandes du tableau de bord",
+        "filters": {
+          "label": "Filtrer et regrouper par"
+        },
+        "group-layouts": "Dispositions du groupe",
+        "link": {
+          "label": "Lien",
+          "tooltip": "Ajouter un lien vers un autre tableau de bord ou un site externe"
+        },
+        "new-panel": {
+          "button": "Bouton d’ajout d’un nouveau panneau",
+          "description": "Faites glisser ou cliquez pour ajouter un panneau",
+          "title": "Panneau"
+        },
+        "pane-header": "Ajouter",
+        "paste-panel": {
+          "description": "Cliquer ou faire glisser pour coller le panneau",
+          "title": "Coller le panneau"
+        },
+        "row": {
+          "add-label": "Ajouter une ligne",
+          "group-label": "Regrouper sur des lignes"
+        },
+        "tab": {
+          "add-label": "Ajouter un onglet",
+          "group-label": "Regrouper dans des onglets"
+        },
         "title": "Ajouter",
-        "tooltip": "Ajouter un nouvel élément"
+        "tooltip": "Ajouter un nouvel élément",
+        "variable": {
+          "label": "Variable"
+        }
+      },
+      "annotation": {
+        "change-data-source": "Modifier la source de données de l’annotation",
+        "choose-panels": "Choisir des panneaux",
+        "color": "Couleur",
+        "color-description": "Couleur à utiliser pour les marqueurs d’événement d’annotation",
+        "data-source": "Source de données",
+        "display": "Afficher les contrôles d’annotation dans",
+        "display-options": {
+          "above-dashboard": "Au-dessus du tableau de bord",
+          "controls-menu": "Menu des commandes",
+          "controls-menu-description": "Accessible lorsque le menu des commandes est ouvert",
+          "hidden": "Masqué",
+          "hidden-description": "Masque l’interrupteur permettant d’activer ou de désactiver cette annotation"
+        },
+        "enabled": "Activé",
+        "enabled-description": "Lorsque cette option est activée, la requête d’annotation est émise à chaque actualisation du tableau de bord",
+        "name": "Nom",
+        "open-query-editor": "Ouvrir l’éditeur de requêtes",
+        "open-query-editor-tooltip": "Ouvrez l’éditeur de requêtes pour configurer la requête d’annotation",
+        "panel-filter": {
+          "all-panels": "Tous les panneaux",
+          "all-panels-description": "Envoyer les données d’annotation à tous les panneaux compatibles",
+          "all-panels-except": "Tous les panneaux sauf",
+          "all-panels-except-description": "Ne pas envoyer les données d’annotation aux panneaux suivants",
+          "selected-panels": "Panneaux sélectionnés",
+          "selected-panels-description": "Envoyer les annotations uniquement aux panneaux spécifiés"
+        },
+        "query": "Requête",
+        "query-editor-close": "Fermer",
+        "query-editor-modal-title": "Requête d’annotation",
+        "show-in": "Afficher dans"
+      },
+      "annotations": {
+        "add-annotation": "Ajouter une annotation",
+        "add-annotation-query": "Ajouter une requête d’annotation",
+        "name-builtin": "{{annoName}} (Intégré)",
+        "name-disabled": "{{annoName}} (Désactivé)",
+        "reorder": "Faire glisser pour réorganiser",
+        "reorder-description": "Réorganiser la liste des annotations",
+        "select-annotation": "Sélectionner",
+        "title-above-dashboard-count_one": "Au-dessus du tableau de bord ({{count}})",
+        "title-above-dashboard-count_other": "Au-dessus du tableau de bord ({{count}})",
+        "title-controls-menu-count_one": "Menu des commandes ({{count}})",
+        "title-controls-menu-count_other": "Menu des commandes ({{count}})",
+        "title-hidden-count_one": "Masqué ({{count}})",
+        "title-hidden-count_other": "Masqués ({{count}})"
       },
       "dashboard-options": {
+        "annotations": "Annotations",
+        "description": "Description",
+        "filters": "",
+        "links": "Liens",
+        "open-settings": "",
         "title": "Options",
-        "tooltip": "Options du tableau de bord"
+        "title-option": "Titre",
+        "tooltip": "Options du tableau de bord",
+        "variables": "Variables"
       },
+      "drag-to-reorder": "Faire glisser pour réorganiser",
       "edit-schema": {
+        "apply-button": "Appliquer les modifications",
+        "apply-button-disabled-tooltip": "Corrigez les erreurs de validation avant d’appliquer les modifications",
+        "apply-button-disabled-tooltip-yaml": "Le document contient des erreurs de validation. Passez en JSON pour voir les détails des erreurs dans les lignes.",
+        "apply-error-title": "Échec de l’application des modifications",
+        "collapse": "Réduire l’éditeur",
+        "copy-as-resource": "",
+        "copy-as-resource-tooltip": "",
+        "expand": "Développer l’éditeur",
+        "modal-title": "Modifier le tableau de bord en tant que code",
+        "pane-header": "Modifier en tant que code",
         "title": "Code",
-        "tooltip": "Modifier en tant que code"
+        "tooltip": "Modifier en tant que code",
+        "undo-title": "Édition du schéma"
+      },
+      "element-actions": {
+        "copy": "Copier",
+        "copy-tooltip": "",
+        "delete": "Supprimer",
+        "duplicate": "Dupliquer",
+        "paste": "Coller"
+      },
+      "elements": {
+        "annotation": "Annotation",
+        "annotation-set": "Annotations et alertes",
+        "dashboard": "Tableau de bord",
+        "element": "Élément",
+        "filter": "",
+        "filters-set": "",
+        "link": "Lien",
+        "link-set": "Liens",
+        "local-variable": "Variable locale",
+        "multiple-elements": "Éléments multiples",
+        "multiple-elements-delete-text": "Voulez-vous vraiment supprimer ces éléments ?",
+        "multiple-panels": "Panneaux multiples",
+        "multiple-panels-delete-text": "Voulez-vous vraiment supprimer ces panneaux ? Toutes les requêtes seront supprimées.",
+        "objects": "Objets",
+        "panel": "Panneau",
+        "panels": "Panneaux",
+        "row": "Ligne",
+        "rows": "Lignes",
+        "section-filters-set": "",
+        "tab": "Onglet",
+        "tabs": "Onglets",
+        "variable": "Variable {{type}}",
+        "variable-set": "Variables"
       },
       "export": {
         "title": "Exporter"
       },
-      "filters": "",
-      "open": "",
+      "feedback-title": "Donner votre avis sur la nouvelle expérience d’édition des tableaux de bord",
+      "filters": {
+        "add-filter": "",
+        "reorder-description": "",
+        "title": "",
+        "title-above-dashboard_one": "",
+        "title-above-dashboard_other": "",
+        "title-controls-menu_one": "",
+        "title-controls-menu_other": "",
+        "title-hidden_one": "",
+        "title-hidden_other": "",
+        "tooltip": ""
+      },
+      "links": {
+        "add-link": "Ajouter un lien",
+        "new-link": "Nouveau lien",
+        "reorder": "Faire glisser pour réorganiser",
+        "reorder-description": "Réorganiser la liste des liens",
+        "select-link": "Sélectionner",
+        "title-above-dashboard_one": "Au-dessus du tableau de bord ({{count}})",
+        "title-above-dashboard_other": "Au-dessus du tableau de bord ({{count}})",
+        "title-controls-menu_one": "Menu des commandes ({{count}})",
+        "title-controls-menu_other": "Menu des commandes ({{count}})",
+        "untitled": "Lien sans titre"
+      },
       "outline": {
+        "pane-header": "Plan du contenu",
+        "repeated-item": "Répéter",
         "title": "Plan",
-        "tooltip": "Plan du contenu"
+        "tooltip": "Plan du contenu",
+        "tree-item": {
+          "empty": "(vide)",
+          "no-title": "<sans titre>"
+        }
       },
       "redo": "Rétablir",
+      "row": {
+        "header": {
+          "hide": "Masquer",
+          "title": "En-tête de ligne"
+        }
+      },
+      "section-filters": {
+        "title": ""
+      },
+      "section-variables": {
+        "title": "Variables"
+      },
+      "select": "Sélectionner",
       "snapshot": {
+        "title": "Source",
         "tooltip": "Ouvrir le tableau de bord d’origine"
       },
       "undo": "Annuler",
+      "variable": {
+        "change-type": "",
+        "change-type-aria-label": "Modifier le type de variable",
+        "custom-options": {
+          "apply": "Appliquer",
+          "change-value": "Modifier la valeur de la variable",
+          "discard": "Abandonner",
+          "modal-title": "Personnaliser les options"
+        },
+        "datasource-options": {
+          "name-filter": "Nom du filtre",
+          "name-filter-description": "Filtre d’expression régulière pour les instances de source de données à inclure. Laisser vide pour tout.",
+          "name-filter-placeholder": "Exemple : /^prod/",
+          "type": "Type",
+          "type-placeholder": "Choisir un type de source de données"
+        },
+        "description": "Description",
+        "description-placeholder": "Texte de description",
+        "display": "Affichage",
+        "display-options": {
+          "controls-menu": "Menu des commandes",
+          "controls-menu-description": "Visible lorsque le menu des commandes est ouvert",
+          "hidden": "Masqué",
+          "hidden-description": "Visible uniquement en mode édition",
+          "label-hidden": "",
+          "label-hidden-description": ""
+        },
+        "label": "Étiquette",
+        "label-description": "Nom d’affichage facultatif",
+        "name": "Nom",
+        "open-editor": "Ouvrir l’éditeur de variables",
+        "open-editor-tooltip": "Pour plus d’options de variables, ouvrez l’éditeur de variables",
+        "query-options": {
+          "close": "Fermer",
+          "modal-title": "Variable de requête",
+          "preview": "Aperçu"
+        },
+        "selection-options": {
+          "allow-custom-values": "Permettra des valeurs personnalisées",
+          "allow-custom-values-description": "Permet aux utilisateurs de saisir des valeurs",
+          "category": "Options de sélection",
+          "custom-all-value": "Personnaliser toutes les valeurs",
+          "custom-all-value-description": "Un caractère générique regex ou une autre valeur pour représenter Tout",
+          "include-all": "Inclure la valeur Tout",
+          "include-all-description": "Active une seule option qui représente toutes les valeurs",
+          "multi-value": "Multi-valeur"
+        },
+        "type-category": "{{type}} options"
+      },
+      "variables": {
+        "add-variable": "Ajouter une variable",
+        "change-type": "",
+        "reorder": "Faire glisser pour réorganiser",
+        "reorder-description": "Réorganiser la liste des variables",
+        "select-type": "Choisir le type de variable",
+        "select-type-card-tooltip": "Cliquer pour sélectionner le type",
+        "select-variable": "Sélectionner",
+        "title-controls-menu_one": "Menu des commandes ({{count}})",
+        "title-controls-menu_other": "Menu des commandes ({{count}})",
+        "title-hidden_one": "Masqué ({{count}})",
+        "title-hidden_other": "Masqués ({{count}})",
+        "title-top-placement_one": "",
+        "title-top-placement_other": "",
+        "top-placement-default": ""
+      },
       "view-panel": {
         "disabled": "",
         "fanout-by-series": "",
@@ -6223,6 +6288,18 @@
         "pane-header": "",
         "quick-toggles": "",
         "title": ""
+      },
+      "viz-panel": {
+        "configure-button": "",
+        "delete-panel-text": "La suppression de ce panneau supprimera également toutes les requêtes. Voulez-vous vraiment continuer ?",
+        "delete-panel-title": "Supprimer le panneau ?",
+        "delete-panel-yes": "Supprimer",
+        "options": {
+          "configure-button-tooltip": "Modifier les requêtes et les options de visualisation",
+          "description": "Description",
+          "title-option": "Titre",
+          "transparent-background": "Arrière-plan transparent"
+        }
       }
     },
     "source-link": {
@@ -6280,9 +6357,6 @@
       "tab-warning": {
         "title-not-unique": "Ce titre n’est pas unique"
       }
-    },
-    "title": {
-      "action": "Modifier le titre du tableau de bord"
     },
     "toolbar": {
       "add": "Ajouter",
@@ -6374,9 +6448,6 @@
       "save-library-panel": "Enregistrer le panneau de la bibliothèque",
       "settings": "Paramètres du tableau de bord",
       "share-button": "Partager",
-      "snapshot": {
-        "title": "Source"
-      },
       "star-add-error": "Échec de l’ajout aux favoris",
       "star-added": "Ajouté aux favoris",
       "star-remove-error": "Échec de la suppression des favoris",
@@ -6446,22 +6517,7 @@
       "tags-expected-strings": "balises attendues tableau de chaînes"
     },
     "variable": {
-      "description": {
-        "action": "Modifier la description de la variable"
-      },
-      "description-tooltip": "Description de la variable",
-      "hide": {
-        "action": "Modifier l’option de masquage de la variable"
-      },
-      "label": {
-        "action": "Modifier l’étiquette de la variable"
-      },
-      "name": {
-        "action": "Modifier le nom de la variable"
-      },
-      "type": {
-        "action": "Modifier le type de variable"
-      }
+      "description-tooltip": "Description de la variable"
     },
     "version-history-comparison": {
       "button-restore": "Restaurer la version {{version}}",
@@ -6484,17 +6540,6 @@
     "view-panel": {
       "back-to-dashboard": "",
       "not-found": ""
-    },
-    "viz-panel": {
-      "delete-panel-text": "La suppression de ce panneau supprimera également toutes les requêtes. Voulez-vous vraiment continuer ?",
-      "delete-panel-title": "Supprimer le panneau ?",
-      "delete-panel-yes": "Supprimer",
-      "options": {
-        "configure-button-tooltip": "Modifier les requêtes et les options de visualisation",
-        "description": "Description",
-        "title-option": "Titre",
-        "transparent-background": "Arrière-plan transparent"
-      }
     }
   },
   "dashboard-import": {
@@ -6608,25 +6653,6 @@
       "name-allow-custom-values": "Autoriser les valeurs personnalisées",
       "name-enable-group-by": "Activer le regroupement par"
     },
-    "add-filters": {
-      "label": "Filtrer et regrouper par"
-    },
-    "add-link": {
-      "inline-instance-name": "Nouveau lien",
-      "label-link": "Lien",
-      "tooltip": "Ajouter un lien vers un autre tableau de bord ou un site externe"
-    },
-    "add-new-edit-pane": {
-      "group-layouts": "Dispositions du groupe"
-    },
-    "add-row": {
-      "add-label": "Ajouter une ligne",
-      "group-label": "Regrouper sur des lignes"
-    },
-    "add-tab": {
-      "add-label": "Ajouter un onglet",
-      "group-label": "Regrouper dans des onglets"
-    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Impossible d’accéder au tableau de bord sélectionné. Veuillez réessayer.",
@@ -6655,19 +6681,12 @@
         "new-panel": "Nouveau panneau"
       }
     },
-    "add-variable": {
-      "label-variable": "Variable"
-    },
     "adhoc-origin-filters-controller": {
       "input-placeholder": "Ajouter un filtre par défaut…"
     },
     "adhoc-origin-filters-editor": {
       "description": "Filtres présélectionnés par défaut.",
       "label": "Filtres par défaut"
-    },
-    "annotation-control": {
-      "description-add-event-data-to-graphs": "Ajouter des données d’événements aux graphiques",
-      "label-annotation-query": "Requête d’annotation"
     },
     "annotation-edit-actions": {
       "description": {
@@ -6684,11 +6703,6 @@
       "delete-title": "Supprimer la requête d’annotation"
     },
     "annotation-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-annotations-list": "Réorganiser la liste des annotations"
-        }
-      },
       "render-list": {
         "aria-label-annotation": "Annotation"
       }
@@ -6734,15 +6748,6 @@
       "query-name": "Nom de la requête",
       "tooltip-move-down": "Déplacer vers le bas",
       "tooltip-move-up": "Déplacer vers le haut"
-    },
-    "annotations-list": {
-      "drag-end": {
-        "description": "Réorganiser la liste des annotations"
-      }
-    },
-    "annotations-section": {
-      "name-builtin": "{{annoName}} (Intégré)",
-      "name-disabled": "{{annoName}} (Désactivé)"
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Il ne peut pas contenir de caractères non valides : « ~ », « ^ », « : », « ? », « * », « [ », « \\\\ » ou « ] ».",
@@ -6798,18 +6803,6 @@
       "name-values-separated-comma": "Valeurs séparées par des virgules",
       "selection-options": "Options de sélection"
     },
-    "dashboard-annotations-list": {
-      "add-annotation-query": "Ajouter une requête d’annotation",
-      "title-above-dashboard-count_one": "Au-dessus du tableau de bord ({{count}})",
-      "title-above-dashboard-count_other": "Au-dessus du tableau de bord ({{count}})",
-      "title-controls-menu-count_one": "Menu des commandes ({{count}})",
-      "title-controls-menu-count_other": "Menu des commandes ({{count}})",
-      "title-hidden-count_one": "Masqué ({{count}})",
-      "title-hidden-count_other": "Masqués ({{count}})"
-    },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "Donner votre avis sur la nouvelle expérience d’édition des tableaux de bord"
-    },
     "dashboard-link-form": {
       "back-to-list": "Retour à la liste",
       "label-icon": "Icône",
@@ -6840,9 +6833,6 @@
       "tooltip-move-link-down": "Déplacer le lien vers le bas",
       "tooltip-move-link-up": "Déplacer le lien vers le haut",
       "type": "Type"
-    },
-    "dashboard-links-list": {
-      "add-link": "Ajouter un lien"
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Erreur lors du chargement du tableau de bord"
@@ -6879,9 +6869,6 @@
         "dashboard-not-found": "Tableau de bord introuvable"
       }
     },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Commandes du tableau de bord"
-    },
     "data-source-variable-form": {
       "data-source-options": "Options de source de données",
       "description-instance-name-filter": "Filtre Regex pour les instances de source de données à choisir dans la liste des valeurs de variable. Laisser vide pour tout.",
@@ -6915,12 +6902,6 @@
     "description-label": {
       "description": "Description"
     },
-    "draggable-item": {
-      "drag-to-reorder": "Faire glisser pour réorganiser"
-    },
-    "draggable-items-list": {
-      "select": "Sélectionner"
-    },
     "edit-link-view": {
       "edit-link-page-nav": {
         "text": {
@@ -6943,16 +6924,6 @@
       "show-more": "Afficher plus",
       "sql-name": "Transformer avec SQL",
       "sql-transformation-description": "Manipulez vos données à l’aide d’une syntaxe de type MySQL"
-    },
-    "filters-list": {
-      "add-filter": "",
-      "reorder-description": "",
-      "title-above-dashboard_one": "",
-      "title-above-dashboard_other": "",
-      "title-controls-menu_one": "",
-      "title-controls-menu_other": "",
-      "title-hidden_one": "",
-      "title-hidden_other": ""
     },
     "general-settings-edit-view": {
       "default_grid_options": {
@@ -7125,11 +7096,6 @@
       "unnamed": "Lien sans nom"
     },
     "link-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-links-list": "Réorganiser la liste des liens"
-        }
-      },
       "render-list": {
         "aria-label-link": "Lien"
       }
@@ -7146,13 +7112,6 @@
       "type-dashboards": "Tableaux de bord",
       "type-link": "Lien",
       "with-tags": "Avec les balises"
-    },
-    "links-list": {
-      "drag-end-description": "Réorganiser la liste des liens",
-      "title-above-dashboard_one": "Au-dessus du tableau de bord ({{count}})",
-      "title-above-dashboard_other": "Au-dessus du tableau de bord ({{count}})",
-      "title-controls-menu_one": "Menu des commandes ({{count}})",
-      "title-controls-menu_other": "Menu des commandes ({{count}})"
     },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "",
@@ -7426,9 +7385,6 @@
       "new-alert-rule": "Nouvelle règle d'alerte",
       "title-no-alerting-capable-query-found": "Aucune requête capable d’alerter n’a été trouvée"
     },
-    "section-filters-list": {
-      "add-filter": ""
-    },
     "section-placement": {
       "top-row": "",
       "top-tab": ""
@@ -7517,31 +7473,10 @@
       "save-dashboard": "Enregistrer le tableau de bord",
       "title-unsaved-changes": "Modifications non enregistrées"
     },
-    "use-annotations-category": {
-      "category": {
-        "title": {
-          "annotations": "Annotations"
-        }
-      }
-    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Paramètres"
-        }
-      }
-    },
-    "use-filters-category": {
-      "category": {
-        "title": {
-          "filters": ""
-        }
-      }
-    },
-    "use-links-category": {
-      "category": {
-        "title": {
-          "links": "Liens"
         }
       }
     },
@@ -7553,13 +7488,6 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Tableau de bord enregistré"
     },
-    "use-variables-category": {
-      "category": {
-        "title": {
-          "variables": "Variables"
-        }
-      }
-    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Cette variable n’est référencée par aucune variable ou aucun tableau de bord.",
       "aria-label-variable-referenced-other-variables-dashboard": "Cette variable est référencée par d’autres variables ou d’autres tableaux de bord.",
@@ -7568,23 +7496,6 @@
     },
     "variable-controls": {
       "add-variable": "Ajouter une variable"
-    },
-    "variable-display-select": {
-      "label": "Affichage",
-      "options": {
-        "controls-menu": {
-          "description": "Visible lorsque le menu des commandes est ouvert",
-          "label": "Menu des commandes"
-        },
-        "hidden": {
-          "description": "Visible uniquement en mode édition",
-          "label": "Masqué"
-        },
-        "top-placement-hidden-label": {
-          "description": "",
-          "label": ""
-        }
-      }
     },
     "variable-editable-element": {
       "delete-confirm": "Supprimer la variable",
@@ -7636,13 +7547,6 @@
       },
       "label": "Masquer"
     },
-    "variable-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Réorganiser la liste des variables"
-        }
-      }
-    },
     "variable-multi-prop-static-options-form": {
       "aria-label-static-options": "Options statiques"
     },
@@ -7657,23 +7561,6 @@
       "show-more": "Afficher plus",
       "preview-of-values_one": "Aperçu des valeurs ({{count}})",
       "preview-of-values_other": "Aperçu des valeurs ({{count}})"
-    },
-    "variables-list": {
-      "add-variable": "Ajouter une variable",
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Réorganiser la liste des variables"
-        }
-      },
-      "top-placement": {
-        "default": ""
-      },
-      "title-controls-menu_one": "Menu des commandes ({{count}})",
-      "title-controls-menu_other": "Menu des commandes ({{count}})",
-      "title-hidden_one": "Masqué ({{count}})",
-      "title-hidden_other": "Masqués ({{count}})",
-      "title-top-placement_one": "",
-      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {

@@ -3,6 +3,7 @@ package metrics
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/tracing"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -97,8 +99,26 @@ func (e *AzureMonitorDatasource) ResourceRequest(rw http.ResponseWriter, req *ht
 // 2. executes each query by calling the Azure Monitor API
 // 3. parses the responses for each query into data frames
 func (e *AzureMonitorDatasource) ExecuteTimeSeriesQuery(ctx context.Context, originalQueries []backend.DataQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, fromAlert bool) (*backend.QueryDataResponse, error) {
-	result := backend.NewQueryDataResponse()
+	batchFlagEnabled := config.GrafanaConfigFromContext(ctx).FeatureToggles().IsEnabled("azureMonitorBatchAPI")
+	if dsInfo.Settings.BatchAPIEnabled && batchFlagEnabled {
+		// The batch data-plane service only exists when the datasource has a
+		// metrics data-plane route (e.g. metrics.monitor.azure.com, or .cn for
+		// China); customized-cloud configs must supply the metricsDataPlane
+		// route themselves. When it is missing we cannot serve batch queries, so
+		// fail the request and prompt the user to fix their cloud configuration
+		// rather than silently returning results from a different endpoint.
+		svc, ok := dsInfo.Services[types.RouteAzureMonitorBatchMetrics]
+		if !ok {
+			e.Logger.Error("Azure Monitor datasource has batchAPIEnabled=true but no batch metrics service is configured")
+			return nil, backend.DownstreamError(errors.New("the Azure Monitor metrics batch service is not configured; please validate your Azure cloud configuration includes the metrics data plane route"))
+		}
+		return e.executeBatchTimeSeriesQuery(ctx, originalQueries, dsInfo, client, svc.HTTPClient, svc.URL)
+	}
+	if dsInfo.Settings.BatchAPIEnabled && !batchFlagEnabled {
+		e.Logger.Warn("Azure Monitor datasource has batchAPIEnabled=true but the azureMonitorBatchAPI feature toggle is off; falling back to the legacy ARM metrics endpoint")
+	}
 
+	result := backend.NewQueryDataResponse()
 	for _, query := range originalQueries {
 		azureQuery, err := e.buildQuery(query, dsInfo)
 		if err != nil {
@@ -545,25 +565,12 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			labels[md.Name.LocalizedValue] = md.Value
 		}
 
-		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeNullableFloat64)
-		frame.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti, TypeVersion: data.FrameTypeVersion{0, 1}}
-		frame.RefID = query.RefID
-		timeField := frame.Fields[0]
-		timeField.Name = data.TimeSeriesTimeFieldName
-		dataField := frame.Fields[1]
-		dataField.Name = amr.Value[0].Name.LocalizedValue
-		dataField.Labels = labels
-		if amr.Value[0].Unit != "Unspecified" {
-			dataField.SetConfig(&data.FieldConfig{
-				Unit: toGrafanaUnit(amr.Value[0].Unit),
-			})
-		}
-
-		resourceIdLabel := "microsoft.resourceid"
-		resourceID, ok := labels[resourceIdLabel]
+		// Derive the resource ID/name from the per-series metadata, falling back
+		// to the query URL for legacy single-resource responses that don't echo
+		// the resource ID.
+		resourceID, ok := labels["microsoft.resourceid"]
 		if !ok {
-			resourceIdLabel = "Microsoft.ResourceId"
-			resourceID = labels[resourceIdLabel]
+			resourceID = labels["Microsoft.ResourceId"]
 		}
 		resourceIDSlice := strings.Split(resourceID, "/")
 		resourceName := ""
@@ -576,76 +583,139 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			resourceID = extractResourceIDFromMetricsURL(query.URL)
 		}
 
-		delete(labels, resourceIdLabel)
-		labels["resourceName"] = resourceName
+		frame, err := buildMetricFrame(metricFrameInput{
+			query:        query,
+			series:       series,
+			labels:       labels,
+			metricName:   amr.Value[0].Name.LocalizedValue,
+			unit:         amr.Value[0].Unit,
+			resourceID:   resourceID,
+			resourceName: resourceName,
+			amr:          &amr,
+			subscription: subscription,
+		}, azurePortalUrl)
+		if err != nil {
+			return nil, err
+		}
+		frames = append(frames, frame)
+	}
 
-		if query.Alias != "" {
-			displayName := formatAzureMonitorLegendKey(query, resourceID, &amr, labels, subscription)
+	return frames, nil
+}
 
+// valueForAggregation returns the metric value for the requested aggregation,
+// defaulting to Count when the aggregation is unset or unrecognised. Shared by
+// the single-resource (parseResponse) and batch (framesFromBatchResponseValue)
+// response parsers.
+func valueForAggregation(point types.AzureMetricTimeseriesData, aggregation string) *float64 {
+	switch aggregation {
+	case "Average":
+		return point.Average
+	case "Total":
+		return point.Total
+	case "Maximum":
+		return point.Maximum
+	case "Minimum":
+		return point.Minimum
+	case "Count":
+		return point.Count
+	default:
+		// No explicit (or an unrecognised) aggregation was requested. Fall back
+		// to Count, preserving long-standing behaviour. Azure may not populate
+		// Count for such queries, in which case the point renders as empty.
+		return point.Count
+	}
+}
+
+// metricFrameInput carries the per-timeseries values needed to build one data
+// frame. It decouples frame construction from whether the data came from the
+// single-resource ARM response (parseResponse) or the Metrics Batch response
+// (framesFromBatchResponseValue), so both paths produce identical frames.
+type metricFrameInput struct {
+	query        *types.AzureMonitorQuery
+	series       types.AzureMetricTimeseries
+	labels       data.Labels // raw metadata labels; the builder finalises them
+	metricName   string      // value-field name
+	unit         string
+	resourceID   string
+	resourceName string
+	amr          *types.AzureMonitorResponse // used only for legend formatting
+	subscription string                      // value substituted for {{subscription}}
+}
+
+// buildMetricFrame converts a single timeseries into a data frame, applying the
+// shared label/unit/alias/aggregation/deep-link logic and the GrafanaSql frame
+// reshaping. Both the single-resource and batch parsers use it so they cannot
+// drift.
+func buildMetricFrame(in metricFrameInput, azurePortalURL string) (*data.Frame, error) {
+	labels := in.labels
+	// The single-resource ARM response carries the resource ID as a metadata
+	// label; drop it and expose the short resource name instead. (No-op for the
+	// batch response, which has no such label.)
+	delete(labels, "microsoft.resourceid")
+	delete(labels, "Microsoft.ResourceId")
+	labels["resourceName"] = in.resourceName
+
+	frame := data.NewFrameOfFieldTypes("", len(in.series.Data), data.FieldTypeTime, data.FieldTypeNullableFloat64)
+	frame.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti, TypeVersion: data.FrameTypeVersion{0, 1}}
+	frame.RefID = in.query.RefID
+	timeField := frame.Fields[0]
+	timeField.Name = data.TimeSeriesTimeFieldName
+	dataField := frame.Fields[1]
+	dataField.Name = in.metricName
+	dataField.Labels = labels
+	if in.unit != "Unspecified" {
+		dataField.SetConfig(&data.FieldConfig{
+			Unit: toGrafanaUnit(in.unit),
+		})
+	}
+
+	if in.query.Alias != "" {
+		displayName := formatAzureMonitorLegendKey(in.query, in.resourceID, in.amr, labels, in.subscription)
+		if dataField.Config != nil {
+			dataField.Config.DisplayName = displayName
+		} else {
+			dataField.SetConfig(&data.FieldConfig{
+				DisplayName: displayName,
+			})
+		}
+	}
+
+	if in.query.GrafanaSql {
+		timeField.Name = "time"
+		metricFieldName := dataField.Name
+		dataField.Name = "value"
+		if in.query.Alias == "" {
 			if dataField.Config != nil {
-				dataField.Config.DisplayName = displayName
+				if dataField.Config.DisplayName == "" {
+					dataField.Config.DisplayName = metricFieldName
+				}
 			} else {
 				dataField.SetConfig(&data.FieldConfig{
-					DisplayName: displayName,
+					DisplayName: metricFieldName,
 				})
 			}
 		}
 
-		if query.GrafanaSql {
-			timeField.Name = "time"
-			metricFieldName := dataField.Name
-			dataField.Name = "value"
-			if query.Alias == "" {
-				if dataField.Config != nil {
-					if dataField.Config.DisplayName == "" {
-						dataField.Config.DisplayName = metricFieldName
-					}
-				} else {
-					dataField.SetConfig(&data.FieldConfig{
-						DisplayName: metricFieldName,
-					})
-				}
-			}
-
-			resourceNameField := data.NewFieldFromFieldType(data.FieldTypeString, len(series.Data))
-			resourceNameField.Name = "resourceName"
-			for i := 0; i < len(series.Data); i++ {
-				resourceNameField.Set(i, resourceName)
-			}
-			frame.Fields = append(frame.Fields, resourceNameField)
+		resourceNameField := data.NewFieldFromFieldType(data.FieldTypeString, len(in.series.Data))
+		resourceNameField.Name = "resourceName"
+		for i := 0; i < len(in.series.Data); i++ {
+			resourceNameField.Set(i, in.resourceName)
 		}
-
-		requestedAgg := query.Params.Get("aggregation")
-
-		for i, point := range series.Data {
-			var value *float64
-			switch requestedAgg {
-			case "Average":
-				value = point.Average
-			case "Total":
-				value = point.Total
-			case "Maximum":
-				value = point.Maximum
-			case "Minimum":
-				value = point.Minimum
-			case "Count":
-				value = point.Count
-			default:
-				value = point.Count
-			}
-
-			frame.SetRow(i, point.TimeStamp, value)
-		}
-
-		queryUrl, err := getQueryUrl(query, azurePortalUrl, resourceID, resourceName)
-		if err != nil {
-			return nil, err
-		}
-		frameWithLink := loganalytics.AddConfigLinks(*frame, queryUrl, nil)
-		frames = append(frames, &frameWithLink)
+		frame.Fields = append(frame.Fields, resourceNameField)
 	}
 
-	return frames, nil
+	requestedAgg := in.query.Params.Get("aggregation")
+	for i, point := range in.series.Data {
+		frame.SetRow(i, point.TimeStamp, valueForAggregation(point, requestedAgg))
+	}
+
+	queryURL, err := getQueryUrl(in.query, azurePortalURL, in.resourceID, in.resourceName)
+	if err != nil {
+		return nil, err
+	}
+	frameWithLink := loganalytics.AddConfigLinks(*frame, queryURL, nil)
+	return &frameWithLink, nil
 }
 
 // Gets the deep link for the given query

@@ -337,7 +337,7 @@ func TestIntegrationDashboardAnnotations(t *testing.T) {
 	st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
 	bValue := float64(42)
 	cValue := float64(1)
-	_ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
+	_, _ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
 		Instance:    data.Labels{"instance_label": "testValue2"},
 		State:       eval.Alerting,
 		EvaluatedAt: evaluationTime,
@@ -401,7 +401,7 @@ func TestIntegrationProcessEvalResultsTemplatedLabelKeysAreNotExpanded(t *testin
 	})
 
 	st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
-	_ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
+	_, _ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
 		Instance:    data.Labels{"instance_label": "test-value"},
 		State:       eval.Alerting,
 		EvaluatedAt: evaluationTime,
@@ -1787,7 +1787,7 @@ func TestProcessEvalResults(t *testing.T) {
 					res[i].EvaluatedAt = evalTime
 				}
 				clk.Set(evalTime)
-				_ = st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, systemLabels, state.NoopSender)
+				_, _ = st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, systemLabels, state.NoopSender)
 				results += len(res)
 			}
 
@@ -1887,7 +1887,7 @@ func TestProcessEvalResults(t *testing.T) {
 			}),
 		)}
 
-		_ = st.ProcessEvalResults(context.Background(), time, rule, res, systemLabels, state.NoopSender)
+		_, _ = st.ProcessEvalResults(context.Background(), time, rule, res, systemLabels, state.NoopSender)
 
 		states := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 		require.Len(t, states, 1)
@@ -1917,7 +1917,7 @@ func TestProcessEvalResults(t *testing.T) {
 		now := clk.Now()
 		var results = eval.GenerateResults(rand.Intn(4)+1, eval.ResultGen(eval.WithEvaluatedAt(now)))
 
-		states := st.ProcessEvalResults(context.Background(), now, rule, results, make(data.Labels), nil)
+		states, _ := st.ProcessEvalResults(context.Background(), now, rule, results, make(data.Labels), nil)
 		require.NotEmpty(t, states)
 
 		savedStates := make(map[data.Fingerprint]models.AlertInstance)
@@ -2096,7 +2096,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 					evalTime = re.EvaluatedAt
 				}
 			}
-			st.ProcessEvalResults(context.Background(), evalTime, rule, res, data.Labels{
+			_, _ = st.ProcessEvalResults(context.Background(), evalTime, rule, res, data.Labels{
 				"alertname":                    rule.Title,
 				"__alert_rule_namespace_uid__": rule.NamespaceUID,
 				"__alert_rule_uid__":           rule.UID,
@@ -2186,7 +2186,7 @@ func TestStaleResults(t *testing.T) {
 
 	// Init
 	var statesToSend state.StateTransitions
-	processed := st.ProcessEvalResults(ctx, clk.Now(), rule, initResults, nil, func(_ context.Context, states state.StateTransitions) {
+	processed, _ := st.ProcessEvalResults(ctx, clk.Now(), rule, initResults, nil, func(_ context.Context, states state.StateTransitions) {
 		statesToSend = states
 	})
 	checkExpectedStateTransitions(t, processed, initStates)
@@ -2208,7 +2208,7 @@ func TestStaleResults(t *testing.T) {
 
 	var expectedStaleKeys []models.AlertInstanceKey
 	t.Run("should mark missing states as stale", func(t *testing.T) {
-		processed = st.ProcessEvalResults(ctx, clk.Now(), rule, results, nil, nil)
+		processed, _ = st.ProcessEvalResults(ctx, clk.Now(), rule, results, nil, nil)
 		checkExpectedStateTransitions(t, processed, initStates)
 		for _, s := range processed {
 			if s.CacheID == state1 {
@@ -2791,7 +2791,7 @@ func TestStateManager_HistorianIntegration(t *testing.T) {
 				// Clear historian state transitions before the evaluation
 				historian.StateTransitions = nil
 
-				mgr.ProcessEvalResults(
+				_, _ = mgr.ProcessEvalResults(
 					context.Background(),
 					evalTime,
 					scenario.rule,

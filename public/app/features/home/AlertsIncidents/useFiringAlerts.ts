@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { escapeRegExp } from 'lodash';
+import { escapeRegExp, uniq } from 'lodash';
 import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
@@ -10,6 +10,7 @@ import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/fi
 import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { ALERTING_PATHS, alertListPageLink } from 'app/features/alerting/unified/utils/navigation';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
+import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
@@ -22,11 +23,56 @@ function alertSeverityLevel(alert: AlertmanagerAlert) {
   return canonicalSeverity(alert.labels.severity ?? '');
 }
 
-function buildTeamMatchers(teamNames: string[]) {
-  if (teamNames.length === 0) {
+function buildTeamMatchers(teamValues: string[]) {
+  if (teamValues.length === 0) {
     return [];
   }
-  return [{ name: 'team', value: teamNames.map(escapeRegExp).join('|'), isRegex: true, isEqual: true }];
+  return [{ name: 'team', value: teamValues.map(escapeRegExp).join('|'), isRegex: true, isEqual: true }];
+}
+
+// Any run of separator characters between or around the name's letter/digit runs.
+// Alertmanager compiles matchers with Go's RE2, which supports \p{...} classes;
+// don't reuse this pattern in a JS RegExp without the `u` flag.
+const SEPARATORS = '[^\\p{L}\\p{N}]*';
+
+/**
+ * Regex pattern matching any labeling convention of a team name: only the
+ * letter/digit runs must appear, with arbitrary separators (or none) between
+ * and around them. "Team (US)" matches "Team (US)", "team-us" or "TeamUS" —
+ * but not "team-us-2", since Alertmanager anchors regex matchers.
+ * Null for names without any letters or digits.
+ */
+function toTolerantPattern(teamName: string): string | null {
+  // Runs of letters/digits contain no regex metacharacters, so no escaping is needed.
+  const runs = teamName.match(/[\p{L}\p{N}]+/gu);
+  return runs && SEPARATORS + runs.join(SEPARATORS) + SEPARATORS;
+}
+
+function buildTolerantTeamMatchers(teamNames: string[]) {
+  const patterns = uniq(teamNames.map(toTolerantPattern).filter((p): p is string => p !== null));
+  if (patterns.length === 0) {
+    return [];
+  }
+  // (?i) (a Go RE2 inline flag): the label's casing is as unpredictable as its separators.
+  return [{ name: 'team', value: `(?i)${patterns.join('|')}`, isRegex: true, isEqual: true }];
+}
+
+/**
+ * Which team matchers to send for the current dropdown selection:
+ * an explicit "All teams" pick means no filter at all, a specific team wins next,
+ * and with no selection we fall back to the user's own teams when they have any.
+ */
+function resolveTeamMatchers(selectedTeam: string | undefined, userTeamNames: string[]) {
+  if (selectedTeam === ALL_VARIABLE_VALUE) {
+    return [];
+  }
+  if (selectedTeam) {
+    // Dropdown selections are real `team` label values, so they're matched exactly.
+    return buildTeamMatchers([selectedTeam]);
+  }
+  // The `team` alert label is free-form — typically some slugged or re-cased variant
+  // of the Grafana team name — so the own-teams default matches tolerantly.
+  return buildTolerantTeamMatchers(userTeamNames);
 }
 
 // Exported so the homepage skeleton reserves the card slot using the same gate.
@@ -37,26 +83,35 @@ export type FiringAlertsData = ReturnType<typeof useFiringAlerts>;
 /**
  * All data fetching and derived state for the homepage Firing alerts view,
  * shared between the old-layout card and the redesigned tabs.
+ *
+ * When `selectedTeam` is set (from the team dropdown) it overrides the default
+ * filter of the user's own teams.
  */
-export function useFiringAlerts() {
+export function useFiringAlerts(selectedTeam?: string) {
+  // The hook gates its own fetching so it's safe to call unconditionally,
+  // e.g. from the tabs component when only incidents are available.
+  const enabled = canViewFiringAlerts();
+
   // Fetched once — teams change at login granularity. A failed fetch leaves teams
   // undefined, so the card intentionally shows all org alerts unfiltered.
-  const { value: teams, loading: teamsLoading } = useAsync(() => getBackendSrv().get<Team[]>('/api/user/teams'), []);
+  const { value: teams, loading: teamsLoading } = useAsync(
+    () => (enabled ? getBackendSrv().get<Team[]>('/api/user/teams') : Promise.resolve<Team[]>([])),
+    [enabled]
+  );
 
   const teamNames = (teams ?? []).map((t) => t.name);
   const hasTeams = teamNames.length > 0;
 
-  // Filter to the user's teams when they have any. No memo needed:
-  // RTK Query serializes query args, so referential identity doesn't matter.
-  const matchers = hasTeams ? buildTeamMatchers(teamNames) : [];
+  // No memo needed: RTK Query serializes query args, so referential identity doesn't matter.
+  const matchers = resolveTeamMatchers(selectedTeam, teamNames);
 
   const {
     data: alerts,
-    isLoading: alertsLoading,
+    isFetching: alertsLoading,
     error,
     refetch,
   } = alertmanagerApi.useGetAlertmanagerAlertsQuery(
-    teamsLoading
+    !enabled || teamsLoading
       ? skipToken
       : {
           amSourceName: GRAFANA_RULES_SOURCE_NAME,
@@ -65,7 +120,8 @@ export function useFiringAlerts() {
         }
   );
 
-  const loading = teamsLoading || alertsLoading;
+  // enabled && ... so the useAsync microtask tick doesn't report loading for gated users
+  const loading = enabled && (teamsLoading || alertsLoading);
 
   // Severity and timestamp are derived once per alert so the sort comparator,
   // the badge counts, and the rows don't recompute them.
@@ -105,6 +161,8 @@ export function useFiringAlerts() {
     highCount,
     hasAlerts,
     hasTeams,
+    // Echoed back so the card can scope its empty message to the filtered team.
+    selectedTeam,
     loading,
     error,
     refetch,

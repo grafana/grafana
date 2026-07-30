@@ -251,6 +251,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	provider2 "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
+	provider3 "github.com/grafana/grafana/pkg/storage/unified/search/rerank/provider"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -259,9 +260,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
-	"github.com/grafana/grafana/pkg/tsdb/loki"
-	"github.com/grafana/grafana/pkg/tsdb/mysql"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -356,17 +354,14 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	cloudwatchService := cloudwatch.ProvideService()
 	graphiteService := graphite.ProvideService(httpclientProvider, tracer)
 	influxdbService := influxdb.ProvideService(httpclientProvider)
-	lokiService := loki.ProvideService(httpclientProvider, tracer)
-	prometheusService := prometheus.ProvideService(httpclientProvider)
 	testdatasourceService := testdatasource.ProvideService()
-	mysqlService := mysql.ProvideService()
 	systemUsers := store.ProvideSystemUsersService()
 	storageService, err := store.ProvideService(sqlStore, cfg, systemUsers)
 	if err != nil {
 		return nil, err
 	}
 	grafanadsService := grafanads.ProvideService(storageService, featureToggles)
-	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, graphiteService, influxdbService, lokiService, prometheusService, testdatasourceService, mysqlService, grafanadsService)
+	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, graphiteService, influxdbService, testdatasourceService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
 	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
@@ -386,7 +381,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	actionSetService := resourcepermissions.NewActionSetService()
 	permissionRegistry := permreg.ProvidePermissionRegistry()
-	serverLockService := serverlock.ProvideService(sqlStore, tracingService)
+	serverLockService := serverlock.ProvideService(legacyDatabaseProvider, tracingService)
 	registerer := metrics.ProvideRegisterer()
 	storeProvider := store2.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
@@ -462,7 +457,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	accessClient, err := authz.ProvideAuthZClient(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, zanzanaClient, eventualRestConfigProvider)
+	eventualClient := resource.ProvideEventualClient()
+	accessClient, err := authz.ProvideAuthZClient(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, zanzanaClient, eventualRestConfigProvider, eventualClient)
 	if err != nil {
 		return nil, err
 	}
@@ -532,6 +528,14 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
+	reranker, err := provider3.ProvideReranker(cfg, vectorMetrics)
+	if err != nil {
+		return nil, err
+	}
+	experimentalKVOptions, err := sql.ProvideExperimentalKV(cfg)
+	if err != nil {
+		return nil, err
+	}
 	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
 	if err != nil {
 		return nil, err
@@ -550,9 +554,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		SecureValues:   inlineSecureValueSupport,
 		VectorBackend:  vectorBackend,
 		Embedder:       embedder,
+		Reranker:       reranker,
 		DashboardStats: ossDashboardStats,
 		KV:             kv,
 		EDB:            dbProvider,
+		ExperimentalKV: experimentalKVOptions,
 		Publisher:      publisherService,
 		Subscriber:     subscriberService,
 	}
@@ -585,12 +591,12 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
 	orgRoleMapper := connectors.ProvideOrgRoleMapper(cfg, orgService)
 	socialService := socialimpl.ProvideService(cfg, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
-	loginStore, err := authinfoimpl.ProvideStore(sqlStore, secretsService)
+	loginStore, err := authinfoimpl.ProvideStore(ctx, legacyDatabaseProvider, secretsService)
 	if err != nil {
 		return nil, err
 	}
 	authinfoimplService := authinfoimpl.ProvideService(loginStore, remoteCache, secretsService)
-	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(ctx, sqlStore, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)
+	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(ctx, legacyDatabaseProvider, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)
 	if err != nil {
 		return nil, err
 	}
@@ -802,7 +808,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	v8 := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
-	appInstaller, err := playlist2.RegisterAppInstaller(featureToggles, acimplService, accessControl)
+	appInstaller, err := playlist2.RegisterAppInstaller(cfg, featureToggles, acimplService, accessControl)
 	if err != nil {
 		return nil, err
 	}
@@ -851,7 +857,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG)
+	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG, accessClient)
 	if err != nil {
 		return nil, err
 	}
@@ -867,7 +873,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v8, eventualRestConfigProvider, registerer, aggregatorRunner, v9, builderMetrics, backend, policyRuleProvider)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v8, eventualRestConfigProvider, eventualClient, registerer, aggregatorRunner, v9, builderMetrics, backend, policyRuleProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1108,17 +1114,14 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	cloudwatchService := cloudwatch.ProvideService()
 	graphiteService := graphite.ProvideService(httpclientProvider, tracer)
 	influxdbService := influxdb.ProvideService(httpclientProvider)
-	lokiService := loki.ProvideService(httpclientProvider, tracer)
-	prometheusService := prometheus.ProvideService(httpclientProvider)
 	testdatasourceService := testdatasource.ProvideService()
-	mysqlService := mysql.ProvideService()
 	systemUsers := store.ProvideSystemUsersService()
 	storageService, err := store.ProvideService(sqlStore, cfg, systemUsers)
 	if err != nil {
 		return nil, err
 	}
 	grafanadsService := grafanads.ProvideService(storageService, featureToggles)
-	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, graphiteService, influxdbService, lokiService, prometheusService, testdatasourceService, mysqlService, grafanadsService)
+	corepluginRegistry := coreplugin.ProvideCoreRegistry(tracer, azuremonitorService, cloudwatchService, graphiteService, influxdbService, testdatasourceService, grafanadsService)
 	backendFactoryProvider := coreplugin.ProvideCoreProvider(corepluginRegistry)
 	processService := process.ProvideService()
 	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
@@ -1138,7 +1141,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	actionSetService := resourcepermissions.NewActionSetService()
 	permissionRegistry := permreg.ProvidePermissionRegistry()
-	serverLockService := serverlock.ProvideService(sqlStore, tracingService)
+	serverLockService := serverlock.ProvideService(legacyDatabaseProvider, tracingService)
 	registerer := metrics.ProvideRegistererForTest()
 	storeProvider := store2.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
@@ -1203,7 +1206,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	accessClient, err := authz.ProvideAuthZClient(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, zanzanaClient, eventualRestConfigProvider)
+	eventualClient := resource.ProvideEventualClient()
+	accessClient, err := authz.ProvideAuthZClient(cfg, featureToggles, grpcserverProvider, tracingService, registerer, sqlStore, acimplService, zanzanaClient, eventualRestConfigProvider, eventualClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1273,11 +1277,19 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	reranker, err := provider3.ProvideReranker(cfg, vectorMetrics)
+	if err != nil {
+		return nil, err
+	}
 	dbProvider, err := sql.ProvideResourceDB(cfg, sqlStore)
 	if err != nil {
 		return nil, err
 	}
 	kv, err := sql.ProvideKV(cfg, dbProvider)
+	if err != nil {
+		return nil, err
+	}
+	experimentalKVOptions, err := sql.ProvideExperimentalKV(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -1299,9 +1311,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		SecureValues:   inlineSecureValueSupport,
 		VectorBackend:  vectorBackend,
 		Embedder:       embedder,
+		Reranker:       reranker,
 		DashboardStats: ossDashboardStats,
 		KV:             kv,
 		EDB:            dbProvider,
+		ExperimentalKV: experimentalKVOptions,
 		Publisher:      publisherService,
 		Subscriber:     subscriberService,
 	}
@@ -1376,7 +1390,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	pluginInstaller := manager4.ProvideInstaller(pluginManagementCfg, inMemory, loaderLoader, repoManager, serviceregistrationService, acimplService)
 	ossProvider := guardian.ProvideGuardian()
 	cacheServiceImpl := service6.ProvideCacheService(cacheService, sqlStore, ossProvider)
-	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(ctx, sqlStore, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)
+	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(ctx, legacyDatabaseProvider, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)
 	if err != nil {
 		return nil, err
 	}
@@ -1425,7 +1439,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	orgRoleMapper := connectors.ProvideOrgRoleMapper(cfg, orgService)
 	socialService := socialimpl.ProvideService(cfg, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
-	loginStore, err := authinfoimpl.ProvideStore(sqlStore, secretsService)
+	loginStore, err := authinfoimpl.ProvideStore(ctx, legacyDatabaseProvider, secretsService)
 	if err != nil {
 		return nil, err
 	}
@@ -1553,7 +1567,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	v8 := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
-	appInstaller, err := playlist2.RegisterAppInstaller(featureToggles, acimplService, accessControl)
+	appInstaller, err := playlist2.RegisterAppInstaller(cfg, featureToggles, acimplService, accessControl)
 	if err != nil {
 		return nil, err
 	}
@@ -1602,7 +1616,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG)
+	historianAppInstaller, err := historian.RegisterAppInstaller(cfg, alertNG, accessClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1618,7 +1632,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	builderMetrics := builder.ProvideBuilderMetrics(registerer)
 	backend := auditing.ProvideNoopBackend()
 	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v8, eventualRestConfigProvider, registerer, aggregatorRunner, v9, builderMetrics, backend, policyRuleProvider)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, dualwriteService, resourceClient, inlineSecureValueSupport, eventualRestConfigProvider, v8, eventualRestConfigProvider, eventualClient, registerer, aggregatorRunner, v9, builderMetrics, backend, policyRuleProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -1863,7 +1877,7 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	secretDBMigrator := migrator.NewWithEngine(sqlStore)
 	actionSetService := resourcepermissions.NewActionSetService()
 	permissionRegistry := permreg.ProvidePermissionRegistry()
-	serverLockService := serverlock.ProvideService(sqlStore, tracingService)
+	serverLockService := serverlock.ProvideService(legacyDatabaseProvider, tracingService)
 	storeProvider := store2.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
 	defaultElector := leaderelection.NewDefaultElector()
