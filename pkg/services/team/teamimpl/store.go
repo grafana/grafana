@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamdelete"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
@@ -29,25 +30,13 @@ type store interface {
 	IsMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error)
 	GetMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error)
 	GetMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error)
-	RegisterDelete(renderer team.DeleteQueryRenderer)
+	RegisterDelete(renderer teamdelete.Renderer)
 }
 
 type xormStore struct {
 	sql             legacysql.LegacyDatabaseProvider
 	cfg             *setting.Cfg
-	deleteRenderers []team.DeleteQueryRenderer
-}
-
-type deleteQueryHelper struct {
-	dbHelper *legacysql.LegacyDatabaseHelper
-}
-
-func (h deleteQueryHelper) Table(name string) string {
-	return h.dbHelper.Table(name)
-}
-
-func (h deleteQueryHelper) Quote(identifier string) string {
-	return h.dbHelper.DB.Quote(identifier)
+	deleteRenderers []teamdelete.Renderer
 }
 
 func getFilteredUsers(signedInUser identity.Requester, hiddenUsers map[string]struct{}) []string {
@@ -160,18 +149,12 @@ func (ss *xormStore) Update(ctx context.Context, cmd *team.UpdateTeamCommand) er
 	})
 }
 
-func getTeamDeleteQueries(dbHelper *legacysql.LegacyDatabaseHelper, renderers []team.DeleteQueryRenderer) []string {
-	deletes := []string{ //nolint:prealloc
+func getTeamDeleteQueries(dbHelper *legacysql.LegacyDatabaseHelper) []string {
+	return []string{
 		"DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("team_member")) + " WHERE org_id=? and team_id = ?",
 		"DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("team")) + " WHERE org_id=? and id = ?",
 		"DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("dashboard_acl")) + " WHERE org_id=? and team_id = ?",
 	}
-
-	for _, render := range renderers {
-		deletes = append(deletes, render(deleteQueryHelper{dbHelper: dbHelper}))
-	}
-
-	return deletes
 }
 
 // DeleteTeam will delete a team, its member and any permissions connected to the team
@@ -186,9 +169,19 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 			return err
 		}
 
-		for _, sql := range getTeamDeleteQueries(dbHelper, ss.deleteRenderers) {
+		for _, sql := range getTeamDeleteQueries(dbHelper) {
 			_, err := sess.Exec(sql, cmd.OrgID, cmd.ID)
 			if err != nil {
+				return err
+			}
+		}
+
+		for _, render := range ss.deleteRenderers {
+			query, err := render(dbHelper, cmd.OrgID, cmd.ID)
+			if err != nil {
+				return err
+			}
+			if _, err := sess.Exec(append([]any{query.SQL}, query.Args...)...); err != nil {
 				return err
 			}
 		}
@@ -699,6 +692,6 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.Leg
 }
 
 // RegisterDelete registers a query to run when a team is deleted.
-func (ss *xormStore) RegisterDelete(renderer team.DeleteQueryRenderer) {
+func (ss *xormStore) RegisterDelete(renderer teamdelete.Renderer) {
 	ss.deleteRenderers = append(ss.deleteRenderers, renderer)
 }

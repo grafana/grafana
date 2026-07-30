@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamdelete"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
@@ -24,8 +25,8 @@ type LegacyService struct {
 	tracer tracing.Tracer
 }
 
-func NewLegacyService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer) (team.Service, error) {
-	store := &xormStore{sql: sql, cfg: cfg, deleteRenderers: []team.DeleteQueryRenderer{}}
+func NewLegacyService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer) (*LegacyService, error) {
+	store := &xormStore{sql: sql, cfg: cfg, deleteRenderers: []teamdelete.Renderer{}}
 
 	return &LegacyService{
 		cache:  localcache.New(defaultCacheDuration, 2*defaultCacheDuration),
@@ -157,6 +158,6 @@ func (s *LegacyService) GetTeamMembers(ctx context.Context, query *team.GetTeamM
 	return s.store.GetMembers(ctx, query)
 }
 
-func (s *LegacyService) RegisterDelete(renderer team.DeleteQueryRenderer) {
+func (s *LegacyService) RegisterDelete(renderer teamdelete.Renderer) {
 	s.store.RegisterDelete(renderer)
 }

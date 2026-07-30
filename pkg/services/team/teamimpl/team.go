@@ -14,13 +14,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/team/teamdelete"
 	"github.com/grafana/grafana/pkg/services/team/teamk8s"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 type Service struct {
-	legacyService     team.Service
+	legacyService     *LegacyService
 	k8sService        team.Service
 	openFeatureClient *openfeature.Client
 	logger            log.Logger
@@ -28,6 +29,7 @@ type Service struct {
 }
 
 var _ team.Service = (*Service)(nil)
+var _ teamdelete.Registrar = (*Service)(nil)
 
 func (s *Service) LegacySearchService() team.Service {
 	return s.legacyService
@@ -184,7 +186,7 @@ func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembers
 	return s.legacyService.GetTeamMembers(ctx, query)
 }
 
-func (s *Service) RegisterDelete(renderer team.DeleteQueryRenderer) {
+func (s *Service) RegisterDelete(renderer teamdelete.Renderer) {
 	// Always register with legacy service since it manages SQL cleanup queries.
 	// The k8s service implementation is a no-op (k8s handles cascading deletes
 	// via its own mechanisms), so there is no need to gate on the feature flag.
