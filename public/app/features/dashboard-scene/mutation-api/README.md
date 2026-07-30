@@ -21,16 +21,54 @@ On failure, `success` is `false` and `error` contains a message. `changes` is al
 
 ## Availability
 
-The API object exists for the lifetime of the app, so holding a reference to it does not mean a dashboard is open. Commands dispatch against a client that is created when a `DashboardScene` activates and destroyed when it deactivates.
+Two objects with different lifetimes are involved:
 
-| Question                                       | Use                                                                                                                   |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Is a dashboard loaded right now?               | `isAvailable()`                                                                                                       |
-| What can I execute right now?                  | `getAvailableCommands()`, empty when no dashboard is loaded                                                           |
-| Tell me when that changes                      | `onAvailabilityChange(listener)`, returns an unsubscribe function                                                     |
-| Does this Grafana version implement a command? | `getPayloadSchema(command) !== null`, which reads the static command registry and so answers with no dashboard loaded |
+- The **API object** is created at app boot and lives for as long as the app runs. Obtaining it means the host supports dashboard mutation, nothing more.
+- The **client** it dispatches to is created when a `DashboardScene` activates and destroyed when that scene deactivates. Commands need it.
 
-`execute` rejects when no dashboard is loaded.
+Scenes can overlap, so the client is replaced rather than cleared when one dashboard succeeds another, and a deactivating scene only clears the client it installed itself.
+
+```typescript
+isAvailable(): boolean
+getAvailableCommands(): string[]
+onAvailabilityChange(listener: (isAvailable: boolean) => void): () => void
+```
+
+### State
+
+|                          | No dashboard open | Dashboard open                               |
+| ------------------------ | ----------------- | -------------------------------------------- |
+| `isAvailable()`          | `false`           | `true`                                       |
+| `getAvailableCommands()` | `[]`              | every command the running version implements |
+| `execute`                | rejects           | resolves with a `success` result             |
+
+`execute` is the only member that rejects. Once a dashboard is open, a command that cannot run resolves with `success: false` instead.
+
+### `getAvailableCommands`
+
+Reports what `execute` can dispatch, not what will succeed. When a dashboard is open the client registers every command the running version implements, unfiltered by permission, snapshot state, dashboard layout, or feature toggle. All four are evaluated per command inside `execute`, so a listed command can still come back with `success: false`.
+
+Because the list is empty both when no dashboard is open and when the version does not implement a command, it cannot answer version questions on its own. Use `getPayloadSchema(command) !== null` for that: schemas come from the static command registry, so it answers with no dashboard open.
+
+### `onAvailabilityChange`
+
+Called with the new availability whenever a dashboard is opened or closed, and returns a function that unsubscribes.
+
+- It is **not** called on subscribe. Read `isAvailable()` for the current state.
+- It is called with `true` again when one dashboard replaces another, because commands then dispatch against a different dashboard.
+
+The client is installed slightly after the scene object appears, so a caller that has just triggered navigation should wait for a notification rather than assume the next tick:
+
+```typescript
+const unsubscribe = api.onAvailabilityChange((isAvailable) => {
+  if (isAvailable) {
+    // A dashboard is open, or a different one replaced the previous one.
+    refreshFromDashboard();
+  } else {
+    discardDashboardState();
+  }
+});
+```
 
 ---
 
