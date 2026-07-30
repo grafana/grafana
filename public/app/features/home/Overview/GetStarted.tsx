@@ -5,11 +5,11 @@ import { Trans } from '@grafana/i18n';
 import { Badge, Button, Grid, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useStoredBoolean } from 'app/core/hooks/useStored';
 
-import { Guide, type GuideProps } from './Guide';
+import { Guide, GuideSkeleton, type GuideProps } from './Guide';
 
 const HOME_GET_STARTED_EXPANDED_LOCAL_STORAGE_KEY = 'grafana.home.get-started.expanded';
 
-export function GetStarted({ guides }: { guides: GuideProps[] }) {
+export function GetStarted({ guides }: { guides?: GuideProps[] }) {
   const styles = useStyles2(getStyles);
   const [expanded, setExpanded] = useStoredBoolean(HOME_GET_STARTED_EXPANDED_LOCAL_STORAGE_KEY, false);
 
@@ -19,16 +19,16 @@ export function GetStarted({ guides }: { guides: GuideProps[] }) {
         <Text variant="body" element="h3" color="secondary">
           <Trans i18nKey="home.overview.get-started.title">Recommended getting started guides</Trans>
         </Text>
-        <Badge text={guides.length} color="darkgrey" className={styles.pill} />
+        {guides && <Badge text={guides.length} color="darkgrey" className={styles.pill} />}
       </Stack>
 
       <Grid gap={2} columns={{ xs: 1, md: 2, lg: 3 }}>
-        {guides.slice(0, expanded ? guides.length : 6).map((guide) => (
-          <Guide key={guide.title} {...guide} />
-        ))}
+        {!guides && Array.from({ length: 6 }).map((_, index) => <GuideSkeleton key={index} />)}
+
+        {guides && guides.slice(0, expanded ? guides.length : 6).map((guide) => <Guide key={guide.title} {...guide} />)}
       </Grid>
 
-      {guides.length > 6 && (
+      {guides && guides.length > 6 && (
         <Stack direction="row" justifyContent="center">
           <Button
             type="button"

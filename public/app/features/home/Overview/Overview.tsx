@@ -46,13 +46,18 @@ export function Overview() {
         label: t('home.overview.options.available', 'Available solutions'),
         content: <></>,
       },
-      {
-        value: 'get-started',
-        label: t('home.overview.options.get-started', 'Get started'),
-        icon: 'rocket',
-        highlight: true,
-        content: <GetStarted guides={guides} />,
-      },
+      // Hide get started if there are no guides to show, but do show it while loading
+      ...(!guides || guides.length > 0
+        ? [
+            {
+              value: 'get-started',
+              label: t('home.overview.options.get-started', 'Get started'),
+              icon: 'rocket' as const,
+              highlight: true,
+              content: <GetStarted guides={guides} />,
+            },
+          ]
+        : []),
     ],
     [guides]
   );

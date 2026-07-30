@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { useRef } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
-import { type IconName, Card, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { type IconName, Card, Icon, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 
 export interface GuideProps {
   title: string;
@@ -47,6 +48,27 @@ export function Guide({ title, description, icon, color, cta, href }: GuideProps
           {cta}
           <Icon name="arrow-right" size="lg" />
         </div>
+      </Card.Actions>
+    </Card>
+  );
+}
+
+export function GuideSkeleton() {
+  const theme = useTheme2();
+
+  return (
+    <Card noMargin>
+      <Card.Heading>
+        <Stack direction="row" gap={1} alignItems="center">
+          <Skeleton width={theme.spacing(5)} height={theme.spacing(5)} />
+          <Skeleton width={theme.spacing(20)} height={theme.spacing(2)} />
+        </Stack>
+      </Card.Heading>
+      <Card.Description>
+        <Skeleton width="100%" height={theme.spacing(2)} count={2} />
+      </Card.Description>
+      <Card.Actions>
+        <Skeleton width={theme.spacing(12)} height={theme.spacing(2)} />
       </Card.Actions>
     </Card>
   );
