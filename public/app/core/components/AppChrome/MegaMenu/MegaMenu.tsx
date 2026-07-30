@@ -345,7 +345,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
     pinnedDivider: css({
       border: 'none',
       borderTop: `1px solid ${theme.colors.border.weak}`,
-      margin: theme.spacing(1, 1, 0, 1),
+      margin: theme.spacing(2, 1, 0, 1),
     }),
     // Customise entry point, pinned to the bottom of the menu as a footer button.
     customiseButton: css({
@@ -373,7 +373,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       borderTop: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       flexShrink: 0,
-      justifyContent: 'flex-end',
+      justifyContent: 'center',
       padding: theme.spacing(1.5, 2),
     }),
   };
