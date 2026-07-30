@@ -5009,6 +5009,10 @@
     "action": {
       "browse-children": "Browse"
     },
+    "deep-search": {
+      "description-label": "Description",
+      "matched-panels": "Matched panels"
+    },
     "empty-state": {
       "message": "No results found"
     },

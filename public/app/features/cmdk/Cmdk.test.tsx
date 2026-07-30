@@ -106,6 +106,21 @@ describe('Cmdk', () => {
     expect(screen.queryByText('Test section')).not.toBeInTheDocument();
   });
 
+  it('renders the detail of the focused item in the split view', async () => {
+    const withDetail = actionItem('Item A', { renderDetail: () => <div>Item A detail content</div> });
+    const withoutDetail = actionItem('Item B');
+    registerSource(makeSource(jest.fn().mockResolvedValue([withDetail, withoutDetail])));
+
+    const { user } = setup();
+    await screen.findByText('Item A');
+
+    // First item is focused by default and has a detail
+    expect(screen.getByText('Item A detail content')).toBeInTheDocument();
+
+    await user.keyboard('{ArrowDown}');
+    expect(screen.queryByText('Item A detail content')).not.toBeInTheDocument();
+  });
+
   it('keeps the palette open and re-queries after a keepOpen action', async () => {
     let queryCount = 0;
     const item = actionItem('Item A', { keepOpen: true });

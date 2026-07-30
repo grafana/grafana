@@ -242,8 +242,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       background: theme.components.overlay.background,
     }),
     panel: css({
-      width: '100%',
-      maxWidth: theme.breakpoints.values.md,
+      width: '80%',
       background: theme.colors.background.primary,
       color: theme.colors.text.primary,
       borderRadius: theme.shape.radius.lg,

@@ -1,3 +1,5 @@
+import { render, screen } from 'test/test-utils';
+
 import { setBackendSrv } from '@grafana/runtime';
 import { getVectorSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -9,11 +11,12 @@ setBackendSrv(backendSrv);
 setupMockServer();
 
 // One hit per matched panel; content is the breadcrumb line plus a Tags line, like the real backend returns.
-function hit(uid: string, dashboardTitle: string, panelTitle: string, score: number) {
+function hit(uid: string, dashboardTitle: string, panelTitle: string, score: number, description?: string) {
+  const breadcrumb = [dashboardTitle, panelTitle, description].filter(Boolean).join(' → ');
   return {
     name: uid,
     title: `${dashboardTitle} — ${panelTitle}`,
-    snippet: `${dashboardTitle} → ${panelTitle}\nTags: monitoring, prod`,
+    snippet: `${breadcrumb}\nTags: monitoring, prod`,
     score,
     panelId: 1,
   };
@@ -53,9 +56,37 @@ describe('deepSearchSource', () => {
         href: '/d/dash-1',
         subtitle: undefined,
         tags: ['monitoring', 'prod'],
+        renderDetail: expect.any(Function),
       },
       expect.objectContaining({ id: 'deep-search/dash-2', title: 'Other dashboard' }),
     ]);
+  });
+
+  it('renders the matched panel snippets in the item detail', async () => {
+    server.use(
+      getVectorSearchHandler([
+        hit('dash-1', 'My dashboard', 'CPU panel', 0.1, 'Shows the CPU usage'),
+        hit('dash-1', 'My dashboard', 'Memory panel', 0.12),
+        hit('dash-1', 'My dashboard', 'Disk panel', 0.14),
+        hit('dash-1', 'My dashboard', 'Network panel', 0.16),
+      ])
+    );
+
+    const [item] = await source.query('cpu usage', signal());
+    render(<>{item.renderDetail?.()}</>);
+
+    expect(screen.getByText('My dashboard')).toBeInTheDocument();
+    // The dashboard title segment is stripped from the snippet breadcrumbs; the panel title and its
+    // description render as separate parts of the snippet card
+    expect(screen.getByText('CPU panel')).toBeInTheDocument();
+    expect(screen.getByText('Description')).toBeInTheDocument();
+    expect(screen.getByText('Shows the CPU usage')).toBeInTheDocument();
+    expect(screen.getByText('Memory panel')).toBeInTheDocument();
+    expect(screen.getByText('Disk panel')).toBeInTheDocument();
+    // Only 3 snippets are shown, the fourth matched panel is summarized
+    expect(screen.queryByText('Network panel')).not.toBeInTheDocument();
+    expect(screen.getByText('1 more matched panel')).toBeInTheDocument();
+    expect(screen.getByText('monitoring')).toBeInTheDocument();
   });
 
   it('caps the results to 5 dashboards', async () => {
