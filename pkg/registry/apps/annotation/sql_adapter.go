@@ -206,7 +206,7 @@ func (a *sqlAdapter) ListTags(ctx context.Context, namespace string, opts TagLis
 	query := &annotations.TagsQuery{
 		OrgID: orgID,
 		Limit: int64(opts.Limit),
-		Tag:   opts.Prefix,
+		Tag:   opts.match(),
 	}
 
 	result, err := a.repo.FindTags(ctx, query)

@@ -71,8 +71,21 @@ type TagProvider interface {
 }
 
 type TagListOptions struct {
+	// Match filters tags to those containing this substring, case-insensitively.
+	Match string
+	// Deprecated: use Match. Prefix only matches the start of a tag, which is
+	// narrower than the legacy annotation store's substring search. Honoured
+	// only when Match is empty.
 	Prefix string
 	Limit  int
+}
+
+// match returns the effective search term, preferring Match over the deprecated Prefix.
+func (o TagListOptions) match() string {
+	if o.Match != "" {
+		return o.Match
+	}
+	return o.Prefix
 }
 
 type Tag struct {

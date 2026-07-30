@@ -205,7 +205,7 @@ func (s *annotationAPIClient) ListTags(ctx context.Context, orgID int64, query *
 		Resource("tags")
 
 	if query.Tag != "" {
-		req = req.Param("prefix", query.Tag)
+		req = req.Param("tag", query.Tag)
 	}
 	if query.Limit != 0 {
 		req = req.Param("limit", strconv.FormatInt(query.Limit, 10))

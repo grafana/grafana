@@ -242,6 +242,7 @@ func (m *memoryStore) ListTags(ctx context.Context, namespace string, opts TagLi
 	defer m.mu.RUnlock()
 
 	tagCounts := make(map[string]int64)
+	match := strings.ToLower(opts.match())
 
 	for _, anno := range m.data {
 		if anno.Namespace != namespace {
@@ -251,7 +252,7 @@ func (m *memoryStore) ListTags(ctx context.Context, namespace string, opts TagLi
 			continue
 		}
 		for _, tag := range anno.Spec.Tags {
-			if opts.Prefix == "" || strings.HasPrefix(tag, opts.Prefix) {
+			if match == "" || strings.Contains(strings.ToLower(tag), match) {
 				tagCounts[tag]++
 			}
 		}
@@ -264,6 +265,8 @@ func (m *memoryStore) ListTags(ctx context.Context, namespace string, opts TagLi
 	slices.SortFunc(tags, func(a, b Tag) int {
 		return cmp.Compare(a.Name, b.Name)
 	})
+
+	slices.SortFunc(tags, func(a, b Tag) int { return cmp.Compare(a.Name, b.Name) })
 
 	if opts.Limit > 0 && len(tags) > opts.Limit {
 		tags = tags[:opts.Limit]
