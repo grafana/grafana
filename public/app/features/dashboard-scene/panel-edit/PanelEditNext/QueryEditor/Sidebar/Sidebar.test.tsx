@@ -1,6 +1,8 @@
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 
 import { reportInteraction } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { SidebarSize } from '../../constants';
 import { type QueryEditorUIState } from '../QueryEditorContext';
@@ -24,7 +26,32 @@ describe('QueryEditorSidebar', () => {
   });
 
   afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
     jest.restoreAllMocks();
+  });
+
+  describe('button labels experiment', () => {
+    it('keeps the add and stacked view buttons icon-only in the control variant', () => {
+      setTestFlags({ [FlagKeys.PaneleditButtonLabels]: false });
+
+      renderWithQueryEditorProvider(<Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />);
+
+      expect(screen.getByRole('button', { name: 'Add query or expression' })).not.toHaveTextContent('Add');
+      expect(screen.getByRole('button', { name: 'Add transformation' })).not.toHaveTextContent('Add');
+      expect(screen.getByRole('button', { name: 'Enter stacked view' })).not.toHaveTextContent('Stacked');
+    });
+
+    it('labels the add and stacked view buttons in the treatment variant', () => {
+      setTestFlags({ [FlagKeys.PaneleditButtonLabels]: true });
+
+      renderWithQueryEditorProvider(<Sidebar sidebarSize={SidebarSize.Full} setSidebarSize={jest.fn()} />);
+
+      expect(screen.getByRole('button', { name: 'Add query or expression' })).toHaveTextContent('Add');
+      expect(screen.getByRole('button', { name: 'Add transformation' })).toHaveTextContent('Add');
+      expect(screen.getByRole('button', { name: 'Enter stacked view' })).toHaveTextContent(/^Stacked$/);
+    });
   });
 
   describe('header view toggle at narrow widths', () => {

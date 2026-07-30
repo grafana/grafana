@@ -14693,6 +14693,7 @@
       "message": "Add a query, expression, or transformation to get started"
     },
     "sidebar": {
+      "add": "Add",
       "add-below": "Add below {{id}}",
       "add-expression": "Add expression",
       "add-expression-disabled": "Expressions are not supported with the Dashboard data source",
@@ -14718,6 +14719,7 @@
       "new-type": "New {{type}}",
       "queries-empty": "No queries or expressions",
       "queries-expressions": "Queries & Expressions",
+      "stacked": "Stacked",
       "toggle-size": "Toggle sidebar size",
       "transformations": "Transformations",
       "transformations-empty": "No transformations",

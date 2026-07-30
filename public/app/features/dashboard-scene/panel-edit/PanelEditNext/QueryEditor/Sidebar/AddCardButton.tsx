@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useCallback, useMemo, useState } from 'react';
 
 import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
@@ -35,10 +35,18 @@ interface AddCardButtonProps {
   variant: 'query' | 'transformation';
   afterId?: string;
   alwaysVisible?: boolean;
+  showLabel?: boolean;
   onAdd?: () => void;
 }
 
-export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }: AddCardButtonProps) => {
+export const AddCardButton = ({
+  variant,
+  afterId,
+  onAdd,
+  alwaysVisible = false,
+  showLabel = false,
+}: AddCardButtonProps) => {
+  const showButtonLabel = alwaysVisible && showLabel;
   const styles = useStyles2(getStyles, alwaysVisible);
   const theme = useTheme2();
   const { dsSettings } = useDatasourceContext();
@@ -150,17 +158,19 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
   }, [afterId, setPendingTransformation, onAdd]);
 
   const ariaLabel = getButtonAriaLabel(variant, afterId);
+  const buttonLabel = t('query-editor-next.sidebar.add', 'Add');
 
   if (variant === 'transformation') {
     return (
       <button
-        className={styles.button}
+        className={cx(styles.button, { [styles.buttonWithLabel]: showButtonLabel })}
         data-add-button={!alwaysVisible || undefined}
         type="button"
         aria-label={ariaLabel}
         onClick={handleTransformationClick}
       >
         <Icon name="plus" size={alwaysVisible ? 'sm' : 'md'} />
+        {showButtonLabel && buttonLabel}
       </button>
     );
   }
@@ -173,13 +183,14 @@ export const AddCardButton = ({ variant, afterId, onAdd, alwaysVisible = false }
       onVisibleChange={handleMenuVisibleChange}
     >
       <button
-        className={styles.button}
+        className={cx(styles.button, { [styles.buttonWithLabel]: showButtonLabel })}
         data-add-button={!alwaysVisible || undefined}
         data-menu-open={menuOpen || undefined}
         type="button"
         aria-label={ariaLabel}
       >
         <Icon name="plus" size={alwaysVisible ? 'sm' : 'md'} />
+        {showButtonLabel && buttonLabel}
       </button>
     </Dropdown>
   );
@@ -237,6 +248,13 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
           pointerEvents: 'auto' as const,
         }),
       },
+    }),
+    buttonWithLabel: css({
+      width: 'auto',
+      gap: theme.spacing(0.5),
+      padding: theme.spacing(0, 0.75),
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
     }),
   };
 }

@@ -65,6 +65,7 @@ declare module "@openfeature/core" {
     | "grafana.useDefaultScopesEndpoint"
     | "grafana.logLevelInference"
     | "plugins.initDataSourcesAsync"
+    | "paneledit.buttonLabels"
     | "grafana.panelEditNextFeedbackEvent"
     | "grafana.visualDesignRefresh"
     | "dashboard.vectorSearch"
