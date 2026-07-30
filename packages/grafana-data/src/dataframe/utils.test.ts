@@ -110,6 +110,7 @@ describe('addRow', () => {
 describe('alignTimeRangeCompareData', () => {
   const ONE_DAY_MS = 24 * 60 * 60 * 1000; // 86400000ms
   const ONE_WEEK_MS = 7 * ONE_DAY_MS; // 604800000ms
+  const theme = createTheme();
 
   it('should align time field values with positive diff (1 day)', () => {
     const frame = toDataFrame({
@@ -220,6 +221,69 @@ describe('alignTimeRangeCompareData', () => {
     expect(second.fields[0].values).toEqual(first.fields[0].values);
     expect(second.fields[0].config).toEqual(first.fields[0].config);
     expect(second.fields).toHaveLength(2);
+  });
+
+  // #126185 — panel-level frame preparation rebuilds frame and field objects on every render but
+  // passes the time field's values array through by reference, so an unchanged time field must not
+  // pay for a fresh shifted array each time.
+  describe('reuse of shifted time values (#126185)', () => {
+    const frameWithSharedTimeValues = (timeValues: number[], values: number[]) =>
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: timeValues },
+          { name: 'value', type: FieldType.number, values },
+        ],
+      });
+
+    it('reuses the shifted array across calls sharing a time values array', () => {
+      const timeValues = [1000, 2000, 3000];
+      const first = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [1, 2, 3]), ONE_DAY_MS, theme);
+      const second = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [4, 5, 6]), ONE_DAY_MS, theme);
+
+      expect(second.fields[0].values).toBe(first.fields[0].values);
+    });
+
+    it('re-shifts when the diff changes', () => {
+      const timeValues = [1000, 2000, 3000];
+      const day = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [1, 2, 3]), ONE_DAY_MS, theme);
+      const week = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [1, 2, 3]), ONE_WEEK_MS, theme);
+
+      expect(week.fields[0].values).not.toBe(day.fields[0].values);
+      expect(day.fields[0].values).toEqual([ONE_DAY_MS + 1000, ONE_DAY_MS + 2000, ONE_DAY_MS + 3000]);
+      expect(week.fields[0].values).toEqual([ONE_WEEK_MS + 1000, ONE_WEEK_MS + 2000, ONE_WEEK_MS + 3000]);
+    });
+
+    it('re-shifts when values are appended to the same array', () => {
+      // Split/streaming query paths accumulate into the array they already handed out.
+      const timeValues = [1000, 2000];
+      const before = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [1, 2]), ONE_DAY_MS, theme);
+      expect(before.fields[0].values).toEqual([ONE_DAY_MS + 1000, ONE_DAY_MS + 2000]);
+
+      timeValues.push(3000);
+      const after = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [1, 2, 3]), ONE_DAY_MS, theme);
+
+      expect(after.fields[0].values).toEqual([ONE_DAY_MS + 1000, ONE_DAY_MS + 2000, ONE_DAY_MS + 3000]);
+    });
+
+    it('re-shifts when a fixed-length buffer slides', () => {
+      // Live streaming keeps a fixed-size ring buffer, so the length alone cannot detect new data.
+      const timeValues = [1000, 2000];
+      alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [1, 2]), ONE_DAY_MS, theme);
+
+      timeValues.shift();
+      timeValues.push(3000);
+      const after = alignTimeRangeCompareData(frameWithSharedTimeValues(timeValues, [2, 3]), ONE_DAY_MS, theme);
+
+      expect(after.fields[0].values).toEqual([ONE_DAY_MS + 2000, ONE_DAY_MS + 3000]);
+    });
+
+    it('does not reuse across distinct time values arrays with equal contents', () => {
+      const first = alignTimeRangeCompareData(frameWithSharedTimeValues([1000, 2000], [1, 2]), ONE_DAY_MS, theme);
+      const second = alignTimeRangeCompareData(frameWithSharedTimeValues([1000, 2000], [1, 2]), ONE_DAY_MS, theme);
+
+      expect(second.fields[0].values).not.toBe(first.fields[0].values);
+      expect(second.fields[0].values).toEqual(first.fields[0].values);
+    });
   });
 
   // #126189 acceptance criteria — "compare is dashed, current is solid".

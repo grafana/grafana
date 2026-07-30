@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import {
   alignTimeRangeCompareData,
@@ -8,6 +8,7 @@ import {
   FieldType,
   type PanelProps,
   shouldAlignTimeCompare,
+  type TimeRange,
   useDataLinksContext,
 } from '@grafana/data';
 import { config, PanelDataErrorView } from '@grafana/runtime';
@@ -33,6 +34,26 @@ import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getTimezones, prepareGraphableFields } from './utils';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
+
+/**
+ * Keeps a stable TimeRange reference for as long as the range's from/to values are unchanged.
+ * Panel hosts can hand back a freshly constructed TimeRange on every render - e.g. scenes re-evaluates
+ * it per render while a live-now timer is enabled - which would otherwise invalidate memoized frame
+ * preparation for data that has not moved. Only the from/to values are read by those consumers, so
+ * value equality is the right identity here.
+ */
+function useStableTimeRange(timeRange: TimeRange): TimeRange {
+  const stable = useRef(timeRange);
+
+  if (
+    stable.current.from.valueOf() !== timeRange.from.valueOf() ||
+    stable.current.to.valueOf() !== timeRange.to.valueOf()
+  ) {
+    stable.current = timeRange;
+  }
+
+  return stable.current;
+}
 
 export const TimeSeriesPanel = ({
   data,
@@ -63,8 +84,9 @@ export const TimeSeriesPanel = ({
   // Vertical orientation is not available for users through config.
   // It is simplified version of horizontal time series panel and it does not support all plugins.
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
+  const stableTimeRange = useStableTimeRange(timeRange);
   const { frames, compareDiffMs } = useMemo(() => {
-    let frames = prepareGraphableFields(data.series, config.theme2, timeRange);
+    let frames = prepareGraphableFields(data.series, config.theme2, stableTimeRange);
     if (frames != null) {
       let compareDiffMs: number[] = [0];
       // Held separately from `frames` below: TS won't retain the null-check narrowing of `frames`
@@ -83,7 +105,7 @@ export const TimeSeriesPanel = ({
         if (diffMs !== 0) {
           // Check if the compared frame needs time alignment
           // Apply alignment when time ranges match (no shift applied yet)
-          const needsAlignment = shouldAlignTimeCompare(frame, originalFrames, timeRange);
+          const needsAlignment = shouldAlignTimeCompare(frame, originalFrames, stableTimeRange);
 
           if (needsAlignment) {
             return alignTimeRangeCompareData(frame, diffMs, config.theme2);
@@ -97,7 +119,7 @@ export const TimeSeriesPanel = ({
     }
 
     return { frames };
-  }, [data.series, timeRange]);
+  }, [data.series, stableTimeRange]);
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const suggestions = useMemo(() => {

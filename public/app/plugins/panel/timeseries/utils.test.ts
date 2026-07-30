@@ -796,3 +796,25 @@ describe('TimeComparison high cardinality (#126181)', () => {
     expect(colorAt(compareBField.state!.seriesIndex!)).toBe(colorAt(mainBField.state!.seriesIndex!));
   });
 });
+
+describe('prepareGraphableFields time field reuse (#126185)', () => {
+  // alignTimeRangeCompareData caches shifted compare timestamps against the source values array, so it
+  // only avoids reallocating them per render while preparation keeps handing back the same array.
+  it('passes the time field values array through by reference', () => {
+    const timeValues = [1000, 2000, 3000];
+    const series = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: timeValues },
+          { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+        ],
+      }),
+    ];
+
+    const first = prepareGraphableFields(series, createTheme());
+    const second = prepareGraphableFields(series, createTheme());
+
+    expect(first![0].fields[0].values).toBe(timeValues);
+    expect(second![0].fields[0].values).toBe(timeValues);
+  });
+});
