@@ -35,13 +35,15 @@ func TestUnaryDefaultTimeout(t *testing.T) {
 		require.Equal(t, 1, retryOpts)
 	})
 
-	t.Run("keeps existing deadline and adds no per-attempt timeout", func(t *testing.T) {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	// Longer than the default deadline, so wrongly applying the default would tighten it
+	// and fail the assertion; a shorter one would survive by winning the earlier-deadline rule.
+	t.Run("keeps existing longer deadline and adds no per-attempt timeout", func(t *testing.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()
 
 		deadline, ok, retryOpts := invoke(ctx)
 		require.True(t, ok)
-		require.WithinDuration(t, time.Now().Add(time.Second), deadline, 5*time.Second)
+		require.WithinDuration(t, time.Now().Add(60*time.Second), deadline, 5*time.Second)
 		require.Zero(t, retryOpts)
 	})
 }
