@@ -229,7 +229,7 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 			success = false
 			continue
 		}
-
+		// TODO change this to consider situation when there is already a state, e.g. when readiness probe expired and state started from scratch.
 		for _, entry := range alertInstances {
 			ruleForEntry, ok := ruleByUID[entry.RuleUID]
 			if !ok {
