@@ -19,14 +19,19 @@ import (
 // At package level
 const defaultCacheDuration = 5 * time.Minute
 
+// LegacyService caches team memberships by org and user only. Its store resolves
+// table names per operation from sql, so a single instance must only be used with
+// a provider that resolves to one database.
 type LegacyService struct {
 	cache  *localcache.CacheService
 	store  store
 	tracer tracing.Tracer
 }
 
+// cfg is retained for signature stability with existing callers; the SQL store
+// no longer reads it.
 func NewLegacyService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer) (*LegacyService, error) {
-	store := &xormStore{sql: sql, cfg: cfg, deleteRenderers: []teamdelete.Renderer{}}
+	store := &xormStore{sql: sql, deleteRenderers: []teamdelete.Renderer{}}
 
 	return &LegacyService{
 		cache:  localcache.New(defaultCacheDuration, 2*defaultCacheDuration),

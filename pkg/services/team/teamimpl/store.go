@@ -13,7 +13,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamdelete"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -35,8 +34,18 @@ type store interface {
 
 type xormStore struct {
 	sql             legacysql.LegacyDatabaseProvider
-	cfg             *setting.Cfg
 	deleteRenderers []teamdelete.Renderer
+}
+
+// quoteTable resolves a table name and quotes it for use in a raw SQL string.
+// Resolved names may be schema-qualified, so they are quoted with db.DB.Quote,
+// which quotes each dotted part separately.
+//
+// Names passed to XORM instead (sess.Table, sess.Join) must be resolved but not
+// quoted, because XORM quotes them itself. Call dbHelper.Table directly there.
+// Locals holding a quoted name are prefixed with q.
+func quoteTable(dbHelper *legacysql.LegacyDatabaseHelper, name string) string {
+	return dbHelper.DB.Quote(dbHelper.Table(name))
 }
 
 func getFilteredUsers(signedInUser identity.Requester, hiddenUsers map[string]struct{}) []string {
@@ -56,22 +65,22 @@ func getFilteredUsers(signedInUser identity.Requester, hiddenUsers map[string]st
 }
 
 func getTeamMemberCount(dbHelper *legacysql.LegacyDatabaseHelper, filteredUsers []string) string {
-	teamMemberTable := dbHelper.DB.Quote(dbHelper.Table("team_member"))
+	qTeamMember := quoteTable(dbHelper, "team_member")
 	if len(filteredUsers) > 0 {
-		userTable := dbHelper.DB.Quote(dbHelper.Table("user"))
+		qUser := quoteTable(dbHelper, "user")
 		userRef := dbHelper.DB.GetDialect().Quote("user")
-		return `(SELECT COUNT(*) FROM ` + teamMemberTable + ` AS team_member
-			INNER JOIN ` + userTable + ` AS ` + userRef + ` ON team_member.user_id = ` + userRef + `.id
+		return `(SELECT COUNT(*) FROM ` + qTeamMember + ` AS team_member
+			INNER JOIN ` + qUser + ` AS ` + userRef + ` ON team_member.user_id = ` + userRef + `.id
 			WHERE team_member.team_id = team.id AND ` + userRef + `.login NOT IN (?` +
 			strings.Repeat(",?", len(filteredUsers)-1) + ")" +
 			`) AS member_count `
 	}
 
-	return "(SELECT COUNT(*) FROM " + teamMemberTable + " AS team_member WHERE team_member.team_id = team.id) AS member_count "
+	return "(SELECT COUNT(*) FROM " + qTeamMember + " AS team_member WHERE team_member.team_id = team.id) AS member_count "
 }
 
 func getTeamSelectSQLBase(dbHelper *legacysql.LegacyDatabaseHelper, filteredUsers []string) string {
-	teamTable := dbHelper.DB.Quote(dbHelper.Table("team"))
+	qTeam := quoteTable(dbHelper, "team")
 	return `SELECT
 		team.id as id,
 		team.uid,
@@ -81,7 +90,7 @@ func getTeamSelectSQLBase(dbHelper *legacysql.LegacyDatabaseHelper, filteredUser
 		team.external_uid as external_uid,
 		team.is_provisioned as is_provisioned, ` +
 		getTeamMemberCount(dbHelper, filteredUsers) +
-		` FROM ` + teamTable + ` AS team `
+		` FROM ` + qTeam + ` AS team `
 }
 
 func (ss *xormStore) Create(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
@@ -102,7 +111,7 @@ func (ss *xormStore) Create(ctx context.Context, cmd *team.CreateTeamCommand) (t
 	}
 
 	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if isNameTaken, err := isTeamNameTaken(dbHelper.Table("team"), cmd.OrgID, cmd.Name, 0, sess); err != nil {
+		if isNameTaken, err := isTeamNameTaken(dbHelper, cmd.OrgID, cmd.Name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
 			return team.ErrTeamNameTaken
@@ -121,7 +130,7 @@ func (ss *xormStore) Update(ctx context.Context, cmd *team.UpdateTeamCommand) er
 	}
 
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if isNameTaken, err := isTeamNameTaken(dbHelper.Table("team"), cmd.OrgID, cmd.Name, cmd.ID, sess); err != nil {
+		if isNameTaken, err := isTeamNameTaken(dbHelper, cmd.OrgID, cmd.Name, cmd.ID, sess); err != nil {
 			return err
 		} else if isNameTaken {
 			return team.ErrTeamNameTaken
@@ -152,9 +161,9 @@ func (ss *xormStore) Update(ctx context.Context, cmd *team.UpdateTeamCommand) er
 
 func getTeamDeleteQueries(dbHelper *legacysql.LegacyDatabaseHelper) []string {
 	return []string{
-		"DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("team_member")) + " WHERE org_id=? and team_id = ?",
-		"DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("team")) + " WHERE org_id=? and id = ?",
-		"DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("dashboard_acl")) + " WHERE org_id=? and team_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "team_member") + " WHERE org_id=? and team_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "team") + " WHERE org_id=? and id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "dashboard_acl") + " WHERE org_id=? and team_id = ?",
 	}
 }
 
@@ -191,7 +200,7 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 }
 
 func teamExists(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, teamID int64, sess *db.Session) (bool, error) {
-	query := "SELECT 1 FROM " + dbHelper.DB.Quote(dbHelper.Table("team")) + " WHERE org_id=? and id=?"
+	query := "SELECT 1 FROM " + quoteTable(dbHelper, "team") + " WHERE org_id=? and id=?"
 	if res, err := sess.Query(query, orgID, teamID); err != nil {
 		return false, err
 	} else if len(res) != 1 {
@@ -201,9 +210,9 @@ func teamExists(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, teamID in
 	return true, nil
 }
 
-func isTeamNameTaken(teamTable string, orgId int64, name string, existingId int64, sess *db.Session) (bool, error) {
+func isTeamNameTaken(dbHelper *legacysql.LegacyDatabaseHelper, orgId int64, name string, existingId int64, sess *db.Session) (bool, error) {
 	var team team.Team
-	exists, err := sess.Table(teamTable).Where("org_id=? and name=?", orgId, name).Get(&team)
+	exists, err := sess.Table(dbHelper.Table("team")).Where("org_id=? and name=?", orgId, name).Get(&team)
 	if err != nil {
 		return false, nil
 	}
@@ -392,7 +401,7 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 		params = append(params, query.OrgID, query.UserID)
 
 		sql.WriteString(getTeamSelectSQLBase(dbHelper, []string{}))
-		sql.WriteString(` INNER JOIN ` + dbHelper.DB.Quote(dbHelper.Table("team_member")) + ` AS team_member on team.id = team_member.team_id`)
+		sql.WriteString(` INNER JOIN ` + quoteTable(dbHelper, "team_member") + ` AS team_member on team.id = team_member.team_id`)
 		sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
 
 		acFilter, err := ac.Filter(query.SignedInUser, "team.id", "teams:id:", ac.ActionTeamsRead)
@@ -422,11 +431,11 @@ func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByU
 	}
 
 	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
-		teamMemberTable := dbHelper.DB.Quote(dbHelper.Table("team_member"))
-		teamTable := dbHelper.DB.Quote(dbHelper.Table("team"))
+		qTeamMember := quoteTable(dbHelper, "team_member")
+		qTeam := quoteTable(dbHelper, "team")
 		rows, err := sess.QueryRows(`SELECT tm.team_id, team.uid
-			FROM `+teamMemberTable+` AS tm
-			JOIN `+teamTable+` AS team ON team.id = tm.team_id
+			FROM `+qTeamMember+` AS tm
+			JOIN `+qTeam+` AS team ON team.id = tm.team_id
 			WHERE tm.user_id=? AND tm.org_id=?
 			ORDER BY tm.team_id asc`, query.UserID, query.OrgID)
 		if err != nil {
@@ -454,7 +463,7 @@ func (ss *xormStore) GetIDsByUser(ctx context.Context, query *team.GetTeamIDsByU
 }
 
 func getTeamMember(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgId int64, teamId int64, userId int64) (team.TeamMember, error) {
-	rawSQL := `SELECT * FROM ` + dbHelper.DB.Quote(dbHelper.Table("team_member")) + ` WHERE org_id=? and team_id=? and user_id=?`
+	rawSQL := `SELECT * FROM ` + quoteTable(dbHelper, "team_member") + ` WHERE org_id=? and team_id=? and user_id=?`
 	var member team.TeamMember
 	exists, err := sess.SQL(rawSQL, orgId, teamId, userId).Get(&member)
 
@@ -486,7 +495,7 @@ func (ss *xormStore) IsMember(ctx context.Context, orgId int64, teamId int64, us
 }
 
 func isTeamMember(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgId int64, teamId int64, userId int64) (bool, error) {
-	query := "SELECT 1 FROM " + dbHelper.DB.Quote(dbHelper.Table("team_member")) + " WHERE org_id=? and team_id=? and user_id=?"
+	query := "SELECT 1 FROM " + quoteTable(dbHelper, "team_member") + " WHERE org_id=? and team_id=? and user_id=?"
 	if res, err := sess.Query(query, orgId, teamId, userId); err != nil {
 		return false, err
 	} else if len(res) != 1 {
@@ -559,7 +568,7 @@ func removeTeamMember(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session
 		return err
 	}
 
-	var rawSQL = "DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("team_member")) + " WHERE org_id=? and team_id=? and user_id=?"
+	var rawSQL = "DELETE FROM " + quoteTable(dbHelper, "team_member") + " WHERE org_id=? and team_id=? and user_id=?"
 	res, err := sess.Exec(rawSQL, cmd.OrgID, cmd.TeamID, cmd.UserID)
 	if err != nil {
 		return err
@@ -581,7 +590,7 @@ func (ss *xormStore) RemoveUsersMemberships(ctx context.Context, userID int64) e
 	}
 
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = "DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("team_member")) + " WHERE user_id = ?"
+		var rawSQL = "DELETE FROM " + quoteTable(dbHelper, "team_member") + " WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)
 		return err
 	})
@@ -629,6 +638,8 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.Leg
 	queryResult := make([]*team.TeamMemberDTO, 0)
 
 	err := dbHelper.DB.WithDbSession(ctx, func(dbSess *db.Session) error {
+		// Resolved but unquoted: these are handed to XORM, which quotes them itself.
+		// The correlated subquery below builds raw SQL and so uses quoteTable.
 		teamMemberTable := dbHelper.Table("team_member")
 		userTable := dbHelper.Table("user")
 		teamTable := dbHelper.Table("team")
@@ -650,7 +661,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.Leg
 		// Join with only most recent auth module
 		authJoinCondition := `user_auth.id=(
 			SELECT id
-			FROM ` + dbHelper.DB.Quote(userAuthTable) + ` AS user_auth
+			FROM ` + quoteTable(dbHelper, "user_auth") + ` AS user_auth
 			WHERE user_auth.user_id = team_member.user_id
 			ORDER BY user_auth.created DESC ` +
 			dbHelper.DB.GetDialect().Limit(1) + ")"
