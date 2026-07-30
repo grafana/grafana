@@ -12,8 +12,9 @@ export interface CmdkSectionResults {
 }
 
 // Sections with a known id are always ordered first, in this order. Any other section follows in source
-// registration order. Mirrors the priority driven order of the old palette (actions > pages > preferences).
-export const KNOWN_SECTION_ORDER: string[] = ['actions', 'pages', 'preferences'];
+// registration order. Mirrors the priority driven order of the old palette (recent dashboards > actions >
+// pages > preferences).
+export const KNOWN_SECTION_ORDER: string[] = ['recent-dashboards', 'actions', 'pages', 'preferences'];
 
 /**
  * Groups the per-source query results into ordered sections. Sections come from the sources' providedSections
