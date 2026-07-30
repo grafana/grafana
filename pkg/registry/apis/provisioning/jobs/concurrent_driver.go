@@ -102,14 +102,27 @@ type ConcurrentJobDriver struct {
 }
 
 // TrackFloor gives the driver the freshness floor its informer maintains, so
-// claim 404s can be told apart from genuinely deleted jobs. Call before Run;
-// a nil floor (the apiserver wiring) leaves every 404 trusted.
+// claim reads can be validated against what was announced. Call before Run; a
+// nil floor (the apiserver wiring) leaves every claim outcome trusted.
 func (c *ConcurrentJobDriver) TrackFloor(floor *usinformer.RVFloor) { c.floor = floor }
 
-// floorOutstanding reports whether an informer event announced this job at a
-// version no read has confirmed yet.
-func (c *ConcurrentJobDriver) floorOutstanding(namespace, name string) bool {
-	return c.floor != nil && c.floor.Floor(namespace, name) > 0
+// staleClaimRead reports whether a claim failure is evidence of a lagging read
+// path rather than the job's true state: a 404 while a floor says the job was
+// announced, or an "already claimed" observed at a version below the floor —
+// the still-claimed predecessor of a reused name, not the announced incarnation.
+// An AlreadyClaimedError at or above the floor is genuine contention.
+func (c *ConcurrentJobDriver) staleClaimRead(err error, namespace, name string) bool {
+	if c.floor == nil {
+		return false
+	}
+	if apierrors.IsNotFound(err) {
+		return c.floor.Floor(namespace, name) > 0
+	}
+	var claimed *AlreadyClaimedError
+	if errors.As(err, &claimed) {
+		return c.floor.Below(namespace, name, claimed.ObservedResourceVersion)
+	}
+	return false
 }
 
 // NewConcurrentJobDriver creates a new concurrent job driver that spawns
@@ -466,23 +479,23 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 	logger.Debug("process job key", "attempt", attempt)
 
 	err = processor.processKey(ctx, namespace, name, trigger, queued.enqueued)
-	// A claim 404 is ambiguous under the NATS informer: the job may be completed
-	// and deleted, or its announced create may not be visible to this read path
-	// yet. The floor disambiguates — it holds the version the informer announced
-	// and no read has confirmed. A stale 404 falls through to the retry branch
-	// (claiming never ran, so retrying cannot re-run any work), with its own
-	// larger attempt cap so the backoff can outlast the visibility lag.
-	staleNotFound := apierrors.IsNotFound(err) && c.floorOutstanding(namespace, name)
+	// A claim outcome read below the announced floor is a lagging replica, not
+	// truth: a 404 may hide an announced create, and an "already claimed" may be
+	// the still-claimed predecessor of a reused job name whose fresh incarnation
+	// this replica cannot see yet. Both retry on the claim path (nothing ran, so
+	// retrying cannot re-run any work), under a larger attempt cap so the
+	// backoff can outlast the visibility lag.
+	staleClaimRead := c.staleClaimRead(err, namespace, name)
 	switch {
 	case err == nil:
 		if attempt > 1 {
 			logger.Info("job claim succeeded after retries", "attempts", attempt)
 		}
 		c.queue.Forget(key)
-	case errors.Is(err, ErrAlreadyClaimed):
+	case errors.Is(err, ErrAlreadyClaimed) && !staleClaimRead:
 		logger.Debug("job already claimed by another worker - dropping from queue")
 		c.queue.Forget(key)
-	case apierrors.IsNotFound(err) && !staleNotFound:
+	case apierrors.IsNotFound(err) && !staleClaimRead:
 		logger.Debug("job no longer exists - dropping from queue")
 		c.queue.Forget(key)
 	case errors.Is(err, errPostClaim):
@@ -495,7 +508,7 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 		logger.Error("job failed after it was claimed - dropping from queue; the informer re-list re-adds it after a cooldown",
 			"attempt", attempt, "cooldown", c.postClaimCooldown, "error", err)
 		c.queue.Forget(key)
-	case staleNotFound && attempt < maxStaleClaimAttempts:
+	case staleClaimRead && attempt < maxStaleClaimAttempts:
 		logger.Info("job announced but not yet visible to this read path - will retry claim",
 			"attempt", attempt, "max_attempts", maxStaleClaimAttempts)
 		c.setQueued(key, queued.trigger, queued.enqueued)

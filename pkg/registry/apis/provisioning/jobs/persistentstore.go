@@ -53,6 +53,23 @@ var ErrLeaseLost = errors.New("job lease lost: claimed by another worker")
 // abandoned claims are recovered by the cleanup controller, not by re-claiming.
 var ErrAlreadyClaimed = errors.New("job is already claimed by another worker")
 
+// AlreadyClaimedError is ErrAlreadyClaimed carrying the resource version the
+// claim's read observed the claimed job at. Under the NATS informer a job name
+// can be reused (a predecessor completes and is deleted, a new incarnation is
+// created), and a lagging read path can serve the still-claimed predecessor —
+// the observed version lets the caller compare against the announced freshness
+// floor and retry instead of dropping the new incarnation's event.
+// errors.Is(err, ErrAlreadyClaimed) matches through it.
+type AlreadyClaimedError struct {
+	ObservedResourceVersion int64
+}
+
+func (e *AlreadyClaimedError) Error() string {
+	return fmt.Sprintf("%s (observed at resource version %d)", ErrAlreadyClaimed.Error(), e.ObservedResourceVersion)
+}
+
+func (e *AlreadyClaimedError) Unwrap() error { return ErrAlreadyClaimed }
+
 // claimConflictRetries bounds how many times Claim re-reads a job after an
 // update conflict. A conflict means the job changed between our Get and
 // Update: usually another worker claimed it, but a concurrent non-claim write
@@ -150,7 +167,8 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string, dri
 		if current.Labels[LabelJobClaim] != "" {
 			// Another worker already holds the claim — the common contention outcome.
 			s.queueMetrics.RecordClaimRoundContended(driverID)
-			return nil, nil, ErrAlreadyClaimed
+			rv, _ := strconv.ParseInt(current.ResourceVersion, 10, 64)
+			return nil, nil, &AlreadyClaimedError{ObservedResourceVersion: rv}
 		}
 
 		claimed := current.DeepCopy()

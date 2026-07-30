@@ -585,3 +585,48 @@ func TestConcurrentJobDriver_TrustedNotFoundClaimIsDropped(t *testing.T) {
 	cancel()
 	require.NoError(t, <-runDone)
 }
+
+// An "already claimed" observed at a version below the announced floor is the
+// still-claimed predecessor of a reused job name served by a lagging read
+// path, not genuine contention: the claim is retried until the read path
+// catches up with the announced incarnation.
+func TestConcurrentJobDriver_StaleAlreadyClaimedIsRetried(t *testing.T) {
+	const (
+		rvStalePredecessor = int64(200000000000000000)
+		rvAnnounced        = int64(300000000000000000)
+	)
+	var claims atomic.Int32
+
+	store := &MockStore{}
+	store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
+			if claims.Add(1) < 3 {
+				return nil, nil, &AlreadyClaimedError{ObservedResourceVersion: rvStalePredecessor}
+			}
+			// The read path caught up: the announced incarnation is genuinely claimed.
+			return nil, nil, &AlreadyClaimedError{ObservedResourceVersion: rvAnnounced}
+		}).Maybe()
+
+	driver := newTestConcurrentDriver(t, 1, store, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+	floor := usinformer.NewRVFloor()
+	floor.Raise("ns1", "job1", rvAnnounced)
+	driver.TrackFloor(floor)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	runDone := make(chan error, 1)
+	go func() { runDone <- driver.Run(ctx) }()
+
+	driver.EventHandler().AddFunc(&provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"},
+	}, false)
+
+	require.Eventually(t, func() bool { return claims.Load() == 3 }, 2*time.Second, 10*time.Millisecond)
+
+	// The genuine (at-floor) already-claimed outcome must stop the retries.
+	time.Sleep(100 * time.Millisecond)
+	assert.Equal(t, int32(3), claims.Load(), "a stale already-claimed must be retried until the announced incarnation is visible")
+
+	cancel()
+	require.NoError(t, <-runDone)
+}
