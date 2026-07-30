@@ -3,6 +3,7 @@ import { lazy, Suspense, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
@@ -121,6 +122,7 @@ export default function CreateNewButton({
               })
             }
             url={buildUrl('/dashboard/new', parentFolder?.uid)}
+            testId={selectors.components.CreateNewButton.newDashboardLink}
           />
           <Menu.Item
             label={getImportPhrase()}
@@ -157,6 +159,7 @@ export default function CreateNewButton({
                     })
               }
               url={buildUrl('/dashboards?templateDashboards=true&source=createNewButton', parentFolder?.uid)}
+              testId={selectors.components.CreateNewButton.newTemplateDashboardLink}
             />
           )}
           {renderGenerateDashboardAction && (
@@ -195,6 +198,7 @@ export default function CreateNewButton({
           disabled={isReadOnlyRepo}
           tooltip={isReadOnlyRepo ? getReadOnlyTooltipText({ isLocal: repoType === 'local' }) : undefined}
           variant="secondary"
+          data-testid={selectors.components.CreateNewButton.newButton}
         >
           {getNewPhrase()}
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />

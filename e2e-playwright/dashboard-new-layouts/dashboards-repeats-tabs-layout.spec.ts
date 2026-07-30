@@ -96,16 +96,16 @@ test.describe(
         dashboardPage.getByGrafanaSelector(selectors.components.Tab.title(`${repeatTitleBase}${repeatOptions.at(-1)}`))
       ).toBeHidden();
     });
-    test('can update repeats in edit pane', async ({ dashboardPage, selectors, page }) => {
+    test('can update repeats in sidebar', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
-        'Tabs layout repeats - update through edit pane',
+        'Tabs layout repeats - update through sidebar',
         JSON.stringify(V2DashWithTabRepeats)
       );
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
-      // select first/original repeat tab to activate edit pane
+      // select first/original repeat tab to activate sidebar
       await dashboardPage
         .getByGrafanaSelector(selectors.components.Tab.title(`${repeatTitleBase}${repeatOptions.at(0)}`))
         .click();
@@ -177,7 +177,7 @@ test.describe(
       await page.keyboard.press('e');
 
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardSidebarSplitter.primaryBody)
       ).toBeHidden(); // verifying that panel editor loaded
 
       const panelTitleInput = dashboardPage.getByGrafanaSelector(
@@ -198,7 +198,7 @@ test.describe(
         .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
         .click();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardSidebarSplitter.primaryBody)
       ).toBeVisible(); // verifying that dashboard loaded
 
       await dashboardPage
@@ -253,13 +253,13 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await moveTab(dashboardPage, page, selectors, `${repeatTitleBase}${repeatOptions.at(0)}`, 'New tab');
 
-      // playwright too fast - adding intermediate step so that UI has time to update
-      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('New tab')).click();
-
-      // verify move by tab position
-      const repeatedTab = await getTabPosition(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.at(0)}`);
-      const normalTab = await getTabPosition(dashboardPage, selectors, 'New tab');
-      expect(normalTab?.x).toBeLessThan(repeatedTab?.x || 0);
+      // The tab order is only updated after the drop animation finishes (onDragEnd),
+      // so retry the position check until the reorder has been applied
+      await expect(async () => {
+        const repeatedTab = await getTabPosition(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.at(-1)}`); // note: -1 (the last repeated tab) because we have to wait for the whole repeated group to move ;)
+        const normalTab = await getTabPosition(dashboardPage, selectors, 'New tab');
+        expect(normalTab?.x).toBeLessThan(repeatedTab!.x);
+      }).toPass();
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 

@@ -14,11 +14,11 @@ export function getVariablesCompatibility(sceneObject: SceneObject): TypedVariab
     return collectAncestorVariables(panel);
   }
 
-  // When a scene object is selected in the edit pane (e.g., editing a section variable),
+  // When a scene object is selected in the sidebar (e.g., editing a section variable),
   // scope to that object's ancestry so datasource pickers only show variables from
   // the same section + dashboard globals.
   if (sceneObject instanceof DashboardScene) {
-    const selectedObject = sceneObject.state.editPane.getSelectedObject();
+    const selectedObject = sceneObject.state.sidebar.getSelectedObject();
 
     if (selectedObject) {
       // @ts-expect-error

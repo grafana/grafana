@@ -110,42 +110,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/loki/**/*",
-      "pkg/tsdb/loki/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Loki"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/mysql/**/*",
-      "pkg/tsdb/mysql/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/MySQL"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/grafana-postgresql-datasource/**/*",
-      "pkg/tsdb/grafana-postgresql-datasource/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Postgres"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/prometheus/**/*",
-      "pkg/tsdb/prometheus/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Prometheus"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/features/variables/**/*",
       "public/app/features/templating/**/*"
     ],

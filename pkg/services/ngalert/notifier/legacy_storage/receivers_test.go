@@ -490,8 +490,6 @@ func getConfigRevisionForTest(opts ...opt) *ConfigRevision {
 					Route: &v1.Route{Receiver: "receiver1"},
 					TimeIntervals: []v1.TimeInterval{
 						{Name: "time-interval-1"},
-					},
-					MuteTimeIntervals: []v1.MuteTimeInterval{
 						{Name: "mute-interval-1"},
 					},
 				},

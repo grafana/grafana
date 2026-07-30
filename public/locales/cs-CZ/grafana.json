@@ -5293,17 +5293,6 @@
     }
   },
   "dashboard": {
-    "actions": {
-      "open-settings": ""
-    },
-    "add": {
-      "new-panel": {
-        "button": "Přidat nové tlačítko panelu",
-        "description": "Přetažením nebo kliknutím přidáte panel",
-        "title": "Panel"
-      },
-      "pane-header": "Přidat"
-    },
     "add-menu": {
       "import": "Importovat z knihovny",
       "paste-panel": "Vložit panel",
@@ -5373,12 +5362,6 @@
       }
     },
     "canvas-actions": {
-      "add": {
-        "paste": {
-          "description": "Kliknutím nebo přetažením vložte panel",
-          "title": "Vložit panel"
-        }
-      },
       "add-panel": "Přidat panel",
       "disabled-child-contains-tabs": "Nelze změnit na karty, protože řádek již karty obsahuje",
       "disabled-nested-grouping": "Seskupení je omezeno na 3 úrovně",
@@ -5393,14 +5376,6 @@
       "paste-tab": "Vložit záložku",
       "ungroup-rows": "Zrušit seskupení řádků",
       "ungroup-tabs": "Zrušit seskupení karet"
-    },
-    "code-pane": {
-      "collapse": "Sbalit editor",
-      "copy-as-resource": "",
-      "copy-as-resource-tooltip": "",
-      "expand": "Rozbalit editor",
-      "header": "Upravit jako kód",
-      "modal-title": "Upravit nástěnku jako kód"
     },
     "conditional-rendering": {
       "conditions": {
@@ -5578,9 +5553,6 @@
         "title": "Možnosti řádku"
       }
     },
-    "description": {
-      "action": "Změnit popis nástěnky"
-    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Odebrat vlastnost"
@@ -5589,6 +5561,8 @@
     "edit-actions": {
       "add": "Přidat {{typeName}}",
       "add-conditional-rule": "Přidat pravidlo {{ruleDescription}}",
+      "dashboard-description": "Změnit popis nástěnky",
+      "dashboard-title": "Změnit název nástěnky",
       "duplicate-panel": "Duplikovat panel",
       "edit-query-result-rule": "Změnit pravidlo výsledku dotazu",
       "edit-template-variable-rule": "Změnit pravidlo proměnné šablony",
@@ -5608,136 +5582,12 @@
       "switch-layout": "Přepnout rozvržení",
       "switch-layout-row": "Přepnout rozvržení",
       "switch-layout-tab": "Přepnout rozvržení",
-      "tab-title": "Změnit název karty"
-    },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "Změnit zdroj dat vysvětlivek",
-        "choose-panels": "Vybrat panely",
-        "color": "Barva",
-        "color-description": "Barva, která bude použita pro značky vysvětlivek události",
-        "data-source": "Zdroj dat",
-        "display": "Zobrazit ovládací prvky vysvětlivek v",
-        "display-options": {
-          "above-dashboard": "Nad nástěnkou",
-          "controls-menu": "Nabídka ovládacích prvků",
-          "controls-menu-description": "Přístup je možný, když je otevřena nabídka ovládacích prvků",
-          "hidden": "Skryté",
-          "hidden-description": "Skryje přepínač pro zapnutí nebo vypnutí této vysvětlivky"
-        },
-        "enabled": "Povoleno",
-        "enabled-description": "Je-li povoleno, při každém obnovení nástěnky bude aktivován dotaz na vysvětlivky",
-        "name": "Název",
-        "open-query-editor": "Otevřít editor dotazů",
-        "open-query-editor-tooltip": "Otevřít editor dotazů a nakonfigurovat dotaz na vysvětlivky",
-        "panel-filter": {
-          "all-panels": "Všechny panely",
-          "all-panels-description": "Odeslat data vysvětlivek do všech panelů, které podporují vysvětlivky",
-          "all-panels-except": "Všechny panely kromě",
-          "all-panels-except-description": "Neposílat data vysvětlivek do následujících panelů",
-          "selected-panels": "Vybrané panely",
-          "selected-panels-description": "Odeslat vysvětlivky do výslovně uvedených panelů"
-        },
-        "query": "Dotaz",
-        "query-editor-close": "Zavřít",
-        "query-editor-modal-title": "Dotaz na vysvětlivky",
-        "show-in": "Zobrazit v"
-      },
-      "annotations": {
-        "add-annotation": "Přidat vysvětlivku",
-        "reorder": "Přetažením změníte pořadí",
-        "select-annotation": "Vybrat"
-      },
-      "elements": {
-        "annotation": "Vysvětlivky",
-        "annotation-set": "Vysvětlivky a výstrahy",
-        "dashboard": "Nástěnka",
-        "element": "Prvek",
-        "filter": "",
-        "filters-set": "",
-        "link-set": "Odkazy",
-        "local-variable": "Lokální proměnná",
-        "multiple-elements": "Více prvků",
-        "multiple-elements-delete-text": "Opravdu chcete odstranit tyto prvky?",
-        "multiple-panels": "Více panelů",
-        "multiple-panels-delete-text": "Opravdu chcete odstranit tyto panely? Všechny dotazy budou odebrány.",
-        "objects": "Objekty",
-        "panel": "Panel",
-        "panels": "Panely",
-        "row": "Řádek",
-        "rows": "Řádky",
-        "section-filters-set": "",
-        "tab": "Karta",
-        "tabs": "Karty",
-        "variable": "{{type}} proměnná",
-        "variable-set": "Proměnné"
-      },
-      "links": {
-        "add-link": "Přidat odkaz",
-        "reorder": "Přetažením změníte pořadí",
-        "select-link": "Vybrat",
-        "untitled": "Odkaz bez názvu"
-      },
-      "row": {
-        "header": {
-          "hide": "Skrýt",
-          "title": "Záhlaví řádku"
-        }
-      },
-      "section-filters": {
-        "title": ""
-      },
-      "section-variables": {
-        "title": "Proměnné"
-      },
-      "variable": {
-        "change-type": "",
-        "change-type-aria-label": "Změnit typ proměnné",
-        "custom-options": {
-          "apply": "Použít",
-          "change-value": "Změnit hodnotu proměnné",
-          "discard": "Zahodit",
-          "modal-title": "Vlastní možnosti"
-        },
-        "datasource-options": {
-          "name-filter": "Filtr názvu",
-          "name-filter-description": "Filtr regulárních výrazů, pro které chcete zahrnout instance zdroje dat. Ponechte prázdné pro vše.",
-          "name-filter-placeholder": "Příklad: /^prod/",
-          "type": "Typ",
-          "type-placeholder": "Vyberte typ zdroje dat"
-        },
-        "description": "Popis",
-        "description-placeholder": "Popisný text",
-        "label": "Štítek",
-        "label-description": "Nepovinné zobrazované jméno",
-        "name": "Název",
-        "open-editor": "Otevřít editor proměnných",
-        "open-editor-tooltip": "Pro další možnosti proměnných otevřete editor proměnných",
-        "query-options": {
-          "close": "Zavřít",
-          "modal-title": "Proměnná dotazu",
-          "preview": "Náhled"
-        },
-        "selection-options": {
-          "allow-custom-values": "Povolit vlastní hodnoty",
-          "allow-custom-values-description": "Umožňuje uživatelům zadávat hodnoty",
-          "category": "Možnosti výběru",
-          "custom-all-value": "Vlastní hodnota všeho",
-          "custom-all-value-description": "Zástupný regulární výraz nebo jiná hodnota reprezentující vše",
-          "include-all": "Zahrnout hodnotu Vše",
-          "include-all-description": "Povolí jednu možnost, která představuje všechny hodnoty",
-          "multi-value": "Vícehodnotové"
-        },
-        "type-category": "Možnosti {{type}}"
-      },
-      "variables": {
-        "add-variable": "Přidat proměnnou",
-        "change-type": "",
-        "reorder": "Přetažením změníte pořadí",
-        "select-type": "Vyberte typ proměnné",
-        "select-type-card-tooltip": "Klikněte pro výběr typu",
-        "select-variable": "Vybrat"
-      }
+      "tab-title": "Změnit název karty",
+      "variable-description": "Změnit popis proměnné",
+      "variable-hide": "Změnit možnost skrytí proměnné",
+      "variable-label": "Změnit štítek proměnné",
+      "variable-name": "Změnit název proměnné",
+      "variable-type": "Změnit typ proměnné"
     },
     "empty": {
       "add-library-panel-body": "Přidejte vizualizace, které jsou sdíleny s ostatními nástěnkami.",
@@ -5984,12 +5834,7 @@
     "layout": {
       "cancel": "Zrušit",
       "common": {
-        "copy": "Kopírovat",
-        "copy-tooltip": "",
-        "delete": "Odstranit",
-        "duplicate": "Duplikovat",
-        "layout": "Rozvržení",
-        "paste": "Vložit"
+        "layout": "Rozvržení"
       },
       "continue": "Pokračovat",
       "panel": {
@@ -6017,7 +5862,6 @@
     },
     "new-panel": {
       "aria-label": "Nekonfigurovaný panel. Stisknutím klávesy Tab zobrazíte možnosti konfigurace.",
-      "configure-button": "",
       "configure-button-menu": "Přepnout nabídku",
       "configure-visualization": "Konfigurovat vizualizaci",
       "empty-state-message": "Spusťte dotaz a vizualizujte jej zde nebo přejděte na všechny vizualizace a přidejte další typy panelů",
@@ -6039,10 +5883,6 @@
         }
       }
     },
-    "options": {
-      "description": "Popis",
-      "title-option": "Název"
-    },
     "options-pane-category": {
       "aria-label-collapse": "Sbalit kategorii {{title}}",
       "aria-label-expand": "Rozbalit kategorii {{title}}"
@@ -6054,14 +5894,6 @@
       "title-matched_few": "Shoda možností: {{count}}/{{totalCount}}",
       "title-matched_many": "Shoda možností: {{count}}/{{totalCount}}",
       "title-matched_other": "Shoda možností: {{count}}/{{totalCount}}"
-    },
-    "outline": {
-      "pane-header": "Osnova obsahu",
-      "repeated-item": "Opakovat",
-      "tree-item": {
-        "empty": "(prázdné)",
-        "no-title": "<bez názvu>"
-      }
     },
     "override-category-title": {
       "aria-label-remove-override": "Odebrat přepsání",
@@ -6242,13 +6074,6 @@
       "save-json-to-file": "Uložit JSON do souboru",
       "see-docs": "Další informace o zajištění najdete v <2>dokumentaci</2>."
     },
-    "schema-editor": {
-      "apply-button": "Použít změny",
-      "apply-button-disabled-tooltip": "Před použitím změn opravte chyby ověření",
-      "apply-button-disabled-tooltip-yaml": "Dokument obsahuje chyby ověření. Přepnutím na JSON zobrazíte podrobnosti o chybách v řádku.",
-      "apply-error-title": "Použití změn se nezdařilo",
-      "undo-title": "Úprava schématu"
-    },
     "search-panel": {
       "no-match": ""
     },
@@ -6257,31 +6082,293 @@
     },
     "sidebar": {
       "add": {
+        "annotation-query": {
+          "description": "Přidat data o události do grafů",
+          "label": "Dotaz na vysvětlivky"
+        },
+        "dashboard-controls": "Ovládací prvky nástěnky",
+        "filters": {
+          "label": "Filtrovat a seřadit podle"
+        },
+        "group-layouts": "Rozvržení skupin",
+        "link": {
+          "label": "Odkaz",
+          "tooltip": "Přidat odkaz na jinou nástěnku nebo externí stránku"
+        },
+        "new-panel": {
+          "button": "Přidat nové tlačítko panelu",
+          "description": "Přetažením nebo kliknutím přidáte panel",
+          "title": "Panel"
+        },
+        "pane-header": "Přidat",
+        "paste-panel": {
+          "description": "Kliknutím nebo přetažením vložte panel",
+          "title": "Vložit panel"
+        },
+        "row": {
+          "add-label": "Přidat řádek",
+          "group-label": "Seskupit do řádků"
+        },
+        "tab": {
+          "add-label": "Přidat kartu",
+          "group-label": "Seskupit do záložek"
+        },
         "title": "Přidat",
-        "tooltip": "Přidat nový prvek"
+        "tooltip": "Přidat nový prvek",
+        "variable": {
+          "label": "Proměnná"
+        }
+      },
+      "annotation": {
+        "change-data-source": "Změnit zdroj dat vysvětlivek",
+        "choose-panels": "Vybrat panely",
+        "color": "Barva",
+        "color-description": "Barva, která bude použita pro značky vysvětlivek události",
+        "data-source": "Zdroj dat",
+        "display": "Zobrazit ovládací prvky vysvětlivek v",
+        "display-options": {
+          "above-dashboard": "Nad nástěnkou",
+          "controls-menu": "Nabídka ovládacích prvků",
+          "controls-menu-description": "Přístup je možný, když je otevřena nabídka ovládacích prvků",
+          "hidden": "Skryté",
+          "hidden-description": "Skryje přepínač pro zapnutí nebo vypnutí této vysvětlivky"
+        },
+        "enabled": "Povoleno",
+        "enabled-description": "Je-li povoleno, při každém obnovení nástěnky bude aktivován dotaz na vysvětlivky",
+        "name": "Název",
+        "open-query-editor": "Otevřít editor dotazů",
+        "open-query-editor-tooltip": "Otevřít editor dotazů a nakonfigurovat dotaz na vysvětlivky",
+        "panel-filter": {
+          "all-panels": "Všechny panely",
+          "all-panels-description": "Odeslat data vysvětlivek do všech panelů, které podporují vysvětlivky",
+          "all-panels-except": "Všechny panely kromě",
+          "all-panels-except-description": "Neposílat data vysvětlivek do následujících panelů",
+          "selected-panels": "Vybrané panely",
+          "selected-panels-description": "Odeslat vysvětlivky do výslovně uvedených panelů"
+        },
+        "query": "Dotaz",
+        "query-editor-close": "Zavřít",
+        "query-editor-modal-title": "Dotaz na vysvětlivky",
+        "show-in": "Zobrazit v"
+      },
+      "annotations": {
+        "add-annotation": "Přidat vysvětlivku",
+        "add-annotation-query": "Přidat dotaz na vysvětlivky",
+        "name-builtin": "{{annoName}} (vestavěný)",
+        "name-disabled": "(Zakázáno) {{annoName}}",
+        "reorder": "Přetažením změníte pořadí",
+        "reorder-description": "Změnit pořadí seznamu vysvětlivek",
+        "select-annotation": "Vybrat",
+        "title-above-dashboard-count_few": "Nad nástěnkou ({{count}})",
+        "title-above-dashboard-count_many": "Nad nástěnkou ({{count}})",
+        "title-above-dashboard-count_one": "Nad nástěnkou ({{count}})",
+        "title-above-dashboard-count_other": "Nad nástěnkou ({{count}})",
+        "title-controls-menu-count_few": "Nabídka ovládacích prvků ({{count}})",
+        "title-controls-menu-count_many": "Nabídka ovládacích prvků ({{count}})",
+        "title-controls-menu-count_one": "Nabídka ovládacích prvků ({{count}})",
+        "title-controls-menu-count_other": "Nabídka ovládacích prvků ({{count}})",
+        "title-hidden-count_few": "Skryté ({{count}})",
+        "title-hidden-count_many": "Skryté ({{count}})",
+        "title-hidden-count_one": "Skryté ({{count}})",
+        "title-hidden-count_other": "Skryté ({{count}})"
       },
       "dashboard-options": {
+        "annotations": "Vysvětlivky",
+        "description": "Popis",
+        "filters": "",
+        "links": "Odkazy",
+        "open-settings": "",
         "title": "Možnosti",
-        "tooltip": "Možnosti nástěnky"
+        "title-option": "Název",
+        "tooltip": "Možnosti nástěnky",
+        "variables": "Proměnné"
       },
+      "drag-to-reorder": "Přetažením změníte pořadí",
       "edit-schema": {
+        "apply-button": "Použít změny",
+        "apply-button-disabled-tooltip": "Před použitím změn opravte chyby ověření",
+        "apply-button-disabled-tooltip-yaml": "Dokument obsahuje chyby ověření. Přepnutím na JSON zobrazíte podrobnosti o chybách v řádku.",
+        "apply-error-title": "Použití změn se nezdařilo",
+        "collapse": "Sbalit editor",
+        "copy-as-resource": "",
+        "copy-as-resource-tooltip": "",
+        "expand": "Rozbalit editor",
+        "modal-title": "Upravit nástěnku jako kód",
+        "pane-header": "Upravit jako kód",
         "title": "Kód",
-        "tooltip": "Upravit jako kód"
+        "tooltip": "Upravit jako kód",
+        "undo-title": "Úprava schématu"
+      },
+      "element-actions": {
+        "copy": "Kopírovat",
+        "copy-tooltip": "",
+        "delete": "Odstranit",
+        "duplicate": "Duplikovat",
+        "paste": "Vložit"
+      },
+      "elements": {
+        "annotation": "Vysvětlivky",
+        "annotation-set": "Vysvětlivky a výstrahy",
+        "dashboard": "Nástěnka",
+        "element": "Prvek",
+        "filter": "",
+        "filters-set": "",
+        "link": "Odkaz",
+        "link-set": "Odkazy",
+        "local-variable": "Lokální proměnná",
+        "multiple-elements": "Více prvků",
+        "multiple-elements-delete-text": "Opravdu chcete odstranit tyto prvky?",
+        "multiple-panels": "Více panelů",
+        "multiple-panels-delete-text": "Opravdu chcete odstranit tyto panely? Všechny dotazy budou odebrány.",
+        "objects": "Objekty",
+        "panel": "Panel",
+        "panels": "Panely",
+        "row": "Řádek",
+        "rows": "Řádky",
+        "section-filters-set": "",
+        "tab": "Karta",
+        "tabs": "Karty",
+        "variable": "{{type}} proměnná",
+        "variable-set": "Proměnné"
       },
       "export": {
         "title": "Exportovat"
       },
-      "filters": "",
-      "open": "",
+      "feedback-title": "Poskytněte zpětnou vazbu k nové zkušenosti s úpravami nástěnky",
+      "filters": {
+        "add-filter": "",
+        "reorder-description": "",
+        "title": "",
+        "title-above-dashboard_few": "",
+        "title-above-dashboard_many": "",
+        "title-above-dashboard_one": "",
+        "title-above-dashboard_other": "",
+        "title-controls-menu_few": "",
+        "title-controls-menu_many": "",
+        "title-controls-menu_one": "",
+        "title-controls-menu_other": "",
+        "title-hidden_few": "",
+        "title-hidden_many": "",
+        "title-hidden_one": "",
+        "title-hidden_other": "",
+        "tooltip": ""
+      },
+      "links": {
+        "add-link": "Přidat odkaz",
+        "new-link": "Nový odkaz",
+        "reorder": "Přetažením změníte pořadí",
+        "reorder-description": "Změnit pořadí seznamu odkazů",
+        "select-link": "Vybrat",
+        "title-above-dashboard_few": "Nad nástěnkou ({{count}})",
+        "title-above-dashboard_many": "Nad nástěnkou ({{count}})",
+        "title-above-dashboard_one": "Nad nástěnkou ({{count}})",
+        "title-above-dashboard_other": "Nad nástěnkou ({{count}})",
+        "title-controls-menu_few": "Nabídka ovládacích prvků ({{count}})",
+        "title-controls-menu_many": "Nabídka ovládacích prvků ({{count}})",
+        "title-controls-menu_one": "Nabídka ovládacích prvků ({{count}})",
+        "title-controls-menu_other": "Nabídka ovládacích prvků ({{count}})",
+        "untitled": "Odkaz bez názvu"
+      },
       "outline": {
+        "pane-header": "Osnova obsahu",
+        "repeated-item": "Opakovat",
         "title": "Osnova",
-        "tooltip": "Osnova obsahu"
+        "tooltip": "Osnova obsahu",
+        "tree-item": {
+          "empty": "(prázdné)",
+          "no-title": "<bez názvu>"
+        }
       },
       "redo": "Opakovat",
+      "row": {
+        "header": {
+          "hide": "Skrýt",
+          "title": "Záhlaví řádku"
+        }
+      },
+      "section-filters": {
+        "title": ""
+      },
+      "section-variables": {
+        "title": "Proměnné"
+      },
+      "select": "Vybrat",
       "snapshot": {
+        "title": "Zdroj",
         "tooltip": "Otevřít původní nástěnku"
       },
       "undo": "Zpět",
+      "variable": {
+        "change-type": "",
+        "change-type-aria-label": "Změnit typ proměnné",
+        "custom-options": {
+          "apply": "Použít",
+          "change-value": "Změnit hodnotu proměnné",
+          "discard": "Zahodit",
+          "modal-title": "Vlastní možnosti"
+        },
+        "datasource-options": {
+          "name-filter": "Filtr názvu",
+          "name-filter-description": "Filtr regulárních výrazů, pro které chcete zahrnout instance zdroje dat. Ponechte prázdné pro vše.",
+          "name-filter-placeholder": "Příklad: /^prod/",
+          "type": "Typ",
+          "type-placeholder": "Vyberte typ zdroje dat"
+        },
+        "description": "Popis",
+        "description-placeholder": "Popisný text",
+        "display": "Zobrazit",
+        "display-options": {
+          "controls-menu": "Nabídka ovládacích prvků",
+          "controls-menu-description": "Viditelné, když je otevřena nabídka ovládacích prvků",
+          "hidden": "Skryté",
+          "hidden-description": "Viditelné pouze v režimu úprav",
+          "label-hidden": "",
+          "label-hidden-description": ""
+        },
+        "label": "Štítek",
+        "label-description": "Nepovinné zobrazované jméno",
+        "name": "Název",
+        "open-editor": "Otevřít editor proměnných",
+        "open-editor-tooltip": "Pro další možnosti proměnných otevřete editor proměnných",
+        "query-options": {
+          "close": "Zavřít",
+          "modal-title": "Proměnná dotazu",
+          "preview": "Náhled"
+        },
+        "selection-options": {
+          "allow-custom-values": "Povolit vlastní hodnoty",
+          "allow-custom-values-description": "Umožňuje uživatelům zadávat hodnoty",
+          "category": "Možnosti výběru",
+          "custom-all-value": "Vlastní hodnota všeho",
+          "custom-all-value-description": "Zástupný regulární výraz nebo jiná hodnota reprezentující vše",
+          "include-all": "Zahrnout hodnotu Vše",
+          "include-all-description": "Povolí jednu možnost, která představuje všechny hodnoty",
+          "multi-value": "Vícehodnotové"
+        },
+        "type-category": "Možnosti {{type}}"
+      },
+      "variables": {
+        "add-variable": "Přidat proměnnou",
+        "change-type": "",
+        "reorder": "Přetažením změníte pořadí",
+        "reorder-description": "Změnit pořadí seznamu proměnných",
+        "select-type": "Vyberte typ proměnné",
+        "select-type-card-tooltip": "Klikněte pro výběr typu",
+        "select-variable": "Vybrat",
+        "title-controls-menu_few": "Nabídka ovládacích prvků ({{count}})",
+        "title-controls-menu_many": "Nabídka ovládacích prvků ({{count}})",
+        "title-controls-menu_one": "Nabídka ovládacích prvků ({{count}})",
+        "title-controls-menu_other": "Nabídka ovládacích prvků ({{count}})",
+        "title-hidden_few": "Skryté ({{count}})",
+        "title-hidden_many": "Skryté ({{count}})",
+        "title-hidden_one": "Skryté ({{count}})",
+        "title-hidden_other": "Skryté ({{count}})",
+        "title-top-placement_few": "",
+        "title-top-placement_many": "",
+        "title-top-placement_one": "",
+        "title-top-placement_other": "",
+        "top-placement-default": ""
+      },
       "view-panel": {
         "disabled": "",
         "fanout-by-series": "",
@@ -6291,6 +6378,18 @@
         "pane-header": "",
         "quick-toggles": "",
         "title": ""
+      },
+      "viz-panel": {
+        "configure-button": "",
+        "delete-panel-text": "Odstraněním tohoto panelu dojde také k odebrání všech dotazů. Opravdu chcete pokračovat?",
+        "delete-panel-title": "Odstranit panel?",
+        "delete-panel-yes": "Odstranit",
+        "options": {
+          "configure-button-tooltip": "Upravit dotazy a možnosti vizualizace",
+          "description": "Popis",
+          "title-option": "Název",
+          "transparent-background": "Průhledné pozadí"
+        }
       }
     },
     "source-link": {
@@ -6348,9 +6447,6 @@
       "tab-warning": {
         "title-not-unique": "Tento název není jedinečný"
       }
-    },
-    "title": {
-      "action": "Změnit název nástěnky"
     },
     "toolbar": {
       "add": "Přidat",
@@ -6442,9 +6538,6 @@
       "save-library-panel": "Uložit panel knihovny",
       "settings": "Nastavení nástěnky",
       "share-button": "Sdílet",
-      "snapshot": {
-        "title": "Zdroj"
-      },
       "star-add-error": "Nepodařilo se přidat do oblíbených",
       "star-added": "Přidáno do oblíbených",
       "star-remove-error": "Nepodařilo se odebrat z oblíbených",
@@ -6514,22 +6607,7 @@
       "tags-expected-strings": "očekávané pole řetězců tagů"
     },
     "variable": {
-      "description": {
-        "action": "Změnit popis proměnné"
-      },
-      "description-tooltip": "Popis proměnné",
-      "hide": {
-        "action": "Změnit možnost skrytí proměnné"
-      },
-      "label": {
-        "action": "Změnit štítek proměnné"
-      },
-      "name": {
-        "action": "Změnit název proměnné"
-      },
-      "type": {
-        "action": "Změnit typ proměnné"
-      }
+      "description-tooltip": "Popis proměnné"
     },
     "version-history-comparison": {
       "button-restore": "Obnovit na verzi {{version}}",
@@ -6552,17 +6630,6 @@
     "view-panel": {
       "back-to-dashboard": "",
       "not-found": ""
-    },
-    "viz-panel": {
-      "delete-panel-text": "Odstraněním tohoto panelu dojde také k odebrání všech dotazů. Opravdu chcete pokračovat?",
-      "delete-panel-title": "Odstranit panel?",
-      "delete-panel-yes": "Odstranit",
-      "options": {
-        "configure-button-tooltip": "Upravit dotazy a možnosti vizualizace",
-        "description": "Popis",
-        "title-option": "Název",
-        "transparent-background": "Průhledné pozadí"
-      }
     }
   },
   "dashboard-import": {
@@ -6678,25 +6745,6 @@
       "name-allow-custom-values": "Povolit vlastní hodnoty",
       "name-enable-group-by": "Povolit funkci Seřadit podle"
     },
-    "add-filters": {
-      "label": "Filtrovat a seřadit podle"
-    },
-    "add-link": {
-      "inline-instance-name": "Nový odkaz",
-      "label-link": "Odkaz",
-      "tooltip": "Přidat odkaz na jinou nástěnku nebo externí stránku"
-    },
-    "add-new-edit-pane": {
-      "group-layouts": "Rozvržení skupin"
-    },
-    "add-row": {
-      "add-label": "Přidat řádek",
-      "group-label": "Seskupit do řádků"
-    },
-    "add-tab": {
-      "add-label": "Přidat kartu",
-      "group-label": "Seskupit do záložek"
-    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Nelze přejít na vybranou nástěnku. Zkuste to znovu.",
@@ -6725,19 +6773,12 @@
         "new-panel": "Nový panel"
       }
     },
-    "add-variable": {
-      "label-variable": "Proměnná"
-    },
     "adhoc-origin-filters-controller": {
       "input-placeholder": "Přidat výchozí filtr…"
     },
     "adhoc-origin-filters-editor": {
       "description": "Filtry, které jsou ve výchozím nastavení předem vybrány.",
       "label": "Výchozí filtry"
-    },
-    "annotation-control": {
-      "description-add-event-data-to-graphs": "Přidat data o události do grafů",
-      "label-annotation-query": "Dotaz na vysvětlivky"
     },
     "annotation-edit-actions": {
       "description": {
@@ -6754,11 +6795,6 @@
       "delete-title": "Odstranit dotaz na vysvětlivky"
     },
     "annotation-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-annotations-list": "Změnit pořadí seznamu vysvětlivek"
-        }
-      },
       "render-list": {
         "aria-label-annotation": "Vysvětlivky"
       }
@@ -6804,15 +6840,6 @@
       "query-name": "Název dotazu",
       "tooltip-move-down": "Přesunout dolů",
       "tooltip-move-up": "Přesunout nahoru"
-    },
-    "annotations-list": {
-      "drag-end": {
-        "description": "Změnit pořadí seznamu vysvětlivek"
-      }
-    },
-    "annotations-section": {
-      "name-builtin": "{{annoName}} (vestavěný)",
-      "name-disabled": "(Zakázáno) {{annoName}}"
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Nemůže obsahovat neplatné znaky: „~“, „^“, „:“, „?“, „*“, „[“, „\\“ nebo „]“.",
@@ -6868,24 +6895,6 @@
       "name-values-separated-comma": "Hodnoty oddělené čárkou",
       "selection-options": "Možnosti výběru"
     },
-    "dashboard-annotations-list": {
-      "add-annotation-query": "Přidat dotaz na vysvětlivky",
-      "title-above-dashboard-count_one": "Nad nástěnkou ({{count}})",
-      "title-above-dashboard-count_few": "Nad nástěnkou ({{count}})",
-      "title-above-dashboard-count_many": "Nad nástěnkou ({{count}})",
-      "title-above-dashboard-count_other": "Nad nástěnkou ({{count}})",
-      "title-controls-menu-count_one": "Nabídka ovládacích prvků ({{count}})",
-      "title-controls-menu-count_few": "Nabídka ovládacích prvků ({{count}})",
-      "title-controls-menu-count_many": "Nabídka ovládacích prvků ({{count}})",
-      "title-controls-menu-count_other": "Nabídka ovládacích prvků ({{count}})",
-      "title-hidden-count_one": "Skryté ({{count}})",
-      "title-hidden-count_few": "Skryté ({{count}})",
-      "title-hidden-count_many": "Skryté ({{count}})",
-      "title-hidden-count_other": "Skryté ({{count}})"
-    },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "Poskytněte zpětnou vazbu k nové zkušenosti s úpravami nástěnky"
-    },
     "dashboard-link-form": {
       "back-to-list": "Zpět na seznam",
       "label-icon": "Ikona",
@@ -6916,9 +6925,6 @@
       "tooltip-move-link-down": "Posunout odkaz dolů",
       "tooltip-move-link-up": "Posunout odkaz nahoru",
       "type": "Typ"
-    },
-    "dashboard-links-list": {
-      "add-link": "Přidat odkaz"
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Chyba při načítání nástěnky"
@@ -6955,9 +6961,6 @@
         "dashboard-not-found": "Nástěnka nebyla nalezena"
       }
     },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Ovládací prvky nástěnky"
-    },
     "data-source-variable-form": {
       "data-source-options": "Možnosti zdroje dat",
       "description-instance-name-filter": "Filtr regulárních výrazů, pro které můžete vybrat instance zdroje dat v seznamu hodnot proměnných. Ponechte prázdné pro vše.",
@@ -6991,12 +6994,6 @@
     "description-label": {
       "description": "Popis"
     },
-    "draggable-item": {
-      "drag-to-reorder": "Přetažením změníte pořadí"
-    },
-    "draggable-items-list": {
-      "select": "Vybrat"
-    },
     "edit-link-view": {
       "edit-link-page-nav": {
         "text": {
@@ -7019,22 +7016,6 @@
       "show-more": "Zobrazit více",
       "sql-name": "Transformovat pomocí SQL",
       "sql-transformation-description": "Manipulujte se svými daty pomocí syntaxe podobné MySQL"
-    },
-    "filters-list": {
-      "add-filter": "",
-      "reorder-description": "",
-      "title-above-dashboard_one": "",
-      "title-above-dashboard_few": "",
-      "title-above-dashboard_many": "",
-      "title-above-dashboard_other": "",
-      "title-controls-menu_one": "",
-      "title-controls-menu_few": "",
-      "title-controls-menu_many": "",
-      "title-controls-menu_other": "",
-      "title-hidden_one": "",
-      "title-hidden_few": "",
-      "title-hidden_many": "",
-      "title-hidden_other": ""
     },
     "general-settings-edit-view": {
       "default_grid_options": {
@@ -7209,11 +7190,6 @@
       "unnamed": "Nepojmenovaný odkaz"
     },
     "link-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-links-list": "Změnit pořadí seznamu odkazů"
-        }
-      },
       "render-list": {
         "aria-label-link": "Odkaz"
       }
@@ -7230,17 +7206,6 @@
       "type-dashboards": "Nástěnky",
       "type-link": "Odkaz",
       "with-tags": "S tagy"
-    },
-    "links-list": {
-      "drag-end-description": "Změnit pořadí seznamu odkazů",
-      "title-above-dashboard_one": "Nad nástěnkou ({{count}})",
-      "title-above-dashboard_few": "Nad nástěnkou ({{count}})",
-      "title-above-dashboard_many": "Nad nástěnkou ({{count}})",
-      "title-above-dashboard_other": "Nad nástěnkou ({{count}})",
-      "title-controls-menu_one": "Nabídka ovládacích prvků ({{count}})",
-      "title-controls-menu_few": "Nabídka ovládacích prvků ({{count}})",
-      "title-controls-menu_many": "Nabídka ovládacích prvků ({{count}})",
-      "title-controls-menu_other": "Nabídka ovládacích prvků ({{count}})"
     },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "",
@@ -7516,9 +7481,6 @@
       "new-alert-rule": "Nové pravidlo výstrahy",
       "title-no-alerting-capable-query-found": "Nebyl nalezen žádný dotaz, který by spustil upozorňování"
     },
-    "section-filters-list": {
-      "add-filter": ""
-    },
     "section-placement": {
       "top-row": "",
       "top-tab": ""
@@ -7607,31 +7569,10 @@
       "save-dashboard": "Uložit nástěnku",
       "title-unsaved-changes": "Neuložené změny"
     },
-    "use-annotations-category": {
-      "category": {
-        "title": {
-          "annotations": "Vysvětlivky"
-        }
-      }
-    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Nastavení"
-        }
-      }
-    },
-    "use-filters-category": {
-      "category": {
-        "title": {
-          "filters": ""
-        }
-      }
-    },
-    "use-links-category": {
-      "category": {
-        "title": {
-          "links": "Odkazy"
         }
       }
     },
@@ -7643,13 +7584,6 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Nástěnka byla uložena"
     },
-    "use-variables-category": {
-      "category": {
-        "title": {
-          "variables": "Proměnné"
-        }
-      }
-    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Na tuto proměnnou neodkazuje žádná proměnná ani nástěnka.",
       "aria-label-variable-referenced-other-variables-dashboard": "Na tuto proměnnou odkazují jiné proměnné nebo nástěnka.",
@@ -7658,23 +7592,6 @@
     },
     "variable-controls": {
       "add-variable": "Přidat proměnnou"
-    },
-    "variable-display-select": {
-      "label": "Zobrazit",
-      "options": {
-        "controls-menu": {
-          "description": "Viditelné, když je otevřena nabídka ovládacích prvků",
-          "label": "Nabídka ovládacích prvků"
-        },
-        "hidden": {
-          "description": "Viditelné pouze v režimu úprav",
-          "label": "Skryté"
-        },
-        "top-placement-hidden-label": {
-          "description": "",
-          "label": ""
-        }
-      }
     },
     "variable-editable-element": {
       "delete-confirm": "Odstranit proměnnou",
@@ -7726,13 +7643,6 @@
       },
       "label": "Skrýt"
     },
-    "variable-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Změnit pořadí seznamu proměnných"
-        }
-      }
-    },
     "variable-multi-prop-static-options-form": {
       "aria-label-static-options": "Statické možnosti"
     },
@@ -7749,29 +7659,6 @@
       "preview-of-values_few": "Náhled hodnot ({{count}})",
       "preview-of-values_many": "Náhled hodnot ({{count}})",
       "preview-of-values_other": "Náhled hodnot ({{count}})"
-    },
-    "variables-list": {
-      "add-variable": "Přidat proměnnou",
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Změnit pořadí seznamu proměnných"
-        }
-      },
-      "top-placement": {
-        "default": ""
-      },
-      "title-controls-menu_one": "Nabídka ovládacích prvků ({{count}})",
-      "title-controls-menu_few": "Nabídka ovládacích prvků ({{count}})",
-      "title-controls-menu_many": "Nabídka ovládacích prvků ({{count}})",
-      "title-controls-menu_other": "Nabídka ovládacích prvků ({{count}})",
-      "title-hidden_one": "Skryté ({{count}})",
-      "title-hidden_few": "Skryté ({{count}})",
-      "title-hidden_many": "Skryté ({{count}})",
-      "title-hidden_other": "Skryté ({{count}})",
-      "title-top-placement_one": "",
-      "title-top-placement_few": "",
-      "title-top-placement_many": "",
-      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {

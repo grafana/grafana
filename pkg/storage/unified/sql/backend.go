@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
@@ -91,6 +92,18 @@ func WithEventPublisher(p resource.EventPublisher) StorageBackendOption {
 	return func(o *resource.KVBackendOptions) { o.EventPublisher = p }
 }
 
+// WithVectorBackend lets the KV backend's tenant deleter remove a deleted
+// tenant's embeddings from the vector store. A nil vb (vector backend disabled)
+// leaves embedding cleanup off.
+func WithVectorBackend(vb vector.VectorBackend) StorageBackendOption {
+	return func(o *resource.KVBackendOptions) {
+		if vb == nil {
+			return
+		}
+		o.EmbeddingDeleter = vb
+	}
+}
+
 // WithNatsNotifierShadow runs a NATS-backed notifier in shadow mode beside the
 // primary notifier for testing: it records comparison metrics without feeding
 // the watch pipeline. KV backend only.
@@ -109,6 +122,12 @@ func WithNatsNotifier(s resource.EventSubscriber) StorageBackendOption {
 		o.EventSubscriber = s
 		o.EnableNatsNotifier = true
 	}
+}
+
+// WithExperimentalKV routes flagged experimental use-cases to an alternative
+// KV. Nil preserves existing behavior. KV backend only.
+func WithExperimentalKV(e *resource.ExperimentalKVOptions) StorageBackendOption {
+	return func(o *resource.KVBackendOptions) { o.ExperimentalKV = e }
 }
 
 // NewStorageBackend creates the unified storage backend based on options.StorageType.
@@ -778,6 +797,13 @@ func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedR
 	})
 
 	return res, err
+}
+
+// GetResourceStatsWithLimit ignores countLimit and returns exact counts. The SQL
+// backend's stats query is not a history scan, so early exit is not needed here;
+// exact counts are valid for callers that only compare against thresholds.
+func (b *backend) GetResourceStatsWithLimit(ctx context.Context, nsr resource.NamespacedResource, minCount, _ int) ([]resource.ResourceStats, error) {
+	return b.GetResourceStats(ctx, nsr, minCount)
 }
 
 // ListStoredResources implements Backend.
