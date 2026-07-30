@@ -357,7 +357,9 @@ describe('fetchMetricsActivity', () => {
       expect.objectContaining({
         diskWorst: expect.stringMatching(/^topk\(1, \(1 - node_filesystem_avail_bytes\{/),
       }),
-      prom
+      prom,
+      undefined,
+      true
     );
     // The follow-up ETA query pins the exact filesystem shown: worst host AND its fullest mountpoint.
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
@@ -424,7 +426,9 @@ describe('fetchMetricsActivity', () => {
         activeSeries: 'sum(max by (id) (grafanacloud_instance_active_series{stack_id="12345"}))',
         dataPointsPerMinute: '60 * sum(max by (id) (grafanacloud_instance_samples_per_second{stack_id="12345"}))',
       },
-      { uid: 'grafanacloud-usage', type: 'prometheus' }
+      { uid: 'grafanacloud-usage', type: 'prometheus' },
+      undefined,
+      true
     );
     // The trend works on Cloud via usage metrics even though the product datasource is Mimir-typed.
     expect(mockRunRangeQuery).toHaveBeenCalledWith(
@@ -510,7 +514,12 @@ describe('fetchMetricsActivity', () => {
 
     expect(mockGetDataSourceInstanceSettings).not.toHaveBeenCalledWith('grafanacloud-usage');
     expect(mockRunInstantQueries).toHaveBeenCalledTimes(1);
-    expect(mockRunInstantQueries).toHaveBeenCalledWith(expect.not.objectContaining({ dpm: expect.anything() }), prom);
+    expect(mockRunInstantQueries).toHaveBeenCalledWith(
+      expect.not.objectContaining({ dpm: expect.anything() }),
+      prom,
+      undefined,
+      true
+    );
     expect(activity.dataPointsPerMinute).toBeNull();
   });
 
@@ -523,7 +532,9 @@ describe('fetchMetricsActivity', () => {
 
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
       expect.objectContaining({ dpm: '60 * sum(rate(prometheus_tsdb_head_samples_appended_total[5m]))' }),
-      prom
+      prom,
+      undefined,
+      true
     );
     expect(activity.dataPointsPerMinute).toBe(250_000);
   });
@@ -550,7 +561,9 @@ describe('fetchMetricsActivity', () => {
     expect(mockRunInstantQueries).toHaveBeenCalledTimes(1);
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
       expect.objectContaining({ hosts: 'count(node_uname_info)' }),
-      prom
+      prom,
+      undefined,
+      true
     );
   });
 

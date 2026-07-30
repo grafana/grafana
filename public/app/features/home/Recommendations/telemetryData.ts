@@ -347,12 +347,18 @@ export async function fetchMetricsActivity(
         diskHosts: `count(max by (instance) (${FS_USED}) > ${DISK_PRESSURE_RATIO})`,
         diskWorst: `topk(1, ${FS_USED})`,
       },
-      ds
+      ds,
+      undefined,
+      // partial: readers are null-safe; one failed query keeps the rest.
+      true
     ).catch(() => null),
     usage
       ? runInstantQueries(
           { activeSeries: usage.activeSeries, dataPointsPerMinute: usage.dataPointsPerMinute },
-          usage.ds
+          usage.ds,
+          undefined,
+          // partial: readers are null-safe; one failed query keeps the rest.
+          true
         )
           .then((frames) => ({
             series: readScalar(frames, 'activeSeries'),

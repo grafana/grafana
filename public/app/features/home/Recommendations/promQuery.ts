@@ -59,14 +59,16 @@ export function readSeries(frames: DataFrame[], refId: string): FieldSparkline |
 /**
  * Run queries through the shared {@link createQueryRunner | QueryRunner} against `ds` — core
  * plumbing owns request building, interval math, and frame conversion. Works for any datasource
- * whose targets are expressible as DataQuery (Prometheus PromQL, Tempo TraceQL). Throws only when
- * the request yields no frames; surviving frames are returned and missing refIds read as null.
+ * whose targets are expressible as DataQuery (Prometheus PromQL, Tempo TraceQL). Throws on query
+ * errors; `partial` callers instead receive the surviving targets' frames and must handle absent
+ * refIds themselves — an error response with no frames at all still throws.
  */
 export async function runDatasourceQueries(
   queries: DataQuery[],
   range: TimeRange,
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
-  timeoutMs = 30_000
+  timeoutMs = 30_000,
+  partial = false
 ): Promise<DataFrame[]> {
   const runner = createQueryRunner();
   try {
@@ -86,8 +88,8 @@ export async function runDatasourceQueries(
         timeout(timeoutMs)
       )
     );
-    // Partial failure keeps the surviving targets' frames; only a request that produced nothing throws.
-    if (data.state === LoadingState.Error && data.series.length === 0) {
+    // Errors reject by default — `?? 0` readers would render a dropped refId as a real zero.
+    if (data.state === LoadingState.Error && (!partial || data.series.length === 0)) {
       throw new Error(data.errors?.[0]?.message ?? data.error?.message ?? 'Prometheus query failed');
     }
     return data.series;
@@ -98,12 +100,14 @@ export async function runDatasourceQueries(
 
 /**
  * Run a batch of instant queries (refId -> PromQL) and return the response frames. The overview
- * cards read single-value scalars off the result via {@link readScalar}.
+ * cards read single-value scalars off the result via {@link readScalar}. Set `partial` to
+ * tolerate individual query errors and keep the surviving frames.
  */
 export async function runInstantQueries(
   queries: Record<string, string>,
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
-  timeoutMs?: number
+  timeoutMs?: number,
+  partial = false
 ): Promise<DataFrame[]> {
   const targets: PromQuery[] = Object.entries(queries).map(([refId, expr]) => ({
     refId,
@@ -111,7 +115,7 @@ export async function runInstantQueries(
     instant: true,
     range: false,
   }));
-  return runDatasourceQueries(targets, getDefaultTimeRange(), ds, timeoutMs);
+  return runDatasourceQueries(targets, getDefaultTimeRange(), ds, timeoutMs, partial);
 }
 
 /**
