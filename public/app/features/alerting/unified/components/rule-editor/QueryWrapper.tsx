@@ -229,18 +229,35 @@ export function MaxDataPointsOption({
   onChange: (options: AlertQueryOptions) => void;
 }) {
   const value = options.maxDataPoints ?? '';
+  const inputValueRef = React.useRef(value.toString());
+  const optionsRef = React.useRef(options);
+  const onChangeRef = React.useRef(onChange);
+  const lastSavedValueRef = React.useRef(options.maxDataPoints);
 
-  const onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const maxDataPointsNumber = parseInt(event.target.value, 10);
+  optionsRef.current = options;
+  onChangeRef.current = onChange;
 
+  const saveMaxDataPoints = React.useCallback((inputValue: string) => {
+    const maxDataPointsNumber = parseInt(inputValue, 10);
     const maxDataPoints = isNaN(maxDataPointsNumber) || maxDataPointsNumber === 0 ? undefined : maxDataPointsNumber;
 
-    if (maxDataPoints !== options.maxDataPoints) {
-      onChange({
-        ...options,
-        maxDataPoints,
-      });
+    if (maxDataPoints !== lastSavedValueRef.current) {
+      lastSavedValueRef.current = maxDataPoints;
+      if (maxDataPoints !== optionsRef.current.maxDataPoints) {
+        onChangeRef.current({
+          ...optionsRef.current,
+          maxDataPoints,
+        });
+      }
     }
+  }, []);
+
+  React.useEffect(() => {
+    return () => saveMaxDataPoints(inputValueRef.current);
+  }, [saveMaxDataPoints]);
+
+  const onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
+    saveMaxDataPoints(event.target.value);
   };
 
   return (
@@ -257,6 +274,7 @@ export function MaxDataPointsOption({
         width={10}
         placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
         spellCheck={false}
+        onChange={(event) => (inputValueRef.current = event.target.value)}
         onBlur={onMaxDataPointsBlur}
         defaultValue={value}
       />
@@ -272,15 +290,32 @@ export function MinIntervalOption({
   onChange: (options: AlertQueryOptions) => void;
 }) {
   const value = options.minInterval ?? '';
+  const inputValueRef = React.useRef(value);
+  const optionsRef = React.useRef(options);
+  const onChangeRef = React.useRef(onChange);
+  const lastSavedValueRef = React.useRef(value);
+
+  optionsRef.current = options;
+  onChangeRef.current = onChange;
+
+  const saveMinInterval = React.useCallback((minInterval: string) => {
+    if (minInterval !== lastSavedValueRef.current) {
+      lastSavedValueRef.current = minInterval;
+      if (minInterval !== optionsRef.current.minInterval) {
+        onChangeRef.current({
+          ...optionsRef.current,
+          minInterval,
+        });
+      }
+    }
+  }, []);
+
+  React.useEffect(() => {
+    return () => saveMinInterval(inputValueRef.current);
+  }, [saveMinInterval]);
 
   const onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const minInterval = event.target.value;
-    if (minInterval !== value) {
-      onChange({
-        ...options,
-        minInterval,
-      });
-    }
+    saveMinInterval(event.target.value);
   };
 
   return (
@@ -299,6 +334,7 @@ export function MinIntervalOption({
         width={10}
         placeholder={DEFAULT_MIN_INTERVAL}
         spellCheck={false}
+        onChange={(event) => (inputValueRef.current = event.target.value)}
         onBlur={onMinIntervalBlur}
         defaultValue={value}
       />
