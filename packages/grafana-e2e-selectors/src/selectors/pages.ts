@@ -1052,6 +1052,9 @@ export const versionedPages = {
       split: {
         '12.4.0': 'data-testid explore-toolbar-split-button',
       },
+      closeSplit: {
+        '13.2.0': 'data-testid explore-toolbar-close-split-button',
+      },
       addTo: {
         '12.4.0': 'data-testid explore-toolbar-add-dropdown-button',
       },
