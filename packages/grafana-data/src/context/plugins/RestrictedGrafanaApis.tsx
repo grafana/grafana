@@ -23,24 +23,6 @@ export interface DashboardMutationResult {
   data?: unknown;
 }
 
-/** A command that cannot run, and why. */
-export interface BlockedDashboardMutation {
-  /** The command name, upper-cased. */
-  command: string;
-  /**
-   * Why it cannot run: an unrecognised command name, no dashboard open,
-   * insufficient permission, a snapshot, or a disabled feature toggle.
-   */
-  reason: string;
-}
-
-/**
- * Whether a set of commands can run. Every blocked command is reported, not
- * just the first, so a caller gating on several commands learns all of the
- * reasons at once.
- */
-export type DashboardMutationPermission = { allowed: true } | { allowed: false; blocked: BlockedDashboardMutation[] };
-
 /**
  * Command-based API for reading and modifying the dashboard the user has open.
  *
@@ -111,9 +93,15 @@ export interface DashboardMutationAPI {
    * this when you need to explain or log the reason, and for a plain decision use
    * the list.
    *
+   * Every blocked command is reported, not just the first, and each `reason`
+   * names the cause: an unrecognised command, no dashboard open, insufficient
+   * permission, a snapshot, or a disabled feature toggle.
+   *
    * An empty list is vacuously allowed, since there is nothing to check.
    */
-  canExecute(commands: string | string[]): DashboardMutationPermission;
+  canExecute(
+    commands: string | string[]
+  ): { allowed: true } | { allowed: false; blocked: Array<{ command: string; reason: string }> };
   /** Whether a dashboard is open, so {@link execute} has something to act on. */
   isAvailable(): boolean;
   /**
