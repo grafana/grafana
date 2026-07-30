@@ -61,6 +61,34 @@ expect(results[0].text).toBe('100%'); // (formatting is secondary)
 
 If the function mostly delegates, assert the delegation with exact arguments (see Step 3).
 
+**Expected values are literals, not recomputations.** Never derive the expected side by calling the
+code under test, a collaborator it calls internally, or by re-typing the production formula — the
+test then passes whenever the code and the expectation share the same bug, and comparing a value to
+_itself_ asserts nothing at all. Freeze the expected value as a literal, computed once by hand or
+captured from a known-good run:
+
+```ts
+// ❌ circular: `expected` is produced the same way the code produces its result
+const expected = theme.visualization.getColorByName('red');
+expect(dim.value()).toBe(expected);
+// ❌ re-derives the production formula — a bug in the formula is copied into `expected`
+const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
+expect(getDefaultRowHeight(theme, [])).toBe(expected);
+
+// ✅ frozen literals — a change in the resolver or the formula now fails the test
+expect(dim.value()).toBe('#F2495C');
+expect(getDefaultRowHeight(theme, [])).toBe(34);
+```
+
+For values awkward to write by hand (projected coordinates, hashes), assert an **independent
+readback** rather than re-running the same path — e.g. project lng/lat, read it back in WGS84, and
+compare to the literal input — or freeze it with `toMatchInlineSnapshot`.
+
+**Prove the assertion has teeth.** Before landing, mutate the asserted value (or the source it
+derives from) and confirm the test goes **red**. A test that stays green — because its expectation
+tracks the code, or checks a value against itself — is a tautology dressed as coverage. Make this a
+habit, not just the final Verify step.
+
 ## Principle 3 — Authoring with AI: no slop tests
 
 This skill exists so AI-proposed tests meet the bar above. The failure mode to avoid is the
@@ -328,7 +356,8 @@ why each test exists.
 Pointers to the sections above — read them for the detail:
 
 - Principle 2 — assert concrete values / exact call args; never bare `toBeDefined`,
-  `instanceof`, "did not throw", or length-mirrors-input.
+  `instanceof`, "did not throw", or length-mirrors-input. Expected values are frozen literals, never
+  recomputed from the code under test; mutate the value and confirm red before landing.
 - Principle 3 — no unfocused/verbose/implementation-coupled slop; review AI output before a PR.
 - Step 1 — one data builder per file; `getPanelProps` + `applyFieldOverrides` for panel renders.
 - Step 2 — `it(...)` equivalent to the assertion; `it.each` for variants, delete duplicates.
