@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -136,7 +137,34 @@ func (ss *xormStore) Update(ctx context.Context, cmd *team.UpdateTeamCommand) er
 	})
 }
 
-// DeleteTeam will delete a team, its member and any permissions connected to the team
+type deleteTeamMembersQuery struct {
+	sqltemplate.SQLTemplate
+	TeamMemberTable string
+	OrgID           int64
+	TeamID          int64
+}
+
+func (q deleteTeamMembersQuery) Validate() error { return nil }
+
+type deleteTeamQuery struct {
+	sqltemplate.SQLTemplate
+	TeamTable string
+	OrgID     int64
+	TeamID    int64
+}
+
+func (q deleteTeamQuery) Validate() error { return nil }
+
+type deleteDashboardACLQuery struct {
+	sqltemplate.SQLTemplate
+	DashboardACLTable string
+	OrgID             int64
+	TeamID            int64
+}
+
+func (q deleteDashboardACLQuery) Validate() error { return nil }
+
+// DeleteTeam will delete a team, its members and any permissions connected to the team.
 func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) error {
 	dbHelper, err := ss.sql(ctx)
 	if err != nil {
@@ -144,21 +172,38 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 	}
 
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if _, err := teamExists(dbHelper, cmd.OrgID, cmd.ID, sess); err != nil {
+		if _, err := teamExists(dbHelper, sess, cmd.OrgID, cmd.ID); err != nil {
 			return err
 		}
 
-		deletes := []string{
-			"DELETE FROM " + quoteTable(dbHelper, "team_member") + " WHERE org_id=? and team_id = ?",
-			"DELETE FROM " + quoteTable(dbHelper, "team") + " WHERE org_id=? and id = ?",
-			"DELETE FROM " + quoteTable(dbHelper, "dashboard_acl") + " WHERE org_id=? and team_id = ?",
+		deleteMembers := deleteTeamMembersQuery{
+			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+			TeamMemberTable: dbHelper.Table("team_member"),
+			OrgID:           cmd.OrgID,
+			TeamID:          cmd.ID,
+		}
+		if err := execTemplate(sess, deleteTeamMembersTemplate, deleteMembers); err != nil {
+			return err
 		}
 
-		for _, sql := range deletes {
-			_, err := sess.Exec(sql, cmd.OrgID, cmd.ID)
-			if err != nil {
-				return err
-			}
+		deleteTeam := deleteTeamQuery{
+			SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
+			TeamTable:   dbHelper.Table("team"),
+			OrgID:       cmd.OrgID,
+			TeamID:      cmd.ID,
+		}
+		if err := execTemplate(sess, deleteTeamTemplate, deleteTeam); err != nil {
+			return err
+		}
+
+		deleteACL := deleteDashboardACLQuery{
+			SQLTemplate:       sqltemplate.New(dbHelper.DialectForDriver()),
+			DashboardACLTable: dbHelper.Table("dashboard_acl"),
+			OrgID:             cmd.OrgID,
+			TeamID:            cmd.ID,
+		}
+		if err := execTemplate(sess, deleteDashboardACLTemplate, deleteACL); err != nil {
+			return err
 		}
 
 		for _, render := range ss.deleteRenderers {
@@ -174,9 +219,28 @@ func (ss *xormStore) Delete(ctx context.Context, cmd *team.DeleteTeamCommand) er
 	})
 }
 
-func teamExists(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, teamID int64, sess *db.Session) (bool, error) {
-	query := "SELECT 1 FROM " + quoteTable(dbHelper, "team") + " WHERE org_id=? and id=?"
-	if res, err := sess.Query(query, orgID, teamID); err != nil {
+type teamExistsQuery struct {
+	sqltemplate.SQLTemplate
+	TeamTable string
+	OrgID     int64
+	TeamID    int64
+}
+
+func (q teamExistsQuery) Validate() error { return nil }
+
+func teamExists(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID int64, teamID int64) (bool, error) {
+	query := teamExistsQuery{
+		SQLTemplate: sqltemplate.New(dbHelper.DialectForDriver()),
+		TeamTable:   dbHelper.Table("team"),
+		OrgID:       orgID,
+		TeamID:      teamID,
+	}
+	rawSQL, err := sqltemplate.Execute(teamExistsTemplate, query)
+	if err != nil {
+		return false, err
+	}
+
+	if res, err := sess.Query(append([]any{rawSQL}, query.GetArgs()...)...); err != nil {
 		return false, err
 	} else if len(res) != 1 {
 		return false, team.ErrTeamNotFound
@@ -498,10 +562,31 @@ type isTeamMemberQuery struct {
 
 func (q isTeamMemberQuery) Validate() error { return nil }
 
+type getTeamMemberQuery struct {
+	sqltemplate.SQLTemplate
+	TeamMemberTable string
+	OrgID           int64
+	TeamID          int64
+	UserID          int64
+}
+
+func (q getTeamMemberQuery) Validate() error { return nil }
+
 func getTeamMember(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgId int64, teamId int64, userId int64) (team.TeamMember, error) {
-	rawSQL := `SELECT * FROM ` + quoteTable(dbHelper, "team_member") + ` WHERE org_id=? and team_id=? and user_id=?`
+	query := getTeamMemberQuery{
+		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+		TeamMemberTable: dbHelper.Table("team_member"),
+		OrgID:           orgId,
+		TeamID:          teamId,
+		UserID:          userId,
+	}
+	rawSQL, err := sqltemplate.Execute(getTeamMemberTemplate, query)
+	if err != nil {
+		return team.TeamMember{}, err
+	}
+
 	var member team.TeamMember
-	exists, err := sess.SQL(rawSQL, orgId, teamId, userId).Get(&member)
+	exists, err := sess.SQL(rawSQL, query.GetArgs()...).Get(&member)
 
 	if err != nil {
 		return member, err
@@ -570,7 +655,7 @@ func AddOrUpdateTeamMemberHook(dbHelper *legacysql.LegacyDatabaseHelper, sess *d
 }
 
 func addTeamMember(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, orgID, teamID, userID int64, isExternal bool, permission team.PermissionType) error {
-	if _, err := teamExists(dbHelper, orgID, teamID, sess); err != nil {
+	if _, err := teamExists(dbHelper, sess, orgID, teamID); err != nil {
 		return err
 	}
 
@@ -610,13 +695,33 @@ func RemoveTeamMemberHook(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Ses
 	return removeTeamMember(dbHelper, sess, cmd)
 }
 
+type removeTeamMemberQuery struct {
+	sqltemplate.SQLTemplate
+	TeamMemberTable string
+	OrgID           int64
+	TeamID          int64
+	UserID          int64
+}
+
+func (q removeTeamMemberQuery) Validate() error { return nil }
+
 func removeTeamMember(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, cmd *team.RemoveTeamMemberCommand) error {
-	if _, err := teamExists(dbHelper, cmd.OrgID, cmd.TeamID, sess); err != nil {
+	if _, err := teamExists(dbHelper, sess, cmd.OrgID, cmd.TeamID); err != nil {
 		return err
 	}
 
-	var rawSQL = "DELETE FROM " + quoteTable(dbHelper, "team_member") + " WHERE org_id=? and team_id=? and user_id=?"
-	res, err := sess.Exec(rawSQL, cmd.OrgID, cmd.TeamID, cmd.UserID)
+	query := removeTeamMemberQuery{
+		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+		TeamMemberTable: dbHelper.Table("team_member"),
+		OrgID:           cmd.OrgID,
+		TeamID:          cmd.TeamID,
+		UserID:          cmd.UserID,
+	}
+	rawSQL, err := sqltemplate.Execute(removeTeamMemberTemplate, query)
+	if err != nil {
+		return err
+	}
+	res, err := sess.Exec(append([]any{rawSQL}, query.GetArgs()...)...)
 	if err != nil {
 		return err
 	}
@@ -628,6 +733,14 @@ func removeTeamMember(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session
 	return err
 }
 
+type removeUserMembershipsQuery struct {
+	sqltemplate.SQLTemplate
+	TeamMemberTable string
+	UserID          int64
+}
+
+func (q removeUserMembershipsQuery) Validate() error { return nil }
+
 // RemoveUsersMemberships removes all the team membership entries for the given user.
 // Only used when removing a user from a Grafana instance.
 func (ss *xormStore) RemoveUsersMemberships(ctx context.Context, userID int64) error {
@@ -637,8 +750,16 @@ func (ss *xormStore) RemoveUsersMemberships(ctx context.Context, userID int64) e
 	}
 
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		var rawSQL = "DELETE FROM " + quoteTable(dbHelper, "team_member") + " WHERE user_id = ?"
-		_, err := sess.Exec(rawSQL, userID)
+		query := removeUserMembershipsQuery{
+			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+			TeamMemberTable: dbHelper.Table("team_member"),
+			UserID:          userID,
+		}
+		rawSQL, err := sqltemplate.Execute(removeUserMembershipsTemplate, query)
+		if err != nil {
+			return err
+		}
+		_, err = sess.Exec(append([]any{rawSQL}, query.GetArgs()...)...)
 		return err
 	})
 }
@@ -755,4 +876,13 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.Leg
 // RegisterDelete registers a query to run when a team is deleted.
 func (ss *xormStore) RegisterDelete(renderer teamdelete.Renderer) {
 	ss.deleteRenderers = append(ss.deleteRenderers, renderer)
+}
+
+func execTemplate(sess *db.Session, tmpl *template.Template, query sqltemplate.SQLTemplate) error {
+	rawSQL, err := sqltemplate.Execute(tmpl, query)
+	if err != nil {
+		return err
+	}
+	_, err = sess.Exec(append([]any{rawSQL}, query.GetArgs()...)...)
+	return err
 }

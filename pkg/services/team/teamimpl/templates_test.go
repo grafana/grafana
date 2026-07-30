@@ -114,6 +114,84 @@ func TestTemplates(t *testing.T) {
 					},
 				},
 			},
+			teamExistsTemplate: {
+				{
+					Name: "team",
+					Data: &teamExistsQuery{
+						SQLTemplate: queryTemplate(),
+						TeamTable:   dbHelper.Table("team"),
+						OrgID:       7,
+						TeamID:      11,
+					},
+				},
+			},
+			getTeamMemberTemplate: {
+				{
+					Name: "team_member",
+					Data: &getTeamMemberQuery{
+						SQLTemplate:     queryTemplate(),
+						TeamMemberTable: dbHelper.Table("team_member"),
+						OrgID:           7,
+						TeamID:          11,
+						UserID:          42,
+					},
+				},
+			},
+			deleteTeamMembersTemplate: {
+				{
+					Name: "team_members",
+					Data: &deleteTeamMembersQuery{
+						SQLTemplate:     queryTemplate(),
+						TeamMemberTable: dbHelper.Table("team_member"),
+						OrgID:           7,
+						TeamID:          11,
+					},
+				},
+			},
+			deleteTeamTemplate: {
+				{
+					Name: "team",
+					Data: &deleteTeamQuery{
+						SQLTemplate: queryTemplate(),
+						TeamTable:   dbHelper.Table("team"),
+						OrgID:       7,
+						TeamID:      11,
+					},
+				},
+			},
+			deleteDashboardACLTemplate: {
+				{
+					Name: "dashboard_acl",
+					Data: &deleteDashboardACLQuery{
+						SQLTemplate:       queryTemplate(),
+						DashboardACLTable: dbHelper.Table("dashboard_acl"),
+						OrgID:             7,
+						TeamID:            11,
+					},
+				},
+			},
+			removeTeamMemberTemplate: {
+				{
+					Name: "team_member",
+					Data: &removeTeamMemberQuery{
+						SQLTemplate:     queryTemplate(),
+						TeamMemberTable: dbHelper.Table("team_member"),
+						OrgID:           7,
+						TeamID:          11,
+						UserID:          42,
+					},
+				},
+			},
+			removeUserMembershipsTemplate: {
+				{
+					Name: "user_memberships",
+					Data: &removeUserMembershipsQuery{
+						SQLTemplate:     queryTemplate(),
+						TeamMemberTable: dbHelper.Table("team_member"),
+						UserID:          42,
+					},
+				},
+			},
 		},
 	})
 }
