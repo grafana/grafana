@@ -25,11 +25,14 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// NOTE (MVP scope): resource limits are intentionally deferred to a follow-up PR (tracked) to keep
-// this experimental feature small: no panel-count cap, no per-run timeout, and no per-body/
-// per-request byte caps. See the "dashboard-level limits" follow-up. The in-memory job store is
-// still bounded (retention TTL + max-entries + in-flight caps below) so it can't grow without limit;
-// that is a correctness guard against unbounded memory, not one of the deferred resource limits.
+// NOTE (MVP scope): there is still no per-run timeout, and capture itself applies no per-body byte cap
+// on the in-process path (out-of-process plugins are bounded by the SDK's own capture budget).
+//
+// Size is bounded by two byte figures rather than by a set of per-artifact caps: diagnostics.MaxBundleBytes
+// for one bundle -- enforced during assembly AND, in buildDashboardDiagnosticsArchive, before each panel
+// runs, since this file's generation loop holds every panel's capture until the last one finishes -- and
+// diagnosticsJobStoreMaxBytes for everything the store retains. A panel-count cap is deliberately absent:
+// the byte budget stops the run instead, which bounds the same thing without a second number to tune.
 
 // diagnosticsEnabled reports whether the grafana.onDemandDiagnostics feature flag is on for the
 // current request. It reuses the shared OpenFeature client (see ds_query_diagnostics.go).
@@ -110,6 +113,17 @@ type diagnosticsJobSnapshot struct {
 type diagnosticsJobStore struct {
 	mu   sync.RWMutex
 	jobs map[string]*diagnosticsJob
+	// maxBytes overrides diagnosticsJobStoreMaxBytes; zero uses it. Only tests set it -- the real budget
+	// is far larger than a test can afford to allocate, so exercising eviction needs a smaller one.
+	maxBytes int
+}
+
+// budgetBytes returns the retained-archive budget in force for this store.
+func (s *diagnosticsJobStore) budgetBytes() int {
+	if s.maxBytes > 0 {
+		return s.maxBytes
+	}
+	return diagnosticsJobStoreMaxBytes
 }
 
 // dashboardDiagnosticsJobs is the process-wide job store. Package-level so the endpoint methods on
@@ -122,10 +136,17 @@ const (
 	// a job is created and when one goes terminal (no background sweeper for this experimental
 	// feature); finer-grained retention is part of the limits follow-up.
 	diagnosticsJobRetention = time.Hour
-	// diagnosticsJobMaxEntries is a hard cap on retained jobs so a burst of creations within the
-	// retention window still can't grow the store without bound. The oldest jobs by completion time
-	// are evicted first.
-	diagnosticsJobMaxEntries = 100
+	// diagnosticsJobStoreMaxBytes bounds the archive bytes the store retains, so a burst of creations
+	// within the retention window can't grow it without bound. The oldest jobs by completion time are
+	// evicted first.
+	//
+	// Bytes rather than a job count, because a count bounds nothing on its own: it multiplies against the
+	// per-bundle ceiling instead of constraining it, so the previous cap of 100 entries permitted a
+	// hundred times MaxBundleBytes. Expressed as a multiple of that ceiling for the same reason -- the two
+	// numbers only mean anything together, and a store smaller than one bundle would evict a full-size
+	// result the moment it completed. Two lets one large bundle coexist with another rather than
+	// displacing it.
+	diagnosticsJobStoreMaxBytes = 2 * diagnostics.MaxBundleBytes
 	// diagnosticsMaxInFlightJobs caps concurrently generating (pending) jobs. Pending jobs are never
 	// pruned -- their background goroutine is still writing to them -- so without this cap an admin
 	// repeatedly POSTing large dashboards could spawn unbounded long-lived goroutines, each holding
@@ -164,13 +185,14 @@ func (s *diagnosticsJobStore) create(total int, creator identity.Requester) (job
 	return j, true
 }
 
-// pruneLocked drops terminal jobs past the retention TTL, then evicts the oldest terminal jobs
-// beyond the max-entries cap. Caller must hold s.mu. This is what keeps the in-memory store bounded.
+// pruneLocked drops terminal jobs past the retention TTL, then evicts the oldest terminal jobs until the
+// retained archive bytes fit diagnosticsJobStoreMaxBytes. Caller must hold s.mu. This is what keeps the
+// in-memory store bounded.
 //
 // A still-pending job is never evicted: its background goroutine is still writing to it, so dropping
 // it would orphan the run -- complete/fail would no-op and status/download would 404 after expensive
-// generation. Only complete/error jobs are eligible here, so the store is bounded by (finished jobs
-// up to the cap) plus at most diagnosticsMaxInFlightJobs runs in flight (capped in create).
+// generation. Only complete/error jobs are eligible here, so the store is bounded by the byte budget
+// plus at most diagnosticsMaxInFlightJobs runs in flight (capped in create).
 //
 // Retention is measured from finishedAt (not CreatedAt): a run that takes longer than the retention
 // window would otherwise be prunable the instant it completes, 404-ing a download for a job that just
@@ -178,6 +200,7 @@ func (s *diagnosticsJobStore) create(total int, creator identity.Requester) (job
 // full window.
 func (s *diagnosticsJobStore) pruneLocked(now time.Time) {
 	terminal := make([]string, 0, len(s.jobs))
+	retained := 0
 	for uid, j := range s.jobs {
 		if j.State == jobPending {
 			continue
@@ -187,8 +210,10 @@ func (s *diagnosticsJobStore) pruneLocked(now time.Time) {
 			continue
 		}
 		terminal = append(terminal, uid)
+		retained += len(j.archive)
 	}
-	if len(terminal) <= diagnosticsJobMaxEntries {
+	budget := s.budgetBytes()
+	if retained <= budget {
 		return
 	}
 	// Evict by finishedAt, not CreatedAt: retention is measured from finishedAt, so a slow run with an
@@ -198,7 +223,15 @@ func (s *diagnosticsJobStore) pruneLocked(now time.Time) {
 	sort.Slice(terminal, func(a, b int) bool {
 		return s.jobs[terminal[a]].finishedAt.Before(s.jobs[terminal[b]].finishedAt)
 	})
-	for _, uid := range terminal[:len(terminal)-diagnosticsJobMaxEntries] {
+	// Oldest first until the rest fit. The newest job is never evicted even if it alone exceeds the
+	// budget: it is the result the caller is about to download, and dropping it would 404 a generation
+	// that just succeeded. Its size is already bounded by MaxBundleBytes, which is what makes leaving it
+	// in place safe.
+	for _, uid := range terminal[:len(terminal)-1] {
+		if retained <= budget {
+			break
+		}
+		retained -= len(s.jobs[uid].archive)
 		delete(s.jobs, uid)
 	}
 }

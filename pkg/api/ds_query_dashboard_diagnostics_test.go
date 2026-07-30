@@ -347,85 +347,110 @@ func TestDiagnosticsJobStore_prune(t *testing.T) {
 		require.True(t, ok, "a pending job must survive pruning regardless of age")
 	})
 
-	// Max-entries cap: a burst of finished jobs within the retention window still can't grow the
-	// store past the cap; the oldest terminal jobs are evicted first.
-	t.Run("evicts oldest terminal jobs beyond the max-entries cap", func(t *testing.T) {
-		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
+	// Byte budget: a burst of finished jobs within the retention window can't grow the store past the
+	// retained-archive budget; the oldest terminal jobs are evicted first. A tiny per-store budget stands
+	// in for the real one, which is far larger than a test can afford to allocate.
+	t.Run("evicts oldest terminal jobs beyond the byte budget", func(t *testing.T) {
+		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}, maxBytes: 300}
 		base := time.Now()
 		var oldest string
-		for i := 0; i < diagnosticsJobMaxEntries; i++ {
+		for i := 0; i < 3; i++ {
 			j, _ := s.create(1, creator)
-			s.complete(j.UID, nil, diagnostics.BundleResult{}) // only terminal jobs count against the cap
-			// Age them deterministically so eviction order is well-defined.
-			s.jobs[j.UID].CreatedAt = base.Add(time.Duration(i) * time.Second)
+			s.complete(j.UID, make([]byte, 100), diagnostics.BundleResult{})
+			s.jobs[j.UID].finishedAt = base.Add(time.Duration(i) * time.Second)
 			if i == 0 {
 				oldest = j.UID
 			}
 		}
-		require.Len(t, s.jobs, diagnosticsJobMaxEntries)
+		require.Len(t, s.jobs, 3, "three 100-byte archives exactly fill a 300-byte budget")
 
-		// One more terminal job pushes over the cap and must evict exactly the oldest. complete()
-		// itself prunes, so no external sweep is needed.
+		// A fourth pushes the total to 400 over a 300 budget, so exactly the oldest must go.
 		newest, _ := s.create(1, creator)
-		s.complete(newest.UID, nil, diagnostics.BundleResult{})
-		require.Len(t, s.jobs, diagnosticsJobMaxEntries)
+		s.complete(newest.UID, make([]byte, 100), diagnostics.BundleResult{})
+		require.Len(t, s.jobs, 3)
 		_, ok := s.snapshot(oldest, creator)
 		require.False(t, ok, "oldest terminal job should have been evicted")
 		_, ok = s.snapshot(newest.UID, creator)
 		require.True(t, ok, "newest job should remain")
 	})
 
-	// Max-entries eviction orders by finishedAt, not CreatedAt: a slow run created long ago but
-	// finished most recently is the freshest result and must survive, while a run created recently but
-	// finished earliest is the one to evict. Ordering by CreatedAt would 404 the just-finished bundle.
-	t.Run("evicts oldest by finishedAt not CreatedAt beyond the cap", func(t *testing.T) {
-		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
+	// Eviction frees only as much as it must: one large archive can displace several small ones, and a
+	// count-based cap could not express that.
+	t.Run("evicts by bytes rather than by job count", func(t *testing.T) {
+		// 380 retained against 330: dropping the oldest 50 is enough, so the second small job survives.
+		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}, maxBytes: 330}
+		base := time.Now()
+		add := func(uid string, size int, finished time.Time) {
+			s.jobs[uid] = &diagnosticsJob{
+				UID: uid, State: jobComplete, finishedAt: finished, archive: make([]byte, size),
+				createdByOrgID: creator.GetOrgID(), createdByUID: creator.GetUID(),
+			}
+		}
+		add("small-1", 50, base)
+		add("small-2", 50, base.Add(time.Second))
+		add("big", 280, base.Add(2*time.Second))
+
+		s.pruneLocked(base.Add(3 * time.Second))
+		require.NotContains(t, s.jobs, "small-1", "the oldest goes first")
+		require.Contains(t, s.jobs, "small-2", "eviction stops as soon as the rest fit")
+		require.Contains(t, s.jobs, "big")
+	})
+
+	// Eviction orders by finishedAt, not CreatedAt: a slow run created long ago but finished most
+	// recently is the freshest result and must survive, while a run created recently but finished
+	// earliest is the one to evict. Ordering by CreatedAt would 404 the just-finished bundle.
+	t.Run("evicts oldest by finishedAt not CreatedAt", func(t *testing.T) {
+		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}, maxBytes: 200}
 		base := time.Now()
 		add := func(uid string, created, finished time.Time) {
 			s.jobs[uid] = &diagnosticsJob{
-				UID:            uid,
-				State:          jobComplete,
-				CreatedAt:      created,
-				finishedAt:     finished,
-				createdByOrgID: creator.GetOrgID(),
-				createdByUID:   creator.GetUID(),
+				UID: uid, State: jobComplete, CreatedAt: created, finishedAt: finished,
+				archive:        make([]byte, 100),
+				createdByOrgID: creator.GetOrgID(), createdByUID: creator.GetUID(),
 			}
 		}
-		// Fill exactly to the cap with baseline terminal jobs all finished at base.
-		for i := 0; i < diagnosticsJobMaxEntries; i++ {
-			add(fmt.Sprintf("fill-%d", i), base, base)
-		}
+		add("fill", base, base)
 		add("slow-but-fresh", base.Add(-time.Hour), base.Add(time.Minute))  // oldest CreatedAt, newest finishedAt
 		add("quick-but-stale", base.Add(time.Hour), base.Add(-time.Minute)) // newest CreatedAt, oldest finishedAt
 
-		s.pruneLocked(base.Add(2 * time.Minute)) // cap+2 terminal jobs -> evict the 2 oldest by finishedAt
-		require.Len(t, s.jobs, diagnosticsJobMaxEntries)
+		s.pruneLocked(base.Add(2 * time.Minute)) // 300 retained over a 200 budget
 		require.Contains(t, s.jobs, "slow-but-fresh",
 			"a job finished most recently must survive even if created long ago")
 		require.NotContains(t, s.jobs, "quick-but-stale",
 			"a job finished earliest must be evicted even if created most recently")
 	})
 
-	// Pruning must also happen when a job goes terminal, not only on create: if the store is already
-	// at the cap and one more job completes, complete() itself must evict down to the cap with no
-	// intervening create(). The store is built directly (bypassing create/complete) so the cap is only
-	// exercised by the single complete() under test.
-	t.Run("enforces the cap on complete without a later create", func(t *testing.T) {
-		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}}
+	// The newest terminal job is never evicted, even alone over budget: it is the result the caller is
+	// about to download, and its size is already bounded by diagnostics.MaxBundleBytes.
+	t.Run("keeps the newest job even when it alone exceeds the budget", func(t *testing.T) {
+		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}, maxBytes: 100}
 		base := time.Now()
-		for i := 0; i < diagnosticsJobMaxEntries; i++ {
-			uid := fmt.Sprintf("term-%d", i)
-			s.jobs[uid] = &diagnosticsJob{UID: uid, State: jobComplete, finishedAt: base}
-		}
-		// One extra in-flight job, also built directly so no prune has run yet.
-		s.jobs["pending"] = &diagnosticsJob{UID: "pending", State: jobPending, CreatedAt: base}
-		require.Len(t, s.jobs, diagnosticsJobMaxEntries+1)
+		s.jobs["old"] = &diagnosticsJob{UID: "old", State: jobComplete, finishedAt: base, archive: make([]byte, 50)}
+		s.jobs["huge"] = &diagnosticsJob{UID: "huge", State: jobComplete, finishedAt: base.Add(time.Second), archive: make([]byte, 5000)}
 
-		// Completing it makes it terminal, pushing terminal jobs one over the cap; complete()'s own
-		// prune must bring the store back down without any create() being called.
-		s.complete("pending", nil, diagnostics.BundleResult{})
-		require.Len(t, s.jobs, diagnosticsJobMaxEntries, "complete() must evict down to the cap on its own")
+		s.pruneLocked(base.Add(2 * time.Second))
+		require.NotContains(t, s.jobs, "old")
+		require.Contains(t, s.jobs, "huge", "the freshest result must survive rather than 404 a finished generation")
+	})
+
+	// Pruning must also happen when a job goes terminal, not only on create: if the store is already at
+	// the budget and one more job completes, complete() itself must evict with no intervening create().
+	t.Run("enforces the budget on complete without a later create", func(t *testing.T) {
+		s := &diagnosticsJobStore{jobs: map[string]*diagnosticsJob{}, maxBytes: 200}
+		base := time.Now()
+		for i := 0; i < 2; i++ {
+			uid := fmt.Sprintf("term-%d", i)
+			s.jobs[uid] = &diagnosticsJob{UID: uid, State: jobComplete, finishedAt: base.Add(time.Duration(i) * time.Second), archive: make([]byte, 100)}
+		}
+		// One extra in-flight job, built directly so no prune has run yet.
+		s.jobs["pending"] = &diagnosticsJob{UID: "pending", State: jobPending, CreatedAt: base}
+		require.Len(t, s.jobs, 3)
+
+		// Completing it adds 100 bytes over a 200 budget; complete()'s own prune must evict the oldest.
+		s.complete("pending", make([]byte, 100), diagnostics.BundleResult{})
+		require.Len(t, s.jobs, 2, "complete() must evict down to the budget on its own")
 		require.Contains(t, s.jobs, "pending", "the just-completed job is the newest by finishedAt and must survive")
+		require.NotContains(t, s.jobs, "term-0", "the oldest terminal job is the one evicted")
 	})
 
 	// In-flight cap: only diagnosticsMaxInFlightJobs generations may be pending at once. Further
