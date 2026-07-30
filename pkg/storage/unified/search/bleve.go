@@ -1756,7 +1756,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 			// serve the document as live or expose a provisioned one in trash. Remove
 			// it instead, which is how this index behaved before deleted documents were
 			// kept, until it is rebuilt.
-			if item.Doc.IsDeleted != nil && *item.Doc.IsDeleted && !b.mapsTrashMarkers() {
+			if item.Doc.IsDeleted != nil && *item.Doc.IsDeleted && !b.mapsTrashFields() {
 				batch.Delete(resource.SearchID(item.Doc.Key))
 				droppedMarkers++
 				continue
@@ -1801,11 +1801,16 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	return b.addSnapshotMutationCount(int64(len(req.Items)))
 }
 
-// mapsTrashMarkers reports whether this index can hold every marker a deleted
-// document relies on. An index built before those mappings existed cannot, and
-// bleve drops the values silently.
-func (b *bleveIndex) mapsTrashMarkers() bool {
-	return slices.Contains(b.features, resource.IndexFeatureDeletedMarker)
+// mapsTrashFields reports whether this index can hold everything a deleted
+// document relies on: the markers and the trash fields. An index built before
+// those mappings existed cannot, and bleve drops the values silently.
+func (b *bleveIndex) mapsTrashFields() bool {
+	for _, feature := range resource.TrashIndexFeatures() {
+		if !slices.Contains(b.features, feature) {
+			return false
+		}
+	}
+	return true
 }
 
 // isDeclaredField reports whether name is a declared search field for this

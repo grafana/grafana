@@ -136,6 +136,13 @@ const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
 // that path reports facet-capable but unstored fields as missing values.
 const IndexFeatureStoredFacets IndexFeature = "facets-are-stored"
 
+// TrashIndexFeatures are the features an index needs before a deleted document may
+// be kept in it. Both writers read this one list, so the producer and the
+// BulkIndex backstop cannot disagree about what makes an index usable for trash.
+func TrashIndexFeatures() []IndexFeature {
+	return []IndexFeature{IndexFeatureDeletedMarker, IndexFeatureTrashFields}
+}
+
 // currentIndexFeatures is recorded in every index this binary builds.
 var currentIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
@@ -2165,7 +2172,7 @@ func (s *searchServer) keepsDeletedDocuments(index ResourceIndex, logger log.Log
 		logger.Warn("cannot read index features, removing deleted documents instead of keeping them", "err", err)
 		return false
 	}
-	missing := MissingIndexFeatures(info, []IndexFeature{IndexFeatureDeletedMarker, IndexFeatureTrashFields})
+	missing := MissingIndexFeatures(info, TrashIndexFeatures())
 	if len(missing) > 0 {
 		logger.Debug("index does not map the markers on deleted documents, removing them until it is rebuilt", "missing", missing)
 		return false
