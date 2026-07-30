@@ -19,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
@@ -392,9 +391,8 @@ func (w *Wrapper) Update(
 		span.End()
 	}()
 
-	requester, requesterErr := identity.GetRequester(ctx)
-	authInfo, hasAuthInfo := types.AuthInfoFrom(ctx)
-	if requesterErr != nil || !hasAuthInfo {
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
 		return nil, false, ErrUnauthenticated
 	}
 
@@ -403,7 +401,6 @@ func (w *Wrapper) Update(
 		inner:      objInfo,
 		authorizer: w.authorizer,
 		requester:  requester,
-		authInfo:   authInfo,
 		tracer:     w.tracer,
 		observer:   w.observer,
 		resource:   w.resource,
@@ -420,7 +417,6 @@ type authorizedUpdateInfo struct {
 	inner      k8srest.UpdatedObjectInfo
 	authorizer ResourceStorageAuthorizer
 	requester  identity.Requester
-	authInfo   types.AuthInfo
 	tracer     trace.Tracer
 	observer   Observer
 	resource   schema.GroupResource
@@ -461,9 +457,7 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 }
 
 func (a *authorizedUpdateInfo) authorizationContext(ctx context.Context) context.Context {
-	ctx = identity.WithRequester(ctx, a.requester)
-	ctx = types.WithAuthInfo(ctx, a.authInfo)
-	return ctx
+	return identity.WithRequester(ctx, a.requester)
 }
 
 func (w *Wrapper) Watch(ctx context.Context, options *internalversion.ListOptions) (result watch.Interface, err error) {
