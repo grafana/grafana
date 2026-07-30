@@ -225,7 +225,10 @@ func (r *githubClient) GetRulesets(ctx context.Context, branch string) (*Ruleset
 	}
 
 	for rulesetID := range rulesetIDs {
-		ruleset, _, err := r.gh.Repositories.GetRuleset(ctx, r.owner, r.repo, rulesetID, false)
+		// includes_parents=true is required so that rulesets inherited from a
+		// parent organization are resolved. With false, an org-level ruleset ID
+		// returns 404 because the ruleset belongs to the org, not the repo.
+		ruleset, _, err := r.gh.Repositories.GetRuleset(ctx, r.owner, r.repo, rulesetID, true)
 		if err != nil {
 			// Fail-closed: a silent false negative would let the Repository save and
 			// then fail every subsequent sync push with a 403. Surfacing a block at
