@@ -48,6 +48,8 @@ type Service struct {
 	serverLock      *serverlock.ServerLockService
 	tracer          tracing.Tracer
 
+	beforeRefreshHook BeforeRefreshHook
+
 	tokenRefreshDuration *prometheus.HistogramVec
 }
 
@@ -66,6 +68,11 @@ type TokenRefreshMetadata struct {
 	AuthID            string
 }
 
+// BeforeRefreshHook prepares an OAuth provider immediately before an expired
+// token is refreshed. Returning an error aborts the refresh without
+// invalidating the persisted tokens.
+type BeforeRefreshHook func(ctx context.Context, provider string) error
+
 func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer,
 	serverLockService *serverlock.ServerLockService, tracer tracing.Tracer, sessionService auth.UserTokenService, features featuremgmt.FeatureToggles,
 ) *Service {
@@ -79,6 +86,13 @@ func ProvideService(socialService social.Service, authInfoService login.AuthInfo
 		tokenRefreshDuration: newTokenRefreshDurationMetric(registerer),
 		tracer:               tracer,
 	}
+}
+
+// SetBeforeRefreshHook configures a hook that runs after the refresh lock is
+// acquired and the persisted token is confirmed to need refreshing. It should
+// be configured during service construction, before the service is shared.
+func (o *Service) SetBeforeRefreshHook(hook BeforeRefreshHook) {
+	o.beforeRefreshHook = hook
 }
 
 // GetCurrentOAuthToken returns the OAuth token, if any, for the authenticated user. Will try to refresh the token if it has expired.
@@ -417,6 +431,14 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 	refreshNeeded := needTokenRefresh(ctx, persistedToken)
 	if !refreshNeeded {
 		return persistedToken, nil
+	}
+
+	if o.beforeRefreshHook != nil {
+		provider := strings.TrimPrefix(tokenRefreshMetadata.AuthModule, "oauth_")
+		if err := o.beforeRefreshHook(ctx, provider); err != nil {
+			span.SetStatus(codes.Error, "OAuth provider refresh preparation failed")
+			return nil, fmt.Errorf("prepare OAuth provider %q for token refresh: %w", provider, err)
+		}
 	}
 
 	connect, err := o.SocialService.GetConnector(tokenRefreshMetadata.AuthModule)

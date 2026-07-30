@@ -83,12 +83,13 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	type testCase struct {
-		desc            string
-		identity        identity.Requester
-		refreshMetadata *TokenRefreshMetadata
-		setup           func(env *environment)
-		expectedToken   *oauth2.Token
-		expectedErr     error
+		desc              string
+		identity          identity.Requester
+		refreshMetadata   *TokenRefreshMetadata
+		setup             func(env *environment)
+		beforeRefreshHook BeforeRefreshHook
+		expectedToken     *oauth2.Token
+		expectedErr       error
 	}
 
 	userIdentity := &authn.Identity{
@@ -239,6 +240,30 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 			expectedToken: unexpiredTokenWithIDToken,
 		},
 		{
+			desc:            "should preserve persisted tokens when refresh preparation fails",
+			identity:        userIdentity,
+			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
+			setup: func(env *environment) {
+				env.socialService.ExpectedAuthInfoProvider = &social.OAuthInfo{
+					UseRefreshToken: true,
+				}
+				env.authInfoService.On("GetAuthInfo", mock.Anything, mock.Anything).Return(&login.UserAuth{
+					AuthModule:        login.GenericOAuthModule,
+					AuthId:            "subject",
+					UserId:            1,
+					OAuthAccessToken:  expiredToken.AccessToken,
+					OAuthRefreshToken: expiredToken.RefreshToken,
+					OAuthExpiry:       expiredToken.Expiry,
+					OAuthTokenType:    expiredToken.TokenType,
+				}, nil).Once()
+			},
+			beforeRefreshHook: func(_ context.Context, provider string) error {
+				assert.Equal(t, social.GenericOAuthProviderName, provider)
+				return assert.AnError
+			},
+			expectedErr: assert.AnError,
+		},
+		{
 			desc:            "should refresh token when the id token is expired",
 			identity:        &authn.Identity{ID: "1234", Type: claims.TypeUser, AuthenticatedBy: login.GenericOAuthModule},
 			refreshMetadata: &TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule},
@@ -355,6 +380,7 @@ func TestIntegration_TryTokenRefresh(t *testing.T) {
 				env.sessionService,
 				featuremgmt.WithFeatures(),
 			)
+			env.service.SetBeforeRefreshHook(tt.beforeRefreshHook)
 
 			// token refresh
 			actualToken, err := env.service.TryTokenRefresh(context.Background(), tt.identity, tt.refreshMetadata)
