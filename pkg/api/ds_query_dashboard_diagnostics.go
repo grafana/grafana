@@ -496,11 +496,14 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 			panel.QueryErr = errors.Join(diagnostics.ResponseError(resp), diagnostics.PluginCaptureError(resp))
 		}
 
-		// RetainedBytes rather than serializing the HAR: serializing to find out the size would allocate
-		// the very copy this accounting exists to avoid. It undercounts (bodies only, before JSON
-		// escaping), so the stop lands a little late -- acceptable, since one panel's overshoot is bounded
-		// by that panel's capture, while running the remaining panels is not.
-		capturedBytes += harBuffer.RetainedBytes()
+		// Both capture paths, because a panel's traffic can arrive by either: the buffer holds what the in-process RoundTripper recorded, while an out-of-process
+		// plugin returns its capture as __har__ frames on resp.
+		//
+		// Measured rather than serialized: serializing to learn the size would allocate the very copy this
+		// accounting exists to avoid. It undercounts (in-process bodies are counted before JSON escaping),
+		// so the stop lands a little late -- acceptable, since one panel's overshoot is bounded by that
+		// panel's capture, while running the remaining panels is not.
+		capturedBytes += harBuffer.RetainedBytes() + diagnostics.CapturedHARBytes(resp)
 		panels = append(panels, panel)
 		dashboardDiagnosticsJobs.setProgress(jobUID, i+1)
 	}

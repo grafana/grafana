@@ -206,12 +206,17 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 		queryDataErr = fmt.Errorf("serialize query request: %w", queryRequestErr)
 	}
 	var queryData []byte
-	// Weighed before marshalling, not after: encoding a response allocates the whole document, so a
-	// response that cannot fit must be declined rather than built and rejected. The floor is charged
-	// against the full budget because the bulk artifacts have not been added yet.
+	// Weighed before marshalling, not after: encoding a response allocates the whole document, so one
+	// that cannot fit is declined rather than built and rejected. The floor is charged against the full
+	// budget because the bulk artifacts have not been added yet.
+	// Only the response is declined -- the artifact is still written with the request and a frame summary,
+	// which cost kilobytes and are the part recorded nowhere else.
 	switch {
-	case resp != nil && !budget.fits("querydata.json", queryDataLowerBoundBytes(resp)):
-		queryDataErr = errors.Join(queryDataErr, errors.New("query data not serialized: larger than the bundle size limit"))
+	case resp != nil && !budget.fits("querydata.json response", queryDataLowerBoundBytes(resp)):
+		reason := "response omitted: larger than the bundle size limit"
+		var err error
+		queryData, err = marshalQueryDataWithoutResponse(queryRequestJSON, resp, reason)
+		queryDataErr = errors.Join(queryDataErr, err, errors.New(reason))
 	case resp != nil || len(queryRequestJSON) > 0:
 		var err error
 		queryData, err = marshalQueryDataArtifact(queryRequestJSON, resp)
@@ -298,13 +303,7 @@ func marshalQueryDataArtifact(request json.RawMessage, resp *backend.QueryDataRe
 			//
 			// The error is returned as well, so both callers record it outside the artifact
 			// (querydata-error.txt, manifest.queryDataError); the embedded copy is a convenience.
-			out, fallbackErr := json.MarshalIndent(queryDataArtifact{
-				Version:         queryDataArtifactVersion,
-				Request:         request,
-				ResponseSummary: summarizeQueryDataResponse(resp),
-				ResponseError:   err.Error(),
-				ResponseOmitted: true,
-			}, "", "  ")
+			out, fallbackErr := marshalQueryDataWithoutResponse(request, resp, err.Error())
 			if fallbackErr != nil {
 				return nil, errors.Join(err, fallbackErr)
 			}
@@ -313,6 +312,18 @@ func marshalQueryDataArtifact(request json.RawMessage, resp *backend.QueryDataRe
 		artifact.Response = responseJSON
 	}
 	return json.MarshalIndent(artifact, "", "  ")
+}
+
+// marshalQueryDataWithoutResponse encodes querydata.json carrying everything except the response
+// itself: the submitted request, a frame summary, and why the response is missing.
+func marshalQueryDataWithoutResponse(request json.RawMessage, resp *backend.QueryDataResponse, reason string) ([]byte, error) {
+	return json.MarshalIndent(queryDataArtifact{
+		Version:         queryDataArtifactVersion,
+		Request:         request,
+		ResponseSummary: summarizeQueryDataResponse(resp),
+		ResponseError:   reason,
+		ResponseOmitted: true,
+	}, "", "  ")
 }
 
 // queryDataLowerBoundBytes returns a floor on the JSON size of resp: a byte count the encoded
@@ -471,9 +482,10 @@ type manifestPanelEntry struct {
 	QueryDataError     string   `json:"queryDataError,omitempty"`
 	Skipped            string   `json:"skipped,omitempty"`
 	Error              string   `json:"error,omitempty"`
-	// CaptureError records a failure to serialize this panel's captured traffic. It's kept separate
-	// from Error (a query failure) so one unserializable buffer only loses this panel's traffic.har,
-	// not the whole multi-panel bundle.
+	// CaptureError records why this panel has no traffic.har despite having run -- either the capture
+	// could not be serialized, or it did not fit the bundle size limit. Kept separate from Error (a query
+	// failure) so one panel's lost traffic doesn't read as a failed query, and separate from
+	// QueryDataTruncated so a reader chasing missing traffic isn't sent to the wrong artifact.
 	CaptureError string `json:"captureError,omitempty"`
 }
 
@@ -521,12 +533,19 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 			queryDataErrs = append(queryDataErrs, "serialize query request: "+p.QueryRequestErr.Error())
 		}
 		var queryData []byte
-		// As in Build: decline a response that provably cannot fit rather than allocating its JSON to
-		// find out. Here the floor is weighed against what earlier panels have already spent.
+		// As in Build: decline a response that provably cannot fit rather than allocating its JSON to find
+		// out, and keep the request either way. Here the floor is weighed against what earlier panels
+		// already spent.
 		switch {
-		case p.Resp != nil && !budget.fits(dir+"/querydata.json", queryDataLowerBoundBytes(p.Resp)):
+		case p.Resp != nil && !budget.fits(dir+"/querydata.json response", queryDataLowerBoundBytes(p.Resp)):
 			entry.QueryDataTruncated = true
-			queryDataErrs = append(queryDataErrs, "not serialized: larger than the remaining bundle size limit")
+			reason := "response omitted: larger than the remaining bundle size limit"
+			var err error
+			queryData, err = marshalQueryDataWithoutResponse(p.QueryRequest, p.Resp, reason)
+			if err != nil {
+				queryDataErrs = append(queryDataErrs, err.Error())
+			}
+			queryDataErrs = append(queryDataErrs, reason)
 		case p.Resp != nil || len(p.QueryRequest) > 0:
 			var err error
 			queryData, err = marshalQueryDataArtifact(p.QueryRequest, p.Resp)
@@ -557,7 +576,9 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 		if budget.add(dir+"/traffic.har", har) {
 			entry.HARBytes = len(har)
 		} else {
-			entry.QueryDataTruncated = true
+			// Not QueryDataTruncated: that field says the query DATA was cut, and a reader chasing missing
+			// traffic would be looking at the wrong artifact.
+			entry.CaptureError = "traffic dropped: bundle size limit reached"
 		}
 		if budget.add(dir+"/querydata.json", queryData) {
 			entry.QueryDataBytes = len(queryData)
@@ -803,7 +824,43 @@ func HasCapturedHAR(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffe
 	return captured
 }
 
+// CapturedHARBytes returns how much captured traffic resp carries from out-of-process plugins: the
+// length of the HAR payload in each __har__ frame. It is the counterpart to harcapture.Buffer.RetainedBytes,
+// and a caller sizing a panel's capture needs both -- an out-of-process plugin leaves that buffer empty
+// however much traffic it recorded, so counting the buffer alone would see nothing at all.
+//
+// IMPORTANT: must be called before collectHAR, which drains these responses out of resp. Nothing
+// enforces that -- a reorder would silently return zero rather than fail, so collectHAR carries the
+// matching note.
+func CapturedHARBytes(resp *backend.QueryDataResponse) int {
+	if resp == nil {
+		return 0
+	}
+	total := 0
+	for refID, harResp := range resp.Responses {
+		if !isHARResponse(refID) {
+			continue
+		}
+		for _, frame := range harResp.Frames {
+			if frame == nil || frame.Meta == nil {
+				continue
+			}
+			custom, ok := frame.Meta.Custom.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if harStr, ok := custom["har"].(string); ok {
+				total += len(harStr)
+			}
+		}
+	}
+	return total
+}
+
 // collectHAR returns the captured HTTP traffic as HAR 1.2 JSON.
+//
+// IMPORTANT: it CONSUMES the __har__ responses, deleting them from resp as it drains them, so anything
+// that needs to size an out-of-process plugin's capture (CapturedHARBytes) must run first.
 func collectHAR(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer) ([]byte, error) {
 	var bufferDoc []byte
 	if harBuffer != nil && harBuffer.Len() > 0 {

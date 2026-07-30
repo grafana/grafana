@@ -1011,19 +1011,68 @@ func TestQueryDataLowerBoundBytes(t *testing.T) {
 
 func ptr[T any](v T) *T { return &v }
 
-func TestBundler_Build_declinesQueryDataItCannotFit(t *testing.T) {
-	// A string field larger than the whole budget: the floor alone exceeds it, so the response must never
-	// be marshalled -- avoiding the allocation is the reason the check exists.
+// The pre-panel stop in pkg/api accumulates capture across panels, and most capture now arrives as
+// __har__ frames rather than in the in-process buffer: an out-of-process datasource leaves that buffer
+// empty however much traffic it recorded. Counting only the buffer would leave the accumulator at zero
+// for every external plugin, so the stop would never fire for them.
+func TestCapturedHARBytes(t *testing.T) {
+	harFrame := func(payload string) *data.Frame {
+		f := data.NewFrame("")
+		f.Meta = &data.FrameMeta{Custom: map[string]interface{}{"har": payload}}
+		return f
+	}
+
+	t.Run("nil and capture-free responses cost nothing", func(t *testing.T) {
+		require.Zero(t, CapturedHARBytes(nil))
+		require.Zero(t, CapturedHARBytes(&backend.QueryDataResponse{Responses: backend.Responses{
+			"A": {Frames: data.Frames{data.NewFrame("cpu", data.NewField("v", nil, []float64{1}))}},
+		}}))
+	})
+
+	t.Run("sums every __har__ frame across datasources", func(t *testing.T) {
+		a, b := strings.Repeat("x", 100), strings.Repeat("y", 250)
+		resp := &backend.QueryDataResponse{Responses: backend.Responses{
+			"A":                             {Frames: data.Frames{data.NewFrame("cpu", data.NewField("v", nil, []float64{1}))}},
+			harResponseRefIDPrefix + "ds-1": {Frames: data.Frames{harFrame(a)}},
+			harResponseRefIDPrefix + "ds-2": {Frames: data.Frames{harFrame(b)}},
+		}}
+		require.Equal(t, len(a)+len(b), CapturedHARBytes(resp),
+			"a multi-datasource panel yields one __har__ response each; all must be counted")
+	})
+
+	t.Run("counts a capture the in-process buffer knows nothing about", func(t *testing.T) {
+		payload := strings.Repeat("z", 512)
+		resp := &backend.QueryDataResponse{Responses: backend.Responses{
+			harResponseRefIDPrefix + "external": {Frames: data.Frames{harFrame(payload)}},
+		}}
+		buffer := &harcapture.Buffer{}
+
+		require.Zero(t, buffer.RetainedBytes(), "an out-of-process plugin leaves the buffer empty")
+		require.Equal(t, len(payload), CapturedHARBytes(resp),
+			"so this is the only accounting that sees the traffic at all")
+	})
+}
+
+// Declining the response must not take the request with it: the request appears nowhere else in the
+// bundle and is what a support engineer needs to reproduce the query.
+func TestBundler_Build_keepsTheRequestWhenTheResponseIsDeclined(t *testing.T) {
 	huge := data.NewFrame("logs", data.NewField("line", nil, []string{strings.Repeat("x", MaxBundleBytes+1)}))
 	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{huge}}}}
+	request := json.RawMessage(`{"expr":"up"}`)
 
-	archive, result, err := NewBundler(nil).Build(resp, nil, nil, nil, json.RawMessage(`{"q":1}`), nil, nil)
+	archive, result, err := NewBundler(nil).Build(resp, nil, nil, nil, request, nil, nil)
 	require.NoError(t, err)
 	require.True(t, result.Partial())
 
 	files := readTarGz(t, archive)
-	require.NotContains(t, files, "querydata.json")
-	require.Contains(t, string(files["bundle-limit.txt"]), "not built",
-		"the reader must be able to tell it was declined rather than absent")
-	require.Contains(t, string(files["querydata-error.txt"]), "larger than the bundle size limit")
+	require.Contains(t, files, "querydata.json", "the artifact still ships, minus the response")
+
+	var artifact queryDataArtifact
+	require.NoError(t, json.Unmarshal(files["querydata.json"], &artifact))
+	require.JSONEq(t, string(request), string(artifact.Request), "the submitted query must survive")
+	require.True(t, artifact.ResponseOmitted)
+	require.Contains(t, artifact.ResponseError, "larger than the bundle size limit")
+	require.NotEmpty(t, artifact.ResponseSummary, "a frame summary stands in for the response")
+	require.Contains(t, string(files["bundle-limit.txt"]), "querydata.json response",
+		"bundle-limit.txt must name the response, not the whole artifact, since the artifact is present")
 }
