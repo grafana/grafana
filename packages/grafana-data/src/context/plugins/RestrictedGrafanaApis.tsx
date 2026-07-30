@@ -27,12 +27,6 @@ export interface DashboardMutationAPI {
    */
   isAvailable(): boolean;
   /**
-   * Commands this Grafana version implements, whether or not a dashboard is
-   * loaded. Use for capability checks, and `getAvailableCommands` for what can
-   * run right now.
-   */
-  getSupportedCommands(): string[];
-  /**
    * Subscribe to a dashboard being loaded or unloaded. Returns an unsubscribe
    * function.
    *

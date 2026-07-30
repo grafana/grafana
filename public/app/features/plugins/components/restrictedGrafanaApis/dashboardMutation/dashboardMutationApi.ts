@@ -80,9 +80,6 @@ export const dashboardMutationApi: DashboardMutationAPI = {
   isAvailable: () => {
     return _client !== null;
   },
-  getSupportedCommands: () => {
-    return ALL_COMMANDS.map((cmd) => cmd.name);
-  },
   onAvailabilityChange: (listener) => {
     _availabilityListeners.add(listener);
     return () => {

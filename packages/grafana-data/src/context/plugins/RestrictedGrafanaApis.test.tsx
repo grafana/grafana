@@ -17,7 +17,6 @@ const mockDashboardMutationAPI = {
   getPayloadSchema: jest.fn(() => null),
   getAvailableCommands: jest.fn(() => []),
   isAvailable: jest.fn(() => false),
-  getSupportedCommands: jest.fn(() => []),
   onAvailabilityChange: jest.fn(() => () => {}),
 };
 

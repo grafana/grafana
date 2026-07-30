@@ -91,19 +91,6 @@ describe('dashboardMutationApi', () => {
     });
   });
 
-  describe('getSupportedCommands', () => {
-    it('reports the commands this Grafana version implements', () => {
-      expect(dashboardMutationApi.getSupportedCommands()).toEqual(ALL_COMMANDS.map((cmd) => cmd.name));
-    });
-
-    // The distinction the two probes exist for: capability does not depend on a
-    // dashboard being open, availability does.
-    it('is populated with no dashboard loaded, where getAvailableCommands is empty', () => {
-      expect(dashboardMutationApi.getSupportedCommands().length).toBeGreaterThan(0);
-      expect(dashboardMutationApi.getAvailableCommands()).toEqual([]);
-    });
-  });
-
   describe('onAvailabilityChange', () => {
     it('notifies on load and unload', () => {
       const listener = jest.fn();

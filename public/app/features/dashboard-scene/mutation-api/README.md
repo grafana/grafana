@@ -23,12 +23,12 @@ On failure, `success` is `false` and `error` contains a message. `changes` is al
 
 The API object exists for the lifetime of the app, so holding a reference to it does not mean a dashboard is open. Commands dispatch against a client that is created when a `DashboardScene` activates and destroyed when it deactivates.
 
-| Question                                       | Use                                                               |
-| ---------------------------------------------- | ----------------------------------------------------------------- |
-| Is a dashboard loaded right now?               | `isAvailable()`                                                   |
-| Does this Grafana version implement a command? | `getSupportedCommands()`                                          |
-| What can I execute right now?                  | `getAvailableCommands()`, empty when no dashboard is loaded       |
-| Tell me when that changes                      | `onAvailabilityChange(listener)`, returns an unsubscribe function |
+| Question                                       | Use                                                                                                                   |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Is a dashboard loaded right now?               | `isAvailable()`                                                                                                       |
+| What can I execute right now?                  | `getAvailableCommands()`, empty when no dashboard is loaded                                                           |
+| Tell me when that changes                      | `onAvailabilityChange(listener)`, returns an unsubscribe function                                                     |
+| Does this Grafana version implement a command? | `getPayloadSchema(command) !== null`, which reads the static command registry and so answers with no dashboard loaded |
 
 `execute` rejects when no dashboard is loaded.
 
