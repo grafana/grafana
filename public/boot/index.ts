@@ -316,7 +316,7 @@ async function initBootDataFromMT() {
       // This is necessary to avoid permissions error
       // We use a type assertion to avoid importing enum JS
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      orgRole: "Admin" as OrgRole
+      orgRole: 'Admin' as OrgRole,
     };
   } else {
     window.grafanaBootData.user = {
