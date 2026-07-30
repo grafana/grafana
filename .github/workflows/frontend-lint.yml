@@ -10,6 +10,8 @@ permissions: {}
 
 jobs:
   detect-changes:
+    # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
     runs-on: ubuntu-arm64-small
     permissions:
@@ -231,8 +233,8 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
+    if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     name: Verify API clients (enterprise)
     runs-on: ubuntu-x64
     steps:
