@@ -1293,7 +1293,7 @@ export const versionedComponents = {
      */
     option: {
       '13.2.0': (value?: string) =>
-        value === undefined ? 'data-testid ButtonSelect option' : `data-testid ButtonSelect option ${value}`,
+        value ? `data-testid ButtonSelect option ${value}` : 'data-testid ButtonSelect option',
     },
   },
   Select: {

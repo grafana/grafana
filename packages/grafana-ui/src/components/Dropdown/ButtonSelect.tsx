@@ -48,7 +48,7 @@ const ButtonSelectComponent = <T,>(props: Props<T>) => {
           return (
             <MenuItem
               key={`${item.value}`}
-              testId={selectors.components.ButtonSelect.option(testIdValue)}
+              testId={selectors.components.ButtonSelect.option(testIdValue ?? '')}
               label={item.label ?? String(item.value)}
               onClick={() => onChange(item)}
               active={item.value === value?.value}
