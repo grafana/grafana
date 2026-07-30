@@ -81,7 +81,7 @@ export function applyJsonToDashboard(
     dashboard.publishEvent(
       new DashboardEditActionEvent({
         source: dashboard,
-        description: t('dashboard.schema-editor.undo-title', 'Schema edit'),
+        description: t('dashboard.sidebar.edit-schema.undo-title', 'Schema edit'),
         perform: () => dashboard.setState(newState),
         undo: () => dashboard.setState(previousState),
       }),

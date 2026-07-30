@@ -135,8 +135,8 @@ func TestConcurrentJobDriver_ClaimedElsewhereIsDropped(t *testing.T) {
 	var claims atomic.Int32
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "ns1", "job1").
-		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
+	store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
 			claims.Add(1)
 			return nil, nil, ErrAlreadyClaimed
 		}).Maybe()
@@ -170,8 +170,8 @@ func TestConcurrentJobDriver_TransientErrorsRetryUntilDropped(t *testing.T) {
 	var claims atomic.Int32
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "ns1", "job1").
-		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
+	store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
 			claims.Add(1)
 			return nil, nil, errors.New("transient API error")
 		}).Maybe()
@@ -205,8 +205,8 @@ func TestConcurrentJobDriver_ResyncUpdateRecoversDroppedJob(t *testing.T) {
 	var claims atomic.Int32
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "ns1", "pending-job").
-		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
+	store.EXPECT().Claim(mock.Anything, "ns1", "pending-job", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
 			claims.Add(1)
 			return nil, nil, ErrAlreadyClaimed
 		}).Maybe()
@@ -244,7 +244,7 @@ func TestConcurrentJobDriver_ProcessesJobEndToEnd(t *testing.T) {
 	completed := make(chan struct{})
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job").
+	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job", "0").
 		Return(claimedJob, func() { rollbackCalled.Store(true) }, nil).Once()
 	store.EXPECT().Update(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, job *provisioning.Job) (*provisioning.Job, error) {
@@ -314,8 +314,8 @@ func TestConcurrentJobDriver_PostClaimFailureDoesNotRerunJob(t *testing.T) {
 	completeCalled := make(chan struct{})
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job").
-		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
+	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
 			claims.Add(1)
 			return claimedJob.DeepCopy(), func() {}, nil
 		}).Maybe()
@@ -394,8 +394,8 @@ func TestConcurrentJobDriver_CooldownBlocksDirtyRedeliveryAfterPostClaimFailure(
 	releaseComplete := make(chan struct{})
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job").
-		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
+	store.EXPECT().Claim(mock.Anything, "test-ns", "test-job", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
 			if claims.Add(1) > 1 {
 				// Later attempts only need to be counted.
 				return nil, nil, ErrAlreadyClaimed
@@ -477,8 +477,8 @@ func TestConcurrentJobDriver_DuplicateEventsCauseNoDuplicateProcessing(t *testin
 	var claims atomic.Int32
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "ns1", "job1").
-		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
+	store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
 			if claims.Add(1) == 1 {
 				close(firstClaimStarted)
 				<-release
@@ -519,8 +519,8 @@ func TestConcurrentJobDriver_StaleNotFoundClaimIsRetried(t *testing.T) {
 	notFound := apierrors.NewNotFound(provisioning.JobResourceInfo.GroupVersionResource().GroupResource(), "job1")
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "ns1", "job1").
-		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
+	store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
 			if claims.Add(1) < 3 {
 				return nil, nil, notFound
 			}
@@ -559,8 +559,8 @@ func TestConcurrentJobDriver_TrustedNotFoundClaimIsDropped(t *testing.T) {
 	notFound := apierrors.NewNotFound(provisioning.JobResourceInfo.GroupVersionResource().GroupResource(), "job1")
 
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything, "ns1", "job1").
-		RunAndReturn(func(context.Context, string, string) (*provisioning.Job, func(), error) {
+	store.EXPECT().Claim(mock.Anything, "ns1", "job1", "0").
+		RunAndReturn(func(context.Context, string, string, string) (*provisioning.Job, func(), error) {
 			claims.Add(1)
 			return nil, nil, notFound
 		}).Maybe()

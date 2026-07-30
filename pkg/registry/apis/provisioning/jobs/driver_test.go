@@ -27,6 +27,25 @@ func newConflictError() error {
 	)
 }
 
+func TestResourceChangeCount(t *testing.T) {
+	summaries := []*provisioning.JobResourceSummary{
+		{Create: 2, Update: 3, Delete: 4, Write: 5},
+		nil,
+		{Create: 1, Update: 1, Delete: 1, Write: 1},
+	}
+
+	require.Equal(t, 0, resourceChangeCount(provisioning.JobActionPull, nil))
+
+	// pull (default): create+update+delete = (2+3+4)+(1+1+1) = 12
+	require.Equal(t, 12, resourceChangeCount(provisioning.JobActionPull, summaries))
+	// push: writes only = 5+1
+	require.Equal(t, 6, resourceChangeCount(provisioning.JobActionPush, summaries))
+	// delete: deletes only = 4+1
+	require.Equal(t, 5, resourceChangeCount(provisioning.JobActionDelete, summaries))
+	// move: creates only (a rename is both create+delete; count once) = 2+1
+	require.Equal(t, 3, resourceChangeCount(provisioning.JobActionMove, summaries))
+}
+
 func makeTestJob(rv string) *provisioning.Job {
 	return &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
@@ -390,6 +391,7 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 				c.store,
 				c.repoGetter,
 				c.historicJobs,
+				strconv.Itoa(driverID),
 				c.metrics,
 				c.processed,
 				c.workers...,
