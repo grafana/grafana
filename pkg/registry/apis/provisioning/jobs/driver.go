@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // Store is an abstraction for the storage API.
@@ -86,6 +87,10 @@ type jobProcessor struct {
 	// metrics for recording job-level Prometheus metrics (warnings, operations, etc.)
 	metrics *JobMetrics
 
+	// processed records the event-processing metrics (source counts + delivery
+	// latency) once a claim confirms a genuine pickup.
+	processed *usinformer.ProcessedMetrics
+
 	// Mutex to protect concurrent access to job processing
 	mu sync.Mutex
 	// currentJob is the job currently being processed
@@ -98,6 +103,7 @@ func newJobProcessor(
 	repoGetter RepoGetter,
 	historicJobs HistoryWriter,
 	metrics *JobMetrics,
+	processed *usinformer.ProcessedMetrics,
 	workers ...Worker,
 ) *jobProcessor {
 	return &jobProcessor{
@@ -108,13 +114,18 @@ func newJobProcessor(
 		historicJobs:         historicJobs,
 		workers:              workers,
 		metrics:              metrics,
+		processed:            processed,
 	}
 }
 
 // processKey claims the job namespace/name and drives it to completion.
 // Returns ErrAlreadyClaimed or a NotFound API error when the job is not ours
-// to process; both mean the key can be dropped.
-func (d *jobProcessor) processKey(ctx context.Context, namespace, name string) error {
+// to process; both mean the key can be dropped. trigger records what enqueued
+// the key so the start of processing can be attributed to a live event, a
+// re-list, or the initial list. enqueuedAt is when the key joined the work
+// queue, used to record how late the event arrived once the claim confirms this
+// is a genuine (non-duplicate) pickup.
+func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, trigger claimTrigger, enqueuedAt time.Time) error {
 	ctx, span := tracing.Start(ctx, "provisioning.jobs.claim_and_process_one_job")
 	defer span.End()
 
@@ -131,6 +142,20 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string) e
 	// Ensure that the job is cleaned up if we fail to complete it.
 	// The rollback function does not care about cancellations.
 	defer rollback()
+
+	// The claim is the cluster-wide exactly-once gate, so this is the point that
+	// attributes each processed job to what enqueued its key. errPostClaim
+	// outcomes still count — processing did start; the execution outcome remains
+	// the job of grafana_provisioning_jobs_processed_total. Mirrors the
+	// claim-time RecordWaitTime precedent.
+	d.processed.RecordProcessed(trigger)
+	// The claim confirms this is a genuine pickup (a job claimed elsewhere returns
+	// ErrAlreadyClaimed above, before here), so record how late the event reached
+	// the queue: from job creation (the event's origin) to when it was enqueued.
+	// This excludes the time the key then waited in the queue for a worker.
+	if !enqueuedAt.IsZero() {
+		d.processed.ObserveDeliveryLatency(trigger, enqueuedAt.Sub(claimedJob.CreationTimestamp.Time).Seconds())
+	}
 
 	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace, "repository", claimedJob.Spec.Repository, "action", claimedJob.Spec.Action)
 	ctx = logging.Context(ctx, logger)
