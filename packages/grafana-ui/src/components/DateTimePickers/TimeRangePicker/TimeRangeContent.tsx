@@ -44,14 +44,6 @@ interface FormState {
   to: string;
 }
 
-// Stops password managers from treating the inputs as login fields; autocomplete="off" alone is not honored by all of them
-const AUTOFILL_SUPPRESSION_ATTRIBUTES = {
-  autoComplete: 'off',
-  'data-lpignore': 'true',
-  'data-1p-ignore': 'true',
-  'data-bwignore': 'true',
-} as const;
-
 const ERROR_MESSAGES = {
   default: () =>
     t(
@@ -207,7 +199,7 @@ export const TimeRangeContent = (props: Props) => {
             onClick={(event) => event.stopPropagation()}
             onKeyDown={submitOnEnter}
             addonAfter={icon}
-            {...AUTOFILL_SUPPRESSION_ATTRIBUTES}
+            autoComplete="off"
             data-testid={selectors.components.TimePicker.fromField}
           />
         </Field>
@@ -236,7 +228,7 @@ export const TimeRangeContent = (props: Props) => {
             onClick={(event) => event.stopPropagation()}
             onKeyDown={submitOnEnter}
             addonAfter={icon}
-            {...AUTOFILL_SUPPRESSION_ATTRIBUTES}
+            autoComplete="off"
             data-testid={selectors.components.TimePicker.toField}
           />
         </Field>
