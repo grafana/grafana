@@ -78,6 +78,8 @@ export const SparklineCell = (props: TableCellProps) => {
 
   const config: FieldConfig<GraphFieldConfig> = {
     color: field.config.color,
+    // allValues sparklines are FieldType.other — nested frames never inherit parent thresholds
+    ...(field.config.thresholds ? { thresholds: field.config.thresholds } : undefined),
     custom: {
       ...defaultSparklineCellConfig,
       ...cellOptions,

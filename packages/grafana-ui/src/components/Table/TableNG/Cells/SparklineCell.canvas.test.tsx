@@ -29,12 +29,12 @@ const tsFrame = toDataFrame({
   ],
 });
 
-function sparklineField(config: Field['config']): Field {
+function sparklineField(config: Field['config'], type: FieldType = FieldType.frame): Field {
   const raw = toDataFrame({
     fields: [
       {
         name: 'trend',
-        type: FieldType.frame,
+        type,
         values: [tsFrame],
         config,
       },
@@ -103,6 +103,34 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
     );
 
     await assertCanvasOutput();
+  });
+
+  // Reduce allValues types the column as FieldType.other, so nested frames never inherit
+  // parent thresholds — SparklineCell must forward them for Scheme gradients.
+  it('renders scheme gradient for reduce/allValues FieldType.other sparklines', async () => {
+    expect(() =>
+      renderSparklineCell(
+        sparklineField(
+          {
+            custom: {
+              cellOptions: { type: TableCellDisplayMode.Sparkline, gradientMode: GraphGradientMode.Scheme },
+            },
+            color: { mode: FieldColorModeId.Thresholds },
+            thresholds: {
+              mode: ThresholdsMode.Absolute,
+              steps: [
+                { value: -Infinity, color: 'green' },
+                { value: 80, color: 'red' },
+              ],
+            },
+          },
+          FieldType.other
+        )
+      )
+    ).not.toThrow();
+
+    await waitFor(() => expect(uPlotInstance?.status).toBe(1));
+    await waitFor(() => expect(document.querySelector('.u-over')).toBeInTheDocument());
   });
 
   it.each(Object.values(GraphGradientMode))('renders %s gradient w/ continuous color mode', async (gradientMode) => {
