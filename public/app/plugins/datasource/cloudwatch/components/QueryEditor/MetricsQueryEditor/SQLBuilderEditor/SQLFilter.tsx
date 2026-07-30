@@ -10,7 +10,7 @@ import {
   type CloudWatchMetricsQuery,
   QueryEditorExpressionType,
   QueryEditorPropertyType,
-} from 'app/plugins/datasource/cloudwatch/dataquery.gen';
+} from '../../../../dataquery.gen';
 
 import { type CloudWatchDatasource } from '../../../../datasource';
 import { type QueryEditorOperatorExpression } from '../../../../expressions';

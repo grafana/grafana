@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { type QueryEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -17,6 +16,7 @@ import {
   validMetricSearchCodeQuery,
 } from '../../mocks/queries';
 import { type CloudWatchJsonData, type CloudWatchQuery } from '../../types';
+import { selectOptionInTest } from '../../test/helpers/selectOptionInTest';
 
 import { QueryEditor } from './QueryEditor';
 
