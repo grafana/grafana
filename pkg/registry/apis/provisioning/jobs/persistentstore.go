@@ -645,33 +645,78 @@ func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repositor
 			continue
 		}
 
-		// Guard against the race where a worker claims the job between the List
-		// and the Delete: the ResourceVersion precondition makes the delete fail
-		// with a conflict if the job changed, so an executing job is never removed.
-		rv := job.ResourceVersion
-		err := s.client.Jobs(namespace).Delete(ctx, job.GetName(), metav1.DeleteOptions{
-			Preconditions: &metav1.Preconditions{ResourceVersion: &rv},
-		})
-		switch {
-		case apierrors.IsNotFound(err):
-			// Already completed and removed by a worker; nothing to do.
-			continue
-		case apierrors.IsConflict(err):
-			// Claimed after we listed it; leave it for the worker to finish.
-			logger.Debug("skipping job claimed during queue clean-up", "job", job.GetName())
-			continue
-		case err != nil:
+		removed, err := s.deleteUnclaimedJob(ctx, namespace, job)
+		if err != nil {
 			span.RecordError(err)
 			return deleted, apifmt.Errorf("failed to delete job '%s' in '%s': %w", job.GetName(), namespace, err)
 		}
-
-		s.queueMetrics.DecreaseQueueSize(string(job.Spec.Action))
-		deleted++
+		if removed {
+			s.queueMetrics.DecreaseQueueSize(string(job.Spec.Action))
+			deleted++
+		}
 	}
 
 	span.SetAttributes(attribute.Int("jobs_deleted", deleted))
 	logger.Info("cleanup queue complete", "deleted", deleted)
 	return deleted, nil
+}
+
+// cleanupConflictRetries bounds the re-fetch/retry loop in deleteUnclaimedJob so
+// a job whose ResourceVersion keeps changing cannot spin forever. Reaching the
+// limit leaves the job in place, which is safe: a leftover pending job is picked
+// up and failed by a worker, whereas deleting a possibly-claimed job is not.
+const cleanupConflictRetries = 3
+
+// deleteUnclaimedJob deletes a single pending job under a ResourceVersion
+// precondition, so a job that gets claimed after the List is never removed.
+//
+// A delete conflict only proves the ResourceVersion moved on, not that the job
+// was claimed: a worker claiming it bumps the RV, but so does an unrelated
+// update to a still-pending job or a delete+recreate of the deterministic job
+// name between our List and Delete. Treating every conflict as "claimed" would
+// leave such an unclaimed job behind for a repository that is being deleted. So
+// on conflict we re-fetch and only bail out when the job actually carries the
+// claim label; otherwise we retry the delete against the current RV.
+//
+// Returns true when a job was deleted.
+func (s *persistentStore) deleteUnclaimedJob(ctx context.Context, namespace string, job *provisioning.Job) (bool, error) {
+	logger := logging.FromContext(ctx)
+	name := job.GetName()
+	rv := job.ResourceVersion
+
+	for attempt := 0; attempt < cleanupConflictRetries; attempt++ {
+		err := s.client.Jobs(namespace).Delete(ctx, name, metav1.DeleteOptions{
+			Preconditions: &metav1.Preconditions{ResourceVersion: &rv},
+		})
+		switch {
+		case err == nil:
+			return true, nil
+		case apierrors.IsNotFound(err):
+			// Already completed and removed by a worker; nothing to do.
+			return false, nil
+		case !apierrors.IsConflict(err):
+			return false, err
+		}
+
+		// Conflict: re-fetch to tell a genuine claim apart from an unrelated
+		// change to a job we should still clear.
+		current, getErr := s.client.Jobs(namespace).Get(ctx, name, metav1.GetOptions{})
+		switch {
+		case apierrors.IsNotFound(getErr):
+			return false, nil
+		case getErr != nil:
+			return false, getErr
+		}
+		if _, claimed := current.Labels[LabelJobClaim]; claimed {
+			logger.Debug("skipping job claimed during queue clean-up", "job", name)
+			return false, nil
+		}
+		// Still unclaimed: retry the delete against the current ResourceVersion.
+		rv = current.ResourceVersion
+	}
+
+	logger.Warn("leaving job in queue after repeated delete conflicts", "job", name)
+	return false, nil
 }
 
 // generateJobName creates and updates the job's name to one that fits it.
