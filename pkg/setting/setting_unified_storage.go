@@ -219,6 +219,10 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
 	cfg.IndexMinUpdateInterval = section.Key("index_min_update_interval").MustDuration(0)
 	cfg.IndexModificationCacheTTL = section.Key("index_modification_cache_ttl").MustDuration(0)
+	// Off by default: switching this on makes the next rebuild of every index pull
+	// in all trash the storage still holds, which is unbounded where garbage
+	// collection is disabled.
+	cfg.IndexDeletedDocuments = section.Key("index_deleted_documents").MustBool(false)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()

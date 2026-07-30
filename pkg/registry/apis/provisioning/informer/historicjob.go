@@ -37,10 +37,13 @@ func NewHistoricJobDeltaSource(natsEnabled bool, client versioned.Interface, res
 // namespace).
 func NewHistoricJobPeriodicInformer(client versioned.Interface, namespace string, resync time.Duration) *usinformer.CachelessPeriodicInformer {
 	c := client.ProvisioningV0alpha1()
+	// The periodic informer has no live subscription and so no re-list/live race
+	// to reconcile; discard the list resource version.
 	list := func(ctx context.Context) ([]runtime.Object, error) {
-		return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+		objs, _, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 			return c.HistoricJobs(namespace).List(ctx, opts)
 		})
+		return objs, err
 	}
 	return usinformer.NewCachelessPeriodicInformer(provisioningapis.HistoricJobResourceInfo.GroupVersionResource().Resource, resync, list)
 }

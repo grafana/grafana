@@ -5,7 +5,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { type RowItems } from './RowItems';
 
-export function getEditOptions(model: RowItems): OptionsPaneCategoryDescriptor[] {
+export function getSidebarOptions(model: RowItems): OptionsPaneCategoryDescriptor[] {
   const categoryId = 'rows-options';
   const options = new OptionsPaneCategoryDescriptor({ title: '', id: categoryId }).addItem(
     new OptionsPaneItemDescriptor({

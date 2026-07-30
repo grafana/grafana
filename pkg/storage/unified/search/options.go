@@ -138,6 +138,7 @@ func NewSearchOptions(
 			BuildVersion:              buildVersion,
 			IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 			IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
+			IndexDeletedDocuments:     cfg.IndexDeletedDocuments,
 			InjectFailuresPercent:     cfg.SearchInjectFailuresPercent,
 
 			IndexSnapshotEnabled:            cfg.IndexSnapshotEnabled,
