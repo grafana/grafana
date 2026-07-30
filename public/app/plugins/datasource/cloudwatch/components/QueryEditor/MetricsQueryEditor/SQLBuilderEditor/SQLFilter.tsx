@@ -6,12 +6,12 @@ import { type SelectableValue, toOption } from '@grafana/data';
 import { AccessoryButton, EditorList, InputGroup } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Alert, Select, useStyles2 } from '@grafana/ui';
+
 import {
   type CloudWatchMetricsQuery,
   QueryEditorExpressionType,
   QueryEditorPropertyType,
 } from '../../../../dataquery.gen';
-
 import { type CloudWatchDatasource } from '../../../../datasource';
 import { type QueryEditorOperatorExpression } from '../../../../expressions';
 import { useDimensionKeys, useEnsureVariableHasSingleSelection } from '../../../../hooks';

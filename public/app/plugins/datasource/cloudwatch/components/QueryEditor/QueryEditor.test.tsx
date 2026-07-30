@@ -15,8 +15,8 @@ import {
   validMetricSearchBuilderQuery,
   validMetricSearchCodeQuery,
 } from '../../mocks/queries';
-import { type CloudWatchJsonData, type CloudWatchQuery } from '../../types';
 import { selectOptionInTest } from '../../test/helpers/selectOptionInTest';
+import { type CloudWatchJsonData, type CloudWatchQuery } from '../../types';
 
 import { QueryEditor } from './QueryEditor';
 
