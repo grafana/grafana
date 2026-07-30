@@ -57,6 +57,14 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/notebook/:uid/:slug?',
+      pageClass: 'page-dashboard',
+      routeName: DashboardRoutes.Notebook,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotebookScenePage" */ '../features/notebook/pages/NotebookScenePage')
+      ),
+    },
+    {
       path: '/dashboard/assistant-preview/*',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate]),
       pageClass: 'page-dashboard',
@@ -153,6 +161,41 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/dashboards',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "DashboardListPage"*/ 'app/features/browse-dashboards/BrowseDashboardsPage')
+      ),
+    },
+    {
+      path: '/dashboards/variables',
+      roles: () =>
+        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "VariablesManagementPage"*/ 'app/features/variables-management/VariablesManagementPage'
+          )
+      ),
+    },
+    {
+      path: '/dashboards/variables/new',
+      roles: () =>
+        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "VariablesManagementPage"*/ 'app/features/variables-management/VariablesManagementPage'
+          )
+      ),
+    },
+    {
+      // Nested under a static /edit segment so a variable whose derived
+      // metadata.name is literally "new" can never collide with the create route.
+      path: '/dashboards/variables/edit/:name',
+      roles: () =>
+        contextSrv.evaluatePermission([AccessControlAction.DashboardsCreate, AccessControlAction.DashboardsWrite]),
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "VariablesManagementPage"*/ 'app/features/variables-management/VariablesManagementPage'
+          )
       ),
     },
     {
@@ -511,6 +554,24 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboards/f/:uid/:slug/variables',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "FolderVariablesPage"*/ 'app/features/browse-dashboards/BrowseFolderVariablesPage'
+          )
+      ),
+    },
+    {
+      path: '/dashboards/f/:uid/variables',
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "FolderVariablesPage"*/ 'app/features/browse-dashboards/BrowseFolderVariablesPage'
+          )
+      ),
+    },
+    {
       path: '/library-panels',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
@@ -574,7 +635,7 @@ export function getAppRoutes(): RouteDescriptor[] {
   return routes.filter(isTruthy);
 }
 
-export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
+function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
   if (!cfg.supportBundlesEnabled) {
     return [];
   }

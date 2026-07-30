@@ -11,16 +11,23 @@ import (
 type VectorMetrics struct {
 	SearchDuration               *prometheus.HistogramVec
 	EmbedDuration                *prometheus.HistogramVec
+	RerankDuration               *prometheus.HistogramVec
+	RerankCandidatesTotal        *prometheus.CounterVec
+	RerankDroppedResultsTotal    *prometheus.CounterVec
 	ReconcilerProcessDuration    *prometheus.HistogramVec
 	ReconcilerPendingEvents      prometheus.Gauge
 	ReconcilerRetriesTotal       *prometheus.CounterVec
 	ReconcilerEventsDroppedTotal *prometheus.CounterVec
-	BackfillItemDuration         *prometheus.HistogramVec
-	QueryCacheHitsTotal          *prometheus.CounterVec
-	QueryCacheMissesTotal        *prometheus.CounterVec
-	QueryCacheEvictionsTotal     prometheus.Counter
-	RateLimitedRequestsTotal     prometheus.Counter
-	RateLimiterErrorsTotal       prometheus.Counter
+
+	ReconcilerSubresourcesExtractedTotal *prometheus.CounterVec
+	ReconcilerSubresourcesEmbeddedTotal  *prometheus.CounterVec
+	ReconcilerSubresourcesDeletedTotal   *prometheus.CounterVec
+	BackfillItemDuration                 *prometheus.HistogramVec
+	QueryCacheHitsTotal                  *prometheus.CounterVec
+	QueryCacheMissesTotal                *prometheus.CounterVec
+	QueryCacheEvictionsTotal             prometheus.Counter
+	RateLimitedRequestsTotal             prometheus.Counter
+	RateLimiterErrorsTotal               prometheus.Counter
 }
 
 func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
@@ -41,6 +48,22 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"model", "task", "status"}),
+		RerankDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "vector_storage_rerank_duration_seconds",
+			Help:                            "Time (in seconds) spent in a single rerank Scorer call to the provider (Vertex/Bedrock), labeled by model and status (ok|error|timeout).",
+			Buckets:                         instrument.DefBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"model", "status"}),
+		RerankCandidatesTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_rerank_candidates_total",
+			Help: "Total results scored by the reranker, labeled by model. Denominator for the drop proportion: rate(dropped) / rate(candidates).",
+		}, []string{"model"}),
+		RerankDroppedResultsTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_rerank_dropped_results_total",
+			Help: "Total HybridSearch results dropped by the min_relevance threshold, labeled by model and requested level.",
+		}, []string{"model", "level"}),
 		ReconcilerProcessDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "vector_storage_reconciler_process_duration_seconds",
 			Help:                            "Time (in seconds) to process a single embedding event in the reconciler, labeled by group, resource, and outcome status.",
@@ -61,6 +84,18 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			Name: "vector_storage_reconciler_events_dropped_total",
 			Help: "Total number of reconciler events dropped (gave up on), labeled by reason.",
 		}, []string{"group", "resource", "reason"}),
+		ReconcilerSubresourcesExtractedTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_reconciler_subresources_extracted_total",
+			Help: "Total subresources extracted from processed resources. Compare with embedded to see how many re-embeds the content diff avoids.",
+		}, []string{"group", "resource"}),
+		ReconcilerSubresourcesEmbeddedTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_reconciler_subresources_embedded_total",
+			Help: "Total subresources re-embedded (new or content-changed). Equal to extracted means the diff is saving nothing.",
+		}, []string{"group", "resource"}),
+		ReconcilerSubresourcesDeletedTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "vector_storage_reconciler_subresources_deleted_total",
+			Help: "Total stale subresources deleted because they no longer exist in the resource.",
+		}, []string{"group", "resource"}),
 		BackfillItemDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "vector_storage_backfill_item_duration_seconds",
 			Help:                            "Time (in seconds) to process a single backfill item, labeled by group, resource, and outcome status (including skip reasons).",

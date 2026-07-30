@@ -6,13 +6,16 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/utils/ptr"
 
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	claims "github.com/grafana/authlib/types"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	prefsregistry "github.com/grafana/grafana/pkg/registry/apis/preferences"
 	prefutils "github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,23 +25,22 @@ import (
 type K8sHandler struct {
 	client     K8sClient
 	dashboards dashboards.DashboardService
+	defaults   preferences.PreferencesSpec
 }
 
 // ProvideK8sHandler is the Wire provider for the legacy preferences
 // bridge.
 func ProvideK8sHandler(cfg *setting.Cfg, configProvider grafanaapiserver.DirectRestConfigProvider, ds dashboards.DashboardService) *K8sHandler {
-	return &K8sHandler{
-		client:     NewK8sClient(cfg, configProvider),
-		dashboards: ds,
-	}
+	return NewK8sHandler(NewK8sClient(cfg, configProvider), ds, prefsregistry.DefaultSpec(cfg))
 }
 
 // NewK8sHandler builds a handler with an explicit client; tests can pass a
 // mock implementation here.
-func NewK8sHandler(client K8sClient, ds dashboards.DashboardService) *K8sHandler {
+func NewK8sHandler(client K8sClient, ds dashboards.DashboardService, defaults preferences.PreferencesSpec) *K8sHandler {
 	return &K8sHandler{
 		client:     client,
 		dashboards: ds,
+		defaults:   defaults,
 	}
 }
 
@@ -50,6 +52,55 @@ func (h *K8sHandler) GetPreferences(c *contextmodel.ReqContext, owner prefutils.
 		return responseFromError(err)
 	}
 	return response.JSON(http.StatusOK, spec)
+}
+
+// GetPreferencesWithDefaults returns the requester's merged preferences
+// (user > teams > org > configured defaults) in the legacy pref.Preference
+// shape, for server-side consumers that render with preferences (e.g. the
+// index page). It is the flag-gated replacement for pref.Service.GetWithDefaults
+// and handles every identity shape, so callers don't need to.
+func (h *K8sHandler) GetPreferencesWithDefaults(c *contextmodel.ReqContext) (*pref.Preference, error) {
+	// No usable identity (e.g. rendering the login page): there are no
+	// user/team/org preferences to merge, so the merged result is exactly the
+	// configured defaults. The API call also cannot be made — an
+	// unauthenticated request has no org/namespace and no token permissions.
+	if !c.IsSignedIn && !c.IsIdentityType(claims.TypeAnonymous) {
+		return specToPreference(&h.defaults), nil
+	}
+
+	spec, err := h.client.GetMerged(c.Req.Context())
+	if err != nil {
+		return nil, err
+	}
+	return specToPreference(spec), nil
+}
+
+// specToPreference maps the app-platform spec onto the legacy model. JSONData
+// is always non-nil because consumers dereference it without checking.
+func specToPreference(spec *preferences.PreferencesSpec) *pref.Preference {
+	p := &pref.Preference{
+		WeekStart: spec.WeekStart,
+		JSONData:  &pref.PreferenceJSONData{},
+	}
+	if spec.Theme != nil {
+		p.Theme = *spec.Theme
+	}
+	if spec.Timezone != nil {
+		p.Timezone = *spec.Timezone
+	}
+	if spec.HomeDashboardUID != nil {
+		p.HomeDashboardUID = *spec.HomeDashboardUID
+	}
+	if spec.Language != nil {
+		p.JSONData.Language = *spec.Language
+	}
+	if spec.QueryHistory != nil && spec.QueryHistory.HomeTab != nil {
+		p.JSONData.QueryHistory.HomeTab = *spec.QueryHistory.HomeTab
+	}
+	if spec.Navbar != nil {
+		p.JSONData.Navbar.BookmarkUrls = spec.Navbar.BookmarkUrls
+	}
+	return p
 }
 
 // UpdatePreferences performs a full replace of the preferences for the

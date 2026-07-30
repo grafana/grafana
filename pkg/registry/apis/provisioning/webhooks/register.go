@@ -137,6 +137,10 @@ func ProvideWebhooksWithImages(
 	}
 	isPublic := isPublicURL(publicURL)
 
+	// Build the limiter once, outside the ExtraBuilder closure so multiple API versions (v0alpha, v1beta)
+	// will still use the same rate limiter
+	rateLimiter := NewConfiguredRateLimiter(cfg.ProvisioningWebhookRateLimitRPS, cfg.ProvisioningWebhookTrustedIPHeader)
+
 	return &WebhookExtraBuilder{
 		isPublic:    isPublic,
 		urlProvider: urls.Public,
@@ -151,6 +155,7 @@ func ProvideWebhooksWithImages(
 				b,
 				screenshotRenderer,
 				registry,
+				rateLimiter,
 			)
 
 			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urls, registry)
@@ -167,7 +172,7 @@ func ProvideWebhooksWithImages(
 	}
 }
 
-func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer) *WebhookExtraBuilder {
+func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer, rateLimiter RateLimiter) *WebhookExtraBuilder {
 	urlProvider := func(_ context.Context, _ string) string {
 		return provisioningURL
 	}
@@ -179,7 +184,7 @@ func ProvideWebhooks(provisioningURL string, registry prometheus.Registerer) *We
 		urlProvider: urlProvider,
 		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
 			screenshotRenderer := pullrequest.NewNoOpRenderer()
-			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer, registry)
+			webhook := NewWebhookConnector(isPublic, b, screenshotRenderer, registry, rateLimiter)
 
 			return NewWebhookExtra(webhook)
 		},

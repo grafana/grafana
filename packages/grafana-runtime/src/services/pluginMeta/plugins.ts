@@ -3,6 +3,7 @@ import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getCachedPromise } from '../../utils/getCachedPromise';
 
+import { logPluginMetaError } from './logging';
 import type { PluginMetasResponse } from './types';
 import { type Meta } from './types/meta/meta_object_gen';
 import { type Plugin } from './types/plugin/plugin_object_gen';
@@ -20,7 +21,12 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
 
   const metas = await fetch(`apis/plugins.grafana.app/${getApiVersion()}/namespaces/${config.namespace}/metas`);
   if (!metas.ok) {
-    throw new Error(`Failed to load plugin metas ${metas.status}:${metas.statusText}`);
+    const error = new Error(`Failed to load plugin metas ${metas.status}:${metas.statusText}`);
+    logPluginMetaError('PluginMeta: failed to load plugin metas', error, {
+      status: String(metas.status),
+      statusText: metas.statusText,
+    });
+    throw error;
   }
 
   const result = await metas.json();
@@ -49,7 +55,13 @@ export async function installPluginMeta(pluginId: string, version: string): Prom
   });
 
   if (!result.ok) {
-    throw new Error(`Failed to install plugin ${pluginId} ${result.status}:${result.statusText}`);
+    const error = new Error(`Failed to install plugin ${pluginId} ${result.status}:${result.statusText}`);
+    logPluginMetaError('PluginMeta: failed to install plugin', error, {
+      pluginId,
+      status: String(result.status),
+      statusText: result.statusText,
+    });
+    throw error;
   }
 }
 
@@ -66,7 +78,13 @@ export async function uninstallPluginMeta(pluginId: string): Promise<void> {
   );
 
   if (!result.ok) {
-    throw new Error(`Failed to uninstall plugin ${pluginId} ${result.status}:${result.statusText}`);
+    const error = new Error(`Failed to uninstall plugin ${pluginId} ${result.status}:${result.statusText}`);
+    logPluginMetaError('PluginMeta: failed to uninstall plugin', error, {
+      pluginId,
+      status: String(result.status),
+      statusText: result.statusText,
+    });
+    throw error;
   }
 }
 

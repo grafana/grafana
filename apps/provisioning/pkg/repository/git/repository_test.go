@@ -1,13 +1,16 @@
 package git
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -2160,8 +2163,8 @@ func TestGitRepository_createSignature(t *testing.T) {
 		require.False(t, author.Time.IsZero())
 
 		require.Equal(t, "Grafana", committer.Name)
-		require.Equal(t, sig.Email, author.Email)
-		require.False(t, author.Time.IsZero())
+		require.Equal(t, sig.Email, committer.Email)
+		require.False(t, committer.Time.IsZero())
 	})
 
 	t.Run("should use current time when signature time is zero", func(t *testing.T) {
@@ -2186,14 +2189,78 @@ func TestGitRepository_createSignature(t *testing.T) {
 		require.True(t, committer.Time.After(before.Add(-time.Second)))
 		require.True(t, committer.Time.Before(after.Add(time.Second)))
 	})
+
+	t.Run("should set committer from spec while author stays default", func(t *testing.T) {
+		repo := &gitRepository{
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					Commit: &provisioning.CommitOptions{
+						SignerName:  "Bot Signer",
+						SignerEmail: "signer@example.com",
+					},
+				},
+			},
+		}
+
+		author, committer := repo.createSignature(context.Background())
+
+		require.Equal(t, "Grafana", author.Name)
+		require.Equal(t, "noreply@grafana.com", author.Email)
+		require.Equal(t, "Bot Signer", committer.Name)
+		require.Equal(t, "signer@example.com", committer.Email)
+	})
+
+	t.Run("should default committer email when only signer name is set", func(t *testing.T) {
+		repo := &gitRepository{
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type:   provisioning.GitHubRepositoryType,
+					Commit: &provisioning.CommitOptions{SignerName: "Bot Signer"},
+				},
+			},
+		}
+
+		author, committer := repo.createSignature(context.Background())
+
+		require.Equal(t, "Grafana", author.Name)
+		require.Equal(t, "Bot Signer", committer.Name)
+		require.Equal(t, "noreply@grafana.com", committer.Email)
+	})
+
+	t.Run("should keep committer independent from a context author override", func(t *testing.T) {
+		repo := &gitRepository{
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitHubRepositoryType,
+					Commit: &provisioning.CommitOptions{
+						SignerName:  "Bot Signer",
+						SignerEmail: "signer@example.com",
+					},
+				},
+			},
+		}
+		ctx := repository.WithAuthorSignature(context.Background(), repository.CommitSignature{
+			Name:  "John Doe",
+			Email: "john@example.com",
+		})
+
+		author, committer := repo.createSignature(ctx)
+
+		require.Equal(t, "John Doe", author.Name)
+		require.Equal(t, "john@example.com", author.Email)
+		require.Equal(t, "Bot Signer", committer.Name)
+		require.Equal(t, "signer@example.com", committer.Email)
+	})
 }
 
 func TestNewGitRepository(t *testing.T) {
 	tests := []struct {
-		name      string
-		gitConfig RepositoryConfig
-		wantError bool
-		expectURL string
+		name          string
+		gitConfig     RepositoryConfig
+		wantError     bool
+		expectURL     string
+		expectSigning bool
 	}{
 		{
 			name: "success - with token",
@@ -2205,6 +2272,30 @@ func TestNewGitRepository(t *testing.T) {
 			},
 			wantError: false,
 			expectURL: "https://git.example.com/owner/repo.git",
+		},
+		{
+			name: "success - with commit signing",
+			gitConfig: RepositoryConfig{
+				URL:              "https://git.example.com/owner/repo.git",
+				Branch:           "main",
+				Token:            "plain-token",
+				SigningMethod:    provisioning.SSHSigningMethod,
+				CommitSigningKey: "ssh-key",
+			},
+			wantError:     false,
+			expectURL:     "https://git.example.com/owner/repo.git",
+			expectSigning: true,
+		},
+		{
+			name: "error - smime signing without certificate",
+			gitConfig: RepositoryConfig{
+				URL:              "https://git.example.com/owner/repo.git",
+				Branch:           "main",
+				Token:            "plain-token",
+				SigningMethod:    provisioning.SMIMESigningMethod,
+				CommitSigningKey: "smime-key",
+			},
+			wantError: true,
 		},
 	}
 
@@ -2229,6 +2320,11 @@ func TestNewGitRepository(t *testing.T) {
 				require.Equal(t, tt.expectURL, gitRepo.URL())
 				require.Equal(t, tt.gitConfig.Branch, gitRepo.Branch())
 				require.Equal(t, config, gitRepo.Config())
+				if tt.expectSigning {
+					require.Len(t, gitRepo.(*gitRepository).writerOptions, 1)
+				} else {
+					require.Empty(t, gitRepo.(*gitRepository).writerOptions)
+				}
 			}
 		})
 	}
@@ -4986,4 +5082,76 @@ func TestGitRepository_GetCurrentBranch(t *testing.T) {
 			require.Equal(t, tt.expectedBranch, branch)
 		})
 	}
+}
+
+func TestWithGitContext_AuditFields(t *testing.T) {
+	var buf bytes.Buffer
+	handler := slog.NewJSONHandler(&buf, nil)
+	logger := logging.NewSLogLogger(handler)
+
+	ctx := logging.Context(context.Background(), logger)
+
+	gitRepo := &gitRepository{
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "test-repo",
+				Namespace: "test-ns",
+			},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType,
+			},
+		},
+		gitConfig: RepositoryConfig{
+			URL:    "https://git.example.com/owner/repo.git",
+			Branch: "main",
+		},
+	}
+
+	_, enrichedLogger := gitRepo.withGitContext(ctx, "main")
+	enrichedLogger.Info("test log")
+
+	output := buf.String()
+	require.Contains(t, output, `"namespace":"test-ns"`)
+	require.Contains(t, output, `"repository_name":"test-repo"`)
+	require.Contains(t, output, `"url":"https://git.example.com/owner/repo.git"`)
+	require.Contains(t, output, `"ref":"main"`)
+}
+
+func TestGitRepository_AuditLog(t *testing.T) {
+	var buf bytes.Buffer
+	handler := slog.NewJSONHandler(&buf, nil)
+	logger := logging.NewSLogLogger(handler)
+
+	ctx := logging.Context(context.Background(), logger)
+
+	mockClient := &mocks.FakeClient{}
+	mockClient.ListRefsReturns([]nanogit.Ref{
+		{Name: "refs/heads/main", Hash: hash.Hash{}},
+	}, nil)
+
+	gitRepo := &gitRepository{
+		client: mockClient,
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-repo",
+				Namespace: "my-ns",
+			},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType,
+			},
+		},
+		gitConfig: RepositoryConfig{
+			URL:    "https://git.example.com/owner/repo.git",
+			Branch: "main",
+		},
+	}
+
+	_, err := gitRepo.ListRefs(ctx)
+	require.NoError(t, err)
+
+	output := buf.String()
+	require.Contains(t, output, `"msg":"list refs"`)
+	require.Contains(t, output, `"namespace":"my-ns"`)
+	require.Contains(t, output, `"repository_name":"my-repo"`)
+	require.Contains(t, output, `"url":"https://git.example.com/owner/repo.git"`)
 }

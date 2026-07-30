@@ -21,19 +21,3 @@ export interface TeamWithRoles extends Team {
    */
   roles?: Role[];
 }
-
-export interface TeamMember {
-  userId: number;
-  teamId: number;
-  avatarUrl: string;
-  email: string;
-  name: string;
-  login: string;
-  labels: string[];
-  permission: number;
-}
-
-export interface TeamGroup {
-  groupId: string;
-  teamId: number;
-}

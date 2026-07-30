@@ -7,15 +7,12 @@ import (
 	"fmt"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/alerting/definition/compat"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/alerting/definition"
 	alertingmodels "github.com/grafana/alerting/models"
-
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 // swagger:route POST /alertmanager/{DatasourceUID}/config/api/v1/alerts alertmanager RoutePostAlertingConfig
@@ -259,18 +256,6 @@ type (
 	InhibitRule               = config.InhibitRule
 )
 
-const (
-	errInvalidExtraConfigurationMsg = "Invalid Alertmanager configuration: {{.Public.Error}}"
-)
-
-var (
-	errInvalidExtraConfigurationBase = errutil.ValidationFailed("alerting.invalidExtraConfiguration").MustTemplate(errInvalidExtraConfigurationMsg, errutil.WithPublic(errInvalidExtraConfigurationMsg))
-)
-
-func errInvalidExtraConfiguration(err error) error {
-	return errInvalidExtraConfigurationBase.Build(errutil.TemplateData{Public: map[string]any{"Error": err}})
-}
-
 var (
 	AsGrafanaRoute = definition.AsGrafanaRoute
 	AllReceivers   = definition.AllReceivers
@@ -307,6 +292,9 @@ type TestTemplatesConfigBodyParams struct {
 
 	// Name of the template file.
 	Name string `json:"name"`
+
+	// Kind of template to test. Either "grafana" or "mimir". Default is "grafana".
+	Kind definition.TemplateKind `json:"kind,omitempty"`
 }
 
 // swagger:model
@@ -624,15 +612,6 @@ func (c *ExtraConfiguration) parsePrometheusConfig() (config.Config, error) {
 	return prometheusConfig, nil
 }
 
-func (c *ExtraConfiguration) GetAlertmanagerConfig() (PostableApiAlertingConfig, error) {
-	prometheusConfig, err := c.parsePrometheusConfig()
-	if err != nil {
-		return PostableApiAlertingConfig{}, err
-	}
-
-	return fromPrometheusConfig(prometheusConfig), nil
-}
-
 // GetSanitizedAlertmanagerConfigYAML returns the alertmanager configuration as a YAML string
 // with secrets masked and global settings removed for mimirtool compatibility.
 func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error) {
@@ -647,44 +626,6 @@ func (c *ExtraConfiguration) GetSanitizedAlertmanagerConfigYAML() (string, error
 	}
 
 	return string(configYAML), nil
-}
-
-func (c ExtraConfiguration) Validate() error {
-	if c.Identifier == "" {
-		return errors.New("identifier is required")
-	}
-
-	cfg, err := c.GetAlertmanagerConfig()
-	if err != nil {
-		return errInvalidExtraConfiguration(fmt.Errorf("failed to parse alertmanager config: %w", err))
-	}
-	err = cfg.Validate()
-	if err != nil {
-		return errInvalidExtraConfiguration(fmt.Errorf("invalid alertmanager config: %w", err))
-	}
-
-	return nil
-}
-
-func fromPrometheusConfig(prometheusConfig config.Config) PostableApiAlertingConfig {
-	config := PostableApiAlertingConfig{
-		Config: Config{
-			Global:            prometheusConfig.Global,
-			Route:             AsGrafanaRoute(prometheusConfig.Route),
-			InhibitRules:      prometheusConfig.InhibitRules,
-			TimeIntervals:     prometheusConfig.TimeIntervals,
-			MuteTimeIntervals: prometheusConfig.MuteTimeIntervals,
-			Templates:         prometheusConfig.Templates,
-		},
-	}
-
-	for _, receiver := range prometheusConfig.Receivers {
-		config.Receivers = append(config.Receivers, &PostableApiReceiver{
-			Receiver: compat.UpstreamReceiverToDefinitionReceiver(receiver),
-		})
-	}
-
-	return config
 }
 
 // ManagedRoutes this type exists purely to ensure unmarshalling upstream Routes will call Validate and populate
@@ -707,20 +648,12 @@ func (mr *ManagedRoutes) UnmarshalJSON(b []byte) error {
 
 // swagger:model
 type PostableUserConfig struct {
-	TemplateFiles          map[string]string         `yaml:"template_files" json:"template_files"`
-	AlertmanagerConfig     PostableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
-	ExtraConfigs           []ExtraConfiguration      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
-	ManagedRoutes          ManagedRoutes             `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"`                     // TODO: Move to ConfigRevision?
-	ManagedInhibitionRules ManagedInhibitionRules    `yaml:"managed_inhibition_rules,omitempty" json:"managed_inhibition_rules,omitempty"` // TODO: Move to ConfigRevision?
-}
-
-// GetMergedTemplateDefinitions converts the given PostableUserConfig's TemplateFiles to a slice of Templates.
-func (c *PostableUserConfig) GetMergedTemplateDefinitions() []definition.PostableApiTemplate {
-	out := definition.TemplatesMapToPostableAPITemplates(c.TemplateFiles, definition.GrafanaTemplateKind)
-	if len(c.ExtraConfigs) == 0 || len(c.ExtraConfigs[0].TemplateFiles) == 0 {
-		return out
-	}
-	return append(out, definition.TemplatesMapToPostableAPITemplates(c.ExtraConfigs[0].TemplateFiles, definition.MimirTemplateKind)...)
+	TemplateFiles          map[string]string                         `yaml:"template_files,omitempty" json:"template_files,omitempty"`
+	ManagedTemplates       map[string]definition.PostableApiTemplate `yaml:"managed_templates,omitempty" json:"managed_templates,omitempty"`
+	AlertmanagerConfig     PostableApiAlertingConfig                 `yaml:"alertmanager_config" json:"alertmanager_config"`
+	ExtraConfigs           []ExtraConfiguration                      `yaml:"extra_config,omitempty" json:"extra_config,omitempty"`
+	ManagedRoutes          ManagedRoutes                             `yaml:"managed_routes,omitempty" json:"managed_routes,omitempty"`                     // TODO: Move to ConfigRevision?
+	ManagedInhibitionRules ManagedInhibitionRules                    `yaml:"managed_inhibition_rules,omitempty" json:"managed_inhibition_rules,omitempty"` // TODO: Move to ConfigRevision?
 }
 
 func (c *PostableUserConfig) UnmarshalJSON(b []byte) error {

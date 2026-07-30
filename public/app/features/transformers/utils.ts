@@ -59,7 +59,7 @@ export function useAllFieldNamesFromDataFrames(frames: DataFrame[], withBaseFiel
   return useMemo(() => getAllFieldNamesFromDataFrames(frames, withBaseFieldNames), [frames, withBaseFieldNames]);
 }
 
-export const TransformerMissingFieldsMessage = () => {
+const TransformerMissingFieldsMessage = () => {
   return React.createElement(
     FieldValidationMessage,
     null,

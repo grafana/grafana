@@ -410,6 +410,7 @@ const (
 	ScopeSettingsAll  = "settings:*"
 	ScopeSettingsSAML = "settings:auth.saml:*"
 	ScopeSettingsSCIM = "settings:auth.scim:*"
+	ScopeSettingsSMTP = "settings:smtp:*"
 
 	// Team related actions
 	ActionTeamsCreate           = "teams:create"
@@ -536,6 +537,19 @@ const (
 
 	// ActionAlertingProvisioningSetStatus Gives access to set provisioning status to alerting resources. Cannot be used alone. Only in conjunction with other permissions.
 	ActionAlertingProvisioningSetStatus = "alert.provisioning.provenance:write"
+
+	// Config k8s resource actions, scoped per-resource. Reads are exposed to
+	// viewers; updates are gated to admins.
+	AlertingConfigResource     = "configs"
+	AlertingConfigKind         = AlertingNotificationsApiGroup + "/" + AlertingConfigResource
+	ActionAlertingConfigRead   = AlertingConfigKind + ":get"
+	ActionAlertingConfigUpdate = AlertingConfigKind + ":update"
+	// ActionAlertingConfigStatusUpdate gates writes to the /status
+	// subresource. Granted only to the in-process service identity (see
+	// pkg/apimachinery/identity/context.go). NOT registered in any fixed
+	// role — humans should never write status directly; the sync worker
+	// owns it.
+	ActionAlertingConfigStatusUpdate = AlertingConfigKind + "/status:update"
 
 	// Feature Management actions
 	ActionFeatureManagementRead  = "featuremgmt.read"

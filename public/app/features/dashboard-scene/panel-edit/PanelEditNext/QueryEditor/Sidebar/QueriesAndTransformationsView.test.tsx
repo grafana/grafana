@@ -27,7 +27,7 @@ describe('QueryEditorSidebar', () => {
       selectedQuery: queries[0],
     });
 
-    expect(screen.getByText(/transformations/i)).toBeInTheDocument();
+    expect(screen.getByText('Transformations')).toBeInTheDocument();
   });
 
   it('should render queries section even when no queries exist', () => {
@@ -35,6 +35,37 @@ describe('QueryEditorSidebar', () => {
 
     // Should still render the queries section header
     expect(screen.getByText(/queries & expressions/i)).toBeInTheDocument();
+  });
+
+  it('shows an empty state in each section when there are no cards', () => {
+    renderWithQueryEditorProvider(<QueriesAndTransformationsView />, { queries: [], transformations: [] });
+
+    expect(screen.getByText('No queries or expressions')).toBeInTheDocument();
+    expect(screen.getByText('No transformations')).toBeInTheDocument();
+  });
+
+  it('does not show section empty states when queries exist but transformations do not', () => {
+    const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
+
+    renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
+      queries,
+      transformations: [],
+      selectedQuery: queries[0],
+    });
+
+    expect(screen.queryByText('No queries or expressions')).not.toBeInTheDocument();
+    expect(screen.queryByText('No transformations')).not.toBeInTheDocument();
+  });
+
+  it('hides the queries empty state while a pending expression ghost card is shown', () => {
+    renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
+      queries: [],
+      transformations: [],
+      uiStateOverrides: { pendingExpression: { insertAfter: '' } },
+    });
+
+    expect(screen.queryByText('No queries or expressions')).not.toBeInTheDocument();
+    expect(screen.getByText('No transformations')).toBeInTheDocument();
   });
 
   it('should only render DataTransformerConfig cards and not CustomTransformerDefinition', () => {

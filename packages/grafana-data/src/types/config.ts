@@ -346,6 +346,7 @@ export interface GrafanaConfig {
   };
   analytics: {
     enabled: boolean;
+    presenceIndicatorsDisabled?: boolean;
   };
 }
 

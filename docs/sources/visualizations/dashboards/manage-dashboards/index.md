@@ -70,7 +70,7 @@ If you have permission to view all folders, you won't see a **Shared with me**.
 
 ### Team folders
 
-If the `teamFolders` feature toggle is enabled and you belong to teams that own folders, the **Dashboards** page displays a **My team folders** section near the top of the page.
+If you belong to teams that own folders, the **Dashboards** page displays a **My team folders** section near the top of the page.
 
 For more information, refer to [Manage team folders](/docs/grafana/<GRAFANA_VERSION>/administration/team-management/team-folders/).
 

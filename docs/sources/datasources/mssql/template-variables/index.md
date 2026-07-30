@@ -17,8 +17,9 @@ labels:
     - enterprise
     - oss
 menuTitle: Template variables
+review_date: 2026-05-19
 title: Microsoft SQL Server template variables
-weight: 400
+weight: 350
 ---
 
 # Microsoft SQL Server template variables
@@ -101,14 +102,163 @@ WHERE $__timeFilter(atimestamp) and hostname in([[hostname]])
 ORDER BY atimestamp
 ```
 
+## Format variables for SQL queries
+
+When using template variables inside SQL queries, the formatting option you choose determines how Grafana renders the variable value. Choosing the correct format prevents SQL injection risks and avoids broken queries from incorrect quoting.
+
+### Use `sqlstring` for safe single-value interpolation
+
+The `${var:sqlstring}` format wraps the variable value in single quotes and escapes any internal single quotes. This is the recommended approach for single-value variables used in `WHERE` clauses:
+
+```sql
+SELECT * FROM events
+WHERE hostname = ${hostname:sqlstring}
+```
+
+If `hostname` is set to `server01`, this expands to:
+
+```sql
+SELECT * FROM events
+WHERE hostname = 'server01'
+```
+
+{{< admonition type="caution" >}}
+Don't manually wrap variables in quotes (for example, `'${var}'`). Since Grafana v11.3, multi-value variables are automatically quoted when used with the `IN` operator. Manually adding quotes results in double-quoting (for example, `''value''`), which breaks queries.
+{{< /admonition >}}
+
+### Multi-value variable formatting
+
+When a variable allows multiple selections, Grafana provides several formatting options:
+
+| Format                | Syntax               | Output for selections `a`, `b` | Use case                       |
+| --------------------- | -------------------- | ------------------------------ | ------------------------------ |
+| Default (auto-quoted) | `$var` or `${var}`   | `'a','b'`                      | `IN` clauses (recommended)     |
+| `sqlstring`           | `${var:sqlstring}`   | `'a'` (single value only)      | Equality comparisons           |
+| `csv`                 | `${var:csv}`         | `a,b`                          | Unquoted lists                 |
+| `singlequote`         | `${var:singlequote}` | `'a','b'`                      | Explicit single-quote wrapping |
+| `doublequote`         | `${var:doublequote}` | `"a","b"`                      | MSSQL identifier quoting       |
+| `pipe`                | `${var:pipe}`        | `a\|b`                         | Regex patterns                 |
+| `raw`                 | `${var:raw}`         | `a,b`                          | No escaping (use with caution) |
+
+For multi-value variables in SQL `WHERE` clauses, the default formatting with `IN` is typically correct:
+
+```sql
+SELECT * FROM events
+WHERE hostname IN ($hostname)
+```
+
+If `hostname` has values `server01` and `server02` selected, this expands to:
+
+```sql
+SELECT * FROM events
+WHERE hostname IN ('server01','server02')
+```
+
 ### Disable quoting for multi-value variables
 
-By default, Grafana formats multi-value variables as a quoted, comma-separated string. For example, if `server01` and `server02` are selected, the result will be `'server01'`, `'server02'`. To disable quoting, use the `csv` formatting option for variables:
+To output multi-value variables without automatic quoting, use the `csv` format:
 
 ```text
 ${servers:csv}
 ```
 
-This outputs the values as an unquoted comma-separated list.
+This outputs the values as an unquoted comma-separated list. Use this only when you handle quoting yourself or when the values are numeric.
 
-Refer to [Advanced variable format options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options) for additional information.
+Refer to [Advanced variable format options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/variable-syntax/#advanced-variable-format-options) for the full list of formatting options.
+
+## Handle the "All" option in SQL queries
+
+When a variable includes the **All** option (enabled in variable settings), you need to handle the case where the user selects "All" differently from individual selections.
+
+### Pattern: Use a custom "All" value with `LIKE`
+
+Set the **Custom all value** field in the variable settings to `%`, then use `LIKE` in your query:
+
+```sql
+SELECT * FROM events
+WHERE hostname LIKE ${hostname:sqlstring}
+```
+
+When the user selects "All", `hostname` resolves to `%`, and the `LIKE '%'` matches all rows. When a specific value is selected, `LIKE 'server01'` matches only that value.
+
+### Pattern: Conditional `WHERE` clause with "All"
+
+For `IN` clauses where `%` doesn't work, use a conditional approach. Set the **Custom all value** to `ALL`, then write:
+
+```sql
+SELECT * FROM events
+WHERE (
+  ${hostname:raw} = 'ALL'
+  OR hostname IN ($hostname)
+)
+```
+
+When the user selects "All", the first condition is true and all rows match. When specific values are selected, the `IN` clause filters normally.
+
+### Pattern: Chained variables with "All"
+
+When you have chained (dependent) variables and the parent uses "All", apply the same pattern. For example, if `region` feeds into `hostname`:
+
+Variable query for `hostname`:
+
+```sql
+SELECT hostname FROM host
+WHERE (${region:raw} = 'ALL' OR region IN ($region))
+```
+
+Panel query:
+
+```sql
+SELECT $__timeGroupAlias(time, '5m'), COUNT(*) as count
+FROM events
+WHERE $__timeFilter(time)
+  AND (${region:raw} = 'ALL' OR region IN ($region))
+  AND (${hostname:raw} = 'ALL' OR hostname IN ($hostname))
+GROUP BY $__timeGroup(time, '5m')
+ORDER BY 1
+```
+
+## Conditional SQL clauses
+
+Grafana doesn't have built-in support for conditionally omitting entire `WHERE` clauses based on variable selection. Use one of these patterns to achieve conditional filtering.
+
+### Pattern: Always-true condition
+
+Use a condition that evaluates to true when the variable should be ignored:
+
+```sql
+SELECT * FROM events
+WHERE $__timeFilter(time)
+  AND (${env:raw} = 'ALL' OR environment IN ($env))
+  AND (${sev:raw} = 'ALL' OR severity IN ($sev))
+```
+
+### Pattern: CASE expression for optional filters
+
+For more complex scenarios, use a `CASE` expression:
+
+```sql
+SELECT * FROM events
+WHERE $__timeFilter(time)
+  AND 1 = CASE
+    WHEN ${hostname:raw} = 'ALL' THEN 1
+    WHEN hostname IN ($hostname) THEN 1
+    ELSE 0
+  END
+```
+
+## Known behaviors and limitations
+
+Be aware of the following behaviors when using template variables with Microsoft SQL Server.
+
+### Automatic quoting in multi-value variables
+
+Since Grafana v11.3, multi-value variables used with the `IN` operator are automatically quoted. If you previously wrote `WHERE col IN ('${var}')` with manual quotes, remove the manual quotes and use `WHERE col IN ($var)` instead.
+
+### Comments inside string literals
+
+The Grafana SQL query parser strips SQL comments (`--` and `/* */`) before macro interpolation. In some cases, `--` inside a quoted string literal could be incorrectly interpreted as a comment. If your query contains strings with `--`, verify the query expands correctly by clicking **Generated SQL** after running the query.
+
+### Variables in alerting queries
+
+Template variables are not supported in alerting queries. Grafana evaluates alert rules on the backend without dashboard context. If your dashboard query uses variables, create a separate alerting query with hard-coded values. For more information, refer to [Microsoft SQL Server alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/mssql/alerting/#template-variables-not-supported).

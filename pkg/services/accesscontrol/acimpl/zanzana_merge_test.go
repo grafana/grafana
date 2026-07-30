@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sort"
+	"sync"
 	"testing"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -63,6 +64,25 @@ func (f *fakeZanzanaClient) Mutate(context.Context, *authzextv1.MutateRequest) e
 
 func (f *fakeZanzanaClient) Query(context.Context, *authzextv1.QueryRequest) (*authzextv1.QueryResponse, error) {
 	return nil, nil
+}
+
+type countingZanzanaClient struct {
+	fakeZanzanaClient
+	mu        sync.Mutex
+	listCalls int
+}
+
+func (c *countingZanzanaClient) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	c.mu.Lock()
+	c.listCalls++
+	c.mu.Unlock()
+	return c.fakeZanzanaClient.List(ctx, req)
+}
+
+func (c *countingZanzanaClient) ListCallCount() int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.listCalls
 }
 
 func sortPermissions(perms []accesscontrol.Permission) {
@@ -218,13 +238,13 @@ func TestZanzanaPermissionResolver_MergeCurrentUser(t *testing.T) {
 	})
 
 	t.Run("zanzana failure returns legacy only", func(t *testing.T) {
-		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listErr: errors.New("zanzana unavailable")}, &usertest.FakeUserService{})
+		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listErr: errors.New("zanzana unavailable")}, &usertest.FakeUserService{}, nil, false)
 		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"))
 		require.Equal(t, legacy, got)
 	})
 
 	t.Run("success unions zanzana permissions", func(t *testing.T) {
-		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}}}, &usertest.FakeUserService{})
+		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}}}, &usertest.FakeUserService{}, nil, false)
 		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"))
 		require.Contains(t, got, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:legacy"})
 		require.Contains(t, got, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:zanzana-dash"})
@@ -245,7 +265,7 @@ func TestZanzanaPermissionResolver_MergeSearch(t *testing.T) {
 	t.Run("zanzana failure returns legacy only", func(t *testing.T) {
 		mockUserSvc := usertest.NewMockService(t)
 		mockUserSvc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: 2}).Return(&user.User{ID: 2, UID: "user_2_uid"}, nil).Maybe()
-		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listErr: errors.New("zanzana unavailable")}, mockUserSvc)
+		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listErr: errors.New("zanzana unavailable")}, mockUserSvc, nil, false)
 		got := r.MergeSearch(context.Background(), &user.SignedInUser{OrgID: 1}, 1, accesscontrol.SearchOptions{Action: "dashboards:read", UserID: 2}, legacy, log.New("test"))
 		require.Equal(t, legacy, got)
 	})
@@ -257,7 +277,7 @@ func TestZanzanaPermissionResolver_MergeSearch(t *testing.T) {
 		mockUserSvc := usertest.NewMockService(t)
 		mockUserSvc.On("GetByID", mock.Anything, &user.GetUserByIDQuery{ID: 2}).Return(&user.User{ID: 2, UID: "user_2_uid"}, nil)
 		// "legacy" overlaps an existing scope (must dedup), "zanzana" is new (must be added).
-		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"legacy", "zanzana"}}}, mockUserSvc)
+		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"legacy", "zanzana"}}}, mockUserSvc, nil, false)
 
 		got := r.MergeSearch(context.Background(), &user.SignedInUser{OrgID: 1}, 1, accesscontrol.SearchOptions{Action: "dashboards:read", UserID: 2}, base, log.New("test"))
 
@@ -277,9 +297,108 @@ func setupServiceWithFakeStore(t *testing.T, store accesscontrol.Store, zClient 
 		nil, permreg.ProvidePermissionRegistry(), nil,
 	)
 	if zClient != nil {
-		svc.zanzanaResolver = NewZanzanaPermissionResolver(zClient, userSvc)
+		svc.zanzanaResolver = NewZanzanaPermissionResolver(zClient, userSvc, nil, false)
 	}
 	return svc
+}
+
+func setupServiceWithPermissionCache(t *testing.T, store accesscontrol.Store, zClient zanzana.Client, userSvc user.Service, cacheEnabled bool) *Service {
+	svc := setupServiceWithFakeStore(t, store, zClient, userSvc)
+	svc.cfg.RBAC.PermissionCache = cacheEnabled
+	return svc
+}
+
+func testSignedInUser() *user.SignedInUser {
+	return &user.SignedInUser{
+		OrgID:       1,
+		UserID:      1,
+		UserUID:     "user_test_uid",
+		Permissions: map[int64]map[string][]string{},
+	}
+}
+
+func TestService_GetUserPermissions_CachesZanzanaPermissions(t *testing.T) {
+	store := &actest.FakeStore{
+		ExpectedUserPermissions: []accesscontrol.Permission{
+			{Action: "dashboards:read", Scope: "dashboards:uid:legacy"},
+		},
+	}
+	zClient := &countingZanzanaClient{
+		fakeZanzanaClient: fakeZanzanaClient{
+			listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}},
+		},
+	}
+	svc := setupServiceWithPermissionCache(t, store, zClient, &usertest.FakeUserService{}, true)
+	siu := testSignedInUser()
+
+	_, err := svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
+	require.NoError(t, err)
+	firstCalls := zClient.ListCallCount()
+	require.NotZero(t, firstCalls, "first resolve should call Zanzana List")
+
+	_, err = svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
+	require.NoError(t, err)
+	require.Equal(t, firstCalls, zClient.ListCallCount(), "cached second call should not re-resolve Zanzana permissions")
+}
+
+func TestService_GetUserPermissions_ReloadCacheBypassesZanzanaCache(t *testing.T) {
+	store := &actest.FakeStore{}
+	zClient := &countingZanzanaClient{
+		fakeZanzanaClient: fakeZanzanaClient{
+			listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}},
+		},
+	}
+	svc := setupServiceWithPermissionCache(t, store, zClient, &usertest.FakeUserService{}, true)
+	siu := testSignedInUser()
+
+	_, err := svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
+	require.NoError(t, err)
+	firstCalls := zClient.ListCallCount()
+
+	_, err = svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{ReloadCache: true})
+	require.NoError(t, err)
+	require.Greater(t, zClient.ListCallCount(), firstCalls, "ReloadCache should bypass Zanzana cache")
+}
+
+func TestService_GetUserPermissions_ClearUserPermissionCacheBypassesZanzanaCache(t *testing.T) {
+	store := &actest.FakeStore{}
+	zClient := &countingZanzanaClient{
+		fakeZanzanaClient: fakeZanzanaClient{
+			listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}},
+		},
+	}
+	svc := setupServiceWithPermissionCache(t, store, zClient, &usertest.FakeUserService{}, true)
+	siu := testSignedInUser()
+
+	_, err := svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
+	require.NoError(t, err)
+	firstCalls := zClient.ListCallCount()
+
+	svc.ClearUserPermissionCache(siu)
+
+	_, err = svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
+	require.NoError(t, err)
+	require.Greater(t, zClient.ListCallCount(), firstCalls, "ClearUserPermissionCache should invalidate Zanzana cache")
+}
+
+func TestService_GetUserPermissions_DoesNotCacheZanzanaWhenPermissionCacheDisabled(t *testing.T) {
+	store := &actest.FakeStore{}
+	zClient := &countingZanzanaClient{
+		fakeZanzanaClient: fakeZanzanaClient{
+			listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}},
+		},
+	}
+	svc := setupServiceWithPermissionCache(t, store, zClient, &usertest.FakeUserService{}, false)
+	siu := testSignedInUser()
+
+	_, err := svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
+	require.NoError(t, err)
+	firstCalls := zClient.ListCallCount()
+	require.NotZero(t, firstCalls)
+
+	_, err = svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
+	require.NoError(t, err)
+	require.Greater(t, zClient.ListCallCount(), firstCalls, "PermissionCache disabled should resolve Zanzana on every call")
 }
 
 func TestService_SearchUsersPermissions_MergesLegacyAndZanzana(t *testing.T) {

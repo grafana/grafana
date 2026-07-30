@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { type Placement } from '@popperjs/core';
-import classnames from 'classnames';
+import classnames from 'clsx';
 import { type ReactElement, type ReactNode, cloneElement, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -131,7 +131,7 @@ export const PopupCard = ({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   popover: css({
-    borderRadius: theme.shape.radius.default,
+    borderRadius: theme.shape.radius.lg,
     boxShadow: theme.shadows.z3,
     background: theme.colors.background.primary,
     border: `1px solid ${theme.colors.border.weak}`,

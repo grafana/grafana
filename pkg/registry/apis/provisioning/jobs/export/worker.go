@@ -16,11 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
 //go:generate mockery --name ExportFn --structname MockExportFn --inpackage --filename mock_export_fn.go --with-expecter
-type ExportFn func(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder, folderAPIVersion string) error
+type ExportFn func(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error
 
 //go:generate mockery --name WrapWithStageFn --structname MockWrapWithStageFn --inpackage --filename mock_wrap_with_stage_fn.go --with-expecter
 type WrapWithStageFn func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repo repository.Repository, staged bool) error) error
@@ -33,7 +32,6 @@ type ExportWorker struct {
 	wrapWithStageFn     WrapWithStageFn
 	metrics             jobs.JobMetrics
 	enabled             bool
-	folderAPIVersion    string
 }
 
 func NewExportWorker(
@@ -44,7 +42,6 @@ func NewExportWorker(
 	wrapWithStageFn WrapWithStageFn,
 	metrics jobs.JobMetrics,
 	enabled bool,
-	folderAPIVersion string,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory:       clientFactory,
@@ -54,7 +51,6 @@ func NewExportWorker(
 		wrapWithStageFn:     wrapWithStageFn,
 		metrics:             metrics,
 		enabled:             enabled,
-		folderAPIVersion:    folderAPIVersion,
 	}
 }
 
@@ -89,12 +85,6 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		attribute.Int("export.resources_count", len(options.Resources)),
 	)
 
-	start := time.Now()
-	outcome := utils.ErrorOutcome
-	resourcesExported := 0
-	defer func() {
-		r.metrics.RecordJob(string(provisioning.JobActionPush), outcome, resourcesExported, time.Since(start).Seconds())
-	}()
 	cfg := repo.Config()
 	// Can write to external branch
 	if err := repository.IsWriteAllowed(cfg, options.Branch); err != nil {
@@ -106,15 +96,16 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return fmt.Errorf("create clients: %w", err)
 	}
 
-	if err := checkExportQuota(ctx, cfg, r.resourceLister, clients); err != nil {
+	if err := checkExportQuota(ctx, cfg, *options, r.resourceLister, clients); err != nil {
 		progress.Complete(ctx, err)
 		return err
 	}
 
-	msg := options.Message
-	if msg == "" {
-		msg = fmt.Sprintf("Export from Grafana %s", job.Name)
+	defaultMsg := options.Message
+	if defaultMsg == "" {
+		defaultMsg = fmt.Sprintf("Export from Grafana %s", job.Name)
 	}
+	msg := jobs.CommitMessage(job, defaultMsg)
 
 	cloneOptions := repository.StageOptions{
 		Ref:                   options.Branch,
@@ -137,7 +128,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			return fmt.Errorf("create repository resource client: %w", err)
 		}
 
-		return r.exportFn(ctx, cfg.Name, *options, clients, repositoryResources, progress, r.folderAPIVersion)
+		return r.exportFn(ctx, cfg.Name, *options, clients, repositoryResources, progress)
 	}
 
 	err = r.wrapWithStageFn(ctx, repo, cloneOptions, fn)
@@ -156,16 +147,14 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		return err
 	}
 
-	outcome = utils.SuccessOutcome
-	jobStatus := progress.Complete(ctx, nil)
-	for _, summary := range jobStatus.Summary {
-		resourcesExported += int(summary.Write)
-	}
+	// Finalize the progress recorder. The job metric is recorded by the driver from
+	// the job's final status, so the returned status is not needed here.
+	progress.Complete(ctx, nil)
 
 	return nil
 }
 
-func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, lister resources.ResourceLister, clients resources.ResourceClients) error {
+func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, options provisioning.ExportJobOptions, lister resources.ResourceLister, clients resources.ResourceClients) error {
 	quota := cfg.Status.Quota
 	if quota.MaxResourcesPerRepository == 0 {
 		return nil
@@ -173,14 +162,24 @@ func checkExportQuota(ctx context.Context, cfg *provisioning.Repository, lister 
 
 	usage := quotas.NewQuotaUsageFromStats(cfg.Status.Stats)
 
-	stats, err := lister.Stats(ctx, cfg.Namespace, "")
-	if err != nil {
-		return fmt.Errorf("get resource stats for quota check: %w", err)
-	}
+	var netChange int64
+	if len(options.Resources) > 0 {
+		// A selective export only writes the explicitly listed resources, so the
+		// net change is bounded by that list — not every unmanaged resource in
+		// the namespace. Counting the whole namespace here would reject exports
+		// whose actual selection stays well within quota.
+		netChange = int64(len(options.Resources))
+	} else {
+		// A full export takes over every unmanaged resource in the namespace.
+		stats, err := lister.Stats(ctx, cfg.Namespace, "")
+		if err != nil {
+			return fmt.Errorf("get resource stats for quota check: %w", err)
+		}
 
-	netChange, err := countSupportedResources(ctx, stats.Unmanaged, clients)
-	if err != nil {
-		return err
+		netChange, err = countSupportedResources(ctx, stats.Unmanaged, clients)
+		if err != nil {
+			return err
+		}
 	}
 
 	if !quotas.WouldStayWithinQuota(quota, usage, netChange) {

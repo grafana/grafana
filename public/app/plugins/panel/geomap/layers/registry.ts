@@ -23,7 +23,7 @@ export const DEFAULT_BASEMAP_CONFIG: MapLayerOptions = {
 };
 
 // Default base layer depending on the server setting
-export const defaultBaseLayer: MapLayerRegistryItem = {
+const defaultBaseLayer: MapLayerRegistryItem = {
   id: DEFAULT_BASEMAP_CONFIG.type,
   name: 'Default base layer',
   isBaseMap: true,

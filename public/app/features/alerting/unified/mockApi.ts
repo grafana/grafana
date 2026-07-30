@@ -13,6 +13,7 @@ import {
 import { resetRoutingTreeMap } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
 import { resetHistorianState } from 'app/features/alerting/unified/mocks/server/handlers/historian';
 import { resetUserStorage } from 'app/features/alerting/unified/mocks/server/handlers/userStorage';
+import { resetAppPluginMetas } from 'app/features/alerting/unified/testSetup/plugins';
 import { type DashboardDTO } from 'app/types/dashboard';
 import { type FolderDTO } from 'app/types/folders';
 import {
@@ -275,10 +276,7 @@ export function mockDashboardApi(server: SetupServer) {
         (hit, index, hits) => hits.findIndex((candidate) => candidate.name === hit.name) === index
       );
 
-      server.use(
-        http.get(`/api/search`, () => HttpResponse.json(results)),
-        getCustomSearchHandler([...folderHits, ...dashboards])
-      );
+      server.use(getCustomSearchHandler([...folderHits, ...dashboards]));
     },
     dashboard: (response: DashboardDTO) => {
       const k8sResponse = {
@@ -324,6 +322,7 @@ export function setupMswServer() {
     resetRoutingTreeMap();
     resetUserStorage();
     resetHistorianState();
+    resetAppPluginMetas();
   });
 
   return server;

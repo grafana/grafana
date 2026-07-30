@@ -1,9 +1,11 @@
 import { memo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Field, Input, SecretTextArea, Stack } from '@grafana/ui';
 
+import { type GitHubBasedConnectionType } from '../../Wizard/types';
 import { type ConnectionFormData } from '../../types';
 import { validateNoHiddenCharacters } from '../../utils/validators';
 
@@ -15,10 +17,12 @@ export interface GitHubConnectionFieldsProps {
   onNewConnectionCreation?: () => void;
   /** Whether the connection is currently being created */
   isCreating?: boolean;
+  type: GitHubBasedConnectionType;
 }
 
 export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
-  ({ required = true, privateKeyConfigured = false, onNewConnectionCreation, isCreating = false }) => {
+  ({ required = true, privateKeyConfigured = false, onNewConnectionCreation, isCreating = false, type }) => {
+    const isEnterprise = type === 'githubEnterprise';
     const [isPrivateKeyConfigured, setIsPrivateKeyConfigured] = useState(privateKeyConfigured);
     const {
       register,
@@ -43,6 +47,7 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
         >
           <Input
             id="title"
+            data-testid={selectors.pages.Provisioning.ConnectionForm.titleInput}
             {...register('title', {
               required: requiredValidation,
             })}
@@ -62,10 +67,35 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
         >
           <Input
             id="description"
+            data-testid={selectors.pages.Provisioning.ConnectionForm.descriptionInput}
             {...register('description')}
             placeholder={t('provisioning.connection-form.placeholder-description', 'Optional description')}
           />
         </Field>
+
+        {isEnterprise && (
+          <Field
+            noMargin
+            label={t('provisioning.github-enterprise.server-url-label', 'Custom server URL')}
+            description={t(
+              'provisioning.github-enterprise.server-url-description',
+              'The custom server URL where your GitHub Enterprise is hosted'
+            )}
+            invalid={!!errors.serverUrl}
+            error={errors.serverUrl?.message}
+            required={required}
+          >
+            <Input
+              id="serverUrl"
+              data-testid={selectors.pages.Provisioning.ConnectionForm.serverUrlInput}
+              {...register('serverUrl', {
+                required: requiredValidation,
+              })}
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+              placeholder="https://your-enterprise-url.com or https://<enterprise-slug>.ghe.com"
+            />
+          </Field>
+        )}
 
         <Field
           noMargin
@@ -77,6 +107,7 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
         >
           <Input
             id="appID"
+            data-testid={selectors.pages.Provisioning.ConnectionForm.appIdInput}
             {...register('appID', {
               required: requiredValidation,
             })}
@@ -97,6 +128,7 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
         >
           <Input
             id="installationID"
+            data-testid={selectors.pages.Provisioning.ConnectionForm.installationIdInput}
             {...register('installationID', {
               required: requiredValidation,
             })}
@@ -127,6 +159,7 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
               <SecretTextArea
                 {...field}
                 id="privateKey"
+                data-testid={selectors.pages.Provisioning.ConnectionForm.privateKeyInput}
                 invalid={!!errors.privateKey}
                 // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
                 placeholder="-----BEGIN RSA PRIVATE KEY-----..."
@@ -144,7 +177,11 @@ export const GitHubConnectionFields = memo<GitHubConnectionFieldsProps>(
 
         {onNewConnectionCreation && (
           <Stack>
-            <Button onClick={onNewConnectionCreation} disabled={isCreating}>
+            <Button
+              onClick={onNewConnectionCreation}
+              disabled={isCreating}
+              data-testid={selectors.pages.Provisioning.ConnectionForm.submitButton}
+            >
               {isCreating ? (
                 <Trans i18nKey="provisioning.connection-form.creating-connection-button">Creating connection...</Trans>
               ) : (

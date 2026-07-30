@@ -125,7 +125,7 @@ export const InstallControlsWarning = ({ plugin, pluginStatus, latestCompatibleV
   return null;
 };
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     alert: css({
       marginTop: `${theme.spacing(2)}`,

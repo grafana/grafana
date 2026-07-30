@@ -41,6 +41,7 @@ export type SearchHit = {
   resource: string; // dashboards | folders
   name: string;
   title: string;
+  description?: string;
   folder: string;
   tags: string[];
 
@@ -431,6 +432,10 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
       // Sort tags so we aren't reliant on the backend having done this for us
       // Sorting order can be different between APIs/search implementations
       tags: (hit.tags || []).sort(),
+      // The backend omits description when empty. arrayToDataFrame derives the frame's
+      // fields from the first row's keys, so without an explicit value here the column
+      // would be missing whenever the first hit has no description.
+      description: hit.description ?? '',
       folder,
       location,
       name: hit.title, // 🤯 FIXME hit.name is k8s name, eg grafana dashboards UID

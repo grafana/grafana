@@ -27,6 +27,7 @@ jest.mock('./plugins', () => ({
 jest.mock('./logging', () => ({
   logPluginMetaWarning: jest.fn(),
   logPluginMetaError: jest.fn(),
+  logPluginMetaDebug: jest.fn(),
 }));
 
 const initPluginMetasMock = jest.mocked(initPluginMetas);

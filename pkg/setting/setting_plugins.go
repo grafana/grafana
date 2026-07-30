@@ -34,12 +34,23 @@ func extractPluginSettings(sections []*ini.Section) config.PluginSettings {
 var (
 	defaultPreinstallPlugins = map[string]InstallPlugin{
 		// Default preinstalled plugins
-		"grafana-lokiexplore-app":      {ID: "grafana-lokiexplore-app"},
-		"grafana-pyroscope-app":        {ID: "grafana-pyroscope-app"},
-		"grafana-exploretraces-app":    {ID: "grafana-exploretraces-app"},
-		"grafana-metricsdrilldown-app": {ID: "grafana-metricsdrilldown-app"},
-		"elasticsearch":                {ID: "elasticsearch"},
-		"zipkin":                       {ID: "zipkin"},
+		"grafana-lokiexplore-app":       {ID: "grafana-lokiexplore-app"},
+		"grafana-pyroscope-app":         {ID: "grafana-pyroscope-app"},
+		"grafana-exploretraces-app":     {ID: "grafana-exploretraces-app"},
+		"grafana-metricsdrilldown-app":  {ID: "grafana-metricsdrilldown-app"},
+		"elasticsearch":                 {ID: "elasticsearch"},
+		"prometheus":                    {ID: "prometheus"},
+		"tempo":                         {ID: "tempo"},
+		"zipkin":                        {ID: "zipkin"},
+		"opentsdb":                      {ID: "opentsdb"},
+		"stackdriver":                   {ID: "stackdriver"},
+		"mssql":                         {ID: "mssql"},
+		"jaeger":                        {ID: "jaeger"},
+		"loki":                          {ID: "loki"},
+		"mysql":                         {ID: "mysql"},
+		"grafana-advisor-app":           {ID: "grafana-advisor-app"},
+		"grafana-postgresql-datasource": {ID: "grafana-postgresql-datasource"},
+		"grafana-pyroscope-datasource":  {ID: "grafana-pyroscope-datasource"},
 	}
 )
 
@@ -149,9 +160,6 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		// Add the default preinstalled plugins to pre install plugins async list
 		for _, plugin := range defaultPreinstallPlugins {
 			preinstallPluginsAsync[plugin.ID] = plugin
-		}
-		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
-			preinstallPluginsAsync["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
 		}
 		if cfg.IsFeatureToggleEnabled("interactiveLearning") { // Use literal string to avoid circular dependency
 			preinstallPluginsAsync["grafana-pathfinder-app"] = InstallPlugin{"grafana-pathfinder-app", "", ""}

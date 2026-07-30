@@ -19,7 +19,7 @@ export function toLineString(field: Field<Geometry | undefined>): LineString {
 }
 
 /** Will return a field with a single row */
-export function calculateBearings(values: Array<Geometry | undefined>): number[] {
+function calculateBearings(values: Array<Geometry | undefined>): number[] {
   const bearing = new Array(values.length);
   if (values.length > 1) {
     let prev: number[] | undefined = getCenterPointWGS84(values[0]);

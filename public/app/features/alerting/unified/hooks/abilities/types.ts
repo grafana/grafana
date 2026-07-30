@@ -42,6 +42,7 @@ export enum ContactPointAction {
   Delete = 'delete-contact-point',
   Export = 'export-contact-point',
   BulkExport = 'bulk-export-contact-points',
+  Test = 'test-contact-point',
 }
 
 export enum NotificationTemplateAction {
@@ -86,7 +87,7 @@ export enum AlertmanagerAdminAction {
 }
 
 /** Union of all alertmanager entity action enums. */
-export type AlertmanagerAction =
+type AlertmanagerAction =
   | ContactPointAction
   | NotificationTemplateAction
   | NotificationPolicyAction
@@ -107,18 +108,24 @@ export enum FolderBulkAction {
   Delete = 'delete-folder',
 }
 
+// this enum lists all of the actions we can perform on a folder
+export enum FolderAction {
+  Create = 'create-folder',
+}
+
 // this enum lists all of the available actions we can perform with enrichments
 export enum EnrichmentAction {
   Read = 'read-enrichment',
   Write = 'write-enrichment',
 }
 
-export type Action =
+type Action =
   | AlertmanagerAction
   | ExternalAlertmanagerAction
   | RuleAction
   | ExternalRuleAction
   | FolderBulkAction
+  | FolderAction
   | EnrichmentAction;
 
 // ── Ability ─────────────────────────────────────────────────────────────

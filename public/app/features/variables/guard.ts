@@ -9,7 +9,6 @@ import {
   type DataQueryResponse,
   type DataSourceApi,
   type DataSourceJsonData,
-  type DataSourceRef,
   type LegacyMetricFindQueryOptions,
   type MetricFindValue,
   type QueryVariableModel,
@@ -49,14 +48,6 @@ export const hasOptions = (model: VariableModel): model is VariableWithOptions =
 export const hasCurrent = (model: VariableModel): model is VariableWithOptions => {
   return 'current' in model;
 };
-
-export function isLegacyAdHocDataSource(datasource: null | DataSourceRef | string): datasource is string {
-  if (datasource === null) {
-    return false;
-  }
-
-  return typeof datasource === 'string';
-}
 
 interface DataSourceWithLegacyVariableSupport<
   TQuery extends DataQuery = DataQuery,

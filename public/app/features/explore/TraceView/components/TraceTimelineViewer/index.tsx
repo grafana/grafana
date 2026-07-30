@@ -96,6 +96,7 @@ export type TProps = {
   detailReferenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   detailProcessToggle: (spanID: string) => void;
   detailTagsToggle: (spanID: string) => void;
+  detailSummaryAttributesToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
@@ -124,7 +125,7 @@ const NUM_TICKS = 5;
  * re-render the ListView every time the cursor is moved on the trace minimap
  * or `TimelineHeaderRow`.
  */
-export const UnthemedTraceTimelineViewer = memo(function UnthemedTraceTimelineViewer(props: TProps) {
+const UnthemedTraceTimelineViewer = memo(function UnthemedTraceTimelineViewer(props: TProps) {
   const {
     setSpanNameColumnWidth,
     updateNextViewRangeTime,

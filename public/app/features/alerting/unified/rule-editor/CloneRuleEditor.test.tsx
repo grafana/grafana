@@ -62,7 +62,9 @@ describe('CloneRuleEditor', function () {
     id: 1,
     type: DashboardSearchItemType.DashDB,
     accessControl: {
+      [AccessControlAction.AlertingRuleRead]: true,
       [AccessControlAction.AlertingRuleUpdate]: true,
+      [AccessControlAction.FoldersRead]: true,
     },
   };
 

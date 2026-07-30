@@ -7,6 +7,7 @@ import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
+  Alert,
   Box,
   Button,
   Divider,
@@ -157,7 +158,7 @@ export function GrafanaEvaluationBehaviorStep({
     setValue,
     getValues,
     clearErrors,
-    formState: { errors },
+    formState: { errors, defaultValues },
     control,
     register,
   } = useFormContext<RuleFormValues>();
@@ -209,6 +210,7 @@ export function GrafanaEvaluationBehaviorStep({
   const v2Enabled = shouldUseRulesAPIV2();
   const isEditingUngroupedRule = Boolean(existing && group && isUngroupedRuleGroup(group));
   const [lastSelectedGroup, setLastSelectedGroup] = useState(group);
+  const wasGroupedRule = Boolean(existing && defaultValues?.group && !isUngroupedRuleGroup(defaultValues.group));
   const evaluationMode: EvaluationMode = isUngroupedRule ? 'rule-based' : 'group-based';
   const showGroupSelection = evaluationMode === 'group-based';
 
@@ -286,6 +288,19 @@ export function GrafanaEvaluationBehaviorStep({
               className={styles.modeField}
             />
           </Field>
+        )}
+        {v2Enabled && wasGroupedRule && evaluationMode === 'rule-based' && (
+          <Alert
+            severity="warning"
+            title={t(
+              'alerting.rule-form.evaluation.ungroup-warning-title',
+              'This will remove the alert rule from its group'
+            )}
+          >
+            <Trans i18nKey="alerting.rule-form.evaluation.ungroup-warning">
+              This action is irreversible. After you save, you will not be able to add it back to a group.
+            </Trans>
+          </Alert>
         )}
         {showGroupSelection ? (
           <Stack alignItems="end" gap={1}>
@@ -682,7 +697,7 @@ export function EvaluationGroupCreationModal({
   );
 }
 
-export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
+function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
   const styles = useStyles2(getStyles);
   const {
     register,

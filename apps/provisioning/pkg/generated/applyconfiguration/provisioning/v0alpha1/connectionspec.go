@@ -31,6 +31,8 @@ type ConnectionSpecApplyConfiguration struct {
 	// Gitlab connection configuration
 	// Only applicable when provider is "gitlab"
 	Gitlab *GitlabConnectionConfigApplyConfiguration `json:"gitlab,omitempty"`
+	// Webhook configuration for this connection
+	Webhook *ConnectionWebhookConfigApplyConfiguration `json:"webhook,omitempty"`
 }
 
 // ConnectionSpecApplyConfiguration constructs a declarative configuration of the ConnectionSpec type for use with
@@ -100,5 +102,13 @@ func (b *ConnectionSpecApplyConfiguration) WithBitbucket(value *BitbucketConnect
 // If called multiple times, the Gitlab field is set to the value of the last call.
 func (b *ConnectionSpecApplyConfiguration) WithGitlab(value *GitlabConnectionConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
 	b.Gitlab = value
+	return b
+}
+
+// WithWebhook sets the Webhook field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Webhook field is set to the value of the last call.
+func (b *ConnectionSpecApplyConfiguration) WithWebhook(value *ConnectionWebhookConfigApplyConfiguration) *ConnectionSpecApplyConfiguration {
+	b.Webhook = value
 	return b
 }

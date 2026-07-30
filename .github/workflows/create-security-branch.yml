@@ -47,12 +47,44 @@ jobs:
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
     steps:
+      # The right app + permission-set depends on which repo we're creating the branch in.
+      # Each (app, repo) pair has a dedicated writer-<scope>-<tier> permission-set in the
+      # Post-release config entry, because Vault asks GitHub for a token covering every
+      # repo in the permission-set's repositories list and no single app is installed on
+      # all the target repos.
+      - name: Compute app and permission_set
+        id: app-config
+        env:
+          REPOSITORY: ${{ inputs.repository }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          case "$REPOSITORY" in
+            grafana/grafana-security-mirror)
+              app=grafana-security-mirror-writer
+              scope=security-mirror
+              ;;
+            grafana/grafana-enterprise)
+              app=grafana-enterprise-writer
+              scope=enterprise
+              ;;
+            *)
+              echo "Unsupported repository: $REPOSITORY" >&2
+              exit 1
+              ;;
+          esac
+          if [[ "$REF_NAME" == release-* ]]; then
+            tier=release
+          else
+            tier=main
+          fi
+          echo "github_app=${app}" | tee -a "$GITHUB_OUTPUT"
+          echo "permission_set=writer-${scope}-${tier}" | tee -a "$GITHUB_OUTPUT"
       - name: Get GitHub App token
         id: get-github-app-token
         uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
         with:
-          github_app: ${{ inputs.repository == 'grafana/grafana-security-mirror' && 'grafana-security-mirror-writer' || 'grafana-pr-automation' }}
-          permission_set: ${{ startsWith(github.ref_name, 'release-') && 'writer-release' || 'writer-main' }}
+          github_app: ${{ steps.app-config.outputs.github_app }}
+          permission_set: ${{ steps.app-config.outputs.permission_set }}
 
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -61,13 +93,44 @@ jobs:
           repository: ${{ inputs.repository }}
           ref: ${{ inputs.release_branch }}
 
+      # The logic is inlined rather than run from the target repo's checkout: this
+      # workflow always executes @main, so inlining keeps the naming logic current for
+      # every target repo/branch instead of trusting whatever stale script copy the
+      # release branch happens to carry.
       - name: Create security branch
         id: branch
         env:
-          GITHUB_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
           INPUT_RELEASE_BRANCH: ${{ inputs.release_branch }}
           INPUT_SECURITY_BRANCH_NUMBER: ${{ inputs.security_branch_number }}
-          INPUT_REPOSITORY: ${{ inputs.repository }}
         run: |
-          chmod +x .github/workflows/scripts/create-security-branch/create-security-branch.sh
-          .github/workflows/scripts/create-security-branch/create-security-branch.sh
+          # When the source release branch is itself a security branch (e.g.
+          # release-11.2.3+security-01), appending another +security-NN would produce a
+          # bogus release-11.2.3+security-01+security-02. Instead, strip the existing
+          # +security-NN suffix and increment its number, so a security release of a
+          # security release advances to the next number on the same base version.
+          if [[ "${INPUT_RELEASE_BRANCH}" =~ ^(.*)\+security-([0-9]+)$ ]]; then
+              BASE_BRANCH="${BASH_REMATCH[1]}"
+              # Increment, preserving the original zero-padded width (e.g. 01 -> 02).
+              NEXT_NUMBER=$((10#${BASH_REMATCH[2]} + 1))
+              WIDTH=${#BASH_REMATCH[2]}
+              SECURITY_NUMBER=$(printf "%0${WIDTH}d" "${NEXT_NUMBER}")
+          else
+              BASE_BRANCH="${INPUT_RELEASE_BRANCH}"
+              SECURITY_NUMBER="${INPUT_SECURITY_BRANCH_NUMBER}"
+          fi
+
+          SECURITY_BRANCH="${BASE_BRANCH}+security-${SECURITY_NUMBER}"
+
+          # Check if branch already exists
+          if git show-ref --verify --quiet "refs/heads/${SECURITY_BRANCH}"; then
+              echo "::error::Security branch ${SECURITY_BRANCH} already exists"
+              exit 1
+          fi
+
+          # Create and push the new branch from the release branch
+          git checkout "${INPUT_RELEASE_BRANCH}"
+          git checkout -b "${SECURITY_BRANCH}"
+          git push origin "${SECURITY_BRANCH}"
+
+          # Output the branch name for the workflow
+          echo "branch=${SECURITY_BRANCH}" >> "${GITHUB_OUTPUT}"

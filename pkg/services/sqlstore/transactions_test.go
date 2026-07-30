@@ -4,11 +4,24 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestTxnRetryBackoff(t *testing.T) {
+	// The cap on the exponential ramp; once we hit it the delay should stay at
+	// the max regardless of how high retry climbs.
+	for _, retry := range []int{0, 1, 2, 4, 5, 10, 62, 63, 100, 1000} {
+		for range 100 {
+			d := txnRetryBackoff(retry)
+			require.GreaterOrEqual(t, d, time.Duration(0))
+			require.Less(t, d, txnRetryMaxDelay)
+		}
+	}
+}
 
 func TestIntegrationReuseSessionWithTransaction(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)

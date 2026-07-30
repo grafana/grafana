@@ -73,6 +73,10 @@ describe('fetchMergedPreferences', () => {
 });
 
 describe('initPreferences', () => {
+  function setSearch(search: string) {
+    window.history.replaceState({}, '', `${window.location.pathname}${search}`);
+  }
+
   beforeEach(() => {
     setupBootData({
       theme: 'dark',
@@ -83,6 +87,7 @@ describe('initPreferences', () => {
   });
 
   afterEach(() => {
+    setSearch('');
     document.body.classList.remove('theme-light', 'theme-dark');
     document.head.querySelectorAll('link[rel="stylesheet"]').forEach((link) => link.remove());
     document.documentElement.lang = '';
@@ -120,6 +125,12 @@ describe('initPreferences', () => {
     expect(window.grafanaBootData.user.timezone).toBe('browser');
   });
 
+  it('returns the fetched preferences so the caller can seed the RTK Query cache', async () => {
+    server.use(http.get(PREFERENCES_URL, () => HttpResponse.json({ spec: { theme: 'light' } })));
+
+    await expect(initPreferences()).resolves.toEqual({ spec: { theme: 'light' } });
+  });
+
   it('does not reject when the API errors', async () => {
     server.use(http.get(PREFERENCES_URL, () => HttpResponse.json({ message: 'internal error' }, { status: 500 })));
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -127,6 +138,27 @@ describe('initPreferences', () => {
     await expect(initPreferences()).resolves.toBeUndefined();
 
     warnSpy.mockRestore();
+  });
+
+  it('lets the theme query param take precedence over the merged preference', async () => {
+    setSearch('?theme=light');
+    server.use(http.get(PREFERENCES_URL, () => HttpResponse.json({ spec: { theme: 'dark' } })));
+
+    await initPreferences();
+
+    expect(window.grafanaBootData.user.theme).toBe('light');
+    expect(document.body.classList.contains('theme-light')).toBe(true);
+    expect(document.body.classList.contains('theme-dark')).toBe(false);
+  });
+
+  it('lets the lang query param take precedence over the merged preference', async () => {
+    setSearch('?lang=de');
+    server.use(http.get(PREFERENCES_URL, () => HttpResponse.json({ spec: { language: 'es-ES' } })));
+
+    await initPreferences();
+
+    expect(window.grafanaBootData.user.language).toBe('de');
+    expect(document.documentElement.lang).toBe('de');
   });
 });
 

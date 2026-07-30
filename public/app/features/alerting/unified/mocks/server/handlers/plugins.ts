@@ -1,8 +1,7 @@
 import { HttpResponse, http } from 'msw';
 
-import { PluginLoadingStrategy, type PluginMeta } from '@grafana/data';
-import { type AppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
-import { plugins } from 'app/features/alerting/unified/testSetup/plugins';
+import { type PluginMeta } from '@grafana/data';
+import { plugins, resetAppPluginMetas } from 'app/features/alerting/unified/testSetup/plugins';
 
 const PLUGIN_NOT_FOUND_RESPONSE = { message: 'Plugin not found, no installed plugin with that id' };
 
@@ -10,34 +9,8 @@ const PLUGIN_NOT_FOUND_RESPONSE = { message: 'Plugin not found, no installed plu
  * Returns a handler that maps from plugin ID to PluginMeta, and additionally sets up necessary
  * config side effects that are expected to come along with this API behaviour
  */
-export const getPluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
-  const appPluginMetas = plugins.reduce((acc, { id, baseUrl, info, angular }) => {
-    acc[id] = {
-      id,
-      path: baseUrl,
-      preload: true,
-      version: info.version,
-      angular: angular ?? { detected: false, hideDeprecation: false },
-      loadingStrategy: PluginLoadingStrategy.script,
-      extensions: {
-        addedLinks: [],
-        addedComponents: [],
-        extensionPoints: [],
-        exposedComponents: [],
-        addedFunctions: [],
-      },
-      dependencies: {
-        grafanaVersion: '',
-        plugins: [],
-        extensions: {
-          exposedComponents: [],
-        },
-      },
-    };
-    return acc;
-  }, {} as AppPluginMetas);
-
-  setAppPluginMetas(appPluginMetas);
+const getPluginsHandler = (pluginsArray: PluginMeta[] = plugins) => {
+  resetAppPluginMetas();
 
   return http.get<{ pluginId: string }>(`/api/plugins/:pluginId/settings`, ({ params: { pluginId } }) => {
     // Handle empty plugin ID (used when no plugin origin) - return 404 silently

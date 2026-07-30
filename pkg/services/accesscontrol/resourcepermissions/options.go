@@ -24,8 +24,9 @@ type Options struct {
 	Resource string
 	// ResourceAttribute is the attribute the scope should be based on (e.g. id or uid)
 	ResourceAttribute string
-	// APIGroup is the Kubernetes API group for the resource (e.g. "folder.grafana.app")
-	// If not set, defaults to "{Resource}.grafana.app"
+	// APIGroup is the Kubernetes API group for the resource (e.g. "folder.grafana.app").
+	// It is required for any flow that reads or writes permissions through the
+	// Kubernetes resource-permission API; those operations fail if it is not set.
 	APIGroup string
 	// K8sActionFormat enables Kubernetes-native action and scope format.
 	// When enabled, actions use "{APIGroup}/{Resource}:get_permissions" format

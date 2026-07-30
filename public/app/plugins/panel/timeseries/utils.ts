@@ -2,23 +2,53 @@ import {
   type DataFrame,
   type Field,
   FieldType,
+  formatLabels,
   getDisplayProcessor,
   type GrafanaTheme2,
   isBooleanUnit,
   type TimeRange,
-  type PanelData,
   cacheFieldDisplayNames,
   applyNullInsertThreshold,
   nullToValue,
 } from '@grafana/data';
 import { convertFieldType } from '@grafana/data/internal';
-import { type GraphFieldConfig, LineInterpolation, TooltipDisplayMode, type VizTooltipOptions } from '@grafana/schema';
-import { type AdHocFilterItem } from '@grafana/ui';
-import { buildScaleKey, FILTER_FOR_OPERATOR } from '@grafana/ui/internal';
-
-import { type HeatmapTooltip } from '../heatmap/panelcfg.gen';
+import { type GraphFieldConfig, LineInterpolation } from '@grafana/schema';
+import { buildScaleKey } from '@grafana/ui/internal';
 
 type ScaleKey = string;
+
+/**
+ * Stable identity for pairing a compare-series field with its current-period counterpart.
+ * Can't reuse getFieldDisplayName since compare series get a " (comparison)" suffix.
+ * Labels come first (precise per-series identity); config.displayName is not preferred over
+ * them because it's often a shared, un-interpolated template that collapses all series.
+ */
+export function getCompareSeriesIdentityKey(field: Field, frame?: DataFrame): string {
+  // The compare request runs under a distinct `<refId>-compare` refId (see PanelTimeRange.getExtraQueries)
+  // so query caches/panels don't collide. Datasources that embed the refId in the series name (e.g. TestData)
+  // then emit compare names like `A-compare-series1` while the current period is `A-series1`. Strip that
+  // infix so a compare series still pairs with its current-period counterpart. Label-based datasources
+  // (e.g. Prometheus) are unaffected since their names don't start with the refId.
+  const refId = frame?.refId ?? '';
+  const baseRefId = refId.replace(/-compare$/, '');
+  const name =
+    baseRefId !== refId && field.name.startsWith(refId) ? `${baseRefId}${field.name.slice(refId.length)}` : field.name;
+
+  const labels = field.labels ? formatLabels(field.labels) : '';
+  if (labels) {
+    return `${name} ${labels}`;
+  }
+  if (field.config?.displayName) {
+    return field.config.displayName;
+  }
+  if (field.config?.displayNameFromDS) {
+    return field.config.displayNameFromDS;
+  }
+  if (frame?.name) {
+    return `${frame.name} ${name}`;
+  }
+  return name;
+}
 
 // this will re-enumerate all enum fields on the same scale to create one ordinal progression
 // e.g. ['a','b'][0,1,0] + ['c','d'][1,0,1] -> ['a','b'][0,1,0] + ['c','d'][3,2,3]
@@ -270,67 +300,48 @@ export const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2,
     );
   };
 
-  // Pre-pass to group main frames by refId
-  const mainFramesByRefId = new Map<string, DataFrame[]>();
+  // Identity -> seriesIndex for current-period fields, keyed by refId so multi-query panels stay isolated.
+  const seriesIndexByIdentity = new Map<string, number>();
+
+  // Assign palette indices to current-period series first so compare frames can look them up by identity.
   for (const frame of frames) {
-    if (!frame.meta?.timeCompare?.isTimeShiftQuery && frame.refId) {
-      if (!mainFramesByRefId.has(frame.refId)) {
-        mainFramesByRefId.set(frame.refId, []);
-      }
-      mainFramesByRefId.get(frame.refId)!.push(frame);
+    if (frame.meta?.timeCompare?.isTimeShiftQuery) {
+      continue;
     }
+
+    const refId = frame.refId ?? '';
+    frame.fields.forEach((field, fieldIdx) => {
+      if (!shouldProcessField(field, fieldIdx)) {
+        return;
+      }
+
+      const idx = seriesIndex++;
+      updateFieldDisplay(field, idx);
+
+      const identityKey = `${refId}\0${getCompareSeriesIdentityKey(field, frame)}`;
+      if (!seriesIndexByIdentity.has(identityKey)) {
+        seriesIndexByIdentity.set(identityKey, idx);
+      }
+    });
   }
 
-  // Counter for comparison indices per baseRefId
-  const compareIndicesByRefId = new Map<string, number>();
-
+  // Pair compare series to the matching current-period series by labels/name, not result-list position.
   for (const frame of frames) {
-    const isCompareFrame = frame.meta?.timeCompare?.isTimeShiftQuery;
-
-    if (isCompareFrame) {
-      const baseRefId = frame.refId?.replace('-compare', '');
-
-      if (baseRefId) {
-        // Get and increment the comparison index
-        let compareIndex = compareIndicesByRefId.get(baseRefId) ?? 0;
-        compareIndicesByRefId.set(baseRefId, compareIndex + 1);
-
-        // Get the matching main frame using the index
-        const mainFrames = mainFramesByRefId.get(baseRefId);
-        const mainFrame = mainFrames?.[compareIndex];
-
-        if (mainFrame && mainFrame.fields.length === frame.fields.length) {
-          // Match series indices with main frame
-          frame.fields.forEach((field, fieldIdx) => {
-            if (shouldProcessField(field, fieldIdx)) {
-              const mainField = mainFrame.fields[fieldIdx];
-              updateFieldDisplay(field, mainField.state?.seriesIndex ?? seriesIndex++);
-            }
-          });
-        } else {
-          // Fallback
-          frame.fields.forEach((field, fieldIdx) => {
-            if (shouldProcessField(field, fieldIdx)) {
-              updateFieldDisplay(field, seriesIndex++);
-            }
-          });
-        }
-      } else {
-        // Fallback when no baseRefId
-        frame.fields.forEach((field, fieldIdx) => {
-          if (shouldProcessField(field, fieldIdx)) {
-            updateFieldDisplay(field, seriesIndex++);
-          }
-        });
-      }
-    } else {
-      // Main frames
-      frame.fields.forEach((field, fieldIdx) => {
-        if (shouldProcessField(field, fieldIdx)) {
-          updateFieldDisplay(field, seriesIndex++);
-        }
-      });
+    if (!frame.meta?.timeCompare?.isTimeShiftQuery) {
+      continue;
     }
+
+    const baseRefId = frame.refId?.replace(/-compare$/, '') ?? '';
+
+    frame.fields.forEach((field, fieldIdx) => {
+      if (!shouldProcessField(field, fieldIdx)) {
+        return;
+      }
+
+      const identityKey = `${baseRefId}\0${getCompareSeriesIdentityKey(field, frame)}`;
+      const matchedIndex = seriesIndexByIdentity.get(identityKey);
+      updateFieldDisplay(field, matchedIndex ?? seriesIndex++);
+    });
   }
 };
 
@@ -339,116 +350,4 @@ export function getTimezones(timezones: string[] | undefined, defaultTimezone: s
     return [defaultTimezone];
   }
   return timezones.map((v) => (v?.length ? v : defaultTimezone));
-}
-
-export const isTooltipScrollable = (tooltipOptions: VizTooltipOptions | HeatmapTooltip) => {
-  return tooltipOptions.mode === TooltipDisplayMode.Multi && tooltipOptions.maxHeight != null;
-};
-
-export function getGroupedFilters(
-  frame: DataFrame,
-  seriesIdx: number,
-  getFiltersBasedOnGrouping: (filters: AdHocFilterItem[]) => AdHocFilterItem[]
-) {
-  const groupingFilters: AdHocFilterItem[] = [];
-  const xField = frame.fields[seriesIdx];
-
-  if (xField && xField.labels && xField.config.filterable) {
-    const seriesFilters: AdHocFilterItem[] = [];
-
-    Object.entries(xField.labels).forEach(([key, value]) => {
-      seriesFilters.push({
-        key,
-        operator: FILTER_FOR_OPERATOR,
-        value,
-      });
-    });
-
-    groupingFilters.push(...getFiltersBasedOnGrouping(seriesFilters));
-  }
-
-  return groupingFilters;
-}
-
-export const LTTB_THRESHOLD = 150;
-
-// adapted from https://github.com/pingec/downsample-lttb
-function lttbIndices(xs: number[], ys: number[], threshold: number): number[] {
-  const len = xs.length;
-  if (threshold >= len) {
-    return Array.from({ length: len }, (_, i) => i);
-  }
-
-  const indices = new Array(threshold);
-  indices[0] = 0;
-  indices[threshold - 1] = len - 1;
-
-  const bucketSize = (len - 2) / (threshold - 2);
-  let prevIdx = 0;
-
-  for (let i = 1; i < threshold - 1; i++) {
-    const bucketStart = Math.floor((i - 1) * bucketSize) + 1;
-    const bucketEnd = Math.min(Math.floor(i * bucketSize) + 1, len - 1);
-    const nextEnd = Math.min(Math.floor((i + 1) * bucketSize) + 1, len - 1);
-
-    let avgX = 0,
-      avgY = 0,
-      count = 0;
-    for (let j = bucketEnd; j < nextEnd; j++) {
-      avgX += xs[j];
-      avgY += ys[j];
-      count++;
-    }
-    if (count > 0) {
-      avgX /= count;
-      avgY /= count;
-    }
-
-    let maxArea = -1,
-      maxIdx = bucketStart;
-    for (let j = bucketStart; j < bucketEnd; j++) {
-      const area =
-        Math.abs((xs[prevIdx] - avgX) * (ys[j] - ys[prevIdx]) - (xs[prevIdx] - xs[j]) * (avgY - ys[prevIdx])) * 0.5;
-      if (area > maxArea) {
-        maxArea = area;
-        maxIdx = j;
-      }
-    }
-    indices[i] = maxIdx;
-    prevIdx = maxIdx;
-  }
-
-  return indices;
-}
-
-// Downsamples each frame using the first numeric field to compute LTTB indices,
-// then applies those indices to all fields. For frames with multiple numeric fields
-// the sampling is optimal for the first field only, which is acceptable for small
-// preview cards where pixel density already limits visible detail.
-export function lttbPreviewData(data: PanelData, threshold = LTTB_THRESHOLD): PanelData {
-  return {
-    ...data,
-    series: data.series.map((frame) => {
-      const timeField = frame.fields.find((f) => f.type === FieldType.time);
-      const numericField = frame.fields.find((f) => f.type === FieldType.number);
-      if (!timeField || !numericField || frame.length <= threshold) {
-        return frame;
-      }
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const indices = lttbIndices(timeField.values as number[], numericField.values as number[], threshold);
-
-      return {
-        ...frame,
-        length: indices.length,
-        fields: frame.fields.map((field) => ({
-          ...field,
-          values: indices.map((i) => field.values[i]),
-          ...(field.type === FieldType.time && {
-            // since lttb may pick points further apart than timeField.config.interval, we clear it out to avoid gap insertion
-            config: { ...field.config, interval: undefined },
-          }),
-        })),
-      };
-    }),
-  };
 }

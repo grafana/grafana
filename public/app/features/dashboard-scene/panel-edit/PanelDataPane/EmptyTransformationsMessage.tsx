@@ -70,7 +70,7 @@ export function LegacyEmptyTransformationsMessage({ onShowPicker }: { onShowPick
   );
 }
 
-export function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
+function NewEmptyTransformationsMessage(props: EmptyTransformationsProps) {
   const styles = useStyles2(getStyles);
 
   const hasGoToQueries = props.onGoToQueries != null;

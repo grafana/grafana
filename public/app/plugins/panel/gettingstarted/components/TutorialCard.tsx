@@ -69,12 +69,12 @@ const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
       },
     }),
     type: css({
-      color: theme.colors.primary.text,
+      color: complete ? theme.colors.success.text : theme.colors.accent.text,
       textTransform: 'uppercase',
     }),
     heading: css({
       textTransform: 'uppercase',
-      color: theme.colors.primary.text,
+      color: complete ? theme.colors.success.text : theme.colors.accent.text,
       marginBottom: theme.spacing(1),
     }),
     cardTitle: css({

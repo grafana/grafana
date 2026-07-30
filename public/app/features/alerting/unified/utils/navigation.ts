@@ -39,6 +39,8 @@ export const ALERTING_PATHS: Record<string, RelativeUrl> = {
   TIME_INTERVALS: '/alerting/routes/mute-timing',
   ROUTES: '/alerting/routes',
   ALERTS_ACTIVITY: '/alerting/alerts',
+  IMPORT_TO_GMA: '/alerting/import-to-gma',
+  IMPORT_DATASOURCE_MANAGED_RULES: '/alerting/import-datasource-managed-rules',
 };
 
 /**

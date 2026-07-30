@@ -1,7 +1,6 @@
 package connection
 
 import (
-	"context"
 	"encoding/base64"
 	"net/http"
 	"testing"
@@ -15,7 +14,7 @@ import (
 
 func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 	helper := sharedHelper(t)
-	ctx := context.Background()
+
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(common.TestGithubPrivateKeyPEM))
 
 	// Create a connection for testing
@@ -40,7 +39,7 @@ func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 			},
 		},
 	}}
-	c, err := helper.CreateGithubConnection(t, ctx, connection)
+	c, err := helper.CreateGithubConnection(t, connection)
 	require.NoError(t, err)
 
 	connectionName := c.GetName()
@@ -52,7 +51,7 @@ func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 			Resource("connections").
 			Name(connectionName).
 			SubResource("status").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.NoError(t, result.Error(), "admin should be able to GET connection status")
 		require.Equal(t, http.StatusOK, statusCode, "should return 200 OK")
@@ -65,7 +64,7 @@ func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 			Resource("connections").
 			Name(connectionName).
 			SubResource("status").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "editor should not be able to GET connection status")
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
@@ -79,7 +78,7 @@ func TestIntegrationProvisioning_ConnectionStatusAuthorization(t *testing.T) {
 			Resource("connections").
 			Name(connectionName).
 			SubResource("status").
-			Do(ctx).StatusCode(&statusCode)
+			Do(t.Context()).StatusCode(&statusCode)
 
 		require.Error(t, result.Error(), "viewer should not be able to GET connection status")
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")

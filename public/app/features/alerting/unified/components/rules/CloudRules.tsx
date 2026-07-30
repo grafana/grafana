@@ -5,28 +5,18 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import {
-  Badge,
-  LinkButton,
-  LoadingPlaceholder,
-  Pagination,
-  Spinner,
-  Stack,
-  Text,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Badge, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
-import { useImportEntrypointState } from '../../hooks/useImportEntrypointState';
 import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
 import { getRulesDataSources, getRulesSourceUid } from '../../utils/datasource';
+import { ALERTING_PATHS } from '../../utils/navigation';
 import { isAsyncRequestStatePending } from '../../utils/redux';
 import { createRelativeUrl } from '../../utils/url';
 
@@ -61,8 +51,6 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
     DEFAULT_PER_PAGE_PAGINATION
   );
 
-  const { disabled: importDisabled, reason: importDisabledReason } = useImportEntrypointState();
-
   const canMigrateToGMA =
     hasDataSourcesConfigured &&
     config.featureToggles.alertingMigrationUI &&
@@ -90,9 +78,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
               <div />
             )}
             <Stack gap={1}>
-              {canMigrateToGMA && hasSomeResults && (
-                <MigrateToGMAButton disabled={importDisabled} disabledReason={importDisabledReason} />
-              )}
+              {canMigrateToGMA && hasSomeResults && <MigrateToGMAButton />}
               <CreateRecordingRuleButton />
             </Stack>
           </div>
@@ -159,7 +145,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export function CreateRecordingRuleButton() {
+function CreateRecordingRuleButton() {
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
   const location = useLocation();
 
@@ -184,16 +170,12 @@ export function CreateRecordingRuleButton() {
   return null;
 }
 
-interface MigrateToGMAButtonProps {
-  disabled: boolean;
-  disabledReason?: string;
-}
+// Not gated on Alertmanager auto-sync: this imports rules only, which the sync worker never touches.
+function MigrateToGMAButton() {
+  const importUrl = createRelativeUrl(ALERTING_PATHS.IMPORT_DATASOURCE_MANAGED_RULES);
 
-function MigrateToGMAButton({ disabled, disabledReason }: MigrateToGMAButtonProps) {
-  const importUrl = createRelativeUrl('/alerting/import-datasource-managed-rules');
-
-  const button = (
-    <LinkButton variant="secondary" href={importUrl} icon="arrow-up" disabled={disabled}>
+  return (
+    <LinkButton variant="secondary" href={importUrl} icon="arrow-up">
       <Stack direction="row" gap={1} alignItems="center">
         <Trans i18nKey="alerting.rule-list.import-to-gma.text">Import to Grafana-managed rules</Trans>
         <Badge
@@ -205,16 +187,4 @@ function MigrateToGMAButton({ disabled, disabledReason }: MigrateToGMAButtonProp
       </Stack>
     </LinkButton>
   );
-
-  // LinkButton applies `pointer-events: none` when disabled, which suppresses tooltip hover.
-  // Wrap in a span so the Tooltip's hover handlers attach to an element that still receives events.
-  if (disabled && disabledReason) {
-    return (
-      <Tooltip content={disabledReason}>
-        <span>{button}</span>
-      </Tooltip>
-    );
-  }
-
-  return button;
 }

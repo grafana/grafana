@@ -1,39 +1,40 @@
 import { type z } from 'zod';
 
+import { textUtil } from '@grafana/data';
 import { sceneGraph } from '@grafana/scenes';
 
+import {
+  type DashboardLink,
+  defaultDashboardLink,
+} from '../../../../../../packages/grafana-schema/src/schema/dashboard/v2';
+import { transformCursorSyncV2ToV1 } from '../../serialization/transformToV1TypesUtils';
+
 import { payloads } from './schemas';
+import { findCursorSyncBehavior, findLiveNowBehavior, readDashboardSettings } from './shared';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
 
-export const updateDashboardSettingsPayloadSchema = payloads.updateDashboardSettings;
+const updateDashboardSettingsPayloadSchema = payloads.updateDashboardSettings;
 
 export type UpdateDashboardSettingsPayload = z.infer<typeof updateDashboardSettingsPayloadSchema>;
 
-interface DashboardSettings {
-  title: string;
-  description: string;
-  tags: string[];
-  editable: boolean;
-  refresh: string;
-  timeRange: { from: string; to: string };
-  timezone: string;
-}
+type DashboardLinkPayload = NonNullable<UpdateDashboardSettingsPayload['links']>[number];
 
-function readCurrentSettings(scene: Parameters<MutationCommand['handler']>[1]['scene']): DashboardSettings {
-  const timeRange = sceneGraph.getTimeRange(scene);
-  const refreshPicker = scene.state.controls?.state.refreshPicker;
-
+// URLs are sanitized because links render as clickable and the input is
+// model-controlled (could carry a javascript:/data: scheme).
+function normalizeDashboardLink(link: DashboardLinkPayload): DashboardLink {
+  const defaults = defaultDashboardLink();
   return {
-    title: scene.state.title ?? '',
-    description: scene.state.description ?? '',
-    tags: scene.state.tags ?? [],
-    editable: scene.state.editable ?? true,
-    refresh: refreshPicker?.state.refresh ?? '',
-    timeRange: {
-      from: timeRange.state.from,
-      to: timeRange.state.to,
-    },
-    timezone: timeRange.state.timeZone ?? '',
+    title: link.title ?? defaults.title,
+    url: link.url ? textUtil.sanitizeUrl(link.url) : defaults.url,
+    type: link.type ?? defaults.type,
+    icon: link.icon ?? defaults.icon,
+    tooltip: link.tooltip ?? defaults.tooltip,
+    tags: link.tags ?? defaults.tags,
+    asDropdown: link.asDropdown ?? defaults.asDropdown,
+    targetBlank: link.targetBlank ?? defaults.targetBlank,
+    includeVars: link.includeVars ?? defaults.includeVars,
+    keepTime: link.keepTime ?? defaults.keepTime,
+    ...(link.placement !== undefined && { placement: link.placement }),
   };
 }
 
@@ -50,7 +51,7 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
     enterEditModeIfNeeded(scene);
 
     try {
-      const previousValue = readCurrentSettings(scene);
+      const previousValue = readDashboardSettings(scene);
       const warnings: string[] = [];
 
       const sceneUpdates: Record<string, unknown> = {};
@@ -66,6 +67,12 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
       if (payload.editable !== undefined) {
         sceneUpdates.editable = payload.editable;
       }
+      if (payload.preload !== undefined) {
+        sceneUpdates.preload = payload.preload;
+      }
+      if (payload.links !== undefined) {
+        sceneUpdates.links = payload.links.map(normalizeDashboardLink);
+      }
 
       if (Object.keys(sceneUpdates).length > 0) {
         scene.setState(sceneUpdates);
@@ -73,28 +80,48 @@ export const updateDashboardSettingsCommand: MutationCommand<UpdateDashboardSett
 
       const timeRange = sceneGraph.getTimeRange(scene);
       const timeRangeUpdates: Record<string, unknown> = {};
-      if (payload.timeRange !== undefined) {
-        timeRangeUpdates.from = payload.timeRange.from;
-        timeRangeUpdates.to = payload.timeRange.to;
+      if (payload.timeSettings?.from !== undefined) {
+        timeRangeUpdates.from = payload.timeSettings.from;
       }
-      if (payload.timezone !== undefined) {
-        timeRangeUpdates.timeZone = payload.timezone;
+      if (payload.timeSettings?.to !== undefined) {
+        timeRangeUpdates.to = payload.timeSettings.to;
+      }
+      if (payload.timeSettings?.timezone !== undefined) {
+        timeRangeUpdates.timeZone = payload.timeSettings.timezone;
       }
 
       if (Object.keys(timeRangeUpdates).length > 0) {
         timeRange.setState(timeRangeUpdates);
       }
 
-      if (payload.refresh !== undefined) {
+      if (payload.timeSettings?.autoRefresh !== undefined) {
         const refreshPicker = scene.state.controls?.state.refreshPicker;
         if (refreshPicker) {
-          refreshPicker.setState({ refresh: payload.refresh });
+          refreshPicker.setState({ refresh: payload.timeSettings.autoRefresh });
         } else {
-          warnings.push('refresh interval could not be set: refresh picker not found in scene controls');
+          warnings.push('autoRefresh could not be set: refresh picker not found in scene controls');
         }
       }
 
-      const newValue = readCurrentSettings(scene);
+      if (payload.cursorSync !== undefined) {
+        const cursorSyncBehavior = findCursorSyncBehavior(scene);
+        if (cursorSyncBehavior) {
+          cursorSyncBehavior.setState({ sync: transformCursorSyncV2ToV1(payload.cursorSync) });
+        } else {
+          warnings.push('cursorSync could not be set: CursorSync behavior not found in scene');
+        }
+      }
+
+      if (payload.liveNow !== undefined) {
+        const liveNowBehavior = findLiveNowBehavior(scene);
+        if (liveNowBehavior) {
+          liveNowBehavior.setState({ enabled: payload.liveNow });
+        } else {
+          warnings.push('liveNow could not be set: LiveNowTimer behavior not found in scene');
+        }
+      }
+
+      const newValue = readDashboardSettings(scene);
 
       return {
         success: true,

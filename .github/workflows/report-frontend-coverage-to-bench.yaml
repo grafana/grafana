@@ -88,9 +88,9 @@ jobs:
         id: bench-report
         continue-on-error: true
         env:
-          PROMETHEUS_URL: ${{ env.PROMETHEUS_URL }}
-          PROMETHEUS_USER: ${{ env.PROMETHEUS_USER }}
-          PROMETHEUS_PASSWORD: ${{ env.PROMETHEUS_TOKEN }}
+          PROMETHEUS_URL: ${{ fromJSON(steps.get-secrets.outputs.secrets).PROMETHEUS_URL }}
+          PROMETHEUS_USER: ${{ fromJSON(steps.get-secrets.outputs.secrets).PROMETHEUS_USER }}
+          PROMETHEUS_PASSWORD: ${{ fromJSON(steps.get-secrets.outputs.secrets).PROMETHEUS_TOKEN }}
         run: |
           grafana-bench report \
             --report-input jscoverage \

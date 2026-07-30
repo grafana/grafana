@@ -13,10 +13,3 @@ export type GetExtensionsOptions = {
 };
 
 export type GetExtensions = (options: GetExtensionsOptions) => { extensions: PluginExtension[] };
-
-export type GetPluginExtensions<T = PluginExtension> = (options: {
-  extensionPointId: string;
-  // Make sure this object is properly memoized and not mutated.
-  context?: object | Record<string | symbol, unknown>;
-  limitPerPlugin?: number;
-}) => { extensions: T[] };

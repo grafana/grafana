@@ -8,6 +8,7 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -83,7 +84,7 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 				},
 				Fields: []*resourcepb.Requirement{{
 					Key:      resource.SEARCH_FIELD_FOLDER,
-					Operator: "=",
+					Operator: string(selection.Equals),
 					Values:   []string{name},
 				}},
 			},

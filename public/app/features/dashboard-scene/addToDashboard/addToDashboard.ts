@@ -5,7 +5,7 @@ import { type Panel } from '@grafana/schema';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDTO } from 'app/types/dashboard';
 
-export enum GenericError {
+enum GenericError {
   UNKNOWN = 'unknown-error',
   NAVIGATION = 'navigation-error',
 }
@@ -15,7 +15,7 @@ export interface SubmissionError {
   message: string;
 }
 
-export enum AddToDashboardError {
+enum AddToDashboardError {
   FETCH_DASHBOARD = 'fetch-dashboard',
   SET_DASHBOARD_LS = 'set-dashboard-ls-error',
 }

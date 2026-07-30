@@ -30,11 +30,10 @@ const (
 var (
 	ErrInvalidHttpMode = errors.New("'httpMode' should be either 'GET' or 'POST'")
 	ErrInvalidUrl      = errors.New("URL must contain scheme and host")
-	glog               = backend.NewLoggerWith("logger", "tsdb.influx_influxql")
 )
 
-func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceInfo, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	logger := glog.FromContext(ctx)
+func Query(ctx context.Context, tracer trace.Tracer, dsInfo *models.DatasourceInfo, req *backend.QueryDataRequest, logger log.Logger) (*backend.QueryDataResponse, error) {
+	logger = logger.FromContext(ctx)
 	response := backend.NewQueryDataResponse()
 	var err error
 

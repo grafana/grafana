@@ -1,7 +1,5 @@
 package v1beta1
 
-const UserDefinedRoutingTreeName = "user-defined"
-
 func (o *RoutingTree) GetProvenanceStatus() string {
 	if o == nil || o.Annotations == nil {
 		return ProvenanceStatusNone

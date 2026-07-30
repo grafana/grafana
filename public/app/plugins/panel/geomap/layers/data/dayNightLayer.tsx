@@ -17,7 +17,7 @@ import {
   type EventBus
 } from '@grafana/data';
 
-export enum ShowTime {
+enum ShowTime {
   From = 'from',
   To = 'to',
 }
@@ -35,15 +35,7 @@ const defaultConfig: DayNightConfig = {
   nightColor: '#a7a6ba4D',
 };
 
-export const DAY_NIGHT_LAYER_ID = 'dayNight';
-
-// Used by default when nothing is configured
-export const defaultDayNightConfig: MapLayerOptions<DayNightConfig> = {
-  type: DAY_NIGHT_LAYER_ID,
-  name: '', // will get replaced
-  config: defaultConfig,
-  tooltip: true,
-};
+const DAY_NIGHT_LAYER_ID = 'dayNight';
 
 /**
  * Map layer configuration for circle overlay

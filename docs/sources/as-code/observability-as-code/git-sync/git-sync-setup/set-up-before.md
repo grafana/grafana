@@ -19,14 +19,6 @@ aliases:
 
 # Before you begin
 
-{{< admonition type="note" >}}
-
-**Git Sync is now GA for Grafana Cloud, OSS and Enterprise.** Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) to understand usage limits for the different tiers.
-
-[Contact Grafana](https://grafana.com/help/) for support or to report any issues you encounter and help us improve this feature.
-
-{{< /admonition >}}
-
 Before you begin to set up Git Sync, ensure you have the following:
 
 - A Grafana instance (Cloud, OSS, or Enterprise)
@@ -35,22 +27,13 @@ Before you begin to set up Git Sync, ensure you have the following:
 - If you're [using webhooks or image rendering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend), a public instance with external access
   - Optional: The [Image Renderer service](https://github.com/grafana/grafana-image-renderer) to save image previews with your PRs
 
-Moreover, make sure you're not blocking any of the Grafana services IPs. For a list of IPs you need to add to your allowlist, refer to [Hosted Grafana source IPs](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/#hosted-grafana).
-
-Finally, get acquainted with the following topics:
-
-- [Git Sync supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/#supported-resources)
-- [Git Sync usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits)
-- [Role and resource permissions](#resource-and-role-permissions)
-- For further details on how Git Sync operates, refer to the [key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts)
-
 ## Enable required feature toggles
 
 The `provisioning` feature toggle is enabled by default in Grafana Cloud and, starting in Grafana v13, for OSS and Enterprise as well. No manual configuration is required.
 
 For more information about feature toggles, refer to [Configure feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
-### Enable Git providers
+## Enable Git providers
 
 If you're using Grafana Enterprise v12.4.0 and want to set up Git Sync with pure Git, GitLab or Bitbucket, or if you're using Grafana OSS v12.4.0 and want to set up Git Sync with pure Git, add them to your configuration file:
 
@@ -63,6 +46,74 @@ If you're using Grafana Enterprise v12.4.0 and want to set up Git Sync with pure
    ```
 
 1. Save the changes to the file and restart Grafana.
+
+## Network connectivity and IP allowlisting
+
+Git Sync requires network connectivity between your Grafana instance and Git server. Understanding the traffic patterns helps you configure firewall rules and allowlists correctly.
+
+### Traffic types
+
+Git Sync uses two types of network traffic:
+
+- **Sync operations (pull and push)**: Grafana → Git Server
+  - Egress traffic from Hosted Grafana IPs
+  - Customer Git servers must allow inbound traffic from these IPs
+  - For a list of IPs to add to your Git server's allowlist, refer to [Hosted Grafana source IPs](https://grafana.com/docs/grafana-cloud/security-and-account-management/allow-list/#hosted-grafana)
+- **Webhooks (instantaneous sync)**: Git Server → Grafana stack
+  - Inbound traffic to the stack's public endpoint
+  - The Git server must be able to reach `*.grafana.net`
+  - Required only if you're [using webhooks](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend)
+
+### AWS PrivateLink and Private Data Source Connect
+
+Git Sync does not route over AWS PrivateLink or Private Data Source Connect (PDC).
+
+AWS PrivateLink and PDC provide a separate tunnel for data source query traffic (Grafana → your private databases or data sources). Git Sync uses the normal public path from the Hosted Grafana IPs and is independent of PrivateLink/PDC.
+
+If you use AWS PrivateLink or PDC for data sources, you can still use Git Sync. The two features neither interfere with nor depend on each other.
+
+Finally, get acquainted with the following topics:
+
+- [Git Sync supported resources](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/#supported-resources)
+- [Git Sync usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits)
+- [Role and resource permissions](#resource-and-role-permissions)
+- For further details on how Git Sync operates, refer to the [key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts)
+
+## Allow internal or private Git servers
+
+{{< admonition type="note" >}}
+This setting is available for Grafana v13.0.4 and Grafana v13.1.1 and later. It only applies to self-managed Grafana (OSS and Enterprise), but it's not configurable in Grafana Cloud.
+{{< /admonition >}}
+
+While public Git servers such as `github.com`, `gitlab.com`, and `bitbucket.org` resolve to public addresses and are always allowed, by default Git Sync rejects repository URLs with a host that resolves to a loopback, a private (RFC 1918), link-local, or an unspecified address. This protects your Grafana instance against server-side request forgery (SSRF).
+
+If you connect Git Sync to a Git server on a private network such as a self-hosted GitHub Enterprise, GitLab, or Bitbucket instance reachable only through an internal address, add its host to the `allowed_git_urls` allowlist:
+
+1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`.
+1. Add each internal Git host to `allowed_git_urls` as a comma-separated list:
+
+   ```ini
+   [provisioning]
+   allowed_git_urls = git.internal.example.com, ghe.example.com:8443
+   ```
+
+1. Save the changes to the file and restart Grafana.
+
+Each entry can be a hostname, `host:port`, a full URL (only the host is used), a literal IP address, or a CIDR range. If possible, use specific hosts or narrow ranges, since a broad CIDR such as `10.0.0.0/8` re-exposes the entire private range that SSRF protection blocks.
+
+**Only add hosts you trust** because an allowlisted host receives the configured Git token on every sync, fetch, and push.
+
+## Resource and role permissions
+
+By default, folders provisioned with Git Sync have these roles:
+
+- Admin = Admin
+- Editor = Editor
+- Viewer = Viewer.
+
+Refer to [Git Sync permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana) for details on how to set up permissions in Git Sync. To modify them, refer to [Manage folder permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/use-git-sync#manage-folder-permissions).
+
+Refer to [Roles and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions) for more information about Grafana roles.
 
 ## Create a GitHub App
 
@@ -107,15 +158,3 @@ Finally, install the app:
 1. On the installation page, copy **`installationID`** from the page URL https://github.com/settings/installations/installationID
 
 You can now proceed to [Set up Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/)!
-
-## Resource and role permissions
-
-By default, folders provisioned with Git Sync have these roles:
-
-- Admin = Admin
-- Editor = Editor
-- Viewer = Viewer.
-
-Refer to [Git Sync permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana) for details on how to set up permissions in Git Sync. To modify them, refer to [Manage folder permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/use-git-sync#manage-folder-permissions).
-
-Refer to [Roles and permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions) for more information about Grafana roles.

@@ -39,7 +39,7 @@ type ContentProps = {
   padding?: number;
 };
 
-export function RuleViewerLayoutContent({ children, padding = 2 }: ContentProps): JSX.Element | null {
+function RuleViewerLayoutContent({ children, padding = 2 }: ContentProps): JSX.Element | null {
   const styles = useStyles2(getContentStyles(padding));
   return <div className={styles.wrapper}>{children}</div>;
 }

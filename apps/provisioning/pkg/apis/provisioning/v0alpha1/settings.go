@@ -79,6 +79,14 @@ type RepositoryView struct {
 
 	// Commit message options. Mirrors the same-named field on the repository spec.
 	Commit *CommitOptions `json:"commit,omitempty"`
+
+	// Branch naming options. Mirrors spec.branch. Exposed under `branchOptions`
+	// rather than `branch` because the view already uses `branch` for the git
+	// target branch name.
+	BranchOptions *BranchOptions `json:"branchOptions,omitempty"`
+
+	// Pull request options. Mirrors the same-named field on the repository spec.
+	PullRequest *PullRequestOptions `json:"pullRequest,omitempty"`
 }
 
 func (RepositoryView) OpenAPIModelName() string {

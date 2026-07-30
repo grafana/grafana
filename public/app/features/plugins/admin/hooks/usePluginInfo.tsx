@@ -1,6 +1,4 @@
-import { css } from '@emotion/css';
-
-import { type GrafanaTheme2, PluginSignatureType } from '@grafana/data';
+import { PluginSignatureType } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { type PageInfoItem } from '../../../../core/components/Page/types';
@@ -106,14 +104,4 @@ export const usePluginInfo = (plugin?: CatalogPlugin): PageInfoItem[] => {
   });
 
   return info;
-};
-
-export const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    subtitle: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1),
-    }),
-  };
 };

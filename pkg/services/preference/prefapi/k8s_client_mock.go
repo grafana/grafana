@@ -82,6 +82,64 @@ func (_c *MockK8sClient_Get_Call) RunAndReturn(run func(context.Context, utils.O
 	return _c
 }
 
+// GetMerged provides a mock function with given fields: ctx
+func (_m *MockK8sClient) GetMerged(ctx context.Context) (*v1alpha1.PreferencesSpec, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMerged")
+	}
+
+	var r0 *v1alpha1.PreferencesSpec
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (*v1alpha1.PreferencesSpec, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) *v1alpha1.PreferencesSpec); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1alpha1.PreferencesSpec)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockK8sClient_GetMerged_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMerged'
+type MockK8sClient_GetMerged_Call struct {
+	*mock.Call
+}
+
+// GetMerged is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockK8sClient_Expecter) GetMerged(ctx interface{}) *MockK8sClient_GetMerged_Call {
+	return &MockK8sClient_GetMerged_Call{Call: _e.mock.On("GetMerged", ctx)}
+}
+
+func (_c *MockK8sClient_GetMerged_Call) Run(run func(ctx context.Context)) *MockK8sClient_GetMerged_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockK8sClient_GetMerged_Call) Return(_a0 *v1alpha1.PreferencesSpec, _a1 error) *MockK8sClient_GetMerged_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockK8sClient_GetMerged_Call) RunAndReturn(run func(context.Context) (*v1alpha1.PreferencesSpec, error)) *MockK8sClient_GetMerged_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Patch provides a mock function with given fields: c, owner, spec
 func (_m *MockK8sClient) Patch(c context.Context, owner utils.OwnerReference, spec *v1alpha1.PreferencesSpec) error {
 	ret := _m.Called(c, owner, spec)

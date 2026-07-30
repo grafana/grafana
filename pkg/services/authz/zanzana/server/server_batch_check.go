@@ -50,18 +50,20 @@ func (s *Server) BatchCheck(ctx context.Context, r *authzv1.BatchCheckRequest) (
 	namespace := r.GetNamespace()
 	checkCount := len(r.GetChecks())
 
+	ctxLogger := s.logger.FromContext(ctx).New(
+		"subject", r.GetSubject(),
+		"namespace", namespace,
+		"check_count", checkCount,
+	)
+
 	defer func() {
 		duration := time.Since(start)
 		s.metrics.requestDurationSeconds.WithLabelValues("BatchCheck").Observe(duration.Seconds())
+		ctxLogger.Debug("BatchCheck execution time", "duration", duration.Milliseconds())
 
 		// Log slow batch checks for debugging (>1s is concerning)
 		if duration > time.Second {
-			s.logger.Debug("slow batch check detected",
-				"namespace", namespace,
-				"subject", r.GetSubject(),
-				"check_count", checkCount,
-				"duration_ms", duration.Milliseconds(),
-			)
+			ctxLogger.Debug("slow batch check detected", "duration_ms", duration.Milliseconds())
 		}
 	}()
 

@@ -25,8 +25,8 @@ import { useTheme2 } from '../../../themes/ThemeContext';
 import { measureText } from '../../../utils/measureText';
 import { FormattedValueDisplay } from '../../FormattedValueDisplay/FormattedValueDisplay';
 import { Sparkline } from '../../Sparkline/Sparkline';
+import { getAlignmentFactor, getCellOptions } from '../cellUtils';
 import { type TableCellProps } from '../types';
-import { getAlignmentFactor, getCellOptions } from '../utils';
 
 export const defaultSparklineCellConfig: TableSparklineCellOptions = {
   type: TableCellDisplayMode.Sparkline,

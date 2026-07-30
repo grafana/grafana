@@ -25,17 +25,10 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
   const nextDataPane = scene.dataPane instanceof PanelDataPaneNext ? scene.dataPane : null;
   const isFull = sidebarSize === SidebarSize.Full;
 
-  const controls = scene.controls && (
-    <div className={styles.controlsWrapper}>
-      <scene.controls.Component model={scene.controls} />
-    </div>
-  );
-
   // No data pane (e.g. text panels): render the viz on its own.
   if (!nextDataPane) {
     return (
       <div className={styles.pageContainer}>
-        {controls}
         <div className={cx(styles.vizPane, { [styles.fixedSizeViz]: isScrollingLayout })}>
           <div className={styles.vizContent}>
             <PanelEditPanelWrapper panel={scene.panel} tableView={scene.tableView} dashboard={scene.dashboard} />
@@ -90,10 +83,16 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
     </div>
   );
 
+  const sidebarHandle = (
+    <div
+      {...sidebarSplitter.splitterProps}
+      className={cx(sidebarSplitter.splitterProps.className, styles.sidebarHandle)}
+    />
+  );
+
   // Mini: viz on top; sidebar + data pane nested in the collapsible bottom pane.
   const miniLayout = (
     <>
-      {controls}
       <VizDataSplit
         splitter={vizDataSplitter}
         viz={viz}
@@ -103,7 +102,7 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
       >
         <div {...sidebarSplitter.containerProps}>
           {sidebarPane}
-          <div {...sidebarSplitter.splitterProps} />
+          {sidebarHandle}
           <div
             {...sidebarSplitter.secondaryProps}
             className={cx(sidebarSplitter.secondaryProps.className, styles.dataPane)}
@@ -115,16 +114,15 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
     </>
   );
 
-  // Full: full-height sidebar on the left; controls over the viz/data split on the right.
+  // Full: full-height sidebar on the left; the viz/data split on the right.
   const fullLayout = (
     <div {...sidebarSplitter.containerProps}>
       {sidebarPane}
-      <div {...sidebarSplitter.splitterProps} />
+      {sidebarHandle}
       <div
         {...sidebarSplitter.secondaryProps}
         className={cx(sidebarSplitter.secondaryProps.className, styles.rightStack)}
       >
-        {controls}
         <VizDataSplit
           splitter={vizDataSplitter}
           viz={viz}
@@ -245,6 +243,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     pageContainer: css({
       display: 'flex',
       flexDirection: 'column',
+      width: '100%',
       height: '100%',
       overflow: 'hidden',
       gap: theme.spacing(2),
@@ -253,12 +252,6 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       minWidth: 0,
       overflow: 'hidden',
       ...(isMini && { marginLeft: theme.spacing(2) }),
-    }),
-    controlsWrapper: css({
-      display: 'flex',
-      flexDirection: 'column',
-      flexGrow: 0,
-      ...(isMini && { paddingLeft: theme.spacing(2) }),
     }),
     vizPane: css({
       position: 'relative',
@@ -297,6 +290,14 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
     sidebarContent: css({
       height: '100%',
       width: '100%',
+    }),
+    // The shared drag handle draws a fixed 200px pill, which the splitter container clips once the
+    // pane is shorter than that — the rounded ends disappear and it reads as a full-height bar.
+    // Scaling by percentage keeps it a pill at any height (40% matches 100px at a 250px pane).
+    sidebarHandle: css({
+      '&::after': {
+        height: 'min(200px, 40%)',
+      },
     }),
     dataPane: css({
       display: 'flex',

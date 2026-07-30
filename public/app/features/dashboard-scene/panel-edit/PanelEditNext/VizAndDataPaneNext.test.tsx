@@ -3,7 +3,6 @@ import { createRef } from 'react';
 
 import { VizPanel } from '@grafana/scenes';
 
-import { type DashboardControls } from '../../scene/DashboardControls';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { type PanelDataPane } from '../PanelDataPane/PanelDataPane';
@@ -12,7 +11,7 @@ import { buildPanelEditScene } from '../PanelEditor';
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { VizAndDataPaneNext } from './VizAndDataPaneNext';
 import { SidebarSize } from './constants';
-import { useVizAndDataPaneLayout } from './hooks';
+import { useQueryEditorBanner, useVizAndDataPaneLayout } from './hooks';
 
 jest.mock('./hooks', () => ({
   useVizAndDataPaneLayout: jest.fn(),
@@ -86,7 +85,6 @@ function buildMockLayout(dataPane?: PanelDataPane | PanelDataPaneNext, sidebarSi
     scene: {
       panel: mockSceneRenderer<VizPanel>('panel-viz'),
       tableView: undefined,
-      controls: undefined,
       dataPane,
       dashboard: mockSceneRenderer<DashboardScene>('dashboard'),
     },
@@ -140,23 +138,13 @@ describe('VizAndDataPaneNext', () => {
       render(<VizAndDataPaneNext model={panelEditor} />);
       expect(screen.getByTestId('data-pane-content')).toBeInTheDocument();
     });
-  });
 
-  describe('when panel has controls', () => {
-    it('renders the controls', () => {
-      const base = buildMockLayout(undefined);
-      jest.mocked(useVizAndDataPaneLayout).mockReturnValue({
-        ...base,
-        scene: { ...base.scene, controls: mockSceneRenderer<DashboardControls>('panel-controls') },
-      });
-      render(<VizAndDataPaneNext model={panelEditor} />);
-      expect(screen.getByTestId('panel-controls')).toBeInTheDocument();
-    });
+    it('renders the query editor banner when enabled', () => {
+      jest.mocked(useQueryEditorBanner).mockReturnValue({ showBanner: true, dismissBanner: jest.fn() });
 
-    it('does not render controls when absent', () => {
-      jest.mocked(useVizAndDataPaneLayout).mockReturnValue(buildMockLayout(undefined));
       render(<VizAndDataPaneNext model={panelEditor} />);
-      expect(screen.queryByTestId('panel-controls')).not.toBeInTheDocument();
+
+      expect(screen.getByTestId('query-editor-banner')).toBeInTheDocument();
     });
   });
 });

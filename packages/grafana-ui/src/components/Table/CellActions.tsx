@@ -9,8 +9,8 @@ import { Stack } from '../Layout/Stack/Stack';
 import { type TooltipPlacement } from '../Tooltip/types';
 
 import { TableCellInspectorMode } from './TableCellInspector';
+import { getTextAlign } from './cellUtils';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, type TableCellProps } from './types';
-import { getTextAlign } from './utils';
 
 interface CellActionProps extends TableCellProps {
   previewMode: TableCellInspectorMode;

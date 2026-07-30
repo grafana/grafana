@@ -41,6 +41,7 @@ const (
 	HeaderPanelPluginId  = "X-Panel-Plugin-Id"
 	HeaderQueryGroupID   = "X-Query-Group-Id"    // mainly useful for finding related queries with query chunking
 	HeaderFromExpression = "X-Grafana-From-Expr" // used by datasources to identify expression queries
+	HeaderCallerID       = "X-Grafana-Caller-Id" // identifies the caller that initiated this query (e.g. an app plugin id or external tool name)
 )
 
 func ProvideService(
@@ -456,8 +457,7 @@ func (s *ServiceImpl) parseMetricRequest(ctx context.Context, user identity.Requ
 			"from", timeRange.GetFromAsMsEpoch(),
 			"to", timeRange.GetToAsMsEpoch(),
 			"interval", pq.query.Interval.Milliseconds(),
-			"max_data_points", pq.query.MaxDataPoints,
-			"query", string(modelJSON))
+			"max_data_points", pq.query.MaxDataPoints)
 	}
 
 	return req, req.validateRequest(ctx)

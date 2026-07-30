@@ -5,16 +5,13 @@ import {
   type CloudRuleIdentifier,
   GrafanaRulesSourceSymbol,
   type RuleGroupIdentifierV2,
-  type RuleIdentifier,
 } from 'app/types/unified-alerting';
 
 import { logError, logMeasurement } from '../Analytics';
 import { alertRuleApi } from '../api/alertRuleApi';
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
 import * as ruleId from '../utils/rule-id';
-import { getRuleName, isCloudRuleIdentifier } from '../utils/rules';
-
-import { useAsync } from './useAsync';
+import { getRuleName } from '../utils/rules';
 
 const { useLazyPrometheusRuleNamespacesQuery, useLazyGetRuleGroupForNamespaceQuery } = alertRuleApi;
 const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;
@@ -54,7 +51,7 @@ function useMatchingPromRuleExists() {
 
 const PREFER_CACHE_VALUE = true;
 
-export function useRuleGroupIsInSync() {
+function useRuleGroupIsInSync() {
   const [discoverDsFeatures] = useLazyDiscoverDsFeaturesQuery();
   const [fetchPrometheusRuleGroups] = useLazyPrometheusRuleNamespacesQuery();
   const [fetchRuleGroup] = useLazyGetRuleGroupForNamespaceQuery();
@@ -330,32 +327,4 @@ export function usePrometheusConsistencyCheck() {
   }
 
   return { waitForRemoval, waitForCreation };
-}
-
-export function usePrometheusCreationConsistencyCheck(ruleIdentifier: RuleIdentifier) {
-  const { matchingPromRuleExists } = useMatchingPromRuleExists();
-  const { waitForCreation } = usePrometheusConsistencyCheck();
-
-  const [actions, state] = useAsync(async (identifier: RuleIdentifier) => {
-    if (isCloudRuleIdentifier(identifier)) {
-      return waitForCreation(identifier);
-    } else {
-      // GMA rules are not supported yet
-      return Promise.resolve();
-    }
-  });
-
-  useEffect(() => {
-    if (isCloudRuleIdentifier(ruleIdentifier)) {
-      // We need to check if the rule exists first, because most of the times it does,
-      // and wait for the consistency only if the rule does not exist.
-      matchingPromRuleExists(ruleIdentifier).then((ruleExists) => {
-        if (!ruleExists) {
-          actions.execute(ruleIdentifier);
-        }
-      });
-    }
-  }, [actions, ruleIdentifier, matchingPromRuleExists]);
-
-  return { isConsistent: state.status === 'success' || state.status === 'not-executed', error: state.error };
 }

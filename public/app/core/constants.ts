@@ -14,8 +14,6 @@ export const LS_ROW_COPY_KEY = 'row-copy';
 export const LS_TAB_COPY_KEY = 'tab-copy';
 export const PANEL_BORDER = 2;
 
-export const EDIT_PANEL_ID = 23763571993;
-
 export const DEFAULT_PER_PAGE_PAGINATION = 40;
 
 export const LS_VISUALIZATION_SELECT_TAB_KEY = 'VisualizationSelectPane.ListMode';
@@ -25,3 +23,8 @@ export const MEGA_MENU_TOGGLE_ID = 'mega-menu-toggle';
  * grafana-setupguide-app plugin ID, used in extension points to provide Cloud-only UI functionality.
  */
 export const SETUPGUIDE_PLUGIN_ID = 'grafana-setupguide-app';
+
+/**
+ * grafana-assistant-app plugin ID, used in extension points to provide Assistant-only UI functionality.
+ */
+export const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';

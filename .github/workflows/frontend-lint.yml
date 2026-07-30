@@ -10,6 +10,8 @@ permissions: {}
 
 jobs:
   detect-changes:
+    # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
+    if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: Detect whether code changed
     runs-on: ubuntu-arm64-small
     permissions:
@@ -100,6 +102,7 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run typecheck
+    - run: yarn run typecheck:smoke
   lint-frontend-typecheck-enterprise:
     needs: detect-changes
     permissions:
@@ -129,36 +132,7 @@ jobs:
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - run: yarn run typecheck
-  lint-frontend-typecheck-tsgo-enterprise:
-    needs: detect-changes
-    permissions:
-      contents: read
-      id-token: write
-    continue-on-error: true  # tsgo is in preview; we don't want to block PRs if it fails, but we want to gather data on how it performs in CI
-    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false && needs.detect-changes.outputs.changed == 'true'
-    name: Typecheck (TSGO/TS7)
-    runs-on: ubuntu-x64
-    env:
-      NODE_OPTIONS: --max-old-space-size=8192
-    steps:
-    - uses: actions/checkout@v5
-      with:
-        persist-credentials: false
-    - name: Setup Node
-      uses: ./.github/actions/setup-node
-    - name: Get GitHub App token
-      id: get-github-app-token
-      uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
-      with:
-        github_app: grafana-ci-bot
-    - name: Setup Enterprise
-      uses: ./.github/actions/setup-enterprise
-      with:
-        token: ${{ steps.get-github-app-token.outputs.token }}
-    - name: Install yarn dependencies
-      uses: ./.github/actions/yarn-install
-    - run: yarn run typecheck:tsgo
+    - run: yarn run typecheck:smoke
   lint-frontend-api-clients:
     permissions:
       contents: read
@@ -231,8 +205,8 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+    # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
+    if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     name: Verify API clients (enterprise)
     runs-on: ubuntu-x64
     steps:
@@ -270,7 +244,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    if: github.event_name == 'pull_request' && needs.detect-changes.outputs.changed-frontend-packages == 'true'
+    if: github.event_name != 'pull_request' || needs.detect-changes.outputs.changed-frontend-packages == 'true'
     name: Verify packed frontend packages
     runs-on: ubuntu-x64
     steps:
@@ -377,14 +351,12 @@ jobs:
       uses: ./.github/actions/setup-enterprise
       with:
         token: ${{ steps.get-github-app-token.outputs.token }}
+    - name: Setup Node.js
+      uses: ./.github/actions/setup-node
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
     - name: Run knip
-      # TODO reduce this to just `yarn run knip`
-      run: |
-        yarn run knip --workspace '@grafana/*'
-        yarn run knip --workspace '@test-plugins/*'
-        yarn run knip --workspace '@grafana-plugins/*'
+      run: yarn run knip
 
   yarn-install-validation:
     needs:
@@ -414,4 +386,13 @@ jobs:
       if: failure() && steps.yarn-dedupe.outcome == 'failure'
       run: |
         echo "::error::yarn.lock contains duplicate dependencies. Run 'yarn dedupe' locally, commit the updated yarn.lock, and push again."
+        exit 1
+
+    - name: Check yarn constraints
+      id: yarn-constraints
+      run: yarn constraints
+    - name: Report yarn constraints failure
+      if: failure() && steps.yarn-constraints.outcome == 'failure'
+      run: |
+        echo "::error::Yarn constraints check failed. Run 'yarn constraints --fix' locally, commit the changes, and push again."
         exit 1

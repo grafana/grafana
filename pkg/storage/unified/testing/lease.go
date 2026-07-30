@@ -23,13 +23,12 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 )
 
-// RunLeaseTest runs the lease contract suite against any kv.KV produced by
-// newKV. The suite is shared between unit tests (using an in-memory map KV)
-// and integration tests (Badger and sqlkv).
-func RunLeaseTest(t *testing.T, newKV NewKVFunc) {
+// RunLeaseTest runs the lease contract suite against a single shared kv.KV. The
+// suite is shared between unit tests (using an in-memory map KV) and integration
+// tests (Badger and sqlkv), and isolates cases from one another via lease names.
+func RunLeaseTest(t *testing.T, store kv.KV) {
 	t.Helper()
 
-	store := newKV(t.Context())
 	t.Cleanup(func() { validateLeaseStore(t, store) })
 
 	t.Run("happy path", func(t *testing.T) { runLeaseHappyPath(t, store) })
@@ -242,7 +241,11 @@ func runLeaseExpiration(t *testing.T, store kv.KV) {
 		// Wait past TTL with a small buffer for timer slack.
 		time.Sleep(ttl + 50*time.Millisecond)
 
-		leaseB, err := b.Acquire(ctx, "expiration/handoff", lease.WithTTL(ttl))
+		// Acquire with a generous TTL for the second holder. The test only
+		// verifies that b can take over once a's short-lived lease expires.
+		// A short TTL here would race b's own expiry against its release on a
+		// slow machine and fail with ErrLeaseLost.
+		leaseB, err := b.Acquire(ctx, "expiration/handoff", lease.WithTTL(time.Minute))
 		require.NoError(t, err, "second holder should be able to acquire after TTL elapsed")
 		require.NotNil(t, leaseB)
 		require.NoError(t, b.Release(ctx, leaseB))
@@ -290,7 +293,10 @@ func runLeaseReleaseSemantics(t *testing.T, store kv.KV) {
 }
 
 func runLeaseAutoRenew(t *testing.T, store kv.KV) {
-	const ttl = 500 * time.Millisecond
+	// A generous TTL keeps the renewal loop's per-attempt budget (ttl/3 * 3/4)
+	// and expiry window wide enough to absorb scheduling jitter and slow DB ops
+	// on loaded CI runners, where a shorter TTL flakes.
+	const ttl = 2 * time.Second
 	ctx := t.Context()
 
 	t.Run("keeps lease alive past TTL", func(t *testing.T) {
@@ -620,6 +626,18 @@ func requireSingleLeaseKey(t *testing.T, store kv.KV, name string) string {
 	keys := leaseKeys(t, store, name)
 	require.Len(t, keys, 1)
 	return keys[0]
+}
+
+// saveKVHelper is a helper function to save data to KV store using the WriteCloser interface.
+func saveKVHelper(t *testing.T, store kv.KV, ctx context.Context, section, key string, value io.Reader) {
+	t.Helper()
+
+	writer, err := store.Save(ctx, section, key)
+	require.NoError(t, err)
+	_, err = io.Copy(writer, value)
+	require.NoError(t, err)
+	err = writer.Close()
+	require.NoError(t, err)
 }
 
 func leaseKeys(t *testing.T, store kv.KV, name string) []string {

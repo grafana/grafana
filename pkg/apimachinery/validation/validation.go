@@ -87,7 +87,7 @@ func IsValidGroup(group string) []string {
 		return []string{"group is too short"}
 	}
 	if !qualifiedNameRegexp(group) {
-		return []string{"group " + validation.RegexError(qualifiedNameErrMsg, qualifiedNameFmt, "dashboards.grafana.app", "grafana-loki-datasource")}
+		return []string{"group " + validation.RegexError(qualifiedNameErrMsg, qualifiedNameFmt, "dashboard.grafana.app", "grafana-loki-datasource")}
 	}
 	return nil
 }

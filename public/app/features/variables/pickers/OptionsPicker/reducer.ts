@@ -11,7 +11,7 @@ import { isMulti, isQuery } from '../../guard';
 // https://catonmat.net/my-favorite-regex :)
 const REGEXP_NON_ASCII = /[^ -~]/m;
 
-export interface ToggleOption {
+interface ToggleOption {
   option?: VariableOption;
   forceSelect: boolean;
   clearOthers: boolean;

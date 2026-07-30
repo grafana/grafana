@@ -60,7 +60,7 @@ export function ConnectRepositoryButton({ items }: Props) {
   );
 }
 
-export function getConfigureRepoTooltip({
+function getConfigureRepoTooltip({
   instanceConnected,
   maxReposReached,
   count,

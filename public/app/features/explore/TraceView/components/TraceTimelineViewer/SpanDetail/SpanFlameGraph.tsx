@@ -17,8 +17,8 @@ import { Trans } from '@grafana/i18n';
 import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
+import { type PyroscopeQuery } from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/pyroscope-types';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { type Query } from 'app/plugins/datasource/grafana-pyroscope-datasource/types';
 
 import {
   defaultProfilingKeys,
@@ -76,7 +76,7 @@ export default function SpanFlameGraph(props: SpanFlameGraphProps) {
     };
   }, [span.duration, span.startTime]);
 
-  const getFlameGraphData = async (request: DataQueryRequest<Query>, datasourceUid: string) => {
+  const getFlameGraphData = async (request: DataQueryRequest<PyroscopeQuery>, datasourceUid: string) => {
     const ds = await getDatasourceSrv().get(datasourceUid);
     if (ds instanceof DataSourceWithBackend) {
       const result = await lastValueFrom(ds.query(request));

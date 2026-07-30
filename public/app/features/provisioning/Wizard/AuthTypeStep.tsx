@@ -7,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Alert, Field, RadioButtonGroup, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
+import { isGitHubBased } from '../utils/repositoryTypes';
 
 import { GitHubAppFields } from './GitHubAppFields';
 import { RepositoryField } from './components/RepositoryField';
@@ -56,7 +57,7 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
   ]);
   const authTypeOptions = useMemo(() => getAuthTypeOptions(), []);
   const shouldShowRepositories = githubAuthType !== 'github-app' || githubAppMode !== 'new';
-  const isGitHub = repoType === 'github';
+  const isGitHubBasedRepo = isGitHubBased(repoType);
 
   const { isConnected: isSelectedConnectionReady } = useConnectionStatus(
     githubAuthType === 'github-app' ? githubAppConnectionName : undefined
@@ -89,20 +90,8 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
         </Alert>
       )}
 
-      {isGitHub && (
-        <Alert
-          severity="info"
-          title={t('provisioning.wizard.github-enterprise-alert-title', 'GitHub Enterprise Server')}
-        >
-          <Trans i18nKey="provisioning.wizard.github-enterprise-alert-body">
-            GitHub Enterprise Server is currently only supported through the Pure Git repository type. Native GitHub
-            Enterprise integration is planned and will be available in the upcoming months.
-          </Trans>
-        </Alert>
-      )}
-
-      {/* PAT & Github App Switch - only for GitHub repositories */}
-      {isGitHub && (
+      {/* PAT & Github App Switch - only for GitHub / GitHub Enterprise repositories */}
+      {isGitHubBasedRepo && (
         <Field
           noMargin
           label={t('provisioning.wizard.auth-type-label', 'Authentication method')}
@@ -130,13 +119,17 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
         </Field>
       )}
 
-      {githubAuthType === 'github-app' ? (
-        <GitHubAppFields onGitHubAppSubmit={onGitHubAppSubmit} />
+      {isGitHubBased(repoType) && githubAuthType === 'github-app' ? (
+        <>
+          <GitHubAppFields connectionType={repoType} onGitHubAppSubmit={onGitHubAppSubmit} />
+          {shouldShowRepositories && <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />}
+        </>
       ) : (
-        <RepositoryTokenInput />
+        <>
+          <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />
+          <RepositoryTokenInput />
+        </>
       )}
-
-      {shouldShowRepositories && <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />}
     </Stack>
   );
 }

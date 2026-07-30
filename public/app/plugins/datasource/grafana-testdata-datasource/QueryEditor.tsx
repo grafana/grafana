@@ -10,6 +10,7 @@ import { CSVFileEditor } from './components/CSVFileEditor';
 import { CSVWavesEditor } from './components/CSVWaveEditor';
 import ErrorEditor from './components/ErrorEditor';
 import ErrorWithSourceQueryEditor from './components/ErrorWithSourceEditor';
+import FlakyQueryEditor from './components/FlakyQueryEditor';
 import { GrafanaLiveEditor } from './components/GrafanaLiveEditor';
 import { NodeGraphEditor } from './components/NodeGraphEditor';
 import { PredictablePulseEditor } from './components/PredictablePulseEditor';
@@ -128,6 +129,14 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         break;
       case TestDataQueryType.ErrorWithSource:
         update.errorSource = 'plugin';
+        break;
+      case TestDataQueryType.FlakyQuery:
+        update.errorProbability = 50;
+        update.errorStatusCode = 400;
+        update.errorSource = 'downstream';
+        update.errorMessage = 'Flaky query error';
+        update.queryDelay = '5s';
+        update.queryDelayVariability = 0;
     }
 
     onUpdate(update);
@@ -200,6 +209,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         <InlineField labelWidth={14} label="Scenario">
           <Select
             inputId={`test-data-scenario-select-${query.refId}`}
+            aria-label={selectors.scenarioSelect}
             options={options}
             value={options.find((item) => item.value === query.scenarioId)}
             onChange={onScenarioChange}
@@ -271,6 +281,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
             <Input
               width={32}
               id={`labels-${query.refId}`}
+              data-testid={selectors.labelsInput(query.refId)}
               name="labels"
               onChange={onInputChange}
               value={query?.labels}
@@ -390,6 +401,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       )}
       {scenarioId === TestDataQueryType.ErrorWithSource && (
         <ErrorWithSourceQueryEditor onChange={onUpdate} query={query} ds={datasource} />
+      )}
+      {scenarioId === TestDataQueryType.FlakyQuery && (
+        <FlakyQueryEditor onChange={onUpdate} query={query} ds={datasource} />
       )}
 
       {description && <p>{description}</p>}

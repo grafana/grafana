@@ -8,6 +8,9 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
+import { isGranted } from '../hooks/abilities/abilityUtils';
+import { useGlobalAlertGroupAbility } from '../hooks/abilities/alertmanager/useAlertGroupAbility';
+import { AlertGroupAction } from '../hooks/abilities/types';
 import { ALERTING_PATHS, NAV_IDS } from '../utils/navigation';
 
 /**
@@ -30,17 +33,6 @@ function canViewAlerts(): boolean {
 }
 
 /**
- * Check if user has permission to view active notifications (alert groups)
- * Checks both internal and external permissions to match backend behavior
- */
-function canViewActiveNotifications(): boolean {
-  return (
-    contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead) ||
-    contextSrv.hasPermission(AccessControlAction.AlertingInstancesExternalRead)
-  );
-}
-
-/**
  * Returns the correct navigation settings for Alert activity pages.
  *
  * When V2 navigation is enabled, alert activity pages appear as tabs under
@@ -57,6 +49,8 @@ export function useAlertActivityNav() {
 
   // V2 Navigation: Get the alert activity nav item
   const alertActivityNav = navIndex[NAV_IDS.ALERT_ACTIVITY];
+
+  const canViewActiveNotifications = isGranted(useGlobalAlertGroupAbility(AlertGroupAction.View));
 
   // Build tabs based on permissions - memoized to avoid recreating on every render
   const tabs = useMemo(() => {
@@ -76,7 +70,7 @@ export function useAlertActivityNav() {
       });
     }
 
-    if (canViewActiveNotifications()) {
+    if (canViewActiveNotifications) {
       tabItems.push({
         id: 'alert-activity-notifications',
         text: t('alerting.navigation.active-notifications', 'Active notifications'),
@@ -87,7 +81,7 @@ export function useAlertActivityNav() {
     }
 
     return tabItems;
-  }, [location.pathname, alertActivityNav, useV2Nav]);
+  }, [location.pathname, alertActivityNav, useV2Nav, canViewActiveNotifications]);
 
   if (!useV2Nav) {
     // Legacy navigation: return simple navId (each page handles its own navId)

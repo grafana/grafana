@@ -1,18 +1,23 @@
 package api
 
 import (
+	"context"
 	"math/rand"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	models2 "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -177,6 +182,57 @@ func (r *recordingConditionValidator) Validate(_ eval.EvaluationContext, conditi
 }
 
 var _ ConditionValidator = &recordingConditionValidator{}
+
+// TestAlertingProxy_withReq_propagatesRequestContext verifies that withReq carries
+// the original request context (including identity) into the new request it creates
+// for the upstream datasource proxy.
+func TestAlertingProxy_withReq_propagatesRequestContext(t *testing.T) {
+	signedInUser := &user.SignedInUser{OrgID: 1, UserID: 1}
+
+	httpReq := httptest.NewRequest(http.MethodGet, "http://upstream/api/v1/alerts", nil)
+	httpReq = httpReq.WithContext(identity.WithRequester(httpReq.Context(), signedInUser))
+	httpReq = web.SetURLParams(httpReq, map[string]string{":DatasourceUID": "test-uid"})
+
+	ctx := &contextmodel.ReqContext{
+		Context: &web.Context{
+			Req:  httpReq,
+			Resp: web.NewResponseWriter(http.MethodGet, httptest.NewRecorder()),
+		},
+		SignedInUser: signedInUser,
+		Logger:       log.NewNopLogger(),
+	}
+
+	var capturedCtx context.Context
+	cache := &contextCapturingCacheService{
+		onGetByUID: func(c context.Context) { capturedCtx = c },
+	}
+	proxy := &AlertingProxy{
+		DataProxy: &datasourceproxy.DataSourceProxyService{DataSourceCache: cache},
+	}
+
+	u, err := url.Parse("http://upstream/api/v1/alerts")
+	require.NoError(t, err)
+	proxy.withReq(ctx, http.MethodGet, u, nil, nil, nil)
+
+	require.NotNil(t, capturedCtx, "GetDatasourceByUID should have been called")
+	_, err = identity.GetRequester(capturedCtx)
+	require.NoError(t, err, "request context forwarded to datasource proxy must carry the identity")
+}
+
+type contextCapturingCacheService struct {
+	onGetByUID func(context.Context)
+}
+
+func (c *contextCapturingCacheService) GetDatasource(_ context.Context, _ int64, _ identity.Requester, _ bool) (*datasources.DataSource, error) {
+	return nil, datasources.ErrDataSourceNotFound
+}
+
+func (c *contextCapturingCacheService) GetDatasourceByUID(ctx context.Context, _ string, _ identity.Requester, _ bool) (*datasources.DataSource, error) {
+	if c.onGetByUID != nil {
+		c.onGetByUID(ctx)
+	}
+	return nil, datasources.ErrDataSourceNotFound
+}
 
 func TestIsPrometheusCompatible(t *testing.T) {
 	testCases := []struct {

@@ -14,7 +14,7 @@ import { type ActionMeta, PluginSignatureBadge, Select, Stack } from '@grafana/u
 
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 
-import { ExpressionDatasourceRef } from './../utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef } from './../utils/expressionRef';
 
 /**
  * Component props description for the {@link DataSourcePicker}
@@ -136,7 +136,7 @@ export const DataSourcePicker = memo(function DataSourcePicker({
     return dataSourceSrv
       .getList({ alerting, tracing, metrics, logs, dashboard, mixed, variables, annotations, pluginId, filter, type })
       .map((ds) => ({
-        value: ds.name,
+        value: ds.uid,
         label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
         imgUrl: ds.meta.info.logos.small,
         meta: ds.meta,

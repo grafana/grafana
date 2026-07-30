@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { config } from '@grafana/runtime';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { isProvisionedDashboard as isProvisionedDashboardFromMeta } from 'app/features/browse-dashboards/api/isProvisioned';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { isItemManagedByRepository, isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { useSelector } from 'app/types/store';
 
@@ -22,8 +21,6 @@ export function useSelectionProvisioningStatus(
   const isProvisionedInstance = useIsProvisionedInstance();
   const [, stateManager] = useSearchStateManager();
   const isSearching = stateManager.hasSearchFilters();
-  const provisioningEnabled = config.featureToggles.provisioning;
-
   const [status, setStatus] = useState({ hasProvisioned: false, hasNonProvisioned: false });
   const [folderCache, setFolderCache] = useState<Record<string, boolean>>({});
   const [dashboardCache, setDashboardCache] = useState<Record<string, boolean>>({});
@@ -54,8 +51,7 @@ export function useSelectionProvisioningStatus(
       }
       try {
         const folder = await folderClient.get(uid);
-        const managedBy = folder.metadata?.annotations?.[AnnoKeyManagerKind];
-        const result = managedBy === ManagerKind.Repo;
+        const result = isManagedByRepository(folder);
         setFolderCache((prev) => ({ ...prev, [uid]: result }));
         return result;
       } catch {
@@ -91,16 +87,16 @@ export function useSelectionProvisioningStatus(
 
       const item = findItemInState(uid);
       if (isFolder) {
-        return item?.managedBy === ManagerKind.Repo;
+        return isItemManagedByRepository(item);
       }
 
       // Check parent folder first for dashboards
       const parent = item?.parentUID ? findItemInState(item.parentUID) : undefined;
-      if (parent?.managedBy === ManagerKind.Repo) {
+      if (isItemManagedByRepository(parent)) {
         return true;
       }
 
-      return item?.managedBy === ManagerKind.Repo;
+      return isItemManagedByRepository(item);
     },
     [isSearching, getFolderMeta, getDashboardMeta, findItemInState]
   );
@@ -110,11 +106,6 @@ export function useSelectionProvisioningStatus(
       // Early returns for simple cases
       if (isProvisionedInstance || isParentProvisioned) {
         setStatus({ hasProvisioned: true, hasNonProvisioned: false });
-        return;
-      }
-
-      if (!provisioningEnabled) {
-        setStatus({ hasProvisioned: false, hasNonProvisioned: true });
         return;
       }
 
@@ -154,7 +145,7 @@ export function useSelectionProvisioningStatus(
     };
 
     checkProvisioningStatus();
-  }, [selectedItems, isProvisionedInstance, isParentProvisioned, checkItemProvisioning, provisioningEnabled]);
+  }, [selectedItems, isProvisionedInstance, isParentProvisioned, checkItemProvisioning]);
 
   return {
     hasProvisioned: status.hasProvisioned,

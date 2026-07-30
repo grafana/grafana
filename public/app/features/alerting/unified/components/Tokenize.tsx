@@ -150,4 +150,4 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export { Tokenize, Token };
+export { Tokenize };

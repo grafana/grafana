@@ -50,6 +50,16 @@ func Validate(_ context.Context, obj runtime.Object, allowInsecure bool) field.E
 		return list
 	}
 
+	// A custom webhook URL and disabling webhooks are mutually exclusive:
+	// one says "receive webhooks at this address" while the other says "never use webhooks."
+	if repo.Spec.Webhook != nil && repo.Spec.Webhook.Disabled && repo.Spec.Webhook.BaseURL != "" {
+		list = append(list, field.Invalid(
+			field.NewPath("spec", "webhook", "disabled"),
+			repo.Spec.Webhook.Disabled,
+			"cannot be true when spec.webhook.baseUrl is set",
+		))
+	}
+
 	// Validate git-related fields (branch, path, token/connection) using the shared git validator
 	list = append(list, git.ValidateGitConfigFields(repo, gh.URL, gh.Branch, gh.Path, allowInsecure)...)
 	return list

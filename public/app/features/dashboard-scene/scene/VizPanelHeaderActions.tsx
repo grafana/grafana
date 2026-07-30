@@ -160,7 +160,7 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
   }
 }
 
-export function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<VizPanelHeaderActions>) {
+function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<VizPanelHeaderActions>) {
   const { hideGroupByAction, isGroupByActionSupported } = model.useState();
   const variables = sceneGraph.getVariables(model);
   const groupByVariable = variables.state.variables.find(

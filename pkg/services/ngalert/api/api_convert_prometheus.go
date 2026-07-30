@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -67,6 +68,8 @@ const (
 	configForceReplaceHeader = "X-Grafana-Alerting-Config-Force-Replace"
 	// dryRunHeader if specified, will validate the configuration without saving it
 	dryRunHeader = "X-Grafana-Alerting-Dry-Run"
+	// promoteHeader if specified, will promote the merge imported configuration into Grafana and save. This is a one-off operation
+	promoteHeader = "X-Grafana-Alerting-Promote"
 
 	// versionMessageHeader is the header that specifies an optional message for rule versions.
 	versionMessageHeader = "X-Grafana-Alerting-Version-Message"
@@ -142,9 +145,10 @@ type ConvertPrometheusSrv struct {
 
 type Alertmanager interface {
 	DeleteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, identifier string) error
-	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, extraConfig v1.ExtraConfiguration, replace bool, dryRun bool) (merge.RenameResources, error)
+	SaveAndApplyExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, extraConfig v1.ExtraConfiguration, replace, dryRun, promote bool) (merge.MergeResult, error)
 	GetAlertmanagerConfiguration(ctx context.Context, org int64, withAutogen bool) (apimodels.GettableUserConfig, error)
 	IsExternalAMSyncConfiguredForOrg(ctx context.Context, orgID int64) (bool, error)
+	PromoteExtraConfiguration(ctx context.Context, org int64, user identity.Requester, authz notifier.ExtraConfigAuthz, identifier string) (merge.MergeResult, error)
 }
 
 func NewConvertPrometheusSrv(
@@ -227,12 +231,12 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 	}
 	logger.Info("Deleting all Prometheus-imported rule groups", "folder_uid", namespace.UID, "folder_title", namespaceTitle)
 
-	provenance := getProvenance(c)
+	manager := getManagerProperties(c)
 	filterOpts := &provisioning.FilterOptions{
 		NamespaceUIDs:               []string{namespace.UID},
 		HasPrometheusRuleDefinition: new(true),
 	}
-	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
+	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, manager, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -258,13 +262,13 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contex
 	}
 	logger.Info("Deleting Prometheus-imported rule group", "folder_uid", folder.UID, "folder_title", namespaceTitle, "group", group)
 
-	provenance := getProvenance(c)
+	manager := getManagerProperties(c)
 	filterOpts := &provisioning.FilterOptions{
 		NamespaceUIDs:               []string{folder.UID},
 		RuleGroups:                  []string{group},
 		HasPrometheusRuleDefinition: new(true),
 	}
-	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, provenance, filterOpts)
+	err = srv.alertRuleService.DeleteRuleGroups(c.Req.Context(), c.SignedInUser, manager, filterOpts)
 	if errors.Is(err, models.ErrAlertRuleGroupNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -406,13 +410,13 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 		}
 	}
 
-	provenance := getProvenance(c)
+	manager := getManagerProperties(c)
 
-	// If the provenance is not ConvertedPrometheus, we don't keep the original rule definition.
+	// If the manager is not ConvertedPrometheus, we don't keep the original rule definition.
 	// This is because the rules can be modified through the UI, which may break compatibility
 	// with the Prometheus format. We only preserve the original rule definition
 	// to ensure we can return them in this API in Prometheus format.
-	keepOriginalRuleDefinition := provenance == models.ProvenanceConvertedPrometheus
+	keepOriginalRuleDefinition := manager.Kind == utils.ManagerKindClassicConvertedPrometheus //nolint:staticcheck
 
 	notificationSettings, err := parseNotificationSettingsHeader(c)
 	if err != nil {
@@ -474,7 +478,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 	}
 
 	// 3. Update the GMA Rules in the DB
-	err = srv.alertRuleService.ReplaceRuleGroups(c.Req.Context(), c.SignedInUser, grafanaGroups, provenance, versionMessage)
+	err = srv.alertRuleService.ReplaceRuleGroups(c.Req.Context(), c.SignedInUser, grafanaGroups, manager, versionMessage)
 	if err != nil {
 		logger.Error("Failed to replace rule groups", "error", err)
 		return errorToResponse(err)
@@ -594,8 +598,7 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c *contextmodel.ReqContext, amCfg apimodels.AlertmanagerUserConfig) response.Response {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) ||
-		!srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 	}
 
@@ -621,11 +624,18 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 		return errorToResponse(err)
 	}
 
+	promote, err := parseBooleanHeader(c.Req.Header.Get(promoteHeader), promoteHeader)
+	if err != nil {
+		logger.Error("Failed to parse promote header", "error", err)
+		return errorToResponse(err)
+	}
+
 	identifier, err := parseConfigIdentifierHeader(c)
 	if err != nil {
 		logger.Error("Failed to parse config identifier header", "error", err)
 		return errorToResponse(err)
 	}
+	logger = logger.New("identifier", identifier)
 
 	ec := v1.ExtraConfiguration{
 		Identifier:         identifier,
@@ -634,7 +644,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 	}
 	err = ec.Validate()
 	if err != nil {
-		logger.Error("Invalid alertmanager configuration", "error", err, "identifier", identifier)
+		logger.Error("Invalid alertmanager configuration", "error", err)
 		return errorToResponse(err)
 	}
 
@@ -644,40 +654,50 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 		return errorToResponse(err)
 	}
 
-	renamed, err := srv.am.SaveAndApplyExtraConfiguration(c.Req.Context(), c.GetOrgID(), c.SignedInUser, srv.importsAuthz, ec, replace, dryRun)
+	result, err := srv.am.SaveAndApplyExtraConfiguration(c.Req.Context(), c.GetOrgID(), c.SignedInUser, srv.importsAuthz, ec, replace, dryRun, promote)
 	if err != nil {
-		logger.Error("Failed to save alertmanager configuration", "error", err, "identifier", identifier)
+		logger.Error("Failed to save alertmanager configuration", "error", err)
 		return errorToResponse(fmt.Errorf("failed to save alertmanager configuration: %w", err))
 	}
 
-	// Convert merge.RenameResources to API RenameResources type
-	var apiRenamed *apimodels.RenameResources
-	if len(renamed.Receivers) > 0 || len(renamed.TimeIntervals) > 0 {
-		apiRenamed = &apimodels.RenameResources{
-			Receivers:     renamed.Receivers,
-			TimeIntervals: renamed.TimeIntervals,
+	apiResp := buildConvertResponse(result)
+
+	logCtx := append(result.LogContext(), "replace", replace)
+	if dryRun {
+		logger.Debug("Dry run: alertmanager configuration validated successfully", logCtx...)
+		return response.JSON(http.StatusOK, apiResp)
+	}
+	if promote {
+		logger.Info("Successfully imported and promoted alertmanager configuration", logCtx...)
+	} else {
+		logger.Info("Successfully updated alertmanager configuration with imported Prometheus config", logCtx...)
+	}
+	return response.JSON(http.StatusAccepted, apiResp)
+}
+
+func buildConvertResponse(result merge.MergeResult) apimodels.ConvertAlertmanagerResponse {
+	resp := apimodels.ConvertAlertmanagerResponse{
+		Status: "success",
+		Stats: &apimodels.MergeStats{
+			AddedRoute:           result.AddedRoute,
+			AddedReceivers:       result.AddedReceivers,
+			AddedTimeIntervals:   result.AddedTimeIntervals,
+			AddedTemplates:       result.AddedTemplates,
+			AddedInhibitionRules: result.AddedInhibitionRules,
+		},
+	}
+	if len(result.Receivers) > 0 || len(result.TimeIntervals) > 0 {
+		resp.RenameResources = &apimodels.RenameResources{
+			Receivers:     result.Receivers,
+			TimeIntervals: result.TimeIntervals,
 		}
 	}
-
-	if dryRun {
-		logger.Info("Dry run: alertmanager configuration validated successfully", "identifier", identifier, "replace", replace)
-		return response.JSON(http.StatusOK, apimodels.ConvertAlertmanagerResponse{
-			Status:          "success",
-			RenameResources: apiRenamed,
-		})
-	}
-
-	logger.Info("Successfully updated alertmanager configuration with imported Prometheus config", "identifier", identifier, "replace", replace)
-	return response.JSON(http.StatusAccepted, apimodels.ConvertAlertmanagerResponse{
-		Status:          "success",
-		RenameResources: apiRenamed,
-	})
+	return resp
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) ||
-		!srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 	}
 
@@ -705,7 +725,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 	}
 
 	if extraCfg == nil {
-		return response.Error(http.StatusNotFound, "Alertmanager configuration not found", nil)
+		return errorToResponse(notifier.ErrAlertmanagerExtraConfigNotFound.Errorf("extra configuration not found"))
 	}
 
 	sanitizedConfig, err := extraCfg.GetSanitizedAlertmanagerConfigYAML()
@@ -726,8 +746,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingMultiplePolicies) ||
-		!srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 	}
 
@@ -747,6 +766,24 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(
 
 	logger.Info("Successfully deleted extra alertmanager configuration", "identifier", identifier)
 	return successfulResponse()
+}
+
+func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPromoteAlertmanagerConfig(c *contextmodel.ReqContext, identifier string) response.Response {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
+		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
+	}
+
+	logger := srv.logger.FromContext(c.Req.Context())
+
+	stats, err := srv.am.PromoteExtraConfiguration(c.Req.Context(), c.GetOrgID(), c.SignedInUser, srv.importsAuthz, identifier)
+	if err != nil {
+		logger.Error("Failed to promote alertmanager configuration", "error", err, "identifier", identifier)
+		return errorToResponse(fmt.Errorf("failed to promote alertmanager configuration: %w", err))
+	}
+
+	logger.Info("Successfully promoted extra alertmanager configuration to main configuration", append(stats.LogContext(), "identifier", identifier)...)
+	return response.JSON(http.StatusAccepted, buildConvertResponse(stats))
 }
 
 // parseBooleanHeader parses a boolean header value, returning an error if the header
@@ -842,14 +879,14 @@ func promGroupHasRecordingRules(promGroup apimodels.PrometheusRuleGroup) bool {
 	return false
 }
 
-// getProvenance determines the provenance value to use for rules created via the Prometheus conversion API.
-// If the X-Disable-Provenance header is present in the request, returns ProvenanceNone,
-// otherwise returns ProvenanceConvertedPrometheus.
-func getProvenance(ctx *contextmodel.ReqContext) models.Provenance {
+// getManagerProperties determines the ManagerProperties to use for rules created via the Prometheus conversion API.
+// If the X-Disable-Provenance header is present in the request, returns empty (unmanaged),
+// otherwise returns ManagerKindClassicConvertedPrometheus.
+func getManagerProperties(ctx *contextmodel.ReqContext) utils.ManagerProperties {
 	if _, disabled := ctx.Req.Header[disableProvenanceHeaderName]; disabled {
-		return models.ProvenanceNone
+		return utils.ManagerProperties{}
 	}
-	return models.ProvenanceConvertedPrometheus
+	return utils.ManagerProperties{Kind: utils.ManagerKindClassicConvertedPrometheus} //nolint:staticcheck
 }
 
 func parseNotificationSettingsHeader(ctx *contextmodel.ReqContext) (*models.NotificationSettings, error) {

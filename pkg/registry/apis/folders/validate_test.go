@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -932,7 +933,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    2,
 					},
@@ -952,7 +953,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    2,
 					},
@@ -1030,7 +1031,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    2, // not empty
 					},
@@ -1072,7 +1073,7 @@ func TestValidateDelete(t *testing.T) {
 			stats: &resourcepb.ResourceStatsResponse{
 				Stats: []*resourcepb.ResourceStatsResponse_Stats{
 					{
-						Group:    "folders.grafana.app",
+						Group:    "folder.grafana.app",
 						Resource: "folders",
 						Count:    10, // now validated
 					},
@@ -1546,6 +1547,7 @@ func TestCheckMoveAccess(t *testing.T) {
 			// All access checks must be batched into one BatchCheck round-trip.
 			if mock != nil {
 				require.Equal(t, 1, mock.batchCheckCall, "expected exactly one BatchCheck call")
+				require.Empty(t, mock.badCorrelationID, "correlation IDs must satisfy OpenFGA's regex")
 			}
 		})
 	}
@@ -1570,17 +1572,21 @@ func TestCheckMoveAccess(t *testing.T) {
 	t.Run("fails closed when BatchCheck omits an escalation verb result", func(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
 		mock := newMockAccessClient([]allow{canCreateFolderInNew})
-		mock.dropResultFor = "newFolder|" + utils.VerbGet
+		mock.dropResultFor = "newFolder-" + utils.VerbGet
 		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
 		require.ErrorContains(t, err, "no result for verb")
 	})
 }
 
+// correlationIDPattern is the CorrelationId regex enforced by OpenFGA
+var correlationIDPattern = regexp.MustCompile(`^[\w\d-]{1,36}$`)
+
 type mockAccessClient struct {
-	allowed        map[allow]struct{}
-	batchCheckCall int
-	batchCheckErr  error
-	dropResultFor  string // CorrelationID to omit from BatchCheckResponse, simulating a bad server
+	allowed          map[allow]struct{}
+	batchCheckCall   int
+	batchCheckErr    error
+	dropResultFor    string // CorrelationID to omit from BatchCheckResponse, simulating a bad server
+	badCorrelationID string // first CorrelationID seen that OpenFGA would reject
 }
 
 func newMockAccessClient(allows []allow) *mockAccessClient {
@@ -1603,6 +1609,9 @@ func (m *mockAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req
 	}
 	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
 	for _, c := range req.Checks {
+		if m.badCorrelationID == "" && !correlationIDPattern.MatchString(c.CorrelationID) {
+			m.badCorrelationID = c.CorrelationID
+		}
 		if c.CorrelationID == m.dropResultFor {
 			continue
 		}
@@ -1623,5 +1632,10 @@ func (m *mockSearchClient) RebuildIndexes(ctx context.Context, in *resourcepb.Re
 
 // VectorSearch implements resourcepb.ResourceIndexClient.
 func (m *mockSearchClient) VectorSearch(ctx context.Context, in *resourcepb.VectorSearchRequest, opts ...grpc.CallOption) (*resourcepb.VectorSearchResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+// HybridSearch implements resourcepb.ResourceIndexClient.
+func (m *mockSearchClient) HybridSearch(ctx context.Context, in *resourcepb.HybridSearchRequest, opts ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
