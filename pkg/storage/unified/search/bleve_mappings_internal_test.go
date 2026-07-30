@@ -323,7 +323,10 @@ func TestPostRankFacetTermsMatchKeywordVariant(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, idx.Close()) })
 
-	doc := &resource.IndexableDocument{Fields: map[string]any{"summary": "Mixed Case"}}
+	doc := &resource.IndexableDocument{
+		Key:    &resourcepb.ResourceKey{Group: gvr.Group, Resource: gvr.Resource},
+		Fields: map[string]any{"summary": "Mixed Case"},
+	}
 	populateFieldVariants(doc, fieldVariantsOf(defs))
 	require.NoError(t, idx.Index("widget", doc))
 
