@@ -1163,11 +1163,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/AlertRuleForm.tsx": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 8
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/route-settings/ActiveTimingFields.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -1254,11 +1249,6 @@
   "public/app/features/alerting/unified/mocks.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/rule-editor/formDefaults.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 6
     }
   },
   "public/app/features/alerting/unified/types/alerting.ts": {
@@ -2828,11 +2818,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/bargauge/BarGaugePanel.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/candlestick/CandlestickPanel.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
@@ -3011,7 +2996,7 @@
       "count": 4
     }
   },
-  "public/app/plugins/panel/text/textPanelMigrationHandler.ts": {
+  "public/app/plugins/panel/text/v1/textPanelMigrationHandler.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
     }

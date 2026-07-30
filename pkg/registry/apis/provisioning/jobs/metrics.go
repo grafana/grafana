@@ -9,6 +9,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 type JobMetrics struct {
@@ -22,6 +23,21 @@ type JobMetrics struct {
 
 	resourceOpsTotal *prometheus.CounterVec // per-resource outcome counter
 }
+
+// claimTrigger records what enqueued the work-queue key that a worker is now
+// processing. It aliases the shared unified-informer type so the driver's local
+// vocabulary matches the metric's source label.
+type claimTrigger = usinformer.ProcessTrigger
+
+const (
+	triggerLive    = usinformer.TriggerLive
+	triggerRelist  = usinformer.TriggerRelist
+	triggerInitial = usinformer.TriggerInitial
+)
+
+// resourceLabelJobs is the resource label value the driver emits on the
+// processing metrics.
+const resourceLabelJobs = "jobs"
 
 type QueueMetrics struct {
 	queueSize     *prometheus.GaugeVec

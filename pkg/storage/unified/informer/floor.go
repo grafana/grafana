@@ -12,7 +12,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -129,62 +128,6 @@ func (f *RVFloor) sweepLocked() {
 
 func floorKey(namespace, name string) string {
 	return namespace + "/" + name
-}
-
-// WithRVFloor wraps a delta source so every delivered event maintains the floor
-// before the wrapped handler runs: adds and updates raise it to the object's
-// announced version, deletes forget it. Raising first means that by the time a
-// controller's handler enqueues the key, the floor its reconcile read must meet
-// is already in place.
-func WithRVFloor(source DeltaSource, floor *RVFloor) DeltaSource {
-	return floorTrackingSource{DeltaSource: source, floor: floor}
-}
-
-type floorTrackingSource struct {
-	DeltaSource
-	floor *RVFloor
-}
-
-func (s floorTrackingSource) AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
-	return s.DeltaSource.AddEventHandler(floorTrackingHandler{next: handler, floor: s.floor})
-}
-
-type floorTrackingHandler struct {
-	next  cache.ResourceEventHandler
-	floor *RVFloor
-}
-
-func (h floorTrackingHandler) OnAdd(obj interface{}, isInInitialList bool) {
-	h.raise(obj)
-	h.next.OnAdd(obj, isInInitialList)
-}
-
-func (h floorTrackingHandler) OnUpdate(oldObj, newObj interface{}) {
-	h.raise(newObj)
-	h.next.OnUpdate(oldObj, newObj)
-}
-
-func (h floorTrackingHandler) OnDelete(obj interface{}) {
-	if acc, err := apimeta.Accessor(obj); err == nil {
-		h.floor.Forget(acc.GetNamespace(), acc.GetName())
-	}
-	h.next.OnDelete(obj)
-}
-
-// raise lifts the floor to the object's resource version. Objects without a
-// parseable version (never expected from the NATS informer, which stamps live
-// events and re-lists full objects) simply don't move the floor, so a missing
-// version degrades to unchecked reads rather than blocking them.
-func (h floorTrackingHandler) raise(obj interface{}) {
-	acc, err := apimeta.Accessor(obj)
-	if err != nil {
-		return
-	}
-	rv, err := strconv.ParseInt(acc.GetResourceVersion(), 10, 64)
-	if err != nil {
-		return
-	}
-	h.floor.Raise(acc.GetNamespace(), acc.GetName(), rv)
 }
 
 // FreshReader bundles a freshness floor with the retry policy GetFresh uses to

@@ -11,6 +11,7 @@ import (
 	alertingNotify "github.com/grafana/alerting/notify"
 	emailV0 "github.com/grafana/alerting/receivers/email/v0mimir1"
 	webhookV0 "github.com/grafana/alerting/receivers/webhook/v0mimir1"
+	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -236,15 +237,26 @@ inhibit_rules:
 	require.NoError(t, err)
 	require.NotNil(t, convertedDB)
 
+	// The round-trip is lossless except that deprecated mute_time_intervals are folded into
+	// time_intervals (mute first) by design, so build the expectation from the same fold.
+	folderIntervals := make([]config.TimeInterval, 0, len(originalDB.AlertmanagerConfig.MuteTimeIntervals)+len(originalDB.AlertmanagerConfig.TimeIntervals))
+	for _, mt := range originalDB.AlertmanagerConfig.MuteTimeIntervals {
+		folderIntervals = append(folderIntervals, config.TimeInterval(mt))
+	}
+	originalDB.AlertmanagerConfig.TimeIntervals = append(folderIntervals, originalDB.AlertmanagerConfig.TimeIntervals...)
+	originalDB.AlertmanagerConfig.MuteTimeIntervals = nil
+
 	diff := cmp.Diff(originalDB, convertedDB, cmpopts.IgnoreUnexported(AMConfigDB{}, definition.Route{}, labels.Matcher{}))
 	if diff != "" {
 		t.Errorf("Unexpected change in converted DB: %v", diff)
 	}
 
+	expectedJSON, err := json.Marshal(originalDB)
+	require.NoError(t, err)
 	convertedJSON, err := json.Marshal(convertedDB)
 	require.NoError(t, err)
 
-	require.JSONEq(t, configJSON, string(convertedJSON),
+	require.JSONEq(t, string(expectedJSON), string(convertedJSON),
 		"Round-trip conversion should be lossless")
 }
 

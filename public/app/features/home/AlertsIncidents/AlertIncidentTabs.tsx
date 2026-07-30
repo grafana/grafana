@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { t } from '@grafana/i18n';
 import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
-import { useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN } from '../DashboardTabs/types';
@@ -14,6 +14,7 @@ import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
 import { FiringAlertsCardView } from './FiringAlertsCard';
 import { IncidentsCardView } from './IncidentsCard';
+import { TeamFilterCombobox } from './TeamFilterCombobox';
 import { canViewFiringAlerts, useFiringAlerts } from './useFiringAlerts';
 import { useIncidents } from './useIncidents';
 
@@ -21,7 +22,7 @@ const ALERTS_TAB_ID = 'firing-alerts';
 const INCIDENTS_TAB_ID = 'incidents';
 
 export function AlertIncidentTabs() {
-  const { installed, loading } = useIrmPlugin(SupportedPlugin.Incident);
+  const { installed, loading } = usePluginBridge(SupportedPlugin.Irm);
   const canViewIncidents = Boolean(installed && !loading);
   const canViewAlerts = canViewFiringAlerts();
 
@@ -42,9 +43,11 @@ function AlertIncidentTabsInner({
 }) {
   // Default to alerts tab if alerts are available, otherwise default to incidents tab
   const [activeTab, setActiveTab] = useState(canViewAlerts ? ALERTS_TAB_ID : INCIDENTS_TAB_ID);
-  const alertsData = useFiringAlerts();
+  // Kept across tab switches so returning to the Alerts tab restores the filter.
+  const [selectedTeam, setSelectedTeam] = useState<string | undefined>();
+  const alertsData = useFiringAlerts(selectedTeam);
   const incidentsData = useIncidents();
-  const { count, hasAlerts, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
+  const { count, hasAlerts, hasTeams, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
   const {
     loading: incidentsLoading,
     error: incidentsError,
@@ -91,12 +94,18 @@ function AlertIncidentTabsInner({
       : []),
   ];
   return (
-    <Stack direction="column" gap={2} minWidth={0}>
-      <Stack justifyContent="space-between" alignItems="center">
+    <Stack direction="column" gap={1} minWidth={0}>
+      <Stack justifyContent="space-between" alignItems="center" minHeight={4}>
         <Text element="h2" variant="h5">
           {title}
         </Text>
-        {/* TODO: team dropdown */}
+        {canViewAlerts && (
+          // Hidden rather than unmounted on the Incidents tab, so the combobox keeps
+          // its fetched team values instead of refetching them on every tab switch.
+          <div hidden={activeTab !== ALERTS_TAB_ID}>
+            <TeamFilterCombobox selectedTeam={selectedTeam} onChange={setSelectedTeam} userHasTeams={hasTeams} />
+          </div>
+        )}
       </Stack>
 
       <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>

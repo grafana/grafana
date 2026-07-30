@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -106,38 +105,6 @@ func TestRVFloor_ReRaiseKeepsEntryAlive(t *testing.T) {
 	f.Raise("ns", "other", rvFresh) // trigger a sweep
 
 	assert.Equal(t, rvFresh, f.Floor("ns", "r"), "a re-announced floor must not expire")
-}
-
-// countingHandler records delegated calls so the wrapper's pass-through can be
-// asserted alongside its floor bookkeeping.
-type countingHandler struct{ adds, updates, deletes int }
-
-func (h *countingHandler) OnAdd(interface{}, bool)   { h.adds++ }
-func (h *countingHandler) OnUpdate(_, _ interface{}) { h.updates++ }
-func (h *countingHandler) OnDelete(interface{})      { h.deletes++ }
-
-var _ cache.ResourceEventHandler = (*countingHandler)(nil)
-
-func TestFloorTrackingHandler(t *testing.T) {
-	floor := NewRVFloor()
-	next := &countingHandler{}
-	h := floorTrackingHandler{next: next, floor: floor}
-
-	h.OnAdd(objWithRV("r", rvStale), false)
-	assert.Equal(t, rvStale, floor.Floor(testNamespace, "r"), "OnAdd raises the floor to the announced version")
-
-	h.OnUpdate(objWithRV("r", rvStale), objWithRV("r", rvFresh))
-	assert.Equal(t, rvFresh, floor.Floor(testNamespace, "r"), "OnUpdate raises the floor from the new object")
-
-	h.OnAdd(obj("unversioned"), false)
-	assert.Zero(t, floor.Floor(testNamespace, "unversioned"), "objects without a parseable version do not move the floor")
-
-	h.OnDelete(objWithRV("r", rvFresh))
-	assert.Zero(t, floor.Floor(testNamespace, "r"), "OnDelete forgets the floor")
-
-	require.Equal(t, 2, next.adds)
-	require.Equal(t, 1, next.updates)
-	require.Equal(t, 1, next.deletes)
 }
 
 func notFound(name string) error {

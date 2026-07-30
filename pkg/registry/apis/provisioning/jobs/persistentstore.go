@@ -228,49 +228,9 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string) (jo
 	}
 
 	// Every attempt conflicted; treat the job as claimed by someone else. If it is in fact
-	// still unclaimed, the backstop poll re-discovers it.
+	// still unclaimed, the informer re-list re-discovers it.
 	logger.Debug("job claim conflicted repeatedly - treating as claimed by another worker")
 	return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s' after %d conflicts: %w", name, namespace, claimConflictRetries, ErrAlreadyClaimed)
-}
-
-// ListUnclaimedJobs lists jobs that no worker has claimed yet, up to limit.
-// It returns a single page: callers poll periodically, so a truncated result
-// self-corrects as claims shrink the unclaimed set.
-func (s *persistentStore) ListUnclaimedJobs(ctx context.Context, limit int) ([]*provisioning.Job, error) {
-	ctx, span := tracing.Start(ctx, "provisioning.jobs.list_unclaimed_jobs")
-	defer span.End()
-
-	// Set up provisioning identity to access jobs across all namespaces
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, "*")
-	if err != nil {
-		span.RecordError(err)
-		return nil, apifmt.Errorf("failed to grant provisioning identity for listing unclaimed jobs: %w", err)
-	}
-
-	requirement, err := labels.NewRequirement(LabelJobClaim, selection.DoesNotExist, nil)
-	if err != nil {
-		span.RecordError(err)
-		return nil, apifmt.Errorf("could not create requirement: %w", err)
-	}
-
-	jobList, err := s.client.Jobs("").List(ctx, metav1.ListOptions{
-		LabelSelector: labels.NewSelector().Add(*requirement).String(),
-		Limit:         int64(limit),
-	})
-	if err != nil {
-		span.RecordError(err)
-		return nil, apifmt.Errorf("failed to list unclaimed jobs: %w", err)
-	}
-
-	result := make([]*provisioning.Job, len(jobList.Items))
-	for i := range jobList.Items {
-		result[i] = &jobList.Items[i]
-	}
-
-	span.SetAttributes(attribute.Int("jobs_found", len(result)))
-	logging.FromContext(ctx).Debug("found unclaimed jobs", "count", len(result))
-
-	return result, nil
 }
 
 // Update saves the job back to the store.

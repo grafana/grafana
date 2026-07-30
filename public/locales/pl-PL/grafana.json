@@ -5610,135 +5610,6 @@
       "switch-layout-tab": "Przełącz układ",
       "tab-title": "Zmień tytuł karty"
     },
-    "edit-pane": {
-      "annotation": {
-        "change-data-source": "Zmień źródło danych adnotacji",
-        "choose-panels": "Wybierz panele",
-        "color": "Kolor",
-        "color-description": "Kolor używany dla znaczników zdarzeń związanych z adnotacją",
-        "data-source": "Źródło danych",
-        "display": "Pokaż opcje adnotacji w:",
-        "display-options": {
-          "above-dashboard": "Nad pulpitem",
-          "controls-menu": "Menu sterowania",
-          "controls-menu-description": "Dostępne, gdy menu sterowania jest otwarte",
-          "hidden": "Ukryte",
-          "hidden-description": "Ukrywa przełącznik do włączania lub wyłączania tej adnotacji"
-        },
-        "enabled": "Włączony",
-        "enabled-description": "Po włączeniu zapytanie dotyczące adnotacji jest wysyłane przy każdym odświeżeniu pulpitu",
-        "name": "Nazwa",
-        "open-query-editor": "Otwórz edytor zapytań",
-        "open-query-editor-tooltip": "Otwórz edytor zapytań, aby skonfigurować zapytanie dotyczące adnotacji",
-        "panel-filter": {
-          "all-panels": "Wszystkie panele",
-          "all-panels-description": "Wyślij dane adnotacji do wszystkich paneli, które obsługują adnotacje",
-          "all-panels-except": "Wszystkie panele z wyjątkiem",
-          "all-panels-except-description": "Nie wysyłaj danych adnotacji do następujących paneli",
-          "selected-panels": "Wybrane panele",
-          "selected-panels-description": "Wyślij adnotacje do wyraźnie wymienionych paneli"
-        },
-        "query": "Zapytanie",
-        "query-editor-close": "Zamknij",
-        "query-editor-modal-title": "Zapytanie dotyczące adnotacji",
-        "show-in": "Pokaż w"
-      },
-      "annotations": {
-        "add-annotation": "Dodaj komentarz",
-        "reorder": "Przeciągnij, aby zmienić kolejność",
-        "select-annotation": "Wybierz"
-      },
-      "elements": {
-        "annotation": "Adnotacja",
-        "annotation-set": "Adnotacje i alerty",
-        "dashboard": "Pulpit",
-        "element": "Element",
-        "filter": "",
-        "filters-set": "",
-        "link-set": "Linki",
-        "local-variable": "Zmienna lokalna",
-        "multiple-elements": "Wiele elementów",
-        "multiple-elements-delete-text": "Czy na pewno chcesz usunąć te elementy?",
-        "multiple-panels": "Wiele paneli",
-        "multiple-panels-delete-text": "Czy na pewno chcesz usunąć te panele? Wszystkie zapytania zostaną usunięte.",
-        "objects": "Obiekty",
-        "panel": "Panel",
-        "panels": "Panele",
-        "row": "Wiersz",
-        "rows": "Wiersze",
-        "section-filters-set": "",
-        "tab": "Karta",
-        "tabs": "Karty",
-        "variable": "Zmienna {{type}}",
-        "variable-set": "Zmienne"
-      },
-      "links": {
-        "add-link": "Dodaj link",
-        "reorder": "Przeciągnij, aby zmienić kolejność",
-        "select-link": "Wybierz",
-        "untitled": "Link bez tytułu"
-      },
-      "row": {
-        "header": {
-          "hide": "Ukryj",
-          "title": "Nagłówek wiersza"
-        }
-      },
-      "section-filters": {
-        "title": ""
-      },
-      "section-variables": {
-        "title": "Zmienne"
-      },
-      "variable": {
-        "change-type": "",
-        "change-type-aria-label": "Zmień typ zmiennej",
-        "custom-options": {
-          "apply": "Zastosuj",
-          "change-value": "Zmień wartość zmiennej",
-          "discard": "Odrzuć",
-          "modal-title": "Opcje niestandardowe"
-        },
-        "datasource-options": {
-          "name-filter": "Filtr nazwy",
-          "name-filter-description": "Filtr wyrażeń regularnych określający instancje źródeł danych do uwzględnienia. Pozostaw puste, aby uwzględnić wszystkie.",
-          "name-filter-placeholder": "Przykład: /^prod/",
-          "type": "Typ",
-          "type-placeholder": "Wybierz typ źródła danych"
-        },
-        "description": "Opis",
-        "description-placeholder": "Tekst opisowy",
-        "label": "Etykieta",
-        "label-description": "Opcjonalna nazwa wyświetlana",
-        "name": "Imię",
-        "open-editor": "Otwórz edytor zmiennych",
-        "open-editor-tooltip": "Aby uzyskać więcej opcji dotyczących zmiennych, otwórz edytor zmiennych",
-        "query-options": {
-          "close": "Zamknij",
-          "modal-title": "Zmienna zapytania",
-          "preview": "Podgląd"
-        },
-        "selection-options": {
-          "allow-custom-values": "Zezwalaj na wartości niestandardowe",
-          "allow-custom-values-description": "Umożliwia użytkownikom wprowadzanie wartości",
-          "category": "Opcje wyboru",
-          "custom-all-value": "Niestandardowe – wszystkie wartości",
-          "custom-all-value-description": "Symbol wieloznaczny wyrażenia regularnego lub inna wartość reprezentująca „wszystkie”",
-          "include-all": "Uwzględnij wszystkie wartości",
-          "include-all-description": "Włącza pojedynczą opcję, która reprezentuje wszystkie wartości",
-          "multi-value": "Wiele wartości"
-        },
-        "type-category": "Opcje typu {{type}}"
-      },
-      "variables": {
-        "add-variable": "Dodaj zmienną",
-        "change-type": "",
-        "reorder": "Przeciągnij, aby zmienić kolejność",
-        "select-type": "Wybierz typ zmiennej",
-        "select-type-card-tooltip": "Kliknij aby wybrać typ",
-        "select-variable": "Wybierz"
-      }
-    },
     "empty": {
       "add-library-panel-body": "Dodaj wizualizacje udostępniane innym pulpitom.",
       "add-library-panel-button": "Dodaj panel biblioteki",
@@ -6260,6 +6131,43 @@
         "title": "Dodaj",
         "tooltip": "Dodaj nowy element"
       },
+      "annotation": {
+        "change-data-source": "Zmień źródło danych adnotacji",
+        "choose-panels": "Wybierz panele",
+        "color": "Kolor",
+        "color-description": "Kolor używany dla znaczników zdarzeń związanych z adnotacją",
+        "data-source": "Źródło danych",
+        "display": "Pokaż opcje adnotacji w:",
+        "display-options": {
+          "above-dashboard": "Nad pulpitem",
+          "controls-menu": "Menu sterowania",
+          "controls-menu-description": "Dostępne, gdy menu sterowania jest otwarte",
+          "hidden": "Ukryte",
+          "hidden-description": "Ukrywa przełącznik do włączania lub wyłączania tej adnotacji"
+        },
+        "enabled": "Włączony",
+        "enabled-description": "Po włączeniu zapytanie dotyczące adnotacji jest wysyłane przy każdym odświeżeniu pulpitu",
+        "name": "Nazwa",
+        "open-query-editor": "Otwórz edytor zapytań",
+        "open-query-editor-tooltip": "Otwórz edytor zapytań, aby skonfigurować zapytanie dotyczące adnotacji",
+        "panel-filter": {
+          "all-panels": "Wszystkie panele",
+          "all-panels-description": "Wyślij dane adnotacji do wszystkich paneli, które obsługują adnotacje",
+          "all-panels-except": "Wszystkie panele z wyjątkiem",
+          "all-panels-except-description": "Nie wysyłaj danych adnotacji do następujących paneli",
+          "selected-panels": "Wybrane panele",
+          "selected-panels-description": "Wyślij adnotacje do wyraźnie wymienionych paneli"
+        },
+        "query": "Zapytanie",
+        "query-editor-close": "Zamknij",
+        "query-editor-modal-title": "Zapytanie dotyczące adnotacji",
+        "show-in": "Pokaż w"
+      },
+      "annotations": {
+        "add-annotation": "Dodaj komentarz",
+        "reorder": "Przeciągnij, aby zmienić kolejność",
+        "select-annotation": "Wybierz"
+      },
       "dashboard-options": {
         "title": "Opcje",
         "tooltip": "Opcje pulpitu"
@@ -6268,20 +6176,110 @@
         "title": "Kod",
         "tooltip": "Edytuj jako kod"
       },
+      "elements": {
+        "annotation": "Adnotacja",
+        "annotation-set": "Adnotacje i alerty",
+        "dashboard": "Pulpit",
+        "element": "Element",
+        "filter": "",
+        "filters-set": "",
+        "link-set": "Linki",
+        "local-variable": "Zmienna lokalna",
+        "multiple-elements": "Wiele elementów",
+        "multiple-elements-delete-text": "Czy na pewno chcesz usunąć te elementy?",
+        "multiple-panels": "Wiele paneli",
+        "multiple-panels-delete-text": "Czy na pewno chcesz usunąć te panele? Wszystkie zapytania zostaną usunięte.",
+        "objects": "Obiekty",
+        "panel": "Panel",
+        "panels": "Panele",
+        "row": "Wiersz",
+        "rows": "Wiersze",
+        "section-filters-set": "",
+        "tab": "Karta",
+        "tabs": "Karty",
+        "variable": "Zmienna {{type}}",
+        "variable-set": "Zmienne"
+      },
       "export": {
         "title": "Eksportuj"
       },
       "filters": "",
+      "links": {
+        "add-link": "Dodaj link",
+        "reorder": "Przeciągnij, aby zmienić kolejność",
+        "select-link": "Wybierz",
+        "untitled": "Link bez tytułu"
+      },
       "open": "",
       "outline": {
         "title": "Konspekt",
         "tooltip": "Konspekt treści"
       },
       "redo": "Ponów",
+      "row": {
+        "header": {
+          "hide": "Ukryj",
+          "title": "Nagłówek wiersza"
+        }
+      },
+      "section-filters": {
+        "title": ""
+      },
+      "section-variables": {
+        "title": "Zmienne"
+      },
       "snapshot": {
         "tooltip": "Otwórz oryginalny pulpit"
       },
       "undo": "Cofnij",
+      "variable": {
+        "change-type": "",
+        "change-type-aria-label": "Zmień typ zmiennej",
+        "custom-options": {
+          "apply": "Zastosuj",
+          "change-value": "Zmień wartość zmiennej",
+          "discard": "Odrzuć",
+          "modal-title": "Opcje niestandardowe"
+        },
+        "datasource-options": {
+          "name-filter": "Filtr nazwy",
+          "name-filter-description": "Filtr wyrażeń regularnych określający instancje źródeł danych do uwzględnienia. Pozostaw puste, aby uwzględnić wszystkie.",
+          "name-filter-placeholder": "Przykład: /^prod/",
+          "type": "Typ",
+          "type-placeholder": "Wybierz typ źródła danych"
+        },
+        "description": "Opis",
+        "description-placeholder": "Tekst opisowy",
+        "label": "Etykieta",
+        "label-description": "Opcjonalna nazwa wyświetlana",
+        "name": "Imię",
+        "open-editor": "Otwórz edytor zmiennych",
+        "open-editor-tooltip": "Aby uzyskać więcej opcji dotyczących zmiennych, otwórz edytor zmiennych",
+        "query-options": {
+          "close": "Zamknij",
+          "modal-title": "Zmienna zapytania",
+          "preview": "Podgląd"
+        },
+        "selection-options": {
+          "allow-custom-values": "Zezwalaj na wartości niestandardowe",
+          "allow-custom-values-description": "Umożliwia użytkownikom wprowadzanie wartości",
+          "category": "Opcje wyboru",
+          "custom-all-value": "Niestandardowe – wszystkie wartości",
+          "custom-all-value-description": "Symbol wieloznaczny wyrażenia regularnego lub inna wartość reprezentująca „wszystkie”",
+          "include-all": "Uwzględnij wszystkie wartości",
+          "include-all-description": "Włącza pojedynczą opcję, która reprezentuje wszystkie wartości",
+          "multi-value": "Wiele wartości"
+        },
+        "type-category": "Opcje typu {{type}}"
+      },
+      "variables": {
+        "add-variable": "Dodaj zmienną",
+        "change-type": "",
+        "reorder": "Przeciągnij, aby zmienić kolejność",
+        "select-type": "Wybierz typ zmiennej",
+        "select-type-card-tooltip": "Kliknij aby wybrać typ",
+        "select-variable": "Wybierz"
+      },
       "view-panel": {
         "disabled": "",
         "fanout-by-series": "",
@@ -6883,9 +6881,6 @@
       "title-hidden-count_many": "Ukryte ({{count}})",
       "title-hidden-count_other": "Ukryte ({{count}})"
     },
-    "dashboard-edit-pane-renderer": {
-      "title-feedback-dashboard-editing-experience": "Przekaż opinię na temat nowego interfejsu edycji pulpitu"
-    },
     "dashboard-link-form": {
       "back-to-list": "Powrót do listy",
       "label-icon": "Ikona",
@@ -6957,6 +6952,9 @@
     },
     "dashboard-side-pane-new": {
       "dashboard-controls": "Opcje pulpitu"
+    },
+    "dashboard-sidebar-renderer": {
+      "title-feedback-dashboard-editing-experience": "Przekaż opinię na temat nowego interfejsu edycji pulpitu"
     },
     "data-source-variable-form": {
       "data-source-options": "Opcje źródła danych",

@@ -47,7 +47,20 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 		store := usinformer.NewStore()
 		floor := usinformer.NewRVFloor()
 		source := NewRepositoryInformer(subscriber, client, "", resync, store)
-		return usinformer.WithRVFloor(source, floor), NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store, floor)
+		// The informer is the repository controller's only feed, and everything
+		// that creates provisioning work lives in its reconcile: scheduled syncs,
+		// health checks, webhook create/rotate, quota. Gating the initial list on
+		// the subscription would stall all of it while NATS is unavailable — and
+		// gating buys no safety here, since reconcile reads come fresh from the
+		// API and the re-list (not the live stream) is what keeps a replica
+		// reconciled under round-robin delivery. In degraded mode only the
+		// live-event latency is lost until the subscription opens.
+		source.AllowDegradedStart()
+		// Every delivered event raises the floor before the controller's handler
+		// enqueues the key, so the getter can refuse reconcile reads staler than
+		// the event that triggered them.
+		source.TrackFloor(floor)
+		return source, NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store, floor)
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
 	return inf.Informer(), NewCachedRepositoryGetter(inf.Lister())
@@ -59,16 +72,10 @@ func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interfac
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
 	}
-	list := func(ctx context.Context) ([]runtime.Object, error) {
-		l, err := c.Repositories(namespace).List(ctx, metav1.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
-		out := make([]runtime.Object, len(l.Items))
-		for i := range l.Items {
-			out[i] = &l.Items[i]
-		}
-		return out, nil
+	list := func(ctx context.Context) ([]runtime.Object, int64, error) {
+		return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+			return c.Repositories(namespace).List(ctx, opts)
+		})
 	}
 	return usinformer.NewInformer(subscriber, provisioningapis.RepositoryResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
 }

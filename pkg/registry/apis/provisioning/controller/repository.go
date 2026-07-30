@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -64,13 +65,21 @@ type RepositoryController struct {
 	quotaChecker      *RepositoryQuotaChecker
 	// To allow injection for testing.
 	processFn         func(key string) error
-	enqueueRepository func(obj any)
+	enqueueRepository func(obj any, trigger usinformer.ProcessTrigger)
 	keyFunc           func(obj any) (string, error)
 
 	queue           workqueue.TypedRateLimitingInterface[string]
 	resyncInterval  time.Duration
 	minSyncInterval time.Duration
 	drainTimeout    time.Duration
+
+	// processed classifies each delivery (encapsulating the NATS/apiserver
+	// backend) and records the processing metrics by what enqueued the key.
+	// triggers carries that attribution from enqueue to dequeue, guarded by
+	// triggersMu (entries live only between enqueue and Forget).
+	processed  *usinformer.ProcessedMetrics
+	triggersMu sync.Mutex
+	triggers   map[string]usinformer.ProcessTrigger
 
 	registry                      prometheus.Registerer
 	tracer                        tracing.Tracer
@@ -104,13 +113,16 @@ func NewRepositoryController(
 	quotaChecker *RepositoryQuotaChecker,
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	webhookSecretRotationInterval time.Duration,
+	natsBacked bool,
 ) *RepositoryController {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
 
 	rc := &RepositoryController{
-		client: provisioningClient,
-		repos:  repos,
+		client:    provisioningClient,
+		repos:     repos,
+		processed: usinformer.NewProcessedMetrics(registry, "repositories", natsBacked),
+		triggers:  make(map[string]usinformer.ProcessTrigger),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
 			workqueue.TypedRateLimitingQueueConfig[string]{
@@ -151,11 +163,13 @@ func NewRepositoryController(
 
 // EventHandler returns the informer event handlers for the controller. Register
 // it with the Repository informer to enqueue repositories on add and update.
-func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: rc.enqueue,
+func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
+	return cache.ResourceEventHandlerDetailedFuncs{
+		AddFunc: func(obj interface{}, isInInitialList bool) {
+			rc.enqueueRepository(obj, rc.processed.ClassifyAdd(objectResourceVersion(obj), isInInitialList))
+		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			rc.enqueue(newObj)
+			rc.enqueueRepository(newObj, rc.processed.ClassifyUpdate(objectResourceVersion(oldObj), objectResourceVersion(newObj)))
 		},
 	}
 }
@@ -166,6 +180,15 @@ func repoKeyFunc(obj any) (string, error) {
 		return "", fmt.Errorf("expected a Repository but got %T", obj)
 	}
 	return cache.DeletionHandlingMetaNamespaceKeyFunc(repo)
+}
+
+// objectResourceVersion returns the resource version of a delivered Repository,
+// or "" for a minimal NATS live event or a delete tombstone.
+func objectResourceVersion(obj any) string {
+	if repo, ok := obj.(*provisioning.Repository); ok {
+		return repo.ResourceVersion
+	}
+	return ""
 }
 
 // Run starts the RepositoryController.
@@ -218,13 +241,49 @@ func (rc *RepositoryController) runWorker(ctx context.Context) {
 	}
 }
 
-func (rc *RepositoryController) enqueue(obj interface{}) {
+func (rc *RepositoryController) enqueue(obj interface{}, trigger usinformer.ProcessTrigger) {
 	key, err := rc.keyFunc(obj)
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("couldn't get key for object: %v", err))
 		return
 	}
+	// Attribute the key before the enqueue so a worker that dequeues immediately
+	// sees it.
+	rc.setTrigger(key, trigger)
 	rc.queue.Add(key)
+}
+
+// setTrigger records what enqueued key, first-wins: the enqueue that first
+// queued the key owns the attribution, and later deliveries that coalesce onto
+// the still-queued key (or a retry re-set) leave it alone — the source that
+// actually caused the pickup. The map is lazily created so tests that build the
+// controller as a struct literal need not initialize it.
+func (rc *RepositoryController) setTrigger(key string, trigger usinformer.ProcessTrigger) {
+	rc.triggersMu.Lock()
+	defer rc.triggersMu.Unlock()
+	if rc.triggers == nil {
+		rc.triggers = make(map[string]usinformer.ProcessTrigger)
+	}
+	if _, ok := rc.triggers[key]; !ok {
+		rc.triggers[key] = trigger
+	}
+}
+
+// popTrigger reads and removes key's attribution. Each pickup pops its own entry
+// up front, so the entry never outlives the key however the pickup ends, and a
+// concurrent enqueue that races an in-flight reconcile (setting a fresh entry
+// and marking the key dirty — e.g. a status update the reconcile itself
+// produced) keeps its attribution for the redelivery, which a terminal
+// queue.Forget must not clobber. A retry re-sets the popped trigger before
+// re-queuing so later attempts keep the original attribution.
+func (rc *RepositoryController) popTrigger(key string) (usinformer.ProcessTrigger, bool) {
+	rc.triggersMu.Lock()
+	defer rc.triggersMu.Unlock()
+	trigger, ok := rc.triggers[key]
+	if ok {
+		delete(rc.triggers, key)
+	}
+	return trigger, ok
 }
 
 // processNextWorkItem deals with one key off the queue.
@@ -240,14 +299,30 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "repository", name)
 	logger.Info("RepositoryController processing key")
 
+	// Pop this pickup's attribution up front so the entry is cleared however the
+	// key leaves this function, without a terminal Forget clobbering a newer
+	// attribution set by a concurrent enqueue while the key was in flight.
+	trigger, ok := rc.popTrigger(key)
+
+	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
+	attempts := rc.queue.NumRequeues(key) + 1
+	// Count the start of processing once per pickup, but only for a pickup that
+	// corresponds to an informer delivery (a present entry). A missing entry is
+	// an internal re-schedule with no informer event behind it — the token
+	// read-after-write AddAfter below re-adds the key without an entry — so it
+	// must not be counted, or it would masquerade as a relist recovery. Retries
+	// keep the entry (re-set below) but bump NumRequeues, so they are not
+	// recounted.
+	if ok && attempts == 1 {
+		rc.processed.RecordProcessed(trigger)
+	}
+
 	err := rc.processFn(key)
 	if err == nil {
 		rc.queue.Forget(key)
 		return true
 	}
 
-	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
-	attempts := rc.queue.NumRequeues(key) + 1
 	logger = logger.With("error", err, "attempts", attempts)
 	logger.Error("RepositoryController failed to process key")
 
@@ -270,6 +345,12 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	}
 
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
+	// Re-set the attribution the pickup popped so the retry keeps it (unless a
+	// concurrent enqueue set a newer one). Only if this pickup had one: an
+	// internal re-schedule carries no attribution and must not fabricate one.
+	if ok {
+		rc.setTrigger(key, trigger)
+	}
 	rc.queue.AddRateLimited(key)
 
 	return true
