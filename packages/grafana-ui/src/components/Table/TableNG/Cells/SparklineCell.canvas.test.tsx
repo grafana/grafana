@@ -22,14 +22,16 @@ import { SparklineCell } from './SparklineCell';
 const width = 300;
 const height = 25;
 
-const tsFrame = toDataFrame({
-  fields: [
-    { name: 'time', type: FieldType.time, values: [1000, 2000] },
-    { name: 'v', type: FieldType.number, values: [1, 99] },
-  ],
-});
+const getTsFrame = () =>
+  toDataFrame({
+    fields: [
+      { name: 'time', type: FieldType.time, values: [1000, 2000] },
+      { name: 'v', type: FieldType.number, values: [1, 99] },
+    ],
+  });
 
 function sparklineField(config: Field['config'], type: FieldType = FieldType.frame): Field {
+  const tsFrame = getTsFrame();
   const raw = toDataFrame({
     fields: [
       {
@@ -50,7 +52,7 @@ function sparklineField(config: Field['config'], type: FieldType = FieldType.fra
 }
 
 function renderSparklineCell(field: Field) {
-  return render(<SparklineCell field={field} rowIdx={0} theme={createTheme()} value={tsFrame} width={width} />);
+  return render(<SparklineCell field={field} rowIdx={0} theme={createTheme()} value={field.values[0]} width={width} />);
 }
 
 let uPlotInstance: InstanceType<typeof uPlot> | undefined;
