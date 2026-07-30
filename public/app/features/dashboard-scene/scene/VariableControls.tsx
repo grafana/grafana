@@ -25,6 +25,7 @@ import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopover';
 import { DashboardScene } from './DashboardScene';
+import { AddFilterButton } from './FilterControlsAddButton';
 import { AddVariableButton } from './VariableControlsAddButton';
 import { VariableDescriptionTooltip } from './VariableDescriptionTooltip';
 import { useTrackDashboardVariableValueChange } from './useTrackDashboardVariableValueChange';
@@ -57,7 +58,12 @@ export function VariableControls({
             isEditingNewLayouts={isEditingNewLayouts}
           />
         ))}
-      {config.featureToggles.dashboardNewLayouts ? <AddVariableButton dashboard={dashboard} /> : null}
+      {config.featureToggles.dashboardNewLayouts ? (
+        <>
+          <AddVariableButton dashboard={dashboard} />
+          <AddFilterButton dashboard={dashboard} />
+        </>
+      ) : null}
     </>
   );
 }

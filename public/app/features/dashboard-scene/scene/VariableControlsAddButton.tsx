@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, VariableHide } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { sceneGraph, sceneUtils } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import { openAddVariablePane } from '../settings/variables/VariableTypeSelectionPane';
@@ -13,6 +14,12 @@ import { type DashboardScene } from './DashboardScene';
 export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
   const { editview, editPanel, isEditing, viewPanel } = dashboard.useState();
+  const { variables } = sceneGraph.getVariables(dashboard).useState();
+
+  // Label collapse is keyed to this button's own feature: filters (adhoc) don't count
+  const hasVariables = variables.some(
+    (v) => !sceneUtils.isAdHocVariable(v) && v.state.hide !== VariableHide.hideVariable
+  );
 
   const handleClick = useCallback(() => {
     openAddVariablePane(dashboard);
@@ -37,9 +44,11 @@ export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) 
           fill="outline"
           size="md"
           onClick={handleClick}
-          tooltip={t('dashboard-scene.variable-controls.add-variable', 'Add variable')}
+          tooltip={hasVariables ? t('dashboard-scene.variable-controls.add-variable', 'Add variable') : undefined}
           aria-label={t('dashboard-scene.variable-controls.add-variable', 'Add variable')}
-        />
+        >
+          {hasVariables ? undefined : t('dashboard-scene.variable-controls.variable', 'Variable')}
+        </Button>
       </div>
     </div>
   );
