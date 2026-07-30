@@ -10947,6 +10947,16 @@
       "read-more": "Read more from the Grafana Labs blog",
       "title": "Latest from the blog"
     },
+    "overview": {
+      "options": {
+        "all": "All solutions",
+        "attention": "Needs attention",
+        "available": "Available solutions",
+        "enabled": "Enabled solutions",
+        "get-started": "Get started"
+      },
+      "title": "Your observability stack overview"
+    },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",
       "clear": "Clear history",
