@@ -290,6 +290,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	_ "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	_ "github.com/grafana/grafana/pkg/registry/apps/correlations"
+	_ "github.com/grafana/grafana/pkg/registry/apps/correlations/migrator"
 	_ "github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	_ "github.com/grafana/grafana/pkg/registry/apps/example"
 	_ "github.com/grafana/grafana/pkg/registry/apps/live"
