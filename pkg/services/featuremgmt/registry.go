@@ -391,7 +391,7 @@ var (
 		},
 		{
 			Name:        "snapshots.kubernetesSnapshots",
-			Description: "Routes snapshot create requests from /api/snapshots to the dashboard.grafana.app k8s API",
+			Description: "Routes snapshot requests from /api to the /apis endpoint",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaSharingSquad,
 			Expression:  "false",

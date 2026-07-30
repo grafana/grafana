@@ -5839,11 +5839,14 @@
     {
       "metadata": {
         "name": "snapshots.kubernetesSnapshots",
-        "resourceVersion": "1785338923798",
-        "creationTimestamp": "2026-07-29T15:28:43Z"
+        "resourceVersion": "1785418218573",
+        "creationTimestamp": "2026-07-29T15:28:43Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-30 13:30:18.573129 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Routes snapshot create requests from /api/snapshots to the dashboard.grafana.app k8s API",
+        "description": "Routes snapshot requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
         "expression": "false"

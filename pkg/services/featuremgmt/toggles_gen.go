@@ -136,7 +136,7 @@ const (
 	FlagExternalSnapshotsSupportLegacyAPI = "externalSnapshotsSupportLegacyAPI"
 
 	// FlagSnapshotsKubernetesSnapshots
-	// Routes snapshot create requests from /api/snapshots to the dashboard.grafana.app k8s API
+	// Routes snapshot requests from /api to the /apis endpoint
 	FlagSnapshotsKubernetesSnapshots = "snapshots.kubernetesSnapshots"
 
 	// FlagLibraryelementsKubernetesLibraryPanels
