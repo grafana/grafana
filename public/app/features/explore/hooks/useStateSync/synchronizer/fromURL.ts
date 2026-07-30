@@ -112,4 +112,12 @@ export function syncFromURL(
   Object.keys(panesState)
     .filter((keyInStore) => !Object.keys(urlState.panes).includes(keyInStore))
     .forEach((paneId) => dispatch(splitClose(paneId)));
+
+  // One-shot seed params: once read into pane state above, drop them from the URL so they
+  // don't linger in the address bar, browser history, or shared links (a shared link must
+  // not carry another user's edit/add context). Mirrors the init-path strip. Guarded so
+  // ordinary history navigation without these params doesn't churn the URL.
+  if (editSavedQueryRef || addingSavedQuery) {
+    location.partial({ editSavedQueryRef: null, createSavedQuery: null }, true);
+  }
 }
