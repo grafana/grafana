@@ -18,6 +18,10 @@ export const versionedPages = {
         [MIN_GRAFANA_VERSION]: (alertRuleUid: string) => `alerting/${alertRuleUid}/edit`,
       },
     },
+    searchInput: {
+      '13.2.0': 'data-testid alerting search-input',
+      [MIN_GRAFANA_VERSION]: 'search-query-input',
+    },
     Home: {
       welcomeCtaLink: {
         '13.2.0': (href: string) => `data-testid alerting welcome-cta-link ${href}`,
