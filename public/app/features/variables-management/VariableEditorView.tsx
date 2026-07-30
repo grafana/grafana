@@ -254,10 +254,11 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
         }
       >
         <FolderPicker
-          // Create: non-editors must pick an editable folder (hide root).
-          // Edit: always show the current scope, including root/global and view-only folders.
-          showRootFolder={allowGlobalScope || !isNew}
-          permission={isNew ? 'edit' : 'view'}
+          // When the picker is usable (create, or edit of a manageable scope), only list
+          // folders the user can edit — same as create. View-only / root listing is only
+          // needed to display an unmanageable current scope with the picker disabled.
+          showRootFolder={allowGlobalScope || !canChangeFolder}
+          permission={canChangeFolder ? 'edit' : 'view'}
           value={folderUid}
           disabled={!canChangeFolder}
           onChange={(uid) => setFolderUid(allowGlobalScope || !isNew ? (uid ?? '') : uid)}
