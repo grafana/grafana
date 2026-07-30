@@ -66,6 +66,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'row',
       maxWidth: '100%',
       flex: 1,
+      alignItems: 'center',
       h1: {
         marginBottom: 0,
       },
