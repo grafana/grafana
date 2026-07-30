@@ -25,6 +25,8 @@ permissions: {}
 
 jobs:
   detect-changes:
+    # Only run in `grafana/grafana` (analyze is repo-guarded too) to prevent double-running on mirrors
+    if: github.repository == 'grafana/grafana'
     name: Detect whether code changed
     runs-on: ubuntu-latest
     permissions:
