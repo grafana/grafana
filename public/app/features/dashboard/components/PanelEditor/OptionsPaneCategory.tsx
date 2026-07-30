@@ -97,7 +97,7 @@ export const OptionsPaneCategory = React.memo(
 
       const highlightTimeout = window.setTimeout(() => {
         setIsHighlighted(false);
-      }, 2000);
+      }, 5000);
 
       return () => {
         window.clearTimeout(scrollTimeout);
