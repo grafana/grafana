@@ -77,3 +77,51 @@ func TestProcessNextWorkItem_DoesNotRetryOtherErrors(t *testing.T) {
 	assert.Equal(t, 1, calls)
 	assert.Zero(t, rc.queue.Len())
 }
+
+func newConnectionRetryTestController(processFn func(ctx context.Context, item *connectionQueueItem) error) *ConnectionController {
+	cc := &ConnectionController{
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
+			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{Name: "test-connection-retry"},
+		),
+		logger:    logging.DefaultLogger.With("logger", "test"),
+		processed: usinformer.NewProcessedMetrics(nil, "connections", true),
+	}
+	cc.processFn = processFn
+	return cc
+}
+
+// The connection controller classifies stale reads as retryable, mirroring the
+// repository controller: the write behind the event is committed, so requeueing
+// beats dropping the event until the next re-list.
+func TestConnectionProcessNextWorkItem_RetriesStaleReads(t *testing.T) {
+	var calls int
+	cc := newConnectionRetryTestController(func(context.Context, *connectionQueueItem) error {
+		calls++
+		if calls < connectionMaxAttempts {
+			return fmt.Errorf("get connection: %w", usinformer.ErrStaleRead)
+		}
+		return nil
+	})
+	cc.queue.Add(&connectionQueueItem{key: "ns/c"})
+
+	for calls < connectionMaxAttempts {
+		require.True(t, cc.processNextWorkItem(context.Background()))
+	}
+	assert.Equal(t, connectionMaxAttempts, calls)
+	assert.Zero(t, cc.queue.Len(), "a succeeded item must not be requeued")
+}
+
+// Non-transient connection errors are still dropped without retrying.
+func TestConnectionProcessNextWorkItem_DoesNotRetryOtherErrors(t *testing.T) {
+	var calls int
+	cc := newConnectionRetryTestController(func(context.Context, *connectionQueueItem) error {
+		calls++
+		return errors.New("boom")
+	})
+	cc.queue.Add(&connectionQueueItem{key: "ns/c"})
+
+	require.True(t, cc.processNextWorkItem(context.Background()))
+	assert.Equal(t, 1, calls)
+	assert.Zero(t, cc.queue.Len())
+}
