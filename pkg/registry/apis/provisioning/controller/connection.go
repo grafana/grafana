@@ -16,6 +16,7 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 const connectionLoggerName = "provisioning-connection-controller"
@@ -42,6 +43,10 @@ type ConnectionController struct {
 	connectionFactory connection.Factory
 	tokenMetrics      *connectionTokenMetrics
 
+	// processed classifies each delivery (encapsulating the NATS/apiserver
+	// backend) and counts the start of each reconcile by what enqueued it.
+	processed *usinformer.ProcessedMetrics
+
 	// To allow injection for testing.
 	processFn func(ctx context.Context, key string) error
 
@@ -58,9 +63,11 @@ func NewConnectionController(
 	resyncInterval time.Duration,
 	drainTimeout time.Duration,
 	registry prometheus.Registerer,
+	natsBacked bool,
 ) *ConnectionController {
 	cc := &ConnectionController{
 		conns:             conns,
+		processed:         usinformer.NewProcessedMetrics(registry, "connections", natsBacked),
 		statusPatcher:     statusPatcher,
 		healthChecker:     healthChecker,
 		connectionFactory: connectionFactory,
@@ -70,36 +77,57 @@ func NewConnectionController(
 	}
 
 	cc.processFn = cc.process
-	cc.runner = appcontroller.NewRunner(appcontroller.RunnerConfig{
+	cc.runner = cc.newRunner(drainTimeout)
+
+	return cc
+}
+
+// newRunner wires the shared runner for this controller. Split from the
+// constructor so tests that build the controller as a struct literal can reuse
+// the exact production wiring.
+func (cc *ConnectionController) newRunner(drainTimeout time.Duration) *appcontroller.Runner {
+	return appcontroller.NewRunner(appcontroller.RunnerConfig{
 		Name:         "provisioningConnectionController",
 		Logger:       cc.logger,
 		DrainTimeout: drainTimeout,
 		Process: func(ctx context.Context, key string) error {
 			return cc.processFn(ctx, key)
 		},
+		RecordProcessed: func(trigger string) {
+			cc.processed.RecordProcessed(usinformer.ProcessTrigger(trigger))
+		},
 	})
-
-	return cc
 }
 
 // EventHandler returns the informer event handlers for the controller. Register
 // it with the Connection informer to enqueue connections on add and update.
-func (cc *ConnectionController) EventHandler() cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: cc.enqueue,
+func (cc *ConnectionController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
+	return cache.ResourceEventHandlerDetailedFuncs{
+		AddFunc: func(obj interface{}, isInInitialList bool) {
+			cc.enqueue(obj, cc.processed.ClassifyAdd(connectionResourceVersion(obj), isInInitialList))
+		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			cc.enqueue(newObj)
+			cc.enqueue(newObj, cc.processed.ClassifyUpdate(connectionResourceVersion(oldObj), connectionResourceVersion(newObj)))
 		},
 	}
 }
 
-func (cc *ConnectionController) enqueue(obj interface{}) {
+func (cc *ConnectionController) enqueue(obj interface{}, trigger usinformer.ProcessTrigger) {
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err != nil {
 		cc.logger.Error("failed to get key for object", "error", err)
 		return
 	}
-	cc.runner.Enqueue(key)
+	cc.runner.EnqueueWithTrigger(key, string(trigger))
+}
+
+// connectionResourceVersion returns the resource version of a delivered
+// Connection, or "" for a minimal NATS live event or a delete tombstone.
+func connectionResourceVersion(obj any) string {
+	if conn, ok := obj.(*provisioning.Connection); ok {
+		return conn.ResourceVersion
+	}
+	return ""
 }
 
 // Run starts the ConnectionController. The onStarted callback is invoked once

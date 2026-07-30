@@ -138,13 +138,17 @@ If label values originate from user input they should be validated. Use `metricu
 
 To guarantee the existence of metrics before any observations have happened, you can use the helper methods available in the `pkg/infra/metrics/metricutil` package.
 
-### Inspect metrics locally
+### How to collect and visualize metrics locally
 
-Run Grafana and open `http://localhost:3000/metrics` to inspect its exported metrics.
+1. Ensure you have Docker installed and running on your machine.
+1. Start Prometheus.
 
-To collect and query the metrics, configure a Prometheus-compatible system to scrape that endpoint. Follow the setup instructions for the system you choose. For example, refer to the [Prometheus documentation](https://prometheus.io/docs/prometheus/latest/getting_started/).
+   ```bash
+   make devenv sources=prometheus
+   ```
 
-To query the metrics from Grafana, install and configure an external data source plugin that supports your metrics system. For Prometheus, refer to the [Grafana Prometheus data source repository](https://github.com/grafana/grafana-prometheus-datasource).
+1. Run Grafana, and then create a Prometheus data source if you do not have one yet. Set the server URL to `http://localhost:9090`, enable basic authentication, and enter the same authentication you have for local Grafana.
+1. Use Grafana Explore or dashboards to query any exported Grafana metrics. You can also view them at `http://localhost:3000/metrics`.
 
 ## Traces
 
@@ -357,28 +361,31 @@ attribute.Int64("org_id", proxy.ctx.SignedInUser.OrgID)
 attribute.Key("org_id").Int64(proxy.ctx.SignedInUser.OrgID)
 ```
 
-### Enable tracing and export traces locally<a name="enable-tracing-in-grafana"></a>
+### How to collect, visualize and query traces (and correlate logs with traces) locally
 
-Grafana exports traces to systems that accept the OpenTelemetry Protocol (OTLP). Before you enable tracing, start an OTLP-compatible collector or tracing backend and determine its OTLP gRPC endpoint.
+1. Start Jaeger
 
-Configure the endpoint in your `config.ini` file:
+   ```bash
+   make devenv sources=jaeger
+   ```
 
-```ini
-[tracing.opentelemetry.otlp]
-address = <OTLP_HOST>:<OTLP_PORT>
-insecure = true
-```
+1. Enable tracing in Grafana<a name="enable-tracing-in-grafana"></a>
 
-Replace `<OTLP_HOST>` and `<OTLP_PORT>` with the host and port of your OTLP endpoint. Only use `insecure = true` for local development.
+   To enable tracing in Grafana, you must set the address in your `config.ini` file:
 
-Run Grafana and exercise the code path that you instrumented. Use your tracing backend's query interface to verify and inspect the exported spans.
+   ```ini
+   [tracing.opentelemetry.jaeger]
+   address = http://localhost:14268/api/traces
+   ```
 
-For local tracing backend setup instructions, refer to one of these external projects:
+1. Search/browse collected logs and traces in Grafana Explore
 
-- [Grafana Tempo](https://github.com/grafana/tempo)
-- [Jaeger](https://github.com/jaegertracing/jaeger)
+   You need provisioned `gdev-jaeger` and `gdev-loki` data sources. Refer to [developer dashboard and data sources](https://github.com/grafana/grafana/tree/main/devenv#developer-dashboards-and-data-sources) for set up instructions.
 
-To query traces from Grafana, install and configure the corresponding external data source plugin:
+   Open Grafana explore and select the `gdev-loki` data source and use the query `{filename="/var/log/grafana/grafana.log"} | logfmt`.
 
-- [Grafana Tempo data source](https://github.com/grafana/grafana-tempo-datasource)
-- [Grafana Jaeger data source](https://github.com/grafana/grafana-jaeger-datasource)
+   You can then inspect any log message that includes a `traceID` and from there click `gdev-jaeger` to split the view and inspect the trace in question.
+
+1. Search or browse collected traces in Jaeger UI
+
+   You can open `http://localhost:16686` to use the Jaeger UI for browsing and searching traces.

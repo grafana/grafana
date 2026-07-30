@@ -298,6 +298,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
 // if extraLabels is not empty, those labels will be added to every state. The extraLabels take precedence over rule labels and result labels
 // This will update the states in cache/store and return the state transitions that need to be sent to the alertmanager.
+// A non-nil error means the results were not applied; the returned StateTransitions is nil in that case.
 func (st *Manager) ProcessEvalResults(
 	ctx context.Context,
 	evaluatedAt time.Time,
@@ -305,7 +306,7 @@ func (st *Manager) ProcessEvalResults(
 	results eval.Results,
 	extraLabels data.Labels,
 	send Sender,
-) StateTransitions {
+) (StateTransitions, error) {
 	utcTick := evaluatedAt.UTC().Format(time.RFC3339Nano)
 	ctx, span := st.tracer.Start(ctx, "alert rule state calculation", trace.WithAttributes(
 		attribute.String("rule_uid", alertRule.UID),
@@ -370,7 +371,7 @@ func (st *Manager) ProcessEvalResults(
 		send(ctx, statesToSend)
 	}
 
-	return allChanges
+	return allChanges, nil
 }
 
 // updateLastSentAt returns the subset StateTransitions that need sending and updates their LastSentAt field.

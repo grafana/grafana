@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -57,12 +58,17 @@ type RepositoryController struct {
 	quotaChecker      *RepositoryQuotaChecker
 	// To allow injection for testing.
 	processFn         func(key string) error
-	enqueueRepository func(obj any)
+	enqueueRepository func(obj any, trigger usinformer.ProcessTrigger)
 	keyFunc           func(obj any) (string, error)
 
 	runner          *appcontroller.Runner
 	resyncInterval  time.Duration
 	minSyncInterval time.Duration
+
+	// processed classifies each delivery (encapsulating the NATS/apiserver
+	// backend) and records the processing metrics by what enqueued the key;
+	// the runner carries the attribution from enqueue to pickup.
+	processed *usinformer.ProcessedMetrics
 
 	registry                      prometheus.Registerer
 	tracer                        tracing.Tracer
@@ -96,6 +102,7 @@ func NewRepositoryController(
 	quotaChecker *RepositoryQuotaChecker,
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	webhookSecretRotationInterval time.Duration,
+	natsBacked bool,
 ) *RepositoryController {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
@@ -103,6 +110,7 @@ func NewRepositoryController(
 	rc := &RepositoryController{
 		client:            provisioningClient,
 		repos:             repos,
+		processed:         usinformer.NewProcessedMetrics(registry, "repositories", natsBacked),
 		repoFactory:       repoFactory,
 		connectionFactory: connectionFactory,
 		healthChecker:     healthChecker,
@@ -130,29 +138,40 @@ func NewRepositoryController(
 	rc.processFn = rc.process
 	rc.enqueueRepository = rc.enqueue
 	rc.keyFunc = repoKeyFunc
-
-	// The runner-provided context is ignored: process builds its own from
-	// context.Background() so an in-flight reconcile can finish during the
-	// shutdown drain rather than being canceled with it.
-	rc.runner = appcontroller.NewRunner(appcontroller.RunnerConfig{
-		Name:         "provisioningRepositoryController",
-		Logger:       rc.logger,
-		DrainTimeout: drainTimeout,
-		Process: func(_ context.Context, key string) error {
-			return rc.processFn(key)
-		},
-	})
+	rc.runner = rc.newRunner(drainTimeout)
 
 	return rc
 }
 
+// newRunner wires the shared runner for this controller. Split from the
+// constructor so tests that build the controller as a struct literal can reuse
+// the exact production wiring.
+func (rc *RepositoryController) newRunner(drainTimeout time.Duration) *appcontroller.Runner {
+	return appcontroller.NewRunner(appcontroller.RunnerConfig{
+		Name:         "provisioningRepositoryController",
+		Logger:       rc.logger,
+		DrainTimeout: drainTimeout,
+		// The runner-provided context is ignored: process builds its own from
+		// context.Background() so an in-flight reconcile can finish during the
+		// shutdown drain rather than being canceled with it.
+		Process: func(_ context.Context, key string) error {
+			return rc.processFn(key)
+		},
+		RecordProcessed: func(trigger string) {
+			rc.processed.RecordProcessed(usinformer.ProcessTrigger(trigger))
+		},
+	})
+}
+
 // EventHandler returns the informer event handlers for the controller. Register
 // it with the Repository informer to enqueue repositories on add and update.
-func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: rc.enqueue,
+func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
+	return cache.ResourceEventHandlerDetailedFuncs{
+		AddFunc: func(obj interface{}, isInInitialList bool) {
+			rc.enqueueRepository(obj, rc.processed.ClassifyAdd(objectResourceVersion(obj), isInInitialList))
+		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			rc.enqueue(newObj)
+			rc.enqueueRepository(newObj, rc.processed.ClassifyUpdate(objectResourceVersion(oldObj), objectResourceVersion(newObj)))
 		},
 	}
 }
@@ -165,6 +184,15 @@ func repoKeyFunc(obj any) (string, error) {
 	return cache.DeletionHandlingMetaNamespaceKeyFunc(repo)
 }
 
+// objectResourceVersion returns the resource version of a delivered Repository,
+// or "" for a minimal NATS live event or a delete tombstone.
+func objectResourceVersion(obj any) string {
+	if repo, ok := obj.(*provisioning.Repository); ok {
+		return repo.ResourceVersion
+	}
+	return ""
+}
+
 // Run starts the RepositoryController.
 //
 // The onStarted callback is invoked once all workers have been launched.
@@ -174,13 +202,13 @@ func (rc *RepositoryController) Run(ctx context.Context, workerCount int, onStar
 	rc.runner.Run(ctx, workerCount, onStarted, onShutdown)
 }
 
-func (rc *RepositoryController) enqueue(obj interface{}) {
+func (rc *RepositoryController) enqueue(obj interface{}, trigger usinformer.ProcessTrigger) {
 	key, err := rc.keyFunc(obj)
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("couldn't get key for object: %v", err))
 		return
 	}
-	rc.runner.Enqueue(key)
+	rc.runner.EnqueueWithTrigger(key, string(trigger))
 }
 
 func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provisioning.Repository) error {

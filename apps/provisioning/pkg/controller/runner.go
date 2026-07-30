@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -44,6 +45,12 @@ type RunnerConfig struct {
 	// Retriable decides whether a Process error is worth re-queuing the key
 	// with rate-limited backoff. Defaults to apierrors.IsServiceUnavailable.
 	Retriable func(error) bool
+
+	// RecordProcessed, when set, is called once per pickup that traces back to a
+	// delivery enqueued via EnqueueWithTrigger, with that delivery's trigger.
+	// Retries of the same delivery and keys re-added without attribution
+	// (Enqueue, EnqueueAfter) are not recorded.
+	RecordProcessed func(trigger string)
 }
 
 // Runner is the shared reconcile loop for provisioning controllers: a
@@ -60,6 +67,13 @@ type Runner struct {
 	maxAttempts  int
 	retriable    func(error) bool
 	drainTimeout time.Duration
+
+	// recordProcessed reports each delivery-attributed pickup; triggers carries
+	// the attribution from EnqueueWithTrigger to the pickup, guarded by
+	// triggersMu (entries live only between enqueue and pickup).
+	recordProcessed func(trigger string)
+	triggersMu      sync.Mutex
+	triggers        map[string]string
 }
 
 // NewRunner creates a Runner from the given config, applying defaults for the
@@ -88,9 +102,11 @@ func NewRunner(cfg RunnerConfig) *Runner {
 				Name: cfg.Name,
 			},
 		),
-		maxAttempts:  maxAttempts,
-		retriable:    retriable,
-		drainTimeout: cfg.DrainTimeout,
+		maxAttempts:     maxAttempts,
+		retriable:       retriable,
+		drainTimeout:    cfg.DrainTimeout,
+		recordProcessed: cfg.RecordProcessed,
+		triggers:        make(map[string]string),
 	}
 }
 
@@ -104,6 +120,44 @@ func (r *Runner) Enqueue(key string) {
 // EnqueueAfter adds a key to the work queue after the given delay.
 func (r *Runner) EnqueueAfter(key string, delay time.Duration) {
 	r.queue.AddAfter(key, delay)
+}
+
+// EnqueueWithTrigger adds a key attributed to the delivery that caused it; the
+// attribution is reported through RecordProcessed when the key is picked up.
+func (r *Runner) EnqueueWithTrigger(key, trigger string) {
+	// Attribute the key before the enqueue so a worker that dequeues immediately
+	// sees it.
+	r.setTrigger(key, trigger)
+	r.queue.Add(key)
+}
+
+// setTrigger records what enqueued key, first-wins: the enqueue that first
+// queued the key owns the attribution, and later deliveries that coalesce onto
+// the still-queued key (or a retry re-set) leave it alone — the source that
+// actually caused the pickup.
+func (r *Runner) setTrigger(key, trigger string) {
+	r.triggersMu.Lock()
+	defer r.triggersMu.Unlock()
+	if _, ok := r.triggers[key]; !ok {
+		r.triggers[key] = trigger
+	}
+}
+
+// popTrigger reads and removes key's attribution. Each pickup pops its own entry
+// up front, so the entry never outlives the key however the pickup ends, and a
+// concurrent enqueue that races an in-flight reconcile (setting a fresh entry
+// and marking the key dirty — e.g. a status update the reconcile itself
+// produced) keeps its attribution for the redelivery, which a terminal
+// queue.Forget must not clobber. A retry re-sets the popped trigger before
+// re-queuing so later attempts keep the original attribution.
+func (r *Runner) popTrigger(key string) (string, bool) {
+	r.triggersMu.Lock()
+	defer r.triggersMu.Unlock()
+	trigger, ok := r.triggers[key]
+	if ok {
+		delete(r.triggers, key)
+	}
+	return trigger, ok
 }
 
 // Run starts workerCount workers and blocks until the context is canceled and
@@ -171,14 +225,28 @@ func (r *Runner) processNextWorkItem(ctx context.Context) bool {
 	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "name", name)
 	logger.Info("processing key")
 
+	// Pop this pickup's attribution up front so the entry is cleared however the
+	// key leaves this function, without a terminal Forget clobbering a newer
+	// attribution set by a concurrent enqueue while the key was in flight.
+	trigger, attributed := r.popTrigger(key)
+
+	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
+	attempts := r.queue.NumRequeues(key) + 1
+	// Count the start of processing once per pickup, but only for a pickup that
+	// corresponds to a delivery (a present entry). A missing entry is an internal
+	// re-schedule with no delivery behind it — Enqueue and EnqueueAfter re-add
+	// keys without an entry — so it must not be counted. Retries keep the entry
+	// (re-set below) but bump NumRequeues, so they are not recounted.
+	if attributed && attempts == 1 && r.recordProcessed != nil {
+		r.recordProcessed(trigger)
+	}
+
 	err := r.process(ctx, key)
 	if err == nil {
 		r.queue.Forget(key)
 		return true
 	}
 
-	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
-	attempts := r.queue.NumRequeues(key) + 1
 	logger = logger.With("error", err, "attempts", attempts)
 	logger.Error("failed to process key")
 
@@ -196,6 +264,12 @@ func (r *Runner) processNextWorkItem(ctx context.Context) bool {
 
 	logger.Info("retrying key")
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
+	// Re-set the attribution the pickup popped so the retry keeps it (unless a
+	// concurrent enqueue set a newer one). Only if this pickup had one: an
+	// internal re-schedule carries no attribution and must not fabricate one.
+	if attributed {
+		r.setTrigger(key, trigger)
+	}
 	r.queue.AddRateLimited(key)
 
 	return true

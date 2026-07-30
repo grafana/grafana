@@ -99,6 +99,60 @@ type IndexBuildInfo struct {
 	BuildVersion     *semver.Version // Grafana version used when originally building the index. This value doesn't change on subsequent index updates.
 	SelectableFields []string        // List of selectable fields used when index was built.
 	SearchFieldsHash string          // Hash captured at build time over the SearchFieldDefinition slices registered for (group, resource), across all versions. Empty when no SearchFieldsProvider was in use.
+	Features         []IndexFeature  // Index features the index was built with. Empty on indexes built before index features existed.
+}
+
+// IndexFeature names a mapping change an older index cannot satisfy. Only for
+// changes no declared search field describes, such as an internal marker: a
+// declared field already moves IndexAffectingHash. Choosing wrong is silent — no
+// rebuild, missing data, no error.
+type IndexFeature string
+
+// IndexFeatureDeletedMarker means the index maps the markers on deleted
+// documents, SEARCH_FIELD_IS_DELETED and SEARCH_FIELD_IS_PROVISIONED. An index
+// without them drops the values, so a deleted document indexed there would look
+// live, and a provisioned one would show up in trash. Recorded but not required:
+// rather than reindex every existing index to add the mapping, writers check for
+// this feature before keeping a deleted document.
+const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
+
+// currentIndexFeatures is recorded in every index this binary builds.
+var currentIndexFeatures = []IndexFeature{
+	IndexFeatureDeletedMarker,
+}
+
+// requiredIndexFeatures is the subset an index must already have to be used. An
+// index without one of these features is rebuilt before it serves anything, even
+// on startup, so only require a feature whose absence gives wrong answers — not
+// one that only makes results incomplete. Requiring a feature also makes every
+// existing index rebuild once.
+//
+// Every required feature must also be current, otherwise indexes rebuild forever
+// (TestRequiredIndexFeaturesAreCurrent).
+var requiredIndexFeatures = []IndexFeature{}
+
+// CurrentIndexFeatures returns the features sorted, so declaration order cannot
+// change what an index records.
+func CurrentIndexFeatures() []IndexFeature {
+	return slices.Sorted(slices.Values(currentIndexFeatures))
+}
+
+// RequiredIndexFeatures returns the features an index must have to be used.
+func RequiredIndexFeatures() []IndexFeature {
+	return slices.Sorted(slices.Values(requiredIndexFeatures))
+}
+
+// MissingIndexFeatures returns the required features the index does not have.
+// Features the index has and this binary does not require are ignored: an index
+// from a newer binary is the build version check's business.
+func MissingIndexFeatures(buildInfo IndexBuildInfo, requiredFeatures []IndexFeature) []IndexFeature {
+	var missing []IndexFeature
+	for _, feature := range requiredFeatures {
+		if !slices.Contains(buildInfo.Features, feature) {
+			missing = append(missing, feature)
+		}
+	}
+	return missing
 }
 
 type ResourceIndex interface {
@@ -216,6 +270,7 @@ type searchServer struct {
 	minBuildVersion      *semver.Version
 	buildVersion         *semver.Version
 	searchFields         *SearchFieldsRegistry
+	requiredFeatures     []IndexFeature
 
 	bgTaskWg     sync.WaitGroup
 	bgTaskCancel func()
@@ -309,6 +364,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		minBuildVersion:           opts.MinBuildVersion,
 		buildVersion:              opts.BuildVersion,
 		searchFields:              searchFields,
+		requiredFeatures:          RequiredIndexFeatures(),
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
 
@@ -1420,7 +1476,7 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 		sfKey := NewLowerGroupResource(key.Group, key.Resource)
 		sfields, expectedSearchFieldsHash, _ := s.searchFields.For(sfKey)
 
-		if shouldRebuildIndex(bi, s.minBuildVersion, s.buildVersion, minBuildTime, lastImportTime, sfields, expectedSearchFieldsHash, nil) {
+		if shouldRebuildIndex(bi, s.minBuildVersion, s.buildVersion, minBuildTime, lastImportTime, sfields, expectedSearchFieldsHash, s.requiredFeatures, nil) {
 			completeCh := make(chan struct{})
 			completeChs = append(completeChs, completeCh)
 			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, expectedSearchFieldsHash, completeCh)
@@ -1491,7 +1547,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 		l.Error("failed to get build info for index to rebuild", "error", err)
 	}
 
-	rebuild := shouldRebuildIndex(bi, req.minBuildVersion, s.buildVersion, req.minBuildTime, req.lastImportTime, req.selectableFields, req.expectedSearchFieldsHash, l)
+	rebuild := shouldRebuildIndex(bi, req.minBuildVersion, s.buildVersion, req.minBuildTime, req.lastImportTime, req.selectableFields, req.expectedSearchFieldsHash, s.requiredFeatures, l)
 	if !rebuild {
 		span.AddEvent("index not rebuilt")
 		l.Info("index doesn't need to be rebuilt")
@@ -1564,7 +1620,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 }
 
-func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, selectableFields []string, expectedSearchFieldsHash string, rebuildLogger log.Logger) bool {
+func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersion *semver.Version, minBuildTime time.Time, lastImportTime time.Time, selectableFields []string, expectedSearchFieldsHash string, requiredFeatures []IndexFeature, rebuildLogger log.Logger) bool {
 	if !minBuildTime.IsZero() {
 		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(minBuildTime) {
 			if rebuildLogger != nil {
@@ -1624,6 +1680,13 @@ func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersi
 	if expectedSearchFieldsHash != "" && expectedSearchFieldsHash != buildInfo.SearchFieldsHash {
 		if rebuildLogger != nil {
 			rebuildLogger.Info("search field metadata changed since the index was built, rebuilding the index")
+		}
+		return true
+	}
+
+	if missing := MissingIndexFeatures(buildInfo, requiredFeatures); len(missing) > 0 {
+		if rebuildLogger != nil {
+			rebuildLogger.Info("index is missing required features, rebuilding the index", "features", missing)
 		}
 		return true
 	}

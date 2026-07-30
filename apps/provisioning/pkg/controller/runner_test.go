@@ -279,6 +279,47 @@ func TestRunner_NonRetryableErrorIsNotRetried(t *testing.T) {
 	assert.Equal(t, int32(1), processCount.Load(), "non-retryable errors must not be retried")
 }
 
+// TestRunner_TriggerRecordedOncePerDelivery verifies that a key enqueued with a
+// trigger reports RecordProcessed exactly once, on the first attempt — retries
+// keep the attribution but are not recounted — while keys enqueued without a
+// trigger report nothing.
+func TestRunner_TriggerRecordedOncePerDelivery(t *testing.T) {
+	recorded := make(chan string, 3)
+	var processCount atomic.Int32
+	processingDone := make(chan struct{})
+
+	r := NewRunner(RunnerConfig{
+		Name:            "test-runner",
+		DrainTimeout:    5 * time.Second,
+		RecordProcessed: func(trigger string) { recorded <- trigger },
+		Process: func(_ context.Context, _ string) error {
+			// Fail twice with a retriable error, then succeed.
+			if processCount.Add(1) < 3 {
+				return apierrors.NewServiceUnavailable("test")
+			}
+			close(processingDone)
+			return nil
+		},
+	})
+
+	r.EnqueueWithTrigger("test/repo", "live")
+
+	ctx, cancel := context.WithCancel(t.Context())
+	runDone := make(chan struct{})
+	go func() {
+		r.Run(ctx, 1, func() {}, func() {})
+		close(runDone)
+	}()
+
+	<-processingDone
+	cancel()
+	<-runDone
+
+	require.Equal(t, int32(3), processCount.Load(), "two retries then success")
+	assert.Equal(t, "live", <-recorded, "the delivery's trigger is recorded")
+	assert.Empty(t, recorded, "retries must not be recorded again")
+}
+
 // TestRunner_CustomRetriable verifies that a configured Retriable classifier
 // replaces the default ServiceUnavailable check.
 func TestRunner_CustomRetriable(t *testing.T) {

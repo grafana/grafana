@@ -151,6 +151,8 @@ export const FlagKeys = {
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
+  /** Sizes TableNG auto-width columns to fit their content instead of distributing evenly */
+  TableAutoColumnWidths: "table.autoColumnWidths",
   /** Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments. */
   TableProtoRowParser: "table.protoRowParser",
   /** Enables the refactored TableNG nested-table implementation */
@@ -714,10 +716,10 @@ export const useFlagManagedPluginsV2 = (options?: ReactFlagEvaluationOptions): b
  *
  * **Details:**
  * - flag key: `newSavedQueriesExperience`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagNewSavedQueriesExperience = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("newSavedQueriesExperience", false, options).value;
+  return useFlag("newSavedQueriesExperience", true, options).value;
 };
 
 /**
@@ -916,6 +918,17 @@ export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationO
  */
 export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("suggestedDashboardsAssistantButton", false, options).value;
+};
+
+/**
+ * Sizes TableNG auto-width columns to fit their content instead of distributing evenly
+ *
+ * **Details:**
+ * - flag key: `table.autoColumnWidths`
+ * - default value: `false`
+ */
+export const useFlagTableAutoColumnWidths = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.autoColumnWidths", false, options).value;
 };
 
 /**
