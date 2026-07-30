@@ -1,5 +1,5 @@
 import { type Display } from '@grafana/api-clients/rtkq/iam/v0alpha1';
-import { type CurrentUserDTO, type GrafanaConfig, type NavLinkDTO } from '@grafana/data';
+import { type OrgRole, type CurrentUserDTO, type GrafanaConfig, type NavLinkDTO } from '@grafana/data';
 
 const publicDashboardAccessToken = window.__grafanaPublicDashboardAccessToken;
 // Grafana can only fail to load once
@@ -312,6 +312,11 @@ async function initBootDataFromMT() {
       uid: display.identity?.name ?? '',
       name: display.displayName,
       gravatarUrl: display.avatarURL ?? '',
+      // TODO remove hardcoding when we have orgRole from MT Auth
+      // This is necessary to avoid permissions error
+      // We use a type assertion to avoid importing enum JS
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      orgRole: "Admin" as OrgRole
     };
   } else {
     window.grafanaBootData.user = {
