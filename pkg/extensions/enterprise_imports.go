@@ -514,6 +514,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	_ "github.com/grafana/grafana/pkg/services/team"
 	_ "github.com/grafana/grafana/pkg/services/team/teamapi"
+	_ "github.com/grafana/grafana/pkg/services/team/teamdelete"
 	_ "github.com/grafana/grafana/pkg/services/team/teamimpl"
 	_ "github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	_ "github.com/grafana/grafana/pkg/services/updatemanager"
