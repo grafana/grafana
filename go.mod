@@ -109,7 +109,7 @@ require (
 	github.com/grafana/grafana-cloud-migration-snapshot v1.11.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.4.2 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
-	github.com/grafana/grafana-plugin-sdk-go v0.292.2 // @grafana/grafana-catalog
+	github.com/grafana/grafana-plugin-sdk-go v0.293.0 // @grafana/grafana-catalog
 	github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 // @grafana/alerting-backend
 	github.com/grafana/nanogit/gittest v1.4.0 // @grafana/grafana-git-ui-sync-team
 	github.com/grafana/otel-profiling-go v0.6.0 // @grafana/grafana-backend-group

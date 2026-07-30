@@ -590,8 +590,8 @@ github.com/grafana/grafana-aws-sdk v1.5.1 h1:qvqZwc2tzWCj5UAICmj+dYpa9ZQU9DY+zdW
 github.com/grafana/grafana-aws-sdk v1.5.1/go.mod h1:9n7/73i1L6E33ozMk2Nb2s4OoOSWqbmYltIoi/AqgJw=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 h1:moFDZEb2kTIrUo5u3Bekg1weABQQjy1EK1biP4I6L+0=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1/go.mod h1:+a3TOFSDsfsBLkpywutcYLqPNMqqO42VZnWw8YvAgmY=
-github.com/grafana/grafana-plugin-sdk-go v0.292.2 h1:6xrNZpe905vzX1pY33Fyet7Oxw5xULcAHm2b8dvNZNY=
-github.com/grafana/grafana-plugin-sdk-go v0.292.2/go.mod h1:MPviZeixuZDc5T3f62FBCCPSOJ51/JocZH5+ZiQ1DmM=
+github.com/grafana/grafana-plugin-sdk-go v0.293.0 h1:VUuQnQcsAw0yTnWwOPgTA0qGYiPUjYgJrCVAbWVRxFs=
+github.com/grafana/grafana-plugin-sdk-go v0.293.0/go.mod h1:uRQfptrkSaBhxFVTaY78Lc32Ls2mA6RY+Yu6KeXGT7w=
 github.com/grafana/otel-profiling-go v0.6.0 h1:W7lOZaJj4IJISXMcM1UBk3fJF3tzF2OD6MJBJaQp1H8=
 github.com/grafana/otel-profiling-go v0.6.0/go.mod h1:cqLIDgNXlnzknJ0WLiEe+JPjZk2MZ4ftMdqRJRWj1ZM=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20260225120258-18275ca76b0c h1:xE7mhc2gIi1iWNCLctz9YjaiEsJ+A/hws8kwt3l7F94=
