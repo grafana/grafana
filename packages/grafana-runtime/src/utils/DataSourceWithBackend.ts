@@ -17,6 +17,7 @@ import {
   parseLiveChannelAddress,
   type ScopedVars,
   type AdHocVariableFilter,
+  type TimeRange,
 } from '@grafana/data';
 
 import { reportInteraction } from '../analytics/utils';
@@ -56,6 +57,38 @@ export function isExpressionReference(ref?: DataSourceRef | string | null): bool
   }
   const v = typeof ref === 'string' ? ref : ref.type;
   return v === ExpressionDatasourceRef.type || v === ExpressionDatasourceRef.name || v === '-100'; // -100 was a legacy accident that should be removed
+}
+
+/**
+ * Converts a request time range into epoch-ms strings for `/api/ds/query`.
+ *
+ * When `range` is omitted entirely (common for metadata / metric-find queries),
+ * returns no bounds — matching the previous `range?.from.valueOf()` short-circuit.
+ * When a range is provided, `from`/`to` must exist and be valid DateTimes.
+ */
+function getQueryTimeRangeBounds(range?: TimeRange): { from?: string; to?: string } {
+  if (range == null) {
+    return {};
+  }
+
+  if (range.from == null || range.to == null) {
+    throw new Error('Missing DateTime in query time range');
+  }
+
+  let from: unknown;
+  let to: unknown;
+  try {
+    from = range.from.valueOf();
+    to = range.to.valueOf();
+  } catch {
+    throw new Error('Invalid DateTime in query time range');
+  }
+
+  if (typeof from !== 'number' || typeof to !== 'number' || Number.isNaN(from) || Number.isNaN(to)) {
+    throw new Error('Invalid DateTime in query time range');
+  }
+
+  return { from: from.toString(), to: to.toString() };
 }
 
 export class HealthCheckError extends Error {
@@ -236,8 +269,7 @@ class DataSourceWithBackend<
 
     const body = {
       queries,
-      from: range?.from.valueOf().toString(),
-      to: range?.to.valueOf().toString(),
+      ...getQueryTimeRangeBounds(range),
     };
 
     const headers: Record<string, string> = request.headers ?? {};

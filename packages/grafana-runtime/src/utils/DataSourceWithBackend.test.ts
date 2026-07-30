@@ -10,6 +10,7 @@ import {
   createDataFrame,
   type AdHocVariableFilter,
   type ScopedVars,
+  dateTime,
   getDefaultTimeRange,
 } from '@grafana/data';
 
@@ -95,6 +96,48 @@ describe('DataSourceWithBackend', () => {
 
   afterEach(() => {
     jest.useRealTimers();
+  });
+
+  describe('invalid query time range', () => {
+    test('allows queries with no range (metadata / metric-find style requests)', () => {
+      const { ds, mock } = createMockDatasource();
+
+      ds.query({
+        targets: [{ refId: 'A' }],
+      } as DataQueryRequest);
+
+      expect(mock.calls.length).toBe(1);
+      expect(mock.calls[0][0].data.from).toBeUndefined();
+      expect(mock.calls[0][0].data.to).toBeUndefined();
+    });
+
+    test('throws a clear error when range from/to are undefined', () => {
+      const { ds, mock } = createMockDatasource();
+
+      expect(() =>
+        ds.query({
+          targets: [{ refId: 'A' }],
+          range: { from: undefined, to: undefined, raw: { from: '', to: '' } },
+        } as unknown as DataQueryRequest)
+      ).toThrow('Missing DateTime in query time range');
+
+      expect(mock.calls.length).toBe(0);
+    });
+
+    test('throws a clear error when range contains invalid DateTimes', () => {
+      const { ds, mock } = createMockDatasource();
+      const from = dateTime(null);
+      const to = dateTime(null);
+
+      expect(() =>
+        ds.query({
+          targets: [{ refId: 'A' }],
+          range: { from, to, raw: { from, to } },
+        } as DataQueryRequest)
+      ).toThrow('Invalid DateTime in query time range');
+
+      expect(mock.calls.length).toBe(0);
+    });
   });
 
   test('check the executed queries', () => {
