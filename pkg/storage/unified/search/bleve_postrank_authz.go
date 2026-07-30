@@ -154,23 +154,6 @@ func (b *bleveIndex) ensureAuthzFields(searchrequest *bleve.SearchRequest) {
 	}
 }
 
-// ensureFacetFields makes Bleve load the stored facet fields so the post-rank
-// runner can aggregate them app-side. Facet capability implies the canonical
-// field is stored, so every facetable field has a stored form to load. Like
-// ensureAuthzFields this extends the Bleve load list only; it is not part of
-// the response column list.
-func (b *bleveIndex) ensureFacetFields(searchrequest *bleve.SearchRequest, req *resourcepb.ResourceSearchRequest) {
-	if slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_ALL_FIELDS) {
-		return
-	}
-	for _, facet := range req.Facet {
-		field := b.searchFields.storedFacetFields[facet.Field]
-		if !slices.Contains(searchrequest.Fields, field) {
-			searchrequest.Fields = append(searchrequest.Fields, field)
-		}
-	}
-}
-
 // authzResources builds the resource-type -> verb map used to authorize hits.
 // The primary resource uses the verb implied by req.Permission; federated
 // resources are read-only.
@@ -476,12 +459,16 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 	initial.Fields = b.facetScanFields(facets)
 	windowReq := &initial
 
+	var firstRes *bleve.SearchResult
 	for {
 		res, err := index.SearchInContext(ctx, windowReq)
 		if err != nil {
 			return nil, 0, false, err
 		}
 		stats.AddSearchTime(res.Took)
+		if firstRes == nil {
+			firstRes = res
+		}
 
 		windowHits := res.Hits
 		candidateSeq := func(yield func(docInfo) bool) {
@@ -508,7 +495,9 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 		}
 
 		if candidates >= maxCandidates {
-			return agg, authorized, false, nil
+			// Like the page scan: a budget that covered every match leaves
+			// nothing unsampled, so the facets are the complete authorized set.
+			return agg, authorized, candidates >= int64(firstRes.Total), nil
 		}
 		if len(res.Hits) < windowReq.Size || len(res.Hits) == 0 {
 			return agg, authorized, true, nil

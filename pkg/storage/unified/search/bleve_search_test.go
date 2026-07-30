@@ -2152,6 +2152,34 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.False(t, res.TotalHitsExact, "the facet sample stopped at its cap")
 	})
 
+	t.Run("facet sample stays exact when the budget covers every match", func(t *testing.T) {
+		// The sample consumes its whole budget, but that budget spans the entire
+		// match set, so no authorized document went uncounted.
+		cfg := search.PostRankAuthzConfig{MaxWindow: 10, FacetSampleSize: 20, MaxCandidates: 100}
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		docs := make([]*resource.BulkIndexItem, 0, 20)
+		for i := 0; i < 20; i++ {
+			folder := "denied"
+			if i%2 == 0 {
+				folder = "allowed"
+			}
+			docs = append(docs, newDocWithTags(fmt.Sprintf("doc-%02d", i), folder, []string{"shared"}))
+		}
+		indexDocs(t, index, docs)
+
+		q := listQuery(5)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+		_, res := searchNames(t, index, &countingAccessClient{
+			allowedFolders: map[string]bool{"allowed": true},
+		}, q)
+
+		require.Equal(t, int64(10), res.TotalHits)
+		require.True(t, res.TotalHitsExact, "the sample budget covered every match")
+		require.Equal(t, map[string]int64{"shared": 10}, facetTermCounts(res.Facet["tags"]))
+	})
+
 	t.Run("exhausted facet-only query reports an exact authorized total", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		indexDocs(t, index, []*resource.BulkIndexItem{

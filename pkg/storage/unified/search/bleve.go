@@ -2162,7 +2162,6 @@ func (b *bleveIndex) Search(
 	selectFields := slices.Clone(searchrequest.Fields)
 	if postRank {
 		b.ensureAuthzFields(searchrequest)
-		b.ensureFacetFields(searchrequest, req)
 	}
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
@@ -2373,8 +2372,8 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		// postFilter aggregates facets app-side over authorized hits (see
 		// facetAggregator); bleve's native facets would run over the unfiltered
 		// searcher and count unauthorized docs, so drop them here. The facet
-		// fields are added to the bleve load list in Search (ensureFacetFields),
-		// separate from the response column list.
+		// scan loads the stored facet fields on its own request copy
+		// (facetScanFields), separate from the response column list.
 		searchrequest.Facets = nil
 	}
 
