@@ -422,6 +422,40 @@ func TestWrapper_UpdateAuthorizationDoesNotRetainRequestContext(t *testing.T) {
 	mockStore.AssertExpectations(t)
 }
 
+func TestWrapper_UpdateFailsClosedWithoutOriginalIdentity(t *testing.T) {
+	testCases := map[string]context.Context{
+		"no auth values": context.Background(),
+		"AuthInfo without requester": types.WithAuthInfo(
+			context.Background(),
+			&identity.StaticRequester{UserUID: "fake-user-uid", Type: types.TypeUser},
+		),
+	}
+
+	for name, ctx := range testCases {
+		t.Run(name, func(t *testing.T) {
+			mockStore := rest.NewMockStorage(t)
+			mockAuth := &FakeAuthorizer{}
+			wrapper := New(mockStore, testResource, mockAuth)
+
+			result, updated, err := wrapper.Update(
+				ctx,
+				"fake-object",
+				&fakeUpdatedObjectInfo{obj: &fakeObject{}},
+				nil,
+				nil,
+				false,
+				&metaV1.UpdateOptions{},
+			)
+
+			require.ErrorIs(t, err, ErrUnauthenticated)
+			assert.Nil(t, result)
+			assert.False(t, updated)
+			mockStore.AssertNotCalled(t, "Update")
+			mockAuth.AssertNotCalled(t, "BeforeUpdate")
+		})
+	}
+}
+
 func TestWrapper_PassthroughMethods(t *testing.T) {
 	setup := newTestSetup(t)
 

@@ -394,18 +394,19 @@ func (w *Wrapper) Update(
 
 	requester, requesterErr := identity.GetRequester(ctx)
 	authInfo, hasAuthInfo := types.AuthInfoFrom(ctx)
+	if requesterErr != nil || !hasAuthInfo {
+		return nil, false, ErrUnauthenticated
+	}
 
 	// Create a wrapper around UpdatedObjectInfo to inject authorization
 	wrappedObjInfo := &authorizedUpdateInfo{
-		inner:        objInfo,
-		authorizer:   w.authorizer,
-		requester:    requester,
-		hasRequester: requesterErr == nil,
-		authInfo:     authInfo,
-		hasAuthInfo:  hasAuthInfo,
-		tracer:       w.tracer,
-		observer:     w.observer,
-		resource:     w.resource,
+		inner:      objInfo,
+		authorizer: w.authorizer,
+		requester:  requester,
+		authInfo:   authInfo,
+		tracer:     w.tracer,
+		observer:   w.observer,
+		resource:   w.resource,
 	}
 
 	innerStart := time.Now()
@@ -416,15 +417,13 @@ func (w *Wrapper) Update(
 }
 
 type authorizedUpdateInfo struct {
-	inner        k8srest.UpdatedObjectInfo
-	authorizer   ResourceStorageAuthorizer
-	requester    identity.Requester
-	hasRequester bool
-	authInfo     types.AuthInfo
-	hasAuthInfo  bool
-	tracer       trace.Tracer
-	observer     Observer
-	resource     schema.GroupResource
+	inner      k8srest.UpdatedObjectInfo
+	authorizer ResourceStorageAuthorizer
+	requester  identity.Requester
+	authInfo   types.AuthInfo
+	tracer     trace.Tracer
+	observer   Observer
+	resource   schema.GroupResource
 }
 
 func (a *authorizedUpdateInfo) Preconditions() *metaV1.Preconditions {
@@ -462,12 +461,8 @@ func (a *authorizedUpdateInfo) UpdatedObject(ctx context.Context, oldObj runtime
 }
 
 func (a *authorizedUpdateInfo) authorizationContext(ctx context.Context) context.Context {
-	if a.hasRequester {
-		ctx = identity.WithRequester(ctx, a.requester)
-	}
-	if a.hasAuthInfo {
-		ctx = types.WithAuthInfo(ctx, a.authInfo)
-	}
+	ctx = identity.WithRequester(ctx, a.requester)
+	ctx = types.WithAuthInfo(ctx, a.authInfo)
 	return ctx
 }
 
