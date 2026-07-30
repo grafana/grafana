@@ -35,12 +35,18 @@ import (
 type ObjectFunc func(namespace, name string) runtime.Object
 
 // ListFunc returns every object of one resource kind, read straight from the
-// API. The informer calls it once on start — to drive the initial reconcile and
-// report HasSynced — and again on every resync interval to re-deliver the full
-// set. The periodic re-list is what makes the informer correct despite
-// round-robin delivery: an event routed to another replica, or a hard delete
-// that is never announced, is reconciled on the next list.
-type ListFunc func(ctx context.Context) ([]runtime.Object, error)
+// API, along with the resource version the LIST snapshot was taken at. The
+// informer calls it once on start — to drive the initial reconcile and report
+// HasSynced — and again on every resync interval to re-deliver the full set. The
+// periodic re-list is what makes the informer correct despite round-robin
+// delivery: an event routed to another replica, or a hard delete that is never
+// announced, is reconciled on the next list.
+//
+// The list resource version dates the snapshot relative to live write-throughs
+// that raced it (the subscription is open while the LIST runs), letting Replace
+// tell a live write that outran the snapshot from an object the snapshot dropped;
+// 0 disables that reconciliation. See Store.Replace.
+type ListFunc func(ctx context.Context) (objs []runtime.Object, listRV int64, err error)
 
 // Verb values passed to the Metrics event observations.
 const (
@@ -451,6 +457,11 @@ func (n *Informer) onNotification() nats.MessageHandler {
 			// (delivered as MODIFIED with a deletionTimestamp) would overwrite the
 			// stored object's real deletionTimestamp with a nil one and mislead the
 			// staleness-tolerant readers of the snapshot (the repository quota count).
+			//
+			// Stamp the notification's resource version onto the minimal object so
+			// the store records it: a re-list whose snapshot predates this add must
+			// carry the object forward rather than diff it as a spurious delete.
+			setResourceVersion(obj, evt.ResourceVersion)
 			n.store.Update(context.Background(), obj)
 			n.observeLiveEvent(VerbAdd, evt.ResourceVersion)
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(obj, false) })
@@ -465,7 +476,7 @@ func (n *Informer) onNotification() nats.MessageHandler {
 			// found" reconcile error. Drop it from the snapshot too, so a
 			// staleness-tolerant reader (e.g. a quota count) stops counting it without
 			// waiting for the next re-list.
-			n.store.Delete(context.Background(), evt.Namespace, evt.Name)
+			n.store.DeleteAt(context.Background(), evt.Namespace, evt.Name, evt.ResourceVersion)
 			n.observeLiveEvent(VerbDelete, evt.ResourceVersion)
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(obj) })
 		default: // MODIFIED
@@ -489,42 +500,38 @@ func (n *Informer) onNotification() nats.MessageHandler {
 // On the initial list the store starts empty, so every object is an add (with
 // isInInitialList=true) and there is nothing to delete.
 func (n *Informer) relist(ctx context.Context, initial bool) error {
-	objs, err := n.list(ctx)
+	objs, listRV, err := n.list(ctx)
 	if err != nil {
 		n.log.Warn("nats informer: list failed", "gvr", n.gvr.String(), "error", err)
 		return err
 	}
 
-	// Swap the snapshot for the fresh set; added/removed are the keys that appeared
-	// and vanished since the previous re-list.
-	added, removed := n.store.Replace(objs)
+	// Swap the snapshot for the fresh set, reconciled at listRV against live
+	// write-throughs that raced the LIST (see Store.Replace): added/updated/removed
+	// are the keys to dispatch as adds/updates/deletes, with objects a live write
+	// already delivered here filtered out.
+	added, updated, removed := n.store.Replace(objs, listRV)
 	n.log.Debug("nats informer re-listed", "gvr", n.gvr.String(), "initial", initial,
-		"count", len(objs), "added", len(added), "removed", len(removed))
-	addedKeys := make(map[string]struct{}, len(added))
+		"count", len(objs), "added", len(added), "updated", len(updated), "removed", len(removed))
+
 	for _, obj := range added {
-		if key, err := cache.MetaNamespaceKeyFunc(obj); err == nil {
-			addedKeys[key] = struct{}{}
+		o := obj
+		// A key first seen on a periodic re-list is a change the live stream did
+		// not deliver here, so its RV timestamp dates the recovery latency. The
+		// initial list is not a recovery — its objects may be arbitrarily old — so
+		// it carries no RV for latency.
+		rv := int64(0)
+		if !initial {
+			rv = objectResourceVersion(o)
 		}
+		n.observeRelistEvent(VerbAdd, rv)
+		n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(o, initial) })
 	}
 
-	for _, obj := range objs {
+	for _, obj := range updated {
 		o := obj
-		key, _ := cache.MetaNamespaceKeyFunc(o)
-		if _, isNew := addedKeys[key]; isNew {
-			// A key first seen on a periodic re-list is a change the live stream
-			// did not deliver here, so its RV timestamp dates the recovery latency.
-			// The initial list is not a recovery — its objects may be arbitrarily
-			// old — so it carries no RV for latency.
-			rv := int64(0)
-			if !initial {
-				rv = objectResourceVersion(o)
-			}
-			n.observeRelistEvent(VerbAdd, rv)
-			n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(o, initial) })
-		} else {
-			n.observeRelistEvent(VerbUpdate, 0)
-			n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(o, o) })
-		}
+		n.observeRelistEvent(VerbUpdate, 0)
+		n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(o, o) })
 	}
 
 	for _, obj := range removed {
@@ -550,6 +557,15 @@ func (n *Informer) observeRelistEvent(verb string, rv int64) {
 func (n *Informer) observeLiveSubscription(open bool) {
 	if n.metrics != nil {
 		n.metrics.ObserveLiveSubscription(open)
+	}
+}
+
+// setResourceVersion stamps rv onto an object's metadata, so a minimal object
+// built from a live notification carries the version the store keys its
+// re-list reconciliation off. A non-meta object is left as-is.
+func setResourceVersion(obj runtime.Object, rv int64) {
+	if acc, err := meta.Accessor(obj); err == nil {
+		acc.SetResourceVersion(strconv.FormatInt(rv, 10))
 	}
 }
 
