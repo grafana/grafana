@@ -60,7 +60,28 @@ export function insertAtCursor(view: EditorView, text: string) {
   view.focus();
 }
 
-/** Prefixes every line the selection touches, or strips the prefix when all lines have it. */
+/**
+ * Ordered so `- [ ] ` matches before the `- ` it starts with. A prefix missing here
+ * can be added but never removed.
+ */
+const LINE_MARKERS = [
+  { kind: 'heading', pattern: /^#{1,6} / },
+  { kind: 'checklist', pattern: /^- \[[ xX]\] / },
+  { kind: 'bullet', pattern: /^- / },
+  { kind: 'numbered', pattern: /^\d+\. / },
+];
+
+function matchMarker(text: string) {
+  for (const { kind, pattern } of LINE_MARKERS) {
+    const match = pattern.exec(text);
+    if (match) {
+      return { kind, length: match[0].length };
+    }
+  }
+  return undefined;
+}
+
+/** Prefixes every line the selection touches, replacing any other marker or clearing its own. */
 export function toggleLinePrefix(view: EditorView, prefix: string) {
   const { state } = view;
   const { from, to } = state.selection.main;
@@ -72,11 +93,15 @@ export function toggleLinePrefix(view: EditorView, prefix: string) {
     lines.push(state.doc.line(n));
   }
 
+  const target = matchMarker(prefix);
+  const markers = lines.map((line) => matchMarker(line.text));
+
   // A partially prefixed selection is completed, not half-cleared.
-  const allPrefixed = lines.every((line) => line.text.startsWith(prefix));
-  const changes = lines.map((line) =>
-    allPrefixed ? { from: line.from, to: line.from + prefix.length } : { from: line.from, insert: prefix }
-  );
+  const allPrefixed = target !== undefined && markers.every((marker) => marker?.kind === target.kind);
+  const changes = lines.map((line, i) => {
+    const markerEnd = line.from + (markers[i]?.length ?? 0);
+    return allPrefixed ? { from: line.from, to: markerEnd } : { from: line.from, to: markerEnd, insert: prefix };
+  });
 
   // Mapping rightward keeps the caret after an inserted prefix.
   const changeSet = state.changes(changes);

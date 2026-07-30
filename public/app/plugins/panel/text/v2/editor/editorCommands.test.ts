@@ -174,6 +174,79 @@ describe('toggleLinePrefix', () => {
 
     toggleLinePrefix(view, '- ');
 
-    expect(view.state.doc.toString()).toBe('- - one\n- two');
+    expect(view.state.doc.toString()).toBe('- one\n- two');
+  });
+
+  it('replaces a checklist marker instead of leaving the checkbox behind', () => {
+    const view = createView('- [ ] task', { anchor: 8 });
+
+    toggleLinePrefix(view, '- ');
+
+    expect(view.state.doc.toString()).toBe('- task');
+  });
+
+  it('replaces a bullet marker when turning the line into a checklist', () => {
+    const view = createView('- task', { anchor: 4 });
+
+    toggleLinePrefix(view, '- [ ] ');
+
+    expect(view.state.doc.toString()).toBe('- [ ] task');
+  });
+
+  it('replaces a numbered marker when switching list style', () => {
+    const view = createView('1. task', { anchor: 5 });
+
+    toggleLinePrefix(view, '- ');
+
+    expect(view.state.doc.toString()).toBe('- task');
+  });
+
+  it('converts every selected line to the new list style', () => {
+    const view = createView('- [ ] one\n1. two\nthree', { anchor: 0, head: 22 });
+
+    toggleLinePrefix(view, '- ');
+
+    expect(view.state.doc.toString()).toBe('- one\n- two\n- three');
+  });
+
+  it('strips a heading of any level', () => {
+    const view = createView('### title', { anchor: 6 });
+
+    toggleLinePrefix(view, '# ');
+
+    expect(view.state.doc.toString()).toBe('title');
+  });
+
+  it('strips a checked checklist item', () => {
+    const view = createView('- [x] task', { anchor: 8 });
+
+    toggleLinePrefix(view, '- [ ] ');
+
+    expect(view.state.doc.toString()).toBe('task');
+  });
+
+  it('strips a multi-digit numbered marker whole', () => {
+    const view = createView('10. task', { anchor: 6 });
+
+    toggleLinePrefix(view, '1. ');
+
+    expect(view.state.doc.toString()).toBe('task');
+  });
+
+  it('leaves text that only looks like a marker alone', () => {
+    const view = createView('-task', { anchor: 3 });
+
+    toggleLinePrefix(view, '- ');
+
+    expect(view.state.doc.toString()).toBe('- -task');
+  });
+
+  it('keeps the caret in the text when the marker length changes', () => {
+    const view = createView('- [ ] task', { anchor: 8 });
+
+    toggleLinePrefix(view, '- ');
+
+    // Still between `ta` and `sk`.
+    expect(view.state.selection.main.head).toBe(4);
   });
 });
