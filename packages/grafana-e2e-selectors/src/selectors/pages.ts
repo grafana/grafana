@@ -97,6 +97,9 @@ export const versionedPages = {
       '9.3.1': (pluginName: string) => `Add new data source ${pluginName}`,
       [MIN_GRAFANA_VERSION]: (pluginName: string) => `Data source plugin item ${pluginName}`,
     },
+    searchInput: {
+      '13.2.0': 'data-testid Add data source search input',
+    },
   },
   Connections: {
     AddNewConnection: {
@@ -1093,10 +1096,12 @@ export const versionedPages = {
       [MIN_GRAFANA_VERSION]: 'Plugins list page',
     },
     list: {
+      '13.2.0': 'data-testid Plugins list',
       [MIN_GRAFANA_VERSION]: 'Plugins list',
     },
     listItem: {
-      [MIN_GRAFANA_VERSION]: 'Plugins list item',
+      '13.2.0': (pluginId: string) => `data-testid Plugins list item ${pluginId}`,
+      [MIN_GRAFANA_VERSION]: (_pluginId: string) => 'Plugins list item',
     },
     signatureErrorNotice: {
       '10.3.0': 'data-testid Unsigned plugins notice',
