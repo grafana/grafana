@@ -179,7 +179,7 @@ interface MetricsDiskPressure {
   worstInstance: string | null;
   /** 0..1 fill ratio of the worst host. */
   worstRatio: number | null;
-  /** Linear fill ETA for the worst host; null when not shrinking or beyond the clamp. */
+  /** Linear fill ETA for the shown filesystem; null when it cannot be identified, is not shrinking, or is beyond the clamp. */
   hoursToFull: number | null;
 }
 
@@ -203,7 +203,7 @@ const DISK_PRESSURE_RATIO = 0.9;
 const DISK_ETA_MAX_HOURS = 48;
 
 const FS_EXCLUDE = 'fstype!~"tmpfs|overlay|squashfs|iso9660|ramfs"';
-// Fullest-filesystem fill ratio per host; pseudo filesystems excluded.
+// Per-filesystem fill ratio; pseudo filesystems excluded.
 const FS_USED = `(1 - node_filesystem_avail_bytes{${FS_EXCLUDE}} / node_filesystem_size_bytes{${FS_EXCLUDE}})`;
 
 // Active series, cloud-first: Mimir's cardinality API, then vanilla Prometheus TSDB head stats.
@@ -229,14 +229,15 @@ async function fetchActiveSeries(instance: DataSourceWithBackend): Promise<numbe
   return headSeries != null && Number.isFinite(headSeries) && headSeries > 0 ? headSeries : null;
 }
 
-// Linear ETA until the worst host's fastest-shrinking filesystem fills. Growing/steady
-// filesystems drop out via `> 0`; past the clamp a linear estimate is noise.
+// Linear ETA until the shown (fullest) filesystem fills. Growing/steady filesystems drop
+// out via `> 0`; past the clamp a linear estimate is noise.
 async function fetchDiskHoursToFull(
   instanceLabel: string,
+  mountpoint: string,
   ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
 ): Promise<number | null> {
-  const escaped = instanceLabel.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-  const selector = `{instance="${escaped}",${FS_EXCLUDE}}`;
+  const esc = (v: string) => v.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  const selector = `{instance="${esc(instanceLabel)}",mountpoint="${esc(mountpoint)}",${FS_EXCLUDE}}`;
   const hours = await runInstantQueries(
     {
       eta: `min((node_filesystem_avail_bytes${selector} / -deriv(node_filesystem_avail_bytes${selector}[6h])) > 0) / 3600`,
@@ -344,7 +345,7 @@ export async function fetchMetricsActivity(
         ...(mimir ? {} : { dpm: PROM_DPM_QUERY }),
         hosts: 'count(node_uname_info)',
         diskHosts: `count(max by (instance) (${FS_USED}) > ${DISK_PRESSURE_RATIO})`,
-        diskWorst: `topk(1, max by (instance) (${FS_USED}))`,
+        diskWorst: `topk(1, ${FS_USED})`,
       },
       ds
     ).catch(() => null),
@@ -368,6 +369,7 @@ export async function fetchMetricsActivity(
   // Empty diskHosts vector (nobody above threshold) reads as null — zero here.
   const hostsAbove = healthFrames ? (readScalar(healthFrames, 'diskHosts') ?? 0) : 0;
   const worst = healthFrames ? readLabeledScalar(healthFrames, 'diskWorst', 'instance') : null;
+  const worstMount = healthFrames ? (readLabeledScalar(healthFrames, 'diskWorst', 'mountpoint')?.label ?? null) : null;
   let disk: MetricsDiskPressure | null = null;
   if (hostsAbove >= 1) {
     const worstInstance = worst?.label ?? null;
@@ -375,7 +377,7 @@ export async function fetchMetricsActivity(
       hostsAbove,
       worstInstance,
       worstRatio: worst?.value ?? null,
-      hoursToFull: worstInstance ? await fetchDiskHoursToFull(worstInstance, ds) : null,
+      hoursToFull: worstInstance && worstMount ? await fetchDiskHoursToFull(worstInstance, worstMount, ds) : null,
     };
   }
   return { series: usageSeries ?? series, dataPointsPerMinute, names, hosts, seriesSparkline, disk };

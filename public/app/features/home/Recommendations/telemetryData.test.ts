@@ -318,7 +318,7 @@ describe('fetchMetricsActivity', () => {
         : [
             scalarFrame('hosts', 12),
             scalarFrame('diskHosts', 3),
-            scalarFrame('diskWorst', 0.96, { instance: 'web-03:9100' }),
+            scalarFrame('diskWorst', 0.96, { instance: 'web-03:9100', mountpoint: '/data' }),
           ]
     );
 
@@ -352,9 +352,16 @@ describe('fetchMetricsActivity', () => {
       DATA_LOOKBACK_HOURS,
       prom
     );
-    // The follow-up ETA query pins the worst host by its full instance label.
+    // diskWorst must stay per-filesystem (no `max by (instance)`) or the mountpoint label is lost.
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
-      { eta: expect.stringContaining('instance="web-03:9100"') },
+      expect.objectContaining({
+        diskWorst: expect.stringMatching(/^topk\(1, \(1 - node_filesystem_avail_bytes\{/),
+      }),
+      prom
+    );
+    // The follow-up ETA query pins the exact filesystem shown: worst host AND its fullest mountpoint.
+    expect(mockRunInstantQueries).toHaveBeenCalledWith(
+      { eta: expect.stringContaining('instance="web-03:9100",mountpoint="/data"') },
       prom
     );
   });
@@ -620,13 +627,30 @@ describe('fetchMetricsActivity', () => {
     expect(mockRunInstantQueries).toHaveBeenCalledTimes(1);
   });
 
+  it('omits the ETA and skips its query when the worst filesystem has no mountpoint label', async () => {
+    const getResource = jest.fn(async () => ({ data: [] }));
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockRunInstantQueries.mockResolvedValue([
+      scalarFrame('diskHosts', 1),
+      scalarFrame('diskWorst', 0.93, { instance: 'db-01:9100' }),
+    ]);
+
+    const promise = fetchMetricsActivity(prom);
+    await jest.advanceTimersByTimeAsync(10_000);
+    const activity = await promise;
+
+    expect(activity.disk).toEqual({ hostsAbove: 1, worstInstance: 'db-01:9100', worstRatio: 0.93, hoursToFull: null });
+    // Without a filesystem identity there is nothing honest to query.
+    expect(mockRunInstantQueries).toHaveBeenCalledTimes(1);
+  });
+
   it.each([90, 0])('drops a meaningless linear ETA (%s h)', async (eta) => {
     const getResource = jest.fn(async () => ({ data: [] }));
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
     mockRunInstantQueries.mockImplementation(async (queries) =>
       'eta' in queries
         ? [scalarFrame('eta', eta)]
-        : [scalarFrame('diskHosts', 1), scalarFrame('diskWorst', 0.93, { instance: 'db-01:9100' })]
+        : [scalarFrame('diskHosts', 1), scalarFrame('diskWorst', 0.93, { instance: 'db-01:9100', mountpoint: '/srv' })]
     );
 
     const promise = fetchMetricsActivity(prom);
