@@ -55,6 +55,16 @@ describe('TimeRangeForm', () => {
     expect(await findByLabelText('To')).toBeInTheDocument();
   });
 
+  it.each(['From', 'To'])('should suppress password-manager autofill on the %s input', async (label) => {
+    const { findByLabelText } = setup();
+    const input = await findByLabelText(label);
+
+    expect(input).toHaveAttribute('autocomplete', 'off');
+    expect(input).toHaveAttribute('data-lpignore', 'true');
+    expect(input).toHaveAttribute('data-1p-ignore', 'true');
+    expect(input).toHaveAttribute('data-bwignore', 'true');
+  });
+
   it('should display calendar when clicking the calendar icon', async () => {
     const user = userEvent.setup();
     setup();
