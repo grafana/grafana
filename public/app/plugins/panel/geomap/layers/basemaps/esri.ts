@@ -1,16 +1,12 @@
-import type OpenLayersMap from 'ol/Map';
-
 import {
   type MapLayerRegistryItem,
   type MapLayerOptions,
-  type GrafanaTheme2,
   type RegistryItem,
   Registry,
-  type EventBus,
   type PanelOptionsEditorBuilder,
 } from '@grafana/data';
 
-import { xyzTiles, defaultXYZConfig, resolveXYZConfig, type XYZConfig } from './generic';
+import { xyzTiles, defaultXYZConfig, resolveXYZConfig, type XYZConfig, type UnresolvedXYZConfig } from './generic';
 
 interface PublicServiceItem extends RegistryItem {
   slug: string;
@@ -58,11 +54,11 @@ const publicServiceRegistry = new Registry<PublicServiceItem>(() => [
   },
 ]);
 
-export type ESRIXYZConfig = Partial<XYZConfig> & {
+export interface ESRIXYZConfig extends XYZConfig {
   server?: string;
-};
+}
 
-const registerOptionsUI = (builder: PanelOptionsEditorBuilder<MapLayerOptions<ESRIXYZConfig>>) => {
+const registerOptionsUI = (builder: PanelOptionsEditorBuilder<MapLayerOptions<UnresolvedXYZConfig<ESRIXYZConfig>>>) => {
   builder
     .addSelect({
       path: 'config.server',
@@ -90,18 +86,13 @@ const registerOptionsUI = (builder: PanelOptionsEditorBuilder<MapLayerOptions<ES
     });
 };
 
-const esriXYZTiles: MapLayerRegistryItem<ESRIXYZConfig> = {
+const esriXYZTiles: MapLayerRegistryItem<UnresolvedXYZConfig<ESRIXYZConfig>> = {
   id: 'esri-xyz',
   name: 'ArcGIS MapServer',
   description: 'Add layer from an ESRI ArcGIS MapServer',
   isBaseMap: true,
 
-  create: async (
-    map: OpenLayersMap,
-    options: MapLayerOptions<ESRIXYZConfig>,
-    eventBus: EventBus,
-    theme: GrafanaTheme2
-  ) => {
+  create: async (map, options, eventBus, theme) => {
     const cfg = resolveXYZConfig<ESRIXYZConfig>(options.config ?? {});
     const svc = publicServiceRegistry.getIfExists(cfg.server ?? DEFAULT_SERVICE)!;
     if (svc.id !== CUSTOM_SERVICE) {

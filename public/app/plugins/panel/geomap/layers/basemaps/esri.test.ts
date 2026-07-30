@@ -7,6 +7,7 @@ import { type EventBus, type GrafanaTheme2, type MapLayerHandler, type MapLayerO
 import { getTileSource } from '../test-utils';
 
 import { esriLayers, type ESRIXYZConfig } from './esri';
+import { type UnresolvedXYZConfig } from './generic';
 
 // The generic XYZ layer interpolates the URL via getTemplateSrv().replace()
 jest.mock('@grafana/runtime', () => ({
@@ -20,12 +21,12 @@ const map = {} as OpenLayersMap;
 const eventBus = {} as EventBus;
 const theme = { isDark: false } as GrafanaTheme2;
 
-function createHandler(config: ESRIXYZConfig): Promise<MapLayerHandler> {
-  const options: MapLayerOptions<ESRIXYZConfig> = { name: 'esri', type: 'esri-xyz', config };
+function createHandler(config: UnresolvedXYZConfig<ESRIXYZConfig>): Promise<MapLayerHandler> {
+  const options: MapLayerOptions<UnresolvedXYZConfig<ESRIXYZConfig>> = { name: 'esri', type: 'esri-xyz', config };
   return esriXYZ.create(map, options, eventBus, theme);
 }
 
-async function initSource(config: ESRIXYZConfig): Promise<XYZ> {
+async function initSource(config: UnresolvedXYZConfig<ESRIXYZConfig>): Promise<XYZ> {
   const handler = await createHandler(config);
   return getTileSource(handler.init(), XYZ);
 }

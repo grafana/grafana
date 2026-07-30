@@ -25,11 +25,19 @@ export const defaultXYZConfig: XYZConfig = {
   attribution: `Tiles © <a href="${sampleURL}">ArcGIS</a>`,
 };
 
+/** A layer config whose XYZ fields are still unset, as saved panel options have them. */
+export type UnresolvedXYZConfig<T extends XYZConfig = XYZConfig> = Omit<T, keyof XYZConfig> & Partial<XYZConfig>;
+
+/** The same config once the XYZ fields are guaranteed present. */
+type ResolvedXYZConfig<T extends XYZConfig = XYZConfig> = Omit<T, keyof XYZConfig> & XYZConfig;
+
 /**
  * Saved panel options are only ever partial, so fill in the gaps once here with defaults if needed
  * and let everything downstream work with a complete config.
  */
-export function resolveXYZConfig<T extends Partial<XYZConfig>>(config: T): T & XYZConfig {
+export function resolveXYZConfig<T extends XYZConfig = XYZConfig>(
+  config: UnresolvedXYZConfig<T>
+): ResolvedXYZConfig<T> {
   if (!config.url) {
     return {
       ...config,
@@ -79,18 +87,13 @@ const registerOptionsUI = (builder: PanelOptionsEditorBuilder<MapLayerOptions<Pa
     });
 };
 
-export const xyzTiles: MapLayerRegistryItem<Partial<XYZConfig>> = {
+export const xyzTiles: MapLayerRegistryItem<UnresolvedXYZConfig<XYZConfig>> = {
   id: 'xyz',
   name: 'XYZ Tile layer',
   description: 'Add map from a generic tile layer',
   isBaseMap: true,
 
-  create: async (
-    map: OpenLayersMap,
-    options: MapLayerOptions<Partial<XYZConfig>>,
-    eventBus: EventBus,
-    theme: GrafanaTheme2
-  ) => ({
+  create: async (_map, options, _eventBus, _theme) => ({
     init: () => {
       const cfg = resolveXYZConfig(options.config ?? {});
       const noRepeat = options.noRepeat ?? false;
