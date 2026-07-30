@@ -7072,6 +7072,10 @@
       "severity-info": "Info",
       "severity-warning": "Warning"
     },
+    "filter-controls": {
+      "add-filter": "Add filter",
+      "filter": "Filter"
+    },
     "general-settings-edit-view": {
       "default_grid_options": {
         "label": {
@@ -7688,7 +7692,8 @@
       "content-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
     },
     "variable-controls": {
-      "add-variable": "Add variable"
+      "add-variable": "Add variable",
+      "variable": "Variable"
     },
     "variable-editable-element": {
       "delete-confirm": "Delete variable",
