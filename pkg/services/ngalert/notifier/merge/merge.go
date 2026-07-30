@@ -134,20 +134,22 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 		return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("cannot merge because config %s because it conflicts with existing managed route", mimirCfg.Identifier)
 	}
 
-	mergedReceivers, renamedReceivers, addedReceivers := Receivers(cfg.AlertmanagerConfig.Receivers, mcfg.Receivers, mimirCfg.Identifier)
+	importedReceivers, err := mcfg.ToGrafanaReceivers()
+	if err != nil {
+		return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("failed to convert imported receivers: %w", err)
+	}
+	mergedReceivers, renamedReceivers, addedReceivers := Receivers(cfg.AlertmanagerConfig.Receivers, importedReceivers, mimirCfg.Identifier)
 
 	mergedTimeIntervals, renamedTimeIntervals, addedTimeIntervals := TimeIntervals(
-		cfg.AlertmanagerConfig.MuteTimeIntervals,
 		cfg.AlertmanagerConfig.TimeIntervals,
-		mcfg.MuteTimeIntervals,
-		mcfg.TimeIntervals,
+		mcfg.ToGrafanaTimeIntervals(),
 		mimirCfg.Identifier,
 	)
 
 	managedRoutes := make(v1.ManagedRoutes, len(cfg.ManagedRoutes)+1)
 	{
 		maps.Copy(managedRoutes, cfg.ManagedRoutes)
-		extraRoute := mcfg.Route
+		extraRoute := mcfg.ToGrafanaRoute()
 		RenameResourceUsagesInRoutes([]*v1.Route{extraRoute}, RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals})
 		managedRoutes[mimirCfg.Identifier] = extraRoute
 	}
@@ -195,46 +197,31 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 
 // DeduplicateResources merges existing and incoming resources (receivers and time intervals) and ensures unique names by
 // appending a suffix derived from identifier. Returns renamed resources for tracking adjustments made.
-func DeduplicateResources(a, b v1.PostableApiAlertingConfig, identifier string) RenameResources {
-	_, renamedReceivers, _ := Receivers(a.Receivers, b.Receivers, identifier)
+func DeduplicateResources(a v1.PostableApiAlertingConfig, b v1.ExtraAlertmanagerConfig, identifier string) RenameResources {
+	_, renamedReceivers, _ := Receivers(a.Receivers, b.ReceiverNameStubs(), identifier)
 	_, renamedTimeIntervals, _ := TimeIntervals(
-		a.MuteTimeIntervals,
 		a.TimeIntervals,
-		b.MuteTimeIntervals,
-		b.TimeIntervals,
+		b.ToGrafanaTimeIntervals(),
 		identifier,
 	)
 	return RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals}
 }
 
-// TimeIntervals merges existing and incoming time intervals and mute intervals, ensuring unique names by appending a
+// TimeIntervals merges existing and incoming time intervals, ensuring unique names by appending a
 // suffix derived from identifier. It returns a merged list of time intervals, a map of renamed interval names for
-// tracking adjustments made, and the final names of the incoming intervals (post-rename) in their original order
-// (mute intervals first, then time intervals). Mute time intervals are converted to time intervals.
+// tracking adjustments made, and the final names of the incoming intervals (post-rename) in their original order.
 func TimeIntervals(
-	existingMuteIntervals []v1.MuteTimeInterval,
-	existingTimeIntervals []v1.TimeInterval,
-	incomingMuteIntervals []v1.MuteTimeInterval,
-	incomingTimeIntervals []v1.TimeInterval,
+	existing []v1.TimeInterval,
+	incoming []v1.TimeInterval,
 	identifier string,
 ) ([]v1.TimeInterval, map[string]string, []string) {
 	dedupSuffix := getDedupSuffix(identifier)
-	// combine all incoming intervals into a single list
-	incomingAll := make([]v1.TimeInterval, 0, len(incomingTimeIntervals)+len(incomingMuteIntervals))
-	for _, interval := range incomingMuteIntervals {
-		incomingAll = append(incomingAll, v1.TimeInterval(interval))
-	}
-	incomingAll = append(incomingAll, incomingTimeIntervals...)
-	usedNames := createIndexTimeIntervals(existingMuteIntervals, existingTimeIntervals, incomingAll)
-	result := make([]v1.TimeInterval, 0, len(existingMuteIntervals)+len(existingTimeIntervals)+len(incomingMuteIntervals)+len(incomingTimeIntervals))
-	// fold mute time intervals into time intervals. The order is important here because during the applying time intervals with the same name win
-	for _, interval := range existingMuteIntervals {
-		result = append(result, v1.TimeInterval(interval))
-	}
-	result = append(result, existingTimeIntervals...)
+	usedNames := createIndexTimeIntervals(existing, incoming)
+	result := make([]v1.TimeInterval, 0, len(existing)+len(incoming))
+	result = append(result, existing...)
 	renames := make(map[string]string)
-	added := make([]string, 0, len(incomingAll))
-	for idx, interval := range incomingAll {
+	added := make([]string, 0, len(incoming))
+	for idx, interval := range incoming {
 		curName := interval.Name
 		if i, ok := usedNames[curName]; ok && i != idx { // if the name is already used by another interval, append a suffix.
 			newName := getUniqueName(curName, dedupSuffix, usedNames)
@@ -249,19 +236,15 @@ func TimeIntervals(
 }
 
 func createIndexTimeIntervals(
-	existingMuteIntervals []v1.MuteTimeInterval,
-	existingTimeIntervals []v1.TimeInterval,
-	incomingTimeIntervals []v1.TimeInterval,
+	existing []v1.TimeInterval,
+	incoming []v1.TimeInterval,
 ) map[string]int {
 	// usedNames is a map of existing interval names where value is the index of the interval that holds the name in the incoming list.
-	usedNames := make(map[string]int, len(existingMuteIntervals)+len(existingTimeIntervals)+len(incomingTimeIntervals))
-	for _, r := range existingMuteIntervals {
+	usedNames := make(map[string]int, len(existing)+len(incoming))
+	for _, r := range existing {
 		usedNames[r.Name] = -1
 	}
-	for _, r := range existingTimeIntervals {
-		usedNames[r.Name] = -1
-	}
-	for idx, r := range incomingTimeIntervals {
+	for idx, r := range incoming {
 		if _, ok := usedNames[r.Name]; !ok {
 			usedNames[r.Name] = idx
 		}

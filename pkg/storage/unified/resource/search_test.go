@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"iter"
 	"net/http"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -22,6 +23,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -38,6 +40,9 @@ type MockResourceIndex struct {
 	buildInfo IndexBuildInfo
 	docCount  int64
 
+	// Items passed to BulkIndex, guarded by updateIndexMu.
+	bulkItems []*BulkIndexItem
+
 	// Optional configured results for the managed-object RPCs. When nil the
 	// methods return an error, matching the default "not expected" behaviour.
 	managedObjects *resourcepb.ListManagedObjectsResponse
@@ -45,11 +50,28 @@ type MockResourceIndex struct {
 }
 
 func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
-	return m.buildInfo, nil
+	bi := m.buildInfo
+	// The mock stands for an index this binary built, so it maps the current
+	// features unless a test sets them. A test that wants an older index sets them
+	// to an empty (non-nil) slice.
+	if bi.Features == nil {
+		bi.Features = CurrentIndexFeatures()
+	}
+	return bi, nil
 }
 
-func (m *MockResourceIndex) BulkIndex(_ *BulkIndexRequest) error {
+func (m *MockResourceIndex) BulkIndex(req *BulkIndexRequest) error {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	m.bulkItems = append(m.bulkItems, req.Items...)
 	return nil
+}
+
+// indexedItems returns the items passed to BulkIndex so far.
+func (m *MockResourceIndex) indexedItems() []*BulkIndexItem {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	return slices.Clone(m.bulkItems)
 }
 
 func (m *MockResourceIndex) Search(_ context.Context, _ types.AccessClient, _ *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
@@ -192,6 +214,8 @@ type mockSearchBackend struct {
 	cache             map[NamespacedResource]ResourceIndex
 	stopCalls         atomic.Int32
 	snapshotThreshold int64
+	// Updater from the most recent BuildIndex, so a test can drive it.
+	lastUpdater UpdateFn
 }
 
 func (m *mockSearchBackend) SnapshotCountThreshold() int64 {
@@ -228,7 +252,7 @@ func TestStartupIndexStatsCountLimit(t *testing.T) {
 				Backend:      &mockSearchBackend{snapshotThreshold: tc.snapshotThreshold},
 				Resources:    &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
 				InitMinCount: tc.initMinCount,
-			}, storage, nil, nil, nil, nil, nil, nil, nil)
+			}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 			require.NoError(t, err)
 
 			_, err = server.startupIndexStats(t.Context())
@@ -250,6 +274,9 @@ func (m *mockSearchBackend) GetIndex(key NamespacedResource) ResourceIndex {
 
 func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResource, size int64, reason string, builder BuildFn, updater UpdateFn, rebuild bool, lastImportTime time.Time, _ time.Duration) (ResourceIndex, error) {
 	index := &MockResourceIndex{}
+	m.mu.Lock()
+	m.lastUpdater = updater
+	m.mu.Unlock()
 
 	// Call the builder function (required by the contract)
 	_, err := builder(index)
@@ -321,7 +348,7 @@ func TestBuildIndexesUsesOpenIndexStats(t *testing.T) {
 		Backend:      search,
 		Resources:    supplier,
 		InitMinCount: 10,
-	}, storage, nil, nil, nil, nil, nil, nil, nil)
+	}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	built, err := support.buildIndexes(t.Context())
@@ -348,7 +375,7 @@ func TestBuildIndexesFallsBackToResourceStats(t *testing.T) {
 		Backend:      search,
 		Resources:    supplier,
 		InitMinCount: 10,
-	}, storage, nil, nil, nil, nil, nil, nil, nil)
+	}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	built, err := support.buildIndexes(t.Context())
@@ -382,7 +409,7 @@ func TestBuildIndexesAppliesOwnershipToOpenIndexStats(t *testing.T) {
 	support, err := newSearchServer(SearchOptions{
 		Backend:   search,
 		Resources: supplier,
-	}, storage, nil, nil, nil, nil, nil, nil, ownsIndexFn)
+	}, storage, nil, nil, nil, nil, nil, nil, nil, ownsIndexFn)
 	require.NoError(t, err)
 
 	built, err := support.buildIndexes(t.Context())
@@ -402,7 +429,7 @@ func TestSearchServerStopStopsBackend(t *testing.T) {
 	support, err := newSearchServer(SearchOptions{
 		Backend:   search,
 		Resources: supplier,
-	}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil)
+	}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	support.bgTaskCancel = func() {}
 
@@ -430,7 +457,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -487,7 +514,7 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 	}
 
 	// Enable searchAfterWrite
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -535,7 +562,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 		InitMinCount: 1, // set min count to default for this test
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -636,6 +663,15 @@ func TestCombineBuildRequests(t *testing.T) {
 	}
 }
 
+// TestRequiredIndexFeaturesAreCurrent guards the invariant that makes required
+// features safe: requiring a feature this binary never records would rebuild
+// every index on every check, forever.
+func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
+	for _, required := range RequiredIndexFeatures() {
+		require.Contains(t, CurrentIndexFeatures(), required)
+	}
+}
+
 func TestShouldRebuildIndex(t *testing.T) {
 	type testcase struct {
 		buildInfo                IndexBuildInfo
@@ -645,145 +681,171 @@ func TestShouldRebuildIndex(t *testing.T) {
 		maxBuildVersion          *semver.Version
 		selectableFields         []string
 		expectedSearchFieldsHash string
+		requiredFeatures         []IndexFeature
 
-		expected bool
+		expectedRebuild bool
 	}
 
 	now := time.Now()
 
 	for name, tc := range map[string]testcase{
 		"empty build info, with no rebuild conditions": {
-			buildInfo: IndexBuildInfo{},
-			expected:  false,
+			buildInfo:       IndexBuildInfo{},
+			expectedRebuild: false,
 		},
 		"empty build info, with minTime": {
-			buildInfo: IndexBuildInfo{},
-			minTime:   now,
-			expected:  true,
+			buildInfo:       IndexBuildInfo{},
+			minTime:         now,
+			expectedRebuild: true,
 		},
 		"empty build info, with lastImportTime": {
-			buildInfo:      IndexBuildInfo{},
-			lastImportTime: now,
-			expected:       true,
+			buildInfo:       IndexBuildInfo{},
+			lastImportTime:  now,
+			expectedRebuild: true,
 		},
 		"empty build info, with minVersion": {
 			buildInfo:       IndexBuildInfo{},
 			minBuildVersion: semver.MustParse("10.15.20"),
-			expected:        true,
+			expectedRebuild: true,
 		},
 		"build time before min time": {
-			buildInfo: IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
-			minTime:   now,
-			expected:  true,
+			buildInfo:       IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
+			minTime:         now,
+			expectedRebuild: true,
 		},
 		"build time after min time": {
-			buildInfo: IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
-			minTime:   now,
-			expected:  false,
+			buildInfo:       IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
+			minTime:         now,
+			expectedRebuild: false,
 		},
 		"build time before last import time": {
-			buildInfo:      IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
-			lastImportTime: now,
-			expected:       true,
+			buildInfo:       IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
+			lastImportTime:  now,
+			expectedRebuild: true,
 		},
 		"build time after last import time": {
-			buildInfo:      IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
-			lastImportTime: now,
-			expected:       false,
+			buildInfo:       IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
+			lastImportTime:  now,
+			expectedRebuild: false,
 		},
 		"build version before min version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("10.15.19")},
 			minBuildVersion: semver.MustParse("10.15.20"),
-			expected:        true,
+			expectedRebuild: true,
 		},
 		"build version after min version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("11.0.0")},
 			minBuildVersion: semver.MustParse("10.15.20"),
-			expected:        false,
+			expectedRebuild: false,
 		},
 		"build version newer than running version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("12.0.0")},
 			maxBuildVersion: semver.MustParse("11.0.0"),
-			expected:        true,
+			expectedRebuild: true,
 		},
 		"build version same as running version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("11.0.0")},
 			maxBuildVersion: semver.MustParse("11.0.0"),
-			expected:        false,
+			expectedRebuild: false,
 		},
 		"build version older than running version": {
 			buildInfo:       IndexBuildInfo{BuildVersion: semver.MustParse("10.0.0")},
 			maxBuildVersion: semver.MustParse("11.0.0"),
-			expected:        false,
+			expectedRebuild: false,
 		},
 		"no index build version with maxBuildVersion set": {
 			buildInfo:       IndexBuildInfo{},
 			maxBuildVersion: semver.MustParse("11.0.0"),
-			expected:        false,
+			expectedRebuild: false,
 		},
 		"index with no previous selectable fields, and no new selectable fields": {
 			buildInfo:        IndexBuildInfo{},
 			selectableFields: nil,
-			expected:         false,
+			expectedRebuild:  false,
 		},
 		"index with no previous selectable fields, with new selectable fields": {
 			buildInfo:        IndexBuildInfo{},
 			selectableFields: []string{"title"},
-			expected:         true,
+			expectedRebuild:  true,
 		},
 		"index with existing fields, and no new selectable fields": {
 			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
 			selectableFields: nil,
-			expected:         false,
+			expectedRebuild:  false,
 		},
 		"index with existing fields, and subset of fields": {
 			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
 			selectableFields: []string{"title"},
-			expected:         false,
+			expectedRebuild:  false,
 		},
 		"index with existing fields, and same selectable fields": {
 			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
 			selectableFields: []string{"title", "team"},
-			expected:         false,
+			expectedRebuild:  false,
 		},
 		"index with existing fields, and different selectable fields": {
 			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
 			selectableFields: []string{"new.title", "new.team"},
-			expected:         true,
+			expectedRebuild:  true,
 		},
 		"index with existing fields, and additional selectable fields": {
 			buildInfo:        IndexBuildInfo{SelectableFields: []string{"title", "team"}},
 			selectableFields: []string{"title", "team", "new.field"},
-			expected:         true,
+			expectedRebuild:  true,
 		},
 		"no expected hash, no stored hash": {
-			buildInfo: IndexBuildInfo{},
-			expected:  false,
+			buildInfo:       IndexBuildInfo{},
+			expectedRebuild: false,
 		},
 		"no expected hash, stored hash present": {
 			buildInfo:                IndexBuildInfo{SearchFieldsHash: "abc"},
 			expectedSearchFieldsHash: "",
-			expected:                 false,
+			expectedRebuild:          false,
 		},
 		"expected hash present, no stored hash": {
 			buildInfo:                IndexBuildInfo{},
 			expectedSearchFieldsHash: "abc",
-			expected:                 true,
+			expectedRebuild:          true,
 		},
 		"expected hash matches stored hash": {
 			buildInfo:                IndexBuildInfo{SearchFieldsHash: "abc"},
 			expectedSearchFieldsHash: "abc",
-			expected:                 false,
+			expectedRebuild:          false,
 		},
 		"expected hash differs from stored hash": {
 			buildInfo:                IndexBuildInfo{SearchFieldsHash: "abc"},
 			expectedSearchFieldsHash: "def",
-			expected:                 true,
+			expectedRebuild:          true,
+		},
+		"no features on the index, none required": {
+			buildInfo:       IndexBuildInfo{},
+			expectedRebuild: false,
+		},
+		"index has the required feature": {
+			buildInfo:        IndexBuildInfo{Features: []IndexFeature{"alpha"}},
+			requiredFeatures: []IndexFeature{"alpha"},
+			expectedRebuild:  false,
+		},
+		"index is missing a required feature": {
+			buildInfo:        IndexBuildInfo{Features: []IndexFeature{"alpha"}},
+			requiredFeatures: []IndexFeature{"alpha", "beta"},
+			expectedRebuild:  true,
+		},
+		// An index from a newer binary has features this one does not know. That is
+		// the build version check's business, not this one's.
+		"index has a feature this binary does not require": {
+			buildInfo:       IndexBuildInfo{Features: []IndexFeature{"alpha", "beta"}},
+			expectedRebuild: false,
+		},
+		"index built before features existed, one required": {
+			buildInfo:        IndexBuildInfo{},
+			requiredFeatures: []IndexFeature{"alpha"},
+			expectedRebuild:  true,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.maxBuildVersion, tc.minTime, tc.lastImportTime, tc.selectableFields, tc.expectedSearchFieldsHash, nil)
-			require.Equal(t, tc.expected, res)
+			res := shouldRebuildIndex(tc.buildInfo, tc.minBuildVersion, tc.maxBuildVersion, tc.minTime, tc.lastImportTime, tc.selectableFields, tc.expectedSearchFieldsHash, tc.requiredFeatures, nil)
+			require.Equal(t, tc.expectedRebuild, res)
 		})
 	}
 }
@@ -884,7 +946,7 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		BuildVersion:         semver.MustParse("6.5.0"), // Running version
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -961,7 +1023,7 @@ func TestRebuildIndexes(t *testing.T) {
 		Resources: supplier,
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -1053,7 +1115,7 @@ func TestRebuildIndexes(t *testing.T) {
 			InitMinCount: 1,
 		}
 
-		support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+		support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 		require.NoError(t, err)
 		require.NotNil(t, support)
 
@@ -1166,7 +1228,7 @@ func TestRebuildIndexesForResource(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -1247,7 +1309,7 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 		InitMinCount: 1,
 	}
 
-	support, err := newSearchServer(opts, nil, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -1356,7 +1418,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 		MinBuildVersion: semver.MustParse("5.0.0"),
 	}
 
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, support)
 
@@ -1367,7 +1429,7 @@ func TestFindIndexesToRebuildWithJitter(t *testing.T) {
 	require.Equal(t, numIndexes, len(chsNoJitter))
 
 	// Create a second server with the same config to get a fresh rebuild queue.
-	support2, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support2, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	// With jitter: some indexes get extra tolerance, so fewer should be queued.
@@ -1427,7 +1489,7 @@ func TestRebuildIndexConcurrentRebuildsForSameKeyAreDeduplicated(t *testing.T) {
 	}
 
 	opts := SearchOptions{Backend: search, Resources: supplier}
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	// Fire the first rebuild. It will claim the in-flight slot and block
@@ -1560,7 +1622,7 @@ func TestRebuildIndexNoFollowUpWhenNotInFlight(t *testing.T) {
 		GroupsResources: map[string]string{"group": "res"},
 	}
 	opts := SearchOptions{Backend: search, Resources: supplier}
-	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil)
+	support, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	done := make(chan struct{})
@@ -1677,4 +1739,306 @@ func TestSumDocCount(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, int64(10), got)
 	require.Equal(t, []string{"root", "a", "b"}, idx.calls)
+}
+
+// trashStorageBackend serves a fixed set of trash entries from ListHistory and a
+// fixed set of modifications from ListModifiedSince.
+type trashStorageBackend struct {
+	mockStorageBackend
+
+	trash     []trashEntry
+	modified  []*ModifiedResource
+	trashReqs []*resourcepb.ListRequest
+}
+
+type trashEntry struct {
+	name  string
+	rv    int64
+	value []byte
+}
+
+func (m *trashStorageBackend) ListHistory(_ context.Context, req *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {
+	m.trashReqs = append(m.trashReqs, req)
+	return 1, callback(&trashIterator{entries: m.trash, pos: -1})
+}
+
+func (m *trashStorageBackend) ListModifiedSince(_ context.Context, _ NamespacedResource, _ int64, _ *time.Time) (int64, iter.Seq2[*ModifiedResource, error]) {
+	return 2, func(yield func(*ModifiedResource, error) bool) {
+		for _, res := range m.modified {
+			if !yield(res, nil) {
+				return
+			}
+		}
+	}
+}
+
+type trashIterator struct {
+	entries []trashEntry
+	pos     int
+}
+
+func (i *trashIterator) Next() bool             { i.pos++; return i.pos < len(i.entries) }
+func (i *trashIterator) Error() error           { return nil }
+func (i *trashIterator) ContinueToken() string  { return "" }
+func (i *trashIterator) ResourceVersion() int64 { return i.entries[i.pos].rv }
+func (i *trashIterator) Namespace() string      { return "ns" }
+func (i *trashIterator) Name() string           { return i.entries[i.pos].name }
+func (i *trashIterator) Folder() string         { return "" }
+func (i *trashIterator) Value() []byte          { return i.entries[i.pos].value }
+
+func testObjectJSON(name, title string) []byte {
+	return []byte(fmt.Sprintf(`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q},"spec":{"title":%q,"tags":["tag-a"]}}`, name, title))
+}
+
+func testProvisionedObjectJSON(name, title string) []byte {
+	return []byte(fmt.Sprintf(`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q,"annotations":{%q:"repo"}},"spec":{"title":%q}}`,
+		name, utils.AnnoKeyManagerKind, title))
+}
+
+// A full build has to list trash itself: deleted objects are absent from the live
+// listing and nothing re-announces them, so without this a rebuild would drop
+// every deleted document for the resource.
+// trashSearchOptions returns search options with deleted objects kept in the
+// index, which is off by default.
+func trashSearchOptions(backend SearchBackend) SearchOptions {
+	return SearchOptions{
+		Backend:               backend,
+		Resources:             &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
+		IndexDeletedDocuments: true,
+	}
+}
+
+func TestIndexTrash(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	storage := &trashStorageBackend{trash: []trashEntry{
+		{name: "gone-1", rv: 10, value: testObjectJSON("gone-1", "Gone one")},
+		{name: "gone-2", rv: 11, value: testObjectJSON("gone-2", "Gone two")},
+	}}
+
+	server, err := newSearchServer(trashSearchOptions(&mockSearchBackend{}), storage, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	index := &MockResourceIndex{}
+	require.NoError(t, server.indexTrash(t.Context(), key, index, log.NewNopLogger()))
+
+	items := index.indexedItems()
+	require.Len(t, items, 2)
+	for i, name := range []string{"gone-1", "gone-2"} {
+		require.Equal(t, ActionIndex, items[i].Action)
+		require.Equal(t, name, items[i].Doc.Key.Name)
+		require.NotNil(t, items[i].Doc.IsDeleted, "document should carry the deleted marker")
+		require.True(t, *items[i].Doc.IsDeleted)
+	}
+
+	require.Len(t, storage.trashReqs, 1)
+	require.Equal(t, resourcepb.ListRequest_TRASH, storage.trashReqs[0].Source)
+
+	// A backend that serves one resource from legacy storage has no history to
+	// list, and no trash either, so the build must not fail on it.
+	t.Run("a backend without history support builds anyway", func(t *testing.T) {
+		server, err := newSearchServer(trashSearchOptions(&mockSearchBackend{}), &noHistoryStorageBackend{}, nil, nil, nil, nil, nil, nil, nil, nil)
+		require.NoError(t, err)
+
+		index := &MockResourceIndex{}
+		require.NoError(t, server.indexTrash(t.Context(), key, index, log.NewNopLogger()))
+		require.Empty(t, index.indexedItems())
+	})
+
+	// The full build has to run that pass, not just be able to.
+	t.Run("a full build indexes trash", func(t *testing.T) {
+		search := &mockSearchBackend{}
+		server, err := newSearchServer(trashSearchOptions(search), storage, nil, nil, nil, nil, nil, nil, nil, nil)
+		require.NoError(t, err)
+
+		built, err := server.build(t.Context(), key, 1, "test", false, time.Time{})
+		require.NoError(t, err)
+
+		items := built.(*MockResourceIndex).indexedItems()
+		require.Len(t, items, 2, "the two deleted objects should have been indexed")
+		for _, item := range items {
+			require.Equal(t, ActionIndex, item.Action)
+			require.NotNil(t, item.Doc.IsDeleted)
+			require.True(t, *item.Doc.IsDeleted)
+		}
+	})
+}
+
+// A delete event carries the object as it was, so the updater can mark it instead
+// of removing it. Without a usable body there is nothing to index and removal is
+// all that is left.
+func TestUpdaterMarksDeletedDocuments(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	// Built in place: a ResourceKey carries a lock, so copying one trips vet.
+	deleted := func(name string, value []byte, rv int64) *ModifiedResource {
+		return &ModifiedResource{
+			Action:          resourcepb.WatchEvent_DELETED,
+			Key:             resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name},
+			ResourceVersion: rv,
+			Value:           value,
+		}
+	}
+
+	storage := &trashStorageBackend{modified: []*ModifiedResource{
+		deleted("gone", testObjectJSON("gone", "Gone"), 10),
+		deleted("broken", []byte("not json"), 11),
+	}}
+
+	search := &mockSearchBackend{}
+	server, err := newSearchServer(trashSearchOptions(search), storage, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	_, err = server.build(t.Context(), key, 1, "test", false, time.Time{})
+	require.NoError(t, err)
+
+	search.mu.Lock()
+	updater := search.lastUpdater
+	search.mu.Unlock()
+	require.NotNil(t, updater)
+
+	index := &MockResourceIndex{}
+	_, docs, err := updater(t.Context(), index, 1)
+	require.NoError(t, err)
+	require.Equal(t, 2, docs)
+
+	items := index.indexedItems()
+	require.Len(t, items, 2)
+
+	require.Equal(t, ActionIndex, items[0].Action)
+	require.Equal(t, "gone", items[0].Doc.Key.Name)
+	require.NotNil(t, items[0].Doc.IsDeleted)
+	require.True(t, *items[0].Doc.IsDeleted)
+
+	require.Equal(t, ActionDelete, items[1].Action, "an unusable body leaves nothing to index")
+	require.Equal(t, "broken", items[1].Key.Name)
+}
+
+// The option is off by default, and with it off a delete has to behave exactly as
+// it did before deleted objects were kept: the document is removed and no trash is
+// listed.
+func TestDeletedDocumentsAreRemovedWhenTheOptionIsOff(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	storage := &trashStorageBackend{
+		trash: []trashEntry{{name: "gone-1", rv: 10, value: testObjectJSON("gone-1", "Gone one")}},
+		modified: []*ModifiedResource{{
+			Action:          resourcepb.WatchEvent_DELETED,
+			Key:             resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "gone-2"},
+			ResourceVersion: 11,
+			Value:           testObjectJSON("gone-2", "Gone two"),
+		}},
+	}
+
+	search := &mockSearchBackend{}
+	options := trashSearchOptions(search)
+	options.IndexDeletedDocuments = false
+	server, err := newSearchServer(options, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	built, err := server.build(t.Context(), key, 1, "test", false, time.Time{})
+	require.NoError(t, err)
+	require.Empty(t, built.(*MockResourceIndex).indexedItems(), "no trash should be listed or indexed")
+	require.Empty(t, storage.trashReqs)
+
+	search.mu.Lock()
+	updater := search.lastUpdater
+	search.mu.Unlock()
+
+	index := &MockResourceIndex{}
+	_, _, err = updater(t.Context(), index, 1)
+	require.NoError(t, err)
+
+	items := index.indexedItems()
+	require.Len(t, items, 1)
+	require.Equal(t, ActionDelete, items[0].Action)
+	require.Equal(t, "gone-2", items[0].Key.Name)
+}
+
+// noHistoryStorageBackend stands for a backend that serves a single resource from
+// legacy storage: everything outside that is unimplemented.
+type noHistoryStorageBackend struct {
+	UnimplementedStorageBackend
+}
+
+// Trash serves a fixed field set, so a deleted document keeps only those fields.
+// Anything a kind declares is live-only: keeping it would grow the index and move
+// term statistics for live searches.
+func TestBuildDeletedDocumentKeepsOnlyTrashFields(t *testing.T) {
+	key := &resourcepb.ResourceKey{Namespace: "ns", Group: "group", Resource: "resource", Name: "gone"}
+
+	// The same object indexed as live carries kind fields, or this test proves
+	// nothing.
+	live, err := (&testDocumentBuilder{}).BuildDocument(t.Context(), key, 10, testObjectJSON("gone", "Gone"))
+	require.NoError(t, err)
+	require.NotEmpty(t, live.Tags)
+	require.NotEmpty(t, live.Fields)
+
+	doc, err := buildDeletedDocument(key, 10, testObjectJSON("gone", "Gone"))
+	require.NoError(t, err)
+
+	require.Equal(t, "Gone", doc.Title)
+	require.Equal(t, "gone", doc.Key.Name)
+	require.Equal(t, "gone", doc.Name, "searches tie-break on name")
+	require.Equal(t, int64(10), doc.RV)
+	require.NotNil(t, doc.IsDeleted)
+	require.True(t, *doc.IsDeleted)
+
+	require.Nil(t, doc.IsProvisioned, "the object was not provisioned")
+	require.Empty(t, doc.Tags)
+	require.Empty(t, doc.Fields)
+	require.Empty(t, doc.Labels)
+	require.Empty(t, doc.References)
+	require.Empty(t, doc.Description)
+	require.Nil(t, doc.Manager)
+}
+
+// Trash never returns an object that was provisioned when it was deleted, and a
+// trimmed document keeps no manager fields to work that out later, so it is
+// captured at delete time.
+func TestBuildDeletedDocumentMarksProvisionedObjects(t *testing.T) {
+	key := &resourcepb.ResourceKey{Namespace: "ns", Group: "group", Resource: "resource", Name: "gone"}
+
+	doc, err := buildDeletedDocument(key, 10, testProvisionedObjectJSON("gone", "Gone"))
+	require.NoError(t, err)
+	require.NotNil(t, doc.IsProvisioned)
+	require.True(t, *doc.IsProvisioned)
+}
+
+// An index built before the markers were mapped drops them, which would serve a
+// deleted document as live. The producer checks first, so the documents are not
+// even built, and the index gets a removal exactly as it did before.
+func TestDeletedDocumentsAreRemovedWhenIndexCannotHoldMarkers(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	storage := &trashStorageBackend{
+		trash: []trashEntry{{name: "gone-1", rv: 10, value: testObjectJSON("gone-1", "Gone one")}},
+		modified: []*ModifiedResource{{
+			Action:          resourcepb.WatchEvent_DELETED,
+			Key:             resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "gone-2"},
+			ResourceVersion: 11,
+			Value:           testObjectJSON("gone-2", "Gone two"),
+		}},
+	}
+
+	search := &mockSearchBackend{}
+	server, err := newSearchServer(trashSearchOptions(search), storage, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	// An index reporting no features: what a binary from before the mapping built.
+	older := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: []IndexFeature{}}}
+	require.False(t, server.keepsDeletedDocuments(older, log.NewNopLogger()))
+
+	require.NoError(t, server.indexTrash(t.Context(), key, older, log.NewNopLogger()))
+	require.Empty(t, older.indexedItems(), "trash listing should be skipped entirely")
+
+	_, err = server.build(t.Context(), key, 1, "test", false, time.Time{})
+	require.NoError(t, err)
+	search.mu.Lock()
+	updater := search.lastUpdater
+	search.mu.Unlock()
+
+	_, _, err = updater(t.Context(), older, 1)
+	require.NoError(t, err)
+
+	items := older.indexedItems()
+	require.Len(t, items, 1)
+	require.Equal(t, ActionDelete, items[0].Action)
+	require.Equal(t, "gone-2", items[0].Key.Name)
 }

@@ -9,6 +9,7 @@ import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants
 
 import { ctaClicked } from '../analytics/main';
 
+import { SYNTHETIC_MONITORING_APP_ID } from './appPluginIds';
 import { KUBERNETES_APP_ID } from './kubernetesData';
 
 interface PopularSolution {
@@ -32,7 +33,7 @@ function getPopularSolutions(): PopularSolution[] {
     },
     {
       id: 'synthetic-monitoring',
-      pluginId: 'grafana-synthetic-monitoring-app',
+      pluginId: SYNTHETIC_MONITORING_APP_ID,
       label: t('home.recommendations.no-data.solution-synthetics', 'Synthetic Monitoring'),
       icon: 'globe',
       appPath: '/home',

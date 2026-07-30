@@ -87,6 +87,11 @@ type BleveOptions struct {
 	// May be nil in tests.
 	SearchFields *resource.SearchFieldsRegistry
 
+	// RequiredIndexFeatures overrides the index features an existing index must
+	// already have to be reused; nil means resource.RequiredIndexFeatures. Only
+	// tests set it. New indexes always record resource.CurrentIndexFeatures.
+	RequiredIndexFeatures []resource.IndexFeature
+
 	// Snapshot configures remote index snapshot download at build time.
 	// If Snapshot.Store is nil, the feature is disabled and BuildIndex behaves exactly as before.
 	Snapshot SnapshotOptions
@@ -182,6 +187,9 @@ type bleveBackend struct {
 
 	fields *resource.SearchFieldsRegistry
 
+	// Index features an existing index must have to be reused. See BleveOptions.
+	requiredFeatures []resource.IndexFeature
+
 	// Parsed opts.BuildVersion for snapshot tier comparisons. Nil if BuildVersion
 	// is empty. Guaranteed non-nil when opts.Snapshot.Store is set.
 	runningBuildVersion *semver.Version
@@ -259,6 +267,11 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		fields = resource.NewSearchFieldsRegistry(nil, nil, nil)
 	}
 
+	requiredFeatures := opts.RequiredIndexFeatures
+	if requiredFeatures == nil {
+		requiredFeatures = resource.RequiredIndexFeatures()
+	}
+
 	be := &bleveBackend{
 		log:                     l,
 		cache:                   map[resource.NamespacedResource]*bleveIndex{},
@@ -266,6 +279,7 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		ownsIndexFn:             ownFn,
 		indexMetrics:            indexMetrics,
 		fields:                  fields,
+		requiredFeatures:        requiredFeatures,
 		runningBuildVersion:     runningBuildVersion,
 		maxSupportedIndexFormat: maxSupportedFormat,
 		lastUploadTime:          map[resource.NamespacedResource]time.Time{},
@@ -646,6 +660,7 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 		BuildVersion:     buildVersion,
 		SelectableFields: selectableFields,
 		SearchFieldsHash: searchFieldsHash,
+		Features:         resource.CurrentIndexFeatures(),
 	}
 
 	biBytes, err := json.Marshal(bi)
@@ -662,10 +677,23 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 }
 
 type buildInfo struct {
-	BuildTime        int64    `json:"build_time"`                   // Unix seconds timestamp of time when the index was built
-	BuildVersion     string   `json:"build_version"`                // Grafana version used when building the index
-	SelectableFields []string `json:"selectable_fields,omitempty"`  // List of selectable fields used when index was created.
-	SearchFieldsHash string   `json:"search_fields_hash,omitempty"` // Hash over the SearchFieldDefinition slices registered for (group, resource) at build time, across every version. Empty when no SearchFieldsProvider was in use.
+	// Unix seconds timestamp of time when the index was built.
+	BuildTime int64 `json:"build_time"`
+
+	// Grafana version used when building the index.
+	BuildVersion string `json:"build_version"`
+
+	// List of selectable fields used when index was created.
+	SelectableFields []string `json:"selectable_fields,omitempty"`
+
+	// Hash over the SearchFieldDefinition slices registered for (group, resource)
+	// at build time, across every version. Empty when no SearchFieldsProvider was
+	// in use.
+	SearchFieldsHash string `json:"search_fields_hash,omitempty"`
+
+	// Index features the index was built with. Absent on indexes built before
+	// index features existed.
+	Features []resource.IndexFeature `json:"features,omitempty"`
 }
 
 type buildIndexSource int
@@ -822,7 +850,7 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	idx := b.newBleveIndex(key, prepared.index, prepared.indexStorage, fields, allFields, standardSearchFields, updater, b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource))
-	idx.facetFieldByRequestName = facetFieldsForMapping(searchFieldsProvider, key.Group, key.Resource)
+	idx.searchFields = newKindSearchFields(searchFieldsProvider, key.Group, key.Resource, selectableFields)
 
 	if prepared.source.needsBuild() {
 		// Type-convert so buildIndexFromScratch can call updateResourceVersion after the builder returns.
@@ -1044,7 +1072,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 
 func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time.Time, logger log.Logger) (bleve.Index, string, int64, error) {
 	idx, name, rv, err := b.findPreviousFileBasedIndex(resourceDir)
-	if err != nil || idx == nil || lastImportTime.IsZero() {
+	if err != nil || idx == nil {
 		return idx, name, rv, err
 	}
 
@@ -1053,16 +1081,26 @@ func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time
 		logger.Warn("failed to get build info from existing index", "error", err)
 		return idx, name, rv, nil
 	}
-	if bi.BuildTime <= 0 {
+
+	indexBuildTime := time.Time{}
+	if bi.BuildTime > 0 {
+		indexBuildTime = time.Unix(bi.BuildTime, 0)
+	}
+
+	// Opening an outdated index is deliberate: startup stays fast and the rebuild
+	// scan replaces it shortly after. Only an index that would answer incorrectly
+	// is rejected. An index with no build time counts as older than any import.
+	reason := ""
+	if missing := resource.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
+		reason = fmt.Sprintf("index is missing required features %v", missing)
+	} else if !lastImportTime.IsZero() && indexBuildTime.Before(lastImportTime) {
+		reason = "index was built before the last import"
+	}
+	if reason == "" {
 		return idx, name, rv, nil
 	}
 
-	indexBuildTime := time.Unix(bi.BuildTime, 0)
-	if !indexBuildTime.Before(lastImportTime) {
-		return idx, name, rv, nil
-	}
-
-	logger.Info("File-based index needs rebuild before opening", "buildTime", indexBuildTime, "lastImportTime", lastImportTime)
+	logger.Info("File-based index needs rebuild before opening", "reason", reason, "buildTime", indexBuildTime, "lastImportTime", lastImportTime)
 	_ = idx.Close()
 	// Release the registration findPreviousFileBasedIndex installed on this
 	// directory: we are discarding the reused index, so cleanOldIndexes is
@@ -1236,7 +1274,7 @@ func (b *bleveBackend) promoteBuildIndexToFile(
 	}
 
 	promoted := b.newBleveIndex(key, fileIndex, indexStorageFile, fields, allFields, standardSearchFields, updater, delegate.logger)
-	promoted.facetFieldByRequestName = delegate.facetFieldByRequestName
+	promoted.searchFields = delegate.searchFields
 	promoted.resourceVersion.Store(delegate.resourceVersion.Load())
 	cleanup = false
 
@@ -1601,8 +1639,11 @@ type updateResult struct {
 }
 
 type bleveIndex struct {
-	key   resource.NamespacedResource
+	key resource.NamespacedResource
+	// Holds live and deleted documents together, so queries go through scopeQuery.
 	index bleve.Index
+	// Index features this index was built with, from its build info.
+	features []resource.IndexFeature
 
 	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
 	resourceVersion atomic.Int64
@@ -1613,9 +1654,9 @@ type bleveIndex struct {
 
 	standard resource.SearchableDocumentFields
 	fields   resource.SearchableDocumentFields
-	// facetFieldByRequestName maps ResourceSearchRequest facet field names to
-	// keyword-analyzed Bleve index field names.
-	facetFieldByRequestName map[string]string
+	// searchFields is what this kind's declarations mean for querying and
+	// indexing, so neither has to consult a hardcoded name list.
+	searchFields kindSearchFields
 
 	indexStorage string // memory or file, used when updating metrics
 
@@ -1664,9 +1705,18 @@ func (b *bleveBackend) newBleveIndex(
 	updaterFn resource.UpdateFn,
 	logger log.Logger,
 ) *bleveIndex {
+	// Read once: what an index maps cannot change while it is open.
+	var features []resource.IndexFeature
+	if info, err := getBuildInfo(index); err == nil {
+		features = info.Features
+	} else {
+		logger.Warn("failed to read index features, treating the index as having none", "err", err)
+	}
+
 	bi := &bleveIndex{
 		key:                  key,
 		index:                index,
+		features:             features,
 		indexStorage:         newIndexType,
 		fields:               fields,
 		allFields:            allFields,
@@ -1694,13 +1744,26 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 
 	batch := b.index.NewBatch()
 	var undeclaredFields map[string]struct{}
+	droppedMarkers := 0
 	for _, item := range req.Items {
 		switch item.Action {
 		case resource.ActionIndex:
 			if item.Doc == nil {
 				return fmt.Errorf("missing document")
 			}
+
+			// An index built before these fields were mapped drops them, which would
+			// serve the document as live or expose a provisioned one in trash. Remove
+			// it instead, which is how this index behaved before deleted documents were
+			// kept, until it is rebuilt.
+			if item.Doc.IsDeleted != nil && *item.Doc.IsDeleted && !b.mapsTrashMarkers() {
+				batch.Delete(resource.SearchID(item.Doc.Key))
+				droppedMarkers++
+				continue
+			}
+
 			doc := item.Doc.UpdateCopyFields()
+			populateFieldVariants(doc, b.searchFields.variants)
 
 			// The static fields.* mapping drops values written under an undeclared
 			// name; collect them so the loss is logged, not silent.
@@ -1725,11 +1788,24 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	for name := range undeclaredFields {
 		b.logger.Warn("search field written to document is not declared for this kind, so it is dropped from the index and cannot be stored or queried", "field", name)
 	}
+	if droppedMarkers > 0 {
+		// Debug because this fires per batch, and the producer already avoids
+		// building these documents: reaching here means a writer skipped that check.
+		b.logger.Debug("index does not map the trash markers, so deleted documents were removed instead of kept; they appear once the index is rebuilt",
+			"documents", droppedMarkers)
+	}
 
 	if err := b.index.Batch(batch); err != nil {
 		return err
 	}
 	return b.addSnapshotMutationCount(int64(len(req.Items)))
+}
+
+// mapsTrashMarkers reports whether this index can hold every marker a deleted
+// document relies on. An index built before those mappings existed cannot, and
+// bleve drops the values silently.
+func (b *bleveIndex) mapsTrashMarkers() bool {
+	return slices.Contains(b.features, resource.IndexFeatureDeletedMarker)
 }
 
 // isDeclaredField reports whether name is a declared search field for this
@@ -1739,7 +1815,18 @@ func (b *bleveIndex) isDeclaredField(name string) bool {
 	if b.fields != nil && b.fields.Field(name) != nil {
 		return true
 	}
-	return b.standard != nil && b.standard.Field(name) != nil
+	if b.standard != nil && b.standard.Field(name) != nil {
+		return true
+	}
+	// Variant fields are mapped but never named by a document builder, so they
+	// only show up here when a document is indexed twice.
+	bare := strings.TrimPrefix(name, resource.SEARCH_FIELD_PREFIX)
+	for _, v := range b.searchFields.variants {
+		if bare == v.keyword || bare == v.ngram {
+			return true
+		}
+	}
+	return false
 }
 
 func (b *bleveIndex) updateResourceVersion(rv int64) error {
@@ -1847,7 +1934,13 @@ func (b *bleveIndex) BuildInfo() (resource.IndexBuildInfo, error) {
 	if err != nil {
 		return resource.IndexBuildInfo{}, err
 	}
+	return bi.resourceBuildInfo(), nil
+}
 
+// resourceBuildInfo converts the persisted form into the one the rebuild and
+// reuse checks consume. An unparseable build version reads as unknown, so it
+// cannot make an index look newer than it is.
+func (bi buildInfo) resourceBuildInfo() resource.IndexBuildInfo {
 	bt := time.Time{}
 	if bi.BuildTime > 0 {
 		bt = time.Unix(bi.BuildTime, 0)
@@ -1866,7 +1959,8 @@ func (b *bleveIndex) BuildInfo() (resource.IndexBuildInfo, error) {
 		BuildVersion:     bv,
 		SelectableFields: bi.SelectableFields,
 		SearchFieldsHash: bi.SearchFieldsHash,
-	}, nil
+		Features:         bi.Features,
+	}
 }
 
 func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest, stats *resource.SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
@@ -1897,7 +1991,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 	stats.AddResultsConversionTime(time.Since(start))
 
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
-		Query: q,
+		Query: scopeQuery(q, false),
 		Fields: []string{
 			resource.SEARCH_FIELD_TITLE,
 			resource.SEARCH_FIELD_FOLDER,
@@ -1979,7 +2073,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 
 func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
-		Query: bleve.NewMatchAllQuery(),
+		Query: scopeQuery(bleve.NewMatchAllQuery(), false),
 		Size:  0,
 		Facets: bleve.FacetsRequest{
 			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_MANAGED_BY, 1000), // typically less then 5
@@ -2111,6 +2205,9 @@ func (b *bleveIndex) Search(
 	}
 
 	response.TotalHits = int64(res.Total)
+	// bleve counts matches exactly, and authz is applied in-searcher here, so the
+	// count is the exact authorized total.
+	response.TotalHitsExact = true
 	response.QueryCost = float64(res.Cost)
 	response.MaxScore = res.MaxScore
 	stats.AddSearchTime(res.Took)
@@ -2140,22 +2237,24 @@ func (b *bleveIndex) Search(
 	return response, nil
 }
 
+// DocCount counts live documents, so callers using it as a size estimate
+// undercount by whatever trash the index holds. Close enough for a threshold.
 func (b *bleveIndex) DocCount(ctx context.Context, folder string, stats *resource.SearchStats) (int64, error) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.DocCount")
 	defer span.End()
 
-	if folder == "" {
-		count, err := b.index.DocCount()
-		return int64(count), err
+	var q query.Query = bleve.NewMatchAllQuery()
+	if folder != "" {
+		q = &query.TermQuery{
+			Term:     folder,
+			FieldVal: resource.SEARCH_FIELD_FOLDER,
+		}
 	}
 
 	req := &bleve.SearchRequest{
 		Size:   0, // we just need the count
 		Fields: []string{},
-		Query: &query.TermQuery{
-			Term:     folder,
-			FieldVal: resource.SEARCH_FIELD_FOLDER,
-		},
+		Query:  scopeQuery(q, false),
 	}
 	rsp, err := b.index.SearchInContext(ctx, req)
 	if rsp == nil {
@@ -2219,11 +2318,11 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 
 	facets := bleve.FacetsRequest{}
 	for name, facet := range req.Facet {
-		field, ok := b.facetFieldByRequestName[facet.Field]
-		if !ok {
+		kf, ok := b.keywordFieldFor(facet.Field)
+		if !ok || !kf.facetable {
 			return nil, resource.NewBadRequestError(fmt.Sprintf("field %q does not support faceting", facet.Field))
 		}
-		facets[name] = bleve.NewFacetRequest(field, int(facet.Limit))
+		facets[name] = bleve.NewFacetRequest(kf.name, int(facet.Limit))
 	}
 
 	// Convert resource-specific fields to bleve fields. Any field declared
@@ -2280,7 +2379,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		return nil, errResult
 	}
 	textQuery := b.buildTextQuery(searchrequest, req)
-	searchrequest.Query = combineFilterAndTextQueries(filters, textQuery)
+	searchrequest.Query = scopeQuery(combineFilterAndTextQueries(filters, textQuery), req.IsDeleted)
 
 	// postFilter applies authorization after ranking in runPostFilterAuthz, so
 	// skip the in-searcher wrapper here and let bleve return unfiltered ranked hits.
@@ -2294,7 +2393,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	// Add the sort fields
-	sorting := getSortFields(req, b.fields)
+	sorting := b.getSortFields(req)
 	searchrequest.SortBy(sorting)
 
 	// When no sort fields are provided, sort by score if there is a query,
@@ -2331,6 +2430,46 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	return searchrequest, nil
+}
+
+// scopeQuery restricts q to live documents, or to deleted ones for trash. Every
+// query this index issues goes through here, so a read path cannot forget the
+// distinction and serve trash as if it were live.
+//
+// Live is "not marked deleted" rather than "marked not deleted", because
+// documents written before the marker carry no value for the field.
+func scopeQuery(q query.Query, deleted bool) query.Query {
+	marked := bleve.NewBoolFieldQuery(true)
+	marked.SetField(resource.SEARCH_FIELD_IS_DELETED)
+
+	scoped := bleve.NewBooleanQuery()
+	if !deleted {
+		scoped.AddMust(q)
+		scoped.AddMustNot(marked)
+		return scoped
+	}
+
+	// An object that was provisioned when it was deleted is never returned from
+	// trash: it comes back from its repository instead.
+	provisioned := bleve.NewBoolFieldQuery(true)
+	provisioned.SetField(resource.SEARCH_FIELD_IS_PROVISIONED)
+	scoped.AddMustNot(provisioned)
+
+	// Bleve drives iteration from the Must clause and uses Filter only to test the
+	// documents that clause produced. With nothing to match on, the marker becomes
+	// the Must clause, so trash comes off its own (small) posting list instead of a
+	// walk over every document. Nothing ranks these results, so scoring it costs
+	// nothing.
+	if _, matchAll := q.(*query.MatchAllQuery); matchAll {
+		scoped.AddMust(marked)
+		return scoped
+	}
+
+	// Filter, not Must: a scoring clause would tie absolute scores to how much
+	// trash the index holds. MustNot never scores either.
+	scoped.AddMust(q)
+	scoped.AddFilter(marked)
+	return scoped
 }
 
 // combineFilterAndTextQueries assembles the final bleve query from the filter
@@ -2503,49 +2642,59 @@ func (b *bleveIndex) buildTextQuery(searchrequest *bleve.SearchRequest, req *res
 	queryFields := b.resolveQueryFields(req.QueryFields)
 
 	for _, field := range queryFields {
-		switch field.Type {
-		case resourcepb.QueryFieldType_TEXT, resourcepb.QueryFieldType_DEFAULT:
+		kind := b.textQueryKindFor(field.Name)
+		switch kind {
+		case textQueryTerm, textQueryTermLowered:
+			// Bleve TermQuery is an exact token lookup: it does not analyze or lowercase the query.
+			term := req.Query
+			if kind == textQueryTermLowered {
+				term = strings.ToLower(term)
+			}
+			q := bleve.NewTermQuery(term)
+			q.SetBoost(float64(field.Boost))
+			q.SetField(field.Name)
+			disjoin.AddQuery(q)
+
+		case textQueryNgram, textQueryStandard:
 			q := bleve.NewMatchQuery(removeSmallTerms(req.Query)) // removeSmallTerms should be part of the analyzer
 			q.SetBoost(float64(field.Boost))
 			q.SetField(field.Name)
-			// Match the analyzer used to index each field: the ngram field
+			// Match the analyzer used to index each field: the ngram variant
 			// must be analyzed with TITLE_ANALYZER, not the standard analyzer
 			// (which splits on punctuation and drops sub-ngram-length fragments).
-			if field.Name == resource.SEARCH_FIELD_TITLE_NGRAM {
+			if kind == textQueryNgram {
 				q.Analyzer = TITLE_ANALYZER
 			} else {
 				q.Analyzer = standard.Name
 			}
 			q.Operator = query.MatchQueryOperatorAnd // all terms must match
 			disjoin.AddQuery(q)
-
-		case resourcepb.QueryFieldType_KEYWORD:
-			// Bleve TermQuery is an exact token lookup: it does not analyze or lowercase the query.
-			q := bleve.NewTermQuery(strings.ToLower(req.Query))
-			q.SetBoost(float64(field.Boost))
-			q.SetField(field.Name)
-			disjoin.AddQuery(q)
-
-		case resourcepb.QueryFieldType_PHRASE:
-			// Bleve phrase queries are different from our title_phrase field: they match adjacent analyzed tokens.
-			q := bleve.NewMatchPhraseQuery(req.Query)
-			q.SetBoost(float64(field.Boost))
-			q.SetField(field.Name)
-			q.Analyzer = standard.Name
-			disjoin.AddQuery(q)
 		}
 	}
 	return disjoin
 }
 
+// textQueryKindFor reports how a physical index field has to be queried.
+func (b *bleveIndex) textQueryKindFor(name string) textQueryKind {
+	if kind, ok := b.searchFields.textQueryKinds[name]; ok {
+		return kind
+	}
+	if strings.HasPrefix(name, referenceFieldPrefix) {
+		return textQueryTerm
+	}
+	// Undeclared fields (dynamically indexed, or named by a client we don't know
+	// about) keep the analyzed default.
+	return textQueryStandard
+}
+
 // titleQueryFields expands a text query on the logical title field across its
 // three physical variants: exact (title_phrase), word-level (title), and partial
-// (title_ngram), each with the query type its analyzer needs.
+// (title_ngram). The query each variant needs comes from its mapping.
 func titleQueryFields() []*resourcepb.ResourceSearchRequest_QueryField {
 	return []*resourcepb.ResourceSearchRequest_QueryField{
-		{Name: resource.SEARCH_FIELD_TITLE_PHRASE, Type: resourcepb.QueryFieldType_KEYWORD, Boost: 10}, // exact title match (case-insensitive via pre-lowered title_phrase)
-		{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.QueryFieldType_TEXT, Boost: 2},            // standard analyzer (word-level matching)
-		{Name: resource.SEARCH_FIELD_TITLE_NGRAM, Type: resourcepb.QueryFieldType_TEXT, Boost: 1},      // ngram analyzer (partial/prefix matching)
+		{Name: resource.SEARCH_FIELD_TITLE_PHRASE, Boost: 10}, // exact title match (case-insensitive via pre-lowered title_phrase)
+		{Name: resource.SEARCH_FIELD_TITLE, Boost: 2},         // standard analyzer (word-level matching)
+		{Name: resource.SEARCH_FIELD_TITLE_NGRAM, Boost: 1},   // ngram analyzer (partial/prefix matching)
 	}
 }
 
@@ -2572,9 +2721,9 @@ func (b *bleveIndex) resolveQueryFields(requested []*resourcepb.ResourceSearchRe
 			out = append(out, titleQueryFields()...)
 			continue
 		}
+		// Type is dropped: the query comes from the field's mapping.
 		out = append(out, &resourcepb.ResourceSearchRequest_QueryField{
 			Name:  resolveFieldName(b.fields, f.Name),
-			Type:  f.Type,
 			Boost: f.Boost,
 		})
 	}
@@ -2768,7 +2917,7 @@ func safeInt64ToInt(i64 int64) (int, error) {
 	return int(i64), nil
 }
 
-func getSortFields(req *resourcepb.ResourceSearchRequest, fields resource.SearchableDocumentFields) []string {
+func (b *bleveIndex) getSortFields(req *resourcepb.ResourceSearchRequest) []string {
 	if len(req.SortBy) == 0 {
 		return nil
 	}
@@ -2776,11 +2925,12 @@ func getSortFields(req *resourcepb.ResourceSearchRequest, fields resource.Search
 	sorting := make([]string, 0, len(req.SortBy)+1)
 	hasNameSort := false
 	for _, sort := range req.SortBy {
-		// title sorts on its populated, doc-valued keyword variant (title_phrase);
-		// other fields sort on their indexed name.
-		input := resolveFieldName(fields, sort.Field)
-		if input == resource.SEARCH_FIELD_TITLE {
-			input = resource.SEARCH_FIELD_TITLE_PHRASE
+		input := resolveFieldName(b.fields, sort.Field)
+		// Sort on the keyword form, or the analyzed field would order by its first
+		// token instead of the whole value. Those copies are stored lowercased, so
+		// sorting is case-insensitive.
+		if kf, ok := b.keywordFieldFor(input); ok {
+			input = kf.name
 		}
 
 		hasNameSort = hasNameSort || input == resource.SEARCH_FIELD_NAME
@@ -2800,23 +2950,40 @@ const (
 	whitespaceCharacters = " \t\r\n"
 )
 
-// exactTermQueryFields are fields where filters use Bleve TermQuery directly.
-var exactTermQueryFields = []string{
-	resource.SEARCH_FIELD_OWNER_REFERENCES,
-	resource.SEARCH_FIELD_CREATED_BY,
-	// FIXME: special case for login and email to use term query only because those fields are using keyword analyzer
-	// This should be fixed by using the info from the schema
-	"login",
-	"email",
+// keywordFieldFor reports the keyword-analyzed index field backing a filter or
+// sort field, and false when the field has no keyword form.
+func (b *bleveIndex) keywordFieldFor(key string) (keywordField, bool) {
+	fields := b.searchFields.keywordFields
+	if fields == nil {
+		// Index opened without per-kind declarations; standard fields still apply.
+		fields = standardKeywordFields
+	}
+	kf, ok := fields[key]
+	return kf, ok
+}
+
+// usesExactTermFilter reports whether "=" or "in" on key matches the whole value
+// as one token rather than going through the analyzed path. That is what the
+// filter capability means: the field is keyword-analyzed. "==" does not ask,
+// being exact by definition.
+func (b *bleveIndex) usesExactTermFilter(key string) bool {
+	// "=" on title expands across its phrase, token and ngram variants instead,
+	// even though title is filter-capable. "in" on title is exact; see the caller.
+	if key == resource.SEARCH_FIELD_TITLE {
+		return false
+	}
+	// Selectable fields are keyword-mapped even for kinds that declare no search
+	// fields, so the prefix alone settles it.
+	if strings.HasPrefix(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX) {
+		return true
+	}
+	kf, ok := b.keywordFieldFor(key)
+	return ok && kf.filterable
 }
 
 // Convert a "requirement" into a bleve query
 func (b *bleveIndex) requirementQuery(req *resourcepb.Requirement) (query.Query, *resourcepb.ErrorResult) {
-	// The exact-term allowlist is keyed by logical (public) field names. Label
-	// requirements arrive with their physical labels.<key> prefix, so match the
-	// allowlist against the logical key while still querying the physical field.
-	allowlistKey := strings.TrimPrefix(req.Key, resource.SEARCH_FIELD_LABELS+".")
-	useExactTermQuery := slices.Contains(exactTermQueryFields, allowlistKey) || strings.HasPrefix(req.Key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX)
+	useExactTermQuery := b.usesExactTermFilter(req.Key)
 	switch selection.Operator(req.Operator) {
 	case selection.DoubleEquals:
 		// DoubleEquals does exact matching via TermQuery (single value only).
@@ -2827,13 +2994,13 @@ func (b *bleveIndex) requirementQuery(req *resourcepb.Requirement) (query.Query,
 	case selection.Equals:
 		return allRequirementValuesQuery(req.Values, func(v string) query.Query {
 			if useExactTermQuery {
-				return exactFieldTermQuery(req.Key, v)
+				return b.exactFieldValueQuery(req.Key, v)
 			}
 			return fieldFilterQuery(req.Key, filterValue(req.Key, v))
 		}), nil
 
 	case selection.In:
-		// "in" is set membership: exact for the keyword allowlist and for title
+		// "in" is set membership: exact for keyword-analyzed fields and for title
 		// (via its populated title_phrase variant); other fields use the analyzed
 		// path, matching legacy behavior.
 		return anyRequirementValueQuery(req.Values, func(v string) query.Query {
@@ -2849,8 +3016,11 @@ func (b *bleveIndex) requirementQuery(req *resourcepb.Requirement) (query.Query,
 		var mustNotQueries []query.Query
 		for _, value := range req.Values {
 			var q query.Query
-			// notin keeps the legacy analyzed path for every field except the
-			// intentional exact-title case (kept consistent with "in" on title).
+			// notin stays on the analyzed path, unlike "=" and "in". On a keyword
+			// field that is already an exact exclusion, and it is what lets a
+			// wildcard value exclude a prefix, or "*" exclude everything. Only a
+			// field with both a text and a keyword form ends up asymmetric with
+			// "in"; title is handled here so the two agree on it.
 			if req.Key == resource.SEARCH_FIELD_TITLE {
 				q = b.exactFieldValueQuery(req.Key, value)
 			} else {
@@ -2932,14 +3102,13 @@ func addWildcardQueries(disjoin *query.DisjunctionQuery, pattern string, field s
 	}
 }
 
-// exactFieldValueQuery builds an exact term query for one filter value. title
-// routes to its populated keyword variant (title_phrase); other fields match on
-// their indexed field. Custom text fields have no populated keyword variant yet
-// (tracked as a follow-up in the search-v1 epic).
+// exactFieldValueQuery builds an exact term query for one filter value, against
+// the field's keyword form. Where that form is a separate copy (title_phrase, a
+// text field's <name>_keyword) the copy is stored lowercased, so the term has to
+// be lowercased too.
 func (b *bleveIndex) exactFieldValueQuery(key, value string) query.Query {
-	if key == resource.SEARCH_FIELD_TITLE {
-		key = resource.SEARCH_FIELD_TITLE_PHRASE
-		value = strings.ToLower(value) // title_phrase stores pre-lowered values
+	if kf, ok := b.keywordFieldFor(key); ok {
+		return exactFieldTermQuery(kf.name, kf.term(value))
 	}
 	return exactFieldTermQuery(key, value)
 }

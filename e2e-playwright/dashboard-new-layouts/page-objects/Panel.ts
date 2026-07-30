@@ -11,11 +11,15 @@ export class Panel extends PageObject {
     return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Panels.Panel.title(title));
   }
 
-  getHeaderByTitle(title: string | RegExp) {
+  // All panel headers whose title matches — the spec owns count assertions
+  getHeadersByTitle(title: string | RegExp) {
     return this.dashboardPage
       .getByGrafanaSelector(this.selectors.components.Panels.Panel.headerContainer)
-      .filter({ hasText: title })
-      .first();
+      .filter({ hasText: title });
+  }
+
+  getHeaderByTitle(title: string | RegExp) {
+    return this.getHeadersByTitle(title).first();
   }
 
   async selectByTitle(title: string | RegExp | Array<string | RegExp>) {

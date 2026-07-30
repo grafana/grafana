@@ -15,6 +15,11 @@ describe('HomePageSkeleton', () => {
     expect(screen.getByTestId('home-page-skeleton-cards')).toBeInTheDocument();
   });
 
+  it('reserves the IRM/news card slot when showIRMNewsCard is set', () => {
+    render(<HomePageSkeleton showIRMNewsCard />);
+    expect(screen.getByTestId('home-page-skeleton-cards')).toBeInTheDocument();
+  });
+
   it('reserves the extra section when showExtra is set', () => {
     render(<HomePageSkeleton showExtra />);
     expect(screen.getByTestId('home-page-skeleton-extra')).toBeInTheDocument();
