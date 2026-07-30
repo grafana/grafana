@@ -2876,9 +2876,11 @@ Whether to allow `http://` repository URLs together with a configured token. Bec
 
 #### `allowed_git_urls`
 
-Comma-separated allowlist of Git hosts, IP addresses, or CIDR ranges that are permitted even when they resolve to an address that would otherwise be blocked.
+While public addresses are always allowed, to prevent server-side request forgery (SSRF), repository URLs that resolve to loopback, private (RFC 1918), link-local, or unspecified addresses are rejected by default.
 
-To prevent server-side request forgery (SSRF), repository URLs that resolve to loopback, private (RFC 1918), link-local, or unspecified addresses are rejected by default. Add an entry here to allow an internal or self-hosted Git server, such as an on-premises GitHub Enterprise host. Each entry can be a hostname, `host:port`, a full URL (only the host is used), a literal IP address, or a CIDR range. Public addresses are always allowed. Empty by default.
+If you want to allow an internal or self-hosted Git server, such as an on-premises GitHub Enterprise host, add an entry here. Each entry can be a hostname, `host:port`, a full URL (only the host is used), a literal IP address, or a CIDR range.
+
+This field is empty by default.
 
 #### `min_sync_interval`
 

@@ -81,11 +81,13 @@ If you're using Grafana Enterprise v12.4.0 and want to set up Git Sync with pure
 
 ## Allow internal or private Git servers
 
-By default, Git Sync rejects repository URLs whose host resolves to a loopback, private (RFC 1918), link-local, or unspecified address. This protects your Grafana instance against server-side request forgery (SSRF). Public Git servers such as `github.com`, `gitlab.com`, and `bitbucket.org` resolve to public addresses and are always allowed.
-
+{{< admonition type="note" >}}
 This setting applies to self-managed Grafana (OSS and Enterprise). It's not configurable in Grafana Cloud.
+{{< /admonition >}}
 
-If you connect Git Sync to a Git server on a private network — for example, a self-hosted GitHub Enterprise, GitLab, or Bitbucket instance reachable only through an internal address — add its host to the `allowed_git_urls` allowlist:
+While public Git servers such as `github.com`, `gitlab.com`, and `bitbucket.org` resolve to public addresses and are always allowed, by default Git Sync rejects repository URLs with a host that resolves to a loopback, a private (RFC 1918), link-local, or an unspecified address. This protects your Grafana instance against server-side request forgery (SSRF).
+
+If you connect Git Sync to a Git server on a private network such as a self-hosted GitHub Enterprise, GitLab, or Bitbucket instance reachable only through an internal address, add its host to the `allowed_git_urls` allowlist:
 
 1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`.
 1. Add each internal Git host to `allowed_git_urls` as a comma-separated list:
@@ -97,7 +99,9 @@ If you connect Git Sync to a Git server on a private network — for example, a 
 
 1. Save the changes to the file and restart Grafana.
 
-Each entry can be a hostname, `host:port`, a full URL (only the host is used), a literal IP address, or a CIDR range. Prefer specific hosts or narrow ranges: a broad CIDR such as `10.0.0.0/8` re-exposes the entire private range that SSRF protection blocks. Only add hosts you trust — an allowlisted host receives the configured Git token on every sync, fetch, and push.
+Each entry can be a hostname, `host:port`, a full URL (only the host is used), a literal IP address, or a CIDR range. If possible, use specific hosts or narrow ranges, since a broad CIDR such as `10.0.0.0/8` re-exposes the entire private range that SSRF protection blocks.
+
+**Only add hosts you trust** because an allowlisted host receives the configured Git token on every sync, fetch, and push.
 
 ## Create a GitHub App
 
