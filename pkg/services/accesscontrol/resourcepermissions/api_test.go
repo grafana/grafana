@@ -796,6 +796,10 @@ func TestIntegrationApi_setUserPermissionForTeams_removeMemberDualWrite(t *testi
 			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
 
 			// Wire the production OnSetUser hook so a removal actually runs RemoveTeamMemberHook.
+			// dbHelper is assigned below, once setupTestEnvironmentWithCfg has produced the
+			// store the hook needs. The hook only runs during the request later in this test,
+			// so the late assignment is safe - but it must stay in this same block, otherwise
+			// the closure captures a nil helper.
 			var dbHelper *legacysql.LegacyDatabaseHelper
 			opts := testOptionsForTeams
 			opts.OnSetUser = func(session *db.Session, orgID int64, usr accesscontrol.User, resourceID, permission string) error {
