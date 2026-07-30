@@ -71,14 +71,14 @@ export default function VariablesManagementPage() {
 
   const selectedVariables = variables.filter((v) => v.metadata.name && selected.has(v.metadata.name));
   const allowGlobalScope = canManageGlobalVariables();
-  const selectionIncludesGlobal = selectedVariables.some((v) => !getVariableFolderUid(v));
   const selectedFolderUids = useMemo(
     () => [...new Set(selectedVariables.map(getVariableFolderUid).filter((uid): uid is string => Boolean(uid)))],
     [selectedVariables]
   );
   const folderCanEdit = useFolderCanEdit(selectedFolderUids);
-  // Match editor: disable Delete when any selected variable is outside scopes the user can manage.
-  const canDeleteSelection =
+  // Disable Move/Delete when any selected variable is outside scopes the user can manage
+  // (global without Editor, or a folder without CanEdit). Reuses the same folder-access map.
+  const canMutateSelection =
     selectedVariables.length > 0 &&
     selectedVariables.every((variable) => {
       const folderUid = getVariableFolderUid(variable);
@@ -281,13 +281,17 @@ export default function VariablesManagementPage() {
                     defaultValue_other: '{{count}} selected',
                   })}
                 </Text>
-                <Button variant="secondary" onClick={() => setPendingAction('move')} disabled={isProcessing}>
+                <Button
+                  variant="secondary"
+                  onClick={() => setPendingAction('move')}
+                  disabled={isProcessing || !canMutateSelection}
+                >
                   <Trans i18nKey="variables-management.page.move">Move</Trans>
                 </Button>
                 <Button
                   variant="destructive"
                   onClick={() => setPendingAction('delete')}
-                  disabled={isProcessing || !canDeleteSelection}
+                  disabled={isProcessing || !canMutateSelection}
                 >
                   <Trans i18nKey="variables-management.page.delete">Delete</Trans>
                 </Button>
@@ -324,7 +328,6 @@ export default function VariablesManagementPage() {
           <MoveVariablesModal
             count={selectedVariables.length}
             isMoving={isProcessing}
-            includesGlobalVariables={selectionIncludesGlobal}
             onConfirm={onBulkMove}
             onDismiss={() => setPendingAction(undefined)}
           />

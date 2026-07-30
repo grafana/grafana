@@ -9,19 +9,11 @@ import { canManageGlobalVariables, getVariableFolderPickerExcludeUIDs } from '..
 export interface MoveVariablesModalProps {
   count: number;
   isMoving: boolean;
-  /** True when the selection includes org-global variables (no folder scope). */
-  includesGlobalVariables?: boolean;
   onConfirm: (targetFolderUid: string | undefined) => void;
   onDismiss: () => void;
 }
 
-export function MoveVariablesModal({
-  count,
-  isMoving,
-  includesGlobalVariables = false,
-  onConfirm,
-  onDismiss,
-}: MoveVariablesModalProps) {
+export function MoveVariablesModal({ count, isMoving, onConfirm, onDismiss }: MoveVariablesModalProps) {
   const allowGlobalScope = canManageGlobalVariables();
   // '' is root/global. Non-editors hide root, so start empty (undefined) — NestedFolderPicker
   // labels '' as "Dashboards" even when showRootFolder is false.
@@ -29,8 +21,6 @@ export function MoveVariablesModal({
     canManageGlobalVariables() ? '' : undefined
   );
   const canConfirm = allowGlobalScope || Boolean(targetFolderUid);
-  // Non-editors cannot delete global variables, so a "move" from root becomes a copy.
-  const willCopyGlobals = !allowGlobalScope && includesGlobalVariables;
 
   return (
     <Modal isOpen title={t('variables-management.move-modal.title', 'Move variables')} onDismiss={onDismiss}>
@@ -43,19 +33,11 @@ export function MoveVariablesModal({
               defaultValue_other:
                 'Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available everywhere in the organization).',
             })
-          : willCopyGlobals
-            ? t('variables-management.move-modal.body-folder-only-with-global', '', {
-                count,
-                defaultValue_one:
-                  'Move {{count}} selected variable to a folder you can edit. Global (root) variables are copied instead of moved — removing the original requires Editor permission.',
-                defaultValue_other:
-                  'Move {{count}} selected variables to a folder you can edit. Global (root) variables are copied instead of moved — removing the originals requires Editor permission.',
-              })
-            : t('variables-management.move-modal.body-folder-only', '', {
-                count,
-                defaultValue_one: 'Move {{count}} selected variable to a folder you can edit.',
-                defaultValue_other: 'Move {{count}} selected variables to a folder you can edit.',
-              })}
+          : t('variables-management.move-modal.body-folder-only', '', {
+              count,
+              defaultValue_one: 'Move {{count}} selected variable to a folder you can edit.',
+              defaultValue_other: 'Move {{count}} selected variables to a folder you can edit.',
+            })}
       </p>
       <Field noMargin label={t('variables-management.move-modal.folder-label', 'Folder')}>
         <FolderPicker

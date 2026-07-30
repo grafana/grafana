@@ -17141,8 +17141,6 @@
       "body_other": "Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available everywhere in the organization).",
       "body-folder-only_one": "Move {{count}} selected variable to a folder you can edit.",
       "body-folder-only_other": "Move {{count}} selected variables to a folder you can edit.",
-      "body-folder-only-with-global_one": "Move {{count}} selected variable to a folder you can edit. Global (root) variables are copied instead of moved — removing the original requires Editor permission.",
-      "body-folder-only-with-global_other": "Move {{count}} selected variables to a folder you can edit. Global (root) variables are copied instead of moved — removing the originals requires Editor permission.",
       "cancel": "Cancel",
       "folder-label": "Folder",
       "move": "Move",
