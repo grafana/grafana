@@ -262,14 +262,17 @@ type ZanzanaClientConfig struct {
 	CallTimeout      time.Duration
 }
 
-// unaryDefaultTimeout applies a deadline to calls whose context carries no deadline. It spans
-// all retry attempts, so it must comfortably exceed the retry interceptor's total backoff.
+// unaryDefaultTimeout applies a deadline to calls whose context carries no deadline, plus a
+// per-attempt cap so all retries fit within it. Callers that bring their own deadline sized
+// their budget deliberately and keep it untouched — one attempt may use it in full.
 func unaryDefaultTimeout(timeout time.Duration) grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		if _, hasDeadline := ctx.Deadline(); !hasDeadline {
 			var cancel context.CancelFunc
 			ctx, cancel = context.WithTimeout(ctx, timeout)
 			defer cancel()
+			// A quarter of the deadline per attempt leaves room for three attempts plus backoff.
+			opts = append(opts, grpc_retry.WithPerRetryTimeout(timeout/4))
 		}
 		return invoker(ctx, method, req, reply, cc, opts...)
 	}
@@ -318,19 +321,14 @@ func NewRemoteZanzanaClient(cfg ZanzanaClientConfig, reg prometheus.Registerer) 
 	}, []string{"operation"})
 	unaryInterceptors, streamInterceptors := instrument(authzRequestDuration, middleware.ReportGRPCStatusOption)
 
-	// Retry transient failures so in-flight calls survive server pod restarts (e.g. GOAWAY on shutdown).
-	retryOptions := []grpc_retry.CallOption{
+	// Retry transient failures so in-flight calls survive server pod restarts (e.g. GOAWAY on
+	// shutdown). Per-attempt timeouts are attached per call by unaryDefaultTimeout, which
+	// knows each call's actual deadline.
+	retryInterceptor := grpc_retry.UnaryClientInterceptor(
 		grpc_retry.WithMax(3),
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.5)),
 		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.Aborted),
-	}
-	if cfg.CallTimeout > 0 {
-		// Cap each attempt at a quarter of the call deadline so all three retries plus
-		// backoff fit within it; a hung attempt is cut early and retried instead of one
-		// attempt consuming the whole budget.
-		retryOptions = append(retryOptions, grpc_retry.WithPerRetryTimeout(cfg.CallTimeout/4))
-	}
-	retryInterceptor := grpc_retry.UnaryClientInterceptor(retryOptions...)
+	)
 
 	// Metrics/tracing outermost so a retried call records one duration entry, then the
 	// default deadline spanning all attempts, then retry, then the per-attempt retry counter.
