@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { AppEvents } from '@grafana/data';
+import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
+import { AppEvents, PluginType } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
+import { Button, ConfirmModal, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
@@ -46,6 +47,8 @@ export function InstallControlsButton({
   const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
   const location = useLocation();
+  const { isAvailable: isAssistantAvailable, openAssistant } = useAssistant();
+  const [isInstallMenuOpen, setIsInstallMenuOpen] = useState(false);
   const { isInstalling, error: errorInstalling } = useInstallStatus();
   const { isUninstalling, error: errorUninstalling } = useUninstallStatus();
   const install = useInstall();
@@ -112,6 +115,25 @@ export function InstallControlsButton({
         setNeedReload?.(false);
       }
     }
+  };
+
+  const onInstallWithAssistant = () => {
+    if (!openAssistant) {
+      return;
+    }
+
+    openAssistant({
+      origin: `grafana/plugin-page/${plugin.id}/install-plugin`,
+      mode: 'assistant',
+      context: [
+        createAssistantContextItem('structured', {
+          title: t('plugins.install-controls.plugin-id', 'Plugin ID'),
+          data: { pluginId: plugin.id },
+        }),
+      ],
+      prompt: `Help me install ${plugin.name} datasource.`,
+      autoSend: true,
+    });
   };
 
   const onUpdate = async () => {
@@ -223,12 +245,52 @@ export function InstallControlsButton({
   }
 
   const shouldDisable = isInstalling || errorInstalling || plugin.angularDetected;
+  // The dropdown trigger only reflects conditions that block every menu option. errorInstalling is
+  // excluded: it just means a failed install is still in the store (it is only cleared on unmount),
+  // so gating the trigger on it would make "Install with assistant" — which never calls the install
+  // thunk — unreachable until a page reload, exactly when guided help is most useful.
+  const disableInstallMenu = isInstalling || plugin.angularDetected;
+  const shouldShowAssistant =
+    isAssistantAvailable && openAssistant && !isInstalling && plugin.type === PluginType.datasource;
+  const installButtonText = isInstalling
+    ? t('plugins.install-controls.installing', 'Installing')
+    : t('plugins.install-controls.install', 'Install');
+
+  // With the assistant available, offer a guided installation alongside the manual one.
+  if (shouldShowAssistant) {
+    const menu = (
+      <Menu>
+        <Menu.Item
+          icon="ai-sparkle"
+          label={t('plugins.install-controls.install-assistant', 'Install with assistant')}
+          description={t('plugins.install-controls.install-assistant-description', 'Guided installation')}
+          onClick={onInstallWithAssistant}
+        />
+        <Menu.Item
+          icon="list-ul"
+          label={t('plugins.install-controls.install-manually', 'Install manually')}
+          description={t('plugins.install-controls.install-manually-description', 'Install it yourself')}
+          onClick={onInstall}
+          disabled={shouldDisable}
+        />
+      </Menu>
+    );
+
+    return (
+      <Dropdown overlay={menu} placement="bottom-end" onVisibleChange={setIsInstallMenuOpen}>
+        <Button disabled={disableInstallMenu}>
+          <Stack direction="row" alignItems="center" gap={1}>
+            {installButtonText}
+            <Icon name={isInstallMenuOpen ? 'angle-up' : 'angle-down'} />
+          </Stack>
+        </Button>
+      </Dropdown>
+    );
+  }
 
   return (
     <Button disabled={shouldDisable} onClick={onInstall}>
-      {isInstalling
-        ? t('plugins.install-controls.installing', 'Installing')
-        : t('plugins.install-controls.install', 'Install')}
+      {installButtonText}
     </Button>
   );
 }
