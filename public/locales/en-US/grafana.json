@@ -15915,24 +15915,6 @@
     },
     "editor": {
       "aria-label-content": "Text content",
-      "view-preview": "Preview",
-      "view-split": "Split",
-      "view-write": "Write"
-    },
-    "mode-options": {
-      "label-code": "Code",
-      "label-html": "HTML",
-      "label-markdown": "Markdown"
-    },
-    "name-language": "Language",
-    "name-mode": "Mode",
-    "name-show-line-numbers": "Show line numbers"
-    "category-text": "Text",
-    "code-view": {
-      "aria-label-code-content": "Code content"
-    },
-    "editor": {
-      "aria-label-content": "Text content",
       "format-bold": "B",
       "format-heading": "H",
       "format-italic": "I",
