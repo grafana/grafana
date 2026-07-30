@@ -1361,7 +1361,10 @@ describe('SaveProvisionedDashboardForm', () => {
     expect(decodeURIComponent(dashboardRequest!.url.pathname)).toContain(
       '/repositories/test-repo/files/test-dashboard.json'
     );
-    expect(props.dashboard.setState).toHaveBeenCalledWith({ meta: { folderUid: undefined } });
+    // The folder is cleared, but the open dashboard keeps its identity while the drawer is open
+    expect(props.dashboard.setState).toHaveBeenCalledWith({
+      meta: { folderUid: undefined, folderTitle: undefined, k8s: undefined, slug: 'test-dashboard' },
+    });
   });
 
   it('creates a folder when New folder is used in folderless mode', async () => {
@@ -1584,7 +1587,12 @@ describe('SaveProvisionedDashboardForm', () => {
     // folder picker's onChange, so downstream consumers see the created folder
     await waitFor(() =>
       expect(props.dashboard.setState).toHaveBeenCalledWith({
-        meta: expect.objectContaining({ folderUid: 'new-folder-uid' }),
+        meta: expect.objectContaining({
+          folderUid: 'new-folder-uid',
+          folderTitle: 'My Team',
+          // identity fields survive the folder change
+          slug: 'test-dashboard',
+        }),
       })
     );
 

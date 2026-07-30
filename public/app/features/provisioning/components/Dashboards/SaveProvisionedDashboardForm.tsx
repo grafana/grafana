@@ -271,8 +271,12 @@ export function SaveProvisionedDashboardForm({
       const meta = await getProvisionedMeta(uid);
       dashboard.setState({
         meta: {
-          ...meta,
+          // Keep the open dashboard's identity (uid, slug, permissions); only the folder and its
+          // manager annotations change while the drawer is open
+          ...dashboard.state.meta,
+          k8s: meta.k8s,
           folderUid: uid,
+          folderTitle: title,
         },
       });
     },
