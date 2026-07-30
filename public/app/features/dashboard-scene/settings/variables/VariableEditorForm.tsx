@@ -84,7 +84,7 @@ export function VariableEditorForm({
         setNameWarning(result.warningMessage);
       }
       // Commit name on change (not only blur) so Save / Preview see the typed name
-      // even when the field still has focus — same pattern as the edit pane.
+      // even when the field still has focus — same pattern as the sidebar.
       // Do not drop predefined vars here: intermediate keystrokes that briefly match
       // a global/folder name must not permanently remove them from the live scene.
       if (!result.errorMessage) {

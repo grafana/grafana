@@ -23,7 +23,7 @@ function buildMockScene(options: { editable?: boolean; isEditing?: boolean } = {
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -285,7 +285,7 @@ describe('Variable mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -321,7 +321,7 @@ describe('Variable mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -354,7 +354,7 @@ describe('Variable mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);

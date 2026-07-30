@@ -26,7 +26,7 @@ import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 import { openAddVariablePane } from './VariableTypeSelectionPane';
 import { isVariableEditable } from './utils';
 
-function useEditPaneOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
+function useSidebarOptions(this: VariableSetEditableElement, set: SceneVariableSet): OptionsPaneCategoryDescriptor[] {
   const variableListId = useId();
   const options = useMemo(() => {
     return new OptionsPaneCategoryDescriptor({ title: '', id: 'variables' }).addItem(
@@ -80,7 +80,7 @@ export class VariableSetEditableElement implements EditableDashboardElement {
     }
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this, this.set);
+  public useSidebarOptions = useSidebarOptions.bind(this, this.set);
 }
 
 export function VariableList({ set }: { set: SceneVariableSet }) {
@@ -124,10 +124,7 @@ export function VariableList({ set }: { set: SceneVariableSet }) {
 
         dashboardEditActions.edit({
           source: set,
-          description: t(
-            'dashboard-scene.variable-list.create-drag-end-handler.description.reorder-variables-list',
-            'Reorder variables list'
-          ),
+          description: t('dashboard.sidebar.variables.reorder-description', 'Reorder variables list'),
           perform: () => {
             if (!result.destination || result.destination.index === result.source.index) {
               return;

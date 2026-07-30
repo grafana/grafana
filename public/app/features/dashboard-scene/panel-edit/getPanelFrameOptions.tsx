@@ -12,7 +12,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { type VizPanelLinks } from '../scene/PanelLinks';
-import { useEditPaneInputAutoFocus } from '../scene/layouts-shared/utils';
+import { useSidebarInputAutoFocus } from '../scene/layouts-shared/utils';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel, transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { dashboardEditActions } from '../sidebar/shared';
@@ -178,7 +178,7 @@ export function PanelFrameTitleInput({
   const notInPanelEdit = panel.getPanelContext().app !== CoreApp.PanelEditor;
   const [prevTitle, setPrevTitle] = React.useState(panel.state.title);
 
-  let ref = useEditPaneInputAutoFocus({
+  let ref = useSidebarInputAutoFocus({
     autoFocus: notInPanelEdit && isNewElement,
   });
 

@@ -57,11 +57,26 @@ export const versionedComponents = {
       '13.0.0': 'data-testid Card heading',
     },
   },
+  /**
+   * @deprecated use DashboardSidebarSplitter instead
+   */
   DashboardEditPaneSplitter: {
     primaryBody: {
+      '13.2.0': 'data-testid DashboardSidebarSplitter primary body',
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
     },
     bodyContainer: {
+      '13.2.0': 'data-testid DashboardSidebarSplitter body container',
+      '12.4.0': 'data-testid DashboardEditPaneSplitter body container',
+    },
+  },
+  DashboardSidebarSplitter: {
+    primaryBody: {
+      '13.2.0': 'data-testid DashboardSidebarSplitter primary body',
+      '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
+    },
+    bodyContainer: {
+      '13.2.0': 'data-testid DashboardSidebarSplitter body container',
       '12.4.0': 'data-testid DashboardEditPaneSplitter body container',
     },
   },
@@ -88,9 +103,11 @@ export const versionedComponents = {
       '12.4.0': 'data-testid sidebar add new panel',
     },
     configurePanelButton: {
+      '13.2.0': 'data-testid sidebar configure panel button',
       '13.1.0': 'data-testid edit pane configure panel button',
     },
     addNewVariableButton: {
+      '13.2.0': 'data-testid sidebar add new variable button',
       '13.1.0': 'data-testid edit pane add new variable button',
     },
   },
