@@ -126,6 +126,7 @@ export function SecondaryActions({
         variant={queryInspectorButtonActive ? 'active' : 'canvas'}
         aria-label={t('explore.secondary-actions.query-inspector-button-aria-label', 'Query inspector')}
         onClick={onClickQueryInspectorButton}
+        data-testid={Components.QueryTab.queryInspectorButton}
         icon="info-circle"
       >
         <Trans i18nKey="explore.secondary-actions.query-inspector-button">Query inspector</Trans>

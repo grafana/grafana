@@ -1358,6 +1358,9 @@ export const versionedComponents = {
     spanBar: {
       '9.0.0': 'data-testid SpanBar--wrapper',
     },
+    filtersRow: {
+      '13.2.0': 'data-testid trace-page-header-adhoc-filters-row',
+    },
   },
   QueryField: {
     container: {
@@ -1719,6 +1722,18 @@ export const versionedComponents = {
       },
       applyInverse: {
         ['12.1.0']: 'data-testid viz-tooltip-footer-apply-inverse-filters-button',
+      },
+    },
+  },
+  Logs: {
+    logLineMenu: {
+      menuButton: {
+        '13.2.0': 'data-testid Log line menu button',
+      },
+    },
+    fieldsSidebar: {
+      searchInput: {
+        '13.2.0': 'data-testid Log fields search input',
       },
     },
   },
