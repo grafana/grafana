@@ -1,6 +1,7 @@
 import { type NavIndex } from '@grafana/data';
 
 import { reducerTester } from '../../../test/core/redux/reducerTester';
+import { pluginNavLoaded } from '../navtree/state';
 
 import { navIndexReducer, updateNavIndex, updateConfigurationSubtitle } from './navModel';
 
@@ -99,6 +100,39 @@ describe('navModelReducer', () => {
           cfg: { ...newCfg, children: [users] },
           users: { ...users, parentItem: newCfg },
         });
+    });
+  });
+
+  describe('when pluginNavLoaded is dispatched', () => {
+    it('then merged tree nodes are indexed with home as their parent', () => {
+      const state = navIndexReducer(
+        {},
+        pluginNavLoaded({
+          tree: [
+            { id: 'home', text: 'Home', url: '/' },
+            {
+              id: 'apps',
+              text: 'More apps',
+              children: [{ id: 'plugin-page-some-app', text: 'Some app', url: '/a/some-app' }],
+            },
+          ],
+        })
+      );
+
+      expect(state['plugin-page-some-app']).toMatchObject({ text: 'Some app', url: '/a/some-app' });
+      expect(state['plugin-page-some-app'].parentItem?.id).toBe('apps');
+      expect(state.apps.parentItem?.id).toBe('home');
+    });
+
+    it('then entries registered by pages survive the merge', () => {
+      const existing: NavIndex = {
+        'page-registered-entry': { id: 'page-registered-entry', text: 'From updateNavIndex' },
+      };
+
+      const state = navIndexReducer(existing, pluginNavLoaded({ tree: [{ id: 'home', text: 'Home', url: '/' }] }));
+
+      expect(state['page-registered-entry']).toBeDefined();
+      expect(state.home).toBeDefined();
     });
   });
 });

@@ -3,6 +3,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { type IconName, type NavModelItem } from '@grafana/data';
 
 import { getInitialNavTree } from '../navtree/buildStaticNavTree';
+import { pluginNavLoaded } from '../navtree/state';
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
 function translateNav(navTree: NavModelItem[]): NavModelItem[] {
@@ -142,6 +143,12 @@ const navTreeSlice = createSlice({
       }
       starred.children = children.sort(compareStarredChildren);
     },
+  },
+  extraReducers: (builder) => {
+    // The payload is a freshly built merged tree (untranslated), with the
+    // runtime-populated children carried over. On failure the tree is left
+    // as-is; a later successful refetch rebuilds from scratch anyway.
+    builder.addCase(pluginNavLoaded, (_, action) => translateNav(action.payload.tree));
   },
 });
 
