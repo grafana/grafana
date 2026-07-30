@@ -1,7 +1,7 @@
 import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { openPanelEditor } from '../panel-edit/openPanelEditor';
 import { createDashboardEditViewFor } from '../settings/createDashboardEditViewFor';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
@@ -93,7 +93,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         return;
       }
 
-      update.editPanel = buildPanelEditScene(panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID);
+      // Sets editPanel in a follow-up state update once the editor chunk has loaded, the same
+      // way the library panel path below already does.
+      openPanelEditor(this._scene, panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID);
     } else if (editPanel && values.editPanel === null) {
       update.editPanel = undefined;
     }
@@ -128,9 +130,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   private _waitForLibPanelToLoadBeforeEnteringPanelEdit(panel: VizPanel, libPanel: LibraryPanelBehavior) {
     const sub = libPanel.subscribeToState((state) => {
       if (state.isLoaded) {
-        this._scene.setState({
-          editPanel: buildPanelEditScene(panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID),
-        });
+        openPanelEditor(this._scene, panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID);
         sub.unsubscribe();
       }
     });
