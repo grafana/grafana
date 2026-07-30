@@ -2322,6 +2322,10 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest") //nolint:staticcheck,ineffassign // SA4006: ctx intentionally kept so future code added to this function inherits the traced span
 	defer span.End()
 
+	if errResult := rejectTrashFieldsOnLiveSearch(req); errResult != nil {
+		return nil, errResult
+	}
+
 	facets := bleve.FacetsRequest{}
 	for name, facet := range req.Facet {
 		kf, ok := b.keywordFieldFor(facet.Field)
@@ -2533,6 +2537,35 @@ func combineFilterAndTextQueries(filters []query.Query, textQuery query.Query) q
 		bq.AddFilter(bleve.NewConjunctionQuery(filters...))
 	}
 	return bq
+}
+
+// rejectTrashFieldsOnLiveSearch refuses a live search naming a field only deleted
+// documents carry, so a filter that would match nothing fails loudly instead.
+func rejectTrashFieldsOnLiveSearch(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	if req.IsDeleted {
+		return nil
+	}
+	refused := func(key string) *resourcepb.ErrorResult {
+		return resource.NewBadRequestError(fmt.Sprintf("field %q is only available when searching deleted resources", key))
+	}
+	for _, f := range req.Fields {
+		if resource.IsTrashSearchField(f) {
+			return refused(f)
+		}
+	}
+	for _, sort := range req.SortBy {
+		if resource.IsTrashSearchField(sort.Field) {
+			return refused(sort.Field)
+		}
+	}
+	if req.Options != nil {
+		for _, f := range req.Options.Fields {
+			if resource.IsTrashSearchField(f.Key) {
+				return refused(f.Key)
+			}
+		}
+	}
+	return nil
 }
 
 // resolveFieldName maps a public field name to its physical index name. Clients

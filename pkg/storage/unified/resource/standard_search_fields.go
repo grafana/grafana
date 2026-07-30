@@ -102,3 +102,52 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 		},
 	}
 }
+
+// TrashSearchFieldDefinitions returns the fields only a deleted document carries.
+// Kept out of the standard set, which is hashed into IndexAffectingHash (adding to
+// it rebuilds every index with a search fields provider) and is what the /search
+// field set is built from.
+//
+// Capabilities mirror trashFieldSet() in the search API layer: if the two
+// disagree, a request the API layer accepts misbehaves here.
+//
+// title and folder are absent on purpose, so trash serves them from the standard
+// declarations and analyzes them exactly as live search does.
+func TrashSearchFieldDefinitions() []SearchFieldDefinition {
+	return []SearchFieldDefinition{
+		{
+			Name:         SEARCH_FIELD_DELETED_BY,
+			Type:         SearchFieldTypeString,
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort, SearchCapabilityRetrieve},
+			Description:  "Who deleted the resource (format: user:<uid>).",
+		},
+		// Numeric so it sorts in time order rather than lexically, and so a retention
+		// window can be a range query later.
+		{
+			Name:         SEARCH_FIELD_DELETION_TIME,
+			Type:         SearchFieldTypeInt64,
+			Capabilities: []SearchCapability{SearchCapabilitySort, SearchCapabilityRetrieve},
+			Description:  "Deletion timestamp (unix millis).",
+		},
+		{
+			Name:         SEARCH_FIELD_DELETED_RV,
+			Type:         SearchFieldTypeInt64,
+			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
+			Description:  "Resource version of the delete.",
+		},
+	}
+}
+
+// Derived once: fixed at build time, read on every search request.
+var trashSearchFieldNames = func() map[string]bool {
+	names := map[string]bool{}
+	for _, def := range TrashSearchFieldDefinitions() {
+		names[def.Name] = true
+	}
+	return names
+}()
+
+// IsTrashSearchField reports whether name is a field only deleted documents carry.
+func IsTrashSearchField(name string) bool {
+	return trashSearchFieldNames[name]
+}

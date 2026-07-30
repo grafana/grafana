@@ -151,6 +151,19 @@ type IndexableDocument struct {
 	// never returns those, and a deleted document keeps no manager fields to work
 	// it out later. Pointer for the same reason as IsDeleted.
 	IsProvisioned *bool `json:"_provisioned,omitempty"`
+
+	// Fields below are only ever set by buildDeletedDocument, the one place a
+	// deleted document is built. Nothing else enforces that.
+	//
+	// Pointers for the same reason as the markers above: a value would be added to
+	// every live document for nothing to read.
+
+	// Who deleted the object, in the same form as CreatedBy.
+	DeletedBy *string `json:"deleted_by,omitempty"`
+
+	// When the object was deleted (unix millis), and the resource version of the delete.
+	DeletionTime *int64 `json:"deletion_time,omitempty"`
+	DeletedRV    *int64 `json:"deleted_rv,omitempty"`
 }
 
 func (m *IndexableDocument) UpdateCopyFields() *IndexableDocument {
@@ -520,6 +533,13 @@ const (
 	// every kind, and so live search callers cannot filter on them themselves.
 	SEARCH_FIELD_IS_DELETED     = "_deleted"
 	SEARCH_FIELD_IS_PROVISIONED = "_provisioned"
+
+	// Fields only a deleted document carries, declared in
+	// TrashSearchFieldDefinitions rather than the standard set for the same reasons
+	// as the markers above.
+	SEARCH_FIELD_DELETED_BY    = "deleted_by"
+	SEARCH_FIELD_DELETION_TIME = "deletion_time"
+	SEARCH_FIELD_DELETED_RV    = "deleted_rv"
 )
 
 var standardSearchFieldsInit sync.Once
@@ -650,6 +670,23 @@ func StandardSearchFields() SearchableDocumentFields {
 				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				IsArray:     true,
 				Description: "Owner references in format {Group}/{Kind}/{Name}",
+			},
+			// Trash columns. A response can only carry a column defined here, so
+			// without these /trash could not return them at all (see hitsToTable).
+			{
+				Name:        SEARCH_FIELD_DELETED_BY,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+				Description: "Who deleted the resource (format: user:<uid>)",
+			},
+			{
+				Name:        SEARCH_FIELD_DELETION_TIME,
+				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
+				Description: "When the resource was deleted (unix millis)",
+			},
+			{
+				Name:        SEARCH_FIELD_DELETED_RV,
+				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
+				Description: "Resource version of the delete",
 			},
 		})
 
