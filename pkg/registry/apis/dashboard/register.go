@@ -674,7 +674,7 @@ func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a adm
 		return apierrors.NewBadRequest("folder scope cannot be changed; delete the variable and create a new one")
 	}
 
-	// allowMissingFolder: users with org-wide (root) variable write can still update
+	// allowMissingFolder: users with stack-wide (root) variable write can still update
 	// variables whose folder was deleted.
 	return b.validateVariableMutationPermissions(ctx, oldAccessor.GetFolder(), ActionVariablesWrite, true)
 }
@@ -694,7 +694,7 @@ func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a adm
 		return fmt.Errorf("error getting variable meta accessor: %w", err)
 	}
 
-	// allowMissingFolder: users with org-wide (root) variable delete can still delete
+	// allowMissingFolder: users with stack-wide (root) variable delete can still delete
 	// variables whose folder was deleted.
 	return b.validateVariableMutationPermissions(ctx, accessor.GetFolder(), ActionVariablesDelete, true)
 }

@@ -501,7 +501,7 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 		Role: ac.RoleDTO{
 			Name:        "fixed:variables:general.reader",
 			DisplayName: "Reader (root)",
-			Description: "Read org-wide (root) variables.",
+			Description: "Read stack-wide (root) variables.",
 			Group:       "Variables",
 			Permissions: []ac.Permission{
 				{Action: ac.ActionVariablesRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},
@@ -514,7 +514,7 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 		Role: ac.RoleDTO{
 			Name:        "fixed:variables:general.writer",
 			DisplayName: "Writer (root)",
-			Description: "Create, read, write or delete org-wide (root) variables.",
+			Description: "Create, read, write or delete stack-wide (root) variables.",
 			Group:       "Variables",
 			Permissions: ac.ConcatPermissions(variablesGeneralReaderRole.Role.Permissions, []ac.Permission{
 				{Action: ac.ActionVariablesCreate, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID(ac.GeneralFolderUID)},

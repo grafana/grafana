@@ -24,7 +24,7 @@ var (
 )
 
 // folderUIDFromVariableMetadataName derives the parent folder UID from a Variable
-// metadata.name. Folder-scoped names are "<specName>--<folderUID>"; org-wide
+// metadata.name. Folder-scoped names are "<specName>--<folderUID>"; stack-wide
 // (root) names have no folder suffix and map to the general folder.
 func folderUIDFromVariableMetadataName(metadataName string) string {
 	if idx := strings.LastIndex(metadataName, "--"); idx >= 0 && idx+2 < len(metadataName) {

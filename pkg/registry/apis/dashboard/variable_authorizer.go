@@ -62,7 +62,7 @@ func NewVariableAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer
 }
 
 // variableFolderScope returns the folders:uid scope used for variable mutation
-// checks. Empty folder UID (org-wide/root) maps to the general folder.
+// checks. Empty folder UID (stack-wide/root) maps to the general folder.
 func variableFolderScope(folderUID string) string {
 	if folderUID == "" {
 		folderUID = ac.GeneralFolderUID

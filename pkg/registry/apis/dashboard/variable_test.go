@@ -263,7 +263,7 @@ func TestDashboardsAPIBuilderValidateVariableUpdateRenameRejected(t *testing.T) 
 	require.Contains(t, err.Error(), "spec.spec.name cannot be changed")
 }
 
-func TestVariableMutationPermissionsOrgWide(t *testing.T) {
+func TestVariableMutationPermissionsStackWide(t *testing.T) {
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	builder := &DashboardsAPIBuilder{accessControl: ac}
 	oldVariable := newCustomVariable("region", "region")
