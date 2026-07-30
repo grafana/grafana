@@ -10948,6 +10948,26 @@
       "title": "Latest from the blog"
     },
     "overview": {
+      "get-started": {
+        "cards": {
+          "app-monitoring": {
+            "cta": "Start setup",
+            "description": "Visualize traces, metrics, and logs from services you build and run.",
+            "title": "Set up app monitoring"
+          },
+          "database-monitoring": {
+            "cta": "Start setup",
+            "description": "Query performance, connections, and storage for your data stores.",
+            "title": "Analyze database performance"
+          },
+          "infra-monitoring": {
+            "cta": "Start setup",
+            "description": "Monitor infra running on Linux, Kubernetes, cloud platforms, and more.",
+            "title": "Monitor infrastructure"
+          }
+        },
+        "title": "Recommended getting started guides"
+      },
       "options": {
         "all": "All solutions",
         "attention": "Needs attention",

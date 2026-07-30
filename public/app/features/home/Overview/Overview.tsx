@@ -6,6 +6,9 @@ import { Trans, t } from '@grafana/i18n';
 import { type IconName, Button, Icon, Stack, Text, Dropdown, Menu, useTheme2, useStyles2 } from '@grafana/ui';
 import { useStoredString } from 'app/core/hooks/useStored';
 
+import { GetStarted } from './GetStarted';
+import { useGuides } from './useGuides';
+
 const HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY = 'grafana.home.overview.option';
 
 interface Option {
@@ -19,6 +22,7 @@ interface Option {
 export function Overview() {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
+  const guides = useGuides();
 
   const options = useMemo<Option[]>(
     () => [
@@ -47,10 +51,10 @@ export function Overview() {
         label: t('home.overview.options.get-started', 'Get started'),
         icon: 'rocket',
         highlight: true,
-        content: <></>,
+        content: <GetStarted guides={guides} />,
       },
     ],
-    []
+    [guides]
   );
   const [stored, setStored] = useStoredString(HOME_OVERVIEW_OPTION_LOCAL_STORAGE_KEY, options[0].value);
   const option = useMemo(() => options.find((o) => o.value === stored) ?? options[0], [options, stored]);
