@@ -9,7 +9,7 @@ import {
   variableSuggestionToCodeEditorSuggestion,
 } from '@grafana/ui';
 
-import { type Options, TextMode } from './panelcfg.gen';
+import { type Options, TextMode } from '../panelcfg.gen';
 
 export const TextPanelEditor = ({ value, onChange, context }: StandardEditorProps<string, {}, Options>) => {
   const language = useMemo(() => context.options?.mode ?? TextMode.Markdown, [context]);

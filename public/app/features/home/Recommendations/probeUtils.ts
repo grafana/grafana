@@ -1,6 +1,6 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 /** Cap the probe fan-out: only the first N candidates (in priority order) are probed per page load. */
 export const MAX_PROBED_DATASOURCES = 10;
@@ -19,11 +19,18 @@ const HEALTH_CHECK_TIMEOUT_MS = 3000;
 // them while the region shows its skeleton. 3 attempts total.
 const RETRY_DELAYS_MS = [500, 1500];
 
-// Exact names of Grafana Cloud's utility Prometheus datasources (billing/ML) — never where product data lives.
+// Grafana Cloud's utility datasources — never where product data lives. Prometheus utilities
+// (billing/ML) carry exact unprefixed names; Loki utilities (query logs, alert history) are
+// provisioned with stack-prefixed names (grafanacloud-<slug>-usage-insights) over stable
+// unprefixed uids, so the name check matches both forms.
 const CLOUD_UTILITY_DATASOURCE_NAMES: Record<string, true> = {
   'grafanacloud-usage': true,
   'grafanacloud-ml-metrics': true,
 };
+const CLOUD_UTILITY_LOKI_NAME_PATTERN = /^grafanacloud-(.+-)?(usage-insights|alert-state-history)$/;
+function isCloudUtilityDatasourceName(name: string): boolean {
+  return Boolean(CLOUD_UTILITY_DATASOURCE_NAMES[name]) || CLOUD_UTILITY_LOKI_NAME_PATTERN.test(name);
+}
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -38,6 +45,12 @@ export async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
       await sleep(RETRY_DELAYS_MS[attempt]);
     }
   }
+}
+
+/** Backend-capable datasource instance for `uid`, or null when it cannot serve resource calls. */
+export async function resolveBackendInstance(uid: string): Promise<DataSourceWithBackend | null> {
+  const instance = await getDataSourceInstance({ uid });
+  return instance instanceof DataSourceWithBackend ? instance : null;
 }
 
 /**
@@ -90,12 +103,7 @@ export function createTtlCachedPromise<T>(fn: () => Promise<T>, ttlMs: number): 
   };
 }
 
-/**
- * Candidate datasources of `type` for a data-existence probe: `excludeUids` are dropped
- * unconditionally (never re-admitted by any fallback), cloud utility datasources are
- * skipped (unless they are all there is), the default datasource leads, capped for fan-out.
- * Pass an Infinity `cap` when the caller reorders before capping itself.
- */
+/** Probe candidates of `type`. Cloud utilities and `excludeUids` never qualify, even as the only candidates: platform telemetry must not settle a product-data probe. */
 export async function listProbeCandidates(
   type: string,
   cap = MAX_PROBED_DATASOURCES,
@@ -106,9 +114,7 @@ export async function listProbeCandidates(
     // Reject the -- Grafana -- builtin by meta.id; a ds.type check would drop alias datasources.
     filter: (ds) => ds.meta.id !== 'grafana',
   });
-  const eligible = excludeUids ? list.filter((ds) => !excludeUids.has(ds.uid)) : list;
-  const preferred = eligible.filter((ds) => !CLOUD_UTILITY_DATASOURCE_NAMES[ds.name]);
-  const pool = preferred.length > 0 ? preferred : eligible;
+  const pool = list.filter((ds) => !excludeUids?.has(ds.uid) && !isCloudUtilityDatasourceName(ds.name));
   const def = pool.find((ds) => ds.isDefault);
   const ordered = def ? [def, ...pool.filter((ds) => ds !== def)] : [...pool];
   return ordered.slice(0, cap);
