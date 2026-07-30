@@ -779,6 +779,19 @@ export const versionedComponents = {
       '9.2.0': 'show measure tools',
     },
 
+    // [Gauge] Effects options
+    Gauge: {
+      gradientSwitch: {
+        '13.2.0': 'data-testid Gauge effects editor gradient switch',
+      },
+      barGlowSwitch: {
+        '13.2.0': 'data-testid Gauge effects editor bar glow switch',
+      },
+      centerGlowSwitch: {
+        '13.2.0': 'data-testid Gauge effects editor center glow switch',
+      },
+    },
+
     Outline: {
       section: {
         '12.0.0': 'data-testid Outline section',
@@ -851,17 +864,6 @@ export const versionedComponents = {
           '12.3.0': 'data-testid row title input',
         },
       },
-    },
-  },
-  GaugeEffectsEditor: {
-    gradientSwitch: {
-      '13.2.0': 'data-testid Gauge effects editor gradient switch',
-    },
-    barGlowSwitch: {
-      '13.2.0': 'data-testid Gauge effects editor bar glow switch',
-    },
-    centerGlowSwitch: {
-      '13.2.0': 'data-testid Gauge effects editor center glow switch',
     },
   },
   PanelInspector: {
