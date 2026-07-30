@@ -5,6 +5,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
@@ -314,6 +315,7 @@ export function NestedFolderPicker({
     return (
       <Trigger
         id={id}
+        data-testid={selectors.components.FolderPicker.triggerButton}
         label={labelComponent}
         handleClearSelection={clearable && value !== undefined ? handleClearSelection : undefined}
         invalid={invalid}
@@ -338,6 +340,7 @@ export function NestedFolderPicker({
       <Input
         ref={refs.setReference}
         autoFocus
+        data-testid={selectors.components.FolderPicker.input}
         prefix={label ? <Icon name="folder" /> : <Icon name="search" />}
         placeholder={label ?? t('browse-dashboards.folder-picker.search-placeholder', 'Search folders')}
         value={search}

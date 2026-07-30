@@ -318,7 +318,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   private updateSelection(selected: ElementSelectionContextItem[], selectedDisconnectedObject?: SceneObject) {
-    // onBlur events are not fired on unmount and some edit pane inputs have important onBlur events
+    // onBlur events are not fired on unmount and some sidebar inputs have important onBlur events
     // This make sure they fire before unmounting
     if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();

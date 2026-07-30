@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sort"
 	"strings"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -151,6 +152,47 @@ func Merge(newItems, legacyItems []*annotations.ItemDTO, limit int64) []*annotat
 		}
 		return cmp.Compare(b.Time, a.Time)
 	})
+
+	if limit > 0 && int64(len(merged)) > limit {
+		merged = merged[:limit]
+	}
+	return merged
+}
+
+// FindTags fetches org-wide tag counts from the new store.
+func (h *MigrationProxy) FindTags(ctx context.Context, orgID int64, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	tags, err := h.client.ListTags(ctx, orgID, query)
+	if err != nil {
+		return annotations.FindTagsResult{}, err
+	}
+
+	// Convert the new store's tag counts to the legacy DTO shape.
+	result := make([]*annotations.TagsDTO, 0, len(tags))
+	for _, tag := range tags {
+		result = append(result, &annotations.TagsDTO{
+			Tag:   tag.Tag,
+			Count: int64(tag.Count),
+		})
+	}
+	return annotations.FindTagsResult{Tags: result}, nil
+}
+
+// MergeTags combines new-store and legacy tag counts, summing the counts of tags present in
+// both stores, then sorts ascending by tag and applies limit to match the legacy response shape.
+func MergeTags(newTags, legacyTags []*annotations.TagsDTO, limit int64) []*annotations.TagsDTO {
+	counts := make(map[string]int64, len(newTags)+len(legacyTags))
+	for _, tag := range newTags {
+		counts[tag.Tag] += tag.Count
+	}
+	for _, tag := range legacyTags {
+		counts[tag.Tag] += tag.Count
+	}
+
+	merged := make([]*annotations.TagsDTO, 0, len(counts))
+	for tag, count := range counts {
+		merged = append(merged, &annotations.TagsDTO{Tag: tag, Count: count})
+	}
+	sort.Sort(annotations.SortedTags(merged))
 
 	if limit > 0 && int64(len(merged)) > limit {
 		merged = merged[:limit]

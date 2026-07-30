@@ -473,7 +473,7 @@ func (a *alertRule) evaluate(ctx context.Context, e *Evaluation, span trace.Span
 		))
 	}
 	start = a.clock.Now()
-	_ = a.stateManager.ProcessEvalResults(
+	_, _ = a.stateManager.ProcessEvalResults(
 		ctx,
 		e.scheduledAt,
 		e.rule,

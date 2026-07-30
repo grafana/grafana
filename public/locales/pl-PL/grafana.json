@@ -5293,17 +5293,6 @@
     }
   },
   "dashboard": {
-    "actions": {
-      "open-settings": ""
-    },
-    "add": {
-      "new-panel": {
-        "button": "Dodaj nowy przycisk panelu",
-        "description": "Przeciągnij lub kliknij, aby dodać panel",
-        "title": "Panel"
-      },
-      "pane-header": "Dodaj"
-    },
     "add-menu": {
       "import": "Importuj z biblioteki",
       "paste-panel": "Wklej panel",
@@ -5373,12 +5362,6 @@
       }
     },
     "canvas-actions": {
-      "add": {
-        "paste": {
-          "description": "Kliknij lub przeciągnij, aby wkleić panel",
-          "title": "Wklej panel"
-        }
-      },
       "add-panel": "Dodaj panel",
       "disabled-child-contains-tabs": "Nie można zmienić na karty, ponieważ wiersz zawiera już karty",
       "disabled-nested-grouping": "Grupowanie jest ograniczone do 3 poziomów",
@@ -5393,14 +5376,6 @@
       "paste-tab": "Wklej kartę",
       "ungroup-rows": "Rozłącz grupę wierszy",
       "ungroup-tabs": "Rozłącz grupę kart"
-    },
-    "code-pane": {
-      "collapse": "Zwiń edytor",
-      "copy-as-resource": "",
-      "copy-as-resource-tooltip": "",
-      "expand": "Rozwiń edytor",
-      "header": "Edytuj jako kod",
-      "modal-title": "Edytuj pulpit jako kod"
     },
     "conditional-rendering": {
       "conditions": {
@@ -5578,9 +5553,6 @@
         "title": "Opcje wiersza"
       }
     },
-    "description": {
-      "action": "Zmień opis pulpitu"
-    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Usuń właściwość"
@@ -5589,6 +5561,8 @@
     "edit-actions": {
       "add": "Dodaj: {{typeName}}",
       "add-conditional-rule": "Dodaj regułę {{ruleDescription}}",
+      "dashboard-description": "Zmień opis pulpitu",
+      "dashboard-title": "Zmień tytuł pulpitu",
       "duplicate-panel": "Duplikuj panel",
       "edit-query-result-rule": "Zmień regułę wyniku zapytania",
       "edit-template-variable-rule": "Zmień regułę zmiennej szablonu",
@@ -5608,7 +5582,12 @@
       "switch-layout": "Przełącz układ",
       "switch-layout-row": "Przełącz układ",
       "switch-layout-tab": "Przełącz układ",
-      "tab-title": "Zmień tytuł karty"
+      "tab-title": "Zmień tytuł karty",
+      "variable-description": "Zmień opis zmiennej",
+      "variable-hide": "Zmień opcję ukrywania zmiennej",
+      "variable-label": "Zmień etykietę zmiennej",
+      "variable-name": "Zmień nazwę zmiennej",
+      "variable-type": "Zmień typ zmiennej"
     },
     "empty": {
       "add-library-panel-body": "Dodaj wizualizacje udostępniane innym pulpitom.",
@@ -5855,12 +5834,7 @@
     "layout": {
       "cancel": "Anuluj",
       "common": {
-        "copy": "Kopiuj",
-        "copy-tooltip": "",
-        "delete": "Usuń",
-        "duplicate": "Duplikuj",
-        "layout": "Układ",
-        "paste": "Wklej"
+        "layout": "Układ"
       },
       "continue": "Kontynuuj",
       "panel": {
@@ -5888,7 +5862,6 @@
     },
     "new-panel": {
       "aria-label": "Nieskonfigurowany panel. Użyj klawisza Tab, aby wyświetlić opcje konfiguracji.",
-      "configure-button": "",
       "configure-button-menu": "Przełącz menu",
       "configure-visualization": "Skonfiguruj wizualizację",
       "empty-state-message": "Uruchom zapytanie, aby je tutaj zwizualizować, lub przejdź do wszystkich wizualizacji, aby dodać inne typy paneli",
@@ -5910,10 +5883,6 @@
         }
       }
     },
-    "options": {
-      "description": "Opis",
-      "title-option": "Tytuł"
-    },
     "options-pane-category": {
       "aria-label-collapse": "Zwiń kategorię {{title}}",
       "aria-label-expand": "Rozwiń kategorię {{title}}"
@@ -5925,14 +5894,6 @@
       "title-matched_few": "Dopasowano {{count}}/{{totalCount}} opcji",
       "title-matched_many": "Dopasowano {{count}}/{{totalCount}} opcji",
       "title-matched_other": "Dopasowano {{count}}/{{totalCount}} opcji"
-    },
-    "outline": {
-      "pane-header": "Konspekt treści",
-      "repeated-item": "Powtórz",
-      "tree-item": {
-        "empty": "(puste)",
-        "no-title": "<bez tytułu>"
-      }
     },
     "override-category-title": {
       "aria-label-remove-override": "Usuń zastąpienie",
@@ -6113,13 +6074,6 @@
       "save-json-to-file": "Zapisz JSON w pliku",
       "see-docs": "Więcej informacji na temat konfiguracji można znaleźć w <2>dokumentacji</2>."
     },
-    "schema-editor": {
-      "apply-button": "Zastosuj zmiany",
-      "apply-button-disabled-tooltip": "Przed zastosowaniem zmian napraw błędy wykryte podczas weryfikacji",
-      "apply-button-disabled-tooltip-yaml": "Dokument zawiera błędy weryfikacji. Przełącz na format JSON, aby zobaczyć szczegóły błędów w tekście.",
-      "apply-error-title": "Nie udało się zastosować zmian",
-      "undo-title": "Edycja schematu"
-    },
     "search-panel": {
       "no-match": ""
     },
@@ -6128,8 +6082,42 @@
     },
     "sidebar": {
       "add": {
+        "annotation-query": {
+          "description": "Dodaj dane zdarzeń do wykresów",
+          "label": "Zapytanie dotyczące adnotacji"
+        },
+        "dashboard-controls": "Opcje pulpitu",
+        "filters": {
+          "label": "Filtruj i grupuj według"
+        },
+        "group-layouts": "Grupuj układy",
+        "link": {
+          "label": "Link",
+          "tooltip": "Dodaj link do innego pulpitu lub witryny zewnętrznej"
+        },
+        "new-panel": {
+          "button": "Dodaj nowy przycisk panelu",
+          "description": "Przeciągnij lub kliknij, aby dodać panel",
+          "title": "Panel"
+        },
+        "pane-header": "Dodaj",
+        "paste-panel": {
+          "description": "Kliknij lub przeciągnij, aby wkleić panel",
+          "title": "Wklej panel"
+        },
+        "row": {
+          "add-label": "Dodaj wiersz",
+          "group-label": "Grupuj w wierszach"
+        },
+        "tab": {
+          "add-label": "Dodaj kartę",
+          "group-label": "Grupuj na kartach"
+        },
         "title": "Dodaj",
-        "tooltip": "Dodaj nowy element"
+        "tooltip": "Dodaj nowy element",
+        "variable": {
+          "label": "Zmienna"
+        }
       },
       "annotation": {
         "change-data-source": "Zmień źródło danych adnotacji",
@@ -6165,16 +6153,58 @@
       },
       "annotations": {
         "add-annotation": "Dodaj komentarz",
+        "add-annotation-query": "Dodaj zapytanie dotyczące adnotacji",
+        "name-builtin": "{{annoName}} (wbudowana)",
+        "name-disabled": "(Wyłączona) {{annoName}}",
         "reorder": "Przeciągnij, aby zmienić kolejność",
-        "select-annotation": "Wybierz"
+        "reorder-description": "Zmień kolejność na liście adnotacji",
+        "select-annotation": "Wybierz",
+        "title-above-dashboard-count_few": "Nad pulpitem ({{count}})",
+        "title-above-dashboard-count_many": "Nad pulpitem ({{count}})",
+        "title-above-dashboard-count_one": "Nad pulpitem ({{count}})",
+        "title-above-dashboard-count_other": "Nad pulpitem ({{count}})",
+        "title-controls-menu-count_few": "Menu sterowania ({{count}})",
+        "title-controls-menu-count_many": "Menu sterowania ({{count}})",
+        "title-controls-menu-count_one": "Menu sterowania ({{count}})",
+        "title-controls-menu-count_other": "Menu sterowania ({{count}})",
+        "title-hidden-count_few": "Ukryte ({{count}})",
+        "title-hidden-count_many": "Ukryte ({{count}})",
+        "title-hidden-count_one": "Ukryte ({{count}})",
+        "title-hidden-count_other": "Ukryte ({{count}})"
       },
       "dashboard-options": {
+        "annotations": "Adnotacje",
+        "description": "Opis",
+        "filters": "",
+        "links": "Linki",
+        "open-settings": "",
         "title": "Opcje",
-        "tooltip": "Opcje pulpitu"
+        "title-option": "Tytuł",
+        "tooltip": "Opcje pulpitu",
+        "variables": "Zmienne"
       },
+      "drag-to-reorder": "Przeciągnij, aby zmienić kolejność",
       "edit-schema": {
+        "apply-button": "Zastosuj zmiany",
+        "apply-button-disabled-tooltip": "Przed zastosowaniem zmian napraw błędy wykryte podczas weryfikacji",
+        "apply-button-disabled-tooltip-yaml": "Dokument zawiera błędy weryfikacji. Przełącz na format JSON, aby zobaczyć szczegóły błędów w tekście.",
+        "apply-error-title": "Nie udało się zastosować zmian",
+        "collapse": "Zwiń edytor",
+        "copy-as-resource": "",
+        "copy-as-resource-tooltip": "",
+        "expand": "Rozwiń edytor",
+        "modal-title": "Edytuj pulpit jako kod",
+        "pane-header": "Edytuj jako kod",
         "title": "Kod",
-        "tooltip": "Edytuj jako kod"
+        "tooltip": "Edytuj jako kod",
+        "undo-title": "Edycja schematu"
+      },
+      "element-actions": {
+        "copy": "Kopiuj",
+        "copy-tooltip": "",
+        "delete": "Usuń",
+        "duplicate": "Duplikuj",
+        "paste": "Wklej"
       },
       "elements": {
         "annotation": "Adnotacja",
@@ -6183,6 +6213,7 @@
         "element": "Element",
         "filter": "",
         "filters-set": "",
+        "link": "Link",
         "link-set": "Linki",
         "local-variable": "Zmienna lokalna",
         "multiple-elements": "Wiele elementów",
@@ -6203,17 +6234,50 @@
       "export": {
         "title": "Eksportuj"
       },
-      "filters": "",
+      "feedback-title": "Przekaż opinię na temat nowego interfejsu edycji pulpitu",
+      "filters": {
+        "add-filter": "",
+        "reorder-description": "",
+        "title": "",
+        "title-above-dashboard_few": "",
+        "title-above-dashboard_many": "",
+        "title-above-dashboard_one": "",
+        "title-above-dashboard_other": "",
+        "title-controls-menu_few": "",
+        "title-controls-menu_many": "",
+        "title-controls-menu_one": "",
+        "title-controls-menu_other": "",
+        "title-hidden_few": "",
+        "title-hidden_many": "",
+        "title-hidden_one": "",
+        "title-hidden_other": "",
+        "tooltip": ""
+      },
       "links": {
         "add-link": "Dodaj link",
+        "new-link": "Nowy link",
         "reorder": "Przeciągnij, aby zmienić kolejność",
+        "reorder-description": "Zmień kolejność na liście linków",
         "select-link": "Wybierz",
+        "title-above-dashboard_few": "Nad pulpitem ({{count}})",
+        "title-above-dashboard_many": "Nad pulpitem ({{count}})",
+        "title-above-dashboard_one": "Nad pulpitem ({{count}})",
+        "title-above-dashboard_other": "Nad pulpitem ({{count}})",
+        "title-controls-menu_few": "Menu sterowania ({{count}})",
+        "title-controls-menu_many": "Menu sterowania ({{count}})",
+        "title-controls-menu_one": "Menu sterowania ({{count}})",
+        "title-controls-menu_other": "Menu sterowania ({{count}})",
         "untitled": "Link bez tytułu"
       },
-      "open": "",
       "outline": {
+        "pane-header": "Konspekt treści",
+        "repeated-item": "Powtórz",
         "title": "Konspekt",
-        "tooltip": "Konspekt treści"
+        "tooltip": "Konspekt treści",
+        "tree-item": {
+          "empty": "(puste)",
+          "no-title": "<bez tytułu>"
+        }
       },
       "redo": "Ponów",
       "row": {
@@ -6228,7 +6292,9 @@
       "section-variables": {
         "title": "Zmienne"
       },
+      "select": "Wybierz",
       "snapshot": {
+        "title": "Źródło",
         "tooltip": "Otwórz oryginalny pulpit"
       },
       "undo": "Cofnij",
@@ -6250,6 +6316,15 @@
         },
         "description": "Opis",
         "description-placeholder": "Tekst opisowy",
+        "display": "Wyświetl",
+        "display-options": {
+          "controls-menu": "Menu sterowania",
+          "controls-menu-description": "Widoczne, gdy menu sterowania jest otwarte",
+          "hidden": "Ukryte",
+          "hidden-description": "Widoczne tylko w trybie edycji",
+          "label-hidden": "",
+          "label-hidden-description": ""
+        },
         "label": "Etykieta",
         "label-description": "Opcjonalna nazwa wyświetlana",
         "name": "Imię",
@@ -6276,9 +6351,23 @@
         "add-variable": "Dodaj zmienną",
         "change-type": "",
         "reorder": "Przeciągnij, aby zmienić kolejność",
+        "reorder-description": "Zmień kolejność na liście zmiennych",
         "select-type": "Wybierz typ zmiennej",
         "select-type-card-tooltip": "Kliknij aby wybrać typ",
-        "select-variable": "Wybierz"
+        "select-variable": "Wybierz",
+        "title-controls-menu_few": "Menu sterowania ({{count}})",
+        "title-controls-menu_many": "Menu sterowania ({{count}})",
+        "title-controls-menu_one": "Menu sterowania ({{count}})",
+        "title-controls-menu_other": "Menu sterowania ({{count}})",
+        "title-hidden_few": "Ukryte ({{count}})",
+        "title-hidden_many": "Ukryte ({{count}})",
+        "title-hidden_one": "Ukryte ({{count}})",
+        "title-hidden_other": "Ukryte ({{count}})",
+        "title-top-placement_few": "",
+        "title-top-placement_many": "",
+        "title-top-placement_one": "",
+        "title-top-placement_other": "",
+        "top-placement-default": ""
       },
       "view-panel": {
         "disabled": "",
@@ -6289,6 +6378,18 @@
         "pane-header": "",
         "quick-toggles": "",
         "title": ""
+      },
+      "viz-panel": {
+        "configure-button": "",
+        "delete-panel-text": "Usunięcie tego panelu spowoduje również usunięcie wszystkich zapytań. Na pewno chcesz kontynuować?",
+        "delete-panel-title": "Usunąć panel?",
+        "delete-panel-yes": "Usuń",
+        "options": {
+          "configure-button-tooltip": "Edytuj zapytania i opcje wizualizacji",
+          "description": "Opis",
+          "title-option": "Tytuł",
+          "transparent-background": "Przezroczyste tło"
+        }
       }
     },
     "source-link": {
@@ -6346,9 +6447,6 @@
       "tab-warning": {
         "title-not-unique": "Ten tytuł nie jest unikalny"
       }
-    },
-    "title": {
-      "action": "Zmień tytuł pulpitu"
     },
     "toolbar": {
       "add": "Dodaj",
@@ -6440,9 +6538,6 @@
       "save-library-panel": "Zapisz panel biblioteki",
       "settings": "Ustawienia panelu",
       "share-button": "Udostępnij",
-      "snapshot": {
-        "title": "Źródło"
-      },
       "star-add-error": "Nie udało się oznaczyć gwiazdką",
       "star-added": "Oznaczono gwiazdką",
       "star-remove-error": "Nie udało się usunąć z oznaczonych gwiazdką",
@@ -6512,22 +6607,7 @@
       "tags-expected-strings": "znaczniki oczekiwały tablicy łańcuchów"
     },
     "variable": {
-      "description": {
-        "action": "Zmień opis zmiennej"
-      },
-      "description-tooltip": "Opis zmiennej",
-      "hide": {
-        "action": "Zmień opcję ukrywania zmiennej"
-      },
-      "label": {
-        "action": "Zmień etykietę zmiennej"
-      },
-      "name": {
-        "action": "Zmień nazwę zmiennej"
-      },
-      "type": {
-        "action": "Zmień typ zmiennej"
-      }
+      "description-tooltip": "Opis zmiennej"
     },
     "version-history-comparison": {
       "button-restore": "Przywróć do wersji {{version}}",
@@ -6550,17 +6630,6 @@
     "view-panel": {
       "back-to-dashboard": "",
       "not-found": ""
-    },
-    "viz-panel": {
-      "delete-panel-text": "Usunięcie tego panelu spowoduje również usunięcie wszystkich zapytań. Na pewno chcesz kontynuować?",
-      "delete-panel-title": "Usunąć panel?",
-      "delete-panel-yes": "Usuń",
-      "options": {
-        "configure-button-tooltip": "Edytuj zapytania i opcje wizualizacji",
-        "description": "Opis",
-        "title-option": "Tytuł",
-        "transparent-background": "Przezroczyste tło"
-      }
     }
   },
   "dashboard-import": {
@@ -6676,25 +6745,6 @@
       "name-allow-custom-values": "Zezwalaj na wartości niestandardowe",
       "name-enable-group-by": "Włącz grupowanie według"
     },
-    "add-filters": {
-      "label": "Filtruj i grupuj według"
-    },
-    "add-link": {
-      "inline-instance-name": "Nowy link",
-      "label-link": "Link",
-      "tooltip": "Dodaj link do innego pulpitu lub witryny zewnętrznej"
-    },
-    "add-new-edit-pane": {
-      "group-layouts": "Grupuj układy"
-    },
-    "add-row": {
-      "add-label": "Dodaj wiersz",
-      "group-label": "Grupuj w wierszach"
-    },
-    "add-tab": {
-      "add-label": "Dodaj kartę",
-      "group-label": "Grupuj na kartach"
-    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Nie udało się przejść na wybrany pulpit. Spróbuj ponownie.",
@@ -6723,19 +6773,12 @@
         "new-panel": "Nowy panel"
       }
     },
-    "add-variable": {
-      "label-variable": "Zmienna"
-    },
     "adhoc-origin-filters-controller": {
       "input-placeholder": "Dodaj filtr domyślny…"
     },
     "adhoc-origin-filters-editor": {
       "description": "Filtry, które są domyślnie wstępnie wybrane.",
       "label": "Filtry domyślne"
-    },
-    "annotation-control": {
-      "description-add-event-data-to-graphs": "Dodaj dane zdarzeń do wykresów",
-      "label-annotation-query": "Zapytanie dotyczące adnotacji"
     },
     "annotation-edit-actions": {
       "description": {
@@ -6752,11 +6795,6 @@
       "delete-title": "Usuń zapytanie dotyczące adnotacji"
     },
     "annotation-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-annotations-list": "Zmień kolejność na liście adnotacji"
-        }
-      },
       "render-list": {
         "aria-label-annotation": "Adnotacja"
       }
@@ -6802,15 +6840,6 @@
       "query-name": "Nazwa zapytania",
       "tooltip-move-down": "Przesuń w dół",
       "tooltip-move-up": "Przesuń do góry"
-    },
-    "annotations-list": {
-      "drag-end": {
-        "description": "Zmień kolejność na liście adnotacji"
-      }
-    },
-    "annotations-section": {
-      "name-builtin": "{{annoName}} (wbudowana)",
-      "name-disabled": "(Wyłączona) {{annoName}}"
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Nie może zawierać nieprawidłowych znaków: „~”, „^”, „:”, „?”, „*”, „[”, „\\\\” lub „]”.",
@@ -6866,21 +6895,6 @@
       "name-values-separated-comma": "Wartości rozdzielone przecinkami",
       "selection-options": "Opcje wyboru"
     },
-    "dashboard-annotations-list": {
-      "add-annotation-query": "Dodaj zapytanie dotyczące adnotacji",
-      "title-above-dashboard-count_one": "Nad pulpitem ({{count}})",
-      "title-above-dashboard-count_few": "Nad pulpitem ({{count}})",
-      "title-above-dashboard-count_many": "Nad pulpitem ({{count}})",
-      "title-above-dashboard-count_other": "Nad pulpitem ({{count}})",
-      "title-controls-menu-count_one": "Menu sterowania ({{count}})",
-      "title-controls-menu-count_few": "Menu sterowania ({{count}})",
-      "title-controls-menu-count_many": "Menu sterowania ({{count}})",
-      "title-controls-menu-count_other": "Menu sterowania ({{count}})",
-      "title-hidden-count_one": "Ukryte ({{count}})",
-      "title-hidden-count_few": "Ukryte ({{count}})",
-      "title-hidden-count_many": "Ukryte ({{count}})",
-      "title-hidden-count_other": "Ukryte ({{count}})"
-    },
     "dashboard-link-form": {
       "back-to-list": "Powrót do listy",
       "label-icon": "Ikona",
@@ -6911,9 +6925,6 @@
       "tooltip-move-link-down": "Przesuń link w dół",
       "tooltip-move-link-up": "Przesuń link w górę",
       "type": "Typ"
-    },
-    "dashboard-links-list": {
-      "add-link": "Dodaj link"
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Błąd wczytywania pulpitu"
@@ -6950,12 +6961,6 @@
         "dashboard-not-found": "Nie znaleziono pulpitu"
       }
     },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Opcje pulpitu"
-    },
-    "dashboard-sidebar-renderer": {
-      "title-feedback-dashboard-editing-experience": "Przekaż opinię na temat nowego interfejsu edycji pulpitu"
-    },
     "data-source-variable-form": {
       "data-source-options": "Opcje źródła danych",
       "description-instance-name-filter": "Filtr wyrażeń regularnych, w przypadku których instancje źródeł danych należy wybrać z listy wartości zmiennych. Pozostaw puste dla wszystkich.",
@@ -6989,12 +6994,6 @@
     "description-label": {
       "description": "Opis"
     },
-    "draggable-item": {
-      "drag-to-reorder": "Przeciągnij, aby zmienić kolejność"
-    },
-    "draggable-items-list": {
-      "select": "Wybierz"
-    },
     "edit-link-view": {
       "edit-link-page-nav": {
         "text": {
@@ -7017,22 +7016,6 @@
       "show-more": "Pokaż więcej",
       "sql-name": "Przekształć za pomocą SQL",
       "sql-transformation-description": "Manipuluj danymi przy użyciu składni podobnej do stosowanej w MySQL"
-    },
-    "filters-list": {
-      "add-filter": "",
-      "reorder-description": "",
-      "title-above-dashboard_one": "",
-      "title-above-dashboard_few": "",
-      "title-above-dashboard_many": "",
-      "title-above-dashboard_other": "",
-      "title-controls-menu_one": "",
-      "title-controls-menu_few": "",
-      "title-controls-menu_many": "",
-      "title-controls-menu_other": "",
-      "title-hidden_one": "",
-      "title-hidden_few": "",
-      "title-hidden_many": "",
-      "title-hidden_other": ""
     },
     "general-settings-edit-view": {
       "default_grid_options": {
@@ -7207,11 +7190,6 @@
       "unnamed": "Link bez nazwy"
     },
     "link-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-links-list": "Zmień kolejność na liście linków"
-        }
-      },
       "render-list": {
         "aria-label-link": "Link"
       }
@@ -7228,17 +7206,6 @@
       "type-dashboards": "Pulpity",
       "type-link": "Link",
       "with-tags": "Z tagami"
-    },
-    "links-list": {
-      "drag-end-description": "Zmień kolejność na liście linków",
-      "title-above-dashboard_one": "Nad pulpitem ({{count}})",
-      "title-above-dashboard_few": "Nad pulpitem ({{count}})",
-      "title-above-dashboard_many": "Nad pulpitem ({{count}})",
-      "title-above-dashboard_other": "Nad pulpitem ({{count}})",
-      "title-controls-menu_one": "Menu sterowania ({{count}})",
-      "title-controls-menu_few": "Menu sterowania ({{count}})",
-      "title-controls-menu_many": "Menu sterowania ({{count}})",
-      "title-controls-menu_other": "Menu sterowania ({{count}})"
     },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "",
@@ -7514,9 +7481,6 @@
       "new-alert-rule": "Nowa reguła alertu",
       "title-no-alerting-capable-query-found": "Nie znaleziono zapytania obsługującego alerty"
     },
-    "section-filters-list": {
-      "add-filter": ""
-    },
     "section-placement": {
       "top-row": "",
       "top-tab": ""
@@ -7605,31 +7569,10 @@
       "save-dashboard": "Zapisz pulpit",
       "title-unsaved-changes": "Niezapisane zmiany"
     },
-    "use-annotations-category": {
-      "category": {
-        "title": {
-          "annotations": "Adnotacje"
-        }
-      }
-    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Ustawienia"
-        }
-      }
-    },
-    "use-filters-category": {
-      "category": {
-        "title": {
-          "filters": ""
-        }
-      }
-    },
-    "use-links-category": {
-      "category": {
-        "title": {
-          "links": "Linki"
         }
       }
     },
@@ -7641,13 +7584,6 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Pulpit został zapisany"
     },
-    "use-variables-category": {
-      "category": {
-        "title": {
-          "variables": "Zmienne"
-        }
-      }
-    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Do tej zmiennej nie odwołuje się żadna zmienna ani pulpit.",
       "aria-label-variable-referenced-other-variables-dashboard": "Do tej zmiennej odwołują się inne zmienne lub pulpit.",
@@ -7656,23 +7592,6 @@
     },
     "variable-controls": {
       "add-variable": "Dodaj zmienną"
-    },
-    "variable-display-select": {
-      "label": "Wyświetl",
-      "options": {
-        "controls-menu": {
-          "description": "Widoczne, gdy menu sterowania jest otwarte",
-          "label": "Menu sterowania"
-        },
-        "hidden": {
-          "description": "Widoczne tylko w trybie edycji",
-          "label": "Ukryte"
-        },
-        "top-placement-hidden-label": {
-          "description": "",
-          "label": ""
-        }
-      }
     },
     "variable-editable-element": {
       "delete-confirm": "Usuń zmienną",
@@ -7724,13 +7643,6 @@
       },
       "label": "Ukryj"
     },
-    "variable-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Zmień kolejność na liście zmiennych"
-        }
-      }
-    },
     "variable-multi-prop-static-options-form": {
       "aria-label-static-options": "Opcje statyczne"
     },
@@ -7747,29 +7659,6 @@
       "preview-of-values_few": "Podgląd wartości ({{count}})",
       "preview-of-values_many": "Podgląd wartości ({{count}})",
       "preview-of-values_other": "Podgląd wartości ({{count}})"
-    },
-    "variables-list": {
-      "add-variable": "Dodaj zmienną",
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Zmień kolejność na liście zmiennych"
-        }
-      },
-      "top-placement": {
-        "default": ""
-      },
-      "title-controls-menu_one": "Menu sterowania ({{count}})",
-      "title-controls-menu_few": "Menu sterowania ({{count}})",
-      "title-controls-menu_many": "Menu sterowania ({{count}})",
-      "title-controls-menu_other": "Menu sterowania ({{count}})",
-      "title-hidden_one": "Ukryte ({{count}})",
-      "title-hidden_few": "Ukryte ({{count}})",
-      "title-hidden_many": "Ukryte ({{count}})",
-      "title-hidden_other": "Ukryte ({{count}})",
-      "title-top-placement_one": "",
-      "title-top-placement_few": "",
-      "title-top-placement_many": "",
-      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {

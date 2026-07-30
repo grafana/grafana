@@ -102,17 +102,17 @@ test.describe(
       await expect(getRowByTitle(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.at(0)}`)).toBeHidden();
     });
 
-    test('updates title for repeat rows in edit pane', async ({ dashboardPage, selectors, page }) => {
+    test('updates title for repeat rows in sidebar', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
-        'Rows layout repeats - update through edit pane',
+        'Rows layout repeats - update through sidebar',
         JSON.stringify(V2DashWithRowRepeats)
       );
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      // select first/original repeat row to activate edit pane
+      // select first/original repeat row to activate sidebar
       await selectRow(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.at(0)}`);
 
       const titleInput = dashboardPage.getByGrafanaSelector(
@@ -179,7 +179,7 @@ test.describe(
       await page.keyboard.press('e');
 
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardSidebarSplitter.primaryBody)
       ).toBeHidden(); // verifying that panel editor loaded
 
       const panelTitleInput = dashboardPage.getByGrafanaSelector(
@@ -197,7 +197,7 @@ test.describe(
         .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
         .click();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardSidebarSplitter.primaryBody)
       ).toBeVisible(); // verifying that dashboard loaded
 
       // close first row to make sure we are viewing second row
