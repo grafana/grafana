@@ -153,3 +153,58 @@ func TestStore_ZeroListRVDoesWholesaleSwap(t *testing.T) {
 func TestStore_ListEmpty(t *testing.T) {
 	assert.Empty(t, NewStore().List(context.Background()))
 }
+
+// Merge upserts without removing anything absent — the partial-re-list path — and
+// reports the newly-added and re-observed (updated) objects, so a truncated list
+// never makes its unread objects look deleted.
+func TestStore_MergeUpsertsWithoutRemoving(t *testing.T) {
+	s := NewStore()
+	ctx := context.Background()
+
+	added, updated := s.Merge([]runtime.Object{obj("a"), obj("b")}, 0)
+	assert.ElementsMatch(t, []string{"a", "b"}, storeNames(added), "first merge adds everything")
+	assert.Empty(t, storeNames(updated))
+	assert.ElementsMatch(t, []string{"a", "b"}, storeNames(s.List(ctx)))
+
+	// c is new; a is re-observed (updated); b is absent from this merge but must
+	// survive — Merge never removes.
+	added, updated = s.Merge([]runtime.Object{obj("a"), obj("c")}, 0)
+	assert.Equal(t, []string{"c"}, storeNames(added), "only the newly-seen key is reported as added")
+	assert.Equal(t, []string{"a"}, storeNames(updated), "the re-observed key is reported as updated")
+	assert.ElementsMatch(t, []string{"a", "b", "c"}, storeNames(s.List(ctx)), "a merge never drops an absent key")
+}
+
+// Merge honors live-delete tombstones exactly as Replace does for added keys: a
+// partial re-list whose snapshot predates the delete must not resurrect the
+// just-deleted object, but a re-observation at or past the delete is a real add.
+func TestStore_MergeSuppressesResurrectionOfLiveDeleted(t *testing.T) {
+	s := NewStore()
+	ctx := context.Background()
+	s.Replace([]runtime.Object{objRV("a", 100)}, 100)
+
+	// A live delete at rv 120 evicts x and tombstones it.
+	s.DeleteAt(ctx, testNamespace, "x", 120)
+
+	// A partial re-list whose snapshot (listRV 110) predates the delete must not
+	// resurrect x.
+	added, _ := s.Merge([]runtime.Object{objRV("a", 100), objRV("x", 100)}, 110)
+	assert.Equal(t, []string{}, addedExcept(added, "a"), "x must stay evicted by the newer tombstone")
+	assert.NotContains(t, storeNames(s.List(ctx)), "x")
+
+	// A re-observation at or past the delete is a legitimate re-create.
+	added, _ = s.Merge([]runtime.Object{objRV("x", 130)}, 130)
+	assert.Equal(t, []string{"x"}, storeNames(added), "a re-create past the tombstone is a real add")
+	assert.Contains(t, storeNames(s.List(ctx)), "x")
+}
+
+// addedExcept drops one expected name from a diff set, so a test can assert on the
+// rest without depending on map iteration order.
+func addedExcept(objs []runtime.Object, except string) []string {
+	out := []string{}
+	for _, n := range storeNames(objs) {
+		if n != except {
+			out = append(out, n)
+		}
+	}
+	return out
+}

@@ -140,6 +140,21 @@ func NewConcurrentJobDriver(
 	}, nil
 }
 
+// HasCapacity reports whether the jobs re-list should fetch another page, given
+// fetchedThisPass — the jobs it has already gathered in the current pass. It
+// returns false once what is already queued plus what this pass has fetched
+// reaches numDrivers, so a re-list stops pulling in work the workers cannot yet
+// absorb. Counting fetchedThisPass is what makes the check bite within a single
+// pass: the re-list does not feed the queue until it finishes, so queue length
+// alone cannot see the backlog the pass is building (and would let a re-list that
+// began with an empty queue — including the initial list — pull every page). A
+// page holds up to 500 jobs, far more than numDrivers, so a multi-page backlog
+// settles at one page per resync; the informer rotates the continue token across
+// re-lists so later pages are still reached.
+func (c *ConcurrentJobDriver) HasCapacity(fetchedThisPass int) bool {
+	return c.queue.Len()+fetchedThisPass < c.numDrivers
+}
+
 // EventHandler returns informer event handlers that feed the work queue.
 // Register it with the jobs informer before the informer runs: the NATS-backed
 // source has no cache to replay for late handlers.

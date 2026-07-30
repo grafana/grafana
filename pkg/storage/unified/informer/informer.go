@@ -2,6 +2,7 @@ package informer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"sync"
@@ -46,7 +47,20 @@ type ObjectFunc func(namespace, name string) runtime.Object
 // that raced it (the subscription is open while the LIST runs), letting Replace
 // tell a live write that outran the snapshot from an object the snapshot dropped;
 // 0 disables that reconciliation. See Store.Replace.
+//
+// A ListFunc may return its objects together with ErrPartialList to signal that
+// the set is a deliberately truncated view — e.g. the jobs list stopped
+// paginating under worker backpressure — rather than the complete resource. The
+// informer upserts a partial list (adds/updates only) instead of diffing it for
+// deletes; see relist. Any other non-nil error means the list failed.
 type ListFunc func(ctx context.Context) (objs []runtime.Object, listRV int64, err error)
+
+// ErrPartialList is returned by a ListFunc alongside a valid object slice to mark
+// that slice as a deliberately truncated view of the resource rather than the
+// complete set. It is modeled on io.EOF: a signal delivered with valid data, not
+// a failure. On a partial list the informer upserts what it got (Merge) and never
+// diffs for removals, because the objects it did not fetch are unread, not gone.
+var ErrPartialList = errors.New("nats informer: partial list")
 
 // Verb values passed to the Metrics event observations.
 const (
@@ -501,9 +515,26 @@ func (n *Informer) onNotification() nats.MessageHandler {
 // isInInitialList=true) and there is nothing to delete.
 func (n *Informer) relist(ctx context.Context, initial bool) error {
 	objs, listRV, err := n.list(ctx)
-	if err != nil {
+	// ErrPartialList is a signal, not a failure: it rides with a valid but
+	// deliberately truncated set (see ErrPartialList). Any other error means the
+	// list failed and objs must be ignored — return so the snapshot is untouched
+	// and the next tick retries.
+	partial := errors.Is(err, ErrPartialList)
+	if err != nil && !partial {
 		n.log.Warn("nats informer: list failed", "gvr", n.gvr.String(), "error", err)
 		return err
+	}
+
+	// A partial re-list must not diff for removals: the objects it did not fetch
+	// are unread, not deleted, so Merge upserts what we got (adds/updates) and
+	// leaves the rest of the snapshot — and its tombstones — untouched. The next
+	// complete re-list reconciles removals.
+	if partial {
+		added, updated := n.store.Merge(objs, listRV)
+		n.log.Debug("nats informer re-listed (partial)", "gvr", n.gvr.String(), "initial", initial,
+			"count", len(objs), "added", len(added), "updated", len(updated))
+		n.dispatchRelist(added, updated, nil, initial)
+		return nil
 	}
 
 	// Swap the snapshot for the fresh set, reconciled at listRV against live
@@ -513,7 +544,14 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 	added, updated, removed := n.store.Replace(objs, listRV)
 	n.log.Debug("nats informer re-listed", "gvr", n.gvr.String(), "initial", initial,
 		"count", len(objs), "added", len(added), "updated", len(updated), "removed", len(removed))
+	n.dispatchRelist(added, updated, removed, initial)
+	return nil
+}
 
+// dispatchRelist delivers a re-list diff to the handlers — added as OnAdd, updated
+// as OnUpdate, removed as OnDelete — recording one relist metric per event. A
+// partial re-list passes a nil removed, since it never diffs for deletes.
+func (n *Informer) dispatchRelist(added, updated, removed []runtime.Object, initial bool) {
 	for _, obj := range added {
 		o := obj
 		// A key first seen on a periodic re-list is a change the live stream did
@@ -539,7 +577,6 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 		n.observeRelistEvent(VerbDelete, 0)
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(o) })
 	}
-	return nil
 }
 
 func (n *Informer) observeLiveEvent(verb string, rv int64) {

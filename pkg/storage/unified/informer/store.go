@@ -44,6 +44,15 @@ type Store interface {
 	// listRV already evicted is suppressed rather than resurrected as a spurious
 	// add. Pass 0 to disable this reconciliation (a plain wholesale swap).
 	Replace(objs []runtime.Object, listRV int64) (added, updated, removed []runtime.Object)
+	// Merge upserts objs into the store without removing keys absent from objs, and
+	// reports the objects newly added and re-observed (updated), reconciled against
+	// live-delete tombstones via listRV exactly as Replace reconciles its added
+	// keys. It is the partial-re-list counterpart to Replace: a truncated list
+	// (deliberately stopped early, e.g. under worker backpressure) must not make the
+	// objects it did not read look deleted, so Merge never diffs for removals and
+	// never expires tombstones for keys it did not read. added is dispatched as
+	// OnAdd, updated as OnUpdate; there is no removed set.
+	Merge(objs []runtime.Object, listRV int64) (added, updated []runtime.Object)
 	// DeleteAt is the informer's live-delete write-through: it removes the object
 	// and records a tombstone at rv (the delete's resource version) so a subsequent
 	// re-list whose snapshot predates rv does not resurrect the just-deleted object
@@ -237,6 +246,50 @@ func (s *store) Replace(objs []runtime.Object, listRV int64) (added, updated, re
 	s.items = result
 	s.tombstones = newTomb
 	return added, updated, removed
+}
+
+// Merge upserts objs into the store without removing keys absent from objs and
+// returns the newly-added and re-observed (updated) objects; see Store.Merge. It
+// mirrors Replace's per-key add/update classification and tombstone reconciliation
+// for the objects it reads, but never diffs for removals and never expires
+// tombstones — an unread key is not evidence the object is gone.
+func (s *store) Merge(objs []runtime.Object, listRV int64) (added, updated []runtime.Object) {
+	reconcile := listRV > 0
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	seen := make(map[string]struct{}, len(objs))
+	for _, obj := range objs {
+		key, err := cache.MetaNamespaceKeyFunc(obj)
+		if err != nil {
+			continue
+		}
+		if _, dup := seen[key]; dup {
+			continue
+		}
+		seen[key] = struct{}{}
+		rv := objectResourceVersion(obj)
+		if _, ok := s.items[key]; ok {
+			s.items[key] = entry{obj: obj, rv: rv}
+			updated = append(updated, obj)
+			continue
+		}
+		// New to the snapshot. Suppress a resurrection: a live delete newer than
+		// the snapshot already evicted this key, so re-adding from an older snapshot
+		// would resurrect a just-deleted object as a spurious add.
+		if reconcile {
+			if trv, ok := s.tombstones[key]; ok && trv > listRV && rv < trv {
+				continue
+			}
+		}
+		// A re-observed object at or past a tombstoned delete supersedes it: the
+		// object was re-created, so drop the tombstone.
+		if trv, ok := s.tombstones[key]; ok && rv >= trv {
+			delete(s.tombstones, key)
+		}
+		s.items[key] = entry{obj: obj, rv: rv}
+		added = append(added, obj)
+	}
+	return added, updated
 }
 
 // keyFor builds the namespace/name store key, matching cache.MetaNamespaceKeyFunc

@@ -45,6 +45,29 @@ func TestNewConcurrentJobDriver_RejectsBadConfig(t *testing.T) {
 	require.ErrorContains(t, err, "numDrivers")
 }
 
+// HasCapacity weighs what is already queued plus what the current re-list pass has
+// fetched against numDrivers: it is the backpressure signal the jobs informer uses
+// to stop paginating once the workers have enough waiting. Counting the pass's own
+// fetches is what makes it bite before the queue is fed, including on a re-list
+// that starts with an empty queue.
+func TestConcurrentJobDriver_HasCapacity(t *testing.T) {
+	driver := newTestConcurrentDriver(t, 2, &MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+
+	assert.True(t, driver.HasCapacity(0), "an empty queue that has fetched nothing has capacity")
+	assert.True(t, driver.HasCapacity(1), "one fetched job with two drivers still has capacity")
+	assert.False(t, driver.HasCapacity(2), "a pass that has fetched numDrivers jobs has no capacity")
+
+	// The pass's own fetches count even while the queue is empty, so a full first
+	// page (far larger than numDrivers) always stops pagination — the queue is not
+	// fed until the re-list finishes.
+	assert.False(t, driver.HasCapacity(500), "a full first page exceeds capacity even with an empty queue")
+
+	// Keys already waiting count too.
+	driver.queue.Add("ns/a")
+	driver.queue.Add("ns/b")
+	assert.False(t, driver.HasCapacity(0), "once numDrivers keys are queued there is no capacity")
+}
+
 // TestConcurrentJobDriver_EventHandler_Enqueue verifies which informer add
 // events feed the work queue: minimal (NATS-style) objects and unclaimed full
 // objects enqueue, while full objects that already carry a claim are skipped.
