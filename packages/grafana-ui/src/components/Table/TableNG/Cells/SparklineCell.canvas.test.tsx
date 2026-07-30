@@ -138,6 +138,10 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
       sparklineField({
         custom: { cellOptions: { type: TableCellDisplayMode.Sparkline, gradientMode } },
         color: { mode: FieldColorModeId.ContinuousViridis },
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [{ value: -Infinity, color: 'green' }],
+        },
       })
     );
 
