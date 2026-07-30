@@ -16,7 +16,6 @@ import { type DataSourceRef } from '@grafana/schema';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import { getNextAvailableId } from '../settings/variables/utils';
-import { dashboardEditActions } from '../sidebar/shared';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { type DashboardScene } from './DashboardScene';
@@ -106,7 +105,14 @@ async function detectFilterCapabilityInner(dashboard: DashboardScene): Promise<F
   return { orgHasCapableDs, dashboardUsesCapableDs, isEmptyDashboard, preferredDsRef: preferred?.getRef() };
 }
 
-export function AddFilterButton({ dashboard }: { dashboard: DashboardScene }) {
+interface AddFilterButtonProps {
+  dashboard: DashboardScene;
+  // dashboardEditActions.addVariable, injected by the caller: a static import of
+  // sidebar/shared from this file would create a new circular dependency
+  onAddVariable: (props: { source: SceneVariableSet; addedObject: AdHocFiltersVariable }) => void;
+}
+
+export function AddFilterButton({ dashboard, onAddVariable }: AddFilterButtonProps) {
   const styles = useStyles2(getStyles);
   const { editview, editPanel, isEditing, viewPanel } = dashboard.useState();
   const { variables } = sceneGraph.getVariables(dashboard).useState();
@@ -149,10 +155,10 @@ export function AddFilterButton({ dashboard }: { dashboard: DashboardScene }) {
       enableGroupBy: true,
     });
 
-    dashboardEditActions.addVariable({ source: variablesSet, addedObject: newVar });
+    onAddVariable({ source: variablesSet, addedObject: newVar });
     dashboard.state.sidebar.selectObject(newVar);
     DashboardInteractions.addVariableButtonClicked({ source: 'filter_controls' });
-  }, [dashboard, capability]);
+  }, [dashboard, capability, onAddVariable]);
 
   // Same visibility guards as AddVariableButton
   if (!isEditing || !!editview || !!viewPanel || !!editPanel) {

@@ -61,7 +61,7 @@ export function VariableControls({
       {config.featureToggles.dashboardNewLayouts ? (
         <>
           <AddVariableButton dashboard={dashboard} />
-          <AddFilterButton dashboard={dashboard} />
+          <AddFilterButton dashboard={dashboard} onAddVariable={dashboardEditActions.addVariable} />
         </>
       ) : null}
     </>
