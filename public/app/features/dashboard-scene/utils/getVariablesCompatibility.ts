@@ -18,7 +18,7 @@ export function getVariablesCompatibility(sceneObject: SceneObject): TypedVariab
   // scope to that object's ancestry so datasource pickers only show variables from
   // the same section + dashboard globals.
   if (sceneObject instanceof DashboardScene) {
-    const selectedObject = sceneObject.state.editPane.getSelectedObject();
+    const selectedObject = sceneObject.state.sidebar.getSelectedObject();
 
     if (selectedObject) {
       // @ts-expect-error

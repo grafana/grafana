@@ -213,8 +213,8 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
       const optionWrapper = page.getByTestId('data-testid Logs Table Show controls field property editor');
       const optionLabel = optionWrapper.getByText(/Show controls/);
       const option = optionWrapper.getByLabel(/Show controls/);
-      const controlsExpandButtonDefault = page.getByLabel('Collapse', { exact: true });
-      const controlsExpandButtonChecked = page.getByLabel('Expand', { exact: true });
+      const controlsExpandButtonChecked = page.getByLabel('Collapse', { exact: true });
+      const controlsExpandButtonDefault = page.getByLabel('Expand', { exact: true });
       const controlsSortByButtonNewest = page.getByLabel('Sorted by newest logs first - Click to show oldest first', {
         exact: true,
       });
@@ -225,22 +225,22 @@ test.describe('Panels test: LogsTable', { tag: ['@panels', '@logstable'] }, () =
       // Assert default option state
       await expect(option, 'Show controls panel option is in the document').toHaveCount(1);
       await expect(option, 'Show controls panel option is not checked by default').not.toBeChecked({ timeout: 400 });
-      await expect(controlsExpandButtonDefault, 'Logs control collapse button is not in the controls').toHaveCount(0);
+      await expect(controlsExpandButtonDefault, 'Logs control expand button is not in the controls').toHaveCount(0);
       await expect(controlsSortByButtonNewest, 'Logs controls sort order button is not in controls').toHaveCount(0);
 
       // Toggle option on
       await optionLabel.click();
       await expect(option, 'Show controls panel option is now checked').toBeChecked();
-      await expect(controlsExpandButtonDefault, 'Logs control collapse button is now in the controls').toHaveCount(1);
+      await expect(controlsExpandButtonDefault, 'Logs control expand button is now in the controls').toHaveCount(1);
       await expect(controlsSortByButtonNewest, 'Logs control sort order button is now in the controls').toHaveCount(1);
 
       // Sort by should update state (but won't change logs in test data source)
       await controlsSortByButtonNewest.click();
       await expect(controlsSortByButtonOldest, 'Logs control sort order button state is toggled').toHaveCount(1);
 
-      // Collapse expanded options sidebar
+      // Expand collapsed options sidebar
       await controlsExpandButtonDefault.click();
-      await expect(controlsExpandButtonChecked, 'Logs control state is now collapsed').toHaveCount(1);
+      await expect(controlsExpandButtonChecked, 'Logs control state is now expanded').toHaveCount(1);
     });
   });
 

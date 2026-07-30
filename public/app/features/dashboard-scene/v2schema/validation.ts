@@ -115,9 +115,6 @@ export function isPanelKindV2(value: unknown): value is PanelKind {
   if (typeof spec.title !== 'string') {
     return false;
   }
-  if (typeof spec.description !== 'string') {
-    return false;
-  }
   if (!Array.isArray(spec.links)) {
     return false;
   }

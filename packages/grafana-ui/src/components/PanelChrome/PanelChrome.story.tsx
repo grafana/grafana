@@ -8,6 +8,7 @@ import { LoadingState } from '@grafana/data';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { Button } from '../Button/Button';
+import { Combobox } from '../Combobox/Combobox';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
@@ -229,6 +230,15 @@ export const Examples = () => {
             ),
           })}
           {renderPanel('Content', {
+            title: 'Actions with button',
+            subtitle: 'And a is a subtitle that has more detail',
+            actions: (
+              <Button size="sm" variant="secondary" key="A">
+                Breakdown
+              </Button>
+            ),
+          })}
+          {renderPanel('Content', {
             title: 'Panel with two actions',
             actions: [
               <Button size="sm" variant="secondary" key="A">
@@ -276,6 +286,22 @@ export const Examples = () => {
                 Breakdown
               </Button>
             ),
+          })}
+          {renderPanel('Not ideal as the space in header does not fit inputs', {
+            title: 'With select in header',
+            actions: (
+              <Combobox
+                value="Hello"
+                options={[{ label: 'hello', value: 'Hello' }]}
+                onChange={() => {}}
+                aria-label="Select option"
+              />
+            ),
+          })}
+          {renderPanel('Content', {
+            title: 'With empty subheader element',
+            menu,
+            subHeaderContent: <></>,
           })}
         </Stack>
       </div>

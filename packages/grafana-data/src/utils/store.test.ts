@@ -14,6 +14,15 @@ describe('Store', () => {
               delete target[key];
             };
           }
+          if (prop === 'length') {
+            return Object.keys(target).length;
+          }
+          if (prop === 'key') {
+            return (index: number) => Object.keys(target)[index] ?? null;
+          }
+          if (prop === 'getItem') {
+            return (key: string) => target[key] ?? null;
+          }
           return target[prop as string];
         },
         set(target, prop, value) {
@@ -79,6 +88,67 @@ describe('Store', () => {
 
       expect(window.localStorage[testKey]).toBe(undefined);
     });
+  });
+
+  describe('all', () => {
+    it('returns all keys', () => {
+      store.set('service:user:key1', 'value1');
+      store.set('service:user:key2', 'value2');
+      store.set('other:user:key3', 'value3');
+
+      const result = store.all();
+
+      expect(result).toEqual({
+        'service:user:key1': 'value1',
+        'service:user:key2': 'value2',
+        'other:user:key3': 'value3',
+      });
+    });
+
+    it('returns all keys matching the given prefix', () => {
+      store.set('service:user:key1', 'value1');
+      store.set('service:user:key2', 'value2');
+      store.set('other:user:key3', 'value3');
+
+      const result = store.all('service:user:');
+
+      expect(result).toEqual({ key1: 'value1', key2: 'value2' });
+    });
+
+    it('returns empty object when no keys match the prefix', () => {
+      store.set('other:user:key1', 'value1');
+
+      const result = store.all('service:user:');
+
+      expect(result).toEqual({});
+    });
+  });
+});
+
+describe('Store without window (SSR)', () => {
+  const originalWindow = window;
+
+  beforeEach(() => {
+    // @ts-expect-error -- simulate a server environment where window is not defined
+    delete global.window;
+  });
+
+  afterEach(() => {
+    global.window = originalWindow;
+  });
+
+  it('does not throw when constructed or used', () => {
+    expect(() => {
+      const ssrStore = new Store();
+      ssrStore.subscribe('key', jest.fn());
+      ssrStore.set('key', 'value');
+      ssrStore.setObject('key', { a: 1 });
+      ssrStore.get('key');
+      ssrStore.getBool('key', true);
+      ssrStore.getObject('key', { a: 1 });
+      ssrStore.exists('key');
+      ssrStore.delete('key');
+    }).not.toThrow();
   });
 });
 

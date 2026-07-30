@@ -91,6 +91,7 @@ type TVirtualizedTraceViewOwnProps = {
   detailReferenceItemToggle: (spanID: string, reference: TraceSpanReference) => void;
   detailProcessToggle: (spanID: string) => void;
   detailTagsToggle: (spanID: string) => void;
+  detailSummaryAttributesToggle: (spanID: string) => void;
   detailToggle: (spanID: string) => void;
   setSpanNameColumnWidth: (width: number) => void;
   hoverIndentGuideIds: Set<string>;
@@ -534,6 +535,7 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
       detailStackTracesToggle,
       detailStates,
       detailTagsToggle,
+      detailSummaryAttributesToggle,
       detailToggle,
       spanNameColumnWidth,
       trace,
@@ -579,6 +581,7 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
           traceToProfilesOptions={traceToProfilesOptions}
           timeZone={timeZone}
           tagsToggle={detailTagsToggle}
+          summaryAttributesToggle={detailSummaryAttributesToggle}
           traceStartTime={trace.startTime}
           traceDuration={trace.duration}
           traceName={trace.traceName}

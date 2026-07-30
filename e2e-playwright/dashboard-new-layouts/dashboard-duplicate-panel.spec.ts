@@ -17,12 +17,12 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can duplicate a panel', async ({ dashboardPage, selectors, page }) => {
+    test('can duplicate a panel', async ({ dashboardPage, selectors, page, components }) => {
       await importTestDashboard(page, selectors, 'Paste tab');
 
-      const controls = new Controls(page, dashboardPage, selectors);
-      const panel = new Panel(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const panel = new Panel({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await controls.enterEditMode();
 
@@ -34,7 +34,7 @@ test.describe(
 
       await expect(panel.getContainerByTitle(panelTitle)).toHaveCount(1);
 
-      await panel.clickMenuItem(panelTitle, ['More...', 'Duplicate']);
+      await panel.selectMenuItem(panelTitle, ['More...', 'Duplicate']);
 
       await expect(panel.getContainerByTitle(panelTitle)).toHaveCount(2);
 

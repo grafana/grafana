@@ -253,7 +253,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 	// Cascade delete wrapper -- always wired (both ST and MT). Recursively deletes a folder's
 	// subtree on delete; a no-op delegate unless kubernetesFolderCascadeDelete is enabled.
-	b.storage = newCascadeDeleteStorage(b.storage, b.searcher, b.dashboardClient, b.contentsDeleter)
+	b.storage = newCascadeDeleteStorage(b.storage, b.searcher, b.dashboardClient, b.contentsDeleter, b.accessClient)
 
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage

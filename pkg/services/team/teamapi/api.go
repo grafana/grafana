@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type TeamAPI struct {
@@ -31,6 +33,7 @@ type TeamAPI struct {
 	logger               log.Logger
 	features             featuremgmt.FeatureToggles
 	teamClientFactory    teamClientFactory
+	folderSearcher       resourcepb.ResourceIndexClient
 }
 
 func ProvideTeamAPI(
@@ -46,6 +49,7 @@ func ProvideTeamAPI(
 	preferenceK8sHandler *prefapi.K8sHandler,
 	ds dashboards.DashboardService,
 	features featuremgmt.FeatureToggles,
+	resourceClient resource.ResourceClient,
 	clientConfigProvider apiserver.DirectRestConfigProvider,
 ) *TeamAPI {
 	tapi := &TeamAPI{
@@ -61,6 +65,7 @@ func ProvideTeamAPI(
 		logger:                 log.New("team-api"),
 		features:               features,
 		teamClientFactory:      &directRestConfigClientFactory{clientConfigProvider: clientConfigProvider},
+		folderSearcher:         resourceClient,
 	}
 
 	tapi.registerRoutes(routeRegister, acEvaluator)

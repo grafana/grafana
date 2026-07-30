@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 type TestUser struct {
@@ -46,7 +47,7 @@ func SetupUserServiceAccount(t *testing.T, db db.DB, cfg *setting.Cfg, testUser 
 
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
-	quotaService := quotaimpl.ProvideService(context.Background(), db, cfgProvider)
+	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(db), cfgProvider)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
@@ -127,7 +128,7 @@ func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, t
 
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
-	quotaService := quotaimpl.ProvideService(context.Background(), sqlStore, cfgProvider)
+	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(sqlStore), cfgProvider)
 	orgService, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
