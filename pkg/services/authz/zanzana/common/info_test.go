@@ -123,6 +123,24 @@ func TestResourceInfoIsValidRelation_TypedResources(t *testing.T) {
 	}
 }
 
+func TestResourceInfoIsValidRelation_GenericResource(t *testing.T) {
+	base := NewResourceInfoFromList(&authzv1.ListRequest{
+		Group:    "loki.datasource.grafana.app",
+		Resource: "datasources",
+	})
+	query := NewResourceInfoFromCheck(&authzv1.CheckRequest{
+		Verb:        utils.VerbCreate,
+		Group:       "loki.datasource.grafana.app",
+		Resource:    "datasources",
+		Subresource: "query",
+		Name:        "ds-1",
+	})
+
+	require.Equal(t, TypeResource, base.Type())
+	assert.False(t, base.IsValidRelation(RelationCreate))
+	assert.True(t, query.IsValidRelation(RelationCreate))
+}
+
 func TestNewResourceInfoFromCheck_FolderCreateAtRootUsesGeneral(t *testing.T) {
 	r := &authzv1.CheckRequest{
 		Verb:      utils.VerbCreate,

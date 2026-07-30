@@ -33,14 +33,15 @@ declare module "@openfeature/core" {
     | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
+    | "alerting.manualAssistantInvestigation"
     | "alerting.ruleQuality"
+    | "azureMonitorBatchAPI"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
     | "otelLogsFormatting"
     | "grafana.starredFolders"
     | "grafana.newTextPanel"
     | "plugins.useMTPlugins"
-    | "dashboardSectionVariables"
     | "globalDashboardVariables"
     | "queryEditorNext"
     | "managedPluginsV2"
@@ -72,6 +73,7 @@ declare module "@openfeature/core" {
     | "table.protoRowParser"
     | "grafana.queryVarEditorRedesign"
     | "table.refactorNested"
+    | "table.autoColumnWidths"
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu"
     | "grafana.dashboardSettingsRedesign"
@@ -79,6 +81,8 @@ declare module "@openfeature/core" {
     | "grafana.onDemandDiagnostics"
     | "grafana.multiTenantNavTree"
     | "grafana.exploreMetricsSidebar"
+    | "grafana.dynamicTraceToLogs"
+    | "grafana.thresholdsInterpolation"
     | "grafana.newCmdk";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;

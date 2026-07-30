@@ -219,6 +219,10 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
 	cfg.IndexMinUpdateInterval = section.Key("index_min_update_interval").MustDuration(0)
 	cfg.IndexModificationCacheTTL = section.Key("index_modification_cache_ttl").MustDuration(0)
+	// Off by default: switching this on makes the next rebuild of every index pull
+	// in all trash the storage still holds, which is unbounded where garbage
+	// collection is disabled.
+	cfg.IndexDeletedDocuments = section.Key("index_deleted_documents").MustBool(false)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()
@@ -352,6 +356,17 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.AzureAPIVersion = embedSection.Key("azure_api_version").MustString("2024-02-01")
 	cfg.AzureDimensions = embedSection.Key("azure_dimensions").MustInt(1024)
 	cfg.AzureBatchSize = embedSection.Key("azure_batch_size").MustInt(50)
+
+	// Rerank provider for the HybridSearch RPC. Empty = disabled (results
+	// keep their RRF ordering and min_relevance is a no-op). When set, the
+	// matching provider's connection fields must also be configured.
+	rerankSection := cfg.Raw.Section("vector_reranker")
+	cfg.RerankProvider = rerankSection.Key("provider").String()
+	cfg.RerankVertexProjectID = rerankSection.Key("vertex_project_id").String()
+	cfg.RerankVertexLocation = rerankSection.Key("vertex_location").MustString("global")
+	cfg.RerankVertexModel = rerankSection.Key("vertex_model").MustString("semantic-ranker-fast-004")
+	cfg.RerankBedrockRegion = rerankSection.Key("bedrock_region").MustString("us-east-1")
+	cfg.RerankBedrockModel = rerankSection.Key("bedrock_model").MustString("cohere.rerank-v3-5:0")
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,

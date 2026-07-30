@@ -53,6 +53,12 @@ type VectorBackend interface {
 	// slice is a no-op. model must be non-empty.
 	DeleteSubresources(ctx context.Context, namespace, model, resource, uid string, subresources []string) error
 
+	// DeleteNamespace removes every row belonging to a namespace across all
+	// resources and models, plus its cached query embeddings, rate buckets, and
+	// promotion log rows. Used when a tenant is hard-deleted. Returns the number
+	// of embedding rows removed. Not scoped by model/resource/uid, unlike Delete.
+	DeleteNamespace(ctx context.Context, namespace string) (int64, error)
+
 	// GetSubresourceContent returns subresource → stored content and the
 	// resource's stored folder ("" when no rows exist; folder is uniform
 	// across a resource's rows). Callers diff content to skip re-embedding

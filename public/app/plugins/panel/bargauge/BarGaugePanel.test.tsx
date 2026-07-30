@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { uniqueId } from 'lodash';
 
 import {
@@ -20,7 +20,15 @@ import {
   type LegendPlacement,
 } from '@grafana/schema';
 
-import { BarGaugePanel, type BarGaugePanelProps } from './BarGaugePanel';
+import {
+  BarGaugePanel,
+  calcBarSize,
+  getItemSpacing,
+  getLegend,
+  getOrientation,
+  type BarGaugePanelProps,
+} from './BarGaugePanel';
+import { defaultOptions } from './panelcfg.gen';
 
 const valueSelector = selectors.components.Panels.Visualization.BarGauge.valueV2;
 
@@ -92,6 +100,118 @@ describe('BarGaugePanel', () => {
       expect(screen.queryByText(/200/)).toBeInTheDocument();
       expect(screen.queryByText(/300/)).toBeInTheDocument();
       expect(screen.getAllByTestId(valueSelector).length).toEqual(2);
+    });
+  });
+
+  describe('legend', () => {
+    function dataWithTwoSeries() {
+      return {
+        series: [
+          toDataFrame({ target: 'series-a', datapoints: [[100, 1000]] }),
+          toDataFrame({ target: 'series-b', datapoints: [[200, 1000]] }),
+        ],
+        timeRange: createTimeRange(),
+        state: LoadingState.Done,
+      };
+    }
+
+    it('renders the legend when showLegend is enabled and there is data', () => {
+      const panelData = buildPanelData({ data: dataWithTwoSeries() });
+      panelData.options.legend.showLegend = true;
+
+      render(<BarGaugePanel {...panelData} />);
+
+      // Series names also render as bar titles, so scope the assertions to the
+      // legend container to prove the legend itself is present.
+      const legend = within(screen.getByTestId(selectors.components.VizLayout.legend));
+      expect(legend.getByText(/series-a/i)).toBeInTheDocument();
+      expect(legend.getByText(/series-b/i)).toBeInTheDocument();
+    });
+
+    it('does not render a legend when showLegend is disabled', () => {
+      const panelData = buildPanelData({ data: dataWithTwoSeries() });
+      panelData.options.legend.showLegend = false;
+
+      expect(getLegend(panelData.options, panelData.data)).toBeNull();
+    });
+
+    it('does not render a legend when there is no data', () => {
+      const panelData = buildPanelData();
+      panelData.options.legend.showLegend = true;
+
+      expect(getLegend(panelData.options, panelData.data)).toBeNull();
+    });
+  });
+
+  describe('getItemSpacing', () => {
+    it('uses tighter spacing for the LCD display mode than for non-LCD display modes', () => {
+      expect(getItemSpacing(BarGaugeDisplayMode.Gradient)).toBeGreaterThan(getItemSpacing(BarGaugeDisplayMode.Lcd));
+    });
+  });
+
+  describe('getOrientation', () => {
+    it('returns the explicit orientation when not Auto', () => {
+      expect(getOrientation(VizOrientation.Vertical, 552, 250)).toBe(VizOrientation.Vertical);
+    });
+
+    it('resolves Auto to Vertical when wider than tall', () => {
+      expect(getOrientation(VizOrientation.Auto, 600, 200)).toBe(VizOrientation.Vertical);
+    });
+
+    it('resolves Auto to Horizontal when taller than wide', () => {
+      expect(getOrientation(VizOrientation.Auto, 200, 600)).toBe(VizOrientation.Horizontal);
+    });
+  });
+
+  describe('calcBarSize', () => {
+    it('uses default sizes when sizing is Auto', () => {
+      const panelData = buildPanelData();
+      panelData.options.sizing = BarGaugeSizing.Auto;
+      panelData.options.minVizWidth = 111;
+      panelData.options.minVizHeight = 222;
+      panelData.options.maxVizHeight = 333;
+
+      expect(calcBarSize(panelData.options, VizOrientation.Horizontal)).toEqual({
+        minVizWidth: defaultOptions.minVizWidth,
+        minVizHeight: defaultOptions.minVizHeight,
+        maxVizHeight: defaultOptions.maxVizHeight,
+      });
+    });
+
+    it('applies manual min width for vertical orientation', () => {
+      const panelData = buildPanelData();
+      panelData.options.sizing = BarGaugeSizing.Manual;
+      panelData.options.minVizWidth = 42;
+
+      expect(calcBarSize(panelData.options, VizOrientation.Vertical).minVizWidth).toBe(42);
+    });
+
+    it('applies manual min/max height for horizontal orientation', () => {
+      const panelData = buildPanelData();
+      panelData.options.sizing = BarGaugeSizing.Manual;
+      panelData.options.minVizHeight = 20;
+      panelData.options.maxVizHeight = 250;
+
+      const result = calcBarSize(panelData.options, VizOrientation.Horizontal);
+      expect(result.minVizHeight).toBe(20);
+      expect(result.maxVizHeight).toBe(250);
+    });
+  });
+
+  describe('single series', () => {
+    it('hides the series name when there is a single unnamed series', () => {
+      const panelData = buildPanelData({
+        data: {
+          series: [toDataFrame({ target: 'onlySeries', datapoints: [[100, 1000]] })],
+          timeRange: createTimeRange(),
+          state: LoadingState.Done,
+        },
+      });
+
+      render(<BarGaugePanel {...panelData} />);
+
+      expect(screen.queryByText(/onlyseries/i)).not.toBeInTheDocument();
+      expect(screen.getByTestId(valueSelector)).toBeInTheDocument();
     });
   });
 });

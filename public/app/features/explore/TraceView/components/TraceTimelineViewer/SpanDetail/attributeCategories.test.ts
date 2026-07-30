@@ -1,4 +1,14 @@
-import { groupAttributesByCategory, SERVICE_CATEGORY_ID } from './attributeCategories';
+import { groupAttributesByCategory, isDatabaseAttribute, SERVICE_CATEGORY_ID } from './attributeCategories';
+
+describe('isDatabaseAttribute', () => {
+  it.each(['db.system', 'db.statement', 'db_name', 'DB.operation'])('matches %s', (key) => {
+    expect(isDatabaseAttribute(key)).toBe(true);
+  });
+
+  it.each(['http.method', 'service.name', 'dbc.something', 'database.system'])('does not match %s', (key) => {
+    expect(isDatabaseAttribute(key)).toBe(false);
+  });
+});
 
 describe('groupAttributesByCategory', () => {
   it('groups resource attributes by semantic namespace', () => {
@@ -88,6 +98,20 @@ describe('groupAttributesByCategory', () => {
     expect(grouped).toHaveLength(1);
     expect(grouped[0].category.id).toBe('frontend');
     expect(grouped[0].attributes).toHaveLength(2);
+  });
+
+  it('groups gf.feo11y resource attributes under Frontend', () => {
+    const attributes = [
+      { key: 'gf.feo11y.app.id', value: '42' },
+      { key: 'gf.feo11y.app.name', value: 'my-app' },
+      { key: 'gf.feo11y.app.original_name', value: 'my-original-app' },
+    ];
+
+    const grouped = groupAttributesByCategory(attributes, 'resource');
+
+    expect(grouped).toHaveLength(1);
+    expect(grouped[0].category.id).toBe('frontend');
+    expect(grouped[0].attributes).toHaveLength(3);
   });
 
   it('groups host, system, and os attributes under Host / OS', () => {
