@@ -20,7 +20,6 @@ const _ = grpc.SupportPackageIsVersion8
 
 const (
 	ServiceAccountTokenStore_CreateToken_FullMethodName             = "/serviceaccounttokenv0alpha1.ServiceAccountTokenStore/CreateToken"
-	ServiceAccountTokenStore_GetToken_FullMethodName                = "/serviceaccounttokenv0alpha1.ServiceAccountTokenStore/GetToken"
 	ServiceAccountTokenStore_ListTokens_FullMethodName              = "/serviceaccounttokenv0alpha1.ServiceAccountTokenStore/ListTokens"
 	ServiceAccountTokenStore_DeleteToken_FullMethodName             = "/serviceaccounttokenv0alpha1.ServiceAccountTokenStore/DeleteToken"
 	ServiceAccountTokenStore_GetTokenByHash_FullMethodName          = "/serviceaccounttokenv0alpha1.ServiceAccountTokenStore/GetTokenByHash"
@@ -32,7 +31,6 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ServiceAccountTokenStoreClient interface {
 	CreateToken(ctx context.Context, in *CreateTokenRequest, opts ...grpc.CallOption) (*CreateTokenResponse, error)
-	GetToken(ctx context.Context, in *GetTokenRequest, opts ...grpc.CallOption) (*GetTokenResponse, error)
 	ListTokens(ctx context.Context, in *ListTokensRequest, opts ...grpc.CallOption) (*ListTokensResponse, error)
 	DeleteToken(ctx context.Context, in *DeleteTokenRequest, opts ...grpc.CallOption) (*DeleteTokenResponse, error)
 	GetTokenByHash(ctx context.Context, in *GetTokenByHashRequest, opts ...grpc.CallOption) (*GetTokenByHashResponse, error)
@@ -51,16 +49,6 @@ func (c *serviceAccountTokenStoreClient) CreateToken(ctx context.Context, in *Cr
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateTokenResponse)
 	err := c.cc.Invoke(ctx, ServiceAccountTokenStore_CreateToken_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *serviceAccountTokenStoreClient) GetToken(ctx context.Context, in *GetTokenRequest, opts ...grpc.CallOption) (*GetTokenResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetTokenResponse)
-	err := c.cc.Invoke(ctx, ServiceAccountTokenStore_GetToken_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +100,6 @@ func (c *serviceAccountTokenStoreClient) UpdateTokenLastUsedDate(ctx context.Con
 // for forward compatibility
 type ServiceAccountTokenStoreServer interface {
 	CreateToken(context.Context, *CreateTokenRequest) (*CreateTokenResponse, error)
-	GetToken(context.Context, *GetTokenRequest) (*GetTokenResponse, error)
 	ListTokens(context.Context, *ListTokensRequest) (*ListTokensResponse, error)
 	DeleteToken(context.Context, *DeleteTokenRequest) (*DeleteTokenResponse, error)
 	GetTokenByHash(context.Context, *GetTokenByHashRequest) (*GetTokenByHashResponse, error)
@@ -125,9 +112,6 @@ type UnimplementedServiceAccountTokenStoreServer struct {
 
 func (UnimplementedServiceAccountTokenStoreServer) CreateToken(context.Context, *CreateTokenRequest) (*CreateTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateToken not implemented")
-}
-func (UnimplementedServiceAccountTokenStoreServer) GetToken(context.Context, *GetTokenRequest) (*GetTokenResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetToken not implemented")
 }
 func (UnimplementedServiceAccountTokenStoreServer) ListTokens(context.Context, *ListTokensRequest) (*ListTokensResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListTokens not implemented")
@@ -167,24 +151,6 @@ func _ServiceAccountTokenStore_CreateToken_Handler(srv interface{}, ctx context.
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ServiceAccountTokenStoreServer).CreateToken(ctx, req.(*CreateTokenRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ServiceAccountTokenStore_GetToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTokenRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ServiceAccountTokenStoreServer).GetToken(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ServiceAccountTokenStore_GetToken_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ServiceAccountTokenStoreServer).GetToken(ctx, req.(*GetTokenRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -271,10 +237,6 @@ var ServiceAccountTokenStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateToken",
 			Handler:    _ServiceAccountTokenStore_CreateToken_Handler,
-		},
-		{
-			MethodName: "GetToken",
-			Handler:    _ServiceAccountTokenStore_GetToken_Handler,
 		},
 		{
 			MethodName: "ListTokens",

@@ -95,6 +95,7 @@ func RegisterAPIService(
 	restConfig apiserver.RestConfigProvider,
 	mappers *resourcepermission.MappersRegistry,
 	tokenStore satoken.Storage,
+	tokenStorage *serviceaccounttoken.ModeAgnosticStorage,
 	_ *satoken.DependencyRegisterer,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
@@ -149,6 +150,7 @@ func RegisterAPIService(
 		ssoLegacyStore:                    sso.NewLegacyStore(ssoService, tracing),
 		ssoUseMTSettings:                  ssoUseMTSettings,
 		tokenStore:                        tokenStore,
+		tokenStorage:                      tokenStorage,
 		roleApiInstaller:                  roleApiInstaller,
 		globalRoleApiInstaller:            globalRoleApiInstaller,
 		teamLBACApiInstaller:              teamLBACApiInstaller,
@@ -718,7 +720,10 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateServiceAccountsAPIGroup(opts 
 	}
 
 	if enableServiceAccountTokensApi {
-		storage[saResource.StoragePath("tokens")] = serviceaccounttoken.NewTokensREST(saStore, b.store, b.tokenStore, b.tracing)
+		// saStore only exists here, so this is where the shared storage learns how to
+		// resolve service accounts.
+		b.tokenStorage.SetServiceAccountGetter(saStore)
+		storage[saResource.StoragePath("tokens")] = serviceaccounttoken.NewTokensREST(saStore, b.tokenStorage, b.tracing)
 	}
 
 	return nil

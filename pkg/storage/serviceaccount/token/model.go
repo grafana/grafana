@@ -38,25 +38,18 @@ type AddTokenCommand struct {
 	SecondsToLive      int64
 }
 
-type GetByNameQuery struct {
-	Namespace          string
-	ServiceAccountName string
-	Name               string
-}
-
 type ListResult struct {
 	Items    []*Token
 	Continue int64
 }
 
-type Validator interface {
-	GetByHash(ctx context.Context, hash string) (*Token, error)
-	GetByName(ctx context.Context, query *GetByNameQuery) (*Token, error)
-	UpdateLastUsedDate(ctx context.Context, id string) error
+type TokenFetcher interface {
+	GetByHash(ctx context.Context, namespace, hash string) (*Token, error)
+	UpdateLastUsedDate(ctx context.Context, namespace, id string) error
 }
 
 type Storage interface {
-	Validator
+	TokenFetcher
 	Add(ctx context.Context, cmd *AddTokenCommand) (*Token, error)
 	Delete(ctx context.Context, namespace, serviceAccountName, name string) error
 	ListByServiceAccount(ctx context.Context, namespace, serviceAccountName string, limit, continueToken int64) (*ListResult, error)

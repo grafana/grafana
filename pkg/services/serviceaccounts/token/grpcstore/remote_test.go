@@ -60,19 +60,11 @@ func TestRemoteCreateAndReadRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, added.ID)
 
-	got, err := store.GetByName(context.Background(), &satoken.GetByNameQuery{
-		Namespace:          testNamespace,
-		ServiceAccountName: testSAName,
-		Name:               "token-a",
-	})
+	got, err := store.GetByHash(context.Background(), testNamespace, "hashed-a")
 	require.NoError(t, err)
 	require.Equal(t, added.ID, got.ID)
 
-	stored, err := embedded.GetByName(context.Background(), &satoken.GetByNameQuery{
-		Namespace:          testNamespace,
-		ServiceAccountName: testSAName,
-		Name:               "token-a",
-	})
+	stored, err := embedded.GetByHash(context.Background(), testNamespace, "hashed-a")
 	require.NoError(t, err)
 	require.Equal(t, "hashed-a", stored.Key)
 }
@@ -96,11 +88,7 @@ func TestRemoteListAndDelete(t *testing.T) {
 
 	require.NoError(t, store.Delete(context.Background(), testNamespace, testSAName, "token-a"))
 
-	_, err = store.GetByName(context.Background(), &satoken.GetByNameQuery{
-		Namespace:          testNamespace,
-		ServiceAccountName: testSAName,
-		Name:               "token-a",
-	})
+	_, err = store.GetByHash(context.Background(), testNamespace, "hashed-token-a")
 	require.ErrorIs(t, err, satoken.ErrTokenNotFound)
 }
 
@@ -114,7 +102,7 @@ func TestRemoteGetByHashIsScopedToTheCallerNamespace(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	got, err := store.GetByHash(nsCtx(testNamespace), "hashed-a")
+	got, err := store.GetByHash(context.Background(), testNamespace, "hashed-a")
 
 	require.NoError(t, err)
 	require.Equal(t, added.ID, got.ID)
@@ -130,21 +118,9 @@ func TestRemoteGetByHashDoesNotCrossNamespaces(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, err = store.GetByHash(nsCtx("other"), "hashed-a")
+	_, err = store.GetByHash(context.Background(), "other", "hashed-a")
 
 	require.ErrorIs(t, err, satoken.ErrTokenNotFound)
-}
-
-func TestRemoteRequiresANamespacedCaller(t *testing.T) {
-	// GetByHash and UpdateLastUsedDate carry no namespace argument, so an unscoped
-	// caller must be refused rather than defaulted.
-	store, _ := newRemoteTestStore(t)
-
-	_, err := store.GetByHash(context.Background(), "hashed-a")
-	require.ErrorContains(t, err, "namespaced caller identity is required")
-
-	err = store.UpdateLastUsedDate(context.Background(), "some-id")
-	require.ErrorContains(t, err, "namespaced caller identity is required")
 }
 
 func TestRemoteUpdateLastUsedDate(t *testing.T) {
@@ -157,13 +133,9 @@ func TestRemoteUpdateLastUsedDate(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	require.NoError(t, store.UpdateLastUsedDate(nsCtx(testNamespace), added.ID))
+	require.NoError(t, store.UpdateLastUsedDate(context.Background(), testNamespace, added.ID))
 
-	stored, err := embedded.GetByName(context.Background(), &satoken.GetByNameQuery{
-		Namespace:          testNamespace,
-		ServiceAccountName: testSAName,
-		Name:               "token-a",
-	})
+	stored, err := embedded.GetByHash(context.Background(), testNamespace, "hashed-a")
 	require.NoError(t, err)
 	require.NotNil(t, stored.LastUsedAt)
 }

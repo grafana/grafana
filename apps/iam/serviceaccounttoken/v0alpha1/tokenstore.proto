@@ -41,16 +41,6 @@ message CreateTokenResponse {
     Token token = 1;
 }
 
-message GetTokenRequest {
-    string namespace = 1;
-    string service_account_name = 2;
-    string name = 3;
-}
-
-message GetTokenResponse {
-    Token token = 1;
-}
-
 message ListTokensRequest {
     string namespace = 1;
     string service_account_name = 2;
@@ -91,7 +81,6 @@ message UpdateTokenLastUsedDateResponse {}
 
 service ServiceAccountTokenStore {
     rpc CreateToken(CreateTokenRequest) returns (CreateTokenResponse);
-    rpc GetToken(GetTokenRequest) returns (GetTokenResponse);
     rpc ListTokens(ListTokensRequest) returns (ListTokensResponse);
     rpc DeleteToken(DeleteTokenRequest) returns (DeleteTokenResponse);
     rpc GetTokenByHash(GetTokenByHashRequest) returns (GetTokenByHashResponse);

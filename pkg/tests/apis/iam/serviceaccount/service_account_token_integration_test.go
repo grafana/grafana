@@ -91,8 +91,9 @@ func TestIntegrationServiceAccountTokensMTStore(t *testing.T) {
 		APIServerStorageType:         "unified",
 		ServiceAccountTokenStoreType: "mt",
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			// Mode3 is the lowest mode that reads from the token store.
 			"serviceaccounts.iam.grafana.app": {
-				DualWriterMode: rest.Mode1,
+				DualWriterMode: rest.Mode3,
 			},
 		},
 		EnableFeatureToggles: []string{
@@ -596,4 +597,97 @@ func doServiceAccountTokenCRUDTests(t *testing.T, helper *apis.K8sTestHelper) {
 			require.Equal(t, http.StatusBadRequest, rsp.Response.StatusCode, "token name %q should be rejected", name)
 		}
 	})
+}
+
+// TestIntegrationServiceAccountTokenDualWriterModes exercises the token endpoints in
+// each supported dual-writer mode.
+//
+// Mode0 passing proves the legacy-only path works, since the token store is never
+// written in that mode. Mode5 passing proves the store-only path works, since legacy
+// is never written. Mode1 and Mode3 differ only in which store reads come from, both
+// of which hold the token; the routing table itself is covered by the unit tests.
+func TestIntegrationServiceAccountTokenDualWriterModes(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode3, rest.Mode5} {
+		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:            false,
+				DisableAnonymous:             true,
+				APIServerStorageType:         "unified",
+				ServiceAccountTokenStoreType: "mt",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"serviceaccounts.iam.grafana.app": {
+						DualWriterMode: mode,
+					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesServiceAccountsApi,
+					featuremgmt.FlagKubernetesServiceAccountTokensApi,
+				},
+			})
+
+			ns := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+			saName := createServiceAccount(t, helper)
+
+			body, err := json.Marshal(createTokenRequest{TokenName: "dw-token", ExpiresInSeconds: 3600})
+			require.NoError(t, err)
+
+			var created createTokenResponse
+			rsp := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   tokensPath(ns, saName),
+				Body:   body,
+			}, &created)
+			require.Equal(t, http.StatusCreated, rsp.Response.StatusCode)
+			require.NotEmpty(t, created.Token)
+
+			var got getTokenResponse
+			getRsp := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodGet,
+				Path:   tokenPath(ns, saName, "dw-token"),
+			}, &got)
+			require.Equal(t, http.StatusOK, getRsp.Response.StatusCode)
+			require.Equal(t, "dw-token", got.Body.Title)
+
+			var list listTokensResponse
+			listRsp := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodGet,
+				Path:   tokensPath(ns, saName),
+			}, &list)
+			require.Equal(t, http.StatusOK, listRsp.Response.StatusCode)
+			require.Len(t, list.Items, 1)
+			require.Equal(t, "dw-token", list.Items[0].Title)
+
+			// The store that writes must also enforce uniqueness.
+			var dup createTokenResponse
+			dupRsp := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   tokensPath(ns, saName),
+				Body:   body,
+			}, &dup)
+			require.Equal(t, http.StatusConflict, dupRsp.Response.StatusCode)
+
+			var del deleteTokenResponse
+			delRsp := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodDelete,
+				Path:   tokenPath(ns, saName, "dw-token"),
+			}, &del)
+			require.Equal(t, http.StatusOK, delRsp.Response.StatusCode)
+
+			var afterDelete getTokenResponse
+			afterRsp := apis.DoRequest(helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodGet,
+				Path:   tokenPath(ns, saName, "dw-token"),
+			}, &afterDelete)
+			require.Equal(t, http.StatusNotFound, afterRsp.Response.StatusCode)
+		})
+	}
 }

@@ -17,7 +17,6 @@ var (
 	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, "data/*.sql"))
 
 	sqlTokenCreate         = mustTemplate("token_create.sql")
-	sqlTokenGetByName      = mustTemplate("token_get_by_name.sql")
 	sqlTokenGetByHash      = mustTemplate("token_get_by_hash.sql")
 	sqlTokenUpdateLastUsed = mustTemplate("token_update_last_used.sql")
 	sqlTokenDelete         = mustTemplate("token_delete.sql")
@@ -51,27 +50,17 @@ func (r createToken) Expires() int64 {
 	return *r.Row.Expires
 }
 
-type getTokenByName struct {
-	sqltemplate.SQLTemplate
-	Query *GetByNameQuery
-}
-
-func (r getTokenByName) Validate() error {
-	if r.Query == nil {
-		return errors.New("query is required")
-	}
-	return nil
-}
-
 type getTokenByHash struct {
 	sqltemplate.SQLTemplate
-	Hash string
+	Namespace string
+	Hash      string
 }
 
 func (r getTokenByHash) Validate() error { return nil }
 
 type updateTokenLastUsed struct {
 	sqltemplate.SQLTemplate
+	Namespace  string
 	ID         string
 	LastUsedAt time.Time
 }

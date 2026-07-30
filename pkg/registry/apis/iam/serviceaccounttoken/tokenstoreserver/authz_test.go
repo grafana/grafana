@@ -27,10 +27,6 @@ func allRPCs(ctx context.Context, client satokenpb.ServiceAccountTokenStoreClien
 			_, err := client.CreateToken(ctx, &satokenpb.CreateTokenRequest{Namespace: testNamespace, Name: "token-a"})
 			return err
 		},
-		"GetToken": func() error {
-			_, err := client.GetToken(ctx, &satokenpb.GetTokenRequest{Namespace: testNamespace, Name: "token-a"})
-			return err
-		},
 		"ListTokens": func() error {
 			_, err := client.ListTokens(ctx, &satokenpb.ListTokensRequest{Namespace: testNamespace})
 			return err
@@ -53,7 +49,6 @@ func allRPCs(ctx context.Context, client satokenpb.ServiceAccountTokenStoreClien
 func fullFakeStore() *fakeStore {
 	return &fakeStore{
 		addToken:       sampleToken(),
-		getToken:       sampleToken(),
 		listRes:        &satoken.ListResult{},
 		getByHashToken: sampleToken(),
 	}
@@ -109,10 +104,9 @@ func TestInProcChannelRejectsCallersWithoutAnIdentity(t *testing.T) {
 	}
 
 	require.Nil(t, store.addCmd, "the store must not be reached by an unauthenticated caller")
-	require.Nil(t, store.getQuery)
 	require.Nil(t, store.listArgs)
 	require.Nil(t, store.deleteArg)
-	require.Empty(t, store.getByHashArg)
+	require.Empty(t, store.getByHashArgs)
 	require.Empty(t, store.updateLastUsedArg)
 }
 

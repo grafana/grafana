@@ -48,19 +48,6 @@ func (s *Server) CreateToken(ctx context.Context, req *satokenpb.CreateTokenRequ
 	return &satokenpb.CreateTokenResponse{Token: toProto(token)}, nil
 }
 
-func (s *Server) GetToken(ctx context.Context, req *satokenpb.GetTokenRequest) (*satokenpb.GetTokenResponse, error) {
-	token, err := s.store.GetByName(ctx, &satoken.GetByNameQuery{
-		Namespace:          req.GetNamespace(),
-		ServiceAccountName: req.GetServiceAccountName(),
-		Name:               req.GetName(),
-	})
-	if err != nil {
-		return nil, mapError(err, "getting token")
-	}
-
-	return &satokenpb.GetTokenResponse{Token: toProto(token)}, nil
-}
-
 func (s *Server) ListTokens(ctx context.Context, req *satokenpb.ListTokensRequest) (*satokenpb.ListTokensResponse, error) {
 	res, err := s.store.ListByServiceAccount(ctx, req.GetNamespace(), req.GetServiceAccountName(), req.GetLimit(), req.GetContinueToken())
 	if err != nil {
@@ -84,23 +71,16 @@ func (s *Server) DeleteToken(ctx context.Context, req *satokenpb.DeleteTokenRequ
 }
 
 func (s *Server) GetTokenByHash(ctx context.Context, req *satokenpb.GetTokenByHashRequest) (*satokenpb.GetTokenByHashResponse, error) {
-	token, err := s.store.GetByHash(ctx, req.GetHash())
+	token, err := s.store.GetByHash(ctx, req.GetNamespace(), req.GetHash())
 	if err != nil {
 		return nil, mapError(err, "getting token by hash")
-	}
-
-	// The key column is unique across all namespaces, so scope the result to the
-	// requested one. Report a mismatch as missing rather than forbidden so hashes
-	// cannot be probed for existence.
-	if token.Namespace != req.GetNamespace() {
-		return nil, status.Error(codes.NotFound, satoken.ErrTokenNotFound.Error())
 	}
 
 	return &satokenpb.GetTokenByHashResponse{Token: toProto(token)}, nil
 }
 
 func (s *Server) UpdateTokenLastUsedDate(ctx context.Context, req *satokenpb.UpdateTokenLastUsedDateRequest) (*satokenpb.UpdateTokenLastUsedDateResponse, error) {
-	if err := s.store.UpdateLastUsedDate(ctx, req.GetId()); err != nil {
+	if err := s.store.UpdateLastUsedDate(ctx, req.GetNamespace(), req.GetId()); err != nil {
 		return nil, mapError(err, "updating token last used date")
 	}
 

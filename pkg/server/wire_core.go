@@ -45,6 +45,8 @@ import (
 	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
 	snapshotmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot/migrator"
 	dsmigrator "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccounttoken"
+	serviceaccounttokencontracts "github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccounttoken/contracts"
 	legacypreferences "github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -472,8 +474,10 @@ var wireBasicSet = wire.NewSet(
 	satokendatabase.ProvideDatabase,
 	wire.Bind(new(satokencontracts.Database), new(*satokendatabase.Database)),
 	satoken.ProvideEmbeddedStorage,
+	serviceaccounttoken.ProvideModeAgnosticStorage,
+	wire.Bind(new(serviceaccounttokencontracts.TokenFetcher), new(*serviceaccounttoken.ModeAgnosticStorage)),
 	satokenprovider.ProvideStorage,
-	satoken.ProvideValidator,
+	satoken.ProvideTokenFetcher,
 	// Unified storage
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,

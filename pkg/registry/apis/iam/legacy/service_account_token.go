@@ -17,6 +17,9 @@ import (
 // ErrTokenAlreadyExists is returned when attempting to create a token with a name that already exists.
 var ErrTokenAlreadyExists = errors.New("a token with this name already exists for the service account")
 
+// ErrTokenNotFound is returned when no token row matched.
+var ErrTokenNotFound = errors.New("service account token not found")
+
 type ServiceAccountToken struct {
 	ID                int64
 	Name              string
@@ -47,6 +50,20 @@ type GetServiceAccountTokenQuery struct {
 	Name              string
 	ServiceAccountUID string
 	OrgID             int64
+}
+
+// GetServiceAccountTokenByHashQuery retrieves a single token by its hashed key
+// within an org.
+type GetServiceAccountTokenByHashQuery struct {
+	Hash  string
+	OrgID int64
+}
+
+// UpdateServiceAccountTokenLastUsedCommand stamps a token's last used timestamp.
+type UpdateServiceAccountTokenLastUsedCommand struct {
+	ID         int64
+	LastUsedAt time.Time
+	OrgID      int64
 }
 
 // CreateServiceAccountTokenCommand creates a new token row in the api_key table.
@@ -102,6 +119,54 @@ func newGetServiceAccountToken(sql *legacysql.LegacyDatabaseHelper, q *GetServic
 		UserTable:   sql.Table("user"),
 		TokenTable:  sql.Table("api_key"),
 		Query:       q,
+	}
+}
+
+var sqlQueryServiceAccountTokenGetByHashTemplate = mustTemplate("service_account_token_get_by_hash_query.sql")
+
+type getServiceAccountTokenByHashQuery struct {
+	sqltemplate.SQLTemplate
+	Query      *GetServiceAccountTokenByHashQuery
+	UserTable  string
+	TokenTable string
+}
+
+func (q getServiceAccountTokenByHashQuery) Validate() error {
+	if q.Query.Hash == "" {
+		return fmt.Errorf("expected non empty token hash")
+	}
+	return nil
+}
+
+func newGetServiceAccountTokenByHash(sql *legacysql.LegacyDatabaseHelper, q *GetServiceAccountTokenByHashQuery) getServiceAccountTokenByHashQuery {
+	return getServiceAccountTokenByHashQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		UserTable:   sql.Table("user"),
+		TokenTable:  sql.Table("api_key"),
+		Query:       q,
+	}
+}
+
+var sqlUpdateServiceAccountTokenLastUsedTemplate = mustTemplate("update_service_account_token_last_used.sql")
+
+type updateServiceAccountTokenLastUsedQuery struct {
+	sqltemplate.SQLTemplate
+	Command    *UpdateServiceAccountTokenLastUsedCommand
+	TokenTable string
+}
+
+func (q updateServiceAccountTokenLastUsedQuery) Validate() error {
+	if q.Command.ID < 1 {
+		return fmt.Errorf("expected non zero token id")
+	}
+	return nil
+}
+
+func newUpdateServiceAccountTokenLastUsed(sql *legacysql.LegacyDatabaseHelper, cmd *UpdateServiceAccountTokenLastUsedCommand) updateServiceAccountTokenLastUsedQuery {
+	return updateServiceAccountTokenLastUsedQuery{
+		SQLTemplate: sqltemplate.New(sql.DialectForDriver()),
+		TokenTable:  sql.Table("api_key"),
+		Command:     cmd,
 	}
 }
 
@@ -212,6 +277,77 @@ func (s *legacySQLStore) GetServiceAccountToken(ctx context.Context, ns claims.N
 	}
 
 	return &t, nil
+}
+
+// GetServiceAccountTokenByHash resolves a token from its hashed key. Returns nil
+// when no token matches.
+func (s *legacySQLStore) GetServiceAccountTokenByHash(ctx context.Context, ns claims.NamespaceInfo, query GetServiceAccountTokenByHashQuery) (*ServiceAccountToken, error) {
+	query.OrgID = ns.OrgID
+	if query.OrgID == 0 {
+		return nil, fmt.Errorf("expected non zero org id")
+	}
+
+	sql, err := s.getDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	req := newGetServiceAccountTokenByHash(sql, &query)
+	q, err := sqltemplate.Execute(sqlQueryServiceAccountTokenGetByHashTemplate, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlQueryServiceAccountTokenGetByHashTemplate.Name(), err)
+	}
+
+	rows, err := sql.DB.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	if !rows.Next() {
+		return nil, nil
+	}
+
+	var t ServiceAccountToken
+	if err := rows.Scan(&t.ID, &t.Name, &t.Revoked, &t.LastUsed, &t.Expires, &t.Created, &t.Updated, &t.ServiceAccountUID, &t.ServiceAccountID); err != nil {
+		return nil, err
+	}
+
+	return &t, nil
+}
+
+// UpdateServiceAccountTokenLastUsed stamps last_used_at on a token row.
+func (s *legacySQLStore) UpdateServiceAccountTokenLastUsed(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateServiceAccountTokenLastUsedCommand) error {
+	cmd.OrgID = ns.OrgID
+	if cmd.OrgID == 0 {
+		return fmt.Errorf("expected non zero org id")
+	}
+
+	sql, err := s.getDB(ctx)
+	if err != nil {
+		return err
+	}
+
+	req := newUpdateServiceAccountTokenLastUsed(sql, &cmd)
+	q, err := sqltemplate.Execute(sqlUpdateServiceAccountTokenLastUsedTemplate, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlUpdateServiceAccountTokenLastUsedTemplate.Name(), err)
+	}
+
+	result, err := sql.DB.GetSqlxSession().Exec(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrTokenNotFound
+	}
+	return nil
 }
 
 func (s *legacySQLStore) DeleteServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteServiceAccountTokenCommand) (int64, error) {

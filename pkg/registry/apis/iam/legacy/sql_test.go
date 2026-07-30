@@ -187,6 +187,18 @@ func TestIdentityQueries(t *testing.T) {
 		return &v
 	}
 
+	getServiceAccountTokenByHash := func(q *GetServiceAccountTokenByHashQuery) sqltemplate.SQLTemplate {
+		v := newGetServiceAccountTokenByHash(nodb, q)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
+	updateServiceAccountTokenLastUsed := func(cmd *UpdateServiceAccountTokenLastUsedCommand) sqltemplate.SQLTemplate {
+		v := newUpdateServiceAccountTokenLastUsed(nodb, cmd)
+		v.SQLTemplate = mocks.NewTestingSQLTemplate()
+		return &v
+	}
+
 	createServiceAccountToken := func(cmd *CreateServiceAccountTokenCommand) sqltemplate.SQLTemplate {
 		v := newCreateServiceAccountToken(nodb, cmd)
 		v.SQLTemplate = mocks.NewTestingSQLTemplate()
@@ -837,6 +849,25 @@ func TestIdentityQueries(t *testing.T) {
 						Name:              "my-token",
 						ServiceAccountUID: "sa-1",
 						OrgID:             1,
+					}),
+				},
+			},
+			sqlQueryServiceAccountTokenGetByHashTemplate: {
+				{
+					Name: "get_token_by_hash",
+					Data: getServiceAccountTokenByHash(&GetServiceAccountTokenByHashQuery{
+						Hash:  "hashed123",
+						OrgID: 1,
+					}),
+				},
+			},
+			sqlUpdateServiceAccountTokenLastUsedTemplate: {
+				{
+					Name: "update_token_last_used",
+					Data: updateServiceAccountTokenLastUsed(&UpdateServiceAccountTokenLastUsedCommand{
+						ID:         42,
+						LastUsedAt: time.Date(2026, 7, 29, 12, 0, 0, 0, time.UTC),
+						OrgID:      1,
 					}),
 				},
 			},

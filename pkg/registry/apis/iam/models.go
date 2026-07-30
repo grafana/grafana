@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccount"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccounttoken"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/teambinding"
@@ -57,6 +58,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	teamBindingLegacyStore     *teambinding.LegacyBindingStore
 	ssoLegacyStore             *sso.LegacyStore
 	tokenStore                 satoken.Storage
+	tokenStorage               *serviceaccounttoken.ModeAgnosticStorage
 	ssoUseMTSettings           bool
 	roleApiInstaller           RoleApiInstaller
 	globalRoleApiInstaller     GlobalRoleApiInstaller

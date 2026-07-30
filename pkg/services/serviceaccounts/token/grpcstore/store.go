@@ -2,11 +2,7 @@
 // service account token store gRPC service.
 //
 // Every satoken.Storage method hits the wire. Authentication matches unified
-// storage: a per-call access token carries the namespace, so the server reads it
-// from the token rather than from anything the caller passes alongside it.
-//
-// GetByHash and UpdateLastUsedDate take no namespace parameter, so ctx must carry a
-// namespaced identity (see identity.WithServiceIdentityForSingleNamespace).
+// storage: a per-call access token carries the namespace supplied to the operation.
 package grpcstore
 
 import (
@@ -22,7 +18,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	authnlib "github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/types"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	satokenpb "github.com/grafana/grafana/apps/iam/serviceaccounttoken/v0alpha1"
@@ -78,22 +73,6 @@ func (s *store) Add(ctx context.Context, cmd *satoken.AddTokenCommand) (*satoken
 	return fromProto(resp.GetToken()), nil
 }
 
-func (s *store) GetByName(ctx context.Context, query *satoken.GetByNameQuery) (*satoken.Token, error) {
-	ctx, span := s.tracer.Start(ctx, "ServiceAccountTokenGrpcStore.GetByName")
-	defer span.End()
-
-	resp, err := s.clientFor(query.Namespace).GetToken(ctx, &satokenpb.GetTokenRequest{
-		Namespace:          query.Namespace,
-		ServiceAccountName: query.ServiceAccountName,
-		Name:               query.Name,
-	})
-	if err != nil {
-		return nil, mapError(err, "getting token")
-	}
-
-	return fromProto(resp.GetToken()), nil
-}
-
 func (s *store) ListByServiceAccount(ctx context.Context, namespace, serviceAccountName string, limit, continueToken int64) (*satoken.ListResult, error) {
 	ctx, span := s.tracer.Start(ctx, "ServiceAccountTokenGrpcStore.ListByServiceAccount")
 	defer span.End()
@@ -116,16 +95,9 @@ func (s *store) ListByServiceAccount(ctx context.Context, namespace, serviceAcco
 	return &satoken.ListResult{Items: items, Continue: resp.GetContinueToken()}, nil
 }
 
-// GetByHash resolves a token by its hashed key, scoped to the namespace on the
-// caller's identity so a hash cannot be resolved across namespaces.
-func (s *store) GetByHash(ctx context.Context, hash string) (*satoken.Token, error) {
+func (s *store) GetByHash(ctx context.Context, namespace, hash string) (*satoken.Token, error) {
 	ctx, span := s.tracer.Start(ctx, "ServiceAccountTokenGrpcStore.GetByHash")
 	defer span.End()
-
-	namespace, err := callerNamespace(ctx)
-	if err != nil {
-		return nil, err
-	}
 
 	resp, err := s.clientFor(namespace).GetTokenByHash(ctx, &satokenpb.GetTokenByHashRequest{
 		Namespace: namespace,
@@ -138,16 +110,9 @@ func (s *store) GetByHash(ctx context.Context, hash string) (*satoken.Token, err
 	return fromProto(resp.GetToken()), nil
 }
 
-// UpdateLastUsedDate stamps the token's last_used_at. The namespace is taken from
-// the caller's identity on ctx.
-func (s *store) UpdateLastUsedDate(ctx context.Context, id string) error {
+func (s *store) UpdateLastUsedDate(ctx context.Context, namespace, id string) error {
 	ctx, span := s.tracer.Start(ctx, "ServiceAccountTokenGrpcStore.UpdateLastUsedDate")
 	defer span.End()
-
-	namespace, err := callerNamespace(ctx)
-	if err != nil {
-		return err
-	}
 
 	if _, err := s.clientFor(namespace).UpdateTokenLastUsedDate(ctx, &satokenpb.UpdateTokenLastUsedDateRequest{
 		Namespace: namespace,
@@ -172,16 +137,6 @@ func (s *store) Delete(ctx context.Context, namespace, serviceAccountName, name 
 	}
 
 	return nil
-}
-
-// callerNamespace reads the namespace off the identity on ctx, for the calls whose
-// signature carries no namespace.
-func callerNamespace(ctx context.Context) (string, error) {
-	authInfo, ok := types.AuthInfoFrom(ctx)
-	if !ok || authInfo.GetNamespace() == "" {
-		return "", fmt.Errorf("a namespaced caller identity is required")
-	}
-	return authInfo.GetNamespace(), nil
 }
 
 // mapError converts gRPC status codes back into the sentinels callers branch on.

@@ -92,11 +92,7 @@ func TestMTStoreTypeWithoutAddressWritesThroughToTheEmbeddedStore(t *testing.T) 
 
 	// The in-process server must persist to the same serviceaccount_token table
 	// the embedded store reads.
-	stored, err := embedded.GetByName(context.Background(), &satoken.GetByNameQuery{
-		Namespace:          "default",
-		ServiceAccountName: "sa-1",
-		Name:               "token-a",
-	})
+	stored, err := embedded.GetByHash(context.Background(), "default", "hashed-a")
 	require.NoError(t, err)
 	require.Equal(t, added.ID, stored.ID)
 }
@@ -118,11 +114,7 @@ func TestMTStoreTypeWithoutAddressDeletesThroughToTheEmbeddedStore(t *testing.T)
 
 	require.NoError(t, store.Delete(context.Background(), "default", "sa-1", "token-a"))
 
-	_, err = embedded.GetByName(context.Background(), &satoken.GetByNameQuery{
-		Namespace:          "default",
-		ServiceAccountName: "sa-1",
-		Name:               "token-a",
-	})
+	_, err = embedded.GetByHash(context.Background(), "default", "hashed-a")
 	require.ErrorIs(t, err, satoken.ErrTokenNotFound)
 }
 

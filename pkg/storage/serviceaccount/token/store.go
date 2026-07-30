@@ -11,7 +11,6 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/storage/serviceaccount/token/contracts"
-	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -31,9 +30,9 @@ func ProvideEmbeddedStorage(db contracts.Database, tracer trace.Tracer) (Embedde
 	}, nil
 }
 
-// ProvideValidator is deliberately bound to EmbeddedStorage: token validation must
-// always hit the database, never a remote token store.
-func ProvideValidator(storage EmbeddedStorage) Validator {
+// ProvideTokenFetcher is deliberately bound to EmbeddedStorage: authentication
+// lookups must always hit the database, never a remote token store.
+func ProvideTokenFetcher(storage EmbeddedStorage) TokenFetcher {
 	return storage
 }
 
@@ -70,7 +69,7 @@ func (s *store) Add(ctx context.Context, cmd *AddTokenCommand) (*Token, error) {
 
 	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
-		if sql.IsRowAlreadyExistsError(err) {
+		if isRowAlreadyExistsError(err) {
 			return nil, ErrTokenDuplicate
 		}
 		return nil, fmt.Errorf("inserting token: %w", err)
@@ -82,34 +81,25 @@ func (s *store) Add(ctx context.Context, cmd *AddTokenCommand) (*Token, error) {
 	return row, nil
 }
 
-func (s *store) GetByName(ctx context.Context, query *GetByNameQuery) (*Token, error) {
-	ctx, span := s.tracer.Start(ctx, "ServiceAccountTokenStorage.GetByName")
-	defer span.End()
-
-	req := getTokenByName{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Query:       query,
-	}
-	return s.queryOne(ctx, sqlTokenGetByName, req)
-}
-
-func (s *store) GetByHash(ctx context.Context, hash string) (*Token, error) {
+func (s *store) GetByHash(ctx context.Context, namespace, hash string) (*Token, error) {
 	ctx, span := s.tracer.Start(ctx, "ServiceAccountTokenStorage.GetByHash")
 	defer span.End()
 
 	req := getTokenByHash{
 		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace,
 		Hash:        hash,
 	}
 	return s.queryOne(ctx, sqlTokenGetByHash, req)
 }
 
-func (s *store) UpdateLastUsedDate(ctx context.Context, id string) error {
+func (s *store) UpdateLastUsedDate(ctx context.Context, namespace, id string) error {
 	ctx, span := s.tracer.Start(ctx, "ServiceAccountTokenStorage.UpdateLastUsedDate", trace.WithAttributes(attribute.String("token.id", id)))
 	defer span.End()
 
 	req := updateTokenLastUsed{
 		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace,
 		ID:          id,
 		LastUsedAt:  time.Now().UTC(),
 	}

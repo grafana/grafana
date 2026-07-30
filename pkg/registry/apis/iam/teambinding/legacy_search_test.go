@@ -683,6 +683,14 @@ func (m *mockLegacyStore) ListServiceAccountTokens(ctx context.Context, ns claim
 	return nil, nil
 }
 
+func (m *mockLegacyStore) UpdateServiceAccountTokenLastUsed(ctx context.Context, ns claims.NamespaceInfo, cmd legacy.UpdateServiceAccountTokenLastUsedCommand) error {
+	return nil
+}
+
+func (m *mockLegacyStore) GetServiceAccountTokenByHash(ctx context.Context, ns claims.NamespaceInfo, query legacy.GetServiceAccountTokenByHashQuery) (*legacy.ServiceAccountToken, error) {
+	return nil, nil
+}
+
 func (m *mockLegacyStore) GetServiceAccountToken(ctx context.Context, ns claims.NamespaceInfo, query legacy.GetServiceAccountTokenQuery) (*legacy.ServiceAccountToken, error) {
 	return nil, nil
 }

@@ -1,7 +1,6 @@
 package token_test
 
 import (
-	"errors"
 	"testing"
 	"time"
 
@@ -46,28 +45,20 @@ func TestStoreLifecycle(t *testing.T) {
 	require.NotNil(t, created.Expires)
 	require.InDelta(t, time.Now().Unix()+3600, *created.Expires, 2)
 
-	byName, err := store.GetByName(ctx, &token.GetByNameQuery{
-		Namespace:          "org-1",
-		ServiceAccountName: "sa-one",
-		Name:               "bravo",
-	})
-	require.NoError(t, err)
-	require.Equal(t, created.ID, byName.ID)
-
-	byHash, err := store.GetByHash(ctx, "hash-bravo")
+	byHash, err := store.GetByHash(ctx, "org-1", "hash-bravo")
 	require.NoError(t, err)
 	require.Equal(t, created.ID, byHash.ID)
 
-	require.NoError(t, store.UpdateLastUsedDate(ctx, created.ID))
-	updated, err := store.GetByHash(ctx, "hash-bravo")
+	require.NoError(t, store.UpdateLastUsedDate(ctx, "org-1", created.ID))
+	updated, err := store.GetByHash(ctx, "org-1", "hash-bravo")
 	require.NoError(t, err)
 	require.NotNil(t, updated.LastUsedAt)
 
 	require.NoError(t, store.Delete(ctx, "org-1", "sa-one", "bravo"))
-	_, err = store.GetByHash(ctx, "hash-bravo")
+	_, err = store.GetByHash(ctx, "org-1", "hash-bravo")
 	require.ErrorIs(t, err, token.ErrTokenNotFound)
 	require.ErrorIs(t, store.Delete(ctx, "org-1", "sa-one", "bravo"), token.ErrTokenNotFound)
-	require.ErrorIs(t, store.UpdateLastUsedDate(ctx, created.ID), token.ErrTokenNotFound)
+	require.ErrorIs(t, store.UpdateLastUsedDate(ctx, "org-1", created.ID), token.ErrTokenNotFound)
 }
 
 func TestStoreDuplicateAndIsolation(t *testing.T) {
@@ -90,12 +81,8 @@ func TestStoreDuplicateAndIsolation(t *testing.T) {
 	require.NoError(t, add("org-1", "sa-two", "deploy", "hash-three"))
 	require.NoError(t, add("org-2", "sa-one", "deploy", "hash-four"))
 
-	_, err := store.GetByName(ctx, &token.GetByNameQuery{
-		Namespace:          "org-1",
-		ServiceAccountName: "sa-one",
-		Name:               "missing",
-	})
-	require.True(t, errors.Is(err, token.ErrTokenNotFound))
+	_, err := store.GetByHash(ctx, "org-2", "hash-one")
+	require.ErrorIs(t, err, token.ErrTokenNotFound)
 }
 
 func TestStoreListPagination(t *testing.T) {

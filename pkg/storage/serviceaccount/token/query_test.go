@@ -37,24 +37,12 @@ func TestTokenQueries(t *testing.T) {
 					},
 				},
 			},
-			sqlTokenGetByName: {
-				{
-					Name: "get_by_name",
-					Data: &getTokenByName{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Query: &GetByNameQuery{
-							Namespace:          "org-1",
-							ServiceAccountName: "sa-one",
-							Name:               "deploy",
-						},
-					},
-				},
-			},
 			sqlTokenGetByHash: {
 				{
 					Name: "get_by_hash",
 					Data: &getTokenByHash{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "org-1",
 						Hash:        "hashed-key",
 					},
 				},
@@ -64,6 +52,7 @@ func TestTokenQueries(t *testing.T) {
 					Name: "update_last_used",
 					Data: &updateTokenLastUsed{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "org-1",
 						ID:          row.ID,
 						LastUsedAt:  time.Unix(1735689900, 0).UTC(),
 					},

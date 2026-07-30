@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/login/social/connectors"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccounttoken/contracts"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -37,7 +38,7 @@ func ProvideRegistration(
 	ctx context.Context, cfgProvider configprovider.ConfigProvider, authnSvc authn.Service,
 	orgService org.Service, sessionService auth.UserTokenService,
 	accessControlService accesscontrol.Service, permRegistry permreg.PermissionRegistry,
-	apikeyService apikey.Service, userService user.Service,
+	apikeyService apikey.Service, tokenStorage contracts.TokenFetcher, userService user.Service,
 	jwtService auth.JWTVerifierService, userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
@@ -54,7 +55,7 @@ func ProvideRegistration(
 	}
 
 	authnSvc.RegisterClient(clients.ProvideRender(renderService))
-	authnSvc.RegisterClient(clients.ProvideAPIKey(apikeyService, tracer))
+	authnSvc.RegisterClient(clients.ProvideAPIKey(apikeyService, tokenStorage, tracer))
 
 	if cfg.LoginCookieName != "" {
 		authnSvc.RegisterClient(clients.ProvideSession(cfgProvider, sessionService, authInfoService, tracer))

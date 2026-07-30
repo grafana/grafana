@@ -10,5 +10,7 @@ SELECT
   {{ .Ident "is_revoked" }},
   {{ .Ident "expires" }}
 FROM {{ .Ident "serviceaccount_token" }}
-WHERE {{ .Ident "key" }} = {{ .Arg .Hash }}
+WHERE
+  {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
+  {{ .Ident "key" }} = {{ .Arg .Hash }}
 ;

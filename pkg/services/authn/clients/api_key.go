@@ -10,13 +10,16 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccounttoken/contracts"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
+	satoken "github.com/grafana/grafana/pkg/storage/serviceaccount/token"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -35,12 +38,16 @@ var (
 const (
 	metaKeyID           = "keyID"
 	metaKeySkipLastUsed = "keySkipLastUsed"
+
+	// defaultOrgID scopes the token lookup when the request carries no org.
+	defaultOrgID = 1
 )
 
-func ProvideAPIKey(apiKeyService apikey.Service, tracer trace.Tracer) *APIKey {
+func ProvideAPIKey(apiKeyService apikey.Service, tokenStorage contracts.TokenFetcher, tracer trace.Tracer) *APIKey {
 	return &APIKey{
 		log:           log.New(authn.ClientAPIKey),
 		apiKeyService: apiKeyService,
+		tokenStorage:  tokenStorage,
 		tracer:        tracer,
 	}
 }
@@ -48,6 +55,7 @@ func ProvideAPIKey(apiKeyService apikey.Service, tracer trace.Tracer) *APIKey {
 type APIKey struct {
 	log           log.Logger
 	apiKeyService apikey.Service
+	tokenStorage  contracts.TokenFetcher
 	tracer        trace.Tracer
 }
 
@@ -58,7 +66,7 @@ func (s *APIKey) Name() string {
 func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.apikey.Authenticate")
 	defer span.End()
-	key, err := s.getAPIKey(ctx, getTokenFromRequest(r))
+	key, lastUsedID, err := s.getAPIKey(ctx, r.OrgID, getTokenFromRequest(r))
 	if err != nil {
 		if errors.Is(err, satokengen.ErrInvalidApiKey) {
 			return nil, errAPIKeyInvalid.Errorf("API key is invalid")
@@ -74,8 +82,8 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 		return nil, err
 	}
 
-	// Set keyID so we can use it in last used hook
-	r.SetMeta(metaKeyID, strconv.FormatInt(key.ID, 10))
+	// Set the opaque last used handle so the hook can stamp the token.
+	r.SetMeta(metaKeyID, lastUsedID)
 	if !shouldUpdateLastUsedAt(key) {
 		// Hack to just have some value, we will check this key in the hook
 		// and if its not an empty string we will not update last used.
@@ -89,36 +97,69 @@ func (s *APIKey) IsEnabled() bool {
 	return true
 }
 
-func (s *APIKey) getAPIKey(ctx context.Context, token string) (*apikey.APIKey, error) {
+// getAPIKey returns the key and an opaque handle for the last used update.
+func (s *APIKey) getAPIKey(ctx context.Context, orgID int64, token string) (*apikey.APIKey, string, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.apikey.getAPIKey")
 	defer span.End()
-	fn := s.getFromToken
+
 	if !strings.HasPrefix(token, satokengen.GrafanaPrefix) {
-		fn = s.getFromTokenLegacy
+		key, err := s.getFromTokenLegacy(ctx, token)
+		if err != nil {
+			return nil, "", err
+		}
+		return key, strconv.FormatInt(key.ID, 10), nil
 	}
 
-	apiKey, err := fn(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-
-	return apiKey, nil
+	return s.getFromToken(ctx, orgID, token)
 }
 
-func (s *APIKey) getFromToken(ctx context.Context, token string) (*apikey.APIKey, error) {
+func (s *APIKey) getFromToken(ctx context.Context, orgID int64, token string) (*apikey.APIKey, string, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.apikey.getFromToken")
 	defer span.End()
 	decoded, err := satokengen.Decode(token)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	hash, err := decoded.Hash()
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return s.apiKeyService.GetAPIKeyByHash(ctx, hash)
+	// Use the effective org so the identity carries one even when the request did not.
+	ns := namespaceForOrg(orgID)
+	info, err := s.tokenStorage.GetByHash(ctx, ns, hash)
+	if err != nil {
+		if errors.Is(err, satoken.ErrTokenNotFound) {
+			return nil, "", satokengen.ErrInvalidApiKey
+		}
+		return nil, "", err
+	}
+
+	return apiKeyFromToken(ns.OrgID, info), info.LastUsedID, nil
+}
+
+// namespaceForOrg builds the namespace the token store is scoped by.
+func namespaceForOrg(orgID int64) claims.NamespaceInfo {
+	if orgID == 0 {
+		orgID = defaultOrgID
+	}
+	return claims.NamespaceInfo{Value: claims.OrgNamespaceFormatter(orgID), OrgID: orgID}
+}
+
+// apiKeyFromToken maps the storage result onto the legacy shape the rest of this
+// client works with.
+func apiKeyFromToken(orgID int64, info *contracts.TokenInfo) *apikey.APIKey {
+	serviceAccountID := info.ServiceAccountID
+	return &apikey.APIKey{
+		ID:               info.ID,
+		OrgID:            orgID,
+		Name:             info.Token.Name,
+		Expires:          info.Token.Expires,
+		LastUsedAt:       info.Token.LastUsedAt,
+		IsRevoked:        info.Token.IsRevoked,
+		ServiceAccountId: &serviceAccountID,
+	}
 }
 
 func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.APIKey, error) {
@@ -163,24 +204,18 @@ func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Re
 		return nil
 	}
 
-	go func(keyID string) {
+	go func(lastUsedID string, orgID int64) {
 		defer func() {
 			if err := recover(); err != nil {
 				s.log.Error("Panic during user last seen sync", "err", err)
 			}
 		}()
 
-		id, err := strconv.ParseInt(keyID, 10, 64)
-		if err != nil {
-			s.log.Warn("Invalid api key id", "id", keyID, "err", err)
+		if err := s.tokenStorage.UpdateLastUsedDate(context.Background(), namespaceForOrg(orgID), lastUsedID); err != nil {
+			s.log.Warn("Failed to update last used date for api key", "id", lastUsedID, "err", err)
 			return
 		}
-
-		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
-			s.log.Warn("Failed to update last used date for api key", "id", keyID, "err", err)
-			return
-		}
-	}(r.GetMeta(metaKeyID))
+	}(r.GetMeta(metaKeyID), r.OrgID)
 
 	return nil
 }

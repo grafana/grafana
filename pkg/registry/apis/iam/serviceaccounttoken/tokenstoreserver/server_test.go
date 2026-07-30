@@ -29,40 +29,32 @@ type fakeStore struct {
 	addCmd    *satoken.AddTokenCommand
 	addToken  *satoken.Token
 	addErr    error
-	getQuery  *satoken.GetByNameQuery
-	getToken  *satoken.Token
-	getErr    error
 	listArgs  []any
 	listRes   *satoken.ListResult
 	listErr   error
 	deleteArg []string
 	deleteErr error
 
-	getByHashArg      string
+	getByHashArgs     []string
 	getByHashToken    *satoken.Token
 	getByHashErr      error
-	updateLastUsedArg string
+	updateLastUsedArg []string
 	updateLastUsedErr error
 }
 
-func (f *fakeStore) GetByHash(_ context.Context, hash string) (*satoken.Token, error) {
-	f.getByHashArg = hash
+func (f *fakeStore) GetByHash(_ context.Context, namespace, hash string) (*satoken.Token, error) {
+	f.getByHashArgs = []string{namespace, hash}
 	return f.getByHashToken, f.getByHashErr
 }
 
-func (f *fakeStore) UpdateLastUsedDate(_ context.Context, id string) error {
-	f.updateLastUsedArg = id
+func (f *fakeStore) UpdateLastUsedDate(_ context.Context, namespace, id string) error {
+	f.updateLastUsedArg = []string{namespace, id}
 	return f.updateLastUsedErr
 }
 
 func (f *fakeStore) Add(_ context.Context, cmd *satoken.AddTokenCommand) (*satoken.Token, error) {
 	f.addCmd = cmd
 	return f.addToken, f.addErr
-}
-
-func (f *fakeStore) GetByName(_ context.Context, q *satoken.GetByNameQuery) (*satoken.Token, error) {
-	f.getQuery = q
-	return f.getToken, f.getErr
 }
 
 func (f *fakeStore) ListByServiceAccount(_ context.Context, ns, saName string, limit, continueToken int64) (*satoken.ListResult, error) {
@@ -165,33 +157,6 @@ func TestCreateTokenMapsUnknownErrorToInternal(t *testing.T) {
 	require.Equal(t, codes.Internal, status.Code(err))
 }
 
-func TestGetTokenForwardsTheQueryToTheStore(t *testing.T) {
-	store := &fakeStore{getToken: sampleToken()}
-	srv := NewServer(store)
-
-	resp, err := srv.GetToken(context.Background(), &satokenpb.GetTokenRequest{
-		Namespace:          testNamespace,
-		ServiceAccountName: testSAName,
-		Name:               "token-a",
-	})
-
-	require.NoError(t, err)
-	require.Equal(t, &satoken.GetByNameQuery{
-		Namespace:          testNamespace,
-		ServiceAccountName: testSAName,
-		Name:               "token-a",
-	}, store.getQuery)
-	require.Equal(t, "token-uuid", resp.GetToken().GetId())
-}
-
-func TestGetTokenMapsNotFoundToNotFound(t *testing.T) {
-	srv := NewServer(&fakeStore{getErr: satoken.ErrTokenNotFound})
-
-	_, err := srv.GetToken(context.Background(), &satokenpb.GetTokenRequest{Name: "nope"})
-
-	require.Equal(t, codes.NotFound, status.Code(err))
-}
-
 func TestListTokensForwardsPaginationToTheStore(t *testing.T) {
 	store := &fakeStore{listRes: &satoken.ListResult{
 		Items:    []*satoken.Token{sampleToken()},
@@ -251,7 +216,7 @@ func nsCtx(namespace string) context.Context {
 	return identity.WithServiceIdentityForSingleNamespaceContext(context.Background(), namespace)
 }
 
-func TestGetTokenByHashReturnsTheTokenWhenNamespaceMatches(t *testing.T) {
+func TestGetTokenByHashForwardsNamespaceAndHash(t *testing.T) {
 	store := &fakeStore{getByHashToken: sampleToken()}
 	srv := NewServer(store)
 
@@ -261,22 +226,9 @@ func TestGetTokenByHashReturnsTheTokenWhenNamespaceMatches(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, "hashed-a", store.getByHashArg)
+	require.Equal(t, []string{testNamespace, "hashed-a"}, store.getByHashArgs)
 	require.Equal(t, "token-uuid", resp.GetToken().GetId())
 	require.Equal(t, testNamespace, resp.GetToken().GetNamespace())
-}
-
-func TestGetTokenByHashHidesTokensFromOtherNamespaces(t *testing.T) {
-	// The key column is globally unique, so without this check a request scoped to one
-	// namespace could resolve another namespace's token by hash.
-	srv := NewServer(&fakeStore{getByHashToken: sampleToken()})
-
-	_, err := srv.GetTokenByHash(context.Background(), &satokenpb.GetTokenByHashRequest{
-		Namespace: "other",
-		Hash:      "hashed-a",
-	})
-
-	require.Equal(t, codes.NotFound, status.Code(err))
 }
 
 func TestGetTokenByHashMapsNotFoundToNotFound(t *testing.T) {
@@ -300,7 +252,7 @@ func TestUpdateTokenLastUsedDateForwardsToTheStore(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Equal(t, "token-uuid", store.updateLastUsedArg)
+	require.Equal(t, []string{testNamespace, "token-uuid"}, store.updateLastUsedArg)
 }
 
 func TestUpdateTokenLastUsedDateMapsNotFoundToNotFound(t *testing.T) {

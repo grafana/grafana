@@ -10,5 +10,7 @@ SELECT
   "is_revoked",
   "expires"
 FROM "serviceaccount_token"
-WHERE "key" = 'hashed-key'
+WHERE
+  "namespace" = 'org-1' AND
+  "key" = 'hashed-key'
 ;

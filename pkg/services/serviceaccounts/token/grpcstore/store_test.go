@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/serviceaccounttoken/tokenstoreserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	satoken "github.com/grafana/grafana/pkg/storage/serviceaccount/token"
@@ -72,11 +71,7 @@ func TestAddPersistsToTheServiceAccountTokenTable(t *testing.T) {
 	added := addToken(t, store, "token-a", 0)
 
 	// Read back through the SQL store directly, bypassing gRPC entirely.
-	stored, err := embedded.GetByName(context.Background(), &satoken.GetByNameQuery{
-		Namespace:          testNamespace,
-		ServiceAccountName: testSAName,
-		Name:               "token-a",
-	})
+	stored, err := embedded.GetByHash(context.Background(), testNamespace, "hashed-token-a")
 	require.NoError(t, err)
 	require.Equal(t, added.ID, stored.ID)
 	require.Equal(t, "hashed-token-a", stored.Key, "the hashed key must reach the table")
@@ -103,33 +98,6 @@ func TestAddDuplicateReturnsErrTokenDuplicate(t *testing.T) {
 	})
 
 	require.ErrorIs(t, err, satoken.ErrTokenDuplicate)
-}
-
-func TestGetByNameReturnsAddedToken(t *testing.T) {
-	store, _ := newTestStore(t)
-	added := addToken(t, store, "token-a", 0)
-
-	got, err := store.GetByName(context.Background(), &satoken.GetByNameQuery{
-		Namespace:          testNamespace,
-		ServiceAccountName: testSAName,
-		Name:               "token-a",
-	})
-
-	require.NoError(t, err)
-	require.Equal(t, added.ID, got.ID)
-	require.Equal(t, added.Created.Unix(), got.Created.Unix())
-}
-
-func TestGetByNameMissingReturnsErrTokenNotFound(t *testing.T) {
-	store, _ := newTestStore(t)
-
-	_, err := store.GetByName(context.Background(), &satoken.GetByNameQuery{
-		Namespace:          testNamespace,
-		ServiceAccountName: testSAName,
-		Name:               "nope",
-	})
-
-	require.ErrorIs(t, err, satoken.ErrTokenNotFound)
 }
 
 func TestListByServiceAccountReturnsTokensSortedByName(t *testing.T) {
@@ -180,11 +148,7 @@ func TestDeleteRemovesTheToken(t *testing.T) {
 
 	require.NoError(t, store.Delete(context.Background(), testNamespace, testSAName, "token-a"))
 
-	_, err := store.GetByName(context.Background(), &satoken.GetByNameQuery{
-		Namespace:          testNamespace,
-		ServiceAccountName: testSAName,
-		Name:               "token-a",
-	})
+	_, err := store.GetByHash(context.Background(), testNamespace, "hashed-token-a")
 	require.ErrorIs(t, err, satoken.ErrTokenNotFound)
 }
 
@@ -195,11 +159,7 @@ func TestDeleteRemovesTheRowFromTheTable(t *testing.T) {
 	require.NoError(t, store.Delete(context.Background(), testNamespace, testSAName, "token-a"))
 
 	// Confirm the row is gone from the table, not just from the gRPC read path.
-	_, err := embedded.GetByName(context.Background(), &satoken.GetByNameQuery{
-		Namespace:          testNamespace,
-		ServiceAccountName: testSAName,
-		Name:               "token-a",
-	})
+	_, err := embedded.GetByHash(context.Background(), testNamespace, "hashed-token-a")
 	require.ErrorIs(t, err, satoken.ErrTokenNotFound)
 }
 
@@ -211,17 +171,11 @@ func TestDeleteMissingTokenReturnsErrTokenNotFound(t *testing.T) {
 	require.ErrorIs(t, err, satoken.ErrTokenNotFound)
 }
 
-// nsCtx carries the namespaced identity the hash-lookup and last-used RPCs use to
-// decide which namespace to mint the access token for.
-func nsCtx(namespace string) context.Context {
-	return identity.WithServiceIdentityForSingleNamespaceContext(context.Background(), namespace)
-}
-
 func TestGetByHashReturnsTheToken(t *testing.T) {
 	store, _ := newTestStore(t)
 	added := addToken(t, store, "token-a", 0)
 
-	got, err := store.GetByHash(nsCtx(testNamespace), "hashed-token-a")
+	got, err := store.GetByHash(context.Background(), testNamespace, "hashed-token-a")
 
 	require.NoError(t, err)
 	require.Equal(t, added.ID, got.ID)
@@ -232,7 +186,7 @@ func TestGetByHashReturnsTheToken(t *testing.T) {
 func TestGetByHashUnknownHashReturnsErrTokenNotFound(t *testing.T) {
 	store, _ := newTestStore(t)
 
-	_, err := store.GetByHash(nsCtx(testNamespace), "hashed-nope")
+	_, err := store.GetByHash(context.Background(), testNamespace, "hashed-nope")
 
 	require.ErrorIs(t, err, satoken.ErrTokenNotFound)
 }
@@ -241,19 +195,9 @@ func TestGetByHashDoesNotCrossNamespaces(t *testing.T) {
 	store, _ := newTestStore(t)
 	addToken(t, store, "token-a", 0)
 
-	_, err := store.GetByHash(nsCtx("other"), "hashed-token-a")
+	_, err := store.GetByHash(context.Background(), "other", "hashed-token-a")
 
 	require.ErrorIs(t, err, satoken.ErrTokenNotFound)
-}
-
-func TestGetByHashRequiresANamespacedIdentity(t *testing.T) {
-	store, _ := newTestStore(t)
-	addToken(t, store, "token-a", 0)
-
-	_, err := store.GetByHash(context.Background(), "hashed-token-a")
-
-	require.Error(t, err)
-	require.NotErrorIs(t, err, satoken.ErrTokenNotFound, "a missing identity is a caller bug, not a missing token")
 }
 
 func TestUpdateLastUsedDateStampsTheToken(t *testing.T) {
@@ -261,13 +205,9 @@ func TestUpdateLastUsedDateStampsTheToken(t *testing.T) {
 	added := addToken(t, store, "token-a", 0)
 	require.Nil(t, added.LastUsedAt)
 
-	require.NoError(t, store.UpdateLastUsedDate(nsCtx(testNamespace), added.ID))
+	require.NoError(t, store.UpdateLastUsedDate(context.Background(), testNamespace, added.ID))
 
-	stored, err := embedded.GetByName(context.Background(), &satoken.GetByNameQuery{
-		Namespace:          testNamespace,
-		ServiceAccountName: testSAName,
-		Name:               "token-a",
-	})
+	stored, err := embedded.GetByHash(context.Background(), testNamespace, "hashed-token-a")
 	require.NoError(t, err)
 	require.NotNil(t, stored.LastUsedAt, "last_used_at must be persisted to the table")
 }
@@ -275,17 +215,16 @@ func TestUpdateLastUsedDateStampsTheToken(t *testing.T) {
 func TestUpdateLastUsedDateUnknownIDReturnsErrTokenNotFound(t *testing.T) {
 	store, _ := newTestStore(t)
 
-	err := store.UpdateLastUsedDate(nsCtx(testNamespace), "no-such-id")
+	err := store.UpdateLastUsedDate(context.Background(), testNamespace, "no-such-id")
 
 	require.ErrorIs(t, err, satoken.ErrTokenNotFound)
 }
 
-func TestUpdateLastUsedDateRequiresANamespacedIdentity(t *testing.T) {
+func TestUpdateLastUsedDateDoesNotCrossNamespaces(t *testing.T) {
 	store, _ := newTestStore(t)
 	added := addToken(t, store, "token-a", 0)
 
-	err := store.UpdateLastUsedDate(context.Background(), added.ID)
+	err := store.UpdateLastUsedDate(context.Background(), "other", added.ID)
 
-	require.Error(t, err)
-	require.NotErrorIs(t, err, satoken.ErrTokenNotFound)
+	require.ErrorIs(t, err, satoken.ErrTokenNotFound)
 }
