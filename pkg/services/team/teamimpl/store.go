@@ -44,6 +44,11 @@ type xormStore struct {
 // Names passed to XORM instead (sess.Table, sess.Join) must be resolved but not
 // quoted, because XORM quotes them itself. Call dbHelper.Table directly there.
 // Locals holding a quoted name are prefixed with q.
+//
+// Queries below reference columns as team.x and team_member.x, which needs no
+// alias even when the resolved name is qualified: the correlation name of a
+// qualified table reference is its unqualified table name. Joined tables are
+// aliased only because the join predicates name them explicitly.
 func quoteTable(dbHelper *legacysql.LegacyDatabaseHelper, name string) string {
 	return dbHelper.DB.Quote(dbHelper.Table(name))
 }
@@ -301,7 +306,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		}
 
 		t := team.Team{}
-		countSess := sess.Table(dbHelper.Table("team")).Alias("team")
+		countSess := sess.Table(dbHelper.Table("team"))
 		countSess.Where("team.org_id=?", query.OrgID)
 
 		if query.Query != "" {
@@ -645,7 +650,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.Leg
 		teamTable := dbHelper.Table("team")
 		userAuthTable := dbHelper.Table("user_auth")
 		userRef := dbHelper.DB.GetDialect().Quote("user")
-		sess := dbSess.Table(teamMemberTable).Alias("team_member")
+		sess := dbSess.Table(teamMemberTable)
 		sess.Join("INNER", []string{userTable, "user"},
 			fmt.Sprintf("team_member.user_id=%s.%s", userRef, dbHelper.DB.GetDialect().Quote("id")),
 		)
