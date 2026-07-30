@@ -427,6 +427,31 @@ describe('InstallControlsButton', () => {
       );
     });
 
+    it('keeps the assistant option reachable after a failed install, but disables manual install', async () => {
+      const user = userEvent.setup();
+      openAssistant.mockClear();
+      store.dispatch({ type: 'plugins/install/rejected', payload: { message: 'Install failed', id: plugin.id } });
+
+      render(
+        <TestProvider store={store}>
+          <InstallControlsButton
+            plugin={{ ...plugin, type: PluginType.datasource }}
+            pluginStatus={PluginStatus.INSTALL}
+          />
+        </TestProvider>
+      );
+
+      // The trigger stays enabled so the menu can still be opened.
+      const trigger = screen.getByRole('button', { name: /install/i });
+      expect(trigger).toBeEnabled();
+      await user.click(trigger);
+
+      expect((await screen.findByText('Install manually')).closest('button')).toBeDisabled();
+
+      await user.click(screen.getByText('Install with assistant'));
+      expect(openAssistant).toHaveBeenCalledTimes(1);
+    });
+
     it('renders a plain install button (no dropdown) when the assistant is not available', () => {
       mockUseAssistant.mockReturnValue({
         isLoading: false,

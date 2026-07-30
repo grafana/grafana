@@ -245,6 +245,11 @@ export function InstallControlsButton({
   }
 
   const shouldDisable = isInstalling || errorInstalling || plugin.angularDetected;
+  // The dropdown trigger only reflects conditions that block every menu option. errorInstalling is
+  // excluded: it just means a failed install is still in the store (it is only cleared on unmount),
+  // so gating the trigger on it would make "Install with assistant" — which never calls the install
+  // thunk — unreachable until a page reload, exactly when guided help is most useful.
+  const disableInstallMenu = isInstalling || plugin.angularDetected;
   const shouldShowAssistant =
     isAssistantAvailable && openAssistant && !isInstalling && plugin.type === PluginType.datasource;
   const installButtonText = isInstalling
@@ -266,13 +271,14 @@ export function InstallControlsButton({
           label={t('plugins.install-controls.install-manually', 'Install manually')}
           description={t('plugins.install-controls.install-manually-description', 'Install it yourself')}
           onClick={onInstall}
+          disabled={shouldDisable}
         />
       </Menu>
     );
 
     return (
       <Dropdown overlay={menu} placement="bottom-end" onVisibleChange={setIsInstallMenuOpen}>
-        <Button disabled={shouldDisable}>
+        <Button disabled={disableInstallMenu}>
           <Stack direction="row" alignItems="center" gap={1}>
             {installButtonText}
             <Icon name={isInstallMenuOpen ? 'angle-up' : 'angle-down'} />
