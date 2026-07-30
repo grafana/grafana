@@ -611,6 +611,17 @@ export const versionedComponents = {
         RowExpander: {
           '12.4.0': 'data-testid tableng row expander',
         },
+        cellActions: {
+          inspectButton: {
+            '13.2.0': 'data-testid tableng cell-actions inspect-button',
+          },
+          filterForButton: {
+            '13.2.0': 'data-testid tableng cell-actions filter-for-button',
+          },
+          filterOutButton: {
+            '13.2.0': 'data-testid tableng cell-actions filter-out-button',
+          },
+        },
         Filters: {
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',
@@ -1272,6 +1283,15 @@ export const versionedComponents = {
     },
     queryEditorRow: {
       '13.2.0': (dataSourceType: string, refId: string) => `data-testid Query editor row ${dataSourceType} ${refId}`,
+    },
+  },
+  ButtonSelect: {
+    /**
+     * Identifies one option of a ButtonSelect menu by its `value`, so the selector does not
+     * depend on the option's translated label. Only rendered for scalar option values.
+     */
+    option: {
+      '13.2.0': (value: string) => `data-testid ButtonSelect option ${value}`,
     },
   },
   Select: {
