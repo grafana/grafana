@@ -1071,14 +1071,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	_, err = dbSection.NewKey("wal", "true")
 	require.NoError(t, err)
 
-	// Kubernetes API
-	if opts.KubernetesSnapshotsEnabled {
-		section, err := getOrCreateSection("snapshots")
-		require.NoError(t, err)
-		_, err = section.NewKey("kubernetes_snapshots_enabled", "true")
-		require.NoError(t, err)
-	}
-
 	cfgPath := filepath.Join(cfgDir, "test.ini")
 	err = cfg.SaveTo(cfgPath)
 	require.NoError(t, err)
@@ -1237,9 +1229,6 @@ type GrafanaOpts struct {
 
 	// Enables Scope Api
 	ScopesApiEnabled bool
-
-	// Kubernetes API section
-	KubernetesSnapshotsEnabled bool
 }
 
 func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUserCommand) *user.User {

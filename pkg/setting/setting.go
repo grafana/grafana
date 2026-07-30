@@ -465,8 +465,6 @@ type Cfg struct {
 	ExternalEnabled       bool
 	ExternalSnapshotToken string
 
-	KubernetesSnapshotsEnabled bool
-
 	// Only used in https://snapshots.raintank.io/
 	SnapshotPublicMode bool
 
@@ -2298,7 +2296,6 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	cfg.ExternalSnapshotToken = valueAsString(snapshots, "external_snapshot_token", "")
 	cfg.SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
 
-	cfg.KubernetesSnapshotsEnabled = snapshots.Key("kubernetes_snapshots_enabled").MustBool(false)
 	return nil
 }
 
