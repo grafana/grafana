@@ -15,6 +15,26 @@ export function canManageGlobalVariables(): boolean {
   return contextSrv.isEditor;
 }
 
+/**
+ * Whether the user may mutate a variable in the given scope.
+ * - `undefined` — no folder selected yet (non-editors creating)
+ * - `''` — org-global / root; requires {@link canManageGlobalVariables}
+ * - otherwise — folder UID; requires that folder's CanEdit
+ */
+export function canManageVariableScope(
+  folderUid: string | undefined,
+  folderCanEdit: boolean | undefined,
+  allowGlobal = canManageGlobalVariables()
+): boolean {
+  if (folderUid === undefined) {
+    return false;
+  }
+  if (folderUid === '') {
+    return allowGlobal;
+  }
+  return Boolean(folderCanEdit);
+}
+
 const KIND_TO_EDITABLE_TYPE: Record<VariableKind['kind'], EditableVariableType> = {
   QueryVariable: 'query',
   TextVariable: 'textbox',

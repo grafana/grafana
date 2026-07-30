@@ -7,6 +7,7 @@ import {
   buildVariableResource,
   buildVariablesTree,
   canManageGlobalVariables,
+  canManageVariableScope,
   getNextAvailableVariableName,
   getVariableEditableType,
   getVariableFolderPickerExcludeUIDs,
@@ -90,6 +91,23 @@ describe('canManageGlobalVariables', () => {
   it('returns false for non-editors', () => {
     contextSrv.isEditor = false;
     expect(canManageGlobalVariables()).toBe(false);
+  });
+});
+
+describe('canManageVariableScope', () => {
+  it('returns false when no folder is selected', () => {
+    expect(canManageVariableScope(undefined, undefined, false)).toBe(false);
+  });
+
+  it('requires allowGlobal for the root/global scope', () => {
+    expect(canManageVariableScope('', undefined, false)).toBe(false);
+    expect(canManageVariableScope('', undefined, true)).toBe(true);
+  });
+
+  it('requires folder CanEdit for folder-scoped variables', () => {
+    expect(canManageVariableScope('folder-a', false, false)).toBe(false);
+    expect(canManageVariableScope('folder-a', undefined, true)).toBe(false);
+    expect(canManageVariableScope('folder-a', true, false)).toBe(true);
   });
 });
 

@@ -20,12 +20,19 @@ import {
   bulkDeleteVariables,
   bulkMoveVariables,
   type BulkOperationResult,
+  useFolderCanEdit,
   useFolderTitles,
   useListAllVariablesQuery,
 } from './api';
 import { MoveVariablesModal } from './components/MoveVariablesModal';
 import { VariablesTable } from './components/VariablesTable';
-import { buildVariablesTree, canManageGlobalVariables, getVariableFolderUid, getVariableSpecName } from './utils';
+import {
+  buildVariablesTree,
+  canManageGlobalVariables,
+  canManageVariableScope,
+  getVariableFolderUid,
+  getVariableSpecName,
+} from './utils';
 
 const LIST_URL = '/dashboards/variables';
 
@@ -65,8 +72,22 @@ export default function VariablesManagementPage() {
   const selectedVariables = variables.filter((v) => v.metadata.name && selected.has(v.metadata.name));
   const allowGlobalScope = canManageGlobalVariables();
   const selectionIncludesGlobal = selectedVariables.some((v) => !getVariableFolderUid(v));
-  // Match editor: viewers can select global variables but cannot delete them.
-  const canDeleteSelection = allowGlobalScope || !selectionIncludesGlobal;
+  const selectedFolderUids = useMemo(
+    () => [...new Set(selectedVariables.map(getVariableFolderUid).filter((uid): uid is string => Boolean(uid)))],
+    [selectedVariables]
+  );
+  const folderCanEdit = useFolderCanEdit(selectedFolderUids);
+  // Match editor: disable Delete when any selected variable is outside scopes the user can manage.
+  const canDeleteSelection =
+    selectedVariables.length > 0 &&
+    selectedVariables.every((variable) => {
+      const folderUid = getVariableFolderUid(variable);
+      return canManageVariableScope(
+        folderUid ?? '',
+        folderUid ? folderCanEdit[folderUid] : undefined,
+        allowGlobalScope
+      );
+    });
 
   const onToggleFolder = (folderUid: string) => {
     setExpandedFolders((prev) => {

@@ -12,6 +12,7 @@ import {
   useUpdateVariableMutation,
   type Variable,
 } from 'app/api/clients/dashboard/v2beta1';
+import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -29,6 +30,7 @@ import { useVariableNameCollisionCheck } from './useVariableNameCollisionCheck';
 import {
   buildVariableResource,
   canManageGlobalVariables,
+  canManageVariableScope,
   getNextAvailableVariableName,
   getVariableFolderPickerExcludeUIDs,
   getVariableFolderUid,
@@ -95,11 +97,42 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
     source?.metadata.name,
     hasNameError
   );
-  // Non-editors may only save folder-scoped variables (root/global requires Editor/Admin).
+
+  const sourceFolderUid = source ? getVariableFolderUid(source) : undefined;
+  // Folder CanEdit gates mutations the same way admission does. Skip the root/global
+  // uid ('' / undefined) — those use allowGlobalScope instead.
+  const { data: selectedFolder, isLoading: isLoadingSelectedFolder } = useGetFolderQueryFacade(
+    folderUid ? folderUid : undefined
+  );
+  // Reuse the selected-folder query when the source is still in that folder.
+  const needsSeparateSourceFolder = Boolean(sourceFolderUid && sourceFolderUid !== folderUid);
+  const { data: sourceFolder, isLoading: isLoadingSourceFolder } = useGetFolderQueryFacade(
+    needsSeparateSourceFolder ? sourceFolderUid : undefined
+  );
+  const selectedFolderCanEdit = selectedFolder?.canEdit;
+  const sourceFolderCanEdit = needsSeparateSourceFolder ? sourceFolder?.canEdit : selectedFolderCanEdit;
+  const selectedScopeReady = !folderUid || !isLoadingSelectedFolder;
+  const sourceScopeReady =
+    !sourceFolderUid || !(needsSeparateSourceFolder ? isLoadingSourceFolder : isLoadingSelectedFolder);
+
+  // Non-editors may only save folder-scoped variables (root/global requires Editor/Admin),
+  // and only into folders they can edit.
   const hasValidFolderScope = allowGlobalScope || Boolean(folderUid);
-  const canSave = !isBusy && !hasNameError && !collisionError && !isCheckingName && hasValidFolderScope;
-  // Match Save: viewers can open a global variable but cannot delete it.
-  const canDelete = !isBusy && (allowGlobalScope || Boolean(source && getVariableFolderUid(source)));
+  const canManageSelectedScope = canManageVariableScope(folderUid, selectedFolderCanEdit, allowGlobalScope);
+  const canSave =
+    !isBusy &&
+    !hasNameError &&
+    !collisionError &&
+    !isCheckingName &&
+    hasValidFolderScope &&
+    selectedScopeReady &&
+    canManageSelectedScope;
+  // Match Save: viewers can open a variable but cannot delete it without scope edit rights.
+  const canDelete =
+    !isBusy &&
+    Boolean(source) &&
+    sourceScopeReady &&
+    canManageVariableScope(sourceFolderUid ?? '', sourceFolderCanEdit, allowGlobalScope);
 
   const scene = useMemo(
     () =>

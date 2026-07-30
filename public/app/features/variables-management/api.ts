@@ -116,6 +116,47 @@ export function useFolderTitles(folderUids: string[]): Record<string, string> {
   return titles;
 }
 
+/**
+ * Resolves folder CanEdit for the given UIDs (via the folder access subresource).
+ * Missing entries mean the lookup has not completed yet — treat as not editable.
+ */
+export function useFolderCanEdit(folderUids: string[]): Record<string, boolean> {
+  const [canEditByUid, setCanEditByUid] = useState<Record<string, boolean>>({});
+  const key = folderUids.join(',');
+
+  useEffect(() => {
+    let cancelled = false;
+    const uids = key ? key.split(',') : [];
+    const missing = uids.filter((uid) => !(uid in canEditByUid));
+    if (missing.length === 0) {
+      return;
+    }
+
+    Promise.all(
+      missing.map(async (uid) => {
+        const subscription = dispatch(folderAPIv1beta1.endpoints.getFolderAccess.initiate({ name: uid }));
+        try {
+          const result = await subscription;
+          return [uid, Boolean(result.data?.canEdit)] as const;
+        } finally {
+          subscription.unsubscribe();
+        }
+      })
+    ).then((entries) => {
+      if (!cancelled) {
+        setCanEditByUid((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+
+  return canEditByUid;
+}
+
 export interface BulkOperationResult {
   succeeded: number;
   /** Variables that were already in the requested state, so no calls were made. */
