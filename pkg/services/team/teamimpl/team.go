@@ -52,6 +52,10 @@ func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, trac
 	}, nil
 }
 
+func ProvideDeleteRegistrar(service *Service) teamdelete.Registrar {
+	return service
+}
+
 func (s *Service) CreateTeam(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
 	if s.isK8sRedirectEnabled(ctx) {
 		return s.k8sService.CreateTeam(ctx, cmd)

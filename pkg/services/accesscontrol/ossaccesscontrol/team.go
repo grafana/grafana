@@ -52,16 +52,11 @@ func TeamPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 }
 
 func ProvideTeamPermissions(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, sqlProvider legacysql.LegacyDatabaseProvider,
 	ac accesscontrol.AccessControl, license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 	directRestConfigProvider apiserver.DirectRestConfigProvider,
 ) (*TeamPermissionsService, error) {
-	dbHelper, err := legacysql.NewDatabaseProvider(sql)(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
 	options := resourcepermissions.Options{
 		Resource:           teamPermissionsResource,
 		ResourceAttribute:  "id",
@@ -98,8 +93,12 @@ func ProvideTeamPermissions(
 		ReaderRoleName: permissionReaderRoleName,
 		WriterRoleName: permissionWriterRoleName,
 		RoleGroup:      teamPermissionsRoleGroup,
-		OnSetUser: func(session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error {
+		OnSetUser: func(ctx context.Context, session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error {
 			teamId, err := strconv.ParseInt(resourceID, 10, 64)
+			if err != nil {
+				return err
+			}
+			dbHelper, err := sqlProvider(ctx)
 			if err != nil {
 				return err
 			}
