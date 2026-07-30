@@ -1800,6 +1800,46 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.False(t, res.TotalHitsExact, "the top facet sample was capped")
 	})
 
+	t.Run("cursor facets retain page authorized total", func(t *testing.T) {
+		// The top facet sample contains no authorized docs, while the page after
+		// the cursor does. The response total must include the latter.
+		cfg := search.PostRankAuthzConfig{
+			OverFetchFactor: 1,
+			MaxWindow:       20,
+			MaxCandidates:   100,
+			FacetSampleSize: 10,
+		}
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		docs := make([]*resource.BulkIndexItem, 0, 30)
+		for i := 0; i < 30; i++ {
+			folder := "denied"
+			if i >= 20 {
+				folder = "allowed"
+			}
+			docs = append(docs, newDocWithTags(fmt.Sprintf("doc-%02d", i), folder, []string{"visible"}))
+		}
+		indexDocs(t, index, docs)
+
+		// Use the native post-rank cursor shape after doc-19.
+		_, cursorRes := searchNames(t, index, &countingAccessClient{allowAll: true}, listQuery(20))
+		rows := cursorRes.Results.GetRows()
+		require.Len(t, rows, 20)
+
+		q := listQuery(3)
+		q.SearchAfter = slices.Clone(rows[len(rows)-1].SortFields)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+		names, res := searchNames(t, index, &countingAccessClient{
+			allowedFolders: map[string]bool{"allowed": true},
+		}, q)
+
+		require.Equal(t, []string{"doc-20", "doc-21", "doc-22"}, names)
+		require.Empty(t, res.Facet["tags"].Terms, "facets remain tied to the denied top sample")
+		require.Equal(t, int64(3), res.TotalHits, "page authorization must raise the sampled total")
+		require.False(t, res.TotalHitsExact, "the top facet sample was capped")
+	})
+
 	t.Run("exhausted tag facets match the in-searcher path", func(t *testing.T) {
 		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
 		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
