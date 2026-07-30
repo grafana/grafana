@@ -1,4 +1,4 @@
-import { config, getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
