@@ -142,6 +142,12 @@ export const versionedComponents = {
       '13.2.0': 'data-testid sidebar add new variable button',
       '13.1.0': 'data-testid edit pane add new variable button',
     },
+    addNewRowButton: {
+      '13.2.0': 'data-testid sidebar add new row button',
+    },
+    addNewTabButton: {
+      '13.2.0': 'data-testid sidebar add new tab button',
+    },
   },
   EditPaneHeader: {
     deleteButton: {
@@ -283,6 +289,7 @@ export const versionedComponents = {
           [MIN_GRAFANA_VERSION]: 'TestData noise',
         },
         seriesCount: {
+          '13.2.0': 'data-testid TestData series count',
           [MIN_GRAFANA_VERSION]: 'TestData series count',
         },
         spread: {
@@ -1075,6 +1082,14 @@ export const versionedComponents = {
     disableTransformationButton: {
       '10.4.0': 'data-testid Disable transformation button',
     },
+    filterEditor: {
+      container: {
+        '13.2.0': 'data-testid transformation filter editor container',
+      },
+      topicSelect: {
+        '13.2.0': 'data-testid transformation filter topic select',
+      },
+    },
     FilterByValue: {
       addConditionButton: {
         '13.2.0': 'data-testid Transforms FilterByValue add-condition-button',
@@ -1200,6 +1215,9 @@ export const versionedComponents = {
     },
     commandPaletteTrigger: {
       '11.5.0': 'data-testid Command palette trigger',
+    },
+    quickAddButton: {
+      '13.2.0': 'data-testid Quick add button',
     },
     shareDashboard: {
       '11.1.0': 'data-testid Share dashboard',
