@@ -2292,6 +2292,12 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		if !ok || !kf.facetable {
 			return nil, resource.NewBadRequestError(fmt.Sprintf("field %q does not support faceting", facet.Field))
 		}
+		// A negative limit is a slice bound on both paths: bleve trims its term
+		// list to the requested size without clamping, and so does the
+		// app-side aggregator. Reject it rather than panic in the handler.
+		if facet.Limit < 0 {
+			return nil, resource.NewBadRequestError(fmt.Sprintf("facet %q has a negative limit", name))
+		}
 		facets[name] = bleve.NewFacetRequest(kf.name, int(facet.Limit))
 	}
 

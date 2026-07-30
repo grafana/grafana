@@ -708,7 +708,10 @@ func (a *facetAggregator) build() map[string]*resourcepb.ResourceSearchResponse_
 			}
 			return sorted[i].Term < sorted[j].Term
 		})
-		if limit == 0 {
+		// Zero means no term buckets, matching what bleve returns for size 0.
+		// Negative is rejected before the search runs; treating it the same way
+		// here keeps the slice bound below unreachable.
+		if limit <= 0 {
 			sorted = nil
 		} else if len(sorted) > limit {
 			sorted = sorted[:limit]

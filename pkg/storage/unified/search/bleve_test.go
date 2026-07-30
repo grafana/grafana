@@ -934,6 +934,23 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 		require.NotNil(t, errResult)
 		assert.Contains(t, errResult.Message, `field "labels.region" does not support faceting`)
 	})
+
+	// Both the bleve term trimmer and the post-rank aggregator use the limit as
+	// a slice bound, so a negative one has to be turned away before either runs.
+	t.Run("rejects a negative facet limit", func(t *testing.T) {
+		for _, postRankAuthz := range []bool{false, true} {
+			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{},
+				Limit:   10,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: -1},
+				},
+			}, nil, postRankAuthz)
+			require.Nil(t, searchReq)
+			require.NotNil(t, errResult)
+			assert.Contains(t, errResult.Message, `facet "tagValues" has a negative limit`)
+		}
+	})
 }
 
 var _ authlib.AccessClient = (*StubAccessClient)(nil)
