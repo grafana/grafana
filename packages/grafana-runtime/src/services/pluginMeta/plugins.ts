@@ -94,24 +94,30 @@ export async function uninstallPluginMeta(pluginId: string): Promise<void> {
   }
 }
 
+// The single shared cache entry for the metas fetch. Errors always propagate
+// out of the cache (invalidating the entry so a later call retries) and each
+// accessor applies its own fallback OUTSIDE the cache: with a defaultValue
+// baked into the cached promise, whichever accessor ran first would decide
+// the failure behaviour for every other caller.
+function cachedPluginMetas(invalidate = false): Promise<PluginMetasResponse> {
+  return getCachedPromise(loadPluginMetas, { invalidate });
+}
+
 export function initPluginMetas(): Promise<PluginMetasResponse | null> {
-  return getCachedPromise<PluginMetasResponse | null>(loadPluginMetas, { defaultValue: null });
+  return cachedPluginMetas().catch(() => null);
 }
 
 /**
- * Like {@link initPluginMetas} but without the default value: a failed fetch
- * rejects instead of resolving to null. Both share the same cache entry, so a
- * successful fetch is only made once either way.
+ * Like {@link initPluginMetas} but without the null fallback: a failed fetch
+ * rejects. Both share the same cache entry, so a successful fetch is only
+ * made once either way.
  */
 export function fetchPluginMetas(): Promise<PluginMetasResponse> {
-  return getCachedPromise(loadPluginMetas);
+  return cachedPluginMetas();
 }
 
 export function refetchPluginMetas(): Promise<PluginMetasResponse | null> {
-  return getCachedPromise<PluginMetasResponse | null>(loadPluginMetas, {
-    defaultValue: null,
-    invalidate: true,
-  });
+  return cachedPluginMetas(true).catch(() => null);
 }
 
 export async function getPluginMetaFromCache(pluginId: string): Promise<Meta | null> {
