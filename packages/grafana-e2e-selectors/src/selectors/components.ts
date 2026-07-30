@@ -728,8 +728,14 @@ export const versionedComponents = {
         '11.1.0': 'data-testid Save as dashboard drawer button',
       },
       saveAsTitleInput: {
+        '13.2.0': 'data-testid Save dashboard title field',
         '11.1.0': 'Save dashboard title field',
       },
+    },
+  },
+  ProvisionedResourceForm: {
+    commentInput: {
+      '13.2.0': 'data-testid provisioned resource form comment input',
     },
   },
   Modal: {
@@ -1246,6 +1252,12 @@ export const versionedComponents = {
       },
       backToDashboardButton: {
         '11.1.0': 'data-testid Back to dashboard button',
+      },
+      saveAsCopyButton: {
+        '13.2.0': 'data-testid Save as copy button',
+      },
+      moreSaveOptionsButton: {
+        '13.2.0': 'data-testid More save options button',
       },
     },
   },
