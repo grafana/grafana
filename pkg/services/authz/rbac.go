@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -102,8 +103,14 @@ func ProvideAuthZClient(
 		// resource client and apiserver, so the folder store resolves the rest
 		// config (and, when search is enabled, the resource client) lazily.
 		folderStore := store.NewAPIFolderStore(tracer, reg, restConfig.GetRestConfig)
+		// In-proc uses NewLocalResourceClient (authnlib) and works. Split
+		// unified-storage over gRPC only works when appPlatformGrpcClientAuth
+		// is on; the legacy client strips service permissions in transit.
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		if features.IsEnabledGlobally(featuremgmt.FlagAuthzListFoldersViaSearch) {
+		searchSupported := cfg.UnifiedStorageType() != string(options.StorageTypeUnifiedGrpc) ||
+			features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth)
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if features.IsEnabledGlobally(featuremgmt.FlagAuthzListFoldersViaSearch) && searchSupported {
 			folderStore = folderStore.WithSearcher(eventualResourceClient)
 		}
 
