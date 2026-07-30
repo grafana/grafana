@@ -17,9 +17,11 @@ export interface TelemetrySolutions {
 // Shared settle gate for the three providers. Error fails closed (settled no-data — the types.ts
 // provider contract). Loading or an undefined value reads as loading: on the render where a
 // signal flips active, useAsync still exposes the disabled run's settled `undefined` (its effect
-// re-runs only after paint), and a datasource-change refetch retains the prior value — neither
-// may paint as settled (same guard as useKubernetesSolution). `build` returns null when the
-// activity has nothing to carry a card.
+// re-runs only after paint) — that frame must not paint as settled empty (same guard as
+// useKubernetesSolution). Results are not keyed to the datasource: solution resolution is
+// one-shot per mount (undefined → at most one datasource, never A → B), so a retained value
+// cannot belong to a different datasource — an in-place datasource swap would need uid-keyed
+// results first. `build` returns null when the activity has nothing to carry a card.
 function toProviderResult<T>(
   state: { loading: boolean; error?: Error; value?: { activity: T } },
   build: (activity: T) => ExistingItem | null
