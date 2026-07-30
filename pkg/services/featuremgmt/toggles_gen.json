@@ -4019,14 +4019,17 @@
     {
       "metadata": {
         "name": "kubernetesSnapshots",
-        "resourceVersion": "1779440584464",
+        "resourceVersion": "1785415648917",
         "creationTimestamp": "2023-12-05T22:31:49Z",
-        "deletionTimestamp": "2026-06-30T14:12:39Z"
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-30 12:47:28.917575 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Routes snapshot requests from /api to the /apis endpoint",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
+        "frontend": true,
         "requiresRestart": true,
         "expression": "false"
       }
