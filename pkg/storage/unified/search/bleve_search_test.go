@@ -1911,6 +1911,35 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Equal(t, legacyRes.Facet, res.Facet)
 	})
 
+	t.Run("repeated tag values match the in-searcher path", func(t *testing.T) {
+		// Native facets read indexed terms while app-side aggregation walks the
+		// stored slice, so a value repeated inside one document is where the two
+		// can disagree.
+		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
+		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
+		docs := []*resource.BulkIndexItem{
+			newDocWithTags("doc-0", "allowed", []string{"prod", "prod"}),
+			newDocWithTags("doc-1", "allowed", []string{"prod", "latency"}),
+			newDocWithTags("doc-2", "denied", []string{"prod", "prod"}),
+		}
+		indexDocs(t, legacyIndex, docs)
+		indexDocs(t, postRankIndex, docs)
+		q := listQuery(10)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+
+		legacyNames, legacyRes := searchNames(t, legacyIndex, &countingAccessClient{
+			allowedFolders: map[string]bool{"allowed": true},
+		}, q)
+		names, res := searchNames(t, postRankIndex, &countingAccessClient{
+			allowedFolders: map[string]bool{"allowed": true},
+		}, q)
+
+		require.Equal(t, legacyNames, names)
+		require.Equal(t, legacyRes.Facet, res.Facet)
+	})
+
 	t.Run("managedBy facets match the in-searcher path", func(t *testing.T) {
 		// managedBy is facet-capable and stored (facet implies stored), so the
 		// post-rank path aggregates it app-side like any other facet field.
@@ -2858,7 +2887,7 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 func TestSearchPostRankAuthzSeparatesDeletedFromLiveDocuments(t *testing.T) {
 	index := newTestDashboardsIndexPostRank(t, 3)
 
-	doc := func(name string, deleted *bool) *resource.BulkIndexItem {
+	doc := func(name, folder string, deleted *bool, tags ...string) *resource.BulkIndexItem {
 		return &resource.BulkIndexItem{
 			Action: resource.ActionIndex,
 			Doc: &resource.IndexableDocument{
@@ -2869,28 +2898,79 @@ func TestSearchPostRankAuthzSeparatesDeletedFromLiveDocuments(t *testing.T) {
 					Name:      name,
 				},
 				Title:     name,
-				Folder:    "folder-a",
+				Folder:    folder,
+				Tags:      tags,
 				IsDeleted: deleted,
 			},
 		}
 	}
+	// The trashed document sits in an authorized folder, so anything that lets
+	// it through is the deleted scope failing, not authorization.
 	indexDocs(t, index, []*resource.BulkIndexItem{
-		doc("no-marker", nil),
-		doc("live", new(false)),
-		doc("trashed", new(true)),
+		doc("no-marker", "allowed", nil, "shared"),
+		doc("live", "allowed", new(false), "shared", "live-only"),
+		doc("denied", "denied", new(false), "shared", "denied-only"),
+		doc("trashed", "allowed", new(true), "shared", "trash-only"),
 	})
 
-	ac := &countingAccessClient{allowAll: true}
+	newAC := func() *countingAccessClient {
+		return &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+	}
+	tagFacet := func(q *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchRequest {
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+		return q
+	}
 
-	names, res := searchNames(t, index, ac, listQuery(100))
-	require.ElementsMatch(t, []string{"no-marker", "live"}, names)
-	require.Equal(t, int64(2), res.TotalHits)
+	t.Run("live search excludes deleted and unauthorized documents", func(t *testing.T) {
+		names, res := searchNames(t, index, newAC(), listQuery(100))
+		require.ElementsMatch(t, []string{"no-marker", "live"}, names)
+		require.Equal(t, int64(2), res.TotalHits)
+	})
 
-	q := listQuery(100)
-	q.IsDeleted = true
-	names, res = searchNames(t, index, ac, q)
-	require.Equal(t, []string{"trashed"}, names)
-	require.Equal(t, int64(1), res.TotalHits)
+	t.Run("trash search returns only deleted documents", func(t *testing.T) {
+		q := listQuery(100)
+		q.IsDeleted = true
+		names, res := searchNames(t, index, newAC(), q)
+		require.Equal(t, []string{"trashed"}, names)
+		require.Equal(t, int64(1), res.TotalHits)
+	})
+
+	t.Run("live facet counts exclude deleted documents", func(t *testing.T) {
+		names, res := searchNames(t, index, newAC(), tagFacet(listQuery(100)))
+		require.ElementsMatch(t, []string{"no-marker", "live"}, names)
+		require.Equal(t, map[string]int64{"shared": 2, "live-only": 1}, facetTermCounts(res.Facet["tags"]))
+		require.Equal(t, int64(3), res.Facet["tags"].Total)
+	})
+
+	t.Run("trash facet counts exclude live documents", func(t *testing.T) {
+		q := tagFacet(listQuery(100))
+		q.IsDeleted = true
+		names, res := searchNames(t, index, newAC(), q)
+		require.Equal(t, []string{"trashed"}, names)
+		require.Equal(t, map[string]int64{"shared": 1, "trash-only": 1}, facetTermCounts(res.Facet["tags"]))
+	})
+
+	t.Run("count-only totals exclude deleted documents", func(t *testing.T) {
+		ac := newAC()
+		_, res := searchNames(t, index, ac, listQuery(0))
+		require.Equal(t, int64(2), res.TotalHits)
+		require.True(t, res.TotalHitsExact)
+		require.Equal(t, 3, ac.checked, "the deleted document is not even a candidate")
+	})
+}
+
+// facetTermCounts flattens a facet response into term -> count for comparison.
+func facetTermCounts(f *resourcepb.ResourceSearchResponse_Facet) map[string]int64 {
+	if f == nil {
+		return nil
+	}
+	counts := make(map[string]int64, len(f.Terms))
+	for _, term := range f.Terms {
+		counts[term.Term] = term.Count
+	}
+	return counts
 }
 
 // checkSearchQueryUnordered asserts on the set of names, where order is not under

@@ -643,7 +643,7 @@ func (a *facetAggregator) add(doc *search.DocumentMatch) {
 			a.missing[name]++
 			continue
 		}
-		// Total is the number of field values, not documents (matches bleve's
+		// Total counts terms, not documents (matches bleve's
 		// TermsFacetBuilder: total counts every term visited).
 		a.total[name] += int64(len(terms))
 		for _, term := range terms {
@@ -656,6 +656,10 @@ func (a *facetAggregator) add(doc *search.DocumentMatch) {
 // value. Multi-value fields (e.g. tags) are stored as slices, so each element
 // is counted as its own term — matching bleve's native term facets. Empty
 // strings are dropped. Non-string scalars are formatted as a single term.
+//
+// A value repeated within one document yields one term: native facets read the
+// document's term set, where a duplicate leaves a single posting, so counting
+// the stored slice verbatim would report it twice.
 func facetTermValues(v any) []string {
 	switch s := v.(type) {
 	case string:
@@ -666,7 +670,7 @@ func facetTermValues(v any) []string {
 	case []string:
 		out := make([]string, 0, len(s))
 		for _, t := range s {
-			if t != "" {
+			if t != "" && !slices.Contains(out, t) {
 				out = append(out, t)
 			}
 		}
@@ -674,7 +678,7 @@ func facetTermValues(v any) []string {
 	case []any:
 		out := make([]string, 0, len(s))
 		for _, e := range s {
-			if str, ok := e.(string); ok && str != "" {
+			if str, ok := e.(string); ok && str != "" && !slices.Contains(out, str) {
 				out = append(out, str)
 			}
 		}
