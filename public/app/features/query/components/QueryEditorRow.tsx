@@ -519,6 +519,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         {!isEditingQueryLibrary && (
           <QueryOperationAction
             title={t('query-operation.header.duplicate-query', 'Duplicate query')}
+            // Set explicitly so the test id stays stable across locales: QueryOperationAction
+            // otherwise derives it from the translated title.
+            dataTestId={selectors.components.QueryEditorRow.actionButton('Duplicate query')}
             icon="copy"
             onClick={this.onCopyQuery}
           />

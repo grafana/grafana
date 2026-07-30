@@ -22,7 +22,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
-import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
+import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { type BulkActionElement } from '../../scene/types/BulkActionElement';
 import {
   type EditableDashboardElement,
@@ -45,7 +45,7 @@ import { openChangeVariableTypePane } from './VariableTypeSelectionPane';
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
 
 // TODO fix conditional hook usage here...
-function useEditPaneOptions(this: VariableEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+function useSidebarOptions(this: VariableEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const variable = this.variable;
   const variableOptionsCategoryId = useId();
   const variableNameId = useId();
@@ -149,7 +149,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
     };
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this);
+  public useSidebarOptions = useSidebarOptions.bind(this);
 
   public renderActions() {
     return <ChangeVariableTypeButton variable={this.variable} />;
@@ -260,7 +260,7 @@ function ChangeVariableTypeButton({ variable }: { variable: SceneVariable }) {
 
 function VariableNameInput({ variable, autoFocus }: { variable: SceneVariable; autoFocus: boolean }) {
   const { name } = variable.useState();
-  const ref = useEditPaneInputAutoFocus({ autoFocus });
+  const ref = useSidebarInputAutoFocus({ autoFocus });
   const [nameError, setNameError] = useState<string>();
   const [nameWarning, setNameWarning] = useState<string>();
   const id = useId();

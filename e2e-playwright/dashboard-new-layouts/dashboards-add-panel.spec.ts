@@ -106,7 +106,7 @@ test.describe(
 
       // scroll to the bottom of the row to load all panels
       const scrollContainer = page
-        .getByTestId(selectors.components.DashboardEditPaneSplitter.primaryBody)
+        .getByTestId(selectors.components.DashboardSidebarSplitter.primaryBody)
         .locator('> div')
         .first();
       await scrollContainer.evaluate((el) => el.scrollTo(0, el.scrollHeight));

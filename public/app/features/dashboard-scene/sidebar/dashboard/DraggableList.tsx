@@ -48,7 +48,7 @@ export function DraggableList<T extends { state: { key?: string; name: string } 
             >
               <Text truncate>{renderItemLabel(item)}</Text>
               <Button variant="primary" size="sm" fill="outline">
-                <Trans i18nKey="dashboard-scene.draggable-items-list.select">Select</Trans>
+                <Trans i18nKey="dashboard.sidebar.select">Select</Trans>
               </Button>
             </div>
           </DraggableListItem>

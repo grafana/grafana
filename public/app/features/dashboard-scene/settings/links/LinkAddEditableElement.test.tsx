@@ -79,7 +79,7 @@ describe('LinkAddEditableElement', () => {
       expect(dashboard.state.links[1].title).toBe(NEW_LINK.title);
     });
 
-    it('registers an undoable action on the edit pane', () => {
+    it('registers an undoable action on the sidebar', () => {
       const dashboard = buildDashboard();
       const sidebar = dashboard.state.sidebar;
 

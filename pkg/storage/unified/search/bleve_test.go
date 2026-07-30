@@ -9,6 +9,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	blevesearch "github.com/blevesearch/bleve/v2/search"
+	"github.com/blevesearch/bleve/v2/search/query"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -932,6 +934,23 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 		require.NotNil(t, errResult)
 		assert.Contains(t, errResult.Message, `field "labels.region" does not support faceting`)
 	})
+
+	// Both the bleve term trimmer and the post-rank aggregator use the limit as
+	// a slice bound, so a negative one has to be turned away before either runs.
+	t.Run("rejects a negative facet limit", func(t *testing.T) {
+		for _, postRankAuthz := range []bool{false, true} {
+			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{},
+				Limit:   10,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: -1},
+				},
+			}, nil, postRankAuthz)
+			require.Nil(t, searchReq)
+			require.NotNil(t, errResult)
+			assert.Contains(t, errResult.Message, `facet "tagValues" has a negative limit`)
+		}
+	})
 }
 
 var _ authlib.AccessClient = (*StubAccessClient)(nil)
@@ -1147,6 +1166,22 @@ func withRequiredIndexFeatures(features ...resource.IndexFeature) setupOption {
 	return func(options *BleveOptions) {
 		options.RequiredIndexFeatures = features
 	}
+}
+
+func withPostRankAuthzEnabled() setupOption {
+	return func(options *BleveOptions) {
+		options.PostRankAuthzEnabled = true
+	}
+}
+
+// TestRequiredIndexFeaturesFollowPostRankAuthz covers the gate that keeps the
+// stored facet mapping from rebuilding indexes that serve facets from bleve.
+func TestRequiredIndexFeaturesFollowPostRankAuthz(t *testing.T) {
+	nativeFacets, _ := setupBleveBackend(t)
+	require.NotContains(t, nativeFacets.requiredFeatures, resource.IndexFeatureStoredFacets)
+
+	postRank, _ := setupBleveBackend(t, withPostRankAuthzEnabled())
+	require.Contains(t, postRank.requiredFeatures, resource.IndexFeatureStoredFacets)
 }
 
 // TestBuildIndexReuseChecksRequiredFeatures covers an on-disk index built before
@@ -2546,4 +2581,230 @@ func TestBleveTextFieldFilterAndSort(t *testing.T) {
 		})
 		assert.Equal(t, []string{"one"}, got)
 	})
+}
+
+// TestIsDeletedMarkerIndexing pins how the marker reaches the index. A document
+// that does not carry it must leave no trace under that field, which is what
+// lets documents written before the marker existed count as live.
+func TestIsDeletedMarkerIndexing(t *testing.T) {
+	const group, kindResource = "example.test", "widgets"
+	key := resource.NamespacedResource{Namespace: "default", Group: group, Resource: kindResource}
+
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          t.TempDir(),
+		FileThreshold: 5, // stay in memory
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	doc := func(name string, deleted, provisioned *bool) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key:           &resourcepb.ResourceKey{Namespace: key.Namespace, Group: group, Resource: kindResource, Name: name},
+				Title:         name,
+				IsDeleted:     deleted,
+				IsProvisioned: provisioned,
+			},
+		}
+	}
+
+	index, err := backend.BuildIndex(t.Context(), key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				doc("live-unset", nil, nil),
+				doc("live-explicit", new(false), nil),
+				doc("trashed", new(true), new(true)),
+			},
+		})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	bi, ok := index.(*bleveIndex)
+	require.True(t, ok)
+
+	markerHits := func(t *testing.T, field string, value bool) []string {
+		t.Helper()
+		q := bleve.NewBoolFieldQuery(value)
+		q.SetField(field)
+		res, err := bi.index.Search(bleve.NewSearchRequest(q))
+		require.NoError(t, err)
+		names := make([]string, 0, len(res.Hits))
+		for _, hit := range res.Hits {
+			names = append(names, hit.ID)
+		}
+		slices.Sort(names)
+		return names
+	}
+
+	assert.Equal(t, []string{"default/example.test/widgets/trashed"}, markerHits(t, resource.SEARCH_FIELD_IS_DELETED, true))
+	assert.Equal(t, []string{"default/example.test/widgets/trashed"}, markerHits(t, resource.SEARCH_FIELD_IS_PROVISIONED, true))
+	assert.Equal(t, []string{"default/example.test/widgets/live-explicit"}, markerHits(t, resource.SEARCH_FIELD_IS_DELETED, false))
+
+	// The marker is not a declared field, so callers cannot ask for it and it
+	// stays out of the hash that forces reindexing.
+	for _, field := range []string{resource.SEARCH_FIELD_IS_DELETED, resource.SEARCH_FIELD_IS_PROVISIONED} {
+		assert.Nil(t, resource.StandardSearchFields().Field(field))
+		assert.False(t, bi.isDeclaredField(field))
+	}
+}
+
+// An index built before the marker was mapped drops it silently, which would
+// leave a deleted document looking live. BulkIndex removes such a document
+// instead, so trash is missing from search rather than leaking into it, until the
+// index is rebuilt.
+func TestBulkIndexRemovesMarkedDocumentsWhenTheMarkerIsNotMapped(t *testing.T) {
+	mapper, err := GetBleveMappings(nil, "", "", nil)
+	require.NoError(t, err)
+	raw, err := newBleveIndex("", mapper, time.Now(), buildVersion, nil, "")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = raw.Close() })
+
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: "g", Resource: "r", Name: "dash-1"}
+	doc := func(deleted *bool) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc:    &resource.IndexableDocument{Key: key, Title: "Production Overview", IsDeleted: deleted},
+		}
+	}
+
+	// features left empty: an index whose mapping predates the marker.
+	legacy := &bleveIndex{index: raw, logger: log.NewNopLogger()}
+	require.NoError(t, legacy.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(nil)}}))
+	count, err := raw.DocCount()
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), count)
+
+	require.NoError(t, legacy.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(new(true))}}))
+	count, err = raw.DocCount()
+	require.NoError(t, err)
+	assert.Equal(t, uint64(0), count, "marked document should be removed, not indexed as live")
+
+	// An index that maps the marker keeps the document.
+	current := &bleveIndex{index: raw, features: resource.CurrentIndexFeatures(), logger: log.NewNopLogger()}
+	require.NoError(t, current.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(new(true))}}))
+	count, err = raw.DocCount()
+	require.NoError(t, err)
+	assert.Equal(t, uint64(1), count)
+}
+
+// TestScopeQueryTrashBrowseDrivesOffTheMarker pins the shape for a trash browse
+// with nothing to match on. Bleve only ever drives iteration from the Must side,
+// so leaving match-all there and testing the marker as a Filter would read every
+// document in the index to find the few deleted ones.
+func TestScopeQueryTrashBrowseDrivesOffTheMarker(t *testing.T) {
+	scoped, ok := scopeQuery(bleve.NewMatchAllQuery(), true).(*query.BooleanQuery)
+	require.True(t, ok)
+
+	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.Must),
+		"the marker has to drive iteration, not sit in Filter")
+	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_PROVISIONED}, boolFieldsOf(t, scoped.MustNot))
+	assert.Nil(t, scoped.Filter)
+
+	// A real query drives iteration itself, so the marker moves to Filter where it
+	// does not score.
+	textQuery := bleve.NewMatchQuery("hello")
+	scoped, ok = scopeQuery(textQuery, true).(*query.BooleanQuery)
+	require.True(t, ok)
+	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.Filter))
+	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_PROVISIONED}, boolFieldsOf(t, scoped.MustNot))
+
+	// Live searches only exclude the marker; provisioning is irrelevant to them.
+	scoped, ok = scopeQuery(bleve.NewMatchAllQuery(), false).(*query.BooleanQuery)
+	require.True(t, ok)
+	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.MustNot))
+	assert.Nil(t, scoped.Filter)
+}
+
+// boolFieldsOf returns the fields of the boolean-field queries in a clause,
+// looking through the conjunction or disjunction bleve wraps clauses in.
+func boolFieldsOf(t *testing.T, clause query.Query) []string {
+	t.Helper()
+	var fields []string
+	var walk func(query.Query)
+	walk = func(q query.Query) {
+		switch typed := q.(type) {
+		case *query.BoolFieldQuery:
+			fields = append(fields, typed.FieldVal)
+		case *query.ConjunctionQuery:
+			for _, sub := range typed.Conjuncts {
+				walk(sub)
+			}
+		case *query.DisjunctionQuery:
+			for _, sub := range typed.Disjuncts {
+				walk(sub)
+			}
+		}
+	}
+	walk(clause)
+	return fields
+}
+
+// TestScopeQueryKeepsScores pins both scopes to the unscoped query's scores. The
+// marker has to sit in a non-scoring position, or absolute scores move with the
+// amount of trash in the index.
+func TestScopeQueryKeepsScores(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "example.test", Resource: "widgets"}
+
+	backend, err := NewBleveBackend(BleveOptions{Root: t.TempDir(), FileThreshold: 5}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	docs := []struct {
+		name    string
+		title   string
+		deleted bool
+	}{
+		{name: "live-1", title: "hello world"},
+		{name: "live-2", title: "hello hello world of hello"},
+		{name: "trashed-1", title: "hello there", deleted: true},
+		{name: "trashed-2", title: "hello hello there", deleted: true},
+	}
+	index, err := backend.BuildIndex(t.Context(), key, 5, "test", func(index resource.ResourceIndex) (int64, error) {
+		items := make([]*resource.BulkIndexItem, 0, len(docs))
+		for _, d := range docs {
+			doc := &resource.IndexableDocument{
+				Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: d.name},
+				Title: d.title,
+			}
+			if d.deleted {
+				doc.IsDeleted = new(true)
+			}
+			items = append(items, &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: doc})
+		}
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: items})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	bi, ok := index.(*bleveIndex)
+	require.True(t, ok)
+
+	textQuery := bleve.NewMatchQuery("hello")
+	textQuery.SetField(resource.SEARCH_FIELD_TITLE)
+
+	scores := func(q query.Query) map[string]float64 {
+		req := bleve.NewSearchRequest(q)
+		req.Size = 10
+		res, err := bi.index.Search(req)
+		require.NoError(t, err)
+		out := map[string]float64{}
+		for _, hit := range res.Hits {
+			out[hit.ID] = hit.Score
+		}
+		return out
+	}
+
+	id := func(name string) string { return key.Namespace + "/" + key.Group + "/" + key.Resource + "/" + name }
+
+	unscoped := scores(textQuery)
+	require.Len(t, unscoped, len(docs))
+
+	assert.Equal(t, map[string]float64{
+		id("live-1"): unscoped[id("live-1")],
+		id("live-2"): unscoped[id("live-2")],
+	}, scores(scopeQuery(textQuery, false)))
+
+	assert.Equal(t, map[string]float64{
+		id("trashed-1"): unscoped[id("trashed-1")],
+		id("trashed-2"): unscoped[id("trashed-2")],
+	}, scores(scopeQuery(textQuery, true)))
 }
