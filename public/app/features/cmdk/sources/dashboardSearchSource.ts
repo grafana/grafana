@@ -66,7 +66,7 @@ export function createDashboardSearchSource(): CmdkSource {
           title: `${name}`,
           priority: SEARCH_RESULTS_PRIORITY,
           href: url,
-          rightSubtitle: data.view.dataFrame.meta?.custom?.locationInfo[location]?.name,
+          subtitle: data.view.dataFrame.meta?.custom?.locationInfo[location]?.name,
         };
       });
     },

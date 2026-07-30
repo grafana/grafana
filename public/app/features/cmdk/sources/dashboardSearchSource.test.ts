@@ -59,7 +59,7 @@ describe('dashboardSearchSource', () => {
         title: 'My dashboard 1',
         priority: 1,
         href: '/d/my-dashboard-1/my-dashboard-1',
-        rightSubtitle: 'Dashboards',
+        subtitle: 'Dashboards',
       },
     ]);
   });

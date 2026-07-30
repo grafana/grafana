@@ -75,12 +75,12 @@ interface CmdkItemBase {
   // The final sort will be done in the cmdk but this should aid that sort.
   priority: number;
 
-  // smaller text to the right of the title, usually used for parent folder
+  // smaller text pinned to the right edge of the line
   rightSubtitle?: string;
 
   // list of tags, for example dashboard tags when showing a dashboard
   tags?: string[];
-  // a smaller text shown next to the title
+  // a smaller text shown next to the title, usually used for parent folder
   subtitle?: string;
   // additional small text items that will be displayed next to the subtitle in single line.
   subtitleItems?: string[];
