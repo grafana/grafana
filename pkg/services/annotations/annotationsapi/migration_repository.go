@@ -222,6 +222,9 @@ func (r *migrationRepository) FindTags(ctx context.Context, query *annotations.T
 func (r *migrationRepository) legacyTagsToMerge(ctx context.Context, query *annotations.TagsQuery) ([]*annotations.TagsDTO, error) {
 	// In the proxy-writes phase the new store only has annotations created since the
 	// migration started, so we still merge in every tag from legacy.
+	// Note: If legacy annotations have been backfilled into the new store,
+	// this could result in double-counting tags if the instance is still in `proxy-writes` mode.
+	// This is a known limitation of the migration and will self-resolve once the instance is moved to `proxy-all`.
 	if !r.cfg.AnnotationAppPlatform.ProxyAll() {
 		result, err := r.legacy.FindTags(ctx, query)
 		return result.Tags, err
