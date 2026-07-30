@@ -1,6 +1,7 @@
 import type OpenLayersMap from 'ol/Map';
 import { LineString, Point } from 'ol/geom';
 import VectorImage from 'ol/layer/VectorImage';
+import { toLonLat } from 'ol/proj';
 
 import {
   createTheme,
@@ -78,9 +79,11 @@ describe('networkLayer', () => {
     const [firstEdge] = source.getFeatures().filter((f) => f.getGeometry() instanceof LineString);
     const line = ensureInstanceOf(firstEdge.getGeometry(), LineString);
     const [start, end] = line.getCoordinates();
-    // projected from lon/lat, so compare against the other node rather than raw degrees
-    expect(start).not.toEqual(end);
-    expect(start).toHaveLength(2);
+    // coords are web-mercator projected; read them back to lon/lat and compare to the a->b node inputs
+    const [startLon, startLat] = toLonLat(start);
+    const [endLon, endLat] = toLonLat(end);
+    expect([startLon, startLat]).toEqual([expect.closeTo(6), expect.closeTo(46)]);
+    expect([endLon, endLat]).toEqual([expect.closeTo(7), expect.closeTo(47)]);
   });
 
   it('update() renders nothing when the edges frame is missing', async () => {

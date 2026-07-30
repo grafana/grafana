@@ -72,17 +72,17 @@ describe('markersLayer', () => {
     expect(layers[1]).toBeInstanceOf(VectorImage);
   });
 
-  it('update() adds one feature per row and sets the WebGL style properties', async () => {
-    const { handler, group } = await setup();
+  it('update() adds one feature per row and sets its size, opacity and color from the style', async () => {
+    const { handler, group } = await setup({ style: { ...defaultStyleConfig, color: { fixed: '#204060' } } });
     handler.update!(pointData([46, 47], [6, 7]));
 
     const source = ensureInstanceOf(group.getLayers().item(0), WebGLPointsLayer).getSource()!;
     const features = source.getFeatures();
     expect(features).toHaveLength(2);
     // WebGLPointsLayer styles from feature properties rather than a style function
-    expect(features[0].get('size')).toBe(defaultStyleConfig.size.fixed * 2);
-    expect(features[0].get('opacity')).toBeCloseTo(defaultStyleConfig.opacity);
-    expect(features[0].get('red')).toEqual(expect.any(Number));
+    expect(features[0].get('size')).toBe(10); // DEFAULT_SIZE (5) rendered at 2x
+    expect(features[0].get('opacity')).toBeCloseTo(0.4);
+    expect([features[0].get('red'), features[0].get('green'), features[0].get('blue')]).toEqual([32, 64, 96]);
   });
 
   it('update() skips markers that would render identically on top of each other', async () => {
@@ -91,7 +91,7 @@ describe('markersLayer', () => {
 
     const source = ensureInstanceOf(group.getLayers().item(0), WebGLPointsLayer).getSource()!;
     const [first, duplicate] = source.getFeatures();
-    expect(first.get('size')).toBeDefined();
+    expect(first.get('size')).toBe(10);
     expect(duplicate.get('size')).toBeUndefined();
   });
 
