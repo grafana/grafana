@@ -1,5 +1,7 @@
 import { type NavModelItem } from '@grafana/data';
 
+import { pluginNavFailed, pluginNavLoaded } from '../navtree/state';
+
 import { ID_PREFIX, navTreeReducer, setStarred, setStarredItems, updateDashboardName } from './navBarTree';
 
 function buildState(starredChildren: NavModelItem[] = []): NavModelItem[] {
@@ -217,6 +219,42 @@ describe('navBarTree reducer', () => {
         state,
         setStarredItems({ uids: ['a'], items: [{ id: 'a', title: 'A', url: '/d/a' }] })
       );
+      expect(next).toEqual(state);
+    });
+  });
+
+  describe('pluginNavLoaded', () => {
+    it('replaces the tree with the merged payload', () => {
+      const state = buildState();
+      const merged: NavModelItem[] = [
+        { id: 'home', text: 'Home', url: '/' },
+        { id: 'starred', text: 'Starred', children: [] },
+        { id: 'apps', text: 'More apps', children: [{ id: 'plugin-page-some-app', text: 'Some app' }] },
+      ];
+
+      const next = navTreeReducer(state, pluginNavLoaded({ tree: merged }));
+
+      expect(next.map((n) => n.id)).toEqual(['home', 'starred', 'apps']);
+    });
+
+    it('is idempotent when the same payload is dispatched twice (refetch)', () => {
+      const merged: NavModelItem[] = [{ id: 'home', text: 'Home', url: '/' }];
+      const once = navTreeReducer(buildState(), pluginNavLoaded({ tree: merged }));
+      const twice = navTreeReducer(once, pluginNavLoaded({ tree: merged }));
+
+      expect(twice).toEqual(once);
+    });
+  });
+
+  describe('pluginNavFailed', () => {
+    it('leaves the tree untouched so a later successful refetch keeps its merge targets', () => {
+      const state: NavModelItem[] = [
+        { id: 'home', text: 'Home', url: '/' },
+        { id: 'connections', text: 'Connections', children: [] },
+      ];
+
+      const next = navTreeReducer(state, pluginNavFailed());
+
       expect(next).toEqual(state);
     });
   });
