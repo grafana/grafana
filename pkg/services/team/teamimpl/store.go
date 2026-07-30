@@ -679,7 +679,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.Leg
 			team_member.external,
 			team_member.permission,
 			user_auth.auth_module,
-			team.uid as team_uid`, userTable))
+			team.uid as team_uid`, dbHelper.DB.GetDialect().Quote("user")))
 		sess.Asc("user.login", "user.email")
 
 		err := sess.Find(&queryResult)
