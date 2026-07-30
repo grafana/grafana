@@ -6,35 +6,90 @@ interface ZodSchema {
   safeParse: (data: unknown) => { success: boolean; data?: unknown; error?: unknown };
 }
 
+/** Outcome of a single {@link DashboardMutationAPI.execute} call. */
 export interface DashboardMutationResult {
+  /** Whether the command ran to completion. */
   success: boolean;
-  error?: string; // structured validation/execution error message
+  /** Why the command did not run, or failed. Set whenever `success` is false. */
+  error?: string;
+  /**
+   * What the command changed, one entry per mutated path. Always empty when
+   * `success` is false: a failed command leaves the dashboard untouched.
+   */
   changes: Array<{ path: string; previousValue: unknown; newValue: unknown }>;
+  /** Non-fatal problems. Present on successful calls too. */
   warnings?: string[];
-  data?: unknown; // command-specific return data
+  /** Command-specific payload, such as the read state for a read command. */
+  data?: unknown;
 }
 
+/**
+ * Command-based API for reading and modifying the dashboard the user has open.
+ *
+ * Commands are dispatched by name through {@link execute}. Each one declares a
+ * payload schema, a permission check, and whether it writes, so callers describe
+ * the change they want rather than manipulating dashboard internals.
+ *
+ * Writes apply to the open dashboard in place and are not persisted. Saving
+ * stays with the user, and there is no command for it.
+ *
+ * Two lifetimes are involved, which is the distinction most of these methods
+ * exist to make visible:
+ *
+ * - This API object is created when Grafana starts and is available for as long
+ *   as the app is running.
+ * - The commands it dispatches to belong to the open dashboard, and come and go
+ *   as the user navigates. {@link isAvailable} reports whether one is there.
+ *
+ * So holding this object means the host supports dashboard mutation, not that
+ * there is a dashboard to mutate.
+ */
 export interface DashboardMutationAPI {
-  execute(mutation: { type: string; payload: unknown }): Promise<DashboardMutationResult>;
-  getPayloadSchema(commandId: string): ZodSchema | null;
-  /** Commands that can be executed right now. Empty when no dashboard is loaded. */
-  getAvailableCommands(): string[];
   /**
-   * Whether a dashboard is loaded, so `execute` has something to mutate.
+   * Run a command against the open dashboard.
    *
-   * The API object itself exists for the lifetime of the app, so its presence
-   * says nothing about whether a dashboard is open.
+   * `type` is a command name, matched case-insensitively. `payload` must satisfy
+   * that command's schema, which {@link getPayloadSchema} returns.
+   *
+   * Rejects when no dashboard is open. Everything else resolves with
+   * `success: false` and an `error`: an unrecognised command name, a payload
+   * that fails validation, a command the current user or dashboard state does
+   * not permit, or an error raised while applying the change.
    */
+  execute(mutation: { type: string; payload: unknown }): Promise<DashboardMutationResult>;
+  /**
+   * The Zod schema a command's payload must satisfy, or `null` for a command
+   * this Grafana version does not implement. `commandId` is matched
+   * case-insensitively.
+   *
+   * Schemas come from the static command registry, so this answers with no
+   * dashboard open. That makes a `null` return usable as a version check, which
+   * {@link getAvailableCommands} cannot be, since it is empty either when the
+   * version lacks the command or when no dashboard is open.
+   */
+  getPayloadSchema(commandId: string): ZodSchema | null;
+  /**
+   * The commands {@link execute} can dispatch right now. Empty when no dashboard
+   * is open.
+   *
+   * Listing a command means it exists and has a dashboard to act on, not that
+   * this call will succeed. Permissions, snapshot state, and feature toggles are
+   * evaluated per command inside {@link execute}, so a listed command can still
+   * come back with `success: false`.
+   */
+  getAvailableCommands(): string[];
+  /** Whether a dashboard is open, so {@link execute} has something to act on. */
   isAvailable(): boolean;
   /**
-   * Subscribe to a dashboard being loaded or unloaded. Returns an unsubscribe
-   * function.
+   * Observe dashboards being opened and closed. Returns a function that
+   * unsubscribes.
    *
-   * Also called when one dashboard replaces another, with `true` again, since
-   * the commands now dispatch against a different dashboard.
+   * The listener receives the new availability, and is also called with `true`
+   * when one dashboard replaces another, since commands then dispatch against a
+   * different dashboard.
    *
-   * The listener is not called with the current state on subscribe; read
-   * `isAvailable()` for that.
+   * It is not called on subscribe. Read {@link isAvailable} for the current
+   * state.
    */
   onAvailabilityChange(listener: (isAvailable: boolean) => void): () => void;
 }
