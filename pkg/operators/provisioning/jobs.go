@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
@@ -79,6 +80,7 @@ func buildDriver(
 		jobHistoryWriter,
 		registry,
 		metrics,
+		nats.Enabled(controllerCfg.natsSubscriber),
 		workers...,
 	)
 }

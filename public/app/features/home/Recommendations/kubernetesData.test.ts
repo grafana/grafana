@@ -292,15 +292,12 @@ describe('Kubernetes Prometheus resolution', () => {
     expect(probedUids).not.toContain('ml-uid');
   });
 
-  it('still probes and picks a lone utility-named datasource', async () => {
+  it('never probes a lone utility-named datasource', async () => {
     setDataSources([{ uid: 'usage-uid', name: 'grafanacloud-usage' }]);
     dataByUid = { 'usage-uid': 1 };
 
-    const inventory = await fetchKubernetesInventory();
-    await fetchKubernetesHealth();
-
-    expect(inventoryCalls()[0][0].datasource.uid).toBe('usage-uid');
-    expect(inventory.clusters).toBe(1);
+    await expect(fetchKubernetesInventory()).rejects.toThrow('No Prometheus datasource with Kubernetes data');
+    expect(probeCalls()).toHaveLength(0);
   });
 
   it('keeps a user datasource whose name merely contains "usage" (exact-match skip)', async () => {

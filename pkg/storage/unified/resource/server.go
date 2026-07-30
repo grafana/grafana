@@ -290,6 +290,10 @@ type SearchOptions struct {
 	// TTL for the dedup cache used in ListModifiedSince updates. 0 disables the cache.
 	IndexModificationCacheTTL time.Duration
 
+	// Keep deleted objects in the index so trash searches can find them. Off means
+	// a delete removes the document, as it did before trash search existed.
+	IndexDeletedDocuments bool
+
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
 
@@ -1684,7 +1688,7 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 				Group:              key.Group,
 				Resource:           key.Resource,
 				Namespace:          key.Namespace,
-				FreshnessTimestamp: resourceVersionTime(c.resourceVersion),
+				FreshnessTimestamp: ResourceVersionTime(c.resourceVersion),
 			}
 		}
 
@@ -2113,8 +2117,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 				if s.storageMetrics != nil && event.ResourceVersion > mostRecentRV {
 					// record latency - resource version can be either a unix microsecond timestamp (SQL backend)
-					// or a snowflake ID (KV backend), so we use resourceVersionTime to handle both formats.
-					latencySeconds := time.Since(resourceVersionTime(event.ResourceVersion)).Seconds()
+					// or a snowflake ID (KV backend), so we use ResourceVersionTime to handle both formats.
+					latencySeconds := time.Since(ResourceVersionTime(event.ResourceVersion)).Seconds()
 					if latencySeconds > 0 {
 						s.storageMetrics.WatchEventLatency.WithLabelValues(event.Key.Resource).Observe(latencySeconds)
 					}
@@ -2573,10 +2577,10 @@ func classifyAuthError(err error) string {
 	}
 }
 
-// resourceVersionTime extracts the timestamp embedded in a resource version.
+// ResourceVersionTime extracts the timestamp embedded in a resource version.
 // Resource versions can be either snowflake IDs (KV backend) or microsecond
 // Unix timestamps (SQL backend).
-func resourceVersionTime(rv int64) time.Time {
+func ResourceVersionTime(rv int64) time.Time {
 	if IsSnowflake(rv) {
 		msec := (rv >> (snowflake.NodeBits + snowflake.StepBits)) + snowflake.Epoch
 		return time.UnixMilli(msec)

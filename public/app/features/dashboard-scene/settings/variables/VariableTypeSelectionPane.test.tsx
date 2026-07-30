@@ -114,7 +114,7 @@ describe('VariableTypeChangePane', () => {
     const variable = variableSet.state.variables[0];
     const user = userEvent.setup();
 
-    renderVariableEditPane(dashboard);
+    renderVariableSidebar(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
 
@@ -145,7 +145,7 @@ describe('VariableTypeChangePane', () => {
     const sectionVariable = sectionVariableSet.state.variables[0];
     const user = userEvent.setup();
 
-    renderVariableEditPane(dashboard);
+    renderVariableSidebar(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
     expect(dashboard.state.sidebar.state.openPane).toBeInstanceOf(VariableTypeChangePane);
@@ -178,7 +178,7 @@ function WrapSidebar({ children }: { children: ReactNode }) {
   );
 }
 
-function renderVariableEditPane(dashboard: DashboardScene) {
+function renderVariableSidebar(dashboard: DashboardScene) {
   render(
     <WrapSidebar>
       <DashboardSidebarRenderer dashboard={dashboard} />

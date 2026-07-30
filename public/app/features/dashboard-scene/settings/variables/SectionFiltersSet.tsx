@@ -25,7 +25,7 @@ export interface SectionFiltersSetState extends SceneObjectState {
   sectionRef: SceneObjectRef<SceneObject>;
 }
 
-function useEditPaneOptions(
+function useSidebarOptions(
   this: SectionFiltersSet,
   sectionRef: SceneObjectRef<SceneObject>
 ): OptionsPaneCategoryDescriptor[] {
@@ -84,5 +84,5 @@ export class SectionFiltersSet extends SceneObjectBase<SectionFiltersSetState> i
     );
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this, this.state.sectionRef);
+  public useSidebarOptions = useSidebarOptions.bind(this, this.state.sectionRef);
 }

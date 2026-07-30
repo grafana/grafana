@@ -42,7 +42,7 @@ import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { type EditableDashboardElement, type EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { type LayoutParent } from '../types/LayoutParent';
 
-import { useEditOptions } from './TabItemEditor';
+import { useSidebarOptions } from './TabItemEditor';
 import { TabItemRenderer } from './TabItemRenderer';
 import { TabItems } from './TabItems';
 import { TabsLayoutManager } from './TabsLayoutManager';
@@ -156,7 +156,7 @@ export class TabItem
     });
   }
 
-  public useEditPaneOptions = useEditOptions.bind(this);
+  public useSidebarOptions = useSidebarOptions.bind(this);
 
   public onDelete() {
     const layout = this.getParentLayout();

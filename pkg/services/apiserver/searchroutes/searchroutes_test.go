@@ -11,9 +11,12 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+// Build only hands the client to the handler; nothing here calls it.
+type fakeClient struct{ resourcepb.ResourceIndexClient }
 
 type fakeBuilder struct {
 	gvs []schema.GroupVersion
@@ -26,18 +29,6 @@ func (b *fakeBuilder) UpdateAPIGroupInfo(*genericapiserver.APIGroupInfo, builder
 }
 func (b *fakeBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions { return nil }
 func (b *fakeBuilder) AllowedV0Alpha1Resources() []string                  { return nil }
-
-func enabledCfg(t *testing.T, enabled bool) *setting.Cfg {
-	t.Helper()
-	cfg := setting.NewCfg()
-	section, err := cfg.Raw.NewSection("grafana-apiserver")
-	require.NoError(t, err)
-	if enabled {
-		_, err = section.NewKey("enable_search_api", "true")
-		require.NoError(t, err)
-	}
-	return cfg
-}
 
 // paths flattens the result so assertions read as the served endpoints do.
 func paths(routes []builder.GroupVersionRoutes) map[string][]string {
@@ -53,11 +44,12 @@ func paths(routes []builder.GroupVersionRoutes) map[string][]string {
 	return out
 }
 
-func TestBuild_DisabledByDefault(t *testing.T) {
-	b := &fakeBuilder{gvs: []schema.GroupVersion{{Group: "dashboard.grafana.app", Version: "v1"}}}
+func TestBuild_NothingMountedWhenOffOrUnusable(t *testing.T) {
+	b := []builder.APIGroupBuilder{&fakeBuilder{gvs: []schema.GroupVersion{{Group: "dashboard.grafana.app", Version: "v1"}}}}
 
-	assert.Nil(t, Build(enabledCfg(t, false), nil, nil, []builder.APIGroupBuilder{b}, nil))
-	assert.Nil(t, Build(nil, nil, nil, []builder.APIGroupBuilder{b}, nil))
+	assert.Nil(t, Build(false, nil, fakeClient{}, b, nil), "off")
+	// A server without a unified storage client has nothing to search.
+	assert.Nil(t, Build(true, nil, nil, b, nil), "no client")
 }
 
 func TestBuild_MountsAllowedKinds(t *testing.T) {
@@ -66,12 +58,10 @@ func TestBuild_MountsAllowedKinds(t *testing.T) {
 		{Group: "folder.grafana.app", Version: "v1"},
 	}}
 
-	got := paths(Build(enabledCfg(t, true), nil, nil, []builder.APIGroupBuilder{b}, nil))
+	got := paths(Build(true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil))
 
 	assert.Equal(t, []string{"dashboards/search"}, got["dashboard.grafana.app/v1"])
-	// Folders are served and namespaced but not allowed yet: their authorizer
-	// would treat a search as a create.
-	assert.NotContains(t, got, "folder.grafana.app/v1")
+	assert.Equal(t, []string{"folders/search"}, got["folder.grafana.app/v1"])
 }
 
 // A manifest describes kinds this process may not serve, so the served group
@@ -79,7 +69,7 @@ func TestBuild_MountsAllowedKinds(t *testing.T) {
 func TestBuild_SkipsGroupVersionsNotServed(t *testing.T) {
 	b := &fakeBuilder{gvs: []schema.GroupVersion{{Group: "dashboard.grafana.app", Version: "v1"}}}
 
-	got := paths(Build(enabledCfg(t, true), nil, nil, []builder.APIGroupBuilder{b}, nil))
+	got := paths(Build(true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil))
 
 	assert.Contains(t, got, "dashboard.grafana.app/v1")
 	assert.NotContains(t, got, "dashboard.grafana.app/v2", "v2 is a served version, but not served by this builder")
@@ -91,11 +81,10 @@ func TestBuild_SkipsKindsNotAllowed(t *testing.T) {
 		{Group: "secret.grafana.app", Version: "v1beta1"},
 		{Group: "iam.grafana.app", Version: "v0alpha1"},
 		{Group: "playlist.grafana.app", Version: "v0alpha1"},
-		{Group: "folder.grafana.app", Version: "v1"},
 	}
 	b := &fakeBuilder{gvs: notAllowed}
 
-	assert.Empty(t, paths(Build(enabledCfg(t, true), nil, nil, []builder.APIGroupBuilder{b}, nil)))
+	assert.Empty(t, paths(Build(true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil)))
 }
 
 // Every served version of an allowed kind gets the endpoint, so a client can use
@@ -114,7 +103,7 @@ func TestBuild_MountsEveryServedVersion(t *testing.T) {
 	}
 	require.NotEmpty(t, dashboardGVs)
 
-	got := paths(Build(enabledCfg(t, true), nil, nil,
+	got := paths(Build(true, nil, fakeClient{},
 		[]builder.APIGroupBuilder{&fakeBuilder{gvs: dashboardGVs}}, nil))
 
 	assert.Len(t, got, len(dashboardGVs))

@@ -21,7 +21,7 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 import { DashboardCodePane } from './DashboardCodePane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
-import { AddNewEditPane } from './add-new/AddNewEditPane';
+import { AddNewPane } from './add-new/AddNewPane';
 import { DashboardPredefinedVariablesPane } from './dashboard/DashboardPredefinedVariablesPane';
 import { ToggleViewPanePaneEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
@@ -32,7 +32,7 @@ export interface Props {
 }
 
 /**
- * Making the Sidebar rendering completely standalone (not using editPane.Component) in order to pass custom react props
+ * Making the Sidebar rendering completely standalone (not using sidebar.Component) in order to pass custom react props
  */
 export function DashboardSidebarRenderer({ dashboard }: Props) {
   const sidebar = dashboard.state.sidebar;
@@ -79,11 +79,11 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             <Sidebar.Button
               icon="plus"
               variant="primary"
-              onClick={() => sidebar.openPane(new AddNewEditPane({}))}
+              onClick={() => sidebar.openPane(new AddNewPane({}))}
               title={t('dashboard.sidebar.add.title', 'Add')}
               tooltip={t('dashboard.sidebar.add.tooltip', 'Add new element')}
               data-testid={selectors.pages.Dashboard.Sidebar.addButton}
-              active={openPane instanceof AddNewEditPane}
+              active={openPane instanceof AddNewPane}
             />
             <Sidebar.Button
               icon="cog"
@@ -103,14 +103,8 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
                     '_blank'
                   )
                 }
-                title={t(
-                  'dashboard-scene.dashboard-sidebar-renderer.title-feedback-dashboard-editing-experience',
-                  'Give feedback on the new dashboard editing experience'
-                )}
-                tooltip={t(
-                  'dashboard-scene.dashboard-sidebar-renderer.title-feedback-dashboard-editing-experience',
-                  'Give feedback on the new dashboard editing experience'
-                )}
+                title={t('dashboard.sidebar.feedback-title', 'Give feedback on the new dashboard editing experience')}
+                tooltip={t('dashboard.sidebar.feedback-title', 'Give feedback on the new dashboard editing experience')}
               />
             )}
             <Sidebar.Button
@@ -173,7 +167,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             <Sidebar.Button
               data-testid="button-snapshot"
               tooltip={t('dashboard.sidebar.snapshot.tooltip', 'Open original dashboard')}
-              title={t('dashboard.toolbar.snapshot.title', 'Source')}
+              title={t('dashboard.sidebar.snapshot.title', 'Source')}
               icon="link"
               onClick={() => onOpenSnapshotOriginalDashboard(dashboard.getSnapshotUrl())}
             />
@@ -209,8 +203,8 @@ function FiltersOverviewButton({
     <Sidebar.Button
       icon="filter"
       onClick={() => sidebar.openPane(new DashboardFiltersOverviewPane({}))}
-      title={t('dashboard.sidebar.filters', 'Filters')}
-      tooltip={t('dashboard.sidebar.open', 'Filters overview')}
+      title={t('dashboard.sidebar.filters.title', 'Filters')}
+      tooltip={t('dashboard.sidebar.filters.tooltip', 'Filters overview')}
       active={openPane instanceof DashboardFiltersOverviewPane}
     />
   );

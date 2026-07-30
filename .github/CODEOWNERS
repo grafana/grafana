@@ -370,10 +370,6 @@
 /pkg/tsdb/cloudwatch/ @grafana/data-sources-plugins
 /pkg/tsdb/azuremonitor/ @grafana/data-sources-plugins
 
-# OSS Big Tent backend code
-/pkg/tsdb/mysql/ @grafana/data-sources-plugins
-/pkg/tsdb/sqlmacro/ @grafana/data-sources-plugins
-
 # Partner Datasources backend code
 /pkg/tsdb/influxdb/ @grafana/data-sources-plugins
 /pkg/tsdb/graphite/ @grafana/data-sources-plugins
@@ -1067,7 +1063,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/plugins/panel/news/ @grafana/dataviz-squad
 /public/app/plugins/panel/stat/ @grafana/dataviz-squad
 /public/app/plugins/panel/text/ @grafana/dataviz-squad
-/public/app/plugins/panel/textng/ @grafana/dataviz-squad
 /public/app/plugins/panel/welcome/ @grafana/grafana-frontend-navigation
 /public/app/plugins/panel/xychart/ @grafana/dataviz-squad
 /public/app/routes/ @grafana/grafana-frontend-navigation
@@ -1166,7 +1161,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/graphite/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/influxdb/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
-/public/app/plugins/datasource/mysql/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
 # Grafana Sharing Squad
@@ -1341,7 +1335,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/scripts/detect-e2e-selectors-change.sh @grafana/grafana-frontend-platform
 /.github/workflows/stale.yml @grafana/grafana-backend-services-squad
 /.github/workflows/storybook-a11y.yml @grafana/grafana-frontend-platform
-/.github/workflows/scripts/create-security-branch/create-security-branch.sh @grafana/grafana-backend-services-squad
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
 /.github/workflows/run-schema-v2-e2e.yml  @grafana/dashboards-squad
 /.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-operator-experience-squad

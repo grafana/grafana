@@ -26,7 +26,7 @@ export interface DashboardFiltersSetState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
 }
 
-function useEditPaneOptions(
+function useSidebarOptions(
   this: DashboardFiltersSet,
   dashboardRef: SceneObjectRef<DashboardScene>
 ): OptionsPaneCategoryDescriptor[] {
@@ -93,5 +93,5 @@ export class DashboardFiltersSet extends SceneObjectBase<DashboardFiltersSetStat
     return variableSet.state.variables.filter(sceneUtils.isAdHocVariable);
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this, this.state.dashboardRef);
+  public useSidebarOptions = useSidebarOptions.bind(this, this.state.dashboardRef);
 }

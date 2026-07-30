@@ -5227,17 +5227,6 @@
     }
   },
   "dashboard": {
-    "actions": {
-      "open-settings": ""
-    },
-    "add": {
-      "new-panel": {
-        "button": "Új panel hozzáadása gomb",
-        "description": "Húzza át, vagy kattintson a panel hozzáadásához",
-        "title": "Panel"
-      },
-      "pane-header": "Hozzáadás"
-    },
     "add-menu": {
       "import": "Importálás könyvtárból",
       "paste-panel": "Panel beillesztése",
@@ -5307,12 +5296,6 @@
       }
     },
     "canvas-actions": {
-      "add": {
-        "paste": {
-          "description": "Kattintson vagy húzza a panel beillesztéséhez",
-          "title": "Panel beillesztése"
-        }
-      },
       "add-panel": "Panel hozzáadása",
       "disabled-child-contains-tabs": "Nem lehet lapokra váltani, mert egy sor már tartalmaz lapokat",
       "disabled-nested-grouping": "A csoportosítás 3 szintre korlátozódik",
@@ -5327,14 +5310,6 @@
       "paste-tab": "Lap beillesztése",
       "ungroup-rows": "Sorok csoportosításának megszüntetése",
       "ungroup-tabs": "Lapok csoportosításának megszüntetése"
-    },
-    "code-pane": {
-      "collapse": "Szerkesztő összecsukása",
-      "copy-as-resource": "",
-      "copy-as-resource-tooltip": "",
-      "expand": "Szerkesztő kibontása",
-      "header": "Szerkesztés kódként",
-      "modal-title": "Irányítópult szerkesztése kódként"
     },
     "conditional-rendering": {
       "conditions": {
@@ -5512,9 +5487,6 @@
         "title": "Sorbeállítások"
       }
     },
-    "description": {
-      "action": "Irányítópult leírásának módosítása"
-    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Tulajdonság eltávolítása"
@@ -5523,6 +5495,8 @@
     "edit-actions": {
       "add": "{{typeName}} hozzáadása",
       "add-conditional-rule": "{{ruleDescription}} szabály hozzáadása",
+      "dashboard-description": "Irányítópult leírásának módosítása",
+      "dashboard-title": "Irányítópult címének módosítása",
       "duplicate-panel": "Panel duplikálása",
       "edit-query-result-rule": "Lekérdezési eredmény szabályának módosítása",
       "edit-template-variable-rule": "Sablonváltozó szabályának módosítása",
@@ -5542,7 +5516,12 @@
       "switch-layout": "Kiosztás váltása",
       "switch-layout-row": "Kiosztás váltása",
       "switch-layout-tab": "Kiosztás váltása",
-      "tab-title": "Lap címének módosítása"
+      "tab-title": "Lap címének módosítása",
+      "variable-description": "Változó leírásának módosítása",
+      "variable-hide": "Változó elrejtési opciójának módosítása",
+      "variable-label": "Változócímke módosítása",
+      "variable-name": "Változónév módosítása",
+      "variable-type": "Változótípus módosítása"
     },
     "empty": {
       "add-library-panel-body": "Más irányítópultokkal megosztott vizualizációk hozzáadása.",
@@ -5789,12 +5768,7 @@
     "layout": {
       "cancel": "Mégse",
       "common": {
-        "copy": "Másolás",
-        "copy-tooltip": "",
-        "delete": "Törlés",
-        "duplicate": "Duplikálás",
-        "layout": "Elrendezés",
-        "paste": "Beillesztés"
+        "layout": "Elrendezés"
       },
       "continue": "Folytatás",
       "panel": {
@@ -5822,7 +5796,6 @@
     },
     "new-panel": {
       "aria-label": "Nem konfigurált panel. A konfigurációs beállítások megtekintéséhez nyissa meg a lapot.",
-      "configure-button": "",
       "configure-button-menu": "Menü átkapcsolása",
       "configure-visualization": "Vizualizáció konfigurálása",
       "empty-state-message": "Futtasson egy lekérdezést, hogy itt megjelenítse, vagy lépjen az összes megjelenítéshez, hogy hozzáadjon más paneltípusokat",
@@ -5844,10 +5817,6 @@
         }
       }
     },
-    "options": {
-      "description": "Leírás",
-      "title-option": "Cím"
-    },
     "options-pane-category": {
       "aria-label-collapse": "{{title}} kategória összecsukása",
       "aria-label-expand": "{{title}} kategória kibontása"
@@ -5857,14 +5826,6 @@
       "Recent options-title-recent-options": "Legutóbbi beállítások",
       "title-matched_one": "{{totalCount}}/{{count}} egyező lehetőség",
       "title-matched_other": "{{totalCount}}/{{count}} egyező lehetőség"
-    },
-    "outline": {
-      "pane-header": "Tartalomvázlat",
-      "repeated-item": "Ismétlés",
-      "tree-item": {
-        "empty": "(üres)",
-        "no-title": "<nincs cím>"
-      }
     },
     "override-category-title": {
       "aria-label-remove-override": "Felülbírálás eltávolítása",
@@ -6045,13 +6006,6 @@
       "save-json-to-file": "JSON mentése fájlba",
       "see-docs": "A kiépítéssel kapcsolatos további információkért tekintse meg a <2>dokumentációt</2>."
     },
-    "schema-editor": {
-      "apply-button": "Módosítások alkalmazása",
-      "apply-button-disabled-tooltip": "A módosítások alkalmazása előtt javítsa ki a validálási hibákat",
-      "apply-button-disabled-tooltip-yaml": "A dokumentumban validálási hibák vannak. Váltson JSON-ra a beágyazott hibarészletek megtekintéséhez.",
-      "apply-error-title": "A módosítások alkalmazása nem sikerült",
-      "undo-title": "Séma szerkesztése"
-    },
     "search-panel": {
       "no-match": ""
     },
@@ -6060,8 +6014,42 @@
     },
     "sidebar": {
       "add": {
+        "annotation-query": {
+          "description": "Eseményadatok hozzáadása a grafikonokhoz",
+          "label": "Jegyzetlekérdezés"
+        },
+        "dashboard-controls": "Irányítópult-vezérlőelemek",
+        "filters": {
+          "label": "Szűrés és csoportosítás"
+        },
+        "group-layouts": "Csoportelrendezések",
+        "link": {
+          "label": "Hivatkozás",
+          "tooltip": "Hivatkozás hozzáadása egy másik irányítópulthoz vagy külső webhelyhez"
+        },
+        "new-panel": {
+          "button": "Új panel hozzáadása gomb",
+          "description": "Húzza át, vagy kattintson a panel hozzáadásához",
+          "title": "Panel"
+        },
+        "pane-header": "Hozzáadás",
+        "paste-panel": {
+          "description": "Kattintson vagy húzza a panel beillesztéséhez",
+          "title": "Panel beillesztése"
+        },
+        "row": {
+          "add-label": "Sor hozzáadása",
+          "group-label": "Csoportosítás sorokba"
+        },
+        "tab": {
+          "add-label": "Lap hozzáadása",
+          "group-label": "Csoportosítás lapokra"
+        },
         "title": "Hozzáadás",
-        "tooltip": "Új elem hozzáadása"
+        "tooltip": "Új elem hozzáadása",
+        "variable": {
+          "label": "Változó"
+        }
       },
       "annotation": {
         "change-data-source": "Jegyzetadatforrás módosítása",
@@ -6097,16 +6085,52 @@
       },
       "annotations": {
         "add-annotation": "Jegyzet hozzáadása",
+        "add-annotation-query": "Jegyzetlekérdezés hozzáadása",
+        "name-builtin": "{{annoName}} (beépített)",
+        "name-disabled": "(Letiltva) {{annoName}}",
         "reorder": "Húzza át az átrendezéshez",
-        "select-annotation": "Kiválasztás"
+        "reorder-description": "Jegyzetlista átrendezése",
+        "select-annotation": "Kiválasztás",
+        "title-above-dashboard-count_one": "Irányítópult felett ({{count}})",
+        "title-above-dashboard-count_other": "Irányítópult felett ({{count}})",
+        "title-controls-menu-count_one": "Vezérlőmenü ({{count}})",
+        "title-controls-menu-count_other": "Vezérlőmenü ({{count}})",
+        "title-hidden-count_one": "Rejtett ({{count}})",
+        "title-hidden-count_other": "Rejtett ({{count}})"
       },
       "dashboard-options": {
+        "annotations": "Jegyzetek",
+        "description": "Leírás",
+        "filters": "",
+        "links": "Hivatkozások",
+        "open-settings": "",
         "title": "Beállítások",
-        "tooltip": "Irányítópult beállításai"
+        "title-option": "Cím",
+        "tooltip": "Irányítópult beállításai",
+        "variables": "Változók"
       },
+      "drag-to-reorder": "Húzza át az átrendezéshez",
       "edit-schema": {
+        "apply-button": "Módosítások alkalmazása",
+        "apply-button-disabled-tooltip": "A módosítások alkalmazása előtt javítsa ki a validálási hibákat",
+        "apply-button-disabled-tooltip-yaml": "A dokumentumban validálási hibák vannak. Váltson JSON-ra a beágyazott hibarészletek megtekintéséhez.",
+        "apply-error-title": "A módosítások alkalmazása nem sikerült",
+        "collapse": "Szerkesztő összecsukása",
+        "copy-as-resource": "",
+        "copy-as-resource-tooltip": "",
+        "expand": "Szerkesztő kibontása",
+        "modal-title": "Irányítópult szerkesztése kódként",
+        "pane-header": "Szerkesztés kódként",
         "title": "Kód",
-        "tooltip": "Szerkesztés kódként"
+        "tooltip": "Szerkesztés kódként",
+        "undo-title": "Séma szerkesztése"
+      },
+      "element-actions": {
+        "copy": "Másolás",
+        "copy-tooltip": "",
+        "delete": "Törlés",
+        "duplicate": "Duplikálás",
+        "paste": "Beillesztés"
       },
       "elements": {
         "annotation": "Jegyzet",
@@ -6115,6 +6139,7 @@
         "element": "Elem",
         "filter": "",
         "filters-set": "",
+        "link": "Hivatkozás",
         "link-set": "Hivatkozások",
         "local-variable": "Helyi változó",
         "multiple-elements": "Több elem",
@@ -6135,17 +6160,40 @@
       "export": {
         "title": "Exportálás"
       },
-      "filters": "",
+      "feedback-title": "Visszajelzés küldése az új irányítópult-szerkesztési élményről",
+      "filters": {
+        "add-filter": "",
+        "reorder-description": "",
+        "title": "",
+        "title-above-dashboard_one": "",
+        "title-above-dashboard_other": "",
+        "title-controls-menu_one": "",
+        "title-controls-menu_other": "",
+        "title-hidden_one": "",
+        "title-hidden_other": "",
+        "tooltip": ""
+      },
       "links": {
         "add-link": "Hivatkozás hozzáadása",
+        "new-link": "Új hivatkozás",
         "reorder": "Húzza át az átrendezéshez",
+        "reorder-description": "Hivatkozáslista átrendezése",
         "select-link": "Kiválasztás",
+        "title-above-dashboard_one": "Irányítópult felett ({{count}})",
+        "title-above-dashboard_other": "Irányítópult felett ({{count}})",
+        "title-controls-menu_one": "Vezérlőmenü ({{count}})",
+        "title-controls-menu_other": "Vezérlőmenü ({{count}})",
         "untitled": "Névtelen hivatkozás"
       },
-      "open": "",
       "outline": {
+        "pane-header": "Tartalomvázlat",
+        "repeated-item": "Ismétlés",
         "title": "Vázlat",
-        "tooltip": "Tartalomvázlat"
+        "tooltip": "Tartalomvázlat",
+        "tree-item": {
+          "empty": "(üres)",
+          "no-title": "<nincs cím>"
+        }
       },
       "redo": "Újra",
       "row": {
@@ -6160,7 +6208,9 @@
       "section-variables": {
         "title": "Változók"
       },
+      "select": "Kiválasztás",
       "snapshot": {
+        "title": "Forrás",
         "tooltip": "Eredeti irányítópult megnyitása"
       },
       "undo": "Visszavonás",
@@ -6182,6 +6232,15 @@
         },
         "description": "Leírás",
         "description-placeholder": "Leírószöveg",
+        "display": "Megjelenítés",
+        "display-options": {
+          "controls-menu": "Vezérlőmenü",
+          "controls-menu-description": "Akkor látható, ha a vezérlőmenü nyitva van",
+          "hidden": "Rejtett",
+          "hidden-description": "Csak szerkesztési módban látható",
+          "label-hidden": "",
+          "label-hidden-description": ""
+        },
         "label": "Címke",
         "label-description": "Opcionális megjelenítendő név",
         "name": "Név",
@@ -6208,9 +6267,17 @@
         "add-variable": "Változó hozzáadása",
         "change-type": "",
         "reorder": "Húzza át az átrendezéshez",
+        "reorder-description": "Változólista átrendezése",
         "select-type": "Válasszon változótípust",
         "select-type-card-tooltip": "Típus kiválasztása kattintással",
-        "select-variable": "Kijelölés"
+        "select-variable": "Kijelölés",
+        "title-controls-menu_one": "Vezérlőmenü ({{count}})",
+        "title-controls-menu_other": "Vezérlőmenü ({{count}})",
+        "title-hidden_one": "Rejtett ({{count}})",
+        "title-hidden_other": "Rejtett ({{count}})",
+        "title-top-placement_one": "",
+        "title-top-placement_other": "",
+        "top-placement-default": ""
       },
       "view-panel": {
         "disabled": "",
@@ -6221,6 +6288,18 @@
         "pane-header": "",
         "quick-toggles": "",
         "title": ""
+      },
+      "viz-panel": {
+        "configure-button": "",
+        "delete-panel-text": "A panel törlésével az összes lekérdezést is eltávolítja. Biztosan folytatja?",
+        "delete-panel-title": "Törli a panelt?",
+        "delete-panel-yes": "Törlés",
+        "options": {
+          "configure-button-tooltip": "Lekérdezések és vizualizációs beállítások szerkesztése",
+          "description": "Leírás",
+          "title-option": "Cím",
+          "transparent-background": "Áttetsző háttér"
+        }
       }
     },
     "source-link": {
@@ -6278,9 +6357,6 @@
       "tab-warning": {
         "title-not-unique": "Ez a cím nem egyedi"
       }
-    },
-    "title": {
-      "action": "Irányítópult címének módosítása"
     },
     "toolbar": {
       "add": "Hozzáadás",
@@ -6372,9 +6448,6 @@
       "save-library-panel": "Könyvtárpanel mentése",
       "settings": "Irányítópult beállításai",
       "share-button": "Megosztás",
-      "snapshot": {
-        "title": "Forrás"
-      },
       "star-add-error": "Nem sikerült hozzáadni a kedvencekhez",
       "star-added": "Hozzáadva a kedvencekhez",
       "star-remove-error": "Nem sikerült eltávolítani a kedvencek közül",
@@ -6444,22 +6517,7 @@
       "tags-expected-strings": "címke karakterláncok tömbjét várta"
     },
     "variable": {
-      "description": {
-        "action": "Változó leírásának módosítása"
-      },
-      "description-tooltip": "Változó leírása",
-      "hide": {
-        "action": "Változó elrejtési opciójának módosítása"
-      },
-      "label": {
-        "action": "Változócímke módosítása"
-      },
-      "name": {
-        "action": "Változónév módosítása"
-      },
-      "type": {
-        "action": "Változótípus módosítása"
-      }
+      "description-tooltip": "Változó leírása"
     },
     "version-history-comparison": {
       "button-restore": "Visszaállítás erre a verzióra: {{version}}",
@@ -6482,17 +6540,6 @@
     "view-panel": {
       "back-to-dashboard": "",
       "not-found": ""
-    },
-    "viz-panel": {
-      "delete-panel-text": "A panel törlésével az összes lekérdezést is eltávolítja. Biztosan folytatja?",
-      "delete-panel-title": "Törli a panelt?",
-      "delete-panel-yes": "Törlés",
-      "options": {
-        "configure-button-tooltip": "Lekérdezések és vizualizációs beállítások szerkesztése",
-        "description": "Leírás",
-        "title-option": "Cím",
-        "transparent-background": "Áttetsző háttér"
-      }
     }
   },
   "dashboard-import": {
@@ -6606,25 +6653,6 @@
       "name-allow-custom-values": "Egyéni értékek engedélyezése",
       "name-enable-group-by": "Csoportosítás engedélyezése"
     },
-    "add-filters": {
-      "label": "Szűrés és csoportosítás"
-    },
-    "add-link": {
-      "inline-instance-name": "Új hivatkozás",
-      "label-link": "Hivatkozás",
-      "tooltip": "Hivatkozás hozzáadása egy másik irányítópulthoz vagy külső webhelyhez"
-    },
-    "add-new-edit-pane": {
-      "group-layouts": "Csoportelrendezések"
-    },
-    "add-row": {
-      "add-label": "Sor hozzáadása",
-      "group-label": "Csoportosítás sorokba"
-    },
-    "add-tab": {
-      "add-label": "Lap hozzáadása",
-      "group-label": "Csoportosítás lapokra"
-    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Nem sikerült a kiválasztott irányítópulthoz navigálni. Próbálkozzon újra.",
@@ -6653,19 +6681,12 @@
         "new-panel": "Új panel"
       }
     },
-    "add-variable": {
-      "label-variable": "Változó"
-    },
     "adhoc-origin-filters-controller": {
       "input-placeholder": "Alapértelmezett szűrő hozzáadása…"
     },
     "adhoc-origin-filters-editor": {
       "description": "Alapértelmezés szerint előre kiválasztott szűrők.",
       "label": "Alapértelmezett szűrők"
-    },
-    "annotation-control": {
-      "description-add-event-data-to-graphs": "Eseményadatok hozzáadása a grafikonokhoz",
-      "label-annotation-query": "Jegyzetlekérdezés"
     },
     "annotation-edit-actions": {
       "description": {
@@ -6682,11 +6703,6 @@
       "delete-title": "Jegyzetlekérdezés törlése"
     },
     "annotation-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-annotations-list": "Jegyzetlista átrendezése"
-        }
-      },
       "render-list": {
         "aria-label-annotation": "Jegyzet"
       }
@@ -6732,15 +6748,6 @@
       "query-name": "Lekérdezési név",
       "tooltip-move-down": "Mozgatás lefelé",
       "tooltip-move-up": "Mozgatás felfelé"
-    },
-    "annotations-list": {
-      "drag-end": {
-        "description": "Jegyzetlista átrendezése"
-      }
-    },
-    "annotations-section": {
-      "name-builtin": "{{annoName}} (beépített)",
-      "name-disabled": "(Letiltva) {{annoName}}"
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Nem tartalmazhat érvénytelen karaktereket: „~”, „^”, „:”, „?”, „*”, „[”, „\\\\” vagy „]”.",
@@ -6796,15 +6803,6 @@
       "name-values-separated-comma": "Értékek vesszővel elválasztva",
       "selection-options": "Kijelölés beállításai"
     },
-    "dashboard-annotations-list": {
-      "add-annotation-query": "Jegyzetlekérdezés hozzáadása",
-      "title-above-dashboard-count_one": "Irányítópult felett ({{count}})",
-      "title-above-dashboard-count_other": "Irányítópult felett ({{count}})",
-      "title-controls-menu-count_one": "Vezérlőmenü ({{count}})",
-      "title-controls-menu-count_other": "Vezérlőmenü ({{count}})",
-      "title-hidden-count_one": "Rejtett ({{count}})",
-      "title-hidden-count_other": "Rejtett ({{count}})"
-    },
     "dashboard-link-form": {
       "back-to-list": "Vissza a listához",
       "label-icon": "Ikon",
@@ -6835,9 +6833,6 @@
       "tooltip-move-link-down": "Hivatkozás lefelé mozgatása",
       "tooltip-move-link-up": "Hivatkozás felfelé mozgatása",
       "type": "Típus"
-    },
-    "dashboard-links-list": {
-      "add-link": "Hivatkozás hozzáadása"
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Hiba történt az irányítópult betöltésekor"
@@ -6874,12 +6869,6 @@
         "dashboard-not-found": "Az irányítópult nem található"
       }
     },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Irányítópult-vezérlőelemek"
-    },
-    "dashboard-sidebar-renderer": {
-      "title-feedback-dashboard-editing-experience": "Visszajelzés küldése az új irányítópult-szerkesztési élményről"
-    },
     "data-source-variable-form": {
       "data-source-options": "Adatforrás beállításai",
       "description-instance-name-filter": "Reguláris kifejezéses szűrő, amelyhez adatforráspéldányokat választhat a változóérték-listában. Hagyja üresen minden esetben.",
@@ -6913,12 +6902,6 @@
     "description-label": {
       "description": "Leírás"
     },
-    "draggable-item": {
-      "drag-to-reorder": "Húzza át az átrendezéshez"
-    },
-    "draggable-items-list": {
-      "select": "Kiválasztás"
-    },
     "edit-link-view": {
       "edit-link-page-nav": {
         "text": {
@@ -6941,16 +6924,6 @@
       "show-more": "Több megjelenítése",
       "sql-name": "Átalakítás SQL-lel",
       "sql-transformation-description": "Az adatok módosítása MySQL-szerű szintaxissal"
-    },
-    "filters-list": {
-      "add-filter": "",
-      "reorder-description": "",
-      "title-above-dashboard_one": "",
-      "title-above-dashboard_other": "",
-      "title-controls-menu_one": "",
-      "title-controls-menu_other": "",
-      "title-hidden_one": "",
-      "title-hidden_other": ""
     },
     "general-settings-edit-view": {
       "default_grid_options": {
@@ -7123,11 +7096,6 @@
       "unnamed": "Névtelen hivatkozás"
     },
     "link-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-links-list": "Hivatkozáslista átrendezése"
-        }
-      },
       "render-list": {
         "aria-label-link": "Hivatkozás"
       }
@@ -7144,13 +7112,6 @@
       "type-dashboards": "Irányítópultok",
       "type-link": "Hivatkozás",
       "with-tags": "Címkékkel"
-    },
-    "links-list": {
-      "drag-end-description": "Hivatkozáslista átrendezése",
-      "title-above-dashboard_one": "Irányítópult felett ({{count}})",
-      "title-above-dashboard_other": "Irányítópult felett ({{count}})",
-      "title-controls-menu_one": "Vezérlőmenü ({{count}})",
-      "title-controls-menu_other": "Vezérlőmenü ({{count}})"
     },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "",
@@ -7424,9 +7385,6 @@
       "new-alert-rule": "Új riasztási szabály",
       "title-no-alerting-capable-query-found": "Nem található riasztásképes lekérdezés"
     },
-    "section-filters-list": {
-      "add-filter": ""
-    },
     "section-placement": {
       "top-row": "",
       "top-tab": ""
@@ -7515,31 +7473,10 @@
       "save-dashboard": "Irányítópult mentése",
       "title-unsaved-changes": "Nem mentett változtatások"
     },
-    "use-annotations-category": {
-      "category": {
-        "title": {
-          "annotations": "Jegyzetek"
-        }
-      }
-    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Beállítások"
-        }
-      }
-    },
-    "use-filters-category": {
-      "category": {
-        "title": {
-          "filters": ""
-        }
-      }
-    },
-    "use-links-category": {
-      "category": {
-        "title": {
-          "links": "Hivatkozások"
         }
       }
     },
@@ -7551,13 +7488,6 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Irányítópult elmentve"
     },
-    "use-variables-category": {
-      "category": {
-        "title": {
-          "variables": "Változók"
-        }
-      }
-    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Erre a változóra egyetlen változó vagy irányítópult sem hivatkozik.",
       "aria-label-variable-referenced-other-variables-dashboard": "Erre a változóra más változó vagy irányítópult hivatkozik.",
@@ -7566,23 +7496,6 @@
     },
     "variable-controls": {
       "add-variable": "Változó hozzáadása"
-    },
-    "variable-display-select": {
-      "label": "Megjelenítés",
-      "options": {
-        "controls-menu": {
-          "description": "Akkor látható, ha a vezérlőmenü nyitva van",
-          "label": "Vezérlőmenü"
-        },
-        "hidden": {
-          "description": "Csak szerkesztési módban látható",
-          "label": "Rejtett"
-        },
-        "top-placement-hidden-label": {
-          "description": "",
-          "label": ""
-        }
-      }
     },
     "variable-editable-element": {
       "delete-confirm": "Változó törlése",
@@ -7634,13 +7547,6 @@
       },
       "label": "Elrejtés"
     },
-    "variable-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Változólista átrendezése"
-        }
-      }
-    },
     "variable-multi-prop-static-options-form": {
       "aria-label-static-options": "Statikus opciók"
     },
@@ -7655,23 +7561,6 @@
       "show-more": "Több megjelenítése",
       "preview-of-values_one": "Értékek előnézete ({{count}})",
       "preview-of-values_other": "Értékek előnézete ({{count}})"
-    },
-    "variables-list": {
-      "add-variable": "Változó hozzáadása",
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Változólista átrendezése"
-        }
-      },
-      "top-placement": {
-        "default": ""
-      },
-      "title-controls-menu_one": "Vezérlőmenü ({{count}})",
-      "title-controls-menu_other": "Vezérlőmenü ({{count}})",
-      "title-hidden_one": "Rejtett ({{count}})",
-      "title-hidden_other": "Rejtett ({{count}})",
-      "title-top-placement_one": "",
-      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {

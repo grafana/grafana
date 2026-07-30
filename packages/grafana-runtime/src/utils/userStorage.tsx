@@ -340,6 +340,31 @@ export class UserStorage implements UserStorageType {
       releaseLock();
     }
   }
+
+  async allItems(): Promise<Record<string, string>> {
+    if (!this.canUseUserStorage) {
+      // Fallback to localStorage
+      return store.all(`${this.resourceName}:`);
+    }
+
+    // Acquire lock to serialize operations
+    const releaseLock = await this.acquireLock();
+    try {
+      // Ensure storage is initialized
+      await this.init();
+      let storageSpec = storageCache.get(this.resourceName);
+      if (storageSpec instanceof Promise) {
+        storageSpec = await storageSpec;
+      }
+      if (!storageSpec) {
+        // Storage doesn't exist, fallback to localStorage
+        return store.all(`${this.resourceName}:`);
+      }
+      return { ...storageSpec.data };
+    } finally {
+      releaseLock();
+    }
+  }
 }
 
 // This is a type alias to avoid breaking changes
