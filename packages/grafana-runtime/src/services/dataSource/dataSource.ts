@@ -1,6 +1,6 @@
 import { DataSourceApi, type DataSourceInstanceSettings, type DataSourceRef, type ScopedVars } from '@grafana/data';
 
-import { isExpressionReference } from '../../utils/DataSourceWithBackend';
+import { isExpressionReference } from '../../utils/expressionRef';
 import { UserStorage } from '../../utils/userStorage';
 import { getDataSourceSrv, type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 

@@ -496,6 +496,9 @@ type hashableVersion struct {
 // (shared by every kind) are mixed in alongside per-(group, resource)
 // versioned fields so that changes to the standard set shift every kind's
 // hash and trigger a rebuild via the SearchFieldsHash check.
+//
+// Mapping changes that no declaration describes are carried by an IndexFeature
+// instead, so only the deployments that depend on them rebuild.
 type hashablePayload struct {
 	Standard []hashableField   `json:"s"`
 	Versions []hashableVersion `json:"v"`

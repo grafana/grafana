@@ -5227,17 +5227,6 @@
     }
   },
   "dashboard": {
-    "actions": {
-      "open-settings": ""
-    },
-    "add": {
-      "new-panel": {
-        "button": "Nieuwe paneelknop toevoegen",
-        "description": "Sleep of klik om een paneel toe te voegen",
-        "title": "Paneel"
-      },
-      "pane-header": "Toevoegen"
-    },
     "add-menu": {
       "import": "Importeren uit bibliotheek",
       "paste-panel": "Paneel plakken",
@@ -5307,12 +5296,6 @@
       }
     },
     "canvas-actions": {
-      "add": {
-        "paste": {
-          "description": "Klik of sleep om paneel te plakken",
-          "title": "Paneel plakken"
-        }
-      },
       "add-panel": "Paneel toevoegen",
       "disabled-child-contains-tabs": "Kan niet wijzigen in tabbladen omdat een rij al tabbladen bevat",
       "disabled-nested-grouping": "Groepering is beperkt tot drie niveaus",
@@ -5327,14 +5310,6 @@
       "paste-tab": "Tabblad plakken",
       "ungroup-rows": "Groepering van rijen opheffen",
       "ungroup-tabs": "Groepering van tabbladen opheffen"
-    },
-    "code-pane": {
-      "collapse": "Editor samenvouwen",
-      "copy-as-resource": "",
-      "copy-as-resource-tooltip": "",
-      "expand": "Editor uitvouwen",
-      "header": "Bewerken als code",
-      "modal-title": "Dashboard bewerken als code"
     },
     "conditional-rendering": {
       "conditions": {
@@ -5512,9 +5487,6 @@
         "title": "Opties voor rijen"
       }
     },
-    "description": {
-      "action": "Dashboardbeschrijving wijzigen"
-    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Eigenschap verwijderen"
@@ -5523,6 +5495,8 @@
     "edit-actions": {
       "add": "{{typeName}} toevoegen",
       "add-conditional-rule": "Regel {{ruleDescription}} toevoegen",
+      "dashboard-description": "Dashboardbeschrijving wijzigen",
+      "dashboard-title": "Dashboardtitel wijzigen",
       "duplicate-panel": "Paneel dupliceren",
       "edit-query-result-rule": "Regel voor queryresultaat wijzigen",
       "edit-template-variable-rule": "Regel voor sjabloonvariabele wijzigen",
@@ -5542,7 +5516,12 @@
       "switch-layout": "Indeling wisselen",
       "switch-layout-row": "Indeling wisselen",
       "switch-layout-tab": "Indeling wisselen",
-      "tab-title": "Tabbladtitel wijzigen"
+      "tab-title": "Tabbladtitel wijzigen",
+      "variable-description": "Variabelebeschrijving wijzigen",
+      "variable-hide": "Optie variabele verbergen wijzigen",
+      "variable-label": "Label variabele wijzigen",
+      "variable-name": "Naam variabele wijzigen",
+      "variable-type": "Type variabele wijzigen"
     },
     "empty": {
       "add-library-panel-body": "Voeg visualisaties toe die worden gedeeld met andere dashboards.",
@@ -5789,12 +5768,7 @@
     "layout": {
       "cancel": "Annuleren",
       "common": {
-        "copy": "Kopiëren",
-        "copy-tooltip": "",
-        "delete": "Verwijderen",
-        "duplicate": "Dupliceren",
-        "layout": "Indeling",
-        "paste": "Plakken"
+        "layout": "Indeling"
       },
       "continue": "Doorgaan",
       "panel": {
@@ -5822,7 +5796,6 @@
     },
     "new-panel": {
       "aria-label": "Niet-geconfigureerd paneel. Gebruik Tab om de configuratieopties te bekijken.",
-      "configure-button": "",
       "configure-button-menu": "Navigatiemenu",
       "configure-visualization": "Visualisatie configureren",
       "empty-state-message": "Voer een query uit om deze hier te visualiseren of ga naar alle visualisaties om andere paneeltypen toe te voegen",
@@ -5844,10 +5817,6 @@
         }
       }
     },
-    "options": {
-      "description": "Beschrijving",
-      "title-option": "Titel"
-    },
     "options-pane-category": {
       "aria-label-collapse": "Categorie {{title}} samenvouwen",
       "aria-label-expand": "Categorie {{title}} uitvouwen"
@@ -5857,14 +5826,6 @@
       "Recent options-title-recent-options": "Recente opties",
       "title-matched_one": "{{count}} overeenkomende/{{totalCount}} opties",
       "title-matched_other": "{{count}} overeenkomende/{{totalCount}} opties"
-    },
-    "outline": {
-      "pane-header": "Inhoudsoverzicht",
-      "repeated-item": "Herhalen",
-      "tree-item": {
-        "empty": "(leeg)",
-        "no-title": "<no title>"
-      }
     },
     "override-category-title": {
       "aria-label-remove-override": "Overschrijving verwijderen",
@@ -6045,13 +6006,6 @@
       "save-json-to-file": "JSON opslaan naar bestand",
       "see-docs": "Bekijk de <2>documentatie</2> voor meer informatie over provisioning."
     },
-    "schema-editor": {
-      "apply-button": "Wijzigingen toepassen",
-      "apply-button-disabled-tooltip": "Los validatiefouten op voordat je wijzigingen toepast",
-      "apply-button-disabled-tooltip-yaml": "Het document bevat validatiefouten. Schakel over naar JSON om de inline-foutdetails te bekijken.",
-      "apply-error-title": "Kan wijzigingen niet toepassen",
-      "undo-title": "Schema bewerken"
-    },
     "search-panel": {
       "no-match": ""
     },
@@ -6060,8 +6014,42 @@
     },
     "sidebar": {
       "add": {
+        "annotation-query": {
+          "description": "Gebeurtenisgegevens toevoegen aan grafieken",
+          "label": "Annotatiequery"
+        },
+        "dashboard-controls": "Dashboardbesturingselementen",
+        "filters": {
+          "label": "Filteren en groeperen op"
+        },
+        "group-layouts": "Indelingen van groepen",
+        "link": {
+          "label": "Link",
+          "tooltip": "Link naar een ander dashboard of een externe site toevoegen"
+        },
+        "new-panel": {
+          "button": "Nieuwe paneelknop toevoegen",
+          "description": "Sleep of klik om een paneel toe te voegen",
+          "title": "Paneel"
+        },
+        "pane-header": "Toevoegen",
+        "paste-panel": {
+          "description": "Klik of sleep om paneel te plakken",
+          "title": "Paneel plakken"
+        },
+        "row": {
+          "add-label": "Rij toevoegen",
+          "group-label": "Groeperen in rijen"
+        },
+        "tab": {
+          "add-label": "Tabblad toevoegen",
+          "group-label": "Groeperen in tabbladen"
+        },
         "title": "Toevoegen",
-        "tooltip": "Nieuw element toevoegen"
+        "tooltip": "Nieuw element toevoegen",
+        "variable": {
+          "label": "Variabele"
+        }
       },
       "annotation": {
         "change-data-source": "Annotatiegegevensbron wijzigen",
@@ -6097,16 +6085,52 @@
       },
       "annotations": {
         "add-annotation": "Annotatie toevoegen",
+        "add-annotation-query": "Annotatiequery toevoegen",
+        "name-builtin": "{{annoName}} (ingebouwd)",
+        "name-disabled": "(Uitgeschakeld) {{annoName}} ",
         "reorder": "Verslepen om de volgorde te wijzigen",
-        "select-annotation": "Selecteren"
+        "reorder-description": "Annotatielijst opnieuw ordenen",
+        "select-annotation": "Selecteren",
+        "title-above-dashboard-count_one": "Boven dashboard ({{count}})",
+        "title-above-dashboard-count_other": "Boven dashboard ({{count}})",
+        "title-controls-menu-count_one": "Besturingsmenu ({{count}})",
+        "title-controls-menu-count_other": "Besturingsmenu ({{count}})",
+        "title-hidden-count_one": "Verborgen ({{count}})",
+        "title-hidden-count_other": "Verborgen ({{count}})"
       },
       "dashboard-options": {
+        "annotations": "Annotaties",
+        "description": "Beschrijving",
+        "filters": "",
+        "links": "Links",
+        "open-settings": "",
         "title": "Opties",
-        "tooltip": "Dashboardopties"
+        "title-option": "Titel",
+        "tooltip": "Dashboardopties",
+        "variables": "Variabelen"
       },
+      "drag-to-reorder": "Verslepen om de volgorde te wijzigen",
       "edit-schema": {
+        "apply-button": "Wijzigingen toepassen",
+        "apply-button-disabled-tooltip": "Los validatiefouten op voordat je wijzigingen toepast",
+        "apply-button-disabled-tooltip-yaml": "Het document bevat validatiefouten. Schakel over naar JSON om de inline-foutdetails te bekijken.",
+        "apply-error-title": "Kan wijzigingen niet toepassen",
+        "collapse": "Editor samenvouwen",
+        "copy-as-resource": "",
+        "copy-as-resource-tooltip": "",
+        "expand": "Editor uitvouwen",
+        "modal-title": "Dashboard bewerken als code",
+        "pane-header": "Bewerken als code",
         "title": "Code",
-        "tooltip": "Bewerken als code"
+        "tooltip": "Bewerken als code",
+        "undo-title": "Schema bewerken"
+      },
+      "element-actions": {
+        "copy": "Kopiëren",
+        "copy-tooltip": "",
+        "delete": "Verwijderen",
+        "duplicate": "Dupliceren",
+        "paste": "Plakken"
       },
       "elements": {
         "annotation": "Annotatie",
@@ -6115,6 +6139,7 @@
         "element": "Element",
         "filter": "",
         "filters-set": "",
+        "link": "Link",
         "link-set": "Links",
         "local-variable": "Lokale variabele",
         "multiple-elements": "Meerdere elementen",
@@ -6135,17 +6160,40 @@
       "export": {
         "title": "Exporteren"
       },
-      "filters": "",
+      "feedback-title": "Geef feedback op de nieuwe ervaring voor het bewerken van dashboards",
+      "filters": {
+        "add-filter": "",
+        "reorder-description": "",
+        "title": "",
+        "title-above-dashboard_one": "",
+        "title-above-dashboard_other": "",
+        "title-controls-menu_one": "",
+        "title-controls-menu_other": "",
+        "title-hidden_one": "",
+        "title-hidden_other": "",
+        "tooltip": ""
+      },
       "links": {
         "add-link": "Link toevoegen",
+        "new-link": "Nieuwe link",
         "reorder": "Verslepen om de volgorde te wijzigen",
+        "reorder-description": "Lijst met links opnieuw ordenen",
         "select-link": "Selecteren",
+        "title-above-dashboard_one": "Boven dashboard ({{count}})",
+        "title-above-dashboard_other": "Boven dashboard ({{count}})",
+        "title-controls-menu_one": "Besturingsmenu ({{count}})",
+        "title-controls-menu_other": "Besturingsmenu ({{count}})",
         "untitled": "Link zonder titel"
       },
-      "open": "",
       "outline": {
+        "pane-header": "Inhoudsoverzicht",
+        "repeated-item": "Herhalen",
         "title": "Overzicht",
-        "tooltip": "Inhoudsoverzicht"
+        "tooltip": "Inhoudsoverzicht",
+        "tree-item": {
+          "empty": "(leeg)",
+          "no-title": "<no title>"
+        }
       },
       "redo": "Opnieuw uitvoeren",
       "row": {
@@ -6160,7 +6208,9 @@
       "section-variables": {
         "title": "Variabelen"
       },
+      "select": "Selecteren",
       "snapshot": {
+        "title": "Bron",
         "tooltip": "Origineel dashboard openen"
       },
       "undo": "Ongedaan maken",
@@ -6182,6 +6232,15 @@
         },
         "description": "Beschrijving",
         "description-placeholder": "Omschrijving",
+        "display": "Display",
+        "display-options": {
+          "controls-menu": "Besturingsmenu",
+          "controls-menu-description": "Zichtbaar wanneer het bedieningsmenu open is",
+          "hidden": "Verborgen",
+          "hidden-description": "Alleen zichtbaar in bewerkingsmodus",
+          "label-hidden": "",
+          "label-hidden-description": ""
+        },
         "label": "Label",
         "label-description": "Optionele weergavenaam",
         "name": "Naam",
@@ -6208,9 +6267,17 @@
         "add-variable": "Variabele toevoegen",
         "change-type": "",
         "reorder": "Verslepen om de volgorde te wijzigen",
+        "reorder-description": "Variabelenlijst opnieuw ordenen",
         "select-type": "Kies type variabele",
         "select-type-card-tooltip": "Klik om te selecteren",
-        "select-variable": "Selecteren"
+        "select-variable": "Selecteren",
+        "title-controls-menu_one": "Besturingsmenu ({{count}})",
+        "title-controls-menu_other": "Besturingsmenu ({{count}})",
+        "title-hidden_one": "Verborgen ({{count}})",
+        "title-hidden_other": "Verborgen ({{count}})",
+        "title-top-placement_one": "",
+        "title-top-placement_other": "",
+        "top-placement-default": ""
       },
       "view-panel": {
         "disabled": "",
@@ -6221,6 +6288,18 @@
         "pane-header": "",
         "quick-toggles": "",
         "title": ""
+      },
+      "viz-panel": {
+        "configure-button": "",
+        "delete-panel-text": "Als je dit paneel verwijdert, worden ook alle vragen verwijderd. Weet je zeker dat je wilt doorgaan?",
+        "delete-panel-title": "Paneel verwijderen?",
+        "delete-panel-yes": "Verwijderen",
+        "options": {
+          "configure-button-tooltip": "Query's en visualisatieopties bewerken",
+          "description": "Beschrijving",
+          "title-option": "Titel",
+          "transparent-background": "Transparante achtergrond"
+        }
       }
     },
     "source-link": {
@@ -6278,9 +6357,6 @@
       "tab-warning": {
         "title-not-unique": "Deze titel is niet uniek"
       }
-    },
-    "title": {
-      "action": "Dashboardtitel wijzigen"
     },
     "toolbar": {
       "add": "Toevoegen",
@@ -6372,9 +6448,6 @@
       "save-library-panel": "Bibliotheekpaneel",
       "settings": "Dashboardinstellingen",
       "share-button": "Delen",
-      "snapshot": {
-        "title": "Bron"
-      },
       "star-add-error": "Kan niet toevoegen aan favorieten",
       "star-added": "Toegevoegd aan favorieten",
       "star-remove-error": "Kan niet verwijderen uit favorieten",
@@ -6444,22 +6517,7 @@
       "tags-expected-strings": "tags expected array van strings"
     },
     "variable": {
-      "description": {
-        "action": "Variabelebeschrijving wijzigen"
-      },
-      "description-tooltip": "Beschrijving van variabele",
-      "hide": {
-        "action": "Optie variabele verbergen wijzigen"
-      },
-      "label": {
-        "action": "Label variabele wijzigen"
-      },
-      "name": {
-        "action": "Naam variabele wijzigen"
-      },
-      "type": {
-        "action": "Type variabele wijzigen"
-      }
+      "description-tooltip": "Beschrijving van variabele"
     },
     "version-history-comparison": {
       "button-restore": "Herstellen naar versie {{version}}",
@@ -6482,17 +6540,6 @@
     "view-panel": {
       "back-to-dashboard": "",
       "not-found": ""
-    },
-    "viz-panel": {
-      "delete-panel-text": "Als je dit paneel verwijdert, worden ook alle vragen verwijderd. Weet je zeker dat je wilt doorgaan?",
-      "delete-panel-title": "Paneel verwijderen?",
-      "delete-panel-yes": "Verwijderen",
-      "options": {
-        "configure-button-tooltip": "Query's en visualisatieopties bewerken",
-        "description": "Beschrijving",
-        "title-option": "Titel",
-        "transparent-background": "Transparante achtergrond"
-      }
     }
   },
   "dashboard-import": {
@@ -6606,25 +6653,6 @@
       "name-allow-custom-values": "Aangepaste waarden toestaan",
       "name-enable-group-by": "Groep inschakelen per"
     },
-    "add-filters": {
-      "label": "Filteren en groeperen op"
-    },
-    "add-link": {
-      "inline-instance-name": "Nieuwe link",
-      "label-link": "Link",
-      "tooltip": "Link naar een ander dashboard of een externe site toevoegen"
-    },
-    "add-new-edit-pane": {
-      "group-layouts": "Indelingen van groepen"
-    },
-    "add-row": {
-      "add-label": "Rij toevoegen",
-      "group-label": "Groeperen in rijen"
-    },
-    "add-tab": {
-      "add-label": "Tabblad toevoegen",
-      "group-label": "Groeperen in tabbladen"
-    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Kon niet naar het geselecteerde dashboard navigeren. Probeer het opnieuw.",
@@ -6653,19 +6681,12 @@
         "new-panel": "Nieuw paneel"
       }
     },
-    "add-variable": {
-      "label-variable": "Variabele"
-    },
     "adhoc-origin-filters-controller": {
       "input-placeholder": "Een standaardfilter toevoegen..."
     },
     "adhoc-origin-filters-editor": {
       "description": "Filters die standaard vooraf zijn geselecteerd.",
       "label": "Standaardfilters"
-    },
-    "annotation-control": {
-      "description-add-event-data-to-graphs": "Gebeurtenisgegevens toevoegen aan grafieken",
-      "label-annotation-query": "Annotatiequery"
     },
     "annotation-edit-actions": {
       "description": {
@@ -6682,11 +6703,6 @@
       "delete-title": "Annotatiequery verwijderen"
     },
     "annotation-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-annotations-list": "Annotatielijst opnieuw ordenen"
-        }
-      },
       "render-list": {
         "aria-label-annotation": "Annotatie"
       }
@@ -6732,15 +6748,6 @@
       "query-name": "Querynaam",
       "tooltip-move-down": "Naar beneden",
       "tooltip-move-up": "Naar boven"
-    },
-    "annotations-list": {
-      "drag-end": {
-        "description": "Annotatielijst opnieuw ordenen"
-      }
-    },
-    "annotations-section": {
-      "name-builtin": "{{annoName}} (ingebouwd)",
-      "name-disabled": "(Uitgeschakeld) {{annoName}} "
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Het mag geen ongeldige tekens bevatten: '~', '^', ':', '?', '*', '[', '\\\\' of ']'.",
@@ -6796,15 +6803,6 @@
       "name-values-separated-comma": "Waarden gescheiden door komma",
       "selection-options": "Selectiemogelijkheden"
     },
-    "dashboard-annotations-list": {
-      "add-annotation-query": "Annotatiequery toevoegen",
-      "title-above-dashboard-count_one": "Boven dashboard ({{count}})",
-      "title-above-dashboard-count_other": "Boven dashboard ({{count}})",
-      "title-controls-menu-count_one": "Besturingsmenu ({{count}})",
-      "title-controls-menu-count_other": "Besturingsmenu ({{count}})",
-      "title-hidden-count_one": "Verborgen ({{count}})",
-      "title-hidden-count_other": "Verborgen ({{count}})"
-    },
     "dashboard-link-form": {
       "back-to-list": "Terug naar lijst",
       "label-icon": "Pictogram",
@@ -6835,9 +6833,6 @@
       "tooltip-move-link-down": "Link omlaag verplaatsen",
       "tooltip-move-link-up": "Link omhoog verplaatsen",
       "type": "Type"
-    },
-    "dashboard-links-list": {
-      "add-link": "Link toevoegen"
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Er is een fout opgetreden bij het laden van het dashboard"
@@ -6874,12 +6869,6 @@
         "dashboard-not-found": "Dashboard niet gevonden"
       }
     },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Dashboardbesturingselementen"
-    },
-    "dashboard-sidebar-renderer": {
-      "title-feedback-dashboard-editing-experience": "Geef feedback op de nieuwe ervaring voor het bewerken van dashboards"
-    },
     "data-source-variable-form": {
       "data-source-options": "Opties voor gegevensbronnen",
       "description-instance-name-filter": "Regex-filter voor welke gegevensbroninstanties uit de lijst met variabele waarden moet worden gekozen. Laat leeg voor alles.",
@@ -6913,12 +6902,6 @@
     "description-label": {
       "description": "Beschrijving"
     },
-    "draggable-item": {
-      "drag-to-reorder": "Verslepen om de volgorde te wijzigen"
-    },
-    "draggable-items-list": {
-      "select": "Selecteren"
-    },
     "edit-link-view": {
       "edit-link-page-nav": {
         "text": {
@@ -6941,16 +6924,6 @@
       "show-more": "Meer weergeven",
       "sql-name": "Transformeren met SQL",
       "sql-transformation-description": "Manipuleer je gegevens met MySQL-achtige syntaxis"
-    },
-    "filters-list": {
-      "add-filter": "",
-      "reorder-description": "",
-      "title-above-dashboard_one": "",
-      "title-above-dashboard_other": "",
-      "title-controls-menu_one": "",
-      "title-controls-menu_other": "",
-      "title-hidden_one": "",
-      "title-hidden_other": ""
     },
     "general-settings-edit-view": {
       "default_grid_options": {
@@ -7123,11 +7096,6 @@
       "unnamed": "Naamloze link"
     },
     "link-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-links-list": "Lijst met links opnieuw ordenen"
-        }
-      },
       "render-list": {
         "aria-label-link": "Link"
       }
@@ -7144,13 +7112,6 @@
       "type-dashboards": "Dashboards",
       "type-link": "Link",
       "with-tags": "Met labels"
-    },
-    "links-list": {
-      "drag-end-description": "Lijst met links opnieuw ordenen",
-      "title-above-dashboard_one": "Boven dashboard ({{count}})",
-      "title-above-dashboard_other": "Boven dashboard ({{count}})",
-      "title-controls-menu_one": "Besturingsmenu ({{count}})",
-      "title-controls-menu_other": "Besturingsmenu ({{count}})"
     },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "",
@@ -7424,9 +7385,6 @@
       "new-alert-rule": "Nieuwe waarschuwingsregel",
       "title-no-alerting-capable-query-found": "Geen query gevonden die waarschuwingen mogelijk maakt"
     },
-    "section-filters-list": {
-      "add-filter": ""
-    },
     "section-placement": {
       "top-row": "",
       "top-tab": ""
@@ -7515,31 +7473,10 @@
       "save-dashboard": "Dashboard opslaan",
       "title-unsaved-changes": "Onopgeslagen wijzigingen"
     },
-    "use-annotations-category": {
-      "category": {
-        "title": {
-          "annotations": "Annotaties"
-        }
-      }
-    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Instellingen"
-        }
-      }
-    },
-    "use-filters-category": {
-      "category": {
-        "title": {
-          "filters": ""
-        }
-      }
-    },
-    "use-links-category": {
-      "category": {
-        "title": {
-          "links": "Links"
         }
       }
     },
@@ -7551,13 +7488,6 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard opgeslagen"
     },
-    "use-variables-category": {
-      "category": {
-        "title": {
-          "variables": "Variabelen"
-        }
-      }
-    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Er wordt door geen enkele variabele of dashboard naar deze variabele verwezen.",
       "aria-label-variable-referenced-other-variables-dashboard": "Deze variabele wordt gebruikt door andere variabelen of dashboard.",
@@ -7566,23 +7496,6 @@
     },
     "variable-controls": {
       "add-variable": "Variabele toevoegen"
-    },
-    "variable-display-select": {
-      "label": "Display",
-      "options": {
-        "controls-menu": {
-          "description": "Zichtbaar wanneer het bedieningsmenu open is",
-          "label": "Besturingsmenu"
-        },
-        "hidden": {
-          "description": "Alleen zichtbaar in bewerkingsmodus",
-          "label": "Verborgen"
-        },
-        "top-placement-hidden-label": {
-          "description": "",
-          "label": ""
-        }
-      }
     },
     "variable-editable-element": {
       "delete-confirm": "Variabele verwijderen",
@@ -7634,13 +7547,6 @@
       },
       "label": "Verbergen"
     },
-    "variable-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Variabelenlijst opnieuw ordenen"
-        }
-      }
-    },
     "variable-multi-prop-static-options-form": {
       "aria-label-static-options": "Statische opties"
     },
@@ -7655,23 +7561,6 @@
       "show-more": "Meer weergeven",
       "preview-of-values_one": "Voorbeeldweergave van waarden ({{count}})",
       "preview-of-values_other": "Voorbeeldweergave van waarden ({{count}})"
-    },
-    "variables-list": {
-      "add-variable": "Variabele toevoegen",
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Variabelenlijst opnieuw ordenen"
-        }
-      },
-      "top-placement": {
-        "default": ""
-      },
-      "title-controls-menu_one": "Besturingsmenu ({{count}})",
-      "title-controls-menu_other": "Besturingsmenu ({{count}})",
-      "title-hidden_one": "Verborgen ({{count}})",
-      "title-hidden_other": "Verborgen ({{count}})",
-      "title-top-placement_one": "",
-      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {

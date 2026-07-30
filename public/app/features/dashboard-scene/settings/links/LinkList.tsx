@@ -11,7 +11,7 @@ import { type DashboardScene } from '../../scene/DashboardScene';
 import { dashboardEditActions } from '../../sidebar/shared';
 import { DashboardInteractions } from '../../utils/interactions';
 
-import { openAddLinkPane, openLinkEditPane } from './LinkAddEditableElement';
+import { openAddLinkPane, openEditLinkPane } from './LinkAddEditableElement';
 
 function partitionLinks(links: DashboardLink[]) {
   const standardLinks: Array<{ link: DashboardLink; originalIndex: number }> = [];
@@ -34,7 +34,7 @@ export function LinkList({ dashboard }: { dashboard: DashboardScene }) {
 
   const onSelectLink = useCallback(
     (linkIndex: number) => {
-      openLinkEditPane(dashboard, linkIndex);
+      openEditLinkPane(dashboard, linkIndex);
     },
     [dashboard]
   );
@@ -56,10 +56,7 @@ export function LinkList({ dashboard }: { dashboard: DashboardScene }) {
 
         dashboardEditActions.edit({
           source: dashboard,
-          description: t(
-            'dashboard-scene.link-list.create-drag-end-handler.description.reorder-links-list',
-            'Reorder links list'
-          ),
+          description: t('dashboard.sidebar.links.reorder-description', 'Reorder links list'),
           perform: () => {
             if (!result.destination || result.destination.index === result.source.index) {
               return;

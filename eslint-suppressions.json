@@ -2443,9 +2443,6 @@
     }
   },
   "public/app/features/variables/query/reducer.ts": {
-    "@grafana/no-locale-compare": {
-      "count": 1
-    },
     "@typescript-eslint/no-explicit-any": {
       "count": 2
     }

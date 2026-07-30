@@ -37,7 +37,7 @@ export function AddFilters({ dashboardScene }: { dashboardScene: DashboardSceneL
   return (
     <AddButton
       icon="filter"
-      label={t('dashboard-scene.add-filters.label', 'Filter and Group by')}
+      label={t('dashboard.sidebar.add.filters.label', 'Filter and Group by')}
       onClick={onAddFiltersClick}
     />
   );

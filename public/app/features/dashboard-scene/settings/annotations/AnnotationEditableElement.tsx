@@ -26,7 +26,7 @@ import { annotationEditActions } from './actions';
 
 export type AnnotationLayer = dataLayers.AnnotationsDataLayer | DashboardAnnotationsDataLayer;
 
-function useEditPaneOptions(this: AnnotationEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+function useSidebarOptions(this: AnnotationEditableElement, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const annotationCategoryId = useId();
   const annotationNameId = useId();
   const enabledId = useId();
@@ -106,7 +106,7 @@ export class AnnotationEditableElement implements EditableDashboardElement {
     };
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this);
+  public useSidebarOptions = useSidebarOptions.bind(this);
 
   public onDuplicate() {
     const dataLayerSet = this.layer.parent;

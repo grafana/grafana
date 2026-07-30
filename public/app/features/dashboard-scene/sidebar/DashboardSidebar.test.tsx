@@ -129,18 +129,18 @@ describe('DashboardSidebar', () => {
       expect(sidebar.getSelectedObject()).toBe(panel);
     });
 
-    it('Selecting tab with closed edit pane should not select tab', () => {
+    it('Selecting tab with closed sidebar should not select tab', () => {
       const { sidebar, tab1 } = setupWithTwoTabs();
 
-      // Selecting tab with closed edit pane should not select tab
+      // Selecting tab with closed sidebar should not select tab
       sidebar.selectObject(tab1);
       expect(sidebar.getSelectedObject()).toBeUndefined();
     });
 
-    it('Selecting tab with open edit pane should select tab', () => {
+    it('Selecting tab with open sidebar should select tab', () => {
       const { sidebar, tab1 } = setupWithTwoTabs();
 
-      // Selecting tab with closed edit pane should not select tab
+      // Selecting tab with closed sidebar should not select tab
       sidebar.openPane(new DashboardOutline({}));
       sidebar.selectObject(tab1);
       expect(sidebar.getSelectedObject()).toBe(tab1);

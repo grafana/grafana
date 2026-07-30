@@ -12,8 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // namespacedScope is the manifest's spelling for a kind that lives in a
@@ -35,25 +35,29 @@ type groupResource struct {
 	resource string
 }
 
-// Build returns the search routes to mount, or nil when the endpoint is off.
+// Build returns the search routes to mount, or nil when the endpoint is off or
+// there is no client to serve it with.
 //
 // builders and installers are the two ways a kind reaches the apiserver; a route
 // is only mounted on a group version one of them actually serves.
 func Build(
-	cfg *setting.Cfg,
+	enabled bool,
 	tracer tracing.Tracer,
-	unified resource.ResourceClient,
+	index resourcepb.ResourceIndexClient,
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 ) []builder.GroupVersionRoutes {
-	if cfg == nil || !cfg.SectionWithEnvOverrides(searchapi.ConfigSection).Key(searchapi.ConfigKey).MustBool(false) {
+	// Whether the endpoint is on is read by the caller, because the two servers
+	// that mount it are configured differently: one from an ini file, one from
+	// flags.
+	if !enabled || index == nil {
 		return nil
 	}
 
 	// Search fields come from the compiled-in app manifests, the same
 	// declarations the index mapping is built from.
 	manifests := resource.AppManifests()
-	handler := searchapi.NewHandler(unified, resource.NewManifestBackedProvider(manifests), tracer)
+	handler := searchapi.NewHandler(index, resource.NewManifestBackedProvider(manifests), tracer)
 
 	served := servedGroupVersions(builders, installers)
 	byGroupVersion := map[schema.GroupVersion][]searchapi.Route{}
