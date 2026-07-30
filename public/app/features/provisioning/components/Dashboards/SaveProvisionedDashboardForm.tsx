@@ -3,6 +3,7 @@ import { Controller, useForm, FormProvider } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
@@ -212,14 +213,14 @@ export function SaveProvisionedDashboardForm({
   );
 
   const handleDismiss = useCallback(
-    (wrapper: ResourceWrapper) => {
+    async (wrapper: ResourceWrapper) => {
       // Baseline against exactly what was committed. On the update path that is the
       // change-trimmed model; getSaveModel() would re-include values the toggles
       // omitted, so change detection would treat them as already saved until reload.
       const model = savedSpecRef.current ?? dashboard.getSaveModel();
       const resourceData = wrapper.resource.upsert || wrapper.resource.dryRun;
       const saveResponse = createSaveResponseFromResource(resourceData);
-      dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
+      await dashboard.saveCompleted(model, saveResponse, defaultValues.folder?.uid);
       dashboardWatcher.clearIgnoreSave();
     },
     [dashboard, defaultValues.folder?.uid]
@@ -598,6 +599,7 @@ export function SaveProvisionedDashboardForm({
             <Button
               variant="primary"
               type="submit"
+              data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
               disabled={
                 request.isLoading || readOnly || !isDirtyState || isSubmitting || isValidating || isCreatingFolder
               }

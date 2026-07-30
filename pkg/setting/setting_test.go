@@ -776,6 +776,20 @@ func TestNewCfgFromINIFile(t *testing.T) {
 	require.Equal(t, "test.com", cfg.Domain)
 }
 
+func TestDashboardDefaultPreload(t *testing.T) {
+	t.Run("defaults to false when unset", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(``))
+		require.NoError(t, err)
+		require.False(t, cfg.DashboardDefaultPreload)
+	})
+
+	t.Run("reads the configured value", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte("[dashboards]\ndefault_preload = true"))
+		require.NoError(t, err)
+		require.True(t, cfg.DashboardDefaultPreload)
+	})
+}
+
 func TestDynamicSection(t *testing.T) {
 	t.Parallel()
 

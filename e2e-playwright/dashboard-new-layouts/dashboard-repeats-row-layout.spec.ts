@@ -102,17 +102,17 @@ test.describe(
       await expect(getRowByTitle(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.at(0)}`)).toBeHidden();
     });
 
-    test('updates title for repeat rows in edit pane', async ({ dashboardPage, selectors, page }) => {
+    test('updates title for repeat rows in sidebar', async ({ dashboardPage, selectors, page }) => {
       await importTestDashboard(
         page,
         selectors,
-        'Rows layout repeats - update through edit pane',
+        'Rows layout repeats - update through sidebar',
         JSON.stringify(V2DashWithRowRepeats)
       );
 
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
-      // select first/original repeat row to activate edit pane
+      // select first/original repeat row to activate sidebar
       await selectRow(dashboardPage, selectors, `${repeatTitleBase}${repeatOptions.at(0)}`);
 
       const titleInput = dashboardPage.getByGrafanaSelector(
@@ -179,7 +179,7 @@ test.describe(
       await page.keyboard.press('e');
 
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardSidebarSplitter.primaryBody)
       ).toBeHidden(); // verifying that panel editor loaded
 
       const panelTitleInput = dashboardPage.getByGrafanaSelector(
@@ -197,7 +197,7 @@ test.describe(
         .getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
         .click();
       await expect(
-        dashboardPage.getByGrafanaSelector(selectors.components.DashboardEditPaneSplitter.primaryBody)
+        dashboardPage.getByGrafanaSelector(selectors.components.DashboardSidebarSplitter.primaryBody)
       ).toBeVisible(); // verifying that dashboard loaded
 
       // close first row to make sure we are viewing second row
@@ -522,9 +522,13 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
       await moveRow(dashboardPage, page, selectors, `${repeatTitleBase}1`, singleRowTitle);
 
-      let singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
-      const repeatedRowBox = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}1`);
-      expect(singleRowBox.y).toBeLessThan(repeatedRowBox.y || 0);
+      // The row order is only updated after the drop animation finishes (onDragEnd),
+      // so retry the position check until the reorder has been applied
+      await expect(async () => {
+        const singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
+        const repeatedRowBox = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}4`); // note: 4 (the last repeated row) because we wait for the whole repeated group to move ;)
+        expect(singleRowBox.y).toBeLessThan(repeatedRowBox.y);
+      }).toPass();
 
       // Wait for save button to be active (indicates changes have been applied)
       // since we cannot verify that changes have been applied by checking the JSON diff we have to check the Save button state
@@ -536,7 +540,7 @@ test.describe(
 
       await page.reload();
 
-      singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
+      const singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
       for (let i = 1; i <= repeatOptions.length; i++) {
         // verify move by row position
         const repeatedRow = await getRowBox(dashboardPage, selectors, `${repeatTitleBase}${i}`);

@@ -27,8 +27,8 @@ export interface Props extends DOMAttributes {
 
 export const MegaMenu = memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
-    const styles = useStyles2(getStyles);
     const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+    const styles = useStyles2(getStyles, visualRefreshEnabled);
     const { chrome } = useGrafana();
     const state = chrome.useState();
     const { isLoading: starredItemsLoading, isError: starredItemsError } = useSyncStarredItemsInNav();
@@ -279,7 +279,7 @@ export const MegaMenu = memo(
 
 MegaMenu.displayName = 'MegaMenu';
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
   return {
     content: css({
       display: 'flex',
@@ -314,11 +314,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     // Subtle grey box around the pinned items. Left inset (margin-left + padding-left = 1.5) matches
     // the nav row icon inset (itemList padding-left 1 + label padding-left 0.5) so the breadcrumb leaf
     // icons line up with the nav section icons. No bottom margin — the divider owns the gap below.
+    // Under visual refresh, mirror the page content pane: flush at the top, matching the page
+    // background token and radius. Off refresh, keep the raised secondary card.
     pinnedBox: css({
-      backgroundColor: theme.colors.background.secondary,
+      backgroundColor: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.secondary,
       border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.default,
-      margin: theme.spacing(1, 1, 0, 1),
+      borderRadius: visualRefreshEnabled ? theme.shape.radius.lg : theme.shape.radius.default,
+      margin: visualRefreshEnabled ? theme.spacing(0, 1, 0, 1) : theme.spacing(1, 1, 0, 1),
       padding: theme.spacing(1),
     }),
     // "Pinned" heading row — a small section label (the medium-weight secondary Text below reads as

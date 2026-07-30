@@ -25,7 +25,7 @@ import {
 } from './api';
 import { MoveVariablesModal } from './components/MoveVariablesModal';
 import { VariablesTable } from './components/VariablesTable';
-import { buildVariablesTree, getVariableFolderUid, getVariableSpecName } from './utils';
+import { buildVariablesTree, canManageGlobalVariables, getVariableFolderUid, getVariableSpecName } from './utils';
 
 const LIST_URL = '/dashboards/variables';
 
@@ -63,6 +63,10 @@ export default function VariablesManagementPage() {
   const tree = useMemo(() => buildVariablesTree(variables, folderTitles), [variables, folderTitles]);
 
   const selectedVariables = variables.filter((v) => v.metadata.name && selected.has(v.metadata.name));
+  const allowGlobalScope = canManageGlobalVariables();
+  const selectionIncludesGlobal = selectedVariables.some((v) => !getVariableFolderUid(v));
+  // Match editor: viewers can select global variables but cannot delete them.
+  const canDeleteSelection = allowGlobalScope || !selectionIncludesGlobal;
 
   const onToggleFolder = (folderUid: string) => {
     setExpandedFolders((prev) => {
@@ -230,19 +234,21 @@ export default function VariablesManagementPage() {
         {isError ? (
           <LoadVariablesError error={error} />
         ) : isEmpty ? (
-          <EmptyState
-            variant="call-to-action"
-            message={t('variables-management.page.empty-title', "You haven't created any variables yet")}
-            button={
-              <Button icon="plus" size="lg" onClick={() => locationService.push(`${LIST_URL}/new`)}>
-                <Trans i18nKey="variables-management.page.empty-cta">New variable</Trans>
-              </Button>
-            }
-          >
-            <Trans i18nKey="variables-management.page.empty-body">
-              Variables created here can be shared across dashboards, either globally or scoped to a folder.
-            </Trans>
-          </EmptyState>
+          <div className={styles.content}>
+            <EmptyState
+              variant="call-to-action"
+              message={t('variables-management.page.empty-title', "You haven't created any variables yet")}
+              button={
+                <Button icon="plus" size="lg" onClick={() => locationService.push(`${LIST_URL}/new`)}>
+                  <Trans i18nKey="variables-management.page.empty-cta">New variable</Trans>
+                </Button>
+              }
+            >
+              <Trans i18nKey="variables-management.page.empty-body">
+                Variables created here can be shared across dashboards, either globally or scoped to a folder.
+              </Trans>
+            </EmptyState>
+          </div>
         ) : (
           <div className={styles.content}>
             {selected.size > 0 && (
@@ -257,7 +263,11 @@ export default function VariablesManagementPage() {
                 <Button variant="secondary" onClick={() => setPendingAction('move')} disabled={isProcessing}>
                   <Trans i18nKey="variables-management.page.move">Move</Trans>
                 </Button>
-                <Button variant="destructive" onClick={() => setPendingAction('delete')} disabled={isProcessing}>
+                <Button
+                  variant="destructive"
+                  onClick={() => setPendingAction('delete')}
+                  disabled={isProcessing || !canDeleteSelection}
+                >
                   <Trans i18nKey="variables-management.page.delete">Delete</Trans>
                 </Button>
               </Stack>
@@ -293,6 +303,7 @@ export default function VariablesManagementPage() {
           <MoveVariablesModal
             count={selectedVariables.length}
             isMoving={isProcessing}
+            includesGlobalVariables={selectionIncludesGlobal}
             onConfirm={onBulkMove}
             onDismiss={() => setPendingAction(undefined)}
           />

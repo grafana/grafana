@@ -31,6 +31,13 @@ concurrency:
 
 permissions: {}
 
+env:
+  # Parallel test binaries share one testcontainers session; Ryuk prunes all
+  # session containers 10s after its last client disconnects, which races with
+  # binaries that are still using their containers. Runners are ephemeral, so
+  # container cleanup is unnecessary here anyway.
+  TESTCONTAINERS_RYUK_DISABLED: 'true'
+
 jobs:
   detect-changes:
     # Run on `grafana/grafana` main branch, or on pull requests to prevent double-running on mirrors

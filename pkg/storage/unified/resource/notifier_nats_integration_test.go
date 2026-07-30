@@ -2,11 +2,11 @@ package resource
 
 import (
 	"context"
-	"net"
 	"testing"
 	"time"
 
 	"github.com/grafana/dskit/services"
+	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
 	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -86,7 +86,17 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 				ResourceVersion: 1,
 				Action:          action,
 			})
-			got := recvEvent(t, out)
+			// Watch subscribes to the whole change stream, so a late warm-up
+			// duplicate (establishInterest publishes many and drains only on a
+			// timeout) can still be queued ahead of ours. Skip anything that is not
+			// the playlist event we just published.
+			var got Event
+			for {
+				got = recvEvent(t, out)
+				if got.Namespace == "default" {
+					break
+				}
+			}
 			assert.Equal(t, action, got.Action, "action %q must survive the round trip", action)
 		}
 	})
@@ -184,10 +194,8 @@ func startNatsRoundTrip(t *testing.T) (context.Context, *nats.PublisherService, 
 		Enabled:       true,
 		Mode:          setting.NATSModeEmbedded,
 		ListenAddress: "127.0.0.1",
-		// Free ports avoid collisions; a zero ClusterPort leaves ClusterAddr() nil,
-		// which the server dereferences.
-		ClientPort:  freePort(t),
-		ClusterPort: freePort(t),
+		ClientPort:    natsserver.RANDOM_PORT,
+		ClusterPort:   natsserver.RANDOM_PORT,
 	}
 
 	server, err := nats.ProvideServer(cfg, nil, prometheus.NewRegistry())
@@ -244,13 +252,4 @@ func startNatsService(t *testing.T, ctx context.Context, svc services.Service) {
 		svc.StopAsync()
 		_ = svc.AwaitTerminated(context.Background())
 	})
-}
-
-func freePort(t *testing.T) int {
-	t.Helper()
-	l, err := net.Listen("tcp", "127.0.0.1:0")
-	require.NoError(t, err)
-	port := l.Addr().(*net.TCPAddr).Port
-	require.NoError(t, l.Close())
-	return port
 }

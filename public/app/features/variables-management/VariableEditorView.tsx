@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -55,14 +56,20 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
   const styles = useStyles2(getStyles);
   const isNew = !source;
   const allowGlobalScope = canManageGlobalVariables();
+  const [searchParams] = useSearchParams();
   // '' is the FolderPicker root/global uid. For non-editors root is hidden, so start
   // with undefined (empty selection) — NestedFolderPicker labels '' as "Dashboards"
-  // even when showRootFolder is false.
+  // even when showRootFolder is false. New variables may preselect a folder via
+  // ?folderUid= from the folder Variables tab.
   const [folderUid, setFolderUid] = useState<string | undefined>(() => {
     if (source) {
       return getVariableFolderUid(source) ?? '';
     }
-    return canManageGlobalVariables() ? '' : undefined;
+    const folderFromUrl = searchParams.get('folderUid');
+    if (folderFromUrl) {
+      return folderFromUrl;
+    }
+    return allowGlobalScope ? '' : undefined;
   });
   const [sceneVariable, setSceneVariable] = useState<SceneVariable>(() =>
     source
@@ -91,6 +98,8 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
   // Non-editors may only save folder-scoped variables (root/global requires Editor/Admin).
   const hasValidFolderScope = allowGlobalScope || Boolean(folderUid);
   const canSave = !isBusy && !hasNameError && !collisionError && !isCheckingName && hasValidFolderScope;
+  // Match Save: viewers can open a global variable but cannot delete it.
+  const canDelete = !isBusy && (allowGlobalScope || Boolean(source && getVariableFolderUid(source)));
 
   const scene = useMemo(
     () =>
@@ -237,7 +246,7 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
           <Trans i18nKey="variables-management.editor.cancel">Cancel</Trans>
         </Button>
         {!isNew && (
-          <Button variant="destructive" fill="outline" onClick={() => setShowDeleteModal(true)} disabled={isBusy}>
+          <Button variant="destructive" fill="outline" onClick={() => setShowDeleteModal(true)} disabled={!canDelete}>
             <Trans i18nKey="variables-management.editor.delete">Delete</Trans>
           </Button>
         )}

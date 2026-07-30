@@ -17,6 +17,19 @@ export const versionedComponents = {
     container: {
       '10.2.3': 'data-testid radio-button',
     },
+    /**
+     * Identifies one option of a RadioButtonGroup by its `value`, so the selector does not depend
+     * on the option's translated label.
+     *
+     * Unique **within a group, not across a page** — generic values collide, and `true`/`false`
+     * are used by a dozen different groups. Always scope it to the group, either via the group's
+     * own `data-testid` prop or `RadioGroup.container`:
+     *
+     *     `${RadioGroup.container} ${RadioButton.option('code')}`
+     */
+    option: {
+      '13.2.0': (value: string) => `data-testid radio-button-option ${value}`,
+    },
   },
   Breadcrumbs: {
     breadcrumb: {
@@ -57,11 +70,45 @@ export const versionedComponents = {
       '13.0.0': 'data-testid Card heading',
     },
   },
+  CreateNewButton: {
+    newButton: {
+      '13.2.0': 'data-testid CreateNewButton New button',
+    },
+    newDashboardLink: {
+      '13.2.0': 'data-testid CreateNewButton New dashboard link',
+    },
+    newTemplateDashboardLink: {
+      '13.2.0': 'data-testid CreateNewButton New template dashboard link',
+    },
+  },
+  BuildDashboardButton: {
+    triggerButton: {
+      '13.2.0': 'data-testid BuildDashboardButton trigger button',
+    },
+    fromSuggestionsButton: {
+      '13.2.0': 'data-testid BuildDashboardButton from suggestions button',
+    },
+  },
+  /**
+   * @deprecated use DashboardSidebarSplitter instead
+   */
   DashboardEditPaneSplitter: {
     primaryBody: {
+      '13.2.0': 'data-testid DashboardSidebarSplitter primary body',
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
     },
     bodyContainer: {
+      '13.2.0': 'data-testid DashboardSidebarSplitter body container',
+      '12.4.0': 'data-testid DashboardEditPaneSplitter body container',
+    },
+  },
+  DashboardSidebarSplitter: {
+    primaryBody: {
+      '13.2.0': 'data-testid DashboardSidebarSplitter primary body',
+      '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
+    },
+    bodyContainer: {
+      '13.2.0': 'data-testid DashboardSidebarSplitter body container',
       '12.4.0': 'data-testid DashboardEditPaneSplitter body container',
     },
   },
@@ -88,9 +135,11 @@ export const versionedComponents = {
       '12.4.0': 'data-testid sidebar add new panel',
     },
     configurePanelButton: {
+      '13.2.0': 'data-testid sidebar configure panel button',
       '13.1.0': 'data-testid edit pane configure panel button',
     },
     addNewVariableButton: {
+      '13.2.0': 'data-testid sidebar add new variable button',
       '13.1.0': 'data-testid edit pane add new variable button',
     },
   },
@@ -185,6 +234,9 @@ export const versionedComponents = {
     absoluteTimeRangeTitle: {
       [MIN_GRAFANA_VERSION]: 'data-testid-absolute-time-range-narrow',
     },
+    timeRangeOption: {
+      '13.2.0': (from: string, to: string) => `data-testid TimePicker time range option ${from} to ${to}`,
+    },
   },
   DataSourcePermissions: {
     form: { '9.5.0': () => 'form[name="addPermission"]' },
@@ -204,6 +256,11 @@ export const versionedComponents = {
       '10.2.3': 'data-testid date-time-input',
     },
   },
+  AddToDashboard: {
+    confirmButton: {
+      '13.2.0': 'data-testid Add to dashboard confirm button',
+    },
+  },
   DataSource: {
     TestData: {
       QueryTab: {
@@ -212,6 +269,9 @@ export const versionedComponents = {
         },
         scenarioSelect: {
           [MIN_GRAFANA_VERSION]: 'Test Data Query scenario select',
+        },
+        labelsInput: {
+          '13.2.0': (refId: string) => `data-testid Test Data Query labels input ${refId}`,
         },
         max: {
           [MIN_GRAFANA_VERSION]: 'TestData max',
@@ -575,6 +635,17 @@ export const versionedComponents = {
         RowExpander: {
           '12.4.0': 'data-testid tableng row expander',
         },
+        cellActions: {
+          inspectButton: {
+            '13.2.0': 'data-testid tableng cell-actions inspect-button',
+          },
+          filterForButton: {
+            '13.2.0': 'data-testid tableng cell-actions filter-for-button',
+          },
+          filterOutButton: {
+            '13.2.0': 'data-testid tableng cell-actions filter-out-button',
+          },
+        },
         Filters: {
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',
@@ -659,6 +730,16 @@ export const versionedComponents = {
       saveAsTitleInput: {
         '11.1.0': 'Save dashboard title field',
       },
+    },
+  },
+  Modal: {
+    closeButton: {
+      '13.2.0': 'data-testid Modal close button',
+    },
+  },
+  UnconfiguredPanel: {
+    actionButton: {
+      '13.2.0': (key: string) => `data-testid UnconfiguredPanel action-button ${key}`,
     },
   },
   PanelEditor: {
@@ -994,6 +1075,17 @@ export const versionedComponents = {
     disableTransformationButton: {
       '10.4.0': 'data-testid Disable transformation button',
     },
+    FilterByValue: {
+      addConditionButton: {
+        '13.2.0': 'data-testid Transforms FilterByValue add-condition-button',
+      },
+      fieldSelect: {
+        '13.2.0': (index: string) => `data-testid Transforms FilterByValue field-select ${index}`,
+      },
+      matchSelect: {
+        '13.2.0': (index: string) => `data-testid Transforms FilterByValue match-select ${index}`,
+      },
+    },
     Reduce: {
       modeLabel: {
         '10.2.3': 'data-testid Transform mode label',
@@ -1064,6 +1156,9 @@ export const versionedComponents = {
     addTransformationButton: {
       '10.1.0': 'data-testid add transformation button',
       [MIN_GRAFANA_VERSION]: 'add transformation button',
+    },
+    addTransformationBelowButton: {
+      '13.2.0': (afterId: string) => `data-testid add transformation below ${afterId}`,
     },
     goToQueriesButton: {
       '10.4.0': 'data-testid go to queries button',
@@ -1154,7 +1249,22 @@ export const versionedComponents = {
       },
     },
   },
+  CommandPalette: {
+    searchInput: {
+      '13.2.0': 'data-testid Command palette search input',
+    },
+  },
+  SearchField: {
+    searchInput: {
+      '13.2.0': 'data-testid Search field input',
+    },
+  },
 
+  PageActionBar: {
+    searchInput: {
+      '13.2.0': 'data-testid PageActionBar search input',
+    },
+  },
   PageToolbar: {
     container: { [MIN_GRAFANA_VERSION]: () => '.page-toolbar' },
     item: {
@@ -1207,6 +1317,17 @@ export const versionedComponents = {
     },
     queryEditorRow: {
       '13.2.0': (dataSourceType: string, refId: string) => `data-testid Query editor row ${dataSourceType} ${refId}`,
+    },
+  },
+  ButtonSelect: {
+    /**
+     * Identifies one option of a ButtonSelect menu, keyed on the option's `value` when it is
+     * scalar so the selector does not depend on the option's translated label. Options whose
+     * values have no meaningful string form (objects, undefined) render the bare selector.
+     */
+    option: {
+      '13.2.0': (value?: string) =>
+        value ? `data-testid ButtonSelect option ${value}` : 'data-testid ButtonSelect option',
     },
   },
   Select: {
@@ -1268,6 +1389,9 @@ export const versionedComponents = {
     input: {
       '10.4.0': 'data-testid folder-picker-input',
     },
+    triggerButton: {
+      '13.2.0': 'data-testid folder-picker-trigger-button',
+    },
   },
   ReadonlyFolderPicker: {
     container: {
@@ -1285,6 +1409,11 @@ export const versionedComponents = {
     },
     dataSourceList: {
       '10.4.0': 'data-testid Data source list dropdown',
+    },
+    dataSourceCard: {
+      '13.2.0': (name: string) => `data-testid data source card ${name}`,
+      // Before 13.2.0 the card carried a hardcoded, non-parameterized testid.
+      [MIN_GRAFANA_VERSION]: (_name: string) => 'data-source-card',
     },
     advancedModal: {
       dataSourceList: {
@@ -1314,6 +1443,9 @@ export const versionedComponents = {
   TraceViewer: {
     spanBar: {
       '9.0.0': 'data-testid SpanBar--wrapper',
+    },
+    filtersRow: {
+      '13.2.0': 'data-testid trace-page-header-adhoc-filters-row',
     },
   },
   QueryField: {
@@ -1676,6 +1808,18 @@ export const versionedComponents = {
       },
       applyInverse: {
         ['12.1.0']: 'data-testid viz-tooltip-footer-apply-inverse-filters-button',
+      },
+    },
+  },
+  Logs: {
+    logLineMenu: {
+      menuButton: {
+        '13.2.0': 'data-testid Log line menu button',
+      },
+    },
+    fieldsSidebar: {
+      searchInput: {
+        '13.2.0': 'data-testid Log fields search input',
       },
     },
   },
