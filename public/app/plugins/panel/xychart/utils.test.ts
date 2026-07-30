@@ -3,7 +3,6 @@ import {
   createTheme,
   FieldColorModeId,
   FieldType,
-  formattedValueToString,
   getDisplayProcessor,
   type DataFrame,
   type Field,
@@ -63,7 +62,7 @@ describe('fmt', () => {
     const field = frame.fields[0];
     field.display = getDisplayProcessor({ field, theme });
 
-    expect(fmt(field, 42)).toBe(formattedValueToString(field.display(42)));
+    expect(fmt(field, 42)).toBe('42 °C');
   });
 
   it('falls back to string coercion when field.display is undefined', () => {
@@ -160,8 +159,8 @@ describe('prepSeries', () => {
       const result = prepSeries(SeriesMapping.Auto, [], [frame], fieldConfig);
 
       expect(result).toHaveLength(1);
-      const expectedColor = theme.visualization.getColorByName(theme.visualization.palette[0]);
-      expect(result[0].color.fixed).toBe(expectedColor);
+      // first palette color, auto-assigned when no color field/config is present
+      expect(result[0].color.fixed).toBe('#73BF69');
     });
 
     it('assigns fixed color from field config', () => {
@@ -179,8 +178,8 @@ describe('prepSeries', () => {
       const result = prepSeries(SeriesMapping.Auto, [], [frame], fieldConfig);
 
       expect(result).toHaveLength(1);
-      const expectedColor = theme.visualization.getColorByName('red');
-      expect(result[0].color.fixed).toBe(expectedColor);
+      // 'red' resolved to its theme hex
+      expect(result[0].color.fixed).toBe('#F2495C');
     });
   });
 

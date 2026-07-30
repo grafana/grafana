@@ -23,13 +23,15 @@ describe('color dimension', () => {
   describe('no field configured', () => {
     it('resolves the fixed color by name and is not assumed', () => {
       const dim = getColorDimension(undefined, { fixed: 'red', field: '' } as ColorDimensionConfig, theme);
-      expect(dim.value()).toBe(theme.visualization.getColorByName('red'));
+      // 'red' resolved to its theme hex
+      expect(dim.value()).toBe('#F2495C');
       expect(dim.isAssumed).toBe(false);
     });
 
     it('defaults to grey and is assumed when no fixed color is set', () => {
       const dim = getColorDimension(undefined, { field: '' } as ColorDimensionConfig, theme);
-      expect(dim.value()).toBe(theme.visualization.getColorByName('grey'));
+      // 'grey' has no theme hue alias, so getColorByName returns the name unchanged
+      expect(dim.value()).toBe('grey');
       expect(dim.isAssumed).toBe(true);
     });
 
@@ -48,7 +50,8 @@ describe('color dimension', () => {
         theme
       );
       expect(dim.field?.name).toBe('v');
-      expect(dim.get(0)).toBe(theme.visualization.getColorByName('blue'));
+      // 'blue' resolved to its theme hex
+      expect(dim.get(0)).toBe('#5794F2');
       // fixed color does not vary by index
       expect(dim.get(1)).toBe(dim.get(0));
     });
@@ -68,9 +71,9 @@ describe('color dimension', () => {
         { fixed: '', field: 'v' },
         theme
       );
-      // value 0 is below the 10 threshold -> green, value 20 is above -> red
-      expect(dim.get(0)).toBe(theme.visualization.getColorByName('green'));
-      expect(dim.get(1)).toBe(theme.visualization.getColorByName('red'));
+      // value 0 is below the 10 threshold -> green, value 20 is above -> red (theme hexes)
+      expect(dim.get(0)).toBe('#73BF69');
+      expect(dim.get(1)).toBe('#F2495C');
     });
   });
 });

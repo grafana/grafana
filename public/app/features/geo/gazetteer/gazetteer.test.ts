@@ -3,8 +3,6 @@ import { LineString, Point } from 'ol/geom';
 import { FieldType, toDataFrame } from '@grafana/data';
 import { getCenterPointWGS84 } from 'app/features/transformers/spatial/utils';
 
-import { pointFieldFromGeohash, pointFieldFromLonLat } from '../format/utils';
-
 import { frameAsGazetter, getGazetteer, GAZETTEER_OPTIONS } from './gazetteer';
 
 const geojsonObject = {
@@ -142,12 +140,9 @@ describe('frameAsGazetter', () => {
           { name: lngName, type: FieldType.number, values: [34] },
         ],
       });
-      const latField = frame.fields.find((f) => f.name === latName)!;
-      const lngField = frame.fields.find((f) => f.name === lngName)!;
-      const expected = (pointFieldFromLonLat(lngField, latField).values[0] as Point).getCoordinates();
-
       const gaz = frameAsGazetter(frame, { path: 't' });
-      expect(gaz.find('a')!.point()!.getCoordinates()).toEqual(expected);
+      // read the projected point back in WGS84: it must round-trip to the input lng/lat
+      expect(getCenterPointWGS84(gaz.find('a')!.geometry())).toEqual([34, 12]);
     });
 
     it('derives points from a geohash field', () => {
@@ -157,11 +152,9 @@ describe('frameAsGazetter', () => {
           { name: 'geohash', type: FieldType.string, values: ['9q8yy'] },
         ],
       });
-      const geohashField = frame.fields.find((f) => f.name === 'geohash')!;
-      const expected = (pointFieldFromGeohash(geohashField).values[0] as Point).getCoordinates();
-
       const gaz = frameAsGazetter(frame, { path: 't' });
-      expect(gaz.find('g')!.point()!.getCoordinates()).toEqual(expected);
+      // '9q8yy' decodes to a fixed lng/lat (near San Francisco), read back in WGS84
+      expect(getCenterPointWGS84(gaz.find('g')!.geometry())).toEqual([-122.40966796875001, 37.77099609375]);
     });
 
     it('uses an existing Point geo field directly', () => {

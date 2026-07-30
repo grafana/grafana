@@ -155,15 +155,10 @@ describe('BarChart utils', () => {
         if (!getColor) {
           throw new Error('Expected getColor to be defined');
         }
-        const theme = createTheme();
-        const expectedColors = {
-          c0: theme.visualization.getColorByName('red'),
-          c1: theme.visualization.getColorByName('green'),
-          c2: theme.visualization.getColorByName('blue'),
-        };
-        expect(getColor(1, 0, 10)).toEqual(expectedColors.c0);
-        expect(getColor(1, 1, 20)).toEqual(expectedColors.c1);
-        expect(getColor(1, 2, 30)).toEqual(expectedColors.c2);
+        // per-bar colors 'red'/'green'/'blue' resolved to their theme hexes
+        expect(getColor(1, 0, 10)).toEqual('#F2495C');
+        expect(getColor(1, 1, 20)).toEqual('#73BF69');
+        expect(getColor(1, 2, 30)).toEqual('#5794F2');
       });
 
       it('sets getColor from per-bar color when field has thresholds', () => {
