@@ -115,11 +115,11 @@ type diagnosticsJobStore struct {
 	jobs map[string]*diagnosticsJob
 	// maxBytes overrides diagnosticsJobStoreMaxBytes; zero uses it. Only tests set it -- the real budget
 	// is far larger than a test can afford to allocate, so exercising eviction needs a smaller one.
-	maxBytes int
+	maxBytes int64
 }
 
 // budgetBytes returns the retained-archive budget in force for this store.
-func (s *diagnosticsJobStore) budgetBytes() int {
+func (s *diagnosticsJobStore) budgetBytes() int64 {
 	if s.maxBytes > 0 {
 		return s.maxBytes
 	}
@@ -146,7 +146,11 @@ const (
 	// numbers only mean anything together, and a store smaller than one bundle would evict a full-size
 	// result the moment it completed. Two lets one large bundle coexist with another rather than
 	// displacing it.
-	diagnosticsJobStoreMaxBytes = 2 * diagnostics.MaxBundleBytes
+	//
+	// int64 because on a 32-bit build (armv6/armv7) this exceeds int: two times a 1 GiB ceiling is 2^31,
+	// one past math.MaxInt32. The byte counts it is compared against are int sums of len(), which cannot
+	// reach that on such a platform anyway, so only the budget itself needs the wider type.
+	diagnosticsJobStoreMaxBytes int64 = 2 * diagnostics.MaxBundleBytes
 	// diagnosticsMaxInFlightJobs caps concurrently generating (pending) jobs. Pending jobs are never
 	// pruned -- their background goroutine is still writing to them -- so without this cap an admin
 	// repeatedly POSTing large dashboards could spawn unbounded long-lived goroutines, each holding
@@ -213,7 +217,7 @@ func (s *diagnosticsJobStore) pruneLocked(now time.Time) {
 		retained += len(j.archive)
 	}
 	budget := s.budgetBytes()
-	if retained <= budget {
+	if int64(retained) <= budget {
 		return
 	}
 	// Evict by finishedAt, not CreatedAt: retention is measured from finishedAt, so a slow run with an
@@ -228,7 +232,7 @@ func (s *diagnosticsJobStore) pruneLocked(now time.Time) {
 	// that just succeeded. Its size is already bounded by MaxBundleBytes, which is what makes leaving it
 	// in place safe.
 	for _, uid := range terminal[:len(terminal)-1] {
-		if retained <= budget {
+		if int64(retained) <= budget {
 			break
 		}
 		retained -= len(s.jobs[uid].archive)

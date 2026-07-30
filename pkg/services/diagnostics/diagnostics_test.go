@@ -754,6 +754,28 @@ func frameWithUnencodableMeta(msg string) *data.Frame {
 	return frame
 }
 
+// A response that cannot be encoded still has a serializable request beside it, so the artifact
+// degrades to request + frame summary rather than being dropped whole -- losing the submitted query in
+// exactly the hard-to-encode cases the artifact exists to capture would defeat its purpose.
+func TestMarshalQueryDataArtifact_degradesOnUnencodableResponse(t *testing.T) {
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{
+		"A": {Frames: data.Frames{frameWithUnencodableMeta(longMarshalError)}},
+	}}
+	request := json.RawMessage(`{"expr":"up"}`)
+
+	out, err := marshalQueryDataArtifact(request, resp)
+	require.Error(t, err, "the error is returned as well, so callers record it outside the artifact too")
+
+	var artifact queryDataArtifact
+	require.NoError(t, json.Unmarshal(out, &artifact))
+	require.JSONEq(t, string(request), string(artifact.Request),
+		"the submitted query is recorded nowhere else, so it must survive an unencodable response")
+	require.True(t, artifact.ResponseOmitted)
+	require.NotEmpty(t, artifact.ResponseSummary, "a frame summary stands in for the response")
+	require.Contains(t, artifact.ResponseError, "boom",
+		"the plugin's error is recorded whole; the bundle budget is what bounds it now")
+}
+
 func TestSummarizeQueryDataResponse(t *testing.T) {
 	t.Run("status never reports success next to an error", func(t *testing.T) {
 		// Core datasources run in-process, so nothing normalizes their status the way the SDK does on the
