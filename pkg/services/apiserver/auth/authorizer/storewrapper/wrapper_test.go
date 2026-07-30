@@ -363,20 +363,17 @@ func TestWrapper_Update(t *testing.T) {
 	setup.mockStore.AssertExpectations(t)
 }
 
-func TestWrapper_UpdateAuthorizationDoesNotRetainRequestContext(t *testing.T) {
+func TestWrapper_UpdateAuthorizationUsesExecutionContext(t *testing.T) {
 	type contextKey string
 
-	const (
-		requestOnlyKey   contextKey = "fake-request-only-key"
-		executionOnlyKey contextKey = "fake-execution-only-key"
-	)
+	const authorizationContextKey contextKey = "fake-authorization-context-key"
 
 	mockStore := rest.NewMockStorage(t)
 	mockAuth := &FakeAuthorizer{}
 	wrapper := New(mockStore, testResource, mockAuth)
 	requester := &identity.StaticRequester{UserUID: "fake-user-uid", Type: types.TypeUser}
-	requestCtx := identity.WithRequester(context.Background(), requester)
-	requestCtx = context.WithValue(requestCtx, requestOnlyKey, "fake-request-only-value")
+	requestCtx, cancelRequest := context.WithCancel(identity.WithRequester(context.Background(), requester))
+	requestCtx = context.WithValue(requestCtx, authorizationContextKey, "fake-request-value")
 
 	oldObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "fake-object"}}
 	objInfo := &fakeUpdatedObjectInfo{obj: oldObj}
@@ -400,21 +397,22 @@ func TestWrapper_UpdateAuthorizationDoesNotRetainRequestContext(t *testing.T) {
 	_, _, err := wrapper.Update(requestCtx, "fake-object", objInfo, nil, nil, false, updateOpts)
 	require.NoError(t, err)
 	require.NotNil(t, authzInfo)
+	cancelRequest()
 
 	mockAuth.On(
 		"BeforeUpdate",
 		mock.MatchedBy(func(ctx context.Context) bool {
 			actualRequester, err := identity.GetRequester(ctx)
-			return err == nil &&
+			return ctx.Err() == nil &&
+				err == nil &&
 				actualRequester.GetUID() == "user:fake-user-uid" &&
-				ctx.Value(requestOnlyKey) == nil &&
-				ctx.Value(executionOnlyKey) == "fake-execution-only-value"
+				ctx.Value(authorizationContextKey) == "fake-execution-value"
 		}),
 		oldObj,
 		oldObj,
 	).Return(nil)
 
-	executionCtx := context.WithValue(context.Background(), executionOnlyKey, "fake-execution-only-value")
+	executionCtx := context.WithValue(context.Background(), authorizationContextKey, "fake-execution-value")
 	_, err = authzInfo.UpdatedObject(executionCtx, oldObj)
 	require.NoError(t, err)
 

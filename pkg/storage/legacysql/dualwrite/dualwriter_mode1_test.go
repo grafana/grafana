@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -15,9 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/apis/example"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 )
 
 var now = time.Now()
@@ -364,7 +361,7 @@ func TestMode1_Update(t *testing.T) {
 	}
 }
 
-func TestMode1_UpdateBackgroundAuthorizationOutlivesRequest(t *testing.T) {
+func TestMode1_UpdateBackgroundOutlivesRequest(t *testing.T) {
 	legacy := &fakeStorage{}
 	legacy.onUpdate(exampleObj, nil)
 
@@ -377,18 +374,11 @@ func TestMode1_UpdateBackgroundAuthorizationOutlivesRequest(t *testing.T) {
 
 	dw, err := newStorage(kind, rest.Mode1, legacy, unified)
 	require.NoError(t, err)
-	inner, ok := dw.(storewrapper.K8sStorage)
-	require.True(t, ok)
 
-	authz := &requestLifecycleAuthorizer{result: make(chan authorizationResult, 1)}
-	storage := storewrapper.New(inner, kind, authz)
+	requestCtx := context.WithValue(context.Background(), backgroundUpdateContextKey{}, "fake-request-value")
+	requestCtx, cancelRequest := context.WithCancel(requestCtx)
 
-	requestCtx, cancelRequest := context.WithCancel(identity.WithRequester(
-		context.Background(),
-		&identity.StaticRequester{UserUID: "fake-user-uid", Type: types.TypeUser, Namespace: "fake-namespace"},
-	))
-
-	obj, _, err := storage.Update(
+	obj, _, err := dw.Update(
 		requestCtx,
 		"foo",
 		updatedObjInfoObj{},
@@ -410,24 +400,16 @@ func TestMode1_UpdateBackgroundAuthorizationOutlivesRequest(t *testing.T) {
 	close(unified.release)
 
 	select {
-	case got := <-authz.result:
-		require.NoError(t, got.contextErr)
-		require.NoError(t, got.identityErr)
-		require.Equal(t, "user:fake-user-uid", got.uid)
-		require.True(t, got.authInfoOK)
-		require.Equal(t, "fake-namespace", got.namespace)
-	case <-time.After(time.Second):
-		t.Fatal("background authorization did not complete")
-	}
-
-	select {
 	case got := <-unified.result:
 		require.NoError(t, got.contextErr)
 		require.NoError(t, got.updateErr)
+		require.Equal(t, "fake-request-value", got.contextValue)
 	case <-time.After(time.Second):
 		t.Fatal("background unified update did not complete")
 	}
 }
+
+type backgroundUpdateContextKey struct{}
 
 type blockingUpdateStorage struct {
 	*fakeStorage
@@ -437,8 +419,9 @@ type blockingUpdateStorage struct {
 }
 
 type backgroundUpdateResult struct {
-	contextErr error
-	updateErr  error
+	contextErr   error
+	updateErr    error
+	contextValue any
 }
 
 func (s *blockingUpdateStorage) Update(
@@ -454,59 +437,10 @@ func (s *blockingUpdateStorage) Update(
 	<-s.release
 
 	_, err := objInfo.UpdatedObject(ctx, exampleObj)
-	s.result <- backgroundUpdateResult{contextErr: ctx.Err(), updateErr: err}
+	s.result <- backgroundUpdateResult{
+		contextErr:   ctx.Err(),
+		updateErr:    err,
+		contextValue: ctx.Value(backgroundUpdateContextKey{}),
+	}
 	return anotherObj, false, err
-}
-
-type requestLifecycleAuthorizer struct {
-	result chan authorizationResult
-}
-
-type authorizationResult struct {
-	contextErr  error
-	identityErr error
-	uid         string
-	authInfoOK  bool
-	namespace   string
-}
-
-func (a *requestLifecycleAuthorizer) BeforeCreate(context.Context, runtime.Object) error {
-	return nil
-}
-
-func (a *requestLifecycleAuthorizer) BeforeUpdate(ctx context.Context, _, _ runtime.Object) error {
-	user, identityErr := identity.GetRequester(ctx)
-	uid := ""
-	if identityErr == nil {
-		uid = user.GetUID()
-	}
-	authInfo, authInfoOK := types.AuthInfoFrom(ctx)
-	namespace := ""
-	if authInfoOK {
-		namespace = authInfo.GetNamespace()
-	}
-	a.result <- authorizationResult{
-		contextErr:  ctx.Err(),
-		identityErr: identityErr,
-		uid:         uid,
-		authInfoOK:  authInfoOK,
-		namespace:   namespace,
-	}
-	return ctx.Err()
-}
-
-func (a *requestLifecycleAuthorizer) BeforeDelete(context.Context, runtime.Object) error {
-	return nil
-}
-
-func (a *requestLifecycleAuthorizer) AfterGet(context.Context, runtime.Object) error {
-	return nil
-}
-
-func (a *requestLifecycleAuthorizer) FilterList(_ context.Context, list runtime.Object) (runtime.Object, error) {
-	return list, nil
-}
-
-func (a *requestLifecycleAuthorizer) WatchFilter(context.Context) (storewrapper.WatchEventFilter, error) {
-	return storewrapper.PassThroughWatchFilter, nil
 }
