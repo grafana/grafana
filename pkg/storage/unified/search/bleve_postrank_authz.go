@@ -93,6 +93,20 @@ func (c PostRankAuthzConfig) facetWindowSize() int {
 	return w
 }
 
+// countWindowSize returns the per-window bleve Size for count-only requests
+// (Limit == 0, no facets). There is no page to fill, so windowSize(0) would be
+// zero and bleve would return no hits to authorize at all. The scan instead
+// walks the ranked set in windows as large as the budget allows (capped by
+// MaxWindow) until it exhausts the match set — giving an exact authorized
+// total — or reaches MaxCandidates.
+func (c PostRankAuthzConfig) countWindowSize() int {
+	w := c.MaxCandidates
+	if w > c.MaxWindow {
+		w = c.MaxWindow
+	}
+	return w
+}
+
 // growWindow sizes each bleve window after the first. The first window uses
 // windowSize(limit); subsequent windows double so a sparse-access or
 // deep-offset scan covers ground in fewer, larger windows. Each bleve
@@ -209,7 +223,9 @@ func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (do
 // runPostFilterAuthz implements postFilter mode: bleve ranks without the authz
 // wrapper, the runner fetches bounded windows (paging via SearchAfter),
 // authorizes hits in rank order, and stops once the page is filled (page-fill
-// queries) or the candidate budget is hit. TotalHits is the exact authorized
+// queries) or the candidate budget is hit. Count-only queries (Limit == 0, no
+// facets) have no page and stop only on exhaustion or the budget. TotalHits is
+// the exact authorized
 // count when the scan exhausts the index from the top (small sets, no incoming
 // cursor), else the unfiltered match count (page filled early / cap hit /
 // cursor pages — fast over exact). Facets are aggregated app-side over an
@@ -240,6 +256,10 @@ func (b *bleveIndex) runPostFilterAuthz(
 	resources := b.authzResources(req)
 	cfg := b.postRankAuthz
 	wantFacets := len(req.Facet) > 0
+	// A count-only request returns no rows, so there is no page to fill: the
+	// scan authorizes ranked hits purely to total them and runs until the match
+	// set is exhausted or the candidate budget is reached.
+	countOnly := limit == 0 && !wantFacets
 
 	agg, facetAuthorized, facetExhausted, err := b.prepareFacetAggregation(
 		ctx, access, req, index, firstReq, resources, stats,
@@ -247,11 +267,20 @@ func (b *bleveIndex) runPostFilterAuthz(
 	if err != nil {
 		return nil, err
 	}
-	// Facets always use a separate scan starting at the top of the query. The
-	// page scan must retain its normal fetch window, otherwise the facet sample
-	// size can unnecessarily shorten pages for sparse-access users.
-	if wantFacets {
-		firstReq.Size = cfg.windowSize(limit)
+
+	baseWindow := cfg.windowSize(limit)
+	switch {
+	case countOnly:
+		baseWindow = cfg.countWindowSize()
+		// No rows are returned, so load only what authorization reads.
+		firstReq.Fields = []string{resource.SEARCH_FIELD_FOLDER}
+		firstReq.Size = baseWindow
+	case wantFacets:
+		// Facets always use a separate scan starting at the top of the query.
+		// The page scan must retain its normal fetch window, otherwise the
+		// facet sample size can unnecessarily shorten pages for sparse-access
+		// users.
+		firstReq.Size = baseWindow
 	}
 
 	extractFn := func(info docInfo) authz.BatchCheckItem {
@@ -293,11 +322,12 @@ func (b *bleveIndex) runPostFilterAuthz(
 
 		// Authorize this window's hits in rank order. Page-fill scans keep going
 		// past MaxCandidates until at least one row is found, so sparse users
-		// don't get an empty first page.
+		// don't get an empty first page. Count-only scans have no page, so the
+		// budget applies on its own.
 		windowHits := res.Hits
 		candidateSeq := func(yield func(docInfo) bool) {
 			for _, hit := range windowHits {
-				if candidates >= maxCandidates && len(page) > 0 {
+				if candidates >= maxCandidates && (countOnly || len(page) > 0) {
 					return
 				}
 				info, ok := parseHitDocInfo(hit, resources)
@@ -322,7 +352,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 				page = append(page, info.doc)
 			}
 			// Stop as soon as the page is full (early-exit).
-			if len(page) >= limit {
+			if !countOnly && len(page) >= limit {
 				stop = true
 				break
 			}
@@ -330,11 +360,15 @@ func (b *bleveIndex) runPostFilterAuthz(
 		if stop {
 			break
 		}
-		// Candidate budget exhausted. Only enforce the budget after the first
-		// authorized row; otherwise keep scanning so a sparse user does not get
-		// an empty first page just because the first authorized hit sorted beyond
-		// MaxCandidates.
-		if candidates >= maxCandidates && len(page) > 0 {
+		// Candidate budget exhausted. On page-fill scans only enforce the budget
+		// after the first authorized row; otherwise keep scanning so a sparse
+		// user does not get an empty first page just because the first
+		// authorized hit sorted beyond MaxCandidates.
+		if candidates >= maxCandidates && (countOnly || len(page) > 0) {
+			// A budget that covered every match leaves nothing unseen, so the
+			// authorized count is still exact. candidates never exceeds the
+			// number of hits walked, so this can only under-claim.
+			exhausted = candidates >= int64(firstRes.Total)
 			break
 		}
 		// Window returned fewer hits than requested -> no more matches: every
@@ -356,7 +390,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 		next := *windowReq
 		next.SearchAfter = cursor
 		next.SearchBefore = nil
-		next.Size = cfg.growWindow(cfg.windowSize(limit), window+1)
+		next.Size = cfg.growWindow(baseWindow, window+1)
 		windowReq = &next
 	}
 
@@ -403,6 +437,22 @@ func (b *bleveIndex) prepareFacetAggregation(
 	return agg, authorized, exhausted, err
 }
 
+// facetScanFields is the stored-field projection the facet scan needs: the
+// folder to authorize a hit and the stored facet fields to count its terms.
+// The response columns come from the page scan, so loading them here would
+// fetch stored data for up to FacetSampleSize hits that is never returned.
+func (b *bleveIndex) facetScanFields(facets map[string]*resourcepb.ResourceSearchRequest_Facet) []string {
+	fields := make([]string, 0, len(facets)+1)
+	for _, facet := range facets {
+		field := b.searchFields.storedFacetFields[facet.Field]
+		if field != "" && !slices.Contains(fields, field) {
+			fields = append(fields, field)
+		}
+	}
+	slices.Sort(fields)
+	return append(fields, resource.SEARCH_FIELD_FOLDER)
+}
+
 func (b *bleveIndex) aggregateFacetsFromTop(
 	ctx context.Context,
 	access authlib.AccessClient,
@@ -423,6 +473,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 	initial.SearchAfter = nil
 	initial.SearchBefore = nil
 	initial.Size = cfg.facetWindowSize()
+	initial.Fields = b.facetScanFields(facets)
 	windowReq := &initial
 
 	for {
@@ -509,7 +560,10 @@ func (b *bleveIndex) finalizePostFilter(
 	exact := exhausted
 	if wantFacets {
 		response.TotalHits = authorized
-	} else if exhausted && req.Limit > 0 && len(req.SearchAfter) == 0 && len(req.SearchBefore) == 0 {
+	} else if exhausted && len(req.SearchAfter) == 0 && len(req.SearchBefore) == 0 {
+		// The scan saw every match from the top, so the authorized count is
+		// exact. Count-only requests (Limit == 0) reach this too: they scan
+		// solely to total, and only fall through when the budget cuts them off.
 		response.TotalHits = authorized
 	} else {
 		exact = false

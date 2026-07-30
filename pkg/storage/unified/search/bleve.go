@@ -88,9 +88,8 @@ type BleveOptions struct {
 	SearchFields *resource.SearchFieldsRegistry
 
 	// RequiredIndexFeatures overrides the index features an existing index must
-	// already have to be reused; nil derives them from PostRankAuthzEnabled via
-	// resource.RequiredIndexFeatures. Only tests set it. New indexes always
-	// record resource.CurrentIndexFeatures.
+	// already have to be reused. Only tests set it. New indexes always record
+	// resource.CurrentIndexFeatures.
 	RequiredIndexFeatures []resource.IndexFeature
 
 	// Snapshot configures remote index snapshot download at build time.
@@ -2107,8 +2106,10 @@ func (b *bleveIndex) Search(
 	// covers normal paginated search, federated queries, facet queries, and
 	// SearchBefore: bleve ranks, the runner authorizes app-side in rank order,
 	// and stops once the page is full (page-fill) or the sample budget is hit
-	// (facets). A count-only request (Limit==0, no facets) returns Bleve's
-	// unfiltered count with TotalHitsExact=false, avoiding a full authz scan.
+	// (facets). A count-only request (Limit==0, no facets) authorizes up to
+	// MaxCandidates ranked hits: an exact authorized total when that exhausts
+	// the match set, otherwise Bleve's unfiltered count with
+	// TotalHitsExact=false.
 	postRank := b.postRankAuthzEnabled && access != nil
 
 	conversionStarts := time.Now()

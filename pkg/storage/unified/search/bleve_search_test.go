@@ -1473,20 +1473,65 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Empty(t, names)
 	})
 
-	t.Run("count-only request returns an unfiltered approximate total", func(t *testing.T) {
+	t.Run("count-only request returns an exact authorized total", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		indexDocs(t, index, []*resource.BulkIndexItem{
 			newDoc("doc-0", "allowed"),
 			newDoc("doc-1", "denied"),
+			newDoc("doc-2", "allowed"),
 		})
 
 		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
 		names, res := searchNames(t, index, ac, listQuery(0))
 
-		require.Empty(t, names)
-		require.Equal(t, int64(2), res.TotalHits, "the count includes unauthorized matches")
+		require.Empty(t, names, "a count-only request returns no rows")
+		require.Equal(t, int64(2), res.TotalHits, "unauthorized matches are excluded")
+		require.True(t, res.TotalHitsExact, "the scan exhausted the match set")
+		require.Equal(t, 3, ac.checked, "every match is authorized once")
+	})
+
+	t.Run("count-only request approximates once the budget is hit", func(t *testing.T) {
+		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 40}
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		docs := make([]*resource.BulkIndexItem, 0, 200)
+		for i := 0; i < 200; i++ {
+			folder := "denied"
+			if i%2 == 0 {
+				folder = "allowed"
+			}
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%03d", i), folder))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		_, res := searchNames(t, index, ac, listQuery(0))
+
+		require.Equal(t, int64(200), res.TotalHits, "a capped count falls back to the unfiltered match count")
 		require.False(t, res.TotalHitsExact)
-		require.Zero(t, ac.checked, "count-only does not authorize individual documents")
+		require.Equal(t, 40, ac.checked, "the scan stops at MaxCandidates")
+	})
+
+	t.Run("count-only request stays exact when the budget covers every match", func(t *testing.T) {
+		// The scan consumes its whole budget, but that budget spans the entire
+		// match set, so nothing is left unseen.
+		cfg := search.PostRankAuthzConfig{MaxWindow: 10, MaxCandidates: 20}
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		docs := make([]*resource.BulkIndexItem, 0, 20)
+		for i := 0; i < 20; i++ {
+			folder := "denied"
+			if i%2 == 0 {
+				folder = "allowed"
+			}
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), folder))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		_, res := searchNames(t, index, ac, listQuery(0))
+
+		require.Equal(t, int64(10), res.TotalHits)
+		require.True(t, res.TotalHitsExact, "the budget covered every match")
+		require.Equal(t, 20, ac.checked)
 	})
 
 	t.Run("limit larger than total returns everything authorized", func(t *testing.T) {
