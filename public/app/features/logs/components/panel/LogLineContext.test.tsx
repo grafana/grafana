@@ -330,7 +330,16 @@ describe('LogLineContext', () => {
   });
 
   test('should render rows sharing the selected row timestamp once', async () => {
-    const selected = dataFrameToLogsModel([burstFrame([[BURST_MS, 'selected']], 'anchor')]).rows[0];
+    const selected = dataFrameToLogsModel([
+      // The gate reads repeats off the original result, so the frame must contain a sibling.
+      burstFrame(
+        [
+          [BURST_MS, 'selected'],
+          [BURST_MS, 'a sibling in the original result'],
+        ],
+        'anchor'
+      ),
+    ]).rows[0];
     const getRowContext = jest.fn().mockImplementation(async (_, options) => ({
       data: [
         burstFrame(
@@ -371,8 +380,141 @@ describe('LogLineContext', () => {
     expect(screen.getAllByText('selected')).toHaveLength(1);
   });
 
+  test('should leave the same-timestamp handling off when the timestamp does not repeat', async () => {
+    // Only one row at this timestamp in the original result, so none of the widening or
+    // page-growing should happen: one request per direction, at the plain page size.
+    const selected = dataFrameToLogsModel([burstFrame([[BURST_MS, 'the only row']], 'anchor')]).rows[0];
+    const newer: BurstRow[] = Array.from({ length: PAGE_SIZE }, (_, i) => [BURST_MS + i + 1, `newer ${i}`]);
+    const older: BurstRow[] = Array.from({ length: PAGE_SIZE }, (_, i) => [BURST_MS - i - 1, `older ${i}`]);
+    const getRowContext = jest
+      .fn()
+      .mockImplementation(async (_, options) =>
+        options.direction === LogRowContextQueryDirection.Forward
+          ? { data: [burstFrame(newer, 'ctx-fwd')] }
+          : { data: [burstFrame(older, 'ctx-bwd')] }
+      );
+
+    render(
+      <LogLineContext
+        log={selected}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        sortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    await waitFor(() => expect(getRowContext).toHaveBeenCalledTimes(2));
+    for (const [requestRow, options] of getRowContext.mock.calls) {
+      expect(options.limit).toBe(PAGE_SIZE);
+      expect(requestRow.timeEpochNs).toBe(`${BURST_MS}000000`);
+    }
+  });
+
+  test('should split rows sharing the timestamp the way the original result ordered them', async () => {
+    // The selected row sits between two rows sharing its timestamp in the original result.
+    const original = burstFrame(
+      [
+        [BURST_MS, 'above in the original'],
+        [BURST_MS, 'the selected row'],
+        [BURST_MS, 'below in the original'],
+      ],
+      'anchor'
+    );
+    const selected = dataFrameToLogsModel([original]).rows[1];
+    expect(selected.entry).toBe('the selected row');
+
+    // The forward request returns the whole burst, as a data source would.
+    const getRowContext = jest.fn().mockImplementation(async (_, options) =>
+      options.direction === LogRowContextQueryDirection.Forward
+        ? {
+            data: [
+              burstFrame(
+                [
+                  [BURST_MS, 'below in the original'],
+                  [BURST_MS, 'above in the original'],
+                ],
+                'ctx-fwd'
+              ),
+            ],
+          }
+        : { data: [burstFrame([[BURST_MS - 1, 'before the burst']], 'ctx-bwd')] }
+    );
+
+    render(
+      <LogLineContext
+        log={selected}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        sortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('above in the original')).toBeInTheDocument());
+
+    const above = screen.getByText('above in the original');
+    const below = screen.getByText('below in the original');
+    // The selected line is also shown in the modal header, so take its last occurrence: the
+    // list renders after the header. The assertion is that it sits between the two siblings,
+    // which only holds if they were split rather than both attached to the fetching side.
+    const selectedInList = screen.getAllByText('the selected row').at(-1)!;
+    const isFollowedBy = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+
+    expect(isFollowedBy(above, selectedInList)).toBe(true);
+    expect(isFollowedBy(selectedInList, below)).toBe(true);
+  });
+
+  test('should not report the end of the logs when a response only fed the opposite side', async () => {
+    const original = burstFrame(
+      [
+        [BURST_MS, 'sibling before'],
+        [BURST_MS, 'the selected row'],
+        [BURST_MS, 'sibling after'],
+      ],
+      'anchor'
+    );
+    const selected = dataFrameToLogsModel([original]).rows[1];
+    // Descending, so 'above' issues the forward request. It returns only the sibling the
+    // original result placed after the selected row, so every row it brings is assigned below
+    // and the above side gains nothing -- which is not the same as running out of logs.
+    const getRowContext = jest
+      .fn()
+      .mockImplementation(async (_, options) =>
+        options.direction === LogRowContextQueryDirection.Forward
+          ? { data: [burstFrame([[BURST_MS, 'sibling after']], 'ctx-fwd')] }
+          : { data: [burstFrame([[BURST_MS - 1, 'older row']], 'ctx-bwd')] }
+      );
+
+    render(
+      <LogLineContext
+        log={selected}
+        open={true}
+        onClose={() => {}}
+        getRowContext={getRowContext}
+        timeZone={timeZone}
+        sortOrder={LogsSortOrder.Descending}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('sibling after')).toBeInTheDocument());
+    expect(screen.queryByText('No more logs available.')).not.toBeInTheDocument();
+  });
+
   test('should ask the forward request from one nanosecond before the selected row', async () => {
-    const selected = dataFrameToLogsModel([burstFrame([[BURST_MS, 'selected']], 'anchor')]).rows[0];
+    const selected = dataFrameToLogsModel([
+      // The gate reads repeats off the original result, so the frame must contain a sibling.
+      burstFrame(
+        [
+          [BURST_MS, 'selected'],
+          [BURST_MS, 'a sibling in the original result'],
+        ],
+        'anchor'
+      ),
+    ]).rows[0];
     const getRowContext = jest.fn().mockResolvedValue({ data: [] });
 
     render(
@@ -398,7 +540,16 @@ describe('LogLineContext', () => {
   });
 
   test('should request more logs when a full page is entirely one timestamp', async () => {
-    const selected = dataFrameToLogsModel([burstFrame([[BURST_MS, 'selected']], 'anchor')]).rows[0];
+    const selected = dataFrameToLogsModel([
+      // The gate reads repeats off the original result, so the frame must contain a sibling.
+      burstFrame(
+        [
+          [BURST_MS, 'selected'],
+          [BURST_MS, 'a sibling in the original result'],
+        ],
+        'anchor'
+      ),
+    ]).rows[0];
     // The page is full and entirely on the selected row's timestamp, so a bigger request is the
     // only way out even though this page did bring new rows.
     const insideBurst: BurstRow[] = Array.from({ length: PAGE_SIZE }, (_, i) => [BURST_MS, `burst ${i}`]);
@@ -440,7 +591,16 @@ describe('LogLineContext', () => {
   });
 
   test('should request more logs when a full page holds nothing new', async () => {
-    const selected = dataFrameToLogsModel([burstFrame([[BURST_MS, 'selected']], 'anchor')]).rows[0];
+    const selected = dataFrameToLogsModel([
+      // The gate reads repeats off the original result, so the frame must contain a sibling.
+      burstFrame(
+        [
+          [BURST_MS, 'selected'],
+          [BURST_MS, 'a sibling in the original result'],
+        ],
+        'anchor'
+      ),
+    ]).rows[0];
     // Data sources anchor the context query on a timestamp and cannot skip rows, so the
     // first page of a burst bigger than PAGE_SIZE only repeats the rows already displayed.
     const firstPage: BurstRow[] = Array.from({ length: PAGE_SIZE }, () => [BURST_MS, 'selected']);

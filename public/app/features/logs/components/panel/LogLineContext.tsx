@@ -34,6 +34,7 @@ import { splitOpen } from 'app/features/explore/state/main';
 import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { useDispatch } from 'app/types/store';
 
+import { parseLogsFrame } from '../../logsFrame';
 import { dataFrameToLogsModel } from '../../logsModel';
 import { sortLogRows } from '../../utils';
 import { LoadingIndicator } from '../LoadingIndicator';
@@ -170,13 +171,21 @@ export const LogLineContext = memo(
       }
     }, [updateContextQuery, open, log]);
 
+    // The selected row carries the frame it came from, so the order of the rows that shared
+    // its timestamp there is already known, with no extra request.
+    const siblingPositions = useMemo(() => getSiblingPositions(log), [log]);
+    // None of the same-timestamp handling runs without repeats, so behaviour is unchanged when
+    // the original result shows the selected row's timestamp only once.
+    const hasRepeatedTimestamp = siblingPositions.size > 1;
+
     const getContextLogs = useCallback(
       async (place: 'above' | 'below', refLog: LogRowModel, timeWindowMs?: number): Promise<LogRowModel[]> => {
         const direction = getLoadMoreDirection(place, sortOrder);
-        const requestRow = direction === LogRowContextQueryDirection.Forward ? withPrecedingNanosecond(refLog) : refLog;
+        const widenToReachSiblings = hasRepeatedTimestamp && direction === LogRowContextQueryDirection.Forward;
+        const requestRow = widenToReachSiblings ? withPrecedingNanosecond(refLog) : refLog;
         let usableLogs: LogRowModel[] = [];
 
-        for (const limit of CONTEXT_PAGE_SIZES) {
+        for (const limit of hasRepeatedTimestamp ? CONTEXT_PAGE_SIZES : [PAGE_SIZE]) {
           const result = await getRowContext(normalizeLogRefId(requestRow), {
             limit,
             direction,
@@ -206,7 +215,7 @@ export const LogLineContext = memo(
 
         return usableLogs;
       },
-      [allLogs, getRowContext, log.timeEpochNs, sortOrder]
+      [allLogs, getRowContext, hasRepeatedTimestamp, log.timeEpochNs, sortOrder]
     );
 
     const loadMore = useCallback(
@@ -227,12 +236,18 @@ export const LogLineContext = memo(
           const newAbove = sortOrder === LogsSortOrder.Ascending ? newer : older;
           const newBelow = sortOrder === LogsSortOrder.Ascending ? older : newer;
 
-          // getContextLogs only keeps same-timestamp rows from the forward request, and the
-          // side that issues it is this `place`, so they belong here.
-          if (place === 'above') {
-            newAbove.push(...sameTimestamp);
-          } else {
-            newBelow.push(...sameTimestamp);
+          // Rows sharing the selected row's timestamp are neither older nor newer than it, but
+          // the original result already ordered them, so reuse that instead of picking a side.
+          for (const row of sortBySiblingPosition(sameTimestamp, siblingPositions)) {
+            const position = siblingPositions.get(row.entry);
+            if (position === undefined) {
+              // Absent from the original result, so there is no known position to reuse.
+              (place === 'above' ? newAbove : newBelow).push(row);
+            } else if (position < log.rowIndex) {
+              newAbove.push(row);
+            } else {
+              newBelow.push(row);
+            }
           }
 
           setAboveLogs((aboveLogs: LogRowModel[]) => {
@@ -243,17 +258,17 @@ export const LogLineContext = memo(
           });
 
           setState(LoadingState.NotStarted);
-          if (!newAbove.length && place === 'above') {
-            setAboveState(LoadingState.Done);
-          }
-          if (!newBelow.length && place === 'below') {
-            setBelowState(LoadingState.Done);
+          // With repeats a response's rows can all be assigned to the opposite side, which is
+          // not the end of this one, so exhaustion keys off the whole response instead.
+          const gained = place === 'above' ? newAbove.length : newBelow.length;
+          if (hasRepeatedTimestamp ? !newLogs.length : !gained) {
+            setState(LoadingState.Done);
           }
         } catch {
           setState(LoadingState.Error);
         }
       },
-      [getContextLogs, log, sortOrder]
+      [getContextLogs, hasRepeatedTimestamp, log, siblingPositions, sortOrder]
     );
 
     useEffect(() => {
@@ -658,6 +673,34 @@ const withPrecedingNanosecond = (log: LogRowModel): LogRowModel => {
   }
   return { ...log, timeEpochNs: (BigInt(log.timeEpochNs) - BigInt(1)).toString() };
 };
+
+// Maps each line sharing the selected row's timestamp to its row index in the original result.
+// Keyed by line: a data source cannot hold two entries with the same timestamp and line.
+const getSiblingPositions = (log: LogRowModel): Map<string, number> => {
+  const positions = new Map<string, number>();
+  const frame = parseLogsFrame(log.dataFrame);
+  if (!frame) {
+    return positions;
+  }
+  const bodies = frame.bodyField.values;
+  const nanoseconds = frame.timeNanosecondField?.values;
+  for (let i = 0; i < bodies.length; i++) {
+    const sharesTimestamp = nanoseconds
+      ? String(nanoseconds[i]) === log.timeEpochNs
+      : frame.timeField.values[i] === log.timeEpochMs;
+    if (sharesTimestamp) {
+      positions.set(String(bodies[i]), i);
+    }
+  }
+  return positions;
+};
+
+// Keeps rows sharing a timestamp in the order the original result had them; rows missing from
+// it have no position and go last.
+const sortBySiblingPosition = (rows: LogRowModel[], positions: Map<string, number>): LogRowModel[] =>
+  [...rows].sort(
+    (a, b) => (positions.get(a.entry) ?? Number.MAX_SAFE_INTEGER) - (positions.get(b.entry) ?? Number.MAX_SAFE_INTEGER)
+  );
 
 const containsRow = (rows: LogRowModel[], row: LogRowModel) => {
   return rows.some((r) => r.entry === row.entry && r.timeEpochNs === row.timeEpochNs);
