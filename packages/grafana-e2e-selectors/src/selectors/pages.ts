@@ -1052,6 +1052,9 @@ export const versionedPages = {
       split: {
         '12.4.0': 'data-testid explore-toolbar-split-button',
       },
+      closeSplit: {
+        '13.2.0': 'data-testid explore-toolbar-close-split-button',
+      },
       addTo: {
         '12.4.0': 'data-testid explore-toolbar-add-dropdown-button',
       },
@@ -1150,6 +1153,78 @@ export const versionedPages = {
       },
       createButton: {
         '10.2.0': 'data-testid new-folder-create-button',
+      },
+    },
+    actions: {
+      deleteButton: {
+        '13.2.0': 'data-testid browse dashboards delete button',
+      },
+      moveButton: {
+        '13.2.0': 'data-testid browse dashboards move button',
+      },
+    },
+  },
+  Provisioning: {
+    repositoryTypeCard: {
+      '13.2.0': (type: string) => `data-testid Provisioning repository type card ${type}`,
+    },
+    ConnectionForm: {
+      titleInput: {
+        '13.2.0': 'data-testid Provisioning connection form title input',
+      },
+      descriptionInput: {
+        '13.2.0': 'data-testid Provisioning connection form description input',
+      },
+      serverUrlInput: {
+        '13.2.0': 'data-testid Provisioning connection form server url input',
+      },
+      appIdInput: {
+        '13.2.0': 'data-testid Provisioning connection form app id input',
+      },
+      installationIdInput: {
+        '13.2.0': 'data-testid Provisioning connection form installation id input',
+      },
+      privateKeyInput: {
+        '13.2.0': 'data-testid Provisioning connection form private key input',
+      },
+      submitButton: {
+        '13.2.0': 'data-testid Provisioning connection form submit button',
+      },
+    },
+    Wizard: {
+      repositoryUrlInput: {
+        '13.2.0': 'data-testid Provisioning wizard repository url input',
+      },
+      repositoryTitleInput: {
+        '13.2.0': 'data-testid Provisioning wizard repository title input',
+      },
+      nextButton: {
+        '13.2.0': 'data-testid Provisioning wizard next button',
+      },
+      previousButton: {
+        '13.2.0': 'data-testid Provisioning wizard previous button',
+      },
+    },
+    RepositoryList: {
+      viewLink: {
+        '13.2.0': (name: string) => `data-testid Provisioning repository view link ${name}`,
+      },
+    },
+    RepositoryOverview: {
+      resourcesCard: {
+        '13.2.0': 'data-testid Provisioning repository overview resources card',
+      },
+      healthCard: {
+        '13.2.0': 'data-testid Provisioning repository overview health card',
+      },
+      webhookCard: {
+        '13.2.0': 'data-testid Provisioning repository overview webhook card',
+      },
+      pullStatusCard: {
+        '13.2.0': 'data-testid Provisioning repository overview pull status card',
+      },
+      jobsCard: {
+        '13.2.0': 'data-testid Provisioning repository overview jobs card',
       },
     },
   },

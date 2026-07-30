@@ -112,6 +112,25 @@ describe('runInstantQueries', () => {
     expect(destroy).toHaveBeenCalled();
   });
 
+  it('keeps the surviving frames when the caller opts into partial results', async () => {
+    setRunnerResult([numberFrame('A', [42])], LoadingState.Error);
+
+    const frames = await runInstantQueries({ A: 'up', B: 'bad' }, { uid: 'prom', type: 'prometheus' }, undefined, true);
+
+    expect(readScalar(frames, 'A')).toBe(42);
+    expect(readScalar(frames, 'B')).toBeNull();
+    expect(destroy).toHaveBeenCalled();
+  });
+
+  it('rejects by default when some targets error even though other frames survive', async () => {
+    setRunnerResult([numberFrame('A', [42])], LoadingState.Error);
+
+    await expect(runInstantQueries({ A: 'up', B: 'bad' }, { uid: 'prom', type: 'prometheus' })).rejects.toThrow(
+      'Prometheus query failed'
+    );
+    expect(destroy).toHaveBeenCalled();
+  });
+
   it('rejects (and still destroys the runner) when the runner never reaches a terminal state', async () => {
     jest.useFakeTimers();
 

@@ -158,6 +158,7 @@
           {
             "type": "text",
             "analyzer": "keyword",
+            "store": true,
             "index": true,
             "skip_freq_norm": true
           }
