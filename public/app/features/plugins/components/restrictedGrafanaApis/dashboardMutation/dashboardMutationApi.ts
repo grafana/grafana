@@ -77,6 +77,22 @@ export const dashboardMutationApi: DashboardMutationAPI = {
   getAvailableCommands: () => {
     return _client?.getAvailableCommands() ?? [];
   },
+  canExecute: (commands) => {
+    const requested = typeof commands === 'string' ? [commands] : commands;
+    if (requested.length === 0) {
+      return { allowed: true };
+    }
+    if (!_client) {
+      return {
+        allowed: false,
+        blocked: requested.map((command) => ({
+          command: command.toUpperCase(),
+          reason: 'No dashboard is currently open, so there is nothing to mutate.',
+        })),
+      };
+    }
+    return _client.canExecute(requested);
+  },
   isAvailable: () => {
     return _client !== null;
   },

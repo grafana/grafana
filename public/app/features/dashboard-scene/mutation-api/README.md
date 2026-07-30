@@ -31,6 +31,7 @@ Scenes can overlap, so the client is replaced rather than cleared when one dashb
 ```typescript
 isAvailable(): boolean
 getAvailableCommands(): string[]
+canExecute(commands: string | string[]): DashboardMutationPermission
 onAvailabilityChange(listener: (isAvailable: boolean) => void): () => void
 ```
 
@@ -49,6 +50,21 @@ onAvailabilityChange(listener: (isAvailable: boolean) => void): () => void
 Reports what `execute` can dispatch, not what will succeed. When a dashboard is open the client registers every command the running version implements, unfiltered by permission, snapshot state, dashboard layout, or feature toggle. All four are evaluated per command inside `execute`, so a listed command can still come back with `success: false`.
 
 Because the list is empty both when no dashboard is open and when the version does not implement a command, it cannot answer version questions on its own. Use `getPayloadSchema(command) !== null` for that: schemas come from the static command registry, so it answers with no dashboard open.
+
+### `canExecute`
+
+Runs the same per-command checks `execute` runs, without executing anything. This is the member to gate a feature on, because it covers everything `getAvailableCommands` cannot: no dashboard open, an unrecognised command, insufficient permission, a snapshot, and commands behind a disabled feature toggle.
+
+All-of over the commands given, and every blocked command is reported rather than only the first, so a caller does not have to fix one thing and retry to discover the next. An empty list is vacuously allowed.
+
+```typescript
+const permission = api.canExecute(['ADD_PANEL', 'ADD_ROW']);
+
+if (!permission.allowed) {
+  // [{ command: 'ADD_ROW', reason: 'Layout management requires the "dashboardNewLayouts" feature toggle...' }]
+  hideDashboardEditing(permission.blocked);
+}
+```
 
 ### `onAvailabilityChange`
 

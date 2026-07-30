@@ -17,7 +17,7 @@ import type { DashboardScene } from '../scene/DashboardScene';
 
 import { ALL_COMMANDS, validatePayload } from './commands/registry';
 import type { MutationCommand, MutationContext } from './commands/types';
-import type { MutationClient, MutationRequest, MutationResult } from './types';
+import type { BlockedMutation, MutationClient, MutationPermission, MutationRequest, MutationResult } from './types';
 
 type MutationHandler = (payload: unknown, context: MutationContext) => Promise<MutationResult>;
 
@@ -81,6 +81,32 @@ export class DashboardMutationClient implements MutationClient {
 
   getAvailableCommands(): string[] {
     return Array.from(this.commands.keys());
+  }
+
+  /**
+   * Run each command's permission check without executing anything, and report
+   * every command that is blocked rather than only the first. A caller gating a
+   * feature on several commands otherwise has to retry to discover the rest.
+   */
+  canExecute(commands: string[]): MutationPermission {
+    const blocked: BlockedMutation[] = [];
+
+    for (const command of commands) {
+      const type = command.toUpperCase();
+      const registration = this.commands.get(type);
+
+      if (!registration) {
+        blocked.push({ command: type, reason: `Unknown command type: ${type}` });
+        continue;
+      }
+
+      const permission = registration.canExecute(this.scene);
+      if (!permission.allowed) {
+        blocked.push({ command: type, reason: permission.error });
+      }
+    }
+
+    return blocked.length > 0 ? { allowed: false, blocked } : { allowed: true };
   }
 
   private registerCommand(cmd: MutationCommand): void {

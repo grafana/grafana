@@ -14,6 +14,7 @@ function createMockClient(): MutationClient {
       })
     ),
     getAvailableCommands: jest.fn(() => []),
+    canExecute: jest.fn(() => ({ allowed: true }) as const),
   };
 }
 
@@ -88,6 +89,41 @@ describe('dashboardMutationApi', () => {
 
       setDashboardMutationClientForTests(null);
       expect(dashboardMutationApi.isAvailable()).toBe(false);
+    });
+  });
+
+  describe('canExecute', () => {
+    it('reports every requested command as blocked when no dashboard is open', () => {
+      const permission = dashboardMutationApi.canExecute(['ADD_PANEL', 'REMOVE_PANEL']);
+
+      expect(permission).toEqual({
+        allowed: false,
+        blocked: [
+          { command: 'ADD_PANEL', reason: expect.stringContaining('No dashboard is currently open') },
+          { command: 'REMOVE_PANEL', reason: expect.stringContaining('No dashboard is currently open') },
+        ],
+      });
+    });
+
+    it('accepts a single command name', () => {
+      expect(dashboardMutationApi.canExecute('add_panel')).toEqual({
+        allowed: false,
+        blocked: [{ command: 'ADD_PANEL', reason: expect.any(String) }],
+      });
+    });
+
+    // All-of over nothing. Called with a tool's command list, an empty list means
+    // the caller needs no commands, not that it should be refused.
+    it('allows an empty list', () => {
+      expect(dashboardMutationApi.canExecute([])).toEqual({ allowed: true });
+    });
+
+    it('delegates to the client once a dashboard is open', () => {
+      const client = createMockClient();
+      setDashboardMutationClientForTests(client);
+
+      expect(dashboardMutationApi.canExecute(['ADD_PANEL'])).toEqual({ allowed: true });
+      expect(client.canExecute).toHaveBeenCalledWith(['ADD_PANEL']);
     });
   });
 

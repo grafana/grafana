@@ -23,6 +23,24 @@ export interface DashboardMutationResult {
   data?: unknown;
 }
 
+/** A command that cannot run, and why. */
+export interface BlockedDashboardMutation {
+  /** The command name, upper-cased. */
+  command: string;
+  /**
+   * Why it cannot run: an unrecognised command name, no dashboard open,
+   * insufficient permission, a snapshot, or a disabled feature toggle.
+   */
+  reason: string;
+}
+
+/**
+ * Whether a set of commands can run. Every blocked command is reported, not
+ * just the first, so a caller gating on several commands learns all of the
+ * reasons at once.
+ */
+export type DashboardMutationPermission = { allowed: true } | { allowed: false; blocked: BlockedDashboardMutation[] };
+
 /**
  * Command-based API for reading and modifying the dashboard the user has open.
  *
@@ -78,6 +96,20 @@ export interface DashboardMutationAPI {
    * come back with `success: false`.
    */
   getAvailableCommands(): string[];
+  /**
+   * Whether the given commands would be permitted right now, without executing
+   * them. Accepts one command or several, matched case-insensitively, and is
+   * all-of: `allowed` is true only when every command passes.
+   *
+   * This runs the same per-command checks {@link execute} runs, so it covers what
+   * {@link getAvailableCommands} cannot: no dashboard open, a command this
+   * version does not implement, insufficient permission, a snapshot, and
+   * commands behind a disabled feature toggle. Use it to decide whether to offer
+   * a capability at all.
+   *
+   * An empty list is vacuously allowed, since there is nothing to check.
+   */
+  canExecute(commands: string | string[]): DashboardMutationPermission;
   /** Whether a dashboard is open, so {@link execute} has something to act on. */
   isAvailable(): boolean;
   /**
