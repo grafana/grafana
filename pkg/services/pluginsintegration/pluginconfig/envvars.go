@@ -69,6 +69,7 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	}
 
 	hostEnv = append(hostEnv, p.featureToggleEnableVars(ctx)...)
+	hostEnv = append(hostEnv, p.openFeatureEnvVars()...)
 
 	marketplaceEnvVars := p.marketplaceLicenseEnvVars(ctx, plugin.PluginID())
 	p.logger.Debug("Providing marketplace env vars", "pluginId", plugin.PluginID(), "envVars", envVarNames(marketplaceEnvVars))
@@ -145,6 +146,27 @@ func (p *EnvVarsProvider) featureToggleEnableVars(ctx context.Context) []string 
 	}
 
 	return variables
+}
+
+// openFeatureEnvVars advertises the host's OpenFeature provider to the plugin
+// process so it can construct its own OpenFeature client at startup. The
+// evaluation context attributes are not included: they are request-scoped and
+// distributed via the per-request config (see RequestConfigProvider).
+func (p *EnvVarsProvider) openFeatureEnvVars() []string {
+	if p.cfg.OpenFeature.ProviderType == "" {
+		return nil
+	}
+
+	providerURL := p.cfg.openFeatureProviderURL()
+	if providerURL == "" {
+		return nil
+	}
+
+	return []string{
+		p.envVar(openFeatureProviderURLKey, providerURL),
+		p.envVar(openFeatureProviderTypeKey, string(p.cfg.OpenFeature.ProviderType)),
+		p.envVar(openFeatureCacheTTLKey, p.cfg.openFeatureCacheTTLSeconds()),
+	}
 }
 
 func (p *EnvVarsProvider) awsEnvVars(pluginID string) []string {
