@@ -2900,6 +2900,24 @@ Maximum number of repositories allowed. Default is `10`. Set to `0` for unlimite
 
 Maximum number of resources (dashboards, folders, etc.) allowed per repository. Default is `0`, which means unlimited.
 
+#### `max_sync_workers`
+
+Maximum number of resources that Grafana applies concurrently during a full repository sync. Default is `10`. A non-positive value uses the default.
+
+#### `git_max_concurrent_requests_per_host`
+
+Maximum number of concurrent outbound Git Smart HTTP requests that Grafana sends to each Git host. The limit is shared by all Pure Git repositories in the Grafana process. Default is `0`, which disables the concurrency limit.
+
+#### `git_rate_limit_rps_per_host`
+
+Sustained number of outbound Git Smart HTTP requests per second that Grafana sends to each Git host. The limit is shared by all Pure Git repositories in the Grafana process. Default is `0`, which disables rate limiting.
+
+#### `git_rate_limit_burst_per_host`
+
+Burst allowance for the outbound Git Smart HTTP request rate limit for each host. Grafana ignores this setting when `git_rate_limit_rps_per_host` is disabled. Default is `1`.
+
+Low request limits increase sync duration. Time spent waiting for a request slot counts toward the sync context and, while applying a resource, `sync_resource_timeout`.
+
 #### `public_root_url`
 
 Public-facing root URL of this Grafana instance, used by provisioning to construct URLs that must be reachable from external systems. When empty, falls back to `[server] root_url`.

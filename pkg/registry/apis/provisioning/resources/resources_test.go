@@ -158,6 +158,60 @@ func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
 	})
 }
 
+func TestWriteResourceFromFileUsesSourceHash(t *testing.T) {
+	expectedErr := errors.New("read by hash")
+	baseRepo := repository.NewMockReaderWriter(t)
+	repo := &hashReaderWriter{
+		MockReaderWriter: baseRepo,
+		err:              expectedErr,
+	}
+	manager := NewResourcesManager(repo, nil, nil, nil)
+
+	_, _, err := manager.WriteResourceFromFile(
+		context.Background(),
+		"dashboard.json",
+		"main",
+		WithSourceHash("abcdef1234567890abcdef1234567890abcdef12"),
+	)
+
+	require.ErrorIs(t, err, expectedErr)
+	require.Equal(t, "dashboard.json", repo.path)
+	require.Equal(t, "main", repo.ref)
+	require.Equal(t, "abcdef1234567890abcdef1234567890abcdef12", repo.hash)
+	baseRepo.AssertNotCalled(t, "Read", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestWriteResourceFromFileFallsBackWhenHashReadsAreUnsupported(t *testing.T) {
+	expectedErr := errors.New("read by path")
+	repo := repository.NewMockReaderWriter(t)
+	repo.On("Read", mock.Anything, "dashboard.json", "main").Return((*repository.FileInfo)(nil), expectedErr)
+	manager := NewResourcesManager(repo, nil, nil, nil)
+
+	_, _, err := manager.WriteResourceFromFile(
+		context.Background(),
+		"dashboard.json",
+		"main",
+		WithSourceHash("abcdef1234567890abcdef1234567890abcdef12"),
+	)
+
+	require.ErrorIs(t, err, expectedErr)
+}
+
+type hashReaderWriter struct {
+	*repository.MockReaderWriter
+	path string
+	ref  string
+	hash string
+	err  error
+}
+
+func (r *hashReaderWriter) ReadByHash(_ context.Context, path, ref, contentHash string) (*repository.FileInfo, error) {
+	r.path = path
+	r.ref = ref
+	r.hash = contentHash
+	return nil, r.err
+}
+
 func TestReplaceResourceFromFile(t *testing.T) {
 	t.Run("name unchanged skips delete", func(t *testing.T) {
 		repo := repository.NewMockReaderWriter(t)

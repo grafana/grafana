@@ -70,6 +70,10 @@ const DefaultRendererAuthToken = "-"
 // written to a provisioning repository through the files API.
 const ProvisioningMaxFileSizeDefault int64 = 5 * 1024 * 1024
 
+// ProvisioningMaxSyncWorkersDefault is the default value for the
+// [provisioning] max_sync_workers key.
+const ProvisioningMaxSyncWorkersDefault = 10
+
 // ProvisioningSyncResourceTimeoutDefault is the default value for the
 // [provisioning] sync_resource_timeout key. It bounds how long applying a
 // single resource (or folder) may take during a sync job before that
@@ -201,6 +205,10 @@ type Cfg struct {
 	ProvisioningMaxRepositories               int64         // default 10, 0 in config = unlimited (converted to -1 internally)
 	ProvisioningMaxIncrementalChanges         int           // default 100, 0 in config = unlimited
 	ProvisioningMaxFileSize                   int64         // bytes; default 5 MiB (5242880); <=0 = unlimited
+	ProvisioningMaxSyncWorkers                int           // default 10; <=0 falls back to the default
+	ProvisioningGitMaxConcurrentRequests      int           // maximum concurrent outbound Git requests per host; <=0 = unlimited
+	ProvisioningGitRateLimitRPS               int           // sustained outbound Git requests per second per host; <=0 = unlimited
+	ProvisioningGitRateLimitBurst             int           // outbound Git request burst per host; <=0 = 1
 	ProvisioningSyncResourceTimeout           time.Duration // per-resource apply timeout during sync; default 30s; <=0 = default
 	ProvisioningWebhookSecretRotationInterval time.Duration // default 30 days
 	ProvisioningControllerResyncInterval      time.Duration // informer re-list interval for the repo/connection controllers (jobs use ProvisioningJobPollInterval); default 60s; <=0 = default
@@ -2561,6 +2569,10 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
 	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
 	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
+	cfg.ProvisioningMaxSyncWorkers = iniFile.Section("provisioning").Key("max_sync_workers").MustInt(ProvisioningMaxSyncWorkersDefault)
+	cfg.ProvisioningGitMaxConcurrentRequests = iniFile.Section("provisioning").Key("git_max_concurrent_requests_per_host").MustInt(0)
+	cfg.ProvisioningGitRateLimitRPS = iniFile.Section("provisioning").Key("git_rate_limit_rps_per_host").MustInt(0)
+	cfg.ProvisioningGitRateLimitBurst = iniFile.Section("provisioning").Key("git_rate_limit_burst_per_host").MustInt(1)
 	cfg.ProvisioningSyncResourceTimeout = iniFile.Section("provisioning").Key("sync_resource_timeout").MustDuration(ProvisioningSyncResourceTimeoutDefault)
 	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
 	cfg.ProvisioningControllerResyncInterval = iniFile.Section("provisioning").Key("resync_interval").MustDuration(ProvisioningControllerResyncIntervalDefault)

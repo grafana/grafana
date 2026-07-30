@@ -128,6 +128,13 @@ type Reader interface {
 	ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error)
 }
 
+// HashReader reads file content directly from the source-side content hash.
+// Full sync uses this optional capability after ReadTree has already resolved
+// the hashes, avoiding another path traversal in remote repositories.
+type HashReader interface {
+	ReadByHash(ctx context.Context, path, ref, contentHash string) (*FileInfo, error)
+}
+
 type Writer interface {
 	Repository
 

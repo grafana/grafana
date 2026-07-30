@@ -212,6 +212,7 @@ func TestChanges(t *testing.T) {
 		require.Equal(t, ResourceFileChange{
 			Action: repository.FileActionUpdated,
 			Path:   "adsl62h.yaml",
+			Hash:   "modified",
 			Existing: &provisioning.ResourceListItem{
 				Path:     "adsl62h.yaml",
 				Group:    "dashboard.grafana.app",

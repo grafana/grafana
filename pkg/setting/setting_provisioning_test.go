@@ -34,3 +34,32 @@ resources = dashboard.grafana.app/Dashboard:folder, playlist.grafana.app/Playlis
 		}, cfg.ProvisioningResources)
 	})
 }
+
+func TestReadProvisioningGitRequestLimits(t *testing.T) {
+	t.Run("uses defaults", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(``))
+		require.NoError(t, err)
+
+		assert.Equal(t, ProvisioningMaxSyncWorkersDefault, cfg.ProvisioningMaxSyncWorkers)
+		assert.Zero(t, cfg.ProvisioningGitMaxConcurrentRequests)
+		assert.Zero(t, cfg.ProvisioningGitRateLimitRPS)
+		assert.Equal(t, 1, cfg.ProvisioningGitRateLimitBurst)
+	})
+
+	t.Run("reads configured values", func(t *testing.T) {
+		iniContent := `
+[provisioning]
+max_sync_workers = 3
+git_max_concurrent_requests_per_host = 2
+git_rate_limit_rps_per_host = 5
+git_rate_limit_burst_per_host = 4
+`
+		cfg, err := NewCfgFromBytes([]byte(iniContent))
+		require.NoError(t, err)
+
+		assert.Equal(t, 3, cfg.ProvisioningMaxSyncWorkers)
+		assert.Equal(t, 2, cfg.ProvisioningGitMaxConcurrentRequests)
+		assert.Equal(t, 5, cfg.ProvisioningGitRateLimitRPS)
+		assert.Equal(t, 4, cfg.ProvisioningGitRateLimitBurst)
+	})
+}

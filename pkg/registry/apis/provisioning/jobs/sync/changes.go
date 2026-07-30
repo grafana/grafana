@@ -183,6 +183,7 @@ func Changes(
 				changes = append(changes, ResourceFileChange{
 					Action:   repository.FileActionUpdated,
 					Path:     primary.Path,
+					Hash:     file.Hash,
 					Existing: primary,
 				})
 			}

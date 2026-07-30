@@ -3,6 +3,7 @@ package git
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -11,15 +12,17 @@ import (
 )
 
 type extra struct {
-	decrypter repository.Decrypter
+	decrypter  repository.Decrypter
+	httpClient *http.Client
 	// allowInsecure permits http:// URLs together with a token (cleartext credentials); local/dev only.
 	allowInsecure bool
 }
 
-func Extra(decrypter repository.Decrypter, allowInsecure bool) repository.Extra {
+func Extra(decrypter repository.Decrypter, allowInsecure bool, httpClient *http.Client) repository.Extra {
 	return &extra{
 		decrypter:     decrypter,
 		allowInsecure: allowInsecure,
+		httpClient:    httpClient,
 	}
 }
 
@@ -50,6 +53,7 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		Path:             cfg.Path,
 		TokenUser:        cfg.TokenUser,
 		Token:            token,
+		HTTPClient:       e.httpClient,
 		CommitSigningKey: signingKey,
 		SigningMethod:    SigningMethodFromSpec(r),
 		SMIMECertificate: SMIMECertificateFromSpec(r),

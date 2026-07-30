@@ -1144,6 +1144,38 @@ func TestGitRepository_Read(t *testing.T) {
 	}
 }
 
+func TestGitRepository_ReadByHash(t *testing.T) {
+	contentHash := hash.MustFromHex("abcdef1234567890abcdef1234567890abcdef12")
+	mockClient := &mocks.FakeClient{}
+	mockClient.GetBlobReturns(&nanogit.Blob{
+		Content: []byte("file content"),
+		Hash:    contentHash,
+	}, nil)
+	gitRepo := &gitRepository{
+		client: mockClient,
+		config: &provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitRepositoryType,
+			},
+		},
+		gitConfig: RepositoryConfig{
+			Branch: "main",
+		},
+	}
+
+	fileInfo, err := gitRepo.ReadByHash(context.Background(), "dashboard.json", "main", contentHash.String())
+
+	require.NoError(t, err)
+	require.Equal(t, "dashboard.json", fileInfo.Path)
+	require.Equal(t, "main", fileInfo.Ref)
+	require.Equal(t, contentHash.String(), fileInfo.Hash)
+	require.Equal(t, []byte("file content"), fileInfo.Data)
+	require.Equal(t, 1, mockClient.GetBlobCallCount())
+	require.Equal(t, 0, mockClient.GetCommitCallCount())
+	require.Equal(t, 0, mockClient.GetBlobByPathCallCount())
+	require.Equal(t, 0, mockClient.GetRefCallCount())
+}
+
 func TestGitRepository_ReadTree(t *testing.T) {
 	tests := []struct {
 		name      string
