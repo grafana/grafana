@@ -6503,6 +6503,10 @@
       },
       "title-delete": "Delete {{name}}?"
     },
+    "transformation-operation-rows": {
+      "remove-transformation": "Remove",
+      "unknown-transformation-title": "Unknown transformation: {{transformationId}}"
+    },
     "transformation-picker-ng": {
       "clear-search": "Clear search",
       "no-transformations-found": "No transformations found",
