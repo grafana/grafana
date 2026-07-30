@@ -435,7 +435,7 @@ export class DefaultGridLayoutManager
 
     if (config.featureToggles.dashboardNewLayouts) {
       // We do this in a timeout to wait a bit with enabling dragging as dragging enables grid animations
-      // if we show the edit pane without animations it opens much faster and feels more responsive
+      // if we show the sidebar without animations it opens much faster and feels more responsive
       setTimeout(updateResizeAndDragging, 10);
       return;
     }

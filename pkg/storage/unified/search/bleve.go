@@ -1639,8 +1639,11 @@ type updateResult struct {
 }
 
 type bleveIndex struct {
-	key   resource.NamespacedResource
+	key resource.NamespacedResource
+	// Holds live and deleted documents together, so queries go through scopeQuery.
 	index bleve.Index
+	// Index features this index was built with, from its build info.
+	features []resource.IndexFeature
 
 	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
 	resourceVersion atomic.Int64
@@ -1702,9 +1705,18 @@ func (b *bleveBackend) newBleveIndex(
 	updaterFn resource.UpdateFn,
 	logger log.Logger,
 ) *bleveIndex {
+	// Read once: what an index maps cannot change while it is open.
+	var features []resource.IndexFeature
+	if info, err := getBuildInfo(index); err == nil {
+		features = info.Features
+	} else {
+		logger.Warn("failed to read index features, treating the index as having none", "err", err)
+	}
+
 	bi := &bleveIndex{
 		key:                  key,
 		index:                index,
+		features:             features,
 		indexStorage:         newIndexType,
 		fields:               fields,
 		allFields:            allFields,
@@ -1732,12 +1744,24 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 
 	batch := b.index.NewBatch()
 	var undeclaredFields map[string]struct{}
+	droppedMarkers := 0
 	for _, item := range req.Items {
 		switch item.Action {
 		case resource.ActionIndex:
 			if item.Doc == nil {
 				return fmt.Errorf("missing document")
 			}
+
+			// An index built before these fields were mapped drops them, which would
+			// serve the document as live or expose a provisioned one in trash. Remove
+			// it instead, which is how this index behaved before deleted documents were
+			// kept, until it is rebuilt.
+			if item.Doc.IsDeleted != nil && *item.Doc.IsDeleted && !b.mapsTrashMarkers() {
+				batch.Delete(resource.SearchID(item.Doc.Key))
+				droppedMarkers++
+				continue
+			}
+
 			doc := item.Doc.UpdateCopyFields()
 			populateFieldVariants(doc, b.searchFields.variants)
 
@@ -1764,11 +1788,24 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	for name := range undeclaredFields {
 		b.logger.Warn("search field written to document is not declared for this kind, so it is dropped from the index and cannot be stored or queried", "field", name)
 	}
+	if droppedMarkers > 0 {
+		// Debug because this fires per batch, and the producer already avoids
+		// building these documents: reaching here means a writer skipped that check.
+		b.logger.Debug("index does not map the trash markers, so deleted documents were removed instead of kept; they appear once the index is rebuilt",
+			"documents", droppedMarkers)
+	}
 
 	if err := b.index.Batch(batch); err != nil {
 		return err
 	}
 	return b.addSnapshotMutationCount(int64(len(req.Items)))
+}
+
+// mapsTrashMarkers reports whether this index can hold every marker a deleted
+// document relies on. An index built before those mappings existed cannot, and
+// bleve drops the values silently.
+func (b *bleveIndex) mapsTrashMarkers() bool {
+	return slices.Contains(b.features, resource.IndexFeatureDeletedMarker)
 }
 
 // isDeclaredField reports whether name is a declared search field for this
@@ -1954,7 +1991,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 	stats.AddResultsConversionTime(time.Since(start))
 
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
-		Query: q,
+		Query: scopeQuery(q, false),
 		Fields: []string{
 			resource.SEARCH_FIELD_TITLE,
 			resource.SEARCH_FIELD_FOLDER,
@@ -2036,7 +2073,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 
 func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
-		Query: bleve.NewMatchAllQuery(),
+		Query: scopeQuery(bleve.NewMatchAllQuery(), false),
 		Size:  0,
 		Facets: bleve.FacetsRequest{
 			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_MANAGED_BY, 1000), // typically less then 5
@@ -2200,22 +2237,24 @@ func (b *bleveIndex) Search(
 	return response, nil
 }
 
+// DocCount counts live documents, so callers using it as a size estimate
+// undercount by whatever trash the index holds. Close enough for a threshold.
 func (b *bleveIndex) DocCount(ctx context.Context, folder string, stats *resource.SearchStats) (int64, error) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.DocCount")
 	defer span.End()
 
-	if folder == "" {
-		count, err := b.index.DocCount()
-		return int64(count), err
+	var q query.Query = bleve.NewMatchAllQuery()
+	if folder != "" {
+		q = &query.TermQuery{
+			Term:     folder,
+			FieldVal: resource.SEARCH_FIELD_FOLDER,
+		}
 	}
 
 	req := &bleve.SearchRequest{
 		Size:   0, // we just need the count
 		Fields: []string{},
-		Query: &query.TermQuery{
-			Term:     folder,
-			FieldVal: resource.SEARCH_FIELD_FOLDER,
-		},
+		Query:  scopeQuery(q, false),
 	}
 	rsp, err := b.index.SearchInContext(ctx, req)
 	if rsp == nil {
@@ -2340,7 +2379,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		return nil, errResult
 	}
 	textQuery := b.buildTextQuery(searchrequest, req)
-	searchrequest.Query = combineFilterAndTextQueries(filters, textQuery)
+	searchrequest.Query = scopeQuery(combineFilterAndTextQueries(filters, textQuery), req.IsDeleted)
 
 	// postFilter applies authorization after ranking in runPostFilterAuthz, so
 	// skip the in-searcher wrapper here and let bleve return unfiltered ranked hits.
@@ -2391,6 +2430,46 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	return searchrequest, nil
+}
+
+// scopeQuery restricts q to live documents, or to deleted ones for trash. Every
+// query this index issues goes through here, so a read path cannot forget the
+// distinction and serve trash as if it were live.
+//
+// Live is "not marked deleted" rather than "marked not deleted", because
+// documents written before the marker carry no value for the field.
+func scopeQuery(q query.Query, deleted bool) query.Query {
+	marked := bleve.NewBoolFieldQuery(true)
+	marked.SetField(resource.SEARCH_FIELD_IS_DELETED)
+
+	scoped := bleve.NewBooleanQuery()
+	if !deleted {
+		scoped.AddMust(q)
+		scoped.AddMustNot(marked)
+		return scoped
+	}
+
+	// An object that was provisioned when it was deleted is never returned from
+	// trash: it comes back from its repository instead.
+	provisioned := bleve.NewBoolFieldQuery(true)
+	provisioned.SetField(resource.SEARCH_FIELD_IS_PROVISIONED)
+	scoped.AddMustNot(provisioned)
+
+	// Bleve drives iteration from the Must clause and uses Filter only to test the
+	// documents that clause produced. With nothing to match on, the marker becomes
+	// the Must clause, so trash comes off its own (small) posting list instead of a
+	// walk over every document. Nothing ranks these results, so scoring it costs
+	// nothing.
+	if _, matchAll := q.(*query.MatchAllQuery); matchAll {
+		scoped.AddMust(marked)
+		return scoped
+	}
+
+	// Filter, not Must: a scoring clause would tie absolute scores to how much
+	// trash the index holds. MustNot never scores either.
+	scoped.AddMust(q)
+	scoped.AddFilter(marked)
+	return scoped
 }
 
 // combineFilterAndTextQueries assembles the final bleve query from the filter

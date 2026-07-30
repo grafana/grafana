@@ -31,10 +31,10 @@ export function AddTab({ dashboardScene, selectedElement }: AddTabProps) {
   const label = useMemo(() => {
     // With no panels there is nothing to group, so present the action as a plain "add"
     if (layout instanceof TabsLayoutManager || isLayoutEmpty) {
-      return t('dashboard-scene.add-tab.add-label', 'Add tab');
+      return t('dashboard.sidebar.add.tab.add-label', 'Add tab');
     }
 
-    return t('dashboard-scene.add-tab.group-label', 'Group into tabs');
+    return t('dashboard.sidebar.add.tab.group-label', 'Group into tabs');
   }, [layout, isLayoutEmpty]);
 
   const disabledTooltip = useMemo(() => getDisableTabsMessage(disableTabsReason), [disableTabsReason]);

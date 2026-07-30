@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
@@ -16,7 +17,16 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
+
+// queuedEvent is what the driver remembers about a queued key between enqueue
+// and pickup: what delivered it, and when it joined the work queue (for the
+// delivery-latency measurement).
+type queuedEvent struct {
+	trigger  claimTrigger
+	enqueued time.Time
+}
 
 // maxClaimAttempts bounds how many times a job key is retried after transient
 // errors before it is dropped from the queue. The informer's periodic
@@ -46,6 +56,11 @@ type ConcurrentJobDriver struct {
 	metrics              *JobMetrics
 	queue                workqueue.TypedRateLimitingInterface[string]
 
+	// processed classifies each delivery and records the processing metrics. It
+	// encapsulates the delivery backend (natsBacked) and the resource label, so
+	// the driver passes only raw event facts.
+	processed *usinformer.ProcessedMetrics
+
 	// postClaimCooldown is how long a key is barred from processing after its
 	// job failed post-claim: the side effects may already have run, and the
 	// rolled-back claim makes the job immediately claimable again. The bar is
@@ -57,10 +72,14 @@ type ConcurrentJobDriver struct {
 	// the first resync after the cooldown passes re-adds the key.
 	postClaimCooldown time.Duration
 
-	// mu guards cooldowns. cooldowns maps a job key to the time its post-claim
-	// cooldown expires; workers refuse to process a key before then.
+	// mu guards cooldowns and triggers. cooldowns maps a job key to the time its
+	// post-claim cooldown expires; workers refuse to process a key before then.
+	// triggers maps a queued key to how it was enqueued — what delivered it and
+	// when it joined the queue — so processing can be attributed and its delivery
+	// latency measured. Entries live only between enqueue and pickup.
 	mu        sync.Mutex
 	cooldowns map[string]time.Time
+	triggers  map[string]queuedEvent
 
 	// logger is used by informer event callbacks, which run outside Run's
 	// context and therefore cannot use logging.FromContext.
@@ -79,6 +98,7 @@ func NewConcurrentJobDriver(
 	historicJobs HistoryWriter,
 	registry prometheus.Registerer,
 	metrics *JobMetrics,
+	natsBacked bool,
 	workers ...Worker,
 ) (*ConcurrentJobDriver, error) {
 	if numDrivers <= 0 {
@@ -107,6 +127,7 @@ func NewConcurrentJobDriver(
 		historicJobs:         historicJobs,
 		workers:              workers,
 		metrics:              metrics,
+		processed:            usinformer.NewProcessedMetrics(registry, resourceLabelJobs, natsBacked),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
 			workqueue.TypedRateLimitingQueueConfig[string]{
@@ -114,6 +135,7 @@ func NewConcurrentJobDriver(
 			},
 		),
 		cooldowns: make(map[string]time.Time),
+		triggers:  make(map[string]queuedEvent),
 		logger:    logging.DefaultLogger.With("logger", "concurrent-job-driver"),
 	}, nil
 }
@@ -128,9 +150,9 @@ func NewConcurrentJobDriver(
 // rolled-back claims, keys dropped after retry exhaustion, missed NATS
 // notifications, and the backlog present at startup (the initial list) — so
 // the informer must be wired and running for jobs to be processed.
-func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
+func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
+	return cache.ResourceEventHandlerDetailedFuncs{
+		AddFunc: func(obj interface{}, isInInitialList bool) {
 			job, ok := obj.(*provisioning.Job)
 			if !ok {
 				c.logger.Error("unexpected object type in job create event", "type", fmt.Sprintf("%T", obj))
@@ -145,7 +167,8 @@ func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerFuncs {
 					"namespace", job.GetNamespace(), "job", job.GetName())
 				return
 			}
-			c.enqueueCreate(job)
+			// Attribute the enqueue for the processing-level metrics.
+			c.enqueueCreate(job, c.processed.ClassifyAdd(job.ResourceVersion, isInInitialList))
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			job, ok := newObj.(*provisioning.Job)
@@ -186,8 +209,9 @@ func (c *ConcurrentJobDriver) EventHandler() cache.ResourceEventHandlerFuncs {
 }
 
 // enqueueCreate adds a freshly-created job's key to the work queue. This is the
-// hot path for every job, so it logs at debug.
-func (c *ConcurrentJobDriver) enqueueCreate(job *provisioning.Job) {
+// hot path for every job, so it logs at debug. trigger records what delivered
+// the key for the processing-level metrics.
+func (c *ConcurrentJobDriver) enqueueCreate(job *provisioning.Job, trigger claimTrigger) {
 	key, err := cache.MetaNamespaceKeyFunc(job)
 	if err != nil {
 		c.logger.Error("could not build key for job create event",
@@ -198,6 +222,9 @@ func (c *ConcurrentJobDriver) enqueueCreate(job *provisioning.Job) {
 	// predecessor that failed post-claim. A create event announces a new
 	// incarnation, which must not sit out its predecessor's cooldown.
 	c.clearCooldown(key)
+	// Attribute the key before the enqueue so a worker that dequeues immediately
+	// sees it.
+	c.setQueued(key, trigger, time.Now())
 	// The queue deduplicates keys that are already queued or in flight.
 	c.queue.Add(key)
 	c.logger.Debug("job create event enqueued", "work_key", key, "queue_len", c.queue.Len())
@@ -217,6 +244,9 @@ func (c *ConcurrentJobDriver) enqueueRecovered(job *provisioning.Job) {
 			"namespace", job.GetNamespace(), "job", job.GetName(), "error", err)
 		return
 	}
+	// A resync/re-list redelivery is always relist-attributed. Set only if
+	// absent so a queued live enqueue is never downgraded.
+	c.setQueued(key, triggerRelist, time.Now())
 	// The queue deduplicates keys that are already queued or in flight.
 	c.queue.Add(key)
 	c.logger.Info("resync enqueued unclaimed job",
@@ -264,6 +294,41 @@ func (c *ConcurrentJobDriver) clearCooldown(key string) {
 	c.mu.Unlock()
 }
 
+// setQueued records how key was enqueued, first-wins: the enqueue that first
+// queued the key owns the attribution and the enqueue time, and later
+// deliveries that coalesce onto the still-queued key (or a retry re-set) leave
+// it alone. First-wins is what the metric wants — the source that actually
+// caused the pickup. In particular, if a re-list recovers a job before its
+// late live event arrives, the pickup stays attributed to relist (the
+// missed/late-live signal), not overwritten to live. A genuinely new job
+// incarnation reusing a deterministic name does not collide here: the
+// predecessor's entry is popped when it is picked up, so the new incarnation's
+// live enqueue finds the key absent and is recorded as live. The map entry lives
+// only between enqueue and pickup.
+func (c *ConcurrentJobDriver) setQueued(key string, trigger claimTrigger, enqueued time.Time) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if _, ok := c.triggers[key]; !ok {
+		c.triggers[key] = queuedEvent{trigger: trigger, enqueued: enqueued}
+	}
+}
+
+// popQueued reads and removes key's entry. Each pickup pops its own entry up
+// front, so the entry never outlives the key however the pickup ends, and a
+// concurrent enqueue that races an in-flight key (setting a fresh entry and
+// marking the key dirty) keeps its attribution for the redelivery — a terminal
+// queue.Forget must not clobber it. A retry re-sets the popped entry before
+// re-queuing so later attempts keep the original attribution and enqueue time.
+func (c *ConcurrentJobDriver) popQueued(key string) (queuedEvent, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	qe, ok := c.triggers[key]
+	if ok {
+		delete(c.triggers, key)
+	}
+	return qe, ok
+}
+
 // Run starts the worker pool.
 // This is a blocking function that will run until the context is canceled.
 //
@@ -300,7 +365,9 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 				c.store,
 				c.repoGetter,
 				c.historicJobs,
+				strconv.Itoa(driverID),
 				c.metrics,
+				c.processed,
 				c.workers...,
 			)
 
@@ -333,6 +400,17 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 
 	logger := logging.FromContext(ctx).With("work_key", key)
 
+	// Pop this pickup's entry up front so it is cleared however the key leaves
+	// this function, without a terminal Forget clobbering a newer entry set by a
+	// concurrent enqueue while the key was in flight. A missing entry (only
+	// reachable via a dirty redelivery after a Forget) falls back to relist so
+	// live+relist+initial always sums to total processed.
+	queued, ok := c.popQueued(key)
+	if !ok {
+		queued.trigger = triggerRelist
+	}
+	trigger := queued.trigger
+
 	// After shutdown begins, Get keeps returning queued keys until the queue is
 	// empty; skip them so workers exit promptly instead of claiming jobs mid-shutdown.
 	if ctx.Err() != nil {
@@ -361,7 +439,7 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 	attempt := c.queue.NumRequeues(key) + 1
 	logger.Debug("process job key", "attempt", attempt)
 
-	err = processor.processKey(ctx, namespace, name)
+	err = processor.processKey(ctx, namespace, name, trigger, queued.enqueued)
 	switch {
 	case err == nil:
 		if attempt > 1 {
@@ -390,9 +468,12 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 		c.queue.Forget(key)
 	default:
 		// Only claim-path failures reach here; the job was never claimed by this
-		// worker, so retrying cannot re-run any work.
+		// worker, so retrying cannot re-run any work. Re-set the attribution the
+		// pickup popped so the retry keeps it (unless a concurrent enqueue set a
+		// newer one).
 		logger.Warn("failed to claim job - will retry",
 			"attempt", attempt, "max_attempts", maxClaimAttempts, "error", err)
+		c.setQueued(key, queued.trigger, queued.enqueued)
 		c.queue.AddRateLimited(key)
 	}
 	return true

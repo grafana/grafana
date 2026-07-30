@@ -1126,7 +1126,7 @@ func TestShouldEnforce(t *testing.T) {
 	}
 }
 
-func Test_resourceVersionTime(t *testing.T) {
+func Test_ResourceVersionTime(t *testing.T) {
 	// Reference time: 2026-01-15 12:00:00 UTC
 	refTime := time.Date(2026, 1, 15, 12, 0, 0, 0, time.UTC)
 
@@ -1175,7 +1175,7 @@ func Test_resourceVersionTime(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := resourceVersionTime(tt.rv)
+			got := ResourceVersionTime(tt.rv)
 			diff := got.Sub(tt.wantClose).Abs()
 			require.Less(t, diff, time.Second,
 				"expected time close to %v, got %v (diff %v)", tt.wantClose, got, diff)

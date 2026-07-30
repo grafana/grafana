@@ -12,8 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // namespacedScope is the manifest's spelling for a kind that lives in a
@@ -22,15 +22,12 @@ const namespacedScope = "Namespaced"
 
 // allowed lists the kinds that expose the search API, as (group, resource).
 //
-// Temporary, and deliberately one kind for now. Every namespaced kind is a
-// candidate, but a kind can only be added once its authorizer restates a search
-// request as the read it performs: the endpoint is a POST, so Kubernetes parses
-// it as a create, and a kind that does not restate would demand create
-// permission to search. Dashboards do this in their own authorizer today. Moving
-// that to the authorization chain, which means both the single-tenant and
-// multi-tenant chains, is what unblocks widening this set.
+// Temporary. Every namespaced kind is a candidate, but turning them all on at
+// once would expose endpoints on kinds nobody has looked at yet, so the set is
+// widened deliberately. A manifest opt-out replaces this.
 var allowed = map[groupResource]bool{
 	{group: "dashboard.grafana.app", resource: "dashboards"}: true,
+	{group: "folder.grafana.app", resource: "folders"}:       true,
 }
 
 type groupResource struct {
@@ -38,25 +35,29 @@ type groupResource struct {
 	resource string
 }
 
-// Build returns the search routes to mount, or nil when the endpoint is off.
+// Build returns the search routes to mount, or nil when the endpoint is off or
+// there is no client to serve it with.
 //
 // builders and installers are the two ways a kind reaches the apiserver; a route
 // is only mounted on a group version one of them actually serves.
 func Build(
-	cfg *setting.Cfg,
+	enabled bool,
 	tracer tracing.Tracer,
-	unified resource.ResourceClient,
+	index resourcepb.ResourceIndexClient,
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 ) []builder.GroupVersionRoutes {
-	if cfg == nil || !cfg.SectionWithEnvOverrides(searchapi.ConfigSection).Key(searchapi.ConfigKey).MustBool(false) {
+	// Whether the endpoint is on is read by the caller, because the two servers
+	// that mount it are configured differently: one from an ini file, one from
+	// flags.
+	if !enabled || index == nil {
 		return nil
 	}
 
 	// Search fields come from the compiled-in app manifests, the same
 	// declarations the index mapping is built from.
 	manifests := resource.AppManifests()
-	handler := searchapi.NewHandler(unified, resource.NewManifestBackedProvider(manifests), tracer)
+	handler := searchapi.NewHandler(index, resource.NewManifestBackedProvider(manifests), tracer)
 
 	served := servedGroupVersions(builders, installers)
 	byGroupVersion := map[schema.GroupVersion][]searchapi.Route{}

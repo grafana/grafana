@@ -5227,17 +5227,6 @@
     }
   },
   "dashboard": {
-    "actions": {
-      "open-settings": ""
-    },
-    "add": {
-      "new-panel": {
-        "button": "Pulsante Aggiungi nuovo pannello",
-        "description": "Trascina o fai clic per aggiungere un pannello",
-        "title": "Pannello"
-      },
-      "pane-header": "Aggiungi"
-    },
     "add-menu": {
       "import": "Importa dalla libreria",
       "paste-panel": "Incolla pannello",
@@ -5307,12 +5296,6 @@
       }
     },
     "canvas-actions": {
-      "add": {
-        "paste": {
-          "description": "Fai clic o trascina per incollare il pannello",
-          "title": "Incolla pannello"
-        }
-      },
       "add-panel": "Aggiungi pannello",
       "disabled-child-contains-tabs": "Impossibile passare alle schede perché una riga contiene già schede",
       "disabled-nested-grouping": "Il raggruppamento è limitato a 3 livelli",
@@ -5327,14 +5310,6 @@
       "paste-tab": "Incolla scheda",
       "ungroup-rows": "Annulla raggruppamento righe",
       "ungroup-tabs": "Annulla raggruppamento schede"
-    },
-    "code-pane": {
-      "collapse": "Comprimi editor",
-      "copy-as-resource": "",
-      "copy-as-resource-tooltip": "",
-      "expand": "Espandi editor",
-      "header": "Modifica come codice",
-      "modal-title": "Modifica la dashboard come codice"
     },
     "conditional-rendering": {
       "conditions": {
@@ -5512,9 +5487,6 @@
         "title": "Opzioni riga"
       }
     },
-    "description": {
-      "action": "Modifica la descrizione della dashboard"
-    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Rimuovi proprietà"
@@ -5523,6 +5495,8 @@
     "edit-actions": {
       "add": "Aggiungi {{typeName}}",
       "add-conditional-rule": "Aggiungi regola {{ruleDescription}}",
+      "dashboard-description": "Modifica la descrizione della dashboard",
+      "dashboard-title": "Modifica il titolo della dashboard",
       "duplicate-panel": "Duplica pannello",
       "edit-query-result-rule": "Modifica regola del risultato della query",
       "edit-template-variable-rule": "Modifica la regola della variabile del modello",
@@ -5542,7 +5516,12 @@
       "switch-layout": "Cambia layout",
       "switch-layout-row": "Cambia layout",
       "switch-layout-tab": "Cambia layout",
-      "tab-title": "Modifica il titolo della scheda"
+      "tab-title": "Modifica il titolo della scheda",
+      "variable-description": "Modifica descrizione variabile",
+      "variable-hide": "Modifica l'opzione di occultamento della variabile",
+      "variable-label": "Modifica etichetta variabile",
+      "variable-name": "Modifica nome variabile",
+      "variable-type": "Modifica il tipo di variabile"
     },
     "empty": {
       "add-library-panel-body": "Aggiungi visualizzazioni condivise con altri dashboard.",
@@ -5789,12 +5768,7 @@
     "layout": {
       "cancel": "Annulla",
       "common": {
-        "copy": "Copia",
-        "copy-tooltip": "",
-        "delete": "Elimina",
-        "duplicate": "Duplica",
-        "layout": "Layout",
-        "paste": "Incolla"
+        "layout": "Layout"
       },
       "continue": "Continua",
       "panel": {
@@ -5822,7 +5796,6 @@
     },
     "new-panel": {
       "aria-label": "Pannello non configurato. Premi il tasto Tab per visualizzare le opzioni di configurazione.",
-      "configure-button": "",
       "configure-button-menu": "Attiva/disattiva menu",
       "configure-visualization": "Configura la visualizzazione",
       "empty-state-message": "Esegui una query per visualizzarlo qui o vai a tutte le visualizzazioni per aggiungere altri tipi di pannello",
@@ -5844,10 +5817,6 @@
         }
       }
     },
-    "options": {
-      "description": "Descrizione",
-      "title-option": "Titolo"
-    },
     "options-pane-category": {
       "aria-label-collapse": "Comprimi categoria {{title}}",
       "aria-label-expand": "Espandi categoria {{title}}"
@@ -5857,14 +5826,6 @@
       "Recent options-title-recent-options": "Opzioni recenti",
       "title-matched_one": "{{count}} corrispondente/{{totalCount}} opzioni",
       "title-matched_other": "{{count}} corrispondente/{{totalCount}} opzioni"
-    },
-    "outline": {
-      "pane-header": "Schema dei contenuti",
-      "repeated-item": "Ripeti",
-      "tree-item": {
-        "empty": "(vuoto)",
-        "no-title": "<nessun titolo>"
-      }
     },
     "override-category-title": {
       "aria-label-remove-override": "Rimuovi sovrascrittura",
@@ -6045,13 +6006,6 @@
       "save-json-to-file": "Salva JSON nel file",
       "see-docs": "Consulta la <2>documentazione</2> per ulteriori informazioni sul provisioning."
     },
-    "schema-editor": {
-      "apply-button": "Applica modifiche",
-      "apply-button-disabled-tooltip": "Correggi gli errori di convalida prima di applicare le modifiche",
-      "apply-button-disabled-tooltip-yaml": "Il documento presenta errori di convalida. Passa al formato JSON per visualizzare i dettagli degli errori all'interno del testo.",
-      "apply-error-title": "Impossibile applicare le modifiche",
-      "undo-title": "Modifica dello schema"
-    },
     "search-panel": {
       "no-match": ""
     },
@@ -6060,8 +6014,42 @@
     },
     "sidebar": {
       "add": {
+        "annotation-query": {
+          "description": "Aggiungi i dati degli eventi ai grafici",
+          "label": "Query di annotazione"
+        },
+        "dashboard-controls": "Controlli della dashboard",
+        "filters": {
+          "label": "Filtra e raggruppa per"
+        },
+        "group-layouts": "Raggruppa layout",
+        "link": {
+          "label": "Collegamento",
+          "tooltip": "Aggiungi link a un'altra dashboard o a un sito esterno"
+        },
+        "new-panel": {
+          "button": "Pulsante Aggiungi nuovo pannello",
+          "description": "Trascina o fai clic per aggiungere un pannello",
+          "title": "Pannello"
+        },
+        "pane-header": "Aggiungi",
+        "paste-panel": {
+          "description": "Fai clic o trascina per incollare il pannello",
+          "title": "Incolla pannello"
+        },
+        "row": {
+          "add-label": "Aggiungi riga",
+          "group-label": "Raggruppa in righe"
+        },
+        "tab": {
+          "add-label": "Aggiungi scheda",
+          "group-label": "Raggruppa in schede"
+        },
         "title": "Aggiungi",
-        "tooltip": "Aggiungi nuovo elemento"
+        "tooltip": "Aggiungi nuovo elemento",
+        "variable": {
+          "label": "Variabile"
+        }
       },
       "annotation": {
         "change-data-source": "Modifica origine dati delle annotazioni",
@@ -6097,16 +6085,52 @@
       },
       "annotations": {
         "add-annotation": "Aggiungi annotazione",
+        "add-annotation-query": "Aggiungi query di annotazione",
+        "name-builtin": "{{annoName}} (Integrato)",
+        "name-disabled": "{{annoName}} (Disabilitato)",
         "reorder": "Trascina per riordinare",
-        "select-annotation": "Seleziona"
+        "reorder-description": "Riordina l'elenco delle annotazioni",
+        "select-annotation": "Seleziona",
+        "title-above-dashboard-count_one": "Sopra la dashboard ({{count}})",
+        "title-above-dashboard-count_other": "Sopra la dashboard ({{count}})",
+        "title-controls-menu-count_one": "Menu comandi ({{count}})",
+        "title-controls-menu-count_other": "Menu comandi ({{count}})",
+        "title-hidden-count_one": "Nascosto ({{count}})",
+        "title-hidden-count_other": "Nascosti ({{count}})"
       },
       "dashboard-options": {
+        "annotations": "Annotazioni",
+        "description": "Descrizione",
+        "filters": "",
+        "links": "Collegamenti",
+        "open-settings": "",
         "title": "Opzioni",
-        "tooltip": "Opzioni della dashboard"
+        "title-option": "Titolo",
+        "tooltip": "Opzioni della dashboard",
+        "variables": "Variabili"
       },
+      "drag-to-reorder": "Trascina per riordinare",
       "edit-schema": {
+        "apply-button": "Applica modifiche",
+        "apply-button-disabled-tooltip": "Correggi gli errori di convalida prima di applicare le modifiche",
+        "apply-button-disabled-tooltip-yaml": "Il documento presenta errori di convalida. Passa al formato JSON per visualizzare i dettagli degli errori all'interno del testo.",
+        "apply-error-title": "Impossibile applicare le modifiche",
+        "collapse": "Comprimi editor",
+        "copy-as-resource": "",
+        "copy-as-resource-tooltip": "",
+        "expand": "Espandi editor",
+        "modal-title": "Modifica la dashboard come codice",
+        "pane-header": "Modifica come codice",
         "title": "Codice",
-        "tooltip": "Modifica come codice"
+        "tooltip": "Modifica come codice",
+        "undo-title": "Modifica dello schema"
+      },
+      "element-actions": {
+        "copy": "Copia",
+        "copy-tooltip": "",
+        "delete": "Elimina",
+        "duplicate": "Duplica",
+        "paste": "Incolla"
       },
       "elements": {
         "annotation": "Annotazione",
@@ -6115,6 +6139,7 @@
         "element": "Elemento",
         "filter": "",
         "filters-set": "",
+        "link": "Collegamento",
         "link-set": "Collegamenti",
         "local-variable": "Variabile locale",
         "multiple-elements": "Elementi multipli",
@@ -6135,17 +6160,40 @@
       "export": {
         "title": "Esporta"
       },
-      "filters": "",
+      "feedback-title": "Lascia un feedback sulla nuova esperienza di modifica della dashboard",
+      "filters": {
+        "add-filter": "",
+        "reorder-description": "",
+        "title": "",
+        "title-above-dashboard_one": "",
+        "title-above-dashboard_other": "",
+        "title-controls-menu_one": "",
+        "title-controls-menu_other": "",
+        "title-hidden_one": "",
+        "title-hidden_other": "",
+        "tooltip": ""
+      },
       "links": {
         "add-link": "Aggiungi link",
+        "new-link": "Nuovo collegamento",
         "reorder": "Trascina per riordinare",
+        "reorder-description": "Riordina l'elenco dei collegamenti",
         "select-link": "Seleziona",
+        "title-above-dashboard_one": "Sopra la dashboard ({{count}})",
+        "title-above-dashboard_other": "Sopra la dashboard ({{count}})",
+        "title-controls-menu_one": "Menu comandi ({{count}})",
+        "title-controls-menu_other": "Menu comandi ({{count}})",
         "untitled": "Link senza titolo"
       },
-      "open": "",
       "outline": {
+        "pane-header": "Schema dei contenuti",
+        "repeated-item": "Ripeti",
         "title": "Schema",
-        "tooltip": "Schema dei contenuti"
+        "tooltip": "Schema dei contenuti",
+        "tree-item": {
+          "empty": "(vuoto)",
+          "no-title": "<nessun titolo>"
+        }
       },
       "redo": "Ripeti",
       "row": {
@@ -6160,7 +6208,9 @@
       "section-variables": {
         "title": "Variabili"
       },
+      "select": "Seleziona",
       "snapshot": {
+        "title": "Origine",
         "tooltip": "Apri la dashboard originale"
       },
       "undo": "Annulla",
@@ -6182,6 +6232,15 @@
         },
         "description": "Descrizione",
         "description-placeholder": "Testo descrittivo",
+        "display": "Visualizza",
+        "display-options": {
+          "controls-menu": "Menu comandi",
+          "controls-menu-description": "Visibile quando il menu dei comandi è aperto",
+          "hidden": "Nascosto",
+          "hidden-description": "Visibile solo in modalità di modifica",
+          "label-hidden": "",
+          "label-hidden-description": ""
+        },
         "label": "Etichetta",
         "label-description": "Nome visualizzato facoltativo",
         "name": "Nome",
@@ -6208,9 +6267,17 @@
         "add-variable": "Aggiungi variabile",
         "change-type": "",
         "reorder": "Trascina per riordinare",
+        "reorder-description": "Riordina l'elenco delle variabili",
         "select-type": "Scegli il tipo di variabile",
         "select-type-card-tooltip": "Fai clic per selezionare il tipo",
-        "select-variable": "Seleziona"
+        "select-variable": "Seleziona",
+        "title-controls-menu_one": "Menu comandi ({{count}})",
+        "title-controls-menu_other": "Menu comandi ({{count}})",
+        "title-hidden_one": "Nascosto ({{count}})",
+        "title-hidden_other": "Nascosti ({{count}})",
+        "title-top-placement_one": "",
+        "title-top-placement_other": "",
+        "top-placement-default": ""
       },
       "view-panel": {
         "disabled": "",
@@ -6221,6 +6288,18 @@
         "pane-header": "",
         "quick-toggles": "",
         "title": ""
+      },
+      "viz-panel": {
+        "configure-button": "",
+        "delete-panel-text": "L'eliminazione di questo pannello rimuoverà anche tutte le query. Desideri continuare?",
+        "delete-panel-title": "Eliminare il pannello?",
+        "delete-panel-yes": "Elimina",
+        "options": {
+          "configure-button-tooltip": "Modifica le query e le opzioni di visualizzazione",
+          "description": "Descrizione",
+          "title-option": "Titolo",
+          "transparent-background": "Sfondo trasparente"
+        }
       }
     },
     "source-link": {
@@ -6278,9 +6357,6 @@
       "tab-warning": {
         "title-not-unique": "Questo titolo non è univoco"
       }
-    },
-    "title": {
-      "action": "Modifica il titolo della dashboard"
     },
     "toolbar": {
       "add": "Aggiungi",
@@ -6372,9 +6448,6 @@
       "save-library-panel": "Salva pannello della libreria",
       "settings": "Impostazioni dashboard",
       "share-button": "Condividi",
-      "snapshot": {
-        "title": "Origine"
-      },
       "star-add-error": "Impossibile aggiungere ai preferiti",
       "star-added": "Elemento aggiunto ai preferiti",
       "star-remove-error": "Impossibile rimuovere dai preferiti",
@@ -6444,22 +6517,7 @@
       "tags-expected-strings": "array di stringhe con tag previsti"
     },
     "variable": {
-      "description": {
-        "action": "Modifica descrizione variabile"
-      },
-      "description-tooltip": "Descrizione della variabile",
-      "hide": {
-        "action": "Modifica l'opzione di occultamento della variabile"
-      },
-      "label": {
-        "action": "Modifica etichetta variabile"
-      },
-      "name": {
-        "action": "Modifica nome variabile"
-      },
-      "type": {
-        "action": "Modifica il tipo di variabile"
-      }
+      "description-tooltip": "Descrizione della variabile"
     },
     "version-history-comparison": {
       "button-restore": "Ripristina alla versione {{version}} ",
@@ -6482,17 +6540,6 @@
     "view-panel": {
       "back-to-dashboard": "",
       "not-found": ""
-    },
-    "viz-panel": {
-      "delete-panel-text": "L'eliminazione di questo pannello rimuoverà anche tutte le query. Desideri continuare?",
-      "delete-panel-title": "Eliminare il pannello?",
-      "delete-panel-yes": "Elimina",
-      "options": {
-        "configure-button-tooltip": "Modifica le query e le opzioni di visualizzazione",
-        "description": "Descrizione",
-        "title-option": "Titolo",
-        "transparent-background": "Sfondo trasparente"
-      }
     }
   },
   "dashboard-import": {
@@ -6606,25 +6653,6 @@
       "name-allow-custom-values": "Consenti valori personalizzati",
       "name-enable-group-by": "Abilita raggruppamento per"
     },
-    "add-filters": {
-      "label": "Filtra e raggruppa per"
-    },
-    "add-link": {
-      "inline-instance-name": "Nuovo collegamento",
-      "label-link": "Collegamento",
-      "tooltip": "Aggiungi link a un'altra dashboard o a un sito esterno"
-    },
-    "add-new-edit-pane": {
-      "group-layouts": "Raggruppa layout"
-    },
-    "add-row": {
-      "add-label": "Aggiungi riga",
-      "group-label": "Raggruppa in righe"
-    },
-    "add-tab": {
-      "add-label": "Aggiungi scheda",
-      "group-label": "Raggruppa in schede"
-    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Impossibile passare alla dashboard selezionata. Riprova.",
@@ -6653,19 +6681,12 @@
         "new-panel": "Nuovo pannello"
       }
     },
-    "add-variable": {
-      "label-variable": "Variabile"
-    },
     "adhoc-origin-filters-controller": {
       "input-placeholder": "Aggiungi un filtro predefinito..."
     },
     "adhoc-origin-filters-editor": {
       "description": "Filtri preselezionati per impostazione predefinita.",
       "label": "Filtri predefiniti"
-    },
-    "annotation-control": {
-      "description-add-event-data-to-graphs": "Aggiungi i dati degli eventi ai grafici",
-      "label-annotation-query": "Query di annotazione"
     },
     "annotation-edit-actions": {
       "description": {
@@ -6682,11 +6703,6 @@
       "delete-title": "Elimina query di annotazione"
     },
     "annotation-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-annotations-list": "Riordina l'elenco delle annotazioni"
-        }
-      },
       "render-list": {
         "aria-label-annotation": "Annotazione"
       }
@@ -6732,15 +6748,6 @@
       "query-name": "Nome query",
       "tooltip-move-down": "Sposta in basso",
       "tooltip-move-up": "Sposta in alto"
-    },
-    "annotations-list": {
-      "drag-end": {
-        "description": "Riordina l'elenco delle annotazioni"
-      }
-    },
-    "annotations-section": {
-      "name-builtin": "{{annoName}} (Integrato)",
-      "name-disabled": "{{annoName}} (Disabilitato)"
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Non può contenere caratteri non validi: \"~\", \"^\", \":\", \"?\", \"*\", \"[\", \"\\\\\" o \"]\".",
@@ -6796,15 +6803,6 @@
       "name-values-separated-comma": "Valori separati da virgola",
       "selection-options": "Seleziona opzioni"
     },
-    "dashboard-annotations-list": {
-      "add-annotation-query": "Aggiungi query di annotazione",
-      "title-above-dashboard-count_one": "Sopra la dashboard ({{count}})",
-      "title-above-dashboard-count_other": "Sopra la dashboard ({{count}})",
-      "title-controls-menu-count_one": "Menu comandi ({{count}})",
-      "title-controls-menu-count_other": "Menu comandi ({{count}})",
-      "title-hidden-count_one": "Nascosto ({{count}})",
-      "title-hidden-count_other": "Nascosti ({{count}})"
-    },
     "dashboard-link-form": {
       "back-to-list": "Torna all'elenco",
       "label-icon": "Icona",
@@ -6835,9 +6833,6 @@
       "tooltip-move-link-down": "Sposta collegamento in basso",
       "tooltip-move-link-up": "Sposta collegamento in alto",
       "type": "Tipo"
-    },
-    "dashboard-links-list": {
-      "add-link": "Aggiungi link"
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Errore durante il caricamento del dashboard"
@@ -6874,12 +6869,6 @@
         "dashboard-not-found": "Dashboard non trovata"
       }
     },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Controlli della dashboard"
-    },
-    "dashboard-sidebar-renderer": {
-      "title-feedback-dashboard-editing-experience": "Lascia un feedback sulla nuova esperienza di modifica della dashboard"
-    },
     "data-source-variable-form": {
       "data-source-options": "Opzioni dell'origine dei dati",
       "description-instance-name-filter": "Filtro Regex per le istanze di origine dei dati tra cui scegliere nell'elenco dei valori delle variabili. Lascia vuoto per tutti.",
@@ -6913,12 +6902,6 @@
     "description-label": {
       "description": "Descrizione"
     },
-    "draggable-item": {
-      "drag-to-reorder": "Trascina per riordinare"
-    },
-    "draggable-items-list": {
-      "select": "Seleziona"
-    },
     "edit-link-view": {
       "edit-link-page-nav": {
         "text": {
@@ -6941,16 +6924,6 @@
       "show-more": "Mostra di più",
       "sql-name": "Trasforma con SQL",
       "sql-transformation-description": "Manipola i tuoi dati utilizzando una sintassi simile a quella di MySQL"
-    },
-    "filters-list": {
-      "add-filter": "",
-      "reorder-description": "",
-      "title-above-dashboard_one": "",
-      "title-above-dashboard_other": "",
-      "title-controls-menu_one": "",
-      "title-controls-menu_other": "",
-      "title-hidden_one": "",
-      "title-hidden_other": ""
     },
     "general-settings-edit-view": {
       "default_grid_options": {
@@ -7123,11 +7096,6 @@
       "unnamed": "Collegamento senza nome"
     },
     "link-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-links-list": "Riordina l'elenco dei collegamenti"
-        }
-      },
       "render-list": {
         "aria-label-link": "Collegamento"
       }
@@ -7144,13 +7112,6 @@
       "type-dashboards": "Dashboard",
       "type-link": "Collegamento",
       "with-tags": "Con tag"
-    },
-    "links-list": {
-      "drag-end-description": "Riordina l'elenco dei collegamenti",
-      "title-above-dashboard_one": "Sopra la dashboard ({{count}})",
-      "title-above-dashboard_other": "Sopra la dashboard ({{count}})",
-      "title-controls-menu_one": "Menu comandi ({{count}})",
-      "title-controls-menu_other": "Menu comandi ({{count}})"
     },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "",
@@ -7424,9 +7385,6 @@
       "new-alert-rule": "Nuova regola di avviso",
       "title-no-alerting-capable-query-found": "Nessuna query con funzione di avviso trovata"
     },
-    "section-filters-list": {
-      "add-filter": ""
-    },
     "section-placement": {
       "top-row": "",
       "top-tab": ""
@@ -7515,31 +7473,10 @@
       "save-dashboard": "Salva dashboard",
       "title-unsaved-changes": "Modifiche non salvate"
     },
-    "use-annotations-category": {
-      "category": {
-        "title": {
-          "annotations": "Annotazioni"
-        }
-      }
-    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Impostazioni"
-        }
-      }
-    },
-    "use-filters-category": {
-      "category": {
-        "title": {
-          "filters": ""
-        }
-      }
-    },
-    "use-links-category": {
-      "category": {
-        "title": {
-          "links": "Collegamenti"
         }
       }
     },
@@ -7551,13 +7488,6 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard salvata"
     },
-    "use-variables-category": {
-      "category": {
-        "title": {
-          "variables": "Variabili"
-        }
-      }
-    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Questa variabile non è referenziata da nessuna variabile o dashboard.",
       "aria-label-variable-referenced-other-variables-dashboard": "Questa variabile è referenziata da altre variabili o dashboard.",
@@ -7566,23 +7496,6 @@
     },
     "variable-controls": {
       "add-variable": "Aggiungi variabile"
-    },
-    "variable-display-select": {
-      "label": "Visualizza",
-      "options": {
-        "controls-menu": {
-          "description": "Visibile quando il menu dei comandi è aperto",
-          "label": "Menu comandi"
-        },
-        "hidden": {
-          "description": "Visibile solo in modalità di modifica",
-          "label": "Nascosto"
-        },
-        "top-placement-hidden-label": {
-          "description": "",
-          "label": ""
-        }
-      }
     },
     "variable-editable-element": {
       "delete-confirm": "Elimina variabile",
@@ -7634,13 +7547,6 @@
       },
       "label": "Nascondi"
     },
-    "variable-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Riordina l'elenco delle variabili"
-        }
-      }
-    },
     "variable-multi-prop-static-options-form": {
       "aria-label-static-options": "Opzioni statiche"
     },
@@ -7655,23 +7561,6 @@
       "show-more": "Mostra di più",
       "preview-of-values_one": "Anteprima dei valori ({{count}})",
       "preview-of-values_other": "Anteprima dei valori ({{count}})"
-    },
-    "variables-list": {
-      "add-variable": "Aggiungi variabile",
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Riordina l'elenco delle variabili"
-        }
-      },
-      "top-placement": {
-        "default": ""
-      },
-      "title-controls-menu_one": "Menu comandi ({{count}})",
-      "title-controls-menu_other": "Menu comandi ({{count}})",
-      "title-hidden_one": "Nascosto ({{count}})",
-      "title-hidden_other": "Nascosti ({{count}})",
-      "title-top-placement_one": "",
-      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {

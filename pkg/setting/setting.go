@@ -325,6 +325,7 @@ type Cfg struct {
 	DefaultHomeDashboardPath         string
 	DashboardPerformanceMetrics      []string
 	PanelSeriesLimit                 int
+	DashboardDefaultPreload          bool
 	DashboardSchemaMigrationCacheTTL time.Duration
 
 	// Auth
@@ -723,6 +724,7 @@ type Cfg struct {
 	IndexCacheTTL                              time.Duration
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
+	IndexDeletedDocuments                      bool          // Keep deleted objects in the search index, so trash searches can find them.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
@@ -1606,6 +1608,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
 	cfg.DashboardPerformanceMetrics = util.SplitString(dashboards.Key("dashboard_performance_metrics").MustString(""))
 	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
+	cfg.DashboardDefaultPreload = dashboards.Key("default_preload").MustBool(false)
 	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Minute)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
@@ -2019,7 +2022,7 @@ func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
 
 func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	security := iniFile.Section("security")
-	cfg.SecretKey = valueAsString(security, "secret_key", "")
+	readSecretKey(iniFile, cfg)
 	cfg.DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 	cfg.GravatarURL = security.Key("gravatar_url").MustString("https://secure.gravatar.com/avatar")
 
@@ -2103,31 +2106,15 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 }
 
 func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
-	auth := iniFile.Section("auth")
-
-	cfg.LoginCookieName = valueAsString(auth, "login_cookie_name", "grafana_session")
-	const defaultMaxInactiveLifetime = "7d"
-	maxInactiveDurationVal := valueAsString(auth, "login_maximum_inactive_lifetime_duration", defaultMaxInactiveLifetime)
-	cfg.LoginMaxInactiveLifetime, err = gtime.ParseDuration(maxInactiveDurationVal)
-	if err != nil {
+	if err := readSessionAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
+
+	auth := iniFile.Section("auth")
 
 	cfg.OAuthAllowInsecureEmailLookup = auth.Key("oauth_allow_insecure_email_lookup").MustBool(false)
 
-	const defaultMaxLifetime = "30d"
-	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", defaultMaxLifetime)
-	cfg.LoginMaxLifetime, err = gtime.ParseDuration(maxLifetimeDurationVal)
-	if err != nil {
-		return err
-	}
-
 	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
-
-	cfg.TokenRotationIntervalMinutes = auth.Key("token_rotation_interval_minutes").MustInt(10)
-	if cfg.TokenRotationIntervalMinutes < 2 {
-		cfg.TokenRotationIntervalMinutes = 2
-	}
 
 	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	cfg.DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
@@ -2249,17 +2236,8 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 		return errors.New("the minimum supported value for the `user_invite_max_lifetime_duration` configuration is 15m (15 minutes)")
 	}
 
-	cfg.UserLastSeenUpdateInterval, err = gtime.ParseDuration(valueAsString(users, "last_seen_update_interval", "15m"))
-	if err != nil {
+	if err := readUserLastSeenUpdateInterval(iniFile, cfg); err != nil {
 		return err
-	}
-
-	if cfg.UserLastSeenUpdateInterval < time.Minute*5 {
-		cfg.Logger.Warn("the minimum supported value for the `last_seen_update_interval` configuration is 5m (5 minutes)")
-		cfg.UserLastSeenUpdateInterval = time.Minute * 5
-	} else if cfg.UserLastSeenUpdateInterval > time.Hour*1 {
-		cfg.Logger.Warn("the maximum supported value for the `last_seen_update_interval` configuration is 1h (1 hour)")
-		cfg.UserLastSeenUpdateInterval = time.Hour * 1
 	}
 
 	cfg.HiddenUsers = make(map[string]struct{})
