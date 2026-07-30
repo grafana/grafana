@@ -191,11 +191,8 @@ func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembers
 }
 
 func (s *Service) RegisterDelete(renderer teamdelete.Renderer) {
-	// Always register with legacy service since it manages SQL cleanup queries.
-	// The k8s service implementation is a no-op (k8s handles cascading deletes
-	// via its own mechanisms), so there is no need to gate on the feature flag.
-	// This is called at init time (Wire providers) where no request context
-	// exists, making feature flag evaluation with context.Background() unreliable.
+	// Delete renderers only apply to legacy SQL cleanup. Kubernetes handles
+	// cascading deletes independently and does not implement teamdelete.Registrar.
 	s.legacyService.RegisterDelete(renderer)
 }
 

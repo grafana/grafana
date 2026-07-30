@@ -57,10 +57,9 @@ func ProvideTeamPermissions(
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 	directRestConfigProvider apiserver.DirectRestConfigProvider,
 ) (*TeamPermissionsService, error) {
-	dbHelper, err := legacysql.NewDatabaseProvider(sql)(context.Background())
-	if err != nil {
-		return nil, err
-	}
+	// Team permissions deliberately use the primary database, not a request-scoped database;
+	// this service is not part of the multitenant authn dependency chain.
+	dbHelper, _ := legacysql.NewDatabaseProvider(sql)(context.Background())
 
 	options := resourcepermissions.Options{
 		Resource:           teamPermissionsResource,

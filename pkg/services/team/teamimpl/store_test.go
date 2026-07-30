@@ -2,6 +2,7 @@ package teamimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/sortopts"
+	"github.com/grafana/grafana/pkg/services/team/teamdelete"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -544,6 +546,84 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, len(teamMembersQueryResult), 1)
 			})
 		})
+	})
+}
+
+func TestIntegrationSQLStore_DeleteRenderers(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	const orgID int64 = 1
+	type deleteRecord struct {
+		OrgID  int64  `xorm:"org_id"`
+		TeamID int64  `xorm:"team_id"`
+		Marker string `xorm:"marker"`
+	}
+
+	setup := func(t *testing.T) (db.DB, *Service, team.Team) {
+		t.Helper()
+		store, cfg := db.InitTestDBWithCfg(t)
+		err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+			if _, err := sess.Exec("DROP TABLE IF EXISTS team_delete_renderer_test"); err != nil {
+				return err
+			}
+			_, err := sess.Exec("CREATE TABLE team_delete_renderer_test (org_id INTEGER, team_id INTEGER, marker TEXT)")
+			return err
+		})
+		require.NoError(t, err)
+
+		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
+		require.NoError(t, err)
+		created, err := teamSvc.CreateTeam(context.Background(), &team.CreateTeamCommand{
+			Name:  "delete-renderer-test",
+			OrgID: orgID,
+		})
+		require.NoError(t, err)
+		return store, teamSvc, created
+	}
+
+	renderInsert := func(marker string) teamdelete.Renderer {
+		return func(dbHelper *legacysql.LegacyDatabaseHelper, orgID, teamID int64) (teamdelete.Query, error) {
+			return teamdelete.Query{
+				SQL: "INSERT INTO " + dbHelper.DB.Quote(dbHelper.Table("team_delete_renderer_test")) +
+					" (org_id, team_id, marker) VALUES (?, ?, ?)",
+				Args: []any{orgID, teamID, marker},
+			}, nil
+		}
+	}
+
+	readRecords := func(t *testing.T, store db.DB) []deleteRecord {
+		t.Helper()
+		var records []deleteRecord
+		err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+			return sess.Table("team_delete_renderer_test").Find(&records)
+		})
+		require.NoError(t, err)
+		return records
+	}
+
+	t.Run("executes rendered SQL with supplied arguments", func(t *testing.T) {
+		store, teamSvc, created := setup(t)
+		teamSvc.RegisterDelete(renderInsert("rendered"))
+
+		err := teamSvc.DeleteTeam(context.Background(), &team.DeleteTeamCommand{OrgID: orgID, ID: created.ID})
+		require.NoError(t, err)
+		require.Equal(t, []deleteRecord{{OrgID: orgID, TeamID: created.ID, Marker: "rendered"}}, readRecords(t, store))
+	})
+
+	t.Run("rolls back when a renderer fails", func(t *testing.T) {
+		store, teamSvc, created := setup(t)
+		teamSvc.RegisterDelete(renderInsert("rolled-back"))
+		renderErr := errors.New("render delete query")
+		teamSvc.RegisterDelete(func(_ *legacysql.LegacyDatabaseHelper, _, _ int64) (teamdelete.Query, error) {
+			return teamdelete.Query{}, renderErr
+		})
+
+		err := teamSvc.DeleteTeam(context.Background(), &team.DeleteTeamCommand{OrgID: orgID, ID: created.ID})
+		require.ErrorIs(t, err, renderErr)
+		require.Empty(t, readRecords(t, store))
+		persisted, err := teamSvc.GetTeamByID(context.Background(), &team.GetTeamByIDQuery{OrgID: orgID, ID: created.ID})
+		require.NoError(t, err)
+		require.Equal(t, created.ID, persisted.ID)
 	})
 }
 
