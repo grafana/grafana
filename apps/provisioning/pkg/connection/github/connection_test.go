@@ -1383,94 +1383,7 @@ func TestConnection_Test(t *testing.T) {
 	}
 }
 
-func TestConnection_TokenCreationTime(t *testing.T) {
-	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
-
-	// Generate a valid token using the existing function (expires in 10 minutes)
-	validToken, err := github.GenerateJWTToken("123", common.RawSecureValue(privateKeyBase64))
-	require.NoError(t, err)
-
-	iss, _, err := getIssuingAndExpirationTimeFromToken(validToken)
-	require.NoError(t, err)
-	require.False(t, iss.IsZero())
-
-	tests := []struct {
-		name          string
-		secrets       github.ConnectionSecrets
-		expectedError string
-		expectTime    time.Time
-	}{
-		{
-			name: "return correct issuing time",
-			secrets: github.ConnectionSecrets{
-				Token:      validToken,
-				PrivateKey: common.RawSecureValue(privateKeyBase64),
-			},
-			expectTime: iss,
-		},
-		{
-			name: "invalid token format returns error",
-			secrets: github.ConnectionSecrets{
-				Token:      common.RawSecureValue("not-a-valid-jwt-token"),
-				PrivateKey: common.RawSecureValue(privateKeyBase64),
-			},
-			expectedError: "failed to parse token",
-		},
-		{
-			name: "invalid private key returns error",
-			secrets: github.ConnectionSecrets{
-				Token:      validToken,
-				PrivateKey: common.RawSecureValue("not-base64"),
-			},
-			expectedError: "failed to decode base64 private key",
-		},
-		{
-			name: "empty token returns error",
-			secrets: github.ConnectionSecrets{
-				Token:      common.RawSecureValue(""),
-				PrivateKey: common.RawSecureValue(privateKeyBase64),
-			},
-			expectedError: "failed to parse token",
-		},
-		{
-			name: "malformed private key PEM returns error",
-			secrets: github.ConnectionSecrets{
-				Token:      validToken,
-				PrivateKey: common.RawSecureValue(base64.StdEncoding.EncodeToString([]byte("not-a-valid-pem"))),
-			},
-			expectedError: "failed to parse private key",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockFactory := github.NewMockGithubFactory(t)
-			connection := &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
-				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GithubConnectionType,
-					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
-						InstallationID: "456",
-					},
-				},
-			}
-
-			conn := github.NewConnection(connection, mockFactory, tt.secrets)
-			iss, err := conn.TokenCreationTime(context.Background())
-
-			if tt.expectedError != "" {
-				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.expectTime, iss)
-			}
-		})
-	}
-}
-
-func TestConnection_TokenExpiration(t *testing.T) {
+func TestConnection_ValidateToken(t *testing.T) {
 	privateKeyBase64 := base64.StdEncoding.EncodeToString([]byte(testPrivateKeyPEM))
 
 	// Generate a valid token using the existing function (expires in 10 minutes)
@@ -1482,77 +1395,81 @@ func TestConnection_TokenExpiration(t *testing.T) {
 	require.False(t, exp.IsZero())
 
 	tests := []struct {
-		name          string
-		secrets       github.ConnectionSecrets
-		expectedError string
-		expectTime    time.Time
+		name            string
+		appID           string
+		secrets         github.ConnectionSecrets
+		expectErr       bool
+		expectExpiresAt time.Time
 	}{
 		{
-			name: "return correct expiration",
+			name:  "valid token is usable with expiry",
+			appID: "123",
 			secrets: github.ConnectionSecrets{
 				Token:      validToken,
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 			},
-			expectTime: exp,
+			expectExpiresAt: exp,
 		},
 		{
-			name: "invalid token format returns error",
+			name:  "token issued for another appID is not usable",
+			appID: "789",
+			secrets: github.ConnectionSecrets{
+				Token:      validToken,
+				PrivateKey: common.RawSecureValue(privateKeyBase64),
+			},
+			expectErr: true,
+		},
+		{
+			name:  "invalid token format is not usable",
+			appID: "123",
 			secrets: github.ConnectionSecrets{
 				Token:      common.RawSecureValue("not-a-valid-jwt-token"),
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 			},
-			expectedError: "failed to parse token",
+			expectErr: true,
 		},
 		{
-			name: "invalid private key returns error",
+			name:  "invalid private key is not usable",
+			appID: "123",
 			secrets: github.ConnectionSecrets{
 				Token:      validToken,
 				PrivateKey: common.RawSecureValue("not-base64"),
 			},
-			expectedError: "failed to decode base64 private key",
+			expectErr: true,
 		},
 		{
-			name: "empty token returns error",
+			name:  "empty token is not usable",
+			appID: "123",
 			secrets: github.ConnectionSecrets{
 				Token:      common.RawSecureValue(""),
 				PrivateKey: common.RawSecureValue(privateKeyBase64),
 			},
-			expectedError: "failed to parse token",
-		},
-		{
-			name: "malformed private key PEM returns error",
-			secrets: github.ConnectionSecrets{
-				Token:      validToken,
-				PrivateKey: common.RawSecureValue(base64.StdEncoding.EncodeToString([]byte("not-a-valid-pem"))),
-			},
-			expectedError: "failed to parse private key",
+			expectErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockFactory := github.NewMockGithubFactory(t)
-			connection := &provisioning.Connection{
+			obj := &provisioning.Connection{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GithubConnectionType,
 					GitHub: &provisioning.GitHubConnectionConfig{
-						AppID:          "123",
+						AppID:          tt.appID,
 						InstallationID: "456",
 					},
 				},
 			}
 
-			conn := github.NewConnection(connection, mockFactory, tt.secrets)
-			exp, err := conn.TokenExpiration(context.Background())
-
-			if tt.expectedError != "" {
+			conn := github.NewConnection(obj, mockFactory, tt.secrets)
+			expiresAt, err := conn.ValidateToken()
+			if tt.expectErr {
 				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.expectTime, exp)
+				return
 			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectExpiresAt, expiresAt)
 		})
 	}
 }

@@ -403,39 +403,28 @@ func (c *Connection) GenerateConnectionToken(_ context.Context) (common.RawSecur
 		return "", errors.New("connection is not a GitHub connection")
 	}
 
-	return GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
-}
-
-// TokenCreationTime returns when the underlying token has been created.
-func (c *Connection) TokenCreationTime(_ context.Context) (time.Time, error) {
-	issuingTime, _, err := getIssuingAndExpirationTimeFromToken(c.secrets.Token, c.secrets.PrivateKey)
+	token, err := GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
 	if err != nil {
-		return time.Time{}, err
+		return "", err
 	}
 
-	return issuingTime, nil
+	return token, nil
 }
 
-// TokenExpiration returns the underlying token expiration.
-func (c *Connection) TokenExpiration(_ context.Context) (time.Time, error) {
-	_, expiration, err := getIssuingAndExpirationTimeFromToken(c.secrets.Token, c.secrets.PrivateKey)
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	return expiration, nil
-}
-
-// TokenValid returns whether the underlying token is valid.
-func (c *Connection) TokenValid(_ context.Context) bool {
+// ValidateToken checks the stored JWT. A token that does not parse with the
+// private key or was issued for another appID is invalid.
+func (c *Connection) ValidateToken() (time.Time, error) {
 	claims, err := parseJWTToken(c.secrets.Token, c.secrets.PrivateKey)
 	if err != nil {
-		// Error here means the token has not been built with the object privateKey
-		return false
+		return time.Time{}, err
 	}
-
-	// For the token to be valid, the issuer must be equal to the object appID
-	return claims.Issuer == c.cfg.AppID()
+	if claims.Issuer != c.cfg.AppID() {
+		return time.Time{}, errors.New("token was issued for another appID")
+	}
+	if claims.ExpiresAt != nil {
+		return claims.ExpiresAt.Time, nil
+	}
+	return time.Time{}, nil
 }
 
 type permissionTarget int
