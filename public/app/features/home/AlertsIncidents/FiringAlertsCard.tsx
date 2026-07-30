@@ -3,13 +3,14 @@ import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Badge, LinkButton, Stack, Tooltip } from '@grafana/ui';
 import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters/SeverityBars';
 import { type SeverityLevel } from 'app/features/alerting/unified/triage/scene/filters/severity';
+import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
-import { alertsCardClicked } from '../analytics/main';
+import { ctaClicked } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
-import { SummaryCard, SummaryCardAge } from './SummaryCard';
+import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
 import { severityLevelColor } from './severity';
 import { canViewFiringAlerts, useFiringAlerts, type FiringAlertsData } from './useFiringAlerts';
 
@@ -40,6 +41,28 @@ function severityLabel(level?: SeverityLevel): string {
     default:
       return t('home.firing-alerts-card.severity-unknown', 'Unknown');
   }
+}
+
+/**
+ * Empty-state copy scoped to the active team filter. The "All teams" sentinel is
+ * checked first so it never leaks into copy; an explicit team selection overrides
+ * the "your teams" default filter, so the copy names that team instead of
+ * claiming it's the user's own.
+ */
+function emptyMessage(selectedTeam: string | undefined, hasTeams: boolean): string {
+  if (selectedTeam === ALL_VARIABLE_VALUE) {
+    return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
+  }
+  if (selectedTeam) {
+    return t('home.firing-alerts-card.empty-selected-team', 'No firing alerts for {{team}}.', {
+      team: selectedTeam,
+      interpolation: { escapeValue: false },
+    });
+  }
+  if (hasTeams) {
+    return t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.');
+  }
+  return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
 }
 
 export function FiringAlertsCard() {
@@ -75,6 +98,7 @@ export function FiringAlertsCardView({
     visibleAlerts,
     hasAlerts,
     hasTeams,
+    selectedTeam,
     loading,
     error,
     refetch,
@@ -120,11 +144,6 @@ export function FiringAlertsCardView({
             }
           : undefined
       }
-      emptyMessage={
-        hasTeams
-          ? t('home.firing-alerts-card.empty-teams', 'No firing alerts for your teams.')
-          : t('home.firing-alerts-card.empty', 'You have no firing alerts.')
-      }
       items={visibleAlerts}
       getItemKey={({ alert }) => alert.fingerprint}
       renderItem={({ alert, level, startedAt }) => {
@@ -147,22 +166,25 @@ export function FiringAlertsCardView({
                   </span>
                 </Tooltip>
               ) : (
-                <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
+                <SummaryCardPrefix>
+                  <Badge text={severityLabel(level)} color={severityLevelColor(level)} />
+                </SummaryCardPrefix>
               )
             }
             trailing={<SummaryCardAge date={startedAt} />}
             href={detailHref}
-            onClick={() => alertsCardClicked({ action: 'alert_detail', placement: 'list', severity: level })}
+            onClick={() => ctaClicked({ surface: 'alerts_card', action: 'alert_detail', placement: 'list' })}
           />
         );
       }}
+      emptyMessage={emptyMessage(selectedTeam, hasTeams)}
       emptyAction={
         canCreate ? (
           <LinkButton
             variant="primary"
             icon="plus"
             href={newRuleHref}
-            onClick={() => alertsCardClicked({ action: 'create_rule', placement: 'empty_state' })}
+            onClick={() => ctaClicked({ surface: 'alerts_card', action: 'create_rule', placement: 'empty_state' })}
           >
             <Trans i18nKey="home.firing-alerts-card.create">Create an alert rule</Trans>
           </LinkButton>

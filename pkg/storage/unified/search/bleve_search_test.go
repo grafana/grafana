@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"slices"
 	"testing"
 	"time"
 
@@ -11,8 +12,10 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	apischema "k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -47,6 +50,7 @@ func checkSearchQuery(t *testing.T, index resource.ResourceIndex, query *resourc
 	res, err := index.Search(context.Background(), nil, query, nil, nil)
 	require.NoError(t, err)
 	require.Equal(t, int64(len(orderedExpectedNames)), res.TotalHits)
+	require.True(t, res.TotalHitsExact, "in-searcher authz path reports an exact total")
 	for ix, name := range orderedExpectedNames {
 		require.Equal(t, name, res.Results.Rows[ix].Key.Name)
 	}
@@ -667,6 +671,125 @@ func TestDoubleEqualsExactMatch(t *testing.T) {
 	})
 }
 
+func titleFilterQuery(operator string, values ...string) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "default",
+				Group:     "dashboard.grafana.app",
+				Resource:  "dashboards",
+			},
+			Fields: []*resourcepb.Requirement{{Key: "title", Operator: operator, Values: values}},
+		},
+		// Sort by name so multi-hit expectations are deterministic (filters alone
+		// impose no order).
+		SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
+		Limit:  100000,
+	}
+}
+
+// TestTitleSetFilterExactMatch covers the "in"/"notin" title filters the v1
+// search API emits: set membership is exact (whole title, case-insensitive via
+// title_phrase), unlike the fuzzy "=" filter.
+func TestTitleSetFilterExactMatch(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	seed := func(t *testing.T) resource.ResourceIndex {
+		index := newTestDashboardsIndex(t, threshold, 3, noop)
+		indexDocumentsWithTitles(t, index, key, map[string]string{
+			"name1": "Test",
+			"name2": "Test Team 1",
+			"name3": "Other",
+		})
+		return index
+	}
+
+	t.Run("in on title matches only the exact title", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), titleFilterQuery("in", "Test"), []string{"name1"})
+	})
+
+	t.Run("in on title is case insensitive", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), titleFilterQuery("in", "tEsT"), []string{"name1"})
+	})
+
+	t.Run("in on title matches any listed value", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), titleFilterQuery("in", "Test", "Other"), []string{"name1", "name3"})
+	})
+
+	t.Run("notin on title excludes the exact title only", func(t *testing.T) {
+		checkSearchQuery(t, seed(t), titleFilterQuery("notin", "Test"), []string{"name2", "name3"})
+	})
+}
+
+// TestPublicFieldNameFilter checks the filter path resolves a public field name
+// to its physical fields.* location, so callers don't supply the prefix.
+func TestPublicFieldNameFilter(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
+		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+	})
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d1", Title: "One",
+			Key:    &resourcepb.ResourceKey{Name: "d1", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: map[string]any{"team": "red"}}},
+		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d2", Title: "Two",
+			Key:    &resourcepb.ResourceKey{Name: "d2", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: map[string]any{"team": "blue"}}},
+	}}))
+
+	filter := func(field string) *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+				Fields: []*resourcepb.Requirement{{Key: field, Operator: "in", Values: []string{"red"}}},
+			},
+			Limit: 100000,
+		}
+	}
+
+	// Public name resolves to the fields.* sub-document.
+	checkSearchQuery(t, index, filter("team"), []string{"d1"})
+	// An explicitly prefixed name still works (passthrough).
+	checkSearchQuery(t, index, filter(resource.SEARCH_FIELD_PREFIX+"team"), []string{"d1"})
+}
+
+// TestPublicFieldNameTextQuery checks a free-text query resolves a public
+// QueryField name to its physical fields.* location.
+func TestPublicFieldNameTextQuery(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
+		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+	})
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d1", Title: "One",
+			Key:    &resourcepb.ResourceKey{Name: "d1", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: map[string]any{"team": "redteam"}}},
+		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d2", Title: "Two",
+			Key:    &resourcepb.ResourceKey{Name: "d2", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: map[string]any{"team": "blueteam"}}},
+		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d3", Title: "Three",
+			Key:    &resourcepb.ResourceKey{Name: "d3", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: map[string]any{"team": "GreenTeam"}}},
+	}}))
+
+	query := func(text string) *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
+			Query:       text,
+			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "team", Type: resourcepb.QueryFieldType_TEXT, Boost: 1}},
+			Limit:       100000,
+		}
+	}
+
+	checkSearchQuery(t, index, query("redteam"), []string{"d1"})
+	// team is keyword-mapped, so its stored value keeps its case and an exact
+	// query has to match it as written.
+	checkSearchQuery(t, index, query("GreenTeam"), []string{"d3"})
+}
+
 func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer resource.BuildFn) resource.ResourceIndex {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
@@ -1198,6 +1321,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Len(t, names, 100, "should return exactly the requested limit")
 		// totalHits stays the unfiltered match count.
 		require.Equal(t, int64(700), res.TotalHits)
+		require.False(t, res.TotalHitsExact, "page filled early -> approximate total")
 		// Early-exit: we must not have authorized all 700 candidates. With a
 		// batch size of 500 the first batch already fills the page of 100.
 		require.LessOrEqual(t, ac.checked, 500)
@@ -1224,6 +1348,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 		require.Empty(t, names, "deny-all -> no authorized hits")
 		require.Equal(t, int64(0), res.TotalHits, "exhausted -> exact authorized total")
+		require.True(t, res.TotalHitsExact, "exhausted scan -> exact total")
 		// Every doc was examined (exhaustion), so candidates == doc count.
 		require.Equal(t, 200, ac.checked)
 		// Growth: far fewer bleve searches than the 20 a constant window-10
@@ -1462,6 +1587,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		p3, r3 := searchNames(t, index, ac, q3)
 		require.Len(t, p3, 5)
 		require.Equal(t, int64(n), r3.TotalHits, "cursor page must report the unfiltered match count, not the tail authorized count")
+		require.False(t, r3.TotalHitsExact, "cursor-page total is approximate, not exact")
 	})
 
 	t.Run("low auth fraction continues past MaxCandidates until first authorized hit", func(t *testing.T) {
@@ -1881,4 +2007,235 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		got := pageAllFederated(t, dash, folder, ac, 5)
 		require.Equal(t, want, got, "duplicate titles must page deterministically by _id across the alias")
 	})
+}
+
+// Deleted documents share an index with live ones, so every read path has to pick
+// a side. These cover each path that builds its own query, plus the document with
+// no marker at all, which must stay live without a reindex.
+func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	const folder = "folder-1"
+	manager := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo-x"}
+
+	doc := func(name, title string, deleted *bool) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+					Name:      name,
+				},
+				Title:     title,
+				Folder:    folder,
+				Tags:      []string{"tag-a"},
+				Manager:   &manager,
+				IsDeleted: deleted,
+			},
+		}
+	}
+
+	index := newTestDashboardsIndex(t, threshold, 3, func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			// What every document written before the marker looks like.
+			doc("no-marker", "Alpha one", nil),
+			doc("live", "Alpha two", new(false)),
+			doc("trashed", "Alpha three", new(true)),
+		}})
+	})
+
+	liveNames := []string{"no-marker", "live"}
+
+	t.Run("search leaves deleted documents out", func(t *testing.T) {
+		q := newTestQuery("Alpha")
+		checkSearchQueryUnordered(t, index, q, liveNames)
+	})
+
+	t.Run("search with IsDeleted returns only deleted documents", func(t *testing.T) {
+		q := newTestQuery("Alpha")
+		q.IsDeleted = true
+		checkSearchQueryUnordered(t, index, q, []string{"trashed"})
+	})
+
+	// Browsing trash with no query at all takes its own path in scopeQuery.
+	t.Run("browsing trash with no query returns only deleted documents", func(t *testing.T) {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		checkSearchQueryUnordered(t, index, q, []string{"trashed"})
+	})
+
+	// A query with filters and no text takes the other branch of
+	// combineFilterAndTextQueries, where filters drive iteration.
+	t.Run("filter-only search leaves deleted documents out", func(t *testing.T) {
+		q := newTestQuery("")
+		q.Options.Fields = []*resourcepb.Requirement{{
+			Key:      resource.SEARCH_FIELD_TAGS,
+			Operator: string(selection.In),
+			Values:   []string{"tag-a"},
+		}}
+		checkSearchQueryUnordered(t, index, q, liveNames)
+
+		q.IsDeleted = true
+		checkSearchQueryUnordered(t, index, q, []string{"trashed"})
+	})
+
+	t.Run("facets and total hits ignore deleted documents", func(t *testing.T) {
+		q := newTestQuery("")
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: resource.SEARCH_FIELD_TAGS, Limit: 100},
+		}
+
+		res, err := index.Search(context.Background(), nil, q, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Equal(t, int64(len(liveNames)), res.TotalHits)
+
+		facet, ok := res.Facet["tags"]
+		require.True(t, ok)
+		require.Equal(t, int64(len(liveNames)), facet.Total)
+		require.Len(t, facet.Terms, 1)
+		require.Equal(t, "tag-a", facet.Terms[0].Term)
+		require.Equal(t, int64(len(liveNames)), facet.Terms[0].Count)
+	})
+
+	t.Run("doc counts ignore deleted documents", func(t *testing.T) {
+		all, err := index.DocCount(context.Background(), "", nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(len(liveNames)), all)
+
+		inFolder, err := index.DocCount(context.Background(), folder, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(len(liveNames)), inFolder)
+	})
+
+	// An object that was provisioned when it was deleted comes back from its
+	// repository, not from trash, so trash must not return it.
+	t.Run("trash leaves out objects that were provisioned when deleted", func(t *testing.T) {
+		provisioned := &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key:           &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "trashed-from-repo"},
+				Title:         "Alpha four",
+				Folder:        folder,
+				IsDeleted:     new(true),
+				IsProvisioned: new(true),
+			},
+		}
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{provisioned}}))
+
+		trashQuery := newTestQuery("Alpha")
+		trashQuery.IsDeleted = true
+		checkSearchQueryUnordered(t, index, trashQuery, []string{"trashed"})
+
+		// It is still absent from live search: it is deleted, after all.
+		checkSearchQueryUnordered(t, index, newTestQuery("Alpha"), liveNames)
+	})
+
+	// Restoring an object reindexes it without the marker, which has to put it back
+	// into live results and take it out of trash.
+	t.Run("reindexing without the marker restores the document", func(t *testing.T) {
+		restored := &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "trashed"},
+				Title:  "Alpha three",
+				Folder: folder,
+			},
+		}
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{restored}}))
+		t.Cleanup(func() {
+			// Put it back in the trash for the other subtests.
+			restored.Doc.IsDeleted = new(true)
+			require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{restored}}))
+		})
+
+		checkSearchQueryUnordered(t, index, newTestQuery("Alpha"), append(slices.Clone(liveNames), "trashed"))
+
+		trashQuery := newTestQuery("Alpha")
+		trashQuery.IsDeleted = true
+		checkSearchQueryUnordered(t, index, trashQuery, nil)
+	})
+
+	// A deleted object provisioning can still see looks like one to keep managing.
+	t.Run("managed object listing and counts ignore deleted documents", func(t *testing.T) {
+		listed, err := index.ListManagedObjects(context.Background(), &resourcepb.ListManagedObjectsRequest{
+			Namespace: key.Namespace,
+			Kind:      string(manager.Kind),
+			Id:        manager.Identity,
+		}, &resource.SearchStats{})
+		require.NoError(t, err)
+		require.Nil(t, listed.Error)
+
+		names := make([]string, 0, len(listed.Items))
+		for _, item := range listed.Items {
+			names = append(names, item.Object.Name)
+		}
+		require.ElementsMatch(t, liveNames, names)
+
+		counts, err := index.CountManagedObjects(context.Background(), &resource.SearchStats{})
+		require.NoError(t, err)
+		require.Len(t, counts, 1)
+		require.Equal(t, int64(len(liveNames)), counts[0].Count)
+	})
+}
+
+// The post-ranking authorization path runs its own search loop, so a leak there
+// would only show up where that path is enabled.
+func TestSearchPostRankAuthzSeparatesDeletedFromLiveDocuments(t *testing.T) {
+	index := newTestDashboardsIndexPostRank(t, 3)
+
+	doc := func(name string, deleted *bool) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: postRankKey.Namespace,
+					Group:     postRankKey.Group,
+					Resource:  postRankKey.Resource,
+					Name:      name,
+				},
+				Title:     name,
+				Folder:    "folder-a",
+				IsDeleted: deleted,
+			},
+		}
+	}
+	indexDocs(t, index, []*resource.BulkIndexItem{
+		doc("no-marker", nil),
+		doc("live", new(false)),
+		doc("trashed", new(true)),
+	})
+
+	ac := &countingAccessClient{allowAll: true}
+
+	names, res := searchNames(t, index, ac, listQuery(100))
+	require.ElementsMatch(t, []string{"no-marker", "live"}, names)
+	require.Equal(t, int64(2), res.TotalHits)
+
+	q := listQuery(100)
+	q.IsDeleted = true
+	names, res = searchNames(t, index, ac, q)
+	require.Equal(t, []string{"trashed"}, names)
+	require.Equal(t, int64(1), res.TotalHits)
+}
+
+// checkSearchQueryUnordered asserts on the set of names, where order is not under
+// test.
+func checkSearchQueryUnordered(t *testing.T, index resource.ResourceIndex, query *resourcepb.ResourceSearchRequest, expectedNames []string) {
+	t.Helper()
+	res, err := index.Search(context.Background(), nil, query, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, res.Error)
+	require.Equal(t, int64(len(expectedNames)), res.TotalHits)
+
+	names := make([]string, 0, len(res.Results.Rows))
+	for _, row := range res.Results.Rows {
+		names = append(names, row.Key.Name)
+	}
+	require.ElementsMatch(t, expectedNames, names)
 }

@@ -3,7 +3,6 @@ import React from 'react';
 import { store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, logWarning } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
   sceneGraph,
@@ -20,10 +19,10 @@ import { LS_ROW_COPY_KEY } from 'app/core/constants';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
-import { dashboardEditActions } from '../../edit-pane/shared';
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
+import { dashboardEditActions } from '../../sidebar/shared';
 import { cloneSectionVariableSet, removeRepeatLocalVariableFromSet } from '../../utils/clone';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
@@ -100,7 +99,7 @@ export class RowItem
   public getEditableElementInfo(): EditableDashboardElementInfo {
     const isHidden = !this.state.conditionalRendering?.state.result;
     return {
-      typeName: t('dashboard.edit-pane.elements.row', 'Row'),
+      typeName: t('dashboard.sidebar.elements.row', 'Row'),
       instanceName: interpolateSectionTitle(this, this.state.title),
       icon: 'list-ul',
       isHidden,
@@ -116,16 +115,7 @@ export class RowItem
 
   public getOutlineChildren(isEditing?: boolean): SceneObject[] {
     const layoutChildren = this.state.layout.getOutlineChildren();
-    if (
-      isEditing &&
-      // OpenFeature is not initialized for anonymous users, so fall back to
-      // the static feature toggle to ensure section variables work without auth.
-      getFeatureFlagClient().getBooleanValue(
-        FlagKeys.DashboardSectionVariables,
-        Boolean(config.featureToggles.dashboardSectionVariables)
-      ) &&
-      this.state.$variables
-    ) {
+    if (isEditing && this.state.$variables) {
       return [
         ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [this.getFiltersSet()] : []),
         this.state.$variables,

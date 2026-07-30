@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -189,7 +188,7 @@ func TestNewSearchOptionsPassesFileSnapshotStoreToBleveBackend(t *testing.T) {
 	cfg.IndexSnapshotBucketURL = fileBucketURL(t, t.TempDir())
 
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
-	opts, err := NewSearchOptions(featuremgmt.WithFeatures(), cfg, nil, metrics, nil, nil)
+	opts, err := NewSearchOptions(cfg, nil, metrics, nil, nil)
 	require.NoError(t, err)
 
 	backend, ok := opts.Backend.(*bleveBackend)

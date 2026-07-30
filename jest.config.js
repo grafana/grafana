@@ -37,6 +37,7 @@ const esModules = [
   'uuid',
   '@react-hookz/web',
   '@ver0/deep-equal',
+  '@marcbachmann/cel-js',
 ].join('|');
 
 module.exports = {
@@ -93,7 +94,6 @@ module.exports = {
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
     '<rootDir>/public/app/plugins/datasource/influxdb',
     '<rootDir>/public/app/plugins/datasource/graphite',
-    '<rootDir>/public/app/plugins/datasource/loki',
     '<rootDir>/public/app/plugins/datasource/mysql',
   ],
 };

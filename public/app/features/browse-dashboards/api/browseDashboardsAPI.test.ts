@@ -5,7 +5,7 @@ import { testWithFeatureToggles, waitFor } from 'test/test-utils';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import * as quotasAPI from '@grafana/api-clients/rtkq/quotas/v0alpha1';
-import { config, setBackendSrv } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -211,7 +211,6 @@ describe('browseDashboardsAPI', () => {
 
   it('does not check whether a single delete target is provisioned before deleting it', async () => {
     const store = createTestStore();
-    config.featureToggles.provisioning = true;
 
     const getProvisionedFolderSpy = jest.fn();
     const deleteFolderSpy = jest.fn();
@@ -458,7 +457,6 @@ describe('browseDashboardsAPI', () => {
 
     it('does not delete provisioned folders during bulk delete', async () => {
       const store = createTestStore();
-      config.featureToggles.provisioning = true;
 
       const deleteSpy = jest.fn();
 
@@ -506,7 +504,6 @@ describe('browseDashboardsAPI', () => {
     });
 
     it('only un-stars folders that were actually deleted when some are provisioned', async () => {
-      config.featureToggles.provisioning = true;
       const { store, setStarredPayloads } = createStoreWithSetStarredRecorder();
 
       const deletedUids: string[] = [];

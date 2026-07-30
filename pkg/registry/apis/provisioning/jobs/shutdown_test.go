@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // --- JobCleanupController shutdown tests ---
@@ -112,15 +114,14 @@ func TestJobCleanupController_Run_CompletesInitialCleanupBeforeExiting(t *testin
 // nil after context cancellation when all drivers are idle (no jobs to claim).
 func TestConcurrentJobDriver_Run_StopsOnContextCancel(t *testing.T) {
 	store := &MockStore{}
-	store.EXPECT().Claim(mock.Anything).Return(nil, nil, ErrNoJobs).Maybe()
 
 	driver, err := NewConcurrentJobDriver(
 		2,
-		time.Minute, 50*time.Millisecond, 30*time.Second,
+		time.Minute, 30*time.Second, 30*time.Second,
 		store, &MockRepoGetter{}, &MockHistoryWriter{},
-		make(chan struct{}, 1),
 		prometheus.NewRegistry(),
 		nil,
+		false,
 	)
 	require.NoError(t, err)
 
@@ -131,7 +132,7 @@ func TestConcurrentJobDriver_Run_StopsOnContextCancel(t *testing.T) {
 		runDone <- driver.Run(ctx)
 	}()
 
-	// Give drivers time to start and settle into their polling loops.
+	// Give drivers time to start and block on the empty work queue.
 	time.Sleep(100 * time.Millisecond)
 	cancel()
 
@@ -153,14 +154,23 @@ func TestConcurrentJobDriver_Run_StopsOnContextCancel(t *testing.T) {
 func TestConcurrentJobDriver_Run_AllDriversExitBeforeRunReturns(t *testing.T) {
 	const numDrivers = 3
 
+	// One unclaimed job per driver, so an informer event hands every driver a key.
+	pending := make([]*provisioning.Job, numDrivers)
+	for i := range pending {
+		pending[i] = &provisioning.Job{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "stacks-123", Name: fmt.Sprintf("job-%d", i)},
+			Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+		}
+	}
+
 	// claimActive tracks how many driver goroutines are currently inside Claim.
 	var claimActive atomic.Int32
 
 	store := &MockStore{}
 	// Claim blocks until ctx is cancelled, simulating drivers that are
-	// mid-poll when the shutdown signal arrives.
-	store.EXPECT().Claim(mock.Anything).
-		RunAndReturn(func(ctx context.Context) (*provisioning.Job, func(), error) {
+	// mid-claim when the shutdown signal arrives.
+	store.EXPECT().Claim(mock.Anything, mock.Anything, mock.Anything).
+		RunAndReturn(func(ctx context.Context, _, _ string) (*provisioning.Job, func(), error) {
 			claimActive.Add(1)
 			defer claimActive.Add(-1)
 			<-ctx.Done()
@@ -169,11 +179,11 @@ func TestConcurrentJobDriver_Run_AllDriversExitBeforeRunReturns(t *testing.T) {
 
 	driver, err := NewConcurrentJobDriver(
 		numDrivers,
-		time.Minute, 10*time.Millisecond, 30*time.Second,
+		time.Minute, 30*time.Second, 30*time.Second,
 		store, &MockRepoGetter{}, &MockHistoryWriter{},
-		make(chan struct{}, 1),
 		prometheus.NewRegistry(),
 		nil,
+		false,
 	)
 	require.NoError(t, err)
 
@@ -183,6 +193,11 @@ func TestConcurrentJobDriver_Run_AllDriversExitBeforeRunReturns(t *testing.T) {
 	go func() {
 		runDone <- driver.Run(ctx)
 	}()
+
+	handler := driver.EventHandler()
+	for _, job := range pending {
+		handler.AddFunc(job, false)
+	}
 
 	// Wait until all drivers are blocked inside Claim, confirming they have
 	// all started and picked up work before we trigger shutdown.

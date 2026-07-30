@@ -12,7 +12,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import { configureStore } from 'app/store/configureStore';
 
 import { makeDatasourceSetup } from '../../spec/helper/setup';
-import { updateQueryLibraryRefAction } from '../../state/explorePane';
+import { updateEditSavedQueryRefAction } from '../../state/explorePane';
 import { splitClose, splitOpen } from '../../state/main';
 
 import { useStateSync } from './';
@@ -586,7 +586,7 @@ describe('useStateSync', () => {
     });
   });
 
-  it('should keep queryLibraryRef in state but not in URL', async () => {
+  it('should keep editSavedQueryRef in state but not in URL', async () => {
     const { store, location } = setup({
       queryParams: {
         panes: JSON.stringify({
@@ -604,15 +604,105 @@ describe('useStateSync', () => {
     });
 
     act(() => {
-      store.dispatch(updateQueryLibraryRefAction({ exploreId: 'one', queryLibraryRef: 'library-query-456' }));
+      store.dispatch(updateEditSavedQueryRefAction({ exploreId: 'one', editSavedQueryRef: 'library-query-456' }));
     });
 
     await waitFor(() => {
-      expect(store.getState().explore.panes['one']?.queryLibraryRef).toBe('library-query-456');
+      expect(store.getState().explore.panes['one']?.editSavedQueryRef).toBe('library-query-456');
 
       const search = location.getSearchObject();
       const panes = search.panes && typeof search.panes === 'string' ? JSON.parse(search.panes) : {};
-      expect(panes.one?.queryLibraryRef).toBeUndefined();
+      expect(panes.one?.editSavedQueryRef).toBeUndefined();
+    });
+  });
+
+  it('seeds editSavedQueryRef onto the first pane from the ?editSavedQueryRef URL param at init', async () => {
+    const { store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'test', refId: 'A' }],
+          },
+        }),
+        schemaVersion: 1,
+        editSavedQueryRef: 'library-query-789',
+      },
+    });
+
+    await waitFor(() => {
+      expect(store.getState().explore.panes['one']?.editSavedQueryRef).toBe('library-query-789');
+    });
+  });
+
+  it('seeds addingSavedQuery onto the first pane from ?createSavedQuery=true at init', async () => {
+    const { store } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'test', refId: 'A' }],
+          },
+        }),
+        schemaVersion: 1,
+        createSavedQuery: 'true',
+      },
+    });
+
+    await waitFor(() => {
+      expect(store.getState().explore.panes['one']?.addingSavedQuery).toBe(true);
+    });
+  });
+
+  it('seeds addingSavedQuery when syncFromURL initializes a new pane with ?createSavedQuery=true', async () => {
+    const { rerender, store, location } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'test', refId: 'A' }],
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitFor(() => {
+      expect(store.getState().explore.panes['one']).toBeDefined();
+      expect(store.getState().explore.panes['one']?.addingSavedQuery).toBeFalsy();
+    });
+
+    const nextPanes = JSON.stringify({
+      two: {
+        datasource: 'loki-uid',
+        queries: [{ expr: 'test', refId: 'A' }],
+      },
+    });
+
+    // In-Explore "Add saved query" navigations mint a new pane id and carry createSavedQuery on the URL.
+    // syncFromURL reads that param from location (not panes JSON), so both must be updated.
+    act(() => {
+      location.push({
+        pathname: '/explore',
+        search: stringify({
+          panes: nextPanes,
+          schemaVersion: 1,
+          createSavedQuery: 'true',
+        }),
+      });
+    });
+
+    rerender({
+      children: null,
+      params: {
+        panes: nextPanes,
+        schemaVersion: 1,
+        createSavedQuery: 'true',
+      },
+    });
+
+    await waitFor(() => {
+      expect(store.getState().explore.panes['two']?.addingSavedQuery).toBe(true);
     });
   });
 });
