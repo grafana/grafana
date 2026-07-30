@@ -1,4 +1,5 @@
 import { type ChatContextItem } from '@grafana/assistant';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 import { type WizardDatasource } from './types';
 
@@ -49,22 +50,6 @@ function formatItem(item: ChatContextItem): FormattedContextItem | undefined {
 }
 
 /**
- * Serializes the selected context items into a prompt block, one line per
- * item, in the same `{type, data}` shape the assistant chat uses. Returns ''
- * when nothing serializes.
- */
-export function formatContextItemsForPrompt(items: ChatContextItem[]): string {
-  const lines: string[] = [];
-  for (const item of items) {
-    const formatted = formatItem(item);
-    if (formatted) {
-      lines.push(`- ${item.node.name} (${formatted.type}): ${JSON.stringify(formatted.data)}`);
-    }
-  }
-  return lines.join('\n');
-}
-
-/**
  * Datasources the user explicitly attached as context. When non-empty, the
  * wizard scopes its suggestions and the build to exactly these.
  */
@@ -94,4 +79,11 @@ export function scopeDatasourcesToContext(
   }
   const scoped = datasources.filter((ds) => uids.has(ds.uid));
   return scoped.length > 0 ? scoped : datasources;
+}
+
+/** Every datasource in the instance, as the wizard's starting scope. */
+export function getWizardDatasources(): WizardDatasource[] {
+  return getDataSourceSrv()
+    .getList()
+    .map((ds) => ({ uid: ds.uid, type: ds.type, name: ds.name }));
 }

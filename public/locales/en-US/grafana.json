@@ -6384,7 +6384,6 @@
             "as-code": "Export as code"
           }
         },
-        "improve-dashboard-tooltip": "Let the Grafana Assistant improve this dashboard",
         "more-save-options": "More save options",
         "playlist-next": "Go to next dashboard",
         "playlist-previous": "Go to previous dashboard",
@@ -7921,54 +7920,14 @@
     "datasource-entry": {
       "generate-dashboard": "Generate dashboard"
     },
-    "generation": {
-      "assistant-unavailable": "The Grafana Assistant is not available.",
-      "failed-title": "Dashboard generation failed",
-      "title": "Building your dashboard",
-      "title-improve": "Improving your dashboard"
-    },
-    "improve-modal": {
-      "description": "Describe the changes — add panels, reorganize sections, fix queries, add variables, polish the visuals.",
-      "label": "What should the Assistant improve?",
-      "placeholder": "e.g. Add a section with error rates per service, and a variable to filter by namespace",
-      "submit": "Improve it",
-      "title": "Improve this dashboard"
-    },
     "modal": {
       "title": "Let's build a dashboard"
     },
     "prompt-step": {
-      "analyzing": "Analyzing your request…",
       "build-it": "Build it",
       "description": "Describe it in your own words — mention the services, data, or questions you care about.",
-      "or": "or",
       "placeholder": "e.g. Error rates and latency for my checkout service, broken down by environment",
-      "show-me": "Just show me what Grafana can do",
-      "show-me-description": "We will make assumptions based on your data and build a dashboard for you.",
       "title": "What do you want to monitor?"
-    },
-    "questions-step": {
-      "back": "Back",
-      "continue": "Continue",
-      "title": "A couple of quick questions"
-    },
-    "summary-step": {
-      "back": "Back",
-      "data-sources": "Data sources",
-      "default-title": "New dashboard",
-      "generate": "Generate dashboard",
-      "kind-tab": "Tab",
-      "refine": "Refine plan",
-      "refine-label": "Not quite right? Tell the assistant what to change",
-      "refine-placeholder": "e.g. add a section for cache hit ratio, or use a table for errors",
-      "repeat-label": "for each {{variable}}",
-      "structure-rows_one": "Organized into {{count}} stacked row",
-      "structure-rows_other": "Organized into {{count}} stacked rows",
-      "structure-tabs_one": "Organized into {{count}} tab",
-      "structure-tabs_other": "Organized into {{count}} tabs",
-      "template-variables": "Template variables",
-      "title": "Here's what we'll build",
-      "your-choices": "Your choices"
     }
   },
   "dashboards": {

@@ -3,7 +3,6 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { useDashboardGenerationAvailable } from 'app/features/dashboard-wizard/useDashboardGenerationAvailable';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { dynamicDashNavActions } from '../../utils/registerDynamicDashNavAction';
@@ -13,7 +12,6 @@ import { type DashboardScene } from '../DashboardScene';
 import { BackToDashboardButton } from './actions/BackToDashboardButton';
 import { DiscardLibraryPanelButton } from './actions/DiscardLibraryPanelButton';
 import { DiscardPanelButton } from './actions/DiscardPanelButton';
-import { ImproveDashboardButton } from './actions/ImproveDashboardButton';
 import { MakeDashboardEditableButton } from './actions/MakeDashboardEditableButton';
 import { PlayListNextButton } from './actions/PlayListNextButton';
 import { PlayListPreviousButton } from './actions/PlayListPreviousButton';
@@ -38,7 +36,6 @@ export const Actions = ({ dashboard }: { dashboard: DashboardScene }) => {
   const isShowingDashboard = !hasEditView && !isViewingPanel && !isEditingPanel;
   const canSaveInFolder = contextSrv.hasEditPermissionInFolders;
   const canEditDashboard = dashboard.canEditDashboard();
-  const canGenerateDashboards = useDashboardGenerationAvailable();
 
   const showPanelButtons = isEditingPanel && !hasEditView && !isViewingPanel;
   const showPlayButtons = isPlaying && isShowingDashboard && !isEditingDashboard;
@@ -67,12 +64,6 @@ export const Actions = ({ dashboard }: { dashboard: DashboardScene }) => {
             component: PlayListNextButton,
             group: 'playlist',
             condition: showPlayButtons,
-          },
-          {
-            key: 'improve-dashboard-button',
-            component: ImproveDashboardButton,
-            group: 'improve-dashboard',
-            condition: canGenerateDashboards && isShowingDashboard && canEditDashboard && isEditable && !isPlaying,
           },
           {
             key: 'back-to-dashboard-button',
