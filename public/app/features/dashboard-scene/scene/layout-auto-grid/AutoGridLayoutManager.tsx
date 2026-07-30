@@ -36,7 +36,7 @@ import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayout } from './AutoGridLayout';
-import { getEditOptions } from './AutoGridLayoutManagerEditor';
+import { getSidebarOptions } from './AutoGridLayoutManagerEditor';
 
 interface AutoGridLayoutManagerState extends SceneObjectState {
   layout: AutoGridLayout;
@@ -302,7 +302,7 @@ export class AutoGridLayoutManager
   }
 
   public getOptions(): OptionsPaneItemDescriptor[] {
-    return getEditOptions(this);
+    return getSidebarOptions(this);
   }
 
   public onMaxColumnCountChanged(maxColumnCount: number) {

@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"math/rand"
@@ -42,6 +43,11 @@ import (
 )
 
 const maxBatchSize = 1000
+
+// listEverything is the limit an index build passes to say "no limit". Backends
+// take req.Limit+1 to spot a next page, so MaxInt64 would overflow; this is far
+// past any real resource count.
+const listEverything = 1000000000000
 
 // openIndexStatsMaxAge is how far back startup accepts the local open index list.
 const openIndexStatsMaxAge = time.Hour
@@ -116,9 +122,17 @@ type IndexFeature string
 // this feature before keeping a deleted document.
 const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
 
+// IndexFeatureStoredFacets means every facet-capable field is stored, so the
+// post-rank authorization path can aggregate facets app-side. Native bleve
+// faceting reads the index, not the stored values, so this is required only
+// where post-rank authorization runs — see RequiredIndexFeatures. Without it,
+// that path reports facet-capable but unstored fields as missing values.
+const IndexFeatureStoredFacets IndexFeature = "facets-are-stored"
+
 // currentIndexFeatures is recorded in every index this binary builds.
 var currentIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
+	IndexFeatureStoredFacets,
 }
 
 // requiredIndexFeatures is the subset an index must already have to be used. An
@@ -138,8 +152,14 @@ func CurrentIndexFeatures() []IndexFeature {
 }
 
 // RequiredIndexFeatures returns the features an index must have to be used.
-func RequiredIndexFeatures() []IndexFeature {
-	return slices.Sorted(slices.Values(requiredIndexFeatures))
+// postRankAuthz adds the features only that path depends on, so deployments
+// serving facets from bleve itself are not rebuilt for it.
+func RequiredIndexFeatures(postRankAuthz bool) []IndexFeature {
+	features := requiredIndexFeatures
+	if postRankAuthz {
+		features = append(slices.Clone(features), IndexFeatureStoredFacets)
+	}
+	return slices.Sorted(slices.Values(features))
 }
 
 // MissingIndexFeatures returns the required features the index does not have.
@@ -289,6 +309,7 @@ type searchServer struct {
 
 	injectFailuresPercent     int
 	indexModificationCacheTTL time.Duration
+	indexDeletedDocuments     bool
 
 	backendDiagnostics resourcepb.DiagnosticsServer //nolint:staticcheck
 }
@@ -364,9 +385,10 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		minBuildVersion:           opts.MinBuildVersion,
 		buildVersion:              opts.BuildVersion,
 		searchFields:              searchFields,
-		requiredFeatures:          RequiredIndexFeatures(),
+		requiredFeatures:          RequiredIndexFeatures(opts.PostRankAuthzEnabled),
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
+		indexDeletedDocuments:     opts.IndexDeletedDocuments,
 
 		queryCache:             opts.QueryCache,
 		queryCacheMaxPerTenant: opts.QueryCacheMaxPerTenant,
@@ -1824,6 +1846,43 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	return idx, nil
 }
 
+// bulkIndexBatcher hands documents to an index in batches, so building an index
+// for a large resource does not hold every document in memory at once.
+type bulkIndexBatcher struct {
+	index ResourceIndex
+	span  trace.Span
+	items []*BulkIndexItem
+	total int
+}
+
+func newBulkIndexBatcher(index ResourceIndex, span trace.Span) *bulkIndexBatcher {
+	return &bulkIndexBatcher{index: index, span: span, items: make([]*BulkIndexItem, 0, maxBatchSize)}
+}
+
+func (b *bulkIndexBatcher) add(item *BulkIndexItem) error {
+	b.items = append(b.items, item)
+	if len(b.items) < maxBatchSize {
+		return nil
+	}
+	return b.flush()
+}
+
+func (b *bulkIndexBatcher) flush() error {
+	if len(b.items) == 0 {
+		return nil
+	}
+	b.span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(b.items))))
+	if err := b.index.BulkIndex(&BulkIndexRequest{Items: b.items}); err != nil {
+		return err
+	}
+	b.total += len(b.items)
+	b.items = b.items[:0]
+	return nil
+}
+
+// indexed returns how many documents have been handed to the index.
+func (b *bulkIndexBatcher) indexed() int { return b.total }
+
 //nolint:gocyclo
 func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size int64, indexBuildReason string, rebuild bool, lastImportTime time.Time) (ResourceIndex, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.build")
@@ -1848,7 +1907,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.String("reason", indexBuildReason)))
 
 		listRV, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
-			Limit: 1000000000000, // big number
+			Limit: listEverything,
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Group:     nsr.Group,
@@ -1857,10 +1916,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				},
 			},
 		}, func(iter ListIterator) error {
-			// Process documents in batches to avoid memory issues
-			// When dealing with large collections (e.g., 100k+ documents),
-			// loading all documents into memory at once can cause OOM errors.
-			items := make([]*BulkIndexItem, 0, maxBatchSize)
+			batch := newBulkIndexBatcher(index, span)
 
 			for iter.Next() {
 				if err = iter.Error(); err != nil {
@@ -1884,33 +1940,31 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 					continue
 				}
 
-				// Add to bulk items
-				items = append(items, &BulkIndexItem{
-					Action: ActionIndex,
-					Doc:    doc,
-				})
-
-				// When we reach the batch size, perform bulk index and reset the batch.
-				if len(items) >= maxBatchSize {
-					span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-					if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
-						return err
-					}
-
-					items = items[:0]
-				}
-			}
-
-			// Index any remaining items in the final batch.
-			if len(items) > 0 {
-				span.AddEvent("bulk indexing", trace.WithAttributes(attribute.Int("count", len(items))))
-				if err = index.BulkIndex(&BulkIndexRequest{Items: items}); err != nil {
+				if err = batch.add(&BulkIndexItem{Action: ActionIndex, Doc: doc}); err != nil {
 					return err
 				}
 			}
+
+			if err = batch.flush(); err != nil {
+				return err
+			}
 			return iter.Error()
 		})
-		return listRV, err
+		if err != nil {
+			return listRV, err
+		}
+
+		// Deleted objects are not on the list above, and nothing will re-announce
+		// them: an object is deleted once. Without this pass every rebuild would
+		// drop the whole trash for this resource.
+		//
+		// The resource version stays the one from the live pass, which is the older
+		// of the two, so anything that changed while this pass ran is replayed by
+		// the updater rather than missed.
+		if err := s.indexTrash(ctx, nsr, index, logger); err != nil {
+			return listRV, err
+		}
+		return listRV, nil
 	}
 
 	var dedupCache *gocache.Cache
@@ -1939,6 +1993,8 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		if lastSinceRV > 0 && sinceRV == lastSinceRV {
 			calledAt = lastCalledAt
 		}
+
+		keepDeleted := s.keepsDeletedDocuments(index, logger)
 
 		listModifiedTime := time.Now()
 		rv, it := s.storage.ListModifiedSince(ctx, NamespacedResource{
@@ -1994,10 +2050,30 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 					Doc:    doc,
 				})
 			case resourcepb.WatchEvent_DELETED:
-				span.AddEvent("deleting document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
+				// The delete event carries the object as it was, so trash searches can
+				// find it. Two things send it to the index as a removal instead: an
+				// index that cannot hold the markers, and a body we cannot read.
+				var doc *IndexableDocument
+				if keepDeleted {
+					doc, err = buildDeletedDocument(key, res.ResourceVersion, res.Value)
+					if err != nil {
+						span.RecordError(err)
+						logger.Warn("error building search document for deleted resource, removing it from the index instead", "key", SearchID(key), "err", err)
+					}
+				}
+				if doc == nil {
+					span.AddEvent("deleting document", trace.WithAttributes(attribute.String("name", res.Key.Name)))
+					items = append(items, &BulkIndexItem{
+						Action: ActionDelete,
+						Key:    &res.Key,
+					})
+					break
+				}
+
+				span.AddEvent("marking document deleted", trace.WithAttributes(attribute.String("name", res.Key.Name)))
 				items = append(items, &BulkIndexItem{
-					Action: ActionDelete,
-					Key:    &res.Key,
+					Action: ActionIndex,
+					Doc:    doc,
 				})
 			default:
 				logger.Error("can't update index with item, unknown action", "action", res.Action, "key", key)
@@ -2066,6 +2142,137 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	}
 
 	return index, err
+}
+
+// keepsDeletedDocuments reports whether deleted objects should stay in this
+// index. They do not when the feature is switched off, or when the index predates
+// the marker mappings and would serve a marked document as live. Either way the
+// document is removed instead, as it was before trash search existed.
+func (s *searchServer) keepsDeletedDocuments(index ResourceIndex, logger log.Logger) bool {
+	if !s.indexDeletedDocuments {
+		return false
+	}
+	info, err := index.BuildInfo()
+	if err != nil {
+		logger.Warn("cannot read index features, removing deleted documents instead of keeping them", "err", err)
+		return false
+	}
+	missing := MissingIndexFeatures(info, []IndexFeature{IndexFeatureDeletedMarker})
+	if len(missing) > 0 {
+		logger.Debug("index does not map the markers on deleted documents, removing them until it is rebuilt", "missing", missing)
+		return false
+	}
+	return true
+}
+
+// indexTrash adds the currently-deleted objects of a resource to the index,
+// marked so only trash searches find them. Deleted objects are absent from the
+// live listing the build runs, so this is the only thing that puts them back
+// after a rebuild.
+func (s *searchServer) indexTrash(ctx context.Context, nsr NamespacedResource, index ResourceIndex, logger log.Logger) error {
+	ctx, span := tracer.Start(ctx, "resource.searchServer.indexTrash")
+	defer span.End()
+
+	// Nothing to do when deleted objects are not kept: listing trash and building
+	// documents that get dropped would be wasted work.
+	if !s.keepsDeletedDocuments(index, logger) {
+		return nil
+	}
+
+	req := &resourcepb.ListRequest{
+		Limit:  listEverything,
+		Source: resourcepb.ListRequest_TRASH,
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:     nsr.Group,
+				Resource:  nsr.Resource,
+				Namespace: nsr.Namespace,
+			},
+		},
+	}
+
+	batch := newBulkIndexBatcher(index, span)
+	_, err := s.storage.ListHistory(ctx, req, func(iter ListIterator) error {
+		for iter.Next() {
+			if err := iter.Error(); err != nil {
+				return err
+			}
+
+			key := &resourcepb.ResourceKey{
+				Group:     nsr.Group,
+				Resource:  nsr.Resource,
+				Namespace: nsr.Namespace,
+				Name:      iter.Name(),
+			}
+
+			doc, err := buildDeletedDocument(key, iter.ResourceVersion(), iter.Value())
+			if err != nil {
+				span.RecordError(err)
+				logger.Error("error building search document for deleted resource", "key", SearchID(key), "err", err)
+				continue
+			}
+
+			if err := batch.add(&BulkIndexItem{Action: ActionIndex, Doc: doc}); err != nil {
+				return err
+			}
+		}
+
+		if err := batch.flush(); err != nil {
+			return err
+		}
+		return iter.Error()
+	})
+	if errors.Is(err, errUnimplemented) {
+		// The IAM backends (resourcepermission, noopstorage) embed
+		// UnimplementedStorageBackend and serve their resource from legacy SQL, so
+		// they have no history to list, and no trash to index either.
+		logger.Debug("storage backend does not support listing trash, skipping deleted resources")
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	span.SetAttributes(attribute.Int("documents", batch.indexed()))
+	if batch.indexed() > 0 {
+		logger.Debug("indexed deleted resources", "documents", batch.indexed())
+	}
+	return nil
+}
+
+// buildDeletedDocument builds the document for an object that is in the trash.
+// Trash serves a fixed field set, so the kind's builder is skipped: it would only
+// add live-only fields, at about twice the cost. Its title comes from the same
+// FindTitle, so trash and live search agree.
+//
+// Fields are listed rather than cleared, so a field added to IndexableDocument
+// later cannot reach trash documents by accident.
+func buildDeletedDocument(key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
+	var u unstructured.Unstructured
+	if err := u.UnmarshalJSON(value); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal deleted object: %w", err)
+	}
+	obj, err := utils.MetaAccessor(&u)
+	if err != nil {
+		return nil, err
+	}
+
+	doc := &IndexableDocument{
+		Key: key,
+		// Searches sort on name as the final tie-breaker, so it has to be set.
+		Name:   key.Name,
+		RV:     rv,
+		Title:  obj.FindTitle(key.Name),
+		Folder: obj.GetFolder(),
+
+		IsDeleted: new(true),
+	}
+	// Only provisioned documents carry the marker, so absent means "not
+	// provisioned", matching how the deleted marker works.
+	if obj.GetAnnotation(utils.AnnoKeyManagerKind) != "" {
+		doc.IsProvisioned = new(true)
+	}
+	return doc, nil
 }
 
 type builderCache struct {

@@ -56,10 +56,7 @@ export function AnnotationList({ dataLayerSet }: { dataLayerSet: DashboardDataLa
 
         dashboardEditActions.edit({
           source: dataLayerSet,
-          description: t(
-            'dashboard-scene.annotation-list.create-drag-end-handler.description.reorder-annotations-list',
-            'Reorder annotations list'
-          ),
+          description: t('dashboard.sidebar.annotations.reorder-description', 'Reorder annotations list'),
           perform: () => {
             if (!result.destination || result.destination.index === result.source.index) {
               return;

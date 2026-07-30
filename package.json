@@ -454,7 +454,7 @@
     "tmp": "0.2.7",
     "yaml@npm:^1.10.0": "1.10.3",
     "tar@npm:7.5.11": "7.5.21",
-    "linkify-it": "5.0.1"
+    "linkify-it": "5.0.2"
   },
   "workspaces": {
     "packages": [

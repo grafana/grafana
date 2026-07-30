@@ -2,7 +2,7 @@ import { type Locator, test } from '@playwright/test';
 
 import { PageObject } from '../PageObject';
 
-// The edit pane shown after adding or selecting a variable — variable type,
+// The sidebar after adding or selecting a variable — variable type,
 // name/label inputs, plus type-specific options (e.g. datasource variables)
 export class VariableOptions extends PageObject {
   async selectVariableType(type: string) {

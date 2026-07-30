@@ -10,7 +10,7 @@ import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
-import { AddNewEditPane } from 'app/features/dashboard-scene/sidebar/add-new/AddNewEditPane';
+import { AddNewPane } from 'app/features/dashboard-scene/sidebar/add-new/AddNewPane';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
@@ -68,7 +68,7 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
   const isEditingNewDashboard = isEditing && !uid;
   const isAutoGrid = body instanceof AutoGridLayoutManager;
 
-  // open the edit pane when the dashboard is new and in editing mode
+  // open the sidebar when the dashboard is new and in editing mode
   // will only happen when the default empty state is shown (not overridden by extension point)
   // skipped when the assistant started the edit session — it drives the build itself,
   // so the pane would only take space away from the assistant sidebar
@@ -78,7 +78,7 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
       dashboard.getEditSessionSource() !== 'assistant' &&
       sidebar.state.openPane?.getId() !== 'add'
     ) {
-      sidebar.openPane(new AddNewEditPane({}));
+      sidebar.openPane(new AddNewPane({}));
     }
   }, [isEditingNewDashboard, dashboard, sidebar]);
 

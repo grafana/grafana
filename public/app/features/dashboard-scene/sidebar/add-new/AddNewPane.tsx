@@ -25,14 +25,14 @@ import { AddRow } from './AddRow';
 import { AddTab } from './AddTab';
 import { AddVariable } from './AddVariable';
 
-export class AddNewEditPane extends SceneObjectBase {
-  public static Component = AddNewEditPaneRenderer;
+export class AddNewPane extends SceneObjectBase {
+  public static Component = AddNewPaneRenderer;
   public getId() {
     return 'add' as const;
   }
 }
 
-function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) {
+function AddNewPaneRenderer({ model }: SceneComponentProps<AddNewPane>) {
   const sidebar = sceneGraph.getAncestor(model, DashboardSidebar);
   const { hasCopiedPanel } = useClipboardState();
   const styles = useStyles2(getStyles);
@@ -52,11 +52,11 @@ function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) 
 
   return (
     <div className={styles.wrapper}>
-      <Sidebar.PaneHeader title={t('dashboard.add.pane-header', 'Add')} />
+      <Sidebar.PaneHeader title={t('dashboard.sidebar.add.pane-header', 'Add')} />
       <ScrollContainer showScrollIndicators={true}>
         <AddNewSection
-          title={t('dashboard.add.new-panel.title', 'Panel')}
-          description={t('dashboard.add.new-panel.description', 'Drag or click to add a panel')}
+          title={t('dashboard.sidebar.add.new-panel.title', 'Panel')}
+          description={t('dashboard.sidebar.add.new-panel.description', 'Drag or click to add a panel')}
         >
           <DragDropContext onDragStart={onStartDragging} onDragEnd={() => {}}>
             <Droppable droppableId="side-drop-id" isDropDisabled>
@@ -80,10 +80,13 @@ function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) 
                               sidebar.addNewPanel(selectedObj);
                             }
                           }}
-                          aria-label={t('dashboard.add.new-panel.title', 'Panel')}
+                          aria-label={t('dashboard.sidebar.add.new-panel.title', 'Panel')}
                         >
                           {/* @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react. */}
-                          <SVG title={t('dashboard.add.new-panel.button', 'Add new panel button')} src={addPanelSvg} />
+                          <SVG
+                            title={t('dashboard.sidebar.add.new-panel.button', 'Add new panel button')}
+                            src={addPanelSvg}
+                          />
                         </div>
                       );
                     }}
@@ -112,12 +115,9 @@ function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) 
                                 pastePanel();
                               }
                             }}
-                            aria-label={t('dashboard.canvas-actions.add.paste.title', 'Paste panel')}
-                            label={t('dashboard.canvas-actions.add.paste.title', 'Paste panel')}
-                            tooltip={t(
-                              'dashboard.canvas-actions.add.paste.description',
-                              'Click or drag to paste panel'
-                            )}
+                            aria-label={t('dashboard.sidebar.add.paste-panel.title', 'Paste panel')}
+                            label={t('dashboard.sidebar.add.paste-panel.title', 'Paste panel')}
+                            tooltip={t('dashboard.sidebar.add.paste-panel.description', 'Click or drag to paste panel')}
                           ></AddButton>
                         </div>
                       )}
@@ -129,11 +129,11 @@ function AddNewEditPaneRenderer({ model }: SceneComponentProps<AddNewEditPane>) 
             </Droppable>
           </DragDropContext>
         </AddNewSection>
-        <AddNewSection title={t('dashboard-scene.add-new-edit-pane.group-layouts', 'Group layouts')}>
+        <AddNewSection title={t('dashboard.sidebar.add.group-layouts', 'Group layouts')}>
           <AddRow dashboardScene={dashboardScene} selectedElement={selectedObj} />
           <AddTab dashboardScene={dashboardScene} selectedElement={selectedObj} />
         </AddNewSection>
-        <AddNewSection title={t('dashboard-scene.dashboard-side-pane-new.dashboard-controls', 'Dashboard controls')}>
+        <AddNewSection title={t('dashboard.sidebar.add.dashboard-controls', 'Dashboard controls')}>
           {config.featureToggles.dashboardUnifiedDrilldownControls && <AddFilters dashboardScene={dashboardScene} />}
           <AddVariable dashboardScene={dashboardScene} selectedElement={selectedObj} />
           <AddAnnotationQuery dashboardScene={dashboardScene} />
