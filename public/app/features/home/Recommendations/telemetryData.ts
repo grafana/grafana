@@ -336,6 +336,8 @@ export async function fetchMetricsActivity(
       ? runRangeQuery('series', usage.activeSeries, DATA_LOOKBACK_HOURS, usage.ds)
           .then((frames) => readSeries(frames, 'series'))
           .catch(() => null)
+          // Zero-ingestion stacks have no usage series; chain the counts' self-monitoring fallback.
+          .then((sparkline) => sparkline ?? fetchSeriesSparkline(ds, mimir))
       : fetchSeriesSparkline(ds, mimir),
     runInstantQueries(
       {

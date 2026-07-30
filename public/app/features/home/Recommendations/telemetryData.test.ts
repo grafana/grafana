@@ -431,6 +431,66 @@ describe('fetchMetricsActivity', () => {
     expect(activity.seriesSparkline?.y.values).toEqual([30, 40]);
   });
 
+  it('falls back to the head-series sparkline when the usage series is empty', async () => {
+    mockGetAPINamespace.mockReturnValue('stacks-12345');
+    mockGetDataSourceInstanceSettings.mockImplementation(async (ref) =>
+      ref === 'grafanacloud-usage' ? usageSettings : undefined
+    );
+    const getResource = jest.fn(async () => ({ data: ['up'] }));
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+    mockRunRangeQuery.mockImplementation(async (_refId, query) =>
+      query === 'sum(prometheus_tsdb_head_series)'
+        ? [
+            createDataFrame({
+              refId: 'series',
+              fields: [
+                { name: 'Time', type: FieldType.time, values: [1_000, 2_000] },
+                { name: 'Value', type: FieldType.number, values: [10, 20] },
+              ],
+            }),
+          ]
+        : []
+    );
+
+    const activity = await fetchMetricsActivity(prom);
+
+    expect(activity.seriesSparkline?.y.values).toEqual([10, 20]);
+    expect(mockRunRangeQuery).toHaveBeenCalledWith(
+      'series',
+      'sum(max by (id) (grafanacloud_instance_active_series{stack_id="12345"}))',
+      DATA_LOOKBACK_HOURS,
+      { uid: 'grafanacloud-usage', type: 'prometheus' }
+    );
+    expect(mockRunRangeQuery).toHaveBeenCalledWith(
+      'series',
+      'sum(prometheus_tsdb_head_series)',
+      DATA_LOOKBACK_HOURS,
+      prom
+    );
+  });
+
+  it('keeps the sparkline null on empty usage when the datasource is Mimir-backed', async () => {
+    mockGetAPINamespace.mockReturnValue('stacks-12345');
+    mockGetDataSourceInstanceSettings.mockImplementation(async (ref) =>
+      ref === 'grafanacloud-usage'
+        ? usageSettings
+        : ({ jsonData: { prometheusType: 'Mimir' } } as unknown as DataSourceInstanceSettings)
+    );
+    const getResource = jest.fn(async () => ({ data: ['up'] }));
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+
+    const activity = await fetchMetricsActivity(prom);
+
+    expect(activity.seriesSparkline).toBeNull();
+    expect(mockRunRangeQuery).toHaveBeenCalledTimes(1);
+    expect(mockRunRangeQuery).toHaveBeenCalledWith(
+      'series',
+      'sum(max by (id) (grafanacloud_instance_active_series{stack_id="12345"}))',
+      DATA_LOOKBACK_HOURS,
+      { uid: 'grafanacloud-usage', type: 'prometheus' }
+    );
+  });
+
   it('never queries the usage datasource outside a Cloud stack', async () => {
     mockGetDataSourceInstanceSettings.mockResolvedValue({
       jsonData: { prometheusType: 'Mimir' },
