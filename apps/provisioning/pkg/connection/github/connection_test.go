@@ -117,7 +117,7 @@ func TestConnection_Mutate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GitlabConnectionType,
-					Gitlab: &provisioning.GitlabConnectionConfig{
+					OAuth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "clientID",
 					},
 				},
@@ -1633,7 +1633,7 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GitlabConnectionType,
-					Gitlab: &provisioning.GitlabConnectionConfig{
+					OAuth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "clientID",
 					},
 				},
@@ -1801,7 +1801,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GitlabConnectionType,
-					Gitlab: &provisioning.GitlabConnectionConfig{
+					OAuth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "clientID",
 					},
 				},
