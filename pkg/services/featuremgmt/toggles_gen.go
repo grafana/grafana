@@ -738,6 +738,10 @@ const (
 	// Enables plugins decoupling from bootdata
 	FlagPluginsUseMTPlugins = "plugins.useMTPlugins"
 
+	// FlagGlobalDashboardVariables
+	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app
+	FlagGlobalDashboardVariables = "globalDashboardVariables"
+
 	// FlagGrafanaDashboardGlobalVariables
 	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app
 	FlagGrafanaDashboardGlobalVariables = "grafana.dashboardGlobalVariables"

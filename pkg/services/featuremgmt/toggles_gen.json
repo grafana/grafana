@@ -1583,20 +1583,6 @@
     },
     {
       "metadata": {
-        "name": "dashboard.globalVariables",
-        "resourceVersion": "1785347170085",
-        "creationTimestamp": "2026-07-29T17:46:10Z",
-        "deletionTimestamp": "2026-07-29T17:50:19Z"
-      },
-      "spec": {
-        "description": "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
-        "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "dashboard.notebooks",
         "resourceVersion": "1783509818865",
         "creationTimestamp": "2026-07-08T11:23:38Z"
@@ -2676,8 +2662,7 @@
       "metadata": {
         "name": "globalDashboardVariables",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z",
-        "deletionTimestamp": "2026-07-29T17:46:10Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z"
       },
       "spec": {
         "description": "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
@@ -2746,8 +2731,8 @@
     {
       "metadata": {
         "name": "grafana.dashboardGlobalVariables",
-        "resourceVersion": "1785347419917",
-        "creationTimestamp": "2026-07-29T17:50:19Z"
+        "resourceVersion": "1785434853665",
+        "creationTimestamp": "2026-07-30T18:07:33Z"
       },
       "spec": {
         "description": "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",

@@ -2265,6 +2265,18 @@ var (
 			Expression:   "false",
 			HideFromDocs: true,
 		},
+		// Deprecated: prefer grafana.dashboardGlobalVariables. Kept registered so
+		// cloud enablement via the legacy wave remains valid until that flag is
+		// removed in a follow-up after all consumers read the new key.
+		{
+			Name:            "globalDashboardVariables",
+			Description:     "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+			Stage:           FeatureStageExperimental,
+			Generate:        Generate{LegacyGo: true, React: true},
+			Owner:           grafanaDashboardsSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+		},
 		{
 			Name:        "grafana.dashboardGlobalVariables",
 			Description: "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
