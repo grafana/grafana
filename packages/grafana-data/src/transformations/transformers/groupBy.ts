@@ -3,7 +3,7 @@ import { map } from 'rxjs/operators';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { type DataFrame, type Field } from '../../types/dataFrame';
 import { type DataTransformerInfo, TransformationApplicabilityLevels } from '../../types/transformations';
-import { getFieldTypeForReducer, reduceField, ReducerID } from '../fieldReducer';
+import { getFieldTypeForReducer, reduceField, type ReducerID } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -102,7 +102,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
             }
 
             const fieldName = getFieldDisplayName(field);
-            const aggregations = options.fields[fieldName].aggregations;
+            const aggregations = (options.fields[fieldName] ?? options.fields[field.name]).aggregations;
             const valuesByAggregation: Record<string, unknown[]> = {};
 
             valuesByGroupKey.forEach((value) => {
@@ -147,8 +147,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
 // exported for test
 export const shouldCalculateField = (field: Field, options: GroupByTransformerOptions): boolean => {
   const fieldName = getFieldDisplayName(field);
-  const { operation, aggregations = [] } = options.fields[fieldName] ?? {};
-
+  const { operation, aggregations = [] } = options.fields[fieldName] ?? options.fields[field.name] ?? {};
   if (!Array.isArray(aggregations)) {
     return false;
   } else if (operation === GroupByOperationID.aggregate) {
