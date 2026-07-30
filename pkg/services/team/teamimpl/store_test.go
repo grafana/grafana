@@ -570,6 +570,15 @@ func TestIntegrationSQLStore_DeleteRenderers(t *testing.T) {
 			return err
 		})
 		require.NoError(t, err)
+		// InitTestDB hands back a package-shared database on postgres and mysql, so
+		// drop the scratch table rather than leaving it for later tests to inherit.
+		t.Cleanup(func() {
+			err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
+				_, err := sess.Exec("DROP TABLE IF EXISTS team_delete_renderer_test")
+				return err
+			})
+			require.NoError(t, err)
+		})
 
 		teamSvc, err := ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil)
 		require.NoError(t, err)
