@@ -24,6 +24,7 @@ jest.mock('@grafana/data', () => {
   const storeMocks = {
     get: jest.fn(),
     set: jest.fn(),
+    delete: jest.fn(),
   };
   return {
     ...jest.requireActual('@grafana/data'),
@@ -48,6 +49,7 @@ describe('userStorage', () => {
     const store = getStoreMocks();
     store.get.mockReset();
     store.set.mockReset();
+    store.delete.mockReset();
     _clearStorageCache();
   });
 
@@ -230,6 +232,173 @@ describe('userStorage', () => {
       // Verify the value was updated
       const value = await storage.getItem('key');
       expect(value).toBe('new-value');
+    });
+  });
+
+  describe('deleteItem', () => {
+    it('use localStorage if the user is not logged in', async () => {
+      config.bootData.user.isSignedIn = false;
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      await storage.deleteItem('key');
+      expect(getStoreMocks().delete).toHaveBeenCalledWith('plugin-id:abc:key');
+    });
+
+    it('use localStorage if the user storage is not found', async () => {
+      request.mockReturnValue(Promise.reject({ status: 404 } as FetchError));
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      await storage.deleteItem('key');
+      expect(getStoreMocks().delete).toHaveBeenCalledWith('plugin-id:abc:key');
+    });
+
+    it('deletes an item from the user storage', async () => {
+      request.mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          data: { metadata: { name: 'service:abc' }, spec: { data: { key: 'value', other: 'data' } } },
+        } as FetchResponse)
+      );
+      request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      await storage.deleteItem('key');
+      expect(request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/plugin-id:abc',
+          method: 'GET',
+          showErrorAlert: false,
+        })
+      );
+      expect(request).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/plugin-id:abc',
+          method: 'PATCH',
+          data: {
+            spec: {
+              data: { key: null },
+            },
+          },
+        })
+      );
+    });
+
+    it('falls back to localStorage if the delete operation fails', async () => {
+      request.mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          data: { metadata: { name: 'service:abc' }, spec: { data: { key: 'value' } } },
+        } as FetchResponse)
+      );
+      request.mockReturnValueOnce(Promise.reject({ status: 403 } as FetchError));
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      await storage.deleteItem('key');
+      expect(getStoreMocks().delete).toHaveBeenCalledWith('plugin-id:abc:key');
+    });
+
+    it('updates cache after deleting an item', async () => {
+      request.mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          data: { spec: { data: { key: 'value', other: 'data' } } },
+        } as FetchResponse)
+      );
+      request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
+
+      const storage1 = renderHook(() => usePluginUserStorage()).result.current;
+      await storage1.deleteItem('key');
+
+      // Second instance should see updated cache without network request
+      request.mockReset();
+      const storage2 = renderHook(() => usePluginUserStorage()).result.current;
+      const value = await storage2.getItem('key');
+
+      // Should not make a GET request because cache has the updated data
+      expect(request).not.toHaveBeenCalled();
+      expect(value).toBeNull();
+    });
+
+    it('verifies other keys remain after deletion', async () => {
+      request.mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          data: { spec: { data: { key1: 'value1', key2: 'value2' } } },
+        } as FetchResponse)
+      );
+      request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
+
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      await storage.deleteItem('key1');
+
+      // Get the deleted key
+      request.mockReset();
+      const deletedValue = await storage.getItem('key1');
+      expect(deletedValue).toBeNull();
+
+      // Get another key
+      const otherValue = await storage.getItem('key2');
+      expect(otherValue).toBe('value2');
+    });
+  });
+
+  describe('allItems', () => {
+    it('uses localStorage if the user is not logged in', async () => {
+      config.bootData.user.isSignedIn = false;
+      getStoreMocks().all = jest.fn().mockReturnValue({ key: 'value' });
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      const result = await storage.allItems();
+      expect(getStoreMocks().all).toHaveBeenCalledWith('plugin-id:abc:');
+      expect(result).toEqual({ key: 'value' });
+    });
+
+    it('returns all items from user storage', async () => {
+      request.mockReturnValue(
+        Promise.resolve({
+          status: 200,
+          data: { spec: { data: { key1: 'value1', key2: 'value2' } } },
+        } as FetchResponse)
+      );
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      const result = await storage.allItems();
+      expect(result).toEqual({ key1: 'value1', key2: 'value2' });
+    });
+
+    it('returns empty object when user storage is not found', async () => {
+      request.mockReturnValue(Promise.reject({ status: 404 } as FetchError));
+      getStoreMocks().all = jest.fn().mockReturnValue({});
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      const result = await storage.allItems();
+      expect(result).toEqual({});
+    });
+
+    it('returns a copy of the cached data without additional network requests', async () => {
+      request.mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          data: { spec: { data: { key1: 'value1', key2: 'value2' } } },
+        } as FetchResponse)
+      );
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      // Prime the cache
+      await storage.getItem('key1');
+      request.mockReset();
+      // allItems should use the cache
+      const result = await storage.allItems();
+      expect(request).not.toHaveBeenCalled();
+      expect(result).toEqual({ key1: 'value1', key2: 'value2' });
+    });
+
+    it('returns data reflecting updates from setItem', async () => {
+      request.mockReturnValueOnce(
+        Promise.resolve({
+          status: 200,
+          data: { spec: { data: { key1: 'old' } } },
+        } as FetchResponse)
+      );
+      request.mockReturnValueOnce(Promise.resolve({ status: 200 } as FetchResponse));
+      const storage = renderHook(() => usePluginUserStorage()).result.current;
+      await storage.setItem('key1', 'new');
+      request.mockReset();
+      const result = await storage.allItems();
+      expect(request).not.toHaveBeenCalled();
+      expect(result).toEqual({ key1: 'new' });
     });
   });
 

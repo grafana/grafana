@@ -2,6 +2,7 @@ import { type ChangeEvent } from 'react';
 
 import { PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { type SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
 import { type TimeZone } from '@grafana/schema';
 import {
@@ -387,7 +388,8 @@ function GeneralSettingsEditViewComponent({ model }: SceneComponentProps<General
             >
               <Switch
                 id="preload-panels-dashboards-toggle"
-                value={dashboard.state.preload}
+                // Reflect the effective value: when the dashboard has no explicit preload, show the instance default.
+                value={dashboard.state.preload ?? config.dashboardDefaultPreload}
                 onChange={(e) => model.onPreloadChange(e.currentTarget.checked)}
               />
             </Field>

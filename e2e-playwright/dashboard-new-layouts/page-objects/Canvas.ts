@@ -46,7 +46,7 @@ export class Canvas extends PageObject {
       // layout (tab/row); by default the whole edit canvas body is hovered.
       const container =
         panelsContainer ??
-        this.dashboardPage.getByGrafanaSelector(this.selectors.components.DashboardEditPaneSplitter.primaryBody);
+        this.dashboardPage.getByGrafanaSelector(this.selectors.components.DashboardSidebarSplitter.primaryBody);
 
       // Hover the top-left pixel instead of the default center, which could land on
       // a panel and trigger unrelated hover states (header actions, tooltips)

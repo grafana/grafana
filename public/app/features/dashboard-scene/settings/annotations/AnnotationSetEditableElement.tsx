@@ -14,7 +14,7 @@ import { partitionAnnotationsByDisplay } from '../../sidebar/dashboard/Dashboard
 
 import { AnnotationList } from './AnnotationList';
 
-function useEditPaneOptions(
+function useSidebarOptions(
   this: AnnotationSetEditableElement,
   dataLayerSet: DashboardDataLayerSet
 ): OptionsPaneCategoryDescriptor[] {
@@ -53,5 +53,5 @@ export class AnnotationSetEditableElement implements EditableDashboardElement {
     return [...visible, ...controlsMenu, ...hidden];
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this, this.dataLayerSet);
+  public useSidebarOptions = useSidebarOptions.bind(this, this.dataLayerSet);
 }

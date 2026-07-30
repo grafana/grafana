@@ -76,8 +76,10 @@ export interface Props<TQuery extends DataQuery> {
   onQueryReplacedFromLibrary?: () => void;
   collapsable?: boolean;
   hideRefId?: boolean;
-  queryLibraryRef?: string;
-  onCancelQueryLibraryEdit?: () => void;
+  editSavedQueryRef?: string;
+  onExitQueryLibraryEdit?: () => void;
+  addingSavedQuery?: boolean;
+  onCancelAddSavedQuery?: () => void;
   isOpen?: boolean;
   /**
    * Required to resolve section-scoped (row/tab) datasource variables
@@ -195,6 +197,15 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       this.setState({ data: dataFilteredByRefId });
     }
 
+    // The owner retargeted the scroll (e.g. a second expression added before this pin settled).
+    // Drop this row's pin so it stops fighting the new target — cancelling rather than finishing,
+    // since finishing would report back and clear the target the owner just set.
+    if (prevProps.scrollIntoView && !this.props.scrollIntoView) {
+      this.cancelScrollPin?.();
+      this.cancelScrollPin = undefined;
+      this.hasStartedScrollIntoView = false;
+    }
+
     this.scrollIntoViewIfNeeded();
 
     // check if we need to load another datasource
@@ -303,12 +314,19 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     reportInteraction('query_library-update_query_from_explore_cancelled', {
       datasourceType: query.datasource?.type,
     });
-    this.props.onCancelQueryLibraryEdit?.();
+    this.props.onExitQueryLibraryEdit?.();
   };
 
   onExitQueryLibraryEditingMode = () => {
-    // Exit query library editing mode after successful update
-    this.props.onCancelQueryLibraryEdit?.();
+    this.props.onExitQueryLibraryEdit?.();
+  };
+
+  onSavedQueryModeSuccess = () => {
+    if (this.props.addingSavedQuery) {
+      this.props.onCancelAddSavedQuery?.();
+      return;
+    }
+    this.onExitQueryLibraryEditingMode();
   };
 
   onCopyQuery = () => {
@@ -463,12 +481,20 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderActions = (props: QueryOperationRowRenderProps) => {
-    const { query, hideHideQueryButton: hideHideQueryButton = false, queryLibraryRef, app } = this.props;
+    const {
+      query,
+      hideHideQueryButton: hideHideQueryButton = false,
+      editSavedQueryRef,
+      addingSavedQuery,
+      app,
+    } = this.props;
     const { datasource, showingHelp } = this.state;
     const isHidden = !!query.hide;
 
     const hasEditorHelp = datasource?.components?.QueryEditorHelp;
-    const isEditingQueryLibrary = queryLibraryRef !== undefined;
+    // Both "editing an existing saved query" and "adding a new saved query" hide the per-row
+    // save/duplicate/remove action
+    const isEditingQueryLibrary = editSavedQueryRef !== undefined || !!addingSavedQuery;
     const isUnifiedAlerting = app === CoreApp.UnifiedAlerting;
     const isExpressionQuery = query.datasource?.uid === ExpressionDatasourceUID;
 
@@ -559,11 +585,15 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       isOpen,
       onQueryOpenChanged,
       app,
-      queryLibraryRef,
-      onCancelQueryLibraryEdit,
+      editSavedQueryRef,
+      addingSavedQuery,
+      onCancelAddSavedQuery,
     } = this.props;
     const { datasource, showingHelp, data } = this.state;
     const isHidden = query.hide;
+    // Both saved-query flows (editing an existing one and adding a new one) show the banner above the
+    // editor and wrap it in the highlighted container.
+    const inSavedQueryMode = editSavedQueryRef !== undefined || !!addingSavedQuery;
     const error =
       data?.error && data.error.refId === query.refId ? data.error : data?.errors?.find((e) => e.refId === query.refId);
     const rowClasses = classNames('query-editor-row', {
@@ -581,7 +611,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const queryOperationRow = (
       <QueryOperationRow
         id={this.id}
-        draggable={!hideActionButtons && !queryLibraryRef}
+        draggable={!hideActionButtons && !inSavedQueryMode}
         collapsable={collapsable}
         index={index}
         headerElement={this.renderHeader}
@@ -615,17 +645,18 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     return (
       <div data-testid={selectors.components.QueryEditorRows.rows} ref={this.editorRef}>
-        {queryLibraryRef && (
+        {inSavedQueryMode && (
           <MaybeQueryLibraryEditingHeader
             query={query}
             app={app}
-            queryLibraryRef={queryLibraryRef}
-            onCancelEdit={onCancelQueryLibraryEdit}
-            onUpdateSuccess={this.onExitQueryLibraryEditingMode}
+            editSavedQueryRef={editSavedQueryRef}
+            mode={addingSavedQuery ? 'add' : 'edit'}
+            onCancelEdit={addingSavedQuery ? onCancelAddSavedQuery : this.onCancelQueryLibraryEdit}
+            onUpdateSuccess={this.onSavedQueryModeSuccess}
             onSelectQuery={this.onSelectQueryFromLibrary}
           />
         )}
-        {queryLibraryRef ? (
+        {inSavedQueryMode ? (
           <QueryLibraryEditingContainer>{queryOperationRow}</QueryLibraryEditingContainer>
         ) : (
           queryOperationRow
@@ -701,7 +732,8 @@ function SavedQueryButtons(props: {
 function MaybeQueryLibraryEditingHeader(props: {
   query: DataQuery;
   app?: CoreApp;
-  queryLibraryRef?: string;
+  editSavedQueryRef?: string;
+  mode?: 'edit' | 'add';
   onCancelEdit?: () => void;
   onUpdateSuccess?: () => void;
   onSelectQuery?: (query: DataQuery) => void;
@@ -710,10 +742,11 @@ function MaybeQueryLibraryEditingHeader(props: {
   return renderQueryLibraryEditingHeader(
     props.query,
     props.app,
-    props.queryLibraryRef,
+    props.editSavedQueryRef,
     props.onCancelEdit,
     props.onUpdateSuccess,
-    props.onSelectQuery
+    props.onSelectQuery,
+    props.mode
   );
 }
 

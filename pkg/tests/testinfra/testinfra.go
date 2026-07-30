@@ -956,6 +956,13 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 
+	if opts.EnableSearchAPI {
+		apiserverSection, err := getOrCreateSection("grafana-apiserver")
+		require.NoError(t, err)
+		_, err = apiserverSection.NewKey("enable_search_api", "true")
+		require.NoError(t, err)
+	}
+
 	if opts.SecretsManagerEnableDBMigrations {
 		apiserverSection, err := getOrCreateSection("secrets_manager")
 		require.NoError(t, err)
@@ -1151,6 +1158,9 @@ type GrafanaOpts struct {
 	MigrationParquetBuffer      bool
 	MigrationChunkMaxBytes      int64
 	EnableSQLKVBackend          bool
+	// EnableSearchAPI turns on the per-resource /search endpoints, which are off
+	// by default.
+	EnableSearchAPI bool
 	// NATSEnabled starts an embedded Core NATS bus ([nats] enabled=true,
 	// mode=embedded). Provisioning controllers then consume resource-change
 	// notifications through the NATS-backed informer instead of the apiserver

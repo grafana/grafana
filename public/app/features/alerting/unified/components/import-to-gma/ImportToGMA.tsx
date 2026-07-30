@@ -37,7 +37,7 @@ import {
 import { fetchAlertManagerConfig } from '../../api/alertmanager';
 import { useIsAutoSyncActive } from '../../hooks/useIsAutoSyncActive';
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
-import { ALERTING_SETTINGS_URL } from '../../settings/navigation';
+import { ALERTING_IMPORT_SETTINGS_URL } from '../../settings/navigation';
 import { type Folder } from '../../types/rule-form';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
 import { stringifyErrorLike } from '../../utils/misc';
@@ -173,7 +173,7 @@ function AutoSyncActiveBlock() {
             </TextLink>
           )}
           {canManageAutoSync && (
-            <TextLink href={ALERTING_SETTINGS_URL} icon="cog">
+            <TextLink href={ALERTING_IMPORT_SETTINGS_URL} icon="cog">
               {t('alerting.import-to-gma.autosync-active-block.go-to-settings', 'Go to Alerting settings')}
             </TextLink>
           )}

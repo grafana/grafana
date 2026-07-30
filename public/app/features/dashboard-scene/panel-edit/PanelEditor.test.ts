@@ -119,7 +119,7 @@ describe('PanelEditor', () => {
   });
 
   describe('Entering panel edit', () => {
-    it('should clear edit pane selection', () => {
+    it('should clear sidebar selection', () => {
       pluginPromise = Promise.resolve(getPanelPlugin({ id: 'text', skipDataQuery: true }));
 
       const panel = new VizPanel({

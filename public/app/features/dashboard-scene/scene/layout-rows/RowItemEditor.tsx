@@ -16,11 +16,11 @@ import { SectionVariablesCategoryTitle, SectionVariablesList } from '../../sideb
 import { dashboardEditActions } from '../../sidebar/shared';
 import { getQueryRunnerFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
-import { generateUniqueTitle, useEditPaneInputAutoFocus } from '../layouts-shared/utils';
+import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 
 import { type RowItem } from './RowItem';
 
-export function useEditOptions(this: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+export function useSidebarOptions(this: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const model = this;
   const { layout } = model.useState();
 
@@ -140,7 +140,7 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
   const { title } = row.useState();
   const prevTitle = useRef('');
 
-  const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
+  const ref = useSidebarInputAutoFocus({ autoFocus: isNewElement });
   const hasUniqueTitle = row.hasUniqueTitle();
 
   return (
