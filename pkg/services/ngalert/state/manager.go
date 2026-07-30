@@ -156,7 +156,7 @@ func (st *Manager) Run(ctx context.Context) error {
 func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader RuleReader, instanceReader InstanceReader) {
 	logger := st.log.FromContext(ctx)
 
-	var success bool
+	success := true
 	startTime := time.Now()
 	rulesCount := 0
 	statesCount := 0
@@ -173,6 +173,7 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 
 	if orgReader == nil || rulesReader == nil || instanceReader == nil {
 		logger.Error("Unable to warm state cache, missing required store readers")
+		success = false
 		return
 	}
 
@@ -181,6 +182,7 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 	orgIds, err := orgReader.FetchOrgIds(ctx)
 	if err != nil {
 		logger.Error("Unable to warm state cache, failed to fetch org IDs", "error", err)
+		success = false
 		return
 	}
 
@@ -192,6 +194,7 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 		alertRules, err := rulesReader.ListAlertRules(ctx, &ruleCmd)
 		if err != nil {
 			logger.Error("Unable to fetch rules", "error", err)
+			success = false
 			continue
 		}
 		rulesCount += len(alertRules)
@@ -223,6 +226,7 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 		alertInstances, err := instanceReader.ListAlertInstances(ctx, &cmd)
 		if err != nil {
 			logger.Error("Unable to fetch previous state.", "error", err)
+			success = false
 			continue
 		}
 
