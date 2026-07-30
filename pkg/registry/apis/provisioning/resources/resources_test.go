@@ -796,8 +796,9 @@ func TestWriteResourceFromParsed_AccidentalDuplicateUIDAcrossFiles(t *testing.T)
 		repo, _, client, mgr := newManager(t)
 
 		client.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).Return(ownedByQ(), nil)
-		// dir-a no longer exists at the current ref (moved/deleted).
-		repo.On("Read", mock.Anything, pathQ, ref).Return(nil, apierrors.NewNotFound(schema.GroupResource{}, pathQ))
+		// dir-a no longer exists at the current ref (moved/deleted); repo.Read
+		// returns repository.ErrFileNotFound, which must be treated as a re-home.
+		repo.On("Read", mock.Anything, pathQ, ref).Return(nil, repository.ErrFileNotFound)
 		client.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(ownedByQ(), nil)
 
 		_, _, err := mgr.WriteResourceFromFile(context.Background(), pathP, ref)
@@ -841,11 +842,12 @@ func TestWriteResourceFromParsed_AccidentalDuplicateUIDAcrossFiles(t *testing.T)
 		client.AssertCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	})
 
-	t.Run("normal update: UID owned by the same file → no probe, write proceeds", func(t *testing.T) {
+	t.Run("normal update: UID owned by the same file → probe is a no-op, write proceeds", func(t *testing.T) {
 		_, _, client, mgr := newManager(t)
 
-		// sourcePath points back at the file being written; no owning-file read
-		// is registered, so a probe of dir-a would panic the test.
+		// sourcePath points back at the file being written, so the probe returns at
+		// owner==path without reading the owning file; no owning-file read is
+		// registered, so any such read would panic the test.
 		ownedBySelf := managedGrafanaObj(uid, "default", map[string]any{grafanautils.AnnoKeySourcePath: pathP})
 		client.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).Return(ownedBySelf, nil)
 		client.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(ownedBySelf, nil)
@@ -912,38 +914,6 @@ func TestWriteResourceFromParsed_AccidentalDuplicateUIDAcrossFiles(t *testing.T)
 
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "transient parse failure")
-		requireNoWrite(t, client)
-	})
-
-	t.Run("in-place update (previousName == UID) skips the probe", func(t *testing.T) {
-		_, _, client, mgr := newManager(t)
-
-		// The resource is reported as owned by a different path; no repo.Read for
-		// that path is registered, so IF the probe ran it would panic the mock.
-		// WithPreviousName(uid) marks this as an in-place update, so the probe is
-		// skipped and the write proceeds straight to the claim + update.
-		client.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).Return(ownedByQ(), nil)
-		client.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(ownedByQ(), nil)
-
-		_, _, err := mgr.WriteResourceFromFile(context.Background(), pathP, ref, WithPreviousName(uid))
-
-		require.NoError(t, err)
-		client.AssertCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
-	})
-
-	t.Run("identity-change update (previousName != UID) still probes", func(t *testing.T) {
-		repo, parser, client, mgr := newManager(t)
-
-		// previousName differs from the new UID, so the probe must still run and
-		// catch a collision on the new UID.
-		client.On("Get", mock.Anything, uid, metav1.GetOptions{}, mock.Anything).Return(ownedByQ(), nil)
-		fileQ := &repository.FileInfo{Data: []byte(`{}`), Path: pathQ}
-		repo.On("Read", mock.Anything, pathQ, ref).Return(fileQ, nil)
-		parser.On("Parse", mock.Anything, fileQ).Return(mustBuildParsedResource(uid, nil), nil)
-
-		_, _, err := mgr.WriteResourceFromFile(context.Background(), pathP, ref, WithPreviousName("old-uid"))
-
-		require.ErrorIs(t, err, ErrDuplicateName)
 		requireNoWrite(t, client)
 	})
 }
