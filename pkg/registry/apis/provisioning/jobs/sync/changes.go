@@ -23,8 +23,8 @@ type ResourceFileChange struct {
 	Existing *provisioning.ResourceListItem
 
 	// Hash is the source-side content hash from the repository tree.
-	// Populated for FileActionCreated entries so DetectRenames can match
-	// them against deletions without reading file content.
+	// It allows repositories to read content directly and lets DetectRenames
+	// match created entries against deletions without reading file content.
 	Hash string
 
 	// FolderRenamed is set when folder metadata reconciliation changes the folder ID
@@ -759,6 +759,7 @@ func emitDirectChildrenChanges(
 		changes = append(changes, ResourceFileChange{
 			Action:   repository.FileActionUpdated,
 			Path:     path,
+			Hash:     file.Hash,
 			Existing: best,
 		})
 		pathsWithChanges[path] = true

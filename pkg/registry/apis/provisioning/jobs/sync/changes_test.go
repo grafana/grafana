@@ -812,6 +812,7 @@ func TestCompare_DuplicateFolderOrphanWithChildren(t *testing.T) {
 		require.Len(t, buckets.fileCreations, 1)
 		require.Equal(t, repository.FileActionUpdated, buckets.fileCreations[0].Action)
 		require.Equal(t, "myfolder/dashboard.json", buckets.fileCreations[0].Path)
+		require.Equal(t, "dashboard-hash", buckets.fileCreations[0].Hash)
 		require.Equal(t, "dash", buckets.fileCreations[0].Existing.Name)
 	})
 
