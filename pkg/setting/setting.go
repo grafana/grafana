@@ -1343,3 +1343,1270 @@ func (cfg *Cfg) loadSpecifiedConfigFile(configFile string, masterFile *ini.File)
 	cfg.configFiles = append(cfg.configFiles, configFile)
 	return nil
 }
+
+func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
+	// load config defaults
+	defaultConfigFile := path.Join(cfg.HomePath, "conf/defaults.ini")
+	cfg.configFiles = append(cfg.configFiles, defaultConfigFile)
+
+	// check if config file exists
+	if _, err := os.Stat(defaultConfigFile); os.IsNotExist(err) {
+		fmt.Println("Grafana-server Init Failed: Could not find config defaults, make sure homepath command line parameter is set or working directory is homepath")
+		os.Exit(1)
+	}
+
+	// load defaults
+	parsedFile, err := ini.Load(defaultConfigFile)
+	if err != nil {
+		fmt.Printf("Failed to parse defaults.ini, %v\n", err)
+		os.Exit(1)
+		return nil, err
+	}
+
+	// command line props
+	cfg.commandLineProps = cfg.getCommandLineProperties(args.Args)
+	// load default overrides
+	cfg.applyCommandLineDefaultProperties(parsedFile)
+
+	// load specified config file
+	err = cfg.loadSpecifiedConfigFile(args.Config, parsedFile)
+	if err != nil {
+		err2 := cfg.initLogging(parsedFile)
+		if err2 != nil {
+			return nil, err2
+		}
+		cfg.Logger.Error(err.Error())
+		os.Exit(1)
+	}
+
+	// apply environment overrides
+	err = cfg.applyEnvVariableOverrides(parsedFile)
+	if err != nil {
+		return nil, err
+	}
+
+	// apply command line overrides
+	cfg.applyCommandLineProperties(parsedFile)
+
+	// evaluate config values containing environment variables
+	err = expandConfig(parsedFile)
+	if err != nil {
+		return nil, err
+	}
+
+	// update data path and logging config
+	dataPath := valueAsString(parsedFile.Section("paths"), "data", "")
+
+	cfg.DataPath = makeAbsolute(dataPath, cfg.HomePath)
+	err = cfg.initLogging(parsedFile)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg.Logger.Info(fmt.Sprintf("Starting %s", ApplicationName), "version", BuildVersion, "commit", BuildCommit, "branch", BuildBranch, "compiled", time.Unix(BuildStamp, 0))
+
+	return parsedFile, err
+}
+
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
+		return false
+	}
+	return false
+}
+
+func (cfg *Cfg) setHomePath(args CommandLineArgs) {
+	if args.HomePath != "" {
+		cfg.HomePath = args.HomePath
+		return
+	}
+
+	var err error
+	cfg.HomePath, err = filepath.Abs(".")
+	if err != nil {
+		panic(err)
+	}
+
+	// check if homepath is correct
+	if pathExists(filepath.Join(cfg.HomePath, "conf/defaults.ini")) {
+		return
+	}
+
+	// try down one path
+	if pathExists(filepath.Join(cfg.HomePath, "../conf/defaults.ini")) {
+		cfg.HomePath = filepath.Join(cfg.HomePath, "../")
+	}
+}
+
+var skipStaticRootValidation = false
+
+func NewCfg() *Cfg {
+	return &Cfg{
+		Env:    Dev,
+		Target: []string{"all"},
+		Logger: log.New("settings"),
+		Raw:    ini.Empty(),
+		Azure:  &azsettings.AzureSettings{},
+
+		// Initialize plugin API restriction maps
+		PluginRestrictedAPIsAllowList: make(map[string][]string),
+		PluginRestrictedAPIsBlockList: make(map[string][]string),
+
+		// Avoid nil pointer
+		IsFeatureToggleEnabled: func(_ string) bool {
+			return false
+		},
+
+		MaxNestedFolderDepth: maxDeptFolderSettings(nil),
+	}
+}
+
+// Deprecated: Avoid using IsFeatureToggleEnabled from settings.  If you need to access
+// feature flags, read them from the FeatureToggle (or FeatureManager) interface
+func NewCfgWithFeatures(features func(string) bool) *Cfg {
+	cfg := NewCfg()
+	cfg.IsFeatureToggleEnabled = features
+	return cfg
+}
+
+func NewCfgFromArgs(args CommandLineArgs) (*Cfg, error) {
+	cfg := NewCfg()
+	if err := cfg.Load(args); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
+
+// NewCfgFromBytes specialized function to create a new Cfg from bytes (INI file).
+func NewCfgFromBytes(bytes []byte) (*Cfg, error) {
+	parsedFile, err := ini.Load(bytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse bytes as INI file: %w", err)
+	}
+
+	return NewCfgFromINIFile(parsedFile)
+}
+
+// prevents a log line from being printed when the static root path is not found, useful for apiservers that have no frontend
+func NewCfgFromBytesWithoutJSValidation(bytes []byte) (*Cfg, error) {
+	skipStaticRootValidation = true
+	return NewCfgFromBytes(bytes)
+}
+
+// NewCfgFromINIFile specialized function to create a new Cfg from an ini.File.
+func NewCfgFromINIFile(iniFile *ini.File) (*Cfg, error) {
+	cfg := NewCfg()
+
+	if err := cfg.parseINIFile(iniFile); err != nil {
+		return nil, fmt.Errorf("failed to parse setting from INI file: %w", err)
+	}
+
+	return cfg, nil
+}
+
+func (cfg *Cfg) validateStaticRootPath() error {
+	if skipStaticRootValidation {
+		return nil
+	}
+
+	if _, err := os.Stat(path.Join(cfg.StaticRootPath, "build")); err != nil {
+		cfg.Logger.Error("Failed to detect generated javascript files in public/build")
+	}
+
+	return nil
+}
+
+func (cfg *Cfg) Load(args CommandLineArgs) error {
+	cfg.setHomePath(args)
+
+	// Fix for missing IANA db on Windows or Alpine
+	_, zoneInfoSet := os.LookupEnv(zoneInfo)
+	if !zoneInfoSet {
+		if err := os.Setenv(zoneInfo, filepath.Join(cfg.HomePath, "tools", "zoneinfo.zip")); err != nil {
+			cfg.Logger.Error("Can't set ZONEINFO environment variable", "err", err)
+		}
+	}
+
+	iniFile, err := cfg.loadConfiguration(args)
+	if err != nil {
+		return err
+	}
+
+	err = cfg.parseINIFile(iniFile)
+	if err != nil {
+		return err
+	}
+
+	cfg.LogConfigSources()
+
+	return nil
+}
+
+// nolint:gocyclo
+func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
+	cfg.Raw = iniFile
+
+	cfg.BuildVersion = BuildVersion
+	cfg.BuildCommit = BuildCommit
+	cfg.EnterpriseBuildCommit = EnterpriseBuildCommit
+	cfg.BuildStamp = BuildStamp
+	cfg.BuildBranch = BuildBranch
+	cfg.IsEnterprise = IsEnterprise
+	cfg.Packaging = Packaging
+
+	cfg.ErrTemplateName = "error"
+
+	Target := valueAsString(iniFile.Section(""), "target", "all")
+	if Target != "" {
+		cfg.Target = util.SplitString(Target)
+	}
+	cfg.Env = valueAsString(iniFile.Section(""), "app_mode", "development")
+	cfg.StackID = valueAsString(iniFile.Section("environment"), "stack_id", "")
+	cfg.Slug = valueAsString(iniFile.Section("environment"), "stack_slug", "")
+	cfg.LocalFileSystemAvailable = iniFile.Section("environment").Key("local_file_system_available").MustBool(true)
+	cfg.InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
+	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
+	bundledPlugins := valueAsString(iniFile.Section("paths"), "bundled_plugins", "data/plugins-bundled")
+	cfg.PluginsPaths = []string{makeAbsolute(plugins, cfg.HomePath), makeAbsolute(bundledPlugins, cfg.HomePath)}
+	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
+	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
+
+	if err := cfg.readServerSettings(iniFile); err != nil {
+		return err
+	}
+
+	if err := readDataProxySettings(iniFile, cfg); err != nil {
+		return err
+	}
+
+	if err := readSecuritySettings(iniFile, cfg); err != nil {
+		return err
+	}
+
+	if err := readSnapshotsSettings(cfg, iniFile); err != nil {
+		return err
+	}
+
+	if err := readGRPCServerSettings(cfg, iniFile); err != nil {
+		return err
+	}
+
+	if err := readNATSSettings(cfg); err != nil {
+		return err
+	}
+
+	if err := cfg.readProvisioningSettings(iniFile); err != nil {
+		return err
+	}
+
+	cfg.readClassicProvisioningSettings(iniFile)
+
+	// read dashboard settings
+	dashboards := iniFile.Section("dashboards")
+	cfg.DashboardVersionsToKeep = dashboards.Key("versions_to_keep").MustInt(20)
+	cfg.MinRefreshInterval = valueAsString(dashboards, "min_refresh_interval", "5s")
+	cfg.DefaultHomeDashboardPath = dashboards.Key("default_home_dashboard_path").MustString("")
+	cfg.DashboardPerformanceMetrics = util.SplitString(dashboards.Key("dashboard_performance_metrics").MustString(""))
+	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
+	cfg.DashboardDefaultPreload = dashboards.Key("default_preload").MustBool(false)
+	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Minute)
+
+	if err := readUserSettings(iniFile, cfg); err != nil {
+		return err
+	}
+	if err := readServiceAccountSettings(iniFile, cfg); err != nil {
+		return err
+	}
+	if err := readAuthSettings(iniFile, cfg); err != nil {
+		return err
+	}
+
+	readOAuth2ServerSettings(cfg)
+
+	cfg.readRBACSettings()
+
+	cfg.readZanzanaSettings()
+
+	cfg.readRenderingSettings(iniFile)
+
+	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
+	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)
+	cfg.MetricsEndpointBasicAuthUsername = valueAsString(iniFile.Section("metrics"), "basic_auth_username", "")
+	cfg.MetricsEndpointBasicAuthPassword = valueAsString(iniFile.Section("metrics"), "basic_auth_password", "")
+	cfg.MetricsEndpointDisableTotalStats = iniFile.Section("metrics").Key("disable_total_stats").MustBool(false)
+	cfg.MetricsIncludeTeamLabel = iniFile.Section("metrics").Key("include_team_label").MustBool(false)
+	cfg.MetricsTotalStatsIntervalSeconds = iniFile.Section("metrics").Key("total_stats_collector_interval_seconds").MustInt(1800)
+	cfg.ClassicHTTPHistogramEnabled = iniFile.Section("metrics").Key("classic_http_histogram_enabled").MustBool(true)
+
+	analytics := iniFile.Section("analytics")
+	cfg.CheckForGrafanaUpdates = analytics.Key("check_for_updates").MustBool(true)
+	cfg.CheckForPluginUpdates = analytics.Key("check_for_plugin_updates").MustBool(true)
+
+	cfg.GoogleAnalyticsID = analytics.Key("google_analytics_ua_id").String()
+	cfg.GoogleAnalytics4ID = analytics.Key("google_analytics_4_id").String()
+	cfg.GoogleAnalytics4SendManualPageViews = analytics.Key("google_analytics_4_send_manual_page_views").MustBool(false)
+	cfg.GoogleTagManagerID = analytics.Key("google_tag_manager_id").String()
+	cfg.RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
+	cfg.RudderstackDataPlaneURL = analytics.Key("rudderstack_data_plane_url").String()
+	cfg.RudderstackSDKURL = analytics.Key("rudderstack_sdk_url").String()
+	cfg.RudderstackV3SDKURL = analytics.Key("rudderstack_v3_sdk_url").String()
+	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
+	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
+	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
+	cfg.PostHogToken = analytics.Key("posthog_token").String()
+	cfg.PostHogHost = analytics.Key("posthog_host").String()
+	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
+	cfg.MeticulousAIRecordingToken = analytics.Key("meticulous_ai_recording_token").String()
+
+	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
+	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
+
+	if len(cfg.ReportingDistributor) >= 100 {
+		cfg.ReportingDistributor = cfg.ReportingDistributor[:100]
+	}
+
+	cfg.ApplicationInsightsConnectionString = analytics.Key("application_insights_connection_string").String()
+	cfg.ApplicationInsightsEndpointUrl = analytics.Key("application_insights_endpoint_url").String()
+	cfg.ApplicationInsightsAutoRouteTracking = analytics.Key("application_insights_connection_string").MustBool(true)
+	cfg.FeedbackLinksEnabled = analytics.Key("feedback_links_enabled").MustBool(true)
+
+	// parse reporting static context string of key=value, key=value pairs into an object
+	cfg.ReportingStaticContext = make(map[string]string)
+	for _, pair := range strings.Split(analytics.Key("reporting_static_context").String(), ",") {
+		kv := strings.Split(pair, "=")
+		if len(kv) == 2 {
+			cfg.ReportingStaticContext[strings.TrimSpace("_static_context_"+kv[0])] = strings.TrimSpace(kv[1])
+		}
+	}
+
+	if err := cfg.readAlertingSettings(iniFile); err != nil {
+		return err
+	}
+
+	explore := iniFile.Section("explore")
+	cfg.ExploreEnabled = explore.Key("enabled").MustBool(true)
+
+	exploreDefaultTimeOffset := valueAsString(explore, "defaultTimeOffset", "1h")
+	// we want to ensure the value parses as a duration, but we send it forward as a string to the frontend
+	if _, err := gtime.ParseDuration(exploreDefaultTimeOffset); err != nil {
+		return err
+	} else {
+		cfg.ExploreDefaultTimeOffset = exploreDefaultTimeOffset
+	}
+	cfg.ExploreHideLogsDownload = explore.Key("hide_logs_download").MustBool(false)
+
+	help := iniFile.Section("help")
+	cfg.HelpEnabled = help.Key("enabled").MustBool(true)
+
+	profile := iniFile.Section("profile")
+	cfg.ProfileEnabled = profile.Key("enabled").MustBool(true)
+
+	news := iniFile.Section("news")
+	cfg.NewsFeedEnabled = news.Key("news_feed_enabled").MustBool(true)
+
+	queryHistory := iniFile.Section("query_history")
+	cfg.QueryHistoryEnabled = queryHistory.Key("enabled").MustBool(true)
+
+	shortLinks := iniFile.Section("short_links")
+	cfg.ShortLinkExpiration = shortLinks.Key("expire_time").MustInt(-1)
+
+	if cfg.ShortLinkExpiration > 365 {
+		cfg.Logger.Warn("short_links expire_time must be less than 366 days. Setting to 365 days")
+		cfg.ShortLinkExpiration = 365
+	}
+
+	panelsSection := iniFile.Section("panels")
+	cfg.DisableSanitizeHtml = panelsSection.Key("disable_sanitize_html").MustBool(false)
+
+	// nolint:staticcheck
+	if err := cfg.readFeatureToggles(iniFile); err != nil {
+		return err
+	}
+
+	if err := cfg.readPluginSettings(iniFile); err != nil {
+		return err
+	}
+
+	if err := cfg.ReadUnifiedAlertingSettings(iniFile); err != nil {
+		return err
+	}
+
+	// check old location for this option
+	if panelsSection.Key("enable_alpha").MustBool(false) {
+		cfg.PluginsEnableAlpha = true
+	}
+
+	cfg.readSAMLConfig()
+	cfg.readLDAPConfig()
+	cfg.handleAWSConfig()
+	cfg.readAzureSettings()
+	cfg.readAuthJWTSettings()
+	cfg.readAuthExtJWTSettings()
+	cfg.readAuthProxySettings()
+	cfg.readSessionConfig()
+	if err := cfg.readSmtpSettings(); err != nil {
+		return err
+	}
+	if err := cfg.readAnnotationSettings(); err != nil {
+		return err
+	}
+
+	cfg.readQuotaSettings()
+
+	cfg.readExpressionsSettings()
+	if err := cfg.readGrafanaEnvironmentMetrics(); err != nil {
+		return err
+	}
+
+	if err := cfg.readOpenFeatureSettings(); err != nil {
+		cfg.Logger.Error("Failed to read open feature settings", "error", err)
+		return err
+	}
+
+	cfg.readDataSourcesSettings()
+	cfg.readDataSourceSecuritySettings()
+	cfg.readK8sDashboardCleanupSettings()
+	cfg.readSqlDataSourceSettings()
+
+	cfg.Storage = readStorageSettings(iniFile)
+	cfg.Search = readSearchSettings(iniFile)
+	cfg.MaxNestedFolderDepth = maxDeptFolderSettings(iniFile)
+
+	var err error
+	cfg.SecureSocksDSProxy, err = readSecureSocksDSProxySettings(iniFile)
+	if err != nil {
+		// if the proxy is misconfigured, disable it rather than crashing
+		cfg.SecureSocksDSProxy.Enabled = false
+		cfg.Logger.Error("secure_socks_datasource_proxy unable to start up", "err", err.Error())
+	}
+
+	if cfg.VerifyEmailEnabled && !cfg.Smtp.Enabled {
+		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
+	}
+
+	// check old key name
+	grafanaComUrl := valueAsString(iniFile.Section("grafana_net"), "url", "")
+	if grafanaComUrl == "" {
+		grafanaComUrl = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
+	}
+	cfg.GrafanaComURL = grafanaComUrl
+
+	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComUrl+"/api")
+	cfg.GrafanaComSSOAPIToken = valueAsString(iniFile.Section("grafana_com"), "sso_api_token", "")
+	cfg.GrafanaComProxyAPIToken = valueAsString(iniFile.Section("grafana_com"), "proxy_token", "")
+	imageUploadingSection := iniFile.Section("external_image_storage")
+	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
+
+	enterprise := iniFile.Section("enterprise")
+	cfg.EnterpriseLicensePath = valueAsString(enterprise, "license_path", filepath.Join(cfg.DataPath, "license.jwt"))
+	marketplace := iniFile.Section("marketplace")
+	cfg.MarketplaceLicenseDirectory = valueAsString(marketplace, "license_directory", cfg.DataPath)
+
+	geomapSection := iniFile.Section("geomap")
+	basemapJSON := valueAsString(geomapSection, "default_baselayer_config", "")
+	if basemapJSON != "" {
+		layer := make(map[string]any)
+		err := json.Unmarshal([]byte(basemapJSON), &layer)
+		if err != nil {
+			cfg.Logger.Error("Error reading json from default_baselayer_config", "error", err)
+		} else {
+			cfg.GeomapDefaultBaseLayerConfig = layer
+		}
+	}
+	cfg.GeomapEnableCustomBaseLayers = geomapSection.Key("enable_custom_baselayers").MustBool(true)
+
+	cfg.readRemoteCacheSettings()
+	cfg.readDateFormats()
+	cfg.readGrafanaJavascriptAgentConfig()
+
+	if err := cfg.readLiveSettings(iniFile); err != nil {
+		return err
+	}
+
+	databaseSection := iniFile.Section("database")
+	cfg.DatabaseInstrumentQueries = databaseSection.Key("instrument_queries").MustBool(false)
+	cfg.DatabaseRegisterDeprecatedMetrics = databaseSection.Key("register_deprecated_metrics").MustBool(true)
+	cfg.DatabaseForceDashboardTitleIndex = databaseSection.Key("force_dashboard_title_index").MustBool(true)
+
+	logSection := iniFile.Section("log")
+	cfg.UserFacingDefaultError = logSection.Key("user_facing_default_error").MustString("please inspect Grafana server log for details")
+
+	cfg.readPublicDashboardsSettings()
+	cfg.readCloudMigrationSettings()
+	cfg.readSecretsManagerSettings()
+
+	// read experimental scopes settings.
+	scopesSection := iniFile.Section("scopes")
+	cfg.ScopesApiEnabled = scopesSection.Key("api_enabled").MustBool(false)
+	cfg.ScopesListScopesURL = scopesSection.Key("list_scopes_endpoint").MustString("")
+	cfg.ScopesListDashboardsURL = scopesSection.Key("list_dashboards_endpoint").MustString("")
+
+	// Time picker settings
+	if err := cfg.readTimePicker(); err != nil {
+		return err
+	}
+
+	// unified storage config
+	cfg.setUnifiedStorageConfig()
+
+	cfg.readStartupParams(iniFile)
+	return nil
+}
+
+func valueAsString(section *ini.Section, keyName string, defaultValue string) string {
+	return section.Key(keyName).MustString(defaultValue)
+}
+
+func (cfg *Cfg) readSAMLConfig() {
+	samlSec := cfg.Raw.Section("auth.saml")
+	cfg.SAMLAuthEnabled = samlSec.Key("enabled").MustBool(false)
+	cfg.SAMLSkipOrgRoleSync = samlSec.Key("skip_org_role_sync").MustBool(false)
+	cfg.SAMLRoleValuesGrafanaAdmin = samlSec.Key("role_values_grafana_admin").MustString("")
+}
+
+func (cfg *Cfg) readLDAPConfig() {
+	ldapSec := cfg.Raw.Section("auth.ldap")
+	cfg.LDAPConfigFilePath = ldapSec.Key("config_file").String()
+	cfg.LDAPSyncCron = ldapSec.Key("sync_cron").String()
+	cfg.LDAPAuthEnabled = ldapSec.Key("enabled").MustBool(false)
+	cfg.LDAPSkipOrgRoleSync = ldapSec.Key("skip_org_role_sync").MustBool(false)
+	cfg.LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
+	cfg.LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
+}
+
+func (cfg *Cfg) handleAWSConfig() {
+	awsPluginSec := cfg.Raw.Section("aws")
+	cfg.AWSAssumeRoleEnabled = awsPluginSec.Key("assume_role_enabled").MustBool(true)
+	cfg.AWSPerDatasourceHTTPProxyEnabled = awsPluginSec.Key("per_datasource_http_proxy_enabled").MustBool(false)
+	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").MustString("default,keys,credentials")
+	for _, authProvider := range strings.Split(allowedAuthProviders, ",") {
+		authProvider = strings.TrimSpace(authProvider)
+		if authProvider != "" {
+			cfg.AWSAllowedAuthProviders = append(cfg.AWSAllowedAuthProviders, authProvider)
+		}
+	}
+	cfg.AWSListMetricsPageLimit = awsPluginSec.Key("list_metrics_page_limit").MustInt(500)
+	cfg.AWSExternalId = awsPluginSec.Key("external_id").Value()
+	cfg.AWSSessionDuration = awsPluginSec.Key("session_duration").Value()
+	cfg.AWSForwardSettingsPlugins = util.SplitString(awsPluginSec.Key("forward_settings_to_plugins").String())
+
+	// Also set environment variables that can be used by core plugins
+	err := os.Setenv(awsds.AssumeRoleEnabledEnvVarKeyName, strconv.FormatBool(cfg.AWSAssumeRoleEnabled))
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AssumeRoleEnabledEnvVarKeyName), err)
+	}
+
+	err = os.Setenv(awsds.AllowedAuthProvidersEnvVarKeyName, allowedAuthProviders)
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AllowedAuthProvidersEnvVarKeyName), err)
+	}
+
+	err = os.Setenv(awsds.ListMetricsPageLimitKeyName, strconv.Itoa(cfg.AWSListMetricsPageLimit))
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.ListMetricsPageLimitKeyName), err)
+	}
+
+	err = os.Setenv(awsds.GrafanaAssumeRoleExternalIdKeyName, cfg.AWSExternalId)
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.GrafanaAssumeRoleExternalIdKeyName), err)
+	}
+
+	err = os.Setenv(awsds.SessionDurationEnvVarKeyName, cfg.AWSSessionDuration)
+	if err != nil {
+		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.SessionDurationEnvVarKeyName), err)
+	}
+}
+
+func (cfg *Cfg) readSessionConfig() {
+	sec, _ := cfg.Raw.GetSection("session")
+
+	if sec != nil {
+		cfg.Logger.Warn(
+			"[Removed] Session setting was removed in v6.2, use remote_cache option instead",
+		)
+	}
+}
+
+func (cfg *Cfg) initLogging(file *ini.File) error {
+	logModeStr := valueAsString(file.Section("log"), "mode", "console")
+	// split on comma
+	logModes := strings.Split(logModeStr, ",")
+	// also try space
+	if len(logModes) == 1 {
+		logModes = strings.Split(logModeStr, " ")
+	}
+	logsPath := valueAsString(file.Section("paths"), "logs", "")
+	cfg.LogsPath = makeAbsolute(logsPath, cfg.HomePath)
+	return log.ReadLoggingConfig(logModes, cfg.LogsPath, file)
+}
+
+func (cfg *Cfg) readStartupParams(iniFile *ini.File) {
+	cfg.EnablePlaylistsReconciler = iniFile.Section("playlists").Key("enable_playlists_reconciler").MustBool(false)
+
+	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
+	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
+}
+func (cfg *Cfg) LogConfigSources() {
+	var text bytes.Buffer
+
+	for _, file := range cfg.configFiles {
+		cfg.Logger.Info("Config loaded from", "file", file)
+	}
+
+	if len(cfg.appliedCommandLineProperties) > 0 {
+		for _, prop := range cfg.appliedCommandLineProperties {
+			cfg.Logger.Info("Config overridden from command line", "arg", prop)
+		}
+	}
+
+	if len(cfg.appliedEnvOverrides) > 0 {
+		text.WriteString("\tEnvironment variables used:\n")
+		for _, prop := range cfg.appliedEnvOverrides {
+			cfg.Logger.Info("Config overridden from Environment variable", "var", prop)
+		}
+	}
+
+	cfg.Logger.Info("Target", "target", cfg.Target)
+	cfg.Logger.Info("Path Home", "path", cfg.HomePath)
+	cfg.Logger.Info("Path Data", "path", cfg.DataPath)
+	cfg.Logger.Info("Path Logs", "path", cfg.LogsPath)
+	cfg.Logger.Info("Path Plugins", "path", cfg.PluginsPaths)
+	cfg.Logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
+	cfg.Logger.Info("App mode " + cfg.Env)
+}
+
+type DynamicSection struct {
+	section *ini.Section
+	Logger  log.Logger
+	env     osutil.Env
+}
+
+// Key dynamically overrides keys with environment variables.
+// As a side effect, the value of the setting key will be updated if an environment variable is present.
+func (s *DynamicSection) Key(k string) *ini.Key {
+	envKey := EnvKey(s.section.Name(), k)
+	envValue := s.env.Getenv(envKey)
+	key := s.section.Key(k)
+
+	if len(envValue) == 0 {
+		return key
+	}
+
+	key.SetValue(envValue)
+	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
+
+	return key
+}
+
+func (s *DynamicSection) KeysHash() map[string]string {
+	hash := s.section.KeysHash()
+	for k := range hash {
+		envKey := EnvKey(s.section.Name(), k)
+		envValue := s.env.Getenv(envKey)
+		if len(envValue) > 0 {
+			hash[k] = envValue
+		}
+	}
+	return hash
+}
+
+// SectionWithEnvOverrides dynamically overrides keys with environment variables.
+// As a side effect, the value of the setting key will be updated if an environment variable is present.
+func (cfg *Cfg) SectionWithEnvOverrides(s string) *DynamicSection {
+	return &DynamicSection{
+		section: cfg.Raw.Section(s),
+		Logger:  cfg.Logger,
+		env:     osutil.RealEnv{},
+	}
+}
+
+func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
+	security := iniFile.Section("security")
+	readSecretKey(iniFile, cfg)
+	cfg.DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+	cfg.GravatarURL = security.Key("gravatar_url").MustString("https://secure.gravatar.com/avatar")
+
+	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
+	cfg.BruteForceLoginProtectionMaxAttempts = security.Key("brute_force_login_protection_max_attempts").MustInt64(5)
+	cfg.DisableUsernameLoginProtection = security.Key("disable_username_login_protection").MustBool(false)
+	cfg.DisableIPAddressLoginProtection = security.Key("disable_ip_address_login_protection").MustBool(true)
+
+	// Ensure at least one login attempt can be performed.
+	if cfg.BruteForceLoginProtectionMaxAttempts <= 0 {
+		cfg.BruteForceLoginProtectionMaxAttempts = 1
+	}
+
+	CookieSecure = security.Key("cookie_secure").MustBool(false)
+	cfg.CookieSecure = CookieSecure
+
+	samesiteString := valueAsString(security, "cookie_samesite", "lax")
+
+	if samesiteString == "disabled" {
+		CookieSameSiteDisabled = true
+		cfg.CookieSameSiteDisabled = CookieSameSiteDisabled
+	} else {
+		validSameSiteValues := map[string]http.SameSite{
+			"lax":    http.SameSiteLaxMode,
+			"strict": http.SameSiteStrictMode,
+			"none":   http.SameSiteNoneMode,
+		}
+
+		if samesite, ok := validSameSiteValues[samesiteString]; ok {
+			CookieSameSiteMode = samesite
+			cfg.CookieSameSiteMode = CookieSameSiteMode
+		} else {
+			CookieSameSiteMode = http.SameSiteLaxMode
+			cfg.CookieSameSiteMode = CookieSameSiteMode
+		}
+	}
+	cfg.AllowEmbedding = security.Key("allow_embedding").MustBool(false)
+
+	cfg.ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
+	cfg.XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
+	cfg.ActionsAllowPostURL = security.Key("actions_allow_post_url").MustString("")
+	cfg.StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
+	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
+	cfg.StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
+	cfg.StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
+	cfg.CSPEnabled = security.Key("content_security_policy").MustBool(false)
+	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
+	cfg.CSPReportOnlyEnabled = security.Key("content_security_policy_report_only").MustBool(false)
+	cfg.CSPReportOnlyTemplate = security.Key("content_security_policy_report_only_template").MustString("")
+	cfg.FormActionAdditionalHosts = security.Key("form_action_additional_hosts").Strings(" ")
+
+	enableFrontendSandboxForPlugins := security.Key("enable_frontend_sandbox_for_plugins").MustString("")
+	for _, plug := range strings.Split(enableFrontendSandboxForPlugins, ",") {
+		plug = strings.TrimSpace(plug)
+		cfg.EnableFrontendSandboxForPlugins = append(cfg.EnableFrontendSandboxForPlugins, plug)
+	}
+
+	if cfg.CSPEnabled && cfg.CSPTemplate == "" {
+		return fmt.Errorf("enabling content_security_policy requires a content_security_policy_template configuration")
+	}
+
+	if cfg.CSPReportOnlyEnabled && cfg.CSPReportOnlyTemplate == "" {
+		return fmt.Errorf("enabling content_security_policy_report_only requires a content_security_policy_report_only_template configuration")
+	}
+
+	// read data source proxy whitelist
+	cfg.DataProxyWhiteList = make(map[string]bool)
+	securityStr := valueAsString(security, "data_source_proxy_whitelist", "")
+
+	for _, hostAndIP := range util.SplitString(securityStr) {
+		cfg.DataProxyWhiteList[hostAndIP] = true
+	}
+
+	// admin
+	cfg.DisableInitAdminCreation = security.Key("disable_initial_admin_creation").MustBool(false)
+	cfg.AdminUser = valueAsString(security, "admin_user", "")
+	cfg.AdminPassword = valueAsString(security, "admin_password", "")
+	cfg.AdminEmail = valueAsString(security, "admin_email", fmt.Sprintf("%s@localhost", cfg.AdminUser))
+
+	return nil
+}
+
+func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
+	if err := readSessionAuthSettings(iniFile, cfg); err != nil {
+		return err
+	}
+
+	auth := iniFile.Section("auth")
+
+	cfg.OAuthAllowInsecureEmailLookup = auth.Key("oauth_allow_insecure_email_lookup").MustBool(false)
+
+	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
+
+	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
+	cfg.DisableForgotPassword = auth.Key("disable_forgot_password").MustBool(false)
+	cfg.DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
+
+	// Deprecated
+	cfg.OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
+	if cfg.OAuthAutoLogin {
+		cfg.Logger.Warn("[Deprecated] The oauth_auto_login configuration setting is deprecated. Please use auto_login inside auth provider section instead.")
+	}
+
+	// Default to the translation key used in the frontend
+	cfg.OAuthLoginErrorMessage = valueAsString(auth, "oauth_login_error_message", "oauth.login.error")
+	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
+	cfg.OAuthRefreshTokenServerLockMinWaitMs = auth.Key("oauth_refresh_token_server_lock_min_wait_ms").MustInt64(1000)
+	cfg.SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
+
+	// Deprecated
+	cfg.OAuthSkipOrgRoleUpdateSync = false
+
+	cfg.DisableLogin = auth.Key("disable_login").MustBool(false)
+
+	// SigV4
+	cfg.SigV4AuthEnabled = auth.Key("sigv4_auth_enabled").MustBool(false)
+	cfg.SigV4VerboseLogging = auth.Key("sigv4_verbose_logging").MustBool(false)
+
+	// Azure Auth
+	cfg.AzureAuthEnabled = auth.Key("azure_auth_enabled").MustBool(false)
+
+	// ID response header
+	cfg.IDResponseHeaderEnabled = auth.Key("id_response_header_enabled").MustBool(false)
+	cfg.IDResponseHeaderPrefix = auth.Key("id_response_header_prefix").MustString("X-Grafana")
+
+	idHeaderNamespaces := util.SplitString(auth.Key("id_response_header_namespaces").MustString(""))
+	cfg.IDResponseHeaderNamespaces = make(map[string]struct{}, len(idHeaderNamespaces))
+	for _, namespace := range idHeaderNamespaces {
+		cfg.IDResponseHeaderNamespaces[namespace] = struct{}{}
+	}
+
+	cfg.IDUseExternalGroupsForGroupsClaim = auth.Key("id_use_external_groups_for_groups_claim").MustBool(false)
+
+	// anonymous access
+	cfg.readAnonymousSettings()
+
+	// basic auth
+	authBasic := iniFile.Section("auth.basic")
+	cfg.BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
+	cfg.BasicAuthStrongPasswordPolicy = authBasic.Key("password_policy").MustBool(false)
+
+	// SSO Settings
+	ssoSettings := iniFile.Section("sso_settings")
+	cfg.SSOSettingsReloadInterval = ssoSettings.Key("reload_interval").MustDuration(1 * time.Minute)
+	providers := ssoSettings.Key("configurable_providers").String()
+
+	cfg.SSOSettingsConfigurableProviders = make(map[string]bool)
+	for _, provider := range util.SplitString(providers) {
+		cfg.SSOSettingsConfigurableProviders[provider] = true
+	}
+
+	// Managed Service Accounts
+	cfg.ManagedServiceAccountsEnabled = auth.Key("managed_service_accounts_enabled").MustBool(false)
+
+	return nil
+}
+
+func readOAuth2ServerSettings(cfg *Cfg) {
+	oauth2Srv := cfg.SectionWithEnvOverrides("oauth2_server")
+	cfg.OAuth2ServerEnabled = oauth2Srv.Key("enabled").MustBool(false)
+	cfg.OAuth2ServerGeneratedKeyTypeForClient = strings.ToUpper(oauth2Srv.Key("generated_key_type_for_client").In("ECDSA", []string{"RSA", "ECDSA"}))
+	cfg.OAuth2ServerAccessTokenLifespan = oauth2Srv.Key("access_token_lifespan").MustDuration(time.Minute * 3)
+}
+
+func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
+	users := iniFile.Section("users")
+	cfg.AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
+	cfg.AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
+	cfg.AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
+	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
+	cfg.LoginDefaultOrgId = users.Key("login_default_org_id").MustInt64(-1)
+	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In(
+		string(identity.RoleViewer), []string{
+			string(identity.RoleNone),
+			string(identity.RoleViewer),
+			string(identity.RoleEditor),
+			string(identity.RoleAdmin),
+		})
+	cfg.VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
+
+	// Deprecated
+	// cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(true)
+	cfg.CaseInsensitiveLogin = true
+
+	cfg.LoginHint = valueAsString(users, "login_hint", "")
+	cfg.PasswordHint = valueAsString(users, "password_hint", "")
+	cfg.DefaultTheme = valueAsString(users, "default_theme", "")
+	cfg.DefaultLanguage = valueAsString(users, "default_language", "")
+	cfg.HomePage = valueAsString(users, "home_page", "")
+	cfg.ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
+	cfg.ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
+	cfg.ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
+	cfg.ExternalUserMngAnalytics = users.Key("external_manage_analytics").MustBool(false)
+	cfg.ExternalUserMngAnalyticsParams = valueAsString(users, "external_manage_analytics_params", "")
+	cfg.ExternalUserUpgradeLinkUrl = valueAsString(users, "external_upgrade_link_url", "")
+
+	//nolint:staticcheck
+	cfg.ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
+	//nolint:staticcheck
+	if cfg.ViewersCanEdit {
+		cfg.Logger.Warn("[Deprecated] The viewers_can_edit configuration setting is deprecated. Please upgrade viewers to editors.")
+	}
+
+	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
+	userInviteMaxLifetimeDuration, err := gtime.ParseDuration(userInviteMaxLifetimeVal)
+	if err != nil {
+		return err
+	}
+
+	cfg.UserInviteMaxLifetime = userInviteMaxLifetimeDuration
+	if cfg.UserInviteMaxLifetime < time.Minute*15 {
+		return errors.New("the minimum supported value for the `user_invite_max_lifetime_duration` configuration is 15m (15 minutes)")
+	}
+
+	if err := readUserLastSeenUpdateInterval(iniFile, cfg); err != nil {
+		return err
+	}
+
+	cfg.HiddenUsers = make(map[string]struct{})
+	hiddenUsers := users.Key("hidden_users").MustString("")
+	for _, user := range strings.Split(hiddenUsers, ",") {
+		user = strings.TrimSpace(user)
+		if user != "" {
+			cfg.HiddenUsers[user] = struct{}{}
+		}
+	}
+
+	verificationEmailMaxLifetimeVal := valueAsString(users, "verification_email_max_lifetime_duration", "1h")
+	verificationEmailMaxLifetimeDuration, err := gtime.ParseDuration(verificationEmailMaxLifetimeVal)
+	if err != nil {
+		return err
+	}
+	cfg.VerificationEmailMaxLifetime = verificationEmailMaxLifetimeDuration
+
+	return nil
+}
+
+func readServiceAccountSettings(iniFile *ini.File, cfg *Cfg) error {
+	serviceAccount := iniFile.Section("service_accounts")
+	cfg.SATokenExpirationDayLimit = serviceAccount.Key("token_expiration_day_limit").MustInt(-1)
+	return nil
+}
+
+func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) {
+	renderSec := iniFile.Section("rendering")
+	cfg.RendererServerUrl = valueAsString(renderSec, "server_url", "")
+	cfg.RendererCallbackUrl = valueAsString(renderSec, "callback_url", "")
+	cfg.RendererAuthToken = valueAsString(renderSec, "renderer_token", DefaultRendererAuthToken)
+
+	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
+	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)
+	cfg.RendererDefaultImageWidth = renderSec.Key("default_image_width").MustInt(1000)
+	cfg.RendererDefaultImageHeight = renderSec.Key("default_image_height").MustInt(500)
+	cfg.RendererDefaultImageScale = renderSec.Key("default_image_scale").MustFloat64(1)
+	cfg.RendererCACert = valueAsString(renderSec, "ca_cert_file_path", "")
+	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
+	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
+	cfg.PDFsDir = filepath.Join(cfg.DataPath, "pdf")
+}
+
+func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {
+	// This check is kept to prevent users that upgrade to Grafana 11 with the legacy alerting enabled. This should prevent them from accidentally upgrading without migration to Unified Alerting.
+	alerting := iniFile.Section("alerting")
+	enabled, err := alerting.Key("enabled").Bool()
+	if err == nil && enabled {
+		cfg.Logger.Error("Option '[alerting].enabled' cannot be true. Legacy Alerting is removed. It is no longer deployed, enhanced, or supported. Delete '[alerting].enabled' and use '[unified_alerting].enabled' to enable Grafana Alerting. For more information, refer to the documentation on upgrading to Grafana Alerting (https://grafana.com/docs/grafana/v10.4/alerting/set-up/migrating-alerts)")
+		return fmt.Errorf("invalid setting [alerting].enabled")
+	}
+	return nil
+}
+
+func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
+	snapshots := iniFile.Section("snapshots")
+
+	cfg.SnapshotEnabled = snapshots.Key("enabled").MustBool(true)
+
+	cfg.ExternalSnapshotUrl = valueAsString(snapshots, "external_snapshot_url", "")
+	cfg.ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
+
+	cfg.ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
+	cfg.ExternalSnapshotToken = valueAsString(snapshots, "external_snapshot_token", "")
+	cfg.SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
+
+	return nil
+}
+
+func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
+	server := iniFile.Section("server")
+	var err error
+	AppUrl, AppSubUrl, err = cfg.parseAppUrlAndSubUrl(server)
+	if err != nil {
+		return err
+	}
+
+	cfg.AppURL = AppUrl
+	cfg.AppSubURL = AppSubUrl
+	cfg.Protocol = HTTPScheme
+	cfg.ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
+	cfg.CertWatchInterval = server.Key("certs_watch_interval").MustDuration(0)
+
+	protocolStr := valueAsString(server, "protocol", "http")
+
+	cfg.ServeOnSocket = server.Key("serve_on_socket").MustBool(false)
+	if cfg.ServeOnSocket && (protocolStr == "http" || protocolStr == "https" || protocolStr == "h2") {
+		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
+		cfg.SocketPath = server.Key("socket").String()
+	}
+
+	switch protocolStr {
+	case "https":
+		cfg.Protocol = HTTPSScheme
+		cfg.CertFile = server.Key("cert_file").String()
+		cfg.KeyFile = server.Key("cert_key").String()
+		cfg.CertPassword = server.Key("cert_pass").String()
+	case "h2":
+		cfg.Protocol = HTTP2Scheme
+		cfg.CertFile = server.Key("cert_file").String()
+		cfg.KeyFile = server.Key("cert_key").String()
+		cfg.CertPassword = server.Key("cert_pass").String()
+	case "socket":
+		cfg.Protocol = SocketScheme
+		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
+		cfg.SocketPath = server.Key("socket").String()
+	case "socket_h2":
+		cfg.Protocol = SocketHTTP2Scheme
+		cfg.SocketGid = server.Key("socket_gid").MustInt(-1)
+		cfg.SocketMode = server.Key("socket_mode").MustInt(0660)
+		cfg.SocketPath = server.Key("socket").String()
+		cfg.CertFile = server.Key("cert_file").String()
+		cfg.KeyFile = server.Key("cert_key").String()
+		cfg.CertPassword = server.Key("cert_pass").String()
+	default:
+	}
+
+	cfg.MinTLSVersion = valueAsString(server, "min_tls_version", "TLS1.2")
+	if cfg.MinTLSVersion == "TLS1.0" || cfg.MinTLSVersion == "TLS1.1" {
+		return fmt.Errorf("TLS version not configured correctly:%v, allowed values are TLS1.2 and TLS1.3", cfg.MinTLSVersion)
+	}
+
+	cfg.Domain = valueAsString(server, "domain", "localhost")
+	cfg.HTTPAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
+	cfg.HTTPPort = valueAsString(server, "http_port", "3000")
+	cfg.RouterLogging = server.Key("router_logging").MustBool(false)
+
+	cfg.EnableGzip = server.Key("enable_gzip").MustBool(true)
+	cfg.EnforceDomain = server.Key("enforce_domain").MustBool(false)
+	staticRoot := valueAsString(server, "static_root_path", "")
+	cfg.StaticRootPath = makeAbsolute(staticRoot, cfg.HomePath)
+
+	if err := cfg.validateStaticRootPath(); err != nil {
+		return err
+	}
+
+	cdnURL := valueAsString(server, "cdn_url", "")
+	if cdnURL != "" {
+		cfg.CDNRootURL, err = url.Parse(cdnURL)
+		if err != nil {
+			return err
+		}
+	}
+
+	cfg.ReadTimeout = server.Key("read_timeout").MustDuration(0)
+
+	headersSection := cfg.Raw.Section("server.custom_response_headers")
+	keys := headersSection.Keys()
+	cfg.CustomResponseHeaders = make(map[string]string, len(keys))
+
+	for _, key := range keys {
+		cfg.CustomResponseHeaders[key.Name()] = key.Value()
+	}
+
+	return nil
+}
+
+// GetContentDeliveryURL returns full content delivery URL with /<edition>/<version> added to URL
+func (cfg *Cfg) GetContentDeliveryURL(prefix string) (string, error) {
+	if cfg.CDNRootURL == nil {
+		return "", nil
+	}
+	if cfg.BuildVersion == "" {
+		return "", errors.New("BuildVersion is not set")
+	}
+	url := *cfg.CDNRootURL
+
+	url.Path = path.Join(url.Path, prefix, cfg.BuildVersion)
+	return url.String() + "/", nil
+}
+
+func (cfg *Cfg) readDataSourcesSettings() {
+	datasources := cfg.Raw.Section("datasources")
+	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
+	cfg.ConcurrentQueryCount = datasources.Key("concurrent_query_count").MustInt(10)
+	cfg.DefaultDatasourceManageAlertsUIToggle = datasources.Key("default_manage_alerts_ui_toggle").MustBool(true)
+	cfg.DefaultAllowRecordingRulesTargetAlertsUIToggle = datasources.Key("default_allow_recording_rules_target_alerts_ui_toggle").MustBool(true)
+}
+
+func (cfg *Cfg) readDataSourceSecuritySettings() {
+	datasources := cfg.Raw.Section("datasources.ip_range_security")
+	cfg.IPRangeACEnabled = datasources.Key("enabled").MustBool(false)
+	cfg.IPRangeACSecretKey = datasources.Key("secret_key").MustString("")
+	if cfg.IPRangeACEnabled && cfg.IPRangeACSecretKey == "" {
+		cfg.Logger.Error("IP range access control is enabled but no secret key is set")
+	}
+	allowedURLString := datasources.Key("allow_list").MustString("")
+	for _, urlString := range util.SplitString(allowedURLString) {
+		allowedURL, err := url.Parse(urlString)
+		if err != nil {
+			cfg.Logger.Error("Error parsing allowed URL for IP range access control", "error", err)
+			continue
+		} else {
+			cfg.IPRangeACAllowedURLs = append(cfg.IPRangeACAllowedURLs, allowedURL)
+		}
+	}
+}
+
+func (cfg *Cfg) readSqlDataSourceSettings() {
+	sqlDatasources := cfg.Raw.Section("sql_datasources")
+	cfg.SqlDatasourceMaxOpenConnsDefault = sqlDatasources.Key("max_open_conns_default").MustInt(100)
+	cfg.SqlDatasourceMaxIdleConnsDefault = sqlDatasources.Key("max_idle_conns_default").MustInt(100)
+	cfg.SqlDatasourceMaxConnLifetimeDefault = sqlDatasources.Key("max_conn_lifetime_default").MustInt(14400)
+}
+
+func GetAllowedOriginGlobs(originPatterns []string) ([]glob.Glob, error) {
+	allowedOrigins := originPatterns
+	originGlobs := make([]glob.Glob, 0, len(allowedOrigins))
+	for _, originPattern := range allowedOrigins {
+		g, err := glob.Compile(originPattern)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing origin pattern: %v", err)
+		}
+		originGlobs = append(originGlobs, g)
+	}
+	return originGlobs, nil
+}
+
+func (cfg *Cfg) readLiveSettings(iniFile *ini.File) error {
+	section := iniFile.Section("live")
+	cfg.LiveMaxConnections = section.Key("max_connections").MustInt(100)
+	if cfg.LiveMaxConnections < -1 {
+		return fmt.Errorf("unexpected value %d for [live] max_connections", cfg.LiveMaxConnections)
+	}
+	cfg.LiveMessageSizeLimit = section.Key("message_size_limit").MustInt(65536)
+	if cfg.LiveMessageSizeLimit < -1 {
+		return fmt.Errorf("unexpected value %d for [live] message_size_limit", cfg.LiveMaxConnections)
+	}
+	cfg.LiveClientQueueMaxSize = section.Key("client_queue_max_size").MustInt(4194304)
+	if cfg.LiveClientQueueMaxSize <= 0 {
+		return fmt.Errorf("unexpected value %d for [live] client_queue_max_size", cfg.LiveMaxConnections)
+	}
+
+	cfg.LiveHAEngine = section.Key("ha_engine").MustString("")
+	switch cfg.LiveHAEngine {
+	case "", "redis":
+	default:
+		return fmt.Errorf("unsupported live HA engine type: %s", cfg.LiveHAEngine)
+	}
+	cfg.LiveHAPrefix = section.Key("ha_prefix").MustString("")
+	cfg.LiveHAEngineAddress = section.Key("ha_engine_address").MustString("127.0.0.1:6379")
+	cfg.LiveHAEnginePassword = section.Key("ha_engine_password").MustString("")
+
+	allowedOrigins := section.Key("allowed_origins").MustString("")
+	origins := strings.Split(allowedOrigins, ",")
+
+	originPatterns := make([]string, 0, len(origins))
+	for _, originPattern := range origins {
+		originPattern = strings.TrimSpace(originPattern)
+		if originPattern == "" {
+			continue
+		}
+		originPatterns = append(originPatterns, originPattern)
+	}
+
+	_, err := GetAllowedOriginGlobs(originPatterns)
+	if err != nil {
+		return err
+	}
+
+	cfg.LiveAllowedOrigins = originPatterns
+	return nil
+}
+
+func (cfg *Cfg) readClassicProvisioningSettings(iniFile *ini.File) {
+	cfg.ClassicProvisioningDashboardsServerLockMinWaitMs = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_min_wait_ms").MustInt64(100)
+	cfg.ClassicProvisioningDashboardsServerLockMaxWaitMs = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_max_wait_ms").MustInt64(1000)
+	cfg.ClassicProvisioningDashboardsServerLockMaxIntervalSeconds = iniFile.Section("classic_provisioning").Key("dashboards_server_lock_max_interval_seconds").MustInt64(15)
+}
+
+func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
+	provisioning := valueAsString(iniFile.Section("paths"), "provisioning", "")
+	cfg.ProvisioningPath = makeAbsolute(provisioning, cfg.HomePath)
+
+	provisioningPaths := strings.TrimSpace(valueAsString(iniFile.Section("paths"), "permitted_provisioning_paths", ""))
+	if provisioningPaths != "|" && provisioningPaths != "" {
+		cfg.PermittedProvisioningPaths = strings.Split(provisioningPaths, "|")
+		for i, s := range cfg.PermittedProvisioningPaths {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				return fmt.Errorf("a provisioning path is empty in '%s' (at index %d)", provisioningPaths, i)
+			}
+			cfg.PermittedProvisioningPaths[i] = makeAbsolute(s, cfg.HomePath)
+		}
+	}
+
+	repositoryTypes := strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "repository_types", ""))
+	if repositoryTypes != "|" && repositoryTypes != "" {
+		cfg.ProvisioningRepositoryTypes = strings.Split(repositoryTypes, "|")
+		for i, s := range cfg.ProvisioningRepositoryTypes {
+			s = strings.TrimSpace(s)
+			if s == "" {
+				return fmt.Errorf("a provisioning repository type is empty in '%s' (at index %d)", repositoryTypes, i)
+			}
+
+			cfg.ProvisioningRepositoryTypes[i] = s
+		}
+	}
+
+	cfg.DisableControllers = iniFile.Section("provisioning").Key("disable_controllers").MustBool(false)
+	// if disable_controllers is not set, check if grafana-apiserver.disable_controllers is set
+	// TODO: consolidate to just [grafana-apiserver]disable_controllers
+	if !cfg.DisableControllers {
+		cfg.DisableControllers = iniFile.Section("grafana-apiserver").Key("disable_controllers").MustBool(false)
+	}
+	cfg.ProvisioningAllowedTargets = iniFile.Section("provisioning").Key("allowed_targets").Strings("|")
+	if len(cfg.ProvisioningAllowedTargets) == 0 {
+		cfg.ProvisioningAllowedTargets = []string{"folder", "folderless"}
+	}
+	cfg.ProvisioningResources = iniFile.Section("provisioning").Key("resources").Strings(",")
+	if len(cfg.ProvisioningResources) == 0 {
+		cfg.ProvisioningResources = defaultProvisioningResources()
+	}
+	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
+	cfg.ProvisioningAllowInsecure = iniFile.Section("provisioning").Key("allow_insecure").MustBool(false)
+	cfg.ProvisioningMinSyncInterval = iniFile.Section("provisioning").Key("min_sync_interval").MustDuration(10 * time.Second)
+	cfg.ProvisioningMaxResourcesPerRepository = iniFile.Section("provisioning").Key("max_resources_per_repository").MustInt64(0)
+	cfg.ProvisioningMaxRepositories = iniFile.Section("provisioning").Key("max_repositories").MustInt64(10)
+	cfg.ProvisioningMaxIncrementalChanges = iniFile.Section("provisioning").Key("max_incremental_changes").MustInt(100)
+	cfg.ProvisioningMaxFileSize = iniFile.Section("provisioning").Key("max_file_size").MustInt64(ProvisioningMaxFileSizeDefault)
+	cfg.ProvisioningSyncResourceTimeout = iniFile.Section("provisioning").Key("sync_resource_timeout").MustDuration(ProvisioningSyncResourceTimeoutDefault)
+	cfg.ProvisioningWebhookSecretRotationInterval = iniFile.Section("provisioning").Key("webhook_secret_rotation_interval").MustDuration(30 * 24 * time.Hour)
+	cfg.ProvisioningControllerResyncInterval = iniFile.Section("provisioning").Key("resync_interval").MustDuration(ProvisioningControllerResyncIntervalDefault)
+	cfg.ProvisioningHistoryExpiration = iniFile.Section("provisioning").Key("history_expiration").MustDuration(ProvisioningHistoryExpirationDefault)
+	cfg.ProvisioningJobPollInterval = iniFile.Section("provisioning").Key("job_poll_interval").MustDuration(ProvisioningJobPollIntervalDefault)
+	cfg.ProvisioningPublicRootURL = strings.TrimRight(valueAsString(iniFile.Section("provisioning"), "public_root_url", ""), "/")
+	cfg.ProvisioningWebhookTrustedIPHeader = iniFile.Section("provisioning").Key("webhook_trusted_ip_header").MustString("")
+	cfg.ProvisioningWebhookRateLimitRPS = iniFile.Section("provisioning").Key("webhook_rate_limit_rps").MustInt(0)
+
+	// Read job history configuration
+	cfg.ProvisioningLokiURL = valueAsString(iniFile.Section("provisioning"), "loki_url", "")
+	cfg.ProvisioningLokiUser = valueAsString(iniFile.Section("provisioning"), "loki_user", "")
+	cfg.ProvisioningLokiPassword = valueAsString(iniFile.Section("provisioning"), "loki_password", "")
+	cfg.ProvisioningLokiTenantID = valueAsString(iniFile.Section("provisioning"), "loki_tenant_id", "")
+
+	return nil
+}
+
+// defaultProvisioningResources is the built-in set used when [provisioning] resources is
+// unset. Tokens use the shared "<group>/<Kind>[:cap...]" grammar (see
+// resources.ParseSupportedResources). Library panels and playlists are declared but
+// disabled by default.
+func defaultProvisioningResources() []string {
+	return []string{
+		"folder.grafana.app/Folder:folder",
+		"dashboard.grafana.app/Dashboard:folder",
+		"dashboard.grafana.app/LibraryPanel:folder:disabled",
+		"playlist.grafana.app/Playlist:disabled",
+	}
+}
+
+func (cfg *Cfg) readPublicDashboardsSettings() {
+	publicDashboards := cfg.Raw.Section("public_dashboards")
+	cfg.PublicDashboardsEnabled = publicDashboards.Key("enabled").MustBool(true)
+}
+
+func (cfg *Cfg) DefaultOrgID() int64 {
+	if cfg.AutoAssignOrg && cfg.AutoAssignOrgId > 0 {
+		return int64(cfg.AutoAssignOrgId)
+	}
+	return int64(1)
+}
+
