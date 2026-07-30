@@ -635,6 +635,17 @@ export const versionedComponents = {
         RowExpander: {
           '12.4.0': 'data-testid tableng row expander',
         },
+        cellActions: {
+          inspectButton: {
+            '13.2.0': 'data-testid tableng cell-actions inspect-button',
+          },
+          filterForButton: {
+            '13.2.0': 'data-testid tableng cell-actions filter-for-button',
+          },
+          filterOutButton: {
+            '13.2.0': 'data-testid tableng cell-actions filter-out-button',
+          },
+        },
         Filters: {
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',
@@ -717,8 +728,14 @@ export const versionedComponents = {
         '11.1.0': 'data-testid Save as dashboard drawer button',
       },
       saveAsTitleInput: {
+        '13.2.0': 'data-testid Save dashboard title field',
         '11.1.0': 'Save dashboard title field',
       },
+    },
+  },
+  ProvisionedResourceForm: {
+    commentInput: {
+      '13.2.0': 'data-testid provisioned resource form comment input',
     },
   },
   Modal: {
@@ -1236,6 +1253,12 @@ export const versionedComponents = {
       backToDashboardButton: {
         '11.1.0': 'data-testid Back to dashboard button',
       },
+      saveAsCopyButton: {
+        '13.2.0': 'data-testid Save as copy button',
+      },
+      moreSaveOptionsButton: {
+        '13.2.0': 'data-testid More save options button',
+      },
     },
   },
   CommandPalette: {
@@ -1306,6 +1329,17 @@ export const versionedComponents = {
     },
     queryEditorRow: {
       '13.2.0': (dataSourceType: string, refId: string) => `data-testid Query editor row ${dataSourceType} ${refId}`,
+    },
+  },
+  ButtonSelect: {
+    /**
+     * Identifies one option of a ButtonSelect menu, keyed on the option's `value` when it is
+     * scalar so the selector does not depend on the option's translated label. Options whose
+     * values have no meaningful string form (objects, undefined) render the bare selector.
+     */
+    option: {
+      '13.2.0': (value?: string) =>
+        value ? `data-testid ButtonSelect option ${value}` : 'data-testid ButtonSelect option',
     },
   },
   Select: {

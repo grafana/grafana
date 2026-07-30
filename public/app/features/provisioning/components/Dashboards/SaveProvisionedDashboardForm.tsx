@@ -466,6 +466,7 @@ export function SaveProvisionedDashboardForm({
               >
                 <Input
                   id="dashboard-title"
+                  data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput}
                   {...register('title', {
                     required: t(
                       'dashboard-scene.save-provisioned-dashboard-form.title-required',

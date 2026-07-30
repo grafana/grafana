@@ -18,9 +18,22 @@ import { type PromQuery } from '@grafana/prometheus';
 import { createQueryRunner } from '@grafana/runtime';
 
 export function readScalar(frames: DataFrame[], refId: string): number | null {
+  // '' is never a label key, so this shares readLabeledScalar's lookup with the label discarded.
+  return readLabeledScalar(frames, refId, '')?.value ?? null;
+}
+
+/** Last sample of the `refId` instant vector plus one identifying label off its number field. */
+export function readLabeledScalar(
+  frames: DataFrame[],
+  refId: string,
+  label: string
+): { value: number; label: string | null } | null {
   const field = frames.find((f) => f.refId === refId)?.fields.find((f) => f.type === FieldType.number);
-  const v = field && field.values.length ? field.values[field.values.length - 1] : undefined;
-  return typeof v === 'number' && Number.isFinite(v) ? v : null;
+  if (!field || field.values.length === 0) {
+    return null;
+  }
+  const v = field.values[field.values.length - 1];
+  return typeof v === 'number' && Number.isFinite(v) ? { value: v, label: field.labels?.[label] ?? null } : null;
 }
 
 // Extract the first usable time series for `refId` as a sparkline input. Requires a real series
@@ -46,14 +59,16 @@ export function readSeries(frames: DataFrame[], refId: string): FieldSparkline |
 /**
  * Run queries through the shared {@link createQueryRunner | QueryRunner} against `ds` — core
  * plumbing owns request building, interval math, and frame conversion. Works for any datasource
- * whose targets are expressible as DataQuery (Prometheus PromQL, Tempo TraceQL). Throws (surfaced
- * as an error; callers omit the entry) when the query errors or times out.
+ * whose targets are expressible as DataQuery (Prometheus PromQL, Tempo TraceQL). Throws on query
+ * errors; `partial` callers instead receive the surviving targets' frames and must handle absent
+ * refIds themselves — an error response with no frames at all still throws.
  */
 export async function runDatasourceQueries(
   queries: DataQuery[],
   range: TimeRange,
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
-  timeoutMs = 30_000
+  timeoutMs = 30_000,
+  partial = false
 ): Promise<DataFrame[]> {
   const runner = createQueryRunner();
   try {
@@ -73,7 +88,8 @@ export async function runDatasourceQueries(
         timeout(timeoutMs)
       )
     );
-    if (data.state === LoadingState.Error) {
+    // Errors reject by default — `?? 0` readers would render a dropped refId as a real zero.
+    if (data.state === LoadingState.Error && (!partial || data.series.length === 0)) {
       throw new Error(data.errors?.[0]?.message ?? data.error?.message ?? 'Prometheus query failed');
     }
     return data.series;
@@ -84,12 +100,14 @@ export async function runDatasourceQueries(
 
 /**
  * Run a batch of instant queries (refId -> PromQL) and return the response frames. The overview
- * cards read single-value scalars off the result via {@link readScalar}.
+ * cards read single-value scalars off the result via {@link readScalar}. Set `partial` to
+ * tolerate individual query errors and keep the surviving frames.
  */
 export async function runInstantQueries(
   queries: Record<string, string>,
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
-  timeoutMs?: number
+  timeoutMs?: number,
+  partial = false
 ): Promise<DataFrame[]> {
   const targets: PromQuery[] = Object.entries(queries).map(([refId, expr]) => ({
     refId,
@@ -97,7 +115,7 @@ export async function runInstantQueries(
     instant: true,
     range: false,
   }));
-  return runDatasourceQueries(targets, getDefaultTimeRange(), ds, timeoutMs);
+  return runDatasourceQueries(targets, getDefaultTimeRange(), ds, timeoutMs, partial);
 }
 
 /**
