@@ -255,6 +255,7 @@ function getStyles(theme: GrafanaTheme2, alwaysVisible: boolean) {
       padding: theme.spacing(0, 0.75),
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
+      marginLeft: 'auto',
     }),
   };
 }
