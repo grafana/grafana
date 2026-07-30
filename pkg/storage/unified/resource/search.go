@@ -122,9 +122,17 @@ type IndexFeature string
 // this feature before keeping a deleted document.
 const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
 
+// IndexFeatureStoredFacets means every facet-capable field is stored, so the
+// post-rank authorization path can aggregate facets app-side. Native bleve
+// faceting reads the index, not the stored values, so this is required only
+// where post-rank authorization runs — see RequiredIndexFeatures. Without it,
+// that path reports facet-capable but unstored fields as missing values.
+const IndexFeatureStoredFacets IndexFeature = "facets-are-stored"
+
 // currentIndexFeatures is recorded in every index this binary builds.
 var currentIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
+	IndexFeatureStoredFacets,
 }
 
 // requiredIndexFeatures is the subset an index must already have to be used. An
@@ -144,8 +152,14 @@ func CurrentIndexFeatures() []IndexFeature {
 }
 
 // RequiredIndexFeatures returns the features an index must have to be used.
-func RequiredIndexFeatures() []IndexFeature {
-	return slices.Sorted(slices.Values(requiredIndexFeatures))
+// postRankAuthz adds the features only that path depends on, so deployments
+// serving facets from bleve itself are not rebuilt for it.
+func RequiredIndexFeatures(postRankAuthz bool) []IndexFeature {
+	features := requiredIndexFeatures
+	if postRankAuthz {
+		features = append(slices.Clone(features), IndexFeatureStoredFacets)
+	}
+	return slices.Sorted(slices.Values(features))
 }
 
 // MissingIndexFeatures returns the required features the index does not have.
@@ -371,7 +385,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		minBuildVersion:           opts.MinBuildVersion,
 		buildVersion:              opts.BuildVersion,
 		searchFields:              searchFields,
-		requiredFeatures:          RequiredIndexFeatures(),
+		requiredFeatures:          RequiredIndexFeatures(opts.PostRankAuthzEnabled),
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		indexModificationCacheTTL: opts.IndexModificationCacheTTL,
 		indexDeletedDocuments:     opts.IndexDeletedDocuments,

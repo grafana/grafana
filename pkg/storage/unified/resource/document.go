@@ -134,7 +134,7 @@ type IndexableDocument struct {
 	// When the resource is managed by an upstream repository
 	Manager *utils.ManagerProperties `json:"manager,omitempty"`
 
-	// indexed only field for faceting manager info
+	// keyword-indexed and stored field for faceting manager info
 	ManagedBy string `json:"managedBy,omitempty"`
 
 	// When the manager knows about file paths
