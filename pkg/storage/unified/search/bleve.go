@@ -1639,7 +1639,8 @@ type updateResult struct {
 }
 
 type bleveIndex struct {
-	key   resource.NamespacedResource
+	key resource.NamespacedResource
+	// Holds live and deleted documents together, so queries go through scopeQuery.
 	index bleve.Index
 
 	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
@@ -1954,7 +1955,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 	stats.AddResultsConversionTime(time.Since(start))
 
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
-		Query: q,
+		Query: scopeQuery(q, false),
 		Fields: []string{
 			resource.SEARCH_FIELD_TITLE,
 			resource.SEARCH_FIELD_FOLDER,
@@ -2036,7 +2037,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 
 func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
-		Query: bleve.NewMatchAllQuery(),
+		Query: scopeQuery(bleve.NewMatchAllQuery(), false),
 		Size:  0,
 		Facets: bleve.FacetsRequest{
 			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_MANAGED_BY, 1000), // typically less then 5
@@ -2200,22 +2201,24 @@ func (b *bleveIndex) Search(
 	return response, nil
 }
 
+// DocCount counts live documents, so callers using it as a size estimate
+// undercount by whatever trash the index holds. Close enough for a threshold.
 func (b *bleveIndex) DocCount(ctx context.Context, folder string, stats *resource.SearchStats) (int64, error) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.DocCount")
 	defer span.End()
 
-	if folder == "" {
-		count, err := b.index.DocCount()
-		return int64(count), err
+	var q query.Query = bleve.NewMatchAllQuery()
+	if folder != "" {
+		q = &query.TermQuery{
+			Term:     folder,
+			FieldVal: resource.SEARCH_FIELD_FOLDER,
+		}
 	}
 
 	req := &bleve.SearchRequest{
 		Size:   0, // we just need the count
 		Fields: []string{},
-		Query: &query.TermQuery{
-			Term:     folder,
-			FieldVal: resource.SEARCH_FIELD_FOLDER,
-		},
+		Query:  scopeQuery(q, false),
 	}
 	rsp, err := b.index.SearchInContext(ctx, req)
 	if rsp == nil {
@@ -2340,7 +2343,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		return nil, errResult
 	}
 	textQuery := b.buildTextQuery(searchrequest, req)
-	searchrequest.Query = combineFilterAndTextQueries(filters, textQuery)
+	searchrequest.Query = scopeQuery(combineFilterAndTextQueries(filters, textQuery), req.IsDeleted)
 
 	// postFilter applies authorization after ranking in runPostFilterAuthz, so
 	// skip the in-searcher wrapper here and let bleve return unfiltered ranked hits.
@@ -2391,6 +2394,46 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	return searchrequest, nil
+}
+
+// scopeQuery restricts q to live documents, or to deleted ones for trash. Every
+// query this index issues goes through here, so a read path cannot forget the
+// distinction and serve trash as if it were live.
+//
+// Live is "not marked deleted" rather than "marked not deleted", because
+// documents written before the marker carry no value for the field.
+func scopeQuery(q query.Query, deleted bool) query.Query {
+	marked := bleve.NewBoolFieldQuery(true)
+	marked.SetField(resource.SEARCH_FIELD_IS_DELETED)
+
+	scoped := bleve.NewBooleanQuery()
+	if !deleted {
+		scoped.AddMust(q)
+		scoped.AddMustNot(marked)
+		return scoped
+	}
+
+	// An object that was provisioned when it was deleted is never returned from
+	// trash: it comes back from its repository instead.
+	provisioned := bleve.NewBoolFieldQuery(true)
+	provisioned.SetField(resource.SEARCH_FIELD_IS_PROVISIONED)
+	scoped.AddMustNot(provisioned)
+
+	// Bleve drives iteration from the Must clause and uses Filter only to test the
+	// documents that clause produced. With nothing to match on, the marker becomes
+	// the Must clause, so trash comes off its own (small) posting list instead of a
+	// walk over every document. Nothing ranks these results, so scoring it costs
+	// nothing.
+	if _, matchAll := q.(*query.MatchAllQuery); matchAll {
+		scoped.AddMust(marked)
+		return scoped
+	}
+
+	// Filter, not Must: a scoring clause would tie absolute scores to how much
+	// trash the index holds. MustNot never scores either.
+	scoped.AddMust(q)
+	scoped.AddFilter(marked)
+	return scoped
 }
 
 // combineFilterAndTextQueries assembles the final bleve query from the filter
