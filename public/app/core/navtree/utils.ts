@@ -73,6 +73,13 @@ function updateNavById(
   });
 }
 
+/** Returns a new tree without the matching node (at any depth) */
+export function removeNavById(nodes: NavModelItem[], id: string): NavModelItem[] {
+  return nodes
+    .filter((node) => node.id !== id)
+    .map((node) => (node.children ? { ...node, children: removeNavById(node.children, id) } : node));
+}
+
 /**
  * Appends items into the children of the section with this id, or at the top
  * level for NavID.root. Returns undefined when no such section exists, so the

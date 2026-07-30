@@ -20,7 +20,6 @@ import {
   applyAppSubUrl,
   buildEntries,
   type NavEntryBuilder,
-  pruneEmptyNavSections,
   sortNavTree,
 } from './utils';
 
@@ -47,8 +46,20 @@ import {
  * decision at boot time (a bootdata boolean alongside the tree) and key off
  * that, rather than re-evaluating the flag here.
  */
-function isClientNavTreeEnabled(): boolean {
+export function isClientNavTreeEnabled(): boolean {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantNavTree, false);
+}
+
+/**
+ * Whether app plugin nav items should be fetched and folded into the tree. On
+ * top of the client-build gate this additionally requires plugins.useMTPlugins:
+ * without it the pluginMeta service never fetches, so grafana.multiTenantNavTree
+ * alone renders the static tree only.
+ */
+export function arePluginNavItemsEnabled(): boolean {
+  return (
+    isClientNavTreeEnabled() && getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)
+  );
 }
 
 /**
@@ -63,10 +74,10 @@ export function getInitialNavTree(): NavModelItem[] {
     return cloneDeep(config.bootData?.navTree ?? []);
   }
 
-  const staticTree = applyAppSubUrl(buildStaticNavTree());
-  // Empty sections (cfg/access without children) are pruned like the server
-  // prunes them after its enterprise hooks run.
-  return pruneEmptyNavSections(staticTree);
+  // Empty attachment-parent shells (connections, cfg/access) are intentionally
+  // kept here: the plugin nav merge needs them as targets. Pruning happens when
+  // the merge completes, mirroring the server's post-hook pruning.
+  return applyAppSubUrl(buildStaticNavTree());
 }
 
 /**
