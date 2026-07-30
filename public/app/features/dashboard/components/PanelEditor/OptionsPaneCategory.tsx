@@ -276,7 +276,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 
   boxHighlighted: css({
     [theme.transitions.handleMotion('no-preference')]: {
-      animation: `${categoryHighlight(theme)} 2s ease-out forwards`,
+      animation: `${categoryHighlight(theme)} 5s ease-out forwards`,
     },
     [theme.transitions.handleMotion('reduce')]: {
       backgroundColor: theme.colors.primary.transparent,
