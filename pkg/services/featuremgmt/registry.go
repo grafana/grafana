@@ -381,6 +381,14 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "snapshots.kubernetesSnapshots",
+			Description: "Routes snapshot create requests from /api/snapshots to the dashboard.grafana.app k8s API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:        "libraryelements.kubernetesLibraryPanels",
 			Description: "Routes library panel requests from /api to the /apis endpoint",
 			Stage:       FeatureStageExperimental,

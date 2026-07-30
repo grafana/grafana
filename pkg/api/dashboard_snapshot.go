@@ -6,10 +6,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -23,38 +24,38 @@ import (
 
 // r.Post("/api/snapshots/"
 func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
-	if !hs.Cfg.KubernetesSnapshotsEnabled {
-		return hs.CreateDashboardSnapshot
-	}
-
-	// Opt-in backward-compat lever for public-mode external snapshot hosts:
-	// keep accepting unauthenticated pushes on /api/snapshots so old senders
-	// (and new senders without externalSnapshotsK8SAPIPush) can still post to
-	// a migrated external instance. CreateDashboardSnapshot itself branches
-	// to CreateDashboardSnapshotPublic when SnapshotPublicMode is set. Default
-	// off rejects anonymous legacy pushes; flip on during the migration window
-	// and off again once all senders have migrated.
-	//
-	// Not compatible with snapshot dual-write Mode5: in Mode5 unified storage
-	// is the only store, the k8s create API is mandatory, and this bypass
-	// would write to legacy SQL where reads will never find it.
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if hs.Cfg.SnapshotPublicMode &&
-		hs.Features.IsEnabledGlobally(featuremgmt.FlagExternalSnapshotsSupportLegacyAPI) {
-		return hs.CreateDashboardSnapshot
-	}
-
 	namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
-	return func(w http.ResponseWriter, r *http.Request) {
-		requester, err := identity.GetRequester(r.Context())
-		if err != nil || requester == nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			_, _ = w.Write([]byte(`{"message":"Unauthorized"}`))
+	return func(c *contextmodel.ReqContext) {
+		ctx := c.Req.Context()
+		if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagSnapshotsKubernetesSnapshots, false, openfeature.TransactionContext(ctx)) {
+			hs.CreateDashboardSnapshot(c)
 			return
 		}
-		r.URL.Path = "/apis/dashboard.grafana.app/v0alpha1/namespaces/" +
-			namespaceMapper(requester.GetOrgID()) + "/snapshots/create"
-		hs.clientConfigProvider.DirectlyServeHTTP(w, r)
+
+		// Opt-in backward-compat lever for public-mode external snapshot hosts:
+		// keep accepting unauthenticated pushes on /api/snapshots so old senders
+		// (and new senders without externalSnapshotsK8SAPIPush) can still post to
+		// a migrated external instance. CreateDashboardSnapshot itself branches
+		// to CreateDashboardSnapshotPublic when SnapshotPublicMode is set. Default
+		// off rejects anonymous legacy pushes; flip on during the migration window
+		// and off again once all senders have migrated.
+		//
+		// Not compatible with snapshot dual-write Mode5: in Mode5 unified storage
+		// is the only store, the k8s create API is mandatory, and this bypass
+		// would write to legacy SQL where reads will never find it.
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if hs.Cfg.SnapshotPublicMode && hs.Features.IsEnabledGlobally(featuremgmt.FlagExternalSnapshotsSupportLegacyAPI) {
+			hs.CreateDashboardSnapshot(c)
+			return
+		}
+
+		if c.SignedInUser == nil {
+			c.JsonApiErr(http.StatusUnauthorized, "Unauthorized", nil)
+			return
+		}
+		c.Req.URL.Path = "/apis/dashboard.grafana.app/v0alpha1/namespaces/" +
+			namespaceMapper(c.SignedInUser.GetOrgID()) + "/snapshots/create"
+		hs.clientConfigProvider.DirectlyServeHTTP(c.Resp, c.Req)
 	}
 }
 

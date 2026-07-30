@@ -5835,6 +5835,19 @@
     },
     {
       "metadata": {
+        "name": "snapshots.kubernetesSnapshots",
+        "resourceVersion": "1785338923798",
+        "creationTimestamp": "2026-07-29T15:28:43Z"
+      },
+      "spec": {
+        "description": "Routes snapshot create requests from /api/snapshots to the dashboard.grafana.app k8s API",
+        "stage": "experimental",
+        "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "splashScreen",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

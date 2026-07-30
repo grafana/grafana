@@ -396,25 +396,29 @@ func TestCreateDashboardSnapshotPublicModeWithKubernetesSnapshots(t *testing.T) 
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			WithEnabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
+
 			dashSnapSvc := dashboardsnapshots.NewMockService(t)
 			if tt.supportLegacy {
 				dashSnapSvc.On("CreateDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.CreateDashboardSnapshotCommand")).
 					Return(&dashboardsnapshots.DashboardSnapshot{Key: "pub-key", DeleteKey: "pub-delete-key"}, nil)
 			}
 
-			flags := []any{}
+			legacyFlags := featuremgmt.WithFeatures()
 			if tt.supportLegacy {
-				flags = append(flags, featuremgmt.FlagExternalSnapshotsSupportLegacyAPI)
+				legacyFlags = featuremgmt.WithFeatures(featuremgmt.FlagExternalSnapshotsSupportLegacyAPI)
 			}
+
+			kubeMock := &mockDirectRestConfigProvider{}
 
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				cfg := setting.NewCfg()
 				cfg.SnapshotEnabled = true
 				cfg.SnapshotPublicMode = true
-				cfg.KubernetesSnapshotsEnabled = true
 				hs.Cfg = cfg
-				hs.Features = featuremgmt.WithFeatures(flags...)
+				hs.Features = legacyFlags
 				hs.dashboardsnapshotsService = dashSnapSvc
+				hs.clientConfigProvider = kubeMock
 			})
 
 			body := strings.NewReader(`{"name":"public push","dashboard":{"uid":"x","title":"t"}}`)
