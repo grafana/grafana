@@ -1,19 +1,9 @@
 import { type FeatureLike } from 'ol/Feature';
-import type OpenLayersMap from 'ol/Map';
 import VectorImage from 'ol/layer/VectorImage';
 import { Stroke, Style } from 'ol/style';
 import Photo from 'ol-ext/style/Photo';
 
-import {
-  type MapLayerRegistryItem,
-  type PanelData,
-  type GrafanaTheme2,
-  type EventBus,
-  FieldType,
-  type Field,
-  type MapLayerOptions,
-  type PanelOptionsEditorBuilder,
-} from '@grafana/data';
+import { type MapLayerRegistryItem, type PanelData, FieldType, type Field } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { findField } from 'app/features/dimensions/utils';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
@@ -49,68 +39,6 @@ const blankPixel =
   'data:image/svg+xml;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 let photoLoad: number[] = []; // TODO find a better way to manage this, used to track image load
 
-// Marker overlay options
-const registerOptionsUI = (builder: PanelOptionsEditorBuilder<MapLayerOptions<PhotoConfig>>) => {
-  builder
-    .addFieldNamePicker({
-      path: `config.src`,
-      name: 'Image Source field',
-      settings: {
-        filter: (f: Field) => f.type === FieldType.string,
-        noFieldsMessage: t('geomap.photos-layer.noFieldsMessage-no-string-fields', 'No string fields found'),
-      },
-    })
-    .addRadio({
-      path: 'config.kind',
-      name: 'Kind',
-      settings: {
-        options: [
-          { label: 'Square', value: 'square' },
-          { label: 'Circle', value: 'circle' },
-          { label: 'Anchored', value: 'anchored' },
-          { label: 'Folio', value: 'folio' },
-        ],
-      },
-      defaultValue: defaultOptions.kind,
-    })
-    .addBooleanSwitch({
-      path: 'config.crop',
-      name: 'Crop',
-      settings: {},
-      defaultValue: defaultOptions.crop,
-    })
-    .addBooleanSwitch({
-      path: 'config.shadow',
-      name: 'Shadow',
-      settings: {},
-      defaultValue: defaultOptions.shadow,
-    })
-    .addSliderInput({
-      path: 'config.border',
-      name: 'Border',
-      settings: {
-        min: 0,
-        max: 10,
-      },
-      defaultValue: defaultOptions.border,
-    })
-    .addColorPicker({
-      path: 'config.color',
-      name: 'Border color',
-      defaultValue: defaultOptions.color,
-      settings: [{ enableNamedColors: false }],
-    })
-    .addSliderInput({
-      path: 'config.radius',
-      name: 'Radius',
-      settings: {
-        min: 1,
-        max: 100,
-      },
-      defaultValue: defaultOptions.radius,
-    });
-};
-
 /**
  * Map layer configuration for circle overlay
  */
@@ -128,7 +56,7 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<PhotoConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (_map, options, _eventBus, theme) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -238,7 +166,67 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
         }
       },
 
-      registerOptionsUI,
+      // Marker overlay options
+      registerOptionsUI: (builder) => {
+        builder
+          .addFieldNamePicker({
+            path: `config.src`,
+            name: 'Image Source field',
+            settings: {
+              filter: (f: Field) => f.type === FieldType.string,
+              noFieldsMessage: t('geomap.photos-layer.noFieldsMessage-no-string-fields', 'No string fields found'),
+            },
+          })
+          .addRadio({
+            path: 'config.kind',
+            name: 'Kind',
+            settings: {
+              options: [
+                { label: 'Square', value: 'square' },
+                { label: 'Circle', value: 'circle' },
+                { label: 'Anchored', value: 'anchored' },
+                { label: 'Folio', value: 'folio' },
+              ],
+            },
+            defaultValue: defaultOptions.kind,
+          })
+          .addBooleanSwitch({
+            path: 'config.crop',
+            name: 'Crop',
+            settings: {},
+            defaultValue: defaultOptions.crop,
+          })
+          .addBooleanSwitch({
+            path: 'config.shadow',
+            name: 'Shadow',
+            settings: {},
+            defaultValue: defaultOptions.shadow,
+          })
+          .addSliderInput({
+            path: 'config.border',
+            name: 'Border',
+            settings: {
+              min: 0,
+              max: 10,
+            },
+            defaultValue: defaultOptions.border,
+          })
+          .addColorPicker({
+            path: 'config.color',
+            name: 'Border color',
+            defaultValue: defaultOptions.color,
+            settings: [{ enableNamedColors: false }],
+          })
+          .addSliderInput({
+            path: 'config.radius',
+            name: 'Radius',
+            settings: {
+              min: 1,
+              max: 100,
+            },
+            defaultValue: defaultOptions.radius,
+          });
+      },
     };
   },
 

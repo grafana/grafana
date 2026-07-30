@@ -1,6 +1,5 @@
 import { isNumber } from 'lodash';
 import Feature, { type FeatureLike } from 'ol/Feature';
-import type OpenLayersMap from 'ol/Map';
 import { LineString, Point, SimpleGeometry } from 'ol/geom';
 import { Group as LayerGroup } from 'ol/layer';
 import VectorImage from 'ol/layer/VectorImage';
@@ -13,15 +12,11 @@ import tinycolor from 'tinycolor2';
 import {
   type MapLayerRegistryItem,
   type PanelData,
-  type GrafanaTheme2,
-  type EventBus,
   DataHoverEvent,
   DataHoverClearEvent,
   type DataFrame,
   FieldType,
   colorManipulator,
-  type MapLayerOptions,
-  type PanelOptionsEditorBuilder,
 } from '@grafana/data';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
@@ -58,33 +53,6 @@ enum mapIndex {
 
 const crosshairColor = '#607D8B';
 
-// Route layer options
-const registerOptionsUI = (builder: PanelOptionsEditorBuilder<MapLayerOptions<RouteConfig>>) => {
-  builder
-    .addCustomEditor({
-      id: 'config.style',
-      path: 'config.style',
-      name: 'Style',
-      editor: StyleEditor,
-      settings: {
-        simpleFixedValues: false,
-      },
-      defaultValue: defaultOptions.style,
-    })
-    .addRadio({
-      path: 'config.arrow',
-      name: 'Arrow',
-      settings: {
-        options: [
-          { label: 'None', value: 0 },
-          { label: 'Forward', value: 1 },
-          { label: 'Reverse', value: -1 },
-        ],
-      },
-      defaultValue: defaultOptions.arrow,
-    });
-};
-
 /**
  * Map layer configuration for circle overlay
  */
@@ -99,7 +67,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<RouteConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (map, options, eventBus, theme) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -362,7 +330,32 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
         }
       },
 
-      registerOptionsUI,
+      // Route layer options
+      registerOptionsUI: (builder) => {
+        builder
+          .addCustomEditor({
+            id: 'config.style',
+            path: 'config.style',
+            name: 'Style',
+            editor: StyleEditor,
+            settings: {
+              simpleFixedValues: false,
+            },
+            defaultValue: defaultOptions.style,
+          })
+          .addRadio({
+            path: 'config.arrow',
+            name: 'Arrow',
+            settings: {
+              options: [
+                { label: 'None', value: 0 },
+                { label: 'Forward', value: 1 },
+                { label: 'Reverse', value: -1 },
+              ],
+            },
+            defaultValue: defaultOptions.arrow,
+          });
+      },
     };
   },
 

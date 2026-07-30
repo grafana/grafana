@@ -1,4 +1,3 @@
-import type OpenLayersMap from 'ol/Map';
 import { type Point } from 'ol/geom';
 import { VectorImage } from 'ol/layer';
 import LayerGroup from 'ol/layer/Group';
@@ -11,10 +10,7 @@ import {
   type MapLayerRegistryItem,
   type MapLayerOptions,
   type PanelData,
-  type GrafanaTheme2,
   FrameGeometrySourceMode,
-  type EventBus,
-  type PanelOptionsEditorBuilder,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
@@ -52,27 +48,6 @@ export const defaultMarkersConfig: MapLayerOptions<MarkersConfig> = {
   tooltip: true,
 };
 
-// Marker overlay options
-const registerOptionsUI = (builder: PanelOptionsEditorBuilder<MapLayerOptions<MarkersConfig>>) => {
-  builder
-    .addCustomEditor({
-      id: 'config.style',
-      path: 'config.style',
-      name: t('geomap.markers-layer.name-styles', 'Styles'),
-      editor: StyleEditor,
-      settings: {
-        displayRotation: true,
-      },
-      defaultValue: defaultOptions.style,
-    })
-    .addBooleanSwitch({
-      path: 'config.showLegend',
-      name: t('geomap.markers-layer.name-show-legend', 'Show legend'),
-      description: t('geomap.markers-layer.description-show-legend', 'Show map legend'),
-      defaultValue: defaultOptions.showLegend,
-    });
-};
-
 /**
  * Map layer configuration for circle overlay
  */
@@ -90,7 +65,7 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<MarkersConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (_map, options, _eventBus, theme) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -240,7 +215,26 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
         }
       },
 
-      registerOptionsUI,
+      // Marker overlay options
+      registerOptionsUI: (builder) => {
+        builder
+          .addCustomEditor({
+            id: 'config.style',
+            path: 'config.style',
+            name: t('geomap.markers-layer.name-styles', 'Styles'),
+            editor: StyleEditor,
+            settings: {
+              displayRotation: true,
+            },
+            defaultValue: defaultOptions.style,
+          })
+          .addBooleanSwitch({
+            path: 'config.showLegend',
+            name: t('geomap.markers-layer.name-show-legend', 'Show legend'),
+            description: t('geomap.markers-layer.description-show-legend', 'Show map legend'),
+            defaultValue: defaultOptions.showLegend,
+          });
+      },
     };
   },
 

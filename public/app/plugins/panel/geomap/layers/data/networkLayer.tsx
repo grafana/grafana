@@ -1,6 +1,5 @@
 import { isNumber } from 'lodash';
 import Feature, { type FeatureLike } from 'ol/Feature';
-import type OpenLayersMap from 'ol/Map';
 import { type Geometry, LineString, type Point, SimpleGeometry } from 'ol/geom';
 import VectorImage from 'ol/layer/VectorImage';
 import { Fill, Stroke, Style, Text } from 'ol/style';
@@ -9,17 +8,7 @@ import { type ReactNode } from 'react';
 import { ReplaySubject } from 'rxjs';
 import tinycolor from 'tinycolor2';
 
-import {
-  type MapLayerRegistryItem,
-  type MapLayerOptions,
-  type PanelData,
-  type GrafanaTheme2,
-  type EventBus,
-  type DataFrame,
-  type Field,
-  type PanelOptionsEditorBuilder,
-  type StandardEditorContext,
-} from '@grafana/data';
+import { type MapLayerRegistryItem, type PanelData, type DataFrame, type Field } from '@grafana/data';
 import { TextDimensionMode } from '@grafana/schema';
 import { FrameVectorSource } from 'app/features/geo/utils/frameVectorSource';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
@@ -49,61 +38,6 @@ const defaultOptions: NetworkConfig = {
 
 const NETWORK_LAYER_ID = 'network';
 
-// Marker overlay options
-const registerOptionsUI = (
-  builder: PanelOptionsEditorBuilder<MapLayerOptions<NetworkConfig>>,
-  context: StandardEditorContext<MapLayerOptions<NetworkConfig>>
-) => {
-  const networkFrames = getGraphFrame(context.data);
-  const frameNodes = networkFrames.nodes[0];
-  const frameEdges = networkFrames.edges[0];
-
-  builder
-    .addCustomEditor({
-      id: 'config.style',
-      category: ['Node Styles'],
-      path: 'config.style',
-      name: 'Node Styles',
-      editor: StyleEditor,
-      settings: {
-        displayRotation: true,
-        frameMatcher: (frame: DataFrame) => frame === frameNodes,
-      },
-      defaultValue: defaultOptions.style,
-    })
-    .addCustomEditor({
-      id: 'config.edgeStyle',
-      category: ['Edge Styles'],
-      path: 'config.edgeStyle',
-      name: 'Edge Styles',
-      editor: StyleEditor,
-      settings: {
-        hideSymbol: true,
-        frameMatcher: (frame: DataFrame) => frame === frameEdges,
-      },
-      defaultValue: defaultOptions.style,
-    })
-    .addRadio({
-      path: 'config.arrow',
-      name: 'Arrow',
-      settings: {
-        options: [
-          { label: 'None', value: 0 },
-          { label: 'Forward', value: 1 },
-          { label: 'Reverse', value: -1 },
-          { label: 'Both', value: 2 },
-        ],
-      },
-      defaultValue: defaultOptions.arrow,
-    })
-    .addBooleanSwitch({
-      path: 'config.showLegend',
-      name: 'Show legend',
-      description: 'Show map legend',
-      defaultValue: defaultOptions.showLegend,
-    });
-};
-
 /**
  * Map layer configuration for network overlay
  */
@@ -121,7 +55,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<NetworkConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (_map, options, _eventBus, theme) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -272,7 +206,57 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
         }
       },
 
-      registerOptionsUI,
+      // Marker overlay options
+      registerOptionsUI: (builder, context) => {
+        const networkFrames = getGraphFrame(context.data);
+        const frameNodes = networkFrames.nodes[0];
+        const frameEdges = networkFrames.edges[0];
+
+        builder
+          .addCustomEditor({
+            id: 'config.style',
+            category: ['Node Styles'],
+            path: 'config.style',
+            name: 'Node Styles',
+            editor: StyleEditor,
+            settings: {
+              displayRotation: true,
+              frameMatcher: (frame: DataFrame) => frame === frameNodes,
+            },
+            defaultValue: defaultOptions.style,
+          })
+          .addCustomEditor({
+            id: 'config.edgeStyle',
+            category: ['Edge Styles'],
+            path: 'config.edgeStyle',
+            name: 'Edge Styles',
+            editor: StyleEditor,
+            settings: {
+              hideSymbol: true,
+              frameMatcher: (frame: DataFrame) => frame === frameEdges,
+            },
+            defaultValue: defaultOptions.style,
+          })
+          .addRadio({
+            path: 'config.arrow',
+            name: 'Arrow',
+            settings: {
+              options: [
+                { label: 'None', value: 0 },
+                { label: 'Forward', value: 1 },
+                { label: 'Reverse', value: -1 },
+                { label: 'Both', value: 2 },
+              ],
+            },
+            defaultValue: defaultOptions.arrow,
+          })
+          .addBooleanSwitch({
+            path: 'config.showLegend',
+            name: 'Show legend',
+            description: 'Show map legend',
+            defaultValue: defaultOptions.showLegend,
+          });
+      },
     };
   },
 

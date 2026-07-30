@@ -1,5 +1,4 @@
 import { type FeatureLike } from 'ol/Feature';
-import type OpenLayersMap from 'ol/Map';
 import { unByKey } from 'ol/Observable';
 import GeoJSON from 'ol/format/GeoJSON';
 import VectorImage from 'ol/layer/VectorImage';
@@ -8,13 +7,7 @@ import { type Style } from 'ol/style';
 import { ReplaySubject } from 'rxjs';
 import { map as rxjsmap, first } from 'rxjs/operators';
 
-import {
-  type MapLayerRegistryItem,
-  type MapLayerOptions,
-  type GrafanaTheme2,
-  type EventBus,
-  type PanelOptionsEditorBuilder,
-} from '@grafana/data';
+import { type MapLayerRegistryItem } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { ComparisonOperation } from '@grafana/schema';
 
@@ -79,7 +72,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<GeoJSONMapperConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (_map, options) => {
     const config = { ...defaultOptions, ...options.config };
 
     // Interpolate variables in the URL
@@ -192,8 +185,7 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
 
     return {
       init: () => vectorLayer,
-      // depends on the features loaded by this layer, so it cannot be hoisted out of create()
-      registerOptionsUI: (builder: PanelOptionsEditorBuilder<MapLayerOptions<GeoJSONMapperConfig>>) => {
+      registerOptionsUI: (builder) => {
         // get properties for first feature to use as ui options
         const layerInfo = features.pipe(
           first(),

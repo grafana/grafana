@@ -1,14 +1,7 @@
-import type Map from 'ol/Map';
 import LayerGroup from 'ol/layer/Group';
 import { apply } from 'ol-mapbox-style';
 
-import {
-  type MapLayerRegistryItem,
-  type MapLayerOptions,
-  type GrafanaTheme2,
-  type EventBus,
-  type PanelOptionsEditorBuilder,
-} from '@grafana/data';
+import { type MapLayerRegistryItem } from '@grafana/data';
 
 // MapLibre Style Specification constants
 const LAYER_TYPE_BACKGROUND = 'background';
@@ -33,38 +26,13 @@ function resolveMaplibreConfig(config: Partial<MaplibreConfig> = {}): MaplibreCo
   return { ...config, url: config.url || defaultMaplibreConfig.url };
 }
 
-const registerOptionsUI = (builder: PanelOptionsEditorBuilder<MapLayerOptions<Partial<MaplibreConfig>>>) => {
-  builder
-    .addTextInput({
-      path: 'config.url',
-      name: 'URL template',
-      description: 'URL to the styles.json file.',
-      settings: {
-        placeholder: defaultMaplibreConfig.url,
-      },
-    })
-    .addTextInput({
-      path: 'config.accessToken',
-      name: 'Public access token',
-      description: 'Public access token for mapbox:// urls',
-      settings: {
-        placeholder: '',
-      },
-    });
-};
-
 const maplibreLayer: MapLayerRegistryItem<Partial<MaplibreConfig>> = {
   id: 'maplibre',
   name: 'MapLibre layer',
   description: 'Add layer using MapLibre style.json URL',
   isBaseMap: true,
 
-  create: async (
-    map: Map,
-    options: MapLayerOptions<Partial<MaplibreConfig>>,
-    eventBus: EventBus,
-    theme: GrafanaTheme2
-  ) => ({
+  create: async (_map, options) => ({
     init: () => {
       const cfg = resolveMaplibreConfig(options.config);
       const layerOpacity = options.opacity ?? 1;
@@ -132,7 +100,25 @@ const maplibreLayer: MapLayerRegistryItem<Partial<MaplibreConfig>> = {
 
       return layer;
     },
-    registerOptionsUI,
+    registerOptionsUI: (builder) => {
+      builder
+        .addTextInput({
+          path: 'config.url',
+          name: 'URL template',
+          description: 'URL to the styles.json file.',
+          settings: {
+            placeholder: defaultMaplibreConfig.url,
+          },
+        })
+        .addTextInput({
+          path: 'config.accessToken',
+          name: 'Public access token',
+          description: 'Public access token for mapbox:// urls',
+          settings: {
+            placeholder: '',
+          },
+        });
+    },
   }),
 };
 

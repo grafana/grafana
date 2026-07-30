@@ -1,10 +1,4 @@
-import {
-  type MapLayerRegistryItem,
-  type MapLayerOptions,
-  type RegistryItem,
-  Registry,
-  type PanelOptionsEditorBuilder,
-} from '@grafana/data';
+import { type MapLayerRegistryItem, type RegistryItem, Registry } from '@grafana/data';
 
 import { xyzTiles, defaultXYZConfig, resolveXYZConfig, type XYZConfig, type UnresolvedXYZConfig } from './generic';
 
@@ -58,34 +52,6 @@ export interface ESRIXYZConfig extends XYZConfig {
   server?: string;
 }
 
-const registerOptionsUI = (builder: PanelOptionsEditorBuilder<MapLayerOptions<UnresolvedXYZConfig<ESRIXYZConfig>>>) => {
-  builder
-    .addSelect({
-      path: 'config.server',
-      name: 'Server instance',
-      settings: {
-        options: publicServiceRegistry.selectOptions().options,
-      },
-    })
-    .addTextInput({
-      path: 'config.url',
-      name: 'URL template',
-      description: 'Must include {x}, {y} or {-y}, and {z} placeholders',
-      settings: {
-        placeholder: defaultXYZConfig.url,
-      },
-      showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
-    })
-    .addTextInput({
-      path: 'config.attribution',
-      name: 'Attribution',
-      settings: {
-        placeholder: defaultXYZConfig.attribution,
-      },
-      showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
-    });
-};
-
 const esriXYZTiles: MapLayerRegistryItem<UnresolvedXYZConfig<ESRIXYZConfig>> = {
   id: 'esri-xyz',
   name: 'ArcGIS MapServer',
@@ -103,7 +69,36 @@ const esriXYZTiles: MapLayerRegistryItem<UnresolvedXYZConfig<ESRIXYZConfig>> = {
     const opts = { ...options, config: cfg };
     const xyz = await xyzTiles.create(map, opts, eventBus, theme);
 
-    return { ...xyz, registerOptionsUI };
+    return {
+      ...xyz,
+      registerOptionsUI: (builder) => {
+        builder
+          .addSelect({
+            path: 'config.server',
+            name: 'Server instance',
+            settings: {
+              options: publicServiceRegistry.selectOptions().options,
+            },
+          })
+          .addTextInput({
+            path: 'config.url',
+            name: 'URL template',
+            description: 'Must include {x}, {y} or {-y}, and {z} placeholders',
+            settings: {
+              placeholder: defaultXYZConfig.url,
+            },
+            showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
+          })
+          .addTextInput({
+            path: 'config.attribution',
+            name: 'Attribution',
+            settings: {
+              placeholder: defaultXYZConfig.attribution,
+            },
+            showIf: (cfg) => cfg.config?.server === CUSTOM_SERVICE,
+          });
+      },
+    };
   },
 
   defaultOptions: {
