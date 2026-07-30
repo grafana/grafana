@@ -87,13 +87,18 @@ export interface DashboardMutationAPI {
    */
   getPayloadSchema(commandId: string): ZodSchema | null;
   /**
-   * The commands {@link execute} can dispatch right now. Empty when no dashboard
-   * is open.
+   * The commands that would run right now: implemented by this version, with a
+   * dashboard open, and permitted on it. Filtered by the same per-command checks
+   * {@link execute} applies, so a listed command is one you can use. Empty when no
+   * dashboard is open.
    *
-   * Listing a command means it exists and has a dashboard to act on, not that
-   * this call will succeed. Permissions, snapshot state, and feature toggles are
-   * evaluated per command inside {@link execute}, so a listed command can still
-   * come back with `success: false`.
+   * A command can still come back with `success: false` for a reason that is not
+   * knowable up front, such as a payload that fails validation.
+   *
+   * Absence does not say why, since a command is missing whether this version
+   * lacks it, no dashboard is open, the dashboard cannot be edited, or a feature
+   * toggle is off. Use {@link getPayloadSchema} for a version check and
+   * {@link canExecute} for the reason.
    */
   getAvailableCommands(): string[];
   /**
@@ -101,11 +106,10 @@ export interface DashboardMutationAPI {
    * them. Accepts one command or several, matched case-insensitively, and is
    * all-of: `allowed` is true only when every command passes.
    *
-   * This runs the same per-command checks {@link execute} runs, so it covers what
-   * {@link getAvailableCommands} cannot: no dashboard open, a command this
-   * version does not implement, insufficient permission, a snapshot, and
-   * commands behind a disabled feature toggle. Use it to decide whether to offer
-   * a capability at all.
+   * Equivalent to checking membership in {@link getAvailableCommands}, plus the
+   * part a list cannot carry: why each unusable command is unusable. Reach for
+   * this when you need to explain or log the reason, and for a plain decision use
+   * the list.
    *
    * An empty list is vacuously allowed, since there is nothing to check.
    */

@@ -9,6 +9,41 @@ function createClient(canEditDashboard: boolean): DashboardMutationClient {
   return new DashboardMutationClient({ canEditDashboard: () => canEditDashboard } as unknown as DashboardScene);
 }
 
+describe('DashboardMutationClient.getAvailableCommands', () => {
+  let originalNewLayouts: boolean | undefined;
+
+  beforeEach(() => {
+    originalNewLayouts = config.featureToggles.dashboardNewLayouts;
+    config.featureToggles.dashboardNewLayouts = true;
+  });
+
+  afterEach(() => {
+    config.featureToggles.dashboardNewLayouts = originalNewLayouts;
+  });
+
+  it('lists the write commands on an editable dashboard', () => {
+    expect(createClient(true).getAvailableCommands()).toEqual(expect.arrayContaining(['ADD_PANEL', 'ADD_ROW']));
+  });
+
+  // A read-only dashboard, Grafana Home being the one users hit, used to
+  // advertise the full registry.
+  it('omits write commands on a dashboard that cannot be edited, and keeps reads', () => {
+    const commands = createClient(false).getAvailableCommands();
+
+    expect(commands).not.toContain('ADD_PANEL');
+    expect(commands).toContain('LIST_PANELS');
+  });
+
+  it('omits commands behind a disabled feature toggle', () => {
+    config.featureToggles.dashboardNewLayouts = false;
+
+    const commands = createClient(true).getAvailableCommands();
+
+    expect(commands).not.toContain('ADD_ROW');
+    expect(commands).toContain('ADD_PANEL');
+  });
+});
+
 describe('DashboardMutationClient.canExecute', () => {
   let originalNewLayouts: boolean | undefined;
 

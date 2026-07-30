@@ -37,23 +37,25 @@ onAvailabilityChange(listener: (isAvailable: boolean) => void): () => void
 
 ### State
 
-|                          | No dashboard open | Dashboard open                               |
-| ------------------------ | ----------------- | -------------------------------------------- |
-| `isAvailable()`          | `false`           | `true`                                       |
-| `getAvailableCommands()` | `[]`              | every command the running version implements |
-| `execute`                | rejects           | resolves with a `success` result             |
+|                          | No dashboard open | Dashboard open                           |
+| ------------------------ | ----------------- | ---------------------------------------- |
+| `isAvailable()`          | `false`           | `true`                                   |
+| `getAvailableCommands()` | `[]`              | the commands permitted on this dashboard |
+| `execute`                | rejects           | resolves with a `success` result         |
 
 `execute` is the only member that rejects. Once a dashboard is open, a command that cannot run resolves with `success: false` instead.
 
 ### `getAvailableCommands`
 
-Reports what `execute` can dispatch, not what will succeed. When a dashboard is open the client registers every command the running version implements, unfiltered by permission, snapshot state, dashboard layout, or feature toggle. All four are evaluated per command inside `execute`, so a listed command can still come back with `success: false`.
+The commands that would run right now: implemented by this version, with a dashboard open, and permitted on it. Filtered by the same per-command checks `execute` applies, so a listed command is one you can use. A read-only dashboard such as Grafana Home lists its read commands and none of the writes, and a command behind a disabled feature toggle is not listed at all.
 
-Because the list is empty both when no dashboard is open and when the version does not implement a command, it cannot answer version questions on its own. Use `getPayloadSchema(command) !== null` for that: schemas come from the static command registry, so it answers with no dashboard open.
+A listed command can still come back with `success: false` for a reason that is not knowable up front, a payload that fails validation being the usual one.
+
+Absence does not say why. A command is missing whether this version lacks it, no dashboard is open, the dashboard cannot be edited, or a toggle is off. For a version check use `getPayloadSchema(command) !== null`, which reads the static registry and so answers with no dashboard open. For the reason, use `canExecute`.
 
 ### `canExecute`
 
-Runs the same per-command checks `execute` runs, without executing anything. This is the member to gate a feature on, because it covers everything `getAvailableCommands` cannot: no dashboard open, an unrecognised command, insufficient permission, a snapshot, and commands behind a disabled feature toggle.
+Answers the same question as checking membership in `getAvailableCommands`, and adds the part a list cannot carry: why a command is unusable. Reach for it when you need to explain, log, or surface the reason; a plain membership check is enough to decide.
 
 All-of over the commands given, and every blocked command is reported rather than only the first, so a caller does not have to fix one thing and retry to discover the next. An empty list is vacuously allowed.
 

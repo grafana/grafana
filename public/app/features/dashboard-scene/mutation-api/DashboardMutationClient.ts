@@ -79,8 +79,15 @@ export class DashboardMutationClient implements MutationClient {
     }
   }
 
+  /**
+   * Commands that would run against this dashboard, filtered by the same
+   * permission check `execute` applies. A caller asking what it can do gets an
+   * answer it can act on, rather than the full registry.
+   */
   getAvailableCommands(): string[] {
-    return Array.from(this.commands.keys());
+    return Array.from(this.commands.entries())
+      .filter(([, registration]) => registration.canExecute(this.scene).allowed)
+      .map(([command]) => command);
   }
 
   /**
