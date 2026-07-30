@@ -30,6 +30,7 @@ export function SaveProvisionedDashboard({ drawer, changeInfo, dashboard, saveAs
 
   const { saveToDatabase, canSwitch, switchToDatabase, switchToGit } = useDatabaseSaveSwitch({
     dashboard,
+    drawer,
     repository,
     repoDataStatus,
     isNewDashboard,

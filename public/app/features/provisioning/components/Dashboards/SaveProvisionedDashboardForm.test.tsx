@@ -12,6 +12,7 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { setupProvisioningMswServer } from '../../mocks/server';
+import { getProvisionedMeta } from '../utils/getProvisionedMeta';
 
 import { type Props, SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 
@@ -42,8 +43,17 @@ jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
 
 jest.mock('app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker', () => {
   return {
-    ProvisioningAwareFolderPicker: () => <div data-testid="folder-picker">Mocked Folder Picker</div>,
+    ProvisioningAwareFolderPicker: ({ onChange }: { onChange: (uid?: string, title?: string) => void }) => (
+      <button type="button" data-testid="folder-picker" onClick={() => onChange('picked-folder', 'Picked Folder')}>
+        Mocked Folder Picker
+      </button>
+    ),
   };
+});
+
+jest.mock('../utils/getProvisionedMeta', () => {
+  const actual = jest.requireActual('../utils/getProvisionedMeta');
+  return { ...actual, getProvisionedMeta: jest.fn(actual.getProvisionedMeta) };
 });
 
 jest.mock('app/features/manage-dashboards/services/ValidationSrv', () => {
@@ -1364,6 +1374,32 @@ describe('SaveProvisionedDashboardForm', () => {
     // The folder is cleared, but the open dashboard keeps its identity while the drawer is open
     expect(props.dashboard.setState).toHaveBeenCalledWith({
       meta: { folderUid: undefined, folderTitle: undefined, k8s: undefined, slug: 'test-dashboard' },
+    });
+  });
+
+  it('ignores a slow folder pick that resolves after saving at root', async () => {
+    let resolvePickedFolderMeta!: (meta: Awaited<ReturnType<typeof getProvisionedMeta>>) => void;
+    jest
+      .mocked(getProvisionedMeta)
+      // The folder pick hangs on its meta lookup while the user moves on to the root save
+      .mockImplementationOnce(() => new Promise((resolve) => (resolvePickedFolderMeta = resolve)))
+      .mockImplementationOnce(() => Promise.resolve({}));
+
+    const { user, props } = setupFolderless();
+
+    await user.click(await screen.findByTestId('folder-picker'));
+    await user.click(screen.getByRole('button', { name: /no folder/i }));
+    await waitFor(() =>
+      expect(props.dashboard.setState).toHaveBeenCalledWith({
+        meta: expect.objectContaining({ folderUid: undefined }),
+      })
+    );
+
+    await act(async () => resolvePickedFolderMeta({}));
+
+    // The stale pick must not win over the root save the user chose afterwards
+    expect(props.dashboard.setState).not.toHaveBeenCalledWith({
+      meta: expect.objectContaining({ folderUid: 'picked-folder' }),
     });
   });
 

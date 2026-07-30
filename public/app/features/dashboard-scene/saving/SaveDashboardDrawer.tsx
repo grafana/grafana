@@ -5,6 +5,7 @@ import { AnnoKeyIgnorePredefinedVariables } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
 import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
+import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import {
@@ -29,6 +30,10 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveDashboardTemplate?: boolean;
   showVariablesWarning?: boolean;
   onSaveSuccess?: () => void;
+  // Git/Database switch for provisioned saves, owned by useDatabaseSaveSwitch. Lives on the
+  // drawer because switching tabs unmounts the save form while the drawer stays open.
+  saveToDatabase?: boolean;
+  databaseSwitchSnapshot?: { gitMeta: DashboardMeta; wasNew: boolean };
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {

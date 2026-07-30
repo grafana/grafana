@@ -1,9 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { locationService } from '@grafana/runtime';
+import { SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { appEvents } from 'app/core/app_events';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { type DashboardMeta } from 'app/types/dashboard';
 import { DashboardSavedEvent } from 'app/types/events';
@@ -19,6 +21,12 @@ const folderlessRepo: RepositoryView = {
   workflows: ['write'],
 };
 
+class TestDrawer extends SceneObjectBase<SceneObjectState> {}
+
+function createDrawer() {
+  return new TestDrawer({}) as unknown as SaveDashboardDrawer;
+}
+
 function createDashboard(meta: DashboardMeta = {}, initialMeta: DashboardMeta = {}) {
   const state = { meta };
   return {
@@ -32,17 +40,21 @@ function createDashboard(meta: DashboardMeta = {}, initialMeta: DashboardMeta = 
 
 function setup({
   dashboard = createDashboard(),
+  drawer = createDrawer(),
   repository = folderlessRepo,
   repoDataStatus = RepoViewStatus.Ready,
   isNewDashboard = true,
 }: {
   dashboard?: DashboardScene;
+  drawer?: SaveDashboardDrawer;
   repository?: RepositoryView;
   repoDataStatus?: RepoViewStatus;
   isNewDashboard?: boolean;
 } = {}) {
-  const rendered = renderHook(() => useDatabaseSaveSwitch({ dashboard, repository, repoDataStatus, isNewDashboard }));
-  return { ...rendered, dashboard };
+  const rendered = renderHook(() =>
+    useDatabaseSaveSwitch({ dashboard, drawer, repository, repoDataStatus, isNewDashboard })
+  );
+  return { ...rendered, dashboard, drawer };
 }
 
 describe('useDatabaseSaveSwitch', () => {
@@ -133,6 +145,25 @@ describe('useDatabaseSaveSwitch', () => {
     unmount();
 
     expect(dashboard.setState).toHaveBeenLastCalledWith({ meta: {} });
+  });
+
+  it('keeps the switch when a tab change unmounts the form while the drawer stays open', () => {
+    const dashboard = createDashboard({ folderUid: 'git-folder' });
+    const drawer = createDrawer();
+    dashboard.state.overlay = drawer;
+    const { result, unmount } = setup({ dashboard, drawer });
+
+    act(() => result.current.switchToDatabase());
+    const callsAfterSwitch = jest.mocked(dashboard.setState).mock.calls.length;
+    unmount();
+
+    // The switch is not undone, and remounting (back on the Details tab) resumes the database form
+    expect(jest.mocked(dashboard.setState).mock.calls).toHaveLength(callsAfterSwitch);
+    const remounted = setup({ dashboard, drawer });
+    expect(remounted.result.current.saveToDatabase).toBe(true);
+
+    act(() => remounted.result.current.switchToGit());
+    expect(dashboard.setState).toHaveBeenLastCalledWith({ meta: { folderUid: 'git-folder' } });
   });
 
   it('does not touch the meta on unmount after a completed save', () => {

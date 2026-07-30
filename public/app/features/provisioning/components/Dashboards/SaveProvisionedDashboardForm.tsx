@@ -265,10 +265,16 @@ export function SaveProvisionedDashboardForm({
   );
   // Updating the dashboard meta (not just the form field) makes the defaults recompute
   // against the selected folder, so path and post-save handlers stay in sync.
+  const folderSelectionIdRef = useRef(0);
   const selectFolder = useCallback(
     async (uid?: string, title?: string) => {
+      // Latest pick wins: an earlier, slower selection must not overwrite this one when it resolves
+      const selectionId = ++folderSelectionIdRef.current;
       setValue('folder', { uid, title });
       const meta = await getProvisionedMeta(uid);
+      if (selectionId !== folderSelectionIdRef.current) {
+        return;
+      }
       dashboard.setState({
         meta: {
           // Keep the open dashboard's identity (uid, slug, permissions); only the folder and its

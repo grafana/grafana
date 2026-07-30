@@ -1,5 +1,6 @@
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
+import { SceneObjectBase, type SceneObjectState } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { type SaveDashboardDrawer } from 'app/features/dashboard-scene/saving/SaveDashboardDrawer';
@@ -26,6 +27,11 @@ jest.mock('app/features/dashboard-scene/saving/SaveDashboardAsForm', () => ({
 }));
 
 const mockUseProvisionedDashboardData = jest.mocked(useProvisionedDashboardData);
+
+// The switch state lives on the drawer's scene state, so the mock must be a real scene object
+class TestDrawer extends SceneObjectBase<SceneObjectState> {
+  public onClose = jest.fn();
+}
 
 function createDashboard({
   folderUid,
@@ -72,7 +78,7 @@ function setup(
 
   const renderProps: SaveProvisionedDashboardProps = {
     dashboard: createDashboard(),
-    drawer: { onClose: jest.fn() } as unknown as SaveDashboardDrawer,
+    drawer: new TestDrawer({}) as unknown as SaveDashboardDrawer,
     changeInfo: { isNew: true } as unknown as DashboardChangeInfo,
     ...props,
   };
@@ -314,7 +320,7 @@ describe('SaveProvisionedDashboard', () => {
     await user.click(screen.getByRole('button', { name: /grafana database/i }));
 
     // useSaveDashboard publishes this before the overlay closes
-    appEvents.publish(new DashboardSavedEvent());
+    act(() => appEvents.publish(new DashboardSavedEvent()));
     dashboard.state.meta.folderUid = 'db-folder-uid';
     unmount();
 
