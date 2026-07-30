@@ -26,6 +26,14 @@ jest.mock('@grafana/runtime', () => ({
 
 const mockUseAppPluginInstalled = jest.mocked(useAppPluginInstalled);
 
+function mockPluginInstalled(installedPluginIds: string[] = []) {
+  mockUseAppPluginInstalled.mockImplementation((pluginId: string) => ({
+    loading: false,
+    error: undefined,
+    value: installedPluginIds.includes(pluginId),
+  }));
+}
+
 function getTraceView(frames: DataFrame[]) {
   const store = configureStore();
   const topOfViewRef = createRef<HTMLDivElement>();
@@ -61,11 +69,7 @@ function renderTraceViewNew() {
 
 describe('TraceView', () => {
   beforeEach(() => {
-    mockUseAppPluginInstalled.mockReturnValue({
-      loading: false,
-      error: undefined,
-      value: undefined,
-    });
+    mockPluginInstalled();
   });
 
   afterEach(() => {
@@ -180,32 +184,20 @@ describe('TraceView', () => {
     });
 
     it('does not render the banner when grafana-adaptivetraces-app is not installed', async () => {
-      mockUseAppPluginInstalled.mockReturnValue({
-        loading: false,
-        error: undefined,
-        value: false,
-      });
+      mockPluginInstalled();
       renderTraceView([frameRestoredByAdaptiveTraces]);
       expect(screen.queryByText(restoredBannerTitle)).not.toBeInTheDocument();
     });
 
     it('renders the banner when at least one span has grafana.adaptivetraces.restored=true', async () => {
-      mockUseAppPluginInstalled.mockReturnValue({
-        loading: false,
-        error: undefined,
-        value: true,
-      });
+      mockPluginInstalled(['grafana-adaptivetraces-app']);
       renderTraceView([frameRestoredByAdaptiveTraces]);
       expect(await screen.findByText(restoredBannerTitle)).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /documentation/ })).toBeInTheDocument();
     });
 
     it('hides the banner after the user dismisses it', async () => {
-      mockUseAppPluginInstalled.mockReturnValue({
-        loading: false,
-        error: undefined,
-        value: true,
-      });
+      mockPluginInstalled(['grafana-adaptivetraces-app']);
       renderTraceView([frameRestoredByAdaptiveTraces]);
       expect(await screen.findByText(restoredBannerTitle)).toBeInTheDocument();
 
@@ -214,11 +206,7 @@ describe('TraceView', () => {
     });
 
     it('shows the banner again after dismiss when navigating directly to a different restored trace', async () => {
-      mockUseAppPluginInstalled.mockReturnValue({
-        loading: false,
-        error: undefined,
-        value: true,
-      });
+      mockPluginInstalled(['grafana-adaptivetraces-app']);
       const { rerender } = render(getTraceView([frameRestoredByAdaptiveTraces]));
       expect(await screen.findByText(restoredBannerTitle)).toBeInTheDocument();
 

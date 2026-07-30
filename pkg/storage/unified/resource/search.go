@@ -102,11 +102,24 @@ type IndexBuildInfo struct {
 	Features         []IndexFeature  // Index features the index was built with. Empty on indexes built before index features existed.
 }
 
-// IndexFeature names a mapping change an older index cannot satisfy.
+// IndexFeature names a mapping change an older index cannot satisfy. Only for
+// changes no declared search field describes, such as an internal marker: a
+// declared field already moves IndexAffectingHash. Choosing wrong is silent — no
+// rebuild, missing data, no error.
 type IndexFeature string
 
+// IndexFeatureDeletedMarker means the index maps the markers on deleted
+// documents, SEARCH_FIELD_IS_DELETED and SEARCH_FIELD_IS_PROVISIONED. An index
+// without them drops the values, so a deleted document indexed there would look
+// live, and a provisioned one would show up in trash. Recorded but not required:
+// rather than reindex every existing index to add the mapping, writers check for
+// this feature before keeping a deleted document.
+const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
+
 // currentIndexFeatures is recorded in every index this binary builds.
-var currentIndexFeatures = []IndexFeature{}
+var currentIndexFeatures = []IndexFeature{
+	IndexFeatureDeletedMarker,
+}
 
 // requiredIndexFeatures is the subset an index must already have to be used. An
 // index without one of these features is rebuilt before it serves anything, even

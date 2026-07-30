@@ -900,6 +900,10 @@ The file may contain either a classic dashboard JSON or a Kubernetes-format dash
 On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 {{< /admonition >}}
 
+#### `default_preload`
+
+Instance-wide default for panel preloading, applied only to dashboards that do not explicitly set the `preload` property in their JSON. When `true`, all panels start loading as soon as the dashboard loads instead of lazy loading as they scroll into view. An explicit `preload` value in the dashboard JSON always takes precedence over this default. Default is `false`.
+
 ### `[dashboard_cleanup]`
 
 Settings related to cleaning up associated dashboards information if the dashboard was deleted through /apis.

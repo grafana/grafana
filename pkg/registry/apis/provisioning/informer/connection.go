@@ -29,6 +29,11 @@ type ConnectionGetter interface {
 func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) (DeltaSource, ConnectionGetter) {
 	if nats.Enabled(subscriber) {
 		source := NewConnectionInformer(subscriber, client, "", resync, usinformer.NewStore())
+		// Same as the repository informer: the controller's only feed, with
+		// connection health checks driven by the re-list, so it must keep
+		// operating at the re-list cadence while NATS is unavailable rather
+		// than gate on the subscription.
+		source.AllowDegradedStart()
 		return source, NewClientConnectionGetter(client.ProvisioningV0alpha1())
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Connections()
@@ -41,7 +46,7 @@ func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interfac
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Connection{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
 	}
-	list := func(ctx context.Context) ([]runtime.Object, error) {
+	list := func(ctx context.Context) ([]runtime.Object, int64, error) {
 		return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 			return c.Connections(namespace).List(ctx, opts)
 		})

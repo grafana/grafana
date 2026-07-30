@@ -25,6 +25,7 @@ func newTestConcurrentDriver(t *testing.T, numDrivers int, store Store, repoGett
 		store, repoGetter, history,
 		prometheus.NewRegistry(),
 		metrics,
+		false, // natsBacked
 		workers...,
 	)
 	require.NoError(t, err)
@@ -39,6 +40,7 @@ func TestNewConcurrentJobDriver_RejectsBadConfig(t *testing.T) {
 		time.Minute, 30*time.Second, 30*time.Second,
 		&MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{},
 		prometheus.NewRegistry(), nil,
+		false,
 	)
 	require.ErrorContains(t, err, "numDrivers")
 }
@@ -75,19 +77,19 @@ func TestConcurrentJobDriver_EventHandler_Enqueue(t *testing.T) {
 			Name:      "claimed-job",
 			Labels:    map[string]string{LabelJobClaim: "1000000000000"},
 		},
-	})
+	}, false)
 	assert.Equal(t, 0, driver.queue.Len(), "claimed jobs must not enqueue")
 
 	// A minimal object (NATS live event: namespace+name only) enqueues.
 	handler.AddFunc(&provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "new-job"},
-	})
+	}, false)
 	assert.Equal(t, 1, driver.queue.Len())
 
 	// Duplicate adds of the same key coalesce while queued.
 	handler.AddFunc(&provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "new-job"},
-	})
+	}, false)
 	assert.Equal(t, 1, driver.queue.Len(), "the queue must deduplicate keys")
 }
 
@@ -164,7 +166,7 @@ func TestConcurrentJobDriver_ClaimedElsewhereIsDropped(t *testing.T) {
 
 	driver.EventHandler().AddFunc(&provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"},
-	})
+	}, false)
 
 	require.Eventually(t, func() bool { return claims.Load() == 1 }, 2*time.Second, 10*time.Millisecond)
 
@@ -199,7 +201,7 @@ func TestConcurrentJobDriver_TransientErrorsRetryUntilDropped(t *testing.T) {
 
 	driver.EventHandler().AddFunc(&provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"},
-	})
+	}, false)
 
 	require.Eventually(t, func() bool { return claims.Load() == maxClaimAttempts }, 2*time.Second, 10*time.Millisecond)
 
@@ -296,7 +298,7 @@ func TestConcurrentJobDriver_ProcessesJobEndToEnd(t *testing.T) {
 	// A NATS-style minimal add event carries only the key.
 	driver.EventHandler().AddFunc(&provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
-	})
+	}, false)
 
 	select {
 	case <-completed:
@@ -372,7 +374,7 @@ func TestConcurrentJobDriver_PostClaimFailureDoesNotRerunJob(t *testing.T) {
 
 	driver.EventHandler().AddFunc(&provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
-	})
+	}, false)
 
 	select {
 	case <-completeCalled:
@@ -453,7 +455,7 @@ func TestConcurrentJobDriver_CooldownBlocksDirtyRedeliveryAfterPostClaimFailure(
 
 	handler.AddFunc(&provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
-	})
+	}, false)
 
 	// While the run is in flight (blocked in Complete), a resync that snapshotted
 	// the job before the claim delivers it as a full unclaimed update. This marks
@@ -474,7 +476,7 @@ func TestConcurrentJobDriver_CooldownBlocksDirtyRedeliveryAfterPostClaimFailure(
 	// it clears the cooldown and is processed without waiting it out.
 	handler.AddFunc(&provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
-	})
+	}, false)
 	require.Eventually(t, func() bool { return claims.Load() == 2 }, 2*time.Second, 10*time.Millisecond,
 		"a new incarnation must not inherit its predecessor's cooldown")
 
@@ -508,12 +510,12 @@ func TestConcurrentJobDriver_DuplicateEventsCauseNoDuplicateProcessing(t *testin
 	go func() { runDone <- driver.Run(ctx) }()
 
 	event := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"}}
-	driver.EventHandler().AddFunc(event)
+	driver.EventHandler().AddFunc(event, false)
 
 	// While the first claim is in flight, duplicate events for the same key arrive.
 	<-firstClaimStarted
-	driver.EventHandler().AddFunc(event)
-	driver.EventHandler().AddFunc(event)
+	driver.EventHandler().AddFunc(event, false)
+	driver.EventHandler().AddFunc(event, false)
 	close(release)
 
 	// The duplicates collapse into a single redelivery after the first attempt.

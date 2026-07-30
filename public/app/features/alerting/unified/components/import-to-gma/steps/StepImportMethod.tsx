@@ -18,7 +18,7 @@ import { MethodPanelCard } from './MethodPanelCard';
  * Whether the Auto-sync method may be offered: gated by the external-alertmanager-sync
  * feature toggle and Org Admin (the admin_config endpoint requires org admin).
  */
-export function isAutoSyncSegmentEnabled(): boolean {
+function isAutoSyncSegmentEnabled(): boolean {
   return Boolean(config.featureToggles['alerting.syncExternalAlertmanager']) && contextSrv.hasRole(OrgRole.Admin);
 }
 

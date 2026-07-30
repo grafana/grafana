@@ -13,10 +13,11 @@ import (
 )
 
 // pagedJobList builds one page of a paginated job LIST: the named jobs plus the
-// continue token pointing at the next page (empty on the last page).
-func pagedJobList(continueToken string, names ...string) *provisioningapis.JobList {
+// continue token pointing at the next page (empty on the last page) and the
+// snapshot resource version (pinned across pages by the continue token).
+func pagedJobList(continueToken, resourceVersion string, names ...string) *provisioningapis.JobList {
 	l := &provisioningapis.JobList{
-		ListMeta: metav1.ListMeta{Continue: continueToken},
+		ListMeta: metav1.ListMeta{Continue: continueToken, ResourceVersion: resourceVersion},
 	}
 	for _, name := range names {
 		l.Items = append(l.Items, provisioningapis.Job{
@@ -31,34 +32,37 @@ func TestListAllPages(t *testing.T) {
 		name string
 		// pages is keyed by the continue token the page func receives; "" is the
 		// first call.
-		pages     map[string]*provisioningapis.JobList
-		errOn     string // continue token whose page fails
-		wantNames []string
-		wantErr   bool
-		wantCalls []string // continue tokens received, in order
+		pages      map[string]*provisioningapis.JobList
+		errOn      string // continue token whose page fails
+		wantNames  []string
+		wantListRV int64 // resource version listAllPages reports for the snapshot
+		wantErr    bool
+		wantCalls  []string // continue tokens received, in order
 	}{
 		{
 			name: "single page",
 			pages: map[string]*provisioningapis.JobList{
-				"": pagedJobList("", "a", "b"),
+				"": pagedJobList("", "100", "a", "b"),
 			},
-			wantNames: []string{"a", "b"},
-			wantCalls: []string{""},
+			wantNames:  []string{"a", "b"},
+			wantListRV: 100,
+			wantCalls:  []string{""},
 		},
 		{
 			name: "follows continue tokens across pages",
 			pages: map[string]*provisioningapis.JobList{
-				"":      pagedJobList("page2", "a", "b"),
-				"page2": pagedJobList("page3", "c", "d"),
-				"page3": pagedJobList("", "e"),
+				"":      pagedJobList("page2", "200", "a", "b"),
+				"page2": pagedJobList("page3", "200", "c", "d"),
+				"page3": pagedJobList("", "200", "e"),
 			},
-			wantNames: []string{"a", "b", "c", "d", "e"},
-			wantCalls: []string{"", "page2", "page3"},
+			wantNames:  []string{"a", "b", "c", "d", "e"},
+			wantListRV: 200, // pinned to the first page's version across pages
+			wantCalls:  []string{"", "page2", "page3"},
 		},
 		{
 			name: "error on a later page fails the whole list",
 			pages: map[string]*provisioningapis.JobList{
-				"": pagedJobList("page2", "a", "b"),
+				"": pagedJobList("page2", "300", "a", "b"),
 			},
 			errOn:     "page2",
 			wantErr:   true,
@@ -79,13 +83,14 @@ func TestListAllPages(t *testing.T) {
 				return l, nil
 			}
 
-			out, err := listAllPages(context.Background(), page)
+			out, listRV, err := listAllPages(context.Background(), page)
 			require.Equal(t, tt.wantCalls, calls)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
 			}
 			require.NoError(t, err)
+			require.Equal(t, tt.wantListRV, listRV)
 			names := make([]string, 0, len(out))
 			for _, obj := range out {
 				job, ok := obj.(*provisioningapis.Job)
@@ -110,9 +115,9 @@ func jobNames(t *testing.T, objs []runtime.Object) []string {
 
 func TestListPagesBackpressure(t *testing.T) {
 	pages := map[string]*provisioningapis.JobList{
-		"":      pagedJobList("page2", "a", "b"),
-		"page2": pagedJobList("page3", "c", "d"),
-		"page3": pagedJobList("", "e"),
+		"":      pagedJobList("page2", "200", "a", "b"),
+		"page2": pagedJobList("page3", "200", "c", "d"),
+		"page3": pagedJobList("", "200", "e"),
 	}
 	newPageFunc := func(calls *[]string) pageFunc {
 		return func(_ context.Context, opts metav1.ListOptions) (runtime.Object, error) {
@@ -126,9 +131,10 @@ func TestListPagesBackpressure(t *testing.T) {
 	t.Run("stops after the first page when there is no capacity", func(t *testing.T) {
 		var calls []string
 		// keepPaging is checked between pages; false stops the chain after page 1.
-		out, complete, err := listPages(context.Background(), newPageFunc(&calls), func() bool { return false })
+		out, listRV, complete, err := listPages(context.Background(), newPageFunc(&calls), func() bool { return false })
 		require.NoError(t, err)
 		require.False(t, complete, "a chain stopped early must report incomplete")
+		require.Equal(t, int64(200), listRV, "the first page still dates the snapshot")
 		require.Equal(t, []string{""}, calls, "must not fetch beyond the first page")
 		require.Equal(t, []string{"a", "b"}, jobNames(t, out))
 	})
@@ -137,7 +143,7 @@ func TestListPagesBackpressure(t *testing.T) {
 		var calls []string
 		// Capacity for two pages, then backpressure stops the third.
 		budget := 2
-		out, complete, err := listPages(context.Background(), newPageFunc(&calls), func() bool {
+		out, _, complete, err := listPages(context.Background(), newPageFunc(&calls), func() bool {
 			budget--
 			return budget > 0
 		})
@@ -149,7 +155,7 @@ func TestListPagesBackpressure(t *testing.T) {
 
 	t.Run("reads every page when capacity never runs out", func(t *testing.T) {
 		var calls []string
-		out, complete, err := listPages(context.Background(), newPageFunc(&calls), func() bool { return true })
+		out, _, complete, err := listPages(context.Background(), newPageFunc(&calls), func() bool { return true })
 		require.NoError(t, err)
 		require.True(t, complete, "reaching the end reports complete")
 		require.Equal(t, []string{"", "page2", "page3"}, calls)
@@ -160,11 +166,11 @@ func TestListPagesBackpressure(t *testing.T) {
 		var calls []string
 		page := func(_ context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 			calls = append(calls, opts.Continue)
-			return pagedJobList("", "only"), nil
+			return pagedJobList("", "100", "only"), nil
 		}
 		// keepPaging returns false, but with no continue token there is no next page
 		// to gate — the set fits in one page, so it is complete.
-		out, complete, err := listPages(context.Background(), page, func() bool { return false })
+		out, _, complete, err := listPages(context.Background(), page, func() bool { return false })
 		require.NoError(t, err)
 		require.True(t, complete)
 		require.Equal(t, []string{""}, calls)

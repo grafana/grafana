@@ -121,6 +121,7 @@ func TestConcurrentJobDriver_Run_StopsOnContextCancel(t *testing.T) {
 		store, &MockRepoGetter{}, &MockHistoryWriter{},
 		prometheus.NewRegistry(),
 		nil,
+		false,
 	)
 	require.NoError(t, err)
 
@@ -182,6 +183,7 @@ func TestConcurrentJobDriver_Run_AllDriversExitBeforeRunReturns(t *testing.T) {
 		store, &MockRepoGetter{}, &MockHistoryWriter{},
 		prometheus.NewRegistry(),
 		nil,
+		false,
 	)
 	require.NoError(t, err)
 
@@ -194,7 +196,7 @@ func TestConcurrentJobDriver_Run_AllDriversExitBeforeRunReturns(t *testing.T) {
 
 	handler := driver.EventHandler()
 	for _, job := range pending {
-		handler.AddFunc(job)
+		handler.AddFunc(job, false)
 	}
 
 	// Wait until all drivers are blocked inside Claim, confirming they have

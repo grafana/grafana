@@ -51,6 +51,7 @@ jest.mock('@grafana/assistant', () => ({
 
 const mockGet = jest.fn(() => Promise.resolve(mockDS));
 const mockGetInstanceSettings = jest.fn(() => mockDS);
+const mockReportInteraction = jest.fn();
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -59,6 +60,7 @@ jest.mock('@grafana/runtime', () => ({
     getList: () => {},
     getInstanceSettings: mockGetInstanceSettings,
   }),
+  reportInteraction: (...args: unknown[]) => mockReportInteraction(...args),
 }));
 
 // Draggable fails to render in tests, so we mock it out
@@ -504,6 +506,33 @@ describe('QueryEditorRow', () => {
       expect(pinScrollIntoView).toHaveBeenCalledTimes(1);
     });
 
+    it('cancels the pin when the scroll is retargeted at another row', async () => {
+      const onScrollIntoView = jest.fn();
+      const initialProps = props(data);
+      const { rerender } = render(
+        <QueryEditorRow {...initialProps} scrollIntoView onScrollIntoView={onScrollIntoView} />
+      );
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+
+      rerender(<QueryEditorRow {...initialProps} scrollIntoView={false} onScrollIntoView={onScrollIntoView} />);
+      fireEvent.wheel(window);
+
+      // The pin is gone, so the row neither re-scrolls nor reports back — reporting would clear the
+      // owner's new scroll target.
+      expect(onScrollIntoView).not.toHaveBeenCalled();
+    });
+
+    it('pins again if the row is retargeted later', async () => {
+      const initialProps = props(data);
+      const { rerender } = render(<QueryEditorRow {...initialProps} scrollIntoView />);
+      await waitFor(() => expect(scrollIntoViewSpy).toHaveBeenCalled());
+
+      rerender(<QueryEditorRow {...initialProps} scrollIntoView={false} />);
+      rerender(<QueryEditorRow {...initialProps} scrollIntoView />);
+
+      expect(pinScrollIntoView).toHaveBeenCalledTimes(2);
+    });
+
     it('does not scroll when the flag is not set', async () => {
       render(<QueryEditorRow {...props(data)} />);
 
@@ -515,12 +544,12 @@ describe('QueryEditorRow', () => {
 
   describe('Query Library Integration', () => {
     let testData: PanelData;
-    let mockOnCancelEdit: jest.MockedFunction<() => void>;
+    let mockOnExitEdit: jest.MockedFunction<() => void>;
 
     beforeEach(() => {
       jest.clearAllMocks();
       mockQueryLibraryContext.renderQueryLibraryEditingHeader.mockReturnValue(null);
-      mockOnCancelEdit = jest.fn();
+      mockOnExitEdit = jest.fn();
 
       // Standard test data for QueryEditorRow
       testData = {
@@ -530,9 +559,9 @@ describe('QueryEditorRow', () => {
       };
     });
 
-    it('should render query library editing header when queryLibraryRef is provided', async () => {
+    it('should render query library editing header when editSavedQueryRef is provided', async () => {
       render(
-        <QueryEditorRow {...props(testData)} queryLibraryRef="test-ref" onCancelQueryLibraryEdit={mockOnCancelEdit} />
+        <QueryEditorRow {...props(testData)} editSavedQueryRef="test-ref" onExitQueryLibraryEdit={mockOnExitEdit} />
       );
 
       // Wait for async datasource loading and component rendering
@@ -540,15 +569,61 @@ describe('QueryEditorRow', () => {
         expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalledWith(
           expect.objectContaining({ refId: 'B' }),
           undefined, // app
-          'test-ref', // queryLibraryRef
-          mockOnCancelEdit, // onCancelEdit
+          'test-ref', // editSavedQueryRef
+          expect.any(Function), // onCancelEdit
           expect.any(Function), // onUpdateSuccess
-          expect.any(Function) // onSelectQuery
+          expect.any(Function), // onSelectQuery
+          'edit' // mode
         );
       });
     });
 
-    it('should not render query library editing header when queryLibraryRef is not provided', async () => {
+    it('routes both cancelling and saving to the single exit callback, with analytics only on cancel', async () => {
+      render(
+        <QueryEditorRow {...props(testData)} editSavedQueryRef="test-ref" onExitQueryLibraryEdit={mockOnExitEdit} />
+      );
+
+      await waitFor(() => {
+        expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalled();
+      });
+
+      const [, , , onCancelEdit, onUpdateSuccess] =
+        mockQueryLibraryContext.renderQueryLibraryEditingHeader.mock.calls[0];
+
+      onUpdateSuccess();
+      expect(mockOnExitEdit).toHaveBeenCalledTimes(1);
+      // Saving is not a cancellation, so it must not emit the cancelled event.
+      expect(mockReportInteraction).not.toHaveBeenCalledWith(
+        'query_library-update_query_from_explore_cancelled',
+        expect.anything()
+      );
+
+      onCancelEdit();
+      expect(mockOnExitEdit).toHaveBeenCalledTimes(2);
+      expect(mockReportInteraction).toHaveBeenCalledWith('query_library-update_query_from_explore_cancelled', {
+        // The fixture query carries no datasource ref, so the reported type is undefined.
+        datasourceType: undefined,
+      });
+    });
+
+    it('should render the add-mode header when addingSavedQuery is set without an editSavedQueryRef', async () => {
+      const mockOnCancelAdd = jest.fn();
+      render(<QueryEditorRow {...props(testData)} addingSavedQuery={true} onCancelAddSavedQuery={mockOnCancelAdd} />);
+
+      await waitFor(() => {
+        expect(mockQueryLibraryContext.renderQueryLibraryEditingHeader).toHaveBeenCalledWith(
+          expect.objectContaining({ refId: 'B' }),
+          undefined, // app
+          undefined, // editSavedQueryRef (none for a brand-new query)
+          mockOnCancelAdd, // onCancelEdit → exits add mode
+          expect.any(Function), // onUpdateSuccess
+          expect.any(Function), // onSelectQuery
+          'add' // mode
+        );
+      });
+    });
+
+    it('should not render query library editing header when editSavedQueryRef is not provided', async () => {
       render(<QueryEditorRow {...props(testData)} />);
 
       await waitFor(() => {
