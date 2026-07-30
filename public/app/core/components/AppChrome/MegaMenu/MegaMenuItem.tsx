@@ -8,9 +8,11 @@ import { useLocalStorage } from 'react-use';
 
 import { FeatureState, type GrafanaTheme2, type NavModelItem, toIconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { useStyles2, Text, IconButton, Icon, Stack, FeatureBadge, Box, ErrorBoundaryAlert } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
+import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
 
 import { Indent } from '../../Indent/Indent';
 
@@ -306,6 +308,11 @@ export function MegaMenuItem({
             </div>
           )}
         </ul>
+      )}
+      {childrenVisible && link.id === 'dashboards/browse' && config.featureToggles.scopeFilters && (
+        <ErrorBoundaryAlert boundaryName="megamenu-scopes-dashboards">
+          <ScopesDashboards inline />
+        </ErrorBoundaryAlert>
       )}
     </li>
   );
