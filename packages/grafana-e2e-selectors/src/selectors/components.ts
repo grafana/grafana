@@ -783,6 +783,11 @@ export const versionedComponents = {
       '10.0.0': 'data-testid toggle-viz-picker',
       '8.0.0': 'toggle-viz-picker',
     },
+    VizTypePicker: {
+      searchInput: {
+        '13.2.0': 'data-testid Panel editor viz type picker search input',
+      },
+    },
     toggleVizOptions: {
       '10.1.0': 'data-testid toggle-viz-options',
       [MIN_GRAFANA_VERSION]: 'toggle-viz-options',
