@@ -160,5 +160,5 @@ func (f *FakeOrgStore) Count(ctx context.Context, _ *quota.ScopeParameters) (*qu
 	return nil, nil
 }
 
-func (f *FakeOrgStore) RegisterDelete(query string) {
+func (f *FakeOrgStore) RegisterDelete(renderer org.DeleteQueryRenderer) {
 }
