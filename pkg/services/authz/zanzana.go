@@ -319,11 +319,12 @@ func NewRemoteZanzanaClient(cfg ZanzanaClientConfig, reg prometheus.Registerer) 
 	unaryInterceptors, streamInterceptors := instrument(authzRequestDuration, middleware.ReportGRPCStatusOption)
 
 	// Retry transient failures so in-flight calls survive server pod restarts (e.g. GOAWAY on shutdown).
+	// Worst case fits the 30s default call deadline: 3x8s attempts + ~4.5s jittered backoff.
 	retryInterceptor := grpc_retry.UnaryClientInterceptor(
 		grpc_retry.WithMax(3),
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.5)),
 		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.Aborted),
-		grpc_retry.WithPerRetryTimeout(10*time.Second),
+		grpc_retry.WithPerRetryTimeout(8*time.Second),
 	)
 
 	// Metrics/tracing outermost so a retried call records one duration entry, then the
