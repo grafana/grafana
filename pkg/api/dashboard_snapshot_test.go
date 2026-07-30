@@ -404,9 +404,9 @@ func TestCreateDashboardSnapshotPublicModeWithKubernetesSnapshots(t *testing.T) 
 					Return(&dashboardsnapshots.DashboardSnapshot{Key: "pub-key", DeleteKey: "pub-delete-key"}, nil)
 			}
 
-			legacyFlags := featuremgmt.WithFeatures()
+			toggles := featuremgmt.WithFeatures()
 			if tt.supportLegacy {
-				legacyFlags = featuremgmt.WithFeatures(featuremgmt.FlagExternalSnapshotsSupportLegacyAPI)
+				toggles = featuremgmt.WithFeatures(featuremgmt.FlagExternalSnapshotsSupportLegacyAPI)
 			}
 
 			kubeMock := &mockDirectRestConfigProvider{}
@@ -416,7 +416,7 @@ func TestCreateDashboardSnapshotPublicModeWithKubernetesSnapshots(t *testing.T) 
 				cfg.SnapshotEnabled = true
 				cfg.SnapshotPublicMode = true
 				hs.Cfg = cfg
-				hs.Features = legacyFlags
+				hs.Features = toggles
 				hs.dashboardsnapshotsService = dashSnapSvc
 				hs.clientConfigProvider = kubeMock
 			})
