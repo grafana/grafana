@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamdelete"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
@@ -28,9 +27,10 @@ type LegacyService struct {
 	tracer tracing.Tracer
 }
 
-// cfg is retained for signature stability with existing callers; the SQL store
-// no longer reads it.
-func NewLegacyService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer) (*LegacyService, error) {
+var _ team.Service = (*LegacyService)(nil)
+var _ teamdelete.Registrar = (*LegacyService)(nil)
+
+func NewLegacyService(sql legacysql.LegacyDatabaseProvider, tracer tracing.Tracer) (*LegacyService, error) {
 	store := &xormStore{sql: sql, deleteRenderers: []teamdelete.Renderer{}}
 
 	return &LegacyService{

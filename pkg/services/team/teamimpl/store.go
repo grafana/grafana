@@ -37,6 +37,8 @@ type xormStore struct {
 	deleteRenderers []teamdelete.Renderer
 }
 
+var _ store = (*xormStore)(nil)
+
 // quoteTable resolves a table name and quotes it for use in a raw SQL string.
 // Resolved names may be schema-qualified, so they are quoted with db.DB.Quote,
 // which quotes each dotted part separately.
