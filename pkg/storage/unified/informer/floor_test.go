@@ -56,13 +56,6 @@ func TestRVFloor_SettleKeepsHigherFloor(t *testing.T) {
 	assert.Equal(t, rvFresh, f.Floor("ns", "r"), "a read below a raised floor must not settle it")
 }
 
-func TestRVFloor_Forget(t *testing.T) {
-	f := NewRVFloor()
-	f.Raise("ns", "r", rvFresh)
-	f.Forget("ns", "r")
-	assert.Zero(t, f.Floor("ns", "r"))
-}
-
 // Wire versions are snowflakes; rows unwritten since migration can still read
 // back legacy microsecond versions. Both must land in one comparable space.
 func TestRVFloor_NormalizesLegacyVersions(t *testing.T) {

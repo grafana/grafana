@@ -109,8 +109,12 @@ func (f *RVFloor) Floor(namespace, name string) int64 {
 	return e.rv
 }
 
-// Settle drops the floor once a read at rv has met it. A floor raised above rv
-// in the meantime is kept, so the next reconcile still has to catch up to it.
+// Settle drops the floor once evidence at rv supersedes it: a read that
+// reached rv, a delete dated rv, or a list snapshot taken at rv. A floor raised
+// above rv survives — that announcement is newer than the evidence, so the next
+// reconcile still has to catch up to it. There is deliberately no unconditional
+// drop: erasing a floor on undated or older evidence is how a recreate's
+// announcement would get lost to a lagging 404.
 func (f *RVFloor) Settle(namespace, name string, rv int64) {
 	rv = resource.ToSnowflakeRV(rv)
 	f.mu.Lock()
@@ -119,14 +123,6 @@ func (f *RVFloor) Settle(namespace, name string, rv int64) {
 	if e, ok := f.floors[key]; ok && e.rv <= rv {
 		delete(f.floors, key)
 	}
-}
-
-// Forget drops the floor unconditionally — for delete events, where the object
-// is gone and no read is expected to reach any version.
-func (f *RVFloor) Forget(namespace, name string) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	delete(f.floors, floorKey(namespace, name))
 }
 
 func (f *RVFloor) sweepLocked() {

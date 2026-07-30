@@ -266,8 +266,9 @@ func TestInformer_LiveEventsDispatchMinimalObject(t *testing.T) {
 }
 
 // With TrackFloor, live events maintain the freshness floor before handlers
-// run: adds and updates raise it to the announced version, deletes forget it,
-// and a re-list raises it for the objects it delivers.
+// run: adds and updates raise it to the announced version, a delete settles it
+// at the delete's version (an older delete must not erase a newer
+// announcement's floor), and a re-list raises it for the objects it delivers.
 func TestInformer_TracksFloor(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		sub := newFakeSubscriber()
@@ -283,10 +284,44 @@ func TestInformer_TracksFloor(t *testing.T) {
 		synctest.Wait()
 		assert.Equal(t, rvFresh, floor.Floor(testNamespace, "changed"), "a live update raises the floor")
 
+		// A delete that predates the announced version — a recreate's events
+		// arriving out of order — must leave the newer floor standing.
+		sub.publish(t, subject(), eventWithRV(resourcepb.WatchNotification_DELETED, "changed", rvStale))
+		synctest.Wait()
+		assert.Equal(t, rvFresh, floor.Floor(testNamespace, "changed"), "an older delete must not erase a newer announcement's floor")
+
 		sub.publish(t, subject(), eventWithRV(resourcepb.WatchNotification_DELETED, "changed", rvFresh))
 		synctest.Wait()
-		assert.Zero(t, floor.Floor(testNamespace, "changed"), "a live delete forgets the floor")
+		assert.Zero(t, floor.Floor(testNamespace, "changed"), "a delete at the announced version settles the floor")
 	})
+}
+
+// A re-list that reports an object removed settles its floor only up to the
+// snapshot's listRV: a floor raised by a live event the LIST predates (e.g. a
+// recreate whose ADDED went to another queue-group member while the LIST caught
+// the absence window) must survive, or the queued reconcile would trust a
+// lagging 404.
+func TestInformer_RelistSettlesFloorsAtListRV(t *testing.T) {
+	floor := NewRVFloor()
+	calls := 0
+	list := func(context.Context) ([]runtime.Object, int64, error) {
+		calls++
+		if calls == 1 {
+			return []runtime.Object{objWithRV("fresh", rvStale), objWithRV("gone", rvStale)}, rvStale, nil
+		}
+		// Both objects absent from this snapshot, dated between the two floors.
+		return nil, rvStale + 1, nil
+	}
+	n := NewInformer(nil, testGVR, testNamespace, time.Minute, "", NewStore(), nil, list)
+	n.TrackFloor(floor)
+
+	require.NoError(t, n.relist(context.Background(), true))
+	// A live announcement newer than the upcoming snapshot.
+	floor.Raise(testNamespace, "fresh", rvFresh)
+
+	require.NoError(t, n.relist(context.Background(), false))
+	assert.Equal(t, rvFresh, floor.Floor(testNamespace, "fresh"), "a floor newer than the list snapshot must survive its removal")
+	assert.Zero(t, floor.Floor(testNamespace, "gone"), "a floor the list snapshot postdates settles with the removal")
 }
 
 // A live DELETED drops the object from the informer's snapshot so a

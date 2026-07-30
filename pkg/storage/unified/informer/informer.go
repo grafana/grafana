@@ -475,13 +475,15 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		// Maintain the freshness floor before dispatching: the notification is
 		// published only after the write is committed, so once a handler enqueues
 		// the key, a reconcile read below this version is provably stale. A delete
-		// forgets the floor instead — the object is gone, so no read will reach
-		// any version. Dispatched objects deliberately keep their RV shape (adds
-		// stamped for the store write-through, updates minimal): consumers such as
-		// ProcessedMetrics classify deliveries by it.
+		// settles the floor at the delete's version rather than dropping it
+		// outright: a floor raised above it belongs to a recreate whose events
+		// arrived out of order, and its reconcile still needs it. Dispatched
+		// objects deliberately keep their RV shape (adds stamped for the store
+		// write-through, updates minimal): consumers such as ProcessedMetrics
+		// classify deliveries by it.
 		if n.floor != nil {
 			if evt.Type == resourcepb.WatchNotification_DELETED {
-				n.floor.Forget(evt.Namespace, evt.Name)
+				n.floor.Settle(evt.Namespace, evt.Name, evt.ResourceVersion)
 			} else {
 				n.floor.Raise(evt.Namespace, evt.Name, evt.ResourceVersion)
 			}
@@ -581,7 +583,7 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 
 	for _, obj := range removed {
 		o := obj
-		n.floorForget(o)
+		n.floorSettle(o, listRV)
 		n.observeRelistEvent(VerbDelete, 0)
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(o) })
 	}
@@ -601,13 +603,19 @@ func (n *Informer) floorRaise(obj runtime.Object) {
 	}
 }
 
-// floorForget drops the tracked floor for an object a re-list observed gone.
-func (n *Informer) floorForget(obj runtime.Object) {
+// floorSettle drops the tracked floor for an object a re-list observed gone —
+// but only up to listRV, the snapshot's date. A floor above listRV was raised
+// by a live event the LIST predates (e.g. a recreate whose ADDED went to
+// another queue-group member while the LIST captured the absence window);
+// erasing it would let the queued reconcile trust a lagging 404 and lose the
+// update until the next resync. An undatable list (listRV 0) settles nothing;
+// the floor TTL bounds any leftover.
+func (n *Informer) floorSettle(obj runtime.Object, listRV int64) {
 	if n.floor == nil {
 		return
 	}
 	if acc, err := meta.Accessor(obj); err == nil {
-		n.floor.Forget(acc.GetNamespace(), acc.GetName())
+		n.floor.Settle(acc.GetNamespace(), acc.GetName(), listRV)
 	}
 }
 
