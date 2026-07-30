@@ -1199,6 +1199,9 @@ export const versionedComponents = {
     item: {
       '9.5.0': 'data-testid Nav menu item',
     },
+    sectionToggleButton: {
+      '13.2.0': (navUrl: string) => `data-testid navigation mega-menu section toggle ${navUrl}`,
+    },
   },
   NavToolbar: {
     container: {
