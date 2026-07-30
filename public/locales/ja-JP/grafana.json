@@ -5194,17 +5194,6 @@
     }
   },
   "dashboard": {
-    "actions": {
-      "open-settings": ""
-    },
-    "add": {
-      "new-panel": {
-        "button": "新しいパネルボタンを追加",
-        "description": "ドラッグまたはクリックしてパネルを追加",
-        "title": "パネル"
-      },
-      "pane-header": "追加"
-    },
     "add-menu": {
       "import": "ライブラリからインポート",
       "paste-panel": "パネルを貼り付け",
@@ -5274,12 +5263,6 @@
       }
     },
     "canvas-actions": {
-      "add": {
-        "paste": {
-          "description": "クリックまたはドラッグしてパネルを貼り付け",
-          "title": "パネルを貼り付け"
-        }
-      },
       "add-panel": "パネルを追加",
       "disabled-child-contains-tabs": "行にすでにタブが含まれているため、タブに変更できません",
       "disabled-nested-grouping": "グループ化は3つのレベルまでに制限されています",
@@ -5294,14 +5277,6 @@
       "paste-tab": "タブを貼り付け",
       "ungroup-rows": "行のグループ化を解除",
       "ungroup-tabs": "タブのグループ化を解除"
-    },
-    "code-pane": {
-      "collapse": "エディターを折りたたむ",
-      "copy-as-resource": "",
-      "copy-as-resource-tooltip": "",
-      "expand": "エディターを展開",
-      "header": "コードとして編集",
-      "modal-title": "ダッシュボードをコードとして編集"
     },
     "conditional-rendering": {
       "conditions": {
@@ -5479,9 +5454,6 @@
         "title": "行オプション"
       }
     },
-    "description": {
-      "action": "ダッシュボードの説明を変更"
-    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "プロパティを削除"
@@ -5490,6 +5462,8 @@
     "edit-actions": {
       "add": "{{typeName}}を追加",
       "add-conditional-rule": "{{ruleDescription}}ルールを追加",
+      "dashboard-description": "ダッシュボードの説明を変更",
+      "dashboard-title": "ダッシュボードのタイトルを変更",
       "duplicate-panel": "パネルを複製",
       "edit-query-result-rule": "クエリ結果ルールを変更",
       "edit-template-variable-rule": "テンプレート変数ルールを変更",
@@ -5509,7 +5483,12 @@
       "switch-layout": "レイアウトを切り替え",
       "switch-layout-row": "レイアウトを切り替える",
       "switch-layout-tab": "レイアウトを切り替える",
-      "tab-title": "タブのタイトルを変更"
+      "tab-title": "タブのタイトルを変更",
+      "variable-description": "変数の説明を変更",
+      "variable-hide": "変数の非表示オプションを変更",
+      "variable-label": "変数ラベルを変更",
+      "variable-name": "変数名を変更",
+      "variable-type": "変数タイプを変更"
     },
     "empty": {
       "add-library-panel-body": "他のダッシュボードと共有されている視覚化を追加します。",
@@ -5756,12 +5735,7 @@
     "layout": {
       "cancel": "キャンセル",
       "common": {
-        "copy": "コピー",
-        "copy-tooltip": "",
-        "delete": "削除",
-        "duplicate": "複製",
-        "layout": "レイアウト",
-        "paste": "貼り付け"
+        "layout": "レイアウト"
       },
       "continue": "続行",
       "panel": {
@@ -5789,7 +5763,6 @@
     },
     "new-panel": {
       "aria-label": "未構成のパネル。タブを使用して構成オプションを表示します。",
-      "configure-button": "",
       "configure-button-menu": "メニューの切り替え",
       "configure-visualization": "可視化を設定",
       "empty-state-message": "クエリを実行してここで可視化するか、すべての視覚化に移動して他のパネルタイプを追加します",
@@ -5811,10 +5784,6 @@
         }
       }
     },
-    "options": {
-      "description": "説明",
-      "title-option": "タイトル"
-    },
     "options-pane-category": {
       "aria-label-collapse": "{{title}}カテゴリを折りたたむ",
       "aria-label-expand": "{{title}}カテゴリを展開"
@@ -5823,14 +5792,6 @@
       "placeholder-search-options": "検索オプション",
       "Recent options-title-recent-options": "最近のオプション",
       "title-matched_other": "{{count}}/{{totalCount}}件のオプションが一致"
-    },
-    "outline": {
-      "pane-header": "コンテンツ概要",
-      "repeated-item": "繰り返し",
-      "tree-item": {
-        "empty": "（空白）",
-        "no-title": "<タイトルなし>"
-      }
     },
     "override-category-title": {
       "aria-label-remove-override": "オーバーライドを削除",
@@ -6011,13 +5972,6 @@
       "save-json-to-file": "JSONをファイルに保存",
       "see-docs": "プロビジョニングについての詳細は<2>ドキュメント</2>をご覧ください。"
     },
-    "schema-editor": {
-      "apply-button": "変更を適用",
-      "apply-button-disabled-tooltip": "変更を適用する前に検証エラーを修正してください",
-      "apply-button-disabled-tooltip-yaml": "ドキュメントに検証エラーがあります。インラインエラーの詳細を表示するには、JSONに切り替えてください。",
-      "apply-error-title": "変更の適用に失敗しました",
-      "undo-title": "スキーマ編集"
-    },
     "search-panel": {
       "no-match": ""
     },
@@ -6026,8 +5980,42 @@
     },
     "sidebar": {
       "add": {
+        "annotation-query": {
+          "description": "グラフにイベントデータを追加",
+          "label": "注釈クエリ"
+        },
+        "dashboard-controls": "ダッシュボードのコントロール",
+        "filters": {
+          "label": "フィルターとグループ化"
+        },
+        "group-layouts": "グループレイアウト",
+        "link": {
+          "label": "リンク",
+          "tooltip": "別のダッシュボードまたは外部サイトへのリンクを追加"
+        },
+        "new-panel": {
+          "button": "新しいパネルボタンを追加",
+          "description": "ドラッグまたはクリックしてパネルを追加",
+          "title": "パネル"
+        },
+        "pane-header": "追加",
+        "paste-panel": {
+          "description": "クリックまたはドラッグしてパネルを貼り付け",
+          "title": "パネルを貼り付け"
+        },
+        "row": {
+          "add-label": "行を追加",
+          "group-label": "行にグループ化"
+        },
+        "tab": {
+          "add-label": "タブを追加",
+          "group-label": "タブにグループ化"
+        },
         "title": "追加",
-        "tooltip": "新しい要素を追加"
+        "tooltip": "新しい要素を追加",
+        "variable": {
+          "label": "変数"
+        }
       },
       "annotation": {
         "change-data-source": "注釈データソースを変更",
@@ -6063,16 +6051,49 @@
       },
       "annotations": {
         "add-annotation": "注釈を追加",
+        "add-annotation-query": "注釈クエリを追加",
+        "name-builtin": "{{annoName}}（内蔵）",
+        "name-disabled": "（無効）{{annoName}}",
         "reorder": "ドラッグして並べ替え",
-        "select-annotation": "選択"
+        "reorder-description": "注釈リストの並べ替え",
+        "select-annotation": "選択",
+        "title-above-dashboard-count_other": "ダッシュボード上部（{{count}}）",
+        "title-controls-menu-count_other": "コントロールメニュー（{{count}}）",
+        "title-hidden-count_other": "非表示（{{count}}）"
       },
       "dashboard-options": {
+        "annotations": "注釈",
+        "description": "説明",
+        "filters": "",
+        "links": "リンク",
+        "open-settings": "",
         "title": "オプション",
-        "tooltip": "ダッシュボードオプション"
+        "title-option": "タイトル",
+        "tooltip": "ダッシュボードオプション",
+        "variables": "変数"
       },
+      "drag-to-reorder": "ドラッグして並べ替え",
       "edit-schema": {
+        "apply-button": "変更を適用",
+        "apply-button-disabled-tooltip": "変更を適用する前に検証エラーを修正してください",
+        "apply-button-disabled-tooltip-yaml": "ドキュメントに検証エラーがあります。インラインエラーの詳細を表示するには、JSONに切り替えてください。",
+        "apply-error-title": "変更の適用に失敗しました",
+        "collapse": "エディターを折りたたむ",
+        "copy-as-resource": "",
+        "copy-as-resource-tooltip": "",
+        "expand": "エディターを展開",
+        "modal-title": "ダッシュボードをコードとして編集",
+        "pane-header": "コードとして編集",
         "title": "コード",
-        "tooltip": "コードとして編集"
+        "tooltip": "コードとして編集",
+        "undo-title": "スキーマ編集"
+      },
+      "element-actions": {
+        "copy": "コピー",
+        "copy-tooltip": "",
+        "delete": "削除",
+        "duplicate": "複製",
+        "paste": "貼り付け"
       },
       "elements": {
         "annotation": "注釈",
@@ -6081,6 +6102,7 @@
         "element": "要素",
         "filter": "",
         "filters-set": "",
+        "link": "リンク",
         "link-set": "リンク",
         "local-variable": "ローカル変数",
         "multiple-elements": "複数の要素",
@@ -6101,17 +6123,35 @@
       "export": {
         "title": "エクスポート"
       },
-      "filters": "",
+      "feedback-title": "新しいダッシュボード編集体験に関するフィードバックをご提供ください",
+      "filters": {
+        "add-filter": "",
+        "reorder-description": "",
+        "title": "",
+        "title-above-dashboard_other": "",
+        "title-controls-menu_other": "",
+        "title-hidden_other": "",
+        "tooltip": ""
+      },
       "links": {
         "add-link": "リンクを追加",
+        "new-link": "新規リンク",
         "reorder": "ドラッグして並べ替え",
+        "reorder-description": "リンクリストの並べ替え",
         "select-link": "選択",
+        "title-above-dashboard_other": "ダッシュボード上部（{{count}}）",
+        "title-controls-menu_other": "コントロールメニュー（{{count}}）",
         "untitled": "無題のリンク"
       },
-      "open": "",
       "outline": {
+        "pane-header": "コンテンツ概要",
+        "repeated-item": "繰り返し",
         "title": "概要",
-        "tooltip": "コンテンツ概要"
+        "tooltip": "コンテンツ概要",
+        "tree-item": {
+          "empty": "（空白）",
+          "no-title": "<タイトルなし>"
+        }
       },
       "redo": "やり直し",
       "row": {
@@ -6126,7 +6166,9 @@
       "section-variables": {
         "title": "変数"
       },
+      "select": "選択",
       "snapshot": {
+        "title": "ソース",
         "tooltip": "元のダッシュボードを開く"
       },
       "undo": "元に戻す",
@@ -6148,6 +6190,15 @@
         },
         "description": "説明",
         "description-placeholder": "説明用のテキスト",
+        "display": "表示",
+        "display-options": {
+          "controls-menu": "コントロールメニュー",
+          "controls-menu-description": "コントロールメニューが開いているときに表示されます",
+          "hidden": "非表示",
+          "hidden-description": "編集モードでのみ表示されます",
+          "label-hidden": "",
+          "label-hidden-description": ""
+        },
         "label": "ラベル",
         "label-description": "表示名（任意）",
         "name": "名前",
@@ -6174,9 +6225,14 @@
         "add-variable": "変数を追加",
         "change-type": "",
         "reorder": "ドラッグして並べ替え",
+        "reorder-description": "変数リストの並べ替え",
         "select-type": "変数タイプを選択",
         "select-type-card-tooltip": "クリックして種類を選択",
-        "select-variable": "選択"
+        "select-variable": "選択",
+        "title-controls-menu_other": "コントロールメニュー（{{count}}）",
+        "title-hidden_other": "非表示（{{count}}）",
+        "title-top-placement_other": "",
+        "top-placement-default": ""
       },
       "view-panel": {
         "disabled": "",
@@ -6187,6 +6243,18 @@
         "pane-header": "",
         "quick-toggles": "",
         "title": ""
+      },
+      "viz-panel": {
+        "configure-button": "",
+        "delete-panel-text": "このパネルを削除すると、すべてのクエリも削除されます。続行してもよろしいですか？",
+        "delete-panel-title": "パネルを削除しますか？",
+        "delete-panel-yes": "削除",
+        "options": {
+          "configure-button-tooltip": "クエリと可視化オプションを編集",
+          "description": "説明",
+          "title-option": "タイトル",
+          "transparent-background": "透明の背景"
+        }
       }
     },
     "source-link": {
@@ -6244,9 +6312,6 @@
       "tab-warning": {
         "title-not-unique": "このタイトルは重複しています"
       }
-    },
-    "title": {
-      "action": "ダッシュボードのタイトルを変更"
     },
     "toolbar": {
       "add": "追加",
@@ -6338,9 +6403,6 @@
       "save-library-panel": "ライブラリパネルを保存",
       "settings": "ダッシュボードの設定",
       "share-button": "共有",
-      "snapshot": {
-        "title": "ソース"
-      },
       "star-add-error": "お気に入りに追加できませんでした",
       "star-added": "お気に入りに追加されました",
       "star-remove-error": "お気に入りから削除できませんでした",
@@ -6410,22 +6472,7 @@
       "tags-expected-strings": "タグは文字列の配列を期待しています"
     },
     "variable": {
-      "description": {
-        "action": "変数の説明を変更"
-      },
-      "description-tooltip": "変数の説明",
-      "hide": {
-        "action": "変数の非表示オプションを変更"
-      },
-      "label": {
-        "action": "変数ラベルを変更"
-      },
-      "name": {
-        "action": "変数名を変更"
-      },
-      "type": {
-        "action": "変数タイプを変更"
-      }
+      "description-tooltip": "変数の説明"
     },
     "version-history-comparison": {
       "button-restore": "バージョン、{{version}}に復元",
@@ -6448,17 +6495,6 @@
     "view-panel": {
       "back-to-dashboard": "",
       "not-found": ""
-    },
-    "viz-panel": {
-      "delete-panel-text": "このパネルを削除すると、すべてのクエリも削除されます。続行してもよろしいですか？",
-      "delete-panel-title": "パネルを削除しますか？",
-      "delete-panel-yes": "削除",
-      "options": {
-        "configure-button-tooltip": "クエリと可視化オプションを編集",
-        "description": "説明",
-        "title-option": "タイトル",
-        "transparent-background": "透明の背景"
-      }
     }
   },
   "dashboard-import": {
@@ -6571,25 +6607,6 @@
       "name-allow-custom-values": "カスタム値の入力を許可",
       "name-enable-group-by": "グループ化を有効化"
     },
-    "add-filters": {
-      "label": "フィルターとグループ化"
-    },
-    "add-link": {
-      "inline-instance-name": "新規リンク",
-      "label-link": "リンク",
-      "tooltip": "別のダッシュボードまたは外部サイトへのリンクを追加"
-    },
-    "add-new-edit-pane": {
-      "group-layouts": "グループレイアウト"
-    },
-    "add-row": {
-      "add-label": "行を追加",
-      "group-label": "行にグループ化"
-    },
-    "add-tab": {
-      "add-label": "タブを追加",
-      "group-label": "タブにグループ化"
-    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "選択したダッシュボードに移動できませんでした。再度お試しください。",
@@ -6618,19 +6635,12 @@
         "new-panel": "新規パネル"
       }
     },
-    "add-variable": {
-      "label-variable": "変数"
-    },
     "adhoc-origin-filters-controller": {
       "input-placeholder": "デフォルトのフィルターを追加…"
     },
     "adhoc-origin-filters-editor": {
       "description": "デフォルトで事前選択されているフィルター。",
       "label": "デフォルトのフィルター"
-    },
-    "annotation-control": {
-      "description-add-event-data-to-graphs": "グラフにイベントデータを追加",
-      "label-annotation-query": "注釈クエリ"
     },
     "annotation-edit-actions": {
       "description": {
@@ -6647,11 +6657,6 @@
       "delete-title": "注釈クエリを削除"
     },
     "annotation-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-annotations-list": "注釈リストの並べ替え"
-        }
-      },
       "render-list": {
         "aria-label-annotation": "注釈"
       }
@@ -6697,15 +6702,6 @@
       "query-name": "クエリ名",
       "tooltip-move-down": "下へ移動",
       "tooltip-move-up": "上へ移動"
-    },
-    "annotations-list": {
-      "drag-end": {
-        "description": "注釈リストの並べ替え"
-      }
-    },
-    "annotations-section": {
-      "name-builtin": "{{annoName}}（内蔵）",
-      "name-disabled": "（無効）{{annoName}}"
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "無効な文字 (「~」、「^」、「:」、「?」、「*」、「[」、「\\\\」、「]」) を含めることはできません。",
@@ -6761,12 +6757,6 @@
       "name-values-separated-comma": "カンマ区切りの値",
       "selection-options": "選択オプション"
     },
-    "dashboard-annotations-list": {
-      "add-annotation-query": "注釈クエリを追加",
-      "title-above-dashboard-count_other": "ダッシュボード上部（{{count}}）",
-      "title-controls-menu-count_other": "コントロールメニュー（{{count}}）",
-      "title-hidden-count_other": "非表示（{{count}}）"
-    },
     "dashboard-link-form": {
       "back-to-list": "一覧に戻る",
       "label-icon": "アイコン",
@@ -6797,9 +6787,6 @@
       "tooltip-move-link-down": "リンクを下に移動",
       "tooltip-move-link-up": "リンクを上に移動",
       "type": "タイプ"
-    },
-    "dashboard-links-list": {
-      "add-link": "リンクを追加"
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "ダッシュボードの読み込み中にエラーが発生しました"
@@ -6836,12 +6823,6 @@
         "dashboard-not-found": "ダッシュボードが見つかりません"
       }
     },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "ダッシュボードのコントロール"
-    },
-    "dashboard-sidebar-renderer": {
-      "title-feedback-dashboard-editing-experience": "新しいダッシュボード編集体験に関するフィードバックをご提供ください"
-    },
     "data-source-variable-form": {
       "data-source-options": "データソースオプション",
       "description-instance-name-filter": "変数値リストで選択するデータソースインスタンスの正規表現フィルター。すべての場合は、空欄にしてください。",
@@ -6875,12 +6856,6 @@
     "description-label": {
       "description": "説明"
     },
-    "draggable-item": {
-      "drag-to-reorder": "ドラッグして並べ替え"
-    },
-    "draggable-items-list": {
-      "select": "選択"
-    },
     "edit-link-view": {
       "edit-link-page-nav": {
         "text": {
@@ -6903,13 +6878,6 @@
       "show-more": "さらに表示",
       "sql-name": "SQLで変換",
       "sql-transformation-description": "MySQLのような構文を使用してデータを操作します"
-    },
-    "filters-list": {
-      "add-filter": "",
-      "reorder-description": "",
-      "title-above-dashboard_other": "",
-      "title-controls-menu_other": "",
-      "title-hidden_other": ""
     },
     "general-settings-edit-view": {
       "default_grid_options": {
@@ -7081,11 +7049,6 @@
       "unnamed": "無名のリンク"
     },
     "link-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-links-list": "リンクリストの並べ替え"
-        }
-      },
       "render-list": {
         "aria-label-link": "リンク"
       }
@@ -7102,11 +7065,6 @@
       "type-dashboards": "ダッシュボード",
       "type-link": "リンク",
       "with-tags": "タグ付き"
-    },
-    "links-list": {
-      "drag-end-description": "リンクリストの並べ替え",
-      "title-above-dashboard_other": "ダッシュボード上部（{{count}}）",
-      "title-controls-menu_other": "コントロールメニュー（{{count}}）"
     },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "",
@@ -7379,9 +7337,6 @@
       "new-alert-rule": "新しいアラートルール",
       "title-no-alerting-capable-query-found": "アラート対応クエリが見つかりません"
     },
-    "section-filters-list": {
-      "add-filter": ""
-    },
     "section-placement": {
       "top-row": "",
       "top-tab": ""
@@ -7470,31 +7425,10 @@
       "save-dashboard": "ダッシュボードを保存",
       "title-unsaved-changes": "未保存の変更"
     },
-    "use-annotations-category": {
-      "category": {
-        "title": {
-          "annotations": "注釈"
-        }
-      }
-    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "設定"
-        }
-      }
-    },
-    "use-filters-category": {
-      "category": {
-        "title": {
-          "filters": ""
-        }
-      }
-    },
-    "use-links-category": {
-      "category": {
-        "title": {
-          "links": "リンク"
         }
       }
     },
@@ -7506,13 +7440,6 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "ダッシュボードが保存されました"
     },
-    "use-variables-category": {
-      "category": {
-        "title": {
-          "variables": "変数"
-        }
-      }
-    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "この変数はどの変数やダッシュボードからも参照されていません。",
       "aria-label-variable-referenced-other-variables-dashboard": "この変数は他の変数やダッシュボードから参照されています。",
@@ -7521,23 +7448,6 @@
     },
     "variable-controls": {
       "add-variable": "変数を追加"
-    },
-    "variable-display-select": {
-      "label": "表示",
-      "options": {
-        "controls-menu": {
-          "description": "コントロールメニューが開いているときに表示されます",
-          "label": "コントロールメニュー"
-        },
-        "hidden": {
-          "description": "編集モードでのみ表示されます",
-          "label": "非表示"
-        },
-        "top-placement-hidden-label": {
-          "description": "",
-          "label": ""
-        }
-      }
     },
     "variable-editable-element": {
       "delete-confirm": "変数を削除",
@@ -7589,13 +7499,6 @@
       },
       "label": "非表示"
     },
-    "variable-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "変数リストの並べ替え"
-        }
-      }
-    },
     "variable-multi-prop-static-options-form": {
       "aria-label-static-options": "スタティックオプション"
     },
@@ -7609,20 +7512,6 @@
     "variable-values-preview": {
       "show-more": "さらに表示",
       "preview-of-values_other": "値のプレビュー（{{count}}）"
-    },
-    "variables-list": {
-      "add-variable": "変数を追加",
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "変数リストの並べ替え"
-        }
-      },
-      "top-placement": {
-        "default": ""
-      },
-      "title-controls-menu_other": "コントロールメニュー（{{count}}）",
-      "title-hidden_other": "非表示（{{count}}）",
-      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {

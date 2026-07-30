@@ -33,7 +33,7 @@ function DashboardPredefinedVariablesPaneRenderer({ model }: SceneComponentProps
 
   return (
     <Box display="flex" direction="column" flex={1} height="100%" minHeight={0}>
-      <Sidebar.PaneHeader title={t('dashboard.predefined-variables-pane.title', 'Predefined variables')} />
+      <Sidebar.PaneHeader title={t('dashboard.sidebar.predefined-variables.pane-header', 'Predefined variables')} />
       <Box padding={2}>
         <DashboardPredefinedVariablesOptions dashboard={scene} />
       </Box>

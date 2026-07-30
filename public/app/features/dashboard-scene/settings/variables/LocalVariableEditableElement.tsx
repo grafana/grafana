@@ -11,7 +11,7 @@ import {
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
 
-function useEditPaneOptions(this: LocalVariableEditableElement): OptionsPaneCategoryDescriptor[] {
+function useSidebarOptions(this: LocalVariableEditableElement): OptionsPaneCategoryDescriptor[] {
   const variable = this.variable;
   const localVariableCategoryId = useId();
   const localVariableId = useId();
@@ -61,5 +61,5 @@ export class LocalVariableEditableElement implements EditableDashboardElement {
     };
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this);
+  public useSidebarOptions = useSidebarOptions.bind(this);
 }

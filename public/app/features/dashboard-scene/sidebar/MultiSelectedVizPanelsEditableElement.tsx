@@ -22,7 +22,7 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
     return { typeName: t('dashboard.sidebar.elements.panels', 'Panels'), icon: 'folder', instanceName: '' };
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+  public useSidebarOptions(): OptionsPaneCategoryDescriptor[] {
     return [];
   }
 

@@ -162,7 +162,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     });
 
     // sadly we cannot publish this event directly here as the main dashboard edit / undo system
-    // is not active while panel edit is active so we have to let the edit pane (which owns undo/redo)
+    // is not active while panel edit is active so we have to let the sidebar (which owns undo/redo)
     // publish this event when it activates
     const dashboard = getDashboardSceneFor(this);
     dashboard.state.sidebar.setPanelEditAction(editAction);

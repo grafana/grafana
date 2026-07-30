@@ -5194,17 +5194,6 @@
     }
   },
   "dashboard": {
-    "actions": {
-      "open-settings": ""
-    },
-    "add": {
-      "new-panel": {
-        "button": "새 패널 버튼 추가",
-        "description": "드래그하거나 클릭하여 패널 추가",
-        "title": "패널"
-      },
-      "pane-header": "추가"
-    },
     "add-menu": {
       "import": "라이브러리에서 가져오기",
       "paste-panel": "패널 붙여넣기",
@@ -5274,12 +5263,6 @@
       }
     },
     "canvas-actions": {
-      "add": {
-        "paste": {
-          "description": "클릭하거나 드래그하여 패널 붙여넣기",
-          "title": "패널 붙여넣기"
-        }
-      },
       "add-panel": "패널 추가",
       "disabled-child-contains-tabs": "행에 탭이 이미 포함되어 탭으로 변경할 수 없습니다",
       "disabled-nested-grouping": "그룹화는 3단계로 제한됩니다.",
@@ -5294,14 +5277,6 @@
       "paste-tab": "탭 붙여넣기",
       "ungroup-rows": "행 그룹 해제",
       "ungroup-tabs": "탭 그룹 해제"
-    },
-    "code-pane": {
-      "collapse": "편집기 접기",
-      "copy-as-resource": "",
-      "copy-as-resource-tooltip": "",
-      "expand": "편집기 펼치기",
-      "header": "코드로 편집",
-      "modal-title": "대시보드를 코드로 편집"
     },
     "conditional-rendering": {
       "conditions": {
@@ -5479,9 +5454,6 @@
         "title": "행 옵션"
       }
     },
-    "description": {
-      "action": "대시보드 설명 변경"
-    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "속성 제거"
@@ -5490,6 +5462,8 @@
     "edit-actions": {
       "add": "{{typeName}} 추가",
       "add-conditional-rule": "{{ruleDescription}} 규칙 추가",
+      "dashboard-description": "대시보드 설명 변경",
+      "dashboard-title": "대시보드 제목 변경",
       "duplicate-panel": "패널 복제",
       "edit-query-result-rule": "쿼리 결과 규칙 변경",
       "edit-template-variable-rule": "템플릿 변수 규칙 변경",
@@ -5509,7 +5483,12 @@
       "switch-layout": "레이아웃 전환",
       "switch-layout-row": "레이아웃 전환",
       "switch-layout-tab": "레이아웃 전환",
-      "tab-title": "탭 제목 변경"
+      "tab-title": "탭 제목 변경",
+      "variable-description": "변수 설명 변경",
+      "variable-hide": "변수 숨기기 옵션 변경",
+      "variable-label": "변수 라벨 변경",
+      "variable-name": "변수 이름 변경",
+      "variable-type": "변수 유형 변경"
     },
     "empty": {
       "add-library-panel-body": "다른 대시보드와 공유되는 시각화를 추가합니다.",
@@ -5756,12 +5735,7 @@
     "layout": {
       "cancel": "취소",
       "common": {
-        "copy": "복사",
-        "copy-tooltip": "",
-        "delete": "삭제",
-        "duplicate": "복제",
-        "layout": "레이아웃",
-        "paste": "붙여넣기"
+        "layout": "레이아웃"
       },
       "continue": "계속",
       "panel": {
@@ -5789,7 +5763,6 @@
     },
     "new-panel": {
       "aria-label": "구성되지 않은 패널. 구성 옵션을 보려면 탭을 누르세요.",
-      "configure-button": "",
       "configure-button-menu": "토글 메뉴",
       "configure-visualization": "시각화 구성",
       "empty-state-message": "쿼리를 실행해 여기에서 시각화하거나 모든 시각화로 이동해 다른 패널 유형을 추가하세요",
@@ -5811,10 +5784,6 @@
         }
       }
     },
-    "options": {
-      "description": "설명",
-      "title-option": "제목"
-    },
     "options-pane-category": {
       "aria-label-collapse": "{{title}} 카테고리 접기",
       "aria-label-expand": "{{title}} 카테고리 펼치기"
@@ -5823,14 +5792,6 @@
       "placeholder-search-options": "검색 옵션",
       "Recent options-title-recent-options": "최근 옵션",
       "title-matched_other": "{{totalCount}}개 옵션 중 {{count}}개 일치함"
-    },
-    "outline": {
-      "pane-header": "콘텐츠 개요",
-      "repeated-item": "반복",
-      "tree-item": {
-        "empty": "(비어 있음)",
-        "no-title": "<제목 없음>"
-      }
     },
     "override-category-title": {
       "aria-label-remove-override": "재정의 제거",
@@ -6011,13 +5972,6 @@
       "save-json-to-file": "JSON을 파일에 저장",
       "see-docs": "프로비저닝에 대한 자세한 내용은 <2>문서</2>를 참고하세요."
     },
-    "schema-editor": {
-      "apply-button": "변경 사항 적용",
-      "apply-button-disabled-tooltip": "변경 사항을 적용하기 전에 유효성 검사 오류를 수정하세요.",
-      "apply-button-disabled-tooltip-yaml": "문서에 유효성 검사 오류가 있습니다. 인라인 오류 세부 정보를 보려면 JSON으로 전환하세요.",
-      "apply-error-title": "변경 사항 적용 실패",
-      "undo-title": "스키마 편집"
-    },
     "search-panel": {
       "no-match": ""
     },
@@ -6026,8 +5980,42 @@
     },
     "sidebar": {
       "add": {
+        "annotation-query": {
+          "description": "그래프에 이벤트 데이터 추가",
+          "label": "주석 쿼리"
+        },
+        "dashboard-controls": "대시보드 컨트롤",
+        "filters": {
+          "label": "필터링 및 그룹화 기준"
+        },
+        "group-layouts": "그룹 레이아웃",
+        "link": {
+          "label": "링크",
+          "tooltip": "다른 대시보드 또는 외부 사이트로 연결되는 링크 추가"
+        },
+        "new-panel": {
+          "button": "새 패널 버튼 추가",
+          "description": "드래그하거나 클릭하여 패널 추가",
+          "title": "패널"
+        },
+        "pane-header": "추가",
+        "paste-panel": {
+          "description": "클릭하거나 드래그하여 패널 붙여넣기",
+          "title": "패널 붙여넣기"
+        },
+        "row": {
+          "add-label": "행 추가",
+          "group-label": "행으로 그룹화"
+        },
+        "tab": {
+          "add-label": "탭 추가",
+          "group-label": "탭으로 그룹화"
+        },
         "title": "추가",
-        "tooltip": "새 요소 추가"
+        "tooltip": "새 요소 추가",
+        "variable": {
+          "label": "변수"
+        }
       },
       "annotation": {
         "change-data-source": "주석 데이터 소스 변경",
@@ -6063,16 +6051,49 @@
       },
       "annotations": {
         "add-annotation": "주석 추가",
+        "add-annotation-query": "주석 쿼리 추가",
+        "name-builtin": "{{annoName}}(내장)",
+        "name-disabled": "(비활성화됨){{annoName}}",
         "reorder": "드래그하여 순서 변경",
-        "select-annotation": "선택"
+        "reorder-description": "주석 목록 순서 변경",
+        "select-annotation": "선택",
+        "title-above-dashboard-count_other": "대시보드 위({{count}})",
+        "title-controls-menu-count_other": "컨트롤 메뉴({{count}})",
+        "title-hidden-count_other": "숨김({{count}})"
       },
       "dashboard-options": {
+        "annotations": "주석",
+        "description": "설명",
+        "filters": "",
+        "links": "링크",
+        "open-settings": "",
         "title": "옵션",
-        "tooltip": "대시보드 옵션"
+        "title-option": "제목",
+        "tooltip": "대시보드 옵션",
+        "variables": "변수"
       },
+      "drag-to-reorder": "드래그하여 순서 변경",
       "edit-schema": {
+        "apply-button": "변경 사항 적용",
+        "apply-button-disabled-tooltip": "변경 사항을 적용하기 전에 유효성 검사 오류를 수정하세요.",
+        "apply-button-disabled-tooltip-yaml": "문서에 유효성 검사 오류가 있습니다. 인라인 오류 세부 정보를 보려면 JSON으로 전환하세요.",
+        "apply-error-title": "변경 사항 적용 실패",
+        "collapse": "편집기 접기",
+        "copy-as-resource": "",
+        "copy-as-resource-tooltip": "",
+        "expand": "편집기 펼치기",
+        "modal-title": "대시보드를 코드로 편집",
+        "pane-header": "코드로 편집",
         "title": "코드",
-        "tooltip": "코드로 편집"
+        "tooltip": "코드로 편집",
+        "undo-title": "스키마 편집"
+      },
+      "element-actions": {
+        "copy": "복사",
+        "copy-tooltip": "",
+        "delete": "삭제",
+        "duplicate": "복제",
+        "paste": "붙여넣기"
       },
       "elements": {
         "annotation": "주석",
@@ -6081,6 +6102,7 @@
         "element": "요소",
         "filter": "",
         "filters-set": "",
+        "link": "링크",
         "link-set": "링크",
         "local-variable": "로컬 변수",
         "multiple-elements": "여러 요소",
@@ -6101,17 +6123,35 @@
       "export": {
         "title": "내보내기"
       },
-      "filters": "",
+      "feedback-title": "새 대시보드 편집 경험에 대한 피드백을 제공해 주세요",
+      "filters": {
+        "add-filter": "",
+        "reorder-description": "",
+        "title": "",
+        "title-above-dashboard_other": "",
+        "title-controls-menu_other": "",
+        "title-hidden_other": "",
+        "tooltip": ""
+      },
       "links": {
         "add-link": "링크 추가",
+        "new-link": "새 링크",
         "reorder": "드래그하여 순서 변경",
+        "reorder-description": "링크 목록 순서 변경",
         "select-link": "선택",
+        "title-above-dashboard_other": "대시보드 위({{count}})",
+        "title-controls-menu_other": "컨트롤 메뉴({{count}})",
         "untitled": "제목 없는 링크"
       },
-      "open": "",
       "outline": {
+        "pane-header": "콘텐츠 개요",
+        "repeated-item": "반복",
         "title": "개요",
-        "tooltip": "콘텐츠 개요"
+        "tooltip": "콘텐츠 개요",
+        "tree-item": {
+          "empty": "(비어 있음)",
+          "no-title": "<제목 없음>"
+        }
       },
       "redo": "다시 실행",
       "row": {
@@ -6126,7 +6166,9 @@
       "section-variables": {
         "title": "변수"
       },
+      "select": "선택",
       "snapshot": {
+        "title": "소스",
         "tooltip": "원래 대시보드 열기"
       },
       "undo": "실행 취소",
@@ -6148,6 +6190,15 @@
         },
         "description": "설명",
         "description-placeholder": "설명 텍스트",
+        "display": "디스플레이",
+        "display-options": {
+          "controls-menu": "컨트롤 메뉴",
+          "controls-menu-description": "컨트롤 메뉴가 열려 있을 때 표시",
+          "hidden": "숨김",
+          "hidden-description": "편집 모드에서만 표시됩니다",
+          "label-hidden": "",
+          "label-hidden-description": ""
+        },
         "label": "라벨",
         "label-description": "표시 이름(선택 사항)",
         "name": "이름",
@@ -6174,9 +6225,14 @@
         "add-variable": "변수 추가",
         "change-type": "",
         "reorder": "드래그하여 순서 변경",
+        "reorder-description": "변수 목록 순서 변경",
         "select-type": "변수 유형 선택",
         "select-type-card-tooltip": "클릭하여 유형 선택",
-        "select-variable": "선택"
+        "select-variable": "선택",
+        "title-controls-menu_other": "컨트롤 메뉴({{count}})",
+        "title-hidden_other": "숨김({{count}})",
+        "title-top-placement_other": "",
+        "top-placement-default": ""
       },
       "view-panel": {
         "disabled": "",
@@ -6187,6 +6243,18 @@
         "pane-header": "",
         "quick-toggles": "",
         "title": ""
+      },
+      "viz-panel": {
+        "configure-button": "",
+        "delete-panel-text": "이 패널을 삭제하면 쿼리도 모두 삭제됩니다. 정말 계속하시겠어요?",
+        "delete-panel-title": "패널을 삭제하시겠어요?",
+        "delete-panel-yes": "삭제",
+        "options": {
+          "configure-button-tooltip": "쿼리 및 시각화 옵션 편집",
+          "description": "설명",
+          "title-option": "제목",
+          "transparent-background": "투명 배경"
+        }
       }
     },
     "source-link": {
@@ -6244,9 +6312,6 @@
       "tab-warning": {
         "title-not-unique": "이 제목은 고유하지 않습니다"
       }
-    },
-    "title": {
-      "action": "대시보드 제목 변경"
     },
     "toolbar": {
       "add": "추가",
@@ -6338,9 +6403,6 @@
       "save-library-panel": "라이브러리 패널 저장",
       "settings": "대시보드 설정",
       "share-button": "공유",
-      "snapshot": {
-        "title": "소스"
-      },
       "star-add-error": "별표에 추가하지 못함",
       "star-added": "별표에 추가됨",
       "star-remove-error": "별표에서 제거하지 못함",
@@ -6410,22 +6472,7 @@
       "tags-expected-strings": "태그로 문자열 배열을 입력해야 합니다."
     },
     "variable": {
-      "description": {
-        "action": "변수 설명 변경"
-      },
-      "description-tooltip": "변수 설명",
-      "hide": {
-        "action": "변수 숨기기 옵션 변경"
-      },
-      "label": {
-        "action": "변수 라벨 변경"
-      },
-      "name": {
-        "action": "변수 이름 변경"
-      },
-      "type": {
-        "action": "변수 유형 변경"
-      }
+      "description-tooltip": "변수 설명"
     },
     "version-history-comparison": {
       "button-restore": "{{version}} 버전으로 복구",
@@ -6448,17 +6495,6 @@
     "view-panel": {
       "back-to-dashboard": "",
       "not-found": ""
-    },
-    "viz-panel": {
-      "delete-panel-text": "이 패널을 삭제하면 쿼리도 모두 삭제됩니다. 정말 계속하시겠어요?",
-      "delete-panel-title": "패널을 삭제하시겠어요?",
-      "delete-panel-yes": "삭제",
-      "options": {
-        "configure-button-tooltip": "쿼리 및 시각화 옵션 편집",
-        "description": "설명",
-        "title-option": "제목",
-        "transparent-background": "투명 배경"
-      }
     }
   },
   "dashboard-import": {
@@ -6571,25 +6607,6 @@
       "name-allow-custom-values": "사용자 지정 값 허용",
       "name-enable-group-by": "그룹화 활성화 기준"
     },
-    "add-filters": {
-      "label": "필터링 및 그룹화 기준"
-    },
-    "add-link": {
-      "inline-instance-name": "새 링크",
-      "label-link": "링크",
-      "tooltip": "다른 대시보드 또는 외부 사이트로 연결되는 링크 추가"
-    },
-    "add-new-edit-pane": {
-      "group-layouts": "그룹 레이아웃"
-    },
-    "add-row": {
-      "add-label": "행 추가",
-      "group-label": "행으로 그룹화"
-    },
-    "add-tab": {
-      "add-label": "탭 추가",
-      "group-label": "탭으로 그룹화"
-    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "선택한 대시보드로 이동할 수 없습니다. 다시 시도해 주세요.",
@@ -6618,19 +6635,12 @@
         "new-panel": "새 패널"
       }
     },
-    "add-variable": {
-      "label-variable": "변수"
-    },
     "adhoc-origin-filters-controller": {
       "input-placeholder": "기본 필터 추가..."
     },
     "adhoc-origin-filters-editor": {
       "description": "기본적으로 미리 선택된 필터입니다.",
       "label": "기본 필터"
-    },
-    "annotation-control": {
-      "description-add-event-data-to-graphs": "그래프에 이벤트 데이터 추가",
-      "label-annotation-query": "주석 쿼리"
     },
     "annotation-edit-actions": {
       "description": {
@@ -6647,11 +6657,6 @@
       "delete-title": "주석 쿼리 삭제"
     },
     "annotation-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-annotations-list": "주석 목록 순서 변경"
-        }
-      },
       "render-list": {
         "aria-label-annotation": "주석"
       }
@@ -6697,15 +6702,6 @@
       "query-name": "쿼리 이름",
       "tooltip-move-down": "아래로 이동",
       "tooltip-move-up": "위로 이동"
-    },
-    "annotations-list": {
-      "drag-end": {
-        "description": "주석 목록 순서 변경"
-      }
-    },
-    "annotations-section": {
-      "name-builtin": "{{annoName}}(내장)",
-      "name-disabled": "(비활성화됨){{annoName}}"
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "다음과 같이 유효하지 않은 문자는 포함할 수 없습니다. '~', '^', ':', '?', '*', '[', '\\\\', ']'",
@@ -6761,12 +6757,6 @@
       "name-values-separated-comma": "쉼표로 구분된 값",
       "selection-options": "선택 옵션"
     },
-    "dashboard-annotations-list": {
-      "add-annotation-query": "주석 쿼리 추가",
-      "title-above-dashboard-count_other": "대시보드 위({{count}})",
-      "title-controls-menu-count_other": "컨트롤 메뉴({{count}})",
-      "title-hidden-count_other": "숨김({{count}})"
-    },
     "dashboard-link-form": {
       "back-to-list": "목록으로 돌아가기",
       "label-icon": "아이콘",
@@ -6797,9 +6787,6 @@
       "tooltip-move-link-down": "링크를 아래로 이동",
       "tooltip-move-link-up": "링크를 위로 이동",
       "type": "유형"
-    },
-    "dashboard-links-list": {
-      "add-link": "링크 추가"
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "대시보드 로딩 중 오류 발생"
@@ -6836,12 +6823,6 @@
         "dashboard-not-found": "대시보드를 찾을 수 없습니다."
       }
     },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "대시보드 컨트롤"
-    },
-    "dashboard-sidebar-renderer": {
-      "title-feedback-dashboard-editing-experience": "새 대시보드 편집 경험에 대한 피드백을 제공해 주세요"
-    },
     "data-source-variable-form": {
       "data-source-options": "데이터 소스 옵션",
       "description-instance-name-filter": "변수 값 목록에서 어떤 데이터 소스 인스턴스를 선택할지에 대한 정규 표현식 필터입니다. 모두 비워 둡니다.",
@@ -6875,12 +6856,6 @@
     "description-label": {
       "description": "설명"
     },
-    "draggable-item": {
-      "drag-to-reorder": "드래그하여 순서 변경"
-    },
-    "draggable-items-list": {
-      "select": "선택"
-    },
     "edit-link-view": {
       "edit-link-page-nav": {
         "text": {
@@ -6903,13 +6878,6 @@
       "show-more": "더 보기",
       "sql-name": "SQL로 변환",
       "sql-transformation-description": "MySQL과 유사한 구문을 사용하여 데이터 조작"
-    },
-    "filters-list": {
-      "add-filter": "",
-      "reorder-description": "",
-      "title-above-dashboard_other": "",
-      "title-controls-menu_other": "",
-      "title-hidden_other": ""
     },
     "general-settings-edit-view": {
       "default_grid_options": {
@@ -7081,11 +7049,6 @@
       "unnamed": "이름 없는 링크"
     },
     "link-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-links-list": "링크 목록 순서 변경"
-        }
-      },
       "render-list": {
         "aria-label-link": "링크"
       }
@@ -7102,11 +7065,6 @@
       "type-dashboards": "대시보드",
       "type-link": "링크",
       "with-tags": "태그 포함"
-    },
-    "links-list": {
-      "drag-end-description": "링크 목록 순서 변경",
-      "title-above-dashboard_other": "대시보드 위({{count}})",
-      "title-controls-menu_other": "컨트롤 메뉴({{count}})"
     },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "",
@@ -7379,9 +7337,6 @@
       "new-alert-rule": "새 경고 규칙",
       "title-no-alerting-capable-query-found": "경고 기능이 있는 쿼리를 찾을 수 없습니다"
     },
-    "section-filters-list": {
-      "add-filter": ""
-    },
     "section-placement": {
       "top-row": "",
       "top-tab": ""
@@ -7470,31 +7425,10 @@
       "save-dashboard": "대시보드 저장",
       "title-unsaved-changes": "저장되지 않은 변경 사항"
     },
-    "use-annotations-category": {
-      "category": {
-        "title": {
-          "annotations": "주석"
-        }
-      }
-    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "설정"
-        }
-      }
-    },
-    "use-filters-category": {
-      "category": {
-        "title": {
-          "filters": ""
-        }
-      }
-    },
-    "use-links-category": {
-      "category": {
-        "title": {
-          "links": "링크"
         }
       }
     },
@@ -7506,13 +7440,6 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "대시보드가 저장되었습니다"
     },
-    "use-variables-category": {
-      "category": {
-        "title": {
-          "variables": "변수"
-        }
-      }
-    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "이 변수는 어떤 변수나 대시보드에서도 참조되지 않습니다.",
       "aria-label-variable-referenced-other-variables-dashboard": "이 변수는 다른 변수 또는 대시보드에서 참조됩니다.",
@@ -7521,23 +7448,6 @@
     },
     "variable-controls": {
       "add-variable": "변수 추가"
-    },
-    "variable-display-select": {
-      "label": "디스플레이",
-      "options": {
-        "controls-menu": {
-          "description": "컨트롤 메뉴가 열려 있을 때 표시",
-          "label": "컨트롤 메뉴"
-        },
-        "hidden": {
-          "description": "편집 모드에서만 표시됩니다",
-          "label": "숨김"
-        },
-        "top-placement-hidden-label": {
-          "description": "",
-          "label": ""
-        }
-      }
     },
     "variable-editable-element": {
       "delete-confirm": "변수 삭제",
@@ -7589,13 +7499,6 @@
       },
       "label": "숨기기"
     },
-    "variable-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "변수 목록 순서 변경"
-        }
-      }
-    },
     "variable-multi-prop-static-options-form": {
       "aria-label-static-options": "정적 옵션"
     },
@@ -7609,20 +7512,6 @@
     "variable-values-preview": {
       "show-more": "더 보기",
       "preview-of-values_other": "값 미리보기({{count}}개)"
-    },
-    "variables-list": {
-      "add-variable": "변수 추가",
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "변수 목록 순서 변경"
-        }
-      },
-      "top-placement": {
-        "default": ""
-      },
-      "title-controls-menu_other": "컨트롤 메뉴({{count}})",
-      "title-hidden_other": "숨김({{count}})",
-      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {
