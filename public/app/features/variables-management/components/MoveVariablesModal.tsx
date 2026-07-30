@@ -2,9 +2,10 @@ import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Button, Field, Modal, Stack } from '@grafana/ui';
+import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 
-import { canManageGlobalVariables, getVariableFolderPickerExcludeUIDs } from '../utils';
+import { canManageGlobalVariables, canManageVariableScope, getVariableFolderPickerExcludeUIDs } from '../utils';
 
 export interface MoveVariablesModalProps {
   count: number;
@@ -20,7 +21,13 @@ export function MoveVariablesModal({ count, isMoving, onConfirm, onDismiss }: Mo
   const [targetFolderUid, setTargetFolderUid] = useState<string | undefined>(() =>
     canManageGlobalVariables() ? '' : undefined
   );
-  const canConfirm = allowGlobalScope || Boolean(targetFolderUid);
+  const { data: targetFolder } = useGetFolderQueryFacade(targetFolderUid || undefined);
+  // Match the editor Save gate: require CanEdit on folder targets (picker alone is not enough
+  // for team folders / other surfaces that may still appear without Edit).
+  const targetFolderMatches = Boolean(targetFolderUid && targetFolder?.uid === targetFolderUid);
+  const targetFolderCanEdit = targetFolderMatches ? targetFolder?.canEdit : undefined;
+  const targetScopeReady = !targetFolderUid || targetFolderMatches;
+  const canConfirm = targetScopeReady && canManageVariableScope(targetFolderUid, targetFolderCanEdit, allowGlobalScope);
 
   return (
     <Modal isOpen title={t('variables-management.move-modal.title', 'Move variables')} onDismiss={onDismiss}>

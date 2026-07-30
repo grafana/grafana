@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { BASE_URL } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
 import { t } from '@grafana/i18n';
@@ -122,12 +122,17 @@ export function useFolderTitles(folderUids: string[]): Record<string, string> {
  */
 export function useFolderCanEdit(folderUids: string[]): Record<string, boolean> {
   const [canEditByUid, setCanEditByUid] = useState<Record<string, boolean>>({});
-  const key = folderUids.join(',');
+  // Read latest map inside the effect without listing it as a dep (avoids re-init
+  // loops while still skipping UIDs already resolved).
+  const canEditByUidRef = useRef(canEditByUid);
+  canEditByUidRef.current = canEditByUid;
+  // Sort so [a,b] and [b,a] share one effect key.
+  const key = [...folderUids].sort().join(',');
 
   useEffect(() => {
     let cancelled = false;
     const uids = key ? key.split(',') : [];
-    const missing = uids.filter((uid) => !(uid in canEditByUid));
+    const missing = uids.filter((uid) => !(uid in canEditByUidRef.current));
     if (missing.length === 0) {
       return;
     }
@@ -151,7 +156,6 @@ export function useFolderCanEdit(folderUids: string[]): Record<string, boolean> 
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
   return canEditByUid;

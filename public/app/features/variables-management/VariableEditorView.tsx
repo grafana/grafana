@@ -101,19 +101,23 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
   const sourceFolderUid = source ? getVariableFolderUid(source) : undefined;
   // Folder CanEdit gates mutations the same way admission does. Skip the root/global
   // uid ('' / undefined) — those use allowGlobalScope instead.
-  const { data: selectedFolder, isLoading: isLoadingSelectedFolder } = useGetFolderQueryFacade(
-    folderUid ? folderUid : undefined
-  );
+  const { data: selectedFolder } = useGetFolderQueryFacade(folderUid ? folderUid : undefined);
   // Reuse the selected-folder query when the source is still in that folder.
   const needsSeparateSourceFolder = Boolean(sourceFolderUid && sourceFolderUid !== folderUid);
-  const { data: sourceFolder, isLoading: isLoadingSourceFolder } = useGetFolderQueryFacade(
-    needsSeparateSourceFolder ? sourceFolderUid : undefined
-  );
-  const selectedFolderCanEdit = selectedFolder?.canEdit;
-  const sourceFolderCanEdit = needsSeparateSourceFolder ? sourceFolder?.canEdit : selectedFolderCanEdit;
-  const selectedScopeReady = !folderUid || !isLoadingSelectedFolder;
+  const { data: sourceFolder } = useGetFolderQueryFacade(needsSeparateSourceFolder ? sourceFolderUid : undefined);
+  // Trust canEdit only when the response matches the requested UID — isLoading alone
+  // can stay false while data still reflects the previous folder after a switch.
+  const selectedFolderMatches = Boolean(folderUid && selectedFolder?.uid === folderUid);
+  const sourceFolderMatches = Boolean(sourceFolderUid && sourceFolder?.uid === sourceFolderUid);
+  const selectedFolderCanEdit = selectedFolderMatches ? selectedFolder?.canEdit : undefined;
+  const sourceFolderCanEdit = needsSeparateSourceFolder
+    ? sourceFolderMatches
+      ? sourceFolder?.canEdit
+      : undefined
+    : selectedFolderCanEdit;
+  const selectedScopeReady = !folderUid || selectedFolderMatches;
   const sourceScopeReady =
-    !sourceFolderUid || !(needsSeparateSourceFolder ? isLoadingSourceFolder : isLoadingSelectedFolder);
+    !sourceFolderUid || (needsSeparateSourceFolder ? sourceFolderMatches : selectedFolderMatches);
 
   // Non-editors may only save folder-scoped variables (root/global requires Editor/Admin),
   // and only into folders they can edit.

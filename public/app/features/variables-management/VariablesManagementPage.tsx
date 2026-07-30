@@ -72,7 +72,7 @@ export default function VariablesManagementPage() {
   const selectedVariables = variables.filter((v) => v.metadata.name && selected.has(v.metadata.name));
   const allowGlobalScope = canManageGlobalVariables();
   const selectedFolderUids = useMemo(
-    () => [...new Set(selectedVariables.map(getVariableFolderUid).filter((uid): uid is string => Boolean(uid)))],
+    () => [...new Set(selectedVariables.map(getVariableFolderUid).filter((uid): uid is string => Boolean(uid)))].sort(),
     [selectedVariables]
   );
   const folderCanEdit = useFolderCanEdit(selectedFolderUids);

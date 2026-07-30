@@ -24,7 +24,7 @@ export function canManageGlobalVariables(): boolean {
 export function canManageVariableScope(
   folderUid: string | undefined,
   folderCanEdit: boolean | undefined,
-  allowGlobal = canManageGlobalVariables()
+  allowGlobal: boolean
 ): boolean {
   if (folderUid === undefined) {
     return false;
