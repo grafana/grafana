@@ -13,6 +13,7 @@ import { Spinner } from '@grafana/ui';
 import { DashboardStateChangedEvent } from '../../sidebar/events';
 import { getCloneKey, getLocalVariableValueSet, getRepeatVariableValueSet } from '../../utils/clone';
 import { getRepeatLocalVariableValue } from '../../utils/getRepeatLocalVariableValue';
+import { registerReportRepeatPendingWork } from '../../utils/registerReportRepeatPendingWork';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
 import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../../variables/utils';
 
@@ -148,6 +149,9 @@ export function performRowRepeats(variable: MultiValueVariable, row: RowItem, co
       row.state.conditionalRendering?.setTarget(row);
     }
   }
+
+  // Keeps report rendering waiting until the repeat clones mount.
+  registerReportRepeatPendingWork(row, clonedRows);
 
   row.setState({ repeatedRows: clonedRows });
   // Rehydrate from a stable parent subtree to keep duplicate var-* key mapping consistent.
