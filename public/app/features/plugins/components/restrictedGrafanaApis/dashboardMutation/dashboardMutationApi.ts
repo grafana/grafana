@@ -18,25 +18,48 @@ import { provideMutationClientFactory } from 'app/features/dashboard-scene/scene
 import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 let _client: MutationClient | null = null;
+const _availabilityListeners = new Set<(isAvailable: boolean) => void>();
+
+function setClient(client: MutationClient | null): void {
+  if (_client === client) {
+    return;
+  }
+  _client = client;
+
+  for (const listener of _availabilityListeners) {
+    try {
+      listener(_client !== null);
+    } catch (error) {
+      console.error('Dashboard Mutation API availability listener threw:', error);
+    }
+  }
+}
 
 provideMutationClientFactory((sceneObject) => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
   const scene = sceneObject as unknown as DashboardScene;
 
+  let client: MutationClient | null = null;
   try {
-    _client = new DashboardMutationClient(scene);
+    client = new DashboardMutationClient(scene);
+    setClient(client);
   } catch (error) {
     console.error('Failed to register Dashboard Mutation API:', error);
   }
 
   return () => {
-    _client = null;
+    // Only the scene that owns the live client may clear it. Two dashboard
+    // scenes can be mounted at once, and without this the first to deactivate
+    // takes the survivor's client with it.
+    if (client && _client === client) {
+      setClient(null);
+    }
   };
 });
 
 /** @internal — exposed only for unit tests that need to inject a mock client. */
 export function setDashboardMutationClientForTests(client: MutationClient | null): void {
-  _client = client;
+  setClient(client);
 }
 
 export const dashboardMutationApi: DashboardMutationAPI = {
@@ -53,5 +76,17 @@ export const dashboardMutationApi: DashboardMutationAPI = {
   },
   getAvailableCommands: () => {
     return _client?.getAvailableCommands() ?? [];
+  },
+  isAvailable: () => {
+    return _client !== null;
+  },
+  getSupportedCommands: () => {
+    return ALL_COMMANDS.map((cmd) => cmd.name);
+  },
+  onAvailabilityChange: (listener) => {
+    _availabilityListeners.add(listener);
+    return () => {
+      _availabilityListeners.delete(listener);
+    };
   },
 };

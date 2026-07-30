@@ -17,7 +17,32 @@ export interface DashboardMutationResult {
 export interface DashboardMutationAPI {
   execute(mutation: { type: string; payload: unknown }): Promise<DashboardMutationResult>;
   getPayloadSchema(commandId: string): ZodSchema | null;
+  /** Commands that can be executed right now. Empty when no dashboard is loaded. */
   getAvailableCommands(): string[];
+  /**
+   * Whether a dashboard is loaded, so `execute` has something to mutate.
+   *
+   * The API object itself exists for the lifetime of the app, so its presence
+   * says nothing about whether a dashboard is open.
+   */
+  isAvailable(): boolean;
+  /**
+   * Commands this Grafana version implements, whether or not a dashboard is
+   * loaded. Use for capability checks, and `getAvailableCommands` for what can
+   * run right now.
+   */
+  getSupportedCommands(): string[];
+  /**
+   * Subscribe to a dashboard being loaded or unloaded. Returns an unsubscribe
+   * function.
+   *
+   * Also called when one dashboard replaces another, with `true` again, since
+   * the commands now dispatch against a different dashboard.
+   *
+   * The listener is not called with the current state on subscribe; read
+   * `isAvailable()` for that.
+   */
+  onAvailabilityChange(listener: (isAvailable: boolean) => void): () => void;
 }
 
 interface RestrictedGrafanaApisContextTypeInternal {

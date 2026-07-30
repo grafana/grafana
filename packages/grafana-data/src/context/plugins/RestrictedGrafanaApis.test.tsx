@@ -16,6 +16,9 @@ const mockDashboardMutationAPI = {
   execute: jest.fn(async () => ({ success: true, changes: [] })),
   getPayloadSchema: jest.fn(() => null),
   getAvailableCommands: jest.fn(() => []),
+  isAvailable: jest.fn(() => false),
+  getSupportedCommands: jest.fn(() => []),
+  onAvailabilityChange: jest.fn(() => () => {}),
 };
 
 describe('RestrictedGrafanaApis', () => {

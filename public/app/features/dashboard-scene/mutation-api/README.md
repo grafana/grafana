@@ -19,6 +19,19 @@ All responses share this shape:
 
 On failure, `success` is `false` and `error` contains a message. `changes` is always `[]` on failure.
 
+## Availability
+
+The API object exists for the lifetime of the app, so holding a reference to it does not mean a dashboard is open. Commands dispatch against a client that is created when a `DashboardScene` activates and destroyed when it deactivates.
+
+| Question                                       | Use                                                               |
+| ---------------------------------------------- | ----------------------------------------------------------------- |
+| Is a dashboard loaded right now?               | `isAvailable()`                                                   |
+| Does this Grafana version implement a command? | `getSupportedCommands()`                                          |
+| What can I execute right now?                  | `getAvailableCommands()`, empty when no dashboard is loaded       |
+| Tell me when that changes                      | `onAvailabilityChange(listener)`, returns an unsubscribe function |
+
+`execute` rejects when no dashboard is loaded.
+
 ---
 
 ## Layout
