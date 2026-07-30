@@ -40,7 +40,7 @@ describe('QueryEditorSidebar', () => {
 
       expect(screen.getByRole('button', { name: 'Add query or expression' })).not.toHaveTextContent('Add');
       expect(screen.getByRole('button', { name: 'Add transformation' })).not.toHaveTextContent('Add');
-      expect(screen.getByRole('button', { name: 'Enter stacked view' })).not.toHaveTextContent('Stacked');
+      expect(screen.getByRole('button', { name: 'Enter stacked view' })).not.toHaveTextContent('Stack');
     });
 
     it('labels the add and stacked view buttons in the treatment variant', () => {
@@ -50,7 +50,7 @@ describe('QueryEditorSidebar', () => {
 
       expect(screen.getByRole('button', { name: 'Add query or expression' })).toHaveTextContent('Add');
       expect(screen.getByRole('button', { name: 'Add transformation' })).toHaveTextContent('Add');
-      expect(screen.getByRole('button', { name: 'Enter stacked view' })).toHaveTextContent(/^Stacked$/);
+      expect(screen.getByRole('button', { name: 'Enter stacked view' })).toHaveTextContent(/^Stack$/);
     });
   });
 
