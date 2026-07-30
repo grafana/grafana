@@ -21,6 +21,9 @@ type kindSearchFields struct {
 	// keywordFields maps a filter, sort or facet field name to the
 	// keyword-analyzed index field backing it.
 	keywordFields map[string]keywordField
+	// storedFacetFields maps a facet field name to the stored canonical field
+	// post-rank authorization loads for app-side aggregation.
+	storedFacetFields map[string]string
 	// textQueryKinds maps physical index field names to the query their analyzer
 	// needs.
 	textQueryKinds map[string]textQueryKind
@@ -31,9 +34,10 @@ type kindSearchFields struct {
 
 func newKindSearchFields(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) kindSearchFields {
 	return kindSearchFields{
-		keywordFields:  keywordFieldsForMapping(provider, group, kindResource, selectableFields),
-		textQueryKinds: textQueryKindsForMapping(provider, group, kindResource, selectableFields),
-		variants:       fieldVariantsOf(fieldDefinitionsForMapping(provider, group, kindResource)),
+		keywordFields:     keywordFieldsForMapping(provider, group, kindResource, selectableFields),
+		storedFacetFields: storedFacetFieldsForMapping(provider, group, kindResource),
+		textQueryKinds:    textQueryKindsForMapping(provider, group, kindResource, selectableFields),
+		variants:          fieldVariantsOf(fieldDefinitionsForMapping(provider, group, kindResource)),
 	}
 }
 
@@ -190,6 +194,33 @@ var keywordSubDocumentFields = []string{
 // are resource kinds, so they cannot be enumerated up front.
 const referenceFieldPrefix = "reference."
 
+// storedFacetFieldsForMapping returns the stored keyword field that post-rank
+// authorization can load for each facet-capable API field. Facet terms come
+// from the keyword variant even when a field also declares text, so loading
+// this form preserves native Bleve facet casing and term boundaries.
+func storedFacetFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string) map[string]string {
+	fields := make(map[string]string)
+	add := func(def resource.SearchFieldDefinition, prefix string) {
+		if !def.HasCapability(resource.SearchCapabilityFacet) {
+			return
+		}
+
+		logicalName := prefix + def.Name
+		fields[logicalName] = prefix + keywordVariantName(def.Name, def.HasCapability(resource.SearchCapabilityText))
+	}
+
+	for _, def := range resource.StandardSearchFieldDefinitions() {
+		add(def, "")
+	}
+	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
+		add(def, resource.SEARCH_FIELD_PREFIX)
+		if storedName, ok := fields[resource.SEARCH_FIELD_PREFIX+def.Name]; ok {
+			fields[def.Name] = storedName
+		}
+	}
+	return fields
+}
+
 // addCapabilityFieldMappings adds bleve field mappings to parent for a single
 // declared search field. The field is placed under parent using def.Name as
 // the local name; this helper does not add any sub-document prefix (callers
@@ -201,8 +232,9 @@ const referenceFieldPrefix = "reference."
 //     (see keywordVariant). sort enables DocValues.
 //   - text                    → standard-analyzer text mapping at def.Name.
 //   - partial                 → ngram mapping at def.Name + "_ngram".
-//   - retrieve                → Store: true on the canonical field
-//     (def.Name if text is declared, else the keyword variant).
+//   - retrieve / facet        → Store: true on the canonical field
+//     (def.Name if text is declared, else the keyword variant). Facet implies
+//     stored: app-side post-rank facet aggregation reads the stored value.
 //
 // Special case: when a field has only [filter] (with or without retrieve) and
 // no text capability, the keyword variant is named def.Name directly, without
@@ -222,6 +254,7 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 	hasText := def.HasCapability(resource.SearchCapabilityText)
 	hasPartial := def.HasCapability(resource.SearchCapabilityPartial)
 	hasSort := def.HasCapability(resource.SearchCapabilitySort)
+	hasFacet := def.HasCapability(resource.SearchCapabilityFacet)
 	hasRetrieve := def.HasCapability(resource.SearchCapabilityRetrieve)
 	hasUnranked := def.HasCapability(resource.SearchCapabilityUnranked)
 
@@ -250,9 +283,9 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 		m.IncludeTermVectors = false
 		m.SkipFreqNorm = true
 		m.DocValues = hasSort
-		// Canonical field for storage is the keyword variant only when no text
-		// mapping will also be created.
-		m.Store = hasRetrieve && !hasText
+		// Facets aggregate from the keyword variant after post-rank authz, even
+		// when the canonical text field is also stored for retrieval.
+		m.Store = hasFacet || (hasRetrieve && !hasText)
 		m.IncludeInAll = false
 		parent.AddFieldMappingsAt(keywordName, m)
 	}
@@ -262,7 +295,7 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 		m.Analyzer = standard.Name
 		m.IncludeTermVectors = false
 		m.DocValues = false
-		m.Store = hasRetrieve
+		m.Store = hasRetrieve || hasFacet
 		m.IncludeInAll = false
 		m.SkipFreqNorm = hasUnranked
 		parent.AddFieldMappingsAt(def.Name, m)

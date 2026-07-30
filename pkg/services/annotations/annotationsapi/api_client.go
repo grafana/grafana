@@ -31,6 +31,7 @@ type annotationClient interface {
 	Delete(ctx context.Context, orgID int64, name string) error
 	GetByLegacyID(ctx context.Context, orgID int64, annotationID int64) (*annotationV0.Annotation, error)
 	Search(ctx context.Context, orgID int64, query *annotations.ItemQuery) ([]*annotationV0.Annotation, error)
+	ListTags(ctx context.Context, orgID int64, query *annotations.TagsQuery) ([]annotationV0.GetTagsV0alpha1BodyTags, error)
 }
 
 var _ annotationClient = (*annotationAPIClient)(nil)
@@ -195,6 +196,31 @@ func (s *annotationAPIClient) Search(ctx context.Context, orgID int64, query *an
 		result[i] = &list[i]
 	}
 	return result, nil
+}
+
+// ListTags calls the /tags custom route, which aggregates tag counts across the org.
+func (s *annotationAPIClient) ListTags(ctx context.Context, orgID int64, query *annotations.TagsQuery) ([]annotationV0.GetTagsV0alpha1BodyTags, error) {
+	req := s.client.Get().
+		Namespace(s.nsMapper(orgID)).
+		Resource("tags")
+
+	if query.Tag != "" {
+		req = req.Param("prefix", query.Tag)
+	}
+	if query.Limit != 0 {
+		req = req.Param("limit", strconv.FormatInt(query.Limit, 10))
+	}
+
+	raw, err := req.DoRaw(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var body annotationV0.GetTagsBody
+	if err := json.Unmarshal(raw, &body); err != nil {
+		return nil, fmt.Errorf("decode tags response: %w", err)
+	}
+	return body.Tags, nil
 }
 
 // collection builds a request against the namespaced annotations collection for orgID.
