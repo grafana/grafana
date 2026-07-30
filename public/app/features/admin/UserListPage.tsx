@@ -115,6 +115,13 @@ export default function UserListPage() {
           content: <UserListAnonymousDevicesPageContent />,
         });
       }
+    } else if (hasAccessToAdminUsers) {
+      result.push({
+        id: TabView.ADMIN,
+        label: t('admin.user-list-page.label-all-users', 'All users'),
+        testId: selectors.tabs.allUsers,
+        content: <UserListAdminPageContent />,
+      });
     } else if (isEmailSharingEnabled()) {
       result.push({
         id: TabView.ORG,
@@ -140,7 +147,7 @@ export default function UserListPage() {
     }
 
     return result;
-  }, [showAdminAndOrgTabs]);
+  }, [showAdminAndOrgTabs, hasAccessToAdminUsers]);
 
   const allTabs = [...builtInTabs, ...extensionTabs];
   const activeTabId = allTabs.some((tab) => tab.id === view) ? view : (allTabs[0]?.id ?? '');
