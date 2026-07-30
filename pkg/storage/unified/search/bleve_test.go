@@ -2616,6 +2616,45 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 	}
 }
 
+// An index built before the marker was mapped drops it silently, which would
+// leave a deleted document looking live. BulkIndex removes such a document
+// instead, so trash is missing from search rather than leaking into it, until the
+// index is rebuilt.
+func TestBulkIndexRemovesMarkedDocumentsWhenTheMarkerIsNotMapped(t *testing.T) {
+	mapper, err := GetBleveMappings(nil, "", "", nil)
+	require.NoError(t, err)
+	raw, err := newBleveIndex("", mapper, time.Now(), buildVersion, nil, "")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = raw.Close() })
+
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: "g", Resource: "r", Name: "dash-1"}
+	doc := func(deleted *bool) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc:    &resource.IndexableDocument{Key: key, Title: "Production Overview", IsDeleted: deleted},
+		}
+	}
+
+	// features left empty: an index whose mapping predates the marker.
+	legacy := &bleveIndex{index: raw, logger: log.NewNopLogger()}
+	require.NoError(t, legacy.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(nil)}}))
+	count, err := raw.DocCount()
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), count)
+
+	require.NoError(t, legacy.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(new(true))}}))
+	count, err = raw.DocCount()
+	require.NoError(t, err)
+	assert.Equal(t, uint64(0), count, "marked document should be removed, not indexed as live")
+
+	// An index that maps the marker keeps the document.
+	current := &bleveIndex{index: raw, features: resource.CurrentIndexFeatures(), logger: log.NewNopLogger()}
+	require.NoError(t, current.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(new(true))}}))
+	count, err = raw.DocCount()
+	require.NoError(t, err)
+	assert.Equal(t, uint64(1), count)
+}
+
 // TestScopeQueryTrashBrowseDrivesOffTheMarker pins the shape for a trash browse
 // with nothing to match on. Bleve only ever drives iteration from the Must side,
 // so leaving match-all there and testing the marker as a Filter would read every
