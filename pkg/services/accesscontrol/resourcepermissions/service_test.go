@@ -42,7 +42,6 @@ type setUserPermissionTest struct {
 
 func TestIntegrationService_SetUserPermission(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	type hookContextKey struct{}
 
 	tests := []setUserPermissionTest{
 		{
@@ -68,22 +67,16 @@ func TestIntegrationService_SetUserPermission(t *testing.T) {
 			require.NoError(t, err)
 
 			var hookCalled bool
-			var hookContextValue string
 			if tt.callHook {
-				service.options.OnSetUser = func(ctx context.Context, session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error {
+				service.options.OnSetUser = func(session *db.Session, orgID int64, user accesscontrol.User, resourceID, permission string) error {
 					hookCalled = true
-					hookContextValue, _ = ctx.Value(hookContextKey{}).(string)
 					return nil
 				}
 			}
 
-			ctx := context.WithValue(context.Background(), hookContextKey{}, "operation")
-			_, err = service.SetUserPermission(ctx, user.OrgID, accesscontrol.User{ID: user.ID}, "1", "")
+			_, err = service.SetUserPermission(context.Background(), user.OrgID, accesscontrol.User{ID: user.ID}, "1", "")
 			require.NoError(t, err)
 			assert.Equal(t, tt.callHook, hookCalled)
-			if tt.callHook {
-				assert.Equal(t, "operation", hookContextValue)
-			}
 		})
 	}
 }

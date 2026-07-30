@@ -798,7 +798,7 @@ func TestIntegrationApi_setUserPermissionForTeams_removeMemberDualWrite(t *testi
 			// Wire the production OnSetUser hook so a removal actually runs RemoveTeamMemberHook.
 			var dbHelper *legacysql.LegacyDatabaseHelper
 			opts := testOptionsForTeams
-			opts.OnSetUser = func(_ context.Context, session *db.Session, orgID int64, usr accesscontrol.User, resourceID, permission string) error {
+			opts.OnSetUser = func(session *db.Session, orgID int64, usr accesscontrol.User, resourceID, permission string) error {
 				teamID, err := strconv.ParseInt(resourceID, 10, 64)
 				if err != nil {
 					return err

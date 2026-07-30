@@ -973,7 +973,6 @@ func (c *K8sTestHelper) AddOrUpdateTeamMember(user User, teamID int64, permissio
 		c.env.FeatureToggles,
 		c.env.Server.HTTPServer.RouteRegister,
 		c.env.SQLStore,
-		legacysql.NewDatabaseProvider(c.env.SQLStore),
 		c.env.Server.HTTPServer.AccessControl,
 		c.env.Server.HTTPServer.License,
 		c.env.Server.HTTPServer.AlertNG.AccesscontrolService,
