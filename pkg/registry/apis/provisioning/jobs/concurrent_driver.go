@@ -32,6 +32,14 @@ type queuedEvent struct {
 // resync/re-list re-delivers the key if the job is still unclaimed.
 const maxClaimAttempts = 3
 
+// maxStaleClaimAttempts bounds the retries of a claim that 404ed while the
+// freshness floor says the job was announced — a read-visibility lag, not a
+// missing job. It is deliberately larger than maxClaimAttempts: the per-item
+// rate limiter backs off exponentially from milliseconds, so outlasting a
+// replication lag needs the later, longer waits. Past it, the key drops and
+// the re-list (or the floor's TTL) resolves the disagreement.
+const maxStaleClaimAttempts = 10
+
 // defaultPostClaimCooldown is the post-claim cooldown used when the constructor
 // is given a non-positive resync interval. It matches the default resync
 // cadence of both wirings.
@@ -80,9 +88,27 @@ type ConcurrentJobDriver struct {
 	cooldowns map[string]time.Time
 	triggers  map[string]queuedEvent
 
+	// floor, when set, is the freshness floor the NATS jobs informer maintains
+	// (see TrackFloor). The driver consults it only to disambiguate a claim 404:
+	// a floor outstanding for the key means the job was announced and the read
+	// path has not caught up, so the claim is retried instead of trusting the
+	// NotFound as "completed and deleted".
+	floor *usinformer.RVFloor
+
 	// logger is used by informer event callbacks, which run outside Run's
 	// context and therefore cannot use logging.FromContext.
 	logger logging.Logger
+}
+
+// TrackFloor gives the driver the freshness floor its informer maintains, so
+// claim 404s can be told apart from genuinely deleted jobs. Call before Run;
+// a nil floor (the apiserver wiring) leaves every 404 trusted.
+func (c *ConcurrentJobDriver) TrackFloor(floor *usinformer.RVFloor) { c.floor = floor }
+
+// floorOutstanding reports whether an informer event announced this job at a
+// version no read has confirmed yet.
+func (c *ConcurrentJobDriver) floorOutstanding(namespace, name string) bool {
+	return c.floor != nil && c.floor.Floor(namespace, name) > 0
 }
 
 // NewConcurrentJobDriver creates a new concurrent job driver that spawns
@@ -438,6 +464,13 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 	logger.Debug("process job key", "attempt", attempt)
 
 	err = processor.processKey(ctx, namespace, name, trigger, queued.enqueued)
+	// A claim 404 is ambiguous under the NATS informer: the job may be completed
+	// and deleted, or its announced create may not be visible to this read path
+	// yet. The floor disambiguates — it holds the version the informer announced
+	// and no read has confirmed. A stale 404 falls through to the retry branch
+	// (claiming never ran, so retrying cannot re-run any work), with its own
+	// larger attempt cap so the backoff can outlast the visibility lag.
+	staleNotFound := apierrors.IsNotFound(err) && c.floorOutstanding(namespace, name)
 	switch {
 	case err == nil:
 		if attempt > 1 {
@@ -447,7 +480,7 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 	case errors.Is(err, ErrAlreadyClaimed):
 		logger.Debug("job already claimed by another worker - dropping from queue")
 		c.queue.Forget(key)
-	case apierrors.IsNotFound(err):
+	case apierrors.IsNotFound(err) && !staleNotFound:
 		logger.Debug("job no longer exists - dropping from queue")
 		c.queue.Forget(key)
 	case errors.Is(err, errPostClaim):
@@ -460,6 +493,11 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 		logger.Error("job failed after it was claimed - dropping from queue; the informer re-list re-adds it after a cooldown",
 			"attempt", attempt, "cooldown", c.postClaimCooldown, "error", err)
 		c.queue.Forget(key)
+	case staleNotFound && attempt < maxStaleClaimAttempts:
+		logger.Info("job announced but not yet visible to this read path - will retry claim",
+			"attempt", attempt, "max_attempts", maxStaleClaimAttempts)
+		c.setQueued(key, queued.trigger, queued.enqueued)
+		c.queue.AddRateLimited(key)
 	case attempt >= maxClaimAttempts:
 		logger.Error("job failed too many times - dropping from queue; the informer re-list re-adds it if still unclaimed",
 			"attempts", attempt, "error", err)

@@ -116,7 +116,9 @@ func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry
 // Claim attempts to claim the job namespace/name for this worker.
 //
 // Returns ErrAlreadyClaimed if another worker holds the claim, and a NotFound
-// API error if the job no longer exists (completed and deleted).
+// API error if the job is not readable: completed and deleted, or its announced
+// create not yet visible to this read path (the caller disambiguates via the
+// freshness floor).
 //
 // If err is not nil, the job and rollback values are always nil.
 func (s *persistentStore) Claim(ctx context.Context, namespace, name string) (job *provisioning.Job, rollback func(), err error) {
