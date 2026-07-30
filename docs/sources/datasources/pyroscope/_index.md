@@ -71,10 +71,14 @@ These dimensions, coupled with the detailed nature of performance profiles, make
 
 ### Flame graphs
 
-Flame graphs help you visualize resource allocation and performance bottlenecks.
+Flame graphs help you visualize resource allocation and performance bottlenecks. For more information about the visualization and its features, refer to the [Flame graph panel](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/flame-graph/).
 
-In Grafana Cloud, views with a flame graph include **Explain flame graph**, which uses AI to analyze the profile and explain the performance bottleneck, its root cause, and a recommended fix. Grafana Cloud also provides line-level insights through the GitHub integration.
-For more information, refer to [Flame graph AI](https://grafana.com/docs/grafana-cloud/monitor-applications/profiles/flamegraph-ai/).
+## Grafana Cloud-only features
+
+Some Pyroscope features are available only in Grafana Cloud:
+
+- **Explain flame graph:** On views with a flame graph, Grafana Cloud provides an AI-driven analysis that explains the performance bottleneck, its root cause, and a recommended fix. For more information, refer to [Flame graph AI](https://grafana.com/docs/grafana-cloud/monitor-applications/profiles/flamegraph-ai/).
+- **GitHub line-level insights:** Through the GitHub integration, Grafana Cloud maps profiling data to your source code and shows line-level performance insights.
 
 ## Integrate profiles into dashboards
 
@@ -85,7 +89,7 @@ This example shows memory profiles alongside panels for logs and metrics, which 
 
 ![dashboard](https://grafana.com/static/img/pyroscope/grafana-pyroscope-dashboard-2023-11-30.png)
 
-## Visualize traces and profiles data using Traces to profiles
+## Visualize traces and profiles data using Trace to profiles
 
 You can link profile and tracing data using your Pyroscope data source with the Tempo data source.
 

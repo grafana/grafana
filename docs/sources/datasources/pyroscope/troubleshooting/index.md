@@ -175,7 +175,7 @@ These errors occur when executing queries against the Pyroscope data source.
 
 Example valid queries:
 
-```promql
+```
 {service_name="my-app"}
 {service_name="my-app", env="production"}
 {service_name=~"my-app.*"}
@@ -295,7 +295,7 @@ These errors are specific to the [Profiles Drilldown](https://grafana.com/docs/g
 1. Ensure the time range includes periods when profiles were collected.
 1. For microservices mode, verify the data source URL points to the correct gateway.
 
-## Traces to profiles issues
+## Trace to profiles issues
 
 These errors occur when linking tracing and profiling data.
 
@@ -308,12 +308,12 @@ These errors occur when linking tracing and profiling data.
 
 **Solutions:**
 
-1. Verify the Tempo data source is configured with Traces to profiles enabled.
+1. Verify the Tempo data source is configured with Trace to profiles enabled.
 1. Ensure your application is instrumented to emit span profiles.
 1. Check that the Pyroscope data source is selected in the Tempo data source configuration.
 1. Verify profile data exists for the time range of the trace.
 
-For more information, refer to [Configure Traces to profiles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure-traces-to-profiles/).
+For more information, refer to [Configure Trace to profiles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure-traces-to-profiles/).
 
 ### Profile doesn't match the trace span
 
@@ -345,7 +345,7 @@ These issues relate to slow queries or high resource usage.
 1. Reduce the time range to decrease the amount of data processed.
 1. Add label filters to narrow the query scope.
 1. Increase the **Timeout** setting in the data source's **Additional settings**.
-1. Adjust the **Minimum step** setting to reduce the number of data points.
+1. Adjust the **Minimal step** setting to reduce the number of data points.
 1. For large deployments, ensure the Pyroscope backend has sufficient resources.
 
 ### High memory usage in browser
