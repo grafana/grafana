@@ -2842,6 +2842,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.iconsRefresh",
+        "resourceVersion": "1785423819800",
+        "creationTimestamp": "2026-07-30T15:03:39Z"
+      },
+      "spec": {
+        "description": "Renders Grafana's icons from the @grafana/icons package",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.kubernetesAnnotationsClient",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

@@ -67,6 +67,7 @@ declare module "@openfeature/core" {
     | "plugins.initDataSourcesAsync"
     | "grafana.panelEditNextFeedbackEvent"
     | "grafana.visualDesignRefresh"
+    | "grafana.iconsRefresh"
     | "dashboard.vectorSearch"
     | "grafana.vectorSearchCmdk"
     | "assistant.fullscreenWorkspace"

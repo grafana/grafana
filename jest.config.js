@@ -28,6 +28,7 @@ const esModules = [
   '@bsull/augurs',
   '@grafana/react-data-grid',
   '@grafana/llm',
+  '@grafana/icons',
   'pkce-challenge',
   'quickselect',
   'rbush',
@@ -83,6 +84,10 @@ module.exports = {
     '^@grafana/assistant$': '<rootDir>/public/test/mocks/assistant.ts',
     // Mock measureText to prevent invalid calculations with uPlot
     '^@grafana/ui/src/utils/measureText$': '<rootDir>/packages/grafana-ui/src/utils/measureText.ts',
+    // @grafana/icons only declares an `import` condition for its per-icon subpaths,
+    // so jest's require-based resolution can't reach them. Point at the ESM leaf
+    // directly; the `esModules` list above gets it transformed.
+    '^@grafana/icons/(?!migrations$)(.+)$': '<rootDir>/node_modules/@grafana/icons/dist/esm/components/Icons/$1.js',
   },
   // Log the test results with dynamic Loki tags. Drone CI only
   reporters: ['default', ['<rootDir>/public/test/log-reporter.js', { enable: process.env.DRONE === 'true' }]],

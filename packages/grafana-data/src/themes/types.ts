@@ -39,6 +39,12 @@ export interface GrafanaTheme2 {
      * @internal
      */
     visualDesignRefresh?: boolean;
+    /**
+     * Renders icons from the @grafana/icons package instead of Grafana's bundled SVGs.
+     * Independent of visualDesignRefresh so the icon set can roll out separately.
+     * @internal
+     */
+    iconsRefresh?: boolean;
   };
 }
 

@@ -8,9 +8,24 @@ import failOnConsole from 'jest-fail-on-console';
 import path from 'node:path';
 import { initReactI18next } from 'react-i18next';
 
+import * as grafanaIcons from '@grafana/icons';
 import { matchers } from '@grafana/test-utils';
 
+import { seedResolvedIcons } from '../../packages/grafana-ui/src/components/Icon/DynamicIcon';
+import { iconComponentNames } from '../../packages/grafana-ui/src/components/Icon/iconLoaders.gen';
 import { getEnvConfig } from '../../scripts/cli/env-util';
+
+// `Icon` loads each glyph from its own async chunk. In tests that async state
+// update would make every component rendering an icon emit a React `act()`
+// warning, which failOnConsole below turns into a failure. Resolving the whole
+// set up front keeps `Icon` synchronous for tests; the async path is covered
+// explicitly by DynamicIcon's own tests.
+seedResolvedIcons(
+  Object.entries(iconComponentNames).flatMap(([iconName, componentName]) => {
+    const component = Reflect.get(grafanaIcons, componentName);
+    return typeof component === 'function' ? [[iconName, component] as const] : [];
+  })
+);
 
 const config = getEnvConfig(path.resolve(__dirname, '../..'));
 

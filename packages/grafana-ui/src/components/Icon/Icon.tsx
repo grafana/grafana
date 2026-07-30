@@ -4,10 +4,11 @@ import SVG from 'react-inlinesvg';
 
 import { type GrafanaTheme2, isIconName } from '@grafana/data';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { type IconName, type IconType, type IconSize } from '../../types/icon';
 import { spin } from '../../utils/keyframes';
 
+import { DynamicIcon } from './DynamicIcon';
 import { getIconPath, getSvgSize } from './utils';
 
 export interface IconProps extends Omit<React.SVGProps<SVGElement>, 'onLoad' | 'onError' | 'ref'> {
@@ -84,77 +85,87 @@ function useIconWorkaround(name: IconName) {
   return { nameToUse, handleLoad };
 }
 
+const LegacyIcon = forwardRef<SVGElement, IconProps>(
+  ({ size = 'md', type = 'default', name: nameProp, className, style, title = '', ...rest }, ref) => {
+    const styles = useStyles2(getIconStyles);
+    const { nameToUse: name, handleLoad } = useIconWorkaround(nameProp);
+
+    if (!isIconName(name)) {
+      console.warn('Icon component passed an invalid icon name', name);
+    }
+
+    // handle the deprecated 'fa fa-spinner'
+    const iconName: IconName = name === 'fa fa-spinner' ? 'spinner' : name;
+
+    const svgSize = getSvgSize(size);
+    const svgHgt = svgSize;
+    const svgWid = name.startsWith('gf-bar-align') ? 16 : name.startsWith('gf-interp') ? 30 : svgSize;
+    const svgPath = getIconPath(iconName, type);
+
+    const composedClassName = cx(
+      styles.icon,
+      className,
+      type === 'mono' ? { [styles.orange]: name === 'favorite' } : '',
+      {
+        [styles.spin]: iconName === 'spinner',
+      }
+    );
+
+    return (
+      // @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react.
+      <SVG
+        data-testid={`icon-${iconName}`}
+        aria-hidden={
+          rest.tabIndex === undefined &&
+          !title &&
+          !rest['aria-label'] &&
+          !rest['aria-labelledby'] &&
+          !rest['aria-describedby']
+        }
+        onLoad={handleLoad}
+        onError={handleLoad}
+        innerRef={ref}
+        src={svgPath}
+        width={svgWid}
+        height={svgHgt}
+        title={title}
+        className={composedClassName}
+        style={style}
+        // render an empty element with the correct dimensions while loading
+        // this prevents content layout shift whilst the icon asynchronously loads
+        // which happens even if the icon is in the cache(!)
+        loader={
+          <svg
+            className={cx(
+              css({
+                width: svgWid,
+                height: svgHgt,
+              }),
+              composedClassName
+            )}
+          />
+        }
+        {...rest}
+      />
+    );
+  }
+);
+
+LegacyIcon.displayName = 'LegacyIcon';
+
 /**
  * Grafana's icon wrapper component.
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/iconography-icon--docs
  */
 export const Icon = memo(
-  forwardRef<SVGElement, IconProps>(
-    ({ size = 'md', type = 'default', name: nameProp, className, style, title = '', ...rest }, ref) => {
-      const styles = useStyles2(getIconStyles);
-      const { nameToUse: name, handleLoad } = useIconWorkaround(nameProp);
+  forwardRef<SVGElement, IconProps>((props, ref) => {
+    const theme = useTheme2();
 
-      if (!isIconName(name)) {
-        console.warn('Icon component passed an invalid icon name', name);
-      }
-
-      // handle the deprecated 'fa fa-spinner'
-      const iconName: IconName = name === 'fa fa-spinner' ? 'spinner' : name;
-
-      const svgSize = getSvgSize(size);
-      const svgHgt = svgSize;
-      const svgWid = name.startsWith('gf-bar-align') ? 16 : name.startsWith('gf-interp') ? 30 : svgSize;
-      const svgPath = getIconPath(iconName, type);
-
-      const composedClassName = cx(
-        styles.icon,
-        className,
-        type === 'mono' ? { [styles.orange]: name === 'favorite' } : '',
-        {
-          [styles.spin]: iconName === 'spinner',
-        }
-      );
-
-      return (
-        // @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react.
-        <SVG
-          data-testid={`icon-${iconName}`}
-          aria-hidden={
-            rest.tabIndex === undefined &&
-            !title &&
-            !rest['aria-label'] &&
-            !rest['aria-labelledby'] &&
-            !rest['aria-describedby']
-          }
-          onLoad={handleLoad}
-          onError={handleLoad}
-          innerRef={ref}
-          src={svgPath}
-          width={svgWid}
-          height={svgHgt}
-          title={title}
-          className={composedClassName}
-          style={style}
-          // render an empty element with the correct dimensions while loading
-          // this prevents content layout shift whilst the icon asynchronously loads
-          // which happens even if the icon is in the cache(!)
-          loader={
-            <svg
-              className={cx(
-                css({
-                  width: svgWid,
-                  height: svgHgt,
-                }),
-                composedClassName
-              )}
-            />
-          }
-          {...rest}
-        />
-      );
-    }
-  )
+    // DynamicIcon can't forward a ref: @grafana/icons' generated components are
+    // plain function components, so React 18 drops refs passed to them.
+    return theme.flags.iconsRefresh ? <DynamicIcon {...props} /> : <LegacyIcon ref={ref} {...props} />;
+  })
 );
 
 Icon.displayName = 'Icon';

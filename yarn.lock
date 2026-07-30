@@ -2421,6 +2421,28 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/icons@npm:0.4.0":
+  version: 0.4.0
+  resolution: "@grafana/icons@npm:0.4.0"
+  dependencies:
+    "@emotion/css": "npm:^11.13.5"
+  peerDependencies:
+    react: ">=18"
+  checksum: 10/49011cac7f82ff3c925e18c6bfad4cb02dacc30b623bddae8ba92378c401c400ec83bc50f5a355a8c8f13cdc5cf445b35684542e0216c20ddb4d5421ab2f7c78
+  languageName: node
+  linkType: hard
+
+"@grafana/icons@patch:@grafana/icons@npm%3A0.4.0#~/.yarn/patches/@grafana-icons-npm-0.4.0-84d1ffd9dd.patch":
+  version: 0.4.0
+  resolution: "@grafana/icons@patch:@grafana/icons@npm%3A0.4.0#~/.yarn/patches/@grafana-icons-npm-0.4.0-84d1ffd9dd.patch::version=0.4.0&hash=668ccc"
+  dependencies:
+    "@emotion/css": "npm:^11.13.5"
+  peerDependencies:
+    react: ">=18"
+  checksum: 10/867a745ee5d753bbe50ad53d7494d8af85686cffa5ef4a209b01a7596d5ea207912665b2384d0b190887930be67a451342cb6c0058f8a89d65a6c759392f9b6e
+  languageName: node
+  linkType: hard
+
 "@grafana/levitate@npm:0.17.2":
   version: 0.17.2
   resolution: "@grafana/levitate@npm:0.17.2"
@@ -2977,6 +2999,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:13.2.0-pre"
     "@grafana/faro-web-sdk": "npm:^2.8.2"
     "@grafana/i18n": "npm:13.2.0-pre"
+    "@grafana/icons": "patch:@grafana/icons@npm%3A0.4.0#~/.yarn/patches/@grafana-icons-npm-0.4.0-84d1ffd9dd.patch"
     "@grafana/react-data-grid": "npm:7.0.0-beta.57"
     "@grafana/schema": "npm:13.2.0-pre"
     "@grafana/test-utils": "workspace:*"

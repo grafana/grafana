@@ -4,7 +4,7 @@ import { SkeletonTheme } from 'react-loading-skeleton';
 
 import { getThemeById, type GrafanaTheme2, ThemeContext } from '@grafana/data';
 import { ThemeChangedEvent, config } from '@grafana/runtime';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { useFlagGrafanaIconsRefresh, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 
 import { appEvents } from '../app_events';
 import 'react-loading-skeleton/dist/skeleton.css';
@@ -24,6 +24,7 @@ function maybeRemapTheme(theme: GrafanaTheme2, visualRefreshEnabled: boolean): G
 
 export const ThemeProvider = ({ children, value }: { children: React.ReactNode; value: GrafanaTheme2 }) => {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const iconsRefreshEnabled = useFlagGrafanaIconsRefresh();
 
   const [theme, setTheme] = useState(() => maybeRemapTheme(value, visualRefreshEnabled));
 
@@ -33,9 +34,10 @@ export const ThemeProvider = ({ children, value }: { children: React.ReactNode; 
       flags: {
         ...theme.flags,
         visualDesignRefresh: visualRefreshEnabled,
+        iconsRefresh: iconsRefreshEnabled,
       },
     }),
-    [theme, visualRefreshEnabled]
+    [theme, visualRefreshEnabled, iconsRefreshEnabled]
   );
 
   useEffect(() => {

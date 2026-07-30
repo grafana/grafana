@@ -67,6 +67,8 @@ export const FlagKeys = {
   GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Enables PLG-focused growth redesign of the unified homepage */
   GrafanaGrowthHomepage: "grafana.growthHomepage",
+  /** Renders Grafana's icons from the @grafana/icons package */
+  GrafanaIconsRefresh: "grafana.iconsRefresh",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
@@ -456,6 +458,17 @@ export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagGrafanaGrowthHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.growthHomepage", false, options).value;
+};
+
+/**
+ * Renders Grafana's icons from the @grafana/icons package
+ *
+ * **Details:**
+ * - flag key: `grafana.iconsRefresh`
+ * - default value: `false`
+ */
+export const useFlagGrafanaIconsRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.iconsRefresh", false, options).value;
 };
 
 /**

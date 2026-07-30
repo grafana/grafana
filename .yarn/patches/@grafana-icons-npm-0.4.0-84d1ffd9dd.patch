@@ -1,0 +1,14 @@
+diff --git a/package.json b/package.json
+index 4529a5b329a548dd6a5c44f268e8f386f50674c2..6acaf4f7f30616e22bc3afe1ca632d4a8f5afef9 100644
+--- a/package.json
++++ b/package.json
+@@ -28,6 +28,9 @@
+         "types": "./dist/cjs/migrations.d.cts",
+         "default": "./dist/cjs/migrations.cjs"
+       }
++    },
++    "./*": {
++      "import": "./dist/esm/components/Icons/*.js"
+     }
+   },
+   "files": [

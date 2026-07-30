@@ -2941,6 +2941,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "grafana.iconsRefresh",
+			Description:  "Renders Grafana's icons from the @grafana/icons package",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendPlatformSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:        "dashboard.vectorSearch",
 			Description: "Exposes the semantic (vector) search endpoint for dashboards under the dashboard API",
 			Stage:       FeatureStageExperimental,
