@@ -1882,10 +1882,20 @@ export type GitRepositoryConfig = {
     
     When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found. */
   path?: string;
+  /** RequestLimits controls outbound Git Smart HTTP traffic for this repository. */
+  requestLimits?: GitRequestLimits;
   /** TokenUser is the user that will be used to access the repository if it's a personal access token. */
   tokenUser?: string;
   /** The repository URL (e.g. `https://github.com/example/test`). */
   url?: string;
+};
+export type GitRequestLimits = {
+  /** Burst allowance for the request rate limit. Zero uses a burst of one. */
+  burst?: number;
+  /** Maximum number of concurrent outbound requests. Zero disables the limit. */
+  maxConcurrent?: number;
+  /** Sustained number of outbound requests per second. Zero disables rate limiting. */
+  requestsPerSecond?: number;
 };
 export type GitHubRepositoryConfig = {
   /** The branch to use in the repository. */

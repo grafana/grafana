@@ -151,6 +151,10 @@ spec:
     branch: '<BRANCH>'
     path: 'grafana/'
     tokenUser: tokenuser
+    requestLimits:
+      maxConcurrent: 2
+      requestsPerSecond: 5
+      burst: 2
 secure:
   token: { create: 'GIT_PAT' }
 ```
@@ -175,20 +179,29 @@ Git Sync supports two sync targets: `target: folder` (the default) creates a fol
 
 The following configuration parameters are available:
 
-| Field                                   | Description                                                     |
-| --------------------------------------- | --------------------------------------------------------------- |
-| `metadata.name`                         | Unique identifier for this repository resource                  |
-| `spec.title`                            | Human-readable name displayed in Grafana UI                     |
-| `spec.type`                             | Repository type (`github`, `githubEnterprise`)                  |
-| `spec.github.url`                       | GitHub repository URL                                           |
-| `spec.github.branch`                    | Branch to sync                                                  |
-| `spec.github.path`                      | Directory path containing dashboards                            |
-| `spec.github.generateDashboardPreviews` | Generate preview images (true/false) (Only available in GitHub) |
-| `spec.sync.enabled`                     | Enable synchronization (true/false)                             |
-| `spec.sync.intervalSeconds`             | Sync interval in seconds                                        |
-| `spec.sync.target`                      | Where to place synced dashboards (`folder` or `folderless`)     |
-| `spec.workflows`                        | Enabled workflows: `write` (direct commits), `branch` (PRs)     |
-| `secure.token.create`                   | GitHub Personal Access Token                                    |
+| Field                                               | Description                                                                                 |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `metadata.name`                                     | Unique identifier for this repository resource                                              |
+| `spec.title`                                        | Human-readable name displayed in Grafana UI                                                 |
+| `spec.type`                                         | Repository type (`git`, `github`, `githubEnterprise`)                                       |
+| `spec.git.url`                                      | Pure Git repository URL                                                                     |
+| `spec.git.branch`                                   | Pure Git branch to sync                                                                     |
+| `spec.git.path`                                     | Directory path containing dashboards in a Pure Git repository                               |
+| `spec.git.tokenUser`                                | Username used with a Pure Git personal access token                                          |
+| `spec.github.url`                                   | GitHub repository URL                                                                       |
+| `spec.github.branch`                                | Branch to sync                                                                              |
+| `spec.github.path`                                  | Directory path containing dashboards                                                        |
+| `spec.github.generateDashboardPreviews`             | Generate preview images (true/false) (Only available in GitHub)                             |
+| `spec.git.requestLimits.maxConcurrent`              | Maximum concurrent Pure Git Smart HTTP requests for this repository. `0` disables the limit |
+| `spec.git.requestLimits.requestsPerSecond`          | Sustained Pure Git Smart HTTP requests per second. `0` disables rate limiting               |
+| `spec.git.requestLimits.burst`                      | Burst allowance when `requestsPerSecond` is enabled. `0` uses a burst of `1`                |
+| `spec.sync.enabled`                                 | Enable synchronization (true/false)                                                         |
+| `spec.sync.intervalSeconds`                         | Sync interval in seconds                                                                    |
+| `spec.sync.target`                                  | Where to place synced dashboards (`folder` or `folderless`)                                 |
+| `spec.workflows`                                    | Enabled workflows: `write` (direct commits), `branch` (PRs)                                 |
+| `secure.token.create`                               | Personal access token                                                                       |
+
+Pure Git request limits apply independently to each repository. Omit `requestLimits`, or set both `maxConcurrent` and `requestsPerSecond` to `0`, to preserve unlimited request concurrency and rate. Low limits increase sync duration. Time spent waiting for a request slot counts toward the sync context and, while Grafana applies a resource, the configured `sync_resource_timeout`.
 
 ## Push the resources to Grafana
 

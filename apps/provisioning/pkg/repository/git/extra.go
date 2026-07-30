@@ -12,17 +12,15 @@ import (
 )
 
 type extra struct {
-	decrypter  repository.Decrypter
-	httpClient *http.Client
+	decrypter repository.Decrypter
 	// allowInsecure permits http:// URLs together with a token (cleartext credentials); local/dev only.
 	allowInsecure bool
 }
 
-func Extra(decrypter repository.Decrypter, allowInsecure bool, httpClient *http.Client) repository.Extra {
+func Extra(decrypter repository.Decrypter, allowInsecure bool) repository.Extra {
 	return &extra{
 		decrypter:     decrypter,
 		allowInsecure: allowInsecure,
-		httpClient:    httpClient,
 	}
 }
 
@@ -53,11 +51,23 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		Path:             cfg.Path,
 		TokenUser:        cfg.TokenUser,
 		Token:            token,
-		HTTPClient:       e.httpClient,
+		HTTPClient:       newRepositoryHTTPClient(cfg.RequestLimits),
 		CommitSigningKey: signingKey,
 		SigningMethod:    SigningMethodFromSpec(r),
 		SMIMECertificate: SMIMECertificateFromSpec(r),
 		SkipGitSuffix:    true,
+	})
+}
+
+func newRepositoryHTTPClient(limits *provisioning.GitRequestLimits) *http.Client {
+	if limits == nil || (limits.MaxConcurrent <= 0 && limits.RequestsPerSecond <= 0) {
+		return nil
+	}
+
+	return newHTTPClient(httpClientConfig{
+		MaxConcurrentRequests: limits.MaxConcurrent,
+		RequestsPerSecond:     limits.RequestsPerSecond,
+		Burst:                 limits.Burst,
 	})
 }
 

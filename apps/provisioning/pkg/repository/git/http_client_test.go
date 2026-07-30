@@ -18,8 +18,8 @@ func TestHostLimitTransportLimitsConcurrentRequestsPerHost(t *testing.T) {
 		started: make(chan string, 3),
 	}
 	client := &http.Client{
-		Transport: newHostLimitTransport(transport, HTTPClientConfig{
-			MaxConcurrentRequestsPerHost: 1,
+		Transport: newHostLimitTransport(transport, httpClientConfig{
+			MaxConcurrentRequests: 1,
 		}),
 	}
 
@@ -59,8 +59,8 @@ func TestHostLimitTransportUsesIndependentHostLimits(t *testing.T) {
 		started: make(chan string, 2),
 	}
 	client := &http.Client{
-		Transport: newHostLimitTransport(transport, HTTPClientConfig{
-			MaxConcurrentRequestsPerHost: 1,
+		Transport: newHostLimitTransport(transport, httpClientConfig{
+			MaxConcurrentRequests: 1,
 		}),
 	}
 
@@ -83,9 +83,9 @@ func TestHostLimitTransportRateLimitHonorsContextCancellation(t *testing.T) {
 		started: make(chan string, 1),
 	}
 	client := &http.Client{
-		Transport: newHostLimitTransport(transport, HTTPClientConfig{
-			RequestsPerSecondPerHost: 1,
-			BurstPerHost:             1,
+		Transport: newHostLimitTransport(transport, httpClientConfig{
+			RequestsPerSecond: 1,
+			Burst:             1,
 		}),
 	}
 

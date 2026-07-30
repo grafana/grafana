@@ -12,19 +12,18 @@ import (
 	"golang.org/x/time/rate"
 )
 
-// HTTPClientConfig controls outbound Git Smart HTTP traffic. Limits are
-// applied independently to each remote host and shared by every repository
-// using the returned client.
-type HTTPClientConfig struct {
-	MaxConcurrentRequestsPerHost int
-	RequestsPerSecondPerHost     int
-	BurstPerHost                 int
+// httpClientConfig controls outbound Git Smart HTTP traffic for one repository.
+// Limits are applied independently to each remote host used by the returned client.
+type httpClientConfig struct {
+	MaxConcurrentRequests int
+	RequestsPerSecond     int
+	Burst                 int
 }
 
-// NewHTTPClient returns an HTTP client that applies the configured limits to
+// newHTTPClient returns an HTTP client that applies the configured limits to
 // outbound Git requests.
-func NewHTTPClient(config HTTPClientConfig) *http.Client {
-	if config.MaxConcurrentRequestsPerHost <= 0 && config.RequestsPerSecondPerHost <= 0 {
+func newHTTPClient(config httpClientConfig) *http.Client {
+	if config.MaxConcurrentRequests <= 0 && config.RequestsPerSecond <= 0 {
 		return &http.Client{}
 	}
 
@@ -35,13 +34,13 @@ func NewHTTPClient(config HTTPClientConfig) *http.Client {
 
 type hostLimitTransport struct {
 	base   http.RoundTripper
-	config HTTPClientConfig
+	config httpClientConfig
 
 	mu       sync.Mutex
 	limiters map[string]*requestLimiter
 }
 
-func newHostLimitTransport(base http.RoundTripper, config HTTPClientConfig) *hostLimitTransport {
+func newHostLimitTransport(base http.RoundTripper, config httpClientConfig) *hostLimitTransport {
 	if base == nil {
 		base = http.DefaultTransport
 	}
@@ -114,17 +113,17 @@ type requestLimiter struct {
 	rate       *rate.Limiter
 }
 
-func newRequestLimiter(config HTTPClientConfig) *requestLimiter {
+func newRequestLimiter(config httpClientConfig) *requestLimiter {
 	limiter := &requestLimiter{}
-	if config.MaxConcurrentRequestsPerHost > 0 {
-		limiter.concurrent = make(chan struct{}, config.MaxConcurrentRequestsPerHost)
+	if config.MaxConcurrentRequests > 0 {
+		limiter.concurrent = make(chan struct{}, config.MaxConcurrentRequests)
 	}
-	if config.RequestsPerSecondPerHost > 0 {
-		burst := config.BurstPerHost
+	if config.RequestsPerSecond > 0 {
+		burst := config.Burst
 		if burst <= 0 {
 			burst = 1
 		}
-		limiter.rate = rate.NewLimiter(rate.Limit(config.RequestsPerSecondPerHost), burst)
+		limiter.rate = rate.NewLimiter(rate.Limit(config.RequestsPerSecond), burst)
 	}
 	return limiter
 }

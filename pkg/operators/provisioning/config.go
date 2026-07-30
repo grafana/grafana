@@ -593,17 +593,12 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	// http:// URLs with a token are only allowed in development or when explicitly opted in,
 	// since the token would otherwise travel in cleartext.
 	allowInsecure := c.Settings.Env == setting.Dev || provisioningSec.Key("allow_insecure").MustBool(false)
-	gitHTTPClient := gitrepo.NewHTTPClient(gitrepo.HTTPClientConfig{
-		MaxConcurrentRequestsPerHost: provisioningSec.Key("git_max_concurrent_requests_per_host").MustInt(0),
-		RequestsPerSecondPerHost:     provisioningSec.Key("git_rate_limit_rps_per_host").MustInt(0),
-		BurstPerHost:                 provisioningSec.Key("git_rate_limit_burst_per_host").MustInt(1),
-	})
 
 	extras := make([]repository.Extra, 0)
 	for _, t := range repoTypes {
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitRepositoryType:
-			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure, gitHTTPClient))
+			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure))
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()

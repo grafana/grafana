@@ -60,6 +60,8 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &provisioningv0alpha1.GitLabRepositoryConfigApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("GitRepositoryConfig"):
 		return &provisioningv0alpha1.GitRepositoryConfigApplyConfiguration{}
+	case v0alpha1.SchemeGroupVersion.WithKind("GitRequestLimits"):
+		return &provisioningv0alpha1.GitRequestLimitsApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("HealthStatus"):
 		return &provisioningv0alpha1.HealthStatusApplyConfiguration{}
 	case v0alpha1.SchemeGroupVersion.WithKind("HistoricJob"):
