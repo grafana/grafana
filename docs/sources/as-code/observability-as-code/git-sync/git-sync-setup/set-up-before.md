@@ -82,7 +82,7 @@ Finally, get acquainted with the following topics:
 ## Allow internal or private Git servers
 
 {{< admonition type="note" >}}
-This setting is available starting in Grafana v13.0.0 and applies to self-managed Grafana (OSS and Enterprise) only. It's not configurable in Grafana Cloud.
+This setting is available for Grafana v13.0.4 and Grafana v13.1.1 onwards and applies to self-managed Grafana (OSS and Enterprise) only. It's not configurable in Grafana Cloud.
 {{< /admonition >}}
 
 While public Git servers such as `github.com`, `gitlab.com`, and `bitbucket.org` resolve to public addresses and are always allowed, by default Git Sync rejects repository URLs with a host that resolves to a loopback, a private (RFC 1918), link-local, or an unspecified address. This protects your Grafana instance against server-side request forgery (SSRF).
