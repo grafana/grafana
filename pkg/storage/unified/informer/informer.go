@@ -39,10 +39,12 @@ var _ DeltaSource = (*Informer)(nil)
 // as a signal — they re-fetch the object from the API in their reconcile — so
 // the informer does not read the object itself; it hands the handler the
 // smallest object that carries the queue key. It must be the resource's concrete
-// type, because the handlers key off the type (e.g. *Repository). The informer
-// stamps the notification's resource version onto the built object before
-// dispatch, so a handler that re-fetches knows the minimum version a fresh read
-// must reach (the write is committed before its notification is published).
+// type, because the handlers key off the type (e.g. *Repository). Only ADDED
+// deliveries get the announced resource version stamped on (the store
+// write-through records it); MODIFIED deliveries stay version-less, the shape
+// delivery classification keys "live" off. Freshness enforcement does not ride
+// the dispatched object at all — the informer maintains it out of band via the
+// tracked RVFloor (see TrackFloor).
 //
 // A nil ObjectFunc means the resource is driven only by the periodic re-list of
 // full objects, not by live notifications — for handlers that read the object

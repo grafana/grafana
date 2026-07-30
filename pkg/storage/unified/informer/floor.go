@@ -28,7 +28,11 @@ const (
 	// clears when a read meets it or a delete event forgets it, but a hard delete
 	// round-robined to another replica for an object that never entered a re-list
 	// snapshot would leave its floor orphaned forever; by TTL time the periodic
-	// re-list has long since delivered the truth, so dropping it is safe.
+	// re-list has long since delivered the truth, so dropping it is safe. Expiry
+	// is enforced at both touch points: Floor drops an expired entry rather than
+	// return it (so an orphan cannot outlive the TTL just because no event
+	// traffic triggers a sweep), and Raise amortizes a full sweep over the event
+	// stream to bound memory for keys nobody reads again.
 	floorTTL = 15 * time.Minute
 	// sweepInterval is how often Raise scans for expired floors, so expiry cost
 	// is amortized over the event stream instead of paid per call.
@@ -86,11 +90,23 @@ func (f *RVFloor) Raise(namespace, name string, rv int64) {
 	f.floors[key] = floorEntry{rv: rv, raisedAt: f.now()}
 }
 
-// Floor returns the key's current floor, or 0 when none is outstanding.
+// Floor returns the key's current floor, or 0 when none is outstanding. An
+// entry past its TTL is dropped and reported absent: a legitimate 404 must stop
+// reading as stale once the TTL passes, even on an informer idle enough that no
+// Raise ever runs the sweep.
 func (f *RVFloor) Floor(namespace, name string) int64 {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	return f.floors[floorKey(namespace, name)].rv
+	key := floorKey(namespace, name)
+	e, ok := f.floors[key]
+	if !ok {
+		return 0
+	}
+	if f.now().Sub(e.raisedAt) > floorTTL {
+		delete(f.floors, key)
+		return 0
+	}
+	return e.rv
 }
 
 // Settle drops the floor once a read at rv has met it. A floor raised above rv

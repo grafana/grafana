@@ -91,6 +91,21 @@ func TestRVFloor_SweepDropsExpiredEntries(t *testing.T) {
 	assert.Equal(t, rvFresh, f.Floor("ns", "live"))
 }
 
+// Expiry must not depend on Raise traffic: with no events at all, a read past
+// the TTL drops the orphan instead of returning it, so a legitimate 404 stops
+// classifying as stale and the entry's memory is reclaimed.
+func TestRVFloor_ExpiredFloorNotReturnedOnRead(t *testing.T) {
+	f := NewRVFloor()
+	now := time.Now()
+	f.now = func() time.Time { return now }
+
+	f.Raise("ns", "orphan", rvFresh)
+	now = now.Add(floorTTL + time.Second)
+
+	assert.Zero(t, f.Floor("ns", "orphan"), "an expired floor must not be returned")
+	assert.Empty(t, f.floors, "the expired entry must be dropped, not just hidden")
+}
+
 func TestRVFloor_ReRaiseKeepsEntryAlive(t *testing.T) {
 	f := NewRVFloor()
 	now := time.Now()
