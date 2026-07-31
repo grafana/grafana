@@ -246,6 +246,9 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 	if err != nil {
 		return namespaceErrorResponse(err)
 	}
+	if resp := srv.rejectManagedFolderChange(c, logger, namespace.UID); resp != nil {
+		return resp
+	}
 	logger.Info("Deleting all Prometheus-imported rule groups", "folder_uid", namespace.UID, "folder_title", namespaceTitle)
 
 	manager := getManagerProperties(c)
@@ -280,6 +283,9 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contex
 	folder, err := srv.ruleStore.GetNamespaceByTitle(c.Req.Context(), namespaceTitle, c.GetOrgID(), c.SignedInUser, workingFolderUID)
 	if err != nil {
 		return namespaceErrorResponse(err)
+	}
+	if resp := srv.rejectManagedFolderChange(c, logger, folder.UID); resp != nil {
+		return resp
 	}
 	logger.Info("Deleting Prometheus-imported rule group", "folder_uid", folder.UID, "folder_title", namespaceTitle, "group", group)
 
@@ -496,6 +502,13 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 		if errResp != nil {
 			logger.Error("Failed to create a new namespace", "folder_uid", workingFolderUID)
 			return errResp
+		}
+
+		// The namespace title can resolve into the sync-managed subtree even when the
+		// working folder isn't managed (e.g. the sync root's own title at the root
+		// level), so re-check the resolved folder.
+		if resp := srv.rejectManagedFolderChange(c, logger, namespace.UID); resp != nil {
+			return resp
 		}
 
 		for _, rg := range rgs {

@@ -115,6 +115,45 @@ func TestRouteConvertPrometheusDelete_ExternalRulerSyncGate(t *testing.T) {
 	})
 }
 
+func TestRouteConvertPrometheus_ExternalRulerSyncGate_ResolvedFolder(t *testing.T) {
+	group := apimodels.PrometheusRuleGroup{
+		Name:  "g",
+		Rules: []apimodels.PrometheusRule{{Alert: "A", Expr: "up == 0"}},
+	}
+	// A namespace set to the sync root's own title, imported/deleted with no folder
+	// header, resolves straight to the top-level managed folder — the gate must catch
+	// that even though the working (root) folder isn't itself managed.
+	const syncRootTitle = "[Alerting] External Ruler Sync (test-ds)"
+	const managedUID = "sync-root-uid"
+
+	setup := func(t *testing.T) *ConvertPrometheusSrv {
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withRulerSync(fakeRulerSyncChecker{
+			configured:     true,
+			managedFolders: map[string]bool{managedUID: true},
+		}))
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], &folder.Folder{
+			UID:       managedUID,
+			Title:     syncRootTitle,
+			ParentUID: folder.LegacyRootFolderUID, //nolint:staticcheck
+		})
+		return srv
+	}
+
+	t.Run("POST resolving to the managed folder by namespace title is rejected", func(t *testing.T) {
+		srv := setup(t)
+		resp := srv.RouteConvertPrometheusPostRuleGroup(createRequestCtx(), syncRootTitle, group)
+		require.Equal(t, http.StatusConflict, resp.Status())
+		require.Contains(t, string(resp.Body()), "external ruler sync")
+	})
+
+	t.Run("DELETE resolving to the managed folder by namespace title is rejected", func(t *testing.T) {
+		srv := setup(t)
+		resp := srv.RouteConvertPrometheusDeleteNamespace(createRequestCtx(), syncRootTitle)
+		require.Equal(t, http.StatusConflict, resp.Status())
+		require.Contains(t, string(resp.Body()), "external ruler sync")
+	})
+}
+
 func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 	simpleGroup := apimodels.PrometheusRuleGroup{
 		Name:     "Test Group",
