@@ -170,7 +170,7 @@ export function buildMetricsItem(parts: MetricsItemParts): ExistingItem {
   if (disk?.hoursToFull != null) {
     alertDetails.push(
       t('home.recommendations.metrics.disk-eta', '', {
-        count: Math.round(disk.hoursToFull),
+        count: Math.max(1, Math.round(disk.hoursToFull)),
         defaultValue_one: '~{{count}} h to full',
         defaultValue_other: '~{{count}} h to full',
       })

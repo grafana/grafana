@@ -318,6 +318,23 @@ describe('RecommendationExisting', () => {
     );
   });
 
+  it('never rounds a sub-hour disk ETA down to zero', async () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    setSolutionState({ metrics: 'active' }, { prometheus: prometheusDatasource });
+    mockFetchMetricsActivity.mockResolvedValue({
+      series: 4_200_000,
+      dataPointsPerMinute: null,
+      names: null,
+      hosts: 620,
+      seriesSparkline: null,
+      disk: { hostsAbove: 3, worstInstance: 'web-03:9100', worstRatio: 0.96, hoursToFull: 0.3 },
+    });
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByText('~1 h to full')).toBeInTheDocument();
+  });
+
   it('shows the ingest rate as the metrics secondary when available', async () => {
     mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
     setSolutionState({ metrics: 'active' }, { prometheus: prometheusDatasource });
