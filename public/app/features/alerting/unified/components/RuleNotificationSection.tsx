@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { notificationsAPIv0alpha1 } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2, textUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
   Button,
@@ -242,6 +243,7 @@ export function RuleNotificationSection() {
                       'alerting.link-to-contact-points.aria-label-view-or-create-contact-points',
                       'View or create contact points'
                     )}
+                    data-testid={selectors.components.AlertRules.viewContactPointsLink}
                   >
                     <Trans i18nKey="alerting.link-to-contact-points.view-or-create-contact-points">
                       View or create contact points

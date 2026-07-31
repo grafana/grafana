@@ -119,6 +119,7 @@ func NewSearchOptions(
 				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
 				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,
 				MaxCandidates:   cfg.SearchPostRankAuthzMaxCandidates,
+				FacetSampleSize: cfg.SearchPostRankAuthzFacetSampleSize,
 			},
 		}, indexMetrics)
 
@@ -138,7 +139,9 @@ func NewSearchOptions(
 			BuildVersion:              buildVersion,
 			IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 			IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,
+			IndexDeletedDocuments:     cfg.IndexDeletedDocuments,
 			InjectFailuresPercent:     cfg.SearchInjectFailuresPercent,
+			PostRankAuthzEnabled:      cfg.SearchPostRankAuthz,
 
 			IndexSnapshotEnabled:            cfg.IndexSnapshotEnabled,
 			IndexSnapshotBucketURL:          cfg.IndexSnapshotBucketURL,

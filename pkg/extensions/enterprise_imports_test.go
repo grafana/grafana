@@ -65,6 +65,8 @@ import (
 	_ "go.opentelemetry.io/otel/trace/noop"
 	_ "go.uber.org/mock/gomock"
 	_ "golang.org/x/net/websocket"
+	_ "google.golang.org/grpc/resolver"
+	_ "google.golang.org/grpc/resolver/manual"
 	_ "google.golang.org/protobuf/testing/protocmp"
 	_ "k8s.io/api/authentication/v1"
 	_ "k8s.io/apiserver/pkg/endpoints/discovery"

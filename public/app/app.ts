@@ -8,7 +8,7 @@ import 'jquery';
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { type Preferences } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type Preferences } from '@grafana/api-clients/rtkq/preferences/v1';
 import {
   locationUtil,
   monacoLanguageRegistry,

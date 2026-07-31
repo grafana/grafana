@@ -6,7 +6,7 @@ import { Sidebar } from '../dashboard-new-layouts/page-objects';
 
 import { makeNewDashboardRequestBody } from './utils/makeDashboard';
 
-// New-layouts has no settings toolbar button; settings open from the dashboard edit-pane
+// New-layouts has no settings toolbar button; settings open from the dashboard sidebar
 // "Dashboard options" sidebar button, then the "View all settings" button it reveals.
 async function openDashboardSettings(
   page: Page,

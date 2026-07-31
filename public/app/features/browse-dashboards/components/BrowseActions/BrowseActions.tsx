@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
@@ -133,7 +134,11 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const moveButton = (
-    <Button onClick={showMoveModal} variant="secondary">
+    <Button
+      onClick={showMoveModal}
+      variant="secondary"
+      data-testid={selectors.pages.BrowseDashboards.actions.moveButton}
+    >
       <Trans i18nKey="browse-dashboards.action.move-button">Move</Trans>
     </Button>
   );
@@ -143,7 +148,11 @@ export function BrowseActions({ folderDTO }: Props) {
       <Stack gap={1} data-testid="manage-actions">
         {moveButton}
 
-        <Button onClick={showDeleteModal} variant="destructive">
+        <Button
+          onClick={showDeleteModal}
+          variant="destructive"
+          data-testid={selectors.pages.BrowseDashboards.actions.deleteButton}
+        >
           <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
         </Button>
       </Stack>
