@@ -177,6 +177,7 @@ func NewStorageBackend(
 			DBProvider:              eDB,
 			Reg:                     reg,
 			IsHA:                    isHA,
+			PollingInterval:         cfg.PollingInterval,
 			storageMetrics:          storageMetrics,
 			LastImportTimeMaxAge:    cfg.MaxFileIndexAge,
 			GCGate:                  gcGate,

@@ -802,6 +802,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("resource_version_batch_transaction_timeout", opts.UnifiedStorageResourceVersionBatchTransactionTimeout.String())
 		require.NoError(t, err)
 	}
+	if opts.UnifiedStoragePollingInterval > 0 {
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("polling_interval", opts.UnifiedStoragePollingInterval.String())
+		require.NoError(t, err)
+	}
 	if opts.MigrationParquetBuffer {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
@@ -1134,6 +1140,7 @@ type GrafanaOpts struct {
 	// server's ini. Bounds one batched RV WithTx; used by provisioning
 	// integration tests on slow CI.
 	UnifiedStorageResourceVersionBatchTransactionTimeout time.Duration
+	UnifiedStoragePollingInterval 						 time.Duration
 	PermittedProvisioningPaths                           string
 	// Provisioning controls [provisioning] enabled. Zero value (FeatureEnabled)
 	// matches the ini default; set FeatureDisabled for DualWriterMode0/1 tests
