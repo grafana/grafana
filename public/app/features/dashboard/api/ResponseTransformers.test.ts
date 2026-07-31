@@ -1251,9 +1251,9 @@ describe('ResponseTransformers', () => {
     }
   }
 
-  describe('scripted dashboard with rows (old format)', () => {
-    it('should convert rows to panels for scripted dashboards', () => {
-      const scriptedDashboard: DashboardDTO = {
+  describe('dashboard with rows (pre-schema-version-16 format)', () => {
+    function buildRowsDashboard(rows: unknown[]): DashboardDTO {
+      return {
         meta: {
           canSave: false,
           canEdit: false,
@@ -1272,40 +1272,86 @@ describe('ResponseTransformers', () => {
             from: 'now-6h',
             to: 'now',
           },
-          rows: [
-            {
-              title: 'Chart',
-              height: '300px',
-              panels: [
-                {
-                  id: 1,
-                  title: 'Events',
-                  type: 'timeseries',
-                  span: 12,
-                  targets: [
-                    {
-                      scenarioId: 'random_walk',
-                      refId: 'A',
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        } as any,
+          rows,
+        } as unknown as DashboardDataDTO,
       };
+    }
 
-      const result = ResponseTransformers.ensureV2Response(scriptedDashboard);
+    it('should convert rows to panels', () => {
+      const result = ResponseTransformers.ensureV2Response(
+        buildRowsDashboard([
+          {
+            title: 'Chart',
+            height: '300px',
+            panels: [
+              {
+                id: 1,
+                title: 'Events',
+                type: 'timeseries',
+                span: 12,
+                targets: [{ scenarioId: 'random_walk', refId: 'A' }],
+              },
+            ],
+          },
+        ])
+      );
 
       expect(result.kind).toBe('DashboardWithAccessInfo');
       expect(result.spec.title).toBe('Scripted dash');
       expect(Object.keys(result.spec.elements).length).toBe(1);
 
       const panelElement = result.spec.elements['panel-1'] as PanelKind;
-      expect(panelElement).toBeDefined();
       expect(panelElement.kind).toBe('Panel');
       expect(panelElement.spec.title).toBe('Events');
       expect(panelElement.spec.vizConfig.group).toBe('timeseries');
+
+      const layout = result.spec.layout as GridLayoutKind;
+      expect(layout.kind).toBe('GridLayout');
+      expect(layout.spec.items).toHaveLength(1);
+      expect(layout.spec.items[0].spec).toMatchObject({ x: 0, y: 0, width: 24, height: 8 });
+    });
+
+    it('should lay out panels of the same row side by side', () => {
+      const result = ResponseTransformers.ensureV2Response(
+        buildRowsDashboard([
+          {
+            height: '250px',
+            panels: [
+              { id: 1, title: 'Left', type: 'timeseries', span: 6 },
+              { id: 2, title: 'Right', type: 'timeseries', span: 6 },
+            ],
+          },
+          {
+            height: '250px',
+            panels: [{ id: 3, title: 'Bottom', type: 'timeseries', span: 12 }],
+          },
+        ])
+      );
+
+      const layout = result.spec.layout as GridLayoutKind;
+      expect(layout.spec.items.map((item) => item.spec)).toMatchObject([
+        { x: 0, y: 0, width: 12, height: 7 },
+        { x: 12, y: 0, width: 12, height: 7 },
+        { x: 0, y: 7, width: 24, height: 7 },
+      ]);
+    });
+
+    it('should convert rows with a visible title to a rows layout', () => {
+      const result = ResponseTransformers.ensureV2Response(
+        buildRowsDashboard([
+          {
+            title: 'Row A',
+            showTitle: true,
+            height: '250px',
+            panels: [{ id: 1, title: 'Events', type: 'timeseries', span: 12 }],
+          },
+        ])
+      );
+
+      const layout = result.spec.layout as RowsLayoutKind;
+      expect(layout.kind).toBe('RowsLayout');
+      expect(layout.spec.rows).toHaveLength(1);
+      expect(layout.spec.rows[0].spec.title).toBe('Row A');
     });
   });
 });

@@ -62,6 +62,7 @@ import {
   DeprecatedInternalId,
   type ObjectMeta,
 } from 'app/features/apiserver/types';
+import { convertRowsToGridPanels, type LegacyRow } from 'app/features/dashboard/state/convertRowsToGridPanels';
 import { transformV2ToV1AnnotationQuery } from 'app/features/dashboard-scene/serialization/annotations';
 import { GRID_ROW_HEIGHT } from 'app/features/dashboard-scene/serialization/const';
 import { validateFiltersOrigin } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToVariables';
@@ -177,15 +178,7 @@ export function ensureV2Response(
   const timeSettingsDefaults = defaultTimeSettingsSpec();
   const dashboardDefaults = defaultDashboardV2Spec();
 
-  // Handle old dashboard format with rows instead of panels (e.g., scripted dashboards)
-  // Old format (pre-schema-version-16): { rows: [{ panels: [...] }] }
-  // New format: { panels: [...] }
-  let panels = dashboard.panels;
-  if (!panels && (dashboard as any).rows) {
-    panels = migrateRowsToPanels((dashboard as any).rows);
-  }
-
-  const [elements, layout] = getElementsFromPanels(panels || []);
+  const [elements, layout] = getElementsFromPanels(getPanels(dashboard));
   // @ts-expect-error - dashboard.templating.list is VariableModel[] and we need TypedVariableModel[] here
   // that would allow accessing unique properties for each variable type that the API returns
   const variables = getVariables(dashboard.templating?.list || []);
@@ -328,34 +321,17 @@ function getElementsFromPanels(
   return [elements, layout];
 }
 
-function migrateRowsToPanels(rows: any[]): Panel[] {
-  const panels: Panel[] = [];
-  let yPos = 0;
-  const widthFactor = 2;
-
-  for (const row of rows) {
-    if (!row.panels) {
-      continue;
-    }
-
-    for (const panel of row.panels) {
-      const panelWithGridPos = {
-        ...panel,
-        gridPos: panel.gridPos || {
-          x: (panel.span || 12) > 12 ? 0 : ((panel.span || 12) - 12) * widthFactor,
-          y: yPos,
-          w: Math.min((panel.span || 12) * widthFactor, 24),
-          h: panel.height || 8,
-        },
-      };
-
-      panels.push(panelWithGridPos);
-    }
-
-    yPos += Math.max(...row.panels.map((p: any) => p.gridPos?.h || p.height || 8), 8);
+/**
+ * Dashboards stored on the backend are migrated to the latest schema version before they reach us,
+ * but client side ones (scripted dashboards) are not. Pre-schema-version-16 dashboards keep their
+ * panels inside `rows`, so run the same rows to grid conversion the v16 migration does.
+ */
+function getPanels(dashboard: DashboardDataDTO & { rows?: LegacyRow[] }): Array<Panel | RowPanel> {
+  if (dashboard.panels) {
+    return dashboard.panels;
   }
 
-  return panels;
+  return dashboard.rows ? convertRowsToGridPanels(dashboard.rows) : [];
 }
 
 function convertToRowsLayout(

@@ -1733,7 +1733,7 @@
       "count": 2
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 16
+      "count": 13
     }
   },
   "public/app/features/dashboard/state/DashboardModel.repeat.test.ts": {
