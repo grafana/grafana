@@ -80,6 +80,11 @@ describe('provisioning data mapping', () => {
           branch: 'main',
           path: 'grafana/',
           tokenUser: 'git-user',
+          requestLimits: {
+            maxConcurrent: 2,
+            requestsPerSecond: 5,
+            burst: 3,
+          },
         },
       };
 
@@ -88,6 +93,54 @@ describe('provisioning data mapping', () => {
       expect(data.url).toBe('https://git.example.com/owner/repo.git');
       expect(data.branch).toBe('main');
       expect(data.path).toBe('grafana/');
+      expect(data.requestLimits).toEqual({
+        maxConcurrent: 2,
+        requestsPerSecond: 5,
+        burst: 3,
+      });
+    });
+
+    it('writes request limits to the git spec', () => {
+      const data = makeFormData('git');
+      data.requestLimits = {
+        maxConcurrent: 2,
+        requestsPerSecond: 5,
+        burst: 3,
+      };
+
+      const spec = dataToSpec(data);
+
+      expect(spec.git?.requestLimits).toEqual({
+        maxConcurrent: 2,
+        requestsPerSecond: 5,
+        burst: 3,
+      });
+    });
+
+    it('preserves explicit zero request limits', () => {
+      const data = makeFormData('git');
+      data.requestLimits = {
+        maxConcurrent: 0,
+        requestsPerSecond: 0,
+        burst: 0,
+      };
+
+      const spec = dataToSpec(data);
+
+      expect(spec.git?.requestLimits).toEqual({
+        maxConcurrent: 0,
+        requestsPerSecond: 0,
+        burst: 0,
+      });
+    });
+
+    it('omits empty request limits', () => {
+      const data = makeFormData('git');
+      data.requestLimits = {};
+
+      const spec = dataToSpec(data);
+
+      expect(spec.git?.requestLimits).toBeUndefined();
     });
   });
 

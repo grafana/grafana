@@ -4,6 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Combobox, Field, Input, Stack } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
+import { PureGitRequestLimitsSection } from '../Config/PureGitRequestLimitsSection';
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { useGetRepositoryFolders } from '../hooks/useGetRepositoryFolders';
 import { useGetRepositoryRefs } from '../hooks/useGetRepositoryRefs';
@@ -132,6 +133,18 @@ export const ConnectStep = memo(function ConnectStep() {
               )}
             />
           </Field>
+
+          {type === 'git' && (
+            <PureGitRequestLimitsSection<WizardFormData>
+              register={register}
+              maxConcurrentName="repository.requestLimits.maxConcurrent"
+              requestsPerSecondName="repository.requestLimits.requestsPerSecond"
+              burstName="repository.requestLimits.burst"
+              maxConcurrentError={errors.repository?.requestLimits?.maxConcurrent?.message}
+              requestsPerSecondError={errors.repository?.requestLimits?.requestsPerSecond?.message}
+              burstError={errors.repository?.requestLimits?.burst?.message}
+            />
+          )}
         </>
       )}
 

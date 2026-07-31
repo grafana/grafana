@@ -777,6 +777,10 @@ describe('ProvisioningWizard', () => {
 
       // Connection step fields (branch combobox + path combobox)
       expect(screen.getAllByRole('combobox')).toHaveLength(2);
+      await user.click(screen.getByText('Request limits'));
+      expect(screen.getByLabelText(/Maximum concurrent requests/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Requests per second/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Burst/)).toBeInTheDocument();
     });
 
     it('should render local repository fields', async () => {
