@@ -61,7 +61,7 @@ Select any of these options to proceed:
 
 ### Configure with GitHub
 
-If you want to configure Git Sync for public cloud GitHub, GitHub Enterprise Cloud, or GitHub Enterprise Server, you can connect using a **Personal Access Token** or with **GitHub App**.
+If you want to configure Git Sync for public cloud GitHub or GitHub Enterprise Server, you can connect using a **Personal Access Token** or with **GitHub App**.
 
 #### Connect with a GitHub Personal Access Token
 
