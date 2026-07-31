@@ -424,6 +424,15 @@ describe('MegaMenu', () => {
         expect(current).toHaveLength(1);
       });
 
+      it('highlights the top-level Starred item on the starred dashboards page, not Dashboards', async () => {
+        renderMegaMenu({ initialRoute: '/dashboards?starred' });
+
+        const starred = await screen.findByRole('link', { name: 'Starred' });
+        expect(starred).toHaveAttribute('aria-current', 'page');
+        // The Dashboards section shares the /dashboards pathname but not the ?starred query.
+        expect(screen.getByRole('link', { name: 'Dashboards' })).not.toHaveAttribute('aria-current');
+      });
+
       it('makes Starred pinnable rather than hideable', async () => {
         const { user } = renderMegaMenu();
 

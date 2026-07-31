@@ -294,12 +294,18 @@ describe('findActivePageItem', () => {
     expect(findActivePageItem(tree, '/dashboards/f/def/folder-slug')?.id).toBe('starred/def');
   });
 
-  it('skips section headers (items with children) so the specific leaf is matched, not its parent', () => {
-    // Both the Dashboards section and its Browse child carry /dashboards; the leaf is returned.
+  it('prefers a child over its parent section when both carry the url', () => {
+    // Both the Dashboards section and its Browse child carry /dashboards; the child is returned.
     expect(findActivePageItem(tree, '/dashboards')?.id).toBe('dashboards/browse');
   });
 
-  it('returns undefined when no leaf carries the current page url', () => {
+  it('matches a section on its own url when no child does (top-level Starred for ?starred)', () => {
+    // The query keeps /dashboards?starred distinct from /dashboards, so the Starred section — not
+    // Dashboards — is returned.
+    expect(findActivePageItem(tree, '/dashboards?starred')?.id).toBe('starred');
+  });
+
+  it('returns undefined when nothing carries the current page url', () => {
     expect(findActivePageItem(tree, '/d/not-starred')).toBeUndefined();
   });
 });
