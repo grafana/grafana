@@ -36,6 +36,8 @@ export const QUERY_EDITOR_V2_PREFERENCE_KEY = 'grafana.dashboard.query-editor-ne
 export const DEFAULT_SIDEBAR_WIDTH = 350;
 /** Below this width the sidebar snaps fully closed. */
 export const SIDEBAR_COLLAPSE_BELOW_PIXELS = 260;
+/** Share of the editor height given to the viz before the user drags the viz/data splitter. */
+export const DEFAULT_VIZ_RATIO = 0.5;
 /** Below this height the bottom data pane snaps fully closed. */
 export const DATA_PANE_COLLAPSE_BELOW_PIXELS = 150;
 

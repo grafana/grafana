@@ -1,4 +1,4 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 
 import { useTheme2 } from '@grafana/ui';
 
@@ -25,6 +25,7 @@ jest.mock('./constants', () => ({
   DEFAULT_SIDEBAR_WIDTH: 350,
   SIDEBAR_COLLAPSE_BELOW_PIXELS: 260,
   DATA_PANE_COLLAPSE_BELOW_PIXELS: 150,
+  DEFAULT_VIZ_RATIO: 0.5,
 }));
 jest.mock('../../sidebar/shared', () => ({ useSidebarCollapsed: jest.fn() }));
 jest.mock('../../utils/utils', () => ({ getDashboardSceneFor: jest.fn() }));
@@ -96,6 +97,30 @@ describe('useVizAndDataPaneLayout', () => {
     localStorage.setItem(WIDTH_KEY, '480');
 
     expect(renderLayout()?.initialSize).toBe(480);
+  });
+
+  // The Mini/Full toggle remounts the viz/data splitter, and useSplitter keeps a flex ratio only on
+  // the DOM node. The hook has to hold it so the toggle doesn't reset the split to 50/50.
+  it('feeds the settled viz/data ratio back as the splitter initial size', () => {
+    const model = {
+      useState: jest.fn(() => ({ dataPane: undefined, tableView: undefined })),
+      getPanel: jest.fn(),
+    } as unknown as PanelEditor;
+
+    const { rerender } = renderHook(() => useVizAndDataPaneLayout(model));
+
+    const flexCalls = () =>
+      jest.mocked(useSnappingSplitter).mock.calls.filter(([options]) => options.pixelPane === undefined);
+
+    expect(flexCalls().at(-1)?.[0].initialSize).toBe(0.5);
+
+    // Settle a drag that leaves the viz taking 80% of the height.
+    act(() => {
+      flexCalls().at(-1)?.[0].onPaneSizeChanged?.(200, 0.8);
+    });
+    rerender();
+
+    expect(flexCalls().at(-1)?.[0].initialSize).toBe(0.8);
   });
 
   // A value of the wrong shape would render as an invalid flex-basis and collapse the sidebar to

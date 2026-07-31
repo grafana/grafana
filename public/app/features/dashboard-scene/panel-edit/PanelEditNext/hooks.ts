@@ -1,5 +1,5 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocalStorage } from 'react-use';
 
 import { useTheme2 } from '@grafana/ui';
@@ -14,6 +14,7 @@ import { useScrollReflowLimit } from '../useScrollReflowLimit';
 import {
   DATA_PANE_COLLAPSE_BELOW_PIXELS,
   DEFAULT_SIDEBAR_WIDTH,
+  DEFAULT_VIZ_RATIO,
   QUERY_EDITOR_BANNER_DISMISSED_KEY,
   QUERY_EDITOR_SIDEBAR_SIZE_KEY,
   QUERY_EDITOR_SIDEBAR_WIDTH_KEY,
@@ -69,8 +70,10 @@ export function usePanelEditorShell(model: PanelEditor) {
  *  - `sidebarSplitter` (horizontal, primary-pixel): sidebar with a persisted absolute width that
  *    snaps fully closed.
  *
- * Both hooks are called unconditionally so their state survives the Mini/Full toggle, which nests
- * them in opposite order (see `VizAndDataPaneNext`).
+ * Both hooks are called unconditionally so their React state survives the Mini/Full toggle, which
+ * nests them in opposite order (see `VizAndDataPaneNext`). Pane *sizes* need more than that: the
+ * toggle remounts the splitter DOM, so each size is held outside it — the sidebar width in local
+ * storage, the viz/data ratio in `vizRatio` below.
  */
 export function useVizAndDataPaneLayout(model: PanelEditor) {
   const dashboard = getDashboardSceneFor(model);
@@ -93,12 +96,18 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
 
   const isScrollingLayout = useScrollReflowLimit();
 
+  // `useSplitter` keeps a flex-sized pane's ratio on the DOM node only. Mini and Full nest the two
+  // splitters in opposite orders, so switching remounts this one — holding the ratio here (this hook
+  // is not remounted by the toggle) is what carries it across.
+  const [vizRatio, setVizRatio] = useState(DEFAULT_VIZ_RATIO);
+
   const vizDataSplitter = useSnappingSplitter({
     direction: 'column',
     dragPosition: 'start',
-    initialSize: 0.5,
+    initialSize: vizRatio,
     collapseBelowPixels: DATA_PANE_COLLAPSE_BELOW_PIXELS,
     disabled: isScrollingLayout,
+    onPaneSizeChanged: (_sizePixels, flexSize) => setVizRatio(flexSize),
   });
 
   const sidebarSplitter = useSnappingSplitter({

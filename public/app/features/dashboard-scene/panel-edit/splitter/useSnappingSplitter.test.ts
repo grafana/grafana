@@ -60,7 +60,7 @@ describe('useSnappingSplitter', () => {
       splitterOptions.onSizeChanged?.(0.5, 500, 240);
     });
 
-    expect(onPaneSizeChanged).toHaveBeenCalledWith(240);
+    expect(onPaneSizeChanged).toHaveBeenCalledWith(240, expect.any(Number));
   });
 
   it('does not persist a size below the collapse threshold', () => {
@@ -88,7 +88,7 @@ describe('useSnappingSplitter', () => {
       splitterOptions.onSizeChanged?.(1, 300, 600);
     });
 
-    expect(onPaneSizeChanged).toHaveBeenCalledWith(300);
+    expect(onPaneSizeChanged).toHaveBeenCalledWith(300, expect.any(Number));
   });
 
   it('does not persist a primary pane size below the collapse threshold', () => {
@@ -168,7 +168,7 @@ describe('useSnappingSplitter', () => {
         expect(result.current.splitterState.collapsed).toBe(false);
         // No size override while open, so the pane keeps the size useSplitter applied.
         expect(collapsingStyle().flexBasis).toBeUndefined();
-        expect(onPaneSizeChanged).toHaveBeenCalledWith(THRESHOLD + 100);
+        expect(onPaneSizeChanged).toHaveBeenCalledWith(THRESHOLD + 100, expect.any(Number));
       });
 
       it('restores the configured size when expanded via the toggle', () => {
@@ -192,13 +192,13 @@ describe('useSnappingSplitter', () => {
         const { onPaneSizeChanged } = renderSplitter(pixelPane);
 
         drag(pixelPane, 300);
-        expect(onPaneSizeChanged).toHaveBeenLastCalledWith(300);
+        expect(onPaneSizeChanged).toHaveBeenLastCalledWith(300, expect.any(Number));
 
         drag(pixelPane, THRESHOLD - 30);
 
         // Still 300 — the sub-threshold size was not persisted over it.
-        expect(onPaneSizeChanged).toHaveBeenLastCalledWith(300);
-        expect(onPaneSizeChanged).not.toHaveBeenCalledWith(THRESHOLD - 30);
+        expect(onPaneSizeChanged).toHaveBeenLastCalledWith(300, expect.any(Number));
+        expect(onPaneSizeChanged).not.toHaveBeenCalledWith(THRESHOLD - 30, expect.any(Number));
       });
 
       it('reopens when a collapsed pane is dragged back past the threshold', () => {
@@ -240,6 +240,36 @@ describe('useSnappingSplitter', () => {
         expect(result.current.splitterState.collapsed).toBe(true);
         expect(collapsingStyle().flexBasis).toBe('0px');
         expect(collapsingStyle().minWidth).toBe('min-content');
+      });
+
+      // `snapSize` pins the pane on every render. Once the pane is open it has to be released, or
+      // the re-render caused by persisting the new size snaps the pane straight back.
+      it('releases the forced size so a later resize is not undone', () => {
+        const { result, collapsingStyle } = renderSplitter(pixelPane, true);
+
+        // Nudge open below the threshold — this is what leaves a snapSize behind.
+        drag(pixelPane, THRESHOLD - 30);
+        expect(result.current.splitterState.collapsed).toBe(false);
+        expect(collapsingStyle().flexBasis).toBe(`${CONFIGURED_SIZE}px`);
+
+        // Now resize it properly.
+        drag(pixelPane, 500);
+
+        expect(result.current.splitterState.snapSize).toBeUndefined();
+        expect(collapsingStyle().flexBasis).toBeUndefined();
+      });
+
+      it('reports the primary pane flex ratio alongside the pixel size', () => {
+        const { onPaneSizeChanged } = renderSplitter(pixelPane);
+        const flex = pixelPane === 'primary' ? 1 : 0.5;
+
+        act(() => {
+          latestOptions().onSizeChanged?.(
+            ...((pixelPane === 'primary' ? [flex, 400, 600] : [flex, 600, 400]) as [number, number, number])
+          );
+        });
+
+        expect(onPaneSizeChanged).toHaveBeenCalledWith(400, flex);
       });
 
       // Nudging a closed pane without clearing the threshold reopens it at the configured size

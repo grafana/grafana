@@ -25,8 +25,12 @@ export interface UseSnappingSplitterOptions {
   /* Disables the splitter, hiding all of its styles */
   disabled?: boolean;
 
-  /** Persist hook: called with the collapsing pane's settled size when a resize ends above the threshold. */
-  onPaneSizeChanged?: (sizePixels: number) => void;
+  /**
+   * Persist hook: called when a resize ends above the threshold, with the collapsing pane's settled
+   * size in pixels and the primary pane's share of the container (0-1). Use `flexSize` for a
+   * flex-sized splitter, whose size is otherwise only stored on the DOM and lost on remount.
+   */
+  onPaneSizeChanged?: (sizePixels: number, flexSize: number) => void;
 }
 
 interface PaneState {
@@ -102,12 +106,19 @@ export function useSnappingSplitter({
           return { snapSize: Math.max(1 - (initialSize ?? 0.5), 1 - flexSize), collapsed: !prev.collapsed };
         }
 
+        // Settled while open: release the forced size. `snapSize` pins the pane on every render, so
+        // leaving it set would let the next render — including the one the persist call below
+        // triggers — snap the pane back to it and undo the resize the user just made.
+        if (prev.snapSize !== undefined) {
+          return { collapsed: prev.collapsed };
+        }
+
         return prev;
       });
 
       // Only persist while open, so collapsing doesn't overwrite the restore size with ~0.
       if (panePixels >= collapseBelowPixels) {
-        onPaneSizeChanged?.(panePixels);
+        onPaneSizeChanged?.(panePixels, flexSize);
       }
     },
     [initialSize, usePixels, collapsePrimary, collapseBelowPixels, onPaneSizeChanged]
