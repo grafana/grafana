@@ -130,6 +130,40 @@ func WithExperimentalKV(e *resource.ExperimentalKVOptions) StorageBackendOption 
 	return func(o *resource.KVBackendOptions) { o.ExperimentalKV = e }
 }
 
+// NewKVBackendOptions builds the config-derived resource.KVBackendOptions
+// It only populates fields derived purely from cfg.
+func NewKVBackendOptions(cfg *setting.Cfg) resource.KVBackendOptions {
+	opts := resource.KVBackendOptions{
+		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
+		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
+		TenantDeleterConfig:  resource.NewTenantDeleterConfig(cfg),
+		GCGate:               nil, // caller-provided; nil starts GC without gating
+		GarbageCollection: resource.GarbageCollectionConfig{
+			Enabled:          cfg.EnableGarbageCollection,
+			DryRun:           cfg.GarbageCollectionDryRun,
+			Interval:         cfg.GarbageCollectionInterval,
+			BatchSize:        cfg.GarbageCollectionBatchSize,
+			BatchWait:        cfg.GarbageCollectionBatchWait,
+			MaxAge:           cfg.GarbageCollectionMaxAge,
+			DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
+		},
+		EventRetentionPeriod:    cfg.EventRetentionPeriod,
+		EventPruningInterval:    cfg.EventPruningInterval,
+		SearchLookback:          cfg.SearchLookback,
+		WatchOptions:            resource.WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
+		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
+	}
+
+	if cfg.EnableKVLeases {
+		opts.EnableKVLeases = true
+		opts.Holder = ResolveLeaseHolder(cfg)
+		opts.LeaseTTL = cfg.KVLeaseTTL
+		opts.LeaseAutoRenew = cfg.KVLeaseAutoRenew
+	}
+
+	return opts
+}
+
 // NewStorageBackend creates the unified storage backend based on options.StorageType.
 // It supports file-based KV backend using BadgerDB (options.StorageTypeFile).
 // Returns a nil backend if options.StorageTypeUnifiedGrpc, a remote gRPC client is expected to be used instead.
@@ -201,31 +235,13 @@ func NewStorageBackend(
 		return nil, fmt.Errorf("unsupported database driver: %s", dbConn.DriverName())
 	}
 
-	kvBackendOpts := resource.KVBackendOptions{
-		KvStore:              kvStore,
-		Reg:                  reg,
-		UseChannelNotifier:   !isHA,
-		Log:                  log.New("storage-backend"),
-		DBKeepAlive:          eDB,
-		LastImportTimeMaxAge: cfg.MaxFileIndexAge,
-		TenantWatcherConfig:  resource.NewTenantWatcherConfig(cfg),
-		TenantDeleterConfig:  resource.NewTenantDeleterConfig(cfg),
-		GCGate:               gcGate,
-		GarbageCollection: resource.GarbageCollectionConfig{
-			Enabled:          cfg.EnableGarbageCollection,
-			DryRun:           cfg.GarbageCollectionDryRun,
-			Interval:         cfg.GarbageCollectionInterval,
-			BatchSize:        cfg.GarbageCollectionBatchSize,
-			BatchWait:        cfg.GarbageCollectionBatchWait,
-			MaxAge:           cfg.GarbageCollectionMaxAge,
-			DashboardsMaxAge: cfg.DashboardsGarbageCollectionMaxAge,
-		},
-		EventRetentionPeriod:    cfg.EventRetentionPeriod,
-		EventPruningInterval:    cfg.EventPruningInterval,
-		SearchLookback:          cfg.SearchLookback,
-		WatchOptions:            resource.WatchOptions{SettleDelay: cfg.NotifierSettleDelay},
-		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
-	}
+	kvBackendOpts := NewKVBackendOptions(cfg)
+	kvBackendOpts.KvStore = kvStore
+	kvBackendOpts.Reg = reg
+	kvBackendOpts.UseChannelNotifier = !isHA
+	kvBackendOpts.Log = log.New("storage-backend")
+	kvBackendOpts.DBKeepAlive = eDB
+	kvBackendOpts.GCGate = gcGate
 
 	for _, opt := range opts {
 		opt(&kvBackendOpts)
@@ -242,13 +258,6 @@ func NewStorageBackend(
 		}
 
 		kvBackendOpts.RvManager = rvManager
-	}
-
-	if cfg.EnableKVLeases {
-		kvBackendOpts.EnableKVLeases = true
-		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
-		kvBackendOpts.LeaseTTL = cfg.KVLeaseTTL
-		kvBackendOpts.LeaseAutoRenew = cfg.KVLeaseAutoRenew
 	}
 
 	return resource.NewKVStorageBackend(kvBackendOpts)
