@@ -47,11 +47,23 @@ jobs:
     - uses: actions/checkout@v5
       with:
         persist-credentials: false
+    - name: Cache golden files
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0  # zizmor: ignore[cache-poisoning] key derived only from hashFiles of tracked source
+      id: cache
+      with:
+        key: "golden-files-${{ runner.os }}-${{ hashFiles('apps/dashboard/**', 'pkg/apimachinery/**', 'go.work', 'go.work.sum') }}"
+        path: |
+          apps/dashboard/pkg/migration/testdata/output/
+          apps/dashboard/pkg/migration/testdata/dev-dashboards-output/
+          apps/dashboard/pkg/migration/conversion/testdata/output/
+          apps/dashboard/pkg/migration/conversion/testdata/migrated_dashboards_output/
     - name: Setup Go
+      if: steps.cache.outputs.cache-hit != 'true'
       uses: ./.github/actions/setup-go
       with:
         cache-build: 'false'
     - name: Generate golden files
+      if: steps.cache.outputs.cache-hit != 'true'
       run: make generate-golden-files
       working-directory: apps/dashboard
     - name: Upload golden files
