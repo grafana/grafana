@@ -33,12 +33,16 @@ type queuedEvent struct {
 // resync/re-list re-delivers the key if the job is still unclaimed.
 const maxClaimAttempts = 3
 
-// maxStaleClaimAttempts bounds the retries of a claim that 404ed while the
-// freshness floor says the job was announced — a read-visibility lag, not a
-// missing job. It is deliberately larger than maxClaimAttempts: the per-item
-// rate limiter backs off exponentially from milliseconds, so outlasting a
-// replication lag needs the later, longer waits. Past it, the key drops and
-// the re-list (or the floor's TTL) resolves the disagreement.
+// maxStaleClaimAttempts bounds the retries of a claim outcome the freshness
+// floor rejected as a lagging read. The count is really a wall-clock budget:
+// the queue's per-item limiter doubles from 5ms, so the nine waits between ten
+// attempts sum to ~2.6s — nearly all of it in the last three — matching the
+// ~2.3s the repository/connection getters afford (4 in-place reads × 250ms ×
+// 3 workqueue attempts). Each attempt is one cheap GET; a worker never sleeps
+// in place, which is why the budget must come from the backoff schedule
+// rather than fewer, longer waits. Past it, the key drops and the re-list (or
+// the floor's TTL) resolves the disagreement; stale_reads_exhausted_total is
+// the signal that this budget is too tight in practice.
 const maxStaleClaimAttempts = 10
 
 // defaultPostClaimCooldown is the post-claim cooldown used when the constructor
