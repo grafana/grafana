@@ -168,6 +168,15 @@ export function useSnappingSplitter({
   collapsingProps.style.minWidth = 'unset';
   collapsingProps.style.minHeight = 'unset';
 
+  if (!state.collapsed) {
+    // `overflow: hidden` above zeroes this pane's automatic minimum size, while the pane beside it
+    // keeps `min-content` and so gives up nothing. Without this the pane absorbs every shortfall as
+    // the container narrows and is squeezed to a sliver — measured at 40px against a configured
+    // 330px. It is either at the size it was given or deliberately closed, never a useless in
+    // between; the pane beside it is the one that has to clip.
+    collapsingProps.style.flexShrink = 0;
+  }
+
   if (state.snapSize) {
     if (usePixels) {
       collapsingProps.style.flexBasis = `${state.snapSize}px`;

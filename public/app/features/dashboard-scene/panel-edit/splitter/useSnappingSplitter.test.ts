@@ -7,9 +7,11 @@ import { useSnappingSplitter } from './useSnappingSplitter';
 
 jest.mock('@grafana/ui', () => ({
   useSplitter: jest.fn((options) => ({
-    containerProps: { className: '' },
-    primaryProps: { className: '', style: {} },
-    secondaryProps: { className: '', style: {} },
+    containerProps: { className: '', ref: { current: document.createElement('div') } },
+    // Refs mirror the real hook: the resize watcher reads the collapsing pane through them, so they
+    // need a real target for it to engage at all.
+    primaryProps: { className: '', style: {}, ref: { current: document.createElement('div') } },
+    secondaryProps: { className: '', style: {}, ref: { current: document.createElement('div') } },
     splitterProps: { style: {} },
     options,
   })),
@@ -282,6 +284,67 @@ describe('useSnappingSplitter', () => {
 
         expect(result.current.splitterState.collapsed).toBe(false);
         expect(collapsingStyle().flexBasis).toBe(`${CONFIGURED_SIZE}px`);
+      });
+    });
+  });
+
+  /**
+   * Narrowing the container squeezes the collapsing pane without any drag: `overflow: hidden` zeroes
+   * its automatic minimum size while the pane beside it keeps `min-content`, so it absorbed every
+   * shortfall. Measured in a browser at a 1150px window, a 330px options pane rendered 40px.
+   */
+  describe('resisting a squeeze from the container', () => {
+    function latestSplitterOptions() {
+      const { calls } = jest.mocked(useSplitter).mock;
+      return calls[calls.length - 1][0];
+    }
+
+    function mountSplitter(pixelPane: 'primary' | 'secondary', collapsed?: boolean) {
+      const { result } = renderHook(() =>
+        useSnappingSplitter({
+          direction: pixelPane === 'primary' ? 'row' : 'column',
+          usePixels: true,
+          pixelPane,
+          initialSize: 330,
+          collapseBelowPixels: 260,
+          collapsed,
+        })
+      );
+
+      const collapsingStyle = () =>
+        pixelPane === 'primary' ? result.current.primaryProps.style : result.current.secondaryProps.style;
+
+      return { result, collapsingStyle };
+    }
+
+    describe.each(['primary', 'secondary'] as const)('%s pane', (pixelPane) => {
+      it('holds its size instead of being shrunk away', () => {
+        const { collapsingStyle } = mountSplitter(pixelPane);
+
+        expect(collapsingStyle().flexShrink).toBe(0);
+      });
+
+      // Closed is a deliberate state, not a squeeze, and the pane has to be free to sit at 0.
+      it('does not pin the size while closed', () => {
+        const { collapsingStyle } = mountSplitter(pixelPane, true);
+
+        expect(collapsingStyle().flexShrink).toBeUndefined();
+        expect(collapsingStyle().flexBasis).toBe('0px');
+      });
+
+      // Dragging past the threshold still has to close it: the pane holds its *given* size, and a
+      // drag is what changes that size.
+      it('still closes when a drag settles below the threshold', () => {
+        const { result, collapsingStyle } = mountSplitter(pixelPane);
+        const args: [number, number, number] = pixelPane === 'primary' ? [1, 200, 600] : [0.5, 600, 200];
+
+        act(() => {
+          latestSplitterOptions().onResizing?.(...args);
+          latestSplitterOptions().onSizeChanged?.(...args);
+        });
+
+        expect(result.current.splitterState.collapsed).toBe(true);
+        expect(collapsingStyle().flexBasis).toBe('0px');
       });
     });
   });
