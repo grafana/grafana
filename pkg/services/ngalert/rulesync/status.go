@@ -16,6 +16,9 @@ const (
 	ReasonConvert   SyncReason = "convert"
 	ReasonSave      SyncReason = "save"
 	ReasonPrune     SyncReason = "prune"
+	// ReasonPanic is recorded when a per-org sync tick panics and is recovered so
+	// the background goroutine (and the process) survives.
+	ReasonPanic SyncReason = "panic"
 	// ReasonUnclassified is the safety net for errors not tagged with
 	// *SyncError. Keeps Prometheus label cardinality bounded.
 	ReasonUnclassified SyncReason = "unclassified"
