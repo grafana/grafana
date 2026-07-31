@@ -1,9 +1,11 @@
 import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import { CallToActionCard, EmptyState, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { FolderReadmePanel } from 'app/features/provisioning/components/Folders/FolderReadmePanel';
@@ -56,24 +58,29 @@ export function BrowseView({
   const selectedItems = useCheckboxSelectionState();
   const childrenByParentUID = useChildrenByParentUIDState();
   const canSelect = canSelectItems(permissions);
-  const { data: settingsData } = useGetFrontendSettingsQuery(undefined);
+  const provisioningEnabled = config.featureToggles.provisioning;
+  const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled ? skipToken : undefined);
   const isProvisionedInstance = useIsProvisionedInstance({ settings: settingsData });
   const rootItems = useSelector(rootItemsSelector);
 
   const [, stateManager] = useSearchStateManager();
 
   const excludeUIDs = useMemo(() => {
-    if (isProvisionedInstance) {
+    if (isProvisionedInstance || !provisioningEnabled) {
       return [];
     }
-    // if only one repo folder and no local folders, then don't exclude it from selection
-    if (rootItems?.items.length === 1 && settingsData?.items.length === 1) {
-      return [];
+    if (provisioningEnabled) {
+      // if only one repo folder and no local folders, then don't exclude it from selection
+      if (rootItems?.items.length === 1 && settingsData?.items.length === 1) {
+        return [];
+      }
+      // loop through settingsData to find all available repo name, and exclude them from select all action
+      // repo root folder is not actionable on browse dashboards page
+      return settingsData?.items.map((repo) => repo.name);
     }
-    // loop through settingsData to find all available repo name, and exclude them from select all action
-    // repo root folder is not actionable on browse dashboards page
-    return settingsData?.items.map((repo) => repo.name);
-  }, [isProvisionedInstance, settingsData, rootItems]);
+
+    return [];
+  }, [isProvisionedInstance, settingsData, provisioningEnabled, rootItems]);
 
   const handleFolderClick = useCallback(
     (clickedFolderUID: string, isOpen: boolean) => {
