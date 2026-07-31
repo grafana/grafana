@@ -48,6 +48,8 @@ type Service struct {
 	serverLock      *serverlock.ServerLockService
 	tracer          tracing.Tracer
 
+	beforeRefreshHook BeforeRefreshHook
+
 	tokenRefreshDuration *prometheus.HistogramVec
 }
 
@@ -66,6 +68,11 @@ type TokenRefreshMetadata struct {
 	AuthID            string
 }
 
+// BeforeRefreshHook prepares an OAuth provider immediately before an expired
+// token is refreshed. Returning an error aborts the refresh without
+// invalidating the persisted tokens.
+type BeforeRefreshHook func(ctx context.Context, provider string) error
+
 func ProvideService(socialService social.Service, authInfoService login.AuthInfoService, cfg *setting.Cfg, registerer prometheus.Registerer,
 	serverLockService *serverlock.ServerLockService, tracer tracing.Tracer, sessionService auth.UserTokenService, features featuremgmt.FeatureToggles,
 ) *Service {
@@ -79,6 +86,13 @@ func ProvideService(socialService social.Service, authInfoService login.AuthInfo
 		tokenRefreshDuration: newTokenRefreshDurationMetric(registerer),
 		tracer:               tracer,
 	}
+}
+
+// SetBeforeRefreshHook configures a hook that runs after the refresh lock is
+// acquired and the persisted token is confirmed to need refreshing. It should
+// be configured during service construction, before the service is shared.
+func (o *Service) SetBeforeRefreshHook(hook BeforeRefreshHook) {
+	o.beforeRefreshHook = hook
 }
 
 // GetCurrentOAuthToken returns the OAuth token, if any, for the authenticated user. Will try to refresh the token if it has expired.
@@ -419,6 +433,14 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 		return persistedToken, nil
 	}
 
+	if o.beforeRefreshHook != nil {
+		provider := strings.TrimPrefix(tokenRefreshMetadata.AuthModule, "oauth_")
+		if err := o.beforeRefreshHook(ctx, provider); err != nil {
+			span.SetStatus(codes.Error, "OAuth provider refresh preparation failed")
+			return nil, fmt.Errorf("prepare OAuth provider %q for token refresh: %w", provider, err)
+		}
+	}
+
 	connect, err := o.SocialService.GetConnector(tokenRefreshMetadata.AuthModule)
 	if err != nil {
 		ctxLogger.Error("Failed to get oauth connector", "provider", tokenRefreshMetadata.AuthModule, "error", err)
@@ -438,7 +460,7 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 	// TokenSource handles refreshing the token if it has expired
 	token, refreshErr := connect.TokenSource(ctx, persistedToken).Token()
 	duration := time.Since(start)
-	o.tokenRefreshDuration.WithLabelValues(tokenRefreshMetadata.AuthModule, fmt.Sprintf("%t", err == nil)).Observe(duration.Seconds())
+	o.tokenRefreshDuration.WithLabelValues(tokenRefreshMetadata.AuthModule, tokenRefreshSuccessLabel(refreshErr)).Observe(duration.Seconds())
 
 	if refreshErr != nil {
 		span.SetAttributes(attribute.Bool("token_refreshed", false))
@@ -461,8 +483,8 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 			ctxLogger.Debug("Oauth got token",
 				"auth_module", usr.GetAuthenticatedBy(),
 				"expiry", fmt.Sprintf("%v", token.Expiry),
-				"access_token", fmt.Sprintf("%v", token.AccessToken),
-				"refresh_token", fmt.Sprintf("%v", token.RefreshToken),
+				"access_token_present", token.AccessToken != "",
+				"refresh_token_present", token.RefreshToken != "",
 			)
 		}
 
@@ -506,6 +528,10 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 	return token, nil
 }
 
+func tokenRefreshSuccessLabel(err error) string {
+	return fmt.Sprintf("%t", err == nil)
+}
+
 func newTokenRefreshDurationMetric(registerer prometheus.Registerer) *prometheus.HistogramVec {
 	tokenRefreshDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
@@ -514,8 +540,18 @@ func newTokenRefreshDurationMetric(registerer prometheus.Registerer) *prometheus
 		Help:      "Time taken to fetch access token using refresh token",
 	},
 		[]string{"auth_provider", "success"})
-	if registerer != nil {
-		registerer.MustRegister(tokenRefreshDuration)
+	if registerer == nil {
+		return tokenRefreshDuration
+	}
+
+	if err := registerer.Register(tokenRefreshDuration); err != nil {
+		var alreadyRegistered prometheus.AlreadyRegisteredError
+		if errors.As(err, &alreadyRegistered) {
+			if existing, ok := alreadyRegistered.ExistingCollector.(*prometheus.HistogramVec); ok {
+				return existing
+			}
+		}
+		panic(err)
 	}
 	return tokenRefreshDuration
 }

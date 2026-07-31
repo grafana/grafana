@@ -1790,16 +1790,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		cfg.Logger.Warn("require_email_validation is enabled but smtp is disabled")
 	}
 
-	// check old key name
-	grafanaComUrl := valueAsString(iniFile.Section("grafana_net"), "url", "")
-	if grafanaComUrl == "" {
-		grafanaComUrl = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
-	}
-	cfg.GrafanaComURL = grafanaComUrl
-
-	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComUrl+"/api")
-	cfg.GrafanaComSSOAPIToken = valueAsString(iniFile.Section("grafana_com"), "sso_api_token", "")
-	cfg.GrafanaComProxyAPIToken = valueAsString(iniFile.Section("grafana_com"), "proxy_token", "")
+	readGrafanaComSettings(iniFile, cfg)
 	imageUploadingSection := iniFile.Section("external_image_storage")
 	cfg.ImageUploadProvider = valueAsString(imageUploadingSection, "provider", "")
 

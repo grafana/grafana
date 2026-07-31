@@ -28,6 +28,7 @@ func (cfg *Cfg) ApplyAuthnSettings(iniFile *ini.File) error {
 
 	cfg.Raw = iniFile
 	readSecretKey(iniFile, cfg)
+	readGrafanaComSettings(iniFile, cfg)
 	if err := readSessionAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
@@ -36,6 +37,18 @@ func (cfg *Cfg) ApplyAuthnSettings(iniFile *ini.File) error {
 
 func readSecretKey(iniFile *ini.File, cfg *Cfg) {
 	cfg.SecretKey = valueAsString(iniFile.Section("security"), "secret_key", "")
+}
+
+func readGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {
+	grafanaComURL := valueAsString(iniFile.Section("grafana_net"), "url", "")
+	if grafanaComURL == "" {
+		grafanaComURL = valueAsString(iniFile.Section("grafana_com"), "url", "https://grafana.com")
+	}
+	cfg.GrafanaComURL = grafanaComURL
+
+	cfg.GrafanaComAPIURL = valueAsString(iniFile.Section("grafana_com"), "api_url", grafanaComURL+"/api")
+	cfg.GrafanaComSSOAPIToken = valueAsString(iniFile.Section("grafana_com"), "sso_api_token", "")
+	cfg.GrafanaComProxyAPIToken = valueAsString(iniFile.Section("grafana_com"), "proxy_token", "")
 }
 
 func readSessionAuthSettings(iniFile *ini.File, cfg *Cfg) error {

@@ -36,6 +36,13 @@ func TestApplyAuthnSettings(t *testing.T) {
 		_, err = users.NewKey("last_seen_update_interval", "30m")
 		require.NoError(t, err)
 
+		grafanaCom, err := settings.NewSection("grafana_com")
+		require.NoError(t, err)
+		_, err = grafanaCom.NewKey("url", "https://tenant-grafana.example")
+		require.NoError(t, err)
+		_, err = grafanaCom.NewKey("api_url", "https://tenant-grafana.example/api")
+		require.NoError(t, err)
+
 		cfg := NewCfg()
 		err = cfg.ApplyAuthnSettings(settings)
 		require.NoError(t, err)
@@ -47,7 +54,30 @@ func TestApplyAuthnSettings(t *testing.T) {
 		assert.Equal(t, 48*time.Hour, cfg.LoginMaxLifetime)
 		assert.Equal(t, 3, cfg.TokenRotationIntervalMinutes)
 		assert.Equal(t, 30*time.Minute, cfg.UserLastSeenUpdateInterval)
+		assert.Equal(t, "https://tenant-grafana.example", cfg.GrafanaComURL)
+		assert.Equal(t, "https://tenant-grafana.example/api", cfg.GrafanaComAPIURL)
 		assert.Equal(t, "secretKey.v1", cfg.Raw.Section("security").Key("encryption_provider").String())
+	})
+
+	t.Run("prefers the legacy Grafana.net URL", func(t *testing.T) {
+		settings := ini.Empty()
+
+		grafanaCom, err := settings.NewSection("grafana_com")
+		require.NoError(t, err)
+		_, err = grafanaCom.NewKey("url", "https://grafana-com.example")
+		require.NoError(t, err)
+
+		grafanaNet, err := settings.NewSection("grafana_net")
+		require.NoError(t, err)
+		_, err = grafanaNet.NewKey("url", "https://grafana-net.example")
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		err = cfg.ApplyAuthnSettings(settings)
+		require.NoError(t, err)
+
+		assert.Equal(t, "https://grafana-net.example", cfg.GrafanaComURL)
+		assert.Equal(t, "https://grafana-net.example/api", cfg.GrafanaComAPIURL)
 	})
 
 	t.Run("applies Grafana defaults", func(t *testing.T) {
@@ -66,6 +96,8 @@ func TestApplyAuthnSettings(t *testing.T) {
 		assert.Equal(t, 30*24*time.Hour, cfg.LoginMaxLifetime)
 		assert.Equal(t, 10, cfg.TokenRotationIntervalMinutes)
 		assert.Equal(t, 15*time.Minute, cfg.UserLastSeenUpdateInterval)
+		assert.Equal(t, "https://grafana.com", cfg.GrafanaComURL)
+		assert.Equal(t, "https://grafana.com/api", cfg.GrafanaComAPIURL)
 	})
 
 	t.Run("does not mutate compatibility globals", func(t *testing.T) {

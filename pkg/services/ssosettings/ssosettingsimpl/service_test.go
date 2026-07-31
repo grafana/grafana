@@ -25,8 +25,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	secretsFakes "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/services/ssosettings/database"
 	"github.com/grafana/grafana/pkg/services/ssosettings/models"
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingstests"
+	"github.com/grafana/grafana/pkg/services/ssosettings/strategies"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/setting/settingtest"
@@ -35,6 +37,25 @@ import (
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
+}
+
+func TestProvideReadOnlyService(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.Raw = ini.Empty()
+	secretsService := secretsFakes.NewMockService(t)
+
+	svc := ProvideReadOnlyService(cfg, &dbtest.FakeDB{}, secretsService)
+
+	require.Same(t, cfg, svc.cfg)
+	require.IsType(t, &database.SSOSettingsStore{}, svc.store)
+	require.Same(t, secretsService, svc.secrets)
+	require.IsType(t, &strategies.OAuthStrategy{}, svc.fbStrategies[0])
+	require.Equal(t, ssosettings.AllOAuthProviders, svc.providersList)
+	require.Empty(t, svc.configurableProviders)
+	require.NotNil(t, svc.reloadables)
+	require.NotNil(t, svc.cachedSSOSettings)
+	require.NotNil(t, svc.metrics)
+	require.ErrorIs(t, svc.Upsert(context.Background(), &models.SSOSettings{Provider: "github"}, nil), ssosettings.ErrNotConfigurable)
 }
 
 func TestService_GetForProvider(t *testing.T) {
