@@ -9,14 +9,21 @@ import { loadDashboards } from './utils';
 export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
   const [items, setItems] = useState<PlaylistItemUI[]>(playlistItems ?? []);
 
-  // Attach dashboards if any were missing
+  // Attach dashboards to any items still missing them. Merge the loaded dashboards onto the
+  // current state (rather than replacing it) so an in-flight load can't clobber an interval the
+  // user edited while it was running.
   useAsync(async () => {
-    for (const item of items) {
-      if (!item.dashboards) {
-        setItems(await loadDashboards(items));
-        return;
-      }
+    if (items.every((item) => item.dashboards)) {
+      return;
     }
+    const loaded = await loadDashboards(items);
+    setItems((current) => {
+      // Bail if the list changed shape while loading; indices would no longer line up.
+      if (current.length !== loaded.length) {
+        return current;
+      }
+      return current.map((item, i) => (item.dashboards ? item : { ...item, dashboards: loaded[i].dashboards }));
+    });
   }, [items]);
 
   const addByUID = useCallback(

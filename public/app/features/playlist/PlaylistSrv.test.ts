@@ -9,18 +9,21 @@ import { type DashboardQueryResult } from '../search/service/types';
 
 import { PlaylistSrv } from './PlaylistSrv';
 import { type PlaylistItemUI } from './types';
+import { loadDashboards } from './utils';
 
 jest.mock('./utils', () => ({
   ...jest.requireActual('./utils'),
-  loadDashboards: (items: PlaylistItemUI[]) => {
+  loadDashboards: jest.fn((items: PlaylistItemUI[]) => {
     return Promise.resolve(
       items.map((v) => ({
         ...v, // same item with dashboard URLs filled in
         dashboards: [{ url: `/url/to/${v.value}` } as unknown as DashboardQueryResult],
       }))
     );
-  },
+  }),
 }));
+
+const loadDashboardsMock = jest.mocked(loadDashboards);
 
 const mockPlaylist: Playlist = {
   apiVersion: 'playlist.grafana.app/v1',
@@ -214,6 +217,27 @@ describe('PlaylistSrv', () => {
       srv.stop();
       jest.useRealTimers();
     }
+  });
+
+  it('does not enter the playing state when the playlist has no items', async () => {
+    await srv.start({ ...mockPlaylist, spec: { ...mockPlaylist.spec!, items: [] } });
+
+    expect(srv.state.isPlaying).toBe(false);
+  });
+
+  it('does not enter the playing state when no dashboards resolve', async () => {
+    loadDashboardsMock.mockResolvedValueOnce(mockPlaylist.spec!.items.map((v) => ({ ...v, dashboards: [] })));
+
+    await srv.start(mockPlaylist);
+
+    expect(srv.state.isPlaying).toBe(false);
+  });
+
+  it('does not throw or enter the playing state when loading dashboards fails', async () => {
+    loadDashboardsMock.mockRejectedValueOnce(new Error('boom'));
+
+    await expect(srv.start(mockPlaylist)).resolves.toBeUndefined();
+    expect(srv.state.isPlaying).toBe(false);
   });
 
   it('should replace playlist start page in history when starting playlist', async () => {
