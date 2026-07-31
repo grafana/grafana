@@ -150,6 +150,7 @@ export default function CreateNewButton({
                     })
               }
               url={buildUrl('/dashboards?templateDashboards=true&source=createNewButton', parentFolder?.uid)}
+              testId={selectors.components.CreateNewButton.newTemplateDashboardLink}
             />
           )}
         </Menu.Group>

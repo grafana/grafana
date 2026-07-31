@@ -94,6 +94,5 @@ module.exports = {
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
     '<rootDir>/public/app/plugins/datasource/influxdb',
     '<rootDir>/public/app/plugins/datasource/graphite',
-    '<rootDir>/public/app/plugins/datasource/mysql',
   ],
 };

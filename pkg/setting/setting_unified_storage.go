@@ -173,6 +173,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MigrationChunkMaxBytes = section.Key("migration_chunk_max_bytes").MustInt64(256 * 1024 * 1024)
 	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
 	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
+	cfg.UnifiedStorageAuthzExemptionEnabled = section.Key("authz_exemption_enabled").MustBool(false)
+	cfg.UnifiedStorageAuthzExemptResources = parseCommaSeparatedList(section.Key("authz_exempt_resources").String())
 	cfg.SearchInjectFailuresPercent = section.Key("search_inject_failures_percent").MustInt(0)
 	if cfg.SearchInjectFailuresPercent < 0 {
 		cfg.SearchInjectFailuresPercent = 0
@@ -185,6 +187,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.SearchPostRankAuthzOverFetchFactor = section.Key("search_post_rank_authz_over_fetch_factor").MustInt(0)
 	cfg.SearchPostRankAuthzMaxWindow = section.Key("search_post_rank_authz_max_window").MustInt(0)
 	cfg.SearchPostRankAuthzMaxCandidates = section.Key("search_post_rank_authz_max_candidates").MustInt(0)
+	cfg.SearchPostRankAuthzFacetSampleSize = section.Key("search_post_rank_authz_facet_sample_size").MustInt(0)
 	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
 	cfg.VectorAllowedInternalCollections = section.Key("vector_allowed_internal_collections").Strings(",")
 	if len(cfg.VectorAllowedInternalCollections) == 0 {

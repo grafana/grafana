@@ -693,7 +693,9 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage map[string]UnifiedStorageConfig
+	UnifiedStorage                      map[string]UnifiedStorageConfig
+	UnifiedStorageAuthzExemptionEnabled bool
+	UnifiedStorageAuthzExemptResources  []string
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
@@ -768,6 +770,10 @@ type Cfg struct {
 	SearchPostRankAuthzOverFetchFactor int
 	SearchPostRankAuthzMaxWindow       int
 	SearchPostRankAuthzMaxCandidates   int
+	// SearchPostRankAuthzFacetSampleSize bounds the candidate budget when
+	// aggregating facets on the post-filter path. Zero falls back to the
+	// default in search.PostRankAuthzConfig.effective().
+	SearchPostRankAuthzFacetSampleSize int
 
 	// Vector storage
 	EnableVectorBackend bool

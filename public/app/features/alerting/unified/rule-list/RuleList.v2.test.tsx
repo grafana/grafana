@@ -3,6 +3,7 @@ import { render, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { OrgRole } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -58,7 +59,7 @@ const ui = {
     grouped: byRole('radio', { name: /grouped/i }),
     list: byRole('radio', { name: /list/i }),
   },
-  searchInput: byTestId('search-query-input'),
+  searchInput: byTestId(selectors.pages.Alerting.searchInput),
 };
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));

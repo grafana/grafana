@@ -6,6 +6,7 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Input, SecretInput, Field, Space, Box } from '@grafana/ui';
 
 import {
@@ -59,6 +60,7 @@ export const InfluxSQLDBConnection = (props: Props) => {
       <Field label="Token" required noMargin invalid={!!fieldErrors.token} error={fieldErrors.token}>
         <SecretInput
           id="token"
+          data-testid={selectors.components.DataSource.InfluxDB.configPage.tokenInput}
           isConfigured={tokenConfigured}
           onBlur={trackInfluxDBConfigV2SQLDBDetailsTokenInputField}
           onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}

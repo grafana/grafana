@@ -1,3 +1,4 @@
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button, Stack } from '@grafana/ui';
 
@@ -54,7 +55,7 @@ export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled, disab
   return (
     <Stack direction="row" gap={1}>
       {canSkip && (
-        <Button variant="secondary" onClick={handleSkip} data-testid="wizard-skip-button">
+        <Button variant="secondary" onClick={handleSkip} data-testid={selectors.pages.Alerting.ImportToGMA.skipButton}>
           {skipLabel || t('alerting.import-to-gma.wizard.skip', 'Skip')}
         </Button>
       )}
@@ -64,7 +65,7 @@ export const NextButton = ({ onNext, canSkip, skipLabel, onSkip, disabled, disab
         onClick={handleClick}
         disabled={disabled}
         tooltip={disabled && disabledTooltip ? disabledTooltip : undefined}
-        data-testid="wizard-next-button"
+        data-testid={selectors.pages.Alerting.ImportToGMA.nextButton}
       >
         {nextStep.name}
       </Button>

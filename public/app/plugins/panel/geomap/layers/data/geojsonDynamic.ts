@@ -19,7 +19,6 @@ import { checkFeatureMatchesStyleRule } from '../../utils/checkFeatureMatchesSty
 import { getLayerPropertyInfo } from '../../utils/getFeatures';
 import { getStyleDimension, getPublicGeoJSONFiles } from '../../utils/utils';
 
-
 export interface DynamicGeoJSONMapperConfig {
   // URL for a geojson file
   src?: string;
@@ -104,7 +103,6 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
     styles.push({
       state: s,
     });
-
 
     const style = await getStyleConfigState(config.style);
     const idToIdx = new Map<string, number>();
@@ -219,7 +217,7 @@ export const dynamicGeoJSONLayer: MapLayerRegistryItem<DynamicGeoJSONMapperConfi
               layerInfo,
             },
             defaultValue: defaultOptions.style,
-          })
+          });
       },
     };
   },

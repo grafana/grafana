@@ -139,7 +139,6 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
     // Crosshair sharing subscriptions
     const subscriptions = new Subscription();
 
-
     return {
       init: () => layer,
       dispose: () => subscriptions.unsubscribe(),

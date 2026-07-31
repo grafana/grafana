@@ -934,6 +934,23 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 		require.NotNil(t, errResult)
 		assert.Contains(t, errResult.Message, `field "labels.region" does not support faceting`)
 	})
+
+	// Both the bleve term trimmer and the post-rank aggregator use the limit as
+	// a slice bound, so a negative one has to be turned away before either runs.
+	t.Run("rejects a negative facet limit", func(t *testing.T) {
+		for _, postRankAuthz := range []bool{false, true} {
+			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{},
+				Limit:   10,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: -1},
+				},
+			}, nil, postRankAuthz)
+			require.Nil(t, searchReq)
+			require.NotNil(t, errResult)
+			assert.Contains(t, errResult.Message, `facet "tagValues" has a negative limit`)
+		}
+	})
 }
 
 var _ authlib.AccessClient = (*StubAccessClient)(nil)
@@ -1149,6 +1166,22 @@ func withRequiredIndexFeatures(features ...resource.IndexFeature) setupOption {
 	return func(options *BleveOptions) {
 		options.RequiredIndexFeatures = features
 	}
+}
+
+func withPostRankAuthzEnabled() setupOption {
+	return func(options *BleveOptions) {
+		options.PostRankAuthzEnabled = true
+	}
+}
+
+// TestRequiredIndexFeaturesFollowPostRankAuthz covers the gate that keeps the
+// stored facet mapping from rebuilding indexes that serve facets from bleve.
+func TestRequiredIndexFeaturesFollowPostRankAuthz(t *testing.T) {
+	nativeFacets, _ := setupBleveBackend(t)
+	require.NotContains(t, nativeFacets.requiredFeatures, resource.IndexFeatureStoredFacets)
+
+	postRank, _ := setupBleveBackend(t, withPostRankAuthzEnabled())
+	require.Contains(t, postRank.requiredFeatures, resource.IndexFeatureStoredFacets)
 }
 
 // TestBuildIndexReuseChecksRequiredFeatures covers an on-disk index built before
@@ -2616,11 +2649,11 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 	}
 }
 
-// An index built before the marker was mapped drops it silently, which would
+// An index built before these fields were mapped drops them silently, which would
 // leave a deleted document looking live. BulkIndex removes such a document
 // instead, so trash is missing from search rather than leaking into it, until the
 // index is rebuilt.
-func TestBulkIndexRemovesMarkedDocumentsWhenTheMarkerIsNotMapped(t *testing.T) {
+func TestBulkIndexRemovesMarkedDocumentsWhenTrashFieldsAreNotMapped(t *testing.T) {
 	mapper, err := GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
 	raw, err := newBleveIndex("", mapper, time.Now(), buildVersion, nil, "")
@@ -2647,7 +2680,16 @@ func TestBulkIndexRemovesMarkedDocumentsWhenTheMarkerIsNotMapped(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, uint64(0), count, "marked document should be removed, not indexed as live")
 
-	// An index that maps the marker keeps the document.
+	// An index mapping the markers but not the trash fields is no better: the
+	// document would be served without a deleter and in arbitrary order. The
+	// producer refuses such an index too, so both writers agree.
+	partial := &bleveIndex{index: raw, features: []resource.IndexFeature{resource.IndexFeatureDeletedMarker}, logger: log.NewNopLogger()}
+	require.NoError(t, partial.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(new(true))}}))
+	count, err = raw.DocCount()
+	require.NoError(t, err)
+	assert.Equal(t, uint64(0), count, "a partially mapped index should not keep the document either")
+
+	// An index that maps everything a deleted document needs keeps it.
 	current := &bleveIndex{index: raw, features: resource.CurrentIndexFeatures(), logger: log.NewNopLogger()}
 	require.NoError(t, current.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(new(true))}}))
 	count, err = raw.DocCount()
