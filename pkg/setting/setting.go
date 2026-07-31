@@ -861,6 +861,9 @@ type Cfg struct {
 	EventPruningInterval time.Duration
 	SearchLookback       time.Duration
 	NotifierSettleDelay  time.Duration
+	// PollingInterval is the interval at which the SQL backend polls the
+	// database for new watch events. Default: 100ms.
+	PollingInterval time.Duration
 	// ResourceVersionBatchTransactionTimeout bounds one batched WithTx in the
 	// resource version manager (all WriteEventFunc calls + RV stamp updates).
 	ResourceVersionBatchTransactionTimeout time.Duration
