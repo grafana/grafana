@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Badge, Icon, Stack, useStyles2 } from '@grafana/ui';
@@ -32,7 +33,12 @@ function PluginListItemComponent({ plugin, pathName }: Props) {
     }
   };
   return (
-    <a href={`${pathName}/${plugin.id}`} className={cx(styles.container)} onClick={reportUserClickInteraction}>
+    <a
+      href={`${pathName}/${plugin.id}`}
+      className={cx(styles.container)}
+      onClick={reportUserClickInteraction}
+      data-testid={selectors.pages.PluginsList.listItem(plugin.id)}
+    >
       <PluginLogo src={plugin.info.logos.small} className={styles.pluginLogo} height={LOGO_SIZE} alt="" />
       <h2 className={cx(styles.name, 'plugin-name')}>{plugin.name}</h2>
       <div className={cx(styles.content, 'plugin-content')}>

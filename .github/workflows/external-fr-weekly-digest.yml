@@ -90,7 +90,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Get vault secrets
         id: vault-secrets
@@ -116,7 +116,7 @@ jobs:
           ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
           REPO: ${{ github.repository }}
           TEAM_FILTER: ${{ inputs.team_filter || '' }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/fr-digest.mts fetch
+        run: node ./community-triage/.github/workflows/scripts/fr-digest.mts fetch
 
       - name: Build analysis container
         if: steps.fetch-frs.outputs.has_frs == 'true'
@@ -224,4 +224,4 @@ jobs:
           echo "Analysis file: ${ANALYSIS_FILE:-none}"
           echo "::endgroup::"
 
-          node --experimental-strip-types ./community-triage/.github/workflows/scripts/fr-digest.mts process
+          node ./community-triage/.github/workflows/scripts/fr-digest.mts process

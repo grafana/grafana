@@ -2,6 +2,7 @@ import { render as RTLRender, screen } from '@testing-library/react';
 import * as React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
+import { config } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { VERSIONS_FETCH_LIMIT } from 'app/features/dashboard/types/revisionModels';
@@ -255,7 +256,12 @@ describe('VersionsEditView', () => {
   });
 
   describe('Provisioned dashboards', () => {
+    beforeEach(() => {
+      config.featureToggles.provisioning = true;
+    });
+
     afterEach(() => {
+      config.featureToggles.provisioning = false;
       jest.clearAllMocks();
     });
 

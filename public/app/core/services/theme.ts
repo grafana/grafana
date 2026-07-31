@@ -1,4 +1,4 @@
-import { generatedAPI as preferencesAPI } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { generatedAPI as preferencesAPI } from '@grafana/api-clients/rtkq/preferences/v1';
 import { getThemeById } from '@grafana/data/internal';
 import { config, ThemeChangedEvent } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';

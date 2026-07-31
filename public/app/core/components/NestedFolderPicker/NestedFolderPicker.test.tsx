@@ -311,8 +311,14 @@ describe('NestedFolderPicker', () => {
       expect(teamFolders.getAttribute('aria-level')).toBe(topLevelFolder.getAttribute('aria-level'));
     });
 
-    it('does auto-select a team folder when root is selected', () => {
+    it('does not auto-select a team folder when root is selected and shown', () => {
       render(<NestedFolderPicker value="" onChange={mockOnChange} />);
+
+      expect(mockOnChange).not.toHaveBeenCalled();
+    });
+
+    it('does auto-select a team folder when root is selected but hidden', () => {
+      render(<NestedFolderPicker value="" showRootFolder={false} onChange={mockOnChange} />);
 
       expect(mockOnChange).toHaveBeenCalled();
     });
