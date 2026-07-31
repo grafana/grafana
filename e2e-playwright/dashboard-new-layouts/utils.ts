@@ -185,7 +185,7 @@ export async function importTestDashboard(
   await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
   if (options.requiresDataSourceSelection) {
     await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
-    await page.locator('div[data-testid="data-source-card"]').first().click();
+    await page.locator('div[data-testid^="data-testid data source card"]').first().click();
   }
   await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
   const undockMenuButton = page.locator('[aria-label="Undock menu"]');
@@ -371,11 +371,6 @@ export function getRowByTitle(dashboardPage: DashboardPage, selectors: E2ESelect
 
 export function getRowWrapper(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
   return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper(rowTitle)).first();
-}
-
-export async function addNewPanelFromSidebar(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.addButton).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
 }
 
 export async function fillVariableValue(

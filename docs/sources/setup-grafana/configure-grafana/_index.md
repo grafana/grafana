@@ -900,6 +900,10 @@ The file may contain either a classic dashboard JSON or a Kubernetes-format dash
 On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 {{< /admonition >}}
 
+#### `default_preload`
+
+Instance-wide default for panel preloading, applied only to dashboards that do not explicitly set the `preload` property in their JSON. When `true`, all panels start loading as soon as the dashboard loads instead of lazy loading as they scroll into view. An explicit `preload` value in the dashboard JSON always takes precedence over this default. Default is `false`.
+
 ### `[dashboard_cleanup]`
 
 Settings related to cleaning up associated dashboards information if the dashboard was deleted through /apis.
@@ -2869,6 +2873,14 @@ Whether image rendering is allowed for dashboard previews. Requires the image re
 #### `allow_insecure`
 
 Whether to allow `http://` repository URLs together with a configured token. Because this sends the token in cleartext on every Git operation, it's rejected by default. Intended for local and development use only. It's also implicitly allowed when `app_mode = development`. Default is `false`.
+
+#### `allowed_git_urls`
+
+While public addresses are always allowed, to prevent server-side request forgery (SSRF), repository URLs that resolve to loopback, private (RFC 1918), link-local, or unspecified addresses are rejected by default.
+
+If you want to allow an internal or self-hosted Git server, such as an on-premises GitHub Enterprise host, add an entry here. Each entry can be a hostname, `host:port`, a full URL (only the host is used), a literal IP address, or a CIDR range.
+
+This field is empty by default.
 
 #### `min_sync_interval`
 

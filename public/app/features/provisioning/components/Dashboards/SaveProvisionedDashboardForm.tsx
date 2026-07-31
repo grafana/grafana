@@ -3,6 +3,7 @@ import { Controller, useForm, FormProvider } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
@@ -480,6 +481,7 @@ export function SaveProvisionedDashboardForm({
               >
                 <Input
                   id="dashboard-title"
+                  data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput}
                   {...register('title', {
                     required: t(
                       'dashboard-scene.save-provisioned-dashboard-form.title-required',
@@ -628,6 +630,7 @@ export function SaveProvisionedDashboardForm({
             <Button
               variant="primary"
               type="submit"
+              data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
               disabled={
                 request.isLoading || readOnly || !isDirtyState || isSubmitting || isValidating || isCreatingFolder
               }

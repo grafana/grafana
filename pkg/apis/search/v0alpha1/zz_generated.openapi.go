@@ -460,7 +460,7 @@ func schema_pkg_apis_search_v0alpha1_SortField(ref common.ReferenceCallback) com
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "SortField names a field to sort by and a direction (\"asc\" or \"desc\"). V1 allows sorting only on scalar string fields that declare the sort capability.",
+				Description: "SortField names a field to sort by and a direction (\"asc\" or \"desc\"). V1 allows sorting only on scalar string and numeric fields that declare the sort capability.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"field": {

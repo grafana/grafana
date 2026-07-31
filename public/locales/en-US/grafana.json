@@ -1614,8 +1614,10 @@
       "additional-settings": "Additional settings",
       "alert-rules": "Alert rules",
       "autosync-active-block": {
-        "description": "Grafana is continuously syncing alert configuration from a data source, so the configuration is a read-only mirror and cannot be imported into. To import, disable auto-sync in Alerting settings first.",
+        "description": "Grafana is continuously syncing alert configuration from a data source, so notification resources are a read-only mirror and cannot be imported into. You can still import alert rules.",
+        "disable-sync": "To import notification resources, disable auto-sync in Alerting settings first.",
         "go-to-settings": "Go to Alerting settings",
+        "import-rules": "Import alert rules",
         "title": "Auto-sync is enabled"
       },
       "autosync-review": {
@@ -3287,8 +3289,21 @@
         "save-success": "Mimir Alertmanager auto-sync enabled",
         "title": "Auto-sync configuration"
       },
+      "import": {
+        "empty-body": "Import an Alertmanager configuration to stage it here as a safe, reversible copy. Review what it contains, then promote it into your live Grafana Alertmanager when you're ready.",
+        "empty-cta": "Import Alertmanager configuration",
+        "empty-learn-more": "Learn more about importing configurations",
+        "empty-title": "No configuration imported yet",
+        "error-body": "The request to the Alerting API failed. Check your connection and try again.",
+        "error-retry": "Retry",
+        "error-title": "Couldn't load imported configurations",
+        "loading": "Loading imported configurations…",
+        "staged-description": "A read-only, reversible copy of an imported Alertmanager config. Promote it to merge into your live config, or revert to remove it.",
+        "staged-title": "Staged configuration"
+      },
       "tabs": {
-        "alert-managers": "Alert managers"
+        "alert-managers": "Alert managers",
+        "import": "Import"
       }
     },
     "settings-content": {
@@ -5360,17 +5375,6 @@
     }
   },
   "dashboard": {
-    "actions": {
-      "open-settings": "View all settings"
-    },
-    "add": {
-      "new-panel": {
-        "button": "Add new panel button",
-        "description": "Drag or click to add a panel",
-        "title": "Panel"
-      },
-      "pane-header": "Add"
-    },
     "add-menu": {
       "import": "Import from library",
       "paste-panel": "Paste panel",
@@ -5412,12 +5416,6 @@
       }
     },
     "canvas-actions": {
-      "add": {
-        "paste": {
-          "description": "Click or drag to paste panel",
-          "title": "Paste panel"
-        }
-      },
       "add-panel": "Add panel",
       "disabled-child-contains-tabs": "Cannot change to tabs because a row already contains tabs",
       "disabled-nested-grouping": "Grouping is limited to {{maxDepth}} levels",
@@ -5432,14 +5430,6 @@
       "paste-tab": "Paste tab",
       "ungroup-rows": "Ungroup rows",
       "ungroup-tabs": "Ungroup tabs"
-    },
-    "code-pane": {
-      "collapse": "Collapse editor",
-      "copy-as-resource": "Copy as resource",
-      "copy-as-resource-tooltip": "Copy dashboard as resource (with apiVersion, kind and metadata) for use in provisioning files",
-      "expand": "Expand editor",
-      "header": "Edit as code",
-      "modal-title": "Edit dashboard as code"
     },
     "conditional-rendering": {
       "conditions": {
@@ -5607,9 +5597,6 @@
         "title": "Row options"
       }
     },
-    "description": {
-      "action": "Change dashboard description"
-    },
     "diagnostics": {
       "actions": "Diagnostics actions",
       "cancel-button": "Cancel",
@@ -5639,6 +5626,8 @@
     "edit-actions": {
       "add": "Add {{typeName}}",
       "add-conditional-rule": "Add {{ruleDescription}} rule",
+      "dashboard-description": "Change dashboard description",
+      "dashboard-title": "Change dashboard title",
       "duplicate-panel": "Duplicate panel",
       "edit-query-result-rule": "Change query result rule",
       "edit-template-variable-rule": "Change template variable rule",
@@ -5658,7 +5647,12 @@
       "switch-layout": "Switch layout",
       "switch-layout-row": "Switch layout",
       "switch-layout-tab": "Switch layout",
-      "tab-title": "Change tab title"
+      "tab-title": "Change tab title",
+      "variable-description": "Change variable description",
+      "variable-hide": "Change variable hide option",
+      "variable-label": "Change variable label",
+      "variable-name": "Change variable name",
+      "variable-type": "Change variable type"
     },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
@@ -5878,12 +5872,7 @@
     "layout": {
       "cancel": "Cancel",
       "common": {
-        "copy": "Copy",
-        "copy-tooltip": "Copy",
-        "delete": "Delete",
-        "duplicate": "Duplicate",
-        "layout": "Layout",
-        "paste": "Paste"
+        "layout": "Layout"
       },
       "continue": "Continue",
       "panel": {
@@ -5908,7 +5897,6 @@
     },
     "new-panel": {
       "aria-label": "Unconfigured panel. Tab to see configuration options.",
-      "configure-button": "Edit visualization",
       "configure-visualization": "Configure visualization",
       "empty-state-message": "Run a query to visualize it here or go to all visualizations to add other panel types",
       "menu-use-library-panel": "Use library panel",
@@ -5933,10 +5921,6 @@
         }
       }
     },
-    "options": {
-      "description": "Description",
-      "title-option": "Title"
-    },
     "options-pane-category": {
       "aria-label-collapse": "Collapse {{title}} category",
       "aria-label-expand": "Expand {{title}} category"
@@ -5946,17 +5930,6 @@
       "Recent options-title-recent-options": "Recent options",
       "title-matched_one": "Matched {{count}}/{{totalCount}} options",
       "title-matched_other": "Matched {{count}}/{{totalCount}} options"
-    },
-    "outline": {
-      "pane-header": "Content outline",
-      "repeated-item": "Repeat",
-      "search": {
-        "no-results": "No results found for your query"
-      },
-      "tree-item": {
-        "empty": "(empty)",
-        "no-title": "<no title>"
-      }
     },
     "override-category-title": {
       "aria-label-remove-override": "Remove override",
@@ -5990,9 +5963,6 @@
     },
     "panel-not-supported": {
       "go-back-to-queries": "Go back to Queries"
-    },
-    "predefined-variables-pane": {
-      "title": "Predefined variables"
     },
     "public-dashboard-not-available": {
       "does-not-exist": "The dashboard you are trying to access does not exist",
@@ -6128,13 +6098,6 @@
       "save-json-to-file": "Save JSON to file",
       "see-docs": "See <2>documentation</2> for more information about provisioning."
     },
-    "schema-editor": {
-      "apply-button": "Apply changes",
-      "apply-button-disabled-tooltip": "Fix validation errors before applying changes",
-      "apply-button-disabled-tooltip-yaml": "Document has validation errors. Switch to JSON to see inline error details.",
-      "apply-error-title": "Failed to apply changes",
-      "undo-title": "Schema edit"
-    },
     "search-panel": {
       "no-match": "No panels matching"
     },
@@ -6143,8 +6106,42 @@
     },
     "sidebar": {
       "add": {
+        "annotation-query": {
+          "description": "Add event data to graphs",
+          "label": "Annotation query"
+        },
+        "dashboard-controls": "Dashboard controls",
+        "filters": {
+          "label": "Filter and Group by"
+        },
+        "group-layouts": "Group layouts",
+        "link": {
+          "label": "Link",
+          "tooltip": "Add link to another dashboard or external site"
+        },
+        "new-panel": {
+          "button": "Add new panel button",
+          "description": "Drag or click to add a panel",
+          "title": "Panel"
+        },
+        "pane-header": "Add",
+        "paste-panel": {
+          "description": "Click or drag to paste panel",
+          "title": "Paste panel"
+        },
+        "row": {
+          "add-label": "Add row",
+          "group-label": "Group into rows"
+        },
+        "tab": {
+          "add-label": "Add tab",
+          "group-label": "Group into tabs"
+        },
         "title": "Add",
-        "tooltip": "Add new element"
+        "tooltip": "Add new element",
+        "variable": {
+          "label": "Variable"
+        }
       },
       "annotation": {
         "change-data-source": "Change annotation data source",
@@ -6180,16 +6177,52 @@
       },
       "annotations": {
         "add-annotation": "Add annotation",
+        "add-annotation-query": "Add annotation query",
+        "name-builtin": "{{annoName}} (Built-in)",
+        "name-disabled": "(Disabled) {{annoName}}",
         "reorder": "Drag to reorder",
-        "select-annotation": "Select"
+        "reorder-description": "Reorder annotations list",
+        "select-annotation": "Select",
+        "title-above-dashboard-count_one": "Above dashboard ({{count}})",
+        "title-above-dashboard-count_other": "Above dashboard ({{count}})",
+        "title-controls-menu-count_one": "Controls menu ({{count}})",
+        "title-controls-menu-count_other": "Controls menu ({{count}})",
+        "title-hidden-count_one": "Hidden ({{count}})",
+        "title-hidden-count_other": "Hidden ({{count}})"
       },
       "dashboard-options": {
+        "annotations": "Annotations",
+        "description": "Description",
+        "filters": "Filters",
+        "links": "Links",
+        "open-settings": "View all settings",
         "title": "Options",
-        "tooltip": "Dashboard options"
+        "title-option": "Title",
+        "tooltip": "Dashboard options",
+        "variables": "Variables"
       },
+      "drag-to-reorder": "Drag to reorder",
       "edit-schema": {
+        "apply-button": "Apply changes",
+        "apply-button-disabled-tooltip": "Fix validation errors before applying changes",
+        "apply-button-disabled-tooltip-yaml": "Document has validation errors. Switch to JSON to see inline error details.",
+        "apply-error-title": "Failed to apply changes",
+        "collapse": "Collapse editor",
+        "copy-as-resource": "Copy as resource",
+        "copy-as-resource-tooltip": "Copy dashboard as resource (with apiVersion, kind and metadata) for use in provisioning files",
+        "expand": "Expand editor",
+        "modal-title": "Edit dashboard as code",
+        "pane-header": "Edit as code",
         "title": "Code",
-        "tooltip": "Edit as code"
+        "tooltip": "Edit as code",
+        "undo-title": "Schema edit"
+      },
+      "element-actions": {
+        "copy": "Copy",
+        "copy-tooltip": "Copy",
+        "delete": "Delete",
+        "duplicate": "Duplicate",
+        "paste": "Paste"
       },
       "elements": {
         "annotation": "Annotation",
@@ -6198,6 +6231,7 @@
         "element": "Element",
         "filter": "Filter",
         "filters-set": "Filters",
+        "link": "Link",
         "link-set": "Links",
         "local-variable": "Local variable",
         "multiple-elements": "Multiple elements",
@@ -6218,19 +6252,52 @@
       "export": {
         "title": "Export"
       },
-      "filters": "Filters",
+      "feedback-title": "Give feedback on the new dashboard editing experience",
+      "filters": {
+        "add-filter": "Add filter",
+        "reorder-description": "Reorder filters list",
+        "title": "Filters",
+        "title-above-dashboard_one": "Above dashboard ({{count}})",
+        "title-above-dashboard_other": "Above dashboard ({{count}})",
+        "title-controls-menu_one": "Controls menu ({{count}})",
+        "title-controls-menu_other": "Controls menu ({{count}})",
+        "title-hidden_one": "Hidden ({{count}})",
+        "title-hidden_other": "Hidden ({{count}})",
+        "tooltip": "Filters overview"
+      },
       "links": {
         "add-link": "Add link",
+        "new-link": "New link",
         "reorder": "Drag to reorder",
+        "reorder-description": "Reorder links list",
         "select-link": "Select",
+        "title-above-dashboard_one": "Above dashboard ({{count}})",
+        "title-above-dashboard_other": "Above dashboard ({{count}})",
+        "title-controls-menu_one": "Controls menu ({{count}})",
+        "title-controls-menu_other": "Controls menu ({{count}})",
         "untitled": "Untitled link"
       },
-      "open": "Filters overview",
       "outline": {
+        "pane-header": "Content outline",
+        "repeated-item": "Repeat",
+        "search": {
+          "no-results": "No results found for your query"
+        },
         "title": "Outline",
-        "tooltip": "Content outline"
+        "tooltip": "Content outline",
+        "tree-item": {
+          "empty": "(empty)",
+          "no-title": "<no title>"
+        }
       },
       "predefined-variables": {
+        "all": "All",
+        "description": "This dashboard receives global and folder-scoped variables by default. Choose which ones to keep.",
+        "folder": "Folder",
+        "global": "Global",
+        "label": "Predefined variables",
+        "none": "None",
+        "pane-header": "Predefined variables",
         "title": "Predefined variables",
         "tooltip": "Choose which global and folder variables this dashboard receives"
       },
@@ -6247,7 +6314,9 @@
       "section-variables": {
         "title": "Variables"
       },
+      "select": "Select",
       "snapshot": {
+        "title": "Source",
         "tooltip": "Open original dashboard"
       },
       "undo": "Undo",
@@ -6268,6 +6337,15 @@
         },
         "description": "Description",
         "description-placeholder": "Descriptive text",
+        "display": "Display",
+        "display-options": {
+          "controls-menu": "Controls menu",
+          "controls-menu-description": "Visible when the controls menu is open",
+          "hidden": "Hidden",
+          "hidden-description": "Only visible in edit mode",
+          "label-hidden": "{{placement}}, label hidden",
+          "label-hidden-description": "{{placement}}, but without showing the name of variable"
+        },
         "label": "Label",
         "label-description": "Optional display name",
         "name": "Name",
@@ -6294,9 +6372,17 @@
         "add-variable": "Add variable",
         "change-type": "Change variable type",
         "reorder": "Drag to reorder",
+        "reorder-description": "Reorder variables list",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
-        "select-variable": "Select"
+        "select-variable": "Select",
+        "title-controls-menu_one": "Controls menu ({{count}})",
+        "title-controls-menu_other": "Controls menu ({{count}})",
+        "title-hidden_one": "Hidden ({{count}})",
+        "title-hidden_other": "Hidden ({{count}})",
+        "title-top-placement_one": "{{placement}} ({{count}})",
+        "title-top-placement_other": "{{placement}} ({{count}})",
+        "top-placement-default": "Above dashboard"
       },
       "view-panel": {
         "disabled": "Disabled",
@@ -6307,6 +6393,18 @@
         "pane-header": "View panel",
         "quick-toggles": "Quick toggles",
         "title": "View panel controls"
+      },
+      "viz-panel": {
+        "configure-button": "Edit visualization",
+        "delete-panel-text": "Deleting this panel will also remove all queries. Are you sure you want to continue?",
+        "delete-panel-title": "Delete panel?",
+        "delete-panel-yes": "Delete",
+        "options": {
+          "configure-button-tooltip": "Edit queries and visualization options",
+          "description": "Description",
+          "title-option": "Title",
+          "transparent-background": "Transparent background"
+        }
       }
     },
     "source-link": {
@@ -6363,9 +6461,6 @@
       "tab-warning": {
         "title-not-unique": "This title is not unique"
       }
-    },
-    "title": {
-      "action": "Change dashboard title"
     },
     "toolbar": {
       "add": "Add",
@@ -6457,9 +6552,6 @@
       "save-library-panel-short": "Save",
       "settings": "Dashboard settings",
       "share-button": "Share",
-      "snapshot": {
-        "title": "Source"
-      },
       "star-add-error": "Failed to add to starred",
       "star-added": "Added to starred",
       "star-remove-error": "Failed to remove from starred",
@@ -6530,22 +6622,7 @@
       "tags-expected-strings": "tags expected array of strings"
     },
     "variable": {
-      "description": {
-        "action": "Change variable description"
-      },
-      "description-tooltip": "Variable description",
-      "hide": {
-        "action": "Change variable hide option"
-      },
-      "label": {
-        "action": "Change variable label"
-      },
-      "name": {
-        "action": "Change variable name"
-      },
-      "type": {
-        "action": "Change variable type"
-      }
+      "description-tooltip": "Variable description"
     },
     "view-json-modal": {
       "title-json": "JSON"
@@ -6553,17 +6630,6 @@
     "view-panel": {
       "back-to-dashboard": "Back to dashboard",
       "not-found": "Panel not found"
-    },
-    "viz-panel": {
-      "delete-panel-text": "Deleting this panel will also remove all queries. Are you sure you want to continue?",
-      "delete-panel-title": "Delete panel?",
-      "delete-panel-yes": "Delete",
-      "options": {
-        "configure-button-tooltip": "Edit queries and visualization options",
-        "description": "Description",
-        "title-option": "Title",
-        "transparent-background": "Transparent background"
-      }
     }
   },
   "dashboard-import": {
@@ -6698,25 +6764,6 @@
       "label-use-static-key-dimensions": "Use static key dimensions",
       "name-enable-group-by": "Enable group by"
     },
-    "add-filters": {
-      "label": "Filter and Group by"
-    },
-    "add-link": {
-      "inline-instance-name": "New link",
-      "label-link": "Link",
-      "tooltip": "Add link to another dashboard or external site"
-    },
-    "add-new-edit-pane": {
-      "group-layouts": "Group layouts"
-    },
-    "add-row": {
-      "add-label": "Add row",
-      "group-label": "Group into rows"
-    },
-    "add-tab": {
-      "add-label": "Add tab",
-      "group-label": "Group into tabs"
-    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Could not navigate to the selected dashboard. Please try again.",
@@ -6745,19 +6792,12 @@
         "new-panel": "New panel"
       }
     },
-    "add-variable": {
-      "label-variable": "Variable"
-    },
     "adhoc-origin-filters-controller": {
       "input-placeholder": "Add a default filter..."
     },
     "adhoc-origin-filters-editor": {
       "description": "Filters that are pre-selected by default.",
       "label": "Default filters"
-    },
-    "annotation-control": {
-      "description-add-event-data-to-graphs": "Add event data to graphs",
-      "label-annotation-query": "Annotation query"
     },
     "annotation-edit-actions": {
       "description": {
@@ -6774,11 +6814,6 @@
       "delete-title": "Delete annotation query"
     },
     "annotation-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-annotations-list": "Reorder annotations list"
-        }
-      },
       "render-list": {
         "aria-label-annotation": "Annotation"
       }
@@ -6824,15 +6859,6 @@
       "query-name": "Query name",
       "tooltip-move-down": "Move down",
       "tooltip-move-up": "Move up"
-    },
-    "annotations-list": {
-      "drag-end": {
-        "description": "Reorder annotations list"
-      }
-    },
-    "annotations-section": {
-      "name-builtin": "{{annoName}} (Built-in)",
-      "name-disabled": "(Disabled) {{annoName}}"
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\\\', or ']'.",
@@ -6887,15 +6913,6 @@
       "name-json-values": "JSON",
       "selection-options": "Selection options"
     },
-    "dashboard-annotations-list": {
-      "add-annotation-query": "Add annotation query",
-      "title-above-dashboard-count_one": "Above dashboard ({{count}})",
-      "title-above-dashboard-count_other": "Above dashboard ({{count}})",
-      "title-controls-menu-count_one": "Controls menu ({{count}})",
-      "title-controls-menu-count_other": "Controls menu ({{count}})",
-      "title-hidden-count_one": "Hidden ({{count}})",
-      "title-hidden-count_other": "Hidden ({{count}})"
-    },
     "dashboard-link-form": {
       "back-to-list": "Back to list",
       "label-icon": "Icon",
@@ -6926,9 +6943,6 @@
       "tooltip-move-link-down": "Move link down",
       "tooltip-move-link-up": "Move link up",
       "type": "Type"
-    },
-    "dashboard-links-list": {
-      "add-link": "Add link"
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Error loading dashboard"
@@ -6982,12 +6996,6 @@
         "title-moved": "Looking for variable settings?"
       }
     },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Dashboard controls"
-    },
-    "dashboard-sidebar-renderer": {
-      "title-feedback-dashboard-editing-experience": "Give feedback on the new dashboard editing experience"
-    },
     "dashboard-template-edit-banner": {
       "body": "Edits made will update this template. <2>If you wish to use this template to create a dashboard, click here</2>",
       "title": "You are editing {{ templateName }}"
@@ -7033,12 +7041,6 @@
     "description-label": {
       "description": "Description"
     },
-    "draggable-item": {
-      "drag-to-reorder": "Drag to reorder"
-    },
-    "draggable-items-list": {
-      "select": "Select"
-    },
     "edit-link-view": {
       "edit-link-page-nav": {
         "text": {
@@ -7069,16 +7071,6 @@
       "severity-error": "Error",
       "severity-info": "Info",
       "severity-warning": "Warning"
-    },
-    "filters-list": {
-      "add-filter": "Add filter",
-      "reorder-description": "Reorder filters list",
-      "title-above-dashboard_one": "Above dashboard ({{count}})",
-      "title-above-dashboard_other": "Above dashboard ({{count}})",
-      "title-controls-menu_one": "Controls menu ({{count}})",
-      "title-controls-menu_other": "Controls menu ({{count}})",
-      "title-hidden_one": "Hidden ({{count}})",
-      "title-hidden_other": "Hidden ({{count}})"
     },
     "general-settings-edit-view": {
       "default_grid_options": {
@@ -7250,11 +7242,6 @@
       "unnamed": "Unnamed link"
     },
     "link-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-links-list": "Reorder links list"
-        }
-      },
       "render-list": {
         "aria-label-link": "Link"
       }
@@ -7271,13 +7258,6 @@
       "type-dashboards": "Dashboards",
       "type-link": "Link",
       "with-tags": "With tags"
-    },
-    "links-list": {
-      "drag-end-description": "Reorder links list",
-      "title-above-dashboard_one": "Above dashboard ({{count}})",
-      "title-above-dashboard_other": "Above dashboard ({{count}})",
-      "title-controls-menu_one": "Controls menu ({{count}})",
-      "title-controls-menu_other": "Controls menu ({{count}})"
     },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "Dashboard is already in the selected folder.",
@@ -7394,14 +7374,6 @@
       "label-folder": "Folder",
       "label-global": "Global",
       "label-none": "None"
-    },
-    "predefined-variables-options": {
-      "all": "All",
-      "description": "This dashboard receives global and folder-scoped variables by default. Choose which ones to keep.",
-      "folder": "Folder",
-      "global": "Global",
-      "label": "Predefined variables",
-      "none": "None"
     },
     "provisioned-controls-section": {
       "label": "Provisioned by data source",
@@ -7613,9 +7585,6 @@
       "new-alert-rule": "New alert rule",
       "title-no-alerting-capable-query-found": "No alerting capable query found"
     },
-    "section-filters-list": {
-      "add-filter": "Add filter"
-    },
     "section-placement": {
       "top-row": "Top of row",
       "top-tab": "Top of tab"
@@ -7699,31 +7668,10 @@
       "save-dashboard": "Save dashboard",
       "title-unsaved-changes": "Unsaved changes"
     },
-    "use-annotations-category": {
-      "category": {
-        "title": {
-          "annotations": "Annotations"
-        }
-      }
-    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Settings"
-        }
-      }
-    },
-    "use-filters-category": {
-      "category": {
-        "title": {
-          "filters": "Filters"
-        }
-      }
-    },
-    "use-links-category": {
-      "category": {
-        "title": {
-          "links": "Links"
         }
       }
     },
@@ -7734,13 +7682,6 @@
     },
     "use-save-dashboard": {
       "message-dashboard-saved": "Dashboard saved"
-    },
-    "use-variables-category": {
-      "category": {
-        "title": {
-          "variables": "Variables"
-        }
-      }
     },
     "validate-variable-name": {
       "warning-predefined-shadow": "A global or folder variable with this name exists and will be overwritten by this dashboard variable."
@@ -7753,23 +7694,6 @@
     },
     "variable-controls": {
       "add-variable": "Add variable"
-    },
-    "variable-display-select": {
-      "label": "Display",
-      "options": {
-        "controls-menu": {
-          "description": "Visible when the controls menu is open",
-          "label": "Controls menu"
-        },
-        "hidden": {
-          "description": "Only visible in edit mode",
-          "label": "Hidden"
-        },
-        "top-placement-hidden-label": {
-          "description": "{{placement}}, but without showing the name of variable",
-          "label": "{{placement}}, label hidden"
-        }
-      }
     },
     "variable-editable-element": {
       "delete-confirm": "Delete variable",
@@ -7810,13 +7734,6 @@
       "tooltip-duplicate-variable": "Duplicate variable",
       "tooltip-remove-variable": "Remove variable"
     },
-    "variable-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Reorder variables list"
-        }
-      }
-    },
     "variable-multi-prop-static-options-form": {
       "aria-label-static-options": "Static options"
     },
@@ -7831,23 +7748,6 @@
       "preview-of-values_one": "Preview of values ({{count}})",
       "preview-of-values_other": "Preview of values ({{count}})",
       "show-more": "Show more"
-    },
-    "variables-list": {
-      "add-variable": "Add variable",
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Reorder variables list"
-        }
-      },
-      "title-controls-menu_one": "Controls menu ({{count}})",
-      "title-controls-menu_other": "Controls menu ({{count}})",
-      "title-hidden_one": "Hidden ({{count}})",
-      "title-hidden_other": "Hidden ({{count}})",
-      "title-top-placement_one": "{{placement}} ({{count}})",
-      "title-top-placement_other": "{{placement}} ({{count}})",
-      "top-placement": {
-        "default": "Above dashboard"
-      }
     },
     "version-history": {
       "comparison": {
@@ -8487,7 +8387,6 @@
       "open-in-new-tab": "Open in new tab"
     },
     "content-outline": {
-      "title-datasource-explorer": "Datasource explorer",
       "tooltip-collapse-outline": "Collapse outline",
       "tooltip-expand-outline": "Expand outline"
     },
@@ -8715,9 +8614,8 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
     },
-    "metrics-explorer": {
-      "search-placeholder": "Search metrics",
-      "title-metrics": "Metrics"
+    "metrics-list": {
+      "search-placeholder": "Search metrics"
     },
     "next-prev-result": {
       "aria-label-next": "Next result button",
@@ -8895,6 +8793,17 @@
       "recent-queries-button-aria-label": "Recent queries"
     },
     "show-all-spans": "Show all spans",
+    "signal-card": {
+      "collapse-aria-label": "Collapse datasource explorer for query {{refId}}",
+      "expand-aria-label": "Expand datasource explorer for query {{refId}}",
+      "jump-to-query-label": "Jump to query {{refId}} ({{datasourceName}})"
+    },
+    "signal-explorer": {
+      "empty-text": "Add a query to browse its datasource.",
+      "section-label-queries": "Queries",
+      "title-datasource-explorer": "Datasource explorer",
+      "unknown-datasource": "Unknown datasource"
+    },
     "span-bar": {
       "tooltip-critical-path": "A segment on the <1>critical path</1> of the overall trace / request / workflow."
     },
@@ -9039,6 +8948,13 @@
         "title": "Trace restored by Adaptive Traces"
       },
       "aria-label-copy": "Copy to clipboard",
+      "attribute-plugin-promo": {
+        "learn-more": "Learn more"
+      },
+      "database-observability-promo": {
+        "body": "Database Observability surfaces visual explain plans, wait events, and query samples — helping you diagnose issues beyond trace spans.",
+        "title": "Find slow queries faster"
+      },
       "no-data": "No data",
       "tooltip-copy-icon": "Copied"
     },
@@ -10947,6 +10863,9 @@
     "alerts-incidents": {
       "alert-tab-label": "Firing alerts",
       "incident-tab-label": "Incidents",
+      "team-filter-all": "All teams",
+      "team-filter-label": "Filter alerts by team",
+      "team-filter-your-teams": "Your teams",
       "title": "Alerts & incidents",
       "title-alerts": "Alerts",
       "title-incidents": "Incidents"
@@ -10969,6 +10888,7 @@
       "critical-count_one": "{{count}} critical",
       "critical-count_other": "{{count}} critical",
       "empty": "You have no firing alerts.",
+      "empty-selected-team": "No firing alerts for {{team}}.",
       "empty-teams": "No firing alerts for your teams.",
       "error-title": "Could not load firing alerts",
       "high-count_one": "{{count}} high",
@@ -12510,7 +12430,7 @@
       "list-label": "Navigation",
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
-      "pinned-list-label": "Pinned",
+      "pinned-list-label": "Pinned items",
       "undock": "Undock menu"
     },
     "megamenu-item": {
@@ -13447,7 +13367,7 @@
       "button-saving": "Saving...",
       "description-commit-message-template": "The commit message used when someone saves, moves, renames, or deletes a resource and leaves the Comment field blank. Placeholders, filled in per operation: {{actionVar}} (create/update/delete/move/rename), {{kindVar}} (dashboard/folder), {{idVar}} (unique resource ID), {{titleVar}}, {{userNameVar}} (display name), {{userLoginVar}} (username), {{userEmailVar}}. Leave blank to use the built-in default messages.",
       "description-connection": "Select the GitHub App connection to use",
-      "description-enabled": "Once automatic pulling is enabled, the target cannot be changed.",
+      "description-enabled": "Once automatic pulling is enabled, the target type below cannot be changed.",
       "description-read-only": "Resources can't be modified through Grafana.",
       "description-title": "A human-readable name for the config",
       "error-connection-required": "Connection is required",
@@ -15879,7 +15799,24 @@
     "name-show-mini-map": "Show mini map"
   },
   "textng": {
-    "placeholder": "New text panel"
+    "category-text": "Text",
+    "code-view": {
+      "aria-label-code-content": "Code content"
+    },
+    "editor": {
+      "aria-label-content": "Text content",
+      "view-preview": "Preview",
+      "view-split": "Split",
+      "view-write": "Write"
+    },
+    "mode-options": {
+      "label-code": "Code",
+      "label-html": "HTML",
+      "label-markdown": "Markdown"
+    },
+    "name-language": "Language",
+    "name-mode": "Mode",
+    "name-show-line-numbers": "Show line numbers"
   },
   "theme-playground": {
     "label-base-theme": "Base theme",

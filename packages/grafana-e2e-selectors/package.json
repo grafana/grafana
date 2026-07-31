@@ -49,14 +49,15 @@
     "@rollup/plugin-node-resolve": "16.0.1",
     "@types/node": "24.10.1",
     "@types/semver": "7.7.1",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "esbuild": "0.25.8",
     "rimraf": "6.0.1",
     "rollup": "^4.60.1",
     "rollup-plugin-esbuild": "6.2.1",
-    "rollup-plugin-node-externals": "^8.0.0"
+    "rollup-plugin-node-externals": "^8.0.0",
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "dependencies": {
-    "semver": "^7.7.0",
-    "typescript": "^6.0.2"
+    "semver": "^7.7.0"
   }
 }

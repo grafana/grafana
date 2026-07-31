@@ -2,7 +2,7 @@ import { type Locator, test } from '@playwright/test';
 
 import { PageObject } from '../PageObject';
 
-// The edit pane shown after adding or selecting a variable — variable type,
+// The sidebar after adding or selecting a variable — variable type,
 // name/label inputs, plus type-specific options (e.g. datasource variables)
 export class VariableOptions extends PageObject {
   async selectVariableType(type: string) {
@@ -48,12 +48,11 @@ export class VariableOptions extends PageObject {
   readonly datasource = {
     selectType: async (dsType: string) => {
       await test.step(`Select variable datasource type "${dsType}"`, async () => {
-        await this.dashboardPage
-          .getByGrafanaSelector(
-            this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
-          )
-          .click();
-        await this.page.getByRole('option', { name: dsType, exact: true }).click();
+        const datasourceSelect = this.dashboardPage.getByGrafanaSelector(
+          this.selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect
+        );
+        await datasourceSelect.fill(dsType);
+        await datasourceSelect.press('Enter');
       });
     },
     setNameFilter: async (filter: string) => {
