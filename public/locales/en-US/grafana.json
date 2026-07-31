@@ -3293,7 +3293,6 @@
       "import": {
         "any": "any",
         "collapse-all": "Collapse all",
-        "default-policy": "Default policy",
         "empty-body": "Import an Alertmanager configuration to stage it here as a safe, reversible copy. Review what it contains, then promote it into your live Grafana Alertmanager when you're ready.",
         "empty-cta": "Import Alertmanager configuration",
         "empty-learn-more": "Learn more about importing configurations",
@@ -3307,11 +3306,13 @@
         "no-matchers": "(no matchers)",
         "parse-error-body": "The imported Alertmanager configuration could not be parsed.",
         "parse-error-title": "Couldn't read the staged configuration",
+        "policy-tree-routes_one": "{{count}} route",
+        "policy-tree-routes_other": "{{count}} routes",
         "resources": "Resources",
         "section": {
           "contact-points": "Contact points",
           "inhibition-rules": "Inhibition rules",
-          "notification-policies": "Notification policies",
+          "notification-policy": "Notification policy",
           "templates": "Templates",
           "time-intervals": "Time intervals"
         },

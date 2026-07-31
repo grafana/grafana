@@ -30,8 +30,9 @@ const stagedConfig = {
   template_files: {},
 };
 
-// A routing tree with a direct child ("a") that itself has two nested routes. Only the root and the
-// direct child are listed, so the section count must be 2 — not the recursive descendant total.
+// A routing tree with two direct children, one of which has two nested routes of its own. The import is one
+// tree, so the section count is 1 and the tree's own route count is its two direct children — the same number
+// the notification policies page shows for it, not the four descendants.
 const nestedPoliciesConfig = {
   identifier: 'nested',
   alertmanager_config: `
@@ -42,11 +43,13 @@ route:
       routes:
         - receiver: a1
         - receiver: a2
+    - receiver: b
 receivers:
   - name: root
   - name: a
   - name: a1
   - name: a2
+  - name: b
 `,
 };
 
@@ -54,7 +57,8 @@ const ui = {
   heading: byRole('heading', { name: 'prometheus-prod' }),
   badge: byText(/staged · read-only/i),
   contactPointsSection: byRole('button', { name: /contact points/i }),
-  notificationPoliciesSection: byRole('button', { name: /notification policies/i }),
+  notificationPoliciesSection: byRole('button', { name: /notification polic/i }),
+  notificationPoliciesContent: byRole('region', { name: /notification polic/i }),
   expandAll: byRole('button', { name: /expand all/i }),
   parseError: byText(/couldn't read the staged configuration/i),
 };
@@ -151,11 +155,28 @@ describe('StagedConfiguration', () => {
     expect(screen.getByText(/equal:\s*alertname/i)).toBeInTheDocument();
   });
 
-  it('counts the notification policies section by root and direct children only, not nested routes', () => {
-    render(<StagedConfiguration stagedConfig={nestedPoliciesConfig} />);
+  it('presents the import as a single routing tree named after the identifier', async () => {
+    const { user } = render(<StagedConfiguration stagedConfig={nestedPoliciesConfig} />);
 
-    // "Default policy" + one direct child ("a") = 2; the two routes nested under "a" are not counted.
-    expect(within(ui.notificationPoliciesSection.get()).getByText('2')).toBeInTheDocument();
+    // One import contributes one routing tree, so the section count is 1 regardless of the tree's size.
+    expect(within(ui.notificationPoliciesSection.get()).getByText('1')).toBeInTheDocument();
+
+    await user.click(ui.notificationPoliciesSection.get());
+    const section = ui.notificationPoliciesContent.get();
+
+    // The tree row is named after the identifier and reports its two direct children — the routes nested
+    // under "a" are not counted, matching the notification policies page.
+    expect(within(section).getByText('nested')).toBeInTheDocument();
+    expect(within(section).getByText(/→ root · 2 routes/)).toBeInTheDocument();
+  });
+
+  it('does not label the imported root as the default policy', async () => {
+    const { user } = render(<StagedConfiguration stagedConfig={stagedConfig} />);
+
+    await user.click(ui.notificationPoliciesSection.get());
+
+    // The imported root is the root of managed route "prometheus-prod", not the Grafana default policy.
+    expect(screen.queryByText(/default policy/i)).not.toBeInTheDocument();
   });
 
   it('shows an error when the configuration cannot be parsed', () => {

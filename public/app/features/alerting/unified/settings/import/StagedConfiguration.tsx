@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 
 import { base64UrlEncode } from '@grafana/alerting';
@@ -128,17 +128,17 @@ export function StagedConfiguration({ stagedConfig, liveConfig }: Props) {
 
   if (summary.hasRoutingTree) {
     sections.push({
-      key: 'notification-policies',
+      key: 'notification-policy',
       icon: 'sitemap',
-      label: t('alerting.settings.import.section.notification-policies', 'Notification policies'),
-      // Root "Default policy" row + the direct child routes we render below (nested routes aren't listed).
-      count: childRoutes.length + 1,
+      // One import contributes exactly one routing tree — the backend adds it as a managed route named after
+      // the identifier rather than merging it into the default policy.
+      label: t('alerting.settings.import.section.notification-policy', 'Notification policy'),
+      count: 1,
       content: (
         <>
           <ResourceRow
-            label={t('alerting.settings.import.default-policy', 'Default policy')}
-            plainLabel
-            meta={config.route?.receiver ?? undefined}
+            label={stagedConfig.identifier}
+            meta={<RoutingTreeMeta receiver={config.route?.receiver} routeCount={childRoutes.length} />}
             href={makeViewPolicyLink(stagedConfig.identifier, '')}
           />
           {childRoutes.map((route, index) => {
@@ -146,6 +146,7 @@ export function StagedConfiguration({ stagedConfig, liveConfig }: Props) {
             return (
               <ResourceRow
                 key={`${matchers}|${route.receiver ?? ''}|${index}`}
+                indented
                 label={matchers || t('alerting.settings.import.no-matchers', '(no matchers)')}
                 meta={route.receiver ? `→ ${route.receiver}` : undefined}
                 href={makeViewPolicyLink(stagedConfig.identifier, encodeRouteMatchersQuery(route))}
@@ -229,19 +230,45 @@ export function StagedConfiguration({ stagedConfig, liveConfig }: Props) {
   );
 }
 
-interface ResourceRowProps {
-  label: string;
-  meta?: string;
-  href?: string;
-  /** Render the label in the default font instead of monospace (used for the "Default policy" row). */
-  plainLabel?: boolean;
+interface RoutingTreeMetaProps {
+  /** Nullable to match `Route['receiver']`, which the Alertmanager config may omit or null out. */
+  receiver?: string | null;
+  routeCount: number;
 }
 
-function ResourceRow({ label, meta, href, plainLabel }: ResourceRowProps) {
+/**
+ * Contact point and size of the imported routing tree. Counts direct children only, matching what the
+ * notification policies page shows for the tree, so the number doesn't change when View is followed.
+ */
+function RoutingTreeMeta({ receiver, routeCount }: RoutingTreeMetaProps) {
+  const receiverPrefix = receiver ? `→ ${receiver} · ` : '';
+  return (
+    <>
+      {receiverPrefix}
+      <Trans
+        i18nKey="alerting.settings.import.policy-tree-routes"
+        count={routeCount}
+        tOptions={{ defaultValue_one: '{{count}} route', defaultValue_other: '{{count}} routes' }}
+      >
+        {'{{count}}'} route
+      </Trans>
+    </>
+  );
+}
+
+interface ResourceRowProps {
+  label: string;
+  meta?: React.ReactNode;
+  href?: string;
+  /** Mark the row as a sub-policy of the row above it. */
+  indented?: boolean;
+}
+
+function ResourceRow({ label, meta, href, indented }: ResourceRowProps) {
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles.row}>
-      <span className={plainLabel ? styles.plainLabel : styles.mono}>{label}</span>
+    <div className={cx(styles.row, indented && styles.childRow)}>
+      <span className={styles.mono}>{label}</span>
       {meta && <span className={styles.meta}>{meta}</span>}
       <span className={styles.spacer} />
       {href && (
@@ -378,14 +405,30 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderTop: 'none',
     },
   }),
+  childRow: css({
+    position: 'relative',
+    paddingLeft: theme.spacing(4),
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      left: theme.spacing(2),
+      top: 0,
+      bottom: 0,
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
+    },
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      left: theme.spacing(2),
+      top: '50%',
+      width: theme.spacing(1),
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+    },
+  }),
   mono: css({
     fontFamily: theme.typography.fontFamilyMonospace,
     fontSize: theme.typography.bodySmall.fontSize,
     color: theme.colors.text.primary,
-  }),
-  plainLabel: css({
-    fontSize: theme.typography.bodySmall.fontSize,
-    color: theme.colors.text.secondary,
   }),
   meta: css({
     fontFamily: theme.typography.fontFamilyMonospace,
