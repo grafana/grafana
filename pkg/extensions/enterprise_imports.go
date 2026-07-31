@@ -130,6 +130,7 @@ import (
 	_ "github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	_ "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	_ "github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
+	_ "github.com/grafana/grafana/apps/provisioning/pkg/util"
 	_ "github.com/grafana/grafana/apps/scope/pkg/apis/scope/v0alpha1"
 	_ "github.com/grafana/grafana/apps/secret/consolidate/v1beta1"
 	_ "github.com/grafana/grafana/apps/secret/decrypt/v1beta1"
