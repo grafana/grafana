@@ -32,6 +32,8 @@ const endpoints = [
 
 const selectors = editorSelectors.components.DataSource.TestData.QueryTab;
 
+const scenarioCollator = new Intl.Collator();
+
 export interface EditorProps {
   onChange: (value: any) => void;
   query: TestDataDataQuery;
@@ -186,7 +188,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     () =>
       (scenarioList || [])
         .map((item) => ({ label: item.name, value: item.id }))
-        .sort((a, b) => a.label.localeCompare(b.label)),
+        .sort((a, b) => scenarioCollator.compare(a.label, b.label)),
     [scenarioList]
   );
 
