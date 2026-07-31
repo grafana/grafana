@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { type SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -372,6 +373,7 @@ function AlertmanagerDataSourceSelect() {
       invalid={!!errors.notificationsDatasourceUID}
       error={errors.notificationsDatasourceUID?.message}
       noMargin
+      data-testid={selectors.pages.Alerting.ImportToGMA.alertmanagerDataSourceField}
     >
       <Controller
         render={({ field: { ref, onChange, ...field } }) => (
