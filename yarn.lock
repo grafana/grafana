@@ -5852,12 +5852,12 @@ __metadata:
   linkType: hard
 
 "@openfeature/react-sdk@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "@openfeature/react-sdk@npm:1.3.0"
+  version: 1.4.1
+  resolution: "@openfeature/react-sdk@npm:1.4.1"
   peerDependencies:
-    "@openfeature/web-sdk": ^1.8.0
+    "@openfeature/web-sdk": ^1.9.0
     react: ">=16.8.0"
-  checksum: 10/9beae4c8142adb6e505818e4bec8cf0a8679d98355d542ea2d7aac2739fb540fff90cfe91b8d6825485c680bb827818a371b65ee4efa1ee0e762f70ef3e14136
+  checksum: 10/a08519a15026aab095efac4ccd277f2b5adc2e8338b88a27fd0740546296ab7e50efef05a2a565c0a8607bcc09a2c1b456c5a8a9713ed9ca43946e835201676e
   languageName: node
   linkType: hard
 
