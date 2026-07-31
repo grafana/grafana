@@ -308,7 +308,7 @@ export function GrafanaEvaluationBehaviorStep({
               <Field
                 noMargin
                 label={label}
-                data-testid="group-picker"
+                data-testid={selectors.components.AlertRules.groupPicker}
                 className={styles.formInput}
                 error={errors.group?.message}
                 invalid={!!errors.group?.message}

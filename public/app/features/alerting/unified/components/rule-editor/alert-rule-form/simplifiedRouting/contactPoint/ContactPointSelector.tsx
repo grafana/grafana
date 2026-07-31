@@ -109,6 +109,7 @@ function LinkToContactPoints() {
         'alerting.link-to-contact-points.aria-label-view-or-create-contact-points',
         'View or create contact points'
       )}
+      data-testid={selectors.components.AlertRules.viewContactPointsLink}
     >
       <Trans i18nKey="alerting.link-to-contact-points.view-or-create-contact-points">
         View or create contact points
