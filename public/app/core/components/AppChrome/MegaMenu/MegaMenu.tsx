@@ -255,22 +255,25 @@ export const MegaMenu = memo(
           {/* Hidden until preferences have loaded: entering edit mode early would start from an empty
               pinned list and pressing Done before the pins arrive would overwrite them with []. */}
           {canCustomise && !isLoading && (
-            <div className={styles.editFooter}>
-              {editMode && (
-                <MegaMenuCustomiseControls
-                  canReset={canReset}
-                  onResetToDefault={onResetToDefault}
-                  onCancelEdit={onCancelEdit}
-                  onSaveEdit={onSaveEdit}
-                  saving={isSaving}
-                />
-              )}
-              {!editMode && (
-                <Button variant="secondary" onClick={onEnterEditMode} size="sm" icon="sliders-v-alt">
-                  <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
-                </Button>
-              )}
-            </div>
+            <>
+              <hr className={styles.pinnedDivider} />
+              <div className={styles.editFooter}>
+                {editMode && (
+                  <MegaMenuCustomiseControls
+                    canReset={canReset}
+                    onResetToDefault={onResetToDefault}
+                    onCancelEdit={onCancelEdit}
+                    onSaveEdit={onSaveEdit}
+                    saving={isSaving}
+                  />
+                )}
+                {!editMode && (
+                  <Button variant="secondary" onClick={onEnterEditMode} size="sm" icon="sliders-v-alt">
+                    <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
+                  </Button>
+                )}
+              </div>
+            </>
           )}
         </nav>
       </div>
@@ -316,7 +319,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
     // Under visual refresh, mirror the page content pane: flush at the top, matching the page
     // background token and radius. Off refresh, keep the raised secondary card.
     pinnedBox: css({
-      margin: visualRefreshEnabled ? theme.spacing(0, 1, 0, 1) : theme.spacing(1, 1, 0, 1),
+      margin: visualRefreshEnabled ? theme.spacing(0, 1, 1, 1) : theme.spacing(1, 1, 0, 1),
     }),
     // "Pinned" heading row — a small section label (the medium-weight secondary Text below reads as
     // a heading, distinct from the pinned item rows). The icon column matches the item rows so it
@@ -341,16 +344,15 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       border: 'none',
       height: 1,
       background: `linear-gradient(90deg, transparent 0%, ${theme.colors.border.weak} 20%, ${theme.colors.border.weak} 80%, transparent 100%)`,
-      margin: theme.spacing(2, 1, 1, 1),
+      margin: theme.spacing(1),
     }),
-    // Edit-mode footer: the Reset/Cancel/Done controls, right-aligned.
+    // Edit-mode footer: the Reset/Cancel/Done controls
     editFooter: css({
       alignItems: 'center',
-      borderTop: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       flexShrink: 0,
       justifyContent: 'center',
-      padding: theme.spacing(1.5, 2),
+      padding: theme.spacing(0.5, 2, 1.5, 2),
     }),
   };
 };
