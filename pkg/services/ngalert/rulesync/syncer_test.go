@@ -214,6 +214,26 @@ func TestSyncOrg_PruneScopedByFolder(t *testing.T) {
 	assert.True(t, *rs.deleted[0].HasPrometheusRuleDefinition)
 }
 
+func TestSyncOrg_SkipsUnconvertibleGroup(t *testing.T) {
+	// Recording rules are disabled in the test settings, so the recording group
+	// can't convert. It must be skipped (best-effort), not abort the whole org.
+	cfg := RulerConfig{
+		"ns1": {
+			{Name: "alerts", Rules: []apimodels.PrometheusRule{{Alert: "A", Expr: "up == 0"}}},
+			{Name: "recording", Rules: []apimodels.PrometheusRule{{Record: "r", Expr: "vector(1)"}}},
+		},
+	}
+	rs := &fakeRuleService{}
+	s := newTestSyncer(t, &fakeFetcher{cfg: cfg, hash: 1}, rs)
+	s.settings.ExternalRulerUID = "ds1"
+
+	s.SyncOrg(context.Background(), 1)
+
+	// The alert group is applied; the recording group is skipped.
+	require.Len(t, rs.replaced, 1)
+	assert.Equal(t, "alerts", rs.replaced[0].Title)
+}
+
 func TestSyncOrg_RecoversPanic(t *testing.T) {
 	s := newTestSyncer(t, &fakeFetcher{panicMsg: "boom"}, &fakeRuleService{})
 	s.settings.ExternalRulerUID = "ds1"
