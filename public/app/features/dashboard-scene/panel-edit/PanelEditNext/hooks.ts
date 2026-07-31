@@ -79,10 +79,17 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
     QUERY_EDITOR_SIDEBAR_SIZE_KEY,
     SidebarSize.Mini
   );
-  const [sidebarWidth = DEFAULT_SIDEBAR_WIDTH, setSidebarWidth] = useLocalStorage<number>(
+  const [storedSidebarWidth, setSidebarWidth] = useLocalStorage<number>(
     QUERY_EDITOR_SIDEBAR_WIDTH_KEY,
     DEFAULT_SIDEBAR_WIDTH
   );
+  // Anything other than a positive number yields an invalid flex-basis, which drops out and leaves
+  // the sidebar the width of its drag handle with the content clipped. Values that fail to parse
+  // already fall back to the default, but valid JSON of the wrong shape (null, {}, -5) does not.
+  const sidebarWidth =
+    typeof storedSidebarWidth === 'number' && Number.isFinite(storedSidebarWidth) && storedSidebarWidth > 0
+      ? storedSidebarWidth
+      : DEFAULT_SIDEBAR_WIDTH;
 
   const isScrollingLayout = useScrollReflowLimit();
 

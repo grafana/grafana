@@ -8,7 +8,7 @@ import type { PanelEditor } from '../PanelEditor';
 import { useSnappingSplitter } from '../splitter/useSnappingSplitter';
 import { useScrollReflowLimit } from '../useScrollReflowLimit';
 
-import { usePanelEditorShell } from './hooks';
+import { usePanelEditorShell, useVizAndDataPaneLayout } from './hooks';
 
 jest.mock('@grafana/ui', () => ({
   useTheme2: jest.fn(),
@@ -21,6 +21,10 @@ jest.mock('./constants', () => ({
   SidebarSize: { Mini: 'mini', Full: 'full' },
   QUERY_EDITOR_SIDEBAR_SIZE_KEY: 'grafana.dashboard.query-editor-next.sidebar-size',
   QUERY_EDITOR_BANNER_DISMISSED_KEY: 'grafana.dashboard.query-editor-next.banner-dismissed',
+  QUERY_EDITOR_SIDEBAR_WIDTH_KEY: 'grafana.dashboard.query-editor-next.sidebar-width',
+  DEFAULT_SIDEBAR_WIDTH: 350,
+  SIDEBAR_COLLAPSE_BELOW_PIXELS: 260,
+  DATA_PANE_COLLAPSE_BELOW_PIXELS: 150,
 }));
 jest.mock('../../sidebar/shared', () => ({ useSidebarCollapsed: jest.fn() }));
 jest.mock('../../utils/utils', () => ({ getDashboardSceneFor: jest.fn() }));
@@ -61,5 +65,53 @@ describe('usePanelEditorShell', () => {
       splitter,
       controls,
     });
+  });
+});
+
+describe('useVizAndDataPaneLayout', () => {
+  const WIDTH_KEY = 'grafana.dashboard.query-editor-next.sidebar-width';
+
+  beforeEach(() => {
+    localStorage.clear();
+    // Recorded calls are inspected below, so they must not carry over between cases.
+    jest.clearAllMocks();
+    jest.mocked(getDashboardSceneFor).mockReturnValue({ useState: jest.fn(() => ({})) } as never);
+    jest.mocked(useScrollReflowLimit).mockReturnValue(false);
+    jest.mocked(useSnappingSplitter).mockReturnValue({ splitterState: { collapsed: false } } as never);
+  });
+
+  function renderLayout() {
+    const model = {
+      useState: jest.fn(() => ({ dataPane: undefined, tableView: undefined })),
+      getPanel: jest.fn(),
+    } as unknown as PanelEditor;
+
+    renderHook(() => useVizAndDataPaneLayout(model));
+
+    // The sidebar splitter is the pixel-pinned one; the viz/data splitter uses a flex ratio.
+    return jest.mocked(useSnappingSplitter).mock.calls.find(([options]) => options.pixelPane === 'primary')?.[0];
+  }
+
+  it('uses the persisted sidebar width when it is a usable number', () => {
+    localStorage.setItem(WIDTH_KEY, '480');
+
+    expect(renderLayout()?.initialSize).toBe(480);
+  });
+
+  // A value of the wrong shape would render as an invalid flex-basis and collapse the sidebar to
+  // the width of its drag handle, so it has to fall back to the default instead.
+  it.each([
+    ['null', 'null'],
+    ['a boolean', 'true'],
+    ['an object', '{}'],
+    ['a negative number', '-5'],
+    ['zero', '0'],
+    ['a value that overflows to Infinity', '1e999'],
+    ['a string', '"480"'],
+    ['unparseable text', 'not-json'],
+  ])('falls back to the default width when the persisted value is %s', (_label, stored) => {
+    localStorage.setItem(WIDTH_KEY, stored);
+
+    expect(renderLayout()?.initialSize).toBe(350);
   });
 });
