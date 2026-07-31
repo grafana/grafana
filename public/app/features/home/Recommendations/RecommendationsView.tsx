@@ -177,7 +177,7 @@ export function RecommendationsView({ recommendations }: RecommendationsViewProp
                       key={recommendation.id}
                       className={styles.item}
                       aria-hidden={i !== safeIndex}
-                      {...(i !== safeIndex && { inert: '' })}
+                      inert={i !== safeIndex}
                     >
                       <RecommendationCard recommendation={recommendation} />
                     </div>
