@@ -23,7 +23,23 @@ runs:
   steps:
     # When cache-build is enabled, use the built-in setup-go caching
     # which stores both GOMODCACHE and GOCACHE together.
+    # The toolchain download can hit GitHub rate limits (HTTP 403) when many
+    # jobs start at once; retry once after a delay before failing the job.
     - uses: actions/setup-go@v6.0.0
+      id: setup-go
+      continue-on-error: true
+      with:
+        go-version-file: ${{ inputs.go-version-file }}
+        cache: ${{ inputs.cache == 'true' && inputs.cache-build == 'true' }}
+        cache-dependency-path: ${{ inputs.cache == 'true' && inputs.cache-build == 'true' && '**/*.mod' || '' }}
+
+    - name: Wait before retrying Go setup
+      if: steps.setup-go.outcome == 'failure'
+      shell: bash
+      run: sleep 30
+
+    - uses: actions/setup-go@v6.0.0
+      if: steps.setup-go.outcome == 'failure'
       with:
         go-version-file: ${{ inputs.go-version-file }}
         cache: ${{ inputs.cache == 'true' && inputs.cache-build == 'true' }}
