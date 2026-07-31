@@ -1,6 +1,7 @@
 package dashboardsearch
 
 import (
+	"context"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -11,6 +12,53 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+// SearchFunc is the signature callers pass to SearchAll to execute the
+// per-page search request.
+type SearchFunc func(ctx context.Context, orgID int64, request *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)
+
+// SearchAll executes a search request and paginates through all results by
+// incrementing the offset until the offset is greater than total hits.
+func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSearchRequest, searchFn SearchFunc) (v0alpha1.SearchResults, error) {
+	if request.Limit == 0 {
+		request.Limit = 100000
+	}
+	request.Page = int64(1)
+	request.Offset = int64(0)
+
+	res, err := searchFn(ctx, orgID, request)
+	if err != nil {
+		return v0alpha1.SearchResults{}, err
+	}
+	results, err := ParseResults(res, 0)
+	if err != nil {
+		return v0alpha1.SearchResults{}, err
+	}
+
+	request.Offset += int64(len(results.Hits))
+	request.Page++
+	for request.Offset < res.TotalHits {
+		res, err = searchFn(ctx, orgID, request)
+		if err != nil {
+			return v0alpha1.SearchResults{}, err
+		}
+
+		page, err := ParseResults(res, 0)
+		if err != nil {
+			return v0alpha1.SearchResults{}, err
+		}
+
+		if len(page.Hits) == 0 {
+			break
+		}
+
+		results.Hits = append(results.Hits, page.Hits...)
+		request.Offset += int64(len(page.Hits))
+		request.Page++
+	}
+
+	return results, nil
+}
 
 var (
 	// These fields exist at the top-level of DashboardHit

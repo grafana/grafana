@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
@@ -38,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // AuthzServiceAudience is the audience for the authz service.
@@ -54,6 +56,7 @@ func ProvideAuthZClient(
 	acService accesscontrol.Service,
 	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
+	eventualResourceClient *resource.EventualClient,
 ) (authlib.AccessClient, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
@@ -96,13 +99,25 @@ func ProvideAuthZClient(
 			rbacSettings.AnonOrgRole = cfg.Anonymous.OrgRole
 		}
 
+		// When running in-proc we get an injection cycle between authz client,
+		// resource client and apiserver, so the folder store resolves the rest
+		// config (and, when search is enabled, the resource client) lazily.
+		folderStore := store.NewAPIFolderStore(tracer, reg, restConfig.GetRestConfig)
+		// In-proc uses NewLocalResourceClient (authnlib) and works. Split
+		// unified-storage over gRPC only works when appPlatformGrpcClientAuth
+		// is on; the legacy client strips service permissions in transit.
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		searchSupported := cfg.UnifiedStorageType() != string(options.StorageTypeUnifiedGrpc) ||
+			features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth)
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		if features.IsEnabledGlobally(featuremgmt.FlagAuthzListFoldersViaSearch) && searchSupported {
+			folderStore = folderStore.WithSearcher(eventualResourceClient)
+		}
+
 		// Register the server
 		server := rbac.NewService(
 			sql,
-			// When running in-proc we get a injection cycle between
-			// authz client, resource client and apiserver so we need to use
-			// package level function to get rest config
-			store.NewAPIFolderStore(tracer, reg, restConfig.GetRestConfig),
+			folderStore,
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),
