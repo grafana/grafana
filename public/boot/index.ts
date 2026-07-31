@@ -312,11 +312,8 @@ async function initBootDataFromMT() {
       uid: display.identity?.name ?? '',
       name: display.displayName,
       gravatarUrl: display.avatarURL ?? '',
-      // TODO remove hardcoding when we have orgRole from MT Auth
-      // This is necessary to avoid permissions error
-      // We use a type assertion to avoid importing enum JS
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      orgRole: 'Admin' as OrgRole,
+      orgRole: (display.role as OrgRole) ?? '',
     };
   } else {
     window.grafanaBootData.user = {
