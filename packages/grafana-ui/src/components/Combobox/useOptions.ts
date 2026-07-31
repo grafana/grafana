@@ -2,7 +2,7 @@
 /* eslint no-restricted-syntax: ["error", "SpreadElement"] */
 
 import { debounce } from 'lodash';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -34,7 +34,18 @@ export function useOptions<T extends string | number>(
 ) {
   const isAsync = typeof rawOptions === 'function';
 
-  const loadOptions = useLatestAsyncCall(isAsync ? rawOptions : asyncNoop);
+  // Consumers typically pass an inline arrow as `options`, giving it a new identity on every
+  // parent render. Read it from a ref so the loader (and the debounce built on it) can stay
+  // stable for the lifetime of the component instead of being recreated mid-debounce.
+  const rawOptionsRef = useRef(rawOptions);
+  rawOptionsRef.current = rawOptions;
+
+  const stableRawOptions = useCallback((searchTerm: string) => {
+    const currentRawOptions = rawOptionsRef.current;
+    return typeof currentRawOptions === 'function' ? currentRawOptions(searchTerm) : asyncNoop();
+  }, []);
+
+  const loadOptions = useLatestAsyncCall(stableRawOptions);
 
   const debouncedLoadOptions = useMemo(
     () =>
@@ -58,6 +69,8 @@ export function useOptions<T extends string | number>(
       }, DEBOUNCE_TIME_MS),
     [loadOptions]
   );
+
+  useEffect(() => () => debouncedLoadOptions.cancel(), [debouncedLoadOptions]);
 
   const [asyncOptions, setAsyncOptions] = useState<Array<ComboboxOption<T>>>([]);
   const [asyncLoading, setAsyncLoading] = useState(false);
