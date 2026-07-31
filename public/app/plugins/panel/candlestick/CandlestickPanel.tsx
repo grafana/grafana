@@ -211,7 +211,7 @@ export const CandlestickPanel = ({
       tweakAxis,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, data.structureRev, data.series.length]);
+  }, [options, data.structureRev, data.series.length, theme]);
 
   if (!info) {
     return (
