@@ -201,7 +201,7 @@ describe('PlaylistPage', () => {
       setup();
 
       expect(await screen.findByText('There are no playlists created yet')).toBeInTheDocument();
-      expect(screen.queryByText(/open pull request/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/open a pull request/i)).not.toBeInTheDocument();
     });
 
     it('shows the PR banner with source and target branches when redirected with PR params', async () => {
@@ -212,7 +212,7 @@ describe('PlaylistPage', () => {
       setup();
 
       // The banner offers to open the pull request...
-      expect(await screen.findByText(/open pull request/i)).toBeInTheDocument();
+      expect(await screen.findByText(/open a pull request/i)).toBeInTheDocument();
       // ...and shows the source and target branches.
       expect(await screen.findByRole('link', { name: 'feature-branch' })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'main' })).toBeInTheDocument();

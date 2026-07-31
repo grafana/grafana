@@ -16,6 +16,14 @@ interface Props {
   behindBranch?: boolean;
   repoUrl?: string;
   branchInfo?: PreviewBranchInfo;
+  /**
+   * Overrides the banner button's action. Receives `openDefault`, which opens the computed link in a
+   * new tab; callers can defer to it (e.g. after a pre-flight branch-existence check passes) or take
+   * a different path (e.g. offer a way out when the branch is gone).
+   */
+  onOpenPullRequest?: (openDefault: () => void) => void;
+  /** Renders the button in a "checking…" state while an async pre-flight runs. */
+  isCheckingBranch?: boolean;
 }
 
 export type PreviewBranchInfo = {
@@ -46,14 +54,35 @@ function BranchDisplay({ baseUrl, branch, repoType }: { baseUrl: string; branch:
 /**
  * @description This component is used to display a banner when a provisioned dashboard/folder is created, deleted, or loaded from a new branch in repo.
  */
-export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo }: Props) {
+export function PreviewBannerViewPR({
+  prURL,
+  isNewPr,
+  behindBranch,
+  repoUrl,
+  branchInfo,
+  onOpenPullRequest,
+  isCheckingBranch,
+}: Props) {
   const { repoType, action, prTitle } = usePullRequestParam();
 
   const capitalizedRepoType = isValidRepoType(repoType) ? RepoTypeDisplay[repoType] : 'repository';
   // Prefill the provider's "open pull request" form title from pullRequest.titleTemplate; only the
   // PR/compare URL carries it. Returns prURL unchanged when no title was threaded through.
   const prLink = appendPullRequestTitleParam(prURL, repoType, prTitle);
-  const linkUrl = prLink || branchInfo?.repoBaseUrl || repoUrl;
+  // When the PR/compare link is unavailable (e.g. the branch was removed after the PR was closed),
+  // fall back to the branch itself rather than the repo root, which is disorienting.
+  const branchLink =
+    branchInfo?.repoBaseUrl && branchInfo?.targetBranch
+      ? getBranchUrl(branchInfo.repoBaseUrl, branchInfo.targetBranch, repoType)
+      : '';
+  const linkUrl = prLink || branchLink || branchInfo?.repoBaseUrl || repoUrl;
+
+  const openDefault = () => {
+    if (linkUrl) {
+      window.open(textUtil.sanitizeUrl(linkUrl), '_blank');
+    }
+  };
+  const onPrimaryAction = onOpenPullRequest ? () => onOpenPullRequest(openDefault) : openDefault;
 
   const actionText =
     action === 'delete'
@@ -99,11 +128,13 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
       title={actionText.title}
       buttonContent={
         <Stack alignItems="center">
-          {actionText.button}
+          {isCheckingBranch
+            ? t('provisioned-resource-preview-banner.preview-banner.checking-branch', 'Checking branch…')
+            : actionText.button}
           <Icon name="external-link-alt" />
         </Stack>
       }
-      onRemove={linkUrl ? () => window.open(textUtil.sanitizeUrl(linkUrl), '_blank') : undefined}
+      onRemove={linkUrl ? onPrimaryAction : undefined}
     >
       {actionText.body}
 
@@ -147,7 +178,7 @@ function getCreateBannerText(isNewPr: boolean | undefined, repoType: string): Ba
     button: isNewPr
       ? t(
           'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
-          'Open pull request in {{repoType}}',
+          'Open a pull request in {{repoType}}',
           { repoType }
         )
       : t(
@@ -171,7 +202,7 @@ function getDeleteBannerText(repoType: string): BannerText {
     ),
     button: t(
       'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
-      'Open pull request in {{repoType}}',
+      'Open a pull request in {{repoType}}',
       { repoType }
     ),
   };
@@ -190,7 +221,7 @@ function getUpdateBannerText(repoType: string): BannerText {
     ),
     button: t(
       'provisioned-resource-preview-banner.preview-banner.open-pull-request-in-repo',
-      'Open pull request in {{repoType}}',
+      'Open a pull request in {{repoType}}',
       { repoType }
     ),
   };
