@@ -115,7 +115,7 @@ export function createBoundedCache<K, V>(maxSize: number) {
 // persist for the whole app lifetime across every table, so they use a generational bounded cache
 // (see createBoundedCache) sized generously enough that a large table mostly hits.
 const arrayPillCache = new WeakMap<object, unknown[]>();
-const primitivePillCache = createBoundedCache<string, unknown[]>(16384);
+const primitivePillCache = createBoundedCache<string, unknown[]>(15000);
 
 // Accepts an arbitrary raw cell value: pill columns hold string arrays (not in TableCellValue), and
 // values can be null, so this is deliberately typed `unknown` and narrowed at runtime.
