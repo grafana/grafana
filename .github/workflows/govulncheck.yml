@@ -35,8 +35,6 @@ jobs:
           fetch-depth: 1
       - name: Setup Go
         uses: ./.github/actions/setup-go
-        with:
-          cache-build: 'false'
       - name: Run govulncheck on all modules
         run: |
           set -euo pipefail
