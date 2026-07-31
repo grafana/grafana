@@ -41,7 +41,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationStatsDataAccess(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	db, cfg := db.InitTestDBWithCfg(t)
+	db, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgSvc := populateDB(t, db, cfg)
 
 	dashSvc := &dashboards.FakeDashboardService{}

@@ -81,7 +81,7 @@ func TestQuotaService(t *testing.T) {
 func TestIntegrationQuotaCommandsAndQueries(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg.Quota = setting.QuotaSettings{
 		Enabled: true,
 

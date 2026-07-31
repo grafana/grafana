@@ -393,7 +393,7 @@ func TestIntegrationBulkChunkedSQLiteRegression(t *testing.T) {
 // enabled, the given per-chunk byte budget, and observer installed as bulkCommitObserver
 // so tests can record every committed chunk.
 func newChunkedTestBackend(t *testing.T, chunkBytes int64, observer func(phase string, bytes int64)) (*backend, sqldb.DB) {
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	require.NotNil(t, eDB)

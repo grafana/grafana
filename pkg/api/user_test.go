@@ -66,7 +66,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	hs := &HTTPServer{
 		Cfg:           settings,
 		SQLStore:      sqlStore,
@@ -620,7 +620,7 @@ func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	hs := &HTTPServer{
 		Cfg:           settings,
@@ -656,7 +656,7 @@ func TestIntegrationHTTPServer_UpdateUser(t *testing.T) {
 func setupUpdateEmailTests(t *testing.T, cfg *setting.Cfg) (*user.User, *HTTPServer, *notifications.NotificationServiceMock) {
 	t.Helper()
 
-	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg})
+	sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: cfg}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	tempUserService := tempuserimpl.ProvideService(sqlStore, cfg)
 	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotatest.New(false, nil))
@@ -887,7 +887,7 @@ func TestIntegrationUser_UpdateEmail(t *testing.T) {
 		}
 
 		nsMock := notifications.MockNotificationService()
-		sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings})
+		sqlStore := db.InitTestDB(t, sqlstore.InitTestDBOpt{Cfg: settings}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 		tempUserSvc := tempuserimpl.ProvideService(sqlStore, settings)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, settings, quotatest.New(false, nil))
@@ -1373,7 +1373,7 @@ func TestIntegrationHTTPServer_UpdateSignedInUser(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	settings := setting.NewCfg()
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	hs := &HTTPServer{
 		Cfg:           settings,

@@ -36,7 +36,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationOrgDataAccess(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ss := db.InitTestDB(t)
+	ss := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgStore := sqlStore{
 		db:      ss,
 		dialect: ss.GetDialect(),
@@ -158,7 +158,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 	})
 
 	t.Run("Given we have organizations, we can limit and paginate search", func(t *testing.T) {
-		ss = db.InitTestDB(t)
+		ss = db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		for i := 1; i < 4; i++ {
 			cmd := &org.CreateOrgCommand{Name: fmt.Sprint("Orga #", i)}
 			_, err := orgStore.CreateWithMember(context.Background(), cmd)
@@ -207,7 +207,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 	})
 
 	t.Run("Testing Account DB Access", func(t *testing.T) {
-		ss := db.InitTestDB(t)
+		ss := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		orgStore = sqlStore{
 			db:      ss,
 			dialect: ss.GetDialect(),
@@ -258,7 +258,7 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 func TestIntegrationOrgUserDataAccess(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	ss := db.InitTestDB(t)
+	ss := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgUserStore := sqlStore{
 		db:      ss,
 		dialect: ss.GetDialect(),
@@ -335,7 +335,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 		require.NoError(t, err)
 	})
 	t.Run("GetOrgUsers and UpdateOrgUsers", func(t *testing.T) {
-		ss, cfg := db.InitTestDBWithCfg(t)
+		ss, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 		ac1cmd := &user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 		ac2cmd := &user.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
@@ -489,7 +489,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("SearchOrgUsersByEmails", func(t *testing.T) {
-		ss, cfg := db.InitTestDBWithCfg(t)
+		ss, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		_, usrSvc := createOrgAndUserSvc(t, ss, cfg)
 
 		ac1, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"})
@@ -614,7 +614,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 	})
 
 	t.Run("Given single org and 2 users inserted", func(t *testing.T) {
-		ss, cfg := db.InitTestDBWithCfg(t)
+		ss, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		cfg.AutoAssignOrg = true
 		cfg.AutoAssignOrgId = 1
 		cfg.AutoAssignOrgRole = "Viewer"
@@ -672,7 +672,7 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 func TestIntegrationSQLStore_AddOrgUser(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store, cfg := db.InitTestDBWithCfg(t)
+	store, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	defer func() {
 		cfg.AutoAssignOrg, cfg.AutoAssignOrgId, cfg.AutoAssignOrgRole = false, 0, ""
 	}()
@@ -742,7 +742,7 @@ func TestIntegrationSQLStore_AddOrgUser(t *testing.T) {
 func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store, cfg := db.InitTestDBWithCfg(t)
+	store, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgUserStore := sqlStore{
 		db:      store,
 		dialect: store.GetDialect(),
@@ -860,7 +860,7 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 	userimpl.MockTimeNow(constNow)
 	defer userimpl.ResetTimeNow()
 
-	store, cfg := db.InitTestDBWithCfg(t, sqlstore.InitTestDBOpt{})
+	store, cfg := db.InitTestDBWithCfg(t, sqlstore.InitTestDBOpt{}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgUserStore := sqlStore{
 		db:      store,
 		dialect: store.GetDialect(),
@@ -920,7 +920,7 @@ func TestIntegration_SQLStore_GetOrgUsers_PopulatesCorrectly(t *testing.T) {
 func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store, cfg := db.InitTestDBWithCfg(t, sqlstore.InitTestDBOpt{})
+	store, cfg := db.InitTestDBWithCfg(t, sqlstore.InitTestDBOpt{}) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgUserStore := sqlStore{
 		db:      store,
 		dialect: store.GetDialect(),
@@ -1099,7 +1099,7 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	store, cfg := db.InitTestDBWithCfg(t)
+	store, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	orgUserStore := sqlStore{
 		db:      store,
 		dialect: store.GetDialect(),

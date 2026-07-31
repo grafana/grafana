@@ -23,7 +23,7 @@ func TestIntegration_UpdateFolderFullpathsForFolders(t *testing.T) {
 	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
 		BaseInterval: 1,
 	}
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	fakeFolderService := foldertest.NewFakeService()
 	b := &fakeBus{}
 	store := createTestStore(sqlStore, fakeFolderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)

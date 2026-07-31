@@ -58,7 +58,7 @@ func testScenario(t *testing.T, desc string, isViewer bool, hasDatasourceExplore
 			Form:   url.Values{},
 		}}
 		ctx.Req.Header.Add("Content-Type", "application/json")
-		sqlStore, cfg := db.InitTestDBWithCfg(t)
+		sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		service := QueryHistoryService{
 			Cfg:           setting.NewCfg(),
 			store:         sqlStore,

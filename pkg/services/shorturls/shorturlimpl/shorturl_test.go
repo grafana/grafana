@@ -23,7 +23,7 @@ func TestIntegrationShortURLService(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	user := &user.SignedInUser{UserID: 1}
-	store := db.InitTestDB(t)
+	store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	t.Run("User can create and read short URLs", func(t *testing.T) {
 		cmd := &dtos.CreateShortURLCmd{

@@ -34,7 +34,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationAnnotations(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	sql := db.InitTestDB(t)
+	sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60
@@ -714,7 +714,7 @@ func BenchmarkFindTags_100k(b *testing.B) {
 }
 
 func benchmarkFindTags(b *testing.B, numAnnotations int) {
-	sql := db.InitTestDB(b)
+	sql := db.InitTestDB(b) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	cfg := setting.NewCfg()
 	cfg.AnnotationMaximumTagsLength = 60
 	store := xormRepositoryImpl{db: sql, cfg: cfg, log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql)}
