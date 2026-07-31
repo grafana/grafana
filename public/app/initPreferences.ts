@@ -1,4 +1,4 @@
-import type { Preferences } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import type { Preferences } from '@grafana/api-clients/rtkq/preferences/v1';
 
 export const initPreferences = async (): Promise<Preferences | undefined> => {
   const preferences = await fetchMergedPreferences();
