@@ -22,8 +22,9 @@ export const DEFAULT_BASEMAP_CONFIG: MapLayerOptions = {
   config: {},
 };
 
-// Default base layer depending on the server setting
-const defaultBaseLayer: MapLayerRegistryItem = {
+// Default base layer depending on the server setting. It delegates to whichever layer the
+// server configures, so its config type is genuinely heterogeneous.
+const defaultBaseLayer: MapLayerRegistryItem<any> = {
   id: DEFAULT_BASEMAP_CONFIG.type,
   name: 'Default base layer',
   isBaseMap: true,

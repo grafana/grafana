@@ -47,8 +47,7 @@ export interface MapLayerHandler<TConfig = any> {
 /**
  * Map layer configuration
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface MapLayerRegistryItem<TConfig = any> extends RegistryItemWithOptions {
+export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends RegistryItemWithOptions {
   /**
    * This layer can be used as a background
    */
