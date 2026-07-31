@@ -246,7 +246,6 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			return org.ErrOrgNotFound.Errorf("failed to delete organisation with ID: %d", cmd.ID)
 		}
 
-		alertRuleTagTable := quoteTable(dbHelper, "alert_rule_tag")
 		deletes := []string{ //nolint:prealloc
 			"DELETE FROM " + quoteTable(dbHelper, "star") + " WHERE org_id = ?",
 			"DELETE FROM " + quoteTable(dbHelper, "dashboard_tag") + " WHERE org_id = ?",
@@ -261,7 +260,7 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			"DELETE FROM " + quoteTable(dbHelper, "alert_notification") + " WHERE org_id = ?",
 			"DELETE FROM " + quoteTable(dbHelper, "alert_notification_state") + " WHERE org_id = ?",
 			"DELETE FROM " + quoteTable(dbHelper, "alert_rule") + " WHERE org_id = ?",
-			"DELETE FROM " + alertRuleTagTable + " WHERE EXISTS (SELECT 1 FROM " + quoteTable(dbHelper, "alert") + " AS alert WHERE alert.org_id = ? AND alert.id = alert_rule_tag.alert_id)",
+			"DELETE FROM " + quoteTable(dbHelper, "alert_rule_tag") + " WHERE EXISTS (SELECT 1 FROM " + quoteTable(dbHelper, "alert") + " AS alert WHERE alert.org_id = ? AND alert.id = alert_rule_tag.alert_id)",
 			"DELETE FROM " + quoteTable(dbHelper, "alert_rule_version") + " WHERE rule_org_id = ?",
 			"DELETE FROM " + quoteTable(dbHelper, "alert") + " WHERE org_id = ?",
 			"DELETE FROM " + quoteTable(dbHelper, "annotation") + " WHERE org_id = ?",
@@ -302,11 +301,9 @@ func (ss *sqlStore) GetUserOrgList(ctx context.Context, query *org.GetUserOrgLis
 
 	result := make([]*org.UserOrgDTO, 0)
 	err = dbHelper.DB.WithDbSession(ctx, func(dbSess *db.Session) error {
-		userTable := dbHelper.Table("user")
-		userRef := dbHelper.DB.GetDialect().Quote("user")
 		sess := dbSess.Table(dbHelper.Table("org_user"))
 		sess.Join("INNER", []string{dbHelper.Table("org"), "org"}, "org_user.org_id=org.id")
-		sess.Join("INNER", []string{userTable, "user"}, fmt.Sprintf("org_user.user_id=%s.id", userRef))
+		sess.Join("INNER", []string{dbHelper.Table("user"), "user"}, fmt.Sprintf("org_user.user_id=%s.id", dbHelper.DB.GetDialect().Quote("user")))
 		sess.Where("org_user.user_id=?", query.UserID)
 		sess.Where(ss.notServiceAccountFilter(dbHelper))
 		sess.Cols("org.name", "org_user.role", "org_user.org_id")
