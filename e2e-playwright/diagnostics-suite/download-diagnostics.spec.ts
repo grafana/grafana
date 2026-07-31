@@ -21,6 +21,10 @@ async function skipUnlessOnPrem(page: Page) {
   test.skip(namespace.startsWith('stacks-'), 'on-demand diagnostics is on-prem only; e2e server runs in cloud mode');
 }
 
+// This only overrides the frontend's OFREP evaluation (so the menu item renders). The backend
+// evaluates the same flag separately for /api/ds/diagnostics, so the server this runs against
+// also needs `[feature_toggles] grafana.onDemandDiagnostics = true` set directly (see
+// pr-diagnostics-e2e.yml), or the download request 404s even with the menu item visible.
 test.use({
   openFeature: {
     flags: {
