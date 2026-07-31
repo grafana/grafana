@@ -82,13 +82,9 @@ If you apply org-level permissions, users can do the following with Git Sync:
 
 ### Admin users
 
-Users with the `Admin` role can set up and manage Git Sync repositories and connections.
+If Grafana OSS/Enterprise, you need to have the `Admin` role to set up and manage Git Sync repositories and connections. In Grafana Cloud, the equivalent role is **Grafana Cloud Admin** or **Admin** at the organization level.
 
-{{< admonition type="note" >}}
-In Grafana Cloud, the equivalent role is **Grafana Cloud Admin** or **Admin** at the organization level.
-{{< /admonition >}}
-
-**Capabilities**:
+As an Admin you can:
 
 - Configure new Git Sync repositories and connections
 - Update repository settings (URL, branch, path, sync interval, webhook configuration)
@@ -123,7 +119,7 @@ Users with the `Editor` role can work with provisioned dashboards and folders. T
 - Push their dashboard and folder changes to Git, including opening pull requests, via the jobs API
 
 {{< admonition type="note" >}}
-**Only Admins can trigger a manual sync (**pull** from Git) and orphan-resource clean-up**. Editors can push their own changes but can't pull from Git on demand. Refer to [Job actions and required permissions](#job-actions-and-required-permissions) for more details.
+**Only Admins can trigger a manual sync (pull from Git) and orphan-resource clean-up**. Editors can push their own changes but can't pull from Git on demand. Refer to [Job actions and required permissions](#job-actions-and-required-permissions) for more details.
 {{< /admonition >}}
 
 **Resource access** depends on folder/dashboard permissions:
