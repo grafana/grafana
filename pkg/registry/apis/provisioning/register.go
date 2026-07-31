@@ -1180,7 +1180,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			// The repository delta source and the getter it backs.
-			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval, b.registry)
 			repoController := controller.NewRepositoryController(
 				b.GetClient(),
 				reconcileRepoGetter,
@@ -1223,7 +1223,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
 			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
-			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval, b.registry)
 			connController := controller.NewConnectionController(
 				connGetter,
 				connStatusPatcher,

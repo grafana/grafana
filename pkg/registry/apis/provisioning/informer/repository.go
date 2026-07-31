@@ -13,6 +13,8 @@ import (
 	typedclient "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/nats"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
@@ -41,10 +43,12 @@ type RepositoryGetter interface {
 // controller anything older (a NATS notification is published after the write
 // commits, but the read may land on a replica that has not seen it yet — an
 // apiserver watch never has this gap because the event carries the object).
-func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) (DeltaSource, RepositoryGetter) {
+// Floor enforcement outcomes are counted on reg (nil disables them).
+func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, reg prometheus.Registerer) (DeltaSource, RepositoryGetter) {
 	if nats.Enabled(subscriber) {
 		store := usinformer.NewStore()
 		floor := usinformer.NewRVFloor()
+		staleReads := usinformer.NewStaleReadMetrics(reg, provisioningapis.RepositoryResourceInfo.GroupVersionResource().Resource)
 		source := NewRepositoryInformer(subscriber, client, "", resync, store)
 		// The informer is the repository controller's only feed, and everything
 		// that creates provisioning work lives in its reconcile: scheduled syncs,
@@ -59,7 +63,7 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 		// enqueues the key, so the getter can refuse reconcile reads staler than
 		// the event that triggered them.
 		source.TrackFloor(floor)
-		return source, NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store, floor)
+		return source, NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store, floor, staleReads)
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
 	return inf.Informer(), NewCachedRepositoryGetter(inf.Lister())
@@ -109,9 +113,9 @@ func (g cachedRepositoryGetter) List(_ context.Context, namespace string) ([]*pr
 //
 // floor is the freshness floor the informer events raise; Get refuses to return
 // a read below it (retrying briefly, then usinformer.ErrStaleRead). A nil floor
-// disables the check.
-func NewClientGetCachedListRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, store usinformer.Cache, floor *usinformer.RVFloor) RepositoryGetter {
-	return clientGetCachedListRepositoryGetter{client: c, store: store, reader: usinformer.NewFreshReader(floor)}
+// disables the check; metrics counts the enforcement outcomes (nil disables).
+func NewClientGetCachedListRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, store usinformer.Cache, floor *usinformer.RVFloor, metrics *usinformer.StaleReadMetrics) RepositoryGetter {
+	return clientGetCachedListRepositoryGetter{client: c, store: store, reader: usinformer.NewFreshReader(floor, metrics)}
 }
 
 type clientGetCachedListRepositoryGetter struct {

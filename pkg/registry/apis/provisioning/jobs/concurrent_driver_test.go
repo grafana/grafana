@@ -3,6 +3,7 @@ package jobs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -629,4 +630,38 @@ func TestConcurrentJobDriver_StaleAlreadyClaimedIsRetried(t *testing.T) {
 
 	cancel()
 	require.NoError(t, <-runDone)
+}
+
+// staleClaimRead is the seam that decides whether a claim failure indicts a
+// lagging read path. It must trust everything without a floor, treat a 404
+// under a live watermark as stale but under a deletion watermark as truth, and
+// indict an already-claimed only when it was observed below the floor —
+// including the conflict-exhausted error, which wraps AlreadyClaimedError.
+func TestConcurrentJobDriver_StaleClaimReadClassification(t *testing.T) {
+	const (
+		rvOld      = int64(200000000000000000)
+		rvAnnounce = int64(300000000000000000)
+	)
+	notFound := apierrors.NewNotFound(provisioning.JobResourceInfo.GroupVersionResource().GroupResource(), "j")
+	staleClaimed := &AlreadyClaimedError{ObservedResourceVersion: rvOld}
+	freshClaimed := &AlreadyClaimedError{ObservedResourceVersion: rvAnnounce}
+	// The conflict-exhaustion path wraps the typed error in more context.
+	exhausted := fmt.Errorf("failed to claim job after conflicts: %w", staleClaimed)
+
+	driver := newTestConcurrentDriver(t, 1, &MockStore{}, &MockRepoGetter{}, &MockHistoryWriter{}, nil)
+	assert.False(t, driver.staleClaimRead(notFound, "ns", "j"), "no floor trusts every outcome")
+
+	floor := usinformer.NewRVFloor()
+	driver.TrackFloor(floor)
+	assert.False(t, driver.staleClaimRead(notFound, "ns", "j"), "no watermark trusts the 404")
+
+	floor.Raise("ns", "j", rvAnnounce)
+	assert.True(t, driver.staleClaimRead(notFound, "ns", "j"), "a 404 under a live watermark is a stale read")
+	assert.True(t, driver.staleClaimRead(staleClaimed, "ns", "j"), "an already-claimed below the floor is the stale predecessor")
+	assert.True(t, driver.staleClaimRead(exhausted, "ns", "j"), "conflict exhaustion below the floor is equally stale")
+	assert.False(t, driver.staleClaimRead(freshClaimed, "ns", "j"), "an already-claimed at the floor is genuine contention")
+	assert.False(t, driver.staleClaimRead(errors.New("boom"), "ns", "j"), "other errors are not staleness evidence")
+
+	floor.Deleted("ns", "j", rvAnnounce+1)
+	assert.False(t, driver.staleClaimRead(notFound, "ns", "j"), "under a deletion watermark the 404 is the truth")
 }

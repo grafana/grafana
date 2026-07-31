@@ -69,6 +69,11 @@ type ConcurrentJobDriver struct {
 	// the driver passes only raw event facts.
 	processed *usinformer.ProcessedMetrics
 
+	// staleReads counts claim outcomes the freshness floor rejected as lagging
+	// reads (retried) and the keys surrendered to the re-list after the retries
+	// ran out (exhausted).
+	staleReads *usinformer.StaleReadMetrics
+
 	// postClaimCooldown is how long a key is barred from processing after its
 	// job failed post-claim: the side effects may already have run, and the
 	// rolled-back claim makes the job immediately claimable again. The bar is
@@ -107,16 +112,19 @@ type ConcurrentJobDriver struct {
 func (c *ConcurrentJobDriver) TrackFloor(floor *usinformer.RVFloor) { c.floor = floor }
 
 // staleClaimRead reports whether a claim failure is evidence of a lagging read
-// path rather than the job's true state: a 404 while a floor says the job was
-// announced, or an "already claimed" observed at a version below the floor —
-// the still-claimed predecessor of a reused name, not the announced incarnation.
-// An AlreadyClaimedError at or above the floor is genuine contention.
+// path rather than the job's true state: a 404 while a live floor says the job
+// was announced (under a deletion watermark the 404 IS the truth — the job
+// completed and was deleted), or an "already claimed" observed at a version
+// below the floor — the still-claimed predecessor of a reused name, not the
+// announced incarnation. An AlreadyClaimedError at or above the floor is
+// genuine contention.
 func (c *ConcurrentJobDriver) staleClaimRead(err error, namespace, name string) bool {
 	if c.floor == nil {
 		return false
 	}
 	if apierrors.IsNotFound(err) {
-		return c.floor.Floor(namespace, name) > 0
+		rv, deleted := c.floor.Watermark(namespace, name)
+		return rv > 0 && !deleted
 	}
 	var claimed *AlreadyClaimedError
 	if errors.As(err, &claimed) {
@@ -167,6 +175,7 @@ func NewConcurrentJobDriver(
 		workers:              workers,
 		metrics:              metrics,
 		processed:            usinformer.NewProcessedMetrics(registry, resourceLabelJobs, natsBacked),
+		staleReads:           usinformer.NewStaleReadMetrics(registry, resourceLabelJobs),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
 			workqueue.TypedRateLimitingQueueConfig[string]{
@@ -509,11 +518,15 @@ func (c *ConcurrentJobDriver) processNextWorkItem(ctx context.Context, processor
 			"attempt", attempt, "cooldown", c.postClaimCooldown, "error", err)
 		c.queue.Forget(key)
 	case staleClaimRead && attempt < maxStaleClaimAttempts:
+		c.staleReads.RecordRetried()
 		logger.Info("job announced but not yet visible to this read path - will retry claim",
 			"attempt", attempt, "max_attempts", maxStaleClaimAttempts)
 		c.setQueued(key, queued.trigger, queued.enqueued)
 		c.queue.AddRateLimited(key)
 	case attempt >= maxClaimAttempts:
+		if staleClaimRead {
+			c.staleReads.RecordExhausted()
+		}
 		logger.Error("job failed too many times - dropping from queue; the informer re-list re-adds it if still unclaimed",
 			"attempts", attempt, "error", err)
 		c.queue.Forget(key)

@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -44,16 +46,41 @@ func TestRVFloor_RaiseIsMonotonic(t *testing.T) {
 	assert.Zero(t, f.Floor("ns", "other"), "keys without announcements have no floor")
 }
 
-func TestRVFloor_SettleKeepsHigherFloor(t *testing.T) {
+func TestRVFloor_DeletedBecomesTombstone(t *testing.T) {
 	f := NewRVFloor()
 
 	f.Raise("ns", "r", rvStale)
-	f.Settle("ns", "r", rvStale)
-	assert.Zero(t, f.Floor("ns", "r"), "a read at the floor settles it")
+	f.Deleted("ns", "r", rvFresh)
+	rv, deleted := f.Watermark("ns", "r")
+	assert.Equal(t, rvFresh, rv, "the deletion watermark carries the delete's version")
+	assert.True(t, deleted)
 
+	// A re-create announced above the delete flips the key live again.
+	f.Raise("ns", "r", rvFresh+1)
+	rv, deleted = f.Watermark("ns", "r")
+	assert.Equal(t, rvFresh+1, rv)
+	assert.False(t, deleted, "an announcement above the delete is a re-create")
+
+	// A stale announcement below an existing watermark flips nothing.
+	f.Deleted("ns", "r", rvFresh+2)
+	f.Raise("ns", "r", rvStale)
+	_, deleted = f.Watermark("ns", "r")
+	assert.True(t, deleted, "an announcement below the delete must not resurrect the key")
+}
+
+func TestRVFloor_DeletedKeepsNewerAnnouncement(t *testing.T) {
+	f := NewRVFloor()
+
+	// The re-create's event arrived before the (older) delete: the live floor wins.
 	f.Raise("ns", "r", rvFresh)
-	f.Settle("ns", "r", rvStale)
-	assert.Equal(t, rvFresh, f.Floor("ns", "r"), "a read below a raised floor must not settle it")
+	f.Deleted("ns", "r", rvStale)
+	rv, deleted := f.Watermark("ns", "r")
+	assert.Equal(t, rvFresh, rv, "an older delete must not erase a newer announcement")
+	assert.False(t, deleted)
+
+	f.Deleted("ns", "r", 0)
+	_, deleted = f.Watermark("ns", "r")
+	assert.False(t, deleted, "an undatable delete records nothing")
 }
 
 // Wire versions are snowflakes; rows unwritten since migration can still read
@@ -65,8 +92,10 @@ func TestRVFloor_NormalizesLegacyVersions(t *testing.T) {
 	f.Raise("ns", "r", legacy)
 	assert.Equal(t, resource.ToSnowflakeRV(legacy), f.Floor("ns", "r"), "legacy versions are stored in snowflake form")
 
-	f.Settle("ns", "r", legacy)
-	assert.Zero(t, f.Floor("ns", "r"), "a legacy read at a legacy floor settles it")
+	f.Deleted("ns", "r", legacy)
+	_, deleted := f.Watermark("ns", "r")
+	assert.True(t, deleted, "a legacy delete at a legacy floor tombstones it")
+	assert.False(t, f.Below("ns", "r", legacy), "the same legacy version is not below its own watermark")
 }
 
 // An orphaned floor (its delete was delivered to another replica and the object
@@ -171,6 +200,26 @@ func TestGetFresh_RetainsFloorAcrossAttempts(t *testing.T) {
 	assert.False(t, apierrors.IsNotFound(err))
 }
 
+// GetFresh accounts each rejected read (retried) and each surrender to the
+// re-list backstop (exhausted) on the stale-read counter.
+func TestGetFresh_RecordsStaleReadMetrics(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	metrics := NewStaleReadMetrics(reg, "widgets")
+	floor := NewRVFloor()
+	floor.Raise(testNamespace, "r", rvFresh)
+
+	_, err := GetFresh(context.Background(), FreshReader{Floor: floor, Retries: 3, Metrics: metrics}, testNamespace, "r",
+		func(context.Context) (*metav1.PartialObjectMetadata, error) {
+			return objWithRV("r", rvStale), nil
+		})
+	require.ErrorIs(t, err, ErrStaleRead)
+
+	assert.Equal(t, 2.0, testutil.ToFloat64(metrics.outcomes.WithLabelValues("widgets", "retried")),
+		"each rescheduled read counts as retried")
+	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.outcomes.WithLabelValues("widgets", "exhausted")),
+		"giving up counts once as exhausted")
+}
+
 func TestRVFloor_Below(t *testing.T) {
 	f := NewRVFloor()
 	assert.False(t, f.Below("ns", "r", rvStale), "no floor indicts no read")
@@ -215,7 +264,7 @@ func TestGetFresh_NotFoundBelowFloorIsStale(t *testing.T) {
 
 // With no floor outstanding a 404 is trusted and returned as is.
 func TestGetFresh_TrustedNotFound(t *testing.T) {
-	_, err := GetFresh(context.Background(), NewFreshReader(NewRVFloor()), testNamespace, "r",
+	_, err := GetFresh(context.Background(), NewFreshReader(NewRVFloor(), nil), testNamespace, "r",
 		func(context.Context) (*metav1.PartialObjectMetadata, error) {
 			return nil, notFound("r")
 		})
@@ -225,7 +274,7 @@ func TestGetFresh_TrustedNotFound(t *testing.T) {
 // A nil floor disables enforcement entirely: one fetch, returned as is.
 func TestGetFresh_NilFloorPassesThrough(t *testing.T) {
 	fetches := 0
-	got, err := GetFresh(context.Background(), NewFreshReader(nil), testNamespace, "r",
+	got, err := GetFresh(context.Background(), NewFreshReader(nil, nil), testNamespace, "r",
 		func(context.Context) (*metav1.PartialObjectMetadata, error) {
 			fetches++
 			return objWithRV("r", rvStale), nil
@@ -233,6 +282,37 @@ func TestGetFresh_NilFloorPassesThrough(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, fetches)
 	assert.Equal(t, formatRV(rvStale), got.ResourceVersion)
+}
+
+// Under a deletion watermark the 404 is the announced truth, a pre-delete
+// object served by a lagging replica is stale, and a re-create at or above the
+// delete is accepted.
+func TestGetFresh_DeletionWatermark(t *testing.T) {
+	floor := NewRVFloor()
+	floor.Raise(testNamespace, "r", rvStale)
+	floor.Deleted(testNamespace, "r", rvFresh)
+	reader := FreshReader{Floor: floor, Retries: 2}
+
+	_, err := GetFresh(context.Background(), reader, testNamespace, "r",
+		func(context.Context) (*metav1.PartialObjectMetadata, error) {
+			return nil, notFound("r")
+		})
+	require.True(t, apierrors.IsNotFound(err), "under a deletion watermark the 404 is the truth")
+
+	_, err = GetFresh(context.Background(), reader, testNamespace, "r",
+		func(context.Context) (*metav1.PartialObjectMetadata, error) {
+			return objWithRV("r", rvStale), nil
+		})
+	require.ErrorIs(t, err, ErrStaleRead, "a pre-delete object from a lagging replica must not be reconciled")
+
+	got, err := GetFresh(context.Background(), reader, testNamespace, "r",
+		func(context.Context) (*metav1.PartialObjectMetadata, error) {
+			return objWithRV("r", rvFresh+1), nil
+		})
+	require.NoError(t, err, "a re-create above the delete is current state")
+	assert.Equal(t, formatRV(rvFresh+1), got.ResourceVersion)
+	_, deleted := floor.Watermark(testNamespace, "r")
+	assert.False(t, deleted, "the accepted re-create flips the watermark live")
 }
 
 // An object whose version does not parse fails open: enforcement cannot apply,

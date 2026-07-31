@@ -158,8 +158,8 @@ type Informer struct {
 	metrics Metrics
 
 	// floor, when set, is maintained as events are delivered: live notifications
-	// and re-list deliveries raise it to the version they announce, deletes
-	// forget it. See TrackFloor.
+	// and re-list deliveries raise it to the version they announce, deletes flip
+	// it to a deletion watermark at the delete's version. See TrackFloor.
 	floor *RVFloor
 
 	// reconnect signals the run loop to re-list after a NATS reconnect, since a
@@ -475,15 +475,17 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		// Maintain the freshness floor before dispatching: the notification is
 		// published only after the write is committed, so once a handler enqueues
 		// the key, a reconcile read below this version is provably stale. A delete
-		// settles the floor at the delete's version rather than dropping it
-		// outright: a floor raised above it belongs to a recreate whose events
-		// arrived out of order, and its reconcile still needs it. Dispatched
-		// objects deliberately keep their RV shape (adds stamped for the store
-		// write-through, updates minimal): consumers such as ProcessedMetrics
-		// classify deliveries by it.
+		// flips the floor to a deletion watermark at the delete's version rather
+		// than dropping it: a queued reconcile must reject a pre-delete object
+		// served by a lagging replica (only a 404, or a re-create at a higher
+		// version, is truth) — while a floor already raised above the delete
+		// belongs to a re-create whose events arrived out of order and is kept.
+		// Dispatched objects deliberately keep their RV shape (adds stamped for
+		// the store write-through, updates minimal): consumers such as
+		// ProcessedMetrics classify deliveries by it.
 		if n.floor != nil {
 			if evt.Type == resourcepb.WatchNotification_DELETED {
-				n.floor.Settle(evt.Namespace, evt.Name, evt.ResourceVersion)
+				n.floor.Deleted(evt.Namespace, evt.Name, evt.ResourceVersion)
 			} else {
 				n.floor.Raise(evt.Namespace, evt.Name, evt.ResourceVersion)
 			}
@@ -583,7 +585,7 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 
 	for _, obj := range removed {
 		o := obj
-		n.floorSettle(o, listRV)
+		n.floorDeleted(o, listRV)
 		n.observeRelistEvent(VerbDelete, 0)
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(o) })
 	}
@@ -603,19 +605,19 @@ func (n *Informer) floorRaise(obj runtime.Object) {
 	}
 }
 
-// floorSettle drops the tracked floor for an object a re-list observed gone —
-// but only up to listRV, the snapshot's date. A floor above listRV was raised
-// by a live event the LIST predates (e.g. a recreate whose ADDED went to
-// another queue-group member while the LIST captured the absence window);
-// erasing it would let the queued reconcile trust a lagging 404 and lose the
-// update until the next resync. An undatable list (listRV 0) settles nothing;
-// the floor TTL bounds any leftover.
-func (n *Informer) floorSettle(obj runtime.Object, listRV int64) {
+// floorDeleted flips the tracked floor to a deletion watermark for an object a
+// re-list observed gone, dated at listRV (the snapshot's date): a queued
+// reconcile must reject pre-delete state a lagging replica may still serve,
+// while trusting a 404. A floor above listRV was raised by a live event the
+// LIST predates (e.g. a recreate whose ADDED went to another queue-group member
+// while the LIST captured the absence window) and is kept live. An undatable
+// list (listRV 0) records nothing; the floor TTL bounds any leftover.
+func (n *Informer) floorDeleted(obj runtime.Object, listRV int64) {
 	if n.floor == nil {
 		return
 	}
 	if acc, err := meta.Accessor(obj); err == nil {
-		n.floor.Settle(acc.GetNamespace(), acc.GetName(), listRV)
+		n.floor.Deleted(acc.GetNamespace(), acc.GetName(), listRV)
 	}
 }
 

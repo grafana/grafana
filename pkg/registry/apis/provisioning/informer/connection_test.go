@@ -42,7 +42,7 @@ func TestNewConnectionDeltaSource_EnforcesNotificationVersion(t *testing.T) {
 		return true, connWithRV(testNamespace, "c", rvStale), nil
 	})
 	sub := newFakeSubscriber()
-	source, getter := NewConnectionDeltaSource(sub, client, time.Minute)
+	source, getter := NewConnectionDeltaSource(sub, client, time.Minute, nil)
 
 	rec := &typeRecorder{}
 	_, err := source.AddEventHandler(rec)

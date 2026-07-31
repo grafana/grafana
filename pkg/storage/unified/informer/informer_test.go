@@ -266,9 +266,10 @@ func TestInformer_LiveEventsDispatchMinimalObject(t *testing.T) {
 }
 
 // With TrackFloor, live events maintain the freshness floor before handlers
-// run: adds and updates raise it to the announced version, a delete settles it
-// at the delete's version (an older delete must not erase a newer
-// announcement's floor), and a re-list raises it for the objects it delivers.
+// run: adds and updates raise it to the announced version, a delete flips it to
+// a deletion watermark at the delete's version (an older delete must not erase
+// a newer announcement's floor), and a re-list raises it for the objects it
+// delivers.
 func TestInformer_TracksFloor(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		sub := newFakeSubscriber()
@@ -288,20 +289,24 @@ func TestInformer_TracksFloor(t *testing.T) {
 		// arriving out of order — must leave the newer floor standing.
 		sub.publish(t, subject(), eventWithRV(resourcepb.WatchNotification_DELETED, "changed", rvStale))
 		synctest.Wait()
-		assert.Equal(t, rvFresh, floor.Floor(testNamespace, "changed"), "an older delete must not erase a newer announcement's floor")
+		rv, deleted := floor.Watermark(testNamespace, "changed")
+		assert.Equal(t, rvFresh, rv, "an older delete must not erase a newer announcement's floor")
+		assert.False(t, deleted)
 
-		sub.publish(t, subject(), eventWithRV(resourcepb.WatchNotification_DELETED, "changed", rvFresh))
+		sub.publish(t, subject(), eventWithRV(resourcepb.WatchNotification_DELETED, "changed", rvFresh+1))
 		synctest.Wait()
-		assert.Zero(t, floor.Floor(testNamespace, "changed"), "a delete at the announced version settles the floor")
+		rv, deleted = floor.Watermark(testNamespace, "changed")
+		assert.Equal(t, rvFresh+1, rv, "a delete above the floor becomes the deletion watermark")
+		assert.True(t, deleted, "a pre-delete read must still be rejectable; only a 404 is truth now")
 	})
 }
 
-// A re-list that reports an object removed settles its floor only up to the
-// snapshot's listRV: a floor raised by a live event the LIST predates (e.g. a
-// recreate whose ADDED went to another queue-group member while the LIST caught
-// the absence window) must survive, or the queued reconcile would trust a
-// lagging 404.
-func TestInformer_RelistSettlesFloorsAtListRV(t *testing.T) {
+// A re-list that reports an object removed tombstones its floor at the
+// snapshot's listRV — but a floor raised by a live event the LIST predates
+// (e.g. a recreate whose ADDED went to another queue-group member while the
+// LIST caught the absence window) must survive live, or the queued reconcile
+// would trust a lagging 404.
+func TestInformer_RelistTombstonesFloorsAtListRV(t *testing.T) {
 	floor := NewRVFloor()
 	calls := 0
 	list := func(context.Context) ([]runtime.Object, int64, error) {
@@ -320,8 +325,12 @@ func TestInformer_RelistSettlesFloorsAtListRV(t *testing.T) {
 	floor.Raise(testNamespace, "fresh", rvFresh)
 
 	require.NoError(t, n.relist(context.Background(), false))
-	assert.Equal(t, rvFresh, floor.Floor(testNamespace, "fresh"), "a floor newer than the list snapshot must survive its removal")
-	assert.Zero(t, floor.Floor(testNamespace, "gone"), "a floor the list snapshot postdates settles with the removal")
+	rv, deleted := floor.Watermark(testNamespace, "fresh")
+	assert.Equal(t, rvFresh, rv, "a floor newer than the list snapshot must survive its removal")
+	assert.False(t, deleted)
+	rv, deleted = floor.Watermark(testNamespace, "gone")
+	assert.Equal(t, rvStale+1, rv, "a removal the snapshot postdates becomes a deletion watermark at listRV")
+	assert.True(t, deleted)
 }
 
 // A live DELETED drops the object from the informer's snapshot so a

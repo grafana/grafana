@@ -106,7 +106,7 @@ func TestNewCachedRepositoryGetter(t *testing.T) {
 func TestClientGetCachedListRepositoryGetter_GetWritesThrough(t *testing.T) {
 	client := fake.NewClientset(repo("ns", "fresh"))
 	store := newFakeStore()
-	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store, nil)
+	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store, nil, nil)
 
 	got, err := g.Get(context.Background(), "ns", "fresh")
 	require.NoError(t, err)
@@ -124,7 +124,7 @@ func TestClientGetCachedListRepositoryGetter_GetWritesThrough(t *testing.T) {
 func TestClientGetCachedListRepositoryGetter_GetNotFoundLeavesSnapshot(t *testing.T) {
 	client := fake.NewClientset()
 	store := newFakeStore(repo("ns", "stale"))
-	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store, nil)
+	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store, nil, nil)
 
 	_, err := g.Get(context.Background(), "ns", "stale")
 	require.True(t, apierrors.IsNotFound(err))
@@ -137,7 +137,7 @@ func TestClientGetCachedListRepositoryGetter_GetNotFoundLeavesSnapshot(t *testin
 // List reads only the requested namespace out of the store.
 func TestClientGetCachedListRepositoryGetter_ListFiltersNamespace(t *testing.T) {
 	store := newFakeStore(repo("ns-a", "one"), repo("ns-a", "two"), repo("ns-b", "other"))
-	g := NewClientGetCachedListRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store, nil)
+	g := NewClientGetCachedListRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store, nil, nil)
 
 	list, err := g.List(context.Background(), "ns-a")
 	require.NoError(t, err)
@@ -217,7 +217,7 @@ func TestNewRepositoryDeltaSource_EnforcesNotificationVersion(t *testing.T) {
 		return true, repoWithRV(testNamespace, "r", rvStale), nil
 	})
 	sub := newFakeSubscriber()
-	source, getter := NewRepositoryDeltaSource(sub, client, time.Minute)
+	source, getter := NewRepositoryDeltaSource(sub, client, time.Minute, nil)
 
 	rec := &typeRecorder{}
 	_, err := source.AddEventHandler(rec)
@@ -252,14 +252,14 @@ func TestNewRepositoryDeltaSource(t *testing.T) {
 	client := fake.NewClientset(repo(testNamespace, "r"))
 
 	t.Run("nats enabled reads fresh from the API", func(t *testing.T) {
-		_, getter := NewRepositoryDeltaSource(newFakeSubscriber(), client, time.Minute)
+		_, getter := NewRepositoryDeltaSource(newFakeSubscriber(), client, time.Minute, nil)
 		got, err := getter.Get(context.Background(), testNamespace, "r")
 		require.NoError(t, err)
 		assert.Equal(t, "r", got.Name)
 	})
 
 	t.Run("nats disabled reads the informer cache", func(t *testing.T) {
-		_, getter := NewRepositoryDeltaSource(nil, client, time.Minute)
+		_, getter := NewRepositoryDeltaSource(nil, client, time.Minute, nil)
 		// The cache getter reads the (empty, unsynced) informer lister, so the
 		// object present in the API is not found — proving it does not hit the API.
 		_, err := getter.Get(context.Background(), testNamespace, "r")

@@ -12,6 +12,8 @@ import (
 	typedclient "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/nats"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
@@ -30,8 +32,9 @@ type ConnectionGetter interface {
 // NewConnectionDeltaSource returns the connection delta source and the getter it
 // backs. Under NATS the getter reads reconcile state fresh from the API;
 // otherwise it reads the informer's cache lister.
-func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration) (DeltaSource, ConnectionGetter) {
+func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, reg prometheus.Registerer) (DeltaSource, ConnectionGetter) {
 	if nats.Enabled(subscriber) {
+		staleReads := usinformer.NewStaleReadMetrics(reg, provisioningapis.ConnectionResourceInfo.GroupVersionResource().Resource)
 		source := NewConnectionInformer(subscriber, client, "", resync, usinformer.NewStore())
 		// Same as the repository informer: the controller's only feed, with
 		// connection health checks driven by the re-list, so it must keep
@@ -43,7 +46,7 @@ func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 		// refuse reconcile reads staler than the event that triggered them.
 		floor := usinformer.NewRVFloor()
 		source.TrackFloor(floor)
-		return source, NewClientConnectionGetter(client.ProvisioningV0alpha1(), floor)
+		return source, NewClientConnectionGetter(client.ProvisioningV0alpha1(), floor, staleReads)
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Connections()
 	return inf.Informer(), NewCachedConnectionGetter(inf.Lister())
@@ -81,9 +84,10 @@ func (g cachedConnectionGetter) Get(_ context.Context, namespace, name string) (
 // the NATS watch where there is no informer cache to serve a fresh reconcile
 // read. floor is the freshness floor the informer events raise; Get refuses to
 // return a read below it (retrying briefly, then usinformer.ErrStaleRead). A
-// nil floor disables the check.
-func NewClientConnectionGetter(c typedclient.ProvisioningV0alpha1Interface, floor *usinformer.RVFloor) ConnectionGetter {
-	return clientConnectionGetter{client: c, reader: usinformer.NewFreshReader(floor)}
+// nil floor disables the check; metrics counts the enforcement outcomes (nil
+// disables).
+func NewClientConnectionGetter(c typedclient.ProvisioningV0alpha1Interface, floor *usinformer.RVFloor, metrics *usinformer.StaleReadMetrics) ConnectionGetter {
+	return clientConnectionGetter{client: c, reader: usinformer.NewFreshReader(floor, metrics)}
 }
 
 type clientConnectionGetter struct {

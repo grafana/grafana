@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -55,11 +56,12 @@ const (
 // Notifications carry the version of a committed write, so a subsequent read
 // returning less is a stale replica, not truth; and once a read has observed a
 // version, a later read (a retry of a failed reconcile, an internal
-// re-schedule) below it is equally stale. Floors therefore drop only against
-// dated informer evidence (Settle from a delete or a re-list) or the TTL —
-// never because a read met them.
+// re-schedule) below it is equally stale. A delete does not drop the watermark
+// either — it flips it to a deletion watermark (Deleted), under which a
+// NotFound is the expected truth but a pre-delete object served by a lagging
+// replica is still rejected. Only the TTL ever removes an entry.
 //
-// Versions are normalized to snowflake form on the way in (Raise/Settle), so
+// Versions are normalized to snowflake form on the way in (Raise/Deleted), so
 // wire versions (always snowflake) and read versions (possibly legacy
 // microsecond values for rows unwritten since migration) compare in one space.
 type RVFloor struct {
@@ -71,6 +73,7 @@ type RVFloor struct {
 
 type floorEntry struct {
 	rv       int64
+	deleted  bool
 	raisedAt time.Time
 }
 
@@ -81,6 +84,8 @@ func NewRVFloor() *RVFloor {
 // Raise records rv as the key's floor if it is higher than the current one, and
 // refreshes the entry's age either way: a floor that keeps being re-announced
 // (e.g. by every re-list) is live evidence and must not expire underneath it.
+// Raising above a deletion watermark marks the key live again — the
+// announcement is a re-create newer than the delete.
 func (f *RVFloor) Raise(namespace, name string, rv int64) {
 	if rv <= 0 {
 		return
@@ -90,20 +95,61 @@ func (f *RVFloor) Raise(namespace, name string, rv int64) {
 	defer f.mu.Unlock()
 	f.sweepLocked()
 	key := floorKey(namespace, name)
-	if e, ok := f.floors[key]; ok && e.rv > rv {
-		rv = e.rv
+	e, ok := f.floors[key]
+	if !ok || rv > e.rv {
+		e = floorEntry{rv: rv}
 	}
-	f.floors[key] = floorEntry{rv: rv, raisedAt: f.now()}
+	e.raisedAt = f.now()
+	f.floors[key] = e
 }
 
-// Floor returns the key's current floor, or 0 when none is outstanding. An
-// entry past its TTL is dropped and reported absent: a legitimate 404 must stop
-// reading as stale once the TTL passes, even on an informer idle enough that no
-// Raise ever runs the sweep.
+// Deleted records that the object was observed gone as of rv — a live delete's
+// version, or the listRV of a re-list snapshot that no longer contains it. The
+// watermark stays outstanding but flips meaning: a NotFound is now the expected
+// truth, while an object read below rv is a pre-delete ghost from a lagging
+// replica that must not be reconciled. A floor already raised above rv (a
+// re-create whose events arrived first) is kept live — the delete is older
+// evidence. rv <= 0 (an undatable list) records nothing.
+func (f *RVFloor) Deleted(namespace, name string, rv int64) {
+	if rv <= 0 {
+		return
+	}
+	rv = resource.ToSnowflakeRV(rv)
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	key := floorKey(namespace, name)
+	e, ok := f.floors[key]
+	if ok && e.rv > rv {
+		// Newer announcement outranks this delete; just refresh its age.
+		e.raisedAt = f.now()
+		f.floors[key] = e
+		return
+	}
+	f.floors[key] = floorEntry{rv: rv, deleted: true, raisedAt: f.now()}
+}
+
+// Floor returns the key's current floor version, or 0 when none is
+// outstanding, regardless of whether it marks a deletion. An entry past its TTL
+// is dropped and reported absent: a legitimate 404 must stop reading as stale
+// once the TTL passes, even on an informer idle enough that no Raise ever runs
+// the sweep.
 func (f *RVFloor) Floor(namespace, name string) int64 {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	return f.currentLocked(floorKey(namespace, name))
+	e := f.currentLocked(floorKey(namespace, name))
+	return e.rv
+}
+
+// Watermark returns the key's outstanding floor version (0 when none) and
+// whether it marks a deletion. For a live watermark a read must reach rv and a
+// NotFound is suspect; for a deletion watermark a NotFound is the expected
+// truth and only an object read below rv is stale (at or above it is a
+// re-create).
+func (f *RVFloor) Watermark(namespace, name string) (rv int64, deleted bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	e := f.currentLocked(floorKey(namespace, name))
+	return e.rv, e.deleted
 }
 
 // Below reports whether rv is evidence of a stale read: a positive version
@@ -117,38 +163,22 @@ func (f *RVFloor) Below(namespace, name string, rv int64) bool {
 	rv = resource.ToSnowflakeRV(rv)
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	floor := f.currentLocked(floorKey(namespace, name))
-	return floor > 0 && rv < floor
+	e := f.currentLocked(floorKey(namespace, name))
+	return e.rv > 0 && rv < e.rv
 }
 
-// currentLocked returns the key's floor, dropping (and reporting absent) an
-// entry past its TTL. Callers hold f.mu.
-func (f *RVFloor) currentLocked(key string) int64 {
+// currentLocked returns the key's entry, dropping (and reporting a zero entry)
+// one past its TTL. Callers hold f.mu.
+func (f *RVFloor) currentLocked(key string) floorEntry {
 	e, ok := f.floors[key]
 	if !ok {
-		return 0
+		return floorEntry{}
 	}
 	if f.now().Sub(e.raisedAt) > floorTTL {
 		delete(f.floors, key)
-		return 0
+		return floorEntry{}
 	}
-	return e.rv
-}
-
-// Settle drops the floor once evidence at rv supersedes it: a read that
-// reached rv, a delete dated rv, or a list snapshot taken at rv. A floor raised
-// above rv survives — that announcement is newer than the evidence, so the next
-// reconcile still has to catch up to it. There is deliberately no unconditional
-// drop: erasing a floor on undated or older evidence is how a recreate's
-// announcement would get lost to a lagging 404.
-func (f *RVFloor) Settle(namespace, name string, rv int64) {
-	rv = resource.ToSnowflakeRV(rv)
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	key := floorKey(namespace, name)
-	if e, ok := f.floors[key]; ok && e.rv <= rv {
-		delete(f.floors, key)
-	}
+	return e
 }
 
 func (f *RVFloor) sweepLocked() {
@@ -168,6 +198,46 @@ func floorKey(namespace, name string) string {
 	return namespace + "/" + name
 }
 
+// StaleReadMetrics counts freshness-floor enforcement outcomes, the signal for
+// how often (and how badly) a read path lags the announced writes in practice:
+//
+//	grafana_provisioning_stale_reads_total{resource, outcome}
+//
+// outcome="retried" — a read (or claim) contradicted the floor and another
+// attempt was scheduled; outcome="exhausted" — the attempts ran out and the key
+// was surrendered to the re-list backstop. Retries without exhaustion mean the
+// floor is absorbing the lag; exhaustion means the lag outlasts the retry
+// budget.
+type StaleReadMetrics struct {
+	resource string
+	outcomes *prometheus.CounterVec
+}
+
+// NewStaleReadMetrics builds the counter on reg for the given resource label
+// value, reusing a collector already registered on reg so several consumers
+// share one family. A nil reg leaves it unregistered; a nil *StaleReadMetrics
+// is safe to record on.
+func NewStaleReadMetrics(reg prometheus.Registerer, resource string) *StaleReadMetrics {
+	return &StaleReadMetrics{
+		resource: resource,
+		outcomes: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_provisioning_stale_reads_total",
+			Help: "Reads rejected by the informer freshness floor (a read below the announced resource version, or a 404/claim outcome contradicting it), by resource and outcome (retried = another attempt was scheduled; exhausted = attempts ran out and recovery fell to the periodic re-list).",
+		}, []string{"resource", "outcome"})),
+	}
+}
+
+func (m *StaleReadMetrics) RecordRetried() { m.record("retried") }
+
+func (m *StaleReadMetrics) RecordExhausted() { m.record("exhausted") }
+
+func (m *StaleReadMetrics) record(outcome string) {
+	if m == nil {
+		return
+	}
+	m.outcomes.WithLabelValues(m.resource, outcome).Inc()
+}
+
 // FreshReader bundles a freshness floor with the retry policy GetFresh uses to
 // wait out visibility lag. Build one with NewFreshReader for the defaults; the
 // fields are exported so tests can tighten them.
@@ -178,10 +248,12 @@ type FreshReader struct {
 	Retries int
 	// Backoff is the wait between reads.
 	Backoff time.Duration
+	// Metrics counts stale-read outcomes; nil disables the accounting.
+	Metrics *StaleReadMetrics
 }
 
-func NewFreshReader(floor *RVFloor) FreshReader {
-	return FreshReader{Floor: floor, Retries: defaultStaleReadRetries, Backoff: defaultStaleReadBackoff}
+func NewFreshReader(floor *RVFloor, metrics *StaleReadMetrics) FreshReader {
+	return FreshReader{Floor: floor, Retries: defaultStaleReadRetries, Backoff: defaultStaleReadBackoff, Metrics: metrics}
 }
 
 // GetFresh fetches an object until the read is at least as fresh as the key's
@@ -192,11 +264,14 @@ func NewFreshReader(floor *RVFloor) FreshReader {
 //     the retry must not accept anything older than this attempt already saw
 //     (a lagging replica could otherwise serve older state, or a 404 that would
 //     read as a trusted delete);
-//   - a read below the floor — or a NotFound while a floor says the object
-//     exists — is a visibility lag: re-read up to Retries times, then return
-//     ErrStaleRead (which deliberately does not wrap the NotFound, so callers
-//     don't mistake a stale 404 for a trusted delete);
-//   - a NotFound with no floor outstanding is trusted and returned as is;
+//   - a read below the floor — or a NotFound while a live floor says the
+//     object exists — is a visibility lag: re-read up to Retries times, then
+//     return ErrStaleRead (which deliberately does not wrap the NotFound, so
+//     callers don't mistake a stale 404 for a trusted delete);
+//   - a NotFound with no floor outstanding, or under a deletion watermark (the
+//     informer announced the delete, so the 404 is the truth), is trusted and
+//     returned as is — while an object read below a deletion watermark is a
+//     pre-delete ghost and treated as stale;
 //   - an object whose version does not parse fails open: enforcement cannot
 //     apply, so it is returned rather than spun on.
 func GetFresh[T runtime.Object](ctx context.Context, r FreshReader, namespace, name string, fetch func(context.Context) (T, error)) (T, error) {
@@ -205,14 +280,15 @@ func GetFresh[T runtime.Object](ctx context.Context, r FreshReader, namespace, n
 		r.Retries = 1
 	}
 	var floor int64
+	var deleted bool
 	if r.Floor != nil {
-		floor = r.Floor.Floor(namespace, name)
+		floor, deleted = r.Floor.Watermark(namespace, name)
 	}
 
 	for attempt := 0; ; attempt++ {
 		obj, err := fetch(ctx)
 		switch {
-		case apierrors.IsNotFound(err) && floor == 0:
+		case apierrors.IsNotFound(err) && (floor == 0 || deleted):
 			return zero, err
 		case err != nil && !apierrors.IsNotFound(err):
 			return zero, err
@@ -229,9 +305,11 @@ func GetFresh[T runtime.Object](ctx context.Context, r FreshReader, namespace, n
 		// Below the floor (or 404 while an event says the object exists): the
 		// announced write is committed but not visible to this read path yet.
 		if attempt+1 >= r.Retries {
+			r.Metrics.RecordExhausted()
 			return zero, fmt.Errorf("%w: %s/%s not visible at resource version %d after %d reads",
 				ErrStaleRead, namespace, name, floor, attempt+1)
 		}
+		r.Metrics.RecordRetried()
 		logging.FromContext(ctx).Info("reconcile read below announced resource version; retrying",
 			"namespace", namespace, "name", name, "floor", floor, "attempt", attempt+1)
 		select {
