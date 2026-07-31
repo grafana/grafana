@@ -37,7 +37,7 @@ func (tc *correlationsTestCase) FeatureToggles() []string {
 }
 
 func (tc *correlationsTestCase) RenameTables() []string {
-	return []string{"correlation"}
+	return []string{}
 }
 
 func (tc *correlationsTestCase) Resources() []schema.GroupVersionResource {
