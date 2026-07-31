@@ -7,7 +7,7 @@ import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { Icon, ScrollContainer, Text, useStyles2, Button } from '@grafana/ui';
+import { ScrollContainer, Text, useStyles2, Button } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 
@@ -101,7 +101,7 @@ export const MegaMenu = memo(
     );
 
     const navLabel = t('navigation.megamenu.list-label', 'Navigation');
-    const pinnedListLabel = t('navigation.megamenu.pinned-list-label', 'Pinned');
+    const pinnedListLabel = t('navigation.megamenu.pinned-list-label', 'Pinned items');
     // The pinned list is named by its visible heading (aria-labelledby) rather than repeating the
     // label as an aria-label, so screen readers don't announce "Pinned" twice.
     const pinnedHeadingId = useId();
@@ -154,8 +154,6 @@ export const MegaMenu = memo(
         <>
           <div className={styles.pinnedBox}>
             <div className={styles.pinnedHeading} id={pinnedHeadingId}>
-              {/* <Icon className={styles.pinnedHeadingIcon} name="gf-pin-filled" size="md" /> */}
-              <div className={styles.pinnedHeadingLine} />
               <Text variant="bodySmall" color="secondary" weight="medium">
                 {pinnedListLabel}
               </Text>
@@ -269,7 +267,7 @@ export const MegaMenu = memo(
               )}
               {!editMode && (
                 <Button variant="secondary" onClick={onEnterEditMode} size="sm" icon="sliders-v-alt">
-                  <Trans i18nKey="navigation.megamenu.customise">Customize navigation</Trans>
+                  <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
                 </Button>
               )}
             </div>
@@ -330,22 +328,20 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       gap: theme.spacing(1),
       height: theme.spacing(3.5),
       // Matches the item rows' label inset so the heading icon lines up with the pinned item icons.
-      paddingLeft: theme.spacing(0.5),
-    }),
-    pinnedHeadingIcon: css({
-      flexShrink: 0,
-      width: theme.spacing(3),
+      paddingLeft: theme.spacing(1),
+      marginBottom: theme.spacing(0.5),
     }),
     pinnedHeadingLine: css({
       flexGrow: 1,
       height: '1px',
-      backgroundColor: theme.colors.border.weak,
+      background: `linear-gradient(90deg, ${theme.colors.border.weak} 65%, transparent 100%)`,
     }),
     // Divider separating the pinned box from the rest of the nav, with a 16px gap above it.
     pinnedDivider: css({
       border: 'none',
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      margin: theme.spacing(2, 1, 0, 1),
+      height: 1,
+      background: `linear-gradient(90deg, transparent 0%, ${theme.colors.border.weak} 30%, ${theme.colors.border.weak} 70%, transparent 100%)`,
+      margin: theme.spacing(2, 1, 1, 1),
     }),
     // Customise entry point, pinned to the bottom of the menu as a footer button.
     customiseButton: css({
