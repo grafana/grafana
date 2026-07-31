@@ -147,12 +147,13 @@ describe('TextNGFormatToolbar', () => {
   });
 
   it('does nothing while the lazily-loaded editor has not mounted yet', async () => {
-    const emptyRef = { current: document.createElement('div') };
-    render(<TextNGFormatToolbar mode={TextMode.Markdown} editorContainerRef={emptyRef} />);
+    const container = document.createElement('div');
+    render(<TextNGFormatToolbar mode={TextMode.Markdown} editorContainerRef={{ current: container }} />);
 
     await clickButton('Bold');
 
-    expect(screen.getByRole('button', { name: 'Bold' })).toBeInTheDocument();
+    // No EditorView to find, so no edit is dispatched (and the click does not throw).
+    expect(container.textContent).toBe('');
   });
 
   it('returns focus to the editor so typing continues where it left off', async () => {

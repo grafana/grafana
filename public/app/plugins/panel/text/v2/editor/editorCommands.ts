@@ -20,9 +20,12 @@ export function insertAtCursor(view: EditorView, text: string) {
 /** Prefixes every line touched by the selection, e.g. for headings and lists. */
 export function prefixSelectedLines(view: EditorView, prefix: string) {
   const { state } = view;
-  const { from, to } = state.selection.main;
-  const startLine = state.doc.lineAt(from).number;
-  const endLine = state.doc.lineAt(to).number;
+  const range = state.selection.main;
+  const startLine = state.doc.lineAt(range.from).number;
+  // A selection ending exactly at a line start (Shift+Down, or dragging through a
+  // trailing newline) does not touch that line, so it must not be prefixed.
+  const endPos = !range.empty && range.to === state.doc.lineAt(range.to).from ? range.to - 1 : range.to;
+  const endLine = state.doc.lineAt(endPos).number;
 
   const changes = [];
   for (let n = startLine; n <= endLine; n++) {

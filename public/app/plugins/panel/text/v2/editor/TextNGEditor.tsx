@@ -5,7 +5,7 @@ import { useDebounce } from 'react-use';
 
 import { type GrafanaTheme2, type InterpolateFunction } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { RadioButtonGroup, useStyles2 } from '@grafana/ui';
+import { RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
 import { CodeMirrorEditor, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 import config from 'app/core/config';
 
@@ -141,8 +141,10 @@ export function TextNGEditor({
   return (
     <div className={styles.wrapper} data-testid="TextNGEditor">
       <div className={styles.toolbar}>
-        <RadioButtonGroup options={viewOptions} value={view} onChange={setView} size="sm" />
-        {showEditor && <TextNGFormatToolbar mode={mode} editorContainerRef={editorContainerRef} />}
+        <Stack gap={1} alignItems="center" wrap="wrap">
+          <RadioButtonGroup options={viewOptions} value={view} onChange={setView} size="sm" />
+          {showEditor && <TextNGFormatToolbar mode={mode} editorContainerRef={editorContainerRef} />}
+        </Stack>
       </div>
 
       <div className={cx(styles.body, view === 'split' && styles.splitBody)}>
@@ -176,10 +178,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
   }),
   toolbar: css({
-    display: 'flex',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: theme.spacing(1),
     marginBottom: theme.spacing(1),
     // Reserve the format toolbar's height so Preview view does not shift the panes.
     minHeight: theme.spacing(theme.components.height.md),
