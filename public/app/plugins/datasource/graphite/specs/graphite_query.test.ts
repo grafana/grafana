@@ -125,6 +125,45 @@ describe('Graphite query model', () => {
     });
   });
 
+  describe('when a pipe cannot be parsed', () => {
+    it('falls back to the text editor for a pipe inside function arguments', () => {
+      ctx.target = { refId: 'A', target: 'sumSeries(devices.air_temperature | scale(2))' };
+      ctx.targets = [ctx.target];
+      ctx.queryModel = new GraphiteQuery(ctx.datasource, ctx.target, ctx.templateSrv);
+
+      expect(ctx.queryModel.target.textEditor).toBe(true);
+      expect(ctx.queryModel.target.target).toBe('sumSeries(devices.air_temperature | scale(2))');
+    });
+
+    it('falls back to the text editor for a metric segment containing a literal pipe', () => {
+      ctx.target = { refId: 'A', target: 'devices.air|temperature' };
+      ctx.targets = [ctx.target];
+      ctx.queryModel = new GraphiteQuery(ctx.datasource, ctx.target, ctx.templateSrv);
+
+      expect(ctx.queryModel.target.textEditor).toBe(true);
+      expect(ctx.queryModel.target.target).toBe('devices.air|temperature');
+    });
+  });
+
+  describe('when the visual builder cannot reproduce a piped query', () => {
+    it('falls back to the text editor instead of rewriting the query', () => {
+      // Stands in for a builder model that loses part of the query: `offset` is built as
+      // `scale`, so the generated query no longer matches the nested rewrite of the original.
+      const lossyDatasource = {
+        ...ctx.datasource,
+        createFuncInstance: (funcDef: string, options: { withDefaultParams: boolean }) =>
+          gfunc.createFuncInstance(funcDef === 'offset' ? 'scale' : funcDef, options),
+      };
+      ctx.target = { refId: 'A', target: 'devices.air_temperature | scale(1.8) | offset(32)' };
+      ctx.targets = [ctx.target];
+      ctx.queryModel = new GraphiteQuery(lossyDatasource, ctx.target, ctx.templateSrv);
+
+      expect(ctx.queryModel.target.textEditor).toBe(true);
+      expect(ctx.queryModel.error).toContain('Failed to make a visual query builder query');
+      expect(ctx.queryModel.target.target).toBe('devices.air_temperature | scale(1.8) | offset(32)');
+    });
+  });
+
   describe('when query is generated from segments', () => {
     beforeEach(() => {
       ctx.target = { refId: 'A', target: '' };

@@ -308,6 +308,31 @@ export class Parser {
   }
 }
 
+/**
+ * Renders a parsed AST back into a Graphite query string. Pipes are folded into nested
+ * function calls while parsing, so a piped expression renders as its nested equivalent.
+ * Throws on node types it cannot render, so callers never compare against a partial query.
+ */
+export function renderAstNode(node: AstNode): string {
+  switch (node.type) {
+    case 'metric':
+      return (node.segments ?? []).map(renderAstNode).join('.');
+    case 'function':
+      return `${node.name}(${(node.params ?? []).map(renderAstNode).join(', ')})`;
+    case 'template':
+      return `[[${node.value}]]`;
+    case 'string':
+      return `'${node.value}'`;
+    case 'segment':
+    case 'number':
+    case 'bool':
+    case 'series-ref':
+      return String(node.value);
+    default:
+      throw new Error(`Cannot render query node of type ${node.type}`);
+  }
+}
+
 // Next steps, need to make this applicable to types in graphite_query.ts
 export type AstNode = {
   type: string;
