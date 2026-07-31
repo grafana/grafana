@@ -11,7 +11,7 @@ import {
 } from 'app/core/constants';
 
 /** Panel of a pre-schema-version-16 dashboard, sized with `span` and pixel `height` instead of `gridPos` */
-export interface LegacyPanel extends Panel {
+interface LegacyPanel extends Panel {
   span?: number;
   minSpan?: number;
   height?: number | string;
