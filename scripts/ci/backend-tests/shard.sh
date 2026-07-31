@@ -127,8 +127,13 @@ if [[ ${#PACKAGES[@]} -eq 0 ]]; then
     exit 1
 fi
 
+declare -A HAS_TESTS=()
+while IFS= read -r f; do
+    [[ -z "$f" ]] && continue
+    HAS_TESTS["${f%/*}"]=1
+done < <(find "${PACKAGES[@]}" -maxdepth 1 -type f -name '*_test.go')
 for i in "${!PACKAGES[@]}"; do
-    if [ -z "$(find "${PACKAGES[i]}" -maxdepth 1 -type f -name '*_test.go' -printf '.' -quit)" ]; then
+    if [[ -z "${HAS_TESTS[${PACKAGES[i]}]:-}" ]]; then
         # There are no test files in this package.
         unset 'PACKAGES[i]'
     fi
