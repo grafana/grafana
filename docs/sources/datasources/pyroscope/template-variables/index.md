@@ -1,5 +1,5 @@
 ---
-description: Use template variables with the Grafana Pyroscope data source to build dynamic, reusable dashboards.
+description: Use template variables with the Pyroscope data source to build dynamic, reusable dashboards.
 keywords:
   - grafana
   - pyroscope
@@ -11,13 +11,13 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Grafana Pyroscope template variables
+title: Pyroscope template variables
 menuTitle: Template variables
 weight: 450
 review_date: 2026-07-08
 ---
 
-# Grafana Pyroscope template variables
+# Pyroscope template variables
 
 Template variables let you create dynamic, reusable dashboards by replacing hard-coded values, such as service names or profile types, with selectable variables. Grafana displays these variables as drop-down menus at the top of the dashboard, letting viewers change the displayed data without editing queries.
 

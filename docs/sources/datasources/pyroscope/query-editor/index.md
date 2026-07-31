@@ -19,7 +19,7 @@ review_date: 2026-07-08
 
 # Query profile data
 
-You can query your profile data using the open source Grafana Profiles Drilldown app or the built-in Grafana Pyroscope data source query editor.
+You can query your profile data using the open source Grafana Profiles Drilldown app or the built-in Pyroscope data source query editor.
 
 - Profiles Drilldown provides a queryless experience for inspecting your profiling data with opinionated workflows to assist your investigation.
 - Data source query editor provides complete control over your data exploration and is recommended for experienced users.
@@ -73,7 +73,7 @@ To access the query editor:
    {{< figure src="/media/docs/pyroscope/query-editor/select-profile.png" class="docs-image--no-shadow" max-width="450px" caption="Profile selector" >}}
 
 1. Use the labels selector input to filter by labels. Pyroscope uses similar syntax to Prometheus to filter labels.
-   Refer to [Pyroscope documentation](https://grafana.com/docs/pyroscope/<PYROSCOPE_VERSION>/) for available operators and syntax.
+   Refer to [Label selector syntax](#label-selector-syntax) for available operators and syntax.
 
    While the label selector can be left empty to query all profiles without filtering by labels, you must select a profile type or app for the query to be valid.
 

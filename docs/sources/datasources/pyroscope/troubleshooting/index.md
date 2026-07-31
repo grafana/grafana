@@ -1,5 +1,5 @@
 ---
-description: Troubleshooting guide for the Grafana Pyroscope data source
+description: Troubleshooting guide for the Pyroscope data source
 keywords:
   - grafana
   - pyroscope
@@ -20,7 +20,7 @@ review_date: 2026-07-08
 
 # Troubleshoot Pyroscope data source issues
 
-This document provides solutions to common issues you may encounter when configuring or using the Pyroscope data source. For configuration instructions, refer to [Configure the Grafana Pyroscope data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure/).
+This document provides solutions to common issues you may encounter when configuring or using the Pyroscope data source. For configuration instructions, refer to [Configure the Pyroscope data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure/).
 
 ## Connection and configuration errors
 
@@ -57,6 +57,37 @@ These errors occur when setting up the data source or when connecting to the Pyr
 1. Remove any trailing slashes from the URL.
 1. For Grafana Cloud Profiles, find the correct URL under **Manage your stack** in your organization settings.
 1. Verify the port number is correct for your deployment.
+
+### "Connection refused" or timeout errors
+
+**Symptoms:**
+
+- Data source test fails with network errors
+- Queries fail with connection errors
+- Intermittent connectivity issues
+
+**Solutions:**
+
+1. Verify network connectivity from the Grafana server to the Pyroscope endpoint.
+1. Check firewall rules allow outbound connections on the required port (default: 4040).
+1. For Kubernetes deployments, verify the service is exposed correctly.
+1. Check if a proxy is required and configure it in the data source settings.
+
+### SSL/TLS certificate errors
+
+**Symptoms:**
+
+- Certificate validation failures
+- SSL handshake errors
+- "Certificate not trusted" messages
+
+**Solutions:**
+
+1. Ensure the system time is correct on the Grafana server.
+1. Verify the certificate is valid and not expired.
+1. For self-signed certificates, enable **Skip TLS Verify** in the data source settings (not recommended for production).
+1. Add the CA certificate to the Grafana server's trusted certificates.
+1. Check that intermediate certificates are included in the certificate chain.
 
 ### Private connectivity or reverse proxy issues
 
@@ -222,39 +253,6 @@ Example valid queries:
 
 If a query over a long time range returns data only for the most recent days, the query time range likely exceeds a server-side query limit. This is most commonly reported in Grafana Cloud Profiles. Refer to [Query time range and retention limits](#query-time-range-and-retention-limits).
 
-## Template variable errors
-
-These errors occur when using template variables with the Pyroscope data source.
-
-### Variables return no values
-
-**Symptoms:**
-
-- The variable drop-down is empty
-- Dependent variables don't populate
-
-**Solutions:**
-
-1. Verify the data source connection is working by testing it in the settings.
-1. For **Label** and **Label value** variables, verify that a profile type is selected. Labels and label values are scoped to the selected profile type.
-1. Expand the dashboard time range to ensure the variable query covers a period when profiles were collected.
-1. Confirm the Pyroscope backend is receiving profiles from your applications.
-
-### Variables don't filter queries as expected
-
-**Symptoms:**
-
-- Query results don't change when the variable value changes
-- Queries return no data after selecting a variable value
-
-**Solutions:**
-
-1. Verify the variable is referenced correctly in the label selector, for example, `{service_name="$service"}`.
-1. When **Multi-value** or **Include All** is enabled, the variable value becomes a regular expression pattern. Use the `=~` operator instead of `=`, for example, `{service_name=~"$service"}`.
-1. Confirm the label used in the variable exists on the profiling data for the selected profile type.
-
-For more information, refer to [Grafana Pyroscope template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/template-variables/).
-
 ## Flame graph issues
 
 These errors are specific to the flame graph visualization.
@@ -321,6 +319,39 @@ Rendering a flame graph over a large time range requires the Pyroscope backend t
 1. Check the browser console for JavaScript errors.
 1. Try using a different browser or clearing the browser cache.
 1. Update Grafana to the latest version.
+
+## Template variable errors
+
+These errors occur when using template variables with the Pyroscope data source.
+
+### Variables return no values
+
+**Symptoms:**
+
+- The variable drop-down is empty
+- Dependent variables don't populate
+
+**Solutions:**
+
+1. Verify the data source connection is working by testing it in the settings.
+1. For **Label** and **Label value** variables, verify that a profile type is selected. Labels and label values are scoped to the selected profile type.
+1. Expand the dashboard time range to ensure the variable query covers a period when profiles were collected.
+1. Confirm the Pyroscope backend is receiving profiles from your applications.
+
+### Variables don't filter queries as expected
+
+**Symptoms:**
+
+- Query results don't change when the variable value changes
+- Queries return no data after selecting a variable value
+
+**Solutions:**
+
+1. Verify the variable is referenced correctly in the label selector, for example, `{service_name="$service"}`.
+1. When **Multi-value** or **Include All** is enabled, the variable value becomes a regular expression pattern. Use the `=~` operator instead of `=`, for example, `{service_name=~"$service"}`.
+1. Confirm the label used in the variable exists on the profiling data for the selected profile type.
+
+For more information, refer to [Pyroscope template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/template-variables/).
 
 ## Profiles Drilldown issues
 
@@ -389,6 +420,19 @@ For per-language setup instructions, refer to [Link traces to profiles](https://
 
 For more information, refer to [Configure Trace to profiles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure-traces-to-profiles/).
 
+### Profile doesn't match the trace span
+
+**Symptoms:**
+
+- Profile data doesn't correlate with the trace
+- Wrong time range in profile
+
+**Solutions:**
+
+1. Verify the trace and profile timestamps are synchronized.
+1. Check that the application's clock is accurate.
+1. Ensure the `span_id` and `trace_id` labels are correctly propagated to profiles.
+
 ### Span profiles aren't available with eBPF-based collection
 
 **Symptoms:**
@@ -453,19 +497,6 @@ Grafana supports Trace to profiles, but there's no direct logs-to-profiles corre
 1. Correlate through shared labels, such as `service_name`, to move between logs and profiles for the same service and time range.
 1. If your logs contain a `trace_id`, use a Loki derived field to open the trace, then use **Profiles for this span** from the trace to reach the profiling data.
 
-### Profile doesn't match the trace span
-
-**Symptoms:**
-
-- Profile data doesn't correlate with the trace
-- Wrong time range in profile
-
-**Solutions:**
-
-1. Verify the trace and profile timestamps are synchronized.
-1. Check that the application's clock is accurate.
-1. Ensure the `span_id` and `trace_id` labels are correctly propagated to profiles.
-
 ## Performance issues
 
 These issues relate to slow queries or high resource usage.
@@ -500,42 +531,6 @@ These issues relate to slow queries or high resource usage.
 1. Close unnecessary browser tabs to free up memory.
 1. Use a smaller aggregation window for very large profiles.
 1. Consider using Profiles Drilldown for large-scale analysis.
-
-## Network and connectivity errors
-
-These errors indicate problems with network connectivity between Grafana and Pyroscope.
-
-### "Connection refused" or timeout errors
-
-**Symptoms:**
-
-- Data source test fails with network errors
-- Queries fail with connection errors
-- Intermittent connectivity issues
-
-**Solutions:**
-
-1. Verify network connectivity from the Grafana server to the Pyroscope endpoint.
-1. Check firewall rules allow outbound connections on the required port (default: 4040).
-1. For Kubernetes deployments, verify the service is exposed correctly.
-1. For Grafana Cloud connecting to private resources, configure [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
-1. Check if a proxy is required and configure it in the data source settings.
-
-### SSL/TLS certificate errors
-
-**Symptoms:**
-
-- Certificate validation failures
-- SSL handshake errors
-- "Certificate not trusted" messages
-
-**Solutions:**
-
-1. Ensure the system time is correct on the Grafana server.
-1. Verify the certificate is valid and not expired.
-1. For self-signed certificates, enable **Skip TLS Verify** in the data source settings (not recommended for production).
-1. Add the CA certificate to the Grafana server's trusted certificates.
-1. Check that intermediate certificates are included in the certificate chain.
 
 ## Grafana Cloud-specific issues
 

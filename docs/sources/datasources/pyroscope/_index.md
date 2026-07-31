@@ -3,7 +3,7 @@ aliases:
   - ../features/datasources/phlare/ # /docs/grafana/<GRAFANA_VERSION>/features/datasources/phlare/
   - ../features/datasources/grafana-pyroscope/ # /docs/grafana/<GRAFANA_VERSION>/features/datasources/grafana-pyroscope/
   - ../datasources/grafana-pyroscope/ # /docs/grafana/<GRAFANA_VERSION>/datasources/grafana-pyroscope/
-description: Horizontally-scalable, highly-available, multi-tenant continuous profiling
+description: Horizontally scalable, highly available, multi-tenant continuous profiling
   aggregation system. OSS profiling solution from Grafana Labs.
 keywords:
   - phlare
@@ -21,7 +21,7 @@ weight: 1350
 review_date: 2026-07-08
 ---
 
-# Grafana Pyroscope data source
+# Pyroscope data source
 
 Grafana Pyroscope is a horizontally scalable, highly available, multi-tenant, OSS, continuous profiling aggregation system.
 Add a Pyroscope data source to query your profiles in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
@@ -48,7 +48,7 @@ The Pyroscope data source returns profiling data visualized as flame graphs and 
 
 The following documents help you get started with the Pyroscope data source:
 
-- [Configure the Grafana Pyroscope data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure/)
+- [Configure the Pyroscope data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/configure/)
 - [Query profile data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/query-editor/)
 - [Template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/template-variables/)
 - [Troubleshoot the Pyroscope data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/pyroscope/troubleshooting/)

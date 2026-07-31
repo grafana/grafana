@@ -11,15 +11,15 @@ labels:
     - cloud
     - enterprise
     - oss
-title: Configure the Grafana Pyroscope data source
+title: Configure the Pyroscope data source
 menuTitle: Configure
 weight: 200
 review_date: 2026-07-08
 ---
 
-# Configure the Grafana Pyroscope data source
+# Configure the Pyroscope data source
 
-The Pyroscope data source sets how Grafana connects to your Pyroscope database.
+The Pyroscope data source sets how Grafana connects to your Pyroscope backend.
 
 You can configure the data source using either the data source interface in Grafana or using a configuration file.
 This page explains how to set up and enable the data source capabilities using Grafana.
@@ -31,7 +31,7 @@ For more information about provisioning and available configuration options, ref
 
 ## Before you begin
 
-To configure a Pyroscope data source, you need administrator rights to your Grafana instance and a Pyroscope instance configured to send data to Grafana.
+To configure a Pyroscope data source, you need administrator rights to your Grafana instance and a running Pyroscope backend that's receiving profiling data.
 
 If you're provisioning a Pyroscope data source, then you also need administrative rights on the server hosting your Grafana instance.
 
@@ -49,9 +49,9 @@ To configure basic settings for the data source, complete the following steps:
 1. Select **Add new data source** in the top-right corner of the page.
 1. On the **Settings** tab, complete the **Name**, **Connection**, and **Authentication** sections.
 
-- Use the **Name** field to specify the name used for the data source in panels, queries, and Explore. Toggle the **Default** switch for the data source to be pre-selected for new panels.
-- Under **Connection**, enter the **URL** of the Pyroscope instance. For example, `https://example.com:4100`. Refer to [Connection URL](#connection-url) for more information.
-- Complete the [**Authentication** section](#authentication).
+   - Use the **Name** field to specify the name used for the data source in panels, queries, and Explore. Toggle the **Default** switch for the data source to be pre-selected for new panels.
+   - Under **Connection**, enter the **URL** of the Pyroscope instance. For example, `https://example.com:4040`. Refer to [Connection URL](#connection-url) for more information.
+   - Complete the [**Authentication** section](#authentication).
 
 1. Optional: Use **Additional settings** to configure other options.
 1. Select **Save & test**.
@@ -66,7 +66,7 @@ To modify an existing Pyroscope data source:
 1. Optional: Use **Additional settings** to configure or modify other options.
 1. After completing your updates, select **Save & test**.
 
-#### Connection URL
+### Connection URL
 
 The data source connection URL should point to a location of a running Pyroscope backend.
 
@@ -147,6 +147,28 @@ datasources:
     jsonData:
       minStep: '15s'
 ```
+
+To provision with basic authentication, for example when connecting to Grafana Cloud Profiles:
+
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: Grafana Pyroscope
+    type: grafana-pyroscope-datasource
+    url: https://example.grafana.net
+    basicAuth: true
+    basicAuthUser: '<INSTANCE_ID>'
+    jsonData:
+      minStep: '15s'
+    secureJsonData:
+      basicAuthPassword: <ACCESS_POLICY_TOKEN>
+```
+
+Replace the following:
+
+- `<INSTANCE_ID>`: Your numeric instance ID, found under **Manage your stack**.
+- `<ACCESS_POLICY_TOKEN>`: An access policy token with the `profiles:read` scope.
 
 ### Terraform example
 
