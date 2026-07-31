@@ -29,7 +29,7 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
   if (!nextDataPane) {
     return (
       <div className={styles.pageContainer}>
-        <div className={cx(styles.vizPane, { [styles.fixedSizeViz]: isScrollingLayout })}>
+        <div className={cx(styles.vizPane, styles.soloVizPane, { [styles.fixedSizeViz]: isScrollingLayout })}>
           <div className={styles.vizContent}>
             <PanelEditPanelWrapper panel={scene.panel} tableView={scene.tableView} dashboard={scene.dashboard} />
           </div>
@@ -257,6 +257,11 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       position: 'relative',
       minHeight: 0,
       overflow: 'visible',
+    }),
+    // Panels with no data pane (text, news) render the viz without a splitter, so nothing supplies
+    // a flex size and the pane would collapse to its content — which for a scene panel is zero.
+    soloVizPane: css({
+      flexGrow: 1,
     }),
     vizContent: css({
       height: '100%',

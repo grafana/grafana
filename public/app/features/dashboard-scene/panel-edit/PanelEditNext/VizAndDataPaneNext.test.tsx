@@ -120,6 +120,15 @@ describe('VizAndDataPaneNext', () => {
       render(<VizAndDataPaneNext model={panelEditor} />);
       expect(screen.queryByTestId('data-pane-content')).not.toBeInTheDocument();
     });
+
+    // No splitter runs in this layout, so nothing supplies a flex size. Without one the pane
+    // collapses to its content height — which for a scene panel is zero, leaving a blank editor.
+    it('lets the viz pane grow to fill the editor', () => {
+      render(<VizAndDataPaneNext model={panelEditor} />);
+
+      const vizPane = screen.getByTestId('panel-viz').parentElement?.parentElement;
+      expect(vizPane).toHaveStyle({ flexGrow: '1' });
+    });
   });
 
   describe('when panel has a PanelDataPaneNext', () => {
