@@ -437,6 +437,8 @@ func TestVariableMutationPermissionsMissingFolder(t *testing.T) {
 	newVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
 	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
 
+	otherFolderScope := folder.ScopeFoldersProvider.GetResourceScopeUID("other-folder")
+
 	tests := []struct {
 		name     string
 		perms    map[string][]string
@@ -445,6 +447,8 @@ func TestVariableMutationPermissionsMissingFolder(t *testing.T) {
 	}{
 		{name: "root delete grant can delete orphaned folder variable", perms: map[string][]string{ActionVariablesDelete: {generalScope}}, op: admission.Delete, expected: true},
 		{name: "all-folders write can update orphaned folder variable", perms: map[string][]string{ActionVariablesWrite: {folder.ScopeFoldersAll}}, op: admission.Update, expected: true},
+		{name: "other-folder write cannot update orphaned folder variable", perms: map[string][]string{ActionVariablesWrite: {otherFolderScope}}, op: admission.Update, expected: false},
+		{name: "other-folder delete cannot delete orphaned folder variable", perms: map[string][]string{ActionVariablesDelete: {otherFolderScope}}, op: admission.Delete, expected: false},
 		{name: "read-only cannot delete orphaned folder variable", perms: map[string][]string{ActionVariablesRead: {generalScope}}, op: admission.Delete, expected: false},
 		{name: "root create cannot create into missing folder", perms: map[string][]string{ActionVariablesCreate: {generalScope}}, op: admission.Create, expected: false},
 	}
