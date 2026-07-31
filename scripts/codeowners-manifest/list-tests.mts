@@ -1,13 +1,27 @@
-#!/usr/bin/env node
-
 // Reads newline-separated test file paths on stdin, prints one JSON object per
 // line (JSONL): { file, startLine, endLine, name }. `file` is relative to the
 // project root and startLine-endLine spans the whole test block so it can be
 // read back for analysis. `name` is the full "describe > … > it" path. No test
 // bodies are executed.
-const { parse } = require('jest-editor-support');
-const fs = require('node:fs');
-const path = require('node:path');
+import fs from 'node:fs';
+import path from 'node:path';
+
+import { parse } from 'jest-editor-support';
+
+// jest-editor-support does not ship a location type for parsed nodes, so we
+// describe only the shape we walk here.
+interface ParsedLocation {
+  line: number;
+  column: number;
+}
+
+interface ParsedNode {
+  type: string;
+  name?: string;
+  start?: ParsedLocation;
+  end?: ParsedLocation;
+  children?: ParsedNode[];
+}
 
 const files = fs
   .readFileSync(0, 'utf8')
@@ -18,17 +32,18 @@ const files = fs
 let ok = 0;
 let failed = 0;
 for (const file of files) {
-  let root;
+  let root: ParsedNode;
   try {
-    ({ root } = parse(file));
+    ({ root } = parse(file) as { root: ParsedNode });
   } catch (err) {
     failed++;
-    process.stderr.write(`parse-fail\t${file}\t${err.message.split('\n')[0]}\n`);
+    const message = err instanceof Error ? err.message.split('\n')[0] : String(err);
+    process.stderr.write(`parse-fail\t${file}\t${message}\n`);
     continue;
   }
   ok++;
   const relFile = path.relative(process.cwd(), file);
-  const walk = (node, trail) => {
+  const walk = (node: ParsedNode | undefined, trail: string[]) => {
     if (!node) {
       return;
     }
