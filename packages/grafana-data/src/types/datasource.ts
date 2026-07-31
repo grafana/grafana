@@ -526,6 +526,57 @@ export interface LegacyMetricFindQueryOptions {
   variable?: { name: string };
 }
 
+export interface QueryEditorCoauthoringRange {
+  from: number;
+  to: number;
+}
+
+export interface QueryEditorCoauthoringMetricMetadata {
+  name: string;
+  type?: string;
+  help?: string;
+  unit?: string;
+  labels?: string[];
+}
+
+export interface QueryEditorCoauthoringContext {
+  query: string;
+  focusRanges: QueryEditorCoauthoringRange[];
+  metricMetadata: QueryEditorCoauthoringMetricMetadata[];
+}
+
+export interface QueryEditorCoauthoringPreviewChange {
+  id: string;
+  focus: 'inside' | 'outside' | 'mixed';
+  original: string;
+  proposed: string;
+  kind?: 'aggregation' | 'binary-expression' | 'function' | 'label-matcher' | 'range' | 'selector';
+}
+
+export interface QueryEditorCoauthoringPreview {
+  changes: QueryEditorCoauthoringPreviewChange[];
+}
+
+export interface QueryEditorCoauthoringInvocation {
+  anchorElement: HTMLElement;
+  dismiss: () => void;
+}
+
+export interface QueryEditorCoauthoringCapability<TQuery extends DataQuery = DataQuery> {
+  getValue: () => string;
+  getContext: () => Promise<QueryEditorCoauthoringContext>;
+  createQuery: (value: string) => TQuery;
+  validateQuery: (value: string) => boolean;
+  stagePreview: (value: string) => QueryEditorCoauthoringPreview | undefined;
+  clearPreview: () => void;
+  subscribeToInvocation: (listener: (invocation: QueryEditorCoauthoringInvocation) => void) => () => void;
+  focus: () => void;
+}
+
+export type QueryEditorCoauthoringRegistrar<TQuery extends DataQuery = DataQuery> = (
+  capability: QueryEditorCoauthoringCapability<TQuery> | undefined
+) => void;
+
 export interface QueryEditorProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
@@ -546,6 +597,7 @@ export interface QueryEditorProps<
   history?: Array<HistoryItem<TQuery>>;
   queries?: DataQuery[];
   app?: CoreApp;
+  onRegisterQueryEditorCoauthoring?: QueryEditorCoauthoringRegistrar<TVQuery>;
 }
 
 // TODO: not really needed but used as type in some data sources and in DataQueryRequest

@@ -49,6 +49,7 @@ declare module "@openfeature/core" {
     | "globalDashboardVariables"
     | "grafana.dashboardGlobalVariables"
     | "queryEditorNext"
+    | "queryeditor.coauthoringUi"
     | "kubernetesTeamsApi"
     | "managedPluginsV2"
     | "analyticsFramework"

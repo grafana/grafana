@@ -8,8 +8,10 @@ import {
   type DataQueryResponse,
   getDefaultTimeRange,
   LoadingState,
+  type QueryEditorCoauthoringCapability,
   type TestDataSourceResponse,
 } from '@grafana/data';
+import { useFlagQueryeditorCoauthoringUi } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 
@@ -34,6 +36,17 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 jest.mock('app/features/query/components/QueryErrorAlert', () => ({
   QueryErrorAlert: ({ error }: { error: DataQueryError }) => <div data-testid="query-error-alert">{error.message}</div>,
 }));
+
+jest.mock('./QueryCoauthoring', () => ({
+  QueryCoauthoring: () => <button>Query with Assistant</button>,
+}));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useFlagQueryeditorCoauthoringUi: jest.fn(),
+}));
+
+const mockedUseFlagQueryeditorCoauthoringUi = jest.mocked(useFlagQueryeditorCoauthoringUi);
 
 interface TestQuery extends DataQuery {
   legendFormat?: string;
@@ -85,6 +98,10 @@ function renderRenderer(
 }
 
 describe('QueryEditorRenderer', () => {
+  beforeEach(() => {
+    mockedUseFlagQueryeditorCoauthoringUi.mockReturnValue(false);
+  });
+
   it('renders nothing when no query is selected', () => {
     renderRenderer(null);
     expect(screen.queryByTestId('query-editor-legend')).not.toBeInTheDocument();
@@ -104,6 +121,60 @@ describe('QueryEditorRenderer', () => {
   it('renders the query editor for the selected query', () => {
     renderRenderer(queryA);
     expect(screen.getByTestId('query-editor-legend')).toHaveTextContent('series-a');
+  });
+
+  it('does not offer the coauthoring capability registrar when the feature flag is disabled', () => {
+    function CapabilityQueryEditor(props: {
+      query: DataQuery;
+      onRegisterQueryEditorCoauthoring?: (capability: QueryEditorCoauthoringCapability) => void;
+    }) {
+      expect(props.onRegisterQueryEditorCoauthoring).toBeUndefined();
+      return <div data-testid="capability-query-editor" />;
+    }
+
+    renderRenderer(queryA, {
+      selectedQueryDsData: {
+        datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }),
+        dsSettings: ds1SettingsMock,
+      },
+    });
+
+    expect(screen.queryByRole('button', { name: /query with assistant/i })).not.toBeInTheDocument();
+  });
+
+  it('renders the coauthoring entry point only after a flagged editor registers its capability', () => {
+    mockedUseFlagQueryeditorCoauthoringUi.mockReturnValue(true);
+
+    function CapabilityQueryEditor(props: {
+      query: DataQuery;
+      onRegisterQueryEditorCoauthoring?: (capability: QueryEditorCoauthoringCapability | undefined) => void;
+    }) {
+      const { onRegisterQueryEditorCoauthoring, query } = props;
+      useEffect(() => {
+        onRegisterQueryEditorCoauthoring?.({
+          getValue: () => query.refId,
+          getContext: async () => ({ query: query.refId, focusRanges: [], metricMetadata: [] }),
+          createQuery: (value) => ({ ...query, refId: value }),
+          validateQuery: () => true,
+          stagePreview: () => ({ changes: [] }),
+          clearPreview: jest.fn(),
+          subscribeToInvocation: () => jest.fn(),
+          focus: jest.fn(),
+        });
+        return () => onRegisterQueryEditorCoauthoring?.(undefined);
+      }, [onRegisterQueryEditorCoauthoring, query]);
+
+      return <div data-testid="capability-query-editor" />;
+    }
+
+    renderRenderer(queryA, {
+      selectedQueryDsData: {
+        datasource: new MockDataSourceApi({ QueryEditor: CapabilityQueryEditor }),
+        dsSettings: ds1SettingsMock,
+      },
+    });
+
+    expect(screen.getByRole('button', { name: /query with assistant/i })).toBeInTheDocument();
   });
 
   it('contains errors thrown by the datasource query editor', () => {

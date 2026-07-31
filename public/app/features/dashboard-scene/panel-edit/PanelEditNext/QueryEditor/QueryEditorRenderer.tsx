@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import {
   CoreApp,
@@ -6,13 +6,16 @@ import {
   type DataSourceInstanceSettings,
   DataSourcePluginContextProvider,
   type PanelData,
+  type QueryEditorCoauthoringCapability,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
+import { useFlagQueryeditorCoauthoringUi } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, ErrorBoundaryAlert, Spinner, Stack, Text } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 
+import { QueryCoauthoring } from './QueryCoauthoring';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
 
 interface QueryDatasourceData {
@@ -41,6 +44,12 @@ export function QueryEditorPanel({
   addQuery,
   runQueries,
 }: QueryEditorPanelProps) {
+  const coauthoringEnabled = useFlagQueryeditorCoauthoringUi();
+  const coauthoringIdentity = `${queryDsData?.dsSettings?.uid ?? ''}:${query?.refId ?? ''}`;
+  const [coauthoringRegistration, setCoauthoringRegistration] = useState<{
+    identity: string;
+    capability: QueryEditorCoauthoringCapability;
+  }>();
   const error = data?.errors?.find((e) => e.refId === query?.refId);
   const queryRefId = query?.refId;
   // Filter panel data to only include data for this specific query
@@ -55,6 +64,15 @@ export function QueryEditorPanel({
     },
     [updateQuery]
   );
+
+  const registerCoauthoringCapability = useCallback(
+    (capability: QueryEditorCoauthoringCapability | undefined) => {
+      setCoauthoringRegistration(capability ? { identity: coauthoringIdentity, capability } : undefined);
+    },
+    [coauthoringIdentity]
+  );
+  const coauthoringCapability =
+    coauthoringRegistration?.identity === coauthoringIdentity ? coauthoringRegistration.capability : undefined;
 
   if (!query) {
     return null;
@@ -113,9 +131,13 @@ export function QueryEditorPanel({
             queries={queries}
             query={query}
             range={filteredData?.timeRange}
+            onRegisterQueryEditorCoauthoring={coauthoringEnabled ? registerCoauthoringCapability : undefined}
           />
         </ErrorBoundaryAlert>
       </DataSourcePluginContextProvider>
+      {coauthoringEnabled && coauthoringCapability && (
+        <QueryCoauthoring capability={coauthoringCapability} onAccept={handleChange} />
+      )}
       {error && <QueryErrorAlert error={error} />}
     </>
   );
