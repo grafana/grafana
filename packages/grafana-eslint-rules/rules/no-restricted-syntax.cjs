@@ -62,5 +62,14 @@ module.exports = createNoRestrictedSyntax(
     ].join(', '),
     message:
       'Direct usage of createMonitoringLogger is not allowed. Register your logger source in packages/grafana-runtime/src/services/logging/loggers.ts and use getLogger from @grafana/runtime/unstable instead.',
+  },
+  {
+    name: 'zod-import-namespace',
+    selector: [
+      "ImportDeclaration[source.value=/^zod.+/]:not([source.value='zod'])",
+      "ImportDeclaration[source.value='zod']:not([specifiers.length=1]:has(> ImportNamespaceSpecifier[local.name='z']))",
+    ].join(', '),
+    message:
+      "Zod imports must use exactly `import * as z from 'zod'` or `import type * as z from 'zod'`. Imports from zod subpaths are not allowed.",
   }
 );
