@@ -62,15 +62,21 @@ export function useSnappingSplitter({
 
       const panePixels = collapsePrimary ? firstPanePixels : secondPanePixels;
 
-      if (state.collapsed && panePixels > collapseBelowPixels) {
-        setState({ collapsed: false });
-      }
+      // Derived from the latest state, not a captured one: the final pointermove and the pointerup
+      // of a single gesture land in the same commit, so a snapshot would be stale by then.
+      setState((prev) => {
+        if (prev.collapsed && panePixels > collapseBelowPixels) {
+          return { collapsed: false };
+        }
 
-      if (!state.collapsed && panePixels < collapseBelowPixels) {
-        setState({ collapsed: true });
-      }
+        if (!prev.collapsed && panePixels < collapseBelowPixels) {
+          return { collapsed: true };
+        }
+
+        return prev;
+      });
     },
-    [state, collapseBelowPixels, collapsePrimary]
+    [collapseBelowPixels, collapsePrimary]
   );
 
   const onSizeChanged = useCallback(
@@ -80,31 +86,36 @@ export function useSnappingSplitter({
       }
 
       const panePixels = collapsePrimary ? firstPanePixels : secondPanePixels;
-      const isSnappedClosed = state.snapSize === 0;
 
-      if (state.collapsed && !isSnappedClosed) {
-        setState({ snapSize: 0, collapsed: state.collapsed });
-      } else if (state.collapsed && isSnappedClosed) {
-        if (usePixels) {
-          const snapSize = Math.max(panePixels, initialSize ?? 200);
-          setState({ snapSize, collapsed: !state.collapsed });
-        } else {
-          const snapSize = Math.max(1 - (initialSize ?? 0.5), 1 - flexSize);
-          setState({ snapSize, collapsed: !state.collapsed });
+      setState((prev) => {
+        const isSnappedClosed = prev.snapSize === 0;
+
+        if (prev.collapsed && !isSnappedClosed) {
+          return { snapSize: 0, collapsed: prev.collapsed };
         }
-      }
+
+        if (prev.collapsed && isSnappedClosed) {
+          if (usePixels) {
+            return { snapSize: Math.max(panePixels, initialSize ?? 200), collapsed: !prev.collapsed };
+          }
+
+          return { snapSize: Math.max(1 - (initialSize ?? 0.5), 1 - flexSize), collapsed: !prev.collapsed };
+        }
+
+        return prev;
+      });
 
       // Only persist while open, so collapsing doesn't overwrite the restore size with ~0.
       if (panePixels >= collapseBelowPixels) {
         onPaneSizeChanged?.(panePixels);
       }
     },
-    [state, initialSize, usePixels, collapsePrimary, collapseBelowPixels, onPaneSizeChanged]
+    [initialSize, usePixels, collapsePrimary, collapseBelowPixels, onPaneSizeChanged]
   );
 
   const onToggleCollapse = useCallback(() => {
-    setState({ collapsed: !state.collapsed });
-  }, [state.collapsed]);
+    setState((prev) => ({ collapsed: !prev.collapsed }));
+  }, []);
 
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: direction,
