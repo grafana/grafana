@@ -351,6 +351,11 @@ Tie the test layer to the feature-toggle phase:
 same PR as the fix. Tests land in the same PR as the feature or fix, so git history explains
 why each test exists.
 
+**A regression test must fail on `main`.** It has to fail in the absence of the fix and pass in
+its presence — otherwise it isn't pinning the bug. Prove it: stash or revert the product change,
+run the new test, and confirm it goes **red**; restore the fix and confirm green. A regression test
+that stays green without the fix documents nothing and will not catch the bug coming back.
+
 ## Rules checklist
 
 Pointers to the sections above — read them for the detail:
@@ -367,7 +372,8 @@ Pointers to the sections above — read them for the detail:
 - Step 5 — E2E selectors-first; every panel gets an `@a11y` test plus interaction aria-snapshots.
 - Step 6 — no tests for code slated for deletion.
 - Anti-flake — apply all 10 rules.
-- SDLC — tests land in the same PR as the feature/fix; close every bug with a regression test.
+- SDLC — tests land in the same PR as the feature/fix; close every bug with a regression test that
+  fails on `main` (red without the fix, green with it).
 - Verify — run the codeowner coverage check before pushing (it gates the PR).
 
 ## Exemplar files
