@@ -1628,6 +1628,7 @@ func WithoutExportFeatureFlag(opts *testinfra.GrafanaOpts) {
 func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 	return testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
+			featuremgmt.FlagProvisioning,
 			featuremgmt.FlagProvisioningExport,
 			featuremgmt.FlagProvisioningUserAttribution,
 			// Lets CleanupAllResources force-delete folders (gracePeriodSeconds=0),

@@ -10,6 +10,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	commonapi "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -21,6 +22,9 @@ func TestIntegrationV1Beta1Connection_Create_GitHub(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagProvisioning,
+		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -85,6 +89,9 @@ func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagProvisioning,
+		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -140,6 +147,9 @@ func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagProvisioning,
+		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -194,6 +204,9 @@ func TestIntegrationV1Beta1Connection_Get(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagProvisioning,
+		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -255,6 +268,9 @@ func TestIntegrationV1Beta1Connection_List(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagProvisioning,
+		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -321,6 +337,9 @@ func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagProvisioning,
+		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
@@ -399,6 +418,9 @@ func TestIntegrationV1Beta1Connection_Delete(t *testing.T) {
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction: false,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagProvisioning,
+		},
 	})
 
 	client := common.GetConnectionClientV1Beta1(helper)
