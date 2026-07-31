@@ -8,7 +8,7 @@ description: Write unit and E2E tests for Grafana visualization panels and viz u
 Write tests for Grafana visualization code that pass review on the first pass. Goals:
 **assert concrete behavior, not existence**; keep test descriptions honest; verify the test
 actually exercises the target code path; use the repo's data-frame and panel-props builders;
-snapshot canvas panels via the draw-call harness; and stabilize the known flake classes. The
+snapshot HTML5 canvas based panels via the draw-call harness; and stabilize the known flake classes. The
 visualization codeowner paths are opted into the gating `check-frontend-test-coverage.yml`
 check, so coverage that drops fails CI.
 
