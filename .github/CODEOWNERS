@@ -1342,7 +1342,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/stale.yml @grafana/grafana-backend-services-squad
 /.github/workflows/storybook-a11y.yml @grafana/grafana-frontend-platform
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
-/.github/workflows/run-schema-v2-e2e.yml  @grafana/dashboards-squad
 /.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/create-security-patch-from-security-mirror.yml @grafana/grafana-backend-services-squad
 /.github/workflows/i18n-crowdin-upload.yml @grafana/grafana-frontend-platform
