@@ -22,6 +22,7 @@ jest.mock('./constants', () => ({
   QUERY_EDITOR_SIDEBAR_SIZE_KEY: 'grafana.dashboard.query-editor-next.sidebar-size',
   QUERY_EDITOR_BANNER_DISMISSED_KEY: 'grafana.dashboard.query-editor-next.banner-dismissed',
   QUERY_EDITOR_SIDEBAR_WIDTH_KEY: 'grafana.dashboard.query-editor-next.sidebar-width',
+  QUERY_EDITOR_SIDEBAR_COLLAPSED_KEY: 'grafana.dashboard.query-editor-next.sidebar-collapsed',
   DEFAULT_SIDEBAR_WIDTH: 350,
   SIDEBAR_COLLAPSE_BELOW_PIXELS: 260,
   DATA_PANE_COLLAPSE_BELOW_PIXELS: 150,
@@ -71,6 +72,7 @@ describe('usePanelEditorShell', () => {
 
 describe('useVizAndDataPaneLayout', () => {
   const WIDTH_KEY = 'grafana.dashboard.query-editor-next.sidebar-width';
+  const COLLAPSED_KEY = 'grafana.dashboard.query-editor-next.sidebar-collapsed';
 
   beforeEach(() => {
     localStorage.clear();
@@ -138,6 +140,40 @@ describe('useVizAndDataPaneLayout', () => {
     localStorage.setItem(WIDTH_KEY, stored);
 
     expect(renderLayout()?.initialSize).toBe(350);
+  });
+
+  // None of the splitter's own state survives a reload, so collapse has to round-trip through local
+  // storage the way the width and the Mini/Full mode already do.
+  describe('sidebar collapse persistence', () => {
+    it('starts the sidebar collapsed when that is what was persisted', () => {
+      localStorage.setItem(COLLAPSED_KEY, 'true');
+
+      expect(renderLayout()?.collapsed).toBe(true);
+    });
+
+    it('starts the sidebar open when nothing was persisted', () => {
+      expect(renderLayout()?.collapsed).toBe(false);
+    });
+
+    it('writes the collapse back so the next load picks it up', () => {
+      jest.mocked(useSnappingSplitter).mockReturnValue({ splitterState: { collapsed: true } } as never);
+
+      renderLayout();
+
+      expect(localStorage.getItem(COLLAPSED_KEY)).toBe('true');
+    });
+
+    // Mirrors the width hardening: valid JSON of the wrong shape must not hide the sidebar.
+    it.each([
+      ['an object', '{}'],
+      ['a string', '"yes"'],
+      ['a number', '1'],
+      ['unparseable text', 'not-json'],
+    ])('stays open when the persisted value is %s', (_label, stored) => {
+      localStorage.setItem(COLLAPSED_KEY, stored);
+
+      expect(renderLayout()?.collapsed).toBe(false);
+    });
   });
 
   // Disabling a splitter strips its flex container, and only the viz/data stack has a layout to fall

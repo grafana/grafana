@@ -16,6 +16,7 @@ import {
   DEFAULT_SIDEBAR_WIDTH,
   DEFAULT_VIZ_RATIO,
   QUERY_EDITOR_BANNER_DISMISSED_KEY,
+  QUERY_EDITOR_SIDEBAR_COLLAPSED_KEY,
   QUERY_EDITOR_SIDEBAR_SIZE_KEY,
   QUERY_EDITOR_SIDEBAR_WIDTH_KEY,
   SIDEBAR_COLLAPSE_BELOW_PIXELS,
@@ -74,6 +75,9 @@ export function usePanelEditorShell(model: PanelEditor) {
  * nests them in opposite order (see `VizAndDataPaneNext`). Pane *sizes* need more than that: the
  * toggle remounts the splitter DOM, so each size is held outside it — the sidebar width in local
  * storage, the viz/data ratio in `vizRatio` below.
+ *
+ * Surviving a reload is a separate problem, since none of the splitter's own state does: the sidebar
+ * width, collapse and Mini/Full mode are all read from and written back to local storage here.
  */
 export function useVizAndDataPaneLayout(model: PanelEditor) {
   const dashboard = getDashboardSceneFor(model);
@@ -93,6 +97,14 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
     typeof storedSidebarWidth === 'number' && Number.isFinite(storedSidebarWidth) && storedSidebarWidth > 0
       ? storedSidebarWidth
       : DEFAULT_SIDEBAR_WIDTH;
+
+  const [storedSidebarCollapsed, setSidebarCollapsed] = useLocalStorage<boolean>(
+    QUERY_EDITOR_SIDEBAR_COLLAPSED_KEY,
+    false
+  );
+  // Only an exact `true` collapses. Valid JSON of the wrong shape ({}, "yes") would otherwise read as
+  // truthy and hide the sidebar with nothing in the UI to explain it.
+  const isInitiallyCollapsed = storedSidebarCollapsed === true;
 
   const isScrollingLayout = useScrollReflowLimit();
 
@@ -123,9 +135,16 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
     usePixels: true,
     pixelPane: 'primary',
     initialSize: sidebarWidth,
+    collapsed: isInitiallyCollapsed,
     collapseBelowPixels: SIDEBAR_COLLAPSE_BELOW_PIXELS,
     onPaneSizeChanged: setSidebarWidth,
   });
+
+  // `collapsed` only seeds the splitter's initial state, so the current value has to be written back
+  // for a reload to pick it up. Matches how the options pane persists its own collapse.
+  useEffect(() => {
+    setSidebarCollapsed(sidebarSplitter.splitterState.collapsed);
+  }, [sidebarSplitter.splitterState.collapsed, setSidebarCollapsed]);
 
   return {
     scene: {

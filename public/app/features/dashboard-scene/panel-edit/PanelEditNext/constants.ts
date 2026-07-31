@@ -29,6 +29,7 @@ export enum SidebarSize {
 
 export const QUERY_EDITOR_SIDEBAR_SIZE_KEY = 'grafana.dashboard.query-editor-next.sidebar-size';
 export const QUERY_EDITOR_SIDEBAR_WIDTH_KEY = 'grafana.dashboard.query-editor-next.sidebar-width';
+export const QUERY_EDITOR_SIDEBAR_COLLAPSED_KEY = 'grafana.dashboard.query-editor-next.sidebar-collapsed';
 export const QUERY_EDITOR_BANNER_DISMISSED_KEY = 'grafana.dashboard.query-editor-next.banner-dismissed';
 export const QUERY_EDITOR_V2_PREFERENCE_KEY = 'grafana.dashboard.query-editor-next.v2-preference';
 
