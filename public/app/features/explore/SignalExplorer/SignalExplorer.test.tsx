@@ -1,15 +1,15 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
+import { type DataSourceApi, type DataSourceInstanceSettings, type TimeRange } from '@grafana/data';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
-import { type ContentOutlineItemContextProps } from '../ContentOutlineContext';
+import { type ContentOutlineItemContextProps } from '../ContentOutline/ContentOutlineContext';
 
 import { SignalExplorer } from './SignalExplorer';
 
-jest.mock('../ContentOutlineContext', () => ({
+jest.mock('../ContentOutline/ContentOutlineContext', () => ({
   useContentOutlineContext: jest.fn(),
 }));
 
@@ -31,10 +31,13 @@ const scrollerMock = document.createElement('div');
 const promQuery = (refId: string, expr = ''): DataQuery =>
   ({ refId, datasource: { uid: 'prom-uid', type: 'prometheus' }, expr }) as DataQuery;
 
+const timeRange = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
+
 const explorer = (queries: DataQuery[], paneDatasource?: DataSourceApi) => (
   <SignalExplorer
     queries={queries}
     paneDatasource={paneDatasource}
+    timeRange={timeRange}
     scroller={scrollerMock}
     toggleButton={<button type="button">Collapse outline</button>}
   />
@@ -61,7 +64,7 @@ const setup = (queries: DataQuery[], paneDatasource?: DataSourceApi) => {
     ref: document.createElement('div'),
   }));
 
-  const useContentOutlineContextMock = jest.requireMock('../ContentOutlineContext')
+  const useContentOutlineContextMock = jest.requireMock('../ContentOutline/ContentOutlineContext')
     .useContentOutlineContext as jest.Mock;
 
   useContentOutlineContextMock.mockReturnValue({

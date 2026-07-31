@@ -78,6 +78,11 @@
       "description-basic-logs": "Bu özelliğin etkinleştirilmesi, <2>Temel Günlükler</2> için yapılandırılmış tabloları sorgulayan pano panellerinde Azure Monitor sorgu başına maliyetlerinin oluşmasına neden olur.",
       "label-enable-basic-logs": "Temel Günlükleri Etkinleştir"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "Ek ayarlar, veri kaynağınız üzerinde daha fazla denetim sağlamak için yapılandırabileceğiniz isteğe bağlı seçeneklerdir. Buna Secure SOCKS Proxy, istek zaman aşımı ve iletilen çerezler dâhildir.",
       "title-additional-settings": "Ek ayarlar"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "Metrik ad alanı"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "Yükleniyor..."
     },
@@ -204,6 +216,10 @@
       "label-by": "ÖLÇÜT",
       "label-order-by": "Sıralama Ölçütü",
       "tooltip-order-by": "Sonuçları bir veya daha fazla sütuna göre artan veya azalan düzende sıralayın."
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "Azure Monitor'dan meta veriler istenirken bir hata oluştu"

@@ -23,8 +23,7 @@ setupMockServer();
 
 const getPrefsUpdateRequest = async (requests: Request[]) => {
   const prefsUpdate = requests.find(
-    (r) =>
-      r.url.match('/apis/preferences.grafana.app/v1alpha1/namespaces/default/preferences/user') && r.method === 'PATCH'
+    (r) => r.url.match('/apis/preferences.grafana.app/v1/namespaces/default/preferences/user') && r.method === 'PATCH'
   );
 
   return prefsUpdate?.clone().json();

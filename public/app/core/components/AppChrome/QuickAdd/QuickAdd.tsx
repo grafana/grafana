@@ -2,6 +2,7 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { Fragment, useMemo, useState } from 'react';
 
 import { type NavModelItem } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
@@ -134,6 +135,7 @@ export const QuickAdd = ({}: Props) => {
           icon={'plus'}
           isOpen={isOpen}
           aria-label={t('navigation.quick-add.aria-label', 'New')}
+          data-testid={selectors.components.NavToolbar.quickAddButton}
         />
       </Dropdown>
       <NavToolbarSeparator />

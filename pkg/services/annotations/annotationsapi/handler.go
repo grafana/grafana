@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sort"
 	"strings"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -158,6 +159,47 @@ func Merge(newItems, legacyItems []*annotations.ItemDTO, limit int64) []*annotat
 	return merged
 }
 
+// FindTags fetches org-wide tag counts from the new store.
+func (h *MigrationProxy) FindTags(ctx context.Context, orgID int64, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	tags, err := h.client.ListTags(ctx, orgID, query)
+	if err != nil {
+		return annotations.FindTagsResult{}, err
+	}
+
+	// Convert the new store's tag counts to the legacy DTO shape.
+	result := make([]*annotations.TagsDTO, 0, len(tags))
+	for _, tag := range tags {
+		result = append(result, &annotations.TagsDTO{
+			Tag:   tag.Tag,
+			Count: int64(tag.Count),
+		})
+	}
+	return annotations.FindTagsResult{Tags: result}, nil
+}
+
+// MergeTags combines new-store and legacy tag counts, summing the counts of tags present in
+// both stores, then sorts ascending by tag and applies limit to match the legacy response shape.
+func MergeTags(newTags, legacyTags []*annotations.TagsDTO, limit int64) []*annotations.TagsDTO {
+	counts := make(map[string]int64, len(newTags)+len(legacyTags))
+	for _, tag := range newTags {
+		counts[tag.Tag] += tag.Count
+	}
+	for _, tag := range legacyTags {
+		counts[tag.Tag] += tag.Count
+	}
+
+	merged := make([]*annotations.TagsDTO, 0, len(counts))
+	for tag, count := range counts {
+		merged = append(merged, &annotations.TagsDTO{Tag: tag, Count: count})
+	}
+	sort.Sort(annotations.SortedTags(merged))
+
+	if limit > 0 && int64(len(merged)) > limit {
+		merged = merged[:limit]
+	}
+	return merged
+}
+
 // Create writes to new store and returns the assigned legacy ID.
 func (h *MigrationProxy) Create(ctx context.Context, orgID int64, item *annotations.Item) (int64, error) {
 	anno, err := itemToAnnotation(item)
@@ -249,6 +291,32 @@ func (h *MigrationProxy) Delete(ctx context.Context, orgID int64, annotationID i
 		return ErrGone
 	}
 	return h.client.Delete(ctx, orgID, existing.GetName())
+}
+
+// MassDelete removes every annotation on a dashboard panel from the new store.
+// The new API has no delete-collection route, so this enumerates the panel's annotations
+// via /search and deletes them one by one.
+func (h *MigrationProxy) MassDelete(ctx context.Context, orgID int64, dashboardUID string, panelID int64) error {
+	query := &annotations.ItemQuery{DashboardUID: dashboardUID, PanelID: panelID}
+	const maxMassDeletePasses = 1000
+	for range maxMassDeletePasses {
+		annos, err := h.client.Search(ctx, orgID, query)
+		if err != nil {
+			return err
+		}
+		// Continue querying relevant annotations until the list is empty.
+		if len(annos) == 0 {
+			return nil
+		}
+
+		for _, anno := range annos {
+			if err := h.client.Delete(ctx, orgID, anno.GetName()); err != nil {
+				return fmt.Errorf("deleting annotation %q: %w", anno.GetName(), err)
+			}
+		}
+	}
+
+	return fmt.Errorf("annotation mass delete: exceeded %d passes for dashboard %q panel %d", maxMassDeletePasses, dashboardUID, panelID)
 }
 
 // Get reads a single annotation from the new store. Returns ErrNotFound if the

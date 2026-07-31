@@ -78,6 +78,9 @@ func TestService(t *testing.T) {
 		TypeVersion: data.FrameTypeVersion{0, 1},
 	})
 
+	// The service labels each result's frames with its refID, so A's frame is returned as "A".
+	dsDF.RefID = "A"
+
 	expect := &backend.QueryDataResponse{
 		Responses: backend.Responses{
 			"A": {

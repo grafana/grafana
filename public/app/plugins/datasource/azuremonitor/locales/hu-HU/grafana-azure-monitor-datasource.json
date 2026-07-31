@@ -78,6 +78,11 @@
       "description-basic-logs": "A funkció engedélyezése esetén lekérdezésenkénti Azure Monitor-költségek merülnek fel azon irányítópult-paneleken, amelyek lekérdezik az <2>Alapvető naplókhoz</2> konfigurált táblákat.",
       "label-enable-basic-logs": "Alapvető naplók engedélyezése"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "A további beállítások olyan opcionális beállítások, amelyek konfigurálhatók az adatforrás nagyobb mértékű ellenőrzése érdekében. Idetartozik a Secure Socks Proxy, a lekérdezési időtúllépés és a továbbított cookie-k.",
       "title-additional-settings": "További beállítások"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "Metrika névtere"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "Betöltés…"
     },
@@ -204,6 +216,10 @@
       "label-by": "SZEMPONT",
       "label-order-by": "Rendezési szempont",
       "tooltip-order-by": "Az eredmények rendezése egy vagy több oszlop alapján növekvő vagy csökkenő sorrendben."
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "Hiba történt a metaadatok Azure Monitor szolgáltatásból történő lekérése során"
