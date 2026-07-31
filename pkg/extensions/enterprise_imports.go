@@ -140,6 +140,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/api/avatar"
 	_ "github.com/grafana/grafana/pkg/api/datasource"
 	_ "github.com/grafana/grafana/pkg/api/dtos"
+	_ "github.com/grafana/grafana/pkg/api/pluginproxy"
 	_ "github.com/grafana/grafana/pkg/api/response"
 	_ "github.com/grafana/grafana/pkg/api/routing"
 	_ "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
