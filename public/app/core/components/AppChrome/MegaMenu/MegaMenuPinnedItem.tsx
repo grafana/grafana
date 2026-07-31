@@ -42,10 +42,10 @@ export function MegaMenuPinnedItem({
   const { item, ancestors, icon } = line;
   const label = item.text;
 
-  // Highlight the row whenever it points at the current route, but only claim aria-current when this
-  // pinned copy is the canonical active item. getActiveItem resolves the nav copy first, so an item
-  // that's both pinned and still in the nav keeps aria-current on its nav row; without this guard
-  // both links would carry aria-current="page" for the same route.
+  // Highlight the row (nav-style selected treatment) whenever it points at the current route, but only
+  // claim aria-current when this pinned copy is the canonical active item. getActiveItem resolves the
+  // pinned copy first, so a pinned page's aria-current lands here and the nav row (reference equality)
+  // no longer claims it — keeping a single aria-current="page" for the route.
   const isActiveRoute = Boolean(item.url) && item.url === activeItem?.url;
   const isCurrentPage = item === activeItem;
   const nearestAncestor = ancestors.at(-1);
@@ -54,7 +54,7 @@ export function MegaMenuPinnedItem({
 
   return (
     <li ref={draggableProvided?.innerRef} className={styles.entry} {...draggableProvided?.draggableProps}>
-      <div className={styles.row}>
+      <div className={cx(styles.row, isActiveRoute && styles.rowActive)}>
         {draggableProvided && (
           // Every pinned row is draggable, so the handle owns the reserved column outright.
           <div
@@ -73,7 +73,7 @@ export function MegaMenuPinnedItem({
               item.onClick?.();
               onClick?.();
             }}
-            className={cx(styles.link, isActiveRoute && styles.active)}
+            className={styles.link}
             {...(isCurrentPage && { 'aria-current': 'page' })}
           >
             {/* The leading icon is the top-level parent section's icon, not the leaf's own. */}
@@ -122,6 +122,14 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
     minWidth: 0,
     '&:hover': {
       backgroundColor: theme.colors.action.hover,
+    },
+  }),
+  // Selected treatment matching the active nav row: accent tint under visual refresh, action.selected
+  // otherwise, with the label reading as selected rather than secondary.
+  rowActive: css({
+    backgroundColor: visualRefreshEnabled ? theme.colors.accent.transparent : theme.colors.action.selected,
+    'a, span': {
+      color: visualRefreshEnabled ? theme.colors.accent.text : theme.colors.text.primary,
     },
   }),
   link: css({
@@ -179,8 +187,5 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
   sep: css({
     color: theme.colors.text.disabled,
     flexShrink: 0,
-  }),
-  active: css({
-    color: theme.colors.text.primary,
   }),
 });
