@@ -268,9 +268,10 @@ describe('TextNGEditor', () => {
 
   describe('content that renders to nothing', () => {
     // Deleting everything and pressing enter in Split view: markdown renders a
-    // lone newline to '', which DangerouslySetHtmlContent throws on.
+    // lone newline to '', which the space fallback keeps DangerouslySetHtmlContent
+    // from throwing on.
     it.each(['\n', '\n\n', '   \n  ', '<!-- just a comment -->'])(
-      'does not crash the preview for %j',
+      'renders the empty space fallback in the preview for %j',
       async (content) => {
         setup('# Hello', TextMode.Markdown);
         await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
@@ -279,8 +280,8 @@ describe('TextNGEditor', () => {
         // only whitespace. A throw here fails the test.
         fireEvent.change(screen.getByRole('textbox'), { target: { value: content } });
 
-        // The throw would happen in the debounced re-render.
-        await waitFor(() => expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).not.toContain('<h1'));
+        // Debounced preview settles from the '# Hello' <h1> to the space fallback.
+        await waitFor(() => expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML.trim()).toBe(''));
       }
     );
   });

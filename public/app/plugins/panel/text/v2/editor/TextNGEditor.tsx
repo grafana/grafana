@@ -5,7 +5,7 @@ import { useDebounce } from 'react-use';
 
 import { type GrafanaTheme2, type InterpolateFunction } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { CodeMirrorEditor, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 import config from 'app/core/config';
 
@@ -60,6 +60,7 @@ export function TextNGEditor({
   replaceVariables,
   onChange,
 }: TextNGEditorProps) {
+  const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const [view, setView] = useState<ViewMode>(() => (content.trim().length === 0 ? 'write' : 'preview'));
 
@@ -208,7 +209,7 @@ export function TextNGEditor({
 
   return (
     <div className={styles.wrapper} data-testid="TextNGEditor">
-      <div className={styles.toolbar}>
+      <Stack gap={1} alignItems="center" wrap="wrap" minHeight={theme.components.height.md}>
         <RadioButtonGroup options={viewOptions} value={view} onChange={setView} size="sm" />
         {showEditor && <TextNGFormatToolbar mode={mode} editorContainerRef={editorContainerRef} />}
         <Dropdown placement="bottom-end" overlay={renderModeMenu}>
@@ -226,7 +227,7 @@ export function TextNGEditor({
             </Stack>
           </Button>
         </Dropdown>
-      </div>
+      </Stack>
 
       <div className={cx(styles.body, view === 'split' && styles.splitBody)}>
         {showEditor && (
@@ -255,17 +256,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'textNGEditor',
     display: 'flex',
     flexDirection: 'column',
+    gap: theme.spacing(1),
     width: '100%',
     height: '100%',
-  }),
-  toolbar: css({
-    display: 'flex',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: theme.spacing(1),
-    marginBottom: theme.spacing(1),
-    // Reserve the format toolbar's height so Preview view does not shift the panes.
-    minHeight: theme.spacing(theme.components.height.md),
   }),
   modePicker: css({
     marginLeft: 'auto',

@@ -50,8 +50,9 @@ export function useStableCallback<Args extends unknown[], Return>(
 ): (...args: Args) => Return {
   const latest = useRef(callback);
 
-  // Runs only for a committed render, and still before any layout effect or
-  // event handler can read the ref.
+  // Stands in for useEffectEvent until we are off React 18. Insertion effects run
+  // before layout effects, so even a caller in another component's layout effect
+  // gets the latest callback instead of the previous render's.
   useInsertionEffect(() => {
     latest.current = callback;
   }, [callback]);

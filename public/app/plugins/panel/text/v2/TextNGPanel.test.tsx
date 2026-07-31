@@ -64,14 +64,16 @@ describe('TextNGPanel', () => {
 
   // Markdown renders these to '', which DangerouslySetHtmlContent throws on.
   it.each(['\n', '\n\n', '   \n  ', '<!-- just a comment -->'])(
-    'should not throw for markdown content that renders to nothing: %j',
+    'renders empty content for markdown that renders to nothing: %j',
     (content) => {
       replaceVariablesMock.mockReturnValueOnce(content);
       const props = Object.assign({}, defaultProps, {
         options: { content, mode: TextMode.Markdown },
       });
 
-      expect(() => setup(props)).not.toThrow();
+      setup(props);
+
+      expect(screen.getByTestId('TextNGPanel-converted-content').innerHTML.trim()).toBe('');
     }
   );
 
