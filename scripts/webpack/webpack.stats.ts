@@ -49,5 +49,20 @@ export default (env: Env = {}) => {
   }
 
   const baseConfig = prodConfig(env);
-  return merge(Array.isArray(baseConfig) ? baseConfig[0] : baseConfig, config);
+
+  if (Array.isArray(baseConfig)) {
+    // yarn build:stats --env configName=swagger
+    if (!env.configName) {
+      env.configName = baseConfig[0].name;
+    }
+
+    const namedConfig = baseConfig.find((c) => c.name === env.configName);
+    if (!namedConfig) {
+      throw new Error(`No config found with name ${env.configName}`);
+    }
+
+    return merge(namedConfig, config);
+  }
+
+  return merge(baseConfig, config);
 };
