@@ -15800,9 +15800,14 @@
     },
     "editor": {
       "aria-label-content": "Text content",
+      "aria-label-mode": "Text mode: {{mode}}",
       "format-bold": "B",
       "format-heading": "H",
       "format-italic": "I",
+      "mode-code": "Code",
+      "mode-html": "HTML",
+      "mode-markdown": "Markdown",
+      "mode-picker-label": "Mode",
       "tooltip-bold": "Bold",
       "tooltip-bullet-list": "Bullet list",
       "tooltip-checklist": "Checklist",
@@ -15816,13 +15821,6 @@
       "view-split": "Split",
       "view-write": "Write"
     },
-    "mode-options": {
-      "label-code": "Code",
-      "label-html": "HTML",
-      "label-markdown": "Markdown"
-    },
-    "name-language": "Language",
-    "name-mode": "Mode",
     "name-show-line-numbers": "Show line numbers"
   },
   "theme-playground": {
