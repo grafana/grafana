@@ -92,26 +92,24 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
 
   // Mini: viz on top; sidebar + data pane nested in the collapsible bottom pane.
   const miniLayout = (
-    <>
-      <VizDataSplit
-        splitter={vizDataSplitter}
-        viz={viz}
-        banner={banner}
-        secondaryClassName={styles.bottom}
-        expandClassName={styles.expandQueryPaneMini}
-      >
-        <div {...sidebarSplitter.containerProps}>
-          {sidebarPane}
-          {sidebarHandle}
-          <div
-            {...sidebarSplitter.secondaryProps}
-            className={cx(sidebarSplitter.secondaryProps.className, styles.dataPane)}
-          >
-            {dataPane}
-          </div>
+    <VizDataSplit
+      splitter={vizDataSplitter}
+      viz={viz}
+      banner={banner}
+      secondaryClassName={styles.bottom}
+      expandClassName={styles.expandQueryPaneMini}
+    >
+      <div {...sidebarSplitter.containerProps}>
+        {sidebarPane}
+        {sidebarHandle}
+        <div
+          {...sidebarSplitter.secondaryProps}
+          className={cx(sidebarSplitter.secondaryProps.className, styles.dataPane)}
+        >
+          {dataPane}
         </div>
-      </VizDataSplit>
-    </>
+      </div>
+    </VizDataSplit>
   );
 
   // Full: full-height sidebar on the left; the viz/data split on the right.

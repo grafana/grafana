@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 
 import { VizPanel } from '@grafana/scenes';
@@ -80,7 +81,16 @@ function mockSplitter(collapsed = false): Splitter {
   };
 }
 
-function buildMockLayout(dataPane?: PanelDataPane | PanelDataPaneNext, sidebarSize: SidebarSize = SidebarSize.Mini) {
+/** True when `first` precedes `second` in document order. */
+function precedes(first: Element, second: Element) {
+  return Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
+}
+
+function buildMockLayout(
+  dataPane?: PanelDataPane | PanelDataPaneNext,
+  sidebarSize: SidebarSize = SidebarSize.Mini,
+  collapsed: { vizData?: boolean; sidebar?: boolean } = {}
+) {
   return {
     scene: {
       panel: mockSceneRenderer<VizPanel>('panel-viz'),
@@ -91,8 +101,8 @@ function buildMockLayout(dataPane?: PanelDataPane | PanelDataPaneNext, sidebarSi
     sidebarSize,
     setSidebarSize: jest.fn(),
     isScrollingLayout: false,
-    vizDataSplitter: mockSplitter(),
-    sidebarSplitter: mockSplitter(),
+    vizDataSplitter: mockSplitter(collapsed.vizData),
+    sidebarSplitter: mockSplitter(collapsed.sidebar),
   } satisfies VizAndDataPaneLayout;
 }
 
@@ -154,6 +164,84 @@ describe('VizAndDataPaneNext', () => {
       render(<VizAndDataPaneNext model={panelEditor} />);
 
       expect(screen.getByTestId('query-editor-banner')).toBeInTheDocument();
+    });
+  });
+
+  /**
+   * Mini and Full nest the two splitters in opposite orders, which is what makes the toggle remount
+   * them and forces sizes to be held outside the splitter. Document order is the cheapest thing that
+   * actually distinguishes the two topologies: Mini stacks the sidebar under the viz, Full puts it
+   * alongside.
+   */
+  describe('sidebar topology', () => {
+    function renderWithSize(sidebarSize: SidebarSize) {
+      const mockDataPane = Object.create(PanelDataPaneNext.prototype);
+      mockDataPane.Component = () => <div data-testid="data-pane-content" />;
+      jest.mocked(useVizAndDataPaneLayout).mockReturnValue(buildMockLayout(mockDataPane, sidebarSize));
+
+      render(<VizAndDataPaneNext model={panelEditor} />);
+
+      return { viz: screen.getByTestId('panel-viz'), sidebar: screen.getByTestId('query-editor-sidebar') };
+    }
+
+    it('puts the sidebar after the viz in Mini, nested in the bottom pane', () => {
+      const { viz, sidebar } = renderWithSize(SidebarSize.Mini);
+
+      expect(precedes(viz, sidebar)).toBe(true);
+    });
+
+    it('puts the full-height sidebar before the viz in Full', () => {
+      const { viz, sidebar } = renderWithSize(SidebarSize.Full);
+
+      expect(precedes(sidebar, viz)).toBe(true);
+    });
+  });
+
+  // Fully collapsing either pane is the point of moving to snapping splitters, so the affordance that
+  // gets it back has to render and be wired up.
+  describe('collapsed panes', () => {
+    function renderCollapsed(collapsed: { vizData?: boolean; sidebar?: boolean }) {
+      const mockDataPane = Object.create(PanelDataPaneNext.prototype);
+      mockDataPane.Component = () => <div data-testid="data-pane-content" />;
+      const layout = buildMockLayout(mockDataPane, SidebarSize.Mini, collapsed);
+      jest.mocked(useVizAndDataPaneLayout).mockReturnValue(layout);
+
+      render(<VizAndDataPaneNext model={panelEditor} />);
+
+      return layout;
+    }
+
+    it('swaps the collapsed sidebar for an expand button', async () => {
+      const layout = renderCollapsed({ sidebar: true });
+
+      expect(screen.queryByTestId('query-editor-sidebar')).not.toBeInTheDocument();
+      const expand = screen.getByRole('button', { name: 'Open sidebar' });
+
+      await userEvent.click(expand);
+
+      expect(layout.sidebarSplitter.onToggleCollapse).toHaveBeenCalled();
+    });
+
+    it('swaps the collapsed query pane for an expand button', async () => {
+      const layout = renderCollapsed({ vizData: true });
+
+      // The whole bottom pane goes, sidebar and data pane together.
+      expect(screen.queryByTestId('data-pane-content')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('query-editor-sidebar')).not.toBeInTheDocument();
+      const expand = screen.getByRole('button', { name: 'Open query pane' });
+
+      await userEvent.click(expand);
+
+      expect(layout.vizDataSplitter.onToggleCollapse).toHaveBeenCalled();
+    });
+
+    // The banner sits inside the bottom pane, so a collapsed query pane must hide it too.
+    it('hides the banner while the query pane is collapsed', () => {
+      jest.mocked(useQueryEditorBanner).mockReturnValue({ showBanner: true, dismissBanner: jest.fn() });
+
+      renderCollapsed({ vizData: true });
+
+      expect(screen.queryByTestId('query-editor-banner')).not.toBeInTheDocument();
     });
   });
 });

@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 
 import { useSplitter } from '@grafana/ui';
+import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
 import { useSnappingSplitter } from './useSnappingSplitter';
 
@@ -282,6 +283,79 @@ describe('useSnappingSplitter', () => {
         expect(result.current.splitterState.collapsed).toBe(false);
         expect(collapsingStyle().flexBasis).toBe(`${CONFIGURED_SIZE}px`);
       });
+    });
+  });
+
+  /**
+   * The options pane is the one consumer outside the query editor, and it is not behind a feature
+   * flag. `useSplitter` reports a double-click through `onSizeChanged` with no preceding
+   * `onResizing` — that absence is what distinguishes the gesture from a drag here.
+   */
+  describe('double-click reset, options pane config', () => {
+    // Mirrors `PanelEditorRenderer` and `usePanelEditorShell`, which both hard-code these. Only the
+    // threshold can be imported; if the 330 there ever drops below it, the last case fails.
+    const RESET_SIZE = 330;
+    const PANE_PADDING = 16;
+    const THRESHOLD = MIN_SUGGESTIONS_PANE_WIDTH + PANE_PADDING;
+
+    function latestOptions() {
+      const { calls } = jest.mocked(useSplitter).mock;
+      return calls[calls.length - 1][0];
+    }
+
+    function mountOptionsPaneSplitter(collapsed?: boolean) {
+      const { result } = renderHook(() =>
+        useSnappingSplitter({
+          direction: 'row',
+          dragPosition: 'end',
+          usePixels: true,
+          initialSize: RESET_SIZE,
+          collapseBelowPixels: THRESHOLD,
+          collapsed,
+          // No `onPaneSizeChanged` — the options pane does not persist its width.
+        })
+      );
+
+      return result;
+    }
+
+    /** Settle at `panePixels` without any pointer move first, the way a double-click arrives. */
+    function doubleClick(panePixels: number) {
+      act(() => {
+        latestOptions().onSizeChanged?.(0.5, 600, panePixels);
+      });
+    }
+
+    it('expands a collapsed pane to the reset size', () => {
+      const result = mountOptionsPaneSplitter(true);
+      expect(result.current.splitterState.collapsed).toBe(true);
+
+      doubleClick(RESET_SIZE);
+
+      expect(result.current.splitterState.collapsed).toBe(false);
+      expect(result.current.secondaryProps.style.flexBasis).toBe(`${RESET_SIZE}px`);
+    });
+
+    it('leaves an open pane open and unforced', () => {
+      const result = mountOptionsPaneSplitter();
+
+      doubleClick(RESET_SIZE);
+
+      expect(result.current.splitterState.collapsed).toBe(false);
+      // No snapSize override, so the pane keeps the size useSplitter wrote to the DOM.
+      expect(result.current.splitterState.snapSize).toBeUndefined();
+      expect(result.current.secondaryProps.style.flexBasis).toBeUndefined();
+    });
+
+    // The reset size clears the collapse threshold by only ~54px. Were that margin ever lost, a
+    // double-click would start *collapsing* the options pane for every user, flag or not.
+    it('does not collapse the pane at its configured reset size', () => {
+      const result = mountOptionsPaneSplitter();
+
+      doubleClick(RESET_SIZE);
+
+      expect(RESET_SIZE).toBeGreaterThanOrEqual(THRESHOLD);
+      expect(result.current.splitterState.collapsed).toBe(false);
     });
   });
 });

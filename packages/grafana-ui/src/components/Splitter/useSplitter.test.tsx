@@ -98,6 +98,22 @@ describe('useSplitter', () => {
       expect(onSizeChanged).toHaveBeenCalledWith(0.5, halfPane, halfPane);
     });
 
+    // The branch the options pane takes. It is not behind a feature flag, so this is the reset that
+    // reaches every user — the pane it reports must clear its own collapse threshold.
+    it('reports the configured size for a secondary-pixel splitter', () => {
+      const onSizeChanged = jest.fn();
+      const primaryPane = CONTAINER - 330 - HANDLE;
+      const separator = mountSplitter(
+        { direction: 'row', usePixels: true, initialSize: 330, onSizeChanged },
+        primaryPane
+      );
+
+      fireEvent.doubleClick(separator);
+
+      // Primary keeps flexGrow 1 in this mode, so the reported ratio is 1 and the pinned pane is 330.
+      expect(onSizeChanged).toHaveBeenCalledWith(1, primaryPane, 330);
+    });
+
     it('reports the configured size for a primary-pixel splitter', () => {
       const onSizeChanged = jest.fn();
       const separator = mountSplitter(
