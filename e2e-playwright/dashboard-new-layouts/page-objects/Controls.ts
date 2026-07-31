@@ -59,7 +59,7 @@ export class Controls extends PageObject {
     });
   }
 
-  readonly timerange = {
+  readonly timeRange = {
     set: async (from: string, to: string) => {
       await test.step(`Set time range from "${from}" to "${to}"`, async () => {
         await this.dashboardPage.getByGrafanaSelector(this.selectors.components.TimePicker.openButton).click();

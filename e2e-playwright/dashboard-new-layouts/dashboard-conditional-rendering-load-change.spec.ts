@@ -128,7 +128,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(tabs.getTitle('Tab - show - time range <7d')).toBeVisible();
     await expect(tabs.getTitle('Tab - hide - time range <7d')).not.toBeVisible();
 
-    await controls.timerange.set('now-8d', 'now');
+    await controls.timeRange.set('now-8d', 'now');
     await page.waitForLoadState('networkidle');
 
     await expect(panel.getContainerByTitle('Panel - show - time range <7d')).not.toBeVisible();
@@ -152,7 +152,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(tabs.getTitle('Tab - show - time range <7d')).not.toBeVisible();
     await expect(tabs.getTitle('Tab - hide - time range <7d')).toBeVisible();
 
-    await controls.timerange.set('now-6h', 'now');
+    await controls.timeRange.set('now-6h', 'now');
     await page.waitForLoadState('networkidle');
 
     await expect(panel.getContainerByTitle('Panel - show - time range <7d')).toBeVisible();

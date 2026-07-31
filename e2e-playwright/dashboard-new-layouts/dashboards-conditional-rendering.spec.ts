@@ -83,14 +83,14 @@ test.describe(
         await tabs.select('Tab 1');
 
         await sidebar.conditionalRenderingOptions.selectVisibility('hide');
-        await sidebar.conditionalRenderingOptions.addTimerangeRule('7 days');
+        await sidebar.conditionalRenderingOptions.addTimeRangeRule('7 days');
 
         await switchTabAndSave(page, tabs, dashboardPage, selectors);
 
-        await controls.timerange.selectPreset('Last 12 hours');
+        await controls.timeRange.selectPreset('Last 12 hours');
         await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
 
-        await controls.timerange.selectPreset('Last 30 days');
+        await controls.timeRange.selectPreset('Last 30 days');
         await expect(tabs.getTitle('Tab 1')).toBeVisible();
       });
 
@@ -107,14 +107,14 @@ test.describe(
         await tabs.select('Tab 1');
 
         await sidebar.conditionalRenderingOptions.selectVisibility('show');
-        await sidebar.conditionalRenderingOptions.addTimerangeRule('7 days');
+        await sidebar.conditionalRenderingOptions.addTimeRangeRule('7 days');
 
         await switchTabAndSave(page, tabs, dashboardPage, selectors);
 
-        await controls.timerange.selectPreset('Last 30 days');
+        await controls.timeRange.selectPreset('Last 30 days');
         await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
 
-        await controls.timerange.selectPreset('Last 5 minutes');
+        await controls.timeRange.selectPreset('Last 5 minutes');
         await expect(tabs.getTitle('Tab 1')).toBeVisible();
       });
     });
@@ -139,19 +139,19 @@ test.describe(
 
         await sidebar.conditionalRenderingOptions.selectVisibility('hide');
         await sidebar.conditionalRenderingOptions.addVariableRule('hideByVariable', '=', '1');
-        await sidebar.conditionalRenderingOptions.addTimerangeRule('7 days');
+        await sidebar.conditionalRenderingOptions.addTimeRangeRule('7 days');
         await sidebar.conditionalRenderingOptions.selectMatch('all');
 
         await switchTabAndSave(page, tabs, dashboardPage, selectors);
 
         await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '2');
-        await controls.timerange.selectPreset('Last 30 days');
+        await controls.timeRange.selectPreset('Last 30 days');
         await expect(tabs.getTitle('Tab 1')).toBeVisible();
 
         await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '1');
         await expect(tabs.getTitle('Tab 1')).toBeVisible();
 
-        await controls.timerange.selectPreset('Last 12 hours');
+        await controls.timeRange.selectPreset('Last 12 hours');
         await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
 
         await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '2');
@@ -177,13 +177,13 @@ test.describe(
 
         await sidebar.conditionalRenderingOptions.selectVisibility('hide');
         await sidebar.conditionalRenderingOptions.addVariableRule('hideByVariable', '=', '1');
-        await sidebar.conditionalRenderingOptions.addTimerangeRule('7 days');
+        await sidebar.conditionalRenderingOptions.addTimeRangeRule('7 days');
         await sidebar.conditionalRenderingOptions.selectMatch('any');
 
         await switchTabAndSave(page, tabs, dashboardPage, selectors);
 
         await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '2');
-        await controls.timerange.selectPreset('Last 30 days');
+        await controls.timeRange.selectPreset('Last 30 days');
         await expect(tabs.getTitle('Tab 1')).toBeVisible();
 
         await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '1');
@@ -192,7 +192,7 @@ test.describe(
         await fillVariableValue(page, dashboardPage, selectors, 'hideByVariable', '2');
         await expect(tabs.getTitle('Tab 1')).toBeVisible();
 
-        await controls.timerange.selectPreset('Last 6 hours');
+        await controls.timeRange.selectPreset('Last 6 hours');
         await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
       });
 
@@ -215,7 +215,7 @@ test.describe(
 
         await sidebar.conditionalRenderingOptions.selectVisibility('show');
         await sidebar.conditionalRenderingOptions.addVariableRule('showByVariable', '=', '1');
-        await sidebar.conditionalRenderingOptions.addTimerangeRule('7 days');
+        await sidebar.conditionalRenderingOptions.addTimeRangeRule('7 days');
         await sidebar.conditionalRenderingOptions.selectMatch('all');
 
         await switchTabAndSave(page, tabs, dashboardPage, selectors);
@@ -223,13 +223,13 @@ test.describe(
         await fillVariableValue(page, dashboardPage, selectors, 'showByVariable', '2');
         await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
 
-        await controls.timerange.selectPreset('Last 30 days');
+        await controls.timeRange.selectPreset('Last 30 days');
         await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
 
         await fillVariableValue(page, dashboardPage, selectors, 'showByVariable', '1');
         await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
 
-        await controls.timerange.selectPreset('Last 5 minutes');
+        await controls.timeRange.selectPreset('Last 5 minutes');
         await expect(tabs.getTitle('Tab 1')).toBeVisible();
       });
 
@@ -252,20 +252,20 @@ test.describe(
 
         await sidebar.conditionalRenderingOptions.selectVisibility('show');
         await sidebar.conditionalRenderingOptions.addVariableRule('showByVariable', '=', '2');
-        await sidebar.conditionalRenderingOptions.addTimerangeRule('7 days');
+        await sidebar.conditionalRenderingOptions.addTimeRangeRule('7 days');
         await sidebar.conditionalRenderingOptions.selectMatch('any');
 
         await switchTabAndSave(page, tabs, dashboardPage, selectors);
 
         await fillVariableValue(page, dashboardPage, selectors, 'showByVariable', '1');
-        await controls.timerange.selectPreset('Last 30 days');
+        await controls.timeRange.selectPreset('Last 30 days');
         await expect(tabs.getTitle('Tab 1')).not.toBeVisible();
 
         await fillVariableValue(page, dashboardPage, selectors, 'showByVariable', '2');
         await expect(tabs.getTitle('Tab 1')).toBeVisible();
 
         await fillVariableValue(page, dashboardPage, selectors, 'showByVariable', '1');
-        await controls.timerange.selectPreset('Last 5 minutes');
+        await controls.timeRange.selectPreset('Last 5 minutes');
         await expect(tabs.getTitle('Tab 1')).toBeVisible();
       });
     });

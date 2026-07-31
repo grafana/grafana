@@ -56,7 +56,7 @@ export class ConditionalRenderingOptions extends PageObject {
     });
   }
 
-  async addTimerangeRule(lessThan: string) {
+  async addTimeRangeRule(lessThan: string) {
     await test.step(`Add timerange conditional rendering rule: "less than ${lessThan}"`, async () => {
       await this.dashboardPage.getByGrafanaSelector(this.selectors.components.ValuePicker.button('Add rule')).click();
       // ValuePicker opens a react-select listbox (portaled to body), not a dialog
@@ -64,7 +64,6 @@ export class ConditionalRenderingOptions extends PageObject {
 
       await this.dashboardPage
         .getByGrafanaSelector(this.selectors.pages.Dashboard.Sidebar.conditionalRendering.timeRange.select)
-        .last()
         .click();
       await this.page.getByRole('listbox').getByRole('option', { name: lessThan }).click();
     });
