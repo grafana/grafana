@@ -6,6 +6,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, waitFor, within } from 'test/test-utils';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
@@ -48,7 +49,7 @@ const renderWithProvider = (
 const server = setupMswServer();
 
 const ui = {
-  typeSelector: byTestId('items.0.type'),
+  typeSelector: byTestId(selectors.pages.Alerting.ContactPointForm.integrationTypeField('items.0.')),
   loadingIndicator: byText('Loading notifiers...'),
   integrationType: byLabelText('Integration'),
   onCallIntegrationType: byRole('radiogroup'),
@@ -64,7 +65,8 @@ const ui = {
   testModal: byRole('dialog'),
   sendTestNotificationButton: byRole('button', { name: /send test notification/i }),
   closeModalButton: byRole('button', { name: /Close/ }),
-  existingOnCallIntegrationSelect: (index: number) => byTestId(`items.${index}.settings.url`),
+  existingOnCallIntegrationSelect: (index: number) =>
+    byTestId(selectors.pages.Alerting.ContactPointForm.settingsField(`items.${index}.settings.url`)),
   saveButton: byRole('button', { name: /save contact point/i }),
   slack: {
     recipient: byRole('textbox', { name: /^Recipient/ }),
@@ -166,7 +168,10 @@ describe('GrafanaReceiverForm', () => {
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
       // Select Slack receiver
-      await clickSelectOption(byTestId('items.0.type').get(), 'Slack');
+      await clickSelectOption(
+        byTestId(selectors.pages.Alerting.ContactPointForm.integrationTypeField('items.0.')).get(),
+        'Slack'
+      );
 
       // Enter a value in the recipient field (required)
       await user.type(ui.slack.recipient.get(), 'my-channel');
@@ -189,7 +194,10 @@ describe('GrafanaReceiverForm', () => {
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
       // Select Slack receiver
-      await clickSelectOption(byTestId('items.0.type').get(), 'Slack');
+      await clickSelectOption(
+        byTestId(selectors.pages.Alerting.ContactPointForm.integrationTypeField('items.0.')).get(),
+        'Slack'
+      );
 
       // Token field should be initially enabled
       const tokenField = ui.slack.token.get();
@@ -430,7 +438,9 @@ describe('GrafanaReceiverForm', () => {
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
-      expect(byTestId('items.0.type').get()).toHaveTextContent('Grafana IRM');
+      expect(
+        byTestId(selectors.pages.Alerting.ContactPointForm.integrationTypeField('items.0.')).get()
+      ).toHaveTextContent('Grafana IRM');
       expect(byLabelText('URL').get()).toHaveValue('https://oncall.example.com');
     });
   });

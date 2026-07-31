@@ -1,7 +1,6 @@
 package github_test
 
 import (
-	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -117,7 +116,7 @@ func TestConnection_Mutate(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GitlabConnectionType,
-					Gitlab: &provisioning.GitlabConnectionConfig{
+					OAuth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "clientID",
 					},
 				},
@@ -129,7 +128,7 @@ func TestConnection_Mutate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := github.Mutate(context.Background(), tt.connection)
+			err := github.Mutate(t.Context(), tt.connection)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -1367,10 +1366,10 @@ func TestConnection_Test(t *testing.T) {
 
 			// Mutate populates Spec.URL (the installation URL) as it would in production
 			// admission, which Test reads for installation-permission error details.
-			require.NoError(t, github.Mutate(context.Background(), tt.connection))
+			require.NoError(t, github.Mutate(t.Context(), tt.connection))
 
 			conn := github.NewConnection(tt.connection, mockFactory, tt.secrets)
-			result, err := conn.Test(context.Background())
+			result, err := conn.Test(t.Context())
 
 			require.NoError(t, err)
 			require.NotNil(t, result)
@@ -1457,7 +1456,7 @@ func TestConnection_TokenCreationTime(t *testing.T) {
 			}
 
 			conn := github.NewConnection(connection, mockFactory, tt.secrets)
-			iss, err := conn.TokenCreationTime(context.Background())
+			iss, err := conn.TokenCreationTime(t.Context())
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
@@ -1544,7 +1543,7 @@ func TestConnection_TokenExpiration(t *testing.T) {
 			}
 
 			conn := github.NewConnection(connection, mockFactory, tt.secrets)
-			exp, err := conn.TokenExpiration(context.Background())
+			exp, err := conn.TokenExpiration(t.Context())
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
@@ -1633,7 +1632,7 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GitlabConnectionType,
-					Gitlab: &provisioning.GitlabConnectionConfig{
+					OAuth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "clientID",
 					},
 				},
@@ -1715,7 +1714,7 @@ func TestConnection_GenerateConnectionToken(t *testing.T) {
 			mockFactory := github.NewMockGithubFactory(t)
 
 			conn := github.NewConnection(tt.connection, mockFactory, tt.secrets)
-			token, err := conn.GenerateConnectionToken(context.Background())
+			token, err := conn.GenerateConnectionToken(t.Context())
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
@@ -1801,7 +1800,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "test-connection"},
 				Spec: provisioning.ConnectionSpec{
 					Type: provisioning.GitlabConnectionType,
-					Gitlab: &provisioning.GitlabConnectionConfig{
+					OAuth: &provisioning.ConnectionOAuthConfig{
 						ClientID: "clientID",
 					},
 				},
@@ -2020,7 +2019,7 @@ func TestConnection_GenerateRepositoryToken(t *testing.T) {
 				Token:      tt.connection.Secure.Token.Create,
 				PrivateKey: tt.connection.Secure.PrivateKey.Create,
 			})
-			token, err := conn.GenerateRepositoryToken(context.Background(), tt.repo)
+			token, err := conn.GenerateRepositoryToken(t.Context(), tt.repo)
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
@@ -2070,7 +2069,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 		conn := github.NewConnection(c, mockFactory, github.ConnectionSecrets{
 			Token: common.RawSecureValue("test-token"),
 		})
-		repos, err := conn.ListRepositories(context.Background())
+		repos, err := conn.ListRepositories(t.Context())
 
 		require.NoError(t, err)
 		require.Len(t, repos, 2)
@@ -2092,7 +2091,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 
 		mockFactory := github.NewMockGithubFactory(t)
 		conn := github.NewConnection(c, mockFactory, github.ConnectionSecrets{})
-		_, err := conn.ListRepositories(context.Background())
+		_, err := conn.ListRepositories(t.Context())
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "github configuration is required")
@@ -2131,7 +2130,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 		conn := github.NewConnection(c, mockFactory, github.ConnectionSecrets{
 			Token: common.RawSecureValue("test-token"),
 		})
-		_, err := conn.ListRepositories(context.Background())
+		_, err := conn.ListRepositories(t.Context())
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "list installation repositories")
@@ -2163,7 +2162,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 		conn := github.NewConnection(c, mockFactory, github.ConnectionSecrets{
 			Token: common.RawSecureValue("test-token"),
 		})
-		_, err := conn.ListRepositories(context.Background())
+		_, err := conn.ListRepositories(t.Context())
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to create installation access token")
@@ -2195,7 +2194,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 		conn := github.NewConnection(c, mockFactory, github.ConnectionSecrets{
 			Token: common.RawSecureValue("test-token"),
 		})
-		_, err := conn.ListRepositories(context.Background())
+		_, err := conn.ListRepositories(t.Context())
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to create installation access token")
@@ -2234,7 +2233,7 @@ func TestConnection_ListRepositories(t *testing.T) {
 		conn := github.NewConnection(c, mockFactory, github.ConnectionSecrets{
 			Token: common.RawSecureValue("test-token"),
 		})
-		repos, err := conn.ListRepositories(context.Background())
+		repos, err := conn.ListRepositories(t.Context())
 
 		require.NoError(t, err)
 		require.Len(t, repos, 0)
@@ -2262,7 +2261,7 @@ func TestNewConnectionWithCustomConfig(t *testing.T) {
 		PrivateKey: common.RawSecureValue(privateKeyBase64),
 	}, cfg)
 
-	token, err := conn.GenerateConnectionToken(context.Background())
+	token, err := conn.GenerateConnectionToken(t.Context())
 	require.NoError(t, err)
 
 	// The JWT issuer is the appID; it must come from the injected config, not spec.github.

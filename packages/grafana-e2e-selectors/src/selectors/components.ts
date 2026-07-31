@@ -289,6 +289,7 @@ export const versionedComponents = {
           [MIN_GRAFANA_VERSION]: 'TestData noise',
         },
         seriesCount: {
+          '13.2.0': 'data-testid TestData series count',
           [MIN_GRAFANA_VERSION]: 'TestData series count',
         },
         spread: {
@@ -311,6 +312,31 @@ export const versionedComponents = {
     Jaeger: {
       traceIDInput: {
         [MIN_GRAFANA_VERSION]: 'Trace ID',
+      },
+    },
+    InfluxDB: {
+      configPage: {
+        urlInput: {
+          '13.2.0': 'data-testid influxdb-v2-config-url-input',
+          [MIN_GRAFANA_VERSION]: 'influxdb-v2-config-url-input',
+        },
+        productSelect: {
+          '13.2.0': 'data-testid influxdb-v2-config-product-select',
+          [MIN_GRAFANA_VERSION]: 'influxdb-v2-config-product-select',
+        },
+        queryLanguageSelect: {
+          '13.2.0': 'data-testid influxdb-v2-config-query-language-select',
+          [MIN_GRAFANA_VERSION]: 'influxdb-v2-config-query-language-select',
+        },
+        organizationInput: {
+          '13.2.0': 'data-testid influxdb-v2-config-organization-input',
+        },
+        defaultBucketInput: {
+          '13.2.0': 'data-testid influxdb-v2-config-default-bucket-input',
+        },
+        tokenInput: {
+          '13.2.0': 'data-testid influxdb-v2-config-token-input',
+        },
       },
     },
     Prometheus: {
@@ -795,6 +821,11 @@ export const versionedComponents = {
       '10.0.0': 'data-testid toggle-viz-picker',
       '8.0.0': 'toggle-viz-picker',
     },
+    VizTypePicker: {
+      searchInput: {
+        '13.2.0': 'data-testid Panel editor viz type picker search input',
+      },
+    },
     toggleVizOptions: {
       '10.1.0': 'data-testid toggle-viz-options',
       [MIN_GRAFANA_VERSION]: 'toggle-viz-options',
@@ -1069,6 +1100,42 @@ export const versionedComponents = {
     stepAdvancedModeSwitch: {
       '11.5.0': (stepNo: string) => `data-testid advanced-mode-switch step-${stepNo}`,
     },
+    contactPointPicker: {
+      '13.2.0': 'data-testid alert-rule contact-point-picker',
+      [MIN_GRAFANA_VERSION]: 'contact-point-picker',
+    },
+    contactPointInput: {
+      '13.2.0': 'data-testid alert-rule contact-point-input',
+    },
+    pendingPeriodInput: {
+      '13.2.0': 'data-testid alert-rule pending-period-input',
+    },
+    thresholdInput: {
+      '13.2.0': 'data-testid alert-rule threshold-input',
+    },
+    saveRuleButton: {
+      '13.2.0': 'data-testid alert-rule save-rule-button',
+      [MIN_GRAFANA_VERSION]: 'save-rule',
+    },
+    addLabelsButton: {
+      '13.2.0': 'data-testid alert-rule add-labels-button',
+      [MIN_GRAFANA_VERSION]: 'add-labels-button',
+    },
+    folderPicker: {
+      '13.2.0': 'data-testid alert-rule folder-picker',
+      [MIN_GRAFANA_VERSION]: 'folder-picker',
+    },
+    groupPicker: {
+      '13.2.0': 'data-testid alert-rule group-picker',
+      [MIN_GRAFANA_VERSION]: 'group-picker',
+    },
+    routingOptions: {
+      '13.2.0': (mode: string) => `data-testid alert-rule routing-options-${mode}`,
+      [MIN_GRAFANA_VERSION]: (mode: string) => `routing-options-${mode}`,
+    },
+    viewContactPointsLink: {
+      '13.2.0': 'data-testid alert-rule view-contact-points-link',
+    },
   },
   Alert: {
     alertV2: {
@@ -1226,6 +1293,9 @@ export const versionedComponents = {
     item: {
       '9.5.0': 'data-testid Nav menu item',
     },
+    sectionToggleButton: {
+      '13.2.0': (navUrl: string) => `data-testid navigation mega-menu section toggle ${navUrl}`,
+    },
   },
   NavToolbar: {
     container: {
@@ -1314,6 +1384,14 @@ export const versionedComponents = {
     },
     itemButton: {
       '9.5.0': (title: string) => `data-testid ${title}`,
+    },
+  },
+  EditableTitle: {
+    editButton: {
+      '13.2.0': 'data-testid Editable title edit button',
+    },
+    titleInput: {
+      '13.2.0': 'data-testid Editable title input',
     },
   },
   QueryEditorToolbarItem: {

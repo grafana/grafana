@@ -1,3 +1,6 @@
+import { skipToken } from '@reduxjs/toolkit/query';
+
+import { config } from '@grafana/runtime';
 import {
   type RepositoryView,
   type RepositoryViewList,
@@ -18,16 +21,19 @@ interface Props extends NestedFolderPickerProps {
 
 export function ProvisioningAwareFolderPicker({ repositoryName, showAllFolders, ...props }: Props) {
   const isProvisionedInstance = useIsProvisionedInstance();
-  const { data: settingsData } = useGetFrontendSettingsQuery(undefined);
+  const provisioningEnabled = config.featureToggles.provisioning;
+  const { data: settingsData } = useGetFrontendSettingsQuery(provisioningEnabled ? undefined : skipToken);
   const isNonProvisionedResource = !repositoryName;
 
   const rootFolderUID = getRootFolderUID({
     isProvisionedInstance,
+    provisioningEnabled,
     repositoryName,
   });
   const excludeUIDs = getExcludeUIDs({
     isProvisionedInstance,
     isNonProvisionedResource,
+    provisioningEnabled,
     settingsData,
   });
   const rootFolderDisplayItem = getRootFolderDisplayItem({
@@ -48,16 +54,18 @@ export function ProvisioningAwareFolderPicker({ repositoryName, showAllFolders, 
 
 function getRootFolderUID({
   isProvisionedInstance,
+  provisioningEnabled,
   repositoryName,
 }: {
   isProvisionedInstance?: boolean;
+  provisioningEnabled?: boolean;
   repositoryName?: string;
 }) {
   if (isProvisionedInstance) {
     return undefined;
   }
 
-  if (repositoryName) {
+  if (provisioningEnabled && repositoryName) {
     return repositoryName;
   }
 
@@ -67,10 +75,12 @@ function getRootFolderUID({
 function getExcludeUIDs({
   isProvisionedInstance,
   isNonProvisionedResource,
+  provisioningEnabled,
   settingsData,
 }: {
   isProvisionedInstance?: boolean;
   isNonProvisionedResource?: boolean;
+  provisioningEnabled?: boolean;
   settingsData?: RepositoryViewList;
 }) {
   if (isProvisionedInstance) {
@@ -78,6 +88,11 @@ function getExcludeUIDs({
   }
 
   if (isNonProvisionedResource) {
+    // If provisioning is disabled, we don't want to exclude any folders
+    if (!provisioningEnabled) {
+      return [];
+    }
+    // If provisioning is enabled, we want to exclude all provisioned folders
     return settingsData?.items.map((repo) => repo.name) || [];
   }
 

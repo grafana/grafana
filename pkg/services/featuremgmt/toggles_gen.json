@@ -5925,6 +5925,21 @@
     },
     {
       "metadata": {
+        "name": "table.paginationPageSize",
+        "resourceVersion": "1785352708239",
+        "creationTimestamp": "2026-07-29T19:18:28Z"
+      },
+      "spec": {
+        "description": "Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "table.protoRowParser",
         "resourceVersion": "1782139478281",
         "creationTimestamp": "2026-06-22T14:44:38Z"

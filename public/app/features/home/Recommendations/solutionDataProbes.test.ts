@@ -1,9 +1,8 @@
-import { createDataFrame, type DataSourceInstanceListItem, FieldType } from '@grafana/data';
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { type BackendSrv, getBackendSrv } from '@grafana/runtime';
 import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
-import { runDatasourceQueries, runInstantQueries } from './promQuery';
-import { hasSolutionData, probeFound, resetSolutionDataProbes, tempoHasTraces } from './solutionDataProbes';
+import { probeFound, tempoHasTraces } from './solutionDataProbes';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -15,16 +14,8 @@ jest.mock('@grafana/runtime/unstable', () => ({
   getDataSourceInstanceList: jest.fn(),
 }));
 
-jest.mock('./promQuery', () => ({
-  ...jest.requireActual('./promQuery'),
-  runInstantQueries: jest.fn(),
-  runDatasourceQueries: jest.fn(),
-}));
-
 const mockList = jest.mocked(getDataSourceInstanceList);
 const mockProxyGet = jest.fn();
-const mockInstant = jest.mocked(runInstantQueries);
-const mockQueries = jest.mocked(runDatasourceQueries);
 
 function datasource(type: string, name = `${type}-ds`): DataSourceInstanceListItem {
   return {
@@ -35,13 +26,6 @@ function datasource(type: string, name = `${type}-ds`): DataSourceInstanceListIt
     readOnly: false,
     isDefault: false,
   };
-}
-
-function scalarFrame(refId: string, value: number) {
-  return createDataFrame({
-    refId,
-    fields: [{ name: 'Value', type: FieldType.number, values: [value] }],
-  });
 }
 
 beforeEach(() => {
@@ -56,12 +40,6 @@ beforeEach(() => {
 
 afterEach(() => {
   jest.useRealTimers();
-});
-
-beforeEach(() => {
-  resetSolutionDataProbes();
-  mockInstant.mockReset();
-  mockQueries.mockReset();
 });
 
 describe('probeFound', () => {
@@ -151,65 +129,5 @@ describe('tempoHasTraces', () => {
     mockProxyGet.mockRejectedValue(new Error('HTTP 404'));
 
     await expect(tempoHasTraces(datasource('tempo'))).rejects.toThrow('HTTP 404');
-  });
-});
-
-describe('hasSolutionData', () => {
-  it('reports no data for an unknown solution', async () => {
-    await expect(hasSolutionData('some-other-app')).resolves.toBe(false);
-  });
-
-  describe('Prometheus-backed solutions', () => {
-    it('reports no data when there is no Prometheus datasource', async () => {
-      mockList.mockResolvedValue([]);
-
-      await expect(hasSolutionData('grafana-synthetic-monitoring-app')).resolves.toBe(false);
-      expect(mockInstant).not.toHaveBeenCalled();
-    });
-
-    it('reports data when a datasource has the solution metric', async () => {
-      mockList.mockResolvedValue([datasource('prometheus')]);
-      mockInstant.mockResolvedValue([scalarFrame('probe', 12)]);
-
-      await expect(hasSolutionData('grafana-synthetic-monitoring-app')).resolves.toBe(true);
-      expect(mockInstant).toHaveBeenCalledWith(
-        { probe: 'count(last_over_time(sm_check_info[24h]))' },
-        expect.objectContaining({ type: 'prometheus' }),
-        expect.any(Number)
-      );
-    });
-
-    it('reports no data when the metric is absent on every datasource', async () => {
-      mockList.mockResolvedValue([datasource('prometheus', 'prom-a'), datasource('prometheus', 'prom-b')]);
-      mockInstant.mockResolvedValue([]);
-
-      await expect(hasSolutionData('grafana-app-observability-app')).resolves.toBe(false);
-      expect(mockInstant).toHaveBeenCalledTimes(2);
-    });
-
-    it('caches the probe within the TTL window', async () => {
-      mockList.mockResolvedValue([datasource('prometheus')]);
-      mockInstant.mockResolvedValue([scalarFrame('probe', 1)]);
-
-      await hasSolutionData('grafana-synthetic-monitoring-app');
-      await hasSolutionData('grafana-synthetic-monitoring-app');
-
-      expect(mockList).toHaveBeenCalledTimes(1);
-      expect(mockInstant).toHaveBeenCalledTimes(1);
-    });
-
-    it('probes both span-metric naming schemes for Application Observability', async () => {
-      mockList.mockResolvedValue([datasource('prometheus')]);
-      mockInstant.mockResolvedValue([scalarFrame('probe', 3)]);
-
-      await expect(hasSolutionData('grafana-app-observability-app')).resolves.toBe(true);
-      expect(mockInstant).toHaveBeenCalledWith(
-        {
-          probe: expect.stringMatching(/traces_spanmetrics_calls_total.* or .*traces_span_metrics_calls_total/),
-        },
-        expect.objectContaining({ type: 'prometheus' }),
-        expect.any(Number)
-      );
-    });
   });
 });

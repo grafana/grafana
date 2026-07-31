@@ -175,8 +175,23 @@ describe('fetchLogsActivity', () => {
     });
     mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
 
-    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: 0, sources: 1, series: null });
+    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, sources: 1, series: null });
     expect(getResource).toHaveBeenCalledWith('label/job/values', expect.anything(), expect.anything());
+  });
+
+  it('reports null bytes when the volume result is empty', async () => {
+    const getResource = jest.fn(async (path: string) => {
+      if (path === 'labels') {
+        return { data: ['service_name'] };
+      }
+      if (path === 'index/volume' || path === 'index/volume_range') {
+        return { data: { result: [] } };
+      }
+      return { data: ['a'] };
+    });
+    mockResolveBackendInstance.mockResolvedValue(instanceWith(getResource));
+
+    await expect(fetchLogsActivity(loki)).resolves.toEqual({ bytes: null, sources: 1, series: null });
   });
 
   it('keeps the other fields when one endpoint is unavailable', async () => {

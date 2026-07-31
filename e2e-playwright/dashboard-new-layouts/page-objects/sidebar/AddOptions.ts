@@ -11,6 +11,12 @@ export class AddOptions extends PageObject {
     });
   }
 
+  async clickAddTabButton() {
+    await test.step('Add new tab from sidebar', async () => {
+      await this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.addNewTabButton).click();
+    });
+  }
+
   async clickNewVariableButton() {
     await test.step('Add new variable from sidebar', async () => {
       await this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.addNewVariableButton).click();
