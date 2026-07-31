@@ -39,7 +39,7 @@ export const ui = {
     expr: byTestId('expr'),
     simplifiedRouting: {
       contactPointRouting: byRole('radio', { name: /select contact point/i }),
-      contactPoint: byTestId('contact-point-picker'),
+      contactPoint: byTestId(selectors.components.AlertRules.contactPointPicker),
       routingOptions: byText(/muting, grouping and timings \(optional\)/i),
     },
     evaluationMode: {

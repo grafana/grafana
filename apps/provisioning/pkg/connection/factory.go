@@ -32,6 +32,16 @@ type factory struct {
 	enabled map[provisioning.ConnectionType]struct{}
 }
 
+// ToConnectionTypes maps the configured repository types to the connection
+// types they enable.
+func ToConnectionTypes(repositoryTypes []string) map[provisioning.ConnectionType]struct{} {
+	enabled := make(map[provisioning.ConnectionType]struct{}, len(repositoryTypes))
+	for _, t := range repositoryTypes {
+		enabled[provisioning.ConnectionType(t)] = struct{}{}
+	}
+	return enabled
+}
+
 func ProvideFactory(enabled map[provisioning.ConnectionType]struct{}, extras []Extra) (Factory, error) {
 	f := &factory{
 		enabled: enabled,

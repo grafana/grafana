@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
+	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
@@ -369,7 +370,8 @@ func (s *service) start(ctx context.Context) error {
 
 	// Built once and used twice: the routes have to reach both the OpenAPI spec
 	// and the served WebServices, or the endpoint works but is undiscoverable.
-	searchRoutes := searchroutes.Build(s.cfg, s.tracing, s.unified, builders, s.appInstallers)
+	searchAPIEnabled := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection).Key(searchapi.ConfigKey).MustBool(false)
+	searchRoutes := searchroutes.Build(searchAPIEnabled, s.tracing, s.unified, builders, s.appInstallers)
 
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(

@@ -934,6 +934,23 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 		require.NotNil(t, errResult)
 		assert.Contains(t, errResult.Message, `field "labels.region" does not support faceting`)
 	})
+
+	// Both the bleve term trimmer and the post-rank aggregator use the limit as
+	// a slice bound, so a negative one has to be turned away before either runs.
+	t.Run("rejects a negative facet limit", func(t *testing.T) {
+		for _, postRankAuthz := range []bool{false, true} {
+			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{},
+				Limit:   10,
+				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
+					"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: -1},
+				},
+			}, nil, postRankAuthz)
+			require.Nil(t, searchReq)
+			require.NotNil(t, errResult)
+			assert.Contains(t, errResult.Message, `facet "tagValues" has a negative limit`)
+		}
+	})
 }
 
 var _ authlib.AccessClient = (*StubAccessClient)(nil)
@@ -1149,6 +1166,22 @@ func withRequiredIndexFeatures(features ...resource.IndexFeature) setupOption {
 	return func(options *BleveOptions) {
 		options.RequiredIndexFeatures = features
 	}
+}
+
+func withPostRankAuthzEnabled() setupOption {
+	return func(options *BleveOptions) {
+		options.PostRankAuthzEnabled = true
+	}
+}
+
+// TestRequiredIndexFeaturesFollowPostRankAuthz covers the gate that keeps the
+// stored facet mapping from rebuilding indexes that serve facets from bleve.
+func TestRequiredIndexFeaturesFollowPostRankAuthz(t *testing.T) {
+	nativeFacets, _ := setupBleveBackend(t)
+	require.NotContains(t, nativeFacets.requiredFeatures, resource.IndexFeatureStoredFacets)
+
+	postRank, _ := setupBleveBackend(t, withPostRankAuthzEnabled())
+	require.Contains(t, postRank.requiredFeatures, resource.IndexFeatureStoredFacets)
 }
 
 // TestBuildIndexReuseChecksRequiredFeatures covers an on-disk index built before
@@ -2614,6 +2647,45 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 		assert.Nil(t, resource.StandardSearchFields().Field(field))
 		assert.False(t, bi.isDeclaredField(field))
 	}
+}
+
+// An index built before the marker was mapped drops it silently, which would
+// leave a deleted document looking live. BulkIndex removes such a document
+// instead, so trash is missing from search rather than leaking into it, until the
+// index is rebuilt.
+func TestBulkIndexRemovesMarkedDocumentsWhenTheMarkerIsNotMapped(t *testing.T) {
+	mapper, err := GetBleveMappings(nil, "", "", nil)
+	require.NoError(t, err)
+	raw, err := newBleveIndex("", mapper, time.Now(), buildVersion, nil, "")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = raw.Close() })
+
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: "g", Resource: "r", Name: "dash-1"}
+	doc := func(deleted *bool) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc:    &resource.IndexableDocument{Key: key, Title: "Production Overview", IsDeleted: deleted},
+		}
+	}
+
+	// features left empty: an index whose mapping predates the marker.
+	legacy := &bleveIndex{index: raw, logger: log.NewNopLogger()}
+	require.NoError(t, legacy.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(nil)}}))
+	count, err := raw.DocCount()
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), count)
+
+	require.NoError(t, legacy.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(new(true))}}))
+	count, err = raw.DocCount()
+	require.NoError(t, err)
+	assert.Equal(t, uint64(0), count, "marked document should be removed, not indexed as live")
+
+	// An index that maps the marker keeps the document.
+	current := &bleveIndex{index: raw, features: resource.CurrentIndexFeatures(), logger: log.NewNopLogger()}
+	require.NoError(t, current.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(new(true))}}))
+	count, err = raw.DocCount()
+	require.NoError(t, err)
+	assert.Equal(t, uint64(1), count)
 }
 
 // TestScopeQueryTrashBrowseDrivesOffTheMarker pins the shape for a trash browse

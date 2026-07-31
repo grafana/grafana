@@ -2154,36 +2154,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana-plugins/mysql@workspace:public/app/plugins/datasource/mysql":
-  version: 0.0.0-use.local
-  resolution: "@grafana-plugins/mysql@workspace:public/app/plugins/datasource/mysql"
-  dependencies:
-    "@emotion/css": "npm:11.13.5"
-    "@grafana/data": "npm:13.2.0-pre"
-    "@grafana/e2e-selectors": "npm:13.2.0-pre"
-    "@grafana/plugin-configs": "npm:13.2.0-pre"
-    "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/runtime": "npm:13.2.0-pre"
-    "@grafana/sql": "npm:13.2.0-pre"
-    "@grafana/ui": "npm:13.2.0-pre"
-    "@testing-library/dom": "npm:10.4.1"
-    "@testing-library/react": "npm:16.3.0"
-    "@testing-library/user-event": "npm:14.6.1"
-    "@types/jest": "npm:29.5.14"
-    "@types/lodash": "npm:4.17.20"
-    "@types/node": "npm:24.10.1"
-    "@types/react": "npm:18.3.18"
-    jest: "npm:29.7.0"
-    lodash: "npm:^4.17.23"
-    react: "npm:18.3.1"
-    rxjs: "npm:7.8.2"
-    typescript: "npm:6.0.2"
-    webpack: "npm:^5.105.0"
-  peerDependencies:
-    "@grafana/runtime": "*"
-  languageName: unknown
-  linkType: soft
-
 "@grafana/alerting@workspace:*, @grafana/alerting@workspace:packages/grafana-alerting":
   version: 0.0.0-use.local
   resolution: "@grafana/alerting@workspace:packages/grafana-alerting"
@@ -12817,14 +12787,14 @@ __metadata:
   linkType: hard
 
 "axios@npm:^1.12.0, axios@npm:^1.12.2, axios@npm:^1.16.0, axios@npm:^1.6.1":
-  version: 1.16.1
-  resolution: "axios@npm:1.16.1"
+  version: 1.18.1
+  resolution: "axios@npm:1.18.1"
   dependencies:
     follow-redirects: "npm:^1.16.0"
     form-data: "npm:^4.0.5"
     https-proxy-agent: "npm:^5.0.1"
     proxy-from-env: "npm:^2.1.0"
-  checksum: 10/9b6218cf96321cfbbf8f160658d695367114bcf4fb62492bdc1ccd647f184b5c71ae400e5ecaaf41079bc561de2ecbaf1fec63f398b3ec53389beff7694df64c
+  checksum: 10/c4cdced3ee0a9bf7dcae189fbc74a124aa079d4f04dbd995e602d39c1419476e8d021f87ee39ac8d8398e5a55e6d0b986238b3645f0d9177ac80de87c2a73f18
   languageName: node
   linkType: hard
 
@@ -22828,12 +22798,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"linkify-it@npm:5.0.1":
-  version: 5.0.1
-  resolution: "linkify-it@npm:5.0.1"
+"linkify-it@npm:5.0.2":
+  version: 5.0.2
+  resolution: "linkify-it@npm:5.0.2"
   dependencies:
     uc.micro: "npm:^2.0.0"
-  checksum: 10/47933d11cda495fd31e3bb3c086358305362f4413ffa289500d1e48164acb221b3be6bde6404b86dba93b7fe701c95f318bee285f7613092cd7f28a9e97261e7
+  checksum: 10/1d23387319c15f2c3d41cdada0fc2edac73afb6083e967ee051afc826f7d8d9f920e287fb7c32679b4516f60e6450853dee2b4339d7d2f313222e4b9e5be1476
   languageName: node
   linkType: hard
 
@@ -31241,8 +31211,8 @@ __metadata:
   linkType: hard
 
 "svgo@npm:^3.3.2":
-  version: 3.3.3
-  resolution: "svgo@npm:3.3.3"
+  version: 3.3.4
+  resolution: "svgo@npm:3.3.4"
   dependencies:
     commander: "npm:^7.2.0"
     css-select: "npm:^5.1.0"
@@ -31253,7 +31223,7 @@ __metadata:
     sax: "npm:^1.5.0"
   bin:
     svgo: ./bin/svgo
-  checksum: 10/f3c1b4d05d1704483e53515d5995af5f06a2718df85e3a8320f57bb256b8dc926b84c87a1a9b98e9d3ca1224314cc0676a803bdd03163508292f2d45c7077096
+  checksum: 10/84287b7eafcd1a1cc1b715292a9d0299e6b9d1822372bd0ec89cd405dc7b77d1106346b8ca69ba48699a1a4cb3e564030b2fce4bb2e34d2c3a9fa49363f9111a
   languageName: node
   linkType: hard
 

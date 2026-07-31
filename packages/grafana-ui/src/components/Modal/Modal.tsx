@@ -1,6 +1,7 @@
 import { cx } from '@emotion/css';
 import { type PropsWithChildren, type ReactNode, useId, type JSX } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
@@ -86,6 +87,7 @@ export function Modal(props: PropsWithChildren<Props>) {
             name="times"
             size="xl"
             onClick={onDismiss}
+            data-testid={selectors.components.Modal.closeButton}
             aria-label={t('grafana-ui.modal.close-tooltip', 'Close')}
           />
         </div>

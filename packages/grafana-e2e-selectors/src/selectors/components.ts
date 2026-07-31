@@ -17,6 +17,19 @@ export const versionedComponents = {
     container: {
       '10.2.3': 'data-testid radio-button',
     },
+    /**
+     * Identifies one option of a RadioButtonGroup by its `value`, so the selector does not depend
+     * on the option's translated label.
+     *
+     * Unique **within a group, not across a page** — generic values collide, and `true`/`false`
+     * are used by a dozen different groups. Always scope it to the group, either via the group's
+     * own `data-testid` prop or `RadioGroup.container`:
+     *
+     *     `${RadioGroup.container} ${RadioButton.option('code')}`
+     */
+    option: {
+      '13.2.0': (value: string) => `data-testid radio-button-option ${value}`,
+    },
   },
   Breadcrumbs: {
     breadcrumb: {
@@ -55,6 +68,25 @@ export const versionedComponents = {
   Card: {
     heading: {
       '13.0.0': 'data-testid Card heading',
+    },
+  },
+  CreateNewButton: {
+    newButton: {
+      '13.2.0': 'data-testid CreateNewButton New button',
+    },
+    newDashboardLink: {
+      '13.2.0': 'data-testid CreateNewButton New dashboard link',
+    },
+    newTemplateDashboardLink: {
+      '13.2.0': 'data-testid CreateNewButton New template dashboard link',
+    },
+  },
+  BuildDashboardButton: {
+    triggerButton: {
+      '13.2.0': 'data-testid BuildDashboardButton trigger button',
+    },
+    fromSuggestionsButton: {
+      '13.2.0': 'data-testid BuildDashboardButton from suggestions button',
     },
   },
   /**
@@ -109,6 +141,12 @@ export const versionedComponents = {
     addNewVariableButton: {
       '13.2.0': 'data-testid sidebar add new variable button',
       '13.1.0': 'data-testid edit pane add new variable button',
+    },
+    addNewRowButton: {
+      '13.2.0': 'data-testid sidebar add new row button',
+    },
+    addNewTabButton: {
+      '13.2.0': 'data-testid sidebar add new tab button',
     },
   },
   EditPaneHeader: {
@@ -603,6 +641,17 @@ export const versionedComponents = {
         RowExpander: {
           '12.4.0': 'data-testid tableng row expander',
         },
+        cellActions: {
+          inspectButton: {
+            '13.2.0': 'data-testid tableng cell-actions inspect-button',
+          },
+          filterForButton: {
+            '13.2.0': 'data-testid tableng cell-actions filter-for-button',
+          },
+          filterOutButton: {
+            '13.2.0': 'data-testid tableng cell-actions filter-out-button',
+          },
+        },
         Filters: {
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',
@@ -685,8 +734,24 @@ export const versionedComponents = {
         '11.1.0': 'data-testid Save as dashboard drawer button',
       },
       saveAsTitleInput: {
+        '13.2.0': 'data-testid Save dashboard title field',
         '11.1.0': 'Save dashboard title field',
       },
+    },
+  },
+  ProvisionedResourceForm: {
+    commentInput: {
+      '13.2.0': 'data-testid provisioned resource form comment input',
+    },
+  },
+  Modal: {
+    closeButton: {
+      '13.2.0': 'data-testid Modal close button',
+    },
+  },
+  UnconfiguredPanel: {
+    actionButton: {
+      '13.2.0': (key: string) => `data-testid UnconfiguredPanel action-button ${key}`,
     },
   },
   PanelEditor: {
@@ -730,6 +795,11 @@ export const versionedComponents = {
       '10.0.0': 'data-testid toggle-viz-picker',
       '8.0.0': 'toggle-viz-picker',
     },
+    VizTypePicker: {
+      searchInput: {
+        '13.2.0': 'data-testid Panel editor viz type picker search input',
+      },
+    },
     toggleVizOptions: {
       '10.1.0': 'data-testid toggle-viz-options',
       [MIN_GRAFANA_VERSION]: 'toggle-viz-options',
@@ -764,6 +834,19 @@ export const versionedComponents = {
     measureButton: {
       '12.1.0': 'data-testid panel-editor-measure-button',
       '9.2.0': 'show measure tools',
+    },
+
+    // [Gauge] Effects options
+    Gauge: {
+      gradientSwitch: {
+        '13.2.0': 'data-testid Gauge effects editor gradient switch',
+      },
+      barGlowSwitch: {
+        '13.2.0': 'data-testid Gauge effects editor bar glow switch',
+      },
+      centerGlowSwitch: {
+        '13.2.0': 'data-testid Gauge effects editor center glow switch',
+      },
     },
 
     Outline: {
@@ -991,6 +1074,19 @@ export const versionedComponents = {
     stepAdvancedModeSwitch: {
       '11.5.0': (stepNo: string) => `data-testid advanced-mode-switch step-${stepNo}`,
     },
+    contactPointPicker: {
+      '13.2.0': 'data-testid alert-rule contact-point-picker',
+      [MIN_GRAFANA_VERSION]: 'contact-point-picker',
+    },
+    contactPointInput: {
+      '13.2.0': 'data-testid alert-rule contact-point-input',
+    },
+    pendingPeriodInput: {
+      '13.2.0': 'data-testid alert-rule pending-period-input',
+    },
+    thresholdInput: {
+      '13.2.0': 'data-testid alert-rule threshold-input',
+    },
   },
   Alert: {
     alertV2: {
@@ -1021,6 +1117,25 @@ export const versionedComponents = {
     },
     disableTransformationButton: {
       '10.4.0': 'data-testid Disable transformation button',
+    },
+    filterEditor: {
+      container: {
+        '13.2.0': 'data-testid transformation filter editor container',
+      },
+      topicSelect: {
+        '13.2.0': 'data-testid transformation filter topic select',
+      },
+    },
+    FilterByValue: {
+      addConditionButton: {
+        '13.2.0': 'data-testid Transforms FilterByValue add-condition-button',
+      },
+      fieldSelect: {
+        '13.2.0': (index: string) => `data-testid Transforms FilterByValue field-select ${index}`,
+      },
+      matchSelect: {
+        '13.2.0': (index: string) => `data-testid Transforms FilterByValue match-select ${index}`,
+      },
     },
     Reduce: {
       modeLabel: {
@@ -1093,6 +1208,9 @@ export const versionedComponents = {
       '10.1.0': 'data-testid add transformation button',
       [MIN_GRAFANA_VERSION]: 'add transformation button',
     },
+    addTransformationBelowButton: {
+      '13.2.0': (afterId: string) => `data-testid add transformation below ${afterId}`,
+    },
     goToQueriesButton: {
       '10.4.0': 'data-testid go to queries button',
       [MIN_GRAFANA_VERSION]: 'go to queries button',
@@ -1133,6 +1251,9 @@ export const versionedComponents = {
     },
     commandPaletteTrigger: {
       '11.5.0': 'data-testid Command palette trigger',
+    },
+    quickAddButton: {
+      '13.2.0': 'data-testid Quick add button',
     },
     shareDashboard: {
       '11.1.0': 'data-testid Share dashboard',
@@ -1180,6 +1301,12 @@ export const versionedComponents = {
       backToDashboardButton: {
         '11.1.0': 'data-testid Back to dashboard button',
       },
+      saveAsCopyButton: {
+        '13.2.0': 'data-testid Save as copy button',
+      },
+      moreSaveOptionsButton: {
+        '13.2.0': 'data-testid More save options button',
+      },
     },
   },
   CommandPalette: {
@@ -1193,6 +1320,11 @@ export const versionedComponents = {
     },
   },
 
+  PageActionBar: {
+    searchInput: {
+      '13.2.0': 'data-testid PageActionBar search input',
+    },
+  },
   PageToolbar: {
     container: { [MIN_GRAFANA_VERSION]: () => '.page-toolbar' },
     item: {
@@ -1245,6 +1377,17 @@ export const versionedComponents = {
     },
     queryEditorRow: {
       '13.2.0': (dataSourceType: string, refId: string) => `data-testid Query editor row ${dataSourceType} ${refId}`,
+    },
+  },
+  ButtonSelect: {
+    /**
+     * Identifies one option of a ButtonSelect menu, keyed on the option's `value` when it is
+     * scalar so the selector does not depend on the option's translated label. Options whose
+     * values have no meaningful string form (objects, undefined) render the bare selector.
+     */
+    option: {
+      '13.2.0': (value?: string) =>
+        value ? `data-testid ButtonSelect option ${value}` : 'data-testid ButtonSelect option',
     },
   },
   Select: {
@@ -1306,6 +1449,9 @@ export const versionedComponents = {
     input: {
       '10.4.0': 'data-testid folder-picker-input',
     },
+    triggerButton: {
+      '13.2.0': 'data-testid folder-picker-trigger-button',
+    },
   },
   ReadonlyFolderPicker: {
     container: {
@@ -1357,6 +1503,9 @@ export const versionedComponents = {
   TraceViewer: {
     spanBar: {
       '9.0.0': 'data-testid SpanBar--wrapper',
+    },
+    filtersRow: {
+      '13.2.0': 'data-testid trace-page-header-adhoc-filters-row',
     },
   },
   QueryField: {
@@ -1719,6 +1868,18 @@ export const versionedComponents = {
       },
       applyInverse: {
         ['12.1.0']: 'data-testid viz-tooltip-footer-apply-inverse-filters-button',
+      },
+    },
+  },
+  Logs: {
+    logLineMenu: {
+      menuButton: {
+        '13.2.0': 'data-testid Log line menu button',
+      },
+    },
+    fieldsSidebar: {
+      searchInput: {
+        '13.2.0': 'data-testid Log fields search input',
       },
     },
   },
