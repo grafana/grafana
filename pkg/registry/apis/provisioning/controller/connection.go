@@ -19,6 +19,7 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 const connectionLoggerName = "provisioning-connection-controller"
@@ -35,6 +36,10 @@ const (
 type connectionQueueItem struct {
 	key      string
 	attempts int
+	// trigger records what enqueued this item, for the processing-level metrics.
+	// It rides the item so retries (which re-add the same item) keep the
+	// attribution.
+	trigger usinformer.ProcessTrigger
 }
 
 // ConnectionStatusPatcher defines the interface for updating connection status.
@@ -54,6 +59,10 @@ type ConnectionController struct {
 	connectionFactory connection.Factory
 	tokenMetrics      *connectionTokenMetrics
 
+	// processed classifies each delivery (encapsulating the NATS/apiserver
+	// backend) and counts the start of each reconcile by what enqueued it.
+	processed *usinformer.ProcessedMetrics
+
 	// To allow injection for testing.
 	processFn func(ctx context.Context, item *connectionQueueItem) error
 
@@ -71,13 +80,16 @@ func NewConnectionController(
 	resyncInterval time.Duration,
 	drainTimeout time.Duration,
 	registry prometheus.Registerer,
+	natsBacked bool,
 ) *ConnectionController {
 	cc := &ConnectionController{
-		conns: conns,
+		conns:     conns,
+		processed: usinformer.NewProcessedMetrics(registry, "connections", natsBacked),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
 			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{
-				Name: "provisioningConnectionController",
+				Name:            "provisioningConnectionController",
+				MetricsProvider: newWorkerQueueWaitProvider(registry, "connection"),
 			},
 		),
 		statusPatcher:     statusPatcher,
@@ -91,27 +103,50 @@ func NewConnectionController(
 
 	cc.processFn = cc.process
 
+	// Expose the local work-queue depth as a scrape-time gauge. The queue is
+	// per-replica, so Prometheus target labels (pod/instance) distinguish replicas;
+	// no metric label is needed. A GaugeFunc reads the authoritative Len() at scrape
+	// time, so it cannot drift the way manual inc/dec would.
+	registry.MustRegister(prometheus.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "grafana_provisioning_connection_worker_queue_size",
+			Help: "Number of connection keys waiting in this replica's local work queue",
+		},
+		func() float64 { return float64(cc.queue.Len()) },
+	))
+
 	return cc
 }
 
 // EventHandler returns the informer event handlers for the controller. Register
 // it with the Connection informer to enqueue connections on add and update.
-func (cc *ConnectionController) EventHandler() cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: cc.enqueue,
+func (cc *ConnectionController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
+	return cache.ResourceEventHandlerDetailedFuncs{
+		AddFunc: func(obj interface{}, isInInitialList bool) {
+			cc.enqueue(obj, cc.processed.ClassifyAdd(connectionResourceVersion(obj), isInInitialList))
+		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			cc.enqueue(newObj)
+			cc.enqueue(newObj, cc.processed.ClassifyUpdate(connectionResourceVersion(oldObj), connectionResourceVersion(newObj)))
 		},
 	}
 }
 
-func (cc *ConnectionController) enqueue(obj interface{}) {
+func (cc *ConnectionController) enqueue(obj interface{}, trigger usinformer.ProcessTrigger) {
 	key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 	if err != nil {
 		cc.logger.Error("failed to get key for object", "error", err)
 		return
 	}
-	cc.queue.Add(&connectionQueueItem{key: key})
+	cc.queue.Add(&connectionQueueItem{key: key, trigger: trigger})
+}
+
+// connectionResourceVersion returns the resource version of a delivered
+// Connection, or "" for a minimal NATS live event or a delete tombstone.
+func connectionResourceVersion(obj any) string {
+	if conn, ok := obj.(*provisioning.Connection); ok {
+		return conn.ResourceVersion
+	}
+	return ""
 }
 
 // Run starts the ConnectionController. The onStarted callback is invoked once
@@ -168,6 +203,13 @@ func (cc *ConnectionController) processNextWorkItem(ctx context.Context) bool {
 	namespace, name, _ := cache.SplitMetaNamespaceKey(item.key)
 	logger := logging.FromContext(ctx).With("work_key", item.key, "namespace", namespace, "connection", name)
 	logger.Info("ConnectionController processing key")
+
+	// Count the start of processing once per pickup, attributed to what enqueued
+	// the item. Retries re-add the same item (attempts already bumped) and are not
+	// recounted.
+	if item.attempts == 0 {
+		cc.processed.RecordProcessed(item.trigger)
+	}
 
 	err := cc.processFn(ctx, item)
 	if err == nil {

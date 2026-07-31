@@ -5227,17 +5227,6 @@
     }
   },
   "dashboard": {
-    "actions": {
-      "open-settings": ""
-    },
-    "add": {
-      "new-panel": {
-        "button": "Lägg till ny panelknapp",
-        "description": "Dra eller klicka för att lägga till en panel",
-        "title": "Panel"
-      },
-      "pane-header": "Lägg till"
-    },
     "add-menu": {
       "import": "Importera från biblioteket",
       "paste-panel": "Klistra in panel",
@@ -5307,12 +5296,6 @@
       }
     },
     "canvas-actions": {
-      "add": {
-        "paste": {
-          "description": "Klicka eller dra för att klistra in panelen",
-          "title": "Klistra in panel"
-        }
-      },
       "add-panel": "Lägg till panel",
       "disabled-child-contains-tabs": "Kan inte ändra till flikar eftersom en rad redan innehåller flikar",
       "disabled-nested-grouping": "Gruppering är begränsad till tre nivåer",
@@ -5327,14 +5310,6 @@
       "paste-tab": "Klistra in flik",
       "ungroup-rows": "Ta bort gruppering av rader",
       "ungroup-tabs": "Ta bort gruppering av flikar"
-    },
-    "code-pane": {
-      "collapse": "Minimera redigeraren",
-      "copy-as-resource": "",
-      "copy-as-resource-tooltip": "",
-      "expand": "Expandera redigeraren",
-      "header": "Redigera som kod",
-      "modal-title": "Redigera instrumentpanel som kod"
     },
     "conditional-rendering": {
       "conditions": {
@@ -5512,9 +5487,6 @@
         "title": "Radalternativ"
       }
     },
-    "description": {
-      "action": "Ändra instrumentpanelbeskrivning"
-    },
     "dynamic-config-value-editor": {
       "render-label": {
         "tooltip-remove-property": "Ta bort egenskap"
@@ -5523,6 +5495,8 @@
     "edit-actions": {
       "add": "Lägg till {{typeName}}",
       "add-conditional-rule": "Lägg till regeln {{ruleDescription}}",
+      "dashboard-description": "Ändra instrumentpanelbeskrivning",
+      "dashboard-title": "Ändra instrumentpaneltitel",
       "duplicate-panel": "Duplicera panel",
       "edit-query-result-rule": "Ändra regel för frågeresultat",
       "edit-template-variable-rule": "Ändra regel för mallvariabel",
@@ -5542,7 +5516,12 @@
       "switch-layout": "Byt layout",
       "switch-layout-row": "Byt layout",
       "switch-layout-tab": "Byt layout",
-      "tab-title": "Ändra fliktitel"
+      "tab-title": "Ändra fliktitel",
+      "variable-description": "Ändra variabelbeskrivning",
+      "variable-hide": "Ändra alternativ för att dölja variabel",
+      "variable-label": "Ändra variabeletikett",
+      "variable-name": "Ändra variabelnamn",
+      "variable-type": "Ändra variabeltyp"
     },
     "empty": {
       "add-library-panel-body": "Lägg till visualiseringar som delas med andra paneler.",
@@ -5789,12 +5768,7 @@
     "layout": {
       "cancel": "Avbryt",
       "common": {
-        "copy": "Kopiera",
-        "copy-tooltip": "",
-        "delete": "Ta bort",
-        "duplicate": "Dubblett",
-        "layout": "Layout",
-        "paste": "Klistra in"
+        "layout": "Layout"
       },
       "continue": "Fortsätt",
       "panel": {
@@ -5822,7 +5796,6 @@
     },
     "new-panel": {
       "aria-label": "Okonfigurerad panel. Tryck på Tabb för att se konfigurationsalternativ.",
-      "configure-button": "",
       "configure-button-menu": "Växla meny",
       "configure-visualization": "Konfigurera visualisering",
       "empty-state-message": "Kör en fråga för att visualisera den här eller gå till alla visualiseringar för att lägga till andra paneltyper",
@@ -5844,10 +5817,6 @@
         }
       }
     },
-    "options": {
-      "description": "Beskrivning",
-      "title-option": "Titel"
-    },
     "options-pane-category": {
       "aria-label-collapse": "Dölj kategorin {{title}}",
       "aria-label-expand": "Expandera kategorin {{title}}"
@@ -5857,14 +5826,6 @@
       "Recent options-title-recent-options": "Senaste alternativen",
       "title-matched_one": "Matchade {{count}}/{{totalCount}} alternativ",
       "title-matched_other": "Matchade {{count}}/{{totalCount}} alternativ"
-    },
-    "outline": {
-      "pane-header": "Innehållskontur",
-      "repeated-item": "Upprepa",
-      "tree-item": {
-        "empty": "(tomt)",
-        "no-title": "<no title>"
-      }
     },
     "override-category-title": {
       "aria-label-remove-override": "Ta bort åsidosättning",
@@ -6045,13 +6006,6 @@
       "save-json-to-file": "Spara JSON till fil",
       "see-docs": "Se <2>dokumentationen</2> för mer information om provisionering."
     },
-    "schema-editor": {
-      "apply-button": "Tillämpa ändringar",
-      "apply-button-disabled-tooltip": "Åtgärda valideringsfel innan du tillämpar ändringar",
-      "apply-button-disabled-tooltip-yaml": "Dokumentet innehåller valideringsfel. Byt till JSON för att se detaljerad felinformation i texten.",
-      "apply-error-title": "Det gick inte att tillämpa ändringarna",
-      "undo-title": "Schemaredigering"
-    },
     "search-panel": {
       "no-match": ""
     },
@@ -6060,8 +6014,42 @@
     },
     "sidebar": {
       "add": {
+        "annotation-query": {
+          "description": "Lägg till händelsedata i diagram",
+          "label": "Kommenteringsfråga"
+        },
+        "dashboard-controls": "Kontroller för instrumentpanel",
+        "filters": {
+          "label": "Filtrera och gruppera efter"
+        },
+        "group-layouts": "Gruppera layouter",
+        "link": {
+          "label": "Länk",
+          "tooltip": "Lägg till en länk till en annan instrumentpanel eller extern webbplats"
+        },
+        "new-panel": {
+          "button": "Lägg till ny panelknapp",
+          "description": "Dra eller klicka för att lägga till en panel",
+          "title": "Panel"
+        },
+        "pane-header": "Lägg till",
+        "paste-panel": {
+          "description": "Klicka eller dra för att klistra in panelen",
+          "title": "Klistra in panel"
+        },
+        "row": {
+          "add-label": "Lägg till rad",
+          "group-label": "Gruppera i rader"
+        },
+        "tab": {
+          "add-label": "Lägg till flik",
+          "group-label": "Gruppera i flikar"
+        },
         "title": "Lägg till",
-        "tooltip": "Lägg till nytt element"
+        "tooltip": "Lägg till nytt element",
+        "variable": {
+          "label": "Variabel"
+        }
       },
       "annotation": {
         "change-data-source": "Ändra datakälla för kommentarer",
@@ -6097,16 +6085,52 @@
       },
       "annotations": {
         "add-annotation": "Lägg till kommentar",
+        "add-annotation-query": "Lägg till kommenteringsfråga",
+        "name-builtin": "{{annoName}} (inbyggd)",
+        "name-disabled": "(Inaktiverad) {{annoName}}",
         "reorder": "Ändra ordning genom att dra",
-        "select-annotation": "Välj"
+        "reorder-description": "Ordna om listan över kommentarer",
+        "select-annotation": "Välj",
+        "title-above-dashboard-count_one": "Ovanför instrumentpanel ({{count}})",
+        "title-above-dashboard-count_other": "Ovanför instrumentpanel ({{count}})",
+        "title-controls-menu-count_one": "Kontrollmeny ({{count}})",
+        "title-controls-menu-count_other": "Kontrollmeny ({{count}})",
+        "title-hidden-count_one": "Dold ({{count}})",
+        "title-hidden-count_other": "Dold ({{count}})"
       },
       "dashboard-options": {
+        "annotations": "Kommentarer",
+        "description": "Beskrivning",
+        "filters": "",
+        "links": "Länkar",
+        "open-settings": "",
         "title": "Alternativ",
-        "tooltip": "Alternativ för instrumentpanel"
+        "title-option": "Titel",
+        "tooltip": "Alternativ för instrumentpanel",
+        "variables": "Variabler"
       },
+      "drag-to-reorder": "Ändra ordning genom att dra",
       "edit-schema": {
+        "apply-button": "Tillämpa ändringar",
+        "apply-button-disabled-tooltip": "Åtgärda valideringsfel innan du tillämpar ändringar",
+        "apply-button-disabled-tooltip-yaml": "Dokumentet innehåller valideringsfel. Byt till JSON för att se detaljerad felinformation i texten.",
+        "apply-error-title": "Det gick inte att tillämpa ändringarna",
+        "collapse": "Minimera redigeraren",
+        "copy-as-resource": "",
+        "copy-as-resource-tooltip": "",
+        "expand": "Expandera redigeraren",
+        "modal-title": "Redigera instrumentpanel som kod",
+        "pane-header": "Redigera som kod",
         "title": "Kod",
-        "tooltip": "Redigera som kod"
+        "tooltip": "Redigera som kod",
+        "undo-title": "Schemaredigering"
+      },
+      "element-actions": {
+        "copy": "Kopiera",
+        "copy-tooltip": "",
+        "delete": "Ta bort",
+        "duplicate": "Dubblett",
+        "paste": "Klistra in"
       },
       "elements": {
         "annotation": "Kommentar",
@@ -6115,6 +6139,7 @@
         "element": "Element",
         "filter": "",
         "filters-set": "",
+        "link": "Länk",
         "link-set": "Länkar",
         "local-variable": "Lokal variabel",
         "multiple-elements": "Flera element",
@@ -6135,17 +6160,40 @@
       "export": {
         "title": "Exportera"
       },
-      "filters": "",
+      "feedback-title": "Ge feedback om den nya upplevelsen av att redigera instrumentpanelen",
+      "filters": {
+        "add-filter": "",
+        "reorder-description": "",
+        "title": "",
+        "title-above-dashboard_one": "",
+        "title-above-dashboard_other": "",
+        "title-controls-menu_one": "",
+        "title-controls-menu_other": "",
+        "title-hidden_one": "",
+        "title-hidden_other": "",
+        "tooltip": ""
+      },
       "links": {
         "add-link": "Lägg till länk",
+        "new-link": "Ny länk",
         "reorder": "Ändra ordning genom att dra",
+        "reorder-description": "Ordna om listan över länkar",
         "select-link": "Välj",
+        "title-above-dashboard_one": "Ovanför instrumentpanel ({{count}})",
+        "title-above-dashboard_other": "Ovanför instrumentpanel ({{count}})",
+        "title-controls-menu_one": "Kontrollmeny ({{count}})",
+        "title-controls-menu_other": "Kontrollmeny ({{count}})",
         "untitled": "Namnlös länk"
       },
-      "open": "",
       "outline": {
+        "pane-header": "Innehållskontur",
+        "repeated-item": "Upprepa",
         "title": "Översikt",
-        "tooltip": "Innehållskontur"
+        "tooltip": "Innehållskontur",
+        "tree-item": {
+          "empty": "(tomt)",
+          "no-title": "<no title>"
+        }
       },
       "redo": "Gör om",
       "row": {
@@ -6160,7 +6208,9 @@
       "section-variables": {
         "title": "Variabler"
       },
+      "select": "Välj",
       "snapshot": {
+        "title": "Källa",
         "tooltip": "Öppna ursprunglig instrumentpanel"
       },
       "undo": "Ångra",
@@ -6182,6 +6232,15 @@
         },
         "description": "Beskrivning",
         "description-placeholder": "Beskrivande text",
+        "display": "Display",
+        "display-options": {
+          "controls-menu": "Kontrollmeny",
+          "controls-menu-description": "Synlig när kontrollmenyn är öppen",
+          "hidden": "Dolt",
+          "hidden-description": "Endast synlig i redigeringsläge",
+          "label-hidden": "",
+          "label-hidden-description": ""
+        },
         "label": "Etikett",
         "label-description": "Valfritt visningsnamn",
         "name": "Namn",
@@ -6208,9 +6267,17 @@
         "add-variable": "Lägg till variabel",
         "change-type": "",
         "reorder": "Ändra ordning genom att dra",
+        "reorder-description": "Ordna om listan över variabler",
         "select-type": "Välj typ av variabel",
         "select-type-card-tooltip": "Klicka för att välja typ",
-        "select-variable": "Välj"
+        "select-variable": "Välj",
+        "title-controls-menu_one": "Kontrollmeny ({{count}})",
+        "title-controls-menu_other": "Kontrollmeny ({{count}})",
+        "title-hidden_one": "Dold ({{count}})",
+        "title-hidden_other": "Dold ({{count}})",
+        "title-top-placement_one": "",
+        "title-top-placement_other": "",
+        "top-placement-default": ""
       },
       "view-panel": {
         "disabled": "",
@@ -6221,6 +6288,18 @@
         "pane-header": "",
         "quick-toggles": "",
         "title": ""
+      },
+      "viz-panel": {
+        "configure-button": "",
+        "delete-panel-text": "Om du tar bort denna panel tas också alla frågor bort. Är du säker på att du vill fortsätta?",
+        "delete-panel-title": "Radera panelen?",
+        "delete-panel-yes": "Ta bort",
+        "options": {
+          "configure-button-tooltip": "Redigera alternativ för frågor och visualisering",
+          "description": "Beskrivning",
+          "title-option": "Titel",
+          "transparent-background": "Genomskinlig bakgrund"
+        }
       }
     },
     "source-link": {
@@ -6278,9 +6357,6 @@
       "tab-warning": {
         "title-not-unique": "Den här titeln är inte unik"
       }
-    },
-    "title": {
-      "action": "Ändra instrumentpaneltitel"
     },
     "toolbar": {
       "add": "Lägg till",
@@ -6372,9 +6448,6 @@
       "save-library-panel": "Spara bibliotekspanel",
       "settings": "Instrumentpanelens inställningar",
       "share-button": "Dela",
-      "snapshot": {
-        "title": "Källa"
-      },
       "star-add-error": "Det gick inte att lägga till i stjärnmärkta",
       "star-added": "Tillagd i stjärnmärkta",
       "star-remove-error": "Det gick inte att ta bort från stjärnmärkta",
@@ -6444,22 +6517,7 @@
       "tags-expected-strings": "taggar förväntade strängmatris"
     },
     "variable": {
-      "description": {
-        "action": "Ändra variabelbeskrivning"
-      },
-      "description-tooltip": "Variabelbeskrivning",
-      "hide": {
-        "action": "Ändra alternativ för att dölja variabel"
-      },
-      "label": {
-        "action": "Ändra variabeletikett"
-      },
-      "name": {
-        "action": "Ändra variabelnamn"
-      },
-      "type": {
-        "action": "Ändra variabeltyp"
-      }
+      "description-tooltip": "Variabelbeskrivning"
     },
     "version-history-comparison": {
       "button-restore": "Återställ till version {{version}}",
@@ -6482,17 +6540,6 @@
     "view-panel": {
       "back-to-dashboard": "",
       "not-found": ""
-    },
-    "viz-panel": {
-      "delete-panel-text": "Om du tar bort denna panel tas också alla frågor bort. Är du säker på att du vill fortsätta?",
-      "delete-panel-title": "Radera panelen?",
-      "delete-panel-yes": "Ta bort",
-      "options": {
-        "configure-button-tooltip": "Redigera alternativ för frågor och visualisering",
-        "description": "Beskrivning",
-        "title-option": "Titel",
-        "transparent-background": "Genomskinlig bakgrund"
-      }
     }
   },
   "dashboard-import": {
@@ -6606,25 +6653,6 @@
       "name-allow-custom-values": "Tillåt anpassade värden",
       "name-enable-group-by": "Aktivera gruppering efter"
     },
-    "add-filters": {
-      "label": "Filtrera och gruppera efter"
-    },
-    "add-link": {
-      "inline-instance-name": "Ny länk",
-      "label-link": "Länk",
-      "tooltip": "Lägg till en länk till en annan instrumentpanel eller extern webbplats"
-    },
-    "add-new-edit-pane": {
-      "group-layouts": "Gruppera layouter"
-    },
-    "add-row": {
-      "add-label": "Lägg till rad",
-      "group-label": "Gruppera i rader"
-    },
-    "add-tab": {
-      "add-label": "Lägg till flik",
-      "group-label": "Gruppera i flikar"
-    },
     "add-to-dashboard": {
       "message": {
         "could-navigate-selected-dashboard-please-again": "Det gick inte att navigera till den valda instrumentpanelen. Försök igen.",
@@ -6653,19 +6681,12 @@
         "new-panel": "Ny panel"
       }
     },
-    "add-variable": {
-      "label-variable": "Variabel"
-    },
     "adhoc-origin-filters-controller": {
       "input-placeholder": "Lägg till ett standardfilter …"
     },
     "adhoc-origin-filters-editor": {
       "description": "Filter som är förvalda som standard.",
       "label": "Standardfilter"
-    },
-    "annotation-control": {
-      "description-add-event-data-to-graphs": "Lägg till händelsedata i diagram",
-      "label-annotation-query": "Kommenteringsfråga"
     },
     "annotation-edit-actions": {
       "description": {
@@ -6682,11 +6703,6 @@
       "delete-title": "Radera kommenteringsfråga"
     },
     "annotation-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-annotations-list": "Ordna om listan över kommentarer"
-        }
-      },
       "render-list": {
         "aria-label-annotation": "Kommentar"
       }
@@ -6732,15 +6748,6 @@
       "query-name": "Frågans namn",
       "tooltip-move-down": "Flytta ner",
       "tooltip-move-up": "Flytta upp"
-    },
-    "annotations-list": {
-      "drag-end": {
-        "description": "Ordna om listan över kommentarer"
-      }
-    },
-    "annotations-section": {
-      "name-builtin": "{{annoName}} (inbyggd)",
-      "name-disabled": "(Inaktiverad) {{annoName}}"
     },
     "branch-validation-error": {
       "cannot-contain-invalid-characters": "Det kan inte innehålla ogiltiga tecken: ”~”, ”^”, ”:”, ”?”, ”*”, ”[”, ”\\\\” eller ”]”.",
@@ -6796,15 +6803,6 @@
       "name-values-separated-comma": "Värden åtskilda med kommatecken",
       "selection-options": "Urvalsalternativ"
     },
-    "dashboard-annotations-list": {
-      "add-annotation-query": "Lägg till kommenteringsfråga",
-      "title-above-dashboard-count_one": "Ovanför instrumentpanel ({{count}})",
-      "title-above-dashboard-count_other": "Ovanför instrumentpanel ({{count}})",
-      "title-controls-menu-count_one": "Kontrollmeny ({{count}})",
-      "title-controls-menu-count_other": "Kontrollmeny ({{count}})",
-      "title-hidden-count_one": "Dold ({{count}})",
-      "title-hidden-count_other": "Dold ({{count}})"
-    },
     "dashboard-link-form": {
       "back-to-list": "Tillbaka till listan",
       "label-icon": "Ikon",
@@ -6835,9 +6833,6 @@
       "tooltip-move-link-down": "Flytta länk nedåt",
       "tooltip-move-link-up": "Flytta länk uppåt",
       "type": "Typ"
-    },
-    "dashboard-links-list": {
-      "add-link": "Lägg till länk"
     },
     "dashboard-preview-banner": {
       "title-error-loading-dashboard": "Fel vid laddning av instrumentpanel"
@@ -6874,12 +6869,6 @@
         "dashboard-not-found": "Instrumentpanelen hittades inte"
       }
     },
-    "dashboard-side-pane-new": {
-      "dashboard-controls": "Kontroller för instrumentpanel"
-    },
-    "dashboard-sidebar-renderer": {
-      "title-feedback-dashboard-editing-experience": "Ge feedback om den nya upplevelsen av att redigera instrumentpanelen"
-    },
     "data-source-variable-form": {
       "data-source-options": "Alternativ för datakälla",
       "description-instance-name-filter": "Regex-filter för vilka datakällsinstanser att välja mellan i variabelvärdelistan. Lämna tomt för alla.",
@@ -6913,12 +6902,6 @@
     "description-label": {
       "description": "Beskrivning"
     },
-    "draggable-item": {
-      "drag-to-reorder": "Ändra ordning genom att dra"
-    },
-    "draggable-items-list": {
-      "select": "Välj"
-    },
     "edit-link-view": {
       "edit-link-page-nav": {
         "text": {
@@ -6941,16 +6924,6 @@
       "show-more": "Visa mer",
       "sql-name": "Transformera med SQL",
       "sql-transformation-description": "Manipulera dina data med MySQL-liknande syntax"
-    },
-    "filters-list": {
-      "add-filter": "",
-      "reorder-description": "",
-      "title-above-dashboard_one": "",
-      "title-above-dashboard_other": "",
-      "title-controls-menu_one": "",
-      "title-controls-menu_other": "",
-      "title-hidden_one": "",
-      "title-hidden_other": ""
     },
     "general-settings-edit-view": {
       "default_grid_options": {
@@ -7123,11 +7096,6 @@
       "unnamed": "Namnlös länk"
     },
     "link-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-links-list": "Ordna om listan över länkar"
-        }
-      },
       "render-list": {
         "aria-label-link": "Länk"
       }
@@ -7144,13 +7112,6 @@
       "type-dashboards": "Kontrollpaneler",
       "type-link": "Länk",
       "with-tags": "Med taggar"
-    },
-    "links-list": {
-      "drag-end-description": "Ordna om listan över länkar",
-      "title-above-dashboard_one": "Ovanför instrumentpanel ({{count}})",
-      "title-above-dashboard_other": "Ovanför instrumentpanel ({{count}})",
-      "title-controls-menu_one": "Kontrollmeny ({{count}})",
-      "title-controls-menu_other": "Kontrollmeny ({{count}})"
     },
     "move-provisioned-dashboard-form": {
       "already-in-folder": "",
@@ -7424,9 +7385,6 @@
       "new-alert-rule": "Ny varningsregel",
       "title-no-alerting-capable-query-found": "Ingen larmkapabel fråga hittades"
     },
-    "section-filters-list": {
-      "add-filter": ""
-    },
     "section-placement": {
       "top-row": "",
       "top-tab": ""
@@ -7515,31 +7473,10 @@
       "save-dashboard": "Spara instrumentpanel",
       "title-unsaved-changes": "Ändringar som inte sparats"
     },
-    "use-annotations-category": {
-      "category": {
-        "title": {
-          "annotations": "Kommentarer"
-        }
-      }
-    },
     "use-dashboard-edit-page-nav": {
       "page-nav": {
         "text": {
           "settings": "Inställningar"
-        }
-      }
-    },
-    "use-filters-category": {
-      "category": {
-        "title": {
-          "filters": ""
-        }
-      }
-    },
-    "use-links-category": {
-      "category": {
-        "title": {
-          "links": "Länkar"
         }
       }
     },
@@ -7551,13 +7488,6 @@
     "use-save-dashboard": {
       "message-dashboard-saved": "Kontrollpanelen sparades"
     },
-    "use-variables-category": {
-      "category": {
-        "title": {
-          "variables": "Variabler"
-        }
-      }
-    },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "Den här variabeln refereras inte av någon variabel eller instrumentpanel.",
       "aria-label-variable-referenced-other-variables-dashboard": "Den här variabeln hänvisas till av andra variabler eller instrumentpanelen.",
@@ -7566,23 +7496,6 @@
     },
     "variable-controls": {
       "add-variable": "Lägg till variabel"
-    },
-    "variable-display-select": {
-      "label": "Display",
-      "options": {
-        "controls-menu": {
-          "description": "Synlig när kontrollmenyn är öppen",
-          "label": "Kontrollmeny"
-        },
-        "hidden": {
-          "description": "Endast synlig i redigeringsläge",
-          "label": "Dolt"
-        },
-        "top-placement-hidden-label": {
-          "description": "",
-          "label": ""
-        }
-      }
     },
     "variable-editable-element": {
       "delete-confirm": "Radera variabel",
@@ -7634,13 +7547,6 @@
       },
       "label": "Dölj"
     },
-    "variable-list": {
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Ordna om listan över variabler"
-        }
-      }
-    },
     "variable-multi-prop-static-options-form": {
       "aria-label-static-options": "Statiska alternativ"
     },
@@ -7655,23 +7561,6 @@
       "show-more": "Visa mer",
       "preview-of-values_one": "Förhandsgranska värden ({{count}})",
       "preview-of-values_other": "Förhandsgranska värden ({{count}})"
-    },
-    "variables-list": {
-      "add-variable": "Lägg till variabel",
-      "create-drag-end-handler": {
-        "description": {
-          "reorder-variables-list": "Ordna om listan över variabler"
-        }
-      },
-      "top-placement": {
-        "default": ""
-      },
-      "title-controls-menu_one": "Kontrollmeny ({{count}})",
-      "title-controls-menu_other": "Kontrollmeny ({{count}})",
-      "title-hidden_one": "Dold ({{count}})",
-      "title-hidden_other": "Dold ({{count}})",
-      "title-top-placement_one": "",
-      "title-top-placement_other": ""
     },
     "version-history": {
       "comparison": {

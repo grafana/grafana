@@ -4696,6 +4696,11 @@
             "type": "integer",
             "format": "int64"
           },
+          "totalChanges": {
+            "description": "TotalChanges is the action-aware count of resources changed for this group/kind, set by the progress recorder as results are recorded. Used for the job-duration histogram's resources_changed bucket.",
+            "type": "integer",
+            "format": "int64"
+          },
           "update": {
             "type": "integer",
             "format": "int64"

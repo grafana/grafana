@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // Store is an abstraction for the storage API.
@@ -32,7 +33,7 @@ type Store interface {
 	// API error if the job no longer exists.
 	//
 	// If err is not nil, the job and rollback values are always nil.
-	Claim(ctx context.Context, namespace, name string) (job *provisioning.Job, rollback func(), err error)
+	Claim(ctx context.Context, namespace, name string, driverID string) (job *provisioning.Job, rollback func(), err error)
 
 	// Complete marks a job as completed and removes it from the active job store.
 	// Callers are responsible for writing the job to history after calling this.
@@ -83,8 +84,16 @@ type jobProcessor struct {
 	// Only the first worker who supports the job will process it; the rest are ignored.
 	workers []Worker
 
+	// driverID identifies this worker within the pod, used as the driver_id label on
+	// the in-flight gauge so per-worker saturation can be observed.
+	driverID string
+
 	// metrics for recording job-level Prometheus metrics (warnings, operations, etc.)
 	metrics *JobMetrics
+
+	// processed records the event-processing metrics (source counts + delivery
+	// latency) once a claim confirms a genuine pickup.
+	processed *usinformer.ProcessedMetrics
 
 	// Mutex to protect concurrent access to job processing
 	mu sync.Mutex
@@ -97,7 +106,9 @@ func newJobProcessor(
 	store Store,
 	repoGetter RepoGetter,
 	historicJobs HistoryWriter,
+	driverID string,
 	metrics *JobMetrics,
+	processed *usinformer.ProcessedMetrics,
 	workers ...Worker,
 ) *jobProcessor {
 	return &jobProcessor{
@@ -107,30 +118,64 @@ func newJobProcessor(
 		repoGetter:           repoGetter,
 		historicJobs:         historicJobs,
 		workers:              workers,
+		driverID:             driverID,
 		metrics:              metrics,
+		processed:            processed,
 	}
 }
 
 // processKey claims the job namespace/name and drives it to completion.
 // Returns ErrAlreadyClaimed or a NotFound API error when the job is not ours
-// to process; both mean the key can be dropped.
-func (d *jobProcessor) processKey(ctx context.Context, namespace, name string) error {
+// to process; both mean the key can be dropped. trigger records what enqueued
+// the key so the start of processing can be attributed to a live event, a
+// re-list, or the initial list. enqueuedAt is when the key joined the work
+// queue, used to record how late the event arrived once the claim confirms this
+// is a genuine (non-duplicate) pickup.
+func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, trigger claimTrigger, enqueuedAt time.Time) error {
 	ctx, span := tracing.Start(ctx, "provisioning.jobs.claim_and_process_one_job")
 	defer span.End()
 
 	logger := logging.FromContext(ctx)
 
 	// Claim the job to work on.
-	claimedJob, rollback, err := d.store.Claim(ctx, namespace, name)
+	claimedJob, rollback, err := d.store.Claim(ctx, namespace, name, d.driverID)
 	if err != nil {
 		if !errors.Is(err, ErrAlreadyClaimed) && !apierrors.IsNotFound(err) {
 			span.RecordError(err)
 		}
 		return apifmt.Errorf("failed to claim job: %w", err)
 	}
+	// Mark this worker slot busy for the whole claim->release window — including job
+	// completion and rollback. This release defer is registered BEFORE the rollback
+	// defer below so LIFO runs rollback first: the slot stays busy (and busy_seconds
+	// keeps accruing) until rollback actually finishes, which matters when the storage
+	// API is slow. busy_seconds thus measures full slot occupancy, not just the worker's
+	// processing time. Metrics methods are nil-safe for drivers built without metrics.
+	inFlightAction := string(claimedJob.Spec.Action)
+	slotStart := time.Now()
+	d.metrics.IncInFlight(d.driverID, inFlightAction)
+	defer func() {
+		d.metrics.DecInFlight(d.driverID, inFlightAction)
+		d.metrics.RecordBusySeconds(d.driverID, inFlightAction, time.Since(slotStart).Seconds())
+	}()
+
 	// Ensure that the job is cleaned up if we fail to complete it.
 	// The rollback function does not care about cancellations.
 	defer rollback()
+
+	// The claim is the cluster-wide exactly-once gate, so this is the point that
+	// attributes each processed job to what enqueued its key. errPostClaim
+	// outcomes still count — processing did start; the execution outcome remains
+	// the job of grafana_provisioning_jobs_processed_total. Mirrors the
+	// claim-time RecordWaitTime precedent.
+	d.processed.RecordProcessed(trigger)
+	// The claim confirms this is a genuine pickup (a job claimed elsewhere returns
+	// ErrAlreadyClaimed above, before here), so record how late the event reached
+	// the queue: from job creation (the event's origin) to when it was enqueued.
+	// This excludes the time the key then waited in the queue for a worker.
+	if !enqueuedAt.IsZero() {
+		d.processed.ObserveDeliveryLatency(trigger, enqueuedAt.Sub(claimedJob.CreationTimestamp.Time).Seconds())
+	}
 
 	logger = logger.With("job", claimedJob.GetName(), "namespace", namespace, "repository", claimedJob.Spec.Repository, "action", claimedJob.Spec.Action)
 	ctx = logging.Context(ctx, logger)
@@ -196,6 +241,19 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string) e
 	progressUpdates := d.currentJob.Status.ProgressUpdates
 	d.currentJob.Status = recorder.Complete(ctx, err)
 	d.currentJob.Status.ProgressUpdates = progressUpdates + 1
+	// Record the job metric here, from the authoritative final status, rather than in
+	// each worker: this covers every action uniformly, uses the driver-measured
+	// duration (accurate even on timeout), and makes the `outcome` label reflect the
+	// job status (success/warning/error) — so a job that "completed with errors" is
+	// recorded as an error, not a success.
+	if d.metrics != nil {
+		d.metrics.RecordJob(
+			string(d.currentJob.Spec.Action),
+			string(d.currentJob.Status.State),
+			sumTotalChanges(d.currentJob.Status.Summary),
+			duration.Seconds(),
+		)
+	}
 	defer func() {
 		d.currentJob = nil
 		d.mu.Unlock()
@@ -448,6 +506,21 @@ func (d *jobProcessor) processJob(ctx context.Context, recorder JobProgressRecor
 	err := apifmt.Errorf("no workers were registered to handle the job")
 	span.RecordError(err)
 	return err
+}
+
+// sumTotalChanges totals the per-summary TotalChanges for the duration-histogram
+// bucket. Each JobResourceSummary carries an action-aware change count set by the
+// progress recorder as results are recorded (see updateSummary), so the driver only
+// has to add them up.
+func sumTotalChanges(summaries []*provisioning.JobResourceSummary) int {
+	total := 0
+	for _, s := range summaries {
+		if s == nil {
+			continue
+		}
+		total += int(s.TotalChanges)
+	}
+	return total
 }
 
 func (d *jobProcessor) onProgress() ProgressFn {

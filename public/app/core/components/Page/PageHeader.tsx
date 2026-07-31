@@ -30,11 +30,20 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
         <div className={styles.titleInfoContainer}>
           <div className={styles.title}>
             {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
+<<<<<<< HEAD
             {navItem.icon && visualRefreshEnabled && (
               <div className={styles.icon}>
                 <Icon name={navItem.icon} title={navItem.text} size="lg" />
               </div>
             )}
+||||||| 9142d53b8b1
+=======
+            {navItem.icon && visualRefreshEnabled && (
+              <div className={styles.icon}>
+                <Icon name={navItem.icon} size="lg" />
+              </div>
+            )}
+>>>>>>> 924fabb7136384e160cb2e532fca7f3d6b8404ab
             {onEditTitle ? (
               <EditableTitle value={navItem.text} onEdit={onEditTitle} />
             ) : renderTitle ? (
@@ -66,6 +75,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'row',
       maxWidth: '100%',
       flex: 1,
+      alignItems: 'center',
       h1: {
         marginBottom: 0,
       },
@@ -101,6 +111,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '32px',
       marginRight: theme.spacing(2),
     }),
+<<<<<<< HEAD
     icon: css({
       marginRight: theme.spacing(1.5),
       color: theme.colors.accent.text,
@@ -113,5 +124,20 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
       justifyContent: 'center',
     }),
+||||||| 9142d53b8b1
+=======
+    icon: css({
+      marginRight: theme.spacing(1.5),
+      color: theme.colors.accent.text,
+      backgroundColor: theme.colors.accent.transparent,
+      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(1),
+      width: theme.spacing(4.5),
+      height: theme.spacing(4.5),
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    }),
+>>>>>>> 924fabb7136384e160cb2e532fca7f3d6b8404ab
   };
 };

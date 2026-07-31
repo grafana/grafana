@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Box, Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
@@ -112,6 +113,7 @@ export function RuleListActions() {
               url={ALERTING_PATHS.IMPORT_TO_GMA}
               disabled={importDisabled}
               description={importDisabled ? importDisabledReason : undefined}
+              testId={selectors.pages.Alerting.RuleList.moreMenu.importToGmaLink}
             />
           )}
         </Menu.Group>
@@ -154,7 +156,7 @@ export function RuleListActions() {
       )}
       {canCreateGrafanaRules && <AIAlertRuleButtonComponent />}
       <Dropdown overlay={moreActionsMenu}>
-        <Button variant="secondary">
+        <Button variant="secondary" data-testid={selectors.pages.Alerting.RuleList.moreMenu.triggerButton}>
           <Trans i18nKey="alerting.rule-list.more">More</Trans> <Icon name="angle-down" />
         </Button>
       </Dropdown>

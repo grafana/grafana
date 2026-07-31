@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"sort"
 	"strings"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	annotationpkg "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,8 +46,9 @@ func (e *partialDecodeError) Unwrap() error { return e.Err }
 
 // MigrationProxy routes annotation writes to the new API server.
 type MigrationProxy struct {
-	client annotationClient
-	logger log.Logger
+	client  annotationClient
+	userSvc user.Service
+	logger  log.Logger
 }
 
 // ProvideMigrationProxy builds the proxy that routes legacy annotation operations to the new API server.
@@ -66,9 +69,15 @@ func ProvideMigrationProxy(cfg *setting.Cfg, userSvc user.Service, exchanger aut
 		return nil, fmt.Errorf("annotation proxy: api_server_url must be set when api_migration_phase is %q", phase)
 	}
 
+	client, err := newAnnotationAPIClient(cfg, exchanger)
+	if err != nil {
+		return nil, err
+	}
+
 	return &MigrationProxy{
-		client: newAnnotationAPIClient(cfg, userSvc, exchanger),
-		logger: log.New("annotationsapi"),
+		client:  client,
+		userSvc: userSvc,
+		logger:  log.New("annotationsapi"),
 	}, nil
 }
 
@@ -92,7 +101,7 @@ func (h *MigrationProxy) List(ctx context.Context, orgID int64, query *annotatio
 	userMap := map[string]*user.User{}
 	if len(createdByMeta) > 0 {
 		var err error
-		userMap, err = h.client.GetUsersFromMeta(ctx, createdByMeta)
+		userMap, err = client.GetUsersFromMeta(ctx, h.userSvc, createdByMeta)
 		if err != nil {
 			h.logger.Warn("failed to hydrate annotation users", "err", err)
 		}
@@ -143,6 +152,47 @@ func Merge(newItems, legacyItems []*annotations.ItemDTO, limit int64) []*annotat
 		}
 		return cmp.Compare(b.Time, a.Time)
 	})
+
+	if limit > 0 && int64(len(merged)) > limit {
+		merged = merged[:limit]
+	}
+	return merged
+}
+
+// FindTags fetches org-wide tag counts from the new store.
+func (h *MigrationProxy) FindTags(ctx context.Context, orgID int64, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
+	tags, err := h.client.ListTags(ctx, orgID, query)
+	if err != nil {
+		return annotations.FindTagsResult{}, err
+	}
+
+	// Convert the new store's tag counts to the legacy DTO shape.
+	result := make([]*annotations.TagsDTO, 0, len(tags))
+	for _, tag := range tags {
+		result = append(result, &annotations.TagsDTO{
+			Tag:   tag.Tag,
+			Count: int64(tag.Count),
+		})
+	}
+	return annotations.FindTagsResult{Tags: result}, nil
+}
+
+// MergeTags combines new-store and legacy tag counts, summing the counts of tags present in
+// both stores, then sorts ascending by tag and applies limit to match the legacy response shape.
+func MergeTags(newTags, legacyTags []*annotations.TagsDTO, limit int64) []*annotations.TagsDTO {
+	counts := make(map[string]int64, len(newTags)+len(legacyTags))
+	for _, tag := range newTags {
+		counts[tag.Tag] += tag.Count
+	}
+	for _, tag := range legacyTags {
+		counts[tag.Tag] += tag.Count
+	}
+
+	merged := make([]*annotations.TagsDTO, 0, len(counts))
+	for tag, count := range counts {
+		merged = append(merged, &annotations.TagsDTO{Tag: tag, Count: count})
+	}
+	sort.Sort(annotations.SortedTags(merged))
 
 	if limit > 0 && int64(len(merged)) > limit {
 		merged = merged[:limit]
@@ -267,7 +317,7 @@ func (h *MigrationProxy) Get(ctx context.Context, orgID int64, annotationID int6
 
 	createdBy := anno.GetCreatedBy()
 	if createdBy != "" {
-		if users, err := h.client.GetUsersFromMeta(ctx, []string{createdBy}); err == nil {
+		if users, err := client.GetUsersFromMeta(ctx, h.userSvc, []string{createdBy}); err == nil {
 			if u, ok := users[createdBy]; ok {
 				applyUserToDTO(u, dto)
 			}

@@ -218,11 +218,11 @@ export const dashboardEditActions = {
   },
 
   changeTitle: makeEditAction<DashboardScene, 'title'>({
-    description: t('dashboard.title.action', 'Change dashboard title'),
+    description: t('dashboard.edit-actions.dashboard-title', 'Change dashboard title'),
     prop: 'title',
   }),
   changeDescription: makeEditAction<DashboardScene, 'description'>({
-    description: t('dashboard.description.action', 'Change dashboard description'),
+    description: t('dashboard.edit-actions.dashboard-description', 'Change dashboard description'),
     prop: 'description',
   }),
 
@@ -274,7 +274,7 @@ export const dashboardEditActions = {
     varsAfterChange[variableIndex] = newVariable;
 
     dashboardEditActions.edit({
-      description: t('dashboard.variable.type.action', 'Change variable type'),
+      description: t('dashboard.edit-actions.variable-type', 'Change variable type'),
       source,
       addedObject: newVariable,
       removedObject: oldVariable,
@@ -291,7 +291,7 @@ export const dashboardEditActions = {
     const snapshots = snapshotVariableSetsAlongPath(source);
 
     dashboardEditActions.edit({
-      description: t('dashboard.variable.name.action', 'Change variable name'),
+      description: t('dashboard.edit-actions.variable-name', 'Change variable name'),
       source,
       perform: () => {
         source.setState({ name: newValue });
@@ -305,11 +305,11 @@ export const dashboardEditActions = {
     });
   },
   changeVariableLabel: makeEditAction<SceneVariable, 'label'>({
-    description: t('dashboard.variable.label.action', 'Change variable label'),
+    description: t('dashboard.edit-actions.variable-label', 'Change variable label'),
     prop: 'label',
   }),
   changeVariableDescription: makeEditAction<SceneVariable, 'description'>({
-    description: t('dashboard.variable.description.action', 'Change variable description'),
+    description: t('dashboard.edit-actions.variable-description', 'Change variable description'),
     prop: 'description',
   }),
   changeVariableHideValue({ source, oldValue, newValue }: EditActionProps<SceneVariable, 'hide'>) {
@@ -318,7 +318,7 @@ export const dashboardEditActions = {
       variableSet instanceof SceneVariableSet ? [...(variableSet.state.variables ?? [])] : undefined;
 
     dashboardEditActions.edit({
-      description: t('dashboard.variable.hide.action', 'Change variable hide option'),
+      description: t('dashboard.edit-actions.variable-hide', 'Change variable hide option'),
       source,
       perform: () => {
         source.setState({ hide: newValue });

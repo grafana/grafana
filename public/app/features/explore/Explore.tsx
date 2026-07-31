@@ -71,6 +71,7 @@ import {
 } from './state/query';
 import { isSplit, selectExploreDSMaps } from './state/selectors';
 import { updateTimeRange } from './state/time';
+import { isPrometheusType } from './utils/prometheus';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -596,14 +597,16 @@ export class Explore extends PureComponent<Props, ExploreState> {
       showQueryInspector,
       setShowQueryInspector,
       compact,
-      queryLibraryRef,
+      editSavedQueryRef,
+      addingSavedQuery,
     } = this.props;
     const { contentOutlineVisible } = this.state;
     const styles = getStyles(theme);
+    // Prometheus is the only datasource with an explorer to offer, so the whole sidebar
+    // waits for one instead of showing cards that cannot be opened. Mixed panes count if
+    // any query uses it.
     const isPrometheusSelected = datasourceInstance?.meta.mixed
-      ? this.props.queries.some(
-          (q) => q.datasource?.type != null && matchPluginId('prometheus', { id: q.datasource.type })
-        )
+      ? this.props.queries.some((q) => isPrometheusType(q.datasource?.type))
       : !!datasourceInstance && matchPluginId('prometheus', datasourceInstance.meta);
     const showPanels = queryResponse && queryResponse.state !== LoadingState.NotStarted;
     const showNoData =
@@ -695,7 +698,9 @@ export class Explore extends PureComponent<Props, ExploreState> {
               <ContentOutline
                 scroller={this.scrollElement}
                 panelId={`content-outline-container-${exploreId}`}
-                showMetricsExplorer={isPrometheusSelected}
+                showSignalExplorer={isPrometheusSelected}
+                queries={this.props.queries}
+                paneDatasource={datasourceInstance}
               />
             )}
             <ScrollContainer
@@ -729,7 +734,10 @@ export class Explore extends PureComponent<Props, ExploreState> {
                         <SecondaryActions
                           // do not allow people to add queries with potentially different datasources in correlations editor mode
                           addQueryRowButtonDisabled={
-                            isLive || (isCorrelationsEditorMode && datasourceInstance.meta.mixed) || !!queryLibraryRef
+                            isLive ||
+                            (isCorrelationsEditorMode && datasourceInstance.meta.mixed) ||
+                            !!editSavedQueryRef ||
+                            !!addingSavedQuery
                           }
                           // We cannot show multiple traces at the same time right now so we do not show add query button.
                           //TODO:unification
@@ -851,7 +859,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     supplementaryQueries,
     correlationEditorHelperData,
     compact,
-    queryLibraryRef,
+    editSavedQueryRef,
+    addingSavedQuery,
     queriesChangedIndexAtRun,
   } = item;
 
@@ -886,7 +895,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     correlationEditorHelperData,
     correlationEditorDetails: explore.correlationEditorDetails,
     exploreActiveDS: selectExploreDSMaps(state),
-    queryLibraryRef,
+    editSavedQueryRef,
+    addingSavedQuery,
     queriesChangedIndexAtRun,
   };
 }
