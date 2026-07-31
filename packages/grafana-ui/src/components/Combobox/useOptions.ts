@@ -35,8 +35,10 @@ export function useOptions<T extends string | number>(
   const isAsync = typeof rawOptions === 'function';
 
   // Consumers typically pass an inline arrow as `options`, giving it a new identity on every
-  // parent render. Read it from a ref so the loader (and the debounce built on it) can stay
-  // stable for the lifetime of the component instead of being recreated mid-debounce.
+  // parent render. Read it from a ref ("latest ref" pattern — what React's experimental
+  // useEffectEvent formalises) so the loader (and the debounce built on it) keeps a stable
+  // identity for the lifetime of the component instead of being recreated mid-debounce,
+  // while still invoking the consumer's most recent closure when it fires.
   const rawOptionsRef = useRef(rawOptions);
   rawOptionsRef.current = rawOptions;
 
@@ -70,6 +72,10 @@ export function useOptions<T extends string | number>(
     [loadOptions]
   );
 
+  // debouncedLoadOptions is stable for the component's lifetime, so this cleanup runs only on
+  // unmount. It cancels a scheduled-but-not-yet-fired load so the timer can't fire (and set
+  // state) after unmount. Requests already in flight are not aborted here — late results from
+  // those are discarded by useLatestAsyncCall's staleness guard instead.
   useEffect(() => () => debouncedLoadOptions.cancel(), [debouncedLoadOptions]);
 
   const [asyncOptions, setAsyncOptions] = useState<Array<ComboboxOption<T>>>([]);
