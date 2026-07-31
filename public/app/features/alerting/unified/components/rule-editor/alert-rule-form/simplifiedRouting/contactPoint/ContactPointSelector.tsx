@@ -8,6 +8,7 @@ import {
   ContactPointSelector as GrafanaManagedContactPointSelector,
   notificationsAPIv0alpha1,
 } from '@grafana/alerting/unstable';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Field, FieldValidationMessage, Stack, TextLink } from '@grafana/ui';
 import { type RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
@@ -48,7 +49,7 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
       <Field
         noMargin
         label={t('alerting.contact-point-selector.contact-point-picker-label-contact-point', 'Contact point')}
-        data-testid="contact-point-picker"
+        data-testid={selectors.components.AlertRules.contactPointPicker}
       >
         <Controller
           name={selectedContactPointField}
@@ -60,6 +61,7 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
                   onChange={(contactPoint) => onChange(contactPoint.spec.title)}
                   width={50}
                   value={contactPointInForm}
+                  data-testid={selectors.components.AlertRules.contactPointInput}
                 />
                 <LinkToContactPoints />
               </Stack>
@@ -107,6 +109,7 @@ function LinkToContactPoints() {
         'alerting.link-to-contact-points.aria-label-view-or-create-contact-points',
         'View or create contact points'
       )}
+      data-testid={selectors.components.AlertRules.viewContactPointsLink}
     >
       <Trans i18nKey="alerting.link-to-contact-points.view-or-create-contact-points">
         View or create contact points

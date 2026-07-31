@@ -1,4 +1,4 @@
-import { generatedAPI as preferencesAPI } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { generatedAPI as preferencesAPI } from '@grafana/api-clients/rtkq/preferences/v1';
 import { config } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';

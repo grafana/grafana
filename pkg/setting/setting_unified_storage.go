@@ -175,6 +175,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MigrationChunkMaxBytes = section.Key("migration_chunk_max_bytes").MustInt64(256 * 1024 * 1024)
 	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
 	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
+	cfg.UnifiedStorageAuthzExemptionEnabled = section.Key("authz_exemption_enabled").MustBool(false)
+	cfg.UnifiedStorageAuthzExemptResources = parseCommaSeparatedList(section.Key("authz_exempt_resources").String())
 	cfg.SearchInjectFailuresPercent = section.Key("search_inject_failures_percent").MustInt(0)
 	if cfg.SearchInjectFailuresPercent < 0 {
 		cfg.SearchInjectFailuresPercent = 0
