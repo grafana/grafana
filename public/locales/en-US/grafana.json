@@ -8737,6 +8737,8 @@
       "no-metrics": "No metrics found",
       "search-placeholder": "Search metrics",
       "show-more": "Show more",
+      "show-more-metrics": "Show more metrics",
+      "show-more-values": "Show more values",
       "show-values": "Show values for {{label}}",
       "sort-ascending": "Sort ascending",
       "sort-descending": "Sort descending",

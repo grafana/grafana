@@ -96,7 +96,15 @@ export function LabelValues({ id, dsRef, timeRange, metric, labelKey }: Props) {
         </ul>
       )}
       {ordered.length > visible.length && (
-        <Button size="sm" variant="secondary" fill="text" onClick={showMore}>
+        // The visible text stays short for the rail, but the accessible name says which list this
+        // extends: the metric list's own "Show more" can be in the same scroll region as this one.
+        <Button
+          size="sm"
+          variant="secondary"
+          fill="text"
+          aria-label={t('explore.metrics-list.show-more-values', 'Show more values')}
+          onClick={showMore}
+        >
           {t('explore.metrics-list.show-more', 'Show more')}
         </Button>
       )}

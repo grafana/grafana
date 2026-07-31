@@ -123,7 +123,14 @@ export const MetricsList = memo(function MetricsList({ dsUid, dsType, timeRange 
         )}
         {/* Inside the scroll region on purpose: it belongs to the end of the list, not to the card. */}
         {metrics.length > visible.length && (
-          <Button className={styles.showMore} size="sm" variant="secondary" fill="text" onClick={showMore}>
+          <Button
+            className={styles.showMore}
+            size="sm"
+            variant="secondary"
+            fill="text"
+            aria-label={t('explore.metrics-list.show-more-metrics', 'Show more metrics')}
+            onClick={showMore}
+          >
             {t('explore.metrics-list.show-more', 'Show more')}
           </Button>
         )}

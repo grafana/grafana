@@ -131,7 +131,7 @@ describe('<MetricsList />', () => {
       setCatalog(manyMetrics);
       renderList();
 
-      await userEvent.click(screen.getByRole('button', { name: /show more/i }));
+      await userEvent.click(screen.getByRole('button', { name: 'Show more metrics' }));
 
       expect(rowCount()).toBe(50);
     });
@@ -139,7 +139,7 @@ describe('<MetricsList />', () => {
     it('drops back to the first batch when the search changes', async () => {
       setCatalog(manyMetrics);
       renderList();
-      await userEvent.click(screen.getByRole('button', { name: /show more/i }));
+      await userEvent.click(screen.getByRole('button', { name: 'Show more metrics' }));
       expect(rowCount()).toBe(50);
 
       await userEvent.type(screen.getByPlaceholderText('Search metrics'), 'metric');
@@ -151,7 +151,7 @@ describe('<MetricsList />', () => {
       setCatalog([row('up')]);
       renderList();
 
-      expect(screen.queryByRole('button', { name: /show more/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Show more metrics' })).not.toBeInTheDocument();
     });
   });
 
@@ -354,12 +354,26 @@ describe('<MetricsList />', () => {
       const { rerender } = renderList();
       await expandMetric('up');
       await expandLabel('job');
-      await userEvent.click(screen.getByRole('button', { name: /show more/i }));
+      await userEvent.click(screen.getByRole('button', { name: 'Show more values' }));
       expect(screen.getAllByTestId('signal-explorer-value-row')).toHaveLength(50);
 
       rerender(<MetricsList dsUid="prom-uid" dsType="prometheus" timeRange={otherTimeRange} />);
 
       expect(screen.getAllByTestId('signal-explorer-value-row')).toHaveLength(25);
+    });
+
+    // A long catalog and a high-cardinality label put both "show more" buttons in the same scroll
+    // region, so the visible text alone cannot say which list either one extends.
+    it('names both "show more" buttons distinctly when they are on screen together', async () => {
+      setCatalog(Array.from({ length: 100 }, (_, i) => row(`metric_${i}`)));
+      setLabelKeys(['job']);
+      setLabelValues(Array.from({ length: 100 }, (_, i) => `value-${i}`));
+      renderList();
+      await expandMetric('metric_0');
+      await expandLabel('job');
+
+      expect(screen.getByRole('button', { name: 'Show more metrics' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Show more values' })).toBeInTheDocument();
     });
 
     it('forgets the expanded label when its metric collapses', async () => {
