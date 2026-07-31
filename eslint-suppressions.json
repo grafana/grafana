@@ -2884,11 +2884,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/geomap/layers/registry.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 3
-    }
-  },
   "public/app/plugins/panel/geomap/migrations.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
