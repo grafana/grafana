@@ -63,8 +63,11 @@ function getSolutionHref(solution: PopularSolution, appAvailable: boolean): stri
 }
 
 interface NoDataCardProps {
-  /** 'partial': telemetry flows (or detection was inconclusive) but nothing is renderable. */
-  variant?: 'empty' | 'partial';
+  /**
+   * 'partial': at least one signal is confirmed active but nothing is renderable.
+   * 'unknown': detection was inconclusive — no signal confirmed active, some unsettled.
+   */
+  variant?: 'empty' | 'partial' | 'unknown';
 }
 
 /** Left recommendations card for instances where no solution is reporting data yet. */
@@ -85,9 +88,9 @@ export function NoDataCard({ variant = 'empty' }: NoDataCardProps) {
         />
 
         <Text element="h3" variant="h3" color="primary">
-          {variant === 'partial'
-            ? t('home.recommendations.no-data.title-partial', 'Add more telemetry')
-            : t('home.recommendations.no-data.title', 'No data flowing yet')}
+          {variant === 'empty'
+            ? t('home.recommendations.no-data.title', 'No data flowing yet')
+            : t('home.recommendations.no-data.title-partial', 'Add more telemetry')}
         </Text>
 
         <Text variant="body">
@@ -96,10 +99,15 @@ export function NoDataCard({ variant = 'empty' }: NoDataCardProps) {
                 'home.recommendations.no-data.description-partial',
                 'Some signals are already flowing. Connect more data sources or pick a solution to see live stats here.'
               )
-            : t(
-                'home.recommendations.no-data.description',
-                'Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.'
-              )}
+            : variant === 'unknown'
+              ? t(
+                  'home.recommendations.no-data.description-unknown',
+                  "We couldn't confirm live data yet. Connect more data sources or pick a solution to see live stats here."
+                )
+              : t(
+                  'home.recommendations.no-data.description',
+                  'Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.'
+                )}
         </Text>
 
         <Stack direction="column" gap={1}>

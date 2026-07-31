@@ -416,6 +416,16 @@ describe('RecommendationExisting', () => {
     expect(mockFetchTracesActivity).not.toHaveBeenCalled();
   });
 
+  it('uses the inconclusive copy when no signal is confirmed active', async () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    setSolutionState({ metrics: 'unknown', logs: 'unknown', traces: 'unknown', kubernetes: 'unknown' });
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByText(/We couldn't confirm live data yet/)).toBeInTheDocument();
+    expect(screen.queryByText(/Some signals are already flowing/)).not.toBeInTheDocument();
+  });
+
   it('drops an active entry when every detail fetch came back empty', async () => {
     mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
     setSolutionState(
@@ -443,6 +453,7 @@ describe('RecommendationExisting', () => {
     render(<RecommendationExisting />);
 
     expect(await screen.findByRole('heading', { name: 'Add more telemetry' })).toBeInTheDocument();
+    expect(screen.getByText(/Some signals are already flowing/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Connect a data source/ })).toBeInTheDocument();
   });
 

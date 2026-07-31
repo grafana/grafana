@@ -38,16 +38,18 @@ export function RecommendationExisting({ onSelectionChange }: RecommendationExis
   }
 
   if (!selected) {
-    // NoDataCard's hard claim is only true when every core signal settled inactive; anything
-    // else (active-but-no-entry, unknown) gets the softened variant.
+    // NoDataCard's hard claim is only true when every core signal settled inactive; a confirmed
+    // active signal earns the "already flowing" copy; anything else (all unknown, resolution
+    // missing) gets the neutral inconclusive variant so the card never overclaims.
     const s = resolution?.state;
-    const allInactive =
-      !!s &&
-      s.metrics === 'inactive' &&
-      s.logs === 'inactive' &&
-      s.traces === 'inactive' &&
-      s.kubernetes === 'inactive';
-    return <NoDataCard variant={allInactive ? 'empty' : 'partial'} />;
+    const core = s ? [s.metrics, s.logs, s.traces, s.kubernetes] : [];
+    const variant =
+      core.length > 0 && core.every((v) => v === 'inactive')
+        ? 'empty'
+        : core.some((v) => v === 'active')
+          ? 'partial'
+          : 'unknown';
+    return <NoDataCard variant={variant} />;
   }
 
   return <ExistingSolutionCard existing={solutions} selected={selected} onSelect={setSelectedId} />;

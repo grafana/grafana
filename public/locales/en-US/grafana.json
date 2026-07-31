@@ -11024,6 +11024,7 @@
         "connect": "Connect a data source",
         "description": "Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.",
         "description-partial": "Some signals are already flowing. Connect more data sources or pick a solution to see live stats here.",
+        "description-unknown": "We couldn't confirm live data yet. Connect more data sources or pick a solution to see live stats here.",
         "popular-solutions": "Popular solutions",
         "solution-k6": "k6",
         "solution-kubernetes": "Kubernetes Monitoring",
