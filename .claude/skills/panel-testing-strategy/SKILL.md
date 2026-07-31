@@ -203,7 +203,7 @@ measureTextMock.mockReturnValue({ width: 100 } as TextMetrics);
 expect(measureTextMock).toHaveBeenCalledWith('label', 12);
 ```
 
-## Step 4 — Canvas / rendering panels: use the draw-call snapshot harness
+## Step 4 — HTML5 canvas / rendering panels: use the draw-call snapshot harness
 
 Panels that draw to canvas (timeseries, heatmap, xychart, timeline, piechart, sparkline)
 are tested by **capturing the ctx draw-call stream**, not by pixel-diffing. Follow the established harness:
