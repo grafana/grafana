@@ -248,7 +248,7 @@ func TestKeywordFieldsForMapping(t *testing.T) {
 	assert.Equal(t, keywordField{name: "fields.login", filterable: true}, fields["fields.login"])
 	// A text field's keyword form is a separate, lowercased variant.
 	assert.Equal(t, keywordField{name: "fields.summary_keyword", lowered: true, filterable: true}, fields["fields.summary"])
-	// tags is both filterable and facetable; managedBy is facet-only.
+	// tags and managedBy are both filterable and facetable.
 	assert.Equal(t, keywordField{name: resource.SEARCH_FIELD_TAGS, filterable: true, facetable: true}, fields[resource.SEARCH_FIELD_TAGS])
 	// A facet-only field has a keyword form, but filtering it is not declared.
 	assert.Equal(t, keywordField{name: "fields.category", facetable: true}, fields["fields.category"])
@@ -256,7 +256,7 @@ func TestKeywordFieldsForMapping(t *testing.T) {
 	assert.Equal(t, keywordField{name: resource.SEARCH_FIELD_TITLE_PHRASE, lowered: true, filterable: true}, fields[resource.SEARCH_FIELD_TITLE])
 	assert.Equal(t, keywordField{name: resource.SEARCH_FIELD_CREATED_BY, filterable: true}, fields[resource.SEARCH_FIELD_CREATED_BY])
 	assert.Equal(t, keywordField{name: resource.SEARCH_FIELD_OWNER_REFERENCES, filterable: true}, fields[resource.SEARCH_FIELD_OWNER_REFERENCES])
-	assert.Equal(t, keywordField{name: resource.SEARCH_FIELD_MANAGED_BY, facetable: true}, fields[resource.SEARCH_FIELD_MANAGED_BY])
+	assert.Equal(t, keywordField{name: resource.SEARCH_FIELD_MANAGED_BY, filterable: true, facetable: true}, fields[resource.SEARCH_FIELD_MANAGED_BY])
 	assert.Equal(t, keywordField{name: resource.SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.login", filterable: true}, fields[resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.login"])
 
 	// Facet requests may name a per-kind field with or without the prefix.

@@ -76,11 +76,13 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
 			Description:  "Owner references in format {Group}/{Kind}/{Name}.",
 		},
+		// Objects with no manager hold an empty value here, so "unmanaged only" is a
+		// filter for the empty string and "anything managed" is one against it.
 		{
 			Name:         SEARCH_FIELD_MANAGED_BY,
 			Type:         SearchFieldTypeString,
-			Capabilities: []SearchCapability{SearchCapabilityFacet},
-			Description:  "Manager identity in format {kind}:{id}; used for faceting.",
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityFacet},
+			Description:  "Manager identity in format {kind}:{id}, empty when unmanaged.",
 		},
 		// created and updated are unix-millis timestamps, mapped as numeric bleve
 		// fields and stored so retrieve returns the value in search results. They

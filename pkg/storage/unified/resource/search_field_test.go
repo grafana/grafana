@@ -233,7 +233,7 @@ func TestMapProvider_IndexAffectingHash_GoldenHash(t *testing.T) {
 	}, nil)
 
 	// Standard tags declare facet capability so Bleve facets use their keyword-analyzed mapping.
-	const expected = "0f114ef8fa64163466eb9d3477163cfe964b5a626c37279d5e60a2586c18a064"
+	const expected = "9b3e4e7d3fc3a15bd674dcfc2cd0ee7c243826a83df2b7bf7246a372875fcb29"
 	assert.Equal(t, expected, p.IndexAffectingHash(group, resource),
 		"canonical hash drifted. If json.Marshal output changed (Go release), update the literal; otherwise a code change shifted the canonical form.")
 }

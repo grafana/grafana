@@ -726,6 +726,70 @@ func TestTitleSetFilterExactMatch(t *testing.T) {
 	})
 }
 
+// TestManagedByFilter covers filtering on managedBy, which was facet-only until
+// it gained the filter capability: callers could count managed objects but not
+// narrow to them.
+func TestManagedByFilter(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newTestDashboardsIndex(t, threshold, 4, noop)
+	doc := func(name string, mgr *utils.ManagerProperties) *resource.BulkIndexItem {
+		d := &resource.IndexableDocument{
+			Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name},
+			Name:  name,
+			Title: name,
+		}
+		d.Manager = mgr
+		return &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: d.UpdateCopyFields()}
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		doc("from-repo", &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo-a"}),
+		doc("from-terraform", &utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf-a"}),
+		doc("hand-made", nil),
+	}}))
+
+	filter := func(op string, values ...string) *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+				Fields: []*resourcepb.Requirement{{
+					Key: resource.SEARCH_FIELD_MANAGED_BY, Operator: op, Values: values,
+				}},
+			},
+			Limit: 100,
+		}
+	}
+
+	t.Run("narrow to one manager", func(t *testing.T) {
+		checkSearchQuery(t, index, filter("in", "repo:repo-a"), []string{"from-repo"})
+	})
+
+	t.Run("narrow to several managers", func(t *testing.T) {
+		checkSearchQuery(t, index, filter("in", "repo:repo-a", "terraform:tf-a"), []string{"from-repo", "from-terraform"})
+	})
+
+	t.Run("exclude one manager", func(t *testing.T) {
+		checkSearchQuery(t, index, filter("notin", "repo:repo-a"), []string{"from-terraform", "hand-made"})
+	})
+
+	// An object with no manager holds an empty value rather than no field at all,
+	// which is what makes these two expressible. If managedBy ever became a
+	// pointer, bleve would omit the field and both would silently return nothing.
+	t.Run("only unmanaged objects", func(t *testing.T) {
+		checkSearchQuery(t, index, filter("in", ""), []string{"hand-made"})
+	})
+
+	t.Run("only managed objects, whatever manages them", func(t *testing.T) {
+		checkSearchQuery(t, index, filter("notin", ""), []string{"from-repo", "from-terraform"})
+	})
+
+	// The kind alone is not a value of this field, so "everything managed by a
+	// repo, whichever repo" needs the ids enumerated. Declaring manager.kind is
+	// what would fix that; see the PR description.
+	t.Run("the kind alone matches nothing", func(t *testing.T) {
+		checkSearchQuery(t, index, filter("in", "repo"), nil)
+	})
+}
+
 // TestPublicFieldNameFilter checks the filter path resolves a public field name
 // to its physical fields.* location, so callers don't supply the prefix.
 func TestPublicFieldNameFilter(t *testing.T) {
