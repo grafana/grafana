@@ -1455,8 +1455,8 @@ export type ConnectionSecure = {
   token?: InlineSecureValue;
 };
 export type BitbucketConnectionConfig = {
-  /** App client ID */
-  clientID: string;
+  /** The workspace the OAuth consumer belongs to */
+  workspace: string;
 };
 export type GitHubConnectionConfig = {
   /** GitHub App ID */
@@ -1472,8 +1472,8 @@ export type GitHubEnterpriseConnectionConfig = {
   /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
   serverUrl: string;
 };
-export type GitlabConnectionConfig = {
-  /** App client ID */
+export type ConnectionOAuthConfig = {
+  /** The OAuth app client ID */
   clientID: string;
 };
 export type ConnectionWebhookConfig = {
@@ -1489,8 +1489,8 @@ export type ConnectionSpec = {
   github?: GitHubConnectionConfig;
   /** GitHub Enterprise Server connection configuration Only applicable when provider is "githubEnterprise" */
   githubEnterprise?: GitHubEnterpriseConnectionConfig;
-  /** Gitlab connection configuration Only applicable when provider is "gitlab" */
-  gitlab?: GitlabConnectionConfig;
+  /** OAuth app configuration shared by all OAuth app providers */
+  oauth?: ConnectionOAuthConfig;
   /** The connection display name (shown in the UI) */
   title: string;
   /** The connection provider type
