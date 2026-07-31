@@ -288,7 +288,6 @@ describe('AdHocFiltersVariableEditor', () => {
         ])
       );
     });
-
   });
 
   describe('default filters editor', () => {

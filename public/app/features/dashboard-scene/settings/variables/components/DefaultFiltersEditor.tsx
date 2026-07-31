@@ -15,14 +15,14 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-export const DEFAULT_FILTER_ORIGIN = 'dashboard';
+const DEFAULT_FILTER_ORIGIN = 'dashboard';
 
 /**
  * Sentinel value for "match everything" default filters, following the convention
  * introduced with the scenes All-value support (values: ['$__all'], valueLabels: ['All']).
  */
 export const ALL_SENTINEL_VALUE = '$__all';
-export const ALL_SENTINEL_LABEL = 'All';
+const ALL_SENTINEL_LABEL = 'All';
 
 export interface DefaultFiltersEditorProps {
   /** The default (dashboard-origin, non-groupBy) filters currently configured. */
