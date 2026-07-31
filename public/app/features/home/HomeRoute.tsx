@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 
-import { useMergedPreferencesQuery } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { useMergedPreferencesQuery } from '@grafana/api-clients/rtkq/preferences/v1';
 import { locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useFlagGrafanaUnifiedHomepage } from '@grafana/runtime/internal';

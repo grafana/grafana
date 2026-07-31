@@ -1659,6 +1659,13 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 							Format:      "int64",
 						},
 					},
+					"totalChanges": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TotalChanges is the action-aware count of resources changed for this group/kind, set by the progress recorder as results are recorded. Used for the job-duration histogram's resources_changed bucket.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 					"errors": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info",

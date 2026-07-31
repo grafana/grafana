@@ -114,8 +114,8 @@ test.describe(
         await page.goto(buildDashboardPathWithSearch(dashboardUid, testCase.searchParams));
 
         const tabLocator = testCase.rowTitle
-          ? tabs.getTab(testCase.expectedSelectedTab, rows.getWrapper(testCase.rowTitle))
-          : tabs.getTab(testCase.expectedSelectedTab);
+          ? tabs.getTitle(testCase.expectedSelectedTab, rows.getContent(testCase.rowTitle))
+          : tabs.getTitle(testCase.expectedSelectedTab);
 
         await expect(tabLocator).toHaveAttribute('aria-selected', 'true');
       });

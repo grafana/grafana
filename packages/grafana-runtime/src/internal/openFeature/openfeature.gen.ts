@@ -153,6 +153,8 @@ export const FlagKeys = {
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
   /** Sizes TableNG auto-width columns to fit their content instead of distributing evenly */
   TableAutoColumnWidths: "table.autoColumnWidths",
+  /** Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height */
+  TablePaginationPageSize: "table.paginationPageSize",
   /** Enables a new internal parser for table panel which doesn't rely on constructing a dynamic function and works in more browser environments. */
   TableProtoRowParser: "table.protoRowParser",
   /** Enables the refactored TableNG nested-table implementation */
@@ -929,6 +931,17 @@ export const useFlagSuggestedDashboardsAssistantButton = (options?: ReactFlagEva
  */
 export const useFlagTableAutoColumnWidths = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("table.autoColumnWidths", false, options).value;
+};
+
+/**
+ * Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height
+ *
+ * **Details:**
+ * - flag key: `table.paginationPageSize`
+ * - default value: `false`
+ */
+export const useFlagTablePaginationPageSize = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("table.paginationPageSize", false, options).value;
 };
 
 /**

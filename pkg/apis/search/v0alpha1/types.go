@@ -92,7 +92,8 @@ type ExistsPredicate struct {
 }
 
 // SortField names a field to sort by and a direction ("asc" or "desc"). V1
-// allows sorting only on scalar string fields that declare the sort capability.
+// allows sorting only on scalar string and numeric fields that declare the sort
+// capability.
 //
 // +k8s:deepcopy-gen=true
 type SortField struct {

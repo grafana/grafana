@@ -12425,7 +12425,7 @@
       "list-label": "Navigation",
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
-      "pinned-list-label": "Pinned",
+      "pinned-list-label": "Pinned items",
       "undock": "Undock menu"
     },
     "megamenu-item": {
