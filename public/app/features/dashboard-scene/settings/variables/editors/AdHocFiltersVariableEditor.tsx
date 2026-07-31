@@ -13,8 +13,8 @@ import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { AdHocFiltersVariable, type AdHocFilterWithLabels, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { AdHocOriginFiltersController } from '../components/AdHocOriginFiltersController';
 import { AdHocVariableForm } from '../components/AdHocVariableForm';
+import { DefaultFiltersEditor } from '../components/DefaultFiltersEditor';
 
 interface AdHocFiltersVariableEditorProps {
   variable: AdHocFiltersVariable;
@@ -36,8 +36,6 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
   const { variable } = props;
   const { datasource: datasourceRef, defaultKeys, allowCustomValue, enableGroupBy } = variable.useState();
 
-  const [wip, setWip] = useState<AdHocFilterWithLabels | undefined>(undefined);
-
   const [originalFilters, setOriginalFilters] = useState<AdHocFilterWithLabels[]>(() => variable.getOriginalFilters());
 
   const adhocOriginFilters = useMemo(
@@ -58,26 +56,20 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
     [variable]
   );
 
-  const originFiltersController = useMemo(() => {
-    if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
-      return undefined;
-    }
-
-    return new AdHocOriginFiltersController(
-      adhocOriginFilters,
-      (filters) => {
+  const defaultFiltersEditor = config.featureToggles.dashboardUnifiedDrilldownControls ? (
+    <DefaultFiltersEditor
+      filters={adhocOriginFilters}
+      onChange={(filters) => {
         const keep = originalFilters.filter((f) => !isOriginDashboard(f) || isGroupByOriginFilter(f));
         updateOriginalFilters([...keep, ...filters]);
         reportInteraction('grafana_unified_drilldown_default_filters_changed', { count: filters.length });
-      },
-      wip,
-      setWip,
-      allowCustomValue,
-      (currentKey) => variable._getKeys(currentKey),
-      (filter) => variable._getValuesFor(filter),
-      () => variable._getOperators()
-    );
-  }, [variable, adhocOriginFilters, originalFilters, wip, allowCustomValue, updateOriginalFilters]);
+      }}
+      getKeyOptions={() => variable._getKeys(null)}
+      getValueOptions={(filter) => variable._getValuesFor(filter)}
+      getOperatorOptions={() => variable._getOperators()}
+      allowCustomValue={allowCustomValue ?? true}
+    />
+  ) : undefined;
 
   const defaultGroupByValues: Array<SelectableValue<string>> = useMemo(
     () => groupByOriginFilters.map((f) => ({ value: f.key, label: f.keyLabel || f.key })),
@@ -160,7 +152,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       onDefaultKeysChange={onDefaultKeysChange}
       onAllowCustomValueChange={onAllowCustomValueChange}
       onEnableGroupByChange={onEnableGroupByChange}
-      originFiltersController={originFiltersController}
+      defaultFiltersEditor={defaultFiltersEditor}
       defaultGroupByValues={groupByEnabled ? defaultGroupByValues : undefined}
       defaultGroupByOptions={groupByEnabled ? groupByKeyOptions : undefined}
       onDefaultGroupByChange={groupByEnabled ? onDefaultGroupByChange : undefined}

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type FormEvent, useCallback } from 'react';
+import { type FormEvent, type ReactNode, useCallback } from 'react';
 
 import {
   type DataSourceInstanceSettings,
@@ -12,12 +12,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
-import { type AdHocFiltersController } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { Alert, CodeEditor, Field, Switch, Stack, useStyles2 } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { AdHocOriginFiltersEditor } from './AdHocOriginFiltersEditor';
 import { DefaultGroupByValueEditor } from './DefaultGroupByValueEditor';
 import { VariableLegend } from './VariableLegend';
 
@@ -31,7 +29,8 @@ export interface AdHocVariableFormProps {
   onDefaultKeysChange?: (keys?: MetricFindValue[]) => void;
   onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
   onEnableGroupByChange?: (event: FormEvent<HTMLInputElement>) => void;
-  originFiltersController?: AdHocFiltersController;
+  /** Row-based editor for default (dashboard-origin) filters, rendered when the datasource supports filters. */
+  defaultFiltersEditor?: ReactNode;
   defaultGroupByValues?: Array<SelectableValue<string>>;
   defaultGroupByOptions?: Array<SelectableValue<string>>;
   onDefaultGroupByChange?: (items: Array<SelectableValue<string>>) => void;
@@ -49,7 +48,7 @@ export function AdHocVariableForm({
   onDefaultKeysChange,
   onAllowCustomValueChange,
   onEnableGroupByChange,
-  originFiltersController,
+  defaultFiltersEditor,
   defaultGroupByValues,
   defaultGroupByOptions,
   onDefaultGroupByChange,
@@ -107,11 +106,7 @@ export function AdHocVariableForm({
         />
       ) : null}
 
-      {datasourceSupported && originFiltersController && (
-        <div className={!inline ? styles.originFiltersWrapper : undefined}>
-          <AdHocOriginFiltersEditor controller={originFiltersController} />
-        </div>
-      )}
+      {datasourceSupported && defaultFiltersEditor}
 
       {config.featureToggles.dashboardUnifiedDrilldownControls &&
         datasource &&

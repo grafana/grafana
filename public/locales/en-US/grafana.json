@@ -6792,13 +6792,6 @@
         "new-panel": "New panel"
       }
     },
-    "adhoc-origin-filters-controller": {
-      "input-placeholder": "Add a default filter..."
-    },
-    "adhoc-origin-filters-editor": {
-      "description": "Filters that are pre-selected by default.",
-      "label": "Default filters"
-    },
     "annotation-edit-actions": {
       "description": {
         "change-annotation-color": "Change annotation color",
@@ -7015,6 +7008,20 @@
       "name-instance-name-filter": "Instance name filter",
       "name-type": "Type",
       "selection-options": "Selection options"
+    },
+    "default-filters-editor": {
+      "add-button": "Add default filter",
+      "cancel-aria-label": "Cancel adding default filter",
+      "cancel-tooltip": "Cancel",
+      "description": "Filters that are pre-selected by default. Set an optional display name to control how the filter key is shown.",
+      "display-name-aria-label": "Filter display name",
+      "display-name-placeholder": "Display name",
+      "field-placeholder": "Select field",
+      "label": "Default filters",
+      "operator-aria-label": "Filter operator",
+      "remove-aria-label": "Remove default filter",
+      "remove-tooltip": "Remove default filter",
+      "values-placeholder": "Values"
     },
     "default-grid-layout-manager": {
       "row": {
