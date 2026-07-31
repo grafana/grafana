@@ -1093,3 +1093,27 @@ func TestIntegrationWithEntityLock(t *testing.T) {
 	err := backend.WithEntityLock(ctx, "ns-lock", testResource, "other-uid", func(context.Context) error { return nil })
 	require.NoError(t, err)
 }
+
+func TestIntegrationEnsureCollection_PartitionKeyConflict(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+	t.Cleanup(func() {
+		_, _ = engine.DB().ExecContext(context.Background(),
+			`DELETE FROM embedding_collections WHERE partition_key = 'clash_things_external'`)
+		_, _ = engine.DB().ExecContext(context.Background(), `DROP TABLE IF EXISTS embeddings_clash_things_external`)
+	})
+
+	_, err := backend.EnsureCollection(ctx, "one.example.com", "clash-things", true)
+	require.NoError(t, err)
+
+	// Sanitize collision within a group: clash_things derives the same key.
+	_, err = backend.EnsureCollection(ctx, "one.example.com", "clash_things", true)
+	require.ErrorContains(t, err, `partition key "clash_things_external" is already owned by one.example.com/clash-things`)
+
+	// Cross-group collision on the same resource name.
+	_, err = backend.EnsureCollection(ctx, "two.example.com", "clash-things", true)
+	require.ErrorContains(t, err, `already owned by one.example.com/clash-things`)
+
+	// The owning collection keeps working.
+	_, err = backend.EnsureCollection(ctx, "one.example.com", "clash-things", true)
+	require.NoError(t, err)
+}

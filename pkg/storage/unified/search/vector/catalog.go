@@ -82,8 +82,15 @@ func (b *pgvectorBackend) EnsureCollection(ctx context.Context, group, resource 
 		IsExternal:   isExternal,
 	})
 	if err != nil {
-		// A UNIQUE(partition_key) violation means a different (group,
-		// resource) already owns this key — surface it for manual fixup.
+		// The insert's ON CONFLICT only swallows same-collection races, so a
+		// UNIQUE(partition_key) violation from a different collection lands
+		// here — name the owner so the conflict is resolvable without
+		// spelunking. Auto-renaming on conflict is a planned follow-up.
+		if owner, ok, oerr := b.collectionByPartitionKey(ctx, key); oerr == nil && ok {
+			return Collection{}, fmt.Errorf(
+				"provision collection %s/%s: derived partition key %q is already owned by %s/%s; the new collection needs a manually assigned partition key",
+				group, resource, key, owner.Group, owner.Resource)
+		}
 		return Collection{}, fmt.Errorf("provision collection %s/%s: %w", group, resource, err)
 	}
 
@@ -107,16 +114,21 @@ func (b *pgvectorBackend) EnsureCollection(ctx context.Context, group, resource 
 // key. Internal callers (reconciler, backfill) work in partition keys
 // directly, so validateResource checks this side of the mapping.
 func (b *pgvectorBackend) hasPartitionKey(ctx context.Context, key string) (bool, error) {
+	_, ok, err := b.collectionByPartitionKey(ctx, key)
+	return ok, err
+}
+
+func (b *pgvectorBackend) collectionByPartitionKey(ctx context.Context, key string) (Collection, bool, error) {
 	collections, err := b.listCollections(ctx)
 	if err != nil {
-		return false, err
+		return Collection{}, false, err
 	}
 	for _, c := range collections {
 		if c.PartitionKey == key {
-			return true, nil
+			return c, true, nil
 		}
 	}
-	return false, nil
+	return Collection{}, false, nil
 }
 
 func (b *pgvectorBackend) listCollections(ctx context.Context) ([]Collection, error) {

@@ -10,5 +10,5 @@ VALUES (
     'my_things_external',
     TRUE
 )
-ON CONFLICT DO NOTHING
+ON CONFLICT ("group_name", "resource") DO NOTHING
 ;

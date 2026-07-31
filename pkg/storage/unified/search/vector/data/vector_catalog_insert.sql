@@ -10,5 +10,5 @@ VALUES (
     {{ .Arg .PartitionKey }},
     {{ .Arg .IsExternal }}
 )
-ON CONFLICT DO NOTHING
+ON CONFLICT ({{ .Ident "group_name" }}, {{ .Ident "resource" }}) DO NOTHING
 ;
