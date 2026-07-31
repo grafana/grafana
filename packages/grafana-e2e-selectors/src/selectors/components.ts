@@ -1074,6 +1074,19 @@ export const versionedComponents = {
     stepAdvancedModeSwitch: {
       '11.5.0': (stepNo: string) => `data-testid advanced-mode-switch step-${stepNo}`,
     },
+    contactPointPicker: {
+      '13.2.0': 'data-testid alert-rule contact-point-picker',
+      [MIN_GRAFANA_VERSION]: 'contact-point-picker',
+    },
+    contactPointInput: {
+      '13.2.0': 'data-testid alert-rule contact-point-input',
+    },
+    pendingPeriodInput: {
+      '13.2.0': 'data-testid alert-rule pending-period-input',
+    },
+    thresholdInput: {
+      '13.2.0': 'data-testid alert-rule threshold-input',
+    },
   },
   Alert: {
     alertV2: {
