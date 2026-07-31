@@ -147,7 +147,7 @@ describe('toggleLinePrefix', () => {
   it('leaves out the line a selection merely ends at the start of', () => {
     const view = createView('one\ntwo', { anchor: 0, head: 4 });
 
-    prefixSelectedLines(view, '- ');
+    toggleLinePrefix(view, '- ');
 
     expect(view.state.doc.toString()).toBe('- one\ntwo');
   });
