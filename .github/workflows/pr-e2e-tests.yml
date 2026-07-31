@@ -149,7 +149,7 @@ jobs:
         uses: ./.github/actions/yarn-install
 
       - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+        uses: ./.github/actions/setup-playwright
 
       - name: Run Storybook and E2E tests
         run: yarn e2e:playwright:storybook
@@ -229,7 +229,7 @@ jobs:
           echo "To view the server logs, wait for this job to complete and downloaded the 'grafana-server-log-${{ matrix.shard }}' artifact."
 
       - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+        uses: ./.github/actions/setup-playwright
 
       - name: Wait for Grafana server to start
         run: |

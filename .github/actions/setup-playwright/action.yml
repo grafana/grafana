@@ -1,0 +1,28 @@
+name: Setup Playwright
+description: Install Playwright browsers, restored from a cache keyed on the Playwright version.
+
+inputs:
+  browser:
+    description: Browser to install.
+    required: false
+    default: chromium
+
+runs:
+  using: composite
+  steps:
+    - name: Get Playwright version
+      id: version
+      shell: bash
+      run: echo "version=$(yarn info @playwright/test --json | jq -r '.children.Version')" >> "$GITHUB_OUTPUT"
+
+    - name: Cache Playwright browsers
+      uses: actions/cache@v5
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ runner.arch }}-${{ steps.version.outputs.version }}-${{ inputs.browser }}
+
+    - name: Install Playwright browsers
+      shell: bash
+      env:
+        BROWSER: ${{ inputs.browser }}
+      run: yarn playwright install "$BROWSER" --with-deps
