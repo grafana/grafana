@@ -23,6 +23,7 @@ import {
 } from '@grafana/ui';
 
 import { PieChart, computeGradientFills } from './PieChart';
+import { applySliceOverrides } from './itemConfig';
 import { type PieChartLegendOptions, PieChartLegendValues, type Options } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
@@ -44,14 +45,18 @@ export function PieChartPanel(props: Props) {
 
   const theme = useTheme2();
   const highlightedTitle = useSliceHighlightState();
-  const fieldDisplayValues = getFieldDisplayValues({
+  const fieldDisplayValues = applySliceOverrides(
     fieldConfig,
-    reduceOptions: options.reduceOptions,
-    data: data.series,
-    theme: theme,
-    replaceVariables,
-    timeZone,
-  });
+    getFieldDisplayValues({
+      fieldConfig,
+      reduceOptions: options.reduceOptions,
+      data: data.series,
+      theme: theme,
+      replaceVariables,
+      timeZone,
+    }),
+    theme
+  );
 
   if (!hasFrames(fieldDisplayValues)) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;

@@ -12901,6 +12901,7 @@
     "category-pie-chart": "Pie chart",
     "description-labels": "Select the labels to be displayed in the pie chart",
     "description-pie-chart-type": "How the pie chart should be rendered",
+    "item-kind-slices": "Slices",
     "labels-options": {
       "label-name": "Name",
       "label-percent": "Percent",

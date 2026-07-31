@@ -13,9 +13,13 @@ import {
   LoadingState,
   getDefaultTimeRange,
   EventBusSrv,
+  createTheme,
+  standardEditorsRegistry,
+  standardFieldConfigEditorRegistry,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { PieChartPanel, comparePieChartItemsByValue } from './PieChartPanel';
 import {
@@ -30,6 +34,10 @@ jest.mock('react-use', () => ({
   ...jest.requireActual('react-use'),
   useMeasure: () => [() => {}, { width: 100, height: 100 }],
 }));
+
+// Item override properties resolve through the standard field-config registry
+standardEditorsRegistry.setInit(getAllOptionEditors);
+standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 type PieChartPanelProps = ComponentProps<typeof PieChartPanel>;
 
@@ -510,6 +518,109 @@ describe('comparePieChartItemsByValue', () => {
     const cmp = comparePieChartItemsByValue(sort);
     expect(cmp(a, b)).toBe(expected);
   });
+});
+
+describe('PieChartPanel item overrides', () => {
+  beforeEach(() => {
+    Object.defineProperty(global, 'ResizeObserver', {
+      writable: true,
+      value: jest.fn().mockImplementation(() => ({
+        observe: jest.fn(),
+        unobserve: jest.fn(),
+        disconnect: jest.fn(),
+      })),
+    });
+  });
+
+  const sliceRule = (id: string, fixedColor: string) => ({
+    matcher: { id: 'byItemIds', kind: 'slice', options: [id] },
+    properties: [{ id: 'color', value: { mode: FieldColorModeId.Fixed, fixedColor } }],
+  });
+
+  // Slices are filled via a per-colour gradient def, e.g. fill="url(#PieChart1-f2495c)"
+  const sliceFills = () =>
+    screen
+      .getAllByTestId(selectors.components.Panels.Visualization.PieChart.svgSlice)
+      .map((slice) => slice.querySelector('path')?.getAttribute('fill') ?? '')
+      .map((fill) => {
+        const match = fill.match(/-([0-9a-f]{6})\)$/i);
+        return match ? `#${match[1].toUpperCase()}` : fill;
+      });
+
+  it('recolours only the targeted slice in Calculate mode', () => {
+    setup({
+      data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: defaultSliceSeries },
+      fieldConfig: { defaults: {}, overrides: [], itemOverrides: [sliceRule('Chrome', 'red')] },
+    });
+
+    const fills = sliceFills();
+    const red = createTheme().visualization.getColorByName('red');
+
+    expect(fills).toContain(red);
+    // Firefox keeps its palette colour
+    expect(fills.filter((fill) => fill === red)).toHaveLength(1);
+  });
+
+  it('recolours a row-valued slice in All values mode, which no field override can target', () => {
+    const rowSeries = [
+      toDataFrame({
+        fields: [
+          { name: 'browser', type: FieldType.string, values: ['Chrome', 'Firefox', 'Safari'] },
+          {
+            name: 'share',
+            type: FieldType.number,
+            values: [60, 30, 10],
+            config: { custom: { hideFrom: defaultHideFrom } },
+          },
+        ],
+      }),
+    ];
+
+    setup({
+      data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: rowSeries },
+      options: buildOptions({ reduceOptions: { calcs: [], values: true } }),
+      fieldConfig: { defaults: {}, overrides: [], itemOverrides: [sliceRule('Firefox', 'purple')] },
+    });
+
+    const fills = sliceFills();
+    const purple = createTheme().visualization.getColorByName('purple');
+
+    expect(fills).toHaveLength(3);
+    expect(fills.filter((fill) => fill === purple)).toHaveLength(1);
+  });
+
+  it('leaves every slice alone when no rule matches', () => {
+    setup({
+      data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: defaultSliceSeries },
+      fieldConfig: { defaults: {}, overrides: [], itemOverrides: [sliceRule('Opera', 'red')] },
+    });
+
+    const red = createTheme().visualization.getColorByName('red');
+    expect(sliceFills().filter((fill) => fill === red)).toHaveLength(0);
+  });
+
+  it('gives the legend swatch the same colour as the slice', () => {
+    setup({
+      data: { state: LoadingState.Done, timeRange: getDefaultTimeRange(), series: defaultSliceSeries },
+      fieldConfig: { defaults: {}, overrides: [], itemOverrides: [sliceRule('Chrome', 'red')] },
+    });
+
+    const red = createTheme().visualization.getColorByName('red');
+    const legend = screen.getByTestId(selectors.components.VizLayout.legend);
+    const chromeSwatch = within(legend)
+      .getByTestId('data-testid VizLegend series Chrome')
+      .querySelector('[data-testid="series-icon"]');
+
+    // Swatch colours are applied inline, which the DOM normalises to rgb()
+    expect(chromeSwatch).toHaveStyle({ background: hexToRgb(red) });
+    expect(sliceFills()).toContain(red);
+  });
+
+  function hexToRgb(hex: string) {
+    const value = parseInt(hex.replace('#', ''), 16);
+    // eslint-disable-next-line no-bitwise
+    return `rgb(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255})`;
+  }
 });
 
 const defaultHideFrom = { legend: false, viz: false, tooltip: false };
