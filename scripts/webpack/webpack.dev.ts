@@ -4,7 +4,7 @@ import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
 import fs from 'node:fs';
 import path from 'node:path';
 import webpack, { type Configuration } from 'webpack';
-import WebpackAssetsManifest from 'webpack-assets-manifest';
+import { WebpackAssetsManifest } from 'webpack-assets-manifest';
 import LiveReloadPlugin from 'webpack-livereload-plugin';
 import { merge } from 'webpack-merge';
 import WebpackBar from 'webpackbar';
@@ -12,7 +12,7 @@ import WebpackBar from 'webpackbar';
 import common, { type Env } from './webpack.common.ts';
 
 // webpack does not correctly export named ESM bindings — destructure from the default import
-const { DefinePlugin, EnvironmentPlugin } = webpack;
+const { DefinePlugin } = webpack;
 
 // To speed up webpack and prevent unnecessary rebuilds we ignore decoupled packages
 function getDecoupledPlugins(): string[] {
@@ -43,7 +43,7 @@ export default (env: Env = {}) => {
 
     // If we enabled watch option via CLI
     watchOptions: {
-      ignored: ['/node_modules/', ...decoupledPlugins],
+      ignored: ['**/node_modules', ...decoupledPlugins],
     },
 
     resolve: {
