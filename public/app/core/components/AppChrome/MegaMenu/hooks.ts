@@ -23,6 +23,7 @@ import { contextSrv } from '../../../services/context_srv';
 import { getNavExperimentPayload, reportNavExperimentViewOnce, setNavExperimentVariant } from './navExperiment';
 import {
   enrichWithInteractionTracking,
+  findActivePageItem,
   findByUrl,
   getActiveItem,
   getPinnedEntries,
@@ -412,10 +413,15 @@ export const useNavCustomization = () => {
     }
   }
 
-  // Resolve the active item from the pinned box first so that, when the current page is pinned, the
-  // highlight and aria-current land on the pinned copy rather than the nav row. Non-pinned pages fall
-  // through to the nav copy. Reference equality then highlights whichever rendered row is the match.
-  const activeItem = getActiveItem([...pinnedLeafItems, ...navItems], state.sectionNav.node, location.pathname);
+  // Resolve the active item, pinned box first so that a pinned copy (or a pinned Starred section's
+  // child) wins over the nav row; reference equality then highlights whichever rendered row matches.
+  // Prefer a match on the current page's actual url — a starred dashboard/folder is the only leaf
+  // carrying that url, so this highlights it in the Starred section, where its sectionNav node (the
+  // generic parent section) never would. Fall back to the sectionNav-node match for everything else.
+  const candidates = [...pinnedLeafItems, ...navItems];
+  const activeItem =
+    findActivePageItem(candidates, location.pathname) ??
+    getActiveItem(candidates, state.sectionNav.node, location.pathname);
 
   // --- Edit session lifecycle ---
 

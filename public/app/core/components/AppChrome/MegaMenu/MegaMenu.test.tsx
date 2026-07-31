@@ -72,11 +72,13 @@ const renderMegaMenu = ({
   hiddenItemIds = [],
   bookmarkUrls = [],
   sectionOrder,
+  initialRoute,
 }: {
   navBarTree?: NavModelItem[];
   hiddenItemIds?: string[];
   bookmarkUrls?: string[];
   sectionOrder?: string[];
+  initialRoute?: string;
 } = {}) => {
   // Hidden state + section order are read from localStorage; pins come from preferences.
   window.localStorage.setItem(HIDDEN_ITEMS_STORAGE_KEY, JSON.stringify(hiddenItemIds));
@@ -85,7 +87,10 @@ const renderMegaMenu = ({
   }
   seedBookmarks(bookmarkUrls);
 
-  return render(<MegaMenu onClose={() => {}} />, { preloadedState: { navBarTree } });
+  return render(<MegaMenu onClose={() => {}} />, {
+    preloadedState: { navBarTree },
+    ...(initialRoute ? { historyOptions: { initialEntries: [initialRoute] } } : {}),
+  });
 };
 
 describe('MegaMenu', () => {
@@ -393,6 +398,30 @@ describe('MegaMenu', () => {
         const pinned = within(await screen.findByRole('list', { name: 'Pinned items' }));
         expect(await pinned.findByRole('link', { name: new RegExp(STARRED_DASHBOARD.name) })).toBeInTheDocument();
         expect(pinned.getByText('Starred')).toBeInTheDocument();
+      });
+
+      it('highlights a starred dashboard in the Starred section when viewing that dashboard', async () => {
+        // The current page's sectionNav points at the generic Dashboards section; the starred child is
+        // the only row carrying the dashboard url, matched via the location pathname.
+        renderMegaMenu({ initialRoute: STARRED_DASHBOARD.url });
+
+        // The Starred section auto-expands around its active child.
+        const starred = await screen.findByRole('link', { name: STARRED_DASHBOARD.name });
+        expect(starred).toHaveAttribute('aria-current', 'page');
+      });
+
+      it('highlights the pinned copy of the starred dashboard when Starred is pinned', async () => {
+        renderMegaMenu({ initialRoute: STARRED_DASHBOARD.url, bookmarkUrls: ['/dashboards?starred'] });
+
+        // The pinned breadcrumb for the current dashboard owns the highlight (pinned box wins).
+        const pinned = within(await screen.findByRole('list', { name: 'Pinned items' }));
+        expect(await pinned.findByRole('link', { name: new RegExp(STARRED_DASHBOARD.name) })).toHaveAttribute(
+          'aria-current',
+          'page'
+        );
+        // Exactly one row claims the current page — no double highlight with the nav copy.
+        const current = screen.getAllByRole('link').filter((link) => link.getAttribute('aria-current') === 'page');
+        expect(current).toHaveLength(1);
       });
 
       it('makes Starred pinnable rather than hideable', async () => {

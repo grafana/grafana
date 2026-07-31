@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { type NavModelItem } from '@grafana/data';
+import { locationUtil, type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
@@ -135,6 +135,51 @@ export const getActiveItem = (
     return getActiveItem(navTree, parentItem);
   }
 
+  return undefined;
+};
+
+// Reduce a nav url or the browser pathname to a stable key for "is this the page I'm on?". Strips the
+// app sub-path, query string and trailing slash, and collapses dashboard/folder urls to their uid —
+// a starred entry's url carries a slug and/or `?orgId=` that the browser location does not.
+const toPageKey = (url?: string): string | undefined => {
+  if (!url) {
+    return undefined;
+  }
+  const path = locationUtil.stripBaseFromUrl(url).split('?')[0].replace(/\/+$/, '');
+  const [, first, second, third] = path.split('/');
+  if (first === 'd' && second) {
+    return `/d/${second}`;
+  }
+  if (first === 'dashboards' && second === 'f' && third) {
+    return `/dashboards/f/${third}`;
+  }
+  return path || '/';
+};
+
+/**
+ * Find the leaf nav item whose url is the page the user is currently on (by pathname). This is how a
+ * starred dashboard/folder highlights in the Starred section: its sectionNav node points at the
+ * generic parent section, but its own row is the only leaf carrying the page's url. Section headers
+ * (items with children) are skipped so the specific page — not its parent — is highlighted. Returns
+ * the matched element by reference, so downstream reference-equality highlighting works.
+ */
+export const findActivePageItem = (nodes: NavModelItem[], pathname: string): NavModelItem | undefined => {
+  const target = toPageKey(pathname);
+  if (!target) {
+    return undefined;
+  }
+  for (const item of nodes) {
+    if (!item.children?.length) {
+      if (toPageKey(item.url) === target) {
+        return item;
+      }
+      continue;
+    }
+    const found = findActivePageItem(item.children, pathname);
+    if (found) {
+      return found;
+    }
+  }
   return undefined;
 };
 

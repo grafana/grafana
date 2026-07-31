@@ -7,6 +7,7 @@ import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
 import {
   getEnrichedHelpItem,
   getActiveItem,
+  findActivePageItem,
   findByUrl,
   getPinnedEntries,
   moveItem,
@@ -261,6 +262,45 @@ describe('findByUrl', () => {
 
   it('returns null if no item found', () => {
     expect(findByUrl(mockNavTree, '/no-item')).toBeNull();
+  });
+});
+
+describe('findActivePageItem', () => {
+  // A Starred section whose children carry the real page urls (a slug on the dashboard, an ?orgId on
+  // the folder) — the shapes the starred sync produces.
+  const tree: NavModelItem[] = [
+    {
+      id: 'dashboards',
+      text: 'Dashboards',
+      url: '/dashboards',
+      children: [{ id: 'dashboards/browse', text: 'Browse', url: '/dashboards' }],
+    },
+    {
+      id: 'starred',
+      text: 'Starred',
+      url: '/dashboards?starred',
+      children: [
+        { id: 'starred/abc', text: 'A dashboard', url: '/d/abc' },
+        { id: 'starred/def', text: 'A folder', url: '/dashboards/f/def/?orgId=1' },
+      ],
+    },
+  ];
+
+  it('matches a starred dashboard by uid despite a slug on the pathname', () => {
+    expect(findActivePageItem(tree, '/d/abc/my-slug')?.id).toBe('starred/abc');
+  });
+
+  it('matches a starred folder by uid despite a trailing slash and query param', () => {
+    expect(findActivePageItem(tree, '/dashboards/f/def/folder-slug')?.id).toBe('starred/def');
+  });
+
+  it('skips section headers (items with children) so the specific leaf is matched, not its parent', () => {
+    // Both the Dashboards section and its Browse child carry /dashboards; the leaf is returned.
+    expect(findActivePageItem(tree, '/dashboards')?.id).toBe('dashboards/browse');
+  });
+
+  it('returns undefined when no leaf carries the current page url', () => {
+    expect(findActivePageItem(tree, '/d/not-starred')).toBeUndefined();
   });
 });
 
