@@ -412,9 +412,10 @@ export const useNavCustomization = () => {
     }
   }
 
-  // Resolve the active item from the rendered nav first (the canonical copy), falling back to the
-  // pinned box. Reference equality then highlights whichever rendered row is the match.
-  const activeItem = getActiveItem([...navItems, ...pinnedLeafItems], state.sectionNav.node, location.pathname);
+  // Resolve the active item from the pinned box first so that, when the current page is pinned, the
+  // highlight and aria-current land on the pinned copy rather than the nav row. Non-pinned pages fall
+  // through to the nav copy. Reference equality then highlights whichever rendered row is the match.
+  const activeItem = getActiveItem([...pinnedLeafItems, ...navItems], state.sectionNav.node, location.pathname);
 
   // --- Edit session lifecycle ---
 
