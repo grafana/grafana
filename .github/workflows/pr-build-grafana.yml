@@ -16,7 +16,7 @@ jobs:
     # Gate the whole workflow behind this check
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false
     name: Detect whether code changed
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:
