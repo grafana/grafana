@@ -171,7 +171,26 @@ jobs:
           make devenv-down sources=postgres_tests
 
   #### Enterprise
+  warm-go-cache:
+    # Populate the tooling cache once; the shards below would otherwise each
+    # download the same release asset and get throttled.
+    if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
+    name: Warm Go cache tooling
+    runs-on: ubuntu-x64-small
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Warm the tooling cache
+        uses: ./.github/actions/setup-go-remote-cache
+        with:
+          download-only: 'true'
+
   sqlite-enterprise:
+    needs: warm-go-cache
     # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
     if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     strategy:
@@ -203,10 +222,12 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
-      # Enterprise must be cloned before setup-go so that enterprise
-      # modules are visible when the Go cache key is computed.
+      - name: Set up remote Go cache
+        uses: ./.github/actions/setup-go-remote-cache
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          cache: 'false'
       - name: Run tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -217,6 +238,7 @@ jobs:
           go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql-enterprise:
+    needs: warm-go-cache
     # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
     if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     strategy:
@@ -253,10 +275,12 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
-      # Enterprise must be cloned before setup-go so that enterprise
-      # modules are visible when the Go cache key is computed.
+      - name: Set up remote Go cache
+        uses: ./.github/actions/setup-go-remote-cache
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          cache: 'false'
       - name: Wait for MySQL
         run: |
           for _ in $(seq 1 60); do
@@ -280,6 +304,7 @@ jobs:
         run: make devenv-down sources=mysql_tests
 
   postgres-enterprise:
+    needs: warm-go-cache
     # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
     if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     strategy:
@@ -318,10 +343,12 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
-      # Enterprise must be cloned before setup-go so that enterprise
-      # modules are visible when the Go cache key is computed.
+      - name: Set up remote Go cache
+        uses: ./.github/actions/setup-go-remote-cache
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          cache: 'false'
       - name: Setup Postgres devenv
         run: psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
       - name: Run tests
