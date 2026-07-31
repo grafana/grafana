@@ -1,7 +1,7 @@
 import { act, render, waitFor } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { useAppPluginMetas } from '@grafana/runtime/internal';
+import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
 import { useSolutionState } from './solutionState';
 import { type SolutionState } from './solutionsMatrix';
@@ -20,13 +20,13 @@ jest.mock('./telemetryData', () => ({
   fetchTracesServices: jest.fn(),
 }));
 
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  useAppPluginMetas: jest.fn(),
+jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
+  ...jest.requireActual('app/features/alerting/unified/hooks/usePluginBridge'),
+  usePluginBridge: jest.fn(),
 }));
 
 const mockUseSolutionState = jest.mocked(useSolutionState);
-const mockUseAppPluginMetas = jest.mocked(useAppPluginMetas);
+const mockUsePluginBridge = jest.mocked(usePluginBridge);
 const mockFetchLogsActivity = jest.mocked(fetchLogsActivity);
 const mockFetchMetricsActivity = jest.mocked(fetchMetricsActivity);
 const mockFetchTracesActivity = jest.mocked(fetchTracesActivity);
@@ -88,7 +88,7 @@ beforeEach(() => {
   frames.length = 0;
   mockUseSolutionState.mockReset();
   setSolutionState({});
-  mockUseAppPluginMetas.mockReturnValue({ loading: false, error: undefined, value: [] });
+  mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
   mockFetchMetricsActivity.mockReset();
   mockFetchMetricsActivity.mockResolvedValue({
     series: null,

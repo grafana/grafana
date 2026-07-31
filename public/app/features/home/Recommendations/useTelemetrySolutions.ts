@@ -1,6 +1,6 @@
 import { useAsync } from 'react-use';
 
-import { useAppPluginMetas } from '@grafana/runtime/internal';
+import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
 import { HOSTED_TRACES_APP_ID, LOGS_DRILLDOWN_APP_ID, METRICS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { buildLogsItem, buildMetricsItem, buildTracesItem } from './buildTelemetryItems';
@@ -36,15 +36,26 @@ function toProviderResult<T>(
 }
 
 /**
+ * Whether a drilldown app is installed, enabled, and its root page is accessible — bootdata
+ * membership alone lists installed-but-disabled apps (config.apps carries no enabled state),
+ * which would turn the CTA into a dead /a/<id> link instead of the working Explore fallback.
+ */
+function useDrilldownAvailable(appId: string): boolean {
+  const { installed, settings } = usePluginBridge(appId);
+  return !!installed && !!settings && canAccessPluginPage(settings, `/a/${appId}`);
+}
+
+/**
  * Metrics, Logs and Traces solution providers: an entry appears only for a confirmed-active
  * signal ('unknown' never invents one) AND when its detail fetches produced something to show —
  * a bare title card with every stat failed-soft reads as broken, so it is dropped instead.
  */
 export function useTelemetrySolutions(): TelemetrySolutions {
   const { value: resolution, loading: stateLoading } = useSolutionState();
-  // Availability only picks link targets; a pending lookup falls back to /explore (never blocks).
-  const { value: appMetas } = useAppPluginMetas();
-  const availableApps = new Set((appMetas ?? []).map((app) => app.id));
+  // Availability only picks link targets; a pending probe falls back to /explore (never blocks).
+  const metricsDrilldown = useDrilldownAvailable(METRICS_DRILLDOWN_APP_ID);
+  const logsDrilldown = useDrilldownAvailable(LOGS_DRILLDOWN_APP_ID);
+  const tracesDrilldown = useDrilldownAvailable(HOSTED_TRACES_APP_ID);
 
   const promDs = resolution?.state.metrics === 'active' ? resolution.prometheusDatasource : null;
   const lokiDs = resolution?.state.logs === 'active' ? resolution.lokiDatasource : null;
@@ -85,7 +96,7 @@ export function useTelemetrySolutions(): TelemetrySolutions {
             seriesSparkline: activity.seriesSparkline,
             disk: activity.disk,
             datasourceName: promDs.name,
-            drilldownAvailable: availableApps.has(METRICS_DRILLDOWN_APP_ID),
+            drilldownAvailable: metricsDrilldown,
           })
     );
   }
@@ -101,7 +112,7 @@ export function useTelemetrySolutions(): TelemetrySolutions {
             sources: activity.sources,
             volumeSeries: activity.series,
             datasourceName: lokiDs.name,
-            drilldownAvailable: availableApps.has(LOGS_DRILLDOWN_APP_ID),
+            drilldownAvailable: logsDrilldown,
           })
     );
   }
@@ -119,7 +130,7 @@ export function useTelemetrySolutions(): TelemetrySolutions {
             services: tracesServices.value ?? null,
             throughputSeries: activity.series,
             datasourceName: tempoDs.name,
-            drilldownAvailable: availableApps.has(HOSTED_TRACES_APP_ID),
+            drilldownAvailable: tracesDrilldown,
           })
     );
   }

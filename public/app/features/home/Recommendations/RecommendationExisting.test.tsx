@@ -1,7 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
 import { createDataFrame, FieldType, type DataSourceInstanceListItem, type PluginMeta } from '@grafana/data';
-import { type AppPluginConfig } from '@grafana/runtime';
 import { useAppPluginMetas } from '@grafana/runtime/internal';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
@@ -10,6 +9,7 @@ import { ctaClicked } from '../analytics/main';
 
 import { RecommendationExisting } from './RecommendationExisting';
 import {
+  KUBERNETES_APP_ID,
   fetchClusterCpuSeries,
   fetchKubernetesHealth,
   fetchKubernetesInventory,
@@ -161,7 +161,11 @@ function mockResolvedKubernetes(
 }
 
 beforeEach(() => {
-  mockUsePluginBridge.mockReturnValue({ loading: false, installed: true, settings });
+  mockUsePluginBridge.mockImplementation((plugin) =>
+    plugin === KUBERNETES_APP_ID
+      ? { loading: false, installed: true, settings }
+      : { loading: false, installed: false, settings: undefined }
+  );
   mockResolvedKubernetes();
   mockResolveDatasource.mockClear();
   mockFetchInventory.mockClear();
@@ -231,13 +235,12 @@ describe('RecommendationExisting', () => {
   });
 
   it('shows traces stats and the drilldown href when the app is available', async () => {
-    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    mockUsePluginBridge.mockImplementation((plugin) =>
+      plugin === 'grafana-exploretraces-app'
+        ? { loading: false, installed: true, settings: { id: 'grafana-exploretraces-app' } as PluginMeta<{}> }
+        : { loading: false, installed: false, settings: undefined }
+    );
     mockActiveTraces();
-    mockUseAppPluginMetas.mockReturnValue({
-      loading: false,
-      error: undefined,
-      value: [{ id: 'grafana-exploretraces-app' } as AppPluginConfig],
-    });
 
     render(<RecommendationExisting />);
 
@@ -252,9 +255,11 @@ describe('RecommendationExisting', () => {
   });
 
   it('falls back to Explore while the app lookup is pending or the app is absent', async () => {
-    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    // Drilldown probes pend; kubernetes must settle absent or the whole card stays a skeleton.
+    mockUsePluginBridge.mockImplementation((plugin) =>
+      plugin === KUBERNETES_APP_ID ? { loading: false, installed: false, settings: undefined } : { loading: true }
+    );
     mockActiveLogs();
-    mockUseAppPluginMetas.mockReturnValue({ loading: true, error: undefined, value: undefined });
 
     render(<RecommendationExisting />);
 
@@ -266,13 +271,12 @@ describe('RecommendationExisting', () => {
   });
 
   it('links the logs entry into Logs Drilldown when the app is available', async () => {
-    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    mockUsePluginBridge.mockImplementation((plugin) =>
+      plugin === 'grafana-lokiexplore-app'
+        ? { loading: false, installed: true, settings: { id: 'grafana-lokiexplore-app' } as PluginMeta<{}> }
+        : { loading: false, installed: false, settings: undefined }
+    );
     mockActiveLogs();
-    mockUseAppPluginMetas.mockReturnValue({
-      loading: false,
-      error: undefined,
-      value: [{ id: 'grafana-lokiexplore-app' } as AppPluginConfig],
-    });
 
     render(<RecommendationExisting />);
 
@@ -285,7 +289,11 @@ describe('RecommendationExisting', () => {
   });
 
   it('shows metrics stats, the disk alert, and the drilldown href when the app is available', async () => {
-    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false, settings: undefined });
+    mockUsePluginBridge.mockImplementation((plugin) =>
+      plugin === 'grafana-metricsdrilldown-app'
+        ? { loading: false, installed: true, settings: { id: 'grafana-metricsdrilldown-app' } as PluginMeta<{}> }
+        : { loading: false, installed: false, settings: undefined }
+    );
     setSolutionState({ metrics: 'active' }, { prometheus: prometheusDatasource });
     mockFetchMetricsActivity.mockResolvedValue({
       series: 4_200_000,
@@ -294,11 +302,6 @@ describe('RecommendationExisting', () => {
       hosts: 12,
       seriesSparkline: null,
       disk: { hostsAbove: 3, worstInstance: 'web-03:9100', worstRatio: 0.96, hoursToFull: 6.4 },
-    });
-    mockUseAppPluginMetas.mockReturnValue({
-      loading: false,
-      error: undefined,
-      value: [{ id: 'grafana-metricsdrilldown-app' } as AppPluginConfig],
     });
 
     render(<RecommendationExisting />);
