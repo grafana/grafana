@@ -354,6 +354,7 @@ const (
 	preferencesID          = "preferences migration"
 	datasourceID           = "datasources migration"
 	snapshotsID            = "snapshots migration"
+	correlationsID         = "correlations migration"
 )
 
 var migrationIDsToDefault = map[string]bool{
@@ -364,6 +365,7 @@ var migrationIDsToDefault = map[string]bool{
 	starsID:                false,
 	preferencesID:          false,
 	snapshotsID:            false,
+	correlationsID:         false,
 }
 
 func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDefault bool, optOut bool, extraMigrationIDs map[string]bool) {
