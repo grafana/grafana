@@ -44,7 +44,7 @@ export async function fetchMergedPreferences(): Promise<Preferences | undefined>
   }
 
   try {
-    const url = `apis/preferences.grafana.app/v1alpha1/namespaces/${namespace}/preferences/merged`;
+    const url = `apis/preferences.grafana.app/v1/namespaces/${namespace}/preferences/merged`;
     const resp = await fetch(url, { headers: { Accept: 'application/json' } });
     if (!resp.ok) {
       return undefined;
