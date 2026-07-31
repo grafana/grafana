@@ -48,5 +48,6 @@ export default (env: Env = {}) => {
     };
   }
 
-  return merge(prodConfig(env), config);
+  const baseConfig = prodConfig(env);
+  return merge(Array.isArray(baseConfig) ? baseConfig[0] : baseConfig, config);
 };
