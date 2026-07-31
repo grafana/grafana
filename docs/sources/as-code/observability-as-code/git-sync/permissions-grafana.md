@@ -117,7 +117,7 @@ Users with the `Editor` role can work with provisioned dashboards and folders. T
 - Push their dashboard and folder changes to Git, including opening pull requests, via the jobs API
 
 {{< admonition type="note" >}}
-**Only Admins can trigger a manual sync (**pull** from Git) and orphan-resource clean-up**. Editors can push their own changes but can't pull from Git on demand. Refer to [Job actions and required permissions](#job-actions-and-required-permissions) for more details.
+**Only Admins can trigger a manual sync** (**pull** from Git) and orphan-resource clean-up**. Editors can push their own changes but can't pull from Git on demand. Refer to [Job actions and required permissions](#job-actions-and-required-permissions) for more details.
 {{< /admonition >}}
 
 **Resource access** depends on folder/dashboard permissions:
