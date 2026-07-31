@@ -116,7 +116,10 @@ export async function fetchLogsActivity(ds: Pick<DataSourceInstanceListItem, 'ui
     }
   }
   return {
-    bytes: Array.isArray(volumes) ? volumes.reduce((total, entry) => total + (Number(entry.value?.[1]) || 0), 0) : null,
+    bytes:
+      Array.isArray(volumes) && volumes.length > 0
+        ? volumes.reduce((total, entry) => total + (Number(entry.value?.[1]) || 0), 0)
+        : null,
     sources: Array.isArray(values?.data) ? values.data.length : null,
     series: toSparkline([...buckets.entries()], 'Ingest volume'),
   };
