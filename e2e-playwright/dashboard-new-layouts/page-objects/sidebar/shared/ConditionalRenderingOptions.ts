@@ -1,6 +1,6 @@
 import { test } from '@playwright/test';
 
-import { PageObject } from '../PageObject';
+import { PageObject } from '../../PageObject';
 
 export class ConditionalRenderingOptions extends PageObject {
   async selectVisibility(visibility: 'show' | 'hide') {

@@ -53,6 +53,14 @@ export class Controls extends PageObject {
     });
   }
 
+  async clickBackToDashboard() {
+    await test.step('Click back to dashboard', async () => {
+      await this.dashboardPage
+        .getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+        .click();
+    });
+  }
+
   async openControlsMenu() {
     await test.step('Open controls menu', async () => {
       await this.dashboardPage.getByGrafanaSelector(this.selectors.pages.Dashboard.ControlsButton).click();
@@ -92,7 +100,8 @@ export class Controls extends PageObject {
     },
     openDropdown: async (variableLabel: string) => {
       await test.step(`Open dropdown of variable "${variableLabel}"`, async () => {
-        await this.variables.getDropdownTrigger(variableLabel).click();
+        // clicking the trigger area can hit value chips or the clear control so we open it via the caret instead
+        await this.variables.getDropdownTrigger(variableLabel).getByTestId('icon-angle-down').click();
       });
     },
     getOption: (optionLabel: string): Locator => this.page.getByRole('option', { name: optionLabel, exact: true }),

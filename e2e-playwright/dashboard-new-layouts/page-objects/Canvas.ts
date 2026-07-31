@@ -3,22 +3,21 @@ import { type Locator, test } from '@playwright/test';
 import { PageObject } from './PageObject';
 
 export class Canvas extends PageObject {
+  getContainer() {
+    return this.dashboardPage.getByGrafanaSelector(this.selectors.components.DashboardSidebarSplitter.primaryBody);
+  }
+
   async addPanel(panelsContainer?: Locator) {
     await test.step('Add panel from canvas', async () => {
       // Like groupPanels: each nested grid (per row/tab) renders its own "Add panel"
       // button — scope the click to the given container to target the right one.
-      const container =
-        panelsContainer ??
-        this.dashboardPage.getByGrafanaSelector(this.selectors.components.DashboardEditPaneSplitter.primaryBody);
+      const container = panelsContainer ?? this.getContainer();
 
       // The edit canvas scrolls via the first child of primaryBody — neither
       // primaryBody nor a row/tab content wrapper is scrollable, so scrolling
       // `container` would be a silent no-op. Scroll to the bottom so
       // lazy-loaded panels render before the "Add panel" button is clicked.
-      const scrollContainer = this.dashboardPage
-        .getByGrafanaSelector(this.selectors.components.DashboardEditPaneSplitter.primaryBody)
-        .locator('> div')
-        .first();
+      const scrollContainer = this.getContainer().locator('> div').first();
       await scrollContainer.evaluate((el) => el.scrollTo(0, el.scrollHeight));
 
       await container.getByTestId(this.selectors.components.CanvasGridAddActions.addPanel).click();
@@ -44,9 +43,7 @@ export class Canvas extends PageObject {
       // The add actions are revealed by hovering the layout container that hosts them
       // (opacity 0 otherwise). Pass `panelsContainer` when grouping inside a nested
       // layout (tab/row); by default the whole edit canvas body is hovered.
-      const container =
-        panelsContainer ??
-        this.dashboardPage.getByGrafanaSelector(this.selectors.components.DashboardSidebarSplitter.primaryBody);
+      const container = panelsContainer ?? this.getContainer();
 
       // Hover the top-left pixel instead of the default center, which could land on
       // a panel and trigger unrelated hover states (header actions, tooltips)
