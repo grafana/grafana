@@ -129,7 +129,7 @@ func (tc *correlationsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) 
 	})
 	tc.correlationUIDs = append(tc.correlationUIDs, uid3)
 
-	return false // correlations K8s API requires kubernetesCorrelations toggle, not available in Mode0 by default
+	return true // Mode0 will work with the correlations LegacyStorageProvider
 }
 
 func (tc *correlationsTestCase) Verify(t *testing.T, helper *apis.K8sTestHelper, shouldExist bool) {
