@@ -28,7 +28,7 @@ interface Props {
  */
 export function LabelValues({ id, dsRef, timeRange, metric, labelKey }: Props) {
   const styles = useStyles2(getStyles);
-  const { values, loading, error } = useLabelValues(dsRef, timeRange, metric, labelKey, true);
+  const { values, loading, error } = useLabelValues(dsRef, timeRange, metric, labelKey);
 
   const [filter, setFilter] = useState('');
   const [ascending, setAscending] = useState(true);

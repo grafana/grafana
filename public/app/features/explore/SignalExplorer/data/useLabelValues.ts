@@ -10,11 +10,10 @@ export function useLabelValues(
   dsRef: DataSourceRef,
   timeRange: TimeRange,
   metric: string,
-  labelKey: string,
-  enabled: boolean
+  labelKey: string
 ): { values: string[]; loading: boolean; error?: Error } {
   const generation = useMetricCacheGeneration(dsRef);
-  const requestKey = enabled ? `${dsKey(dsRef)}|${rangeKey(timeRange)}|${metric}|${labelKey}|${generation}` : null;
+  const requestKey = `${dsKey(dsRef)}|${rangeKey(timeRange)}|${metric}|${labelKey}|${generation}`;
 
   const { data, loading, error } = useAsyncResource(
     requestKey,

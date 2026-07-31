@@ -6,7 +6,7 @@ const EMPTY: string[] = [];
 
 /**
  * The three metric hooks cover the shared behaviour through their own request keys. This suite covers
- * only what none of them reach: a rejection that is not an `Error`, and a key going back to `null`.
+ * only what none of them reach: a rejection that is not an `Error`, and an unmount mid-flight.
  */
 describe('useAsyncResource', () => {
   it('coerces a non-Error rejection into an Error, so callers can always read `message`', async () => {
@@ -17,21 +17,6 @@ describe('useAsyncResource', () => {
     expect(result.current.error).toBeInstanceOf(Error);
     expect(result.current.error?.message).toBe('just a string');
     expect(result.current.data).toEqual([]);
-  });
-
-  it('clears data, error and loading when the key goes back to null', async () => {
-    const fetch = jest.fn().mockResolvedValue(['a', 'b']);
-    const { result, rerender } = renderHook(({ key }) => useAsyncResource(key, fetch, EMPTY), {
-      initialProps: { key: 'k1' as string | null },
-    });
-    await waitFor(() => expect(result.current.data).toEqual(['a', 'b']));
-
-    rerender({ key: null });
-
-    expect(result.current.data).toEqual([]);
-    expect(result.current.loading).toBe(false);
-    expect(result.current.error).toBeUndefined();
-    expect(fetch).toHaveBeenCalledTimes(1);
   });
 
   it('does not set state after unmount, so a late response cannot warn or leak', async () => {

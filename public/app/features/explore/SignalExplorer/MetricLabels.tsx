@@ -24,7 +24,7 @@ interface Props {
  */
 export function MetricLabels({ id, dsRef, timeRange, metric, expandedLabel, onToggleLabel }: Props) {
   const styles = useStyles2(getStyles);
-  const { labelKeys, loading, error } = useMetricDetail(dsRef, timeRange, metric, true);
+  const { labelKeys, loading, error } = useMetricDetail(dsRef, timeRange, metric);
 
   return (
     // The container stays a `div` because it holds the status text as well as the rows, and a `ul` may

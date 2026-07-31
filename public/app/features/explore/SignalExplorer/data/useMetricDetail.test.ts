@@ -18,15 +18,9 @@ function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
 describe('useMetricDetail', () => {
   afterEach(() => jest.restoreAllMocks());
 
-  it('does not fetch while disabled', async () => {
-    const spy = jest.spyOn(client, 'fetchLabelKeys').mockResolvedValue(['job']);
-    renderHook(() => useMetricDetail({ uid: 'p1' }, range, 'up', false));
-    expect(spy).not.toHaveBeenCalled();
-  });
-
-  it('fetches label keys once enabled', async () => {
+  it('fetches label keys', async () => {
     const spy = jest.spyOn(client, 'fetchLabelKeys').mockResolvedValue(['instance', 'job']);
-    const { result } = renderHook(() => useMetricDetail({ uid: 'p1' }, range, 'up', true));
+    const { result } = renderHook(() => useMetricDetail({ uid: 'p1' }, range, 'up'));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.labelKeys).toEqual(['instance', 'job']);
     expect(spy).toHaveBeenCalledTimes(1);
@@ -34,32 +28,17 @@ describe('useMetricDetail', () => {
 
   it('surfaces error without throwing', async () => {
     jest.spyOn(client, 'fetchLabelKeys').mockRejectedValue(new Error('nope'));
-    const { result } = renderHook(() => useMetricDetail({ uid: 'p1' }, range, 'up', true));
+    const { result } = renderHook(() => useMetricDetail({ uid: 'p1' }, range, 'up'));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error?.message).toBe('nope');
     expect(result.current.labelKeys).toEqual([]);
   });
 
-  it('stays disabled across rerenders, then fetches once enabled turns true', async () => {
-    const spy = jest.spyOn(client, 'fetchLabelKeys').mockResolvedValue(['job']);
-    const { result, rerender } = renderHook(({ enabled }) => useMetricDetail({ uid: 'p1' }, range, 'up', enabled), {
-      initialProps: { enabled: false },
-    });
-    rerender({ enabled: false });
-    rerender({ enabled: false });
-    expect(spy).not.toHaveBeenCalled();
-
-    rerender({ enabled: true });
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect(result.current.labelKeys).toEqual(['job']);
-  });
-
-  it('refetches for the new metric when `metric` changes while enabled', async () => {
+  it('refetches for the new metric when `metric` changes', async () => {
     const spy = jest
       .spyOn(client, 'fetchLabelKeys')
       .mockImplementation((_dsRef, _timeRange, metric) => Promise.resolve(metric === 'up' ? ['job'] : ['instance']));
-    const { result, rerender } = renderHook(({ metric }) => useMetricDetail({ uid: 'p1' }, range, metric, true), {
+    const { result, rerender } = renderHook(({ metric }) => useMetricDetail({ uid: 'p1' }, range, metric), {
       initialProps: { metric: 'up' },
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -80,7 +59,7 @@ describe('useMetricDetail', () => {
       .mockImplementationOnce(() => first.promise)
       .mockImplementationOnce(() => second.promise);
 
-    const { result, rerender } = renderHook(({ metric }) => useMetricDetail({ uid: 'p1' }, range, metric, true), {
+    const { result, rerender } = renderHook(({ metric }) => useMetricDetail({ uid: 'p1' }, range, metric), {
       initialProps: { metric: 'up' },
     });
     rerender({ metric: 'node_load1' });
@@ -108,7 +87,7 @@ describe('useMetricDetail', () => {
       .mockResolvedValueOnce(['job'])
       .mockImplementationOnce(() => pending.promise);
 
-    const { result, rerender } = renderHook(({ metric }) => useMetricDetail({ uid: 'p1' }, range, metric, true), {
+    const { result, rerender } = renderHook(({ metric }) => useMetricDetail({ uid: 'p1' }, range, metric), {
       initialProps: { metric: 'up' },
     });
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -125,7 +104,7 @@ describe('useMetricDetail', () => {
 
   it('refetches when the cache is invalidated, so a host refresh control reaches an expanded row', async () => {
     const spy = jest.spyOn(client, 'fetchLabelKeys').mockResolvedValue(['instance', 'job']);
-    const { result } = renderHook(() => useMetricDetail({ uid: 'p1' }, range, 'up', true));
+    const { result } = renderHook(() => useMetricDetail({ uid: 'p1' }, range, 'up'));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(spy).toHaveBeenCalledTimes(1);
 

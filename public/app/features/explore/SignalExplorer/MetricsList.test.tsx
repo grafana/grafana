@@ -182,7 +182,7 @@ describe('<MetricsList />', () => {
 
       expect(screen.getByText('instance')).toBeInTheDocument();
       expect(screen.getByText('job')).toBeInTheDocument();
-      expect(useMetricDetailMock).toHaveBeenCalledWith({ uid: 'prom-uid', type: 'prometheus' }, timeRange, 'up', true);
+      expect(useMetricDetailMock).toHaveBeenCalledWith({ uid: 'prom-uid', type: 'prometheus' }, timeRange, 'up');
     });
 
     it('collapses again, unmounting the labels', async () => {
@@ -294,13 +294,7 @@ describe('<MetricsList />', () => {
       await expandLabel('job');
 
       expect(screen.getByText('web-1')).toBeInTheDocument();
-      expect(useLabelValuesMock).toHaveBeenCalledWith(
-        { uid: 'prom-uid', type: 'prometheus' },
-        timeRange,
-        'up',
-        'job',
-        true
-      );
+      expect(useLabelValuesMock).toHaveBeenCalledWith({ uid: 'prom-uid', type: 'prometheus' }, timeRange, 'up', 'job');
     });
 
     it('renders only the first batch of a high-cardinality label', async () => {

@@ -20,12 +20,10 @@ export interface MetricCatalog {
 export function useMetricCatalog(
   dsRef: DataSourceRef,
   timeRange: TimeRange,
-  opts?: { typeFilter?: MetricType | null; searchText?: string },
-  /** Off means zero requests, an empty list and `loading: false` — the same gate the label hooks have. */
-  enabled = true
+  opts?: { typeFilter?: MetricType | null; searchText?: string }
 ): MetricCatalog {
   const generation = useMetricCacheGeneration(dsRef);
-  const requestKey = enabled ? `${dsKey(dsRef)}|${rangeKey(timeRange)}|${generation}` : null;
+  const requestKey = `${dsKey(dsRef)}|${rangeKey(timeRange)}|${generation}`;
 
   const { data: all, loading, error } = useAsyncResource(requestKey, () => fetchCatalog(dsRef, timeRange), NO_METRICS);
 
