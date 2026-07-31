@@ -107,6 +107,12 @@ readability/maintainability. If reviewing the AI output costs more than writing 
 hand, write it by hand. A test is a specification a teammate — and future-you — must read
 easily; value refactoring for readability over a raw coverage percentage.
 
+## Principle 4 - Do not simply update failing tests to pass after changing behaviour, or adding a feature
+
+When a test fails after updating functionality, behaviour or features, this is a warning that a regression was caused. Tests are meant as a safety net to catch regressions, and a failing test isn't broken -- its doing its job.
+
+Net new functionality requires net new tests. Existing tests should be treated as a spec, and if you cause a test to fail -- STOP -- and analyze why that test fails, only after thorough analysis based on tracing real code should an existing test ever be updated.
+
 ## Step 1 — Set up data with the repo's builders
 
 Build data frames with the `@grafana/data` builders — **pick one and don't mix**
