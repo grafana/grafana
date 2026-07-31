@@ -11,7 +11,7 @@ import 'react-loading-skeleton/dist/skeleton.css';
 
 // temporarily remap dark/light to the visual refresh themes if the flag is enabled
 // when delivering the visual refresh, remove this remapping and use the updated dark/light themes directly
-export function maybeRemapTheme(theme: GrafanaTheme2, visualRefreshEnabled: boolean): GrafanaTheme2 {
+function maybeRemapTheme(theme: GrafanaTheme2, visualRefreshEnabled: boolean): GrafanaTheme2 {
   let remappedTheme = theme;
 
   if (visualRefreshEnabled) {
