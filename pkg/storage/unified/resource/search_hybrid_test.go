@@ -942,17 +942,30 @@ func TestHybridSearch_RootFolderSkipsTitleLookup(t *testing.T) {
 }
 
 func TestHybridSearch_FolderTitleResolutionFailsOpen(t *testing.T) {
-	lexResp := lexTableResponse([3]string{"d1", "Dash One", "f1"})
-	s, idx, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
-	idx.folderErr = errors.New("folder index exploded")
+	for name, setup := range map[string]func(*hybridFakeIndex){
+		"transport error": func(idx *hybridFakeIndex) {
+			idx.folderErr = errors.New("folder index exploded")
+		},
+		"payload-embedded error": func(idx *hybridFakeIndex) {
+			idx.folderResp = &resourcepb.ResourceSearchResponse{
+				Error: &resourcepb.ErrorResult{Message: "index building", Code: 503},
+			}
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			lexResp := lexTableResponse([3]string{"d1", "Dash One", "f1"})
+			s, idx, _ := newHybridTestServer(lexResp, &fakeVectorBackend{})
+			setup(idx)
 
-	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
-		Key: validKey(), Query: "q",
-	})
-	require.NoError(t, err, "title resolution is display sugar; it must never fail the search")
-	require.Len(t, resp.Results, 1)
-	assert.Empty(t, resp.Results[0].FolderTitle)
-	assert.Equal(t, "f1", resp.Results[0].Folder, "folder uid still returned")
+			resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+				Key: validKey(), Query: "q",
+			})
+			require.NoError(t, err, "title resolution is display sugar; it must never fail the search")
+			require.Len(t, resp.Results, 1)
+			assert.Empty(t, resp.Results[0].FolderTitle)
+			assert.Equal(t, "f1", resp.Results[0].Folder, "folder uid still returned")
+		})
+	}
 }
 
 func TestHybridSearch_RerankFailureFallsBackToRRFOrder(t *testing.T) {

@@ -187,7 +187,10 @@ func (s *searchServer) resolveFolderTitles(ctx context.Context, namespace string
 		Limit:  int64(len(uids)),
 		Fields: []string{SEARCH_FIELD_TITLE},
 	})
-	if err != nil || resp == nil || resp.Error != nil {
+	if err == nil && resp != nil && resp.Error != nil {
+		err = grpcErrorFromErrorResult(resp.Error)
+	}
+	if err != nil || resp == nil {
 		s.log.Warn("hybrid search: folder title resolution failed", "err", err)
 		return
 	}
