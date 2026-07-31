@@ -56,11 +56,14 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
     : colorManipulator.onBackground(theme.colors.warning.main, bgColor).lighten(25).toHexString();
 
   const selectedRowHoverColor = theme.colors.emphasize(selectedRowColor, 0.05);
+  const columnDropIndicatorColor = theme.colors.primary.main;
+  const columnDragHighlightColor = theme.colors.primary.transparent;
 
   return {
     grid: css({
       '--rdg-background-color': bgColor,
       '--rdg-header-background-color': bgColor,
+      '--rdg-header-draggable-background-color': theme.colors.action.hover,
       '--rdg-border-color': borderColor,
       '--rdg-color': theme.colors.text.primary,
       '--rdg-summary-border-color': borderColor,
@@ -145,6 +148,39 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
           boxShadow: theme.shadows.z2,
         },
       },
+
+      '@keyframes table-ng-column-settle': {
+        '0%': {
+          backgroundColor: columnDragHighlightColor,
+        },
+        '100%': {
+          backgroundColor: 'transparent',
+        },
+      },
+
+      '.table-ng-column-settling': {
+        animation: 'table-ng-column-settle 0.28s ease-out',
+        '@media (prefers-reduced-motion: reduce)': {
+          animation: 'none',
+        },
+      },
+
+      // Native drag preview ghost: keep off-screen so it doesn't reflow the live header cell,
+      // and preserve full column width so right/center aligned labels don't jump left.
+      '& .rdg-header-row [aria-hidden="true"].rdg-cell': {
+        position: 'fixed',
+        left: '-10000px',
+        top: 0,
+        width: 'auto !important',
+        minWidth: 'auto !important',
+        maxWidth: 'none !important',
+        boxShadow: theme.shadows.z3,
+        outline: `2px solid ${columnDropIndicatorColor}`,
+        outlineOffset: -2,
+        borderRadius: theme.shape.radius.default,
+        opacity: 1,
+        pointerEvents: 'none',
+      },
     }),
     gridNested: css({
       height: '100%',
@@ -173,7 +209,31 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
     headerRow: css({
       paddingBlockStart: 0,
       fontWeight: 'normal',
-      '& .rdg-cell': { height: '100%', alignItems: 'flex-end' },
+      '& .rdg-cell': {
+        height: '100%',
+        alignItems: 'center',
+        transition: 'background-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease',
+      },
+      '& .rdg-cell-draggable': {
+        cursor: 'grab',
+      },
+      '& .rdg-cell-draggable:hover [data-table-ng-header-cell] .table-ng-header-label': {
+        textDecoration: 'underline',
+      },
+      '& .rdg-cell-dragging': {
+        cursor: 'grabbing',
+        opacity: 0.45,
+        boxShadow: `inset 0 0 0 1px ${theme.colors.border.medium}`,
+      },
+      '& .rdg-cell-drag-over': {
+        backgroundColor: columnDragHighlightColor,
+        boxShadow: `inset 3px 0 0 0 ${columnDropIndicatorColor}`,
+      },
+      '@media (prefers-reduced-motion: reduce)': {
+        '& .rdg-cell': {
+          transition: 'none',
+        },
+      },
     }),
     displayNone: css({ display: 'none' }),
     paginationContainer: css({
@@ -198,6 +258,7 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
 export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent: Property.JustifyContent) =>
   css({
     display: 'flex',
+    alignItems: 'center',
     gap: theme.spacing(0.5),
     zIndex: theme.zIndex.tooltip - 1,
     paddingInline: TABLE.CELL_PADDING,

@@ -51,7 +51,7 @@ import { hasGeoCell, LazyOpenLayersProvider } from '../../geo';
 import { TableCellDisplayMode } from '../../types';
 import { getCellRenderer, getCellSpecificStyles } from '../Cells/renderers';
 import { EmptyTablePlaceholder } from '../components/EmptyTablePlaceholder';
-import { HeaderCell } from '../components/HeaderCell';
+import { HeaderCell, HeaderCellContainer } from '../components/HeaderCell';
 import { RowExpander } from '../components/RowExpander';
 import { SummaryCell } from '../components/SummaryCell';
 import { TableCellActions } from '../components/TableCellActions';
@@ -109,6 +109,7 @@ import {
   getStableRowKey,
   getSummaryCellTextAlign,
   getVisibleFields,
+  orderFieldsByDisplayNames,
   isCellInspectEnabled,
   parseStyleJson,
   predicateByName,
@@ -118,6 +119,8 @@ import {
 } from '../utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
+const COLUMN_SETTLING_CLASS = 'table-ng-column-settling';
+const COLUMN_SETTLE_MS = 280;
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
 
 export function LegacyTableNG(props: TableNGProps) {
@@ -164,6 +167,61 @@ export function LegacyTableNG(props: TableNGProps) {
   );
 
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+  const [columnOrder, setColumnOrder] = useState<string[] | undefined>(undefined);
+  const [settlingColumnKeys, setSettlingColumnKeys] = useState<ReadonlySet<string>>(() => new Set());
+  const settleTimeoutRef = useRef<number>();
+
+  useEffect(() => {
+    setColumnOrder(undefined);
+    setSettlingColumnKeys(new Set());
+  }, [structureRev]);
+
+  useEffect(() => {
+    return () => {
+      if (settleTimeoutRef.current) {
+        window.clearTimeout(settleTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const orderedVisibleFields = useMemo(
+    () => orderFieldsByDisplayNames(visibleFields, columnOrder),
+    [visibleFields, columnOrder]
+  );
+
+  const handleColumnsReorder = useCallback(
+    (sourceColumnKey: string, targetColumnKey: string) => {
+      if (sourceColumnKey === EXPANDED_COLUMN_KEY || targetColumnKey === EXPANDED_COLUMN_KEY) {
+        return;
+      }
+
+      setColumnOrder((prev) => {
+        const currentOrder = prev ?? visibleFields.map(getDisplayName);
+        const sourceIdx = currentOrder.indexOf(sourceColumnKey);
+        const targetIdx = currentOrder.indexOf(targetColumnKey);
+
+        if (sourceIdx < 0 || targetIdx < 0) {
+          return prev;
+        }
+
+        const next = [...currentOrder];
+        const [moved] = next.splice(sourceIdx, 1);
+        next.splice(targetIdx, 0, moved);
+        return next;
+      });
+
+      setSettlingColumnKeys(new Set([sourceColumnKey, targetColumnKey]));
+      if (settleTimeoutRef.current) {
+        window.clearTimeout(settleTimeoutRef.current);
+      }
+      settleTimeoutRef.current = window.setTimeout(() => {
+        setSettlingColumnKeys(new Set());
+        settleTimeoutRef.current = undefined;
+      }, COLUMN_SETTLE_MS);
+    },
+    [visibleFields]
+  );
+
   const hasHeader = !noHeader;
   const hasFooter = useMemo(
     () => visibleFields.some((field) => Boolean(field.config.custom?.footer?.reducers?.length)),
@@ -313,7 +371,7 @@ export function LegacyTableNG(props: TableNGProps) {
   prevConfiguredWidthCount.current = configuredWidthCount;
 
   const [widths, numFrozenColsFullyInView] = useColWidths(
-    visibleFields,
+    orderedVisibleFields,
     availableWidth,
     frozenColumns,
     widthConfigResetKey
@@ -321,7 +379,7 @@ export function LegacyTableNG(props: TableNGProps) {
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
-    fields: visibleFields,
+    fields: orderedVisibleFields,
     enabled: hasHeader,
     sortColumns,
     showTypeIcons: showTypeIcons ?? false,
@@ -351,8 +409,8 @@ export function LegacyTableNG(props: TableNGProps) {
   });
 
   const defaultRowHeight = useMemo(
-    () => getDefaultRowHeight(theme, visibleFields, cellHeight),
-    [theme, visibleFields, cellHeight]
+    () => getDefaultRowHeight(theme, orderedVisibleFields, cellHeight),
+    [theme, orderedVisibleFields, cellHeight]
   );
   const defaultNestedRowHeight = useMemo(
     () => getDefaultRowHeight(theme, nestedVisibleFields, cellHeight),
@@ -361,7 +419,7 @@ export function LegacyTableNG(props: TableNGProps) {
 
   const rowHeight = useRowHeight({
     columnWidths: widths,
-    fields: visibleFields,
+    fields: orderedVisibleFields,
     hasNestedFrames,
     defaultHeight: defaultRowHeight,
     defaultNestedHeight: defaultNestedRowHeight,
@@ -481,6 +539,7 @@ export function LegacyTableNG(props: TableNGProps) {
       key: EXPANDED_COLUMN_KEY,
       sortable: false,
       resizable: false,
+      draggable: false,
       name: t('grafana-ui.table.nested-table.expander-column-name', 'Expand nested rows'),
       field: {
         name: '',
@@ -672,7 +731,10 @@ export function LegacyTableNG(props: TableNGProps) {
         const textAlign = getAlignment(field);
         const justifyContent = getJustifyContent(textAlign);
         const displayName = getDisplayName(field);
-        const headerCellClass = getHeaderCellStyles(theme, justifyContent);
+        const headerCellClass = clsx(
+          getHeaderCellStyles(theme, justifyContent),
+          settlingColumnKeys.has(displayName) && COLUMN_SETTLING_CLASS
+        );
         const CellType = getCellRenderer(field, cellOptions);
 
         const cellInspect = isCellInspectEnabled(field);
@@ -896,25 +958,29 @@ export function LegacyTableNG(props: TableNGProps) {
           name: displayName,
           width,
           headerCellClass,
+          draggable: true,
+          cellClass: settlingColumnKeys.has(displayName) ? COLUMN_SETTLING_CLASS : undefined,
           frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
           renderCell: renderCellContent,
           renderHeaderCell: ({ column, sortDirection }) => (
-            <HeaderCell
-              column={column}
-              rows={rawRows}
-              field={field}
-              filter={filter}
-              setFilter={setFilter}
-              disableKeyboardEvents={disableKeyboardEvents}
-              direction={sortDirection}
-              showTypeIcons={showTypeIcons}
-              parentIndex={parentIndex}
-              crossFilterRows={crossFilterRows}
-              crossFilterTailRows={crossFilterTailRows}
-              selectFirstCell={() => {
-                gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
-              }}
-            />
+            <HeaderCellContainer column={column} field={field}>
+              <HeaderCell
+                column={column}
+                rows={rawRows}
+                field={field}
+                filter={filter}
+                setFilter={setFilter}
+                disableKeyboardEvents={disableKeyboardEvents}
+                direction={sortDirection}
+                showTypeIcons={showTypeIcons}
+                parentIndex={parentIndex}
+                crossFilterRows={crossFilterRows}
+                crossFilterTailRows={crossFilterTailRows}
+                selectFirstCell={() => {
+                  gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
+                }}
+              />
+            </HeaderCellContainer>
           ),
           renderSummaryCell: () => (
             <SummaryCell
@@ -949,6 +1015,7 @@ export function LegacyTableNG(props: TableNGProps) {
       rowHeight,
       rowHeightFn,
       setFilter,
+      settlingColumnKeys,
       showTypeIcons,
       theme,
       timeRange,
@@ -978,7 +1045,7 @@ export function LegacyTableNG(props: TableNGProps) {
   }, [rows, hasNestedFrames, nestedData, nestedRows, nestedFieldWidths, fromFields]);
 
   const { columns, cellRootRenderers } = useMemo(() => {
-    const result = fromFields(visibleFields, widths, data, rows, sortedRows);
+    const result = fromFields(orderedVisibleFields, widths, data, rows, sortedRows);
 
     // if nested frames are present, augment the columns to include the nested table expander column.
     if (!firstRowNestedData) {
@@ -1030,7 +1097,7 @@ export function LegacyTableNG(props: TableNGProps) {
     panelContext,
     rows,
     sortedRows,
-    visibleFields,
+    orderedVisibleFields,
     widths,
   ]);
 
@@ -1064,6 +1131,11 @@ export function LegacyTableNG(props: TableNGProps) {
         columnWidths={resetColumnWidths}
         onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
         onColumnResize={resizeHandler}
+        onColumnsReorder={handleColumnsReorder}
+        defaultColumnOptions={{
+          ...commonDataGridProps.defaultColumnOptions,
+          draggable: true,
+        }}
         onCellClick={onCellClick}
         onCellKeyDown={({ column, row }, event) => {
           // if top-left cell, use default browser tabbing

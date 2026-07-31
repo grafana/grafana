@@ -1037,6 +1037,37 @@ export const getIsNestedTable = (fields: Field[]): boolean =>
   fields.some(({ type }) => type === FieldType.nestedFrames);
 
 /**
+ * Reorders fields to match a persisted column order. Unknown or new fields are appended at the end
+ * in their original relative order.
+ */
+export function orderFieldsByDisplayNames(fields: Field[], columnOrder?: string[]): Field[] {
+  if (!columnOrder?.length) {
+    return fields;
+  }
+
+  const remaining = new Map(fields.map((field) => [getDisplayName(field), field]));
+  const ordered: Field[] = [];
+
+  for (const displayName of columnOrder) {
+    const field = remaining.get(displayName);
+    if (field) {
+      ordered.push(field);
+      remaining.delete(displayName);
+    }
+  }
+
+  for (const field of fields) {
+    const displayName = getDisplayName(field);
+    if (remaining.has(displayName)) {
+      ordered.push(field);
+      remaining.delete(displayName);
+    }
+  }
+
+  return ordered;
+}
+
+/**
  * @internal
  * returns a map of column types by display name
  */

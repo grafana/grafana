@@ -51,6 +51,7 @@ import {
   getTextHeightEstimator,
   getTextHeightMeasurerFromUwrapCount,
   migrateTableDisplayModeToCellOptions,
+  orderFieldsByDisplayNames,
   parseStyleJson,
   predicateByName,
   prepareSparklineValue,
@@ -2181,6 +2182,24 @@ describe('TableNG utils', () => {
         values: [],
       };
       expect(getDisplayName(field)).toBe('test');
+    });
+  });
+
+  describe('orderFieldsByDisplayNames', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.number, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.boolean, config: {}, values: [] };
+
+    it('returns fields unchanged when no column order is provided', () => {
+      expect(orderFieldsByDisplayNames([fieldA, fieldB, fieldC])).toEqual([fieldA, fieldB, fieldC]);
+    });
+
+    it('reorders fields to match the provided column order', () => {
+      expect(orderFieldsByDisplayNames([fieldA, fieldB, fieldC], ['C', 'A'])).toEqual([fieldC, fieldA, fieldB]);
+    });
+
+    it('appends fields missing from the column order at the end', () => {
+      expect(orderFieldsByDisplayNames([fieldA, fieldB, fieldC], ['B'])).toEqual([fieldB, fieldA, fieldC]);
     });
   });
 
