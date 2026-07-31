@@ -36,11 +36,13 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                                           |                    |
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                                                         | Yes                |
 | `dashboardNewLayouts`                        | Enables new dashboard layouts                                                                                                                                 | Yes                |
-| `dashboardDefaultLayoutSelector`             | Enables default layout selector in dashboard settings                                                                                                         | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                                             |                    |
 | `sqlExpressions`                             | Enables SQL Expressions, which can execute SQL queries against data source results.                                                                           | Yes                |
 | `cloudWatchNewLabelParsing`                  | Updates CloudWatch label parsing to be more accurate                                                                                                          | Yes                |
+| `queryLibrary`                               | Enables Saved queries (query library) feature                                                                                                                 | Yes                |
 | `playlistsRBAC`                              | Enables RBAC for playlists                                                                                                                                    |                    |
+| `savedQueriesRBAC`                           | Enables Saved queries (query library) RBAC permissions                                                                                                        | Yes                |
+| `newSavedQueriesExperience`                  | Enables the new Saved queries (query library) modal experience                                                                                                | Yes                |
 | `alertingListViewV2`                         | Enables the new alert list view design                                                                                                                        | Yes                |
 | `alertingNavigationV2`                       | Enables the new Alerting navigation structure with improved menu grouping                                                                                     | Yes                |
 | `pluginProxyPreserveTrailingSlash`           | Preserve plugin proxy trailing slash.                                                                                                                         |                    |
@@ -55,20 +57,19 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingUIOptimizeReducer`                  | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                                                      | Yes                |
 | `azureMonitorEnableUserAuth`                 | Enables user auth for Azure Monitor datasource only                                                                                                           | Yes                |
 | `alertingNotificationsStepMode`              | Enables simplified step mode in the notifications section                                                                                                     | Yes                |
-| `elasticsearchCrossClusterSearch`            | Enables cross cluster search in the Elasticsearch data source                                                                                                 |                    |
 | `lokiLabelNamesQueryApi`                     | Defaults to using the Loki `/labels` API instead of `/series`                                                                                                 | Yes                |
 | `improvedExternalSessionHandlingSAML`        | Enables improved support for SAML external sessions. Ensure the NameID format is correctly configured in Grafana for SAML Single Logout to function properly. | Yes                |
-| `grafanaAdvisor`                             | Enables Advisor app                                                                                                                                           | Yes                |
 | `alertingMigrationUI`                        | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                                              | Yes                |
 | `alertingImportYAMLUI`                       | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                                                      | Yes                |
 | `unifiedNavbars`                             | Enables unified navbars                                                                                                                                       |                    |
 | `grafanaAssistantInProfilesDrilldown`        | Enables integration with Grafana Assistant in Profiles Drilldown                                                                                              | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                                          | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                                             | Yes                |
-| `dashboardSectionVariables`                  | Enables support for section level variables (rows and tabs)                                                                                                   | Yes                |
 | `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                                                      | Yes                |
 | `react19`                                    | Whether to use the new React 19 runtime                                                                                                                       | Yes                |
+| `grafana.newPreferencesPage`                 | Whether to use the new SharedPreferences functional component                                                                                                 | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                                            |                    |
+| `preferences.rerouteLegacyAPIs`              | Use K8s client implementation for legacy preferences API                                                                                                      | Yes                |
 | `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                                              | Yes                |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                                                    | Yes                |
 
@@ -89,9 +90,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `timeComparison`                  | Enables time comparison option in supported panels                                             |
 | `secretsManagementAppPlatformUI`  | Enable the secrets management app platform UI                                                  |
 | `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                 |
-| `queryLibrary`                    | Enables Saved queries (query library) feature                                                  |
-| `savedQueriesRBAC`                | Enables Saved queries (query library) RBAC permissions                                         |
-| `newSavedQueriesExperience`       | Enables the new Saved queries (query library) modal experience                                 |
 | `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                             |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                         |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                |
@@ -103,6 +101,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `queryEditorNext`                 | Enables next generation query editor experience                                                |
 | `flameGraphWithCallTree`          | Enables the new Flame Graph UI containing the Call Tree view                                   |
 | `splashScreen`                    | Enables the splash screen modal for introducing new Grafana features on first session          |
+| `grafana.dynamicTraceToLogs`      | Check for the existence of logs when linking from the Trace View                               |
 
 ## Development feature toggles
 

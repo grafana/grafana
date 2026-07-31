@@ -1,6 +1,6 @@
-import { HttpResponse, http, type HttpResponseResolver } from 'msw';
+import { HttpResponse, http } from 'msw';
 
-import { type PreferencesSpec } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type PreferencesSpec } from '@grafana/api-clients/rtkq/preferences/v1';
 
 import { mockUserPreferences, setMockUserPreferences } from '../../../fixtures/preferences';
 import { mockStarredDashboardsMap } from '../../../fixtures/starred';
@@ -43,13 +43,9 @@ const patchPreferencesHandler = () =>
     return HttpResponse.json({ message: 'Preferences updated' });
   });
 
-// Override the GET in a test — e.g. to simulate a pending/slow or failing request.
-export const customGetUserPreferencesHandler = (resolver: HttpResponseResolver) =>
-  http.get('/api/user/preferences', resolver);
-
-const getSignedInUserTeamListHandler = () =>
+export const getSignedInUserTeamListHandler = (teams: Array<{ uid: string; name: string }> = []) =>
   http.get('/api/user/teams', async () => {
-    return HttpResponse.json([]);
+    return HttpResponse.json(teams);
   });
 
 const handlers = [

@@ -1,7 +1,8 @@
 import { useState } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Stack, Text } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { BulkDeleteProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkDeleteProvisionedResource';
@@ -41,8 +42,6 @@ export function BrowseActions({ folderDTO }: Props) {
   const [moveFolders] = useMoveMultipleFoldersMutationFacade();
   const [moveDashboards] = useMoveDashboardsMutation();
   const [, stateManager] = useSearchStateManager();
-  const provisioningEnabled = config.featureToggles.provisioning;
-
   const { hasProvisioned, hasNonProvisioned } = useSelectionProvisioningStatus(
     selectedItems,
     isItemManagedByRepository(folderDTO)
@@ -79,7 +78,7 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const showMoveModal = () => {
-    if (provisioningEnabled && hasProvisioned && hasNonProvisioned) {
+    if (hasProvisioned && hasNonProvisioned) {
       // Mixed selection
       appEvents.publish(
         new ShowModalReactEvent({
@@ -90,7 +89,7 @@ export function BrowseActions({ folderDTO }: Props) {
       return;
     }
 
-    if (provisioningEnabled && hasProvisioned) {
+    if (hasProvisioned) {
       // Only provisioned items
       setShowBulkMoveProvisionedResource(true);
       return;
@@ -109,7 +108,7 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const showDeleteModal = () => {
-    if (hasProvisioned && hasNonProvisioned && provisioningEnabled) {
+    if (hasProvisioned && hasNonProvisioned) {
       // Mixed selection
       appEvents.publish(
         new ShowModalReactEvent({
@@ -117,7 +116,7 @@ export function BrowseActions({ folderDTO }: Props) {
           props: {},
         })
       );
-    } else if (hasProvisioned && provisioningEnabled) {
+    } else if (hasProvisioned) {
       // Only provisioned items
       setShowBulkDeleteProvisionedResource(true);
     } else {
@@ -135,7 +134,11 @@ export function BrowseActions({ folderDTO }: Props) {
   };
 
   const moveButton = (
-    <Button onClick={showMoveModal} variant="secondary">
+    <Button
+      onClick={showMoveModal}
+      variant="secondary"
+      data-testid={selectors.pages.BrowseDashboards.actions.moveButton}
+    >
       <Trans i18nKey="browse-dashboards.action.move-button">Move</Trans>
     </Button>
   );
@@ -145,7 +148,11 @@ export function BrowseActions({ folderDTO }: Props) {
       <Stack gap={1} data-testid="manage-actions">
         {moveButton}
 
-        <Button onClick={showDeleteModal} variant="destructive">
+        <Button
+          onClick={showDeleteModal}
+          variant="destructive"
+          data-testid={selectors.pages.BrowseDashboards.actions.deleteButton}
+        >
           <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
         </Button>
       </Stack>

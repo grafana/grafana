@@ -4,6 +4,7 @@ package github
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -78,7 +79,7 @@ type webhookConfig struct {
 	Secret string
 }
 
-func (c *webhookConfig) GetID() int64              { return c.ID }
+func (c *webhookConfig) GetID() string             { return strconv.FormatInt(c.ID, 10) }
 func (c *webhookConfig) GetURL() string            { return c.URL }
 func (c *webhookConfig) GetEvents() []string       { return c.Events }
 func (c *webhookConfig) GetSecret() string         { return c.Secret }

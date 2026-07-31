@@ -1,20 +1,22 @@
 import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { lazy, Suspense, useCallback, useEffect, useMemo } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useLocalStorage, useMeasure } from 'react-use';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { CompletionItemKind, type TableIdentifier } from '@grafana/plugin-ui';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { useFlagSqlExpressionsColumnAutoComplete } from '@grafana/runtime/internal';
 import { type DataQuery } from '@grafana/schema';
-import { formatSQL } from '@grafana/sql';
+import { formatSQL, quoteIdentifierIfNecessary } from '@grafana/sql';
 import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { type ExpressionQueryEditorProps } from '../../ExpressionQueryEditor';
 import { type SqlExpressionQuery } from '../../types';
 import { ALLOWED_FUNCTIONS, fetchSQLFields, type FetchSQLFieldsOptions } from '../../utils/metaSqlExpr';
+import { SQL_EXPRESSIONS_DIALECT } from '../../utils/sqlIdentifier';
 import { QueryToolbox } from '../QueryToolbox';
 
 import { getSqlCompletionProvider as getLegacySqlCompletionProvider } from './CompletionProvider/sqlCompletionProvider';
@@ -48,10 +50,12 @@ export interface SqlExprProps {
 
 export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, metadata, onRunQuery }: SqlExprProps) => {
   const vars = useMemo(() => refIds.map((v) => v.value!), [refIds]);
+  const containerRef = useRef<HTMLDivElement>(null);
   const interpolationScopedVars = metadata?.data?.request?.scopedVars;
   const interpolationFilters = metadata?.data?.request?.filters;
   const interpolationRange = metadata?.range;
   const useCodeMirrorEditor = useBooleanFlagValue('sqlExpressionsCodeMirror', false);
+  const columnAutoCompleteEnabled = useFlagSqlExpressionsColumnAutoComplete();
 
   // Signature metadata is large, so it is loaded lazily only for the CodeMirror path.
   const functionSignatures = useFunctionSignatures(useCodeMirrorEditor);
@@ -59,14 +63,19 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
   const completionProvider = useMemo<SqlCompletionProvider>(
     () => ({
       tables: () =>
-        refIds.map((refId) => ({
-          label: refId.label || refId.value || '',
-          insertText: refId.value || refId.label || '',
-          kind: 'table',
-          boost: 99,
-        })),
+        refIds.map((refId) => {
+          const name = refId.value || refId.label || '';
+
+          return {
+            label: refId.label || refId.value || '',
+            // Quote names that need it (e.g. spaces) so the inserted FROM clause parses and runs on the MySQL backend.
+            insertText: quoteIdentifierIfNecessary(name, SQL_EXPRESSIONS_DIALECT),
+            kind: 'table',
+            boost: 99,
+          };
+        }),
       columns: async ({ table }) => {
-        if (!config.featureToggles.sqlExpressionsColumnAutoComplete) {
+        if (!columnAutoCompleteEnabled) {
           return [];
         }
 
@@ -87,7 +96,7 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
           kind: 'function',
         })),
     }),
-    [interpolationFilters, interpolationRange, interpolationScopedVars, queries, refIds]
+    [columnAutoCompleteEnabled, interpolationFilters, interpolationRange, interpolationScopedVars, queries, refIds]
   );
 
   const legacyCompletionProvider = useMemo(
@@ -100,8 +109,9 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
             filters: interpolationFilters,
           }),
         refIds,
+        columnAutoCompleteEnabled,
       }),
-    [interpolationFilters, interpolationRange, interpolationScopedVars, queries, refIds]
+    [columnAutoCompleteEnabled, interpolationFilters, interpolationRange, interpolationScopedVars, queries, refIds]
   );
 
   // Define the language definition for MySQL syntax highlighting and autocomplete
@@ -111,10 +121,12 @@ export const SqlExpr = ({ onChange, refIds, query, alerting = false, queries, me
     formatter: formatSQL,
   };
 
+  // Quote the seeded table name so refIds with spaces or special characters produce a runnable query.
+  const initialTable = quoteIdentifierIfNecessary(vars[0] || 'table name', SQL_EXPRESSIONS_DIALECT);
   const initialQuery = `SELECT
   *
 FROM
-  ${vars[0]}
+  ${initialTable}
 LIMIT
   10`;
 
@@ -211,8 +223,12 @@ LIMIT
     const handleKeyDown = (event: KeyboardEvent) => {
       const isMac = navigator.userAgent.includes('Mac');
       const isCmdOrCtrl = isMac ? event.metaKey : event.ctrlKey;
+      const target = event.target;
 
-      if (isCmdOrCtrl && event.key === 'Enter') {
+      // Only handle the shortcut when it originates inside this editor. The listener is on document at
+      // capture phase (to win the shortcut over the inner code editor), so without this guard every mounted
+      // instance would fire and it would steal cmd/ctrl+enter from other editors on the page.
+      if (isCmdOrCtrl && event.key === 'Enter' && target instanceof Node && containerRef.current?.contains(target)) {
         event.preventDefault();
         event.stopPropagation();
         executeQuery();
@@ -304,7 +320,7 @@ LIMIT
   );
 
   return (
-    <div className={styles.mainContainer} data-testid="sql-expression-editor">
+    <div className={styles.mainContainer} data-testid="sql-expression-editor" ref={containerRef}>
       <Stack direction="column" gap={1}>
         {renderButtons()}
         {renderMainContent()}

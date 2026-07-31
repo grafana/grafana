@@ -1,7 +1,6 @@
 package quota
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -19,28 +18,28 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 	t.Run("export succeeds when resources are within quota", func(t *testing.T) {
 		helper := sharedHelper(t)
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 10})
-		ctx := context.Background()
 
 		// Create 2 unmanaged dashboards directly in Grafana
 		dashboard1 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-		_, err := helper.DashboardsV1.Resource.Create(ctx, dashboard1, metav1.CreateOptions{})
+		created1, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard1, metav1.CreateOptions{})
 		require.NoError(t, err, "should be able to create first dashboard")
 
 		dashboard2 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v0.yaml")
-		_, err = helper.DashboardsV0.Resource.Create(ctx, dashboard2, metav1.CreateOptions{})
+		created2, err := helper.DashboardsV0.Resource.Create(t.Context(), dashboard2, metav1.CreateOptions{})
 		require.NoError(t, err, "should be able to create second dashboard")
 
 		// Create an empty repository with instance target for export
 		const repo = "export-quota-success"
 		testRepo := common.TestRepo{
-			Name:               repo,
-			SyncTarget:         "instance",
-			Workflows:          []string{"write"},
-			Copies:             map[string]string{},
-			ExpectedDashboards: 2,
-			ExpectedFolders:    0,
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			Copies:     map[string]string{},
 		}
 		helper.CreateLocalRepo(t, testRepo)
+
+		helper.RequireDashboards(t, created1.GetName(), created2.GetName())
+		helper.RequireRepoFolderCount(t, repo, 0)
 
 		// Wait for quota reconciliation to confirm limits are set on the repository
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
@@ -64,27 +63,27 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 	t.Run("export fails when existing resources already exceed the quota", func(t *testing.T) {
 		helper := sharedHelper(t)
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 1})
-		ctx := context.Background()
 
 		// Create 2 unmanaged dashboards — these alone will exceed the quota of 1
 		dashboard1 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-		_, err := helper.DashboardsV1.Resource.Create(ctx, dashboard1, metav1.CreateOptions{})
+		created1, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard1, metav1.CreateOptions{})
 		require.NoError(t, err, "should be able to create first dashboard")
 
 		dashboard2 := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v0.yaml")
-		_, err = helper.DashboardsV0.Resource.Create(ctx, dashboard2, metav1.CreateOptions{})
+		created2, err := helper.DashboardsV0.Resource.Create(t.Context(), dashboard2, metav1.CreateOptions{})
 		require.NoError(t, err, "should be able to create second dashboard")
 
 		const repo = "export-quota-resources-exceeded"
 		testRepo := common.TestRepo{
-			Name:               repo,
-			SyncTarget:         "instance",
-			Workflows:          []string{"write"},
-			Copies:             map[string]string{},
-			ExpectedDashboards: 2,
-			ExpectedFolders:    0,
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			Copies:     map[string]string{},
 		}
 		helper.CreateLocalRepo(t, testRepo)
+
+		helper.RequireDashboards(t, created1.GetName(), created2.GetName())
+		helper.RequireRepoFolderCount(t, repo, 0)
 
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 
@@ -116,16 +115,16 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 	t.Run("export fails when exceeding folders and resources already exceed the quota", func(t *testing.T) {
 		helper := sharedHelper(t)
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 2})
-		ctx := context.Background()
 
 		// Create 1 unmanaged dashboard (alone would fit in quota of 2)
 		dashboard := helper.LoadYAMLOrJSONFile("../exportunifiedtorepository/dashboard-test-v1.yaml")
-		_, err := helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+		createdDash, err := helper.DashboardsV1.Resource.Create(t.Context(), dashboard, metav1.CreateOptions{})
 		require.NoError(t, err, "should be able to create dashboard")
 
 		// Create 2 unmanaged folders — together with the dashboard, the total
 		// becomes 1 dashboard + 2 folders = 3 resources which exceeds the quota of 2.
-		for i, name := range []string{"export-test-folder-1", "export-test-folder-2"} {
+		folderNames := []string{"export-test-folder-1", "export-test-folder-2"}
+		for i, name := range folderNames {
 			folderObj := &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"apiVersion": foldersV1.FolderResourceInfo.GroupVersion().String(),
@@ -138,20 +137,21 @@ func TestIntegrationProvisioning_ExportQuota(t *testing.T) {
 					},
 				},
 			}
-			_, err = helper.Folders.Resource.Create(ctx, folderObj, metav1.CreateOptions{})
+			_, err = helper.Folders.Resource.Create(t.Context(), folderObj, metav1.CreateOptions{})
 			require.NoError(t, err, "should be able to create folder %s", name)
 		}
 
 		const repo = "export-quota-folders-exceeded"
 		testRepo := common.TestRepo{
-			Name:               repo,
-			SyncTarget:         "instance",
-			Workflows:          []string{"write"},
-			Copies:             map[string]string{},
-			ExpectedDashboards: 1,
-			ExpectedFolders:    2,
+			Name:       repo,
+			SyncTarget: "instance",
+			Workflows:  []string{"write"},
+			Copies:     map[string]string{},
 		}
 		helper.CreateLocalRepo(t, testRepo)
+
+		helper.RequireDashboards(t, createdDash.GetName())
+		helper.RequireFolders(t, folderNames...)
 
 		helper.WaitForQuotaReconciliation(t, repo, provisioning.ReasonWithinQuota)
 

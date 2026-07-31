@@ -51,7 +51,6 @@ jest.mock('@grafana/assistant', () => ({
 
 // metadata and interactive elements
 const ELEMENTS = {
-  loading: byText(/Loading rule/i),
   metadata: {
     summary: (text: string) => byText(text),
     runbook: (url: string) => byRole('link', { name: url }),
@@ -280,11 +279,16 @@ describe('RuleViewer', () => {
 
         expect(screen.getAllByRole('row')[6]).toHaveTextContent(/1Unknown 2025-01-13 04:35:17/i);
 
+        // findBy* resolves as soon as the button exists — it does not retry the enabled/disabled
+        // assertion — so the state check has to be wrapped in waitFor to survive a loaded CI runner.
+        const compareButton = screen.getByRole('button', { name: /Compare versions/i });
+
         await user.click(screen.getByLabelText('1'));
         await user.click(screen.getByLabelText('2'));
-        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeEnabled();
+        await waitFor(() => expect(compareButton).toBeEnabled());
+
         await user.click(screen.getByLabelText('1'));
-        expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
+        await waitFor(() => expect(compareButton).toBeDisabled());
       });
       it('shows version history with special case `updated_by` values', async () => {
         await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
@@ -703,7 +707,7 @@ const renderRuleViewer = async (
     { historyOptions: { initialEntries: [path] }, store }
   );
 
-  await waitFor(() => expect(ELEMENTS.loading.query()).not.toBeInTheDocument());
+  await screen.findByRole('heading', { name: rule.name });
 
   return view;
 };

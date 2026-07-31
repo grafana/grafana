@@ -6,6 +6,7 @@
 package extensions
 
 import (
+	_ "github.com/DATA-DOG/go-sqlmock"
 	_ "github.com/alicebob/miniredis/v2"
 	_ "github.com/google/go-github/v82/github"
 	_ "github.com/grafana/authlib/authz/proto/v1"
@@ -51,6 +52,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/tests/testsuite"
 	_ "github.com/grafana/grafana/pkg/util/testutil"
 	_ "github.com/grafana/grafana/pkg/util/testutil/pgtest"
+	_ "github.com/grafana/grafana/pkg/util/xorm/core"
 	_ "github.com/grafana/grafana/pkg/web/webtest"
 	_ "github.com/jackc/pgx/v5"
 	_ "github.com/migueleliasweb/go-github-mock/src/mock"
@@ -63,6 +65,8 @@ import (
 	_ "go.opentelemetry.io/otel/trace/noop"
 	_ "go.uber.org/mock/gomock"
 	_ "golang.org/x/net/websocket"
+	_ "google.golang.org/grpc/resolver"
+	_ "google.golang.org/grpc/resolver/manual"
 	_ "google.golang.org/protobuf/testing/protocmp"
 	_ "k8s.io/api/authentication/v1"
 	_ "k8s.io/apiserver/pkg/endpoints/discovery"

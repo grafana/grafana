@@ -1,8 +1,7 @@
 import { acceptCompletion, autocompletion, startCompletion } from '@codemirror/autocomplete';
 import { EditorState, Prec } from '@codemirror/state';
-import { keymap } from '@codemirror/view';
-import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
-import CodeMirror, { EditorView } from '@uiw/react-codemirror';
+import { EditorView, keymap } from '@codemirror/view';
+import CodeMirror from '@uiw/react-codemirror';
 import { memo, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
@@ -10,6 +9,7 @@ import { t } from '@grafana/i18n';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 
+import { createCodeEditorTheme } from './theme';
 import {
   type CodeMirrorCompletionMode,
   type CodeMirrorCompletionSource,
@@ -96,28 +96,20 @@ export const CodeEditor = memo(function CodeEditor({
   theme: themeOverride,
   basicSetup,
   indentWithTab = true,
+  readOnly = false,
+  lineWrapping = false,
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
   const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
-  const foldPlaceholderTheme = useMemo(
-    () =>
-      EditorView.theme({
-        '.cm-foldPlaceholder': {
-          backgroundColor: theme.colors.background.secondary,
-          borderColor: theme.colors.border.medium,
-          color: theme.colors.text.secondary,
-        },
-      }),
-    [theme]
-  );
+  const editorTheme = useMemo(() => createCodeEditorTheme(theme), [theme]);
 
   const extensions = useMemo(
     () => [
       autocompleteTabKeymap,
-      foldPlaceholderTheme,
       ...getAccessibilityExtensions(ariaLabel, ariaLabelledby),
       ...(languageExtension ? [languageExtension] : []),
       ...getCompletionExtensions(completionSources, completionMode),
+      ...(lineWrapping ? [EditorView.lineWrapping] : []),
       ...(additionalExtensions ?? []),
     ],
     [
@@ -126,8 +118,8 @@ export const CodeEditor = memo(function CodeEditor({
       languageExtension,
       completionSources,
       completionMode,
+      lineWrapping,
       additionalExtensions,
-      foldPlaceholderTheme,
     ]
   );
   return (
@@ -141,13 +133,14 @@ export const CodeEditor = memo(function CodeEditor({
         </Alert>
       )}
       <CodeMirror
-        theme={themeOverride ?? (theme.isDark ? vscodeDark : vscodeLight)}
+        theme={themeOverride ?? editorTheme}
         value={value}
         height={height}
         extensions={extensions}
         onChange={onChange}
         basicSetup={basicSetup}
         indentWithTab={indentWithTab}
+        readOnly={readOnly}
       />
     </>
   );

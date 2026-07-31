@@ -68,6 +68,11 @@ func (a *GrafanaAuthorizer) Register(gv schema.GroupVersion, fn authorizer.Autho
 
 // Authorize implements authorizer.Authorizer.
 func (a *GrafanaAuthorizer) Authorize(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
+	// Restated before the chain, not inside one link: the org role authorizer
+	// allows a viewer to list but not to create.
+	if IsSearchRequest(attr) {
+		attr = AsReadAttributes(attr)
+	}
 	return a.auth.Authorize(ctx, attr)
 }
 

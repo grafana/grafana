@@ -138,7 +138,8 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
                 if (colorByValue) {
                   if (pointColors[i] !== curColorIdx) {
                     curColorIdx = pointColors[i];
-                    let c = curColorIdx === -1 ? FALLBACK_COLOR : pointPalette[curColorIdx];
+                    let c =
+                      curColorIdx === undefined || curColorIdx === -1 ? FALLBACK_COLOR : pointPalette[curColorIdx];
                     u.ctx.fillStyle = paletteHasAlpha ? c : colorManipulator.alpha(c as string, pointAlpha);
                     u.ctx.strokeStyle = colorManipulator.alpha(c as string, 1);
                   }

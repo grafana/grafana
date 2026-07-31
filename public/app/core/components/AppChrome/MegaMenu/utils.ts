@@ -176,122 +176,210 @@ const isPinnable = (item: NavModelItem): boolean =>
 // Children that participate in pinning.
 const pinnableChildren = (item: NavModelItem): NavModelItem[] => (item.children ?? []).filter(isPinnable);
 
-/** Urls of the pinnable leaves under an item — or the item's own url if it has no pinnable children. */
-export function getPinnableLeafUrls(item: NavModelItem): string[] {
-  const children = pinnableChildren(item);
-  if (children.length > 0) {
-    return children.flatMap(getPinnableLeafUrls);
-  }
-  return item.url ? [item.url] : [];
-}
-
-/**
- * Expand a stored (canonical) pin set into the flat set of effective leaf urls — a stored section
- * url becomes all its pinnable leaves. A stored url that no longer resolves to a nav item (e.g. the
- * page was removed, a plugin uninstalled, or it's hidden by the current permissions/flags) is kept
- * as-is so the pin isn't silently dropped, and re-resolves if the item comes back.
- */
-export function expandPinnedUrls(storedUrls: string[], items: NavModelItem[]): Set<string> {
-  const leaves = new Set<string>();
-  for (const url of storedUrls) {
-    const node = findByUrl(items, url);
-    const urls = node ? getPinnableLeafUrls(node) : [url];
-    urls.forEach((u) => leaves.add(u));
-  }
-  return leaves;
-}
-
-/**
- * Collapse a flat set of pinned leaf urls back into the canonical stored form: a top-level section
- * whose every pinnable leaf is pinned is stored as the section itself; otherwise its pinned leaves
- * are stored individually. Collapse is top-level only (intermediate groups aren't collapsed).
- */
-export function normalizePinnedUrls(leafSet: Set<string>, items: NavModelItem[]): string[] {
-  const result: string[] = [];
+/** The chain of nodes from a root item down to (and including) the first item matching `match`. */
+function findPath(items: NavModelItem[], match: (item: NavModelItem) => boolean): NavModelItem[] | null {
   for (const item of items) {
-    const leaves = getPinnableLeafUrls(item);
-    const pinned = leaves.filter((url) => leafSet.has(url));
-    if (pinned.length === 0) {
+    if (match(item)) {
+      return [item];
+    }
+    const childPath = item.children ? findPath(item.children, match) : null;
+    if (childPath) {
+      return [item, ...childPath];
+    }
+  }
+  return null;
+}
+
+/** One breadcrumb line in the pinned box: the nav item it links to, its ancestor text labels, and
+ * the icon of its top-level parent section (shown as the row's leading icon). */
+export interface PinnedLine {
+  item: NavModelItem;
+  ancestors: string[];
+  icon?: string;
+}
+
+/**
+ * A pinned entry (one pinned url). Either a normal pin — rendered as a single breadcrumb `line` — or a
+ * whole-section pin (Starred), which carries the `section` node and renders as a collapsible section
+ * listing the section's own children.
+ */
+export type PinnedEntry =
+  | { url: string; line: PinnedLine; section?: undefined }
+  | { url: string; section: NavModelItem; line?: undefined };
+
+/**
+ * Resolve the pinned urls (in their stored order) into entries for the pinned box. A normal url
+ * becomes one entry with a single breadcrumb line (its ancestor path + itself). A whole-section pin
+ * whose children aren't individually pinnable — i.e. Starred — is flagged with `section` (its node)
+ * so the box renders it as a collapsible section listing its children. Urls matching no nav item are
+ * skipped.
+ */
+export function getPinnedEntries(items: NavModelItem[], pinnedUrls: string[]): PinnedEntry[] {
+  const entries: PinnedEntry[] = [];
+  for (const url of pinnedUrls) {
+    const path = findPath(items, (item) => item.url === url);
+    if (!path) {
       continue;
     }
-    if (item.url && pinned.length === leaves.length) {
-      result.push(item.url);
+    const node = path[path.length - 1];
+    const children = (node.children ?? []).filter((child) => !child.isCreateAction);
+    // Starred is always a whole-section pin (its children are dynamic and none are individually
+    // pinnable) even before its children have loaded — so it keeps the collapsible section layout and
+    // its own empty/loading/error state instead of briefly rendering as a plain breadcrumb and then
+    // reflowing once children arrive. Any other node is a section only when it currently has children,
+    // none of which are individually pinnable.
+    const isSection = node.id === 'starred' || (children.length > 0 && pinnableChildren(node).length === 0);
+    if (isSection) {
+      entries.push({ url, section: node });
     } else {
-      result.push(...pinned);
+      const ancestors = path.slice(0, -1).map((item) => item.text);
+      // The leading icon comes from the top-level parent section (path[0]) — its own icon for a
+      // top-level pin, or the ancestor section's icon for a nested one.
+      const icon = path[0].icon;
+      entries.push({ url, line: { item: node, ancestors, icon } });
     }
   }
-  return result;
+  return entries;
 }
 
-/** Whether an item is pinned in its own right (its url is in the pinned set). */
-function isItemPinned(item: NavModelItem, pinned: Set<string>): boolean {
-  return Boolean(item.url && pinned.has(item.url));
-}
-
-/**
- * Whether an item has been "moved" out of the normal nav into the pinned area. An item is moved
- * when it is pinned in its own right (the whole item, including any children), or when it is a
- * section whose every child is moved (so a fully-pinned parent disappears from the normal nav).
- * Pinning is keyed on the item's own url rather than its children so that sections with dynamic
- * children (e.g. "Starred") stay correctly pinned as items are starred/unstarred.
- */
-function isNavItemMoved(item: NavModelItem, pinned: Set<string>): boolean {
-  if (isItemPinned(item, pinned)) {
-    return true;
+/** Move the element at `from` to `to`, returning a new array (no-op for out-of-range indices). */
+export function moveItem<T>(arr: T[], from: number, to: number): T[] {
+  if (from < 0 || to < 0 || from >= arr.length || to >= arr.length) {
+    return arr;
   }
-  const children = pinnableChildren(item);
-  return children.length > 0 && children.every((child) => isNavItemMoved(child, pinned));
+  const next = [...arr];
+  const [moved] = next.splice(from, 1);
+  next.splice(to, 0, moved);
+  return next;
 }
 
-/** Whether an item is pinned itself or has any pinned descendant (so it appears in the pinned area). */
-function hasPinnedItem(item: NavModelItem, pinned: Set<string>): boolean {
-  return isItemPinned(item, pinned) || pinnableChildren(item).some((child) => hasPinnedItem(child, pinned));
+// ----- Hiding -----
+
+/**
+ * Top-level items that can never be hidden, so users can't customise their way out of the home
+ * page or the bookmarks section (itself a customisation surface). Starred is pinnable instead of
+ * hideable, so it's protected here too.
+ */
+const PROTECTED_NAV_IDS = new Set(['home', 'bookmarks', 'starred']);
+
+/**
+ * Items the mega menu never lists directly (surfaced elsewhere in the chrome). Home is reached via
+ * the logo, so it isn't repeated as a menu item.
+ */
+export const NON_MENU_NAV_IDS = new Set(['profile', 'help', HOME_NAV_ID]);
+
+/**
+ * The stable key identifying an item for hiding — its id, or its url when it has no id (plugin nav
+ * items often have only a url). Everything hiding-related keys on this so any linked row can be hidden.
+ */
+export const hiddenKey = (item: NavModelItem): string => item.id ?? item.url ?? '';
+
+/**
+ * Whether an item can be hidden (any depth). Needs an id or url; excludes Home/Bookmarks/Starred,
+ * create actions and the dynamic starred sub-items (the `starred/` id prefix).
+ */
+export const isHideable = (item: NavModelItem): boolean =>
+  Boolean(hiddenKey(item)) &&
+  !PROTECTED_NAV_IDS.has(item.id ?? '') &&
+  !item.isCreateAction &&
+  !item.id?.startsWith(ID_PREFIX);
+
+// Children that can be hidden — used when "breaking apart" a hidden parent.
+const hideableChildren = (item: NavModelItem): NavModelItem[] => (item.children ?? []).filter(isHideable);
+
+/**
+ * Build the normal nav with hidden items removed. A hidden node takes its subtree with it; a
+ * partially-hidden parent keeps its non-hidden children (so all-children-hidden still shows the parent).
+ */
+export function removeHiddenItems(items: NavModelItem[], hidden: Set<string>): NavModelItem[] {
+  return items
+    .filter((item) => !hidden.has(hiddenKey(item)))
+    .map((item) => (item.children ? { ...item, children: removeHiddenItems(item.children, hidden) } : item));
+}
+
+/** All descendant keys of an item. */
+function getDescendantKeys(item: NavModelItem): string[] {
+  return (item.children ?? []).flatMap((child) => {
+    const key = hiddenKey(child);
+    return [...(key ? [key] : []), ...getDescendantKeys(child)];
+  });
+}
+
+/** Hide an item: add its key and drop any of its now-redundant descendant keys. Never adds the parent. */
+export function hideItem(hidden: string[], items: NavModelItem[], key: string): string[] {
+  const node = findPath(items, (item) => hiddenKey(item) === key)?.at(-1);
+  const descendants = new Set(node ? getDescendantKeys(node) : []);
+  return [...hidden.filter((h) => h !== key && !descendants.has(h)), key];
 }
 
 /**
- * Build the pinned subtree to render at the top of the menu. A directly-pinned item is kept whole
- * (with all its live children); an item that only has pinned descendants is kept as a structural
- * ancestor with just the branches that lead to a pinned item — so pinning "Playlists" surfaces
- * "Dashboards → Playlists".
+ * Reveal an item. If it's hidden via an ancestor, "break apart" that hide: remove the hidden
+ * ancestor and hide every off-path sibling down the path to the item, so only the item's path is
+ * revealed and the rest of the hidden subtree stays hidden. If it was only explicitly hidden,
+ * this just removes its key.
  */
-function buildPinnedTree(items: NavModelItem[], pinned: Set<string>): NavModelItem[] {
-  return items
-    .filter((item) => hasPinnedItem(item, pinned))
-    .map((item) => {
-      if (isItemPinned(item, pinned)) {
-        return { ...item };
+export function revealItem(hidden: string[], items: NavModelItem[], key: string): string[] {
+  const path = findPath(items, (item) => hiddenKey(item) === key);
+  const next = new Set(hidden);
+  next.delete(key);
+  if (!path) {
+    return [...next];
+  }
+  let underHidden = false;
+  for (let i = 0; i < path.length - 1; i++) {
+    const node = path[i];
+    const onPathChildKey = hiddenKey(path[i + 1]);
+    const nodeKey = hiddenKey(node);
+    if (nodeKey && next.has(nodeKey)) {
+      next.delete(nodeKey);
+      underHidden = true;
+    }
+    if (underHidden) {
+      for (const child of hideableChildren(node)) {
+        const childKey = hiddenKey(child);
+        if (childKey && childKey !== onPathChildKey) {
+          next.add(childKey);
+        }
       }
-      const children = pinnableChildren(item);
-      return children.length > 0
-        ? { ...item, children: buildPinnedTree(children, pinned) }
-        : { ...item, children: undefined };
-    });
+    }
+  }
+  return [...next];
 }
 
+// ----- Top-level ordering -----
+
 /**
- * Build the normal nav with pinned items removed. A partially-pinned section is kept with only
- * its un-pinned children; a fully-pinned section is dropped entirely.
+ * Order the top-level sections by the user's stored order (`orderedIds`): sections appear in that
+ * order; any not in the list (e.g. a newly-added section) keep their nav-tree position and sort after.
  */
-function removeMovedItems(items: NavModelItem[], pinned: Set<string>): NavModelItem[] {
+export function orderTopLevelSections(items: NavModelItem[], orderedIds: string[]): NavModelItem[] {
+  const rank = (item: NavModelItem) => {
+    const index = orderedIds.indexOf(item.id ?? '');
+    return index === -1 ? Infinity : index;
+  };
   return items
-    .filter((item) => !isNavItemMoved(item, pinned))
-    .map((item) => (item.children ? { ...item, children: removeMovedItems(item.children, pinned) } : item));
+    .map((item, navIndex) => ({ item, navIndex }))
+    .sort((a, b) => rank(a.item) - rank(b.item) || a.navIndex - b.navIndex)
+    .map(({ item }) => item);
 }
 
 /**
- * Split a nav tree into the pinned subtree (hoisted to the top of the menu) and the rest (with
- * pinned items removed). Single entry point so callers don't orchestrate the two transforms.
+ * Move the top-level section at `fromIndex` to `toIndex`. Operates on the full ordered id list
+ * (via `orderTopLevelSections`) so newly-added sections keep their appended position, and returns
+ * the new stored order — or `currentOrder` unchanged for out-of-range indices.
  */
-export function partitionNavForPinning(
+export function reorderSections(
   items: NavModelItem[],
-  pinned: Set<string>
-): { pinned: NavModelItem[]; rest: NavModelItem[] } {
-  return { pinned: buildPinnedTree(items, pinned), rest: removeMovedItems(items, pinned) };
+  currentOrder: string[],
+  fromIndex: number,
+  toIndex: number
+): string[] {
+  const ordered = orderTopLevelSections(items, currentOrder).map((item) => item.id ?? '');
+  const next = moveItem(ordered, fromIndex, toIndex);
+  // moveItem returns the same array for out-of-range indices; keep the stored order untouched then
+  // rather than persisting the fully-expanded `ordered` list.
+  return next === ordered ? currentOrder : next;
 }
-
-// Items the mega menu never lists directly (surfaced elsewhere in the chrome). Home is reached via
-// the logo, so it isn't repeated as a menu item.
-export const NON_MENU_NAV_IDS: Record<string, true> = { profile: true, help: true, [HOME_NAV_ID]: true };
 
 export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | null {
   for (const item of nodes) {

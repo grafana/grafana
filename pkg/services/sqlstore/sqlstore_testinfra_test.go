@@ -35,7 +35,20 @@ func TestIntegrationTempDatabaseConnect(t *testing.T) {
 func TestIntegrationTempDatabaseOSSMigrate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	_ = sqlstore.NewTestStore(t, sqlstore.WithOSSMigrations())
+	store := sqlstore.NewTestStore(t, sqlstore.WithOSSMigrations())
+	countMigrationLogs := func() int64 {
+		t.Helper()
+
+		count, err := store.GetEngine().Table("migration_log").Count()
+		require.NoError(t, err)
+		return count
+	}
+
+	initialCount := countMigrationLogs()
+	require.Positive(t, initialCount)
+
+	require.NoError(t, store.Migrate(false))
+	require.Equal(t, initialCount, countMigrationLogs())
 }
 
 func TestIntegrationUniqueConstraintViolation(t *testing.T) {

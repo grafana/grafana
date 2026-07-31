@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -1521,6 +1522,15 @@ func (a apiClient) RawConvertPrometheusDeleteAlertmanagerConfig(t *testing.T, he
 	return sendRequestJSON[apimodels.ConvertPrometheusResponse](t, req, http.StatusAccepted)
 }
 
+func (a apiClient) RawConvertPrometheusPromoteAlertmanagerConfig(t *testing.T, identifier string) (apimodels.ConvertAlertmanagerResponse, int, string) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/convert/api/v1/alerts/%s/promote", a.url, identifier), nil)
+	require.NoError(t, err)
+
+	return sendRequestJSON[apimodels.ConvertAlertmanagerResponse](t, req, http.StatusAccepted)
+}
+
 func (a apiClient) RawConvertPrometheusDeleteNamespace(t *testing.T, namespaceTitle string, headers map[string]string) (apimodels.ConvertPrometheusResponse, int, string) {
 	t.Helper()
 
@@ -1635,7 +1645,7 @@ func createUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCom
 
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
-	quotaService := quotaimpl.ProvideService(context.Background(), db, cfgProvider)
+	quotaService := quotaimpl.ProvideService(context.Background(), legacysql.NewDatabaseProvider(db), cfgProvider)
 	orgService, err := orgimpl.ProvideService(db, cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(

@@ -3,7 +3,6 @@ import { BehaviorSubject, type Observable, combineLatest, type Subscription } fr
 import { map, distinctUntilChanged } from 'rxjs/operators';
 
 import { type LocationService, type ScopesContextValue, type ScopesContextValueState } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { type ScopesApiClient } from './ScopesApiClient';
 import { type ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
@@ -251,14 +250,11 @@ export class ScopesService implements ScopesContextValue {
       this.updateState({ enabled });
       if (enabled) {
         const { appliedScopes, scopes } = this.selectorService.state;
-        // When there is no selection yet and ScopesFirstMode is on, fetch the
-        // default scope and apply it. Fire-and-forget so setEnabled stays sync.
-        // fetchDefaultScope is itself gated on grafana.useDefaultScopesEndpoint
-        // and returns undefined when off, so the call is safe here.
-        if (
-          appliedScopes.length === 0 &&
-          getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaEnableScopesFirstMode, false)
-        ) {
+        // When there is no selection yet, fetch the default scope and apply
+        // it. Fire-and-forget so setEnabled stays sync. fetchDefaultScope is
+        // itself gated on grafana.useDefaultScopesEndpoint and returns
+        // undefined when off, so the call is safe here.
+        if (appliedScopes.length === 0) {
           this.apiClient
             .fetchDefaultScope()
             .then((name) => {
@@ -281,12 +277,12 @@ export class ScopesService implements ScopesContextValue {
               }
               // Bypass this.changeScopes (which hardcodes redirectOnApply=false
               // for URL-driven init) and call the selector service directly
-              // with redirectOnApply=true. Applying the default scope on first
-              // mount should land the user on the scope's redirectPath or
-              // first scope navigation, matching the behavior of selecting
-              // the scope manually. The scope metadata is already in the
-              // getScope RTK Query cache (seeded by fetchDefaultScope), so
-              // applyScopes' downstream fetch is a cache hit.
+              // with redirectOnApply=true. If the default scope's scope node
+              // resolves with a redirectPath once applyScopes has loaded scope
+              // metadata and nodes, the user is redirected there — same as manual
+              // selection. The scope metadata is already in the getScope RTK Query
+              // cache (seeded by fetchDefaultScope), so applyScopes' downstream
+              // fetch is a cache hit.
               // Return the promise so the outer .catch below actually catches
               // a rejection from changeScopes → applyScopes → fetch chains.
               // Without the return, the inner promise floats free and any

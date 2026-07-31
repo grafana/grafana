@@ -40,8 +40,7 @@ func TestIntegrationProvisioning_PullJobFolderDepthExceeded(t *testing.T) {
 			"../testdata/text-options.json":  deepDir + "/dashboard2.json",
 			"../testdata/timeline-demo.json": deepDir + "/dashboard3.json",
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
@@ -171,8 +170,7 @@ func TestIntegrationProvisioning_PullJobFolderDepthExceeded_RecoversAfterFix(t *
 			"../testdata/all-panels.json":   "ok/dashboard.json",
 			"../testdata/text-options.json": deepDashboardRel,
 		},
-		SkipSync:               true,
-		SkipResourceAssertions: true,
+		SkipSync: true,
 	})
 
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{

@@ -900,6 +900,10 @@ The file may contain either a classic dashboard JSON or a Kubernetes-format dash
 On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 {{< /admonition >}}
 
+#### `default_preload`
+
+Instance-wide default for panel preloading, applied only to dashboards that do not explicitly set the `preload` property in their JSON. When `true`, all panels start loading as soon as the dashboard loads instead of lazy loading as they scroll into view. An explicit `preload` value in the dashboard JSON always takes precedence over this default. Default is `false`.
+
 ### `[dashboard_cleanup]`
 
 Settings related to cleaning up associated dashboards information if the dashboard was deleted through /apis.
@@ -2492,6 +2496,26 @@ When set to `false`, the OTLP client will use TLS credentials with the default s
 
 <hr>
 
+### `[tracing.opentelemetry.file]`
+
+Grafana can capture its own distributed traces to a local file in OpenTelemetry Protocol (OTLP) JSON format, without running a collector or a tracing backend.
+Capturing stops when the file reaches the size limit or the capture duration elapses, whichever comes first.
+Use this exporter for support: turn it on, reproduce an issue, then collect and share the file.
+
+#### `path`
+
+The path to the capture file, for example, `/var/lib/grafana/traces/capture.json`. Setting this option turns on the file exporter. The parent directory must already exist and be writable by Grafana. Default value is empty, which turns off the exporter.
+
+#### `max_file_size_bytes`
+
+The maximum size of the capture file, in bytes. Default value is `104857600` (100 MiB). The value must be greater than `0`.
+
+#### `capture_duration`
+
+How long to capture traces after Grafana starts, expressed as a duration such as `10m`. Default value is `10m`. The value must be greater than `0`.
+
+<hr>
+
 ### `[external_image_storage]`
 
 These options control how images should be made public so they can be shared on services like Slack or email message.
@@ -2779,6 +2803,15 @@ To prevent automatic updates for specific plugins, pin them to a specific versio
 
 <hr>
 
+### `[marketplace]`
+
+#### `license_directory`
+
+Directory containing Marketplace license files for plugins. Name each file `license-<PLUGIN_ID>.jwt`.
+Defaults to the Grafana data path, alongside the default Enterprise `license.jwt` file.
+
+<hr>
+
 ### `[live]`
 
 #### `max_connections`
@@ -2840,6 +2873,14 @@ Whether image rendering is allowed for dashboard previews. Requires the image re
 #### `allow_insecure`
 
 Whether to allow `http://` repository URLs together with a configured token. Because this sends the token in cleartext on every Git operation, it's rejected by default. Intended for local and development use only. It's also implicitly allowed when `app_mode = development`. Default is `false`.
+
+#### `allowed_git_urls`
+
+While public addresses are always allowed, to prevent server-side request forgery (SSRF), repository URLs that resolve to loopback, private (RFC 1918), link-local, or unspecified addresses are rejected by default.
+
+If you want to allow an internal or self-hosted Git server, such as an on-premises GitHub Enterprise host, add an entry here. Each entry can be a hostname, `host:port`, a full URL (only the host is used), a literal IP address, or a CIDR range.
+
+This field is empty by default.
 
 #### `min_sync_interval`
 

@@ -122,7 +122,7 @@ test.describe(
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item('New tab')).click();
       await expect(firstTab).toBeInViewport();
 
-      // Selecting an outline item can move focus to another edit pane; reopen
+      // Selecting an outline item can move focus to another sidebar pane; reopen
       // outline defensively before selecting the second tab.
       await openOutline(page, dashboardPage, selectors);
       await dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.Outline.item(lastTabTitle)).click();
