@@ -20,9 +20,12 @@ const DEFAULT_FILTER_ORIGIN = 'dashboard';
 /**
  * Sentinel value for "match everything" default filters, following the convention
  * introduced with the scenes All-value support (values: ['$__all'], valueLabels: ['All']).
+ * Only meaningful with the "one of" (=|) operator - any other operator treats the
+ * sentinel as a literal value, mirroring isAllValueFilter in @grafana/scenes.
  */
 export const ALL_SENTINEL_VALUE = '$__all';
 const ALL_SENTINEL_LABEL = 'All';
+const ONE_OF_OPERATOR = '=|';
 
 export interface DefaultFiltersEditorProps {
   /** The default (dashboard-origin, non-groupBy) filters currently configured. */
@@ -39,7 +42,7 @@ export function createAllFilter(key: string, keyLabel?: string): AdHocFilterWith
     key,
     // Only persist a keyLabel when the datasource provides a display label distinct from the raw key
     ...(keyLabel && keyLabel !== key ? { keyLabel } : {}),
-    operator: '=',
+    operator: ONE_OF_OPERATOR,
     value: ALL_SENTINEL_VALUE,
     values: [ALL_SENTINEL_VALUE],
     valueLabels: [ALL_SENTINEL_LABEL],
@@ -47,10 +50,12 @@ export function createAllFilter(key: string, keyLabel?: string): AdHocFilterWith
   };
 }
 
+// Mirrors isAllValueFilter in @grafana/scenes: the sentinel only means "All" with =|
 export function isAllFilter(filter: AdHocFilterWithLabels): boolean {
-  // Single-value operators round-trip through scenes without a values array, so check value too
-  const values = filter.values ?? (filter.value !== '' ? [filter.value] : []);
-  return values.length === 1 && values[0] === ALL_SENTINEL_VALUE;
+  if (filter.operator !== ONE_OF_OPERATOR) {
+    return false;
+  }
+  return filter.values ? filter.values.includes(ALL_SENTINEL_VALUE) : filter.value === ALL_SENTINEL_VALUE;
 }
 
 function isMultiValueOperator(operator: string): boolean {
@@ -108,12 +113,23 @@ export function DefaultFiltersEditor({
 
       // Selecting All alongside other values resolves in favour of the most recent action:
       // picking All clears the other values; picking a value while All is set drops All.
-      const hasAll = selected.some((item) => item.value === ALL_SENTINEL_VALUE);
-      if (selected.length === 0 || (hasAll && !wasAll)) {
-        updateFilterAt(index, { ...createAllFilter(filter.key, filter.keyLabel), operator: filter.operator });
+      const hasAll = filter.operator === ONE_OF_OPERATOR && selected.some((item) => item.value === ALL_SENTINEL_VALUE);
+      if (hasAll && !wasAll) {
+        updateFilterAt(index, createAllFilter(filter.key, filter.keyLabel));
         return;
       }
       selected = selected.filter((item) => item.value !== ALL_SENTINEL_VALUE);
+
+      if (selected.length === 0) {
+        // An empty selection means All for the "one of" operator; other operators keep an
+        // empty row for the author to fill in ($__all would be a literal value there)
+        const { values: _values, valueLabels: _valueLabels, ...rest } = filter;
+        updateFilterAt(
+          index,
+          filter.operator === ONE_OF_OPERATOR ? createAllFilter(filter.key, filter.keyLabel) : { ...rest, value: '' }
+        );
+        return;
+      }
 
       if (!isMultiValueOperator(filter.operator) && selected.length > 1) {
         selected = [selected[selected.length - 1]];
@@ -121,7 +137,6 @@ export function DefaultFiltersEditor({
 
       updateFilterAt(index, {
         ...filter,
-        operator: filter.operator,
         value: selected[0].value!,
         values: selected.map((item) => item.value!),
         valueLabels: selected.map((item) => item.label ?? item.value!),
@@ -134,10 +149,23 @@ export function DefaultFiltersEditor({
   const onOperatorChange = useCallback(
     (index: number, operator: string) => {
       const filter = filters[index];
+
+      // The All sentinel is only meaningful with the "one of" operator - moving off
+      // it clears the values, and moving onto it with nothing selected means All
+      if (isAllFilter(filter) && operator !== ONE_OF_OPERATOR) {
+        const { values: _values, valueLabels: _valueLabels, ...rest } = filter;
+        updateFilterAt(index, { ...rest, operator, value: '' });
+        return;
+      }
+      if (operator === ONE_OF_OPERATOR && filter.value === '' && !filter.values?.length) {
+        updateFilterAt(index, createAllFilter(filter.key, filter.keyLabel));
+        return;
+      }
+
       const update: AdHocFilterWithLabels = { ...filter, operator };
 
       // Moving to a single-value operator keeps only the first selected value
-      if (!isMultiValueOperator(operator) && !isAllFilter(filter) && (filter.values?.length ?? 0) > 1) {
+      if (!isMultiValueOperator(operator) && (filter.values?.length ?? 0) > 1) {
         update.value = filter.values![0];
         update.values = [filter.values![0]];
         update.valueLabels = [filter.valueLabels?.[0] ?? filter.values![0]];
@@ -168,6 +196,19 @@ export function DefaultFiltersEditor({
     description: option.description,
   }));
 
+  // Datasources without multi-value operator support get no All option, so new rows
+  // start empty with the equals operator instead of as an All filter
+  const createNewFilter = (key: string, keyLabel?: string): AdHocFilterWithLabels =>
+    operatorOptions.some((option) => option.value === ONE_OF_OPERATOR)
+      ? createAllFilter(key, keyLabel)
+      : {
+          key,
+          ...(keyLabel && keyLabel !== key ? { keyLabel } : {}),
+          operator: '=',
+          value: '',
+          origin: DEFAULT_FILTER_ORIGIN,
+        };
+
   return (
     <Field
       label={t('dashboard-scene.default-filters-editor.label', 'Default filters')}
@@ -187,7 +228,7 @@ export function DefaultFiltersEditor({
               value={filter.key}
               onChange={(option) => {
                 if (option?.value) {
-                  updateFilterAt(index, createAllFilter(option.value, option.label));
+                  updateFilterAt(index, createNewFilter(option.value, option.label));
                 }
               }}
             />
@@ -241,7 +282,7 @@ export function DefaultFiltersEditor({
               placeholder={t('dashboard-scene.default-filters-editor.field-placeholder', 'Select field')}
               onChange={(option) => {
                 if (option?.value) {
-                  onChange([...filters, createAllFilter(option.value, option.label)]);
+                  onChange([...filters, createNewFilter(option.value, option.label)]);
                   setAddingNew(false);
                 }
               }}
@@ -286,12 +327,12 @@ async function loadValueOptions(
     ? mapped.filter((option) => (option.label ?? option.value).toLowerCase().includes(needle))
     : mapped;
 
-  const allOption: ComboboxOption<string> = { value: ALL_SENTINEL_VALUE, label: ALL_SENTINEL_LABEL };
-  if (needle && !ALL_SENTINEL_LABEL.toLowerCase().includes(needle)) {
+  // All is only offered for the "one of" operator, matching the scenes combobox behaviour
+  if (filter.operator !== ONE_OF_OPERATOR || (needle && !ALL_SENTINEL_LABEL.toLowerCase().includes(needle))) {
     return filtered;
   }
 
-  return [allOption, ...filtered];
+  return [{ value: ALL_SENTINEL_VALUE, label: ALL_SENTINEL_LABEL }, ...filtered];
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
