@@ -57,9 +57,9 @@ describe('NotebookLayoutManager', () => {
       cells: [new NotebookCellItem({ elementName: 'md1', source: 'assistant' })],
     });
 
-    // The annotation is the assertion here: serialize() is typed as returning the notebook's own
-    // kind, so this line stops compiling if the return type is ever widened back to the dashboard
-    // layout union and laundered through a cast.
+    // The annotation carries the real check: serialize() is typed as the notebook's own kind, so
+    // widening it back to the dashboard layout union fails `yarn typecheck`. It does not fail this
+    // test run, since jest strips the types.
     const result: NotebookLayoutKind = manager.serialize();
 
     expect(result.kind).toBe('NotebookLayout');

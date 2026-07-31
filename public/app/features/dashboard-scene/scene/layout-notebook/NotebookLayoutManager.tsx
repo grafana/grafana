@@ -14,7 +14,7 @@ import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '@grafana/s
 import { useStyles2 } from '@grafana/ui';
 
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
-import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { type NotebookCellItem } from './NotebookCellItem';
@@ -80,11 +80,11 @@ export class NotebookLayoutManager
   // DashboardLayoutManager contract minimally.
   public addPanel(): void {}
 
-  public cloneLayout(): AnyDashboardLayoutManager {
+  public cloneLayout(): NotebookLayoutManager {
     return this.clone({});
   }
 
-  public duplicate(_panelIdGenerator?: PanelIdGenerator): AnyDashboardLayoutManager {
+  public duplicate(_panelIdGenerator?: PanelIdGenerator): NotebookLayoutManager {
     return this.clone({ key: undefined });
   }
 
