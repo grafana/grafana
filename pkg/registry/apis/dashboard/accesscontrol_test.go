@@ -35,4 +35,17 @@ func TestVariableUIDScopeResolver(t *testing.T) {
 		require.Contains(t, scopes, ScopeVariablesProvider.GetResourceScopeUID("region--folder-a"))
 		require.Contains(t, scopes, folder.ScopeFoldersProvider.GetResourceScopeUID("folder-a"))
 	})
+
+	t.Run("missing parent folder still returns direct scopes", func(t *testing.T) {
+		missingSvc := foldertest.NewFakeService()
+		missingSvc.ExpectedError = folder.ErrFolderNotFound
+		_, missingResolver := VariableUIDScopeResolver(missingSvc)
+
+		scopes, err := missingResolver.Resolve(context.Background(), 1, "variables:uid:region--gone")
+		require.NoError(t, err)
+		require.Equal(t, []string{
+			folder.ScopeFoldersProvider.GetResourceScopeUID("gone"),
+			ScopeVariablesProvider.GetResourceScopeUID("region--gone"),
+		}, scopes)
+	})
 }

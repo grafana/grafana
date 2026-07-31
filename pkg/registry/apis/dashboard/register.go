@@ -702,7 +702,7 @@ func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a adm
 // validateVariableMutationPermissions authorizes variable create/update/delete via
 // variables:* RBAC actions scoped to the target folder (general/root when empty).
 // When allowMissingFolder is true (update/delete) and the folder no longer exists,
-// users who have the action on any scope (e.g. root general.writer / Admin writer)
+// users who have the action on any scope (e.g. variables writer with folders:*)
 // may still mutate so orphaned variables can be cleaned up.
 func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context, folderUID string, action string, allowMissingFolder bool) error {
 	requester, err := identity.GetRequester(ctx)
@@ -726,7 +726,7 @@ func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.C
 	if allowMissingFolder && folderUID != "" {
 		if _, ferr := b.validateFolderExists(ctx, folderUID, requester.GetOrgID()); apierrors.IsNotFound(ferr) {
 			// Folder gone: allow cleanup if the user has the action on any scope
-			// (Editor root writer or Admin all-folders writer).
+			// (e.g. Editor/Admin variables writer with folders:*).
 			ok, err = b.accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(action))
 			if err != nil {
 				return err

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 )
 
 func TestVariableAuthorizer(t *testing.T) {
@@ -65,6 +66,13 @@ func TestVariableAuthorizer(t *testing.T) {
 			wantAllow: true,
 		},
 		{
+			name:      "root write can update folder-scoped variable (coarse; admission narrows)",
+			verb:      "update",
+			resName:   "region--folder-a",
+			perms:     map[string][]string{ActionVariablesWrite: {generalScope}},
+			wantAllow: true,
+		},
+		{
 			name:      "delete denied without action",
 			verb:      "delete",
 			resName:   "region--folder-a",
@@ -76,6 +84,13 @@ func TestVariableAuthorizer(t *testing.T) {
 			verb:      "delete",
 			resName:   "region--folder-a",
 			perms:     map[string][]string{ActionVariablesDelete: {ScopeVariablesProvider.GetResourceScopeUID("region--folder-a")}},
+			wantAllow: true,
+		},
+		{
+			name:      "root delete can delete folder-scoped variable (coarse; admission narrows)",
+			verb:      "delete",
+			resName:   "region--missing-folder",
+			perms:     map[string][]string{ActionVariablesDelete: {generalScope}},
 			wantAllow: true,
 		},
 	}
@@ -103,6 +118,36 @@ func TestVariableAuthorizer(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestVariableAuthorizer_OrphanedFolderScopedUpdate(t *testing.T) {
+	// Regression: scoped update/delete used to resolve variables:uid via
+	// GetInheritedScopes; when the parent folder was gone the resolver erred and
+	// the authorizer denied before admission allowMissingFolder could run.
+	acSvc := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+	folderSvc := foldertest.NewFakeService()
+	folderSvc.ExpectedError = folder.ErrFolderNotFound
+	prefix, resolver := VariableUIDScopeResolver(folderSvc)
+	acSvc.RegisterScopeAttributeResolver(prefix, resolver)
+
+	authz := NewVariableAuthorizer(acSvc)
+	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
+
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {ActionVariablesWrite: {generalScope}},
+		},
+	})
+	decision, _, err := authz.Authorize(ctx, authorizer.AttributesRecord{
+		ResourceRequest: true,
+		Verb:            "update",
+		APIGroup:        "dashboard.grafana.app",
+		Resource:        "variables",
+		Name:            "region--missing-folder",
+	})
+	require.NoError(t, err)
+	require.Equal(t, authorizer.DecisionAllow, decision)
 }
 
 func TestFolderUIDFromVariableMetadataName(t *testing.T) {

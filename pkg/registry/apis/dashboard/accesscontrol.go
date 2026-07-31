@@ -2,9 +2,13 @@ package dashboard
 
 import (
 	"context"
+	"errors"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
@@ -35,6 +39,10 @@ func folderUIDFromVariableMetadataName(metadataName string) string {
 
 // VariableUIDScopeResolver converts a scope prefixed with "variables:uid:" into
 // the variable UID scope plus its parent folder (and ancestors).
+// When the parent folder no longer exists, it still returns the direct folder and
+// variable scopes so folders:* grants can authorize (e.g. Admin get/list of
+// orphans). Root-writer orphan cleanup for update/delete is handled by the
+// coarse VariableAuthorizer gate plus admission allowMissingFolder.
 func VariableUIDScopeResolver(folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeVariablesProvider.GetResourceScopeUID("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
@@ -50,9 +58,21 @@ func VariableUIDScopeResolver(folderSvc folder.Service) (string, ac.ScopeAttribu
 		folderUID := folderUIDFromVariableMetadataName(uid)
 		inheritedScopes, err := folder.GetInheritedScopes(ctx, orgID, folderUID, folderSvc)
 		if err != nil {
+			if isFolderNotFound(err) {
+				return []string{
+					folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID),
+					ScopeVariablesProvider.GetResourceScopeUID(uid),
+				}, nil
+			}
 			return nil, err
 		}
 
 		return append(inheritedScopes, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID), ScopeVariablesProvider.GetResourceScopeUID(uid)), nil
 	})
+}
+
+func isFolderNotFound(err error) bool {
+	return errors.Is(err, folder.ErrFolderNotFound) ||
+		errors.Is(err, dashboards.ErrFolderNotFound) ||
+		apierrors.IsNotFound(err)
 }
