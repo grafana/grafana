@@ -604,7 +604,9 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 				return fmt.Errorf("failed to convert alert rule %s to storage model: %w", r.New.UID, err)
 			}
 			// no way to update multiple rules at once
-			if updated, err := sess.Table(alertRule{}).ID(r.Existing.ID).AllCols().Omit("guid").Update(converted); err != nil || updated == 0 {
+			// Omit k8s_status so spec updates never clobber the status subresource,
+			// which is written independently via SaveAlertRuleStatus.
+			if updated, err := sess.Table(alertRule{}).ID(r.Existing.ID).AllCols().Omit("guid", "k8s_status").Update(converted); err != nil || updated == 0 {
 				if err != nil {
 					if st.SQLStore.GetDialect().IsUniqueConstraintViolation(err) {
 						return ngmodels.ErrAlertRuleConflict(r.New.UID, r.New.OrgID, err)

@@ -8,6 +8,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
@@ -41,6 +42,7 @@ var (
 	_ appsdkapiserver.AppInstaller        = (*AppInstaller)(nil)
 	_ appinstaller.AuthorizerProvider     = (*AppInstaller)(nil)
 	_ appinstaller.LegacyStorageProvider  = (*AppInstaller)(nil)
+	_ appinstaller.LegacyStatusProvider   = (*AppInstaller)(nil)
 	_ appinstaller.StorageOptionsProvider = (*AppInstaller)(nil)
 )
 
@@ -251,5 +253,21 @@ func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafana
 		return nil
 	default:
 		panic("unknown legacy storage requested: " + gvr.String())
+	}
+}
+
+// GetLegacyStatus wires the /status subresource for the legacy-storage-backed rule
+// kinds. Without this, the app-sdk-generated StatusREST is silently dropped for
+// legacy/dual-write parents. The rule status is persisted to alert_rule.k8s_status
+// via the shared rule store.
+func (a *AppInstaller) GetLegacyStatus(gvr schema.GroupVersionResource, unified *appsdkapiserver.StatusREST) rest.Storage {
+	namespacer := reqns.GetNamespaceMapper(a.cfg)
+	switch gvr {
+	case recordingrule.ResourceInfo.GroupVersionResource():
+		return recordingrule.NewStatusStorage(*a.ng.Api.AlertRules, namespacer, a.ng.RuleStatusStore, unified)
+	case alertrule.ResourceInfo.GroupVersionResource():
+		return alertrule.NewStatusStorage(*a.ng.Api.AlertRules, namespacer, a.ng.RuleStatusStore, unified)
+	default:
+		return nil
 	}
 }

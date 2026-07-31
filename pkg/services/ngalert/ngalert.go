@@ -127,6 +127,7 @@ func ProvideService(
 		pluginsStore:             pluginsStore,
 		tracer:                   tracer,
 		store:                    ruleStore,
+		RuleStatusStore:          ruleStore,
 		httpClientProvider:       httpClientProvider,
 		pluginContextProvider:    pluginContextProvider,
 		clientGenerator:          clientGenerator,
@@ -187,8 +188,11 @@ type AlertNG struct {
 	RouteResourcePermissions accesscontrol.RoutePermissionsService
 	annotationsRepo          annotations.Repository
 	store                    *store.DBstore
-	userService              user.Service
-	orgService               org.Service
+	// RuleStatusStore exposes the rule store to the app-platform legacy storage
+	// adapter for persisting the status subresource (see SaveAlertRuleStatus).
+	RuleStatusStore *store.DBstore
+	userService     user.Service
+	orgService      org.Service
 
 	bus             bus.Bus
 	pluginsStore    pluginstore.Store
