@@ -303,6 +303,9 @@ export const versionedPages = {
           variableSelection: {
             '12.4.0': 'data-testid Dashboard Conditional Rendering Variable variable selection',
           },
+          operatorSelection: {
+            '13.2.0': 'data-testid Dashboard Conditional Rendering Variable operator selection',
+          },
         },
         timeRange: {
           select: {
