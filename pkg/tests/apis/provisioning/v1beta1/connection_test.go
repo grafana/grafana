@@ -110,7 +110,7 @@ func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test GitLab Connection",
 			Type:  provisioning.GitlabConnectionType,
-			Gitlab: &provisioning.GitlabConnectionConfig{
+			OAuth: &provisioning.ConnectionOAuthConfig{
 				ClientID: "gitlab-client-123",
 			},
 		},
@@ -131,7 +131,7 @@ func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
 	createdConn, err := common.FromUnstructured[provisioning.Connection](created)
 	require.NoError(t, err)
 	require.Equal(t, provisioning.GitlabConnectionType, createdConn.Spec.Type)
-	require.Equal(t, "gitlab-client-123", createdConn.Spec.Gitlab.ClientID)
+	require.Equal(t, "gitlab-client-123", createdConn.Spec.OAuth.ClientID)
 
 	// Clean up. Retry on transient 409 conflicts: unified storage guards the delete with the object's
 	// current RV, which the ConnectionController's async /status patches keep bumping.
@@ -168,7 +168,7 @@ func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test Bitbucket Connection",
 			Type:  provisioning.BitbucketConnectionType,
-			Bitbucket: &provisioning.BitbucketConnectionConfig{
+			OAuth: &provisioning.ConnectionOAuthConfig{
 				ClientID: "bitbucket-client-456",
 			},
 		},
@@ -189,7 +189,7 @@ func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
 	createdConn, err := common.FromUnstructured[provisioning.Connection](created)
 	require.NoError(t, err)
 	require.Equal(t, provisioning.BitbucketConnectionType, createdConn.Spec.Type)
-	require.Equal(t, "bitbucket-client-456", createdConn.Spec.Bitbucket.ClientID)
+	require.Equal(t, "bitbucket-client-456", createdConn.Spec.OAuth.ClientID)
 
 	// Clean up. Retry on transient 409 conflicts: unified storage guards the delete with the object's
 	// current RV, which the ConnectionController's async /status patches keep bumping.

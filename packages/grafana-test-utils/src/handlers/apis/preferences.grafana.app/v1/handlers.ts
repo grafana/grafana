@@ -1,11 +1,11 @@
 import { HttpResponse, http, type HttpResponseResolver } from 'msw';
 
-import { type Preferences } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type Preferences } from '@grafana/api-clients/rtkq/preferences/v1';
 
 import { mockUserPreferences, setMockUserPreferences } from '../../../../fixtures/preferences';
 
-export const MERGED_PREFS_URL = '/apis/preferences.grafana.app/v1alpha1/namespaces/:namespace/preferences/merged';
-const LIST_PREFS_URL = '/apis/preferences.grafana.app/v1alpha1/namespaces/:namespace/preferences';
+export const MERGED_PREFS_URL = '/apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/merged';
+const LIST_PREFS_URL = '/apis/preferences.grafana.app/v1/namespaces/:namespace/preferences';
 const UPDATE_PREFS_URL = `${LIST_PREFS_URL}/:name`;
 
 const listPreferencesHandler = (override?: ReturnType<typeof HttpResponse.json>) =>
