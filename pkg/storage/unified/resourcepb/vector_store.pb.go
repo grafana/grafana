@@ -100,6 +100,10 @@ func (x *EmbeddingInput) GetTitle() string {
 }
 
 // Plain upsert: inserts or overwrites exactly the (uid, subresource) rows in the batch.
+// Upsert and UpsertSubresources serve different entity kinds — flat rows here,
+// server-diffed chunked entities there. Do not mix them for the same uid:
+// only UpsertSubresources holds the per-entity lock, so interleaving the two
+// on one entity is undefined.
 // All params are required
 //
 // Validation errors fail the whole request (INVALID_ARGUMENT, nothing written).
@@ -180,6 +184,7 @@ func (x *VectorUpsertRequest) GetInputs() []*EmbeddingInput {
 }
 
 // Upsert subresources (chunks) for the single entity named by uid, atomically.
+// See the Upsert comment: never mix the two RPCs for the same uid.
 // New chunks will be embedded, existing ones will be re-embedded only if content has changed, and chunks that don't
 // exist in the inputs set will be deleted.
 // Title and metadata are always written for every input, even when the embedding is
