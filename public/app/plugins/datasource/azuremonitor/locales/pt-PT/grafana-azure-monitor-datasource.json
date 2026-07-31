@@ -78,6 +78,11 @@
       "description-basic-logs": "A ativação desta funcionalidade incorre em custos por consulta do Azure Monitor em painéis que consultam tabelas configuradas para <2>Registos básicos</2>.",
       "label-enable-basic-logs": "Ativar registos básicos"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "As definições adicionais são definições opcionais que podem ser configuradas para obter mais controlo sobre a sua origem de dados. Isto inclui o Secure Socks Proxy, o tempo limite de pedido e os cookies encaminhados.",
       "title-additional-settings": "Definições adicionais"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "Espaço de nome métrico"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "A carregar..."
     },
@@ -204,6 +216,10 @@
       "label-by": "POR",
       "label-order-by": "Ordenar por",
       "tooltip-order-by": "Ordene os resultados com base numa ou mais colunas por ordem ascendente ou descendente."
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "Ocorreu um erro ao solicitar metadados do Azure Monitor"

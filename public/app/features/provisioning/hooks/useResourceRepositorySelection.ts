@@ -1,3 +1,6 @@
+import { skipToken } from '@reduxjs/toolkit/query/react';
+
+import { config } from '@grafana/runtime';
 import { type RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 import { isResourceKindAvailable, type ResourceKindInfo } from '../utils/resourceKinds';
@@ -22,13 +25,14 @@ export interface ResourceRepositorySelection {
  * settings response doesn't fall back to "all kinds available").
  */
 export function useResourceRepositorySelection(info: ResourceKindInfo): ResourceRepositorySelection {
-  const { data } = useGetFrontendSettingsQuery(undefined);
+  const provisioningEnabled = Boolean(config.featureToggles.provisioning);
+  const { data } = useGetFrontendSettingsQuery(provisioningEnabled ? undefined : skipToken);
 
   const repositories = data?.items ?? [];
   const kindEnabled = isResourceKindAvailable(info, data?.availableResources ?? []);
 
   return {
-    isAvailable: kindEnabled && repositories.length > 0,
+    isAvailable: provisioningEnabled && kindEnabled && repositories.length > 0,
     repositories,
   };
 }
