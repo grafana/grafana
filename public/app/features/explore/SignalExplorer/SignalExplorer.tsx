@@ -1,16 +1,16 @@
 import { css } from '@emotion/css';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 
-import { type DataSourceApi, type GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceApi, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
-import { isPrometheusType } from '../../utils/prometheus';
-import { useContentOutlineContext } from '../ContentOutlineContext';
-import { QUERIES_PANEL_ID } from '../ContentOutlineItem';
-import { scrollOutlineItemIntoView } from '../scrollIntoView';
+import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
+import { QUERIES_PANEL_ID } from '../ContentOutline/ContentOutlineItem';
+import { scrollOutlineItemIntoView } from '../ContentOutline/scrollIntoView';
+import { isPrometheusType } from '../utils/prometheus';
 
 import { MetricsList } from './MetricsList';
 import { SignalCard } from './SignalCard';
@@ -20,6 +20,15 @@ interface CardDescriptor {
   datasourceName: string;
   datasourceLogo?: string;
   isExpandable: boolean;
+  /**
+   * Kept as primitives rather than a `DataSourceRef` because `MetricsList` is the `memo()` boundary
+   * this crosses: these descriptors are rebuilt on every keystroke in a query editor, since `queries`
+   * arrives from the store with a fresh identity, and a new ref object each time would re-render the
+   * metrics list for a datasource that never changed. `MetricsList` assembles the ref once and passes
+   * it on as an object from there.
+   */
+  dsUid?: string;
+  dsType?: string;
 }
 
 interface Props {
@@ -29,6 +38,8 @@ interface Props {
    * single-datasource panes render the same cards as Mixed panes.
    */
   paneDatasource: DataSourceApi | null | undefined;
+  /** The pane's range, which scopes every metric and label lookup a card makes. */
+  timeRange: TimeRange;
   scroller: HTMLElement | undefined;
   /** Owned by ContentOutline, which holds the collapse state for the whole sidebar. */
   toggleButton: ReactNode;
@@ -38,7 +49,7 @@ interface Props {
  * Datasource explorer sidebar: one card per query, so Mixed mode makes it clear
  * which query and datasource the user is interacting with.
  */
-export function SignalExplorer({ queries, paneDatasource, scroller, toggleButton }: Props) {
+export function SignalExplorer({ queries, paneDatasource, timeRange, scroller, toggleButton }: Props) {
   const styles = useStyles2(getStyles);
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
   const [expandedRefIds, setExpandedRefIds] = useState<Set<string>>(new Set());
@@ -57,6 +68,10 @@ export function SignalExplorer({ queries, paneDatasource, scroller, toggleButton
         datasourceLogo: settings?.meta.info.logos.small,
         // Prometheus is currently the only datasource with an explorer to open.
         isExpandable: isPrometheusType(type),
+        // The settings uid rather than the ref's: a ref naming a datasource by name resolves to the
+        // uid here, and the uid is what the metric cache keys its entries on.
+        dsUid: settings?.uid ?? ref?.uid,
+        dsType: type,
       };
     });
   }, [queries, paneDatasource]);
@@ -134,7 +149,7 @@ export function SignalExplorer({ queries, paneDatasource, scroller, toggleButton
                 onToggleExpanded={() => toggleExpanded(card.refId)}
                 onJumpToQuery={() => jumpToQuery(card.refId)}
               >
-                <MetricsList />
+                <MetricsList dsUid={card.dsUid} dsType={card.dsType} timeRange={timeRange} />
               </SignalCard>
             ))
           )}

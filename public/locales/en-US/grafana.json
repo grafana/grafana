@@ -8610,7 +8610,24 @@
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
     },
     "metrics-list": {
-      "search-placeholder": "Search metrics"
+      "collapse-metric": "Collapse {{name}}",
+      "error": "Failed to load metrics",
+      "expand-metric": "Expand {{name}}",
+      "filter-values": "Filter values",
+      "hide-values": "Hide values for {{label}}",
+      "labels-error": "Failed to load labels",
+      "loading": "Loading metrics…",
+      "loading-labels": "Loading labels…",
+      "loading-values": "Loading values…",
+      "no-metrics": "No metrics found",
+      "search-placeholder": "Search metrics",
+      "show-more": "Show more",
+      "show-more-metrics": "Show more metrics",
+      "show-more-values": "Show more values",
+      "show-values": "Show values for {{label}}",
+      "sort-ascending": "Sort ascending",
+      "sort-descending": "Sort descending",
+      "values-error": "Failed to load values"
     },
     "next-prev-result": {
       "aria-label-next": "Next result button",
@@ -10987,16 +11004,50 @@
         "title": "Kubernetes Monitoring",
         "view": "View"
       },
+      "logs": {
+        "action": "Open Explore (Logs)",
+        "action-explore": "Open in Explore",
+        "datasource": "via {{name}}",
+        "stats": "ingested · 7d",
+        "stats-sources_one": "ingested · 7d · ~{{count}} source",
+        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
+        "title": "Hosted Logs",
+        "volume": "Ingest volume · last 24h"
+      },
+      "metrics": {
+        "action": "Open Metrics Drilldown",
+        "action-explore": "Open in Explore",
+        "data-points-per-minute": "{{value}} data points/min",
+        "datasource": "via {{name}}",
+        "disk-eta_one": "~{{count}} h to full",
+        "disk-eta_other": "~{{count}} h to full",
+        "disk-hosts_one": "{{count}} host above 90% disk",
+        "disk-hosts_other": "{{count}} hosts above 90% disk",
+        "disk-worst": "{{host}} at {{percent}}%",
+        "names_one": "{{value}} metric",
+        "names_other": "{{value}} metrics",
+        "series_one": "{{value}} series",
+        "series_other": "{{value}} series",
+        "series-trend": "Active series · last 24h",
+        "stats": "active",
+        "stats-hosts_one": "active · {{count}} host",
+        "stats-hosts_other": "active · {{count}} hosts",
+        "title": "Metrics & infrastructure",
+        "view": "View"
+      },
       "next": "Next",
       "no-data": {
         "badge": "Getting started",
         "connect": "Connect a data source",
         "description": "Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.",
+        "description-partial": "Some signals are already flowing. Connect more data sources or pick a solution to see live stats here.",
+        "description-unknown": "We couldn't confirm live data yet. Connect more data sources or pick a solution to see live stats here.",
         "popular-solutions": "Popular solutions",
         "solution-k6": "k6",
         "solution-kubernetes": "Kubernetes Monitoring",
         "solution-synthetics": "Synthetic Monitoring",
-        "title": "No data flowing yet"
+        "title": "No data flowing yet",
+        "title-partial": "Add more telemetry"
       },
       "pause": "Pause",
       "previous": "Previous",
@@ -11012,7 +11063,19 @@
         "setup-action": "Set up Synthetic Monitoring",
         "title": "Watch your cluster from outside"
       },
-      "title": "Recommendations for your stack"
+      "title": "Recommendations for your stack",
+      "traces": {
+        "action": "Open Traces Drilldown",
+        "action-explore": "Open in Explore",
+        "datasource": "via {{name}}",
+        "spans_one": "{{value}} span",
+        "spans_other": "{{value}} spans",
+        "stats": "traced · 24h",
+        "stats-services_one": "traced · 24h · {{count}} service",
+        "stats-services_other": "traced · 24h · {{count}} services",
+        "throughput": "Span throughput · last 24h",
+        "title": "Hosted Traces"
+      }
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
@@ -17123,6 +17186,7 @@
       "delete-modal-confirm": "Delete",
       "delete-modal-title": "Delete variable",
       "folder-description": "Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)",
+      "folder-description-folder-only": "Scope the variable to a folder you can edit",
       "folder-label": "Folder",
       "moved": "Variable moved",
       "name-exists": "A variable with this name already exists in the selected folder",
@@ -17138,6 +17202,8 @@
     "move-modal": {
       "body_one": "Move {{count}} selected variable. Choosing the root Dashboards folder makes it global (available everywhere in the organization).",
       "body_other": "Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available everywhere in the organization).",
+      "body-folder-only_one": "Move {{count}} selected variable to a folder you can edit.",
+      "body-folder-only_other": "Move {{count}} selected variables to a folder you can edit.",
       "cancel": "Cancel",
       "folder-label": "Folder",
       "move": "Move",
