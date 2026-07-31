@@ -160,6 +160,12 @@ export function transformSceneToSaveModelSchemaV2(scene: DashboardScene, isSnaps
     // EOF annotations
 
     // layout
+    // Unchecked: body is AnyDashboardLayoutManager, so serialize() is typed `any` and any layout
+    // kind assigns here. validateDashboardSchemaV2 below only dispatches on GridLayout and
+    // RowsLayout, so a sibling kind (e.g. a notebook layout) passes validation and is written out
+    // silently. Reachable only via getSaveModel, which is gated behind edit mode. A save path for a
+    // sibling resource must not reuse this function -- narrow to the concrete manager first and
+    // serialize that, so the compiler checks the kind and a wrong body fails loudly.
     layout: sceneDash.body.serialize(isSnapshot),
     // EOF layout
   };

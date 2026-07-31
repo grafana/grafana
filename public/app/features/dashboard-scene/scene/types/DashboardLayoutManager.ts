@@ -13,6 +13,11 @@ import { type LayoutRegistryItem } from './LayoutRegistryItem';
  * assignable to the bare DashboardLayoutManager. Only TLayout is erased; `any` (not `unknown`) is
  * required because these results flow back into bare `DashboardLayoutManager` fields and `any` is
  * bidirectionally assignable, so those consumers keep compiling unchanged.
+ *
+ * Because TLayout is `any`, serialize() through this alias is unchecked: its result assigns to any
+ * layout kind without complaint. Callers that need a specific kind must narrow to the concrete
+ * manager first (e.g. `body instanceof NotebookLayoutManager`) and call serialize() on that, which
+ * restores the real return type and fails loudly when the body is not the expected layout.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- erases only the serialize() kind so sibling layout managers fit
 export type AnyDashboardLayoutManager = DashboardLayoutManager<{}, any>;
