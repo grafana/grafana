@@ -101,6 +101,7 @@
     "@types/node": "24.10.1",
     "@types/papaparse": "5.3.16",
     "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
     "@types/tinycolor2": "1.4.6",
     "@typescript/native": "npm:typescript@^7.0.2",
     "esbuild": "0.28.1",

@@ -15,6 +15,7 @@
     "@grafana/plugin-configs": "workspace:*",
     "@types/node": "24.9.2",
     "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
     "i18next-cli": "^1.48.0",
     "typescript": "6.0.2",
     "webpack": "^5.105.0",

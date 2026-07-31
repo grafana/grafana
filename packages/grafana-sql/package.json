@@ -67,6 +67,7 @@
     "@types/lodash": "4.17.20",
     "@types/node": "24.10.1",
     "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
     "@types/systemjs": "6.15.3",
     "@typescript/native": "npm:typescript@^7.0.2",
     "i18next-cli": "^1.48.0",
