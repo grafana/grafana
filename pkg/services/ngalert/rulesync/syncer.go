@@ -101,7 +101,7 @@ func NewExternalRulerSyncer(
 		logger:         logger,
 		metrics:        m,
 		datasources:    datasourceService,
-		fetcher:        NewRulerFetcher(proxy),
+		fetcher:        NewRulerFetcher(proxy, logger),
 		ruleService:    ruleSvc,
 		namespaceStore: namespaceStore,
 		orgStore:       orgStore,
