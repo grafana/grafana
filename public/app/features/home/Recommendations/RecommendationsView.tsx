@@ -30,11 +30,24 @@ export function RecommendationsView({ recommendations }: RecommendationsViewProp
     }
   }, [collapsed]);
 
-  const [index, setIndex] = useState(0);
+  // Anchored by id, not position: probes insert cards in priority order as they settle, and a
+  // late earlier-ordered card must grow the deck without moving the slide the user is reading.
+  const [activeId, setActiveId] = useState<string>();
   const [paused, setPaused] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 
-  // Clamp during render so a shrinking list cannot select an undefined entry.
-  const safeIndex = Math.min(index, recommendations.length - 1);
+  // First card while unanchored (mount, or the anchored card disappeared).
+  const foundIndex = recommendations.findIndex((recommendation) => recommendation.id === activeId);
+  const safeIndex = foundIndex === -1 ? 0 : foundIndex;
+  const nextId = recommendations[(safeIndex + 1) % recommendations.length].id;
+
+  // Capture the anchor as soon as a card is showing: without this, activeId stays undefined
+  // until the first interaction and the displayed slide would still track position 0.
+  const firstId = recommendations[0].id;
+  useEffect(() => {
+    if (foundIndex === -1) {
+      setActiveId(firstId);
+    }
+  }, [foundIndex, firstId]);
 
   useEffect(() => {
     if (collapsed || paused) {
@@ -42,11 +55,11 @@ export function RecommendationsView({ recommendations }: RecommendationsViewProp
     }
 
     const timeout = setTimeout(() => {
-      setIndex((safeIndex + 1) % recommendations.length);
+      setActiveId(nextId);
     }, 5000);
 
     return () => clearTimeout(timeout);
-  }, [collapsed, paused, safeIndex, recommendations.length]);
+  }, [collapsed, paused, nextId]);
 
   return (
     <div>
@@ -112,14 +125,16 @@ export function RecommendationsView({ recommendations }: RecommendationsViewProp
                     size="sm"
                     fill="text"
                     icon="angle-left"
-                    onClick={() => setIndex((safeIndex - 1 + recommendations.length) % recommendations.length)}
+                    onClick={() =>
+                      setActiveId(recommendations[(safeIndex - 1 + recommendations.length) % recommendations.length].id)
+                    }
                     aria-label={t('home.recommendations.previous', 'Previous')}
                   />
 
-                  {recommendations.map((_, i) =>
+                  {recommendations.map((recommendation, i) =>
                     i === safeIndex ? (
                       <Button
-                        key={i}
+                        key={recommendation.id}
                         variant="secondary"
                         size="sm"
                         fill="solid"
@@ -133,11 +148,11 @@ export function RecommendationsView({ recommendations }: RecommendationsViewProp
                       />
                     ) : (
                       <Button
-                        key={i}
+                        key={recommendation.id}
                         variant="secondary"
                         size="sm"
                         fill="solid"
-                        onClick={() => setIndex(i)}
+                        onClick={() => setActiveId(recommendation.id)}
                         aria-label={t('home.recommendations.go-to', 'Go to recommendation {{index}}', { index: i + 1 })}
                         className={styles.dot}
                       />
@@ -149,7 +164,7 @@ export function RecommendationsView({ recommendations }: RecommendationsViewProp
                     size="sm"
                     fill="text"
                     icon="angle-right"
-                    onClick={() => setIndex((safeIndex + 1) % recommendations.length)}
+                    onClick={() => setActiveId(nextId)}
                     aria-label={t('home.recommendations.next', 'Next')}
                   />
                 </Stack>

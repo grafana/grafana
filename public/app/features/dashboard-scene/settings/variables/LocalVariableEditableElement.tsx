@@ -11,7 +11,7 @@ import {
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
 
-function useEditPaneOptions(this: LocalVariableEditableElement): OptionsPaneCategoryDescriptor[] {
+function useSidebarOptions(this: LocalVariableEditableElement): OptionsPaneCategoryDescriptor[] {
   const variable = this.variable;
   const localVariableCategoryId = useId();
   const localVariableId = useId();
@@ -54,12 +54,12 @@ export class LocalVariableEditableElement implements EditableDashboardElement {
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.local-variable', 'Local variable'),
+      typeName: t('dashboard.sidebar.elements.local-variable', 'Local variable'),
       icon: 'dollar-alt',
       instanceName: ` $${this.variable.state.name} = ${this.variable.getValueText!()}`,
       isHidden: true,
     };
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this);
+  public useSidebarOptions = useSidebarOptions.bind(this);
 }

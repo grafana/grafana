@@ -8,6 +8,7 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 
 import HomeRoute from './HomeRoute';
 import { homepageViewed } from './analytics/main';
@@ -26,8 +27,12 @@ jest.mock('./analytics/main', () => ({
   homepageViewed: jest.fn(),
 }));
 
+jest.mock('app/plugins/panel/news/useNewsFeed');
+
 setBackendSrv(backendSrv);
 setupMockServer();
+
+const useNewsFeedMock = jest.mocked(useNewsFeed);
 
 describe('HomeRoute', () => {
   let probeCallCount = 0;
@@ -45,6 +50,10 @@ describe('HomeRoute', () => {
     jest.clearAllMocks();
     probeCallCount = 0;
     setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+    useNewsFeedMock.mockReturnValue({
+      state: { loading: false, error: undefined, value: undefined },
+      getNews: jest.fn(),
+    });
 
     // Deny alerting permission so the FiringAlertsCard renders null
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);

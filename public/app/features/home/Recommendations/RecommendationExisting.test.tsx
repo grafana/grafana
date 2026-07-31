@@ -40,8 +40,6 @@ const mockFetchInventory = jest.mocked(fetchKubernetesInventory);
 const mockFetchHealth = jest.mocked(fetchKubernetesHealth);
 const mockFetchCpuSeries = jest.mocked(fetchClusterCpuSeries);
 
-const compactFormatter = new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 });
-
 const settings = { id: 'grafana-k8s-app' } as PluginMeta<{}>;
 const datasource: DataSourceInstanceListItem = {
   uid: 'k8s-uid',
@@ -126,6 +124,28 @@ describe('RecommendationExisting', () => {
     expect(screen.queryByRole('heading', { name: 'Kubernetes Monitoring' })).not.toBeInTheDocument();
     expect(mockResolveDatasource).not.toHaveBeenCalled();
     expect(mockFetchInventory).not.toHaveBeenCalled();
+  });
+
+  it('keeps the skeleton (never the no-data card) when the plugin gate opens before the probe resolves', async () => {
+    // Regression: on the render where the bridge settles, useAsync still carries the
+    // disabled run's settled undefined — it must read as loading, not as settled empty.
+    mockUsePluginBridge.mockReturnValue({ loading: true, installed: undefined, settings: undefined });
+    let resolveProbe: (value: typeof datasource) => void = () => {};
+    mockResolveDatasource.mockImplementation(() => new Promise((resolve) => (resolveProbe = resolve)));
+
+    const { rerender } = render(<RecommendationExisting />);
+    expect(await screen.findByTestId('recommendation-existing-skeleton')).toBeInTheDocument();
+
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: true, settings });
+    rerender(<RecommendationExisting />);
+
+    expect(screen.getByTestId('recommendation-existing-skeleton')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'No data flowing yet' })).not.toBeInTheDocument();
+
+    resolveProbe(datasource);
+
+    expect(await screen.findByRole('heading', { name: 'Kubernetes Monitoring' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'No data flowing yet' })).not.toBeInTheDocument();
   });
 
   it('shows the no-data card when resolution returns null', async () => {
@@ -233,14 +253,12 @@ describe('RecommendationExisting', () => {
     expect(screen.queryByTestId('kubernetes-stats-skeleton')).not.toBeInTheDocument();
   });
 
-  it('compact-formats large pod counts', async () => {
-    const pods = 311101;
-    mockResolvedKubernetes({ clusters: 17, pods });
+  it('uses the standard short format for large pod counts', async () => {
+    mockResolvedKubernetes({ clusters: 17, pods: 311101 });
 
     render(<RecommendationExisting />);
 
-    const expectedPods = compactFormatter.format(pods);
-    expect(await screen.findByText(`${expectedPods} pods`)).toBeInTheDocument();
+    expect(await screen.findByText('311 K pods')).toBeInTheDocument();
   });
 
   it('shows stub stats without skeletons when switching away while Kubernetes data is pending', async () => {

@@ -93,14 +93,6 @@
   },
   {
     "type": "label",
-    "name": "datasource/Prometheus",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
-    }
-  },
-  {
-    "type": "label",
     "name": "datasource/InfluxDB",
     "action": "addToProject",
     "addToProject": {
@@ -113,14 +105,6 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "label",
-    "name": "datasource/Loki",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/457"
     }
   },
   {

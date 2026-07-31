@@ -399,13 +399,12 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "kubernetesLibraryPanels",
-			Description:     "Routes library panel requests from /api to the /apis endpoint",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true, // changes the API routing
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Name:        "libraryelements.kubernetesLibraryPanels",
+			Description: "Routes library panel requests from /api to the /apis endpoint",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAppPlatformSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
 		},
 		{
 			Name:         "kubernetesFolderCascadeDelete",
@@ -659,22 +658,6 @@ var (
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaSharingSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "dashboardDefaultLayoutSelector",
-			Description: "Enables default layout selector in dashboard settings",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true",
-		},
-		{
-			Name:        "dashboardAssistantPopover",
-			Description: "Enables the assistant prompt popover on panel click in dashboard view mode",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 		},
 		{
@@ -1002,10 +985,10 @@ var (
 		{
 			Name:        "queryLibrary",
 			Description: "Enables Saved queries (query library) feature",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "grafana.savedQueriesPage",
@@ -1026,18 +1009,18 @@ var (
 		{
 			Name:        "savedQueriesRBAC",
 			Description: "Enables Saved queries (query library) RBAC permissions",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "newSavedQueriesExperience",
 			Description: "Enables the new Saved queries (query library) modal experience",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyFrontend: true, React: true},
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "dashboardLibrary",
@@ -1351,15 +1334,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "playlistsReconciler",
-			Description:     "Enables experimental reconciler for playlists",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "prometheusSpecialCharsInLabelValues",
 			Description: "Adds support for quotes and special characters in label values for Prometheus queries",
 			Generate:    Generate{LegacyFrontend: true},
@@ -1461,6 +1435,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "alerting.manualAssistantInvestigation",
+			Description:  "Enable manually starting an Assistant investigation from the alert instance drawer.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 		{
 			Name:         "alertingAIAnalyzeCentralStateHistory",
@@ -1691,6 +1674,14 @@ var (
 			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:        "azureMonitorBatchAPI",
+			Description: "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
+			Generate:    Generate{Go: true, React: true, LegacyFrontend: true},
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataSourcesPlugins,
+			Expression:  "false",
 		},
 		{
 			Name:         "alertingRulePermanentlyDelete",
@@ -2107,15 +2098,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "pluginContainers",
-			Description:     "Enables running plugins in containers",
-			Stage:           FeatureStagePrivatePreview,
-			Owner:           grafanaCatalogSquad,
-			Expression:      "false",
-			RequiresRestart: true,
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "cdnPluginsLoadFirst",
 			Description: "Prioritize loading plugins from the CDN before other sources",
 			Stage:       FeatureStageExperimental,
@@ -2279,23 +2261,15 @@ var (
 			Description:  "Enables plugins decoupling from bootdata",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaCatalogSquad,
-			Generate:     Generate{React: true},
+			Generate:     Generate{Go: true, React: true},
 			Expression:   "false",
 			HideFromDocs: true,
-		},
-		{
-			Name:        "dashboardSectionVariables",
-			Description: "Enables support for section level variables (rows and tabs)",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:            "globalDashboardVariables",
 			Description:     "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
 			Stage:           FeatureStageExperimental,
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:        Generate{LegacyGo: true, React: true},
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: true,
 			Expression:      "false",
@@ -2613,10 +2587,10 @@ var (
 		{
 			Name:         "grafana.viewPanelPane",
 			Description:  "Enables the sidebar pane with new toggles and options in panel view mode",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{React: true},
 		},
 		{
@@ -3026,6 +3000,24 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "table.paginationPageSize",
+			Description:  "Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "table.autoColumnWidths",
+			Description:  "Sizes TableNG auto-width columns to fit their content instead of distributing evenly",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "dataviz.experimentalColorSchemes",
 			Description:  "Enables additional experimental color schemes for visualizations.",
 			Stage:        FeatureStageExperimental,
@@ -3085,6 +3077,14 @@ var (
 			Generate:        Generate{Go: true, LegacyGo: true},
 		},
 		{
+			Name:        "reporting.redirectReportsToK8SApi",
+			Description: "Redirect legacy report CRUD API endpoints to the Kubernetes reporting API",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:        "grafana.onDemandDiagnostics",
 			Description: "Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more",
 			Stage:       FeatureStageExperimental,
@@ -3117,7 +3117,7 @@ var (
 			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{React: true},
+			Generate:     Generate{Go: true, React: true},
 		},
 		{
 			Name:        "grafana.exploreMetricsSidebar",
@@ -3126,6 +3126,40 @@ var (
 			Owner:       grafanaDataProSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "grafana.dynamicTraceToLogs",
+			Description: "Check for the existence of logs when linking from the Trace View",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaObservabilityLogsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "grafana.thresholdsInterpolation",
+			Description: "Enables using dashboard variables in panel threshold values",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:         "authz.listFoldersViaSearch",
+			Description:  "Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "libraryElements.folderTreeViaSearch",
+			Description:  "Build the library-elements folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips on GET /api/library-elements.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
