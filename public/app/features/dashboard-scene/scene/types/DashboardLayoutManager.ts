@@ -7,17 +7,12 @@ import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { type LayoutRegistryItem } from './LayoutRegistryItem';
 
 /**
- * A layout manager of any layout kind, regardless of what its serialize() returns. Needed where
- * managers of different kinds are held or returned together: a sibling layout (e.g. the notebook
- * layout) parameterizes TLayout with a kind outside the dashboard layout union, so it is not
- * assignable to the bare DashboardLayoutManager. Only TLayout is erased; `any` (not `unknown`) is
- * required because these results flow back into bare `DashboardLayoutManager` fields and `any` is
- * bidirectionally assignable, so those consumers keep compiling unchanged.
+ * A layout manager of any layout kind, whatever its serialize() returns. Needed where managers of
+ * different kinds are held together: the notebook layout serializes a kind outside the dashboard
+ * layout union, so it does not fit the plain DashboardLayoutManager.
  *
- * Because TLayout is `any`, serialize() through this alias is unchecked: its result assigns to any
- * layout kind without complaint. Callers that need a specific kind must narrow to the concrete
- * manager first (e.g. `body instanceof NotebookLayoutManager`) and call serialize() on that, which
- * restores the real return type and fails loudly when the body is not the expected layout.
+ * serialize() is not type-checked through this alias. Narrow to the concrete manager first
+ * (e.g. `body instanceof NotebookLayoutManager`) if you need a specific kind.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- erases only the serialize() kind so sibling layout managers fit
 export type AnyDashboardLayoutManager = DashboardLayoutManager<{}, any>;
