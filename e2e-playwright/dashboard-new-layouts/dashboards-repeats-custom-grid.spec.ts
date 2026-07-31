@@ -290,7 +290,7 @@ test.describe(
         await importTestDashboard(
           page,
           selectors,
-          'Custom grid repeats - move repeated panels',
+          'Custom grid repeats - view repeated panels',
           JSON.stringify(testV2DashWithRepeats)
         );
 
@@ -388,6 +388,13 @@ test.describe(
       // there is a bug in the Snapshot feature that prevents the next two tests from passing
       // tracking issue: https://github.com/grafana/grafana/issues/114509
       // test.skip('can view repeated panel inside snapshot', async ({ dashboardPage, selectors, page }) => {
+      //   async function goToPanelSnapshot(page: Page) {
+      //     // extracting snapshot url from clipboard
+      //     const snapshotUrl = await page.evaluate(() => navigator.clipboard.readText());
+      //     expect(snapshotUrl).toBeDefined();
+      //     await page.goto(snapshotUrl);
+      //   }
+
       //   await importTestDashboard(
       //     page,
       //     selectors,
@@ -455,12 +462,3 @@ test.describe(
     });
   }
 );
-
-// export async function goToPanelSnapshot(page: Page) {
-//   // extracting snapshot url from clipboard
-//   const snapshotUrl = await page.evaluate(() => navigator.clipboard.readText());
-
-//   expect(snapshotUrl).toBeDefined();
-
-//   await page.goto(snapshotUrl);
-// }

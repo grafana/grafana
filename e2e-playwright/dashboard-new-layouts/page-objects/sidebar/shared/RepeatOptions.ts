@@ -2,6 +2,8 @@ import { test } from '@playwright/test';
 
 import { PageObject } from '../../PageObject';
 
+// The collapsible "Repeat options" group in the sidebar options pane —
+// shared by panels, rows, and tabs to repeat the element by a template variable
 export class RepeatOptions extends PageObject {
   async repeatByVariable(variableName: string) {
     await test.step(`Repeat by variable "${variableName}"`, async () => {

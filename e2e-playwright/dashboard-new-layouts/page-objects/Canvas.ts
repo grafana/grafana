@@ -2,6 +2,8 @@ import { type Locator, test } from '@playwright/test';
 
 import { PageObject } from './PageObject';
 
+// The dashboard edit canvas (the area left of the sidebar) — hosts the grid
+// add actions: add panel/tab/row and group panels into a row or tab
 export class Canvas extends PageObject {
   getContainer() {
     return this.dashboardPage.getByGrafanaSelector(this.selectors.components.DashboardSidebarSplitter.primaryBody);

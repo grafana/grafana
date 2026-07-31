@@ -5,6 +5,8 @@ import { PageObject, type PageObjectArgs } from '../PageObject';
 import { ConditionalRenderingOptions } from './shared/ConditionalRenderingOptions';
 import { RepeatOptions } from './shared/RepeatOptions';
 
+// The "Panel options" pane in the sidebar — title/description inputs, transparent
+// background toggle, plus the shared repeat and conditional rendering option groups
 export class PanelOptions extends PageObject {
   public conditionalRenderingOptions: ConditionalRenderingOptions;
   public repeatOptions: RepeatOptions;
