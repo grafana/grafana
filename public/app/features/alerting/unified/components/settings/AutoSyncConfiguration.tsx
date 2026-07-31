@@ -5,8 +5,10 @@ import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, Card, ConfirmModal, Field, LinkButton, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { hasConfiguredUid, isOperatorManaged } from '../../utils/autoSync';
+
 import { AutoSyncStatusBadge } from './AutoSyncStatusBadge';
-import { hasConfiguredUid, isOperatorManaged, useAutoSyncConfiguration } from './useAutoSyncConfiguration';
+import { useAutoSyncConfiguration } from './useAutoSyncConfiguration';
 
 export function AutoSyncConfiguration() {
   const styles = useStyles2(getStyles);

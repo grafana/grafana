@@ -168,6 +168,21 @@ describe('AutoSyncConfiguration — edge-case states', () => {
     expect(await ui.picker.find()).toBeDisabled();
   });
 
+  it('case 5b: a removed ini key releases the lock, which is what the callout tells the admin to do', async () => {
+    // origin stays 'ini' after the key is removed, so trusting it alone left the admin with a locked
+    // picker, no Save and no Disable — permanently.
+    setupAutoSyncConfig(server, { statusUid: MIMIR_DS_UID, origin: 'ini', syncedReason: 'NotConfigured' });
+    setupDatasourcesEndpoint(server, [MIMIR_DS_PAYLOAD]);
+    registerMimirDataSources();
+
+    render(<AutoSyncConfiguration />);
+
+    expect(await ui.notConfiguredBadge.find()).toBeInTheDocument();
+    expect(edgeUi.operatorManagedCallout.query()).not.toBeInTheDocument();
+    expect(ui.picker.get()).toBeEnabled();
+    expect(ui.saveButton.get()).toBeInTheDocument();
+  });
+
   it('case 6: rejected write — state does not change and operator-managed is not inferred', async () => {
     setupStatefulAutoSyncConfig(server);
     setupAutoSyncConfigWriteError(server, { code: 403, message: 'datasource must be of type alertmanager' });

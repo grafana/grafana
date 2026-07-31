@@ -1,40 +1,62 @@
 import { HttpResponse, http } from 'msw';
 import { type SetupServer } from 'msw/node';
 
-import { API_GROUP, API_VERSION, type Config } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
+import {
+  API_GROUP,
+  API_VERSION,
+  type Config,
+  type ConfigCondition,
+} from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { CONFIG_SINGLETON_NAME } from 'app/features/alerting/unified/api/configApi';
+import { SYNCED_CONDITION_TYPE, SYNC_REASON_NOT_CONFIGURED } from 'app/features/alerting/unified/utils/autoSync';
 
 // Config is the one notifications resource that only exists in v0alpha1, so this route is built from
 // that version's own constants rather than the shared ALERTING_API_SERVER_BASE_URL, which points at v1beta1.
 const CONFIG_URL = `/apis/${API_GROUP}/${API_VERSION}/namespaces/:namespace/configs/:name`;
 
+/** The subset of the worker's condition reasons tests need so far. */
+type SyncedConditionReason = typeof SYNC_REASON_NOT_CONFIGURED | 'SyncSucceeded' | 'MimirFetchFailed';
+
+const CONDITION_STATUS_BY_REASON: Record<SyncedConditionReason, ConfigCondition['status']> = {
+  SyncSucceeded: 'True',
+  NotConfigured: 'Unknown',
+  MimirFetchFailed: 'False',
+};
+
 interface AutoSyncConfigOptions {
-  /**
-   * UID on spec.externalAlertmanagerSync — the desired configuration, and the field
-   * `useIsAutoSyncActive` reads. Set it to simulate an active sync; omit it for an inactive sync.
-   */
+  /** spec.externalAlertmanagerSync — the desired configuration. */
   specUid?: string;
-  /**
-   * UID on status.externalAlertmanagerSync — the last sync attempt, which can lag spec.
-   * `useIsAutoSyncActive` only reads this when `origin` is 'ini'; set it with the default
-   * `origin: 'api'` (and specUid omitted) to simulate a stale status that must not count as active.
-   */
+  /** status.externalAlertmanagerSync — the last attempt, which lags spec. */
   statusUid?: string;
-  /**
-   * origin on status.externalAlertmanagerSync. 'ini' marks the org as operator-managed: the
-   * grafana.ini key is authoritative, spec is dormant, and UID writes are rejected on admission.
-   */
+  /** 'ini' marks the org as operator-managed: the grafana.ini key wins and spec is dormant. */
   origin?: 'api' | 'ini';
+  /**
+   * Defaults to what the worker would write for the other options. Pass 'NotConfigured' with
+   * `origin: 'ini'` for an org whose ini key was removed: the stale status stays, the reason moves on.
+   */
+  syncedReason?: SyncedConditionReason;
 }
 
 function buildAutoSyncConfig(name: string, options: AutoSyncConfigOptions = {}): Config {
   const { specUid, statusUid, origin = 'api' } = options;
+  const syncedReason = options.syncedReason ?? (statusUid ? 'SyncSucceeded' : SYNC_REASON_NOT_CONFIGURED);
   return {
     apiVersion: `${API_GROUP}/${API_VERSION}`,
     kind: 'Config',
     metadata: { name, namespace: 'default', resourceVersion: '1' },
     spec: specUid ? { externalAlertmanagerSync: { datasourceUid: specUid } } : {},
-    status: statusUid ? { externalAlertmanagerSync: { datasourceUid: statusUid, origin } } : {},
+    status: {
+      // The worker writes it every tick, so a seeded singleton always has this condition.
+      conditions: [
+        {
+          type: SYNCED_CONDITION_TYPE,
+          status: CONDITION_STATUS_BY_REASON[syncedReason],
+          reason: syncedReason,
+          lastTransitionTime: '2026-01-01T00:00:00Z',
+        },
+      ],
+      ...(statusUid ? { externalAlertmanagerSync: { datasourceUid: statusUid, origin } } : {}),
+    },
   };
 }
 
@@ -57,13 +79,9 @@ const configHandler = (options: AutoSyncConfigOptions = {}, onRequest?: () => vo
   });
 
 /**
- * Override the Config GET to drive external Alertmanager auto-sync state. Pass `specUid` to
- * simulate an API-configured active sync; omit it for an inactive, empty Config. Pass `statusUid`
- * alone to simulate a stale status that must not count as active. Pass `origin: 'ini'` with
- * `statusUid` for an operator-managed org (also an active sync).
- *
- * Returns a `requestSpy` that fires on every GET, so a test can assert the query was — or, when a
- * permission gate should short-circuit it, was not — made.
+ * Override the Config GET to drive external Alertmanager auto-sync state — see
+ * `AutoSyncConfigOptions`. The returned `requestSpy` fires on every GET, so a test can assert the
+ * query was, or was not, made.
  */
 export function setupAutoSyncConfig(server: SetupServer, options: AutoSyncConfigOptions = {}) {
   const requestSpy = jest.fn();
@@ -71,11 +89,7 @@ export function setupAutoSyncConfig(server: SetupServer, options: AutoSyncConfig
   return { requestSpy };
 }
 
-/**
- * Make the Config singleton 404 on both read and write, simulating an instance where the sync
- * worker has not seeded it yet. The UI must read this as "unconfigured" and refuse to save with a
- * transient "still initializing" message, because humans cannot create the singleton.
- */
+/** 404 on both read and write: the sync worker has not seeded the singleton yet. */
 export function setupAutoSyncConfigAbsent(server: SetupServer) {
   const requestSpy = jest.fn();
   server.use(
@@ -90,20 +104,13 @@ export function setupAutoSyncConfigAbsent(server: SetupServer) {
   return { requestSpy };
 }
 
-/**
- * A realistic apimachinery message for a read failure. It quotes the resource name on purpose: those
- * quotes are what catch i18next's default escaping when the message is interpolated into translated
- * copy, so tests asserting the message reaches the user unmangled should keep them.
- */
+/** Quotes the resource name on purpose: they catch i18next escaping the interpolated message. */
 export const CONFIG_READ_FAILURE_MESSAGE =
   'Internal error occurred: failed to read config "default": etcdserver: request timed out';
 
 /**
- * Make the Config GET fail with something other than a 404. The UI must not present this as "still
- * initializing": no amount of waiting seeds a singleton whose read is broken.
- *
- * Returns a `requestSpy` so a test that installs this mid-flight can confirm the failing read
- * actually landed before asserting on what the UI did with it.
+ * Fail the Config GET with something other than a 404 — no amount of waiting fixes it. The
+ * `requestSpy` lets a test installing this mid-flight confirm the failing read landed.
  */
 export function setupAutoSyncConfigReadError(
   server: SetupServer,
@@ -130,14 +137,9 @@ interface PatchOperation {
 }
 
 /**
- * Stateful Config handlers: PATCH applies to the stored object and GET serves it, so a refetch after
- * RTKQ tag invalidation observes the saved UID without a manual handler swap.
- *
- * Every write bumps `metadata.resourceVersion`, as a real apiserver does. The UI must not depend on
- * that value: the sync worker bumps it on every poll tick, so a write that pins resourceVersion is
- * rejected with a spurious 409 whenever a tick lands between page load and save.
- *
- * Returns `patchSpy` (called with each JSON Patch body) and `getStored` for asserting persisted state.
+ * Stateful Config handlers: PATCH applies to the stored object and GET serves it, so a refetch
+ * observes the saved UID. Every write bumps `metadata.resourceVersion`, as a real apiserver does —
+ * the UI must not pin it, since the worker bumps it every tick too.
  */
 export function setupStatefulAutoSyncConfig(server: SetupServer, options: AutoSyncConfigOptions = {}) {
   let stored = buildAutoSyncConfig(CONFIG_SINGLETON_NAME, options);

@@ -217,6 +217,18 @@ describe('useAutoSyncConfiguration — state resolution', () => {
     expect(result.current.state.kind).toBe('operator-managed');
   });
 
+  it('drops `operator-managed` once the worker stops resolving a removed ini key', async () => {
+    // Regression: `operator-managed` offers no picker, no Save and no Disable, so a stale ini status
+    // stranded the admin in the exact state the callout tells them to leave.
+    setupAutoSyncConfig(server, { statusUid: 'mimir-uid', origin: 'ini', syncedReason: 'NotConfigured' });
+    setupDatasourcesEndpoint(server, [MIMIR_DS]);
+
+    const { result } = renderAutoSyncHook();
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.state).toEqual({ kind: 'unconfigured' });
+  });
+
   it('skips the Config query without the read permission', async () => {
     grantUserPermissions([]);
     const { requestSpy } = setupAutoSyncConfig(server, { specUid: 'mimir-uid' });
@@ -449,6 +461,25 @@ describe('useAutoSyncConfiguration — save / disable', () => {
     expect(patchSpy).toHaveBeenCalledTimes(1);
     expect(getStored().spec.externalAlertmanagerSync).toEqual({});
     await waitFor(() => expect(result.current.state).toEqual({ kind: 'unconfigured' }));
+  });
+
+  it('saves after a removed ini key, the recovery path operator-managed would have blocked', async () => {
+    const { getStored } = setupStatefulAutoSyncConfig(server, {
+      statusUid: 'mimir-uid',
+      origin: 'ini',
+      syncedReason: 'NotConfigured',
+    });
+    setupDatasourcesEndpoint(server, [MIMIR_DS, CORTEX_DS]);
+
+    const { result } = renderAutoSyncHook();
+    await waitFor(() => expect(result.current.state).toEqual({ kind: 'unconfigured' }));
+
+    await act(async () => {
+      await expect(result.current.save('cortex-uid')).resolves.toBe(true);
+    });
+
+    expect(getStored().spec.externalAlertmanagerSync).toEqual({ datasourceUid: 'cortex-uid' });
+    await waitFor(() => expect(result.current.state).toEqual({ kind: 'configured', uid: 'cortex-uid' }));
   });
 
   it('reports isReady only once the singleton has been read', async () => {
