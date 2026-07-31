@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgdelete"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -127,6 +128,54 @@ func TestStoreUsesProviderTables(t *testing.T) {
 	require.Equal(t, 2, calls)
 	require.Equal(t, []string{"org", "org_user"}, tables)
 	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestIntegrationOrgDeleteRenderers(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	type deleteRecord struct {
+		OrgID  int64  `xorm:"org_id"`
+		Marker string `xorm:"marker"`
+	}
+
+	dbStore := db.InitTestDB(t)
+	store := &sqlStore{sql: legacysql.NewDatabaseProvider(dbStore), log: log.NewNopLogger()}
+	err := dbStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		if _, err := sess.Exec("DROP TABLE IF EXISTS org_delete_renderer_test"); err != nil {
+			return err
+		}
+		_, err := sess.Exec("CREATE TABLE org_delete_renderer_test (org_id INTEGER, marker TEXT)")
+		return err
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		err := dbStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.Exec("DROP TABLE IF EXISTS org_delete_renderer_test")
+			return err
+		})
+		require.NoError(t, err)
+	})
+
+	created := &org.Org{Name: "delete-renderer-test", Created: time.Now(), Updated: time.Now()}
+	_, err = store.Insert(context.Background(), created)
+	require.NoError(t, err)
+
+	deletionService := &DeletionService{store: store}
+	deletionService.RegisterDelete(func(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64) (orgdelete.Query, error) {
+		return orgdelete.Query{
+			SQL:  "INSERT INTO " + quoteTable(dbHelper, "org_delete_renderer_test") + " (org_id, marker) VALUES (?, ?)",
+			Args: []any{orgID, "rendered"},
+		}, nil
+	})
+
+	require.NoError(t, store.Delete(context.Background(), &org.DeleteOrgCommand{ID: created.ID}))
+
+	var records []deleteRecord
+	err = dbStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		return sess.Table("org_delete_renderer_test").Find(&records)
+	})
+	require.NoError(t, err)
+	require.Equal(t, []deleteRecord{{OrgID: created.ID, Marker: "rendered"}}, records)
 }
 
 func TestIntegrationOrgDataAccess(t *testing.T) {

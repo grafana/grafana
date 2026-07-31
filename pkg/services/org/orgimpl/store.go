@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgdelete"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -48,27 +49,20 @@ type store interface {
 	RemoveOrgUser(context.Context, *org.RemoveOrgUserCommand) error
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
-	RegisterDelete(renderer org.DeleteQueryRenderer)
+	RegisterDelete(renderer orgdelete.Renderer)
 }
 
 type sqlStore struct {
 	sql legacysql.LegacyDatabaseProvider
 	// TODO: moved to service
 	log             log.Logger
-	deleteRenderers []org.DeleteQueryRenderer
+	deleteRenderers []orgdelete.Renderer
 	cfg             *setting.Cfg
 }
 
-type deleteQueryHelper struct {
-	dbHelper *legacysql.LegacyDatabaseHelper
-}
-
-func (h deleteQueryHelper) Table(name string) string {
-	return h.dbHelper.Table(name)
-}
-
-func (h deleteQueryHelper) Quote(identifier string) string {
-	return h.dbHelper.DB.Quote(identifier)
+// quoteTable resolves a table name and quotes it for use in raw SQL.
+func quoteTable(dbHelper *legacysql.LegacyDatabaseHelper, name string) string {
+	return dbHelper.DB.Quote(dbHelper.Table(name))
 }
 
 func (ss *sqlStore) Get(ctx context.Context, orgID int64) (*org.Org, error) {
@@ -115,7 +109,7 @@ func (ss *sqlStore) Insert(ctx context.Context, orga *org.Org) (int64, error) {
 		orgID = orga.ID
 
 		if orga.ID != 0 && dbHelper.DB.GetDialect().DriverName() == migrator.Postgres {
-			orgTable := dbHelper.DB.Quote(dbHelper.Table("org"))
+			orgTable := quoteTable(dbHelper, "org")
 			if _, err := sess.Exec("SELECT setval(?::regclass, (SELECT max(id) FROM "+orgTable+"));", dbHelper.Table("org_id_seq")); err != nil {
 				return fmt.Errorf("failed to sync primary key for org table: %w", err)
 			}
@@ -154,7 +148,7 @@ func (ss *sqlStore) DeleteUserFromAll(ctx context.Context, userID int64) error {
 	}
 
 	return dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
-		query := "DELETE FROM " + dbHelper.DB.Quote(dbHelper.Table("org_user")) + " WHERE user_id = ?"
+		query := "DELETE FROM " + quoteTable(dbHelper, "org_user") + " WHERE user_id = ?"
 		if _, err := sess.Exec(query, userID); err != nil {
 			return err
 		}
@@ -245,7 +239,7 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 	}
 
 	return dbHelper.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		orgTable := dbHelper.DB.Quote(dbHelper.Table("org"))
+		orgTable := quoteTable(dbHelper, "org")
 		if res, err := sess.Query("SELECT 1 FROM "+orgTable+" WHERE id=?", cmd.ID); err != nil {
 			return err
 		} else if len(res) != 1 {
@@ -258,43 +252,46 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			}
 		}
 
+		for _, render := range ss.deleteRenderers {
+			query, err := render(dbHelper, cmd.ID)
+			if err != nil {
+				return err
+			}
+			if _, err := sess.Exec(append([]any{query.SQL}, query.Args...)...); err != nil {
+				return err
+			}
+		}
+
 		return nil
 	})
 }
 
 func (ss *sqlStore) orgDeletions(dbHelper *legacysql.LegacyDatabaseHelper) []string {
-	quoteTable := func(name string) string {
-		return dbHelper.DB.Quote(dbHelper.Table(name))
-	}
-	alertRuleTagTable := quoteTable("alert_rule_tag")
+	alertRuleTagTable := quoteTable(dbHelper, "alert_rule_tag")
 	deletes := []string{ //nolint:prealloc
-		"DELETE FROM " + quoteTable("star") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("dashboard_tag") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("api_key") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("data_source") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("org_user") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("org") + " WHERE id = ?",
-		"DELETE FROM " + quoteTable("temp_user") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("ngalert_configuration") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("alert_configuration") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("alert_instance") + " WHERE rule_org_id = ?",
-		"DELETE FROM " + quoteTable("alert_notification") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("alert_notification_state") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("alert_rule") + " WHERE org_id = ?",
-		"DELETE FROM " + alertRuleTagTable + " AS alert_rule_tag WHERE EXISTS (SELECT 1 FROM " + quoteTable("alert") + " AS alert WHERE alert.org_id = ? AND alert.id = alert_rule_tag.alert_id)",
-		"DELETE FROM " + quoteTable("alert_rule_version") + " WHERE rule_org_id = ?",
-		"DELETE FROM " + quoteTable("alert") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("annotation") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("kv_store") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("team") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("team_member") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("team_role") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("user_role") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable("builtin_role") + " WHERE org_id = ?",
-	}
-
-	for _, render := range ss.deleteRenderers {
-		deletes = append(deletes, render(deleteQueryHelper{dbHelper: dbHelper}))
+		"DELETE FROM " + quoteTable(dbHelper, "star") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "dashboard_tag") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "api_key") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "data_source") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "org_user") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "org") + " WHERE id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "temp_user") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "ngalert_configuration") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "alert_configuration") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "alert_instance") + " WHERE rule_org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "alert_notification") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "alert_notification_state") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "alert_rule") + " WHERE org_id = ?",
+		"DELETE FROM " + alertRuleTagTable + " WHERE EXISTS (SELECT 1 FROM " + quoteTable(dbHelper, "alert") + " AS alert WHERE alert.org_id = ? AND alert.id = alert_rule_tag.alert_id)",
+		"DELETE FROM " + quoteTable(dbHelper, "alert_rule_version") + " WHERE rule_org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "alert") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "annotation") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "kv_store") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "team") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "team_member") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "team_role") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "user_role") + " WHERE org_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "builtin_role") + " WHERE org_id = ?",
 	}
 
 	return deletes
@@ -309,10 +306,11 @@ func (ss *sqlStore) GetUserOrgList(ctx context.Context, query *org.GetUserOrgLis
 
 	result := make([]*org.UserOrgDTO, 0)
 	err = dbHelper.DB.WithDbSession(ctx, func(dbSess *db.Session) error {
-		userTable := dbHelper.DB.Quote(dbHelper.Table("user"))
+		userTable := dbHelper.Table("user")
+		userRef := dbHelper.DB.GetDialect().Quote("user")
 		sess := dbSess.Table(dbHelper.Table("org_user"))
-		sess.Join("INNER", dbHelper.DB.Quote(dbHelper.Table("org")), "org_user.org_id=org.id")
-		sess.Join("INNER", userTable, fmt.Sprintf("org_user.user_id=%s.id", userTable))
+		sess.Join("INNER", []string{dbHelper.Table("org"), "org"}, "org_user.org_id=org.id")
+		sess.Join("INNER", []string{userTable, "user"}, fmt.Sprintf("org_user.user_id=%s.id", userRef))
 		sess.Where("org_user.user_id=?", query.UserID)
 		sess.Where(ss.notServiceAccountFilter(dbHelper))
 		sess.Cols("org.name", "org_user.role", "org_user.org_id")
@@ -329,7 +327,7 @@ func (ss *sqlStore) GetUserOrgList(ctx context.Context, query *org.GetUserOrgLis
 
 func (ss *sqlStore) notServiceAccountFilter(dbHelper *legacysql.LegacyDatabaseHelper) string {
 	return fmt.Sprintf("%s.is_service_account = %s",
-		dbHelper.DB.Quote(dbHelper.Table("user")),
+		dbHelper.DB.GetDialect().Quote("user"),
 		dbHelper.DB.GetDialect().BooleanStr(false))
 }
 
@@ -427,14 +425,14 @@ func (ss *sqlStore) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) 
 			return user.ErrUserNotFound
 		}
 
-		orgUserTable := dbHelper.DB.Quote(dbHelper.Table("org_user"))
+		orgUserTable := quoteTable(dbHelper, "org_user")
 		if res, err := sess.Query("SELECT 1 FROM "+orgUserTable+" WHERE org_id=? and user_id=?", cmd.OrgID, usr.ID); err != nil {
 			return err
 		} else if len(res) == 1 {
 			return org.ErrOrgUserAlreadyAdded
 		}
 
-		orgTable := dbHelper.DB.Quote(dbHelper.Table("org"))
+		orgTable := quoteTable(dbHelper, "org")
 		if res, err := sess.Query("SELECT 1 FROM "+orgTable+" WHERE id=?", cmd.OrgID); err != nil {
 			return err
 		} else if len(res) != 1 {
@@ -456,7 +454,7 @@ func (ss *sqlStore) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) 
 
 		var userOrgs []*org.UserOrgDTO
 		sess.Table(dbHelper.Table("org_user"))
-		sess.Join("INNER", orgTable, "org_user.org_id=org.id")
+		sess.Join("INNER", []string{dbHelper.Table("org"), "org"}, "org_user.org_id=org.id")
 		sess.Where("org_user.user_id=? AND org_user.org_id=?", usr.ID, usr.OrgID)
 		sess.Cols("org.name", "org_user.role", "org_user.org_id")
 		err = sess.Find(&userOrgs)
@@ -486,7 +484,7 @@ func (ss *sqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 
 	r := result{}
 	if err := dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rawSQL := "SELECT COUNT(*) as count FROM " + dbHelper.DB.Quote(dbHelper.Table("org"))
+		rawSQL := "SELECT COUNT(*) as count FROM " + quoteTable(dbHelper, "org")
 		if _, err := sess.SQL(rawSQL).Get(&r); err != nil {
 			return err
 		}
@@ -504,8 +502,8 @@ func (ss *sqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 	if scopeParams != nil && scopeParams.OrgID != 0 {
 		if err := dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM (SELECT user_id FROM %s WHERE org_id=? AND user_id IN (SELECT id AS user_id FROM %s WHERE is_service_account=%s)) as subq",
-				dbHelper.DB.Quote(dbHelper.Table("org_user")),
-				dbHelper.DB.Quote(dbHelper.Table("user")),
+				quoteTable(dbHelper, "org_user"),
+				quoteTable(dbHelper, "user"),
 				dbHelper.DB.GetDialect().BooleanStr(false),
 			)
 			if _, err := sess.SQL(rawSQL, scopeParams.OrgID).Get(&r); err != nil {
@@ -526,7 +524,7 @@ func (ss *sqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 	if scopeParams != nil && scopeParams.UserID != 0 {
 		if err := dbHelper.DB.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			// should we exclude service accounts?
-			rawSQL := "SELECT COUNT(*) AS count FROM " + dbHelper.DB.Quote(dbHelper.Table("org_user")) + " WHERE user_id=?"
+			rawSQL := "SELECT COUNT(*) AS count FROM " + quoteTable(dbHelper, "org_user") + " WHERE user_id=?"
 			if _, err := sess.SQL(rawSQL, scopeParams.UserID).Get(&r); err != nil {
 				return err
 			}
@@ -585,7 +583,7 @@ func (ss *sqlStore) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCom
 
 // validate that there is an org admin user left
 func validateOneAdminLeftInOrg(dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, sess *db.Session) error {
-	query := "SELECT 1 FROM " + dbHelper.DB.Quote(dbHelper.Table("org_user")) + " WHERE org_id=? and role='Admin'"
+	query := "SELECT 1 FROM " + quoteTable(dbHelper, "org_user") + " WHERE org_id=? and role='Admin'"
 	res, err := sess.Query(query, orgID)
 	if err != nil {
 		return err
@@ -632,7 +630,7 @@ func (ss *sqlStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgUser
 		OrgUsers: make([]*org.OrgUserDTO, 0),
 	}
 	err = dbHelper.DB.WithDbSession(ctx, func(dbSession *db.Session) error {
-		userTable := dbHelper.DB.Quote(dbHelper.Table("user"))
+		userTable := dbHelper.Table("user")
 		sess := dbSession.Table(dbHelper.Table("org_user"))
 		sess.Join("INNER", []string{userTable, "u"}, "org_user.user_id=u.id")
 
@@ -779,7 +777,7 @@ func (ss *sqlStore) SearchOrgUsersByEmails(ctx context.Context, query *org.Searc
 		}
 
 		sess := dbSession.Table(dbHelper.Table("org_user")).
-			Join("INNER", []string{dbHelper.DB.Quote(dbHelper.Table("user")), "u"}, "org_user.user_id=u.id").
+			Join("INNER", []string{dbHelper.Table("user"), "u"}, "org_user.user_id=u.id").
 			Where(strings.Join(whereConditions, " AND "), whereParams...).
 			Cols(
 				"org_user.org_id",
@@ -853,14 +851,11 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 			return nil
 		}
 
-		quoteTable := func(name string) string {
-			return dbHelper.DB.Quote(dbHelper.Table(name))
-		}
 		deletes := []string{
-			"DELETE FROM " + quoteTable("org_user") + " WHERE org_id=? and user_id=?",
-			"DELETE FROM " + quoteTable("dashboard_acl") + " WHERE org_id=? and user_id = ?",
-			"DELETE FROM " + quoteTable("team_member") + " WHERE org_id=? and user_id = ?",
-			"DELETE FROM " + quoteTable("query_history_star") + " WHERE org_id=? and user_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "org_user") + " WHERE org_id=? and user_id=?",
+			"DELETE FROM " + quoteTable(dbHelper, "dashboard_acl") + " WHERE org_id=? and user_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "team_member") + " WHERE org_id=? and user_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "query_history_star") + " WHERE org_id=? and user_id = ?",
 		}
 
 		for _, sql := range deletes {
@@ -878,7 +873,7 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 		// check user other orgs and update user current org
 		var userOrgs []*org.UserOrgDTO
 		sess.Table(dbHelper.Table("org_user"))
-		sess.Join("INNER", dbHelper.DB.Quote(dbHelper.Table("org")), "org_user.org_id=org.id")
+		sess.Join("INNER", []string{dbHelper.Table("org"), "org"}, "org_user.org_id=org.id")
 		sess.Where("org_user.user_id=?", usr.ID)
 		sess.Cols("org.name", "org_user.role", "org_user.org_id")
 		err := sess.Find(&userOrgs)
@@ -943,18 +938,18 @@ func (ss *sqlStore) deleteUserInTransaction(dbHelper *legacysql.LegacyDatabaseHe
 
 func deleteUserAccessControl(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, userID int64) error {
 	// Delete user role assignments
-	if _, err := sess.Exec("DELETE FROM "+dbHelper.DB.Quote(dbHelper.Table("user_role"))+" WHERE user_id = ?", userID); err != nil {
+	if _, err := sess.Exec("DELETE FROM "+quoteTable(dbHelper, "user_role")+" WHERE user_id = ?", userID); err != nil {
 		return err
 	}
 
 	// Delete permissions that are scoped to user
-	permissionTable := dbHelper.DB.Quote(dbHelper.Table("permission"))
+	permissionTable := quoteTable(dbHelper, "permission")
 	if _, err := sess.Exec("DELETE FROM "+permissionTable+" WHERE scope = ?", accesscontrol.Scope("users", "id", strconv.FormatInt(userID, 10))); err != nil {
 		return err
 	}
 
 	var roleIDs []int64
-	roleTable := dbHelper.DB.Quote(dbHelper.Table("role"))
+	roleTable := quoteTable(dbHelper, "role")
 	if err := sess.SQL("SELECT id FROM "+roleTable+" WHERE name = ?", accesscontrol.ManagedUserRoleName(userID)).Find(&roleIDs); err != nil {
 		return err
 	}
@@ -984,19 +979,16 @@ func deleteUserAccessControl(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.
 }
 
 func (ss *sqlStore) userDeletions(dbHelper *legacysql.LegacyDatabaseHelper) []string {
-	quoteTable := func(name string) string {
-		return dbHelper.DB.Quote(dbHelper.Table(name))
-	}
 	deletes := []string{
-		"DELETE FROM " + quoteTable("star") + " WHERE user_id = ?",
-		"DELETE FROM " + quoteTable("user") + " WHERE id = ?",
-		"DELETE FROM " + quoteTable("org_user") + " WHERE user_id = ?",
-		"DELETE FROM " + quoteTable("dashboard_acl") + " WHERE user_id = ?",
-		"DELETE FROM " + quoteTable("preferences") + " WHERE user_id = ?",
-		"DELETE FROM " + quoteTable("team_member") + " WHERE user_id = ?",
-		"DELETE FROM " + quoteTable("user_auth") + " WHERE user_id = ?",
-		"DELETE FROM " + quoteTable("user_auth_token") + " WHERE user_id = ?",
-		"DELETE FROM " + quoteTable("quota") + " WHERE user_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "star") + " WHERE user_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "user") + " WHERE id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "org_user") + " WHERE user_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "dashboard_acl") + " WHERE user_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "preferences") + " WHERE user_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "team_member") + " WHERE user_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "user_auth") + " WHERE user_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "user_auth_token") + " WHERE user_id = ?",
+		"DELETE FROM " + quoteTable(dbHelper, "quota") + " WHERE user_id = ?",
 	}
 	return deletes
 }
@@ -1011,8 +1003,7 @@ func removeUserOrg(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, u
 	return err
 }
 
-// RegisterDelete registers a query to run when an org is deleted.
-func (ss *sqlStore) RegisterDelete(renderer org.DeleteQueryRenderer) {
+func (ss *sqlStore) RegisterDelete(renderer orgdelete.Renderer) {
 	ss.deleteRenderers = append(ss.deleteRenderers, renderer)
 }
 

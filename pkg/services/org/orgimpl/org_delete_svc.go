@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgdelete"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
@@ -24,7 +25,10 @@ type DeletionService struct {
 	k8sDeleter resourceDeleter
 }
 
-func ProvideDeletionService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, dashboardService dashboards.DashboardService, ac accesscontrol.AccessControl, restCfg apiserver.RestConfigProvider) (org.DeletionService, error) {
+var _ org.DeletionService = (*DeletionService)(nil)
+var _ orgdelete.Registrar = (*DeletionService)(nil)
+
+func ProvideDeletionService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, dashboardService dashboards.DashboardService, ac accesscontrol.AccessControl, restCfg apiserver.RestConfigProvider) (*DeletionService, error) {
 	log := log.New("org deletion service")
 	s := &DeletionService{
 		store: &sqlStore{
@@ -39,6 +43,14 @@ func ProvideDeletionService(sql legacysql.LegacyDatabaseProvider, cfg *setting.C
 	}
 
 	return s, nil
+}
+
+func ProvideDeleteRegistrar(service *DeletionService) orgdelete.Registrar {
+	return service
+}
+
+func (s *DeletionService) RegisterDelete(renderer orgdelete.Renderer) {
+	s.store.RegisterDelete(renderer)
 }
 
 func (s *DeletionService) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error {
