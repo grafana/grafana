@@ -17,6 +17,7 @@ import { setRunRequest } from '@grafana/runtime';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { useDatasources } from 'app/features/datasources/hooks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
 
@@ -47,6 +48,15 @@ jest.mock('@grafana/runtime', () => ({
     getInstanceSettings: (uid: string) => (uid === promDatasource.uid ? promDatasource : defaultDatasource),
   }),
 }));
+
+jest.mock('app/features/datasources/hooks', () => ({
+  ...jest.requireActual('app/features/datasources/hooks'),
+  // Stub the async useDatasources() so no state update escapes act(). Wired below —
+  // jest.mock factories cannot reference file-scope variables.
+  useDatasources: jest.fn(),
+}));
+
+jest.mocked(useDatasources).mockImplementation(() => [defaultDatasource, promDatasource]);
 
 const runRequestMock = jest.fn().mockReturnValue(
   of<PanelData>({

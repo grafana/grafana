@@ -55,11 +55,14 @@ describe('ImportToGMARules', () => {
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleCreate]);
   testWithFeatureToggles({ enable: ['alertingImportYAMLUI', 'alertingMigrationUI'] });
 
-  it('should render the import source options', () => {
+  it('should render the import source options', async () => {
     render(<ImportToGMARules />);
 
     expect(ui.importSource.existingDatasource.get()).toBeInTheDocument();
     expect(ui.importSource.yaml.get()).toBeInTheDocument();
+
+    // Wait for the picker's async data source lookup so the state update doesn't escape act().
+    await waitFor(() => expect(ui.dsImport.dsPicker.get()).toBeEnabled());
   });
 
   describe('existing datasource', () => {

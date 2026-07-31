@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
+import { useDatasources } from 'app/features/datasources/hooks';
 
 import { type Props, QueryEditorRowHeader } from './QueryEditorRowHeader';
 
@@ -27,6 +28,15 @@ jest.mock('@grafana/runtime', () => ({
     getInstanceSettings: () => mockDS,
   }),
 }));
+
+jest.mock('app/features/datasources/hooks', () => ({
+  ...jest.requireActual('app/features/datasources/hooks'),
+  // Stub the async useDatasources() so no state update escapes act(). Wired below —
+  // jest.mock factories cannot reference file-scope variables.
+  useDatasources: jest.fn(),
+}));
+
+jest.mocked(useDatasources).mockImplementation(({ variables }) => (variables ? [mockDS, mockVariable] : [mockDS]));
 
 describe('QueryEditorRowHeader', () => {
   beforeAll(() => {
