@@ -28,6 +28,15 @@ export type UseRecentQueriesDataReturn = {
   starQuery: (id: string, starred: boolean) => Promise<void>;
 };
 
+export type UseRecentQueriesDataOptions = {
+  /**
+   * Start from clean default filters and never persist them. For surfaces without their own
+   * filter UI (e.g. a plain recent-queries picker), which would otherwise both inherit the
+   * filters remembered by the full Recent Queries view and overwrite them on unmount.
+   */
+  ignoreStoredFilters?: boolean;
+};
+
 function defaultSortingOption(): SelectableValue<SortOrder> {
   return {
     value: SortOrder.Descending,
@@ -35,8 +44,11 @@ function defaultSortingOption(): SelectableValue<SortOrder> {
   };
 }
 
-export function useRecentQueriesData(): UseRecentQueriesDataReturn {
-  const storedDefaults = useMemo(() => getStoredFilterDefaults<RecentQueriesFilterState>('recent'), []);
+export function useRecentQueriesData({ ignoreStoredFilters = false }: UseRecentQueriesDataOptions = {}): UseRecentQueriesDataReturn {
+  const storedDefaults = useMemo(
+    () => (ignoreStoredFilters ? {} : getStoredFilterDefaults<RecentQueriesFilterState>('recent')),
+    [ignoreStoredFilters]
+  );
 
   const [filters, setFiltersState] = useState<RecentQueriesFilterState>(() => {
     const base: RecentQueriesFilterState = {
@@ -67,20 +79,26 @@ export function useRecentQueriesData(): UseRecentQueriesDataReturn {
   });
 
   useEffect(() => {
+    if (ignoreStoredFilters) {
+      return;
+    }
     return () => {
       if (filtersRef.current.rememberFilters) {
         storeFilterDefaults('recent', filtersRef.current);
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ignoreStoredFilters]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const prevRememberFiltersRef = useRef(false);
   useEffect(() => {
+    if (ignoreStoredFilters) {
+      return;
+    }
     if (!filters.rememberFilters && prevRememberFiltersRef.current) {
       storeFilterDefaults('recent', {});
     }
     prevRememberFiltersRef.current = filters.rememberFilters;
-  }, [filters.rememberFilters]);
+  }, [filters.rememberFilters, ignoreStoredFilters]);
 
   const datasourceFiltersKey = useMemo(
     () => filters.datasourceFilters.slice().sort().join(','),
