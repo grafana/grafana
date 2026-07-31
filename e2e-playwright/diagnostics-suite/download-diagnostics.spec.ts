@@ -162,7 +162,10 @@ test.describe('diagnostics: Download diagnostics drawer', { tag: ['@diagnostics'
   let failureDsUid: string;
   let dashboardUid: string;
 
-  test.beforeAll(async ({ createDataSource, request }) => {
+  // createDataSource is a test-scoped fixture and can't be used from beforeAll (Playwright only
+  // allows worker-scoped fixtures there), so datasources are created via the API directly, same as
+  // the dashboard below.
+  test.beforeAll(async ({ request }) => {
     successUpstream = await startUpstream('success');
     failureUpstream = await startUpstream('failure');
 
@@ -170,21 +173,29 @@ test.describe('diagnostics: Download diagnostics drawer', { tag: ['@diagnostics'
     // more than once concurrently, and a fixed name would race across those runs.
     const runId = randomUUID();
 
-    const successDs = await createDataSource({
-      type: 'prometheus',
-      name: `e2e-diagnostics-prometheus-success-${runId}`,
-      url: successUpstream.url,
-      access: 'proxy',
+    const successDsResponse = await request.post('/api/datasources', {
+      data: {
+        type: 'prometheus',
+        name: `e2e-diagnostics-prometheus-success-${runId}`,
+        url: successUpstream.url,
+        access: 'proxy',
+        isDefault: false,
+      },
     });
-    successDsUid = successDs.uid;
+    const successDsBody = await successDsResponse.json();
+    successDsUid = successDsBody.datasource.uid;
 
-    const failureDs = await createDataSource({
-      type: 'prometheus',
-      name: `e2e-diagnostics-prometheus-failure-${runId}`,
-      url: failureUpstream.url,
-      access: 'proxy',
+    const failureDsResponse = await request.post('/api/datasources', {
+      data: {
+        type: 'prometheus',
+        name: `e2e-diagnostics-prometheus-failure-${runId}`,
+        url: failureUpstream.url,
+        access: 'proxy',
+        isDefault: false,
+      },
     });
-    failureDsUid = failureDs.uid;
+    const failureDsBody = await failureDsResponse.json();
+    failureDsUid = failureDsBody.datasource.uid;
 
     const response = await request.post('/api/dashboards/db', {
       data: buildDashboardRequestBody('Diagnostics download e2e', successDsUid, failureDsUid),

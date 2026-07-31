@@ -93,6 +93,9 @@ jobs:
         env:
           GRAFANA_URL: http://localhost:3002
           CI: true
+          # Without this, Node resolves @grafana/* workspace packages via their built dist/
+          # output (not built here), rather than source -- see yarn e2e:pw in package.json.
+          NODE_OPTIONS: '-C @grafana-app/source'
 
       - uses: actions/upload-artifact@v7
         if: always()
