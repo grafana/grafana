@@ -153,4 +153,55 @@ describe('dataSourceVariableReducer', () => {
         });
     });
   });
+
+  describe('when createDataSourceOptions is dispatched with labels filter', () => {
+    it('should include only datasources that match the label filter', () => {
+      const plugins = getMockPlugins(3);
+      const sources: DataSourceInstanceSettings[] = plugins.map((p) => getDataSourceInstanceSetting(p.name, p));
+      sources[0].labels = { env: 'prod', team: 'frontend' };
+      sources[1].labels = { env: 'staging', team: 'frontend' };
+      sources[2].labels = { env: 'prod', team: 'backend' };
+
+      const { initialState } = getVariableTestContext<DataSourceVariableModel>(adapter, {
+        query: sources[0].meta.id,
+        labels: { env: 'prod' },
+      });
+      const payload = toVariablePayload({ id: '0', type: 'datasource' }, { sources, regex: undefined });
+
+      reducerTester<VariablesState>()
+        .givenReducer(dataSourceVariableReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(createDataSourceOptions(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          ['0']: {
+            ...initialState['0'],
+            options: [{ text: 'pretty cool plugin-0', value: 'pretty cool plugin-0', selected: false }],
+          } as unknown as DataSourceVariableModel,
+        });
+    });
+
+    it('should filter by both regex and label filter combined', () => {
+      const plugins = getMockPlugins(3);
+      const sources: DataSourceInstanceSettings[] = plugins.map((p) => getDataSourceInstanceSetting(p.name, p));
+      sources[0].labels = { env: 'prod' };
+      sources[1].labels = { env: 'prod' };
+
+      const { initialState } = getVariableTestContext<DataSourceVariableModel>(adapter, {
+        query: sources[0].meta.id,
+        labels: { env: 'prod' },
+      });
+      const payload = toVariablePayload({ id: '0', type: 'datasource' }, { sources, regex: /.*plugin-0.*/ });
+
+      reducerTester<VariablesState>()
+        .givenReducer(dataSourceVariableReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(createDataSourceOptions(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          ['0']: {
+            ...initialState['0'],
+            options: [{ text: 'pretty cool plugin-0', value: 'pretty cool plugin-0', selected: false }],
+          } as unknown as DataSourceVariableModel,
+        });
+    });
+  });
 });

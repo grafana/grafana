@@ -116,6 +116,7 @@ export interface CustomVariableModel extends VariableWithMultiSupport {
 export interface DataSourceVariableModel extends VariableWithMultiSupport {
   type: 'datasource';
   regex: string;
+  labels?: Record<string, string>;
   refresh: VariableRefresh;
 }
 
