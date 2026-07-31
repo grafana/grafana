@@ -2632,6 +2632,36 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/plugin-ui@npm:0.17.3, @grafana/plugin-ui@npm:^0.17.3":
+  version: 0.17.3
+  resolution: "@grafana/plugin-ui@npm:0.17.3"
+  dependencies:
+    "@emotion/css": "npm:11.13.5"
+    "@hello-pangea/dnd": "npm:17.0.0"
+    "@marcbachmann/cel-js": "npm:7.6.1"
+    "@react-awesome-query-builder/ui": "npm:6.6.15"
+    lodash: "npm:4.18.1"
+    prismjs: "npm:1.30.0"
+    react-calendar: "npm:4.8.0"
+    react-popper-tooltip: "npm:4.4.2"
+    react-use: "npm:17.6.1"
+    react-virtualized-auto-sizer: "npm:1.0.26"
+    sql-formatter: "npm:15.8.2"
+    uuid: "npm:14.0.1"
+  peerDependencies:
+    "@grafana/data": ^13.0.0
+    "@grafana/e2e-selectors": ^13.0.0
+    "@grafana/runtime": ^13.0.0
+    "@grafana/ui": ^13.0.0
+    "@testing-library/jest-dom": ^6.9.1
+    "@testing-library/react": ^16.3.2
+    "@testing-library/user-event": ^14.6.1
+    react: ^18.0.0 || ^19.0.0
+    react-dom: ^18.0.0 || ^19.0.0
+  checksum: 10/059f1ae8216bd7a640306c3ee64f7c53955cf3cd499732f38c58010007c73b10a94e9425b8b20e0fcecc225c28a70b8ee8b19cbc0ca9e266d2036d1a3cec6460
+  languageName: node
+  linkType: hard
+
 "@grafana/plugin-ui@npm:^0.13.0, @grafana/plugin-ui@npm:^0.13.1":
   version: 0.13.1
   resolution: "@grafana/plugin-ui@npm:0.13.1"
@@ -2693,60 +2723,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/plugin-ui@npm:^0.17.3":
-  version: 0.17.3
-  resolution: "@grafana/plugin-ui@npm:0.17.3"
-  dependencies:
-    "@emotion/css": "npm:11.13.5"
-    "@hello-pangea/dnd": "npm:17.0.0"
-    "@marcbachmann/cel-js": "npm:7.6.1"
-    "@react-awesome-query-builder/ui": "npm:6.6.15"
-    lodash: "npm:4.18.1"
-    prismjs: "npm:1.30.0"
-    react-calendar: "npm:4.8.0"
-    react-popper-tooltip: "npm:4.4.2"
-    react-use: "npm:17.6.1"
-    react-virtualized-auto-sizer: "npm:1.0.26"
-    sql-formatter: "npm:15.8.2"
-    uuid: "npm:14.0.1"
-  peerDependencies:
-    "@grafana/data": ^13.0.0
-    "@grafana/e2e-selectors": ^13.0.0
-    "@grafana/runtime": ^13.0.0
-    "@grafana/ui": ^13.0.0
-    "@testing-library/jest-dom": ^6.9.1
-    "@testing-library/react": ^16.3.2
-    "@testing-library/user-event": ^14.6.1
-    react: ^18.0.0 || ^19.0.0
-    react-dom: ^18.0.0 || ^19.0.0
-  checksum: 10/059f1ae8216bd7a640306c3ee64f7c53955cf3cd499732f38c58010007c73b10a94e9425b8b20e0fcecc225c28a70b8ee8b19cbc0ca9e266d2036d1a3cec6460
-  languageName: node
-  linkType: hard
-
-"@grafana/prometheus@npm:13.1.2":
-  version: 13.1.2
-  resolution: "@grafana/prometheus@npm:13.1.2"
+"@grafana/prometheus@npm:13.1.10":
+  version: 13.1.10
+  resolution: "@grafana/prometheus@npm:13.1.10"
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@floating-ui/react": "npm:0.27.19"
-    "@grafana/plugin-ui": "npm:^0.13.1"
+    "@grafana/plugin-ui": "npm:0.17.3"
     "@hello-pangea/dnd": "npm:18.0.1"
     "@leeoniya/ufuzzy": "npm:1.0.19"
     "@lezer/common": "npm:1.5.2"
     "@lezer/highlight": "npm:1.2.3"
     "@lezer/lr": "npm:1.4.8"
     "@prometheus-io/lezer-promql": "npm:0.307.3"
-    "@types/debounce-promise": "npm:3.1.9"
-    "@types/lodash": "npm:4.17.20"
-    "@types/react": "npm:18.3.18"
-    "@types/react-dom": "npm:18.3.5"
-    "@types/react-highlight-words": "npm:0.20.0"
-    "@types/semver": "npm:7.7.1"
-    "@types/uuid": "npm:10.0.0"
     debounce-promise: "npm:3.1.2"
-    lodash: "npm:^4.17.23"
-    moment: "npm:2.30.1"
-    moment-timezone: "npm:0.5.47"
+    lodash: "npm:4.18.1"
     monaco-editor: "npm:0.34.1"
     monaco-promql: "npm:1.8.0"
     pluralize: "npm:8.0.0"
@@ -2756,9 +2747,8 @@ __metadata:
     react-window: "npm:1.8.11"
     rxjs: "npm:7.8.2"
     semver: "npm:7.7.3"
-    uuid: "npm:11.1.0"
+    uuid: "npm:14.0.0"
   peerDependencies:
-    "@grafana/assistant": ">=0.1.0"
     "@grafana/data": ">=11.5.0"
     "@grafana/e2e-selectors": ">=11.5.0"
     "@grafana/i18n": ">=12.3.0"
@@ -2767,10 +2757,7 @@ __metadata:
     "@grafana/ui": ">=11.5.0"
     react: ^18.0.0
     react-dom: ^18.0.0
-  peerDependenciesMeta:
-    "@grafana/assistant":
-      optional: true
-  checksum: 10/d96748add1b29ed9251dbf0f7d65ece846c3ce29760a6f74e21f8f4c7614a15ec79f657c8764d4a1fa117cb45ea531ab91d8bc99495919e78bcc6ae8ce82d7d2
+  checksum: 10/9d469dca1affe4a9abac934e765366770a93496e206ebd3125ca1c3641125e47d28bc2e0a6b4d72ea3acb3168b60a2827f04852a79d91320ead43bf0e44ab209
   languageName: node
   linkType: hard
 
@@ -18874,7 +18861,7 @@ __metadata:
     "@grafana/o11y-ds-frontend": "workspace:*"
     "@grafana/plugin-e2e": "npm:^3.10.0"
     "@grafana/plugin-ui": "npm:^0.13.1"
-    "@grafana/prometheus": "npm:13.1.2"
+    "@grafana/prometheus": "npm:13.1.10"
     "@grafana/runtime": "workspace:*"
     "@grafana/scenes": "npm:8.13.5"
     "@grafana/scenes-react": "npm:8.13.5"
@@ -18961,6 +18948,7 @@ __metadata:
     "@types/swagger-ui-react": "npm:5.18.0"
     "@types/systemjs": "npm:6.15.3"
     "@types/trusted-types": "npm:^2.0.7"
+    "@types/uuid": "npm:10.0.0"
     "@types/webpack-assets-manifest": "npm:^5"
     "@types/webpack-env": "npm:^1.18.4"
     "@types/yargs": "npm:17.0.33"
@@ -32820,15 +32808,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uuid@npm:11.1.0, uuid@npm:^11.0.0, uuid@npm:^11.1.0":
-  version: 11.1.0
-  resolution: "uuid@npm:11.1.0"
-  bin:
-    uuid: dist/esm/bin/uuid
-  checksum: 10/d2da43b49b154d154574891ced66d0c83fc70caaad87e043400cf644423b067542d6f3eb641b7c819224a7cd3b4c2f21906acbedd6ec9c6a05887aa9115a9cf5
-  languageName: node
-  linkType: hard
-
 "uuid@npm:14.0.0":
   version: 14.0.0
   resolution: "uuid@npm:14.0.0"
@@ -32844,6 +32823,15 @@ __metadata:
   bin:
     uuid: dist-node/bin/uuid
   checksum: 10/0f978fd5b0269d7acb615342aeb131f0b8d85eeb8ec34f2915d906baa3befcc14a079a430d0f8116aec6fd20c850cbfab65d1b3d1643fa81ed373c0cf9574f18
+  languageName: node
+  linkType: hard
+
+"uuid@npm:^11.0.0, uuid@npm:^11.1.0":
+  version: 11.1.0
+  resolution: "uuid@npm:11.1.0"
+  bin:
+    uuid: dist/esm/bin/uuid
+  checksum: 10/d2da43b49b154d154574891ced66d0c83fc70caaad87e043400cf644423b067542d6f3eb641b7c819224a7cd3b4c2f21906acbedd6ec9c6a05887aa9115a9cf5
   languageName: node
   linkType: hard
 
