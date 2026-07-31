@@ -224,7 +224,18 @@ func (ds *DataSource) executeStartQuery(ctx context.Context, logsClient models.C
 
 	isMonitoringAccount := false
 	if features.IsEnabled(ctx, features.FlagCloudWatchCrossAccountQuerying) && region != "" {
-		monitoringAccountStatus, err := ds.isMonitoringAccount(ctx, region)
+		// Use a short timeout for the monitoring account pre-check. If the OAM
+		// endpoint is unreachable (network black-hole), the default socket idle
+		// timeout is ~60s. A bounded timeout prevents blocking the Logs query
+		// for the entire duration. The existing error branch degrades gracefully
+		// to isMonitoringAccount = false, so a timeout is safe.
+		checkCtx := ctx
+		if deadline, ok := ctx.Deadline(); !ok || time.Until(deadline) > 5*time.Second {
+			var cancel context.CancelFunc
+			checkCtx, cancel = context.WithTimeout(ctx, 5*time.Second)
+			defer cancel()
+		}
+		monitoringAccountStatus, err := ds.isMonitoringAccount(checkCtx, region)
 		if err != nil {
 			ds.logger.FromContext(ctx).Debug("failed to determine monitoring account status", "err", err)
 		} else {
