@@ -81,7 +81,7 @@
     "@types/history": "4.7.11",
     "@types/jest": "29.5.14",
     "@types/lodash": "4.17.20",
-    "@types/react": "19.2.3",
+    "@types/react": "19.2.17",
     "@typescript/native": "npm:typescript@^7.0.2",
     "esbuild": "0.25.8",
     "react": "19.2.8",
