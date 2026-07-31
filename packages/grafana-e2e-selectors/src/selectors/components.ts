@@ -1087,6 +1087,26 @@ export const versionedComponents = {
     thresholdInput: {
       '13.2.0': 'data-testid alert-rule threshold-input',
     },
+    saveRuleButton: {
+      '13.2.0': 'data-testid alert-rule save-rule-button',
+      [MIN_GRAFANA_VERSION]: 'save-rule',
+    },
+    addLabelsButton: {
+      '13.2.0': 'data-testid alert-rule add-labels-button',
+      [MIN_GRAFANA_VERSION]: 'add-labels-button',
+    },
+    folderPicker: {
+      '13.2.0': 'data-testid alert-rule folder-picker',
+      [MIN_GRAFANA_VERSION]: 'folder-picker',
+    },
+    groupPicker: {
+      '13.2.0': 'data-testid alert-rule group-picker',
+      [MIN_GRAFANA_VERSION]: 'group-picker',
+    },
+    routingOptions: {
+      '13.2.0': (mode: string) => `data-testid alert-rule routing-options-${mode}`,
+      [MIN_GRAFANA_VERSION]: (mode: string) => `routing-options-${mode}`,
+    },
   },
   Alert: {
     alertV2: {
