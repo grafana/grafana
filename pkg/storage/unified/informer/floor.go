@@ -288,13 +288,19 @@ func GetFresh[T runtime.Object](ctx context.Context, r FreshReader, namespace, n
 	if r.Retries < 1 {
 		r.Retries = 1
 	}
-	var floor int64
-	var deleted bool
-	if r.Floor != nil {
-		floor, deleted = r.Floor.Watermark(namespace, name)
-	}
 
 	for attempt := 0; ; attempt++ {
+		// Re-read the watermark on every attempt: a newer announcement can land
+		// during the backoff, and a retry must not accept a read below the floor
+		// as it stands now — only comparing against the floor captured before the
+		// loop would let a read at the old floor slip through and be reconciled
+		// ahead of the newer event's own (already queued) reconcile.
+		var floor int64
+		var deleted bool
+		if r.Floor != nil {
+			floor, deleted = r.Floor.Watermark(namespace, name)
+		}
+
 		obj, err := fetch(ctx)
 		switch {
 		case apierrors.IsNotFound(err) && (floor == 0 || deleted):

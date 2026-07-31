@@ -200,6 +200,36 @@ func TestGetFresh_RetainsFloorAcrossAttempts(t *testing.T) {
 	assert.False(t, apierrors.IsNotFound(err))
 }
 
+// The watermark is re-read on every attempt: an announcement landing during
+// the backoff window tightens the bar for the retries already in flight, so a
+// read at the pre-announcement floor cannot slip through and be reconciled
+// ahead of the newer event's own reconcile.
+func TestGetFresh_RefreshesFloorBetweenAttempts(t *testing.T) {
+	floor := NewRVFloor()
+	floor.Raise(testNamespace, "r", rvStale)
+
+	fetches := 0
+	got, err := GetFresh(context.Background(), FreshReader{Floor: floor, Retries: 3}, testNamespace, "r",
+		func(context.Context) (*metav1.PartialObjectMetadata, error) {
+			fetches++
+			switch fetches {
+			case 1:
+				// While this stale read is being rejected, a newer event raises
+				// the floor.
+				floor.Raise(testNamespace, "r", rvFresh)
+				return objWithRV("r", rvStale-1), nil
+			case 2:
+				// Meets the floor captured at loop entry, but not the current one.
+				return objWithRV("r", rvStale), nil
+			default:
+				return objWithRV("r", rvFresh), nil
+			}
+		})
+	require.NoError(t, err)
+	assert.Equal(t, 3, fetches, "the read at the outdated floor must be rejected")
+	assert.Equal(t, formatRV(rvFresh), got.ResourceVersion)
+}
+
 // GetFresh accounts each rejected read (retried) and each surrender to the
 // re-list backstop (exhausted) on the stale-read counter.
 func TestGetFresh_RecordsStaleReadMetrics(t *testing.T) {
