@@ -608,6 +608,93 @@ func TestV1ToV2alpha1(t *testing.T) {
 			},
 		},
 		{
+			name: "dashboard with item (mark) overrides",
+			createV1: func() *dashv1.Dashboard {
+				return &dashv1.Dashboard{
+					Spec: dashv1.DashboardSpec{
+						Object: map[string]interface{}{
+							"title": "Test Dashboard",
+							"panels": []interface{}{
+								map[string]interface{}{
+									"id":    1,
+									"type":  "nodeGraph",
+									"title": "Panel with item overrides",
+									"gridPos": map[string]interface{}{
+										"h": 8, "w": 12, "x": 0, "y": 0,
+									},
+									"fieldConfig": map[string]interface{}{
+										"overrides": []interface{}{},
+										"itemOverrides": []interface{}{
+											map[string]interface{}{
+												"matcher": map[string]interface{}{
+													"id":      "byItemIds",
+													"kind":    "node",
+													"options": []interface{}{"eu-west", "us-east"},
+												},
+												"properties": []interface{}{
+													map[string]interface{}{
+														"id":    "color",
+														"value": map[string]interface{}{"mode": "fixed", "fixedColor": "red"},
+													},
+												},
+											},
+											map[string]interface{}{
+												"matcher": map[string]interface{}{
+													"id":      "byItemRegexp",
+													"kind":    "totallyUnknownKind",
+													"options": "^us-west",
+												},
+												"properties": []interface{}{
+													map[string]interface{}{"id": "custom.thickness", "value": float64(3)},
+												},
+											},
+										},
+									},
+									"targets": []interface{}{},
+								},
+								map[string]interface{}{
+									"id":    2,
+									"type":  "timeseries",
+									"title": "Panel without item overrides",
+									"gridPos": map[string]interface{}{
+										"h": 8, "w": 12, "x": 12, "y": 0,
+									},
+									"fieldConfig": map[string]interface{}{
+										"overrides": []interface{}{},
+									},
+									"targets": []interface{}{},
+								},
+							},
+						},
+					},
+				}
+			},
+			validateV2alpha1: func(t *testing.T, v2alpha1 *dashv2alpha1.Dashboard) {
+				require.Contains(t, v2alpha1.Spec.Elements, "panel-1")
+				fc := v2alpha1.Spec.Elements["panel-1"].PanelKind.Spec.VizConfig.Spec.FieldConfig
+				require.Len(t, fc.ItemOverrides, 2)
+
+				assert.Equal(t, "byItemIds", fc.ItemOverrides[0].Matcher.Id)
+				assert.Equal(t, "node", fc.ItemOverrides[0].Matcher.Kind)
+				assert.Equal(t, []interface{}{"eu-west", "us-east"}, fc.ItemOverrides[0].Matcher.Options)
+				require.Len(t, fc.ItemOverrides[0].Properties, 1)
+				assert.Equal(t, "color", fc.ItemOverrides[0].Properties[0].Id)
+				assert.Equal(t, map[string]interface{}{"mode": "fixed", "fixedColor": "red"}, fc.ItemOverrides[0].Properties[0].Value)
+
+				// An unknown kind is plugin-declared and open-ended, so it must survive untouched
+				assert.Equal(t, "byItemRegexp", fc.ItemOverrides[1].Matcher.Id)
+				assert.Equal(t, "totallyUnknownKind", fc.ItemOverrides[1].Matcher.Kind)
+				assert.Equal(t, "^us-west", fc.ItemOverrides[1].Matcher.Options)
+				require.Len(t, fc.ItemOverrides[1].Properties, 1)
+				assert.Equal(t, "custom.thickness", fc.ItemOverrides[1].Properties[0].Id)
+				assert.Equal(t, float64(3), fc.ItemOverrides[1].Properties[0].Value)
+
+				// A panel with no item overrides leaves the optional field unset
+				require.Contains(t, v2alpha1.Spec.Elements, "panel-2")
+				assert.Nil(t, v2alpha1.Spec.Elements["panel-2"].PanelKind.Spec.VizConfig.Spec.FieldConfig.ItemOverrides)
+			},
+		},
+		{
 			name: "legacy bare-string datasource: known names resolve, unknown names are preserved as UID-only refs",
 			createV1: func() *dashv1.Dashboard {
 				return &dashv1.Dashboard{

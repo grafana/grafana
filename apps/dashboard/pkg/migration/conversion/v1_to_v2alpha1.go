@@ -2547,6 +2547,9 @@ func extractFieldConfigSource(fieldConfig map[string]interface{}) dashv2alpha1.D
 	// Handle overrides
 	fieldConfigSource.Overrides = extractFieldConfigOverrides(fieldConfig)
 
+	// Handle item (mark) overrides
+	fieldConfigSource.ItemOverrides = extractItemOverrides(fieldConfig)
+
 	return fieldConfigSource
 }
 
@@ -2994,6 +2997,60 @@ func extractFieldConfigOverrides(fieldConfig map[string]interface{}) []dashv2alp
 		}
 
 		result = append(result, fieldOverride)
+	}
+
+	return result
+}
+
+func buildItemMatcherConfig(matcherMap map[string]interface{}) dashv2alpha1.DashboardItemMatcherConfig {
+	return dashv2alpha1.DashboardItemMatcherConfig{
+		Id:      schemaversion.GetStringValue(matcherMap, "id"),
+		Kind:    schemaversion.GetStringValue(matcherMap, "kind"),
+		Options: matcherMap["options"],
+	}
+}
+
+// extractItemOverrides maps fieldConfig.itemOverrides, which target individual marks (rows) such as
+// node graph nodes or pie chart slices rather than fields. The matcher kind is plugin-declared and
+// open-ended, so unknown kinds are carried through untouched.
+func extractItemOverrides(fieldConfig map[string]interface{}) []dashv2alpha1.DashboardItemOverrideRule {
+	itemOverrides, ok := fieldConfig["itemOverrides"].([]interface{})
+	if !ok || len(itemOverrides) == 0 {
+		// Optional field: leave unset rather than emitting an empty array
+		return nil
+	}
+
+	result := make([]dashv2alpha1.DashboardItemOverrideRule, 0, len(itemOverrides))
+	for _, override := range itemOverrides {
+		overrideMap, ok := override.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		itemOverride := dashv2alpha1.DashboardItemOverrideRule{}
+
+		if matcher, exists := overrideMap["matcher"]; exists {
+			if matcherMap, ok := matcher.(map[string]interface{}); ok {
+				itemOverride.Matcher = buildItemMatcherConfig(matcherMap)
+			}
+		}
+		if properties, exists := overrideMap["properties"]; exists {
+			if propertiesArray, ok := properties.([]interface{}); ok {
+				itemOverride.Properties = make([]dashv2alpha1.DashboardDynamicConfigValue, 0, len(propertiesArray))
+				for _, property := range propertiesArray {
+					if propertyMap, ok := property.(map[string]interface{}); ok {
+						// Strip BOMs from property values (may contain links with URLs)
+						cleanedValue := stripBOMFromInterface(propertyMap["value"])
+						itemOverride.Properties = append(itemOverride.Properties, dashv2alpha1.DashboardDynamicConfigValue{
+							Id:    schemaversion.GetStringValue(propertyMap, "id"),
+							Value: cleanedValue,
+						})
+					}
+				}
+			}
+		}
+
+		result = append(result, itemOverride)
 	}
 
 	return result

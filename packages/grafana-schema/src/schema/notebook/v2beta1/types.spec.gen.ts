@@ -355,6 +355,9 @@ export interface FieldConfigSource {
 		matcher: MatcherConfig;
 		properties: DynamicConfigValue[];
 	}[];
+	// Item overrides are the options applied to specific items (marks) within a visualization,
+	// such as a node graph node or a pie chart slice, rather than to a field.
+	itemOverrides?: ItemOverrideRule[];
 }
 
 export const defaultFieldConfigSource = (): FieldConfigSource => ({
@@ -707,6 +710,33 @@ export interface DynamicConfigValue {
 
 export const defaultDynamicConfigValue = (): DynamicConfigValue => ({
 	id: "",
+});
+
+// Overrides the options applied to specific items (marks) within a visualization, overriding the defaults.
+export interface ItemOverrideRule {
+	matcher: ItemMatcherConfig;
+	properties: DynamicConfigValue[];
+}
+
+export const defaultItemOverrideRule = (): ItemOverrideRule => ({
+	matcher: defaultItemMatcherConfig(),
+	properties: [],
+});
+
+// Selects the items (marks) an item override rule applies to. The analogue of MatcherConfig
+// for visualizations whose marks are rows rather than fields, such as node graph nodes or pie chart slices.
+export interface ItemMatcherConfig {
+	// The item matcher id. This is used to find the matcher implementation from registry.
+	id: string;
+	// The kind of item this matcher selects, declared by the panel plugin. For example "node" or "slice".
+	kind: string;
+	// The matcher options. This is specific to the matcher implementation.
+	options?: any;
+}
+
+export const defaultItemMatcherConfig = (): ItemMatcherConfig => ({
+	id: "",
+	kind: "",
 });
 
 export interface LibraryPanelKind {

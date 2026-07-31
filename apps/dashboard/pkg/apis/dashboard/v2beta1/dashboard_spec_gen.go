@@ -477,6 +477,9 @@ type DashboardFieldConfigSource struct {
 	Defaults DashboardFieldConfig `json:"defaults"`
 	// Overrides are the options applied to specific fields overriding the defaults.
 	Overrides []DashboardV2beta1FieldConfigSourceOverrides `json:"overrides"`
+	// Item overrides are the options applied to specific items (marks) within a visualization,
+	// such as a node graph node or a pie chart slice, rather than to a field.
+	ItemOverrides []DashboardItemOverrideRule `json:"itemOverrides,omitempty"`
 }
 
 // NewDashboardFieldConfigSource creates a new DashboardFieldConfigSource object.
@@ -1025,6 +1028,51 @@ func NewDashboardDynamicConfigValue() *DashboardDynamicConfigValue {
 // OpenAPIModelName returns the OpenAPI model name for DashboardDynamicConfigValue.
 func (DashboardDynamicConfigValue) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardDynamicConfigValue"
+}
+
+// Overrides the options applied to specific items (marks) within a visualization, overriding the defaults.
+// +k8s:openapi-gen=true
+type DashboardItemOverrideRule struct {
+	Matcher    DashboardItemMatcherConfig    `json:"matcher"`
+	Properties []DashboardDynamicConfigValue `json:"properties"`
+}
+
+// NewDashboardItemOverrideRule creates a new DashboardItemOverrideRule object.
+func NewDashboardItemOverrideRule() *DashboardItemOverrideRule {
+	return &DashboardItemOverrideRule{
+		Matcher:    *NewDashboardItemMatcherConfig(),
+		Properties: []DashboardDynamicConfigValue{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardItemOverrideRule.
+func (DashboardItemOverrideRule) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardItemOverrideRule"
+}
+
+// Selects the items (marks) an item override rule applies to. The analogue of MatcherConfig
+// for visualizations whose marks are rows rather than fields, such as node graph nodes or pie chart slices.
+// +k8s:openapi-gen=true
+type DashboardItemMatcherConfig struct {
+	// The item matcher id. This is used to find the matcher implementation from registry.
+	Id string `json:"id"`
+	// The kind of item this matcher selects, declared by the panel plugin. For example "node" or "slice".
+	Kind string `json:"kind"`
+	// The matcher options. This is specific to the matcher implementation.
+	Options interface{} `json:"options,omitempty"`
+}
+
+// NewDashboardItemMatcherConfig creates a new DashboardItemMatcherConfig object.
+func NewDashboardItemMatcherConfig() *DashboardItemMatcherConfig {
+	return &DashboardItemMatcherConfig{
+		Id:   "",
+		Kind: "",
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for DashboardItemMatcherConfig.
+func (DashboardItemMatcherConfig) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardItemMatcherConfig"
 }
 
 // +k8s:openapi-gen=true

@@ -552,6 +552,9 @@ type NotebookFieldConfigSource struct {
 	Defaults NotebookFieldConfig `json:"defaults"`
 	// Overrides are the options applied to specific fields overriding the defaults.
 	Overrides []NotebookV2beta1FieldConfigSourceOverrides `json:"overrides"`
+	// Item overrides are the options applied to specific items (marks) within a visualization,
+	// such as a node graph node or a pie chart slice, rather than to a field.
+	ItemOverrides []NotebookItemOverrideRule `json:"itemOverrides,omitempty"`
 }
 
 // NewNotebookFieldConfigSource creates a new NotebookFieldConfigSource object.
@@ -1100,6 +1103,51 @@ func NewNotebookDynamicConfigValue() *NotebookDynamicConfigValue {
 // OpenAPIModelName returns the OpenAPI model name for NotebookDynamicConfigValue.
 func (NotebookDynamicConfigValue) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookDynamicConfigValue"
+}
+
+// Overrides the options applied to specific items (marks) within a visualization, overriding the defaults.
+// +k8s:openapi-gen=true
+type NotebookItemOverrideRule struct {
+	Matcher    NotebookItemMatcherConfig    `json:"matcher"`
+	Properties []NotebookDynamicConfigValue `json:"properties"`
+}
+
+// NewNotebookItemOverrideRule creates a new NotebookItemOverrideRule object.
+func NewNotebookItemOverrideRule() *NotebookItemOverrideRule {
+	return &NotebookItemOverrideRule{
+		Matcher:    *NewNotebookItemMatcherConfig(),
+		Properties: []NotebookDynamicConfigValue{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for NotebookItemOverrideRule.
+func (NotebookItemOverrideRule) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookItemOverrideRule"
+}
+
+// Selects the items (marks) an item override rule applies to. The analogue of MatcherConfig
+// for visualizations whose marks are rows rather than fields, such as node graph nodes or pie chart slices.
+// +k8s:openapi-gen=true
+type NotebookItemMatcherConfig struct {
+	// The item matcher id. This is used to find the matcher implementation from registry.
+	Id string `json:"id"`
+	// The kind of item this matcher selects, declared by the panel plugin. For example "node" or "slice".
+	Kind string `json:"kind"`
+	// The matcher options. This is specific to the matcher implementation.
+	Options interface{} `json:"options,omitempty"`
+}
+
+// NewNotebookItemMatcherConfig creates a new NotebookItemMatcherConfig object.
+func NewNotebookItemMatcherConfig() *NotebookItemMatcherConfig {
+	return &NotebookItemMatcherConfig{
+		Id:   "",
+		Kind: "",
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for NotebookItemMatcherConfig.
+func (NotebookItemMatcherConfig) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.NotebookItemMatcherConfig"
 }
 
 // +k8s:openapi-gen=true

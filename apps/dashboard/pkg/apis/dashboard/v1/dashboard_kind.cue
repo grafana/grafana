@@ -732,6 +732,9 @@ lineage: schemas: [{
 				matcher: #MatcherConfig
 				properties: [...#DynamicConfigValue]
 			}] @grafanamaturity(NeedsExpertReview)
+			// Item overrides are the options applied to specific items (marks) within a visualization,
+			// such as a node graph node or a pie chart slice, rather than to a field.
+			itemOverrides?: [...#ItemOverrideRule] @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 		// A library panel is a reusable panel that you can use in any dashboard.
@@ -756,6 +759,23 @@ lineage: schemas: [{
 			// The matcher options. This is specific to the matcher implementation.
 			options?: _ @grafanamaturity(NeedsExpertReview)
 		} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+
+		// Selects the items (marks) an item override rule applies to. The analogue of #MatcherConfig
+		// for visualizations whose marks are rows rather than fields, such as node graph nodes or pie chart slices.
+		#ItemMatcherConfig: {
+			// The item matcher id. This is used to find the matcher implementation from registry.
+			id: string | *"" @grafanamaturity(NeedsExpertReview)
+			// The kind of item this matcher selects, declared by the panel plugin. For example "node" or "slice".
+			kind: string | *"" @grafanamaturity(NeedsExpertReview)
+			// The matcher options. This is specific to the matcher implementation.
+			options?: _ @grafanamaturity(NeedsExpertReview)
+		} @cuetsy(kind="interface")
+
+		// Overrides the options applied to specific items (marks) within a visualization, overriding the defaults.
+		#ItemOverrideRule: {
+			matcher: #ItemMatcherConfig
+			properties: [...#DynamicConfigValue]
+		} @cuetsy(kind="interface")
 
 		#DynamicConfigValue: {
 			id:     string | *"" @grafanamaturity(NeedsExpertReview)
