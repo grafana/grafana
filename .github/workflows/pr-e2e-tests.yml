@@ -284,88 +284,13 @@ jobs:
     needs:
       - build-backend
       - build-frontend
-    name: Download diagnostics e2e (on-prem)
-    runs-on: ubuntu-x64-large
-    timeout-minutes: 20
+    name: Diagnostics e2e (on-prem)
     permissions:
       contents: read
-
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
-      - name: Setup Node.js
-        uses: ./.github/actions/setup-node
-      - name: Install yarn dependencies
-        uses: ./.github/actions/yarn-install
-
-      # Download the grafana artifacts and stitch them together into a standalone prod-ish Grafana distribution
-      - name: Download backend artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: grafana-backend
-          path: grafana-server/bin
-      - name: Fix binary permissions
-        run: chmod +x grafana-server/bin/grafana*
-      - name: Download frontend artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: grafana-frontend
-          path: grafana-server/public
-      - name: Copy misc server files
-        run: cp -r conf/ grafana-server
-
-      # On-demand diagnostics only renders on-prem (empty stack_id) with the toggle on, unlike the
-      # shared cloud-mode server the other Playwright shards use (scripts/grafana-server/custom.ini
-      # sets stack_id = 12345). "prometheus" is preinstalled synchronously so it's ready before the
-      # server finishes starting, since the diagnostics-suite spec queries it as a real upstream.
-      - name: Configure for on-prem diagnostics testing
-        run: |
-          cat > grafana-server/conf/custom.ini <<'EOF'
-          [feature_toggles]
-          grafana.onDemandDiagnostics = true
-
-          [plugins]
-          preinstall_sync = prometheus
-          EOF
-
-      - name: Start Grafana server
-        run: |
-          grafana-server/bin/grafana server \
-            --homepath="$PWD/grafana-server" \
-            cfg:server.http_port=3002 \
-            > grafana-server/grafana.log 2>&1 &
-
-      - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
-
-      - name: Wait for Grafana server to start
-        run: |
-          timeout=90
-          elapsed=0
-          until curl -sf http://localhost:3002/api/health > /dev/null 2>&1; do
-            if [ "$elapsed" -ge "$timeout" ]; then
-              cat grafana-server/grafana.log
-              echo "Timeout after ${timeout}s waiting for Grafana"
-              exit 1
-            fi
-            sleep 2
-            elapsed=$((elapsed + 2))
-          done
-
-      - name: Run diagnostics e2e
-        run: yarn playwright test --project=diagnostics --reporter=list
-        env:
-          GRAFANA_URL: http://localhost:3002
-          CI: true
-
-      - uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: grafana-server-log-diagnostics
-          path: grafana-server/grafana.log
-          retention-days: 7
+    uses: ./.github/workflows/pr-diagnostics-e2e.yml
+    with:
+      backend-artifact-name: grafana-backend
+      frontend-artifact-name: grafana-frontend
 
   required-playwright-tests:
     needs:
