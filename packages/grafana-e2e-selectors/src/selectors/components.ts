@@ -1334,6 +1334,14 @@ export const versionedComponents = {
       '9.5.0': (title: string) => `data-testid ${title}`,
     },
   },
+  EditableTitle: {
+    editButton: {
+      '13.2.0': 'data-testid Editable title edit button',
+    },
+    titleInput: {
+      '13.2.0': 'data-testid Editable title input',
+    },
+  },
   QueryEditorToolbarItem: {
     button: {
       [MIN_GRAFANA_VERSION]: (title: string) => `QueryEditor toolbar item button ${title}`,
