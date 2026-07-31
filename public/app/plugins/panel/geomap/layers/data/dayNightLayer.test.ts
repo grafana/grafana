@@ -81,7 +81,9 @@ describe('dayNightLayer', () => {
 
   it('update() moves the sun to the subsolar point for the selected time', async () => {
     const { handler, group } = await setup({ sun: true });
-    const sunFeature = ensureInstanceOf<VectorImage>(group.getLayers().item(1), VectorImage).getSource()!.getFeatures()[0];
+    const sunFeature = ensureInstanceOf<VectorImage>(group.getLayers().item(1), VectorImage)
+      .getSource()!
+      .getFeatures()[0];
     expect(sunFeature.getGeometry()!.getCoordinates()).toEqual([]);
 
     handler.update!(dataFor(timeRange));
