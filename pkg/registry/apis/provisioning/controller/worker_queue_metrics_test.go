@@ -25,6 +25,84 @@ func gaugeValueByName(t *testing.T, g prometheus.Gatherer, name string) float64 
 	return 0
 }
 
+// histogramSampleCountByName reads the observation count of the histogram `name`.
+func histogramSampleCountByName(t *testing.T, g prometheus.Gatherer, name string) uint64 {
+	t.Helper()
+	mfs, err := g.Gather()
+	require.NoError(t, err)
+	for _, mf := range mfs {
+		if mf.GetName() == name {
+			require.Len(t, mf.GetMetric(), 1)
+			return mf.GetMetric()[0].GetHistogram().GetSampleCount()
+		}
+	}
+	t.Fatalf("metric %q not found", name)
+	return 0
+}
+
+// TestRepositoryController_WorkerQueueWaitHistogram verifies the queue-wait histogram
+// records one observation each time a worker picks a key up off the queue.
+func TestRepositoryController_WorkerQueueWaitHistogram(t *testing.T) {
+	const metricName = "grafana_provisioning_repository_worker_queue_wait_seconds"
+
+	reg := prometheus.NewRegistry()
+	rc := NewRepositoryController(
+		nil, nil, nil, nil, nil, nil, nil, nil, nil,
+		reg,
+		nil,
+		1,
+		time.Minute, time.Minute, 30*time.Second,
+		nil, nil,
+		repository.IncrementalSyncPolicy{},
+		30*time.Second,
+		false,
+	)
+
+	require.Equal(t, uint64(0), histogramSampleCountByName(t, reg, metricName))
+
+	// Two distinct keys, but repo-a is enqueued twice: the workqueue coalesces the
+	// re-add onto the still-queued key, so only two keys are ever picked up and only
+	// two wait times are observed.
+	rc.queue.Add("ns/repo-a")
+	rc.queue.Add("ns/repo-a")
+	rc.queue.Add("ns/repo-b")
+
+	key, _ := rc.queue.Get()
+	rc.queue.Done(key)
+	require.Equal(t, uint64(1), histogramSampleCountByName(t, reg, metricName))
+
+	key, _ = rc.queue.Get()
+	rc.queue.Done(key)
+	require.Equal(t, uint64(2), histogramSampleCountByName(t, reg, metricName))
+}
+
+// TestConnectionController_WorkerQueueWaitHistogram verifies the queue-wait histogram
+// records one observation each time a worker picks an item up off the queue.
+func TestConnectionController_WorkerQueueWaitHistogram(t *testing.T) {
+	const metricName = "grafana_provisioning_connection_worker_queue_wait_seconds"
+
+	reg := prometheus.NewRegistry()
+	cc := NewConnectionController(
+		nil, nil, nil, nil,
+		time.Minute, 30*time.Second,
+		reg,
+		false,
+	)
+
+	require.Equal(t, uint64(0), histogramSampleCountByName(t, reg, metricName))
+
+	cc.queue.Add(&connectionQueueItem{key: "ns/conn-a"})
+	cc.queue.Add(&connectionQueueItem{key: "ns/conn-b"})
+
+	item, _ := cc.queue.Get()
+	cc.queue.Done(item)
+	require.Equal(t, uint64(1), histogramSampleCountByName(t, reg, metricName))
+
+	item, _ = cc.queue.Get()
+	cc.queue.Done(item)
+	require.Equal(t, uint64(2), histogramSampleCountByName(t, reg, metricName))
+}
+
 // TestRepositoryController_WorkerQueueSizeGauge verifies the worker-queue-size gauge
 // reports the live depth of the replica's local work queue at scrape time.
 func TestRepositoryController_WorkerQueueSizeGauge(t *testing.T) {

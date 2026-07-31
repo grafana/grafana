@@ -88,7 +88,8 @@ func NewConnectionController(
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
 			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{
-				Name: "provisioningConnectionController",
+				Name:            "provisioningConnectionController",
+				MetricsProvider: newWorkerQueueWaitProvider(registry, "connection"),
 			},
 		),
 		statusPatcher:     statusPatcher,

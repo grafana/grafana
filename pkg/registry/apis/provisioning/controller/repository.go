@@ -126,7 +126,8 @@ func NewRepositoryController(
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
 			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name: "provisioningRepositoryController",
+				Name:            "provisioningRepositoryController",
+				MetricsProvider: newWorkerQueueWaitProvider(registry, "repository"),
 			},
 		),
 		repoFactory:       repoFactory,
