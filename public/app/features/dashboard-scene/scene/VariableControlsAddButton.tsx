@@ -39,7 +39,7 @@ export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) 
     <div className={styles.addButton}>
       <div className="dashboard-canvas-add-button">
         <Button
-          icon="plus"
+          icon="brackets-curly"
           variant="secondary"
           fill="outline"
           size="md"

@@ -48,22 +48,30 @@ export function VariableControls({
       (v.state.hide !== VariableHide.hideVariable || v.UNSAFE_renderAsHidden)
   );
 
+  // Group plain variables (with the add variable button) before filters (with the add filter button)
+  const plainVariables = visibleVariables.filter((v) => !sceneUtils.isAdHocVariable(v));
+  const filterVariables = visibleVariables.filter((v) => sceneUtils.isAdHocVariable(v));
+
   return (
     <>
-      {visibleVariables.length > 0 &&
-        visibleVariables.map((variable) => (
-          <VariableValueSelectWrapper
-            key={variable.state.key}
-            variable={variable}
-            isEditingNewLayouts={isEditingNewLayouts}
-          />
-        ))}
-      {config.featureToggles.dashboardNewLayouts ? (
-        <>
-          <AddVariableButton dashboard={dashboard} />
-          <AddFilterButton dashboard={dashboard} onAddVariable={dashboardEditActions.addVariable} />
-        </>
-      ) : null}
+      {plainVariables.map((variable) => (
+        <VariableValueSelectWrapper
+          key={variable.state.key}
+          variable={variable}
+          isEditingNewLayouts={isEditingNewLayouts}
+        />
+      ))}
+      {config.featureToggles.dashboardNewLayouts && <AddVariableButton dashboard={dashboard} />}
+      {filterVariables.map((variable) => (
+        <VariableValueSelectWrapper
+          key={variable.state.key}
+          variable={variable}
+          isEditingNewLayouts={isEditingNewLayouts}
+        />
+      ))}
+      {config.featureToggles.dashboardNewLayouts && (
+        <AddFilterButton dashboard={dashboard} onAddVariable={dashboardEditActions.addVariable} />
+      )}
     </>
   );
 }
