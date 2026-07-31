@@ -5,7 +5,7 @@ name: Build Docker Variants
 # tarball for a single OS/arch combination.
 #
 # Called from release-build.yml (once per arch, tarball from build-targz) and
-# from pr-test-docker.yml (amd64 only, tarball built from source in the PR).
+# from pr-build-grafana.yml (amd64 only, tarball built from source in the PR).
 
 on:
   workflow_call:
