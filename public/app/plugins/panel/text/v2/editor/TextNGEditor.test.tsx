@@ -368,6 +368,9 @@ describe('TextNGEditor', () => {
 
       expect(screen.getByRole('button', { name: 'Text mode: HTML' })).toBeInTheDocument();
 
+      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+      expect(screen.getByRole('button', { name: 'Text mode: HTML' })).toBeInTheDocument();
+
       await enterWriteMode();
       expect(screen.getByRole('button', { name: 'Text mode: HTML' })).toBeInTheDocument();
     });
@@ -384,8 +387,8 @@ describe('TextNGEditor', () => {
       await selectMode('HTML');
 
       expect(onChange).toHaveBeenCalledWith({ mode: TextMode.HTML, content: '# Hello' });
-      // HTML mode does not turn '#' into a heading.
-      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).not.toContain('<h1');
+      // HTML mode does not turn '#' into a heading, it renders the text as-is.
+      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML.trim()).toBe('# Hello');
     });
 
     it('carries a pending draft with the mode change, so typing is not lost', async () => {

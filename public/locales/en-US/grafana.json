@@ -15956,6 +15956,7 @@
       "format-bold": "B",
       "format-heading": "H",
       "format-italic": "I",
+      "language-plaintext": "Plain text",
       "mode-code": "Code",
       "mode-html": "HTML",
       "mode-markdown": "Markdown",

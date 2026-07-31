@@ -35,19 +35,17 @@ export interface TextNGEditorProps {
   onChange: (change: TextNGEditorChange) => void;
 }
 
-const LANGUAGE_LABELS: Record<CodeLanguage, string> = {
+const getLanguageLabels = (): Record<CodeLanguage, string> => ({
   [CodeLanguage.Go]: 'Go',
   [CodeLanguage.Html]: 'HTML',
   [CodeLanguage.Json]: 'JSON',
   [CodeLanguage.Markdown]: 'Markdown',
-  [CodeLanguage.Plaintext]: 'Plain text',
+  [CodeLanguage.Plaintext]: t('textng.editor.language-plaintext', 'Plain text'),
   [CodeLanguage.Sql]: 'SQL',
   [CodeLanguage.Typescript]: 'TypeScript',
   [CodeLanguage.Xml]: 'XML',
   [CodeLanguage.Yaml]: 'YAML',
-};
-
-const LANGUAGE_OPTIONS = Object.values(CodeLanguage).map((value) => ({ value, label: LANGUAGE_LABELS[value] }));
+});
 
 const COMMIT_DEBOUNCE_MS = 250;
 // Markdown, sanitization and the innerHTML reparse cost tens of milliseconds on
@@ -154,8 +152,11 @@ export function TextNGEditor({
     [TextMode.HTML]: t('textng.editor.mode-html', 'HTML'),
     [TextMode.Code]: t('textng.editor.mode-code', 'Code'),
   };
+  const languageLabels = getLanguageLabels();
+  const languageOptions = Object.values(CodeLanguage).map((value) => ({ value, label: languageLabels[value] }));
+
   const language = codeLanguage ?? defaultCodeLanguage;
-  const modeValue = mode === TextMode.Code ? `${modeLabels[mode]} · ${LANGUAGE_LABELS[language]}` : modeLabels[mode];
+  const modeValue = mode === TextMode.Code ? `${modeLabels[mode]} · ${languageLabels[language]}` : modeLabels[mode];
 
   const renderModeMenu = () => (
     <Menu>
@@ -174,7 +175,7 @@ export function TextNGEditor({
         className={styles.pickerMenuItem}
         label={modeLabels[TextMode.Code]}
         active={mode === TextMode.Code}
-        childItems={LANGUAGE_OPTIONS.map((option) => (
+        childItems={languageOptions.map((option) => (
           <Menu.Item
             key={option.value}
             className={styles.pickerMenuItem}
