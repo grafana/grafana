@@ -155,6 +155,11 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string, dri
 		return nil, nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
 	}
 
+	// lastObservedRV is the resource version of the most recent read the claim
+	// acted on, carried on the conflict-exhausted error below so the caller can
+	// tell whether every attempt was fighting over a stale predecessor of a
+	// reused name rather than the announced incarnation.
+	var lastObservedRV int64
 	for attempt := 0; attempt < claimConflictRetries; attempt++ {
 		current, err := s.client.Jobs(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
@@ -164,11 +169,11 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string, dri
 			}
 			return nil, nil, apifmt.Errorf("failed to get job '%s' in '%s' for claiming: %w", name, namespace, err)
 		}
+		lastObservedRV, _ = strconv.ParseInt(current.ResourceVersion, 10, 64)
 		if current.Labels[LabelJobClaim] != "" {
 			// Another worker already holds the claim — the common contention outcome.
 			s.queueMetrics.RecordClaimRoundContended(driverID)
-			rv, _ := strconv.ParseInt(current.ResourceVersion, 10, 64)
-			return nil, nil, &AlreadyClaimedError{ObservedResourceVersion: rv}
+			return nil, nil, &AlreadyClaimedError{ObservedResourceVersion: lastObservedRV}
 		}
 
 		claimed := current.DeepCopy()
@@ -264,7 +269,8 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string, dri
 	// claim_conflicts_total.
 	s.queueMetrics.RecordClaimRoundContended(driverID)
 	logger.Debug("job claim conflicted repeatedly - treating as claimed by another worker")
-	return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s' after %d conflicts: %w", name, namespace, claimConflictRetries, ErrAlreadyClaimed)
+	return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s' after %d conflicts: %w",
+		name, namespace, claimConflictRetries, &AlreadyClaimedError{ObservedResourceVersion: lastObservedRV})
 }
 
 // Update saves the job back to the store.
