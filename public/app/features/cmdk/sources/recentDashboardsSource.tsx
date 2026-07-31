@@ -9,6 +9,8 @@ import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { registerCmdkSource } from '../registry';
 import { type CmdkItem, type CmdkSource } from '../types';
 
+import { DashboardPreviewLazy } from './DashboardPreviewLazy';
+
 const MAX_RECENT_DASHBOARDS = 5;
 
 // Above the static actions so recently viewed dashboards show at the top, like in the old palette.
@@ -49,7 +51,7 @@ export function createRecentDashboardsSource(): CmdkSource {
       }
 
       return dashboards.map((dashboard): CmdkItem => {
-        const { url, name } = dashboard; // items are backed by DataFrameView, so must hold the values in a closure
+        const { url, name, uid } = dashboard; // items are backed by DataFrameView, so must hold the values in a closure
         return {
           type: 'navigation',
           id: `recent-dashboards${url}`,
@@ -57,6 +59,7 @@ export function createRecentDashboardsSource(): CmdkSource {
           title: `${name}`,
           priority: RECENT_DASHBOARDS_PRIORITY,
           href: url,
+          renderDetail: () => <DashboardPreviewLazy uid={uid} />,
         };
       });
     },

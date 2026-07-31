@@ -8,6 +8,8 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { registerCmdkSource } from '../registry';
 import { type CmdkItem, type CmdkSource } from '../types';
 
+import { DashboardPreviewLazy } from './DashboardPreviewLazy';
+
 const MAX_SEARCH_RESULTS = 100;
 const SEARCH_DEBOUNCE_MS = 500;
 
@@ -58,7 +60,7 @@ export function createDashboardSearchSource(): CmdkSource {
       });
 
       return data.view.map((result): CmdkItem => {
-        const { url, name, kind, location } = result; // items are backed by DataFrameView, so must hold the values in a closure
+        const { url, name, kind, location, uid } = result; // items are backed by DataFrameView, so must hold the values in a closure
         return {
           type: 'navigation',
           id: `go/${kind}${url}`,
@@ -67,6 +69,7 @@ export function createDashboardSearchSource(): CmdkSource {
           priority: SEARCH_RESULTS_PRIORITY,
           href: url,
           subtitle: data.view.dataFrame.meta?.custom?.locationInfo[location]?.name,
+          renderDetail: kind === 'dashboard' ? () => <DashboardPreviewLazy uid={uid} /> : undefined,
         };
       });
     },

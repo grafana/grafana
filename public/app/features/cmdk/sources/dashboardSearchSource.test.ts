@@ -60,6 +60,8 @@ describe('dashboardSearchSource', () => {
         priority: 1,
         href: '/d/my-dashboard-1/my-dashboard-1',
         subtitle: 'Dashboards',
+        // Dashboards get a live preview as their detail
+        renderDetail: expect.any(Function),
       },
     ]);
   });

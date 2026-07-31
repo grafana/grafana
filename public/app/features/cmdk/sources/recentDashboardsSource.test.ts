@@ -52,6 +52,8 @@ describe('recentDashboardsSource', () => {
         title: 'My dashboard 1',
         priority: 6,
         href: '/d/my-dashboard-1/my-dashboard-1',
+        // Recent dashboards get the same live preview as search results
+        renderDetail: expect.any(Function),
       },
     ]);
   });

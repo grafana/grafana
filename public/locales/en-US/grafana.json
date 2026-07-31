@@ -5009,8 +5009,10 @@
     "action": {
       "browse-children": "Browse"
     },
+    "dashboard-preview": {
+      "error": "Failed to load dashboard preview"
+    },
     "deep-search": {
-      "description-label": "Description",
       "matched-panels": "Matched panels"
     },
     "empty-state": {

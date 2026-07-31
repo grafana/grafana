@@ -78,7 +78,6 @@ describe('deepSearchSource', () => {
     // The dashboard title segment is stripped from the snippet breadcrumbs; the panel title and its
     // description render as separate parts of the snippet card
     expect(screen.getByText('CPU panel')).toBeInTheDocument();
-    expect(screen.getByText('Description')).toBeInTheDocument();
     expect(screen.getByText('Shows the CPU usage')).toBeInTheDocument();
     expect(screen.getByText('Memory panel')).toBeInTheDocument();
     expect(screen.getByText('Disk panel')).toBeInTheDocument();
