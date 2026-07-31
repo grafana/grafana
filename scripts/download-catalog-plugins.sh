@@ -269,37 +269,49 @@ main() {
   rm -rf "${out}"
   mkdir -p "${out}"
 
-  local line plugin_id plan_ver spec_checksum meta resolved_ver sha tmp_zip
+  local line pids=() pid rc=0
   while IFS= read -r line; do
     [[ -z "${line}" ]] && continue
-    IFS='|' read -r plugin_id plan_ver spec_checksum <<<"${line}"
+    download_one "${line}" "${grafana_version}" "${os_str}" "${arch_str}" "${out}" &
+    pids+=("$!")
+  done < <(merge_specs_lines <"${specs_tmp}")
 
-    if [[ -n "${plan_ver}" ]]; then
-      # pkg/build/daggerbuild/plugins.ResolvePluginVersions (pinned): no versions API call;
-      # URL from BuildPluginDownloadURL; checksum only from spec (optional).
-      resolved_ver="${plan_ver}"
-      sha="${spec_checksum}"
-      if [[ -n "${sha}" ]]; then
-        sha="${sha#sha256:}"
-      fi
-    else
-      meta="$(fetch_resolved_meta "${plugin_id}" "${grafana_version}" "${os_str}" "${arch_str}")"
-      resolved_ver="$(jq -r '.version' <<<"${meta}")"
-      sha="$(jq -r '.sha256 // empty' <<<"${meta}")"
+  for pid in "${pids[@]}"; do
+    wait "${pid}" || rc=1
+  done
+  return "${rc}"
+}
+
+download_one() {
+  local line="$1" grafana_version="$2" os_str="$3" arch_str="$4" out="$5"
+  local plugin_id plan_ver spec_checksum meta resolved_ver sha tmp_zip
+  IFS='|' read -r plugin_id plan_ver spec_checksum <<<"${line}"
+
+  if [[ -n "${plan_ver}" ]]; then
+    # pkg/build/daggerbuild/plugins.ResolvePluginVersions (pinned): no versions API call;
+    # URL from BuildPluginDownloadURL; checksum only from spec (optional).
+    resolved_ver="${plan_ver}"
+    sha="${spec_checksum}"
+    if [[ -n "${sha}" ]]; then
+      sha="${sha#sha256:}"
+    fi
+  else
+    meta="$(fetch_resolved_meta "${plugin_id}" "${grafana_version}" "${os_str}" "${arch_str}")"
+    resolved_ver="$(jq -r '.version' <<<"${meta}")"
+    sha="$(jq -r '.sha256 // empty' <<<"${meta}")"
+    if [[ -n "${spec_checksum}" ]]; then
+      spec_checksum="${spec_checksum#sha256:}"
       if [[ -n "${spec_checksum}" ]]; then
-        spec_checksum="${spec_checksum#sha256:}"
-        if [[ -n "${spec_checksum}" ]]; then
-          sha="${spec_checksum}"
-        fi
+        sha="${spec_checksum}"
       fi
     fi
+  fi
 
-    tmp_zip="$(mktemp)"
+  tmp_zip="$(mktemp)"
 
-    download_plugin_archive "${plugin_id}" "${resolved_ver}" "${sha}" "${grafana_version}" "${os_str}" "${arch_str}" "${tmp_zip}"
-    extract_plugin_zip "${tmp_zip}" "${out}/${plugin_id}"
-    rm -f "${tmp_zip}"
-  done < <(merge_specs_lines <"${specs_tmp}")
+  download_plugin_archive "${plugin_id}" "${resolved_ver}" "${sha}" "${grafana_version}" "${os_str}" "${arch_str}" "${tmp_zip}"
+  extract_plugin_zip "${tmp_zip}" "${out}/${plugin_id}"
+  rm -f "${tmp_zip}"
 }
 
 main "$@"
