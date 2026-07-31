@@ -340,7 +340,7 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
     pinnedDivider: css({
       border: 'none',
       height: 1,
-      background: `linear-gradient(90deg, transparent 0%, ${theme.colors.border.weak} 30%, ${theme.colors.border.weak} 70%, transparent 100%)`,
+      background: `linear-gradient(90deg, transparent 0%, ${theme.colors.border.weak} 20%, ${theme.colors.border.weak} 80%, transparent 100%)`,
       margin: theme.spacing(2, 1, 1, 1),
     }),
     // Edit-mode footer: the Reset/Cancel/Done controls, right-aligned.
