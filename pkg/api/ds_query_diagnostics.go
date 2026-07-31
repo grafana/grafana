@@ -25,6 +25,7 @@ type diagnosticsRequest struct {
 	dtos.MetricRequest
 	Dashboard json.RawMessage `json:"dashboard"`
 	Panel     json.RawMessage `json:"panel"`
+	PanelData json.RawMessage `json:"panelData"`
 }
 
 // diagnosticsFeatureClient is a shared OpenFeature client reused across requests. Flags are
@@ -108,7 +109,10 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	if marshalErr != nil {
 		queryRequestJSON = nil
 	}
-	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, marshalErr, bundleErr)
+	refs := panelEnvironmentRefs(reqDTO.MetricRequest, reqDTO.Panel)
+	env := diagnostics.CollectEnvironment(ctx, hs.Cfg, hs.pluginStore, refs)
+	bundle, err := diagnostics.NewBundler(env).Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, marshalErr, bundleErr,
+		diagnostics.WithPanelData(reqDTO.PanelData))
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to build diagnostics bundle", err)
 	}

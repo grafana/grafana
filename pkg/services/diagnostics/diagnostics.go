@@ -1,6 +1,7 @@
 // Package diagnostics assembles on-demand datasource diagnostic bundles: captured HTTP traffic
-// (HAR), QueryData request/results, and the panel/dashboard JSON. The HTTP handler in pkg/api runs
-// the queries with capture active and delegates bundle assembly here.
+// (HAR), QueryData request/results, the panel/dashboard JSON, and the Grafana build and plugin
+// versions that produced them. The HTTP handler in pkg/api runs the queries with capture active and
+// delegates bundle assembly here.
 package diagnostics
 
 import (
@@ -21,7 +22,10 @@ import (
 )
 
 // Bundler assembles diagnostic bundles.
-type Bundler struct{}
+type Bundler struct {
+	// Written as environment.json by both bundle shapes; nil omits the artifact.
+	env *Environment
+}
 
 // Query responses can contain substantially more data than the diagnostic traffic itself. Keep
 // their uncompressed JSON bounded independently so adding querydata.json cannot multiply a large
@@ -38,19 +42,86 @@ const (
 // truncated fallbacks) so a reader can tell how to interpret the artifact.
 const queryDataArtifactVersion = 1
 
-// NewBundler returns a Bundler.
-func NewBundler() *Bundler {
-	return &Bundler{}
+// NewBundler returns a Bundler that writes env as environment.json into the bundles it assembles.
+func NewBundler(env *Environment) *Bundler {
+	return &Bundler{env: env}
+}
+
+// addEnvironment writes environment.json, if there is one. A marshal failure drops this artifact
+// alone rather than the captured traffic with it, as for manifest.json.
+func (b *Bundler) addEnvironment(files map[string][]byte) {
+	if b == nil || b.env == nil {
+		return
+	}
+	if data, err := json.MarshalIndent(b.env, "", "  "); err == nil {
+		files["environment.json"] = data
+	}
+}
+
+// BuildOption sets optional bundle contents. An option, rather than another parameter on Build, because
+// only some callers can supply these artifacts -- paneldata.json needs a browser. BuildDashboard accepts
+// none of these: paneldata.json is single-panel-only for now.
+type BuildOption func(*buildConfig)
+
+type buildConfig struct {
+	panelData json.RawMessage
+}
+
+// WithPanelData bundles paneldata.json: the data frames the user's browser was holding for the panel,
+// serialized client-side from already-resolved scene state -- or, when that serialization failed, the
+// {version, captureError} record the frontend sends in their place, so a capture that broke on the way
+// out stays distinguishable from a browser that had no frames to give (which sends nothing at all).
+//
+// This is the frontend counterpart to querydata.json, which holds what the datasource's *backend*
+// returned. Diffing the two is the point: a datasource plugin's frontend code also processes the
+// response, so frames present in querydata.json but missing or altered here pin the loss on the
+// plugin's frontend rather than on its backend or the upstream.
+//
+// Unlike panel.json it is data, not a definition: reading it re-runs no queries and re-applies no
+// transformations.
+//
+// The payload is stored as the client sent it, outer whitespace aside: deliberately unvalidated and,
+// unlike the other JSON artifacts, not pretty-printed. Nothing here parses it, so a malformed payload
+// yields a malformed artifact rather than a failed bundle, and indenting would hold a second, larger
+// copy of an unbounded input. That containment is for direct callers: through the HTTP endpoint
+// web.Bind rejects a syntactically malformed payload before Build runs, so the worst that reaches here
+// is a well-formed payload of the wrong shape. This is an experimental, admin-only, on-prem-gated
+// feature.
+//
+// Size is the one failure this does NOT contain, and it is the client's to bound: web.MaxBindBodyBytes
+// caps the whole REQUEST (at 100MiB) rather than this field, so a payload past it fails web.Bind before
+// Build runs and costs the caller the entire bundle instead of just this artifact. Bounding it is
+// intentionally postponed.
+//
+// Leaving it uncapped is also deliberately asymmetric with querydata.json, which IS capped
+// (maxQueryDataArtifactBytes) and degrades to a frame summary above it. Matching that cap would cost
+// the common case a complete diff to make the rare oversized one symmetric.
+//
+// Note for whoever adds the client-side bound: that reasoning only holds BELOW
+// maxQueryDataArtifactBytes. Past it querydata.json is already a frame summary, so a complete
+// paneldata.json has no fields left to be diffed against -- only frame and row counts -- and the
+// uncapped side stops buying a complete diff exactly where the payload is heaviest. Pick the two caps
+// together rather than independently.
+func WithPanelData(panelData json.RawMessage) BuildOption {
+	return func(cfg *buildConfig) {
+		cfg.panelData = panelData
+	}
 }
 
 // Build assembles a .tar.gz bundle from the query response, the captured HAR buffer, and the
 // optional panel/dashboard JSON the client supplied. traffic.har is omitted when nothing was
-// captured.
+// captured. Artifacts only some callers can supply arrive through opts; see BuildOption.
 //
 // Server logs are intentionally omitted because they are not scoped to this request and would leak
 // unrelated activity into a bundle meant for external sharing; they will be tackled in a follow-up.
-func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON, queryRequestJSON json.RawMessage, queryRequestErr, queryErr error) ([]byte, error) {
+func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.Buffer, panelJSON, dashboardJSON, queryRequestJSON json.RawMessage, queryRequestErr, queryErr error, opts ...BuildOption) ([]byte, error) {
 	files := map[string][]byte{}
+	b.addEnvironment(files)
+
+	cfg := buildConfig{}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
 
 	// queryRequestErr is the caller's failure to serialize the request into queryRequestJSON. Record it
 	// so a support engineer can tell the request JSON was omitted because serialization failed rather
@@ -83,6 +154,15 @@ func (b *Bundler) Build(resp *backend.QueryDataResponse, harBuffer *harcapture.B
 	}
 	if len(har) > 0 {
 		files["traffic.har"] = har
+	}
+
+	// A bare "null" is 4 bytes of valid JSON, so it clears a length check: treat it as not supplied
+	// rather than bundling an artifact whose whole content reads as "the frontend was holding no
+	// frames". A real capture of zero frames ({"version":1,"frames":[]}) still ships -- that one IS a
+	// frontend loss worth seeing, and it must not collapse into "the client had nothing to send".
+	if panelData := bytes.TrimSpace(cfg.panelData); len(panelData) > 0 && !bytes.Equal(panelData, []byte("null")) {
+		// Stored as sent, not indented -- see WithPanelData for why.
+		files["paneldata.json"] = panelData
 	}
 
 	if len(panelJSON) > 0 {
@@ -296,6 +376,7 @@ type DashboardPanel struct {
 	// unserializable request only costs this panel its request JSON, not the whole multi-panel bundle.
 	QueryRequestErr error
 	Datasources     []string                   // datasource UIDs the panel references (for the manifest)
+	PluginIDs       []string                   // plugin IDs the panel references (datasource + viz), for the manifest
 	Resp            *backend.QueryDataResponse // query response, carries external plugins' __har__ frames
 	HARBuffer       *harcapture.Buffer         // in-process capture buffer for this panel's queries
 	QueryErr        error                      // top-level error running the panel's queries, if any
@@ -312,10 +393,12 @@ type dashboardManifest struct {
 }
 
 type manifestPanelEntry struct {
-	ID                 int64    `json:"id"`
-	Title              string   `json:"title"`
-	Dir                string   `json:"dir,omitempty"`
-	Datasources        []string `json:"datasources,omitempty"`
+	ID          int64    `json:"id"`
+	Title       string   `json:"title"`
+	Dir         string   `json:"dir,omitempty"`
+	Datasources []string `json:"datasources,omitempty"`
+	// The plugins this panel used, keying into environment.json (which holds the versions).
+	PluginIDs          []string `json:"pluginIds,omitempty"`
 	HARBytes           int      `json:"harBytes,omitempty"`
 	QueryDataBytes     int      `json:"queryDataBytes,omitempty"`
 	QueryDataTruncated bool     `json:"queryDataTruncated,omitempty"`
@@ -340,6 +423,7 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 	}
 
 	files := map[string][]byte{}
+	b.addEnvironment(files)
 	if len(dashboardJSON) > 0 {
 		files["dashboard.json"] = indentJSON(dashboardJSON)
 	}
@@ -348,7 +432,7 @@ func (b *Bundler) BuildDashboard(dashboardJSON json.RawMessage, panels []Dashboa
 	queryDataBytesRemaining := maxDashboardQueryDataBytes
 	panelJSONByID := indexPanelJSON(dashboardJSON)
 	for _, p := range panels {
-		entry := manifestPanelEntry{ID: p.ID, Title: p.Title, Datasources: p.Datasources}
+		entry := manifestPanelEntry{ID: p.ID, Title: p.Title, Datasources: p.Datasources, PluginIDs: p.PluginIDs}
 
 		if p.Skipped != "" {
 			entry.Skipped = p.Skipped

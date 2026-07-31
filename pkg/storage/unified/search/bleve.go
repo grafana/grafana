@@ -87,6 +87,11 @@ type BleveOptions struct {
 	// May be nil in tests.
 	SearchFields *resource.SearchFieldsRegistry
 
+	// RequiredIndexFeatures overrides the index features an existing index must
+	// already have to be reused. Only tests set it. New indexes always record
+	// resource.CurrentIndexFeatures.
+	RequiredIndexFeatures []resource.IndexFeature
+
 	// Snapshot configures remote index snapshot download at build time.
 	// If Snapshot.Store is nil, the feature is disabled and BuildIndex behaves exactly as before.
 	Snapshot SnapshotOptions
@@ -182,6 +187,9 @@ type bleveBackend struct {
 
 	fields *resource.SearchFieldsRegistry
 
+	// Index features an existing index must have to be reused. See BleveOptions.
+	requiredFeatures []resource.IndexFeature
+
 	// Parsed opts.BuildVersion for snapshot tier comparisons. Nil if BuildVersion
 	// is empty. Guaranteed non-nil when opts.Snapshot.Store is set.
 	runningBuildVersion *semver.Version
@@ -259,6 +267,11 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		fields = resource.NewSearchFieldsRegistry(nil, nil, nil)
 	}
 
+	requiredFeatures := opts.RequiredIndexFeatures
+	if requiredFeatures == nil {
+		requiredFeatures = resource.RequiredIndexFeatures(opts.PostRankAuthzEnabled)
+	}
+
 	be := &bleveBackend{
 		log:                     l,
 		cache:                   map[resource.NamespacedResource]*bleveIndex{},
@@ -266,6 +279,7 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 		ownsIndexFn:             ownFn,
 		indexMetrics:            indexMetrics,
 		fields:                  fields,
+		requiredFeatures:        requiredFeatures,
 		runningBuildVersion:     runningBuildVersion,
 		maxSupportedIndexFormat: maxSupportedFormat,
 		lastUploadTime:          map[resource.NamespacedResource]time.Time{},
@@ -646,6 +660,7 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 		BuildVersion:     buildVersion,
 		SelectableFields: selectableFields,
 		SearchFieldsHash: searchFieldsHash,
+		Features:         resource.CurrentIndexFeatures(),
 	}
 
 	biBytes, err := json.Marshal(bi)
@@ -662,10 +677,23 @@ func newBleveIndex(path string, mapper mapping.IndexMapping, buildTime time.Time
 }
 
 type buildInfo struct {
-	BuildTime        int64    `json:"build_time"`                   // Unix seconds timestamp of time when the index was built
-	BuildVersion     string   `json:"build_version"`                // Grafana version used when building the index
-	SelectableFields []string `json:"selectable_fields,omitempty"`  // List of selectable fields used when index was created.
-	SearchFieldsHash string   `json:"search_fields_hash,omitempty"` // Hash over the SearchFieldDefinition slices registered for (group, resource) at build time, across every version. Empty when no SearchFieldsProvider was in use.
+	// Unix seconds timestamp of time when the index was built.
+	BuildTime int64 `json:"build_time"`
+
+	// Grafana version used when building the index.
+	BuildVersion string `json:"build_version"`
+
+	// List of selectable fields used when index was created.
+	SelectableFields []string `json:"selectable_fields,omitempty"`
+
+	// Hash over the SearchFieldDefinition slices registered for (group, resource)
+	// at build time, across every version. Empty when no SearchFieldsProvider was
+	// in use.
+	SearchFieldsHash string `json:"search_fields_hash,omitempty"`
+
+	// Index features the index was built with. Absent on indexes built before
+	// index features existed.
+	Features []resource.IndexFeature `json:"features,omitempty"`
 }
 
 type buildIndexSource int
@@ -1044,7 +1072,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 
 func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time.Time, logger log.Logger) (bleve.Index, string, int64, error) {
 	idx, name, rv, err := b.findPreviousFileBasedIndex(resourceDir)
-	if err != nil || idx == nil || lastImportTime.IsZero() {
+	if err != nil || idx == nil {
 		return idx, name, rv, err
 	}
 
@@ -1053,16 +1081,26 @@ func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time
 		logger.Warn("failed to get build info from existing index", "error", err)
 		return idx, name, rv, nil
 	}
-	if bi.BuildTime <= 0 {
+
+	indexBuildTime := time.Time{}
+	if bi.BuildTime > 0 {
+		indexBuildTime = time.Unix(bi.BuildTime, 0)
+	}
+
+	// Opening an outdated index is deliberate: startup stays fast and the rebuild
+	// scan replaces it shortly after. Only an index that would answer incorrectly
+	// is rejected. An index with no build time counts as older than any import.
+	reason := ""
+	if missing := resource.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
+		reason = fmt.Sprintf("index is missing required features %v", missing)
+	} else if !lastImportTime.IsZero() && indexBuildTime.Before(lastImportTime) {
+		reason = "index was built before the last import"
+	}
+	if reason == "" {
 		return idx, name, rv, nil
 	}
 
-	indexBuildTime := time.Unix(bi.BuildTime, 0)
-	if !indexBuildTime.Before(lastImportTime) {
-		return idx, name, rv, nil
-	}
-
-	logger.Info("File-based index needs rebuild before opening", "buildTime", indexBuildTime, "lastImportTime", lastImportTime)
+	logger.Info("File-based index needs rebuild before opening", "reason", reason, "buildTime", indexBuildTime, "lastImportTime", lastImportTime)
 	_ = idx.Close()
 	// Release the registration findPreviousFileBasedIndex installed on this
 	// directory: we are discarding the reused index, so cleanOldIndexes is
@@ -1601,8 +1639,11 @@ type updateResult struct {
 }
 
 type bleveIndex struct {
-	key   resource.NamespacedResource
+	key resource.NamespacedResource
+	// Holds live and deleted documents together, so queries go through scopeQuery.
 	index bleve.Index
+	// Index features this index was built with, from its build info.
+	features []resource.IndexFeature
 
 	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
 	resourceVersion atomic.Int64
@@ -1664,9 +1705,18 @@ func (b *bleveBackend) newBleveIndex(
 	updaterFn resource.UpdateFn,
 	logger log.Logger,
 ) *bleveIndex {
+	// Read once: what an index maps cannot change while it is open.
+	var features []resource.IndexFeature
+	if info, err := getBuildInfo(index); err == nil {
+		features = info.Features
+	} else {
+		logger.Warn("failed to read index features, treating the index as having none", "err", err)
+	}
+
 	bi := &bleveIndex{
 		key:                  key,
 		index:                index,
+		features:             features,
 		indexStorage:         newIndexType,
 		fields:               fields,
 		allFields:            allFields,
@@ -1694,12 +1744,24 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 
 	batch := b.index.NewBatch()
 	var undeclaredFields map[string]struct{}
+	droppedMarkers := 0
 	for _, item := range req.Items {
 		switch item.Action {
 		case resource.ActionIndex:
 			if item.Doc == nil {
 				return fmt.Errorf("missing document")
 			}
+
+			// An index built before these fields were mapped drops them, which would
+			// serve the document as live or expose a provisioned one in trash. Remove
+			// it instead, which is how this index behaved before deleted documents were
+			// kept, until it is rebuilt.
+			if item.Doc.IsDeleted != nil && *item.Doc.IsDeleted && !b.mapsTrashMarkers() {
+				batch.Delete(resource.SearchID(item.Doc.Key))
+				droppedMarkers++
+				continue
+			}
+
 			doc := item.Doc.UpdateCopyFields()
 			populateFieldVariants(doc, b.searchFields.variants)
 
@@ -1726,11 +1788,24 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	for name := range undeclaredFields {
 		b.logger.Warn("search field written to document is not declared for this kind, so it is dropped from the index and cannot be stored or queried", "field", name)
 	}
+	if droppedMarkers > 0 {
+		// Debug because this fires per batch, and the producer already avoids
+		// building these documents: reaching here means a writer skipped that check.
+		b.logger.Debug("index does not map the trash markers, so deleted documents were removed instead of kept; they appear once the index is rebuilt",
+			"documents", droppedMarkers)
+	}
 
 	if err := b.index.Batch(batch); err != nil {
 		return err
 	}
 	return b.addSnapshotMutationCount(int64(len(req.Items)))
+}
+
+// mapsTrashMarkers reports whether this index can hold every marker a deleted
+// document relies on. An index built before those mappings existed cannot, and
+// bleve drops the values silently.
+func (b *bleveIndex) mapsTrashMarkers() bool {
+	return slices.Contains(b.features, resource.IndexFeatureDeletedMarker)
 }
 
 // isDeclaredField reports whether name is a declared search field for this
@@ -1859,7 +1934,13 @@ func (b *bleveIndex) BuildInfo() (resource.IndexBuildInfo, error) {
 	if err != nil {
 		return resource.IndexBuildInfo{}, err
 	}
+	return bi.resourceBuildInfo(), nil
+}
 
+// resourceBuildInfo converts the persisted form into the one the rebuild and
+// reuse checks consume. An unparseable build version reads as unknown, so it
+// cannot make an index look newer than it is.
+func (bi buildInfo) resourceBuildInfo() resource.IndexBuildInfo {
 	bt := time.Time{}
 	if bi.BuildTime > 0 {
 		bt = time.Unix(bi.BuildTime, 0)
@@ -1878,7 +1959,8 @@ func (b *bleveIndex) BuildInfo() (resource.IndexBuildInfo, error) {
 		BuildVersion:     bv,
 		SelectableFields: bi.SelectableFields,
 		SearchFieldsHash: bi.SearchFieldsHash,
-	}, nil
+		Features:         bi.Features,
+	}
 }
 
 func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest, stats *resource.SearchStats) (*resourcepb.ListManagedObjectsResponse, error) {
@@ -1909,7 +1991,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 	stats.AddResultsConversionTime(time.Since(start))
 
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
-		Query: q,
+		Query: scopeQuery(q, false),
 		Fields: []string{
 			resource.SEARCH_FIELD_TITLE,
 			resource.SEARCH_FIELD_FOLDER,
@@ -1991,7 +2073,7 @@ func (b *bleveIndex) ListManagedObjects(ctx context.Context, req *resourcepb.Lis
 
 func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.SearchStats) ([]*resourcepb.CountManagedObjectsResponse_ResourceCount, error) {
 	found, err := b.index.SearchInContext(ctx, &bleve.SearchRequest{
-		Query: bleve.NewMatchAllQuery(),
+		Query: scopeQuery(bleve.NewMatchAllQuery(), false),
 		Size:  0,
 		Facets: bleve.FacetsRequest{
 			"count": bleve.NewFacetRequest(resource.SEARCH_FIELD_MANAGED_BY, 1000), // typically less then 5
@@ -2057,12 +2139,14 @@ func (b *bleveIndex) Search(
 	}
 
 	// postFilter is opt-in via the search_post_rank_authz config option. It
-	// covers normal paginated search and federated queries: bleve ranks, the
-	// runner authorizes app-side in rank order, and stops once the page is full.
-	// Count-only (Limit==0), facet, and SearchBefore requests stay on the
-	// in-searcher path (exact totals / exact facets).
-	postRank := b.postRankAuthzEnabled && access != nil &&
-		req.Limit > 0 && len(req.SearchBefore) == 0 && len(req.Facet) == 0
+	// covers normal paginated search, federated queries, facet queries, and
+	// SearchBefore: bleve ranks, the runner authorizes app-side in rank order,
+	// and stops once the page is full (page-fill) or the sample budget is hit
+	// (facets). A count-only request (Limit==0, no facets) authorizes up to
+	// MaxCandidates ranked hits: an exact authorized total when that exhausts
+	// the match set, otherwise Bleve's unfiltered count with
+	// TotalHitsExact=false.
+	postRank := b.postRankAuthzEnabled && access != nil
 
 	conversionStarts := time.Now()
 	// convert protobuf request to bleve request
@@ -2076,16 +2160,20 @@ func (b *bleveIndex) Search(
 		return nil, err
 	}
 
-	// A SearchAfter cursor carries one sort value per field in the sort order
-	// that produced it. The post-rank path appends a SortDocID tie-breaker, so
-	// its sort order is one longer than the in-searcher path's. A cursor
-	// created before the flag was enabled (or after it was turned off) has the
-	// wrong length for the current path. runPostFilterAuthz calls
+	// A SearchAfter/SearchBefore cursor carries one sort value per field in the
+	// sort order that produced it. The post-rank path appends a SortDocID
+	// tie-breaker, so its sort order is one longer than the in-searcher path's.
+	// A cursor created before the flag was enabled (or after it was turned off)
+	// has the wrong length for the current path. runPostFilterAuthz calls
 	// SearchInContext directly, so bleve doesn't validate the mismatch before
 	// the collector indexes into the shorter cursor. Guard it here: if the
 	// cursor doesn't match the post-rank sort order, fall back to the in-searcher
 	// path; if it still doesn't match, reject the request.
-	if postRank && len(req.SearchAfter) > 0 && len(req.SearchAfter) != len(searchrequest.Sort) {
+	cursorLen := len(req.SearchAfter)
+	if cursorLen == 0 {
+		cursorLen = len(req.SearchBefore)
+	}
+	if postRank && cursorLen > 0 && cursorLen != len(searchrequest.Sort) {
 		postRank = false
 		searchrequest, e = b.toBleveSearchRequest(ctx, req, access, postRank)
 		if e != nil {
@@ -2096,8 +2184,8 @@ func (b *bleveIndex) Search(
 			return nil, err
 		}
 	}
-	if len(req.SearchAfter) > 0 && len(req.SearchAfter) != len(searchrequest.Sort) {
-		response.Error = resource.NewBadRequestError("search_after cursor does not match the current sort order")
+	if cursorLen > 0 && cursorLen != len(searchrequest.Sort) {
+		response.Error = resource.NewBadRequestError("search cursor does not match the current sort order")
 		return response, nil
 	}
 
@@ -2155,22 +2243,24 @@ func (b *bleveIndex) Search(
 	return response, nil
 }
 
+// DocCount counts live documents, so callers using it as a size estimate
+// undercount by whatever trash the index holds. Close enough for a threshold.
 func (b *bleveIndex) DocCount(ctx context.Context, folder string, stats *resource.SearchStats) (int64, error) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.DocCount")
 	defer span.End()
 
-	if folder == "" {
-		count, err := b.index.DocCount()
-		return int64(count), err
+	var q query.Query = bleve.NewMatchAllQuery()
+	if folder != "" {
+		q = &query.TermQuery{
+			Term:     folder,
+			FieldVal: resource.SEARCH_FIELD_FOLDER,
+		}
 	}
 
 	req := &bleve.SearchRequest{
 		Size:   0, // we just need the count
 		Fields: []string{},
-		Query: &query.TermQuery{
-			Term:     folder,
-			FieldVal: resource.SEARCH_FIELD_FOLDER,
-		},
+		Query:  scopeQuery(q, false),
 	}
 	rsp, err := b.index.SearchInContext(ctx, req)
 	if rsp == nil {
@@ -2238,6 +2328,12 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		if !ok || !kf.facetable {
 			return nil, resource.NewBadRequestError(fmt.Sprintf("field %q does not support faceting", facet.Field))
 		}
+		// A negative limit is a slice bound on both paths: bleve trims its term
+		// list to the requested size without clamping, and so does the
+		// app-side aggregator. Reject it rather than panic in the handler.
+		if facet.Limit < 0 {
+			return nil, resource.NewBadRequestError(fmt.Sprintf("facet %q has a negative limit", name))
+		}
 		facets[name] = bleve.NewFacetRequest(kf.name, int(facet.Limit))
 	}
 
@@ -2260,13 +2356,19 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	// On the post-filter path bleve returns an unfiltered, bounded ranked window;
-	// authorization (and offset handling) happen afterward in bleveIndex.Search.
-	// The first window over-fetches via windowSize and pages with SearchAfter.
-	// From/offset are applied app-side (over authorized hits), so bleve starts at 0.
+	// authorization (and offset/facet aggregation) happen afterward in
+	// bleveIndex.Search. The first window over-fetches via windowSize (page-fill)
+	// or facetWindowSize (facets, one large window covering the sample budget)
+	// and pages with SearchAfter. From/offset are applied app-side (over
+	// authorized hits), so bleve starts at 0.
 	reqSize := size
 	reqFrom := offset
 	if postRankAuthz {
-		reqSize = b.postRankAuthz.windowSize(size)
+		if len(req.Facet) > 0 {
+			reqSize = b.postRankAuthz.facetWindowSize()
+		} else {
+			reqSize = b.postRankAuthz.windowSize(size)
+		}
 		reqFrom = 0
 	}
 
@@ -2295,7 +2397,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		return nil, errResult
 	}
 	textQuery := b.buildTextQuery(searchrequest, req)
-	searchrequest.Query = combineFilterAndTextQueries(filters, textQuery)
+	searchrequest.Query = scopeQuery(combineFilterAndTextQueries(filters, textQuery), req.IsDeleted)
 
 	// postFilter applies authorization after ranking in runPostFilterAuthz, so
 	// skip the in-searcher wrapper here and let bleve return unfiltered ranked hits.
@@ -2306,6 +2408,15 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			group:     b.key.Group,
 			resources: b.authzResources(req),
 		})
+	}
+
+	if postRankAuthz {
+		// postFilter aggregates facets app-side over authorized hits (see
+		// facetAggregator); bleve's native facets would run over the unfiltered
+		// searcher and count unauthorized docs, so drop them here. The facet
+		// scan loads the stored facet fields on its own request copy
+		// (facetScanFields), separate from the response column list.
+		searchrequest.Facets = nil
 	}
 
 	// Add the sort fields
@@ -2333,19 +2444,60 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	}
 
 	if postRankAuthz {
-		// Total-order tie-breaker for stable SearchAfter cursors. The doc ID
-		// {namespace}/{group}/{resource}/{name} is globally unique across a
-		// federated alias (dashboards + folders differ by the resource segment),
-		// so this guarantees no skips/dupes over the merged result set. (For
-		// non-federated queries the name tie-breaker above already gives a total
-		// order; the doc ID is still harmless and keeps the cursor shape uniform
-		// across federated and non-federated post-rank searches.)
+		// Total-order tie-breaker for stable SearchAfter/SearchBefore cursors.
+		// The doc ID {namespace}/{group}/{resource}/{name} is globally unique
+		// across a federated alias (dashboards + folders differ by the resource
+		// segment), so this guarantees no skips/dupes over the merged result set.
+		// (For non-federated queries the name tie-breaker above already gives a
+		// total order; the doc ID is still harmless and keeps the cursor shape
+		// uniform across federated and non-federated post-rank searches.)
 		searchrequest.Sort = append(searchrequest.Sort, &search.SortDocID{})
-		// The folder stored field (needed to authorize) is added to the bleve
-		// load list in Search, separate from the response column list.
+		// The folder and facet stored fields (needed to authorize / aggregate
+		// app-side) are added to the bleve load list in Search, separate from
+		// the response column list.
 	}
 
 	return searchrequest, nil
+}
+
+// scopeQuery restricts q to live documents, or to deleted ones for trash. Every
+// query this index issues goes through here, so a read path cannot forget the
+// distinction and serve trash as if it were live.
+//
+// Live is "not marked deleted" rather than "marked not deleted", because
+// documents written before the marker carry no value for the field.
+func scopeQuery(q query.Query, deleted bool) query.Query {
+	marked := bleve.NewBoolFieldQuery(true)
+	marked.SetField(resource.SEARCH_FIELD_IS_DELETED)
+
+	scoped := bleve.NewBooleanQuery()
+	if !deleted {
+		scoped.AddMust(q)
+		scoped.AddMustNot(marked)
+		return scoped
+	}
+
+	// An object that was provisioned when it was deleted is never returned from
+	// trash: it comes back from its repository instead.
+	provisioned := bleve.NewBoolFieldQuery(true)
+	provisioned.SetField(resource.SEARCH_FIELD_IS_PROVISIONED)
+	scoped.AddMustNot(provisioned)
+
+	// Bleve drives iteration from the Must clause and uses Filter only to test the
+	// documents that clause produced. With nothing to match on, the marker becomes
+	// the Must clause, so trash comes off its own (small) posting list instead of a
+	// walk over every document. Nothing ranks these results, so scoring it costs
+	// nothing.
+	if _, matchAll := q.(*query.MatchAllQuery); matchAll {
+		scoped.AddMust(marked)
+		return scoped
+	}
+
+	// Filter, not Must: a scoring clause would tie absolute scores to how much
+	// trash the index holds. MustNot never scores either.
+	scoped.AddMust(q)
+	scoped.AddFilter(marked)
+	return scoped
 }
 
 // combineFilterAndTextQueries assembles the final bleve query from the filter

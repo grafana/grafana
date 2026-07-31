@@ -81,6 +81,7 @@
     "@types/react": "18.3.18",
     "@types/react-table": "^7.7.20",
     "@types/tinycolor2": "1.4.6",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "esbuild": "0.28.1",
     "fs-extra": "^11.3.2",
     "jest": "^29.6.4",
@@ -89,7 +90,7 @@
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
     "storybook": "10.3.6",
-    "typescript": "6.0.2"
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "peerDependencies": {
     "@grafana/assistant": "^0.1.1",

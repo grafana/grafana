@@ -73,6 +73,8 @@ declare module "@openfeature/core" {
     | "table.protoRowParser"
     | "grafana.queryVarEditorRedesign"
     | "table.refactorNested"
+    | "table.paginationPageSize"
+    | "table.autoColumnWidths"
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu"
     | "grafana.dashboardSettingsRedesign"

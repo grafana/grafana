@@ -8,12 +8,12 @@ import { config } from '@grafana/runtime';
 
 import {
   createTtlCachedPromise,
+  filterHealthyDatasources,
   findDatasourceWithData,
   listProbeCandidates,
   MAX_PROBED_DATASOURCES,
   PROBE_TIMEOUT_MS,
   PROBE_TTL_MS,
-  withRetry,
 } from './probeUtils';
 import { readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
 
@@ -85,20 +85,16 @@ async function orderedCandidates(): Promise<DataSourceInstanceListItem[]> {
   return storedMatch ? [storedMatch, ...ordered.filter((ds) => ds !== storedMatch)] : ordered;
 }
 
-// "Has Kubernetes data" = namespaces detected; an errored probe retries with backoff, then counts
-// as no data — an unusable datasource must not win the probe.
+// Single attempt inside the probe timeout; errors read as no data in the parallel scan.
 async function hasKubernetesNamespaces(ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>): Promise<boolean> {
-  try {
-    const frames = await withRetry(() => runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds, PROBE_TIMEOUT_MS));
-    return (readScalar(frames, 'namespaces') ?? 0) > 0;
-  } catch {
-    return false;
-  }
+  const frames = await runInstantQueries({ namespaces: NAMESPACE_PROBE }, ds, PROBE_TIMEOUT_MS);
+  return (readScalar(frames, 'namespaces') ?? 0) > 0;
 }
 
-// Leader-first probe over the ordered candidates; see findDatasourceWithData for the fan-out rules.
+// Health-filtered parallel scan over the ordered candidates; first candidate with data wins.
 async function resolveKubernetesPrometheus(): Promise<DataSourceInstanceListItem | null> {
-  const candidates = (await orderedCandidates()).slice(0, MAX_PROBED_DATASOURCES);
+  // Filter after the cap: broken datasources consume cap slots, same as they consumed probe slots.
+  const candidates = await filterHealthyDatasources((await orderedCandidates()).slice(0, MAX_PROBED_DATASOURCES));
   return findDatasourceWithData(candidates, hasKubernetesNamespaces);
 }
 
@@ -123,7 +119,7 @@ export async function fetchKubernetesInventory(): Promise<KubernetesInventory> {
   if (!ds) {
     throw new Error(NO_KUBERNETES_DATA_ERROR);
   }
-  const frames = await withRetry(() => runInstantQueries(INVENTORY_QUERIES, ds));
+  const frames = await runInstantQueries(INVENTORY_QUERIES, ds);
   return {
     clusters: readScalar(frames, 'clusters') ?? 0,
     pods: readScalar(frames, 'pods') ?? 0,
@@ -151,7 +147,7 @@ export async function fetchKubernetesHealth(): Promise<KubernetesHealth> {
   };
 
   const [frames, grafanaAlertsFiring] = await Promise.all([
-    withRetry(() => runInstantQueries(queries, ds)),
+    runInstantQueries(queries, ds),
     sameDatasource ? Promise.resolve(null) : fetchGrafanaManagedAlertCount(grafanaAlertsUid, grafanaMetric),
   ]);
 
@@ -172,8 +168,9 @@ export async function fetchKubernetesHealth(): Promise<KubernetesHealth> {
 // A broken/absent state-history datasource must not blank the whole health row: fail to null.
 async function fetchGrafanaManagedAlertCount(uid: string, metric: string): Promise<number | null> {
   try {
-    const frames = await withRetry(() =>
-      runInstantQueries({ grafanaAlertsFiring: `count(${metric}${ALERTS_MATCHER})` }, { uid, type: 'prometheus' })
+    const frames = await runInstantQueries(
+      { grafanaAlertsFiring: `count(${metric}${ALERTS_MATCHER})` },
+      { uid, type: 'prometheus' }
     );
     return readScalar(frames, 'grafanaAlertsFiring');
   } catch {
@@ -187,8 +184,6 @@ export async function fetchClusterCpuSeries(): Promise<FieldSparkline | null> {
   if (!ds) {
     throw new Error(NO_KUBERNETES_DATA_ERROR);
   }
-  const frames = await withRetry(() =>
-    runRangeQuery('cpu', 'sum(rate(container_cpu_usage_seconds_total{container!=""}[5m]))', 24, ds)
-  );
+  const frames = await runRangeQuery('cpu', 'sum(rate(container_cpu_usage_seconds_total{container!=""}[5m]))', 24, ds);
   return readSeries(frames, 'cpu');
 }

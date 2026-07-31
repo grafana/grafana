@@ -11,10 +11,10 @@ import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 import type { MutationResult } from '../types';
 
-// Mock the edit-pane actions so that perform() is called synchronously
+// Mock the sidebar actions so that perform() is called synchronously
 // instead of publishing an event (which requires a DashboardScene subscriber).
-jest.mock('../../edit-pane/shared', () => {
-  const actual = jest.requireActual('../../edit-pane/shared');
+jest.mock('../../sidebar/shared', () => {
+  const actual = jest.requireActual('../../sidebar/shared');
   return {
     ...actual,
     dashboardEditActions: {
@@ -89,7 +89,7 @@ function buildRowsScene(rowTitles: string[] = ['Row A', 'Row B']): DashboardScen
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -126,7 +126,7 @@ function buildTabsScene(tabTitles: string[] = ['Tab A', 'Tab B']): DashboardScen
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -167,7 +167,7 @@ function buildRowsSceneWithPanels(): DashboardScene {
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -210,7 +210,7 @@ function buildSceneWithLayoutParent(
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
-    activateEditPane: jest.fn(),
+    activateSidebar: jest.fn(),
     forceRender: jest.fn(),
     setState: jest.fn((partial: Record<string, unknown>) => {
       Object.assign(state, partial);
@@ -802,7 +802,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -964,7 +964,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1010,7 +1010,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1054,7 +1054,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1102,7 +1102,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1146,7 +1146,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1360,7 +1360,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -1987,7 +1987,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -2030,7 +2030,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -2076,7 +2076,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -2119,7 +2119,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(state, partial);
@@ -2163,7 +2163,7 @@ describe('Layout mutation commands', () => {
         onEnterEditMode: jest.fn(() => {
           tabsState.isEditing = true;
         }),
-        activateEditPane: jest.fn(),
+        activateSidebar: jest.fn(),
         forceRender: jest.fn(),
         setState: jest.fn((partial: Record<string, unknown>) => {
           Object.assign(tabsState, partial);

@@ -148,13 +148,10 @@ func TestExtraAlertmanagerConfig_ToGrafanaTimeIntervals(t *testing.T) {
 		TimeIntervals:     []config.TimeInterval{{Name: "business-hours"}},
 	}
 
-	mutes := c.ToGrafanaMuteTimeIntervals()
-	require.Len(t, mutes, 1)
-	assert.Equal(t, "weekends", mutes[0].Name)
-
 	times := c.ToGrafanaTimeIntervals()
-	require.Len(t, times, 1)
-	assert.Equal(t, "business-hours", times[0].Name)
+	require.Len(t, times, 2)
+	assert.Equal(t, "weekends", times[0].Name)
+	assert.Equal(t, "business-hours", times[1].Name)
 }
 
 func TestExtraAlertmanagerConfig_ReceiverNameStubs(t *testing.T) {
@@ -172,4 +169,76 @@ func TestExtraAlertmanagerConfig_ReceiverNameStubs(t *testing.T) {
 	// Only names are carried over; receiver contents are dropped.
 	assert.False(t, stubs[0].HasMimirIntegrations())
 	assert.Empty(t, stubs[0].GrafanaManagedReceivers)
+}
+
+func TestExtraConfiguration_Validate(t *testing.T) {
+	testCases := []struct {
+		name          string
+		config        ExtraConfiguration
+		expectedError string
+	}{
+		{
+			name: "valid configuration",
+			config: ExtraConfiguration{
+				Identifier: "test-config",
+				AlertmanagerConfig: `route:
+  receiver: default
+receivers:
+  - name: default`,
+			},
+		},
+		{
+			name: "empty identifier",
+			config: ExtraConfiguration{
+				Identifier:         "",
+				AlertmanagerConfig: `route: {receiver: default}`,
+			},
+			expectedError: "identifier is required",
+		},
+		{
+			name: "invalid YAML alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:         "test-config",
+				AlertmanagerConfig: `invalid: yaml: content: [`,
+			},
+			expectedError: "failed to parse alertmanager config",
+		},
+		{
+			name: "missing route in alertmanager config",
+			config: ExtraConfiguration{
+				Identifier: "test-config",
+				AlertmanagerConfig: `receivers:
+  - name: default`,
+			},
+			expectedError: "no routes provided",
+		},
+		{
+			name: "missing receivers in alertmanager config",
+			config: ExtraConfiguration{
+				Identifier: "test-config",
+				AlertmanagerConfig: `route:
+  receiver: default`,
+			},
+			expectedError: "undefined receiver",
+		},
+		{
+			name: "empty alertmanager config",
+			config: ExtraConfiguration{
+				Identifier:         "test-config",
+				AlertmanagerConfig: "",
+			},
+			expectedError: "failed to parse alertmanager config",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.config.Validate()
+			if tc.expectedError == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, tc.expectedError)
+			}
+		})
+	}
 }

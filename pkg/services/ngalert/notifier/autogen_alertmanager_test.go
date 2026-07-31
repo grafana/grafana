@@ -40,7 +40,7 @@ func TestAddAutogenConfig(t *testing.T) {
 			})
 		}
 		for _, muteInterval := range muteIntervals {
-			cfg.AlertmanagerConfig.MuteTimeIntervals = append(cfg.AlertmanagerConfig.MuteTimeIntervals, v1.MuteTimeInterval{
+			cfg.AlertmanagerConfig.TimeIntervals = append(cfg.AlertmanagerConfig.TimeIntervals, v1.TimeInterval{
 				Name: muteInterval,
 			})
 		}

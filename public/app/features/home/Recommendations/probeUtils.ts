@@ -1,26 +1,36 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 /** Cap the probe fan-out: only the first N candidates (in priority order) are probed per page load. */
 export const MAX_PROBED_DATASOURCES = 10;
 
-// Probes gate homepage cards: 3 attempts x 30s meant a fallback could wait 92s+. 10s per attempt
-// bounds the leader to ~32s worst case while still outlasting a slow-but-alive datasource.
+// Probes gate homepage cards: 10s outlasts a slow-but-alive datasource without stalling the region.
 export const PROBE_TIMEOUT_MS = 10_000;
 
 /** One shared probe resolution per TTL window; a later home visit re-resolves after datasource changes. */
 export const PROBE_TTL_MS = 60_000;
+
+// ponytail: 3s /health cutoff (drilldown's) — suspected too tight for OPS-scale instances; revisit as follow-up.
+const HEALTH_CHECK_TIMEOUT_MS = 3000;
 
 // Spacing between retry attempts: the transient browser-side failures observed on the homepage
 // (connection queuing, gateway blips) can outlast an immediate retry; a short backoff covers
 // them while the region shows its skeleton. 3 attempts total.
 const RETRY_DELAYS_MS = [500, 1500];
 
-// Exact names of Grafana Cloud's utility Prometheus datasources (billing/ML) — never where product data lives.
+// Grafana Cloud's utility datasources — never where product data lives. Prometheus utilities
+// (billing/ML) carry exact unprefixed names; Loki utilities (query logs, alert history) are
+// provisioned with stack-prefixed names (grafanacloud-<slug>-usage-insights) over stable
+// unprefixed uids, so the name check matches both forms.
 const CLOUD_UTILITY_DATASOURCE_NAMES: Record<string, true> = {
   'grafanacloud-usage': true,
   'grafanacloud-ml-metrics': true,
 };
+const CLOUD_UTILITY_LOKI_NAME_PATTERN = /^grafanacloud-(.+-)?(usage-insights|alert-state-history)$/;
+function isCloudUtilityDatasourceName(name: string): boolean {
+  return Boolean(CLOUD_UTILITY_DATASOURCE_NAMES[name]) || CLOUD_UTILITY_LOKI_NAME_PATTERN.test(name);
+}
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -35,6 +45,21 @@ export async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
       await sleep(RETRY_DELAYS_MS[attempt]);
     }
   }
+}
+
+/** Backend-capable datasource instance for `uid`, or null when it cannot serve resource calls. */
+export async function resolveBackendInstance(uid: string): Promise<DataSourceWithBackend | null> {
+  const instance = await getDataSourceInstance({ uid });
+  return instance instanceof DataSourceWithBackend ? instance : null;
+}
+
+/**
+ * GET through the classic datasource proxy, timeout-bounded, never toasts. Some datasource
+ * backends (e.g. Tempo) serve their HTTP API only here, not on the resource router.
+ */
+export async function probeProxyGet<T>(uid: string, path: string, params: Record<string, unknown>): Promise<T> {
+  const url = `/api/datasources/proxy/uid/${encodeURIComponent(uid)}/${path}`;
+  return withTimeout(getBackendSrv().get<T>(url, params, undefined, { showErrorAlert: false }), PROBE_TIMEOUT_MS);
 }
 
 /** Rejects when `promise` outlasts `ms`; the underlying request keeps running but stops gating the caller. */
@@ -78,51 +103,52 @@ export function createTtlCachedPromise<T>(fn: () => Promise<T>, ttlMs: number): 
   };
 }
 
-/**
- * Candidate datasources of `type` for a data-existence probe: cloud utility datasources are
- * skipped (unless they are all there is), the default datasource leads, capped for fan-out.
- * Pass an Infinity `cap` when the caller reorders before capping itself.
- */
+/** Probe candidates of `type`. Cloud utilities and `excludeUids` never qualify, even as the only candidates: platform telemetry must not settle a product-data probe. */
 export async function listProbeCandidates(
   type: string,
-  cap = MAX_PROBED_DATASOURCES
+  cap = MAX_PROBED_DATASOURCES,
+  excludeUids?: ReadonlySet<string>
 ): Promise<DataSourceInstanceListItem[]> {
-  const list = await withRetry(() =>
-    getDataSourceInstanceList({
-      type,
-      // Reject the -- Grafana -- builtin by meta.id; a ds.type check would drop alias datasources.
-      filter: (ds) => ds.meta.id !== 'grafana',
-    })
-  );
-  const preferred = list.filter((ds) => !CLOUD_UTILITY_DATASOURCE_NAMES[ds.name]);
-  const pool = preferred.length > 0 ? preferred : list;
+  const list = await getDataSourceInstanceList({
+    type,
+    // Reject the -- Grafana -- builtin by meta.id; a ds.type check would drop alias datasources.
+    filter: (ds) => ds.meta.id !== 'grafana',
+  });
+  const pool = list.filter((ds) => !excludeUids?.has(ds.uid) && !isCloudUtilityDatasourceName(ds.name));
   const def = pool.find((ds) => ds.isDefault);
   const ordered = def ? [def, ...pool.filter((ds) => ds !== def)] : [...pool];
   return ordered.slice(0, cap);
 }
 
-/**
- * Probe the top-priority candidate alone first: in the common case (the default datasource has
- * the data) this issues 1 query instead of N, and a transient sibling race can never outrank it.
- * Only when the leader has no data (or errors) fan out to the rest in parallel. `hasData` must
- * not throw — an unusable datasource counts as no data.
- */
+/** Candidates whose /health reports OK; broken or slow datasources drop out of detection. */
+export async function filterHealthyDatasources(
+  candidates: DataSourceInstanceListItem[]
+): Promise<DataSourceInstanceListItem[]> {
+  const results = await Promise.allSettled(
+    candidates.map((ds) =>
+      withTimeout(
+        getBackendSrv().get<{ status?: string }>(
+          `/api/datasources/uid/${encodeURIComponent(ds.uid)}/health`,
+          undefined,
+          undefined,
+          { showErrorAlert: false }
+        ),
+        HEALTH_CHECK_TIMEOUT_MS
+      )
+    )
+  );
+  return candidates.filter((_, i) => {
+    const result = results[i];
+    return result.status === 'fulfilled' && result.value?.status === 'OK';
+  });
+}
+
+/** First candidate (in priority order) whose probe confirms data; probe errors read as no data. */
 export async function findDatasourceWithData(
   candidates: DataSourceInstanceListItem[],
   hasData: (ds: DataSourceInstanceListItem) => Promise<boolean>
 ): Promise<DataSourceInstanceListItem | null> {
-  if (candidates.length === 0) {
-    return null;
-  }
-  if (await hasData(candidates[0])) {
-    return candidates[0];
-  }
-  const rest = candidates.slice(1);
-  // Parallel probe for hasData while retaining priority of original list
-  for (const [index, probe] of rest.map(hasData).entries()) {
-    if (await probe) {
-      return rest[index];
-    }
-  }
-  return null;
+  const results = await Promise.allSettled(candidates.map((ds) => hasData(ds)));
+  const winner = results.findIndex((result) => result.status === 'fulfilled' && result.value === true);
+  return winner === -1 ? null : candidates[winner];
 }
