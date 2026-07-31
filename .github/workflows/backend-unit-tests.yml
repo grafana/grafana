@@ -101,10 +101,12 @@ jobs:
         uses: ./.github/actions/setup-enterprise
         with:
           token: ${{ steps.get-github-app-token.outputs.token }}
-      # Enterprise must be cloned before setup-go so that enterprise
-      # modules are visible when the Go cache key is computed.
+      - name: Set up remote Go cache
+        uses: ./.github/actions/setup-go-remote-cache
       - name: Setup Go
         uses: ./.github/actions/setup-go
+        with:
+          cache: 'false'
 
       # Run code
       - name: Run unit tests

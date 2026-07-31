@@ -1,0 +1,65 @@
+name: Setup remote Go cache
+description: >-
+  Authenticates to AWS and starts the S3-backed Go build cache
+  (go-cache-plugin). Subsequent go commands in the job use the remote cache
+  through GOCACHEPROG and download modules through the local proxy.
+  Only usable in jobs that can assume the grafana-cicd role; the role trust
+  is granted per workflow file, so fork PRs cannot use it.
+
+runs:
+  using: composite
+  steps:
+    - name: Auth to AWS
+      uses: grafana/shared-workflows/actions/aws-auth@aws-auth/v1.0.2
+      with:
+        aws-region: 'us-east-2'
+        pass-claims: 'repository_owner, repository_name, job_workflow_ref, ref, event_name'
+        set-creds-in-environment: true
+        role-arn: 'arn:aws:iam::422075448034:role/github-actions/grafana-cicd'
+
+    - name: Configure Go cache environment
+      shell: bash
+      run: |
+        set -euo pipefail
+        case "$RUNNER_ARCH" in
+          X64)
+            GOCP_OS='linux-amd64'
+            GOCP_HASH='66e0f3e2ea1515d73540a57efcdd1ebcec8bc1f233af452f30ad32fb84feff9f'
+            ;;
+          ARM64)
+            GOCP_OS='linux-arm64'
+            GOCP_HASH='a6f164d1c38700a1aaafb8537aa405a2edf0c9897e7f62fa4b902445921a23bb'
+            ;;
+          *)
+            echo "Unsupported runner architecture: $RUNNER_ARCH" >&2
+            exit 1
+            ;;
+        esac
+        {
+          echo "GOCP_OS=${GOCP_OS}"
+          echo "GOCP_HASH=${GOCP_HASH}"
+          echo "GOCACHE_HTTP=localhost:12345"
+          echo "GOCACHE_MODPROXY=true"
+          echo "GOCACHE_PLUGIN=1234"
+          echo "GOCACHE_S3_BUCKET=grafana-cicd-gha-cache-workloads-prod"
+          echo "GOCACHE_S3_REGION=us-east-2"
+          echo "GOCACHE_METRICS=true"
+          echo "GOCACHE_DIR=/tmp/gocache"
+          echo "GOCACHEPROG=go-cache-plugin connect 1234"
+          echo "GOPROXY=http://localhost:12345/mod"
+          echo "GOSUMDB=sum.golang.org http://localhost:12345/mod/sumdb/sum.golang.org"
+        } >> "$GITHUB_ENV"
+
+    - name: Install go-cache-plugin
+      shell: bash
+      env:
+        GOCP_VERSION: 'v0.1.4-otel-exporter5'
+      run: |
+        set -xeuo pipefail
+        curl -LO https://github.com/grafana/go-cache-plugin/releases/download/"$GOCP_VERSION"/go-cache-plugin-"$GOCP_OS"
+        mv go-cache-plugin-"$GOCP_OS" go-cache-plugin
+        echo -e "$GOCP_HASH\tgo-cache-plugin" | sha256sum --check
+        chmod +x go-cache-plugin
+        sudo mv go-cache-plugin /bin/go-cache-plugin # move to PATH
+        go-cache-plugin version || true # success returns exit code 2
+        go-cache-plugin serve &
