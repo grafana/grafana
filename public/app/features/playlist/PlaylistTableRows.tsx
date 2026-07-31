@@ -113,7 +113,9 @@ export const PlaylistTableRows = ({ items, onDelete, intervalPlaceholder, onUpda
                   className={styles.rightMargin}
                   width={10}
                   type="text"
-                  defaultValue={item.interval ?? ''}
+                  // Controlled so the value always reflects the correct item after a
+                  // reorder and stays synced for submission/validation on every keystroke.
+                  value={item.interval ?? ''}
                   placeholder={intervalPlaceholder}
                   invalid={!!item.interval && !isValidInterval(item.interval)}
                   title={
@@ -124,7 +126,7 @@ export const PlaylistTableRows = ({ items, onDelete, intervalPlaceholder, onUpda
                   aria-label={t('playlist.playlist-table-rows.aria-label-item-interval', 'Interval for {{itemValue}}', {
                     itemValue: item.value,
                   })}
-                  onBlur={(e) => onUpdateInterval?.(index, e.currentTarget.value.trim())}
+                  onChange={(e) => onUpdateInterval?.(index, e.currentTarget.value.trim())}
                 />
                 <IconButton
                   name="times"
