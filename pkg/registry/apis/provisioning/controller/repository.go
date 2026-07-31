@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -63,13 +65,21 @@ type RepositoryController struct {
 	quotaChecker      *RepositoryQuotaChecker
 	// To allow injection for testing.
 	processFn         func(key string) error
-	enqueueRepository func(obj any)
+	enqueueRepository func(obj any, trigger usinformer.ProcessTrigger)
 	keyFunc           func(obj any) (string, error)
 
 	queue           workqueue.TypedRateLimitingInterface[string]
 	resyncInterval  time.Duration
 	minSyncInterval time.Duration
 	drainTimeout    time.Duration
+
+	// processed classifies each delivery (encapsulating the NATS/apiserver
+	// backend) and records the processing metrics by what enqueued the key.
+	// triggers carries that attribution from enqueue to dequeue, guarded by
+	// triggersMu (entries live only between enqueue and Forget).
+	processed  *usinformer.ProcessedMetrics
+	triggersMu sync.Mutex
+	triggers   map[string]usinformer.ProcessTrigger
 
 	registry                      prometheus.Registerer
 	tracer                        tracing.Tracer
@@ -103,17 +113,21 @@ func NewRepositoryController(
 	quotaChecker *RepositoryQuotaChecker,
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	webhookSecretRotationInterval time.Duration,
+	natsBacked bool,
 ) *RepositoryController {
 	finalizerMetrics := registerFinalizerMetrics(registry)
 	repoTokenMetrics := registerRepositoryTokenMetrics(registry)
 
 	rc := &RepositoryController{
-		client: provisioningClient,
-		repos:  repos,
+		client:    provisioningClient,
+		repos:     repos,
+		processed: usinformer.NewProcessedMetrics(registry, "repositories", natsBacked),
+		triggers:  make(map[string]usinformer.ProcessTrigger),
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[string](),
 			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name: "provisioningRepositoryController",
+				Name:            "provisioningRepositoryController",
+				MetricsProvider: newWorkerQueueWaitProvider(registry, "repository"),
 			},
 		),
 		repoFactory:       repoFactory,
@@ -124,6 +138,7 @@ func NewRepositoryController(
 		finalizer: &finalizer{
 			lister:        resourceLister,
 			clientFactory: clients,
+			jobs:          jobs,
 			metrics:       &finalizerMetrics,
 			maxWorkers:    parallelOperations,
 		},
@@ -144,16 +159,30 @@ func NewRepositoryController(
 	rc.enqueueRepository = rc.enqueue
 	rc.keyFunc = repoKeyFunc
 
+	// Expose the local work-queue depth as a scrape-time gauge. The queue is
+	// per-replica, so Prometheus target labels (pod/instance) distinguish replicas;
+	// no metric label is needed. A GaugeFunc reads the authoritative Len() at scrape
+	// time, so it cannot drift the way manual inc/dec would.
+	registry.MustRegister(prometheus.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "grafana_provisioning_repository_worker_queue_size",
+			Help: "Number of repository keys waiting in this replica's local work queue",
+		},
+		func() float64 { return float64(rc.queue.Len()) },
+	))
+
 	return rc
 }
 
 // EventHandler returns the informer event handlers for the controller. Register
 // it with the Repository informer to enqueue repositories on add and update.
-func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerFuncs {
-	return cache.ResourceEventHandlerFuncs{
-		AddFunc: rc.enqueue,
+func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerDetailedFuncs {
+	return cache.ResourceEventHandlerDetailedFuncs{
+		AddFunc: func(obj interface{}, isInInitialList bool) {
+			rc.enqueueRepository(obj, rc.processed.ClassifyAdd(objectResourceVersion(obj), isInInitialList))
+		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			rc.enqueue(newObj)
+			rc.enqueueRepository(newObj, rc.processed.ClassifyUpdate(objectResourceVersion(oldObj), objectResourceVersion(newObj)))
 		},
 	}
 }
@@ -164,6 +193,15 @@ func repoKeyFunc(obj any) (string, error) {
 		return "", fmt.Errorf("expected a Repository but got %T", obj)
 	}
 	return cache.DeletionHandlingMetaNamespaceKeyFunc(repo)
+}
+
+// objectResourceVersion returns the resource version of a delivered Repository,
+// or "" for a minimal NATS live event or a delete tombstone.
+func objectResourceVersion(obj any) string {
+	if repo, ok := obj.(*provisioning.Repository); ok {
+		return repo.ResourceVersion
+	}
+	return ""
 }
 
 // Run starts the RepositoryController.
@@ -216,13 +254,49 @@ func (rc *RepositoryController) runWorker(ctx context.Context) {
 	}
 }
 
-func (rc *RepositoryController) enqueue(obj interface{}) {
+func (rc *RepositoryController) enqueue(obj interface{}, trigger usinformer.ProcessTrigger) {
 	key, err := rc.keyFunc(obj)
 	if err != nil {
 		utilruntime.HandleError(fmt.Errorf("couldn't get key for object: %v", err))
 		return
 	}
+	// Attribute the key before the enqueue so a worker that dequeues immediately
+	// sees it.
+	rc.setTrigger(key, trigger)
 	rc.queue.Add(key)
+}
+
+// setTrigger records what enqueued key, first-wins: the enqueue that first
+// queued the key owns the attribution, and later deliveries that coalesce onto
+// the still-queued key (or a retry re-set) leave it alone — the source that
+// actually caused the pickup. The map is lazily created so tests that build the
+// controller as a struct literal need not initialize it.
+func (rc *RepositoryController) setTrigger(key string, trigger usinformer.ProcessTrigger) {
+	rc.triggersMu.Lock()
+	defer rc.triggersMu.Unlock()
+	if rc.triggers == nil {
+		rc.triggers = make(map[string]usinformer.ProcessTrigger)
+	}
+	if _, ok := rc.triggers[key]; !ok {
+		rc.triggers[key] = trigger
+	}
+}
+
+// popTrigger reads and removes key's attribution. Each pickup pops its own entry
+// up front, so the entry never outlives the key however the pickup ends, and a
+// concurrent enqueue that races an in-flight reconcile (setting a fresh entry
+// and marking the key dirty — e.g. a status update the reconcile itself
+// produced) keeps its attribution for the redelivery, which a terminal
+// queue.Forget must not clobber. A retry re-sets the popped trigger before
+// re-queuing so later attempts keep the original attribution.
+func (rc *RepositoryController) popTrigger(key string) (usinformer.ProcessTrigger, bool) {
+	rc.triggersMu.Lock()
+	defer rc.triggersMu.Unlock()
+	trigger, ok := rc.triggers[key]
+	if ok {
+		delete(rc.triggers, key)
+	}
+	return trigger, ok
 }
 
 // processNextWorkItem deals with one key off the queue.
@@ -238,14 +312,30 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	logger := logging.FromContext(ctx).With("work_key", key, "namespace", namespace, "repository", name)
 	logger.Info("RepositoryController processing key")
 
+	// Pop this pickup's attribution up front so the entry is cleared however the
+	// key leaves this function, without a terminal Forget clobbering a newer
+	// attribution set by a concurrent enqueue while the key was in flight.
+	trigger, ok := rc.popTrigger(key)
+
+	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
+	attempts := rc.queue.NumRequeues(key) + 1
+	// Count the start of processing once per pickup, but only for a pickup that
+	// corresponds to an informer delivery (a present entry). A missing entry is
+	// an internal re-schedule with no informer event behind it — the token
+	// read-after-write AddAfter below re-adds the key without an entry — so it
+	// must not be counted, or it would masquerade as a relist recovery. Retries
+	// keep the entry (re-set below) but bump NumRequeues, so they are not
+	// recounted.
+	if ok && attempts == 1 {
+		rc.processed.RecordProcessed(trigger)
+	}
+
 	err := rc.processFn(key)
 	if err == nil {
 		rc.queue.Forget(key)
 		return true
 	}
 
-	// NumRequeues counts prior AddRateLimited calls; add 1 for the current attempt.
-	attempts := rc.queue.NumRequeues(key) + 1
 	logger = logger.With("error", err, "attempts", attempts)
 	logger.Error("RepositoryController failed to process key")
 
@@ -264,6 +354,12 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	}
 
 	utilruntime.HandleError(fmt.Errorf("%v failed with: %v", key, err))
+	// Re-set the attribution the pickup popped so the retry keeps it (unless a
+	// concurrent enqueue set a newer one). Only if this pickup had one: an
+	// internal re-schedule carries no attribution and must not fabricate one.
+	if ok {
+		rc.setTrigger(key, trigger)
+	}
 	rc.queue.AddRateLimited(key)
 
 	return true
@@ -417,40 +513,48 @@ func (rc *RepositoryController) determineSyncStrategy(
 
 	switch {
 	case !obj.Spec.Sync.Enabled:
-		logger.Info("skip sync as it's disabled")
+		logger.Info("skip sync as it's disabled in the repository spec")
 		return nil
 	case isBlocked:
-		logger.Info("skip sync for repository over quota")
+		logger.Info("skip sync as the repository is blocked for exceeding its namespace quota")
 		return nil
 	case !healthStatus.Healthy:
-		logger.Info("skip sync for unhealthy repository")
+		// Surface why the repository is unhealthy so operators can act without
+		// having to inspect the repository status separately. The health error
+		// type and messages are the same ones exposed on /status/health.
+		logger.Info("skip sync as the repository is unhealthy",
+			"health_error", healthStatus.Error,
+			"health_messages", healthStatus.Message,
+			"health_checked", time.UnixMilli(healthStatus.Checked))
 		return nil
 	case healthStatus.Healthy != obj.Status.Health.Healthy:
-		logger.Info("repository became healthy, full resync")
+		logger.Info("full resync as the repository recovered from an unhealthy state")
 		return &provisioning.SyncJobOptions{}
 	case obj.Status.ObservedGeneration < 1:
-		logger.Info("full sync for new repository")
+		logger.Info("full sync as this is the first sync for a new repository")
 		return &provisioning.SyncJobOptions{}
 	case obj.Generation != obj.Status.ObservedGeneration:
-		logger.Info("full sync for spec change")
+		logger.Info("full sync as the repository spec changed",
+			"generation", obj.Generation, "observed_generation", obj.Status.ObservedGeneration)
 		return &provisioning.SyncJobOptions{}
 	case shouldResync:
 		// Continue to see if we could skip for other reasons
 		versioned, ok := repo.(repository.Versioned)
 		// If the repository is not versioned, we don't have a way to check for incremental updates
 		if !ok {
-			logger.Info("full sync on interval for non-versioned repository")
+			logger.Info("full sync on interval as the repository is not versioned and cannot be diffed incrementally")
 			return &provisioning.SyncJobOptions{}
 		}
 		latestRef, err := versioned.LatestRef(ctx)
 		if err != nil {
-			logger.Warn("incremental sync on interval without knowing if ref has actually changed", "error", err)
+			logger.Warn("falling back to incremental sync on interval as the latest ref could not be resolved to detect changes", "error", err)
 			return &provisioning.SyncJobOptions{Incremental: true}
 		}
 
 		// Only resync if the latest ref is different from the last synced ref
 		if latestRef == obj.Status.Sync.LastRef {
-			logger.Info("skip incremental sync as reference is the same")
+			logger.Info("skip sync on interval as the latest ref matches the last synced ref",
+				"ref", latestRef)
 			return nil
 		}
 
@@ -460,11 +564,13 @@ func (rc *RepositoryController) determineSyncStrategy(
 		// was deleted in git) or when the diff size reaches/exceeds max_incremental_changes.
 		incremental, err := shouldUseIncrementalSync(ctx, versioned, obj, latestRef, rc.incrementalPolicy)
 		if err != nil {
-			logger.Warn("unable to compare files for incremental sync, doing full sync", "error", err)
+			logger.Warn("falling back to full sync on interval as files could not be compared for an incremental sync",
+				"error", err, "from_ref", obj.Status.Sync.LastRef, "to_ref", latestRef)
 			return &provisioning.SyncJobOptions{}
 		}
 
-		logger.Info("sync on interval", "incremental", incremental)
+		logger.Info("sync on interval as the latest ref changed",
+			"incremental", incremental, "from_ref", obj.Status.Sync.LastRef, "to_ref", latestRef)
 		return &provisioning.SyncJobOptions{Incremental: incremental}
 	default:
 		return nil

@@ -1768,6 +1768,8 @@ export type JobResourceSummary = {
   /** No action required (useful for sync) */
   noop?: number;
   total?: number;
+  /** TotalChanges is the action-aware count of resources changed for this group/kind, set by the progress recorder as results are recorded. Used for the job-duration histogram's resources_changed bucket. */
+  totalChanges?: number;
   update?: number;
   /** The error count */
   warning?: number;
@@ -1790,6 +1792,8 @@ export type JobStatus = {
   message?: string;
   /** Optional value 0-100 that can be set while running */
   progress?: number;
+  /** ProgressUpdates is the number of times the job's status has been written while it was processed. It is carried over to the historic job so the total number of progress updates a job went through remains observable after completion. */
+  progressUpdates?: number;
   started?: number;
   /** Possible enum values:
      - `"error"` Finished with errors

@@ -64,7 +64,12 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<NetworkConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (
+    map: OpenLayersMap,
+    options: MapLayerOptions<NetworkConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => {
     // Assert default values
     const config = {
       ...defaultOptions,
@@ -76,7 +81,7 @@ export const networkLayer: MapLayerRegistryItem<NetworkConfig> = {
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
     const vectorLayer = new VectorImage({
-      source
+      source,
     });
     const hasArrows = config.arrow === 1 || config.arrow === -1 || config.arrow === 2;
 

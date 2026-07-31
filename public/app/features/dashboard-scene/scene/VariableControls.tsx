@@ -17,9 +17,9 @@ import {
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
-import { dashboardEditActions } from '../edit-pane/shared';
 import { SourceIcon } from '../settings/ProvisionedControlsSection';
 import { isVariableEditable } from '../settings/variables/utils';
+import { dashboardEditActions } from '../sidebar/shared';
 import { getPredefinedOrigin } from '../utils/predefinedVariables';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
@@ -79,7 +79,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
 
   const onClickEditVariable = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(variable, DashboardScene);
-    dashboard.state.editPane.selectObject(variable);
+    dashboard.state.sidebar.selectObject(variable);
   }, [variable]);
 
   const onClickDeleteVariable = useCallback(() => {
@@ -117,6 +117,8 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
             isReadOnlyControl && styles.readOnlyControl
           )}
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+          data-dashboard-element-key={variable.state.key}
+          data-dashboard-element-type="variable"
           onPointerDown={markUserInitiated}
         >
           <div className={styles.switchControl}>
@@ -143,6 +145,8 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
             isReadOnlyControl && styles.readOnlyControl
           )}
           data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+          data-dashboard-element-key={variable.state.key}
+          data-dashboard-element-type="variable"
           onPointerDown={markUserInitiated}
         >
           <VariableLabel
@@ -166,6 +170,8 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditingNewLayou
           isReadOnlyControl && styles.readOnlyControl
         )}
         data-testid={selectors.pages.Dashboard.SubMenu.submenuItem}
+        data-dashboard-element-key={variable.state.key}
+        data-dashboard-element-type="variable"
         onPointerDown={markUserInitiated}
       >
         <VariableLabel variable={variable} className={cx(isSelectable && styles.labelSelectable, styles.label)} />

@@ -82,14 +82,6 @@ var PathRewriters = []filters.PathRewriter{
 			return matches[1] + "/name" // connector requires a name
 		},
 	},
-	{
-		// Rewrite the deprecated query path
-		// NOTE, this should be removed after the enterprise changes are running in hosted grafana
-		Pattern: regexp.MustCompile(`(/apis/.*.datasource.grafana.app/v0alpha1/namespaces/.*/connections/.*/query$)`),
-		ReplaceFunc: func(matches []string) string {
-			return strings.Replace(matches[0], "connections", "datasources", 1)
-		},
-	},
 }
 
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
@@ -132,6 +124,7 @@ func SetupConfig(
 	additionalOpenAPIDefGetters []common.GetOpenAPIDefinitions,
 	reg prometheus.Registerer,
 	apiResourceConfig *serverstorage.ResourceConfig,
+	extraRoutes ...GroupVersionRoutes,
 ) error {
 	serverConfig.AdmissionControl = NewAdmissionFromBuilders(builders)
 	defsGetter := GetOpenAPIDefinitions(builders, additionalOpenAPIDefGetters...)
@@ -144,7 +137,7 @@ func SetupConfig(
 		openapinamer.NewDefinitionNamer(scheme, k8sscheme.Scheme))
 
 	// Add the custom routes to service discovery
-	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders, gvs, apiResourceConfig)
+	serverConfig.OpenAPIV3Config.PostProcessSpec = getOpenAPIPostProcessor(buildVersion, builders, gvs, apiResourceConfig, extraRoutes)
 	serverConfig.OpenAPIV3Config.GetOperationIDAndTagsFromRoute = func(r common.Route) (string, []string, error) {
 		meta := r.Metadata()
 		kind := ""

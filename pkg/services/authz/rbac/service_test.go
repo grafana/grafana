@@ -1717,6 +1717,17 @@ func TestService_Check(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "should allow rendering to list plugin metas",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "plugins.grafana.app",
+				Resource:  "metas",
+				Verb:      "list",
+			},
+			expected: true,
+		},
+		{
 			// Unregistered groups fall back to the K8s-native mapping. The renderer has no
 			// permissions for K8s-native actions, so the check is denied without an error.
 			name: "should deny rendering access to unregistered app resources",
@@ -1784,7 +1795,7 @@ func TestService_K8sNativeFallback(t *testing.T) {
 		assert.False(t, resp.Allowed)
 	})
 
-	t.Run("Check: unregistered group denied with stack-role grant and no folder (wildcard access)", func(t *testing.T) {
+	t.Run("Check: unregistered group allowed with stack-role grant and no folder (folder verification is on storage layer)", func(t *testing.T) {
 		s := setup([]accesscontrol.Permission{
 			{Action: "unregistered.grafana.app/widgets:get", Scope: ""},
 			{Action: "folders:read", Scope: "folders:*"},
@@ -1797,8 +1808,8 @@ func TestService_K8sNativeFallback(t *testing.T) {
 			Verb:      "get",
 			Name:      "w1",
 		})
-		require.Error(t, err)
-		assert.False(t, resp.Allowed)
+		require.NoError(t, err)
+		assert.True(t, resp.Allowed)
 	})
 
 	t.Run("Check: unregistered group denied with resource-scoped grant but no stack role", func(t *testing.T) {
@@ -2435,6 +2446,19 @@ func TestService_List(t *testing.T) {
 				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 				Verb:      "get",
+			},
+			expected: &authzv1.ListResponse{
+				All: true,
+			},
+		},
+		{
+			name: "should list plugin metas for rendering",
+			req: &authzv1.ListRequest{
+				Namespace: "org-12",
+				Subject:   "render:0",
+				Group:     "plugins.grafana.app",
+				Resource:  "metas",
+				Verb:      "list",
 			},
 			expected: &authzv1.ListResponse{
 				All: true,

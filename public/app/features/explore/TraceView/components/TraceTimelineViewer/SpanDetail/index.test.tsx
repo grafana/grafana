@@ -29,6 +29,16 @@ jest.mock('@grafana/runtime/unstable', () => ({
   useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useAppPluginInstalled: jest.fn().mockReturnValue({ loading: false, value: false, error: undefined }),
+}));
+
+jest.mock('./pluginPromo/attributePluginPromos', () => ({
+  ...jest.requireActual('./pluginPromo/attributePluginPromos'),
+  useAttributePluginPromoGetter: jest.fn(() => () => undefined),
+}));
+
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 

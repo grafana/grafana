@@ -5,6 +5,7 @@ import { type JSX, useEffect, useMemo } from 'react';
 import { Controller, type FieldErrors, useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Badge, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type NotificationChannelOption } from 'app/features/alerting/unified/types/alerting';
@@ -246,7 +247,7 @@ export function ChannelSubForm<R extends ChannelValues>({
           <Field
             label={t('alerting.channel-sub-form.label-integration', 'Integration')}
             htmlFor={contactPointTypeInputId}
-            data-testid={`${pathPrefix}type`}
+            data-testid={selectors.pages.Alerting.ContactPointForm.integrationTypeField(pathPrefix)}
             noMargin
           >
             <Stack direction="row" alignItems="center" gap={1}>

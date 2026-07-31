@@ -19,6 +19,7 @@ type annotationProxy interface {
 	Delete(ctx context.Context, orgID int64, annotationID int64) error
 	Get(ctx context.Context, orgID int64, annotationID int64) (*annotations.ItemDTO, error)
 	List(ctx context.Context, orgID int64, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error)
+	FindTags(ctx context.Context, orgID int64, query *annotations.TagsQuery) (annotations.FindTagsResult, error)
 }
 
 var _ annotations.Repository = (*migrationRepository)(nil)
@@ -61,8 +62,6 @@ func (r *migrationRepository) Find(ctx context.Context, query *annotations.ItemQ
 }
 
 // search lists from the new store and merges in whatever legacy still owns for this query.
-// TODO: the stores order by different keys but share one limit, so a range annotation near the
-// boundary can be dropped after the merge. Tracked for a follow-up PR.
 func (r *migrationRepository) search(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error) {
 	// The new store filters users by UID, so translate the query's legacy user ID first.
 	r.resolveUserUID(ctx, query)
@@ -197,7 +196,44 @@ func (r *migrationRepository) Delete(ctx context.Context, params *annotations.De
 	}
 }
 
-// TODO: FindTags reads from legacy only. Follow up to proxy tag searches to the new store.
+// FindTags reads tag counts from the new store and merges in what the legacy store still owns.
 func (r *migrationRepository) FindTags(ctx context.Context, query *annotations.TagsQuery) (annotations.FindTagsResult, error) {
-	return r.legacy.FindTags(ctx, query)
+	newResult, err := r.proxy.FindTags(ctx, query.OrgID, query)
+	if err != nil {
+		if r.cfg.AnnotationAppPlatform.ProxyAll() {
+			// In proxy-all the new store is authoritative; a silent legacy fallback would
+			// hide tags behind a 200. Only degrade while legacy still holds everything.
+			return annotations.FindTagsResult{}, err
+		}
+		r.logger.Warn("new store tag search failed, returning legacy results only", "err", err)
+		newResult = annotations.FindTagsResult{}
+	}
+
+	legacyTags, err := r.legacyTagsToMerge(ctx, query)
+	if err != nil {
+		return annotations.FindTagsResult{}, err
+	}
+
+	return annotations.FindTagsResult{
+		Tags: MergeTags(newResult.Tags, legacyTags, query.Limit),
+	}, nil
+}
+
+func (r *migrationRepository) legacyTagsToMerge(ctx context.Context, query *annotations.TagsQuery) ([]*annotations.TagsDTO, error) {
+	// In the proxy-writes phase the new store only has annotations created since the
+	// migration started, so we still merge in every tag from legacy.
+	// Note: If legacy annotations have been backfilled into the new store,
+	// this could result in double-counting tags if the instance is still in `proxy-writes` mode.
+	// This is a known limitation of the migration and will self-resolve once the instance is moved to `proxy-all`.
+	if !r.cfg.AnnotationAppPlatform.ProxyAll() {
+		result, err := r.legacy.FindTags(ctx, query)
+		return result.Tags, err
+	}
+
+	// In the proxy-all phase, the new store holds all user annotations, so
+	// we only need to merge in tags from alert annotations
+	alertQuery := *query
+	alertQuery.Type = "alert"
+	result, err := r.legacy.FindTags(ctx, &alertQuery)
+	return result.Tags, err
 }
