@@ -48,7 +48,7 @@ To set up Git Sync from the Grafana UI, follow these steps:
 
 ## Select your provider
 
-Git Sync is available for any Git provider through a Pure Git repository type, and has specific enhanced integrations for GitHub, GitLab and Bitbucket. Refer to [Compatible providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits#compatible-providers) for more details.
+Git Sync is available for any Git provider through a Pure Git repository type, and has specific enhanced integrations for GitHub (including GitHub Enterprise), GitLab and Bitbucket. Refer to [Compatible providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits#compatible-providers) for more details.
 
 Alternatively, on-prem file provisioning in Grafana lets you include resources, including folders and dashboard JSON files, that are stored in a local file system. Refer to [Provision resources on-prem](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/) for more details.
 
@@ -61,13 +61,7 @@ Select any of these options to proceed:
 
 ### Configure with GitHub
 
-If you want to configure Git Sync for public cloud GitHub, GitHub Enterprise Cloud, or GitHub Enterprise Server, you can connect using a **Personal Access Token** or with **GitHub App**.
-
-{{< admonition type="note" >}}
-
-If you're using self-hosted GitHub servers or GitHub Enterprise refer to [Configure with Pure Git](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-pure-git) for instructions on how to set up Git Sync.
-
-{{< /admonition >}}
+If you want to configure Git Sync for public cloud GitHub or GitHub Enterprise Server, you can connect using a **Personal Access Token** or with **GitHub App**.
 
 #### Connect with a GitHub Personal Access Token
 
@@ -112,12 +106,12 @@ If you want to configure Git Sync for GitHub and authenticate with GitHub App:
 - If you want to connect using a new GitHub App:
   1. Select **Connect to a new app**.
   1. Type in the following fields:
-     - The ID of the GitHub App you want to use
-     - The GitHub Installation ID
-     - The Private Key
-  1. Additionally, for GitHub Enterprise, add the URL of your GitHub Enterprise instance
-     - For GitHub Enterprise Cloud, it looks like `https://<enterprise-slug>.ghe.com`
-     - For GitHub Enterprise Server, your custom URL
+     - The ID of the GitHub App you want to use.
+     - The GitHub Installation ID.
+     - The Private Key.
+  1. Additionally, for GitHub Enterprise, add the URL of your GitHub Enterprise instance.
+     - For GitHub Enterprise Cloud, it looks like `https://<enterprise-slug>.ghe.com`.
+     - For GitHub Enterprise Server, your custom URL.
   1. Click on **Configure repository** to proceed.
   1. Paste the **Repository URL** for your GitHub repository into the text box.
 
@@ -203,11 +197,7 @@ To set up synchronization:
 1. Click **Synchronize with external storage** to continue.
 1. You can repeat this process for up to 10 connections.
 
-{{< admonition type="note" >}}
-
 Optionally, you can export any unmanaged resources into the provisioned folder. See how in [Synchronize with external storage](#synchronize-with-external-storage).
-
-{{< /admonition >}}
 
 Select **Choose additional settings** to continue setup.
 
@@ -247,24 +237,16 @@ In the **Webhook options** menu, you can type in an URL to override the auto-det
 
 You can also check the **Disable webhook integration**. When checked, Grafana doesn't register or receive webhook events, and polls the repository on an interval instead. Use this when your Grafana instance is not reachable from the public internet.
 
-{{< admonition type="note" >}}
-
 GitHub limits each repository to 20 webhooks per event type (for example, `push` and `pull_request`). Because Git Sync registers webhooks per repository connection, syncing the same repository from many Grafana instances can exceed this limit and cause GitHub to reject new webhooks with an `HTTP 422` error. Disable webhook integration for connections that don't need real-time sync to stay under the limit.
-
-{{< /admonition >}}
 
 ### Signed commit option
 
 Starting in Grafana 13.1.0, you can **configure a verified account** with a signing key, allowing you to enforce your users to sign commits so your Git provider can mark them as _Verified_. Git Sync supports GPG, SSH, and S/MIME keys.
 
-{{< admonition type="note" >}}
-
 For the moment, Git Sync doesn't support:
 
 - Passphrase-protected keys.
 - Verification of individual accounts.
-
-{{< /admonition >}}
 
 Follow the UI wizard to set up any of these options, and refer to the example below for more details.
 
