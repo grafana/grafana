@@ -455,3 +455,12 @@ test.describe(
     });
   }
 );
+
+// export async function goToPanelSnapshot(page: Page) {
+//   // extracting snapshot url from clipboard
+//   const snapshotUrl = await page.evaluate(() => navigator.clipboard.readText());
+
+//   expect(snapshotUrl).toBeDefined();
+
+//   await page.goto(snapshotUrl);
+// }
