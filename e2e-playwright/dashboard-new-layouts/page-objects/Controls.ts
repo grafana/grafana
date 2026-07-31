@@ -102,7 +102,9 @@ export class Controls extends PageObject {
     openDropdown: async (variableLabel: string) => {
       await test.step(`Open dropdown of variable "${variableLabel}"`, async () => {
         // value chips / clear control sit above the input, we force so the combobox receives the click
-        await this.variables.getDropdownTrigger(variableLabel).getByRole('combobox').click({ force: true });
+        // we don't click on a bottom-right pixel because the position would change for variables vs filter+groupby
+        // but we may change this in the future
+        await this.variables.getDropdownTrigger(variableLabel).getByRole('combobox').first().click({ force: true });
       });
     },
     selectOption: async (variableLabel: string, optionLabel: string) => {
@@ -110,7 +112,10 @@ export class Controls extends PageObject {
         await this.variables.openDropdown(variableLabel);
         const option = this.variables.getOption(optionLabel);
 
-        // multi-value options render a checkbox — throw if already selected so we don't toggle it off
+        // ensure options are rendered before inspecting the checkbox (locator.count below does not wait)
+        await option.waitFor();
+
+        // multi-value options render a checkbox, we throw if already selected so we don't toggle it off
         const checkbox = option.getByRole('checkbox');
         if ((await checkbox.count()) > 0 && (await checkbox.isChecked())) {
           throw new Error(

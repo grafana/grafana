@@ -16,13 +16,27 @@ export class RepeatOptions extends PageObject {
   }
 
   private async selectOption(optionLabel: string) {
-    await this.dashboardPage
-      .getByGrafanaSelector(this.selectors.components.OptionsGroup.toggle('repeat-options'), {
+    const toggle = this.dashboardPage.getByGrafanaSelector(
+      this.selectors.components.OptionsGroup.toggle('repeat-options'),
+      {
         root: this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.container),
-      })
+      }
+    );
+
+    // the toggle collapses an already-open group (expanded state persists in local storage), so only click when collapsed
+    if ((await toggle.getAttribute('aria-expanded')) !== 'true') {
+      await test.step('Repeat options are collapsed, expand them', async () => {
+        await toggle.click();
+      });
+    }
+
+    await this.dashboardPage
+      .getByGrafanaSelector(
+        this.selectors.components.PanelEditor.OptionsPane.fieldLabel('repeat-options Repeat by variable')
+      )
+      .getByRole('combobox')
       .click();
 
-    await this.page.getByRole('combobox', { name: 'Repeat by variable' }).click();
     await this.page.getByRole('listbox').getByRole('option', { name: optionLabel, exact: true }).click();
   }
 }
