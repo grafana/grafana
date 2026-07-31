@@ -64,8 +64,6 @@ jobs:
       # modules are visible when the Go cache key is computed.
       - name: Setup Go
         uses: ./.github/actions/setup-go
-        with:
-          cache-build: 'false'
 
       - name: Generate Swagger specs
         run: make swagger-clean && make openapi3-gen
