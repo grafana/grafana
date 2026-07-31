@@ -241,9 +241,8 @@ do-gen-apps: ## Generate code for Grafana App SDK apps
 		echo "Generating code for app: $(app)"; \
 		$(MAKE) -C $$app_dir generate; \
 	else \
-		for dir in $(APPS_DIRS); do \
-			$(MAKE) -C $$dir generate; \
-		done; \
+		$(MAKE) -C $(firstword $(APPS_DIRS)) install-app-sdk; \
+		printf '%s\n' $(APPS_DIRS) | xargs -n1 -P8 -I{} $(MAKE) -C {} generate; \
 		./hack/update-codegen.sh; \
 	fi
 
