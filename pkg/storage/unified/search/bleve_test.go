@@ -2649,11 +2649,11 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 	}
 }
 
-// An index built before the marker was mapped drops it silently, which would
+// An index built before these fields were mapped drops them silently, which would
 // leave a deleted document looking live. BulkIndex removes such a document
 // instead, so trash is missing from search rather than leaking into it, until the
 // index is rebuilt.
-func TestBulkIndexRemovesMarkedDocumentsWhenTheMarkerIsNotMapped(t *testing.T) {
+func TestBulkIndexRemovesMarkedDocumentsWhenTrashFieldsAreNotMapped(t *testing.T) {
 	mapper, err := GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
 	raw, err := newBleveIndex("", mapper, time.Now(), buildVersion, nil, "")
@@ -2680,7 +2680,16 @@ func TestBulkIndexRemovesMarkedDocumentsWhenTheMarkerIsNotMapped(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, uint64(0), count, "marked document should be removed, not indexed as live")
 
-	// An index that maps the marker keeps the document.
+	// An index mapping the markers but not the trash fields is no better: the
+	// document would be served without a deleter and in arbitrary order. The
+	// producer refuses such an index too, so both writers agree.
+	partial := &bleveIndex{index: raw, features: []resource.IndexFeature{resource.IndexFeatureDeletedMarker}, logger: log.NewNopLogger()}
+	require.NoError(t, partial.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(new(true))}}))
+	count, err = raw.DocCount()
+	require.NoError(t, err)
+	assert.Equal(t, uint64(0), count, "a partially mapped index should not keep the document either")
+
+	// An index that maps everything a deleted document needs keeps it.
 	current := &bleveIndex{index: raw, features: resource.CurrentIndexFeatures(), logger: log.NewNopLogger()}
 	require.NoError(t, current.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(new(true))}}))
 	count, err = raw.DocCount()

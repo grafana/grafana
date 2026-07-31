@@ -78,6 +78,11 @@
       "description-basic-logs": "この機能を有効にすると、<2>基本ログ</2>用に設定されたテーブルをクエリするダッシュボードパネルで、Azure Monitorのクエリごとのコストが発生します。",
       "label-enable-basic-logs": "基本ログを有効にする"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "追加設定は、データソースをより詳細に制御するために指定できるオプション設定です。これには、セキュアSOCKSプロキシ、リクエストタイムアウト、および転送されたCookieが含まれます。",
       "title-additional-settings": "追加設定"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "メトリック名前空間"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "読み込み中..."
     },
@@ -204,6 +216,10 @@
       "label-by": "基準",
       "label-order-by": "並べ替え",
       "tooltip-order-by": "1つ以上の列に基づいて結果を昇順または降順で並び替えます。"
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "Azure Monitorからメタデータをリクエスト中にエラーが発生しました"
