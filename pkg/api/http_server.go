@@ -718,6 +718,8 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	// These endpoints are used for monitoring the Grafana instance
 	// and should not be redirected or rejected.
 	m.Use(hs.healthzHandler)
+	m.Use(hs.livezHandler)
+	m.Use(hs.readyzHandler)
 	m.Use(hs.apiHealthHandler)
 	m.Use(hs.metricsEndpoint)
 	m.Use(hs.pluginMetricsEndpoint)
@@ -773,6 +775,36 @@ func (hs *HTTPServer) healthzHandler(ctx *web.Context) {
 
 	ctx.Resp.WriteHeader(http.StatusOK)
 	if _, err := ctx.Resp.Write([]byte("Ok")); err != nil {
+		hs.log.Error("could not write to response", "err", err)
+	}
+}
+
+// livezHandler returns 200 OK for /livez, matching the instrumentation server's LivezHandler.
+// This is needed because the instrumentation server is a no-op in the default module mode,
+// so /livez would otherwise fall through to the auth middleware and redirect to login.
+func (hs *HTTPServer) livezHandler(ctx *web.Context) {
+	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
+	if notHeadOrGet || ctx.Req.URL.Path != "/livez" {
+		return
+	}
+
+	ctx.Resp.WriteHeader(http.StatusOK)
+	if _, err := ctx.Resp.Write([]byte("OK")); err != nil {
+		hs.log.Error("could not write to response", "err", err)
+	}
+}
+
+// readyzHandler returns 200 OK for /readyz, matching the instrumentation server's ReadyzHandler.
+// In the default module mode the instrumentation server is a no-op, so /readyz requests
+// would otherwise be intercepted by the auth middleware and redirected to login.
+func (hs *HTTPServer) readyzHandler(ctx *web.Context) {
+	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
+	if notHeadOrGet || ctx.Req.URL.Path != "/readyz" {
+		return
+	}
+
+	ctx.Resp.WriteHeader(http.StatusOK)
+	if _, err := ctx.Resp.Write([]byte("OK")); err != nil {
 		hs.log.Error("could not write to response", "err", err)
 	}
 }
