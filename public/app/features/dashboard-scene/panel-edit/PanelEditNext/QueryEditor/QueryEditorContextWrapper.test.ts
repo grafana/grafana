@@ -723,9 +723,8 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
       loading: false,
       isDashboardSaved: true,
     });
-    // Stacked mode is single-select and drives the active card (selectedQuery /
-    // selectedTransformation), so the query runner must expose real queries for the active
-    // selection to resolve through useSelectedCard.
+    // Stacked mode drives the active card (selectedQuery / selectedTransformation), so the query
+    // runner must expose real queries for the active selection to resolve through useSelectedCard.
     const { getQueryRunnerFor } = require('../../../utils/utils');
     getQueryRunnerFor.mockReturnValue({ useState: () => ({ queries: stackedQueries }) });
   });
@@ -735,19 +734,19 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     getQueryRunnerFor.mockReturnValue(null);
   });
 
-  it('selects a clicked query as a single selection in stacked mode (scrolling is the renderer’s job)', () => {
+  it('activates a clicked query in stacked mode (scrolling is the renderer’s job)', () => {
     const dataPane = makeMockDataPane();
     const { result } = renderWithWrapper(dataPane);
 
     act(() => result.current.stackedMode.enter());
     act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery));
 
-    // Stacked mode is single-select: the click drives the active card, not the bulk selection.
+    // A plain click drives the active card; with multi-select off there is no bulk selection.
     expect(result.current.selectedQuery?.refId).toBe('B');
     expect(result.current.selectedQueryRefIds).toEqual([]);
   });
 
-  it('selects a clicked transformation as a single selection in stacked mode', () => {
+  it('activates a clicked transformation in stacked mode', () => {
     const { useTransformations } = require('./hooks/useTransformations');
     const mockTransformation: Transformation = {
       registryItem: undefined,
@@ -761,12 +760,12 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     act(() => result.current.stackedMode.enter());
     act(() => result.current.toggleTransformationSelection(mockTransformation));
 
-    // Stacked mode is single-select: the click drives the active card, not the bulk selection.
+    // A plain click drives the active card; with multi-select off there is no bulk selection.
     expect(result.current.selectedTransformation).toEqual(mockTransformation);
     expect(result.current.selectedTransformationIds).toEqual([]);
   });
 
-  it('syncStackedActiveItem mirrors observer-driven activations into the active card selection', () => {
+  it('syncActiveItem mirrors observer-driven activations into the active card selection', () => {
     const reduce: Transformation = {
       registryItem: undefined,
       transformId: 'reduce-0',
@@ -788,7 +787,9 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     expect(result.current.selectedQuery).toBeNull();
   });
 
-  it('exits stacked mode when an alert is selected', () => {
+  // The alerts view takes over the content pane, so it suppresses the stack rather than turning
+  // it off — leaving the alerts view puts the user back where they were.
+  it('suppresses stacked mode while an alert is selected and restores it on return', () => {
     mockUseAlertRulesForPanel.mockReturnValue({
       alertRules: [mockAlert],
       loading: false,
@@ -800,41 +801,78 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     expect(result.current.stackedMode.enabled).toBe(true);
 
     act(() => result.current.setSelectedAlert(mockAlert));
-
     expect(result.current.stackedMode.enabled).toBe(false);
-  });
 
-  it('entering stacked mode collapses existing multi-selection to the primary item', () => {
-    const dataPane = makeMockDataPane();
-    const { result } = renderWithWrapper(dataPane);
-
-    // Entering multi-select seeds the active card (A); Cmd+click B to build a two-item selection.
-    act(() => result.current.setMultiSelectMode(true));
-    act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
-
-    expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
-    expect(result.current.multiSelectMode).toBe(true);
-
-    act(() => result.current.stackedMode.enter());
-
-    // Entering stacked mode exits multi-select and collapses the bulk set to the primary
-    // (most-recently-selected) card, which becomes the single active selection.
-    expect(result.current.multiSelectMode).toBe(false);
-    expect(result.current.selectedQuery?.refId).toBe('B');
-    expect(result.current.selectedQueryRefIds).toEqual([]);
-  });
-
-  it('entering multi-select mode exits stacked mode', () => {
-    const dataPane = makeMockDataPane();
-    const { result } = renderWithWrapper(dataPane);
-
-    act(() => result.current.stackedMode.enter());
+    act(() => result.current.setSelectedAlert(null));
     expect(result.current.stackedMode.enabled).toBe(true);
+  });
 
-    act(() => result.current.setMultiSelectMode(true));
+  it('stays off after returning from the alerts view when the user never turned it on', () => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [mockAlert],
+      loading: false,
+      isDashboardSaved: true,
+    });
+    const { result } = renderWithWrapper(makeMockDataPane());
 
-    expect(result.current.multiSelectMode).toBe(true);
+    act(() => result.current.setSelectedAlert(mockAlert));
+    act(() => result.current.setSelectedAlert(null));
+
     expect(result.current.stackedMode.enabled).toBe(false);
+  });
+
+  // Multi-select lives in the sidebar and stacked view owns the content pane, so the two coexist.
+  describe('with multi-select mode', () => {
+    it('entering stacked mode keeps an existing multi-selection', () => {
+      const { result } = renderWithWrapper(makeMockDataPane());
+
+      // Entering multi-select seeds the active card (A); Cmd+click B to build a two-item selection.
+      act(() => result.current.setMultiSelectMode(true));
+      act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
+
+      act(() => result.current.stackedMode.enter());
+
+      expect(result.current.stackedMode.enabled).toBe(true);
+      expect(result.current.multiSelectMode).toBe(true);
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
+    });
+
+    it('entering multi-select mode keeps stacked mode on', () => {
+      const { result } = renderWithWrapper(makeMockDataPane());
+
+      act(() => result.current.stackedMode.enter());
+      act(() => result.current.setMultiSelectMode(true));
+
+      expect(result.current.multiSelectMode).toBe(true);
+      expect(result.current.stackedMode.enabled).toBe(true);
+      // Seeded from the active card, as in the single-card view.
+      expect(result.current.selectedQueryRefIds).toEqual(['A']);
+    });
+
+    it('keeps the bulk selection when scrolling the stack activates another card', () => {
+      const { result } = renderWithWrapper(makeMockDataPane());
+
+      act(() => result.current.setMultiSelectMode(true));
+      act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
+      act(() => result.current.stackedMode.enter());
+
+      act(() => result.current.stackedMode.syncActiveItem({ type: QueryEditorType.Query, id: 'B' }));
+
+      expect(result.current.selectedQuery?.refId).toBe('B');
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
+    });
+
+    it('supports Cmd+click bulk selection while stacked mode is on', () => {
+      const { result } = renderWithWrapper(makeMockDataPane());
+
+      act(() => result.current.stackedMode.enter());
+      act(() => result.current.setMultiSelectMode(true));
+      act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
+
+      expect(result.current.stackedMode.enabled).toBe(true);
+      expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
+    });
   });
 
   // Opening a picker temporarily swaps to the single pane (expression/transformation) or a
