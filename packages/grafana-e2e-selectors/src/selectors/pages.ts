@@ -31,6 +31,9 @@ export const versionedPages = {
       emptyStateNewRuleLink: {
         '13.2.0': 'data-testid rule-list empty-state-new-rule-link',
       },
+      newAlertRuleLink: {
+        '13.2.0': 'data-testid rule-list new-alert-rule-link',
+      },
       moreMenu: {
         triggerButton: {
           '13.2.0': 'data-testid rule-list more-menu-trigger-button',

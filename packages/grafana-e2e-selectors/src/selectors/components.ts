@@ -1132,6 +1132,9 @@ export const versionedComponents = {
       '13.2.0': (mode: string) => `data-testid alert-rule routing-options-${mode}`,
       [MIN_GRAFANA_VERSION]: (mode: string) => `routing-options-${mode}`,
     },
+    viewContactPointsLink: {
+      '13.2.0': 'data-testid alert-rule view-contact-points-link',
+    },
   },
   Alert: {
     alertV2: {
