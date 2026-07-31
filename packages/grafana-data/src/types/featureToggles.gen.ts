@@ -124,6 +124,11 @@ export interface FeatureToggles {
   */
   grafanaAPIServerWithExperimentalAPIs?: boolean;
   /**
+  * Enables Git Sync and as-code provisioning for Grafana resources
+  * @default true
+  */
+  provisioning?: boolean;
+  /**
   * Enable export functionality for provisioned resources
   * @default false
   */
