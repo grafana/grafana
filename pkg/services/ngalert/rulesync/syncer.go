@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"time"
@@ -190,11 +191,21 @@ func (s *ExternalRulerSyncer) IsManagedFolder(ctx context.Context, orgID int64, 
 // SyncOrg runs one sync tick for a single org. It never returns an error;
 // failures are logged and counted so a bad org can't break the others.
 func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
+	orgIDStr := strconv.FormatInt(orgID, 10)
+	// A panic in a per-org tick (conversion, datasource proxy, upstream response)
+	// must not crash the background syncer goroutine and the process; recover and
+	// record it like any other per-org failure.
+	defer func() {
+		if r := recover(); r != nil {
+			s.logger.Error("External ruler sync panicked", "org_id", orgID, "panic", r, "stack", string(debug.Stack()))
+			s.metrics.SyncFailures.WithLabelValues(orgIDStr, ReasonPanic.Label()).Inc()
+		}
+	}()
+
 	uid := s.settings.ExternalRulerUID
 	if uid == "" {
 		return
 	}
-	orgIDStr := strconv.FormatInt(orgID, 10)
 
 	svcCtx, svcUser := identity.WithServiceIdentity(ctx, orgID)
 

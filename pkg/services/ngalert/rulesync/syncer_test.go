@@ -23,14 +23,18 @@ import (
 // --- fakes ---
 
 type fakeFetcher struct {
-	cfg   RulerConfig
-	hash  uint64
-	err   error
-	calls int
+	cfg      RulerConfig
+	hash     uint64
+	err      error
+	calls    int
+	panicMsg string
 }
 
 func (f *fakeFetcher) Fetch(context.Context, *datasources.DataSource) (RulerConfig, uint64, error) {
 	f.calls++
+	if f.panicMsg != "" {
+		panic(f.panicMsg)
+	}
 	return f.cfg, f.hash, f.err
 }
 
@@ -208,6 +212,14 @@ func TestSyncOrg_PruneScopedByFolder(t *testing.T) {
 	// Delete is scoped to converted-Prometheus rules only.
 	require.NotNil(t, rs.deleted[0].HasPrometheusRuleDefinition)
 	assert.True(t, *rs.deleted[0].HasPrometheusRuleDefinition)
+}
+
+func TestSyncOrg_RecoversPanic(t *testing.T) {
+	s := newTestSyncer(t, &fakeFetcher{panicMsg: "boom"}, &fakeRuleService{})
+	s.settings.ExternalRulerUID = "ds1"
+
+	// A panic in a tick must be recovered so the background goroutine survives.
+	require.NotPanics(t, func() { s.SyncOrg(context.Background(), 1) })
 }
 
 func TestIsManagedFolder(t *testing.T) {
