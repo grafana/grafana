@@ -4,13 +4,6 @@ import (
 	"context"
 )
 
-type DeleteQueryHelper interface {
-	Table(name string) string
-	Quote(identifier string) string
-}
-
-type DeleteQueryRenderer func(dbHelper DeleteQueryHelper) string
-
 //go:generate mockery --name Service --structname MockService --outpkg orgtest --filename mock.go --output ./orgtest/
 type Service interface {
 	GetIDForNewUser(context.Context, GetOrgIDForNewUserCommand) (int64, error)
@@ -32,7 +25,6 @@ type Service interface {
 	// SearchOrgUsersByEmails returns org members whose emails match the given list.
 	// Email matching is case-insensitive. Service accounts are excluded from results.
 	SearchOrgUsersByEmails(context.Context, *SearchOrgUsersByEmailsQuery) ([]*OrgUserDTO, error)
-	RegisterDelete(renderer DeleteQueryRenderer)
 }
 
 type DeletionService interface {
