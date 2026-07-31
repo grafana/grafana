@@ -343,26 +343,6 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       background: `linear-gradient(90deg, transparent 0%, ${theme.colors.border.weak} 30%, ${theme.colors.border.weak} 70%, transparent 100%)`,
       margin: theme.spacing(2, 1, 1, 1),
     }),
-    // Customise entry point, pinned to the bottom of the menu as a footer button.
-    customiseButton: css({
-      alignItems: 'center',
-      background: 'none',
-      border: 'none',
-      borderTop: `1px solid ${theme.colors.border.weak}`,
-      cursor: 'pointer',
-      display: 'flex',
-      flexShrink: 0,
-      gap: theme.spacing(1),
-      padding: theme.spacing(1.5, 2),
-      width: '100%',
-      '&:hover': {
-        background: theme.colors.action.hover,
-      },
-      '&:focus-visible': {
-        outline: `2px solid ${theme.colors.primary.main}`,
-        outlineOffset: '-2px',
-      },
-    }),
     // Edit-mode footer: the Reset/Cancel/Done controls, right-aligned.
     editFooter: css({
       alignItems: 'center',
