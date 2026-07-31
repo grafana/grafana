@@ -1484,7 +1484,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   isManagedRepository() {
-    if (!config.featureToggles.provisioning) {
+    if (!config.provisioningEnabled) {
       return false;
     }
     return Boolean(this.getManagerKind() === ManagerKind.Repo);
