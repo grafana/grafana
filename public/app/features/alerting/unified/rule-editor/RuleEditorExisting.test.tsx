@@ -199,10 +199,10 @@ describe('Data source managed rules', () => {
     const groupName = 'toggle-test-group';
 
     setupDataSources(dataSource);
-    mockRulerRulesApiResponse(server, dataSource.name, {
+    mockRulerRulesApiResponse(server, dataSource.uid, {
       [namespace]: [{ name: groupName, interval: '1m', rules: [rule] }],
     });
-    mockRulerRulesGroupApiResponse(server, dataSource.name, namespace, groupName, {
+    mockRulerRulesGroupApiResponse(server, dataSource.uid, namespace, groupName, {
       name: groupName,
       interval: '1m',
       rules: [rule],
