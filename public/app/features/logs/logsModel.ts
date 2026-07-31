@@ -58,7 +58,7 @@ export const LogLevelColor = {
   [LogLevel.error]: colors[4],
   [LogLevel.warning]: colors[1],
   [LogLevel.info]: colors[5],
-  [LogLevel.debug]: colors[5],
+  [LogLevel.debug]: getThemeColor('#DEB6F2', '#CA95E5'),
   [LogLevel.trace]: colors[2],
   [LogLevel.unknown]: getThemeColor('#8e8e8e', '#bdc4cd'),
   [LogLevel.unspecified]: getThemeColor('#8e8e8e', '#bdc4cd'),
