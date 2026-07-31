@@ -206,6 +206,11 @@ func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
 		s.recordFailure(orgID, orgIDStr, &SyncError{Reason: ReasonDatasourceLookup, Cause: err})
 		return
 	}
+	// TODO: validate the datasource (prometheus-compatible + Mimir flavor) at the
+	// rules-app Config-resource admission when it lands, mirroring the external
+	// Alertmanager sync's input-time check. The operator-set ini datasource is
+	// trusted here (as the AM ini path is).
+	//
 	// Recording rules write to the same datasource they are queried from.
 	targetDS := ds
 
