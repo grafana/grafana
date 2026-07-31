@@ -66,7 +66,7 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-node
       - name: Install JS dependencies
-        run: yarn install --immutable
+        uses: ./.github/actions/yarn-install
       - name: Build frontend
         run: yarn build
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
@@ -120,54 +120,29 @@ jobs:
           path: dist
           retention-days: 1
 
-  build-docker:
-    name: build docker
-    runs-on: ubuntu-x64-large
+  build-docker-variants:
+    name: build docker variants
     needs:
       - setup
       - build-targz
     permissions:
       contents: read
       id-token: write
-    steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: pr-targz
-          path: dist
-      - name: Set up Docker Buildx
-        run: docker buildx create --use
-      - name: Build docker image
-        env:
-          GOOS: linux
-          GOARCH: amd64
-          BUILD_NUMBER: ${{ github.run_id }}
-          BUILD_VERSION: ${{ needs.setup.outputs.version }}
-        run: |
-          for TARGZ in dist/*.tar.gz; do break; done
-          TAG_VERSION="${BUILD_VERSION//+/-}"
-          make build-docker \
-            -o "$TARGZ" \
-            BUILD_VERSION="$BUILD_VERSION" \
-            BUILD_NUMBER="$BUILD_NUMBER" \
-            DOCKER_TAG="grafana/grafana-image-tags:${TAG_VERSION}-amd64"
-      - name: Stage docker artifact
-        run: |
-          mkdir -p upload
-          cp dist/*.docker.tar.gz upload/
-      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
-        with:
-          name: pr-docker
-          path: upload
-          retention-days: 1
+    uses: ./.github/workflows/build-docker-variants.yml
+    with:
+      targz-artifact-name: pr-targz
+      name: linux-amd64
+      os: linux
+      arch: amd64
+      arch-tag: amd64
+      version: ${{ needs.setup.outputs.version }}
+      build-number: ${{ github.run_id }}
+      tag-prefix: 'grafana/grafana-image-tags:'
 
   push-docker-image:
     needs:
       - detect-changes
-      - build-docker
+      - build-docker-variants
     if: needs.detect-changes.outputs.changed == 'true'
     name: Push PR Docker image
     outputs:
@@ -184,7 +159,7 @@ jobs:
           environment: 'dev'
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: pr-docker
+          name: artifacts-docker-linux-amd64
           path: .
       - name: Load & Push Docker image
         id: push-image

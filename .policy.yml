@@ -546,32 +546,8 @@ approval_rules:
         paths:
           - ^Makefile$
           - ^Dockerfile$
-          - ^public\/(?:(?:[^/]*(?:/|$))*)$
-          - ^packages\/(?:(?:[^/]*(?:/|$))*)$
-          - ^apps\/(?:(?:[^/]*(?:/|$))*)$
-          - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
-          - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
-          - ^(?:(?:[^/]*(?:/|$))*)go\.work$
-          - ^(?:(?:[^/]*(?:/|$))*)go\.work\.sum$
-          - ^(?:(?:[^/]*(?:/|$))*)package\.json$
-          - ^(?:(?:[^/]*(?:/|$))*)nx\.json$
-          - ^(?:(?:[^/]*(?:/|$))*)project\.json$
-          - ^(?:(?:[^/]*(?:/|$))*)yarn\.lock$
-          - ^conf\/(?:(?:[^/]*(?:/|$))*)$
-          - ^\.yarnrc\.yml$
-          - ^\.yarn\/(?:(?:[^/]*(?:/|$))*)$
-          - ^tsconfig\.json$
-          - ^(?:[^/]*)\.js$
-          - ^(?:[^/]*)\.ts$
-          - ^(?:[^/]*)\.config\.ts$
-          - ^scripts\/(?:(?:[^/]*(?:/|$))*)$
-          - ^emails\/(?:(?:[^/]*(?:/|$))*)$
-          - ^\.citools\/(?:(?:[^/]*(?:/|$))*)$
-          - ^kinds\/(?:(?:[^/]*(?:/|$))*)$
-          - ^embed\.go$
           - ^packaging\/docker\/(?:(?:[^/]*(?:/|$))*)$
           - ^\.github\/workflows\/pr-test-docker\.yml$
-          - ^\.github\/workflows\/build-docker-variants\.yml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/pr-test-docker\.yml$
