@@ -1,30 +1,30 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type TimeRange } from '@grafana/data';
 
 import { MetricsList } from './MetricsList';
-
-import { type MetricRow, useLabelValues, useMetricCatalog, useMetricDetail } from './index';
+import { useLabelValues } from './data/useLabelValues';
+import { useMetricCatalog } from './data/useMetricCatalog';
+import { useMetricDetail } from './data/useMetricDetail';
+import { type MetricInfo } from './types';
 
 // The data hooks are mocked; `useVisibleBatch` and `INITIAL_BATCH` are deliberately left real, so the
 // batching assertions below exercise the actual cap rather than a stand-in for it.
-jest.mock('./index', () => ({
-  ...jest.requireActual('./index'),
-  useMetricCatalog: jest.fn(),
-  useMetricDetail: jest.fn(),
-  useLabelValues: jest.fn(),
-}));
+jest.mock('./data/useMetricCatalog');
+jest.mock('./data/useMetricDetail');
+jest.mock('./data/useLabelValues');
 
 const useMetricCatalogMock = jest.mocked(useMetricCatalog);
 const useMetricDetailMock = jest.mocked(useMetricDetail);
 const useLabelValuesMock = jest.mocked(useLabelValues);
 
 const timeRange = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
+const otherTimeRange = { raw: { from: 'now-6h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 
-const row = (name: string): MetricRow => ({ name, type: 'counter' });
+const row = (name: string): MetricInfo => ({ name, type: 'counter' });
 
-const setCatalog = (metrics: MetricRow[], rest: { loading?: boolean; error?: Error } = {}) => {
+const setCatalog = (metrics: MetricInfo[], rest: { loading?: boolean; error?: Error } = {}) => {
   useMetricCatalogMock.mockReturnValue({ metrics, loading: false, ...rest });
 };
 
@@ -91,11 +91,16 @@ describe('<MetricsList />', () => {
     expect(screen.getByText('Loading metrics…')).toBeInTheDocument();
   });
 
-  it('reports a catalog that failed to load', () => {
-    setCatalog([], { error: new Error('boom') });
+  // Announced rather than merely coloured: the error replaces the loading text with nothing focused,
+  // so a screen reader user gets no other cue that the list is not coming. The message comes with it,
+  // because "failed" alone leaves nothing to act on.
+  it('announces a catalog that failed to load, with the underlying message', () => {
+    setCatalog([], { error: new Error('bad gateway') });
     renderList();
 
-    expect(screen.getByText('Failed to load metrics')).toBeInTheDocument();
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('Failed to load metrics');
+    expect(alert).toHaveTextContent('bad gateway');
   });
 
   it('says so when the datasource has no metrics matching the search', async () => {
@@ -204,18 +209,35 @@ describe('<MetricsList />', () => {
       expect(screen.getByRole('button', { name: 'Collapse node_load1' })).toBeInTheDocument();
     });
 
-    it('reports labels that are loading, and labels that failed', async () => {
+    it('reports labels that are loading, and announces labels that failed', async () => {
       setCatalog([row('up')]);
       setLabelKeys([], { loading: true });
       renderList();
       await expandMetric('up');
       expect(screen.getByText('Loading labels…')).toBeInTheDocument();
 
-      setLabelKeys([], { error: new Error('boom') });
+      setLabelKeys([], { error: new Error('label lookup refused') });
       await userEvent.click(screen.getByRole('button', { name: 'Collapse up' }));
       await expandMetric('up');
 
-      expect(screen.getByText('Failed to load labels')).toBeInTheDocument();
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent('Failed to load labels');
+      expect(alert).toHaveTextContent('label lookup refused');
+    });
+
+    // A `ul` may only hold `li`, and this block also holds its own status text — so the rows get their
+    // own nested list rather than the container becoming one.
+    it('renders the label keys as a list nested in the metric’s list item', async () => {
+      setCatalog([row('up')]);
+      setLabelKeys(['instance', 'job']);
+      renderList();
+
+      await expandMetric('up');
+
+      const labelList = screen.getByText('job').closest('ul');
+      expect(labelList).not.toBeNull();
+      expect(within(labelList!).getAllByRole('listitem')).toHaveLength(2);
+      expect(labelList!.closest('li')).toContainElement(screen.getByRole('button', { name: 'Collapse up' }));
     });
 
     // `aria-controls` has to name an element that is really there, so assert the id resolves rather
@@ -302,6 +324,48 @@ describe('<MetricsList />', () => {
 
       await userEvent.type(screen.getByRole('textbox', { name: 'Filter values' }), 'an');
       expect(valueTexts()).toEqual(['banana']);
+    });
+
+    it('announces values that failed to load, with the underlying message', async () => {
+      setLabelValues([], { error: new Error('cardinality limit exceeded') });
+      await openJob();
+
+      await expandLabel('job');
+
+      const alert = screen.getByRole('alert');
+      expect(alert).toHaveTextContent('Failed to load values');
+      expect(alert).toHaveTextContent('cardinality limit exceeded');
+    });
+
+    // A `ul` may only hold `li`, and this block also holds a toolbar, its status text and "show more" —
+    // so the rows get their own nested list rather than the container becoming one.
+    it('renders the values as a list nested in the label’s list item', async () => {
+      setLabelValues(['web-1', 'web-2']);
+      await openJob();
+
+      await expandLabel('job');
+
+      const valueList = screen.getByText('web-1').closest('ul');
+      expect(valueList).not.toBeNull();
+      expect(within(valueList!).getAllByRole('listitem')).toHaveLength(2);
+      expect(valueList!.closest('li')).toContainElement(screen.getByRole('button', { name: 'Hide values for job' }));
+    });
+
+    // This block stays mounted across a range change, unlike the metrics list, whose card body it
+    // hangs off. A paging offset kept from the old range indexes into a list the user never paged.
+    it('drops back to the first batch when the time range changes', async () => {
+      setLabelValues(Array.from({ length: 100 }, (_, i) => `value-${i}`));
+      setCatalog([row('up')]);
+      setLabelKeys(['job']);
+      const { rerender } = renderList();
+      await expandMetric('up');
+      await expandLabel('job');
+      await userEvent.click(screen.getByRole('button', { name: /show more/i }));
+      expect(screen.getAllByTestId('signal-explorer-value-row')).toHaveLength(50);
+
+      rerender(<MetricsList dsUid="prom-uid" dsType="prometheus" timeRange={otherTimeRange} />);
+
+      expect(screen.getAllByTestId('signal-explorer-value-row')).toHaveLength(25);
     });
 
     it('forgets the expanded label when its metric collapses', async () => {

@@ -58,9 +58,7 @@ describe('useMetricDetail', () => {
   it('refetches for the new metric when `metric` changes while enabled', async () => {
     const spy = jest
       .spyOn(client, 'fetchLabelKeys')
-      .mockImplementation((_dsRef, _timeRange, metric) =>
-        Promise.resolve(metric === 'up' ? ['job'] : ['instance'])
-      );
+      .mockImplementation((_dsRef, _timeRange, metric) => Promise.resolve(metric === 'up' ? ['job'] : ['instance']));
     const { result, rerender } = renderHook(({ metric }) => useMetricDetail({ uid: 'p1' }, range, metric, true), {
       initialProps: { metric: 'up' },
     });

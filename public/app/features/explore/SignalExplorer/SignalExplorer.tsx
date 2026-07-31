@@ -21,9 +21,11 @@ interface CardDescriptor {
   datasourceLogo?: string;
   isExpandable: boolean;
   /**
-   * Kept as primitives rather than a `DataSourceRef` so the body below stays memoized: this list is
-   * rebuilt on every keystroke in a query editor, and a fresh ref object each time would re-render
-   * the metrics list for a datasource that never changed.
+   * Kept as primitives rather than a `DataSourceRef` because `MetricsList` is the `memo()` boundary
+   * this crosses: these descriptors are rebuilt on every keystroke in a query editor, since `queries`
+   * arrives from the store with a fresh identity, and a new ref object each time would re-render the
+   * metrics list for a datasource that never changed. `MetricsList` assembles the ref once and passes
+   * it on as an object from there.
    */
   dsUid?: string;
   dsType?: string;

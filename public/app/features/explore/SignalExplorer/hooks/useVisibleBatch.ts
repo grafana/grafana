@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
 /** How many rows of a long list reach the DOM at a time, and how many each "show more" adds. */
-export const INITIAL_BATCH = 25;
+const INITIAL_BATCH = 25;
 
 /**
  * Caps how much of a long list is rendered. Hiding the overflow with CSS is not enough — a

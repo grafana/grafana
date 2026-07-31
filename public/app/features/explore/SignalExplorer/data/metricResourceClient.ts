@@ -2,22 +2,14 @@ import type { DataSourceApi, DataSourceRef, TimeRange } from '@grafana/data';
 import type { PrometheusLanguageProviderInterface } from '@grafana/prometheus';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
-import type { MetricRow } from '../types';
+import type { MetricInfo } from '../types';
 
 import { baseMetricName, deriveMetricType } from './metricType';
 
 /**
- * The part of the Prometheus language provider this module calls — derived from the real interface
- * with `Pick`, not restated here.
- *
- * A hand-written copy of this shape is what every test in this module mocks, so if upstream renamed
- * `retrieveMetrics` or re-signed `queryLabelValues`, the copy and the mocks would agree with each
- * other, the suite would stay green, and only production would break. `Pick` fails to compile
- * instead: an absent key is an error, and a changed signature propagates straight into the call
- * sites below.
- *
- * `import type` is erased at build time, so this costs nothing at runtime even though the Prometheus
- * datasource is no longer a core plugin.
+ * Derive this with `Pick`, never restate it by hand: the tests mock this shape, so a hand-written copy
+ * would keep agreeing with the mocks after an upstream rename or re-signing and break only
+ * production. `Pick` fails to compile instead.
  */
 type PromLanguageProvider = Pick<
   PrometheusLanguageProviderInterface,
@@ -25,15 +17,10 @@ type PromLanguageProvider = Pick<
 >;
 
 /**
- * How long a resolved entry is served from cache. A relative range (`now-1h`/`now`) is one cache key
- * for the whole life of the page, so without expiry a catalog fetched on first open would still be
- * the answer hours later and a metric scraped since would never appear.
- *
- * Five minutes is the safety net, not the refresh mechanism: nothing re-runs on its own, so an entry
- * is only re-fetched the next time something asks for it after expiry (a card reopening, a range
- * change, or `invalidateMetricCache`). Actual freshness is also bounded below by the Prometheus
- * language provider's own cache, which snaps a range to an interval derived from the datasource's
- * cache level — expiring here lets a request through, it does not guarantee a network call.
+ * How long a resolved entry is served from cache. This is a bound on staleness, not a refresh: nothing
+ * re-runs on its own, so an expired entry is only re-fetched the next time something asks for it. It
+ * also does not guarantee a network call — the Prometheus language provider holds its own cache
+ * underneath, keyed on a range snapped to the datasource's cache level.
  */
 export const CACHE_TTL_MS = 5 * 60 * 1000;
 
@@ -42,7 +29,7 @@ interface CacheEntry<T> {
   expiresAt: number;
 }
 
-const catalogCache = new Map<string, CacheEntry<MetricRow[]>>();
+const catalogCache = new Map<string, CacheEntry<MetricInfo[]>>();
 const labelKeysCache = new Map<string, CacheEntry<string[]>>();
 const labelValuesCache = new Map<string, CacheEntry<string[]>>();
 
@@ -64,8 +51,11 @@ function once<T>(cache: Map<string, CacheEntry<T>>, key: string, fn: () => Promi
   return value;
 }
 
-/** Test-only: reset the module-level caches between test cases. Not part of the public API. */
-export function __clearCache() {
+/** Test helper — resets the module-level caches. Should only be called from tests. */
+export function __clearCacheForTests() {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('__clearCacheForTests must only be called from tests');
+  }
   for (const cache of allCaches) {
     cache.clear();
   }
@@ -167,13 +157,13 @@ async function getLP(dsRef: DataSourceRef): Promise<PromLanguageProvider> {
 // the string literal early and the datasource rejects the selector as malformed.
 const selector = (metric: string) => `{__name__="${metric.replace(/[\\"]/g, '\\$&')}"}`;
 
-export function fetchCatalog(dsRef: DataSourceRef, timeRange: TimeRange): Promise<MetricRow[]> {
+export function fetchCatalog(dsRef: DataSourceRef, timeRange: TimeRange): Promise<MetricInfo[]> {
   return once(catalogCache, `cat:${dsKey(dsRef)}:${rangeKey(timeRange)}`, async () => {
     const lp = await getLP(dsRef);
     await lp.start(timeRange);
     const names = lp.retrieveMetrics() ?? [];
     const meta = lp.retrieveMetricsMetadata() ?? {};
-    return names.map<MetricRow>((name) => {
+    return names.map<MetricInfo>((name) => {
       // Metadata is keyed by the metric family, so a classic histogram or summary series has none of
       // its own; fall back to its family's. Own entry first, in case a metric really is named with
       // one of those suffixes.

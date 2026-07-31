@@ -1,22 +1,23 @@
 import { css } from '@emotion/css';
-import { memo, useCallback, useId, useState } from 'react';
+import { memo, useCallback, useId, useMemo, useState } from 'react';
 
-import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
+import { type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, FilterInput, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
 
 import { MetricLabels } from './MetricLabels';
 import { MetricRow } from './MetricRow';
 import { blockId } from './blockId';
-
-import { dsKey, rangeKey, useMetricCatalog, useVisibleBatch } from './index';
+import { dsKey, rangeKey } from './data/metricResourceClient';
+import { useMetricCatalog } from './data/useMetricCatalog';
+import { useVisibleBatch } from './hooks/useVisibleBatch';
 
 interface Props {
   /**
-   * The card's datasource, as primitives rather than a `DataSourceRef`, so this component keeps the
-   * `memo()` below: the explorer above rebuilds its card descriptors on every keystroke in a query
+   * The card's datasource, as primitives rather than a `DataSourceRef`, because this component is the
+   * `memo()` boundary: the explorer above rebuilds its card descriptors on every keystroke in a query
    * editor, and a fresh ref object each time would re-render this list for a datasource that never
-   * changed.
+   * changed. The ref is assembled once below and passed down as an object from there.
    */
   dsUid?: string;
   dsType?: string;
@@ -59,7 +60,9 @@ export const MetricsList = memo(function MetricsList({ dsUid, dsType, timeRange 
     setExpandedLabel((current) => (current === labelKey ? null : labelKey));
   }, []);
 
-  const dsRef = { uid: dsUid, type: dsType };
+  // Stable across the re-renders the memo above cannot absorb, so the plain components below can take
+  // a ref object without one identity change per render turning into a refetch.
+  const dsRef = useMemo<DataSourceRef>(() => ({ uid: dsUid, type: dsType }), [dsUid, dsType]);
   const { metrics, loading, error } = useMetricCatalog(dsRef, timeRange, { searchText: searchTerm });
 
   // Paging resets on anything that swaps the catalog out for a different one — the search, but also
@@ -80,9 +83,11 @@ export const MetricsList = memo(function MetricsList({ dsUid, dsType, timeRange 
           {t('explore.metrics-list.loading', 'Loading metrics…')}
         </Text>
       )}
+      {/* `role="alert"` because the block appears in place of the loading text, with nothing focused
+          and no other cue that the list the user was waiting for is not coming. */}
       {error && (
-        <Text color="error" variant="bodySmall">
-          {t('explore.metrics-list.error', 'Failed to load metrics')}
+        <Text color="error" variant="bodySmall" role="alert">
+          {t('explore.metrics-list.error', 'Failed to load metrics')}: {error.message}
         </Text>
       )}
       {!loading && !error && metrics.length === 0 && (
@@ -91,29 +96,31 @@ export const MetricsList = memo(function MetricsList({ dsUid, dsType, timeRange 
         </Text>
       )}
       <ScrollContainer>
-        <ul className={styles.list}>
-          {visible.map((metric) => {
-            const expanded = metric.name === expandedMetric;
-            const labelsId = blockId(listId, 'labels', metric.name);
+        {/* Only once there is a row to put in it: an empty list is still announced as a list. */}
+        {visible.length > 0 && (
+          <ul className={styles.list}>
+            {visible.map((metric) => {
+              const expanded = metric.name === expandedMetric;
+              const labelsId = blockId(listId, 'labels', metric.name);
 
-            return (
-              <li key={metric.name}>
-                <MetricRow name={metric.name} expanded={expanded} labelsId={labelsId} onToggle={toggleMetric} />
-                {expanded && (
-                  <MetricLabels
-                    id={labelsId}
-                    dsUid={dsUid}
-                    dsType={dsType}
-                    timeRange={timeRange}
-                    metric={metric.name}
-                    expandedLabel={expandedLabel}
-                    onToggleLabel={toggleLabel}
-                  />
-                )}
-              </li>
-            );
-          })}
-        </ul>
+              return (
+                <li key={metric.name}>
+                  <MetricRow name={metric.name} expanded={expanded} labelsId={labelsId} onToggle={toggleMetric} />
+                  {expanded && (
+                    <MetricLabels
+                      id={labelsId}
+                      dsRef={dsRef}
+                      timeRange={timeRange}
+                      metric={metric.name}
+                      expandedLabel={expandedLabel}
+                      onToggleLabel={toggleLabel}
+                    />
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
         {/* Inside the scroll region on purpose: it belongs to the end of the list, not to the card. */}
         {metrics.length > visible.length && (
           <Button className={styles.showMore} size="sm" variant="secondary" fill="text" onClick={showMore}>
@@ -137,11 +144,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(1, 1, 1, 1.5),
     }),
     list: css({
+      label: 'metrics-list-items',
       listStyle: 'none',
       margin: 0,
       padding: 0,
     }),
     showMore: css({
+      label: 'metrics-list-show-more',
       alignSelf: 'flex-start',
     }),
   };

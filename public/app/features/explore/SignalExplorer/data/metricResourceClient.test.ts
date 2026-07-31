@@ -10,7 +10,7 @@ import {
   getMetricCacheGeneration,
   invalidateMetricCache,
   subscribeToMetricCache,
-  __clearCache,
+  __clearCacheForTests,
 } from './metricResourceClient';
 
 const range = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
@@ -30,11 +30,11 @@ jest.mock('@grafana/runtime/unstable', () => ({ getDataSourceInstance: jest.fn()
 
 describe('metricResourceClient', () => {
   beforeEach(() => {
-    __clearCache();
+    __clearCacheForTests();
     (getDataSourceInstance as jest.Mock).mockReset();
   });
 
-  it('maps names+metadata into MetricRow with derived type', async () => {
+  it('maps names+metadata into MetricInfo with derived type', async () => {
     const lp = makeLP();
     (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
     const rows = await fetchCatalog({ uid: 'p1' }, range);
@@ -59,10 +59,9 @@ describe('metricResourceClient', () => {
     };
 
     it('types a histogram series from the base metric’s metadata', async () => {
-      withMetadata(
-        ['go_gc_pauses_seconds_bucket', 'go_gc_pauses_seconds_sum', 'go_gc_pauses_seconds_count'],
-        { go_gc_pauses_seconds: { type: 'histogram', help: 'GC pause distribution' } }
-      );
+      withMetadata(['go_gc_pauses_seconds_bucket', 'go_gc_pauses_seconds_sum', 'go_gc_pauses_seconds_count'], {
+        go_gc_pauses_seconds: { type: 'histogram', help: 'GC pause distribution' },
+      });
 
       const rows = await fetchCatalog({ uid: 'h1' }, range);
 
@@ -133,7 +132,11 @@ describe('metricResourceClient', () => {
 
   it('lookupsDisabled / empty metrics → [] without throwing', async () => {
     (getDataSourceInstance as jest.Mock).mockResolvedValue({
-      languageProvider: { start: jest.fn().mockResolvedValue([]), retrieveMetrics: () => [], retrieveMetricsMetadata: () => ({}) },
+      languageProvider: {
+        start: jest.fn().mockResolvedValue([]),
+        retrieveMetrics: () => [],
+        retrieveMetricsMetadata: () => ({}),
+      },
     });
     await expect(fetchCatalog({ uid: 'p2' }, range)).resolves.toEqual([]);
   });

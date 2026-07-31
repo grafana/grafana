@@ -52,6 +52,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   // The whole row is the control, not just the chevron: it is a bigger pointer target and one
   // tab stop per metric instead of two.
   row: css({
+    label: 'metric-row',
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(0.5),
@@ -70,10 +71,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   chevron: css({
+    label: 'metric-row-chevron',
     flexShrink: 0,
     color: theme.colors.text.secondary,
   }),
   name: css({
+    label: 'metric-row-name',
     minWidth: 0,
     overflow: 'hidden',
     color: theme.colors.text.secondary,

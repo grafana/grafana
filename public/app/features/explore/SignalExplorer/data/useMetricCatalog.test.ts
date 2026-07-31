@@ -2,13 +2,13 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 
 import type { TimeRange } from '@grafana/data';
 
-import type { MetricRow } from '../types';
+import type { MetricInfo } from '../types';
 
 import * as client from './metricResourceClient';
 import { useMetricCatalog } from './useMetricCatalog';
 
 const range = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
-const rows: MetricRow[] = [
+const rows: MetricInfo[] = [
   { name: 'http_requests_total', type: 'counter', help: 'h' },
   { name: 'node_load1', type: 'gauge', help: 'l' },
 ];
@@ -44,9 +44,12 @@ describe('useMetricCatalog', () => {
 
   it('fetches once enabled', async () => {
     const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
-    const { result, rerender } = renderHook(({ enabled }) => useMetricCatalog({ uid: 'p1' }, range, undefined, enabled), {
-      initialProps: { enabled: false },
-    });
+    const { result, rerender } = renderHook(
+      ({ enabled }) => useMetricCatalog({ uid: 'p1' }, range, undefined, enabled),
+      {
+        initialProps: { enabled: false },
+      }
+    );
 
     rerender({ enabled: true });
 
@@ -75,6 +78,13 @@ describe('useMetricCatalog', () => {
   it('filters case-insensitively on search text', async () => {
     jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
     const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range, { searchText: 'LOAD' }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
+  });
+
+  it('trims the search text, which otherwise matches no metric name at all', async () => {
+    jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
+    const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range, { searchText: '  load ' }));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
   });
@@ -146,8 +156,8 @@ describe('useMetricCatalog', () => {
   });
 
   it('does not let a superseded response overwrite a newer one (stale-response ordering)', async () => {
-    const first = deferred<MetricRow[]>();
-    const second = deferred<MetricRow[]>();
+    const first = deferred<MetricInfo[]>();
+    const second = deferred<MetricInfo[]>();
     const spy = jest
       .spyOn(client, 'fetchCatalog')
       .mockImplementationOnce(() => first.promise)
@@ -175,7 +185,7 @@ describe('useMetricCatalog', () => {
   });
 
   it('does not throw when unmounting mid-flight', async () => {
-    const { promise, resolve } = deferred<MetricRow[]>();
+    const { promise, resolve } = deferred<MetricInfo[]>();
     jest.spyOn(client, 'fetchCatalog').mockImplementation(() => promise);
     const { unmount } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range));
     unmount();
@@ -188,7 +198,7 @@ describe('useMetricCatalog', () => {
   });
 
   it('raises `loading` and clears stale `metrics` in the render that starts a fetch for a new datasource, before the promise resolves', async () => {
-    const pending = deferred<MetricRow[]>();
+    const pending = deferred<MetricInfo[]>();
     const spy = jest
       .spyOn(client, 'fetchCatalog')
       .mockResolvedValueOnce(rows)

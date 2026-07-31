@@ -82,10 +82,9 @@ describe('useLabelValues', () => {
       .mockImplementation((_dsRef, _timeRange, metric) =>
         Promise.resolve(metric === 'up' ? ['prometheus'] : ['grafana'])
       );
-    const { result, rerender } = renderHook(
-      ({ metric }) => useLabelValues({ uid: 'p1' }, range, metric, 'job', true),
-      { initialProps: { metric: 'up' } }
-    );
+    const { result, rerender } = renderHook(({ metric }) => useLabelValues({ uid: 'p1' }, range, metric, 'job', true), {
+      initialProps: { metric: 'up' },
+    });
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.values).toEqual(['prometheus']);
     expect(spy).toHaveBeenLastCalledWith({ uid: 'p1' }, range, 'up', 'job');
