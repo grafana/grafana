@@ -341,6 +341,10 @@ func RegisterAPIService(
 	quotaGetter quotas.QuotaGetter,
 	natsSubscriber nats.Subscriber,
 ) (*APIBuilder, error) {
+	if !cfg.ProvisioningEnabled {
+		return nil, nil
+	}
+
 	allowedTargets := make([]provisioning.SyncTargetType, 0, len(cfg.ProvisioningAllowedTargets))
 	for _, target := range cfg.ProvisioningAllowedTargets {
 		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))

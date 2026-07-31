@@ -108,7 +108,9 @@ func ProvideRegistration(
 		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthTokenService, socialService, settingsProviderService, features, tracer))
 	}
 
-	authnSvc.RegisterClient(clients.ProvideProvisioning())
+	if cfg.ProvisioningEnabled {
+		authnSvc.RegisterClient(clients.ProvideProvisioning())
+	}
 
 	// FIXME (jguer): move to User package
 	// Pass nil for k8sClient - it will be handled gracefully in the SCIMSettingsUtil
