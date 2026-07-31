@@ -270,6 +270,7 @@
       "placeholder-search-devices-by-ip-address": "Search devices by IP address."
     },
     "user-list-page": {
+      "label-active-users": "Active users",
       "label-all-users": "All users",
       "label-anonymous-devices": "Anonymous devices",
       "label-organization-users": "Organization users",
