@@ -415,12 +415,13 @@ export const useNavCustomization = () => {
 
   // Resolve the active item, pinned box first so that a pinned copy (or a pinned Starred section's
   // child) wins over the nav row; reference equality then highlights whichever rendered row matches.
-  // Prefer a match on the current page's actual url — a starred dashboard/folder is the only leaf
-  // carrying that url, so this highlights it in the Starred section, where its sectionNav node (the
-  // generic parent section) never would. Fall back to the sectionNav-node match for everything else.
+  // Prefer a match on the current page's actual url (pathname + query) — a starred dashboard/folder is
+  // the only row carrying that url, and the Starred section's own `/dashboards?starred` link needs the
+  // query to win over Dashboards — so these highlight in the Starred section, where their sectionNav
+  // node (the generic parent section) never would. Fall back to the sectionNav-node match otherwise.
   const candidates = [...pinnedLeafItems, ...navItems];
   const activeItem =
-    findActivePageItem(candidates, location.pathname) ??
+    findActivePageItem(candidates, location.pathname + location.search) ??
     getActiveItem(candidates, state.sectionNav.node, location.pathname);
 
   // --- Edit session lifecycle ---

@@ -138,46 +138,45 @@ export const getActiveItem = (
   return undefined;
 };
 
-// Reduce a nav url or the browser pathname to a stable key for "is this the page I'm on?". Strips the
-// app sub-path, query string and trailing slash, and collapses dashboard/folder urls to their uid —
-// a starred entry's url carries a slug and/or `?orgId=` that the browser location does not.
+// Reduce a nav url or the browser url to a stable key for "is this the page I'm on?". Strips the app
+// sub-path and trailing slash, and collapses dashboard/folder urls to their uid (their entry carries a
+// slug and/or `?orgId=` the browser location does not). The query string is otherwise kept, so the
+// Starred section's `/dashboards?starred` stays distinct from the Dashboards section's `/dashboards`.
 const toPageKey = (url?: string): string | undefined => {
   if (!url) {
     return undefined;
   }
-  const path = locationUtil.stripBaseFromUrl(url).split('?')[0].replace(/\/+$/, '');
-  const [, first, second, third] = path.split('/');
+  const stripped = locationUtil.stripBaseFromUrl(url);
+  const [, first, second, third] = stripped.split('?')[0].split('/');
   if (first === 'd' && second) {
     return `/d/${second}`;
   }
   if (first === 'dashboards' && second === 'f' && third) {
     return `/dashboards/f/${third}`;
   }
-  return path || '/';
+  return stripped.replace(/\/+$/, '') || '/';
 };
 
 /**
- * Find the leaf nav item whose url is the page the user is currently on (by pathname). This is how a
- * starred dashboard/folder highlights in the Starred section: its sectionNav node points at the
- * generic parent section, but its own row is the only leaf carrying the page's url. Section headers
- * (items with children) are skipped so the specific page — not its parent — is highlighted. Returns
+ * Find the nav item whose url is the page the user is currently on. This is how a starred item
+ * highlights in the Starred section: the page's sectionNav node points at the generic parent section,
+ * but a starred row (or the Starred section's own `/dashboards?starred` link) is what carries the real
+ * url. Children are matched before their parent, so `/dashboards` resolves to the Browse child rather
+ * than the Dashboards section, while a section still matches on its own url when no child does. Returns
  * the matched element by reference, so downstream reference-equality highlighting works.
  */
-export const findActivePageItem = (nodes: NavModelItem[], pathname: string): NavModelItem | undefined => {
-  const target = toPageKey(pathname);
+export const findActivePageItem = (nodes: NavModelItem[], currentUrl: string): NavModelItem | undefined => {
+  const target = toPageKey(currentUrl);
   if (!target) {
     return undefined;
   }
   for (const item of nodes) {
-    if (!item.children?.length) {
-      if (toPageKey(item.url) === target) {
-        return item;
-      }
-      continue;
+    const childMatch = item.children?.length ? findActivePageItem(item.children, currentUrl) : undefined;
+    if (childMatch) {
+      return childMatch;
     }
-    const found = findActivePageItem(item.children, pathname);
-    if (found) {
-      return found;
+    if (toPageKey(item.url) === target) {
+      return item;
     }
   }
   return undefined;
