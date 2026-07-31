@@ -66,7 +66,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 		ac.EvalPermission(pluginaccesscontrol.ActionInstall),
 	))
 
-	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.GetOrgID())
+	pluginSettingsMap, _, err := hs.pluginSettings(c.Req.Context(), c.GetOrgID())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get list of plugins", err)
 	}
@@ -226,6 +226,13 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 		dto.Enabled = plugin.AutoEnabled
 		dto.Pinned = plugin.AutoEnabled
 		dto.AutoEnabled = plugin.AutoEnabled
+	}
+
+	if plugin.IncludedInAppID != "" {
+		// A plugin included in an app is exposed unless explicitly disabled, so with no stored row the
+		// honest answer is enabled. Without this the response is a bare false and a config page cannot
+		// tell "never configured" from "turned off". Mirrors explicitlyDisabled in bootdata.go.
+		dto.Enabled = true
 	}
 
 	ps, err := hs.PluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{

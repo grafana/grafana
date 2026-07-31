@@ -1006,6 +1006,107 @@ func Test_PluginsSettings(t *testing.T) {
 	}
 }
 
+func Test_PluginsSettings_IncludedInApp(t *testing.T) {
+	const (
+		appID             = "test-app"
+		nestedPanelID     = "test-app-panel"
+		standalonePanelID = "standalone-panel"
+	)
+
+	newPanel := func(id string) *plugins.Plugin {
+		return createPlugin(plugins.JSONData{
+			ID: id, Type: plugins.TypePanel, Name: id,
+			Info: plugins.Info{Version: "1.0.0"},
+		}, plugins.ClassExternal, plugins.NewFakeFS())
+	}
+
+	nestedPanel := newPanel(nestedPanelID)
+	nestedPanel.IncludedInAppID = appID
+	standalonePanel := newPanel(standalonePanelID)
+
+	pluginRegistry := &pluginfakes.FakePluginRegistry{
+		Store: map[string]*plugins.Plugin{
+			nestedPanel.ID:     nestedPanel,
+			standalonePanel.ID: standalonePanel,
+		},
+	}
+
+	type testCase struct {
+		desc            string
+		pluginID        string
+		stored          map[string]*pluginsettings.DTO
+		expectedEnabled bool
+	}
+	tcs := []testCase{
+		{
+			desc:            "plugin included in an app with no stored row is reported as enabled",
+			pluginID:        nestedPanelID,
+			expectedEnabled: true,
+		},
+		{
+			desc:     "plugin included in an app with a stored row is reported as the row says",
+			pluginID: nestedPanelID,
+			stored: map[string]*pluginsettings.DTO{
+				nestedPanelID: {OrgID: 1, PluginID: nestedPanelID, Enabled: false},
+			},
+			expectedEnabled: false,
+		},
+		{
+			// The default is deliberately scoped to plugins included in an app, so a standalone panel's
+			// response is byte-identical to before the change.
+			desc:            "standalone plugin with no stored row is unchanged",
+			pluginID:        standalonePanelID,
+			expectedEnabled: false,
+		},
+	}
+
+	for _, tc := range tcs {
+		t.Run(tc.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				store, err := pluginstore.NewPluginStoreForTest(pluginRegistry, &pluginfakes.FakeLoader{}, &pluginfakes.FakeSourceRegistry{})
+				require.NoError(t, err)
+
+				stored := tc.stored
+				if stored == nil {
+					stored = map[string]*pluginsettings.DTO{}
+				}
+
+				hs.Cfg = setting.NewCfg()
+				hs.PluginSettings = &pluginsettings.FakePluginSettings{Plugins: stored}
+				hs.pluginStore = store
+				hs.pluginFileStore = filestore.ProvideService(pluginRegistry)
+				pCfg := &config.PluginManagementCfg{}
+				pluginCDN := pluginscdn.ProvideService(pCfg)
+				sig := signature.ProvideService(pCfg, statickey.New())
+				calc := modulehash.NewCalculator(pCfg, registry.NewInMemory(), pluginCDN, sig)
+				hs.pluginAssets = pluginassets.ProvideService(calc)
+				hs.pluginErrorResolver = pluginerrs.ProvideStore(pluginerrs.ProvideErrorTracker())
+				hs.pluginsUpdateChecker, err = updatemanager.ProvidePluginsService(
+					hs.Cfg,
+					hs.pluginStore,
+					&pluginfakes.FakePluginInstaller{},
+					tracing.InitializeTracerForTest(),
+					kvstore.NewFakeFeatureToggles(t, true),
+					pluginchecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
+				)
+				require.NoError(t, err)
+			})
+
+			res, err := server.Send(webtest.RequestWithSignedInUser(
+				server.NewGetRequest("/api/plugins/"+tc.pluginID+"/settings"),
+				userWithPermissions(1, []ac.Permission{}),
+			))
+			require.NoError(t, err)
+			defer func() { require.NoError(t, res.Body.Close()) }()
+			require.Equal(t, http.StatusOK, res.StatusCode)
+
+			var result dtos.PluginSetting
+			require.NoError(t, json.NewDecoder(res.Body).Decode(&result))
+			assert.Equal(t, tc.expectedEnabled, result.Enabled)
+		})
+	}
+}
+
 func Test_UpdatePluginSetting(t *testing.T) {
 	pID := "test-app"
 	p1 := createPlugin(plugins.JSONData{

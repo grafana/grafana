@@ -787,6 +787,134 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 	}
 }
 
+func TestIntegrationHTTPServer_GetFrontendSettings_disabledNestedPanels(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	const (
+		appID           = "test-app"
+		nestedPanelA    = "test-app-panel-a"
+		nestedPanelB    = "test-app-panel-b"
+		standalonePanel = "standalone-panel"
+	)
+
+	type settings struct {
+		Panels map[string]*plugins.PanelDTO `json:"panels"`
+	}
+
+	// The app is neither enabled nor autoEnabled, the realistic shape for an app that bundles panels.
+	// pluginSettings therefore synthesises Enabled=false for both of its children, and no case below
+	// may treat that as a reason to hide them.
+	pluginStore := func(panelAState plugins.ReleaseState) pluginstore.Store {
+		panel := func(id, includedInAppID string, state plugins.ReleaseState) pluginstore.Plugin {
+			return pluginstore.Plugin{
+				Module: fmt.Sprintf("/%s/module.js", id),
+				JSONData: plugins.JSONData{
+					ID:    id,
+					Type:  plugins.TypePanel,
+					State: state,
+					Info:  plugins.Info{Version: "1.0.0"},
+				},
+				IncludedInAppID: includedInAppID,
+				FS:              &pluginfakes.FakePluginFS{},
+			}
+		}
+		return &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{
+				{
+					Module: fmt.Sprintf("/%s/module.js", appID),
+					JSONData: plugins.JSONData{
+						ID:   appID,
+						Type: plugins.TypeApp,
+						Info: plugins.Info{Version: "1.0.0"},
+					},
+					FS: &pluginfakes.FakePluginFS{},
+				},
+				panel(nestedPanelA, appID, panelAState),
+				panel(nestedPanelB, appID, ""),
+				panel(standalonePanel, "", ""),
+			},
+		}
+	}
+
+	// Entries here stand for plugin_setting rows: FakePluginSettings.GetPluginSettings returns one
+	// InfoDTO per entry, so these IDs are exactly the ones an operator has decided something about.
+	storedSettings := func(enabledByPluginID map[string]bool) pluginsettings.Service {
+		stored := make(map[string]*pluginsettings.DTO, len(enabledByPluginID))
+		for id, enabled := range enabledByPluginID {
+			stored[id] = &pluginsettings.DTO{OrgID: 1, PluginID: id, Enabled: enabled}
+		}
+		return &pluginsettings.FakePluginSettings{Plugins: stored}
+	}
+
+	tests := []struct {
+		desc        string
+		stored      map[string]bool
+		panelAState plugins.ReleaseState
+		enableAlpha bool
+		expected    []string
+	}{
+		{
+			// The regression guard: fails loudly if the gate ever keys off !Settings.Enabled instead of
+			// the stored set, which would hide every app-bundled panel on every existing instance.
+			desc:     "no stored rows leaves every panel exposed",
+			expected: []string{nestedPanelA, nestedPanelB, standalonePanel},
+		},
+		{
+			desc:     "app disabled by a stored row leaves its panels exposed",
+			stored:   map[string]bool{appID: false},
+			expected: []string{nestedPanelA, nestedPanelB, standalonePanel},
+		},
+		{
+			desc:     "stored row disabling one nested panel hides only that panel",
+			stored:   map[string]bool{nestedPanelA: false},
+			expected: []string{nestedPanelB, standalonePanel},
+		},
+		{
+			desc:     "stored row enabling a nested panel leaves it exposed",
+			stored:   map[string]bool{nestedPanelA: true},
+			expected: []string{nestedPanelA, nestedPanelB, standalonePanel},
+		},
+		{
+			desc:     "stored row disabling a standalone panel is ignored",
+			stored:   map[string]bool{standalonePanel: false},
+			expected: []string{nestedPanelA, nestedPanelB, standalonePanel},
+		},
+		{
+			desc:        "alpha panel with no stored row is still hidden by the alpha gate",
+			panelAState: plugins.ReleaseStateAlpha,
+			expected:    []string{nestedPanelB, standalonePanel},
+		},
+		{
+			desc:        "stored row hides an alpha panel that enable_alpha would have exposed",
+			stored:      map[string]bool{nestedPanelA: false},
+			panelAState: plugins.ReleaseStateAlpha,
+			enableAlpha: true,
+			expected:    []string{nestedPanelB, standalonePanel},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.PluginsEnableAlpha = test.enableAlpha
+			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), pluginStore(test.panelAState), storedSettings(test.stored), nil)
+
+			recorder := httptest.NewRecorder()
+			m.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil))
+			require.Equal(t, http.StatusOK, recorder.Code)
+
+			var got settings
+			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &got))
+
+			gotPanels := make([]string, 0, len(got.Panels))
+			for id := range got.Panels {
+				gotPanels = append(gotPanels, id)
+			}
+			assert.ElementsMatch(t, test.expected, gotPanels)
+		})
+	}
+}
+
 func newPluginAssets() func() *pluginassets.Service {
 	return newPluginAssetsWithConfig(&config.PluginManagementCfg{})
 }

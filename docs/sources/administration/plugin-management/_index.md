@@ -29,6 +29,7 @@ Read on for an overview on how to get started with plugins:
 - Customize where app plugin pages appear in the navigation menu.
 - Configure backend communication between installed plugins.
 - Improve security by isolating plugins with the Plugin Frontend Sandbox.
+- Choose which of the panels bundled in an app plugin your users can use.
 
 ## Types of plugins
 
@@ -131,6 +132,54 @@ When enabled, plugins run in a separate JavaScript context, which provides sever
 - Stops plugins from interfering with other plugins functionality
 - Protects core Grafana features from being altered by plugins
 - Prevents plugins from modifying global browser objects and behaviors
+
+### Disable an individual plugin included in an app
+
+An app plugin bundles other plugins, and those bundled plugins don't always reach the same maturity at the same time. When an app ships several panels and only some of them are ready for your users, you can disable the panels you don't want to offer instead of choosing between the whole app and none of it.
+
+This applies to panel plugins included in an app. Data source plugins included in an app aren't affected, because Grafana needs their definitions to load the data sources that already use them.
+
+To disable a panel included in an app, post to the plugin settings endpoint with the ID of the included panel:
+
+```sh
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>" \
+  -d '{"enabled": false, "pinned": false}' \
+  http://localhost:3000/api/plugins/<INCLUDED_PLUGIN_ID>/settings
+```
+
+Replace the following placeholders:
+
+- _`<SERVICE_ACCOUNT_TOKEN>`_: a token for an account with the `plugins:write` permission, which Grafana grants to the Organization administrator role by default.
+- _`<INCLUDED_PLUGIN_ID>`_: the ID of the panel included in the app, not the ID of the app itself.
+
+An app's own configuration page is the expected way to make this choice, so refer to the app's documentation before you call the API directly. To offer the panel again, repeat the request with `"enabled": true`.
+
+Keep the following in mind:
+
+- **The setting applies to one organization:** Grafana stores plugin settings per organization and plugin, so organizations on the same Grafana instance can offer different sets of panels.
+- **The change takes effect on the next page load:** you don't need to restart Grafana. Reload the browser to pick up the new set of panels.
+- **Disabling the app itself doesn't disable the panels it includes:** disable each panel you want to withhold.
+- **Dashboards that already use a disabled panel still open:** the panel shows a "Panel plugin not found" message, and you can change it to another visualization or remove it.
+- **Disabling a panel hides it, it doesn't block access to it:** Grafana withholds the panel from the frontend, but the plugin's assets stay reachable under `/public/plugins/`. Use this to control what your users are offered, not as a security boundary.
+
+You can also apply this setting with [plugin provisioning](../provisioning/#plugins). The `apps` block accepts any plugin ID, including the ID of a panel included in an app:
+
+```yaml
+apiVersion: 1
+
+apps:
+  - type: <INCLUDED_PLUGIN_ID>
+    org_id: 1
+    disabled: true
+```
+
+The block is named `apps` for historical reasons.
+
+{{< admonition type="caution" >}}
+Grafana reapplies provisioned plugin settings every time it starts. A provisioned entry overwrites changes you make through the API or an app's configuration page the next time you restart Grafana.
+{{< /admonition >}}
 
 ### Learn more
 

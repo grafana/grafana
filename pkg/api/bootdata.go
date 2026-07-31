@@ -392,6 +392,9 @@ func (hs *HTTPServer) getFSPanels(c *contextmodel.ReqContext, availablePanels ma
 		if panel.State == plugins.ReleaseStateAlpha && !hs.Cfg.PluginsEnableAlpha {
 			continue
 		}
+		if ap.ExplicitlyDisabled {
+			continue
+		}
 
 		panels[panel.ID] = plugins.PanelDTO{
 			ID:              panel.ID,
@@ -498,6 +501,18 @@ func getPanelSort(id string) int {
 type availablePluginDTO struct {
 	Plugin   pluginstore.Plugin
 	Settings pluginsettings.InfoDTO
+	// Set for panels only; see explicitlyDisabled and getFSPanels.
+	ExplicitlyDisabled bool
+}
+
+// explicitlyDisabled reports whether an operator turned this plugin off for the org by storing a
+// plugin_setting row, as opposed to Grafana defaulting it off.
+//
+// Restricted to plugins included in an app for two reasons: those are the only ones an operator has a
+// route to disable today, and standalone panels have never been hideable this way, so leaving them
+// out keeps every existing instance behaving exactly as before.
+func explicitlyDisabled(p pluginstore.Plugin, s pluginsettings.InfoDTO, stored map[string]bool) bool {
+	return p.IncludedInAppID != "" && stored[p.ID] && !s.Enabled
 }
 
 // AvailablePlugins represents a mapping from plugin types (panel, data source, etc.) to plugin IDs to plugins
@@ -523,7 +538,7 @@ func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (Availa
 
 	ap := make(AvailablePlugins)
 
-	pluginSettingMap, err := hs.pluginSettings(ctx, orgID)
+	pluginSettingMap, storedSettings, err := hs.pluginSettings(ctx, orgID)
 	if err != nil {
 		return ap, err
 	}
@@ -555,8 +570,9 @@ func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (Availa
 	for _, p := range hs.pluginStore.Plugins(ctx, plugins.TypePanel) {
 		if s, exists := pluginSettingMap[p.ID]; exists {
 			panels[p.ID] = &availablePluginDTO{
-				Plugin:   p,
-				Settings: *s,
+				Plugin:             p,
+				Settings:           *s,
+				ExplicitlyDisabled: explicitlyDisabled(p, *s, storedSettings),
 			}
 		}
 	}
@@ -565,18 +581,24 @@ func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (Availa
 	return ap, nil
 }
 
-func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*pluginsettings.InfoDTO, error) {
+// pluginSettings returns the effective settings for every plugin in the store, plus the set of plugin
+// IDs that have a stored plugin_setting row for the org. Only the stored ones reflect a decision an
+// operator made; everything else is a default filled in below, including the app-enabled cascade,
+// which is advisory and must not be treated as an instruction to hide anything.
+func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*pluginsettings.InfoDTO, map[string]bool, error) {
 	ctx, span := hs.tracer.Start(ctx, "api.pluginSettings")
 	defer span.End()
 
 	pluginSettings := make(map[string]*pluginsettings.InfoDTO)
+	stored := make(map[string]bool)
 
 	// fill settings from database
 	if pss, err := hs.PluginSettings.GetPluginSettings(ctx, &pluginsettings.GetArgs{OrgID: orgID}); err != nil {
-		return nil, err
+		return nil, nil, err
 	} else {
 		for _, ps := range pss {
 			pluginSettings[ps.PluginID] = ps
+			stored[ps.PluginID] = true
 		}
 	}
 
@@ -627,7 +649,7 @@ func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[stri
 		pluginSettings[plugin.ID] = pluginSetting
 	}
 
-	return pluginSettings, nil
+	return pluginSettings, stored, nil
 }
 
 func (hs *HTTPServer) getEnabledOAuthProviders() map[string]any {

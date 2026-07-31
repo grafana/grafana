@@ -9,3 +9,10 @@ apiVersion: 1
 #     org_id: 1
 #     jsonData:
 #       apiKey: "API KEY"
+
+# The type is any plugin ID, so a panel included in an app can be disabled on its own to
+# withhold it from the org's visualization picker. The block is named apps for historical reasons.
+# Note that these settings are reapplied on every start, overwriting changes made via the API.
+#   - type: grafana-example-app-panel
+#     org_id: 1
+#     disabled: true
