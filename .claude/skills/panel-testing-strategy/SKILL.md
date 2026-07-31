@@ -374,7 +374,6 @@ Pointers to the sections above — read them for the detail:
 - Anti-flake — apply all 10 rules.
 - SDLC — tests land in the same PR as the feature/fix; close every bug with a regression test that
   fails on `main` (red without the fix, green with it).
-- Verify — run the codeowner coverage check before pushing (it gates the PR).
 
 ## Exemplar files
 
@@ -398,7 +397,5 @@ See also the `add-e2e-selectors` skill, `contribute/style-guides/e2e-playwright.
 
 - `yarn test <path>` (add `--watchAll=false`) — the new tests pass and actually fail when the
   asserted value is broken (mutate the expected value once to confirm it's not a no-op).
-- `yarn test:coverage:by-codeowner "@grafana/dataviz-squad"` — confirms coverage didn't drop
-  (this check gates the PR).
 - For E2E: `yarn e2e:playwright <spec>` (it starts its own server).
 - `yarn typecheck` if selectors or casts were added.
