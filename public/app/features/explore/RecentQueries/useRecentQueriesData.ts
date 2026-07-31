@@ -44,7 +44,9 @@ function defaultSortingOption(): SelectableValue<SortOrder> {
   };
 }
 
-export function useRecentQueriesData({ ignoreStoredFilters = false }: UseRecentQueriesDataOptions = {}): UseRecentQueriesDataReturn {
+export function useRecentQueriesData({
+  ignoreStoredFilters = false,
+}: UseRecentQueriesDataOptions = {}): UseRecentQueriesDataReturn {
   const storedDefaults = useMemo(
     () => (ignoreStoredFilters ? {} : getStoredFilterDefaults<RecentQueriesFilterState>('recent')),
     [ignoreStoredFilters]
