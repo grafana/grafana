@@ -198,44 +198,53 @@ func floorKey(namespace, name string) string {
 	return namespace + "/" + name
 }
 
-// StaleReadMetrics counts freshness-floor enforcement outcomes, the signal for
-// how often (and how badly) a read path lags the announced writes in practice:
+// StaleReadMetrics counts freshness-floor enforcement, the signal for how
+// often (and how badly) a read path lags the announced writes in practice:
 //
-//	grafana_provisioning_stale_reads_total{resource, outcome}
+//	grafana_provisioning_stale_read_retries_total{resource}
+//	grafana_provisioning_stale_reads_exhausted_total{resource}
 //
-// outcome="retried" — a read (or claim) contradicted the floor and another
-// attempt was scheduled; outcome="exhausted" — the attempts ran out and the key
-// was surrendered to the re-list backstop. Retries without exhaustion mean the
-// floor is absorbing the lag; exhaustion means the lag outlasts the retry
+// A retry means a read (or claim) contradicted the floor and another attempt
+// was scheduled; an exhaustion means the attempts ran out and the key was
+// surrendered to the re-list backstop. Retries without exhaustions mean the
+// floor is absorbing the lag; exhaustions mean the lag outlasts the retry
 // budget.
 type StaleReadMetrics struct {
-	resource string
-	outcomes *prometheus.CounterVec
+	resource  string
+	retries   *prometheus.CounterVec
+	exhausted *prometheus.CounterVec
 }
 
-// NewStaleReadMetrics builds the counter on reg for the given resource label
-// value, reusing a collector already registered on reg so several consumers
-// share one family. A nil reg leaves it unregistered; a nil *StaleReadMetrics
-// is safe to record on.
+// NewStaleReadMetrics builds the counters on reg for the given resource label
+// value, reusing collectors already registered on reg so several consumers
+// share the families. A nil reg leaves them unregistered; a nil
+// *StaleReadMetrics is safe to record on.
 func NewStaleReadMetrics(reg prometheus.Registerer, resource string) *StaleReadMetrics {
 	return &StaleReadMetrics{
 		resource: resource,
-		outcomes: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_provisioning_stale_reads_total",
-			Help: "Reads rejected by the informer freshness floor (a read below the announced resource version, or a 404/claim outcome contradicting it), by resource and outcome (retried = another attempt was scheduled; exhausted = attempts ran out and recovery fell to the periodic re-list).",
-		}, []string{"resource", "outcome"})),
+		retries: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_provisioning_stale_read_retries_total",
+			Help: "Reads or claims rejected by the informer freshness floor (below the announced resource version, or a 404/claim outcome contradicting it) for which another attempt was scheduled, by resource.",
+		}, []string{"resource"})),
+		exhausted: registerOrReuse(reg, prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_provisioning_stale_reads_exhausted_total",
+			Help: "Stale-read retry budgets that ran out, surrendering the key to the periodic re-list backstop, by resource.",
+		}, []string{"resource"})),
 	}
 }
 
-func (m *StaleReadMetrics) RecordRetried() { m.record("retried") }
-
-func (m *StaleReadMetrics) RecordExhausted() { m.record("exhausted") }
-
-func (m *StaleReadMetrics) record(outcome string) {
+func (m *StaleReadMetrics) RecordRetried() {
 	if m == nil {
 		return
 	}
-	m.outcomes.WithLabelValues(m.resource, outcome).Inc()
+	m.retries.WithLabelValues(m.resource).Inc()
+}
+
+func (m *StaleReadMetrics) RecordExhausted() {
+	if m == nil {
+		return
+	}
+	m.exhausted.WithLabelValues(m.resource).Inc()
 }
 
 // FreshReader bundles a freshness floor with the retry policy GetFresh uses to
