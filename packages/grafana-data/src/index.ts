@@ -154,6 +154,7 @@ export {
   DataLinksContext,
   useDataLinksContext,
 } from './field/fieldOverrides';
+export { applyItemOverrides, type ApplyItemOverrideOptions } from './field/itemOverrides';
 export { getFieldDisplayValuesProxy } from './field/getFieldDisplayValuesProxy';
 export {
   getFieldDisplayName,
@@ -293,6 +294,9 @@ export {
   getFrameMatchers,
   getValueMatcher,
 } from './transformations/matchers';
+export { itemMatchers } from './transformations/itemMatchers';
+export { type ItemMatcher, type ItemMatcherInfo } from './transformations/itemMatchers/itemMatchers';
+export { ItemMatcherID } from './transformations/itemMatchers/ids';
 export { type FieldValueMatcherConfig } from './transformations/matchers/fieldValueMatcher';
 export { DataTransformerID } from './transformations/transformers/ids';
 export { MatcherID, FieldMatcherID, FrameMatcherID, ValueMatcherID } from './transformations/matchers/ids';
@@ -448,6 +452,7 @@ export {
   PanelPlugin,
   type PanelOptionsSupplier,
   type SetFieldConfigOptionsArgs,
+  type SetItemConfigOptionsArgs,
   type StandardOptionConfig,
   type PanelScreenshotContext,
   type PanelScreenshotHandler,
@@ -461,7 +466,7 @@ export {
   type OptionDefaults,
 } from './panel/getPanelOptionsWithDefaults';
 export { type PanelDataSummary, getPanelDataSummary } from './panel/suggestions/getPanelDataSummary';
-export { createFieldConfigRegistry } from './panel/registryFactories';
+export { createFieldConfigRegistry, createItemConfigRegistry } from './panel/registryFactories';
 export { type QueryRunner, type QueryRunnerOptions } from './types/queryRunner';
 export { type GroupingToMatrixTransformerOptions } from './transformations/transformers/groupingToMatrix';
 export {
@@ -745,6 +750,14 @@ export {
   type ApplyFieldOverrideOptions,
   FieldConfigProperty,
 } from './types/fieldOverrides';
+export {
+  type PanelItem,
+  type ItemMatcherConfig,
+  type ItemOverrideRule,
+  type ItemKindDescriptor,
+  type ItemKindContext,
+  defaultItemStandardOptions,
+} from './types/itemOverrides';
 export {
   type VisualizationSuggestion,
   type VisualizationSuggestionsSupplier,

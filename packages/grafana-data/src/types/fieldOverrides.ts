@@ -8,6 +8,7 @@ import { type OptionsEditorItem } from './OptionsUIRegistryBuilder';
 import { type ScopedVars } from './ScopedVars';
 import { type DataFrame, type Field, type FieldConfig, type ValueLinkConfig } from './dataFrame';
 import { type DataLink, type LinkModel } from './dataLink';
+import { type ItemOverrideRule } from './itemOverrides';
 import { type OptionEditorConfig } from './options';
 import { type InterpolateFunction } from './panel';
 import { type TimeZone } from './time';
@@ -61,6 +62,14 @@ export interface FieldConfigSource<TOptions = any> {
 
   // Rules to override individual values
   overrides: ConfigOverrideRule[];
+
+  /**
+   * Rules to override individual items (marks) rather than fields, for visualizations
+   * whose marks are rows — node graph nodes and edges, pie slices.
+   *
+   * @alpha
+   */
+  itemOverrides?: ItemOverrideRule[];
 }
 
 export interface FieldOverrideContext extends StandardEditorContext<any> {

@@ -5,6 +5,7 @@ import { FieldConfigOptionsRegistry } from '../field/FieldConfigOptionsRegistry'
 import { type StandardEditorContext } from '../field/standardFieldConfigEditorRegistry';
 import { type PanelModel } from '../types/dashboard';
 import { type FieldConfigProperty, type FieldConfigSource } from '../types/fieldOverrides';
+import { type ItemKindDescriptor } from '../types/itemOverrides';
 import {
   type PanelPluginMeta,
   type PanelProps,
@@ -27,7 +28,7 @@ import {
 import { type FieldConfigEditorBuilder, PanelOptionsEditorBuilder } from '../utils/OptionsUIBuilders';
 import { deprecationWarning } from '../utils/deprecationWarning';
 
-import { createFieldConfigRegistry } from './registryFactories';
+import { createFieldConfigRegistry, createItemConfigRegistry } from './registryFactories';
 import { type PanelDataSummary } from './suggestions/getPanelDataSummary';
 
 /** @beta */
@@ -125,6 +126,19 @@ export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
 }
 
 /**
+ * Arguments for {@link PanelPlugin.useItemConfig}.
+ *
+ * @alpha
+ */
+export interface SetItemConfigOptionsArgs {
+  /**
+   * The item (mark) kinds this panel supports. Each declares how to enumerate its marks from
+   * the data and which properties an override rule may set on one.
+   */
+  kinds?: ItemKindDescriptor[];
+}
+
+/**
  * Callback used to declare a panel's option editors via {@link PanelPlugin.setPanelOptions}.
  * Receives a builder and an editor context, and should call builder methods to register editors.
  *
@@ -171,6 +185,9 @@ export class PanelPlugin<
   private _initConfigRegistry = () => {
     return new FieldConfigOptionsRegistry();
   };
+
+  private _itemKinds: ItemKindDescriptor[] = [];
+  private _itemConfigRegistries = new Map<string, FieldConfigOptionsRegistry>();
 
   private optionsSupplier?: PanelOptionsSupplier<TOptions>;
   private suggestionsSupplier?: VisualizationSuggestionsSupplier<TOptions, TFieldConfigOptions>;
@@ -431,6 +448,60 @@ export class PanelPlugin<
     this._initConfigRegistry = () => createFieldConfigRegistry(config, this.meta.name);
 
     return this;
+  }
+
+  /**
+   * Declares the item (mark) kinds this panel supports, enabling per-item overrides.
+   *
+   * Field overrides target columns. Panels whose marks are rows — node graph nodes and edges,
+   * pie slices — declare those marks here instead, so the editor can offer a rule that targets
+   * one mark and the panel can resolve it with `applyItemOverrides`.
+   *
+   * ```ts
+   * export const plugin = new PanelPlugin<Options>(Panel)
+   *  .useItemConfig({
+   *    kinds: [
+   *      {
+   *        id: 'node',
+   *        name: 'Nodes',
+   *        getItems: (data) => getNodeItems(data),
+   *        useCustomConfig: (builder) => {
+   *          builder.addNumberInput({ id: 'nodeRadius', name: 'Node radius' });
+   *        },
+   *      },
+   *    ],
+   *  });
+   * ```
+   *
+   * @alpha
+   */
+  useItemConfig(config: SetItemConfigOptionsArgs = {}) {
+    this._itemKinds = config.kinds ?? [];
+    // registries are built lazily, per kind, when the editor or resolver first asks for one
+    this._itemConfigRegistries = new Map();
+
+    return this;
+  }
+
+  /** The item kinds this plugin declares, empty when it does not support item overrides. @alpha */
+  get itemKinds(): ItemKindDescriptor[] {
+    return this._itemKinds;
+  }
+
+  /** The property registry for one declared kind, or undefined when the kind is unknown. @alpha */
+  getItemConfigRegistry(kindId: string): FieldConfigOptionsRegistry | undefined {
+    const kind = this._itemKinds.find((k) => k.id === kindId);
+    if (!kind) {
+      return undefined;
+    }
+
+    let registry = this._itemConfigRegistries.get(kindId);
+    if (!registry) {
+      registry = createItemConfigRegistry(kind, this.meta.name);
+      this._itemConfigRegistries.set(kindId, registry);
+    }
+
+    return registry;
   }
 
   /**
