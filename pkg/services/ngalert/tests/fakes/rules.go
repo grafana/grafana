@@ -786,3 +786,25 @@ func applyPluginOriginFilter(rules []*models.AlertRule, filter models.PluginOrig
 	}
 	return filteredList
 }
+
+func (f *RuleStore) SaveAlertRuleStatus(ctx context.Context, orgID int64, ruleUID string, data []byte) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	q := GenericRecordedQuery{Name: "SaveAlertRuleStatus", Params: []any{orgID, ruleUID, data}}
+	defer func() {
+		f.RecordedOps = append(f.RecordedOps, q)
+	}()
+
+	if err := f.Hook(q); err != nil {
+		return err
+	}
+
+	orgRules := f.Rules[orgID]
+	for _, rule := range orgRules {
+		if rule.UID == ruleUID {
+			rule.K8sStatus = data
+		}
+	}
+
+	return nil
+}

@@ -145,6 +145,14 @@ func convertToK8sResource(
 	// FIXME: we don't have a creation timestamp in the domain model, so we can't set it here.
 	// We should consider adding it to the domain model. Migration can set it to the Updated timestamp for existing
 	// k8sRule.SetCreationTimestamp(rule.)
+
+	if len(rule.K8sStatus) > 0 {
+		// Status is best-effort: a malformed blob degrades to empty status rather
+		// than failing the rule read. Versions/tombstones carry no status blob, so
+		// they naturally serialize with empty status.
+		_ = json.Unmarshal(rule.K8sStatus, &k8sRule.Status)
+	}
+
 	return k8sRule, nil
 }
 

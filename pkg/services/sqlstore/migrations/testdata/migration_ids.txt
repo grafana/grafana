@@ -407,6 +407,7 @@
 "add is_paused column to alert_rule table"
 "fix is_paused column for alert_rule table"
 "alter table alert_rule alter column rule_group_idx type to bigint"
+"add k8s_status column to alert_rule table"
 "create alert_rule_version table"
 "add index in alert_rule_version table on rule_org_id, rule_uid and version columns"
 "add index in alert_rule_version table on rule_org_id, rule_namespace_uid and rule_group columns"
