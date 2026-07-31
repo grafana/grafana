@@ -36,13 +36,20 @@ function toProviderResult<T>(
 }
 
 /**
- * Whether a drilldown app is installed, enabled, and its root page is accessible — bootdata
+ * Whether a drilldown app is installed, enabled, and its default page is accessible — bootdata
  * membership alone lists installed-but-disabled apps (config.apps carries no enabled state),
  * which would turn the CTA into a dead /a/<id> link instead of the working Explore fallback.
+ * The CTA links to the app root, which lands on the default-nav include's page, so that is the
+ * path whose role/action gate must pass (canAccessPluginPage exact-matches declared include
+ * paths and allows unmatched ones, like the core app route guard).
  */
 function useDrilldownAvailable(appId: string): boolean {
   const { installed, settings } = usePluginBridge(appId);
-  return !!installed && !!settings && canAccessPluginPage(settings, `/a/${appId}`);
+  if (!installed || !settings) {
+    return false;
+  }
+  const defaultPage = settings.includes?.find((include) => include.defaultNav && include.path)?.path;
+  return canAccessPluginPage(settings, defaultPage ?? `/a/${appId}`);
 }
 
 /**

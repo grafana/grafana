@@ -1,8 +1,15 @@
 import { render, screen } from 'test/test-utils';
 
-import { createDataFrame, FieldType, type DataSourceInstanceListItem, type PluginMeta } from '@grafana/data';
+import {
+  createDataFrame,
+  FieldType,
+  PluginIncludeType,
+  type DataSourceInstanceListItem,
+  type PluginMeta,
+} from '@grafana/data';
 import { useAppPluginMetas } from '@grafana/runtime/internal';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
+import { contextSrv } from 'app/core/services/context_srv';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
 import { ctaClicked } from '../analytics/main';
@@ -318,6 +325,70 @@ describe('RecommendationExisting', () => {
     expect(screen.getByRole('link', { name: /Open Metrics Drilldown/ })).toHaveAttribute(
       'href',
       '/a/grafana-metricsdrilldown-app'
+    );
+  });
+
+  it('falls back to Explore when the user cannot access the drilldown default page', async () => {
+    mockUsePluginBridge.mockImplementation((plugin) =>
+      plugin === 'grafana-lokiexplore-app'
+        ? {
+            loading: false,
+            installed: true,
+            settings: {
+              id: 'grafana-lokiexplore-app',
+              includes: [
+                {
+                  type: PluginIncludeType.page,
+                  name: 'Logs',
+                  path: '/a/grafana-lokiexplore-app/explore',
+                  defaultNav: true,
+                  action: 'datasources:explore',
+                },
+              ],
+            } as PluginMeta<{}>,
+          }
+        : { loading: false, installed: false, settings: undefined }
+    );
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+    mockActiveLogs();
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Hosted Logs' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Open Explore \(Logs\)/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Open in Explore/ }).getAttribute('href')).toMatch(/^\/explore\?left=/);
+  });
+
+  it('keeps the drilldown CTA when the user can access the declared default page', async () => {
+    mockUsePluginBridge.mockImplementation((plugin) =>
+      plugin === 'grafana-exploretraces-app'
+        ? {
+            loading: false,
+            installed: true,
+            settings: {
+              id: 'grafana-exploretraces-app',
+              includes: [
+                {
+                  type: PluginIncludeType.page,
+                  name: 'Traces',
+                  path: '/a/grafana-exploretraces-app/',
+                  defaultNav: true,
+                  action: 'datasources:explore',
+                },
+              ],
+            } as PluginMeta<{}>,
+          }
+        : { loading: false, installed: false, settings: undefined }
+    );
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    mockActiveTraces();
+
+    render(<RecommendationExisting />);
+
+    expect(await screen.findByRole('heading', { name: 'Hosted Traces' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Open Traces Drilldown/ })).toHaveAttribute(
+      'href',
+      '/a/grafana-exploretraces-app'
     );
   });
 
