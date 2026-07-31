@@ -94,13 +94,24 @@ func TestRulerFetcher_Fetch(t *testing.T) {
 		assert.Equal(t, "/api/datasources/proxy/uid/ds1/config/v1/rules", proxy.gotPath)
 	})
 
-	t.Run("404 yields an empty config and no error (empty ruler)", func(t *testing.T) {
-		proxy := &fakeDatasourceProxy{status: http.StatusNotFound, body: []byte("no rule groups found")}
+	t.Run("200 with an empty object yields an empty config (empty ruler)", func(t *testing.T) {
+		// Mimir's ListRules returns 200 with {} when there are no rule groups.
+		proxy := &fakeDatasourceProxy{status: http.StatusOK, body: []byte("{}")}
 
-		got, hash, err := NewRulerFetcher(proxy, log.NewNopLogger()).Fetch(ctx, testDS())
+		got, _, err := NewRulerFetcher(proxy, log.NewNopLogger()).Fetch(ctx, testDS())
 		require.NoError(t, err)
 		assert.Empty(t, got)
-		assert.Equal(t, emptyHash, hash)
+	})
+
+	t.Run("a 404 is a fetch error, never empty (list API returns 200 when empty)", func(t *testing.T) {
+		// A 404 is always an error here (e.g. the proxy can't find the
+		// datasource/plugin). Treating it as an empty ruler would prune every synced
+		// rule, so it must be a fetch error instead.
+		proxy := &fakeDatasourceProxy{status: http.StatusNotFound, body: []byte(`{"message":"Unable to find datasource plugin"}`)}
+
+		_, _, err := NewRulerFetcher(proxy, log.NewNopLogger()).Fetch(ctx, testDS())
+		require.Error(t, err)
+		assert.NotErrorIs(t, err, ErrNotARuler)
 	})
 
 	t.Run("non-2xx (not 404) is a fetch error, not ErrNotARuler", func(t *testing.T) {
@@ -140,6 +151,6 @@ func TestRulerFetcher_Fetch(t *testing.T) {
 		_, h2, err := f.Fetch(ctx, testDS())
 		require.NoError(t, err)
 		assert.Equal(t, h1, h2)
-		assert.NotEqual(t, emptyHash, h1)
+		assert.NotZero(t, h1)
 	})
 }

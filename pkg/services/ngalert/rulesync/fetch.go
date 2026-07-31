@@ -96,15 +96,12 @@ func (f *RulerFetcher) Fetch(ctx context.Context, ds *datasources.DataSource) (R
 
 	f.proxy.ProxyDatasourceRequestWithUID(c, ds.UID)
 
-	// 404 → no rule groups (mirrors Grafana's frontend ruler client).
-	if resp.Status() == http.StatusNotFound {
-		return RulerConfig{}, emptyHash, nil
-	}
-
+	// The ruler config list API returns HTTP 200 with an empty object when there
+	// are no rule groups (see Mimir's ListRules), so a non-2xx is never "no rules":
+	// a 404 here is a proxy-local error (datasource/plugin not found) or an upstream
+	// failure, not an empty ruler. Treat every non-2xx as a fetch failure so
+	// apply/prune never runs and synced rules aren't wiped.
 	if resp.Status()/100 != 2 {
-		// Any other non-2xx is a failed fetch (transient 5xx, auth, wrong URL, ...),
-		// not a definitive "not a ruler" signal — SyncOrg classifies it as a fetch
-		// failure. Cap the body echoed into the error.
 		body, _ := io.ReadAll(io.LimitReader(bytes.NewReader(resp.Body()), 1024))
 		return nil, 0, fmt.Errorf("ruler config API returned HTTP %d: %s", resp.Status(), string(body))
 	}
@@ -149,10 +146,3 @@ func serviceIdentityUser(orgID int64) *user.SignedInUser {
 		},
 	}
 }
-
-// emptyHash is the FNV-1a hash of an empty body, used for the no-rules (404)
-// case so dedup treats "still empty" as unchanged across ticks.
-var emptyHash = func() uint64 {
-	h := fnv.New64a()
-	return h.Sum64()
-}()
