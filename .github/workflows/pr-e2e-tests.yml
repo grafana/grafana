@@ -324,9 +324,12 @@ jobs:
           path: playwright-report
           retention-days: 7
 
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - name: Check test suites
         id: check-jobs
-        uses: grafana/grafana/.github/actions/check-jobs@main
+        uses: ./.github/actions/check-jobs
         continue-on-error: true # Failure will be reported on Check test results step
         with:
           needs: ${{ toJson(needs) }}
