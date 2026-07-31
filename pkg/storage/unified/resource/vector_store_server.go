@@ -23,6 +23,10 @@ const maxWriteBatch = 500
 // maxMetadataBytes mirrors the proto contract (metadata ≤ 4 KiB JSON).
 const maxMetadataBytes = 4096
 
+// maxKeyFieldLen mirrors the VARCHAR(256) width of the uid and subresource
+// columns — reject before spending an embedding on a row Postgres will bounce.
+const maxKeyFieldLen = 256
+
 // vectorWriteStore is the narrow slice of vector.VectorBackend the write
 // service needs.
 type vectorWriteStore interface {
@@ -95,10 +99,12 @@ func writeStatusError(ctx context.Context, err error, msg string) error {
 	// A downstream error that already carries an explicitly retryable gRPC
 	// code (e.g. the embedding provider's quota pressure or transient
 	// outage) keeps that code so client retry policies work as documented.
-	if s, ok := status.FromError(err); ok {
-		switch s.Code() {
-		case codes.ResourceExhausted, codes.Unavailable:
-			return status.Error(s.Code(), msg)
+	if err != nil {
+		if s, ok := status.FromError(err); ok {
+			switch s.Code() {
+			case codes.ResourceExhausted, codes.Unavailable:
+				return status.Error(s.Code(), msg)
+			}
 		}
 	}
 	return status.Error(codes.Internal, msg)
@@ -143,6 +149,10 @@ func validateInputs(inputs []*resourcepb.EmbeddingInput, requireUID string) erro
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: empty", i)
 		case requireUID == "" && in.Uid == "":
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: uid is required", i)
+		case len(in.Uid) > maxKeyFieldLen:
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: uid exceeds %d chars", i, maxKeyFieldLen)
+		case len(in.Subresource) > maxKeyFieldLen:
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: subresource exceeds %d chars", i, maxKeyFieldLen)
 		case requireUID != "" && in.Uid != "" && in.Uid != requireUID:
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: uid %q does not match request uid %q", i, in.Uid, requireUID)
 		case in.Content == "":
@@ -236,6 +246,9 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 	}
 	if req.Uid == "" {
 		return nil, status.Error(codes.InvalidArgument, "uid is required")
+	}
+	if len(req.Uid) > maxKeyFieldLen {
+		return nil, status.Errorf(codes.InvalidArgument, "uid exceeds %d chars", maxKeyFieldLen)
 	}
 	if err := validateInputs(req.Inputs, req.Uid); err != nil {
 		return nil, err

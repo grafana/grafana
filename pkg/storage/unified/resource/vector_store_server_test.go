@@ -228,6 +228,8 @@ func TestVectorStore_UpsertValidation(t *testing.T) {
 			r.Inputs[0].Metadata = []byte(`{"k":"` + strings.Repeat("x", 4096) + `"}`)
 		}},
 		{"invalid metadata json", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Metadata = []byte(`{not json`) }},
+		{"oversized uid", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Uid = strings.Repeat("u", 257) }},
+		{"oversized subresource", func(r *resourcepb.VectorUpsertRequest) { r.Inputs[0].Subresource = strings.Repeat("s", 257) }},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -310,6 +312,14 @@ func TestVectorStore_UpsertSubresourcesValidation(t *testing.T) {
 	// Empty inputs.
 	_, err = s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
 		Namespace: "ns", Group: "g", Resource: "r", Uid: "e",
+	})
+	require.Error(t, err)
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+
+	// Oversized request uid.
+	_, err = s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
+		Namespace: "ns", Group: "g", Resource: "r", Uid: strings.Repeat("e", 257),
+		Inputs: []*resourcepb.EmbeddingInput{{Subresource: "c", Content: "x", Title: "t"}},
 	})
 	require.Error(t, err)
 	assert.Equal(t, codes.InvalidArgument, status.Code(err))
@@ -486,4 +496,12 @@ func TestVectorStore_UpsertEmbedQuotaErrorKeepsRetryableCode(t *testing.T) {
 	require.Error(t, err)
 	assert.Equal(t, codes.ResourceExhausted, status.Code(err))
 	assert.Empty(t, store.upserts)
+}
+
+func TestWriteStatusError_NilErrorIsInternal(t *testing.T) {
+	// The embed count-mismatch path passes a nil error; must not panic and
+	// must map to Internal.
+	err := writeStatusError(context.Background(), nil, "boom")
+	require.Error(t, err)
+	assert.Equal(t, codes.Internal, status.Code(err))
 }

@@ -294,23 +294,23 @@ func TestTruncateRunes(t *testing.T) {
 }
 
 func TestEnsureResourcePartition_RejectsOverlongResource(t *testing.T) {
-	// 63-byte Postgres identifier limit minus len("embeddings_") = 52.
-	// Postgres would silently truncate a longer name, breaking the
-	// existence fast-path forever.
+	// 63-byte Postgres identifier limit minus len("embeddings_") minus
+	// len("_metadata_idx") = 39. Postgres would silently truncate a longer
+	// name, breaking the existence fast-path forever.
 	rdb := test.NewDBProviderNopSQL(t)
 	backend := NewPgvectorBackend(context.Background(), rdb.DB, 1000, 0, false, nil)
 	ctx := testutil.NewDefaultTestContext(t)
 
-	ok52 := strings.Repeat("a", 52)
-	bad53 := strings.Repeat("a", 53)
+	ok39 := strings.Repeat("a", 39)
+	bad40 := strings.Repeat("a", 40)
 
-	err := backend.EnsureResourcePartition(ctx, bad53)
+	err := backend.EnsureResourcePartition(ctx, bad40)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "too long")
 
-	// 52 passes the length guard (then hits the DB check — mock it minimally).
+	// 39 passes the length guard (then hits the DB check — mock it minimally).
 	rdb.SQLMock.ExpectQuery("SELECT").WillReturnError(errors.New("stop here"))
-	err = backend.EnsureResourcePartition(ctx, ok52)
+	err = backend.EnsureResourcePartition(ctx, ok39)
 	require.Error(t, err)
 	require.NotContains(t, err.Error(), "too long")
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())

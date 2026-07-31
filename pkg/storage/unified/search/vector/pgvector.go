@@ -25,11 +25,12 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/
 
 var _ VectorBackend = (*pgvectorBackend)(nil)
 
-// maxPartitionKeyLen keeps `embeddings_<key>` under Postgres's 63-byte
-// identifier limit (len("embeddings_") == 11). Postgres would otherwise
-// silently truncate the table name, and the pg_inherits existence check
-// (which uses the untruncated name) would re-attempt DDL forever.
-const maxPartitionKeyLen = 52
+// maxPartitionKeyLen keeps the LONGEST derived identifier —
+// `embeddings_<key>_metadata_idx` — under Postgres's 63-byte limit
+// (63 - len("embeddings_") - len("_metadata_idx") = 39). Postgres would
+// otherwise silently truncate the name, and the readiness check (which
+// uses the untruncated name) would re-attempt DDL on every write forever.
+const maxPartitionKeyLen = 39
 
 // backfillAdvisoryLockName is hashed by Postgres' hashtext() into the
 // 64-bit advisory-lock keyspace. Keeping the lock identity as a string in
