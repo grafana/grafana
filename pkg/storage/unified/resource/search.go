@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net/http"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -114,6 +115,13 @@ type IndexBuildInfo struct {
 // rebuild, missing data, no error.
 type IndexFeature string
 
+// IndexFeatureTrashFields means the index maps TrashSearchFieldDefinitions. An
+// index without them drops the values, so trash would come back missing the
+// deleter and in arbitrary order. Checked by writers alongside
+// IndexFeatureDeletedMarker, so an older index keeps no deleted documents until it
+// rebuilds.
+const IndexFeatureTrashFields IndexFeature = "trash-fields"
+
 // IndexFeatureDeletedMarker means the index maps the markers on deleted
 // documents, SEARCH_FIELD_IS_DELETED and SEARCH_FIELD_IS_PROVISIONED. An index
 // without them drops the values, so a deleted document indexed there would look
@@ -129,10 +137,18 @@ const IndexFeatureDeletedMarker IndexFeature = "deleted-marker"
 // that path reports facet-capable but unstored fields as missing values.
 const IndexFeatureStoredFacets IndexFeature = "facets-are-stored"
 
+// TrashIndexFeatures are the features an index needs before a deleted document may
+// be kept in it. Both writers read this one list, so the producer and the
+// BulkIndex backstop cannot disagree about what makes an index usable for trash.
+func TrashIndexFeatures() []IndexFeature {
+	return []IndexFeature{IndexFeatureDeletedMarker, IndexFeatureTrashFields}
+}
+
 // currentIndexFeatures is recorded in every index this binary builds.
 var currentIndexFeatures = []IndexFeature{
 	IndexFeatureDeletedMarker,
 	IndexFeatureStoredFacets,
+	IndexFeatureTrashFields,
 }
 
 // requiredIndexFeatures is the subset an index must already have to be used. An
@@ -2157,7 +2173,7 @@ func (s *searchServer) keepsDeletedDocuments(index ResourceIndex, logger log.Log
 		logger.Warn("cannot read index features, removing deleted documents instead of keeping them", "err", err)
 		return false
 	}
-	missing := MissingIndexFeatures(info, []IndexFeature{IndexFeatureDeletedMarker})
+	missing := MissingIndexFeatures(info, TrashIndexFeatures())
 	if len(missing) > 0 {
 		logger.Debug("index does not map the markers on deleted documents, removing them until it is rebuilt", "missing", missing)
 		return false
@@ -2266,6 +2282,15 @@ func buildDeletedDocument(key *resourcepb.ResourceKey, rv int64, value []byte) (
 		Folder: obj.GetFolder(),
 
 		IsDeleted: new(true),
+		DeletedRV: new(strconv.FormatInt(rv, 10)),
+	}
+	// The deletion marker records the deleting user as the last updater, which is
+	// also what listFromTrash reads, so both trash views name the same user.
+	if by := obj.GetUpdatedBy(); by != "" {
+		doc.DeletedBy = &by
+	}
+	if ts := obj.GetDeletionTimestamp(); ts != nil {
+		doc.DeletionTime = new(ts.UnixMilli())
 	}
 	// Only provisioned documents carry the marker, so absent means "not
 	// provisioned", matching how the deleted marker works.
