@@ -2563,6 +2563,12 @@ func rejectTrashFieldsOnLiveSearch(req *resourcepb.ResourceSearchRequest) *resou
 			return refused(sort.Field)
 		}
 	}
+	// Legacy clients name the fields a text query runs against here.
+	for _, f := range req.QueryFields {
+		if resource.IsTrashSearchField(f.Name) {
+			return refused(f.Name)
+		}
+	}
 	if req.Options != nil {
 		for _, f := range req.Options.Fields {
 			if resource.IsTrashSearchField(f.Key) {

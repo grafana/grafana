@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"slices"
+	"strconv"
 	"testing"
 	"time"
 
@@ -3033,6 +3034,7 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 	// Deliberately indexed out of order, so a passing sort cannot be the order the
 	// documents happened to arrive in.
 	deleted := func(name, title, by string, deletedAt int64, rv int64) *resource.BulkIndexItem {
+		deletedRV := strconv.FormatInt(rv, 10)
 		return &resource.BulkIndexItem{
 			Action: resource.ActionIndex,
 			Doc: &resource.IndexableDocument{
@@ -3048,7 +3050,7 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 				IsDeleted:    new(true),
 				DeletedBy:    &by,
 				DeletionTime: &deletedAt,
-				DeletedRV:    &rv,
+				DeletedRV:    &deletedRV,
 			},
 		}
 	}
@@ -3114,12 +3116,34 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 		require.Equal(t, "oldest", rows[0].Key.Name)
 
 		// int64 columns are encoded big-endian, not as JSON (see NewTableBuilder).
-		readInt64 := func(cell []byte) int64 {
-			require.Len(t, cell, 8)
-			return int64(binary.BigEndian.Uint64(cell))
-		}
-		require.Equal(t, int64(1000), readInt64(rows[0].Cells[1]))
-		require.Equal(t, int64(10), readInt64(rows[0].Cells[2]), "the resource version of the delete")
+		require.Len(t, rows[0].Cells[1], 8)
+		require.Equal(t, int64(1000), int64(binary.BigEndian.Uint64(rows[0].Cells[1])))
+		require.Equal(t, "10", string(rows[0].Cells[2]), "the resource version of the delete")
+	})
+
+	// Resource versions are snowflake ids well past the range a float64 represents
+	// exactly, so a numeric mapping would return a rounded value and restore would
+	// submit the wrong revision.
+	t.Run("a large resource version comes back exactly", func(t *testing.T) {
+		const rv = "1856241819843796993"
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "snowflake",
+				},
+				Title: "Alpha snowflake", Name: "snowflake",
+				IsDeleted: new(true), DeletedRV: &[]string{rv}[0],
+			},
+		}}}))
+
+		q := newTestQuery("snowflake")
+		q.IsDeleted = true
+		q.Fields = []string{resource.SEARCH_FIELD_DELETED_RV}
+		res, err := index.Search(context.Background(), nil, q, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, res.Results.Rows, 1)
+		require.Equal(t, rv, string(res.Results.Rows[0].Cells[0]))
 	})
 
 	// Live documents leave these unset, so naming one in a live search is a caller
@@ -3141,6 +3165,15 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 					Key:      resource.SEARCH_FIELD_DELETED_BY,
 					Operator: string(selection.In),
 					Values:   []string{alice},
+				}}
+			}},
+			// Legacy clients name the fields a text query runs against. Without this
+			// the query would run and return nothing, which reads as "no results"
+			// rather than "wrong field".
+			{"query fields", func(q *resourcepb.ResourceSearchRequest) {
+				q.Query = "alice"
+				q.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{{
+					Name: resource.SEARCH_FIELD_DELETED_BY,
 				}}
 			}},
 		} {

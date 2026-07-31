@@ -71,8 +71,10 @@
         "dynamic": true,
         "fields": [
           {
-            "type": "number",
-            "store": true
+            "type": "text",
+            "analyzer": "keyword",
+            "store": true,
+            "skip_freq_norm": true
           }
         ]
       },

@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net/http"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -2281,7 +2282,7 @@ func buildDeletedDocument(key *resourcepb.ResourceKey, rv int64, value []byte) (
 		Folder: obj.GetFolder(),
 
 		IsDeleted: new(true),
-		DeletedRV: &rv,
+		DeletedRV: new(strconv.FormatInt(rv, 10)),
 	}
 	// The deletion marker records the deleting user as the last updater, which is
 	// also what listFromTrash reads, so both trash views name the same user.

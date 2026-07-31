@@ -2027,7 +2027,16 @@ func TestBuildDeletedDocumentRecordsWhoDeletedItAndWhen(t *testing.T) {
 	require.NotNil(t, doc.DeletionTime)
 	require.Equal(t, deletedAt.UnixMilli(), *doc.DeletionTime)
 	require.NotNil(t, doc.DeletedRV)
-	require.Equal(t, int64(42), *doc.DeletedRV, "the resource version of the delete, not of the last update")
+	require.Equal(t, "42", *doc.DeletedRV, "the resource version of the delete, not of the last update")
+
+	// A snowflake resource version from the KV backend. Kept as a string because a
+	// float64 cannot represent one exactly, and restore submits this value back.
+	t.Run("a large resource version keeps every digit", func(t *testing.T) {
+		const rv int64 = 1856241819843796993
+		doc, err := buildDeletedDocument(key, rv, testDeletedObjectJSON("gone", "Gone", "user:alice", deletedAt))
+		require.NoError(t, err)
+		require.Equal(t, "1856241819843796993", *doc.DeletedRV)
+	})
 
 	// An object deleted by a process with no user attached, or written before the
 	// marker recorded one. Left unset rather than stored empty, so live and deleted

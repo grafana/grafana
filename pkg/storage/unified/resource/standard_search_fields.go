@@ -122,16 +122,20 @@ func TrashSearchFieldDefinitions() []SearchFieldDefinition {
 			Description:  "Who deleted the resource (format: user:<uid>).",
 		},
 		// Numeric so it sorts in time order rather than lexically, and so a retention
-		// window can be a range query later.
+		// window can be a range query later. Milliseconds are exact as a float64, which
+		// is how bleve stores numbers.
 		{
 			Name:         SEARCH_FIELD_DELETION_TIME,
 			Type:         SearchFieldTypeInt64,
 			Capabilities: []SearchCapability{SearchCapabilitySort, SearchCapabilityRetrieve},
 			Description:  "Deletion timestamp (unix millis).",
 		},
+		// A string, unlike deletion_time: resource versions are snowflake ids around
+		// 1.8e18, where a float64 can only represent multiples of 256, so a number
+		// would come back rounded. Restore submits this value, so it has to be exact.
 		{
 			Name:         SEARCH_FIELD_DELETED_RV,
-			Type:         SearchFieldTypeInt64,
+			Type:         SearchFieldTypeString,
 			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
 			Description:  "Resource version of the delete.",
 		},

@@ -161,9 +161,12 @@ type IndexableDocument struct {
 	// Who deleted the object, in the same form as CreatedBy.
 	DeletedBy *string `json:"deleted_by,omitempty"`
 
-	// When the object was deleted (unix millis), and the resource version of the delete.
+	// When the object was deleted (unix millis).
 	DeletionTime *int64 `json:"deletion_time,omitempty"`
-	DeletedRV    *int64 `json:"deleted_rv,omitempty"`
+
+	// Resource version of the delete, as a string because it does not survive a
+	// float64 (see TrashSearchFieldDefinitions).
+	DeletedRV *string `json:"deleted_rv,omitempty"`
 }
 
 func (m *IndexableDocument) UpdateCopyFields() *IndexableDocument {
@@ -685,7 +688,7 @@ func StandardSearchFields() SearchableDocumentFields {
 			},
 			{
 				Name:        SEARCH_FIELD_DELETED_RV,
-				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
 				Description: "Resource version of the delete",
 			},
 		})
