@@ -1768,6 +1768,8 @@ export type JobResourceSummary = {
   /** No action required (useful for sync) */
   noop?: number;
   total?: number;
+  /** TotalChanges is the action-aware count of resources changed for this group/kind, set by the progress recorder as results are recorded. Used for the job-duration histogram's resources_changed bucket. */
+  totalChanges?: number;
   update?: number;
   /** The error count */
   warning?: number;
