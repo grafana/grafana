@@ -1068,6 +1068,17 @@ export function orderFieldsByDisplayNames(fields: Field[], columnOrder?: string[
 }
 
 /**
+ * Excludes fields whose display names appear in hiddenColumns.
+ */
+export function filterFieldsByHiddenColumns(fields: Field[], hiddenColumns?: ReadonlySet<string>): Field[] {
+  if (!hiddenColumns?.size) {
+    return fields;
+  }
+
+  return fields.filter((field) => !hiddenColumns.has(getDisplayName(field)));
+}
+
+/**
  * @internal
  * returns a map of column types by display name
  */

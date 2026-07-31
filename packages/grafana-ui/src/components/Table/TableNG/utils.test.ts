@@ -52,6 +52,7 @@ import {
   getTextHeightMeasurerFromUwrapCount,
   migrateTableDisplayModeToCellOptions,
   orderFieldsByDisplayNames,
+  filterFieldsByHiddenColumns,
   parseStyleJson,
   predicateByName,
   prepareSparklineValue,
@@ -2200,6 +2201,21 @@ describe('TableNG utils', () => {
 
     it('appends fields missing from the column order at the end', () => {
       expect(orderFieldsByDisplayNames([fieldA, fieldB, fieldC], ['B'])).toEqual([fieldB, fieldA, fieldC]);
+    });
+  });
+
+  describe('filterFieldsByHiddenColumns', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.number, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.boolean, config: {}, values: [] };
+
+    it('returns fields unchanged when no columns are hidden', () => {
+      expect(filterFieldsByHiddenColumns([fieldA, fieldB, fieldC])).toEqual([fieldA, fieldB, fieldC]);
+      expect(filterFieldsByHiddenColumns([fieldA, fieldB, fieldC], new Set())).toEqual([fieldA, fieldB, fieldC]);
+    });
+
+    it('excludes hidden columns by display name', () => {
+      expect(filterFieldsByHiddenColumns([fieldA, fieldB, fieldC], new Set(['B']))).toEqual([fieldA, fieldC]);
     });
   });
 

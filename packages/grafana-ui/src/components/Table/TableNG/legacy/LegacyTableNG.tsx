@@ -51,6 +51,7 @@ import { hasGeoCell, LazyOpenLayersProvider } from '../../geo';
 import { TableCellDisplayMode } from '../../types';
 import { getCellRenderer, getCellSpecificStyles } from '../Cells/renderers';
 import { EmptyTablePlaceholder } from '../components/EmptyTablePlaceholder';
+import { ColumnVisibilityPicker } from '../components/ColumnVisibilityPicker';
 import { HeaderCell, HeaderCellContainer } from '../components/HeaderCell';
 import { RowExpander } from '../components/RowExpander';
 import { SummaryCell } from '../components/SummaryCell';
@@ -110,6 +111,7 @@ import {
   getSummaryCellTextAlign,
   getVisibleFields,
   orderFieldsByDisplayNames,
+  filterFieldsByHiddenColumns,
   isCellInspectEnabled,
   parseStyleJson,
   predicateByName,
@@ -168,11 +170,13 @@ export function LegacyTableNG(props: TableNGProps) {
 
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
   const [columnOrder, setColumnOrder] = useState<string[] | undefined>(undefined);
+  const [hiddenColumns, setHiddenColumns] = useState<ReadonlySet<string>>(() => new Set());
   const [settlingColumnKeys, setSettlingColumnKeys] = useState<ReadonlySet<string>>(() => new Set());
   const settleTimeoutRef = useRef<number>();
 
   useEffect(() => {
     setColumnOrder(undefined);
+    setHiddenColumns(new Set());
     setSettlingColumnKeys(new Set());
   }, [structureRev]);
 
@@ -187,6 +191,11 @@ export function LegacyTableNG(props: TableNGProps) {
   const orderedVisibleFields = useMemo(
     () => orderFieldsByDisplayNames(visibleFields, columnOrder),
     [visibleFields, columnOrder]
+  );
+
+  const displayedFields = useMemo(
+    () => filterFieldsByHiddenColumns(orderedVisibleFields, hiddenColumns),
+    [orderedVisibleFields, hiddenColumns]
   );
 
   const handleColumnsReorder = useCallback(
@@ -290,6 +299,54 @@ export function LegacyTableNG(props: TableNGProps) {
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
 
+  const handleHideColumn = useCallback(
+    (displayName: string) => {
+      setHiddenColumns((prev) => {
+        if (prev.has(displayName)) {
+          return prev;
+        }
+
+        const visibleCount = orderedVisibleFields.filter((field) => !prev.has(getDisplayName(field))).length;
+        if (visibleCount <= 1) {
+          return prev;
+        }
+
+        return new Set([...prev, displayName]);
+      });
+
+      setFilter((current) => {
+        if (!(displayName in current)) {
+          return current;
+        }
+        const next = { ...current };
+        delete next[displayName];
+        return next;
+      });
+
+      setSortColumns((current) => current.filter(({ columnKey }) => columnKey !== displayName));
+    },
+    [orderedVisibleFields, setFilter, setSortColumns]
+  );
+
+  const handleToggleColumnVisibility = useCallback(
+    (displayName: string, visible: boolean) => {
+      if (visible) {
+        setHiddenColumns((prev) => {
+          if (!prev.has(displayName)) {
+            return prev;
+          }
+          const next = new Set(prev);
+          next.delete(displayName);
+          return next;
+        });
+        return;
+      }
+
+      handleHideColumn(displayName);
+    },
+    [handleHideColumn]
+  );
+
   const nestedRows = useNestedRows(rows, nestedData, hasNestedFrames, nestedFramesFieldName, filter, sortColumns);
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
@@ -371,7 +428,7 @@ export function LegacyTableNG(props: TableNGProps) {
   prevConfiguredWidthCount.current = configuredWidthCount;
 
   const [widths, numFrozenColsFullyInView] = useColWidths(
-    orderedVisibleFields,
+    displayedFields,
     availableWidth,
     frozenColumns,
     widthConfigResetKey
@@ -379,7 +436,7 @@ export function LegacyTableNG(props: TableNGProps) {
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
-    fields: orderedVisibleFields,
+    fields: displayedFields,
     enabled: hasHeader,
     sortColumns,
     showTypeIcons: showTypeIcons ?? false,
@@ -409,8 +466,8 @@ export function LegacyTableNG(props: TableNGProps) {
   });
 
   const defaultRowHeight = useMemo(
-    () => getDefaultRowHeight(theme, orderedVisibleFields, cellHeight),
-    [theme, orderedVisibleFields, cellHeight]
+    () => getDefaultRowHeight(theme, displayedFields, cellHeight),
+    [theme, displayedFields, cellHeight]
   );
   const defaultNestedRowHeight = useMemo(
     () => getDefaultRowHeight(theme, nestedVisibleFields, cellHeight),
@@ -419,7 +476,7 @@ export function LegacyTableNG(props: TableNGProps) {
 
   const rowHeight = useRowHeight({
     columnWidths: widths,
-    fields: orderedVisibleFields,
+    fields: displayedFields,
     hasNestedFrames,
     defaultHeight: defaultRowHeight,
     defaultNestedHeight: defaultNestedRowHeight,
@@ -979,6 +1036,8 @@ export function LegacyTableNG(props: TableNGProps) {
                 selectFirstCell={() => {
                   gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
                 }}
+                onHideColumn={() => handleHideColumn(displayName)}
+                canHideColumn={f.length > 1}
               />
             </HeaderCellContainer>
           ),
@@ -1008,6 +1067,7 @@ export function LegacyTableNG(props: TableNGProps) {
       getCellActions,
       getCellColorInlineStyles,
       getTextColorForBackground,
+      handleHideColumn,
       maxRowHeight,
       nestedRows,
       numFrozenColsFullyInView,
@@ -1045,7 +1105,7 @@ export function LegacyTableNG(props: TableNGProps) {
   }, [rows, hasNestedFrames, nestedData, nestedRows, nestedFieldWidths, fromFields]);
 
   const { columns, cellRootRenderers } = useMemo(() => {
-    const result = fromFields(orderedVisibleFields, widths, data, rows, sortedRows);
+    const result = fromFields(displayedFields, widths, data, rows, sortedRows);
 
     // if nested frames are present, augment the columns to include the nested table expander column.
     if (!firstRowNestedData) {
@@ -1097,7 +1157,7 @@ export function LegacyTableNG(props: TableNGProps) {
     panelContext,
     rows,
     sortedRows,
-    orderedVisibleFields,
+    displayedFields,
     widths,
   ]);
 
@@ -1115,6 +1175,13 @@ export function LegacyTableNG(props: TableNGProps) {
 
   let rendered = (
     <>
+      {!noHeader && (
+        <ColumnVisibilityPicker
+          fields={orderedVisibleFields}
+          hiddenColumns={hiddenColumns}
+          onToggleColumn={handleToggleColumnVisibility}
+        />
+      )}
       <DataGrid<TableRow, TableSummaryRow, string>
         {...commonDataGridProps}
         role={hasNestedFrames ? 'treegrid' : 'grid'}

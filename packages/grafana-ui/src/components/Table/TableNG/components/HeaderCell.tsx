@@ -15,15 +15,17 @@ import { getJustifyContent } from '../styles';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
 import { getAlignment, getDisplayName } from '../utils';
 
+import { HeaderColumnMenu } from './HeaderColumnMenu';
+
 interface HeaderCellContainerProps {
   column: Column<TableRow, TableSummaryRow>;
-  field: Field;
+  /** Kept for call-site compatibility; label alignment is handled inside HeaderCell. */
+  field?: Field;
   children: React.ReactNode;
 }
 
-/** Keeps header labels anchored to their alignment during column drag previews. */
-export function HeaderCellContainer({ column, field, children }: HeaderCellContainerProps) {
-  const justifyContent = getJustifyContent(getAlignment(field));
+/** Full-width header shell: label alignment is handled by children; trailing actions stay right. */
+export function HeaderCellContainer({ column, children }: HeaderCellContainerProps) {
   const columnWidth = typeof column.width === 'number' ? `${column.width}px` : undefined;
 
   return (
@@ -38,7 +40,7 @@ export function HeaderCellContainer({ column, field, children }: HeaderCellConta
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent,
+        justifyContent: 'flex-start',
         gap: 4,
         minHeight: 0,
         pointerEvents: 'none',
@@ -62,6 +64,8 @@ interface HeaderCellProps {
   parentIndex?: number;
   crossFilterRows: Record<string, TableRow[]>;
   crossFilterTailRows: TableRow[];
+  onHideColumn?: () => void;
+  canHideColumn?: boolean;
 }
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -77,6 +81,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   parentIndex,
   crossFilterRows,
   crossFilterTailRows,
+  onHideColumn,
+  canHideColumn = true,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -147,18 +153,26 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
         </Stack>
       </div>
 
-      {filterable && (
-        <Filter
-          name={column.key}
-          rows={rows}
-          filter={filter}
-          setFilter={setFilter}
-          field={field}
-          iconClassName={styles.headerCellIcon}
-          parentIndex={parentIndex}
-          crossFilterRows={crossFilterRows}
-          crossFilterTailRows={crossFilterTailRows}
-        />
+      {(filterable || onHideColumn) && (
+        <div className={styles.headerCellActions}>
+          {filterable && (
+            <Filter
+              name={column.key}
+              rows={rows}
+              filter={filter}
+              setFilter={setFilter}
+              field={field}
+              iconClassName={styles.headerCellIcon}
+              parentIndex={parentIndex}
+              crossFilterRows={crossFilterRows}
+              crossFilterTailRows={crossFilterTailRows}
+            />
+          )}
+
+          {onHideColumn && (
+            <HeaderColumnMenu displayName={displayName} onHideColumn={onHideColumn} canHideColumn={canHideColumn} />
+          )}
+        </div>
       )}
     </>
   );
@@ -168,7 +182,17 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
   headerCellContent: css({
     label: 'headerCellContent',
     pointerEvents: 'none',
+    flex: 1,
     minWidth: 0,
+  }),
+  headerCellActions: css({
+    label: 'headerCellActions',
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.25),
+    flexShrink: 0,
+    marginLeft: 'auto',
+    pointerEvents: 'none',
   }),
   headerCellLabel: css({
     label: 'headerCellLabel',
