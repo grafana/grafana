@@ -90,7 +90,7 @@ describe('LinkBasicOptions', () => {
       it('supports undo/redo for title changes', async () => {
         const dashboard = buildDashboard([LINK_TYPE_LINK]);
         const linkEdit = createLinkEdit(dashboard);
-        const editPane = dashboard.state.editPane;
+        const sidebar = dashboard.state.sidebar;
 
         render(<LinkTextInput linkEdit={linkEdit} prop="title" />);
 
@@ -102,15 +102,15 @@ describe('LinkBasicOptions', () => {
         fireEvent.blur(input);
 
         expect(input).toHaveValue('Changed');
-        expect(editPane.state.undoStack).toHaveLength(1);
+        expect(sidebar.state.undoStack).toHaveLength(1);
 
-        act(() => editPane.undoAction());
+        act(() => sidebar.undoAction());
 
         expect(input).toHaveValue('Test Link');
-        expect(editPane.state.undoStack).toHaveLength(0);
-        expect(editPane.state.redoStack).toHaveLength(1);
+        expect(sidebar.state.undoStack).toHaveLength(0);
+        expect(sidebar.state.redoStack).toHaveLength(1);
 
-        act(() => editPane.redoAction());
+        act(() => sidebar.redoAction());
 
         expect(input).toHaveValue('Changed');
       });
@@ -157,7 +157,7 @@ describe('LinkBasicOptions', () => {
         fireEvent.blur(input);
 
         expect(dashboard.state.links[0].url).toBe('https://new-url.com');
-        expect(dashboard.state.editPane.state.undoStack).toHaveLength(1);
+        expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
       });
     });
 

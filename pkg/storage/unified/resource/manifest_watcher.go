@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/transport"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
@@ -132,17 +133,24 @@ func newManifestRESTConfig(cfg ManifestWatcherConfig) (*rest.Config, error) {
 		return nil, fmt.Errorf("creating token exchange client: %w", err)
 	}
 
-	// The token audience for an app-platform apiserver is its API group.
 	return &rest.Config{
 		APIPath:       "/apis",
 		Host:          cfg.APIServerURL,
 		Timeout:       manifestPollTimeout,
-		WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(tc, appManifestGVR.Group, clientauth.WildcardNamespace),
+		WrapTransport: manifestAuthWrapper(tc),
 		TLSClientConfig: rest.TLSClientConfig{
 			CAFile:   cfg.CAFile,
 			Insecure: cfg.AllowInsecure && cfg.CAFile == "",
 		},
 	}, nil
+}
+
+// manifestAuthWrapper builds the transport wrapper used to reach the app-platform
+// apiserver. That server authenticates a standard bearer token from the
+// Authorization header, so the exchanged token must go there rather than in the
+// authlib X-Access-Token header. The token audience is the API group.
+func manifestAuthWrapper(exchanger authnlib.TokenExchanger) transport.WrapperFunc {
+	return clientauth.NewStaticTokenExchangeAuthorizationTransportWrapper(exchanger, appManifestGVR.Group, clientauth.WildcardNamespace)
 }
 
 // NewManifestWatcher creates a ManifestWatcher as a dskit service. The initial

@@ -4,18 +4,26 @@ import { PageObject } from './PageObject';
 
 // A dashboard panel: header, title, and selection within the edit canvas
 export class Panel extends PageObject {
-  getContainerByTitle(title: string) {
+  getContainersByTitle(title: string) {
     // despite the Panel.title() naming, this data-testid is on the whole
     // panel <section> container, not the title text or header bar.
     // see PanelChrome.tsx and packages/grafana-e2e-selectors/src/selectors/components.ts
     return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Panels.Panel.title(title));
   }
 
-  getHeaderByTitle(title: string | RegExp) {
+  getContainerByTitle(title: string) {
+    return this.getContainersByTitle(title).first();
+  }
+
+  // All panel headers whose title matches — the spec owns count assertions
+  getHeadersByTitle(title: string | RegExp) {
     return this.dashboardPage
       .getByGrafanaSelector(this.selectors.components.Panels.Panel.headerContainer)
-      .filter({ hasText: title })
-      .first();
+      .filter({ hasText: title });
+  }
+
+  getHeaderByTitle(title: string | RegExp) {
+    return this.getHeadersByTitle(title).first();
   }
 
   async selectByTitle(title: string | RegExp | Array<string | RegExp>) {
@@ -33,8 +41,8 @@ export class Panel extends PageObject {
     }
   }
 
-  async clickMenuItem(panelTitle: string, menuPath: string[]) {
-    await test.step(`Click menu item "${menuPath.join(' > ')}" on panel "${panelTitle}"`, async () => {
+  async selectMenuItem(panelTitle: string, menuPath: string[]) {
+    await test.step(`Select menu item "${menuPath.join(' > ')}" on panel "${panelTitle}"`, async () => {
       await this.dashboardPage
         .getByGrafanaSelector(this.selectors.components.Panels.Panel.menu(panelTitle))
         .click({ force: true });

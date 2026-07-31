@@ -4,13 +4,14 @@ import { type ReactNode } from 'react';
 import { getWrapper } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { CustomVariable, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
 
-import { DashboardEditPaneRenderer } from '../../edit-pane/DashboardEditPaneRenderer';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { RowItem } from '../../scene/layout-rows/RowItem';
+import { DashboardSidebarRenderer } from '../../sidebar/DashboardSidebarRenderer';
 import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
@@ -27,6 +28,8 @@ jest.mock('../../utils/interactions', () => ({
 const variableActionButtonClickedMock = jest.mocked(DashboardInteractions.variableActionButtonClicked);
 
 const TestWrapper = getWrapper({ renderWithRouter: true });
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 function buildTestVariables() {
   const var1 = new CustomVariable({ name: 'query0', query: 'a, b, c' });
@@ -145,10 +148,10 @@ describe('VariableEditableElement', () => {
     const { dashboard } = buildDashboardVariableScene();
     const user = userEvent.setup();
 
-    renderVariableEditPane(dashboard);
+    renderVariableSidebar(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
-    expect(dashboard.state.editPane.state.openPane).toBeInstanceOf(VariableTypeChangePane);
+    expect(dashboard.state.sidebar.state.openPane).toBeInstanceOf(VariableTypeChangePane);
     expect(screen.getByText('Change variable type')).toBeInTheDocument();
   });
 });
@@ -163,10 +166,10 @@ function WrapSidebar({ children }: { children: ReactNode }) {
   );
 }
 
-function renderVariableEditPane(dashboard: DashboardScene) {
+function renderVariableSidebar(dashboard: DashboardScene) {
   render(
     <WrapSidebar>
-      <DashboardEditPaneRenderer dashboard={dashboard} />
+      <DashboardSidebarRenderer dashboard={dashboard} />
     </WrapSidebar>
   );
 }
@@ -188,7 +191,7 @@ function buildDashboardVariableScene() {
   });
 
   activateFullSceneTree(dashboard);
-  dashboard.state.editPane.selectObject(variable, { force: true });
+  dashboard.state.sidebar.selectObject(variable, { force: true });
 
   return { dashboard, variableSet };
 }

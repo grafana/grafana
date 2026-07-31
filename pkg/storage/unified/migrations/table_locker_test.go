@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -111,7 +112,7 @@ func TestIntegrationTableLocker(t *testing.T) {
 	default:
 		setup = lockerTestSetup{
 			name:   "sqlite",
-			locker: &sqliteTableLocker{},
+			locker: &noopTableLocker{},
 			sess:   func(t *testing.T) *xorm.Session { return nil },
 		}
 	}
@@ -169,5 +170,64 @@ func TestIntegrationTableLocker(t *testing.T) {
 		case <-time.After(10 * time.Second):
 			t.Fatal("Write is still blocked after unlock")
 		}
+	})
+}
+
+// TestIntegrationTableLockerDisabled verifies that with [unified_storage] migration_locking=false,
+// newTableLocker returns the no-op locker even on MySQL/Postgres, so source-table locks are never
+// issued and concurrent writers are not blocked during migration.
+func TestIntegrationTableLockerDisabled(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if db.IsTestDbSQLite() {
+		t.Skip("SQLite already uses the no-op locker")
+	}
+
+	dbstore := db.InitTestDB(t)
+	t.Cleanup(db.CleanupTestDB)
+	engine := dbstore.GetEngine()
+	ctx := context.Background()
+
+	// Locking disabled: expect the no-op locker regardless of the real DB type.
+	locker := newTableLocker(dbstore, legacysql.NewDatabaseProvider(dbstore), false)
+	require.IsType(t, &noopTableLocker{}, locker)
+
+	table := createTestTable(t, dbstore)
+	unlock, err := locker.LockMigrationTables(ctx, nil, []string{table})
+	require.NoError(t, err)
+	require.NotNil(t, unlock)
+
+	// A concurrent write must NOT be blocked, since no lock was taken.
+	writeErr := make(chan error, 1)
+	go func() {
+		_, werr := engine.Exec(fmt.Sprintf("UPDATE %s SET val=val WHERE id=-1", engine.Quote(table)))
+		writeErr <- werr
+	}()
+	select {
+	case err = <-writeErr:
+		require.NoError(t, err, "Write should succeed immediately when locking is disabled")
+	case <-time.After(5 * time.Second):
+		t.Fatal("Write was blocked despite locking being disabled")
+	}
+
+	require.NoError(t, unlock(ctx))
+}
+
+func TestNewTableLocker(t *testing.T) {
+	// FakeDB.GetDBType() returns "", hitting the default (MySQL) branch.
+	store := dbtest.NewFakeDB()
+
+	t.Run("locking enabled uses the DB-specific locker", func(t *testing.T) {
+		locker := newTableLocker(store, nil, true)
+		require.IsType(t, &mysqlTableLocker{}, locker)
+	})
+
+	t.Run("locking disabled uses the no-op locker regardless of DB type", func(t *testing.T) {
+		locker := newTableLocker(store, nil, false)
+		require.IsType(t, &noopTableLocker{}, locker)
+
+		unlock, err := locker.LockMigrationTables(context.Background(), nil, []string{"dashboard"})
+		require.NoError(t, err)
+		require.NotNil(t, unlock)
+		require.NoError(t, unlock(context.Background()))
 	})
 }

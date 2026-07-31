@@ -70,6 +70,7 @@ export const versionedPages = {
       [MIN_GRAFANA_VERSION]: '/datasources',
     },
     dataSources: {
+      '13.2.0': (dataSourceName: string) => `data-testid Data source list item ${dataSourceName}`,
       [MIN_GRAFANA_VERSION]: (dataSourceName: string) => `Data source list item ${dataSourceName}`,
     },
     dataSourceAddButton: {
@@ -95,6 +96,16 @@ export const versionedPages = {
       '13.1.0': (pluginName: string) => `data-testid Add new data source ${pluginName}`,
       '9.3.1': (pluginName: string) => `Add new data source ${pluginName}`,
       [MIN_GRAFANA_VERSION]: (pluginName: string) => `Data source plugin item ${pluginName}`,
+    },
+  },
+  Connections: {
+    AddNewConnection: {
+      url: {
+        '13.2.0': '/connections/add-new-connection',
+      },
+      pluginCard: {
+        '13.2.0': (name: string) => `data-testid Connections plugin card ${name}`,
+      },
     },
   },
   ConfirmModal: {
@@ -183,6 +194,9 @@ export const versionedPages = {
       },
       addButton: {
         '12.4.0': 'data-testid Dashboard Sidebar new button',
+      },
+      codeButton: {
+        '13.2.0': 'data-testid Dashboard Sidebar code button',
       },
       viewPanelControls: {
         '13.0.0': 'data-testid Dashboard Sidebar view panel controls',
@@ -1024,6 +1038,9 @@ export const versionedPages = {
       addFromQueryLibrary: {
         '11.5.0': 'data-testid explore add from query library button',
       },
+      addQueryRow: {
+        '13.2.0': 'data-testid explore add query row button',
+      },
     },
     toolbar: {
       bar: {
@@ -1038,8 +1055,14 @@ export const versionedPages = {
       split: {
         '12.4.0': 'data-testid explore-toolbar-split-button',
       },
+      closeSplit: {
+        '13.2.0': 'data-testid explore-toolbar-close-split-button',
+      },
       addTo: {
         '12.4.0': 'data-testid explore-toolbar-add-dropdown-button',
+      },
+      addToDashboardButton: {
+        '13.2.0': 'data-testid explore-toolbar-add-to-dashboard-button',
       },
       share: {
         '12.4.0': 'data-testid explore-toolbar-share-button',
@@ -1110,6 +1133,9 @@ export const versionedPages = {
     },
   },
   BrowseDashboards: {
+    searchInput: {
+      '13.2.0': 'data-testid Browse dashboards search input',
+    },
     table: {
       body: {
         '10.2.0': 'data-testid browse-dashboards-table',
@@ -1130,6 +1156,78 @@ export const versionedPages = {
       },
       createButton: {
         '10.2.0': 'data-testid new-folder-create-button',
+      },
+    },
+    actions: {
+      deleteButton: {
+        '13.2.0': 'data-testid browse dashboards delete button',
+      },
+      moveButton: {
+        '13.2.0': 'data-testid browse dashboards move button',
+      },
+    },
+  },
+  Provisioning: {
+    repositoryTypeCard: {
+      '13.2.0': (type: string) => `data-testid Provisioning repository type card ${type}`,
+    },
+    ConnectionForm: {
+      titleInput: {
+        '13.2.0': 'data-testid Provisioning connection form title input',
+      },
+      descriptionInput: {
+        '13.2.0': 'data-testid Provisioning connection form description input',
+      },
+      serverUrlInput: {
+        '13.2.0': 'data-testid Provisioning connection form server url input',
+      },
+      appIdInput: {
+        '13.2.0': 'data-testid Provisioning connection form app id input',
+      },
+      installationIdInput: {
+        '13.2.0': 'data-testid Provisioning connection form installation id input',
+      },
+      privateKeyInput: {
+        '13.2.0': 'data-testid Provisioning connection form private key input',
+      },
+      submitButton: {
+        '13.2.0': 'data-testid Provisioning connection form submit button',
+      },
+    },
+    Wizard: {
+      repositoryUrlInput: {
+        '13.2.0': 'data-testid Provisioning wizard repository url input',
+      },
+      repositoryTitleInput: {
+        '13.2.0': 'data-testid Provisioning wizard repository title input',
+      },
+      nextButton: {
+        '13.2.0': 'data-testid Provisioning wizard next button',
+      },
+      previousButton: {
+        '13.2.0': 'data-testid Provisioning wizard previous button',
+      },
+    },
+    RepositoryList: {
+      viewLink: {
+        '13.2.0': (name: string) => `data-testid Provisioning repository view link ${name}`,
+      },
+    },
+    RepositoryOverview: {
+      resourcesCard: {
+        '13.2.0': 'data-testid Provisioning repository overview resources card',
+      },
+      healthCard: {
+        '13.2.0': 'data-testid Provisioning repository overview health card',
+      },
+      webhookCard: {
+        '13.2.0': 'data-testid Provisioning repository overview webhook card',
+      },
+      pullStatusCard: {
+        '13.2.0': 'data-testid Provisioning repository overview pull status card',
+      },
+      jobsCard: {
+        '13.2.0': 'data-testid Provisioning repository overview jobs card',
       },
     },
   },

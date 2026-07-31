@@ -1,5 +1,5 @@
-import { config } from '@grafana/runtime';
 import { defaultCustomVariableSpec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Variable } from 'app/api/clients/dashboard/v2beta1';
 import { buildVariableResource } from 'app/features/variables-management/utils';
 
@@ -9,6 +9,8 @@ import {
   isPredefinedOrigin,
   toControlSourceRef,
 } from './predefinedVariables';
+
+const GLOBAL_DASHBOARD_VARIABLES_FLAG = 'globalDashboardVariables';
 
 const mockGet = jest.fn();
 
@@ -35,20 +37,18 @@ function mockListResponses({ global = [], folder = [] }: { global?: Variable[]; 
 }
 
 describe('fetchPredefinedVariables', () => {
-  const originalToggle = config.featureToggles.globalDashboardVariables;
-
   beforeEach(() => {
     jest.clearAllMocks();
     clearPredefinedVariablesCache();
-    config.featureToggles.globalDashboardVariables = true;
+    setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true });
   });
 
-  afterAll(() => {
-    config.featureToggles.globalDashboardVariables = originalToggle;
+  afterEach(() => {
+    setTestFlags({});
   });
 
   it('returns an empty list without fetching when the feature toggle is off', async () => {
-    config.featureToggles.globalDashboardVariables = false;
+    setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: false });
 
     const result = await fetchPredefinedVariables('folder-1');
 
@@ -63,9 +63,10 @@ describe('fetchPredefinedVariables', () => {
 
     expect(mockGet).toHaveBeenCalledTimes(1);
     expect(mockGet.mock.calls[0][1]).toMatchObject({ labelSelector: '!grafana.app/folder' });
+    expect(result).not.toBeNull();
     expect(result).toHaveLength(1);
-    expect(result[0].spec.name).toBe('region');
-    expect(result[0].spec.origin).toEqual({ type: 'global' });
+    expect(result![0].spec.name).toBe('region');
+    expect(result![0].spec.origin).toEqual({ type: 'global' });
   });
 
   it('fetches global and folder variables and tags each with its origin', async () => {
@@ -81,9 +82,10 @@ describe('fetchPredefinedVariables', () => {
     expect(selectors).toEqual(expect.arrayContaining(['!grafana.app/folder', 'grafana.app/folder=folder-1']));
 
     // Hierarchy order: global, then folder-scoped.
-    expect(result.map((v) => v.spec.name)).toEqual(['region', 'cluster']);
-    expect(result[0].spec.origin).toEqual({ type: 'global' });
-    expect(result[1].spec.origin).toEqual({ type: 'folder', folderUid: 'folder-1' });
+    expect(result).not.toBeNull();
+    expect(result!.map((v) => v.spec.name)).toEqual(['region', 'cluster']);
+    expect(result![0].spec.origin).toEqual({ type: 'global' });
+    expect(result![1].spec.origin).toEqual({ type: 'folder', folderUid: 'folder-1' });
   });
 
   it('drops global variables shadowed by a folder variable of the same name', async () => {
@@ -94,17 +96,18 @@ describe('fetchPredefinedVariables', () => {
 
     const result = await fetchPredefinedVariables('folder-1');
 
-    expect(result.map((v) => v.spec.name)).toEqual(['region', 'cluster']);
-    expect(result[1].spec.origin).toEqual({ type: 'folder', folderUid: 'folder-1' });
+    expect(result).not.toBeNull();
+    expect(result!.map((v) => v.spec.name)).toEqual(['region', 'cluster']);
+    expect(result![1].spec.origin).toEqual({ type: 'folder', folderUid: 'folder-1' });
   });
 
-  it('fails open and returns an empty list when the fetch errors', async () => {
+  it('returns null when the fetch errors so callers can keep existing variables', async () => {
     const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     mockGet.mockRejectedValue(new Error('boom'));
 
     const result = await fetchPredefinedVariables('folder-1');
 
-    expect(result).toEqual([]);
+    expect(result).toBeNull();
     expect(warnSpy).toHaveBeenCalled();
     warnSpy.mockRestore();
   });
@@ -131,7 +134,8 @@ describe('fetchPredefinedVariables', () => {
     const result = await fetchPredefinedVariables();
 
     expect(mockGet).toHaveBeenCalledTimes(2);
-    expect(result.map((v) => v.spec.name)).toEqual(['one', 'two']);
+    expect(result).not.toBeNull();
+    expect(result!.map((v) => v.spec.name)).toEqual(['one', 'two']);
   });
 });
 
