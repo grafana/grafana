@@ -338,9 +338,9 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	// heals it, where dropping the key would defer it to the next re-list).
 	switch {
 	case errors.Is(err, usinformer.ErrStaleRead):
-		logger.Info("RepositoryController will retry: read is staler than the triggering event")
+		logger.Info("RepositoryController will retry as read is staler than the triggering event")
 	case apierrors.IsServiceUnavailable(err):
-		logger.Info("RepositoryController will retry: service unavailable")
+		logger.Info("RepositoryController will retry as service is unavailable")
 	default:
 		logger.Info("RepositoryController will not retry")
 		rc.queue.Forget(key)
