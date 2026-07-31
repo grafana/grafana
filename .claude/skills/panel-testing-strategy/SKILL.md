@@ -160,6 +160,13 @@ it('draws a horizontal threshold line (constant y, spanning plot width) in Line 
 Use `it.each` with `$name` / `$desc` interpolation for enumerable variants so each row
 self-labels. Delete duplicate cases — if two tests exercise the same path, keep one.
 
+**Prefer deletion over inflation.** When an assertion only restates what a stronger assertion in
+the same test already proves — e.g. a `toBeDefined()` prelude before a concrete check — delete it,
+don't convert it into a contrived value check. When two tests exercise the same path, keep the
+stronger and delete the other. Removing redundant coverage is a legitimate, reviewable improvement:
+a smaller honest test beats a padded one. Before deleting, confirm the behavior is still covered by
+a sibling assertion or test.
+
 ## Step 3 — Verify the test reaches the target branch
 
 A test that never enters the code you meant to cover is worse than no test. Two habits:
