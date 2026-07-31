@@ -102,20 +102,17 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   }
 
   async start(playlist: Playlist) {
-    this.stop();
-
-    this.startUrl = window.location.href;
-    this.index = 0;
-
+    // Do all async work up front, before touching any instance state. This means an early return
+    // can never leave the service half-playing, and the synchronous tail below can't interleave
+    // with a concurrent start() (PlaylistStartPage calls start() during render).
     if (!playlist.spec?.items?.length) {
       // alert
       return;
     }
 
-    // Global interval used as the fallback for items that don't define their own.
-    // Parsing is guarded: an unparseable value (e.g. from a hand-edited or provisioned
-    // playlist) must not throw here and leave the service in a half-playing state.
-    const globalInterval = this.toIntervalMs(playlist.spec?.interval, DEFAULT_INTERVAL_MS);
+    // Global interval used as the fallback for items that don't define their own. Parsing is
+    // guarded so an unparseable value (e.g. from a hand-edited or provisioned playlist) can't throw.
+    const globalInterval = this.toIntervalMs(playlist.spec.interval, DEFAULT_INTERVAL_MS);
 
     let items;
     try {
@@ -142,8 +139,12 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
       return;
     }
 
-    // Only enter the playing state once the playlist is known to be playable, so an early
-    // return above can never leave the service half-playing (state set, listener attached).
+    // Synchronous from here on: tear down any previous run, then set up this one. With no await in
+    // this tail, an overlapping start() can't interleave — the later one's stop() cleans up the
+    // earlier, so there's always exactly one playback with one listener/timeout.
+    this.stop();
+    this.startUrl = window.location.href;
+    this.index = 0;
     this.entries = entries;
     this.setState({ isPlaying: true });
     this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
@@ -151,7 +152,6 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     // Replace current history entry with first dashboard instead of pushing
     // this is to avoid the back button to go back to the playlist start page which causes a redirection
     this.navigateToDashboard(true);
-    return;
   }
 
   stop() {
@@ -160,7 +160,6 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     }
 
     this.index = 0;
-
     this.setState({ isPlaying: false });
 
     if (this.locationListenerUnsub) {
