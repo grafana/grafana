@@ -78,6 +78,51 @@ func TestSubQueryConnectReturnsDownstreamErrorsAsQueryDataResponses(t *testing.T
 	}
 }
 
+func TestSubQueryConnectReturnsLifecycleErrorsAsDownstreamQueryDataResponses(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		queryError error
+		status     backend.Status
+	}{
+		{
+			name:       "canceled",
+			queryError: context.Canceled,
+			status:     backend.Status(499),
+		},
+		{
+			name:       "downstream-wrapped canceled",
+			queryError: backend.DownstreamError(context.Canceled),
+			status:     backend.Status(499),
+		},
+		{
+			name:       "deadline exceeded",
+			queryError: context.DeadlineExceeded,
+			status:     backend.Status(http.StatusRequestTimeout),
+		},
+		{
+			name:       "downstream-wrapped deadline exceeded",
+			queryError: backend.DownstreamError(context.DeadlineExceeded),
+			status:     backend.Status(http.StatusRequestTimeout),
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			responder := executeSubQuery(t, tc.queryError)
+
+			require.NoError(t, responder.err)
+			require.Equal(t, int(tc.status), responder.statusCode)
+
+			qdr, ok := responder.object.(*v0alpha1.QueryDataResponse)
+			require.True(t, ok)
+			for _, refID := range []string{"A", "B"} {
+				require.Contains(t, qdr.Responses, refID)
+				require.Equal(t, tc.status, qdr.Responses[refID].Status)
+				require.Equal(t, backend.ErrorSourceDownstream, qdr.Responses[refID].ErrorSource)
+				require.EqualError(t, qdr.Responses[refID].Error, tc.queryError.Error())
+			}
+		})
+	}
+}
+
 func TestSubQueryConnectDoesNotConvertOtherErrors(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -85,10 +130,6 @@ func TestSubQueryConnectDoesNotConvertOtherErrors(t *testing.T) {
 	}{
 		{name: "untyped", err: errors.New("internal failure")},
 		{name: "explicit plugin", err: backend.PluginError(errors.New("plugin failure"))},
-		{name: "canceled", err: context.Canceled},
-		{name: "downstream-wrapped canceled", err: backend.DownstreamError(context.Canceled)},
-		{name: "deadline exceeded", err: context.DeadlineExceeded},
-		{name: "downstream-wrapped deadline exceeded", err: backend.DownstreamError(context.DeadlineExceeded)},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			responder := executeSubQuery(t, tc.err)

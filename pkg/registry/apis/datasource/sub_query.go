@@ -162,13 +162,8 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 
 			// responder.Error converts errors into Kubernetes Status responses, which do not
 			// preserve the datasource error source. Return downstream errors as QDR instead.
-			if errorMessage, ok := downstreamErrorMessage(err); ok {
+			if dataResponse, ok := downstreamDataResponse(err); ok {
 				responses := make(map[string]backend.DataResponse, len(queries))
-				dataResponse := backend.ErrDataResponseWithSource(
-					backend.StatusBadRequest,
-					backend.ErrorSourceDownstream,
-					errorMessage,
-				)
 				for _, query := range queries {
 					refID := query.RefID
 					if refID == "" {
@@ -180,7 +175,7 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 					responses["A"] = dataResponse
 				}
 
-				responder.Object(int(backend.StatusBadRequest), &dsV0.QueryDataResponse{
+				responder.Object(int(dataResponse.Status), &dsV0.QueryDataResponse{
 					QueryDataResponse: backend.QueryDataResponse{Responses: responses},
 				})
 				return
@@ -196,18 +191,31 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	}), nil
 }
 
-func downstreamErrorMessage(err error) (string, bool) {
-	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-		return "", false
+func downstreamDataResponse(err error) (backend.DataResponse, bool) {
+	status := backend.StatusBadRequest
+	message := err.Error()
+
+	switch {
+	case errors.Is(err, context.Canceled):
+		status = backend.Status(499)
+	case errors.Is(err, context.DeadlineExceeded):
+		status = backend.Status(http.StatusRequestTimeout)
+	default:
+		var grafanaErr errutil.Error
+		if errors.As(err, &grafanaErr) && grafanaErr.Source.IsDownstream() {
+			message = grafanaErr.LogMessage
+			break
+		}
+
+		var sourceErr backend.ErrorWithSource
+		if !errors.As(err, &sourceErr) || sourceErr.ErrorSource() != backend.ErrorSourceDownstream {
+			return backend.DataResponse{}, false
+		}
 	}
 
-	var sourceErr backend.ErrorWithSource
-	isDownstreamError := errors.As(err, &sourceErr) && sourceErr.ErrorSource() == backend.ErrorSourceDownstream
-
-	var grafanaErr errutil.Error
-	if errors.As(err, &grafanaErr) && grafanaErr.Source.IsDownstream() {
-		return grafanaErr.LogMessage, true
-	}
-
-	return err.Error(), isDownstreamError
+	return backend.ErrDataResponseWithSource(
+		status,
+		backend.ErrorSourceDownstream,
+		message,
+	), true
 }
