@@ -283,7 +283,11 @@ func (s *ExternalRulerSyncer) apply(ctx context.Context, user identity.Requester
 				KeepOriginalRuleDefinition: true,
 			})
 			if err != nil {
-				return &SyncError{Reason: ReasonConvert, Cause: fmt.Errorf("convert group %q in namespace %q: %w", promGroup.Name, namespace, err)}
+				// Best-effort: skip a group we can't convert (e.g. it has recording
+				// rules but recording rules are disabled) rather than aborting the whole
+				// org — one bad group must not block the rest.
+				s.logger.Warn("Skipping external ruler group that failed to convert", "org_id", orgID, "namespace", namespace, "group", promGroup.Name, "error", err)
+				continue
 			}
 			groups = append(groups, group)
 			desired[groupKey{folderUID: nsFolder.UID, group: group.Title}] = struct{}{}

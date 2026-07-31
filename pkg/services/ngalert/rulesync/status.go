@@ -13,7 +13,6 @@ const (
 	// ReasonNotARuler: the datasource responded but not as a ruler config API
 	// (see ErrNotARuler). Distinct from ReasonRulerFetch (fetch failure).
 	ReasonNotARuler SyncReason = "not_a_ruler"
-	ReasonConvert   SyncReason = "convert"
 	ReasonSave      SyncReason = "save"
 	ReasonPrune     SyncReason = "prune"
 	// ReasonPanic is recorded when a per-org sync tick panics and is recovered so
