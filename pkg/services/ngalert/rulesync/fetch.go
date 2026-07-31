@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -45,12 +46,13 @@ type datasourceProxy interface {
 // datasource by routing the ruler config GET through Grafana's datasource proxy
 // service (transport, auth and egress validation are all handled there).
 type RulerFetcher struct {
-	proxy datasourceProxy
+	proxy  datasourceProxy
+	logger log.Logger
 }
 
 // NewRulerFetcher constructs a RulerFetcher around the datasource proxy service.
-func NewRulerFetcher(proxy datasourceProxy) *RulerFetcher {
-	return &RulerFetcher{proxy: proxy}
+func NewRulerFetcher(proxy datasourceProxy, logger log.Logger) *RulerFetcher {
+	return &RulerFetcher{proxy: proxy, logger: logger}
 }
 
 // Fetch retrieves the ruler configuration from ds, returning the parsed configs
@@ -86,6 +88,10 @@ func (f *RulerFetcher) Fetch(ctx context.Context, ds *datasources.DataSource) (R
 			Resp: web.NewResponseWriter(req.Method, &closeNotifierResponseWriter{resp}),
 		},
 		SignedInUser: serviceIdentityUser(ds.OrgID),
+		// The proxy calls ReqContext.JsonApiErr on failures (datasource lookup,
+		// access, plugin load), which logs via Logger when err != nil — it must be
+		// non-nil or that call panics (and this runs in a background goroutine).
+		Logger: f.logger,
 	}
 
 	f.proxy.ProxyDatasourceRequestWithUID(c, ds.UID)
