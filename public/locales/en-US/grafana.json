@@ -12564,6 +12564,16 @@
     "category-edges": "Edges",
     "category-node-graph": "Node graph",
     "category-nodes": "Nodes",
+    "item-config": {
+      "description-node-radius": "Radius of the node circle in pixels",
+      "description-stroke-dasharray": "SVG stroke-dasharray, e.g. \"5 5\"",
+      "description-thickness": "Stroke width of the edge line",
+      "name-node-radius": "Node radius",
+      "name-stroke-dasharray": "Dash array",
+      "name-thickness": "Thickness"
+    },
+    "item-kind-edges": "Edges",
+    "item-kind-nodes": "Nodes",
     "layout-algorithm-options": {
       "description-force": "Use a force-directed layout",
       "description-grid": "Use a grid layout",

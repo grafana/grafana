@@ -76,6 +76,20 @@ const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
 
 export const computeNodeCircumferenceStrokeWidth = (nodeRadius: number) => Math.ceil(nodeRadius * 0.075);
 
+/**
+ * An item override beats the data-driven nodeRadius column, the same way a field override beats
+ * datasource-supplied field config.
+ */
+function getNodeRadius(node: NodeDatum): number {
+  return node.itemConfig?.custom?.nodeRadius ?? node.nodeRadius?.values[node.dataFrameRowIndex] ?? nodeR;
+}
+
+/** The fixed colour an item override set for this node, if any. */
+function getItemOverrideColor(node: NodeDatum, theme: GrafanaTheme2): string | undefined {
+  const fixedColor = node.itemConfig?.color?.fixedColor;
+  return fixedColor ? theme.visualization.getColorByName(fixedColor) : undefined;
+}
+
 export const Node = memo(function Node(props: {
   node: NodeDatum;
   hovering: HoverState;
@@ -87,7 +101,7 @@ export const Node = memo(function Node(props: {
   const theme = useTheme2();
   const styles = getStyles(theme, hovering);
   const isHovered = hovering === 'active';
-  const nodeRadius = node.nodeRadius?.values[node.dataFrameRowIndex] || nodeR;
+  const nodeRadius = getNodeRadius(node);
   const strokeWidth = computeNodeCircumferenceStrokeWidth(nodeRadius);
 
   if (!(node.x !== undefined && node.y !== undefined)) {
@@ -186,8 +200,16 @@ function ColorCircle(props: { node: NodeDatum }) {
   const { node } = props;
   const fullStat = node.arcSections.find((s) => s.values[node.dataFrameRowIndex] >= 1);
   const theme = useTheme2();
-  const nodeRadius = node.nodeRadius?.values[node.dataFrameRowIndex] || nodeR;
+  const nodeRadius = getNodeRadius(node);
   const strokeWidth = computeNodeCircumferenceStrokeWidth(nodeRadius);
+
+  // An item override replaces the whole ring, including any arc sections
+  const overrideColor = getItemOverrideColor(node, theme);
+  if (overrideColor) {
+    return (
+      <circle fill="none" stroke={overrideColor} strokeWidth={strokeWidth} r={nodeRadius} cx={node.x} cy={node.y} />
+    );
+  }
 
   if (fullStat) {
     // Drawing a full circle with a `path` tag does not work well, it's better to use a `circle` tag in that case

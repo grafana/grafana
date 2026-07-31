@@ -3,6 +3,7 @@ import { t } from '@grafana/i18n';
 
 import { NodeGraphPanel } from './NodeGraphPanel';
 import { ArcOptionsEditor } from './editor/ArcOptionsEditor';
+import { getEdgeItemKind, getNodeItemKind } from './itemConfig';
 import { LayoutAlgorithm, type Options as NodeGraphOptions } from './panelcfg.gen';
 import { nodeGraphSuggestionsSupplier } from './suggestions';
 
@@ -10,6 +11,7 @@ export const plugin = new PanelPlugin<NodeGraphOptions>(NodeGraphPanel)
   .useFieldConfig({
     disableStandardOptions: Object.values(FieldConfigProperty).filter((v) => v !== FieldConfigProperty.Links),
   })
+  .useItemConfig({ kinds: [getNodeItemKind(), getEdgeItemKind()] })
   .setPanelOptions((builder, context) => {
     const category = [t('node-graph.category-node-graph', 'Node graph')];
     builder.addSelect({

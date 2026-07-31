@@ -5,6 +5,7 @@ import * as React from 'react';
 import { type DataFrame, type Field, type GrafanaTheme2, type LinkModel, type LinkTarget } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ContextMenu, MenuGroup, MenuItem, useStyles2 } from '@grafana/ui';
+import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
 
 import { type Config } from './layout';
 import { type EdgeDatumLayout, type NodeDatum } from './types';
@@ -47,7 +48,7 @@ export function useContextMenu(
         },
       ];
 
-      const links = nodes ? getLinks(nodes, node.dataFrameRowIndex) : [];
+      const links = [...(nodes ? getLinks(nodes, node.dataFrameRowIndex) : []), ...getItemOverrideLinks(node)];
       const renderer = getItemsRenderer(links, node, extraNodeItem);
       setMenu(makeContextMenu(<NodeHeader node={node} nodes={nodes} />, event, setMenu, renderer));
     },
@@ -61,7 +62,7 @@ export function useContextMenu(
         // to click on.
         return;
       }
-      const links = getLinks(edges, edge.dataFrameRowIndex);
+      const links = [...getLinks(edges, edge.dataFrameRowIndex), ...getItemOverrideLinks(edge)];
       const renderer = getItemsRenderer(links, edge);
       setMenu(makeContextMenu(<EdgeHeader edge={edge} edges={edges} />, event, setMenu, renderer));
     },
@@ -69,6 +70,14 @@ export function useContextMenu(
   );
 
   return { onEdgeOpen, onNodeOpen, MenuComponent: menu };
+}
+
+/**
+ * Links set by an item override join the field-derived ones rather than replacing them, so a
+ * per-node link and a datasource-supplied link can coexist in the same menu.
+ */
+function getItemOverrideLinks<T extends NodeDatum | EdgeDatumLayout>(item: T): Array<LinkModel<T>> {
+  return (item.itemConfig?.links ?? []).map((link) => getLinkSrv().getDataLinkUIModel(link, undefined, item));
 }
 
 function makeContextMenu(
