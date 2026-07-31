@@ -158,6 +158,18 @@ func NewRepositoryController(
 	rc.enqueueRepository = rc.enqueue
 	rc.keyFunc = repoKeyFunc
 
+	// Expose the local work-queue depth as a scrape-time gauge. The queue is
+	// per-replica, so Prometheus target labels (pod/instance) distinguish replicas;
+	// no metric label is needed. A GaugeFunc reads the authoritative Len() at scrape
+	// time, so it cannot drift the way manual inc/dec would.
+	registry.MustRegister(prometheus.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "grafana_provisioning_repository_worker_queue_size",
+			Help: "Number of repository keys waiting in this replica's local work queue",
+		},
+		func() float64 { return float64(rc.queue.Len()) },
+	))
+
 	return rc
 }
 
