@@ -65,6 +65,11 @@ export const PlaylistForm = ({
     : selectedRepository; // undefined leaves nothing selected (placeholder)
 
   const doSubmit = async (specUpdates: Playlist['spec']) => {
+    // Pressing Enter submits even when the Save button is disabled, and per-item intervals
+    // aren't RHF fields — so re-check them here before persisting anything.
+    if (items.some((item) => item.interval && !isValidInterval(item.interval))) {
+      return;
+    }
     setSaving(true);
     // Strip UI-only properties (dashboards) from items before submission. Per-item intervals are
     // kept as-is: blank rows are stored as undefined by the hook and fall back to the global interval.
@@ -88,10 +93,13 @@ export const PlaylistForm = ({
 
   return (
     <Form<PlaylistSpec> onSubmit={doSubmit} validateOn={'onBlur'}>
-      {({ register, errors }) => {
+      {({ register, errors, watch }) => {
         // Block saving on any unparseable per-item interval (the input isn't part of the RHF form).
         const hasInvalidItemInterval = items.some((item) => item.interval && !isValidInterval(item.interval));
         const isDisabled = items.length === 0 || Object.keys(errors).length > 0 || hasInvalidItemInterval;
+        // Blank rows inherit the global interval; track the live field value so the row
+        // placeholders update as the user edits it, not just the initial value.
+        const currentInterval = watch('interval') || interval || DEFAULT_INTERVAL;
         return (
           <>
             <Field
@@ -143,7 +151,7 @@ export const PlaylistForm = ({
               items={items}
               deleteItem={deleteItem}
               moveItem={moveItem}
-              intervalPlaceholder={interval ?? DEFAULT_INTERVAL}
+              intervalPlaceholder={currentInterval}
               updateItemInterval={updateItemInterval}
             />
 

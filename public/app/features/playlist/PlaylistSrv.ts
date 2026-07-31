@@ -107,12 +107,6 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     this.startUrl = window.location.href;
     this.index = 0;
 
-    this.setState({ isPlaying: true });
-
-    // setup location tracking
-    this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
-    const entries: Array<{ url: string; interval: number }> = [];
-
     if (!playlist.spec?.items?.length) {
       // alert
       return;
@@ -123,7 +117,15 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
     // playlist) must not throw here and leave the service in a half-playing state.
     const globalInterval = this.toIntervalMs(playlist.spec?.interval, DEFAULT_INTERVAL_MS);
 
-    const items = await loadDashboards(playlist.spec?.items);
+    let items;
+    try {
+      items = await loadDashboards(playlist.spec.items);
+    } catch {
+      // Could not resolve the dashboards; nothing to play.
+      return;
+    }
+
+    const entries: Array<{ url: string; interval: number }> = [];
     for (const item of items) {
       if (item.dashboards) {
         // A tag item can expand to several dashboards; they all share the item's interval.
@@ -140,8 +142,11 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
       return;
     }
 
+    // Only enter the playing state once the playlist is known to be playable, so an early
+    // return above can never leave the service half-playing (state set, listener attached).
     this.entries = entries;
     this.setState({ isPlaying: true });
+    this.locationListenerUnsub = locationService.getHistory().listen(this.locationUpdated);
 
     // Replace current history entry with first dashboard instead of pushing
     // this is to avoid the back button to go back to the playlist start page which causes a redirection

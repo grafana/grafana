@@ -232,10 +232,37 @@ describe('PlaylistForm', () => {
 
       const input = screen.getByRole('textbox', { name: /interval for uid_1/i });
       await userEvent.type(input, 'not-an-interval');
-      await userEvent.tab(); // blur to store the value
 
       expect(input).toBeInvalid();
       expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+    });
+
+    it('does not submit when Enter is pressed with an invalid per-item interval', async () => {
+      const { onSubmitMock } = getTestContext();
+
+      // Enter submits even though the disabled button can't be clicked.
+      await userEvent.type(screen.getByRole('textbox', { name: /interval for uid_1/i }), 'bad{Enter}');
+
+      expect(onSubmitMock).not.toHaveBeenCalled();
+    });
+
+    it('updates the row interval placeholder when the global interval changes', async () => {
+      getTestContext();
+
+      await userEvent.clear(screen.getByRole('textbox', { name: 'Interval' }));
+      await userEvent.type(screen.getByRole('textbox', { name: 'Interval' }), '42s');
+
+      expect(screen.getByRole('textbox', { name: /interval for uid_1/i })).toHaveAttribute('placeholder', '42s');
+    });
+
+    it('keeps a per-item interval with its own row after another row is removed', async () => {
+      getTestContext(mockPerItemIntervalPlaylist);
+
+      // uid_1 has 30s, uid_2 is blank. Removing uid_1 must not leave 30s on uid_2's input.
+      await userEvent.click(within(rows()[0]).getByRole('button', { name: /delete playlist item/i }));
+      await waitFor(() => expect(rows()).toHaveLength(1));
+
+      expect(screen.getByRole('textbox', { name: /interval for uid_2/i })).toHaveValue('');
     });
 
     it('clearing a per-item interval removes the override', async () => {
