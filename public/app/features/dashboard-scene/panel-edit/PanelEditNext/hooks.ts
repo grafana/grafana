@@ -101,6 +101,8 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
   // is not remounted by the toggle) is what carries it across.
   const [vizRatio, setVizRatio] = useState(DEFAULT_VIZ_RATIO);
 
+  // Disabled on short screens: the viz is pinned to 100vh there and the panes stack so the editor
+  // scrolls, which a flex ratio splitting a fixed height cannot express.
   const vizDataSplitter = useSnappingSplitter({
     direction: 'column',
     dragPosition: 'start',
@@ -110,6 +112,10 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
     onPaneSizeChanged: (_sizePixels, flexSize) => setVizRatio(flexSize),
   });
 
+  // Stays enabled on short screens, unlike the splitter above. Disabling strips the flex container,
+  // and the sidebar has no CSS fallback to stack against — it would land above the data pane instead
+  // of beside it. A fixed pixel width beside a filling pane is the arrangement those screens want
+  // anyway, so there is nothing to disable.
   const sidebarSplitter = useSnappingSplitter({
     direction: 'row',
     // The sidebar is the primary (left) pane, so the handle indicator sits on its right border.
@@ -118,7 +124,6 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
     pixelPane: 'primary',
     initialSize: sidebarWidth,
     collapseBelowPixels: SIDEBAR_COLLAPSE_BELOW_PIXELS,
-    disabled: isScrollingLayout,
     onPaneSizeChanged: setSidebarWidth,
   });
 

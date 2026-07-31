@@ -139,4 +139,23 @@ describe('useVizAndDataPaneLayout', () => {
 
     expect(renderLayout()?.initialSize).toBe(350);
   });
+
+  // Disabling a splitter strips its flex container, and only the viz/data stack has a layout to fall
+  // back on. Disabling the sidebar too would drop it above the data pane instead of beside it.
+  describe('on a screen short enough to reflow', () => {
+    beforeEach(() => {
+      jest.mocked(useScrollReflowLimit).mockReturnValue(true);
+    });
+
+    it('disables the viz/data splitter', () => {
+      renderLayout();
+
+      const flexOptions = jest.mocked(useSnappingSplitter).mock.calls.find(([options]) => !options.usePixels)?.[0];
+      expect(flexOptions?.disabled).toBe(true);
+    });
+
+    it('leaves the sidebar splitter enabled', () => {
+      expect(renderLayout()?.disabled).toBeFalsy();
+    });
+  });
 });
