@@ -1223,18 +1223,6 @@ const MAX_SAMPLE = 100;
 // column while still catching proportional-font width (e.g. "WWW" is wider than "iiiiii").
 const MEASURE_CANDIDATES = 3;
 
-// Cell types that don't render free text (gauges need bar room, sparklines/images/geo are
-// graphical). We give these a sensible default instead of measuring their content.
-const NON_TEXT_DEFAULT_WIDTHS: Partial<Record<TableCellDisplayMode, number>> = {
-  [TableCellDisplayMode.Sparkline]: COLUMN.DEFAULT_WIDTH,
-  [TableCellDisplayMode.Gauge]: COLUMN.DEFAULT_WIDTH,
-  [TableCellDisplayMode.BasicGauge]: COLUMN.DEFAULT_WIDTH,
-  [TableCellDisplayMode.GradientGauge]: COLUMN.DEFAULT_WIDTH,
-  [TableCellDisplayMode.LcdGauge]: COLUMN.DEFAULT_WIDTH,
-  [TableCellDisplayMode.Image]: COLUMN.DEFAULT_WIDTH,
-  [TableCellDisplayMode.Geo]: COLUMN.DEFAULT_WIDTH,
-};
-
 export interface ContentAwareColWidthsOptions {
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
@@ -1247,7 +1235,9 @@ function formatCellValue(field: Field, value: unknown): string {
   if (value == null) {
     return '';
   }
-  if (field.type !== FieldType.string && field.display != null) {
+  // AutoCell renders field.display(value) for every field type, so measure the same thing.
+  // String fields go through it too: they can carry units, value mappings, or other formatting.
+  if (field.display != null) {
     return formattedValueToString(field.display(value));
   }
   return String(value);
@@ -1337,6 +1327,42 @@ function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boo
   return textWidth + iconSpace + CELL_CHROME;
 }
 
+interface ColWidthMeasureCtx {
+  typographyCtx: TypographyCtx;
+  /** lazily-created pill-font context, shared across pill columns (most tables have none). */
+  getPillCtx: () => TypographyCtx;
+}
+
+/**
+ * A cell type's content-width strategy: the width its content wants, including any horizontal
+ * chrome. The caller unions this with the header width and clamps it to `[floor, cap]`.
+ */
+type MeasureColWidth = (field: Field, sampleSize: number, ctx: ColWidthMeasureCtx) => number;
+
+// Graphical cells don't render free text — gauges need bar room, sparklines/images/geo are
+// pictorial — so they take a fixed default instead of being measured.
+const measureGraphicalColWidth: MeasureColWidth = () => COLUMN.DEFAULT_WIDTH;
+
+const measurePillColWidth: MeasureColWidth = (field, sampleSize, { getPillCtx }) =>
+  measurePillContentWidth(field, sampleSize, getPillCtx()) + CELL_CHROME;
+
+const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
+  measureLongestContentWidth(field, sampleSize, typographyCtx) + CELL_CHROME;
+
+// Singleton registry mirroring the buildCellHeightMeasurers factory map: cell types that size
+// differently from the default text measurement register here; anything absent falls back to
+// measureTextColWidth. Text wrapping is handled separately (it's cross-cutting — see below).
+const COL_WIDTH_MEASURERS: Partial<Record<TableCellDisplayMode, MeasureColWidth>> = {
+  [TableCellDisplayMode.Sparkline]: measureGraphicalColWidth,
+  [TableCellDisplayMode.Gauge]: measureGraphicalColWidth,
+  [TableCellDisplayMode.BasicGauge]: measureGraphicalColWidth,
+  [TableCellDisplayMode.GradientGauge]: measureGraphicalColWidth,
+  [TableCellDisplayMode.LcdGauge]: measureGraphicalColWidth,
+  [TableCellDisplayMode.Image]: measureGraphicalColWidth,
+  [TableCellDisplayMode.Geo]: measureGraphicalColWidth,
+  [TableCellDisplayMode.Pill]: measurePillColWidth,
+};
+
 /**
  * @internal
  * Content-aware variant of {@link computeColWidths}. Columns with a configured `custom.width` keep
@@ -1380,25 +1406,23 @@ export function computeContentAwareColWidths(
   // Pills render at a smaller font, so they need their own measuring context. Created lazily and
   // reused across pill columns, since most tables have none.
   let pillCtx: TypographyCtx | undefined;
+  const measureCtx: ColWidthMeasureCtx = {
+    typographyCtx,
+    getPillCtx: () =>
+      (pillCtx ??= createTypographyContext(PILLS_FONT_SIZE, typographyCtx.fontFamily, typographyCtx.letterSpacing)),
+  };
 
   for (const i of autoIdxs) {
     const field = fields[i];
-    const cellType = getCellOptions(field).type;
     const headerWidth = measureHeaderWidth(field, typographyCtx, showTypeIcons);
 
-    let cellWidth: number;
-    const defaultWidth = NON_TEXT_DEFAULT_WIDTHS[cellType];
-    if (defaultWidth != null) {
-      cellWidth = defaultWidth;
-    } else if (cellType === TableCellDisplayMode.Pill) {
-      pillCtx ??= createTypographyContext(PILLS_FONT_SIZE, typographyCtx.fontFamily, typographyCtx.letterSpacing);
-      cellWidth = measurePillContentWidth(field, effectiveSampleSize, pillCtx) + CELL_CHROME;
-    } else if (shouldTextWrap(field)) {
-      // wrapped columns grow in height, not width; don't size to the full unwrapped content.
-      cellWidth = headerWidth;
-    } else {
-      cellWidth = measureLongestContentWidth(field, effectiveSampleSize, typographyCtx) + CELL_CHROME;
-    }
+    // Text wrapping is cross-cutting: a wrapped column grows in height, not width, so it sizes to
+    // its header regardless of cell type. Otherwise the cell type's registered measurer (or the
+    // default text measurement) gives the content width, which is then unioned with the header.
+    const measure = shouldTextWrap(field)
+      ? undefined
+      : (COL_WIDTH_MEASURERS[getCellOptions(field).type] ?? measureTextColWidth);
+    const cellWidth = measure?.(field, effectiveSampleSize, measureCtx) ?? 0;
 
     const floor = Math.max(COLUMN.MIN_WIDTH, field.config.custom?.minWidth ?? 0);
     const cap = Math.max(COLUMN.MAX_AUTO_WIDTH, floor);

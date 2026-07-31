@@ -1875,8 +1875,28 @@ describe('TableNG utils', () => {
           display: (v) => ({ text: `${v} MiB`, numeric: Number(v) }),
         },
       ];
-      // "1 MiB" (5) => 5*8+13 = 53, which beats header "S" (1) => 21.
-      expect(compute(fields, 53)).toEqual([53]);
+      // "1 MiB" (5) => 5*8+13 = 53, which beats header "S" (1) => 21. availWidth < content so the
+      // column can't grow to fill it (which would mask the difference): the raw "1" would size to
+      // 50 (floored), so landing on 53 proves we measured the display string.
+      expect(compute(fields, 40)).toEqual([53]);
+    });
+
+    it('measures a string field through its display processor, not the raw value', () => {
+      const fields: Field[] = [
+        {
+          name: 'S',
+          type: FieldType.string,
+          values: ['fast'],
+          config: {},
+          // string fields can still carry units/value mappings; here "fast" renders as
+          // "fast response time" (length 18) — AutoCell would show that, so we measure it.
+          display: (v) => ({ text: `${v} response time`, numeric: NaN }),
+        },
+      ];
+      // "fast response time" (18) => 18*8+13 = 157, beating header "S" (1) => 21. availWidth 100 is
+      // below the content width, so the column overflows and keeps 157 (grid scrolls). The raw
+      // "fast" (4 => floored to 50) would instead grow to fill 100, so 157 proves we used display.
+      expect(compute(fields, 100)).toEqual([157]);
     });
 
     it('uses a fixed default width for graphical (non-text) cells regardless of content', () => {
@@ -1900,8 +1920,8 @@ describe('TableNG utils', () => {
           config: { custom: { wrapText: true } },
         },
       ];
-      const headerWidth = 'Desc'.length * CHAR_W + CELL_CHROME; // 4*8+13 = 45 => floored to 50
-      expect(compute(fields, 50)).toEqual([Math.max(headerWidth, COLUMN.MIN_WIDTH)]);
+      // header "Desc" (4) => 4*8+13 = 45, floored to MIN_WIDTH 50; the wrapping content is not measured.
+      expect(compute(fields, 50)).toEqual([50]);
     });
 
     it('reserves header icon space so the label is not truncated by the type icon', () => {
