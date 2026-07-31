@@ -299,7 +299,7 @@ export function useSplitter(options: UseSplitterOptions) {
   );
 
   const onDoubleClick = useCallback(() => {
-    if (!firstPaneRef.current || !secondPaneRef.current) {
+    if (!firstPaneRef.current || !secondPaneRef.current || !containerRef.current) {
       return;
     }
 
@@ -311,10 +311,19 @@ export function useSplitter(options: UseSplitterOptions) {
     } else {
       firstPaneRef.current.style.flexGrow = '0.5';
       secondPaneRef.current.style.flexGrow = '0.5';
-      primarySizeRef.current = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
       splitterRef.current!.ariaValueNow = `50`;
     }
-  }, [measurementProp, usePixels, pixelPrimary, initialSize]);
+
+    // Report the reset like any other resize. A consumer that keeps the size outside the DOM would
+    // otherwise hold the pre-reset value and reapply it on the next render that touches the styles.
+    containerSize.current = containerRef.current.getBoundingClientRect()[measurementProp];
+    primarySizeRef.current = firstPaneRef.current.getBoundingClientRect()[measurementProp];
+
+    const firstPanePixels = primarySizeRef.current;
+    const secondPanePixels = containerSize.current - firstPanePixels - handleSize;
+
+    onSizeChanged?.(getPrimaryFlexSize(firstPanePixels), firstPanePixels, secondPanePixels);
+  }, [measurementProp, usePixels, pixelPrimary, initialSize, handleSize, onSizeChanged, getPrimaryFlexSize]);
 
   const onBlur = useCallback(() => {
     // If focus is lost while keys are held, stop changing panel sizes
