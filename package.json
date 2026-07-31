@@ -203,6 +203,7 @@
     "jest": "29.7.0",
     "jest-canvas-mock": "2.5.2",
     "jest-date-mock": "1.0.10",
+    "jest-editor-support": "^32.0.0-beta.1",
     "jest-environment-jsdom": "29.7.0",
     "jest-fail-on-console": "3.3.1",
     "jest-junit": "16.0.0",
