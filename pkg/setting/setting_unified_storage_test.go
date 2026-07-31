@@ -234,6 +234,51 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		assert.Equal(t, 3, cfg.IndexWorkers)
 	})
 
+	t.Run("authorization defaults preserve allowlist behavior", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.False(t, cfg.UnifiedStorageAuthzExemptionEnabled)
+		assert.Empty(t, cfg.UnifiedStorageAuthzExemptResources)
+	})
+
+	t.Run("authorization config reads INI controls", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		section := cfg.Raw.Section("unified_storage")
+		section.Key("authz_exemption_enabled").SetValue("true")
+		section.Key("authz_exempt_resources").SetValue(" example.grafana.app/widgets,querycaching.grafana.app/querycacheconfigs, ")
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.True(t, cfg.UnifiedStorageAuthzExemptionEnabled)
+		assert.Equal(t, []string{
+			"example.grafana.app/widgets",
+			"querycaching.grafana.app/querycacheconfigs",
+		}, cfg.UnifiedStorageAuthzExemptResources)
+	})
+
+	t.Run("authorization config supports unified storage env overrides", func(t *testing.T) {
+		t.Setenv("GF_UNIFIED_STORAGE_AUTHZ_EXEMPTION_ENABLED", "true")
+		t.Setenv("GF_UNIFIED_STORAGE_AUTHZ_EXEMPT_RESOURCES", "example.grafana.app/widgets,querycaching.grafana.app/querycacheconfigs")
+
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+
+		cfg.setUnifiedStorageConfig()
+
+		assert.True(t, cfg.UnifiedStorageAuthzExemptionEnabled)
+		assert.Equal(t, []string{
+			"example.grafana.app/widgets",
+			"querycaching.grafana.app/querycacheconfigs",
+		}, cfg.UnifiedStorageAuthzExemptResources)
+	})
+
 	t.Run("chunked writes config defaults", func(t *testing.T) {
 		cfg := NewCfg()
 		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
