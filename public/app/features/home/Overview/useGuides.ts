@@ -20,6 +20,7 @@ export function useGuides() {
   const guides = useMemo<GuideProps[]>(
     () => [
       {
+        id: 'app-monitoring',
         title: t('home.overview.get-started.cards.app-monitoring.title', 'Set up app monitoring'),
         description: t(
           'home.overview.get-started.cards.app-monitoring.description',
@@ -31,6 +32,7 @@ export function useGuides() {
         href: '/a/grafana-app-observability-app/landing',
       },
       {
+        id: 'infra-monitoring',
         title: t('home.overview.get-started.cards.infra-monitoring.title', 'Monitor infrastructure'),
         description: t(
           'home.overview.get-started.cards.infra-monitoring.description',
@@ -42,6 +44,7 @@ export function useGuides() {
         href: '#',
       },
       {
+        id: 'database-monitoring',
         title: t('home.overview.get-started.cards.database-monitoring.title', 'Analyze database performance'),
         description: t(
           'home.overview.get-started.cards.database-monitoring.description',
@@ -53,6 +56,7 @@ export function useGuides() {
         href: '/a/grafana-dbo11y-app',
       },
       {
+        id: 'website-monitoring',
         title: t('home.overview.get-started.cards.website-monitoring.title', 'Monitor website uptime and performance'),
         description: t(
           'home.overview.get-started.cards.website-monitoring.description',
@@ -64,6 +68,7 @@ export function useGuides() {
         href: '/a/grafana-synthetic-monitoring-app/checks/new/api-endpoint',
       },
       {
+        id: 'cloud-monitoring',
         title: t('home.overview.get-started.cards.cloud-monitoring.title', 'Observe cloud services'),
         description: t(
           'home.overview.get-started.cards.cloud-monitoring.description',
@@ -75,6 +80,7 @@ export function useGuides() {
         href: '/a/grafana-setupguide-app/getting-started/cloud-services',
       },
       {
+        id: 'visualize-data',
         title: t('home.overview.get-started.cards.visualize-data.title', 'Visualize existing data'),
         description: t(
           'home.overview.get-started.cards.visualize-data.description',
@@ -86,6 +92,7 @@ export function useGuides() {
         href: '/a/grafana-setupguide-app/getting-started/connect-visualize',
       },
       {
+        id: 'prometheus-metrics',
         title: t('home.overview.get-started.cards.prometheus.title', 'Prometheus metrics'),
         description: t(
           'home.overview.get-started.cards.prometheus.description',
@@ -97,6 +104,7 @@ export function useGuides() {
         href: '/a/grafana-setupguide-app/getting-started/prometheus',
       },
       {
+        id: 'logs',
         title: t('home.overview.get-started.cards.logs.title', 'Logs'),
         description: t(
           'home.overview.get-started.cards.logs.description',
@@ -108,6 +116,7 @@ export function useGuides() {
         href: '/a/grafana-setupguide-app/getting-started/logs-onboarding',
       },
       {
+        id: 'opentelemetry',
         title: t('home.overview.get-started.cards.opentelemetry.title', 'OpenTelemetry'),
         description: t(
           'home.overview.get-started.cards.opentelemetry.description',
@@ -119,6 +128,7 @@ export function useGuides() {
         href: '/a/grafana-setupguide-app/getting-started/opentelemetry',
       },
       {
+        id: 'kubernetes',
         title: t('home.overview.get-started.cards.kubernetes.title', 'Kubernetes'),
         description: t(
           'home.overview.get-started.cards.kubernetes.description',
@@ -130,6 +140,7 @@ export function useGuides() {
         href: '/a/grafana-k8s-app/configuration/cluster-config',
       },
       {
+        id: 'hosted-data',
         title: t('home.overview.get-started.cards.hosted-data.title', 'Hosted telemetry data'),
         description: t(
           'home.overview.get-started.cards.hosted-data.description',
@@ -141,6 +152,7 @@ export function useGuides() {
         href: '/a/grafana-setupguide-app/getting-started/hosted-data',
       },
       {
+        id: 'demo-data',
         title: t('home.overview.get-started.cards.demo-data.title', 'Demo data dashboards'),
         description: t(
           'home.overview.get-started.cards.demo-data.description',

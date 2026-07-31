@@ -5,7 +5,10 @@ import Skeleton from 'react-loading-skeleton';
 import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { type IconName, Card, Icon, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 
+import { ctaClicked } from '../analytics/main';
+
 export interface GuideProps {
+  id: string;
   title: string;
   description: string;
   icon: IconName;
@@ -14,7 +17,7 @@ export interface GuideProps {
   href: string;
 }
 
-export function Guide({ title, description, icon, color, cta, href }: GuideProps) {
+export function Guide({ id, title, description, icon, color, cta, href }: GuideProps) {
   const styles = useStyles2(getStyles, color);
 
   const refGlow = useRef<HTMLDivElement>(null);
@@ -34,7 +37,14 @@ export function Guide({ title, description, icon, color, cta, href }: GuideProps
   };
 
   return (
-    <Card noMargin href={href} className={styles.card} onMouseMove={showGlow} onMouseLeave={hideGlow}>
+    <Card
+      noMargin
+      href={href}
+      className={styles.card}
+      onMouseMove={showGlow}
+      onMouseLeave={hideGlow}
+      onClick={() => ctaClicked({ surface: 'overview', action: 'open_guide', placement: 'card', solution: id })}
+    >
       <div className={styles.glow} ref={refGlow} aria-hidden="true" />
       <Card.Heading>
         <Stack direction="row" gap={1} alignItems="center">

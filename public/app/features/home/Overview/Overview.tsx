@@ -6,6 +6,8 @@ import { Trans, t } from '@grafana/i18n';
 import { type IconName, Button, Icon, Stack, Text, Dropdown, Menu, useTheme2, useStyles2 } from '@grafana/ui';
 import { useStoredString } from 'app/core/hooks/useStored';
 
+import { ctaClicked } from '../analytics/main';
+
 import { GetStarted } from './GetStarted';
 import { useGuides } from './useGuides';
 
@@ -81,7 +83,15 @@ export function Overview() {
               }
               className={highlight ? styles.highlight : undefined}
               label={label}
-              onClick={() => setStored(value)}
+              onClick={() => {
+                setStored(value);
+                ctaClicked({
+                  surface: 'overview',
+                  action: 'change_overview_filter',
+                  placement: 'menu',
+                  solution: value,
+                });
+              }}
               active={option.value === value}
             />
           </Fragment>
