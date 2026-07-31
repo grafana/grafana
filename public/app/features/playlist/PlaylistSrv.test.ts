@@ -240,6 +240,46 @@ describe('PlaylistSrv', () => {
     expect(srv.state.isPlaying).toBe(false);
   });
 
+  it('keeps a single clean playback when start() calls overlap', async () => {
+    const getValidUrl = () => (srv as any).validPlaylistUrl; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    // Control both loads so we decide the resolution order.
+    let resolveA: (items: PlaylistItemUI[]) => void = () => {};
+    let resolveB: (items: PlaylistItemUI[]) => void = () => {};
+    loadDashboardsMock
+      .mockReturnValueOnce(new Promise<PlaylistItemUI[]>((res) => (resolveA = res)))
+      .mockReturnValueOnce(new Promise<PlaylistItemUI[]>((res) => (resolveB = res)));
+
+    const playlistA: Playlist = {
+      ...mockPlaylist,
+      spec: { ...mockPlaylist.spec!, items: [{ type: 'dashboard_by_uid', value: 'a' }] },
+    };
+    const playlistB: Playlist = {
+      ...mockPlaylist,
+      spec: { ...mockPlaylist.spec!, items: [{ type: 'dashboard_by_uid', value: 'b' }] },
+    };
+
+    jest.useFakeTimers();
+    try {
+      const pA = srv.start(playlistA);
+      const pB = srv.start(playlistB);
+
+      // Resolve A first, then B — the later-resolving start wins and tears down the earlier.
+      resolveA([{ type: 'dashboard_by_uid', value: 'a', dashboards: [{ url: '/url/to/a' } as DashboardQueryResult] }]);
+      await pA;
+      resolveB([{ type: 'dashboard_by_uid', value: 'b', dashboards: [{ url: '/url/to/b' } as DashboardQueryResult] }]);
+      await pB;
+
+      expect(srv.state.isPlaying).toBe(true);
+      expect(getValidUrl()).toBe('/url/to/b');
+      // Exactly one timeout is pending — start A's was cleaned up rather than leaked.
+      expect(jest.getTimerCount()).toBe(1);
+    } finally {
+      srv.stop();
+      jest.useRealTimers();
+    }
+  });
+
   it('should replace playlist start page in history when starting playlist', async () => {
     // Start at playlists page
     locationService.push('/playlists');
