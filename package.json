@@ -431,6 +431,7 @@
     "underscore": "1.13.7",
     "@types/slate": "0.47.11",
     "axios": "1.15.2",
+    "lodash@npm:~4.17.21": "4.18.1",
     "semver@npm:~7.3.5": "^7.3.5",
     "debug@npm:^0.7.2": "2.6.9",
     "debug@npm:^0.7.4": "2.6.9",
