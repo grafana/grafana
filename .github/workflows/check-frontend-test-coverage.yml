@@ -41,7 +41,7 @@ jobs:
   detect-changes:
     name: Detect changed files
     if: github.event.pull_request.head.repo.fork == false
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-arm64-small
     permissions:
       contents: read
     outputs:
