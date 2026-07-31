@@ -449,6 +449,8 @@ func (x *VectorUpsertSubresourcesResponse) GetDeleted() int64 {
 // 2. Delete by metadata filter
 // 3. Delete everything (explicit delete_all)
 // A request with no selector set is INVALID_ARGUMENT.
+// Deletes span all embedding models: rows embedded under a previous model
+// are removed too, not just the server's current one.
 //
 // To replace a filtered set of rows: Upsert with a run timestamp in the metadata,
 // then Delete with a filter matching timestamps older than the run. A failure between

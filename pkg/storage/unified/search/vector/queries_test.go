@@ -69,6 +69,16 @@ func TestVectorQueries(t *testing.T) {
 						UIDs:        []string{"u1", "u2"},
 					},
 				},
+				{
+					Name: "all_models",
+					Data: &sqlVectorCollectionDeleteUIDsRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "dashboards",
+						Namespace:   "stacks-123",
+						AllModels:   true,
+						UIDs:        []string{"u1", "u2"},
+					},
+				},
 			},
 			sqlVectorCollectionDeleteAll: {
 				{
@@ -78,6 +88,16 @@ func TestVectorQueries(t *testing.T) {
 						Resource:    "dashboards",
 						Namespace:   "stacks-123",
 						Model:       "text-embedding-005",
+						Limit:       10000,
+					},
+				},
+				{
+					Name: "all_models",
+					Data: &sqlVectorCollectionDeleteAllRequest{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Resource:    "dashboards",
+						Namespace:   "stacks-123",
+						AllModels:   true,
 						Limit:       10000,
 					},
 				},

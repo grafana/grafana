@@ -7,10 +7,10 @@ DELETE FROM embeddings
         SELECT ctid FROM embeddings
         WHERE {{ .Ident "resource" }}  = {{ .Arg .Resource }}
         AND {{ .Ident "namespace" }} = {{ .Arg .Namespace }}
-        AND {{ .Ident "model" }}     = {{ .Arg .Model }}
+        {{ if not .AllModels }}AND {{ .Ident "model" }} = {{ .Arg .Model }}{{ end }}
         LIMIT {{ .Arg .Limit }}
     )
     AND {{ .Ident "resource" }}  = {{ .Arg .Resource }}
     AND {{ .Ident "namespace" }} = {{ .Arg .Namespace }}
-    AND {{ .Ident "model" }}     = {{ .Arg .Model }}
+    {{ if not .AllModels }}AND {{ .Ident "model" }} = {{ .Arg .Model }}{{ end }}
 ;

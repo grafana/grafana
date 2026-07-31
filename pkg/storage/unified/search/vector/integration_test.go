@@ -888,6 +888,25 @@ func TestIntegrationVectorDeleteRows(t *testing.T) {
 	require.Error(t, err)
 	_, _, err = backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{UIDs: []string{"x"}, All: true})
 	require.Error(t, err)
+
+	// AllModels spans embedding models; model-scoped deletes leave other
+	// models' rows (orphans from a model change) behind.
+	oldModel := mk("u8", "")
+	oldModel.Model = "old-model"
+	require.NoError(t, backend.Upsert(ctx, []Vector{mk("u8", ""), oldModel}))
+	n, _, err = backend.DeleteRows(ctx, "ns-del", testModel, testResource, DeleteSelector{UIDs: []string{"u8"}})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, n)
+	n, more, err = backend.DeleteRows(ctx, "ns-del", "", testResource, DeleteSelector{UIDs: []string{"u8"}, AllModels: true})
+	require.NoError(t, err)
+	require.False(t, more)
+	require.EqualValues(t, 1, n)
+
+	require.NoError(t, backend.Upsert(ctx, []Vector{mk("u9", ""), func() Vector { v := mk("u9", ""); v.Model = "old-model"; return v }()}))
+	n, more, err = backend.DeleteRows(ctx, "ns-del", "", testResource, DeleteSelector{All: true, AllModels: true, Limit: 2})
+	require.NoError(t, err)
+	require.EqualValues(t, 2, n)
+	require.False(t, more)
 }
 
 func TestIntegrationEnsureCollection(t *testing.T) {

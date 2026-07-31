@@ -188,6 +188,10 @@ type DeleteSelector struct {
 	UIDs  []string
 	All   bool
 	Limit int // page size when All; 0 means defaultDeleteAllPageSize
+	// AllModels drops the model scope: rows under every embedding model are
+	// deleted. External collections use this — they have no backfill, so
+	// rows from a previous model are unreachable orphans otherwise.
+	AllModels bool
 }
 
 func (v *Vector) Validate() error {

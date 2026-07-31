@@ -347,7 +347,9 @@ func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDe
 		return nil, status.Errorf(codes.NotFound, "collection %s/%s not found", req.Group, req.Resource)
 	}
 
-	var sel vector.DeleteSelector
+	// External collections have no backfill, so rows embedded under a prior
+	// model would be unreachable orphans — delete across all models.
+	sel := vector.DeleteSelector{AllModels: true}
 	switch sl := req.Selector.(type) {
 	case *resourcepb.VectorDeleteRequest_Uids:
 		uids := sl.Uids.GetValues()

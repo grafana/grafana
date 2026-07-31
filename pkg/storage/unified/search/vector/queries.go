@@ -105,11 +105,12 @@ type sqlVectorCollectionDeleteUIDsRequest struct {
 	Resource  string
 	Namespace string
 	Model     string
+	AllModels bool
 	UIDs      []string
 }
 
 func (r *sqlVectorCollectionDeleteUIDsRequest) Validate() error {
-	if r.Resource == "" || r.Namespace == "" || r.Model == "" {
+	if r.Resource == "" || r.Namespace == "" || (r.Model == "" && !r.AllModels) {
 		return fmt.Errorf("missing required fields")
 	}
 	if len(r.UIDs) == 0 {
@@ -127,11 +128,12 @@ type sqlVectorCollectionDeleteAllRequest struct {
 	Resource  string
 	Namespace string
 	Model     string
+	AllModels bool
 	Limit     int
 }
 
 func (r *sqlVectorCollectionDeleteAllRequest) Validate() error {
-	if r.Resource == "" || r.Namespace == "" || r.Model == "" {
+	if r.Resource == "" || r.Namespace == "" || (r.Model == "" && !r.AllModels) {
 		return fmt.Errorf("missing required fields")
 	}
 	if r.Limit <= 0 {

@@ -325,7 +325,7 @@ func (b *pgvectorBackend) subresourceKeysTx(ctx context.Context, tx db.Tx, names
 const defaultDeleteAllPageSize = 10000
 
 func (b *pgvectorBackend) DeleteRows(ctx context.Context, namespace, model, resource string, sel DeleteSelector) (int64, bool, error) {
-	if model == "" {
+	if model == "" && !sel.AllModels {
 		return 0, false, fmt.Errorf("model must not be empty")
 	}
 	if (len(sel.UIDs) > 0) == sel.All {
@@ -341,6 +341,7 @@ func (b *pgvectorBackend) DeleteRows(ctx context.Context, namespace, model, reso
 			Resource:    resource,
 			Namespace:   namespace,
 			Model:       model,
+			AllModels:   sel.AllModels,
 			UIDs:        sel.UIDs,
 		})
 		if err != nil {
@@ -359,6 +360,7 @@ func (b *pgvectorBackend) DeleteRows(ctx context.Context, namespace, model, reso
 		Resource:    resource,
 		Namespace:   namespace,
 		Model:       model,
+		AllModels:   sel.AllModels,
 		Limit:       limit,
 	})
 	if err != nil {
@@ -372,11 +374,19 @@ func (b *pgvectorBackend) DeleteRows(ctx context.Context, namespace, model, reso
 	// exactly `limit` rows) — check instead of over-reporting has_more.
 	hasMore := false
 	if n == int64(limit) {
-		if err := b.db.QueryRowContext(ctx, `
-			SELECT EXISTS (
+		q := `SELECT EXISTS (
 				SELECT 1 FROM embeddings
 				WHERE resource = $1 AND namespace = $2 AND model = $3
-			)`, resource, namespace, model).Scan(&hasMore); err != nil {
+			)`
+		args := []any{resource, namespace, model}
+		if sel.AllModels {
+			q = `SELECT EXISTS (
+				SELECT 1 FROM embeddings
+				WHERE resource = $1 AND namespace = $2
+			)`
+			args = args[:2]
+		}
+		if err := b.db.QueryRowContext(ctx, q, args...).Scan(&hasMore); err != nil {
 			return n, false, fmt.Errorf("check remaining rows: %w", err)
 		}
 	}
