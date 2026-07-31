@@ -8610,7 +8610,24 @@
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
     },
     "metrics-list": {
-      "search-placeholder": "Search metrics"
+      "collapse-metric": "Collapse {{name}}",
+      "error": "Failed to load metrics",
+      "expand-metric": "Expand {{name}}",
+      "filter-values": "Filter values",
+      "hide-values": "Hide values for {{label}}",
+      "labels-error": "Failed to load labels",
+      "loading": "Loading metrics…",
+      "loading-labels": "Loading labels…",
+      "loading-values": "Loading values…",
+      "no-metrics": "No metrics found",
+      "search-placeholder": "Search metrics",
+      "show-more": "Show more",
+      "show-more-metrics": "Show more metrics",
+      "show-more-values": "Show more values",
+      "show-values": "Show values for {{label}}",
+      "sort-ascending": "Sort ascending",
+      "sort-descending": "Sort descending",
+      "values-error": "Failed to load values"
     },
     "next-prev-result": {
       "aria-label-next": "Next result button",
