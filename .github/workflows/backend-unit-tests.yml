@@ -106,12 +106,6 @@ jobs:
       - name: Setup Go
         uses: ./.github/actions/setup-go
 
-      # Prepare what we need to upload test results
-      - run: echo "RESULTS_FILE=$(date --rfc-3339=seconds --utc | sed -s 's/ /-/g')_${SHARD/\//_}.xml" >> "$GITHUB_ENV"
-        env:
-          SHARD: ${{ matrix.shard }}
-      - run: go install github.com/jstemmer/go-junit-report/v2@85bf4716ac1f025f2925510a9f5e9f5bb347c009
-
       # Run code
       - name: Run unit tests
         env:
