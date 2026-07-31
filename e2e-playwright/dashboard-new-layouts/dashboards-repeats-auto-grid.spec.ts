@@ -118,9 +118,7 @@ test.describe(
         await saveDashboard(dashboardPage, page, selectors);
         await page.reload();
 
-        await controls.variables.openDropdown('c1');
-        // deselect last variable option
-        await controls.variables.getOption(`${REPEAT_OPTIONS.at(-1)}`).click();
+        await controls.variables.deselectOption('c1', `${REPEAT_OPTIONS.at(-1)}`);
         await page.locator('body').click({ position: { x: 0, y: 0 } }); // blur select
 
         // verify that repeats are present for first 3 values

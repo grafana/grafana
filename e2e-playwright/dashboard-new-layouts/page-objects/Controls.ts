@@ -98,17 +98,40 @@ export class Controls extends PageObject {
       // the trigger is the next sibling of its label
       return this.variables.getLabel(variableLabel).locator('+ *');
     },
+    getOption: (optionLabel: string): Locator => this.page.getByRole('option', { name: optionLabel, exact: true }),
     openDropdown: async (variableLabel: string) => {
       await test.step(`Open dropdown of variable "${variableLabel}"`, async () => {
-        // clicking the trigger area can hit value chips or the clear control so we open it via the caret instead
-        await this.variables.getDropdownTrigger(variableLabel).getByTestId('icon-angle-down').click();
+        // value chips / clear control sit above the input, we force so the combobox receives the click
+        await this.variables.getDropdownTrigger(variableLabel).getByRole('combobox').click({ force: true });
       });
     },
-    getOption: (optionLabel: string): Locator => this.page.getByRole('option', { name: optionLabel, exact: true }),
     selectOption: async (variableLabel: string, optionLabel: string) => {
       await test.step(`Select option "${optionLabel}" of variable "${variableLabel}"`, async () => {
         await this.variables.openDropdown(variableLabel);
-        await this.variables.getOption(optionLabel).click();
+        const option = this.variables.getOption(optionLabel);
+
+        // multi-value options render a checkbox — throw if already selected so we don't toggle it off
+        const checkbox = option.getByRole('checkbox');
+        if ((await checkbox.count()) > 0 && (await checkbox.isChecked())) {
+          throw new Error(
+            `Cannot select option "${optionLabel}" of variable "${variableLabel}": it is already selected`
+          );
+        }
+
+        await option.click();
+      });
+    },
+    // multi-value variables only (options render checkboxes)
+    deselectOption: async (variableLabel: string, optionLabel: string) => {
+      await test.step(`Deselect option "${optionLabel}" of variable "${variableLabel}"`, async () => {
+        await this.variables.openDropdown(variableLabel);
+
+        const option = this.variables.getOption(optionLabel);
+        if (!(await option.getByRole('checkbox').isChecked())) {
+          throw new Error(`Cannot deselect option "${optionLabel}" of variable "${variableLabel}": it is not selected`);
+        }
+
+        await option.click();
       });
     },
     addFilter: async (variableLabel: string, filter: [string, string, string]) => {
