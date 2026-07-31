@@ -125,8 +125,8 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(panel.getContainerByTitle('Panel - hide - time range <7d')).not.toBeVisible();
     await expect(rows.getTitle('Row - show - time range <7d')).toBeVisible();
     await expect(rows.getTitle('Row - hide - time range <7d')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - show - time range <7d')).toBeVisible();
-    await expect(tabs.getTab('Tab - hide - time range <7d')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - show - time range <7d')).toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - time range <7d')).not.toBeVisible();
 
     await controls.setTimeRange('now-8d', 'now');
     await page.waitForLoadState('networkidle');
@@ -135,8 +135,8 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(panel.getContainerByTitle('Panel - hide - time range <7d')).toBeVisible();
     await expect(rows.getTitle('Row - show - time range <7d')).not.toBeVisible();
     await expect(rows.getTitle('Row - hide - time range <7d')).toBeVisible();
-    await expect(tabs.getTab('Tab - show - time range <7d')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - hide - time range <7d')).toBeVisible();
+    await expect(tabs.getTitle('Tab - show - time range <7d')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - time range <7d')).toBeVisible();
   });
 
   test('Load with time range', async ({ page, gotoDashboardPage, selectors, components }) => {
@@ -149,8 +149,8 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(panel.getContainerByTitle('Panel - hide - time range <7d')).toBeVisible();
     await expect(rows.getTitle('Row - show - time range <7d')).not.toBeVisible();
     await expect(rows.getTitle('Row - hide - time range <7d')).toBeVisible();
-    await expect(tabs.getTab('Tab - show - time range <7d')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - hide - time range <7d')).toBeVisible();
+    await expect(tabs.getTitle('Tab - show - time range <7d')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - time range <7d')).toBeVisible();
 
     await controls.setTimeRange('now-6h', 'now');
     await page.waitForLoadState('networkidle');
@@ -159,8 +159,8 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(panel.getContainerByTitle('Panel - hide - time range <7d')).not.toBeVisible();
     await expect(rows.getTitle('Row - show - time range <7d')).toBeVisible();
     await expect(rows.getTitle('Row - hide - time range <7d')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - show - time range <7d')).toBeVisible();
-    await expect(tabs.getTab('Tab - hide - time range <7d')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - show - time range <7d')).toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - time range <7d')).not.toBeVisible();
   });
 
   test('Load without variable equals/not equals', async ({ page, gotoDashboardPage, selectors, components }) => {
@@ -174,10 +174,10 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(rows.getTitle('Row - hide - variable - equals 1,2,3')).toBeVisible();
     await expect(rows.getTitle('Row - show - variable - not equals 1,2,3')).toBeVisible();
     await expect(rows.getTitle('Row - hide - variable - not equals 1,2,3')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - show - variable - equals 1,2,3')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - hide - variable - equals 1,2,3')).toBeVisible();
-    await expect(tabs.getTab('Tab - show - variable - not equals 1,2,3')).toBeVisible();
-    await expect(tabs.getTab('Tab - hide - variable - not equals 1,2,3')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - show - variable - equals 1,2,3')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - variable - equals 1,2,3')).toBeVisible();
+    await expect(tabs.getTitle('Tab - show - variable - not equals 1,2,3')).toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - variable - not equals 1,2,3')).not.toBeVisible();
 
     await fillVariableValue(page, dashboardPage, selectors, testDashboard.spec.variables[0].spec.name, '1,2,3');
 
@@ -189,10 +189,10 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(rows.getTitle('Row - hide - variable - equals 1,2,3')).not.toBeVisible();
     await expect(rows.getTitle('Row - show - variable - not equals 1,2,3')).not.toBeVisible();
     await expect(rows.getTitle('Row - hide - variable - not equals 1,2,3')).toBeVisible();
-    await expect(tabs.getTab('Tab - show - variable - equals 1,2,3')).toBeVisible();
-    await expect(tabs.getTab('Tab - hide - variable - equals 1,2,3')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - show - variable - not equals 1,2,3')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - hide - variable - not equals 1,2,3')).toBeVisible();
+    await expect(tabs.getTitle('Tab - show - variable - equals 1,2,3')).toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - variable - equals 1,2,3')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - show - variable - not equals 1,2,3')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - variable - not equals 1,2,3')).toBeVisible();
   });
 
   test('Load with variable equals/not equals', async ({ page, gotoDashboardPage, selectors, components }) => {
@@ -208,10 +208,10 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(rows.getTitle('Row - hide - variable - equals 1,2,3')).not.toBeVisible();
     await expect(rows.getTitle('Row - show - variable - not equals 1,2,3')).not.toBeVisible();
     await expect(rows.getTitle('Row - hide - variable - not equals 1,2,3')).toBeVisible();
-    await expect(tabs.getTab('Tab - show - variable - equals 1,2,3')).toBeVisible();
-    await expect(tabs.getTab('Tab - hide - variable - equals 1,2,3')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - show - variable - not equals 1,2,3')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - hide - variable - not equals 1,2,3')).toBeVisible();
+    await expect(tabs.getTitle('Tab - show - variable - equals 1,2,3')).toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - variable - equals 1,2,3')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - show - variable - not equals 1,2,3')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - variable - not equals 1,2,3')).toBeVisible();
 
     await fillVariableValue(page, dashboardPage, selectors, testDashboard.spec.variables[0].spec.name, '');
 
@@ -223,10 +223,10 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(rows.getTitle('Row - hide - variable - equals 1,2,3')).toBeVisible();
     await expect(rows.getTitle('Row - show - variable - not equals 1,2,3')).toBeVisible();
     await expect(rows.getTitle('Row - hide - variable - not equals 1,2,3')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - show - variable - equals 1,2,3')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - hide - variable - equals 1,2,3')).toBeVisible();
-    await expect(tabs.getTab('Tab - show - variable - not equals 1,2,3')).toBeVisible();
-    await expect(tabs.getTab('Tab - hide - variable - not equals 1,2,3')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - show - variable - equals 1,2,3')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - variable - equals 1,2,3')).toBeVisible();
+    await expect(tabs.getTitle('Tab - show - variable - not equals 1,2,3')).toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - variable - not equals 1,2,3')).not.toBeVisible();
   });
 
   test('Load without variable matches/not matches', async ({ page, gotoDashboardPage, selectors, components }) => {
@@ -240,10 +240,10 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(rows.getTitle('Row - hide - variable - matches .*2.*')).toBeVisible();
     await expect(rows.getTitle('Row - show - variable - not matches .*2.*')).toBeVisible();
     await expect(rows.getTitle('Row - hide - variable - not matches .*2.*')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - show - variable - matches .*2.*')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - hide - variable - matches .*2.*')).toBeVisible();
-    await expect(tabs.getTab('Tab - show - variable - not matches .*2.*')).toBeVisible();
-    await expect(tabs.getTab('Tab - hide - variable - not matches .*2.*')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - show - variable - matches .*2.*')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - variable - matches .*2.*')).toBeVisible();
+    await expect(tabs.getTitle('Tab - show - variable - not matches .*2.*')).toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - variable - not matches .*2.*')).not.toBeVisible();
 
     await fillVariableValue(page, dashboardPage, selectors, testDashboard.spec.variables[0].spec.name, '1,2,3');
 
@@ -255,10 +255,10 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(rows.getTitle('Row - hide - variable - matches .*2.*')).not.toBeVisible();
     await expect(rows.getTitle('Row - show - variable - not matches .*2.*')).not.toBeVisible();
     await expect(rows.getTitle('Row - hide - variable - not matches .*2.*')).toBeVisible();
-    await expect(tabs.getTab('Tab - show - variable - matches .*2.*')).toBeVisible();
-    await expect(tabs.getTab('Tab - hide - variable - matches .*2.*')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - show - variable - not matches .*2.*')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - hide - variable - not matches .*2.*')).toBeVisible();
+    await expect(tabs.getTitle('Tab - show - variable - matches .*2.*')).toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - variable - matches .*2.*')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - show - variable - not matches .*2.*')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - variable - not matches .*2.*')).toBeVisible();
   });
 
   test('Load with variable matches/not matches', async ({ page, gotoDashboardPage, selectors, components }) => {
@@ -274,10 +274,10 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(rows.getTitle('Row - hide - variable - matches .*2.*')).not.toBeVisible();
     await expect(rows.getTitle('Row - show - variable - not matches .*2.*')).not.toBeVisible();
     await expect(rows.getTitle('Row - hide - variable - not matches .*2.*')).toBeVisible();
-    await expect(tabs.getTab('Tab - show - variable - matches .*2.*')).toBeVisible();
-    await expect(tabs.getTab('Tab - hide - variable - matches .*2.*')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - show - variable - not matches .*2.*')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - hide - variable - not matches .*2.*')).toBeVisible();
+    await expect(tabs.getTitle('Tab - show - variable - matches .*2.*')).toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - variable - matches .*2.*')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - show - variable - not matches .*2.*')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - variable - not matches .*2.*')).toBeVisible();
 
     await fillVariableValue(page, dashboardPage, selectors, testDashboard.spec.variables[0].spec.name, '');
 
@@ -289,10 +289,10 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(rows.getTitle('Row - hide - variable - matches .*2.*')).toBeVisible();
     await expect(rows.getTitle('Row - show - variable - not matches .*2.*')).toBeVisible();
     await expect(rows.getTitle('Row - hide - variable - not matches .*2.*')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - show - variable - matches .*2.*')).not.toBeVisible();
-    await expect(tabs.getTab('Tab - hide - variable - matches .*2.*')).toBeVisible();
-    await expect(tabs.getTab('Tab - show - variable - not matches .*2.*')).toBeVisible();
-    await expect(tabs.getTab('Tab - hide - variable - not matches .*2.*')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - show - variable - matches .*2.*')).not.toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - variable - matches .*2.*')).toBeVisible();
+    await expect(tabs.getTitle('Tab - show - variable - not matches .*2.*')).toBeVisible();
+    await expect(tabs.getTitle('Tab - hide - variable - not matches .*2.*')).not.toBeVisible();
   });
 
   test.describe('Variable repeat', () => {
@@ -321,7 +321,7 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
 
       await failTestDataRequestForOption(page, optionForHiddenPanels);
 
-      await tabs.getTab('Tab - repeated items').click();
+      await tabs.getTitle('Tab - repeated items').click();
 
       await checkRepeatedPanelTitles(
         dashboardPage,

@@ -746,6 +746,7 @@ function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         <Input
           id={evaluateForId}
           width={8}
+          data-testid={selectors.components.AlertRules.pendingPeriodInput}
           {...register(
             'evaluateFor',
             forValidationOptions(() => getValues('evaluateEvery'))
