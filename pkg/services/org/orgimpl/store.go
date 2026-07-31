@@ -246,7 +246,34 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			return org.ErrOrgNotFound.Errorf("failed to delete organisation with ID: %d", cmd.ID)
 		}
 
-		for _, sql := range ss.orgDeletions(dbHelper) {
+		alertRuleTagTable := quoteTable(dbHelper, "alert_rule_tag")
+		deletes := []string{ //nolint:prealloc
+			"DELETE FROM " + quoteTable(dbHelper, "star") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "dashboard_tag") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "api_key") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "data_source") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "org_user") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "org") + " WHERE id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "temp_user") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "ngalert_configuration") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "alert_configuration") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "alert_instance") + " WHERE rule_org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "alert_notification") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "alert_notification_state") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "alert_rule") + " WHERE org_id = ?",
+			"DELETE FROM " + alertRuleTagTable + " WHERE EXISTS (SELECT 1 FROM " + quoteTable(dbHelper, "alert") + " AS alert WHERE alert.org_id = ? AND alert.id = alert_rule_tag.alert_id)",
+			"DELETE FROM " + quoteTable(dbHelper, "alert_rule_version") + " WHERE rule_org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "alert") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "annotation") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "kv_store") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "team") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "team_member") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "team_role") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "user_role") + " WHERE org_id = ?",
+			"DELETE FROM " + quoteTable(dbHelper, "builtin_role") + " WHERE org_id = ?",
+		}
+
+		for _, sql := range deletes {
 			if _, err := sess.Exec(sql, cmd.ID); err != nil {
 				return err
 			}
@@ -264,37 +291,6 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 
 		return nil
 	})
-}
-
-func (ss *sqlStore) orgDeletions(dbHelper *legacysql.LegacyDatabaseHelper) []string {
-	alertRuleTagTable := quoteTable(dbHelper, "alert_rule_tag")
-	deletes := []string{ //nolint:prealloc
-		"DELETE FROM " + quoteTable(dbHelper, "star") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "dashboard_tag") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "api_key") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "data_source") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "org_user") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "org") + " WHERE id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "temp_user") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "ngalert_configuration") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "alert_configuration") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "alert_instance") + " WHERE rule_org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "alert_notification") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "alert_notification_state") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "alert_rule") + " WHERE org_id = ?",
-		"DELETE FROM " + alertRuleTagTable + " WHERE EXISTS (SELECT 1 FROM " + quoteTable(dbHelper, "alert") + " AS alert WHERE alert.org_id = ? AND alert.id = alert_rule_tag.alert_id)",
-		"DELETE FROM " + quoteTable(dbHelper, "alert_rule_version") + " WHERE rule_org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "alert") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "annotation") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "kv_store") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "team") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "team_member") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "team_role") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "user_role") + " WHERE org_id = ?",
-		"DELETE FROM " + quoteTable(dbHelper, "builtin_role") + " WHERE org_id = ?",
-	}
-
-	return deletes
 }
 
 // TODO: refactor move logic to service method
