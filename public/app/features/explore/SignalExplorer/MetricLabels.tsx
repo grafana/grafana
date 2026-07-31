@@ -4,10 +4,10 @@ import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Text, useStyles2 } from '@grafana/ui';
 
-import { useMetricDetail } from '../../signalExplorer';
-
 import { LabelValues } from './LabelValues';
 import { blockId } from './blockId';
+
+import { useMetricDetail } from './index';
 
 interface Props {
   /** Set on the container, and the base for each label row's own values-block id. */

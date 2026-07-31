@@ -5,11 +5,11 @@ import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, FilterInput, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
 
-import { dsKey, rangeKey, useMetricCatalog, useVisibleBatch } from '../../signalExplorer';
-
 import { MetricLabels } from './MetricLabels';
 import { MetricRow } from './MetricRow';
 import { blockId } from './blockId';
+
+import { dsKey, rangeKey, useMetricCatalog, useVisibleBatch } from './index';
 
 interface Props {
   /**

@@ -5,7 +5,7 @@ import { type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, IconButton, Input, Text, useStyles2 } from '@grafana/ui';
 
-import { useLabelValues, useVisibleBatch } from '../../signalExplorer';
+import { useLabelValues, useVisibleBatch } from './index';
 
 // One reused collator rather than per-comparison `localeCompare`: a high-cardinality label can hold
 // thousands of values, and this comparator runs across all of them on every reorder.

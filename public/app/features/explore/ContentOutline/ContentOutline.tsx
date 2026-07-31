@@ -9,9 +9,10 @@ import { reportInteraction } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2, PanelContainer, ScrollContainer } from '@grafana/ui';
 
+import { SignalExplorer } from '../SignalExplorer/SignalExplorer';
+
 import { type ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
-import { SignalExplorer } from './SignalExplorer/SignalExplorer';
 import { scrollOutlineItemIntoView } from './scrollIntoView';
 
 function scrollableChildren(item: ContentOutlineItemContextProps) {

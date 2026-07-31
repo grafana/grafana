@@ -5,11 +5,11 @@ import { type DataSourceApi, type DataSourceInstanceSettings, type TimeRange } f
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
-import { type ContentOutlineItemContextProps } from '../ContentOutlineContext';
+import { type ContentOutlineItemContextProps } from '../ContentOutline/ContentOutlineContext';
 
 import { SignalExplorer } from './SignalExplorer';
 
-jest.mock('../ContentOutlineContext', () => ({
+jest.mock('../ContentOutline/ContentOutlineContext', () => ({
   useContentOutlineContext: jest.fn(),
 }));
 
@@ -64,7 +64,7 @@ const setup = (queries: DataQuery[], paneDatasource?: DataSourceApi) => {
     ref: document.createElement('div'),
   }));
 
-  const useContentOutlineContextMock = jest.requireMock('../ContentOutlineContext')
+  const useContentOutlineContextMock = jest.requireMock('../ContentOutline/ContentOutlineContext')
     .useContentOutlineContext as jest.Mock;
 
   useContentOutlineContextMock.mockReturnValue({

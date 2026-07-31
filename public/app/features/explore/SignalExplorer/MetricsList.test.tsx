@@ -3,14 +3,14 @@ import userEvent from '@testing-library/user-event';
 
 import { type TimeRange } from '@grafana/data';
 
-import { type MetricRow, useLabelValues, useMetricCatalog, useMetricDetail } from '../../signalExplorer';
-
 import { MetricsList } from './MetricsList';
+
+import { type MetricRow, useLabelValues, useMetricCatalog, useMetricDetail } from './index';
 
 // The data hooks are mocked; `useVisibleBatch` and `INITIAL_BATCH` are deliberately left real, so the
 // batching assertions below exercise the actual cap rather than a stand-in for it.
-jest.mock('../../signalExplorer', () => ({
-  ...jest.requireActual('../../signalExplorer'),
+jest.mock('./index', () => ({
+  ...jest.requireActual('./index'),
   useMetricCatalog: jest.fn(),
   useMetricDetail: jest.fn(),
   useLabelValues: jest.fn(),

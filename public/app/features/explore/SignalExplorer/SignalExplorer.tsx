@@ -7,10 +7,10 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
-import { isPrometheusType } from '../../utils/prometheus';
-import { useContentOutlineContext } from '../ContentOutlineContext';
-import { QUERIES_PANEL_ID } from '../ContentOutlineItem';
-import { scrollOutlineItemIntoView } from '../scrollIntoView';
+import { useContentOutlineContext } from '../ContentOutline/ContentOutlineContext';
+import { QUERIES_PANEL_ID } from '../ContentOutline/ContentOutlineItem';
+import { scrollOutlineItemIntoView } from '../ContentOutline/scrollIntoView';
+import { isPrometheusType } from '../utils/prometheus';
 
 import { MetricsList } from './MetricsList';
 import { SignalCard } from './SignalCard';
