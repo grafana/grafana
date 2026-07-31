@@ -144,8 +144,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       case TestDataQueryType.Exemplars:
         update.exemplarCount = 100;
         update.exemplarLabels = defaultExemplarLabels;
-        update.queryDelay = '0s';
-        update.errorProbability = 0;
         break;
       case TestDataQueryType.FlakyQuery:
         update.errorProbability = 50;

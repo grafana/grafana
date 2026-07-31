@@ -592,36 +592,16 @@ func flakyQueryDelay(base time.Duration, variability float64) time.Duration {
 	return delay
 }
 
-// handleExemplarsScenario returns exemplars and nothing else. Unlike the flaky
-// query scenario, which fails every refID in a request together, the error is
-// rolled per query so a single exemplar query can fail while its siblings
-// succeed.
+// handleExemplarsScenario returns exemplars and nothing else. There is no delay
+// or error rate here: every query for a panel goes to the data source in one
+// request, so a slow or failing exemplar query is indistinguishable from a slow
+// or failing series query - use the flaky query scenario for that.
 func (s *Service) handleExemplarsScenario(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
 		model, err := GetJSONModel(q.JSON)
 		if err != nil {
-			continue
-		}
-
-		baseDelay, _ := time.ParseDuration(model.QueryDelay)
-		time.Sleep(flakyQueryDelay(baseDelay, model.QueryDelayVariability))
-
-		if model.ErrorProbability > 0 && rand.Float64()*100 < model.ErrorProbability {
-			status := backend.Status(model.ErrorStatusCode)
-			if status == 0 {
-				status = backend.StatusBadRequest
-			}
-			src := backend.ErrorSourcePlugin
-			if model.ErrorSource == kinds.ErrorSourceDownstream {
-				src = backend.ErrorSourceDownstream
-			}
-			message := model.ErrorMessage
-			if message == "" {
-				message = "Exemplar query error"
-			}
-			resp.Responses[q.RefID] = backend.ErrDataResponseWithSource(status, src, message)
 			continue
 		}
 

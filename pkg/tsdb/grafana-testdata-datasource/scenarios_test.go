@@ -500,38 +500,27 @@ func TestExemplarsScenario(t *testing.T) {
 		})
 	})
 
-	t.Run("fails per query when the error rate is set", func(t *testing.T) {
-		dResp := runScenario(t, `{"errorProbability": 100, "errorStatusCode": 400, "errorSource": "downstream"}`)
-		require.Error(t, dResp.Error)
-		require.Equal(t, "Exemplar query error", dResp.Error.Error())
-		require.Equal(t, backend.StatusBadRequest, dResp.Status)
-		require.Equal(t, backend.ErrorSourceDownstream, dResp.ErrorSource)
-		require.Empty(t, dResp.Frames)
-
-		dResp = runScenario(t, `{"errorProbability": 100, "errorMessage": "custom message"}`)
-		require.Error(t, dResp.Error)
-		require.Equal(t, "custom message", dResp.Error.Error())
-		require.Equal(t, backend.ErrorSourcePlugin, dResp.ErrorSource)
-
-		for i := 0; i < 50; i++ {
-			require.NoError(t, runScenario(t, `{"errorProbability": 0}`).Error)
-		}
+	t.Run("ignores the flaky query delay and error rate", func(t *testing.T) {
+		dResp := runScenario(t, `{"queryDelay": "5s", "errorProbability": 100, "errorStatusCode": 400}`)
+		require.NoError(t, dResp.Error)
+		require.Len(t, dResp.Frames, 1)
 	})
 
-	t.Run("only the failing query in a request errors", func(t *testing.T) {
-		failing := newQuery(`{"errorProbability": 100}`)
-		failing.RefID = "A"
-		succeeding := newQuery(`{}`)
-		succeeding.RefID = "B"
+	t.Run("answers every query in a request", func(t *testing.T) {
+		first := newQuery(`{}`)
+		first.RefID = "A"
+		second := newQuery(`{"exemplarCount": 7}`)
+		second.RefID = "B"
 
 		resp, err := s.handleExemplarsScenario(context.Background(), &backend.QueryDataRequest{
 			PluginContext: backend.PluginContext{},
-			Queries:       []backend.DataQuery{failing, succeeding},
+			Queries:       []backend.DataQuery{first, second},
 		})
 		require.NoError(t, err)
-		require.Error(t, resp.Responses["A"].Error)
-		require.NoError(t, resp.Responses["B"].Error)
+		require.Len(t, resp.Responses["A"].Frames, 1)
+		require.Equal(t, 100, resp.Responses["A"].Frames[0].Rows())
 		require.Len(t, resp.Responses["B"].Frames, 1)
+		require.Equal(t, 7, resp.Responses["B"].Frames[0].Rows())
 	})
 
 	t.Run("adds a string field per label", func(t *testing.T) {

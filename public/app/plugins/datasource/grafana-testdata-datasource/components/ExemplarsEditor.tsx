@@ -1,7 +1,7 @@
 import { type FormEvent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Icon, InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
 import { type EditorProps } from '../QueryEditor';
 
@@ -63,27 +63,6 @@ const ExemplarsEditor = ({ query, onChange }: EditorProps) => {
           data-testid={testSelectors.max}
           placeholder="auto"
           value={query.max ?? ''}
-        />
-      </InlineField>
-      <InlineField
-        labelWidth={14}
-        label="Query delay"
-        tooltip="Base delay applied to the query (e.g. 1s, 500ms). Every query sent to one data source shares a single response, so put the exemplars and the series on two TestData instances behind the Mixed data source to make them actually arrive out of order"
-      >
-        <Input width={12} onChange={onInputChange} name="queryDelay" placeholder="0s" value={query.queryDelay ?? ''} />
-      </InlineField>
-      <InlineField labelWidth={14} label="Error rate" tooltip="Percentage of queries that return an error">
-        <Input
-          type="number"
-          min={0}
-          max={100}
-          step={5}
-          width={12}
-          onChange={onInputChange}
-          name="errorProbability"
-          placeholder="0"
-          value={query.errorProbability ?? ''}
-          suffix={<Icon name="percentage" />}
         />
       </InlineField>
     </InlineFieldRow>

@@ -106,8 +106,6 @@ describe('Test Datasource Query Editor', () => {
         scenarioId: TestDataQueryType.Exemplars,
         exemplarCount: 100,
         exemplarLabels: defaultExemplarLabels,
-        queryDelay: '0s',
-        errorProbability: 0,
       })
     );
 
@@ -119,8 +117,6 @@ describe('Test Datasource Query Editor', () => {
           scenarioId: TestDataQueryType.Exemplars,
           exemplarCount: 100,
           exemplarLabels: defaultExemplarLabels,
-          queryDelay: '0s',
-          errorProbability: 0,
         }}
       />
     );
@@ -128,8 +124,6 @@ describe('Test Datasource Query Editor', () => {
     expect(await screen.findByTestId(testSelectors.exemplarCount)).toHaveValue(100);
     expect(screen.getByTestId(testSelectors.min)).toHaveValue(null);
     expect(screen.getByTestId(testSelectors.max)).toHaveValue(null);
-    expect(screen.getByRole('textbox', { name: 'Query delay' })).toHaveValue('0s');
-    expect(screen.getByRole('spinbutton', { name: 'Error rate' })).toHaveValue(0);
 
     // The label row comes from Phase 2 and defaults to a single traceID label.
     expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('traceID');
