@@ -5735,6 +5735,19 @@
       "title-matcher-no-editor": "Matcher \"{{matcherName}}\" has no visual editor",
       "title-unknown-matcher": "Unknown matcher type \"{{matcherId}}\""
     },
+    "get-item-override-categories": {
+      "body-unknown-kind": "This panel does not support this kind of item. This override has no effect. Remove it, or correct the kind in the dashboard JSON.",
+      "body-unknown-matcher": "This override has no effect. Remove it, or correct the matcher id in the dashboard JSON.",
+      "label-add-item-override": "Add item override",
+      "label-add-override-property": "Add override property",
+      "override-name": "Item override {{overrideNum}}",
+      "target-items": "Target items",
+      "title": {
+        "add-button": "add item override button"
+      },
+      "title-unknown-kind": "Unknown item kind \"{{kind}}\"",
+      "title-unknown-matcher": "Unknown item matcher type \"{{matcherId}}\""
+    },
     "get-library-panel-options-category": {
       "descriptor": {
         "title": {
@@ -10371,6 +10384,15 @@
       "expand-row-tooltip": "Toggle row expanded",
       "tooltip-collapse-all": "Collapse all rows",
       "tooltip-expand-all": "Expand all rows"
+    },
+    "item-matchers-ui": {
+      "description-all-items": "Set properties for every item of this kind",
+      "description-items-with-id": "Set properties for specific items",
+      "description-items-with-name-matching-regex": "Set properties for items whose name matches a regular expression",
+      "name-all-items": "All items",
+      "name-items-with-id": "Items with id",
+      "name-items-with-name-matching-regex": "Items with name matching regex",
+      "placeholder-item-regexp": "Enter regular expression"
     },
     "matchers": {
       "groups": {

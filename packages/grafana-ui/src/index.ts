@@ -276,6 +276,9 @@ export {
   getUniqueMatcherScopes,
   buildScopeOptions,
 } from './components/MatchersUI/MatcherScopeSelector';
+export { itemMatchersUI, useItemMatchersOptions } from './components/MatchersUI/items/itemMatchersUI';
+export { ItemKindSelector, buildKindOptions } from './components/MatchersUI/items/ItemKindSelector';
+export type { ItemMatcherUIProps, ItemMatcherUIRegistryItem } from './components/MatchersUI/items/types';
 export { Link } from './components/Link/Link';
 export { TextLink } from './components/Link/TextLink';
 export { Text } from './components/Text/Text';

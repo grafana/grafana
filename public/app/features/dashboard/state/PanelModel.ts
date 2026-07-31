@@ -450,6 +450,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       },
       // filter out custom overrides
       overrides: filterFieldConfigOverrides(this.fieldConfig.overrides, isStandardFieldProp),
+      // carried through as-is; getPanelOptionsWithDefaults prunes the rules the new plugin
+      // cannot express, so switching away and back keeps them
+      itemOverrides: this.fieldConfig.itemOverrides,
     };
   }
 

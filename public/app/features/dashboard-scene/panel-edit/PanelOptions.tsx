@@ -1,10 +1,13 @@
 import { useMemo } from 'react';
 import * as React from 'react';
 
-import { type PanelData } from '@grafana/data';
-import { VizPanel } from '@grafana/scenes';
+import { type PanelData, type ScopedVars } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { useFlagDashboardItemOverrides } from '@grafana/runtime/internal';
+import { sceneGraph, VizPanel } from '@grafana/scenes';
 import { OptionFilter, renderSearchHits } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getFieldOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getFieldOverrideElements';
+import { getItemOverrideCategories } from 'app/features/dashboard/components/PanelEditor/getItemOverrideElements';
 import {
   getLibraryVizPanelOptionsCategory,
   getVisualizationOptions2,
@@ -73,6 +76,28 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
     [data, searchQuery, panel, fieldConfig]
   );
 
+  const itemOverridesEnabled = useFlagDashboardItemOverrides();
+
+  const itemOverrides = useMemo(() => {
+    const plugin = panel.getPlugin();
+    if (!itemOverridesEnabled || !plugin?.itemKinds.length) {
+      return [];
+    }
+
+    // Some kinds (pie slices) can only enumerate their marks once the data has been reduced,
+    // which depends on the panel's own options.
+    const itemContext = {
+      fieldConfig,
+      options,
+      replaceVariables: (value: string, scopedVars?: ScopedVars) => sceneGraph.interpolate(panel, value, scopedVars),
+      theme: config.theme2,
+    };
+
+    return getItemOverrideCategories(fieldConfig, plugin, data?.series ?? [], itemContext, searchQuery, (newConfig) => {
+      panel.onFieldConfigChange(newConfig, true);
+    });
+  }, [itemOverridesEnabled, data, searchQuery, panel, fieldConfig, options]);
+
   const isSearching = searchQuery.length > 0;
   const mainBoxElements: React.ReactNode[] = [];
 
@@ -85,7 +110,7 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
           ...(libraryPanelOptions ? [libraryPanelOptions] : []),
           ...(visualizationOptions ?? []),
         ],
-        justOverrides,
+        [...justOverrides, ...itemOverrides],
         searchQuery
       )
     );
@@ -108,9 +133,17 @@ export const PanelOptions = React.memo<Props>(({ panel, searchQuery, listMode, d
         for (const item of justOverrides) {
           mainBoxElements.push(item.renderElement());
         }
+
+        for (const item of itemOverrides) {
+          mainBoxElements.push(item.renderElement());
+        }
         break;
       case OptionFilter.Overrides:
         for (const item of justOverrides) {
+          mainBoxElements.push(item.renderElement());
+        }
+
+        for (const item of itemOverrides) {
           mainBoxElements.push(item.renderElement());
         }
       default:

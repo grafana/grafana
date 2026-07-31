@@ -7,11 +7,18 @@ import { type FieldMatcherUIRegistryItem } from '@grafana/ui/internal';
 
 interface Props {
   isExpanded: boolean;
-  registry: FieldConfigOptionsRegistry;
-  matcherUi?: FieldMatcherUIRegistryItem<ConfigOverrideRule>;
-  override: ConfigOverrideRule;
   overrideName: string;
   onOverrideRemove: () => void;
+  /**
+   * Field overrides pass the rule, its registry and matcher UI, and the label is derived here.
+   * Item overrides resolve their own label because their matcher registry is per-kind, so they
+   * pass {@link matcherLabel} and {@link propertyNames} directly instead.
+   */
+  registry?: FieldConfigOptionsRegistry;
+  matcherUi?: FieldMatcherUIRegistryItem<ConfigOverrideRule>;
+  override?: ConfigOverrideRule;
+  matcherLabel?: string;
+  propertyNames?: string[];
 }
 export const OverrideCategoryTitle = ({
   isExpanded,
@@ -20,13 +27,24 @@ export const OverrideCategoryTitle = ({
   overrideName,
   override,
   onOverrideRemove,
+  matcherLabel,
+  propertyNames: propertyNamesFromProps,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const properties = override.properties.map((p) => registry.getIfExists(p.id)).filter((prop) => !!prop);
-  const propertyNames = properties.map((p) => p?.name).join(', ');
+  const propertyNames = (
+    propertyNamesFromProps ??
+    (override ?? { properties: [] }).properties
+      .map((p) => registry?.getIfExists(p.id))
+      .filter((prop) => !!prop)
+      .map((p) => p.name)
+  ).join(', ');
+
   // Fall back to the raw matcher id when the matcher type is unknown
-  const matcherOptions = matcherUi ? matcherUi.optionsToLabel(override.matcher.options) : override.matcher.id;
+  const matcherOptions =
+    matcherLabel ??
+    (matcherUi && override ? matcherUi.optionsToLabel(override.matcher.options) : override?.matcher.id) ??
+    '';
 
   return (
     <div>
