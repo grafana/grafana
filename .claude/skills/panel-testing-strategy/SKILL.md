@@ -1,16 +1,16 @@
 ---
 name: panel-testing-strategy
-description: Write unit and E2E tests for Grafana visualization panels and DataViz-owned code the way the DataViz squad wants them. Use when adding, backfilling, or reviewing tests for panels (barchart, timeseries, table, xychart, heatmap, canvas, etc.), grafana-ui viz components (Table, uPlot, VizLegend, VizTooltip), or grafana-data viz utils; when a panel test only asserts "it rendered" or "it's defined"; when reviewing AI-generated panel tests for slop; or when a canvas/rendering test is flaky.
+description: Write unit and E2E tests for Grafana visualization panels and viz utilities to the conventions this repo expects. Use when adding, backfilling, or reviewing tests for panels (barchart, timeseries, table, xychart, heatmap, canvas, etc.), grafana-ui viz components (Table, uPlot, VizLegend, VizTooltip), or grafana-data viz utils; when a panel test only asserts "it rendered" or "it's defined"; when reviewing AI-generated panel tests for slop; or when a canvas/rendering test is flaky.
 ---
 
 # Panel testing strategy
 
-Write tests for Grafana visualization code that reviewers on `@grafana/dataviz-squad` will
-accept on the first pass. Goals: **assert concrete behavior, not existence**; keep test
-descriptions honest; verify the test actually exercises the target code path; use the
-repo's data-frame and panel-props builders; snapshot canvas panels via the draw-call
-harness; and stabilize the known flake classes. `@grafana/dataviz-squad` is opted into the
-gating `check-frontend-test-coverage.yml` check, so coverage that drops fails CI.
+Write tests for Grafana visualization code that pass review on the first pass. Goals:
+**assert concrete behavior, not existence**; keep test descriptions honest; verify the test
+actually exercises the target code path; use the repo's data-frame and panel-props builders;
+snapshot canvas panels via the draw-call harness; and stabilize the known flake classes. The
+visualization codeowner paths are opted into the gating `check-frontend-test-coverage.yml`
+check, so coverage that drops fails CI.
 
 ## Resolve the target
 
