@@ -100,11 +100,8 @@ func writeStatusError(ctx context.Context, err error, msg string) error {
 	// code (e.g. the embedding provider's quota pressure or transient
 	// outage) keeps that code so client retry policies work as documented.
 	if err != nil {
-		if s, ok := status.FromError(err); ok {
-			switch s.Code() {
-			case codes.ResourceExhausted, codes.Unavailable:
-				return status.Error(s.Code(), msg)
-			}
+		if s, ok := status.FromError(err); ok && (s.Code() == codes.ResourceExhausted || s.Code() == codes.Unavailable) {
+			return status.Error(s.Code(), msg)
 		}
 	}
 	return status.Error(codes.Internal, msg)
