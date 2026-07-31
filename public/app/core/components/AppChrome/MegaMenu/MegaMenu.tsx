@@ -190,7 +190,7 @@ export const MegaMenu = memo(
               </ul>
             )}
           </div>
-          <hr className={styles.pinnedDivider} />
+          <hr className={styles.dividerLine} />
         </>
       );
 
@@ -256,7 +256,7 @@ export const MegaMenu = memo(
               pinned list and pressing Done before the pins arrive would overwrite them with []. */}
           {canCustomise && !isLoading && (
             <>
-              <hr className={styles.pinnedDivider} />
+              <hr className={styles.dividerLine} />
               <div className={styles.editFooter}>
                 {editMode && (
                   <MegaMenuCustomiseControls
@@ -316,8 +316,6 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
     // Subtle grey box around the pinned items. Left inset (margin-left + padding-left = 1.5) matches
     // the nav row icon inset (itemList padding-left 1 + label padding-left 0.5) so the breadcrumb leaf
     // icons line up with the nav section icons. No bottom margin — the divider owns the gap below.
-    // Under visual refresh, mirror the page content pane: flush at the top, matching the page
-    // background token and radius. Off refresh, keep the raised secondary card.
     pinnedBox: css({
       margin: visualRefreshEnabled ? theme.spacing(0, 1, 1, 1) : theme.spacing(1, 1, 0, 1),
     }),
@@ -339,9 +337,10 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       height: '1px',
       background: `linear-gradient(90deg, ${theme.colors.border.weak} 65%, transparent 100%)`,
     }),
-    // Divider separating the pinned box from the rest of the nav, with a 16px gap above it.
-    pinnedDivider: css({
+    // Divider separating the pinned box from the rest of the nav, and nav from footer
+    dividerLine: css({
       border: 'none',
+      flexShrink: 0,
       height: 1,
       background: `linear-gradient(90deg, transparent 0%, ${theme.colors.border.weak} 20%, ${theme.colors.border.weak} 80%, transparent 100%)`,
       margin: theme.spacing(1),
