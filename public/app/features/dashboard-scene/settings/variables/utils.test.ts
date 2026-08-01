@@ -230,8 +230,11 @@ describe('getVariableTypeSelectOptions', () => {
     });
 
     it('should show adhoc as "Filter" in the dashboard context', () => {
-      const values = getVariableTypeSelectOptions().map((o) => o.value);
-      expect(values).toContain('adhoc');
+      const options = getVariableTypeSelectOptions();
+      const adhoc = options.find((o) => o.value === 'adhoc');
+
+      expect(adhoc).toBeDefined();
+      expect(adhoc?.label).toBe('Filter');
     });
 
     it('should show adhoc as "Filter and Group by" in the standalone context', () => {
