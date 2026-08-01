@@ -511,7 +511,8 @@ export function SaveProvisionedDashboardForm({
                     return (
                       <ProvisioningAwareFolderPicker
                         onChange={selectFolder}
-                        value={value.uid}
+                        // An empty uid must read as "root", or the picker's team-folder preselect overwrites it
+                        value={value.uid || undefined}
                         {...field}
                         showAllFolders
                       />

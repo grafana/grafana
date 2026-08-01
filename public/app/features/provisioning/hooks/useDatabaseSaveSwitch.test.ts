@@ -90,6 +90,7 @@ describe('useDatabaseSaveSwitch', () => {
   it('clears the provisioned folder and annotations when switching to the database', () => {
     const dashboard = createDashboard({
       folderUid: 'repo-folder',
+      folderTitle: 'Repo Folder',
       k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Repo } },
     });
     const { result } = setup({ dashboard });
@@ -128,7 +129,7 @@ describe('useDatabaseSaveSwitch', () => {
 
   it('restores the entry folder on switch-back when the repo never resolved', () => {
     locationService.push('/?folderUid=repo-folder');
-    const dashboard = createDashboard({ folderUid: 'orphaned-folder' });
+    const dashboard = createDashboard({ folderUid: 'orphaned-folder', folderTitle: 'Orphaned Folder' });
     const { result } = setup({ dashboard, repository: undefined, repoDataStatus: RepoViewStatus.Orphaned });
 
     act(() => result.current.switchToDatabase());

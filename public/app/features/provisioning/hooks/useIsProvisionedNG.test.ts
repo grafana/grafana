@@ -52,10 +52,11 @@ describe('useIsProvisionedNG', () => {
     config.featureToggles = originalToggles;
   });
 
-  it('returns false when provisioning is disabled', () => {
+  it('returns false when provisioning is disabled, even for a managed dashboard with a resolved repository', () => {
     config.featureToggles = { ...originalToggles, provisioning: false };
+    mockRepositoryView({ repository: { name: 'my-repo' }, isInstanceManaged: true });
 
-    const { result } = renderHook(() => useIsProvisionedNG(createDashboard()));
+    const { result } = renderHook(() => useIsProvisionedNG(createDashboard({ managed: true })));
 
     expect(result.current).toEqual({ isProvisioned: false, isLoading: false });
   });

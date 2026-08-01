@@ -98,13 +98,15 @@ export function useDatabaseSaveSwitch({
 
     // Only a Ready repo has a trustworthy folder; anything else restores the entry folder so switch-back lands on a working Git form
     const gitMeta =
-      repoDataStatus === RepoViewStatus.Ready ? { ...meta } : { ...meta, folderUid: entryFolderUid, k8s: undefined };
+      repoDataStatus === RepoViewStatus.Ready
+        ? { ...meta }
+        : { ...meta, folderUid: entryFolderUid, folderTitle: undefined, k8s: undefined };
     drawer.setState({ saveToDatabase: true, databaseSwitchSnapshot: { gitMeta, wasNew: isNewDashboard } });
 
     // Only an unmanaged folder is a valid database target; provisioned and orphaned ones are rejected.
     // Manager annotations go with it, or saveCompleted would carry them into the saved database dashboard.
     if (repoDataStatus !== RepoViewStatus.Error) {
-      dashboard.setState({ meta: { ...meta, folderUid: undefined, k8s: undefined } });
+      dashboard.setState({ meta: { ...meta, folderUid: undefined, folderTitle: undefined, k8s: undefined } });
     }
   }, [dashboard, drawer, isNewDashboard, repoDataStatus]);
 

@@ -43,8 +43,19 @@ jest.mock('app/features/live/dashboard/dashboardWatcher', () => ({
 
 jest.mock('app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker', () => {
   return {
-    ProvisioningAwareFolderPicker: ({ onChange }: { onChange: (uid?: string, title?: string) => void }) => (
-      <button type="button" data-testid="folder-picker" onClick={() => onChange('picked-folder', 'Picked Folder')}>
+    ProvisioningAwareFolderPicker: ({
+      onChange,
+      value,
+    }: {
+      onChange: (uid?: string, title?: string) => void;
+      value?: string;
+    }) => (
+      <button
+        type="button"
+        data-testid="folder-picker"
+        data-folder-uid={value}
+        onClick={() => onChange('picked-folder', 'Picked Folder')}
+      >
         Mocked Folder Picker
       </button>
     ),
@@ -216,11 +227,16 @@ function saveSuccessResponse(name: string, title: string) {
 
 describe('SaveProvisionedDashboardForm', () => {
   let capturedRequest: { url: URL; body: unknown } | null = null;
+  const originalHref = window.location.href;
 
   beforeEach(() => {
     capturedRequest = null;
     jest.clearAllMocks();
     (validationSrv.validateNewDashboardName as jest.Mock).mockResolvedValue(true);
+  });
+
+  afterEach(() => {
+    window.history.replaceState({}, '', originalHref);
   });
 
   it('should render the form with correct fields for a new dashboard', async () => {
@@ -1324,6 +1340,13 @@ describe('SaveProvisionedDashboardForm', () => {
     setupFolderless();
 
     expect(await screen.findByRole('button', { name: /no folder/i })).toBeInTheDocument();
+  });
+
+  it('passes no folder value to the picker for a new dashboard at root', async () => {
+    setupFolderless();
+
+    // An empty-string value would fire the picker's team-folder preselect and overwrite the root target
+    expect(await screen.findByTestId('folder-picker')).not.toHaveAttribute('data-folder-uid');
   });
 
   it('does not show the No folder button for non-folderless repos', async () => {
