@@ -226,20 +226,39 @@ export function MaxDataPointsOption({
   onChange,
 }: {
   options: AlertQueryOptions;
-  onChange: (options: AlertQueryOptions) => void;
+  onChange: (options: Partial<AlertQueryOptions>) => void;
 }) {
-  const value = options.maxDataPoints ?? '';
+  const [value, setValue] = useState(options.maxDataPoints?.toString() ?? '');
+  const lastCommittedRef = React.useRef(value);
+  const stateRef = React.useRef({ value, options, onChange });
+  stateRef.current = { value, options, onChange };
 
-  const onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const maxDataPointsNumber = parseInt(event.target.value, 10);
-
+  const commitValue = React.useCallback(() => {
+    const { value, options, onChange } = stateRef.current;
+    if (value === lastCommittedRef.current) {
+      return;
+    }
+    
+    const maxDataPointsNumber = parseInt(value, 10);
     const maxDataPoints = isNaN(maxDataPointsNumber) || maxDataPointsNumber === 0 ? undefined : maxDataPointsNumber;
 
     if (maxDataPoints !== options.maxDataPoints) {
       onChange({
-        ...options,
         maxDataPoints,
       });
+    }
+    lastCommittedRef.current = value;
+  }, []);
+
+  React.useEffect(() => {
+    return () => {
+      commitValue();
+    };
+  }, [commitValue]);
+
+  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      commitValue();
     }
   };
 
@@ -257,8 +276,10 @@ export function MaxDataPointsOption({
         width={10}
         placeholder={DEFAULT_MAX_DATA_POINTS.toString()}
         spellCheck={false}
-        onBlur={onMaxDataPointsBlur}
-        defaultValue={value}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => setValue(e.target.value)}
+        onBlur={commitValue}
+        onKeyDown={onKeyDown}
+        value={value}
       />
     </InlineField>
   );
@@ -269,17 +290,46 @@ export function MinIntervalOption({
   onChange,
 }: {
   options: AlertQueryOptions;
-  onChange: (options: AlertQueryOptions) => void;
+  onChange: (options: Partial<AlertQueryOptions>) => void;
 }) {
-  const value = options.minInterval ?? '';
+  const [value, setValue] = useState(options.minInterval ?? '');
+  const lastCommittedRef = React.useRef(value);
+  const stateRef = React.useRef({ value, options, onChange });
+  stateRef.current = { value, options, onChange };
 
-  const onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {
-    const minInterval = event.target.value;
-    if (minInterval !== value) {
+  const commitValue = React.useCallback(() => {
+    const { value, options, onChange } = stateRef.current;
+    if (value === lastCommittedRef.current) {
+      return;
+    }
+    
+    if (value !== (options.minInterval ?? '')) {
+      if (value !== '') {
+        try {
+          rangeUtil.intervalToMs(value);
+        } catch (err) {
+          // Invalid interval; revert input to last valid value to prevent crash
+          setValue(lastCommittedRef.current);
+          return;
+        }
+      }
+
       onChange({
-        ...options,
-        minInterval,
+        minInterval: value,
       });
+    }
+    lastCommittedRef.current = value;
+  }, []);
+
+  React.useEffect(() => {
+    return () => {
+      commitValue();
+    };
+  }, [commitValue]);
+
+  const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      commitValue();
     }
   };
 
@@ -299,8 +349,10 @@ export function MinIntervalOption({
         width={10}
         placeholder={DEFAULT_MIN_INTERVAL}
         spellCheck={false}
-        onBlur={onMinIntervalBlur}
-        defaultValue={value}
+        onChange={(e: ChangeEvent<HTMLInputElement>) => setValue(e.target.value)}
+        onBlur={commitValue}
+        onKeyDown={onKeyDown}
+        value={value}
       />
     </InlineField>
   );

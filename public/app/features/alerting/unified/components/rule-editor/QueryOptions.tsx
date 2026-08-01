@@ -28,6 +28,16 @@ export const QueryOptions = ({
   const styles = useStyles2(getStyles);
 
   const [showOptions, setShowOptions] = useState(false);
+  const queryOptionsRef = React.useRef(queryOptions);
+  queryOptionsRef.current = queryOptions;
+
+  const handlePartialChange = React.useCallback(
+    (partial: Partial<AlertQueryOptions>) => {
+      queryOptionsRef.current = { ...queryOptionsRef.current, ...partial };
+      onChangeQueryOptions(queryOptionsRef.current, index);
+    },
+    [onChangeQueryOptions, index]
+  );
 
   const separator = <span>, </span>;
 
@@ -44,8 +54,8 @@ export const QueryOptions = ({
                 />
               </InlineField>
             )}
-            <MaxDataPointsOption options={queryOptions} onChange={(options) => onChangeQueryOptions(options, index)} />
-            <MinIntervalOption options={queryOptions} onChange={(options) => onChangeQueryOptions(options, index)} />
+            <MaxDataPointsOption options={queryOptions} onChange={handlePartialChange} />
+            <MinIntervalOption options={queryOptions} onChange={handlePartialChange} />
           </div>
         }
         closeButton={true}
