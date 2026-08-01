@@ -28,7 +28,7 @@ import { copyStringToClipboard } from 'app/core/utils/explore';
 
 import { createNotebook, duplicateNotebook, notebookEditUrl, notebookViewUrl } from '../api/notebookAPI';
 import { markNotebookAsNew } from '../model/newNotebookSignal';
-import { newNotebookSpec } from '../model/notebookSpec';
+import { DEFAULT_NOTEBOOK_TITLE, newNotebookSpec } from '../model/notebookSpec';
 
 export function NotebooksListPage() {
   const notebooksEnabled = useFlagDashboardNotebooks();
@@ -75,7 +75,7 @@ export function NotebooksListPage() {
     setCreating(true);
     try {
       const created = await createNotebook(
-        newNotebookSpec(t('notebooks.list.new-notebook-title', 'Untitled notebook'))
+        newNotebookSpec(t('notebooks.list.new-notebook-title', DEFAULT_NOTEBOOK_TITLE))
       );
       markNotebookAsNew(created.metadata.name);
       locationService.push(notebookEditUrl(created.metadata.name));

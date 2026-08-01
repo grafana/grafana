@@ -46,8 +46,17 @@ export function normalizeNotebookSpec(spec: NotebookSpec): NotebookSpec {
   };
 }
 
+/** Default title used when creating a notebook (list, sidebar, command palette, etc.). */
+export const DEFAULT_NOTEBOOK_TITLE = 'Untitled notebook';
+
+/** True when the title is missing/blank or still the create-flow default. */
+export function isDefaultNotebookTitle(title: string | undefined | null): boolean {
+  const trimmed = title?.trim() ?? '';
+  return !trimmed || trimmed.toLowerCase() === DEFAULT_NOTEBOOK_TITLE.toLowerCase();
+}
+
 export function newNotebookSpec(
-  title: string,
+  title: string = DEFAULT_NOTEBOOK_TITLE,
   options?: { description?: string; from?: string; to?: string }
 ): NotebookSpec {
   const timeSettings = defaultTimeSettingsSpec();

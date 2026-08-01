@@ -10,7 +10,7 @@ import { type PluginExtensionExploreContext } from '../../explore/extensions/Too
 import { createNotebook, notebookEditUrl } from '../api/notebookAPI';
 import { getLastUsedNotebook } from '../model/lastUsedNotebook';
 import { markNotebookAsNew } from '../model/newNotebookSignal';
-import { newNotebookSpec } from '../model/notebookSpec';
+import { DEFAULT_NOTEBOOK_TITLE, newNotebookSpec } from '../model/notebookSpec';
 
 /** Title shared by the sidebar added link and added component (the sidebar matches them by title). */
 export const NOTEBOOKS_SIDEBAR_COMPONENT_TITLE = 'Notebooks';
@@ -132,7 +132,7 @@ export function getNotebookExtensionConfigs(): PluginExtensionAddedLinkConfig[] 
           return {};
         },
         onClick: async () => {
-          const created = await createNotebook(newNotebookSpec('Untitled notebook'));
+          const created = await createNotebook(newNotebookSpec(DEFAULT_NOTEBOOK_TITLE));
           markNotebookAsNew(created.metadata.name);
           locationService.push(notebookEditUrl(created.metadata.name));
         },

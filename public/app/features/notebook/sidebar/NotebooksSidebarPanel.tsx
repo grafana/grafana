@@ -23,6 +23,7 @@ import {
   insertElement,
   moveCell,
   newMarkdownElement,
+  DEFAULT_NOTEBOOK_TITLE,
   newNotebookSpec,
   removeCellAt,
   resolveCells,
@@ -68,7 +69,9 @@ export function NotebooksSidebarPanel() {
   const effectiveUid = selectedUid && options.some((o) => o.value === selectedUid) ? selectedUid : options[0]?.value;
 
   const onCreate = async () => {
-    const created = await createNotebook(newNotebookSpec(t('notebooks.list.new-notebook-title', 'Untitled notebook')));
+    const created = await createNotebook(
+      newNotebookSpec(t('notebooks.list.new-notebook-title', DEFAULT_NOTEBOOK_TITLE))
+    );
     setSelectedUid(created.metadata.name);
   };
 

@@ -1,6 +1,6 @@
 import { defaultSpec as defaultNotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 
-import { newPanelForDatasource } from '../model/notebookSpec';
+import { DEFAULT_NOTEBOOK_TITLE, newPanelForDatasource } from '../model/notebookSpec';
 
 import { buildDeclareIncidentParams, declareIncidentContextFromSpec } from './declareIncidentFromNotebook';
 
@@ -43,18 +43,19 @@ describe('buildDeclareIncidentParams', () => {
   it('falls back to the first markdown line when the title is still the default', () => {
     const params = buildDeclareIncidentParams({
       uid: 'nb1',
-      title: 'Untitled notebook',
+      title: DEFAULT_NOTEBOOK_TITLE,
       firstMarkdownLine: 'Checkout p99 over SLO in prod',
       description: 'API errors spiking in us-east',
     });
 
     expect(params.title).toBe('Checkout p99 over SLO in prod');
+    expect(params.caption).toBe('Investigation notebook');
   });
 
-  it('falls back to description when title is default and there is no markdown', () => {
+  it('treats blank titles like the create default', () => {
     const params = buildDeclareIncidentParams({
       uid: 'nb1',
-      title: 'New notebook',
+      title: '   ',
       description: 'API errors spiking in us-east',
     });
 

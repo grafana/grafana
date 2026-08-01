@@ -50,6 +50,7 @@ import { declareIncidentContextFromSpec } from '../extensions/declareIncidentFro
 import { setLastUsedNotebook } from '../model/lastUsedNotebook';
 import { consumeNewNotebook } from '../model/newNotebookSignal';
 import {
+  DEFAULT_NOTEBOOK_TITLE,
   duplicateCellAt,
   insertElement,
   moveCell,
@@ -453,7 +454,7 @@ export function NotebookEditor({ uid }: Props) {
   }, [editor, uid]);
 
   const pageNav = {
-    text: spec?.title || t('notebooks.editor.untitled', 'Untitled notebook'),
+    text: spec?.title || t('notebooks.editor.untitled', DEFAULT_NOTEBOOK_TITLE),
     parentItem: { text: t('notebook.breadcrumb-title', 'Notebooks'), url: '/notebooks' },
   };
 

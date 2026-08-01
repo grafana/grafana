@@ -2,8 +2,10 @@ import { type PanelKind } from '@grafana/schema/apis/notebook/v2beta1';
 
 import {
   clearCellTimeOverride,
+  DEFAULT_NOTEBOOK_TITLE,
   duplicateCellAt,
   insertElement,
+  isDefaultNotebookTitle,
   moveCell,
   newCodeElement,
   newMarkdownElement,
@@ -43,6 +45,17 @@ function newPanelElement(id = 0): PanelKind {
 }
 
 describe('notebookSpec', () => {
+  it('treats blank and create-default titles as the default notebook title', () => {
+    expect(DEFAULT_NOTEBOOK_TITLE).toBe('Untitled notebook');
+    expect(isDefaultNotebookTitle(DEFAULT_NOTEBOOK_TITLE)).toBe(true);
+    expect(isDefaultNotebookTitle('  untitled notebook  ')).toBe(true);
+    expect(isDefaultNotebookTitle('')).toBe(true);
+    expect(isDefaultNotebookTitle('   ')).toBe(true);
+    expect(isDefaultNotebookTitle(undefined)).toBe(true);
+    expect(isDefaultNotebookTitle('Checkout latency')).toBe(false);
+    expect(newNotebookSpec().title).toBe(DEFAULT_NOTEBOOK_TITLE);
+  });
+
   it('normalizes null arrays/maps from API-created notebooks', () => {
     // Go marshals unset slices/maps as null; notebooks created directly through
     // the resource API arrive like this and must not crash the UI.
