@@ -11,6 +11,7 @@ import { type DashboardScene } from 'app/features/dashboard-scene/scene/Dashboar
 import { NotebookLayoutManager } from 'app/features/dashboard-scene/scene/layout-notebook/NotebookLayoutManager';
 import { dispatch } from 'app/store/store';
 
+import { normalizeNotebookSpec } from '../model/notebookSpec';
 import { buildNotebookEnvelope } from '../scene/buildNotebookEnvelope';
 
 // A notebook renders through the same scene pipeline as a v2 dashboard, so we reuse
@@ -46,7 +47,7 @@ export class NotebookScenePageStateManager extends DashboardScenePageStateManage
     // stay on the @grafana/schema notebook types.
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema resource type at the fetch seam
     const notebook = result.data as unknown as Resource<NotebookSpec>;
-    return buildNotebookEnvelope(notebook);
+    return buildNotebookEnvelope({ ...notebook, spec: normalizeNotebookSpec(notebook.spec) });
   }
 
   public transformResponseToScene(

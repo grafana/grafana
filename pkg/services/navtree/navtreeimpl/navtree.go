@@ -147,6 +147,17 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		})
 	}
 
+	if c.IsSignedIn && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardNotebooks) {
+		treeRoot.AddSection(&navtree.NavLink{
+			Text:       "Notebooks",
+			Id:         navtree.NavIDNotebooks,
+			SubTitle:   "Capture investigations with narrative text and live visualizations",
+			Icon:       "book-open",
+			SortWeight: navtree.WeightNotebooks,
+			Url:        s.cfg.AppSubURL + "/notebooks",
+		})
+	}
+
 	if s.cfg.ProfileEnabled && c.IsSignedIn {
 		treeRoot.AddSection(s.getProfileNode(c))
 	}

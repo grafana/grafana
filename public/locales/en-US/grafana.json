@@ -5915,8 +5915,9 @@
     "new-panel-title": "New panel",
     "notebook-layout": {
       "description": "A vertical sequence of panels, text, and code cells",
+      "locked-range": "Locked: {{range}}",
       "name": "Notebook",
-      "pill": "Published Notebook",
+      "pill": "Notebook",
       "time": "Time"
     },
     "on-create-new-row": {
@@ -12671,7 +12672,192 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": "Notebooks"
+    "back-button": "All notebooks",
+    "breadcrumb-title": "Notebooks",
+    "edit-button": "Edit"
+  },
+  "notebooks": {
+    "activity": {
+      "added-code": "added a code block",
+      "added-note": "added a note",
+      "added-text": "added a text block",
+      "changed-viz": "changed a visualization",
+      "deleted-block": "deleted a block",
+      "duplicated-block": "duplicated a block",
+      "empty": "Edits made while this notebook is open will show up here.",
+      "locked-time": "locked a block to a time range",
+      "moved-block": "moved a block",
+      "renamed-panel": "renamed a panel",
+      "title": "Activity",
+      "tooltip": "Activity"
+    },
+    "add-cell": {
+      "code": "Code",
+      "text": "Text",
+      "visualization": "Visualization",
+      "viz-body": "Visualizations are added to a notebook from where the data lives: open any dashboard panel menu and choose Add to notebook, or run a query in Explore and use Add to notebook in the toolbar. The panel is embedded live and follows the time range of this notebook.",
+      "viz-dashboards": "Browse dashboards",
+      "viz-explore": "Open Explore",
+      "viz-title": "Add a visualization"
+    },
+    "add-form": {
+      "add": "Add",
+      "add-open": "Add & open notebook",
+      "added": "Added to notebook",
+      "cancel": "Cancel",
+      "default-title": "Investigation — {{date}}",
+      "error-title": "Could not add to notebook",
+      "existing": "Existing notebook",
+      "failed": "Failed to add to notebook",
+      "lock-time": "Lock this panel to the current time window",
+      "lock-time-description": "{{from}} → {{to}}",
+      "new": "New notebook",
+      "none-yet": "No notebooks yet",
+      "notebook-label": "Notebook",
+      "notebook-placeholder": "Choose a notebook",
+      "select-required": "Select a notebook to add to.",
+      "source": "Adding a live panel from {{sourceName}}.",
+      "target-label": "Target notebook",
+      "title-label": "Notebook name"
+    },
+    "add-from-explore": {
+      "origin": "From Explore ({{datasource}})",
+      "panel-title": "Explore query",
+      "source": "Explore"
+    },
+    "add-from-panel": {
+      "origin": "From dashboard: {{title}}",
+      "unnamed-dashboard": "this dashboard"
+    },
+    "add-modal": {
+      "title": "Add to notebook"
+    },
+    "assistant": {
+      "open": "Ask Assistant",
+      "prompt": "Help me with the attached notebook \"{{title}}\" — continue the investigation and add findings to it."
+    },
+    "cell": {
+      "assistant-badge": "Assistant",
+      "collapse": "Collapse block",
+      "delete": "Delete block",
+      "drag": "Drag to reorder block",
+      "duplicate": "Duplicate block",
+      "expand": "Expand block",
+      "explore": "Open in Explore",
+      "locked-range": "Locked: {{range}}",
+      "rename": "Rename panel",
+      "rename-label": "Panel title",
+      "time-close": "Close",
+      "time-lock": "Lock to a specific time range",
+      "time-locked": "Edit locked time range",
+      "time-sync": "Use notebook time",
+      "unlock": "Sync back to notebook time range"
+    },
+    "code-cell": {
+      "language": "Code language"
+    },
+    "collapsed-cell": {
+      "code_one": "{{language}} · {{count}} line",
+      "code_other": "{{language}} · {{count}} lines",
+      "empty-text": "Empty text cell",
+      "expand": "Expand block",
+      "hint": "collapsed",
+      "panel": "Panel"
+    },
+    "declare-incident": {
+      "button": "Declare incident"
+    },
+    "editor": {
+      "copied-markdown": "Notebook copied as Markdown",
+      "copy-markdown": "Copy as Markdown",
+      "delete": "Delete notebook",
+      "delete-body": "Are you sure you want to delete \"{{title}}\"?",
+      "delete-confirm": "Delete",
+      "delete-title": "Delete notebook",
+      "done": "Done",
+      "empty-add-code": "Add code",
+      "empty-add-text": "Add text",
+      "empty-body": "Write down what you are seeing, then bring in live data — any dashboard panel or Explore query can be added straight into this notebook.",
+      "empty-dashboards": "Browse dashboards",
+      "empty-explore": "Open Explore",
+      "empty-title": "Start your investigation",
+      "following": "Following {{name}}",
+      "library-panel": "Library panel — open the notebook view to render it",
+      "load-error": "Failed to load notebook",
+      "more": "More actions",
+      "redo": "Redo (⇧⌘Z)",
+      "save-failed": "Failed to save notebook",
+      "status-clean": "All changes saved",
+      "status-pending": "Saving shortly…",
+      "status-saved": "Saved {{when}}",
+      "status-saving": "Saving…",
+      "status-unsaved": "Unsaved changes",
+      "stop-following": "Stop following",
+      "tags-placeholder": "Add tags",
+      "title-label": "Notebook title",
+      "title-placeholder": "Give this notebook a title",
+      "undo": "Undo (⌘Z)",
+      "untitled": "Untitled notebook"
+    },
+    "insert-divider": {
+      "code": "Code",
+      "text": "Text",
+      "tooltip": "Insert block here"
+    },
+    "list": {
+      "cell-count_one": "{{count}} block",
+      "cell-count_other": "{{count}} blocks",
+      "copy-title": "{{title}} (copy)",
+      "delete-body": "Are you sure you want to delete \"{{title}}\"?",
+      "delete-confirm": "Delete",
+      "delete-label": "Delete notebook {{title}}",
+      "delete-title": "Delete notebook",
+      "duplicate-label": "Duplicate notebook {{title}}",
+      "edit": "Edit",
+      "empty-body": "Notebooks are living documents for investigations: mix text with live panels added from dashboards and Explore, and collaborate with your team in real time.",
+      "empty-title": "You have not created any notebooks yet",
+      "new-notebook": "New notebook",
+      "new-notebook-title": "Untitled notebook",
+      "no-results": "No notebooks match your search",
+      "search-placeholder": "Search notebooks by name, description or tag",
+      "subtitle": "Capture investigations combining narrative text with live visualizations from your dashboards and Explore.",
+      "updated": "Updated {{when}}"
+    },
+    "markdown-cell": {
+      "edit-label": "Edit text cell",
+      "empty": "Click to add text — markdown, links and images supported",
+      "placeholder": "Write markdown…"
+    },
+    "panel-cell": {
+      "resize": "Resize panel"
+    },
+    "presence": {
+      "click-to-follow": "{{name}} is in this notebook — click to follow",
+      "stop-following": "Following {{name}} — click to stop",
+      "viewing": "{{name}} is in this notebook"
+    },
+    "quick-add": {
+      "added": "Added to notebook"
+    },
+    "sidebar": {
+      "add-note": "Add note (Enter)",
+      "delete-block": "Delete block",
+      "edit": "Open in editor",
+      "empty": "No notebooks yet — create one to start capturing findings.",
+      "new": "New",
+      "no-blocks": "Nothing here yet — capture your first note below, or add panels from any dashboard.",
+      "note-placeholder": "Jot a quick note — Enter to add",
+      "open": "Open notebook",
+      "picker": "Notebook",
+      "status-synced": "All changes saved",
+      "title": "Notebooks",
+      "view-all": "View all"
+    },
+    "viz-suggestions": {
+      "no-data": "No data yet — suggestions appear once the panel has results.",
+      "none": "No suggestions for this data shape.",
+      "tooltip": "Change visualization"
+    }
   },
   "notifications": {
     "empty-state": {
@@ -12836,6 +13022,8 @@
       }
     },
     "header-menu": {
+      "add-to-last-notebook": "Add to \"{{title}}\"",
+      "add-to-notebook": "Add to notebook",
       "copy": "Copy",
       "copy-styles": "Copy styles",
       "download-diagnostics": "Download diagnostics",

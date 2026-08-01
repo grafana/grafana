@@ -184,7 +184,10 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
   return new VizPanel(vizPanelState);
 }
 
-function createPanelDataProvider(
+// Exported so the notebooks editor can build standalone viz panels from a PanelKind
+// without pulling in the dashboard-scene-coupled parts of buildVizPanel (menu, header
+// actions, panel context) that require a DashboardScene ancestor.
+export function createPanelDataProvider(
   panelKind: PanelKind,
   panelMetas: PanelPluginMetas = getPanelPluginMetasMapSync()
 ): SceneDataProvider | undefined {

@@ -1,11 +1,13 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
-import { type AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data';
+import { type AppPluginConfig, PluginExtensionExposedComponents, PluginExtensionPoints } from '@grafana/data';
 import { getAppPluginMetas, getCachedPromise } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 import { CreateAlertFromPanelExposedComponent } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponent';
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
+import { NOTEBOOKS_SIDEBAR_COMPONENT_TITLE } from 'app/features/notebook/extensions/getNotebookExtensionConfigs';
+import { NotebooksSidebarPanelLoader } from 'app/features/notebook/sidebar/NotebooksSidebarPanelLoader';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -23,12 +25,45 @@ function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistries {
   return { addedComponentsRegistry, addedFunctionsRegistry, addedLinksRegistry, exposedComponentsRegistry };
 }
 
-function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry }: PluginExtensionRegistries) {
+function registerCoreExtensions({
+  addedComponentsRegistry,
+  addedLinksRegistry,
+  addedFunctionsRegistry,
+  exposedComponentsRegistry,
+}: PluginExtensionRegistries) {
   // Registering core extension links
   addedLinksRegistry.register({
     pluginId: 'grafana',
     configs: getCoreExtensionConfigurations(),
   });
+
+  // The notebooks workspace panel for the extension sidebar. The matching added link
+  // (which gates visibility on the feature flag) is part of getCoreExtensionConfigurations.
+  addedComponentsRegistry.register({
+    pluginId: 'grafana',
+    configs: [
+      {
+        targets: [PluginExtensionPoints.ExtensionSidebar],
+        title: NOTEBOOKS_SIDEBAR_COMPONENT_TITLE,
+        description: 'Browse notebooks and capture quick notes alongside any Grafana page',
+        component: NotebooksSidebarPanelLoader,
+      },
+    ],
+  });
+
+  // Notebook operations exposed to the Grafana Assistant (inert without the assistant app).
+  // Imported lazily: @grafana/assistant runs init-time code that must not execute in the
+  // synchronous bootstrap path, and a failure here should never block Grafana from loading.
+  import('app/features/notebook/extensions/notebookAssistantFunctions')
+    .then((m) => {
+      addedFunctionsRegistry.register({
+        pluginId: 'grafana',
+        configs: m.getNotebookAssistantFunctionConfigs(),
+      });
+    })
+    .catch((error) => {
+      console.warn('Could not register notebook assistant functions', error);
+    });
 
   // Registering core exposed components
   exposedComponentsRegistry.register({
