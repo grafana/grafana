@@ -172,7 +172,7 @@ export function NotebooksListPage() {
                         <TagList tags={notebook.spec.tags} />
                       </Card.Tags>
                     )}
-                    <Card.SecondaryActions>
+                    <Card.SecondaryActions className={styles.cardActions}>
                       <LinkButton
                         key="edit"
                         variant="secondary"
@@ -301,6 +301,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     listStyle: 'none',
     margin: 0,
     padding: 0,
+  }),
+  // The card's href renders as an absolutely-positioned overlay covering the whole
+  // card, which paints above static children — without a z-index the action buttons
+  // are neither hoverable (no tooltips) nor clickable (same trick as Card.Meta).
+  cardActions: css({
+    zIndex: 1,
   }),
 });
 
