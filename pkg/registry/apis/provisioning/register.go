@@ -369,6 +369,23 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, fmt.Errorf("invalid allowed_git_urls configuration: %w", err)
 	}
+
+	// allow_git_private_ip controls whether private (RFC 1918) IP addresses are allowed
+	// for Git repository URLs. When true, private IP ranges are added to the allowlist
+	// so that the URL validator does not reject them. This is a security-sensitive setting
+	// that should only be enabled when the Git server is on a trusted network.
+	allowPrivateIP := provisioningSec.Key("allow_git_private_ip").MustBool(false)
+	if allowPrivateIP {
+		// Add RFC 1918 private IP ranges to the allowlist
+		allowlist, err = repository.NewAllowlist(append(allowListConfig,
+			"10.0.0.0/8",
+			"172.16.0.0/12",
+			"192.168.0.0/16",
+		))
+		if err != nil {
+			return nil, fmt.Errorf("failed to build allowlist with private IP ranges: %w", err)
+		}
+	}
 	urlValidator := repository.NewURLValidator(allowlist, net.DefaultResolver.LookupIPAddr)
 	repoValidatorOpts := []repository.ValidatorOption{repository.WithURLValidator(urlValidator)}
 
