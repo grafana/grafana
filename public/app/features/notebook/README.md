@@ -62,8 +62,8 @@ Related code outside this folder:
 - View-mode time controls are hidden when a notebook has no visualization panels
   (nothing for the shared range to drive); they stay editable when panels are present.
 - Notebook `description` exists on the spec (list search / declare-incident can use it)
-  but is **not editable in the POC UI** — fast follow. Until then, declare-incident
-  falls back to the first markdown line, then `Investigation: {title}`.
+  but is **not editable in the POC UI** — fast follow. Declare-incident title order:
+  named title → first markdown line → description → `Investigation: Untitled notebook`.
 
 ## Review notes (private preview readiness)
 

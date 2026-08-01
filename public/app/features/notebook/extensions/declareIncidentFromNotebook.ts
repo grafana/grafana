@@ -10,10 +10,7 @@ export interface DeclareIncidentNotebookContext {
   tags?: string[];
   /** Panel titles when known — used for a short description bullet list. */
   panelTitles?: string[];
-  /**
-   * First meaningful markdown line — used when `description` is empty.
-   * Notebook description isn't editable in the POC UI yet, so notes often live here.
-   */
+  /** First meaningful markdown line — used when the notebook title is still the create default. */
   firstMarkdownLine?: string;
 }
 
@@ -65,20 +62,29 @@ export function declareIncidentContextFromSpec(uid: string, spec: NotebookSpec):
 }
 
 function incidentTitle(ctx: DeclareIncidentNotebookContext): string {
-  // Prefer a short notebook description, then the first note line, then a prefixed title.
-  // Description isn't editable in the POC UI yet — markdown notes are the usual signal.
-  for (const candidate of [ctx.description, ctx.firstMarkdownLine]) {
-    const trimmed = asSingleLineSummary(candidate);
-    if (trimmed) {
-      return trimmed;
+  // Named title wins; only fall through when it's still the create default.
+  // Description isn't editable in the POC UI, so markdown notes beat it.
+  const trimmedTitle = ctx.title.trim();
+  if (trimmedTitle && !isDefaultNotebookTitle(trimmedTitle)) {
+    if (/^investigation\b/i.test(trimmedTitle)) {
+      return trimmedTitle;
+    }
+    return `Investigation: ${trimmedTitle}`;
+  }
+
+  for (const candidate of [ctx.firstMarkdownLine, ctx.description]) {
+    const summary = asSingleLineSummary(candidate);
+    if (summary) {
+      return summary;
     }
   }
 
-  const trimmedTitle = ctx.title.trim() || 'Untitled notebook';
-  if (/^investigation\b/i.test(trimmedTitle)) {
-    return trimmedTitle;
-  }
-  return `Investigation: ${trimmedTitle}`;
+  return 'Investigation: Untitled notebook';
+}
+
+function isDefaultNotebookTitle(title: string): boolean {
+  // Matches the create-flow default (and a couple of common placeholders).
+  return /^(untitled notebook|new notebook)$/i.test(title.trim());
 }
 
 function incidentDescription(ctx: DeclareIncidentNotebookContext, notebookUrl: string, title: string): string {
