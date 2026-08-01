@@ -7,24 +7,21 @@ import { createBridgeURL } from 'app/features/alerting/unified/components/Plugin
 import { canAccessPluginPage, useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
-import { notebookViewUrl } from '../api/notebookAPI';
+import { buildDeclareIncidentParams, type DeclareIncidentNotebookContext } from './declareIncidentFromNotebook';
 
 const DECLARE_INCIDENT_PATH = '/incidents/declare';
 
-interface Props {
-  uid: string;
-  title: string;
+interface Props extends DeclareIncidentNotebookContext {
   /** Toolbar control (default) or hamburger menu item. */
   as?: 'button' | 'menu-item';
 }
 
 /**
- * IRM entry point from a notebook: escalates the captured investigation into a
- * declared incident, prefilled with the notebook title and a link back to the
- * notebook. Uses the same plugin bridge as alerting (IRM app with Incident app
- * fallback) and renders nothing when neither is available.
+ * IRM entry point from a notebook: opens declare-incident prefilled with a sensible
+ * title, a labeled link back to the notebook, and a short description. Renders
+ * nothing when IRM/Incident isn't available.
  */
-export function DeclareIncidentFromNotebookButton({ uid, title, as = 'button' }: Props) {
+export function DeclareIncidentFromNotebookButton({ as = 'button', ...ctx }: Props) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { pluginId, loading, installed, settings } = useIrmPlugin(SupportedPlugin.Incident);
@@ -37,11 +34,7 @@ export function DeclareIncidentFromNotebookButton({ uid, title, as = 'button' }:
     return null;
   }
 
-  const notebookUrl = new URL(notebookViewUrl(uid), window.location.origin).toString();
-  const bridgeURL = createBridgeURL(pluginId, DECLARE_INCIDENT_PATH, {
-    title,
-    url: notebookUrl,
-  });
+  const bridgeURL = createBridgeURL(pluginId, DECLARE_INCIDENT_PATH, buildDeclareIncidentParams(ctx));
 
   const label = t('notebooks.declare-incident.button', 'Declare incident');
   const fireColor = theme.colors.error.text;

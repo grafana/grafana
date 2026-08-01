@@ -17,6 +17,7 @@ import { copyStringToClipboard } from 'app/core/utils/explore';
 import { DashboardPageError } from 'app/features/dashboard/containers/DashboardPageError';
 import { type DashboardControls } from 'app/features/dashboard-scene/scene/DashboardControls';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { NotebookLayoutManager } from 'app/features/dashboard-scene/scene/layout-notebook/NotebookLayoutManager';
 import { AccessControlAction } from 'app/types/accessControl';
 import { DashboardRoutes } from 'app/types/dashboard';
 
@@ -84,7 +85,7 @@ export function NotebookScenePage() {
 // and outline sidebar out. The scene is activated so panels still run their queries and
 // resolve the shared time range; the title stays via the page breadcrumb (pageNav).
 function NotebookDocument({ scene }: { scene: DashboardScene }) {
-  const { body, controls, title, uid } = scene.useState();
+  const { body, controls, title, description, tags, uid } = scene.useState();
 
   useEffect(() => scene.activate(), [scene]);
 
@@ -95,7 +96,23 @@ function NotebookDocument({ scene }: { scene: DashboardScene }) {
     <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
       {/* ScopesVariable (and other UNSAFE_renderAsHidden vars) must mount so query runners aren't blocked forever on dependsOnScopes — same as SoloPanelPage. */}
       {renderHiddenVariables(scene)}
-      {controls && <NotebookControls controls={controls} uid={uid} title={title} />}
+      {controls && (
+        <NotebookControls
+          controls={controls}
+          uid={uid}
+          title={title}
+          description={description}
+          tags={tags}
+          panelTitles={
+            body instanceof NotebookLayoutManager
+              ? body
+                  .getVizPanels()
+                  .map((panel) => panel.state.title)
+                  .filter((panelTitle): panelTitle is string => Boolean(panelTitle?.trim()))
+              : undefined
+          }
+        />
+      )}
       {body && <body.Component model={body} />}
     </Page>
   );
@@ -120,7 +137,21 @@ function renderHiddenVariables(scene: DashboardScene) {
 // Read-only notebooks still get the shared time range + refresh — but only those two
 // pickers, not the full dashboard controls bar (which carries edit/variable actions).
 // The Edit button is the entry into the collaborative notebook editor.
-function NotebookControls({ controls, uid, title }: { controls: DashboardControls; uid?: string; title?: string }) {
+function NotebookControls({
+  controls,
+  uid,
+  title,
+  description,
+  tags,
+  panelTitles,
+}: {
+  controls: DashboardControls;
+  uid?: string;
+  title?: string;
+  description?: string;
+  tags?: string[];
+  panelTitles?: string[];
+}) {
   const styles = useStyles2(getControlsStyles);
   const { timePicker, refreshPicker, hideTimeControls } = controls.useState();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -189,7 +220,15 @@ function NotebookControls({ controls, uid, title }: { controls: DashboardControl
           }}
           data-testid="notebook-copy-link"
         />
-        {uid && title && <DeclareIncidentFromNotebookButton uid={uid} title={title} />}
+        {uid && title && (
+          <DeclareIncidentFromNotebookButton
+            uid={uid}
+            title={title}
+            description={description}
+            tags={tags}
+            panelTitles={panelTitles}
+          />
+        )}
         {canEdit && uid && (
           <LinkButton variant="secondary" icon="pen" href={`/notebooks/edit/${uid}`} data-testid="notebook-edit-button">
             {t('notebook.edit-button', 'Edit')}
