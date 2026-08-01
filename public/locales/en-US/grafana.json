@@ -12832,7 +12832,7 @@
       "empty-title": "You have not created any notebooks yet",
       "link-copied": "Notebook link copied",
       "new-notebook": "New notebook",
-      "new-notebook-title": "Untitled notebook",
+      "new-notebook-title": "Investigation — {{date}}",
       "no-results": "No notebooks match your search",
       "panel-count_one": "{{count}} panel",
       "panel-count_other": "{{count}} panels",

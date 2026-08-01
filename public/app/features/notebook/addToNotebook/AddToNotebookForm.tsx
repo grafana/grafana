@@ -10,6 +10,7 @@ import { appEvents } from 'app/core/app_events';
 
 import { notebookEditUrl } from '../api/notebookAPI';
 import { getLastUsedNotebook } from '../model/lastUsedNotebook';
+import { newNotebookTitleDate } from '../model/notebookSpec';
 
 import { addElementToNotebook, type AddToNotebookTarget } from './addToNotebook';
 
@@ -161,8 +162,9 @@ export function AddToNotebookForm({ element, sourceName, timeRange, onDismiss }:
 }
 
 function defaultTitle(): string {
+  // Same dated shape as list/sidebar/command-palette creates (i18n-wrapped).
   return t('notebooks.add-form.default-title', 'Investigation — {{date}}', {
-    date: new Date().toLocaleDateString(),
+    date: newNotebookTitleDate(),
   });
 }
 

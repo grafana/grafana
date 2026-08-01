@@ -382,7 +382,7 @@ export function NotebookEditor({ uid }: Props) {
   }, [autoRefresh]);
 
   // Freshly created notebooks start with the title focused and selected, so typing
-  // immediately replaces "Untitled notebook".
+  // immediately focuses the title for rename.
   const isLoaded = !loading && !!spec;
   useEffect(() => {
     if (!isLoaded) {

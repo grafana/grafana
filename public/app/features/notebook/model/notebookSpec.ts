@@ -46,17 +46,33 @@ export function normalizeNotebookSpec(spec: NotebookSpec): NotebookSpec {
   };
 }
 
-/** Default title used when creating a notebook (list, sidebar, command palette, etc.). */
+/**
+ * Legacy / empty-title fallback shown in the editor when a notebook has no name.
+ * New notebooks are created with {@link newNotebookTitle} instead.
+ */
 export const DEFAULT_NOTEBOOK_TITLE = 'Untitled notebook';
 
-/** True when the title is missing/blank or still the create-flow default. */
+/** True when the title is missing/blank or still the legacy untitled placeholder. */
 export function isDefaultNotebookTitle(title: string | undefined | null): boolean {
   const trimmed = title?.trim() ?? '';
   return !trimmed || trimmed.toLowerCase() === DEFAULT_NOTEBOOK_TITLE.toLowerCase();
 }
 
+/** Locale date segment used in {@link newNotebookTitle} (also for i18n `{{date}}`). */
+export function newNotebookTitleDate(now: Date = new Date()): string {
+  return now.toLocaleDateString();
+}
+
+/**
+ * Title for newly created notebooks — dated so capture/quick-add targets are easy
+ * to find later (list, sidebar, command palette, add-to-notebook).
+ */
+export function newNotebookTitle(now: Date = new Date()): string {
+  return `Investigation — ${newNotebookTitleDate(now)}`;
+}
+
 export function newNotebookSpec(
-  title: string = DEFAULT_NOTEBOOK_TITLE,
+  title: string = newNotebookTitle(),
   options?: { description?: string; from?: string; to?: string }
 ): NotebookSpec {
   const timeSettings = defaultTimeSettingsSpec();

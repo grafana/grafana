@@ -23,8 +23,8 @@ import {
   insertElement,
   moveCell,
   newMarkdownElement,
-  DEFAULT_NOTEBOOK_TITLE,
   newNotebookSpec,
+  newNotebookTitleDate,
   removeCellAt,
   resolveCells,
   updateMarkdownText,
@@ -70,7 +70,9 @@ export function NotebooksSidebarPanel() {
 
   const onCreate = async () => {
     const created = await createNotebook(
-      newNotebookSpec(t('notebooks.list.new-notebook-title', DEFAULT_NOTEBOOK_TITLE))
+      newNotebookSpec(
+        t('notebooks.list.new-notebook-title', 'Investigation — {{date}}', { date: newNotebookTitleDate() })
+      )
     );
     setSelectedUid(created.metadata.name);
   };

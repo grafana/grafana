@@ -63,7 +63,8 @@ Related code outside this folder:
   (nothing for the shared range to drive); they stay editable when panels are present.
 - Notebook `description` exists on the spec (list search / declare-incident can use it)
   but is **not editable in the POC UI** — fast follow. Declare-incident title order:
-  named title → first markdown line → description → `Investigation: {DEFAULT_NOTEBOOK_TITLE}`.
+  named title → first markdown line → description → `Investigation: Untitled notebook`.
+  New notebooks are titled `Investigation — {today}` (not Untitled) so capture targets are easier to find.
 
 ## Review notes (private preview readiness)
 
