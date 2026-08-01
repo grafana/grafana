@@ -59,9 +59,8 @@ Related code outside this folder:
 - Notebooks are not in the search index: no "recent notebooks" or search results in the
   command palette (dashboards get this via unified search). Indexing the notebook
   resource is the natural GA path; the list page's content search is client-side.
-- Known bug: canvas panels render in the editor but can hang on "Loading plugin
-  panel..." on the read-only view page — needs investigation in the scene view
-  pipeline.
+- View-mode time controls are hidden when a notebook has no visualization panels
+  (nothing for the shared range to drive); they stay editable when panels are present.
 
 ## Review notes (private preview readiness)
 

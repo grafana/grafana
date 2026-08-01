@@ -191,9 +191,9 @@ function fixThresholds(thresholds: ThresholdsConfig) {
   if (!thresholds.steps) {
     thresholds.steps = [];
   } else if (thresholds.steps.length) {
-    // First value is always -Infinity
-    // JSON saves it as null
-    thresholds.steps[0].value = -Infinity;
+    // First value is always -Infinity (JSON saves it as null). Clone the steps
+    // array/objects so we never mutate immutable sources (RTK Query / Immer).
+    thresholds.steps = thresholds.steps.map((step, index) => (index === 0 ? { ...step, value: -Infinity } : step));
   }
 }
 

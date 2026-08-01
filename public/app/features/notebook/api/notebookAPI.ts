@@ -29,7 +29,9 @@ export async function fetchNotebook(uid: string): Promise<Resource<NotebookSpec>
   }
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema resource type at the fetch seam
   const resource = result.data as unknown as Resource<NotebookSpec>;
-  return { ...resource, spec: normalizeNotebookSpec(resource.spec) };
+  // RTK Query freezes cached responses (Immer); clone so editor mutations stay safe.
+  const mutable = structuredClone(resource);
+  return { ...mutable, spec: normalizeNotebookSpec(mutable.spec) };
 }
 
 export async function createNotebook(spec: NotebookSpec): Promise<Resource<NotebookSpec>> {

@@ -268,6 +268,32 @@ describe('getPanelOptionsWithDefaults', () => {
     });
   });
 
+  describe('when fieldConfig comes from an immutable source', () => {
+    it('should normalize threshold base value without mutating frozen steps', () => {
+      const steps = Object.freeze([
+        Object.freeze({ color: 'green', value: null as unknown as number }),
+        Object.freeze({ color: 'red', value: 80 }),
+      ]);
+      const thresholds = Object.freeze({
+        mode: ThresholdsMode.Absolute,
+        steps,
+      });
+
+      const result = getPanelOptionsWithDefaults({
+        plugin: pluginA,
+        currentOptions: {},
+        currentFieldConfig: {
+          defaults: { thresholds },
+          overrides: [],
+        },
+        isAfterPluginChange: false,
+      });
+
+      expect(result.fieldConfig.defaults.thresholds?.steps[0].value).toBe(-Infinity);
+      expect(steps[0].value).toBeNull();
+    });
+  });
+
   describe('when applying defaults clean properties that are no longer part of the registry', () => {
     it('should remove custom defaults that no longer exist', () => {
       const result = runScenario({

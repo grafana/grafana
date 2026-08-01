@@ -48,9 +48,12 @@ export class NotebookScenePageStateManager extends DashboardScenePageStateManage
     // stay on the @grafana/schema notebook types.
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema resource type at the fetch seam
     const notebook = result.data as unknown as Resource<NotebookSpec>;
+    // RTK Query freezes cached responses (Immer). The scene pipeline mutates nested panel
+    // fieldConfig (e.g. threshold base → -Infinity), so clone before building the envelope.
+    const mutable = structuredClone(notebook);
     // Viewing counts as "using": quick-add targets and the sidebar follow the last opened notebook.
-    setLastUsedNotebook(notebook.metadata.name, notebook.spec.title);
-    return buildNotebookEnvelope({ ...notebook, spec: normalizeNotebookSpec(notebook.spec) });
+    setLastUsedNotebook(mutable.metadata.name, mutable.spec.title);
+    return buildNotebookEnvelope({ ...mutable, spec: normalizeNotebookSpec(mutable.spec) });
   }
 
   public transformResponseToScene(
@@ -69,6 +72,13 @@ export class NotebookScenePageStateManager extends DashboardScenePageStateManage
     const body = scene?.state.body;
     if (body instanceof NotebookLayoutManager) {
       body.setState({ title: rsp?.spec.title, tags: rsp?.spec.tags });
+
+      // No visualizations → nothing for the shared time range to drive. Hide the picker
+      // (and skip URL time sync) so markdown/code-only notebooks aren't showing dead chrome.
+      // Spec hideTimepicker already sets this; OR so we never un-hide an author preference.
+      if (body.getVizPanels().length === 0 && scene.state.controls) {
+        scene.state.controls.setState({ hideTimeControls: true });
+      }
     }
 
     return scene;
