@@ -61,15 +61,19 @@ export class NotebookScenePageStateManager extends DashboardScenePageStateManage
     options: LoadDashboardOptions
   ): DashboardScene | null {
     const scene = super.transformResponseToScene(rsp, options);
+    if (!scene) {
+      return null;
+    }
+
     // The POC notebook is read-only. Marking the scene as embedded hides the dashboard
     // edit/share/export toolbar actions and the outline/sidebar (canEditDashboard() and
     // the share button both require !isEmbedded) while the page + title still render.
-    scene?.setState({ meta: { ...scene.state.meta, isEmbedded: true } });
+    scene.setState({ meta: { ...scene.state.meta, isEmbedded: true } });
 
     // Surface the notebook's title and tags on the layout manager's own state so its header can
     // show them. The manager deliberately doesn't read them off the DashboardScene (that import
     // would form a dependency cycle), so the loader pushes them down here.
-    const body = scene?.state.body;
+    const body = scene.state.body;
     if (body instanceof NotebookLayoutManager) {
       body.setState({ title: rsp?.spec.title, tags: rsp?.spec.tags });
 
