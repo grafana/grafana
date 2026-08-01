@@ -77,7 +77,7 @@ export function newCodeElement(language = '', code = ''): CellKind {
 }
 
 /** The visualization that best fits what a datasource type typically returns. */
-export function defaultVizForDatasource(datasourceType: string): string {
+function defaultVizForDatasource(datasourceType: string): string {
   switch (datasourceType) {
     case 'loki':
       return 'logs';
@@ -433,14 +433,6 @@ export function updateCodeCell(
   return { ...spec, elements: { ...spec.elements, [elementName]: updated } };
 }
 
-export function updatePanelElement(spec: NotebookSpec, elementName: string, panel: PanelKind): NotebookSpec {
-  const element = spec.elements[elementName];
-  if (!element || element.kind !== 'Panel') {
-    return spec;
-  }
-  return { ...spec, elements: { ...spec.elements, [elementName]: panel } };
-}
-
 export function setNotebookTitle(spec: NotebookSpec, title: string): NotebookSpec {
   return { ...spec, title };
 }
@@ -469,8 +461,4 @@ export function resolveCells(spec: NotebookSpec): ResolvedCell[] {
     });
   }
   return result;
-}
-
-export function cellCount(spec: NotebookSpec): number {
-  return spec.layout.spec.cells.length;
 }

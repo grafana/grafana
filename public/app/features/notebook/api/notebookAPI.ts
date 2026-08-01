@@ -32,18 +32,6 @@ export async function fetchNotebook(uid: string): Promise<Resource<NotebookSpec>
   return { ...resource, spec: normalizeNotebookSpec(resource.spec) };
 }
 
-export async function fetchNotebooks(): Promise<Array<Resource<NotebookSpec>>> {
-  const result = await dispatch(
-    dashboardAPIv2beta1.endpoints.listNotebook.initiate({}, { subscribe: false, forceRefetch: true })
-  );
-  if ('error' in result && result.error) {
-    throw result.error;
-  }
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema resource type at the fetch seam
-  const items = (result.data?.items ?? []) as unknown as Array<Resource<NotebookSpec>>;
-  return items.map((item) => ({ ...item, spec: normalizeNotebookSpec(item.spec) }));
-}
-
 export async function createNotebook(spec: NotebookSpec): Promise<Resource<NotebookSpec>> {
   const result = await dispatch(
     dashboardAPIv2beta1.endpoints.createNotebook.initiate({

@@ -13,7 +13,7 @@ const UNDO_STACK_LIMIT = 100;
 /** Edits closer together than this collapse into one undo step (e.g. typing bursts). */
 const UNDO_COALESCE_MS = 800;
 
-export interface NotebookEditorState {
+interface NotebookEditorState {
   resource?: Resource<NotebookSpec>;
   spec?: NotebookSpec;
   loading: boolean;

@@ -18,7 +18,7 @@ interface CollabMessageBase {
 }
 
 /** Full working-copy broadcast, sent debounced after local edits and in reply to `hello`. */
-export interface CollabDocMessage extends CollabMessageBase {
+interface CollabDocMessage extends CollabMessageBase {
   t: 'doc';
   spec: NotebookSpec;
   /** Sent by one-shot flows (e.g. add-to-notebook) — not a session; skip presence tracking. */
@@ -26,7 +26,7 @@ export interface CollabDocMessage extends CollabMessageBase {
 }
 
 /** Cursor position in notebook-document coordinates plus the cell the user is in. */
-export interface CollabCursorMessage extends CollabMessageBase {
+interface CollabCursorMessage extends CollabMessageBase {
   t: 'cursor';
   x: number;
   y: number;
@@ -35,23 +35,23 @@ export interface CollabCursorMessage extends CollabMessageBase {
 }
 
 /** Sent on join and as heartbeat so peers can discover each other. */
-export interface CollabHelloMessage extends CollabMessageBase {
+interface CollabHelloMessage extends CollabMessageBase {
   t: 'hello';
 }
 
 /** Sent on leave for immediate presence cleanup (heartbeat expiry is the fallback). */
-export interface CollabByeMessage extends CollabMessageBase {
+interface CollabByeMessage extends CollabMessageBase {
   t: 'bye';
 }
 
 /** Sender's viewport position (the cell nearest its center), powering follow mode. */
-export interface CollabViewMessage extends CollabMessageBase {
+interface CollabViewMessage extends CollabMessageBase {
   t: 'view';
   cellKey: string | null;
 }
 
 /** A human-readable edit event ("added a text block") for the activity feed. */
-export interface CollabActivityMessage extends CollabMessageBase {
+interface CollabActivityMessage extends CollabMessageBase {
   t: 'activity';
   label: string;
   cellKey?: string;

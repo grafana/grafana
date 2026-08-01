@@ -8,7 +8,7 @@ import { Badge, Icon, IconButton, Stack, useStyles2 } from '@grafana/ui';
 
 import { type CellSource } from '../../model/notebookSpec';
 
-export interface CellPeer {
+interface CellPeer {
   name: string;
   color: string;
 }

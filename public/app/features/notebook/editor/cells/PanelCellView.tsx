@@ -19,7 +19,7 @@ import { preferredVizForData } from '../../model/preferredViz';
 
 import { buildNotebookVizPanel } from './buildNotebookVizPanel';
 
-export const DEFAULT_PANEL_HEIGHT = 320;
+const DEFAULT_PANEL_HEIGHT = 320;
 const MIN_PANEL_HEIGHT = 120;
 const MAX_PANEL_HEIGHT = 1200;
 
@@ -226,7 +226,7 @@ export function PanelCellView({
 }
 
 /** Converts a notebook panel's queries back to the legacy shape Explore understands. */
-export function panelToExploreQueries(panel: PanelKind): DataQuery[] {
+function panelToExploreQueries(panel: PanelKind): DataQuery[] {
   return panel.spec.data.spec.queries.map((query) => ({
     refId: query.spec.refId,
     ...query.spec.query.spec,
