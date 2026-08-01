@@ -4,7 +4,7 @@ import { standardEditorsRegistry, standardFieldConfigEditorRegistry } from '../f
 import { type FieldConfig } from '../types/dataFrame';
 import { FieldColorModeId } from '../types/fieldColor';
 import { type ConfigOverrideRule, FieldConfigProperty, type FieldConfigSource } from '../types/fieldOverrides';
-import { ThresholdsMode } from '../types/thresholds';
+import { type ThresholdsConfig, ThresholdsMode } from '../types/thresholds';
 
 import { type PanelPlugin, type StandardOptionConfig } from './PanelPlugin';
 import { getPanelOptionsWithDefaults, restoreCustomOverrideRules } from './getPanelOptionsWithDefaults';
@@ -274,10 +274,13 @@ describe('getPanelOptionsWithDefaults', () => {
         Object.freeze({ color: 'green', value: null as unknown as number }),
         Object.freeze({ color: 'red', value: 80 }),
       ]);
+      // Simulate an Immer/RTK-frozen thresholds object from an API response.
+      // Cast through unknown: Object.freeze widens to readonly types that aren't
+      // assignable to ThresholdsConfig, but that's the runtime shape we care about.
       const thresholds = Object.freeze({
         mode: ThresholdsMode.Absolute,
         steps,
-      });
+      }) as unknown as ThresholdsConfig;
 
       const result = getPanelOptionsWithDefaults({
         plugin: pluginA,
