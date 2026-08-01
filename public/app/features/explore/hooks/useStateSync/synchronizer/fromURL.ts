@@ -1,8 +1,14 @@
 import { isEqual } from 'lodash';
 
 import { EventBusSrv } from '@grafana/data';
+import { type LocationService } from '@grafana/runtime';
 import { changeDatasource } from 'app/features/explore/state/datasource';
-import { changePanelsStateAction, initializeExplore } from 'app/features/explore/state/explorePane';
+import {
+  changePanelsStateAction,
+  initializeExplore,
+  setAddingSavedQueryAction,
+  updateEditSavedQueryRefAction,
+} from 'app/features/explore/state/explorePane';
 import { splitClose, syncTimesAction } from 'app/features/explore/state/main';
 import { cancelQueries, runQueries, setQueriesAction } from 'app/features/explore/state/query';
 import { updateTime } from 'app/features/explore/state/time';
@@ -18,8 +24,16 @@ import { type ExploreURLV1 } from '../migrators/v1';
 export function syncFromURL(
   urlState: ExploreURLV1,
   panesState: Record<string, undefined | ExploreItemState>,
-  dispatch: ThunkDispatch
+  dispatch: ThunkDispatch,
+  location: LocationService
 ) {
+  // Saved query being edited via "Edit in Explore" (?editSavedQueryRef=<uid>). Read here too — not just at
+  // init — so the "Editing from saved queries" banner also shows when navigating from within Explore
+  // (e.g. the Saved Queries modal), which goes through this sync path rather than a cold init.
+  const editSavedQueryRef = location.getSearch().get('editSavedQueryRef') ?? undefined;
+  // Same for "Add to saved queries" (?createSavedQuery=true): in-Explore navigations mint a new pane id
+  // and go through sync rather than cold init, so we must seed add mode here too.
+  const addingSavedQuery = location.getSearch().get('createSavedQuery') === 'true';
   // if navigating the history causes one of the time range to not being equal to all the other ones,
   // we set syncedTimes to false to avoid inconsistent UI state.
   // Ideally `syncedTimes` should be saved in the URL.
@@ -35,6 +49,15 @@ export function syncFromURL(
     const paneState = panesState[exploreId];
 
     if (paneState !== undefined) {
+      // First pane only, mirroring the init path. Only set when present so ordinary history navigation
+      // doesn't clobber an in-place editing session.
+      if (i === 0 && editSavedQueryRef && paneState.editSavedQueryRef !== editSavedQueryRef) {
+        dispatch(updateEditSavedQueryRefAction({ exploreId, editSavedQueryRef }));
+      }
+      if (i === 0 && addingSavedQuery && !paneState.addingSavedQuery) {
+        dispatch(setAddingSavedQueryAction({ exploreId, addingSavedQuery: true }));
+      }
+
       const update = urlDiff(urlPane, getUrlStateFromPaneState(paneState));
 
       Promise.resolve()
@@ -77,6 +100,8 @@ export function syncFromURL(
           compact: !!urlPane.compact,
           position: i,
           eventBridge: new EventBusSrv(),
+          editSavedQueryRef: i === 0 ? editSavedQueryRef : undefined,
+          addingSavedQuery: i === 0 ? addingSavedQuery : undefined,
         })
       );
     }

@@ -19,7 +19,7 @@ export interface DashboardLinksSetState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
 }
 
-function useEditPaneOptions(
+function useSidebarOptions(
   this: DashboardLinksSet,
   dashboardRef: SceneObjectRef<DashboardScene>
 ): OptionsPaneCategoryDescriptor[] {
@@ -52,9 +52,9 @@ export class DashboardLinksSet extends SceneObjectBase<DashboardLinksSetState> i
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.link-set', 'Links'),
+      typeName: t('dashboard.sidebar.elements.link-set', 'Links'),
       icon: 'link',
-      instanceName: t('dashboard.edit-pane.elements.link-set', 'Links'),
+      instanceName: t('dashboard.sidebar.elements.link-set', 'Links'),
     };
   }
 
@@ -73,5 +73,5 @@ export class DashboardLinksSet extends SceneObjectBase<DashboardLinksSetState> i
     return this._linkEditItems;
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this, this.state.dashboardRef);
+  public useSidebarOptions = useSidebarOptions.bind(this, this.state.dashboardRef);
 }

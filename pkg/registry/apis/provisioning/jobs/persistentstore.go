@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"net/http"
 	"strconv"
 	"time"
 
@@ -49,19 +48,17 @@ const (
 // sees this must stop processing immediately so two workers do not run the same job.
 var ErrLeaseLost = errors.New("job lease lost: claimed by another worker")
 
-var ErrNoJobs = &apierrors.StatusError{
-	ErrStatus: metav1.Status{
-		Status:  metav1.StatusFailure,
-		Reason:  metav1.StatusReasonConflict,
-		Message: "no jobs are available to claim, try again later",
-		Code:    http.StatusNoContent,
-		Details: &metav1.StatusDetails{
-			Group:             provisioning.GROUP,
-			Kind:              provisioning.JobResourceInfo.GetName(),
-			RetryAfterSeconds: 3,
-		},
-	},
-}
+// ErrAlreadyClaimed indicates the job is currently claimed by another worker.
+// Callers should skip the job: the claim label is the mutual exclusion, and
+// abandoned claims are recovered by the cleanup controller, not by re-claiming.
+var ErrAlreadyClaimed = errors.New("job is already claimed by another worker")
+
+// claimConflictRetries bounds how many times Claim re-reads a job after an
+// update conflict. A conflict means the job changed between our Get and
+// Update: usually another worker claimed it, but a concurrent non-claim write
+// (e.g. a rolled-back claim) also bumps the resource version, so retry with
+// fresh state before giving up.
+const claimConflictRetries = 3
 
 // Queue is a job queue abstraction.
 //
@@ -116,75 +113,70 @@ func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry
 	}, nil
 }
 
-// Claim takes a job from storage, marks it as ours, and returns it.
+// Claim attempts to claim the job namespace/name for this worker.
 //
-// Any job which has not been claimed by another worker is fair game.
+// Returns ErrAlreadyClaimed if another worker holds the claim, and a NotFound
+// API error if the job no longer exists (completed and deleted).
 //
 // If err is not nil, the job and rollback values are always nil.
-// The err may be ErrNoJobs if there are no jobs to claim.
-func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rollback func(), err error) {
+func (s *persistentStore) Claim(ctx context.Context, namespace, name string, driverID string) (job *provisioning.Job, rollback func(), err error) {
 	ctx, span := tracing.Start(ctx, "provisioning.jobs.claim")
 	defer func() {
-		if err != nil && !errors.Is(err, ErrNoJobs) {
+		if err != nil && !errors.Is(err, ErrAlreadyClaimed) && !apierrors.IsNotFound(err) {
 			span.RecordError(err)
 		}
 		span.End()
 	}()
 
-	logger := logging.FromContext(ctx).With("operation", "claim")
+	logger := logging.FromContext(ctx).With("operation", "claim", "namespace", namespace, "job", name)
 
-	requirement, err := labels.NewRequirement(LabelJobClaim, selection.DoesNotExist, nil)
+	// Set up the provisioning identity for this namespace
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
-		return nil, nil, apifmt.Errorf("could not create requirement: %w", err)
+		return nil, nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", namespace, err)
 	}
 
-	jobs, err := s.client.Jobs("").List(ctx, metav1.ListOptions{
-		LabelSelector: labels.NewSelector().Add(*requirement).String(),
-		Limit:         16,
-	})
-	if err != nil {
-		return nil, nil, apifmt.Errorf("failed to list jobs: %w", err)
-	}
-
-	if len(jobs.Items) == 0 {
-		logger.Debug("no jobs available to claim")
-		return nil, nil, ErrNoJobs
-	}
-
-	logger.Debug("found jobs available", "count", len(jobs.Items))
-
-	for _, job := range jobs.Items {
-		if job.Labels == nil {
-			job.Labels = make(map[string]string)
-		}
-		job.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
-		job.Labels[LabelJobClaimOwner] = util.GenerateShortUID()
-		s.queueMetrics.RecordWaitTime(string(job.Spec.Action), s.clock().Sub(job.CreationTimestamp.Time).Seconds())
-
-		// Set up the provisioning identity for this namespace
-		ctx, _, err = identity.WithProvisioningIdentity(ctx, job.GetNamespace())
+	for attempt := 0; attempt < claimConflictRetries; attempt++ {
+		current, err := s.client.Jobs(namespace).Get(ctx, name, metav1.GetOptions{})
 		if err != nil {
-			// This should never happen, as it is already a valid namespace from the job existing... but better be safe.
-			return nil, nil, apifmt.Errorf("failed to get provisioning identity for '%s': %w", job.GetNamespace(), err)
+			// NotFound propagates as-is: the job was completed and deleted before we got here.
+			if apierrors.IsNotFound(err) {
+				return nil, nil, err
+			}
+			return nil, nil, apifmt.Errorf("failed to get job '%s' in '%s' for claiming: %w", name, namespace, err)
+		}
+		if current.Labels[LabelJobClaim] != "" {
+			// Another worker already holds the claim — the common contention outcome.
+			s.queueMetrics.RecordClaimRoundContended(driverID)
+			return nil, nil, ErrAlreadyClaimed
 		}
 
-		// This relies on the resource version being updated for us.
-		// If the resource version we pass in via the current job is not the same as the one currently in the store, it will fail with Conflict.
+		claimed := current.DeepCopy()
+		if claimed.Labels == nil {
+			claimed.Labels = make(map[string]string)
+		}
+		claimed.Labels[LabelJobClaim] = strconv.FormatInt(s.clock().UnixMilli(), 10)
+		claimed.Labels[LabelJobClaimOwner] = util.GenerateShortUID()
+
+		// This relies on the resource version from the Get above.
+		// If the job changed in the store since then, the Update fails with Conflict.
 		// This is the desired behavior, as it ensures that claims are atomic.
-		updatedJob, err := s.client.Jobs(job.GetNamespace()).Update(ctx, &job, metav1.UpdateOptions{})
+		updatedJob, err := s.client.Jobs(namespace).Update(ctx, claimed, metav1.UpdateOptions{})
 		if apierrors.IsConflict(err) {
-			// On conflict: another worker claimed the job before us.
-			// On would create: the job was completed and deleted before we could claim it.
-			// We'll just move on to the next job.
+			// Lost the CAS race; another worker updated the job first. Record it and
+			// re-read/re-evaluate on the next attempt.
+			s.queueMetrics.RecordClaimConflict(driverID)
 			continue
 		}
 		if err != nil {
-			return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
+			// This records only the failure of the claim itself (the atomic Update that
+			// takes the job). Earlier failures — identity setup and the job Get — return
+			// before this point and are intentionally not counted here.
+			s.queueMetrics.RecordClaimError(driverID)
+			return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s': %w", name, namespace, err)
 		}
 
 		logger.Info("job claim complete",
-			"job", updatedJob.GetName(),
-			"namespace", updatedJob.GetNamespace(),
 			"repository", updatedJob.Spec.Repository,
 			"action", updatedJob.Spec.Action,
 		)
@@ -196,10 +188,15 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 			attribute.String("job.action", string(updatedJob.Spec.Action)),
 		)
 
+		// Record the wait only now that the claim succeeded: a conflicting attempt that
+		// retried (the continue above) must not record a wait for a claim it never won.
+		s.queueMetrics.RecordWaitTime(string(updatedJob.Spec.Action), s.clock().Sub(updatedJob.CreationTimestamp.Time).Seconds())
+		s.queueMetrics.RecordClaimWon(driverID)
+
 		return updatedJob.DeepCopy(), func() {
 			// Rolling back does not need to care about the parent's cancellation state.
-			// This will also use the parent context (i.e. from the for loop!), ensuring we have permissions to do this.
-			ctx = context.WithoutCancel(ctx)
+			// Keep the identity-augmented context so we have permissions to do this.
+			ctx := context.WithoutCancel(ctx)
 
 			logger := logging.FromContext(ctx).With("namespace", updatedJob.GetNamespace(), "job", updatedJob.GetName())
 
@@ -241,9 +238,13 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 		}, nil
 	}
 
-	// We failed to claim any jobs.
-	logger.Debug("no jobs claimed - all already claimed by others")
-	return nil, nil, ErrNoJobs
+	// Every attempt hit a CAS conflict (the job kept changing under us) and the retries
+	// are now exhausted. Like the already-claimed case above, this counts as contended
+	// (lost to another worker); each individual lost race is also counted by
+	// claim_conflicts_total.
+	s.queueMetrics.RecordClaimRoundContended(driverID)
+	logger.Debug("job claim conflicted repeatedly - treating as claimed by another worker")
+	return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s' after %d conflicts: %w", name, namespace, claimConflictRetries, ErrAlreadyClaimed)
 }
 
 // Update saves the job back to the store.
@@ -376,7 +377,6 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 	}
 	delete(job.Labels, LabelJobClaim)
 	delete(job.Labels, LabelJobClaimOwner)
-	s.queueMetrics.DecreaseQueueSize(string(job.Spec.Action))
 
 	logger.Debug("complete job complete")
 	return nil
@@ -577,8 +577,6 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		return nil, apifmt.Errorf("failed to create job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
 
-	s.queueMetrics.IncreaseQueueSize(string(job.Spec.Action))
-
 	logger.Info("insert job complete")
 	return created, nil
 }
@@ -664,7 +662,6 @@ func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repositor
 			return deleted, apifmt.Errorf("failed to delete job '%s' in '%s': %w", job.GetName(), namespace, err)
 		}
 
-		s.queueMetrics.DecreaseQueueSize(string(job.Spec.Action))
 		deleted++
 	}
 

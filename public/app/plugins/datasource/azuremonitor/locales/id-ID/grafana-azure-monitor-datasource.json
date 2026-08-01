@@ -78,6 +78,11 @@
       "description-basic-logs": "Jika Anda mengaktifkan fitur ini, Azure Monitor akan dikenakan biaya per kueri untuk panel dasbor yang melakukan kueri pada tabel yang dikonfigurasi untuk <2>Log Dasar</2>.",
       "label-enable-basic-logs": "Aktifkan Log Dasar"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "Pengaturan tambahan adalah pengaturan opsional yang dapat dikonfigurasi agar memiliki kendali lebih besar atas sumber data Anda. Ini termasuk Secure Socks Proxy, batas waktu permintaan, dan cookie yang diteruskan.",
       "title-additional-settings": "Pengaturan tambahan"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "Namespace metrik"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "Memuat..."
     },
@@ -204,6 +216,10 @@
       "label-by": "BERDASARKAN",
       "label-order-by": "Urutkan Berdasarkan",
       "tooltip-order-by": "Urutkan hasil berdasarkan satu atau beberapa kolom dalam urutan naik atau turun."
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "Terjadi kesalahan saat meminta metadata dari Azure Monitor"

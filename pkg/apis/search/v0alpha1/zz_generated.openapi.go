@@ -250,7 +250,7 @@ func schema_pkg_apis_search_v0alpha1_ResultsMetadata(ref common.ReferenceCallbac
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "ResultsMetadata carries the pagination token and, when known exactly, the total hit count.",
+				Description: "ResultsMetadata carries the pagination token and the total hit count.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"continue": {
@@ -261,12 +261,22 @@ func schema_pkg_apis_search_v0alpha1_ResultsMetadata(ref common.ReferenceCallbac
 					},
 					"totalHits": {
 						SchemaProps: spec.SchemaProps{
-							Description: "TotalHits is the exact count of authorized resources matching the query. It is present only when the server can compute it exactly; when it can't, the field is omitted and absence means \"unknown\". There is no approximate value.",
+							Description: "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation, which says whether the count is exact.",
+							Default:     0,
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},
 					},
+					"totalHitsRelation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
+				Required: []string{"totalHits", "totalHitsRelation"},
 			},
 		},
 	}
@@ -450,7 +460,7 @@ func schema_pkg_apis_search_v0alpha1_SortField(ref common.ReferenceCallback) com
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "SortField names a field to sort by and a direction (\"asc\" or \"desc\"). V1 allows sorting only on scalar string fields that declare the sort capability.",
+				Description: "SortField names a field to sort by and a direction (\"asc\" or \"desc\"). V1 allows sorting only on scalar string and numeric fields that declare the sort capability.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"field": {

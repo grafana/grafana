@@ -1,5 +1,6 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -8,6 +9,7 @@ import {
   createTheme,
   type DataSourceApi,
   EventBusSrv,
+  getDefaultTimeRange,
   LoadingState,
   PluginExtensionTypes,
   store,
@@ -113,8 +115,10 @@ const dummyProps: Props = {
   changeDatasource: jest.fn(),
   compact: false,
   changeCompactMode: jest.fn(),
-  queryLibraryRef: undefined,
+  editSavedQueryRef: undefined,
+  addingSavedQuery: undefined,
   queriesChangedIndexAtRun: 0,
+  range: getDefaultTimeRange(),
 };
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -261,17 +265,21 @@ describe('Explore', () => {
       getBoolMock.mockRestore();
     });
 
-    it('shows the metrics explorer when a Mixed datasource contains a managed Prometheus flavor query', async () => {
+    it('shows an expandable query card when a Mixed datasource contains a managed Prometheus flavor query', async () => {
       setTestFlags({ 'grafana.exploreMetricsSidebar': true });
       setup({
         datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
         queries: [{ refId: 'A', datasource: { type: 'grafana-amazonprometheus-datasource', uid: 'amp-uid' } }],
       });
 
-      expect(await screen.findByPlaceholderText('Search metrics')).toBeInTheDocument();
+      expect(await screen.findByTestId('signal-card-A')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+
+      expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
     });
 
-    it('does not show the metrics explorer for a non-Prometheus Mixed datasource query', async () => {
+    it('does not show the query cards for a non-Prometheus Mixed datasource query', async () => {
       setTestFlags({ 'grafana.exploreMetricsSidebar': true });
       setup({
         datasourceInstance: { meta: { mixed: true, metrics: true } } as DataSourceApi,
@@ -279,13 +287,14 @@ describe('Explore', () => {
       });
 
       await screen.findByTestId(selectors.components.DataSourcePicker.container);
+      expect(screen.queryByTestId('signal-card-A')).not.toBeInTheDocument();
       expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
     });
   });
 
   describe('Saved Queries Integration', () => {
-    it('should enable add query buttons when queryLibraryRef is undefined', async () => {
-      setup({ queryLibraryRef: undefined });
+    it('should enable add query buttons when editSavedQueryRef is undefined', async () => {
+      setup({ editSavedQueryRef: undefined });
 
       // Wait for the Explore component to render
       await screen.findByTestId(selectors.components.DataSourcePicker.container);
@@ -294,8 +303,8 @@ describe('Explore', () => {
       expect(addQueryButton).toBeEnabled();
     });
 
-    it('should disable add query buttons when queryLibraryRef is set (editing from library)', async () => {
-      setup({ queryLibraryRef: 'library-query-123' });
+    it('should disable add query buttons when editSavedQueryRef is set (editing from library)', async () => {
+      setup({ editSavedQueryRef: 'library-query-123' });
 
       // Wait for the Explore component to render
       await screen.findByTestId(selectors.components.DataSourcePicker.container);
@@ -313,7 +322,7 @@ describe('Explore', () => {
           },
         },
       });
-      const exploreProps = { ...dummyProps, queryLibraryRef: 'library-query-123' };
+      const exploreProps = { ...dummyProps, editSavedQueryRef: 'library-query-123' };
 
       render(
         <TestProvider store={store}>

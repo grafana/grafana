@@ -17,9 +17,9 @@ export interface EditableDashboardElement {
   getEditableElementInfo(): EditableDashboardElementInfo;
 
   /**
-   * Hook that returns edit pane options
+   * Hook that returns sidebar options
    */
-  useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[];
+  useSidebarOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[];
 
   /**
    * Panel Actions
