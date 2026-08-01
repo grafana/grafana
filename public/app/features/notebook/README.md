@@ -34,19 +34,17 @@ Related code outside this folder:
 - **Durable model**: the `Notebook` resource + shared dashboard `PanelKind` leaf types.
   Scenes/`VizPanel` are how we render live panels (same stack as dashboards/Explore),
   not the source of truth. Capture and round-trip stay cheap because of that reuse.
-- **Two render paths (POC debt — not the end state)**:
-  - **Edit**: Notion-style block editor. Each panel is a small `EmbeddedScene` +
-    `VizPanel` (`editor/cells/PanelCellView` / `buildNotebookVizPanel`). Markdown/code
-    cells are custom editors. Mutations are immutable transforms over the whole spec.
-  - **View**: read-only page reuses the pre-existing `layout-notebook` dashboard-scene
-    pipeline (`NotebookScenePageStateManager` + `buildNotebookEnvelope`) so we got URL
-    sync, time controls, and panel chrome without rebuilding a viewer.
-  - **Why two?** View existed first; edit is a different interaction model (dnd, inline
-    query edit, autosave, collab overlays) that fights DashboardScene’s edit chrome.
-    Same spec → same `VizPanel` shape, different lifecycle/chrome.
-  - **Production direction**: one notebook layout with view vs edit _mode_ (still
-    scenes for panels, shared narrative renderers). Do **not** invent a third path.
-    Dual path is fine for private preview; converge when view/edit parity bugs pile up.
+- **Edit and view are separate surfaces (intentional)**:
+  - **Edit**: Notion-style block editor — dnd, inline query/markdown editing, autosave,
+    collab overlays. Each panel is a small `EmbeddedScene` + `VizPanel`
+    (`editor/cells/PanelCellView` / `buildNotebookVizPanel`). Notebooks aren’t dashboards,
+    so this doesn’t go through DashboardScene edit chrome.
+  - **View**: read-only document page via the `layout-notebook` dashboard-scene pipeline
+    (`NotebookScenePageStateManager` + `buildNotebookEnvelope`) for URL sync, time
+    controls, and panel chrome.
+  - Both read the same `NotebookSpec` and build the same kind of `VizPanel`. Keep panel /
+    narrative construction shared so the two surfaces don’t drift; don’t force edit into
+    a dashboard scene just to have “one path.”
 - **Editing model**: all mutations are immutable spec transforms in `model/notebookSpec.ts`,
   applied through `useNotebookEditorState` (debounced autosave with optimistic-concurrency
   retry, snapshot-based undo/redo with typing coalescing).
@@ -71,8 +69,6 @@ Related code outside this folder:
 - Notebooks are not in the search index: no "recent notebooks" or search results in the
   command palette (dashboards get this via unified search). Indexing the notebook
   resource is the natural GA path; the list page's content search is client-side.
-- Dual edit/view render paths can diverge (e.g. library panels stubbed in the editor,
-  fieldConfig/defaults bugs that only show in view). Track as parity debt; unify before GA.
 - View-mode time controls are hidden when a notebook has no visualization panels
   (nothing for the shared range to drive); they stay editable when panels are present.
 - Notebook `description` exists on the spec (list search / declare-incident can use it)
