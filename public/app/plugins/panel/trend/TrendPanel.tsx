@@ -104,6 +104,7 @@ export const TrendPanel = ({
                       dataLinks={dataLinks}
                       hideZeros={options.tooltip.hideZeros}
                       canExecuteActions={userCanExecuteActions}
+                      timeZone={timeZone}
                     />
                   );
                 }}
