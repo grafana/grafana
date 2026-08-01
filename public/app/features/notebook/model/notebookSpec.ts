@@ -76,6 +76,124 @@ export function newCodeElement(language = '', code = ''): CellKind {
   return { kind: 'Cell', spec: { content: { kind: 'Code', spec: { language, code } } } };
 }
 
+/** The visualization that best fits what a datasource type typically returns. */
+export function defaultVizForDatasource(datasourceType: string): string {
+  switch (datasourceType) {
+    case 'loki':
+      return 'logs';
+    case 'tempo':
+    case 'jaeger':
+    case 'zipkin':
+      return 'traces';
+    case 'grafana-pyroscope-datasource':
+    case 'parca':
+      return 'flamegraph';
+    case 'mysql':
+    case 'postgres':
+    case 'mssql':
+      return 'table';
+    default:
+      return 'timeseries';
+  }
+}
+
+/**
+ * A fresh panel wired to a datasource with one empty query — the in-editor
+ * "Add visualization" starting point. The id is reassigned on insert.
+ */
+export function newPanelForDatasource(
+  datasource: { uid: string; type: string },
+  options?: { title?: string; querySpec?: Record<string, unknown>; vizType?: string }
+): PanelKind {
+  return {
+    kind: 'Panel',
+    spec: {
+      id: 0,
+      title: options?.title ?? '',
+      links: [],
+      data: {
+        kind: 'QueryGroup',
+        spec: {
+          queries: [
+            {
+              kind: 'PanelQuery',
+              spec: {
+                refId: 'A',
+                hidden: false,
+                query: {
+                  kind: 'DataQuery',
+                  group: datasource.type,
+                  version: 'v0',
+                  datasource: { name: datasource.uid },
+                  spec: options?.querySpec ?? {},
+                },
+              },
+            },
+          ],
+          transformations: [],
+          queryOptions: {},
+        },
+      },
+      vizConfig: {
+        kind: 'VizConfig',
+        group: options?.vizType ?? defaultVizForDatasource(datasource.type),
+        version: '',
+        spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+      },
+    },
+  };
+}
+
+/**
+ * Replaces one query of a panel element with an edited data query. The runtime-only
+ * keys (refId, datasource, hide) live on the query envelope, not in the stored spec.
+ * When `datasource` is provided the envelope's datasource wiring is updated too.
+ */
+export function updatePanelQuery(
+  spec: NotebookSpec,
+  elementName: string,
+  refId: string,
+  dataQuery: Record<string, unknown>,
+  datasource?: { uid: string; type: string }
+): NotebookSpec {
+  const element = spec.elements[elementName];
+  if (!element || element.kind !== 'Panel') {
+    return spec;
+  }
+
+  const { refId: _refId, datasource: _datasource, hide: _hide, ...querySpec } = dataQuery;
+
+  const queries = element.spec.data.spec.queries.map((query) =>
+    query.spec.refId === refId
+      ? {
+          ...query,
+          spec: {
+            ...query.spec,
+            query: {
+              ...query.spec.query,
+              ...(datasource ? { group: datasource.type, datasource: { name: datasource.uid } } : {}),
+              spec: querySpec,
+            },
+          },
+        }
+      : query
+  );
+
+  return {
+    ...spec,
+    elements: {
+      ...spec.elements,
+      [elementName]: {
+        ...element,
+        spec: {
+          ...element.spec,
+          data: { ...element.spec.data, spec: { ...element.spec.data.spec, queries } },
+        },
+      },
+    },
+  };
+}
+
 /** Panel ids must be unique within a notebook: scene panel keys are derived from them. */
 export function nextPanelId(spec: NotebookSpec): number {
   let max = 0;

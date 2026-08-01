@@ -26,8 +26,14 @@ const ACTIVITY_FEED_LIMIT = 30;
 const PEER_COLORS = ['#7EB26D', '#EAB839', '#6ED0E0', '#EF843C', '#E24D42', '#1F78C1', '#BA43A9', '#705DA0'];
 
 export interface NotebookCollabApi {
-  /** Other sessions currently connected to this notebook (excludes self). */
+  /**
+   * Other sessions currently connected to this notebook (excludes self). Updates on
+   * structural changes (join/leave, block focus, viewport) — NOT on every cursor
+   * move, so consuming components don't re-render at pointer frequency.
+   */
   peers: RemotePeer[];
+  /** Latest peers including live cursor positions — for the cursor overlay, which polls. */
+  getPeers: () => RemotePeer[];
   /** Recent edit events from everyone (own actions included), newest first. */
   activity: ActivityEvent[];
   /** Call after every local spec change; broadcasts the doc debounced. */
@@ -49,6 +55,47 @@ interface Options {
   getSpec: () => NotebookSpec | undefined;
   /** Called when a newer document arrives from a collaborator. */
   onRemoteSpec: (spec: NotebookSpec) => void;
+  /**
+   * The saved-version timestamp (ms) of the loaded document. Doc broadcasts carry the
+   * timestamp of the edit that produced the document — not the send time — so a session
+   * holding an older working copy can never clobber a fresher one just by replying later.
+   */
+  initialDocTs?: number;
+}
+
+/** The saved version's timestamp (ms) of a notebook resource, seeding the doc-version clock. */
+export function resourceVersionTs(resource?: {
+  metadata: { annotations?: Record<string, string>; creationTimestamp?: string };
+}): number | undefined {
+  const stamp =
+    resource?.metadata.annotations?.['grafana.app/updatedTimestamp'] ?? resource?.metadata.creationTimestamp;
+  const parsed = stamp ? Date.parse(stamp) : NaN;
+  return Number.isNaN(parsed) ? undefined : parsed;
+}
+
+/**
+ * One-shot document broadcast for flows that save over HTTP outside an editor
+ * session (add-to-notebook from dashboards/Explore) — open editors of the same
+ * notebook apply the fresh document immediately instead of waiting for a reload.
+ */
+export function broadcastNotebookDoc(uid: string, spec: NotebookSpec) {
+  const message: CollabMessage = {
+    t: 'doc',
+    sid: `oneshot-${generateUUID()}`,
+    ts: Date.now(),
+    user: {
+      login: contextSrv.user.login,
+      name: contextSrv.user.name || contextSrv.user.login,
+      avatarUrl: contextSrv.user.gravatarUrl,
+    },
+    spec,
+    transient: true,
+  };
+  getGrafanaLiveSrv()
+    .publish({ scope: LiveChannelScope.Grafana, stream: 'notebook', path: `uid/${uid}` }, message)
+    .catch(() => {
+      // Best-effort: open editors fall back to seeing the change on reload.
+    });
 }
 
 function colorForSession(sid: string): string {
@@ -65,13 +112,18 @@ function colorForSession(sid: string): string {
  * presence (who is here), live cursors and last-write-wins doc sync. The
  * notebook API remains the source of truth — this only syncs working copies.
  */
-export function useNotebookCollab({ uid, enabled, getSpec, onRemoteSpec }: Options): NotebookCollabApi {
+export function useNotebookCollab({ uid, enabled, getSpec, onRemoteSpec, initialDocTs }: Options): NotebookCollabApi {
   const sessionId = useMemo(() => generateUUID(), []);
   const [peers, setPeers] = useState<RemotePeer[]>([]);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
 
   const peersRef = useRef(new Map<string, RemotePeer>());
-  const lastLocalEditTs = useRef(0);
+  // Version timestamp of the current working copy: the saved version's timestamp at
+  // load, bumped by local edits (to now) and by accepted remote documents (to their ts).
+  const docTs = useRef(0);
+  if (initialDocTs && docTs.current === 0) {
+    docTs.current = initialDocTs;
+  }
   const lastCursorSentAt = useRef(0);
   const lastViewSentAt = useRef(0);
   const lastViewCell = useRef<string | null | undefined>(undefined);
@@ -125,15 +177,27 @@ export function useNotebookCollab({ uid, enabled, getSpec, onRemoteSpec }: Optio
       };
       peer.lastSeen = Date.now();
       peer.user = message.user;
+
+      // Re-rendering consumers at cursor frequency (~16/s per peer) can saturate the
+      // main thread on large notebooks, so pure position updates only mutate the ref
+      // (polled by the cursor overlay). State flushes are reserved for structural
+      // changes: new peers, block focus changes and viewport moves.
+      let structural = !existing;
       if (message.t === 'cursor') {
         peer.cursor = { x: message.x, y: message.y, ts: Date.now() };
-        peer.cellKey = message.cellKey;
+        if (peer.cellKey !== message.cellKey) {
+          peer.cellKey = message.cellKey;
+          structural = true;
+        }
       }
-      if (message.t === 'view') {
+      if (message.t === 'view' && peer.viewCell !== message.cellKey) {
         peer.viewCell = message.cellKey;
+        structural = true;
       }
       peersRef.current.set(message.sid, peer);
-      flushPeers();
+      if (structural) {
+        flushPeers();
+      }
     },
     [flushPeers]
   );
@@ -147,7 +211,9 @@ export function useNotebookCollab({ uid, enabled, getSpec, onRemoteSpec }: Optio
     if (!spec) {
       return;
     }
-    publish({ t: 'doc', sid: sessionId, ts: lastLocalEditTs.current || Date.now(), user, spec });
+    // ts is the document's version timestamp, never the send time: replying to a
+    // hello with an old working copy must not out-rank fresher documents.
+    publish({ t: 'doc', sid: sessionId, ts: docTs.current || Date.now(), user, spec });
   }, [publish, sessionId, user]);
 
   useEffect(() => {
@@ -187,11 +253,15 @@ export function useNotebookCollab({ uid, enabled, getSpec, onRemoteSpec }: Optio
             break;
           }
           case 'doc': {
-            touchPeer(message);
-            // Last write wins: apply only when the remote edit is newer than our
-            // latest local edit (concurrently-typed local cells are protected by
-            // the editor's merge).
-            if (message.ts > lastLocalEditTs.current) {
+            if (!message.transient) {
+              touchPeer(message);
+            }
+            // Last write wins on document-version timestamps: apply only when the
+            // remote document is strictly newer than ours (concurrently-typed local
+            // cells are protected by the editor's merge). Equal timestamps mean both
+            // sessions hold the same saved version — nothing to converge.
+            if (message.ts > docTs.current) {
+              docTs.current = message.ts;
               onRemoteSpecRef.current(message.spec);
             }
             break;
@@ -252,7 +322,7 @@ export function useNotebookCollab({ uid, enabled, getSpec, onRemoteSpec }: Optio
   }, [address, enabled, uid, publish, sessionId, user, touchPeer, flushPeers, broadcastDocNow, appendActivity]);
 
   const notifyLocalEdit = useCallback(() => {
-    lastLocalEditTs.current = Date.now();
+    docTs.current = Date.now();
     if (!enabled) {
       return;
     }
@@ -310,5 +380,7 @@ export function useNotebookCollab({ uid, enabled, getSpec, onRemoteSpec }: Optio
     [enabled, publish, sessionId, user, selfColor, appendActivity]
   );
 
-  return { peers, activity, notifyLocalEdit, sendCursor, sendView, sendActivity, selfColor, sessionId };
+  const getPeers = useCallback(() => Array.from(peersRef.current.values()), []);
+
+  return { peers, getPeers, activity, notifyLocalEdit, sendCursor, sendView, sendActivity, selfColor, sessionId };
 }

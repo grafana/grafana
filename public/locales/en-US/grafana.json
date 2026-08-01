@@ -12674,31 +12674,35 @@
   "notebook": {
     "back-button": "All notebooks",
     "breadcrumb-title": "Notebooks",
-    "edit-button": "Edit"
+    "copy-link": "Copy link",
+    "edit-button": "Edit",
+    "link-copied": "Notebook link copied"
   },
   "notebooks": {
     "activity": {
       "added-code": "added a code block",
       "added-note": "added a note",
       "added-text": "added a text block",
+      "added-viz": "added a visualization",
+      "changed-time": "changed the notebook time range",
       "changed-viz": "changed a visualization",
       "deleted-block": "deleted a block",
       "duplicated-block": "duplicated a block",
+      "edited-query": "edited a query",
       "empty": "Edits made while this notebook is open will show up here.",
       "locked-time": "locked a block to a time range",
       "moved-block": "moved a block",
       "renamed-panel": "renamed a panel",
       "title": "Activity",
-      "tooltip": "Activity"
+      "tooltip": "Activity",
+      "unlocked-time": "synced a block back to notebook time"
     },
     "add-cell": {
       "code": "Code",
       "text": "Text",
       "visualization": "Visualization",
-      "viz-body": "Visualizations are added to a notebook from where the data lives: open any dashboard panel menu and choose Add to notebook, or run a query in Explore and use Add to notebook in the toolbar. The panel is embedded live and follows the time range of this notebook.",
-      "viz-dashboards": "Browse dashboards",
-      "viz-explore": "Open Explore",
-      "viz-title": "Add a visualization"
+      "viz-cancel": "Cancel",
+      "viz-hint": "Tip: any dashboard panel or Explore query can also be added via “Add to notebook”."
     },
     "add-form": {
       "add": "Add",
@@ -12732,17 +12736,12 @@
     "add-modal": {
       "title": "Add to notebook"
     },
-    "assistant": {
-      "open": "Ask Assistant",
-      "prompt": "Help me with the attached notebook \"{{title}}\" — continue the investigation and add findings to it."
-    },
     "cell": {
       "assistant-badge": "Assistant",
-      "collapse": "Collapse block",
       "delete": "Delete block",
       "drag": "Drag to reorder block",
       "duplicate": "Duplicate block",
-      "expand": "Expand block",
+      "edit-query": "Edit query",
       "explore": "Open in Explore",
       "locked-range": "Locked: {{range}}",
       "rename": "Rename panel",
@@ -12754,35 +12753,30 @@
       "unlock": "Sync back to notebook time range"
     },
     "code-cell": {
+      "done": "Done editing",
+      "edit-label": "Edit code block",
+      "empty": "Click to add code — a query, a command, a config snippet…",
       "language": "Code language"
-    },
-    "collapsed-cell": {
-      "code_one": "{{language}} · {{count}} line",
-      "code_other": "{{language}} · {{count}} lines",
-      "empty-text": "Empty text cell",
-      "expand": "Expand block",
-      "hint": "collapsed",
-      "panel": "Panel"
     },
     "declare-incident": {
       "button": "Declare incident"
     },
     "editor": {
+      "block-deleted": "Block deleted",
       "copied-markdown": "Notebook copied as Markdown",
+      "copy-link": "Copy link",
       "copy-markdown": "Copy as Markdown",
       "delete": "Delete notebook",
       "delete-body": "Are you sure you want to delete \"{{title}}\"?",
       "delete-confirm": "Delete",
       "delete-title": "Delete notebook",
-      "done": "Done",
-      "empty-add-code": "Add code",
-      "empty-add-text": "Add text",
-      "empty-body": "Write down what you are seeing, then bring in live data — any dashboard panel or Explore query can be added straight into this notebook.",
+      "empty-body": "Write down what you are seeing, then bring in live data — add a visualization below, or capture any dashboard panel or Explore query with “Add to notebook”.",
       "empty-dashboards": "Browse dashboards",
       "empty-explore": "Open Explore",
       "empty-title": "Start your investigation",
       "following": "Following {{name}}",
       "library-panel": "Library panel — open the notebook view to render it",
+      "link-copied": "Notebook link copied",
       "load-error": "Failed to load notebook",
       "more": "More actions",
       "redo": "Redo (⇧⌘Z)",
@@ -12797,25 +12791,33 @@
       "title-label": "Notebook title",
       "title-placeholder": "Give this notebook a title",
       "undo": "Undo (⌘Z)",
-      "untitled": "Untitled notebook"
+      "undo-delete": "Undo",
+      "untitled": "Untitled notebook",
+      "view": "View"
     },
     "insert-divider": {
       "code": "Code",
       "text": "Text",
-      "tooltip": "Insert block here"
+      "tooltip": "Insert block here",
+      "visualization": "Visualization"
     },
     "list": {
       "cell-count_one": "{{count}} block",
       "cell-count_other": "{{count}} blocks",
+      "copy-link": "Copy link",
+      "copy-link-label": "Copy link to notebook {{title}}",
       "copy-title": "{{title}} (copy)",
+      "delete": "Delete",
       "delete-body": "Are you sure you want to delete \"{{title}}\"?",
       "delete-confirm": "Delete",
       "delete-label": "Delete notebook {{title}}",
       "delete-title": "Delete notebook",
+      "duplicate": "Duplicate",
       "duplicate-label": "Duplicate notebook {{title}}",
       "edit": "Edit",
       "empty-body": "Notebooks are living documents for investigations: mix text with live panels added from dashboards and Explore, and collaborate with your team in real time.",
       "empty-title": "You have not created any notebooks yet",
+      "link-copied": "Notebook link copied",
       "new-notebook": "New notebook",
       "new-notebook-title": "Untitled notebook",
       "no-results": "No notebooks match your search",
@@ -12826,7 +12828,9 @@
     "markdown-cell": {
       "edit-label": "Edit text cell",
       "empty": "Click to add text — markdown, links and images supported",
-      "placeholder": "Write markdown…"
+      "image-too-large": "Image is too large to embed (roughly 500KB max)",
+      "image-unsupported": "This file type cannot be embedded",
+      "placeholder": "Write markdown… (paste or drop images)"
     },
     "panel-cell": {
       "resize": "Resize panel"
@@ -12835,6 +12839,14 @@
       "click-to-follow": "{{name}} is in this notebook — click to follow",
       "stop-following": "Following {{name}} — click to stop",
       "viewing": "{{name}} is in this notebook"
+    },
+    "query-editor": {
+      "close": "Close query editor",
+      "no-datasource": "The data source for this panel could not be loaded.",
+      "no-editor": "This data source does not provide a query editor that can be embedded here.",
+      "query-picker": "Query to edit",
+      "run": "Run query",
+      "run-tooltip": "Ctrl/Cmd + Enter to run"
     },
     "quick-add": {
       "added": "Added to notebook"

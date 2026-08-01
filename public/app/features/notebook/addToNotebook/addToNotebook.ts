@@ -2,6 +2,7 @@ import { rangeUtil, type RawTimeRange } from '@grafana/data';
 import { type NotebookElement } from '@grafana/schema/apis/notebook/v2beta1';
 
 import { createNotebook, fetchNotebook, saveNotebook } from '../api/notebookAPI';
+import { broadcastNotebookDoc } from '../collab/useNotebookCollab';
 import { insertElement, newNotebookSpec, type CellSource } from '../model/notebookSpec';
 
 export type AddToNotebookTarget = { type: 'new'; title: string } | { type: 'existing'; uid: string };
@@ -41,6 +42,8 @@ export async function addElementToNotebook(
   const notebook = await fetchNotebook(target.uid);
   const { spec, elementName } = insertElement(notebook.spec, element, { source: options?.source, timeOverride });
   const saved = await saveNotebook({ ...notebook, spec });
+  // Any editor with this notebook open shows the new block immediately.
+  broadcastNotebookDoc(saved.metadata.name, saved.spec);
   return { uid: saved.metadata.name, title: saved.spec.title, elementName };
 }
 

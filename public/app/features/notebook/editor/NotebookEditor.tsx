@@ -6,6 +6,8 @@ import {
   AppEvents,
   dateTimeFormatTimeAgo,
   rangeUtil,
+  toUtc,
+  type DataSourceInstanceSettings,
   type GrafanaTheme2,
   type PanelData,
   type RawTimeRange,
@@ -28,22 +30,27 @@ import {
   TagsInput,
   Text,
   TimeRangeInput,
+  TimeRangePicker,
   useStyles2,
 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { copyStringToClipboard } from 'app/core/utils/explore';
+import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePicker';
+import { dispatch } from 'app/store/store';
 
-import { deleteNotebook, notebookViewUrl } from '../api/notebookAPI';
+import { deleteNotebook, duplicateNotebook, notebookEditUrl, notebookViewUrl } from '../api/notebookAPI';
 import { ActivityFeedButton } from '../collab/ActivityFeed';
 import { CollabCursors } from '../collab/CollabCursors';
 import { PresenceAvatars } from '../collab/PresenceAvatars';
 import { mergeRemoteSpec } from '../collab/mergeRemoteSpec';
-import { useNotebookCollab } from '../collab/useNotebookCollab';
+import { resourceVersionTs, useNotebookCollab } from '../collab/useNotebookCollab';
 import { DeclareIncidentFromNotebookButton } from '../extensions/DeclareIncidentFromNotebookButton';
-import { OpenInAssistantButton } from '../extensions/OpenInAssistantButton';
 import { setLastUsedNotebook } from '../model/lastUsedNotebook';
+import { consumeNewNotebook } from '../model/newNotebookSignal';
 import {
   clearCellTimeOverride,
   duplicateCellAt,
@@ -51,9 +58,10 @@ import {
   moveCell,
   newCodeElement,
   newMarkdownElement,
+  newPanelForDatasource,
   removeCellAt,
+  updatePanelQuery,
   resolveCells,
-  setCellCollapsed,
   setCellHeight,
   setCellTimeOverride,
   setNotebookTimeRange,
@@ -70,9 +78,9 @@ import { AddCellRow } from './AddCellRow';
 import { InsertCellDivider } from './InsertCellDivider';
 import { CellFrame } from './cells/CellFrame';
 import { CodeCellEditor } from './cells/CodeCellEditor';
-import { CollapsedCellSummary } from './cells/CollapsedCellSummary';
 import { MarkdownCellEditor } from './cells/MarkdownCellEditor';
 import { PanelCellView, getExploreUrlForPanel } from './cells/PanelCellView';
+import { PanelQueryEditor } from './cells/PanelQueryEditor';
 import { VizSuggestionsButton } from './cells/VizSuggestionsButton';
 import { useNotebookEditorState } from './useNotebookEditorState';
 
@@ -91,14 +99,22 @@ export function NotebookEditor({ uid }: Props) {
 
   const [renamingKey, setRenamingKey] = useState<string | null>(null);
   const [timeEditKey, setTimeEditKey] = useState<string | null>(null);
+  const [queryEditKey, setQueryEditKey] = useState<string | null>(null);
   const [highlightKey, setHighlightKey] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
   const [followSid, setFollowSid] = useState<string | null>(null);
   const documentRef = useRef<HTMLDivElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
   const highlightTimer = useRef<ReturnType<typeof setTimeout>>();
   // Latest query-result readers per panel cell, powering the viz suggestions previews.
   const dataReaders = useRef(new Map<string, () => PanelData | undefined>());
+  // Panels added in-editor whose viz is still the pre-data default: their first
+  // results auto-pick the visualization the data prefers (frame metadata). Cleared
+  // by the first arrival or any manual viz choice.
+  const autoVizCells = useRef(new Set<string>());
+  // Panels whose viz the user picked explicitly — auto-pick never touches these.
+  const manualVizCells = useRef(new Set<string>());
 
   // Opening a notebook makes it the target of the "Add to last notebook" quick actions.
   const loadedTitle = !loading && !loadError ? spec?.title : undefined;
@@ -112,6 +128,7 @@ export function NotebookEditor({ uid }: Props) {
     uid,
     enabled: !loading && !loadError,
     getSpec: editor.getSpec,
+    initialDocTs: resourceVersionTs(editor.state.resource),
     onRemoteSpec: useCallback(
       (remoteSpec) => {
         editor.applyRemoteSpec(mergeRemoteSpec(remoteSpec, editor.getSpec(), editingCellKeyRef.current));
@@ -200,6 +217,54 @@ export function NotebookEditor({ uid }: Props) {
     [update, collab]
   );
 
+  const insertVizAt = useCallback(
+    (index: number, ds: DataSourceInstanceSettings) => {
+      // The testdata datasource gets a scenario so the new panel renders data immediately.
+      const isTestdata = ds.type === 'grafana-testdata-datasource';
+      const querySpec = isTestdata ? { scenarioId: 'random_walk' } : {};
+      let newKey: string | undefined;
+      update((s) => {
+        const result = insertElement(
+          s,
+          newPanelForDatasource({ uid: ds.uid, type: ds.type }, { title: ds.name, querySpec }),
+          {
+            index,
+          }
+        );
+        newKey = result.elementName;
+        return result.spec;
+      });
+      if (newKey) {
+        collab.sendActivity(t('notebooks.activity.added-viz', 'added a visualization'), newKey);
+        jumpToCell(newKey);
+        autoVizCells.current.add(newKey);
+        // A panel with an empty query renders "no data" — open the query editor
+        // right away so the next step is obvious. Testdata already shows data.
+        if (!isTestdata) {
+          setQueryEditKey(newKey);
+        }
+      }
+    },
+    [update, collab, jumpToCell]
+  );
+
+  // First data for a freshly added panel: adopt the viz the frames prefer, unless
+  // the user already picked one themselves.
+  const onPreferredViz = useCallback(
+    (elementName: string, pluginId: string) => {
+      if (!autoVizCells.current.has(elementName)) {
+        return;
+      }
+      autoVizCells.current.delete(elementName);
+      const element = editor.getSpec()?.elements[elementName];
+      if (element?.kind !== 'Panel' || element.spec.vizConfig.group === pluginId) {
+        return;
+      }
+      update((s) => updatePanelViz(s, elementName, { pluginId }));
+    },
+    [editor, update]
+  );
+
   const onDragEnd = useCallback(
     (result: DropResult) => {
       if (result.destination && result.destination.index !== result.source.index) {
@@ -242,11 +307,19 @@ export function NotebookEditor({ uid }: Props) {
 
   // Broadcast which block sits at our viewport center so collaborators can follow us.
   useEffect(() => {
+    let lastMeasure = 0;
     const onScroll = () => {
       const container = documentRef.current;
       if (!container) {
         return;
       }
+      // Measuring every block per scroll event causes layout thrash on large
+      // notebooks; a coarse gate is plenty for follow mode.
+      const now = Date.now();
+      if (now - lastMeasure < 200) {
+        return;
+      }
+      lastMeasure = now;
       const centerY = window.innerHeight / 2;
       let best: { key: string; distance: number } | undefined;
       for (const node of container.querySelectorAll('[data-cell-key]')) {
@@ -318,8 +391,42 @@ export function NotebookEditor({ uid }: Props) {
     return () => clearInterval(timer);
   }, [autoRefresh]);
 
-  // Scroll to and briefly highlight a cell linked via ?cell= (used by "Add & open notebook").
+  // Freshly created notebooks start with the title focused and selected, so typing
+  // immediately replaces "Untitled notebook".
   const isLoaded = !loading && !!spec;
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+    const isNew = consumeNewNotebook(uid) || new URLSearchParams(locationService.getLocation().search).has('new');
+    if (!isNew) {
+      return;
+    }
+    locationService.partial({ new: null }, true);
+    // The app chrome moves focus for a11y shortly after navigation, so a single
+    // focus() loses the race — retry briefly until the title actually holds focus.
+    let cancelled = false;
+    let attempts = 0;
+    const tryFocus = () => {
+      if (cancelled) {
+        return;
+      }
+      const input = titleInputRef.current;
+      if (input && document.activeElement !== input) {
+        input.focus();
+        input.select();
+      }
+      if (document.activeElement !== titleInputRef.current && attempts++ < 15) {
+        setTimeout(tryFocus, 150);
+      }
+    };
+    requestAnimationFrame(tryFocus);
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoaded, uid]);
+
+  // Scroll to and briefly highlight a cell linked via ?cell= (used by "Add & open notebook").
   useEffect(() => {
     if (!isLoaded) {
       return;
@@ -384,9 +491,47 @@ export function NotebookEditor({ uid }: Props) {
   const cells = resolveCells(spec);
   const timeRange = rangeUtil.convertRawToRange({ from: spec.timeSettings.from, to: spec.timeSettings.to });
 
+  // The notebook time range is shared document state (autosaved, synced to
+  // collaborators) — every change is announced like any other structural edit.
+  const commitTimeRange = (from: string, to: string) =>
+    update((s) => setNotebookTimeRange(s, from, to), {
+      label: t('notebooks.activity.changed-time', 'changed the notebook time range'),
+    });
+  const shiftTimeRange = (direction: number) => {
+    const shifted = getShiftedTimeRange(direction, timeRange);
+    commitTimeRange(toUtc(shifted.from).toISOString(), toUtc(shifted.to).toISOString());
+  };
+  const zoomTimeRange = () => {
+    const zoomed = getZoomedTimeRange(timeRange, 2);
+    commitTimeRange(toUtc(zoomed.from).toISOString(), toUtc(zoomed.to).toISOString());
+  };
+
   const moreMenu = (
     <Menu>
+      <Menu.Item
+        icon="link"
+        label={t('notebooks.editor.copy-link', 'Copy link')}
+        onClick={() => {
+          copyStringToClipboard(new URL(notebookViewUrl(uid), window.location.origin).toString());
+          appEvents.emit(AppEvents.alertSuccess, [t('notebooks.editor.link-copied', 'Notebook link copied')]);
+        }}
+      />
       <Menu.Item icon="copy" label={t('notebooks.editor.copy-markdown', 'Copy as Markdown')} onClick={onCopyMarkdown} />
+      <Menu.Item
+        icon="file-copy-alt"
+        label={t('notebooks.editor.duplicate', 'Duplicate notebook')}
+        onClick={async () => {
+          const current = editor.getSpec();
+          if (!current) {
+            return;
+          }
+          const created = await duplicateNotebook(
+            current,
+            t('notebooks.list.copy-title', '{{title}} (copy)', { title: current.title })
+          );
+          locationService.push(notebookEditUrl(created.metadata.name));
+        }}
+      />
       <Menu.Divider />
       <Menu.Item
         icon="trash-alt"
@@ -405,25 +550,33 @@ export function NotebookEditor({ uid }: Props) {
         onToggleFollow={(peer) => setFollowSid((cur) => (cur === peer.sid ? null : peer.sid))}
       />
       <IconButton
-        name="corner-up-left"
+        name="history"
         size="lg"
         disabled={!editor.state.canUndo}
         onClick={undo}
         tooltip={t('notebooks.editor.undo', 'Undo (⌘Z)')}
       />
+      {/* No mirrored circular-arrow icon exists in the icon set; flip the undo glyph. */}
       <IconButton
-        name="corner-up-right"
+        name="history"
         size="lg"
+        className={styles.redoIcon}
         disabled={!editor.state.canRedo}
         onClick={redo}
         tooltip={t('notebooks.editor.redo', 'Redo (⇧⌘Z)')}
       />
       <ActivityFeedButton activity={collab.activity} onJumpToCell={jumpToCell} />
       <DeclareIncidentFromNotebookButton uid={uid} title={spec.title} />
-      <OpenInAssistantButton uid={uid} spec={spec} />
-      <TimeRangeInput
+      {/* The dashboards-style picker: its popup is right-edge aligned (TimeRangeInput's
+          overflows the viewport from a right-anchored toolbar) and it brings the
+          shift/zoom arrows Grafana users expect. */}
+      <TimeRangePicker
         value={timeRange}
-        onChange={(tr) => update((s) => setNotebookTimeRange(s, rawToString(tr.raw.from), rawToString(tr.raw.to)))}
+        onChange={(tr) => commitTimeRange(rawToString(tr.raw.from), rawToString(tr.raw.to))}
+        onChangeTimeZone={() => {}}
+        onMoveBackward={() => shiftTimeRange(-1)}
+        onMoveForward={() => shiftTimeRange(1)}
+        onZoom={zoomTimeRange}
       />
       <RefreshPicker
         value={spec.timeSettings.autoRefresh}
@@ -434,7 +587,7 @@ export function NotebookEditor({ uid }: Props) {
         }
       />
       <LinkButton variant="primary" href={notebookViewUrl(uid)} icon="eye">
-        <Trans i18nKey="notebooks.editor.done">Done</Trans>
+        <Trans i18nKey="notebooks.editor.view">View</Trans>
       </LinkButton>
       <Dropdown overlay={moreMenu} placement="bottom-end">
         <IconButton name="ellipsis-v" tooltip={t('notebooks.editor.more', 'More actions')} size="lg" />
@@ -444,10 +597,14 @@ export function NotebookEditor({ uid }: Props) {
 
   const titleInput = (
     <input
+      ref={titleInputRef}
       className={styles.titleInput}
       value={spec.title}
       placeholder={t('notebooks.editor.title-placeholder', 'Give this notebook a title')}
       onChange={(e) => update((s) => setNotebookTitle(s, e.currentTarget.value))}
+      // Fresh notebooks carry a placeholder-ish title; selecting it on focus means
+      // typing replaces it instead of appending to it.
+      onFocus={(e) => e.currentTarget.select()}
       aria-label={t('notebooks.editor.title-label', 'Notebook title')}
       data-testid="notebook-title-input"
     />
@@ -459,7 +616,7 @@ export function NotebookEditor({ uid }: Props) {
         {/* Pointer tracking is presence telemetry for collaborators, not an interaction. */}
         {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
         <div className={styles.document} ref={documentRef} onPointerMove={onPointerMove}>
-          <CollabCursors peers={collab.peers} />
+          <CollabCursors getPeers={collab.getPeers} />
 
           {followedPeer && (
             <div className={styles.followingPill} style={{ backgroundColor: followedPeer.color }}>
@@ -490,7 +647,7 @@ export function NotebookEditor({ uid }: Props) {
           </div>
 
           {cells.length === 0 ? (
-            <EmptyNotebook onAddText={() => insertTextAt(0)} onAddCode={() => insertCodeAt(0)} />
+            <EmptyNotebook />
           ) : (
             <DragDropContext onDragEnd={onDragEnd}>
               <Droppable droppableId="notebook-cells">
@@ -508,44 +665,73 @@ export function NotebookEditor({ uid }: Props) {
                               ref={draggable.innerRef}
                               {...draggable.draggableProps}
                               onFocusCapture={() => setEditingCellKey(cell.elementName)}
-                              onBlurCapture={() => setEditingCellKey((cur) => (cur === cell.elementName ? null : cur))}
+                              onBlurCapture={(e) => {
+                                // Focus moving between controls inside the same cell (e.g. code
+                                // editor → its language picker) is not "done editing".
+                                if (e.relatedTarget instanceof Node && e.currentTarget.contains(e.relatedTarget)) {
+                                  return;
+                                }
+                                setEditingCellKey((cur) => (cur === cell.elementName ? null : cur));
+                              }}
                             >
                               <InsertCellDivider
                                 onInsertText={() => insertTextAt(index)}
                                 onInsertCode={() => insertCodeAt(index)}
+                                onInsertViz={(ds) => insertVizAt(index, ds)}
                               />
                               <CellFrame
                                 cellKey={cell.elementName}
                                 source={cell.source}
-                                collapsed={cell.collapsed}
                                 peers={peersInCell}
                                 highlighted={highlightKey === cell.elementName}
                                 isDragging={snapshot.isDragging}
                                 dragHandleProps={draggable.dragHandleProps}
-                                onToggleCollapse={() => update((s) => setCellCollapsed(s, index, !cell.collapsed))}
                                 onDuplicate={() =>
                                   update((s) => duplicateCellAt(s, index), {
                                     label: t('notebooks.activity.duplicated-block', 'duplicated a block'),
                                     cellKey: cell.elementName,
                                   })
                                 }
-                                onDelete={() =>
+                                onDelete={() => {
                                   update((s) => removeCellAt(s, index), {
                                     label: t('notebooks.activity.deleted-block', 'deleted a block'),
-                                  })
-                                }
+                                  });
+                                  dispatch(
+                                    notifyApp(
+                                      createSuccessNotification(
+                                        t('notebooks.editor.block-deleted', 'Block deleted'),
+                                        undefined,
+                                        undefined,
+                                        <Button variant="secondary" size="sm" onClick={undo}>
+                                          <Trans i18nKey="notebooks.editor.undo-delete">Undo</Trans>
+                                        </Button>
+                                      )
+                                    )
+                                  );
+                                }}
                                 extraActions={
-                                  cell.element.kind === 'Panel' && !cell.collapsed ? (
+                                  cell.element.kind === 'Panel' ? (
                                     <>
+                                      <IconButton
+                                        name="database"
+                                        size="sm"
+                                        onClick={() =>
+                                          setQueryEditKey((cur) => (cur === cell.elementName ? null : cell.elementName))
+                                        }
+                                        tooltip={t('notebooks.cell.edit-query', 'Edit query')}
+                                      />
                                       <VizSuggestionsButton
                                         currentPluginId={cell.element.spec.vizConfig.group}
                                         getData={() => dataReaders.current.get(cell.elementName)?.()}
-                                        onSelect={(suggestion) =>
+                                        onSelect={(suggestion) => {
+                                          // A manual choice always wins over data-driven auto-pick.
+                                          autoVizCells.current.delete(cell.elementName);
+                                          manualVizCells.current.add(cell.elementName);
                                           update((s) => updatePanelViz(s, cell.elementName, suggestion), {
                                             label: t('notebooks.activity.changed-viz', 'changed a visualization'),
                                             cellKey: cell.elementName,
-                                          })
-                                        }
+                                          });
+                                        }}
                                       />
                                       <IconButton
                                         name="clock-nine"
@@ -579,30 +765,33 @@ export function NotebookEditor({ uid }: Props) {
                                   ) : undefined
                                 }
                               >
-                                {cell.collapsed ? (
-                                  <CollapsedCellSummary
-                                    cell={cell}
-                                    onExpand={() => update((s) => setCellCollapsed(s, index, false))}
-                                  />
-                                ) : (
-                                  <NotebookCellBody
-                                    cell={cell}
-                                    spec={spec}
-                                    index={index}
-                                    editing={editingCellKey === cell.elementName}
-                                    renaming={renamingKey === cell.elementName}
-                                    timeEditing={timeEditKey === cell.elementName}
-                                    refreshNonce={refreshNonce}
-                                    onStartEdit={() => setEditingCellKey(cell.elementName)}
-                                    onDoneEdit={() => setEditingCellKey(null)}
-                                    onDoneRename={() => setRenamingKey(null)}
-                                    onDoneTimeEdit={() => setTimeEditKey(null)}
-                                    onRegisterDataReader={(getData) =>
-                                      dataReaders.current.set(cell.elementName, getData)
+                                <NotebookCellBody
+                                  cell={cell}
+                                  spec={spec}
+                                  index={index}
+                                  editing={editingCellKey === cell.elementName}
+                                  renaming={renamingKey === cell.elementName}
+                                  timeEditing={timeEditKey === cell.elementName}
+                                  queryEditing={queryEditKey === cell.elementName}
+                                  refreshNonce={refreshNonce}
+                                  onStartEdit={() => setEditingCellKey(cell.elementName)}
+                                  onDoneEdit={() => setEditingCellKey(null)}
+                                  onDoneRename={() => setRenamingKey(null)}
+                                  onDoneTimeEdit={() => setTimeEditKey(null)}
+                                  onDoneQueryEdit={() => setQueryEditKey(null)}
+                                  getPanelData={() => dataReaders.current.get(cell.elementName)?.()}
+                                  onRegisterDataReader={(getData) => dataReaders.current.set(cell.elementName, getData)}
+                                  onPreferredViz={(pluginId) => onPreferredViz(cell.elementName, pluginId)}
+                                  onQueryApplied={() => {
+                                    // A new query means a possibly new data shape (e.g. no time
+                                    // field → table); re-arm auto-pick unless the viz was chosen
+                                    // manually.
+                                    if (!manualVizCells.current.has(cell.elementName)) {
+                                      autoVizCells.current.add(cell.elementName);
                                     }
-                                    update={update}
-                                  />
-                                )}
+                                  }}
+                                  update={update}
+                                />
                               </CellFrame>
                             </div>
                           )}
@@ -616,9 +805,11 @@ export function NotebookEditor({ uid }: Props) {
             </DragDropContext>
           )}
 
-          {cells.length > 0 && (
-            <AddCellRow onAddText={() => insertTextAt(cells.length)} onAddCode={() => insertCodeAt(cells.length)} />
-          )}
+          <AddCellRow
+            onAddText={() => insertTextAt(cells.length)}
+            onAddCode={() => insertCodeAt(cells.length)}
+            onAddViz={(ds) => insertVizAt(cells.length, ds)}
+          />
         </div>
 
         <ConfirmModal
@@ -646,12 +837,17 @@ interface CellBodyProps {
   editing: boolean;
   renaming: boolean;
   timeEditing: boolean;
+  queryEditing: boolean;
   refreshNonce: number;
   onStartEdit: () => void;
   onDoneEdit: () => void;
   onDoneRename: () => void;
   onDoneTimeEdit: () => void;
+  onDoneQueryEdit: () => void;
+  getPanelData: () => PanelData | undefined;
   onRegisterDataReader: (getData: () => PanelData | undefined) => void;
+  onPreferredViz: (pluginId: string) => void;
+  onQueryApplied: () => void;
   update: (mutate: (spec: NotebookSpec) => NotebookSpec, activity?: { label: string; cellKey?: string }) => void;
 }
 
@@ -662,12 +858,17 @@ function NotebookCellBody({
   editing,
   renaming,
   timeEditing,
+  queryEditing,
   refreshNonce,
   onStartEdit,
   onDoneEdit,
   onDoneRename,
   onDoneTimeEdit,
+  onDoneQueryEdit,
+  getPanelData,
   onRegisterDataReader,
+  onPreferredViz,
+  onQueryApplied,
   update,
 }: CellBodyProps) {
   const { element, elementName } = cell;
@@ -721,7 +922,10 @@ function NotebookCellBody({
               variant="secondary"
               fill="outline"
               onClick={() => {
-                update((s) => clearCellTimeOverride(s, index));
+                update((s) => clearCellTimeOverride(s, index), {
+                  label: t('notebooks.activity.unlocked-time', 'synced a block back to notebook time'),
+                  cellKey: elementName,
+                });
                 onDoneTimeEdit();
               }}
             >
@@ -742,9 +946,30 @@ function NotebookCellBody({
               name="times"
               size="sm"
               tooltip={t('notebooks.cell.unlock', 'Sync back to notebook time range')}
-              onClick={() => update((s) => clearCellTimeOverride(s, index))}
+              onClick={() =>
+                update((s) => clearCellTimeOverride(s, index), {
+                  label: t('notebooks.activity.unlocked-time', 'synced a block back to notebook time'),
+                  cellKey: elementName,
+                })
+              }
             />
           </Stack>
+        )}
+        {queryEditing && (
+          <PanelQueryEditor
+            panel={element}
+            timeFrom={effectiveFrom}
+            timeTo={effectiveTo}
+            getData={getPanelData}
+            onApply={(refId, query, datasource) => {
+              update((s) => updatePanelQuery(s, elementName, refId, { ...query }, datasource), {
+                label: t('notebooks.activity.edited-query', 'edited a query'),
+                cellKey: elementName,
+              });
+              onQueryApplied();
+            }}
+            onClose={onDoneQueryEdit}
+          />
         )}
         <PanelCellView
           panel={element}
@@ -754,6 +979,14 @@ function NotebookCellBody({
           height={cell.height}
           onHeightChange={(height) => update((s) => setCellHeight(s, index, height))}
           onDataReaderReady={onRegisterDataReader}
+          onPreferredViz={onPreferredViz}
+          revertUserTimeChanges={isLocked}
+          onUserTimeChange={(from, to) =>
+            update((s) => setCellTimeOverride(s, index, from, to), {
+              label: t('notebooks.activity.locked-time', 'locked a block to a time range'),
+              cellKey: elementName,
+            })
+          }
         />
       </>
     );
@@ -785,12 +1018,15 @@ function NotebookCellBody({
     <CodeCellEditor
       code={content.spec.code}
       language={content.spec.language}
+      editing={editing}
+      onStartEdit={onStartEdit}
       onChange={(changes) => update((s) => updateCodeCell(s, elementName, changes))}
+      onDone={onDoneEdit}
     />
   );
 }
 
-function EmptyNotebook({ onAddText, onAddCode }: { onAddText: () => void; onAddCode: () => void }) {
+function EmptyNotebook() {
   const styles = useStyles2(getStyles);
 
   return (
@@ -800,17 +1036,11 @@ function EmptyNotebook({ onAddText, onAddCode }: { onAddText: () => void; onAddC
       </Text>
       <Text color="secondary">
         <Trans i18nKey="notebooks.editor.empty-body">
-          Write down what you are seeing, then bring in live data — any dashboard panel or Explore query can be added
-          straight into this notebook.
+          Write down what you are seeing, then bring in live data — add a visualization below, or capture any dashboard
+          panel or Explore query with “Add to notebook”.
         </Trans>
       </Text>
       <Stack direction="row" gap={1} wrap="wrap" justifyContent="center">
-        <Button icon="text-fields" onClick={onAddText}>
-          <Trans i18nKey="notebooks.editor.empty-add-text">Add text</Trans>
-        </Button>
-        <Button variant="secondary" icon="brackets-curly" onClick={onAddCode}>
-          <Trans i18nKey="notebooks.editor.empty-add-code">Add code</Trans>
-        </Button>
         <LinkButton variant="secondary" icon="apps" href="/dashboards">
           <Trans i18nKey="notebooks.editor.empty-dashboards">Browse dashboards</Trans>
         </LinkButton>
@@ -866,6 +1096,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(2),
     paddingBottom: theme.spacing(2),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
+  }),
+  redoIcon: css({
+    transform: 'scaleX(-1)',
   }),
   followingPill: css({
     position: 'fixed',

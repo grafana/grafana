@@ -8,6 +8,7 @@ import {
   newCodeElement,
   newMarkdownElement,
   newNotebookSpec,
+  newPanelForDatasource,
   nextPanelId,
   normalizeNotebookSpec,
   removeCellAt,
@@ -18,6 +19,7 @@ import {
   setNotebookTimeRange,
   updateCodeCell,
   updateMarkdownText,
+  updatePanelQuery,
   updatePanelTitle,
   updatePanelViz,
 } from './notebookSpec';
@@ -61,6 +63,33 @@ describe('notebookSpec', () => {
     expect(Array.isArray(spec.timeSettings.autoRefreshIntervals)).toBe(true);
     expect(spec.timeSettings.autoRefreshIntervals!.length).toBeGreaterThan(0);
     expect(resolveCells(spec)).toEqual([]);
+  });
+
+  it('updates one query of a panel element, stripping runtime-only keys', () => {
+    const base = newNotebookSpec('nb');
+    const panel = newPanelForDatasource({ uid: 'ds-uid', type: 'prometheus' });
+    const { spec, elementName } = insertElement(base, panel);
+
+    const updated = updatePanelQuery(spec, elementName, 'A', {
+      refId: 'A',
+      datasource: { uid: 'ds-uid', type: 'prometheus' },
+      hide: false,
+      expr: 'up',
+      instant: true,
+    });
+
+    const element = updated.elements[elementName];
+    if (element.kind !== 'Panel') {
+      throw new Error('expected panel element');
+    }
+    const query = element.spec.data.spec.queries[0];
+    expect(query.spec.refId).toBe('A');
+    expect(query.spec.query.spec).toEqual({ expr: 'up', instant: true });
+    // Datasource wiring on the envelope is untouched.
+    expect(query.spec.query.datasource?.name).toBe('ds-uid');
+    expect(query.spec.query.group).toBe('prometheus');
+    // Unknown refIds leave the spec unchanged.
+    expect(updatePanelQuery(updated, elementName, 'Z', { expr: 'down' })).toEqual(updated);
   });
 
   it('creates an empty notebook with the requested time range', () => {

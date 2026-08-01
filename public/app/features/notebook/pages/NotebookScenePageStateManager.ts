@@ -11,6 +11,7 @@ import { type DashboardScene } from 'app/features/dashboard-scene/scene/Dashboar
 import { NotebookLayoutManager } from 'app/features/dashboard-scene/scene/layout-notebook/NotebookLayoutManager';
 import { dispatch } from 'app/store/store';
 
+import { setLastUsedNotebook } from '../model/lastUsedNotebook';
 import { normalizeNotebookSpec } from '../model/notebookSpec';
 import { buildNotebookEnvelope } from '../scene/buildNotebookEnvelope';
 
@@ -47,6 +48,8 @@ export class NotebookScenePageStateManager extends DashboardScenePageStateManage
     // stay on the @grafana/schema notebook types.
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema resource type at the fetch seam
     const notebook = result.data as unknown as Resource<NotebookSpec>;
+    // Viewing counts as "using": quick-add targets and the sidebar follow the last opened notebook.
+    setLastUsedNotebook(notebook.metadata.name, notebook.spec.title);
     return buildNotebookEnvelope({ ...notebook, spec: normalizeNotebookSpec(notebook.spec) });
   }
 

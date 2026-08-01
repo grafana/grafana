@@ -4,6 +4,7 @@ import { type Resource } from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 
 import { setLastUsedNotebook } from '../model/lastUsedNotebook';
+import { markNotebookAsNew } from '../model/newNotebookSignal';
 import { normalizeNotebookSpec } from '../model/notebookSpec';
 
 // The generated RTK types and the @grafana/schema notebook types are produced from the same
@@ -81,6 +82,18 @@ export async function saveNotebook(resource: Resource<NotebookSpec>): Promise<Re
   const saved = result.data as unknown as Resource<NotebookSpec>;
   setLastUsedNotebook(saved.metadata.name, saved.spec.title);
   return saved;
+}
+
+/**
+ * Creates a copy of a notebook under a new title. The copy is marked as freshly
+ * created so opening it in the editor focuses the title, ready to rename.
+ */
+export async function duplicateNotebook(spec: NotebookSpec, copyTitle: string): Promise<Resource<NotebookSpec>> {
+  const copy: NotebookSpec = JSON.parse(JSON.stringify(spec));
+  copy.title = copyTitle;
+  const created = await createNotebook(copy);
+  markNotebookAsNew(created.metadata.name);
+  return created;
 }
 
 export async function deleteNotebook(uid: string): Promise<void> {

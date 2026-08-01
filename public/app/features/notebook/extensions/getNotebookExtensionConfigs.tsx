@@ -9,6 +9,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type PluginExtensionExploreContext } from '../../explore/extensions/ToolbarExtensionPoint';
 import { createNotebook, notebookEditUrl } from '../api/notebookAPI';
 import { getLastUsedNotebook } from '../model/lastUsedNotebook';
+import { markNotebookAsNew } from '../model/newNotebookSignal';
 import { newNotebookSpec } from '../model/notebookSpec';
 
 /** Title shared by the sidebar added link and added component (the sidebar matches them by title). */
@@ -111,9 +112,9 @@ export function getNotebookExtensionConfigs(): PluginExtensionAddedLinkConfig[] 
         },
       }),
 
-      // Command palette → quick "Create notebook" from anywhere (incl. the workspace chrome).
+      // Command palette → quick "New notebook" from anywhere (matches "New dashboard").
       createAddedLinkConfig({
-        title: 'Create notebook',
+        title: 'New notebook',
         description: 'Create a new notebook to capture an investigation',
         targets: [PluginExtensionPoints.CommandPalette],
         icon: 'book-open',
@@ -126,6 +127,7 @@ export function getNotebookExtensionConfigs(): PluginExtensionAddedLinkConfig[] 
         },
         onClick: async () => {
           const created = await createNotebook(newNotebookSpec('Untitled notebook'));
+          markNotebookAsNew(created.metadata.name);
           locationService.push(notebookEditUrl(created.metadata.name));
         },
       }),

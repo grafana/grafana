@@ -15,9 +15,51 @@ function capturePanel(panel: VizPanel, dashboard: DashboardScene): NotebookEleme
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- identical leaf type across the two schemas
   const element = vizPanelToSchemaV2(panel) as unknown as NotebookElement;
   if (element.kind === 'Panel') {
+    interpolateVariables(element, panel);
     annotateOrigin(element, dashboard);
   }
   return element;
+}
+
+/**
+ * Dashboard panels usually reference template variables ($instance, $job, ...) that
+ * don't exist in a notebook. Resolve them to their current values at capture time —
+ * in queries, the title and panel options (e.g. text panel content) — so the
+ * notebook panel keeps showing what the user was looking at.
+ */
+function interpolateVariables(element: PanelKind, panel: VizPanel) {
+  element.spec.title = sceneGraph.interpolate(panel, element.spec.title);
+  element.spec.data.spec.queries = element.spec.data.spec.queries.map((query) => ({
+    ...query,
+    spec: {
+      ...query.spec,
+      query: {
+        ...query.spec.query,
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- deep-walk preserves the query spec shape
+        spec: interpolateDeep(query.spec.query.spec, panel) as Record<string, unknown>,
+      },
+    },
+  }));
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- deep-walk preserves the options shape
+  element.spec.vizConfig.spec.options = interpolateDeep(element.spec.vizConfig.spec.options, panel) as Record<
+    string,
+    unknown
+  >;
+}
+
+// Query-time macros ($__rate_interval, $__timeFilter, ${__field.*}) are not dashboard
+// variables: scene interpolation leaves them unresolved, so they stay dynamic.
+function interpolateDeep(value: unknown, panel: VizPanel): unknown {
+  if (typeof value === 'string') {
+    return value.includes('$') ? sceneGraph.interpolate(panel, value) : value;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => interpolateDeep(item, panel));
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, interpolateDeep(item, panel)]));
+  }
+  return value;
 }
 
 /**

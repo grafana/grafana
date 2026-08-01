@@ -1,21 +1,26 @@
 import { css } from '@emotion/css';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
+import { AppEvents, type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { locationService } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Box, LinkButton, useStyles2 } from '@grafana/ui';
+import { Box, ConfirmModal, Dropdown, IconButton, LinkButton, Menu, useStyles2 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { contextSrv } from 'app/core/services/context_srv';
+import { copyStringToClipboard } from 'app/core/utils/explore';
 import { DashboardPageError } from 'app/features/dashboard/containers/DashboardPageError';
 import { type DashboardControls } from 'app/features/dashboard-scene/scene/DashboardControls';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AccessControlAction } from 'app/types/accessControl';
 import { DashboardRoutes } from 'app/types/dashboard';
+
+import { deleteNotebook, duplicateNotebook, fetchNotebook, notebookEditUrl } from '../api/notebookAPI';
 
 import { getNotebookScenePageStateManager } from './NotebookScenePageStateManager';
 
@@ -116,6 +121,7 @@ function renderHiddenVariables(scene: DashboardScene) {
 function NotebookControls({ controls, uid }: { controls: DashboardControls; uid?: string }) {
   const styles = useStyles2(getControlsStyles);
   const { timePicker, refreshPicker, hideTimeControls } = controls.useState();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const canEdit =
     contextSrv.hasPermission(AccessControlAction.DashboardsCreate) ||
@@ -124,6 +130,38 @@ function NotebookControls({ controls, uid }: { controls: DashboardControls; uid?
   if (hideTimeControls && !canEdit) {
     return null;
   }
+
+  const onDuplicate = async () => {
+    if (!uid) {
+      return;
+    }
+    // Fetch fresh: the scene envelope does not retain the raw notebook spec.
+    const notebook = await fetchNotebook(uid);
+    const created = await duplicateNotebook(
+      notebook.spec,
+      t('notebooks.list.copy-title', '{{title}} (copy)', { title: notebook.spec.title })
+    );
+    locationService.push(notebookEditUrl(created.metadata.name));
+  };
+
+  const moreMenu = (
+    <Menu>
+      <Menu.Item
+        icon="file-copy-alt"
+        label={t('notebook.duplicate', 'Duplicate notebook')}
+        onClick={() => {
+          onDuplicate();
+        }}
+      />
+      <Menu.Divider />
+      <Menu.Item
+        icon="trash-alt"
+        destructive
+        label={t('notebook.delete', 'Delete notebook')}
+        onClick={() => setConfirmDelete(true)}
+      />
+    </Menu>
+  );
 
   return (
     <div className={styles.controls}>
@@ -137,6 +175,16 @@ function NotebookControls({ controls, uid }: { controls: DashboardControls; uid?
         {t('notebook.back-button', 'All notebooks')}
       </LinkButton>
       <div className={styles.controlsRight}>
+        <IconButton
+          name="link"
+          size="lg"
+          tooltip={t('notebook.copy-link', 'Copy link')}
+          onClick={() => {
+            copyStringToClipboard(window.location.href);
+            appEvents.emit(AppEvents.alertSuccess, [t('notebook.link-copied', 'Notebook link copied')]);
+          }}
+          data-testid="notebook-copy-link"
+        />
         {canEdit && uid && (
           <LinkButton variant="secondary" icon="pen" href={`/notebooks/edit/${uid}`} data-testid="notebook-edit-button">
             {t('notebook.edit-button', 'Edit')}
@@ -148,7 +196,26 @@ function NotebookControls({ controls, uid }: { controls: DashboardControls; uid?
             <refreshPicker.Component model={refreshPicker} />
           </>
         )}
+        {canEdit && uid && (
+          <Dropdown overlay={moreMenu} placement="bottom-end">
+            <IconButton name="ellipsis-v" size="lg" tooltip={t('notebook.more-actions', 'More actions')} />
+          </Dropdown>
+        )}
       </div>
+
+      <ConfirmModal
+        isOpen={confirmDelete}
+        title={t('notebook.delete-title', 'Delete notebook')}
+        body={t('notebook.delete-body', 'Are you sure you want to delete this notebook?')}
+        confirmText={t('notebook.delete-confirm', 'Delete')}
+        onConfirm={async () => {
+          if (uid) {
+            await deleteNotebook(uid);
+          }
+          locationService.push('/notebooks');
+        }}
+        onDismiss={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }

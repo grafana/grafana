@@ -9,7 +9,10 @@ export interface CollabUser {
 interface CollabMessageBase {
   /** Session id of the sender — one per open editor tab, used to ignore own messages. */
   sid: string;
-  /** Sender wall-clock timestamp, used for last-write-wins document convergence. */
+  /**
+   * For doc messages: the document's version timestamp (the edit that produced it),
+   * used for last-write-wins convergence. For everything else: the send time.
+   */
   ts: number;
   user: CollabUser;
 }
@@ -18,6 +21,8 @@ interface CollabMessageBase {
 export interface CollabDocMessage extends CollabMessageBase {
   t: 'doc';
   spec: NotebookSpec;
+  /** Sent by one-shot flows (e.g. add-to-notebook) — not a session; skip presence tracking. */
+  transient?: boolean;
 }
 
 /** Cursor position in notebook-document coordinates plus the cell the user is in. */

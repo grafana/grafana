@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
-import { dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
+import { AppEvents, dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
@@ -19,10 +19,13 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useDeleteNotebookMutation, useListNotebookQuery, type Notebook } from 'app/api/clients/dashboard/v2beta1';
+import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
+import { copyStringToClipboard } from 'app/core/utils/explore';
 
-import { createNotebook, notebookEditUrl, notebookViewUrl } from '../api/notebookAPI';
+import { createNotebook, duplicateNotebook, notebookEditUrl, notebookViewUrl } from '../api/notebookAPI';
+import { markNotebookAsNew } from '../model/newNotebookSignal';
 import { newNotebookSpec } from '../model/notebookSpec';
 
 export function NotebooksListPage() {
@@ -47,7 +50,8 @@ export function NotebooksListPage() {
       (nb) =>
         nb.spec.title.toLowerCase().includes(needle) ||
         (nb.spec.description ?? '').toLowerCase().includes(needle) ||
-        nb.spec.tags.some((tag) => tag.toLowerCase().includes(needle))
+        nb.spec.tags.some((tag) => tag.toLowerCase().includes(needle)) ||
+        contentMatches(nb, needle)
     );
   }, [data, search]);
 
@@ -61,18 +65,26 @@ export function NotebooksListPage() {
       const created = await createNotebook(
         newNotebookSpec(t('notebooks.list.new-notebook-title', 'Untitled notebook'))
       );
+      markNotebookAsNew(created.metadata.name);
       locationService.push(notebookEditUrl(created.metadata.name));
     } finally {
       setCreating(false);
     }
   };
 
-  // Duplicating makes notebooks reusable as investigation templates.
+  const onCopyLink = (notebook: Notebook) => {
+    copyStringToClipboard(new URL(notebookViewUrl(notebook.metadata.name ?? ''), window.location.origin).toString());
+    appEvents.emit(AppEvents.alertSuccess, [t('notebooks.list.link-copied', 'Notebook link copied')]);
+  };
+
+  // Duplicating makes notebooks reusable as investigation templates. The copy opens
+  // in the editor with its title focused, ready to rename.
   const onDuplicate = async (notebook: Notebook) => {
-    const copy = JSON.parse(JSON.stringify(notebook.spec));
-    copy.title = t('notebooks.list.copy-title', '{{title}} (copy)', { title: notebook.spec.title });
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client spec bridged to the schema spec at the API seam
-    const created = await createNotebook(copy as Parameters<typeof createNotebook>[0]);
+    const created = await duplicateNotebook(
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client spec bridged to the schema spec at the API seam
+      notebook.spec as Parameters<typeof duplicateNotebook>[0],
+      t('notebooks.list.copy-title', '{{title}} (copy)', { title: notebook.spec.title })
+    );
     locationService.push(notebookEditUrl(created.metadata.name));
   };
 
@@ -125,6 +137,7 @@ export function NotebooksListPage() {
             {notebooks.map((notebook) => {
               const name = notebook.metadata.name ?? '';
               const cells = countCells(notebook);
+              const panels = countPanels(notebook);
               return (
                 <li key={name}>
                   <Card noMargin href={notebookViewUrl(name)} data-testid={`notebook-card-${name}`}>
@@ -138,11 +151,19 @@ export function NotebooksListPage() {
                         t('notebooks.list.updated', 'Updated {{when}}', {
                           when: dateTimeFormatTimeAgo(lastUpdated(notebook)),
                         }),
-                        t('notebooks.list.cell-count', '', {
-                          count: cells,
-                          defaultValue_one: '{{count}} block',
-                          defaultValue_other: '{{count}} blocks',
-                        }),
+                        // Live panels are the load-bearing content — lead with them; text-only
+                        // notebooks fall back to the block count.
+                        panels > 0
+                          ? t('notebooks.list.panel-count', '', {
+                              count: panels,
+                              defaultValue_one: '{{count}} panel',
+                              defaultValue_other: '{{count}} panels',
+                            })
+                          : t('notebooks.list.cell-count', '', {
+                              count: cells,
+                              defaultValue_one: '{{count}} block',
+                              defaultValue_other: '{{count}} blocks',
+                            }),
                       ]}
                     </Card.Meta>
                     {notebook.spec.tags.length > 0 && (
@@ -162,12 +183,34 @@ export function NotebooksListPage() {
                         <Trans i18nKey="notebooks.list.edit">Edit</Trans>
                       </LinkButton>
                       <Button
+                        key="copy-link"
+                        variant="secondary"
+                        fill="outline"
+                        size="sm"
+                        icon="link"
+                        onClick={(e) => {
+                          // Never let the click reach the card's navigation link.
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onCopyLink(notebook);
+                        }}
+                        tooltip={t('notebooks.list.copy-link', 'Copy link')}
+                        aria-label={t('notebooks.list.copy-link-label', 'Copy link to notebook {{title}}', {
+                          title: notebook.spec.title,
+                        })}
+                      />
+                      <Button
                         key="duplicate"
                         variant="secondary"
                         fill="outline"
                         size="sm"
                         icon="copy"
-                        onClick={() => onDuplicate(notebook)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onDuplicate(notebook);
+                        }}
+                        tooltip={t('notebooks.list.duplicate', 'Duplicate')}
                         aria-label={t('notebooks.list.duplicate-label', 'Duplicate notebook {{title}}', {
                           title: notebook.spec.title,
                         })}
@@ -178,7 +221,12 @@ export function NotebooksListPage() {
                         fill="outline"
                         size="sm"
                         icon="trash-alt"
-                        onClick={() => setDeleteTarget(notebook)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setDeleteTarget(notebook);
+                        }}
+                        tooltip={t('notebooks.list.delete', 'Delete')}
                         aria-label={t('notebooks.list.delete-label', 'Delete notebook {{title}}', {
                           title: notebook.spec.title,
                         })}
@@ -217,6 +265,28 @@ function lastUpdated(notebook: Notebook): string {
 
 function countCells(notebook: Notebook): number {
   return notebook.spec.layout.spec.cells.length;
+}
+
+function countPanels(notebook: Notebook): number {
+  return Object.values(notebook.spec.elements).filter(
+    (element) => element.kind === 'Panel' || element.kind === 'LibraryPanel'
+  ).length;
+}
+
+// The list endpoint returns full specs, so block contents are searchable client-side
+// at POC scale (a proper search index is the GA path).
+function contentMatches(notebook: Notebook, needle: string): boolean {
+  return Object.values(notebook.spec.elements).some((element) => {
+    if (element.kind === 'Panel' || element.kind === 'LibraryPanel') {
+      return element.spec.title.toLowerCase().includes(needle);
+    }
+    if (element.kind === 'Cell') {
+      const content = element.spec.content;
+      const text = content.kind === 'Markdown' ? content.spec.text : content.kind === 'Code' ? content.spec.code : '';
+      return text.toLowerCase().includes(needle);
+    }
+    return false;
+  });
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

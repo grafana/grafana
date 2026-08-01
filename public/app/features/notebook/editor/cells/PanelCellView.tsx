@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { rangeUtil, type DataQuery, type GrafanaTheme2, type PanelData } from '@grafana/data';
+import { LoadingState, rangeUtil, type DataQuery, type GrafanaTheme2, type PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   EmbeddedScene,
@@ -14,6 +14,8 @@ import {
 import { type PanelKind } from '@grafana/schema/apis/notebook/v2beta1';
 import { useStyles2 } from '@grafana/ui';
 import { getExploreUrl } from 'app/core/utils/explore';
+
+import { preferredVizForData } from '../../model/preferredViz';
 
 import { buildNotebookVizPanel } from './buildNotebookVizPanel';
 
@@ -33,6 +35,22 @@ interface Props {
   onHeightChange?: (height: number) => void;
   /** Exposes a reader for the panel's latest query result (used by viz suggestions). */
   onDataReaderReady?: (getData: () => PanelData | undefined) => void;
+  /**
+   * Called when the user changes this panel's time range from inside the panel
+   * (drag-to-zoom, zoom out) — the editor turns it into a per-block time lock.
+   */
+  onUserTimeChange?: (from: string, to: string) => void;
+  /**
+   * When set, in-panel time gestures snap back instead of reporting up — used for
+   * blocks already locked to a window, whose range should not shift accidentally.
+   */
+  revertUserTimeChanges?: boolean;
+  /**
+   * Called whenever a query run completes with data, with the visualization the
+   * result frames themselves prefer (frame metadata). The editor uses it to
+   * auto-pick the right viz for freshly added panels.
+   */
+  onPreferredViz?: (pluginId: string) => void;
 }
 
 /**
@@ -49,6 +67,9 @@ export function PanelCellView({
   height,
   onHeightChange,
   onDataReaderReady,
+  onUserTimeChange,
+  revertUserTimeChanges,
+  onPreferredViz,
 }: Props) {
   const styles = useStyles2(getStyles);
 
@@ -81,6 +102,22 @@ export function PanelCellView({
     });
   }, [scene, onDataReaderReady]);
 
+  // Report the viz the result frames prefer once a run completes with data.
+  const onPreferredVizRef = useRef(onPreferredViz);
+  onPreferredVizRef.current = onPreferredViz;
+  useEffect(() => {
+    const vizPanel = vizPanelRef.current;
+    if (!vizPanel || !onPreferredVizRef.current) {
+      return;
+    }
+    const sub = sceneGraph.getData(vizPanel).subscribeToState((state) => {
+      if (state.data?.state === LoadingState.Done && state.data.series.length > 0) {
+        onPreferredVizRef.current?.(preferredVizForData(state.data));
+      }
+    });
+    return () => sub.unsubscribe();
+  }, [scene]);
+
   useEffect(() => {
     const timeRange = scene.state.$timeRange;
     if (!timeRange) {
@@ -90,6 +127,38 @@ export function PanelCellView({
       timeRange.onTimeRangeChange(rangeUtil.convertRawToRange({ from: timeFrom, to: timeTo }));
     }
   }, [scene, timeFrom, timeTo]);
+
+  // Drag-to-zoom (and other in-panel time interactions) change this cell's scene
+  // range. Anything that differs from the props is a user gesture — report it up so
+  // it becomes a persistent per-block time lock instead of silently vanishing on the
+  // next spec-driven rebuild. Props-driven syncs (above) settle equal and are ignored.
+  const timeFromRef = useRef(timeFrom);
+  timeFromRef.current = timeFrom;
+  const timeToRef = useRef(timeTo);
+  timeToRef.current = timeTo;
+  const onUserTimeChangeRef = useRef(onUserTimeChange);
+  onUserTimeChangeRef.current = onUserTimeChange;
+  const revertUserTimeRef = useRef(revertUserTimeChanges);
+  revertUserTimeRef.current = revertUserTimeChanges;
+
+  useEffect(() => {
+    const timeRange = scene.state.$timeRange;
+    if (!timeRange) {
+      return;
+    }
+    const sub = timeRange.subscribeToState((state) => {
+      if (state.from === timeFromRef.current && state.to === timeToRef.current) {
+        return;
+      }
+      if (revertUserTimeRef.current) {
+        // Locked blocks keep their window: snap the gesture back.
+        timeRange.onTimeRangeChange(rangeUtil.convertRawToRange({ from: timeFromRef.current, to: timeToRef.current }));
+        return;
+      }
+      onUserTimeChangeRef.current?.(state.from, state.to);
+    });
+    return () => sub.unsubscribe();
+  }, [scene]);
 
   useEffect(() => {
     if (refreshNonce) {

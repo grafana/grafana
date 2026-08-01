@@ -1,25 +1,49 @@
 import { css } from '@emotion/css';
+import { useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
+
+import { InlineDataSourcePicker } from './InlineDataSourcePicker';
 
 interface Props {
   onInsertText: () => void;
   onInsertCode: () => void;
+  onInsertViz: (datasource: DataSourceInstanceSettings) => void;
 }
 
 /**
  * Notion-style hover affordance between cells: a thin line with a "+" that inserts
- * a new text or code cell at that position.
+ * a new text, code or visualization block at that position.
  */
-export function InsertCellDivider({ onInsertText, onInsertCode }: Props) {
+export function InsertCellDivider({ onInsertText, onInsertCode, onInsertViz }: Props) {
   const styles = useStyles2(getStyles);
+  const [pickingDatasource, setPickingDatasource] = useState(false);
+
+  if (pickingDatasource) {
+    return (
+      <div className={styles.pickerRow}>
+        <InlineDataSourcePicker
+          onSelect={(ds) => {
+            setPickingDatasource(false);
+            onInsertViz(ds);
+          }}
+          onCancel={() => setPickingDatasource(false)}
+        />
+      </div>
+    );
+  }
 
   const menu = (
     <Menu>
       <Menu.Item icon="text-fields" label={t('notebooks.insert-divider.text', 'Text')} onClick={onInsertText} />
       <Menu.Item icon="brackets-curly" label={t('notebooks.insert-divider.code', 'Code')} onClick={onInsertCode} />
+      <Menu.Item
+        icon="graph-bar"
+        label={t('notebooks.insert-divider.visualization', 'Visualization')}
+        onClick={() => setPickingDatasource(true)}
+      />
     </Menu>
   );
 
@@ -50,6 +74,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:hover, &:focus-within': {
       opacity: 1,
     },
+  }),
+  pickerRow: css({
+    padding: theme.spacing(1, 0),
   }),
   line: css({
     flex: 1,

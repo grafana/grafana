@@ -40,7 +40,12 @@ export function AddToNotebookForm({ element, sourceName, timeRange, onDismiss }:
   const [saveTarget, setSaveTarget] = useState<SaveTarget>(lastUsed ? SaveTarget.Existing : SaveTarget.New);
   const [title, setTitle] = useState(defaultTitle());
   const [existingUid, setExistingUid] = useState<string | undefined>(lastUsed?.uid);
-  const [lockTimeRange, setLockTimeRange] = useState(false);
+  // An absolute source range means the user was looking at a specific window (e.g.
+  // zoomed into a spike) — capture what they saw by defaulting the lock on. Relative
+  // ranges ("last 6 hours") follow the notebook's time by default.
+  const [lockTimeRange, setLockTimeRange] = useState(() =>
+    Boolean(timeRange && !rangeUtil.isRelativeTimeRange(timeRange))
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | undefined>();
 
@@ -122,12 +127,16 @@ export function AddToNotebookForm({ element, sourceName, timeRange, onDismiss }:
       )}
 
       {timeRange && (
-        <Checkbox
-          value={lockTimeRange}
-          onChange={(e) => setLockTimeRange(e.currentTarget.checked)}
-          label={t('notebooks.add-form.lock-time', 'Lock this panel to the current time window')}
-          description={t('notebooks.add-form.lock-time-description', '{{from}} → {{to}}', absoluteRange(timeRange))}
-        />
+        // alignSelf keeps the checkbox's inline-grid hugging the left edge instead of
+        // stretching (which centers its label/description in the modal).
+        <div style={{ alignSelf: 'flex-start' }}>
+          <Checkbox
+            value={lockTimeRange}
+            onChange={(e) => setLockTimeRange(e.currentTarget.checked)}
+            label={t('notebooks.add-form.lock-time', 'Lock this panel to the current time window')}
+            description={t('notebooks.add-form.lock-time-description', '{{from}} → {{to}}', absoluteRange(timeRange))}
+          />
+        </div>
       )}
 
       {error && (

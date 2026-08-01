@@ -28,7 +28,6 @@ function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistries {
 function registerCoreExtensions({
   addedComponentsRegistry,
   addedLinksRegistry,
-  addedFunctionsRegistry,
   exposedComponentsRegistry,
 }: PluginExtensionRegistries) {
   // Registering core extension links
@@ -50,20 +49,6 @@ function registerCoreExtensions({
       },
     ],
   });
-
-  // Notebook operations exposed to the Grafana Assistant (inert without the assistant app).
-  // Imported lazily: @grafana/assistant runs init-time code that must not execute in the
-  // synchronous bootstrap path, and a failure here should never block Grafana from loading.
-  import('app/features/notebook/extensions/notebookAssistantFunctions')
-    .then((m) => {
-      addedFunctionsRegistry.register({
-        pluginId: 'grafana',
-        configs: m.getNotebookAssistantFunctionConfigs(),
-      });
-    })
-    .catch((error) => {
-      console.warn('Could not register notebook assistant functions', error);
-    });
 
   // Registering core exposed components
   exposedComponentsRegistry.register({

@@ -1,10 +1,13 @@
 import { css } from '@emotion/css';
 import { useEffect, useRef } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { TextArea, useStyles2 } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { MarkdownCell } from 'app/features/dashboard-scene/scene/layout-notebook/cells/MarkdownCell';
+
+import { imageFileFromEvent, imageFileToMarkdown } from './imagePaste';
 
 interface Props {
   value: string;
@@ -17,7 +20,8 @@ interface Props {
 /**
  * Notion-style markdown cell: rendered preview that switches to a textarea on
  * click, committing on blur / Escape / mod+Enter. Preview rendering reuses the
- * read-only notebook MarkdownCell (sanitized markdown).
+ * read-only notebook MarkdownCell (sanitized markdown). Images can be pasted or
+ * dropped straight in — they embed as downscaled data URIs.
  */
 export function MarkdownCellEditor({ value, editing, onStartEdit, onChange, onDone }: Props) {
   const styles = useStyles2(getStyles);
@@ -32,6 +36,23 @@ export function MarkdownCellEditor({ value, editing, onStartEdit, onChange, onDo
     }
   }, [editing]);
 
+  const embedImage = async (file: File, position?: number) => {
+    const result = await imageFileToMarkdown(file);
+    if (!result.ok) {
+      appEvents.emit(AppEvents.alertWarning, [
+        result.reason === 'too-large'
+          ? t('notebooks.markdown-cell.image-too-large', 'Image is too large to embed (roughly 500KB max)')
+          : t('notebooks.markdown-cell.image-unsupported', 'This file type cannot be embedded'),
+      ]);
+      return;
+    }
+    if (position === undefined) {
+      onChange(value.trim() ? `${value}\n\n${result.markdown}` : result.markdown);
+    } else {
+      onChange(`${value.slice(0, position)}${result.markdown}${value.slice(position)}`);
+    }
+  };
+
   if (editing) {
     const rows = Math.min(Math.max(value.split('\n').length + 1, 3), 30);
     return (
@@ -39,9 +60,24 @@ export function MarkdownCellEditor({ value, editing, onStartEdit, onChange, onDo
         ref={textareaRef}
         value={value}
         rows={rows}
-        placeholder={t('notebooks.markdown-cell.placeholder', 'Write markdown…')}
+        placeholder={t('notebooks.markdown-cell.placeholder', 'Write markdown… (paste or drop images)')}
         onChange={(e) => onChange(e.currentTarget.value)}
         onBlur={onDone}
+        onPaste={(e) => {
+          const file = imageFileFromEvent(e);
+          if (file) {
+            e.preventDefault();
+            embedImage(file, e.currentTarget.selectionStart ?? undefined);
+          }
+        }}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          const file = imageFileFromEvent(e);
+          if (file) {
+            e.preventDefault();
+            embedImage(file, e.currentTarget.selectionStart ?? undefined);
+          }
+        }}
         onKeyDown={(e) => {
           if (e.key === 'Escape' || (e.key === 'Enter' && (e.metaKey || e.ctrlKey))) {
             e.preventDefault();
@@ -64,6 +100,14 @@ export function MarkdownCellEditor({ value, editing, onStartEdit, onChange, onDo
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           onStartEdit();
+        }
+      }}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => {
+        const file = imageFileFromEvent(e);
+        if (file) {
+          e.preventDefault();
+          embedImage(file);
         }
       }}
       aria-label={t('notebooks.markdown-cell.edit-label', 'Edit text cell')}

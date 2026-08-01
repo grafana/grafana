@@ -76,7 +76,7 @@ export function ActivityFeedButton({ activity, onJumpToCell }: Props) {
       onOpen={() => setOpen(true)}
       onClose={() => setOpen(false)}
     >
-      <IconButton name="history" size="lg" tooltip={t('notebooks.activity.tooltip', 'Activity')} />
+      <IconButton name="list-ul" size="lg" tooltip={t('notebooks.activity.tooltip', 'Activity')} />
     </Toggletip>
   );
 }

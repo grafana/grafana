@@ -16,14 +16,12 @@ export interface CellPeer {
 interface Props {
   cellKey: string;
   source: CellSource;
-  collapsed?: boolean;
   /** Collaborators currently editing this cell — the frame is outlined in their color. */
   peers?: CellPeer[];
   /** Briefly highlighted (e.g. right after being added from a dashboard or Explore). */
   highlighted?: boolean;
   isDragging?: boolean;
   dragHandleProps?: DraggableProvidedDragHandleProps | null;
-  onToggleCollapse: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
   /** Cell-type specific actions (e.g. rename / open in Explore for panels). */
@@ -39,12 +37,10 @@ interface Props {
 export function CellFrame({
   cellKey,
   source,
-  collapsed,
   peers,
   highlighted,
   isDragging,
   dragHandleProps,
-  onToggleCollapse,
   onDuplicate,
   onDelete,
   extraActions,
@@ -80,14 +76,6 @@ export function CellFrame({
             <Badge text={t('notebooks.cell.assistant-badge', 'Assistant')} color="purple" icon="ai" />
           )}
           {extraActions}
-          <IconButton
-            name={collapsed ? 'angle-double-down' : 'angle-double-up'}
-            size="sm"
-            onClick={onToggleCollapse}
-            tooltip={
-              collapsed ? t('notebooks.cell.expand', 'Expand block') : t('notebooks.cell.collapse', 'Collapse block')
-            }
-          />
           <IconButton
             name="copy"
             size="sm"

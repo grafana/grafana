@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom-v5-compat';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
@@ -8,11 +9,11 @@ import { locationService } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { Button, Icon, IconButton, LinkButton, Select, Spinner, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
 import { useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
+import { useExtensionSidebarContext } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 
 import { createNotebook, notebookEditUrl, notebookViewUrl } from '../api/notebookAPI';
 import { mergeRemoteSpec } from '../collab/mergeRemoteSpec';
-import { useNotebookCollab } from '../collab/useNotebookCollab';
-import { CollapsedCellSummary } from '../editor/cells/CollapsedCellSummary';
+import { resourceVersionTs, useNotebookCollab } from '../collab/useNotebookCollab';
 import { MarkdownCellEditor } from '../editor/cells/MarkdownCellEditor';
 import { PanelCellView } from '../editor/cells/PanelCellView';
 import { useNotebookEditorState } from '../editor/useNotebookEditorState';
@@ -24,7 +25,6 @@ import {
   newNotebookSpec,
   removeCellAt,
   resolveCells,
-  setCellCollapsed,
   updateMarkdownText,
 } from '../model/notebookSpec';
 
@@ -40,8 +40,17 @@ export function NotebooksSidebarPanel() {
   const notebooksEnabled = useFlagDashboardNotebooks();
   const styles = useStyles2(getStyles);
   const [selectedUid, setSelectedUid] = useState<string | undefined>(() => getLastUsedNotebook()?.uid);
+  const location = useLocation();
 
   const { data, isLoading } = useListNotebookQuery(notebooksEnabled ? {} : { limit: 0 });
+
+  // The sidebar follows along: navigating to a notebook page selects that notebook here.
+  useEffect(() => {
+    const match = location.pathname.match(/^\/(?:notebooks\/edit|notebook)\/([^/]+)/);
+    if (match) {
+      setSelectedUid(match[1]);
+    }
+  }, [location.pathname]);
 
   const options: Array<SelectableValue<string>> = useMemo(
     () =>
@@ -112,8 +121,15 @@ function SidebarNotebookEditor({ uid }: { uid: string }) {
   const styles = useStyles2(getStyles);
   const editor = useNotebookEditorState(uid);
   const { spec, loading, dirty, saving } = editor.state;
+  const { setDockedComponentId } = useExtensionSidebarContext();
   const [note, setNote] = useState('');
   const [editingKey, setEditingKey] = useState<string | null>(null);
+
+  // Jumping to the full page is a context switch — the sidebar closes with it.
+  const onNavigate = (url: string) => {
+    setDockedComponentId(undefined);
+    locationService.push(url);
+  };
   const editingKeyRef = useRef<string | null>(null);
   editingKeyRef.current = editingKey;
   const blocksRef = useRef<HTMLDivElement>(null);
@@ -122,6 +138,7 @@ function SidebarNotebookEditor({ uid }: { uid: string }) {
     uid,
     enabled: !loading && !!spec,
     getSpec: editor.getSpec,
+    initialDocTs: resourceVersionTs(editor.state.resource),
     onRemoteSpec: useCallback(
       (remoteSpec) => {
         editor.applyRemoteSpec(mergeRemoteSpec(remoteSpec, editor.getSpec(), editingKeyRef.current));
@@ -207,48 +224,29 @@ function SidebarNotebookEditor({ uid }: { uid: string }) {
                               <Icon name="draggabledots" size="sm" />
                             </div>
                             <div className={styles.cellBody}>
-                              {cell.collapsed ? (
-                                <CollapsedCellSummary
-                                  cell={cell}
-                                  onExpand={() => update((s) => setCellCollapsed(s, index, false))}
+                              {element.kind === 'Panel' && (
+                                <PanelCellView
+                                  panel={element}
+                                  timeFrom={cell.timeFrom ?? spec.timeSettings.from}
+                                  timeTo={cell.timeTo ?? spec.timeSettings.to}
+                                  height={SIDEBAR_PANEL_HEIGHT}
                                 />
-                              ) : (
-                                <>
-                                  {element.kind === 'Panel' && (
-                                    <PanelCellView
-                                      panel={element}
-                                      timeFrom={cell.timeFrom ?? spec.timeSettings.from}
-                                      timeTo={cell.timeTo ?? spec.timeSettings.to}
-                                      height={SIDEBAR_PANEL_HEIGHT}
-                                    />
-                                  )}
-                                  {element.kind === 'LibraryPanel' && (
-                                    <Text color="secondary">{element.spec.title}</Text>
-                                  )}
-                                  {element.kind === 'Cell' && element.spec.content.kind === 'Markdown' && (
-                                    <MarkdownCellEditor
-                                      value={element.spec.content.spec.text}
-                                      editing={editingKey === elementName}
-                                      onStartEdit={() => setEditingKey(elementName)}
-                                      onChange={(text) => update((s) => updateMarkdownText(s, elementName, text))}
-                                      onDone={() => setEditingKey(null)}
-                                    />
-                                  )}
-                                  {element.kind === 'Cell' && element.spec.content.kind === 'Code' && (
-                                    <pre className={styles.code}>{element.spec.content.spec.code}</pre>
-                                  )}
-                                </>
+                              )}
+                              {element.kind === 'LibraryPanel' && <Text color="secondary">{element.spec.title}</Text>}
+                              {element.kind === 'Cell' && element.spec.content.kind === 'Markdown' && (
+                                <MarkdownCellEditor
+                                  value={element.spec.content.spec.text}
+                                  editing={editingKey === elementName}
+                                  onStartEdit={() => setEditingKey(elementName)}
+                                  onChange={(text) => update((s) => updateMarkdownText(s, elementName, text))}
+                                  onDone={() => setEditingKey(null)}
+                                />
+                              )}
+                              {element.kind === 'Cell' && element.spec.content.kind === 'Code' && (
+                                <pre className={styles.code}>{element.spec.content.spec.code}</pre>
                               )}
                             </div>
                             <div className={cx('sidebar-cell-actions', styles.cellActions)}>
-                              {!cell.collapsed && (
-                                <IconButton
-                                  name="angle-double-up"
-                                  size="sm"
-                                  tooltip={t('notebooks.cell.collapse', 'Collapse block')}
-                                  onClick={() => update((s) => setCellCollapsed(s, index, true))}
-                                />
-                              )}
                               <IconButton
                                 name="trash-alt"
                                 size="sm"
@@ -281,12 +279,12 @@ function SidebarNotebookEditor({ uid }: { uid: string }) {
           <IconButton
             name="eye"
             tooltip={t('notebooks.sidebar.open', 'Open notebook')}
-            onClick={() => locationService.push(notebookViewUrl(uid))}
+            onClick={() => onNavigate(notebookViewUrl(uid))}
           />
           <IconButton
             name="pen"
             tooltip={t('notebooks.sidebar.edit', 'Open in editor')}
-            onClick={() => locationService.push(notebookEditUrl(uid))}
+            onClick={() => onNavigate(notebookEditUrl(uid))}
           />
         </Stack>
       </div>
