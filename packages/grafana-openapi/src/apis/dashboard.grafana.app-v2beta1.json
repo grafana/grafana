@@ -5997,7 +5997,7 @@
         }
       },
       "NotebookNotebookLayoutItemSpec": {
-        "description": "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
+        "description": "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI; `height` is the rendered height in pixels for panel cells (narrative cells auto-size). `timeFrom`/`timeTo` lock a panel cell to its own time range (absolute or relative time strings) instead of following the notebook's global range.",
         "type": "object",
         "required": ["element", "source"],
         "properties": {
@@ -6012,9 +6012,19 @@
               }
             ]
           },
+          "height": {
+            "type": "integer",
+            "format": "int64"
+          },
           "source": {
             "type": "string",
             "default": ""
+          },
+          "timeFrom": {
+            "type": "string"
+          },
+          "timeTo": {
+            "type": "string"
           }
         }
       },
