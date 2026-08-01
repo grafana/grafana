@@ -10,6 +10,7 @@ import {
   useExtensionSidebarContext,
   getComponentIdFromComponentMeta,
   getComponentMetaFromComponentId,
+  getInteractiveLearningPluginId,
   EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
 } from './ExtensionSidebarProvider';
 
@@ -139,6 +140,21 @@ describe('ExtensionSidebarProvider', () => {
 
     expect(screen.getByTestId('is-open')).toHaveTextContent('true');
     expect(screen.getByTestId('docked-component-id')).toHaveTextContent(componentId);
+  });
+
+  it('should clear a docked component that is no longer available', () => {
+    // A component of a permitted plugin that is not among its added components anymore.
+    const componentId = getComponentIdFromComponentMeta(mockPluginMeta.pluginId, 'Removed Component');
+    (store.get as jest.Mock).mockReturnValue(componentId);
+
+    render(
+      <ExtensionSidebarContextProvider>
+        <TestComponent />
+      </ExtensionSidebarContextProvider>
+    );
+
+    expect(screen.getByTestId('is-open')).toHaveTextContent('false');
+    expect(screen.getByTestId('docked-component-id')).toHaveTextContent('undefined');
   });
 
   it('should update storage when docked component changes', () => {
@@ -637,6 +653,27 @@ describe('Utility Functions', () => {
     it('should return undefined for wrong field types', () => {
       const meta = getComponentMetaFromComponentId(JSON.stringify({ pluginId: 123, componentTitle: 'Test Component' }));
       expect(meta).toBeUndefined();
+    });
+  });
+
+  describe('getInteractiveLearningPluginId', () => {
+    const emptyMeta = { addedComponents: [], addedLinks: [] };
+
+    it('prefers the pathfinder plugin when both learning plugins are available', () => {
+      const components = new Map([
+        ['grafana-pathfinder-app', emptyMeta],
+        ['grafana-grafanadocsplugin-app', emptyMeta],
+      ]);
+      expect(getInteractiveLearningPluginId(components)).toBe('grafana-pathfinder-app');
+    });
+
+    it('falls back to the docs plugin when pathfinder is not available', () => {
+      const components = new Map([['grafana-grafanadocsplugin-app', emptyMeta]]);
+      expect(getInteractiveLearningPluginId(components)).toBe('grafana-grafanadocsplugin-app');
+    });
+
+    it('returns undefined when no learning plugin is available', () => {
+      expect(getInteractiveLearningPluginId(new Map())).toBeUndefined();
     });
   });
 });
