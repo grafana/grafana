@@ -997,7 +997,7 @@ func (r *gitRepository) createSignature(ctx context.Context) (nanogit.Author, na
 	if commit := r.config.Spec.Commit; commit != nil && (commit.SignerName != "" || commit.SignerEmail != "") {
 		committer.Name = cmp.Or(commit.SignerName, "Grafana")
 		committer.Email = cmp.Or(commit.SignerEmail, "noreply@grafana.com")
-		if commit.SignerIsAuthor {
+		if commit.SignerIsAuthor || commit.SignerName != "" || commit.SignerEmail != "" {
 			author.Name = committer.Name
 			author.Email = committer.Email
 		}
