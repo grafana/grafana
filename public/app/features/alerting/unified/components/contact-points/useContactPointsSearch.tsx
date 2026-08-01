@@ -5,6 +5,8 @@ import { useMemo } from 'react';
 import { RECEIVER_META_KEY } from 'app/features/alerting/unified/components/contact-points/constants';
 import { type ContactPointWithMetadata } from 'app/features/alerting/unified/components/contact-points/utils';
 
+const LONG_QUERY_LENGTH_THRESHOLD = 40;
+
 const fuzzyFinder = new uFuzzy({
   intraMode: 1,
   intraIns: 1,
@@ -18,6 +20,8 @@ export const useContactPointsSearch = (
   contactPoints: ContactPointWithMetadata[],
   search?: string | null
 ): ContactPointWithMetadata[] => {
+  const normalizedSearch = search?.trim();
+
   const nameHaystack = useMemo(() => {
     return contactPoints.map((contactPoint) => contactPoint.name);
   }, [contactPoints]);
@@ -29,12 +33,31 @@ export const useContactPointsSearch = (
     );
   }, [contactPoints]);
 
-  if (!search) {
+  if (!normalizedSearch) {
     return contactPoints;
   }
 
-  const nameHits = fuzzyFinder.filter(nameHaystack, search) ?? [];
-  const typeHits = fuzzyFinder.filter(typeHaystack, search) ?? [];
+  // Long, separator-heavy queries can trigger expensive regex backtracking in fuzzy matching.
+  // For these cases, use a deterministic contains check to keep typing responsive.
+  if (normalizedSearch.length >= LONG_QUERY_LENGTH_THRESHOLD) {
+    const lowerSearch = normalizedSearch.toLocaleLowerCase();
+
+    const hits = contactPoints
+      .map((contactPoint, index) => ({ contactPoint, index }))
+      .filter(({ contactPoint }) => {
+        const nameMatch = contactPoint.name.toLocaleLowerCase().includes(lowerSearch);
+        const typeMatch = contactPoint.grafana_managed_receiver_configs
+          .some((receiver) => receiver[RECEIVER_META_KEY].name.toLocaleLowerCase().includes(lowerSearch));
+
+        return nameMatch || typeMatch;
+      })
+      .map(({ index }) => index);
+
+    return hits.map((id) => contactPoints[id]);
+  }
+
+  const nameHits = fuzzyFinder.filter(nameHaystack, normalizedSearch) ?? [];
+  const typeHits = fuzzyFinder.filter(typeHaystack, normalizedSearch) ?? [];
 
   const hits = [...nameHits, ...typeHits];
 
