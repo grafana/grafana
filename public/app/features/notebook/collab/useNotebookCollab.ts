@@ -12,6 +12,7 @@ import {
 import { getGrafanaLiveSrv } from '@grafana/runtime';
 import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AnnoKeyUpdatedTimestamp, type Resource } from 'app/features/apiserver/types';
 
 import { type ActivityEvent, type CollabMessage, type CollabUser, type RemotePeer } from './types';
 
@@ -64,11 +65,8 @@ interface Options {
 }
 
 /** The saved version's timestamp (ms) of a notebook resource, seeding the doc-version clock. */
-export function resourceVersionTs(resource?: {
-  metadata: { annotations?: Record<string, string>; creationTimestamp?: string };
-}): number | undefined {
-  const stamp =
-    resource?.metadata.annotations?.['grafana.app/updatedTimestamp'] ?? resource?.metadata.creationTimestamp;
+export function resourceVersionTs(resource?: Resource<NotebookSpec>): number | undefined {
+  const stamp = resource?.metadata.annotations?.[AnnoKeyUpdatedTimestamp] ?? resource?.metadata.creationTimestamp;
   const parsed = stamp ? Date.parse(stamp) : NaN;
   return Number.isNaN(parsed) ? undefined : parsed;
 }

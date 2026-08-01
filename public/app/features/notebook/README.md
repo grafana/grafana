@@ -63,6 +63,30 @@ Related code outside this folder:
   panel..." on the read-only view page — needs investigation in the scene view
   pipeline.
 
+## Review notes (private preview readiness)
+
+- **Permissions**: editing is gated on the dashboards `create`/`write` actions as a
+  POC shortcut. A real rollout wants notebook-scoped actions (or at least a
+  deliberate decision to inherit dashboard permissions) plus folder placement.
+- **Generated files**: the schema change (`height`, `timeFrom`, `timeTo` on
+  `NotebookLayoutItemSpec`) lives in `apps/dashboard/kinds/v2beta1/notebook_spec.cue`;
+  the Go/OpenAPI/TS outputs were generated and committed together — CI's codegen
+  verification should pass as-is.
+- **Security posture**: markdown renders through the standard text-panel sanitizer
+  (js-xss whitelist; `data:image/` is allowed for img src by its defaults, which the
+  image paste feature relies on — pasted images are downscaled and capped at ~500KB).
+  The Live channel is org-isolated upstream; the relay handler does **not** stamp
+  sender identity server-side yet, so collab messages trust the client-supplied user
+  (fine for preview, must fix before GA — the handler receives the authenticated
+  requester and can stamp it).
+- **Shipping split**: per repo convention the backend (CUE schema, Live handler,
+  navtree) and frontend should land as separate PRs; the backend diff is ~130 lines
+  and has no frontend dependency.
+- **Test coverage**: model/spec transforms, editor state (undo/autosave), collab
+  merge, capture orchestration, markdown export, view-page loading are covered.
+  Not covered: the Live hook itself (`useNotebookCollab` — needs a Live mock
+  harness) and the editor component tree (exercised manually).
+
 ## Running it
 
 `make run` + `yarn start`, with `dashboard.notebooks = true` under `[feature_toggles]`.

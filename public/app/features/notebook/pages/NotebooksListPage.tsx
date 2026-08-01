@@ -5,6 +5,7 @@ import { AppEvents, dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/d
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
+import { type NotebookElement } from '@grafana/schema/apis/notebook/v2beta1';
 import {
   Button,
   Card,
@@ -268,15 +269,19 @@ function countCells(notebook: Notebook): number {
 }
 
 function countPanels(notebook: Notebook): number {
-  return Object.values(notebook.spec.elements).filter(
-    (element) => element.kind === 'Panel' || element.kind === 'LibraryPanel'
-  ).length;
+  return notebookElements(notebook).filter((element) => element.kind === 'Panel' || element.kind === 'LibraryPanel')
+    .length;
+}
+
+function notebookElements(notebook: Notebook): NotebookElement[] {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client element union bridged to the schema union at the read seam
+  return Object.values(notebook.spec.elements) as unknown as NotebookElement[];
 }
 
 // The list endpoint returns full specs, so block contents are searchable client-side
 // at POC scale (a proper search index is the GA path).
 function contentMatches(notebook: Notebook, needle: string): boolean {
-  return Object.values(notebook.spec.elements).some((element) => {
+  return notebookElements(notebook).some((element) => {
     if (element.kind === 'Panel' || element.kind === 'LibraryPanel') {
       return element.spec.title.toLowerCase().includes(needle);
     }
