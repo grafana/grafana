@@ -257,6 +257,23 @@ describe('ExtensionSidebarProvider', () => {
 
       expect(screen.getByTestId('available-components-size')).toHaveTextContent('1');
       expect(screen.getByTestId('plugin-ids')).toHaveTextContent('grafana');
+
+      // Opening a core-synthesized component exercises the same permission path as plugin apps.
+      act(() => {
+        const openCall = subscribeSpy.mock.calls.find((call) => call[0] === OpenExtensionSidebarEvent);
+        const [, subscriberFn] = openCall!;
+        subscriberFn(
+          new OpenExtensionSidebarEvent({
+            pluginId: 'grafana',
+            componentTitle: 'Notebooks',
+          })
+        );
+      });
+
+      expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+      expect(screen.getByTestId('docked-component-id')).toHaveTextContent(
+        JSON.stringify({ pluginId: 'grafana', componentTitle: 'Notebooks' })
+      );
     } finally {
       // Later tests rely on the module-level default implementation.
       usePluginLinksMock.mockImplementation(() => ({
