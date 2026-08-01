@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid';
 
+import { dateTimeFormat } from '@grafana/data';
 import {
   defaultTimeSettingsSpec,
   type CellKind,
@@ -58,14 +59,19 @@ export function isDefaultNotebookTitle(title: string | undefined | null): boolea
   return !trimmed || trimmed.toLowerCase() === DEFAULT_NOTEBOOK_TITLE.toLowerCase();
 }
 
-/** Locale date segment used in {@link newNotebookTitle} (also for i18n `{{date}}`). */
+/**
+ * Stable date/time segment for {@link newNotebookTitle} (also for i18n `{{date}}`).
+ * Uses an explicit month/day/year + time format so locale quirks from
+ * `toLocaleDateString()` don't produce unreadable titles.
+ */
 export function newNotebookTitleDate(now: Date = new Date()): string {
-  return now.toLocaleDateString();
+  return dateTimeFormat(now, { format: 'MMMM D, YYYY HH:mm', timeZone: 'browser' });
 }
 
 /**
  * Title for newly created notebooks — dated so capture/quick-add targets are easy
  * to find later (list, sidebar, command palette, add-to-notebook).
+ * Example: `Investigation — August 1, 2026 16:30`
  */
 export function newNotebookTitle(now: Date = new Date()): string {
   return `Investigation — ${newNotebookTitleDate(now)}`;

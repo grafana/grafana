@@ -58,8 +58,10 @@ describe('notebookSpec', () => {
     expect(isDefaultNotebookTitle(newNotebookTitle())).toBe(false);
   });
 
-  it('names new notebooks with a dated investigation title', () => {
-    const now = new Date('2026-08-01T15:00:00Z');
+  it('names new notebooks with a stable month/day/year + time title', () => {
+    const now = new Date('2026-08-01T15:30:00Z');
+    // Explicit format (not toLocaleDateString) so titles stay readable across locales.
+    expect(newNotebookTitleDate(now)).toMatch(/^[A-Z][a-z]+ \d{1,2}, \d{4} \d{2}:\d{2}$/);
     expect(newNotebookTitle(now)).toBe(`Investigation — ${newNotebookTitleDate(now)}`);
     expect(newNotebookSpec().title.startsWith('Investigation — ')).toBe(true);
   });

@@ -74,7 +74,11 @@ Related code outside this folder:
 - Notebook `description` exists on the spec (list search / declare-incident can use it)
   but is **not editable in the POC UI** — fast follow. Declare-incident title order:
   named title → first markdown line → description → `Investigation: Untitled notebook`.
-  New notebooks are titled `Investigation — {today}` (not Untitled) so capture targets are easier to find.
+  New notebooks are titled `Investigation — {Month D, YYYY HH:mm}` (browser TZ; not
+  Untitled) so capture targets are easier to find. Declare-incident attaches the
+  notebook via url/caption and leads the description with
+  “This incident was declared from this notebook: {url}” (IRM has no URL param for
+  a status-update body — `status` is lifecycle only).
 
 ## Review notes (private preview readiness)
 

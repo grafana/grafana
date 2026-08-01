@@ -15,10 +15,12 @@ export interface DeclareIncidentNotebookContext {
 }
 
 /**
- * Prefill params for the IRM declare-incident form. URL `status` is the incident
- * lifecycle state (active/resolved), not a status update — attach the notebook via
- * url/caption/description instead. Assistant can do a richer summary later; these
- * are just sensible defaults from the notebook metadata.
+ * Prefill params for the IRM declare-incident form.
+ *
+ * Documented URL params are title / url / caption / description (plus severity, etc.).
+ * `status` is the lifecycle state (active/resolved), not a status-update message — so the
+ * “declared from this notebook” line goes in `description`, and the notebook is also
+ * attached via `url` + `caption` (IRM’s attached-context UI).
  */
 export function buildDeclareIncidentParams(ctx: DeclareIncidentNotebookContext): Record<string, string> {
   const notebookUrl = new URL(notebookViewUrl(ctx.uid), window.location.origin).toString();
@@ -64,8 +66,8 @@ export function declareIncidentContextFromSpec(uid: string, spec: NotebookSpec):
 }
 
 function incidentTitle(ctx: DeclareIncidentNotebookContext): string {
-  // Named title wins; only fall through when empty or still the create default.
-  // Description isn't editable in the POC UI, so markdown notes beat it.
+  // Named title wins (including dated `Investigation — …` create defaults).
+  // Only fall through when empty or still the legacy untitled placeholder.
   const trimmedTitle = ctx.title?.trim() ?? '';
   if (!isDefaultNotebookTitle(trimmedTitle)) {
     if (/^investigation\b/i.test(trimmedTitle)) {
@@ -85,7 +87,13 @@ function incidentTitle(ctx: DeclareIncidentNotebookContext): string {
 }
 
 function incidentDescription(ctx: DeclareIncidentNotebookContext, notebookUrl: string, title: string): string {
-  const lines = [`Investigation notebook: ${notebookUrl}`];
+  // Lead with the declaration line so it reads like the initial status / context
+  // responders see first. IRM has no documented URL param for a status-update body.
+  const lines = [
+    `This incident was declared from this notebook: ${notebookUrl}`,
+    '',
+    `Notebook: ${ctx.title.trim() || DEFAULT_NOTEBOOK_TITLE}`,
+  ];
 
   const trimmedDescription = ctx.description?.trim();
   if (trimmedDescription && trimmedDescription !== title) {

@@ -35,9 +35,22 @@ describe('buildDeclareIncidentParams', () => {
     expect(params.title).toBe('Investigation: Checkout latency');
     expect(params.url).toBe('https://grafana.example/notebook/nb1');
     expect(params.caption).toBe('Notebook: Checkout latency');
-    expect(params.description).toContain('https://grafana.example/notebook/nb1');
+    expect(params.description).toContain(
+      'This incident was declared from this notebook: https://grafana.example/notebook/nb1'
+    );
+    expect(params.description).toContain('Notebook: Checkout latency');
     expect(params.description).toContain('Tags: checkout');
     expect(params.description).toContain('- p99 latency');
+  });
+
+  it('keeps dated Investigation create titles as the incident title', () => {
+    const params = buildDeclareIncidentParams({
+      uid: 'nb1',
+      title: 'Investigation — August 1, 2026 16:30',
+    });
+
+    expect(params.title).toBe('Investigation — August 1, 2026 16:30');
+    expect(params.caption).toBe('Notebook: Investigation — August 1, 2026 16:30');
   });
 
   it('falls back to the first markdown line when the title is still the default', () => {
