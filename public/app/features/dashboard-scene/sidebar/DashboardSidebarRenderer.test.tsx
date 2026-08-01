@@ -4,7 +4,7 @@ import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginImportUtils, config } from '@grafana/runtime';
+import { setPluginImportUtils, setPluginLinksHook, config } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -20,6 +20,8 @@ setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
 });
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 jest.mock('app/core/hooks/useMediaQueryMinWidth', () => ({
   useMediaQueryMinWidth: () => true,
@@ -97,7 +99,7 @@ describe('DashboardSidebarRenderer', () => {
     expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
   });
 
-  it('Should sync sidebar docked state with edit pane state', async () => {
+  it('Should sync sidebar docked state with sidebar state', async () => {
     const scene = buildTestScene();
 
     act(() => activateFullSceneTree(scene));

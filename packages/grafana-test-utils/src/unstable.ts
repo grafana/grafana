@@ -16,7 +16,7 @@ export { customCreateTeamHandler } from './handlers/api/teams/handlers';
 export {
   customGetUserPreferencesHandler,
   customPatchUserPreferencesHandler,
-} from './handlers/apis/preferences.grafana.app/v1alpha1/handlers';
+} from './handlers/apis/preferences.grafana.app/v1/handlers';
 export { mockUserPreferences, setupMockUserPreferences, setMockUserPreferences } from './fixtures/preferences';
 export { setMockStarredDashboards, setMockStarredFolders } from './fixtures/starred';
 export { customSetTeamRolesHandler } from './handlers/api/access-control/handlers';

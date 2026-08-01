@@ -4,6 +4,7 @@ import { type ReactNode } from 'react';
 import { getWrapper } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { setPluginLinksHook } from '@grafana/runtime';
 import { CustomVariable, SceneGridLayout, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
 
@@ -25,6 +26,8 @@ const defaultDsSettings = {
 };
 
 const Wrapper = getWrapper({ renderWithRouter: true });
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -111,7 +114,7 @@ describe('VariableTypeChangePane', () => {
     const variable = variableSet.state.variables[0];
     const user = userEvent.setup();
 
-    renderVariableEditPane(dashboard);
+    renderVariableSidebar(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
 
@@ -142,7 +145,7 @@ describe('VariableTypeChangePane', () => {
     const sectionVariable = sectionVariableSet.state.variables[0];
     const user = userEvent.setup();
 
-    renderVariableEditPane(dashboard);
+    renderVariableSidebar(dashboard);
 
     await user.click(screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.changeVariableType));
     expect(dashboard.state.sidebar.state.openPane).toBeInstanceOf(VariableTypeChangePane);
@@ -175,7 +178,7 @@ function WrapSidebar({ children }: { children: ReactNode }) {
   );
 }
 
-function renderVariableEditPane(dashboard: DashboardScene) {
+function renderVariableSidebar(dashboard: DashboardScene) {
   render(
     <WrapSidebar>
       <DashboardSidebarRenderer dashboard={dashboard} />

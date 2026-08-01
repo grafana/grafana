@@ -3,6 +3,7 @@ import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Stack, Text, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
@@ -214,7 +215,9 @@ function WelcomeCTABox({ title, description, href, hrefText }: WelcomeCTABoxProp
       </Text>
       <div className={styles.desc}>{description}</div>
       <div className={styles.actionRow}>
-        <TextLink href={href}>{hrefText}</TextLink>
+        <TextLink href={href} data-testid={selectors.pages.Alerting.Home.welcomeCtaLink(href)}>
+          {hrefText}
+        </TextLink>
       </div>
     </div>
   );

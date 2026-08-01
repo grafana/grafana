@@ -88,11 +88,11 @@
       "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
       "brandVertical": "linear-gradient(0.01deg, palette.orange400 0.01%, palette.orange500 99.99%)"
     },
-    "contrastThreshold": 4.5,
+    "contrastThreshold": 3,
     "action": {
-      "selected": "hsl(from palette.ink100 h s l / 0.12)",
-      "hover": "hsl(from palette.ink100 h s l / 0.09)",
-      "focus": "hsl(from palette.ink100 h s l / 0.09)",
+      "selected": "hsl(from palette.ink100 h s l / 0.10)",
+      "hover": "hsl(from palette.ink100 h s l / 0.07)",
+      "focus": "hsl(from palette.ink100 h s l / 0.07)",
       "selectedBorder": "palette.orange500"
     }
   },

@@ -287,30 +287,30 @@ describe('DashboardScene', () => {
         expect(startSpy).toHaveBeenCalled();
       });
 
-      it('activateEditPane activates an inactive edit pane and releases it on exit', () => {
+      it('activateSidebar activates an inactive sidebar and releases it on exit', () => {
         const sidebar = scene.state.sidebar;
         expect(sidebar.isActive).toBe(false);
 
-        scene.activateEditPane();
+        scene.activateSidebar();
         expect(sidebar.isActive).toBe(true);
 
         scene.exitEditMode({ skipConfirm: true });
         expect(sidebar.isActive).toBe(false);
       });
 
-      it('activateEditPane is a no-op when the edit pane is already active', () => {
+      it('activateSidebar is a no-op when the sidebar is already active', () => {
         const sidebar = scene.state.sidebar;
         const activateSpy = jest.spyOn(sidebar, 'activate');
         sidebar.activate();
 
-        scene.activateEditPane();
+        scene.activateSidebar();
 
         expect(activateSpy).toHaveBeenCalledTimes(1);
       });
 
-      it('re-activates the swapped-in edit pane when discarding and keeping edit', () => {
+      it('re-activates the swapped-in sidebar when discarding and keeping edit', () => {
         const sidebar = scene.state.sidebar;
-        scene.activateEditPane();
+        scene.activateSidebar();
         expect(sidebar.isActive).toBe(true);
 
         scene.discardChangesAndKeepEditing();
@@ -318,9 +318,9 @@ describe('DashboardScene', () => {
         // The original pane is released, but a fresh clone is swapped in and re-activated so
         // programmatic mutations keep working while we stay in edit mode.
         expect(sidebar.isActive).toBe(false);
-        const newEditPane = scene.state.sidebar;
-        expect(newEditPane).not.toBe(sidebar);
-        expect(newEditPane.isActive).toBe(true);
+        const newSidebar = scene.state.sidebar;
+        expect(newSidebar).not.toBe(sidebar);
+        expect(newSidebar.isActive).toBe(true);
       });
 
       it('Exiting already saved dashboard should not restore initial state', async () => {
@@ -2016,6 +2016,14 @@ describe('DashboardScene', () => {
   });
 
   describe('When checking dashboard managed by an external system', () => {
+    beforeEach(() => {
+      config.featureToggles.provisioning = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.provisioning = false;
+    });
+
     it('should return true if the dashboard is managed', () => {
       const scene = buildTestScene({
         meta: {

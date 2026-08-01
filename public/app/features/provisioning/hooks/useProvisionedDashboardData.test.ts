@@ -2,6 +2,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { getWrapper } from 'test/test-utils';
 
+import { config } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import {
@@ -75,6 +76,14 @@ const mockMeta = {
     },
   },
 };
+
+beforeEach(() => {
+  config.featureToggles.provisioning = true;
+});
+
+afterEach(() => {
+  config.featureToggles.provisioning = false;
+});
 
 describe('useDefaultValues', () => {
   it('returns Loading while settings are being fetched', async () => {

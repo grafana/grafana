@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
+	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
@@ -42,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -366,6 +368,11 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.AuditBackend = s.auditBackend
 	serverConfig.AuditPolicyRuleEvaluator = s.auditPolicyRuleProvider.PolicyRuleProvider(builder.EvaluatorPolicyRuleFromBuilders(s.builders))
 
+	// Built once and used twice: the routes have to reach both the OpenAPI spec
+	// and the served WebServices, or the endpoint works but is undiscoverable.
+	searchAPIEnabled := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection).Key(searchapi.ConfigKey).MustBool(false)
+	searchRoutes := searchroutes.Build(searchAPIEnabled, s.tracing, s.unified, builders, s.appInstallers)
+
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
 		s.scheme,
@@ -377,6 +384,7 @@ func (s *service) start(ctx context.Context) error {
 		defGetters,
 		s.metrics,
 		apiResourceConfig,
+		searchRoutes...,
 	)
 	if err != nil {
 		return err
@@ -441,6 +449,7 @@ func (s *service) start(ctx context.Context) error {
 			builders,
 			s.metrics,
 			serverConfig.MergedResourceConfig,
+			searchRoutes...,
 		); err != nil {
 			return fmt.Errorf("failed to augment web services with custom routes: %w", err)
 		}

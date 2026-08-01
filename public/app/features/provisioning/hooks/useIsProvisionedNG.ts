@@ -1,4 +1,4 @@
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 
 import { type DashboardScene } from '../../dashboard-scene/scene/DashboardScene';
 
@@ -22,6 +22,11 @@ export function useIsProvisionedNG(dashboard: DashboardScene): ProvisionedNGStat
     folderName,
     includeFolderless: !folderName && isNewDashboard,
   });
+
+  // The toggle wins over everything, even repo-managed annotations on the dashboard itself
+  if (!config.featureToggles.provisioning) {
+    return { isProvisioned: false, isLoading: false };
+  }
 
   // The dashboard's own annotations settle this without waiting on the repository lookup
   if (dashboard.isManagedRepository()) {

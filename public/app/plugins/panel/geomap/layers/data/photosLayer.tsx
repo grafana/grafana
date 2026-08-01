@@ -65,7 +65,12 @@ export const photosLayer: MapLayerRegistryItem<PhotoConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<PhotoConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (
+    map: OpenLayersMap,
+    options: MapLayerOptions<PhotoConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => {
     // Assert default values
     const config = {
       ...defaultOptions,

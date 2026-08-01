@@ -5,10 +5,10 @@ import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getBackendSrv } from '../backendSrv';
 
-import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
+import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
 import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
 import { getDatasourcePluginMapper } from './mappers/mappers';
-import { initPluginMetas, refetchPluginMetas } from './plugins';
+import { getPluginMetasUrl, initPluginMetas, refetchPluginMetas } from './plugins';
 import type { DatasourcePluginMetas, FrontendSettings, PluginMetasResponse } from './types';
 
 let datasources: DatasourcePluginMetas = {};
@@ -78,18 +78,19 @@ function extractFromConfig(
   return seen;
 }
 
-function setMetas(metas: PluginMetasResponse) {
-  if (!metas.items.length) {
-    // something failed while trying to fetch plugin meta
-    // fallback to config.datasources from bootdata
+function setMetas(metas: PluginMetasResponse | null) {
+  if (!metas?.items.length) {
+    // null means plugin meta failed to load, empty items means the API had nothing
+    const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
     // eslint-disable-next-line no-restricted-syntax
     setDatasourcesAndAliases(extractFromConfig(config.datasources));
-    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, { pluginType: PluginType.datasource });
+    logPluginMetaWarning(message, { pluginType: PluginType.datasource, requestUrl: getPluginMetasUrl() });
     return;
   }
 
   const mapper = getDatasourcePluginMapper();
   setDatasourcesAndAliases(mapper(metas));
+  logPluginMetaDebug('PluginMeta: initializing datasource plugins cache with meta values', {});
 }
 
 async function initDatasourcePluginMetas(): Promise<void> {
@@ -102,7 +103,6 @@ async function initDatasourcePluginMetas(): Promise<void> {
 
   const metas = await initPluginMetas();
   setMetas(metas);
-  logPluginMetaDebug('PluginMeta: initializing datasource plugins cache with meta values', {});
 }
 
 export async function getDatasourcePluginMetas(): Promise<DataSourcePluginMeta[]> {

@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type StorageType string
@@ -86,6 +87,13 @@ type StorageOptions struct {
 
 	// Support writing secrets inline
 	InlineSecrets secret.InlineSecureValueSupport
+
+	// SearchIndexClient is the search half of the client ApplyTo built, kept so
+	// the search endpoints do not build a second client with the same
+	// credentials. Deliberately the narrow interface: this is not a general back
+	// door to unified storage. Nil until ApplyTo runs, and for storage types that
+	// have no client.
+	SearchIndexClient resourcepb.ResourceIndexClient
 
 	// {resource}.{group} = 1|2|3|4
 	UnifiedStorageConfig map[string]setting.UnifiedStorageConfig
@@ -286,6 +294,8 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 		}
 		o.InlineSecrets = inlineSecureValueService
 	}
+
+	o.SearchIndexClient = unified
 
 	getter := apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider)
 	serverConfig.RESTOptionsGetter = getter

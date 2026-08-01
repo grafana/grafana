@@ -25,6 +25,7 @@ type diagnosticsRequest struct {
 	dtos.MetricRequest
 	Dashboard json.RawMessage `json:"dashboard"`
 	Panel     json.RawMessage `json:"panel"`
+	PanelData json.RawMessage `json:"panelData"`
 }
 
 // diagnosticsFeatureClient is a shared OpenFeature client reused across requests. Flags are
@@ -50,6 +51,14 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	}
 	if len(reqDTO.Queries) == 0 {
 		return response.Error(http.StatusBadRequest, "at least one query is required", nil)
+	}
+
+	result := diagnostics.ResultError
+	if hs.diagnosticsMetrics != nil {
+		hs.diagnosticsMetrics.RecordStarted(ctx, diagnostics.ScopePanel)
+		defer func() {
+			hs.diagnosticsMetrics.RecordCompleted(ctx, diagnostics.ScopePanel, result)
+		}()
 	}
 
 	captureCtx, harBuffer := harcapture.WithCapture(ctx)
@@ -108,7 +117,10 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	if marshalErr != nil {
 		queryRequestJSON = nil
 	}
-	bundle, err := diagnostics.NewBundler().Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, marshalErr, bundleErr)
+	refs := panelEnvironmentRefs(reqDTO.MetricRequest, reqDTO.Panel)
+	env := diagnostics.CollectEnvironment(ctx, hs.Cfg, hs.pluginStore, refs)
+	bundle, err := diagnostics.NewBundler(env).Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, marshalErr, bundleErr,
+		diagnostics.WithPanelData(reqDTO.PanelData))
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to build diagnostics bundle", err)
 	}
@@ -117,6 +129,7 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	header := http.Header{}
 	header.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
 	header.Set("Content-Type", "application/tar+gzip")
+	result = diagnostics.ResultSuccess
 	return response.CreateNormalResponse(header, bundle, http.StatusOK)
 }
 
