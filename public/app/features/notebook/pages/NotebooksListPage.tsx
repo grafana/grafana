@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo, useState } from 'react';
 
 import { AppEvents, dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
@@ -36,13 +37,23 @@ export function NotebooksListPage() {
   const [deleteTarget, setDeleteTarget] = useState<Notebook | undefined>();
   const [creating, setCreating] = useState(false);
 
-  const { data, isLoading, error } = useListNotebookQuery(notebooksEnabled ? {} : { limit: 0 });
+  const { data, isLoading, error } = useListNotebookQuery(notebooksEnabled ? {} : skipToken);
   const [deleteNotebook] = useDeleteNotebookMutation();
 
   const notebooks = useMemo(() => {
     const items = [...(data?.items ?? [])];
     // ISO timestamps sort correctly with plain string comparison.
-    items.sort((a, b) => (lastUpdated(b) > lastUpdated(a) ? 1 : -1));
+    items.sort((a, b) => {
+      const aUpdated = lastUpdated(a);
+      const bUpdated = lastUpdated(b);
+      if (bUpdated > aUpdated) {
+        return 1;
+      }
+      if (bUpdated < aUpdated) {
+        return -1;
+      }
+      return 0;
+    });
     if (!search) {
       return items;
     }

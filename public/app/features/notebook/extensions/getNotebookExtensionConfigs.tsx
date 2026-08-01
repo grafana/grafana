@@ -133,7 +133,7 @@ export function getNotebookExtensionConfigs(): PluginExtensionAddedLinkConfig[] 
       }),
     ];
   } catch (error) {
-    console.warn(`Could not configure notebook extensions: '${error}'`);
+    console.warn('Could not configure notebook extensions', error);
     return [];
   }
 }

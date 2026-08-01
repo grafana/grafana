@@ -1,5 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
@@ -42,7 +43,7 @@ export function NotebooksSidebarPanel() {
   const [selectedUid, setSelectedUid] = useState<string | undefined>(() => getLastUsedNotebook()?.uid);
   const location = useLocation();
 
-  const { data, isLoading } = useListNotebookQuery(notebooksEnabled ? {} : { limit: 0 });
+  const { data, isLoading } = useListNotebookQuery(notebooksEnabled ? {} : skipToken);
 
   // The sidebar follows along: navigating to a notebook page selects that notebook here.
   useEffect(() => {
