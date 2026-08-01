@@ -278,7 +278,7 @@ function SidebarNotebookEditor({ uid }: { uid: string }) {
         </Text>
         <Stack direction="row" gap={0.25}>
           <IconButton
-            name="eye"
+            name="book-open"
             tooltip={t('notebooks.sidebar.open', 'Open notebook')}
             onClick={() => onNavigate(notebookViewUrl(uid))}
           />

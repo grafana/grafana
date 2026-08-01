@@ -1,5 +1,8 @@
+import { css } from '@emotion/css';
+
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { LinkButton } from '@grafana/ui';
+import { Icon, LinkButton, Menu, useStyles2, useTheme2 } from '@grafana/ui';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
@@ -11,6 +14,8 @@ const DECLARE_INCIDENT_PATH = '/incidents/declare';
 interface Props {
   uid: string;
   title: string;
+  /** Toolbar control (default) or hamburger menu item. */
+  as?: 'button' | 'menu-item';
 }
 
 /**
@@ -19,7 +24,9 @@ interface Props {
  * notebook. Uses the same plugin bridge as alerting (IRM app with Incident app
  * fallback) and renders nothing when neither is available.
  */
-export function DeclareIncidentFromNotebookButton({ uid, title }: Props) {
+export function DeclareIncidentFromNotebookButton({ uid, title, as = 'button' }: Props) {
+  const theme = useTheme2();
+  const styles = useStyles2(getStyles);
   const { pluginId, loading, installed, settings } = useIrmPlugin(SupportedPlugin.Incident);
 
   if (loading || !installed || !settings) {
@@ -37,16 +44,30 @@ export function DeclareIncidentFromNotebookButton({ uid, title }: Props) {
   });
 
   const label = t('notebooks.declare-incident.button', 'Declare incident');
+  const fireColor = theme.colors.error.text;
 
-  // Icon-only keeps the editor toolbar compact; the label lives in the tooltip.
+  if (as === 'menu-item') {
+    return (
+      <Menu.Item icon="fire" iconColor={fireColor} label={label} url={bridgeURL} testId="notebook-declare-incident" />
+    );
+  }
+
+  // Match Edit / time-picker chrome: secondary filled control with a colored fire glyph.
   return (
     <LinkButton
       variant="secondary"
-      icon="fire"
       href={bridgeURL}
       tooltip={label}
       aria-label={label}
       data-testid="notebook-declare-incident"
-    />
+    >
+      <Icon name="fire" className={styles.fireIcon} />
+    </LinkButton>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  fireIcon: css({
+    color: theme.colors.error.text,
+  }),
+});

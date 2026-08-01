@@ -200,6 +200,9 @@ export const versionedComponents = {
     zoomOut: {
       '12.4.0': 'data-testid explore-toolbar-timepicker-zoom-out-button',
     },
+    zoomIn: {
+      '13.2.0': 'data-testid TimePicker zoom in button',
+    },
     openButton: {
       [MIN_GRAFANA_VERSION]: 'data-testid TimePicker Open Button',
     },

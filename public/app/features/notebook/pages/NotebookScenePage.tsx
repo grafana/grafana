@@ -7,7 +7,7 @@ import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
-import { Box, ConfirmModal, Dropdown, IconButton, LinkButton, Menu, useStyles2 } from '@grafana/ui';
+import { Box, Button, ConfirmModal, Dropdown, IconButton, LinkButton, Menu, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -21,8 +21,10 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { deleteNotebook, duplicateNotebook, fetchNotebook, notebookEditUrl } from '../api/notebookAPI';
+import { DeclareIncidentFromNotebookButton } from '../extensions/DeclareIncidentFromNotebookButton';
 
 import { getNotebookScenePageStateManager } from './NotebookScenePageStateManager';
+import { NotebookSceneTimePicker } from './NotebookSceneTimePicker';
 
 // Fetch a notebook, wrap it into the scene envelope, hand it to the existing transformer
 // via the notebook state manager, and render the resulting scene body read-only.
@@ -93,7 +95,7 @@ function NotebookDocument({ scene }: { scene: DashboardScene }) {
     <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
       {/* ScopesVariable (and other UNSAFE_renderAsHidden vars) must mount so query runners aren't blocked forever on dependsOnScopes — same as SoloPanelPage. */}
       {renderHiddenVariables(scene)}
-      {controls && <NotebookControls controls={controls} uid={uid} />}
+      {controls && <NotebookControls controls={controls} uid={uid} title={title} />}
       {body && <body.Component model={body} />}
     </Page>
   );
@@ -118,7 +120,7 @@ function renderHiddenVariables(scene: DashboardScene) {
 // Read-only notebooks still get the shared time range + refresh — but only those two
 // pickers, not the full dashboard controls bar (which carries edit/variable actions).
 // The Edit button is the entry into the collaborative notebook editor.
-function NotebookControls({ controls, uid }: { controls: DashboardControls; uid?: string }) {
+function NotebookControls({ controls, uid, title }: { controls: DashboardControls; uid?: string; title?: string }) {
   const styles = useStyles2(getControlsStyles);
   const { timePicker, refreshPicker, hideTimeControls } = controls.useState();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -175,16 +177,19 @@ function NotebookControls({ controls, uid }: { controls: DashboardControls; uid?
         {t('notebook.back-button', 'All notebooks')}
       </LinkButton>
       <div className={styles.controlsRight}>
-        <IconButton
-          name="link"
-          size="lg"
+        {/* Match Edit / time-picker chrome: secondary filled controls (not bare IconButtons). */}
+        <Button
+          variant="secondary"
+          icon="link"
           tooltip={t('notebook.copy-link', 'Copy link')}
+          aria-label={t('notebook.copy-link', 'Copy link')}
           onClick={() => {
             copyStringToClipboard(window.location.href);
             appEvents.emit(AppEvents.alertSuccess, [t('notebook.link-copied', 'Notebook link copied')]);
           }}
           data-testid="notebook-copy-link"
         />
+        {uid && title && <DeclareIncidentFromNotebookButton uid={uid} title={title} />}
         {canEdit && uid && (
           <LinkButton variant="secondary" icon="pen" href={`/notebooks/edit/${uid}`} data-testid="notebook-edit-button">
             {t('notebook.edit-button', 'Edit')}
@@ -192,7 +197,7 @@ function NotebookControls({ controls, uid }: { controls: DashboardControls; uid?
         )}
         {!hideTimeControls && (
           <>
-            <timePicker.Component model={timePicker} />
+            <NotebookSceneTimePicker model={timePicker} />
             <refreshPicker.Component model={refreshPicker} />
           </>
         )}

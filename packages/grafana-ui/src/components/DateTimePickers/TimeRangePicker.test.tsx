@@ -172,6 +172,41 @@ it('shows t - in zoom out tooltip', async () => {
   expect(await screen.findByText(/t -/)).toBeInTheDocument();
 });
 
+it('renders zoom in when onZoomIn is provided', async () => {
+  const onZoomIn = jest.fn();
+  render(
+    <TimeRangePicker
+      onChangeTimeZone={() => {}}
+      onChange={(value) => {}}
+      value={value}
+      onMoveBackward={() => {}}
+      onMoveForward={() => {}}
+      onZoom={() => {}}
+      onZoomIn={onZoomIn}
+    />
+  );
+
+  const zoomInButton = screen.getByLabelText('Zoom in time range');
+  expect(zoomInButton).toBeInTheDocument();
+  await userEvent.click(zoomInButton);
+  expect(onZoomIn).toHaveBeenCalledTimes(1);
+});
+
+it('hides zoom in when onZoomIn is omitted', () => {
+  render(
+    <TimeRangePicker
+      onChangeTimeZone={() => {}}
+      onChange={(value) => {}}
+      value={value}
+      onMoveBackward={() => {}}
+      onMoveForward={() => {}}
+      onZoom={() => {}}
+    />
+  );
+
+  expect(screen.queryByLabelText('Zoom in time range')).not.toBeInTheDocument();
+});
+
 describe('TimePickerTooltip', () => {
   beforeAll(() => {
     const mockIntl = {

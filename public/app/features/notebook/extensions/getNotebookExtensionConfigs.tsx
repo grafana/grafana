@@ -59,6 +59,8 @@ export function getNotebookExtensionConfigs(): PluginExtensionAddedLinkConfig[] 
       }),
 
       // Explore toolbar → one-click append to the most recently used notebook.
+      // Title is overridden in configure to match the dashboard panel menu:
+      // `Add to "<notebook name>"` (truncated).
       createAddedLinkConfig<PluginExtensionExploreContext>({
         title: 'Add to last notebook',
         description: 'Append the current query to your most recent notebook without any dialogs',
@@ -73,7 +75,11 @@ export function getNotebookExtensionConfigs(): PluginExtensionAddedLinkConfig[] 
           if (!lastUsed) {
             return undefined;
           }
-          return { description: `Append the current query to "${lastUsed.title}"` };
+          const shortTitle = lastUsed.title.length > 25 ? `${lastUsed.title.slice(0, 25)}…` : lastUsed.title;
+          return {
+            title: `Add to "${shortTitle}"`,
+            description: `Append the current query to "${lastUsed.title}"`,
+          };
         },
         onClick: async (_, { context }) => {
           if (!context?.exploreId) {

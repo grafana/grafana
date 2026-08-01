@@ -5914,6 +5914,8 @@
     },
     "new-panel-title": "New panel",
     "notebook-layout": {
+      "code-copied": "Code copied",
+      "copy-code": "Copy code",
       "description": "A vertical sequence of panels, text, and code cells",
       "locked-range": "Locked: {{range}}",
       "name": "Notebook",
@@ -12682,7 +12684,11 @@
     "duplicate": "Duplicate notebook",
     "edit-button": "Edit",
     "link-copied": "Notebook link copied",
-    "more-actions": "More actions"
+    "more-actions": "More actions",
+    "time-picker": {
+      "move-backward-tooltip": "Move {{duration}} backward",
+      "move-forward-tooltip": "Move {{duration}} forward"
+    }
   },
   "notebooks": {
     "activity": {
@@ -16240,6 +16246,8 @@
       "current-time-selected": "Time range selected: {{currentTimeRange}}",
       "forwards-time-aria-label": "Move time range forwards",
       "to": "to",
+      "zoom-in-button": "Zoom in time range",
+      "zoom-in-tooltip": "Time range zoom in <br/> t +",
       "zoom-out-button": "Zoom out time range",
       "zoom-out-tooltip-new": "Time range zoom out <br/> t -"
     },

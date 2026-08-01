@@ -489,8 +489,8 @@ export function NotebookEditor({ uid }: Props) {
     const shifted = getShiftedTimeRange(direction, timeRange);
     commitTimeRange(toUtc(shifted.from).toISOString(), toUtc(shifted.to).toISOString());
   };
-  const zoomTimeRange = () => {
-    const zoomed = getZoomedTimeRange(timeRange, 2);
+  const zoomTimeRange = (factor: number) => {
+    const zoomed = getZoomedTimeRange(timeRange, factor);
     commitTimeRange(toUtc(zoomed.from).toISOString(), toUtc(zoomed.to).toISOString());
   };
 
@@ -504,6 +504,7 @@ export function NotebookEditor({ uid }: Props) {
           appEvents.emit(AppEvents.alertSuccess, [t('notebooks.editor.link-copied', 'Notebook link copied')]);
         }}
       />
+      <DeclareIncidentFromNotebookButton as="menu-item" uid={uid} title={spec.title} />
       <Menu.Item icon="copy" label={t('notebooks.editor.copy-markdown', 'Copy as Markdown')} onClick={onCopyMarkdown} />
       <Menu.Item
         icon="file-copy-alt"
@@ -554,7 +555,6 @@ export function NotebookEditor({ uid }: Props) {
         tooltip={t('notebooks.editor.redo', 'Redo (⇧⌘Z)')}
       />
       <ActivityFeedButton activity={collab.activity} onJumpToCell={jumpToCell} />
-      <DeclareIncidentFromNotebookButton uid={uid} title={spec.title} />
       {/* The dashboards-style picker: its popup is right-edge aligned (TimeRangeInput's
           overflows the viewport from a right-anchored toolbar) and it brings the
           shift/zoom arrows Grafana users expect. */}
@@ -564,7 +564,8 @@ export function NotebookEditor({ uid }: Props) {
         onChangeTimeZone={() => {}}
         onMoveBackward={() => shiftTimeRange(-1)}
         onMoveForward={() => shiftTimeRange(1)}
-        onZoom={zoomTimeRange}
+        onZoom={() => zoomTimeRange(2)}
+        onZoomIn={() => zoomTimeRange(0.5)}
       />
       <RefreshPicker
         value={spec.timeSettings.autoRefresh}
@@ -574,7 +575,7 @@ export function NotebookEditor({ uid }: Props) {
           update((s) => ({ ...s, timeSettings: { ...s.timeSettings, autoRefresh: interval } }))
         }
       />
-      <LinkButton variant="primary" href={notebookViewUrl(uid)} icon="eye">
+      <LinkButton variant="primary" href={notebookViewUrl(uid)} icon="book-open">
         <Trans i18nKey="notebooks.editor.view">View</Trans>
       </LinkButton>
       <Dropdown overlay={moreMenu} placement="bottom-end">
