@@ -12675,8 +12675,14 @@
     "back-button": "All notebooks",
     "breadcrumb-title": "Notebooks",
     "copy-link": "Copy link",
+    "delete": "Delete notebook",
+    "delete-body": "Are you sure you want to delete this notebook?",
+    "delete-confirm": "Delete",
+    "delete-title": "Delete notebook",
+    "duplicate": "Duplicate notebook",
     "edit-button": "Edit",
-    "link-copied": "Notebook link copied"
+    "link-copied": "Notebook link copied",
+    "more-actions": "More actions"
   },
   "notebooks": {
     "activity": {
@@ -12770,6 +12776,7 @@
       "delete-body": "Are you sure you want to delete \"{{title}}\"?",
       "delete-confirm": "Delete",
       "delete-title": "Delete notebook",
+      "duplicate": "Duplicate notebook",
       "empty-body": "Write down what you are seeing, then bring in live data — add a visualization below, or capture any dashboard panel or Explore query with “Add to notebook”.",
       "empty-dashboards": "Browse dashboards",
       "empty-explore": "Open Explore",
@@ -12821,6 +12828,8 @@
       "new-notebook": "New notebook",
       "new-notebook-title": "Untitled notebook",
       "no-results": "No notebooks match your search",
+      "panel-count_one": "{{count}} panel",
+      "panel-count_other": "{{count}} panels",
       "search-placeholder": "Search notebooks by name, description or tag",
       "subtitle": "Capture investigations combining narrative text with live visualizations from your dashboards and Explore.",
       "updated": "Updated {{when}}"
