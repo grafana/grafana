@@ -229,9 +229,9 @@ describe('getVariableTypeSelectOptions', () => {
       config.featureToggles.dashboardUnifiedDrilldownControls = false;
     });
 
-    it('should hide adhoc in the dashboard context', () => {
+    it('should show adhoc as "Filter" in the dashboard context', () => {
       const values = getVariableTypeSelectOptions().map((o) => o.value);
-      expect(values).not.toContain('adhoc');
+      expect(values).toContain('adhoc');
     });
 
     it('should show adhoc as "Filter and Group by" in the standalone context', () => {

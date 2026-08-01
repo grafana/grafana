@@ -211,10 +211,6 @@ export function getVariableTypeSelectOptions({ standalone }: VariableTypeSelectO
     if (!config.featureToggles.groupByVariable && option.value === 'groupby') {
       return false;
     }
-    if (option.value === 'adhoc' && unifiedDrilldown && !standalone) {
-      // Dashboards have a dedicated "Filter and Group by" entry point instead.
-      return false;
-    }
 
     return true;
   });
