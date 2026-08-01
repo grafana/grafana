@@ -165,6 +165,44 @@ export const setWeekStart = (weekStart?: string) => {
       },
     });
   } else {
+    // If the user hasn't explicitly set a weekStart preference, we try to infer it
+    // from the browser's regional format.
+    // The backend provides the parsed Accept-Language header in bootData.user.locale.
+    const w = typeof window !== 'undefined' ? (window as any) : undefined;
+    const regionalFormat = w?.grafanaBootData?.user?.locale || w?.navigator?.language;
+    
+    if (regionalFormat && regionalFormat !== language) {
+      let regionalDow: number | undefined;
+
+      try {
+        // Try to use modern Intl.Locale API to get the first day of the week
+        // Intl.Locale firstDay: 1 = Monday, 7 = Sunday
+        // Moment dow: 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+        const localeObj = new Intl.Locale(regionalFormat) as any;
+        const weekInfo = localeObj.weekInfo || localeObj.getWeekInfo?.();
+        if (weekInfo && typeof weekInfo.firstDay === 'number') {
+          regionalDow = weekInfo.firstDay === 7 ? 0 : weekInfo.firstDay;
+        }
+      } catch (e) {
+        // Ignore Intl.Locale errors (e.g. unsupported in older browsers)
+      }
+
+      if (regionalDow === undefined) {
+        // Fallback to moment (only works if the locale pack was actually loaded)
+        regionalDow = moment.localeData(regionalFormat)?.firstDayOfWeek();
+      }
+
+      if (regionalDow !== undefined && regionalDow !== moment.localeData(language)?.firstDayOfWeek()) {
+        moment.updateLocale(language + suffix, {
+          parentLocale: language,
+          week: {
+            dow: regionalDow,
+          },
+        });
+        return;
+      }
+    }
+
     setLocale(language);
   }
 };
