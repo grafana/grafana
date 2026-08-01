@@ -705,4 +705,66 @@ describe('useStateSync', () => {
       expect(store.getState().explore.panes['two']?.addingSavedQuery).toBe(true);
     });
   });
+
+  it('strips createSavedQuery and editSavedQueryRef from the URL once syncFromURL has seeded them', async () => {
+    const { rerender, store, location } = setup({
+      queryParams: {
+        panes: JSON.stringify({
+          one: {
+            datasource: 'loki-uid',
+            queries: [{ expr: 'test', refId: 'A' }],
+          },
+        }),
+        schemaVersion: 1,
+      },
+    });
+
+    await waitFor(() => {
+      expect(store.getState().explore.panes['one']).toBeDefined();
+    });
+
+    // Different query so the panes are out of sync and syncFromURL (not init) handles the change,
+    // while keeping the same pane id so it hits the existing-pane seeding branch.
+    const nextPanes = JSON.stringify({
+      one: {
+        datasource: 'loki-uid',
+        queries: [{ expr: 'updated', refId: 'A' }],
+      },
+    });
+
+    // An in-Explore "Edit in Explore" / "Add saved query" navigation carries the one-shot seed
+    // params on the URL. syncFromURL should consume them into pane state and then remove them
+    // from the URL so they don't leak into shared links.
+    act(() => {
+      location.push({
+        pathname: '/explore',
+        search: stringify({
+          panes: nextPanes,
+          schemaVersion: 1,
+          createSavedQuery: 'true',
+          editSavedQueryRef: 'library-query-123',
+        }),
+      });
+    });
+
+    rerender({
+      children: null,
+      params: {
+        panes: nextPanes,
+        schemaVersion: 1,
+        createSavedQuery: 'true',
+        editSavedQueryRef: 'library-query-123',
+      },
+    });
+
+    await waitFor(() => {
+      // Seeded into state...
+      expect(store.getState().explore.panes['one']?.addingSavedQuery).toBe(true);
+      expect(store.getState().explore.panes['one']?.editSavedQueryRef).toBe('library-query-123');
+      // ...and stripped from the URL.
+      const search = location.getSearchObject();
+      expect(search.createSavedQuery).toBeUndefined();
+      expect(search.editSavedQueryRef).toBeUndefined();
+    });
+  });
 });
