@@ -2754,11 +2754,6 @@
       "count": 3
     }
   },
-  "public/app/plugins/datasource/influxdb/components/editor/query/influxql/visual/PartListSection.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 2
-    }
-  },
   "public/app/plugins/datasource/influxdb/components/editor/query/influxql/visual/TagsSection.tsx": {
     "@grafana/no-gf-form": {
       "count": 1

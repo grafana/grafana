@@ -1,9 +1,9 @@
-import { css, cx } from '@emotion/css';
-import { Fragment, useMemo, type JSX } from 'react';
+import { css } from '@emotion/css';
+import { Fragment, type JSX } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/plugin-ui';
-import { useTheme2 } from '@grafana/ui';
+import { InlineLabel, useStyles2 } from '@grafana/ui';
 
 import { toSelectableValue } from '../utils/toSelectableValue';
 import { unwrap } from '../utils/unwrap';
@@ -27,41 +27,35 @@ type Props = {
   onAddNewPart: (type: string) => void;
 };
 
-const noRightMarginPaddingClass = css({
-  paddingRight: '0',
-  marginRight: '0',
-});
-
 type PartProps = {
   name: string;
   params: PartParams;
-  onRemove: () => void;
   onChange: (paramValues: string[]) => void;
 };
 
-const noHorizMarginPaddingClass = css({
-  paddingLeft: '0',
-  paddingRight: '0',
-  marginLeft: '0',
-  marginRight: '0',
+const getStyles = (theme: GrafanaTheme2) => ({
+  part: css({
+    paddingLeft: 0,
+    paddingRight: 0,
+    marginLeft: 0,
+    marginRight: 0,
+    lineHeight: theme.typography.body.lineHeight,
+    fontSize: theme.typography.body.fontSize,
+  }),
+  name: css({
+    paddingRight: 0,
+    marginRight: 0,
+  }),
+  segmentButton: css({
+    paddingLeft: 0,
+    paddingRight: 0,
+    marginLeft: 0,
+    marginRight: 0,
+  }),
 });
 
-const getPartClass = (theme: GrafanaTheme2) => {
-  return cx(
-    'gf-form-label',
-    css({
-      paddingLeft: '0',
-      // gf-form-label class makes certain css attributes incorrect
-      // for the selectbox-dropdown, so we have to "reset" them back
-      lineHeight: theme.typography.body.lineHeight,
-      fontSize: theme.typography.body.fontSize,
-    })
-  );
-};
-
 const Part = ({ name, params, onChange }: PartProps): JSX.Element => {
-  const theme = useTheme2();
-  const partClass = useMemo(() => getPartClass(theme), [theme]);
+  const styles = useStyles2(getStyles);
 
   const onParamChange = (par: string, i: number) => {
     const newParams = params.map((p) => p.value);
@@ -69,8 +63,11 @@ const Part = ({ name, params, onChange }: PartProps): JSX.Element => {
     onChange(newParams);
   };
   return (
-    <div className={partClass}>
-      <button className={cx('gf-form-label', noRightMarginPaddingClass)}>{name}</button>(
+    <InlineLabel as="div" width="auto" className={styles.part}>
+      <InlineLabel as="span" width="auto" className={styles.name}>
+        {name}
+      </InlineLabel>
+      (
       {params.map((p, i) => {
         const { value, options } = p;
         const isLast = i === params.length - 1;
@@ -81,7 +78,7 @@ const Part = ({ name, params, onChange }: PartProps): JSX.Element => {
             <Seg
               allowCustomValue
               value={value}
-              buttonClassName={noHorizMarginPaddingClass}
+              buttonClassName={styles.segmentButton}
               loadOptions={loadOptions}
               onChange={(v) => {
                 onParamChange(unwrap(v.value), i);
@@ -92,7 +89,7 @@ const Part = ({ name, params, onChange }: PartProps): JSX.Element => {
         );
       })}
       )
-    </div>
+    </InlineLabel>
   );
 };
 
@@ -110,16 +107,13 @@ export const PartListSection = ({
           <Part
             name={part.name}
             params={part.params}
-            onRemove={() => {
-              onRemovePart(index);
-            }}
             onChange={(pars) => {
               onChange(index, pars);
             }}
           />
           <AccessoryButton
             style={{ marginRight: '4px' }}
-            aria-label="remove"
+            aria-label={`Remove ${part.name}`}
             icon="times"
             variant="secondary"
             onClick={() => {
