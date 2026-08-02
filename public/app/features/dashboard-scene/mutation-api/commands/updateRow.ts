@@ -4,7 +4,7 @@
  * Update a row's metadata (title, collapse, hideHeader, fillScreen) by path.
  */
 
-import { type z } from 'zod';
+import type * as z from 'zod';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { RowItem } from '../../scene/layout-rows/RowItem';
