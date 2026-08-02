@@ -1220,12 +1220,18 @@ func (NotebookNotebookLayoutItemKind) OpenAPIModelName() string {
 
 // One ordered item in a notebook layout. `element` references either a CellKind
 // (markdown/code content) or a PanelKind in the notebook's elements map. `source`
-// records who authored the cell; `collapsed` hides the body in the UI.
+// records who authored the cell; `collapsed` hides the body in the UI; `height`
+// is the rendered height in pixels for panel cells (narrative cells auto-size).
+// `timeFrom`/`timeTo` lock a panel cell to its own time range (absolute or
+// relative time strings) instead of following the notebook's global range.
 // +k8s:openapi-gen=true
 type NotebookNotebookLayoutItemSpec struct {
 	Element   NotebookElementReference             `json:"element"`
 	Source    NotebookNotebookLayoutItemSpecSource `json:"source"`
 	Collapsed *bool                                `json:"collapsed,omitempty"`
+	Height    *int64                               `json:"height,omitempty"`
+	TimeFrom  *string                              `json:"timeFrom,omitempty"`
+	TimeTo    *string                              `json:"timeTo,omitempty"`
 }
 
 // NewNotebookNotebookLayoutItemSpec creates a new NotebookNotebookLayoutItemSpec object.
