@@ -18,6 +18,7 @@ const getTestContext = (overides?: object, mockFromFetch = true) => {
     statusText: 'Ok',
     isSignedIn: true,
     orgId: 1337,
+    authenticatedBy: undefined as string | undefined,
     redirected: false,
     type: 'basic',
     url: 'http://localhost:3000/api/some-mock',
@@ -47,6 +48,7 @@ const getTestContext = (overides?: object, mockFromFetch = true) => {
   const user: User = {
     isSignedIn: props.isSignedIn,
     orgId: props.orgId,
+    authenticatedBy: props.authenticatedBy,
   } as jest.MockedObject<User>;
   const contextSrvMock: ContextSrv = {
     user,
@@ -86,6 +88,7 @@ const getTestContext = (overides?: object, mockFromFetch = true) => {
 };
 
 jest.mock('app/core/utils/auth', () => ({
+  ...jest.requireActual('app/core/utils/auth'),
   getSessionExpiry: () => 1,
   hasSessionExpiry: () => true,
 }));
@@ -213,6 +216,29 @@ describe('backendSrv', () => {
           expect(logoutMock).not.toHaveBeenCalled();
           expect(backendSrv.rotateToken).toHaveBeenCalledTimes(1);
           expect(fetchMock).toHaveBeenCalledTimes(2); // expecting 2 calls because of retry and because the tokenRotation is mocked
+        });
+      });
+    });
+
+    describe('when making an unsuccessful call and the request was authenticated without a session', () => {
+      it('then it should not rotate the token', async () => {
+        const url = '/api/dashboard/';
+        const { backendSrv, logoutMock } = getTestContext({
+          ok: false,
+          status: 401,
+          statusText: errorMessage,
+          data: { message: errorMessage },
+          url,
+          authenticatedBy: 'jwt',
+        });
+
+        backendSrv.rotateToken = jest.fn();
+        backendSrv.loginPing = jest.fn().mockResolvedValue({ ok: true } as FetchResponse);
+
+        await backendSrv.request({ url, method: 'GET', retry: 0 }).catch(() => {
+          expect(backendSrv.rotateToken).not.toHaveBeenCalled();
+          expect(backendSrv.loginPing).toHaveBeenCalledTimes(1);
+          expect(logoutMock).not.toHaveBeenCalled();
         });
       });
     });

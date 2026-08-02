@@ -10,7 +10,7 @@ import {
   userHasAnyPermission,
 } from '@grafana/data';
 import { featureEnabled, getBackendSrv } from '@grafana/runtime';
-import { getSessionExpiry } from 'app/core/utils/auth';
+import { canRotateSessionToken, getSessionExpiry } from 'app/core/utils/auth';
 import { type UserPermission, AccessControlAction } from 'app/types/accessControl';
 import { type CurrentUserInternal } from 'app/types/config';
 
@@ -222,6 +222,11 @@ export class ContextSrv {
   private canScheduleRotation() {
     // skip if user is not signed in, this happens on login page or when using anonymous auth
     if (!this.isSignedIn) {
+      return false;
+    }
+
+    // skip if the request was authenticated without a session e.g. JWT
+    if (!canRotateSessionToken(this.user.authenticatedBy)) {
       return false;
     }
 
