@@ -63,8 +63,11 @@ export class NotebookLayoutManager
       spec: {
         element: { kind: 'ElementReference', name: cell.state.elementName },
         source: cell.state.source,
-        // Emit collapsed only when it was set, so an omitted value stays omitted on round-trip.
+        // Emit collapsed/height/time lock only when they were set, so omitted values stay omitted on round-trip.
         ...(cell.state.collapsed !== undefined ? { collapsed: cell.state.collapsed } : {}),
+        ...(cell.state.height !== undefined ? { height: cell.state.height } : {}),
+        ...(cell.state.timeFrom !== undefined ? { timeFrom: cell.state.timeFrom } : {}),
+        ...(cell.state.timeTo !== undefined ? { timeTo: cell.state.timeTo } : {}),
       },
     }));
 

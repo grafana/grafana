@@ -35,7 +35,7 @@ describe('NotebookLayoutManager', () => {
   it('renders the document header with badge, title, time range and tags', async () => {
     renderNotebook();
 
-    expect(screen.getByText('Published Notebook')).toBeInTheDocument();
+    expect(screen.getByText('Notebook')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'My notebook' })).toBeInTheDocument();
     expect(screen.getByText(/now-6h/)).toBeInTheDocument();
     expect(screen.getByText('incident')).toBeInTheDocument();

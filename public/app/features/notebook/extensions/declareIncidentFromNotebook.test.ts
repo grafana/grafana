@@ -1,0 +1,118 @@
+import { defaultSpec as defaultNotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
+
+import { DEFAULT_NOTEBOOK_TITLE, newPanelForDatasource } from '../model/notebookSpec';
+
+import { buildDeclareIncidentParams, declareIncidentContextFromSpec } from './declareIncidentFromNotebook';
+
+describe('buildDeclareIncidentParams', () => {
+  const originalLocation = window.location;
+
+  beforeAll(() => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...originalLocation, origin: 'https://grafana.example' },
+    });
+  });
+
+  afterAll(() => {
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: originalLocation,
+    });
+  });
+
+  it('prefixes a named title and attaches the notebook link with a caption', () => {
+    const params = buildDeclareIncidentParams({
+      uid: 'nb1',
+      title: 'Checkout latency',
+      tags: ['checkout'],
+      panelTitles: ['p99 latency'],
+      firstMarkdownLine: 'some notes',
+      description: 'API errors spiking',
+    });
+
+    // Named title beats markdown/description.
+    expect(params.title).toBe('Investigation: Checkout latency');
+    expect(params.url).toBe('https://grafana.example/notebook/nb1');
+    expect(params.caption).toBe('Notebook: Checkout latency');
+    expect(params.description).toContain(
+      'This incident was declared from this notebook: https://grafana.example/notebook/nb1'
+    );
+    expect(params.description).toContain('Notebook: Checkout latency');
+    expect(params.description).toContain('Tags: checkout');
+    expect(params.description).toContain('- p99 latency');
+  });
+
+  it('keeps dated Investigation create titles as the incident title', () => {
+    const params = buildDeclareIncidentParams({
+      uid: 'nb1',
+      title: 'Investigation — August 1, 2026 16:30',
+    });
+
+    expect(params.title).toBe('Investigation — August 1, 2026 16:30');
+    expect(params.caption).toBe('Notebook: Investigation — August 1, 2026 16:30');
+  });
+
+  it('falls back to the first markdown line when the title is still the default', () => {
+    const params = buildDeclareIncidentParams({
+      uid: 'nb1',
+      title: DEFAULT_NOTEBOOK_TITLE,
+      firstMarkdownLine: 'Checkout p99 over SLO in prod',
+      description: 'API errors spiking in us-east',
+    });
+
+    expect(params.title).toBe('Checkout p99 over SLO in prod');
+    expect(params.caption).toBe('Investigation notebook');
+  });
+
+  it('treats blank titles like the create default', () => {
+    const params = buildDeclareIncidentParams({
+      uid: 'nb1',
+      title: '   ',
+      description: 'API errors spiking in us-east',
+    });
+
+    expect(params.title).toBe('API errors spiking in us-east');
+  });
+
+  it('does not double-prefix titles that already say Investigation', () => {
+    const params = buildDeclareIncidentParams({
+      uid: 'nb1',
+      title: 'Investigation: payment timeouts',
+    });
+
+    expect(params.title).toBe('Investigation: payment timeouts');
+  });
+});
+
+describe('declareIncidentContextFromSpec', () => {
+  it('collects panel titles and the first markdown line from the notebook', () => {
+    const panel = newPanelForDatasource({ uid: 'prom', type: 'prometheus' }, { title: 'Error rate' });
+    const ctx = declareIncidentContextFromSpec('nb1', {
+      ...defaultNotebookSpec(),
+      title: 'Outage notes',
+      elements: {
+        md1: { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text: '# Checkout p99\n\nDetails…' } } } },
+        p1: panel,
+      },
+      layout: {
+        kind: 'NotebookLayout',
+        spec: {
+          cells: [
+            {
+              kind: 'NotebookLayoutItem',
+              spec: { element: { kind: 'ElementReference', name: 'md1' }, source: 'user' },
+            },
+            {
+              kind: 'NotebookLayoutItem',
+              spec: { element: { kind: 'ElementReference', name: 'p1' }, source: 'user' },
+            },
+          ],
+        },
+      },
+    });
+
+    expect(ctx.panelTitles).toEqual(['Error rate']);
+    expect(ctx.firstMarkdownLine).toBe('Checkout p99');
+  });
+});

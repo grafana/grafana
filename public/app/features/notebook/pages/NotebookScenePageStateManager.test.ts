@@ -11,6 +11,7 @@ import { NotebookLayoutManager } from 'app/features/dashboard-scene/scene/layout
 import { dispatch } from 'app/store/store';
 import { DashboardRoutes } from 'app/types/dashboard';
 
+import { newPanelForDatasource } from '../model/notebookSpec';
 import { buildNotebookEnvelope } from '../scene/buildNotebookEnvelope';
 
 import { getNotebookScenePageStateManager } from './NotebookScenePageStateManager';
@@ -138,6 +139,48 @@ describe('NotebookScenePageStateManager', () => {
 
       // The page keys the picker + URL sync off this, so the notebook's hideTimepicker must reach it.
       expect(scene?.state.controls?.state.hideTimeControls).toBe(true);
+    });
+
+    it('hides the time controls when the notebook has no visualization panels', () => {
+      // notebookResource() is markdown-only — picker would do nothing.
+      const notebook = notebookResource();
+      notebook.metadata.name = 'nb-no-viz';
+
+      const scene = getNotebookScenePageStateManager().transformResponseToScene(buildNotebookEnvelope(notebook), {
+        uid: 'nb-no-viz',
+        route: DashboardRoutes.Notebook,
+      });
+
+      expect(scene?.state.controls?.state.hideTimeControls).toBe(true);
+    });
+
+    it('keeps the time controls when the notebook has a visualization panel', () => {
+      const panel = newPanelForDatasource({ uid: 'prom', type: 'prometheus' });
+      const notebook = notebookResource();
+      notebook.metadata.name = 'nb-with-viz';
+      notebook.spec.elements = {
+        ...notebook.spec.elements,
+        panel1: panel,
+      };
+      notebook.spec.layout = {
+        kind: 'NotebookLayout',
+        spec: {
+          cells: [
+            ...notebook.spec.layout.spec.cells,
+            {
+              kind: 'NotebookLayoutItem',
+              spec: { element: { kind: 'ElementReference', name: 'panel1' }, source: 'user' },
+            },
+          ],
+        },
+      };
+
+      const scene = getNotebookScenePageStateManager().transformResponseToScene(buildNotebookEnvelope(notebook), {
+        uid: 'nb-with-viz',
+        route: DashboardRoutes.Notebook,
+      });
+
+      expect(scene?.state.controls?.state.hideTimeControls).toBe(false);
     });
   });
 });

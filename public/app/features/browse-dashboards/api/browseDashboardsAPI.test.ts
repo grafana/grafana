@@ -49,7 +49,8 @@ describe('browseDashboardsAPI', () => {
         browseDashboards: browseDashboardsReducer,
       },
       middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(
+        // CI runners can exceed RTK's invariant middleware timing threshold and fail via jest-fail-on-console.
+        getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }).concat(
           browseDashboardsAPI.middleware,
           folderAPIv1beta1.middleware,
           legacyAPI.middleware
@@ -70,7 +71,7 @@ describe('browseDashboardsAPI', () => {
         browseDashboards: browseDashboardsReducer,
       },
       middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(
+        getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }).concat(
           browseDashboardsAPI.middleware,
           folderAPIv1beta1.middleware,
           legacyAPI.middleware,
