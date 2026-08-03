@@ -352,7 +352,8 @@ describe('RadialGauge utils', () => {
     describe('edge cases', () => {
       it('should adjust 360deg or greater  arcs to avoid SVG rendering issues', () => {
         expect(drawRadialArcPath(0, 360, 80)).toEqual(drawRadialArcPath(0, 359.99, 80));
-        expect(drawRadialArcPath(0, 380, 80)).toEqual(drawRadialArcPath(0, 380, 80));
+        // any end angle >360 is clamped to the same 359.99 path
+        expect(drawRadialArcPath(0, 380, 80)).toEqual(drawRadialArcPath(0, 359.99, 80));
       });
     });
   });

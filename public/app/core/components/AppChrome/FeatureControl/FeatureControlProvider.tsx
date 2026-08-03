@@ -1,7 +1,7 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo } from 'react';
 
 import { locationService } from '@grafana/runtime';
-import { useStoredBoolean } from 'app/core/hooks/useStoredBoolean';
+import { useStoredBoolean } from 'app/core/hooks/useStored';
 
 const FEATURE_CONTROL_ACCESSIBLE_LOCAL_STORAGE_KEY = 'grafana.feature-control.accessible';
 const FEATURE_CONTROL_OPEN_LOCAL_STORAGE_KEY = 'grafana.feature-control.open';
