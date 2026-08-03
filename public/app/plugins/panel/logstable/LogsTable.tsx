@@ -12,6 +12,7 @@ import {
   type PanelData,
   type PanelProps,
 } from '@grafana/data';
+import { useFlagGrafanaPanelPluginTransformations } from '@grafana/runtime/internal';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { SETTING_KEY_ROOT } from 'app/features/explore/Logs/utils/logs';
 import { getDefaultFieldSelectorWidth } from 'app/features/logs/components/fieldSelector/FieldSelector';
