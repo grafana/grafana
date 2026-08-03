@@ -59,7 +59,6 @@ declare module "@openfeature/core" {
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"
     | "assistant.frontend.tools.dashboardTemplates"
-    | "grafana.unifiedHomepage"
     | "alerting.syncExternalAlertmanager"
     | "grafana.enableScopesFirstMode"
     | "grafana.useDefaultScopesEndpoint"

@@ -4,7 +4,7 @@ import { Components, type DashboardPage, type E2ESelectorGroups, expect, test } 
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
-import { Canvas, Controls, Panel, Sidebar } from './page-objects';
+import { Canvas, Controls, Panels, Sidebar } from './page-objects';
 
 export const flows = {
   async addNewGenericVariable(
@@ -95,13 +95,13 @@ export async function checkRepeatedPanelTitles(
   // Keep the signature unchanged for unmigrated callers: build the
   // `components` fixture equivalent from the page context
   const components = new Components(dashboardPage.ctx);
-  const panel = new Panel({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+  const panels = new Panels({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
 
   for (const option of options) {
     if (expectHidden) {
-      await expect(panel.getContainerByTitle(`${title}${option}`)).toBeHidden();
+      await expect(panels.getPanel(`${title}${option}`)).toBeHidden();
     } else {
-      await expect(panel.getContainerByTitle(`${title}${option}`)).toBeVisible();
+      await expect(panels.getPanel(`${title}${option}`)).toBeVisible();
     }
   }
 }
@@ -115,11 +115,11 @@ export async function movePanel(
   // Keep the signature unchanged for unmigrated callers: build the
   // `components` fixture equivalent from the page context
   const components = new Components(dashboardPage.ctx);
-  const panel = new Panel({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+  const panels = new Panels({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
 
   await test.step(`Move panel "${sourcePanel}" onto "${targetPanel}"`, async () => {
     // Perform drag and drop; pixel-sensitive mechanics stay out of page objects
-    await panel.getHeaderByTitle(sourcePanel).dragTo(panel.getHeaderByTitle(targetPanel));
+    await panels.getHeader(sourcePanel).dragTo(panels.getHeader(targetPanel));
   });
 }
 
@@ -131,10 +131,10 @@ export async function getPanelPosition(
   // Keep the signature unchanged for unmigrated callers: build the
   // `components` fixture equivalent from the page context
   const components = new Components(dashboardPage.ctx);
-  const panel = new Panel({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+  const panels = new Panels({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
 
   // boundingBox() is a point-in-time snapshot and stays out of page objects
-  return panel.getHeaderByTitle(panelTitle).boundingBox();
+  return panels.getHeader(panelTitle).boundingBox();
 }
 
 export async function verifyChanges(
@@ -213,15 +213,6 @@ export async function goToEmbeddedPanel(page: Page) {
   soloPanelUrl = soloPanelUrl!.replace(baseUrlRegex, baseUrl!);
 
   await page.goto(soloPanelUrl!);
-}
-
-export async function goToPanelSnapshot(page: Page) {
-  // extracting snapshot url from clipboard
-  const snapshotUrl = await page.evaluate(() => navigator.clipboard.readText());
-
-  expect(snapshotUrl).toBeDefined();
-
-  await page.goto(snapshotUrl);
 }
 
 /**

@@ -1,7 +1,7 @@
 import { PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { CodeLanguage, defaultCodeOptions, defaultOptions, type Options, TextMode } from '../panelcfg.gen';
+import { defaultCodeOptions, defaultOptions, type Options, TextMode } from '../panelcfg.gen';
 
 import { TextNGPanel } from './TextNGPanel';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
@@ -10,31 +10,25 @@ export const plugin = new PanelPlugin<Options>(TextNGPanel)
   .setPanelOptions((builder) => {
     const category = [t('textng.category-text', 'Text')];
     builder
-      .addRadio({
+      // Mode and code language are edited in the panel toolbar; they stay
+      // registered here only so their defaults are applied.
+      .addCustomEditor({
+        id: 'mode',
         path: 'mode',
-        name: t('textng.name-mode', 'Mode'),
+        name: '',
         category,
-        settings: {
-          options: [
-            { value: TextMode.Markdown, label: t('textng.mode-options.label-markdown', 'Markdown') },
-            { value: TextMode.HTML, label: t('textng.mode-options.label-html', 'HTML') },
-            { value: TextMode.Code, label: t('textng.mode-options.label-code', 'Code') },
-          ],
-        },
+        editor: () => null,
         defaultValue: defaultOptions.mode,
+        showIf: () => false,
       })
-      .addSelect({
+      .addCustomEditor({
+        id: 'code.language',
         path: 'code.language',
-        name: t('textng.name-language', 'Language'),
+        name: '',
         category,
-        settings: {
-          options: Object.values(CodeLanguage).map((v) => ({
-            value: v,
-            label: v,
-          })),
-        },
+        editor: () => null,
         defaultValue: defaultCodeOptions.language,
-        showIf: (v) => v.mode === TextMode.Code,
+        showIf: () => false,
       })
       .addBooleanSwitch({
         path: 'code.showLineNumbers',
