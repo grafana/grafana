@@ -54,6 +54,7 @@ type AlertRuleService struct {
 	log                    log.Logger
 	nsValidatorProvider    NotificationSettingsValidatorProvider
 	authz                  ruleAccessControlService
+	ruleValidator          RuleMutationValidator
 }
 
 func NewAlertRuleService(ruleStore RuleStore,
@@ -67,6 +68,7 @@ func NewAlertRuleService(ruleStore RuleStore,
 	log log.Logger,
 	ns NotificationSettingsValidatorProvider,
 	authz RuleAccessControlService,
+	ruleValidator RuleMutationValidator,
 ) *AlertRuleService {
 	return &AlertRuleService{
 		defaultIntervalSeconds: defaultIntervalSeconds,
@@ -80,6 +82,7 @@ func NewAlertRuleService(ruleStore RuleStore,
 		log:                    log,
 		nsValidatorProvider:    ns,
 		authz:                  newRuleAccessControlService(authz),
+		ruleValidator:          ruleValidator,
 	}
 }
 
@@ -505,6 +508,9 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, user ident
 	if err != nil {
 		return models.AlertRule{}, err
 	}
+	if err := service.validateRuleMutation(ctx, &rule); err != nil {
+		return models.AlertRule{}, err
+	}
 	rule.Updated = time.Now()
 	if rule.NotificationSettings != nil {
 		validator, err := service.nsValidatorProvider.Validator(ctx, rule.OrgID)
@@ -844,6 +850,19 @@ func (service *AlertRuleService) calcDelta(ctx context.Context, user identity.Re
 }
 
 func (service *AlertRuleService) persistDelta(ctx context.Context, user identity.Requester, delta *store.GroupDelta, manager utils.ManagerProperties, versionMessage string) error {
+	// Group replace is the path used by file and Terraform provisioning; it does not
+	// flow through CreateAlertRule/UpdateAlertRule, so validate here as well.
+	for _, r := range delta.New {
+		if err := service.validateRuleMutation(ctx, r); err != nil {
+			return err
+		}
+	}
+	for _, u := range delta.Update {
+		if err := service.validateRuleMutation(ctx, u.New); err != nil {
+			return err
+		}
+	}
+
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		// Delete first as this could prevent future unique constraint violations.
 		if len(delta.Delete) > 0 {
@@ -989,6 +1008,9 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, user ident
 		if err := validator.Validate(*rule.NotificationSettings); err != nil {
 			return models.AlertRule{}, errors.Join(models.ErrAlertRuleFailedValidation, err)
 		}
+	}
+	if err := service.validateRuleMutation(ctx, &rule); err != nil {
+		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID

@@ -78,6 +78,7 @@ func ProvideService(
 	kvStore kvstore.KVStore,
 	expressionService *expr.Service,
 	dataProxy *datasourceproxy.DataSourceProxyService,
+	ruleMutationValidator provisioning.RuleMutationValidator,
 	quotaService quota.Service,
 	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	notificationService notifications.Service,
@@ -110,6 +111,7 @@ func ProvideService(
 		KVStore:                  kvStore,
 		ExpressionService:        expressionService,
 		DataProxy:                dataProxy,
+		ruleMutationValidator:    ruleMutationValidator,
 		QuotaService:             quotaService,
 		SecretsService:           secretsService,
 		Metrics:                  m,
@@ -156,6 +158,7 @@ type AlertNG struct {
 	KVStore               kvstore.KVStore
 	ExpressionService     *expr.Service
 	DataProxy             *datasourceproxy.DataSourceProxyService
+	ruleMutationValidator provisioning.RuleMutationValidator
 	QuotaService          quota.Service
 	SecretsService        secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	Metrics               *metrics.NGAlert
@@ -586,7 +589,7 @@ func (ng *AlertNG) init() error {
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
 		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
-		ac.NewRuleService(ng.accesscontrol))
+		ac.NewRuleService(ng.accesscontrol), ng.ruleMutationValidator)
 
 	ng.Api = &api.API{
 		Cfg:                   ng.Cfg,
