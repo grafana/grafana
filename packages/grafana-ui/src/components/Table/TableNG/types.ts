@@ -149,6 +149,9 @@ interface BaseTableProps {
   disableKeyboardEvents?: boolean;
   // temporary feature toggle to manage rollout of the refactored nested-table implementation
   nestedRefactorEnabled?: boolean;
+  // renders each field as a row (pivoted); column one is a frozen field-name column. gated behind the
+  // table.rowsAsFields feature toggle. header, sorting, filtering, and footers are disabled in this mode.
+  rowsAsFields?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */

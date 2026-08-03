@@ -1,4 +1,10 @@
-import { identityOverrideProcessor, FieldConfigProperty, PanelPlugin, standardEditorsRegistry } from '@grafana/data';
+import {
+  identityOverrideProcessor,
+  FieldConfigProperty,
+  PanelPlugin,
+  standardEditorsRegistry,
+  type StandardEditorProps,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   TableCellDisplayMode,
@@ -17,6 +23,18 @@ import { tableSuggestionsSupplier } from './suggestions';
 
 function getTableNoValuePlaceholder(): string {
   return t('table.no-value-placeholder', 'No rows');
+}
+
+// Footers are a per-field config option, but they are disabled in rows-as-fields mode. Field-config
+// editors can't gate on panel options via `showIf`, so this wrapper hides the footer editor when the
+// panel option is set by reading it from the editor context (which does carry the panel options).
+function FooterReducersEditor(props: StandardEditorProps<string[]>) {
+  const StatsPickerEditor = standardEditorsRegistry.get('stats-picker').editor;
+  const options: Options | undefined = props.context.options;
+  if (options?.rowsAsFields) {
+    return null;
+  }
+  return <StatsPickerEditor {...props} />;
 }
 
 export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
@@ -48,8 +66,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         path: 'footer.reducers',
         name: t('table.name-calculation', 'Calculation'),
         description: t('table.description-calculation', 'Choose a reducer function / calculation'),
-        editor: standardEditorsRegistry.get('stats-picker').editor,
-        override: standardEditorsRegistry.get('stats-picker').editor,
+        editor: FooterReducersEditor,
+        override: FooterReducersEditor,
         defaultValue: [],
         process: identityOverrideProcessor,
         shouldApply: () => true,

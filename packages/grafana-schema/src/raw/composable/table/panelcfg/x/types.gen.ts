@@ -49,6 +49,10 @@ export interface Options {
    */
   pageSize?: number;
   /**
+   * If true, renders each field as a row (pivoted); column one is a frozen field-name column. Header, sorting, filtering, and footers are disabled in this mode.
+   */
+  rowsAsFields?: boolean;
+  /**
    * Controls whether the panel should show the header
    */
   showHeader: boolean;
@@ -65,6 +69,7 @@ export interface Options {
 export const defaultOptions: Partial<Options> = {
   cellHeight: ui.TableCellHeight.Sm,
   frameIndex: 0,
+  rowsAsFields: false,
   showHeader: true,
   showTypeIcons: false,
   sortBy: [],
