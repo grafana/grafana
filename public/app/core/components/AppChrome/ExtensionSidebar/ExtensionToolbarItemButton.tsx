@@ -19,6 +19,9 @@ function getPluginIcon(pluginId?: string): IconName {
       return 'book';
     case 'grafana-grotfood-app':
       return 'gf-grotfood';
+    // Core-provided sidebar components (currently the notebooks workspace panel).
+    case 'grafana':
+      return 'book-open';
     default:
       return 'ai-sparkle';
   }

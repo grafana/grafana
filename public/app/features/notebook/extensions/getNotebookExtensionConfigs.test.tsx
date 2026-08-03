@@ -1,3 +1,4 @@
+import { PluginExtensionPoints } from '@grafana/data';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -50,6 +51,15 @@ describe('getNotebookExtensionConfigs', () => {
 
     getLastUsedNotebookMock.mockReturnValue(undefined);
     expect(configure('Add to last notebook')).toBeUndefined();
+  });
+
+  it('hides the editing sidebar without notebook write permissions', () => {
+    contextSrvMock.hasPermission.mockReturnValue(false);
+    const sidebar = getNotebookExtensionConfigs().find((config) =>
+      config.targets.includes(PluginExtensionPoints.ExtensionSidebar)
+    );
+
+    expect(sidebar?.configure?.(undefined)).toBeUndefined();
   });
 });
 
