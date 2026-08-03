@@ -503,7 +503,8 @@ Actions add a button to a cell that triggers a basic, unauthenticated API call w
 | URL                | Enter the request URL. |
 | Variables          | Enter **Key**, **Name**, and **Type** to define a variable you can reference in the URL, headers, query parameters, or body. |
 | Query parameters   | Enter as many **Key**, **Value** pairs as you need. |
-| Headers            | Enter as many **Key**, **Value** pairs as you need, and select a **Content-Type**. |
+| Headers            | Enter as many **Key**, **Value** pairs as you need. |
+| Content-Type       | Select from the following: **application/json**, **text/plain**, **application/xml**, and **application/x-www-form-urlencoded**. |
 | Body               | Enter the body of the API call. |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
 <!-- prettier-ignore-end -->
