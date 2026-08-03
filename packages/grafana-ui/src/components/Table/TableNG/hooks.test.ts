@@ -436,6 +436,26 @@ describe('TableNG hooks', () => {
       expect(result.current.numPages).toBe(2);
     });
 
+    it('should clamp a fractional pageSize in (0, 1) to one row per page instead of flooring to 0', () => {
+      // pageSize 0.5 is positive but floors to 0; without a guard that yields numPages = Infinity and crashes Pagination.
+      const { rows } = setupData();
+      const { result } = renderHook(() =>
+        usePaginatedRows(rows, {
+          enabled: true,
+          height: 300,
+          width: 800,
+          rowHeight: 10,
+          headerHeight: 0,
+          footerHeight: 0,
+          pageSize: 0.5,
+        })
+      );
+
+      expect(result.current.rowsPerPage).toBe(1);
+      expect(result.current.numPages).toBe(3);
+      expect(result.current.rows.length).toBe(1);
+    });
+
     it('should clamp the page to the last valid page when pageSize grows and drops the page count', () => {
       // 3 rows. pageSize 1 -> 3 pages (indices 0..2); land on the last page.
       const { rows } = setupData();

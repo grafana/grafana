@@ -214,7 +214,8 @@ export function usePaginatedRows(
     // a user-configured page size takes precedence; otherwise derive rowsPerPage from the height stack
     let rowsPerPage: number;
     if (pageSize != null && pageSize > 0) {
-      rowsPerPage = Math.floor(pageSize);
+      // ensure at least one row per page so a fractional size in (0, 1) doesn't floor to 0
+      rowsPerPage = Math.max(1, Math.floor(pageSize));
     } else {
       const rowAreaHeight = height - headerHeight - footerHeight - PAGINATION_HEIGHT;
       const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
