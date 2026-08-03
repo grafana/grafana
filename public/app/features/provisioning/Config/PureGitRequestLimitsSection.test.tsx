@@ -11,10 +11,17 @@ interface FormData {
   };
 }
 
-function TestForm({ onSubmit }: { onSubmit: (data: FormData) => void }) {
+function TestForm({
+  onSubmit,
+  canSetServerError = false,
+}: {
+  onSubmit: (data: FormData) => void;
+  canSetServerError?: boolean;
+}) {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<FormData>();
 
@@ -29,6 +36,14 @@ function TestForm({ onSubmit }: { onSubmit: (data: FormData) => void }) {
         requestsPerSecondError={errors.requestLimits?.requestsPerSecond?.message}
         burstError={errors.requestLimits?.burst?.message}
       />
+      {canSetServerError && (
+        <button
+          type="button"
+          onClick={() => setError('requestLimits.maxConcurrent', { message: 'Server validation error.' })}
+        >
+          Set server error
+        </button>
+      )}
       <button type="submit">Submit</button>
     </form>
   );
@@ -69,5 +84,16 @@ describe('PureGitRequestLimitsSection', () => {
 
     expect(await screen.findByText('Enter zero or a positive integer.')).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('opens when a field error appears', async () => {
+    const { user } = render(<TestForm onSubmit={jest.fn()} canSetServerError />);
+
+    expect(screen.queryByLabelText(/Maximum concurrent requests/)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Set server error' }));
+
+    expect(await screen.findByText('Server validation error.')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Maximum concurrent requests/)).toBeInTheDocument();
   });
 });

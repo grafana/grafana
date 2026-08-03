@@ -1,7 +1,8 @@
+import { useEffect, useState } from 'react';
 import { type FieldValues, type Path, type UseFormRegister } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
-import { ControlledCollapse, Field, Input, Stack } from '@grafana/ui';
+import { Collapse, Field, Input, Stack } from '@grafana/ui';
 
 interface Props<T extends FieldValues> {
   register: UseFormRegister<T>;
@@ -24,6 +25,15 @@ export function PureGitRequestLimitsSection<T extends FieldValues>({
   requestsPerSecondError,
   burstError,
 }: Props<T>) {
+  const hasError = Boolean(maxConcurrentError || requestsPerSecondError || burstError);
+  const [isOpen, setIsOpen] = useState(hasError);
+
+  useEffect(() => {
+    if (hasError) {
+      setIsOpen(true);
+    }
+  }, [hasError]);
+
   const validateLimit = (value: unknown) =>
     value === undefined ||
     (typeof value === 'number' && Number.isInteger(value) && value >= 0) ||
@@ -35,9 +45,10 @@ export function PureGitRequestLimitsSection<T extends FieldValues>({
   };
 
   return (
-    <ControlledCollapse
+    <Collapse
       label={t('provisioning.pure-git-request-limits.label-section', 'Request limits')}
-      isOpen={Boolean(maxConcurrentError || requestsPerSecondError || burstError)}
+      isOpen={isOpen}
+      onToggle={setIsOpen}
     >
       <Stack direction="column" gap={2}>
         <Field
@@ -100,6 +111,6 @@ export function PureGitRequestLimitsSection<T extends FieldValues>({
           />
         </Field>
       </Stack>
-    </ControlledCollapse>
+    </Collapse>
   );
 }
