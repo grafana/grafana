@@ -108,7 +108,7 @@ export function requiresNewDashboardLayoutsReadOnly(_scene: DashboardScene): Per
  * blast radius of the coarseness is a scene the user could not save anyway. A notebook-scoped
  * action is the right long-term answer and is tracked with the resource's permission model.
  */
-export function requiresNotebookEdit(scene: DashboardScene): PermissionCheckResult {
+function requiresNotebookEdit(scene: DashboardScene): PermissionCheckResult {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)) {
     return {
       allowed: false,

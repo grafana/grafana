@@ -491,7 +491,7 @@ export const vizConfigKindSchema = z.object({
   }),
 }) satisfies z.ZodType<VizConfigKind>;
 
-export const panelKindSchema = z.object({
+const panelKindSchema = z.object({
   kind: z.literal('Panel'),
   spec: z.object({
     id: z.number(),

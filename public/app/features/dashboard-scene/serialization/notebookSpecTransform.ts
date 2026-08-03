@@ -22,7 +22,7 @@ import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1
 import { normalizeTransformation, toWireTransformation, type WireTransformation } from './transformationCompat';
 
 /** Layout kind, and the layout registry id, that identifies a notebook. */
-export const NOTEBOOK_LAYOUT_KIND = 'NotebookLayout';
+const NOTEBOOK_LAYOUT_KIND = 'NotebookLayout';
 
 /**
  * A notebook is always a v2beta1 resource, so its panels carry the v2beta1 transformation shape
