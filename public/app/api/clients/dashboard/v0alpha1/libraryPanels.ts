@@ -247,18 +247,16 @@ async function resolveFolderNames(folderUIDs: string[], signal?: AbortSignal): P
         return;
       }
       try {
-        const folder = signal
-          ? (
-              await lastValueFrom(
-                getBackendSrv().fetch<Resource<{ title: string }>>({
-                  method: 'GET',
-                  url: `${client.url}/${uid}`,
-                  abortSignal: signal,
-                  showErrorAlert: false,
-                })
-              )
-            ).data
-          : await client.get(uid);
+        const folder = (
+          await lastValueFrom(
+            getBackendSrv().fetch<Resource<{ title: string }>>({
+              method: 'GET',
+              url: `${client.url}/${uid}`,
+              abortSignal: signal,
+              showErrorAlert: false,
+            })
+          )
+        ).data;
         titles.set(uid, folder.spec.title);
       } catch (error) {
         if (signal?.aborted) {
@@ -289,7 +287,16 @@ async function resolveUserDisplays(keys: string[]): Promise<Map<string, LibraryE
   }
   try {
     const url = `${getAPIBaseURL('iam.grafana.app', 'v0alpha1')}/display`;
-    const result = await getBackendSrv().get<DisplayList>(url, { key: wanted });
+    const result = (
+      await lastValueFrom(
+        getBackendSrv().fetch<DisplayList>({
+          method: 'GET',
+          url,
+          params: { key: wanted },
+          showErrorAlert: false,
+        })
+      )
+    ).data;
     for (const display of result.display ?? []) {
       const key = `${display.identity.type}:${display.identity.name ?? ''}`;
       users.set(key, {
@@ -306,7 +313,15 @@ async function resolveUserDisplays(keys: string[]): Promise<Map<string, LibraryE
 
 async function fetchConnectedDashboardsCount(uid: string): Promise<number> {
   try {
-    const { result } = await getBackendSrv().get<{ result: unknown[] }>(`/api/library-elements/${uid}/connections`);
+    const { result } = (
+      await lastValueFrom(
+        getBackendSrv().fetch<{ result: unknown[] }>({
+          method: 'GET',
+          url: `/api/library-elements/${uid}/connections`,
+          showErrorAlert: false,
+        })
+      )
+    ).data;
     return result.length;
   } catch {
     return 0;
