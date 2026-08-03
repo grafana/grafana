@@ -63,14 +63,14 @@ func (tc *correlationsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) 
 	srcDS := helper.CreateDS(&datasources.AddDataSourceCommand{
 		OrgID: orgID,
 		Name:  "corr-source-ds",
-		Type:  "grafana-testdata-datasource",
+		Type:  "prometheus",
 		URL:   "http://localhost",
 	})
 
 	targetDS := helper.CreateDS(&datasources.AddDataSourceCommand{
 		OrgID: orgID,
 		Name:  "corr-target-ds",
-		Type:  "grafana-testdata-datasource",
+		Type:  "prometheus",
 		URL:   "http://localhost",
 	})
 
