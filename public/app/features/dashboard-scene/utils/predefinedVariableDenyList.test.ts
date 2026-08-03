@@ -8,6 +8,9 @@ import {
 
 import {
   applyPredefinedVariableDenyList,
+  countPredefinedVariableOrigins,
+  denyListFromGlobalVariablesMode,
+  getGlobalVariablesMode,
   mayInjectAnyPredefinedVariables,
   parseIgnorePredefinedVariables,
   resolvePredefinedVariablesForDashboard,
@@ -188,5 +191,53 @@ describe('mayInjectAnyPredefinedVariables', () => {
         },
       })
     ).toBe(false);
+  });
+});
+
+describe('getGlobalVariablesMode', () => {
+  it('maps missing and empty denylist to all', () => {
+    expect(getGlobalVariablesMode(undefined)).toBe('all');
+    expect(getGlobalVariablesMode([])).toBe('all');
+  });
+
+  it('maps deny-all to none', () => {
+    expect(getGlobalVariablesMode([DENY_ALL_PREDEFINED])).toBe('none');
+  });
+
+  it('maps single bucket denials to the kept bucket', () => {
+    expect(getGlobalVariablesMode([DENY_ALL_FOLDER_PREDEFINED])).toBe('global');
+    expect(getGlobalVariablesMode([DENY_ALL_GLOBAL_PREDEFINED])).toBe('folder');
+  });
+
+  it('returns undefined for name-level or mixed denylists', () => {
+    expect(getGlobalVariablesMode(['env'])).toBeUndefined();
+    expect(getGlobalVariablesMode([DENY_ALL_GLOBAL_PREDEFINED, 'cluster'])).toBeUndefined();
+  });
+});
+
+describe('denyListFromGlobalVariablesMode', () => {
+  it('round-trips coarse radio modes', () => {
+    expect(denyListFromGlobalVariablesMode('all')).toBeUndefined();
+    expect(denyListFromGlobalVariablesMode('none')).toEqual([DENY_ALL_PREDEFINED]);
+    expect(denyListFromGlobalVariablesMode('global')).toEqual([DENY_ALL_FOLDER_PREDEFINED]);
+    expect(denyListFromGlobalVariablesMode('folder')).toEqual([DENY_ALL_GLOBAL_PREDEFINED]);
+  });
+});
+
+describe('countPredefinedVariableOrigins', () => {
+  it('counts global and folder origins', () => {
+    expect(countPredefinedVariableOrigins(globalsAndFolder)).toEqual({
+      global_count: 2,
+      folder_count: 1,
+      total_count: 3,
+    });
+  });
+
+  it('returns zeros for an empty list', () => {
+    expect(countPredefinedVariableOrigins([])).toEqual({
+      global_count: 0,
+      folder_count: 0,
+      total_count: 0,
+    });
   });
 });

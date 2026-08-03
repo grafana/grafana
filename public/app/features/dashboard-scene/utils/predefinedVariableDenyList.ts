@@ -12,6 +12,68 @@ export type PredefinedVariableResolutionInput = {
   annotations?: Record<string, string | undefined> | null;
 };
 
+/** Coarse injection mode for analytics and the sidebar radio. */
+export type GlobalVariablesMode = 'none' | 'all' | 'global' | 'folder';
+
+/**
+ * Map a deny list to the coarse mode used by the sidebar radio and load analytics.
+ *
+ * - Missing / empty → `all`
+ * - `*` → `none`
+ * - `folder:*` only → `global` (keep globals)
+ * - `global:*` only → `folder` (keep folder)
+ * - Name-level / mixed denylists → `undefined` (no radio selected; per-name UI is not shipped yet)
+ */
+export function getGlobalVariablesMode(denyList: string[] | undefined): GlobalVariablesMode | undefined {
+  if (denyList === undefined || denyList.length === 0) {
+    return 'all';
+  }
+  if (denyList.includes(DENY_ALL_PREDEFINED)) {
+    return 'none';
+  }
+  // Mode names the bucket to KEEP, so folder:* deny → Global and global:* deny → Folder.
+  if (denyList.length === 1 && denyList[0] === DENY_ALL_FOLDER_PREDEFINED) {
+    return 'global';
+  }
+  if (denyList.length === 1 && denyList[0] === DENY_ALL_GLOBAL_PREDEFINED) {
+    return 'folder';
+  }
+  return undefined;
+}
+
+export function denyListFromGlobalVariablesMode(mode: GlobalVariablesMode): string[] | undefined {
+  switch (mode) {
+    case 'all':
+      return undefined;
+    case 'none':
+      return [DENY_ALL_PREDEFINED];
+    // Mode names the bucket to KEEP, so we deny the *other* bucket.
+    case 'global':
+      return [DENY_ALL_FOLDER_PREDEFINED];
+    case 'folder':
+      return [DENY_ALL_GLOBAL_PREDEFINED];
+  }
+}
+
+/** Count injected variables by predefined origin for load analytics. */
+export function countPredefinedVariableOrigins(variables: VariableKind[]): {
+  global_count: number;
+  folder_count: number;
+  total_count: number;
+} {
+  let global_count = 0;
+  let folder_count = 0;
+  for (const variable of variables) {
+    const origin = getPredefinedOrigin(variable.spec.origin);
+    if (origin?.type === 'global') {
+      global_count += 1;
+    } else if (origin?.type === 'folder') {
+      folder_count += 1;
+    }
+  }
+  return { global_count, folder_count, total_count: global_count + folder_count };
+}
+
 /**
  * Parse the dashboard ignore/deny annotation.
  *
