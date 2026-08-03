@@ -536,6 +536,18 @@ func Test_ReadPluginJSON(t *testing.T) {
 	}
 }
 
+func TestReadPluginJSONIncludesNavigationParent(t *testing.T) {
+	data, err := ReadPluginJSON(strings.NewReader(`{
+		"id": "test-app",
+		"type": "app",
+		"includes": [{"type": "page", "name": "Customization", "parent": "Settings"}]
+	}`))
+
+	require.NoError(t, err)
+	require.Len(t, data.Includes, 1)
+	require.Equal(t, "Settings", data.Includes[0].Parent)
+}
+
 func Test_validatePluginJSON(t *testing.T) {
 	type args struct {
 		data JSONData

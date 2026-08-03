@@ -92,7 +92,8 @@ export function MegaMenuItem({
   const hasActiveChild = hasChildMatch(link, activeItem);
   const isActive = link === activeItem || (level === MAX_DEPTH && hasActiveChild);
   // Starred leaf rows (id `starred/<uid>`) carry a per-kind icon (folder vs dashboard) that must
-  // render alongside the label the same way section-header icons do, so the two kinds are distinguishable.
+  // render alongside the label so the two kinds are distinguishable. Nav items at every depth can
+  // also provide an icon through plugin metadata.
   const isStarredLeaf = Boolean(link.id?.startsWith(ID_PREFIX));
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(
     `grafana.navigation.expanded[${expandKeyPrefix}${link.text}]`,
@@ -225,10 +226,10 @@ export function MegaMenuItem({
               className={cx(styles.labelWrapper, {
                 [styles.tightLabelGap]: tightLabelGap,
                 [styles.hasActiveChild]: hasActiveChild,
-                [styles.labelWrapperWithIcon]: Boolean(level === 0 && iconElement),
+                [styles.labelWrapperWithIcon]: Boolean(iconElement),
               })}
             >
-              {(level === 0 || isStarredLeaf) && iconElement}
+              {iconElement}
               <Text truncate element="p">
                 {link.text}
               </Text>

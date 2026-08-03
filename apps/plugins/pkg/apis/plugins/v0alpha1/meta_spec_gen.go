@@ -145,6 +145,7 @@ type MetaInclude struct {
 	Path       *string          `json:"path,omitempty"`
 	AddToNav   *bool            `json:"addToNav,omitempty"`
 	DefaultNav *bool            `json:"defaultNav,omitempty"`
+	Parent     *string          `json:"parent,omitempty"`
 	Icon       *string          `json:"icon,omitempty"`
 }
 

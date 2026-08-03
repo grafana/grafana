@@ -256,6 +256,11 @@ func (s *ServiceImpl) shouldIncludeInvestigations(plugin pluginstore.Plugin, inc
 func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
 	assistantTrialMode := s.isAssistantTrialMode(plugin, c)
+	type pluginNavLink struct {
+		link   *navtree.NavLink
+		parent string
+	}
+	var pluginNavLinks []pluginNavLink
 	appLink := &navtree.NavLink{
 		Text:       plugin.Name,
 		Id:         "plugin-page-" + plugin.ID,
@@ -328,7 +333,7 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 
 				// Register the page under the app
 			} else if include.AddToNav {
-				appLink.Children = append(appLink.Children, link)
+				pluginNavLinks = append(pluginNavLinks, pluginNavLink{link: link, parent: include.Parent})
 			}
 		}
 
@@ -340,9 +345,26 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 					Text:     include.Name,
 					PluginID: plugin.ID,
 				}
-				appLink.Children = append(appLink.Children, link)
+				pluginNavLinks = append(pluginNavLinks, pluginNavLink{link: link, parent: include.Parent})
 			}
 		}
+	}
+
+	linksByName := make(map[string]*navtree.NavLink, len(pluginNavLinks))
+	for _, pluginNavLink := range pluginNavLinks {
+		if pluginNavLink.link.Text != "" {
+			linksByName[pluginNavLink.link.Text] = pluginNavLink.link
+		}
+	}
+
+	for _, pluginNavLink := range pluginNavLinks {
+		parent := appLink
+		if pluginNavLink.parent != "" {
+			if candidate := linksByName[pluginNavLink.parent]; candidate != nil && candidate.Url != appLink.Url {
+				parent = candidate
+			}
+		}
+		parent.Children = append(parent.Children, pluginNavLink.link)
 	}
 
 	// Apps without any nav children are not part of navtree

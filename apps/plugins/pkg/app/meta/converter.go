@@ -280,6 +280,9 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 			if include.DefaultNav {
 				v0Include.DefaultNav = &include.DefaultNav
 			}
+			if include.Parent != "" {
+				v0Include.Parent = &include.Parent
+			}
 			if include.Icon != "" {
 				v0Include.Icon = &include.Icon
 			}

@@ -238,6 +238,7 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 					Path:       "/dashboards/1",
 					AddToNav:   true,
 					DefaultNav: true,
+					Parent:     "Settings",
 					Icon:       "dashboard",
 				},
 				{UID: "page-1", Type: "page", Name: "Page 1", Role: identity.RoleViewer},
@@ -249,6 +250,7 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 		assert.Equal(t, "dashboard-1", *meta.Includes[0].Uid)
 		assert.Equal(t, pluginsv0alpha1.MetaIncludeTypeDashboard, *meta.Includes[0].Type)
 		assert.Equal(t, pluginsv0alpha1.MetaIncludeRoleAdmin, *meta.Includes[0].Role)
+		assert.Equal(t, "Settings", *meta.Includes[0].Parent)
 		assert.Equal(t, pluginsv0alpha1.MetaIncludeRoleViewer, *meta.Includes[1].Role)
 	})
 

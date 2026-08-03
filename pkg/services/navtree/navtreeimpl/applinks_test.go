@@ -1127,6 +1127,47 @@ func TestAddAssistantWatchersToAlerting(t *testing.T) {
 	})
 }
 
+func TestProcessAppPluginWithParentNavigation(t *testing.T) {
+	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
+	reqCtx := &contextmodel.ReqContext{
+		SignedInUser: &user.SignedInUser{OrgRole: identity.RoleAdmin},
+		Context:      &web.Context{Req: httpReq},
+	}
+
+	app := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "nested-app",
+			Name: "Nested app",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{Name: "Customization", Path: "/a/nested-app/settings/customization", Type: "page", AddToNav: true, Parent: "Settings"},
+				{Name: "Home", Path: "/a/nested-app", Type: "page", AddToNav: true, DefaultNav: true},
+				{Name: "Settings", Path: "/a/nested-app/settings", Type: "page", AddToNav: true},
+				{Name: "Integration", Path: "/a/nested-app/settings/integration", Type: "page", AddToNav: true, Parent: "Settings"},
+			},
+		},
+	}
+
+	service := ServiceImpl{
+		cfg:            setting.NewCfg(),
+		accessControl:  accesscontrolmock.New().WithPermissions([]ac.Permission{{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"}}),
+		pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{app.ID: {OrgID: 1, PluginID: app.ID, Enabled: true}}},
+	}
+
+	treeRoot := navtree.NavTreeRoot{}
+	service.processAppPlugin(app, reqCtx, &treeRoot)
+
+	appNode := treeRoot.FindById("plugin-page-" + app.ID)
+	require.NotNil(t, appNode)
+	require.Len(t, appNode.Children, 1)
+	require.Equal(t, "Settings", appNode.Children[0].Text)
+	require.Len(t, appNode.Children[0].Children, 2)
+	require.ElementsMatch(t, []string{"Customization", "Integration"}, []string{
+		appNode.Children[0].Children[0].Text,
+		appNode.Children[0].Children[1].Text,
+	})
+}
+
 func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}

@@ -153,6 +153,7 @@ metaV0Alpha1: {
 	path?:       string
 	addToNav?:   bool
 	defaultNav?: bool
+	parent?:     string
 	icon?:       string
 }
 

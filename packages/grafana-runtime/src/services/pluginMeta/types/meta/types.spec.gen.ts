@@ -146,6 +146,7 @@ export interface Include {
 	path?: string;
 	addToNav?: boolean;
 	defaultNav?: boolean;
+	parent?: string;
 	icon?: string;
 }
 

@@ -317,6 +317,10 @@
             "type": "boolean",
             "description": "Page or dashboard when user clicks the icon in the side menu."
           },
+          "parent": {
+            "type": "string",
+            "description": "Name of the included navigation item under which this item should appear."
+          },
           "icon": {
             "type": "string",
             "description": "Icon to use in the side menu. For information on available icon, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)."
