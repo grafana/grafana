@@ -7,7 +7,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 
 /** @internal */
 export enum ColorSwatchVariant {
@@ -38,9 +38,8 @@ export const ColorSwatch = React.forwardRef<HTMLDivElement, Props>(
     },
     ref
   ) => {
-    const theme = useTheme2();
     const { isFocusVisible, focusProps } = useFocusRing();
-    const styles = getStyles(theme, variant, color, isFocusVisible, isSelected);
+    const styles = useStyles2(getStyles, variant, color, isFocusVisible, isSelected);
     const hasLabel = !!label;
     const colorLabel = ariaLabel || label;
     return (

@@ -3,7 +3,7 @@ import { type AnchorHTMLAttributes, forwardRef } from 'react';
 
 import { type GrafanaTheme2, locationUtil, textUtil, type ThemeTypographyVariantTypes } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { type IconName, type IconSize } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 import { customWeight } from '../Text/utils';
@@ -55,8 +55,7 @@ export const TextLink = forwardRef<HTMLAnchorElement, TextLinkProps>(
   ) => {
     const validUrl = textUtil.sanitizeUrl(href ?? '');
 
-    const theme = useTheme2();
-    const styles = getLinkStyles(theme, inline, variant, weight, color);
+    const styles = useStyles2(getLinkStyles, inline, variant, weight, color);
     const externalIcon = icon || 'external-link-alt';
 
     if (external) {

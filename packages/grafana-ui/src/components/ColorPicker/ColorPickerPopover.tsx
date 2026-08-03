@@ -5,7 +5,7 @@ import { type ComponentType, createElement, useState } from 'react';
 import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { Tab } from '../Tabs/Tab';
 import { TabsBar } from '../Tabs/TabsBar';
 import { type PopoverContentProps } from '../Tooltip/types';
@@ -40,7 +40,7 @@ export const ColorPickerPopover = <T extends CustomPickersDescriptor>(props: Pro
   const theme = useTheme2();
   const [activePicker, setActivePicker] = useState<PickerType | keyof T>('palette');
 
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   const handleChange = (color: string) => {
     if (enableNamedColors) {

@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
@@ -51,9 +51,8 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     },
     ref
   ) => {
-    const theme = useTheme2();
     const hasTitle = Boolean(title);
-    const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
+    const styles = useStyles2(getStyles, severity, hasTitle, elevated, bottomSpacing, topSpacing);
     const rolesBySeverity: Record<AlertVariant, AriaRole> = {
       error: 'alert',
       warning: 'alert',

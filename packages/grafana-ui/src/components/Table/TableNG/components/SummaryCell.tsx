@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type TableFooterOptions } from '@grafana/schema';
 
-import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
+import { useStyles2 } from '../../../../themes/ThemeContext';
 import { useReducerEntries } from '../hooks';
 import { getDefaultCellStyles, getJustifyContent, type TextAlign } from '../styles';
 import { type TableRow } from '../types';
@@ -40,12 +40,7 @@ export const SummaryCell = ({
   textAlign,
 }: SummaryCellProps) => {
   const styles = useStyles2(getStyles, textAlign, hideLabel);
-  const theme = useTheme2();
-  const defaultFooterCellStyles = getDefaultCellStyles(theme, {
-    textAlign: 'left', // alignment is set in footerItem
-    shouldOverflow: true,
-    textWrap: false,
-  });
+  const defaultFooterCellStyles = useStyles2(getFooterCellStyles);
   const displayName = getDisplayName(field);
   const reducerResultsEntries = useReducerEntries(field, rows, displayName, colIdx);
   const cellClass = clsx(styles.footerCell, defaultFooterCellStyles);
@@ -112,6 +107,13 @@ export const SummaryCell = ({
     </div>
   );
 };
+
+const getFooterCellStyles = (theme: GrafanaTheme2) =>
+  getDefaultCellStyles(theme, {
+    textAlign: 'left', // alignment is set in footerItem
+    shouldOverflow: true,
+    textWrap: false,
+  });
 
 const getStyles = (theme: GrafanaTheme2, textAlign: TextAlign, hideLabel: boolean) => ({
   footerCell: css({

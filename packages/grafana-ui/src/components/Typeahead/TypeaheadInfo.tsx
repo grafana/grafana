@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2, renderMarkdown } from '@grafana/data';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { type CompletionItem } from '../../types/completion';
 
 const getStyles = (theme: GrafanaTheme2, height: number, visible: boolean) => {
@@ -36,8 +36,7 @@ export const TypeaheadInfo = ({ item, height }: Props) => {
   const visible = item && !!item.documentation;
   const label = item ? item.label : '';
   const documentation = renderMarkdown(item?.documentation);
-  const theme = useTheme2();
-  const styles = getStyles(theme, height, visible);
+  const styles = useStyles2(getStyles, height, visible);
 
   return (
     <div className={cx([styles.typeaheadItem])}>

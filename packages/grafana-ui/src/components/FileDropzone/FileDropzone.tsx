@@ -13,7 +13,7 @@ import {
 import { formattedValueToString, getValueFormat, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 
-import { useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { uniqueId } from '../../utils/uniqueId';
 import { Alert } from '../Alert/Alert';
 import { useFieldContext } from '../Forms/FieldContext';
@@ -188,8 +188,7 @@ export function FileDropzone({
     onDrop,
     accept: transformAcceptToNewFormat(options?.accept),
   });
-  const theme = useTheme2();
-  const styles = getStyles(theme, isDragActive);
+  const styles = useStyles2(getStyles, isDragActive);
   const fileList = files.map((file) => {
     if (fileListRenderer) {
       return fileListRenderer(file, removeFile);
@@ -290,8 +289,7 @@ function transformAcceptToNewFormat(accept?: string | string[] | Accept): Accept
 }
 
 export function FileDropzoneDefaultChildren({ primaryText = 'Drop file here or click to upload', secondaryText = '' }) {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
 
   return (
     <div className={cx(styles.defaultDropZone)} data-testid="file-drop-zone-default-children">
