@@ -492,9 +492,14 @@ export const libraryPanelsK8sClient = {
   },
 
   async update(uid: string, name: string, model: object, version: number, folderUid?: string): Promise<LibraryPanel> {
+    const client = resourceClient();
+    const existing = await client.get(uid);
+    const currentVersion = existing.metadata.generation ?? 1;
+    if (currentVersion !== version) {
+      throw new Error(`Library panel version mismatch: expected ${version}, current ${currentVersion}`);
+    }
     // legacy PATCH semantics: an absent folderUid keeps the panel in its current folder
     if (folderUid === undefined) {
-      const existing = await resourceClient().get(uid);
       folderUid = existing.metadata.annotations?.[AnnoKeyFolder] ?? '';
     }
     const { spec, status } = legacyModelToSpecAndStatus(name, model);
@@ -505,14 +510,14 @@ export const libraryPanelsK8sClient = {
         name: uid,
         // generation carries the legacy optimistic-concurrency version check
         generation: version,
-        resourceVersion: '',
-        creationTimestamp: '',
+        resourceVersion: existing.metadata.resourceVersion ?? '',
+        creationTimestamp: existing.metadata.creationTimestamp ?? '',
         ...(folderUid ? { annotations: { [AnnoKeyFolder]: folderUid } } : {}),
       },
       spec,
       status,
     };
-    const updated = await resourceClient().update(obj);
+    const updated = await client.update(obj);
     return this.get(updated.metadata.name);
   },
 

@@ -168,10 +168,11 @@ describe('k8sResourceToLegacyDTO', () => {
 describe('libraryPanelsK8sClient request options', () => {
   const fetch = jest.fn();
   const get = jest.fn();
+  const put = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    setBackendSrv({ fetch, get } as unknown as BackendSrv);
+    setBackendSrv({ fetch, get, put } as unknown as BackendSrv);
   });
 
   it('forwards the abort signal through pagination and folder resolution', async () => {
@@ -245,5 +246,47 @@ describe('libraryPanelsK8sClient request options', () => {
 
     expect(result.totalCount).toBe(0);
     expect(result.elements).toEqual([]);
+  });
+
+  it('uses the current resource version when updating', async () => {
+    const resource = makeResource({
+      metadata: {
+        ...makeResource().metadata,
+        resourceVersion: '42',
+      },
+    });
+    get.mockImplementation((url: string) =>
+      url.startsWith('/apis/') ? Promise.resolve(resource) : Promise.resolve({ result: [] })
+    );
+    put.mockResolvedValue(resource);
+    fetch.mockReturnValue(of({ data: resource }));
+
+    await libraryPanelsK8sClient.update('panel-uid', 'Updated name', resource.spec, 3, 'folder-uid');
+
+    expect(put).toHaveBeenCalledWith(
+      expect.stringMatching(/\/librarypanels\/panel-uid$/),
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          generation: 3,
+          resourceVersion: '42',
+        }),
+      }),
+      { params: undefined }
+    );
+  });
+
+  it('rejects an update when the legacy version is stale', async () => {
+    const resource = makeResource({
+      metadata: {
+        ...makeResource().metadata,
+        generation: 4,
+      },
+    });
+    get.mockResolvedValue(resource);
+
+    await expect(libraryPanelsK8sClient.update('panel-uid', 'Updated name', resource.spec, 3)).rejects.toThrow(
+      'Library panel version mismatch'
+    );
+    expect(put).not.toHaveBeenCalled();
   });
 });
