@@ -1,6 +1,6 @@
 import { HttpResponse, http } from 'msw';
 
-import { type PreferencesSpec } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type PreferencesSpec } from '@grafana/api-clients/rtkq/preferences/v1';
 
 import { mockUserPreferences, setMockUserPreferences } from '../../../fixtures/preferences';
 import { mockStarredDashboardsMap } from '../../../fixtures/starred';

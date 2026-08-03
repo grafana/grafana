@@ -29,6 +29,11 @@ var updateGolden = flag.Bool("update-golden", false, "regenerate bleve mapping g
 // mapping ships, regenerate with -update-golden and review the diff. Any
 // unintended drift trips this test.
 //
+// Reading a snapshot: a field mapping without "index": true is stored only, so its
+// value is returned but never searchable, and bleve does not analyze it — analysis
+// runs only for indexed fields (see scorch.analyze). The "analyzer" key is emitted
+// on every text mapping regardless, so it says nothing about whether it is used.
+//
 // The standard search fields (title, title_phrase, title_ngram, description,
 // tags, folder, ownerReferences, createdBy, managedBy, manager.*, source.*,
 // labels.*, reference.*, created, updated) are part of the mapping returned

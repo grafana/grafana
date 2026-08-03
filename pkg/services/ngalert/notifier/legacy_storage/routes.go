@@ -296,16 +296,11 @@ func (rev *ConfigRevision) ValidateRoute(route v1.Route) error {
 }
 
 func (rev *ConfigRevision) validateReceiverReferences(route v1.Route) error {
-	receivers := rev.GetReceiversNames()
-	receivers[""] = struct{}{} // Allow empty receiver (inheriting from parent)
-	return route.ValidateReceivers(receivers)
+	return route.ValidateReceivers(rev.GetReceiversNames())
 }
 
 func (rev *ConfigRevision) validateTimeIntervalReferences(route v1.Route) error {
 	timeIntervals := map[string]struct{}{}
-	for _, mt := range rev.Config.AlertmanagerConfig.MuteTimeIntervals {
-		timeIntervals[mt.Name] = struct{}{}
-	}
 	for _, mt := range rev.Config.AlertmanagerConfig.TimeIntervals {
 		timeIntervals[mt.Name] = struct{}{}
 	}

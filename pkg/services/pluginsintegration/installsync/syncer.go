@@ -2,6 +2,8 @@ package installsync
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"slices"
 	"strings"
 	"time"
@@ -47,7 +49,6 @@ type ServerLock interface {
 type syncer struct {
 	services.NamedService
 	featureToggles      featuremgmt.FeatureToggles
-	clientGenerator     resource.ClientGenerator
 	installRegistrar    *install.InstallRegistrar
 	orgService          org.Service
 	namespaceMapper     request.NamespaceMapper
@@ -64,7 +65,6 @@ var _ services.NamedService = (*syncer)(nil)
 // newSyncer creates a new syncer with the provided dependencies.
 func newSyncer(
 	featureToggles featuremgmt.FeatureToggles,
-	clientGenerator resource.ClientGenerator,
 	installRegistrar *install.InstallRegistrar,
 	orgService org.Service,
 	namespaceMapper request.NamespaceMapper,
@@ -73,7 +73,6 @@ func newSyncer(
 	pluginsStoreService pluginstore.Store,
 ) *syncer {
 	s := syncer{
-		clientGenerator:     clientGenerator,
 		featureToggles:      featureToggles,
 		installRegistrar:    installRegistrar,
 		orgService:          orgService,
@@ -105,7 +104,6 @@ func ProvideSyncer(
 
 	return newSyncer(
 		featureToggles,
-		clientGenerator,
 		installRegistrar,
 		orgService,
 		namespaceMapper,
@@ -177,58 +175,32 @@ func (s *syncer) syncAllNamespaces(ctx context.Context, source install.Source, i
 		return err
 	}
 
+	// a namespace failure must not strand the ones after it: the sync runs
+	// once per process, so skipped namespaces stay stale until restart
+	var errs []error
 	for _, org := range orgs {
 		namespace := s.namespaceMapper(org.ID)
 		nsCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
 		if err := s.syncNamespace(nsCtx, namespace, source, installedPlugins); err != nil {
-			return err
+			errs = append(errs, fmt.Errorf("sync namespace %q: %w", namespace, err))
 		}
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 func (s *syncer) syncNamespace(ctx context.Context, namespace string, source install.Source, installedPlugins []pluginstore.Plugin) error {
-	client, err := s.installRegistrar.GetClient()
-	if err != nil {
-		return err
-	}
-
-	apiPlugins, err := client.ListAll(ctx, namespace, resource.ListOptions{})
-	if err != nil {
-		return err
-	}
-
 	primaryPlugins := filterPrimaryPlugins(installedPlugins)
-	installedMap := make(map[string]struct{}, len(primaryPlugins))
+	desired := make([]install.PluginInstall, 0, len(primaryPlugins))
 	for _, p := range primaryPlugins {
-		installedMap[p.ID] = struct{}{}
-	}
-
-	// unregister plugins that are not installed
-	for _, apiPlugin := range apiPlugins.Items {
-		if _, exists := installedMap[apiPlugin.Spec.Id]; !exists {
-			err := s.installRegistrar.Unregister(ctx, namespace, apiPlugin.Spec.Id, source)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	// register plugins that are installed
-	for _, p := range primaryPlugins {
-		err := s.installRegistrar.Register(ctx, namespace, &install.PluginInstall{
+		desired = append(desired, install.PluginInstall{
 			ID:           p.ID,
 			Version:      p.Info.Version,
 			Source:       source,
 			Dependencies: pluginDependencyIDs(p),
 		})
-		if err != nil {
-			return err
-		}
 	}
-
-	return nil
+	return s.installRegistrar.SyncNamespace(ctx, namespace, source, desired)
 }
 
 func pluginDependencyIDs(p pluginstore.Plugin) []string {

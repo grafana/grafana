@@ -234,6 +234,13 @@ func TestDeleteWithSuggestionAndConflict(t *testing.T) {
 	storagetesting.RunTestDeleteWithSuggestionAndConflict(ctx, t, store)
 }
 
+func TestDeleteWithConflict(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	assert.NoError(t, err)
+	storagetesting.RunTestDeleteWithConflict(ctx, t, store)
+}
+
 type resourceClientMock struct {
 	resourcepb.ResourceStoreClient
 	resourcepb.ResourceStatsClient

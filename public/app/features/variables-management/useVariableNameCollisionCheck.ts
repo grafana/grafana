@@ -42,7 +42,7 @@ export function evaluateVariableNameCollision(args: {
  */
 export function useVariableNameCollisionCheck(
   logicalName: string,
-  folderUid: string,
+  folderUid: string | undefined,
   /** metadata.name of the variable being edited; undefined when creating. */
   editingResourceName?: string,
   /** Skip while local format validation already failed (name may not be committed). */
@@ -52,10 +52,14 @@ export function useVariableNameCollisionCheck(
   useDebounce(() => setDebouncedName(logicalName), NAME_CHECK_DEBOUNCE_MS, [logicalName]);
 
   const isDebouncing = logicalName !== debouncedName;
+  // undefined = no folder selected yet (non-editors); '' = global. Skip until a scope is chosen
+  // so we don't false-positive against global names before the user picks a folder.
+  const hasFolderScope = folderUid !== undefined;
   // Folder is not debounced so changing scope re-checks immediately (Save As does the same).
-  const resourceName = debouncedName ? deriveVariableMetadataName(debouncedName, folderUid || undefined) : '';
+  const resourceName =
+    debouncedName && hasFolderScope ? deriveVariableMetadataName(debouncedName, folderUid || undefined) : '';
   const isEditingSelf = Boolean(editingResourceName && resourceName === editingResourceName);
-  const shouldQuery = Boolean(resourceName) && !skip && !isDebouncing && !isEditingSelf;
+  const shouldQuery = Boolean(resourceName) && hasFolderScope && !skip && !isDebouncing && !isEditingSelf;
 
   const { data, error, isFetching } = useGetVariableQuery(shouldQuery ? { name: resourceName } : skipToken);
 

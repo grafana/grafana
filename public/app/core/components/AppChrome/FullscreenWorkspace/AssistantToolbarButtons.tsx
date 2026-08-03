@@ -1,119 +1,145 @@
-import { css, cx } from '@emotion/css';
-import { forwardRef } from 'react';
+import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
+import { Icon, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
-interface Props {
-  /** Whether the assistant sidebar is open — drives the Chat pill's active styling. */
-  isOpen: boolean;
-  /** Toggles the assistant sidebar. */
-  onClick?: () => void;
+import {
+  getComponentIdFromComponentMeta,
+  useExtensionSidebarContext,
+} from '../ExtensionSidebar/ExtensionSidebarProvider';
+import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
+
+const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
+const CHAT_ICON_GRADIENT_ID = 'grafana-assistant-chat-icon-gradient';
+const WORKSPACE_ICON_GRADIENT_ID = 'grafana-assistant-workspace-icon-gradient';
+
+function getOrangeColor(theme: GrafanaTheme2) {
+  return theme.visualization.getColorByName('orange');
+}
+function getPurpleColor(theme: GrafanaTheme2) {
+  return theme.visualization.getColorByName('dark-purple');
+}
+
+function AssistantIconGradientDefs() {
+  const theme = useTheme2();
+  const orange = getOrangeColor(theme);
+  const purple = getPurpleColor(theme);
+
+  return (
+    <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden focusable="false">
+      <defs>
+        <linearGradient id={CHAT_ICON_GRADIENT_ID} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="32" y2="32">
+          <stop offset="0%" stopColor={orange} />
+          <stop offset="80%" stopColor={purple} />
+        </linearGradient>
+        <linearGradient id={WORKSPACE_ICON_GRADIENT_ID} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="24">
+          <stop offset="0%" stopColor={orange} />
+          <stop offset="80%" stopColor={purple} />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
 }
 
 /**
- * The Grafana Assistant's top-bar buttons: a labelled purple "Chat" pill (the sidebar
- * toggle) and an "Enter Workspace" pill. `ExtensionToolbarItemButton` delegates here for
- * the `grafana-assistant-app` plugin, keeping the assistant-specific UI + styles out of the
- * generic extension-toolbar button. The forwarded ref lands on the Chat pill for the
- * extension sidebar's `Dropdown` integration.
+ * The Grafana Assistant's top-bar buttons: a "Chat" pill (the sidebar toggle) and a
+ * "Workspace" pill. Self-contained like `NavRightButton`/`InviteUserButton`: it decides for
+ * itself whether it should render (fullscreen workspace flag on, not a small screen, and the
+ * `grafana-assistant-app` plugin actually available), rather than the caller working that out.
  */
-export const AssistantToolbarButtons = forwardRef<HTMLButtonElement, Props>(function AssistantToolbarButtons(
-  { isOpen, onClick },
-  ref
-) {
+export function AssistantToolbarButtons() {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
+  const fullscreenWorkspaceEnabled = useFlagAssistantFullscreenWorkspace();
+  const isSmallScreen = !useMediaQueryMinWidth('sm');
+  const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
+
+  const assistantComponentTitle = availableComponents.get(ASSISTANT_PLUGIN_ID)?.addedComponents[0]?.title;
+  const assistantComponentId = assistantComponentTitle
+    ? getComponentIdFromComponentMeta(ASSISTANT_PLUGIN_ID, assistantComponentTitle)
+    : undefined;
+  const isOpen = assistantComponentId !== undefined && dockedComponentId === assistantComponentId;
+
+  const shouldRender = fullscreenWorkspaceEnabled && !isSmallScreen && assistantComponentId !== undefined;
 
   return (
-    <>
-      <button
-        ref={ref}
-        type="button"
-        className={cx(styles.assistantPill, isOpen && styles.assistantPillActive)}
-        data-testid={`extension-toolbar-button-${isOpen ? 'close' : 'open'}`}
-        aria-expanded={isOpen}
-        aria-pressed={isOpen}
-        aria-label={
-          isOpen
-            ? t('navigation.extension-sidebar.assistant-close', 'Close Grafana Assistant')
-            : t('navigation.extension-sidebar.assistant-open', 'Open Grafana Assistant')
-        }
-        onClick={onClick}
-      >
-        <Icon name="ai-sparkle" size="md" />
-        <span>{t('navigation.extension-sidebar.assistant-label', 'Chat')}</span>
-      </button>
-      <button
-        type="button"
-        className={styles.fullscreenWorkspaceButton}
-        onClick={() => chrome.setFullscreenWorkspace(true)}
-        aria-label={t('navigation.fullscreen-workspace.enter', 'Enter Workspace')}
-      >
-        <span className={styles.fullscreenWorkspaceIcon}>
-          <Icon name="ai-sparkle" size="md" />
-        </span>
-        <span className={styles.fullscreenWorkspaceText}>
-          {t('navigation.fullscreen-workspace.enter', 'Enter Workspace')}
-        </span>
-      </button>
-    </>
+    shouldRender && (
+      <>
+        <AssistantIconGradientDefs />
+        <ToolbarButton
+          icon={
+            <span className={styles.chatIcon}>
+              <Icon name="ai-sparkle" size="lg" />
+            </span>
+          }
+          onClick={() => setDockedComponentId(isOpen ? undefined : assistantComponentId)}
+          variant={isOpen ? 'active' : 'default'}
+          className={isOpen ? styles.chatButtonActive : undefined}
+          data-testid={`extension-toolbar-button-${isOpen ? 'close' : 'open'}`}
+          aria-expanded={isOpen}
+          aria-pressed={isOpen}
+          aria-label={
+            isOpen
+              ? t('navigation.extension-sidebar.assistant-close', 'Close Grafana Assistant')
+              : t('navigation.extension-sidebar.assistant-open', 'Open Grafana Assistant')
+          }
+          tooltip={
+            isOpen
+              ? t('navigation.extension-sidebar.assistant-close-tooltip', 'Close Chat')
+              : t('navigation.extension-sidebar.assistant-open-tooltip', 'Open Chat')
+          }
+        >
+          {t('navigation.extension-sidebar.assistant-label', 'Chat')}
+        </ToolbarButton>
+        <NavToolbarSeparator />
+        <ToolbarButton
+          icon={
+            <span className={styles.workspaceIcon}>
+              <Icon name="message-sparkles" size="lg" />
+            </span>
+          }
+          onClick={() => chrome.setFullscreenWorkspace(true)}
+          aria-label={t('navigation.fullscreen-workspace.workspace', 'Workspace')}
+          tooltip={t('navigation.fullscreen-workspace.enter', 'Enter Workspace')}
+        >
+          {t('navigation.fullscreen-workspace.workspace', 'Workspace')}
+        </ToolbarButton>
+        <NavToolbarSeparator className={styles.separator} />
+      </>
+    )
   );
-});
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  assistantPill: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.75),
-    height: theme.spacing(3.5),
-    padding: theme.spacing(0, 1.25),
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.weak}`,
-    background: 'rgba(155, 140, 255, 0.05)',
-    margin: theme.spacing(0, 1, 0, 2),
-    color: '#9b8cff',
-    fontSize: theme.typography.bodySmall.fontSize,
-    fontWeight: theme.typography.fontWeightMedium,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    '&:hover': {
-      background: 'rgba(155, 140, 255, 0.12)',
+  separator: css({
+    marginRight: theme.spacing(1),
+  }),
+  chatButtonActive: css({
+    '&:hover, &:focus': {
+      background: theme.colors.secondary.main,
+      border: `1px solid ${theme.colors.secondary.border}`,
     },
   }),
-  assistantPillActive: css({
-    borderColor: '#9b8cff',
-    background: 'rgba(155, 140, 255, 0.12)',
-    boxShadow: '0 0 0 1px rgba(155, 140, 255, 0.35)',
-  }),
-  fullscreenWorkspaceButton: css({
+  chatIcon: css({
     display: 'inline-flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.75),
-    height: theme.spacing(3.5),
-    marginRight: theme.spacing(2),
-    padding: theme.spacing(0, 1.25),
-    borderRadius: theme.shape.radius.default,
-    border: `1px solid ${theme.colors.border.weak}`,
-    background: 'transparent',
-    fontSize: theme.typography.bodySmall.fontSize,
-    fontWeight: theme.typography.fontWeightMedium,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
-    '&:hover': {
-      background: theme.colors.action.hover,
+    '& svg path': {
+      fill: `url(#${CHAT_ICON_GRADIENT_ID})`,
+      stroke: `url(#${CHAT_ICON_GRADIENT_ID})`,
     },
   }),
-  fullscreenWorkspaceIcon: css({
+  workspaceIcon: css({
     display: 'inline-flex',
-    color: '#ff8a2b',
-  }),
-  fullscreenWorkspaceText: css({
-    background: 'linear-gradient(90deg, #ff8a2b, #f2546b, #e07be0, #9b8cff)',
-    WebkitBackgroundClip: 'text',
-    backgroundClip: 'text',
-    color: 'transparent',
+    '& svg path:first-of-type': {
+      fill: 'none',
+      stroke: `url(#${WORKSPACE_ICON_GRADIENT_ID})`,
+    },
+    '& svg path:not(:first-of-type)': {
+      fill: getPurpleColor(theme),
+      stroke: 'none',
+    },
   }),
 });
