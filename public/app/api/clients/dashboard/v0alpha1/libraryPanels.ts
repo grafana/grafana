@@ -234,7 +234,7 @@ export function k8sResourceToLegacyDTO(
       created,
       updated,
       createdBy: enrichment?.createdBy ?? emptyUser,
-      updatedBy: enrichment?.updatedBy ?? enrichment?.createdBy ?? emptyUser,
+      updatedBy: enrichment?.updatedBy ?? emptyUser,
     },
   };
 }
@@ -331,6 +331,27 @@ async function fetchConnectedDashboardsCount(uid: string): Promise<number> {
   } catch {
     return 0;
   }
+}
+
+async function enrichLibraryPanel(item: LibraryPanelResource): Promise<LibraryPanel> {
+  const annotations = item.metadata.annotations ?? {};
+  const folderUid = annotations[AnnoKeyFolder] ?? '';
+  const createdByKey = annotations[AnnoKeyCreatedBy] ?? '';
+  const updatedByKey = annotations[AnnoKeyUpdatedBy] ?? createdByKey;
+
+  const [folderNames, users, connectedDashboards] = await Promise.all([
+    resolveFolderNames([folderUid]),
+    resolveUserDisplays([createdByKey, updatedByKey]),
+    fetchConnectedDashboardsCount(item.metadata.name),
+  ]);
+  const createdBy = users.get(createdByKey);
+
+  return k8sResourceToLegacyDTO(item, {
+    folderName: folderNames.get(folderUid),
+    connectedDashboards,
+    createdBy,
+    updatedBy: updatedByKey === createdByKey ? createdBy : users.get(updatedByKey),
+  });
 }
 
 async function listAll(signal?: AbortSignal): Promise<LibraryPanelResource[]> {
@@ -480,22 +501,7 @@ export const libraryPanelsK8sClient = {
         })
       )
     ).data;
-    const annotations = item.metadata.annotations ?? {};
-    const createdByKey = annotations[AnnoKeyCreatedBy] ?? '';
-    const updatedByKey = annotations[AnnoKeyUpdatedBy] ?? createdByKey;
-
-    const [folderNames, users, connectedDashboards] = await Promise.all([
-      resolveFolderNames([annotations[AnnoKeyFolder] ?? '']),
-      resolveUserDisplays([createdByKey, updatedByKey]),
-      fetchConnectedDashboardsCount(uid),
-    ]);
-
-    return k8sResourceToLegacyDTO(item, {
-      folderName: folderNames.get(annotations[AnnoKeyFolder] ?? ''),
-      connectedDashboards,
-      createdBy: users.get(createdByKey),
-      updatedBy: users.get(updatedByKey),
-    });
+    return enrichLibraryPanel(item);
   },
 
   async getByName(name: string): Promise<LibraryPanel[]> {
@@ -515,7 +521,7 @@ export const libraryPanelsK8sClient = {
       obj.metadata.annotations = { [AnnoKeyFolder]: folderUid };
     }
     const created = await resourceClient().create(obj);
-    return this.get(created.metadata.name);
+    return enrichLibraryPanel(created);
   },
 
   async update(uid: string, name: string, model: object, version: number, folderUid?: string): Promise<LibraryPanel> {
@@ -560,7 +566,7 @@ export const libraryPanelsK8sClient = {
       status,
     };
     const updated = await client.update(obj);
-    return this.get(updated.metadata.name);
+    return enrichLibraryPanel(updated);
   },
 
   async remove(uid: string): Promise<{ message: string }> {

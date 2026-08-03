@@ -169,11 +169,12 @@ describe('k8sResourceToLegacyDTO', () => {
 describe('libraryPanelsK8sClient request options', () => {
   const fetch = jest.fn();
   const get = jest.fn();
+  const post = jest.fn();
   const put = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    setBackendSrv({ fetch, get, put } as unknown as BackendSrv);
+    setBackendSrv({ fetch, get, post, put } as unknown as BackendSrv);
   });
 
   it('forwards the abort signal through pagination and folder resolution', async () => {
@@ -249,6 +250,55 @@ describe('libraryPanelsK8sClient request options', () => {
     );
   });
 
+  it('does not attribute an unresolved distinct update to the creator', async () => {
+    const resource = makeResource();
+    resource.metadata.annotations!['grafana.app/createdBy'] = 'user:creator';
+    resource.metadata.annotations!['grafana.app/updatedBy'] = 'user:updater';
+    fetch.mockImplementation(({ url }) => {
+      if (url.endsWith('/librarypanels/panel-uid')) {
+        return of({ data: resource });
+      }
+      if (url.endsWith('/folders/folder-uid')) {
+        return of({ data: { spec: { title: 'Folder' } } });
+      }
+      if (url.includes('iam.grafana.app/v0alpha1/display')) {
+        return of({
+          data: {
+            display: [
+              {
+                displayName: 'Creator',
+                identity: { type: 'user', name: 'creator' },
+              },
+            ],
+          },
+        });
+      }
+      if (url === '/api/library-elements/panel-uid/connections') {
+        return of({ data: { result: [] } });
+      }
+      throw new Error(`Unexpected URL: ${url}`);
+    });
+
+    const result = await libraryPanelsK8sClient.get('panel-uid');
+
+    expect(result.meta?.createdBy.name).toBe('Creator');
+    expect(result.meta?.updatedBy).toEqual({ avatarUrl: '', id: 0, name: '' });
+  });
+
+  it('returns a successful create when best-effort enrichment fails', async () => {
+    const resource = makeResource();
+    resource.metadata.annotations!['grafana.app/createdBy'] = 'user:creator';
+    post.mockResolvedValue(resource);
+    fetch.mockImplementation(() => {
+      throw new Error('enrichment unavailable');
+    });
+
+    const result = await libraryPanelsK8sClient.create('My library panel', resource.spec, 'folder-uid');
+
+    expect(result.uid).toBe('panel-uid');
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+
   it('does not match root panels by the synthetic General folder name', async () => {
     const resource = makeResource();
     resource.metadata.annotations!['grafana.app/folder'] = 'general';
@@ -315,6 +365,21 @@ describe('libraryPanelsK8sClient request options', () => {
       { params: undefined }
     );
     expect(put.mock.calls[0][1].metadata.annotations).not.toHaveProperty('grafana.app/folder');
+  });
+
+  it('returns a successful update when best-effort enrichment fails', async () => {
+    const resource = makeResource();
+    resource.metadata.annotations!['grafana.app/createdBy'] = 'user:creator';
+    get.mockResolvedValue(resource);
+    put.mockResolvedValue(resource);
+    fetch.mockImplementation(() => {
+      throw new Error('enrichment unavailable');
+    });
+
+    const result = await libraryPanelsK8sClient.update('panel-uid', 'Updated name', resource.spec, 3);
+
+    expect(result.uid).toBe('panel-uid');
+    expect(fetch).toHaveBeenCalledTimes(3);
   });
 
   it('rejects an update when the legacy version is stale', async () => {
