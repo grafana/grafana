@@ -163,6 +163,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/components/loki/logproto"
 	_ "github.com/grafana/grafana/pkg/components/loki/lokigrpc"
 	_ "github.com/grafana/grafana/pkg/components/loki/lokihttp"
+	_ "github.com/grafana/grafana/pkg/components/satokengen"
 	_ "github.com/grafana/grafana/pkg/components/simplejson"
 	_ "github.com/grafana/grafana/pkg/configprovider"
 	_ "github.com/grafana/grafana/pkg/events"

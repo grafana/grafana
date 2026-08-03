@@ -24,6 +24,8 @@ import (
 	_ "github.com/grafana/grafana/pkg/registry/apis/secret/testutils"
 	_ "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	_ "github.com/grafana/grafana/pkg/services/anonymous/anontest"
+	_ "github.com/grafana/grafana/pkg/services/apikey"
+	_ "github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	_ "github.com/grafana/grafana/pkg/services/authn/authntest"
 	_ "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	_ "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
