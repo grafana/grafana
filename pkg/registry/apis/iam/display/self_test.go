@@ -44,6 +44,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		UserUID:   "u1",
 		UserID:    1,
 		OrgID:     1,
+		OrgRole:   identity.RoleEditor,
 		Namespace: "default",
 	}
 
@@ -71,6 +72,8 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		require.Equal(t, http.StatusOK, rec.Code)
 		// The caller identifies itself purely from context, no query input.
 		require.Equal(t, []string{"user:u1"}, resolver.gotKeys)
+
+		want.Role = string(identity.RoleEditor)
 
 		var got iam.Display
 		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))

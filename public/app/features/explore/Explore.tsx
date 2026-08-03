@@ -701,6 +701,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                 showSignalExplorer={isPrometheusSelected}
                 queries={this.props.queries}
                 paneDatasource={datasourceInstance}
+                timeRange={this.props.range}
               />
             )}
             <ScrollContainer
@@ -862,6 +863,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     editSavedQueryRef,
     addingSavedQuery,
     queriesChangedIndexAtRun,
+    range,
   } = item;
 
   const loading = selectIsWaitingForData(exploreId)(state);
@@ -898,6 +900,9 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     editSavedQueryRef,
     addingSavedQuery,
     queriesChangedIndexAtRun,
+    // The pane's raw range, not `queryResponse.timeRange`: the latter is the absolute snapshot of
+    // the last run, so a relative range would mint a new metric-cache key on every query.
+    range,
   };
 }
 

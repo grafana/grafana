@@ -370,10 +370,6 @@
 /pkg/tsdb/cloudwatch/ @grafana/data-sources-plugins
 /pkg/tsdb/azuremonitor/ @grafana/data-sources-plugins
 
-# OSS Big Tent backend code
-/pkg/tsdb/mysql/ @grafana/data-sources-plugins
-/pkg/tsdb/sqlmacro/ @grafana/data-sources-plugins
-
 # Partner Datasources backend code
 /pkg/tsdb/influxdb/ @grafana/data-sources-plugins
 /pkg/tsdb/graphite/ @grafana/data-sources-plugins
@@ -677,6 +673,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/pluginMeta @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/chromeHeaderHeight.ts @grafana/grafana-frontend-navigation
 /packages/grafana-runtime/src/utils/DataSourceWithBackend* @grafana/grafana-datasources-core-services
+/packages/grafana-runtime/src/utils/expressionRef* @grafana/grafana-datasources-core-services
 /packages/grafana-runtime/src/utils/licensing.ts @grafana/grafana-operator-experience-squad
 /packages/grafana-runtime/src/utils/logging.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/utils/megaMenuOpen.ts @grafana/grafana-frontend-navigation
@@ -831,6 +828,10 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /.levignore.js @grafana/grafana-frontend-platform
 knip.config.ts @grafana/grafana-frontend-platform
 playwright.config.ts @grafana/grafana-catalog
+
+# Claude Code skills — owned by the squad that maintains each skill
+/.claude/skills/panel-testing-strategy/ @grafana/dataviz-squad
+/.claude/skills/add-e2e-selectors/ @grafana/grafana-frontend-platform
 playwright.storybook.config.ts @grafana/grafana-frontend-platform
 
 # public folder
@@ -902,7 +903,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useMediaQueryMinWidth.ts @grafana/grafana-frontend-platform
 /public/app/core/hooks/useNavModel.ts @grafana/grafana-frontend-navigation
 /public/app/core/hooks/useQueryParams.ts @grafana/grafana-frontend-platform
-/public/app/core/hooks/useStoredBoolean.ts @grafana/grafana-frontend-platform @grafana/grafana-frontend-navigation
+/public/app/core/hooks/useStored.ts @grafana/grafana-frontend-platform @grafana/grafana-frontend-navigation
 /public/app/core/icons/ @grafana/grafana-frontend-platform
 /public/app/core/lifecycle-hooks.ts @grafana/grafana-frontend-platform
 /public/app/core/monacoEnv.ts @grafana/grafana-frontend-platform @grafana/grafana-catalog
@@ -976,6 +977,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/roles.ts @grafana/identity-access-team
 /public/app/dev-utils.ts @grafana/grafana-frontend-platform
 
+/public/app/features/AGENTS.md @grafana/dataviz-squad
 /public/app/features/actions/ @grafana/dataviz-squad
 /public/app/features/admin/ @grafana/identity-access-team
 /public/app/features/auth-config/ @grafana/identity-squad
@@ -1165,7 +1167,6 @@ eslint-suppressions.json @grafanabot
 /public/app/plugins/datasource/graphite/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/influxdb/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/mixed/ @grafana/dashboards-squad
-/public/app/plugins/datasource/mysql/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/alertmanager/ @grafana/alerting-squad
 
 # Grafana Sharing Squad
@@ -1403,6 +1404,7 @@ embed.go @grafana/grafana-as-code
 /conf/ldap_multiple.toml @grafana/identity-squad
 /conf/provisioning/access-control/ @grafana/access-squad
 /conf/provisioning/alerting/ @grafana/alerting-squad
+/conf/provisioning/appmanifests/ @grafana/grafana-app-platform-squad
 /conf/provisioning/dashboards/ @grafana/dashboards-squad
 /conf/provisioning/datasources/ @grafana/grafana-catalog
 /conf/provisioning/plugins/ @grafana/grafana-catalog

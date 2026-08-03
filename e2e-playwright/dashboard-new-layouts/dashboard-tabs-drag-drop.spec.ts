@@ -13,7 +13,7 @@ test.use({
 });
 
 async function getTabWithBoundingBox(tabs: Tabs, tabTitle: string) {
-  const tab = tabs.getTab(tabTitle);
+  const tab = tabs.getTitle(tabTitle);
   const box = await tab.boundingBox();
   if (!box) {
     throw new Error(`Tab bounding box not found for title: ${tabTitle}`);

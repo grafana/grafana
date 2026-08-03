@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
@@ -115,6 +116,7 @@ const ContactPointsTab = () => {
               variant="primary"
               href="/alerting/notifications/receivers/new"
               disabled={!addContactPointAbility.granted}
+              data-testid={selectors.pages.Alerting.ContactPoints.addContactPointLink}
             >
               <Trans i18nKey="alerting.contact-points.create">New contact point</Trans>
             </LinkButton>

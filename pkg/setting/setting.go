@@ -693,7 +693,9 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage map[string]UnifiedStorageConfig
+	UnifiedStorage                      map[string]UnifiedStorageConfig
+	UnifiedStorageAuthzExemptionEnabled bool
+	UnifiedStorageAuthzExemptResources  []string
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
@@ -768,6 +770,10 @@ type Cfg struct {
 	SearchPostRankAuthzOverFetchFactor int
 	SearchPostRankAuthzMaxWindow       int
 	SearchPostRankAuthzMaxCandidates   int
+	// SearchPostRankAuthzFacetSampleSize bounds the candidate budget when
+	// aggregating facets on the post-filter path. Zero falls back to the
+	// default in search.PostRankAuthzConfig.effective().
+	SearchPostRankAuthzFacetSampleSize int
 
 	// Vector storage
 	EnableVectorBackend bool
@@ -885,6 +891,11 @@ type Cfg struct {
 
 	// Enable CAP token based authentication in grafana's embedded kube-aggregator
 	EnableKubernetesAggregatorCapTokenAuth bool
+
+	// EnableEmbeddedAPIExtensions runs the apiextensions apiserver and
+	// the AppManifest installer in-process inside single-tenant Grafana. Enterprise
+	// only; OSS keeps the no-op path. Default off.
+	EnableEmbeddedAPIExtensions bool
 
 	// Enable playlist reconciler
 	EnablePlaylistsReconciler bool
@@ -1945,6 +1956,7 @@ func (cfg *Cfg) readStartupParams(iniFile *ini.File) {
 
 	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
 	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
+	cfg.EnableEmbeddedAPIExtensions = iniFile.Section("grafana-apiserver").Key("apiextensions_enabled").MustBool(false)
 }
 func (cfg *Cfg) LogConfigSources() {
 	var text bytes.Buffer

@@ -75,6 +75,7 @@ export const SingleTopBar = memo(function SingleTopBar({
             <ToolbarButton
               narrow
               id={MEGA_MENU_TOGGLE_ID}
+              data-testid={Components.NavBar.Toggle.button}
               onClick={onToggleMegaMenu}
               tooltip={t('navigation.megamenu.open', 'Main menu')}
               aria-expanded={state.megaMenuOpen}

@@ -88,7 +88,8 @@ func NewConnectionController(
 		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
 			workqueue.DefaultTypedControllerRateLimiter[*connectionQueueItem](),
 			workqueue.TypedRateLimitingQueueConfig[*connectionQueueItem]{
-				Name: "provisioningConnectionController",
+				Name:            "provisioningConnectionController",
+				MetricsProvider: newWorkerQueueWaitProvider(registry, "connection"),
 			},
 		),
 		statusPatcher:     statusPatcher,
@@ -101,6 +102,18 @@ func NewConnectionController(
 	}
 
 	cc.processFn = cc.process
+
+	// Expose the local work-queue depth as a scrape-time gauge. The queue is
+	// per-replica, so Prometheus target labels (pod/instance) distinguish replicas;
+	// no metric label is needed. A GaugeFunc reads the authoritative Len() at scrape
+	// time, so it cannot drift the way manual inc/dec would.
+	registry.MustRegister(prometheus.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Name: "grafana_provisioning_connection_worker_queue_size",
+			Help: "Number of connection keys waiting in this replica's local work queue",
+		},
+		func() float64 { return float64(cc.queue.Len()) },
+	))
 
 	return cc
 }
@@ -296,11 +309,7 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 	tokenConn, isTokenConnection := c.(connection.TokenConnection)
 	var shouldRefreshToken bool
 	if isTokenConnection {
-		shouldRefreshToken, err = cc.shouldGenerateToken(ctx, conn, tokenConn)
-		if err != nil {
-			logger.Error("failed to check if token needs to be generated", "error", err)
-			return err
-		}
+		shouldRefreshToken = cc.shouldGenerateToken(ctx, conn, tokenConn)
 	}
 
 	// Determine the main triggering condition
@@ -346,8 +355,8 @@ func (cc *ConnectionController) process(ctx context.Context, item *connectionQue
 				"path":  "/status/token",
 				"value": provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()},
 			})
+			conn.Secure.Token = common.InlineSecureValue{Create: token}
 		}
-		conn.Secure.Token = common.InlineSecureValue{Create: common.NewSecretValue(token)}
 	}
 
 	// Handle health checks using the health checker
@@ -394,39 +403,34 @@ func (cc *ConnectionController) shouldGenerateToken(
 	ctx context.Context,
 	obj *provisioning.Connection,
 	c connection.TokenConnection,
-) (bool, error) {
+) bool {
 	if obj.Secure.Token.IsZero() {
 		cc.tokenMetrics.recordRefreshReason(refreshReasonMissing)
-		return true, nil
+		return true
 	}
 
-	if !c.TokenValid(ctx) {
+	expiresAt, err := c.ValidateToken()
+	if err != nil {
 		cc.tokenMetrics.recordRefreshReason(refreshReasonInvalid)
-		return true, nil
+		return true
 	}
 
-	issuingTime, err := c.TokenCreationTime(ctx)
-	if err != nil {
-		return false, err
+	if tokenRecentlyCreated(time.UnixMilli(obj.Status.Token.LastUpdated)) {
+		return false
 	}
 
-	if tokenRecentlyCreated(issuingTime) {
-		return false, nil
+	if expiresAt.IsZero() {
+		return false
 	}
 
-	expiration, err := c.TokenExpiration(ctx)
-	if err != nil {
-		return false, err
-	}
+	cc.tokenMetrics.recordTimeToExpiry(time.Until(expiresAt).Seconds())
 
-	cc.tokenMetrics.recordTimeToExpiry(time.Until(expiration).Seconds())
-
-	if shouldRefreshBeforeExpiration(expiration, cc.resyncInterval) {
+	if shouldRefreshBeforeExpiration(expiresAt, cc.resyncInterval) {
 		cc.tokenMetrics.recordRefreshReason(refreshReasonExpiring)
-		return true, nil
+		return true
 	}
 
-	return false, nil
+	return false
 }
 
 // generateConnectionToken regenerates the connection token if the connection supports it.
@@ -435,7 +439,7 @@ func (cc *ConnectionController) shouldGenerateToken(
 func (cc *ConnectionController) generateConnectionToken(
 	ctx context.Context,
 	conn connection.TokenConnection,
-) (string, []map[string]interface{}, error) {
+) (common.RawSecureValue, []map[string]interface{}, error) {
 	logger := logging.FromContext(ctx)
 
 	start := time.Now()
@@ -467,5 +471,5 @@ func (cc *ConnectionController) generateConnectionToken(
 		},
 	}
 
-	return string(token), patchOperations, nil
+	return token, patchOperations, nil
 }
