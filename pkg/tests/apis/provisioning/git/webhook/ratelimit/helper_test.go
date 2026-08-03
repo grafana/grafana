@@ -22,10 +22,6 @@ const trustedIPHeader = "X-Real-Ip"
 var env = common.NewSharedGitEnv(
 	common.WithProvisioningWebhookRateLimitRPS(webhookRateLimitRPS),
 	common.WithProvisioningWebhookTrustedIPHeader(trustedIPHeader),
-	// Match the sibling webhook env so the webhook connector is wired the same
-	// way (public root URL makes the endpoint "enabled"; github is registered
-	// alongside git).
-	common.WithProvisioningPublicRootURL("https://grafana.example.com"),
 	common.WithRepositoryTypes([]string{"git", "github", "local"}),
 )
 
