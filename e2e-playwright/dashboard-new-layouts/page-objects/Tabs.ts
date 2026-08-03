@@ -1,4 +1,4 @@
-import { type Locator } from '@playwright/test';
+import test, { type Locator } from '@playwright/test';
 
 import { PageObject } from './PageObject';
 
@@ -12,5 +12,10 @@ export class Tabs extends PageObject {
   getContent(tabTitle: string): Locator {
     // the layout container holding the tab's content
     return this.dashboardPage.getByGrafanaSelector(this.selectors.components.LayoutContainer(`tab ${tabTitle}`));
+  }
+  async select(tabTitle: string) {
+    await test.step(`Select tab "${tabTitle}"`, async () => {
+      await this.getTitle(tabTitle).click();
+    });
   }
 }

@@ -78,6 +78,11 @@
       "description-basic-logs": "Включение этой функции влечет за собой затраты на каждый запрос Azure Monitor на панелях дашбордов, связанный с таблицами для <2>базовых журналов</2>.",
       "label-enable-basic-logs": "Включить базовые журналы"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "Дополнительные параметры — это необязательные настройки, которые позволяют получить больший контроль над источником данных. К таким параметрам относятся Secure Socks Proxy, время ожидания запроса и пересылаемые файлы cookie.",
       "title-additional-settings": "Дополнительные параметры"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "Пространство имен метрик"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "Загрузка…"
     },
@@ -204,6 +216,10 @@
       "label-by": "ПО",
       "label-order-by": "Упорядочить по",
       "tooltip-order-by": "Сортируйте результаты по одному или нескольким столбцам в порядке возрастания или убывания"
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "Ошибка при запросе метаданных из Azure Monitor"

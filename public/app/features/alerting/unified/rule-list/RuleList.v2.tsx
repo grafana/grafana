@@ -150,7 +150,12 @@ export function RuleListActions() {
   return (
     <Stack direction="row" gap={1}>
       {canCreateRules && (
-        <LinkButton variant="primary" icon="plus" href="/alerting/new/alerting">
+        <LinkButton
+          variant="primary"
+          icon="plus"
+          href="/alerting/new/alerting"
+          data-testid={selectors.pages.Alerting.RuleList.newAlertRuleLink}
+        >
           <Trans i18nKey="alerting.rule-list.new-alert-rule">New alert rule</Trans>
         </LinkButton>
       )}

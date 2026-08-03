@@ -1756,7 +1756,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 			// serve the document as live or expose a provisioned one in trash. Remove
 			// it instead, which is how this index behaved before deleted documents were
 			// kept, until it is rebuilt.
-			if item.Doc.IsDeleted != nil && *item.Doc.IsDeleted && !b.mapsTrashMarkers() {
+			if item.Doc.IsDeleted != nil && *item.Doc.IsDeleted && !b.mapsTrashFields() {
 				batch.Delete(resource.SearchID(item.Doc.Key))
 				droppedMarkers++
 				continue
@@ -1801,11 +1801,16 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	return b.addSnapshotMutationCount(int64(len(req.Items)))
 }
 
-// mapsTrashMarkers reports whether this index can hold every marker a deleted
-// document relies on. An index built before those mappings existed cannot, and
-// bleve drops the values silently.
-func (b *bleveIndex) mapsTrashMarkers() bool {
-	return slices.Contains(b.features, resource.IndexFeatureDeletedMarker)
+// mapsTrashFields reports whether this index can hold everything a deleted
+// document relies on: the markers and the trash fields. An index built before
+// those mappings existed cannot, and bleve drops the values silently.
+func (b *bleveIndex) mapsTrashFields() bool {
+	for _, feature := range resource.TrashIndexFeatures() {
+		if !slices.Contains(b.features, feature) {
+			return false
+		}
+	}
+	return true
 }
 
 // isDeclaredField reports whether name is a declared search field for this
@@ -2322,6 +2327,10 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest") //nolint:staticcheck,ineffassign // SA4006: ctx intentionally kept so future code added to this function inherits the traced span
 	defer span.End()
 
+	if errResult := validateTrashRequest(req); errResult != nil {
+		return nil, errResult
+	}
+
 	facets := bleve.FacetsRequest{}
 	for name, facet := range req.Facet {
 		kf, ok := b.keywordFieldFor(facet.Field)
@@ -2533,6 +2542,55 @@ func combineFilterAndTextQueries(filters []query.Query, textQuery query.Query) q
 		bq.AddFilter(bleve.NewConjunctionQuery(filters...))
 	}
 	return bq
+}
+
+// validateTrashRequest enforces the rules that separate trash from live search: a
+// live search cannot name trash-only fields, and a trash search cannot federate.
+// Both live here so a read path cannot apply one rule without the other.
+func validateTrashRequest(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	if !req.IsDeleted {
+		return rejectTrashFieldsOnLiveSearch(req)
+	}
+	// Trash authorizes each hit against one index's group and resource, so hits
+	// federated in from another index would be checked against the wrong one.
+	// searchServer.Search refuses this before the indexes are resolved; this is the
+	// backstop for callers that reach an index directly.
+	if len(req.Federated) > 0 {
+		return resource.NewBadRequestError("searching deleted resources does not support federated queries")
+	}
+	return nil
+}
+
+// rejectTrashFieldsOnLiveSearch refuses a live search naming a field only deleted
+// documents carry, so a filter that would match nothing fails loudly instead.
+func rejectTrashFieldsOnLiveSearch(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	refused := func(key string) *resourcepb.ErrorResult {
+		return resource.NewBadRequestError(fmt.Sprintf("field %q is only available when searching deleted resources", key))
+	}
+	for _, f := range req.Fields {
+		if resource.IsTrashSearchField(f) {
+			return refused(f)
+		}
+	}
+	for _, sort := range req.SortBy {
+		if resource.IsTrashSearchField(sort.Field) {
+			return refused(sort.Field)
+		}
+	}
+	// Legacy clients name the fields a text query runs against here.
+	for _, f := range req.QueryFields {
+		if resource.IsTrashSearchField(f.Name) {
+			return refused(f.Name)
+		}
+	}
+	if req.Options != nil {
+		for _, f := range req.Options.Fields {
+			if resource.IsTrashSearchField(f.Key) {
+				return refused(f.Key)
+			}
+		}
+	}
+	return nil
 }
 
 // resolveFieldName maps a public field name to its physical index name. Clients
