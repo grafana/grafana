@@ -33,11 +33,11 @@ func buildVersionPolicyIniLayer(cfg *setting.Cfg) (map[string]versionpolicy.Vers
 	layer := map[string]versionpolicy.VersionPolicy{}
 	section := cfg.SectionWithEnvOverrides("grafana-apiserver")
 
-	if err := mergeGroupVersionListSetting(section.Key("preferred_api_version").String(), layer,
+	if err := mergeGroupVersionListSetting("preferred_api_version", section.Key("preferred_api_version").String(), layer,
 		func(p *versionpolicy.VersionPolicy, version string) { p.PreferredVersion = version }); err != nil {
 		return nil, err
 	}
-	if err := mergeGroupVersionListSetting(section.Key("max_allowed_api_version").String(), layer,
+	if err := mergeGroupVersionListSetting("max_allowed_api_version", section.Key("max_allowed_api_version").String(), layer,
 		func(p *versionpolicy.VersionPolicy, version string) { p.MaxAllowedVersion = version }); err != nil {
 		return nil, err
 	}
@@ -45,8 +45,9 @@ func buildVersionPolicyIniLayer(cfg *setting.Cfg) (map[string]versionpolicy.Vers
 }
 
 // mergeGroupVersionListSetting parses a comma-separated group/version list and folds each entry into
-// layer, using setVersion to write the parsed version onto that group's policy.
-func mergeGroupVersionListSetting(csvSetting string, layer map[string]versionpolicy.VersionPolicy, setVersion func(policy *versionpolicy.VersionPolicy, version string)) error {
+// layer, using setVersion to write the parsed version onto that group's policy. settingName names the
+// source config key so a bad entry points at the right setting.
+func mergeGroupVersionListSetting(settingName, csvSetting string, layer map[string]versionpolicy.VersionPolicy, setVersion func(policy *versionpolicy.VersionPolicy, version string)) error {
 	csvSetting = strings.TrimSpace(csvSetting)
 	if csvSetting == "" {
 		return nil
@@ -56,7 +57,7 @@ func mergeGroupVersionListSetting(csvSetting string, layer map[string]versionpol
 		if part == "" {
 			continue
 		}
-		gv, err := ParseGroupVersionSetting(part)
+		gv, err := ParseGroupVersionSetting(part, settingName)
 		if err != nil {
 			return err
 		}

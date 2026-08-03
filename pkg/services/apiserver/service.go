@@ -373,7 +373,7 @@ func (s *service) start(ctx context.Context) error {
 		if s.cfg.EnableVersionPolicy {
 			versionPolicyIni, err := buildVersionPolicyIniLayer(s.cfg)
 			if err != nil {
-				return fmt.Errorf("max_allowed_api_version/preferred_api_version: %w", err)
+				return err
 			}
 			s.vpRegistry = versionpolicy.NewVersionPolicyRegistry(
 				versionpolicy.NewResolver(naturalOrder),
