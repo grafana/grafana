@@ -7,6 +7,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
+import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
 import {
   setOnCallFeatures,
@@ -640,7 +641,7 @@ describe('GrafanaReceiverForm', () => {
       const savedIntegrations: Array<{ settings: Record<string, unknown> }> = [];
       server.use(
         http.put(
-          '/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers/:name',
+          '/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers/:name',
           async ({ request }) => {
             const body = await request.clone().json();
             savedIntegrations.push(...body.spec.integrations);
