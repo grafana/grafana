@@ -118,6 +118,12 @@ export const scenarios = [
   },
   {
     description: '',
+    id: TestDataQueryType.Exemplars,
+    name: 'Exemplars',
+    stringInput: '',
+  },
+  {
+    description: '',
     id: TestDataQueryType.StreamingClient,
     name: 'Streaming Client',
     stringInput: '',

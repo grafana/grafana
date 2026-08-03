@@ -28,7 +28,7 @@ test.describe(
       const controls = new Controls({ page, dashboardPage, selectors, components });
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
-      const variable: Variable = {
+      const variable: Variable & { label: string } = {
         type: 'adhoc',
         name: 'VariableUnderTest',
         value: 'label1',
@@ -39,15 +39,15 @@ test.describe(
       await sidebar.variableOptions.adhoc.selectDatasource('gdev-e2etestdatasource');
 
       // Assert the variable dropdown is visible with correct label
-      const variableLabel = controls.variables.getLabel(variable.label!);
+      const variableLabel = controls.variables.getLabel(variable.label);
       await expect(variableLabel).toBeVisible();
-      await expect(variableLabel).toContainText(variable.label!);
+      await expect(variableLabel).toContainText(variable.label);
 
       const labels = ['label1', 'label2'];
       const labelValues = ['label2Value1'];
 
       // build the filter, then close the dropdown
-      await controls.variables.addFilter(variable.label!, [labels[1], '=', labelValues[0]]);
+      await controls.variables.addFilter(variable.label, [labels[1], '=', labelValues[0]]);
       await page.locator('body').click();
 
       // assert the panel is visible and has the correct value

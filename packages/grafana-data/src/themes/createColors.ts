@@ -1,5 +1,5 @@
 import { merge } from 'lodash';
-import { z } from 'zod';
+import * as z from 'zod';
 
 import { alpha, darken, emphasize, getContrastRatio, lighten } from './colorManipulator';
 import { palette } from './palette';
