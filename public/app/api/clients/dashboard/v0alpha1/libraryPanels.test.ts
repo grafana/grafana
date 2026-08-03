@@ -1,9 +1,19 @@
+import { of } from 'rxjs';
+
+import { type BackendSrv, setBackendSrv } from '@grafana/runtime';
+
 import {
   k8sResourceToLegacyDTO,
   k8sResourceToLegacyModel,
   legacyModelToSpecAndStatus,
+  libraryPanelsK8sClient,
   type LibraryPanelResource,
 } from './libraryPanels';
+
+jest.mock('app/api/utils', () => ({
+  getAPIBaseURL: (group: string, version: string) => `/apis/${group}/${version}`,
+  getAPINamespace: () => 'default',
+}));
 
 function makeResource(overrides: Partial<LibraryPanelResource> = {}): LibraryPanelResource {
   return {
@@ -53,6 +63,8 @@ describe('legacyModelToSpecAndStatus', () => {
       options: { a: 1 },
       fieldConfig: { defaults: {} },
       gridPos: { x: 0, y: 0, w: 12, h: 8 },
+      links: [{ title: 'link' }],
+      transparent: true,
       id: 4,
       libraryPanel: { uid: 'x', name: 'name' },
       transformations: [{ id: 'reduce' }],
@@ -61,6 +73,23 @@ describe('legacyModelToSpecAndStatus', () => {
 
     expect(status.missing).toEqual({ transformations: [{ id: 'reduce' }], maxDataPoints: 100 });
     expect(spec.gridPos).toEqual({ x: 0, y: 0, w: 12, h: 8 });
+  });
+
+  it('does not retain typed values in status.missing after they are cleared', () => {
+    const { spec, status } = legacyModelToSpecAndStatus('name', {
+      type: 'timeseries',
+      title: 'title',
+      links: [{ title: 'link' }],
+      transparent: true,
+    });
+
+    spec.links = undefined;
+    spec.transparent = false;
+
+    expect(k8sResourceToLegacyModel(makeResource({ spec, status }))).not.toMatchObject({
+      links: expect.anything(),
+      transparent: expect.anything(),
+    });
   });
 });
 
@@ -123,5 +152,83 @@ describe('k8sResourceToLegacyDTO', () => {
     const dto = k8sResourceToLegacyDTO(resource);
 
     expect(dto.meta?.updated).toBe('2024-01-01T00:00:00Z');
+  });
+
+  it('uses the legacy root folder name for root-level panels', () => {
+    const resource = makeResource();
+    delete resource.metadata.annotations!['grafana.app/folder'];
+
+    const dto = k8sResourceToLegacyDTO(resource);
+
+    expect(dto.meta?.folderName).toBe('General');
+    expect(dto.meta?.folderUid).toBe('');
+  });
+});
+
+describe('libraryPanelsK8sClient request options', () => {
+  const fetch = jest.fn();
+  const get = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    setBackendSrv({ fetch, get } as unknown as BackendSrv);
+  });
+
+  it('forwards the abort signal through pagination and folder resolution', async () => {
+    const rootResource = makeResource();
+    delete rootResource.metadata.annotations!['grafana.app/folder'];
+    const folderResource = makeResource({
+      metadata: {
+        ...makeResource().metadata,
+        name: 'second-panel',
+      },
+    });
+    fetch.mockImplementation(({ url, params }) => {
+      if (url.endsWith('/librarypanels') && !params?.continue) {
+        return of({
+          data: { metadata: { resourceVersion: '1', continue: 'next' }, items: [rootResource] },
+        });
+      }
+      if (url.endsWith('/librarypanels')) {
+        return of({
+          data: { metadata: { resourceVersion: '1' }, items: [folderResource] },
+        });
+      }
+      if (url.endsWith('/folders/folder-uid')) {
+        return of({ data: { spec: { title: 'Folder' } } });
+      }
+      throw new Error(`Unexpected URL: ${url}`);
+    });
+    const controller = new AbortController();
+
+    const result = await libraryPanelsK8sClient.list({ signal: controller.signal });
+
+    expect(result.elements).toHaveLength(2);
+    expect(fetch).toHaveBeenCalledTimes(3);
+    expect(fetch.mock.calls.map(([options]) => options)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          url: expect.stringMatching(/\/librarypanels$/),
+          abortSignal: controller.signal,
+          showErrorAlert: false,
+        }),
+        expect.objectContaining({
+          url: expect.stringMatching(/\/folders\/folder-uid$/),
+          abortSignal: controller.signal,
+          showErrorAlert: false,
+        }),
+      ])
+    );
+  });
+
+  it('suppresses get alerts when the caller handles errors', async () => {
+    const resource = makeResource();
+    delete resource.metadata.annotations!['grafana.app/folder'];
+    fetch.mockReturnValue(of({ data: resource }));
+    get.mockResolvedValue({ result: [] });
+
+    await libraryPanelsK8sClient.get('panel-uid', true);
+
+    expect(fetch).toHaveBeenCalledWith(expect.objectContaining({ showSuccessAlert: false, showErrorAlert: false }));
   });
 });
