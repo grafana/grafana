@@ -64,11 +64,11 @@ const mockMeta = {
 };
 
 beforeEach(() => {
-  config.featureToggles.provisioning = true;
+  config.provisioningEnabled = true;
 });
 
 afterEach(() => {
-  config.featureToggles.provisioning = false;
+  config.provisioningEnabled = false;
 });
 
 describe('useDefaultValues', () => {

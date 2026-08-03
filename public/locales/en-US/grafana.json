@@ -3997,6 +3997,9 @@
       "trace-id": "Trace ID: {{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": "Add to Assistant"
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Auth settings"
@@ -6177,13 +6180,10 @@
         "show-in": "Show in"
       },
       "annotations": {
-        "add-annotation": "Add annotation",
         "add-annotation-query": "Add annotation query",
         "name-builtin": "{{annoName}} (Built-in)",
         "name-disabled": "(Disabled) {{annoName}}",
-        "reorder": "Drag to reorder",
         "reorder-description": "Reorder annotations list",
-        "select-annotation": "Select",
         "title-above-dashboard-count_one": "Above dashboard ({{count}})",
         "title-above-dashboard-count_other": "Above dashboard ({{count}})",
         "title-controls-menu-count_one": "Controls menu ({{count}})",
@@ -6269,14 +6269,11 @@
       "links": {
         "add-link": "Add link",
         "new-link": "New link",
-        "reorder": "Drag to reorder",
         "reorder-description": "Reorder links list",
-        "select-link": "Select",
         "title-above-dashboard_one": "Above dashboard ({{count}})",
         "title-above-dashboard_other": "Above dashboard ({{count}})",
         "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "untitled": "Untitled link"
+        "title-controls-menu_other": "Controls menu ({{count}})"
       },
       "outline": {
         "pane-header": "Content outline",
@@ -6372,11 +6369,9 @@
       "variables": {
         "add-variable": "Add variable",
         "change-type": "Change variable type",
-        "reorder": "Drag to reorder",
         "reorder-description": "Reorder variables list",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
-        "select-variable": "Select",
         "title-controls-menu_one": "Controls menu ({{count}})",
         "title-controls-menu_other": "Controls menu ({{count}})",
         "title-hidden_one": "Hidden ({{count}})",
@@ -6814,11 +6809,6 @@
       "delete-text": "Are you sure you want to delete: {{name}}?",
       "delete-title": "Delete annotation query"
     },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "Annotation"
-      }
-    },
     "annotation-query-library-dropdown": {
       "use-saved-query": "Use saved query"
     },
@@ -7241,11 +7231,6 @@
       "delete-text": "Are you sure you want to delete: {{name}}?",
       "delete-title": "Delete link",
       "unnamed": "Unnamed link"
-    },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "Link"
-      }
     },
     "link-options": {
       "icon": "Icon",
@@ -10946,6 +10931,83 @@
       "error-title": "Could not load recent blog posts",
       "read-more": "Read more from the Grafana Labs blog",
       "title": "Latest from the blog"
+    },
+    "overview": {
+      "get-started": {
+        "cards": {
+          "app-monitoring": {
+            "cta": "Start setup",
+            "description": "Visualize traces, metrics, and logs from services you build and run.",
+            "title": "Set up app monitoring"
+          },
+          "cloud-monitoring": {
+            "cta": "Start setup",
+            "description": "Monitor AWS, Azure, or GCP resources, costs, and service metrics.",
+            "title": "Observe cloud services"
+          },
+          "database-monitoring": {
+            "cta": "Start setup",
+            "description": "Query performance, connections, and storage for your data stores.",
+            "title": "Analyze database performance"
+          },
+          "demo-data": {
+            "cta": "Start setup",
+            "description": "Connect real data from our demo environment and explore pre-built dashboards.",
+            "title": "Demo data dashboards"
+          },
+          "hosted-data": {
+            "cta": "Start setup",
+            "description": "Store, query, and visualize your telemetry with our fully managed backend.",
+            "title": "Hosted telemetry data"
+          },
+          "infra-monitoring": {
+            "cta": "Start setup",
+            "description": "Monitor infra running on Linux, Kubernetes, cloud platforms, and more.",
+            "title": "Monitor infrastructure"
+          },
+          "kubernetes": {
+            "cta": "Start setup",
+            "description": "Get full visibility into the health and performance of your clusters.",
+            "title": "Kubernetes"
+          },
+          "logs": {
+            "cta": "Start setup",
+            "description": "Aggregate, search, and analyze logs across all your applications and services.",
+            "title": "Logs"
+          },
+          "opentelemetry": {
+            "cta": "Start setup",
+            "description": "Instrument your app or infrastructure for observability across your stack.",
+            "title": "OpenTelemetry"
+          },
+          "prometheus": {
+            "cta": "Start setup",
+            "description": "Connect Prometheus to monitor and visualize metrics in Grafana Cloud.",
+            "title": "Prometheus metrics"
+          },
+          "visualize-data": {
+            "cta": "Start setup",
+            "description": "Connect your existing data to Grafana and build dashboards to visualize it.",
+            "title": "Visualize existing data"
+          },
+          "website-monitoring": {
+            "cta": "Start setup",
+            "description": "Test user experience under load and track availability over time.",
+            "title": "Monitor website uptime and performance"
+          }
+        },
+        "show-less": "Show fewer guides",
+        "show-more": "More getting started guides",
+        "title": "Recommended getting started guides"
+      },
+      "options": {
+        "all": "All solutions",
+        "attention": "Needs attention",
+        "available": "Available solutions",
+        "enabled": "Enabled solutions",
+        "get-started": "Get started"
+      },
+      "title": "Your observability stack overview"
     },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",
@@ -15875,17 +15937,28 @@
     },
     "editor": {
       "aria-label-content": "Text content",
+      "aria-label-mode": "Text mode: {{mode}}",
+      "format-bold": "B",
+      "format-heading": "H",
+      "format-italic": "I",
+      "language-plaintext": "Plain text",
+      "mode-code": "Code",
+      "mode-html": "HTML",
+      "mode-markdown": "Markdown",
+      "mode-picker-label": "Mode",
+      "tooltip-bold": "Bold",
+      "tooltip-bullet-list": "Bullet list",
+      "tooltip-checklist": "Checklist",
+      "tooltip-heading": "Heading",
+      "tooltip-insert-variable": "Insert variable",
+      "tooltip-italic": "Italic",
+      "tooltip-link": "Link",
+      "tooltip-numbered-list": "Numbered list",
+      "tooltip-table": "Table",
       "view-preview": "Preview",
       "view-split": "Split",
       "view-write": "Write"
     },
-    "mode-options": {
-      "label-code": "Code",
-      "label-html": "HTML",
-      "label-markdown": "Markdown"
-    },
-    "name-language": "Language",
-    "name-mode": "Mode",
     "name-show-line-numbers": "Show line numbers"
   },
   "theme-playground": {
