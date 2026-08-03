@@ -1,7 +1,9 @@
 import { test } from '@playwright/test';
 
-import { PageObject } from '../PageObject';
+import { PageObject } from '../../PageObject';
 
+// The conditional rendering ("Show / hide rules") options in the sidebar pane —
+// visibility toggle, match all/any, and the rule builder (variable, time range)
 export class ConditionalRenderingOptions extends PageObject {
   async selectVisibility(visibility: 'show' | 'hide') {
     await test.step(`Select conditional rendering visibility: "${visibility}"`, async () => {
