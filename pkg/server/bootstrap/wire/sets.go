@@ -225,6 +225,7 @@ var Basic = wire.NewSet(
 	provisioning.ProvideStubProvisioningService,
 	dashboardlegacy.ProvideMigrator,
 	dashboardmigrator.ProvideFoldersDashboardsMigrator,
+	dashboardmigrator.ProvideLibraryPanelsMigrator,
 	playlistmigrator.ProvidePlaylistMigrator,
 	querycachingmigrator.ProvideQueryCacheConfigMigrator,
 	shorturlmigrator.ProvideShortURLMigrator,
