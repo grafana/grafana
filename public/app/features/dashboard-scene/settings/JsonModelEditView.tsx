@@ -83,6 +83,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
         spec: jsonModel as DashboardV2Spec,
         metadata: {
           ...oldDto?.metadata,
+          name: result.uid,
           generation: result.version,
         },
         access: {
