@@ -260,6 +260,8 @@ jobs:
       uses: ./.github/actions/setup-node
     - name: Install yarn dependencies
       uses: ./.github/actions/yarn-install
+    - name: Check dependencies are unpinned
+      run: yarn run packages:check-unpinned
     - name: Build and pack packages
       run: |
         yarn run packages:build
