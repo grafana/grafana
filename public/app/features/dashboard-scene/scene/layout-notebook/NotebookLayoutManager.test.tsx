@@ -64,4 +64,43 @@ describe('NotebookLayoutManager', () => {
 
     expect(result.kind).toBe('NotebookLayout');
   });
+
+  describe('getNonPanelElements', () => {
+    // getVizPanels() cannot report narrative cells, so without this the v2 serializer builds
+    // `elements` from viz panels alone and every markdown/code cell disappears while the layout
+    // keeps referencing it by name.
+    it('reports markdown and code cells keyed by element name', () => {
+      const manager = new NotebookLayoutManager({
+        cells: [
+          new NotebookCellItem({
+            elementName: 'intro',
+            source: 'assistant',
+            content: { kind: 'Markdown', spec: { text: '## Findings' } },
+          }),
+          new NotebookCellItem({
+            elementName: 'repro',
+            source: 'user',
+            content: { kind: 'Code', spec: { language: 'promql', code: 'up' } },
+          }),
+        ],
+      });
+
+      expect(manager.getNonPanelElements()).toEqual({
+        intro: { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text: '## Findings' } } } },
+        repro: { kind: 'Cell', spec: { content: { kind: 'Code', spec: { language: 'promql', code: 'up' } } } },
+      });
+    });
+
+    it('skips panel cells, which the serializer already gets from getVizPanels', () => {
+      const manager = new NotebookLayoutManager({
+        cells: [new NotebookCellItem({ elementName: 'panel-1', source: 'assistant' })],
+      });
+
+      expect(manager.getNonPanelElements()).toEqual({});
+    });
+
+    it('returns an empty map for an empty notebook', () => {
+      expect(new NotebookLayoutManager({ cells: [] }).getNonPanelElements()).toEqual({});
+    });
+  });
 });

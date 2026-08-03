@@ -213,19 +213,28 @@ function getElements(scene: DashboardScene, dsReferencesMapping?: DSReferencesMa
     panels.push(...getRepeatedSectionPanelsForSnapshot(scene));
   }
 
-  return panels.reduce<Record<string, Element>>((elements, vizPanel) => {
-    const element = vizPanelToSchemaV2(vizPanel, dsReferencesMapping, isSnapshot);
+  // A sibling layout can own elements that are not viz panels — the notebook's markdown and
+  // code cells. They cannot come from `panels`, so the layout contributes them directly;
+  // without this they vanish here while `layout` keeps referencing them by name. Dashboard
+  // layouts do not implement the hook, so this is an empty spread for all of them.
+  const nonPanelElements: Record<string, Element> = scene.state.body.getNonPanelElements?.() ?? {};
 
-    // Snapshot layout expands repeaters into explicit panels and references clones by a disambiguated key
-    // (panel clones by their own `key`, panels inside a repeated row clone additionally prefixed with the
-    // enclosing clone's key). Non-clone panels keep their stable element identifier.
-    const elementKey = isSnapshot
-      ? dashboardSceneGraph.getSnapshotElementIdentifierForVizPanel(vizPanel)
-      : dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
+  return panels.reduce<Record<string, Element>>(
+    (elements, vizPanel) => {
+      const element = vizPanelToSchemaV2(vizPanel, dsReferencesMapping, isSnapshot);
 
-    elements[elementKey] = element;
-    return elements;
-  }, {});
+      // Snapshot layout expands repeaters into explicit panels and references clones by a disambiguated key
+      // (panel clones by their own `key`, panels inside a repeated row clone additionally prefixed with the
+      // enclosing clone's key). Non-clone panels keep their stable element identifier.
+      const elementKey = isSnapshot
+        ? dashboardSceneGraph.getSnapshotElementIdentifierForVizPanel(vizPanel)
+        : dashboardSceneGraph.getElementIdentifierForVizPanel(vizPanel);
+
+      elements[elementKey] = element;
+      return elements;
+    },
+    { ...nonPanelElements }
+  );
 }
 
 // A repeated row/tab clone: duck-typed (rather than importing RowItem/TabItem, which would create a circular

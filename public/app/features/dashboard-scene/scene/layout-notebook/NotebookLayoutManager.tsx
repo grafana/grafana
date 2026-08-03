@@ -10,7 +10,11 @@ import {
   type SceneObjectState,
   type VizPanel,
 } from '@grafana/scenes';
-import { type NotebookLayoutItemKind, type NotebookLayoutKind } from '@grafana/schema/apis/notebook/v2beta1';
+import {
+  type CellKind,
+  type NotebookLayoutItemKind,
+  type NotebookLayoutKind,
+} from '@grafana/schema/apis/notebook/v2beta1';
 import { useStyles2 } from '@grafana/ui';
 
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
@@ -33,7 +37,7 @@ interface NotebookLayoutManagerState extends SceneObjectState {
 
 export class NotebookLayoutManager
   extends SceneObjectBase<NotebookLayoutManagerState>
-  implements DashboardLayoutManager<{}, NotebookLayoutKind>
+  implements DashboardLayoutManager<{}, NotebookLayoutKind, CellKind>
 {
   public static Component = NotebookLayoutManagerRenderer;
   public readonly isDashboardLayoutManager = true;
@@ -74,6 +78,19 @@ export class NotebookLayoutManager
   // intentionally invisible to the rest of the scene (query runner, edit tooling).
   public getVizPanels(): VizPanel[] {
     return this.state.cells.map((cell) => cell.state.body).filter((body): body is VizPanel => body !== undefined);
+  }
+
+  // Narrative cells are exactly the elements getVizPanels() cannot report. Without this the
+  // serializer builds `elements` from viz panels alone and every markdown/code cell disappears
+  // while `layout.spec.cells` still references it — a spec with dangling ElementReferences.
+  public getNonPanelElements(): Record<string, CellKind> {
+    const elements: Record<string, CellKind> = {};
+    for (const cell of this.state.cells) {
+      if (cell.state.content) {
+        elements[cell.state.elementName] = { kind: 'Cell', spec: { content: cell.state.content } };
+      }
+    }
+    return elements;
   }
 
   // Editing (add/reorder/remove) is out of scope for the POC; these satisfy the

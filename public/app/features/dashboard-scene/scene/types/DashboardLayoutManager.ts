@@ -1,5 +1,8 @@
 import { type SceneObject, type VizPanel } from '@grafana/scenes';
-import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  type Element as DashboardElement,
+  type Spec as DashboardV2Spec,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
@@ -11,17 +14,18 @@ import { type LayoutRegistryItem } from './LayoutRegistryItem';
  * different kinds are held together: the notebook layout serializes a kind outside the dashboard
  * layout union, so it does not fit the plain DashboardLayoutManager.
  *
- * serialize() is not type-checked through this alias. Narrow to the concrete manager first
- * (e.g. `body instanceof NotebookLayoutManager`) if you need a specific kind.
+ * serialize() and getNonPanelElements() are not type-checked through this alias. Narrow to the
+ * concrete manager first (e.g. `body instanceof NotebookLayoutManager`) if you need a specific kind.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- erases only the serialize() kind so sibling layout managers fit
-export type AnyDashboardLayoutManager = DashboardLayoutManager<{}, any>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- erases only the serialize()/element kinds so sibling layout managers fit
+export type AnyDashboardLayoutManager = DashboardLayoutManager<{}, any, any>;
 
 /**
  * A scene object that usually wraps an underlying layout
  * Dealing with all the state management and editing of the layout
  */
-export interface DashboardLayoutManager<S = {}, TLayout = DashboardV2Spec['layout']> extends SceneObject {
+export interface DashboardLayoutManager<S = {}, TLayout = DashboardV2Spec['layout'], TElement = DashboardElement>
+  extends SceneObject {
   /** Marks it as a DashboardLayoutManager */
   isDashboardLayoutManager: true;
 
@@ -57,6 +61,19 @@ export interface DashboardLayoutManager<S = {}, TLayout = DashboardV2Spec['layou
    * Gets all the viz panels in the layout
    */
   getVizPanels(): VizPanel[];
+
+  /**
+   * Elements this layout references that are NOT viz panels, keyed by element name.
+   *
+   * The v2 serializer derives the spec's `elements` map from {@link getVizPanels}, which is
+   * complete for every dashboard layout. A sibling layout whose elements include non-panel
+   * kinds — the notebook's markdown/code cells — must contribute them here, or they are
+   * dropped on serialize while the layout keeps referencing them by name.
+   *
+   * TElement defaults to the dashboard element union; a sibling layout narrows it to its own
+   * element kind (the notebook to `CellKind`) the same way it narrows TLayout.
+   */
+  getNonPanelElements?(): Record<string, TElement>;
 
   /**
    * Notify the layout manager that the edit mode has changed
