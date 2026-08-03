@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
@@ -45,7 +46,7 @@ func TestFolderUIDFromLegacyID(t *testing.T) {
 		uid, ok := handler.folderUIDFromLegacyID(reqContext, 0)
 
 		require.True(t, ok)
-		require.Empty(t, uid)
+		require.Equal(t, accesscontrol.GeneralFolderUID, uid)
 	})
 
 	t.Run("folder", func(t *testing.T) {
@@ -60,6 +61,21 @@ func TestFolderUIDFromLegacyID(t *testing.T) {
 		require.True(t, ok)
 		require.Equal(t, "folder-uid", uid)
 	})
+}
+
+func TestResolveFolderTitlesUsesLegacyRootName(t *testing.T) {
+	handler := &libraryElementsK8sHandler{}
+	items := []unstructured.Unstructured{{Object: map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"annotations": map[string]interface{}{
+				"grafana.app/folder": accesscontrol.GeneralFolderUID,
+			},
+		},
+	}}}
+
+	titles := handler.resolveFolderTitles(&contextmodel.ReqContext{}, items)
+
+	require.Equal(t, dashboards.RootFolderName, titles[accesscontrol.GeneralFolderUID])
 }
 
 func TestFilterLibraryPanelsByPermission(t *testing.T) {
