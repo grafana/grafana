@@ -1048,7 +1048,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		// Standalone mode has no legacy SQL, so library panels are served from
 		// unified storage directly (no dual writer).
 		if libraryPanels != nil {
-			storage[libraryPanels.StoragePath()], err = grafanaregistry.NewRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
+			// status.missing preserves legacy model fields that have no typed spec field.
+			storage[libraryPanels.StoragePath()], err = grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
 			if err != nil {
 				return err
 			}
@@ -1086,7 +1087,8 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			service:      b.libraryPanels,
 		}
 
-		unifiedLibraryStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
+		// status.missing preserves legacy model fields that have no typed spec field.
+		unifiedLibraryStore, err := grafanaregistry.NewCompleteRegistryStore(opts.Scheme, *libraryPanels, opts.OptsGetter)
 		if err != nil {
 			return err
 		}

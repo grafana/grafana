@@ -690,8 +690,15 @@ func (lk8s *libraryElementsK8sHandler) createK8sLibraryElement(c *contextmodel.R
 		uid = util.GenerateShortUID()
 	}
 	folderUID := ""
-	if cmd.FolderUID != nil {
+	switch {
+	case cmd.FolderUID != nil:
 		folderUID = *cmd.FolderUID
+	case cmd.FolderID != 0: // nolint:staticcheck
+		var ok bool
+		folderUID, ok = lk8s.folderUIDFromLegacyID(c, cmd.FolderID) // nolint:staticcheck
+		if !ok {
+			return
+		}
 	}
 	obj, err := legacyLibraryPanelToUnstructured(uid, cmd.Name, folderUID, 0, cmd.Model)
 	if err != nil {
@@ -758,8 +765,15 @@ func (lk8s *libraryElementsK8sHandler) patchK8sLibraryElement(c *contextmodel.Re
 		}
 	}
 	folderUID := existing.GetAnnotations()[utils.AnnoKeyFolder]
-	if cmd.FolderUID != nil {
+	switch {
+	case cmd.FolderUID != nil:
 		folderUID = *cmd.FolderUID
+	case cmd.FolderID >= 0: // nolint:staticcheck
+		var ok bool
+		folderUID, ok = lk8s.folderUIDFromLegacyID(c, cmd.FolderID) // nolint:staticcheck
+		if !ok {
+			return
+		}
 	}
 
 	// cmd.Version travels via metadata.generation and carries the legacy
@@ -1161,8 +1175,9 @@ func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *co
 		Model:       finalModel,
 		Version:     item.GetGeneration(),
 		Meta: model.LibraryElementDTOMeta{
-			FolderUID: folderUID,
-			Created:   meta.GetCreationTimestamp().Time,
+			FolderUID:  folderUID,
+			FolderName: dashboards.RootFolderName,
+			Created:    meta.GetCreationTimestamp().Time,
 		},
 	}
 
@@ -1239,6 +1254,25 @@ func (lk8s *libraryElementsK8sHandler) getClient(c *contextmodel.ReqContext) (dy
 	return dyn.Resource(lk8s.gvr).Namespace(lk8s.namespacer(c.OrgID)), true
 }
 
+func (lk8s *libraryElementsK8sHandler) folderUIDFromLegacyID(c *contextmodel.ReqContext, folderID int64) (string, bool) {
+	if folderID == 0 {
+		return "", true
+	}
+	folder, err := lk8s.folderService.Get(c.Req.Context(), &foldermodel.GetFolderQuery{
+		OrgID:        c.OrgID,
+		ID:           &folderID, // nolint:staticcheck
+		SignedInUser: c.SignedInUser,
+	})
+	if err != nil || folder == nil {
+		if err == nil {
+			err = foldermodel.ErrFolderNotFound
+		}
+		c.JsonApiErr(http.StatusBadRequest, "failed to get folder", err)
+		return "", false
+	}
+	return folder.UID, true
+}
+
 func (lk8s *libraryElementsK8sHandler) writeError(c *contextmodel.ReqContext, err error) {
 	//nolint:errorlint
 	statusError, ok := err.(*k8serrors.StatusError)
@@ -1247,6 +1281,8 @@ func (lk8s *libraryElementsK8sHandler) writeError(c *contextmodel.ReqContext, er
 		message := statusError.Status().Message
 		// keep the legacy /api contract for errors the k8s apiserver expresses differently
 		switch {
+		case k8serrors.IsNotFound(err):
+			message = model.ErrLibraryElementNotFound.Error()
 		case k8serrors.IsAlreadyExists(err):
 			code = http.StatusBadRequest
 			message = model.ErrLibraryElementAlreadyExists.Error()

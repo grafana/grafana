@@ -9,13 +9,16 @@ import (
 
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -239,6 +242,31 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	})
 	ctx := createTestContext(t, helper, helper.Org1)
 
+	legacyFolderResponse := apis.DoRequest(helper, apis.RequestParams{
+		User:        ctx.AdminUser,
+		Method:      http.MethodPost,
+		Path:        "/api/folders",
+		Body:        []byte(`{"title":"Legacy folder ID","uid":"legacy-folder-id"}`),
+		ContentType: "application/json",
+	}, &folder.Folder{})
+	require.Equal(t, http.StatusOK, legacyFolderResponse.Response.StatusCode)
+	legacyFolder := legacyFolderResponse.Result
+	require.NotNil(t, legacyFolder)
+	require.NotZero(t, legacyFolder.ID)
+	createdByFolderID, err := postHelper(t, &ctx, "/api/library-elements", map[string]interface{}{
+		"kind":     1,
+		"name":     "FolderIDPanel",
+		"folderId": legacyFolder.ID, // nolint:staticcheck
+		"model": map[string]interface{}{
+			"type":  "text",
+			"title": "Folder ID panel",
+		},
+	}, ctx.AdminUser)
+	require.NoError(t, err)
+	createdByFolderIDResult := createdByFolderID["result"].(map[string]interface{})
+	require.Equal(t, legacyFolder.UID, createdByFolderIDResult["folderUid"])
+	require.NoError(t, deleteLibraryElement(t, ctx, ctx.AdminUser, createdByFolderIDResult["uid"].(string)))
+
 	// create: the display title and properties without a typed spec field (e.g.
 	// transformations) must survive the conversion round trip
 	created, err := postHelper(t, &ctx, "/api/library-elements", map[string]interface{}{
@@ -257,6 +285,7 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	require.NotEmpty(t, uid)
 	require.Equal(t, "CRUDPanel", result["name"])
 	require.Equal(t, float64(1), result["version"])
+	require.Equal(t, "General", result["meta"].(map[string]interface{})["folderName"])
 	createdModel := result["model"].(map[string]interface{})
 	require.Equal(t, "CRUD panel display title", createdModel["title"])
 	require.Contains(t, createdModel, "transformations")
@@ -331,6 +360,60 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 		Path:   fmt.Sprintf("/api/library-elements/%s", uid),
 	}, &struct{}{})
 	require.Equal(t, http.StatusNotFound, getResp.Response.StatusCode)
+	var notFoundBody map[string]interface{}
+	require.NoError(t, json.Unmarshal(getResp.Body, &notFoundBody))
+	require.Equal(t, "library element could not be found", notFoundBody["message"])
+}
+
+func TestIntegrationLibraryPanelPreservesStatusMissingInUnifiedStorage(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"librarypanels.dashboard.grafana.app": {DualWriterMode: grafanarest.Mode5},
+		},
+	})
+	ctx := createTestContext(t, helper, helper.Org1)
+	client := getResourceClient(t, ctx.Helper, ctx.AdminUser, getLibraryElementGVR())
+
+	panel := &unstructured.Unstructured{Object: map[string]interface{}{
+		"apiVersion": dashboardV0.APIGroup + "/" + dashboardV0.VERSION,
+		"kind":       "LibraryPanel",
+		"metadata": map[string]interface{}{
+			"name": "status-missing-panel",
+		},
+		"spec": map[string]interface{}{
+			"type":        "text",
+			"title":       "Status missing panel",
+			"panelTitle":  "Panel title",
+			"options":     map[string]interface{}{},
+			"fieldConfig": map[string]interface{}{},
+		},
+		"status": map[string]interface{}{
+			"missing": map[string]interface{}{
+				"transformations": []interface{}{map[string]interface{}{"id": "reduce"}},
+			},
+		},
+	}}
+
+	created, err := client.Resource.Create(context.Background(), panel, v1.CreateOptions{})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = client.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
+	})
+	missing, found, err := unstructured.NestedMap(created.Object, "status", "missing")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Contains(t, missing, "transformations")
+
+	require.NoError(t, unstructured.SetNestedField(created.Object, int64(100), "status", "missing", "maxDataPoints"))
+	updated, err := client.Resource.Update(context.Background(), created, v1.UpdateOptions{})
+	require.NoError(t, err)
+	missing, found, err = unstructured.NestedMap(updated.Object, "status", "missing")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, int64(100), missing["maxDataPoints"])
 }
 
 func getLibraryElementGVR() schema.GroupVersionResource {

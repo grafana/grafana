@@ -112,6 +112,8 @@ func TestLegacyModelToLibraryPanel(t *testing.T) {
 		"options": {"hello": "options"},
 		"fieldConfig": {"hello": "fieldConfig"},
 		"gridPos": {"w": 1, "h": 2, "x": 3, "y": 4},
+		"links": [{"title": "link"}],
+		"transparent": true,
 		"transformations": [{"id": "reduce", "options": {}}],
 		"maxDataPoints": 100,
 		"libraryPanel": {"uid": "uid", "name": "my library panel"},
@@ -134,8 +136,32 @@ func TestLegacyModelToLibraryPanel(t *testing.T) {
 	require.Contains(t, status.Missing.Object, "maxDataPoints")
 	require.NotContains(t, status.Missing.Object, "type")
 	require.NotContains(t, status.Missing.Object, "title")
+	require.NotContains(t, status.Missing.Object, "links")
+	require.NotContains(t, status.Missing.Object, "transparent")
 	require.NotContains(t, status.Missing.Object, "libraryPanel")
 	require.NotContains(t, status.Missing.Object, "id")
+}
+
+func TestLibraryPanelModelClearsTypedValues(t *testing.T) {
+	legacyModel := json.RawMessage(`{
+		"type": "timeseries",
+		"title": "panel title",
+		"links": [{"title": "link"}],
+		"transparent": true
+	}`)
+
+	spec, status, err := LegacyModelToLibraryPanel("my library panel", legacyModel)
+	require.NoError(t, err)
+	spec.Links = nil
+	spec.Transparent = false
+
+	rebuilt, err := LibraryPanelToLegacyModel(&v0alpha1.LibraryPanel{Spec: spec, Status: status})
+	require.NoError(t, err)
+
+	var got map[string]any
+	require.NoError(t, json.Unmarshal(rebuilt, &got))
+	require.NotContains(t, got, "links")
+	require.NotContains(t, got, "transparent")
 }
 
 func TestLibraryPanelModelRoundTrip(t *testing.T) {
