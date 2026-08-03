@@ -1003,10 +1003,8 @@ describe('TableNG utils', () => {
     it('calculates height based on theme when cellHeight is undefined', () => {
       const result = getDefaultRowHeight(theme, []);
 
-      // Calculate the expected result based on the theme values
-      const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
-
-      expect(result).toBe(expected);
+      // default theme: CELL_PADDING*2 (12) + fontSize 14 * body.lineHeight ≈ 34
+      expect(result).toBe(34);
     });
   });
 

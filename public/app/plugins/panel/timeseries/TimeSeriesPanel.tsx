@@ -11,13 +11,14 @@ import {
   type TimeRange,
   useDataLinksContext,
 } from '@grafana/data';
-import { config, PanelDataErrorView } from '@grafana/runtime';
+import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import {
   EventBusPlugin,
   KeyboardPlugin,
   TooltipPlugin2,
   usePanelContext,
+  useTheme2,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
 import { type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
@@ -77,6 +78,7 @@ export const TimeSeriesPanel = ({
     getFiltersBasedOnGrouping,
     onAddAdHocFilters,
   } = usePanelContext();
+  const theme = useTheme2();
 
   const { dataLinkPostProcessor } = useDataLinksContext();
 
@@ -86,7 +88,7 @@ export const TimeSeriesPanel = ({
   const isVerticallyOriented = options.orientation === VizOrientation.Vertical;
   const stableTimeRange = useStableTimeRange(timeRange);
   const { frames, compareDiffMs } = useMemo(() => {
-    let frames = prepareGraphableFields(data.series, config.theme2, stableTimeRange);
+    let frames = prepareGraphableFields(data.series, theme, timeRange);
     if (frames != null) {
       let compareDiffMs: number[] = [0];
       // Held separately from `frames` below: TS won't retain the null-check narrowing of `frames`
@@ -108,7 +110,7 @@ export const TimeSeriesPanel = ({
           const needsAlignment = shouldAlignTimeCompare(frame, originalFrames, stableTimeRange);
 
           if (needsAlignment) {
-            return alignTimeRangeCompareData(frame, diffMs, config.theme2);
+            return alignTimeRangeCompareData(frame, diffMs, theme);
           }
         }
 
@@ -119,7 +121,7 @@ export const TimeSeriesPanel = ({
     }
 
     return { frames };
-  }, [data.series, stableTimeRange]);
+  }, [data.series, timeRange, theme]);
 
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
   const suggestions = useMemo(() => {

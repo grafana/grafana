@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getLocalStorageProvider, getOFREPWebProvider } from '@grafana/runtime/internal';
+import { FlagKeys, getLocalStorageProvider, getOFREPWebProvider } from '@grafana/runtime/internal';
 import {
   Badge,
   type BadgeColor,
@@ -85,7 +85,7 @@ const FeatureControlKey = ({ value, onChange }: { value: string; onChange: (valu
   useEffect(() => {
     const loadKeys = () => {
       setKeys(
-        Object.keys(getOFREPWebProvider().flagCache)
+        [...new Set(Object.keys(getOFREPWebProvider().flagCache).concat(Object.values(FlagKeys)))]
           .sort((a, b) => compare(a, b))
           .map((k) => ({ label: k, value: k }))
       );

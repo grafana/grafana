@@ -6,7 +6,7 @@ import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { setLogger } from '../logging/registry';
 
-import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
+import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
 import {
   getDatasourcePluginMeta,
   getDatasourcePluginMetas,
@@ -228,7 +228,75 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       expect(logPluginMetaWarningMock).toHaveBeenCalledTimes(1);
       expect(logPluginMetaWarningMock).toHaveBeenCalledWith(FALLBACK_TO_BOOTDATA_WARNING, {
         pluginType: 'datasource',
+        requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas',
       });
+    });
+  });
+
+  describe('and initPluginMetas returns null because plugin metas failed to load', () => {
+    const originalConfigDatasources = config.datasources;
+
+    beforeEach(() => {
+      setDatasourcePluginMetas({});
+      jest.resetAllMocks();
+      initPluginMetasMock.mockResolvedValue(null);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      config.datasources = {
+        Prometheus: { type: 'prometheus', meta: prometheusMeta } as (typeof config.datasources)[string],
+      };
+    });
+
+    afterEach(() => {
+      config.datasources = originalConfigDatasources;
+    });
+
+    it('should fall back to bootdata when plugin metas fail to load', async () => {
+      const result = await getDatasourcePluginMetas();
+
+      expect(result).toEqual([prometheusMeta]);
+      expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('should log an error warning when falling back to bootdata', async () => {
+      await getDatasourcePluginMetas();
+
+      expect(logPluginMetaWarningMock).toHaveBeenCalledTimes(1);
+      expect(logPluginMetaWarningMock).toHaveBeenCalledWith(FALLBACK_TO_BOOTDATA_ERROR_WARNING, {
+        pluginType: 'datasource',
+        requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas',
+      });
+    });
+  });
+
+  describe('and refetchPluginMetas returns null because plugin metas failed to load', () => {
+    const originalConfigDatasources = config.datasources;
+
+    beforeEach(() => {
+      setDatasourcePluginMetas({});
+      jest.resetAllMocks();
+      refetchPluginMetasMock.mockResolvedValue(null);
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      config.datasources = {
+        Prometheus: { type: 'prometheus', meta: prometheusMeta } as (typeof config.datasources)[string],
+      };
+    });
+
+    afterEach(() => {
+      config.datasources = originalConfigDatasources;
+    });
+
+    it('refetchDatasourcePluginMetas should fall back to bootdata and log an error warning', async () => {
+      await refetchDatasourcePluginMetas();
+
+      expect(logPluginMetaWarningMock).toHaveBeenCalledTimes(1);
+      expect(logPluginMetaWarningMock).toHaveBeenCalledWith(FALLBACK_TO_BOOTDATA_ERROR_WARNING, {
+        pluginType: 'datasource',
+        requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas',
+      });
+
+      const result = await getDatasourcePluginMetas();
+      expect(result).toEqual([prometheusMeta]);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
   });
 });
