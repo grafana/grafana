@@ -153,7 +153,9 @@ func TestVariableAuthorizer_OrphanedFolderScopedUpdate(t *testing.T) {
 func TestFolderUIDFromVariableMetadataName(t *testing.T) {
 	require.Equal(t, accesscontrol.GeneralFolderUID, folderUIDFromVariableMetadataName("region"))
 	require.Equal(t, "folder-a", folderUIDFromVariableMetadataName("region--folder-a"))
-	require.Equal(t, "abc", folderUIDFromVariableMetadataName("my--var--abc"))
+	// Folder UIDs may contain "--"; split on the first separator (spec names are \w+).
+	require.Equal(t, "var--abc", folderUIDFromVariableMetadataName("my--var--abc"))
+	require.Equal(t, "team--prod", folderUIDFromVariableMetadataName("region--team--prod"))
 }
 
 func TestVariableFolderScope(t *testing.T) {
