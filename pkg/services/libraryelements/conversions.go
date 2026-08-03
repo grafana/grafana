@@ -115,7 +115,7 @@ func LibraryPanelToLegacyModel(panel *v0alpha1.LibraryPanel) (json.RawMessage, e
 
 // libraryPanelSpecKeys are the legacy model properties that map to typed fields on
 // LibraryPanelSpec. Everything else is preserved in status.missing.
-var libraryPanelSpecKeys = []string{"type", "pluginVersion", "title", "description", "options", "fieldConfig", "datasource", "targets", "libraryPanel", "id", "gridPos"}
+var libraryPanelSpecKeys = []string{"type", "pluginVersion", "title", "description", "options", "fieldConfig", "datasource", "targets", "links", "transparent", "libraryPanel", "id", "gridPos"}
 
 // LegacyModelToLibraryPanel builds the spec and status of a k8s LibraryPanel from a
 // legacy `model` JSON blob and the library panel name (the SQL name column). Model

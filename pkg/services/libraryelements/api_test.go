@@ -13,10 +13,42 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func TestFolderUIDFromLegacyID(t *testing.T) {
+	reqContext := &contextmodel.ReqContext{
+		Context: &web.Context{Req: &http.Request{}},
+		SignedInUser: &user.SignedInUser{
+			OrgID: 1,
+		},
+	}
+
+	t.Run("root folder", func(t *testing.T) {
+		handler := &libraryElementsK8sHandler{}
+
+		uid, ok := handler.folderUIDFromLegacyID(reqContext, 0)
+
+		require.True(t, ok)
+		require.Empty(t, uid)
+	})
+
+	t.Run("folder", func(t *testing.T) {
+		handler := &libraryElementsK8sHandler{
+			folderService: &foldertest.FakeService{
+				ExpectedFolder: &folder.Folder{ID: 42, UID: "folder-uid", OrgID: 1},
+			},
+		}
+
+		uid, ok := handler.folderUIDFromLegacyID(reqContext, 42)
+
+		require.True(t, ok)
+		require.Equal(t, "folder-uid", uid)
+	})
+}
 
 func TestFilterLibraryPanelsByPermission(t *testing.T) {
 	panels := []model.LibraryElementDTO{
