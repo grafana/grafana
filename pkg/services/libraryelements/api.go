@@ -176,7 +176,7 @@ func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) respon
 func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.Response {
 	ctx := c.Req.Context()
 	if useKubernetesLibraryPanels(ctx) {
-		l.k8sHandler.getK8sLibraryElement(c)
+		l.k8sHandler.getK8sLibraryElement(c, l.AccessControl)
 		return nil // already handled in the k8s handler
 	}
 
@@ -641,10 +641,37 @@ func newLibraryElementsK8sHandler(cfg *setting.Cfg, clientConfigProvider grafana
 	}
 }
 
-func (lk8s *libraryElementsK8sHandler) getK8sLibraryElement(c *contextmodel.ReqContext) {
+func (lk8s *libraryElementsK8sHandler) getK8sLibraryElement(c *contextmodel.ReqContext, accessControl ac.AccessControl) {
 	uid := web.Params(c.Req)[":uid"]
-	dto, ok := lk8s.fetchK8sLibraryElementDTO(c, uid)
+	client, ok := lk8s.getClient(c)
 	if !ok {
+		return
+	}
+	serviceCtx, _ := identity.WithServiceIdentity(c.Req.Context(), c.OrgID)
+	out, err := client.Get(serviceCtx, uid, v1.GetOptions{})
+	if err != nil {
+		lk8s.writeError(c, err)
+		return
+	}
+
+	folderUID := out.GetAnnotations()[utils.AnnoKeyFolder]
+	authCtx := withPanelFolders(c.Req.Context(), []model.LibraryElementDTO{{UID: uid, FolderUID: folderUID}})
+	allowed, err := accessControl.Evaluate(authCtx, c.SignedInUser, ac.EvalPermission(
+		ActionLibraryPanelsRead,
+		ScopeLibraryPanelsProvider.GetResourceScopeUID(uid),
+	))
+	if err != nil {
+		c.JsonApiErr(http.StatusInternalServerError, "unable to evaluate library panel permissions", err)
+		return
+	}
+	if !allowed {
+		c.JsonApiErr(http.StatusForbidden, "insufficient permissions for getting library panel", nil)
+		return
+	}
+
+	dto, err := lk8s.unstructuredToLegacyLibraryPanelDTO(c, *out)
+	if err != nil {
+		c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
 		return
 	}
 	c.JSON(http.StatusOK, model.LibraryElementResponse{Result: *dto})
