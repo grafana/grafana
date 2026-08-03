@@ -614,6 +614,28 @@ func TestService_mapping(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "should use the folder field as RBAC action override for the iam permissions resource",
+			input: &authzv1.CheckRequest{
+				Group:    "iam.grafana.app",
+				Resource: "permissions",
+				Name:     "delegate",
+				Verb:     utils.VerbPatch,
+				Folder:   "users.roles:add",
+			},
+			output: &checkRequest{
+				Action:       "users.roles:add",
+				Group:        "iam.grafana.app",
+				Resource:     "permissions",
+				Name:         "delegate",
+				Verb:         "patch",
+				ParentFolder: "users.roles:add",
+				Namespace: types.NamespaceInfo{
+					Value: ns,
+					OrgID: 1,
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1594,6 +1616,53 @@ func TestService_Check(t *testing.T) {
 			},
 			expected: false,
 		},
+		{
+			name: "permissions:type check with action override should deny when user holds the delegate scope on a different action",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "iam.grafana.app",
+				Resource:  "permissions",
+				Verb:      utils.VerbPatch,
+				Name:      "delegate",
+				Folder:    "users.roles:add",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "roles:write", Scope: "permissions:type:delegate"},
+			},
+			expected: false,
+		},
+		{
+			name: "permissions:type check with action override should allow when user holds the delegate scope on that same action",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "iam.grafana.app",
+				Resource:  "permissions",
+				Verb:      utils.VerbPatch,
+				Name:      "delegate",
+				Folder:    "users.roles:add",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "users.roles:add", Scope: "permissions:type:delegate"},
+			},
+			expected: true,
+		},
+		{
+			name: "permissions:type check without action override should keep the roles:write verb mapping",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "iam.grafana.app",
+				Resource:  "permissions",
+				Verb:      utils.VerbPatch,
+				Name:      "delegate",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "roles:write", Scope: "permissions:type:delegate"},
+			},
+			expected: true,
+		},
 	}
 	t.Run("User permission check", func(t *testing.T) {
 		for _, tc := range testCases {
@@ -1626,6 +1695,13 @@ func TestService_Check(t *testing.T) {
 				}
 				if tc.req.Resource == "folders" {
 					expAction = "folders:delete"
+				}
+				if tc.req.Resource == "permissions" {
+					// the folder field carries the RBAC action override for permissions checks
+					expAction = "roles:write"
+					if tc.req.Folder != "" {
+						expAction = tc.req.Folder
+					}
 				}
 				if tc.req.Subresource == "annotations" {
 					switch tc.req.Verb {
@@ -3067,6 +3143,38 @@ func TestService_BatchCheck(t *testing.T) {
 				"check1": true,
 				"check2": true,
 				"check3": false,
+			},
+		},
+		{
+			name: "should use the folder field as RBAC action override for iam permissions checks",
+			req: &authzv1.BatchCheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Checks: []*authzv1.BatchCheckItem{
+					{
+						CorrelationId: "delegate-roles",
+						Group:         "iam.grafana.app",
+						Resource:      "permissions",
+						Verb:          utils.VerbPatch,
+						Name:          "delegate",
+						Folder:        "roles:write",
+					},
+					{
+						CorrelationId: "delegate-users",
+						Group:         "iam.grafana.app",
+						Resource:      "permissions",
+						Verb:          utils.VerbPatch,
+						Name:          "delegate",
+						Folder:        "users.roles:add",
+					},
+				},
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "roles:write", Scope: "permissions:type:delegate"},
+			},
+			expected: map[string]bool{
+				"delegate-roles": true,
+				"delegate-users": false,
 			},
 		},
 		{

@@ -316,6 +316,11 @@ func (s *Service) groupBatchCheckItems(
 			continue
 		}
 
+		if override, ok := permissionsActionOverride(item.GetGroup(), item.GetResource(), item.GetFolder()); ok {
+			action = override
+			actionSets = nil
+		}
+
 		checkReq := &checkRequest{
 			Namespace:    ns,
 			UserUID:      userUID,
@@ -553,6 +558,11 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 		return nil, err
 	}
 
+	if override, ok := permissionsActionOverride(req.GetGroup(), req.GetResource(), req.GetFolder()); ok {
+		action = override
+		actionSets = nil
+	}
+
 	if req.GetResource() == "" && req.GetSubresource() != "" {
 		return nil, status.Error(codes.InvalidArgument, "resource is required when subresource is provided")
 	}
@@ -571,6 +581,20 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 		ParentFolder: req.GetFolder(),
 	}
 	return checkReq, nil
+}
+
+// permissionsActionOverride returns the RBAC action to load grants for on
+// iam.grafana.app/permissions checks. Those checks validate that a caller may
+// delegate a specific RBAC action with a "permissions:type:*" scope, but the
+// verb mapping can only express the static roles:write action. The caller
+// passes the action being delegated in the folder field (the permissions
+// pseudo-resource is not folder-scoped); without it, all delegable actions
+// would collapse into a single roles:write check.
+func permissionsActionOverride(group, resource, folder string) (string, bool) {
+	if group == "iam.grafana.app" && resource == "permissions" && folder != "" {
+		return folder, true
+	}
+	return "", false
 }
 
 func (s *Service) validateListRequest(ctx context.Context, req *authzv1.ListRequest) (*listRequest, error) {
