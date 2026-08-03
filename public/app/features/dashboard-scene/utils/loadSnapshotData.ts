@@ -2,12 +2,9 @@ import { firstValueFrom } from 'rxjs';
 import { filter, timeout } from 'rxjs/operators';
 
 import { LoadingState } from '@grafana/data';
-import { type CancelActivationHandler, type SceneDataProvider, type VizPanel } from '@grafana/scenes';
+import { type CancelActivationHandler, type SceneDataProvider, type SceneObject, type VizPanel } from '@grafana/scenes';
 
 import { type DashboardScene } from '../scene/DashboardScene';
-
-import { dashboardSceneGraph } from './dashboardSceneGraph';
-import { forceActivateFullSceneObjectTree } from './utils';
 
 // A single stuck datasource shouldn't be able to keep the snapshot spinner up forever, so bound
 // both how long we wait for any one panel and the whole load. Whatever hasn't loaded when the
@@ -22,7 +19,7 @@ const OVERALL_TIMEOUT_MS = 30_000;
 const NOMINAL_CONTAINER_WIDTH = 1000;
 
 export interface LoadSnapshotDataResult {
-  loadedPanels: number;
+  totalPanels: number;
   timedOutPanels: number;
 }
 
@@ -31,12 +28,19 @@ export interface LoadSnapshotDataOptions {
   overallTimeoutMs?: number;
 }
 
+// A settled provider is one whose data is worth capturing in the snapshot. Streaming panels never
+// reach Done, but they do have data, so treat Streaming as settled — otherwise they would always
+// hit the timeout, delaying every snapshot and firing a spurious warning.
+function isSettled(state?: LoadingState): boolean {
+  return state === LoadingState.Done || state === LoadingState.Error || state === LoadingState.Streaming;
+}
+
 /**
  * Force-activates every VizPanel in the dashboard — including panels in hidden tabs, collapsed
  * rows and off-screen lazy panels that were never mounted — so their query runners execute, then
- * waits for each to reach Done/Error before returning. Snapshot serialization reads whatever data
- * currently sits in each panel's data provider, so without this those panels would serialize empty
- * ("No data"). Everything this activates is deactivated again before returning, so the live
+ * waits for each to reach a settled state before returning. Snapshot serialization reads whatever
+ * data currently sits in each panel's data provider, so without this those panels would serialize
+ * empty ("No data"). Everything this activates is deactivated again before returning, so the live
  * dashboard is left untouched.
  */
 export async function loadSnapshotData(
@@ -61,12 +65,12 @@ export async function loadSnapshotData(
 
   try {
     // First pass activates repeaters, which populate their `repeatedPanels` clones synchronously.
-    for (const panel of dashboardSceneGraph.getVizPanels(dashboard)) {
+    for (const panel of dashboard.getDashboardPanels()) {
       activateIfInactive(panel);
     }
 
     // Re-enumerate to pick up the repeat clones created during the first pass and activate them.
-    const panels = dashboardSceneGraph.getVizPanels(dashboard);
+    const panels = dashboard.getDashboardPanels();
     for (const panel of panels) {
       activateIfInactive(panel);
     }
@@ -89,7 +93,7 @@ export async function loadSnapshotData(
     await withOverallTimeout(Promise.all(waits), overallTimeoutMs);
 
     const timedOutPanels = loaded.filter((didLoad) => !didLoad).length;
-    return { loadedPanels: panels.length, timedOutPanels };
+    return { totalPanels: panels.length, timedOutPanels };
   } finally {
     // Deactivate only what we activated, unwinding in reverse so children go before their parents.
     for (const cancel of cancelHandlers.reverse()) {
@@ -99,24 +103,23 @@ export async function loadSnapshotData(
 }
 
 /**
- * Resolves true once the provider's data reaches Done/Error, or false if it doesn't within the
- * timeout. Panels without a data provider (rows, text panels, panels with no query) are treated as
- * loaded immediately.
+ * Resolves true once the provider's data settles, or false if it doesn't within the timeout.
+ * Panels without a data provider (rows, text panels, panels with no query) are treated as loaded
+ * immediately.
  */
 async function waitForPanelData(provider: SceneDataProvider | undefined, timeoutMs: number): Promise<boolean> {
   if (!provider) {
     return true;
   }
 
-  const currentState = provider.state.data?.state;
-  if (currentState === LoadingState.Done || currentState === LoadingState.Error) {
+  if (isSettled(provider.state.data?.state)) {
     return true;
   }
 
   try {
     await firstValueFrom(
       provider.getResultsStream().pipe(
-        filter(({ data }) => data.state === LoadingState.Done || data.state === LoadingState.Error),
+        filter(({ data }) => isSettled(data.state)),
         timeout(timeoutMs)
       )
     );
@@ -128,13 +131,31 @@ async function waitForPanelData(provider: SceneDataProvider | undefined, timeout
 
 /**
  * Races the given promise against a timer that resolves (rather than rejects), so the caller's
- * cleanup always runs and we can still serialize whatever data managed to load in time.
+ * cleanup always runs and we can still serialize whatever data managed to load in time. The timer
+ * is cleared once the race settles so it doesn't linger when the work finishes first.
  */
 function withOverallTimeout(promise: Promise<unknown>, timeoutMs: number): Promise<unknown> {
-  return Promise.race([
-    promise,
-    new Promise<void>((resolve) => {
-      setTimeout(resolve, timeoutMs);
-    }),
-  ]);
+  let timer: ReturnType<typeof setTimeout>;
+  const timeoutPromise = new Promise<void>((resolve) => {
+    timer = setTimeout(resolve, timeoutMs);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timer));
+}
+
+/**
+ * Activates a scene object and its full ancestor chain, returning a handler that deactivates
+ * everything this activated (no-op for nodes that were already active).
+ *
+ * Inlined from utils/utils.ts (rather than imported) to keep this module free of dashboard-scene
+ * runtime imports, which would otherwise close a circular dependency back through ShareSnapshotTab.
+ * Same approach as utils/getVizSuggestionForQuery.ts.
+ */
+function forceActivateFullSceneObjectTree(so: SceneObject): CancelActivationHandler | undefined {
+  const parentCancel = so.parent ? forceActivateFullSceneObjectTree(so.parent) : undefined;
+  const cancel = so.isActive ? undefined : so.activate();
+
+  return () => {
+    parentCancel?.();
+    cancel?.();
+  };
 }

@@ -36,7 +36,7 @@ class TestQueryRunner extends SceneObjectBase<SceneDataState> implements SceneDa
   private _results = new ReplaySubject<SceneDataProviderResult>(1);
   private _completed = false;
 
-  public constructor(private mode: 'complete' | 'never' = 'complete') {
+  public constructor(private mode: 'complete' | 'never' | 'streaming' = 'complete') {
     super({ data: undefined });
 
     this.addActivationHandler(() => {
@@ -51,9 +51,11 @@ class TestQueryRunner extends SceneObjectBase<SceneDataState> implements SceneDa
     this._completed = true;
 
     // async so waitForPanelData has to subscribe to the results stream rather than read an
-    // already-Done state — exercising the real code path.
+    // already-settled state — exercising the real code path. A 'streaming' runner settles on
+    // Streaming and never reaches Done, mirroring a live panel.
     setTimeout(() => {
-      const data = buildPanelData(LoadingState.Done, [
+      const state = this.mode === 'streaming' ? LoadingState.Streaming : LoadingState.Done;
+      const data = buildPanelData(state, [
         toDataFrame({ fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3] }] }),
       ]);
       this.setState({ data });
@@ -98,7 +100,7 @@ describe('loadSnapshotData', () => {
 
     const result = await loadSnapshotData(dashboard);
 
-    expect(result).toEqual({ loadedPanels: 2, timedOutPanels: 0 });
+    expect(result).toEqual({ totalPanels: 2, timedOutPanels: 0 });
     expect(hiddenPanel.state.$data!.state.data?.state).toBe(LoadingState.Done);
     // The hidden panel we activated is torn down again; the live active panel is left alone.
     expect(hiddenPanel.isActive).toBe(false);
@@ -118,9 +120,23 @@ describe('loadSnapshotData', () => {
 
     const result = await loadSnapshotData(dashboard);
 
-    expect(result).toEqual({ loadedPanels: 1, timedOutPanels: 0 });
+    expect(result).toEqual({ totalPanels: 1, timedOutPanels: 0 });
     expect(panel.state.$data!.state.data?.state).toBe(LoadingState.Done);
     expect(panel.isActive).toBe(false);
+  });
+
+  it('treats a streaming panel as loaded rather than timing out', async () => {
+    const streamingPanel = buildPanel('panel-streaming', new TestQueryRunner('streaming'));
+
+    const dashboard = new DashboardScene({
+      body: new TabsLayoutManager({ tabs: [tabWith('Streaming', streamingPanel)] }),
+    });
+
+    const result = await loadSnapshotData(dashboard, { perPanelTimeoutMs: 50, overallTimeoutMs: 200 });
+
+    expect(result).toEqual({ totalPanels: 1, timedOutPanels: 0 });
+    expect(streamingPanel.state.$data!.state.data?.state).toBe(LoadingState.Streaming);
+    expect(streamingPanel.isActive).toBe(false);
   });
 
   it('reports panels that do not finish loading within the timeout and still deactivates them', async () => {
@@ -132,7 +148,7 @@ describe('loadSnapshotData', () => {
 
     const result = await loadSnapshotData(dashboard, { perPanelTimeoutMs: 50, overallTimeoutMs: 200 });
 
-    expect(result).toEqual({ loadedPanels: 1, timedOutPanels: 1 });
+    expect(result).toEqual({ totalPanels: 1, timedOutPanels: 1 });
     expect(stuckPanel.isActive).toBe(false);
   });
 
@@ -145,7 +161,7 @@ describe('loadSnapshotData', () => {
 
     const result = await loadSnapshotData(dashboard);
 
-    expect(result).toEqual({ loadedPanels: 1, timedOutPanels: 0 });
+    expect(result).toEqual({ totalPanels: 1, timedOutPanels: 0 });
     expect(panel.isActive).toBe(false);
   });
 });
