@@ -90,7 +90,9 @@ func awaitZanzanaMTReconcileNext(t *testing.T, helper *K8sTestHelper) {
 // namespace_reconcile_duration_seconds, so awaitZanzanaMTReconcileNext can
 // time out at start-of-test.
 //
-// Only Org1 is needed: MT-mode tests set RBACSingleOrganization: true.
+// Only Org1 is needed to unblock the metric: MT-mode tests enable the users
+// API (via RBACSingleOrganization), and a single successful namespace
+// reconcile is enough for AwaitZanzanaReconcileNext's barrier.
 func ensureZanzanaStoreForOrg1(t *testing.T, helper *K8sTestHelper) {
 	t.Helper()
 	ns := helper.Org1.Admin.Identity.GetNamespace()
