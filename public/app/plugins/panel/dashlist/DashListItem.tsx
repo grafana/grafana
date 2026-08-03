@@ -1,5 +1,6 @@
 import { reportInteraction } from '@grafana/runtime';
 import { Card, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
+import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
 import { type LocationInfo } from 'app/features/search/service/types';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 
@@ -18,6 +19,9 @@ interface Props {
   onStarChange?: (id: string, isStarred: boolean) => void;
   // Row density for list mode. 'compact' gives denser rows for the redesigned homepage
   density?: 'default' | 'compact';
+  // Show an info icon with the dashboard description in list mode, when one exists.
+  // Defaults to false so shared consumers (homepage tabs, recently viewed) are unchanged.
+  showDescription?: boolean;
 }
 export function DashListItem({
   dashboard,
@@ -29,9 +33,20 @@ export function DashListItem({
   onStarChange,
   source,
   density = 'default',
+  showDescription = false,
 }: Props) {
   const css = useStyles2(getStyles);
   const isCompact = density === 'compact';
+
+  const starButton = (
+    <StarToolbarButton
+      title={dashboard.name}
+      group="dashboard.grafana.app"
+      kind="Dashboard"
+      id={dashboard.uid}
+      onStarChange={onStarChange}
+    />
+  );
 
   const onCardLinkClick = () => {
     reportInteraction('grafana_browse_dashboards_page_click_list_item', {
@@ -52,13 +67,14 @@ export function DashListItem({
           href={url}
           onClick={onCardLinkClick}
           trailing={
-            <StarToolbarButton
-              title={dashboard.name}
-              group="dashboard.grafana.app"
-              kind="Dashboard"
-              id={dashboard.uid}
-              onStarChange={onStarChange}
-            />
+            showDescription ? (
+              <Stack gap={0.5} alignItems="center">
+                <DescriptionTooltip description={dashboard.description} />
+                {starButton}
+              </Stack>
+            ) : (
+              starButton
+            )
           }
         />
       ) : (
@@ -91,13 +107,7 @@ export function DashListItem({
               )}
             </Link>
 
-            <StarToolbarButton
-              title={dashboard.name}
-              group="dashboard.grafana.app"
-              kind="Dashboard"
-              id={dashboard.uid}
-              onStarChange={onStarChange}
-            />
+            {starButton}
           </Stack>
         </Card>
       )}
