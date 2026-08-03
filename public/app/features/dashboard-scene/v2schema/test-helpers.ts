@@ -90,7 +90,8 @@ export function validateVizPanel(vizPanel: VizPanel, dash: DashboardV2Spec) {
       topic: undefined,
     });
 
-    expect(dataTransformer.state.$data).toBeInstanceOf(SceneQueryRunner);
+    // Not asserted via `dataTransformer.state.$data` — a panel plugin can contribute its own
+    // transformer below the user's, so the query runner is not always one level down.
     const queryRunner = getQueryRunnerFor(vizPanel)!;
     expect(queryRunner).toBeInstanceOf(SceneQueryRunner);
     expect(queryRunner.state.queries).toEqual([

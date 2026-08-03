@@ -16,6 +16,7 @@ import {
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardScene } from './DashboardScene';
+import { PanelPluginDataTransformer } from './PanelPluginDataTransformer';
 import { VizPanelSubHeader } from './VizPanelSubHeader';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
@@ -118,12 +119,40 @@ describe('VizPanelSubHeader', () => {
 
     expect(subHeader.state.supportsApplicability).toBe(false);
   });
+
+  describe('getQueryRunner', () => {
+    it('finds the query runner directly under the user transformer', async () => {
+      const { subHeader, queryRunner } = await buildScene();
+
+      const found = subHeader.getQueryRunner();
+
+      expect(found).toBeInstanceOf(SceneQueryRunner);
+      // Compared as a boolean: scene objects hold circular references, so a failing `toBe`
+      // diff cannot be serialized by the jest reporter.
+      expect(found === queryRunner).toBe(true);
+    });
+
+    it('finds the query runner through a nested panel-plugin transformer', async () => {
+      const { subHeader, queryRunner } = await buildScene({ withPluginTransformer: true });
+
+      // Unwrapping a single level of `$data` lands on the plugin transformer and would silently
+      // return null here, hiding the non-applicable drilldowns sub header.
+      const found = subHeader.getQueryRunner();
+
+      expect(found).toBeInstanceOf(SceneQueryRunner);
+      // Compared as a boolean: scene objects hold circular references, so a failing `toBe`
+      // diff cannot be serialized by the jest reporter.
+      expect(found === queryRunner).toBe(true);
+    });
+  });
 });
 
 interface BuildSceneOptions {
   applicabilityEnabled?: boolean;
   variableDatasourceUid?: string;
   noGroupBy?: boolean;
+  /** Nest a panel-plugin transformer between the query runner and the user's transformer. */
+  withPluginTransformer?: boolean;
 }
 
 async function buildScene(options?: BuildSceneOptions) {
@@ -153,7 +182,9 @@ async function buildScene(options?: BuildSceneOptions) {
   });
 
   const dataProvider = new SceneDataTransformer({
-    $data: queryRunner,
+    $data: options?.withPluginTransformer
+      ? new PanelPluginDataTransformer({ $data: queryRunner, transformations: [] })
+      : queryRunner,
     transformations: [],
   });
 

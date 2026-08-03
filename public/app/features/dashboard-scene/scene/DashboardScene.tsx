@@ -113,6 +113,7 @@ import { createMutationClient } from './DashboardMutationClientSetter';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { wrapInPanelPluginDataTransformer } from './PanelPluginDataTransformer';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
@@ -1104,11 +1105,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       const defaultDs = getDataSourceSrv().getInstanceSettings(null);
       panel.setState({
         $data: new SceneDataTransformer({
-          $data: new SceneQueryRunner({
-            // The query editor needs the datasource type, which config.defaultDatasource does not provide.
-            datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined,
-            queries: [{ refId: 'A' }],
-          }),
+          $data: wrapInPanelPluginDataTransformer(
+            new SceneQueryRunner({
+              // The query editor needs the datasource type, which config.defaultDatasource does not provide.
+              datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined,
+              queries: [{ refId: 'A' }],
+            })
+          ),
           transformations: [],
         }),
       });

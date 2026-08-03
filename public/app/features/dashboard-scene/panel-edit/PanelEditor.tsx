@@ -27,6 +27,7 @@ import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePick
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { wrapInPanelPluginDataTransformer } from '../scene/PanelPluginDataTransformer';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
@@ -285,12 +286,14 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
         panel.setState({
           $data: new SceneDataTransformer({
-            $data: new SceneQueryRunner({
-              datasource: {
-                uid: ds,
-              },
-              queries: [{ refId: 'A' }],
-            }),
+            $data: wrapInPanelPluginDataTransformer(
+              new SceneQueryRunner({
+                datasource: {
+                  uid: ds,
+                },
+                queries: [{ refId: 'A' }],
+              })
+            ),
             transformations: [],
           }),
         });

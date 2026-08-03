@@ -3,6 +3,7 @@ import { type Unsubscribable } from 'rxjs';
 import { LoadingState } from '@grafana/data';
 import {
   SceneDataTransformer,
+  type SceneObject,
   SceneObjectBase,
   type SceneObjectState,
   SceneQueryRunner,
@@ -166,9 +167,11 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
         }
       };
 
-      const dataTransformer = sourcePanelQueryRunner.parent;
+      // The query runner can be wrapped by more than one transformer, so walk up to the
+      // outermost one — that is the user's, and the only one whose transformations count here.
+      const dataTransformer = getOutermostDataTransformer(sourcePanelQueryRunner);
 
-      if (dataTransformer instanceof SceneDataTransformer && dataTransformer.state.transformations.length) {
+      if (dataTransformer && dataTransformer.state.transformations.length) {
         // In mixed DS scenario we complete the observable and merge data, so on a variable change
         // the data transformer will emit but there will be no subscription and thus no visual update
         // on the panel. Similar thing happens when going to edit mode and back, where we unsubscribe and
@@ -262,4 +265,22 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       dashboardDsQueryRunner.runQueries();
     }
   }
+}
+
+/**
+ * Walks up from a query runner to the outermost transformer wrapping it — the one holding the
+ * user's transformations. Panel plugins can contribute their own transformer below it
+ * (see {@link PanelPluginDataTransformer}), so the immediate parent is not necessarily the
+ * user's transformer.
+ */
+function getOutermostDataTransformer(sceneObject: SceneObject): SceneDataTransformer | undefined {
+  let outermost: SceneDataTransformer | undefined;
+  let current: SceneObject | undefined = sceneObject.parent;
+
+  while (current instanceof SceneDataTransformer) {
+    outermost = current;
+    current = current.parent;
+  }
+
+  return outermost;
 }

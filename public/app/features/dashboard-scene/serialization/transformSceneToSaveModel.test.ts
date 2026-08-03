@@ -3,6 +3,7 @@ import { map, of } from 'rxjs';
 
 import {
   type DataFrame,
+  type DataFrameJSON,
   type DataQueryRequest,
   type DataSourceApi,
   dateTime,
@@ -10,22 +11,25 @@ import {
   type PanelData,
   type PanelPluginMeta,
   type StandardVariableQuery,
+  getDefaultTimeRange,
   toDataFrame,
   VariableSupportType,
 } from '@grafana/data';
 import { mockTransformationsRegistry, reduceTransformer } from '@grafana/data/internal';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { setPanelPluginMetas } from '@grafana/runtime/internal';
+import { FlagKeys, setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   CustomVariable,
   type MultiValueVariable,
   sceneGraph,
+  type SceneDataTransformer,
   SceneGridLayout,
   type SceneGridRow,
   VizPanel,
 } from '@grafana/scenes';
 import { type Dashboard, LoadingState, type Panel, type RowPanel, VariableRefresh } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
@@ -33,6 +37,7 @@ import { type DashboardDataDTO } from 'app/types/dashboard';
 
 import { type DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
+import { PanelPluginDataTransformer } from '../scene/PanelPluginDataTransformer';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { type RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
@@ -41,7 +46,7 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
-import { getVizPanelKeyForPanelId } from '../utils/utils';
+import { getQueryRunnerFor, getVizPanelKeyForPanelId } from '../utils/utils';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
@@ -1738,5 +1743,56 @@ describe('rowItemToSaveModel', () => {
     expect(followingRowPanel.type).toBe('row');
     expect(followingRowPanel.title).toBe('Following Row');
     expect(followingRowPanel.gridPos?.y).toBe(14); // Starts after hidden header content
+  });
+});
+
+describe('given a panel plugin that registers transformations', () => {
+  const transformations = [{ id: 'reduce', options: { reducers: ['max'] } }];
+
+  beforeAll(() => {
+    setTestFlags({ [FlagKeys.GrafanaPanelPluginTransformations]: true });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
+  it('does not persist the plugin transformer into the save model', () => {
+    const panel = buildGridItemFromPanelSchema({
+      datasource: { type: 'grafana-testdata', uid: 'abc' },
+      transformations,
+      targets: [{ refId: 'A', datasource: { type: 'grafana-testdata', uid: 'abc' } }],
+    });
+
+    const vizPanel = panel.state.body;
+    // The extra provider really is in the tree, otherwise this test proves nothing.
+    expect((vizPanel.state.$data as SceneDataTransformer).state.$data).toBeInstanceOf(PanelPluginDataTransformer);
+
+    const result = gridItemToPanel(panel);
+
+    // Only the user's transformation is serialized, and the queries are still reachable
+    // through the extra provider.
+    expect(result.transformations).toEqual(transformations);
+    expect(result.targets?.length).toBe(1);
+  });
+
+  it('snapshots the query result rather than the plugin-transformed frames', () => {
+    const panel = buildGridItemFromPanelSchema({
+      datasource: { type: 'grafana-testdata', uid: 'abc' },
+      transformations,
+      targets: [{ refId: 'A', datasource: { type: 'grafana-testdata', uid: 'abc' } }],
+    });
+
+    const queryRunner = getQueryRunnerFor(panel.state.body)!;
+    const rawSeries = [toDataFrame({ name: 'raw', fields: [{ name: 'v', type: FieldType.number, values: [1] }] })];
+    queryRunner.setState({
+      data: { state: LoadingState.Done, series: rawSeries, timeRange: getDefaultTimeRange() },
+    });
+
+    const result = gridItemToPanel(panel, true);
+
+    // Snapshots must capture query output, not whatever the plugin transformer produced.
+    const snapshot = result.targets?.[0].snapshot as DataFrameJSON[] | undefined;
+    expect(snapshot?.[0].schema?.name).toBe('raw');
   });
 });

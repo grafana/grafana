@@ -64,6 +64,7 @@ import { type DashboardSceneState } from '../scene/types/dashboard';
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
+import { getUntransformedDataProvider } from '../utils/getUntransformedDataProvider';
 import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor, isLibraryPanel } from '../utils/utils';
 
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
@@ -461,10 +462,8 @@ export function getVizPanelQueries(
       return queries;
     }
 
-    let snapshotData = getPanelDataFrames(dataProvider.state.data);
-    if (dataProvider instanceof SceneDataTransformer) {
-      snapshotData = getPanelDataFrames(dataProvider.state.$data!.state.data);
-    }
+    const untransformed = getUntransformedDataProvider(dataProvider);
+    const snapshotData = getPanelDataFrames(untransformed?.state.data ?? dataProvider.state.data);
 
     const snapshotQuery: DataQueryKind = {
       kind: 'DataQuery',

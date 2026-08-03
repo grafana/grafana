@@ -30,6 +30,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelMenuBehavior } from '../scene/PanelMenuBehavior';
+import { wrapInPanelPluginDataTransformer } from '../scene/PanelPluginDataTransformer';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
@@ -307,11 +308,13 @@ export function getDefaultVizPanel(): VizPanel {
     }),
     $data: datasourceSettings
       ? new SceneDataTransformer({
-          $data: new SceneQueryRunner({
-            queries: [{ refId: 'A' }],
-            datasource: getDataSourceRef(datasourceSettings),
-            $behaviors: [new DashboardDatasourceBehaviour({})],
-          }),
+          $data: wrapInPanelPluginDataTransformer(
+            new SceneQueryRunner({
+              queries: [{ refId: 'A' }],
+              datasource: getDataSourceRef(datasourceSettings),
+              $behaviors: [new DashboardDatasourceBehaviour({})],
+            })
+          ),
           transformations: [],
         })
       : undefined,
