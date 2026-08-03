@@ -239,7 +239,7 @@ Geomap has nine data layer types and five basemap layer types.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
-- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
+- [MapLibre layer](#maplibre-layer) adds a map from a MapLibre/Mapbox style URL.
 
 There are also two experimental, alpha layer types.
 
@@ -315,7 +315,7 @@ Similar to `Markers`, you are prompted with various options to determine which d
 | ------ | ----------- |
 | Data | Configure the data settings for the layer. For more information, refer to [Data](#data). |
 | Location | Configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
-| Weight values | Configures the size of the markers. The default is `Fixed size`, which makes all marker sizes the same regardless of the data; however, there is also an option to size the markers based on data corresponding to a selected field. `Min` and `Max` marker sizes have to be set such that the markers can scale within this range. |
+| Weight values | Scales the weight distribution for each row. The default is a fixed value applied to every row; however, there is also an option to base the weight on data corresponding to a selected field. `Min` and `Max` values have to be set such that the weight can scale within this range. |
 | Radius | Configures the size of the heatmap clusters. |
 | Blur | Configures the amount of blur on each cluster. |
 | Opacity | Configures the opacity of each cluster. |
@@ -331,7 +331,7 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
 | ------ | ----------- |
 | GeoJSON URL | Provides a choice of GeoJSON files that are included with Grafana. You can also enter a URL manually, which supports variables. |
 | Default style | Controls which styles to apply when no rules above match.<ul><li>**Color** - configures the color of the default style</li><li>**Opacity** - configures the default opacity</li></ul> |
-| Style Rules | Apply styles based on feature properties <ul><li>**Rule** - allows you to select a _feature_, _condition_, and _value_ from the GeoJSON file in order to define a rule. The trash bin icon can be used to delete the current rule.</li><li>**Color** - configures the color of the style for the current rule</li><li>**Opacity** - configures the transparency level for the current rule</li> |
+| Style rules | Apply styles based on feature properties <ul><li>**Rule** - allows you to select a _feature_, _condition_, and _value_ from the GeoJSON file in order to define a rule. The trash bin icon can be used to delete the current rule.</li><li>**Color** - configures the color of the style for the current rule</li><li>**Opacity** - configures the transparency level for the current rule</li> |
 | Display tooltip | Allows you to toggle tooltips for the layer. |
 <!-- prettier-ignore-end -->
 
@@ -388,6 +388,9 @@ The layer can also render a route with arrows.
 | Data | configure the data settings for the layer. For more information, refer to [Data](#data). |
 | Location | configure the data settings for the layer. For more information, refer to [Location mode](#location-mode). |
 | Size | sets the route thickness. Fixed value by default. When field data is selected you can set the Min and Max range in which field data can scale. |
+| Symbol | allows you to choose the symbol, icon, or graphic to aid in providing additional visual context to your data. |
+| Symbol vertical align | configures the vertical alignment of the symbol relative to the data point. |
+| Symbol horizontal align | configures the horizontal alignment of the symbol relative to the data point. |
 | Color | sets the route color. Set to `Fixed color` by default. You can also tie the color to field data. |
 | Fill opacity | configures the opacity of the route. |
 | Text label | configures a text label for each route. |
@@ -494,7 +497,7 @@ A CARTO layer is from CARTO Raster basemaps.
 
 An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 
-- **Server Instance** to select the map type.
+- **Server instance** to select the map type.
   - World Street Map
     {{< figure src="/static/img/docs/geomap-panel/geomap-arcgis-wsm-9-1-0.png" max-width="600px" alt="Geomap panel ArcGIS World Street Map" >}}
   - World Imagery
@@ -535,9 +538,9 @@ The XYZ Tile layer is a map from a generic tile layer.
 - [Tiled Web Map Wikipedia](https://en.wikipedia.org/wiki/Tiled_web_map)
 - [List of OpenStreetMap Tile Servers](https://wiki.openstreetmap.org/wiki/Tile_servers)
 
-#### MapLibre Style layer
+#### MapLibre layer
 
-The MapLibre Style Layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
+The MapLibre layer is a map defined using a MapLibre/Mapbox `style.json` URL. The style contains the URL to the tiles, layer definitions, and more. Typically, they're based on vector tiles as opposed to raster tiles.
 
 - **URL template** - Set a valid style URL. For example: `https://demotiles.maplibre.org/style.json`
 - **Public access token** - An API token for mapbox maps. Only works for `mapbox://` URLs. Refer to [mapbox access tokens documentation](https://docs.mapbox.com/help/dive-deeper/access-tokens/) for more information. In other cases, you might have to include the token in the URL. For example: `https://example.com/map/style.json?key=XXX`.
@@ -555,7 +558,7 @@ There are five basemap layer types to choose from in a geomap.
 - [CARTO basemap](#carto-basemap-layer) adds a layer from CARTO Raster basemaps.
 - [ArcGIS MapServer](#arcgis-mapserver-layer) adds a layer from an ESRI ArcGIS MapServer.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
-- [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
+- [MapLibre layer](#maplibre-layer) adds a map from a MapLibre/Mapbox style URL.
 
 The default basemap layer uses the CARTO map. You can define custom default base layers in the `.ini` configuration file.
 
@@ -716,8 +719,8 @@ Get the spherical area of a geometry. This area is calculated assuming that poly
 - **Square Kilometers (km²)**
 - **Square Feet (ft²)**
 - **Square Miles (mi²)**
-- **Acres (acre)**
-- **Hectare (ha)**
+- **Acres**
+- **Hectare**
 
 {{< figure src="/static/img/docs/geomap-panel/geomap-map-controls-measure-area-9-1-0.png" max-width="550px" alt="Geomap panel measure area" >}}
 
