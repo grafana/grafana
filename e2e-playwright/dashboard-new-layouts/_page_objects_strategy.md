@@ -78,7 +78,7 @@ await toolbar.openDashboardOptions();
 await sidebar.dashboardOptions.switchToAutoGrid();
 await panel.selectByTitle('New panel');
 await sidebar.panelOptions.setTitle(`${repeatTitleBase}$c1`);
-await sidebar.panelOptions.enableRepeat('c1');
+await sidebar.panelOptions.repeatOptions.repeatByVariable('c1');
 ```
 
 ## Expected Gains

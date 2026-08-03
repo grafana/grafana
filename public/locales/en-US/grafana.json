@@ -3997,6 +3997,9 @@
       "trace-id": "Trace ID: {{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": "Add to Assistant"
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Auth settings"
@@ -6177,13 +6180,10 @@
         "show-in": "Show in"
       },
       "annotations": {
-        "add-annotation": "Add annotation",
         "add-annotation-query": "Add annotation query",
         "name-builtin": "{{annoName}} (Built-in)",
         "name-disabled": "(Disabled) {{annoName}}",
-        "reorder": "Drag to reorder",
         "reorder-description": "Reorder annotations list",
-        "select-annotation": "Select",
         "title-above-dashboard-count_one": "Above dashboard ({{count}})",
         "title-above-dashboard-count_other": "Above dashboard ({{count}})",
         "title-controls-menu-count_one": "Controls menu ({{count}})",
@@ -6269,14 +6269,11 @@
       "links": {
         "add-link": "Add link",
         "new-link": "New link",
-        "reorder": "Drag to reorder",
         "reorder-description": "Reorder links list",
-        "select-link": "Select",
         "title-above-dashboard_one": "Above dashboard ({{count}})",
         "title-above-dashboard_other": "Above dashboard ({{count}})",
         "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "untitled": "Untitled link"
+        "title-controls-menu_other": "Controls menu ({{count}})"
       },
       "outline": {
         "pane-header": "Content outline",
@@ -6372,11 +6369,9 @@
       "variables": {
         "add-variable": "Add variable",
         "change-type": "Change variable type",
-        "reorder": "Drag to reorder",
         "reorder-description": "Reorder variables list",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
-        "select-variable": "Select",
         "title-controls-menu_one": "Controls menu ({{count}})",
         "title-controls-menu_other": "Controls menu ({{count}})",
         "title-hidden_one": "Hidden ({{count}})",
@@ -6814,11 +6809,6 @@
       "delete-text": "Are you sure you want to delete: {{name}}?",
       "delete-title": "Delete annotation query"
     },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "Annotation"
-      }
-    },
     "annotation-query-library-dropdown": {
       "use-saved-query": "Use saved query"
     },
@@ -7241,11 +7231,6 @@
       "delete-text": "Are you sure you want to delete: {{name}}?",
       "delete-title": "Delete link",
       "unnamed": "Unnamed link"
-    },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "Link"
-      }
     },
     "link-options": {
       "icon": "Icon",
@@ -15953,6 +15938,18 @@
     },
     "editor": {
       "aria-label-content": "Text content",
+      "format-bold": "B",
+      "format-heading": "H",
+      "format-italic": "I",
+      "tooltip-bold": "Bold",
+      "tooltip-bullet-list": "Bullet list",
+      "tooltip-checklist": "Checklist",
+      "tooltip-heading": "Heading",
+      "tooltip-insert-variable": "Insert variable",
+      "tooltip-italic": "Italic",
+      "tooltip-link": "Link",
+      "tooltip-numbered-list": "Numbered list",
+      "tooltip-table": "Table",
       "view-preview": "Preview",
       "view-split": "Split",
       "view-write": "Write"
