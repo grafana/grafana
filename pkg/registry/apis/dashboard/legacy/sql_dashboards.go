@@ -636,7 +636,9 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 	defer span.End()
 
 	limit := int(query.Limit)
-	query.Limit += 1 // for continue
+	// Access control is evaluated after reading SQL rows, so stream all remaining
+	// candidates until we find one more readable item than the requested page.
+	query.Limit = 0
 	if query.OrgID == 0 {
 		return nil, fmt.Errorf("expected non zero orgID")
 	}
@@ -657,7 +659,6 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		return nil, fmt.Errorf("execute template %q: %w", sqlQueryPanels.Name(), err)
 	}
 
-	res := &dashboardV0.LibraryPanelList{}
 	rows, err := a.executeQuery(ctx, helper, rawQuery, req.GetArgs()...)
 	defer func() {
 		if rows != nil {
@@ -668,39 +669,14 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		return nil, err
 	}
 
-	var lastID int64
-	rowCount := 0
-	for rows.Next() {
-		p := panel{}
-		err = rows.Scan(&p.ID, &p.UID, &p.FolderUID,
-			&p.Created, &p.CreatedBy,
-			&p.Updated, &p.UpdatedBy,
-			&p.Name, &p.Type, &p.Description, &p.Model, &p.Version,
-		)
-		if err != nil {
-			return res, err
-		}
-		rowCount++
-		if rowCount > limit {
-			res.Continue = strconv.FormatInt(lastID, 10)
-			break
-		}
-		lastID = p.ID
-
-		item, err := parseLibraryPanelRow(p)
-		if err != nil {
-			return res, err
-		}
-
-		ok, err := a.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(
+	res, err := collectLibraryPanelPage(rows, limit, func(item dashboardV0.LibraryPanel) (bool, error) {
+		return a.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(
 			libraryelements.ActionLibraryPanelsRead,
 			libraryelements.ScopeLibraryPanelsProvider.GetResourceScopeUID(item.Name),
 		))
-		if err != nil || !ok {
-			continue
-		}
-
-		res.Items = append(res.Items, item)
+	})
+	if err != nil {
+		return res, err
 	}
 	if query.UID == "" {
 		rv, err := helper.GetResourceVersion(ctx, "library_element", "updated")
@@ -708,7 +684,45 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 			res.ResourceVersion = strconv.FormatInt(rv*1000, 10) // convert to microseconds
 		}
 	}
-	return res, err
+	return res, nil
+}
+
+func collectLibraryPanelPage(
+	rows *sql.Rows,
+	limit int,
+	evaluate func(dashboardV0.LibraryPanel) (bool, error),
+) (*dashboardV0.LibraryPanelList, error) {
+	res := &dashboardV0.LibraryPanelList{}
+	var lastReturnedID int64
+	for rows.Next() {
+		p := panel{}
+		err := rows.Scan(&p.ID, &p.UID, &p.FolderUID,
+			&p.Created, &p.CreatedBy,
+			&p.Updated, &p.UpdatedBy,
+			&p.Name, &p.Type, &p.Description, &p.Model, &p.Version,
+		)
+		if err != nil {
+			return res, err
+		}
+
+		item, err := parseLibraryPanelRow(p)
+		if err != nil {
+			return res, err
+		}
+
+		ok, err := evaluate(item)
+		if err != nil || !ok {
+			continue
+		}
+
+		if limit > 0 && len(res.Items) >= limit {
+			res.Continue = strconv.FormatInt(lastReturnedID, 10)
+			break
+		}
+		res.Items = append(res.Items, item)
+		lastReturnedID = p.ID
+	}
+	return res, rows.Err()
 }
 
 func parseLibraryPanelRow(p panel) (dashboardV0.LibraryPanel, error) {

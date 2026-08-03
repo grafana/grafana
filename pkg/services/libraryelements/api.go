@@ -689,7 +689,7 @@ func (lk8s *libraryElementsK8sHandler) createK8sLibraryElement(c *contextmodel.R
 	if uid == "" {
 		uid = util.GenerateShortUID()
 	}
-	folderUID := ""
+	folderUID := ac.GeneralFolderUID
 	switch {
 	case cmd.FolderUID != nil:
 		folderUID = *cmd.FolderUID
@@ -1150,10 +1150,11 @@ func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *co
 	id := int64(0)
 	folderUID := ""
 	meta, err := utils.MetaAccessor(panel)
-	if err == nil {
-		id = meta.GetDeprecatedInternalID() // nolint:staticcheck
-		folderUID = meta.GetFolder()
+	if err != nil {
+		return nil, err
 	}
+	id = meta.GetDeprecatedInternalID() // nolint:staticcheck
+	folderUID = meta.GetFolder()
 
 	// rebuild the legacy model blob, then re-attach the identifiers the legacy API inlines
 	modelJSON, err := LibraryPanelToLegacyModel(panel)
