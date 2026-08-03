@@ -1,34 +1,41 @@
-import { test } from '@playwright/test';
+import { test, type Locator } from '@playwright/test';
 
 import { PageObject } from './PageObject';
 
-// The dashboard panels in the edit canvas: containers, headers, and selection.
+// The dashboard panels in the edit canvas: containers, headers, bodies, selection.
 // Plural getters return every match (assert counts, narrow in the spec);
 // singular getters return the first match.
+// Pass `rows.getContent(...)` or `tabs.getContent(...)` as `scope` to look up
+// panels inside a specific row or tab.
 export class Panels extends PageObject {
-  getContainers(title: string) {
+  getContainers(title: string, scope?: Locator): Locator {
     // despite the Panel.title() naming, this data-testid is on the whole
     // panel <section> container, not the title text or header bar.
     // see PanelChrome.tsx and packages/grafana-e2e-selectors/src/selectors/components.ts
-    return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Panels.Panel.title(title));
+    return (scope ?? this.page).getByTestId(this.selectors.components.Panels.Panel.title(title));
   }
 
-  getContainer(title: string) {
-    return this.getContainers(title).first();
+  getContainer(title: string, scope?: Locator): Locator {
+    return this.getContainers(title, scope).first();
   }
 
-  getHeaders(title?: string | RegExp) {
-    const headers = this.dashboardPage.getByGrafanaSelector(this.selectors.components.Panels.Panel.headerContainer);
+  getHeaders(title?: string | RegExp, scope?: Locator): Locator {
+    if (typeof title === 'string') {
+      // exact title match via the container testid: a hasText filter would
+      // also match longer titles containing this one as a substring
+      // (e.g. "Panel repeat 1" would match "Panel repeat 10")
+      return this.getContainers(title, scope).getByTestId(this.selectors.components.Panels.Panel.headerContainer);
+    }
+    const headers = (scope ?? this.page).getByTestId(this.selectors.components.Panels.Panel.headerContainer);
     return title === undefined ? headers : headers.filter({ hasText: title });
   }
 
-  getHeader(title: string | RegExp) {
-    return this.getHeaders(title).first();
+  getHeader(title: string | RegExp, scope?: Locator): Locator {
+    return this.getHeaders(title, scope).first();
   }
 
   getBodies() {
-    // the rendered panel body below the header ("data-testid panel content"),
-    // present on every non-collapsed panel, including hover-header ones
+    // the rendered panel body below the header
     return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Panels.Panel.content);
   }
 

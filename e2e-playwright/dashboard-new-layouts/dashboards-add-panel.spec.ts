@@ -95,6 +95,7 @@ test.describe(
     }) => {
       const dashboardPage = await gotoDashboardPage({});
 
+      const panels = new Panels({ page, dashboardPage, selectors, components });
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
       const canvas = new Canvas({ page, dashboardPage, selectors, components });
       const tabs = new Tabs({ page, dashboardPage, selectors, components });
@@ -111,17 +112,17 @@ test.describe(
 
       // add a new panel to this tab
       await addPanelFromSidebar(sidebar);
-      await expect(tab1.getByTestId(selectors.components.Panels.Panel.title('New panel'))).toHaveCount(2);
+      await expect(panels.getContainers('New panel', tab1)).toHaveCount(2);
 
       // add another tab and a new panel inside
       await canvas.addTab();
       const tab2 = await expectVisibleTab('New tab 1', tabs);
 
       await addPanelFromSidebar(sidebar);
-      await expect(tab2.getByTestId(selectors.components.Panels.Panel.title('New panel'))).toHaveCount(1);
+      await expect(panels.getContainers('New panel', tab2)).toHaveCount(1);
 
       await addPanelFromSidebar(sidebar);
-      await expect(tab2.getByTestId(selectors.components.Panels.Panel.title('New panel'))).toHaveCount(2);
+      await expect(panels.getContainers('New panel', tab2)).toHaveCount(2);
 
       // group into row
       await canvas.groupPanels('row', tab2);
@@ -129,18 +130,18 @@ test.describe(
 
       // add a panel to the row
       await addPanelFromSidebar(sidebar);
-      await expect(row1.getByTestId(selectors.components.Panels.Panel.title('New panel'))).toHaveCount(3);
+      await expect(panels.getContainers('New panel', row1)).toHaveCount(3);
 
       // add another row and a couple of panels to it
       await canvas.addRow();
       const row2 = await expectVisibleRow('New row 1', rows);
 
       await addPanelFromSidebar(sidebar);
-      await expect(row2.getByTestId(selectors.components.Panels.Panel.title('New panel'))).toHaveCount(1);
+      await expect(panels.getContainers('New panel', row2)).toHaveCount(1);
 
       // use the canvas
       await canvas.addPanel(row2);
-      await expect(row2.getByTestId(selectors.components.Panels.Panel.title('New panel'))).toHaveCount(2);
+      await expect(panels.getContainers('New panel', row2)).toHaveCount(2);
     });
   }
 );
