@@ -33,6 +33,10 @@ export function loadNotebookScenePage() {
   return import(/* webpackChunkName: "NotebookScenePage" */ '../features/notebook/pages/NotebookScenePage');
 }
 
+export function loadNotebooksListPage() {
+  return import(/* webpackChunkName: "NotebooksListPage" */ '../features/notebook/pages/NotebooksListPage');
+}
+
 export function loadNotebookEditorPage() {
   return import(/* webpackChunkName: "NotebookEditorPage" */ '../features/notebook/pages/NotebookEditorPage');
 }
@@ -70,6 +74,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Notebook,
       component: SafeDynamicImport(loadNotebookScenePage),
+    },
+    {
+      path: '/notebooks',
+      component: SafeDynamicImport(loadNotebooksListPage),
     },
     {
       path: '/notebooks/edit/:uid',

@@ -12674,7 +12674,21 @@
     }
   },
   "notebook": {
-    "breadcrumb-title": "Notebooks"
+    "back-button": "All notebooks",
+    "breadcrumb-title": "Notebooks",
+    "copy-link": "Copy link",
+    "delete": "Delete notebook",
+    "delete-body": "Are you sure you want to delete this notebook?",
+    "delete-confirm": "Delete",
+    "delete-title": "Delete notebook",
+    "duplicate": "Duplicate notebook",
+    "edit-button": "Edit",
+    "link-copied": "Notebook link copied",
+    "more-actions": "More actions",
+    "time-picker": {
+      "move-backward-tooltip": "Move {{duration}} backward",
+      "move-forward-tooltip": "Move {{duration}} forward"
+    }
   },
   "notebooks": {
     "activity": {
@@ -12751,7 +12765,30 @@
       "visualization": "Visualization"
     },
     "list": {
-      "copy-title": "{{title}} (copy)"
+      "cell-count_one": "{{count}} block",
+      "cell-count_other": "{{count}} blocks",
+      "copy-link": "Copy link",
+      "copy-link-label": "Copy link to notebook {{title}}",
+      "copy-title": "{{title}} (copy)",
+      "delete": "Delete",
+      "delete-body": "Are you sure you want to delete \"{{title}}\"?",
+      "delete-confirm": "Delete",
+      "delete-label": "Delete notebook {{title}}",
+      "delete-title": "Delete notebook",
+      "duplicate": "Duplicate",
+      "duplicate-label": "Duplicate notebook {{title}}",
+      "edit": "Edit",
+      "empty-body": "Notebooks are living documents for investigations: mix text with live panels added from dashboards and Explore, and collaborate with your team in real time.",
+      "empty-title": "You have not created any notebooks yet",
+      "link-copied": "Notebook link copied",
+      "new-notebook": "New notebook",
+      "new-notebook-title": "Investigation — {{date}}",
+      "no-results": "No notebooks match your search",
+      "panel-count_one": "{{count}} panel",
+      "panel-count_other": "{{count}} panels",
+      "search-placeholder": "Search notebooks by name, description or tag",
+      "subtitle": "Capture investigations combining narrative text with live visualizations from your dashboards and Explore.",
+      "updated": "Updated {{when}}"
     },
     "markdown-cell": {
       "edit-label": "Edit text cell",
