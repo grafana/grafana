@@ -6,7 +6,7 @@ import { type DashboardV2Version, dashboardAPIVersionResolver } from '../../dash
 /**
  * Wire transformation is what the API returns — either v2 stable or v2beta1 shape.
  */
-type WireTransformation = TransformationKind | V2Beta1TransformationKind;
+export type WireTransformation = TransformationKind | V2Beta1TransformationKind;
 
 function isV2Transformation(t: WireTransformation): t is TransformationKind {
   return t.kind === 'Transformation' && 'group' in t;

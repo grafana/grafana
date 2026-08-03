@@ -25,9 +25,12 @@ describe('buildNotebookEnvelope', () => {
     expect(envelope.kind).toBe('DashboardWithAccessInfo');
     expect(envelope.apiVersion).toBe(notebook.apiVersion);
     expect(envelope.metadata).toBe(notebook.metadata);
-    // The notebook's own fields are carried onto the spec.
+    // The notebook's own fields are carried onto the spec. `elements` is rebuilt rather than
+    // passed by reference: panel transformations are converted from the notebook's v2beta1 wire
+    // shape to the v2 shape the scene speaks (elements without transformations are still carried
+    // by reference inside the new map).
     expect(envelope.spec.title).toBe('My notebook');
-    expect(envelope.spec.elements).toBe(notebook.spec.elements);
+    expect(envelope.spec.elements).toEqual(notebook.spec.elements);
     expect(envelope.spec.layout).toBe(notebook.spec.layout);
   });
 

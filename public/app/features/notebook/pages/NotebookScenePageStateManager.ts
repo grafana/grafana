@@ -8,7 +8,7 @@ import {
   type LoadDashboardOptions,
 } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
-import { NotebookLayoutManager } from 'app/features/dashboard-scene/scene/layout-notebook/NotebookLayoutManager';
+import { setNotebookDocumentHeader } from 'app/features/dashboard-scene/serialization/notebookSpecTransform';
 import { dispatch } from 'app/store/store';
 
 import { buildNotebookEnvelope } from '../scene/buildNotebookEnvelope';
@@ -61,11 +61,9 @@ export class NotebookScenePageStateManager extends DashboardScenePageStateManage
 
     // Surface the notebook's title and tags on the layout manager's own state so its header can
     // show them. The manager deliberately doesn't read them off the DashboardScene (that import
-    // would form a dependency cycle), so the loader pushes them down here.
-    const body = scene?.state.body;
-    if (body instanceof NotebookLayoutManager) {
-      body.setState({ title: rsp?.spec.title, tags: rsp?.spec.tags });
-    }
+    // would form a dependency cycle), so the loader pushes them down here. Shared with the
+    // full-spec apply path, which rebuilds the layout manager and must restore the same header.
+    setNotebookDocumentHeader(scene?.state.body, rsp?.spec.title, rsp?.spec.tags);
 
     return scene;
   }

@@ -68,7 +68,7 @@ import type {
  * validated, `satisfies z.ZodType<...>` holds, and `z.toJSONSchema` still emits
  * a proper `array` type (a trailing transform would collapse it to `any`).
  */
-function nullableArray<T extends z.ZodTypeAny>(element: T) {
+export function nullableArray<T extends z.ZodTypeAny>(element: T) {
   return z.preprocess((value) => (value == null ? [] : value), z.array(element));
 }
 
@@ -81,7 +81,7 @@ const controlSourceRefSchema = z.object({
   group: z.string(),
 }) satisfies z.ZodType<ControlSourceRef>;
 
-const elementReferenceSchema = z.object({
+export const elementReferenceSchema = z.object({
   kind: z.literal('ElementReference'),
   name: z.string(),
 }) satisfies z.ZodType<ElementReference>;
@@ -409,13 +409,13 @@ const conditionalRenderingGroupKindSchema = z.object({
 // Panel (query stack + viz config)
 // ---------------------------------------------------------------------------
 
-const dataLinkSchema = z.object({
+export const dataLinkSchema = z.object({
   title: z.string(),
   url: z.string(),
   targetBlank: z.boolean().optional(),
 });
 
-const panelQueryKindSchema = z.object({
+export const panelQueryKindSchema = z.object({
   kind: z.literal('PanelQuery'),
   spec: z.object({
     query: dataQueryKindSchema,
@@ -424,7 +424,7 @@ const panelQueryKindSchema = z.object({
   }),
 }) satisfies z.ZodType<PanelQueryKind>;
 
-const matcherConfigSchema = z.object({
+export const matcherConfigSchema = z.object({
   id: z.string().optional().default(''),
   scope: z.enum(['series', 'nested', 'annotation', 'exemplar']).optional(),
   options: z.unknown().optional(),
@@ -441,7 +441,7 @@ const transformationKindSchema = z.object({
   }),
 }) satisfies z.ZodType<TransformationKind>;
 
-const queryOptionsSpecSchema = z.object({
+export const queryOptionsSpecSchema = z.object({
   timeFrom: z.string().optional(),
   maxDataPoints: z.number().optional(),
   timeShift: z.string().optional(),
@@ -474,7 +474,7 @@ const fieldConfigSourceSchema = z.object({
   ),
 }) satisfies z.ZodType<FieldConfigSource>;
 
-const vizConfigKindSchema = z.object({
+export const vizConfigKindSchema = z.object({
   kind: z.literal('VizConfig'),
   group: z.string(),
   // The panel plugin version is runtime metadata (used only for panel
@@ -491,7 +491,7 @@ const vizConfigKindSchema = z.object({
   }),
 }) satisfies z.ZodType<VizConfigKind>;
 
-const panelKindSchema = z.object({
+export const panelKindSchema = z.object({
   kind: z.literal('Panel'),
   spec: z.object({
     id: z.number(),
@@ -505,7 +505,7 @@ const panelKindSchema = z.object({
   }),
 }) satisfies z.ZodType<PanelKind>;
 
-const libraryPanelKindSchema = z.object({
+export const libraryPanelKindSchema = z.object({
   kind: z.literal('LibraryPanel'),
   spec: z.object({
     id: z.number(),
@@ -642,7 +642,7 @@ const timeRangeOptionSchema = z.object({
   to: z.string().optional().default('now'),
 }) satisfies z.ZodType<TimeRangeOption>;
 
-const timeSettingsSpecSchema = z.object({
+export const timeSettingsSpecSchema = z.object({
   timezone: z.string().optional().default('browser'),
   from: z.string().optional().default('now-6h'),
   to: z.string().optional().default('now'),
