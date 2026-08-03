@@ -669,6 +669,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 	}
 
 	var lastID int64
+	rowCount := 0
 	for rows.Next() {
 		p := panel{}
 		err = rows.Scan(&p.ID, &p.UID, &p.FolderUID,
@@ -678,6 +679,11 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		)
 		if err != nil {
 			return res, err
+		}
+		rowCount++
+		if rowCount > limit {
+			res.Continue = strconv.FormatInt(lastID, 10)
+			break
 		}
 		lastID = p.ID
 
@@ -695,10 +701,6 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 		}
 
 		res.Items = append(res.Items, item)
-		if len(res.Items) > limit {
-			res.Continue = strconv.FormatInt(lastID, 10)
-			break
-		}
 	}
 	if query.UID == "" {
 		rv, err := helper.GetResourceVersion(ctx, "library_element", "updated")
