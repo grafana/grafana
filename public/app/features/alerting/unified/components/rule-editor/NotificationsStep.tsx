@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { RadioButtonGroup, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
@@ -186,7 +187,9 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
     <Stack direction="column" gap={2}>
       <Stack direction="column">
         <RadioButtonGroup
-          data-testid={manualRouting ? 'routing-options-contact-point' : 'routing-options-notification-policy'}
+          data-testid={selectors.components.AlertRules.routingOptions(
+            manualRouting ? 'contact-point' : 'notification-policy'
+          )}
           options={routingOptions}
           value={manualRouting ? RoutingOptions.ContactPoint : RoutingOptions.NotificationPolicy}
           onChange={onRoutingOptionChange}

@@ -18,7 +18,10 @@
     "secondary": {
       "main": "palette.neutral200",
       "background": "palette.neutral200",
+      "shade": "palette.neutral300",
+      "backgroundEmphasis": "palette.neutral300",
       "border": "palette.neutral300",
+      "borderEmphasis": "palette.neutral350",
       "text": "palette.neutral800",
       "contrastText": "palette.neutral800"
     },
@@ -86,7 +89,7 @@
       "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
       "brandVertical": "linear-gradient(0.01deg, palette.orange400 0.01%, palette.orange500 99.99%)"
     },
-    "contrastThreshold": 4.5,
+    "contrastThreshold": 3,
     "action": {
       "selected": "hsl(from palette.neutral900 h s l / 0.12)",
       "hover": "hsl(from palette.neutral900 h s l / 0.09)",

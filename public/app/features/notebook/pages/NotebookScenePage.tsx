@@ -71,7 +71,7 @@ export function NotebookScenePage() {
 }
 
 // The POC notebook is a read-only document, so we render the scene body inside a plain
-// Page instead of DashboardScene.Component — that keeps the dashboard toolbar, edit pane
+// Page instead of DashboardScene.Component — that keeps the dashboard toolbar, sidebar
 // and outline sidebar out. The scene is activated so panels still run their queries and
 // resolve the shared time range; the title stays via the page breadcrumb (pageNav).
 function NotebookDocument({ scene }: { scene: DashboardScene }) {

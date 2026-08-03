@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { firstValueFrom } from 'rxjs';
 
 import { onUpdateDatasourceJsonDataOptionSelect, onUpdateDatasourceOption } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { getBackendSrv } from '@grafana/runtime';
 import {
   Box,
@@ -213,7 +214,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
         <Box direction="column" marginTop={3}>
           <Field label="URL" noMargin required invalid={!!fieldErrors.url} error={fieldErrors.url}>
             <Input
-              data-testid="influxdb-v2-config-url-input"
+              data-testid={selectors.components.DataSource.InfluxDB.configPage.urlInput}
               placeholder="example: http://localhost:8086/"
               onChange={onUrlChange}
               value={options.url || ''}
@@ -250,7 +251,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                     error={fieldErrors.product}
                   >
                     <Combobox
-                      data-testid="influxdb-v2-config-product-select"
+                      data-testid={selectors.components.DataSource.InfluxDB.configPage.productSelect}
                       value={options.jsonData.product}
                       options={INFLUXDB_VERSION_MAP.map(({ name }) => ({ value: name }))}
                       onChange={onProductChange}
@@ -269,7 +270,7 @@ export const UrlAndAuthenticationSection = (props: Props) => {
                     error={fieldErrors.version}
                   >
                     <Combobox
-                      data-testid="influxdb-v2-config-query-language-select"
+                      data-testid={selectors.components.DataSource.InfluxDB.configPage.queryLanguageSelect}
                       value={options.jsonData.product !== '' ? options.jsonData.version : ''}
                       options={getQueryLanguageOptions(options.jsonData.product || '')}
                       onChange={onQueryLanguageChange}

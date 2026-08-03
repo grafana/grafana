@@ -13,19 +13,19 @@ import {
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { SectionFiltersList } from '../../edit-pane/SectionFiltersList';
-import { partitionVariablesByDisplay } from '../../edit-pane/dashboard/DashboardVariablesList';
 import {
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../../scene/types/EditableDashboardElement';
+import { SectionFiltersList } from '../../sidebar/SectionFiltersList';
+import { partitionVariablesByDisplay } from '../../sidebar/dashboard/DashboardVariablesList';
 import { filterSectionRepeatLocalVariables } from '../../variables/utils';
 
 export interface SectionFiltersSetState extends SceneObjectState {
   sectionRef: SceneObjectRef<SceneObject>;
 }
 
-function useEditPaneOptions(
+function useSidebarOptions(
   this: SectionFiltersSet,
   sectionRef: SceneObjectRef<SceneObject>
 ): OptionsPaneCategoryDescriptor[] {
@@ -62,9 +62,9 @@ export class SectionFiltersSet extends SceneObjectBase<SectionFiltersSetState> i
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.edit-pane.elements.section-filters-set', 'Filters'),
+      typeName: t('dashboard.sidebar.elements.section-filters-set', 'Filters'),
       icon: 'filter',
-      instanceName: t('dashboard.edit-pane.elements.section-filters-set', 'Filters'),
+      instanceName: t('dashboard.sidebar.elements.section-filters-set', 'Filters'),
     };
   }
 
@@ -84,5 +84,5 @@ export class SectionFiltersSet extends SceneObjectBase<SectionFiltersSetState> i
     );
   }
 
-  public useEditPaneOptions = useEditPaneOptions.bind(this, this.state.sectionRef);
+  public useSidebarOptions = useSidebarOptions.bind(this, this.state.sectionRef);
 }

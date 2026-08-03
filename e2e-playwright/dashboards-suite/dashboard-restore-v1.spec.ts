@@ -6,7 +6,7 @@ import { Sidebar } from '../dashboard-new-layouts/page-objects';
 
 import { makeNewDashboardRequestBody } from './utils/makeDashboard';
 
-// New-layouts has no settings toolbar button; settings open from the dashboard edit-pane
+// New-layouts has no settings toolbar button; settings open from the dashboard sidebar
 // "Dashboard options" sidebar button, then the "View all settings" button it reveals.
 async function openDashboardSettings(
   page: Page,
@@ -163,8 +163,8 @@ test.describe(
         await page.getByTestId(selectors.pages.ConfirmModal.input).fill('Delete');
         await page.getByTestId(selectors.pages.ConfirmModal.delete).click();
 
-        // Wait for redirect to home after deletion
-        await page.waitForURL('**/');
+        // Wait for redirect to home after deletion (?orgId=N may be appended by locationService)
+        await page.waitForURL((url) => url.pathname === '/');
 
         // Navigate to recently deleted
         await page.goto('/dashboard/recently-deleted');

@@ -2,7 +2,8 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { type NavModelItem, type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
+import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 import { PageInfo } from '../PageInfo/PageInfo';
 
@@ -20,6 +21,7 @@ export interface Props {
 
 export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEditTitle }: Props) {
   const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const sub = subTitle ?? navItem.subTitle;
 
   return (
@@ -28,6 +30,11 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
         <div className={styles.titleInfoContainer}>
           <div className={styles.title}>
             {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
+            {navItem.icon && visualRefreshEnabled && (
+              <div className={styles.icon}>
+                <Icon name={navItem.icon} size="lg" />
+              </div>
+            )}
             {onEditTitle ? (
               <EditableTitle value={navItem.text} onEdit={onEditTitle} />
             ) : renderTitle ? (
@@ -59,6 +66,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'row',
       maxWidth: '100%',
       flex: 1,
+      alignItems: 'center',
       h1: {
         marginBottom: 0,
       },
@@ -93,6 +101,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: '32px',
       height: '32px',
       marginRight: theme.spacing(2),
+    }),
+    icon: css({
+      marginRight: theme.spacing(1.5),
+      color: theme.colors.accent.text,
+      backgroundColor: theme.colors.accent.transparent,
+      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(1),
+      width: theme.spacing(4.5),
+      height: theme.spacing(4.5),
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
     }),
   };
 };

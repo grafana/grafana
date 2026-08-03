@@ -6,11 +6,11 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
-import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
+import { type DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
-import { containsTabsLayout } from './findAllGridTypes';
+import { hasDirectTabsChild } from './hasDirectTabsChild';
 import { layoutRegistry } from './layoutRegistry';
 
 export interface Props {
@@ -22,18 +22,19 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
   const options = layoutRegistry.list().filter((layout) => layout.isGridLayout === isGridLayout);
   const [newLayout, setNewLayout] = useState<LayoutRegistryItem | undefined>();
 
-  const disableTabsReason = useMemo(() => {
-    // Check parent hierarchy
+  const disableTabsReason = useMemo((): 'parent' | 'child' | undefined => {
     let parent = layoutManager.parent;
     while (parent) {
-      if (parent instanceof TabsLayoutManager) {
-        return 'parent';
+      if (isDashboardLayoutManager(parent)) {
+        if (parent instanceof TabsLayoutManager) {
+          return 'parent';
+        }
+        break;
       }
       parent = parent.parent;
     }
 
-    // Check child hierarchy
-    if (containsTabsLayout(layoutManager)) {
+    if (hasDirectTabsChild(layoutManager)) {
       return 'child';
     }
 
@@ -64,7 +65,7 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
 
   const onDismissNewLayout = useCallback(() => setNewLayout(undefined), []);
 
-  const disabledOptions: LayoutRegistryItem[] = [];
+  const disabledOptions: string[] = [];
 
   const radioOptions = options.map((opt) => {
     let description = opt.description;
@@ -77,11 +78,13 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
           'Cannot change to tabs because a row already contains tabs'
         );
       }
-      disabledOptions.push(opt);
+      disabledOptions.push(opt.id);
     }
 
+    // The option value is the layout's stable id (not the registry item object) so that
+    // RadioButtonGroup can emit a per-option data-testid keyed on it.
     return {
-      value: opt,
+      value: opt.id,
       label: opt.name,
       icon: opt.icon,
       description,
@@ -89,14 +92,30 @@ export function DashboardLayoutSelector({ layoutManager }: Props) {
     };
   });
 
+  const onChangeLayout = useCallback(
+    (id: string) => {
+      const layoutItem = options.find((opt) => opt.id === id);
+      if (!layoutItem) {
+        return;
+      }
+
+      if (isGridLayout) {
+        promptLayoutChange(layoutItem);
+      } else {
+        switchLayout(layoutItem);
+      }
+    },
+    [options, isGridLayout, promptLayoutChange, switchLayout]
+  );
+
   return (
     <>
       <Box paddingBottom={2} display="flex" grow={1} alignItems="stretch" gap={2} direction={'column'}>
         <RadioButtonGroup
           fullWidth
-          value={layoutManager.descriptor}
+          value={layoutManager.descriptor.id}
           options={radioOptions}
-          onChange={!isGridLayout ? switchLayout : promptLayoutChange}
+          onChange={onChangeLayout}
           disabledOptions={disabledOptions}
         />
       </Box>

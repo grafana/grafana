@@ -15,14 +15,15 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-func ProvideService(sqlStore db.DB, tracer tracing.Tracer) *ServerLockService {
+func ProvideService(sql legacysql.LegacyDatabaseProvider, tracer tracing.Tracer) *ServerLockService {
 	return &ServerLockService{
-		SQLStore: sqlStore,
-		tracer:   tracer,
-		log:      log.New("infra.lockservice"),
+		sql:    sql,
+		tracer: tracer,
+		log:    log.New("infra.lockservice"),
 	}
 }
 
@@ -30,9 +31,9 @@ func ProvideService(sqlStore db.DB, tracer tracing.Tracer) *ServerLockService {
 // It exposes 2 services LockAndExecute and LockExecuteAndRelease, which are intended to be used independently, don't mix
 // them up (ie, use the same actionName for both of them).
 type ServerLockService struct {
-	SQLStore db.DB
-	tracer   tracing.Tracer
-	log      log.Logger
+	sql    legacysql.LegacyDatabaseProvider
+	tracer tracing.Tracer
+	log    log.Logger
 }
 
 // LockAndExecute try to create a lock for this server and only executes the
@@ -77,21 +78,43 @@ func (sl *ServerLockService) LockAndExecute(ctx context.Context, actionName stri
 	return nil
 }
 
+type updateVersionQuery struct {
+	sqltemplate.SQLTemplate
+	ServerLockTable string
+	Version         int64
+	LastExecution   int64
+	OperationUID    string
+	PreviousVersion int64
+}
+
+func (updateVersionQuery) Validate() error {
+	return nil
+}
+
 func (sl *ServerLockService) acquireLock(ctx context.Context, serverLock *serverLock) (bool, error) {
 	ctx, span := sl.tracer.Start(ctx, "ServerLockService.acquireLock")
 	defer span.End()
 	var result bool
 
-	err := sl.SQLStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		newVersion := serverLock.Version + 1
-		sql := `UPDATE server_lock SET
-			version = ?,
-			last_execution = ?
-		WHERE
-			operation_uid = ? AND version = ?`
+	dbHelper, err := sl.sql(ctx)
+	if err != nil {
+		return false, fmt.Errorf("get legacy DB: %w", err)
+	}
 
-		res, err := dbSession.Exec(sql, newVersion, time.Now().Unix(),
-			serverLock.OperationUID, serverLock.Version)
+	err = dbHelper.DB.WithDbSession(ctx, func(dbSession *db.Session) error {
+		query := updateVersionQuery{
+			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+			ServerLockTable: dbHelper.Table("server_lock"),
+			Version:         serverLock.Version + 1,
+			LastExecution:   time.Now().Unix(),
+			OperationUID:    serverLock.OperationUID,
+			PreviousVersion: serverLock.Version,
+		}
+		rawSQL, err := sqltemplate.Execute(updateVersionTemplate, query)
+		if err != nil {
+			return err
+		}
+		res, err := dbSession.Exec(append([]any{rawSQL}, query.GetArgs()...)...)
 		if err != nil {
 			return err
 		}
@@ -105,15 +128,38 @@ func (sl *ServerLockService) acquireLock(ctx context.Context, serverLock *server
 	return result, err
 }
 
+type getLockQuery struct {
+	sqltemplate.SQLTemplate
+	ServerLockTable string
+	OperationUID    string
+}
+
+func (getLockQuery) Validate() error {
+	return nil
+}
+
 func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string) (*serverLock, error) {
 	ctx, span := sl.tracer.Start(ctx, "ServerLockService.getOrCreate")
 	defer span.End()
 
 	var result *serverLock
-	err := sl.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
+	dbHelper, err := sl.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
+
+	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
+		query := getLockQuery{
+			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+			ServerLockTable: dbHelper.Table("server_lock"),
+			OperationUID:    actionName,
+		}
+		rawSQL, err := sqltemplate.Execute(getLockTemplate, query)
+		if err != nil {
+			return err
+		}
 		sqlRes := &serverLock{}
-		has, err := dbSession.SQL("SELECT * FROM server_lock WHERE operation_uid = ?",
-			actionName).Get(sqlRes)
+		has, err := dbSession.SQL(rawSQL, query.GetArgs()...).Get(sqlRes)
 		if err != nil {
 			return err
 		}
@@ -127,7 +173,7 @@ func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string)
 			OperationUID:  actionName,
 			LastExecution: 0,
 		}
-		result, err = sl.createLock(ctx, lockRow, dbSession)
+		result, err = sl.createLock(ctx, lockRow, dbHelper, dbSession)
 		return err
 	})
 
@@ -241,24 +287,52 @@ func lockWait(minWait time.Duration, maxWait time.Duration) time.Duration {
 	return time.Duration(rand.Int63n(int64(maxWait-minWait)) + int64(minWait))
 }
 
+type getLockForUpdateQuery struct {
+	sqltemplate.SQLTemplate
+	ServerLockTable string
+	OperationUID    string
+}
+
+func (getLockForUpdateQuery) Validate() error {
+	return nil
+}
+
+type updateLastExecutionQuery struct {
+	sqltemplate.SQLTemplate
+	ServerLockTable string
+	LastExecution   int64
+	OperationUID    string
+}
+
+func (updateLastExecutionQuery) Validate() error {
+	return nil
+}
+
 // acquireForRelease will check if the lock is already on the database, if it is, will check with maxInterval if it is
 // timeouted. Returns nil error if the lock was acquired correctly
 func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName string, maxInterval time.Duration) error {
 	ctx, span := sl.tracer.Start(ctx, "ServerLockService.acquireForRelease")
 	defer span.End()
 
+	dbHelper, err := sl.sql(ctx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
+
 	// getting the lock - as the action name has a Unique constraint, this will fail if the lock is already on the database
-	err := sl.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
+	err = dbHelper.DB.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
+		query := getLockForUpdateQuery{
+			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+			ServerLockTable: dbHelper.Table("server_lock"),
+			OperationUID:    actionName,
+		}
+		rawSQL, err := sqltemplate.Execute(getLockForUpdateTemplate, query)
+		if err != nil {
+			return err
+		}
 		// we need to find if the lock is in the database
 		result := &serverLock{}
-		sqlRaw := `SELECT * FROM server_lock WHERE operation_uid = ?`
-		if sl.SQLStore.GetDBType() == migrator.MySQL || sl.SQLStore.GetDBType() == migrator.Postgres {
-			sqlRaw += ` FOR UPDATE`
-		}
-
-		has, err := dbSession.SQL(
-			sqlRaw,
-			actionName).Get(result)
+		has, err := dbSession.SQL(rawSQL, query.GetArgs()...).Get(result)
 		if err != nil {
 			return err
 		}
@@ -271,8 +345,17 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 			}
 			// lock has timed out, so we update the timestamp
 			result.LastExecution = time.Now().Unix()
-			res, err := dbSession.Exec("UPDATE server_lock SET last_execution = ? WHERE operation_uid = ?",
-				result.LastExecution, actionName)
+			updateQuery := updateLastExecutionQuery{
+				SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+				ServerLockTable: dbHelper.Table("server_lock"),
+				LastExecution:   result.LastExecution,
+				OperationUID:    actionName,
+			}
+			updateSQL, err := sqltemplate.Execute(updateLastExecutionTemplate, updateQuery)
+			if err != nil {
+				return err
+			}
+			res, err := dbSession.Exec(append([]any{updateSQL}, updateQuery.GetArgs()...)...)
 			if err != nil {
 				return err
 			}
@@ -294,11 +377,21 @@ func (sl *ServerLockService) acquireForRelease(ctx context.Context, actionName s
 			OperationUID:  actionName,
 			LastExecution: time.Now().Unix(),
 		}
-		_, err = sl.createLock(ctx, lock, dbSession)
+		_, err = sl.createLock(ctx, lock, dbHelper, dbSession)
 		return err
 	})
 
 	return err
+}
+
+type releaseLockQuery struct {
+	sqltemplate.SQLTemplate
+	ServerLockTable string
+	OperationUID    string
+}
+
+func (releaseLockQuery) Validate() error {
+	return nil
 }
 
 // releaseLock will delete the row at the database. This is only intended to be used within the scope of LockExecuteAndRelease
@@ -310,10 +403,22 @@ func (sl *ServerLockService) releaseLock(ctx context.Context, actionName string)
 	// ensure clean up happens even if the context is cancelled
 	dbCtx := context.WithoutCancel(ctx)
 
-	err := sl.SQLStore.WithDbSession(dbCtx, func(dbSession *db.Session) error {
-		sql := `DELETE FROM server_lock WHERE operation_uid=? `
+	dbHelper, err := sl.sql(dbCtx)
+	if err != nil {
+		return fmt.Errorf("get legacy DB: %w", err)
+	}
 
-		res, err := dbSession.Exec(sql, actionName)
+	err = dbHelper.DB.WithDbSession(dbCtx, func(dbSession *db.Session) error {
+		query := releaseLockQuery{
+			SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+			ServerLockTable: dbHelper.Table("server_lock"),
+			OperationUID:    actionName,
+		}
+		rawSQL, err := sqltemplate.Execute(releaseLockTemplate, query)
+		if err != nil {
+			return err
+		}
+		res, err := dbSession.Exec(append([]any{rawSQL}, query.GetArgs()...)...)
 		if err != nil {
 			return err
 		}
@@ -354,15 +459,36 @@ func (sl *ServerLockService) executeFunc(ctx context.Context, actionName string,
 	ctxLogger.Debug("Execution finished", "actionName", actionName, "duration", time.Since(start))
 }
 
+type createLockQuery struct {
+	sqltemplate.SQLTemplate
+	ServerLockTable string
+	OperationUID    string
+	LastExecution   int64
+	Version         int64
+}
+
+func (createLockQuery) Validate() error {
+	return nil
+}
+
 func (sl *ServerLockService) createLock(ctx context.Context,
-	lockRow *serverLock, dbSession *sqlstore.DBSession,
+	lockRow *serverLock, dbHelper *legacysql.LegacyDatabaseHelper, dbSession *sqlstore.DBSession,
 ) (*serverLock, error) {
 	affected := int64(1)
-	rawSQL := `INSERT INTO server_lock (operation_uid, last_execution, version) VALUES (?, ?, ?)`
-	if sl.SQLStore.GetDBType() == migrator.Postgres {
-		rawSQL += ` ON CONFLICT DO NOTHING RETURNING id`
+	query := createLockQuery{
+		SQLTemplate:     sqltemplate.New(dbHelper.DialectForDriver()),
+		ServerLockTable: dbHelper.Table("server_lock"),
+		OperationUID:    lockRow.OperationUID,
+		LastExecution:   lockRow.LastExecution,
+		Version:         0,
+	}
+	rawSQL, err := sqltemplate.Execute(createLockTemplate, query)
+	if err != nil {
+		return nil, err
+	}
+	if query.DialectName() == "postgres" {
 		var id int64
-		_, err := dbSession.SQL(rawSQL, lockRow.OperationUID, lockRow.LastExecution, 0).Get(&id)
+		_, err := dbSession.SQL(rawSQL, query.GetArgs()...).Get(&id)
 		if err != nil {
 			return nil, err
 		}
@@ -377,9 +503,7 @@ func (sl *ServerLockService) createLock(ctx context.Context,
 		}
 		lockRow.Id = id
 	} else {
-		res, err := dbSession.Exec(
-			rawSQL,
-			lockRow.OperationUID, lockRow.LastExecution, 0)
+		res, err := dbSession.Exec(append([]any{rawSQL}, query.GetArgs()...)...)
 		if err != nil {
 			return nil, err
 		}
