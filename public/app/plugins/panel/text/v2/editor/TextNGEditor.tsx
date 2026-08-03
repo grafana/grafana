@@ -13,7 +13,9 @@ import { CodeLanguage, defaultCodeLanguage, TextMode } from '../../panelcfg.gen'
 import { TextNGCodeView } from '../TextNGCodeView';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
+import { TextNGEditorFooter } from './TextNGEditorFooter';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
+import { getEditorLayoutStyles } from './editorLayout';
 import { variableCompletion } from './variableCompletion';
 
 type ViewMode = 'write' | 'split' | 'preview';
@@ -25,6 +27,7 @@ export interface TextNGEditorChange {
   content: string;
   mode?: TextMode;
   codeLanguage?: CodeLanguage;
+  showLineNumbers?: boolean;
 }
 
 export interface TextNGEditorProps {
@@ -197,17 +200,18 @@ export function TextNGEditor({
   );
 
   const showEditor = view !== 'preview';
+  const isCode = mode === TextMode.Code;
 
   const renderOutput = (testId: string) =>
-    mode === TextMode.Code ? (
-      <div className={styles.codeView} data-testid={testId}>
+    isCode ? (
+      <div className={styles.fullHeight} data-testid={testId}>
         <TextNGCodeView content={interpolatedContent} language={codeLanguage} showLineNumbers={showLineNumbers} />
       </div>
     ) : (
       <DangerouslySetHtmlContent
         allowRerender
         html={previewHtml}
-        className={cx('markdown-html', styles.markdownHtml)}
+        className={cx('markdown-html', styles.fullHeight)}
         data-testid={testId}
       />
     );
@@ -251,21 +255,25 @@ export function TextNGEditor({
             />
           </div>
         )}
-        {showPreview && <div className={cx(styles.pane, styles.previewPane)}>{renderOutput(PREVIEW_TEST_ID)}</div>}
+        {showPreview && (
+          <div className={cx(styles.pane, styles.previewPane, !isCode && styles.htmlPreviewPane)}>
+            {renderOutput(PREVIEW_TEST_ID)}
+          </div>
+        )}
       </div>
+
+      {isCode && (
+        <TextNGEditorFooter
+          showLineNumbers={showLineNumbers}
+          onShowLineNumbersChange={(next) => changeOption({ showLineNumbers: next })}
+        />
+      )}
     </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css({
-    label: 'textNGEditor',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-    width: '100%',
-    height: '100%',
-  }),
+  ...getEditorLayoutStyles(theme),
   modePicker: css({
     marginLeft: 'auto',
   }),
@@ -275,41 +283,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   pickerLabel: css({
     color: theme.colors.text.secondary,
   }),
-  body: css({
-    display: 'flex',
-    flex: 1,
-    width: '100%',
-    minHeight: 0,
-  }),
-  splitBody: css({
-    gap: theme.spacing(1),
-  }),
-  pane: css({
-    flex: 1,
-    minWidth: 0,
-    overflow: 'hidden',
-    border: `1px solid ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.default,
-  }),
-  editorPane: css({
-    display: 'flex',
-    flexDirection: 'column',
-    // Give CodeMirror a bounded height so it scrolls internally instead of growing.
-    '& > *': {
-      flex: 1,
-      minHeight: 0,
-      overflow: 'auto',
-    },
-  }),
-  previewPane: css({
-    overflow: 'auto',
-    padding: theme.spacing(1, 2),
-    background: theme.colors.background.primary,
-  }),
-  markdownHtml: css({
-    height: '100%',
-  }),
-  codeView: css({
+  fullHeight: css({
     height: '100%',
   }),
 });
