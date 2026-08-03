@@ -771,6 +771,9 @@ func (lk8s *libraryElementsK8sHandler) patchK8sLibraryElement(c *contextmodel.Re
 	switch {
 	case cmd.FolderUID != nil:
 		folderUID = *cmd.FolderUID
+		if folderUID == "" {
+			folderUID = ac.GeneralFolderUID
+		}
 	case cmd.FolderID >= 0: // nolint:staticcheck
 		var ok bool
 		folderUID, ok = lk8s.folderUIDFromLegacyID(c, cmd.FolderID) // nolint:staticcheck
@@ -1259,7 +1262,7 @@ func (lk8s *libraryElementsK8sHandler) getClient(c *contextmodel.ReqContext) (dy
 
 func (lk8s *libraryElementsK8sHandler) folderUIDFromLegacyID(c *contextmodel.ReqContext, folderID int64) (string, bool) {
 	if folderID == 0 {
-		return "", true
+		return ac.GeneralFolderUID, true
 	}
 	folder, err := lk8s.folderService.Get(c.Req.Context(), &foldermodel.GetFolderQuery{
 		OrgID:        c.OrgID,

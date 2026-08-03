@@ -15,6 +15,7 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
@@ -281,6 +282,21 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	}, &model.LibraryElementResponse{})
 	require.Equal(t, http.StatusOK, patchWithoutFolderResponse.Response.StatusCode)
 	require.Equal(t, legacyFolder.UID, patchWithoutFolderResponse.Result.Result.FolderUID)
+	moveToRootBody, err := json.Marshal(map[string]interface{}{
+		"folderUid": "",
+		"kind":      1,
+		"version":   2,
+	})
+	require.NoError(t, err)
+	moveToRootResponse := apis.DoRequest(ctx.Helper, apis.RequestParams{
+		User:        ctx.AdminUser,
+		Method:      http.MethodPatch,
+		Path:        fmt.Sprintf("/api/library-elements/%s", createdByFolderIDResult["uid"]),
+		Body:        moveToRootBody,
+		ContentType: "application/json",
+	}, &model.LibraryElementResponse{})
+	require.Equal(t, http.StatusOK, moveToRootResponse.Response.StatusCode)
+	require.Equal(t, ac.GeneralFolderUID, moveToRootResponse.Result.Result.FolderUID)
 	require.NoError(t, deleteLibraryElement(t, ctx, ctx.AdminUser, createdByFolderIDResult["uid"].(string)))
 
 	// create: the display title and properties without a typed spec field (e.g.

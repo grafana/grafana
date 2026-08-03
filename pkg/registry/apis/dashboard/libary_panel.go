@@ -129,7 +129,7 @@ func (s *LibraryPanelStore) Update(ctx context.Context, name string, objInfo res
 		return nil, false, err
 	}
 
-	cmd, err := libraryelements.ToPatchLibraryElementCommand(obj)
+	cmd, err := libraryelements.ToPatchLibraryElementCommand(obj, old)
 	if err != nil {
 		return nil, false, apierrors.NewBadRequest(err.Error())
 	}

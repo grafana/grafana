@@ -34,16 +34,25 @@ func ToCreateLibraryElementCommand(raw runtime.Object) (*model.CreateLibraryElem
 	return cmd, err
 }
 
-func ToPatchLibraryElementCommand(raw runtime.Object) (*model.PatchLibraryElementCommand, error) {
+func ToPatchLibraryElementCommand(raw runtime.Object, previous runtime.Object) (*model.PatchLibraryElementCommand, error) {
 	obj, err := utils.MetaAccessor(raw)
 	if err != nil {
 		return nil, err
 	}
+	previousObj, err := utils.MetaAccessor(previous)
+	if err != nil {
+		return nil, err
+	}
 	folder := obj.GetFolder()
+	var folderUID *string
+	if folder != previousObj.GetFolder() {
+		folderUID = &folder
+	}
 	cmd := &model.PatchLibraryElementCommand{
 		UID:       obj.GetName(),
-		FolderUID: &folder,
-		Kind:      1, // the only kind... LibraryPanel
+		FolderUID: folderUID,
+		FolderID:  -1, // nolint:staticcheck
+		Kind:      1,  // the only kind... LibraryPanel
 		Name:      obj.FindTitle("library panel"),
 		// generation mirrors the legacy library element version, so it carries the
 		// optimistic-concurrency token through the k8s update path.
