@@ -1,10 +1,12 @@
+import { lastValueFrom } from 'rxjs';
+
 import { type LibraryPanelSpec, type LibraryPanelStatus } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { getBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type LibraryElementDTOMetaUser, type LibraryPanel } from '@grafana/schema';
 import { getAPIBaseURL } from 'app/api/utils';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
-import { getAPIGroupVersions } from 'app/features/apiserver/discovery';
+import { discoveryResources, getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
@@ -13,11 +15,14 @@ import {
   type ListOptions,
   type Resource,
   type ResourceForCreate,
+  type ResourceList,
 } from 'app/features/apiserver/types';
 
 const DASHBOARD_API_GROUP = 'dashboard.grafana.app';
 const DASHBOARD_API_VERSION = 'v0alpha1';
 const LIBRARY_PANELS_RESOURCE = 'librarypanels';
+const ROOT_FOLDER_NAME = 'General';
+const REQUIRED_RESOURCE_VERBS = ['get', 'list', 'create', 'update', 'delete'];
 
 export type LibraryPanelResource = Resource<LibraryPanelSpec, LibraryPanelStatus, 'LibraryPanel'>;
 
@@ -53,8 +58,14 @@ function isLibraryPanelApiAvailable(): Promise<boolean> {
     return apiAvailable;
   }
 
-  const pending = getAPIGroupVersions(DASHBOARD_API_GROUP).then(
-    (group) => group !== undefined && group.versions.has(DASHBOARD_API_VERSION)
+  const pending = getAPIGroupDiscoveryList().then((apis) =>
+    discoveryResources(apis).some(
+      (resource) =>
+        resource.responseKind.group === DASHBOARD_API_GROUP &&
+        resource.responseKind.version === DASHBOARD_API_VERSION &&
+        resource.resource === LIBRARY_PANELS_RESOURCE &&
+        REQUIRED_RESOURCE_VERBS.every((verb) => resource.verbs.includes(verb))
+    )
   );
 
   const result = pending.catch(() => false);
@@ -71,9 +82,9 @@ function isLibraryPanelApiAvailable(): Promise<boolean> {
 
 /**
  * The k8s library panels client is gated by the FE feature flag
- * (`libraryelements.kubernetesLibraryPanels`) and presence of the
- * `dashboard.grafana.app/v0alpha1` API in the apiserver discovery list, so we never
- * call endpoints an older backend does not serve.
+ * (`libraryelements.kubernetesLibraryPanels`) and discovery of the writable
+ * `dashboard.grafana.app/v0alpha1/librarypanels` resource, so we never call an
+ * endpoint an older backend does not serve.
  */
 export function isK8sLibraryPanelsClientEnabled(): Promise<boolean> {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.LibraryelementsKubernetesLibraryPanels, false)) {
@@ -93,6 +104,8 @@ const specModelKeys = new Set([
   'fieldConfig',
   'datasource',
   'targets',
+  'links',
+  'transparent',
   'libraryPanel',
   'id',
   'gridPos',
@@ -213,7 +226,7 @@ export function k8sResourceToLegacyDTO(
     model: k8sResourceToLegacyModel(item),
     version: metadata.generation ?? 1,
     meta: {
-      folderName: enrichment?.folderName ?? '',
+      folderName: enrichment?.folderName ?? (folderUid ? '' : ROOT_FOLDER_NAME),
       folderUid,
       connectedDashboards: enrichment?.connectedDashboards ?? 0,
       created,
@@ -225,8 +238,8 @@ export function k8sResourceToLegacyDTO(
 }
 
 /** Resolve folder titles for the given folder UIDs; unresolvable folders map to ''. */
-async function resolveFolderNames(folderUIDs: string[]): Promise<Map<string, string>> {
-  const titles = new Map<string, string>();
+async function resolveFolderNames(folderUIDs: string[], signal?: AbortSignal): Promise<Map<string, string>> {
+  const titles = new Map<string, string>([['', ROOT_FOLDER_NAME]]);
   const client = folderClient();
   await Promise.all(
     [...new Set(folderUIDs)].map(async (uid) => {
@@ -234,9 +247,23 @@ async function resolveFolderNames(folderUIDs: string[]): Promise<Map<string, str
         return;
       }
       try {
-        const folder = await client.get(uid);
+        const folder = signal
+          ? (
+              await lastValueFrom(
+                getBackendSrv().fetch<Resource<{ title: string }>>({
+                  method: 'GET',
+                  url: `${client.url}/${uid}`,
+                  abortSignal: signal,
+                  showErrorAlert: false,
+                })
+              )
+            ).data
+          : await client.get(uid);
         titles.set(uid, folder.spec.title);
-      } catch {
+      } catch (error) {
+        if (signal?.aborted) {
+          throw error;
+        }
         titles.set(uid, '');
       }
     })
@@ -286,12 +313,22 @@ async function fetchConnectedDashboardsCount(uid: string): Promise<number> {
   }
 }
 
-async function listAll(): Promise<LibraryPanelResource[]> {
+async function listAll(signal?: AbortSignal): Promise<LibraryPanelResource[]> {
   const client = resourceClient();
   const items: LibraryPanelResource[] = [];
   const opts: ListOptions = { limit: 500 };
   for (;;) {
-    const page = await client.list(opts);
+    const page = (
+      await lastValueFrom(
+        getBackendSrv().fetch<ResourceList<LibraryPanelSpec, LibraryPanelStatus, 'LibraryPanel'>>({
+          method: 'GET',
+          url: client.url,
+          params: opts,
+          abortSignal: signal,
+          showErrorAlert: false,
+        })
+      )
+    ).data;
     items.push(...page.items);
     if (!page.metadata.continue) {
       return items;
@@ -308,6 +345,7 @@ export interface K8sGetLibraryPanelsOptions {
   sortDirection?: string;
   typeFilter?: string[];
   folderFilterUIDs?: string[];
+  signal?: AbortSignal;
 }
 
 export interface K8sLibraryPanelsSearchResult {
@@ -326,8 +364,9 @@ export const libraryPanelsK8sClient = {
     sortDirection = '',
     typeFilter = [],
     folderFilterUIDs = [],
+    signal,
   }: K8sGetLibraryPanelsOptions = {}): Promise<K8sLibraryPanelsSearchResult> {
-    const items = await listAll();
+    const items = await listAll(signal);
     const search = searchString.trim().toLowerCase();
 
     // the legacy search also matches panels whose folder title contains the search
@@ -336,7 +375,10 @@ export const libraryPanelsK8sClient = {
     const matchByFolderTitle = search !== '' && folderFilterUIDs.length === 0;
     let folderNames = new Map<string, string>();
     if (matchByFolderTitle) {
-      folderNames = await resolveFolderNames(items.map((item) => item.metadata.annotations?.[AnnoKeyFolder] ?? ''));
+      folderNames = await resolveFolderNames(
+        items.map((item) => item.metadata.annotations?.[AnnoKeyFolder] ?? ''),
+        signal
+      );
     }
 
     const filtered = items.filter((item) => {
@@ -379,7 +421,10 @@ export const libraryPanelsK8sClient = {
     const start = Math.min(perPage * (page - 1), filtered.length);
     const pageItems = filtered.slice(start, start + perPage);
     if (!matchByFolderTitle) {
-      folderNames = await resolveFolderNames(pageItems.map((item) => item.metadata.annotations?.[AnnoKeyFolder] ?? ''));
+      folderNames = await resolveFolderNames(
+        pageItems.map((item) => item.metadata.annotations?.[AnnoKeyFolder] ?? ''),
+        signal
+      );
     }
 
     return {
@@ -396,8 +441,18 @@ export const libraryPanelsK8sClient = {
     };
   },
 
-  async get(uid: string): Promise<LibraryPanel> {
-    const item = await resourceClient().get(uid);
+  async get(uid: string, isHandled = false): Promise<LibraryPanel> {
+    const client = resourceClient();
+    const item = (
+      await lastValueFrom(
+        getBackendSrv().fetch<LibraryPanelResource>({
+          method: 'GET',
+          url: `${client.url}/${uid}`,
+          showSuccessAlert: !isHandled,
+          showErrorAlert: !isHandled,
+        })
+      )
+    ).data;
     const annotations = item.metadata.annotations ?? {};
     const createdByKey = annotations[AnnoKeyCreatedBy] ?? '';
     const updatedByKey = annotations[AnnoKeyUpdatedBy] ?? createdByKey;

@@ -53,6 +53,7 @@ export async function getLibraryPanels({
       sortDirection,
       typeFilter,
       folderFilterUIDs,
+      signal,
     });
   }
 
@@ -100,7 +101,7 @@ function migrateLibraryPanelModel(result: LibraryElementDTO): LibraryElementDTO 
 
 export async function getLibraryPanel(uid: string, isHandled = false): Promise<LibraryElementDTO> {
   if (await isK8sLibraryPanelsClientEnabled()) {
-    const result = await libraryPanelsK8sClient.get(uid);
+    const result = await libraryPanelsK8sClient.get(uid, isHandled);
     return migrateLibraryPanelModel(result);
   }
 
