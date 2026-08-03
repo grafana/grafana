@@ -11,26 +11,17 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// A preferred reorder of the scheme must not weaken the maxAllowedVersion cap: the resolver ranks
-// against an immutable snapshot captured before any preferred reorder.
-func TestNaturalOrderSnapshotDecouplesCapFromPreferred(t *testing.T) {
+// The maxAllowedVersion cap ranks major-first (a higher major always outranks), independent of scheme
+// priority — so a preferred reorder cannot move the ceiling, and the whole higher-major line is capped.
+func TestCapRanksMajorFirst(t *testing.T) {
 	const group = "dashboard.grafana.app"
-	v2 := schema.GroupVersion{Group: group, Version: "v2"}
-	v1 := schema.GroupVersion{Group: group, Version: "v1"}
+	gv := func(v string) schema.GroupVersion { return schema.GroupVersion{Group: group, Version: v} }
+	// Dashboard-style priority: the v2 line and v0alpha1 sit above v1 in scheme priority.
+	all := []schema.GroupVersion{gv("v2"), gv("v2beta1"), gv("v2alpha1"), gv("v0alpha1"), gv("v1"), gv("v1beta1")}
 
 	scheme := runtime.NewScheme()
-	// Natural (recency) order registered by the builder: v2 outranks v1.
-	require.NoError(t, scheme.SetVersionPriority(v2, v1))
-	groupVersions := []schema.GroupVersion{v2, v1}
-
-	// Snapshot captured BEFORE the preferred reorder.
-	natural := naturalOrderSnapshot(scheme, groupVersions)
-
-	// Simulate a preferred=v1 reorder: v1 now first in the live scheme.
-	require.NoError(t, scheme.SetVersionPriority(v1, v2))
-	require.Equal(t, "v1", scheme.PrioritizedVersionsForGroup(group)[0].Version,
-		"precondition: preferred reorder must put v1 first in the live scheme")
-	reordered := naturalOrderSnapshot(scheme, groupVersions)
+	require.NoError(t, scheme.SetVersionPriority(all...))
+	groupVersions := all
 
 	capRegistry := func(order map[string][]string) *versionpolicy.VersionPolicyRegistry {
 		return versionpolicy.NewVersionPolicyRegistry(
@@ -38,15 +29,27 @@ func TestNaturalOrderSnapshotDecouplesCapFromPreferred(t *testing.T) {
 			map[string]versionpolicy.VersionPolicy{group: {MaxAllowedVersion: "v1"}})
 	}
 
-	t.Run("snapshot taken before the reorder still rejects v2 over max=v1", func(t *testing.T) {
-		allowed, maxAllowed := capRegistry(natural).IsVersionAllowed(group, "v2")
-		require.False(t, allowed, "v2 must still outrank the max=v1 cap despite the preferred=v1 reorder")
-		require.Equal(t, "v1", maxAllowed)
+	t.Run("the whole v2 line outranks a v1 cap and is rejected", func(t *testing.T) {
+		reg := capRegistry(naturalOrderSnapshot(scheme, groupVersions))
+		for _, v := range []string{"v2", "v2beta1", "v2alpha1"} {
+			allowed, maxAllowed := reg.IsVersionAllowed(group, v)
+			require.False(t, allowed, "%s must be rejected by max=v1", v)
+			require.Equal(t, "v1", maxAllowed)
+		}
 	})
 
-	t.Run("order taken from the reordered scheme would wrongly allow v2 (why the snapshot must precede the reorder)", func(t *testing.T) {
-		allowed, _ := capRegistry(reordered).IsVersionAllowed(group, "v2")
-		require.True(t, allowed, "documents the defect the pre-reorder snapshot fixes")
+	t.Run("lower majors stay below the cap and are allowed", func(t *testing.T) {
+		reg := capRegistry(naturalOrderSnapshot(scheme, groupVersions))
+		for _, v := range []string{"v1", "v1beta1", "v0alpha1"} {
+			allowed, _ := reg.IsVersionAllowed(group, v)
+			require.True(t, allowed, "%s must be allowed under max=v1", v)
+		}
+	})
+
+	t.Run("reordering the scheme does not move the ceiling", func(t *testing.T) {
+		require.NoError(t, scheme.SetVersionPriority(gv("v1"), gv("v2"), gv("v0alpha1"), gv("v2beta1"), gv("v2alpha1"), gv("v1beta1")))
+		allowed, _ := capRegistry(naturalOrderSnapshot(scheme, groupVersions)).IsVersionAllowed(group, "v2beta1")
+		require.False(t, allowed, "v2beta1 still rejected: ranking is major-first, not registration order")
 	})
 }
 

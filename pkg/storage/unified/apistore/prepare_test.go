@@ -896,7 +896,7 @@ func TestEncodeMaxVersionEnforcement(t *testing.T) {
 		s := newStorage(dashv1.DashboardResourceInfo.GroupResource(), reg)
 
 		var buf bytes.Buffer
-		err := s.encode(dashboardAt("v2"), &buf)
+		err := s.encode(dashboardAt("v2"), &buf, true)
 
 		require.Error(t, err)
 		require.True(t, apierrors.IsBadRequest(err) || apierrors.IsConflict(err), "expected a 4xx, got %v", err)
@@ -908,7 +908,7 @@ func TestEncodeMaxVersionEnforcement(t *testing.T) {
 		s := newStorage(dashv1.DashboardResourceInfo.GroupResource(), reg)
 
 		var buf bytes.Buffer
-		err := s.encode(dashboardAt("v1"), &buf)
+		err := s.encode(dashboardAt("v1"), &buf, true)
 		require.NoError(t, err)
 
 		out := &unstructured.Unstructured{}
@@ -920,7 +920,7 @@ func TestEncodeMaxVersionEnforcement(t *testing.T) {
 		s := newStorage(dashv1.DashboardResourceInfo.GroupResource(), nil)
 
 		var buf bytes.Buffer
-		err := s.encode(dashboardAt("v2"), &buf)
+		err := s.encode(dashboardAt("v2"), &buf, true)
 		require.NoError(t, err)
 	})
 
@@ -940,7 +940,7 @@ func TestEncodeMaxVersionEnforcement(t *testing.T) {
 		// declared version and let this through; the fix rejects against the persisted v2.
 		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v1")
 		var buf bytes.Buffer
-		err := codecStorage(reg, "v2").encode(dashboardAt("v1"), &buf)
+		err := codecStorage(reg, "v2").encode(dashboardAt("v1"), &buf, true)
 
 		require.Error(t, err)
 		require.True(t, apierrors.IsBadRequest(err), "expected a 4xx, got %v", err)
@@ -951,7 +951,7 @@ func TestEncodeMaxVersionEnforcement(t *testing.T) {
 	t.Run("codec path: persisted version at/under cap is allowed", func(t *testing.T) {
 		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v2")
 		var buf bytes.Buffer
-		require.NoError(t, codecStorage(reg, "v1").encode(dashboardAt("v1"), &buf))
+		require.NoError(t, codecStorage(reg, "v1").encode(dashboardAt("v1"), &buf, true))
 		out := &unstructured.Unstructured{}
 		require.NoError(t, json.Unmarshal(buf.Bytes(), out))
 		require.Equal(t, group+"/v1", out.GetAPIVersion())
@@ -960,7 +960,37 @@ func TestEncodeMaxVersionEnforcement(t *testing.T) {
 	t.Run("codec path: uncapped group encodes directly", func(t *testing.T) {
 		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "") // no cap for the group
 		var buf bytes.Buffer
-		require.NoError(t, codecStorage(reg, "v2").encode(dashboardAt("v2"), &buf))
+		require.NoError(t, codecStorage(reg, "v2").encode(dashboardAt("v2"), &buf, true))
+	})
+
+	t.Run("codec path: a persisted version from another group is rejected, not silently allowed", func(t *testing.T) {
+		// The codec picks a GVK outside the resource's group. That version cannot be ranked against the
+		// group's cap, so it must be rejected rather than slip through as unregistered.
+		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v1")
+		s := &Storage{
+			gr: dashv1.DashboardResourceInfo.GroupResource(),
+			codec: upcastCodec{
+				Codec:      apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+				apiVersion: "other.grafana.app/v1",
+			},
+			opts: StorageOptions{Scheme: nil, VersionPolicy: reg},
+		}
+		var buf bytes.Buffer
+		err := s.encode(dashboardAt("v1"), &buf, true)
+		require.True(t, apierrors.IsBadRequest(err), "expected a 4xx, got %v", err)
+		require.Contains(t, err.Error(), "does not match resource group")
+		require.Zero(t, buf.Len())
+	})
+
+	t.Run("enforceCap=false (deletion path) allows an over-cap write", func(t *testing.T) {
+		reg := newGlobalCapRegistry(group, []string{"v2", "v1"}, "v1")
+		s := newStorage(dashv1.DashboardResourceInfo.GroupResource(), reg)
+		var buf bytes.Buffer
+		// enforceCap=false is used for deletion-related updates: a v2 write (over the v1 cap) is allowed.
+		require.NoError(t, s.encode(dashboardAt("v2"), &buf, false))
+		out := &unstructured.Unstructured{}
+		require.NoError(t, json.Unmarshal(buf.Bytes(), out))
+		require.Equal(t, group+"/v2", out.GetAPIVersion())
 	})
 }
 
@@ -974,4 +1004,55 @@ type upcastCodec struct {
 func (c upcastCodec) Encode(_ runtime.Object, w io.Writer) error {
 	_, err := fmt.Fprintf(w, `{"apiVersion":%q,"kind":"Dashboard","metadata":{"name":"x"}}`, c.apiVersion)
 	return err
+}
+
+// TestUpdateCapExemptsDeletion covers the drain-only policy: an object stored above the cap cannot be
+// mutated by a regular update, but soft delete and the writes that complete deletion still go through.
+func TestUpdateCapExemptsDeletion(t *testing.T) {
+	_ = dashv1.AddToScheme(rtscheme)
+	group := dashv1.DashboardResourceInfo.GroupResource().Group
+	node, err := snowflake.NewNode(1)
+	require.NoError(t, err)
+	s := &Storage{
+		gr:        dashv1.DashboardResourceInfo.GroupResource(),
+		codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
+		snowflake: node,
+		opts: StorageOptions{
+			Scheme:            rtscheme,
+			MaximumNameLength: 100,
+			VersionPolicy:     newGlobalCapRegistry(group, []string{"v2", "v1"}, "v1"),
+		},
+	}
+	ctx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser})
+
+	// previous is stored above the v1 cap.
+	prev := func() *dashv1.Dashboard {
+		d := dashboardAt("v2")
+		d.UID = "uid-1"
+		return d
+	}
+
+	t.Run("a regular update to an over-cap object is rejected", func(t *testing.T) {
+		_, err := s.prepareObjectForUpdate(ctx, dashboardAt("v2"), prev())
+		require.True(t, apierrors.IsBadRequest(err), "expected a 4xx, got %v", err)
+	})
+
+	t.Run("a soft delete (sets deletionTimestamp) on an over-cap object is allowed", func(t *testing.T) {
+		now := v1.Now()
+		upd := dashboardAt("v2")
+		upd.DeletionTimestamp = &now
+		_, err := s.prepareObjectForUpdate(ctx, upd, prev())
+		require.NoError(t, err)
+	})
+
+	t.Run("a write while deletionTimestamp is already set is allowed (finalizer/status)", func(t *testing.T) {
+		now := v1.Now()
+		p := prev()
+		p.DeletionTimestamp = &now
+		upd := dashboardAt("v2")
+		upd.DeletionTimestamp = &now
+		_, err := s.prepareObjectForUpdate(ctx, upd, p)
+		require.NoError(t, err)
+	})
 }
