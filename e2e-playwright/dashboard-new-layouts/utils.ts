@@ -99,9 +99,9 @@ export async function checkRepeatedPanelTitles(
 
   for (const option of options) {
     if (expectHidden) {
-      await expect(panels.getContainer(`${title}${option}`)).toBeHidden();
+      await expect(panels.getPanel(`${title}${option}`)).toBeHidden();
     } else {
-      await expect(panels.getContainer(`${title}${option}`)).toBeVisible();
+      await expect(panels.getPanel(`${title}${option}`)).toBeVisible();
     }
   }
 }

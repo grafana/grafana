@@ -32,16 +32,16 @@ test.describe(
       await panels.selectByTitle(oldPanelTitle);
       await sidebar.panelOptions.setTitle(panelTitle);
 
-      await expect(panels.getContainers(panelTitle)).toHaveCount(1);
+      await expect(panels.getPanels(panelTitle)).toHaveCount(1);
 
       await panels.selectMenuItem(panelTitle, ['More...', 'Duplicate']);
 
-      await expect(panels.getContainers(panelTitle)).toHaveCount(2);
+      await expect(panels.getPanels(panelTitle)).toHaveCount(2);
 
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
-      await expect(panels.getContainers(panelTitle)).toHaveCount(2);
+      await expect(panels.getPanels(panelTitle)).toHaveCount(2);
     });
   }
 );

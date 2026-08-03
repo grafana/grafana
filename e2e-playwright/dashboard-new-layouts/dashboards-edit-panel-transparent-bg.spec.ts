@@ -27,7 +27,7 @@ test.describe(
 
       const panelTitle = 'No Data Points Warning';
 
-      const panelContainer = panels.getContainer(panelTitle);
+      const panelContainer = panels.getPanel(panelTitle);
 
       const initialBackground = await panelContainer.evaluate((el) => getComputedStyle(el).background);
       expect(initialBackground).not.toMatch(/rgba\(0, 0, 0, 0\)/);

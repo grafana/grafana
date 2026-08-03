@@ -19,8 +19,8 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
 
     const panelBodies = panels.getBodies();
     await expect(panelBodies).toHaveCount(5);
-    await expect(panels.getContainer('server = A, pod = Bob')).toBeVisible();
-    await expect(panels.getContainer('server = B, pod = Bob')).toBeVisible();
+    await expect(panels.getPanel('server = A, pod = Bob')).toBeVisible();
+    await expect(panels.getPanel('server = B, pod = Bob')).toBeVisible();
 
     // Collapse all rows using keyboard shortcut: d + Shift+C
     await page.keyboard.press('d');
@@ -43,7 +43,7 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
     const dashboardPage = await gotoDashboardPage({ uid: 'edediimbjhdz4b/a-tall-dashboard' });
     const panels = new Panels({ page, dashboardPage, selectors, components });
 
-    const panel1 = panels.getContainer('Panel #1');
+    const panel1 = panels.getPanel('Panel #1');
     await expect(panel1).toBeVisible();
     await panel1.press('i');
 

@@ -71,17 +71,17 @@ test.describe(
 
       // by default on a new dashboard, the "Add options" are already opened in the sidebar, so no need to click on the "Add" toolbar button
       await addPanelFromSidebar(sidebar, false);
-      await expect(panels.getContainers('New panel')).toHaveCount(1);
+      await expect(panels.getPanels('New panel')).toHaveCount(1);
 
       await addPanelFromSidebar(sidebar);
-      await expect(panels.getContainers('New panel')).toHaveCount(2);
+      await expect(panels.getPanels('New panel')).toHaveCount(2);
 
       // use the canvas
       await canvas.addPanel();
-      await expect(panels.getContainers('New panel')).toHaveCount(3);
+      await expect(panels.getPanels('New panel')).toHaveCount(3);
 
       // check that pressing the configure button shows the panel editor
-      const panelContainer = panels.getContainer('New panel');
+      const panelContainer = panels.getPanel('New panel');
       await panelContainer.hover();
       await panelContainer.getByRole('button', { name: /configure/i }).click();
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.General.content)).toBeVisible();
@@ -112,17 +112,17 @@ test.describe(
 
       // add a new panel to this tab
       await addPanelFromSidebar(sidebar);
-      await expect(panels.getContainers('New panel', tab1)).toHaveCount(2);
+      await expect(panels.getPanels('New panel', tab1)).toHaveCount(2);
 
       // add another tab and a new panel inside
       await canvas.addTab();
       const tab2 = await expectVisibleTab('New tab 1', tabs);
 
       await addPanelFromSidebar(sidebar);
-      await expect(panels.getContainers('New panel', tab2)).toHaveCount(1);
+      await expect(panels.getPanels('New panel', tab2)).toHaveCount(1);
 
       await addPanelFromSidebar(sidebar);
-      await expect(panels.getContainers('New panel', tab2)).toHaveCount(2);
+      await expect(panels.getPanels('New panel', tab2)).toHaveCount(2);
 
       // group into row
       await canvas.groupPanels('row', tab2);
@@ -130,18 +130,18 @@ test.describe(
 
       // add a panel to the row
       await addPanelFromSidebar(sidebar);
-      await expect(panels.getContainers('New panel', row1)).toHaveCount(3);
+      await expect(panels.getPanels('New panel', row1)).toHaveCount(3);
 
       // add another row and a couple of panels to it
       await canvas.addRow();
       const row2 = await expectVisibleRow('New row 1', rows);
 
       await addPanelFromSidebar(sidebar);
-      await expect(panels.getContainers('New panel', row2)).toHaveCount(1);
+      await expect(panels.getPanels('New panel', row2)).toHaveCount(1);
 
       // use the canvas
       await canvas.addPanel(row2);
-      await expect(panels.getContainers('New panel', row2)).toHaveCount(2);
+      await expect(panels.getPanels('New panel', row2)).toHaveCount(2);
     });
   }
 );
