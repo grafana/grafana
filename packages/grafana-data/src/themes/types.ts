@@ -34,12 +34,7 @@ export interface GrafanaTheme2 {
   /** @deprecated Will be removed in a future version */
   v1: GrafanaTheme;
   /** feature flags that might impact component looks */
-  flags: {
-    /**
-     * @internal
-     */
-    visualDesignRefresh?: boolean;
-  };
+  flags: Record<string, boolean>;
 }
 
 export const ThemeRichColorInputSchema = z.object({
