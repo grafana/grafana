@@ -1,4 +1,4 @@
-import { render, screen, testWithFeatureToggles } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';

@@ -850,10 +850,10 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
 		require.NoError(t, err)
 	}
-	if opts.ProvisioningEnabled {
+	if opts.Provisioning == FeatureDisabled {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
-		_, err = provisioningSect.NewKey("enabled", strconv.FormatBool(true))
+		_, err = provisioningSect.NewKey("enabled", "false")
 		require.NoError(t, err)
 	}
 	if len(opts.ProvisioningAllowedTargets) > 0 {
@@ -1090,6 +1090,17 @@ func SQLiteIntegrationTest(t *testing.T) {
 	}
 }
 
+// FeatureMode toggles a test option whose underlying config defaults to
+// enabled. The zero value is FeatureEnabled, so callers only need to set the
+// field when they want to opt out — unlike a bool, whose zero value would
+// silently mean "disabled" and require every caller to opt in instead.
+type FeatureMode int
+
+const (
+	FeatureEnabled FeatureMode = iota
+	FeatureDisabled
+)
+
 type GrafanaOpts struct {
 	EnableCSP                             bool
 	EnableFeatureToggles                  []string
@@ -1127,10 +1138,10 @@ type GrafanaOpts struct {
 	// integration tests on slow CI.
 	UnifiedStorageResourceVersionBatchTransactionTimeout time.Duration
 	PermittedProvisioningPaths                           string
-	// ProvisioningEnabled overrides [provisioning] enabled. nil leaves the ini
-	// default (true, provisioning registered); set false to keep provisioning
-	// off, e.g. for DualWriterMode0/1 tests where it requires unified storage.
-	ProvisioningEnabled                   bool
+	// Provisioning controls [provisioning] enabled. Zero value (FeatureEnabled)
+	// matches the ini default; set FeatureDisabled for DualWriterMode0/1 tests
+	// where provisioning requires unified storage.
+	Provisioning                          FeatureMode
 	ProvisioningAllowedTargets            []string
 	ProvisioningAllowInsecure             bool
 	ProvisioningPublicRootURL             string

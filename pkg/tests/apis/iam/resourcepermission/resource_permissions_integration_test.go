@@ -110,16 +110,17 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			t.Setenv("GF_AUTHORIZATION_CACHE_TTL", "0s")
 
 			// Provisioning requires dashboards/folders in unified storage (Mode4+).
-			var provisioningEnabled bool
+			// modes here are always < Mode5, but keep the check for clarity.
+			provisioning := testinfra.FeatureEnabled
 			if mode < rest.Mode5 {
-				provisioningEnabled = false
+				provisioning = testinfra.FeatureDisabled
 			}
 
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				AppModeProduction:    false,
 				DisableAnonymous:     true,
 				APIServerStorageType: "unified",
-				ProvisioningEnabled:  provisioningEnabled,
+				Provisioning:         provisioning,
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 					"resourcepermissions.iam.grafana.app": {
 						DualWriterMode: mode,

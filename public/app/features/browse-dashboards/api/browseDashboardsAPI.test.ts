@@ -1,7 +1,7 @@
 import { configureStore, type Middleware, isAnyOf } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
-import { testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { waitFor } from 'test/test-utils';
 
 import { folderAPIVersionResolver } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import * as quotasAPI from '@grafana/api-clients/rtkq/quotas/v0alpha1';

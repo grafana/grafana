@@ -185,7 +185,8 @@ type Cfg struct {
 	// Grafana API Server
 	DisableControllers bool
 	// Provisioning config
-	// ProvisioningEnabled controls provisioning
+	// ProvisioningEnabled: enable or disable Git Sync / as-code provisioning
+	// for Grafana resources. See [provisioning] enabled in defaults.ini.
 	ProvisioningEnabled        bool
 	ProvisioningAllowedTargets []string
 	// ProvisioningResources is the configured set of provisionable resources, each as a
