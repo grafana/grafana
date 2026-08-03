@@ -34,9 +34,11 @@ func (cfg *Cfg) ApplyAuthnSettings(iniFile *ini.File) error {
 	if err := readSessionAuthSettings(iniFile, cfg); err != nil {
 		return err
 	}
-	readOAuthSettings(iniFile, cfg)
+	readOAuthCookieMaxAge(iniFile, cfg)
 	readCookieSecuritySettings(iniFile, cfg)
-	readServerURLSettings(iniFile, cfg)
+	if err := readServerURLSettings(iniFile, cfg); err != nil {
+		return err
+	}
 	readGrafanaComSettings(iniFile, cfg)
 	return readUserLastSeenUpdateInterval(iniFile, cfg)
 }
@@ -71,9 +73,8 @@ func readSessionAuthSettings(iniFile *ini.File, cfg *Cfg) error {
 	return nil
 }
 
-func readOAuthSettings(iniFile *ini.File, cfg *Cfg) {
-	auth := iniFile.Section("auth")
-	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
+func readOAuthCookieMaxAge(iniFile *ini.File, cfg *Cfg) {
+	cfg.OAuthCookieMaxAge = iniFile.Section("auth").Key("oauth_state_cookie_max_age").MustInt(600)
 }
 
 func readCookieSecuritySettings(iniFile *ini.File, cfg *Cfg) {
@@ -97,7 +98,9 @@ func readCookieSecuritySettings(iniFile *ini.File, cfg *Cfg) {
 	}
 }
 
-func readServerURLSettings(iniFile *ini.File, cfg *Cfg) {
+// readServerURLSettings sets AppURL even when the URL fails to parse, so
+// callers can include the offending value in their error reporting.
+func readServerURLSettings(iniFile *ini.File, cfg *Cfg) error {
 	server := iniFile.Section("server")
 	appURL := valueAsString(server, "root_url", "http://localhost:3000/")
 	if appURL[len(appURL)-1] != '/' {
@@ -105,9 +108,12 @@ func readServerURLSettings(iniFile *ini.File, cfg *Cfg) {
 	}
 	cfg.AppURL = appURL
 
-	if parsed, err := url.Parse(appURL); err == nil {
-		cfg.AppSubURL = strings.TrimSuffix(parsed.Path, "/")
+	parsed, err := url.Parse(appURL)
+	if err != nil {
+		return fmt.Errorf("server.root_url: %w", err)
 	}
+	cfg.AppSubURL = strings.TrimSuffix(parsed.Path, "/")
+	return nil
 }
 
 func readGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {
