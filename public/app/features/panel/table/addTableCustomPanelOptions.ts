@@ -1,10 +1,24 @@
-import { type PanelOptionsEditorBuilder } from '@grafana/data';
+import { type DataFrame, FieldType, type PanelOptionsEditorBuilder } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { defaultOptions as defaultTableOptions } from '@grafana/schema/dist/esm/raw/composable/table/panelcfg/x/TablePanelCfg_types.gen';
 
 import { PaginationEditor } from './PaginationEditor';
+
+// Nested frames route to the nested table, which is mutually exclusive with rows-as-fields. We don't
+// pivot nested data (that would mean inventing nested columns), so treat rows-as-fields as unavailable
+// whenever any frame carries a nested-frames field.
+const hasNestedFrames = (data?: DataFrame[]): boolean =>
+  data?.some((frame) => frame.fields.some((field) => field.type === FieldType.nestedFrames)) ?? false;
+
+// Whether the rows-as-fields render path is actually in effect: the toggle is on, the option is set,
+// and the data is not nested. Editors that rows-as-fields disables (frozen columns, header) key off
+// this so they stay visible when the table still renders normally (e.g. nested data, or toggle off).
+const rowsAsFieldsActive = (opts: TableOptions, data?: DataFrame[]): boolean =>
+  Boolean(opts.rowsAsFields) &&
+  !hasNestedFrames(data) &&
+  getFeatureFlagClient().getBooleanValue(FlagKeys.TableRowsAsFields, false);
 
 export const addTableCustomPanelOptions = <O extends TableOptions>(builder: PanelOptionsEditorBuilder<O>) => {
   const category = [t('table.category-table', 'Table')];
@@ -18,15 +32,17 @@ export const addTableCustomPanelOptions = <O extends TableOptions>(builder: Pane
       ),
       category,
       defaultValue: defaultTableOptions.rowsAsFields,
-      // React-only feature toggle, so it is not on config.featureToggles and must be read via the OpenFeature client
-      showIf: () => getFeatureFlagClient().getBooleanValue(FlagKeys.TableRowsAsFields, false),
+      // React-only feature toggle (not on config.featureToggles, read via the OpenFeature client). Also
+      // hidden when nested frames are present, since those render as a nested table, not a pivoted one.
+      showIf: (_opts, data) =>
+        getFeatureFlagClient().getBooleanValue(FlagKeys.TableRowsAsFields, false) && !hasNestedFrames(data),
     })
     .addBooleanSwitch({
       path: 'showHeader',
       name: t('table.name-show-table-header', 'Show table header'),
       category,
       defaultValue: defaultTableOptions.showHeader,
-      showIf: (opts) => !opts.rowsAsFields,
+      showIf: (opts, data) => !rowsAsFieldsActive(opts, data),
     })
     .addNumberInput({
       path: 'frozenColumns.left',
@@ -36,7 +52,7 @@ export const addTableCustomPanelOptions = <O extends TableOptions>(builder: Pane
         placeholder: t('table.placeholder-frozen-columns', 'none'),
       },
       category,
-      showIf: (opts) => !opts.rowsAsFields,
+      showIf: (opts, data) => !rowsAsFieldsActive(opts, data),
     })
     .addRadio({
       path: 'cellHeight',

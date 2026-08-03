@@ -127,6 +127,18 @@ describe('table module', () => {
       return builder.getItems();
     };
 
+    const plainFrame = createDataFrame({ fields: [{ name: 'a', type: FieldType.string, values: ['x'] }] });
+    const nestedFrame = createDataFrame({
+      fields: [
+        { name: 'a', type: FieldType.string, values: ['x'] },
+        {
+          name: 'nested',
+          type: FieldType.nestedFrames,
+          values: [[createDataFrame({ fields: [{ name: 'b', type: FieldType.number, values: [1] }] })]],
+        },
+      ],
+    });
+
     afterEach(() => {
       mockRowsAsFieldsFlag = false;
     });
@@ -136,22 +148,33 @@ describe('table module', () => {
       expect(rowsAsFields).toBeDefined();
 
       mockRowsAsFieldsFlag = false;
-      expect(rowsAsFields?.showIf?.({} as Options, undefined)).toBe(false);
+      expect(rowsAsFields?.showIf?.({} as Options, [plainFrame])).toBe(false);
 
       mockRowsAsFieldsFlag = true;
-      expect(rowsAsFields?.showIf?.({} as Options, undefined)).toBe(true);
+      expect(rowsAsFields?.showIf?.({} as Options, [plainFrame])).toBe(true);
     });
 
-    it('hides the frozen-columns and show-header options when rows-as-fields is enabled', () => {
+    it('hides the "Rows as fields" switch when nested frames are present', () => {
+      mockRowsAsFieldsFlag = true;
+      const rowsAsFields = buildPanelItems().find((item) => item.path === 'rowsAsFields');
+
+      expect(rowsAsFields?.showIf?.({} as Options, [plainFrame])).toBe(true);
+      expect(rowsAsFields?.showIf?.({} as Options, [nestedFrame])).toBe(false);
+    });
+
+    it('hides frozen-columns and show-header only when rows-as-fields is active', () => {
+      mockRowsAsFieldsFlag = true;
       const items = buildPanelItems();
-      const frozenColumns = items.find((item) => item.path === 'frozenColumns.left');
-      const showHeader = items.find((item) => item.path === 'showHeader');
+      const gated = [items.find((i) => i.path === 'frozenColumns.left'), items.find((i) => i.path === 'showHeader')];
 
-      expect(frozenColumns?.showIf?.({ rowsAsFields: false } as Options, undefined)).toBe(true);
-      expect(frozenColumns?.showIf?.({ rowsAsFields: true } as Options, undefined)).toBe(false);
-
-      expect(showHeader?.showIf?.({ rowsAsFields: false } as Options, undefined)).toBe(true);
-      expect(showHeader?.showIf?.({ rowsAsFields: true } as Options, undefined)).toBe(false);
+      for (const item of gated) {
+        // shown when the option is off
+        expect(item?.showIf?.({ rowsAsFields: false } as Options, [plainFrame])).toBe(true);
+        // hidden when rows-as-fields is on and the data is flat
+        expect(item?.showIf?.({ rowsAsFields: true } as Options, [plainFrame])).toBe(false);
+        // shown again when nested frames are present — the table renders nested, not pivoted
+        expect(item?.showIf?.({ rowsAsFields: true } as Options, [nestedFrame])).toBe(true);
+      }
     });
   });
 });
