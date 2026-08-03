@@ -299,6 +299,27 @@ describe('libraryPanelsK8sClient request options', () => {
     expect(fetch).toHaveBeenCalledTimes(3);
   });
 
+  it('uses the canonical root folder annotation when creating in General', async () => {
+    const resource = makeResource();
+    resource.metadata.annotations!['grafana.app/folder'] = 'general';
+    post.mockResolvedValue(resource);
+    fetch.mockImplementation(() => {
+      throw new Error('enrichment unavailable');
+    });
+
+    await libraryPanelsK8sClient.create('My library panel', resource.spec, '');
+
+    expect(post).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          annotations: expect.objectContaining({ 'grafana.app/folder': 'general' }),
+        }),
+      }),
+      expect.any(Object)
+    );
+  });
+
   it('does not match root panels by the synthetic General folder name', async () => {
     const resource = makeResource();
     resource.metadata.annotations!['grafana.app/folder'] = 'general';
@@ -364,7 +385,7 @@ describe('libraryPanelsK8sClient request options', () => {
       }),
       { params: undefined }
     );
-    expect(put.mock.calls[0][1].metadata.annotations).not.toHaveProperty('grafana.app/folder');
+    expect(put.mock.calls[0][1].metadata.annotations['grafana.app/folder']).toBe('general');
   });
 
   it('returns a successful update when best-effort enrichment fails', async () => {

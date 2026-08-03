@@ -517,9 +517,7 @@ export const libraryPanelsK8sClient = {
       spec,
       status,
     };
-    if (folderUid) {
-      obj.metadata.annotations = { [AnnoKeyFolder]: folderUid };
-    }
+    obj.metadata.annotations = { [AnnoKeyFolder]: folderUid || ROOT_FOLDER_UID };
     const created = await resourceClient().create(obj);
     return enrichLibraryPanel(created);
   },
@@ -544,11 +542,7 @@ export const libraryPanelsK8sClient = {
       folderUid = existing.metadata.annotations?.[AnnoKeyFolder] ?? '';
     }
     const annotations = { ...existing.metadata.annotations };
-    if (folderUid) {
-      annotations[AnnoKeyFolder] = folderUid;
-    } else {
-      delete annotations[AnnoKeyFolder];
-    }
+    annotations[AnnoKeyFolder] = folderUid || ROOT_FOLDER_UID;
     const { spec, status } = legacyModelToSpecAndStatus(name, model);
     const obj: LibraryPanelResource = {
       apiVersion: `${DASHBOARD_API_GROUP}/${DASHBOARD_API_VERSION}`,
