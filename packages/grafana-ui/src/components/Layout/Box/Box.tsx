@@ -173,12 +173,13 @@ const customBorderColor = (color: BorderColor, theme: GrafanaTheme2) => {
 };
 
 const customBackgroundColor = (color: BackgroundColor, theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   switch (color) {
     case 'error':
     case 'success':
     case 'info':
     case 'warning':
-      return theme.colors[color].transparent;
+      return visualRefreshEnabled ? theme.colors[color].background : theme.colors[color].transparent;
     default:
       return color ? theme.colors.background[color] : undefined;
   }
