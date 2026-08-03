@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	shorturlV1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
-	"github.com/grafana/grafana/pkg/api/dtos"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/shorturls"
@@ -35,41 +33,12 @@ var RESOURCEGROUP = gvr.GroupResource().String()
 func TestIntegrationShortURL(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	t.Run("with dual write (unified storage, mode 0)", func(t *testing.T) {
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    false, // required for  unified storage
-			DisableAnonymous:     true,
-			APIServerStorageType: options.StorageTypeUnified,
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode0,
-				},
-			},
-		})
-		doLegacyOnlyTests(t, helper)
-	})
-
-	t.Run("modes", func(t *testing.T) {
-		for _, mode := range []grafanarest.DualWriterMode{
-			grafanarest.Mode1,
-			grafanarest.Mode5,
-		} {
-			t.Run(fmt.Sprintf("dual write (unified storage, mode %d)", mode), func(t *testing.T) {
-				helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-					AppModeProduction:    false,
-					DisableAnonymous:     true,
-					APIServerStorageType: options.StorageTypeUnified,
-					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-						RESOURCEGROUP: {
-							DualWriterMode: mode,
-						},
-					},
-				})
-				doDualWriteTests(t, helper, mode)
-			})
-		}
-	})
-
+	// ShortURL is a fully migrated resource: it is enforced to unified storage
+	// (mode 5) via setting.MigratedUnifiedResources. Once the migration has run,
+	// the legacy `short_url` table is renamed and the storage mode is resolved to
+	// unified from the migration log regardless of the configured dualWriterMode.
+	// Legacy-only (mode 0) and dual-write (mode 1) configurations are therefore no
+	// longer valid for this resource, so only unified storage is exercised here.
 	t.Run("with dual write (unified storage, mode 5)", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    false,
@@ -82,187 +51,6 @@ func TestIntegrationShortURL(t *testing.T) {
 			},
 		})
 		doUnifiedOnlyTests(t, helper)
-	})
-}
-
-// doLegacyOnlyTests tests functionality for Mode 0 (legacy only)
-// Only legacy API should be used, no K8s API interaction
-func doLegacyOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
-	client := helper.GetResourceClient(apis.ResourceClientArgs{
-		User: helper.Org1.None,
-		GVR:  gvr,
-	})
-
-	t.Run("Legacy API CRUD", func(t *testing.T) {
-		// Create via legacy API
-		legacyPayload := `{
-			"path": "d/xCmMwXdVz/legacy-only-test"
-		}`
-		legacyCreate := apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
-			Method: http.MethodPost,
-			Path:   "/api/short-urls",
-			Body:   []byte(legacyPayload),
-		}, &dtos.ShortURL{})
-		require.NotNil(t, legacyCreate.Result)
-		uid := legacyCreate.Result.UID
-		require.NotEmpty(t, uid)
-
-		// Read via legacy API
-		legacyGet := apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
-			Method: http.MethodGet,
-			Path:   "/api/short-urls/" + uid,
-		}, &shorturls.ShortUrl{})
-		require.NotNil(t, legacyGet.Result)
-		assert.Equal(t, uid, legacyGet.Result.Uid)
-		assert.Equal(t, "d/xCmMwXdVz/legacy-only-test", legacyGet.Result.Path)
-	})
-
-	t.Run("Legacy API redirect functionality", func(t *testing.T) {
-		// Create via legacy API
-		legacyPayload := `{
-			"path": "d/test/legacy-redirect"
-		}`
-		legacyCreate := apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
-			Method: http.MethodPost,
-			Path:   "/api/short-urls",
-			Body:   []byte(legacyPayload),
-		}, &dtos.ShortURL{})
-		require.NotNil(t, legacyCreate.Result)
-		uid := legacyCreate.Result.UID
-
-		// Test redirect functionality
-		redirectResponse := apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
-			Method: http.MethodGet,
-			Path:   "/goto/" + uid + "?orgId=default",
-		}, (*any)(nil))
-		assert.Equal(t, 302, redirectResponse.Response.StatusCode)
-	})
-}
-
-// doDualWriteTests tests functionality for Modes 1-3 (dual write modes)
-// Both APIs available with cross-API visibility
-func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.DualWriterMode) {
-	// Check if shortURL K8s APIs are available
-	hasShortURLAPI := checkShortURLAPIAvailable(t, helper)
-	if !hasShortURLAPI {
-		t.Log("ShortURL Kubernetes APIs not available - skipping K8s API tests")
-		return
-	}
-
-	t.Run("Legacy API -> K8s API visibility", func(t *testing.T) {
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.None,
-			GVR:  gvr,
-		})
-
-		// Create via legacy API
-		legacyPayload := `{
-			"path": "d/xCmMwXdVz/dual-write-test"
-		}`
-		legacyCreate := apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
-			Method: http.MethodPost,
-			Path:   "/api/short-urls",
-			Body:   []byte(legacyPayload),
-		}, &dtos.ShortURL{})
-		require.NotNil(t, legacyCreate.Result)
-		uid := legacyCreate.Result.UID
-		require.NotEmpty(t, uid)
-
-		// Should be visible via K8s API
-		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
-		require.NoError(t, err)
-		assert.Equal(t, uid, found.GetName())
-		assert.LessOrEqual(t, time.Since(found.GetCreationTimestamp().Time).Seconds(), 30.0, "creation timestamp should be within last 30 seconds")
-
-		// Verify cross-API consistency
-		getFromBothAPIs(t, helper, client, uid)
-
-		// Clean up
-		err = client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
-		require.NoError(t, err)
-	})
-
-	t.Run("K8s API -> Legacy API visibility", func(t *testing.T) {
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.None,
-			GVR:  gvr,
-		})
-
-		// Create via K8s API
-		obj := apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
-			Method: http.MethodPost,
-			Path:   "/apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls",
-			Body:   []byte(`{ "metadata": { "generateName": "test-" }, "spec": { "path": "d/xCmMwXdVz/k8s-dual-write" } }`),
-		}, &unstructured.Unstructured{})
-		require.NotNil(t, obj.Result)
-
-		uid := obj.Result.GetName()
-		assert.NotEmpty(t, uid)
-
-		// Should be visible via legacy API
-		legacyShortURL := apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
-			Method: http.MethodGet,
-			Path:   "/api/short-urls/" + uid,
-		}, &shorturls.ShortUrl{}).Result
-		require.NotNil(t, legacyShortURL)
-		assert.Equal(t, uid, legacyShortURL.Uid)
-
-		// Verify cross-API consistency
-		getFromBothAPIs(t, helper, client, uid)
-
-		// Clean up
-		err := client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
-		require.NoError(t, err)
-	})
-
-	t.Run("Redirect functionality", func(t *testing.T) {
-		t.Skip("Skipping redirect functionality tests for now - flaky test")
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.None,
-			GVR:  gvr,
-		})
-
-		// Create via K8s API
-		obj := apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
-			Method: http.MethodPost,
-			Path:   "/apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls",
-			Body:   []byte(`{ "metadata": { "generateName": "redirect-" }, "spec": { "path": "d/test/redirect" } }`),
-		}, &unstructured.Unstructured{})
-		require.NotNil(t, obj.Result)
-
-		uid := obj.Result.GetName()
-
-		// Test redirect functionality and lastSeenAt update
-		redirectResponse := apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
-			Method: http.MethodGet,
-			Path:   "/goto/" + uid + "?orgId=default",
-		}, (*any)(nil))
-		assert.Equal(t, 302, redirectResponse.Response.StatusCode)
-
-		require.EventuallyWithT(t, func(t *assert.CollectT) {
-			// Verify lastSeenAt was updated (should be > 0 now)
-			found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
-			require.NoError(t, err)
-
-			lastSeenAt, exists, err := unstructured.NestedInt64(found.Object, "status", "lastSeenAt")
-			require.NoError(t, err)
-			require.True(t, exists)
-
-			require.Greater(t, lastSeenAt, int64(1), "lastSeenAt should be greater than 1 after redirect")
-		}, time.Second*15, time.Millisecond*150, "lastSeenAt not changed after 15s")
-
-		// Clean up
-		err := client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
-		require.NoError(t, err)
 	})
 }
 
@@ -451,35 +239,4 @@ func checkShortURLAPIAvailable(t *testing.T, helper *apis.K8sTestHelper) bool {
 		}
 	}
 	return false
-}
-
-// This does a get with both k8s and legacy API, and verifies the results are the same
-func getFromBothAPIs(t *testing.T,
-	helper *apis.K8sTestHelper,
-	client *apis.K8sResourceClient,
-	uid string,
-) {
-	t.Helper()
-
-	k8sResource, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
-	require.NoError(t, err)
-	assert.Equal(t, uid, k8sResource.GetName())
-
-	// Legacy API: Try to get the shortURL (might not be implemented)
-	legacyShortURL := apis.DoRequest(helper, apis.RequestParams{
-		User:   client.Args.User,
-		Method: http.MethodGet,
-		Path:   "/api/short-urls/" + uid,
-	}, &shorturls.ShortUrl{}).Result
-
-	if legacyShortURL != nil {
-		// If legacy API returns data, verify consistency
-		spec, ok := k8sResource.Object["spec"].(map[string]any)
-		require.True(t, ok)
-		status, ok := k8sResource.Object["status"].(map[string]any)
-		require.True(t, ok)
-		assert.Equal(t, legacyShortURL.Uid, k8sResource.GetName())
-		assert.Equal(t, legacyShortURL.Path, spec["path"].(string))
-		assert.Equal(t, legacyShortURL.LastSeenAt, status["lastSeenAt"].(int64))
-	}
 }
