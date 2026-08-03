@@ -159,12 +159,18 @@ export function prepareGraphableFields(
     let hasTimeField = false;
     let hasValueField = false;
 
+    // Compare frames still sit in their own earlier window at this point - they are only shifted onto
+    // the current range afterwards, by the panel. Offsetting the pseudo range by the same amount keeps
+    // gap filling from reading the whole compare offset as a gap and padding it with nulls that end up
+    // outside the visible range once the frame is shifted.
+    const compareOffsetMs = Math.abs(frame.meta?.timeCompare?.diffMs ?? 0);
+
     let nulledFrame = useNumericX
       ? frame
       : applyNullInsertThreshold({
           frame,
-          refFieldPseudoMin: timeRange?.from.valueOf(),
-          refFieldPseudoMax: timeRange?.to.valueOf(),
+          refFieldPseudoMin: timeRange == null ? undefined : timeRange.from.valueOf() - compareOffsetMs,
+          refFieldPseudoMax: timeRange == null ? undefined : timeRange.to.valueOf() - compareOffsetMs,
         });
 
     const frameFields = nullToValue(nulledFrame).fields;

@@ -1,4 +1,4 @@
-import { createTheme, FieldType, createDataFrame, toDataFrame } from '@grafana/data';
+import { createTheme, FieldType, createDataFrame, toDataFrame, dateTime, type TimeRange } from '@grafana/data';
 import { LineInterpolation } from '@grafana/ui';
 
 import { getCompareSeriesIdentityKey, getTimezones, prepareGraphableFields, setClassicPaletteIdxs } from './utils';
@@ -794,5 +794,68 @@ describe('TimeComparison high cardinality (#126181)', () => {
     const colorAt = (idx: number) => theme.visualization.getColorByName(palette[idx % palette.length]);
     expect(colorAt(compareAField.state!.seriesIndex!)).toBe(colorAt(mainAField.state!.seriesIndex!));
     expect(colorAt(compareBField.state!.seriesIndex!)).toBe(colorAt(mainBField.state!.seriesIndex!));
+  });
+});
+
+describe('prepareGraphableFields gap filling for compare frames (#125104)', () => {
+  const HOUR = 60 * 60 * 1000;
+  const INTERVAL = 60 * 1000;
+  const FROM = 1700000000000;
+  const TO = FROM + 2 * HOUR;
+  const OFFSET = 24 * HOUR;
+
+  const timeRange: TimeRange = {
+    from: dateTime(FROM),
+    to: dateTime(TO),
+    raw: { from: dateTime(FROM), to: dateTime(TO) },
+  };
+
+  const seriesFrame = (start: number, isCompare: boolean) => {
+    const times: number[] = [];
+    for (let t = start; t <= start + 2 * HOUR; t += INTERVAL) {
+      times.push(t);
+    }
+    return toDataFrame({
+      refId: isCompare ? 'A-compare' : 'A',
+      meta: isCompare ? { timeCompare: { isTimeShiftQuery: true, diffMs: OFFSET } } : undefined,
+      fields: [
+        { name: 'time', type: FieldType.time, config: { interval: INTERVAL }, values: times },
+        { name: 'value', type: FieldType.number, values: times.map((_, i) => i) },
+      ],
+    });
+  };
+
+  it('does not pad a compare frame across its compare offset', () => {
+    // The compare frame covers its own earlier window and is only shifted onto the current range
+    // afterwards. Measuring it against the unshifted current range would read the whole offset as a
+    // gap and pad it with nulls, which then land outside the visible range once the frame is shifted.
+    const current = seriesFrame(FROM, false);
+    const compare = seriesFrame(FROM - OFFSET, true);
+
+    const frames = prepareGraphableFields([current, compare], createTheme(), timeRange)!;
+
+    expect(frames[1].length).toBe(compare.length);
+    expect(frames[1].length).toBe(frames[0].length);
+  });
+
+  it('still fills genuine gaps inside a compare frame', () => {
+    const compare = toDataFrame({
+      refId: 'A-compare',
+      meta: { timeCompare: { isTimeShiftQuery: true, diffMs: OFFSET } },
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          config: { interval: INTERVAL },
+          values: [FROM - OFFSET, FROM - OFFSET + INTERVAL, FROM - OFFSET + 5 * INTERVAL],
+        },
+        { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+      ],
+    });
+
+    const frames = prepareGraphableFields([compare], createTheme(), timeRange)!;
+
+    expect(frames[0].length).toBeGreaterThan(3);
+    expect(frames[0].fields[1].values).toContain(null);
   });
 });
