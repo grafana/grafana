@@ -511,17 +511,24 @@ export const libraryPanelsK8sClient = {
     if (folderUid === undefined) {
       folderUid = existing.metadata.annotations?.[AnnoKeyFolder] ?? '';
     }
+    const annotations = { ...existing.metadata.annotations };
+    if (folderUid) {
+      annotations[AnnoKeyFolder] = folderUid;
+    } else {
+      delete annotations[AnnoKeyFolder];
+    }
     const { spec, status } = legacyModelToSpecAndStatus(name, model);
     const obj: LibraryPanelResource = {
       apiVersion: `${DASHBOARD_API_GROUP}/${DASHBOARD_API_VERSION}`,
       kind: 'LibraryPanel',
       metadata: {
+        ...existing.metadata,
         name: uid,
         // generation carries the legacy optimistic-concurrency version check
         generation: version,
         resourceVersion: existing.metadata.resourceVersion ?? '',
         creationTimestamp: existing.metadata.creationTimestamp ?? '',
-        ...(folderUid ? { annotations: { [AnnoKeyFolder]: folderUid } } : {}),
+        annotations,
       },
       spec,
       status,

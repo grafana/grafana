@@ -1,6 +1,7 @@
 import { of } from 'rxjs';
 
 import { type BackendSrv, setBackendSrv } from '@grafana/runtime';
+import { ManagerKind } from 'app/features/apiserver/types';
 
 import {
   k8sResourceToLegacyDTO,
@@ -268,6 +269,11 @@ describe('libraryPanelsK8sClient request options', () => {
       metadata: {
         ...makeResource().metadata,
         resourceVersion: '42',
+        annotations: {
+          ...makeResource().metadata.annotations,
+          'grafana.app/managedBy': ManagerKind.Repo,
+          'grafana.app/managerId': 'library-panels-repo',
+        },
       },
     });
     get.mockImplementation((url: string) =>
@@ -276,7 +282,7 @@ describe('libraryPanelsK8sClient request options', () => {
     put.mockResolvedValue(resource);
     fetch.mockReturnValue(of({ data: resource }));
 
-    await libraryPanelsK8sClient.update('panel-uid', 'Updated name', resource.spec, 3, 'folder-uid');
+    await libraryPanelsK8sClient.update('panel-uid', 'Updated name', resource.spec, 3, '');
 
     expect(put).toHaveBeenCalledWith(
       expect.stringMatching(/\/librarypanels\/panel-uid$/),
@@ -284,10 +290,15 @@ describe('libraryPanelsK8sClient request options', () => {
         metadata: expect.objectContaining({
           generation: 3,
           resourceVersion: '42',
+          annotations: expect.objectContaining({
+            'grafana.app/managedBy': 'repo',
+            'grafana.app/managerId': 'library-panels-repo',
+          }),
         }),
       }),
       { params: undefined }
     );
+    expect(put.mock.calls[0][1].metadata.annotations).not.toHaveProperty('grafana.app/folder');
   });
 
   it('rejects an update when the legacy version is stale', async () => {
