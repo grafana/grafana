@@ -2,6 +2,7 @@ package annotationsapi
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -172,6 +173,10 @@ type fakeClient struct {
 	deletedNames []string
 	deleteErr    error
 	createErr    error
+
+	live      []annotationV0.Annotation
+	pageSize  int
+	searchErr error
 }
 
 func (f *fakeClient) GetByLegacyID(context.Context, int64, int64) (*annotationV0.Annotation, error) {
@@ -187,7 +192,28 @@ func (f *fakeClient) Update(_ context.Context, _ int64, anno *annotationV0.Annot
 }
 func (f *fakeClient) Delete(_ context.Context, _ int64, name string) error {
 	f.deletedNames = append(f.deletedNames, name)
-	return f.deleteErr
+	if f.deleteErr != nil {
+		return f.deleteErr
+	}
+	f.live = slices.DeleteFunc(f.live, func(a annotationV0.Annotation) bool {
+		return a.GetName() == name
+	})
+	return nil
+}
+
+// Search returns one page of the live annotations, mirroring the real store's server-side
+// limit: deletes remove items, so the remaining ones only surface on a later call.
+func (f *fakeClient) Search(_ context.Context, _ int64, _ *annotations.ItemQuery) ([]*annotationV0.Annotation, error) {
+	if f.searchErr != nil {
+		return nil, f.searchErr
+	}
+
+	live := slices.Clone(f.live[:min(f.pageSize, len(f.live))])
+	page := make([]*annotationV0.Annotation, len(live))
+	for i := range live {
+		page[i] = &live[i]
+	}
+	return page, nil
 }
 
 func TestMigrationProxy(t *testing.T) {
@@ -382,6 +408,63 @@ func TestMigrationProxy(t *testing.T) {
 			err := proxy.Update(context.Background(), orgID, legacyID, &annotations.Item{Text: "before", Epoch: 5000})
 			require.ErrorIs(t, err, assert.AnError)
 			assert.Empty(t, client.deletedNames, "the old record must not be deleted if the new one was not created")
+		})
+	})
+
+	t.Run("MassDelete", func(t *testing.T) {
+		const orgID = int64(1)
+
+		newProxy := func(client annotationClient) *MigrationProxy {
+			return &MigrationProxy{client: client, logger: log.New("test")}
+		}
+
+		live := func(names ...string) []annotationV0.Annotation {
+			annos := make([]annotationV0.Annotation, len(names))
+			for i, name := range names {
+				annos[i] = annotationV0.Annotation{ObjectMeta: metav1.ObjectMeta{Name: name}}
+			}
+			return annos
+		}
+
+		t.Run("deletes every annotation on the panel", func(t *testing.T) {
+			client := &fakeClient{live: live("a-1", "a-2"), pageSize: 10}
+			proxy := newProxy(client)
+
+			require.NoError(t, proxy.MassDelete(context.Background(), orgID, "dash-1", 2))
+			assert.Equal(t, []string{"a-1", "a-2"}, client.deletedNames)
+		})
+
+		t.Run("deletes every annotation when they span multiple pages", func(t *testing.T) {
+			client := &fakeClient{live: live("a-1", "a-2", "a-3", "a-4", "a-5"), pageSize: 2}
+			proxy := newProxy(client)
+
+			require.NoError(t, proxy.MassDelete(context.Background(), orgID, "dash-1", 2))
+			assert.Equal(t, []string{"a-1", "a-2", "a-3", "a-4", "a-5"}, client.deletedNames)
+			assert.Empty(t, client.live)
+		})
+
+		t.Run("is a no-op when the panel has no annotations", func(t *testing.T) {
+			client := &fakeClient{pageSize: 10}
+			proxy := newProxy(client)
+
+			require.NoError(t, proxy.MassDelete(context.Background(), orgID, "dash-1", 2))
+			assert.Empty(t, client.deletedNames)
+		})
+
+		t.Run("propagates a search failure", func(t *testing.T) {
+			client := &fakeClient{searchErr: assert.AnError, pageSize: 10}
+			proxy := newProxy(client)
+
+			require.ErrorIs(t, proxy.MassDelete(context.Background(), orgID, "dash-1", 2), assert.AnError)
+			assert.Empty(t, client.deletedNames)
+		})
+
+		t.Run("stops and propagates a delete failure", func(t *testing.T) {
+			client := &fakeClient{live: live("a-1", "a-2"), pageSize: 10, deleteErr: assert.AnError}
+			proxy := newProxy(client)
+
+			require.ErrorIs(t, proxy.MassDelete(context.Background(), orgID, "dash-1", 2), assert.AnError)
+			assert.Equal(t, []string{"a-1"}, client.deletedNames, "it stops at the first failure")
 		})
 	})
 

@@ -30,7 +30,7 @@ interface BridgeProbe {
  * app that isn't installed 404s on every mount: the rejection evicts the promise from the settings
  * cache instead of being deduped for the session, and gets reported as an error to telemetry.
  */
-async function probePlugin(plugin: PluginID): Promise<BridgeProbe> {
+export async function probePlugin(plugin: PluginID): Promise<BridgeProbe> {
   if (!plugin || !(await isAppPluginInstalled(plugin))) {
     return {};
   }
@@ -48,7 +48,7 @@ async function probePlugin(plugin: PluginID): Promise<BridgeProbe> {
   }
 }
 
-function isEnabled({ settings }: BridgeProbe): boolean {
+export function isPluginEnabled(settings?: PluginMeta<{}>): boolean {
   return settings?.enabled ?? false;
 }
 
@@ -64,7 +64,7 @@ function toBridgeResponse(probe: BridgeProbe | undefined, error: unknown): Plugi
     return { loading: true };
   }
 
-  return { loading: false, installed: isEnabled(probe), settings: probe.settings };
+  return { loading: false, installed: isPluginEnabled(probe.settings), settings: probe.settings };
 }
 
 export function usePluginBridge(plugin: PluginID): PluginBridgeHookResponse {
@@ -126,8 +126,8 @@ export function useIrmPlugin(fallback: FallbackPlugin): PluginBridgeResult {
     // Probing the legacy app only after IRM has come back unavailable means stacks that migrated
     // to IRM never touch OnCall / Incident at all. An IRM failure is not surfaced — it just means
     // we can't tell, so we ask the legacy app instead.
-    const irmProbeResult = await probePlugin(SupportedPlugin.Irm).catch(() => ({}));
-    if (isEnabled(irmProbeResult)) {
+    const irmProbeResult = await probePlugin(SupportedPlugin.Irm).catch(() => {});
+    if (isPluginEnabled(irmProbeResult?.settings)) {
       return { pluginId: SupportedPlugin.Irm, ...irmProbeResult };
     }
 

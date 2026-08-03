@@ -10,11 +10,12 @@ import (
 
 	"github.com/google/go-github/v82/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 )
 
 // API errors that we need to convey after parsing real GH errors (or faking them).
 var (
-	ErrAuthentication     = apierrors.NewUnauthorized("authentication failed")
 	ErrServiceUnavailable = apierrors.NewServiceUnavailable("github is unavailable")
 
 	ErrNotFound            = errors.New("not found")
@@ -102,7 +103,7 @@ func (r *githubClient) GetApp(ctx context.Context) (App, error) {
 		if errors.As(err, &ghErr) && ghErr.Response != nil {
 			switch ghErr.Response.StatusCode {
 			case http.StatusUnauthorized, http.StatusForbidden:
-				return App{}, ErrAuthentication
+				return App{}, connection.ErrAuthentication
 			case http.StatusNotFound:
 				return App{}, fmt.Errorf("app: %w", ErrNotFound)
 			case http.StatusServiceUnavailable:
@@ -138,7 +139,7 @@ func (r *githubClient) GetAppInstallation(ctx context.Context, installationID st
 		if errors.As(err, &ghErr) && ghErr.Response != nil {
 			switch ghErr.Response.StatusCode {
 			case http.StatusUnauthorized, http.StatusForbidden:
-				return AppInstallation{}, ErrAuthentication
+				return AppInstallation{}, connection.ErrAuthentication
 			case http.StatusNotFound:
 				return AppInstallation{}, fmt.Errorf("installation: %w", ErrNotFound)
 			case http.StatusServiceUnavailable:
@@ -241,7 +242,7 @@ func (r *githubClient) CreateInstallationAccessToken(ctx context.Context, instal
 			case http.StatusServiceUnavailable:
 				return InstallationToken{}, ErrServiceUnavailable
 			case http.StatusUnauthorized, http.StatusForbidden:
-				return InstallationToken{}, ErrAuthentication
+				return InstallationToken{}, connection.ErrAuthentication
 			case http.StatusNotFound:
 				// Not Found is returned by this API when the given installation is not present.
 				return InstallationToken{}, fmt.Errorf("installation: %w", ErrNotFound)

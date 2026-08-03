@@ -234,6 +234,7 @@ func withStateManager(mgr *state.Manager) alertNGOption {
 
 func createTestAlertNG(sched *testSchedule, coordinator *testEvaluationCoordinator, opts ...alertNGOption) *AlertNG {
 	defaultCfg := state.ManagerCfg{
+		Clock:                     clock.NewMock(),
 		Log:                       log.NewNopLogger(),
 		StatePeriodicSaveInterval: time.Minute,
 	}
