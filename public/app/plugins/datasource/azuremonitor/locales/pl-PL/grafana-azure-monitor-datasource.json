@@ -78,6 +78,11 @@
       "description-basic-logs": "Włączenie tej funkcji wiąże się z opłatami Azure Monitor za każde zapytanie w przypadku paneli pulpitu, które wysyłają zapytania do tabel skonfigurowanych dla <2>podstawowych dzienników</2>.",
       "label-enable-basic-logs": "Włącz podstawowe dzienniki"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "Dodatkowe ustawienia to opcje, które można skonfigurować, aby uzyskać większą kontrolę nad źródłem danych. Obejmują one Secure Socks Proxy, limit czasu żądania i przekazywane pliki cookie.",
       "title-additional-settings": "Ustawienia dodatkowe"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "Przestrzeń nazw wskaźników"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "Ładowanie…"
     },
@@ -204,6 +216,10 @@
       "label-by": "WEDŁUG",
       "label-order-by": "Sortuj według",
       "tooltip-order-by": "Sortuj wyniki na podstawie jednej lub kilku kolumn w kolejności rosnącej lub malejącej."
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "Podczas wysyłania żądania metadanych do narzędzia Azure Monitor wystąpił błąd"

@@ -270,6 +270,7 @@
       "placeholder-search-devices-by-ip-address": "Search devices by IP address."
     },
     "user-list-page": {
+      "label-active-users": "Active users",
       "label-all-users": "All users",
       "label-anonymous-devices": "Anonymous devices",
       "label-organization-users": "Organization users",
@@ -3996,6 +3997,9 @@
       "trace-id": "Trace ID: {{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": "Add to Assistant"
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Auth settings"
@@ -6176,13 +6180,10 @@
         "show-in": "Show in"
       },
       "annotations": {
-        "add-annotation": "Add annotation",
         "add-annotation-query": "Add annotation query",
         "name-builtin": "{{annoName}} (Built-in)",
         "name-disabled": "(Disabled) {{annoName}}",
-        "reorder": "Drag to reorder",
         "reorder-description": "Reorder annotations list",
-        "select-annotation": "Select",
         "title-above-dashboard-count_one": "Above dashboard ({{count}})",
         "title-above-dashboard-count_other": "Above dashboard ({{count}})",
         "title-controls-menu-count_one": "Controls menu ({{count}})",
@@ -6268,14 +6269,11 @@
       "links": {
         "add-link": "Add link",
         "new-link": "New link",
-        "reorder": "Drag to reorder",
         "reorder-description": "Reorder links list",
-        "select-link": "Select",
         "title-above-dashboard_one": "Above dashboard ({{count}})",
         "title-above-dashboard_other": "Above dashboard ({{count}})",
         "title-controls-menu_one": "Controls menu ({{count}})",
-        "title-controls-menu_other": "Controls menu ({{count}})",
-        "untitled": "Untitled link"
+        "title-controls-menu_other": "Controls menu ({{count}})"
       },
       "outline": {
         "pane-header": "Content outline",
@@ -6371,11 +6369,9 @@
       "variables": {
         "add-variable": "Add variable",
         "change-type": "Change variable type",
-        "reorder": "Drag to reorder",
         "reorder-description": "Reorder variables list",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
-        "select-variable": "Select",
         "title-controls-menu_one": "Controls menu ({{count}})",
         "title-controls-menu_other": "Controls menu ({{count}})",
         "title-hidden_one": "Hidden ({{count}})",
@@ -6813,11 +6809,6 @@
       "delete-text": "Are you sure you want to delete: {{name}}?",
       "delete-title": "Delete annotation query"
     },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "Annotation"
-      }
-    },
     "annotation-query-library-dropdown": {
       "use-saved-query": "Use saved query"
     },
@@ -7240,11 +7231,6 @@
       "delete-text": "Are you sure you want to delete: {{name}}?",
       "delete-title": "Delete link",
       "unnamed": "Unnamed link"
-    },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "Link"
-      }
     },
     "link-options": {
       "icon": "Icon",
@@ -8610,7 +8596,24 @@
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
     },
     "metrics-list": {
-      "search-placeholder": "Search metrics"
+      "collapse-metric": "Collapse {{name}}",
+      "error": "Failed to load metrics",
+      "expand-metric": "Expand {{name}}",
+      "filter-values": "Filter values",
+      "hide-values": "Hide values for {{label}}",
+      "labels-error": "Failed to load labels",
+      "loading": "Loading metrics…",
+      "loading-labels": "Loading labels…",
+      "loading-values": "Loading values…",
+      "no-metrics": "No metrics found",
+      "search-placeholder": "Search metrics",
+      "show-more": "Show more",
+      "show-more-metrics": "Show more metrics",
+      "show-more-values": "Show more values",
+      "show-values": "Show values for {{label}}",
+      "sort-ascending": "Sort ascending",
+      "sort-descending": "Sort descending",
+      "values-error": "Failed to load values"
     },
     "next-prev-result": {
       "aria-label-next": "Next result button",
@@ -10929,6 +10932,83 @@
       "read-more": "Read more from the Grafana Labs blog",
       "title": "Latest from the blog"
     },
+    "overview": {
+      "get-started": {
+        "cards": {
+          "app-monitoring": {
+            "cta": "Start setup",
+            "description": "Visualize traces, metrics, and logs from services you build and run.",
+            "title": "Set up app monitoring"
+          },
+          "cloud-monitoring": {
+            "cta": "Start setup",
+            "description": "Monitor AWS, Azure, or GCP resources, costs, and service metrics.",
+            "title": "Observe cloud services"
+          },
+          "database-monitoring": {
+            "cta": "Start setup",
+            "description": "Query performance, connections, and storage for your data stores.",
+            "title": "Analyze database performance"
+          },
+          "demo-data": {
+            "cta": "Start setup",
+            "description": "Connect real data from our demo environment and explore pre-built dashboards.",
+            "title": "Demo data dashboards"
+          },
+          "hosted-data": {
+            "cta": "Start setup",
+            "description": "Store, query, and visualize your telemetry with our fully managed backend.",
+            "title": "Hosted telemetry data"
+          },
+          "infra-monitoring": {
+            "cta": "Start setup",
+            "description": "Monitor infra running on Linux, Kubernetes, cloud platforms, and more.",
+            "title": "Monitor infrastructure"
+          },
+          "kubernetes": {
+            "cta": "Start setup",
+            "description": "Get full visibility into the health and performance of your clusters.",
+            "title": "Kubernetes"
+          },
+          "logs": {
+            "cta": "Start setup",
+            "description": "Aggregate, search, and analyze logs across all your applications and services.",
+            "title": "Logs"
+          },
+          "opentelemetry": {
+            "cta": "Start setup",
+            "description": "Instrument your app or infrastructure for observability across your stack.",
+            "title": "OpenTelemetry"
+          },
+          "prometheus": {
+            "cta": "Start setup",
+            "description": "Connect Prometheus to monitor and visualize metrics in Grafana Cloud.",
+            "title": "Prometheus metrics"
+          },
+          "visualize-data": {
+            "cta": "Start setup",
+            "description": "Connect your existing data to Grafana and build dashboards to visualize it.",
+            "title": "Visualize existing data"
+          },
+          "website-monitoring": {
+            "cta": "Start setup",
+            "description": "Test user experience under load and track availability over time.",
+            "title": "Monitor website uptime and performance"
+          }
+        },
+        "show-less": "Show fewer guides",
+        "show-more": "More getting started guides",
+        "title": "Recommended getting started guides"
+      },
+      "options": {
+        "all": "All solutions",
+        "attention": "Needs attention",
+        "available": "Available solutions",
+        "enabled": "Enabled solutions",
+        "get-started": "Get started"
+      },
+      "title": "Your observability stack overview"
+    },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",
       "clear": "Clear history",
@@ -10949,14 +11029,25 @@
       },
       "carousel-label": "Recommended apps",
       "carousel-roledescription": "carousel",
-      "existing": "Enabled solution",
-      "frontend-observability": {
-        "action": "Enable Frontend Observability",
-        "context": "Connect the browser to your backend traces",
-        "description": "Capture Core Web Vitals and errors from the browser and tie them back to backend traces.",
-        "setup-action": "Set up Frontend Observability",
-        "title": "Measure real user experience"
+      "connect-metrics": {
+        "action": "Connect metrics",
+        "context": "The foundation of your observability stack",
+        "description": "Connect a Prometheus-compatible data source or ship metrics with a collector to light up dashboards and alerting.",
+        "title": "Start with metrics"
       },
+      "enable-logs": {
+        "action": "Add Logs",
+        "context": "Correlate spikes with the logs that explain them",
+        "description": "Send logs alongside your metrics to explain anomalies. Use your existing collector or follow a guided connection.",
+        "title": "See the story behind your metrics"
+      },
+      "enable-logs-k8s": {
+        "action": "Set up log collection",
+        "context": "Pod logs next to the cluster metrics you already have",
+        "description": "Add pod logs alongside your cluster metrics. If you use the Grafana Kubernetes Monitoring Helm chart, log collection is a single values flag.",
+        "title": "Turn on logs for your clusters"
+      },
+      "existing": "Enabled solution",
       "go-to": "Go to recommendation {{index}}",
       "health": {
         "nodes_one": "{{count}} node not ready",
@@ -10987,16 +11078,57 @@
         "title": "Kubernetes Monitoring",
         "view": "View"
       },
+      "kubernetes-monitoring": {
+        "action": "Enable Kubernetes Monitoring",
+        "context": "Cluster health next to your existing telemetry",
+        "description": "Deploy the Helm chart to get pod, node, and workload health out of the box.",
+        "setup-action": "Set up Kubernetes Monitoring",
+        "title": "Monitor your Kubernetes fleet"
+      },
+      "logs": {
+        "action": "Open Explore (Logs)",
+        "action-explore": "Open in Explore",
+        "datasource": "via {{name}}",
+        "stats": "ingested · 7d",
+        "stats-sources_one": "ingested · 7d · ~{{count}} source",
+        "stats-sources_other": "ingested · 7d · ~{{count}} sources",
+        "title": "Hosted Logs",
+        "volume": "Ingest volume · last 24h"
+      },
+      "metrics": {
+        "action": "Open Metrics Drilldown",
+        "action-explore": "Open in Explore",
+        "data-points-per-minute": "{{value}} data points/min",
+        "datasource": "via {{name}}",
+        "disk-eta_one": "~{{count}} h to full",
+        "disk-eta_other": "~{{count}} h to full",
+        "disk-hosts_one": "{{count}} host above 90% disk",
+        "disk-hosts_other": "{{count}} hosts above 90% disk",
+        "disk-worst": "{{host}} at {{percent}}%",
+        "names_one": "{{value}} metric",
+        "names_other": "{{value}} metrics",
+        "series_one": "{{value}} series",
+        "series_other": "{{value}} series",
+        "series-trend": "Active series · last 24h",
+        "stats": "active",
+        "stats-hosts_one": "active · {{count}} host",
+        "stats-hosts_other": "active · {{count}} hosts",
+        "title": "Metrics & infrastructure",
+        "view": "View"
+      },
       "next": "Next",
       "no-data": {
         "badge": "Getting started",
         "connect": "Connect a data source",
         "description": "Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.",
+        "description-partial": "Some signals are already flowing. Connect more data sources or pick a solution to see live stats here.",
+        "description-unknown": "We couldn't confirm live data yet. Connect more data sources or pick a solution to see live stats here.",
         "popular-solutions": "Popular solutions",
         "solution-k6": "k6",
         "solution-kubernetes": "Kubernetes Monitoring",
         "solution-synthetics": "Synthetic Monitoring",
-        "title": "No data flowing yet"
+        "title": "No data flowing yet",
+        "title-partial": "Add more telemetry"
       },
       "pause": "Pause",
       "previous": "Previous",
@@ -11005,14 +11137,19 @@
       "show": "Show",
       "switch": "Recommendations follow the selected solution",
       "switchSolution": "Switch solution",
-      "synthetic-monitoring": {
-        "action": "Add Synthetic Monitoring",
-        "context": "Catch outages before your users do",
-        "description": "Probe your endpoints from 20+ global locations before your users notice.",
-        "setup-action": "Set up Synthetic Monitoring",
-        "title": "Watch your cluster from outside"
-      },
-      "title": "Recommendations for your stack"
+      "title": "Recommendations for your stack",
+      "traces": {
+        "action": "Open Traces Drilldown",
+        "action-explore": "Open in Explore",
+        "datasource": "via {{name}}",
+        "spans_one": "{{value}} span",
+        "spans_other": "{{value}} spans",
+        "stats": "traced · 24h",
+        "stats-services_one": "traced · 24h · {{count}} service",
+        "stats-services_other": "traced · 24h · {{count}} services",
+        "throughput": "Span throughput · last 24h",
+        "title": "Hosted Traces"
+      }
     },
     "starred-dashboards-tab": {
       "empty": "Your starred dashboards will appear here.",
@@ -12425,7 +12562,7 @@
       "list-label": "Navigation",
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
-      "pinned-list-label": "Pinned",
+      "pinned-list-label": "Pinned items",
       "undock": "Undock menu"
     },
     "megamenu-item": {
@@ -15800,17 +15937,28 @@
     },
     "editor": {
       "aria-label-content": "Text content",
+      "aria-label-mode": "Text mode: {{mode}}",
+      "format-bold": "B",
+      "format-heading": "H",
+      "format-italic": "I",
+      "language-plaintext": "Plain text",
+      "mode-code": "Code",
+      "mode-html": "HTML",
+      "mode-markdown": "Markdown",
+      "mode-picker-label": "Mode",
+      "tooltip-bold": "Bold",
+      "tooltip-bullet-list": "Bullet list",
+      "tooltip-checklist": "Checklist",
+      "tooltip-heading": "Heading",
+      "tooltip-insert-variable": "Insert variable",
+      "tooltip-italic": "Italic",
+      "tooltip-link": "Link",
+      "tooltip-numbered-list": "Numbered list",
+      "tooltip-table": "Table",
       "view-preview": "Preview",
       "view-split": "Split",
       "view-write": "Write"
     },
-    "mode-options": {
-      "label-code": "Code",
-      "label-html": "HTML",
-      "label-markdown": "Markdown"
-    },
-    "name-language": "Language",
-    "name-mode": "Mode",
     "name-show-line-numbers": "Show line numbers"
   },
   "theme-playground": {
@@ -17123,6 +17271,7 @@
       "delete-modal-confirm": "Delete",
       "delete-modal-title": "Delete variable",
       "folder-description": "Scope the variable to a folder, or choose the root Dashboards folder to make it global (available everywhere in the organization)",
+      "folder-description-folder-only": "Scope the variable to a folder you can edit",
       "folder-label": "Folder",
       "moved": "Variable moved",
       "name-exists": "A variable with this name already exists in the selected folder",
@@ -17138,6 +17287,8 @@
     "move-modal": {
       "body_one": "Move {{count}} selected variable. Choosing the root Dashboards folder makes it global (available everywhere in the organization).",
       "body_other": "Move {{count}} selected variables. Choosing the root Dashboards folder makes them global (available everywhere in the organization).",
+      "body-folder-only_one": "Move {{count}} selected variable to a folder you can edit.",
+      "body-folder-only_other": "Move {{count}} selected variables to a folder you can edit.",
       "cancel": "Cancel",
       "folder-label": "Folder",
       "move": "Move",

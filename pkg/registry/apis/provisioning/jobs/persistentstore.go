@@ -377,7 +377,6 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 	}
 	delete(job.Labels, LabelJobClaim)
 	delete(job.Labels, LabelJobClaimOwner)
-	s.queueMetrics.DecreaseQueueSize(string(job.Spec.Action))
 
 	logger.Debug("complete job complete")
 	return nil
@@ -578,8 +577,6 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		return nil, apifmt.Errorf("failed to create job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
 
-	s.queueMetrics.IncreaseQueueSize(string(job.Spec.Action))
-
 	logger.Info("insert job complete")
 	return created, nil
 }
@@ -665,7 +662,6 @@ func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repositor
 			return deleted, apifmt.Errorf("failed to delete job '%s' in '%s': %w", job.GetName(), namespace, err)
 		}
 
-		s.queueMetrics.DecreaseQueueSize(string(job.Spec.Action))
 		deleted++
 	}
 

@@ -667,9 +667,24 @@ func TestCombineBuildRequests(t *testing.T) {
 // features safe: requiring a feature this binary never records would rebuild
 // every index on every check, forever.
 func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
-	for _, required := range RequiredIndexFeatures() {
-		require.Contains(t, CurrentIndexFeatures(), required)
+	for _, postRankAuthz := range []bool{false, true} {
+		for _, required := range RequiredIndexFeatures(postRankAuthz) {
+			require.Contains(t, CurrentIndexFeatures(), required)
+		}
 	}
+}
+
+// TestRequiredIndexFeaturesStoredFacets covers the gating that keeps the stored
+// facet mapping from rebuilding indexes where post-rank authorization is off.
+func TestRequiredIndexFeaturesStoredFacets(t *testing.T) {
+	require.NotContains(t, RequiredIndexFeatures(false), IndexFeatureStoredFacets)
+	require.Contains(t, RequiredIndexFeatures(true), IndexFeatureStoredFacets)
+
+	// An index built before the stored facet mapping is reused with the option
+	// off, and rebuilt once it is on.
+	buildInfo := IndexBuildInfo{Features: []IndexFeature{IndexFeatureDeletedMarker}}
+	require.Empty(t, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
+	require.Equal(t, []IndexFeature{IndexFeatureStoredFacets}, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(true)))
 }
 
 func TestShouldRebuildIndex(t *testing.T) {
@@ -1351,6 +1366,54 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 	})
 }
 
+// Trash authorizes each hit against one index's group and resource, so a federated
+// trash search has no correct answer and is refused. The refusal has to come
+// before the federated indexes are resolved, because resolving one can build an
+// index -- hence the assertion on BuildIndex.
+func TestSearchRejectsFederatedTrashQueries(t *testing.T) {
+	backend := &mockSearchBackend{}
+	opts := SearchOptions{
+		Backend: backend,
+		Resources: &TestDocumentBuilderSupplier{
+			GroupsResources: map[string]string{
+				"group": "resource",
+			},
+		},
+		InitMinCount: 1,
+	}
+
+	support, err := newSearchServer(opts, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, support)
+
+	req := &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Namespace: "ns",
+				Group:     "group",
+				Resource:  "resource",
+			},
+		},
+		Federated: []*resourcepb.ResourceKey{{
+			Namespace: "ns",
+			Group:     "group",
+			Resource:  "resource",
+		}},
+		Limit:     10,
+		IsDeleted: true,
+	}
+
+	rsp, err := support.Search(context.Background(), req)
+	require.NoError(t, err)
+	require.NotNil(t, rsp.Error)
+	require.Equal(t, http.StatusBadRequest, int(rsp.Error.Code))
+	require.Equal(t, "searching deleted resources does not support federated queries", rsp.Error.Message)
+
+	backend.mu.Lock()
+	defer backend.mu.Unlock()
+	require.Empty(t, backend.buildIndexCalls, "the request must be refused before any index is resolved")
+}
+
 func TestJitterForKey(t *testing.T) {
 	maxAge := 24 * time.Hour
 
@@ -1790,14 +1853,19 @@ func testObjectJSON(name, title string) []byte {
 	return []byte(fmt.Sprintf(`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q},"spec":{"title":%q,"tags":["tag-a"]}}`, name, title))
 }
 
+// testDeletedObjectJSON is what storage holds after a delete: the deletion marker
+// records who deleted the object as its last updater, and when (see server.go).
+func testDeletedObjectJSON(name, title, deletedBy string, deletedAt time.Time) []byte {
+	return []byte(fmt.Sprintf(
+		`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q,"deletionTimestamp":%q,"annotations":{%q:%q}},"spec":{"title":%q}}`,
+		name, deletedAt.UTC().Format(time.RFC3339), utils.AnnoKeyUpdatedBy, deletedBy, title))
+}
+
 func testProvisionedObjectJSON(name, title string) []byte {
 	return []byte(fmt.Sprintf(`{"apiVersion":"group/v1","kind":"Thing","metadata":{"name":%q,"annotations":{%q:"repo"}},"spec":{"title":%q}}`,
 		name, utils.AnnoKeyManagerKind, title))
 }
 
-// A full build has to list trash itself: deleted objects are absent from the live
-// listing and nothing re-announces them, so without this a rebuild would drop
-// every deleted document for the resource.
 // trashSearchOptions returns search options with deleted objects kept in the
 // index, which is off by default.
 func trashSearchOptions(backend SearchBackend) SearchOptions {
@@ -1808,6 +1876,9 @@ func trashSearchOptions(backend SearchBackend) SearchOptions {
 	}
 }
 
+// A full build has to list trash itself: deleted objects are absent from the live
+// listing and nothing re-announces them, so without this a rebuild would drop
+// every deleted document for the resource.
 func TestIndexTrash(t *testing.T) {
 	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
 	storage := &trashStorageBackend{trash: []trashEntry{
@@ -1990,6 +2061,43 @@ func TestBuildDeletedDocumentKeepsOnlyTrashFields(t *testing.T) {
 	require.Nil(t, doc.Manager)
 }
 
+// The three fields /trash serves beyond title and folder. All of them come from
+// the object storage already holds, so building one costs no extra read.
+func TestBuildDeletedDocumentRecordsWhoDeletedItAndWhen(t *testing.T) {
+	key := &resourcepb.ResourceKey{Namespace: "ns", Group: "group", Resource: "resource", Name: "gone"}
+	deletedAt := time.Now().Truncate(time.Second)
+
+	doc, err := buildDeletedDocument(key, 42, testDeletedObjectJSON("gone", "Gone", "user:alice", deletedAt))
+	require.NoError(t, err)
+
+	require.NotNil(t, doc.DeletedBy)
+	require.Equal(t, "user:alice", *doc.DeletedBy)
+	require.NotNil(t, doc.DeletionTime)
+	require.Equal(t, deletedAt.UnixMilli(), *doc.DeletionTime)
+	require.NotNil(t, doc.DeletedRV)
+	require.Equal(t, "42", *doc.DeletedRV, "the resource version of the delete, not of the last update")
+
+	// A snowflake resource version from the KV backend. Kept as a string because a
+	// float64 cannot represent one exactly, and restore submits this value back.
+	t.Run("a large resource version keeps every digit", func(t *testing.T) {
+		const rv int64 = 1856241819843796993
+		doc, err := buildDeletedDocument(key, rv, testDeletedObjectJSON("gone", "Gone", "user:alice", deletedAt))
+		require.NoError(t, err)
+		require.Equal(t, "1856241819843796993", *doc.DeletedRV)
+	})
+
+	// An object deleted by a process with no user attached, or written before the
+	// marker recorded one. Left unset rather than stored empty, so live and deleted
+	// documents are indexed the same way.
+	t.Run("an unknown deleter is left unset", func(t *testing.T) {
+		doc, err := buildDeletedDocument(key, 42, testObjectJSON("gone", "Gone"))
+		require.NoError(t, err)
+		require.Nil(t, doc.DeletedBy)
+		require.Nil(t, doc.DeletionTime)
+		require.NotNil(t, doc.DeletedRV, "the delete always has a resource version")
+	})
+}
+
 // Trash never returns an object that was provisioned when it was deleted, and a
 // trimmed document keeps no manager fields to work that out later, so it is
 // captured at delete time.
@@ -2041,4 +2149,12 @@ func TestDeletedDocumentsAreRemovedWhenIndexCannotHoldMarkers(t *testing.T) {
 	require.Len(t, items, 1)
 	require.Equal(t, ActionDelete, items[0].Action)
 	require.Equal(t, "gone-2", items[0].Key.Name)
+
+	// An index that maps the markers but not the trash fields would hold a deleted
+	// document whose sort field is missing, so /trash would return it in arbitrary
+	// order. Treated the same as no markers at all: wait for the rebuild.
+	t.Run("an index with the markers but not the trash fields", func(t *testing.T) {
+		index := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: []IndexFeature{IndexFeatureDeletedMarker}}}
+		require.False(t, server.keepsDeletedDocuments(index, log.NewNopLogger()))
+	})
 }

@@ -78,6 +78,11 @@
       "description-basic-logs": "Habilitar esta función conlleva costes por consulta de Azure Monitor en los paneles del dashboard que consultan tablas configuradas para <2>logs básicos</2>.",
       "label-enable-basic-logs": "Habilitar logs básicos"
     },
+    "batch-api-toggle": {
+      "aria-label-enable-batch-api": "",
+      "description-batch-api": "",
+      "label-enable-batch-api": ""
+    },
     "config-editor": {
       "description-additional-settings": "Los ajustes adicionales son ajustes opcionales que se pueden configurar para tener un mayor control sobre la fuente de datos. Esto incluye el proxy SOCKS seguro, el tiempo de espera de la solicitud y las cookies remitidas.",
       "title-additional-settings": "Configuraciones adicionales"
@@ -193,6 +198,13 @@
     "metric-namespace-field": {
       "label-metric-namespace": "Espacio de nombres métrico"
     },
+    "metrics-query-editor": {
+      "selection-notice-batch": "",
+      "selection-notice-standard": ""
+    },
+    "monitor-config": {
+      "title-features": ""
+    },
     "nested-row": {
       "text-loading": "Cargando..."
     },
@@ -204,6 +216,10 @@
       "label-by": "POR",
       "label-order-by": "Ordenar por",
       "tooltip-order-by": "Ordena los resultados en función de una o más columnas en orden ascendente o descendente."
+    },
+    "pagination": {
+      "results-truncated-message": "",
+      "results-truncated-title": ""
     },
     "query-editor": {
       "alert-error-occurred": "Se ha producido un error al solicitar metadatos de Azure Monitor"

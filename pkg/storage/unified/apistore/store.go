@@ -261,6 +261,15 @@ func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.
 	return obj, err
 }
 
+// cleanupSecretsAfterFailedPreparation deletes inline secrets a failed preparation created, but only
+// when cleanupSafe reports the write definitely did not persist; otherwise they may be referenced.
+func (s *Storage) cleanupSecretsAfterFailedPreparation(ctx context.Context, v objectForStorage, cleanupSafe bool, err error) error {
+	if err != nil && cleanupSafe {
+		return v.finish(ctx, err, s.opts.SecureValues)
+	}
+	return err
+}
+
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
@@ -289,7 +298,9 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 
 	v, err := s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
-		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_ADDED, key, obj, out)
+		// Re-route managed resources; clean up any secrets preparation created if the write failed.
+		cleanupSafe, err := s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_ADDED, key, obj, out)
+		return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
 	}
 	req := &resourcepb.CreateRequest{
 		Value: v.raw.Bytes(),
@@ -298,7 +309,8 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 
 	v.permissionCreator, err = afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, obj, s.opts.Permissions)
 	if err != nil {
-		return err
+		// Nothing has been written yet, so clean up any inline secrets preparation created.
+		return v.finish(ctx, err, s.opts.SecureValues)
 	}
 
 	rsp, err := s.store.Create(ctx, req)
@@ -395,7 +407,8 @@ func (s *Storage) Delete(
 			return fmt.Errorf("unable to read object %w", err)
 		}
 		if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
-			return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
+			_, err = s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
+			return err
 		}
 
 		cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
@@ -761,7 +774,9 @@ func (s *Storage) GuaranteedUpdate(
 
 		v, err := s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
 		if err != nil {
-			return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
+			// Re-route managed resources; clean up any secrets preparation created if the write failed.
+			cleanupSafe, err := s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
+			return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
 		}
 
 		req.Value = v.raw.Bytes()
