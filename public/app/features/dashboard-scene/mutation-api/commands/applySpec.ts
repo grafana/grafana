@@ -11,7 +11,7 @@
  * scroll position).
  */
 
-import { z } from 'zod';
+import * as z from 'zod';
 
 import { sceneUtils } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';

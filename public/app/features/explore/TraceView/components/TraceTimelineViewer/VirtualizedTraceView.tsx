@@ -33,6 +33,7 @@ import { type SpanLinkFunc } from '../types/links';
 import { type TraceSpan, type Trace, type TraceSpanReference, type CriticalPathSection } from '../types/trace';
 import { getColorByKey } from '../utils/color-generator';
 import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name';
+import { countSummarySpans } from '../utils/summary-span';
 
 import ListView from './ListView';
 import { SpanBarRow } from './SpanBarRow';
@@ -607,11 +608,16 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
   scrollToTop = () => {
     const { topOfViewRef, datasourceType, trace } = this.props;
     topOfViewRef?.current?.scrollIntoView({ behavior: 'smooth' });
+    // trace can be unset (button still renders); skip analytics rather than dereference it.
+    if (!trace) {
+      return;
+    }
     reportInteraction('grafana_traces_trace_view_scroll_to_top_clicked', {
       datasourceType: datasourceType,
       grafana_version: config.buildInfo.version,
       numServices: trace.services.length,
       numSpans: trace.spans.length,
+      numSummarySpans: countSummarySpans(trace.spans),
     });
   };
 

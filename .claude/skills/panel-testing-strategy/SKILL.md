@@ -8,7 +8,7 @@ description: Write unit and E2E tests for Grafana visualization panels and viz u
 Write tests for Grafana visualization code that pass review on the first pass. Goals:
 **assert concrete behavior, not existence**; keep test descriptions honest; verify the test
 actually exercises the target code path; use the repo's data-frame and panel-props builders;
-snapshot canvas panels via the draw-call harness; and stabilize the known flake classes. The
+snapshot HTML5 canvas based panels via the draw-call harness; and stabilize the known flake classes. The
 visualization codeowner paths are opted into the gating `check-frontend-test-coverage.yml`
 check, so coverage that drops fails CI.
 
@@ -107,6 +107,12 @@ readability/maintainability. If reviewing the AI output costs more than writing 
 hand, write it by hand. A test is a specification a teammate — and future-you — must read
 easily; value refactoring for readability over a raw coverage percentage.
 
+## Principle 4 - Do not simply update failing tests to pass after changing behaviour, or adding a feature
+
+When a test fails after updating functionality, behaviour or features, this is a warning that a regression was caused. Tests are meant as a safety net to catch regressions, and a failing test isn't broken -- its doing its job.
+
+Net new functionality requires net new tests. Existing tests should be treated as a spec, and if you cause a test to fail -- STOP -- and analyze why that test fails, only after thorough analysis based on tracing real code should an existing test ever be updated.
+
 ## Step 1 — Set up data with the repo's builders
 
 Build data frames with the `@grafana/data` builders — **pick one and don't mix**
@@ -160,9 +166,12 @@ it('draws a horizontal threshold line (constant y, spanning plot width) in Line 
 Use `it.each` with `$name` / `$desc` interpolation for enumerable variants so each row
 self-labels. Delete duplicate cases — if two tests exercise the same path, keep one.
 
-## Step 3 — Verify the test reaches the target branch
+**Prefer deletion over inflation.** When an assertion only restates what a stronger assertion in
+stronger and delete the other. Removing redundant coverage is a legitimate, reviewable improvement:
+a smaller honest test beats a padded one. Before deleting, confirm the behavior is still covered by
+a sibling assertion or test.
 
-A test that never enters the code you meant to cover is worse than no test. Two habits:
+## Step 3 — Verify the test reaches the target branch
 
 - **Set the gates.** e.g. percentage-threshold merging only runs when
   `color.mode: FieldColorModeId.Thresholds` is set — omit it and you test the plain path
@@ -196,7 +205,7 @@ measureTextMock.mockReturnValue({ width: 100 } as TextMetrics);
 expect(measureTextMock).toHaveBeenCalledWith('label', 12);
 ```
 
-## Step 4 — Canvas / rendering panels: use the draw-call snapshot harness
+## Step 4 — HTML5 canvas / rendering panels: use the draw-call snapshot harness
 
 Panels that draw to canvas (timeseries, heatmap, xychart, timeline, piechart, sparkline)
 are tested by **capturing the ctx draw-call stream**, not by pixel-diffing. Follow the established harness:

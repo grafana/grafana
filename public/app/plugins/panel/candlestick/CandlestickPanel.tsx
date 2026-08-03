@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import type uPlot from 'uplot';
 
 import { type Field, getDisplayProcessor, type PanelProps, useDataLinksContext } from '@grafana/data';
-import { config, PanelDataErrorView } from '@grafana/runtime';
+import { PanelDataErrorView } from '@grafana/runtime';
 import { DashboardCursorSync, TooltipDisplayMode } from '@grafana/schema';
 import {
   EventBusPlugin,
@@ -116,7 +116,7 @@ export const CandlestickPanel = ({
           volumeField.config.unit = 'short';
           volumeField.display = getDisplayProcessor({
             field: volumeField,
-            theme: config.theme2,
+            theme,
           });
 
           tweakAxis = (opts: AxisProps, forField: Field) => {
@@ -195,9 +195,9 @@ export const CandlestickPanel = ({
               drawMarkers({
                 mode,
                 fields: fieldIndices,
-                upColor: config.theme2.visualization.getColorByName(colors.up),
-                downColor: config.theme2.visualization.getColorByName(colors.down),
-                flatColor: config.theme2.visualization.getColorByName(colors.flat),
+                upColor: theme.visualization.getColorByName(colors.up),
+                downColor: theme.visualization.getColorByName(colors.down),
+                flatColor: theme.visualization.getColorByName(colors.flat),
                 volumeAlpha,
                 colorStrategy,
                 candleStyle,
@@ -211,7 +211,7 @@ export const CandlestickPanel = ({
       tweakAxis,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options, data.structureRev, data.series.length]);
+  }, [options, data.structureRev, data.series.length, theme]);
 
   if (!info) {
     return (

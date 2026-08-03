@@ -1,3 +1,4 @@
+import { config } from '@grafana/runtime';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
@@ -17,7 +18,7 @@ export function OrphanedDashboardBanner({ dashboard }: Props) {
   const kind = dashboard.getManagerKind();
   const name = dashboard.getManagerIdentity();
 
-  const shouldSkip = kind !== ManagerKind.Repo || !name;
+  const shouldSkip = !config.featureToggles.provisioning || kind !== ManagerKind.Repo || !name;
 
   const { status } = useGetResourceRepositoryView({
     name: shouldSkip ? undefined : name,

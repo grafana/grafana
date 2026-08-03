@@ -154,15 +154,9 @@ However, Pure Git doesn't include any features that require provider APIs, such 
 
 ### Enhanced integrations: GitHub, GitHub Enterprise, GitLab, Bitbucket
 
-If your Git provider is GitHub, GitLab, or Bitbucket, use the enhanced integration. Enhanced integrations understand the platform you're using, allowing workflows that feel native: automated pull request comments with dashboard previews, instant webhook-based sync, or direct navigation from Grafana to source files in your provider's UI.
+If your Git provider is GitHub, GitHub Enterprise, GitLab, or Bitbucket, use the enhanced integration. Enhanced integrations understand the platform you're using, allowing workflows that feel native: automated pull request comments with dashboard previews, instant webhook-based sync, or direct navigation from Grafana to source files in your provider's UI.
 
 The GitHub enhanced integration is the most feature-complete experience today. It enables richer pull request workflows, deeper linking between Grafana and GitHub, and tighter integration into review processes. It is available in Grafana OSS, Enterprise, and Cloud.
-
-{{< admonition type="note" >}}
-
-**GitHub Enterprise Server** is currently only supported through the Pure Git repository type. A dedicated enhanced integration for GitHub Enterprise Server is planned for upcoming releases.
-
-{{< /admonition >}}
 
 The GitLab and Bitbucket integrations have limited functionality for the moment, and are only available in Grafana Enterprise and Grafana Cloud. Expect continued improvements around pull request workflows, linking, and sync behavior in upcoming releases.
 

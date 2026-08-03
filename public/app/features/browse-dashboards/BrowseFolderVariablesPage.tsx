@@ -73,6 +73,7 @@ export function BrowseFolderVariablesPage() {
                   <Trans i18nKey="browse-dashboards.folder-variables.list-heading">Folder variables</Trans>
                 </Text>
                 <Button
+                  disabled={!folderDTO.canEdit}
                   onClick={() =>
                     navigate(locationUtil.assureBaseUrl(`/dashboards/variables/new?folderUid=${folderUID}`))
                   }

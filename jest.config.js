@@ -54,7 +54,10 @@ module.exports = {
     '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest')],
   },
   transformIgnorePatterns: [
-    `/node_modules/(?!${esModules})`, // exclude es modules to prevent TS complaining
+    // Transform listed ESM packages at the top level or nested under another package
+    // (e.g. @grafana/plugin-ui → uuid). Top-level still uses prefix matching so
+    // entries like `d3` continue to cover related packages (d3-force, etc.).
+    `/node_modules/(?!(?:${esModules})|(?:.*/(?:${esModules})/))`,
   ],
   moduleDirectories: ['public', 'node_modules'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts/tests'],
@@ -91,6 +94,7 @@ module.exports = {
     '/node_modules/',
     // Decoupled plugins run their own tests so ignoring them here.
     '<rootDir>/public/app/plugins/datasource/azuremonitor',
+    '<rootDir>/public/app/plugins/datasource/cloudwatch',
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
     '<rootDir>/public/app/plugins/datasource/influxdb',
     '<rootDir>/public/app/plugins/datasource/graphite',
