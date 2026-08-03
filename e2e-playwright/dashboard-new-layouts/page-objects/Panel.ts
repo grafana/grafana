@@ -4,6 +4,10 @@ import { PageObject } from './PageObject';
 
 // A dashboard panel: header, title, and selection within the edit canvas
 export class Panel extends PageObject {
+  getHeaders() {
+    return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Panels.Panel.headerContainer);
+  }
+
   getContainersByTitle(title: string) {
     // despite the Panel.title() naming, this data-testid is on the whole
     // panel <section> container, not the title text or header bar.
@@ -17,9 +21,7 @@ export class Panel extends PageObject {
 
   // All panel headers whose title matches — the spec owns count assertions
   getHeadersByTitle(title: string | RegExp) {
-    return this.dashboardPage
-      .getByGrafanaSelector(this.selectors.components.Panels.Panel.headerContainer)
-      .filter({ hasText: title });
+    return this.getHeaders().filter({ hasText: title });
   }
 
   getHeaderByTitle(title: string | RegExp) {
@@ -39,6 +41,12 @@ export class Panel extends PageObject {
         }
       });
     }
+  }
+
+  async selectByIndex(index: number) {
+    await test.step(`Select panel at index ${index}`, async () => {
+      await this.getHeaders().nth(index).click();
+    });
   }
 
   async selectMenuItem(panelTitle: string, menuPath: string[]) {

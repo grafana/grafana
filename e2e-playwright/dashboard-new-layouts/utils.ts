@@ -215,15 +215,6 @@ export async function goToEmbeddedPanel(page: Page) {
   await page.goto(soloPanelUrl!);
 }
 
-export async function goToPanelSnapshot(page: Page) {
-  // extracting snapshot url from clipboard
-  const snapshotUrl = await page.evaluate(() => navigator.clipboard.readText());
-
-  expect(snapshotUrl).toBeDefined();
-
-  await page.goto(snapshotUrl);
-}
-
 /**
  * Coordinate-based drag: hover the source, press, move in steps, release.
  * Playwright's locator.dragTo() does not trigger the dnd library (pangea) used by
