@@ -290,8 +290,17 @@ type SearchOptions struct {
 	// TTL for the dedup cache used in ListModifiedSince updates. 0 disables the cache.
 	IndexModificationCacheTTL time.Duration
 
+	// Keep deleted objects in the index so trash searches can find them. Off means
+	// a delete removes the document, as it did before trash search existed.
+	IndexDeletedDocuments bool
+
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
+
+	// PostRankAuthzEnabled mirrors the index backend's post-rank authorization
+	// setting. It selects the index features this server requires, so an index
+	// that predates them is rebuilt before that path serves a query.
+	PostRankAuthzEnabled bool
 
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition

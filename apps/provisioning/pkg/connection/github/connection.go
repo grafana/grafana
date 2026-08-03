@@ -112,21 +112,16 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		if err != nil {
 			// Error generating JWT token means the privateKey is not valid.
 			logger.Info("JWT token generation failed during connection test", "appID", c.cfg.AppID())
-			return &provisioning.TestResults{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: provisioning.APIVERSION,
-					Kind:       "TestResults",
-				},
-				Code:    http.StatusUnauthorized,
-				Success: false,
-				Errors: []provisioning.ErrorDetails{
+			return connection.FailedTestResults(
+				http.StatusUnauthorized,
+				[]provisioning.ErrorDetails{
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
 						Field:  field.NewPath("secure", "privateKey").String(),
 						Detail: "invalid private key",
 					},
 				},
-			}, nil
+			), nil
 		}
 		c.obj.Secure.Token.Create = token
 		c.secrets.Token = token
@@ -136,32 +131,22 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		if err != nil {
 			// Error parsing JWT token means the given private key is invalid
 			logger.Info("JWT token parsing failed during connection test", "appID", c.cfg.AppID())
-			return &provisioning.TestResults{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: provisioning.APIVERSION,
-					Kind:       "TestResults",
-				},
-				Code:    http.StatusUnauthorized,
-				Success: false,
-				Errors: []provisioning.ErrorDetails{
+			return connection.FailedTestResults(
+				http.StatusUnauthorized,
+				[]provisioning.ErrorDetails{
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
 						Field:  field.NewPath("secure", "privateKey").String(),
 						Detail: "invalid private key",
 					},
 				},
-			}, nil
+			), nil
 		}
 		if claims.Issuer != c.cfg.AppID() {
 			logger.Info("JWT issuer mismatch", "expected", c.cfg.AppID(), "got", claims.Issuer)
-			return &provisioning.TestResults{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: provisioning.APIVERSION,
-					Kind:       "TestResults",
-				},
-				Code:    http.StatusUnauthorized,
-				Success: false,
-				Errors: []provisioning.ErrorDetails{
+			return connection.FailedTestResults(
+				http.StatusUnauthorized,
+				[]provisioning.ErrorDetails{
 					{
 						Type:     metav1.CauseTypeFieldValueInvalid,
 						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "appID").String(),
@@ -169,7 +154,7 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 						BadValue: c.cfg.AppID(),
 					},
 				},
-			}, nil
+			), nil
 		}
 	}
 
@@ -184,17 +169,12 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 
 		// Check for specific error types
 		switch {
-		case errors.Is(err, ErrAuthentication):
+		case errors.Is(err, connection.ErrAuthentication):
 			// ErrAuthentication is returned when the underlying JWT is invalid.
 			// This means that appID and/or privateKey are not correct.
-			return &provisioning.TestResults{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: provisioning.APIVERSION,
-					Kind:       "TestResults",
-				},
-				Code:    http.StatusUnauthorized,
-				Success: false,
-				Errors: []provisioning.ErrorDetails{
+			return connection.FailedTestResults(
+				http.StatusUnauthorized,
+				[]provisioning.ErrorDetails{
 					{
 						Type:     metav1.CauseTypeFieldValueInvalid,
 						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "appID").String(),
@@ -208,16 +188,11 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 						BadValue: "****",
 					},
 				},
-			}, nil
+			), nil
 		case errors.Is(err, ErrNotFound):
-			return &provisioning.TestResults{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: provisioning.APIVERSION,
-					Kind:       "TestResults",
-				},
-				Code:    http.StatusNotFound,
-				Success: false,
-				Errors: []provisioning.ErrorDetails{
+			return connection.FailedTestResults(
+				http.StatusNotFound,
+				[]provisioning.ErrorDetails{
 					{
 						Type:     metav1.CauseTypeFieldValueNotFound,
 						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "appID").String(),
@@ -225,51 +200,36 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 						BadValue: c.cfg.AppID(),
 					},
 				},
-			}, nil
+			), nil
 		case errors.Is(err, ErrServiceUnavailable):
-			return &provisioning.TestResults{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: provisioning.APIVERSION,
-					Kind:       "TestResults",
-				},
-				Code:    http.StatusServiceUnavailable,
-				Success: false,
-				Errors: []provisioning.ErrorDetails{
+			return connection.FailedTestResults(
+				http.StatusServiceUnavailable,
+				[]provisioning.ErrorDetails{
 					{
 						Type:   metav1.CauseTypeInternal,
 						Detail: ErrServiceUnavailable.Error(),
 					},
 				},
-			}, nil
+			), nil
 		default:
 			// Generic error
-			return &provisioning.TestResults{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: provisioning.APIVERSION,
-					Kind:       "TestResults",
-				},
-				Code:    http.StatusUnprocessableEntity,
-				Success: false,
-				Errors: []provisioning.ErrorDetails{
+			return connection.FailedTestResults(
+				http.StatusUnprocessableEntity,
+				[]provisioning.ErrorDetails{
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
 						Detail: fmt.Errorf("failed to GET app: %w", err).Error(),
 					},
 				},
-			}, nil
+			), nil
 		}
 	}
 
 	if fmt.Sprintf("%d", app.ID) != c.cfg.AppID() {
 		logger.Info("app ID mismatch", "expected", c.cfg.AppID(), "got", app.ID)
-		return &provisioning.TestResults{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: provisioning.APIVERSION,
-				Kind:       "TestResults",
-			},
-			Code:    http.StatusBadRequest,
-			Success: false,
-			Errors: []provisioning.ErrorDetails{
+		return connection.FailedTestResults(
+			http.StatusBadRequest,
+			[]provisioning.ErrorDetails{
 				{
 					Type:     metav1.CauseTypeFieldValueInvalid,
 					Field:    field.NewPath("spec", string(c.obj.Spec.Type), "appID").String(),
@@ -277,22 +237,14 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 					BadValue: c.cfg.AppID(),
 				},
 			},
-		}, nil
+		), nil
 	}
 
 	// Validate the app's permissions.
 	permissionErrors := c.validatePermissions(permissionTargetApp, c.cfg.AppID(), app.Permissions)
 	if len(permissionErrors) > 0 {
 		logger.Info("GitHub App permission validation failed", "appID", c.cfg.AppID(), "errorCount", len(permissionErrors))
-		return &provisioning.TestResults{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: provisioning.APIVERSION,
-				Kind:       "TestResults",
-			},
-			Code:    http.StatusForbidden,
-			Success: false,
-			Errors:  permissionErrors,
-		}, nil
+		return connection.FailedTestResults(http.StatusForbidden, permissionErrors), nil
 	}
 
 	installation, err := ghClient.GetAppInstallation(ctx, c.cfg.InstallationID())
@@ -300,32 +252,22 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 		logger.Info("error getting app installation", "installationID", c.cfg.InstallationID(), "error", err)
 		// Check for specific error types
 		switch {
-		case errors.Is(err, ErrAuthentication):
-			return &provisioning.TestResults{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: provisioning.APIVERSION,
-					Kind:       "TestResults",
-				},
-				Code:    http.StatusUnauthorized,
-				Success: false,
-				Errors: []provisioning.ErrorDetails{
+		case errors.Is(err, connection.ErrAuthentication):
+			return connection.FailedTestResults(
+				http.StatusUnauthorized,
+				[]provisioning.ErrorDetails{
 					{
 						Type:     metav1.CauseTypeFieldValueInvalid,
 						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "installationID").String(),
-						Detail:   ErrAuthentication.Error(),
+						Detail:   connection.ErrAuthentication.Error(),
 						BadValue: c.cfg.InstallationID(),
 					},
 				},
-			}, nil
+			), nil
 		case errors.Is(err, ErrNotFound):
-			return &provisioning.TestResults{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: provisioning.APIVERSION,
-					Kind:       "TestResults",
-				},
-				Code:    http.StatusNotFound,
-				Success: false,
-				Errors: []provisioning.ErrorDetails{
+			return connection.FailedTestResults(
+				http.StatusNotFound,
+				[]provisioning.ErrorDetails{
 					{
 						Type:     metav1.CauseTypeFieldValueInvalid,
 						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "installationID").String(),
@@ -333,16 +275,11 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 						BadValue: c.cfg.InstallationID(),
 					},
 				},
-			}, nil
+			), nil
 		case errors.Is(err, ErrServiceUnavailable):
-			return &provisioning.TestResults{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: provisioning.APIVERSION,
-					Kind:       "TestResults",
-				},
-				Code:    http.StatusServiceUnavailable,
-				Success: false,
-				Errors: []provisioning.ErrorDetails{
+			return connection.FailedTestResults(
+				http.StatusServiceUnavailable,
+				[]provisioning.ErrorDetails{
 					{
 						Type:     metav1.CauseTypeFieldValueInvalid,
 						Field:    field.NewPath("spec", string(c.obj.Spec.Type), "installationID").String(),
@@ -350,23 +287,18 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 						BadValue: c.cfg.InstallationID(),
 					},
 				},
-			}, nil
+			), nil
 		default:
 			// Generic error
-			return &provisioning.TestResults{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: provisioning.APIVERSION,
-					Kind:       "TestResults",
-				},
-				Code:    http.StatusUnprocessableEntity,
-				Success: false,
-				Errors: []provisioning.ErrorDetails{
+			return connection.FailedTestResults(
+				http.StatusUnprocessableEntity,
+				[]provisioning.ErrorDetails{
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
 						Detail: fmt.Errorf("failed to GET app installation: %w", err).Error(),
 					},
 				},
-			}, nil
+			), nil
 		}
 	}
 
@@ -375,25 +307,10 @@ func (c *Connection) Test(ctx context.Context) (*provisioning.TestResults, error
 	// permissions but the installation owner has not yet accepted them on GitHub.
 	installationPermErrors := c.validatePermissions(permissionTargetInstallation, c.cfg.InstallationID(), installation.Permissions)
 	if len(installationPermErrors) > 0 {
-		return &provisioning.TestResults{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: provisioning.APIVERSION,
-				Kind:       "TestResults",
-			},
-			Code:    http.StatusForbidden,
-			Success: false,
-			Errors:  installationPermErrors,
-		}, nil
+		return connection.FailedTestResults(http.StatusForbidden, installationPermErrors), nil
 	}
 
-	return &provisioning.TestResults{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: provisioning.APIVERSION,
-			Kind:       "TestResults",
-		},
-		Code:    http.StatusOK,
-		Success: true,
-	}, nil
+	return connection.SuccessTestResults(), nil
 }
 
 // GenerateRepositoryToken generates a repository-scoped access token.
@@ -427,7 +344,7 @@ func (c *Connection) GenerateRepositoryToken(ctx context.Context, repo *provisio
 			return nil, fmt.Errorf("%s: %w", err.Error(), connection.ErrRepositoryAccess)
 		case errors.Is(err, ErrNotFound):
 			return nil, fmt.Errorf("%s: %w", err.Error(), connection.ErrNotFound)
-		case errors.Is(err, ErrAuthentication):
+		case errors.Is(err, connection.ErrAuthentication):
 			return nil, connection.ErrAuthentication
 		}
 
@@ -486,39 +403,28 @@ func (c *Connection) GenerateConnectionToken(_ context.Context) (common.RawSecur
 		return "", errors.New("connection is not a GitHub connection")
 	}
 
-	return GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
-}
-
-// TokenCreationTime returns when the underlying token has been created.
-func (c *Connection) TokenCreationTime(_ context.Context) (time.Time, error) {
-	issuingTime, _, err := getIssuingAndExpirationTimeFromToken(c.secrets.Token, c.secrets.PrivateKey)
+	token, err := GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
 	if err != nil {
-		return time.Time{}, err
+		return "", err
 	}
 
-	return issuingTime, nil
+	return token, nil
 }
 
-// TokenExpiration returns the underlying token expiration.
-func (c *Connection) TokenExpiration(_ context.Context) (time.Time, error) {
-	_, expiration, err := getIssuingAndExpirationTimeFromToken(c.secrets.Token, c.secrets.PrivateKey)
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	return expiration, nil
-}
-
-// TokenValid returns whether the underlying token is valid.
-func (c *Connection) TokenValid(_ context.Context) bool {
+// ValidateToken checks the stored JWT. A token that does not parse with the
+// private key or was issued for another appID is invalid.
+func (c *Connection) ValidateToken() (time.Time, error) {
 	claims, err := parseJWTToken(c.secrets.Token, c.secrets.PrivateKey)
 	if err != nil {
-		// Error here means the token has not been built with the object privateKey
-		return false
+		return time.Time{}, err
 	}
-
-	// For the token to be valid, the issuer must be equal to the object appID
-	return claims.Issuer == c.cfg.AppID()
+	if claims.Issuer != c.cfg.AppID() {
+		return time.Time{}, errors.New("token was issued for another appID")
+	}
+	if claims.ExpiresAt != nil {
+		return claims.ExpiresAt.Time, nil
+	}
+	return time.Time{}, nil
 }
 
 type permissionTarget int

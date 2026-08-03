@@ -7,9 +7,10 @@ import { CoreApp, type GrafanaTheme2, type PanelProps, type InterpolateFunction 
 import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 
-import { defaultCodeOptions, defaultOptions, type Options, TextMode } from '../panelcfg.gen';
+import { type CodeOptions, defaultCodeOptions, defaultOptions, type Options, TextMode } from '../panelcfg.gen';
 
 import { TextNGCodeView } from './TextNGCodeView';
+import { type TextNGEditorChange } from './editor/TextNGEditor';
 import { getInterpolateFormat, transformContent } from './utils';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
@@ -71,7 +72,7 @@ export function TextNGPanel(props: Props) {
           showLineNumbers={options.code?.showLineNumbers ?? false}
           codeLanguage={options.code?.language}
           replaceVariables={replaceVariables}
-          onChange={(next) => onOptionsChange({ ...options, content: next })}
+          onChange={(change) => onOptionsChange(applyEditorChange(options, change))}
         />
       </Suspense>
     );
@@ -131,6 +132,15 @@ function EditorLoadingFallback({
   );
 
   return <TextNGView mode={options.mode} content={content} code={options.code} />;
+}
+
+function applyEditorChange(options: Options, change: TextNGEditorChange): Options {
+  const { content, mode = options.mode, codeLanguage } = change;
+  const code: CodeOptions | undefined = codeLanguage
+    ? { showLineNumbers: false, showMiniMap: false, ...options.code, language: codeLanguage }
+    : options.code;
+
+  return { ...options, content, mode, code };
 }
 
 function interpolateContent(options: Options, interpolate: InterpolateFunction): string {

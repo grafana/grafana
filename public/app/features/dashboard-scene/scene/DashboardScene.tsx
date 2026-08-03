@@ -120,7 +120,7 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
-import { type DashboardLayoutManager } from './types/DashboardLayoutManager';
+import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
@@ -184,7 +184,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    */
   private _changeTracker: DashboardSceneChangeTracker;
 
-  private _editPaneActivation?: CancelActivationHandler;
+  private _sidebarActivation?: CancelActivationHandler;
 
   /**
    * Remember scroll position when going into panel edit
@@ -280,7 +280,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
-      this.deactivateEditPane();
+      this.deactivateSidebar();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
     };
@@ -441,23 +441,23 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   /**
-   * Activate the edit pane if it is not already active (e.g. not rendered), so programmatic
+   * Activate the sidebar if it is not already active (e.g. not rendered), so programmatic
    * mutations that dispatch DashboardEditActionEvents get performed. The activation is
-   * reference-counted, so we retain the handler and release it on exit (see deactivateEditPane).
+   * reference-counted, so we retain the handler and release it on exit (see deactivateSidebar).
    */
-  public activateEditPane() {
+  public activateSidebar() {
     const { sidebar } = this.state;
     if (sidebar.isActive) {
       return;
     }
     // Release the previous pane's activation before acquiring a new one.
-    this.deactivateEditPane();
-    this._editPaneActivation = sidebar.activate();
+    this.deactivateSidebar();
+    this._sidebarActivation = sidebar.activate();
   }
 
-  private deactivateEditPane() {
-    this._editPaneActivation?.();
-    this._editPaneActivation = undefined;
+  private deactivateSidebar() {
+    this._sidebarActivation?.();
+    this._sidebarActivation = undefined;
   }
 
   public async saveCompleted(
@@ -569,8 +569,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // none to begin with. dashboardEditDiscarded only fires on the dirty path,
     // so we'd otherwise lose the no-op exit case.
     reportInteraction('dashboards_edit_exited', { restoreInitialState }, { silent: true });
-    // Release any edit pane we activated programmatically before the pane is swapped/unmounted.
-    this.deactivateEditPane();
+    // Release any sidebar we activated programmatically before the pane is swapped/unmounted.
+    this.deactivateSidebar();
 
     // We are updating url and removing editview and editPanel.
     // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
@@ -625,9 +625,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Stop tracking while we reset state.
     this._changeTracker.stopTrackingChanges();
 
-    // The restored state swaps in a cloned edit pane, so release the one we activated programmatically.
-    const hadProgrammaticEditPane = this._editPaneActivation !== undefined;
-    this.deactivateEditPane();
+    // The restored state swaps in a cloned sidebar, so release the one we activated programmatically.
+    const hadProgrammaticSidebar = this._sidebarActivation !== undefined;
+    this.deactivateSidebar();
 
     const restoredState = sceneUtils.cloneSceneObjectState(this._initialState!, { isDirty: false });
 
@@ -645,8 +645,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     });
 
     // We stay in edit mode, so re-activate the swapped-in pane to keep programmatic mutations working.
-    if (hadProgrammaticEditPane) {
-      this.activateEditPane();
+    if (hadProgrammaticSidebar) {
+      this.activateSidebar();
     }
 
     this.restoreSerializerAnnotationsFromInitialState();
@@ -1184,7 +1184,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
-  public getLayout(): DashboardLayoutManager {
+  public getLayout(): AnyDashboardLayoutManager {
     return this.state.body;
   }
 
@@ -1484,6 +1484,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   isManagedRepository() {
+    if (!config.provisioningEnabled) {
+      return false;
+    }
     return Boolean(this.getManagerKind() === ManagerKind.Repo);
   }
 

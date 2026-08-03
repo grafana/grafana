@@ -14,7 +14,7 @@ import {
   type MapLayerOptions,
   type PanelData,
   type GrafanaTheme2,
-  type EventBus
+  type EventBus,
 } from '@grafana/data';
 
 enum ShowTime {
@@ -52,7 +52,12 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<DayNightConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (
+    map: OpenLayersMap,
+    options: MapLayerOptions<DayNightConfig>,
+    eventBus: EventBus,
+    theme: GrafanaTheme2
+  ) => {
     // Assert default values
     const config = {
       ...defaultConfig,
@@ -145,7 +150,6 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
 
     // Crosshair sharing subscriptions
     const subscriptions = new Subscription();
-
 
     return {
       init: () => layer,

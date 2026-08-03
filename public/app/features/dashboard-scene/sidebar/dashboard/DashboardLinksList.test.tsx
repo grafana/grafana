@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type DashboardLink, type DashboardLinkPlacement } from '@grafana/schema';
 
 import { DashboardScene } from '../../scene/DashboardScene';
-import { createDefaultLink, openLinkEditPane } from '../../settings/links/LinkAddEditableElement';
+import { createDefaultLink, openEditLinkPane } from '../../settings/links/LinkAddEditableElement';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { DashboardLinksList, partitionLinksByPlacement } from './DashboardLinksList';
@@ -12,7 +12,7 @@ import { DashboardLinksList, partitionLinksByPlacement } from './DashboardLinksL
 jest.mock('../../settings/links/LinkAddEditableElement', () => ({
   ...jest.requireActual('../../settings/links/LinkAddEditableElement'),
   openAddLinkPane: jest.fn(),
-  openLinkEditPane: jest.fn(),
+  openEditLinkPane: jest.fn(),
 }));
 
 jest.mock('../../utils/interactions', () => ({
@@ -106,7 +106,7 @@ describe('<DashboardLinksList />', () => {
 
         await user.click(getByText(visibleLink1.title));
 
-        expect(openLinkEditPane).toHaveBeenCalledWith(elements.dashboardScene, 0);
+        expect(openEditLinkPane).toHaveBeenCalledWith(elements.dashboardScene, 0);
       });
     });
 
