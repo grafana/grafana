@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -18,6 +19,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func TestFilterK8sLibraryPanelsEmptyFolderFilter(t *testing.T) {
+	handler := &libraryElementsK8sHandler{}
+	items := []unstructured.Unstructured{{Object: map[string]interface{}{
+		"metadata": map[string]interface{}{"name": "panel"},
+		"spec":     map[string]interface{}{"type": "text", "title": "Panel"},
+	}}}
+
+	require.Len(t, handler.filterK8sLibraryPanels(nil, items, model.SearchLibraryElementsQuery{}, nil), 1)
+	require.Empty(t, handler.filterK8sLibraryPanels(nil, items, model.SearchLibraryElementsQuery{}, []string{}))
+}
 
 func TestFolderUIDFromLegacyID(t *testing.T) {
 	reqContext := &contextmodel.ReqContext{
