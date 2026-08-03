@@ -28,6 +28,15 @@ import { getProvisioningRoutes } from '../features/provisioning/utils/routes';
 const isDevEnv = config.buildInfo.env === 'development';
 export const extraRoutes: RouteDescriptor[] = [];
 
+/** Named loaders so notebook routes stay coverage-friendly for navigation owners. */
+export function loadNotebookScenePage() {
+  return import(/* webpackChunkName: "NotebookScenePage" */ '../features/notebook/pages/NotebookScenePage');
+}
+
+export function loadNotebookEditorPage() {
+  return import(/* webpackChunkName: "NotebookEditorPage" */ '../features/notebook/pages/NotebookEditorPage');
+}
+
 export function getAppRoutes(): RouteDescriptor[] {
   const routes: Array<RouteDescriptor | undefined | false> = [
     // Based on the Grafana configuration standalone plugin pages can even override and extend existing core pages, or they can register new routes under existing ones.
@@ -60,9 +69,11 @@ export function getAppRoutes(): RouteDescriptor[] {
       path: '/notebook/:uid/:slug?',
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Notebook,
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "NotebookScenePage" */ '../features/notebook/pages/NotebookScenePage')
-      ),
+      component: SafeDynamicImport(loadNotebookScenePage),
+    },
+    {
+      path: '/notebooks/edit/:uid',
+      component: SafeDynamicImport(loadNotebookEditorPage),
     },
     {
       path: '/dashboard/assistant-preview/*',
