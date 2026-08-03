@@ -78,7 +78,7 @@ export async function getLibraryPanels({
   return response.data.result;
 }
 
-// kinda heavy weight migration process!!!
+// Rebuild through DashboardModel so registered panel migrations run before use.
 function migrateLibraryPanelModel(result: LibraryElementDTO): LibraryElementDTO {
   const dash = new DashboardModel({
     ...defaultDashboard,
