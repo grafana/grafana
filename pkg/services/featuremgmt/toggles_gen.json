@@ -4953,7 +4953,8 @@
       "metadata": {
         "name": "provisioning",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2024-11-22T09:03:50Z"
+        "creationTimestamp": "2024-11-22T09:03:50Z",
+        "deletionTimestamp": "2026-08-03T14:10:33Z"
       },
       "spec": {
         "description": "Enables Git Sync and as-code provisioning for Grafana resources",
