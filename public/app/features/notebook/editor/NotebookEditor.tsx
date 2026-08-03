@@ -45,6 +45,8 @@ import { CollabCursors } from '../collab/CollabCursors';
 import { PresenceAvatars } from '../collab/PresenceAvatars';
 import { mergeRemoteSpec } from '../collab/mergeRemoteSpec';
 import { resourceVersionTs, useNotebookCollab } from '../collab/useNotebookCollab';
+import { DeclareIncidentFromNotebookButton } from '../extensions/DeclareIncidentFromNotebookButton';
+import { declareIncidentContextFromSpec } from '../extensions/declareIncidentFromNotebook';
 import { setLastUsedNotebook } from '../model/lastUsedNotebook';
 import { consumeNewNotebook } from '../model/newNotebookSignal';
 import {
@@ -504,6 +506,7 @@ export function NotebookEditor({ uid }: Props) {
           appEvents.emit(AppEvents.alertSuccess, [t('notebooks.editor.link-copied', 'Notebook link copied')]);
         }}
       />
+      <DeclareIncidentFromNotebookButton as="menu-item" {...declareIncidentContextFromSpec(uid, spec)} />
       <Menu.Item icon="copy" label={t('notebooks.editor.copy-markdown', 'Copy as Markdown')} onClick={onCopyMarkdown} />
       <Menu.Item
         icon="file-copy-alt"
