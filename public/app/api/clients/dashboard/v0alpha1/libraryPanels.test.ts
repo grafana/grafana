@@ -299,9 +299,11 @@ describe('libraryPanelsK8sClient request options', () => {
     });
     get.mockResolvedValue(resource);
 
-    await expect(libraryPanelsK8sClient.update('panel-uid', 'Updated name', resource.spec, 3)).rejects.toThrow(
-      'Library panel version mismatch'
-    );
+    await expect(libraryPanelsK8sClient.update('panel-uid', 'Updated name', resource.spec, 3)).rejects.toMatchObject({
+      status: 412,
+      statusText: 'Precondition Failed',
+      data: { message: 'the library element has been changed by someone else' },
+    });
     expect(put).not.toHaveBeenCalled();
   });
 });
