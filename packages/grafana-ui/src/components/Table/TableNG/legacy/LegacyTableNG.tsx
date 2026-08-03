@@ -672,6 +672,7 @@ export function LegacyTableNG(props: TableNGProps) {
         const textAlign = getAlignment(field);
         const justifyContent = getJustifyContent(textAlign);
         const displayName = getDisplayName(field);
+        // eslint-disable-next-line @grafana/prefer-use-styles2 -- called inside a per-field loop; hooks cannot run here, and these creators are micro-memoize-wrapped
         const headerCellClass = getHeaderCellStyles(theme, justifyContent);
         const CellType = getCellRenderer(field, cellOptions);
 
@@ -698,8 +699,11 @@ export function LegacyTableNG(props: TableNGProps) {
           maxHeight: maxRowHeight,
         };
 
+        // eslint-disable-next-line @grafana/prefer-use-styles2 -- called inside a per-field loop; hooks cannot run here, and these creators are micro-memoize-wrapped
         const defaultCellStyles = getDefaultCellStyles(theme, cellStyleOptions);
+        // eslint-disable-next-line @grafana/prefer-use-styles2 -- called inside a per-field loop; hooks cannot run here, and these creators are micro-memoize-wrapped
         const cellSpecificStyles = getCellSpecificStyles(cellType, field, theme, cellStyleOptions);
+        // eslint-disable-next-line @grafana/prefer-use-styles2 -- called inside a per-field loop; hooks cannot run here, and these creators are micro-memoize-wrapped
         const linkStyles = getLinkStyles(theme, canBeColorized);
         const cellParentStyles = clsx(defaultCellStyles, linkStyles);
         const maxHeightClassName = maxRowHeight ? getMaxHeightCellStyles(theme, cellStyleOptions) : undefined;
@@ -825,14 +829,18 @@ export function LegacyTableNG(props: TableNGProps) {
               shouldOverflow: false,
             } satisfies TableCellStyleOptions;
             const tooltipCanBeColorized = canFieldBeColorized(tooltipCellOptions.type, applyToRowBgFn);
+            // eslint-disable-next-line @grafana/prefer-use-styles2 -- called inside a per-field loop; hooks cannot run here, and these creators are micro-memoize-wrapped
             const tooltipDefaultStyles = getDefaultCellStyles(theme, tooltipCellStyleOptions);
+            // eslint-disable-next-line @grafana/prefer-use-styles2 -- called inside a per-field loop; hooks cannot run here, and these creators are micro-memoize-wrapped
             const tooltipSpecificStyles = getCellSpecificStyles(
               tooltipCellOptions.type,
               tooltipField,
               theme,
               tooltipCellStyleOptions
             );
+            // eslint-disable-next-line @grafana/prefer-use-styles2 -- called inside a per-field loop; hooks cannot run here, and these creators are micro-memoize-wrapped
             const tooltipLinkStyles = getLinkStyles(theme, tooltipCanBeColorized);
+            // eslint-disable-next-line @grafana/prefer-use-styles2 -- called inside a per-field loop; hooks cannot run here, and these creators are micro-memoize-wrapped
             const tooltipClasses = getTooltipStyles(theme, textAlign);
 
             const placement = field.config.custom?.tooltip?.placement ?? TableCellTooltipPlacement.Auto;

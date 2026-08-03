@@ -39,6 +39,7 @@ export const SelectMenu = ({
   selectProps,
 }: React.PropsWithChildren<SelectMenuProps>) => {
   const theme = useTheme2();
+  // eslint-disable-next-line @grafana/prefer-use-styles2 -- getSelectStyles is stylesFactory-memoized with a stable theme arg, so it does not re-serialize
   const styles = getSelectStyles(theme);
 
   const { toggleAllOptions, components } = selectProps;
@@ -106,6 +107,7 @@ export const VirtualizedSelectMenu = ({
   focusedOption,
 }: VirtualSelectMenuProps<SelectableValue>) => {
   const theme = useTheme2();
+  // eslint-disable-next-line @grafana/prefer-use-styles2 -- getSelectStyles is stylesFactory-memoized with a stable theme arg, so it does not re-serialize
   const styles = getSelectStyles(theme);
   const listRef = useRef<List>(null);
   const { toggleAllOptions, components } = selectProps;
@@ -227,6 +229,7 @@ const ToggleAllOption = ({
   optionComponent: (props: React.PropsWithChildren<SelectMenuOptionProps<unknown>>) => JSX.Element;
 }) => {
   const theme = useTheme2();
+  // eslint-disable-next-line @grafana/prefer-use-styles2 -- getSelectStyles is stylesFactory-memoized with a stable theme arg, so it does not re-serialize
   const styles = getSelectStyles(theme);
 
   return (
@@ -266,6 +269,7 @@ export const SelectMenuOptions = ({
   renderOptionLabel,
 }: React.PropsWithChildren<SelectMenuOptionProps<unknown>>) => {
   const theme = useTheme2();
+  // eslint-disable-next-line @grafana/prefer-use-styles2 -- getSelectStyles is stylesFactory-memoized with a stable theme arg, so it does not re-serialize
   const styles = getSelectStyles(theme);
   const icon = data.icon ? toIconName(data.icon) : undefined;
   // We are removing onMouseMove and onMouseOver from innerProps because they cause the whole

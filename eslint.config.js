@@ -289,6 +289,13 @@ module.exports = [
     },
   },
   {
+    name: 'grafana/grafana-ui-prefer-use-styles2',
+    files: ['packages/grafana-ui/src/**/*.{ts,tsx}'],
+    rules: {
+      '@grafana/prefer-use-styles2': 'warn',
+    },
+  },
+  {
     name: 'grafana/story-rules',
     files: ['packages/grafana-ui/src/**/*.story.tsx'],
     rules: {
