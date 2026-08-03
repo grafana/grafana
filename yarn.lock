@@ -18904,6 +18904,7 @@ __metadata:
     "@codemirror/lang-sql": "npm:6.10.0"
     "@codemirror/language": "npm:6.12.4"
     "@codemirror/state": "npm:6.7.1"
+    "@codemirror/view": "npm:^6.41.0"
     "@emotion/css": "npm:11.13.5"
     "@emotion/eslint-plugin": "npm:11.12.0"
     "@emotion/react": "npm:11.14.0"
