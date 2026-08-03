@@ -17,8 +17,8 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
     const dashboardPage = await gotoDashboardPage({ uid: 'Repeating-rows-uid/repeating-rows' });
     const panels = new Panels({ page, dashboardPage, selectors, components });
 
-    const panelContents = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content);
-    await expect(panelContents).toHaveCount(5);
+    const panelBodies = panels.getBodies();
+    await expect(panelBodies).toHaveCount(5);
     await expect(panels.getContainer('server = A, pod = Bob')).toBeVisible();
     await expect(panels.getContainer('server = B, pod = Bob')).toBeVisible();
 
@@ -26,7 +26,7 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
     await page.keyboard.press('d');
     await page.keyboard.press('Shift+C');
 
-    await expect(panelContents).toHaveCount(0);
+    await expect(panelBodies).toHaveCount(0);
     await expect(page.getByText('server = A, pod = Bob')).toBeHidden();
     await expect(page.getByText('server = B, pod = Bob')).toBeHidden();
 
@@ -34,7 +34,7 @@ test.describe('Dashboard keybindings with new layouts', { tag: ['@dashboards'] }
     await page.keyboard.press('d');
     await page.keyboard.press('Shift+E');
 
-    await expect(panelContents).toHaveCount(6);
+    await expect(panelBodies).toHaveCount(6);
     await expect(page.getByText('server = A, pod = Bob')).toBeVisible();
     await expect(page.getByText('server = B, pod = Bob')).toBeVisible();
   });

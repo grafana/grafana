@@ -26,6 +26,12 @@ export class Panels extends PageObject {
     return this.getHeaders(title).first();
   }
 
+  getBodies() {
+    // the rendered panel body below the header ("data-testid panel content"),
+    // present on every non-collapsed panel, including hover-header ones
+    return this.dashboardPage.getByGrafanaSelector(this.selectors.components.Panels.Panel.content);
+  }
+
   async selectByTitle(title: string | RegExp | Array<string | RegExp>) {
     if (!Array.isArray(title)) {
       await test.step(`Select panel "${title}"`, async () => {
