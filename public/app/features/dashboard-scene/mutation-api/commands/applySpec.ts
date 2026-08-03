@@ -1,39 +1,55 @@
 /**
- * APPLY_SPEC — replace the dashboard with a complete v2 DashboardSpec, the write
- * half of the full-spec surface (paired with GET_SPEC). A caller reads the spec,
- * edits the JSON, and applies the whole thing back instead of emitting a long
- * sequence of granular ADD / UPDATE / MOVE / REMOVE commands.
+ * APPLY_SPEC — replace the document with a complete spec, the write half of the
+ * full-spec surface (paired with GET_SPEC). A caller reads the spec, edits the
+ * JSON, and applies the whole thing back instead of emitting a long sequence of
+ * granular ADD / UPDATE / MOVE / REMOVE commands.
  *
  * Rebuilds the scene from the spec via `transformSaveModelSchemaV2ToScene` and
  * swaps the result onto the live DashboardScene in place (the pattern
  * `JsonModelEditView.onSaveSuccess` uses). Being a full rebuild-and-swap, it
  * resets transient runtime state (in-flight queries, variable selections,
  * scroll position).
+ *
+ * The command is resource-polymorphic, mirroring GET_SPEC: on a dashboard scene
+ * the payload is a v2 `DashboardSpec`, on a notebook scene a v2beta1
+ * `NotebookSpec`. The notebook path widens the spec to the dashboard shape for
+ * the transformer, validates against the notebook schema rather than the
+ * dashboard one, and skips dashboard edit mode — a notebook has no dashboard
+ * edit chrome to enter, and entering it would mount the edit pane over a page
+ * that is deliberately read-only to hand editing.
  */
 
 import * as z from 'zod';
 
 import { sceneUtils } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 import { type ObjectMeta } from 'app/features/apiserver/types';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
+import {
+  dashboardSpecToNotebookSpec,
+  isNotebookScene,
+  notebookSpecToDashboardSpec,
+  setNotebookDocumentHeader,
+} from '../../serialization/notebookSpecTransform';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
+import { validateNotebookSpec } from '../../v2schema/notebookSpecSchema';
 
-import { enterEditModeIfNeeded, requiresNewDashboardLayouts, type MutationCommand } from './types';
+import { enterEditModeIfNeeded, requiresSpecWrite, type MutationCommand } from './types';
 
 const applySpecPayloadSchema = z.object({
   spec: z
     .record(z.string(), z.unknown())
-    .describe('A complete v2 DashboardSpec to apply (same shape GET_SPEC returns).'),
+    .describe('A complete spec to apply (same shape and resource GET_SPEC returns).'),
   validate: z
     .boolean()
     .optional()
     .default(false)
-    .describe('When true, validate the spec against the v2 schema and reject the mutation if it is invalid.'),
+    .describe('When true, validate the spec against its schema and reject the mutation if it is invalid.'),
 });
 
 export type ApplySpecPayload = z.infer<typeof applySpecPayloadSchema>;
@@ -94,6 +110,7 @@ function resolveMetadata(scene: MutationContextScene): DashboardWithAccessInfo<D
 // kept local to avoid a circular import.
 type MutationContextScene = {
   state: {
+    key?: string;
     meta: Record<string, unknown> & {
       canEdit?: boolean;
       canSave?: boolean;
@@ -101,6 +118,7 @@ type MutationContextScene = {
       canStar?: boolean;
       canDelete?: boolean;
       canAdmin?: boolean;
+      isEmbedded?: boolean;
       slug?: string;
       url?: string;
       key?: string;
@@ -110,20 +128,90 @@ type MutationContextScene = {
   setState: (state: unknown) => void;
 };
 
+/**
+ * Rebuild the scene from a dashboard-shaped spec and swap it in place.
+ *
+ * Shared by both resources: the notebook path widens its spec to this shape first, so there is
+ * exactly one rebuild-and-swap and the two cannot drift. `preserveMeta` carries forward the meta
+ * flags the caller owns rather than the save model — the notebook page sets `isEmbedded` after
+ * loading, and a rebuild would otherwise drop it and reveal the dashboard edit chrome on a page
+ * that is meant to be read-only to hand editing.
+ */
+function rebuildSceneFromSpec(
+  scene: MutationContextScene,
+  spec: DashboardV2Spec,
+  preserveMeta?: Record<string, unknown>
+): void {
+  const dto = dtoFromScene(scene, spec);
+  const rebuilt = transformSaveModelSchemaV2ToScene(dto);
+
+  // Reuse the live key so existing references (incl. the mutation client's
+  // `scene`) survive the swap.
+  const newState = sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key });
+  scene.setState(preserveMeta ? { ...newState, meta: { ...newState.meta, ...preserveMeta } } : newState);
+}
+
 export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
   name: 'APPLY_SPEC',
   description:
-    'Replace the dashboard with a complete v2 DashboardSpec. The scene is rebuilt from the spec ' +
-    '(settings, variables, annotations, panels, and nested rows/tabs layout).',
+    'Replace the document with a complete spec. On a dashboard this is a v2 DashboardSpec ' +
+    '(settings, variables, annotations, panels, and nested rows/tabs layout); on a notebook a ' +
+    'v2beta1 NotebookSpec (settings, elements including markdown/code cells, and the ordered ' +
+    'NotebookLayout). The scene is rebuilt from the spec.',
 
   payloadSchema: applySpecPayloadSchema,
-  // Rebuilds the layout tree, so gate on the same toggle as the layout commands.
-  permission: requiresNewDashboardLayouts,
+  // Rebuilds the layout tree, so a dashboard gates on the same toggle as the layout commands;
+  // a notebook has its own rule (the dashboard one refuses every notebook write).
+  permission: requiresSpecWrite,
   readOnly: false,
 
   handler: async (payload, context) => {
     const { scene } = context;
     try {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow DashboardScene to the fields this command reads
+      const mutationScene = scene as unknown as MutationContextScene;
+
+      if (isNotebookScene(scene)) {
+        // Opt-in validation, same contract as the dashboard path below: reject before mutating
+        // and hand back field-scoped messages the caller can self-correct on. The notebook check
+        // also covers referential integrity, which zod alone cannot express — a cell pointing at
+        // a missing element is structurally valid and renders as a silently absent cell.
+        let notebookSpec: NotebookSpec;
+        if (payload.validate) {
+          const result = validateNotebookSpec(payload.spec);
+          if (!result.success || !result.data) {
+            return { success: false, error: `Validation failed: ${result.errors.join(', ')}`, changes: [] };
+          }
+          // Apply the PARSED spec: the schema normalizes Go's `null` slices to `[]`,
+          // `elements: null` to `{}`, and fills CUE `*` defaults, so the scene is rebuilt from
+          // the same shape validation saw.
+          notebookSpec = result.data;
+        } else {
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unvalidated path: caller-supplied spec is checked by the transform
+          notebookSpec = payload.spec as unknown as NotebookSpec;
+        }
+
+        // A notebook has no dashboard edit mode to enter — deliberately no enterEditModeIfNeeded.
+        rebuildSceneFromSpec(mutationScene, notebookSpecToDashboardSpec(notebookSpec), {
+          isEmbedded: scene.state.meta.isEmbedded,
+        });
+        // The rebuild replaces the layout manager, which holds the document header on its own
+        // state, so restore it from the spec that was just applied.
+        setNotebookDocumentHeader(scene.state.body, notebookSpec.title, notebookSpec.tags);
+
+        // Echo the re-serialized spec so the caller sees the post-apply element names without a
+        // follow-up GET_SPEC. Best effort: a serialization failure still reports success, since
+        // the write itself already landed.
+        let appliedNotebook: NotebookSpec | undefined;
+        try {
+          appliedNotebook = dashboardSpecToNotebookSpec(transformSceneToSaveModelSchemaV2(scene));
+        } catch {
+          appliedNotebook = undefined;
+        }
+
+        return { success: true, data: { applied: true, spec: appliedNotebook, resource: 'notebook' }, changes: [] };
+      }
+
       // Opt-in structural validation (default off to avoid breaking existing
       // callers). When enabled, reject an invalid spec before mutating anything.
       // On success we apply the *parsed* spec: the schema normalizes Go's
@@ -147,15 +235,7 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unvalidated path: caller-supplied spec is checked by the transform
       const spec = validatedSpec ?? (payload.spec as unknown as DashboardV2Spec);
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow DashboardScene to the fields this command reads
-      const dto = dtoFromScene(scene as unknown as MutationContextScene, spec);
-
-      const rebuilt = transformSaveModelSchemaV2ToScene(dto);
-
-      // Reuse the live key so existing references (incl. the mutation client's
-      // `scene`) survive the swap.
-      const newState = sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key });
-      scene.setState(newState);
+      rebuildSceneFromSpec(mutationScene, spec);
 
       // Return the re-serialized spec so the caller gets the rekeyed element
       // names (rebuild rekeys to `panel-<id>`) without a follow-up GET_SPEC.
@@ -167,7 +247,7 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
         appliedSpec = undefined;
       }
 
-      return { success: true, data: { applied: true, spec: appliedSpec }, changes: [] };
+      return { success: true, data: { applied: true, spec: appliedSpec, resource: 'dashboard' }, changes: [] };
     } catch (error) {
       return {
         success: false,

@@ -8,8 +8,12 @@
 import type * as z from 'zod';
 
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
+import { isNotebookScene } from '../../serialization/notebookSpecTransform';
 import type { MutationResult } from '../types';
 
 export interface MutationContext {
@@ -87,6 +91,46 @@ export function requiresNewDashboardLayoutsReadOnly(_scene: DashboardScene): Per
     };
   }
   return { allowed: true };
+}
+
+/**
+ * Requires notebook editing to be possible: the resource must be enabled and the user must be
+ * able to write dashboards.
+ *
+ * A notebook cannot reuse {@link requiresEdit}. The notebook page marks its scene `isEmbedded`
+ * to hide the dashboard edit/share chrome, which makes `canEditDashboard()` false — so the
+ * dashboard rule refuses every write to a notebook the user owns and can save. The read-only
+ * chrome is a statement about hand editing on that page, not about the resource.
+ *
+ * The permission is the dashboards write action, matching how the notebook editor gates itself.
+ * That is coarse: it is an org-level action, not a check against this notebook's folder. The
+ * apiserver authorizes the eventual save per resource, and nothing here is persisted, so the
+ * blast radius of the coarseness is a scene the user could not save anyway. A notebook-scoped
+ * action is the right long-term answer and is tracked with the resource's permission model.
+ */
+export function requiresNotebookEdit(scene: DashboardScene): PermissionCheckResult {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)) {
+    return {
+      allowed: false,
+      error: 'Notebooks are not enabled on this instance (feature flag dashboard.notebooks).',
+    };
+  }
+  if (scene.state.meta.isSnapshot) {
+    return { allowed: false, error: 'Cannot edit notebook: it is a snapshot.' };
+  }
+  if (!contextSrv.hasPermission(AccessControlAction.DashboardsWrite)) {
+    return { allowed: false, error: 'Cannot edit notebook: insufficient permissions.' };
+  }
+  return { allowed: true };
+}
+
+/**
+ * Write permission for the full-spec surface (APPLY_SPEC), which is the one command that serves
+ * both resources. Dispatches on what the scene actually renders so a notebook is judged by the
+ * notebook rule and a dashboard keeps the exact rule it had before.
+ */
+export function requiresSpecWrite(scene: DashboardScene): PermissionCheckResult {
+  return isNotebookScene(scene) ? requiresNotebookEdit(scene) : requiresNewDashboardLayouts(scene);
 }
 
 /**

@@ -133,7 +133,7 @@ describe('GET_SPEC validate flag', () => {
     mockTransformSceneToSaveModelSchemaV2.mockReturnValue(invalidSpec);
     const result = await getSpecCommand.handler({ validate: false }, stubContext);
     expect(result.success).toBe(true);
-    expect(result.data).toEqual({ spec: invalidSpec });
+    expect(result.data).toEqual({ spec: invalidSpec, resource: 'dashboard' });
   });
 
   it('fails with a structured error when validate is true and the spec is invalid', async () => {
@@ -147,6 +147,6 @@ describe('GET_SPEC validate flag', () => {
     mockTransformSceneToSaveModelSchemaV2.mockReturnValue(validSpec);
     const result = await getSpecCommand.handler({ validate: true }, stubContext);
     expect(result.success).toBe(true);
-    expect(result.data).toEqual({ spec: validSpec });
+    expect(result.data).toEqual({ spec: validSpec, resource: 'dashboard' });
   });
 });
