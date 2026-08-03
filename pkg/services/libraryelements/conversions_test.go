@@ -162,6 +162,7 @@ func TestLibraryPanelModelClearsTypedValues(t *testing.T) {
 	require.NoError(t, json.Unmarshal(rebuilt, &got))
 	require.NotContains(t, got, "links")
 	require.NotContains(t, got, "transparent")
+	require.NotContains(t, got, "gridPos")
 }
 
 func TestLibraryPanelModelRoundTrip(t *testing.T) {
