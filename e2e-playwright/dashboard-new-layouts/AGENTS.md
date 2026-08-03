@@ -111,6 +111,11 @@ yarn e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <
 - **Scoped lookups**: getters with a `scope?: Locator` parameter search inside that container — pass `rows.getContent(...)` or `tabs.getContent(...)` to look up elements in a specific row or tab.
 - **No waits or retries inside page objects** unless the pre-refactor code had them. Keep `toPass()` retries, drag-and-drop, scroll logic, and `boundingBox()` in the spec or in `utils.ts`.
 
+### Selector scoping
+
+- **Scope lookups to the owning container.** A bare `page.getByRole(...)` searches the whole page and can match an unrelated element with the same role and name — if not today, then after an unrelated UI change. Elements that belong to a region with a page object must be looked up through that region's container: e.g. radio buttons in the sidebar are `sidebar.getContainer().getByRole('radio', { name: '...' })`, the same way `Toolbar.getButton()` scopes button names to `Sidebar.container`. Inside a page object, chain from the container selector (`this.dashboardPage.getByGrafanaSelector(this.selectors.components.Sidebar.container).getByRole(...)`).
+- **Portalled UI is the only exception.** Select/Combobox option lists, modals, tooltips, and toasts render in a portal at the document root, outside their logical parent, so they cannot be scoped to it. Anchor them to the portal's own root instead: `page.getByRole('listbox').getByRole('option', { name })` (see `RepeatOptions`), or `page.getByRole('dialog', { name: 'Delete panel?' })`. A bare `page.getByRole('option', ...)` with no anchor is still too broad.
+
 ### Specs
 
 - **One raw `getByGrafanaSelector` is allowed** for one-off assertions that aren't reusable interactions (e.g. a breadcrumb check).

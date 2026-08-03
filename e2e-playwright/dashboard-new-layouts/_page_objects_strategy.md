@@ -43,6 +43,7 @@ Design principles:
 - **Locator getters return Playwright `Locator`** — the test owns the assertion, never the page object
 - **Action methods wrap multi-step interactions** — and use `test.step()` so the Playwright HTML report shows named steps, not cryptic stack traces
 - **Page objects minimize cross-references** - when composition is needed, the spec orchestrates the sequence
+- **Lookups are scoped to their owning container** — page objects chain from their region's container selector; page-wide `getByRole` is reserved for portalled UI (dropdown option lists, dialogs, tooltips, toasts) and must anchor to the portal root (`listbox`, `dialog`, ...)
 - **Timing and layout-sensitive mechanics stay in specs or `utils`** — e.g.
   - `toPass()` retries,
   - `mouse` drag-and-drop,
