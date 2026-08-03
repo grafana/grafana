@@ -98,13 +98,15 @@ export class Controls extends PageObject {
       // the trigger is the next sibling of its label
       return this.variables.getLabel(variableLabel).locator('+ *');
     },
+    getInput: (variableLabel: string): Locator => {
+      // the input has no selector of its own: like the dropdown trigger, it lives in the label's next sibling
+      return this.variables.getLabel(variableLabel).locator('+ *').locator('input');
+    },
     getOption: (optionLabel: string): Locator => this.page.getByRole('option', { name: optionLabel, exact: true }),
     openDropdown: async (variableLabel: string) => {
       await test.step(`Open dropdown of variable "${variableLabel}"`, async () => {
-        // value chips / clear control sit above the input, we force so the combobox receives the click
-        // we don't click on a bottom-right pixel because the position would change for variables vs filter+groupby
-        // but we may change this in the future
-        await this.variables.getDropdownTrigger(variableLabel).getByRole('combobox').first().click({ force: true });
+        // clicking the input itself and not the trigger avoids the value chips and clear icon
+        await this.variables.getInput(variableLabel).click();
       });
     },
     selectOption: async (variableLabel: string, optionLabel: string) => {
@@ -126,7 +128,7 @@ export class Controls extends PageObject {
         await option.click();
       });
     },
-    // multi-value variables only (options render checkboxes)
+    // multi-value variables only (options rendered as checkboxes)
     deselectOption: async (variableLabel: string, optionLabel: string) => {
       await test.step(`Deselect option "${optionLabel}" of variable "${variableLabel}"`, async () => {
         await this.variables.openDropdown(variableLabel);
@@ -139,19 +141,6 @@ export class Controls extends PageObject {
         await option.click();
       });
     },
-    addFilter: async (variableLabel: string, filter: [string, string, string]) => {
-      await test.step(`Add filter "${filter[0]}${filter[1]}\"${filter[2]}\"" to variable "${variableLabel}"`, async () => {
-        await this.variables.openDropdown(variableLabel);
-
-        await this.page.getByRole('option', { name: filter[0], exact: true }).click();
-        await this.page.getByRole('option', { name: new RegExp(`^${filter[1]} `) }).click();
-        await this.page.getByRole('option', { name: filter[2], exact: true }).click();
-      });
-    },
-    getInput: (variableLabel: string): Locator => {
-      // the input has no selector of its own: like the dropdown trigger, it lives in the label's next sibling
-      return this.variables.getLabel(variableLabel).locator('+ *').locator('input');
-    },
     setValue: async (variableLabel: string, text: string) => {
       await test.step(`Set value of variable "${variableLabel}" to "${text}"`, async () => {
         const input = this.variables.getInput(variableLabel);
@@ -161,5 +150,16 @@ export class Controls extends PageObject {
         await input.press('Enter');
       });
     },
+    addFilter: async (variableLabel: string, filter: [string, string, string]) => {
+      await test.step(`Add filter "${filter[0]}${filter[1]}\"${filter[2]}\"" to variable "${variableLabel}"`, async () => {
+        await this.variables.openDropdown(variableLabel);
+
+        await this.page.getByRole('option', { name: filter[0], exact: true }).click();
+        await this.page.getByRole('option', { name: new RegExp(`^${filter[1]} `) }).click();
+        await this.page.getByRole('option', { name: filter[2], exact: true }).click();
+      });
+    },
   };
+
+  readonly filters = {};
 }
