@@ -2,9 +2,11 @@ package search_test
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"log"
 	"slices"
+	"strconv"
 	"testing"
 	"time"
 
@@ -3015,4 +3017,181 @@ func checkSearchQueryUnordered(t *testing.T, index resource.ResourceIndex, query
 		names = append(names, row.Key.Name)
 	}
 	require.ElementsMatch(t, expectedNames, names)
+}
+
+// The trash fields are declared apart from the standard ones, so they have their
+// own mapping, their own query metadata and their own response columns. Each of
+// those can fail silently — an unmapped sort field orders arbitrarily and a
+// missing column definition is dropped without an error — so this drives all
+// three through a real index.
+func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	const alice, bob = "user:alice", "user:bob"
+	// Deliberately indexed out of order, so a passing sort cannot be the order the
+	// documents happened to arrive in.
+	deleted := func(name, title, by string, deletedAt int64, rv int64) *resource.BulkIndexItem {
+		deletedRV := strconv.FormatInt(rv, 10)
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+					Name:      name,
+				},
+				Title:        title,
+				Name:         name,
+				RV:           rv,
+				IsDeleted:    new(true),
+				DeletedBy:    &by,
+				DeletionTime: &deletedAt,
+				DeletedRV:    &deletedRV,
+			},
+		}
+	}
+
+	index := newTestDashboardsIndex(t, threshold, 4, func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			deleted("middle", "Alpha middle", alice, 2000, 20),
+			deleted("newest", "Alpha newest", bob, 3000, 30),
+			deleted("oldest", "Alpha oldest", alice, 1000, 10),
+			{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "live",
+				},
+				Title: "Alpha live", Name: "live",
+			}},
+		}})
+	})
+
+	t.Run("filtering by who deleted it", func(t *testing.T) {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		q.Options.Fields = []*resourcepb.Requirement{{
+			Key:      resource.SEARCH_FIELD_DELETED_BY,
+			Operator: string(selection.In),
+			Values:   []string{alice},
+		}}
+		checkSearchQueryUnordered(t, index, q, []string{"middle", "oldest"})
+	})
+
+	// The default sort for /trash, and the reason deletion_time is numeric: as a
+	// keyword it would order lexically.
+	t.Run("sorting by deletion time", func(t *testing.T) {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{
+			Field: resource.SEARCH_FIELD_DELETION_TIME,
+			Desc:  true,
+		}}
+		checkSearchQuery(t, index, q, []string{"newest", "middle", "oldest"})
+
+		q.SortBy[0].Desc = false
+		checkSearchQuery(t, index, q, []string{"oldest", "middle", "newest"})
+	})
+
+	t.Run("returning the values", func(t *testing.T) {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		q.Fields = []string{
+			resource.SEARCH_FIELD_DELETED_BY,
+			resource.SEARCH_FIELD_DELETION_TIME,
+			resource.SEARCH_FIELD_DELETED_RV,
+		}
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETION_TIME}}
+
+		res, err := index.Search(context.Background(), nil, q, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, res.Results.Columns, 3, "a field without a column definition is dropped silently")
+		require.Equal(t, resource.SEARCH_FIELD_DELETED_BY, res.Results.Columns[0].Name)
+
+		rows := res.Results.Rows
+		require.Len(t, rows, 3)
+		require.Equal(t, alice, string(rows[0].Cells[0]))
+		require.Equal(t, "oldest", rows[0].Key.Name)
+
+		// int64 columns are encoded big-endian, not as JSON (see NewTableBuilder).
+		require.Len(t, rows[0].Cells[1], 8)
+		require.Equal(t, int64(1000), int64(binary.BigEndian.Uint64(rows[0].Cells[1])))
+		require.Equal(t, "10", string(rows[0].Cells[2]), "the resource version of the delete")
+	})
+
+	// Resource versions are snowflake ids well past the range a float64 represents
+	// exactly, so a numeric mapping would return a rounded value and restore would
+	// submit the wrong revision.
+	t.Run("a large resource version comes back exactly", func(t *testing.T) {
+		const rv = "1856241819843796993"
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "snowflake",
+				},
+				Title: "Alpha snowflake", Name: "snowflake",
+				IsDeleted: new(true), DeletedRV: &[]string{rv}[0],
+			},
+		}}}))
+
+		q := newTestQuery("snowflake")
+		q.IsDeleted = true
+		q.Fields = []string{resource.SEARCH_FIELD_DELETED_RV}
+		res, err := index.Search(context.Background(), nil, q, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, res.Results.Rows, 1)
+		require.Equal(t, rv, string(res.Results.Rows[0].Cells[0]))
+	})
+
+	// Live documents leave these unset, so naming one in a live search is a caller
+	// mistake: a filter would match nothing and a sort would order by nothing. The
+	// index refuses it rather than answering with an empty column.
+	t.Run("a live search cannot name a trash field", func(t *testing.T) {
+		for _, tc := range []struct {
+			name   string
+			mutate func(*resourcepb.ResourceSearchRequest)
+		}{
+			{"retrieve", func(q *resourcepb.ResourceSearchRequest) {
+				q.Fields = []string{resource.SEARCH_FIELD_DELETED_BY}
+			}},
+			{"sort", func(q *resourcepb.ResourceSearchRequest) {
+				q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETION_TIME}}
+			}},
+			{"filter", func(q *resourcepb.ResourceSearchRequest) {
+				q.Options.Fields = []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_DELETED_BY,
+					Operator: string(selection.In),
+					Values:   []string{alice},
+				}}
+			}},
+			// Legacy clients name the fields a text query runs against. Without this
+			// the query would run and return nothing, which reads as "no results"
+			// rather than "wrong field".
+			{"query fields", func(q *resourcepb.ResourceSearchRequest) {
+				q.Query = "alice"
+				q.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{{
+					Name: resource.SEARCH_FIELD_DELETED_BY,
+				}}
+			}},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				q := newTestQuery("")
+				tc.mutate(q)
+
+				res, err := index.Search(context.Background(), nil, q, nil, nil)
+				require.NoError(t, err, "a bad request comes back in the response, not as an error")
+				require.NotNil(t, res.Error)
+				require.Equal(t, int32(400), res.Error.Code)
+
+				// The same request against trash is fine.
+				q.IsDeleted = true
+				res, err = index.Search(context.Background(), nil, q, nil, nil)
+				require.NoError(t, err)
+				require.Nil(t, res.Error)
+			})
+		}
+	})
 }

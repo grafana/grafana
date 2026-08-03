@@ -245,6 +245,7 @@ function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
       height: '100%',
       overflow: 'hidden',
       gap: theme.spacing(2),
+      paddingBottom: theme.spacing(1),
     }),
     banner: css({
       minWidth: 0,

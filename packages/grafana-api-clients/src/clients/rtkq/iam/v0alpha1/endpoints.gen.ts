@@ -940,6 +940,8 @@ export type Display = {
   identity: IdentityRef;
   /** InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible */
   internalId?: number;
+  /** Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user ("users/~") endpoint. */
+  role?: string;
 };
 export type ListMeta = {
   /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
@@ -1184,6 +1186,8 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMember = {
      - `"admin"`
      - `"member"` */
   permission?: 'admin' | 'member';
+  /** Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user ("users/~") endpoint. */
+  role?: string;
 };
 export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMemberList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */

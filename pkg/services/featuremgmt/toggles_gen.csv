@@ -330,7 +330,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,grafana.correlationsSkipLegacy,experimental,@grafana/datapro,false,false,false
 2026-05-22,grafana.meticulousAIMode,experimental,@grafana/dataviz-squad,false,false,false
 2026-05-22,datasources.useNewStackInfoToSettingsCache,GA,@grafana/grafana-datasources-core-services,false,false,false
-2026-05-22,grafana.unifiedHomepage,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-05-22,preferences.rerouteLegacyAPIs,GA,@grafana/grafana-frontend-platform,false,false,false
 2026-05-22,plugins.marketplaceLicensing,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-22,alerting.syncExternalAlertmanager,experimental,@grafana/alerting-squad,false,true,false
@@ -348,6 +347,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-06-22,table.protoRowParser,experimental,@grafana/dataviz-squad,false,false,true
 2026-06-17,grafana.queryVarEditorRedesign,GA,@grafana/dashboards-squad,false,false,true
 2026-06-25,table.refactorNested,experimental,@grafana/dataviz-squad,false,false,true
+2026-07-29,table.paginationPageSize,experimental,@grafana/dataviz-squad,false,false,true
 2026-07-24,table.autoColumnWidths,experimental,@grafana/dataviz-squad,false,false,true
 2026-06-23,dataviz.experimentalColorSchemes,experimental,@grafana/dataviz-squad,false,false,true
 2026-06-25,grafana.customizableMegaMenu,experimental,@grafana/grafana-frontend-navigation,false,false,true

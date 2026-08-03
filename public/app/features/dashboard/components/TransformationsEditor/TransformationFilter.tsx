@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { type DataFrame, type DataTransformerConfig, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { DataTopic } from '@grafana/schema';
 import { Field, Select, useStyles2 } from '@grafana/ui';
@@ -33,11 +34,12 @@ export const TransformationFilter = ({ index, annotations, config, onChange, dat
   }, [data, annotations?.length, config.topic]);
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.wrapper} data-testid={selectors.components.Transforms.filterEditor.container}>
       <Field label={t('dashboard.transformation-filter.label-apply-transformation-to', 'Apply transformation to')}>
         <>
           {opts.showTopic && (
             <Select
+              data-testid={selectors.components.Transforms.filterEditor.topicSelect}
               isClearable={true}
               options={opts.source}
               value={opts.source.find((v) => v.value === config.topic)}

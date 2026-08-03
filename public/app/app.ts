@@ -8,7 +8,7 @@ import 'jquery';
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import { type Preferences } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type Preferences } from '@grafana/api-clients/rtkq/preferences/v1';
 import {
   locationUtil,
   monacoLanguageRegistry,
@@ -22,6 +22,7 @@ import {
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
 import { initializeI18n, loadNamespacedResources } from '@grafana/i18n/internal';
 import {
+  HistoryWrapper,
   locationService,
   setBackendSrv,
   setDataSourceSrv,
@@ -279,6 +280,14 @@ export class GrafanaApp {
         getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
         getVariablesUrlParams: getVariablesUrlParams,
       });
+
+      // For multi-org users, ensure every SPA navigation carries ?orgId so
+      // dashboard / alert URLs are shareable across orgs. Single-org users
+      // (the OSS / Cloud majority) skip this, no URL pollution. Registered
+      // before handleRedirectTo() so the post-login redirect gets orgId too.
+      if (locationService instanceof HistoryWrapper && contextSrv.user.orgCount > 1) {
+        locationService.setOrgIdGetter(() => contextSrv.user.orgId);
+      }
 
       if (config.featureToggles.useSessionStorageForRedirection) {
         handleRedirectTo();
