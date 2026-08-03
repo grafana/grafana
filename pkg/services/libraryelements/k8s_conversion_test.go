@@ -171,5 +171,12 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 		"type": "text"
 	}`, string(result.Model))
 
+	handler.folderService = &foldertest.FakeService{ExpectedError: folder.ErrAccessDenied}
+	result, err = handler.unstructuredToLegacyLibraryPanelDTO(reqContext, *unstructuredObj)
+	require.NoError(t, err)
+	require.Equal(t, testFolder.UID, result.FolderUID)
+	require.Empty(t, result.Meta.FolderName)
+	require.Zero(t, result.FolderID) // nolint:staticcheck
+
 	dashboardsSvc.AssertExpectations(t)
 }

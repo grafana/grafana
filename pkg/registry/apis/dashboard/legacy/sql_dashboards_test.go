@@ -321,6 +321,25 @@ func TestParseLibraryPanelRow(t *testing.T) {
 		require.Equal(t, "Database Name", item.Spec.Title)
 	})
 
+	t.Run("typed fields are not retained in status missing", func(t *testing.T) {
+		p := basePanel
+		p.Name = "Test Panel"
+		modelBytes, err := json.Marshal(map[string]interface{}{
+			"title":       "Panel title",
+			"type":        "graph",
+			"description": "desc from db",
+			"links":       []interface{}{map[string]interface{}{"title": "Link"}},
+			"transparent": true,
+		})
+		require.NoError(t, err)
+		p.Model = modelBytes
+
+		item, err := parseLibraryPanelRow(p)
+		require.NoError(t, err)
+		require.NotContains(t, item.Status.Missing.Object, "links")
+		require.NotContains(t, item.Status.Missing.Object, "transparent")
+	})
+
 	t.Run("handles NULL created_by and updated_by fields", func(t *testing.T) {
 		p := basePanel
 		p.Name = "Test Panel"

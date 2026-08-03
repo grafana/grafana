@@ -1183,17 +1183,16 @@ func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *co
 	}
 
 	if folderUID != "" {
+		dto.Meta.FolderName = ""
 		folder, err := lk8s.folderService.Get(c.Req.Context(), &foldermodel.GetFolderQuery{
 			OrgID:        c.OrgID,
 			UID:          &folderUID,
 			SignedInUser: c.SignedInUser,
 		})
-		if err != nil {
-			return nil, err
+		if err == nil && folder != nil {
+			dto.Meta.FolderName = folder.Title
+			dto.FolderID = folder.ID // nolint:staticcheck
 		}
-
-		dto.Meta.FolderName = folder.Title
-		dto.FolderID = folder.ID // nolint:staticcheck
 	}
 
 	// count connections with a service identity so the result does not depend on the
