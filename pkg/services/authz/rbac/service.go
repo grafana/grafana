@@ -316,6 +316,11 @@ func (s *Service) groupBatchCheckItems(
 			continue
 		}
 
+		if item.GetGroup() == "iam.grafana.app" && item.GetResource() == "permissions" && item.GetFolder() != "" {
+			action = item.GetFolder()
+			actionSets = nil
+		}
+
 		checkReq := &checkRequest{
 			Namespace:    ns,
 			UserUID:      userUID,
@@ -551,6 +556,14 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 	action, actionSets, err := s.validateAction(ctx, req.GetGroup(), req.GetResource(), req.GetSubresource(), req.GetVerb())
 	if err != nil {
 		return nil, err
+	}
+
+	// iam.grafana.app/permissions checks permissions:type:* scopes for a specific RBAC
+	// action. The caller passes that action in the folder field so we load the correct
+	// grants instead of always using roles:write from the verb mapping.
+	if req.GetGroup() == "iam.grafana.app" && req.GetResource() == "permissions" && req.GetFolder() != "" {
+		action = req.GetFolder()
+		actionSets = nil
 	}
 
 	if req.GetResource() == "" && req.GetSubresource() != "" {
