@@ -6,7 +6,8 @@
     "rewriteRelativeImportExtensions": true,
     "erasableSyntaxOnly": true,
     "verbatimModuleSyntax": true,
-    "strict": true
+    "strict": true,
+    "skipLibCheck": true
   },
   "include": ["./**/*.ts"]
 }
