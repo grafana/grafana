@@ -363,6 +363,88 @@ describe('TextNGEditor', () => {
     });
   });
 
+  describe('mode picker', () => {
+    it('shows the current mode in the toolbar, in every view', async () => {
+      setup('<p>Hello</p>', TextMode.HTML);
+
+      expect(screen.getByRole('button', { name: 'Text mode: HTML' })).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+      expect(screen.getByRole('button', { name: 'Text mode: HTML' })).toBeInTheDocument();
+
+      await enterWriteMode();
+      expect(screen.getByRole('button', { name: 'Text mode: HTML' })).toBeInTheDocument();
+    });
+
+    it('shows the language alongside the mode in Code mode', () => {
+      setup('{}', TextMode.Code, jest.fn(), false, CodeLanguage.Json);
+
+      expect(screen.getByRole('button', { name: 'Text mode: Code · JSON' })).toBeInTheDocument();
+    });
+
+    it('changes the mode and re-renders the preview with it', async () => {
+      const { onChange } = setup('# Hello', TextMode.Markdown);
+
+      await selectMode('HTML');
+
+      expect(onChange).toHaveBeenCalledWith({ mode: TextMode.HTML, content: '# Hello' });
+      // HTML mode does not turn '#' into a heading, it renders the text as-is.
+      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML.trim()).toBe('# Hello');
+    });
+
+    it('carries a pending draft with the mode change, so typing is not lost', async () => {
+      const { onChange } = setup('initial', TextMode.Markdown);
+      await enterWriteMode();
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'draft' } });
+      await selectMode('HTML');
+
+      expect(onChange).toHaveBeenLastCalledWith({ mode: TextMode.HTML, content: 'draft' });
+      expect(screen.getByRole('textbox')).toHaveValue('draft');
+    });
+  });
+
+  describe('language submenu', () => {
+    it('only hangs off the Code option', async () => {
+      setup('# Hello', TextMode.Markdown);
+
+      await openModeMenu();
+
+      expect(screen.getByRole('menuitem', { name: 'Code' })).toHaveAttribute('aria-haspopup', 'menu');
+      expect(screen.getByRole('menuitemradio', { name: 'Markdown' })).not.toHaveAttribute('aria-haspopup');
+    });
+
+    it('falls back to the default language when none is set', () => {
+      setup('hello', TextMode.Code);
+
+      expect(screen.getByRole('button', { name: 'Text mode: Code · Plain text' })).toBeInTheDocument();
+    });
+
+    it('switches to Code mode and the picked language in one change', async () => {
+      const { onChange } = setup('# Hello', TextMode.Markdown);
+
+      await selectLanguage('SQL');
+
+      // A second, mode-only change from the parent item would drop the language.
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange).toHaveBeenCalledWith({
+        mode: TextMode.Code,
+        codeLanguage: CodeLanguage.Sql,
+        content: '# Hello',
+      });
+      expect(screen.getByRole('button', { name: 'Text mode: Code · SQL' })).toBeInTheDocument();
+    });
+
+    it('changes the language while already in Code mode', async () => {
+      const { onChange } = setup('{}', TextMode.Code, jest.fn(), false, CodeLanguage.Plaintext);
+
+      await selectLanguage('JSON');
+
+      expect(onChange).toHaveBeenCalledWith({ mode: TextMode.Code, codeLanguage: CodeLanguage.Json, content: '{}' });
+      expect(screen.getByRole('button', { name: 'Text mode: Code · JSON' })).toBeInTheDocument();
+    });
+  });
+
   describe('line numbers', () => {
     it('never shows line numbers in Markdown mode', async () => {
       setup('# Hello', TextMode.Markdown, jest.fn(), true);
