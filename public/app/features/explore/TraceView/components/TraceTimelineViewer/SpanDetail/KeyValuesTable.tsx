@@ -127,6 +127,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     jsonTable: css({
       display: 'block',
+      // `word-break: break-word` also shrinks min-content, which lets the table column narrow enough
+      // to wrap long unbroken values. `overflow-wrap: break-word` does not, and restores the scrollbar.
       wordBreak: 'break-word',
     }),
   };
