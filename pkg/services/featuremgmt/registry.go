@@ -3018,6 +3018,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "table.rowsAsFields",
+			Description:  "Enables a rows-as-fields (pivoted) rendering mode for the table panel",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "dataviz.experimentalColorSchemes",
 			Description:  "Enables additional experimental color schemes for visualizations.",
 			Stage:        FeatureStageExperimental,
