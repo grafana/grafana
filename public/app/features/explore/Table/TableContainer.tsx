@@ -13,7 +13,7 @@ import {
   EventBusSrv,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getTemplateSrv, PanelRenderer } from '@grafana/runtime';
+import { getTemplateSrv, PanelRenderer } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
 import { type AdHocFilterItem, PanelChrome, useTheme2, PanelContextProvider } from '@grafana/ui';
 const TEMPO_STREAMING_PROGRESS_REF_ID = 'streaming-progress';
@@ -144,7 +144,7 @@ export const TableContainer = memo(function TableContainer({
     dataFrames = applyFieldOverrides({
       data: dataFrames,
       timeZone,
-      theme: config.theme2,
+      theme,
       replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
       fieldConfig: {
         defaults: {},

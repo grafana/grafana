@@ -284,12 +284,12 @@ describe('MegaMenu', () => {
     });
 
     describe('pinning', () => {
-      const pinnedRegion = () => within(screen.getByRole('list', { name: 'Pinned' }));
+      const pinnedRegion = () => within(screen.getByRole('list', { name: 'Pinned items' }));
 
       it('shows a pinned child as a breadcrumb in the grey box, and keeps it in the nav', async () => {
         const { user } = renderMegaMenu({ bookmarkUrls: ['/playlists'] });
 
-        await screen.findByRole('list', { name: 'Pinned' });
+        await screen.findByRole('list', { name: 'Pinned items' });
         // The box shows the breadcrumb "Dashboards › Playlists" as a single link with an ancestor crumb.
         expect(pinnedRegion().getByRole('link', { name: /Playlists/ })).toBeInTheDocument();
         expect(pinnedRegion().getByText('Dashboards')).toBeInTheDocument();
@@ -305,7 +305,7 @@ describe('MegaMenu', () => {
         renderMegaMenu();
 
         await screen.findByRole('link', { name: 'Explore' });
-        expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('list', { name: 'Pinned items' })).not.toBeInTheDocument();
       });
 
       it('pins a child from the nav into the box, staged and persisted on Done', async () => {
@@ -319,7 +319,7 @@ describe('MegaMenu', () => {
         await user.click(pin!);
 
         expect(
-          within(await screen.findByRole('list', { name: 'Pinned' })).getByRole('link', { name: /Playlists/ })
+          within(await screen.findByRole('list', { name: 'Pinned items' })).getByRole('link', { name: /Playlists/ })
         ).toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: 'Done' }));
@@ -360,7 +360,7 @@ describe('MegaMenu', () => {
 
         await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/dashboards']));
         // Shows in the box as a single breadcrumb quick-link…
-        const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
+        const pinned = within(await screen.findByRole('list', { name: 'Pinned items' }));
         expect(pinned.getByRole('link', { name: 'Dashboards' })).toBeInTheDocument();
         // …and still appears in the nav below (pinning duplicates, it doesn't move).
         expect(screen.getAllByRole('link', { name: 'Dashboards' }).length).toBeGreaterThanOrEqual(2);
@@ -390,7 +390,7 @@ describe('MegaMenu', () => {
 
         await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/dashboards?starred']));
         // The box expands the pin into one breadcrumb line per starred dashboard ("Starred › <name>").
-        const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
+        const pinned = within(await screen.findByRole('list', { name: 'Pinned items' }));
         expect(await pinned.findByRole('link', { name: new RegExp(STARRED_DASHBOARD.name) })).toBeInTheDocument();
         expect(pinned.getByText('Starred')).toBeInTheDocument();
       });
@@ -427,7 +427,7 @@ describe('MegaMenu', () => {
         await user.click(screen.getByRole('button', { name: 'Done' }));
 
         await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual([]));
-        await waitFor(() => expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument());
+        await waitFor(() => expect(screen.queryByRole('list', { name: 'Pinned items' })).not.toBeInTheDocument());
       });
 
       it('keeps the collapsible Bookmarks section when the flag is off, skipping orphaned urls', async () => {
@@ -471,7 +471,7 @@ describe('MegaMenu', () => {
       it('offers the unpin control only while editing', async () => {
         const { user } = renderMegaMenu({ bookmarkUrls: ['/playlists'] });
 
-        await screen.findByRole('list', { name: 'Pinned' });
+        await screen.findByRole('list', { name: 'Pinned items' });
         // Outside edit mode the box is read-only — no unpin control.
         const before = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
         expect(before).not.toContain('Unpin Playlists');
@@ -494,14 +494,14 @@ describe('MegaMenu', () => {
         const { user } = renderMegaMenu({ hiddenItemIds: ['explore'], bookmarkUrls: ['/playlists'] });
 
         await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
-        expect(screen.getByRole('list', { name: 'Pinned' })).toBeInTheDocument();
+        expect(screen.getByRole('list', { name: 'Pinned items' })).toBeInTheDocument();
 
         await user.click(
           await screen.findByRole('button', { name: 'Reset navigation - show all items, unpin all and reset order' })
         );
         // Staged, not saved — the box clears in the preview but the stored pins are untouched
         expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/playlists']);
-        expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('list', { name: 'Pinned items' })).not.toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: 'Done' }));
         expect(getStoredHiddenItems()).toEqual([]);

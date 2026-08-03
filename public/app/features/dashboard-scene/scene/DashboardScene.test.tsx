@@ -2016,6 +2016,14 @@ describe('DashboardScene', () => {
   });
 
   describe('When checking dashboard managed by an external system', () => {
+    beforeEach(() => {
+      config.provisioningEnabled = true;
+    });
+
+    afterEach(() => {
+      config.provisioningEnabled = false;
+    });
+
     it('should return true if the dashboard is managed', () => {
       const scene = buildTestScene({
         meta: {

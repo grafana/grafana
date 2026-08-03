@@ -4,7 +4,7 @@ import { Components, type DashboardPage, type E2ESelectorGroups, expect, test } 
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
-import { Controls, Panel, Sidebar } from './page-objects';
+import { Canvas, Controls, Panel, Sidebar } from './page-objects';
 
 export const flows = {
   async addNewGenericVariable(
@@ -215,15 +215,6 @@ export async function goToEmbeddedPanel(page: Page) {
   await page.goto(soloPanelUrl!);
 }
 
-export async function goToPanelSnapshot(page: Page) {
-  // extracting snapshot url from clipboard
-  const snapshotUrl = await page.evaluate(() => navigator.clipboard.readText());
-
-  expect(snapshotUrl).toBeDefined();
-
-  await page.goto(snapshotUrl);
-}
-
 /**
  * Coordinate-based drag: hover the source, press, move in steps, release.
  * Playwright's locator.dragTo() does not trigger the dnd library (pangea) used by
@@ -294,13 +285,19 @@ export async function moveRow(
 }
 
 export async function groupIntoTab(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addTab).click();
+  // Keep the flows signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const canvas = new Canvas({ page, dashboardPage, selectors, components });
+  await canvas.groupPanels('tab');
 }
 
 export async function groupIntoRow(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow).click();
+  // Keep the flows signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const canvas = new Canvas({ page, dashboardPage, selectors, components });
+  await canvas.groupPanels('row');
 }
 
 export async function checkRepeatedTabTitles(
@@ -371,11 +368,6 @@ export function getRowByTitle(dashboardPage: DashboardPage, selectors: E2ESelect
 
 export function getRowWrapper(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
   return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper(rowTitle)).first();
-}
-
-export async function addNewPanelFromSidebar(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.addButton).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
 }
 
 export async function fillVariableValue(
