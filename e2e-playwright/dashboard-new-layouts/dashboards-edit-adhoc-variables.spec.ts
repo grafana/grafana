@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { Controls, Sidebar } from './page-objects';
+import { Controls, Panels, Sidebar } from './page-objects';
 import { flows, type Variable } from './utils';
 
 test.use({
@@ -27,8 +27,9 @@ test.describe(
 
       const controls = new Controls({ page, dashboardPage, selectors, components });
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+      const panels = new Panels({ page, dashboardPage, selectors, components });
 
-      const variable: Variable = {
+      const variable: Variable & { label: string } = {
         type: 'adhoc',
         name: 'VariableUnderTest',
         value: 'label1',
@@ -39,21 +40,21 @@ test.describe(
       await sidebar.variableOptions.adhoc.selectDatasource('gdev-e2etestdatasource');
 
       // Assert the variable dropdown is visible with correct label
-      const variableLabel = controls.variables.getLabel(variable.label!);
+      const variableLabel = controls.variables.getLabel(variable.label);
       await expect(variableLabel).toBeVisible();
-      await expect(variableLabel).toContainText(variable.label!);
+      await expect(variableLabel).toContainText(variable.label);
 
       const labels = ['label1', 'label2'];
       const labelValues = ['label2Value1'];
 
       // build the filter, then close the dropdown
-      await controls.variables.addFilter(variable.label!, [labels[1], '=', labelValues[0]]);
+      await controls.variables.addFilter(variable.label, [labels[1], '=', labelValues[0]]);
       await page.locator('body').click();
 
       // assert the panel is visible and has the correct value
-      const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
-      await expect(panelContent).toBeVisible();
-      const markdownContent = panelContent.locator('.markdown-html');
+      const panelBody = panels.getBodies().first();
+      await expect(panelBody).toBeVisible();
+      const markdownContent = panelBody.locator('.markdown-html');
       await expect(markdownContent).toContainText(`VariableUnderTest: ${labels[1]}="${labelValues[0]}"`);
     });
   }

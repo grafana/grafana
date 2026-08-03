@@ -4,17 +4,27 @@ import { useMemo, useState } from 'react';
 import { fuzzySearch, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { type SceneObject } from '@grafana/scenes';
+import { locationService } from '@grafana/runtime';
+import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
 import { Icon, Text, useElementSelection, useStyles2 } from '@grafana/ui';
+import {
+  CATEGORY_PARAM_NAME,
+  HIGHLIGHT_CATEGORY_PARAM_NAME,
+} from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
+import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import { DashboardScene } from '../../scene/DashboardScene';
+import { RowItem } from '../../scene/layout-rows/RowItem';
+import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
 import { LinkEdit } from '../../settings/links/LinkAddEditableElement';
 import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSet';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { getEditableElementFor } from '../shared';
-import { type DashboardSidebarLike } from '../types';
+import { SidebarCategoryType, type DashboardSidebarLike } from '../types';
 import { useOutlineRename } from '../useOutlineRename';
 
 import { type DashboardOutline } from './DashboardOutline';
@@ -69,13 +79,21 @@ export function DashboardOutlineNode({
   const onNodeClicked = (e: React.MouseEvent) => {
     e.stopPropagation();
 
+    // clicking variable, annotation, link and filter sections opens the enclosing settings
+    // in the sidebar and scrolls to the category
+    const settingsTarget = getOutlineSettingsTarget(sceneObject);
+    if (settingsTarget) {
+      sidebar.selectObject(settingsTarget.parent, { force: true });
+      locationService.partial({
+        [CATEGORY_PARAM_NAME]: settingsTarget.categoryId,
+        [HIGHLIGHT_CATEGORY_PARAM_NAME]: settingsTarget.categoryId,
+      });
+      DashboardInteractions.outlineItemClicked({ index, depth, isEditing });
+      return;
+    }
+
     if (!isSelected) {
-      if (
-        sceneObject instanceof LinkEdit ||
-        sceneObject instanceof DashboardLinksSet ||
-        sceneObject instanceof DashboardFiltersSet ||
-        sceneObject instanceof SectionFiltersSet
-      ) {
+      if (sceneObject instanceof LinkEdit) {
         // Select directly via sidebar.selectObject because these objects are not
         // in the scene graph, so sceneGraph.findByKey (used by onSelect) can't find them.
         sidebar.selectObject(sceneObject);
@@ -274,6 +292,58 @@ function getStyles(theme: GrafanaTheme2) {
       color: theme.colors.text.secondary,
     }),
   };
+}
+
+export interface OutlineSettingsTarget {
+  /** enclosing object */
+  parent: SceneObject;
+  /** Id of the section to scroll to and expand. Matches ids in OptionsPaneCategoryDescriptors */
+  categoryId: string;
+}
+
+/**
+ * maps an outline item (variables/annotations/links/filters) to the sidebar settings it references
+ * Hooks up to redirect to sidebar and scroll to the correct section
+ */
+export function getOutlineSettingsTarget(sceneObject: SceneObject): OutlineSettingsTarget | undefined {
+  if (sceneObject instanceof DashboardFiltersSet) {
+    return { parent: sceneObject.state.dashboardRef.resolve(), categoryId: SidebarCategoryType.DashboardFilters };
+  }
+
+  if (sceneObject instanceof DashboardLinksSet) {
+    return { parent: sceneObject.state.dashboardRef.resolve(), categoryId: SidebarCategoryType.DashboardLinks };
+  }
+
+  if (sceneObject instanceof DashboardDataLayerSet) {
+    return { parent: getDashboardSceneFor(sceneObject), categoryId: SidebarCategoryType.DashboardAnnotations };
+  }
+
+  if (sceneObject instanceof SectionFiltersSet) {
+    const owner = sceneObject.state.sectionRef.resolve();
+    if (owner instanceof RowItem) {
+      return { parent: owner, categoryId: SidebarCategoryType.RowSectionFilters };
+    }
+    if (owner instanceof TabItem) {
+      return { parent: owner, categoryId: SidebarCategoryType.TabSectionFilters };
+    }
+    return undefined;
+  }
+
+  if (sceneObject instanceof SceneVariableSet) {
+    const owner = sceneObject.parent;
+    if (owner instanceof DashboardScene) {
+      return { parent: owner, categoryId: SidebarCategoryType.DashboardVariables };
+    }
+    if (owner instanceof RowItem) {
+      return { parent: owner, categoryId: SidebarCategoryType.RowSectionVariables };
+    }
+    if (owner instanceof TabItem) {
+      return { parent: owner, categoryId: SidebarCategoryType.TabSectionVariables };
+    }
+    return undefined;
+  }
+
+  return undefined;
 }
 
 function getVisibleOutlineChildren(sceneObject: SceneObject, isEditing: boolean): SceneObject[] {
