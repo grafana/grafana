@@ -225,13 +225,28 @@ describe('libraryPanelsK8sClient request options', () => {
 
   it('suppresses get alerts when the caller handles errors', async () => {
     const resource = makeResource();
-    delete resource.metadata.annotations!['grafana.app/folder'];
+    resource.metadata.annotations!['grafana.app/createdBy'] = 'user:abc';
     fetch.mockReturnValue(of({ data: resource }));
     get.mockResolvedValue({ result: [] });
 
     await libraryPanelsK8sClient.get('panel-uid', true);
 
     expect(fetch).toHaveBeenCalledWith(expect.objectContaining({ showSuccessAlert: false, showErrorAlert: false }));
+    expect(fetch).toHaveBeenCalledWith(
+      expect.objectContaining({ url: expect.stringMatching(/\/folders\/folder-uid$/), showErrorAlert: false })
+    );
+    expect(fetch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: expect.stringMatching(/iam\.grafana\.app\/v0alpha1\/display$/),
+        showErrorAlert: false,
+      })
+    );
+    expect(fetch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: '/api/library-elements/panel-uid/connections',
+        showErrorAlert: false,
+      })
+    );
   });
 
   it('does not match root panels by the synthetic General folder name', async () => {
