@@ -2,6 +2,7 @@ package pluginstore
 
 import (
 	"context"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/plugins"
 )
@@ -19,6 +20,9 @@ func NewFakePluginStore(ps ...Plugin) *FakePluginStore {
 func (pr *FakePluginStore) Plugin(_ context.Context, pluginID string) (Plugin, bool) {
 	for _, v := range pr.PluginList {
 		if v.ID == pluginID {
+			return v, true
+		}
+		if slices.Contains(v.AliasIDs, pluginID) {
 			return v, true
 		}
 	}
