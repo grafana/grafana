@@ -3,13 +3,17 @@ package informer
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/grafana/dskit/backoff"
 	"google.golang.org/protobuf/proto"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -31,12 +35,53 @@ import (
 type ObjectFunc func(namespace, name string) runtime.Object
 
 // ListFunc returns every object of one resource kind, read straight from the
-// API. The informer calls it once on start — to drive the initial reconcile and
-// report HasSynced — and again on every resync interval to re-deliver the full
-// set. The periodic re-list is what makes the informer correct despite
-// round-robin delivery: an event routed to another replica, or a hard delete
-// that is never announced, is reconciled on the next list.
-type ListFunc func(ctx context.Context) ([]runtime.Object, error)
+// API, along with the resource version the LIST snapshot was taken at. The
+// informer calls it once on start — to drive the initial reconcile and report
+// HasSynced — and again on every resync interval to re-deliver the full set. The
+// periodic re-list is what makes the informer correct despite round-robin
+// delivery: an event routed to another replica, or a hard delete that is never
+// announced, is reconciled on the next list.
+//
+// The list resource version dates the snapshot relative to live write-throughs
+// that raced it (the subscription is open while the LIST runs), letting Replace
+// tell a live write that outran the snapshot from an object the snapshot dropped;
+// 0 disables that reconciliation. See Store.Replace.
+type ListFunc func(ctx context.Context) (objs []runtime.Object, listRV int64, err error)
+
+// Verb values passed to the Metrics event observations.
+const (
+	VerbAdd    = "add"
+	VerbUpdate = "update"
+	VerbDelete = "delete"
+)
+
+// Metrics receives one observation per event the informer delivers to its
+// handlers (per event, not per handler): ObserveLiveEvent for a live
+// notification, ObserveRelistEvent for a delivery from the periodic re-list.
+// rv is the resource version whose embedded timestamp dates the change, so an
+// implementation can derive delivery latency; it is 0 when the event carries
+// no meaningful issue time: relist re-deliveries of retained objects,
+// relist-detected deletes (the last-known RV predates the delete), and the
+// initial list.
+//
+// ObserveReconnect is called each time the live subscription is
+// (re)established after a gap — live events published during the gap were
+// dropped, and the informer forces a re-list to recover them.
+//
+// ObserveLiveSubscription reports whether the informer holds an open live
+// subscription (true) or is running re-list-only (false): before the
+// subscription first opens, throughout degraded-start mode, and once the
+// informer stops. It cannot see mid-run connection outages — the subscription
+// exposes no disconnect callback and the client resumes it transparently —
+// so a connection-level status metric is what reports those.
+//
+// Implementations must not block: observations are made on the delivery path.
+type Metrics interface {
+	ObserveLiveEvent(verb string, rv int64)
+	ObserveRelistEvent(verb string, rv int64)
+	ObserveReconnect()
+	ObserveLiveSubscription(open bool)
+}
 
 // defaultResync is the fallback re-list cadence when a caller passes a
 // non-positive interval.
@@ -81,6 +126,19 @@ type Informer struct {
 	// retryInterval is how often Run retries opening the live subscription while it
 	// fails; defaults to defaultSubscribeRetry.
 	retryInterval time.Duration
+
+	// degradedStart lets Run fall back to re-list-only operation when the live
+	// subscription cannot be opened, instead of holding the initial list (and
+	// HasSynced) until it succeeds. See AllowDegradedStart.
+	degradedStart bool
+
+	// jitterFactor randomizes each resync interval by up to this fraction to avoid
+	// a thundering herd; defaults to defaultResyncJitterFactor.
+	jitterFactor float64
+
+	// metrics observes delivered events and reconnects; nil disables observation.
+	// See SetMetrics.
+	metrics Metrics
 
 	// reconnect signals the run loop to re-list after a NATS reconnect, since a
 	// round-robin subscription can miss events published while it was down.
@@ -130,6 +188,7 @@ func NewInformer(subscriber nats.Subscriber, gvr schema.GroupVersionResource, na
 		log:           log.New("provisioning.informer.nats"),
 		store:         store,
 		retryInterval: defaultSubscribeRetry,
+		jitterFactor:  defaultResyncJitterFactor,
 		syncedCh:      make(chan struct{}),
 		reconnect:     make(chan struct{}, 1),
 	}
@@ -153,6 +212,21 @@ func (n *Informer) AddEventHandler(handler cache.ResourceEventHandler) (cache.Re
 
 // HasSynced reports whether the initial full list has completed at least once.
 func (n *Informer) HasSynced() bool { return n.synced.Load() }
+
+// AllowDegradedStart lets Run operate in re-list-only degraded mode while the
+// live subscription cannot be opened — most commonly at startup, when the
+// embedded NATS server has no client URL yet — instead of holding the initial
+// list (and HasSynced) until it succeeds. Run keeps retrying the subscription
+// in the background and forces a re-list once it opens, reconciling whatever
+// was published in between. Consumers whose progress must not stall with NATS
+// (e.g. the job queue, whose only feed is this informer) opt in; the default
+// gating suits controllers that prefer not to start against a snapshot with no
+// live updates. Call before Run.
+func (n *Informer) AllowDegradedStart() { n.degradedStart = true }
+
+// SetMetrics registers the observer for delivered events and reconnects; a nil
+// observer (the default) disables observation. Call before Run.
+func (n *Informer) SetMetrics(m Metrics) { n.metrics = m }
 
 // registration implements cache.ResourceEventHandlerRegistration by deferring to
 // the informer's sync state, so a NATS informer registration is interchangeable
@@ -178,8 +252,9 @@ func (c syncedChecker) Done() <-chan struct{} { return c.informer.syncedCh }
 // (retrying until it succeeds, unless live notifications are disabled), then
 // performs the initial list (marking HasSynced), then serves live notifications
 // and a periodic re-list. Subscribing before listing means it never lists — nor
-// reports HasSynced — while it still cannot watch the resource. Register handlers
-// before calling Run.
+// reports HasSynced — while it still cannot watch the resource, unless
+// AllowDegradedStart opted into re-list-only operation for that window.
+// Register handlers before calling Run.
 func (n *Informer) Run(stopCh <-chan struct{}) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -204,12 +279,21 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 	// while we are listing is delivered (core NATS has no replay) rather than
 	// dropped in a list-to-subscribe gap. If the subscription cannot be created
 	// yet — most commonly at startup, before the embedded NATS server has a client
-	// URL — keep retrying and do NOT list or report HasSynced: re-listing a
-	// resource we cannot watch would start the controller against a snapshot with
-	// no live updates until the next resync. A nil newObject or a disabled
-	// subscriber means the informer is re-list-only, so there is no subscription
-	// to wait for.
+	// URL — the default is to keep retrying and NOT list or report HasSynced:
+	// re-listing a resource we cannot watch would start the controller against a
+	// snapshot with no live updates until the next resync. With
+	// AllowDegradedStart the informer proceeds in re-list-only mode instead and
+	// retrySubscribe opens the subscription in the background. A nil newObject or
+	// a disabled subscriber means the informer is re-list-only, so there is no
+	// subscription to wait for.
 	if n.newObject != nil && nats.Enabled(n.subscriber) {
+		// The gauge covers only what this informer can see: no subscription yet
+		// (or degraded mode) vs an open one. A mid-run connection outage is
+		// invisible here — the subscription has no disconnect callback and the
+		// client resumes it transparently — and is reported by the subscriber's
+		// connection-status metric instead.
+		n.observeLiveSubscription(false)
+		defer n.observeLiveSubscription(false)
 		subject := resourcewatch.Subject(n.gvr, n.namespace)
 		// Re-list on reconnect: a round-robin subscription can miss events
 		// published while the connection was down, so reconcile from a fresh list.
@@ -217,18 +301,31 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 		if n.queueGroup != "" {
 			opts = append(opts, nats.WithQueueGroup(n.queueGroup))
 		}
-		for {
-			s, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
-			if err == nil {
-				sub = s
-				n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
-				break
-			}
-			n.log.Warn("nats informer: subscribe failed, will retry", "subject", subject, "error", err)
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(n.retryInterval):
+		s, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
+		switch {
+		case err == nil:
+			sub = s
+			n.observeLiveSubscription(true)
+			n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
+		case n.degradedStart:
+			n.log.Warn("nats informer: subscribe failed; starting in re-list-only degraded mode",
+				"subject", subject, "gvr", n.gvr.String(), "error", err)
+			go n.retrySubscribe(ctx, subject, opts)
+		default:
+			for {
+				n.log.Warn("nats informer: subscribe failed, will retry", "subject", subject, "error", err)
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(n.retryInterval):
+				}
+				s, err = n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
+				if err == nil {
+					sub = s
+					n.observeLiveSubscription(true)
+					n.log.Debug("opened nats informer", "subject", subject, "gvr", n.gvr.String())
+					break
+				}
 			}
 		}
 	}
@@ -252,13 +349,21 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 	n.synced.Store(true)
 	close(n.syncedCh)
 
-	resync := time.NewTicker(n.resync)
+	// Jitter each interval independently so informers that started together do not
+	// re-list in lockstep and stampede the API server. A fresh timer per pass
+	// (rather than a fixed ticker) lets the delay vary every time.
+	resync := time.NewTimer(wait.Jitter(n.resync, n.jitterFactor))
 	defer resync.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-resync.C:
+			// Re-arm before relisting so a slow LIST or handler dispatch is not
+			// added to the interval; this keeps the cadence start-to-start (as the
+			// ticker was) rather than relist-duration + resync. Reset is safe here
+			// because the timer has already fired and C has been drained.
+			resync.Reset(wait.Jitter(n.resync, n.jitterFactor))
 			// Error already logged in relist; the next tick retries.
 			_ = n.relist(ctx, false)
 		case <-n.reconnect:
@@ -268,10 +373,49 @@ func (n *Informer) Run(stopCh <-chan struct{}) {
 	}
 }
 
+// retrySubscribe keeps trying to open the live subscription while the informer
+// runs in re-list-only degraded mode (see AllowDegradedStart). Once it opens,
+// a reconnect signal forces a re-list to reconcile whatever was published while
+// there was no subscription, and the goroutine holds the subscription until
+// shutdown so its lifecycle needs no shared state with Run.
+func (n *Informer) retrySubscribe(ctx context.Context, subject string, opts []nats.SubscribeOption) {
+	// min == max pins the cadence to exactly retryInterval (no jitter, no
+	// growth), matching the foreground subscribe retry in Run; MaxRetries 0
+	// retries until ctx ends.
+	boff := backoff.New(ctx, backoff.Config{
+		MinBackoff: n.retryInterval,
+		MaxBackoff: n.retryInterval,
+	})
+	for boff.Ongoing() {
+		// Run just attempted the subscription, so wait before the first retry.
+		boff.Wait()
+		if !boff.Ongoing() {
+			return
+		}
+		s, err := n.subscriber.Subscribe(ctx, subject, n.onNotification(), opts...)
+		if err != nil {
+			n.log.Warn("nats informer: subscribe failed, will retry", "subject", subject, "error", err)
+			continue
+		}
+		n.observeLiveSubscription(true)
+		n.log.Info("nats informer: subscription opened; leaving re-list-only degraded mode",
+			"subject", subject, "gvr", n.gvr.String())
+		n.signalReconnect()
+		<-ctx.Done()
+		if err := s.Unsubscribe(); err != nil {
+			n.log.Debug("nats informer: unsubscribe", "error", err)
+		}
+		return
+	}
+}
+
 // signalReconnect nudges the run loop to re-list after a NATS reconnect. It is
 // the WithOnReconnect callback, so it must not block: the send is non-blocking
 // and a pending signal coalesces additional reconnects into the next re-list.
 func (n *Informer) signalReconnect() {
+	if n.metrics != nil {
+		n.metrics.ObserveReconnect()
+	}
 	select {
 	case n.reconnect <- struct{}{}:
 	default:
@@ -305,6 +449,21 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		// reconcile, so the minimal object and old == new are both fine.
 		switch evt.Type {
 		case resourcepb.WatchNotification_ADDED:
+			// Write the add through to the snapshot, the counterpart to the Delete
+			// below: without it the object is absent until the next re-list, whose
+			// diff would then re-report a delivered live add as a recovery — inflating
+			// the relist metrics and re-dispatching OnAdd. MODIFIED is deliberately not
+			// written through: it carries only namespace/name, so a soft-delete
+			// (delivered as MODIFIED with a deletionTimestamp) would overwrite the
+			// stored object's real deletionTimestamp with a nil one and mislead the
+			// staleness-tolerant readers of the snapshot (the repository quota count).
+			//
+			// Stamp the notification's resource version onto the minimal object so
+			// the store records it: a re-list whose snapshot predates this add must
+			// carry the object forward rather than diff it as a spurious delete.
+			setResourceVersion(obj, evt.ResourceVersion)
+			n.store.Update(context.Background(), obj)
+			n.observeLiveEvent(VerbAdd, evt.ResourceVersion)
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(obj, false) })
 		case resourcepb.WatchNotification_DELETED:
 			// A DELETED notification is published only once the object is actually
@@ -317,9 +476,11 @@ func (n *Informer) onNotification() nats.MessageHandler {
 			// found" reconcile error. Drop it from the snapshot too, so a
 			// staleness-tolerant reader (e.g. a quota count) stops counting it without
 			// waiting for the next re-list.
-			n.store.Delete(context.Background(), evt.Namespace, evt.Name)
+			n.store.DeleteAt(context.Background(), evt.Namespace, evt.Name, evt.ResourceVersion)
+			n.observeLiveEvent(VerbDelete, evt.ResourceVersion)
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(obj) })
 		default: // MODIFIED
+			n.observeLiveEvent(VerbUpdate, evt.ResourceVersion)
 			n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(obj, obj) })
 		}
 	}
@@ -339,39 +500,87 @@ func (n *Informer) onNotification() nats.MessageHandler {
 // On the initial list the store starts empty, so every object is an add (with
 // isInInitialList=true) and there is nothing to delete.
 func (n *Informer) relist(ctx context.Context, initial bool) error {
-	objs, err := n.list(ctx)
+	objs, listRV, err := n.list(ctx)
 	if err != nil {
 		n.log.Warn("nats informer: list failed", "gvr", n.gvr.String(), "error", err)
 		return err
 	}
 
-	// Swap the snapshot for the fresh set; added/removed are the keys that appeared
-	// and vanished since the previous re-list.
-	added, removed := n.store.Replace(objs)
+	// Swap the snapshot for the fresh set, reconciled at listRV against live
+	// write-throughs that raced the LIST (see Store.Replace): added/updated/removed
+	// are the keys to dispatch as adds/updates/deletes, with objects a live write
+	// already delivered here filtered out.
+	added, updated, removed := n.store.Replace(objs, listRV)
 	n.log.Debug("nats informer re-listed", "gvr", n.gvr.String(), "initial", initial,
-		"count", len(objs), "added", len(added), "removed", len(removed))
-	addedKeys := make(map[string]struct{}, len(added))
+		"count", len(objs), "added", len(added), "updated", len(updated), "removed", len(removed))
+
 	for _, obj := range added {
-		if key, err := cache.MetaNamespaceKeyFunc(obj); err == nil {
-			addedKeys[key] = struct{}{}
+		o := obj
+		// A key first seen on a periodic re-list is a change the live stream did
+		// not deliver here, so its RV timestamp dates the recovery latency. The
+		// initial list is not a recovery — its objects may be arbitrarily old — so
+		// it carries no RV for latency.
+		rv := int64(0)
+		if !initial {
+			rv = objectResourceVersion(o)
 		}
+		n.observeRelistEvent(VerbAdd, rv)
+		n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(o, initial) })
 	}
 
-	for _, obj := range objs {
+	for _, obj := range updated {
 		o := obj
-		key, _ := cache.MetaNamespaceKeyFunc(o)
-		if _, isNew := addedKeys[key]; isNew {
-			n.dispatch(func(h cache.ResourceEventHandler) { h.OnAdd(o, initial) })
-		} else {
-			n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(o, o) })
-		}
+		n.observeRelistEvent(VerbUpdate, 0)
+		n.dispatch(func(h cache.ResourceEventHandler) { h.OnUpdate(o, o) })
 	}
 
 	for _, obj := range removed {
 		o := obj
+		n.observeRelistEvent(VerbDelete, 0)
 		n.dispatch(func(h cache.ResourceEventHandler) { h.OnDelete(o) })
 	}
 	return nil
+}
+
+func (n *Informer) observeLiveEvent(verb string, rv int64) {
+	if n.metrics != nil {
+		n.metrics.ObserveLiveEvent(verb, rv)
+	}
+}
+
+func (n *Informer) observeRelistEvent(verb string, rv int64) {
+	if n.metrics != nil {
+		n.metrics.ObserveRelistEvent(verb, rv)
+	}
+}
+
+func (n *Informer) observeLiveSubscription(open bool) {
+	if n.metrics != nil {
+		n.metrics.ObserveLiveSubscription(open)
+	}
+}
+
+// setResourceVersion stamps rv onto an object's metadata, so a minimal object
+// built from a live notification carries the version the store keys its
+// re-list reconciliation off. A non-meta object is left as-is.
+func setResourceVersion(obj runtime.Object, rv int64) {
+	if acc, err := meta.Accessor(obj); err == nil {
+		acc.SetResourceVersion(strconv.FormatInt(rv, 10))
+	}
+}
+
+// objectResourceVersion parses an object's resource version as the int64
+// unified storage issues; 0 when absent or not numeric (no latency sample).
+func objectResourceVersion(obj runtime.Object) int64 {
+	acc, err := meta.Accessor(obj)
+	if err != nil {
+		return 0
+	}
+	rv, err := strconv.ParseInt(acc.GetResourceVersion(), 10, 64)
+	if err != nil {
+		return 0
+	}
+	return rv
 }
 
 func (n *Informer) dispatch(fn func(cache.ResourceEventHandler)) {

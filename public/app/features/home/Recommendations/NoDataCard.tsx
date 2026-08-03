@@ -9,6 +9,7 @@ import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants
 
 import { ctaClicked } from '../analytics/main';
 
+import { SYNTHETIC_MONITORING_APP_ID } from './appPluginIds';
 import { KUBERNETES_APP_ID } from './kubernetesData';
 
 interface PopularSolution {
@@ -32,7 +33,7 @@ function getPopularSolutions(): PopularSolution[] {
     },
     {
       id: 'synthetic-monitoring',
-      pluginId: 'grafana-synthetic-monitoring-app',
+      pluginId: SYNTHETIC_MONITORING_APP_ID,
       label: t('home.recommendations.no-data.solution-synthetics', 'Synthetic Monitoring'),
       icon: 'globe',
       appPath: '/home',
@@ -61,8 +62,16 @@ function getSolutionHref(solution: PopularSolution, appAvailable: boolean): stri
   return locationUtil.assureBaseUrl(`/plugins?${search}`);
 }
 
+interface NoDataCardProps {
+  /**
+   * 'partial': at least one signal is confirmed active but nothing is renderable.
+   * 'unknown': detection was inconclusive — no signal confirmed active, some unsettled.
+   */
+  variant?: 'empty' | 'partial' | 'unknown';
+}
+
 /** Left recommendations card for instances where no solution is reporting data yet. */
-export function NoDataCard() {
+export function NoDataCard({ variant = 'empty' }: NoDataCardProps) {
   const styles = useStyles2(getStyles);
   // Availability only picks the link target; while the lookup is pending the pills
   // fall back to the catalog, so the card never blocks on it.
@@ -79,14 +88,26 @@ export function NoDataCard() {
         />
 
         <Text element="h3" variant="h3" color="primary">
-          <Trans i18nKey="home.recommendations.no-data.title">No data flowing yet</Trans>
+          {variant === 'empty'
+            ? t('home.recommendations.no-data.title', 'No data flowing yet')
+            : t('home.recommendations.no-data.title-partial', 'Add more telemetry')}
         </Text>
 
         <Text variant="body">
-          <Trans i18nKey="home.recommendations.no-data.description">
-            Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a
-            getting started guide.
-          </Trans>
+          {variant === 'partial'
+            ? t(
+                'home.recommendations.no-data.description-partial',
+                'Some signals are already flowing. Connect more data sources or pick a solution to see live stats here.'
+              )
+            : variant === 'unknown'
+              ? t(
+                  'home.recommendations.no-data.description-unknown',
+                  "We couldn't confirm live data yet. Connect more data sources or pick a solution to see live stats here."
+                )
+              : t(
+                  'home.recommendations.no-data.description',
+                  'Connect a data source to light up your dashboards and alerts, pick from available solutions, or follow a getting started guide.'
+                )}
         </Text>
 
         <Stack direction="column" gap={1}>
