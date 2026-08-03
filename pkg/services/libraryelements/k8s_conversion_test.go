@@ -117,7 +117,7 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 	meta.SetGeneration(2)
 	creationTimestamp := metav1.NewTime(time.Now())
 	meta.SetCreationTimestamp(creationTimestamp)
-	meta.SetCreatedBy(testUser.UID)
+	meta.SetCreatedBy("user:" + testUser.UID)
 	meta.SetDeprecatedInternalID(123) // nolint:staticcheck
 
 	reqContext := &contextmodel.ReqContext{
@@ -154,6 +154,7 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 	require.Equal(t, testUser.ID, result.Meta.UpdatedBy.Id)
 	require.Equal(t, testUser.Login, result.Meta.UpdatedBy.Name)
 	require.Equal(t, dtos.GetGravatarUrl(cfg, testUser.Email), result.Meta.UpdatedBy.AvatarUrl)
+	require.Equal(t, []string{testUser.UID}, userSvc.ListUsersByIdOrUidCalls[0].Uids)
 
 	// fmt.Printf("%s\n", result.Model)
 	require.JSONEq(t, `{

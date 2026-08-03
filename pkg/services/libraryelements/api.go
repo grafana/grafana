@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
+	apiserverclient "github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -1217,35 +1218,32 @@ func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *co
 
 	createdBy := meta.GetCreatedBy()
 	updatedBy := createdBy // the old /api returns the same user for updated if it was never updated
-	userUIDs := []string{meta.GetCreatedBy()}
+	userMeta := []string{createdBy}
 	if timestamp, err := meta.GetUpdatedTimestamp(); err == nil && timestamp != nil {
 		dto.Meta.Updated = *timestamp
 		updatedBy = meta.GetUpdatedBy()
-		userUIDs = append(userUIDs, updatedBy)
+		userMeta = append(userMeta, updatedBy)
 	} else {
 		// if never updated, the old /api returns the same timestamp for updated as for created
 		dto.Meta.Updated = dto.Meta.Created
 	}
 
-	users, err := lk8s.userService.ListByIdOrUID(c.Req.Context(), userUIDs, []int64{c.OrgID})
+	users, err := apiserverclient.GetUsersFromMeta(c.Req.Context(), lk8s.userService, userMeta)
 	if err != nil {
 		return nil, err
 	}
-	for _, user := range users {
-		if user.UID == createdBy {
-			dto.Meta.CreatedBy = model.LibraryElementDTOMetaUser{
-				Id:        user.ID,
-				Name:      user.Login,
-				AvatarUrl: dtos.GetGravatarUrl(lk8s.cfg, user.Email),
-			}
+	if user := users[createdBy]; user != nil {
+		dto.Meta.CreatedBy = model.LibraryElementDTOMetaUser{
+			Id:        user.ID,
+			Name:      user.Login,
+			AvatarUrl: dtos.GetGravatarUrl(lk8s.cfg, user.Email),
 		}
-		// not else because /api returns the same user for updated if it was never updated
-		if user.UID == updatedBy {
-			dto.Meta.UpdatedBy = model.LibraryElementDTOMetaUser{
-				Id:        user.ID,
-				Name:      user.Login,
-				AvatarUrl: dtos.GetGravatarUrl(lk8s.cfg, user.Email),
-			}
+	}
+	if user := users[updatedBy]; user != nil {
+		dto.Meta.UpdatedBy = model.LibraryElementDTOMetaUser{
+			Id:        user.ID,
+			Name:      user.Login,
+			AvatarUrl: dtos.GetGravatarUrl(lk8s.cfg, user.Email),
 		}
 	}
 
