@@ -10,7 +10,11 @@ import {
   type InterpolateFunction,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { useFlagTablePaginationPageSize, useFlagTableRefactorNested } from '@grafana/runtime/internal';
+import {
+  useFlagTablePaginationPageSize,
+  useFlagTableRefactorNested,
+  useFlagTableRowsAsFields,
+} from '@grafana/runtime/internal';
 import { type TableOptions } from '@grafana/schema';
 import { usePanelContext } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
@@ -67,6 +71,7 @@ type CommonTableOptions = Pick<
   | 'cellHeight'
   | 'maxRowHeight'
   | 'disableKeyboardEvents'
+  | 'rowsAsFields'
 >;
 
 /**
@@ -77,6 +82,7 @@ type CommonTableOptions = Pick<
 export function useCommonTableProps(options: CommonTableOptions, fieldConfig: FieldConfigSource) {
   const nestedRefactorEnabled = useFlagTableRefactorNested();
   const paginationPageSizeEnabled = useFlagTablePaginationPageSize();
+  const rowsAsFieldsEnabled = useFlagTableRowsAsFields();
 
   return useMemo(
     () => ({
@@ -94,6 +100,8 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       disableKeyboardEvents: options.disableKeyboardEvents,
       disableSanitizeHtml: getConfig().disableSanitizeHtml,
       nestedRefactorEnabled,
+      // rowsAsFields is gated behind the feature toggle; when disabled the mode is never active
+      rowsAsFields: rowsAsFieldsEnabled && Boolean(options.rowsAsFields),
     }),
     [
       options.showHeader,
@@ -105,9 +113,11 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       options.cellHeight,
       options.maxRowHeight,
       options.disableKeyboardEvents,
+      options.rowsAsFields,
       fieldConfig.defaults.noValue,
       nestedRefactorEnabled,
       paginationPageSizeEnabled,
+      rowsAsFieldsEnabled,
     ]
   );
 }

@@ -132,6 +132,8 @@ TableOptions: {
 	frozenColumns?: {
 		left?: number | *0
 	}
+	// If true, renders each field as a row (pivoted); column one is a frozen field-name column. Header, sorting, filtering, and footers are disabled in this mode.
+	rowsAsFields?: bool | *false
 	// If true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
 	disableKeyboardEvents?: bool
 } @cuetsy(kind="interface")

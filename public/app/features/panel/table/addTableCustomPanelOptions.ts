@@ -10,10 +10,23 @@ export const addTableCustomPanelOptions = <O extends TableOptions>(builder: Pane
   const category = [t('table.category-table', 'Table')];
   builder
     .addBooleanSwitch({
+      path: 'rowsAsFields',
+      name: t('table.name-rows-as-fields', 'Rows as fields'),
+      description: t(
+        'table.description-rows-as-fields',
+        'Render each field as a row (pivoted). The first column is a frozen list of field names. Header, sorting, filtering, and footers are disabled in this mode.'
+      ),
+      category,
+      defaultValue: defaultTableOptions.rowsAsFields,
+      // React-only feature toggle, so it is not on config.featureToggles and must be read via the OpenFeature client
+      showIf: () => getFeatureFlagClient().getBooleanValue(FlagKeys.TableRowsAsFields, false),
+    })
+    .addBooleanSwitch({
       path: 'showHeader',
       name: t('table.name-show-table-header', 'Show table header'),
       category,
       defaultValue: defaultTableOptions.showHeader,
+      showIf: (opts) => !opts.rowsAsFields,
     })
     .addNumberInput({
       path: 'frozenColumns.left',
@@ -23,6 +36,7 @@ export const addTableCustomPanelOptions = <O extends TableOptions>(builder: Pane
         placeholder: t('table.placeholder-frozen-columns', 'none'),
       },
       category,
+      showIf: (opts) => !opts.rowsAsFields,
     })
     .addRadio({
       path: 'cellHeight',
