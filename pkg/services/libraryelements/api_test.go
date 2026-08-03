@@ -32,6 +32,29 @@ func TestFilterK8sLibraryPanelsEmptyFolderFilter(t *testing.T) {
 	require.Empty(t, handler.filterK8sLibraryPanels(nil, items, model.SearchLibraryElementsQuery{}, []string{}))
 }
 
+func TestFilterK8sLibraryPanelsFolderTitleSearchWithDeprecatedIDFilter(t *testing.T) {
+	handler := &libraryElementsK8sHandler{folderService: &foldertest.FakeService{ExpectedFolder: &folder.Folder{
+		ID: 42, UID: "folder-uid", Title: "Matching folder", OrgID: 1,
+	}}}
+	items := []unstructured.Unstructured{{Object: map[string]interface{}{
+		"metadata": map[string]interface{}{
+			"name":        "panel",
+			"annotations": map[string]interface{}{"grafana.app/folder": "folder-uid"},
+		},
+		"spec": map[string]interface{}{"type": "text", "title": "Panel"},
+	}}}
+	reqContext := &contextmodel.ReqContext{
+		Context:      &web.Context{Req: &http.Request{}},
+		SignedInUser: &user.SignedInUser{OrgID: 1},
+	}
+
+	deprecatedFilter := model.SearchLibraryElementsQuery{SearchString: "matching", FolderFilter: "42"} // nolint:staticcheck
+	require.Len(t, handler.filterK8sLibraryPanels(reqContext, items, deprecatedFilter, []string{"folder-uid"}), 1)
+
+	uidFilter := model.SearchLibraryElementsQuery{SearchString: "matching", FolderFilterUIDs: "folder-uid"}
+	require.Empty(t, handler.filterK8sLibraryPanels(reqContext, items, uidFilter, []string{"folder-uid"}))
+}
+
 func TestFolderUIDFromLegacyID(t *testing.T) {
 	reqContext := &contextmodel.ReqContext{
 		Context: &web.Context{Req: &http.Request{}},

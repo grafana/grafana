@@ -92,9 +92,7 @@ func LibraryPanelToLegacyModel(panel *v0alpha1.LibraryPanel) (json.RawMessage, e
 	if spec.PluginVersion != "" {
 		legacyModel["pluginVersion"] = spec.PluginVersion
 	}
-	if spec.Description != "" {
-		legacyModel["description"] = spec.Description
-	}
+	legacyModel["description"] = spec.Description
 	options := spec.Options.Object
 	if options == nil {
 		options = map[string]any{}

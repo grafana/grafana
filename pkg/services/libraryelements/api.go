@@ -937,11 +937,13 @@ func (lk8s *libraryElementsK8sHandler) filterK8sLibraryPanels(c *contextmodel.Re
 		typeFilter = strings.Split(query.TypeFilter, ",")
 	}
 	searchString := strings.ToLower(strings.TrimSpace(query.SearchString))
+	matchByFolderTitle := searchString != "" && len(strings.TrimSpace(query.FolderFilterUIDs)) == 0
 
 	// the legacy search also matches elements whose folder title contains the search
-	// string (unless an explicit folder filter is set), so resolve folder titles first
+	// string unless a folder UID filter is set. The deprecated numeric folder filter
+	// still expands matching folder titles before restricting results to those folders.
 	folderTitles := map[string]string{}
-	if searchString != "" && !hasFolderFilter {
+	if matchByFolderTitle {
 		folderTitles = lk8s.resolveFolderTitles(c, items)
 	}
 
