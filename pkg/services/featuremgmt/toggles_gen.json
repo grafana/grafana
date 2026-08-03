@@ -2474,6 +2474,20 @@
     },
     {
       "metadata": {
+        "name": "faroInteractionEvents",
+        "resourceVersion": "1785791208707",
+        "creationTimestamp": "2026-08-03T21:06:48Z"
+      },
+      "spec": {
+        "description": "Forward interaction events reported via reportInteraction to Faro",
+        "stage": "experimental",
+        "codeowner": "@grafana/app-o11y",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "faroSessionReplay",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"

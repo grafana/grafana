@@ -45,6 +45,8 @@ export const FlagKeys = {
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
   /** A/A test for recently viewed dashboards feature */
   ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
+  /** Forward interaction events reported via reportInteraction to Faro */
+  FaroInteractionEvents: "faroInteractionEvents",
   /** Enable Faro session replay for Grafana */
   FaroSessionReplay: "faroSessionReplay",
   /** Enables the new Flame Graph UI containing the Call Tree view */
@@ -335,6 +337,17 @@ export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvalua
  */
 export const useFlagExperimentRecentlyViewedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("experimentRecentlyViewedDashboards", false, options).value;
+};
+
+/**
+ * Forward interaction events reported via reportInteraction to Faro
+ *
+ * **Details:**
+ * - flag key: `faroInteractionEvents`
+ * - default value: `false`
+ */
+export const useFlagFaroInteractionEvents = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("faroInteractionEvents", false, options).value;
 };
 
 /**

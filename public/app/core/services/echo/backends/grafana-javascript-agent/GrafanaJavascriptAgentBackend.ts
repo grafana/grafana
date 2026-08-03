@@ -9,13 +9,25 @@ import {
   type Instrumentation,
 } from '@grafana/faro-web-sdk';
 import { TracingInstrumentation } from '@grafana/faro-web-tracing';
-import { type EchoBackend, type EchoEvent, EchoEventType } from '@grafana/runtime';
+import { type EchoBackend, type EchoEvent, EchoEventType, isInteractionEvent } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { EchoSrvTransport } from './EchoSrvTransport';
 import { beforeSendHandler } from './beforeSendHandler';
 import { setupFaroPageMeta } from './faroPageMeta';
 import { type GrafanaJavascriptAgentBackendOptions, type GrafanaJavascriptAgentEchoEvent } from './types';
+
+// faro event attributes must be strings
+function interactionPropertiesToAttributes(properties?: Record<string, unknown>): Record<string, string> | undefined {
+  if (!properties) {
+    return undefined;
+  }
+  return Object.fromEntries(
+    Object.entries(properties)
+      .filter(([, value]) => value != null)
+      .map(([key, value]) => [key, typeof value === 'object' ? JSON.stringify(value) : String(value)])
+  );
+}
 
 function isCrossOriginIframe() {
   try {
@@ -35,6 +47,8 @@ export class GrafanaJavascriptAgentBackend
   implements EchoBackend<GrafanaJavascriptAgentEchoEvent, GrafanaJavascriptAgentBackendOptions>
 {
   supportedEvents = [EchoEventType.GrafanaJavascriptAgent];
+
+  private faro?: Faro;
 
   constructor(public options: GrafanaJavascriptAgentBackendOptions) {
     // configure instrumentations.
@@ -56,6 +70,12 @@ export class GrafanaJavascriptAgentBackend
     }
 
     const sessionReplayEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.FaroSessionReplay, false);
+    const interactionEventsEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.FaroInteractionEvents, false);
+
+    // when enabled, reportInteraction events are also delivered here and forwarded to faro (see addEvent)
+    if (interactionEventsEnabled) {
+      this.supportedEvents = [EchoEventType.GrafanaJavascriptAgent, EchoEventType.Interaction];
+    }
 
     const transports: BaseTransport[] = [new EchoSrvTransport({ ignoreUrls })];
 
@@ -118,6 +138,8 @@ export class GrafanaJavascriptAgentBackend
     const faro = initializeFaro(grafanaJavaScriptAgentOptions);
 
     if (faro) {
+      this.faro = faro;
+
       // Attach navigation + session context (referrer, previousUrl, sessionStart) to the meta of
       // every emitted signal.
       refreshFaroPageMeta = setupFaroPageMeta(faro);
@@ -171,8 +193,13 @@ export class GrafanaJavascriptAgentBackend
     observer.observe(reactRoot ?? document.body, { childList: true });
   }
 
-  // noop because the EchoSrvTransport registered in Faro will already broadcast all signals emitted by the Faro API
-  addEvent = (e: EchoEvent) => {};
+  // forward interaction events to faro; everything else is a noop because the EchoSrvTransport
+  // registered in faro will already broadcast all signals emitted by the faro API
+  addEvent = (e: EchoEvent) => {
+    if (isInteractionEvent(e)) {
+      this.faro?.api.pushEvent(e.payload.interactionName, interactionPropertiesToAttributes(e.payload.properties));
+    }
+  };
 
   // backend will log events to stdout, and at least in case of hosted grafana they will be
   // ingested into Loki. Due to Loki limitations logs cannot be backdated,
