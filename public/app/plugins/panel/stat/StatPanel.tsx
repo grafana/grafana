@@ -1,5 +1,5 @@
 import { isNumber } from 'lodash';
-import { memo, useCallback, type JSX } from 'react';
+import { memo, useCallback, useMemo, type JSX } from 'react';
 
 import {
   type DisplayValueAlignmentFactors,
@@ -46,31 +46,14 @@ export const StatPanel = memo(
         valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
         menuProps: DataLinksContextMenuApi
       ): JSX.Element => {
-        const { value, alignmentFactors, width, height, count } = valueProps;
-        const { openMenu, targetClassName } = menuProps;
-        let sparkline = value.sparkline;
-        if (sparkline) {
-          sparkline.timeRange = timeRange;
-        }
-
         return (
-          <BigValue
-            value={value.display}
-            count={count}
-            sparkline={sparkline}
-            colorMode={options.colorMode}
-            graphMode={options.graphMode}
-            justifyMode={options.justifyMode}
+          <StatBigValue
+            valueProps={valueProps}
+            menuProps={menuProps}
+            options={options}
             textMode={getTextMode()}
-            alignmentFactors={alignmentFactors}
-            text={options.text}
-            width={width}
-            height={height}
             theme={theme}
-            onClick={openMenu}
-            className={targetClassName}
-            disableWideLayout={!options.wideLayout}
-            percentChangeColorMode={options.percentChangeColorMode}
+            timeRange={timeRange}
           />
         );
       },
@@ -149,3 +132,43 @@ export const StatPanel = memo(
   }
 );
 StatPanel.displayName = 'StatPanel';
+
+interface StatBigValueProps {
+  valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>;
+  menuProps: DataLinksContextMenuApi;
+  options: Options;
+  textMode: BigValueTextMode;
+  theme: ReturnType<typeof useTheme2>;
+  timeRange: PanelProps<Options>['timeRange'];
+}
+
+const StatBigValue = memo(({ valueProps, menuProps, options, textMode, theme, timeRange }: StatBigValueProps) => {
+  const { value, alignmentFactors, width, height, count } = valueProps;
+  const { openMenu, targetClassName } = menuProps;
+  const sparkline = useMemo(
+    () => (value.sparkline ? { ...value.sparkline, timeRange } : undefined),
+    [value.sparkline, timeRange]
+  );
+
+  return (
+    <BigValue
+      value={value.display}
+      count={count}
+      sparkline={sparkline}
+      colorMode={options.colorMode}
+      graphMode={options.graphMode}
+      justifyMode={options.justifyMode}
+      textMode={textMode}
+      alignmentFactors={alignmentFactors}
+      text={options.text}
+      width={width}
+      height={height}
+      theme={theme}
+      onClick={openMenu}
+      className={targetClassName}
+      disableWideLayout={!options.wideLayout}
+      percentChangeColorMode={options.percentChangeColorMode}
+    />
+  );
+});
+StatBigValue.displayName = 'StatBigValue';

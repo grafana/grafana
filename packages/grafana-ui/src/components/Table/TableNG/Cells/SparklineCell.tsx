@@ -38,7 +38,27 @@ const defaultSparklineCellConfig: TableSparklineCellOptions = {
 
 export const SparklineCell = (props: SparklineCellProps) => {
   const { field, value, theme, timeRange, rowIdx, width } = props;
-  const sparkline = prepareSparklineValue(value, field);
+  const preparedSparkline = React.useMemo(() => {
+    const valueSparkline = prepareSparklineValue(value, field);
+    return valueSparkline ? prepareSparklineForRender(valueSparkline) : undefined;
+  }, [field, value]);
+  const sparkline = React.useMemo(
+    () => (preparedSparkline ? { ...preparedSparkline, timeRange } : undefined),
+    [preparedSparkline, timeRange]
+  );
+
+  const cellOptions = React.useMemo(() => getTableSparklineCellOptions(field), [field]);
+
+  const config: FieldConfig<GraphFieldConfig> = React.useMemo(
+    () => ({
+      color: field.config.color,
+      custom: {
+        ...defaultSparklineCellConfig,
+        ...cellOptions,
+      },
+    }),
+    [cellOptions, field.config.color]
+  );
 
   if (!sparkline) {
     return (
@@ -47,36 +67,6 @@ export const SparklineCell = (props: SparklineCellProps) => {
       </MaybeWrapWithLink>
     );
   }
-
-  // Get the step from the first two values to null-fill the x-axis based on timerange
-  if (sparkline.x && !sparkline.x.config.interval && sparkline.x.values.length > 1) {
-    sparkline.x.config.interval = sparkline.x.values[1] - sparkline.x.values[0];
-  }
-
-  // Remove non-finite values, e.g: NaN, +/-Infinity
-  sparkline.y.values = sparkline.y.values.map((v) => {
-    if (!Number.isFinite(v)) {
-      return null;
-    } else {
-      return v;
-    }
-  });
-
-  const range = getMinMaxAndDelta(sparkline.y);
-  sparkline.y.config.min = range.min;
-  sparkline.y.config.max = range.max;
-  sparkline.y.state = { range };
-  sparkline.timeRange = timeRange;
-
-  const cellOptions = getTableSparklineCellOptions(field);
-
-  const config: FieldConfig<GraphFieldConfig> = {
-    color: field.config.color,
-    custom: {
-      ...defaultSparklineCellConfig,
-      ...cellOptions,
-    },
-  };
 
   const hideValue = cellOptions.hideValue;
   let valueWidth = 0;
@@ -110,6 +100,36 @@ function getTableSparklineCellOptions(field: Field): TableSparklineCellOptions {
     return options;
   }
   throw new Error(`Expected options type ${TableCellDisplayMode.Sparkline} but got ${options.type}`);
+}
+
+function prepareSparklineForRender(sparkline: NonNullable<ReturnType<typeof prepareSparklineValue>>) {
+  const x = sparkline.x
+    ? {
+        ...sparkline.x,
+        config: { ...sparkline.x.config },
+      }
+    : undefined;
+  const y = {
+    ...sparkline.y,
+    config: { ...sparkline.y.config },
+    values: sparkline.y.values.map((v) => (Number.isFinite(v) ? v : null)),
+  };
+
+  // Get the step from the first two values to null-fill the x-axis based on timerange.
+  if (x && !x.config.interval && x.values.length > 1) {
+    x.config.interval = x.values[1] - x.values[0];
+  }
+
+  const range = getMinMaxAndDelta(y);
+  y.config.min = range.min;
+  y.config.max = range.max;
+  y.state = { range };
+
+  return {
+    ...sparkline,
+    x,
+    y,
+  };
 }
 
 export const getStyles: TableCellStyles = memoize(

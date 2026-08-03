@@ -14,6 +14,7 @@ import {
   nullToValue,
   roundDecimals,
   sortDataFrame,
+  type TimeRange,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
@@ -170,7 +171,9 @@ export const prepareConfig = (
   sparkline: FieldSparkline,
   dataFrame: DataFrame,
   theme: GrafanaTheme2,
-  showHighlights?: boolean
+  showHighlights?: boolean,
+  getTimeRange?: () => TimeRange | undefined,
+  getAlignedDataFrame?: () => DataFrame
 ): UPlotConfigBuilder => {
   const builder = new UPlotConfigBuilder();
   const rangePad = HIGHLIGHT_IDX_POINT_SIZE / 2;
@@ -190,8 +193,9 @@ export const prepareConfig = (
     isTime: false, // xField.type === FieldType.time,
     range: () => {
       if (sparkline.x) {
-        if (sparkline.timeRange && sparkline.x.type === FieldType.time) {
-          return [sparkline.timeRange.from.valueOf(), sparkline.timeRange.to.valueOf()];
+        const timeRange = getTimeRange?.() ?? sparkline.timeRange;
+        if (timeRange && sparkline.x.type === FieldType.time) {
+          return [timeRange.from.valueOf(), timeRange.to.valueOf()];
         }
         const vals = sparkline.x.values;
         return [vals[0], vals[vals.length - 1]];
@@ -224,7 +228,7 @@ export const prepareConfig = (
       scaleKey,
       orientation: ScaleOrientation.Vertical,
       direction: ScaleDirection.Up,
-      range: () => getYRange(dataFrame),
+      range: () => getYRange(getAlignedDataFrame?.() ?? dataFrame),
     });
 
     builder.addAxis({

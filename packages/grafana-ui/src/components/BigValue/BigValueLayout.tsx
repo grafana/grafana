@@ -1,5 +1,6 @@
 import { type CSSProperties, type JSX } from 'react';
 import * as React from 'react';
+import memoize from 'micro-memoize';
 import tinycolor from 'tinycolor2';
 
 import {
@@ -245,32 +246,7 @@ export abstract class BigValueLayout {
       return null;
     }
 
-    let fillColor: string;
-    let lineColor: string;
-
-    switch (colorMode) {
-      case BigValueColorMode.Background:
-      case BigValueColorMode.BackgroundSolid:
-        fillColor = 'rgba(255,255,255,0.4)';
-        lineColor = tinycolor(this.valueColor).brighten(40).toRgbString();
-        break;
-      case BigValueColorMode.None:
-      case BigValueColorMode.Value:
-      default:
-        lineColor = this.valueColor;
-        fillColor = tinycolor(this.valueColor).setAlpha(0.2).toRgbString();
-        break;
-    }
-
-    // The graph field configuration applied to Y values
-    const config: FieldConfig<GraphFieldConfig> = {
-      custom: {
-        drawStyle: GraphDrawStyle.Line,
-        lineWidth: 1,
-        fillColor,
-        lineColor,
-      },
-    };
+    const config = getSparklineConfig(colorMode, this.valueColor);
 
     return (
       <div style={this.getChartStyles()}>
@@ -292,6 +268,38 @@ export abstract class BigValueLayout {
     };
   }
 }
+
+const getSparklineConfig = memoize(
+  (colorMode: BigValueColorMode, valueColor: string): FieldConfig<GraphFieldConfig> => {
+    let fillColor: string;
+    let lineColor: string;
+
+    switch (colorMode) {
+      case BigValueColorMode.Background:
+      case BigValueColorMode.BackgroundSolid:
+        fillColor = 'rgba(255,255,255,0.4)';
+        lineColor = tinycolor(valueColor).brighten(40).toRgbString();
+        break;
+      case BigValueColorMode.None:
+      case BigValueColorMode.Value:
+      default:
+        lineColor = valueColor;
+        fillColor = tinycolor(valueColor).setAlpha(0.2).toRgbString();
+        break;
+    }
+
+    // The graph field configuration applied to Y values.
+    return {
+      custom: {
+        drawStyle: GraphDrawStyle.Line,
+        lineWidth: 1,
+        fillColor,
+        lineColor,
+      },
+    };
+  },
+  { maxSize: 25 }
+);
 
 class WideNoChartLayout extends BigValueLayout {
   constructor(props: Props) {

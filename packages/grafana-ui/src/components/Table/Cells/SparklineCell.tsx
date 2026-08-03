@@ -43,8 +43,28 @@ export const defaultSparklineCellConfig: TableSparklineCellOptions = {
 
 export const SparklineCell = (props: TableCellProps) => {
   const { field, innerWidth, tableStyles, cell, cellProps, timeRange } = props;
-  const sparkline = getSparkline(cell.value);
+  const preparedSparkline = React.useMemo(() => {
+    const valueSparkline = getSparkline(cell.value);
+    return valueSparkline ? prepareSparklineForRender(valueSparkline) : undefined;
+  }, [cell.value]);
+  const sparkline = React.useMemo(
+    () => (preparedSparkline ? { ...preparedSparkline, timeRange } : undefined),
+    [preparedSparkline, timeRange]
+  );
   const theme = useTheme2();
+
+  const cellOptions = React.useMemo(() => getTableSparklineCellOptions(field), [field]);
+
+  const config: FieldConfig<GraphFieldConfig> = React.useMemo(
+    () => ({
+      color: field.config.color,
+      custom: {
+        ...defaultSparklineCellConfig,
+        ...cellOptions,
+      },
+    }),
+    [cellOptions, field.config.color]
+  );
 
   if (!sparkline) {
     return (
@@ -53,36 +73,6 @@ export const SparklineCell = (props: TableCellProps) => {
       </div>
     );
   }
-
-  // Get the step from the first two values to null-fill the x-axis based on timerange
-  if (sparkline.x && !sparkline.x.config.interval && sparkline.x.values.length > 1) {
-    sparkline.x.config.interval = sparkline.x.values[1] - sparkline.x.values[0];
-  }
-
-  // Remove non-finite values, e.g: NaN, +/-Infinity
-  sparkline.y.values = sparkline.y.values.map((v) => {
-    if (!Number.isFinite(v)) {
-      return null;
-    } else {
-      return v;
-    }
-  });
-
-  const range = getMinMaxAndDelta(sparkline.y);
-  sparkline.y.config.min = range.min;
-  sparkline.y.config.max = range.max;
-  sparkline.y.state = { range };
-  sparkline.timeRange = timeRange;
-
-  const cellOptions = getTableSparklineCellOptions(field);
-
-  const config: FieldConfig<GraphFieldConfig> = {
-    color: field.config.color,
-    custom: {
-      ...defaultSparklineCellConfig,
-      ...cellOptions,
-    },
-  };
 
   const hideValue = field.config.custom?.cellOptions?.hideValue;
   let valueWidth = 0;
@@ -144,6 +134,36 @@ function getSparkline(value: unknown): FieldSparkline | undefined {
   }
 
   return;
+}
+
+function prepareSparklineForRender(sparkline: FieldSparkline): FieldSparkline {
+  const x = sparkline.x
+    ? {
+        ...sparkline.x,
+        config: { ...sparkline.x.config },
+      }
+    : undefined;
+  const y = {
+    ...sparkline.y,
+    config: { ...sparkline.y.config },
+    values: sparkline.y.values.map((v) => (Number.isFinite(v) ? v : null)),
+  };
+
+  // Get the step from the first two values to null-fill the x-axis based on timerange.
+  if (x && !x.config.interval && x.values.length > 1) {
+    x.config.interval = x.values[1] - x.values[0];
+  }
+
+  const range = getMinMaxAndDelta(y);
+  y.config.min = range.min;
+  y.config.max = range.max;
+  y.state = { range };
+
+  return {
+    ...sparkline,
+    x,
+    y,
+  };
 }
 
 function getTableSparklineCellOptions(field: Field): TableSparklineCellOptions {
