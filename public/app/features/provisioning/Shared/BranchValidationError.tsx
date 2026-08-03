@@ -17,7 +17,8 @@ export function BranchValidationError() {
         </li>
         <li>
           <Trans i18nKey="dashboard-scene.branch-validation-error.cannot-contain-invalid-characters">
-            It cannot contain invalid characters: &apos;~&apos;, &apos;^&apos;, &apos;:&apos;, &apos;?&apos;, &apos;*&apos;, &apos;[&apos;, &apos;\\&apos;, or &apos;]&apos;.
+            It cannot contain invalid characters: &apos;~&apos;, &apos;^&apos;, &apos;:&apos;, &apos;?&apos;,
+            &apos;*&apos;, &apos;[&apos;, &apos;\\&apos;, or &apos;]&apos;.
           </Trans>
         </li>
         <li>
