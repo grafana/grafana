@@ -951,6 +951,10 @@ func (lk8s *libraryElementsK8sHandler) resolveFolderTitles(c *contextmodel.ReqCo
 		if _, found := folderTitles[folderUID]; found {
 			continue
 		}
+		if folderUID == ac.GeneralFolderUID {
+			folderTitles[folderUID] = dashboards.RootFolderName
+			continue
+		}
 		title := ""
 		if folder, err := lk8s.folderService.Get(c.Req.Context(), &foldermodel.GetFolderQuery{
 			OrgID:        c.OrgID,
