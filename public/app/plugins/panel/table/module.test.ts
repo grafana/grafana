@@ -1,11 +1,31 @@
-import { createDataFrame, FieldType, getPanelDataSummary, PanelPlugin, standardEditorsRegistry } from '@grafana/data';
+import {
+  createDataFrame,
+  FieldType,
+  getPanelDataSummary,
+  PanelOptionsEditorBuilder,
+  PanelPlugin,
+  standardEditorsRegistry,
+} from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
 
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { plugin } from './module';
+import { type Options } from './panelcfg.gen';
 import { tableSuggestionsSupplier } from './suggestions';
+
+let mockRowsAsFieldsFlag = false;
+
+jest.mock('@grafana/runtime/internal', () => {
+  const actual = jest.requireActual('@grafana/runtime/internal');
+  return {
+    ...actual,
+    getFeatureFlagClient: () => ({
+      getBooleanValue: (key: string) => (key === actual.FlagKeys.TableRowsAsFields ? mockRowsAsFieldsFlag : false),
+    }),
+  };
+});
 
 // building the plugin's fieldConfigRegistry runs the table useCustomConfig path,
 // which resolves the 'stats-picker' standard editor; initialise the registry so
@@ -97,6 +117,41 @@ describe('table module', () => {
 
     it('is shown once a tooltip field is chosen', () => {
       expect(showIf('metric')).toBe(true);
+    });
+  });
+
+  describe('rows-as-fields option gating', () => {
+    const buildPanelItems = () => {
+      const builder = new PanelOptionsEditorBuilder<Options>();
+      plugin.getPanelOptionsSupplier()(builder, { data: [] });
+      return builder.getItems();
+    };
+
+    afterEach(() => {
+      mockRowsAsFieldsFlag = false;
+    });
+
+    it('gates the "Rows as fields" switch behind the feature toggle', () => {
+      const rowsAsFields = buildPanelItems().find((item) => item.path === 'rowsAsFields');
+      expect(rowsAsFields).toBeDefined();
+
+      mockRowsAsFieldsFlag = false;
+      expect(rowsAsFields?.showIf?.({} as Options, undefined)).toBe(false);
+
+      mockRowsAsFieldsFlag = true;
+      expect(rowsAsFields?.showIf?.({} as Options, undefined)).toBe(true);
+    });
+
+    it('hides the frozen-columns and show-header options when rows-as-fields is enabled', () => {
+      const items = buildPanelItems();
+      const frozenColumns = items.find((item) => item.path === 'frozenColumns.left');
+      const showHeader = items.find((item) => item.path === 'showHeader');
+
+      expect(frozenColumns?.showIf?.({ rowsAsFields: false } as Options, undefined)).toBe(true);
+      expect(frozenColumns?.showIf?.({ rowsAsFields: true } as Options, undefined)).toBe(false);
+
+      expect(showHeader?.showIf?.({ rowsAsFields: false } as Options, undefined)).toBe(true);
+      expect(showHeader?.showIf?.({ rowsAsFields: true } as Options, undefined)).toBe(false);
     });
   });
 });

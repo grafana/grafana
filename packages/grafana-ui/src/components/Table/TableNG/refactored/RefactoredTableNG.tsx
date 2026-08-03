@@ -10,6 +10,7 @@ import { type TableNGProps } from '../types';
 
 import { TableFlat } from './TableFlat';
 import { TableNested } from './TableNested';
+import { TableRowsAsFields } from './TableRowsAsFields';
 
 // Safari 26 shipped with a bug that prevents the table from rendering correctly
 // unless it is wrapped in a container with `contain: strict`.
@@ -26,6 +27,8 @@ export function RefactoredTableNG(props: TableNGProps) {
 
   const inner = nestedDataField ? (
     <TableNested {...props} nestedFramesField={nestedDataField} />
+  ) : props.rowsAsFields ? (
+    <TableRowsAsFields {...props} />
   ) : (
     <TableFlat {...props} />
   );
