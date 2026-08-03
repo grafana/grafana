@@ -340,3 +340,24 @@ const logger = createMonitoringLogger('features.my-area');
 import { getLogger } from '@grafana/runtime/unstable';
 const logger = getLogger('features.my-area');
 ```
+
+### `prefer-use-styles2`
+
+Prefer `useStyles2` over calling a `get*Styles` creator directly with a `useTheme2()` theme.
+
+`useStyles2` memoizes the style creator's result (via `micro-memoize`, keyed by argument identity), so identical components reuse the computed class names instead of re-running Emotion's `css()` — serializing and hashing every rule — on each render. Calling a style creator directly with the theme from `useTheme2()` skips that cache and re-serializes on every render.
+
+The rule reports when the result is used as per-render classes (assigned to a variable, or composed via `cx`). It intentionally ignores creators whose result flows into `<Global styles={[...]}>`, which are one-time global stylesheets.
+
+Known limitation: the rule can't see whether a given creator is already memoized (e.g. `stylesFactory`-wrapped and called with only a stable `theme` argument), so a few such perf-neutral calls may be flagged. Routing them through `useStyles2` is still the consistent pattern; otherwise disable per line.
+
+#### Examples
+
+```tsx
+// Bad ❌ — re-serializes styles on every render
+const theme = useTheme2();
+const styles = getButtonStyles({ theme, size, variant });
+
+// Good ✅ — memoized by useStyles2 (creator takes positional args: getButtonStyles(theme, size, variant))
+const styles = useStyles2(getButtonStyles, size, variant);
+```
