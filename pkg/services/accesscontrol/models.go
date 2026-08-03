@@ -561,7 +561,7 @@ const (
 	ActionLibraryPanelsWrite  = "library.panels:write"
 	ActionLibraryPanelsDelete = "library.panels:delete"
 
-	// Variable actions (dashboard.grafana.app/variables — org-wide and folder-scoped)
+	// Variable actions (dashboard.grafana.app/variables — stack-wide and folder-scoped)
 	ActionVariablesCreate = "variables:create"
 	ActionVariablesRead   = "variables:read"
 	ActionVariablesWrite  = "variables:write"

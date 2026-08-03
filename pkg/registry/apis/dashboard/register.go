@@ -392,11 +392,12 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		case admission.Connect:
 			return nil
 		}
-	// Reachability invariant: this case only fires when the apiserver routes
-	// a request to the v2beta1 Notebook storage, which is registered in
-	// UpdateAPIGroupInfo behind FlagDashboardNotebooks. Without the flag the
-	// apiserver has no route and admission never dispatches here. Create/Update
-	// enforce the notebook-only layout; delete/connect need no validation.
+	// Reachability invariant: notebook storage is always registered, but
+	// FlagDashboardNotebooks is gated per request in GetAuthorizer. When the
+	// feature is disabled the authorizer denies the request (403) before
+	// admission runs, so this case only fires when notebooks are enabled.
+	// Create/Update enforce the notebook-only layout; delete/connect need no
+	// validation.
 	case dashv2beta1.NotebookResourceInfo.GroupVersionResource().Resource:
 		switch op {
 		case admission.Create, admission.Update:
@@ -673,7 +674,7 @@ func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a adm
 		return apierrors.NewBadRequest("folder scope cannot be changed; delete the variable and create a new one")
 	}
 
-	// allowMissingFolder: users with org-wide (root) variable write can still update
+	// allowMissingFolder: users with stack-wide (root) variable write can still update
 	// variables whose folder was deleted.
 	return b.validateVariableMutationPermissions(ctx, oldAccessor.GetFolder(), ActionVariablesWrite, true)
 }
@@ -693,7 +694,7 @@ func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a adm
 		return fmt.Errorf("error getting variable meta accessor: %w", err)
 	}
 
-	// allowMissingFolder: users with org-wide (root) variable delete can still delete
+	// allowMissingFolder: users with stack-wide (root) variable delete can still delete
 	// variables whose folder was deleted.
 	return b.validateVariableMutationPermissions(ctx, accessor.GetFolder(), ActionVariablesDelete, true)
 }
@@ -701,8 +702,8 @@ func (b *DashboardsAPIBuilder) validateVariableDelete(ctx context.Context, a adm
 // validateVariableMutationPermissions authorizes variable create/update/delete via
 // variables:* RBAC actions scoped to the target folder (general/root when empty).
 // When allowMissingFolder is true (update/delete) and the folder no longer exists,
-// users who have the action on any scope (e.g. root general.writer / Admin writer)
-// may still mutate so orphaned variables can be cleaned up.
+// users who have the action at stack-wide/root scope (folders:uid:general, or
+// folders:* which matches it) may still mutate so orphaned variables can be cleaned up.
 func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.Context, folderUID string, action string, allowMissingFolder bool) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -723,10 +724,15 @@ func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.C
 	}
 
 	if allowMissingFolder && folderUID != "" {
-		if _, ferr := b.validateFolderExists(ctx, folderUID, requester.GetOrgID()); apierrors.IsNotFound(ferr) {
-			// Folder gone: allow cleanup if the user has the action on any scope
-			// (Editor root writer or Admin all-folders writer).
-			ok, err = b.accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(action))
+		if _, ferr := b.validateFolderExists(ctx, folderUID, requester.GetOrgID()); ferr != nil {
+			if !apierrors.IsNotFound(ferr) {
+				// Transient / infra failures must not be reported as access denied.
+				return ferr
+			}
+			// Folder gone: allow cleanup only for stack-wide/root writers.
+			// Unscoped EvalPermission(action) would let any folder-scoped writer
+			// mutate orphans from a different deleted folder.
+			ok, err = b.accessControl.Evaluate(ctx, requester, accesscontrol.EvalPermission(action, variableFolderScope("")))
 			if err != nil {
 				return err
 			}
@@ -1009,20 +1015,20 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		storage[dashv2beta1.VariableResourceInfo.StoragePath()] = gvStore
 	}
 
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if b.features.IsEnabledGlobally(featuremgmt.FlagDashboardNotebooks) {
-		opts.StorageOptsRegister(dashv2beta1.NotebookResourceInfo.GroupResource(), apistore.StorageOptions{
-			EnableFolderSupport: true,
-		})
+	// Notebook storage is always registered so FlagDashboardNotebooks can be
+	// evaluated per request (and targeted per tenant) via OpenFeature in the
+	// authorizer, without requiring a restart. See GetAuthorizer.
+	opts.StorageOptsRegister(dashv2beta1.NotebookResourceInfo.GroupResource(), apistore.StorageOptions{
+		EnableFolderSupport: true,
+	})
 
-		nbStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.NotebookResourceInfo, opts.OptsGetter)
-		if err != nil {
-			return err
-		}
-
-		notebookStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
-		notebookStorage[dashv2beta1.NotebookResourceInfo.StoragePath()] = nbStore
+	nbStore, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.NotebookResourceInfo, opts.OptsGetter)
+	if err != nil {
+		return err
 	}
+
+	notebookStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
+	notebookStorage[dashv2beta1.NotebookResourceInfo.StoragePath()] = nbStore
 
 	return nil
 }
@@ -1436,20 +1442,23 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 }
 
 func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
-	if gv.Version != dashv0.VERSION {
-		return nil // Only show the custom routes for v0
+	routes := &builder.APIRoutes{}
+
+	if gv.Version == dashv0.VERSION {
+		defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
+		legacySearchRoutes := b.search.GetAPIRoutes(defs)
+		snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotOptions, b.accessControl, defs,
+			func() rest.Storage {
+				return b.snapshotStorage
+			}, b.dashboardService)
+		routes.Namespace = append(routes.Namespace, legacySearchRoutes.Namespace...)
+		routes.Namespace = append(routes.Namespace, snapshotAPIRoutes.Namespace...)
 	}
 
-	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
-	searchAPIRoutes := b.search.GetAPIRoutes(defs)
-	snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotOptions, b.accessControl, defs,
-		func() rest.Storage {
-			return b.snapshotStorage
-		}, b.dashboardService)
-
-	return &builder.APIRoutes{
-		Namespace: append(searchAPIRoutes.Namespace, snapshotAPIRoutes.Namespace...),
+	if len(routes.Namespace) == 0 {
+		return nil
 	}
+	return routes
 }
 
 // GetPolicyRuleEvaluator defines the rules for logging auditing events from the API server.
@@ -1458,20 +1467,27 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 }
 
 // GetAuthorizer returns a composite authorizer that dispatches by resource type.
-// Snapshots use RBAC-based authorization; other resources fall back to ServiceAuthorizer.
+// Notebooks, snapshots, and variables use dedicated authorizers; other resources
+// fall back to ServiceAuthorizer.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
 	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
 	variableAuthorizer := NewVariableAuthorizer(b.accessControl)
-	variableResource := dashv2beta1.VariableResourceInfo.GroupVersionResource().Resource
+	// Notebooks defer to the service authorizer when the feature is enabled, so
+	// the notebook authorizer wraps that same instance as its fallback.
+	notebookAuthorizer := newNotebookAuthorizer(serviceAuthorizer)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-			if attr.IsResourceRequest() && attr.GetResource() == dashv0.SNAPSHOT_RESOURCE {
-				return snapshotAuthorizer.Authorize(ctx, attr)
-			}
-			if attr.IsResourceRequest() && attr.GetResource() == variableResource {
-				return variableAuthorizer.Authorize(ctx, attr)
+			if attr.IsResourceRequest() {
+				switch attr.GetResource() {
+				case dashv2beta1.NotebookResourceInfo.GetName():
+					return notebookAuthorizer.Authorize(ctx, attr)
+				case dashv0.SnapshotResourceInfo.GetName():
+					return snapshotAuthorizer.Authorize(ctx, attr)
+				case dashv2beta1.VariableResourceInfo.GetName():
+					return variableAuthorizer.Authorize(ctx, attr)
+				}
 			}
 			return serviceAuthorizer.Authorize(ctx, attr)
 		})

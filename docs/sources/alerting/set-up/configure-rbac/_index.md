@@ -169,12 +169,14 @@ Permissions for managing alerting resources via the provisioning API.
 
 ### Alert enrichments
 
-Permissions for managing alert enrichments.
+Permissions for managing [alert enrichment](https://grafana.com/docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/alert-enrichment/) in Grafana Cloud.
 
 | Action                    | Applicable scope | Description                                                                             |
 | ------------------------- | ---------------- | --------------------------------------------------------------------------------------- |
 | `alert.enrichments:read`  | n/a              | Read alert enrichment configurations in the current organization.                       |
 | `alert.enrichments:write` | n/a              | Create, update, and delete alert enrichment configurations in the current organization. |
+
+These permissions apply to per-rule enrichments, configured on the **Alert enrichment** tab of an individual alert rule. Managing global enrichments from **Alerting** > **Settings** requires the **Admin** basic role and isn't granted by the `alert.enrichments` permissions or the Enrichments fixed roles.
 
 To help plan your RBAC rollout strategy, refer to [Plan your RBAC rollout strategy](https://grafana.com/docs/grafana/next/administration/roles-and-permissions/access-control/plan-rbac-rollout-strategy/).
 

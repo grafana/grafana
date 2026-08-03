@@ -1,10 +1,13 @@
 import { config } from '@grafana/runtime';
 import { type Variable, type VariableSpec } from 'app/api/clients/dashboard/v2beta1';
+import { contextSrv } from 'app/core/services/context_srv';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 
 import {
   buildVariableResource,
   buildVariablesTree,
+  canManageGlobalVariables,
+  canManageVariableScope,
   getNextAvailableVariableName,
   getVariableEditableType,
   getVariableFolderPickerExcludeUIDs,
@@ -70,6 +73,46 @@ describe('getVariableFolderPickerExcludeUIDs', () => {
   it('returns undefined when Shared with me is not configured', () => {
     config.sharedWithMeFolderUID = undefined;
     expect(getVariableFolderPickerExcludeUIDs()).toBeUndefined();
+  });
+});
+
+describe('canManageGlobalVariables', () => {
+  const originalHasRole = contextSrv.hasRole;
+
+  afterEach(() => {
+    contextSrv.hasRole = originalHasRole;
+  });
+
+  it('returns true for org Admins', () => {
+    contextSrv.hasRole = jest.fn((role: string) => role === 'Admin');
+    expect(canManageGlobalVariables()).toBe(true);
+  });
+
+  it('returns false for Editors without Admin', () => {
+    contextSrv.hasRole = jest.fn((role: string) => role === 'Editor');
+    expect(canManageGlobalVariables()).toBe(false);
+  });
+
+  it('returns false for non-admins', () => {
+    contextSrv.hasRole = jest.fn(() => false);
+    expect(canManageGlobalVariables()).toBe(false);
+  });
+});
+
+describe('canManageVariableScope', () => {
+  it('returns false when no folder is selected', () => {
+    expect(canManageVariableScope(undefined, undefined, false)).toBe(false);
+  });
+
+  it('requires allowGlobal for the root/global scope', () => {
+    expect(canManageVariableScope('', undefined, false)).toBe(false);
+    expect(canManageVariableScope('', undefined, true)).toBe(true);
+  });
+
+  it('requires folder CanEdit for folder-scoped variables', () => {
+    expect(canManageVariableScope('folder-a', false, false)).toBe(false);
+    expect(canManageVariableScope('folder-a', undefined, true)).toBe(false);
+    expect(canManageVariableScope('folder-a', true, false)).toBe(true);
   });
 });
 

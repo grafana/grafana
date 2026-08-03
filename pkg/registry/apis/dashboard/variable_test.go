@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -263,7 +264,7 @@ func TestDashboardsAPIBuilderValidateVariableUpdateRenameRejected(t *testing.T) 
 	require.Contains(t, err.Error(), "spec.spec.name cannot be changed")
 }
 
-func TestVariableMutationPermissionsOrgWide(t *testing.T) {
+func TestVariableMutationPermissionsStackWide(t *testing.T) {
 	ac := acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 	builder := &DashboardsAPIBuilder{accessControl: ac}
 	oldVariable := newCustomVariable("region", "region")
@@ -437,6 +438,8 @@ func TestVariableMutationPermissionsMissingFolder(t *testing.T) {
 	newVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
 	generalScope := folder.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID)
 
+	otherFolderScope := folder.ScopeFoldersProvider.GetResourceScopeUID("other-folder")
+
 	tests := []struct {
 		name     string
 		perms    map[string][]string
@@ -445,6 +448,8 @@ func TestVariableMutationPermissionsMissingFolder(t *testing.T) {
 	}{
 		{name: "root delete grant can delete orphaned folder variable", perms: map[string][]string{ActionVariablesDelete: {generalScope}}, op: admission.Delete, expected: true},
 		{name: "all-folders write can update orphaned folder variable", perms: map[string][]string{ActionVariablesWrite: {folder.ScopeFoldersAll}}, op: admission.Update, expected: true},
+		{name: "other-folder write cannot update orphaned folder variable", perms: map[string][]string{ActionVariablesWrite: {otherFolderScope}}, op: admission.Update, expected: false},
+		{name: "other-folder delete cannot delete orphaned folder variable", perms: map[string][]string{ActionVariablesDelete: {otherFolderScope}}, op: admission.Delete, expected: false},
 		{name: "read-only cannot delete orphaned folder variable", perms: map[string][]string{ActionVariablesRead: {generalScope}}, op: admission.Delete, expected: false},
 		{name: "root create cannot create into missing folder", perms: map[string][]string{ActionVariablesCreate: {generalScope}}, op: admission.Create, expected: false},
 	}
@@ -476,6 +481,35 @@ func TestVariableMutationPermissionsMissingFolder(t *testing.T) {
 			require.True(t, apierrors.IsNotFound(err) || apierrors.IsForbidden(err))
 		})
 	}
+}
+
+func TestVariableMutationPermissionsFolderLookupError(t *testing.T) {
+	folderUID := "folder-a"
+	oldVariable := newCustomVariable("region", "region--folder-a")
+	oldVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+	newVariable := newCustomVariable("region", "region--folder-a")
+	newVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+
+	lookupErr := errors.New("folder lookup timed out")
+	builder := &DashboardsAPIBuilder{
+		accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		folderClientProvider: &staticHandlerProvider{
+			handler: &variableFolderAccessHandler{getError: lookupErr},
+		},
+	}
+
+	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
+		OrgID: 1,
+		// No folder-scoped grant so Evaluate fails and allowMissingFolder path runs.
+		Permissions: map[int64]map[string][]string{
+			1: {ActionVariablesWrite: {folder.ScopeFoldersProvider.GetResourceScopeUID("other-folder")}},
+		},
+	})
+
+	err := builder.Validate(ctx, buildVariableAttributesForOp(admission.Update, newVariable, oldVariable), nil)
+	require.ErrorIs(t, err, lookupErr)
+	require.False(t, apierrors.IsForbidden(err))
 }
 
 func newCustomVariable(variableName, metadataName string) *dashv2beta1.Variable {
@@ -589,6 +623,7 @@ type variableFolderAccessHandler struct {
 	accessSubresourceChecked   bool
 	forbiddenAccessSubresource bool
 	notFoundAccessSubresource  bool
+	getError                   error
 }
 
 func (h *variableFolderAccessHandler) Get(_ context.Context, name string, _ int64, _ metav1.GetOptions, subresource ...string) (*unstructured.Unstructured, error) {
@@ -606,6 +641,10 @@ func (h *variableFolderAccessHandler) Get(_ context.Context, name string, _ int6
 				"canEdit": true,
 			},
 		}, nil
+	}
+
+	if h.getError != nil {
+		return nil, h.getError
 	}
 
 	if h.notFoundAccessSubresource {

@@ -11,9 +11,12 @@ import (
 )
 
 // NewVariableAuthorizer maps k8s verbs on dashboard.grafana.app/variables to
-// variables:* RBAC actions. Create uses a coarse (any-scope) check; admission
-// enforces the target folder scope. Get/update/delete evaluate against
-// variables:uid:<name>, which the scope resolver expands to folder scopes.
+// variables:* RBAC actions.
+//
+// Create/update/delete/list/watch use a coarse (any-scope) check; admission
+// enforces the target folder scope and allowMissingFolder orphan cleanup.
+// Get evaluates against variables:uid:<name>, which the scope resolver expands
+// to folder scopes.
 func NewVariableAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -42,12 +45,14 @@ func NewVariableAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer
 
 			var eval ac.Evaluator
 			verb := attr.GetVerb()
-			if verb == "create" || verb == "list" || verb == "watch" || attr.GetName() == "" {
-				// Coarse check: user must have the action on some scope.
-				// Create folder precision is enforced in admission.
-				eval = ac.EvalPermission(action)
-			} else {
+			// Named get stays scoped. Mutations must stay coarse: a scoped check
+			// resolves variables:uid:<name> via the parent folder, and when that
+			// folder is gone the resolver fails before admission's
+			// allowMissingFolder orphan-cleanup path can run.
+			if verb == "get" && attr.GetName() != "" {
 				eval = ac.EvalPermission(action, ScopeVariablesProvider.GetResourceScopeUID(attr.GetName()))
+			} else {
+				eval = ac.EvalPermission(action)
 			}
 
 			ok, err := accessControl.Evaluate(ctx, user, eval)
@@ -62,7 +67,7 @@ func NewVariableAuthorizer(accessControl ac.AccessControl) authorizer.Authorizer
 }
 
 // variableFolderScope returns the folders:uid scope used for variable mutation
-// checks. Empty folder UID (org-wide/root) maps to the general folder.
+// checks. Empty folder UID (stack-wide/root) maps to the general folder.
 func variableFolderScope(folderUID string) string {
 	if folderUID == "" {
 		folderUID = ac.GeneralFolderUID

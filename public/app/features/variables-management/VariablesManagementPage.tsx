@@ -22,12 +22,19 @@ import {
   bulkDeleteVariables,
   bulkMoveVariables,
   type BulkOperationResult,
+  useFolderCanEdit,
   useFolderTitles,
   useListAllVariablesQuery,
 } from './api';
 import { MoveVariablesModal } from './components/MoveVariablesModal';
 import { VariablesTable } from './components/VariablesTable';
-import { buildVariablesTree, getVariableFolderUid, getVariableSpecName } from './utils';
+import {
+  buildVariablesTree,
+  canManageGlobalVariables,
+  canManageVariableScope,
+  getVariableFolderUid,
+  getVariableSpecName,
+} from './utils';
 
 const LIST_URL = '/dashboards/variables';
 
@@ -65,6 +72,24 @@ export default function VariablesManagementPage() {
   const tree = useMemo(() => buildVariablesTree(variables, folderTitles), [variables, folderTitles]);
 
   const selectedVariables = variables.filter((v) => v.metadata.name && selected.has(v.metadata.name));
+  const allowGlobalScope = canManageGlobalVariables();
+  const selectedFolderUids = useMemo(
+    () => [...new Set(selectedVariables.map(getVariableFolderUid).filter((uid): uid is string => Boolean(uid)))].sort(),
+    [selectedVariables]
+  );
+  const folderCanEdit = useFolderCanEdit(selectedFolderUids);
+  // Disable Move/Delete when any selected variable is outside scopes the user can manage
+  // (global without Admin, or a folder without CanEdit). Reuses the same folder-access map.
+  const canMutateSelection =
+    selectedVariables.length > 0 &&
+    selectedVariables.every((variable) => {
+      const folderUid = getVariableFolderUid(variable);
+      return canManageVariableScope(
+        folderUid ?? '',
+        folderUid ? folderCanEdit[folderUid] : undefined,
+        allowGlobalScope
+      );
+    });
 
   const canCreate = contextSrv.hasPermission(AccessControlAction.VariablesCreate);
   const canWrite = contextSrv.hasPermission(AccessControlAction.VariablesWrite);
@@ -264,12 +289,20 @@ export default function VariablesManagementPage() {
                   })}
                 </Text>
                 {canWrite && (
-                  <Button variant="secondary" onClick={() => setPendingAction('move')} disabled={isProcessing}>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setPendingAction('move')}
+                    disabled={isProcessing || !canMutateSelection}
+                  >
                     <Trans i18nKey="variables-management.page.move">Move</Trans>
                   </Button>
                 )}
                 {canDelete && (
-                  <Button variant="destructive" onClick={() => setPendingAction('delete')} disabled={isProcessing}>
+                  <Button
+                    variant="destructive"
+                    onClick={() => setPendingAction('delete')}
+                    disabled={isProcessing || !canMutateSelection}
+                  >
                     <Trans i18nKey="variables-management.page.delete">Delete</Trans>
                   </Button>
                 )}

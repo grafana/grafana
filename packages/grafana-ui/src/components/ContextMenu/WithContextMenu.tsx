@@ -5,7 +5,9 @@ import { ContextMenu } from '../ContextMenu/ContextMenu';
 
 /**
  * Anything we can resolve into a viewport `{ x, y }` position for the context menu:
- *   - A React or native pointer event → use `pageX`/`pageY` (legacy, click-driven path)
+ *   - A React or native pointer event → use `pageX`/`pageY` (legacy, click-driven path);
+ *                                       keyboard-synthesized clicks (`detail` 0) anchor
+ *                                       to the event's `currentTarget` element instead
  *   - A DOM/SVG element              → use the element's bounding-rect center
  *                                      (keyboard-driven path: trigger.focus()+Enter)
  *   - An explicit `{ x, y }` literal → use it directly
@@ -41,6 +43,13 @@ function resolveTriggerPosition(trigger: OpenMenuTrigger): { x: number; y: numbe
 
   // trigger: MouseEvent
   if ('pageX' in trigger && 'pageY' in trigger) {
+    // Keyboard or assistive-tech activation of a native control dispatches a
+    // click without a pointer position (`detail` is 0 and the coordinates sit
+    // at the viewport origin), so anchor to the element that fired the event
+    // instead of placing the menu in the top-left corner.
+    if (trigger.detail === 0 && trigger.currentTarget instanceof Element) {
+      return resolveTriggerPosition(trigger.currentTarget);
+    }
     return { x: trigger.pageX, y: trigger.pageY - window.scrollY };
   }
 

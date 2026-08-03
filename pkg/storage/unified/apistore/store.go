@@ -261,6 +261,15 @@ func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.
 	return obj, err
 }
 
+// cleanupSecretsAfterFailedPreparation deletes inline secrets a failed preparation created, but only
+// when cleanupSafe reports the write definitely did not persist; otherwise they may be referenced.
+func (s *Storage) cleanupSecretsAfterFailedPreparation(ctx context.Context, v objectForStorage, cleanupSafe bool, err error) error {
+	if err != nil && cleanupSafe {
+		return v.finish(ctx, err, s.opts.SecureValues)
+	}
+	return err
+}
+
 // Create adds a new object at a key unless it already exists. 'ttl' is time-to-live
 // in seconds (0 means forever). If no error is returned and out is not nil, out will be
 // set to the read value from database.
@@ -289,7 +298,9 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 
 	v, err := s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
-		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_ADDED, key, obj, out)
+		// Re-route managed resources; clean up any secrets preparation created if the write failed.
+		cleanupSafe, err := s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_ADDED, key, obj, out)
+		return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
 	}
 	req := &resourcepb.CreateRequest{
 		Value: v.raw.Bytes(),
@@ -298,7 +309,8 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 
 	v.permissionCreator, err = afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, obj, s.opts.Permissions)
 	if err != nil {
-		return err
+		// Nothing has been written yet, so clean up any inline secrets preparation created.
+		return v.finish(ctx, err, s.opts.SecureValues)
 	}
 
 	rsp, err := s.store.Create(ctx, req)
@@ -356,58 +368,71 @@ func (s *Storage) Delete(
 		return errors.New("missing auth info")
 	}
 
-	if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
-		return err
-	}
-
+	// The delete is conditional on the resource version read here, so a
+	// concurrent write (e.g. a controller status update) between the read and
+	// the delete produces a conflict. Callers of an unconditional delete never
+	// supplied that resource version, so re-read and retry rather than
+	// surfacing the conflict; explicit preconditions are re-checked against
+	// the fresh read each attempt. This mirrors the upstream etcd3
+	// conditionalDelete retry loop.
 	k, err := s.getKey(key)
 	if err != nil {
-		return err
+		return storage.NewKeyNotFoundError(key, 0)
 	}
-	cmd := &resourcepb.DeleteRequest{Key: k}
 
-	if preconditions != nil {
-		if err := preconditions.Check(key, out); err != nil {
+	for attempt := 1; attempt <= MaxUpdateAttempts; attempt++ {
+		if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
 			return err
 		}
-		if preconditions.UID != nil {
-			cmd.Uid = string(*preconditions.UID)
-		}
-	}
 
-	if validateDeletion != nil {
-		if err := validateDeletion(ctx, out); err != nil {
+		cmd := &resourcepb.DeleteRequest{Key: k}
+
+		if preconditions != nil {
+			if err := preconditions.Check(key, out); err != nil {
+				return err
+			}
+			if preconditions.UID != nil {
+				cmd.Uid = string(*preconditions.UID)
+			}
+		}
+
+		if validateDeletion != nil {
+			if err := validateDeletion(ctx, out); err != nil {
+				return err
+			}
+		}
+
+		meta, err := utils.MetaAccessor(out)
+		if err != nil {
+			return fmt.Errorf("unable to read object %w", err)
+		}
+		if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
+			_, err = s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
 			return err
 		}
+
+		cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
+		if err != nil {
+			return resource.GetError(resource.AsErrorResult(err))
+		}
+		rsp, err := s.store.Delete(ctx, cmd)
+		if err != nil {
+			return resource.GetError(resource.AsErrorResult(err))
+		}
+		if rsp.Error != nil {
+			if rsp.Error.Code == http.StatusConflict && attempt < MaxUpdateAttempts {
+				continue
+			}
+			return resource.GetError(rsp.Error)
+		}
+
+		if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
+			logging.FromContext(ctx).Warn("failed to delete inline secure values", "err", err)
+		}
+
+		return s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion))
 	}
 
-	meta, err := utils.MetaAccessor(out)
-	if err != nil {
-		return fmt.Errorf("unable to read object %w", err)
-	}
-	if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
-		return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
-	}
-
-	cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
-	if err != nil {
-		return resource.GetError(resource.AsErrorResult(err))
-	}
-	rsp, err := s.store.Delete(ctx, cmd)
-	if err != nil {
-		return resource.GetError(resource.AsErrorResult(err))
-	}
-	if rsp.Error != nil {
-		return resource.GetError(rsp.Error)
-	}
-
-	if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
-		logging.FromContext(ctx).Warn("failed to delete inline secure values", "err", err)
-	}
-
-	if err := s.versioner.UpdateObject(out, uint64(rsp.ResourceVersion)); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -706,6 +731,17 @@ func (s *Storage) GuaranteedUpdate(
 				}
 				continue
 			}
+
+			// A write that carries a resourceVersion is a conditional (optimistic
+			// concurrency) update, not a create. Reaching here means the object was
+			// deleted between the caller's read and this write, so the precondition can
+			// never hold. Report a Conflict so the caller re-reads and retries, rather
+			// than resurrecting the object or failing downstream with the opaque
+			// "resourceVersion should not be set on objects to be created" create error.
+			// Unconditional writes (no resourceVersion) still upsert as before.
+			if m, merr := utils.MetaAccessor(updatedObj); merr == nil && m.GetResourceVersion() != "" {
+				return apierrors.NewConflict(s.gr, req.Key.Name, errors.New("the object was deleted"))
+			}
 			return s.Create(ctx, key, updatedObj, destination, 0)
 		}
 
@@ -738,7 +774,9 @@ func (s *Storage) GuaranteedUpdate(
 
 		v, err := s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
 		if err != nil {
-			return s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
+			// Re-route managed resources; clean up any secrets preparation created if the write failed.
+			cleanupSafe, err := s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_MODIFIED, key, updatedObj, destination)
+			return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
 		}
 
 		req.Value = v.raw.Bytes()
