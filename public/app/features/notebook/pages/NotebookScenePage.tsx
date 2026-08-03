@@ -136,13 +136,20 @@ function NotebookControls({ controls, uid, title }: { controls: DashboardControl
     if (!uid) {
       return;
     }
-    // Fetch fresh: the scene envelope does not retain the raw notebook spec.
-    const notebook = await fetchNotebook(uid);
-    const created = await duplicateNotebook(
-      notebook.spec,
-      t('notebooks.list.copy-title', '{{title}} (copy)', { title: notebook.spec.title })
-    );
-    locationService.push(notebookEditUrl(created.metadata.name));
+    try {
+      // Fetch fresh: the scene envelope does not retain the raw notebook spec.
+      const notebook = await fetchNotebook(uid);
+      const created = await duplicateNotebook(
+        notebook.spec,
+        t('notebooks.list.copy-title', '{{title}} (copy)', { title: notebook.spec.title })
+      );
+      locationService.push(notebookEditUrl(created.metadata.name));
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, [
+        t('notebooks.list.duplicate-failed', 'Failed to duplicate notebook'),
+        error instanceof Error ? error.message : '',
+      ]);
+    }
   };
 
   const moreMenu = (

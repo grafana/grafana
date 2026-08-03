@@ -6,8 +6,9 @@ import { AppEvents, dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/d
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
-import { type NotebookElement } from '@grafana/schema/apis/notebook/v2beta1';
+import { type NotebookElement, type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
 import {
+  Alert,
   Button,
   Card,
   ConfirmModal,
@@ -28,7 +29,7 @@ import { copyStringToClipboard } from 'app/core/utils/explore';
 
 import { createNotebook, duplicateNotebook, notebookEditUrl, notebookViewUrl } from '../api/notebookAPI';
 import { markNotebookAsNew } from '../model/newNotebookSignal';
-import { newNotebookSpec, newNotebookTitleDate } from '../model/notebookSpec';
+import { newNotebookSpec, newNotebookTitleDate, normalizeNotebookSpec } from '../model/notebookSpec';
 
 export function NotebooksListPage() {
   const notebooksEnabled = useFlagDashboardNotebooks();
@@ -41,7 +42,7 @@ export function NotebooksListPage() {
   const [deleteNotebook] = useDeleteNotebookMutation();
 
   const notebooks = useMemo(() => {
-    const items = [...(data?.items ?? [])];
+    const items = (data?.items ?? []).map(normalizeListNotebook);
     // ISO timestamps sort correctly with plain string comparison.
     items.sort((a, b) => {
       const aUpdated = lastUpdated(a);
@@ -81,6 +82,11 @@ export function NotebooksListPage() {
       );
       markNotebookAsNew(created.metadata.name);
       locationService.push(notebookEditUrl(created.metadata.name));
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, [
+        t('notebooks.list.create-failed', 'Failed to create notebook'),
+        error instanceof Error ? error.message : '',
+      ]);
     } finally {
       setCreating(false);
     }
@@ -94,12 +100,19 @@ export function NotebooksListPage() {
   // Duplicating makes notebooks reusable as investigation templates. The copy opens
   // in the editor with its title focused, ready to rename.
   const onDuplicate = async (notebook: Notebook) => {
-    const created = await duplicateNotebook(
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client spec bridged to the schema spec at the API seam
-      notebook.spec as Parameters<typeof duplicateNotebook>[0],
-      t('notebooks.list.copy-title', '{{title}} (copy)', { title: notebook.spec.title })
-    );
-    locationService.push(notebookEditUrl(created.metadata.name));
+    try {
+      const created = await duplicateNotebook(
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client spec bridged to the schema spec at the API seam
+        notebook.spec as Parameters<typeof duplicateNotebook>[0],
+        t('notebooks.list.copy-title', '{{title}} (copy)', { title: notebook.spec.title })
+      );
+      locationService.push(notebookEditUrl(created.metadata.name));
+    } catch (error) {
+      appEvents.emit(AppEvents.alertError, [
+        t('notebooks.list.duplicate-failed', 'Failed to duplicate notebook'),
+        error instanceof Error ? error.message : '',
+      ]);
+    }
   };
 
   const createButton = (
@@ -127,6 +140,10 @@ export function NotebooksListPage() {
 
           {isLoading && <Spinner />}
 
+          {!isLoading && Boolean(error) && (
+            <Alert severity="error" title={t('notebooks.list.load-error', 'Failed to load notebooks')} />
+          )}
+
           {!isLoading && !error && notebooks.length === 0 && !search && (
             <EmptyState
               variant="call-to-action"
@@ -140,7 +157,7 @@ export function NotebooksListPage() {
             </EmptyState>
           )}
 
-          {!isLoading && notebooks.length === 0 && search && (
+          {!isLoading && !error && notebooks.length === 0 && search && (
             <EmptyState
               variant="not-found"
               message={t('notebooks.list.no-results', 'No notebooks match your search')}
@@ -271,6 +288,16 @@ export function NotebooksListPage() {
       </Page.Contents>
     </Page>
   );
+}
+
+function normalizeListNotebook(notebook: Notebook): Notebook {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client spec bridged to the schema spec at the API seam
+  const spec = normalizeNotebookSpec(notebook.spec as unknown as NotebookSpec);
+  return {
+    ...notebook,
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- normalized schema spec bridged back to the generated client type
+    spec: spec as unknown as Notebook['spec'],
+  };
 }
 
 function lastUpdated(notebook: Notebook): string {
