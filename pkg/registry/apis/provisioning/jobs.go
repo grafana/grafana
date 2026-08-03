@@ -305,15 +305,6 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 	if spec.Action == provisioning.JobActionPullRequest {
 		return apierrors.NewBadRequest("pull request jobs cannot be created via the API; they are triggered by webhooks")
 	}
-	if spec.Action == provisioning.JobActionFixFolderMetadata {
-		if !c.folderMetadataEnabled {
-			return apierrors.NewBadRequest("fixFolderMetadata jobs require the provisioningFolderMetadata feature flag")
-		}
-		// Editor-only. The jobs subresource authorizer may allow Folder Admins via
-		// folder dashboards:write fallback (for move/delete), but this action has no
-		// path/resource-level checks of its own, so re-require jobs:create here.
-		return c.authorizeEditorJob(ctx, cfg)
-	}
 	if spec.Action == provisioning.JobActionTest && (c.perfTestingEnabled == nil || !c.perfTestingEnabled(ctx)) {
 		return apierrors.NewBadRequest("test jobs require the provisioning.performance feature flag")
 	}
@@ -340,10 +331,17 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 		if spec.Move != nil {
 			return c.authorizeMoveJob(ctx, repo, cfg, spec.Move)
 		}
-	case provisioning.JobActionPull, provisioning.JobActionPullRequest, provisioning.JobActionFixFolderMetadata, provisioning.JobActionTest:
+	case provisioning.JobActionFixFolderMetadata:
+		if !c.folderMetadataEnabled {
+			return apierrors.NewBadRequest("fixFolderMetadata jobs require the provisioningFolderMetadata feature flag")
+		}
+		// Editor-only. The jobs subresource authorizer may allow Folder Admins via
+		// folder dashboards:write fallback (for move/delete), but this action has no
+		// path/resource-level checks of its own, so re-require jobs:create here.
+		return c.authorizeEditorJob(ctx, cfg)
+	case provisioning.JobActionPull, provisioning.JobActionPullRequest, provisioning.JobActionTest:
 		// Read-only / no-op operations don't require pre-flight resource authorization.
 		// Pull and test are authorized inline in handleCreateJob (admin-only).
-		// FixFolderMetadata is handled above via authorizeEditorJob.
 	case provisioning.JobActionReleaseResources, provisioning.JobActionDeleteResources:
 		// Orphan cleanup actions are handled separately via handleOrphanCleanupJob
 		// and never reach authorizeJob.
