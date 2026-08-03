@@ -53,6 +53,10 @@ export function openEditLinkPane(dashboard: DashboardSceneLike, linkIndex: numbe
   dashboard.state.sidebar.selectObject(element, { force: true, multi: false });
 }
 
+export function duplicateLink(dashboard: DashboardSceneLike, linkIndex: number) {
+  new LinkEditEditableElement(createLinkEdit(dashboard, linkIndex)).onDuplicate();
+}
+
 export interface LinkEditState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardSceneLike>;
   linkIndex: number;

@@ -6801,13 +6801,16 @@
       "label": "Default filters"
     },
     "annotation-edit-actions": {
+      "annotation-settings": "Annotation settings",
+      "aria-label-duplicate": "Duplicate",
       "description": {
         "change-annotation-color": "Change annotation color",
         "change-annotation-controls-display": "Change annotation controls display",
         "change-annotation-enabled-state": "Change annotation enabled state",
         "change-annotation-name": "Change annotation name",
         "change-annotation-panel-filter": "Change annotation panel filter"
-      }
+      },
+      "edit-query": "Edit query"
     },
     "annotation-editable-element": {
       "delete-confirm": "Delete annotation query",
@@ -6889,7 +6892,6 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "Delete",
-      "aria-label-edit": "Edit",
       "delete": {
         "confirm": "Are you sure you want to delete: {{name}}?",
         "text": "Delete {{type}}",
@@ -7233,6 +7235,8 @@
     },
     "link-edit-actions": {
       "add-link": "Add link",
+      "aria-label-duplicate": "Duplicate",
+      "link-settings": "Link settings",
       "remove-link": "Remove link",
       "update-link": "Update link"
     },
@@ -7690,6 +7694,12 @@
     },
     "variable-controls": {
       "add-variable": "Add variable"
+    },
+    "variable-edit-actions": {
+      "aria-label-duplicate": "Duplicate",
+      "edit-custom-options": "Edit options",
+      "edit-query": "Edit query",
+      "variable-settings": "Variable settings"
     },
     "variable-editable-element": {
       "delete-confirm": "Delete variable",

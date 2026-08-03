@@ -1,13 +1,15 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { type SceneDataLayerProvider, sceneGraph } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
+import { AnnotationEditableElement } from '../settings/annotations/AnnotationEditableElement';
+import { AnnotationQueryEditorModal } from '../settings/annotations/AnnotationQueryEditorModal';
 import { annotationEditActions } from '../settings/annotations/actions';
 
-import { ControlActionsPopover, ControlEditActions } from './ControlActionsPopover';
+import { AnnotationEditActions, ControlActionsPopover } from './ControlActionsPopover';
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet, isDashboardDataLayerSet, isDashboardDataLayerSetState } from './DashboardDataLayerSet';
 import { DashboardScene } from './DashboardScene';
@@ -43,10 +45,21 @@ export function DashboardDataLayerControls({ dashboard, inMenu }: DashboardDataL
 export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDataLayerProvider; inMenu?: boolean }) {
   const styles = useStyles2(getStyles);
   const { isSelectable } = useElementSelection(layer.state.key);
+  const [isQueryEditorOpen, setIsQueryEditorOpen] = useState(false);
 
   const onClickEditLayer = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(layer, DashboardScene);
     dashboard.state.sidebar.selectObject(layer);
+  }, [layer]);
+
+  const onClickEditLayerQuery = useCallback(() => {
+    setIsQueryEditorOpen(true);
+  }, []);
+
+  const onClickDuplicateLayer = useCallback(() => {
+    if (layer instanceof DashboardAnnotationsDataLayer) {
+      new AnnotationEditableElement(layer).onDuplicate();
+    }
   }, [layer]);
 
   const onClickDeleteLayer = useCallback(() => {
@@ -61,16 +74,29 @@ export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDat
   }, [layer]);
 
   const editActions = useMemo(
-    () => <ControlEditActions element={layer} onClickEdit={onClickEditLayer} onClickDelete={onClickDeleteLayer} />,
-    [layer, onClickEditLayer, onClickDeleteLayer]
+    () => (
+      <AnnotationEditActions
+        layer={layer}
+        onClickEdit={onClickEditLayer}
+        onClickEditQuery={onClickEditLayerQuery}
+        onClickDuplicate={onClickDuplicateLayer}
+        onClickDelete={onClickDeleteLayer}
+      />
+    ),
+    [layer, onClickEditLayer, onClickEditLayerQuery, onClickDuplicateLayer, onClickDeleteLayer]
   );
 
   return (
-    <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
-      <div className={styles.container}>
-        <DataLayerControl layer={layer} inMenu={inMenu} />
-      </div>
-    </ControlActionsPopover>
+    <>
+      {isQueryEditorOpen && layer instanceof DashboardAnnotationsDataLayer && (
+        <AnnotationQueryEditorModal layer={layer} onClose={() => setIsQueryEditorOpen(false)} />
+      )}
+      <ControlActionsPopover isEditable={Boolean(isSelectable)} content={editActions}>
+        <div className={styles.container}>
+          <DataLayerControl layer={layer} inMenu={inMenu} />
+        </div>
+      </ControlActionsPopover>
+    </>
   );
 }
 

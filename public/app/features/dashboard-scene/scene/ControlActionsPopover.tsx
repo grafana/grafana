@@ -1,13 +1,23 @@
 import { css, cx } from '@emotion/css';
 import { autoUpdate, offset, safePolygon, useFloating, useHover, useInteractions } from '@floating-ui/react';
-import React, { cloneElement, useCallback, useMemo, useState } from 'react';
+import React, { cloneElement, createContext, useCallback, useContext, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { isDataLayer, isSceneObject, type SceneVariable, SceneVariableSet, type SceneObject } from '@grafana/scenes';
-import { IconButton, Portal, useStyles2 } from '@grafana/ui';
+import { CustomVariable, QueryVariable, type SceneDataLayerProvider, type SceneVariable } from '@grafana/scenes';
+import { Button, IconButton, Portal, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
+
+const ControlActionsPopoverContext = createContext<{ closePopover: () => void }>({ closePopover: () => {} });
+
+/**
+ * Lets popover content close the popover programmatically, e.g. before opening
+ * a modal on top of it. Resolves to a no-op when rendered outside a popover.
+ */
+export function useControlActionsPopover() {
+  return useContext(ControlActionsPopoverContext);
+}
 
 export function ControlActionsPopover({
   isEditable,
@@ -32,6 +42,8 @@ export function ControlActionsPopover({
   const hover = useHover(context, { handleClose: safePolygon() });
   const { getReferenceProps, getFloatingProps } = useInteractions([hover]);
 
+  const popoverContextValue = useMemo(() => ({ closePopover: () => setIsOpen(false) }), []);
+
   if (!isEditable) {
     return children;
   }
@@ -42,7 +54,9 @@ export function ControlActionsPopover({
       {isOpen && content && (
         <Portal>
           <div ref={refs.setFloating} style={floatingStyles} className={styles.popover} {...getFloatingProps()}>
-            {content}
+            <ControlActionsPopoverContext.Provider value={popoverContextValue}>
+              {content}
+            </ControlActionsPopoverContext.Provider>
           </div>
         </Portal>
       )}
@@ -50,33 +64,22 @@ export function ControlActionsPopover({
   );
 }
 
-export function ControlEditActions({
-  element,
+export function VariableEditActions({
+  variable,
   onClickEdit,
+  onClickEditQuery,
+  onClickDuplicate,
   onClickDelete,
 }: {
-  element: SceneObject | { name: string; type: string };
+  variable: SceneVariable;
   onClickEdit: () => void;
+  onClickEditQuery: () => void;
+  onClickDuplicate: () => void;
   onClickDelete: () => void;
 }) {
   const styles = useStyles2(getStyles);
-
-  const { name, type } = useMemo(() => {
-    if (!isSceneObject(element)) {
-      return { name: element.name, type: element.type };
-    }
-
-    if (isDataLayer(element)) {
-      return { name: element.state.name, type: 'annotation query' };
-    }
-
-    if (element.parent instanceof SceneVariableSet) {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return { name: (element as SceneVariable).state.name, type: 'variable' };
-    }
-
-    return { name: '', type: 'unknown type' };
-  }, [element]);
+  const { closePopover } = useControlActionsPopover();
+  const hasQueryEditor = variable instanceof QueryVariable || variable instanceof CustomVariable;
 
   const onClickEditInternal = useCallback(
     (event: React.MouseEvent) => {
@@ -85,34 +88,255 @@ export function ControlEditActions({
     },
     [onClickEdit]
   );
+  const onClickEditQueryInternal = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      closePopover();
+      onClickEditQuery();
+    },
+    [onClickEditQuery, closePopover]
+  );
+  const onClickDuplicateInternal = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      onClickDuplicate();
+    },
+    [onClickDuplicate]
+  );
   const onClickDeleteInternal = useCallback(
     (event: React.MouseEvent) => {
       event.stopPropagation();
+      closePopover();
       appEvents.publish(
         new ShowConfirmModalEvent({
-          title: t('dashboard-scene.control-edit-actions.delete.title', 'Delete {{type}}', { type }),
+          title: t('dashboard-scene.control-edit-actions.delete.title', 'Delete {{type}}', { type: 'variable' }),
           text: t('dashboard-scene.control-edit-actions.delete.confirm', 'Are you sure you want to delete: {{name}}?', {
-            name,
+            name: variable.state.name,
           }),
-          yesText: t('dashboard-scene.control-edit-actions.delete.text', 'Delete {{type}}', { type }),
+          yesText: t('dashboard-scene.control-edit-actions.delete.text', 'Delete {{type}}', { type: 'variable' }),
           onConfirm: onClickDelete,
         })
       );
     },
-    [name, type, onClickDelete]
+    [variable.state.name, onClickDelete, closePopover]
   );
 
   return (
     <div className={styles.hoverActions}>
-      <IconButton
-        name="pen"
-        variant="primary"
-        size="md"
-        className={cx(styles.action, styles.editAction)}
+      <Button
+        fill="text"
+        variant="secondary"
+        size="sm"
+        className={cx(styles.action, styles.editAction, styles.textAction)}
         onPointerDown={onClickEditInternal}
-        aria-label={t('dashboard-scene.control-edit-actions.aria-label-edit', 'Edit')}
-      />
+      >
+        {t('dashboard-scene.variable-edit-actions.variable-settings', 'Variable settings')}
+      </Button>
+      {hasQueryEditor && (
+        <>
+          <div className={styles.actionsDivider} />
+          <Button
+            fill="text"
+            variant="secondary"
+            size="sm"
+            className={cx(styles.action, styles.textAction)}
+            onPointerDown={onClickEditQueryInternal}
+          >
+            {variable instanceof CustomVariable
+              ? t('dashboard-scene.variable-edit-actions.edit-custom-options', 'Edit options')
+              : t('dashboard-scene.variable-edit-actions.edit-query', 'Edit query')}
+          </Button>
+        </>
+      )}
       <div className={styles.actionsDivider} />
+      <IconButton
+        name="copy"
+        variant="secondary"
+        size="md"
+        className={styles.action}
+        onPointerDown={onClickDuplicateInternal}
+        aria-label={t('dashboard-scene.variable-edit-actions.aria-label-duplicate', 'Duplicate')}
+      />
+      <IconButton
+        name="trash-alt"
+        variant="destructive"
+        size="md"
+        className={cx(styles.action, styles.deleteAction)}
+        onPointerDown={onClickDeleteInternal}
+        aria-label={t('dashboard-scene.control-edit-actions.aria-label-delete', 'Delete')}
+      />
+    </div>
+  );
+}
+
+export function AnnotationEditActions({
+  layer,
+  onClickEdit,
+  onClickEditQuery,
+  onClickDuplicate,
+  onClickDelete,
+}: {
+  layer: SceneDataLayerProvider;
+  onClickEdit: () => void;
+  onClickEditQuery: () => void;
+  onClickDuplicate: () => void;
+  onClickDelete: () => void;
+}) {
+  const styles = useStyles2(getStyles);
+  const { closePopover } = useControlActionsPopover();
+
+  const onClickEditInternal = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      onClickEdit();
+    },
+    [onClickEdit]
+  );
+  const onClickEditQueryInternal = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      closePopover();
+      onClickEditQuery();
+    },
+    [onClickEditQuery, closePopover]
+  );
+  const onClickDuplicateInternal = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      onClickDuplicate();
+    },
+    [onClickDuplicate]
+  );
+  const onClickDeleteInternal = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      closePopover();
+      appEvents.publish(
+        new ShowConfirmModalEvent({
+          title: t('dashboard-scene.control-edit-actions.delete.title', 'Delete {{type}}', {
+            type: 'annotation query',
+          }),
+          text: t('dashboard-scene.control-edit-actions.delete.confirm', 'Are you sure you want to delete: {{name}}?', {
+            name: layer.state.name,
+          }),
+          yesText: t('dashboard-scene.control-edit-actions.delete.text', 'Delete {{type}}', {
+            type: 'annotation query',
+          }),
+          onConfirm: onClickDelete,
+        })
+      );
+    },
+    [layer.state.name, onClickDelete, closePopover]
+  );
+
+  return (
+    <div className={styles.hoverActions}>
+      <Button
+        fill="text"
+        variant="secondary"
+        size="sm"
+        className={cx(styles.action, styles.editAction, styles.textAction)}
+        onPointerDown={onClickEditInternal}
+      >
+        {t('dashboard-scene.annotation-edit-actions.annotation-settings', 'Annotation settings')}
+      </Button>
+      <div className={styles.actionsDivider} />
+      <Button
+        fill="text"
+        variant="secondary"
+        size="sm"
+        className={cx(styles.action, styles.textAction)}
+        onPointerDown={onClickEditQueryInternal}
+      >
+        {t('dashboard-scene.annotation-edit-actions.edit-query', 'Edit query')}
+      </Button>
+      <div className={styles.actionsDivider} />
+      <IconButton
+        name="copy"
+        variant="secondary"
+        size="md"
+        className={styles.action}
+        onPointerDown={onClickDuplicateInternal}
+        aria-label={t('dashboard-scene.annotation-edit-actions.aria-label-duplicate', 'Duplicate')}
+      />
+      <IconButton
+        name="trash-alt"
+        variant="destructive"
+        size="md"
+        className={cx(styles.action, styles.deleteAction)}
+        onPointerDown={onClickDeleteInternal}
+        aria-label={t('dashboard-scene.control-edit-actions.aria-label-delete', 'Delete')}
+      />
+    </div>
+  );
+}
+
+export function LinkEditActions({
+  name,
+  onClickEdit,
+  onClickDuplicate,
+  onClickDelete,
+}: {
+  name: string;
+  onClickEdit: () => void;
+  onClickDuplicate: () => void;
+  onClickDelete: () => void;
+}) {
+  const styles = useStyles2(getStyles);
+  const { closePopover } = useControlActionsPopover();
+
+  const onClickEditInternal = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      onClickEdit();
+    },
+    [onClickEdit]
+  );
+  const onClickDuplicateInternal = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      onClickDuplicate();
+    },
+    [onClickDuplicate]
+  );
+  const onClickDeleteInternal = useCallback(
+    (event: React.MouseEvent) => {
+      event.stopPropagation();
+      closePopover();
+      appEvents.publish(
+        new ShowConfirmModalEvent({
+          title: t('dashboard-scene.control-edit-actions.delete.title', 'Delete {{type}}', { type: 'link' }),
+          text: t('dashboard-scene.control-edit-actions.delete.confirm', 'Are you sure you want to delete: {{name}}?', {
+            name,
+          }),
+          yesText: t('dashboard-scene.control-edit-actions.delete.text', 'Delete {{type}}', { type: 'link' }),
+          onConfirm: onClickDelete,
+        })
+      );
+    },
+    [name, onClickDelete, closePopover]
+  );
+
+  return (
+    <div className={styles.hoverActions}>
+      <Button
+        fill="text"
+        variant="secondary"
+        size="sm"
+        className={cx(styles.action, styles.editAction, styles.textAction)}
+        onPointerDown={onClickEditInternal}
+      >
+        {t('dashboard-scene.link-edit-actions.link-settings', 'Link settings')}
+      </Button>
+      <div className={styles.actionsDivider} />
+      <IconButton
+        name="copy"
+        variant="secondary"
+        size="md"
+        className={styles.action}
+        onPointerDown={onClickDuplicateInternal}
+        aria-label={t('dashboard-scene.link-edit-actions.aria-label-duplicate', 'Duplicate')}
+      />
       <IconButton
         name="trash-alt"
         variant="destructive"
@@ -134,9 +358,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-evenly',
     alignItems: 'center',
     gap: theme.spacing(0.75),
-    padding: theme.spacing(1),
+    padding: theme.spacing(0.51),
     borderRadius: theme.shape.radius.default,
-    backgroundColor: theme.colors.background.elevated,
+    backgroundColor: theme.components.dropdown.background,
     border: `1px solid ${theme.colors.border.weak}`,
     boxShadow: theme.shadows.z1,
     position: 'relative',
@@ -155,6 +379,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
         duration: theme.transitions.duration.short,
       }),
     },
+  }),
+  textAction: css({
+    padding: 0,
+    height: 'auto',
+    fontWeight: theme.typography.fontWeightRegular,
   }),
   editAction: css({
     '&:hover': {
