@@ -32,8 +32,8 @@ test.describe(
         await controls.enterEditMode();
         await tabs.select('Tab 1');
 
-        await sidebar.conditionalRenderingOptions.selectVisibility('hide');
-        await sidebar.conditionalRenderingOptions.addVariableRule('hideByVariable', '=', '1');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('hide');
+        await sidebar.tabOptions.conditionalRenderingOptions.addVariableRule('hideByVariable', '=', '1');
 
         await switchTabAndSave(page, tabs, dashboardPage, selectors);
 
@@ -56,8 +56,8 @@ test.describe(
         await controls.enterEditMode();
         await tabs.select('Tab 1');
 
-        await sidebar.conditionalRenderingOptions.selectVisibility('show');
-        await sidebar.conditionalRenderingOptions.addVariableRule('showByVariable', '=', '2');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('show');
+        await sidebar.tabOptions.conditionalRenderingOptions.addVariableRule('showByVariable', '=', '2');
 
         await switchTabAndSave(page, tabs, dashboardPage, selectors);
 
@@ -82,8 +82,8 @@ test.describe(
         await controls.enterEditMode();
         await tabs.select('Tab 1');
 
-        await sidebar.conditionalRenderingOptions.selectVisibility('hide');
-        await sidebar.conditionalRenderingOptions.addTimeRangeRule('7 days');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('hide');
+        await sidebar.tabOptions.conditionalRenderingOptions.addTimeRangeRule('7 days');
 
         await switchTabAndSave(page, tabs, dashboardPage, selectors);
 
@@ -106,8 +106,8 @@ test.describe(
         await controls.enterEditMode();
         await tabs.select('Tab 1');
 
-        await sidebar.conditionalRenderingOptions.selectVisibility('show');
-        await sidebar.conditionalRenderingOptions.addTimeRangeRule('7 days');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('show');
+        await sidebar.tabOptions.conditionalRenderingOptions.addTimeRangeRule('7 days');
 
         await switchTabAndSave(page, tabs, dashboardPage, selectors);
 
@@ -137,10 +137,10 @@ test.describe(
         await controls.enterEditMode();
         await tabs.select('Tab 1');
 
-        await sidebar.conditionalRenderingOptions.selectVisibility('hide');
-        await sidebar.conditionalRenderingOptions.addVariableRule('hideByVariable', '=', '1');
-        await sidebar.conditionalRenderingOptions.addTimeRangeRule('7 days');
-        await sidebar.conditionalRenderingOptions.selectMatch('all');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('hide');
+        await sidebar.tabOptions.conditionalRenderingOptions.addVariableRule('hideByVariable', '=', '1');
+        await sidebar.tabOptions.conditionalRenderingOptions.addTimeRangeRule('7 days');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectMatch('all');
 
         await switchTabAndSave(page, tabs, dashboardPage, selectors);
 
@@ -175,10 +175,10 @@ test.describe(
         await controls.enterEditMode();
         await tabs.select('Tab 1');
 
-        await sidebar.conditionalRenderingOptions.selectVisibility('hide');
-        await sidebar.conditionalRenderingOptions.addVariableRule('hideByVariable', '=', '1');
-        await sidebar.conditionalRenderingOptions.addTimeRangeRule('7 days');
-        await sidebar.conditionalRenderingOptions.selectMatch('any');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('hide');
+        await sidebar.tabOptions.conditionalRenderingOptions.addVariableRule('hideByVariable', '=', '1');
+        await sidebar.tabOptions.conditionalRenderingOptions.addTimeRangeRule('7 days');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectMatch('any');
 
         await switchTabAndSave(page, tabs, dashboardPage, selectors);
 
@@ -213,10 +213,10 @@ test.describe(
         await controls.enterEditMode();
         await tabs.select('Tab 1');
 
-        await sidebar.conditionalRenderingOptions.selectVisibility('show');
-        await sidebar.conditionalRenderingOptions.addVariableRule('showByVariable', '=', '1');
-        await sidebar.conditionalRenderingOptions.addTimeRangeRule('7 days');
-        await sidebar.conditionalRenderingOptions.selectMatch('all');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('show');
+        await sidebar.tabOptions.conditionalRenderingOptions.addVariableRule('showByVariable', '=', '1');
+        await sidebar.tabOptions.conditionalRenderingOptions.addTimeRangeRule('7 days');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectMatch('all');
 
         await switchTabAndSave(page, tabs, dashboardPage, selectors);
 
@@ -250,10 +250,10 @@ test.describe(
         await controls.enterEditMode();
         await tabs.select('Tab 1');
 
-        await sidebar.conditionalRenderingOptions.selectVisibility('show');
-        await sidebar.conditionalRenderingOptions.addVariableRule('showByVariable', '=', '2');
-        await sidebar.conditionalRenderingOptions.addTimeRangeRule('7 days');
-        await sidebar.conditionalRenderingOptions.selectMatch('any');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectVisibility('show');
+        await sidebar.tabOptions.conditionalRenderingOptions.addVariableRule('showByVariable', '=', '2');
+        await sidebar.tabOptions.conditionalRenderingOptions.addTimeRangeRule('7 days');
+        await sidebar.tabOptions.conditionalRenderingOptions.selectMatch('any');
 
         await switchTabAndSave(page, tabs, dashboardPage, selectors);
 

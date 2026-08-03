@@ -19,6 +19,11 @@ import (
 // 4. Putting migrations behind feature flags is no longer recommended as broken
 //    migrations may not be caught by integration tests unless feature flags are
 //    specifically added
+// 5. Adding a migration is a last resort. Resources are moving to the app
+//    platform, so schema added here is a dead end. Every migration also runs on
+//    every instance that upgrades and can never be rolled back or changed
+//    afterwards. New migrations require regenerating testdata/migration_ids.txt,
+//    which a human has to do deliberately; see migration_ids_golden_test.go
 
 type OSSMigrations struct {
 	features featuremgmt.FeatureToggles
