@@ -76,7 +76,7 @@ await page.getByRole('option', { name: 'c1' }).click();
 await controls.enterEditMode();
 await toolbar.openDashboardOptions();
 await sidebar.dashboardOptions.switchToAutoGrid();
-await panel.selectByTitle('New panel');
+await panels.selectByTitle('New panel');
 await sidebar.panelOptions.setTitle(`${repeatTitleBase}$c1`);
 await sidebar.panelOptions.repeatOptions.repeatByVariable('c1');
 ```
@@ -268,13 +268,13 @@ Playwright's [test generator](https://playwright.dev/docs/codegen) lets engineer
 
 This means **`data-testid` always wins over `getByRole`** when both are present — the opposite of what the docs suggest. The output is fully deterministic for a given DOM state.
 
-**The opportunity**: Grafana's `@grafana/e2e-selectors` system assigns `data-testid` attributes to UI elements, and `data-testid` is one of codegen's top-priority selectors. When codegen produces a `getByTestId('header-container')`, that value maps directly to a page object method like `panel.headerContainer()` — the mapping is deterministic. A mapping table (testid value to page object method) in the `AGENTS.md` would make this transform mechanical for both humans and AI agents.
+**The opportunity**: Grafana's `@grafana/e2e-selectors` system assigns `data-testid` attributes to UI elements, and `data-testid` is one of codegen's top-priority selectors. When codegen produces a `getByTestId('header-container')`, that value maps directly to a page object method like `panels.getHeaders()` — the mapping is deterministic. A mapping table (testid value to page object method) in the `AGENTS.md` would make this transform mechanical for both humans and AI agents.
 
 **Possible approaches**:
 
 1. **Agent-first authoring** — Describe the test scenario in natural language ("test that enabling repeats on a variable shows repeated panels, and that they persist after save+reload"). The agent reads `AGENTS.md`, discovers the page objects, and writes the test directly using the `add-e2e-tests` skill. No recording step — the agent composes page objects from the available API. This works best when the UI workflow maps cleanly to existing page objects. Lowest friction, highest leverage from the page object investment.
 
-2. **Record then transform** — Run `npx playwright codegen -o /tmp/recorded.spec.ts`, manually walk through the flow in the browser, then run the raw output through an AST transform. Because codegen deterministically emits `getByTestId(...)` for elements with `data-testid` (score 1, highest priority), and Grafana's `@grafana/e2e-selectors` assigns `data-testid` to all interactive elements, the raw output maps mechanically to page object methods. A Babel or ts-morph visitor can rewrite `getByTestId('header-container')` → `panel.headerContainer()` using a static mapping table — no LLM needed at runtime. The transform is a build-once tool (an agent could help scaffold it), then it runs instantly and deterministically on every codegen output. Best for complex flows where the engineer wants to validate the exact click sequence visually before transforming it.
+2. **Record then transform** — Run `npx playwright codegen -o /tmp/recorded.spec.ts`, manually walk through the flow in the browser, then run the raw output through an AST transform. Because codegen deterministically emits `getByTestId(...)` for elements with `data-testid` (score 1, highest priority), and Grafana's `@grafana/e2e-selectors` assigns `data-testid` to all interactive elements, the raw output maps mechanically to page object methods. A Babel or ts-morph visitor can rewrite `getByTestId('header-container')` → `panels.getHeaders()` using a static mapping table — no LLM needed at runtime. The transform is a build-once tool (an agent could help scaffold it), then it runs instantly and deterministically on every codegen output. Best for complex flows where the engineer wants to validate the exact click sequence visually before transforming it.
 
 Both approaches benefit from the same foundation: page objects provide the vocabulary, `AGENTS.md` provides the mapping, and the `add-e2e-tests` skill provides the conventions.
 
