@@ -19,6 +19,7 @@ import {
   Button,
   ConfirmModal,
   Dropdown,
+  Icon,
   IconButton,
   LinkButton,
   Menu,
@@ -39,6 +40,11 @@ import { getShiftedTimeRange, getZoomedTimeRange } from 'app/core/utils/timePick
 import { dispatch } from 'app/store/store';
 
 import { deleteNotebook, duplicateNotebook, notebookEditUrl, notebookViewUrl } from '../api/notebookAPI';
+import { ActivityFeedButton } from '../collab/ActivityFeed';
+import { CollabCursors } from '../collab/CollabCursors';
+import { PresenceAvatars } from '../collab/PresenceAvatars';
+import { mergeRemoteSpec } from '../collab/mergeRemoteSpec';
+import { resourceVersionTs, useNotebookCollab } from '../collab/useNotebookCollab';
 import { setLastUsedNotebook } from '../model/lastUsedNotebook';
 import { consumeNewNotebook } from '../model/newNotebookSignal';
 import {
@@ -76,12 +82,17 @@ export function NotebookEditor({ uid }: Props) {
   const { spec, loading, loadError, saving, dirty, lastSavedAt } = editor.state;
 
   const [editingCellKey, setEditingCellKey] = useState<string | null>(null);
+  const editingCellKeyRef = useRef<string | null>(null);
+  editingCellKeyRef.current = editingCellKey;
+
   const [renamingKey, setRenamingKey] = useState<string | null>(null);
   const [timeEditKey, setTimeEditKey] = useState<string | null>(null);
   const [queryEditKey, setQueryEditKey] = useState<string | null>(null);
   const [highlightKey, setHighlightKey] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [refreshNonce, setRefreshNonce] = useState(0);
+  const [followSid, setFollowSid] = useState<string | null>(null);
+  const documentRef = useRef<HTMLDivElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const highlightTimer = useRef<ReturnType<typeof setTimeout>>();
   // Latest query-result readers per panel cell, powering the viz suggestions previews.
@@ -101,20 +112,43 @@ export function NotebookEditor({ uid }: Props) {
     }
   }, [uid, loadedTitle]);
 
+  const collab = useNotebookCollab({
+    uid,
+    enabled: !loading && !loadError,
+    getSpec: editor.getSpec,
+    initialDocTs: resourceVersionTs(editor.state.resource),
+    onRemoteSpec: useCallback(
+      (remoteSpec) => {
+        editor.applyRemoteSpec(mergeRemoteSpec(remoteSpec, editor.getSpec(), editingCellKeyRef.current));
+      },
+      [editor]
+    ),
+  });
+
+  // Every local mutation goes through here so collaborators get the update too.
+  // Structural edits pass an `activity` label that lands in everyone's feed.
   const update = useCallback(
-    (mutate: Parameters<typeof editor.updateSpec>[0]) => {
+    (mutate: Parameters<typeof editor.updateSpec>[0], activity?: { label: string; cellKey?: string }) => {
       editor.updateSpec(mutate);
+      collab.notifyLocalEdit();
+      if (activity) {
+        collab.sendActivity(activity.label, activity.cellKey);
+      }
     },
-    [editor]
+    [editor, collab]
   );
 
   const undo = useCallback(() => {
-    editor.undo();
-  }, [editor]);
+    if (editor.undo()) {
+      collab.notifyLocalEdit();
+    }
+  }, [editor, collab]);
 
   const redo = useCallback(() => {
-    editor.redo();
-  }, [editor]);
+    if (editor.redo()) {
+      collab.notifyLocalEdit();
+    }
+  }, [editor, collab]);
 
   const jumpToCell = useCallback((cellKey: string) => {
     document.querySelector(`[data-cell-key="${CSS.escape(cellKey)}"]`)?.scrollIntoView({
@@ -126,6 +160,20 @@ export function NotebookEditor({ uid }: Props) {
     highlightTimer.current = setTimeout(() => setHighlightKey(null), 2500);
   }, []);
 
+  const onPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      const container = documentRef.current;
+      if (!container) {
+        return;
+      }
+      const rect = container.getBoundingClientRect();
+      const target = e.target instanceof Element ? e.target : null;
+      const hoveredCell = target?.closest('[data-cell-key]')?.getAttribute('data-cell-key') ?? null;
+      collab.sendCursor(e.clientX - rect.left, e.clientY - rect.top, editingCellKeyRef.current ?? hoveredCell);
+    },
+    [collab]
+  );
+
   const insertTextAt = useCallback(
     (index: number) => {
       let newKey: string | undefined;
@@ -136,19 +184,25 @@ export function NotebookEditor({ uid }: Props) {
       });
       if (newKey) {
         setEditingCellKey(newKey);
+        collab.sendActivity(t('notebooks.activity.added-text', 'added a text block'), newKey);
       }
     },
-    [update]
+    [update, collab]
   );
 
   const insertCodeAt = useCallback(
     (index: number) => {
+      let newKey: string | undefined;
       update((s) => {
         const result = insertElement(s, newCodeElement('', ''), { index });
+        newKey = result.elementName;
         return result.spec;
       });
+      if (newKey) {
+        collab.sendActivity(t('notebooks.activity.added-code', 'added a code block'), newKey);
+      }
     },
-    [update]
+    [update, collab]
   );
 
   const insertVizAt = useCallback(
@@ -169,6 +223,7 @@ export function NotebookEditor({ uid }: Props) {
         return result.spec;
       });
       if (newKey) {
+        collab.sendActivity(t('notebooks.activity.added-viz', 'added a visualization'), newKey);
         jumpToCell(newKey);
         autoVizCells.current.add(newKey);
         // A panel with an empty query renders "no data" — open the query editor
@@ -178,7 +233,7 @@ export function NotebookEditor({ uid }: Props) {
         }
       }
     },
-    [update, jumpToCell]
+    [update, collab, jumpToCell]
   );
 
   // First data for a freshly added panel: adopt the viz the frames prefer, unless
@@ -201,7 +256,10 @@ export function NotebookEditor({ uid }: Props) {
   const onDragEnd = useCallback(
     (result: DropResult) => {
       if (result.destination && result.destination.index !== result.source.index) {
-        update((s) => moveCell(s, result.source.index, result.destination!.index));
+        update((s) => moveCell(s, result.source.index, result.destination!.index), {
+          label: t('notebooks.activity.moved-block', 'moved a block'),
+          cellKey: result.draggableId,
+        });
       }
     },
     [update]
@@ -234,6 +292,73 @@ export function NotebookEditor({ uid }: Props) {
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [editor, undo, redo]);
+
+  // Broadcast which block sits at our viewport center so collaborators can follow us.
+  useEffect(() => {
+    let lastMeasure = 0;
+    const onScroll = () => {
+      const container = documentRef.current;
+      if (!container) {
+        return;
+      }
+      // Measuring every block per scroll event causes layout thrash on large
+      // notebooks; a coarse gate is plenty for follow mode.
+      const now = Date.now();
+      if (now - lastMeasure < 200) {
+        return;
+      }
+      lastMeasure = now;
+      const centerY = window.innerHeight / 2;
+      let best: { key: string; distance: number } | undefined;
+      for (const node of container.querySelectorAll('[data-cell-key]')) {
+        const rect = node.getBoundingClientRect();
+        const distance = Math.abs((rect.top + rect.bottom) / 2 - centerY);
+        const key = node.getAttribute('data-cell-key');
+        if (key && (!best || distance < best.distance)) {
+          best = { key, distance };
+        }
+      }
+      collab.sendView(best?.key ?? null);
+    };
+    // Capture phase: the page content scrolls inside a nested scroller, not the window.
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    return () => window.removeEventListener('scroll', onScroll, { capture: true });
+  }, [collab]);
+
+  // Follow mode: ride along with the followed collaborator's viewport.
+  const followedPeer = followSid ? collab.peers.find((p) => p.sid === followSid) : undefined;
+  const followedViewCell = followedPeer?.viewCell;
+  useEffect(() => {
+    if (!followSid) {
+      return;
+    }
+    if (!followedPeer) {
+      // The peer left; following ends with them.
+      setFollowSid(null);
+      return;
+    }
+    if (followedViewCell) {
+      document.querySelector(`[data-cell-key="${CSS.escape(followedViewCell)}"]`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }
+  }, [followSid, followedPeer, followedViewCell]);
+
+  // Any deliberate scroll input (wheel, touch) means the user wants their own viewport
+  // back — these events only come from the user, never from scrollIntoView.
+  useEffect(() => {
+    if (!followSid) {
+      return;
+    }
+    const stop = () => setFollowSid(null);
+    window.addEventListener('wheel', stop, { passive: true });
+    window.addEventListener('touchmove', stop, { passive: true });
+    return () => {
+      window.removeEventListener('wheel', stop);
+      window.removeEventListener('touchmove', stop);
+    };
+  }, [followSid]);
 
   // Auto-refresh: re-run all panels on the notebook's refresh interval.
   const autoRefresh = spec?.timeSettings.autoRefresh;
@@ -354,7 +479,12 @@ export function NotebookEditor({ uid }: Props) {
   const cells = resolveCells(spec);
   const timeRange = rangeUtil.convertRawToRange({ from: spec.timeSettings.from, to: spec.timeSettings.to });
 
-  const commitTimeRange = (from: string, to: string) => update((s) => setNotebookTimeRange(s, from, to));
+  // The notebook time range is shared document state (autosaved, synced to
+  // collaborators) — every change is announced like any other structural edit.
+  const commitTimeRange = (from: string, to: string) =>
+    update((s) => setNotebookTimeRange(s, from, to), {
+      label: t('notebooks.activity.changed-time', 'changed the notebook time range'),
+    });
   const shiftTimeRange = (direction: number) => {
     const shifted = getShiftedTimeRange(direction, timeRange);
     commitTimeRange(toUtc(shifted.from).toISOString(), toUtc(shifted.to).toISOString());
@@ -402,6 +532,11 @@ export function NotebookEditor({ uid }: Props) {
 
   const actions = (
     <Stack direction="row" gap={1} alignItems="center" wrap="wrap" justifyContent="flex-end">
+      <PresenceAvatars
+        peers={collab.peers}
+        followedSid={followSid}
+        onToggleFollow={(peer) => setFollowSid((cur) => (cur === peer.sid ? null : peer.sid))}
+      />
       <IconButton
         name="history"
         size="lg"
@@ -418,6 +553,7 @@ export function NotebookEditor({ uid }: Props) {
         onClick={redo}
         tooltip={t('notebooks.editor.redo', 'Redo (⇧⌘Z)')}
       />
+      <ActivityFeedButton activity={collab.activity} onJumpToCell={jumpToCell} />
       {/* The dashboards-style picker: its popup is right-edge aligned (TimeRangeInput's
           overflows the viewport from a right-anchored toolbar) and it brings the
           shift/zoom arrows Grafana users expect. */}
@@ -464,7 +600,27 @@ export function NotebookEditor({ uid }: Props) {
   return (
     <Page navId="notebooks" pageNav={pageNav} renderTitle={() => titleInput} actions={actions}>
       <Page.Contents>
-        <div className={styles.document}>
+        {/* Pointer tracking is presence telemetry for collaborators, not an interaction. */}
+        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+        <div className={styles.document} ref={documentRef} onPointerMove={onPointerMove}>
+          <CollabCursors getPeers={collab.getPeers} />
+
+          {followedPeer && (
+            <div className={styles.followingPill} style={{ backgroundColor: followedPeer.color }}>
+              <Icon name="eye" size="sm" />
+              {t('notebooks.editor.following', 'Following {{name}}', {
+                name: followedPeer.user.name || followedPeer.user.login,
+              })}
+              <IconButton
+                name="times"
+                size="sm"
+                variant="secondary"
+                tooltip={t('notebooks.editor.stop-following', 'Stop following')}
+                onClick={() => setFollowSid(null)}
+              />
+            </div>
+          )}
+
           <div className={styles.metaRow}>
             <TagsInput
               tags={spec.tags}
@@ -485,6 +641,10 @@ export function NotebookEditor({ uid }: Props) {
                 {(droppable) => (
                   <div ref={droppable.innerRef} {...droppable.droppableProps} className={styles.cells}>
                     {cells.map((cell, index) => {
+                      const peersInCell = collab.peers
+                        .filter((p) => p.cellKey === cell.elementName)
+                        .map((p) => ({ name: p.user.name || p.user.login, color: p.color }));
+
                       return (
                         <Draggable draggableId={cell.elementName} index={index} key={cell.elementName}>
                           {(draggable, snapshot) => (
@@ -509,13 +669,20 @@ export function NotebookEditor({ uid }: Props) {
                               <CellFrame
                                 cellKey={cell.elementName}
                                 source={cell.source}
-                                peers={[]}
+                                peers={peersInCell}
                                 highlighted={highlightKey === cell.elementName}
                                 isDragging={snapshot.isDragging}
                                 dragHandleProps={draggable.dragHandleProps}
-                                onDuplicate={() => update((s) => duplicateCellAt(s, index))}
+                                onDuplicate={() =>
+                                  update((s) => duplicateCellAt(s, index), {
+                                    label: t('notebooks.activity.duplicated-block', 'duplicated a block'),
+                                    cellKey: cell.elementName,
+                                  })
+                                }
                                 onDelete={() => {
-                                  update((s) => removeCellAt(s, index));
+                                  update((s) => removeCellAt(s, index), {
+                                    label: t('notebooks.activity.deleted-block', 'deleted a block'),
+                                  });
                                   dispatch(
                                     notifyApp(
                                       createSuccessNotification(
@@ -547,7 +714,10 @@ export function NotebookEditor({ uid }: Props) {
                                           // A manual choice always wins over data-driven auto-pick.
                                           autoVizCells.current.delete(cell.elementName);
                                           manualVizCells.current.add(cell.elementName);
-                                          update((s) => updatePanelViz(s, cell.elementName, suggestion));
+                                          update((s) => updatePanelViz(s, cell.elementName, suggestion), {
+                                            label: t('notebooks.activity.changed-viz', 'changed a visualization'),
+                                            cellKey: cell.elementName,
+                                          });
                                         }}
                                       />
                                       <IconButton
@@ -707,6 +877,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   redoIcon: css({
     transform: 'scaleX(-1)',
+  }),
+  followingPill: css({
+    position: 'fixed',
+    top: theme.spacing(10),
+    left: '50%',
+    transform: 'translateX(-50%)',
+    zIndex: theme.zIndex.portal,
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.75),
+    color: '#fff',
+    padding: theme.spacing(0.5, 0.75, 0.5, 1.5),
+    borderRadius: theme.shape.radius.pill,
+    boxShadow: theme.shadows.z3,
+    fontWeight: theme.typography.fontWeightMedium,
   }),
   titleInput: css({
     border: 'none',
