@@ -1,5 +1,5 @@
 import { escapeRegex } from '@grafana/data';
-import { type BaseTransport, defaultInternalLoggerLevel, type Faro } from '@grafana/faro-core';
+import { type BaseTransport, defaultInternalLoggerLevel, type Faro, stringifyObjectValues } from '@grafana/faro-core';
 import { ReplayInstrumentation } from '@grafana/faro-instrumentation-replay';
 import {
   initializeFaro,
@@ -16,18 +16,6 @@ import { EchoSrvTransport } from './EchoSrvTransport';
 import { beforeSendHandler } from './beforeSendHandler';
 import { setupFaroPageMeta } from './faroPageMeta';
 import { type GrafanaJavascriptAgentBackendOptions, type GrafanaJavascriptAgentEchoEvent } from './types';
-
-// faro event attributes must be strings
-function interactionPropertiesToAttributes(properties?: Record<string, unknown>): Record<string, string> | undefined {
-  if (!properties) {
-    return undefined;
-  }
-  return Object.fromEntries(
-    Object.entries(properties)
-      .filter(([, value]) => value != null)
-      .map(([key, value]) => [key, typeof value === 'object' ? JSON.stringify(value) : String(value)])
-  );
-}
 
 function isCrossOriginIframe() {
   try {
@@ -197,7 +185,8 @@ export class GrafanaJavascriptAgentBackend
   // registered in faro will already broadcast all signals emitted by the faro API
   addEvent = (e: EchoEvent) => {
     if (isInteractionEvent(e)) {
-      this.faro?.api.pushEvent(e.payload.interactionName, interactionPropertiesToAttributes(e.payload.properties));
+      // faro event attributes must be strings; stringifyObjectValues also survives circular refs
+      this.faro?.api.pushEvent(e.payload.interactionName, stringifyObjectValues(e.payload.properties));
     }
   };
 
