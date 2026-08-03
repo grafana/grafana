@@ -244,9 +244,10 @@ export function usePaginatedRows(
       return;
     }
 
-    if (page > numPages) {
-      // resets pagination to end
-      setPage(numPages - 1);
+    // valid page indices are 0..numPages-1, so anything at or past numPages overflows
+    if (page > numPages - 1) {
+      // resets pagination to the last valid page
+      setPage(Math.max(0, numPages - 1));
     }
   }, [numPages, enabled, page, setPage]);
 

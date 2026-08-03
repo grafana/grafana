@@ -435,6 +435,42 @@ describe('TableNG hooks', () => {
       expect(result.current.rowsPerPage).toBe(2);
       expect(result.current.numPages).toBe(2);
     });
+
+    it('should clamp the page to the last valid page when pageSize grows and drops the page count', () => {
+      // 3 rows. pageSize 1 -> 3 pages (indices 0..2); land on the last page.
+      const { rows } = setupData();
+      const { result, rerender } = renderHook(
+        ({ pageSize }) =>
+          usePaginatedRows(rows, {
+            enabled: true,
+            height: 300,
+            width: 800,
+            rowHeight: 10,
+            headerHeight: 0,
+            footerHeight: 0,
+            pageSize,
+          }),
+        { initialProps: { pageSize: 1 } }
+      );
+
+      expect(result.current.numPages).toBe(3);
+
+      act(() => {
+        result.current.setPage(2);
+      });
+      expect(result.current.page).toBe(2);
+
+      // pageSize 2 -> 2 pages (indices 0..1). page 2 now overflows and must snap to the last valid page,
+      // rather than sitting on an empty page with a broken range summary.
+      rerender({ pageSize: 2 });
+
+      expect(result.current.numPages).toBe(2);
+      expect(result.current.page).toBe(1);
+      expect(result.current.pageRangeStart).toBe(3);
+      expect(result.current.pageRangeEnd).toBe(3);
+      expect(result.current.rows.length).toBe(1);
+      expect(result.current.rows[0].__index).toBe(2);
+    });
   });
 
   describe('useNestedRows', () => {
