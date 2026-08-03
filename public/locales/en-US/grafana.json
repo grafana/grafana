@@ -4832,6 +4832,7 @@
       "not-found": "<0>Not found: </0><config />"
     },
     "pan-zoom-help": {
+      "aria-label-open-documentation": "Open Canvas documentation",
       "ctrl-right-mouse": "CTRL + right mouse",
       "middle-mouse": "Middle mouse",
       "pan-title": "Pan:",
@@ -9249,6 +9250,7 @@
       "name-lookup-field": "Lookup field"
     },
     "location-more-editor": {
+      "aria-label-open-documentation": "Open geospatial data documentation",
       "mode-options": {
         "description-auto": "Automatically identify location data based on default field names",
         "description-coords": "Specify latitude and longitude fields",

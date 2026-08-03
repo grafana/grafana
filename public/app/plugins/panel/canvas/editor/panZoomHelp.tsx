@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type StandardEditorProps, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Icon, Stack, useStyles2 } from '@grafana/ui';
 
 const helpUrl = 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/';
 
@@ -15,14 +15,21 @@ export const PanZoomHelp = ({}: StandardEditorProps<string, unknown, unknown, un
         <Alert
           title={t('canvas.pan-zoom-help.title-pan-and-zoom-controls', 'Pan and zoom controls')}
           severity="info"
-          buttonContent={<Icon name="question-circle" size="xl" />}
           className={styles.alert}
-          onRemove={() => {
-            const newWindow = window.open(helpUrl, '_blank', 'noopener,noreferrer');
-            if (newWindow) {
-              newWindow.opener = null;
-            }
-          }}
+          action={
+            <Button
+              aria-label={t('canvas.pan-zoom-help.aria-label-open-documentation', 'Open Canvas documentation')}
+              variant="secondary"
+              onClick={() => {
+                const newWindow = window.open(helpUrl, '_blank', 'noopener,noreferrer');
+                if (newWindow) {
+                  newWindow.opener = null;
+                }
+              }}
+            >
+              <Icon name="question-circle" size="xl" />
+            </Button>
+          }
         >
           <Stack direction="column">
             <ul>
