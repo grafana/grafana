@@ -7,17 +7,17 @@ export function BranchValidationError() {
       <ul style={{ padding: '0 20px' }}>
         <li>
           <Trans i18nKey="dashboard-scene.branch-validation-error.cannot-start-with">
-            It cannot start with '/' or end with '/', '.', or whitespace.
+            It cannot start with &apos;/&apos; or end with &apos;/&apos;, &apos;.&apos;, or whitespace.
           </Trans>
         </li>
         <li>
           <Trans i18nKey="dashboard-scene.branch-validation-error.it-cannot-contain-or">
-            It cannot contain '//' or '..'.
+            It cannot contain &apos;//&apos; or &apos;..&apos;.
           </Trans>
         </li>
         <li>
           <Trans i18nKey="dashboard-scene.branch-validation-error.cannot-contain-invalid-characters">
-            It cannot contain invalid characters: '~', '^', ':', '?', '*', '[', '\\', or ']'.
+            It cannot contain invalid characters: &apos;~&apos;, &apos;^&apos;, &apos;:&apos;, &apos;?&apos;, &apos;*&apos;, &apos;[&apos;, &apos;\\&apos;, or &apos;]&apos;.
           </Trans>
         </li>
         <li>
