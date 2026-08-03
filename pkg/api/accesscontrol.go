@@ -510,6 +510,9 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 		Grants: []string{"Viewer"},
 	}
 
+	// Stack-wide / root variable CRUD is Admin-only. Editors (and Viewers with
+	// folder Edit) manage folder-scoped variables via FolderEditActions on the
+	// folder ACL — same hybrid model as the RBAC design for shared variables.
 	variablesWriterRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:variables:writer",
@@ -522,7 +525,7 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 				{Action: ac.ActionVariablesDelete, Scope: folder.ScopeFoldersAll},
 			}),
 		},
-		Grants: []string{"Editor", "Admin"},
+		Grants: []string{"Admin"},
 	}
 
 	publicDashboardsWriterRole := ac.RoleRegistration{

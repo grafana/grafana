@@ -55,14 +55,11 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, listRsp.Items)
 
-	t.Run("editor can mutate variables", func(t *testing.T) {
+	t.Run("editor cannot mutate root variables", func(t *testing.T) {
 		editorVariable := buildVariableObject("", "editorRegion", "")
-		createdEditorVariable, err := editorVariableClient.Resource.Create(ctx, editorVariable, metav1.CreateOptions{})
-		require.NoError(t, err)
-		require.Equal(t, "editorRegion", createdEditorVariable.GetName())
-
-		err = editorVariableClient.Resource.Delete(ctx, createdEditorVariable.GetName(), metav1.DeleteOptions{})
-		require.NoError(t, err)
+		_, err := editorVariableClient.Resource.Create(ctx, editorVariable, metav1.CreateOptions{})
+		require.Error(t, err)
+		require.True(t, k8serrors.IsForbidden(err), "expected forbidden error, got: %v", err)
 	})
 
 	t.Run("viewer cannot mutate variables", func(t *testing.T) {
@@ -88,6 +85,17 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 	folder2 := buildFolderObject(helper.Namespacer(admin.Identity.GetOrgID()), "Folder 2")
 	createdFolder2, err := folderClient.Resource.Create(ctx, folder2, metav1.CreateOptions{})
 	require.NoError(t, err)
+
+	// Default folder ACLs grant Editors Edit, which includes variables:* via FolderEditActions.
+	t.Run("editor can mutate variables in folder with edit access", func(t *testing.T) {
+		editorFolderVariable := buildVariableObject("", "editorFolderVar", createdFolder1.GetName())
+		created, err := editorVariableClient.Resource.Create(ctx, editorFolderVariable, metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "editorFolderVar--"+createdFolder1.GetName(), created.GetName())
+
+		err = editorVariableClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		require.NoError(t, err)
+	})
 
 	t.Run("editor cannot create variable in folder without edit access", func(t *testing.T) {
 		editorID, err := identity.UserIdentifier(editor.Identity.GetID())
