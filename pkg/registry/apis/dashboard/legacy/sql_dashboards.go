@@ -755,7 +755,7 @@ func parseLibraryPanelRow(p panel) (dashboardV0.LibraryPanel, error) {
 	item.Status = status
 
 	// Remove the properties we are already showing
-	for _, k := range []string{"type", "pluginVersion", "title", "description", "options", "fieldConfig", "datasource", "targets", "libraryPanel", "id", "gridPos"} {
+	for _, k := range []string{"type", "pluginVersion", "title", "description", "options", "fieldConfig", "datasource", "targets", "links", "transparent", "libraryPanel", "id", "gridPos"} {
 		delete(status.Missing.Object, k)
 	}
 
