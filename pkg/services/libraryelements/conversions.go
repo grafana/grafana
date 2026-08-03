@@ -96,7 +96,9 @@ func LibraryPanelToLegacyModel(panel *v0alpha1.LibraryPanel) (json.RawMessage, e
 		fieldConfig = map[string]any{}
 	}
 	legacyModel["fieldConfig"] = fieldConfig
-	legacyModel["gridPos"] = spec.GridPos
+	if spec.GridPos != (v0alpha1.GridPos{}) {
+		legacyModel["gridPos"] = spec.GridPos
+	}
 	if spec.Datasource != nil {
 		legacyModel["datasource"] = spec.Datasource
 	}
