@@ -15,7 +15,14 @@ export interface LastUsedNotebook {
  */
 export function getLastUsedNotebook(): LastUsedNotebook | undefined {
   const value = store.getObject<LastUsedNotebook>(LAST_USED_NOTEBOOK_KEY);
-  if (!value || typeof value.uid !== 'string' || value.uid === '' || typeof value.title !== 'string') {
+  if (
+    !value ||
+    typeof value.uid !== 'string' ||
+    value.uid === '' ||
+    typeof value.title !== 'string' ||
+    typeof value.at !== 'number' ||
+    !Number.isFinite(value.at)
+  ) {
     return undefined;
   }
   return value;
