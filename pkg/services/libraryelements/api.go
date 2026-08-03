@@ -897,6 +897,7 @@ func (lk8s *libraryElementsK8sHandler) getAllK8sLibraryElements(c *contextmodel.
 // filterK8sLibraryPanels applies the legacy search query semantics to the listed
 // library panels.
 func (lk8s *libraryElementsK8sHandler) filterK8sLibraryPanels(c *contextmodel.ReqContext, items []unstructured.Unstructured, query model.SearchLibraryElementsQuery, folderUIDFilter []string) []unstructured.Unstructured {
+	hasFolderFilter := folderUIDFilter != nil
 	var typeFilter []string
 	if len(strings.TrimSpace(query.TypeFilter)) > 0 {
 		typeFilter = strings.Split(query.TypeFilter, ",")
@@ -906,7 +907,7 @@ func (lk8s *libraryElementsK8sHandler) filterK8sLibraryPanels(c *contextmodel.Re
 	// the legacy search also matches elements whose folder title contains the search
 	// string (unless an explicit folder filter is set), so resolve folder titles first
 	folderTitles := map[string]string{}
-	if searchString != "" && len(folderUIDFilter) == 0 {
+	if searchString != "" && !hasFolderFilter {
 		folderTitles = lk8s.resolveFolderTitles(c, items)
 	}
 
@@ -921,7 +922,7 @@ func (lk8s *libraryElementsK8sHandler) filterK8sLibraryPanels(c *contextmodel.Re
 		if len(typeFilter) > 0 && !slices.Contains(typeFilter, panelType) {
 			continue
 		}
-		if len(folderUIDFilter) > 0 && !matchesFolderFilter(folderUID, folderUIDFilter) {
+		if hasFolderFilter && !matchesFolderFilter(folderUID, folderUIDFilter) {
 			continue
 		}
 		if !matchesSearchString(item, searchString, folderTitles[folderUID]) {
