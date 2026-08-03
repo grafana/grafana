@@ -2327,7 +2327,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.toBleveSearchRequest") //nolint:staticcheck,ineffassign // SA4006: ctx intentionally kept so future code added to this function inherits the traced span
 	defer span.End()
 
-	if errResult := rejectTrashFieldsOnLiveSearch(req); errResult != nil {
+	if errResult := validateTrashRequest(req); errResult != nil {
 		return nil, errResult
 	}
 
@@ -2544,12 +2544,26 @@ func combineFilterAndTextQueries(filters []query.Query, textQuery query.Query) q
 	return bq
 }
 
+// validateTrashRequest enforces the rules that separate trash from live search: a
+// live search cannot name trash-only fields, and a trash search cannot federate.
+// Both live here so a read path cannot apply one rule without the other.
+func validateTrashRequest(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	if !req.IsDeleted {
+		return rejectTrashFieldsOnLiveSearch(req)
+	}
+	// Trash authorizes each hit against one index's group and resource, so hits
+	// federated in from another index would be checked against the wrong one.
+	// searchServer.Search refuses this before the indexes are resolved; this is the
+	// backstop for callers that reach an index directly.
+	if len(req.Federated) > 0 {
+		return resource.NewBadRequestError("searching deleted resources does not support federated queries")
+	}
+	return nil
+}
+
 // rejectTrashFieldsOnLiveSearch refuses a live search naming a field only deleted
 // documents carry, so a filter that would match nothing fails loudly instead.
 func rejectTrashFieldsOnLiveSearch(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
-	if req.IsDeleted {
-		return nil
-	}
 	refused := func(key string) *resourcepb.ErrorResult {
 		return resource.NewBadRequestError(fmt.Sprintf("field %q is only available when searching deleted resources", key))
 	}

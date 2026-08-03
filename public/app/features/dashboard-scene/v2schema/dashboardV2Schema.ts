@@ -19,7 +19,7 @@
  * forward-compatible with newer schema fields.
  */
 
-import { z } from 'zod';
+import * as z from 'zod';
 
 import type {
   Spec as DashboardV2Spec,

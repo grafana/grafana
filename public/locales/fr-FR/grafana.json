@@ -270,6 +270,7 @@
       "placeholder-search-devices-by-ip-address": "Rechercher des appareils par adresse IP."
     },
     "user-list-page": {
+      "label-active-users": "",
       "label-all-users": "Tous les utilisateurs",
       "label-anonymous-devices": "Appareils anonymes",
       "label-organization-users": "Utilisateurs de l’organisation",
@@ -8610,7 +8611,24 @@
       "body-no-logs-volume-available": "Aucune information de volume disponible pour les requêtes actuelles et la plage temporelle."
     },
     "metrics-list": {
-      "search-placeholder": ""
+      "collapse-metric": "",
+      "error": "",
+      "expand-metric": "",
+      "filter-values": "",
+      "hide-values": "",
+      "labels-error": "",
+      "loading": "",
+      "loading-labels": "",
+      "loading-values": "",
+      "no-metrics": "",
+      "search-placeholder": "",
+      "show-more": "",
+      "show-more-metrics": "",
+      "show-more-values": "",
+      "show-values": "",
+      "sort-ascending": "",
+      "sort-descending": "",
+      "values-error": ""
     },
     "next-prev-result": {
       "aria-label-next": "Bouton Résultat suivant",
@@ -10929,6 +10947,83 @@
       "read-more": "",
       "title": ""
     },
+    "overview": {
+      "get-started": {
+        "cards": {
+          "app-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "cloud-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "database-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "demo-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "hosted-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "infra-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "kubernetes": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "logs": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "opentelemetry": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "prometheus": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "visualize-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "website-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          }
+        },
+        "show-less": "",
+        "show-more": "",
+        "title": ""
+      },
+      "options": {
+        "all": "",
+        "attention": "",
+        "available": "",
+        "enabled": "",
+        "get-started": ""
+      },
+      "title": ""
+    },
     "recent-dashboards-tab": {
       "browse": "",
       "clear": "",
@@ -10949,14 +11044,25 @@
       },
       "carousel-label": "",
       "carousel-roledescription": "",
-      "existing": "",
-      "frontend-observability": {
+      "connect-metrics": {
         "action": "",
         "context": "",
         "description": "",
-        "setup-action": "",
         "title": ""
       },
+      "enable-logs": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "title": ""
+      },
+      "enable-logs-k8s": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "title": ""
+      },
+      "existing": "",
       "go-to": "",
       "health": {
         "nodes_one": "",
@@ -10987,16 +11093,57 @@
         "pods_one": "",
         "pods_other": ""
       },
+      "kubernetes-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
+      "logs": {
+        "action": "",
+        "action-explore": "",
+        "datasource": "",
+        "stats": "",
+        "title": "",
+        "volume": "",
+        "stats-sources_one": "",
+        "stats-sources_other": ""
+      },
+      "metrics": {
+        "action": "",
+        "action-explore": "",
+        "data-points-per-minute": "",
+        "datasource": "",
+        "disk-worst": "",
+        "series-trend": "",
+        "stats": "",
+        "title": "",
+        "view": "",
+        "disk-eta_one": "",
+        "disk-eta_other": "",
+        "disk-hosts_one": "",
+        "disk-hosts_other": "",
+        "names_one": "",
+        "names_other": "",
+        "series_one": "",
+        "series_other": "",
+        "stats-hosts_one": "",
+        "stats-hosts_other": ""
+      },
       "next": "",
       "no-data": {
         "badge": "",
         "connect": "",
         "description": "",
+        "description-partial": "",
+        "description-unknown": "",
         "popular-solutions": "",
         "solution-k6": "",
         "solution-kubernetes": "",
         "solution-synthetics": "",
-        "title": ""
+        "title": "",
+        "title-partial": ""
       },
       "pause": "",
       "previous": "",
@@ -11005,14 +11152,19 @@
       "show": "",
       "switch": "",
       "switchSolution": "",
-      "synthetic-monitoring": {
+      "title": "",
+      "traces": {
         "action": "",
-        "context": "",
-        "description": "",
-        "setup-action": "",
-        "title": ""
-      },
-      "title": ""
+        "action-explore": "",
+        "datasource": "",
+        "stats": "",
+        "throughput": "",
+        "title": "",
+        "spans_one": "",
+        "spans_other": "",
+        "stats-services_one": "",
+        "stats-services_other": ""
+      }
     },
     "starred-dashboards-tab": {
       "empty": "",
@@ -17123,6 +17275,7 @@
       "delete-modal-confirm": "",
       "delete-modal-title": "",
       "folder-description": "",
+      "folder-description-folder-only": "",
       "folder-label": "",
       "moved": "",
       "name-exists": "",
@@ -17142,7 +17295,9 @@
       "moving": "",
       "title": "",
       "body_one": "",
-      "body_other": ""
+      "body_other": "",
+      "body-folder-only_one": "",
+      "body-folder-only_other": ""
     },
     "page": {
       "delete": "",
