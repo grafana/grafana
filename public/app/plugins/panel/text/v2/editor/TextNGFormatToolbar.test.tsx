@@ -111,6 +111,16 @@ describe('TextNGFormatToolbar', () => {
       expect(view!.state.doc.toString()).toBe('- one\n- two');
     });
 
+    // Toggling itself is covered in editorCommands.test.ts.
+    it('removes the markers when the action is re-applied', async () => {
+      setup(TextMode.Markdown, 'hello world', { anchor: 0, head: 5 });
+
+      await clickButton('Bold');
+      await clickButton('Bold');
+
+      expect(view!.state.doc.toString()).toBe('hello world');
+    });
+
     it('inserts a table skeleton', async () => {
       setup(TextMode.Markdown, '');
 
