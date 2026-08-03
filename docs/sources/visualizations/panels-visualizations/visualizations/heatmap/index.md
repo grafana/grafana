@@ -183,12 +183,12 @@ Use these settings to control the display of heatmap cells.
 
 Tooltip options control the information overlay that appears when you hover over data points in the visualization.
 
-| Option                                | Description                                                                                                                                                                     |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Tooltip mode](#tooltip-mode)         | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                                                                    |
-| Show histogram (Y axis)               | When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.        |
-| Max width                             | Set the maximum width of the tooltip box.                                                                                                                                       |
-| Max height                            | Set the maximum height of the tooltip box. This option is shown when **Tooltip mode** is **All**, or when exemplar data is present. If unset, the tooltip isn't scroll-limited. |
+| Option                        | Description                                                                                                                                                                     |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Tooltip mode](#tooltip-mode) | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                                                                    |
+| Show histogram (Y axis)       | When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.        |
+| Max width                     | Set the maximum width of the tooltip box.                                                                                                                                       |
+| Max height                    | Set the maximum height of the tooltip box. This option is shown when **Tooltip mode** is **All**, or when exemplar data is present. If unset, the tooltip isn't scroll-limited. |
 
 #### Tooltip mode
 
