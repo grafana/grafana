@@ -31,6 +31,21 @@
         },
         {
           "type": "query",
+          "name": "refresh_numeric_truthy_var",
+          "refresh": 2
+        },
+        {
+          "type": "query",
+          "name": "hide_variable_numeric_truthy_var",
+          "hideVariable": 1
+        },
+        {
+          "type": "query",
+          "name": "hide_label_numeric_truthy_var",
+          "hideLabel": 1
+        },
+        {
+          "type": "query",
           "name": "no_properties_var"
         }
       ]

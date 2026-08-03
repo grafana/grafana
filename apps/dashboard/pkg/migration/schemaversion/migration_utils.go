@@ -104,10 +104,10 @@ func ConvertToInt(value interface{}) (int, bool) {
 	}
 }
 
-// isTruthy reports whether value is truthy using the same rules as JavaScript,
+// IsTruthy reports whether value is truthy using the same rules as JavaScript,
 // so migrations that mirror the frontend treat 0, "", false and null/absent
 // values as falsy while any other value (including objects and arrays) is truthy.
-func isTruthy(value interface{}) bool {
+func IsTruthy(value interface{}) bool {
 	switch v := value.(type) {
 	case nil:
 		return false
