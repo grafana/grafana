@@ -403,7 +403,7 @@ export const libraryPanelsK8sClient = {
         if (
           !name.includes(search) &&
           !description.includes(search) &&
-          !(matchByFolderTitle && folderTitle !== '' && folderTitle.includes(search))
+          !(matchByFolderTitle && folderUid !== '' && folderTitle !== '' && folderTitle.includes(search))
         ) {
           return false;
         }

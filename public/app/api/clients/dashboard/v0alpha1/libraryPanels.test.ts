@@ -231,4 +231,19 @@ describe('libraryPanelsK8sClient request options', () => {
 
     expect(fetch).toHaveBeenCalledWith(expect.objectContaining({ showSuccessAlert: false, showErrorAlert: false }));
   });
+
+  it('does not match root panels by the synthetic General folder name', async () => {
+    const resource = makeResource();
+    delete resource.metadata.annotations!['grafana.app/folder'];
+    fetch.mockReturnValue(
+      of({
+        data: { metadata: { resourceVersion: '1' }, items: [resource] },
+      })
+    );
+
+    const result = await libraryPanelsK8sClient.list({ searchString: 'general' });
+
+    expect(result.totalCount).toBe(0);
+    expect(result.elements).toEqual([]);
+  });
 });
