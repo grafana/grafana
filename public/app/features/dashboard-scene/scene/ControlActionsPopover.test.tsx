@@ -104,7 +104,7 @@ describe('<ControlActionsPopover />', () => {
         />
       );
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Delete' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
       expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     });
@@ -152,7 +152,7 @@ describe('<ControlActionsPopover />', () => {
         />
       );
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Duplicate' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Duplicate' }));
 
       expect(screen.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument();
     });
@@ -266,11 +266,14 @@ describe('<VariableEditActions />', () => {
       const { onClickEdit, onClickDuplicate, onClickDelete, onAncestorPointerDown } =
         renderVariableEditActions(buildVariable());
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Duplicate' }));
+      const duplicateButton = screen.getByRole('button', { name: 'Duplicate' });
+      fireEvent.click(duplicateButton);
 
       expect(onClickDuplicate).toHaveBeenCalledTimes(1);
       expect(onClickEdit).not.toHaveBeenCalled();
       expect(onClickDelete).not.toHaveBeenCalled();
+
+      fireEvent.pointerDown(duplicateButton);
       expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
@@ -280,7 +283,8 @@ describe('<VariableEditActions />', () => {
       const variable = buildVariable();
       const { onClickDelete, onAncestorPointerDown } = renderVariableEditActions(variable);
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Delete' }));
+      const deleteButton = screen.getByRole('button', { name: 'Delete' });
+      fireEvent.click(deleteButton);
 
       expect(mockPublishAppEvent).toHaveBeenCalledTimes(1);
 
@@ -297,6 +301,7 @@ describe('<VariableEditActions />', () => {
         })
       );
 
+      fireEvent.pointerDown(deleteButton);
       expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
@@ -351,11 +356,14 @@ describe('<LinkEditActions />', () => {
     test('calls onClickDuplicate and the event does not bubble to ancestors', () => {
       const { onClickEdit, onClickDuplicate, onClickDelete, onAncestorPointerDown } = renderLinkEditActions();
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Duplicate' }));
+      const duplicateButton = screen.getByRole('button', { name: 'Duplicate' });
+      fireEvent.click(duplicateButton);
 
       expect(onClickDuplicate).toHaveBeenCalledTimes(1);
       expect(onClickEdit).not.toHaveBeenCalled();
       expect(onClickDelete).not.toHaveBeenCalled();
+
+      fireEvent.pointerDown(duplicateButton);
       expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
@@ -364,7 +372,8 @@ describe('<LinkEditActions />', () => {
     test('publishes a ShowConfirmModalEvent and the click event does not bubble to ancestors', () => {
       const { onClickDelete, onAncestorPointerDown } = renderLinkEditActions();
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Delete' }));
+      const deleteButton = screen.getByRole('button', { name: 'Delete' });
+      fireEvent.click(deleteButton);
 
       expect(mockPublishAppEvent).toHaveBeenCalledTimes(1);
 
@@ -381,6 +390,7 @@ describe('<LinkEditActions />', () => {
         })
       );
 
+      fireEvent.pointerDown(deleteButton);
       expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
@@ -450,11 +460,14 @@ describe('<AnnotationEditActions />', () => {
     test('calls onClickDuplicate and the event does not bubble to ancestors', () => {
       const { onClickEdit, onClickDuplicate, onClickDelete, onAncestorPointerDown } = renderAnnotationEditActions();
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Duplicate' }));
+      const duplicateButton = screen.getByRole('button', { name: 'Duplicate' });
+      fireEvent.click(duplicateButton);
 
       expect(onClickDuplicate).toHaveBeenCalledTimes(1);
       expect(onClickEdit).not.toHaveBeenCalled();
       expect(onClickDelete).not.toHaveBeenCalled();
+
+      fireEvent.pointerDown(duplicateButton);
       expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });
@@ -464,7 +477,8 @@ describe('<AnnotationEditActions />', () => {
       const dataLayer = buildDataLayer();
       const { onClickDelete, onAncestorPointerDown } = renderAnnotationEditActions(dataLayer);
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Delete' }));
+      const deleteButton = screen.getByRole('button', { name: 'Delete' });
+      fireEvent.click(deleteButton);
 
       expect(mockPublishAppEvent).toHaveBeenCalledTimes(1);
 
@@ -481,6 +495,7 @@ describe('<AnnotationEditActions />', () => {
         })
       );
 
+      fireEvent.pointerDown(deleteButton);
       expect(onAncestorPointerDown).not.toHaveBeenCalled();
     });
   });

@@ -6802,7 +6802,6 @@
     },
     "annotation-edit-actions": {
       "annotation-settings": "Annotation settings",
-      "aria-label-duplicate": "Duplicate",
       "description": {
         "change-annotation-color": "Change annotation color",
         "change-annotation-controls-display": "Change annotation controls display",
@@ -6892,6 +6891,7 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "Delete",
+      "aria-label-duplicate": "Duplicate",
       "delete": {
         "confirm": "Are you sure you want to delete: {{name}}?",
         "text": "Delete {{type}}",
@@ -7235,7 +7235,6 @@
     },
     "link-edit-actions": {
       "add-link": "Add link",
-      "aria-label-duplicate": "Duplicate",
       "link-settings": "Link settings",
       "remove-link": "Remove link",
       "update-link": "Update link"
@@ -7696,7 +7695,6 @@
       "add-variable": "Add variable"
     },
     "variable-edit-actions": {
-      "aria-label-duplicate": "Duplicate",
       "edit-custom-options": "Edit options",
       "edit-query": "Edit query",
       "variable-settings": "Variable settings"

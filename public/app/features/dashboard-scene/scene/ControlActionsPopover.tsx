@@ -64,6 +64,10 @@ export function ControlActionsPopover({
   );
 }
 
+function stopPointerDownPropagation(event: React.PointerEvent) {
+  event.stopPropagation();
+}
+
 export function VariableEditActions({
   variable,
   onClickEdit,
@@ -81,21 +85,10 @@ export function VariableEditActions({
   const { closePopover } = useControlActionsPopover();
   const hasQueryEditor = variable instanceof QueryVariable || variable instanceof CustomVariable;
 
-  const onClickEditInternal = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      onClickEdit();
-    },
-    [onClickEdit]
-  );
-  const onClickEditQueryInternal = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      closePopover();
-      onClickEditQuery();
-    },
-    [onClickEditQuery, closePopover]
-  );
+  const onClickEditQueryInternal = useCallback(() => {
+    closePopover();
+    onClickEditQuery();
+  }, [onClickEditQuery, closePopover]);
   const onClickDuplicateInternal = useCallback(
     (event: React.MouseEvent) => {
       event.stopPropagation();
@@ -122,13 +115,15 @@ export function VariableEditActions({
   );
 
   return (
-    <div className={styles.hoverActions}>
+    // Stops pointerdown from all actions reaching ancestors, e.g. element selection.
+    // It cannot live on the icon buttons: their wrapping Tooltip overrides their pointerdown handlers
+    <div className={styles.hoverActions} onPointerDown={stopPointerDownPropagation}>
       <Button
         fill="text"
         variant="secondary"
         size="sm"
         className={cx(styles.action, styles.editAction, styles.textAction)}
-        onPointerDown={onClickEditInternal}
+        onPointerDown={onClickEdit}
       >
         {t('dashboard-scene.variable-edit-actions.variable-settings', 'Variable settings')}
       </Button>
@@ -154,16 +149,18 @@ export function VariableEditActions({
         variant="secondary"
         size="md"
         className={styles.action}
-        onPointerDown={onClickDuplicateInternal}
-        aria-label={t('dashboard-scene.variable-edit-actions.aria-label-duplicate', 'Duplicate')}
+        onClick={onClickDuplicateInternal}
+        tooltip={t('dashboard-scene.control-edit-actions.aria-label-duplicate', 'Duplicate')}
+        tooltipPlacement="top"
       />
       <IconButton
         name="trash-alt"
         variant="destructive"
         size="md"
         className={cx(styles.action, styles.deleteAction)}
-        onPointerDown={onClickDeleteInternal}
-        aria-label={t('dashboard-scene.control-edit-actions.aria-label-delete', 'Delete')}
+        onClick={onClickDeleteInternal}
+        tooltip={t('dashboard-scene.control-edit-actions.aria-label-delete', 'Delete')}
+        tooltipPlacement="top"
       />
     </div>
   );
@@ -185,21 +182,10 @@ export function AnnotationEditActions({
   const styles = useStyles2(getStyles);
   const { closePopover } = useControlActionsPopover();
 
-  const onClickEditInternal = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      onClickEdit();
-    },
-    [onClickEdit]
-  );
-  const onClickEditQueryInternal = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      closePopover();
-      onClickEditQuery();
-    },
-    [onClickEditQuery, closePopover]
-  );
+  const onClickEditQueryInternal = useCallback(() => {
+    closePopover();
+    onClickEditQuery();
+  }, [onClickEditQuery, closePopover]);
   const onClickDuplicateInternal = useCallback(
     (event: React.MouseEvent) => {
       event.stopPropagation();
@@ -230,13 +216,15 @@ export function AnnotationEditActions({
   );
 
   return (
-    <div className={styles.hoverActions}>
+    // Stops pointerdown from all actions reaching ancestors, e.g. element selection.
+    // It cannot live on the icon buttons: their wrapping Tooltip overrides their pointerdown handlers
+    <div className={styles.hoverActions} onPointerDown={stopPointerDownPropagation}>
       <Button
         fill="text"
         variant="secondary"
         size="sm"
         className={cx(styles.action, styles.editAction, styles.textAction)}
-        onPointerDown={onClickEditInternal}
+        onPointerDown={onClickEdit}
       >
         {t('dashboard-scene.annotation-edit-actions.annotation-settings', 'Annotation settings')}
       </Button>
@@ -256,16 +244,18 @@ export function AnnotationEditActions({
         variant="secondary"
         size="md"
         className={styles.action}
-        onPointerDown={onClickDuplicateInternal}
-        aria-label={t('dashboard-scene.annotation-edit-actions.aria-label-duplicate', 'Duplicate')}
+        onClick={onClickDuplicateInternal}
+        tooltip={t('dashboard-scene.control-edit-actions.aria-label-duplicate', 'Duplicate')}
+        tooltipPlacement="top"
       />
       <IconButton
         name="trash-alt"
         variant="destructive"
         size="md"
         className={cx(styles.action, styles.deleteAction)}
-        onPointerDown={onClickDeleteInternal}
-        aria-label={t('dashboard-scene.control-edit-actions.aria-label-delete', 'Delete')}
+        onClick={onClickDeleteInternal}
+        tooltip={t('dashboard-scene.control-edit-actions.aria-label-delete', 'Delete')}
+        tooltipPlacement="top"
       />
     </div>
   );
@@ -285,13 +275,6 @@ export function LinkEditActions({
   const styles = useStyles2(getStyles);
   const { closePopover } = useControlActionsPopover();
 
-  const onClickEditInternal = useCallback(
-    (event: React.MouseEvent) => {
-      event.stopPropagation();
-      onClickEdit();
-    },
-    [onClickEdit]
-  );
   const onClickDuplicateInternal = useCallback(
     (event: React.MouseEvent) => {
       event.stopPropagation();
@@ -318,13 +301,15 @@ export function LinkEditActions({
   );
 
   return (
-    <div className={styles.hoverActions}>
+    // Stops pointerdown from all actions reaching ancestors, e.g. element selection.
+    // It cannot live on the icon buttons: their wrapping Tooltip overrides their pointerdown handlers
+    <div className={styles.hoverActions} onPointerDown={stopPointerDownPropagation}>
       <Button
         fill="text"
         variant="secondary"
         size="sm"
         className={cx(styles.action, styles.editAction, styles.textAction)}
-        onPointerDown={onClickEditInternal}
+        onPointerDown={onClickEdit}
       >
         {t('dashboard-scene.link-edit-actions.link-settings', 'Link settings')}
       </Button>
@@ -334,16 +319,18 @@ export function LinkEditActions({
         variant="secondary"
         size="md"
         className={styles.action}
-        onPointerDown={onClickDuplicateInternal}
-        aria-label={t('dashboard-scene.link-edit-actions.aria-label-duplicate', 'Duplicate')}
+        onClick={onClickDuplicateInternal}
+        tooltip={t('dashboard-scene.control-edit-actions.aria-label-duplicate', 'Duplicate')}
+        tooltipPlacement="top"
       />
       <IconButton
         name="trash-alt"
         variant="destructive"
         size="md"
         className={cx(styles.action, styles.deleteAction)}
-        onPointerDown={onClickDeleteInternal}
-        aria-label={t('dashboard-scene.control-edit-actions.aria-label-delete', 'Delete')}
+        onClick={onClickDeleteInternal}
+        tooltip={t('dashboard-scene.control-edit-actions.aria-label-delete', 'Delete')}
+        tooltipPlacement="top"
       />
     </div>
   );
