@@ -161,6 +161,7 @@ func TestLibraryPanelModelClearsTypedValues(t *testing.T) {
 	legacyModel := json.RawMessage(`{
 		"type": "timeseries",
 		"title": "panel title",
+		"description": "description",
 		"links": [{"title": "link"}],
 		"transparent": true
 	}`)
@@ -169,6 +170,7 @@ func TestLibraryPanelModelClearsTypedValues(t *testing.T) {
 	require.NoError(t, err)
 	spec.Links = nil
 	spec.Transparent = false
+	spec.Description = ""
 
 	rebuilt, err := LibraryPanelToLegacyModel(&v0alpha1.LibraryPanel{Spec: spec, Status: status})
 	require.NoError(t, err)
@@ -178,6 +180,7 @@ func TestLibraryPanelModelClearsTypedValues(t *testing.T) {
 	require.NotContains(t, got, "links")
 	require.NotContains(t, got, "transparent")
 	require.NotContains(t, got, "gridPos")
+	require.Equal(t, "", got["description"])
 }
 
 func TestLibraryPanelModelRoundTrip(t *testing.T) {
