@@ -149,7 +149,7 @@ Use the following options to define the heatmap colors.
 
 #### Steps
 
-Set a value between `1` and `128`.
+Set a value between `2` and `128`.
 
 #### Reverse
 
@@ -183,13 +183,12 @@ Use these settings to control the display of heatmap cells.
 
 Tooltip options control the information overlay that appears when you hover over data points in the visualization.
 
-| Option                                | Description                                                                                                                                                                     |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Tooltip mode](#tooltip-mode)         | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                                                                    |
-| Show histogram (Y axis)               | When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.        |
-| [Show color scale](#show-color-scale) | This option controls whether or not the tooltip includes the color scale that's also represented in the legend.                                                                 |
-| Max width                             | Set the maximum width of the tooltip box.                                                                                                                                       |
-| Max height                            | Set the maximum height of the tooltip box. This option is shown when **Tooltip mode** is **All**, or when exemplar data is present. If unset, the tooltip isn't scroll-limited. |
+| Option                        | Description                                                                                                                                                                     |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Tooltip mode](#tooltip-mode) | When you hover your cursor over the visualization, Grafana can display tooltips. Choose how tooltips behave.                                                                    |
+| Show histogram (Y axis)       | When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes a histogram representing the y-axis.        |
+| Max width                     | Set the maximum width of the tooltip box.                                                                                                                                       |
+| Max height                    | Set the maximum height of the tooltip box. This option is shown when **Tooltip mode** is **All**, or when exemplar data is present. If unset, the tooltip isn't scroll-limited. |
 
 #### Tooltip mode
 
@@ -200,12 +199,6 @@ When you hover your cursor over the visualization, Grafana can display tooltips.
 - **Hidden -** Do not display the tooltip when you interact with the visualization.
 
 Use an override to hide individual series from the tooltip.
-
-#### Show color scale
-
-When you set the **Tooltip mode** to **Single**, this option is displayed. This option controls whether or not the tooltip includes the color scale that's also represented in the legend. When the color scale is included in the tooltip, it shows the hovered value on the scale:
-
-![Heatmap with a tooltip displayed showing the hovered value reflected in the color scale](/media/docs/grafana/panels-visualizations/screenshot-heatmap-tooltip-color-scale-v11.0.png)
 
 ### Legend options
 

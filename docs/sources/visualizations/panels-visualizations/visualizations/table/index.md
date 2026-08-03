@@ -203,7 +203,6 @@ and clicking the column name.
 ## Dataset selector
 
 If the data queried contains multiple datasets, a table displays a drop-down list at the bottom, so you can select the dataset you want to visualize.
-This option is only available when you're editing the panel.
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-table-multi-dataset-v11.3.png" max-width="650px" alt="Table visualization with multiple datasets" >}}
 
@@ -499,12 +498,14 @@ Actions add a button to a cell that triggers a basic, unauthenticated API call w
 <!-- prettier-ignore-start -->
 | Option             | Description  |
 | ------------------ | ------------ |
-| Endpoint           | Enter the endpoint URL. |
-| Method             | Choose from **GET**, **POST**, and **PUT**. |
-| Content-Type       | Select an option in the drop-down list. Choose from: JSON, Text, JavaScript, HTML, XML, and x-www-form-urlencoded. |
+| Connection         | Shows how the action's HTTP request is sent. The default and only available option is **Direct from browser**. |
+| Method             | Choose from **GET** and **POST**. |
+| URL                | Enter the request URL. |
+| Variables          | Enter **Key**, **Name**, and **Type** to define a variable you can reference in the URL, headers, query parameters, or body. |
 | Query parameters   | Enter as many **Key**, **Value** pairs as you need. |
-| Header parameters  | Enter as many **Key**, **Value** pairs as you need. |
-| Payload            | Enter the body of the API call. |
+| Headers            | Enter as many **Key**, **Value** pairs as you need. |
+| Content-Type       | Select from the following: **application/json**, **text/plain**, **application/xml**, and **application/x-www-form-urlencoded**. |
+| Body               | Enter the body of the API call. |
 | Tooltip from field | Toggle on the **Tooltip from field** switch to use the values from another field (or column) in a tooltip. For more information, refer to [Tooltip from field](#tooltip-from-field). |
 <!-- prettier-ignore-end -->
 
