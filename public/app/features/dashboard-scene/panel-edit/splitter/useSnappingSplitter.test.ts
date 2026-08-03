@@ -313,9 +313,16 @@ describe('useSnappingSplitter', () => {
 
       const collapsingStyle = () =>
         pixelPane === 'primary' ? result.current.primaryProps.style : result.current.secondaryProps.style;
+      const fillingStyle = () =>
+        pixelPane === 'primary' ? result.current.secondaryProps.style : result.current.primaryProps.style;
 
-      return { result, collapsingStyle };
+      return { result, collapsingStyle, fillingStyle };
     }
+
+    // `mountSplitter` gives the primary case a row and the secondary case a column, so this picks
+    // the main axis each one is laid out on.
+    const mainAxisMinDim = (pixelPane: 'primary' | 'secondary') =>
+      pixelPane === 'primary' ? ('minWidth' as const) : ('minHeight' as const);
 
     describe.each(['primary', 'secondary'] as const)('%s pane', (pixelPane) => {
       it('holds its size instead of being shrunk away', () => {
@@ -324,12 +331,30 @@ describe('useSnappingSplitter', () => {
         expect(collapsingStyle().flexShrink).toBe(0);
       });
 
+      // Pinning the pane is only half of it. `useSplitter` floors the pane beside it at
+      // `min-content`, so with neither able to give, the flex line overflows the container and its
+      // `overflow: hidden` clips the pinned pane off the trailing edge instead.
+      it('lets the pane beside it give up the space', () => {
+        const { fillingStyle } = mountSplitter(pixelPane);
+
+        expect(fillingStyle()[mainAxisMinDim(pixelPane)]).toBe(0);
+      });
+
       // Closed is a deliberate state, not a squeeze, and the pane has to be free to sit at 0.
       it('does not pin the size while closed', () => {
         const { collapsingStyle } = mountSplitter(pixelPane, true);
 
         expect(collapsingStyle().flexShrink).toBeUndefined();
         expect(collapsingStyle().flexBasis).toBe('0px');
+      });
+
+      // Closed still leaves a `min-content` expand affordance on the trailing edge. If the pane
+      // beside it cannot shrink, that affordance is the thing pushed past the container's clip and
+      // there is nothing left to click to bring the pane back.
+      it('keeps the expand affordance on screen while closed', () => {
+        const { fillingStyle } = mountSplitter(pixelPane, true);
+
+        expect(fillingStyle()[mainAxisMinDim(pixelPane)]).toBe(0);
       });
 
       // Dragging past the threshold still has to close it: the pane holds its *given* size, and a
@@ -346,6 +371,24 @@ describe('useSnappingSplitter', () => {
         expect(result.current.splitterState.collapsed).toBe(true);
         expect(collapsingStyle().flexBasis).toBe('0px');
       });
+    });
+
+    // A flex-sized splitter divides the container by ratio from a basis of 0, so there is no size to
+    // defend and nothing that can overflow. Leaving the panes alone keeps the viz/data split — the
+    // one flex consumer — on the behaviour it already had.
+    it('leaves a flex-sized splitter alone', () => {
+      const { result } = renderHook(() =>
+        useSnappingSplitter({
+          direction: 'column',
+          initialSize: 0.5,
+          collapseBelowPixels: 100,
+        })
+      );
+
+      // Neither half of the pixel-pane treatment: the pane keeps its shrink factor, and the pane
+      // beside it keeps whatever floor `useSplitter` gave it.
+      expect(result.current.secondaryProps.style.flexShrink).toBeUndefined();
+      expect(result.current.primaryProps.style.minHeight).toBeUndefined();
     });
   });
 

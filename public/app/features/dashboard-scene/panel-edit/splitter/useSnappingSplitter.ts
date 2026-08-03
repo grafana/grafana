@@ -168,13 +168,25 @@ export function useSnappingSplitter({
   collapsingProps.style.minWidth = 'unset';
   collapsingProps.style.minHeight = 'unset';
 
-  if (!state.collapsed) {
-    // `overflow: hidden` above zeroes this pane's automatic minimum size, while the pane beside it
-    // keeps `min-content` and so gives up nothing. Without this the pane absorbs every shortfall as
-    // the container narrows and is squeezed to a sliver — measured at 40px against a configured
-    // 330px. It is either at the size it was given or deliberately closed, never a useless in
-    // between; the pane beside it is the one that has to clip.
-    collapsingProps.style.flexShrink = 0;
+  // Only a pixel-sized pane has a size of its own to keep. A flex-sized one starts from a basis of 0
+  // and divides the container by ratio, so it can neither overflow nor be squeezed.
+  if (usePixels) {
+    // `useSplitter` floors both panes at `min-content`, so once the container is narrower than the
+    // two of them together, neither gives and the flex line overflows — and the container's
+    // `overflow: hidden` clips whatever sits on the trailing edge. That is this pane, open or shut:
+    // measured at a 1150px window, a 330px options pane laid out at full width with 340px of it cut
+    // off, and once collapsed, its 53px expand affordance pushed off screen with no way to get the
+    // pane back. Letting the pane beside it shrink keeps the line inside the container, so that pane
+    // is the one that clips.
+    fillingProps.style[direction === 'row' ? 'minWidth' : 'minHeight'] = 0;
+
+    if (!state.collapsed) {
+      // `overflow: hidden` above zeroes this pane's own automatic minimum, so with the pane beside
+      // it now able to shrink, it would be the one absorbing every shortfall instead — measured at
+      // 40px against a configured 330px. It is either at the size it was given or deliberately
+      // closed, never a useless in between. Closed is deliberate, so it is free to sit at 0.
+      collapsingProps.style.flexShrink = 0;
+    }
   }
 
   if (state.snapSize) {
