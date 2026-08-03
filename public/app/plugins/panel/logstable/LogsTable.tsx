@@ -51,7 +51,15 @@ import {
   type OnLogsTableOptionsChange,
 } from './types';
 
-interface LogsTablePanelProps extends Omit<PanelProps<Options>, 'timeRange'> {}
+interface LogsTablePanelProps extends Omit<PanelProps<Options>, 'timeRange'> {
+  /**
+   * Set by hosts that render this component directly instead of through a dashboard scene, and so
+   * never run the `extractFields` transformation registered in `module.tsx`. Explore is the only
+   * one today. Dashboards cannot set it — scenes passes `PanelProps` and nothing more — which is
+   * why the dashboard case is the default.
+   */
+  extractFieldsInPanel?: boolean;
+}
 
 /**
  * Props:
@@ -74,11 +82,17 @@ export const LogsTable = ({
   timeZone,
   id,
   renderCounter,
+  extractFieldsInPanel = false,
 }: LogsTablePanelProps) => {
   const frameIndex = options.frameIndex <= data.series.length - 1 ? options.frameIndex : 0;
   const styles = useStyles2(getStyles, height, width);
   const { app } = usePanelContext();
   const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
+  const panelPluginTransformationsEnabled = useFlagGrafanaPanelPluginTransformations();
+
+  // With the flag off nothing upstream extracts, whatever the host, so the in-panel pass is the
+  // only one. With it on, only a host that runs the registered transformations has already done it.
+  const extractFields = extractFieldsInPanel || !panelPluginTransformationsEnabled;
 
   const rawTableFrame: DataFrame | null = data.series[frameIndex] ? data.series[frameIndex] : null;
   const logsFrame: LogsFrame | null = useMemo(
@@ -223,6 +237,7 @@ export const LogsTable = ({
     timeZone,
     replaceVariables,
     loadingState: data.state,
+    enabled: extractFields,
   });
 
   // Organize fields transform
