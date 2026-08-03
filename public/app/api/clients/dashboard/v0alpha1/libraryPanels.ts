@@ -22,6 +22,7 @@ const DASHBOARD_API_GROUP = 'dashboard.grafana.app';
 const DASHBOARD_API_VERSION = 'v0alpha1';
 const LIBRARY_PANELS_RESOURCE = 'librarypanels';
 const ROOT_FOLDER_NAME = 'General';
+const ROOT_FOLDER_UID = 'general';
 const REQUIRED_RESOURCE_VERBS = ['get', 'list', 'create', 'update', 'delete'];
 
 export type LibraryPanelResource = Resource<LibraryPanelSpec, LibraryPanelStatus, 'LibraryPanel'>;
@@ -213,7 +214,8 @@ export function k8sResourceToLegacyDTO(
 ): LibraryPanel {
   const metadata = item.metadata;
   const annotations = metadata.annotations ?? {};
-  const folderUid = annotations[AnnoKeyFolder] ?? '';
+  const storedFolderUid = annotations[AnnoKeyFolder] ?? '';
+  const folderUid = storedFolderUid === ROOT_FOLDER_UID ? '' : storedFolderUid;
   const created = metadata.creationTimestamp ?? '';
   const updated = annotations[AnnoKeyUpdatedTimestamp] ?? created;
 
@@ -239,11 +241,14 @@ export function k8sResourceToLegacyDTO(
 
 /** Resolve folder titles for the given folder UIDs; unresolvable folders map to ''. */
 async function resolveFolderNames(folderUIDs: string[], signal?: AbortSignal): Promise<Map<string, string>> {
-  const titles = new Map<string, string>([['', ROOT_FOLDER_NAME]]);
+  const titles = new Map<string, string>([
+    ['', ROOT_FOLDER_NAME],
+    [ROOT_FOLDER_UID, ROOT_FOLDER_NAME],
+  ]);
   const client = folderClient();
   await Promise.all(
     [...new Set(folderUIDs)].map(async (uid) => {
-      if (!uid) {
+      if (!uid || uid === ROOT_FOLDER_UID) {
         return;
       }
       try {
@@ -407,7 +412,7 @@ export const libraryPanelsK8sClient = {
       }
       if (folderFilterUIDs.length > 0) {
         // the legacy filter uses the "general" sentinel for root-level panels
-        const wanted = folderUid === '' ? 'general' : folderUid;
+        const wanted = folderUid === '' ? ROOT_FOLDER_UID : folderUid;
         if (!folderFilterUIDs.includes(wanted)) {
           return false;
         }
@@ -419,7 +424,13 @@ export const libraryPanelsK8sClient = {
         if (
           !name.includes(search) &&
           !description.includes(search) &&
-          !(matchByFolderTitle && folderUid !== '' && folderTitle !== '' && folderTitle.includes(search))
+          !(
+            matchByFolderTitle &&
+            folderUid !== '' &&
+            folderUid !== ROOT_FOLDER_UID &&
+            folderTitle !== '' &&
+            folderTitle.includes(search)
+          )
         ) {
           return false;
         }

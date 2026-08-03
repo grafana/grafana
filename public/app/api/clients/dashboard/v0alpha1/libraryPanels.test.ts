@@ -157,7 +157,7 @@ describe('k8sResourceToLegacyDTO', () => {
 
   it('uses the legacy root folder name for root-level panels', () => {
     const resource = makeResource();
-    delete resource.metadata.annotations!['grafana.app/folder'];
+    resource.metadata.annotations!['grafana.app/folder'] = 'general';
 
     const dto = k8sResourceToLegacyDTO(resource);
 
@@ -251,7 +251,7 @@ describe('libraryPanelsK8sClient request options', () => {
 
   it('does not match root panels by the synthetic General folder name', async () => {
     const resource = makeResource();
-    delete resource.metadata.annotations!['grafana.app/folder'];
+    resource.metadata.annotations!['grafana.app/folder'] = 'general';
     fetch.mockReturnValue(
       of({
         data: { metadata: { resourceVersion: '1' }, items: [resource] },
@@ -262,6 +262,7 @@ describe('libraryPanelsK8sClient request options', () => {
 
     expect(result.totalCount).toBe(0);
     expect(result.elements).toEqual([]);
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 
   it('normalizes page zero to the first page', async () => {
