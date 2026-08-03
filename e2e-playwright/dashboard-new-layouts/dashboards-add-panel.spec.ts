@@ -2,7 +2,7 @@ import { type Locator } from '@playwright/test';
 
 import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { Canvas, Panel, Rows, Sidebar, Tabs } from './page-objects';
+import { Canvas, Panels, Rows, Sidebar, Tabs } from './page-objects';
 
 test.use({
   featureToggles: {
@@ -62,7 +62,7 @@ test.describe(
     }) => {
       const dashboardPage = await gotoDashboardPage({});
 
-      const panel = new Panel({ page, dashboardPage, selectors, components });
+      const panels = new Panels({ page, dashboardPage, selectors, components });
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
       const canvas = new Canvas({ page, dashboardPage, selectors, components });
 
@@ -71,17 +71,17 @@ test.describe(
 
       // by default on a new dashboard, the "Add options" are already opened in the sidebar, so no need to click on the "Add" toolbar button
       await addPanelFromSidebar(sidebar, false);
-      await expect(panel.getContainersByTitle('New panel')).toHaveCount(1);
+      await expect(panels.getContainers('New panel')).toHaveCount(1);
 
       await addPanelFromSidebar(sidebar);
-      await expect(panel.getContainersByTitle('New panel')).toHaveCount(2);
+      await expect(panels.getContainers('New panel')).toHaveCount(2);
 
       // use the canvas
       await canvas.addPanel();
-      await expect(panel.getContainersByTitle('New panel')).toHaveCount(3);
+      await expect(panels.getContainers('New panel')).toHaveCount(3);
 
       // check that pressing the configure button shows the panel editor
-      const panelContainer = panel.getContainerByTitle('New panel');
+      const panelContainer = panels.getContainer('New panel');
       await panelContainer.hover();
       await panelContainer.getByRole('button', { name: /configure/i }).click();
       await expect(dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.General.content)).toBeVisible();

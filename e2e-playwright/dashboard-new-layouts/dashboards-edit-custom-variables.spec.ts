@@ -2,7 +2,7 @@ import { type Locator } from '@playwright/test';
 
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { Controls, Panel, Sidebar } from './page-objects';
+import { Controls, Panels, Sidebar } from './page-objects';
 import { flows, type Variable } from './utils';
 
 test.use({
@@ -181,10 +181,10 @@ test.describe(
       await expect(panelContents.nth(1).locator('.markdown-html')).toContainText(`${variable.name}Text: Development`);
 
       // Retitle the first panel to verify the aws property can be interpolated via ${var.property}
-      const panel = new Panel({ page, dashboardPage, selectors, components });
-      await panel.selectByTitle('Panel Title');
+      const panels = new Panels({ page, dashboardPage, selectors, components });
+      await panels.selectByTitle('Panel Title');
       await sidebar.panelOptions.setTitle(`Panel Title - aws: \${${variable.name}.aws}`);
-      await expect(panel.getHeaderByTitle(`Panel Title - aws: ${options[0].aws}`)).toBeVisible();
+      await expect(panels.getHeader(`Panel Title - aws: ${options[0].aws}`)).toBeVisible();
     });
   }
 );
