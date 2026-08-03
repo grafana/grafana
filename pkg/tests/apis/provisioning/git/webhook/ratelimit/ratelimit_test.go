@@ -152,17 +152,19 @@ func TestIntegrationProvisioning_WebhookRateLimitNamespaceIsolation(t *testing.T
 	const repoB = "webhook-rl-orgb"
 	// A plain local repo is enough: the limiter wraps the handler for every
 	// repository type and runs before any repository-specific work.
-	orgA.CreateLocalRepo(t, common.TestRepo{
-		Name:       repoA,
-		SyncTarget: "folder",
-		LocalPath:  filepath.Join(helper.ProvisioningPath, repoA),
-		SkipSync:   true,
+	orgA.CreateRepo(t, common.TestRepo{
+		Name:                   repoA,
+		Target:                 "folder",
+		Path:                   filepath.Join(helper.ProvisioningPath, repoA),
+		SkipSync:               true,
+		SkipResourceAssertions: true,
 	})
-	orgB.CreateLocalRepo(t, common.TestRepo{
-		Name:       repoB,
-		SyncTarget: "folder",
-		LocalPath:  filepath.Join(helper.ProvisioningPath, repoB),
-		SkipSync:   true,
+	orgB.CreateRepo(t, common.TestRepo{
+		Name:                   repoB,
+		Target:                 "folder",
+		Path:                   filepath.Join(helper.ProvisioningPath, repoB),
+		SkipSync:               true,
+		SkipResourceAssertions: true,
 	})
 
 	addr := helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
