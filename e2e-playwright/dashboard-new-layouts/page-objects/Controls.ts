@@ -53,6 +53,14 @@ export class Controls extends PageObject {
     });
   }
 
+  async clickBackToDashboard() {
+    await test.step('Click back to dashboard', async () => {
+      await this.dashboardPage
+        .getByGrafanaSelector(this.selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+        .click();
+    });
+  }
+
   async openControlsMenu() {
     await test.step('Open controls menu', async () => {
       await this.dashboardPage.getByGrafanaSelector(this.selectors.pages.Dashboard.ControlsButton).click();
@@ -90,16 +98,56 @@ export class Controls extends PageObject {
       // the trigger is the next sibling of its label
       return this.variables.getLabel(variableLabel).locator('+ *');
     },
-    openDropdown: async (variableLabel: string) => {
-      await test.step(`Open dropdown of variable "${variableLabel}"`, async () => {
-        await this.variables.getDropdownTrigger(variableLabel).click();
-      });
+    getInput: (variableLabel: string): Locator => {
+      // the input has no selector of its own: like the dropdown trigger, it lives in the label's next sibling
+      return this.variables.getLabel(variableLabel).locator('+ *').locator('input');
     },
     getOption: (optionLabel: string): Locator => this.page.getByRole('option', { name: optionLabel, exact: true }),
+    openDropdown: async (variableLabel: string) => {
+      await test.step(`Open dropdown of variable "${variableLabel}"`, async () => {
+        // clicking the input itself and not the trigger avoids the value chips and clear icon
+        await this.variables.getInput(variableLabel).click();
+      });
+    },
     selectOption: async (variableLabel: string, optionLabel: string) => {
       await test.step(`Select option "${optionLabel}" of variable "${variableLabel}"`, async () => {
         await this.variables.openDropdown(variableLabel);
-        await this.variables.getOption(optionLabel).click();
+        const option = this.variables.getOption(optionLabel);
+
+        // ensure options are rendered before inspecting the checkbox (locator.count below does not wait)
+        await option.waitFor();
+
+        // multi-value options render a checkbox, we throw if already selected so we don't toggle it off
+        const checkbox = option.getByRole('checkbox');
+        if ((await checkbox.count()) > 0 && (await checkbox.isChecked())) {
+          throw new Error(
+            `Cannot select option "${optionLabel}" of variable "${variableLabel}": it is already selected`
+          );
+        }
+
+        await option.click();
+      });
+    },
+    // multi-value variables only (options rendered as checkboxes)
+    deselectOption: async (variableLabel: string, optionLabel: string) => {
+      await test.step(`Deselect option "${optionLabel}" of variable "${variableLabel}"`, async () => {
+        await this.variables.openDropdown(variableLabel);
+
+        const option = this.variables.getOption(optionLabel);
+        if (!(await option.getByRole('checkbox').isChecked())) {
+          throw new Error(`Cannot deselect option "${optionLabel}" of variable "${variableLabel}": it is not selected`);
+        }
+
+        await option.click();
+      });
+    },
+    setValue: async (variableLabel: string, text: string) => {
+      await test.step(`Set value of variable "${variableLabel}" to "${text}"`, async () => {
+        const input = this.variables.getInput(variableLabel);
+        await input.click();
+        await input.clear();
+        await input.fill(text);
+        await input.press('Enter');
       });
     },
     addFilter: async (variableLabel: string, filter: [string, string, string]) => {
@@ -111,18 +159,7 @@ export class Controls extends PageObject {
         await this.page.getByRole('option', { name: filter[2], exact: true }).click();
       });
     },
-    getInput: (variableLabel: string): Locator => {
-      // the input has no selector of its own: like the dropdown trigger, it lives in the label's next sibling
-      return this.variables.getLabel(variableLabel).locator('+ *').locator('input');
-    },
-    setValue: async (variableLabel: string, text: string) => {
-      await test.step(`Set value of variable "${variableLabel}" to "${text}"`, async () => {
-        const input = this.variables.getInput(variableLabel);
-        await input.click();
-        await input.clear();
-        await input.fill(text);
-        await input.press('Enter');
-      });
-    },
   };
+
+  readonly filters = {};
 }
