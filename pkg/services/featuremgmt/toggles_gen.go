@@ -989,4 +989,8 @@ const (
 	// FlagLibraryElementsFolderTreeViaSearch
 	// Build the library-elements folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips on GET /api/library-elements.
 	FlagLibraryElementsFolderTreeViaSearch = "libraryElements.folderTreeViaSearch"
+
+	// FlagAlertingStateManagerRequireWarm
+	// Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.
+	FlagAlertingStateManagerRequireWarm = "alerting.stateManagerRequireWarm"
 )
