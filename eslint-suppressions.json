@@ -2119,11 +2119,6 @@
       "count": 3
     }
   },
-  "public/app/features/provisioning/Shared/BranchValidationError.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 26
-    }
-  },
   "public/app/features/query/components/QueryEditorRow.tsx": {
     "@grafana/no-gf-form": {
       "count": 1

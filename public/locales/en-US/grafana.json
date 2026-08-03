@@ -15962,6 +15962,18 @@
     },
     "editor": {
       "aria-label-content": "Text content",
+      "format-bold": "B",
+      "format-heading": "H",
+      "format-italic": "I",
+      "tooltip-bold": "Bold",
+      "tooltip-bullet-list": "Bullet list",
+      "tooltip-checklist": "Checklist",
+      "tooltip-heading": "Heading",
+      "tooltip-insert-variable": "Insert variable",
+      "tooltip-italic": "Italic",
+      "tooltip-link": "Link",
+      "tooltip-numbered-list": "Numbered list",
+      "tooltip-table": "Table",
       "view-preview": "Preview",
       "view-split": "Split",
       "view-write": "Write"

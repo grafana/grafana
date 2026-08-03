@@ -2050,6 +2050,50 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana-plugins/grafana-cloudwatch-datasource@workspace:public/app/plugins/datasource/cloudwatch":
+  version: 0.0.0-use.local
+  resolution: "@grafana-plugins/grafana-cloudwatch-datasource@workspace:public/app/plugins/datasource/cloudwatch"
+  dependencies:
+    "@emotion/css": "npm:11.13.5"
+    "@grafana/aws-sdk": "npm:^0.12.0"
+    "@grafana/data": "npm:13.2.0-pre"
+    "@grafana/e2e-selectors": "npm:13.2.0-pre"
+    "@grafana/plugin-configs": "npm:13.2.0-pre"
+    "@grafana/plugin-ui": "npm:^0.17.3"
+    "@grafana/runtime": "npm:13.2.0-pre"
+    "@grafana/scenes": "npm:8.13.5"
+    "@grafana/schema": "npm:13.2.0-pre"
+    "@grafana/ui": "npm:13.2.0-pre"
+    "@testing-library/dom": "npm:10.4.1"
+    "@testing-library/jest-dom": "npm:6.6.4"
+    "@testing-library/react": "npm:16.3.0"
+    "@testing-library/user-event": "npm:14.6.1"
+    "@types/common-tags": "npm:^1.8.0"
+    "@types/jest": "npm:29.5.14"
+    "@types/lodash": "npm:4.17.20"
+    "@types/node": "npm:24.10.1"
+    "@types/prismjs": "npm:1.26.5"
+    "@types/react": "npm:18.3.18"
+    "@types/react-dom": "npm:18.3.5"
+    common-tags: "npm:1.8.2"
+    core-js: "npm:3.44.0"
+    fast-deep-equal: "npm:^3.1.3"
+    jest: "npm:29.7.0"
+    lodash: "npm:^4.17.23"
+    monaco-editor: "npm:0.34.1"
+    prismjs: "npm:1.30.0"
+    react: "npm:18.3.1"
+    react-dom: "npm:18.3.1"
+    react-select-event: "npm:5.5.1"
+    react-use: "npm:17.6.1"
+    rxjs: "npm:7.8.2"
+    typescript: "npm:6.0.2"
+    webpack: "npm:^5.105.0"
+  peerDependencies:
+    "@grafana/runtime": "*"
+  languageName: unknown
+  linkType: soft
+
 "@grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/grafana-testdata-datasource@workspace:public/app/plugins/datasource/grafana-testdata-datasource"
@@ -9722,13 +9766,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/cookie@npm:^0.4.1":
-  version: 0.4.1
-  resolution: "@types/cookie@npm:0.4.1"
-  checksum: 10/427c9220217d3d74f3e5d53d68cd39502f3bbebdb1af4ecf0d05076bcbe9ddab299ad6369fe0f517389296ba4ca49ddf9a8c22f68e5e9eb8ae6d0076cfab90b2
-  languageName: node
-  linkType: hard
-
 "@types/cookie@npm:^0.6.0":
   version: 0.6.0
   resolution: "@types/cookie@npm:0.6.0"
@@ -10868,6 +10905,15 @@ __metadata:
   version: 1.18.8
   resolution: "@types/webpack-env@npm:1.18.8"
   checksum: 10/f3932f3d6c2530f644cfc898eda1ab8182d6ae57f555c2f0179d813549b639078671b71e4041831fc306c5ebe61f5cdac794fe4ceae281fce8bf67e23661a488
+  languageName: node
+  linkType: hard
+
+"@types/ws@npm:^8.5.12":
+  version: 8.18.1
+  resolution: "@types/ws@npm:8.18.1"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 10/1ce05e3174dcacf28dae0e9b854ef1c9a12da44c7ed73617ab6897c5cbe4fccbb155a20be5508ae9a7dde2f83bd80f5cf3baa386b934fc4b40889ec963e94f3a
   languageName: node
   linkType: hard
 
@@ -15396,7 +15442,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:~4.3.1, debug@npm:~4.3.2, debug@npm:~4.3.4":
+"debug@npm:~4.3.2, debug@npm:~4.3.4":
   version: 4.3.7
   resolution: "debug@npm:4.3.7"
   dependencies:
@@ -16243,20 +16289,20 @@ __metadata:
   linkType: hard
 
 "engine.io@npm:~6.6.0":
-  version: 6.6.2
-  resolution: "engine.io@npm:6.6.2"
+  version: 6.6.9
+  resolution: "engine.io@npm:6.6.9"
   dependencies:
-    "@types/cookie": "npm:^0.4.1"
     "@types/cors": "npm:^2.8.12"
     "@types/node": "npm:>=10.0.0"
+    "@types/ws": "npm:^8.5.12"
     accepts: "npm:~1.3.4"
     base64id: "npm:2.0.0"
     cookie: "npm:~0.7.2"
     cors: "npm:~2.8.5"
-    debug: "npm:~4.3.1"
+    debug: "npm:~4.4.1"
     engine.io-parser: "npm:~5.2.1"
-    ws: "npm:~8.17.1"
-  checksum: 10/381c0a715362bebf32c95f0e4247899b53ff9f8c0074b03f88748cf17635a02948ea3eca27905df37130bc963747c0d286acc78c757e6fc085fe8b8e17d76e01
+    ws: "npm:~8.21.0"
+  checksum: 10/604c1d0d7180b67689ccb9bf8d5faca3255cdeed63c05eae92960df2f1c0c016fe37f492d2c015efa9082af5addf553ee9923113649d593cd09ee3e19cefa5f4
   languageName: node
   linkType: hard
 
@@ -18858,6 +18904,7 @@ __metadata:
     "@codemirror/lang-sql": "npm:6.10.0"
     "@codemirror/language": "npm:6.12.4"
     "@codemirror/state": "npm:6.7.1"
+    "@codemirror/view": "npm:^6.41.0"
     "@emotion/css": "npm:11.13.5"
     "@emotion/eslint-plugin": "npm:11.12.0"
     "@emotion/react": "npm:11.14.0"
@@ -18929,7 +18976,6 @@ __metadata:
     "@testing-library/react": "npm:16.3.0"
     "@testing-library/user-event": "npm:14.6.1"
     "@types/chance": "npm:^1.1.7"
-    "@types/common-tags": "npm:^1.8.0"
     "@types/confusing-browser-globals": "npm:^1"
     "@types/d3": "npm:7.4.3"
     "@types/d3-force": "npm:^3.0.0"
@@ -18994,7 +19040,6 @@ __metadata:
     clsx: "npm:^2.1.1"
     combokeys: "npm:^3.0.0"
     comlink: "npm:4.4.2"
-    common-tags: "npm:1.8.2"
     confusing-browser-globals: "npm:^1.0.11"
     copy-webpack-plugin: "npm:^14.0.0"
     core-js: "npm:3.44.0"

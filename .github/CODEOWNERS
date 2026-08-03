@@ -1404,6 +1404,7 @@ embed.go @grafana/grafana-as-code
 /conf/ldap_multiple.toml @grafana/identity-squad
 /conf/provisioning/access-control/ @grafana/access-squad
 /conf/provisioning/alerting/ @grafana/alerting-squad
+/conf/provisioning/appmanifests/ @grafana/grafana-app-platform-squad
 /conf/provisioning/dashboards/ @grafana/dashboards-squad
 /conf/provisioning/datasources/ @grafana/grafana-catalog
 /conf/provisioning/plugins/ @grafana/grafana-catalog
