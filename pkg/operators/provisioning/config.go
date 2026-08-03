@@ -553,7 +553,14 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
 			if provisioningAppURL != "" {
-				webhook = webhooks.ProvideWebhooks(provisioningAppURL, c.Registry())
+				webhook = webhooks.ProvideWebhooks(
+					provisioningAppURL,
+					c.Registry(),
+					webhooks.NewConfiguredRateLimiter(
+						provisioningSec.Key("webhook_rate_limit_rps").MustInt(0),
+						provisioningSec.Key("webhook_trusted_ip_header").MustString(""),
+					),
+				)
 			}
 			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, resources.IsFolderMetadataEnabled(c.Settings)))
 		case provisioning.LocalRepositoryType:

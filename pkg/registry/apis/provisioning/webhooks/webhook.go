@@ -39,6 +39,7 @@ type webhookConnector struct {
 	renderer        pullrequest.ScreenshotRenderer
 	registry        prometheus.Registerer
 	metrics         webhookMetrics
+	rateLimiter     RateLimiter
 }
 
 func NewWebhookConnector(
@@ -47,14 +48,15 @@ func NewWebhookConnector(
 	core *provisioningapis.APIBuilder,
 	renderer pullrequest.ScreenshotRenderer,
 	registry prometheus.Registerer,
+	rateLimiter RateLimiter,
 ) *webhookConnector {
-	metrics := registerWebhookMetrics(registry)
 	return &webhookConnector{
 		webhooksEnabled: webhooksEnabled,
 		core:            core,
 		renderer:        renderer,
 		registry:        registry,
-		metrics:         metrics,
+		metrics:         registerWebhookMetrics(registry),
+		rateLimiter:     rateLimiter,
 	}
 }
 
@@ -111,11 +113,12 @@ func (s *webhookConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 }
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx, span := tracing.Start(ctx, "provisioning.webhook.handle")
+	namespace := request.NamespaceValue(ctx)
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx, span := tracing.Start(r.Context(), "provisioning.webhook.handle")
 		defer span.End()
 
-		namespace := request.NamespaceValue(ctx)
 		span.SetAttributes(
 			attribute.String("repository", name),
 			attribute.String("namespace", namespace),
@@ -201,7 +204,14 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 		}
 
 		responder.Object(rsp.Code, rsp)
-	}), nil
+	})
+
+	var h http.Handler = handler
+	if s.rateLimiter != nil {
+		h = s.rateLimiter.Wrap(namespace, h)
+	}
+
+	return h, nil
 }
 
 // statusPatcher is the subset of the status patcher API used by updateLastEvent.
