@@ -1,12 +1,19 @@
-// Reads newline-separated test file paths on stdin, prints one JSON object per
-// line (JSONL): { file, startLine, endLine, name }. `file` is relative to the
-// project root and startLine-endLine spans the whole test block so it can be
-// read back for analysis. `name` is the full "describe > … > it" path. No test
+// Lists every test case owned by a codeowner as JSONL on stdout, one object per
+// line: { file, startLine, endLine, name }. `file` is relative to the project
+// root and startLine-endLine spans the whole test block so it can be read back
+// for analysis. `name` is the full "describe > … > it" path. Test files are
+// resolved with `jest --listTests` against jest.config.codeowner.js; no test
 // bodies are executed.
-import fs from 'node:fs';
+//
+// Usage: node ./scripts/codeowners-manifest/list-tests.mts '@grafana/dataviz-squad'
+import cp from 'node:child_process';
 import path from 'node:path';
 
 import { parse } from 'jest-editor-support';
+
+const JEST_BIN_PATH = 'node_modules/jest/bin/jest.js';
+const JEST_CONFIG_PATH = 'jest.config.codeowner.js';
+const TEST_FILE_PATTERN = /\.(test|spec)\.[jt]sx?$/;
 
 // jest-editor-support does not ship a location type for parsed nodes, so we
 // describe only the shape we walk here.
@@ -23,11 +30,39 @@ interface ParsedNode {
   children?: ParsedNode[];
 }
 
-const files = fs
-  .readFileSync(0, 'utf8')
+const codeownerName = process.argv[2];
+if (!codeownerName) {
+  process.stderr.write(`usage: node ${path.relative(process.cwd(), process.argv[1])} <codeowner>\n`);
+  process.stderr.write(`example: node ${path.relative(process.cwd(), process.argv[1])} '@grafana/dataviz-squad'\n`);
+  process.exit(1);
+}
+
+process.stderr.write(`Resolving test files owned by ${codeownerName} ...\n`);
+
+const jest = cp.spawnSync(process.execPath, [JEST_BIN_PATH, `--config=${JEST_CONFIG_PATH}`, '--listTests'], {
+  encoding: 'utf8',
+  env: { ...process.env, CODEOWNER_NAME: codeownerName },
+});
+
+if (jest.error || jest.status !== 0) {
+  process.stderr.write(jest.stdout ?? '');
+  process.stderr.write(jest.stderr ?? '');
+  process.stderr.write(`jest --listTests failed${jest.status != null ? ` with code ${jest.status}` : ''}\n`);
+  process.exit(jest.status ?? 1);
+}
+
+// jest.config.codeowner.js logs progress on stdout alongside the test paths, so
+// keep only the lines that look like absolute test file paths.
+const files = jest.stdout
   .split('\n')
   .map((s) => s.trim())
-  .filter(Boolean);
+  .filter((s) => path.isAbsolute(s) && TEST_FILE_PATTERN.test(s));
+
+if (files.length === 0) {
+  process.stderr.write(jest.stdout);
+  process.stderr.write(`No test files found for ${codeownerName}\n`);
+  process.exit(0);
+}
 
 let ok = 0;
 let failed = 0;
