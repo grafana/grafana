@@ -722,7 +722,7 @@ func (lk8s *libraryElementsK8sHandler) createK8sLibraryElement(c *contextmodel.R
 }
 
 func (lk8s *libraryElementsK8sHandler) patchK8sLibraryElement(c *contextmodel.ReqContext) {
-	cmd := model.PatchLibraryElementCommand{}
+	cmd := model.PatchLibraryElementCommand{FolderID: -1} // nolint:staticcheck
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "bad request data", err)
 		return
