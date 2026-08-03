@@ -724,7 +724,11 @@ func (b *DashboardsAPIBuilder) validateVariableMutationPermissions(ctx context.C
 	}
 
 	if allowMissingFolder && folderUID != "" {
-		if _, ferr := b.validateFolderExists(ctx, folderUID, requester.GetOrgID()); apierrors.IsNotFound(ferr) {
+		if _, ferr := b.validateFolderExists(ctx, folderUID, requester.GetOrgID()); ferr != nil {
+			if !apierrors.IsNotFound(ferr) {
+				// Transient / infra failures must not be reported as access denied.
+				return ferr
+			}
 			// Folder gone: allow cleanup only for stack-wide/root writers.
 			// Unscoped EvalPermission(action) would let any folder-scoped writer
 			// mutate orphans from a different deleted folder.

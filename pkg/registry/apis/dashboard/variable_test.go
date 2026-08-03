@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -482,6 +483,35 @@ func TestVariableMutationPermissionsMissingFolder(t *testing.T) {
 	}
 }
 
+func TestVariableMutationPermissionsFolderLookupError(t *testing.T) {
+	folderUID := "folder-a"
+	oldVariable := newCustomVariable("region", "region--folder-a")
+	oldVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+	newVariable := newCustomVariable("region", "region--folder-a")
+	newVariable.SetAnnotations(map[string]string{utils.AnnoKeyFolder: folderUID})
+
+	lookupErr := errors.New("folder lookup timed out")
+	builder := &DashboardsAPIBuilder{
+		accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		folderClientProvider: &staticHandlerProvider{
+			handler: &variableFolderAccessHandler{getError: lookupErr},
+		},
+	}
+
+	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	ctx = identity.WithRequester(ctx, &identity.StaticRequester{
+		OrgID: 1,
+		// No folder-scoped grant so Evaluate fails and allowMissingFolder path runs.
+		Permissions: map[int64]map[string][]string{
+			1: {ActionVariablesWrite: {folder.ScopeFoldersProvider.GetResourceScopeUID("other-folder")}},
+		},
+	})
+
+	err := builder.Validate(ctx, buildVariableAttributesForOp(admission.Update, newVariable, oldVariable), nil)
+	require.ErrorIs(t, err, lookupErr)
+	require.False(t, apierrors.IsForbidden(err))
+}
+
 func newCustomVariable(variableName, metadataName string) *dashv2beta1.Variable {
 	customVariable := dashv2beta1.NewDashboardCustomVariableKind()
 	customVariable.Spec.Name = variableName
@@ -593,6 +623,7 @@ type variableFolderAccessHandler struct {
 	accessSubresourceChecked   bool
 	forbiddenAccessSubresource bool
 	notFoundAccessSubresource  bool
+	getError                   error
 }
 
 func (h *variableFolderAccessHandler) Get(_ context.Context, name string, _ int64, _ metav1.GetOptions, subresource ...string) (*unstructured.Unstructured, error) {
@@ -610,6 +641,10 @@ func (h *variableFolderAccessHandler) Get(_ context.Context, name string, _ int6
 				"canEdit": true,
 			},
 		}, nil
+	}
+
+	if h.getError != nil {
+		return nil, h.getError
 	}
 
 	if h.notFoundAccessSubresource {
