@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -176,6 +177,13 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, testFolder.UID, result.FolderUID)
 	require.Empty(t, result.Meta.FolderName)
+	require.Zero(t, result.FolderID) // nolint:staticcheck
+
+	meta.SetFolder(ac.GeneralFolderUID)
+	result, err = handler.unstructuredToLegacyLibraryPanelDTO(reqContext, *unstructuredObj)
+	require.NoError(t, err)
+	require.Equal(t, ac.GeneralFolderUID, result.FolderUID)
+	require.Equal(t, dashboards.RootFolderName, result.Meta.FolderName)
 	require.Zero(t, result.FolderID) // nolint:staticcheck
 
 	dashboardsSvc.AssertExpectations(t)
