@@ -6891,12 +6891,7 @@
     },
     "control-edit-actions": {
       "aria-label-delete": "Delete",
-      "aria-label-duplicate": "Duplicate",
-      "delete": {
-        "confirm": "Are you sure you want to delete: {{name}}?",
-        "text": "Delete {{type}}",
-        "title": "Delete {{type}}"
-      }
+      "aria-label-duplicate": "Duplicate"
     },
     "conversion-warning-banner": {
       "detail-conditional": "Show/hide rules will not work",

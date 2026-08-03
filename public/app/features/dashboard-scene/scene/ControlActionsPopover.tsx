@@ -15,9 +15,7 @@ const ControlActionsPopoverContext = createContext<{ closePopover: () => void }>
  * Lets popover content close the popover programmatically, e.g. before opening
  * a modal on top of it. Resolves to a no-op when rendered outside a popover.
  */
-export function useControlActionsPopover() {
-  return useContext(ControlActionsPopoverContext);
-}
+const useControlActionsPopover = () => useContext(ControlActionsPopoverContext);
 
 export function ControlActionsPopover({
   isEditable,
@@ -102,11 +100,15 @@ export function VariableEditActions({
       closePopover();
       appEvents.publish(
         new ShowConfirmModalEvent({
-          title: t('dashboard-scene.control-edit-actions.delete.title', 'Delete {{type}}', { type: 'variable' }),
-          text: t('dashboard-scene.control-edit-actions.delete.confirm', 'Are you sure you want to delete: {{name}}?', {
-            name: variable.state.name,
-          }),
-          yesText: t('dashboard-scene.control-edit-actions.delete.text', 'Delete {{type}}', { type: 'variable' }),
+          title: t('dashboard-scene.variable-editable-element.delete-title', 'Delete variable'),
+          text: t(
+            'dashboard-scene.variable-editable-element.delete-text',
+            'Are you sure you want to delete: {{name}}?',
+            {
+              name: variable.state.name,
+            }
+          ),
+          yesText: t('dashboard-scene.variable-editable-element.delete-confirm', 'Delete variable'),
           onConfirm: onClickDelete,
         })
       );
@@ -199,15 +201,15 @@ export function AnnotationEditActions({
       closePopover();
       appEvents.publish(
         new ShowConfirmModalEvent({
-          title: t('dashboard-scene.control-edit-actions.delete.title', 'Delete {{type}}', {
-            type: 'annotation query',
-          }),
-          text: t('dashboard-scene.control-edit-actions.delete.confirm', 'Are you sure you want to delete: {{name}}?', {
-            name: layer.state.name,
-          }),
-          yesText: t('dashboard-scene.control-edit-actions.delete.text', 'Delete {{type}}', {
-            type: 'annotation query',
-          }),
+          title: t('dashboard-scene.annotation-editable-element.delete-title', 'Delete annotation query'),
+          text: t(
+            'dashboard-scene.annotation-editable-element.delete-text',
+            'Are you sure you want to delete: {{name}}?',
+            {
+              name: layer.state.name,
+            }
+          ),
+          yesText: t('dashboard-scene.annotation-editable-element.delete-confirm', 'Delete annotation query'),
           onConfirm: onClickDelete,
         })
       );
@@ -288,11 +290,11 @@ export function LinkEditActions({
       closePopover();
       appEvents.publish(
         new ShowConfirmModalEvent({
-          title: t('dashboard-scene.control-edit-actions.delete.title', 'Delete {{type}}', { type: 'link' }),
-          text: t('dashboard-scene.control-edit-actions.delete.confirm', 'Are you sure you want to delete: {{name}}?', {
+          title: t('dashboard-scene.link-editable-element.delete-title', 'Delete link'),
+          text: t('dashboard-scene.link-editable-element.delete-text', 'Are you sure you want to delete: {{name}}?', {
             name,
           }),
-          yesText: t('dashboard-scene.control-edit-actions.delete.text', 'Delete {{type}}', { type: 'link' }),
+          yesText: t('dashboard-scene.link-editable-element.delete-confirm', 'Delete link'),
           onConfirm: onClickDelete,
         })
       );
@@ -345,7 +347,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-evenly',
     alignItems: 'center',
     gap: theme.spacing(0.75),
-    padding: theme.spacing(0.51),
+    padding: theme.spacing(0.5, 1),
     borderRadius: theme.shape.radius.default,
     backgroundColor: theme.components.dropdown.background,
     border: `1px solid ${theme.colors.border.weak}`,
