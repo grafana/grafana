@@ -20,6 +20,11 @@ review_date: 2026-04-10
 
 # Parca template variables
 
+{{< admonition type="caution" >}}
+Starting January 2, 2027, the Parca data source plugin is deprecated.
+It will no longer receive updates after that date.
+{{< /admonition >}}
+
 Instead of hard-coding label values in your profiling queries, you can use template variables to create dynamic, reusable dashboards. Variables appear as drop-down menus at the top of the dashboard, making it easy to switch between services, instances, or environments without editing queries.
 
 For an introduction to template variables, refer to the [Variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) documentation.
