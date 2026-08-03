@@ -41,6 +41,22 @@ function mockAlerts(alerts: AlertmanagerAlert[]) {
   server.use(http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json(alerts)));
 }
 
+/** Mocks the alerts endpoint and returns the `filter` query params of each request received. */
+function captureAlertFilters() {
+  const requests: string[][] = [];
+  server.use(
+    http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+      requests.push(new URL(request.url).searchParams.getAll('filter'));
+      return HttpResponse.json([]);
+    })
+  );
+  return requests;
+}
+
+// Wire form of the tolerant pattern's separator gap: quoteWithEscape doubles
+// the backslashes when the matcher value is serialized into the filter param.
+const WIRE_SEP = '[^\\\\p{L}\\\\p{N}]*';
+
 beforeEach(() => {
   jest
     .spyOn(contextSrv, 'hasPermission')
@@ -103,5 +119,42 @@ describe('useFiringAlerts', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(result.current.hasTeams).toBe(true);
+  });
+
+  describe('team matchers', () => {
+    it('matches own teams tolerantly: case-insensitive, punctuation as separator gaps', async () => {
+      mockTeams([{ name: 'Platform Monitoring' }, { name: 'Team (US)' }]);
+      const requests = captureAlertFilters();
+
+      const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      // Leading/trailing gaps let "Team (US)" still match its own literal label.
+      const platform = `${WIRE_SEP}Platform${WIRE_SEP}Monitoring${WIRE_SEP}`;
+      const teamUs = `${WIRE_SEP}Team${WIRE_SEP}US${WIRE_SEP}`;
+      expect(requests).toEqual([[`team=~"(?i)${platform}|${teamUs}"`]]);
+    });
+
+    it('skips teams without letters or digits, sending no matcher when none remain', async () => {
+      mockTeams([{ name: '@#$' }]);
+      const requests = captureAlertFilters();
+
+      const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(requests).toEqual([[]]);
+    });
+
+    it('matches an explicitly selected team label value exactly, with regex escaping', async () => {
+      mockTeams([{ name: 'Platform Monitoring' }]);
+      const requests = captureAlertFilters();
+
+      // Dropdown values are real label values; '.' must be escaped, not treated as a wildcard.
+      const { result } = renderHook(() => useFiringAlerts('team.one'), { wrapper: getWrapper({}) });
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      // escapeRegExp adds '\.', quoteWithEscape doubles the backslash on the wire.
+      expect(requests).toEqual([['team=~"team\\\\.one"']]);
+    });
   });
 });

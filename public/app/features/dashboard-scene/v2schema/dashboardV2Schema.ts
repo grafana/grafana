@@ -19,7 +19,7 @@
  * forward-compatible with newer schema fields.
  */
 
-import { z } from 'zod';
+import * as z from 'zod';
 
 import type {
   Spec as DashboardV2Spec,
@@ -496,7 +496,8 @@ const panelKindSchema = z.object({
   spec: z.object({
     id: z.number(),
     title: z.string(),
-    description: z.string(),
+    description: z.string().optional(),
+    subtitle: z.string().optional(),
     links: nullableArray(dataLinkSchema),
     data: queryGroupKindSchema,
     vizConfig: vizConfigKindSchema,

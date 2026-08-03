@@ -20,6 +20,16 @@ func GetStringValue(m map[string]interface{}, key string, defaultValue ...string
 	return ""
 }
 
+func GetStringValueOrNil(m map[string]interface{}, key string) *string {
+	if value, ok := m[key]; ok {
+		if s, ok := value.(string); ok {
+			return &s
+		}
+	}
+
+	return nil
+}
+
 // GetBoolValue safely extracts a boolean value from a map, returning false if not found or not a boolean
 func GetBoolValue(m map[string]interface{}, key string) bool {
 	if value, ok := m[key]; ok {

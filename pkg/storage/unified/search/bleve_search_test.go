@@ -2,8 +2,11 @@ package search_test
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"log"
+	"slices"
+	"strconv"
 	"testing"
 	"time"
 
@@ -11,8 +14,10 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	apischema "k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -47,6 +52,7 @@ func checkSearchQuery(t *testing.T, index resource.ResourceIndex, query *resourc
 	res, err := index.Search(context.Background(), nil, query, nil, nil)
 	require.NoError(t, err)
 	require.Equal(t, int64(len(orderedExpectedNames)), res.TotalHits)
+	require.True(t, res.TotalHitsExact, "in-searcher authz path reports an exact total")
 	for ix, name := range orderedExpectedNames {
 		require.Equal(t, name, res.Results.Rows[ix].Key.Name)
 	}
@@ -766,15 +772,24 @@ func TestPublicFieldNameTextQuery(t *testing.T) {
 		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d2", Title: "Two",
 			Key:    &resourcepb.ResourceKey{Name: "d2", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
 			Fields: map[string]any{"team": "blueteam"}}},
+		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d3", Title: "Three",
+			Key:    &resourcepb.ResourceKey{Name: "d3", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: map[string]any{"team": "GreenTeam"}}},
 	}}))
 
-	req := &resourcepb.ResourceSearchRequest{
-		Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
-		Query:       "redteam",
-		QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "team", Type: resourcepb.QueryFieldType_TEXT, Boost: 1}},
-		Limit:       100000,
+	query := func(text string) *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
+			Query:       text,
+			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{{Name: "team", Type: resourcepb.QueryFieldType_TEXT, Boost: 1}},
+			Limit:       100000,
+		}
 	}
-	checkSearchQuery(t, index, req, []string{"d1"})
+
+	checkSearchQuery(t, index, query("redteam"), []string{"d1"})
+	// team is keyword-mapped, so its stored value keeps its case and an exact
+	// query has to match it as written.
+	checkSearchQuery(t, index, query("GreenTeam"), []string{"d3"})
 }
 
 func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer resource.BuildFn) resource.ResourceIndex {
@@ -1217,6 +1232,12 @@ func newDoc(name, folder string) *resource.BulkIndexItem {
 	}
 }
 
+func newDocWithTags(name, folder string, tags []string) *resource.BulkIndexItem {
+	d := newDoc(name, folder)
+	d.Doc.Tags = tags
+	return d
+}
+
 func listQuery(limit int64) *resourcepb.ResourceSearchRequest {
 	return &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
@@ -1292,6 +1313,7 @@ func pageAll(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient
 	return all
 }
 
+//nolint:gocyclo // The subtests share post-rank fixtures and helpers.
 func TestSearchPostRankAuthz(t *testing.T) {
 	t.Run("stops checking once the page is full", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
@@ -1308,6 +1330,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		require.Len(t, names, 100, "should return exactly the requested limit")
 		// totalHits stays the unfiltered match count.
 		require.Equal(t, int64(700), res.TotalHits)
+		require.False(t, res.TotalHitsExact, "page filled early -> approximate total")
 		// Early-exit: we must not have authorized all 700 candidates. With a
 		// batch size of 500 the first batch already fills the page of 100.
 		require.LessOrEqual(t, ac.checked, 500)
@@ -1334,6 +1357,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 		require.Empty(t, names, "deny-all -> no authorized hits")
 		require.Equal(t, int64(0), res.TotalHits, "exhausted -> exact authorized total")
+		require.True(t, res.TotalHitsExact, "exhausted scan -> exact total")
 		// Every doc was examined (exhaustion), so candidates == doc count.
 		require.Equal(t, 200, ac.checked)
 		// Growth: far fewer bleve searches than the 20 a constant window-10
@@ -1449,6 +1473,67 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
 		names, _ := searchNames(t, index, ac, listQuery(10))
 		require.Empty(t, names)
+	})
+
+	t.Run("count-only request returns an exact authorized total", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("doc-0", "allowed"),
+			newDoc("doc-1", "denied"),
+			newDoc("doc-2", "allowed"),
+		})
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		names, res := searchNames(t, index, ac, listQuery(0))
+
+		require.Empty(t, names, "a count-only request returns no rows")
+		require.Equal(t, int64(2), res.TotalHits, "unauthorized matches are excluded")
+		require.True(t, res.TotalHitsExact, "the scan exhausted the match set")
+		require.Equal(t, 3, ac.checked, "every match is authorized once")
+	})
+
+	t.Run("count-only request approximates once the budget is hit", func(t *testing.T) {
+		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 40}
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		docs := make([]*resource.BulkIndexItem, 0, 200)
+		for i := 0; i < 200; i++ {
+			folder := "denied"
+			if i%2 == 0 {
+				folder = "allowed"
+			}
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%03d", i), folder))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		_, res := searchNames(t, index, ac, listQuery(0))
+
+		require.Equal(t, int64(200), res.TotalHits, "a capped count falls back to the unfiltered match count")
+		require.False(t, res.TotalHitsExact)
+		require.Equal(t, 40, ac.checked, "the scan stops at MaxCandidates")
+	})
+
+	t.Run("count-only request stays exact when the budget covers every match", func(t *testing.T) {
+		// The scan consumes its whole budget, but that budget spans the entire
+		// match set, so nothing is left unseen.
+		cfg := search.PostRankAuthzConfig{MaxWindow: 10, MaxCandidates: 20}
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		docs := make([]*resource.BulkIndexItem, 0, 20)
+		for i := 0; i < 20; i++ {
+			folder := "denied"
+			if i%2 == 0 {
+				folder = "allowed"
+			}
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), folder))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		_, res := searchNames(t, index, ac, listQuery(0))
+
+		require.Equal(t, int64(10), res.TotalHits)
+		require.True(t, res.TotalHitsExact, "the budget covered every match")
+		require.Equal(t, 20, ac.checked)
 	})
 
 	t.Run("limit larger than total returns everything authorized", func(t *testing.T) {
@@ -1572,6 +1657,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		p3, r3 := searchNames(t, index, ac, q3)
 		require.Len(t, p3, 5)
 		require.Equal(t, int64(n), r3.TotalHits, "cursor page must report the unfiltered match count, not the tail authorized count")
+		require.False(t, r3.TotalHitsExact, "cursor-page total is approximate, not exact")
 	})
 
 	t.Run("low auth fraction continues past MaxCandidates until first authorized hit", func(t *testing.T) {
@@ -1723,6 +1809,579 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		res := searchResponse(t, index, ac, q)
 		require.NotNil(t, res.Error)
 	})
+
+	// --- Facets on the postFilter path (aggregated app-side over authorized hits) ---
+
+	t.Run("facets use a top sample without shortening sparse pages", func(t *testing.T) {
+		// The top facet sample contains no authorized docs, but the page scan
+		// must continue with its independent MaxCandidates budget to fill the
+		// requested page from later ranked hits.
+		cfg := search.PostRankAuthzConfig{
+			OverFetchFactor: 1,
+			MaxWindow:       20,
+			MaxCandidates:   100,
+			FacetSampleSize: 10,
+		}
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		docs := make([]*resource.BulkIndexItem, 0, 30)
+		for i := 0; i < 30; i++ {
+			folder := "denied"
+			if i >= 20 {
+				folder = "allowed"
+			}
+			docs = append(docs, newDocWithTags(fmt.Sprintf("doc-%02d", i), folder, []string{"visible"}))
+		}
+		indexDocs(t, index, docs)
+
+		q := listQuery(3)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+		names, res := searchNames(t, index, &countingAccessClient{
+			allowedFolders: map[string]bool{"allowed": true},
+		}, q)
+
+		require.Equal(t, []string{"doc-20", "doc-21", "doc-22"}, names)
+		require.Empty(t, res.Facet["tags"].Terms, "facets remain tied to the top sample")
+		require.Equal(t, int64(3), res.TotalHits, "returned authorized rows raise the sampled total")
+		require.False(t, res.TotalHitsExact, "the top facet sample was capped")
+	})
+
+	t.Run("cursor facets retain page authorized total", func(t *testing.T) {
+		// The top facet sample contains no authorized docs, while the page after
+		// the cursor does. The response total must include the latter.
+		cfg := search.PostRankAuthzConfig{
+			OverFetchFactor: 1,
+			MaxWindow:       20,
+			MaxCandidates:   100,
+			FacetSampleSize: 10,
+		}
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		docs := make([]*resource.BulkIndexItem, 0, 30)
+		for i := 0; i < 30; i++ {
+			folder := "denied"
+			if i >= 20 {
+				folder = "allowed"
+			}
+			docs = append(docs, newDocWithTags(fmt.Sprintf("doc-%02d", i), folder, []string{"visible"}))
+		}
+		indexDocs(t, index, docs)
+
+		// Use the native post-rank cursor shape after doc-19.
+		_, cursorRes := searchNames(t, index, &countingAccessClient{allowAll: true}, listQuery(20))
+		rows := cursorRes.Results.GetRows()
+		require.Len(t, rows, 20)
+
+		q := listQuery(3)
+		q.SearchAfter = slices.Clone(rows[len(rows)-1].SortFields)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+		names, res := searchNames(t, index, &countingAccessClient{
+			allowedFolders: map[string]bool{"allowed": true},
+		}, q)
+
+		require.Equal(t, []string{"doc-20", "doc-21", "doc-22"}, names)
+		require.Empty(t, res.Facet["tags"].Terms, "facets remain tied to the denied top sample")
+		require.Equal(t, int64(3), res.TotalHits, "page authorization must raise the sampled total")
+		require.False(t, res.TotalHitsExact, "the top facet sample was capped")
+	})
+
+	t.Run("exhausted tag facets match the in-searcher path", func(t *testing.T) {
+		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
+		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
+		docs := []*resource.BulkIndexItem{
+			newDocWithTags("doc-0", "allowed", []string{"prod east", "latency"}),
+			newDocWithTags("doc-1", "denied", []string{"secret"}),
+			newDocWithTags("doc-2", "allowed", []string{"prod east"}),
+		}
+		indexDocs(t, legacyIndex, docs)
+		indexDocs(t, postRankIndex, docs)
+		q := listQuery(10)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+
+		legacyNames, legacyRes := searchNames(t, legacyIndex, &countingAccessClient{
+			allowedFolders: map[string]bool{"allowed": true},
+		}, q)
+		names, res := searchNames(t, postRankIndex, &countingAccessClient{
+			allowedFolders: map[string]bool{"allowed": true},
+		}, q)
+		require.Equal(t, legacyNames, names)
+		require.ElementsMatch(t, []string{"doc-0", "doc-2"}, names)
+		require.Equal(t, legacyRes.Facet, res.Facet)
+	})
+
+	t.Run("repeated tag values match the in-searcher path", func(t *testing.T) {
+		// Native facets read indexed terms while app-side aggregation walks the
+		// stored slice, so a value repeated inside one document is where the two
+		// can disagree.
+		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
+		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
+		docs := []*resource.BulkIndexItem{
+			newDocWithTags("doc-0", "allowed", []string{"prod", "prod"}),
+			newDocWithTags("doc-1", "allowed", []string{"prod", "latency"}),
+			newDocWithTags("doc-2", "denied", []string{"prod", "prod"}),
+		}
+		indexDocs(t, legacyIndex, docs)
+		indexDocs(t, postRankIndex, docs)
+		q := listQuery(10)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+
+		legacyNames, legacyRes := searchNames(t, legacyIndex, &countingAccessClient{
+			allowedFolders: map[string]bool{"allowed": true},
+		}, q)
+		names, res := searchNames(t, postRankIndex, &countingAccessClient{
+			allowedFolders: map[string]bool{"allowed": true},
+		}, q)
+
+		require.Equal(t, legacyNames, names)
+		require.Equal(t, legacyRes.Facet, res.Facet)
+	})
+
+	t.Run("managedBy facets match the in-searcher path", func(t *testing.T) {
+		// managedBy is facet-capable and stored (facet implies stored), so the
+		// post-rank path aggregates it app-side like any other facet field.
+		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
+		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
+		docs := []*resource.BulkIndexItem{
+			newDoc("doc-0", "allowed"),
+			newDoc("doc-1", "allowed"),
+			newDoc("doc-2", "denied"),
+		}
+		docs[0].Doc.ManagedBy = "repo:one"
+		docs[1].Doc.ManagedBy = "repo:two"
+		docs[2].Doc.ManagedBy = "repo:secret"
+		indexDocs(t, legacyIndex, docs)
+		indexDocs(t, postRankIndex, docs)
+		q := listQuery(10)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"managedBy": {Field: "managedBy", Limit: 10},
+		}
+
+		legacyAC := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		postRankAC := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		legacyNames, legacyRes := searchNames(t, legacyIndex, legacyAC, q)
+		names, res := searchNames(t, postRankIndex, postRankAC, q)
+
+		require.Equal(t, legacyNames, names)
+		require.Equal(t, legacyRes.Facet, res.Facet)
+		// The denied doc's manager must not leak into the authorized facet.
+		f := res.Facet["managedBy"]
+		require.Equal(t, int64(2), f.Total)
+		for _, term := range f.Terms {
+			require.NotEqual(t, "repo:secret", term.Term)
+		}
+	})
+
+	t.Run("zero facet limit matches the in-searcher path", func(t *testing.T) {
+		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
+		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
+		docs := []*resource.BulkIndexItem{
+			newDocWithTags("doc-0", "allowed", []string{"prod", "latency"}),
+			newDocWithTags("doc-1", "allowed", nil),
+		}
+		indexDocs(t, legacyIndex, docs)
+		indexDocs(t, postRankIndex, docs)
+		q := listQuery(10)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 0},
+		}
+
+		_, legacyRes := searchNames(t, legacyIndex, &countingAccessClient{allowAll: true}, q)
+		_, res := searchNames(t, postRankIndex, &countingAccessClient{allowAll: true}, q)
+		require.Equal(t, legacyRes.Facet, res.Facet)
+		require.Empty(t, res.Facet["tags"].Terms)
+		require.Equal(t, int64(2), res.Facet["tags"].Total)
+		require.Equal(t, int64(1), res.Facet["tags"].Missing)
+	})
+
+	t.Run("facet aliases targeting the same field do not double-count", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDocWithTags("doc-0", "allowed", []string{"prod", "latency"}),
+			newDocWithTags("doc-1", "allowed", []string{"prod"}),
+		})
+		q := listQuery(10)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"primary":   {Field: "tags", Limit: 10},
+			"secondary": {Field: "tags", Limit: 10},
+		}
+
+		_, res := searchNames(t, index, &countingAccessClient{allowAll: true}, q)
+		require.Equal(t, res.Facet["primary"], res.Facet["secondary"])
+		for _, name := range []string{"primary", "secondary"} {
+			facet := res.Facet[name]
+			require.Equal(t, int64(3), facet.Total)
+			require.Equal(t, []*resourcepb.ResourceSearchResponse_TermFacet{
+				{Term: "prod", Count: 2},
+				{Term: "latency", Count: 1},
+			}, facet.Terms)
+		}
+	})
+
+	t.Run("facets split multi-value tag fields into individual terms", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDocWithTags("doc-0", "allowed", []string{"prod", "latency"}),
+			newDocWithTags("doc-1", "denied", []string{"prod", "secrets"}),
+			newDocWithTags("doc-2", "allowed", []string{"prod"}),
+			newDocWithTags("doc-3", "allowed", nil), // no tags -> missing
+		})
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		q := listQuery(10)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 100},
+		}
+		_, res := searchNames(t, index, ac, q)
+		f := res.Facet["tags"]
+		require.NotNil(t, f)
+		// Authorized docs: doc-0 (prod, latency), doc-2 (prod), doc-3 (none).
+		// Each tag element is its own term: prod=2, latency=1. Total = 3 values.
+		// doc-3 has no tags -> missing=1. The denied doc-1's "secrets" tag must
+		// not appear, and tags must never be stringified as "[prod latency]".
+		require.Equal(t, int64(3), f.Total)
+		require.Equal(t, int64(1), f.Missing)
+		terms := map[string]int64{}
+		for _, term := range f.Terms {
+			terms[term.Term] = term.Count
+			require.NotContains(t, term.Term, "[", "tag must not be stringified as an array")
+		}
+		require.Equal(t, map[string]int64{"prod": 2, "latency": 1}, terms)
+		require.NotContains(t, terms, "secrets", "unauthorized doc's tag must not be counted")
+	})
+
+	t.Run("facets are independent of forward and backward cursors", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		docs := make([]*resource.BulkIndexItem, 0, 10)
+		for i := 0; i < 10; i++ {
+			tag := "even"
+			if i%2 != 0 {
+				tag = "odd"
+			}
+			docs = append(docs, newDocWithTags(fmt.Sprintf("doc-%02d", i), "allowed", []string{tag}))
+		}
+		indexDocs(t, index, docs)
+		ac := &countingAccessClient{allowAll: true}
+		facets := map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+
+		baselineQuery := listQuery(4)
+		baselineQuery.Facet = facets
+		_, baseline := searchNames(t, index, ac, baselineQuery)
+
+		afterQuery := listQuery(3)
+		afterQuery.Facet = facets
+		afterQuery.SearchAfter = baseline.Results.GetRows()[3].SortFields
+		afterNames, after := searchNames(t, index, ac, afterQuery)
+		require.Equal(t, []string{"doc-04", "doc-05", "doc-06"}, afterNames)
+		require.Equal(t, baseline.Facet, after.Facet)
+
+		_, cursorPage := searchNames(t, index, ac, listQuery(7))
+		beforeQuery := listQuery(3)
+		beforeQuery.Facet = facets
+		beforeQuery.SearchBefore = cursorPage.Results.GetRows()[6].SortFields
+		beforeNames, before := searchNames(t, index, ac, beforeQuery)
+		require.Equal(t, []string{"doc-03", "doc-04", "doc-05"}, beforeNames)
+		require.Equal(t, baseline.Facet, before.Facet)
+	})
+
+	t.Run("facets report exact sample counts when the scan is capped (no extrapolation)", func(t *testing.T) {
+		// FacetSampleSize below the dataset size forces a capped scan. Counts
+		// are the exact authorized term counts within the bounded sample, NOT
+		// extrapolated: scaling by TotalHits/candidates would estimate the
+		// unfiltered count and over-count for low-access-fraction users.
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{
+			FacetSampleSize: 20,
+		})
+		docs := make([]*resource.BulkIndexItem, 0, 100)
+		for i := 0; i < 100; i++ {
+			docs = append(docs, newDocWithTags(fmt.Sprintf("doc-%03d", i), "allowed", []string{"sampled"}))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowAll: true}
+		q := listQuery(10)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+		_, res := searchNames(t, index, ac, q)
+		f := res.Facet["tags"]
+		require.NotNil(t, f)
+		// 20 candidates sampled (FacetSampleSize cap); all 20 are "allowed".
+		// Counts reflect only the sample, not the full 100-doc set.
+		require.Equal(t, int64(20), f.Total, "Total is the sample count, not extrapolated")
+		require.Len(t, f.Terms, 1)
+		require.Equal(t, "sampled", f.Terms[0].Term)
+		require.Equal(t, int64(20), f.Terms[0].Count, "term count is the sample count, not extrapolated")
+	})
+
+	t.Run("facets do not over-count for low-access-fraction users", func(t *testing.T) {
+		// Reproduces the reported UI bug: a tag appears on a few authorized docs
+		// but extrapolation (totalHits/candidates) reported a scaled-up count.
+		// The exact sample count must match what the tag-filtered search
+		// actually delivers, not the unfiltered total.
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{
+			FacetSampleSize: 100, MaxCandidates: 100,
+		})
+		docs := make([]*resource.BulkIndexItem, 0, 200)
+		for i := 0; i < 200; i++ {
+			folder := "denied"
+			if i < 4 { // 4 allowed of 200 -> 2% authorized fraction
+				folder = "allowed"
+			}
+			docs = append(docs, newDocWithTags(fmt.Sprintf("doc-%03d", i), folder, []string{"graceful-simply"}))
+		}
+		indexDocs(t, index, docs)
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+
+		q := listQuery(0) // facets-only: no page to fill, sample the facets
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+		_, res := searchNames(t, index, ac, q)
+		f := res.Facet["tags"]
+		require.NotNil(t, f)
+		require.Equal(t, "graceful-simply", f.Terms[0].Term)
+		// Only the 4 allowed docs are authorized; the facet counts those, not
+		// the 200 unfiltered matches.
+		require.Equal(t, int64(4), f.Terms[0].Count, "facet count is the authorized count, not extrapolated to the unfiltered total")
+		require.Equal(t, int64(4), res.TotalHits, "total and facet counts use the same authorized sample")
+		require.False(t, res.TotalHitsExact, "the facet sample stopped at its cap")
+	})
+
+	t.Run("facet sample stays exact when the budget covers every match", func(t *testing.T) {
+		// The sample consumes its whole budget, but that budget spans the entire
+		// match set, so no authorized document went uncounted.
+		cfg := search.PostRankAuthzConfig{MaxWindow: 10, FacetSampleSize: 20, MaxCandidates: 100}
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		docs := make([]*resource.BulkIndexItem, 0, 20)
+		for i := 0; i < 20; i++ {
+			folder := "denied"
+			if i%2 == 0 {
+				folder = "allowed"
+			}
+			docs = append(docs, newDocWithTags(fmt.Sprintf("doc-%02d", i), folder, []string{"shared"}))
+		}
+		indexDocs(t, index, docs)
+
+		q := listQuery(5)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+		_, res := searchNames(t, index, &countingAccessClient{
+			allowedFolders: map[string]bool{"allowed": true},
+		}, q)
+
+		require.Equal(t, int64(10), res.TotalHits)
+		require.True(t, res.TotalHitsExact, "the sample budget covered every match")
+		require.Equal(t, map[string]int64{"shared": 10}, facetTermCounts(res.Facet["tags"]))
+	})
+
+	t.Run("exhausted facet-only query reports an exact authorized total", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDocWithTags("doc-0", "allowed", []string{"prod"}),
+			newDocWithTags("doc-1", "denied", []string{"secret"}),
+			newDocWithTags("doc-2", "allowed", []string{"latency"}),
+		})
+		q := listQuery(0)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+
+		_, res := searchNames(t, index, &countingAccessClient{
+			allowedFolders: map[string]bool{"allowed": true},
+		}, q)
+		require.Equal(t, int64(2), res.TotalHits)
+		require.True(t, res.TotalHitsExact)
+		require.Equal(t, int64(2), res.Facet["tags"].Total)
+	})
+
+	t.Run("app-side facet term list respects Limit", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		// Tags with descending counts so the top-2 are well defined.
+		tags := []struct {
+			name  string
+			count int
+		}{
+			{"f1", 4}, {"f2", 3}, {"f3", 2}, {"f4", 1},
+		}
+		docs := make([]*resource.BulkIndexItem, 0, 10)
+		for _, tag := range tags {
+			for i := 0; i < tag.count; i++ {
+				docs = append(docs, newDocWithTags(fmt.Sprintf("%s-%d", tag.name, i), "allowed", []string{tag.name}))
+			}
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowAll: true}
+		q := listQuery(100)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 2},
+		}
+		_, res := searchNames(t, index, ac, q)
+		f := res.Facet["tags"]
+		require.NotNil(t, f)
+		require.Len(t, f.Terms, 2, "term list must be truncated to the requested Limit")
+		require.Equal(t, "f1", f.Terms[0].Term)
+		require.Equal(t, int64(4), f.Terms[0].Count)
+		require.Equal(t, "f2", f.Terms[1].Term)
+		require.Equal(t, int64(3), f.Terms[1].Count)
+		require.Equal(t, int64(10), f.Total)
+	})
+
+	t.Run("facet fields are not leaked into response columns", func(t *testing.T) {
+		// The post-rank path loads facet stored fields to aggregate app-side,
+		// but they must not become response columns (mirrors the folder authz
+		// field leak guard).
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDocWithTags("doc-0", "allowed", []string{"prod"}),
+			newDoc("doc-1", "allowed"),
+		})
+		ac := &countingAccessClient{allowAll: true}
+		q := listQuery(10)
+		q.Fields = []string{"title"}
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+		_, res := searchNames(t, index, ac, q)
+		cols := columnNames(res)
+		require.Equal(t, []string{"title"}, cols, "only the requested field should be returned, not the facet field")
+	})
+
+	// --- SearchBefore (reverse cursor) on the postFilter path ---
+
+	// backwardNames runs a SearchBefore query with the given cursor and returns
+	// the names in the returned (forward-ordered) page, plus the response.
+	backwardNames := func(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, cursor []string, limit int64) ([]string, *resourcepb.ResourceSearchResponse) {
+		t.Helper()
+		q := listQuery(limit)
+		q.SearchBefore = cursor
+		return searchNames(t, index, ac, q)
+	}
+
+	t.Run("SearchBefore returns the previous page in forward order", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		docs := make([]*resource.BulkIndexItem, 0, 30)
+		for i := 0; i < 30; i++ {
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), "allowed"))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowAll: true}
+		// Establish a forward cursor at doc-14 (the 15th hit).
+		_, fwd := searchNames(t, index, ac, listQuery(15))
+		rows := fwd.Results.GetRows()
+		require.Len(t, rows, 15)
+		cursor := rows[len(rows)-1].SortFields // doc-14
+		require.Equal(t, "doc-14", rows[len(rows)-1].Key.Name)
+
+		// The 5 hits immediately before doc-14, in forward order.
+		names, res := backwardNames(t, index, ac, cursor, 5)
+		require.Equal(t, []string{"doc-09", "doc-10", "doc-11", "doc-12", "doc-13"}, names)
+		require.Equal(t, int64(30), res.TotalHits, "TotalHits stays the unfiltered match count")
+	})
+
+	t.Run("SearchBefore pages backwards contiguously with no dupes or skips", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		docs := make([]*resource.BulkIndexItem, 0, 30)
+		for i := 0; i < 30; i++ {
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), "allowed"))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowAll: true}
+		// Start from doc-14.
+		_, fwd := searchNames(t, index, ac, listQuery(15))
+		cursor := fwd.Results.GetRows()[len(fwd.Results.GetRows())-1].SortFields
+
+		// Walk backwards in pages of 5; each page's first row is the next cursor.
+		var got []string
+		pages := [][]string{
+			{"doc-09", "doc-10", "doc-11", "doc-12", "doc-13"},
+			{"doc-04", "doc-05", "doc-06", "doc-07", "doc-08"},
+			{"doc-00", "doc-01", "doc-02", "doc-03"}, // start of index reached
+		}
+		for p, want := range pages {
+			require.Less(t, p, 100)
+			names, res := backwardNames(t, index, ac, cursor, 5)
+			require.Equal(t, want, names, "page %d backwards", p)
+			got = append(got, names...)
+			rows := res.Results.GetRows()
+			if len(rows) == 0 {
+				break
+			}
+			cursor = rows[0].SortFields // smallest sort key -> next SearchBefore cursor
+			if len(rows) < 5 {
+				break // shorter page => reached the start
+			}
+		}
+		// Backward walk covers doc-00..doc-13 exactly once, in forward order
+		// within each page and decreasing ranges across pages.
+		wantAll := []string{
+			"doc-09", "doc-10", "doc-11", "doc-12", "doc-13",
+			"doc-04", "doc-05", "doc-06", "doc-07", "doc-08",
+			"doc-00", "doc-01", "doc-02", "doc-03",
+		}
+		require.Equal(t, wantAll, got)
+	})
+
+	t.Run("SearchBefore respects authorization", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRank(t, 2)
+		// Even-indexed docs authorized; titles equal names so order is stable.
+		docs := make([]*resource.BulkIndexItem, 0, 20)
+		for i := 0; i < 20; i++ {
+			folder := "denied"
+			if i%2 == 0 {
+				folder = "allowed"
+			}
+			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), folder))
+		}
+		indexDocs(t, index, docs)
+
+		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+		// Forward cursor at doc-18 (authorized). Forward search over authorized
+		// hits returns the even docs; the last returned is doc-18.
+		_, fwd := searchNames(t, index, ac, listQuery(20))
+		rows := fwd.Results.GetRows()
+		require.Equal(t, "doc-18", rows[len(rows)-1].Key.Name)
+		cursor := rows[len(rows)-1].SortFields
+
+		// The 3 authorized hits immediately before doc-18 (in forward order):
+		// doc-12, doc-14, doc-16.
+		names, _ := backwardNames(t, index, ac, cursor, 3)
+		require.Equal(t, []string{"doc-12", "doc-14", "doc-16"}, names)
+	})
+
+	t.Run("stale SearchBefore cursor falls back to in-searcher path", func(t *testing.T) {
+		// A SearchBefore cursor created before the flag was enabled has one
+		// fewer sort value (no SortDocID tie-breaker). The post-rank path must
+		// fall back to the in-searcher path instead of feeding bleve a
+		// mismatched cursor.
+		index := newTestDashboardsIndexPostRank(t, 2)
+		indexDocs(t, index, []*resource.BulkIndexItem{
+			newDoc("doc-a", "allowed"),
+			newDoc("doc-b", "allowed"),
+			newDoc("doc-c", "allowed"),
+		})
+		ac := &countingAccessClient{allowAll: true}
+		// Pre-flag cursor shape: [title, name], no _id tie-breaker (len 2). The
+		// post-rank sort order is [title, name, _id] (len 3); this cursor
+		// mismatches post-rank and falls back to the in-searcher path, whose
+		// sort is [title, name] (len 2) — a match.
+		q := listQuery(10)
+		q.SearchBefore = []string{"doc-c", "doc-c"}
+		names, res := searchNames(t, index, ac, q)
+		require.Nil(t, res.Error)
+		// Falls back to in-searcher SearchBefore: the hits before ("doc-c","doc-c").
+		require.Equal(t, []string{"doc-a", "doc-b"}, names)
+	})
 }
 
 // newTestFoldersIndexPostRank builds a folders index with the post-rank-authz
@@ -1862,6 +2521,14 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		return all
 	}
 
+	federatedRowLabels := func(rows []*resourcepb.ResourceTableRow) [][2]string {
+		out := make([][2]string, 0, len(rows))
+		for _, row := range rows {
+			out = append(out, [2]string{row.Key.Resource, row.Key.Name})
+		}
+		return out
+	}
+
 	t.Run("returns dashboards + folders merged in sort order", func(t *testing.T) {
 		dash := newTestDashboardsIndexPostRank(t, 2)
 		folder := newTestFoldersIndexPostRank(t, 2, search.PostRankAuthzConfig{})
@@ -1990,5 +2657,541 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		ac := search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
 		got := pageAllFederated(t, dash, folder, ac, 5)
 		require.Equal(t, want, got, "duplicate titles must page deterministically by _id across the alias")
+	})
+
+	t.Run("facets aggregated app-side over authorized federated hits", func(t *testing.T) {
+		dash := newTestDashboardsIndexPostRank(t, 2)
+		folder := newTestFoldersIndexPostRank(t, 2, search.PostRankAuthzConfig{})
+		dashboardDoc := newDash("d-aaa", "aaa", "any") // no tags -> missing
+		westFolder := newFolder("f-zzz", "zzz", nil)
+		westFolder.Doc.Tags = []string{"west"}
+		eastFolder := newFolder("f-mmm", "mmm", nil)
+		eastFolder.Doc.Tags = []string{"east"}
+		indexDashboards(t, dash, []*resource.BulkIndexItem{dashboardDoc})
+		indexDashboards(t, folder, []*resource.BulkIndexItem{westFolder, eastFolder})
+
+		ac := search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
+		q := federatedQuery(100)
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 100},
+		}
+		_, res := searchFederated(t, dash, folder, ac, q)
+
+		f, ok := res.Facet["tags"]
+		require.True(t, ok, "facet should be aggregated app-side")
+		require.NotNil(t, f)
+		// 2 authorized hits have tags (west, east); the dashboard has none.
+		// Total is the number of field values, not docs.
+		require.Equal(t, int64(2), f.Total)
+		require.Equal(t, int64(1), f.Missing)
+		terms := map[string]int64{}
+		for _, term := range f.Terms {
+			terms[term.Term] = term.Count
+		}
+		require.Equal(t, map[string]int64{"west": 1, "east": 1}, terms)
+	})
+
+	t.Run("SearchBefore returns the previous federated page in forward order", func(t *testing.T) {
+		// Use a tiny MaxWindow so the backward scan crosses window boundaries.
+		cfg := search.PostRankAuthzConfig{MaxWindow: 6}
+		dash := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
+		folder := newTestFoldersIndexPostRank(t, 2, cfg)
+		// 6 dashboards (t-00,t-02,...,t-10) and 6 folders (t-01,t-03,...,t-11),
+		// interleaved by title so the merged sort alternates resources.
+		docs := make([]*resource.BulkIndexItem, 0, 6)
+		for i := 0; i < 6; i++ {
+			docs = append(docs, newDash(fmt.Sprintf("d-%02d", i), fmt.Sprintf("t-%02d", i*2), "allowed"))
+		}
+		indexDashboards(t, dash, docs)
+		fdocs := make([]*resource.BulkIndexItem, 0, 6)
+		for i := 0; i < 6; i++ {
+			fdocs = append(fdocs, newFolder(fmt.Sprintf("f-%02d", i), fmt.Sprintf("t-%02d", i*2+1), nil))
+		}
+		indexDashboards(t, folder, fdocs)
+
+		// Merged forward title order: t-00(d-00), t-01(f-00), t-02(d-01), ...
+		merged := make([][2]string, 0, 12)
+		for i := 0; i < 12; i++ {
+			if i%2 == 0 {
+				merged = append(merged, [2]string{"dashboards", fmt.Sprintf("d-%02d", i/2)})
+			} else {
+				merged = append(merged, [2]string{"folders", fmt.Sprintf("f-%02d", i/2)})
+			}
+		}
+
+		ac := search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
+		// Forward page of 8 -> merged[0..7]; cursor = merged[7] (t-07, f-03).
+		_, fwd := searchFederated(t, dash, folder, ac, federatedQuery(8))
+		fwdRows := fwd.Results.GetRows()
+		require.Len(t, fwdRows, 8)
+		require.Equal(t, merged[:8], federatedRowLabels(fwdRows))
+		cursor := fwdRows[len(fwdRows)-1].SortFields
+
+		// SearchBefore limit=5 -> the 5 merged hits before the cursor, forward
+		// order: merged[2..6] = t-02..t-06.
+		q := federatedQuery(5)
+		q.SearchBefore = cursor
+		got, res := searchFederated(t, dash, folder, ac, q)
+		require.Equal(t, merged[2:7], got, "SearchBefore must return the previous federated page in forward order")
+		require.Equal(t, int64(12), res.TotalHits, "TotalHits stays the unfiltered merged match count")
+	})
+}
+
+// Deleted documents share an index with live ones, so every read path has to pick
+// a side. These cover each path that builds its own query, plus the document with
+// no marker at all, which must stay live without a reindex.
+func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	const folder = "folder-1"
+	manager := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo-x"}
+
+	doc := func(name, title string, deleted *bool) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+					Name:      name,
+				},
+				Title:     title,
+				Folder:    folder,
+				Tags:      []string{"tag-a"},
+				Manager:   &manager,
+				IsDeleted: deleted,
+			},
+		}
+	}
+
+	index := newTestDashboardsIndex(t, threshold, 3, func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			// What every document written before the marker looks like.
+			doc("no-marker", "Alpha one", nil),
+			doc("live", "Alpha two", new(false)),
+			doc("trashed", "Alpha three", new(true)),
+		}})
+	})
+
+	liveNames := []string{"no-marker", "live"}
+
+	t.Run("search leaves deleted documents out", func(t *testing.T) {
+		q := newTestQuery("Alpha")
+		checkSearchQueryUnordered(t, index, q, liveNames)
+	})
+
+	t.Run("search with IsDeleted returns only deleted documents", func(t *testing.T) {
+		q := newTestQuery("Alpha")
+		q.IsDeleted = true
+		checkSearchQueryUnordered(t, index, q, []string{"trashed"})
+	})
+
+	// Browsing trash with no query at all takes its own path in scopeQuery.
+	t.Run("browsing trash with no query returns only deleted documents", func(t *testing.T) {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		checkSearchQueryUnordered(t, index, q, []string{"trashed"})
+	})
+
+	// A query with filters and no text takes the other branch of
+	// combineFilterAndTextQueries, where filters drive iteration.
+	t.Run("filter-only search leaves deleted documents out", func(t *testing.T) {
+		q := newTestQuery("")
+		q.Options.Fields = []*resourcepb.Requirement{{
+			Key:      resource.SEARCH_FIELD_TAGS,
+			Operator: string(selection.In),
+			Values:   []string{"tag-a"},
+		}}
+		checkSearchQueryUnordered(t, index, q, liveNames)
+
+		q.IsDeleted = true
+		checkSearchQueryUnordered(t, index, q, []string{"trashed"})
+	})
+
+	t.Run("facets and total hits ignore deleted documents", func(t *testing.T) {
+		q := newTestQuery("")
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: resource.SEARCH_FIELD_TAGS, Limit: 100},
+		}
+
+		res, err := index.Search(context.Background(), nil, q, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Equal(t, int64(len(liveNames)), res.TotalHits)
+
+		facet, ok := res.Facet["tags"]
+		require.True(t, ok)
+		require.Equal(t, int64(len(liveNames)), facet.Total)
+		require.Len(t, facet.Terms, 1)
+		require.Equal(t, "tag-a", facet.Terms[0].Term)
+		require.Equal(t, int64(len(liveNames)), facet.Terms[0].Count)
+	})
+
+	t.Run("doc counts ignore deleted documents", func(t *testing.T) {
+		all, err := index.DocCount(context.Background(), "", nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(len(liveNames)), all)
+
+		inFolder, err := index.DocCount(context.Background(), folder, nil)
+		require.NoError(t, err)
+		require.Equal(t, int64(len(liveNames)), inFolder)
+	})
+
+	// An object that was provisioned when it was deleted comes back from its
+	// repository, not from trash, so trash must not return it.
+	t.Run("trash leaves out objects that were provisioned when deleted", func(t *testing.T) {
+		provisioned := &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key:           &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "trashed-from-repo"},
+				Title:         "Alpha four",
+				Folder:        folder,
+				IsDeleted:     new(true),
+				IsProvisioned: new(true),
+			},
+		}
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{provisioned}}))
+
+		trashQuery := newTestQuery("Alpha")
+		trashQuery.IsDeleted = true
+		checkSearchQueryUnordered(t, index, trashQuery, []string{"trashed"})
+
+		// It is still absent from live search: it is deleted, after all.
+		checkSearchQueryUnordered(t, index, newTestQuery("Alpha"), liveNames)
+	})
+
+	// Restoring an object reindexes it without the marker, which has to put it back
+	// into live results and take it out of trash.
+	t.Run("reindexing without the marker restores the document", func(t *testing.T) {
+		restored := &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "trashed"},
+				Title:  "Alpha three",
+				Folder: folder,
+			},
+		}
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{restored}}))
+		t.Cleanup(func() {
+			// Put it back in the trash for the other subtests.
+			restored.Doc.IsDeleted = new(true)
+			require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{restored}}))
+		})
+
+		checkSearchQueryUnordered(t, index, newTestQuery("Alpha"), append(slices.Clone(liveNames), "trashed"))
+
+		trashQuery := newTestQuery("Alpha")
+		trashQuery.IsDeleted = true
+		checkSearchQueryUnordered(t, index, trashQuery, nil)
+	})
+
+	// A deleted object provisioning can still see looks like one to keep managing.
+	t.Run("managed object listing and counts ignore deleted documents", func(t *testing.T) {
+		listed, err := index.ListManagedObjects(context.Background(), &resourcepb.ListManagedObjectsRequest{
+			Namespace: key.Namespace,
+			Kind:      string(manager.Kind),
+			Id:        manager.Identity,
+		}, &resource.SearchStats{})
+		require.NoError(t, err)
+		require.Nil(t, listed.Error)
+
+		names := make([]string, 0, len(listed.Items))
+		for _, item := range listed.Items {
+			names = append(names, item.Object.Name)
+		}
+		require.ElementsMatch(t, liveNames, names)
+
+		counts, err := index.CountManagedObjects(context.Background(), &resource.SearchStats{})
+		require.NoError(t, err)
+		require.Len(t, counts, 1)
+		require.Equal(t, int64(len(liveNames)), counts[0].Count)
+	})
+}
+
+// The post-ranking authorization path runs its own search loop, so a leak there
+// would only show up where that path is enabled.
+func TestSearchPostRankAuthzSeparatesDeletedFromLiveDocuments(t *testing.T) {
+	index := newTestDashboardsIndexPostRank(t, 3)
+
+	doc := func(name, folder string, deleted *bool, tags ...string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: postRankKey.Namespace,
+					Group:     postRankKey.Group,
+					Resource:  postRankKey.Resource,
+					Name:      name,
+				},
+				Title:     name,
+				Folder:    folder,
+				Tags:      tags,
+				IsDeleted: deleted,
+			},
+		}
+	}
+	// The trashed document sits in an authorized folder, so anything that lets
+	// it through is the deleted scope failing, not authorization.
+	indexDocs(t, index, []*resource.BulkIndexItem{
+		doc("no-marker", "allowed", nil, "shared"),
+		doc("live", "allowed", new(false), "shared", "live-only"),
+		doc("denied", "denied", new(false), "shared", "denied-only"),
+		doc("trashed", "allowed", new(true), "shared", "trash-only"),
+	})
+
+	newAC := func() *countingAccessClient {
+		return &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+	}
+	tagFacet := func(q *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchRequest {
+		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
+			"tags": {Field: "tags", Limit: 10},
+		}
+		return q
+	}
+
+	t.Run("live search excludes deleted and unauthorized documents", func(t *testing.T) {
+		names, res := searchNames(t, index, newAC(), listQuery(100))
+		require.ElementsMatch(t, []string{"no-marker", "live"}, names)
+		require.Equal(t, int64(2), res.TotalHits)
+	})
+
+	t.Run("trash search returns only deleted documents", func(t *testing.T) {
+		q := listQuery(100)
+		q.IsDeleted = true
+		names, res := searchNames(t, index, newAC(), q)
+		require.Equal(t, []string{"trashed"}, names)
+		require.Equal(t, int64(1), res.TotalHits)
+	})
+
+	t.Run("live facet counts exclude deleted documents", func(t *testing.T) {
+		names, res := searchNames(t, index, newAC(), tagFacet(listQuery(100)))
+		require.ElementsMatch(t, []string{"no-marker", "live"}, names)
+		require.Equal(t, map[string]int64{"shared": 2, "live-only": 1}, facetTermCounts(res.Facet["tags"]))
+		require.Equal(t, int64(3), res.Facet["tags"].Total)
+	})
+
+	t.Run("trash facet counts exclude live documents", func(t *testing.T) {
+		q := tagFacet(listQuery(100))
+		q.IsDeleted = true
+		names, res := searchNames(t, index, newAC(), q)
+		require.Equal(t, []string{"trashed"}, names)
+		require.Equal(t, map[string]int64{"shared": 1, "trash-only": 1}, facetTermCounts(res.Facet["tags"]))
+	})
+
+	t.Run("count-only totals exclude deleted documents", func(t *testing.T) {
+		ac := newAC()
+		_, res := searchNames(t, index, ac, listQuery(0))
+		require.Equal(t, int64(2), res.TotalHits)
+		require.True(t, res.TotalHitsExact)
+		require.Equal(t, 3, ac.checked, "the deleted document is not even a candidate")
+	})
+}
+
+// facetTermCounts flattens a facet response into term -> count for comparison.
+func facetTermCounts(f *resourcepb.ResourceSearchResponse_Facet) map[string]int64 {
+	if f == nil {
+		return nil
+	}
+	counts := make(map[string]int64, len(f.Terms))
+	for _, term := range f.Terms {
+		counts[term.Term] = term.Count
+	}
+	return counts
+}
+
+// checkSearchQueryUnordered asserts on the set of names, where order is not under
+// test.
+func checkSearchQueryUnordered(t *testing.T, index resource.ResourceIndex, query *resourcepb.ResourceSearchRequest, expectedNames []string) {
+	t.Helper()
+	res, err := index.Search(context.Background(), nil, query, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, res.Error)
+	require.Equal(t, int64(len(expectedNames)), res.TotalHits)
+
+	names := make([]string, 0, len(res.Results.Rows))
+	for _, row := range res.Results.Rows {
+		names = append(names, row.Key.Name)
+	}
+	require.ElementsMatch(t, expectedNames, names)
+}
+
+// The trash fields are declared apart from the standard ones, so they have their
+// own mapping, their own query metadata and their own response columns. Each of
+// those can fail silently — an unmapped sort field orders arbitrarily and a
+// missing column definition is dropped without an error — so this drives all
+// three through a real index.
+func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	const alice, bob = "user:alice", "user:bob"
+	// Deliberately indexed out of order, so a passing sort cannot be the order the
+	// documents happened to arrive in.
+	deleted := func(name, title, by string, deletedAt int64, rv int64) *resource.BulkIndexItem {
+		deletedRV := strconv.FormatInt(rv, 10)
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace,
+					Group:     key.Group,
+					Resource:  key.Resource,
+					Name:      name,
+				},
+				Title:        title,
+				Name:         name,
+				RV:           rv,
+				IsDeleted:    new(true),
+				DeletedBy:    &by,
+				DeletionTime: &deletedAt,
+				DeletedRV:    &deletedRV,
+			},
+		}
+	}
+
+	index := newTestDashboardsIndex(t, threshold, 4, func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			deleted("middle", "Alpha middle", alice, 2000, 20),
+			deleted("newest", "Alpha newest", bob, 3000, 30),
+			deleted("oldest", "Alpha oldest", alice, 1000, 10),
+			{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "live",
+				},
+				Title: "Alpha live", Name: "live",
+			}},
+		}})
+	})
+
+	t.Run("filtering by who deleted it", func(t *testing.T) {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		q.Options.Fields = []*resourcepb.Requirement{{
+			Key:      resource.SEARCH_FIELD_DELETED_BY,
+			Operator: string(selection.In),
+			Values:   []string{alice},
+		}}
+		checkSearchQueryUnordered(t, index, q, []string{"middle", "oldest"})
+	})
+
+	// The default sort for /trash, and the reason deletion_time is numeric: as a
+	// keyword it would order lexically.
+	t.Run("sorting by deletion time", func(t *testing.T) {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{
+			Field: resource.SEARCH_FIELD_DELETION_TIME,
+			Desc:  true,
+		}}
+		checkSearchQuery(t, index, q, []string{"newest", "middle", "oldest"})
+
+		q.SortBy[0].Desc = false
+		checkSearchQuery(t, index, q, []string{"oldest", "middle", "newest"})
+	})
+
+	t.Run("returning the values", func(t *testing.T) {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		q.Fields = []string{
+			resource.SEARCH_FIELD_DELETED_BY,
+			resource.SEARCH_FIELD_DELETION_TIME,
+			resource.SEARCH_FIELD_DELETED_RV,
+		}
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETION_TIME}}
+
+		res, err := index.Search(context.Background(), nil, q, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, res.Results.Columns, 3, "a field without a column definition is dropped silently")
+		require.Equal(t, resource.SEARCH_FIELD_DELETED_BY, res.Results.Columns[0].Name)
+
+		rows := res.Results.Rows
+		require.Len(t, rows, 3)
+		require.Equal(t, alice, string(rows[0].Cells[0]))
+		require.Equal(t, "oldest", rows[0].Key.Name)
+
+		// int64 columns are encoded big-endian, not as JSON (see NewTableBuilder).
+		require.Len(t, rows[0].Cells[1], 8)
+		require.Equal(t, int64(1000), int64(binary.BigEndian.Uint64(rows[0].Cells[1])))
+		require.Equal(t, "10", string(rows[0].Cells[2]), "the resource version of the delete")
+	})
+
+	// Resource versions are snowflake ids well past the range a float64 represents
+	// exactly, so a numeric mapping would return a rounded value and restore would
+	// submit the wrong revision.
+	t.Run("a large resource version comes back exactly", func(t *testing.T) {
+		const rv = "1856241819843796993"
+		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "snowflake",
+				},
+				Title: "Alpha snowflake", Name: "snowflake",
+				IsDeleted: new(true), DeletedRV: &[]string{rv}[0],
+			},
+		}}}))
+
+		q := newTestQuery("snowflake")
+		q.IsDeleted = true
+		q.Fields = []string{resource.SEARCH_FIELD_DELETED_RV}
+		res, err := index.Search(context.Background(), nil, q, nil, nil)
+		require.NoError(t, err)
+		require.Len(t, res.Results.Rows, 1)
+		require.Equal(t, rv, string(res.Results.Rows[0].Cells[0]))
+	})
+
+	// Live documents leave these unset, so naming one in a live search is a caller
+	// mistake: a filter would match nothing and a sort would order by nothing. The
+	// index refuses it rather than answering with an empty column.
+	t.Run("a live search cannot name a trash field", func(t *testing.T) {
+		for _, tc := range []struct {
+			name   string
+			mutate func(*resourcepb.ResourceSearchRequest)
+		}{
+			{"retrieve", func(q *resourcepb.ResourceSearchRequest) {
+				q.Fields = []string{resource.SEARCH_FIELD_DELETED_BY}
+			}},
+			{"sort", func(q *resourcepb.ResourceSearchRequest) {
+				q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETION_TIME}}
+			}},
+			{"filter", func(q *resourcepb.ResourceSearchRequest) {
+				q.Options.Fields = []*resourcepb.Requirement{{
+					Key:      resource.SEARCH_FIELD_DELETED_BY,
+					Operator: string(selection.In),
+					Values:   []string{alice},
+				}}
+			}},
+			// Legacy clients name the fields a text query runs against. Without this
+			// the query would run and return nothing, which reads as "no results"
+			// rather than "wrong field".
+			{"query fields", func(q *resourcepb.ResourceSearchRequest) {
+				q.Query = "alice"
+				q.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{{
+					Name: resource.SEARCH_FIELD_DELETED_BY,
+				}}
+			}},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				q := newTestQuery("")
+				tc.mutate(q)
+
+				res, err := index.Search(context.Background(), nil, q, nil, nil)
+				require.NoError(t, err, "a bad request comes back in the response, not as an error")
+				require.NotNil(t, res.Error)
+				require.Equal(t, int32(400), res.Error.Code)
+
+				// The same request against trash is fine.
+				q.IsDeleted = true
+				res, err = index.Search(context.Background(), nil, q, nil, nil)
+				require.NoError(t, err)
+				require.Nil(t, res.Error)
+			})
+		}
 	})
 }

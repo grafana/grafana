@@ -2,6 +2,7 @@ package annotationsapi
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -172,6 +173,10 @@ type fakeClient struct {
 	deletedNames []string
 	deleteErr    error
 	createErr    error
+
+	live      []annotationV0.Annotation
+	pageSize  int
+	searchErr error
 }
 
 func (f *fakeClient) GetByLegacyID(context.Context, int64, int64) (*annotationV0.Annotation, error) {
@@ -187,7 +192,28 @@ func (f *fakeClient) Update(_ context.Context, _ int64, anno *annotationV0.Annot
 }
 func (f *fakeClient) Delete(_ context.Context, _ int64, name string) error {
 	f.deletedNames = append(f.deletedNames, name)
-	return f.deleteErr
+	if f.deleteErr != nil {
+		return f.deleteErr
+	}
+	f.live = slices.DeleteFunc(f.live, func(a annotationV0.Annotation) bool {
+		return a.GetName() == name
+	})
+	return nil
+}
+
+// Search returns one page of the live annotations, mirroring the real store's server-side
+// limit: deletes remove items, so the remaining ones only surface on a later call.
+func (f *fakeClient) Search(_ context.Context, _ int64, _ *annotations.ItemQuery) ([]*annotationV0.Annotation, error) {
+	if f.searchErr != nil {
+		return nil, f.searchErr
+	}
+
+	live := slices.Clone(f.live[:min(f.pageSize, len(f.live))])
+	page := make([]*annotationV0.Annotation, len(live))
+	for i := range live {
+		page[i] = &live[i]
+	}
+	return page, nil
 }
 
 func TestMigrationProxy(t *testing.T) {
@@ -384,4 +410,156 @@ func TestMigrationProxy(t *testing.T) {
 			assert.Empty(t, client.deletedNames, "the old record must not be deleted if the new one was not created")
 		})
 	})
+
+	t.Run("MassDelete", func(t *testing.T) {
+		const orgID = int64(1)
+
+		newProxy := func(client annotationClient) *MigrationProxy {
+			return &MigrationProxy{client: client, logger: log.New("test")}
+		}
+
+		live := func(names ...string) []annotationV0.Annotation {
+			annos := make([]annotationV0.Annotation, len(names))
+			for i, name := range names {
+				annos[i] = annotationV0.Annotation{ObjectMeta: metav1.ObjectMeta{Name: name}}
+			}
+			return annos
+		}
+
+		t.Run("deletes every annotation on the panel", func(t *testing.T) {
+			client := &fakeClient{live: live("a-1", "a-2"), pageSize: 10}
+			proxy := newProxy(client)
+
+			require.NoError(t, proxy.MassDelete(context.Background(), orgID, "dash-1", 2))
+			assert.Equal(t, []string{"a-1", "a-2"}, client.deletedNames)
+		})
+
+		t.Run("deletes every annotation when they span multiple pages", func(t *testing.T) {
+			client := &fakeClient{live: live("a-1", "a-2", "a-3", "a-4", "a-5"), pageSize: 2}
+			proxy := newProxy(client)
+
+			require.NoError(t, proxy.MassDelete(context.Background(), orgID, "dash-1", 2))
+			assert.Equal(t, []string{"a-1", "a-2", "a-3", "a-4", "a-5"}, client.deletedNames)
+			assert.Empty(t, client.live)
+		})
+
+		t.Run("is a no-op when the panel has no annotations", func(t *testing.T) {
+			client := &fakeClient{pageSize: 10}
+			proxy := newProxy(client)
+
+			require.NoError(t, proxy.MassDelete(context.Background(), orgID, "dash-1", 2))
+			assert.Empty(t, client.deletedNames)
+		})
+
+		t.Run("propagates a search failure", func(t *testing.T) {
+			client := &fakeClient{searchErr: assert.AnError, pageSize: 10}
+			proxy := newProxy(client)
+
+			require.ErrorIs(t, proxy.MassDelete(context.Background(), orgID, "dash-1", 2), assert.AnError)
+			assert.Empty(t, client.deletedNames)
+		})
+
+		t.Run("stops and propagates a delete failure", func(t *testing.T) {
+			client := &fakeClient{live: live("a-1", "a-2"), pageSize: 10, deleteErr: assert.AnError}
+			proxy := newProxy(client)
+
+			require.ErrorIs(t, proxy.MassDelete(context.Background(), orgID, "dash-1", 2), assert.AnError)
+			assert.Equal(t, []string{"a-1"}, client.deletedNames, "it stops at the first failure")
+		})
+	})
+
+	t.Run("FindTags", func(t *testing.T) {
+		t.Run("converts the tag counts from the new store", func(t *testing.T) {
+			client := &fakeTagClient{tags: []annotationV0.GetTagsV0alpha1BodyTags{
+				{Tag: "outage", Count: 3},
+				{Tag: "region:eu", Count: 1},
+			}}
+			proxy := &MigrationProxy{client: client, logger: log.New("test")}
+
+			result, err := proxy.FindTags(context.Background(), 1, &annotations.TagsQuery{OrgID: 1, Tag: "o", Limit: 10})
+			require.NoError(t, err)
+			assert.Equal(t, []*annotations.TagsDTO{
+				{Tag: "outage", Count: 3},
+				{Tag: "region:eu", Count: 1},
+			}, result.Tags)
+
+			require.Len(t, client.tagQueries, 1)
+			assert.Equal(t, "o", client.tagQueries[0].Tag, "the query is passed through unchanged")
+		})
+
+		t.Run("propagates the client error", func(t *testing.T) {
+			proxy := &MigrationProxy{client: &fakeTagClient{err: assert.AnError}, logger: log.New("test")}
+
+			_, err := proxy.FindTags(context.Background(), 1, &annotations.TagsQuery{OrgID: 1})
+			require.ErrorIs(t, err, assert.AnError)
+		})
+	})
+}
+
+type fakeTagClient struct {
+	annotationClient
+
+	tags       []annotationV0.GetTagsV0alpha1BodyTags
+	err        error
+	tagQueries []*annotations.TagsQuery
+}
+
+func (f *fakeTagClient) ListTags(_ context.Context, _ int64, query *annotations.TagsQuery) ([]annotationV0.GetTagsV0alpha1BodyTags, error) {
+	f.tagQueries = append(f.tagQueries, query)
+	return f.tags, f.err
+}
+
+func TestMergeTags(t *testing.T) {
+	tag := func(name string, count int64) *annotations.TagsDTO {
+		return &annotations.TagsDTO{Tag: name, Count: count}
+	}
+
+	tests := []struct {
+		name       string
+		newTags    []*annotations.TagsDTO
+		legacyTags []*annotations.TagsDTO
+		limit      int64
+		want       []*annotations.TagsDTO
+	}{
+		{
+			name:       "sums the counts of tags present in both stores",
+			newTags:    []*annotations.TagsDTO{tag("shared", 2)},
+			legacyTags: []*annotations.TagsDTO{tag("shared", 3)},
+			want:       []*annotations.TagsDTO{tag("shared", 5)},
+		},
+		{
+			name:       "sorts ascending by tag regardless of the input ordering",
+			newTags:    []*annotations.TagsDTO{tag("zebra", 9), tag("alpha", 1)},
+			legacyTags: []*annotations.TagsDTO{tag("middle", 5)},
+			want:       []*annotations.TagsDTO{tag("alpha", 1), tag("middle", 5), tag("zebra", 9)},
+		},
+		{
+			name:       "truncates to the limit after sorting",
+			newTags:    []*annotations.TagsDTO{tag("c", 1), tag("a", 1)},
+			legacyTags: []*annotations.TagsDTO{tag("b", 1), tag("d", 1)},
+			limit:      3,
+			want:       []*annotations.TagsDTO{tag("a", 1), tag("b", 1), tag("c", 1)},
+		},
+		{
+			name:       "keeps every tag when the limit is zero",
+			newTags:    []*annotations.TagsDTO{tag("a", 1)},
+			legacyTags: []*annotations.TagsDTO{tag("b", 1)},
+			want:       []*annotations.TagsDTO{tag("a", 1), tag("b", 1)},
+		},
+		{
+			name: "returns an empty result when neither store has tags",
+			want: []*annotations.TagsDTO{},
+		},
+		{
+			name:    "keeps key:value tags distinct from their bare key",
+			newTags: []*annotations.TagsDTO{tag("region:eu", 1), tag("region", 2)},
+			want:    []*annotations.TagsDTO{tag("region", 2), tag("region:eu", 1)},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, MergeTags(tt.newTags, tt.legacyTags, tt.limit))
+		})
+	}
 }

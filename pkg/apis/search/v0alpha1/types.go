@@ -18,6 +18,11 @@ const (
 	KindSearchResults = "SearchResults"
 	KindTrashQuery    = "TrashQuery"
 	KindTrashResults  = "TrashResults"
+
+	// Here rather than beside the routes because the authorization chain needs
+	// them and cannot depend on the handler package.
+	SearchPathSegment = "search"
+	TrashPathSegment  = "trash"
 )
 
 // WhereNode is a single node of the where tree. Exactly one field must be set;
@@ -87,7 +92,8 @@ type ExistsPredicate struct {
 }
 
 // SortField names a field to sort by and a direction ("asc" or "desc"). V1
-// allows sorting only on scalar string fields that declare the sort capability.
+// allows sorting only on scalar string and numeric fields that declare the sort
+// capability.
 //
 // +k8s:deepcopy-gen=true
 type SortField struct {
@@ -172,18 +178,33 @@ type TrashResults struct {
 	Items    []ResultItem    `json:"items"`
 }
 
-// ResultsMetadata carries the pagination token and, when known exactly, the
-// total hit count.
+// TotalHitsRelation says how ResultsMetadata.TotalHits relates to the real
+// number of matching resources the caller is allowed to see.
+type TotalHitsRelation string
+
+const (
+	// TotalHitsEqual means TotalHits is the exact count.
+	TotalHitsEqual TotalHitsRelation = "eq"
+
+	// TotalHitsAtMost means TotalHits is an upper bound: the real count is less
+	// than or equal to it. The server falls back to this when counting exactly
+	// would be too expensive.
+	TotalHitsAtMost TotalHitsRelation = "lte"
+)
+
+// ResultsMetadata carries the pagination token and the total hit count.
 //
 // +k8s:deepcopy-gen=true
 type ResultsMetadata struct {
 	Continue string `json:"continue,omitempty"`
 
-	// TotalHits is the exact count of authorized resources matching the query.
-	// It is present only when the server can compute it exactly; when it can't,
-	// the field is omitted and absence means "unknown". There is no
-	// approximate value.
-	TotalHits *int64 `json:"totalHits,omitempty"`
+	// TotalHits counts the resources matching the query. Always read it together
+	// with TotalHitsRelation, which says whether the count is exact.
+	TotalHits int64 `json:"totalHits"`
+
+	// TotalHitsRelation is "eq" when TotalHits is exact and "lte" when it is an
+	// upper bound.
+	TotalHitsRelation TotalHitsRelation `json:"totalHitsRelation"`
 }
 
 // ResultItem is one search or trash hit. The item shape is identical on both
