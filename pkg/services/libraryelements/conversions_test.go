@@ -20,6 +20,7 @@ func TestConversionsCommands(t *testing.T) {
 	cases := []struct {
 		name           string
 		input          runtime.Object
+		previous       runtime.Object
 		expectedCreate *model.CreateLibraryElementCommand
 		expectedPatch  *model.PatchLibraryElementCommand
 	}{
@@ -67,6 +68,7 @@ func TestConversionsCommands(t *testing.T) {
 					},
 				},
 			},
+			previous: &v0alpha1.LibraryPanel{},
 			// in the legacy model blob "title" is the panel display title (spec.panelTitle),
 			// while the library panel name (spec.title) maps to the command Name / SQL column
 			expectedCreate: &model.CreateLibraryElementCommand{
@@ -78,6 +80,7 @@ func TestConversionsCommands(t *testing.T) {
 			},
 			expectedPatch: &model.PatchLibraryElementCommand{
 				FolderUID: new("aaa"),
+				FolderID:  -1, // nolint:staticcheck
 				UID:       "uid",
 				Name:      "title",
 				Kind:      1,
@@ -95,13 +98,25 @@ func TestConversionsCommands(t *testing.T) {
 				require.FailNowf(t, "Create mismatch (-want +got):%s", diff)
 			}
 
-			patch, err := ToPatchLibraryElementCommand(tt.input)
+			patch, err := ToPatchLibraryElementCommand(tt.input, tt.previous)
 			require.NoError(t, err)
 			if diff := cmp.Diff(tt.expectedPatch, patch); diff != "" {
 				require.FailNowf(t, "Path mismatch (-want +got):%s", diff)
 			}
 		})
 	}
+}
+
+func TestPatchCommandOmitsUnchangedFolder(t *testing.T) {
+	previous := &v0alpha1.LibraryPanel{ObjectMeta: metav1.ObjectMeta{Annotations: map[string]string{
+		utils.AnnoKeyFolder: "aaa",
+	}}}
+	updated := previous.DeepCopy()
+	updated.Generation = 2
+
+	patch, err := ToPatchLibraryElementCommand(updated, previous)
+	require.NoError(t, err)
+	require.Nil(t, patch.FolderUID)
 }
 
 func TestLegacyModelToLibraryPanel(t *testing.T) {
