@@ -10,6 +10,7 @@ type FrontendGrafanaJavascriptAgentEvent struct {
 	Exceptions   []Exception   `json:"exceptions,omitempty"`
 	Logs         []Log         `json:"logs,omitempty"`
 	Measurements []Measurement `json:"measurements,omitempty"`
+	Events       []Event       `json:"events,omitempty"`
 	Meta         Meta          `json:"meta,omitempty"`
 	Traces       *Traces       `json:"traces,omitempty"`
 }

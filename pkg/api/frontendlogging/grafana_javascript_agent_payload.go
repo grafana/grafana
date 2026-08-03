@@ -259,6 +259,15 @@ func (l Log) KeyValContext() *KeyVal {
 	return kv
 }
 
+// Event holds the data for a faro event signal, e.g. user interactions
+type Event struct {
+	Name       string            `json:"name"`
+	Domain     string            `json:"domain,omitempty"`
+	Attributes map[string]string `json:"attributes,omitempty"`
+	Timestamp  time.Time         `json:"timestamp,omitempty"`
+	Trace      TraceContext      `json:"trace,omitempty"`
+}
+
 // Measurement holds the data for user provided measurements
 type Measurement struct {
 	Values    map[string]float64 `json:"values,omitempty"`
