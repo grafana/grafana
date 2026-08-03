@@ -112,6 +112,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
               title={t('dashboard.sidebar.edit-schema.title', 'Code')}
               icon="brackets-curly"
               onClick={() => sidebar.openPane(new DashboardCodePane({}))}
+              data-testid={selectors.pages.Dashboard.Sidebar.codeButton}
               active={openPane instanceof DashboardCodePane}
             />
             {globalDashboardVariablesEnabled && (

@@ -42,7 +42,6 @@ const (
 const resourceLabelJobs = "jobs"
 
 type QueueMetrics struct {
-	queueSize     *prometheus.GaugeVec
 	queueWaitTime *prometheus.HistogramVec
 
 	// Claim metrics, per driver_id. These count per CAS (compare-and-swap) attempt on a
@@ -69,15 +68,6 @@ var (
 
 func RegisterQueueMetrics(registry prometheus.Registerer) QueueMetrics {
 	queueOnce.Do(func() {
-		queueSize := prometheus.NewGaugeVec(
-			prometheus.GaugeOpts{
-				Name: "grafana_provisioning_jobs_queue_size",
-				Help: "Number of jobs currently in the queue",
-			},
-			[]string{"action"},
-		)
-		registry.MustRegister(queueSize)
-
 		queueWaitTime := prometheus.NewHistogramVec(
 			prometheus.HistogramOpts{
 				Name:    "grafana_provisioning_jobs_queue_wait_seconds",
@@ -125,7 +115,6 @@ func RegisterQueueMetrics(registry prometheus.Registerer) QueueMetrics {
 		registry.MustRegister(claimRoundsCont)
 
 		queueMetrics = QueueMetrics{
-			queueSize:       queueSize,
 			queueWaitTime:   queueWaitTime,
 			claimed:         claimed,
 			claimConflicts:  claimConflicts,
@@ -134,14 +123,6 @@ func RegisterQueueMetrics(registry prometheus.Registerer) QueueMetrics {
 		}
 	})
 	return queueMetrics
-}
-
-func (m *QueueMetrics) IncreaseQueueSize(action string) {
-	m.queueSize.WithLabelValues(action).Inc()
-}
-
-func (m *QueueMetrics) DecreaseQueueSize(action string) {
-	m.queueSize.WithLabelValues(action).Dec()
 }
 
 func (m *QueueMetrics) RecordWaitTime(action string, waitSeconds float64) {

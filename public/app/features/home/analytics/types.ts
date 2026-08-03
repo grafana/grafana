@@ -19,7 +19,8 @@ export interface CtaClicked extends EventProperty {
     | 'recent_tab'
     | 'recommendations'
     | 'existing_solution'
-    | 'no_data_card';
+    | 'no_data_card'
+    | 'overview';
   /** What the user asked for. Which values are valid depends on the surface (not compiler-enforced). */
   action:
     | 'alert_detail'
@@ -37,15 +38,26 @@ export interface CtaClicked extends EventProperty {
     | 'open_solution'
     | 'view_alerts'
     | 'switch_solution'
-    | 'connect_data_source';
+    | 'connect_data_source'
+    | 'open_guide'
+    | 'change_overview_filter';
   /**
    * Where on the widget the control lives. 'list' | 'empty_state' | 'footer' apply to the
    * alerts/incidents cards and the recent tab; 'card' | 'pill' apply to recommendations and
    * the no-data card; the existing-solution card uses 'card'.
    */
-  placement: 'list' | 'empty_state' | 'footer' | 'card' | 'pill';
+  placement: 'list' | 'empty_state' | 'footer' | 'card' | 'pill' | 'menu';
   /** Stable id of the recommendation whose Enable CTA was clicked (surface 'recommendations' only). */
   recommendation_id?: string;
-  /** Stable id of the solution whose control was clicked (surfaces 'existing_solution' and 'no_data_card' only). */
+  /**
+   * Matrix base-row id driving the current card selection (surface 'recommendations' only);
+   * values are the BaseRow union in solutionsMatrix.ts.
+   */
+  starting_state?: string;
+  /**
+   * Stable id of the solution whose control was clicked (surfaces 'existing_solution' and
+   * 'no_data_card'). Also valid for surface 'recommendations', where it carries the solution
+   * view active when the card/pill was clicked.
+   */
   solution?: string;
 }
