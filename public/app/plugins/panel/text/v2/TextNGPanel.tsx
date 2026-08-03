@@ -6,6 +6,7 @@ import { useDebounce } from 'react-use';
 import { CoreApp, type GrafanaTheme2, type PanelProps, type InterpolateFunction } from '@grafana/data';
 import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
+import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { type CodeOptions, defaultCodeOptions, defaultOptions, type Options, TextMode } from '../panelcfg.gen';
 
@@ -19,11 +20,16 @@ export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
-  const { options, onOptionsChange, replaceVariables } = props;
+  const { options, onOptionsChange, replaceVariables, data } = props;
   const isEditing = app === CoreApp.PanelEditor;
   const content = options.content ?? defaultOptions.content ?? '';
 
   const interpolatedContent = isEditing ? '' : interpolateContent(options, replaceVariables);
+
+  const suggestions = useMemo(
+    () => (isEditing ? getDataLinksVariableSuggestions(data.series) : []),
+    [isEditing, data.series]
+  );
 
   const [processed, setProcessed] = useState<Options>(() => ({
     mode: options.mode,
@@ -72,6 +78,7 @@ export function TextNGPanel(props: Props) {
           showLineNumbers={options.code?.showLineNumbers ?? false}
           codeLanguage={options.code?.language}
           replaceVariables={replaceVariables}
+          suggestions={suggestions}
           onChange={(change) => onOptionsChange(applyEditorChange(options, change))}
         />
       </Suspense>

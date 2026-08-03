@@ -3,7 +3,7 @@ import DangerouslySetHtmlContent from 'dangerously-set-html-content';
 import { useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
-import { type GrafanaTheme2, type InterpolateFunction } from '@grafana/data';
+import { type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { CodeMirrorEditor, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
@@ -14,6 +14,7 @@ import { TextNGCodeView } from '../TextNGCodeView';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
+import { variableCompletion } from './variableCompletion';
 
 type ViewMode = 'write' | 'split' | 'preview';
 
@@ -32,6 +33,7 @@ export interface TextNGEditorProps {
   showLineNumbers: boolean;
   codeLanguage?: CodeLanguage;
   replaceVariables: InterpolateFunction;
+  suggestions?: VariableSuggestion[];
   onChange: (change: TextNGEditorChange) => void;
 }
 
@@ -58,6 +60,7 @@ export function TextNGEditor({
   showLineNumbers,
   codeLanguage,
   replaceVariables,
+  suggestions,
   onChange,
 }: TextNGEditorProps) {
   const theme = useTheme2();
@@ -136,6 +139,8 @@ export function TextNGEditor({
   } else if (mode === TextMode.Code) {
     editorLanguage = getCodeMirrorLanguage(codeLanguage);
   }
+
+  const completionSources = useMemo(() => [variableCompletion(suggestions ?? [])], [suggestions]);
 
   const basicSetup = useMemo(
     () => ({ lineNumbers: mode === TextMode.Code ? showLineNumbers : false }),
@@ -238,6 +243,7 @@ export function TextNGEditor({
               value={draft}
               onChange={handleDraftChange}
               language={editorLanguage}
+              completionSources={completionSources}
               lineWrapping
               basicSetup={basicSetup}
               height="100%"
