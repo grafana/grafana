@@ -77,7 +77,7 @@
       "primary": "palette.ink150",
       "secondary": "palette.ink300",
       "disabled": "palette.ink400",
-      "link": "palette.orange500"
+      "link": "palette.blue500"
     },
     "border": {
       "weak": "palette.ink700",
