@@ -7,7 +7,7 @@ import SwaggerUI from 'swagger-ui-react';
 import { createTheme, monacoLanguageRegistry, type SelectableValue } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
-import { Icon, Stack, Select, UserIcon, type UserView, Button, Spinner } from '@grafana/ui';
+import { Icon, Stack, Select, UserIcon, type UserView, Button } from '@grafana/ui';
 import { setMonacoEnv } from 'app/core/monacoEnv';
 import { ThemeProvider } from 'app/core/utils/ConfigProvider';
 
@@ -130,11 +130,7 @@ export const Page = () => {
                 displayOperationId
               />
             )}
-            {!url?.value && (
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-                <Spinner />
-              </div>
-            )}
+            {!url?.value && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
           </NamespaceContext.Provider>
         </ThemeProvider>
       </OpenFeatureProvider>
