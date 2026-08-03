@@ -367,3 +367,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-21,grafana.thresholdsInterpolation,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-24,authz.listFoldersViaSearch,experimental,@grafana/identity-access-team,false,false,false
 2026-06-24,libraryElements.folderTreeViaSearch,experimental,@grafana/identity-access-team,false,false,false
+2026-08-03,grafana.panelPluginTransformations,experimental,@grafana/dataviz-squad,false,false,true

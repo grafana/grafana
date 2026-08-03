@@ -83,6 +83,8 @@ export const FlagKeys = {
   GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
+  /** Let panel plugins register transformations that run before user-configured transformations */
+  GrafanaPanelPluginTransformations: "grafana.panelPluginTransformations",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Enables the dedicated Saved queries page and its navigation entry */
@@ -546,6 +548,17 @@ export const useFlagGrafanaOnDemandDiagnostics = (options?: ReactFlagEvaluationO
  */
 export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.panelEditNextFeedbackEvent", false, options).value;
+};
+
+/**
+ * Let panel plugins register transformations that run before user-configured transformations
+ *
+ * **Details:**
+ * - flag key: `grafana.panelPluginTransformations`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelPluginTransformations = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelPluginTransformations", false, options).value;
 };
 
 /**
