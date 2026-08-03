@@ -39,16 +39,16 @@ func TestIntegrationStars(t *testing.T) {
 
 		// Provisioning requires dashboards/folders in unified storage (Mode4+).
 		// Disable it for legacy modes to avoid startup failures.
-		var disableFlags []string
+		var provisioningEnabled bool
 		if mode < grafanarest.Mode5 {
-			disableFlags = append(disableFlags, featuremgmt.FlagProvisioning)
+			provisioningEnabled = false
 		}
 
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:     false, // required for experimental APIs
-			DisableAnonymous:      true,
-			EnableFeatureToggles:  flags,
-			DisableFeatureToggles: disableFlags,
+			AppModeProduction:    false, // required for experimental APIs
+			DisableAnonymous:     true,
+			EnableFeatureToggles: flags,
+			ProvisioningEnabled:  provisioningEnabled,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 				"dashboards.dashboard.grafana.app": {
 					DualWriterMode: mode,

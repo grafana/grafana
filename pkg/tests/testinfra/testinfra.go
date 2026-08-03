@@ -850,6 +850,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
 		require.NoError(t, err)
 	}
+	if opts.ProvisioningEnabled {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("enabled", strconv.FormatBool(true))
+		require.NoError(t, err)
+	}
 	if len(opts.ProvisioningAllowedTargets) > 0 {
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
@@ -1121,17 +1127,21 @@ type GrafanaOpts struct {
 	// integration tests on slow CI.
 	UnifiedStorageResourceVersionBatchTransactionTimeout time.Duration
 	PermittedProvisioningPaths                           string
-	ProvisioningAllowedTargets                           []string
-	ProvisioningAllowInsecure                            bool
-	ProvisioningPublicRootURL                            string
-	ProvisioningRepositoryTypes                          []string
-	ProvisioningResources                                []string
-	ProvisioningMaxResourcesPerRepository                int64
-	ProvisioningMaxRepositories                          int64
-	ProvisioningMaxIncrementalChanges                    *int
-	ProvisioningMaxFileSize                              *int64
-	ProvisioningWebhookRateLimitRPS                      int
-	ProvisioningWebhookTrustedIPHeader                   string
+	// ProvisioningEnabled overrides [provisioning] enabled. nil leaves the ini
+	// default (true, provisioning registered); set false to keep provisioning
+	// off, e.g. for DualWriterMode0/1 tests where it requires unified storage.
+	ProvisioningEnabled                   bool
+	ProvisioningAllowedTargets            []string
+	ProvisioningAllowInsecure             bool
+	ProvisioningPublicRootURL             string
+	ProvisioningRepositoryTypes           []string
+	ProvisioningResources                 []string
+	ProvisioningMaxResourcesPerRepository int64
+	ProvisioningMaxRepositories           int64
+	ProvisioningMaxIncrementalChanges     *int
+	ProvisioningMaxFileSize               *int64
+	ProvisioningWebhookRateLimitRPS       int
+	ProvisioningWebhookTrustedIPHeader    string
 	// ProvisioningControllerResyncInterval overrides [provisioning]
 	// resync_interval (repo/connection/job informer re-list). Set it
 	// high in NATS tests so a fast reconcile can only be a live notification, not
