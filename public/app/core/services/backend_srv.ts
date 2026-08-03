@@ -514,13 +514,8 @@ export class BackendSrv implements BackendService {
                   return throwError(() => error);
                 }
 
-                let authChecker = this.loginPing();
-                if (hasSessionExpiry()) {
-                  const expired = getSessionExpiry() * 1000 < Date.now();
-                  if (expired) {
-                    authChecker = this.rotateToken();
-                  }
-                }
+                const sessionExpired = hasSessionExpiry() && getSessionExpiry() * 1000 < Date.now();
+                const authChecker = sessionExpired ? this.rotateToken() : this.loginPing();
 
                 return from(authChecker).pipe(
                   catchError((err) => {

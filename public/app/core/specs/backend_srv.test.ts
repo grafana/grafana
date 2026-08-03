@@ -219,11 +219,13 @@ describe('backendSrv', () => {
           false
         );
 
+        backendSrv.loginPing = jest.fn();
         backendSrv.rotateToken = jest.fn().mockResolvedValue(okResponse);
 
         await backendSrv.request({ url, method: 'GET', retry: 0 }).finally(() => {
           expect(appEventsMock.emit).not.toHaveBeenCalled();
           expect(logoutMock).not.toHaveBeenCalled();
+          expect(backendSrv.loginPing).not.toHaveBeenCalled();
           expect(backendSrv.rotateToken).toHaveBeenCalledTimes(1);
           expect(fetchMock).toHaveBeenCalledTimes(2); // expecting 2 calls because of retry and because the tokenRotation is mocked
         });
