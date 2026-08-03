@@ -1,7 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { type LibraryPanelSpec, type LibraryPanelStatus } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { getBackendSrv } from '@grafana/runtime';
+import { type FetchError, getBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type LibraryElementDTOMetaUser, type LibraryPanel } from '@grafana/schema';
 import { getAPIBaseURL } from 'app/api/utils';
@@ -497,7 +497,15 @@ export const libraryPanelsK8sClient = {
     const existing = await client.get(uid);
     const currentVersion = existing.metadata.generation ?? 1;
     if (currentVersion !== version) {
-      throw new Error(`Library panel version mismatch: expected ${version}, current ${currentVersion}`);
+      const message = 'the library element has been changed by someone else';
+      const error: FetchError<{ message: string }> = {
+        status: 412,
+        statusText: 'Precondition Failed',
+        data: { message },
+        message,
+        config: { url: `${client.url}/${uid}`, method: 'PUT' },
+      };
+      throw error;
     }
     // legacy PATCH semantics: an absent folderUid keeps the panel in its current folder
     if (folderUid === undefined) {
