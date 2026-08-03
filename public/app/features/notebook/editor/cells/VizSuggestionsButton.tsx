@@ -9,6 +9,8 @@ import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggesti
 
 const CARD_WIDTH = 150;
 const MAX_SUGGESTIONS = 8;
+const DATA_POLL_INTERVAL_MS = 250;
+const DATA_POLL_TIMEOUT_MS = 10000;
 
 interface Props {
   currentPluginId: string;
@@ -40,12 +42,36 @@ export function VizSuggestionsButton({ currentPluginId, getData, onSelect }: Pro
 
 function SuggestionsContent({ currentPluginId, getData, onSelect }: Props) {
   const styles = useStyles2(getStyles);
-  const [data] = useState(getData);
+  const [data, setData] = useState(getData);
   const [suggestions, setSuggestions] = useState<PanelPluginVisualizationSuggestion[] | undefined>();
 
   useEffect(() => {
+    if (data?.series.length) {
+      return;
+    }
+
+    const startedAt = Date.now();
+    const interval = setInterval(() => {
+      const latest = getData();
+      if (latest) {
+        setData({ ...latest });
+      }
+      if (latest?.series.length || Date.now() - startedAt >= DATA_POLL_TIMEOUT_MS) {
+        clearInterval(interval);
+      }
+    }, DATA_POLL_INTERVAL_MS);
+
+    return () => clearInterval(interval);
+  }, [data?.series.length, getData]);
+
+  useEffect(() => {
+    if (!data?.series.length) {
+      setSuggestions(undefined);
+      return;
+    }
+
     let cancelled = false;
-    getAllSuggestions(data?.series).then((result) => {
+    getAllSuggestions(data.series).then((result) => {
       if (!cancelled) {
         setSuggestions(result.suggestions.slice(0, MAX_SUGGESTIONS));
       }

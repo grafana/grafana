@@ -161,7 +161,13 @@ export function useNotebookCollab({ uid, enabled, getSpec, onRemoteSpec, initial
   );
 
   const flushPeers = useCallback(() => {
-    setPeers(Array.from(peersRef.current.values()));
+    setPeers(
+      Array.from(peersRef.current.values(), (peer) => ({
+        ...peer,
+        user: { ...peer.user },
+        cursor: peer.cursor ? { ...peer.cursor } : undefined,
+      }))
+    );
   }, []);
 
   const touchPeer = useCallback(

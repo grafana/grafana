@@ -7,13 +7,17 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live/model"
 )
 
 func TestNotebookHandler_OnSubscribe(t *testing.T) {
+	setNotebookFeatureToggle(t, true)
 	h := &NotebookHandler{}
 	user := &identity.StaticRequester{Type: types.TypeUser, OrgID: 1, UserID: 2}
 
@@ -45,9 +49,17 @@ func TestNotebookHandler_OnSubscribe(t *testing.T) {
 		require.Error(t, err)
 		require.Equal(t, backend.SubscribeStreamStatusPermissionDenied, status)
 	})
+
+	t.Run("service account identity is denied", func(t *testing.T) {
+		serviceAccount := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgID: 1}
+		_, status, err := h.OnSubscribe(context.Background(), serviceAccount, model.SubscribeEvent{Path: "uid/abc123"})
+		require.Error(t, err)
+		require.Equal(t, backend.SubscribeStreamStatusPermissionDenied, status)
+	})
 }
 
 func TestNotebookHandler_OnPublish(t *testing.T) {
+	setNotebookFeatureToggle(t, true)
 	h := &NotebookHandler{}
 	user := &identity.StaticRequester{Type: types.TypeUser, OrgID: 1, UserID: 2}
 
@@ -70,5 +82,48 @@ func TestNotebookHandler_OnPublish(t *testing.T) {
 		_, status, err := h.OnPublish(context.Background(), anon, model.PublishEvent{Path: "uid/abc123", Data: json.RawMessage(`{}`)})
 		require.Error(t, err)
 		require.Equal(t, backend.PublishStreamStatusPermissionDenied, status)
+	})
+}
+
+func TestNotebookHandler_FeatureDisabled(t *testing.T) {
+	setNotebookFeatureToggle(t, false)
+	h := &NotebookHandler{}
+	user := &identity.StaticRequester{Type: types.TypeUser, OrgID: 1, UserID: 2}
+
+	_, subscribeStatus, subscribeErr := h.OnSubscribe(
+		context.Background(),
+		user,
+		model.SubscribeEvent{Path: "uid/abc123"},
+	)
+	require.NoError(t, subscribeErr)
+	require.Equal(t, backend.SubscribeStreamStatusNotFound, subscribeStatus)
+
+	_, publishStatus, publishErr := h.OnPublish(
+		context.Background(),
+		user,
+		model.PublishEvent{Path: "uid/abc123", Data: json.RawMessage(`{}`)},
+	)
+	require.NoError(t, publishErr)
+	require.Equal(t, backend.PublishStreamStatusNotFound, publishStatus)
+}
+
+func setNotebookFeatureToggle(t *testing.T, enabled bool) {
+	t.Helper()
+	variant := "disabled"
+	if enabled {
+		variant = "enabled"
+	}
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagDashboardNotebooks: {
+			Key:            featuremgmt.FlagDashboardNotebooks,
+			DefaultVariant: variant,
+			Variants: map[string]any{
+				"enabled":  true,
+				"disabled": false,
+			},
+		},
+	})))
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
 	})
 }

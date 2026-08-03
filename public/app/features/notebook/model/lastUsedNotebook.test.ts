@@ -28,4 +28,12 @@ describe('lastUsedNotebook', () => {
     window.localStorage.setItem('grafana.notebooks.lastUsed', JSON.stringify({ nope: true }));
     expect(getLastUsedNotebook()).toBeUndefined();
   });
+
+  it.each([undefined, 'recently', null])('rejects a partially valid value with timestamp %p', (at) => {
+    window.localStorage.setItem(
+      'grafana.notebooks.lastUsed',
+      JSON.stringify({ uid: 'nb1', title: 'Investigation', at })
+    );
+    expect(getLastUsedNotebook()).toBeUndefined();
+  });
 });

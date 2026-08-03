@@ -178,6 +178,8 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     if (
       contextSrv.isSignedIn &&
       !isEditingPanel &&
+      (contextSrv.hasPermission(AccessControlAction.DashboardsCreate) ||
+        contextSrv.hasPermission(AccessControlAction.DashboardsWrite)) &&
       getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNotebooks, false)
     ) {
       items.push({
@@ -193,8 +195,9 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
 
       // One-click append to the most recently used notebook (skips the picker).
-      const { getLastUsedNotebook } = await import('app/features/notebook/model/lastUsedNotebook');
-      const lastUsedNotebook = getLastUsedNotebook();
+      const lastUsedNotebook = await import('app/features/notebook/model/lastUsedNotebook')
+        .then(({ getLastUsedNotebook }) => getLastUsedNotebook())
+        .catch(() => undefined);
       if (lastUsedNotebook) {
         const shortTitle =
           lastUsedNotebook.title.length > 25 ? `${lastUsedNotebook.title.slice(0, 25)}…` : lastUsedNotebook.title;

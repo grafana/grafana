@@ -8,9 +8,23 @@ import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
-import { Button, Icon, IconButton, LinkButton, Select, Spinner, Stack, Text, TextArea, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  Icon,
+  IconButton,
+  LinkButton,
+  Select,
+  Spinner,
+  Stack,
+  Text,
+  TextArea,
+  useStyles2,
+} from '@grafana/ui';
 import { useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 import { useExtensionSidebarContext } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { createNotebook, notebookEditUrl, notebookViewUrl } from '../api/notebookAPI';
 import { mergeRemoteSpec } from '../collab/mergeRemoteSpec';
@@ -43,8 +57,11 @@ export function NotebooksSidebarPanel() {
   const styles = useStyles2(getStyles);
   const [selectedUid, setSelectedUid] = useState<string | undefined>(() => getLastUsedNotebook()?.uid);
   const location = useLocation();
+  const canEditNotebooks =
+    contextSrv.hasPermission(AccessControlAction.DashboardsCreate) ||
+    contextSrv.hasPermission(AccessControlAction.DashboardsWrite);
 
-  const { data, isLoading } = useListNotebookQuery(notebooksEnabled ? {} : skipToken);
+  const { data, isLoading, error } = useListNotebookQuery(notebooksEnabled && canEditNotebooks ? {} : skipToken);
 
   // The sidebar follows along: navigating to a notebook page selects that notebook here.
   useEffect(() => {
@@ -62,7 +79,7 @@ export function NotebooksSidebarPanel() {
     [data]
   );
 
-  if (!notebooksEnabled) {
+  if (!notebooksEnabled || !canEditNotebooks) {
     return null;
   }
 
@@ -98,7 +115,11 @@ export function NotebooksSidebarPanel() {
 
       {isLoading && <Spinner />}
 
-      {!isLoading && options.length === 0 && (
+      {!isLoading && Boolean(error) && (
+        <Alert severity="error" title={t('notebooks.sidebar.load-error', 'Failed to load notebooks')} />
+      )}
+
+      {!isLoading && !error && options.length === 0 && (
         <Text color="secondary">
           <Trans i18nKey="notebooks.sidebar.empty">No notebooks yet — create one to start capturing findings.</Trans>
         </Text>
@@ -126,7 +147,7 @@ export function NotebooksSidebarPanel() {
 function SidebarNotebookEditor({ uid }: { uid: string }) {
   const styles = useStyles2(getStyles);
   const editor = useNotebookEditorState(uid);
-  const { spec, loading, dirty, saving } = editor.state;
+  const { spec, loading, loadError, dirty, saving } = editor.state;
   const { setDockedComponentId } = useExtensionSidebarContext();
   const [note, setNote] = useState('');
   const [editingKey, setEditingKey] = useState<string | null>(null);
@@ -160,6 +181,10 @@ function SidebarNotebookEditor({ uid }: { uid: string }) {
     },
     [editor, collab]
   );
+
+  if (loadError) {
+    return <Alert severity="error" title={t('notebooks.editor.load-error', 'Failed to load notebook')} />;
+  }
 
   if (loading || !spec) {
     return <Spinner />;

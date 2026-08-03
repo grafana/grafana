@@ -100,7 +100,7 @@ export function getNotebookExtensionConfigs(): PluginExtensionAddedLinkConfig[] 
         description: 'Browse notebooks and capture quick notes alongside any Grafana page',
         targets: [PluginExtensionPoints.ExtensionSidebar],
         icon: 'book-open',
-        configure: () => (notebooksEnabled() ? {} : undefined),
+        configure: () => (notebooksEnabled() && canEditNotebooks() ? {} : undefined),
         onClick: (_, { openSidebar }) => {
           openSidebar(NOTEBOOKS_SIDEBAR_COMPONENT_TITLE);
         },

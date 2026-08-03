@@ -7,22 +7,20 @@ jest.mock('../features/notebook/pages/NotebookScenePage', () => ({
 
 jest.mock('../features/notebook/pages/NotebooksListPage', () => ({
   __esModule: true,
+  default: () => null,
   NotebooksListPage: () => null,
 }));
 
 jest.mock('../features/notebook/pages/NotebookEditorPage', () => ({
   __esModule: true,
+  default: () => null,
   NotebookEditorPage: () => null,
 }));
 
 describe('notebook route loaders', () => {
   it('resolves notebook page modules', async () => {
     await expect(loadNotebookScenePage()).resolves.toEqual(expect.objectContaining({ default: expect.any(Function) }));
-    await expect(loadNotebooksListPage()).resolves.toEqual(
-      expect.objectContaining({ NotebooksListPage: expect.any(Function) })
-    );
-    await expect(loadNotebookEditorPage()).resolves.toEqual(
-      expect.objectContaining({ NotebookEditorPage: expect.any(Function) })
-    );
+    await expect(loadNotebooksListPage()).resolves.toEqual(expect.objectContaining({ default: expect.any(Function) }));
+    await expect(loadNotebookEditorPage()).resolves.toEqual(expect.objectContaining({ default: expect.any(Function) }));
   });
 });

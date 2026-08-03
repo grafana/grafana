@@ -52,6 +52,7 @@ export function PresenceAvatars({ peers, followedSid, onToggleFollow }: Props) {
               className={cx(styles.avatar, styles.clickable, following && styles.following)}
               style={{ backgroundColor: peer.color, ...(following ? { outlineColor: peer.color } : {}) }}
               onClick={() => onToggleFollow(peer)}
+              aria-label={tooltip}
               aria-pressed={following}
             >
               {initials(label)}
