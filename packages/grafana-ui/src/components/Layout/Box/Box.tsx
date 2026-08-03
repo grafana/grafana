@@ -161,12 +161,13 @@ export const Box = forwardRef<HTMLElement, PropsWithChildren<BoxProps>>((props, 
 Box.displayName = 'Box';
 
 const customBorderColor = (color: BorderColor, theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   switch (color) {
     case 'error':
     case 'success':
     case 'info':
     case 'warning':
-      return theme.colors[color].borderTransparent;
+      return visualRefreshEnabled ? theme.colors[color].border : theme.colors[color].borderTransparent;
     default:
       return color ? theme.colors.border[color] : undefined;
   }
