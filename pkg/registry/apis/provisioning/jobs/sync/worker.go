@@ -163,7 +163,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		setupSpan.End()
 		logger.Error("failed to create repository resources client", "error", err)
 		setupError := fmt.Errorf("create repository resources client: %w", err)
-		progress.Complete(ctx, setupError)
+		r.completeFailedSync(ctx, cfg, job, progress, lastRef, setupError)
 		return tracing.Error(span, setupError)
 	}
 	clients, err := r.clients.Clients(setupCtx, cfg.Namespace)
@@ -171,7 +171,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		setupSpan.End()
 		logger.Error("failed to get clients for the repository", "error", err)
 		setupError := fmt.Errorf("get clients for %s: %w", cfg.Name, err)
-		progress.Complete(ctx, setupError)
+		r.completeFailedSync(ctx, cfg, job, progress, lastRef, setupError)
 		return tracing.Error(span, setupError)
 	}
 	setupSpan.End()
@@ -263,4 +263,22 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	finalSpan.End()
 
 	return syncError
+}
+
+// completeFailedSync finalizes the job progress after a failure that happens once the repository
+// has already been marked as 'working', and writes the terminal state back to the repository.
+// Without this writeback the repository would report 'working' forever: sync jobs are singletons
+// per repository and failed syncs are not re-enqueued.
+func (r *SyncWorker) completeFailedSync(ctx context.Context, cfg *provisioning.Repository, job provisioning.Job, progress jobs.JobProgressRecorder, lastRef string, syncErr error) {
+	jobStatus := progress.Complete(ctx, syncErr)
+	syncStatus := jobStatus.ToSyncStatus(job.Name)
+	syncStatus.LastRef = lastRef
+
+	if err := r.patchStatus(ctx, cfg, map[string]interface{}{
+		"op":    "replace",
+		"path":  "/status/sync",
+		"value": syncStatus,
+	}); err != nil {
+		logging.FromContext(ctx).Error("failed to update the repository sync status after a failed sync", "error", err)
+	}
 }

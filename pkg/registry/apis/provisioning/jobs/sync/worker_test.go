@@ -440,6 +440,18 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("Complete", mock.Anything, mock.MatchedBy(func(err error) bool {
 					return err != nil && err.Error() == "create repository resources client: failed to create repository resources client"
 				})).Return(provisioning.JobStatus{State: provisioning.JobStateError})
+
+				// The terminal state must be written back so the repository does not stay 'working'
+				rpf.On("Execute", mock.Anything, repoConfig,
+					mock.MatchedBy(func(patch map[string]interface{}) bool {
+						syncStatus, ok := patch["value"].(provisioning.SyncStatus)
+						return ok && patch["op"] == "replace" &&
+							patch["path"] == "/status/sync" &&
+							syncStatus.State == provisioning.JobStateError &&
+							syncStatus.JobID == "test-job" &&
+							syncStatus.LastRef == "existing-ref"
+					}),
+				).Return(nil).Once()
 			},
 			expectedError: "create repository resources client: failed to create repository resources client",
 		},
@@ -477,6 +489,18 @@ func TestSyncWorker_Process(t *testing.T) {
 				pr.On("Complete", mock.Anything, mock.MatchedBy(func(err error) bool {
 					return err != nil && err.Error() == "get clients for test-repo: failed to get clients"
 				})).Return(provisioning.JobStatus{State: provisioning.JobStateError})
+
+				// The terminal state must be written back so the repository does not stay 'working'
+				rpf.On("Execute", mock.Anything, repoConfig,
+					mock.MatchedBy(func(patch map[string]interface{}) bool {
+						syncStatus, ok := patch["value"].(provisioning.SyncStatus)
+						return ok && patch["op"] == "replace" &&
+							patch["path"] == "/status/sync" &&
+							syncStatus.State == provisioning.JobStateError &&
+							syncStatus.JobID == "test-job" &&
+							syncStatus.LastRef == "existing-ref"
+					}),
+				).Return(nil).Once()
 			},
 			expectedError: "get clients for test-repo: failed to get clients",
 		},
