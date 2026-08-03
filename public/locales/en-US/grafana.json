@@ -15314,6 +15314,7 @@
       "expiration-label": "Expires in",
       "info-alert": "A Grafana dashboard snapshot publicly shares a dashboard while removing sensitive data such as queries and panel links, leaving only visible metrics and series names. Anyone with the link can access the snapshot.",
       "learn-more-button": "Learn more",
+      "load-timeout-warning": "Some panels did not finish loading and may show no data in the snapshot",
       "local-button": "Publish snapshot",
       "name-label": "Snapshot name",
       "new-snapshot-button": "New snapshot",
