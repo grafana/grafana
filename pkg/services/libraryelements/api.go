@@ -693,6 +693,9 @@ func (lk8s *libraryElementsK8sHandler) createK8sLibraryElement(c *contextmodel.R
 	switch {
 	case cmd.FolderUID != nil:
 		folderUID = *cmd.FolderUID
+		if folderUID == "" {
+			folderUID = ac.GeneralFolderUID
+		}
 	case cmd.FolderID != 0: // nolint:staticcheck
 		var ok bool
 		folderUID, ok = lk8s.folderUIDFromLegacyID(c, cmd.FolderID) // nolint:staticcheck
@@ -1182,7 +1185,7 @@ func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *co
 		},
 	}
 
-	if folderUID != "" {
+	if folderUID != "" && folderUID != ac.GeneralFolderUID {
 		dto.Meta.FolderName = ""
 		folder, err := lk8s.folderService.Get(c.Req.Context(), &foldermodel.GetFolderQuery{
 			OrgID:        c.OrgID,

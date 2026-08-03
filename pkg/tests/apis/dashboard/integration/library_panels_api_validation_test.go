@@ -252,7 +252,7 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	require.Equal(t, http.StatusOK, legacyFolderResponse.Response.StatusCode)
 	legacyFolder := legacyFolderResponse.Result
 	require.NotNil(t, legacyFolder)
-	require.NotZero(t, legacyFolder.ID)
+	require.NotZero(t, legacyFolder.ID) // nolint:staticcheck
 	createdByFolderID, err := postHelper(t, &ctx, "/api/library-elements", map[string]interface{}{
 		"kind":     1,
 		"name":     "FolderIDPanel",
@@ -270,8 +270,9 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	// create: the display title and properties without a typed spec field (e.g.
 	// transformations) must survive the conversion round trip
 	created, err := postHelper(t, &ctx, "/api/library-elements", map[string]interface{}{
-		"kind": 1,
-		"name": "CRUDPanel",
+		"kind":      1,
+		"name":      "CRUDPanel",
+		"folderUid": "",
 		"model": map[string]interface{}{
 			"type":            "text",
 			"title":           "CRUD panel display title",
