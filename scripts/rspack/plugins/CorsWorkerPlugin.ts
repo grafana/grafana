@@ -2,10 +2,6 @@ import rspack, { type Chunk, type Compilation, type Compiler } from '@rspack/cor
 
 const { RuntimeGlobals, RuntimeModule } = rspack;
 
-// Port of scripts/webpack/plugins/CorsWorkerPlugin.ts for rspack. Pairs with the Blob
-// wrappers in public/app/core/utils/CorsWorker.ts and CorsSharedWorker.ts, which define
-// __webpack_worker_public_path__ before importScripts so worker chunks resolve assets
-// against the Grafana origin rather than the blob: URL.
 class CorsWorkerPublicPathRuntimeModule extends RuntimeModule {
   publicPath: string;
 
@@ -35,19 +31,12 @@ export default class CorsWorkerRspackPlugin {
           ? entryOptions.chunkLoading
           : compilation.outputOptions.chunkLoading;
       };
-      const getChunkPublicPath = (chunk: Chunk) => {
-        const entryOptions = chunk.getEntryOptions();
-        return entryOptions && entryOptions.publicPath !== undefined
-          ? entryOptions.publicPath
-          : compilation.outputOptions.publicPath;
-      };
 
       compilation.hooks.runtimeRequirementInTree
         .for(RuntimeGlobals.publicPath)
         .tap('CorsWorkerRspackPlugin', (chunk: Chunk) => {
           if (getChunkLoading(chunk) === 'import-scripts') {
-            const publicPath = getChunkPublicPath(chunk);
-
+            const publicPath = compilation.outputOptions.publicPath;
             if (publicPath !== 'auto') {
               const module = new CorsWorkerPublicPathRuntimeModule(String(publicPath));
               compilation.addRuntimeModule(chunk, module);
