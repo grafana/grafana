@@ -2055,11 +2055,11 @@ __metadata:
   resolution: "@grafana-plugins/grafana-cloudwatch-datasource@workspace:public/app/plugins/datasource/cloudwatch"
   dependencies:
     "@emotion/css": "npm:11.13.5"
-    "@grafana/aws-sdk": "npm:^0.10.1"
+    "@grafana/aws-sdk": "npm:^0.12.0"
     "@grafana/data": "npm:13.2.0-pre"
     "@grafana/e2e-selectors": "npm:13.2.0-pre"
     "@grafana/plugin-configs": "npm:13.2.0-pre"
-    "@grafana/plugin-ui": "npm:^0.13.1"
+    "@grafana/plugin-ui": "npm:^0.17.3"
     "@grafana/runtime": "npm:13.2.0-pre"
     "@grafana/scenes": "npm:8.13.5"
     "@grafana/schema": "npm:13.2.0-pre"
