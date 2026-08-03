@@ -4,8 +4,10 @@
  * A notebook is a sibling resource in the dashboard API group that rides the dashboard scene:
  * it reuses `PanelKind`/`LibraryPanelKind`, adds `CellKind`, and replaces the dashboard layout
  * union with a single `NotebookLayout`. It has no variables, annotations, links, cursorSync,
- * liveNow, preload, editable or revision. The panel reuse is near-total but not literal: the
- * notebook is v2beta1, so its transformations carry the v2beta1 wire shape (see below).
+ * liveNow, preload, editable or revision. The panel reuse is near-total but not literal today:
+ * the notebook spec sits in the dashboard v2beta1 CUE package, so its transformations carry the
+ * v2beta1 wire shape. That is a bug to be migrated away, not a shape to support — see
+ * {@link NOTEBOOK_WIRE_VERSION}.
  *
  * Everything that builds or reads a scene is dashboard-typed, so a notebook has to be widened
  * into a `DashboardV2Spec` on the way in and narrowed back on the way out. Both directions live
@@ -25,16 +27,32 @@ import { normalizeTransformation, toWireTransformation, type WireTransformation 
 const NOTEBOOK_LAYOUT_KIND = 'NotebookLayout';
 
 /**
- * A notebook is always a v2beta1 resource, so its panels carry the v2beta1 transformation shape
- * (`{ kind: <id>, spec: { id: <id>, … } }`) while everything inside the scene — and everything
- * `transformSceneToSaveModelSchemaV2` emits — is v2 stable (`{ kind: 'Transformation',
- * group: <id>, spec: { … } }`).
+ * INTERIM. This conversion exists because of a schema bug, and the agreed fix is to remove it.
  *
- * The dashboard save path picks a wire shape from the resolved dashboard API version, which says
- * nothing about notebooks, so the conversion is pinned here instead. Without it a notebook that
- * round-trips through a scene comes back with panels the notebook schema does not describe: the
- * read side happens to survive (buildVizPanel normalizes either shape) but a save would persist
- * an off-schema transformation, and validation would reject it.
+ * `notebook_spec.cue` lives in the dashboard **v2beta1** CUE package and picks up its leaf types
+ * from there by lexical scope, with no imports. So a notebook's panels carry the v2beta1
+ * transformation shape (`{ kind: <id>, spec: { id: <id>, … } }`) while everything inside the scene
+ * — and everything `transformSceneToSaveModelSchemaV2` emits — is v2 stable
+ * (`{ kind: 'Transformation', group: <id>, spec: { … } }`). That is the ONLY difference between
+ * the two packages' leaves that a notebook can reach; everything else is byte-identical.
+ *
+ * Without the conversion a notebook that round-trips through a scene comes back with panels the
+ * notebook schema does not describe: the read side happens to survive (`buildVizPanel` normalizes
+ * either shape) but a save would persist an off-schema transformation, and validation would
+ * reject it. So it cannot simply be deleted first.
+ *
+ * The decision is to migrate the notebook onto the dashboard v2 leaves and delete this. That is
+ * blocked on a cog codegen bug, not on design: reparenting the notebook spec to any other CUE
+ * package regresses five enum references (`ValueMap.type`, `RangeMap.type`, `RegexMap.type`,
+ * `SpecialValueMap.type`, `ActionVariable.type`) to `unknown`, which does not compile in Go.
+ * `simplecue`'s generator returns a `ConstantReferenceType` tagged with the FOREIGN package for
+ * scalar/enum references while having just declared the object into the CURRENT schema, so the
+ * jennies cannot locate it and emit `"unknown"`. Struct references are inlined and survive;
+ * constant references bypass `externalReferenceFunc` entirely. The effective constraint is that a
+ * kind's CUE package name must equal its manifest version name.
+ *
+ * Remove this module's transformation handling as soon as that is fixed upstream and
+ * `notebook_spec.cue` can be reparented to the v2 package.
  */
 const NOTEBOOK_WIRE_VERSION = 'v2beta1';
 

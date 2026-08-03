@@ -84,11 +84,16 @@ const cellKindSchema = z.object({
 //
 // A notebook panel is the dashboard panel with ONE difference, and it is worth being explicit
 // about it because "notebook panels are byte-identical to dashboard panels" is the assumption
-// the whole capture/round-trip story rests on. A notebook is a v2beta1 resource, so it carries
-// the v2beta1 transformation shape — the transformation id in `kind`, duplicated in `spec.id`.
-// Dashboard v2 (stable) moved the id to `group` and dropped `spec.id`. Every other leaf is
-// shared, so only this one is restated; `transformationCompat` converts between the two shapes
-// at the scene boundary.
+// the whole capture/round-trip story rests on.
+//
+// `notebook_spec.cue` sits in the dashboard v2beta1 CUE package, so it inherits that package's
+// transformation shape — the id in `kind`, duplicated in `spec.id`. Dashboard v2 (stable) moved
+// the id to `group` and dropped `spec.id`. Every other leaf is shared, so only this one is
+// restated here, and `transformationCompat` converts at the scene boundary.
+//
+// INTERIM, matching notebookSpecTransform's NOTEBOOK_WIRE_VERSION: the agreed fix is to reparent
+// the notebook spec onto the v2 leaves, at which point this whole section collapses back to
+// importing the shared `panelKindSchema`. Blocked on a cog codegen bug, documented there.
 // ---------------------------------------------------------------------------
 
 const notebookTransformationKindSchema = z.object({
