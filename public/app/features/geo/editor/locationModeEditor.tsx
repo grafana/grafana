@@ -5,7 +5,7 @@ import { type StandardEditorProps, type DataFrame, type GrafanaTheme2 } from '@g
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
-import { Alert, Button, Icon, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, LinkButton, Select, useStyles2 } from '@grafana/ui';
 
 import { type FrameGeometryField, getGeometryField, getLocationMatchers } from '../utils/location';
 
@@ -80,21 +80,18 @@ export const LocationModeEditor = ({
             severity="warning"
             className={styles.alert}
             action={
-              <Button
+              <LinkButton
                 aria-label={t(
                   'geo.location-more-editor.aria-label-open-documentation',
                   'Open geospatial data documentation'
                 )}
                 variant="secondary"
-                onClick={() => {
-                  const newWindow = window.open(helpUrl, '_blank', 'noopener,noreferrer');
-                  if (newWindow) {
-                    newWindow.opener = null;
-                  }
-                }}
+                href={helpUrl}
+                target="_blank"
+                rel="noreferrer noopener"
               >
                 <Icon name="question-circle" size="xl" />
-              </Button>
+              </LinkButton>
             }
           />
         );

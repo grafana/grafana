@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type StandardEditorProps, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 
 const helpUrl = 'https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/canvas/';
 
@@ -17,18 +17,15 @@ export const PanZoomHelp = ({}: StandardEditorProps<string, unknown, unknown, un
           severity="info"
           className={styles.alert}
           action={
-            <Button
+            <LinkButton
               aria-label={t('canvas.pan-zoom-help.aria-label-open-documentation', 'Open Canvas documentation')}
               variant="secondary"
-              onClick={() => {
-                const newWindow = window.open(helpUrl, '_blank', 'noopener,noreferrer');
-                if (newWindow) {
-                  newWindow.opener = null;
-                }
-              }}
+              href={helpUrl}
+              target="_blank"
+              rel="noreferrer noopener"
             >
               <Icon name="question-circle" size="xl" />
-            </Button>
+            </LinkButton>
           }
         >
           <Stack direction="column">
