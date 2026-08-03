@@ -85,7 +85,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     linkValue: css({
       display: 'inline-flex',
-      alignItems: 'center',
+      // values wrap, so keep the icon on the first line instead of centering it across all of them
+      alignItems: 'flex-start',
       gap: theme.spacing(0.5),
     }),
     linkIcon: css({
@@ -93,7 +94,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     multiLinkValue: css({
       display: 'inline-flex',
-      alignItems: 'center',
+      // values wrap, so keep the chevron on the first line instead of centering it across all of them
+      alignItems: 'flex-start',
       gap: theme.spacing(0.25),
     }),
     multiLinkContent: css({
