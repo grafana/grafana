@@ -214,6 +214,7 @@ The options under the **Graph styles** section let you control the general appea
 | [Disconnect values](#disconnect-values)     | Choose whether to set a threshold above which values in the data should be disconnected. |
 | [Show points](#show-points)                 | Set whether to show data points to lines or bars. |
 | Point size                                  | Set the size of the points, from 1 to 40 pixels in diameter. |
+| Show values                                 | Set whether to show data point values above the lines or bars. |
 | [Stack series](#stack-series)               | Set whether Grafana displays series on top of each other. |
 | [Bar alignment](#bar-alignment)             | Set the position of the bar relative to a data point. |
 | Bar width factor                            | Set the width of the bar relative to minimum space between data points. A factor of 0.5 means that the bars take up half of the available space between data points. A factor of 1.0 means that the bars take up all available space. |
