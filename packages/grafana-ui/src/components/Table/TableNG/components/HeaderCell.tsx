@@ -66,6 +66,8 @@ interface HeaderCellProps {
   crossFilterTailRows: TableRow[];
   onHideColumn?: () => void;
   canHideColumn?: boolean;
+  isPinned?: boolean;
+  onTogglePin?: () => void;
 }
 
 export const HeaderCell: React.FC<HeaderCellProps> = ({
@@ -83,6 +85,8 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   crossFilterTailRows,
   onHideColumn,
   canHideColumn = true,
+  isPinned = false,
+  onTogglePin,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -105,41 +109,40 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 
   /* eslint-disable jsx-a11y/no-static-element-interactions */
   return (
-    <>
-      <div
-        ref={ref}
-        className={styles.headerCellContent}
-        onKeyDown={
-          disableKeyboardEvents
-            ? undefined
-            : (ev) => {
-                // unfortunately, react-data-grid's default keyboard behavior is not compatible with what we need
-                // to do to make filter and sort keyboard accessible, so we have to stop the propagation of events here,
-                // and add a way to "hook back in" to their behavior once you've reached the last tabbable element in the last header cell.
-                ev.stopPropagation();
+    <div
+      ref={ref}
+      className={styles.headerCellRoot}
+      onKeyDown={
+        disableKeyboardEvents
+          ? undefined
+          : (ev) => {
+              // unfortunately, react-data-grid's default keyboard behavior is not compatible with what we need
+              // to do to make filter and sort keyboard accessible, so we have to stop the propagation of events here,
+              // and add a way to "hook back in" to their behavior once you've reached the last tabbable element in the last header cell.
+              ev.stopPropagation();
 
-                if (!(ev.key === 'Tab' && !ev.shiftKey)) {
-                  return;
-                }
-
-                const tableTabbedElement = ev.target;
-                if (!(tableTabbedElement instanceof HTMLElement)) {
-                  return;
-                }
-
-                const headerContent = ref.current;
-                const headerCell = ref.current?.parentNode?.parentNode;
-                const row = headerCell?.parentNode;
-                const isLastElementInHeader =
-                  headerContent?.lastElementChild?.contains(tableTabbedElement) &&
-                  headerCell === row?.lastElementChild;
-
-                if (isLastElementInHeader) {
-                  selectFirstCell();
-                }
+              if (!(ev.key === 'Tab' && !ev.shiftKey)) {
+                return;
               }
-        }
-      >
+
+              const tableTabbedElement = ev.target;
+              if (!(tableTabbedElement instanceof HTMLElement)) {
+                return;
+              }
+
+              const headerContent = ref.current;
+              const headerCell = ref.current?.parentNode?.parentNode;
+              const row = headerCell?.parentNode;
+              const isLastElementInHeader =
+                headerContent?.lastElementChild?.contains(tableTabbedElement) && headerCell === row?.lastElementChild;
+
+              if (isLastElementInHeader) {
+                selectFirstCell();
+              }
+            }
+      }
+    >
+      <div className={styles.headerCellContent}>
         <Stack direction="row" gap={0.5} alignItems="center" justifyContent={justifyContent} width="100%">
           {showTypeIcons && (
             <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />
@@ -147,13 +150,17 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           <span className={clsx(styles.headerCellLabel, 'table-ng-header-label')} title={displayName}>
             {displayName}
             {direction && (
-              <Icon className={styles.headerCellIcon} size="lg" name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'} />
+              <Icon
+                className={styles.headerCellIcon}
+                size="lg"
+                name={direction === 'ASC' ? 'arrow-up' : 'arrow-down'}
+              />
             )}
           </span>
         </Stack>
       </div>
 
-      {(filterable || onHideColumn) && (
+      {(filterable || onHideColumn || onTogglePin) && (
         <div className={styles.headerCellActions}>
           {filterable && (
             <Filter
@@ -170,15 +177,29 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           )}
 
           {onHideColumn && (
-            <HeaderColumnMenu displayName={displayName} onHideColumn={onHideColumn} canHideColumn={canHideColumn} />
+            <HeaderColumnMenu
+              displayName={displayName}
+              onHideColumn={onHideColumn}
+              canHideColumn={canHideColumn}
+              isPinned={isPinned}
+              onTogglePin={onTogglePin}
+            />
           )}
         </div>
       )}
-    </>
+    </div>
   );
 };
 
 const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
+  headerCellRoot: css({
+    label: 'headerCellRoot',
+    display: 'flex',
+    alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
+    pointerEvents: 'none',
+  }),
   headerCellContent: css({
     label: 'headerCellContent',
     pointerEvents: 'none',
@@ -192,7 +213,7 @@ const getStyles = memoize((theme: GrafanaTheme2, headerTextWrap?: boolean) => ({
     gap: theme.spacing(0.25),
     flexShrink: 0,
     marginLeft: 'auto',
-    pointerEvents: 'none',
+    pointerEvents: 'auto',
   }),
   headerCellLabel: css({
     label: 'headerCellLabel',

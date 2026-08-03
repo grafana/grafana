@@ -15,14 +15,33 @@ interface HeaderColumnMenuProps {
   displayName: string;
   onHideColumn: () => void;
   canHideColumn: boolean;
+  isPinned: boolean;
+  onTogglePin?: () => void;
 }
 
-export function HeaderColumnMenu({ displayName, onHideColumn, canHideColumn }: HeaderColumnMenuProps) {
+export function HeaderColumnMenu({
+  displayName,
+  onHideColumn,
+  canHideColumn,
+  isPinned,
+  onTogglePin,
+}: HeaderColumnMenuProps) {
   const styles = useStyles2(getStyles);
 
   const overlay = useCallback(
     () => (
       <Menu ariaLabel={t('grafana-ui.table.column-menu', 'Column menu for {{name}}', { name: displayName })}>
+        {onTogglePin && (
+          <MenuItem
+            label={
+              isPinned
+                ? t('grafana-ui.table.unpin-column', 'Unpin column')
+                : t('grafana-ui.table.pin-column-left', 'Pin column left')
+            }
+            icon="gf-pin"
+            onClick={() => onTogglePin()}
+          />
+        )}
         <MenuItem
           label={t('grafana-ui.table.hide-column', 'Hide column')}
           icon="eye-slash"
@@ -31,10 +50,13 @@ export function HeaderColumnMenu({ displayName, onHideColumn, canHideColumn }: H
         />
       </Menu>
     ),
-    [canHideColumn, displayName, onHideColumn]
+    [canHideColumn, displayName, isPinned, onHideColumn, onTogglePin]
   );
 
   return (
+    // The inner IconButton owns keyboard interaction. This wrapper only prevents its pointer
+    // events from bubbling to react-data-grid's header sort handler.
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
     <div
       className={styles.menuWrapper}
       onClick={(ev) => ev.stopPropagation()}
@@ -68,7 +90,9 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     padding: `${theme.spacing(0.5)} !important`,
     opacity: 0,
     color: theme.colors.text.secondary,
-    transition: 'opacity 0.15s ease',
+    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+      transition: 'opacity 0.15s ease',
+    },
     '.rdg-cell:hover &, .rdg-cell:focus-within &': {
       opacity: 1,
     },

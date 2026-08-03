@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { type Property } from 'csstype';
 import memoize, { type Key, type RawKey } from 'micro-memoize';
 
 import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
@@ -10,8 +9,9 @@ import { type TableCellStyles } from './types';
 // TextAlign, getJustifyContent, and IS_SAFARI_26 live here rather than in utils.tsx to avoid a
 // circular dependency: styles.ts → utils.tsx → renderers.tsx → AutoCell/PillCell → styles.ts
 export type TextAlign = 'left' | 'right' | 'center';
+type TableJustifyContent = 'flex-start' | 'center' | 'flex-end';
 
-export function getJustifyContent(textAlign: TextAlign): Property.JustifyContent {
+export function getJustifyContent(textAlign: TextAlign): TableJustifyContent {
   return textAlign === 'center' ? 'center' : textAlign === 'right' ? 'flex-end' : 'flex-start';
 }
 
@@ -60,6 +60,23 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
   const columnDragHighlightColor = theme.colors.primary.transparent;
 
   return {
+    interactionToolbar: css({
+      minHeight: 36,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(1),
+      paddingInline: theme.spacing(0.5),
+      paddingBlockEnd: theme.spacing(0.5),
+    }),
+    gridViewport: css({
+      position: 'relative',
+      blockSize: '100%',
+      minBlockSize: 0,
+    }),
+    gridViewportWithToolbar: css({
+      blockSize: 'calc(100% - 36px)',
+    }),
     grid: css({
       '--rdg-background-color': bgColor,
       '--rdg-header-background-color': bgColor,
@@ -255,7 +272,7 @@ export const getGridStyles = memoize((theme: GrafanaTheme2, enablePagination?: b
   };
 });
 
-export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent: Property.JustifyContent) =>
+export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent: TableJustifyContent) =>
   css({
     display: 'flex',
     alignItems: 'center',

@@ -1079,6 +1079,40 @@ export function filterFieldsByHiddenColumns(fields: Field[], hiddenColumns?: Rea
 }
 
 /**
+ * Moves pinned fields to the start while preserving relative order within both groups.
+ */
+export function orderFieldsByPinnedColumns(fields: Field[], pinnedColumns?: ReadonlySet<string>): Field[] {
+  if (!pinnedColumns?.size) {
+    return fields;
+  }
+
+  const pinned: Field[] = [];
+  const unpinned: Field[] = [];
+
+  for (const field of fields) {
+    (pinnedColumns.has(getDisplayName(field)) ? pinned : unpinned).push(field);
+  }
+
+  return [...pinned, ...unpinned];
+}
+
+export function updatePinnedColumnsAfterReorder(
+  pinnedColumns: string[],
+  sourceColumn: string,
+  targetColumn: string
+): string[] {
+  const pinnedColumnSet = new Set(pinnedColumns);
+  const sourceIsPinned = pinnedColumnSet.has(sourceColumn);
+  const targetIsPinned = pinnedColumnSet.has(targetColumn);
+
+  if (sourceIsPinned === targetIsPinned) {
+    return pinnedColumns;
+  }
+
+  return sourceIsPinned ? pinnedColumns.filter((column) => column !== sourceColumn) : [...pinnedColumns, sourceColumn];
+}
+
+/**
  * @internal
  * returns a map of column types by display name
  */

@@ -50,9 +50,11 @@ import { type DataLinksActionsTooltipState } from '../../cellUtils';
 import { hasGeoCell, LazyOpenLayersProvider } from '../../geo';
 import { TableCellDisplayMode } from '../../types';
 import { getCellRenderer, getCellSpecificStyles } from '../Cells/renderers';
-import { EmptyTablePlaceholder } from '../components/EmptyTablePlaceholder';
+import { ColumnFreezeDivider } from '../components/ColumnFreezeDivider';
 import { ColumnVisibilityPicker } from '../components/ColumnVisibilityPicker';
+import { EmptyTablePlaceholder } from '../components/EmptyTablePlaceholder';
 import { HeaderCell, HeaderCellContainer } from '../components/HeaderCell';
+import { type PinningInteraction, PinningPrototypeControls } from '../components/PinningPrototypeControls';
 import { RowExpander } from '../components/RowExpander';
 import { SummaryCell } from '../components/SummaryCell';
 import { TableCellActions } from '../components/TableCellActions';
@@ -110,14 +112,16 @@ import {
   getStableRowKey,
   getSummaryCellTextAlign,
   getVisibleFields,
-  orderFieldsByDisplayNames,
   filterFieldsByHiddenColumns,
   isCellInspectEnabled,
+  orderFieldsByDisplayNames,
+  orderFieldsByPinnedColumns,
   parseStyleJson,
   predicateByName,
   rowKeyGetter,
   shouldTextOverflow,
   shouldTextWrap,
+  updatePinnedColumnsAfterReorder,
 } from '../utils';
 
 const EXPANDED_COLUMN_KEY = 'expanded';
@@ -168,15 +172,19 @@ export function LegacyTableNG(props: TableNGProps) {
     [getActions, data, userCanExecuteActions]
   );
 
+  const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
   const [columnOrder, setColumnOrder] = useState<string[] | undefined>(undefined);
   const [hiddenColumns, setHiddenColumns] = useState<ReadonlySet<string>>(() => new Set());
+  const [pinnedColumns, setPinnedColumns] = useState<string[] | undefined>(undefined);
+  const [pinningInteraction, setPinningInteraction] = useState<PinningInteraction>('both');
   const [settlingColumnKeys, setSettlingColumnKeys] = useState<ReadonlySet<string>>(() => new Set());
   const settleTimeoutRef = useRef<number>();
 
   useEffect(() => {
     setColumnOrder(undefined);
     setHiddenColumns(new Set());
+    setPinnedColumns(undefined);
     setSettlingColumnKeys(new Set());
   }, [structureRev]);
 
@@ -193,10 +201,38 @@ export function LegacyTableNG(props: TableNGProps) {
     [visibleFields, columnOrder]
   );
 
-  const displayedFields = useMemo(
-    () => filterFieldsByHiddenColumns(orderedVisibleFields, hiddenColumns),
-    [orderedVisibleFields, hiddenColumns]
+  const configuredPinnedColumns = useMemo(
+    () => (hasNestedFrames ? [] : orderedVisibleFields.slice(0, _frozenColumns).map((field) => getDisplayName(field))),
+    [hasNestedFrames, orderedVisibleFields, _frozenColumns]
   );
+  const effectivePinnedColumns = pinnedColumns ?? configuredPinnedColumns;
+  const pinnedColumnSet = useMemo(() => new Set(effectivePinnedColumns), [effectivePinnedColumns]);
+  const pinnedOrderedVisibleFields = useMemo(
+    () => orderFieldsByPinnedColumns(orderedVisibleFields, pinnedColumnSet),
+    [orderedVisibleFields, pinnedColumnSet]
+  );
+  const displayedFields = useMemo(
+    () => filterFieldsByHiddenColumns(pinnedOrderedVisibleFields, hiddenColumns),
+    [pinnedOrderedVisibleFields, hiddenColumns]
+  );
+  const displayedPinnedColumnCount = useMemo(
+    () => displayedFields.filter((field) => pinnedColumnSet.has(getDisplayName(field))).length,
+    [displayedFields, pinnedColumnSet]
+  );
+
+  const handleTogglePin = useCallback(
+    (displayName: string) => {
+      setPinnedColumns((current) => {
+        const effective = current ?? configuredPinnedColumns;
+        return effective.includes(displayName)
+          ? effective.filter((column) => column !== displayName)
+          : [...effective, displayName];
+      });
+    },
+    [configuredPinnedColumns]
+  );
+  const menuPinningEnabled = pinningInteraction !== 'divider';
+  const dividerPinningEnabled = pinningInteraction !== 'menu' && !hasNestedFrames;
 
   const handleColumnsReorder = useCallback(
     (sourceColumnKey: string, targetColumnKey: string) => {
@@ -219,6 +255,17 @@ export function LegacyTableNG(props: TableNGProps) {
         return next;
       });
 
+      if (pinningInteraction !== 'menu') {
+        const nextPinnedColumns = updatePinnedColumnsAfterReorder(
+          effectivePinnedColumns,
+          sourceColumnKey,
+          targetColumnKey
+        );
+        if (nextPinnedColumns !== effectivePinnedColumns) {
+          setPinnedColumns(nextPinnedColumns);
+        }
+      }
+
       setSettlingColumnKeys(new Set([sourceColumnKey, targetColumnKey]));
       if (settleTimeoutRef.current) {
         window.clearTimeout(settleTimeoutRef.current);
@@ -228,7 +275,7 @@ export function LegacyTableNG(props: TableNGProps) {
         settleTimeoutRef.current = undefined;
       }, COLUMN_SETTLE_MS);
     },
-    [visibleFields]
+    [effectivePinnedColumns, pinningInteraction, visibleFields]
   );
 
   const hasHeader = !noHeader;
@@ -244,7 +291,6 @@ export function LegacyTableNG(props: TableNGProps) {
   const resizeHandler = useColumnResize(onColumnResize);
   const nestedResizeHandler = useColumnResize(onColumnResize, 'nested');
 
-  const hasNestedFrames = useMemo(() => getIsNestedTable(data.fields), [data]);
   const tableHasGeoCell = useMemo(() => hasGeoCell(data), [data]);
   const nestedFramesFieldName = useMemo(() => {
     if (!hasNestedFrames) {
@@ -347,6 +393,15 @@ export function LegacyTableNG(props: TableNGProps) {
     [handleHideColumn]
   );
 
+  const handlePinnedColumnCountChange = useCallback(
+    (count: number) => {
+      const visiblePinnedColumns = displayedFields.slice(0, count).map(getDisplayName);
+      const hiddenPinnedColumns = effectivePinnedColumns.filter((column) => hiddenColumns.has(column));
+      setPinnedColumns([...visiblePinnedColumns, ...hiddenPinnedColumns]);
+    },
+    [displayedFields, effectivePinnedColumns, hiddenColumns]
+  );
+
   const nestedRows = useNestedRows(rows, nestedData, hasNestedFrames, nestedFramesFieldName, filter, sortColumns);
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
@@ -393,6 +448,7 @@ export function LegacyTableNG(props: TableNGProps) {
 
   // vt scrollbar accounting for column auto-sizing
   const gridRef = useRef<DataGridHandle>(null);
+  const gridContainerRef = useRef<HTMLDivElement>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
   const availableWidth = useMemo(
     () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width) - scrollbarWidth,
@@ -416,7 +472,7 @@ export function LegacyTableNG(props: TableNGProps) {
   );
 
   // https://github.com/grafana/grafana/issues/118984: nested tables don't support frozen columns yet.
-  const frozenColumns = useMemo(() => (hasNestedFrames ? 0 : _frozenColumns), [hasNestedFrames, _frozenColumns]);
+  const frozenColumns = hasNestedFrames ? 0 : displayedPinnedColumnCount;
   const configuredWidthCount = visibleFields.reduce(
     (count, field) => count + (field.config.custom?.width != null ? 1 : 0),
     0
@@ -433,6 +489,8 @@ export function LegacyTableNG(props: TableNGProps) {
     frozenColumns,
     widthConfigResetKey
   );
+  const renderedPinnedColumnCount = Math.max(0, Math.min(frozenColumns, numFrozenColsFullyInView));
+  const pinnedWidth = widths.slice(0, renderedPinnedColumnCount).reduce((total, columnWidth) => total + columnWidth, 0);
 
   const headerHeight = useHeaderHeight({
     columnWidths: widths,
@@ -708,6 +766,7 @@ export function LegacyTableNG(props: TableNGProps) {
         columns: [],
         cellRootRenderers: {},
       };
+      const isTopLevel = frame === data;
 
       // Derive footer config from the fields being processed so nested tables use
       // their own footer configuration rather than the top-level table's.
@@ -1036,8 +1095,12 @@ export function LegacyTableNG(props: TableNGProps) {
                 selectFirstCell={() => {
                   gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
                 }}
-                onHideColumn={() => handleHideColumn(displayName)}
+                onHideColumn={isTopLevel ? () => handleHideColumn(displayName) : undefined}
                 canHideColumn={f.length > 1}
+                isPinned={pinnedColumnSet.has(displayName)}
+                onTogglePin={
+                  isTopLevel && !hasNestedFrames && menuPinningEnabled ? () => handleTogglePin(displayName) : undefined
+                }
               />
             </HeaderCellContainer>
           ),
@@ -1059,6 +1122,7 @@ export function LegacyTableNG(props: TableNGProps) {
     },
     [
       applyToRowBgFn,
+      data,
       disableKeyboardEvents,
       disableSanitizeHtml,
       filter,
@@ -1068,10 +1132,14 @@ export function LegacyTableNG(props: TableNGProps) {
       getCellColorInlineStyles,
       getTextColorForBackground,
       handleHideColumn,
+      handleTogglePin,
+      hasNestedFrames,
       maxRowHeight,
+      menuPinningEnabled,
       nestedRows,
       numFrozenColsFullyInView,
       onCellFilterAdded,
+      pinnedColumnSet,
       rowHeight,
       rowHeightFn,
       setFilter,
@@ -1172,59 +1240,77 @@ export function LegacyTableNG(props: TableNGProps) {
   // we need to have variables with these exact names for the localization to work properly
   const itemsRangeStart = pageRangeStart;
   const displayedEnd = pageRangeEnd;
+  const showInteractionToolbar = !noHeader && (!hasNestedFrames || hiddenColumns.size > 0);
 
   let rendered = (
     <>
-      {!noHeader && (
-        <ColumnVisibilityPicker
-          fields={orderedVisibleFields}
-          hiddenColumns={hiddenColumns}
-          onToggleColumn={handleToggleColumnVisibility}
-        />
+      {showInteractionToolbar && (
+        <div className={styles.interactionToolbar}>
+          {!hasNestedFrames && <PinningPrototypeControls value={pinningInteraction} onChange={setPinningInteraction} />}
+          <ColumnVisibilityPicker
+            fields={pinnedOrderedVisibleFields}
+            hiddenColumns={hiddenColumns}
+            onToggleColumn={handleToggleColumnVisibility}
+          />
+        </div>
       )}
-      <DataGrid<TableRow, TableSummaryRow, string>
-        {...commonDataGridProps}
-        role={hasNestedFrames ? 'treegrid' : 'grid'}
-        ref={gridRef}
-        className={styles.grid}
-        columns={structureRevColumns}
-        rows={paginatedRows}
-        rowKeyGetter={rowKeyGetter}
-        isRowSelectionDisabled={() => initialRowIndex !== undefined}
-        selectedRows={selectedRows}
-        onSelectedRowsChange={setSelectedRows}
-        headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
-        headerRowHeight={headerHeight}
-        columnWidths={resetColumnWidths}
-        onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
-        onColumnResize={resizeHandler}
-        onColumnsReorder={handleColumnsReorder}
-        defaultColumnOptions={{
-          ...commonDataGridProps.defaultColumnOptions,
-          draggable: true,
-        }}
-        onCellClick={onCellClick}
-        onCellKeyDown={({ column, row }, event) => {
-          // if top-left cell, use default browser tabbing
-          if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
-            event.preventGridDefault();
-            gridRef.current?.selectCell({ rowIdx: -1, idx: columns.length - 1 }); // select the far right cell of the header
-            return;
-          }
+      <div
+        ref={gridContainerRef}
+        className={clsx(styles.gridViewport, showInteractionToolbar && styles.gridViewportWithToolbar)}
+      >
+        <DataGrid<TableRow, TableSummaryRow, string>
+          {...commonDataGridProps}
+          role={hasNestedFrames ? 'treegrid' : 'grid'}
+          ref={gridRef}
+          className={styles.grid}
+          columns={structureRevColumns}
+          rows={paginatedRows}
+          rowKeyGetter={rowKeyGetter}
+          isRowSelectionDisabled={() => initialRowIndex !== undefined}
+          selectedRows={selectedRows}
+          onSelectedRowsChange={setSelectedRows}
+          headerRowClass={clsx(styles.headerRow, noHeader ? styles.displayNone : '')}
+          headerRowHeight={headerHeight}
+          columnWidths={resetColumnWidths}
+          onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
+          onColumnResize={resizeHandler}
+          onColumnsReorder={handleColumnsReorder}
+          defaultColumnOptions={{
+            ...commonDataGridProps.defaultColumnOptions,
+            draggable: true,
+          }}
+          onCellClick={onCellClick}
+          onCellKeyDown={({ column, row }, event) => {
+            // if top-left cell, use default browser tabbing
+            if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
+              event.preventGridDefault();
+              gridRef.current?.selectCell({ rowIdx: -1, idx: columns.length - 1 }); // select the far right cell of the header
+              return;
+            }
 
-          if (
-            disableKeyboardEvents ||
-            (hasNestedFrames && event.isDefaultPrevented()) // skip parent grid keyboard navigation if nested grid handled it
-          ) {
-            event.preventGridDefault();
-          }
-        }}
-        renderers={{
-          renderRow,
-          renderCell: renderCellRoot,
-          noRowsFallback: <EmptyTablePlaceholder noValue={noValue} />,
-        }}
-      />
+            if (
+              disableKeyboardEvents ||
+              (hasNestedFrames && event.isDefaultPrevented()) // skip parent grid keyboard navigation if nested grid handled it
+            ) {
+              event.preventGridDefault();
+            }
+          }}
+          renderers={{
+            renderRow,
+            renderCell: renderCellRoot,
+            noRowsFallback: <EmptyTablePlaceholder noValue={noValue} />,
+          }}
+        />
+        {dividerPinningEnabled && (
+          <ColumnFreezeDivider
+            gridRef={gridContainerRef}
+            columnCount={displayedFields.length}
+            pinnedColumnCount={renderedPinnedColumnCount}
+            pinnedWidth={pinnedWidth}
+            onPinnedColumnCountChange={handlePinnedColumnCountChange}
+          />
+        )}
+      </div>
 
       {enablePagination && numRows > 0 && (
         <div className={styles.paginationContainer}>
