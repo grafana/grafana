@@ -27,10 +27,9 @@ func userIdentifierCacheKeyById(namespace, ID string) string {
 // permCacheActionPart builds the action segment of permission-cache keys.
 // Lookups for the same action with a different action-set shape (e.g.
 // delegation checks, which exclude action sets) must not share entries.
+// The separator is always present so no key matches the legacy bare-action
+// format and entries written by older instances sharing the cache are never read.
 func permCacheActionPart(action string, actionSets []string) string {
-	if len(actionSets) == 0 {
-		return action
-	}
 	sets := slices.Clone(actionSets)
 	slices.Sort(sets)
 	return action + "!" + strings.Join(sets, ",")

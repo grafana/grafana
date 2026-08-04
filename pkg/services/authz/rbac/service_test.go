@@ -1892,6 +1892,19 @@ func TestService_Check_DelegationOverrideCacheIsolation(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, resp.Allowed, "ordinary check must still pass via the dashboards:admin action set")
 	})
+
+	t.Run("legacy bare-action cache entries must not be readable by any lookup", func(t *testing.T) {
+		s := newService()
+		ctx := types.WithAuthInfo(context.Background(), callingService)
+
+		// A widened entry written under the pre-change key format by an older
+		// instance sharing the cache during a rollout.
+		s.permCache.Set(ctx, "org-12.perm_test-uid_dashboards:read", map[string]bool{"permissions:type:delegate": true})
+
+		resp, err := s.Check(ctx, delegationReq)
+		require.NoError(t, err)
+		require.False(t, resp.Allowed, "delegation check must not read grants cached under the legacy key format")
+	})
 }
 
 func TestService_K8sNativeFallback(t *testing.T) {
