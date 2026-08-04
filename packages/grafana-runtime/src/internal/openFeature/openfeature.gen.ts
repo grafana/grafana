@@ -73,6 +73,8 @@ export const FlagKeys = {
   GrafanaLogLevelInference: "grafana.logLevelInference",
   /** Builds the navigation tree client-side instead of reading it from /bootdata */
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
+  /** Enables the new command palette architecture */
+  GrafanaNewCmdk: "grafana.newCmdk",
   /** Enables a new UI for query errors and notices */
   GrafanaNewPanelQueryErrorsUI: "grafana.newPanelQueryErrorsUI",
   /** Whether to use the new SharedPreferences functional component */
@@ -489,6 +491,17 @@ export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaMultiTenantNavTree = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.multiTenantNavTree", false, options).value;
+};
+
+/**
+ * Enables the new command palette architecture
+ *
+ * **Details:**
+ * - flag key: `grafana.newCmdk`
+ * - default value: `false`
+ */
+export const useFlagGrafanaNewCmdk = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.newCmdk", false, options).value;
 };
 
 /**

@@ -8,11 +8,12 @@ import { createPortal } from 'react-dom';
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { useFlagGrafanaNewCmdk, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
 import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashScreenModal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
+import { CmdkRoot } from 'app/features/cmdk/CmdkRoot';
 import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
 
@@ -49,6 +50,7 @@ export function AppChrome({ children }: Props) {
   const state = chrome.useState();
   const scopes = useScopes();
   const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', false);
+  const newCmdkEnabled = useFlagGrafanaNewCmdk();
 
   const { fullscreenWorkspaceActive, fullscreenWorkspaceFeatureFlagEnabled } = useFullscreenWorkspace();
 
@@ -221,7 +223,7 @@ export function AppChrome({ children }: Props) {
         </div>
       </div>
       {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
-      {!state.chromeless && <CommandPalette />}
+      {!state.chromeless && (newCmdkEnabled ? <CmdkRoot /> : <CommandPalette />)}
       {!state.chromeless && isSplashScreenEnabled && <SplashScreenModal />}
       {!state.chromeless && <FeatureControlFloating />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (

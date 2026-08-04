@@ -5009,6 +5009,23 @@
   },
   "cloud-enterprise-feature-badge": "Cloud & Enterprise",
   "cloud-feature-badge": "Cloud",
+  "cmdk": {
+    "action": {
+      "browse-children": "Browse"
+    },
+    "dashboard-preview": {
+      "error": "Failed to load dashboard preview"
+    },
+    "deep-search": {
+      "matched-panels": "Matched panels"
+    },
+    "empty-state": {
+      "message": "No results found"
+    },
+    "search": {
+      "placeholder": "Search or jump to..."
+    }
+  },
   "combobox": {
     "async": {
       "error": "An error occurred while loading options."
