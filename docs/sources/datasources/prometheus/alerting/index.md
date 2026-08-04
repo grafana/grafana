@@ -14,7 +14,7 @@ labels:
 menuTitle: Alerting
 title: Prometheus alerting
 weight: 550
-review_date: 2026-05-07
+review_date: 2026-08-04
 ---
 
 # Prometheus alerting
@@ -191,7 +191,7 @@ $A > 2 && $B > 100
 
 1. **Enable the data source as a recording rules target:** In the Prometheus data source configuration, verify that **Allow as recording rules target** is toggled on (it's on by default). This allows Grafana to write recording rule results back to this instance.
 
-1. **Verify write access:** The Prometheus-compatible backend must support remote write. Grafana Cloud Metrics (Mimir) and self-hosted Mimir support this natively. Standard Prometheus requires the `--web.enable-remote-write-receiver` flag (Prometheus 2.33+).
+1. **Verify write access:** The Prometheus-compatible backend must support remote write. Grafana Cloud Metrics (Mimir) and self-managed Mimir support this natively. Standard Prometheus requires the `--web.enable-remote-write-receiver` flag (Prometheus 2.33+).
 
 1. **Create a recording rule:**
    1. Navigate to **Alerting** > **Alert rules**.
@@ -204,7 +204,7 @@ $A > 2 && $B > 100
       ```
 
    1. Enter a metric name for the result (for example, `service:http_requests:rate5m`). Follow the Prometheus [recording rule naming convention](https://prometheus.io/docs/practices/rules/#naming-and-aggregation): `level:metric:operations`.
-   1. Select the **Target data source** — the Prometheus instance where results will be written.
+   1. Select the **Target data source**—the Prometheus instance where results are written.
    1. Set the evaluation interval (for example, every 1 minute).
    1. Click **Save rule**.
 

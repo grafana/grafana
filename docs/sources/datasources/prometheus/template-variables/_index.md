@@ -17,7 +17,7 @@ labels:
 menuTitle: Template variables
 title: Prometheus template variables
 weight: 400
-review_date: 2026-05-07
+review_date: 2026-08-04
 ---
 
 # Prometheus template variables
@@ -39,7 +39,7 @@ Query variables query Prometheus to populate dropdown values. When creating a qu
 | **Series query**  | `metric`, `label`, or both              | Returns time series matching the specified metric and/or label selectors.       | Metric: `http_requests_total`, Label: `job="api"`                                       |
 | **Classic query** | query string                            | _Deprecated._ Legacy syntax using functions like `label_values(metric, label)`. | `label_values(http_requests_total, job)`                                                |
 
-For details on metric names, label names, and label values, refer to the [Prometheus data model](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
+For details on metric names, label names, and label values, refer to the [Prometheus data model](https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 
 ### Query type examples
 
@@ -199,7 +199,13 @@ If **Multi-value** or **Include All** is enabled, the variable value becomes a r
 
 ## Filters variable
 
-Prometheus supports the [Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/add-template-variables/#add-ad-hoc-filters) variable type (formerly called "ad hoc filters"), which lets dashboard viewers dynamically add label filters without editing queries.
+<!-- vale Grafana.WordList = NO -->
+<!-- vale Grafana.Spelling = NO -->
+
+Prometheus supports the [Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/) variable type (formerly called "ad hoc filters"), which lets dashboard viewers dynamically add label filters without editing queries.
+
+<!-- vale Grafana.Spelling = YES -->
+<!-- vale Grafana.WordList = YES -->
 
 {{< admonition type="note" >}}
 The **Filter and Group by** feature extends the Filters variable by adding grouping support for Prometheus and Loki data sources. For more information, refer to [Filter and Group by](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/).

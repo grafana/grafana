@@ -14,7 +14,7 @@ labels:
 menuTitle: Annotations
 title: Prometheus annotations
 weight: 500
-review_date: 2026-05-07
+review_date: 2026-08-04
 ---
 
 # Prometheus annotations
@@ -65,7 +65,7 @@ Prometheus annotations work differently from SQL-based annotations. Instead of q
 - If the query returns multiple time series, each series produces its own set of annotations.
 
 {{< admonition type="note" >}}
-Because every returned data point creates an annotation, queries that return continuous data (like `node_cpu_seconds_total`) will produce an annotation at every step interval, flooding your dashboard. Always use expressions that return data only at the moments you want annotated.
+Because every returned data point creates an annotation, queries that return continuous data (like `node_cpu_seconds_total`) produce an annotation at every step interval, flooding your dashboard. Always use expressions that return data only at the moments you want annotated.
 {{< /admonition >}}
 
 ## Field mappings

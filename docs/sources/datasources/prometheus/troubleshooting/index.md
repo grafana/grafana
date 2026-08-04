@@ -16,7 +16,7 @@ labels:
 menuTitle: Troubleshooting
 title: Troubleshoot Prometheus data source issues
 weight: 600
-review_date: 2026-05-07
+review_date: 2026-08-04
 ---
 
 # Troubleshoot Prometheus data source issues
@@ -109,7 +109,7 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 PDC connectivity issues are almost always caused by networking on the customer side (DNS, firewall rules, routing), not by Grafana Cloud. The data source test passing doesn't guarantee sustained connectivity under load — it only verifies a single query succeeds.
 {{< /admonition >}}
 
-For general PDC setup and configuration, refer to [Private data source connect (PDC)](/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/).
+For general PDC setup and configuration, refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/).
 
 ### Certificate verification failed
 
@@ -167,7 +167,7 @@ The following errors occur when there are issues with authentication credentials
 For Google Managed Prometheus (GMP):
 
 1. Use the **GCP datasource-syncer** pattern: run a sidecar process that refreshes OAuth tokens and updates the Grafana data source credentials on a schedule shorter than the token lifetime (typically every 45 minutes for a 60-minute token). This ensures the stored token is always valid when the alerting backend uses it.
-1. Alternatively, use the [Google Cloud Monitor data source](https://grafana.com/grafana/plugins/stackdriver/) with its built-in GCP credential management rather than pointing the core Prometheus data source at a GMP endpoint.
+1. Alternatively, use the [Google Cloud Monitor data source](https://grafana.com/grafana/plugins/stackdriver/) with its built-in GCP credential management rather than pointing the Prometheus data source at a GMP endpoint.
 1. If running on GKE with Workload Identity, ensure the Kubernetes service account token refresh is functioning and the projected token volume is mounted correctly.
 
 For Azure Managed Prometheus:
@@ -190,7 +190,7 @@ This token caching behavior is a known issue that has received code fixes in rec
 
 **Symptom:** You've enabled `teamHttpHeadersMimir` and configured Team LBAC rules, but users can still see all metrics regardless of their team assignments.
 
-**Cause:** Label-Based Access Control (LBAC) for the Prometheus data source only works when the backend is **Grafana Cloud Metrics (Mimir)** or **Grafana Enterprise Metrics (GEM)**. It doesn't work with Google Managed Prometheus, self-hosted Prometheus, Thanos, or other Prometheus-compatible endpoints. The LBAC enforcement relies on Mimir-specific HTTP headers (`X-Scope-OrgID` and team-scoped label matchers) that other backends ignore.
+**Cause:** Label-Based Access Control (LBAC) for the Prometheus data source only works when the backend is **Grafana Cloud Metrics (Mimir)** or **Grafana Enterprise Metrics (GEM)**. It doesn't work with Google Managed Prometheus, self-managed Prometheus, Thanos, or other Prometheus-compatible endpoints. The LBAC enforcement relies on Mimir-specific HTTP headers (`X-Scope-OrgID` and team-scoped label matchers) that other backends ignore.
 
 **Solution:**
 

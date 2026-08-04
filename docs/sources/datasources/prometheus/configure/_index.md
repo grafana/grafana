@@ -15,12 +15,12 @@ labels:
 menuTitle: Configure
 title: Configure the Prometheus data source
 weight: 200
-review_date: 2026-05-07
+review_date: 2026-08-04
 ---
 
 # Configure the Prometheus data source
 
-This document provides instructions for configuring the Prometheus data source and explains the available configuration options. Grafana includes built-in support for Prometheus, so you don't need to install a plugin. For general information on adding a data source to Grafana, refer to [Add a data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source).
+This document provides instructions for configuring the Prometheus data source and explains the available configuration options. The Prometheus data source is preinstalled in Grafana, so you don't need to install it manually. For general information on adding a data source to Grafana, refer to [Add a data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/#add-a-data-source).
 
 ## Before you begin
 
@@ -155,7 +155,7 @@ Pass along additional information and metadata about the request or response.
   Grafana uses this setting to determine which API endpoints and features to enable. For example, when set to Mimir, Grafana uses regular expression-optimized label queries that significantly improve autocomplete and variable loading performance for large metric sets.
 
 {{< admonition type="note" >}}
-Team-based Label-Based Access Control (LBAC) for the Prometheus data source requires the backend to be **Grafana Cloud Metrics (Mimir)** or **Grafana Enterprise Metrics (GEM)**. LBAC doesn't work with external Prometheus-compatible endpoints such as Google Managed Prometheus, self-hosted Prometheus, or Thanos, even if you enable the `teamHttpHeadersMimir` setting. The LBAC enforcement relies on Mimir-specific HTTP headers that other backends don't support.
+Team-based Label-Based Access Control (LBAC) for the Prometheus data source requires the backend to be **Grafana Cloud Metrics (Mimir)** or **Grafana Enterprise Metrics (GEM)**. LBAC doesn't work with external Prometheus-compatible endpoints such as Google Managed Prometheus, self-managed Prometheus, or Thanos, even if you enable the `teamHttpHeadersMimir` setting. The LBAC enforcement relies on Mimir-specific HTTP headers that other backends don't support.
 {{< /admonition >}}
 
 - **Cache level** - Sets the browser caching level for editor queries. Options: `Low`, `Medium`, `High`, or `None`. Higher cache settings are recommended for high-cardinality data sources.
@@ -201,7 +201,7 @@ If you use PDC with SigV4 (AWS Signature Version 4 Authentication), the PDC agen
 
 Click **Manage private data source connect networks** to view your PDC configuration details.
 
-For more information, refer to [Private data source connect (PDC)](/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc).
+For more information, refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc).
 
 For troubleshooting PDC connectivity issues (DNS resolution, "host unreachable" errors, or parallel connection tuning), refer to [PDC connectivity errors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/#pdc-connectivity-errors).
 
@@ -330,7 +330,7 @@ azure_auth_enabled = true
 ```
 
 {{< admonition type="note" >}}
-If you are using Azure authentication, don't enable `Forward OAuth identity`. Both methods use the same HTTP authorization headers, and the OAuth token will override your Azure credentials.
+If you are using Azure authentication, don't enable `Forward OAuth identity`. Both methods use the same HTTP authorization headers, and the OAuth token overrides your Azure credentials.
 {{< /admonition >}}
 
 ## Troubleshooting

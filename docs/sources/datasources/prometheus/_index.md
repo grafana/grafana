@@ -15,14 +15,14 @@ labels:
 menuTitle: Prometheus
 title: Prometheus data source
 weight: 1300
-review_date: 2026-05-07
+review_date: 2026-08-04
 ---
 
 # Prometheus data source
 
 Prometheus is an open source monitoring system and time series database that scrapes and stores metrics used for monitoring and alerting.
 
-Grafana includes built-in support for Prometheus, so you don't need to install a plugin. Write queries using [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) in the query editor, or use [Metrics Drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/metrics/) to explore metrics without writing queries. The Prometheus data source also works with other projects that implement the [Prometheus querying API](https://prometheus.io/docs/prometheus/latest/querying/api/), including [Grafana Mimir](/docs/mimir/latest/) and [Thanos](https://thanos.io/tip/components/query.md/).
+The Prometheus data source is preinstalled in Grafana, so you don't need to install it manually. Write queries using [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) in the query editor, or use [Metrics Drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/metrics/) to explore metrics without writing queries. The Prometheus data source also works with other projects that implement the [Prometheus querying API](https://prometheus.io/docs/prometheus/latest/querying/api/), including [Grafana Mimir](https://grafana.com/docs/mimir/latest/) and [Thanos](https://thanos.io/tip/components/query.md/).
 
 ## Supported features
 
@@ -65,6 +65,30 @@ In Grafana 13, the core Prometheus data source no longer supports SigV4 (AWS) or
 
 Existing data sources using these methods are automatically migrated on startup.
 {{< /admonition >}}
+
+## Plugin updates
+
+Starting with Grafana v13.2, the Prometheus data source is a standalone plugin, preinstalled in both Grafana OSS and Enterprise. This enables more frequent updates independent of Grafana releases. Grafana automatically checks the plugin catalog and installs the latest version on each server restart.
+
+To adjust this behavior:
+
+- **Opt out of auto-updates:** Set `preinstall_auto_update` to `false` in your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/).
+- **Update manually:** Update at any time from the **Administration > Plugins** page without restarting Grafana.
+
+The standalone plugin requires Grafana 12.3.0 or later. The Prometheus data source bundled with Grafana 13.1 and earlier continues to work as before—those versions aren't affected by this change.
+
+Users running Grafana 12.3.x through 13.1.x can install the standalone plugin from the plugin catalog if they want the latest features before upgrading to Grafana 13.2. To use the standalone plugin with Grafana 12.3.x through 13.1.x, add the following to your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/):
+
+```ini
+[plugin.prometheus]
+as_external = true
+
+[plugins]
+; Install the latest version on startup:
+preinstall_sync = prometheus
+; Or install a specific version:
+; preinstall_sync = prometheus@<version>
+```
 
 ## Related resources
 

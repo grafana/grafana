@@ -16,14 +16,14 @@ labels:
 menuTitle: Query editor
 title: Prometheus query editor
 weight: 300
-review_date: 2026-05-07
+review_date: 2026-08-04
 ---
 
 # Prometheus query editor
 
 The Prometheus query editor lets you write PromQL queries against your Prometheus-compatible data sources. It includes a visual query builder for constructing queries without writing PromQL, a code editor with autocomplete and syntax highlighting, and configurable output formats for different visualization types.
 
-You can access the query editor from the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) or from any dashboard panel by clicking the panel title and selecting **Edit**. For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/). For more information about PromQL, see [Querying Prometheus](http://prometheus.io/docs/querying/basics/).
+You can access the query editor from the [Explore page](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) or from any dashboard panel by clicking the panel title and selecting **Edit**. For general documentation on querying data sources in Grafana, refer to [Query and transform data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/). For more information about PromQL, refer to [Querying Prometheus](https://prometheus.io/docs/prometheus/latest/querying/basics/).
 
 The query editor has two modes:
 
@@ -78,7 +78,7 @@ Grafana adjusts the query time range to align with the dynamically calculated st
 
 ### Exemplars
 
-Toggle on to include exemplars in the graph. Exemplars link aggregated metric data to specific trace examples, letting you jump from a spike directly to a relevant trace. For more information, see [Introduction to exemplars](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/).
+Toggle on to include exemplars in the graph. Exemplars link aggregated metric data to specific trace examples, letting you jump from a spike directly to a relevant trace. For more information, refer to [Introduction to exemplars](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/exemplars/).
 
 {{< admonition type="note" >}}
 Exemplars are not available with Instant query types.
@@ -152,7 +152,7 @@ The Metrics explorer (Builder mode) and [Metrics browser (Code mode)](#metrics-b
 
 ## Code mode
 
-**Code mode** is for experienced Prometheus users who prefer writing PromQL directly. For more information about PromQL, see [Querying Prometheus](http://prometheus.io/docs/querying/basics/).
+**Code mode** is for experienced Prometheus users who prefer writing PromQL directly. For more information about PromQL, refer to [Querying Prometheus](https://prometheus.io/docs/prometheus/latest/querying/basics/).
 
 {{< figure src="/static/img/docs/prometheus/code-mode.png" max-width="500px" class="docs-image--no-shadow" caption="Code mode" >}}
 
