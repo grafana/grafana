@@ -69,13 +69,13 @@ async function loadAppPluginMetasStrict(): Promise<AppPluginMetaConfig[]> {
  * rejects instead of resolving to an empty list (the cache entry is
  * invalidated on failure, so a later call retries). With the
  * plugins.useMTPlugins flag off it resolves to an empty array. The result is
- * cached, so concurrent callers share one fetch and one resolved array — note
- * the cache has no refetch hook: a successful response is reused for the rest
- * of the session, and installing or uninstalling a plugin does not
- * invalidate it.
+ * cached, so concurrent callers share one fetch (each receives its own copy,
+ * like the other accessors) — note the cache has no refetch hook: a
+ * successful response is reused for the rest of the session, and installing
+ * or uninstalling a plugin does not invalidate it.
  */
 export function getAppPluginMetasStrict(): Promise<AppPluginMetaConfig[]> {
-  return getCachedPromise(loadAppPluginMetasStrict);
+  return getCachedPromise(loadAppPluginMetasStrict).then((metas) => structuredClone(metas));
 }
 
 export async function getAppPluginMeta(pluginId: string): Promise<AppPluginConfig | null> {
