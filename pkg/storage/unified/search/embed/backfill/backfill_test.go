@@ -592,7 +592,8 @@ func TestIsPermanentItemError(t *testing.T) {
 	}{
 		{"pq data exception", &pq.Error{Code: "22021"}, true},
 		{"wrapped pq data exception", fmt.Errorf("upsert: %w", &pq.Error{Code: "22021"}), true},
-		{"pq constraint violation", &pq.Error{Code: "23505"}, true},
+		// Class 23 stays retryable: a missing partition is 23514 check_violation.
+		{"pq check violation", &pq.Error{Code: "23514"}, false},
 		{"pq connection failure", &pq.Error{Code: "08006"}, false},
 		{"pq insufficient resources", &pq.Error{Code: "53100"}, false},
 		// Provider rejections stay retryable: misconfig produces the same codes.

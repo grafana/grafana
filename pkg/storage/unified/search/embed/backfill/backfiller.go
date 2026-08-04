@@ -309,9 +309,9 @@ func isPermanentItemError(err error) bool {
 	}
 	var pqErr *pq.Error
 	if errors.As(err, &pqErr) {
-		// SQLSTATE class 22 = data exception (e.g. NUL byte), 23 = constraint violation.
-		class := pqErr.Code.Class()
-		return class == "22" || class == "23"
+		// SQLSTATE class 22 = data exception, e.g. NUL byte in text. Class 23
+		// is excluded: missing partitions surface as 23514 check_violation.
+		return pqErr.Code.Class() == "22"
 	}
 	return false
 }
