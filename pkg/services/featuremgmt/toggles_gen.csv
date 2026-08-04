@@ -51,7 +51,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-08-29,useKubernetesShortURLsAPI,GA,@grafana/sharing-squad,false,false,true
 2025-08-29,kubernetesCorrelations,experimental,@grafana/datapro,false,true,false
 2025-10-16,kubernetesLogsDrilldown,experimental,@grafana/observability-logs,false,true,false
-2025-10-20,kubernetesQueryCaching,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-05-22,datasources.queryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-22,datasources.loadOpenAPI,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-22,datasources.chunkedQueryStreaming,experimental,@grafana/grafana-datasources-core-services,false,false,false
@@ -314,7 +313,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-22,tracesDrilldownTimeSeeker,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-05-22,enableColorblindSafePanelOptions,experimental,@grafana/dataviz-squad,false,false,true
 2026-05-22,cacheConfigUnifiedStorageMigration,experimental,@grafana/grafana-operator-experience-squad,false,true,false
-2026-05-22,querycaching.redirectToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-22,querycaching.enableConnectionsClient,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-22,querycaching.useInQueryService,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-22,influxDBConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
