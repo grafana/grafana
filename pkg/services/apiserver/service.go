@@ -45,6 +45,7 @@ import (
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -107,6 +108,9 @@ type service struct {
 
 	auditBackend            audit.Backend
 	auditPolicyRuleProvider auditing.PolicyRuleProvider
+
+	// vpRegistry serves the resolved policy consulted by apistore.encode.
+	vpRegistry *versionpolicy.VersionPolicyRegistry
 }
 
 func ProvideService(
@@ -337,6 +341,9 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	// Snapshot natural priority before applyPreferredAPIVersions reorders the scheme, so the cap ranks against natural order and preferred can't weaken it.
+	naturalOrder := naturalOrderSnapshot(s.scheme, groupVersions)
+
 	if err := applyPreferredAPIVersions(s.log, s.cfg, s.scheme, apiResourceConfig); err != nil {
 		return err
 	}
@@ -362,6 +369,22 @@ func (s *service) start(ctx context.Context) error {
 		}
 	} else {
 		getter := apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
+
+		if s.cfg.EnableVersionPolicy {
+			versionPolicyIni, err := buildVersionPolicyIniLayer(s.cfg)
+			if err != nil {
+				return err
+			}
+			s.vpRegistry = versionpolicy.NewVersionPolicyRegistry(
+				versionpolicy.NewResolver(naturalOrder),
+				versionPolicyIni,
+			)
+			if err := s.vpRegistry.Validate(); err != nil {
+				return err
+			}
+			getter.SetVersionPolicy(s.vpRegistry)
+		}
+
 		optsregister = getter.RegisterOptions
 		serverConfig.RESTOptionsGetter = getter
 	}

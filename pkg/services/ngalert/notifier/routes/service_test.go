@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
@@ -75,7 +74,7 @@ func configRevisionWithImportedRoute() *legacy_storage.ConfigRevision {
 					Route: &v1.Route{Receiver: "grafana-default"},
 				},
 				Receivers: []*v1.PostableApiReceiver{
-					{Receiver: definitions.Receiver{Name: "grafana-default"}},
+					{Name: "grafana-default"},
 				},
 			},
 			ExtraConfigs: []v1.ExtraConfiguration{
@@ -97,8 +96,8 @@ func configRevisionWithManagedRoutes() *legacy_storage.ConfigRevision {
 					Route: &v1.Route{Receiver: "grafana-default"},
 				},
 				Receivers: []*v1.PostableApiReceiver{
-					{Receiver: definitions.Receiver{Name: "grafana-default"}},
-					{Receiver: definitions.Receiver{Name: "empty"}},
+					{Name: "grafana-default"},
+					{Name: "empty"},
 				},
 			},
 			ManagedRoutes: v1.ManagedRoutes{

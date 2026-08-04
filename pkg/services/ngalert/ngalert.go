@@ -448,6 +448,7 @@ func (ng *AlertNG) init() error {
 		ResolvedRetention:              ng.Cfg.UnifiedAlerting.ResolvedAlertRetention,
 
 		IgnorePendingForNoDataAndError: ng.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertingIgnorePendingForNoDataAndError),
+		RequireWarm:                    ng.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagAlertingStateManagerRequireWarm),
 	}
 	statePersister := initStatePersister(ng.Cfg.UnifiedAlerting, stateManagerCfg, ng.FeatureToggles)
 	ng.stateManager = state.NewManager(stateManagerCfg, statePersister)
