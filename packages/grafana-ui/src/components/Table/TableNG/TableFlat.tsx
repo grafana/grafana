@@ -4,11 +4,13 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { type Field } from '@grafana/data';
 import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
 
-import { useTheme2 } from '../../../../themes/ThemeContext';
-import { getTextColorForBackground as _getTextColorForBackground } from '../../../../utils/colors';
-import { usePanelContext } from '../../../PanelChrome';
-import { type DataLinksActionsTooltipState } from '../../cellUtils';
-import { TABLE } from '../constants';
+import { useTheme2 } from '../../../themes/ThemeContext';
+import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
+import { usePanelContext } from '../../PanelChrome';
+import { type DataLinksActionsTooltipState } from '../cellUtils';
+
+import { TableDataGrid } from './TableDataGrid';
+import { TABLE } from './constants';
 import {
   useColumnResize,
   useColWidths,
@@ -20,7 +22,8 @@ import {
   useScrollbarWidth,
   useSortedRows,
   useRowCompiler,
-} from '../hooks';
+} from './hooks';
+import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
 import {
   type CellRootRenderer,
   type InspectCellProps,
@@ -28,7 +31,7 @@ import {
   type TableNGProps,
   type TableRow,
   type TableSummaryRow,
-} from '../types';
+} from './types';
 import {
   calculateFooterHeight,
   createTypographyContext,
@@ -38,10 +41,7 @@ import {
   getCellLinks,
   getDefaultRowHeight,
   getVisibleFields,
-} from '../utils';
-
-import { TableDataGrid } from './TableDataGrid';
-import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
+} from './utils';
 
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
 
