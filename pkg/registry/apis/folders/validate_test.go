@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -25,11 +27,12 @@ import (
 
 func TestValidateCreate(t *testing.T) {
 	tests := []struct {
-		name        string
-		folder      *folders.Folder
-		mockFolders map[string]*folders.Folder
-		expectedErr error
-		maxDepth    int // defaults to 5 unless set
+		name           string
+		folder         *folders.Folder
+		mockFolders    map[string]*folders.Folder
+		expectedErr    error
+		maxDepth       int  // defaults to 5 unless set
+		serviceAccount bool // the requester is a service account
 	}{
 		{
 			name: "ok",
@@ -146,6 +149,127 @@ func TestValidateCreate(t *testing.T) {
 				},
 			},
 			expectedErr: folder.ErrFolderCannotBeParentOfItself,
+		},
+		{
+			name: "error to create a folder inside the k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				accesscontrol.K6FolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: accesscontrol.K6FolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6",
+					},
+				},
+			},
+			expectedErr: folder.ErrFolderCannotBeCreatedInK6,
+		},
+		{
+			name: "error to create a folder under an existing descendant of the k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: "legacy-k6-child"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				"legacy-k6-child": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "legacy-k6-child",
+						Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
+					},
+					Spec: folders.FolderSpec{
+						Title: "created before k6 was restricted",
+					},
+				},
+				accesscontrol.K6FolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: accesscontrol.K6FolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6",
+					},
+				},
+			},
+			expectedErr: folder.ErrFolderCannotBeCreatedInK6,
+		},
+		{
+			name: "service account can create a folder inside the k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				accesscontrol.K6FolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: accesscontrol.K6FolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6",
+					},
+				},
+			},
+			serviceAccount: true,
+		},
+		{
+			name: "service account can create a folder deeper in the k6 tree",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: "k6-child"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				"k6-child": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "k6-child",
+						Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6 child",
+					},
+				},
+				accesscontrol.K6FolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: accesscontrol.K6FolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6",
+					},
+				},
+			},
+			serviceAccount: true,
+		},
+		{
+			name: "the k6 folder itself can be created at root",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: accesscontrol.K6FolderUID,
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
 		},
 		{
 			name: "can not create a tree that is too deep",
@@ -343,15 +467,20 @@ func TestValidateCreate(t *testing.T) {
 				maxDepth = 5
 			}
 
+			ctx := context.Background()
+			if tt.serviceAccount {
+				ctx = identity.WithRequester(ctx, &user.SignedInUser{UserID: 1, OrgID: 1, IsServiceAccount: true})
+			}
+
 			mockStorage := grafanarest.NewMockStorage(t)
 			for name, f := range tt.mockFolders {
 				f.Name = name
-				mockStorage.On("Get", context.Background(), name, &metav1.GetOptions{}).Return(f, nil).Maybe()
+				mockStorage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(f, nil).Maybe()
 			}
 
 			getter := newParentsGetter(mockStorage, maxDepth)
 
-			err := validateOnCreate(context.Background(), tt.folder, getter, maxDepth)
+			err := validateOnCreate(ctx, tt.folder, getter, maxDepth)
 
 			if tt.expectedErr == nil {
 				require.NoError(t, err)
@@ -555,6 +684,68 @@ func TestValidateUpdate(t *testing.T) {
 				},
 			},
 			expectedErr: "k6 project may not be moved",
+		},
+		{
+			name: "error to move into an existing descendant of the k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "legacy-k6-child",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
+			},
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: accesscontrol.K6FolderUID, Title: "k6"},
+					{Name: "legacy-k6-child", Title: "created before k6 was restricted", Parent: accesscontrol.K6FolderUID},
+				},
+			},
+			expectedErr: "[folder.cannot-be-moved-to-k6] k6 project may not be moved",
+		},
+		{
+			name: "error to move a folder out of the k6 tree",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: folder.GeneralFolderUID,
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "legacy-k6-child",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
+			},
+			// resolved for the source chain, which still runs through k6
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: accesscontrol.K6FolderUID, Title: "k6"},
+					{Name: "legacy-k6-child", Title: "created before k6 was restricted", Parent: accesscontrol.K6FolderUID},
+				},
+			},
+			expectedErr: "[folder.bad-request] k6 project may not be moved",
 		},
 		{
 			name: "error to move the k6 folder itself",
