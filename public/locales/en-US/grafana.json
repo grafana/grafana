@@ -9153,6 +9153,11 @@
     "flag-value": "Flag value",
     "menu": "Open menu",
     "new-flag": "new-flag-override",
+    "preview-assets": {
+      "body": "This session is using frontend assets from the preview build <1>{{ folder }}</1> instead of the released frontend.",
+      "stop": "Stop preview",
+      "title": "Frontend preview active"
+    },
     "save-flag": "Save",
     "title": "Feature control"
   },
