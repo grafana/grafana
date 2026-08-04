@@ -1,7 +1,7 @@
 import { Registry, type RegistryItem } from '@grafana/data';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { type AnyDashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 
 import { deserializeAutoGridLayout } from './AutoGridLayoutSerializer';
@@ -16,7 +16,7 @@ interface LayoutSerializerRegistryItem extends RegistryItem {
     elements: DashboardV2Spec['elements'],
     preload: boolean,
     panelIdGenerator?: PanelIdGenerator
-  ) => DashboardLayoutManager;
+  ) => AnyDashboardLayoutManager;
 }
 
 export const layoutDeserializerRegistry: Registry<LayoutSerializerRegistryItem> =
