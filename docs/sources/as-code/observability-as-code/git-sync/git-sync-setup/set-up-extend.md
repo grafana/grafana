@@ -68,7 +68,7 @@ If you hit this limit, you can either:
 The following limits apply:
 
 - GitHub limits each repository to 20 webhooks per event type, such `push` and `pull_request`. For more information refer to the official [GitHub webhooks documentation](https://docs.github.com/en/webhooks/types-of-webhooks).
-- GitLab defaults to 100 webhhooks for each project, 50 for each group, although subgroup webhooks are not counted towards parent group limits. Refer to [GitLab settings](https://docs.gitlab.com/user/gitlab_com/#other-limits) for more information.
+- GitLab defaults to 100 webhooks for each project, 50 for each group, although subgroup webhooks are not counted towards parent group limits. Refer to [GitLab settings](https://docs.gitlab.com/user/gitlab_com/#other-limits) for more information.
 - BitBucket limits to 50 webhooks per repository. Refer to [BitBucket webhook documentation](https://support.atlassian.com/bitbucket-cloud/docs/manage-webhooks/#Create-webhooks) for more details.
 
 ### Set a publicly-reachable URL
