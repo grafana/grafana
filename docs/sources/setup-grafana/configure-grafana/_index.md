@@ -2919,6 +2919,16 @@ Two consumers honor this setting:
 
 Set this when `[server] root_url` points at a cluster-internal address (for example, when Grafana runs behind a private ingress) but provisioning needs an externally-reachable host. This is analogous to `[rendering] callback_url`, which serves the same purpose for the image renderer plugin.
 
+#### `webhook_trusted_ip_header`
+
+Name of the header that carries the real client IP, used to key per-client rate limiting on the webhook endpoint. When empty, rate-limiter keys on the real TCP peer address.
+
+Set this only when the endpoint sits behind a proxy that overwrites the header with the resolved client IP, for example `X-Real-Ip`.
+
+#### `webhook_rate_limit_rps`
+
+Sustained requests per second that the webhook endpoint allows per client before it returns `429 Too Many Requests`. The instantaneous burst allowance is twice this value. Default is `0`, which disables rate limiting.
+
 <hr>
 
 ### `[plugin.plugin_id]`

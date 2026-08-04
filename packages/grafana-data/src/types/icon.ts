@@ -220,6 +220,7 @@ export const availableIconsIndex = {
   'mobile-android': true,
   monitor: true,
   'multi-step': true,
+  'open-telemetry': true,
   palette: true,
   'panel-add': true,
   paragraph: true,

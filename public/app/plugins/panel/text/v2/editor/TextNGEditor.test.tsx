@@ -6,7 +6,9 @@ import config from 'app/core/config';
 
 import { CodeLanguage, TextMode } from '../../panelcfg.gen';
 
-import { PREVIEW_TEST_ID, TextNGEditor } from './TextNGEditor';
+import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNGEditor';
+import { FOOTER_TEST_ID } from './TextNGEditorFooter';
+import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
@@ -34,9 +36,9 @@ jest.mock('@grafana/ui/unstable', () => ({
 
 function ControlledEditor({
   initialValue,
-  mode,
-  showLineNumbers = false,
-  codeLanguage,
+  mode: initialMode,
+  showLineNumbers: initialShowLineNumbers = false,
+  codeLanguage: initialLanguage,
   replaceVariables = (value: string) => value,
   onChange,
 }: {
@@ -45,9 +47,12 @@ function ControlledEditor({
   showLineNumbers?: boolean;
   codeLanguage?: CodeLanguage;
   replaceVariables?: (value: string) => string;
-  onChange: (value: string) => void;
+  onChange: (change: TextNGEditorChange) => void;
 }) {
   const [value, setValue] = useState(initialValue);
+  const [mode, setMode] = useState(initialMode);
+  const [codeLanguage, setCodeLanguage] = useState(initialLanguage);
+  const [showLineNumbers, setShowLineNumbers] = useState(initialShowLineNumbers);
   return (
     <TextNGEditor
       content={value}
@@ -55,9 +60,18 @@ function ControlledEditor({
       showLineNumbers={showLineNumbers}
       codeLanguage={codeLanguage}
       replaceVariables={replaceVariables}
-      onChange={(next) => {
-        setValue(next);
-        onChange(next);
+      onChange={(change) => {
+        setValue(change.content);
+        if (change.mode !== undefined) {
+          setMode(change.mode);
+        }
+        if (change.codeLanguage !== undefined) {
+          setCodeLanguage(change.codeLanguage);
+        }
+        if (change.showLineNumbers !== undefined) {
+          setShowLineNumbers(change.showLineNumbers);
+        }
+        onChange(change);
       }}
     />
   );
@@ -85,6 +99,19 @@ const setup = (
 };
 
 const enterWriteMode = () => userEvent.click(screen.getByRole('radio', { name: 'Write' }));
+
+const openModeMenu = () => userEvent.click(screen.getByRole('button', { name: /^Text mode/ }));
+
+const selectMode = async (name: string) => {
+  await openModeMenu();
+  await userEvent.click(await screen.findByRole('menuitemradio', { name }));
+};
+
+const selectLanguage = async (name: string) => {
+  await openModeMenu();
+  await userEvent.hover(screen.getByRole('menuitem', { name: 'Code' }));
+  await userEvent.click(await screen.findByRole('menuitemradio', { name }));
+};
 
 describe('TextNGEditor', () => {
   describe('default (view-first) state', () => {
@@ -176,14 +203,6 @@ describe('TextNGEditor', () => {
       expect(screen.getByRole('textbox')).toHaveValue('# Data center = $datacenter');
     });
 
-    it('does not render a formatting toolbar', async () => {
-      setup('hello', TextMode.Markdown);
-      await enterWriteMode();
-
-      expect(screen.queryByRole('button', { name: 'Insert variable' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Bold' })).not.toBeInTheDocument();
-    });
-
     it('forwards editor changes via a debounced onChange', async () => {
       const { onChange } = setup('initial', TextMode.Markdown);
       await enterWriteMode();
@@ -193,7 +212,7 @@ describe('TextNGEditor', () => {
       await userEvent.type(editor, 'updated');
 
       // The commit is debounced so the dashboard is not re-rendered per keystroke.
-      await waitFor(() => expect(onChange).toHaveBeenLastCalledWith('updated'));
+      await waitFor(() => expect(onChange).toHaveBeenLastCalledWith({ content: 'updated' }));
     });
 
     it('commits a pending draft when the editor loses focus', async () => {
@@ -208,7 +227,7 @@ describe('TextNGEditor', () => {
       // synchronously instead of waiting out the commit debounce.
       await userEvent.tab();
 
-      expect(onChange).toHaveBeenLastCalledWith('updated');
+      expect(onChange).toHaveBeenLastCalledWith({ content: 'updated' });
     });
 
     it('commits the latest draft when the last change and the blur happen in the same event turn', async () => {
@@ -222,7 +241,7 @@ describe('TextNGEditor', () => {
         fireEvent.blur(editor);
       });
 
-      expect(onChange).toHaveBeenCalledWith('updated');
+      expect(onChange).toHaveBeenCalledWith({ content: 'updated' });
     });
 
     it('does not commit a pending draft on unmount, so Discard is not overwritten', async () => {
@@ -239,7 +258,7 @@ describe('TextNGEditor', () => {
       unmount();
 
       // A flush here could overwrite a Discard.
-      expect(onChange).not.toHaveBeenCalledWith('updated');
+      expect(onChange).not.toHaveBeenCalledWith({ content: 'updated' });
     });
 
     it('interpolates with the json format when code language is json, regardless of mode', () => {
@@ -249,6 +268,185 @@ describe('TextNGEditor', () => {
       // Matches the panel render path, which keys the interpolation format off
       // code.language alone.
       expect(replaceVariables).toHaveBeenCalledWith('# Hello', {}, 'json');
+    });
+  });
+
+  describe('content that renders to nothing', () => {
+    // Deleting everything and pressing enter in Split view: markdown renders a
+    // lone newline to '', which the space fallback keeps DangerouslySetHtmlContent
+    // from throwing on.
+    it.each(['\n', '\n\n', '   \n  ', '<!-- just a comment -->'])(
+      'renders the empty space fallback in the preview for %j',
+      async (content) => {
+        setup('# Hello', TextMode.Markdown);
+        await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+
+        // fireEvent, because userEvent.type() does not reproduce a value that is
+        // only whitespace. A throw here fails the test.
+        fireEvent.change(screen.getByRole('textbox'), { target: { value: content } });
+
+        // Debounced preview settles from the '# Hello' <h1> to the space fallback.
+        await waitFor(() => expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML.trim()).toBe(''));
+      }
+    );
+  });
+
+  describe('preview updates', () => {
+    it('re-renders the preview once typing settles', async () => {
+      setup('# Hello', TextMode.Markdown);
+      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: '## Updated' } });
+
+      // Still the old preview: the update is debounced.
+      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h1');
+      await waitFor(() => expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h2'));
+    });
+
+    it('shows the current draft immediately when switching view, without waiting for the debounce', async () => {
+      setup('# Hello', TextMode.Markdown);
+      await enterWriteMode();
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: '## Updated' } });
+      await userEvent.click(screen.getByRole('radio', { name: 'Preview' }));
+
+      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h2');
+    });
+
+    it('shows externally replaced content immediately, e.g. after a discard', async () => {
+      const { rerender } = render(
+        <TextNGEditor
+          content="# Hello"
+          mode={TextMode.Markdown}
+          showLineNumbers={false}
+          replaceVariables={(value: string) => value}
+          onChange={jest.fn()}
+        />
+      );
+
+      rerender(
+        <TextNGEditor
+          content="## Reverted"
+          mode={TextMode.Markdown}
+          showLineNumbers={false}
+          replaceVariables={(value: string) => value}
+          onChange={jest.fn()}
+        />
+      );
+
+      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML).toContain('<h2');
+    });
+  });
+
+  describe('formatting toolbar', () => {
+    it('renders alongside the editor in Write view', async () => {
+      setup('hello', TextMode.Markdown);
+      await enterWriteMode();
+
+      expect(screen.getByTestId(FORMAT_TOOLBAR_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('renders in Split view', async () => {
+      setup('hello', TextMode.Markdown);
+
+      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+
+      expect(screen.getByTestId(FORMAT_TOOLBAR_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('is hidden in Preview view, where there is nothing to format', () => {
+      setup('hello', TextMode.Markdown);
+
+      expect(screen.queryByTestId(FORMAT_TOOLBAR_TEST_ID)).not.toBeInTheDocument();
+    });
+
+    it('is not rendered in Code mode', async () => {
+      setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+      await enterWriteMode();
+
+      expect(screen.queryByTestId(FORMAT_TOOLBAR_TEST_ID)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('mode picker', () => {
+    it('shows the current mode in the toolbar, in every view', async () => {
+      setup('<p>Hello</p>', TextMode.HTML);
+
+      expect(screen.getByRole('button', { name: 'Text mode: HTML' })).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('radio', { name: 'Split' }));
+      expect(screen.getByRole('button', { name: 'Text mode: HTML' })).toBeInTheDocument();
+
+      await enterWriteMode();
+      expect(screen.getByRole('button', { name: 'Text mode: HTML' })).toBeInTheDocument();
+    });
+
+    it('shows the language alongside the mode in Code mode', () => {
+      setup('{}', TextMode.Code, jest.fn(), false, CodeLanguage.Json);
+
+      expect(screen.getByRole('button', { name: 'Text mode: Code · JSON' })).toBeInTheDocument();
+    });
+
+    it('changes the mode and re-renders the preview with it', async () => {
+      const { onChange } = setup('# Hello', TextMode.Markdown);
+
+      await selectMode('HTML');
+
+      expect(onChange).toHaveBeenCalledWith({ mode: TextMode.HTML, content: '# Hello' });
+      // HTML mode does not turn '#' into a heading, it renders the text as-is.
+      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML.trim()).toBe('# Hello');
+    });
+
+    it('carries a pending draft with the mode change, so typing is not lost', async () => {
+      const { onChange } = setup('initial', TextMode.Markdown);
+      await enterWriteMode();
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'draft' } });
+      await selectMode('HTML');
+
+      expect(onChange).toHaveBeenLastCalledWith({ mode: TextMode.HTML, content: 'draft' });
+      expect(screen.getByRole('textbox')).toHaveValue('draft');
+    });
+  });
+
+  describe('language submenu', () => {
+    it('only hangs off the Code option', async () => {
+      setup('# Hello', TextMode.Markdown);
+
+      await openModeMenu();
+
+      expect(screen.getByRole('menuitem', { name: 'Code' })).toHaveAttribute('aria-haspopup', 'menu');
+      expect(screen.getByRole('menuitemradio', { name: 'Markdown' })).not.toHaveAttribute('aria-haspopup');
+    });
+
+    it('falls back to the default language when none is set', () => {
+      setup('hello', TextMode.Code);
+
+      expect(screen.getByRole('button', { name: 'Text mode: Code · Plain text' })).toBeInTheDocument();
+    });
+
+    it('switches to Code mode and the picked language in one change', async () => {
+      const { onChange } = setup('# Hello', TextMode.Markdown);
+
+      await selectLanguage('SQL');
+
+      // A second, mode-only change from the parent item would drop the language.
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange).toHaveBeenCalledWith({
+        mode: TextMode.Code,
+        codeLanguage: CodeLanguage.Sql,
+        content: '# Hello',
+      });
+      expect(screen.getByRole('button', { name: 'Text mode: Code · SQL' })).toBeInTheDocument();
+    });
+
+    it('changes the language while already in Code mode', async () => {
+      const { onChange } = setup('{}', TextMode.Code, jest.fn(), false, CodeLanguage.Plaintext);
+
+      await selectLanguage('JSON');
+
+      expect(onChange).toHaveBeenCalledWith({ mode: TextMode.Code, codeLanguage: CodeLanguage.Json, content: '{}' });
+      expect(screen.getByRole('button', { name: 'Text mode: Code · JSON' })).toBeInTheDocument();
     });
   });
 
@@ -279,6 +477,47 @@ describe('TextNGEditor', () => {
       await enterWriteMode();
 
       expect(screen.getByRole('textbox')).toHaveAttribute('data-line-numbers', 'false');
+    });
+  });
+
+  describe('footer', () => {
+    const lineNumbersToggle = () => screen.getByRole('switch', { name: 'Line numbers' });
+
+    it('only shows the footer in Code mode', async () => {
+      setup('# Hello', TextMode.Markdown);
+
+      expect(screen.queryByTestId(FOOTER_TEST_ID)).not.toBeInTheDocument();
+
+      await selectLanguage('JSON');
+      expect(screen.getByTestId(FOOTER_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('keeps the footer in Preview view, where the editor is hidden', () => {
+      setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+
+      expect(screen.getByRole('radio', { name: 'Preview' })).toBeChecked();
+      expect(screen.getByTestId(FOOTER_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('turns line numbers on and applies them to the editor', async () => {
+      const { onChange } = setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+      await enterWriteMode();
+
+      await userEvent.click(lineNumbersToggle());
+
+      expect(onChange).toHaveBeenLastCalledWith({ showLineNumbers: true, content: 'const a = 1;' });
+      expect(screen.getByRole('textbox')).toHaveAttribute('data-line-numbers', 'true');
+    });
+
+    it('sends the pending draft with the line numbers change, so typing is not lost', async () => {
+      const { onChange } = setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+      await enterWriteMode();
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'const b = 2;' } });
+      await userEvent.click(lineNumbersToggle());
+
+      expect(onChange).toHaveBeenLastCalledWith({ showLineNumbers: true, content: 'const b = 2;' });
+      expect(screen.getByRole('textbox')).toHaveValue('const b = 2;');
     });
   });
 });
