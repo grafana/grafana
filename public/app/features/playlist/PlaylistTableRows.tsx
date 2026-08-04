@@ -6,7 +6,7 @@ import { type ReactNode, useId, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Icon, IconButton, Input, Spinner, Text, useStyles2, type IconName } from '@grafana/ui';
+import { Field, Icon, IconButton, Input, Spinner, Text, Tooltip, useStyles2, type IconName } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
 import { type PlaylistItemUI } from './types';
@@ -166,20 +166,19 @@ function PlaylistTableRow({
                 </Text>
               </span>
             )}
-            <Button
-              icon="sliders-v-alt"
-              size="sm"
-              variant="secondary"
-              fill="outline"
-              aria-expanded={optionsOpen}
-              aria-controls={optionsId}
-              aria-label={t('playlist.playlist-table-rows.aria-label-item-options', 'Options for {{itemValue}}', {
-                itemValue: item.value,
-              })}
-              onClick={() => setOptionsOpen((open) => !open)}
-            >
-              <Trans i18nKey="playlist.playlist-table-rows.options">Options</Trans>
-            </Button>
+            <Tooltip content={t('playlist.playlist-table-rows.settings', 'Settings')}>
+              <IconButton
+                name="cog"
+                size="md"
+                variant={optionsOpen ? 'primary' : 'secondary'}
+                aria-expanded={optionsOpen}
+                aria-controls={optionsId}
+                aria-label={t('playlist.playlist-table-rows.aria-label-item-settings', 'Settings for {{itemValue}}', {
+                  itemValue: item.value,
+                })}
+                onClick={() => setOptionsOpen((open) => !open)}
+              />
+            </Tooltip>
             <IconButton
               name="times"
               size="md"

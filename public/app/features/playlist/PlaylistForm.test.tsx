@@ -97,7 +97,7 @@ function rows() {
 }
 
 async function openItemOptions(itemValue: string) {
-  const button = screen.getByRole('button', { name: `Options for ${itemValue}` });
+  const button = screen.getByRole('button', { name: `Settings for ${itemValue}` });
   if (button.getAttribute('aria-expanded') === 'false') {
     await userEvent.click(button);
   }
@@ -213,7 +213,7 @@ describe('PlaylistForm', () => {
       expect(screen.getByRole('textbox', { name: 'Interval' })).toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: /interval for uid_1/i })).not.toBeInTheDocument();
 
-      const optionsButton = screen.getByRole('button', { name: 'Options for uid_1' });
+      const optionsButton = screen.getByRole('button', { name: 'Settings for uid_1' });
       optionsButton.focus();
       await userEvent.keyboard('{Enter}');
 
@@ -229,7 +229,7 @@ describe('PlaylistForm', () => {
       expect(screen.getByRole('textbox', { name: 'Interval' })).toHaveValue('10m');
       // uid_1's override is visible as a compact summary until its options are opened.
       expect(within(rows()[0]).getByText('30s')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Options for uid_1' })).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.getByRole('button', { name: 'Settings for uid_1' })).toHaveAttribute('aria-expanded', 'false');
       await openItemOptions('uid_1');
       expect(screen.getByRole('textbox', { name: /interval for uid_1/i })).toHaveValue('30s');
 
