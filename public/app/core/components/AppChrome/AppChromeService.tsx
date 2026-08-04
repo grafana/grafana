@@ -172,12 +172,13 @@ export class AppChromeService {
     });
   };
 
-  public setFullscreenWorkspace = (
-    { fullscreenWorkspace, pushHistoryEntry = true }: { fullscreenWorkspace: boolean; pushHistoryEntry?: boolean } = {
-      fullscreenWorkspace: false,
-      pushHistoryEntry: true,
-    }
-  ) => {
+  public setFullscreenWorkspace = ({
+    fullscreenWorkspace,
+    pushHistoryEntry = true,
+  }: {
+    fullscreenWorkspace: boolean;
+    pushHistoryEntry?: boolean;
+  }) => {
     if (Boolean(this.state.getValue().fullscreenWorkspace) === fullscreenWorkspace) {
       return;
     }

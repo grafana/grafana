@@ -129,21 +129,36 @@ describe('FullscreenWorkspaceShell', () => {
     expect(screen.getByTestId('top-bar-actions')).toContainElement(profile);
   });
 
-  it('leaves workspace mode when a profile menu link is followed', async () => {
-    mockPluginWorkspaceWithTopBarSlot();
-    // The link is a real anchor; jsdom can't navigate and logs an error when it tries.
+  describe('leaving the workspace for a portaled link', () => {
+    // These menu items are real anchors; jsdom can't navigate and logs an error when it tries.
     const swallowNavigation = (event: MouseEvent) => event.preventDefault();
-    document.addEventListener('click', swallowNavigation);
+    beforeEach(() => document.addEventListener('click', swallowNavigation));
+    afterEach(() => document.removeEventListener('click', swallowNavigation));
 
-    const { chrome } = renderShell(jest.fn(), storeWithProfileNav());
-    act(() => chrome.setFullscreenWorkspace({ fullscreenWorkspace: true }));
+    it('exits when a profile menu link is followed', async () => {
+      mockPluginWorkspaceWithTopBarSlot();
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Profile' }));
-    await userEvent.click(await screen.findByRole('menuitem', { name: 'Profile settings' }));
+      const { chrome } = renderShell(jest.fn(), storeWithProfileNav());
+      act(() => chrome.setFullscreenWorkspace({ fullscreenWorkspace: true }));
 
-    // Otherwise the destination would open inside the workspace's Platform tab.
-    expect(chrome.state.getValue().fullscreenWorkspace).toBe(false);
-    document.removeEventListener('click', swallowNavigation);
+      await userEvent.click(await screen.findByRole('button', { name: 'Profile' }));
+      await userEvent.click(await screen.findByRole('menuitem', { name: 'Profile settings' }));
+
+      // Otherwise the destination would open inside the workspace's Platform tab.
+      expect(chrome.state.getValue().fullscreenWorkspace).toBe(false);
+    });
+
+    it('stays in the workspace for items that open a drawer in place', async () => {
+      mockPluginWorkspaceWithTopBarSlot();
+
+      const { chrome } = renderShell(jest.fn(), storeWithProfileNav());
+      act(() => chrome.setFullscreenWorkspace({ fullscreenWorkspace: true }));
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Profile' }));
+      await userEvent.click(await screen.findByRole('menuitem', { name: /change theme/i }));
+
+      expect(chrome.state.getValue().fullscreenWorkspace).toBe(true);
+    });
   });
 
   it('claims no top bar slot when there is no profile nav node, so no divider is drawn', () => {

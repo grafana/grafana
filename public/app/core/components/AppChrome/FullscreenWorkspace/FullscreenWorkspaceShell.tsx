@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type RefCallback, useState } from 'react';
+import { type MouseEvent, type RefCallback, useCallback, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -41,6 +41,44 @@ export function FullscreenWorkspaceShell({ workspaceHostRef }: Props) {
   const [topBarActions, setTopBarActions] = useState<HTMLElement | null>(null);
   const profileNode = useSelector((state) => state.navIndex['profile']);
 
+  const exitWorkspace = useCallback(() => chrome.setFullscreenWorkspace({ fullscreenWorkspace: false }), [chrome]);
+
+  // Everything portaled below targets normal Grafana pages, so a link click has to leave workspace
+  // mode first or the destination opens inside the Platform tab. React events bubble along the React
+  // tree through portals, so one capture handler here covers the whole portaled subtree — including
+  // grafana-ui's own Dropdown portal — without shared chrome components knowing about the overlay.
+  // Non-link items (theme, kiosk, news) are buttons that open drawers in place, so they don't match.
+  const exitWorkspaceOnLinkClick = useCallback(
+    (event: MouseEvent<HTMLElement>) => {
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+      const link = target.closest('a[href]');
+      if (link && link.getAttribute('target') !== '_blank') {
+        exitWorkspace();
+      }
+    },
+    [exitWorkspace]
+  );
+
+  // Memoized so the slot ref firing during mount — a `setState` on this component — doesn't re-render
+  // the whole plugin workspace subtree it just mounted. `writableProxy` clones the props on every
+  // wrapper render, so no downstream memo can absorb that.
+  const workspace = useMemo(
+    () =>
+      PluginWorkspace ? (
+        <PluginWorkspace
+          workspaceHostRef={workspaceHostRef}
+          onExitFullscreenWorkspace={exitWorkspace}
+          // Only claim the slot when there's something to put in it, so the plugin doesn't draw its
+          // leading divider against an empty slot.
+          topBarActionsRef={profileNode ? setTopBarActions : undefined}
+        />
+      ) : null,
+    [PluginWorkspace, workspaceHostRef, exitWorkspace, profileNode]
+  );
+
   if (isLoading) {
     return (
       <div className={styles.root}>
@@ -48,8 +86,6 @@ export function FullscreenWorkspaceShell({ workspaceHostRef }: Props) {
       </div>
     );
   }
-
-  const exitWorkspace = () => chrome.setFullscreenWorkspace({ fullscreenWorkspace: false });
 
   // No component once loading has finished means the plugin isn't available (not installed,
   // disabled, or failed to load). Show a minimal error rather than a blank page.
@@ -71,23 +107,14 @@ export function FullscreenWorkspaceShell({ workspaceHostRef }: Props) {
             <WorkspaceError onExit={exitWorkspace} />
           ) : (
             <>
-              <PluginWorkspace
-                workspaceHostRef={workspaceHostRef}
-                onExitFullscreenWorkspace={exitWorkspace}
-                // Only claim the slot when there's something to put in it, so the plugin doesn't
-                // draw its leading divider against an empty slot.
-                topBarActionsRef={profileNode ? setTopBarActions : undefined}
-              />
+              {workspace}
               {topBarActions &&
                 profileNode &&
                 createPortal(
-                  <ProfileButton
-                    profileNode={profileNode}
-                    onToggleKioskMode={chrome.onToggleKioskMode}
-                    // Its links point at normal Grafana pages, so leave workspace mode before
-                    // navigating — otherwise the destination opens inside the Platform tab.
-                    onNavigate={exitWorkspace}
-                  />,
+                  // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
+                  <div onClickCapture={exitWorkspaceOnLinkClick}>
+                    <ProfileButton profileNode={profileNode} onToggleKioskMode={chrome.onToggleKioskMode} />
+                  </div>,
                   topBarActions
                 )}
             </>

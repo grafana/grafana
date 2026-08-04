@@ -58,55 +58,6 @@ describe('ProfileButton', () => {
     expect(Array.from(menu.children)).toHaveLength(4);
   });
 
-  describe('onNavigate', () => {
-    // The fullscreen workspace uses this to leave workspace mode before a link navigates, so the
-    // destination opens in normal chrome rather than inside the workspace's Platform tab.
-    const propsWithLink = {
-      ...defaultProps,
-      profileNode: {
-        ...defaultProps.profileNode,
-        children: [{ id: 'profile-settings', text: 'Profile settings', url: '/profile' }],
-      },
-    };
-
-    // These items are real anchors. jsdom can't navigate and logs an error when it tries, so
-    // swallow the default — the click handlers under test still run.
-    const swallowNavigation = (event: MouseEvent) => event.preventDefault();
-    beforeEach(() => document.addEventListener('click', swallowNavigation));
-    afterEach(() => document.removeEventListener('click', swallowNavigation));
-
-    it('is called when a nav link item is activated', async () => {
-      const onNavigate = jest.fn();
-      render(<ProfileButton {...propsWithLink} onNavigate={onNavigate} />);
-
-      await user.click(screen.getByRole('button', { name: /profile/i }));
-      await user.click(await screen.findByRole('menuitem', { name: 'Profile settings' }));
-
-      expect(onNavigate).toHaveBeenCalledTimes(1);
-    });
-
-    it('is called when sign out is activated', async () => {
-      const onNavigate = jest.fn();
-      render(<ProfileButton {...propsWithLink} onNavigate={onNavigate} />);
-
-      await user.click(screen.getByRole('button', { name: /profile/i }));
-      await user.click(await screen.findByRole('menuitem', { name: /sign out/i }));
-
-      expect(onNavigate).toHaveBeenCalledTimes(1);
-    });
-
-    it('is not called by items that open a drawer instead of navigating', async () => {
-      const onNavigate = jest.fn();
-      render(<ProfileButton {...propsWithLink} onNavigate={onNavigate} />);
-
-      await user.click(screen.getByRole('button', { name: /profile/i }));
-      await user.click(await screen.findByRole('menuitem', { name: /latest from the blog/i }));
-
-      expect(await screen.findByRole('dialog')).toBeInTheDocument();
-      expect(onNavigate).not.toHaveBeenCalled();
-    });
-  });
-
   it('should return focus to the profile button when the news feed drawer is closed', async () => {
     render(<ProfileButton {...defaultProps} />);
 
