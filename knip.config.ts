@@ -52,6 +52,12 @@ const config: KnipConfig = {
         // used via `yarn <bin>` in scripts/validate-npm-packages.sh — knip doesn't detect yarn-invoked binaries
         '@arethetypeswrong/cli',
         'publint',
+
+        // not imported directly, but the pin keeps react-router@5 hoisted to the top level so
+        // @types/react-router-dom resolves v5 types (otherwise react-router@6 from
+        // react-router-dom-v5-compat wins the hoist). Remove both when core swaps to react-router 6.
+        'react-router',
+        '@types/react-router',
       ],
       project: [
         'public/app/**',
