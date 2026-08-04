@@ -635,6 +635,7 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(0.5),
     }),
     optionSummary: css({
+      marginRight: theme.spacing(0.5),
       whiteSpace: 'nowrap',
     }),
     iconAction: css({
@@ -710,6 +711,7 @@ function getStyles(theme: GrafanaTheme2) {
       cursor: 'help',
       display: 'inline-flex',
       gap: theme.spacing(0.5),
+      transform: 'translateY(1px)',
     }),
     configuredStatusText: css({
       borderBottom: `1px dotted ${theme.colors.text.secondary}`,
