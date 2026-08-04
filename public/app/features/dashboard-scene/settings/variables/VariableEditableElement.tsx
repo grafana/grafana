@@ -39,7 +39,6 @@ import {
 import { dashboardEditActions } from '../../sidebar/shared';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
-import { DashboardInteractions } from '../../utils/interactions';
 
 import { openChangeVariableTypePane } from './VariableTypeSelectionPane';
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
@@ -180,8 +179,6 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
     if (!(set instanceof SceneVariableSet)) {
       return;
     }
-
-    DashboardInteractions.variableActionButtonClicked('delete', { type: this.variable.state.type });
 
     dashboardEditActions.removeVariable({
       source: set,

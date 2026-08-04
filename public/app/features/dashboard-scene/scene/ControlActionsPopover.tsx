@@ -149,7 +149,7 @@ export function VariableEditActions({
           <Menu.Item
             label={
               variable instanceof CustomVariable
-                ? t('dashboard-scene.variable-edit-actions.edit-custom-options', 'Edit options')
+                ? t('dashboard-scene.variable-edit-actions.edit-custom-values', 'Edit values')
                 : t('dashboard-scene.variable-edit-actions.edit-query', 'Edit query')
             }
             icon="pen"

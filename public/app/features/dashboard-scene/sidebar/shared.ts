@@ -265,6 +265,8 @@ export const dashboardEditActions = {
   removeVariable({ source, removedObject }: RemoveVariableActionHelperProps) {
     const varsBeforeRemoval = [...source.state.variables];
 
+    DashboardInteractions.variableActionButtonClicked('delete', { type: removedObject.state.type });
+
     dashboardEditActions.removeElement({
       source,
       removedObject,
