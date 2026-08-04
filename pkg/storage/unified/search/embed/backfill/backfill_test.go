@@ -3,15 +3,22 @@ package backfill
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
+	"github.com/aws/smithy-go"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/lib/pq"
+	"github.com/openai/openai-go/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -565,4 +572,120 @@ func TestRunBackfillJob_PendingDeleteLabel_RunsBeforeStatsLookup(t *testing.T) {
 
 	assert.Empty(t, vec.upserts)
 	assert.Equal(t, 0, stats.calls, "pending-delete skip must come before stats lookup")
+}
+
+// azureAPIError builds an openai.Error with Request/Response populated —
+// its Error() method dereferences both, as the SDK always sets them.
+func azureAPIError(status int) *openai.Error {
+	req, _ := http.NewRequest(http.MethodPost, "https://example.test/embeddings", nil)
+	return &openai.Error{
+		StatusCode: status,
+		Request:    req,
+		Response:   &http.Response{StatusCode: status},
+	}
+}
+
+func TestIsPermanentItemError(t *testing.T) {
+	cases := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{"pq data exception", &pq.Error{Code: "22021"}, true},
+		{"wrapped pq data exception", fmt.Errorf("upsert: %w", &pq.Error{Code: "22021"}), true},
+		{"pq constraint violation", &pq.Error{Code: "23505"}, true},
+		{"pq connection failure", &pq.Error{Code: "08006"}, false},
+		{"pq insufficient resources", &pq.Error{Code: "53100"}, false},
+		{"grpc invalid argument", grpcstatus.Error(grpccodes.InvalidArgument, "bad input"), true},
+		{"grpc out of range", grpcstatus.Error(grpccodes.OutOfRange, "too long"), true},
+		{"grpc resource exhausted", grpcstatus.Error(grpccodes.ResourceExhausted, "quota"), false},
+		{"bedrock validation", &smithy.GenericAPIError{Code: "ValidationException", Message: "bad input"}, true},
+		{"wrapped bedrock validation", fmt.Errorf("bedrock: invoke: %w", &smithy.GenericAPIError{Code: "ValidationException"}), true},
+		{"bedrock throttling", &smithy.GenericAPIError{Code: "ThrottlingException"}, false},
+		{"azure bad request", azureAPIError(http.StatusBadRequest), true},
+		{"azure payload too large", azureAPIError(http.StatusRequestEntityTooLarge), true},
+		{"azure rate limited", azureAPIError(http.StatusTooManyRequests), false},
+		{"wrapped grpc invalid argument", fmt.Errorf("embed batch: %w", grpcstatus.Error(grpccodes.InvalidArgument, "bad input")), true},
+		{"grpc unavailable", grpcstatus.Error(grpccodes.Unavailable, "down"), false},
+		{"plain error", errors.New("connection refused"), false},
+		{"context canceled", context.Canceled, false},
+		{"context deadline", context.DeadlineExceeded, false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, isPermanentItemError(tc.err))
+		})
+	}
+}
+
+func TestRunBackfillJob_CorruptResource_SkippedNotFatal(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{
+		// Truncated JSON: extract fails deterministically.
+		{Namespace: "ns", Name: "poison", RV: 50, Value: []byte(`{"uid":"poison","panels":[`)},
+		makeListItem("ns", "good", 60),
+	}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.upserts, 1, "corrupt item skipped, good item embedded")
+	assert.Equal(t, "good", vec.upserts[0][0].UID)
+	assert.Empty(t, vec.errorMarks, "permanent errors must not fail the job")
+	assert.Equal(t, []int64{1}, vec.completedJobIDs)
+}
+
+func TestRunBackfillJob_PermanentUpsertError_SkipsItem(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
+
+	vec := newFakeVector()
+	vec.upsertErr = &pq.Error{Code: "22021"}
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	assert.Empty(t, vec.errorMarks)
+	assert.Equal(t, []int64{1}, vec.completedJobIDs)
+}
+
+func TestRunBackfillJob_RetryableUpsertError_FailsJob(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
+
+	vec := newFakeVector()
+	vec.upsertErr = errors.New("connection refused")
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	o := newBackfiller(t, storage, vec)
+	o.runBackfill(context.Background())
+
+	require.Len(t, vec.errorMarks, 1, "retryable errors keep failing the job for the next tick")
+	assert.Empty(t, vec.completedJobIDs)
+}
+
+func TestRunBackfillJob_PermanentEmbedError_SkipsItem(t *testing.T) {
+	storage := newFakeStorage()
+	storage.listItems = []listItem{makeListItem("ns", "dash-a", 50)}
+
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
+
+	emb := newFakeEmbedder(&fakeText{dim: 4, err: grpcstatus.Error(grpccodes.InvalidArgument, "input rejected")})
+	b, err := NewVectorBackfiller(Options{
+		Storage:       storage,
+		VectorBackend: vec,
+		BatchEmbedder: embedder.NewBatchEmbedder(*emb),
+		Builders:      []embed.Builder{dashboard.New()},
+	})
+	require.NoError(t, err)
+	b.runBackfill(context.Background())
+
+	assert.Empty(t, vec.upserts)
+	assert.Empty(t, vec.errorMarks)
+	assert.Equal(t, []int64{1}, vec.completedJobIDs)
 }

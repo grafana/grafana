@@ -2,9 +2,20 @@ package backfill
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"sort"
 	"time"
+
+	"github.com/aws/smithy-go"
+	"github.com/lib/pq"
+	"github.com/openai/openai-go/v3"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -14,9 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search/embed/backfill")
@@ -297,6 +305,56 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 	return nextToken, nil
 }
 
+// isPermanentItemError reports whether an item-level failure is a
+// deterministic function of the item's content rather than a transient
+// infra fault. Unknown errors default to retryable so outages keep the
+// job's fail-and-retry semantics instead of silently dropping items.
+func isPermanentItemError(err error) bool {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) {
+		// SQLSTATE class 22 (data exception, e.g. NUL byte in text) and
+		// class 23 (constraint violation) are decided by the row itself;
+		// all other classes stay retryable.
+		class := pqErr.Code.Class()
+		return class == "22" || class == "23"
+	}
+	var apiErr smithy.APIError
+	if errors.As(err, &apiErr) {
+		// Bedrock (aws-sdk-go-v2): ValidationException means the model
+		// rejected the request contents. Throttling, model timeouts, and
+		// 5xx arrive as other exception types and stay retryable.
+		return apiErr.ErrorCode() == "ValidationException"
+	}
+	var oaiErr *openai.Error
+	if errors.As(err, &oaiErr) {
+		// Azure (openai-go): 400/413/422 from the embeddings endpoint
+		// means the input was rejected (malformed, too large). 429 and
+		// 5xx stay retryable.
+		return oaiErr.StatusCode == http.StatusBadRequest ||
+			oaiErr.StatusCode == http.StatusRequestEntityTooLarge ||
+			oaiErr.StatusCode == http.StatusUnprocessableEntity
+	}
+	if s, ok := grpcstatus.FromError(err); ok {
+		// Vertex (cloud.google.com/go/aiplatform) speaks gRPC and
+		// rejects an item's content with InvalidArgument or OutOfRange —
+		// e.g. text over the model's token limit or input the model
+		// refuses to process. Quota and availability failures surface as
+		// ResourceExhausted or Unavailable and stay retryable.
+		return s.Code() == grpccodes.InvalidArgument || s.Code() == grpccodes.OutOfRange
+	}
+	return false
+}
+
+// skipPermanentItem logs an item whose failure no retry can fix; callers
+// skip the item so one poison resource cannot wedge the job forever.
+func (b *VectorBackfiller) skipPermanentItem(stage, namespace, group, res, name string, err error) {
+	b.log.Error("backfill: permanent error; skipping item",
+		"stage", stage, "namespace", namespace, "group", group, "resource", res, "name", name, "err", err)
+}
+
 // processBackfillItem runs the per-resource pipeline: skip if RV>stopping_rv
 // or already embedded, else extract → embed → upsert.
 func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.BackfillJob, builder embed.Builder, iter resource.ListIterator) (retErr error) {
@@ -368,7 +426,11 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 
 	items, err := builder.Extract(ctx, key, iter.Value())
 	if err != nil {
-		return fmt.Errorf("extract %s/%s: %w", namespace, name, err)
+		// Extract is a pure function of the stored bytes, so any failure
+		// (e.g. corrupt dashboard JSON) is permanent by definition.
+		b.skipPermanentItem("extract", namespace, group, res, name, err)
+		statusLabel = "skipped_permanent_error"
+		return nil
 	}
 	if resCap := builder.MaxItemsPerResource(); resCap > 0 && len(items) > resCap {
 		items = items[:resCap]
@@ -382,10 +444,20 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 
 	vectors, err := b.batchEmbedder.Embed(ctx, namespace, res, rv, items)
 	if err != nil {
+		if isPermanentItemError(err) {
+			b.skipPermanentItem("embed", namespace, group, res, name, err)
+			statusLabel = "skipped_permanent_error"
+			return nil
+		}
 		return fmt.Errorf("embed %s/%s: %w", namespace, name, err)
 	}
 
 	if err := b.vectorBackend.Upsert(ctx, vectors); err != nil {
+		if isPermanentItemError(err) {
+			b.skipPermanentItem("upsert", namespace, group, res, name, err)
+			statusLabel = "skipped_permanent_error"
+			return nil
+		}
 		return fmt.Errorf("upsert %s/%s: %w", namespace, name, err)
 	}
 	return nil
