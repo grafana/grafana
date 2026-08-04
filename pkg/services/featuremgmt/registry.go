@@ -462,15 +462,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:            "kubernetesQueryCaching",
-			Description:     "Adds support for Kubernetes querycaching",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaOperatorExperienceSquad,
-			RequiresRestart: true,
-			Expression:      "false",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "datasources.queryTypes",
 			Description:     "Load Query types from spec.{version}.query.{yaml|json}",
 			Stage:           FeatureStageExperimental,
@@ -2710,14 +2701,6 @@ var (
 			Expression:      "false",
 			RequiresRestart: true,
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "querycaching.redirectToK8SApi",
-			Description: "Redirect caching service cache config reads from legacy storage to K8s API",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaOperatorExperienceSquad,
-			Expression:  "false",
-			Generate:    Generate{Go: true},
 		},
 		{
 			Name:        "querycaching.enableConnectionsClient",
