@@ -54,7 +54,12 @@ export function openEditLinkPane(dashboard: DashboardSceneLike, linkIndex: numbe
 }
 
 export function duplicateLink(dashboard: DashboardSceneLike, linkIndex: number) {
-  new LinkEditEditableElement(createLinkEdit(dashboard, linkIndex)).onDuplicate();
+  const links = dashboard.state.links ?? [];
+  const link = { ...links[linkIndex] };
+  link.title = `${link.title} - Copy`;
+
+  linkEditActions.addLink({ dashboard, link, addedObject: createLinkEdit(dashboard, linkIndex) });
+  openEditLinkPane(dashboard, links.length);
 }
 
 export interface LinkEditState extends SceneObjectState {
@@ -214,15 +219,7 @@ export class LinkEditEditableElement implements EditableDashboardElement {
   public useSidebarOptions = useSidebarOptions.bind(this, this.linkEdit);
 
   public onDuplicate() {
-    const dashboard = this.linkEdit.state.dashboardRef.resolve();
-    const { links } = dashboard.state;
-
-    const link = { ...links[this.linkEdit.state.linkIndex] };
-    link.title = `${link.title} - Copy`;
-    const linkEdit = createLinkEdit(dashboard, this.linkEdit.state.linkIndex);
-
-    linkEditActions.addLink({ dashboard, link, addedObject: linkEdit });
-    openEditLinkPane(dashboard, links.length);
+    duplicateLink(this.linkEdit.state.dashboardRef.resolve(), this.linkEdit.state.linkIndex);
   }
 
   public onConfirmDelete(): void {
