@@ -89,7 +89,7 @@ export function useRecentQueriesData({
         storeFilterDefaults('recent', filtersRef.current);
       }
     };
-  }, [ignoreStoredFilters]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ignoreStoredFilters]);
 
   const prevRememberFiltersRef = useRef(false);
   useEffect(() => {
