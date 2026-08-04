@@ -1361,15 +1361,20 @@ const COL_WIDTH_MEASURERS: Partial<Record<TableCellDisplayMode, MeasureColWidth>
   [TableCellDisplayMode.Pill]: measurePillColWidth,
 };
 
-// Per-type multiplier on a column's share of the panel's leftover space (see the grow step below).
-// Numeric and boolean columns hold short, fixed-width values, so they grow at a fraction of a
-// text-like column's rate — enough that they aren't pinned to their content width, but so
-// strings/dates/pills take most of the slack. A shared weight cancels out, so an all-numeric table
-// still fills the panel.
-const COMPACT_GROWTH_WEIGHT = 0.35;
+const DEFAULT_GROWTH_WEIGHT = 1;
+
+// Per-field-type multiplier on a column's share of the panel's leftover space (see the grow step
+// below). Types absent from this map fall back to DEFAULT_GROWTH_WEIGHT. Numeric and boolean
+// columns hold short, fixed-width values, so a smaller weight keeps them comparatively tight while
+// strings/dates/pills take most of the slack (a shared weight cancels out, so an all-numeric table
+// still fills the panel). Broken out per type so each can be tuned individually later.
+const GROWTH_WEIGHTS: Partial<Record<FieldType, number>> = {
+  [FieldType.number]: 0.35,
+  [FieldType.boolean]: 0.35,
+};
 
 function growthWeight(type: FieldType): number {
-  return type === FieldType.number || type === FieldType.boolean ? COMPACT_GROWTH_WEIGHT : 1;
+  return GROWTH_WEIGHTS[type] ?? DEFAULT_GROWTH_WEIGHT;
 }
 
 /**
