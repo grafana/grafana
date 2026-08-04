@@ -9,45 +9,11 @@ on:
 permissions: {}
 
 jobs:
-  # PRs that only change frontend code get a frontend preview deploy (see
-  # deploy-frontend-preview.yml) instead of a full ephemeral instance.
-  check-frontend-preview:
-    name: Check for frontend preview eligibility
-    if: |
-      github.repository_owner == 'grafana' &&
-      github.event_name == 'issue_comment' &&
-      github.event.issue.pull_request &&
-      startsWith(github.event.comment.body, '/deploy-to-hg') &&
-      (github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER')
-    runs-on: ubuntu-arm64-small
-    permissions:
-      contents: read
-      pull-requests: read
-    outputs:
-      should-deploy: ${{ steps.check.outputs.should-deploy }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
-      - name: Check PR is eligible for a frontend preview
-        id: check
-        uses: ./.github/actions/frontend-preview-check
-        with:
-          pr-number: ${{ github.event.issue.number }}
-          token: ${{ github.token }}
-
   handle-ephemeral-instances:
-    needs: check-frontend-preview
-    # !cancelled() lets this run when check-frontend-preview is skipped (the
-    # pull_request closed teardown path); its outputs are then empty, which is
-    # treated as not getting a frontend preview.
     if: |
-      !cancelled() &&
       github.repository_owner == 'grafana' &&
       (
-        (github.event.issue.pull_request && startsWith(github.event.comment.body, '/deploy-to-hg') && (github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER') && needs.check-frontend-preview.outputs.should-deploy != 'true') ||
+        (github.event.issue.pull_request && startsWith(github.event.comment.body, '/deploy-to-hg') && (github.event.comment.author_association == 'MEMBER' || github.event.comment.author_association == 'OWNER')) ||
         github.event.action == 'closed'
       )
     runs-on: ubuntu-arm64-small
