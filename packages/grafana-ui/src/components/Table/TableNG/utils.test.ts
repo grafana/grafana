@@ -2053,7 +2053,7 @@ describe('TableNG utils', () => {
       expect(widths).toEqual([63]);
     });
 
-    it('only samples the first N rows (bounded work) rather than scanning every value', () => {
+    it('samples a bounded number of rows (spread across the field) rather than scanning every value', () => {
       const display = jest.fn((v) => ({ text: String(v), numeric: Number(v) }));
       const fields: Field[] = [
         {
@@ -2067,8 +2067,18 @@ describe('TableNG utils', () => {
 
       compute(fields, 1000);
 
-      // one auto column => sample size clamps to the MAX_SAMPLE of 100.
+      // one auto column => sample size clamps to the MAX_SAMPLE of 100, spread over the 100k rows.
       expect(display).toHaveBeenCalledTimes(100);
+    });
+
+    it('spreads the sample across the field so a sorted column is sized beyond its first rows', () => {
+      // Ascending-style layout: many short values, then one long value in the last row. A
+      // front-biased sample would miss the long tail; the evenly-spaced sample includes the last row.
+      const values = [...new Array(50).fill('x'), 'X'.repeat(30)]; // 51 rows, long value at index 50
+      const fields: Field[] = [{ name: 'c', type: FieldType.string, values, config: {} }];
+      // sampleSize 5 => indices [0, 13, 25, 38, 50]; index 50 (30 chars) drives width: 30*8+13 = 253.
+      const widths = computeContentAwareColWidths(fields, 253, { typographyCtx: makeTypographyCtx(), sampleSize: 5 });
+      expect(widths).toEqual([253]);
     });
 
     describe('pill columns', () => {

@@ -1220,11 +1220,35 @@ export function shouldDebounceWidth(fields: Field[]): boolean {
 
 // Bounds the amount of work content-aware sizing does. We sample at most MAX_SAMPLE rows per
 // column and shrink the per-column sample as the column count grows so a very wide frame doesn't
-// blow up the measurement budget. Sampling the first N rows is sufficient — width is
-// order-independent, so there's no need to scan sorted/filtered rows.
+// blow up the measurement budget. The sample is spread evenly across the whole field (see
+// sampleIndices) rather than taken from the front, so a sorted or clustered column isn't sized from
+// just its first — e.g. smallest — values.
 const TARGET_MEASUREMENTS = 2000;
 const MIN_SAMPLE = 20;
 const MAX_SAMPLE = 100;
+
+/**
+ * Evenly-spaced row indices spanning the whole field, inclusive of the first and last rows. Sizing
+ * from the first N rows biases sorted/clustered columns (an ascending column would be measured from
+ * its shortest values, an alphabetical one from a single letter); spreading the sample across the
+ * field — and always including the last row — captures the extremes wherever the sort puts them.
+ * Deterministic on purpose: true random sampling would make column widths jitter between recomputes.
+ */
+function sampleIndices(totalLen: number, sampleSize: number): number[] {
+  const n = Math.min(sampleSize, totalLen);
+  if (n <= 0) {
+    return [];
+  }
+  if (n === 1) {
+    return [0];
+  }
+  const step = (totalLen - 1) / (n - 1);
+  const indices = new Array<number>(n);
+  for (let k = 0; k < n; k++) {
+    indices[k] = Math.round(k * step);
+  }
+  return indices;
+}
 
 export interface ContentAwareColWidthsOptions {
   typographyCtx: TypographyCtx;
@@ -1261,9 +1285,8 @@ function formatCellValue(field: Field, value: unknown): string {
  * proportional-font width (e.g. "WWW" vs "iiiiii") for a cheap estimate the global cap bounds.
  */
 function measureLongestContentWidth(field: Field, sampleSize: number, avgCharWidth: number): number {
-  const len = Math.min(sampleSize, field.values.length);
   let maxLen = 0;
-  for (let i = 0; i < len; i++) {
+  for (const i of sampleIndices(field.values.length, sampleSize)) {
     maxLen = Math.max(maxLen, formatCellValue(field, field.values[i]).length);
   }
   return maxLen * avgCharWidth;
@@ -1280,10 +1303,10 @@ function measureLongestContentWidth(field: Field, sampleSize: number, avgCharWid
  * Item text is estimated from character count (`avgCharWidth`) rather than canvas-measured — the
  * fuzzy sizing used elsewhere. It slightly over-estimates, which errs toward roomier columns: the
  * safe direction for avoiding clipped items. `itemsForRow` returns the display text of each item in
- * a sampled row (empty when the row has none).
+ * a sampled row (empty when the row has none); `indices` are the sampled rows (see sampleIndices).
  */
 function measureInlineRunWidth(
-  rowCount: number,
+  indices: number[],
   itemsForRow: (rowIdx: number) => string[],
   avgCharWidth: number,
   chrome: number,
@@ -1293,7 +1316,7 @@ function measureInlineRunWidth(
   let rowTotalSum = 0;
   let sampledRows = 0;
 
-  for (let i = 0; i < rowCount; i++) {
+  for (const i of indices) {
     const items = itemsForRow(i);
     if (items.length === 0) {
       continue;
@@ -1359,7 +1382,7 @@ const measureImageColWidth: MeasureColWidth = () => COLUMN.IMAGE_WIDTH;
 
 const measurePillColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
   measureInlineRunWidth(
-    Math.min(sampleSize, field.values.length),
+    sampleIndices(field.values.length, sampleSize),
     // PillCell renders formattedValueToString(field.display(pill)); estimate from that same text so
     // value mappings/units are reflected. formatCellValue falls back to String() with no display.
     (i) => inferPills(field.values[i]).map((pill) => formatCellValue(field, pill)),
@@ -1370,7 +1393,7 @@ const measurePillColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx
 
 const measureDataLinksColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
   measureInlineRunWidth(
-    Math.min(sampleSize, field.values.length),
+    sampleIndices(field.values.length, sampleSize),
     // DataLinksCell renders one <a> per link title; getCellLinks resolves the same links per row.
     (i) => getCellLinks(field, i)?.map((link) => link.title ?? '') ?? [],
     typographyCtx.avgCharWidth,
@@ -1384,7 +1407,7 @@ const measureActionsColWidth: MeasureColWidth = (field, sampleSize, { typography
   }
   return (
     measureInlineRunWidth(
-      Math.min(sampleSize, field.values.length),
+      sampleIndices(field.values.length, sampleSize),
       // ActionsCell renders one Button per action, labelled action.title.
       (i) => getActions(field, i).map((action) => action.title),
       typographyCtx.avgCharWidth,
