@@ -52,9 +52,9 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const selectedColumns = query.azureLogAnalytics?.builderQuery?.columns?.columns || [];
 
-  const tableOptions: Array<SelectableValue<string>> = tables.map((t) => {
-    const isBasic = t.plan === TablePlan.Basic;
-    const isAux = t.plan === TablePlan.Auxiliary;
+  const tableOptions: Array<SelectableValue<string>> = tables.map((table) => {
+    const isBasic = table.plan === TablePlan.Basic;
+    const isAux = table.plan === TablePlan.Auxiliary;
     const disabled = (isBasic && !basicLogsEnabled) || (isAux && !auxiliaryLogsEnabled);
     let description = '';
     if (isBasic) {
@@ -79,8 +79,8 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
           );
     }
     return {
-      label: t.name,
-      value: t.name,
+      label: table.name,
+      value: table.name,
       description,
       isDisabled: disabled,
     };

@@ -198,6 +198,9 @@
     },
     "logs-query-editor": {
       "learn-more": "Learn More",
+      "notice-auxiliary-single-resource": "When using Auxiliary Logs, you may only select one resource at a time.",
+      "notice-basic-single-resource": "When using Basic Logs, you may only select one resource at a time.",
+      "notice-same-resource-type": "You may only choose items of the same resource type.",
       "tier-switch-body-analytics": "<0>{{tableName}}</0> is an Analytics table.",
       "tier-switch-body-auxiliary": "<0>{{tableName}}</0> is an Auxiliary Logs table — incurs cost per GiB scanned, has no response-time SLA, and isn't suitable for real-time or alerting scenarios.",
       "tier-switch-body-basic": "<0>{{tableName}}</0> is a Basic Logs table — incurs cost per GiB scanned.",
@@ -207,6 +210,13 @@
       "warning-auxiliary-raw": "This is an Auxiliary Logs query — uses the search endpoint, incurs cost per GiB scanned, has no response-time SLA, and isn't suitable for real-time or alerting scenarios. Analytics-plan tables can't be queried in this mode (use the Analytics tier for those). ",
       "warning-basic-raw": "This is a Basic Logs query — uses the search endpoint and incurs cost per GiB scanned. Analytics-plan tables can't be queried in this mode (use the Analytics tier for those). ",
       "warning-data-ingested": "This query is processing {{dataIngested}} GiB when run. "
+    },
+    "logs-table-section": {
+      "description-auxiliary-disabled": "This table is on the Auxiliary Logs plan. Enable \"Auxiliary Logs\" in the data source settings to query it.",
+      "description-auxiliary-enabled": "Selecting this table will switch the query mode to Auxiliary Logs",
+      "description-basic-disabled": "This table is on the Basic Logs plan. Enable \"Basic Logs\" in the data source settings to query it.",
+      "description-basic-enabled": "Selecting this table will switch the query mode to Basic Logs",
+      "label-all-columns": "All Columns"
     },
     "metric-name-field": {
       "label-metric": "Metric"
