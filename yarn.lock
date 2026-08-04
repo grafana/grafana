@@ -11083,7 +11083,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-router@npm:*":
+"@types/react-router@npm:*, @types/react-router@npm:5.1.20":
   version: 5.1.20
   resolution: "@types/react-router@npm:5.1.20"
   dependencies:
@@ -19583,6 +19583,7 @@ __metadata:
     "@types/react-dom": "npm:18.3.5"
     "@types/react-highlight-words": "npm:0.20.0"
     "@types/react-resizable": "npm:3.0.8"
+    "@types/react-router": "npm:5.1.20"
     "@types/react-router-dom": "npm:5.3.3"
     "@types/react-table": "npm:7.7.20"
     "@types/react-transition-group": "npm:4.4.12"
@@ -19742,6 +19743,7 @@ __metadata:
     react-moveable: "npm:0.56.0"
     react-redux: "npm:9.2.0"
     react-resizable: "npm:3.0.5"
+    react-router: "npm:5.3.4"
     react-router-dom: "npm:5.3.4"
     react-router-dom-v5-compat: "npm:^6.26.1"
     react-select: "npm:5.10.2"
