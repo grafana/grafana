@@ -77,6 +77,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.alerting-list.title', 'Alert rules');
     case 'alert-list-legacy':
       return t('nav.alert-list-legacy.title', 'Alert rules');
+    case 'standalone-plugin-page-assistant-watchers':
+      return t('nav.alerting-watchers.title', 'Watchers');
     case 'receivers':
       return t('nav.alerting-receivers.title', 'Contact points');
     case 'am-routes':
@@ -250,6 +252,11 @@ export function getNavSubTitle(navId: string | undefined) {
       );
     case 'alert-list':
       return t('nav.alerting-list.subtitle', 'Rules that determine whether an alert will fire');
+    case 'standalone-plugin-page-assistant-watchers':
+      return t(
+        'nav.alerting-watchers.subtitle',
+        'Let the Assistant watch your data and notify you when something needs attention'
+      );
     case 'receivers':
       return t(
         'nav.alerting-receivers.subtitle',
