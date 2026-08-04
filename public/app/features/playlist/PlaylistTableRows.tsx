@@ -741,6 +741,7 @@ function getStyles(theme: GrafanaTheme2) {
       },
       '& svg': {
         flexShrink: 0,
+        transform: 'translateY(1px)',
         [theme.breakpoints.down('md')]: {
           display: 'none',
         },
