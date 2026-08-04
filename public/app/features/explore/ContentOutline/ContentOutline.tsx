@@ -16,8 +16,22 @@ import { QUERIES_PANEL_ID } from './ContentOutlineItem';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
 import { scrollOutlineItemIntoView } from './scrollIntoView';
 
+/**
+ * Children the scroll spy can land on. A filter jumps to its section rather than to itself, and a
+ * pinned log line registers without a ref because clicking it opens the log context instead of
+ * scrolling anywhere — neither can ever be the active child.
+ */
 function scrollableChildren(item: ContentOutlineItemContextProps) {
-  return item.children?.filter((child) => child.type !== 'filter') || [];
+  return item.children?.filter((child) => child.type !== 'filter' && child.ref) || [];
+}
+
+/**
+ * Whether clicking any of the section's children lands the user back in the section, which is what
+ * lets the children stand in for it. Filters are given their section's ref when they register; a
+ * pinned log line has none, so a section holding one still needs its own row.
+ */
+function childrenScrollIntoSection(item: ContentOutlineItemContextProps) {
+  return item.children?.every((child) => child.ref) ?? false;
 }
 
 type SectionsExpanded = Record<string, boolean>;
@@ -225,8 +239,9 @@ export function ContentOutline({
               const childrenRendered = isCollapsible(item) && (!contentOutlineExpanded || !!sectionsExpanded[item.id]);
               // Children carry the section's own icon while the outline is icon-only, so a section
               // row there is an unlabelled duplicate of the row right below it. Let the children
-              // stand for the section instead — every one of them scrolls back into it.
-              const sectionRowRendered = contentOutlineExpanded || !childrenRendered;
+              // stand for the section instead, as long as they all lead back into it.
+              const sectionRowRendered =
+                contentOutlineExpanded || !childrenRendered || !childrenScrollIntoSection(item);
 
               return (
                 <Fragment key={item.id}>

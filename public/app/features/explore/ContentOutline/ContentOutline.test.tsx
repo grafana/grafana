@@ -280,6 +280,45 @@ describe('<ContentOutline />', () => {
       expect(screen.queryByRole('button', { name: 'Item 1-1' })).not.toBeInTheDocument();
     });
 
+    it('keeps the section row when a child does not lead back into it', async () => {
+      // Explore registers a pinned log line as a child of Logs with no ref, because clicking it
+      // opens the log context instead of scrolling. Letting it stand for the section would leave
+      // the rail with nothing that jumps to Logs.
+      const mockUseContentOutlineContext = require('./ContentOutlineContext').useContentOutlineContext;
+      mockUseContentOutlineContext.mockReturnValue({
+        outlineItems: [
+          {
+            id: 'logs',
+            panelId: 'Logs',
+            icon: 'gf-logs',
+            title: 'Logs',
+            level: 'root',
+            ref: document.createElement('div'),
+            children: [
+              {
+                id: 'pinned-log',
+                panelId: 'Logs',
+                icon: 'gf-logs',
+                title: 'Pinned log',
+                level: 'child',
+                ref: null,
+                childOnTop: true,
+                onClick: jest.fn(),
+              },
+            ],
+          },
+        ],
+        register: jest.fn(),
+        unregister: unregisterMock,
+      });
+
+      render(<ContentOutline scroller={scrollerMock} panelId="content-outline-container-1" timeRange={timeRange} />);
+      await userEvent.click(screen.getByRole('button', { name: 'Collapse outline' }));
+
+      expect(screen.getByRole('button', { name: 'Logs' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Pinned log' })).toBeInTheDocument();
+    });
+
     it('restores each section to the state it had before the outline was collapsed', async () => {
       setup();
       // Open the first section only, so the two sections differ when the outline widens again.
@@ -391,8 +430,10 @@ describe('<ContentOutline />', () => {
 // The highlight is styling, so it cannot be read off the rendered rows. These cover the rule the
 // rows are given instead: a section takes the highlight only while it stands in for its children.
 describe('shouldBeActive', () => {
-  const queryRow = { id: 'query-1', title: 'A', level: 'child' } as ContentOutlineItemContextProps;
-  const secondQueryRow = { id: 'query-2', title: 'B', level: 'child' } as ContentOutlineItemContextProps;
+  const child = (id: string, title: string, ref: HTMLElement | null = document.createElement('div')) =>
+    ({ id, title, level: 'child', ref }) as ContentOutlineItemContextProps;
+  const queryRow = child('query-1', 'A');
+  const secondQueryRow = child('query-2', 'B');
   const section = (children: ContentOutlineItemContextProps[], mergeSingleChild = false) =>
     ({ id: 'queries', title: 'Queries', mergeSingleChild, children }) as ContentOutlineItemContextProps;
 
@@ -411,5 +452,11 @@ describe('shouldBeActive', () => {
 
   it('highlights a row that has no children of its own', () => {
     expect(shouldBeActive(queryRow, 'queries', 'query-1', false)).toBe(true);
+  });
+
+  it('keeps the highlight on a section whose children cannot take it', () => {
+    // A pinned log line has no ref, so the scroll spy can never land on it and the section has to
+    // hold the highlight even with the pin on screen.
+    expect(shouldBeActive(section([child('pinned-log', 'Pinned log', null)]), 'queries', undefined, true)).toBe(true);
   });
 });
