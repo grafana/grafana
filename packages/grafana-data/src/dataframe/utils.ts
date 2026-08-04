@@ -157,19 +157,22 @@ export function alignTimeRangeCompareData(series: DataFrame, diff: number, theme
 
     // Apply visual styling for comparison series
     if (field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum) {
-      const mode = getFieldColorModeForField(field);
+      const fieldColorMode = getFieldColorModeForField(field);
+      const fieldColor = getFieldSeriesColor(field, theme).color;
 
-      if (mode.isByValue || mode.isContinuous) {
+      // if the color is by value, we shouldn't trust the color to be distinct and instead use the same color but a different pattern to differentiate
+      if (fieldColorMode.isByValue || fieldColorMode.isContinuous) {
         config.custom = {
           ...config.custom,
+          lineColor: fieldColor,
           lineStyle: {
             fill: 'dash',
             dash: [1, 5, 4, 5],
           },
         };
       } else {
-        const color = getFieldSeriesColor(field, theme).color;
-        const ghostColor = theme.isDark ? darken(color, 0.6) : lighten(color, 0.6);
+        // otherwise, get the color and create a "ghost color" to differentiate it from the original
+        const ghostColor = theme.isDark ? darken(fieldColor, 0.6) : lighten(fieldColor, 0.6);
 
         config.custom = {
           ...config.custom,
