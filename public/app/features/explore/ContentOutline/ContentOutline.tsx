@@ -12,6 +12,7 @@ import { useStyles2, PanelContainer, ScrollContainer } from '@grafana/ui';
 import { SignalExplorer } from '../SignalExplorer/SignalExplorer';
 
 import { type ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
+import { QUERIES_PANEL_ID } from './ContentOutlineItem';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
 import { scrollOutlineItemIntoView } from './scrollIntoView';
 
@@ -80,11 +81,24 @@ export function ContentOutline({
   const [activeSectionId, setActiveSectionId] = useState(outlineItems[0]?.id);
   const [activeSectionChildId, setActiveSectionChildId] = useState(outlineItems[0]?.children?.[0]?.id);
 
-  const outlineItemsShouldIndent = outlineItems.some(
-    (item) => item.children && !(item.mergeSingleChild && item.children?.length === 1) && item.children.length > 0
-  );
+  // The signal explorer lists the same query rows in its own Queries section, so the outline's
+  // copy would be a second list of the same refIds. Filtered on render only: the signal explorer
+  // resolves a card to its query row through this item's registered children.
+  const visibleOutlineItems = signalExplorerVisible
+    ? outlineItems.filter((item) => item.panelId !== QUERIES_PANEL_ID)
+    : outlineItems;
 
-  const outlineItemsHaveDeleteButton = outlineItems.some((item) => item.children?.some((child) => child.onRemove));
+  // Indentation exists to align rows against the chevrons and the nesting of an expanded outline.
+  // An icon-only rail has neither, and padding there only pushes the icons off centre.
+  const outlineItemsShouldIndent =
+    contentOutlineExpanded &&
+    visibleOutlineItems.some(
+      (item) => item.children && !(item.mergeSingleChild && item.children?.length === 1) && item.children.length > 0
+    );
+
+  const outlineItemsHaveDeleteButton = visibleOutlineItems.some((item) =>
+    item.children?.some((child) => child.onRemove)
+  );
 
   const [sectionsExpanded, setSectionsExpanded] = useState(() => {
     return outlineItems.reduce((acc: { [key: string]: boolean }, item) => {
@@ -92,6 +106,13 @@ export function ContentOutline({
       return acc;
     }, {});
   });
+
+  // Icon-only mode has no label to save space on, so sections render open and lose the collapse
+  // affordance — a lone chevron next to an icon reads as nothing at all. `sectionsExpanded` is
+  // left untouched so the user's choice is still there when the outline is expanded again.
+  const effectiveSectionsExpanded: SectionsExpanded = contentOutlineExpanded
+    ? sectionsExpanded
+    : Object.fromEntries(visibleOutlineItems.map((item) => [item.id, true]));
 
   const handleItemClicked = (item: ContentOutlineItemContextProps) => {
     if (item.level === 'child' && item.type === 'filter') {
@@ -174,7 +195,7 @@ export function ContentOutline({
       tooltipPlacement={contentOutlineExpanded ? 'right' : 'bottom'}
       onClick={toggle}
       className={cx(styles.toggleContentOutlineButton, {
-        [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsShouldIndent,
+        [styles.justifyCenter]: !contentOutlineExpanded,
       })}
       aria-expanded={contentOutlineExpanded}
     />
@@ -196,39 +217,42 @@ export function ContentOutline({
         <ScrollContainer>
           <div className={styles.content}>
             {!signalExplorerVisible && toggleButton}
-            {outlineItems.map((item) => {
+            {visibleOutlineItems.map((item) => {
+              const childrenRendered = isCollapsible(item) && effectiveSectionsExpanded[item.id];
+              // Children carry the section's own icon while the outline is icon-only, so a section
+              // row there is an unlabelled duplicate of the row right below it. Let the children
+              // stand for the section instead — every one of them scrolls back into it.
+              const sectionRowRendered = contentOutlineExpanded || !childrenRendered;
+
               return (
                 <Fragment key={item.id}>
-                  <ContentOutlineItemButton
-                    key={item.id}
-                    title={contentOutlineExpanded ? item.title : undefined}
-                    contentOutlineExpanded={contentOutlineExpanded}
-                    className={cx(styles.buttonStyles, {
-                      [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsHaveDeleteButton,
-                      [styles.sectionHighlighter]: isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
-                    })}
-                    indentStyle={cx({
-                      [styles.indentRoot]: !isCollapsible(item) && outlineItemsShouldIndent,
-                      [styles.sectionHighlighter]:
-                        isChildActive(item, activeSectionChildId) &&
-                        !contentOutlineExpanded &&
-                        sectionsExpanded[item.id],
-                    })}
-                    icon={item.icon}
-                    onClick={() => handleItemClicked(item)}
-                    tooltip={item.title}
-                    collapsible={isCollapsible(item)}
-                    collapsed={!sectionsExpanded[item.id]}
-                    toggleCollapsed={() => toggleSection(item.id)}
-                    isActive={shouldBeActive(item, activeSectionId, activeSectionChildId, sectionsExpanded)}
-                    sectionId={item.id}
-                    color={item.color}
-                  />
+                  {sectionRowRendered && (
+                    <ContentOutlineItemButton
+                      key={item.id}
+                      title={contentOutlineExpanded ? item.title : undefined}
+                      contentOutlineExpanded={contentOutlineExpanded}
+                      className={cx(styles.buttonStyles, {
+                        [styles.justifyCenter]: !contentOutlineExpanded && !outlineItemsHaveDeleteButton,
+                        [styles.sectionHighlighter]:
+                          isChildActive(item, activeSectionChildId) && !contentOutlineExpanded,
+                      })}
+                      indentStyle={cx({
+                        [styles.indentRoot]: !isCollapsible(item) && outlineItemsShouldIndent,
+                      })}
+                      icon={item.icon}
+                      onClick={() => handleItemClicked(item)}
+                      tooltip={item.title}
+                      collapsible={isCollapsible(item) && contentOutlineExpanded}
+                      collapsed={!effectiveSectionsExpanded[item.id]}
+                      toggleCollapsed={() => toggleSection(item.id)}
+                      isActive={shouldBeActive(item, activeSectionId, activeSectionChildId, effectiveSectionsExpanded)}
+                      sectionId={item.id}
+                      color={item.color}
+                    />
+                  )}
                   <div id={item.id} data-testid={`section-wrapper-${item.id}`}>
-                    {item.children &&
-                      isCollapsible(item) &&
-                      sectionsExpanded[item.id] &&
-                      item.children.map((child, i) => (
+                    {childrenRendered &&
+                      item.children?.map((child, i) => (
                         <div key={child.id} className={styles.itemWrapper}>
                           {contentOutlineExpanded && (
                             <div
@@ -254,7 +278,12 @@ export function ContentOutline({
                               child.onClick?.(e);
                             }}
                             tooltip={child.title}
-                            isActive={shouldBeActive(child, activeSectionId, activeSectionChildId, sectionsExpanded)}
+                            isActive={shouldBeActive(
+                              child,
+                              activeSectionId,
+                              activeSectionChildId,
+                              effectiveSectionsExpanded
+                            )}
                             extraHighlight={child.highlight}
                             color={child.color}
                             onRemove={child.onRemove ? () => child.onRemove?.(child.id) : undefined}
@@ -329,7 +358,7 @@ const getStyles = (theme: GrafanaTheme2, expanded: boolean, signalExplorerVisibl
       paddingLeft: theme.spacing(3),
     }),
     indentChild: css({
-      paddingLeft: expanded ? theme.spacing(5) : theme.spacing(2.75),
+      paddingLeft: expanded ? theme.spacing(5) : 0,
     }),
     itemWrapper: css({
       display: 'flex',

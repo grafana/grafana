@@ -5,7 +5,8 @@ import { type DataSourceInstanceSettings, type TimeRange, store } from '@grafana
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
-import { ContentOutline } from './ContentOutline';
+import { CONTENT_OUTLINE_LOCAL_STORAGE_KEYS, ContentOutline } from './ContentOutline';
+import { QUERIES_PANEL_ID } from './ContentOutlineItem';
 
 jest.mock('./ContentOutlineContext', () => ({
   useContentOutlineContext: jest.fn(),
@@ -31,7 +32,31 @@ const promSettings = {
 
 const timeRange = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 
-const setup = (mergeSingleChild = false, showSignalExplorer = false, queries: DataQuery[] = []) => {
+/** Mirrors how Explore registers the query rows: one root item, one child per query row. */
+const queriesOutlineItem = () => ({
+  id: 'queries',
+  panelId: QUERIES_PANEL_ID,
+  icon: 'test-icon',
+  title: 'Queries',
+  level: 'root',
+  ref: document.createElement('div'),
+  mergeSingleChild: true,
+  children: ['A', 'B'].map((refId) => ({
+    id: `queries-${refId}`,
+    panelId: QUERIES_PANEL_ID,
+    icon: 'test-icon',
+    title: refId,
+    level: 'child',
+    ref: document.createElement('div'),
+  })),
+});
+
+const setup = (
+  mergeSingleChild = false,
+  showSignalExplorer = false,
+  queries: DataQuery[] = [],
+  includeQueriesItem = false
+) => {
   HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
 
   scrollerMock.scroll = jest.fn();
@@ -45,6 +70,7 @@ const setup = (mergeSingleChild = false, showSignalExplorer = false, queries: Da
 
   mockUseContentOutlineContext.mockReturnValue({
     outlineItems: [
+      ...(includeQueriesItem ? [queriesOutlineItem()] : []),
       {
         id: 'item-1',
         icon: 'test-icon',
@@ -102,6 +128,12 @@ const setup = (mergeSingleChild = false, showSignalExplorer = false, queries: Da
 };
 
 describe('<ContentOutline />', () => {
+  beforeEach(() => {
+    // The outline persists whether it is expanded, so a test that collapses it would otherwise
+    // hand the collapsed state to every test that runs after it.
+    store.delete(CONTENT_OUTLINE_LOCAL_STORAGE_KEYS.expanded);
+  });
+
   it('toggles content on button click', async () => {
     setup();
     let showContentOutlineButton = screen.getByRole('button', { name: 'Collapse outline' });
@@ -200,6 +232,48 @@ describe('<ContentOutline />', () => {
     getBoolMock.mockRestore();
   });
 
+  describe('icon-only outline', () => {
+    it('renders every section open, with no collapse toggle left behind', async () => {
+      setup();
+      await userEvent.click(screen.getByRole('button', { name: 'Collapse outline' }));
+
+      expect(screen.queryAllByRole('button', { name: 'Content outline item collapse button' })).toHaveLength(0);
+      expect(screen.getByRole('button', { name: 'Item 1-1' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Item 2-1' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Item 2-2' })).toBeInTheDocument();
+    });
+
+    it('lets the children stand for a section instead of repeating its icon', async () => {
+      setup();
+      await userEvent.click(screen.getByRole('button', { name: 'Collapse outline' }));
+
+      expect(screen.queryByRole('button', { name: 'Item 1' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Item 2' })).not.toBeInTheDocument();
+    });
+
+    it('keeps the section row when its children are not rendered', async () => {
+      // A merged single child is folded into its section, which then has nothing to stand for it.
+      setup(true);
+      await userEvent.click(screen.getByRole('button', { name: 'Collapse outline' }));
+
+      expect(screen.getByRole('button', { name: 'Item 1' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Item 1-1' })).not.toBeInTheDocument();
+    });
+
+    it('restores each section to the state it had before the outline was collapsed', async () => {
+      setup();
+      // Open the first section only, so the two sections differ when the outline widens again.
+      const chevrons = screen.getAllByRole('button', { name: 'Content outline item collapse button' });
+      await userEvent.click(chevrons[0]);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Collapse outline' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Expand outline' }));
+
+      expect(screen.getByRole('button', { name: 'Item 1-1' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Item 2-1' })).not.toBeInTheDocument();
+    });
+  });
+
   describe('signal explorer', () => {
     const promQueries: DataQuery[] = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
 
@@ -253,6 +327,35 @@ describe('<ContentOutline />', () => {
       // The collapsed rail keeps its own copy of the toggle, so the explorer going away
       // must not take the way back with it.
       expect(screen.getByRole('button', { name: 'Expand outline' })).toBeInTheDocument();
+    });
+
+    it('drops the outline Queries section while the explorer is visible', () => {
+      useBooleanFlagValueMock.mockReturnValue(true);
+      setup(false, true, promQueries, true);
+
+      expect(screen.getByTestId('signal-card-A')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Queries' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'A' })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Item 1' })).toBeInTheDocument();
+    });
+
+    it('keeps the outline Queries section when the explorer is not visible', () => {
+      setup(false, false, promQueries, true);
+
+      expect(screen.getByRole('button', { name: 'Queries' })).toBeInTheDocument();
+    });
+
+    it('renders the query rows as icons once the outline is collapsed in metrics mode', async () => {
+      useBooleanFlagValueMock.mockReturnValue(true);
+      setup(false, true, promQueries, true);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Collapse outline' }));
+
+      // The explorer is gone with the outline collapsed, so the query rows are only reachable
+      // through the outline again — as the rows themselves, not behind a Queries section.
+      expect(screen.getByRole('button', { name: 'A' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'B' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Queries' })).not.toBeInTheDocument();
     });
 
     it('does not render the query cards or header title when the toggle is enabled but Prometheus is not selected', () => {
