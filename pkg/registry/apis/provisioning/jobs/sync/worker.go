@@ -274,11 +274,20 @@ func (r *SyncWorker) completeFailedSync(ctx context.Context, cfg *provisioning.R
 	syncStatus := jobStatus.ToSyncStatus(job.Name)
 	syncStatus.LastRef = lastRef
 
-	if err := r.patchStatus(ctx, cfg, map[string]interface{}{
-		"op":    "replace",
-		"path":  "/status/sync",
-		"value": syncStatus,
-	}); err != nil {
+	patchOperations := []map[string]interface{}{
+		{
+			"op":    "replace",
+			"path":  "/status/sync",
+			"value": syncStatus,
+		},
+	}
+
+	syncCondition := EvaluatePullCondition(jobStatus.State, progress.ResultReasons())
+	if conditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), syncCondition); conditionOps != nil {
+		patchOperations = append(patchOperations, conditionOps...)
+	}
+
+	if err := r.patchStatus(ctx, cfg, patchOperations...); err != nil {
 		logging.FromContext(ctx).Error("failed to update the repository sync status after a failed sync", "error", err)
 	}
 }
