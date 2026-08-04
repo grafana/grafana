@@ -33,7 +33,7 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
 
   const onClickLink = useCallback(
     (link: PseudoSceneLink) => {
-      openLinkEditPane(dashboard, Number(link.state.key));
+      openEditLinkPane(dashboard, Number(link.state.key));
     },
     [dashboard]
   );

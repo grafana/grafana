@@ -163,7 +163,6 @@ export const OptionsPaneCategory = React.memo(
     const boxStyles = cx(
       {
         [styles.box]: true,
-        [styles.boxSidebar]: isDashboardSidebar,
         [styles.boxNestedSidebar]: isNested && isDashboardSidebar,
         [styles.boxNestedExpanded]: isNested && isExpanded,
       },
@@ -241,8 +240,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   boxNestedExpanded: css({
     marginBottom: theme.spacing(2),
   }),
-  boxSidebar: css({
+  boxNestedSidebar: css({
     borderTop: 'none',
+    padding: theme.spacing(0),
   }),
   title: css({
     flexGrow: 1,
@@ -259,7 +259,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   header: css({
     display: 'flex',
     alignItems: 'center',
-    padding: theme.spacing(0.5, 2),
+    padding: theme.spacing(0.5, 1),
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeightMedium,
     cursor: 'pointer',
@@ -306,9 +306,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   bodyNested: css({
     position: 'relative',
     paddingRight: 0,
-  }),
-  boxNestedSidebar: css({
-    padding: theme.spacing(0, 0.5),
   }),
   bodyNestedSidebar: css({
     '&:before': {

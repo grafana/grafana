@@ -2,9 +2,8 @@ import { DragDropContext } from '@hello-pangea/dnd';
 import { useCallback, useMemo } from 'react';
 
 import { VariableHide } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
-import { Box, Button } from '@grafana/ui';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { VariableEditableElement } from '../../settings/variables/VariableEditableElement';
@@ -98,26 +97,11 @@ export function DashboardFiltersList({ variableSet }: { variableSet: SceneVariab
 
 const renderItemLabel = (v: SceneVariable) => <span data-testid="filter-name">{v.state.name}</span>;
 
-export function AddFilterButton({ dashboard }: { dashboard: DashboardScene }) {
-  const onAddFilter = useCallback(() => {
-    openAddFilterForm(dashboard, dashboard);
-    DashboardInteractions.addFilterButtonClicked({ source: 'edit_pane' });
-  }, [dashboard]);
-
-  return (
-    <Box display="flex" paddingTop={1} paddingBottom={1}>
-      <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={onAddFilter}>
-        <Trans i18nKey="dashboard.sidebar.filters.add-filter">Add filter</Trans>
-      </Button>
-    </Box>
-  );
-}
-
 export function AddFilterIconButton({ dashboard }: { dashboard: DashboardScene }) {
   const onAddFilter = useCallback(() => {
     openAddFilterForm(dashboard, dashboard);
     DashboardInteractions.addFilterButtonClicked({ source: 'edit_pane' });
   }, [dashboard]);
 
-  return <SidebarAddButton onAdd={onAddFilter} tooltip={t('dashboard-scene.filters-list.add-filter', 'Add filter')} />;
+  return <SidebarAddButton onAdd={onAddFilter} tooltip={t('dashboard.sidebar.filters.add-filter', 'Add filter')} />;
 }
