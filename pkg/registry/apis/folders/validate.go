@@ -75,6 +75,13 @@ func validateOwnerReferencesOnManagedFolder(obj *folders.Folder, old *folders.Fo
 	return nil
 }
 
+// the k6 app manages its own subfolders through a service account, so only
+// other identities are kept out of the k6 tree (same rule as k6 visibility)
+func isServiceAccount(ctx context.Context) bool {
+	user, err := identity.GetRequester(ctx)
+	return err == nil && user.IsIdentityType(authlib.TypeServiceAccount)
+}
+
 // hasK6Ancestor checks the whole chain, not just the immediate parent: folders
 // created under k6 before it was restricted must not become parents themselves.
 func hasK6Ancestor(info *folders.FolderInfoList, self string) bool {
@@ -128,7 +135,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	parentName := meta.GetFolder()
 
 	// checked before resolving the tree so it also rejects a k6 parent we cannot read
-	if parentName == accesscontrol.K6FolderUID {
+	if parentName == accesscontrol.K6FolderUID && !isServiceAccount(ctx) {
 		return folder.ErrFolderCannotBeCreatedInK6.Errorf("folders may not be created in the k6 project")
 	}
 
@@ -146,7 +153,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return fmt.Errorf("unable to create folder inside parent: %w", err)
 	}
 
-	if hasK6Ancestor(parents, f.Name) {
+	if hasK6Ancestor(parents, f.Name) && !isServiceAccount(ctx) {
 		return folder.ErrFolderCannotBeCreatedInK6.Errorf("folders may not be created in the k6 project")
 	}
 
