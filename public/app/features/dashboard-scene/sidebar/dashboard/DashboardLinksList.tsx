@@ -11,7 +11,7 @@ import {
   LinkEditEditableElement,
   linkSelectionId,
   openAddLinkPane,
-  openLinkEditPane,
+  openEditLinkPane,
 } from '../../settings/links/LinkAddEditableElement';
 import { DashboardInteractions } from '../../utils/interactions';
 import { dashboardEditActions } from '../shared';
@@ -89,7 +89,7 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
 
       dashboardEditActions.edit({
         source: dashboard,
-        description: t('dashboard-scene.links-list.drag-end-description', 'Reorder links list'),
+        description: t('dashboard.sidebar.links.reorder-description', 'Reorder links list'),
         perform: () => {
           const reorderedLinks = [...lists[ID_VISIBLE_LIST], ...lists[ID_CONTROLS_MENU_LIST]].map((l) => {
             const { state: _, ...link } = l;
@@ -111,7 +111,7 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
       <DraggableList
         items={visible}
         droppableId={ID_VISIBLE_LIST}
-        title={t('dashboard-scene.links-list.title-above-dashboard', 'Above dashboard')}
+        title={t('dashboard.sidebar.links.title-above-dashboard', 'Above dashboard')}
         onEditItem={onClickLink}
         onDuplicateItem={onDuplicateLink}
         onDeleteItem={onDeleteLink}
@@ -120,7 +120,7 @@ export function DashboardLinksList({ dashboard }: { dashboard: DashboardScene })
       <DraggableList
         items={controlsMenu}
         droppableId={ID_CONTROLS_MENU_LIST}
-        title={t('dashboard-scene.links-list.title-controls-menu', 'Controls menu')}
+        title={t('dashboard.sidebar.links.title-controls-menu', 'Controls menu')}
         onEditItem={onClickLink}
         onDuplicateItem={onDuplicateLink}
         onDeleteItem={onDeleteLink}

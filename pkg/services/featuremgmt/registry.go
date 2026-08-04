@@ -985,10 +985,10 @@ var (
 		{
 			Name:        "queryLibrary",
 			Description: "Enables Saved queries (query library) feature",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "grafana.savedQueriesPage",
@@ -1009,18 +1009,18 @@ var (
 		{
 			Name:        "savedQueriesRBAC",
 			Description: "Enables Saved queries (query library) RBAC permissions",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "newSavedQueriesExperience",
 			Description: "Enables the new Saved queries (query library) modal experience",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyFrontend: true, React: true},
-			Expression:  "false",
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "dashboardLibrary",
@@ -2844,14 +2844,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "grafana.unifiedHomepage",
-			Description: "Replaces the bundled home dashboard with the unified homepage React page",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendNavigation,
-			Generate:    Generate{React: true},
-			Expression:  "false",
-		},
-		{
 			Name:        "preferences.rerouteLegacyAPIs",
 			Description: "Use K8s client implementation for legacy preferences API",
 			Stage:       FeatureStageGeneralAvailability,
@@ -2993,6 +2985,24 @@ var (
 		{
 			Name:         "table.refactorNested",
 			Description:  "Enables the refactored TableNG nested-table implementation",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "table.paginationPageSize",
+			Description:  "Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "table.autoColumnWidths",
+			Description:  "Sizes TableNG auto-width columns to fit their content instead of distributing evenly",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDatavizSquad,
 			HideFromDocs: true,

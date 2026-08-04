@@ -89,7 +89,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
 
       dashboardEditActions.edit({
         source: dataLayerSet,
-        description: t('dashboard-scene.annotations-list.drag-end.description', 'Reorder annotations list'),
+        description: t('dashboard.sidebar.annotations.reorder-description', 'Reorder annotations list'),
         perform: () => {
           moved.setState(newState);
           dataLayerSet.setState({
@@ -111,7 +111,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
         <DraggableList
           items={visible}
           droppableId={ID_VISIBLE_LIST}
-          title={t('dashboard-scene.dashboard-annotations-list.title-above-dashboard', 'Above dashboard')}
+          title={t('dashboard.sidebar.annotations.title-above-dashboard', 'Above dashboard')}
           onEditItem={onClickAnnotation}
           onDuplicateItem={onDuplicateAnnotation}
           onDeleteItem={onDeleteAnnotation}
@@ -120,7 +120,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
         <DraggableList
           items={controlsMenu}
           droppableId={ID_CONTROLS_MENU_LIST}
-          title={t('dashboard-scene.dashboard-annotations-list.title-controls-menu', 'Controls menu')}
+          title={t('dashboard.sidebar.annotations.title-controls-menu', 'Controls menu')}
           onEditItem={onClickAnnotation}
           onDuplicateItem={onDuplicateAnnotation}
           onDeleteItem={onDeleteAnnotation}
@@ -129,7 +129,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
         <DraggableList
           items={hidden}
           droppableId={ID_HIDDEN_LIST}
-          title={t('dashboard-scene.dashboard-annotations-list.title-hidden', 'Hidden')}
+          title={t('dashboard.sidebar.annotations.title-hidden', 'Hidden')}
           onEditItem={onClickAnnotation}
           onDuplicateItem={onDuplicateAnnotation}
           onDeleteItem={onDeleteAnnotation}
@@ -151,7 +151,7 @@ function AnnotationName({ annotation }: { annotation: DashboardAnnotationsDataLa
     if (query.enable === false) {
       return (
         <span className={styles.muted}>
-          <Trans i18nKey="dashboard-scene.annotations-section.name-disabled" values={{ annoName }}>
+          <Trans i18nKey="dashboard.sidebar.annotations.name-disabled" values={{ annoName }}>
             (Disabled) {'{{annoName}}'}
           </Trans>
         </span>
@@ -160,7 +160,7 @@ function AnnotationName({ annotation }: { annotation: DashboardAnnotationsDataLa
     if (query.builtIn) {
       return (
         <span className={styles.muted}>
-          <Trans i18nKey="dashboard-scene.annotations-section.name-builtin" values={{ annoName }}>
+          <Trans i18nKey="dashboard.sidebar.annotations.name-builtin" values={{ annoName }}>
             {'{{annoName}}'} (Built-in)
           </Trans>
         </span>
@@ -188,7 +188,7 @@ export function AddAnnotationButton({ dataLayerSet }: { dataLayerSet: DashboardD
   return (
     <SidebarAddButton
       onAdd={onClickAddAnnotation}
-      tooltip={t('dashboard-scene.dashboard-annotations-list.add-annotation-query', 'Add annotation query')}
+      tooltip={t('dashboard.sidebar.annotations.add-annotation-query', 'Add annotation query')}
       dataTestId={selectors.components.PanelEditor.ElementEditPane.addAnnotationButton}
     />
   );

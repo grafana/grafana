@@ -7,6 +7,28 @@
         "enabled": false,
         "dynamic": false
       },
+      "_deleted": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "boolean",
+            "index": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
+      "_provisioned": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "boolean",
+            "index": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
       "created": {
         "enabled": true,
         "dynamic": true,
@@ -27,6 +49,44 @@
             "store": true,
             "index": true,
             "skip_freq_norm": true
+          }
+        ]
+      },
+      "deleted_by": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "text",
+            "analyzer": "keyword",
+            "store": true,
+            "index": true,
+            "docvalues": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
+      "deleted_rv": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "text",
+            "analyzer": "keyword",
+            "store": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
+      "deletion_time": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "number",
+            "store": true,
+            "index": true,
+            "docvalues": true
           }
         ]
       },
@@ -325,6 +385,7 @@
           {
             "type": "text",
             "analyzer": "keyword",
+            "store": true,
             "index": true,
             "skip_freq_norm": true
           }

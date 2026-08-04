@@ -92,7 +92,7 @@ function AddVariableButton({ sectionOwner }: AddVariableButtonProps) {
       }}
       data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
     >
-      <Trans i18nKey="dashboard-scene.variables-list.add-variable">Add variable</Trans>
+      <Trans i18nKey="dashboard.sidebar.variables.add-variable">Add variable</Trans>
     </Button>
   );
 }

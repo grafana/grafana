@@ -14,7 +14,7 @@ import { type ActionMeta, PluginSignatureBadge, Select, Stack } from '@grafana/u
 
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 
-import { ExpressionDatasourceRef } from './../utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef } from './../utils/expressionRef';
 
 /**
  * Component props description for the {@link DataSourcePicker}

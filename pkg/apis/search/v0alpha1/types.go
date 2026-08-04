@@ -18,6 +18,11 @@ const (
 	KindSearchResults = "SearchResults"
 	KindTrashQuery    = "TrashQuery"
 	KindTrashResults  = "TrashResults"
+
+	// Here rather than beside the routes because the authorization chain needs
+	// them and cannot depend on the handler package.
+	SearchPathSegment = "search"
+	TrashPathSegment  = "trash"
 )
 
 // WhereNode is a single node of the where tree. Exactly one field must be set;
@@ -87,7 +92,8 @@ type ExistsPredicate struct {
 }
 
 // SortField names a field to sort by and a direction ("asc" or "desc"). V1
-// allows sorting only on scalar string fields that declare the sort capability.
+// allows sorting only on scalar string and numeric fields that declare the sort
+// capability.
 //
 // +k8s:deepcopy-gen=true
 type SortField struct {

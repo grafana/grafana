@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { isFetchError } from '@grafana/runtime';
 import { incidentsApi } from 'app/features/alerting/unified/api/incidentsApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
-import { canAccessPluginPage, useIrmPlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { HOME_CARD_MAX_ITEMS } from './constants';
@@ -16,7 +16,8 @@ export type IncidentsData = ReturnType<typeof useIncidents>;
  * shared between the old-layout card and the redesigned tabs.
  */
 export function useIncidents() {
-  const { pluginId, installed, loading: pluginLoading, settings } = useIrmPlugin(SupportedPlugin.Incident);
+  const { installed, loading: pluginLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
+  const pluginId = SupportedPlugin.Irm;
 
   // Gate incident links like DeclareIncidentButton/InstanceDetailsDrawerTitle do: a user without
   // access to the plugin's incidents page sees titles as plain text, not links that 403 on click.

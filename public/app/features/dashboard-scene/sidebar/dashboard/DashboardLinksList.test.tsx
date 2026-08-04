@@ -7,7 +7,7 @@ import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
-import { createDefaultLink, openLinkEditPane } from '../../settings/links/LinkAddEditableElement';
+import { createDefaultLink, openEditLinkPane } from '../../settings/links/LinkAddEditableElement';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { DashboardLinksList, partitionLinksByPlacement } from './DashboardLinksList';
@@ -15,7 +15,7 @@ import { DashboardLinksList, partitionLinksByPlacement } from './DashboardLinksL
 jest.mock('../../settings/links/LinkAddEditableElement', () => ({
   ...jest.requireActual('../../settings/links/LinkAddEditableElement'),
   openAddLinkPane: jest.fn(),
-  openLinkEditPane: jest.fn(),
+  openEditLinkPane: jest.fn(),
 }));
 
 jest.mock('../../utils/interactions', () => ({
@@ -116,7 +116,7 @@ describe('<DashboardLinksList />', () => {
         await user.hover(getByText(visibleLink1.title));
         await user.click(getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.editButton(key)));
 
-        expect(openLinkEditPane).toHaveBeenCalledWith(elements.dashboardScene, 0);
+        expect(openEditLinkPane).toHaveBeenCalledWith(elements.dashboardScene, 0);
       });
       test('clicking on delete button triggers confirmation modal', async () => {
         const { visibleLink1 } = buildLinks();

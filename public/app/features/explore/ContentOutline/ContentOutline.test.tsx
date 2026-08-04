@@ -1,7 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { store } from '@grafana/data';
+import { type DataSourceInstanceSettings, type TimeRange, store } from '@grafana/data';
+import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 
 import { ContentOutline } from './ContentOutline';
 
@@ -20,10 +22,23 @@ const scrollerMock = document.createElement('div');
 
 const unregisterMock = jest.fn();
 
-const setup = (mergeSingleChild = false, showMetricsExplorer = false) => {
+const promSettings = {
+  uid: 'prom-uid',
+  type: 'prometheus',
+  name: 'gdev-prometheus',
+  meta: { id: 'prometheus', info: { logos: { small: 'prometheus.svg' } } },
+} as unknown as DataSourceInstanceSettings;
+
+const timeRange = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
+
+const setup = (mergeSingleChild = false, showSignalExplorer = false, queries: DataQuery[] = []) => {
   HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
 
   scrollerMock.scroll = jest.fn();
+
+  setDataSourceSrv({
+    getInstanceSettings: () => promSettings,
+  } as unknown as DataSourceSrv);
 
   // Mock useContentOutlineContext with custom outlineItems
   const mockUseContentOutlineContext = require('./ContentOutlineContext').useContentOutlineContext;
@@ -79,7 +94,9 @@ const setup = (mergeSingleChild = false, showMetricsExplorer = false) => {
     <ContentOutline
       scroller={scrollerMock}
       panelId="content-outline-container-1"
-      showMetricsExplorer={showMetricsExplorer}
+      showSignalExplorer={showSignalExplorer}
+      queries={queries}
+      timeRange={timeRange}
     />
   );
 };
@@ -183,37 +200,65 @@ describe('<ContentOutline />', () => {
     getBoolMock.mockRestore();
   });
 
-  describe('metrics explorer', () => {
+  describe('signal explorer', () => {
+    const promQueries: DataQuery[] = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
+
     afterEach(() => {
       useBooleanFlagValueMock.mockImplementation((_: string, defaultValue: boolean) => defaultValue);
     });
 
-    it('hides the header title and the metrics explorer by default (feature toggle off)', () => {
-      setup();
+    it('hides the header title and the query cards by default (feature toggle off)', () => {
+      setup(false, false, promQueries);
       expect(screen.queryByText('Outline')).not.toBeInTheDocument();
       expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
-      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('signal-card-A')).not.toBeInTheDocument();
     });
 
-    it('does not render the metrics explorer or header title when the feature toggle is disabled', () => {
+    it('does not render the query cards or header title when the feature toggle is disabled', () => {
       useBooleanFlagValueMock.mockReturnValue(false);
-      setup(false, true);
-      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+      setup(false, true, promQueries);
+      expect(screen.queryByTestId('signal-card-A')).not.toBeInTheDocument();
       expect(screen.queryByText('Outline')).not.toBeInTheDocument();
     });
 
-    it('renders the metrics explorer and "Datasource explorer" title when the toggle is enabled and Prometheus is selected', () => {
+    it('renders a query card and the "Datasource explorer" title when the toggle is enabled and Prometheus is selected', () => {
       useBooleanFlagValueMock.mockReturnValue(true);
-      setup(false, true);
+      setup(false, true, promQueries);
       expect(screen.getByText('Datasource explorer')).toBeInTheDocument();
-      expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
-      expect(screen.getByText('up')).toBeInTheDocument();
+      expect(screen.getByTestId('signal-card-A')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toBeInTheDocument();
     });
 
-    it('does not render the metrics explorer or header title when the toggle is enabled but Prometheus is not selected', () => {
+    it('renders the metrics explorer once a Prometheus card is expanded', async () => {
       useBooleanFlagValueMock.mockReturnValue(true);
-      setup(false, false);
+      setup(false, true, promQueries);
       expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+
+      // Only that the list mounted: its contents come from the datasource now, which this test does
+      // not stand up. `MetricsList.test.tsx` covers what the list does with a catalog.
+      expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
+    });
+
+    it('hides the explorer when the outline is collapsed', async () => {
+      useBooleanFlagValueMock.mockReturnValue(true);
+      setup(false, true, promQueries);
+      expect(screen.getByTestId('signal-card-A')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Collapse outline' }));
+
+      expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('signal-card-A')).not.toBeInTheDocument();
+      // The collapsed rail keeps its own copy of the toggle, so the explorer going away
+      // must not take the way back with it.
+      expect(screen.getByRole('button', { name: 'Expand outline' })).toBeInTheDocument();
+    });
+
+    it('does not render the query cards or header title when the toggle is enabled but Prometheus is not selected', () => {
+      useBooleanFlagValueMock.mockReturnValue(true);
+      setup(false, false, promQueries);
+      expect(screen.queryByTestId('signal-card-A')).not.toBeInTheDocument();
       expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
       expect(screen.queryByText('Outline')).not.toBeInTheDocument();
     });

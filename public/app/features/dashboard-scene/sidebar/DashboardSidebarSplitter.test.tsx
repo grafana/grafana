@@ -4,7 +4,7 @@ import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginImportUtils, config } from '@grafana/runtime';
+import { setPluginImportUtils, setPluginLinksHook, config } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -19,6 +19,8 @@ setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
 });
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 const autoLayoutInputs = [
   selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.minColumnWidth,
@@ -67,7 +69,7 @@ describe('DashboardSidebarSplitter', () => {
 
     render(<DashboardSidebarSplitter dashboard={scene} />);
 
-    const scrollContainer = screen.getByTestId(selectors.components.DashboardEditPaneSplitter.bodyContainer);
+    const scrollContainer = screen.getByTestId(selectors.components.DashboardSidebarSplitter.bodyContainer);
     expect(scrollContainer).toHaveAttribute('tabindex', '0');
   });
 });

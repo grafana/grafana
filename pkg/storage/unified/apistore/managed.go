@@ -241,37 +241,41 @@ func managedResourceCommitMessage(obj utils.GrafanaMetaAccessor, action resource
 	}
 }
 
+// handleManagedResourceRouting re-routes a write for a repo-managed resource to the provisioning
+// files endpoint. cleanupSafe reports whether the write definitely did not persist (so a caller may
+// safely delete secrets it created for it): true only when the provisioning request was never sent,
+// false once it is sent because the endpoint may have committed the file even when it returns an error.
 func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 	err error,
 	action resourcepb.WatchEvent_Type,
 	key string,
 	orig runtime.Object,
 	rsp runtime.Object,
-) error {
+) (cleanupSafe bool, _ error) {
 	if !errors.Is(err, errResourceIsManagedInRepository) || s.configProvider == nil {
-		return err
+		return true, err // not routed: the write was never attempted
 	}
 	obj, err := utils.MetaAccessor(orig)
 	if err != nil {
-		return err
+		return true, err
 	}
 	repo, ok := obj.GetManagerProperties()
 	if !ok {
-		return fmt.Errorf("expected managed resource")
+		return true, fmt.Errorf("expected managed resource")
 	}
 	if repo.Kind != utils.ManagerKindRepo {
 		if !repo.AllowsEdits {
-			return fmt.Errorf("managed resource does not allow edits")
+			return true, fmt.Errorf("managed resource does not allow edits")
 		}
 	}
 	src, ok := obj.GetSourceProperties()
 	if !ok || src.Path == "" {
-		return fmt.Errorf("managed resource is missing source path annotation")
+		return true, fmt.Errorf("managed resource is missing source path annotation")
 	}
 
 	cfg, err := s.configProvider.GetRestConfig(ctx)
 	if err != nil {
-		return err
+		return true, err
 	}
 	cfg.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
 	cfg.GroupVersion = &schema.GroupVersion{
@@ -280,13 +284,13 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 	}
 	client, err := rest.RESTClientFor(cfg)
 	if err != nil {
-		return err
+		return true, err
 	}
 
 	if action == resourcepb.WatchEvent_DELETED {
 		// TODO? can we copy orig into rsp without a full get?
 		if err = s.Get(ctx, key, storage.GetOptions{}, rsp); err != nil { // COPY?
-			return err
+			return true, err
 		}
 		result := client.Delete().
 			Namespace(obj.GetNamespace()).
@@ -295,7 +299,7 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 			Suffix("files", src.Path).
 			Param("message", managedResourceCommitMessage(obj, action)).
 			Do(ctx)
-		return result.Error()
+		return false, result.Error()
 	}
 
 	var req *rest.Request
@@ -305,7 +309,7 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 	case resourcepb.WatchEvent_MODIFIED:
 		req = client.Put()
 	default:
-		return fmt.Errorf("unsupported provisioning action: %v, %w", action, err)
+		return true, fmt.Errorf("unsupported provisioning action: %v, %w", action, err)
 	}
 
 	// Execute the change. The provisioning files endpoint reads the commit
@@ -321,11 +325,13 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 		Param("skipDryRun", "true").
 		Param("message", managedResourceCommitMessage(obj, action)).
 		Do(ctx)
-	err = result.Error()
-	if err != nil {
-		return err
+	if err = result.Error(); err != nil {
+		// The files endpoint may commit the repository file before returning an error
+		// (e.g. a 409 after the write), so any post-send failure is ambiguous: keep the
+		// secret rather than orphan a committed reference.
+		return false, err
 	}
 
-	// return the updated value
-	return s.Get(ctx, key, storage.GetOptions{}, rsp)
+	// The write persisted; keep any secrets even if the read-back fails.
+	return false, s.Get(ctx, key, storage.GetOptions{}, rsp)
 }

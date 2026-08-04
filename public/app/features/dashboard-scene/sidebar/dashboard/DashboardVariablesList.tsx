@@ -81,10 +81,7 @@ export function DashboardVariablesList({
         visible,
         controlsMenu,
         hidden,
-        t(
-          'dashboard-scene.variables-list.create-drag-end-handler.description.reorder-variables-list',
-          'Reorder variables list'
-        ),
+        t('dashboard.sidebar.variables.reorder-description', 'Reorder variables list'),
         DROPPABLE_TO_HIDE
       ),
     [sourceVariableSet, visible, controlsMenu, hidden]
@@ -95,7 +92,12 @@ export function DashboardVariablesList({
       <DraggableList
         items={visible}
         droppableId={ID_VISIBLE_LIST}
-        title={resolvedTopPlacementLabel}
+        title={t('dashboard.sidebar.variables.title-top-placement', '', {
+          placement: resolvedTopPlacementLabel,
+          count: visible.length,
+          defaultValue_one: '{{placement}} ({{count}})',
+          defaultValue_other: '{{placement}} ({{count}})',
+        })}
         onEditItem={onClickVariable}
         onDuplicateItem={onDuplicateVariable}
         onDeleteItem={onDeleteVariable}
@@ -105,7 +107,11 @@ export function DashboardVariablesList({
         <DraggableList
           items={controlsMenu}
           droppableId={ID_CONTROLS_MENU_LIST}
-          title={t('dashboard-scene.variables-list.title-controls-menu', 'Controls menu')}
+          title={t('dashboard.sidebar.variables.title-controls-menu', '', {
+            count: controlsMenu.length,
+            defaultValue_one: 'Controls menu ({{count}})',
+            defaultValue_other: 'Controls menu ({{count}})',
+          })}
           onEditItem={onClickVariable}
           onDuplicateItem={onDuplicateVariable}
           onDeleteItem={onDeleteVariable}
@@ -115,7 +121,11 @@ export function DashboardVariablesList({
       <DraggableList
         items={hidden}
         droppableId={ID_HIDDEN_LIST}
-        title={t('dashboard-scene.variables-list.title-hidden', 'Hidden')}
+        title={t('dashboard.sidebar.variables.title-hidden', '', {
+          count: hidden.length,
+          defaultValue_one: 'Hidden ({{count}})',
+          defaultValue_other: 'Hidden ({{count}})',
+        })}
         onEditItem={onClickVariable}
         onDuplicateItem={onDuplicateVariable}
         onDeleteItem={onDeleteVariable}
@@ -137,7 +147,7 @@ export function AddVariableButton({ dashboard }: { dashboard: DashboardScene }) 
     <SidebarAddButton
       data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
       onAdd={onAddVariable}
-      tooltip={t('dashboard-scene.variables-list.add-variable', 'Add variable')}
+      tooltip={t('dashboard.sidebar.variables.add-variable', 'Add variable')}
     />
   );
 }

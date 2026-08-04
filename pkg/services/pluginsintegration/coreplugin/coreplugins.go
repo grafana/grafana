@@ -23,8 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb"
-	"github.com/grafana/grafana/pkg/tsdb/mysql"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 )
 
 const (
@@ -32,10 +30,8 @@ const (
 	AzureMonitor  = "grafana-azure-monitor-datasource"
 	Graphite      = "graphite"
 	InfluxDB      = "influxdb"
-	Prometheus    = "prometheus"
 	TestData      = "grafana-testdata-datasource"
 	TestDataAlias = "testdata"
-	MySQL         = "mysql"
 	Grafana       = "grafana"
 )
 
@@ -77,8 +73,7 @@ func ProvideCoreProvider(coreRegistry *Registry) plugins.BackendFactoryProvider 
 }
 
 func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service,
-	grap *graphite.Service, idb *influxdb.Service,
-	pr *prometheus.Service, td *testdatasource.Service, my *mysql.Service,
+	grap *graphite.Service, idb *influxdb.Service, td *testdatasource.Service,
 	graf *grafanads.Service) *Registry {
 	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
 	sdktracing.InitDefaultTracer(tracer)
@@ -88,9 +83,7 @@ func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *clou
 		AzureMonitor: asBackendPlugin(am),
 		Graphite:     asBackendPlugin(grap),
 		InfluxDB:     asBackendPlugin(idb),
-		Prometheus:   asBackendPlugin(pr),
 		TestData:     asBackendPlugin(td),
-		MySQL:        asBackendPlugin(my),
 		Grafana:      asBackendPlugin(graf),
 	})
 }
@@ -199,10 +192,6 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 		svc = graphite.ProvideService(httpClientProvider, tracer)
 	case InfluxDB:
 		svc = influxdb.ProvideService(httpClientProvider)
-	case Prometheus:
-		svc = prometheus.ProvideService(httpClientProvider)
-	case MySQL:
-		svc = mysql.ProvideService()
 	default:
 		return nil, ErrCorePluginNotFound
 	}
