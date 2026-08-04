@@ -1,3 +1,16 @@
+<!-- 12.4.7 START -->
+
+# 12.4.7 (2026-08-04)
+
+### Features and enhancements
+
+- **Dashboards:** Get annotations and dashboard endpoint performance improvements [#129780](https://github.com/grafana/grafana/pull/129780), [@filewalkwithme](https://github.com/filewalkwithme)
+
+### Bug fixes
+
+- **DashboardDS:** Fix Mixed panels with a time override stuck in permanent loading [#129289](https://github.com/grafana/grafana/pull/129289), [@oscarkilhed](https://github.com/oscarkilhed)
+
+<!-- 12.4.7 END -->
 <!-- 12.3.10 START -->
 
 # 12.3.10 (2026-08-04)
