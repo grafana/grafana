@@ -3997,6 +3997,9 @@
       "trace-id": "Trace ID: {{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": "Add to Assistant"
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Auth settings"
@@ -12205,6 +12208,10 @@
       "subtitle": "Upgrade your existing legacy alerts and notification channels to the new Grafana Alerting",
       "title": "Alerting upgrade"
     },
+    "alerting-watchers": {
+      "subtitle": "Let the Assistant watch your data and notify you when something needs attention",
+      "title": "Watchers"
+    },
     "alerts-and-incidents": {
       "subtitle": "Alerting and incident management apps",
       "title": "Alerts & IRM"
@@ -15934,9 +15941,16 @@
     },
     "editor": {
       "aria-label-content": "Text content",
+      "aria-label-mode": "Text mode: {{mode}}",
+      "footer-line-numbers": "Line numbers",
       "format-bold": "B",
       "format-heading": "H",
       "format-italic": "I",
+      "language-plaintext": "Plain text",
+      "mode-code": "Code",
+      "mode-html": "HTML",
+      "mode-markdown": "Markdown",
+      "mode-picker-label": "Mode",
       "tooltip-bold": "Bold",
       "tooltip-bullet-list": "Bullet list",
       "tooltip-checklist": "Checklist",
@@ -15949,15 +15963,7 @@
       "view-preview": "Preview",
       "view-split": "Split",
       "view-write": "Write"
-    },
-    "mode-options": {
-      "label-code": "Code",
-      "label-html": "HTML",
-      "label-markdown": "Markdown"
-    },
-    "name-language": "Language",
-    "name-mode": "Mode",
-    "name-show-line-numbers": "Show line numbers"
+    }
   },
   "theme-playground": {
     "label-base-theme": "Base theme",
