@@ -300,34 +300,23 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 	return nextToken, nil
 }
 
-// isPermanentItemError reports whether an item-level failure is a
-// deterministic function of the item's content rather than a transient
-// infra fault. Only Postgres data/constraint errors qualify: embedding
-// provider rejections (Bedrock ValidationException, Azure 400, Vertex
-// InvalidArgument) are deliberately excluded because the same codes fire
-// for request-wide misconfiguration (bad model, deployment, endpoint) —
-// skipping on those would drain every item and complete the job with
-// nothing embedded. Unknown errors default to retryable for the same
-// reason.
+// isPermanentItemError reports whether the item's own content caused the
+// failure, so retrying can never succeed. Provider rejections stay retryable
+// because misconfig produces the same codes.
 func isPermanentItemError(err error) bool {
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 		return false
 	}
 	var pqErr *pq.Error
 	if errors.As(err, &pqErr) {
-		// SQLSTATE class 22 (data exception, e.g. NUL byte in text) and
-		// class 23 (constraint violation) are decided by the row itself;
-		// all other classes stay retryable.
+		// SQLSTATE class 22 = data exception (e.g. NUL byte), 23 = constraint violation.
 		class := pqErr.Code.Class()
 		return class == "22" || class == "23"
 	}
 	return false
 }
 
-// skipPermanentItem logs an item whose failure no retry can fix; callers
-// skip the item so one poison resource cannot wedge the job forever.
-// Warn, not Error: the skip is expected, handled behavior; the
-// skipped_permanent_error metric status is the alerting signal.
+// skipPermanentItem logs an unfixable item being skipped so it can't wedge the job.
 func (b *VectorBackfiller) skipPermanentItem(stage, namespace, group, res, name string, err error) {
 	b.log.Warn("backfill: permanent error; skipping item",
 		"stage", stage, "namespace", namespace, "group", group, "resource", res, "name", name, "err", err)
@@ -404,8 +393,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 
 	items, err := builder.Extract(ctx, key, iter.Value())
 	if err != nil {
-		// Extract is a pure function of the stored bytes, so any failure
-		// (e.g. corrupt dashboard JSON) is permanent by definition.
+		// Extract is deterministic over stored bytes; failures are permanent.
 		b.skipPermanentItem("extract", namespace, group, res, name, err)
 		statusLabel = "skipped_permanent_error"
 		return nil
@@ -422,9 +410,6 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 
 	vectors, err := b.batchEmbedder.Embed(ctx, namespace, res, rv, items)
 	if err != nil {
-		// Provider errors are never classified permanent (see
-		// isPermanentItemError), so embed failures always fail the job
-		// and retry on the next tick.
 		return fmt.Errorf("embed %s/%s: %w", namespace, name, err)
 	}
 

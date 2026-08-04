@@ -574,8 +574,7 @@ func TestRunBackfillJob_PendingDeleteLabel_RunsBeforeStatsLookup(t *testing.T) {
 	assert.Equal(t, 0, stats.calls, "pending-delete skip must come before stats lookup")
 }
 
-// azureAPIError builds an openai.Error with Request/Response populated —
-// its Error() method dereferences both, as the SDK always sets them.
+// azureAPIError populates Request/Response because Error() dereferences both.
 func azureAPIError(status int) *openai.Error {
 	req, _ := http.NewRequest(http.MethodPost, "https://example.test/embeddings", nil)
 	return &openai.Error{
@@ -596,9 +595,7 @@ func TestIsPermanentItemError(t *testing.T) {
 		{"pq constraint violation", &pq.Error{Code: "23505"}, true},
 		{"pq connection failure", &pq.Error{Code: "08006"}, false},
 		{"pq insufficient resources", &pq.Error{Code: "53100"}, false},
-		// Provider rejections stay retryable: the same codes fire for
-		// request-wide misconfig (bad model/deployment), where skipping
-		// would silently drain the whole job.
+		// Provider rejections stay retryable: misconfig produces the same codes.
 		{"grpc invalid argument", grpcstatus.Error(grpccodes.InvalidArgument, "bad input"), false},
 		{"bedrock validation", &smithy.GenericAPIError{Code: "ValidationException", Message: "bad input"}, false},
 		{"azure bad request", azureAPIError(http.StatusBadRequest), false},
@@ -671,8 +668,6 @@ func TestRunBackfillJob_EmbedProviderError_FailsJob(t *testing.T) {
 	vec := newFakeVector()
 	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", StoppingRV: 100}}
 
-	// Even a provider "validation" rejection must fail the job — the same
-	// code fires for misconfig, and skipping would drain every item.
 	emb := newFakeEmbedder(&fakeText{dim: 4, err: grpcstatus.Error(grpccodes.InvalidArgument, "input rejected")})
 	b, err := NewVectorBackfiller(Options{
 		Storage:       storage,
