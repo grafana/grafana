@@ -1,17 +1,11 @@
 import { type Unsubscribable } from 'rxjs';
 
 import { LoadingState } from '@grafana/data';
-import {
-  SceneDataTransformer,
-  type SceneObject,
-  SceneObjectBase,
-  type SceneObjectState,
-  SceneQueryRunner,
-  VizPanel,
-} from '@grafana/scenes';
+import { SceneObjectBase, type SceneObjectState, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { getOutermostDataTransformer } from '../utils/getOutermostDataTransformer';
 import {
   findVizPanelByKey,
   getDashboardSceneFor,
@@ -265,22 +259,4 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       dashboardDsQueryRunner.runQueries();
     }
   }
-}
-
-/**
- * Walks up from a query runner to the outermost transformer wrapping it — the one holding the
- * user's transformations. Panel plugins can contribute their own transformer below it
- * (see {@link PanelPluginDataTransformer}), so the immediate parent is not necessarily the
- * user's transformer.
- */
-function getOutermostDataTransformer(sceneObject: SceneObject): SceneDataTransformer | undefined {
-  let outermost: SceneDataTransformer | undefined;
-  let current: SceneObject | undefined = sceneObject.parent;
-
-  while (current instanceof SceneDataTransformer) {
-    outermost = current;
-    current = current.parent;
-  }
-
-  return outermost;
 }
