@@ -4,6 +4,9 @@ export const COLUMN = {
   EXPANDER_WIDTH: 50,
   // This will need to eventually change to 36
   MIN_WIDTH: 50,
+  // Upper bound for a content-aware auto-sized column before we grow it to fill the panel.
+  // Keeps one long value (e.g. a JSON blob) from consuming the whole table width.
+  MAX_AUTO_WIDTH: 400,
 };
 
 /** Table layout and display constants */

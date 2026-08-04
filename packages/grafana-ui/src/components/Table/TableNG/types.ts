@@ -147,6 +147,8 @@ interface BaseTableProps {
   disableKeyboardEvents?: boolean;
   // temporary feature toggle to manage rollout of the refactored nested-table implementation
   nestedRefactorEnabled?: boolean;
+  // temporary feature toggle to manage rollout of content-aware auto column widths (table.autoColumnWidths)
+  contentAwareWidthsEnabled?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
