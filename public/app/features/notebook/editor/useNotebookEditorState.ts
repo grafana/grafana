@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
+import { extractErrorMessage } from 'app/api/utils';
 import { appEvents } from 'app/core/app_events';
 import { type Resource } from 'app/features/apiserver/types';
 
@@ -150,7 +151,7 @@ export function useNotebookEditorState(uid: string): NotebookEditorApi {
       setState((s) => ({ ...s, saving: false }));
       appEvents.emit(AppEvents.alertError, [
         t('notebooks.editor.save-failed', 'Failed to save notebook'),
-        error instanceof Error ? error.message : '',
+        extractErrorMessage(error, ''),
       ]);
     } finally {
       savingRef.current = false;

@@ -8,6 +8,7 @@ import { locationService } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box, Button, ConfirmModal, Dropdown, IconButton, LinkButton, Menu, useStyles2 } from '@grafana/ui';
+import { extractErrorMessage } from 'app/api/utils';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -179,7 +180,7 @@ function NotebookControls({
     } catch (error) {
       appEvents.emit(AppEvents.alertError, [
         t('notebooks.list.duplicate-failed', 'Failed to duplicate notebook'),
-        error instanceof Error ? error.message : '',
+        extractErrorMessage(error, ''),
       ]);
     }
   };

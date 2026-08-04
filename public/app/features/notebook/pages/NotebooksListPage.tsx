@@ -22,6 +22,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useDeleteNotebookMutation, useListNotebookQuery, type Notebook } from 'app/api/clients/dashboard/v2beta1';
+import { extractErrorMessage } from 'app/api/utils';
 import { appEvents } from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
@@ -85,7 +86,7 @@ export function NotebooksListPage() {
     } catch (error) {
       appEvents.emit(AppEvents.alertError, [
         t('notebooks.list.create-failed', 'Failed to create notebook'),
-        error instanceof Error ? error.message : '',
+        extractErrorMessage(error, ''),
       ]);
     } finally {
       setCreating(false);
@@ -110,7 +111,7 @@ export function NotebooksListPage() {
     } catch (error) {
       appEvents.emit(AppEvents.alertError, [
         t('notebooks.list.duplicate-failed', 'Failed to duplicate notebook'),
-        error instanceof Error ? error.message : '',
+        extractErrorMessage(error, ''),
       ]);
     }
   };

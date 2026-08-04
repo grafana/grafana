@@ -152,6 +152,45 @@ func TestAuthzLimitedClient_Compile(t *testing.T) {
 	}
 }
 
+func TestAuthzLimitedClient_NotebooksUseDashboardAuthorization(t *testing.T) {
+	const (
+		namespace  = "stacks-1"
+		notebooks  = "notebooks"
+		dashboards = "dashboards"
+	)
+
+	seen := make([]string, 0, 3)
+	underlying := &callbackAccessClient{fn: func(req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+		seen = append(seen, req.Resource)
+		return authlib.CheckResponse{Allowed: req.Group == "dashboard.grafana.app" && req.Resource == dashboards}, nil
+	}}
+	client := NewAuthzLimitedClient(underlying, AuthzOptions{})
+	user := &identity.StaticRequester{Namespace: namespace}
+
+	check, err := client.Check(context.Background(), user, authlib.CheckRequest{
+		Group: "dashboard.grafana.app", Resource: notebooks, Verb: utils.VerbCreate, Namespace: namespace,
+	}, "")
+	require.NoError(t, err)
+	require.True(t, check.Allowed)
+
+	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
+	checker, _, err := client.Compile(context.Background(), user, authlib.ListRequest{
+		Group: "dashboard.grafana.app", Resource: notebooks, Verb: utils.VerbList, Namespace: namespace,
+	})
+	require.NoError(t, err)
+	require.True(t, checker("nb1", ""))
+
+	batch, err := client.BatchCheck(context.Background(), user, authlib.BatchCheckRequest{
+		Namespace: namespace,
+		Checks: []authlib.BatchCheckItem{{
+			CorrelationID: "nb1", Group: "dashboard.grafana.app", Resource: notebooks, Verb: utils.VerbGet, Name: "nb1",
+		}},
+	})
+	require.NoError(t, err)
+	require.True(t, batch.Results["nb1"].Allowed)
+	require.Equal(t, []string{dashboards, dashboards, dashboards}, seen)
+}
+
 // TestNamespaceMatching tests namespace matching in Check and Compile methods
 func TestNamespaceMatching(t *testing.T) {
 	// Create a mock client that always returns allowed=true

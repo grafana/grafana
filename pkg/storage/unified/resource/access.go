@@ -14,6 +14,8 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashboardv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -160,6 +162,20 @@ func alwaysEnforced(group, resource string) bool {
 	return ok
 }
 
+// authorizationTarget returns the established resource whose permissions govern
+// a storage resource. Notebooks intentionally reuse dashboard permissions, and
+// this translation must happen before the request leaves Grafana: hosted stacks
+// can use a separately deployed authz service that does not contain the local
+// mapper entry for this experimental resource yet.
+func authorizationTarget(group, resource string) (string, string) {
+	if group == dashboardv2beta1.NotebookResourceInfo.GroupResource().Group &&
+		resource == dashboardv2beta1.NotebookResourceInfo.GroupResource().Resource {
+		return dashboardv1.DashboardResourceInfo.GroupResource().Group,
+			dashboardv1.DashboardResourceInfo.GroupResource().Resource
+	}
+	return group, resource
+}
+
 // Check implements claims.AccessClient.
 func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req claims.CheckRequest, folder string) (claims.CheckResponse, error) {
 	t := time.Now()
@@ -180,6 +196,7 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		return claims.CheckResponse{Allowed: false}, claims.ErrNamespaceMismatch
 	}
 
+	req.Group, req.Resource = authorizationTarget(req.Group, req.Resource)
 	if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
 		span.SetAttributes(attribute.Bool("allowed", true))
 		return claims.CheckResponse{Allowed: true}, nil
@@ -215,6 +232,7 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 		return nil, claims.NoopZookie{}, claims.ErrNamespaceMismatch
 	}
 
+	req.Group, req.Resource = authorizationTarget(req.Group, req.Resource)
 	if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
 		return func(name, folder string) bool {
 			return true
@@ -270,6 +288,7 @@ func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, 
 	// Build a separate request for items that need to be checked by the underlying client
 	var itemsToCheck []claims.BatchCheckItem
 	for _, item := range req.Checks {
+		item.Group, item.Resource = authorizationTarget(item.Group, item.Resource)
 		if !c.IsCompatibleWithRBAC(item.Group, item.Resource) {
 			// Not compatible with RBAC, allow by default
 			results[item.CorrelationID] = claims.BatchCheckResult{Allowed: true}

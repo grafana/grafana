@@ -6,6 +6,7 @@ import { locationService } from '@grafana/runtime';
 import { type NotebookElement } from '@grafana/schema/apis/notebook/v2beta1';
 import { Alert, Button, Checkbox, Field, Input, Modal, RadioButtonGroup, Select, Stack, Text } from '@grafana/ui';
 import { useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
+import { extractErrorMessage } from 'app/api/utils';
 import { appEvents } from 'app/core/app_events';
 
 import { notebookEditUrl } from '../api/notebookAPI';
@@ -92,7 +93,7 @@ export function AddToNotebookForm({ element, sourceName, timeRange, onDismiss }:
         appEvents.emit(AppEvents.alertSuccess, [t('notebooks.add-form.added', 'Added to notebook'), result.title]);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : t('notebooks.add-form.failed', 'Failed to add to notebook'));
+      setError(extractErrorMessage(e, t('notebooks.add-form.failed', 'Failed to add to notebook')));
     } finally {
       setSubmitting(false);
     }
