@@ -261,6 +261,7 @@ describe('PlaylistForm', () => {
       const row = rows()[0];
       const duplicateButton = within(row).getByRole('button', { name: 'Duplicate playlist item' });
       const deleteButton = within(row).getByRole('button', { name: 'Delete playlist item' });
+      expect(duplicateButton.querySelector('svg')).toHaveStyle({ transform: 'translateY(1px)' });
 
       await userEvent.hover(duplicateButton);
       expect(await screen.findByRole('tooltip')).toHaveTextContent(/^Duplicate$/);
@@ -372,10 +373,9 @@ describe('PlaylistForm', () => {
       // The global interval remains editable.
       expect(screen.getByRole('textbox', { name: 'Interval' })).toHaveValue('10m');
       // uid_1's override is visible as a compact summary until its options are opened.
-      expect(within(rows()[0]).getByText('Custom view · Interval: 30s').closest('[title]')).toHaveAttribute(
-        'title',
-        'Custom view · Interval: 30s'
-      );
+      const optionSummary = within(rows()[0]).getByText('Custom view · Interval: 30s').closest('[title]');
+      expect(optionSummary).toHaveAttribute('title', 'Custom view · Interval: 30s');
+      expect(optionSummary).toHaveStyle({ transform: 'translateY(1px)' });
       expect(within(rows()[0]).getByRole('button', { name: 'Settings' })).toHaveAttribute('aria-expanded', 'false');
       await openItemOptions('uid_1');
       expect(screen.getByRole('textbox', { name: /interval for uid_1/i })).toHaveValue('30s');
@@ -479,6 +479,19 @@ describe('PlaylistForm', () => {
   });
 
   describe('per-dashboard state', () => {
+    it('opens the dashboard title in a new tab with its configured view', async () => {
+      getTestContext(mockPerItemOptionsPlaylist, [{ name: 'uid_1', resource: 'dashboards', title: 'Dashboard one' }]);
+
+      const dashboardLink = await within(rowForItem('uid_1')).findByRole('link', { name: 'Dashboard one' });
+      expect(dashboardLink).toHaveAttribute('target', '_blank');
+      expect(dashboardLink).toHaveAttribute('rel', 'noreferrer');
+
+      const dashboardUrl = new URL(dashboardLink.getAttribute('href') ?? '', window.location.origin);
+      expect(dashboardUrl.searchParams.get('var-host')).toBe('host1');
+      expect(dashboardUrl.searchParams.get('from')).toBe('now-6h');
+      expect(dashboardUrl.searchParams.get('to')).toBe('now');
+    });
+
     it('renders the state stored on each playlist item', async () => {
       getTestContext(mockPerItemOptionsPlaylist);
 
