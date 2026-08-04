@@ -21,13 +21,8 @@ import {
   type DataSourceGetDrilldownsApplicabilityOptions,
   type DrilldownsApplicability,
 } from '@grafana/data';
-import {
-  isSceneObject,
-  sceneGraph,
-  type SceneDataProvider,
-  SceneDataTransformer,
-  type SceneObject,
-} from '@grafana/scenes';
+import { isSceneObject, sceneGraph, type SceneDataProvider, type SceneObject } from '@grafana/scenes';
+import { getUntransformedDataProvider } from 'app/features/dashboard-scene/utils/getUntransformedDataProvider';
 import {
   activateSceneObjectAndParentTree,
   findVizPanelByKey,
@@ -86,8 +81,8 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
     let sourceDataProvider: SceneDataProvider | undefined = sourcePanel.state.$data;
 
-    if (!query.withTransforms && sourceDataProvider instanceof SceneDataTransformer) {
-      sourceDataProvider = sourceDataProvider.state.$data;
+    if (!query.withTransforms) {
+      sourceDataProvider = getUntransformedDataProvider(sourceDataProvider);
     }
 
     if (!sourceDataProvider || !sourceDataProvider.getResultsStream) {

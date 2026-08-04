@@ -14,6 +14,7 @@ import { type DataSourceRef } from '@grafana/schema';
 
 import { verifyDrilldownApplicability } from '../utils/drilldownUtils';
 import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
+import { getUntransformedDataProvider } from '../utils/getUntransformedDataProvider';
 
 import { PanelNonApplicableDrilldownsSubHeader } from './PanelNonApplicableDrilldownsSubHeader';
 
@@ -160,7 +161,9 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
   public getQueryRunner() {
     const panel = this.parent;
     const dataObject = panel ? sceneGraph.getData(panel) : undefined;
-    const queryRunner = dataObject?.state.$data;
+    // More than one transformer can sit between the panel and its query runner, so unwrap
+    // all of them rather than a single level of `$data`.
+    const queryRunner = getUntransformedDataProvider(dataObject);
 
     if (!queryRunner || !(queryRunner instanceof SceneQueryRunner)) {
       return null;

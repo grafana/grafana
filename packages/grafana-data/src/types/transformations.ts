@@ -65,6 +65,38 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
 export type CustomTransformOperator = (context: DataTransformContext) => MonoTypeOperatorFunction<DataFrame[]>;
 
 /**
+ * Data handed to a {@link PanelDataTransformationsSupplier}.
+ *
+ * @alpha
+ */
+export interface PanelDataTransformationsContext {
+  /** Query result frames, before user transformations and before field overrides */
+  series: DataFrame[];
+}
+
+/**
+ * Returns read-only transformations a dashboard panel requires in order to render its data.
+ *
+ * Registered via `PanelPlugin.setDataTransformations`. The result runs before any
+ * user-configured transformation and before field overrides, so fields it produces are
+ * matchable by overrides.
+ *
+ * Called on every data update that carries frames, so it may branch on frame shape or
+ * `meta`. Empty results pass through without consulting the supplier.
+ *
+ * Only the series data topic is supported: configs with `topic` set to annotations or
+ * alert states are ignored.
+ *
+ * Note that option strings are not interpolated: template variables in the returned
+ * configs are passed through as-is.
+ *
+ * @alpha
+ */
+export type PanelDataTransformationsSupplier = (
+  ctx: PanelDataTransformationsContext
+) => Array<DataTransformerConfig | CustomTransformOperator> | undefined;
+
+/**
  * Many transformations can be called with a simple synchronous function.
  * When a transformer is defined, it should have identical behavior to using the operator
  *

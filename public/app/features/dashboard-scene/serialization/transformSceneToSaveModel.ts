@@ -46,6 +46,7 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
+import { getUntransformedDataProvider } from '../utils/getUntransformedDataProvider';
 import {
   calculateGridItemDimensions,
   getLibraryPanelBehavior,
@@ -342,11 +343,9 @@ function vizPanelDataToPanel(
   if (dataProvider && isSnapshot) {
     panel.datasource = GRAFANA_DATASOURCE_REF;
 
-    let data = getPanelDataFrames(dataProvider.state.data);
-    if (dataProvider instanceof SceneDataTransformer) {
-      // For transformations the non-transformed data is snapshoted
-      data = getPanelDataFrames(dataProvider.state.$data!.state.data);
-    }
+    // For transformations the non-transformed data is snapshoted
+    const untransformed = getUntransformedDataProvider(dataProvider);
+    const data = getPanelDataFrames(untransformed?.state.data ?? dataProvider.state.data);
 
     panel.targets = [
       {

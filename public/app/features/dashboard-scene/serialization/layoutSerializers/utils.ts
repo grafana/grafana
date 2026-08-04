@@ -34,6 +34,7 @@ import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../../scene/PanelMenuBehavior';
 import { PanelNotices } from '../../scene/PanelNotices';
+import { wrapInPanelPluginDataTransformer } from '../../scene/PanelPluginDataTransformer';
 import { VizPanelHeaderActions } from '../../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../../scene/VizPanelSubHeader';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -227,7 +228,7 @@ function createPanelDataProvider(
 
   // Wrap inner data provider in a data transformer
   return new SceneDataTransformer({
-    $data: dataProvider,
+    $data: wrapInPanelPluginDataTransformer(dataProvider),
     transformations: panel.data.spec.transformations.map((t) => {
       const normalized = normalizeTransformation(t);
       return {

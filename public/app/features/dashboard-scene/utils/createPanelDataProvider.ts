@@ -4,6 +4,7 @@ import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
+import { wrapInPanelPluginDataTransformer } from '../scene/PanelPluginDataTransformer';
 
 export function createPanelDataProvider(
   panel: PanelModel,
@@ -38,7 +39,7 @@ export function createPanelDataProvider(
 
   // Wrap inner data provider in a data transformer
   return new SceneDataTransformer({
-    $data: dataProvider,
+    $data: wrapInPanelPluginDataTransformer(dataProvider),
     transformations: panel.transformations || [],
   });
 }

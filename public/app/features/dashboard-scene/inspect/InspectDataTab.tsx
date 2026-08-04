@@ -14,6 +14,7 @@ import { InspectTab } from 'app/features/inspector/types';
 import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { InspectDataTab as InspectDataTabOld } from '../../inspector/InspectDataTab';
+import { getUntransformedDataProvider } from '../utils/getUntransformedDataProvider';
 
 export interface InspectDataTabState extends SceneObjectState {
   panelRef: SceneObjectRef<VizPanel>;
@@ -81,8 +82,8 @@ function hasTransformations(dataProvider: SceneDataProvider) {
 }
 
 function getDataProviderToSubscribeTo(dataProvider: SceneDataProvider, withTransforms: boolean) {
-  if (!withTransforms && dataProvider instanceof SceneDataTransformer && dataProvider.state.$data) {
-    return dataProvider.state.$data;
+  if (!withTransforms) {
+    return getUntransformedDataProvider(dataProvider) ?? dataProvider;
   }
 
   return dataProvider;

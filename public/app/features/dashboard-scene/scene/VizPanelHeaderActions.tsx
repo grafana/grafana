@@ -11,6 +11,8 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 
+import { getUntransformedDataProvider } from '../utils/getUntransformedDataProvider';
+
 import { PanelGroupByAction } from './panel-actions/PanelGroupByAction/PanelGroupByAction';
 
 export interface VizPanelHeaderActionsState extends SceneObjectState {
@@ -150,7 +152,9 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
   public getQueryRunner() {
     const panel = this.parent;
     const dataObject = panel ? sceneGraph.getData(panel) : undefined;
-    const queryRunner = dataObject?.state.$data;
+    // More than one transformer can sit between the panel and its query runner, so unwrap
+    // all of them rather than a single level of `$data`.
+    const queryRunner = getUntransformedDataProvider(dataObject);
 
     if (!queryRunner || !(queryRunner instanceof SceneQueryRunner)) {
       return null;

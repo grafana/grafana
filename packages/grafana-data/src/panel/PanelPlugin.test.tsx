@@ -590,4 +590,28 @@ describe('PanelPlugin', () => {
       expect(suggestions2).toHaveLength(0);
     });
   });
+  describe('data transformations', () => {
+    it('returns no transformations when the plugin registered none', () => {
+      const panel = new PanelPlugin(() => <div />);
+
+      expect(panel.getDataTransformations({ series: [] })).toEqual([]);
+    });
+
+    it('is chainable and passes the query result frames to the supplier', () => {
+      const supplier = jest.fn().mockReturnValue([{ id: 'extractFields', options: {} }]);
+      const panel = new PanelPlugin(() => <div />);
+
+      expect(panel.setDataTransformations(supplier)).toBe(panel);
+
+      const series = [createDataFrame({ fields: [{ type: FieldType.number, name: 'Value' }] })];
+      expect(panel.getDataTransformations({ series })).toEqual([{ id: 'extractFields', options: {} }]);
+      expect(supplier).toHaveBeenCalledWith({ series });
+    });
+
+    it('treats an undefined result from the supplier as no transformations', () => {
+      const panel = new PanelPlugin(() => <div />).setDataTransformations(() => undefined);
+
+      expect(panel.getDataTransformations({ series: [] })).toEqual([]);
+    });
+  });
 });
