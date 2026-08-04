@@ -77,9 +77,11 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
 function PlaylistShareButton({ onClick }: { onClick: () => void }) {
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const label = t('playlist-page.card.tooltip', 'Share playlist');
+  const styles = useStyles2(getShareButtonStyles);
 
   return (
     <div
+      className={styles.container}
       onMouseEnter={() => setTooltipOpen(true)}
       onMouseLeave={() => setTooltipOpen(false)}
       onFocusCapture={() => setTooltipOpen(true)}
@@ -98,6 +100,15 @@ function PlaylistShareButton({ onClick }: { onClick: () => void }) {
       </Tooltip>
     </div>
   );
+}
+
+function getShareButtonStyles(theme: GrafanaTheme2) {
+  return {
+    container: css({
+      display: 'flex',
+      padding: `0 ${theme.spacing(0.5)}`,
+    }),
+  };
 }
 
 const PlaylistCardSkeleton: SkeletonComponent = ({ rootProps }) => {
