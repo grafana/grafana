@@ -352,6 +352,27 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, byName["result"], 1)
 
+	// Legacy get-by-name distinguishes an absent name from an existing panel that
+	// permission filtering hides: the former is 404, while the latter is a 200
+	// response with an empty result array. Preserve that contract through /apis.
+	restrictedFolder, err := createFolder(t, ctx.Helper, ctx.AdminUser, "Restricted by-name folder")
+	require.NoError(t, err)
+	restrictedUID, err := createLibraryElement(t, ctx, ctx.AdminUser, "RestrictedPanel", restrictedFolder.UID)
+	require.NoError(t, err)
+	setResourceUserPermission(t, ctx, ctx.AdminUser, false, restrictedFolder.UID, []ResourcePermissionSetting{})
+
+	hiddenByName, err := getDashboardViaHTTP(t, &ctx, "/api/library-elements/name/RestrictedPanel", ctx.ViewerUser)
+	require.NoError(t, err)
+	require.Empty(t, hiddenByName["result"])
+
+	missingByNameResp := apis.DoRequest(ctx.Helper, apis.RequestParams{
+		User:   ctx.ViewerUser,
+		Method: http.MethodGet,
+		Path:   "/api/library-elements/name/DoesNotExist",
+	}, &struct{}{})
+	require.Equal(t, http.StatusNotFound, missingByNameResp.Response.StatusCode)
+	require.NoError(t, deleteLibraryElement(t, ctx, ctx.AdminUser, restrictedUID))
+
 	// patch with a stale version must fail the optimistic concurrency check
 	staleBody, err := json.Marshal(map[string]interface{}{"kind": 1, "name": "CRUDPanelRenamed", "version": 99})
 	require.NoError(t, err)

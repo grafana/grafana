@@ -405,8 +405,22 @@ func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext
 // 500: internalServerError
 func (l *LibraryElementService) getByNameHandler(c *contextmodel.ReqContext) response.Response {
 	if useKubernetesLibraryPanels(c.Req.Context()) {
-		l.k8sHandler.getByNameK8sLibraryElement(c)
-		return nil // already handled in the k8s handler
+		elements, ok := l.k8sHandler.getByNameK8sLibraryElements(c)
+		if !ok {
+			return nil // error response already written by the k8s handler
+		}
+		if len(elements) == 0 {
+			c.JsonApiErr(http.StatusNotFound, model.ErrLibraryElementNotFound.Error(), nil)
+			return nil
+		}
+
+		filteredElements, err := l.filterLibraryPanelsByPermission(c, elements)
+		if err != nil {
+			c.JsonApiErr(http.StatusInternalServerError, err.Error(), err)
+			return nil
+		}
+		c.JSON(http.StatusOK, model.LibraryElementArrayResponse{Result: filteredElements})
+		return nil
 	}
 
 	elements, err := l.getLibraryElementsByName(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":name"])
@@ -883,7 +897,7 @@ func (lk8s *libraryElementsK8sHandler) getAllK8sLibraryElements(c *contextmodel.
 	if !ok {
 		return
 	}
-	items, ok := lk8s.listAllK8sLibraryPanels(c, client)
+	items, ok := lk8s.listAllK8sLibraryPanels(c, c.Req.Context(), client)
 	if !ok {
 		return
 	}
@@ -1024,15 +1038,21 @@ func matchesSearchString(item unstructured.Unstructured, searchString string, fo
 	return folderTitle != "" && strings.Contains(strings.ToLower(folderTitle), searchString)
 }
 
-func (lk8s *libraryElementsK8sHandler) getByNameK8sLibraryElement(c *contextmodel.ReqContext) {
+func (lk8s *libraryElementsK8sHandler) getByNameK8sLibraryElements(c *contextmodel.ReqContext) ([]model.LibraryElementDTO, bool) {
 	name := web.Params(c.Req)[":name"]
 	client, ok := lk8s.getClient(c)
 	if !ok {
-		return
+		return nil, false
 	}
-	items, ok := lk8s.listAllK8sLibraryPanels(c, client)
+	// List with service identity so we can distinguish a name that does not exist
+	// from one whose matching panels are hidden by per-panel authorization. The
+	// legacy endpoint returns 404 only for the former and 200 with an empty array
+	// for the latter; filterLibraryPanelsByPermission applies the caller's access
+	// after this function returns.
+	serviceCtx, _ := identity.WithServiceIdentity(c.Req.Context(), c.OrgID)
+	items, ok := lk8s.listAllK8sLibraryPanels(c, serviceCtx, client)
 	if !ok {
-		return
+		return nil, false
 	}
 
 	elements := make([]model.LibraryElementDTO, 0)
@@ -1044,15 +1064,11 @@ func (lk8s *libraryElementsK8sHandler) getByNameK8sLibraryElement(c *contextmode
 		dto, err := lk8s.unstructuredToLegacyLibraryPanelDTO(c, item)
 		if err != nil {
 			c.JsonApiErr(http.StatusInternalServerError, "conversion error", err)
-			return
+			return nil, false
 		}
 		elements = append(elements, *dto)
 	}
-	if len(elements) == 0 {
-		c.JsonApiErr(http.StatusNotFound, model.ErrLibraryElementNotFound.Error(), nil)
-		return
-	}
-	c.JSON(http.StatusOK, model.LibraryElementArrayResponse{Result: elements})
+	return elements, true
 }
 
 // resolveFolderFilter converts the legacy folder filter query parameters into a list
@@ -1102,11 +1118,11 @@ func (lk8s *libraryElementsK8sHandler) resolveFolderFilter(c *contextmodel.ReqCo
 // listAllK8sLibraryPanels pages through the k8s list endpoint until all library
 // panels for the org have been collected. On failure the error response has already
 // been written and ok is false.
-func (lk8s *libraryElementsK8sHandler) listAllK8sLibraryPanels(c *contextmodel.ReqContext, client dynamic.ResourceInterface) ([]unstructured.Unstructured, bool) {
+func (lk8s *libraryElementsK8sHandler) listAllK8sLibraryPanels(c *contextmodel.ReqContext, ctx context.Context, client dynamic.ResourceInterface) ([]unstructured.Unstructured, bool) {
 	items := make([]unstructured.Unstructured, 0)
 	opts := v1.ListOptions{Limit: 500}
 	for {
-		out, err := client.List(c.Req.Context(), opts)
+		out, err := client.List(ctx, opts)
 		if err != nil {
 			lk8s.writeError(c, err)
 			return nil, false
