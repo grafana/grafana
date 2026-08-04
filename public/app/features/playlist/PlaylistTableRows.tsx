@@ -99,10 +99,12 @@ export const PlaylistTableRows = ({
             </span>
           </span>
         ) : (
-          <span key="info">
-            <TextLink href={getDashboardUrl(item) ?? first.url} external inline={false}>
-              {first.name ?? item.value}
-            </TextLink>
+          <span key="info" className={styles.dashboardTitle}>
+            <Text element="p" truncate>
+              <TextLink href={getDashboardUrl(item) ?? first.url} external inline={false}>
+                {first.name ?? item.value}
+              </TextLink>
+            </Text>
           </span>
         )
       );
@@ -723,6 +725,11 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       display: 'flex',
       minWidth: 0,
+    }),
+    dashboardTitle: css({
+      flex: 1,
+      minWidth: 0,
+      overflow: 'hidden',
     }),
     rowActions: css({
       alignItems: 'center',
