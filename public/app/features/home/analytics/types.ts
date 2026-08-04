@@ -57,11 +57,18 @@ export type CtaClicked = Satisfies<
           placement: 'footer';
         }
     ))
-  | {
+  | ({
       surface: 'news_card';
-      action: 'read_more_news';
-      placement: 'footer';
-    }
+    } & (
+      | {
+          action: 'news_detail';
+          placement: 'list';
+        }
+      | {
+          action: 'read_more_news';
+          placement: 'footer';
+        }
+    ))
   | {
       surface: 'recent_tab';
       action: 'create_dashboard' | 'browse_dashboards';
