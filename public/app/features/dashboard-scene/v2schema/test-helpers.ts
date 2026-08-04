@@ -1,3 +1,4 @@
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   CustomVariable,
@@ -16,6 +17,7 @@ import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.gra
 import { type DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { type VizPanelLinks } from '../scene/PanelLinks';
+import { PanelPluginDataTransformer } from '../scene/PanelPluginDataTransformer';
 import { type TypedVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { getLibraryPanelBehavior, getPanelIdForVizPanel, getQueryRunnerFor } from '../utils/utils';
 
@@ -90,8 +92,14 @@ export function validateVizPanel(vizPanel: VizPanel, dash: DashboardV2Spec) {
       topic: undefined,
     });
 
-    // Not asserted via `dataTransformer.state.$data` — a panel plugin can contribute its own
-    // transformer below the user's, so the query runner is not always one level down.
+    // A panel plugin can contribute its own transformer below the user's, so the expected
+    // chain shape depends on the toggle. Asserting it in both states catches accidental
+    // structural drift — most importantly any nesting sneaking in while the flag is off.
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelPluginTransformations, false)) {
+      expect(dataTransformer.state.$data).toBeInstanceOf(PanelPluginDataTransformer);
+    } else {
+      expect(dataTransformer.state.$data).toBeInstanceOf(SceneQueryRunner);
+    }
     const queryRunner = getQueryRunnerFor(vizPanel)!;
     expect(queryRunner).toBeInstanceOf(SceneQueryRunner);
     expect(queryRunner.state.queries).toEqual([

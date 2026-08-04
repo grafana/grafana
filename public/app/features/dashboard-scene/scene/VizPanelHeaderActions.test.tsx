@@ -165,6 +165,20 @@ describe('VizPanelHeaderActions', () => {
       // diff cannot be serialized by the jest reporter.
       expect(found === queryRunner).toBe(true);
     });
+
+    it('finds the query runner when it is the panel data provider itself', async () => {
+      const { headerActions, queryRunner } = await buildScene({ withBareQueryRunner: true });
+
+      // Documents a deliberate widening: the previous one-level unwrap returned null for a
+      // panel whose `$data` is the runner itself, disabling its header actions. No dashboard
+      // path builds that chain today, but unwrapping zero transformer levels is just as valid.
+      const found = headerActions.getQueryRunner();
+
+      expect(found).toBeInstanceOf(SceneQueryRunner);
+      // Compared as a boolean: scene objects hold circular references, so a failing `toBe`
+      // diff cannot be serialized by the jest reporter.
+      expect(found === queryRunner).toBe(true);
+    });
   });
 });
 
@@ -174,6 +188,8 @@ interface BuildSceneOptions {
   useUnifiedGroupBy?: boolean;
   /** Nest a panel-plugin transformer between the query runner and the user's transformer. */
   withPluginTransformer?: boolean;
+  /** Set the query runner directly as the panel's `$data`, with no transformer wrapping it. */
+  withBareQueryRunner?: boolean;
 }
 
 async function buildScene(options?: BuildSceneOptions) {
@@ -202,12 +218,14 @@ async function buildScene(options?: BuildSceneOptions) {
       })
     : undefined;
 
-  const dataProvider = new SceneDataTransformer({
-    $data: options?.withPluginTransformer
-      ? new PanelPluginDataTransformer({ $data: queryRunner, transformations: [] })
-      : queryRunner,
-    transformations: [],
-  });
+  const dataProvider = options?.withBareQueryRunner
+    ? queryRunner
+    : new SceneDataTransformer({
+        $data: options?.withPluginTransformer
+          ? new PanelPluginDataTransformer({ $data: queryRunner, transformations: [] })
+          : queryRunner,
+        transformations: [],
+      });
 
   const panelState: VizPanelState = {
     key: 'panel-1',
