@@ -781,6 +781,8 @@ type Cfg struct {
 	// defaults to dashboards; external defaults to none.
 	VectorAllowedInternalCollections []string
 	VectorAllowedExternalCollections []string
+	// Registers the VectorStore write RPCs on the storage server.
+	EnableVectorStore bool
 	// Service identities allowed to call the VectorStore write RPCs.
 	// Empty = no identity restriction.
 	VectorAllowedWriteServices []string

@@ -6152,7 +6152,8 @@
       "metadata": {
         "name": "unifiedStorage.vectorStore",
         "resourceVersion": "1785880163909",
-        "creationTimestamp": "2026-08-04T21:49:23Z"
+        "creationTimestamp": "2026-08-04T21:49:23Z",
+        "deletionTimestamp": "2026-08-04T22:01:34Z"
       },
       "spec": {
         "description": "Enables the VectorStore write RPCs on the unified storage server",

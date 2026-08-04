@@ -950,10 +950,6 @@ const (
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
 
-	// FlagUnifiedStorageVectorStore
-	// Enables the VectorStore write RPCs on the unified storage server
-	FlagUnifiedStorageVectorStore = "unifiedStorage.vectorStore"
-
 	// FlagSplunkUseLegacyResultsApi
 	// Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2
 	FlagSplunkUseLegacyResultsApi = "splunk.useLegacyResultsApi"

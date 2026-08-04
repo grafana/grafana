@@ -2949,14 +2949,6 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-			Name:        "unifiedStorage.vectorStore",
-			Description: "Enables the VectorStore write RPCs on the unified storage server",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-			Generate:    Generate{Go: true},
-		},
-		{
 			Name:        "assistant.fullscreenWorkspace",
 			Description: "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
 			Stage:       FeatureStageExperimental,
