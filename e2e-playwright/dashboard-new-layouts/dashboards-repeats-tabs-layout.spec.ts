@@ -51,12 +51,12 @@ test.describe(
 
       await sidebar.tabOptions.repeatOptions.repeatByVariable('c1');
 
-      await checkRepeatedTabTitles(dashboardPage, selectors, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
+      await checkRepeatedTabTitles(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
 
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
-      await checkRepeatedTabTitles(dashboardPage, selectors, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
+      await checkRepeatedTabTitles(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
     });
 
     test('can update tab repeats with variable change', async ({ dashboardPage, selectors, page, components }) => {
@@ -75,7 +75,7 @@ test.describe(
       await page.locator('body').click({ position: { x: 0, y: 0 } }); // blur select
 
       // verify that repeats are present for first 3 values
-      await checkRepeatedTabTitles(dashboardPage, selectors, REPEAT_TITLE_BASE, REPEAT_OPTIONS.slice(0, -1));
+      await checkRepeatedTabTitles(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS.slice(0, -1));
 
       // verify there is no repeat with last value
       await expect(tabs.getTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeHidden();
@@ -100,12 +100,12 @@ test.describe(
 
       await sidebar.tabOptions.setTitle(`${NEW_TITLE_BASE}$c1`);
 
-      await checkRepeatedTabTitles(dashboardPage, selectors, NEW_TITLE_BASE, REPEAT_OPTIONS);
+      await checkRepeatedTabTitles(tabs, NEW_TITLE_BASE, REPEAT_OPTIONS);
 
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
-      await checkRepeatedTabTitles(dashboardPage, selectors, NEW_TITLE_BASE, REPEAT_OPTIONS);
+      await checkRepeatedTabTitles(tabs, NEW_TITLE_BASE, REPEAT_OPTIONS);
     });
 
     test('can update repeats after panel change', async ({ dashboardPage, selectors, page, components }) => {
@@ -370,7 +370,7 @@ test.describe(
       );
 
       // verify 5 tabs are present (4 repeats and 1 normal)
-      await checkRepeatedTabTitles(dashboardPage, selectors, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
+      await checkRepeatedTabTitles(tabs, REPEAT_TITLE_BASE, REPEAT_OPTIONS);
       await expect(tabs.getTitle('New tab')).toBeVisible();
 
       await controls.enterEditMode();
@@ -397,16 +397,10 @@ test.describe(
   }
 );
 
-async function checkRepeatedTabTitles(
-  dashboardPage: DashboardPage,
-  selectors: E2ESelectorGroups,
-  title: string,
-  options: Array<string | number>
-) {
-  const components = new Components(dashboardPage.ctx);
-  const tabs = new Tabs({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
-
-  for (const option of options) {
-    await expect(tabs.getTitle(`${title}${option}`)).toBeVisible();
-  }
+async function checkRepeatedTabTitles(tabs: Tabs, title: string, options: Array<string | number>) {
+  await test.step('Checking repeated tab titles', async () => {
+    for (const option of options) {
+      await expect(tabs.getTitle(`${title}${option}`)).toBeVisible();
+    }
+  });
 }
