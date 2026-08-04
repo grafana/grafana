@@ -7,8 +7,10 @@ import {
   type DataFrame,
   type DataLink,
   type EventBus,
+  FieldColorModeId,
   FieldType,
   type LinkModel,
+  ThresholdsMode,
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -118,6 +120,63 @@ const createNestedDataFrame = (meta?: DataFrame['meta']): DataFrame => {
       name: 'TestData',
       length: 2,
       meta,
+      fields: [
+        { name: 'Column A', type: FieldType.string, values: ['A1', 'A2'], config: { custom: {} } },
+        { name: 'Column B', type: FieldType.number, values: [1, 2], config: { custom: {} } },
+        { name: '__depth', type: FieldType.number, values: [0, 0], config: { custom: { hideFrom: { viz: true } } } },
+        { name: '__index', type: FieldType.number, values: [0, 1], config: { custom: { hideFrom: { viz: true } } } },
+        {
+          name: '__nestedFrames',
+          type: FieldType.nestedFrames,
+          values: [[processedNestedFrame], [processedNestedFrame]],
+          config: { custom: {} },
+        },
+      ],
+    })
+  );
+};
+
+/**
+ * A nested table where the apply-to-row background lives on a field *inside the nested frame*
+ * ("Nested B": 10 -> red, 20 -> blue via absolute thresholds), and the top-level frame has no
+ * apply-to-row field. Used to verify each nested row is colored from its own nested value.
+ */
+const createNestedDataFrameWithRowColor = (): DataFrame => {
+  const processedNestedFrame = withFieldOverrides(
+    toDataFrame({
+      name: 'NestedRowColor',
+      fields: [
+        { name: 'Nested A', type: FieldType.string, values: ['N1', 'N2'], config: { custom: {} } },
+        {
+          name: 'Nested B',
+          type: FieldType.number,
+          values: [10, 20],
+          config: {
+            color: { mode: FieldColorModeId.Thresholds },
+            thresholds: {
+              mode: ThresholdsMode.Absolute,
+              steps: [
+                { value: -Infinity, color: '#FF0000' },
+                { value: 15, color: '#0000FF' },
+              ],
+            },
+            custom: {
+              cellOptions: {
+                type: TableCellDisplayMode.ColorBackground,
+                mode: TableCellBackgroundDisplayMode.Basic,
+                applyToRow: true,
+              },
+            },
+          },
+        },
+      ],
+    })
+  );
+
+  return withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 2,
       fields: [
         { name: 'Column A', type: FieldType.string, values: ['A1', 'A2'], config: { custom: {} } },
         { name: 'Column B', type: FieldType.number, values: [1, 2], config: { custom: {} } },
@@ -551,6 +610,25 @@ describe('TableNG', () => {
         const expandedRow = container.querySelector('[aria-expanded="true"]');
         expect(expandedRow).toBeInTheDocument();
       }
+    });
+
+    it('colors each expanded nested row from its own nested apply-to-row field value (10 -> red, 20 -> blue)', async () => {
+      // Regression: apply-to-row coloring configured on a field *inside* the nested frame must
+      // resolve each nested row's background from that nested field's own value at the nested
+      // row index — not from the top-level frame (which here has no apply-to-row field at all).
+      window.HTMLElement.prototype.scrollIntoView = jest.fn();
+
+      const { container } = render(
+        <TableNG enableVirtualization={false} data={createNestedDataFrameWithRowColor()} width={800} height={600} />
+      );
+
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      // Each nested row's cells inherit the row background computed from that row's Nested B value.
+      const redRowCell = screen.getByText('N1').closest('[role="gridcell"]');
+      const blueRowCell = screen.getByText('N2').closest('[role="gridcell"]');
+      expect(redRowCell).toHaveStyle({ background: '#FF0000' }); // Nested B = 10 -> below threshold 15
+      expect(blueRowCell).toHaveStyle({ background: '#0000FF' }); // Nested B = 20 -> at/above threshold 15
     });
 
     it('auto-expands all rows when expandAllRows is set in frame meta', () => {
