@@ -3027,6 +3027,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.panelPluginTransformations",
+        "resourceVersion": "1785785398398",
+        "creationTimestamp": "2026-08-03T19:29:58Z"
+      },
+      "spec": {
+        "description": "Let panel plugins register transformations that run before user-configured transformations",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.queryVarEditorRedesign",
         "resourceVersion": "1781718345897",
         "creationTimestamp": "2026-06-17T17:45:45Z"
