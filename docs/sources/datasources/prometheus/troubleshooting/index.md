@@ -106,7 +106,7 @@ The following errors occur when Grafana cannot establish or maintain a connectio
 1. **Check for idle timeout issues.** If the connection drops after periods of inactivity, configure TCP keepalives on the host or add a keepalive setting to the PDC agent configuration.
 
 {{< admonition type="note" >}}
-PDC connectivity issues are almost always caused by networking on the customer side (DNS, firewall rules, routing), not by Grafana Cloud. The data source test passing doesn't guarantee sustained connectivity under load — it only verifies a single query succeeds.
+PDC connectivity issues are almost always caused by networking on the customer side (DNS, firewall rules, routing), not by Grafana Cloud. The data source test passing doesn't guarantee sustained connectivity under load. It only verifies a single query succeeds.
 {{< /admonition >}}
 
 For general PDC setup and configuration, refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/).
@@ -174,12 +174,12 @@ For Azure Managed Prometheus:
 
 1. Verify the Azure AD app registration's client secret hasn't expired.
 1. If using Managed Identity, ensure the Grafana instance's identity has the **Monitoring Data Reader** role on the Azure Monitor workspace.
-1. Check that **Forward OAuth identity** is not enabled alongside Azure AD authentication — both use the same HTTP authorization headers and conflict with each other.
+1. Check that **Forward OAuth identity** is not enabled alongside Azure AD authentication. Both use the same HTTP authorization headers and conflict with each other.
 
 General steps:
 
 1. Check the Grafana server logs for token refresh errors around the time alerts fail.
-1. Verify the data source test (**Save & test**) passes — this confirms current credentials are valid but doesn't guarantee the alerting backend has a fresh token.
+1. Verify the data source test (**Save & test**) passes. This confirms current credentials are valid but doesn't guarantee the alerting backend has a fresh token.
 1. If the issue persists, set **Alert state if execution error or timeout** to **Keep Last State** to prevent false alarms while investigating. Refer to [Configure alert state for execution errors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/alerting/#configure-alert-state-for-execution-errors).
 
 {{< admonition type="note" >}}
@@ -352,7 +352,7 @@ The following errors occur when there are issues with PromQL syntax or query exe
 
 | Cause                                         | Solution                                                                                                                                              |
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `increase()` fractional values                | Expected behavior — Prometheus uses linear interpolation. Use `ceil()` or `floor()` if you need integers.                                             |
+| `increase()` fractional values                | Expected behavior. Prometheus uses linear interpolation. Use `ceil()` or `floor()` if you need integers.                                              |
 | `rate()` grows over time                      | Multiple instances write to the same series without unique labels. Ensure each target has unique `instance`/`pod` labels and aggregate with `sum by`. |
 | Counter reset spikes after pod restarts       | Use `$__rate_interval` or a longer range vector to smooth spikes. Investigate frequent restarts as the root cause.                                    |
 | Values differ between edit mode and dashboard | Panel width affects `$__interval` which affects `rate()` window calculations. Set a **Min step** on the query.                                        |
@@ -407,7 +407,7 @@ The following errors occur when the data source is not configured correctly.
 
 **Symptom:** Queries using `$__rate_interval` return no data, return different values in edit mode versus the dashboard, or produce unexpected gaps.
 
-**Cause:** `$__rate_interval` is calculated as `max($__interval + scrape_interval, 4 * scrape_interval)`. If any input to this formula is incorrect, the resulting window is wrong — either too small (no data) or inconsistent across contexts.
+**Cause:** `$__rate_interval` is calculated as `max($__interval + scrape_interval, 4 * scrape_interval)`. If any input to this formula is incorrect, the resulting window is wrong: either too small (no data) or inconsistent across contexts.
 
 **Common causes and solutions:**
 
@@ -421,7 +421,7 @@ The following errors occur when the data source is not configured correctly.
 **To debug the current value:**
 
 1. Open the query inspector in a panel (click the panel title, then **Inspect** > **Query**).
-1. Look at the expanded query sent to Prometheus — the actual interval value replacing `$__rate_interval` is visible in the request.
+1. Look at the expanded query sent to Prometheus. The actual interval value replacing `$__rate_interval` is visible in the request.
 1. Compare this value against your actual scrape interval. If it's smaller than your scrape interval, you need to configure the data source scrape interval or set a Min step.
 
 For detailed documentation on how `$__rate_interval` works and how to configure it, refer to [Use `$__rate_interval`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/template-variables/#use-__rate_interval).
@@ -459,7 +459,7 @@ The following issues affect query speed and data freshness.
 1. Verify the **Scrape interval** is configured correctly in the data source settings.
 1. Ensure Prometheus has finished scraping the target (there's a delay between the scrape interval and data availability).
 1. Check for clock synchronization issues between Grafana and Prometheus (use NTP).
-1. For `rate()` and similar functions, the most recent partial scrape interval won't have enough data points — this is expected.
+1. For `rate()` and similar functions, the most recent partial scrape interval won't have enough data points. This is expected.
 
 ### Exemplars not showing
 
@@ -510,7 +510,7 @@ The following issues occur when using Prometheus with Grafana Alerting.
 
 **Symptom:** Alert rules intermittently fire due to execution errors rather than genuine threshold breaches. On-call teams receive false positive notifications. Alert state history shows error states caused by transient backend issues (network blips, HTTP 502/500 responses, timeouts) rather than actual metric conditions being met.
 
-**Cause:** By default, when an alert rule encounters an execution error or timeout, Grafana sets the alert state to **Alerting** — which fires the alert. Transient connectivity issues between Grafana and Prometheus (i/o timeouts, deadline exceeded, brief outages) trigger this behavior even though the underlying metric hasn't crossed its threshold.
+**Cause:** By default, when an alert rule encounters an execution error or timeout, Grafana sets the alert state to **Alerting**, which fires the alert. Transient connectivity issues between Grafana and Prometheus (i/o timeouts, deadline exceeded, brief outages) trigger this behavior even though the underlying metric hasn't crossed its threshold.
 
 **Solution:**
 
@@ -524,8 +524,8 @@ This ensures the alert retains its previous state during transient errors and on
 
 1. Network stability between Grafana and Prometheus.
 1. Prometheus resource utilization (CPU, memory, disk I/O).
-1. The **Query timeout** setting in the data source configuration — increase it if complex queries regularly exceed the limit.
-1. Query complexity — simplify queries or use recording rules to pre-compute expensive expressions.
+1. The **Query timeout** setting in the data source configuration. Increase it if complex queries regularly exceed the limit.
+1. Query complexity. Simplify queries or use recording rules to pre-compute expensive expressions.
 
 For configuration details, refer to [Configure alert state for execution errors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/alerting/#configure-alert-state-for-execution-errors).
 

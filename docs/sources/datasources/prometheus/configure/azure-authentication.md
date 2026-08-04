@@ -49,9 +49,9 @@ To determine if your Prometheus data sources have been migrated:
 
 The banner displays one of the following messages:
 
-- **"Migration Notice"** — The data source has been migrated to the Azure Monitor Managed Service for Prometheus plugin.
-- **"Deprecation Notice"** — The data source hasn't been migrated yet.
-- **No banner** — No migration is needed (the data source doesn't use Azure AD authentication).
+- **"Migration Notice":** The data source has been migrated to the Azure Monitor Managed Service for Prometheus plugin.
+- **"Deprecation Notice":** The data source hasn't been migrated yet.
+- **No banner:** No migration is needed (the data source doesn't use Azure AD authentication).
 
 ## Configure the Azure Monitor Managed Service for Prometheus data source
 
@@ -209,7 +209,7 @@ echo "$response_body" | jq -c '.[] | select(.jsonData["prometheus-type-migration
     read_only=$(echo "$data" | jq -r '.readOnly // false')
 
     if [[ "$read_only" == "true" ]]; then
-        log_message "$uid is readOnly — edit the type to 'prometheus' in the provisioning file instead."
+        log_message "$uid is readOnly; edit the type to 'prometheus' in the provisioning file instead."
         continue
     fi
 

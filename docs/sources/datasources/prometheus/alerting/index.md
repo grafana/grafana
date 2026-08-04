@@ -74,9 +74,9 @@ The **pending period** determines how long a condition must be continuously true
 
 Choose evaluation intervals based on your use case:
 
-- **15s–30s** — Critical infrastructure alerts where fast detection matters.
-- **1m** — Standard monitoring alerts (recommended default).
-- **5m** — Non-urgent or noisy metrics where you want to reduce evaluation load.
+- **15s–30s:** Critical infrastructure alerts where fast detection matters.
+- **1m:** Standard monitoring alerts (recommended default).
+- **5m:** Non-urgent or noisy metrics where you want to reduce evaluation load.
 
 ## Example alert queries
 
@@ -137,7 +137,7 @@ up{job="myservice"}
 
 ### Alert when a metric disappears
 
-Use `absent()` to detect when a metric stops being scraped entirely — for example, when a service crashes and no longer reports metrics:
+Use `absent()` to detect when a metric stops being scraped entirely, for example, when a service crashes and no longer reports metrics:
 
 **Query A:**
 
@@ -157,19 +157,19 @@ absent_over_time(up{job="myservice"}[5m])
 
 Use multiple queries and expressions to alert only when multiple conditions are true simultaneously. This reduces noise by avoiding alerts during low-traffic periods.
 
-**Query A** — P95 latency:
+**Query A** (P95 latency):
 
 ```promql
 histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="api"}[$__rate_interval])) by (le))
 ```
 
-**Query B** — Request rate:
+**Query B** (request rate):
 
 ```promql
 sum(rate(http_requests_total{job="api"}[$__rate_interval]))
 ```
 
-**Expression C** — Math (both conditions must be true):
+**Expression C** (Math, where both conditions must be true):
 
 ```
 $A > 2 && $B > 100
@@ -183,9 +183,9 @@ $A > 2 && $B > 100
 
 ### When to use recording rules
 
-- **Dashboard panels that query the same expensive expression repeatedly** — pre-compute it once and query the result.
-- **Alert rules on complex expressions** — simplify the alert query by alerting on the pre-aggregated metric.
-- **High-cardinality aggregations** — reduce thousands of series to a handful of pre-computed series.
+- **Dashboard panels that query the same expensive expression repeatedly:** pre-compute it once and query the result.
+- **Alert rules on complex expressions:** simplify the alert query by alerting on the pre-aggregated metric.
+- **High-cardinality aggregations:** reduce thousands of series to a handful of pre-computed series.
 
 ### Set up Grafana-managed recording rules for Prometheus
 
@@ -204,7 +204,7 @@ $A > 2 && $B > 100
       ```
 
    1. Enter a metric name for the result (for example, `service:http_requests:rate5m`). Follow the Prometheus [recording rule naming convention](https://prometheus.io/docs/practices/rules/#naming-and-aggregation): `level:metric:operations`.
-   1. Select the **Target data source**—the Prometheus instance where results are written.
+   1. Select the **Target data source**, which is the Prometheus instance where results are written.
    1. Set the evaluation interval (for example, every 1 minute).
    1. Click **Save rule**.
 
@@ -216,7 +216,7 @@ $A > 2 && $B > 100
 
 ### Recording rules with PDC
 
-If your Prometheus instance is behind [Private data source connect (PDC)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/#private-data-source-connect), Grafana can write recording rule results through the PDC tunnel. No additional configuration is needed — PDC supports both reads and writes.
+If your Prometheus instance is behind [Private data source connect (PDC)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/#private-data-source-connect), Grafana can write recording rule results through the PDC tunnel. No additional configuration is needed, because PDC supports both reads and writes.
 
 ### Limitations
 
@@ -249,7 +249,7 @@ Complex queries with many nested functions or large result sets may timeout or f
 
 When using OAuth-authenticated Prometheus endpoints (Google Managed Prometheus, Azure Managed Prometheus), queries may succeed in Explore and dashboards but fail intermittently during alert evaluation. This happens because the alerting backend handles token refresh differently from the interactive query path.
 
-If you're using GCP, consider the **datasource-syncer** pattern — a sidecar process that refreshes OAuth tokens and updates the data source credentials on a schedule shorter than the token lifetime.
+If you're using GCP, consider the **datasource-syncer** pattern, a sidecar process that refreshes OAuth tokens and updates the data source credentials on a schedule shorter than the token lifetime.
 
 For detailed troubleshooting steps, refer to [OAuth token expiration errors](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/troubleshooting/#oauth-token-expiration-errors-gcp-and-azure).
 
@@ -259,15 +259,15 @@ Grafana can display Prometheus alerting rules but can't create or modify them th
 
 ## Configure alert state for execution errors
 
-By default, when a Grafana-managed alert rule encounters an execution error or timeout (such as a network blip, i/o timeout, or a transient 502 from Prometheus), the rule enters an **Error** state — which fires the alert. This can cause false alarms and spam on-call teams when the underlying issue is a brief connectivity interruption rather than a genuine threshold breach.
+By default, when a Grafana-managed alert rule encounters an execution error or timeout (such as a network blip, i/o timeout, or a transient 502 from Prometheus), the rule enters an **Error** state, which fires the alert. This can cause false alarms and spam on-call teams when the underlying issue is a brief connectivity interruption rather than a genuine threshold breach.
 
 To prevent false positives from transient errors, configure the **Alert state if execution error or timeout** setting on each alert rule:
 
 1. Open the alert rule for editing.
 1. In the alert conditions section, locate **Alert state if execution error or timeout**.
 1. Change the value from **Alerting** (default) to one of:
-   - **Keep Last State** — The alert retains its previous state (firing or normal) until a successful evaluation occurs. This is the recommended setting for most Prometheus alert rules.
-   - **OK** — The alert is set to normal during the error, preventing it from firing.
+   - **Keep Last State:** The alert retains its previous state (firing or normal) until a successful evaluation occurs. This is the recommended setting for most Prometheus alert rules.
+   - **OK:** The alert is set to normal during the error, preventing it from firing.
 1. Click **Save rule**.
 
 {{< admonition type="note" >}}
