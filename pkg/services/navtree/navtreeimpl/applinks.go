@@ -140,8 +140,10 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 
 // addAssistantWatchersToAlerting adds the Assistant's Watchers page to the Alerting
 // section, right below Alert rules. The page belongs to the Assistant plugin, so the
-// entry is driven by that plugin's own "Watchers" include: it disappears on plugin
-// versions that don't ship the page, and it honours the RBAC action guarding it.
+// entry is driven by that plugin's own "Watchers" include and passes through the same
+// checks the include gets under the Assistant section: it disappears on plugin versions
+// that don't ship the page, in the environments where the page is not offered, and for
+// users without the RBAC action guarding it.
 func (s *ServiceImpl) addAssistantWatchersToAlerting(treeRoot *navtree.NavTreeRoot, plugin pluginstore.Plugin, c *contextmodel.ReqContext) {
 	alertingNode := treeRoot.FindById(navtree.NavIDAlerting)
 	if alertingNode == nil {
@@ -156,7 +158,15 @@ func (s *ServiceImpl) addAssistantWatchersToAlerting(treeRoot *navtree.NavTreeRo
 		}
 	}
 
-	if watchersInclude == nil || !s.hasAccessToInclude(c, plugin.ID)(watchersInclude) {
+	if watchersInclude == nil {
+		return
+	}
+
+	if !s.shouldIncludeAssistantNavigation(plugin, watchersInclude, s.isAssistantTrialMode(plugin, c)) {
+		return
+	}
+
+	if !s.hasAccessToInclude(c, plugin.ID)(watchersInclude) {
 		return
 	}
 

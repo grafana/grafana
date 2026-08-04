@@ -1003,22 +1003,27 @@ func TestAddAssistantWatchersToAlerting(t *testing.T) {
 		},
 	}
 
-	newService := func(plugins ...pluginstore.Plugin) ServiceImpl {
+	// Watchers is only offered on Cloud/Enterprise, so the default service is a Cloud one.
+	newServiceWithCfg := func(cfg *setting.Cfg, jsonData map[string]any, plugins ...pluginstore.Plugin) ServiceImpl {
 		ps := map[string]*pluginsettings.DTO{}
 		list := make([]pluginstore.Plugin, 0, len(plugins))
 		for _, p := range plugins {
-			ps[p.ID] = &pluginsettings.DTO{OrgID: 1, PluginID: p.ID, PluginVersion: "1.0.0", Enabled: true}
+			ps[p.ID] = &pluginsettings.DTO{OrgID: 1, PluginID: p.ID, PluginVersion: "1.0.0", Enabled: true, JSONData: jsonData}
 			list = append(list, p)
 		}
 		return ServiceImpl{
 			log:                 log.New("navtree"),
-			cfg:                 setting.NewCfg(),
+			cfg:                 cfg,
 			accessControl:       accesscontrolmock.New().WithPermissions(permissions),
 			pluginSettings:      &pluginsettings.FakePluginSettings{Plugins: ps},
 			features:            featuremgmt.WithFeatures(),
 			pluginStore:         &pluginstore.FakePluginStore{PluginList: list},
 			navigationAppConfig: map[string]NavigationAppConfig{},
 		}
+	}
+
+	newService := func(plugins ...pluginstore.Plugin) ServiceImpl {
+		return newServiceWithCfg(&setting.Cfg{StackID: "1"}, nil, plugins...)
 	}
 
 	newAlertingTree := func(alertRulesID string) *navtree.NavTreeRoot {
@@ -1085,6 +1090,30 @@ func TestAddAssistantWatchersToAlerting(t *testing.T) {
 		require.NoError(t, service.addAppLinks(treeRoot, reqCtx))
 
 		require.Nil(t, treeRoot.FindById("standalone-plugin-page-assistant-watchers"))
+	})
+
+	t.Run("Should not add Watchers on OSS, where the Assistant does not offer the page", func(t *testing.T) {
+		service := newServiceWithCfg(setting.NewCfg(), nil, assistantApp)
+		treeRoot := newAlertingTree("alert-list")
+		require.NoError(t, service.addAppLinks(treeRoot, reqCtx))
+
+		require.Nil(t, treeRoot.FindById("standalone-plugin-page-assistant-watchers"))
+	})
+
+	t.Run("Should not add Watchers in trial mode", func(t *testing.T) {
+		service := newServiceWithCfg(&setting.Cfg{StackID: "1"}, map[string]any{"trialMode": true}, assistantApp)
+		treeRoot := newAlertingTree("alert-list")
+		require.NoError(t, service.addAppLinks(treeRoot, reqCtx))
+
+		require.Nil(t, treeRoot.FindById("standalone-plugin-page-assistant-watchers"))
+	})
+
+	t.Run("Should add Watchers on Enterprise", func(t *testing.T) {
+		service := newServiceWithCfg(&setting.Cfg{IsEnterprise: true}, nil, assistantApp)
+		treeRoot := newAlertingTree("alert-list")
+		require.NoError(t, service.addAppLinks(treeRoot, reqCtx))
+
+		require.NotNil(t, treeRoot.FindById("standalone-plugin-page-assistant-watchers"))
 	})
 
 	t.Run("Should not add Watchers when the plugin version has no Watchers page", func(t *testing.T) {
