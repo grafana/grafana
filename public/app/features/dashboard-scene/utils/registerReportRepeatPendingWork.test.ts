@@ -21,6 +21,21 @@ function buildSupportingController() {
   return { controller, registerPendingWork, release };
 }
 
+// Variant returning a distinct release mock per registration, for supersede scenarios.
+function buildMultiHoldController() {
+  const releases: jest.Mock[] = [];
+  const registerPendingWork = jest.fn(() => {
+    const release = jest.fn();
+    releases.push(release);
+    return release;
+  });
+  const controller = Object.assign(new behaviors.SceneQueryController(), { registerPendingWork });
+
+  jest.spyOn(sceneGraph, 'getQueryController').mockReturnValue(controller);
+
+  return { controller, registerPendingWork, releases };
+}
+
 describe('registerReportRepeatPendingWork', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -146,6 +161,76 @@ describe('registerReportRepeatPendingWork', () => {
       jest.advanceTimersByTime(RELEASE_FALLBACK_MS);
 
       expect(release).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('when the same origin re-registers before the previous clones activated', () => {
+    it('releases the superseded hold exactly once and keeps the new hold pending', () => {
+      const { releases } = buildMultiHoldController();
+      const origin = new TestSceneObject({});
+
+      registerReportRepeatPendingWork(origin, [new TestSceneObject({})]);
+      registerReportRepeatPendingWork(origin, [new TestSceneObject({})]);
+
+      expect(releases[0]).toHaveBeenCalledTimes(1);
+      expect(releases[1]).not.toHaveBeenCalled();
+    });
+
+    it('registers the new hold before releasing the old one, so the running count never crosses zero', () => {
+      const { registerPendingWork, releases } = buildMultiHoldController();
+      const origin = new TestSceneObject({});
+
+      registerReportRepeatPendingWork(origin, [new TestSceneObject({})]);
+      registerReportRepeatPendingWork(origin, [new TestSceneObject({})]);
+
+      expect(registerPendingWork.mock.invocationCallOrder[1]).toBeLessThan(releases[0].mock.invocationCallOrder[0]);
+    });
+
+    it('after superseding, the old fallback timeout does not release the old hold a second time', () => {
+      const { releases } = buildMultiHoldController();
+      const origin = new TestSceneObject({});
+
+      registerReportRepeatPendingWork(origin, [new TestSceneObject({})]);
+      registerReportRepeatPendingWork(origin, [new TestSceneObject({})]);
+      jest.advanceTimersByTime(RELEASE_FALLBACK_MS);
+
+      expect(releases[0]).toHaveBeenCalledTimes(1);
+    });
+
+    it('when the re-repeat produces no clones, then it releases the previous hold without registering a new one', () => {
+      const { registerPendingWork, releases } = buildMultiHoldController();
+      const origin = new TestSceneObject({});
+
+      registerReportRepeatPendingWork(origin, [new TestSceneObject({})]);
+      registerReportRepeatPendingWork(origin, []);
+
+      expect(registerPendingWork).toHaveBeenCalledTimes(1);
+      expect(releases[0]).toHaveBeenCalledTimes(1);
+    });
+
+    it('holds from different origins stay independent', () => {
+      const { releases } = buildMultiHoldController();
+      const firstOrigin = new TestSceneObject({});
+      const secondOrigin = new TestSceneObject({});
+
+      registerReportRepeatPendingWork(firstOrigin, [new TestSceneObject({})]);
+      registerReportRepeatPendingWork(secondOrigin, [new TestSceneObject({})]);
+
+      expect(releases[0]).not.toHaveBeenCalled();
+      expect(releases[1]).not.toHaveBeenCalled();
+    });
+
+    it('when the discarded clones activate later, then they do not release the new hold', () => {
+      const { releases } = buildMultiHoldController();
+      const origin = new TestSceneObject({});
+      const discardedClone = new TestSceneObject({});
+
+      registerReportRepeatPendingWork(origin, [discardedClone]);
+      registerReportRepeatPendingWork(origin, [new TestSceneObject({})]);
+      discardedClone.activate();
+
+      expect(releases[0]).toHaveBeenCalledTimes(1);
+      expect(releases[1]).not.toHaveBeenCalled();
     });
   });
 });

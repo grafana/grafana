@@ -15,6 +15,11 @@ function supportsPendingWork(controller: SceneQueryControllerLike): controller i
   return 'registerPendingWork' in controller && typeof controller.registerPendingWork === 'function';
 }
 
+// Latest hold per repeater. A re-repeat discards the previous clones, which will never
+// activate, so the superseded hold must be released eagerly instead of waiting for the
+// fallback timeout.
+const activeHolds = new WeakMap<SceneObject, () => void>();
+
 /**
  * Holds the scene query controller "running" until every given repeat clone has activated
  * (React mounted it). This closes the race where the running-query count briefly hits zero
@@ -26,7 +31,14 @@ function supportsPendingWork(controller: SceneQueryControllerLike): controller i
  * dashboard_view metrics for every user).
  */
 export function registerReportRepeatPendingWork(origin: SceneObject, clones: SceneObject[]): void {
-  if (clones.length === 0 || !isRenderTarget()) {
+  if (!isRenderTarget()) {
+    return;
+  }
+
+  const releasePrevious = activeHolds.get(origin);
+
+  if (clones.length === 0) {
+    releasePrevious?.();
     return;
   }
 
@@ -36,6 +48,8 @@ export function registerReportRepeatPendingWork(origin: SceneObject, clones: Sce
   }
 
   const release = controller.registerPendingWork('repeat', origin);
+  // Register-then-release keeps the running count above zero across the swap.
+  releasePrevious?.();
 
   let released = false;
   let fallbackTimeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -47,6 +61,8 @@ export function registerReportRepeatPendingWork(origin: SceneObject, clones: Sce
       release();
     }
   };
+
+  activeHolds.set(origin, releaseOnce);
 
   fallbackTimeoutId = setTimeout(releaseOnce, RELEASE_FALLBACK_MS);
 
