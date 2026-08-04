@@ -43,21 +43,20 @@ To do so, execute `go mod tidy` to ensure that `go.mod` and `go.sum` are updated
 
 ## Node.js dependencies
 
-Updated using `yarn`:
+Updated using `pnpm`:
 
 - `package.json`
 
-## Yarn
+## pnpm
 
-The Yarn version is set in the `packageManager` field in `package.json` and the `yarnPath` setting in `.yarnrc.yml`. Several workspaces (built-in plugins, e2e test plugins, and some packages) pin their own Yarn version in their `package.json`. A constraint in `yarn.config.cjs` keeps them in sync with the root.
+The pnpm version is set in the `packageManager` field in `package.json`, and corepack provisions it from there. Several workspaces (built-in plugins, e2e test plugins, and some packages) pin their own pnpm version in their `package.json`, because corepack reads the nearest `package.json` when you run a command from inside one.
 
-To upgrade Yarn:
+To upgrade pnpm:
 
-1. Run `yarn set version <version>`. This updates `yarnPath` in `.yarnrc.yml`, adds the new release to `.yarn/releases/`, and updates the `packageManager` field in the root `package.json`.
-1. Run `yarn constraints --fix` to propagate the new version to the `packageManager` field of every workspace that pins its own Yarn version. Running `yarn constraints` without `--fix` reports any files that are out of sync.
-1. Check that the previous release file was removed from `.yarn/releases/`.
-1. Update any documentation that mentions the Yarn version.
-1. Run `yarn install` to verify the new version installs dependencies cleanly.
+1. Update the `packageManager` field in the root `package.json` to `pnpm@<version>`.
+1. Run `pnpm run lint:package-manager -- --fix` to propagate the new version to every workspace that pins its own. Running it without `--fix` reports any files that are out of sync; CI runs it that way.
+1. Update any documentation that mentions the pnpm version.
+1. Run `pnpm install` to verify the new version installs dependencies cleanly.
 
 ## Where to make changes
 

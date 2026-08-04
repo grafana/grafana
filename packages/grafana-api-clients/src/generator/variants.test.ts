@@ -4,7 +4,7 @@ describe('variantFor', () => {
   it('returns the OSS variant for false', () => {
     const v = variantFor(false);
     expect(v.clientBase).toContain(PACKAGE_ROOT);
-    expect(v.generateCommand).toBe('yarn generate-apis');
+    expect(v.generateCommand).toBe('pnpm run generate-apis');
   });
 
   it('returns the enterprise variant for true', () => {

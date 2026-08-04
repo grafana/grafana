@@ -9,10 +9,10 @@ The examples below add Python support. Replace all Python references with the la
 1. Add the CodeMirror language package to `@grafana/ui` from the repository root:
 
    ```bash
-   yarn workspace @grafana/ui add @codemirror/lang-python
+   pnpm --filter @grafana/ui add @codemirror/lang-python
    ```
 
-   Commit the resulting changes to `packages/grafana-ui/package.json` and `yarn.lock`.
+   Commit the resulting changes to `packages/grafana-ui/package.json` and `pnpm-lock.yaml`.
 
 2. Add the public language name to `CodeMirrorEditorLanguage` in `types.ts`:
 
@@ -43,8 +43,8 @@ The examples below add Python support. Replace all Python references with the la
 Run the shared editor tests and formatting checks from the repository root:
 
 ```bash
-yarn jest --no-watch packages/grafana-ui/src/components/CodeMirror/languageLoader.test.ts packages/grafana-ui/src/components/CodeMirror/CodeEditor.test.tsx
-yarn prettier --check packages/grafana-ui/src/components/CodeMirror/ADDING_LANGUAGES.md
+pnpm exec jest --no-watch packages/grafana-ui/src/components/CodeMirror/languageLoader.test.ts packages/grafana-ui/src/components/CodeMirror/CodeEditor.test.tsx
+pnpm exec prettier --check packages/grafana-ui/src/components/CodeMirror/ADDING_LANGUAGES.md
 ```
 
 Use the CodeMirrorEditor Storybook story to confirm syntax highlighting and any language-specific behavior in the browser.

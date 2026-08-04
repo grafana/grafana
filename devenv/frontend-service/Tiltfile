@@ -13,26 +13,26 @@ port_faro     = base_port + 5   # +5  faro receiver
 port_goff     = base_port + 6   # +6  go feature flag
 # port_tilt   = base_port + 9   # +9  tilt UI (set in run.sh)
 
-# A cold build (yarn install + serial plugin builds + main webpack compile) can take
-# longer than Tilt's default 5m readiness timeout before 'yarn start' is ready, which
-# fails `tilt ci` in CI even though the build succeeds. Raise the readiness timeout.
+# `pnpm start` builds the grafana bundle plus its 16 decoupled-plugin deps (the
+# `start` nx target's dependsOn). With a cold cache in `tilt ci` that exceeds the
+# default 5m readiness window, so the assets-manifest probe times out. Give it room.
 ci_settings(readiness_timeout='15m')
 
 # --- Frontend processes
 local_resource(
-  'yarn install',
-  cmd='yarn install',
+  'pnpm install',
+  cmd='pnpm install',
   deps=[
-    'yarn.lock',
+    'pnpm-lock.yaml',
   ],
   labels=["local"]
 )
 
 local_resource(
-  'yarn start',
+  'pnpm start',
   cmd='rm -rf public/build/assets-manifest-react19.json',
-  serve_cmd='yarn start:noLint',
-  resource_deps=['yarn install'],
+  serve_cmd='pnpm run start:noLint',
+  resource_deps=['pnpm install'],
 
   # Note: this doesn't seem to work as expected - the assets-manifest is somehow created before
   # the webpack build is complete?
@@ -114,11 +114,11 @@ dc_resource("proxy",
   labels=["services"]
 )
 dc_resource("grafana-api",
-  resource_deps=["yarn start", "backend-build"],
+  resource_deps=["pnpm start", "backend-build"],
   labels=["services"]
 )
 dc_resource("frontend-service",
-  resource_deps=["yarn start", "backend-build"],
+  resource_deps=["pnpm start", "backend-build"],
   labels=["services"],
 )
 dc_resource("alloy", labels=["observability"])

@@ -43,6 +43,6 @@
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --maxWorkers 4"
   },
-  "packageManager": "yarn@4.17.1",
+  "packageManager": "pnpm@11.19.0",
   "type": "module"
 }

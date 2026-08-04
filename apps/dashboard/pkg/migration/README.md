@@ -249,13 +249,13 @@ Both backend and frontend outputs are passed through the same Scene load/save cy
 **Test execution:**
 ```bash
 # V1 to V2 conversion parity tests
-yarn test transformSaveModelV1ToV2.test.ts
+pnpm run test transformSaveModelV1ToV2.test.ts
 
 # V2 to V1 conversion parity tests
-yarn test transformSaveModelV2ToV1.test.ts
+pnpm run test transformSaveModelV2ToV1.test.ts
 
 # Schema migration parity tests
-yarn test DashboardMigratorToBackend.test.ts
+pnpm run test DashboardMigratorToBackend.test.ts
 ```
 
 **Test approach (v1 -> v2):**

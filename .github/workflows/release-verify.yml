@@ -28,11 +28,11 @@ jobs:
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
 
-      - name: Install yarn dependencies
-        uses: ./.github/actions/yarn-install
+      - name: Install dependencies
+        uses: ./.github/actions/pnpm-install
 
       - name: Build test plugins
-        run: yarn e2e:plugin:build
+        run: pnpm run e2e:plugin:build
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
@@ -73,7 +73,7 @@ jobs:
             > grafana-server/grafana.log 2>&1 &
 
       - name: Install Playwright browsers
-        run: yarn playwright install chromium --with-deps
+        run: pnpm exec playwright install chromium --with-deps
 
       - name: Wait for Grafana server to start
         run: |
@@ -92,7 +92,7 @@ jobs:
         env:
           GRAFANA_URL: http://localhost:3001
           CI: true
-        run: yarn e2e:acceptance --reporter=dot,blob --output=playwright-test-results
+        run: pnpm run e2e:acceptance --reporter=dot,blob --output=playwright-test-results
 
       - name: Upload Playwright blob report
         if: success() || failure()

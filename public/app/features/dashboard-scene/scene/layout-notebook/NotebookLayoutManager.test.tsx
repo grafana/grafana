@@ -58,7 +58,7 @@ describe('NotebookLayoutManager', () => {
     });
 
     // The annotation carries the real check: serialize() is typed as the notebook's own kind, so
-    // widening it back to the dashboard layout union fails `yarn typecheck`. It does not fail this
+    // widening it back to the dashboard layout union fails `pnpm typecheck`. It does not fail this
     // test run, since jest strips the types.
     const result: NotebookLayoutKind = manager.serialize();
 

@@ -18,11 +18,12 @@ runs:
       env:
         VERSION: ${{ inputs.version }}
       run: |
-        yarn install
+        corepack enable
+        pnpm install
         npm version "$VERSION" --no-git-tag-version
-        yarn run lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
-        yarn install
-        yarn prettier:write
+        pnpm exec lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
+        pnpm install
+        pnpm run prettier:write
     - name: make gen-cue
       shell: bash
       run: make gen-cue

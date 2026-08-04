@@ -181,7 +181,7 @@ describe('MyComponent', () => {
 
 If you need to modify the Sass variable files, we recommend that you migrate the styles to [Emotion](https://emotion.sh/docs/introduction).
 
-For the following variables to apply, you need to run this `yarn dev` task:
+For the following variables to apply, you need to run this `pnpm run dev` task:
 
 - `[_variables|_variables.dark|_variables.light].generated.scss`: These files must be referenced in the main Sass files for Sass variables to be available.
 

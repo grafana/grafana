@@ -408,7 +408,7 @@ See also the `add-e2e-selectors` skill, `contribute/style-guides/e2e-playwright.
 
 ## Verify
 
-- `yarn test <path>` (add `--watchAll=false`) — the new tests pass and actually fail when the
+- `pnpm test <path>` (add `--watchAll=false`) — the new tests pass and actually fail when the
   asserted value is broken (mutate the expected value once to confirm it's not a no-op).
-- For E2E: `yarn e2e:playwright <spec>` (it starts its own server).
-- `yarn typecheck` if selectors or casts were added.
+- For E2E: `pnpm e2e:playwright <spec>` (it starts its own server).
+- `pnpm typecheck` if selectors or casts were added.

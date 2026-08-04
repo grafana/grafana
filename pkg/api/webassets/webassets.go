@@ -156,7 +156,7 @@ func readWebAssets(r io.Reader) (*dtos.EntryPointAssets, error) {
 	}
 
 	if entryPoints.App == nil || len(entryPoints.App.Assets.JS) == 0 {
-		return nil, fmt.Errorf("missing app entry, try running `yarn build`")
+		return nil, fmt.Errorf("missing app entry, try running `pnpm run build`")
 	}
 
 	rsp := &dtos.EntryPointAssets{

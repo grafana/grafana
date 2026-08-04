@@ -35,7 +35,7 @@ async function readEntrypoints(manifestPath: string): Promise<Record<string, Ent
   try {
     contents = await readFile(manifestPath, 'utf8');
   } catch (err) {
-    throw new Error(`Could not read ${manifestPath}. Run 'yarn build' first.`, { cause: err });
+    throw new Error(`Could not read ${manifestPath}. Run 'pnpm run build' first.`, { cause: err });
   }
 
   return JSON.parse(contents).entrypoints;

@@ -317,11 +317,11 @@ See `packages/grafana-e2e-selectors/src/selectors/README.md` and
 
 ## Verify
 
-- `yarn typecheck` — confirms the selector path and any function signature resolve. This runs
+- `pnpm typecheck` — confirms the selector path and any function signature resolve. This runs
   the whole monorepo and takes several minutes; that's expected.
 - If a literal testid was replaced (Step 2 exception), grep the old literal across `public/`
   and `e2e-playwright/` — expect zero remaining references.
 - Selectors are resolved at runtime by the package's resolver; **no codegen step** is needed
   after editing `components.ts` / `pages.ts`.
-- `yarn lint` the changed files — the `import/order` rule cares where the new
+- `pnpm lint` the changed files — the `import/order` rule cares where the new
   `@grafana/e2e-selectors` import lands (alphabetical within the `@grafana/*` group).
