@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -10,6 +11,7 @@ import { type Playlist } from '../../api/clients/playlist/v1';
 import { backendSrv } from '../../core/services/backend_srv';
 
 import { PlaylistForm } from './PlaylistForm';
+import { PLAYLIST_CUSTOM_VIEW_MESSAGE, PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM } from './customView';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -19,6 +21,13 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
     return <>mocked-tag-filter</>;
   },
 }));
+
+const originalBroadcastChannel = Object.getOwnPropertyDescriptor(globalThis, 'BroadcastChannel');
+const mockBroadcastChannels: Array<{
+  name: string;
+  onmessage: ((event: MessageEvent) => void) | null;
+  close: jest.Mock;
+}> = [];
 
 const mockPlaylist: Playlist = {
   apiVersion: 'playlist.grafana.app/v1',
@@ -85,8 +94,8 @@ const mockEmptyPlaylist: Playlist = {
   status: {},
 };
 
-function getTestContext(playlist: Playlist = mockPlaylist) {
-  server.use(getCustomSearchHandler([]));
+function getTestContext(playlist: Playlist = mockPlaylist, dashboards: DashboardHit[] = []) {
+  server.use(getCustomSearchHandler(dashboards));
   const onSubmitMock = jest.fn();
   const { rerender } = render(<PlaylistForm onSubmit={onSubmitMock} playlist={playlist} />);
 
@@ -101,6 +110,14 @@ async function openItemOptions(itemValue: string) {
   const button = within(rowForItem(itemValue)).getByRole('button', { name: 'Settings' });
   if (button.getAttribute('aria-expanded') === 'false') {
     await userEvent.click(button);
+  }
+}
+
+async function openDashboardLinkPaste(itemValue: string) {
+  await openItemOptions(itemValue);
+  const row = rowForItem(itemValue);
+  if (!within(row).queryByRole('textbox', { name: new RegExp(`dashboard state for ${itemValue}`, 'i') })) {
+    await userEvent.click(within(row).getByRole('button', { name: 'Paste link' }));
   }
 }
 
@@ -125,6 +142,21 @@ async function deleteItem(row: HTMLElement) {
 describe('PlaylistForm', () => {
   beforeEach(() => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
+    mockBroadcastChannels.length = 0;
+    Object.defineProperty(globalThis, 'BroadcastChannel', {
+      configurable: true,
+      value: jest.fn().mockImplementation((name: string) => {
+        const channel = { name, onmessage: null, close: jest.fn() };
+        mockBroadcastChannels.push(channel);
+        return channel;
+      }),
+    });
+  });
+
+  afterAll(() => {
+    if (originalBroadcastChannel) {
+      Object.defineProperty(globalThis, 'BroadcastChannel', originalBroadcastChannel);
+    }
   });
 
   describe('when mounted with a playlist', () => {
@@ -253,6 +285,10 @@ describe('PlaylistForm', () => {
 
       expect(optionsButton).toHaveAttribute('aria-expanded', 'true');
       expect(screen.getByRole('textbox', { name: /interval for uid_1/i })).toBeInTheDocument();
+      expect(within(rowForItem('uid_1')).getByText('Configure')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Paste link' })).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Paste link' }));
       expect(screen.getByRole('textbox', { name: /dashboard state for uid_1/i })).toBeInTheDocument();
     });
 
@@ -367,8 +403,8 @@ describe('PlaylistForm', () => {
     it('renders the state stored on each playlist item', async () => {
       getTestContext(mockPerItemOptionsPlaylist);
 
-      await openItemOptions('uid_1');
-      await openItemOptions('uid_2');
+      await openDashboardLinkPaste('uid_1');
+      await openDashboardLinkPaste('uid_2');
       expect(screen.getByRole('textbox', { name: /dashboard state for uid_1/i })).toHaveValue(
         'var-host=host1&from=now-6h&to=now'
       );
@@ -378,12 +414,13 @@ describe('PlaylistForm', () => {
     it('accepts a copied dashboard URL and stores only its query string', async () => {
       const { onSubmitMock } = getTestContext();
 
-      await openItemOptions('uid_1');
+      await openDashboardLinkPaste('uid_1');
       const dashboardState = screen.getByRole('textbox', { name: /dashboard state for uid_1/i });
       dashboardState.focus();
       await userEvent.paste('https://grafana.example.com/d/uid/name?var-host=host1&from=now-6h&to=now');
 
-      expect(dashboardState).toHaveValue('var-host=host1&from=now-6h&to=now');
+      expect(screen.queryByRole('textbox', { name: /dashboard state for uid_1/i })).not.toBeInTheDocument();
+      expect(within(rowForItem('uid_1')).getByText('Configured')).toBeInTheDocument();
       await userEvent.click(screen.getByRole('button', { name: /save/i }));
 
       expect(onSubmitMock).toHaveBeenCalledWith(
@@ -411,12 +448,16 @@ describe('PlaylistForm', () => {
       );
       const { onSubmitMock } = getTestContext();
 
-      await openItemOptions('uid_1');
+      await openDashboardLinkPaste('uid_1');
       const dashboardState = screen.getByRole('textbox', { name: /dashboard state for uid_1/i });
       dashboardState.focus();
       await userEvent.paste('http://localhost:3000/goto/short123?orgId=1');
 
-      await waitFor(() => expect(dashboardState).toHaveValue('var-host=host2&from=now-12h&to=now'));
+      await waitFor(() => expect(within(rowForItem('uid_1')).getByText('Configured')).toBeInTheDocument());
+      await openDashboardLinkPaste('uid_1');
+      expect(screen.getByRole('textbox', { name: /dashboard state for uid_1/i })).toHaveValue(
+        'var-host=host2&from=now-12h&to=now'
+      );
       await userEvent.click(screen.getByRole('button', { name: /save/i }));
 
       expect(onSubmitMock).toHaveBeenCalledWith(
@@ -433,13 +474,54 @@ describe('PlaylistForm', () => {
       );
     });
 
+    it('applies a custom view configured on the dashboard', async () => {
+      const { onSubmitMock } = getTestContext(mockPerItemIntervalPlaylist, [
+        { name: 'uid_1', resource: 'dashboards', title: 'Dashboard one' },
+      ]);
+
+      await openItemOptions('uid_1');
+      const configureLink = await screen.findByRole('link', { name: 'Configure' });
+      await waitFor(() => expect(configureLink).not.toHaveAttribute('aria-disabled', 'true'));
+
+      const configureUrl = configureLink.getAttribute('href') ?? '';
+      const token = new URL(configureUrl, window.location.origin).searchParams.get(PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM);
+      expect(token).toBeTruthy();
+      await userEvent.click(configureLink);
+      const channel = mockBroadcastChannels[0];
+      expect(channel?.name).toContain(token);
+      channel?.onmessage?.(
+        new MessageEvent('message', {
+          data: {
+            type: PLAYLIST_CUSTOM_VIEW_MESSAGE,
+            token,
+            queryParams: 'var-host=host3&from=now-3h&to=now',
+          },
+        })
+      );
+
+      await waitFor(() => expect(within(rowForItem('uid_1')).getByText('Configured')).toBeInTheDocument());
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+      expect(onSubmitMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          spec: expect.objectContaining({
+            items: expect.arrayContaining([
+              expect.objectContaining({
+                value: 'uid_1',
+                queryParams: 'var-host=host3&from=now-3h&to=now',
+              }),
+            ]),
+          }),
+        })
+      );
+    });
+
     it('keeps parameters attached to the correct item when another row is removed', async () => {
       getTestContext(mockPerItemOptionsPlaylist);
 
       await deleteItem(rows()[0]);
       await waitFor(() => expect(rows()).toHaveLength(1));
 
-      await openItemOptions('uid_2');
+      await openDashboardLinkPaste('uid_2');
       expect(screen.getByRole('textbox', { name: /dashboard state for uid_2/i })).toHaveValue('var-host=host2');
     });
   });

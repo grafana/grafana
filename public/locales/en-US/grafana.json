@@ -7355,6 +7355,12 @@
       },
       "title-close": "Close"
     },
+    "playlist-view-banner": {
+      "body": "Adjust dashboard variables and time range, then use this view in your playlist.",
+      "cancel": "Cancel",
+      "title": "Configuring playlist custom view",
+      "use-view": "Use this view"
+    },
     "predefined-variables": {
       "label-all": "All",
       "label-custom": "Custom",
@@ -12966,8 +12972,12 @@
       "aria-label-item-dashboard-state": "Dashboard state for {{itemValue}}",
       "aria-label-item-interval": "Interval for {{itemValue}}",
       "aria-label-playlist-item": "Playlist item, {{itemType}}, {{itemValue}}",
+      "clear-view": "Clear",
+      "configure-view": "Configure",
+      "custom-view-configured": "Configured",
+      "custom-view-default": "Uses dashboard defaults",
+      "custom-view-label": "Custom view",
       "dashboard-state-empty-link": "This link has no custom dashboard state",
-      "dashboard-state-label": "Dashboard state",
       "dashboard-state-placeholder": "Paste a dashboard link",
       "dashboard-state-short-link-error": "Could not resolve this short link. Paste the full dashboard URL instead.",
       "dashboard-state-summary": "Custom view",
@@ -12978,7 +12988,7 @@
       "multiple-dashboards-found": "Multiple items found: {{items}}",
       "no-dashboards-found": "No dashboards found",
       "not-found": "Not found: {{items}}",
-      "open-dashboard": "Open dashboard",
+      "paste-dashboard-link": "Paste link",
       "settings": "Settings"
     },
     "start-modal": {
@@ -13025,7 +13035,7 @@
       "table-drag": "Reorder playlist item",
       "table-empty": "Playlist is empty. Add dashboards below.",
       "table-heading": "Dashboards",
-      "table-item-settings-help": "Use Settings to customize a dashboard's state or interval. Open a dashboard, adjust its variables and time range, then paste its link."
+      "table-item-settings-help": "Use Settings to configure a custom dashboard view or interval for each playlist item."
     },
     "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
     "title": "Edit playlist"

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { Draggable, type DraggableProvided } from '@hello-pangea/dnd';
 import pluralize from 'pluralize';
-import { type ClipboardEvent, type ReactNode, useId, useState } from 'react';
+import { type ClipboardEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react';
 
 import { type GrafanaTheme2, urlUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -23,6 +23,12 @@ import {
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
+import {
+  addPlaylistCustomViewToken,
+  createPlaylistCustomViewToken,
+  getPlaylistCustomViewChannelName,
+  isPlaylistCustomViewMessage,
+} from './customView';
 import { type PlaylistItemUI } from './types';
 import { getPlaylistShortLinkUid, isValidInterval, normalizePlaylistItemQueryParams } from './utils';
 
@@ -152,6 +158,9 @@ function PlaylistTableRow({
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [dashboardStateError, setDashboardStateError] = useState<string>();
   const [resolvingDashboardState, setResolvingDashboardState] = useState(false);
+  const [pasteLinkOpen, setPasteLinkOpen] = useState(false);
+  const [customViewToken] = useState(createPlaylistCustomViewToken);
+  const customViewChannel = useRef<BroadcastChannel>();
   const optionsId = useId();
   const optionSummary = [
     item.queryParams ? t('playlist.playlist-table-rows.dashboard-state-summary', 'Custom view') : undefined,
@@ -169,6 +178,26 @@ function PlaylistTableRow({
       })
     : undefined;
 
+  useEffect(() => () => customViewChannel.current?.close(), []);
+
+  const configureCustomViewUrl = dashboardUrl ? addPlaylistCustomViewToken(dashboardUrl, customViewToken) : undefined;
+  const beginCustomViewConfiguration = () => {
+    customViewChannel.current?.close();
+    const channel = new BroadcastChannel(getPlaylistCustomViewChannelName(customViewToken));
+    channel.onmessage = (event) => {
+      if (!isPlaylistCustomViewMessage(event.data) || event.data.token !== customViewToken) {
+        return;
+      }
+
+      setDashboardStateError(undefined);
+      setPasteLinkOpen(false);
+      onUpdateQueryParams?.(index, event.data.queryParams);
+      channel.close();
+      window.focus();
+    };
+    customViewChannel.current = channel;
+  };
+
   const onDashboardStatePaste = async (event: ClipboardEvent<HTMLInputElement>) => {
     const pastedValue = event.clipboardData.getData('text').trim();
     if (!pastedValue) {
@@ -181,6 +210,7 @@ function PlaylistTableRow({
     const shortLinkUid = getPlaylistShortLinkUid(pastedValue);
     if (!shortLinkUid) {
       onUpdateQueryParams?.(index, normalizePlaylistItemQueryParams(pastedValue) ?? '');
+      setPasteLinkOpen(false);
       return;
     }
 
@@ -198,6 +228,7 @@ function PlaylistTableRow({
         return;
       }
       onUpdateQueryParams?.(index, dashboardState);
+      setPasteLinkOpen(false);
     } catch {
       setDashboardStateError(
         t(
@@ -276,44 +307,81 @@ function PlaylistTableRow({
             <div className={styles.options} id={optionsId}>
               <Field
                 noMargin
-                label={t('playlist.playlist-table-rows.dashboard-state-label', 'Dashboard state')}
+                label={t('playlist.playlist-table-rows.custom-view-label', 'Custom view')}
                 invalid={!!dashboardStateError}
                 error={dashboardStateError}
                 loading={resolvingDashboardState}
               >
-                <Input
-                  type="text"
-                  value={item.queryParams ?? ''}
-                  placeholder={t('playlist.playlist-table-rows.dashboard-state-placeholder', 'Paste a dashboard link')}
-                  title={t(
-                    'playlist.playlist-table-rows.dashboard-state-title',
-                    'Paste a dashboard link or enter its URL state'
-                  )}
-                  aria-label={t(
-                    'playlist.playlist-table-rows.aria-label-item-dashboard-state',
-                    'Dashboard state for {{itemValue}}',
-                    { itemValue: item.value }
-                  )}
-                  loading={resolvingDashboardState}
-                  addonAfter={
-                    dashboardUrl ? (
+                <div className={styles.customViewEditor}>
+                  <div className={styles.customViewControls}>
+                    <Text variant="bodySmall" color="secondary">
+                      {item.queryParams
+                        ? t('playlist.playlist-table-rows.custom-view-configured', 'Configured')
+                        : t('playlist.playlist-table-rows.custom-view-default', 'Uses dashboard defaults')}
+                    </Text>
+                    <div className={styles.customViewActions}>
                       <LinkButton
-                        href={dashboardUrl}
+                        size="sm"
+                        variant="secondary"
+                        icon="sliders-v-alt"
+                        href={configureCustomViewUrl ?? ''}
                         target="_blank"
                         rel="noreferrer"
-                        icon="external-link-alt"
-                        size="sm"
+                        disabled={!configureCustomViewUrl}
+                        onClick={beginCustomViewConfiguration}
                       >
-                        <Trans i18nKey="playlist.playlist-table-rows.open-dashboard">Open dashboard</Trans>
+                        <Trans i18nKey="playlist.playlist-table-rows.configure-view">Configure</Trans>
                       </LinkButton>
-                    ) : undefined
-                  }
-                  onPaste={onDashboardStatePaste}
-                  onChange={(e) => {
-                    setDashboardStateError(undefined);
-                    onUpdateQueryParams?.(index, e.currentTarget.value);
-                  }}
-                />
+                      <Button
+                        size="sm"
+                        fill="text"
+                        icon="clipboard-alt"
+                        onClick={() => setPasteLinkOpen((open) => !open)}
+                      >
+                        <Trans i18nKey="playlist.playlist-table-rows.paste-dashboard-link">Paste link</Trans>
+                      </Button>
+                      {item.queryParams && (
+                        <Button
+                          size="sm"
+                          fill="text"
+                          onClick={() => {
+                            setDashboardStateError(undefined);
+                            setPasteLinkOpen(false);
+                            onUpdateQueryParams?.(index, '');
+                          }}
+                        >
+                          <Trans i18nKey="playlist.playlist-table-rows.clear-view">Clear</Trans>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  {pasteLinkOpen && (
+                    <Input
+                      autoFocus
+                      type="text"
+                      value={item.queryParams ?? ''}
+                      placeholder={t(
+                        'playlist.playlist-table-rows.dashboard-state-placeholder',
+                        'Paste a dashboard link'
+                      )}
+                      title={t(
+                        'playlist.playlist-table-rows.dashboard-state-title',
+                        'Paste a dashboard link or enter its URL state'
+                      )}
+                      aria-label={t(
+                        'playlist.playlist-table-rows.aria-label-item-dashboard-state',
+                        'Dashboard state for {{itemValue}}',
+                        { itemValue: item.value }
+                      )}
+                      loading={resolvingDashboardState}
+                      onPaste={onDashboardStatePaste}
+                      onChange={(e) => {
+                        setDashboardStateError(undefined);
+                        onUpdateQueryParams?.(index, e.currentTarget.value);
+                      }}
+                    />
+                  )}
+                </div>
               </Field>
               <Field noMargin label={t('playlist.playlist-table-rows.interval-addon', 'Interval')}>
                 <Input
@@ -451,6 +519,28 @@ function getStyles(theme: GrafanaTheme2) {
     deleteConfirmation: css({
       alignItems: 'center',
       display: 'flex',
+      gap: theme.spacing(0.5),
+    }),
+    customViewEditor: css({
+      background: theme.colors.background.primary,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      display: 'grid',
+      gap: theme.spacing(0.5),
+      padding: theme.spacing(0.5, 1),
+    }),
+    customViewControls: css({
+      alignItems: 'center',
+      display: 'flex',
+      flexWrap: 'wrap',
+      gap: theme.spacing(0.5, 1),
+      justifyContent: 'space-between',
+      minHeight: theme.spacing(3),
+    }),
+    customViewActions: css({
+      alignItems: 'center',
+      display: 'flex',
+      flexWrap: 'wrap',
       gap: theme.spacing(0.5),
     }),
     options: css({
