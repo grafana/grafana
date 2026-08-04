@@ -16,6 +16,7 @@ import {
   LinkButton,
   Spinner,
   Text,
+  TextLink,
   Tooltip,
   useStyles2,
   type IconButtonVariant,
@@ -98,7 +99,11 @@ export const PlaylistTableRows = ({
             </span>
           </span>
         ) : (
-          <span key="info">{first.name ?? item.value}</span>
+          <span key="info">
+            <TextLink href={getDashboardUrl(item) ?? first.url} external inline={false}>
+              {first.name ?? item.value}
+            </TextLink>
+          </span>
         )
       );
     } else {
@@ -184,13 +189,7 @@ function PlaylistTableRow({
   ]
     .filter(Boolean)
     .join(' · ');
-  const dashboard = item.dashboards?.length === 1 ? item.dashboards[0] : undefined;
-  const dashboardUrl = dashboard
-    ? urlUtil.renderUrl(dashboard.url.split('?')[0], {
-        ...urlUtil.parseKeyValue(dashboard.url.split('?')[1] ?? ''),
-        ...urlUtil.parseKeyValue(normalizeDashboardViewQueryString(item.dashboardView?.queryString) ?? ''),
-      })
-    : undefined;
+  const dashboardUrl = getDashboardUrl(item);
   const intervalInvalid = !!item.interval && !isValidInterval(item.interval);
   const intervalError = intervalInvalid
     ? t('playlist.playlist-table-rows.invalid-interval-error', 'Invalid interval')
@@ -314,6 +313,7 @@ function PlaylistTableRow({
               label={t('playlist.playlist-table-rows.duplicate-item', 'Duplicate playlist item')}
               tooltip={t('playlist.playlist-table-rows.duplicate-item-tooltip', 'Duplicate')}
               triggerClassName={styles.iconAction}
+              buttonClassName={styles.duplicateButton}
               onClick={() => onDuplicate(index)}
             />
             <PlaylistActionIconButton
@@ -624,6 +624,18 @@ function CustomViewTooltipRow({ label, value, styles }: CustomViewTooltipRowProp
   );
 }
 
+function getDashboardUrl(item: PlaylistItemUI): string | undefined {
+  const dashboard = item.dashboards?.length === 1 ? item.dashboards[0] : undefined;
+  if (!dashboard) {
+    return undefined;
+  }
+
+  return urlUtil.renderUrl(dashboard.url.split('?')[0], {
+    ...urlUtil.parseKeyValue(dashboard.url.split('?')[1] ?? ''),
+    ...urlUtil.parseKeyValue(normalizeDashboardViewQueryString(item.dashboardView?.queryString) ?? ''),
+  });
+}
+
 interface PlaylistActionIconButtonProps {
   name: IconName;
   label: string;
@@ -715,6 +727,7 @@ function getStyles(theme: GrafanaTheme2) {
       maxWidth: 'min(240px, 40vw)',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
+      transform: 'translateY(1px)',
       whiteSpace: 'nowrap',
     }),
     iconAction: css({
@@ -727,6 +740,11 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     settingsButton: css({
+      '& svg': {
+        transform: 'translateY(1px)',
+      },
+    }),
+    duplicateButton: css({
       '& svg': {
         transform: 'translateY(1px)',
       },
