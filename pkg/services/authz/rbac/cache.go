@@ -24,11 +24,9 @@ func userIdentifierCacheKeyById(namespace, ID string) string {
 	return namespace + ".id_" + ID
 }
 
-// permCacheActionPart builds the action segment of permission-cache keys. The
-// action sets the grants were fetched with are part of the cache identity:
-// lookups for the same action but a different action-set shape (e.g. iam
-// permissions delegation checks, which exclude action sets) must not share
-// entries, or results would depend on which lookup ran first.
+// permCacheActionPart builds the action segment of permission-cache keys.
+// Lookups for the same action with a different action-set shape (e.g.
+// delegation checks, which exclude action sets) must not share entries.
 func permCacheActionPart(action string, actionSets []string) string {
 	if len(actionSets) == 0 {
 		return action

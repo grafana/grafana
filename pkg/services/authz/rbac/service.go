@@ -338,9 +338,7 @@ func (s *Service) groupBatchCheckItems(
 
 		requiresFresh := s.requiresFreshData(item.GetFreshnessTimestamp())
 
-		// Group by the same identity as the permission cache: items sharing an
-		// action but not its action-set shape (e.g. delegation overrides) must
-		// not share a permission lookup.
+		// Group by the same identity as the permission cache (action + action-set shape).
 		groupKey := permCacheActionPart(action, actionSets)
 		if g, ok := groups[groupKey]; ok {
 			g.items = append(g.items, item)
@@ -589,12 +587,9 @@ func (s *Service) validateCheckRequest(ctx context.Context, req *authzv1.CheckRe
 }
 
 // permissionsActionOverride returns the RBAC action to load grants for on
-// iam.grafana.app/permissions checks. Those checks validate that a caller may
-// delegate a specific RBAC action with a "permissions:type:*" scope, but the
-// verb mapping can only express the static roles:write action. The caller
-// passes the action being delegated in the folder field (the permissions
-// pseudo-resource is not folder-scoped); without it, all delegable actions
-// would collapse into a single roles:write check.
+// iam.grafana.app/permissions delegation checks. The verb mapping can only
+// express the static roles:write action, so the caller passes the action being
+// delegated in the folder field (this pseudo-resource is not folder-scoped).
 func permissionsActionOverride(group, resource, folder string) (string, bool) {
 	if group == "iam.grafana.app" && resource == "permissions" && folder != "" {
 		return folder, true

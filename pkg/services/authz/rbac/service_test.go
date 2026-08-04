@@ -1689,8 +1689,7 @@ func TestService_Check(t *testing.T) {
 				require.True(t, ok)
 				require.Equal(t, id.UID, "test-uid")
 
-				// Derive the same action and action sets the service used, including
-				// the folder-field action override for permissions delegation checks.
+				// Derive the same action and action sets the service used.
 				expAction, expActionSets, err := s.validateAction(ctx, tc.req.Group, tc.req.Resource, tc.req.Subresource, tc.req.Verb)
 				require.NoError(t, err)
 				if override, hasOverride := permissionsActionOverride(tc.req.Group, tc.req.Resource, tc.req.Folder); hasOverride {
@@ -1818,11 +1817,9 @@ func TestService_Check(t *testing.T) {
 }
 
 // TestService_Check_DelegationOverrideCacheIsolation guards against delegation
-// checks (action override, no action sets) sharing permission-cache entries with
-// ordinary checks for the same action. A shared entry makes authorization depend
-// on request order: an ordinary check can leak action-set grants into a later
-// delegation check (false allow), and a delegation check can cache a narrowed
-// grant set that starves a later ordinary check (false deny).
+// checks (action override, no action sets) sharing permission-cache entries
+// with ordinary checks for the same action, which would make authorization
+// depend on request order.
 func TestService_Check_DelegationOverrideCacheIsolation(t *testing.T) {
 	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 		Claims: jwt.Claims{
@@ -1832,8 +1829,7 @@ func TestService_Check_DelegationOverrideCacheIsolation(t *testing.T) {
 		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
 	})
 
-	// The user holds a dashboard action-set grant and a delegate grant on
-	// folders:view — but NO delegate grant on dashboards:read itself.
+	// A delegate grant on folders:view only — none on dashboards:read itself.
 	permissions := []accesscontrol.Permission{
 		{Action: "dashboards:admin", Scope: "dashboards:uid:dash1"},
 		{Action: "folders:view", Scope: "permissions:type:delegate"},
@@ -2752,8 +2748,7 @@ func TestService_CacheList(t *testing.T) {
 	})
 }
 
-// actionSetsForVerb resolves the action sets a request maps to, so tests can
-// build permission-cache keys matching what the service looks up.
+// actionSetsForVerb resolves the action sets a request maps to.
 func actionSetsForVerb(t *testing.T, group, resource, subresource, verb string) []string {
 	t.Helper()
 	_, actionSets, err := setupService().validateAction(context.Background(), group, resource, subresource, verb)
