@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -22,12 +24,26 @@ func userIdentifierCacheKeyById(namespace, ID string) string {
 	return namespace + ".id_" + ID
 }
 
-func anonymousPermCacheKey(namespace, action string) string {
-	return namespace + ".perm_anonymous_" + action
+// permCacheActionPart builds the action segment of permission-cache keys. The
+// action sets the grants were fetched with are part of the cache identity:
+// lookups for the same action but a different action-set shape (e.g. iam
+// permissions delegation checks, which exclude action sets) must not share
+// entries, or results would depend on which lookup ran first.
+func permCacheActionPart(action string, actionSets []string) string {
+	if len(actionSets) == 0 {
+		return action
+	}
+	sets := slices.Clone(actionSets)
+	slices.Sort(sets)
+	return action + "!" + strings.Join(sets, ",")
 }
 
-func userPermCacheKey(namespace, userUID, action string) string {
-	return namespace + ".perm_" + userUID + "_" + action
+func anonymousPermCacheKey(namespace, action string, actionSets []string) string {
+	return namespace + ".perm_anonymous_" + permCacheActionPart(action, actionSets)
+}
+
+func userPermCacheKey(namespace, userUID, action string, actionSets []string) string {
+	return namespace + ".perm_" + userUID + "_" + permCacheActionPart(action, actionSets)
 }
 
 func userPermDenialCacheKey(namespace, userUID, action, name, parent string) string {
