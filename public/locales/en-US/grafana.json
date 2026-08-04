@@ -5686,14 +5686,6 @@
       "variable-name": "Change variable name",
       "variable-type": "Change variable type"
     },
-    "edit-pane": {
-      "group": {
-        "different-parents": "Select items within the same row, tab, or grid to group them",
-        "into-row": "Group into row",
-        "into-tab": "Group into tab",
-        "title": "Group"
-      }
-    },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
       "add-library-panel-button": "Add library panel",
@@ -6312,6 +6304,12 @@
         "title-hidden_one": "Hidden ({{count}})",
         "title-hidden_other": "Hidden ({{count}})",
         "tooltip": "Filters overview"
+      },
+      "group": {
+        "different-parents": "Select items within the same row, tab, or grid to group them",
+        "into-row": "Group into row",
+        "into-tab": "Group into tab",
+        "title": "Group"
       },
       "links": {
         "add-link": "Add link",
