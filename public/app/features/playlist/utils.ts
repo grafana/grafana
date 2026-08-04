@@ -7,7 +7,7 @@ import { contextSrv } from '../../core/services/context_srv';
 import { getGrafanaSearcher } from '../search/service/searcher';
 import { type SearchQuery } from '../search/service/types';
 
-import { PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM } from './customView';
+import { PLAYLIST_CUSTOM_VIEW_TITLE_PARAM, PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM } from './customView';
 import { type PlaylistItemUI } from './types';
 
 // Playlist/session controls belong to the playback URL, not a portable dashboard view.
@@ -54,6 +54,7 @@ export function normalizeDashboardViewQueryString(value?: string): string | unde
   const normalized = (fragmentStart === -1 ? query : query.slice(0, fragmentStart)).replace(/^\?/, '');
   const params = new URLSearchParams(normalized);
   params.delete(PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM);
+  params.delete(PLAYLIST_CUSTOM_VIEW_TITLE_PARAM);
   for (const key of PLAYLIST_RUNTIME_QUERY_PARAMS) {
     params.delete(key);
   }

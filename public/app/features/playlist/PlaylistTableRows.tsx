@@ -24,7 +24,7 @@ import {
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
 import {
-  addPlaylistCustomViewToken,
+  addPlaylistCustomViewContext,
   createPlaylistCustomViewToken,
   getPlaylistCustomViewChannelName,
   isPlaylistCustomViewMessage,
@@ -34,6 +34,7 @@ import { getPlaylistShortLinkUid, isValidInterval, normalizeDashboardViewQuerySt
 
 interface Props {
   items: PlaylistItemUI[];
+  playlistTitle?: string;
   onDelete: (idx: number) => void;
   onDuplicate: (idx: number) => void;
   /** Placeholder for empty per-item intervals; the global interval used as fallback during playback. */
@@ -44,6 +45,7 @@ interface Props {
 
 export const PlaylistTableRows = ({
   items,
+  playlistTitle,
   onDelete,
   onDuplicate,
   intervalPlaceholder,
@@ -127,6 +129,7 @@ export const PlaylistTableRows = ({
           key={item.localId ?? `${index}/${item.type}/${item.value}`}
           item={item}
           index={index}
+          playlistTitle={playlistTitle}
           styles={styles}
           renderItem={renderItem}
           onDelete={onDelete}
@@ -150,6 +153,7 @@ interface RowProps extends Omit<Props, 'items'> {
 function PlaylistTableRow({
   item,
   index,
+  playlistTitle,
   styles,
   renderItem,
   onDelete,
@@ -200,7 +204,9 @@ function PlaylistTableRow({
     };
   }, []);
 
-  const configureCustomViewUrl = dashboardUrl ? addPlaylistCustomViewToken(dashboardUrl, customViewToken) : undefined;
+  const configureCustomViewUrl = dashboardUrl
+    ? addPlaylistCustomViewContext(dashboardUrl, customViewToken, playlistTitle)
+    : undefined;
   const beginCustomViewConfiguration = () => {
     customViewChannel.current?.close();
     const channel = new BroadcastChannel(getPlaylistCustomViewChannelName(customViewToken));

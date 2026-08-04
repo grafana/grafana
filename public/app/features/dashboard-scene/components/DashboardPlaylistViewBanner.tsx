@@ -9,6 +9,7 @@ import {
   getPlaylistCustomViewQueryString,
   getPlaylistCustomViewChannelName,
   PLAYLIST_CUSTOM_VIEW_MESSAGE,
+  PLAYLIST_CUSTOM_VIEW_TITLE_PARAM,
   PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM,
 } from 'app/features/playlist/customView';
 
@@ -16,9 +17,10 @@ export function DashboardPlaylistViewBanner() {
   const styles = useStyles2(getStyles);
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  // Keep the token for the lifetime of this dashboard even if URL synchronization
-  // later removes unknown query parameters while variables or time range change.
+  // Keep the configuration context for the lifetime of this dashboard even if URL synchronization
+  // later removes unknown query parameters while the user adjusts the view.
   const [token] = useState(() => searchParams.get(PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM));
+  const [playlistTitle] = useState(() => searchParams.get(PLAYLIST_CUSTOM_VIEW_TITLE_PARAM));
 
   if (!token) {
     return null;
@@ -38,13 +40,22 @@ export function DashboardPlaylistViewBanner() {
 
   return (
     <Alert
-      title={t('dashboard-scene.playlist-view-banner.title', 'Configuring playlist custom view')}
+      title={
+        playlistTitle
+          ? t(
+              'dashboard-scene.playlist-view-banner.title-with-playlist',
+              'Configuring “{{playlistTitle}}” playlist custom view',
+              { playlistTitle }
+            )
+          : t('dashboard-scene.playlist-view-banner.title', 'Configuring playlist custom view')
+      }
       severity="info"
       className={styles.banner}
     >
       <div className={styles.content}>
         <Trans i18nKey="dashboard-scene.playlist-view-banner.body">
-          Adjust dashboard variables and time range, then use this view in your playlist.
+          Adjust this dashboard to the view you want—including variables, time range, timezone, and selected tabs—then
+          use this view in the playlist.
         </Trans>
         <div className={styles.actions}>
           <Button variant="secondary" size="sm" onClick={close}>

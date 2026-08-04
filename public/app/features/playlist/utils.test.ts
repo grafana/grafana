@@ -4,7 +4,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM } from './customView';
+import { PLAYLIST_CUSTOM_VIEW_TITLE_PARAM, PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM } from './customView';
 import { getPlaylistShortLinkUid, normalizeDashboardViewQueryString, useCanWritePlaylists } from './utils';
 
 jest.mock('app/core/services/context_srv', () => ({
@@ -73,6 +73,7 @@ describe('normalizeDashboardViewQueryString', () => {
     ['?var-host=host1&from=now-6h', 'var-host=host1&from=now-6h'],
     ['https://grafana.example.com/d/uid/name?var-host=host1&from=now-6h#view', 'var-host=host1&from=now-6h'],
     [`/d/uid/name?var-host=host1&${PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM}=temporary`, 'var-host=host1'],
+    [`/d/uid/name?var-host=host1&${PLAYLIST_CUSTOM_VIEW_TITLE_PARAM}=Playlist+name`, 'var-host=host1'],
     [
       '/d/uid/name?var-host=host1&orgId=2&auth_token=secret&forceLogin=true&kiosk&autofitpanels&hideLogo&_dash.hideTimePicker=true',
       'var-host=host1',

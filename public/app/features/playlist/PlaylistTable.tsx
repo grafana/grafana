@@ -8,6 +8,7 @@ import { type PlaylistItemUI } from './types';
 
 interface Props {
   items: PlaylistItemUI[];
+  playlistTitle?: string;
   deleteItem: (idx: number) => void;
   duplicateItem: (idx: number) => void;
   moveItem: (src: number, dst: number) => void;
@@ -19,6 +20,7 @@ interface Props {
 
 export const PlaylistTable = ({
   items,
+  playlistTitle,
   deleteItem,
   duplicateItem,
   moveItem,
@@ -51,6 +53,7 @@ export const PlaylistTable = ({
               <div ref={provided.innerRef} {...provided.droppableProps}>
                 <PlaylistTableRows
                   items={items}
+                  playlistTitle={playlistTitle}
                   onDelete={deleteItem}
                   onDuplicate={duplicateItem}
                   intervalPlaceholder={intervalPlaceholder}
