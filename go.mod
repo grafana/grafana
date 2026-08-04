@@ -29,22 +29,22 @@ require (
 	github.com/apache/arrow-go/v18 v18.6.0 // @grafana/grafana-catalog
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/aws/aws-sdk-go-v2 v1.42.1 // @grafana/data-sources-plugins
-	github.com/aws/aws-sdk-go-v2/config v1.32.29 // @grafana/grafana-search-and-storage
-	github.com/aws/aws-sdk-go-v2/credentials v1.19.28 // @grafana/grafana-operator-experience-squad
+	github.com/aws/aws-sdk-go-v2/config v1.32.30 // @grafana/grafana-search-and-storage
+	github.com/aws/aws-sdk-go-v2/credentials v1.19.29 // @grafana/grafana-operator-experience-squad
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.30 // @grafana/grafana-operator-experience-squad
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.20.12 // @grafana/alerting-backend
-	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.50.5 // @grafana/grafana-search-and-storage
-	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.45.3 // @grafana/data-sources-plugins
-	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.73.0 // @grafana/data-sources-plugins
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.307.0 // @grafana/data-sources-plugins
-	github.com/aws/aws-sdk-go-v2/service/kms v1.49.1 // @grafana/grafana-operator-experience-squad
-	github.com/aws/aws-sdk-go-v2/service/licensemanager v1.37.14 // @grafana/grafana-operator-experience-squad
-	github.com/aws/aws-sdk-go-v2/service/oam v1.18.3 // @grafana/data-sources-plugins
-	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.6 // @grafana/data-sources-plugins
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.101.0 // @grafana/grafana-search-and-storage
-	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.40.2 // @grafana/grafana-operator-experience-squad
-	github.com/aws/aws-sdk-go-v2/service/sts v1.44.0 // @grafana/grafana-operator-experience-squad
-	github.com/aws/smithy-go v1.27.3 // @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.22.34 // @grafana/alerting-backend
+	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.55.1 // @grafana/grafana-search-and-storage
+	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.63.1 // @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.79.1 // @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.316.1 // @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go-v2/service/kms v1.54.1 // @grafana/grafana-operator-experience-squad
+	github.com/aws/aws-sdk-go-v2/service/licensemanager v1.40.1 // @grafana/grafana-operator-experience-squad
+	github.com/aws/aws-sdk-go-v2/service/oam v1.25.1 // @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.34.1 // @grafana/data-sources-plugins
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.105.2 // @grafana/grafana-search-and-storage
+	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.43.1 // @grafana/grafana-operator-experience-squad
+	github.com/aws/aws-sdk-go-v2/service/sts v1.44.1 // @grafana/grafana-operator-experience-squad
+	github.com/aws/smithy-go v1.27.4 // @grafana/data-sources-plugins
 	github.com/beevik/etree v1.6.0 // @grafana/grafana-backend-group
 	github.com/benbjohnson/clock v1.3.5 // @grafana/alerting-backend
 	github.com/blevesearch/bleve/v2 v2.5.7 // @grafana/grafana-search-and-storage
@@ -352,17 +352,17 @@ require (
 	github.com/at-wat/mqtt-go v0.19.6 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aws/aws-sdk-go v1.55.8 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.10 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.14 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.30 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.30 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.31 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.13 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.15 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.23 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.30 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.23 // indirect
-	github.com/aws/aws-sdk-go-v2/service/signin v1.4.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.32.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.37.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.31 // indirect
+	github.com/aws/aws-sdk-go-v2/service/signin v1.4.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.32.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.37.1 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/barkimedes/go-deepcopy v0.0.0-20220514131651-17c30cfc62df // indirect
