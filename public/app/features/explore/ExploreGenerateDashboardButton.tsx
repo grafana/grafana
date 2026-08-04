@@ -3,13 +3,13 @@ import { lazy, Suspense, useState } from 'react';
 import { t } from '@grafana/i18n';
 import { ToolbarButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { type WizardSeed } from 'app/features/dashboard-wizard/types';
-import { useDashboardGenerationAvailable } from 'app/features/dashboard-wizard/useDashboardGenerationAvailable';
+import { type PromptSeed } from 'app/features/dashboard-prompt/types';
+import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
 import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
 const GenerateDashboardModal = lazy(() =>
-  import('app/features/dashboard-wizard/GenerateDashboardModal').then((module) => ({
+  import('app/features/dashboard-prompt/GenerateDashboardModal').then((module) => ({
     default: module.GenerateDashboardModal,
   }))
 );
@@ -19,14 +19,14 @@ interface Props {
 }
 
 /**
- * "Generate dashboard" entry point in the Explore toolbar: opens the wizard
+ * "Generate dashboard" entry point in the Explore toolbar: opens the prompt
  * pre-seeded with the pane's datasource and the queries currently open, so
  * "turn what I'm looking at into a dashboard" needs no re-describing. Hidden
- * when the wizard is unavailable (toggle off, assistant missing, or no
+ * when dashboard generation is unavailable (toggle off, assistant missing, or no
  * create permission).
  */
 export function ExploreGenerateDashboardButton({ exploreId }: Props) {
-  const [showWizard, setShowWizard] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
   const isAvailable =
     useDashboardGenerationAvailable() && contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
   const pane = useSelector((state) => state.explore.panes[exploreId]);
@@ -35,7 +35,7 @@ export function ExploreGenerateDashboardButton({ exploreId }: Props) {
     return null;
   }
 
-  const buildSeed = (): WizardSeed => {
+  const buildSeed = (): PromptSeed => {
     const datasourceUids = new Set<string>();
     const queryLines: string[] = [];
 
@@ -72,12 +72,12 @@ export function ExploreGenerateDashboardButton({ exploreId }: Props) {
           'explore.generate-dashboard-button.tooltip',
           'Generate a dashboard from this data with the Grafana Assistant'
         )}
-        onClick={() => setShowWizard(true)}
+        onClick={() => setShowPrompt(true)}
         data-testid="explore-generate-dashboard-button"
       />
-      {showWizard && (
+      {showPrompt && (
         <Suspense fallback={null}>
-          <GenerateDashboardModal seed={buildSeed()} onDismiss={() => setShowWizard(false)} />
+          <GenerateDashboardModal seed={buildSeed()} onDismiss={() => setShowPrompt(false)} />
         </Suspense>
       )}
     </>

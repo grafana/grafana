@@ -1,8 +1,8 @@
-import { createAssistantContextItem, openAssistant } from '@grafana/assistant';
+import { openAssistant } from '@grafana/assistant';
 import { locationService } from '@grafana/runtime';
 
 import { buildPlanningInstructions, startPlanningInAssistant } from './handoff';
-import { WIZARD_ORIGIN } from './prompts';
+import { PROMPT_ORIGIN } from './prompts';
 
 // The repo-wide jest mapping stubs @grafana/assistant with no-op fns, so give
 // createAssistantContextItem a fake that mirrors the real factory's shape.
@@ -32,7 +32,6 @@ const pushMock = jest.mocked(locationService.push);
 const args = {
   request: 'Monitor my checkout service\n\nWhere this request came from:\nPrometheus datasource page',
   displayPrompt: 'Monitor my checkout service',
-  contextItems: [createAssistantContextItem('structured', { title: 'Attached item', data: { foo: 'bar' } })],
   datasources: [{ uid: 'prom-1', type: 'prometheus', name: 'Prometheus' }],
 };
 
@@ -48,21 +47,20 @@ describe('startPlanningInAssistant', () => {
     expect(openAssistantMock).toHaveBeenCalledTimes(1);
 
     const call = openAssistantMock.mock.calls[0][0];
-    expect(call.origin).toBe(WIZARD_ORIGIN);
+    expect(call.origin).toBe(PROMPT_ORIGIN);
     expect(call.mode).toBe('dashboarding');
     expect(call.autoSend).toBe(true);
     // The chat shows the user's own words, not the composed request.
     expect(call.prompt).toBe('Monitor my checkout service');
   });
 
-  it('passes the picker items through and appends a hidden planning-instructions item', () => {
+  it('attaches a hidden planning-instructions item', () => {
     startPlanningInAssistant(args);
 
     const call = openAssistantMock.mock.calls[0][0];
-    expect(call.context).toHaveLength(2);
-    expect(call.context?.[0]).toBe(args.contextItems[0]);
+    expect(call.context).toHaveLength(1);
 
-    const planningItem = call.context?.[1];
+    const planningItem = call.context?.[0];
     // The exact title is the trigger the assistant's plan-first workflow matches on.
     expect(planningItem?.node.name).toBe('Dashboard planning instructions');
     expect(planningItem?.node.data?.params?.hidden).toBe(true);

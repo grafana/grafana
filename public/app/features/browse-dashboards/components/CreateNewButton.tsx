@@ -16,7 +16,7 @@ import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
-import { useDashboardGenerationAvailable } from 'app/features/dashboard-wizard/useDashboardGenerationAvailable';
+import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { NewProvisionedFolderForm } from 'app/features/provisioning/components/Folders/NewProvisionedFolderForm';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
@@ -34,7 +34,7 @@ import { type FolderDTO } from 'app/types/folders';
 import { NewFolderForm } from './NewFolderForm';
 
 const GenerateDashboardModal = lazy(() =>
-  import('app/features/dashboard-wizard/GenerateDashboardModal').then((module) => ({
+  import('app/features/dashboard-prompt/GenerateDashboardModal').then((module) => ({
     default: module.GenerateDashboardModal,
   }))
 );
@@ -58,7 +58,7 @@ export default function CreateNewButton({
   const location = useLocation();
   const [newFolder] = useCreateFolder();
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
-  const [showGenerateDashboardWizard, setShowGenerateDashboardWizard] = useState(false);
+  const [showGenerateDashboardPrompt, setShowGenerateDashboardPrompt] = useState(false);
   const notifyApp = useAppNotification();
   const isProvisionedInstance = useIsProvisionedInstance();
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
@@ -167,7 +167,7 @@ export default function CreateNewButton({
               label={t('browse-dashboards.create-new-button.generate-dashboard', 'Generate dashboard')}
               icon="ai-sparkle"
               iconColor={dashboardIconColor}
-              onClick={() => setShowGenerateDashboardWizard(true)}
+              onClick={() => setShowGenerateDashboardPrompt(true)}
             />
           )}
         </Menu.Group>
@@ -222,9 +222,9 @@ export default function CreateNewButton({
           )}
         </Drawer>
       )}
-      {showGenerateDashboardWizard && (
+      {showGenerateDashboardPrompt && (
         <Suspense fallback={null}>
-          <GenerateDashboardModal onDismiss={() => setShowGenerateDashboardWizard(false)} />
+          <GenerateDashboardModal onDismiss={() => setShowGenerateDashboardPrompt(false)} />
         </Suspense>
       )}
     </>

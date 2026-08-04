@@ -1,10 +1,10 @@
-import { type WizardDatasource } from './types';
+import { type PromptDatasource } from './types';
 
-/** Origin reported to the assistant for all wizard interactions. */
-export const WIZARD_ORIGIN = 'grafana/dashboard-wizard';
+/** Origin reported to the assistant for all dashboard-prompt interactions. */
+export const PROMPT_ORIGIN = 'grafana/dashboard-prompt';
 
 /** The datasources the assistant may query, as a list for the planning instructions. */
-export function formatDatasources(datasources: WizardDatasource[]): string {
+export function formatDatasources(datasources: PromptDatasource[]): string {
   const maxListed = 50;
   const lines = datasources
     .slice(0, maxListed)

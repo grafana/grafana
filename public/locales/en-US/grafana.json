@@ -6753,6 +6753,18 @@
       "title": "There are no dashboard links added yet"
     }
   },
+  "dashboard-prompt": {
+    "datasource-entry": {
+      "generate-dashboard": "Generate dashboard"
+    },
+    "modal": {
+      "title": "What do you want to monitor?"
+    },
+    "prompt": {
+      "description": "Describe it in your own words — mention the services, data, or questions you care about.",
+      "placeholder": "e.g. Error rates and latency for my checkout service, broken down by environment"
+    }
+  },
   "dashboard-scene": {
     "ad-hoc-filters-variable-editor": {
       "message-not-supported": "This data source does not support filters.",
@@ -7862,23 +7874,6 @@
     "versions": {
       "provisioned-warning": "This dashboard is managed by a repository. Version history is not available for provisioned dashboards.",
       "title": "Versions"
-    }
-  },
-  "dashboard-wizard": {
-    "context-picker": {
-      "add": "Add context",
-      "remove": "Remove {{name}}"
-    },
-    "datasource-entry": {
-      "generate-dashboard": "Generate dashboard"
-    },
-    "modal": {
-      "title": "Let's build a dashboard"
-    },
-    "prompt-step": {
-      "description": "Describe it in your own words — mention the services, data, or questions you care about.",
-      "placeholder": "e.g. Error rates and latency for my checkout service, broken down by environment",
-      "title": "What do you want to monitor?"
     }
   },
   "dashboards": {

@@ -12,7 +12,7 @@ import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
-import { useDashboardGenerationAvailable } from 'app/features/dashboard-wizard/useDashboardGenerationAvailable';
+import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
 import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
@@ -27,7 +27,7 @@ import {
 } from './utils';
 
 const GenerateDashboardModal = lazy(() =>
-  import('app/features/dashboard-wizard/GenerateDashboardModal').then((module) => ({
+  import('app/features/dashboard-prompt/GenerateDashboardModal').then((module) => ({
     default: module.GenerateDashboardModal,
   }))
 );
@@ -37,7 +37,7 @@ export interface Props {}
 export const QuickAdd = ({}: Props) => {
   const navBarTree = useSelector((state) => state.navBarTree);
   const [isOpen, setIsOpen] = useState(false);
-  const [showGenerateDashboardWizard, setShowGenerateDashboardWizard] = useState(false);
+  const [showGenerateDashboardPrompt, setShowGenerateDashboardPrompt] = useState(false);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
@@ -84,7 +84,7 @@ export const QuickAdd = ({}: Props) => {
       const generateItem: NavModelItem = {
         id: 'generate-dashboard',
         text: t('navigation.quick-add.generate-dashboard-button', 'Generate dashboard'),
-        onClick: () => setShowGenerateDashboardWizard(true),
+        onClick: () => setShowGenerateDashboardPrompt(true),
       };
 
       const dashboardGroup = groups.find((g) => g.parentId === 'dashboards/browse');
@@ -171,9 +171,9 @@ export const QuickAdd = ({}: Props) => {
         />
       </Dropdown>
       <NavToolbarSeparator />
-      {showGenerateDashboardWizard && (
+      {showGenerateDashboardPrompt && (
         <Suspense fallback={null}>
-          <GenerateDashboardModal onDismiss={() => setShowGenerateDashboardWizard(false)} />
+          <GenerateDashboardModal onDismiss={() => setShowGenerateDashboardPrompt(false)} />
         </Suspense>
       )}
     </>
