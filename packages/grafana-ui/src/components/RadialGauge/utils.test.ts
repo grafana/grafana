@@ -355,6 +355,24 @@ describe('RadialGauge utils', () => {
       expect(result.startValueAngle + result.endValueAngle).toBeLessThanOrEqual(result.angleRange);
       expect(result.startValueAngle).toBeGreaterThanOrEqual(0);
     });
+
+    // When min === max and both are negative, getFieldConfigMinMax inverts the range.
+    // Clamping must use ordered bounds so a constant series still maps to mid-scale.
+    it('should keep mid-scale arc when min equals max and both are negative', () => {
+      const fieldDisplay = createFieldDisplay(-10, -10, -10);
+      const result = getValueAngleForValue(fieldDisplay, 0, 360);
+
+      expect(result.startValueAngle).toBe(0);
+      expect(result.endValueAngle).toBe(180);
+    });
+
+    it('should keep mid-scale arc with neutral when min equals max and both are negative', () => {
+      const fieldDisplay = createFieldDisplay(-10, -10, -10);
+      const result = getValueAngleForValue(fieldDisplay, 0, 360, -10);
+
+      expect(result.startValueAngle).toBe(180);
+      expect(result.endValueAngle).toBe(0);
+    });
   });
 
   describe('drawRadialArcPath', () => {
