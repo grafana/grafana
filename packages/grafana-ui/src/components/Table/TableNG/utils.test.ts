@@ -2005,17 +2005,25 @@ describe('TableNG utils', () => {
       expect(compute(fields, 40)).toEqual([COLUMN.DEFAULT_WIDTH]);
     });
 
-    it('sizes a wrapped column to its header, not its (wrapping) content', () => {
+    it('sizes a wrapped column to its content (capped) so content-heavy columns stay wider', () => {
       const fields: Field[] = [
+        {
+          name: 'S',
+          type: FieldType.string,
+          values: ['x'],
+          config: { custom: { wrapText: true } },
+        },
         {
           name: 'Desc',
           type: FieldType.string,
-          values: ['a very long value that would wrap across multiple lines'],
+          values: ['a very long value that would wrap across multiple lines'], // 54 chars
           config: { custom: { wrapText: true } },
         },
       ];
-      // header "Desc" (4) => 4*8+13 = 45, floored to MIN_WIDTH 50; the wrapping content is not measured.
-      expect(compute(fields, 50)).toEqual([50]);
+      // Wrapped columns are still measured by content: the sparse "S" floors to MIN_WIDTH 50, while
+      // the long "Desc" value (54*8+13 = 445) is capped at MAX_AUTO_WIDTH. availWidth == their sum,
+      // so no growth — the content-heavy wrapped column is much wider than the sparse one.
+      expect(compute(fields, 50 + COLUMN.MAX_AUTO_WIDTH)).toEqual([50, COLUMN.MAX_AUTO_WIDTH]);
     });
 
     it('reserves header icon space so the label is not truncated by the type icon', () => {

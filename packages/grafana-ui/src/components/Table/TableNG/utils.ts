@@ -1320,11 +1320,10 @@ function measureInlineRunWidth(
 /**
  * Width the header label needs, including its filter/type-icon affordances.
  *
- * Unlike body/pill content, the header is canvas-measured exactly rather than estimated from
- * `avgCharWidth`. It's the only measurement that sets a hard lower bound: a wrapped column sizes to
- * its header alone (its cells grow in height, not width), so an under-estimate here truncates the
- * title outright — there's no wider cell content to absorb the slack. Exactness is also affordable
- * here: it's one short string measured once per column, not a value sampled across many rows.
+ * Unlike body content, the header is canvas-measured exactly rather than estimated from
+ * `avgCharWidth`. It sets a hard lower bound the content is unioned with, so an under-estimate here
+ * truncates the title outright. Exactness is affordable: it's one short string measured once per
+ * column, not a value sampled across many rows.
  */
 function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boolean): number {
   const textWidth = ctx.ctx.measureText(getDisplayName(field)).width;
@@ -1400,7 +1399,7 @@ const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx
 
 // Singleton registry mirroring the buildCellHeightMeasurers factory map: cell types that size
 // differently from the default text measurement register here; anything absent falls back to
-// measureTextColWidth. Text wrapping is handled separately (it's cross-cutting — see below).
+// measureTextColWidth.
 const COL_WIDTH_MEASURERS: Partial<Record<TableCellDisplayMode, MeasureColWidth>> = {
   [TableCellDisplayMode.Sparkline]: measureGraphicalColWidth,
   [TableCellDisplayMode.Gauge]: measureGraphicalColWidth,
@@ -1485,16 +1484,15 @@ export function computeContentAwareColWidths(
     const field = fields[i];
     const headerWidth = measureHeaderWidth(field, headerTypographyCtx, showTypeIcons);
 
-    // A wrapped *free-text* column grows in height, not width, so it sizes to its header. But cell
-    // types with a dedicated measurer are wrap-aware or wrap-invariant and always measure: pills
-    // size to their average pill content (which the cap lets wrap onto a few lines — so a busy pill
-    // column stays wider than a sparse one even when wrapping), and graphical cells take a fixed
-    // default. Only the default text path collapses to the header when wrapping is on.
+    // Every column is sized to its content (unioned with the header below), including wrapped ones:
+    // a wrapped column still gets a content-based width so a content-heavy column (e.g. long text)
+    // stays wider than a sparse one — the cap keeps it bounded and it wraps to extra height within.
+    // The cell type's registered measurer handles pills/links/actions/graphical; text is default.
     const cellType = getCellOptions(field).type;
-    const registered =
-      COL_WIDTH_MEASURERS[cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType];
-    const measure = registered ?? (shouldTextWrap(field) ? undefined : measureTextColWidth);
-    const cellWidth = measure?.(field, effectiveSampleSize, measureCtx) ?? 0;
+    const measure =
+      COL_WIDTH_MEASURERS[cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType] ??
+      measureTextColWidth;
+    const cellWidth = measure(field, effectiveSampleSize, measureCtx);
 
     const floor = Math.max(COLUMN.MIN_WIDTH, field.config.custom?.minWidth ?? 0);
     const cap = Math.max(COLUMN.MAX_AUTO_WIDTH, floor);
