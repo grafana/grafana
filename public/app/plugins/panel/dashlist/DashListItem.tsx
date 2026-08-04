@@ -67,7 +67,7 @@ export function DashListItem({
           href={url}
           onClick={onCardLinkClick}
           trailing={
-            showDescription ? (
+            showDescription && dashboard.description ? (
               <Stack gap={0.5} alignItems="center">
                 <DescriptionTooltip description={dashboard.description} />
                 {starButton}
