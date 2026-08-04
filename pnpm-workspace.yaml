@@ -14,6 +14,7 @@ minimumReleaseAgeExclude:
   - "@grafana/scenes-react"
   - "@grafana/plugin-e2e"
   - "@grafana/plugin-ui"
+  - "@grafana/lezer-logql"
   # Security backport still inside the release-age window (published 2026-06-26).
   # Every other patched version pinned in `overrides` below is already older than
   # the gate, so no further excludes are needed.
@@ -95,7 +96,7 @@ overrides:
   gitconfiglocal: "2.1.0"
   ws: "^8.20.1"
   js-cookie: "^3.0.7"
-  "@opentelemetry/core": "2.8.0"
+  "@opentelemetry/core": "2.10.0"
   # Drift pins: a fresh pnpm resolution moved these above the versions yarn.lock
   # had, and the newer releases broke types in code untouched by this migration
   # (react-hook-form 7.79 tightened Validate<>; @bsull/augurs 0.10.2 added
@@ -130,6 +131,11 @@ overrides:
   # the 6.43.1 view, and the private dispatchTransactions makes the types
   # non-assignable. Pin to one version that satisfies every range.
   "@codemirror/view": "6.43.1"
+  # Dedupe the react-aria copies @grafana/plugin-ui 0.17.x pulls in; multiple
+  # overlay/focus instances break focus management inside plugin config editors.
+  "@react-aria/dialog": "3.5.31"
+  "@react-aria/focus": "3.21.2"
+  "@react-aria/overlays": "3.30.0"
 
   # --- Scoped version selectors (yarn npm: prefix dropped) ---
   "semver@~7.3.5": "^7.3.5"
@@ -143,10 +149,10 @@ overrides:
   "@grafana/plugin-e2e>@grafana/e2e-selectors": "workspace:*"
   "@grafana/scenes>@grafana/e2e-selectors": "workspace:*"
   "@grafana/scenes-react>@grafana/e2e-selectors": "workspace:*"
-  "socks>ip-address": "10.2.0"
+  "socks>ip-address": "10.3.1"
   "refractor>prismjs": "^1.27.0"
-  "@types/slate>immutable": "^4.0.0"
-  "@types/slate-react>immutable": "^4.0.0"
+  "@types/slate>immutable": "^5.0.0"
+  "@types/slate-react>immutable": "^5.0.0"
   # @testing-library/dom@10.4.1 allows ^0.5.9; pnpm picks 0.5.16, whose corrected
   # accessible-name handling (title vs text content) breaks TraceView SpanDetail
   # tests untouched by this migration. yarn locked 0.5.10 — pin to match.
@@ -180,14 +186,37 @@ overrides:
   # types-only transitive deps (jspdf via @siedlerchr/types-ol-ext). A global pin
   # is required for jspdf because it is resolved as a peerDependency, which the
   # conditional `jspdf@<x` selectors do not reliably intercept.
-  dompurify: "3.4.11"
+  dompurify: "3.4.12"
   jspdf: "4.2.1"
-  nodemailer: "9.0.1"
-  linkify-it: "5.0.1"
+  nodemailer: "9.0.3"
+  linkify-it: "5.0.2"
   js-yaml@<3.15.0: "3.15.0"
-  undici@<6.27.0: "6.27.0"
-  tar@<=7.5.15: ^7.5.16
+  undici@<6.28.0: "6.28.0"
+  tar@<=7.5.20: ^7.5.21
   uuid@<11.1.1: ^11.1.1
   shell-quote: "1.9.0"
   tmp: "0.2.7"
   "yaml@^1.10.0": "1.10.3"
+  # brace-expansion patched each of its live majors separately, so each needs its
+  # own selector — a global pin would drag 1.x consumers onto 5.x.
+  "brace-expansion@<1.1.18": "^1.1.18"
+  "brace-expansion@>=2.0.0 <2.1.4": "^2.1.4"
+  "brace-expansion@>=3.0.0 <5.0.9": "^5.0.9"
+  "fast-uri@<3.1.5": "^3.1.5"
+  # socket.io (via @rsdoctor/webpack-plugin) allows the vulnerable 4.2.6.
+  "socket.io-parser@<4.2.7": "^4.2.7"
+  # Only the 4.x line is affected; 2.x/3.x consumers must keep their own major.
+  "svgo@>=4.0.0 <4.0.2": "^4.0.2"
+  "protobufjs@<7.6.5": "^7.6.5"
+  # nx 22.7.2 (the `nx graph` CORS fix) exact-pins these three at vulnerable
+  # versions where 22.5.4 used floating ranges. All three bumps stay within the
+  # same major, and the target versions are already in the tree via other consumers.
+  "axios@<1.18.0": "^1.18.0"
+  "form-data@>=4.0.0 <4.0.6": "^4.0.6"
+  "yaml@>=2.0.0 <2.8.3": "^2.8.3"
+  # hono/@hono/node-server come from @modelcontextprotocol/sdk via @grafana/llm.
+  # The sdk pins `@hono/node-server: ^1.19.9` and that advisory is only patched in
+  # 2.x, so it stays open until the sdk bumps. hono's remaining CORS ReDoS fix
+  # (4.12.34) is still inside minimumReleaseAge, and hono is not @grafana-scoped,
+  # so it cannot be excluded from the gate.
+  "hono@<4.12.27": "^4.12.27"

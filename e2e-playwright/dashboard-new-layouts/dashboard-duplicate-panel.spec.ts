@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { Controls, Panel, Sidebar } from './page-objects';
+import { Controls, Panels, Sidebar } from './page-objects';
 import { importTestDashboard, saveDashboard } from './utils';
 
 test.use({
@@ -17,31 +17,31 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can duplicate a panel', async ({ dashboardPage, selectors, page }) => {
+    test('can duplicate a panel', async ({ dashboardPage, selectors, page, components }) => {
       await importTestDashboard(page, selectors, 'Paste tab');
 
-      const controls = new Controls(page, dashboardPage, selectors);
-      const panel = new Panel(page, dashboardPage, selectors);
-      const sidebar = new Sidebar(page, dashboardPage, selectors);
+      const controls = new Controls({ page, dashboardPage, selectors, components });
+      const panels = new Panels({ page, dashboardPage, selectors, components });
+      const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
 
       await controls.enterEditMode();
 
       const oldPanelTitle = 'New panel';
       const panelTitle = 'Unique';
 
-      await panel.selectByTitle(oldPanelTitle);
+      await panels.selectByTitle(oldPanelTitle);
       await sidebar.panelOptions.setTitle(panelTitle);
 
-      await expect(panel.getContainerByTitle(panelTitle)).toHaveCount(1);
+      await expect(panels.getPanels(panelTitle)).toHaveCount(1);
 
-      await panel.clickMenuItem(panelTitle, ['More...', 'Duplicate']);
+      await panels.selectMenuItem(panelTitle, ['More...', 'Duplicate']);
 
-      await expect(panel.getContainerByTitle(panelTitle)).toHaveCount(2);
+      await expect(panels.getPanels(panelTitle)).toHaveCount(2);
 
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
-      await expect(panel.getContainerByTitle(panelTitle)).toHaveCount(2);
+      await expect(panels.getPanels(panelTitle)).toHaveCount(2);
     });
   }
 );

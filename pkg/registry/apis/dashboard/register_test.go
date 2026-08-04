@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/admission"
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -199,6 +200,9 @@ func (m *mockK8sHandler) Create(_ context.Context, _ *unstructured.Unstructured,
 	return nil, nil
 }
 func (m *mockK8sHandler) Update(_ context.Context, _ *unstructured.Unstructured, _ int64, _ metav1.UpdateOptions) (*unstructured.Unstructured, error) {
+	return nil, nil
+}
+func (m *mockK8sHandler) Patch(_ context.Context, _ string, _ types.PatchType, _ []byte, _ int64, _ metav1.PatchOptions) (*unstructured.Unstructured, error) {
 	return nil, nil
 }
 func (m *mockK8sHandler) Delete(_ context.Context, _ string, _ int64, _ metav1.DeleteOptions) error {

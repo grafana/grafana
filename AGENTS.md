@@ -85,8 +85,8 @@ make update-workspace             # Go workspace (after adding modules)
 ### Dev Environment
 
 ```bash
-pnpm install --frozen-lockfile                     # Install frontend deps
-make devenv sources=postgres,influxdb,loki        # Start backing services
+pnpm install --frozen-lockfile                    # Install frontend deps
+make devenv sources=influxdb        # Start backing services
 make devenv-down                                  # Stop backing services
 make lefthook-install                             # Pre-commit hooks
 ```
@@ -130,7 +130,7 @@ Standalone Go apps using Grafana App SDK: `apps/dashboard/`, `apps/folder/`, `ap
 
 ### Plugin Workspaces
 
-These built-in plugins require separate build steps: `azuremonitor`, `grafana-postgresql-datasource`, `loki`, `jaeger`, `mysql`, `grafana-pyroscope-datasource`, `grafana-testdata-datasource`.
+These built-in plugins require separate build steps: `azuremonitor`, `loki`, `grafana-testdata-datasource`.
 
 Build a specific plugin: `pnpm --filter @grafana-plugins/<name> run dev`
 
@@ -150,10 +150,11 @@ Build a specific plugin: `pnpm --filter @grafana-plugins/<name> run dev`
 
 ### Prerequisites
 
-- **Node.js v24.x** (see `.nvmrc` for exact version). Use `nvm install` / `nvm use` to match.
-- **Go 1.26.4** (see `go.mod`). Pre-installed in the VM.
-- **pnpm 11.7.0** via corepack (provisioned from the `packageManager` field). Run `corepack enable` if `pnpm` is not found.
+- **Node.js** — version pinned in `.nvmrc` (check that file for the exact version). Installed via nvm and set as the nvm default. **PATH gotcha:** the infra injects `/exec-daemon/node` ahead of nvm, so the plain non-login shell may resolve `node` to an older version — check it satisfies the `engines` range in `package.json` (it does today, so builds/tests work), but it is not the pinned version. Login shells (tmux sessions, `bash -lc '...'`) get the pinned version because `~/.bashrc` prepends the nvm bin. Run `pnpm` / `pnpm start` / `jest` / webpack via a login shell (tmux or `bash -lc`) to use the pinned Node.
+- **Go** — version pinned in `go.mod` (check that file for the exact version), installed at `/usr/local/go` and symlinked to `/usr/local/bin/go`. The distro `/usr/bin/go` is older; `/usr/local/bin` wins in PATH so `go` resolves correctly. If `go.mod` bumps Go, reinstall a matching toolchain into `/usr/local/go`.
+- **pnpm** via corepack — version pinned by `package.json` `packageManager` (check that field for the exact version). Run `corepack enable` if `pnpm` is not found. pnpm blocks dependency build/lifecycle scripts by default; the allowlist lives in `allowBuilds` in `pnpm-workspace.yaml`.
 - **GCC** required for CGo/SQLite compilation of the backend.
+- Repos in this environment live under `/agent/repos/<repo>` (e.g. `/agent/repos/grafana`); this is a multi-repo workspace, not the single `~/grafana` layout described in `grafana-enterprise/AGENTS.md`.
 
 ### Running services
 

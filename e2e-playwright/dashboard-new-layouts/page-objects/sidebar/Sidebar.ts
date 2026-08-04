@@ -1,13 +1,12 @@
-import { test, type Page } from '@playwright/test';
+import { test } from '@playwright/test';
 
-import { type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
-
-import { PageObject } from '../PageObject';
+import { PageObject, type PageObjectArgs } from '../PageObject';
 
 import { AddOptions } from './AddOptions';
 import { ContentOutline } from './ContentOutline';
 import { DashboardOptions } from './DashboardOptions';
 import { PanelOptions } from './PanelOptions';
+import { TabOptions } from './TabOptions';
 import { Toolbar } from './Toolbar';
 import { VariableOptions } from './VariableOptions';
 
@@ -20,15 +19,17 @@ export class Sidebar extends PageObject {
   public dashboardOptions: DashboardOptions;
   public variableOptions: VariableOptions;
   public panelOptions: PanelOptions;
+  public tabOptions: TabOptions;
 
-  constructor(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-    super(page, dashboardPage, selectors);
-    this.toolbar = new Toolbar(page, dashboardPage, selectors);
-    this.contentOutline = new ContentOutline(page, dashboardPage, selectors);
-    this.addOptions = new AddOptions(page, dashboardPage, selectors);
-    this.dashboardOptions = new DashboardOptions(page, dashboardPage, selectors);
-    this.variableOptions = new VariableOptions(page, dashboardPage, selectors);
-    this.panelOptions = new PanelOptions(page, dashboardPage, selectors);
+  constructor(args: PageObjectArgs) {
+    super(args);
+    this.toolbar = new Toolbar(args);
+    this.contentOutline = new ContentOutline(args);
+    this.addOptions = new AddOptions(args);
+    this.dashboardOptions = new DashboardOptions(args);
+    this.variableOptions = new VariableOptions(args);
+    this.panelOptions = new PanelOptions(args);
+    this.tabOptions = new TabOptions(args);
   }
 
   getContainer() {
@@ -51,15 +52,13 @@ export class Sidebar extends PageObject {
     });
   }
 
-  async clickDeleteButton(options: { confirm: boolean } = { confirm: false }) {
-    const stepTitle = options.confirm
-      ? 'Delete selected element(s) (with confirmation)'
-      : 'Click delete button in sidebar';
+  async clickDeleteButton({ confirm = false }: { confirm?: boolean } = {}) {
+    const stepTitle = confirm ? 'Delete selected element(s) (with confirmation)' : 'Click delete button in sidebar';
 
     await test.step(stepTitle, async () => {
       await this.dashboardPage.getByGrafanaSelector(this.selectors.components.EditPaneHeader.deleteButton).click();
 
-      if (options.confirm) {
+      if (confirm) {
         await this.dashboardPage.getByGrafanaSelector(this.selectors.pages.ConfirmModal.delete).click();
       }
     });

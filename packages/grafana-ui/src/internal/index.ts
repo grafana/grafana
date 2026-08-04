@@ -77,6 +77,10 @@ export { AbstractList } from '../components/List/AbstractList';
 export type { HttpSettingsBaseProps, AzureAuthSettings } from '../components/DataSourceSettings/types';
 export { TimeZoneOffset, formatUtcOffset } from '../components/DateTimePickers/TimeZonePicker/TimeZoneOffset';
 export { TimeZoneTitle, getTimeZoneTitle } from '../components/DateTimePickers/TimeZonePicker/TimeZoneTitle';
+export {
+  getTimeZoneDisplayInfo,
+  type TimeZoneDisplayInfo,
+} from '../components/DateTimePickers/TimeZonePicker/timeZoneUtils';
 export type { CodeEditorProps } from '../components/Monaco/types';
 export { type Props as InlineFieldProps } from '../components/Forms/InlineField';
 export { DataLinkSuggestions } from '../components/DataLinks/DataLinkSuggestions';
@@ -89,6 +93,7 @@ export { ThemeDemo } from '../components/ThemeDemos/ThemeDemo';
 
 export { mapMouseEventToMode } from '../components/VizLegend/utils';
 export { Carousel } from '../components/Carousel/Carousel';
+export { SearchStatus, type SearchStatusProps } from '../components/SearchStatus/SearchStatus';
 
 export { getFocusStyles, getMouseFocusStyles, getTooltipContainerStyles } from '../themes/mixins';
 

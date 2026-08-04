@@ -206,6 +206,7 @@ approval_rules:
       changed_files:
         paths:
           - ^packages\/grafana-ui\/(?:(?:[^/]*(?:/|$))*)$
+          - ^packages\/grafana-data\/src\/themes\/(?:(?:[^/]*(?:/|$))*)$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/deploy-storybook-preview\.yml$

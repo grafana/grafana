@@ -46,6 +46,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/
+  export-alerting-resources:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/provision-alerting-resources/export-alerting-resources/
 ---
 
 {{< admonition type="caution" >}}
@@ -55,6 +60,12 @@ New Grafana Cloud stacks will use Grafana-managed alerting (GMA) by default. Dat
 This applies to the default Loki and Prometheus Grafana Cloud data sources managed by Grafana Labs and Cloud Alertmanager, which will not be available nor will Grafana provision the data source for it. If you add your own Mimir, Loki, or Alertmanager data sources, you can continue to use data source-managed alerts.
 
 Cloud users can import DMA rules into GMA rules with the import tool. See the [import data source-managed alerts to Grafana-managed alerts documentation](https://grafana.com/docs/grafana/latest/alerting/alerting-rules/alerting-migration/) for information on how to do this.
+{{< /admonition >}}
+
+{{< admonition type="note" >}}
+The standalone Alertmanager UI in Grafana Cloud (for example, `https://alertmanager-<REGION>.grafana.net/alertmanager/`) is deprecated and no longer available.
+
+All Alertmanager functionality, including silences, notification policies, contact points, and mute timings, is now available in the Grafana Alerting UI. Use the `Choose Alertmanager` dropdown to select the Alertmanager you want to manage. To manage silences, go to **Alerts & IRM** > **Alerting** > **Silences**.
 {{< /admonition >}}
 
 # Configure Alertmanagers
@@ -144,3 +155,13 @@ On the Settings page, you can also manage your Alertmanager configurations.
 
 - Manage version snapshots for the built-in Alertmanager, which allows administrators to roll back unintentional changes or mistakes in the Alertmanager configuration.
 - Compare the historical snapshot with the latest configuration to see which changes were made.
+
+### Configuration history limits
+
+Grafana stores up to the last 100 configuration versions for the built-in Grafana Alertmanager, per organization, including the current one. Each time the Alertmanager configuration changes, Grafana saves a new version and permanently deletes the oldest version once the limit is exceeded.
+
+To avoid losing a working configuration:
+
+- **Back up your configuration**: [Export and store](ref:export-alerting-resources) your Alertmanager configuration outside of Grafana before you automate changes or run large-scale updates.
+- **Test changes in a low-impact environment**: Run automations and configuration experiments against a development or staging Grafana instance before applying them to production.
+- **Limit the frequency of automated changes**: Frequent automated updates consume the available configuration history. Batch changes where possible so that a single mistake doesn't overwrite every recoverable version.

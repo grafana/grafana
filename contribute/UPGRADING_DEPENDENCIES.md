@@ -47,6 +47,17 @@ Updated using `pnpm`:
 
 - `package.json`
 
+## pnpm
+
+The pnpm version is set in the `packageManager` field in `package.json`, and corepack provisions it from there. Several workspaces (built-in plugins, e2e test plugins, and some packages) pin their own pnpm version in their `package.json`, because corepack reads the nearest `package.json` when you run a command from inside one.
+
+To upgrade pnpm:
+
+1. Update the `packageManager` field in the root `package.json` to `pnpm@<version>`.
+1. Run `pnpm run lint:package-manager -- --fix` to propagate the new version to every workspace that pins its own. Running it without `--fix` reports any files that are out of sync; CI runs it that way.
+1. Update any documentation that mentions the pnpm version.
+1. Run `pnpm install` to verify the new version installs dependencies cleanly.
+
 ## Where to make changes
 
 ### Drone

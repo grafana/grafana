@@ -43,6 +43,6 @@ the pinned commit. To sync:
 2. Diff against this directory; apply matching changes under `lib/`.
 3. Bump `version` in `package.json` (e.g. `2.0.2-grafana.1`).
 4. Update the commit SHA above.
-5. Run `rm -rf node_modules && pnpm install`, then `yarn typecheck:tsgo`
+5. Run `rm -rf node_modules && pnpm install`, then `pnpm typecheck`
    and `pnpm exec jest --no-watch --testPathPattern='public/app/plugins/panel/geomap'`
    to confirm the consumer (`@maplibre/maplibre-gl-style-spec`) still works.

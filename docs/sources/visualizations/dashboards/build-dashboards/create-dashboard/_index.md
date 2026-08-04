@@ -5,10 +5,14 @@ aliases:
   - ../../../dashboards/build-dashboards/create-dynamic-dashboard/ # /docs/grafana/latest/dashboards/build-dashboards/create-dynamic-dashboard/
   - ./create-dynamic-dashboard/ # /docs/grafana/latest/visualizations/dashboards/build-dashboards/create-dynamic-dashboard/
 keywords:
-  - panel
   - dashboard
-  - create
-  - dynamic dashboard
+  - panel
+  - edit mode
+  - sidebar
+  - content outline
+  - layout
+  - repeat
+  - show/hide rules
 labels:
   products:
     - cloud
@@ -101,7 +105,7 @@ To create a dashboard, follow these steps:
      Then, go to step 12.
 
    {{< admonition type="note" >}}
-   [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is currently in [public preview](https://grafana.com/docs/release-life-cycle/) in Grafana Enterprise and Grafana Cloud only.
+   [Saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) is only available on Grafana Enterprise and Grafana Cloud.
    {{< /admonition >}}
 
 1. If you want to change the panel data source, in the **Queries** tab, click the **Data source** drop-down list and do one of the following:
@@ -496,3 +500,30 @@ To make a copy of a dashboard, follow these steps:
 1. Click **Save**.
 
 You're now in the copied dashboard.
+
+## Frequently asked questions
+
+{{< qa-list >}}
+{{< qa question="How do I create a dashboard in Grafana?" >}}
+To create a dashboard, select New → New dashboard, then Add visualization.
+Choose the data source you want to query, build your query, and pick a visualization type (time series, table, stat, and so on) to display the results.
+Add as many panels as you need, then click Save dashboard to keep it.
+{{< /qa >}}
+{{< qa question="How do I add a panel to a dashboard?" >}}
+Open the dashboard in edit mode and click Add → Visualization.
+Select a data source, write or build your query, choose how to visualize the results, and adjust the panel options on the right.
+Click Apply to add the panel to the dashboard, then Save to persist your changes.
+{{< /qa >}}
+{{< qa question="Do I need to know my data source's query language?" >}}
+In most cases, yes.
+Building effective dashboards requires understanding how to query your data source so you can retrieve the information you want to visualize.
+Grafana provides visualization and editing tools, but the query syntax depends on the data source you're using.
+{{< /qa >}}
+{{< qa question="How do I organize panels in a dashboard?" >}}
+Grafana lets you organize panels by arranging them on the dashboard canvas, grouping them into rows or tabs, and resizing or repositioning them as needed.
+These layout options help you create dashboards that are easier to scan and navigate.
+{{< /qa >}}
+{{< qa question="How do I keep a dashboard organized as it grows?" >}}
+As dashboards become more complex, you can improve organization by grouping related content into rows or tabs, arranging panels into a logical layout, and using dashboard features such as variables and annotations to make dashboards easier to navigate and use.
+{{< /qa >}}
+{{< /qa-list >}}

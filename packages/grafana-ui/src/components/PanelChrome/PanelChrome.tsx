@@ -8,7 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { getFocusStyles } from '../../themes/mixins';
+import { getFocusStyles, getInternalRadius } from '../../themes/mixins';
 import { DelayRender } from '../../utils/DelayRender';
 import { usePointerDistance } from '../../utils/usePointerDistance';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
@@ -169,7 +169,6 @@ export function PanelChrome({
   subtitle,
 }: PanelChromeProps) {
   const theme = useTheme2();
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
@@ -211,14 +210,13 @@ export function PanelChrome({
     theme,
     headerHeight,
     collapsed,
-    subHeaderHeight,
     height,
     width
   );
 
   const headerStyles: CSSProperties = {
-    height: headerHeight,
     cursor: dragClass ? 'move' : 'auto',
+    paddingBottom: subHeaderHeight ? 0 : theme.spacing.gridSize,
   };
 
   const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height };
@@ -478,9 +476,7 @@ export function PanelChrome({
           <div
             id={panelContentId}
             data-testid={selectors.components.Panels.Panel.content}
-            className={cx(styles.content, height === undefined && styles.containNone, {
-              [styles.contentTransparent]: visualRefreshEnabled && isPanelTransparent,
-            })}
+            className={cx(styles.content, height === undefined && styles.containNone)}
             style={contentStyle}
             onPointerDown={onContentPointerDown}
           >
@@ -500,9 +496,7 @@ const itemsRenderer = (items: ReactNode[] | ReactNode, renderer: (items: ReactNo
 const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean, subHeaderHeight: number) => {
   if (hasHeader) {
     // To reduce spacing between subHeader and content, we remove some height from the header when subHeader is present.
-    return (
-      theme.spacing.gridSize * theme.components.panel.headerHeight - (subHeaderHeight > 0 ? theme.spacing.gridSize : 0)
-    );
+    return theme.spacing.gridSize * theme.components.panel.headerHeight + subHeaderHeight;
   }
 
   return 0;
@@ -513,7 +507,6 @@ const getContentStyle = (
   theme: GrafanaTheme2,
   headerHeight: number,
   collapsed: boolean,
-  subHeaderHeight: number,
   height?: number,
   width?: number
 ) => {
@@ -529,7 +522,12 @@ const getContentStyle = (
 
   let innerHeight = 0;
   if (height) {
-    innerHeight = height - headerHeight - panelPadding - panelBorder - subHeaderHeight;
+    innerHeight = height - headerHeight - panelPadding - panelBorder + chromePadding;
+
+    // When there is no header the content has topPadding
+    if (headerHeight === 0) {
+      innerHeight -= chromePadding;
+    }
   }
 
   if (collapsed) {
@@ -538,14 +536,14 @@ const getContentStyle = (
 
   const contentStyle: CSSProperties = {
     padding: chromePadding,
+    paddingTop: headerHeight > 0 ? 0 : chromePadding,
   };
 
   return { contentStyle, innerWidth, innerHeight };
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { background, borderColor, contentBackground, contentBorderColor } = theme.components.panel;
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  const { background, borderColor } = theme.components.panel;
 
   return {
     container: css({
@@ -561,7 +559,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      overflow: visualRefreshEnabled ? 'unset' : 'hidden',
+      overflow: 'hidden',
 
       '.always-show': {
         background: 'none',
@@ -602,15 +600,23 @@ const getStyles = (theme: GrafanaTheme2) => {
         border: `1px solid ${borderColor}`,
       },
     }),
-    contentTransparent: css({
-      backgroundColor: 'transparent',
-      border: '1px solid transparent',
-    }),
     loadingBarContainer: css({
       label: 'panel-loading-bar-container',
       position: 'absolute',
-      top: 0,
-      width: '100%',
+      // inset by the panel border width, so the bar sits on the panel's padding box
+      // rather than on top of the border itself
+      top: 1,
+      left: 1,
+      right: 1,
+      // the clip box has to be at least as tall as the corner radius. On a 1px-tall box the
+      // corner-overlap rule scales the radii down to 1px and nothing is rounded
+      // see https://drafts.csswg.org/css-backgrounds/#corner-overlap
+      height: theme.shape.radius.lg,
+      overflow: 'hidden',
+      borderTopLeftRadius: getInternalRadius(theme, 0, { parentBorderRadius: 'lg' }),
+      borderTopRightRadius: getInternalRadius(theme, 0, { parentBorderRadius: 'lg' }),
+      // the container is taller than the bar it clips, so let hover and clicks through to the header
+      pointerEvents: 'none',
       // this is to force the loading bar container to create a new stacking context
       // otherwise, in webkit browsers on windows/linux, the aliasing of panel text changes when the loading bar is shown
       // see https://github.com/grafana/grafana/issues/88104
@@ -619,35 +625,30 @@ const getStyles = (theme: GrafanaTheme2) => {
     containNone: css({
       contain: 'none',
     }),
-    content: css(
-      {
-        label: 'panel-content',
-        flexGrow: 1,
-        contain: 'size layout',
-      },
-      visualRefreshEnabled && {
-        backgroundColor: contentBackground,
-        border: `1px solid ${contentBorderColor}`,
-        borderRadius: theme.shape.radius.lg,
-        overflow: 'hidden',
-        margin: '-1px', // to overlay the nested borders nicely
-      }
-    ),
+    content: css({
+      label: 'panel-content',
+      flexGrow: 1,
+      contain: 'size layout',
+    }),
     headerContainer: css({
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
-      padding: theme.spacing(0, 1, 0, 1),
+      padding: theme.spacing(1, 1, 0, 1),
       gap: theme.spacing(1),
+      maxHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
     }),
     subHeader: css({
       label: 'panel-sub-header',
       display: 'flex',
       alignItems: 'center',
       maxHeight: theme.spacing.gridSize * theme.components.panel.headerHeight,
-      padding: theme.spacing(0, 1, 0, 1.5),
+      padding: theme.spacing(0, 1, 1, 1.5),
       overflow: 'hidden',
       gap: theme.spacing(1),
+      '&:empty': {
+        display: 'none',
+      },
     }),
     pointer: css({
       cursor: 'pointer',

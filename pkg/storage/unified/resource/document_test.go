@@ -61,6 +61,14 @@ func TestStandardDocumentBuilder(t *testing.T) {
 	}`, string(jj))
 }
 
+// registryWithProvider seeds a registry so the standard builder finds the given
+// provider for the kind under test.
+func registryWithProvider(gvr schema.GroupVersionResource, provider SearchFieldsProvider) *SearchFieldsRegistry {
+	return NewSearchFieldsRegistry(nil, nil, map[LowerGroupResource]SearchFieldsProvider{
+		NewLowerGroupResource(gvr.Group, gvr.Resource): provider,
+	})
+}
+
 func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 	ctx := t.Context()
 	gvr := schema.GroupVersionResource{Group: "example.grafana.app", Version: "v1", Resource: "things"}
@@ -96,7 +104,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 				{Name: "member_names", Path: "spec.members[*].name", Type: SearchFieldTypeString, Array: true},
 			},
 		}, nil)
-		builder := StandardDocumentBuilderWithFields(nil, provider)
+		builder := StandardDocumentBuilder(registryWithProvider(gvr, provider))
 		doc, err := builder.BuildDocument(ctx, key, 1, body)
 		require.NoError(t, err)
 		require.Equal(t, "alice@example.com", doc.Fields["email"])
@@ -112,7 +120,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 				{Name: "computed", Type: SearchFieldTypeString},
 			},
 		}, nil)
-		builder := StandardDocumentBuilderWithFields(nil, provider)
+		builder := StandardDocumentBuilder(registryWithProvider(gvr, provider))
 		doc, err := builder.BuildDocument(ctx, key, 1, body)
 		require.NoError(t, err)
 		_, present := doc.Fields["computed"]
@@ -125,7 +133,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 				{Name: "email", Path: "spec.email", Type: SearchFieldTypeInt64},
 			},
 		}, nil)
-		builder := StandardDocumentBuilderWithFields(nil, provider)
+		builder := StandardDocumentBuilder(registryWithProvider(gvr, provider))
 		doc, err := builder.BuildDocument(ctx, key, 1, body)
 		require.NoError(t, err)
 		_, present := doc.Fields["email"]
@@ -138,7 +146,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 				{Name: "absent", Path: "spec.not_there", Type: SearchFieldTypeString},
 			},
 		}, nil)
-		builder := StandardDocumentBuilderWithFields(nil, provider)
+		builder := StandardDocumentBuilder(registryWithProvider(gvr, provider))
 		doc, err := builder.BuildDocument(ctx, key, 1, body)
 		require.NoError(t, err)
 		assert.Empty(t, doc.Fields)
@@ -158,7 +166,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 				{Group: gvr.Group, Resource: gvr.Resource}: "v2",
 			},
 		)
-		builder := StandardDocumentBuilderWithFields(nil, provider)
+		builder := StandardDocumentBuilder(registryWithProvider(gvr, provider))
 		doc, err := builder.BuildDocument(ctx, key, 1, body)
 		require.NoError(t, err)
 		assert.Empty(t, doc.Fields)
@@ -180,7 +188,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 				{Group: gvr.Group, Resource: gvr.Resource}: gvr.Version,
 			},
 		)
-		builder := StandardDocumentBuilderWithFields(nil, provider)
+		builder := StandardDocumentBuilder(registryWithProvider(gvr, provider))
 		doc, err := builder.BuildDocument(ctx, key, 1, bodyNoVersion)
 		require.NoError(t, err)
 		assert.Equal(t, "alice@example.com", doc.Fields["email"])
@@ -209,7 +217,7 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 				},
 			}, nil,
 		)
-		builder := StandardDocumentBuilderWithFields(nil, provider)
+		builder := StandardDocumentBuilder(registryWithProvider(gvr, provider))
 		doc, err := builder.BuildDocument(ctx, key, 1, bodyEmpty)
 		require.NoError(t, err)
 		assert.Equal(t, false, doc.Fields["flag"])
@@ -230,18 +238,74 @@ func TestStandardDocumentBuilder_DeclaredFields(t *testing.T) {
 		provider := NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{
 			gvr: {{Name: "email", Path: "spec.email", Type: SearchFieldTypeString}},
 		}, nil)
-		builder := StandardDocumentBuilderWithFields(nil, provider)
+		builder := StandardDocumentBuilder(registryWithProvider(gvr, provider))
 		doc, err := builder.BuildDocument(ctx, key, 1, bodyNoVersion)
 		require.NoError(t, err)
 		assert.Empty(t, doc.Fields)
 	})
 
-	t.Run("nil provider preserves legacy behaviour", func(t *testing.T) {
-		// Constructor without a provider must produce the same shape as
-		// StandardDocumentBuilder(manifests).
-		builder := StandardDocumentBuilderWithFields(nil, nil)
+	t.Run("nil registry preserves base behaviour", func(t *testing.T) {
+		// Without a registry the builder still produces the base document,
+		// just no selectable or declared fields.
+		builder := StandardDocumentBuilder(nil)
 		doc, err := builder.BuildDocument(ctx, key, 1, body)
 		require.NoError(t, err)
 		assert.Empty(t, doc.Fields)
 	})
+}
+
+// TestStandardDocumentBuilder_ReloadThroughRegistry verifies the central
+// reload behavior: one builder, backed by a registry, reflects a Replace of the
+// registry's selectable fields and path-based definitions on the next document
+// without being rebuilt.
+func TestStandardDocumentBuilder_ReloadThroughRegistry(t *testing.T) {
+	ctx := t.Context()
+	gvr := schema.GroupVersionResource{Group: "example.grafana.app", Version: "v1", Resource: "things"}
+	gr := gvr.GroupResource()
+	sfKey := NewLowerGroupResource(gvr.Group, gvr.Resource)
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: gvr.Group, Resource: gvr.Resource, Name: "thing-1"}
+	body := []byte(`{
+		"apiVersion": "example.grafana.app/v1",
+		"kind": "Thing",
+		"metadata": {"name": "thing-1"},
+		"spec": {"a": "AAA", "b": "BBB", "x": "XXX", "y": "YYY"}
+	}`)
+
+	providerFor := func(name, path string) SearchFieldsProvider {
+		return NewMapProvider(
+			map[schema.GroupVersionResource][]SearchFieldDefinition{
+				gvr: {{Name: name, Path: path, Type: SearchFieldTypeString}},
+			},
+			map[schema.GroupResource]string{gr: gvr.Version},
+		)
+	}
+
+	registry := NewSearchFieldsRegistry(
+		map[LowerGroupResource][]string{sfKey: {"spec.x"}},
+		nil,
+		map[LowerGroupResource]SearchFieldsProvider{sfKey: providerFor("a", "spec.a")},
+	)
+	builder := StandardDocumentBuilder(registry)
+
+	doc, err := builder.BuildDocument(ctx, key, 1, body)
+	require.NoError(t, err)
+	require.Equal(t, "AAA", doc.Fields["a"])
+	require.NotContains(t, doc.Fields, "b")
+	require.Contains(t, doc.SelectableFields, "spec.x")
+	require.NotContains(t, doc.SelectableFields, "spec.y")
+
+	// Reload with different declared and selectable fields; the same builder
+	// must reflect them on the next document.
+	registry.Replace(
+		map[LowerGroupResource][]string{sfKey: {"spec.y"}},
+		nil,
+		map[LowerGroupResource]SearchFieldsProvider{sfKey: providerFor("b", "spec.b")},
+	)
+
+	doc, err = builder.BuildDocument(ctx, key, 1, body)
+	require.NoError(t, err)
+	require.Equal(t, "BBB", doc.Fields["b"])
+	require.NotContains(t, doc.Fields, "a")
+	require.Contains(t, doc.SelectableFields, "spec.y")
+	require.NotContains(t, doc.SelectableFields, "spec.x")
 }

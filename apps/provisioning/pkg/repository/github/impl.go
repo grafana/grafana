@@ -164,7 +164,8 @@ func (r *githubClient) GetRulesets(ctx context.Context, branch string) (*Ruleset
 	logger := logging.FromContext(ctx).With(
 		slog.String("owner", r.owner),
 		slog.String("repository", r.repo),
-		slog.String("branch", branch))
+		slog.String("branch", branch),
+	)
 
 	// Get all active rules that apply to this specific branch
 	// This API returns only active rules (no disabled/evaluate enforcement)
@@ -431,8 +432,8 @@ func (r *githubClient) adoptExistingWebhook(ctx context.Context, cfg webhookConf
 	return nil, ErrWebhookAlreadyExists
 }
 
-func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (repo.WebhookConfig, error) {
-	hook, _, err := r.gh.Repositories.GetHook(ctx, r.owner, r.repo, webhookID)
+func (r *githubClient) GetWebhook(ctx context.Context, webhookID repo.WebhookID) (repo.WebhookConfig, error) {
+	hook, _, err := r.gh.Repositories.GetHook(ctx, r.owner, r.repo, webhookID.ID)
 	if err != nil {
 		return nil, translateGitHubError(err)
 	}
@@ -454,8 +455,8 @@ func (r *githubClient) GetWebhook(ctx context.Context, webhookID int64) (repo.We
 	}, nil
 }
 
-func (r *githubClient) DeleteWebhook(ctx context.Context, webhookID int64) error {
-	_, err := r.gh.Repositories.DeleteHook(ctx, r.owner, r.repo, webhookID)
+func (r *githubClient) DeleteWebhook(ctx context.Context, webhookID repo.WebhookID) error {
+	_, err := r.gh.Repositories.DeleteHook(ctx, r.owner, r.repo, webhookID.ID)
 	if err != nil {
 		return translateGitHubError(err)
 	}

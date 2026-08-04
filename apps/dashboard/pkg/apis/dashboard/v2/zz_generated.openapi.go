@@ -724,8 +724,8 @@ func schema_pkg_apis_dashboard_v2_DashboardAnnotationPanelFilter(ref common.Refe
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
 										Default: 0,
-										Type:    []string{"integer"},
-										Format:  "int64",
+										Type:    []string{"number"},
+										Format:  "double",
 									},
 								},
 							},
@@ -3340,9 +3340,16 @@ func schema_pkg_apis_dashboard_v2_DashboardPanelSpec(ref common.ReferenceCallbac
 					},
 					"description": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "Shown in a info icon tooltip next to panel title",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"subtitle": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Shown in a sub header below the title.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"links": {
@@ -3377,7 +3384,7 @@ func schema_pkg_apis_dashboard_v2_DashboardPanelSpec(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"id", "title", "description", "links", "data", "vizConfig"},
+				Required: []string{"id", "title", "links", "data", "vizConfig"},
 			},
 		},
 		Dependencies: []string{
@@ -4693,6 +4700,13 @@ func schema_pkg_apis_dashboard_v2_DashboardThreshold(ref common.ReferenceCallbac
 							Description: "Value null means -Infinity",
 							Type:        []string{"number"},
 							Format:      "double",
+						},
+					},
+					"valueExpr": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"color": {

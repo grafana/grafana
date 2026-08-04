@@ -1,320 +1,136 @@
-import { css, cx } from '@emotion/css';
-import { useEffect, useState } from 'react';
+import { useRef } from 'react';
+import { useAsync } from 'react-use';
 
-import { type GrafanaTheme2, type IconName } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
-import { Badge, Button, Grid, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
-import { useStoredBoolean } from 'app/core/hooks/useStoredBoolean';
+import { config } from '@grafana/runtime';
+import { useStoredBoolean } from 'app/core/hooks/useStored';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
-import RecommendationCard from './RecommendationCard';
-import RecommendationExisting from './RecommendationExisting';
-import RecommendationPill from './RecommendationPill';
+import { RecommendationsSkeleton } from './RecommendationsSkeleton';
+import { RecommendationsView } from './RecommendationsView';
+import { fetchInstalledPlugins, getRecommendationCards, type PluginRecommendationCard } from './pluginRecommendations';
+import { useSolutionState } from './solutionState';
+import {
+  type ExistingSolutionId,
+  orderCardsForSolution,
+  type RecommendedCardId,
+  selectRecommendations,
+} from './solutionsMatrix';
+import { type RecommendationItem } from './types';
 
 const HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.collapsed';
 
-export interface RecommendationItem {
-  title: string;
-  icon: IconName;
-  color: string | ((theme: GrafanaTheme2) => string);
-  context: string;
-  description: string;
-  action: string;
-  href: string;
+export function Recommendations() {
+  const canInstall = contextSrv.hasPermission(AccessControlAction.PluginsInstall) && config.pluginAdminEnabled;
+  // Unscoped pre-gate; each card re-checks its scoped permission. Plugin management or
+  // datasource creation qualifies — everyone else is spared the fetches and probes.
+  const canWriteSome = contextSrv.hasPermission(AccessControlAction.PluginsWrite);
+  const canCreateDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
+  if (!canInstall && !canWriteSome && !canCreateDataSources) {
+    return null;
+  }
+  return <GatedRecommendations canInstall={canInstall} />;
 }
 
-// Stubbed data for initial development
-const recommendations: RecommendationItem[] = [
-  {
-    title: 'Explore your service map',
-    icon: 'shield',
-    color: (theme) => theme.visualization.getColorByName('green'),
-    context: '34 services mapped automatically',
-    description: 'Grafana built a live map of your services from their telemetry — dive in.',
-    action: 'Open the map',
-    href: '#',
-  },
-  {
-    title: 'Watch your cluster from outside',
-    icon: 'plus',
-    color: (theme) => theme.visualization.getColorByName('purple'),
-    context: 'Because you set up Kubernetes Monitoring',
-    description: 'Probe your endpoints from 20+ global locations before your users notice.',
-    action: 'Add Synthetic Monitoring',
-    href: '#',
-  },
-  {
-    title: 'Define an SLO on checkout',
-    icon: 'crosshair',
-    color: (theme) => theme.visualization.getColorByName('blue'),
-    context: 'You have the metrics — set a target',
-    description: 'Turn your telemetry into a reliability target and track the error budget.',
-    action: 'Open SLOs',
-    href: '#',
-  },
-];
+interface GatedRecommendationsProps {
+  canInstall: boolean;
+}
 
-export default function Recommendations() {
-  const styles = useStyles2(getStyles);
+function toEnableItem(recommendation: PluginRecommendationCard): RecommendationItem {
+  return { ...recommendation, cta: 'enable' };
+}
+
+// Enabled-but-silent app: the CTA leads into the app to finish setup, not to the catalog.
+function toSetupItem(recommendation: PluginRecommendationCard): RecommendationItem {
+  return { ...recommendation, action: recommendation.setupAction, href: recommendation.appHref, cta: 'setup' };
+}
+
+function GatedRecommendations({ canInstall }: GatedRecommendationsProps) {
   const [collapsed, setCollapsed] = useStoredBoolean(HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY, false);
+  // A stored collapsed preference must not fire the probes or the plugin fetch. Monotonic
+  // render-time latch: expanding never commits an ungated frame, re-collapsing never refetches.
+  const everExpanded = useRef(!collapsed);
+  if (!collapsed) {
+    everExpanded.current = true;
+  }
+  const probesEnabled = everExpanded.current;
 
-  const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  useEffect(() => {
-    if (collapsed || paused) {
-      return;
-    }
+  const plugins = useAsync(async () => (probesEnabled ? fetchInstalledPlugins() : undefined), [probesEnabled]);
+  const pluginsById = new Map((plugins.value ?? []).map((plugin) => [plugin.id, plugin]));
+  // Derived from the settled value, not the loading flag: on the probesEnabled flip, useAsync
+  // still reports the gated run's state for one frame, which must read as pending.
+  const pluginsSettled = !!plugins.value || !!plugins.error;
 
-    const timeout = setTimeout(() => {
-      setIndex((index + 1) % recommendations.length);
-    }, 5000);
+  const { value: resolution } = useSolutionState(probesEnabled);
+  const selection = resolution ? selectRecommendations(resolution.state) : undefined;
 
-    return () => clearTimeout(timeout);
-  }, [collapsed, paused, index]);
+  const cardsById = getRecommendationCards();
+  const selectedCards = selection?.cards.map((id) => cardsById[id]) ?? [];
+
+  // An unavailable plugin list fails closed (plugin cards only). /api/plugins always lists at
+  // least the core plugins, so an empty response means the list is unreliable and also fails closed.
+  const listReady = !!plugins.value && plugins.value.length > 0;
+
+  const toItems = (cards: RecommendedCardId[]): RecommendationItem[] =>
+    cards.flatMap((cardId): RecommendationItem[] => {
+      const card = cardsById[cardId];
+      if (card.kind === 'connection') {
+        // Independent of the plugin list: a failing /api/plugins must not hide a connection card.
+        return contextSrv.hasPermission(AccessControlAction.DataSourcesCreate) ? [{ ...card, cta: 'enable' }] : [];
+      }
+      if (!listReady) {
+        return [];
+      }
+      const plugin = pluginsById.get(card.pluginId);
+      if (!plugin) {
+        // Unlistable plugins take the install-only path.
+        return canInstall ? [toEnableItem(card)] : [];
+      }
+      if (plugin.enabled) {
+        // Selection already established the solution is silent; the setup CTA leads into the app,
+        // so it only renders for users who can open it.
+        return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsAppAccess, plugin)
+          ? [toSetupItem(card)]
+          : [];
+      }
+      // plugins:write is scoped to this plugin.
+      return contextSrv.hasPermissionInMetadata(AccessControlAction.PluginsWrite, plugin) ? [toEnableItem(card)] : [];
+    });
+
+  const recommendations = toItems(selection?.cards ?? []);
+  // Per-solution views are permutations of the same selection (membership is the matrix's
+  // call, never the view's), so the skeleton and region-hide gates below stay list-agnostic.
+  // The Record type keeps the literal in lockstep with EXISTING_SOLUTION_IDS.
+  const forSolution = (id: ExistingSolutionId) => toItems(orderCardsForSolution(selection?.cards ?? [], id));
+  const recommendationsBySolution: Record<ExistingSolutionId, RecommendationItem[]> = {
+    kubernetes: forSolution('kubernetes'),
+    metrics: forSolution('metrics'),
+    logs: forSolution('logs'),
+    traces: forSolution('traces'),
+  };
+
+  // The region renders once state settles; recommendations only decide the right column.
+  // Collapsed (gated-off) renders immediately as just the header row.
+  const waitingOnPlugins = !pluginsSettled && selectedCards.some((card) => card.kind === 'plugin');
+  if (probesEnabled && (!selection || waitingOnPlugins)) {
+    return <RecommendationsSkeleton />;
+  }
+
+  // All-or-nothing: the region never renders one column alone. An empty right column —
+  // inconclusive detection (the matrix's unknown short-circuit), nothing left to recommend,
+  // or every card failing closed — hides the whole region. The collapsed-gated render
+  // (probesEnabled false) keeps its header row: with probes off, emptiness is unknowable.
+  if (probesEnabled && recommendations.length === 0) {
+    return null;
+  }
 
   return (
-    <div>
-      <Stack direction="row" alignItems="center" columnGap={2} rowGap={1} wrap="wrap">
-        <Text element="h2" variant="h5">
-          <Trans i18nKey="home.recommendations.title">Recommendations for your stack</Trans>
-        </Text>
-
-        {collapsed && (
-          <div className={styles.pills}>
-            <Stack direction="row" alignItems="center" gap={1} wrap="wrap">
-              {recommendations.map((recommendation) => (
-                <RecommendationPill key={recommendation.title} recommendation={recommendation} />
-              ))}
-            </Stack>
-          </div>
-        )}
-
-        <Stack direction="row" alignItems="center" gap={1} flex="1 1 auto">
-          <div className={cx(styles.spacer, collapsed && styles.line)} />
-
-          <Button
-            variant="secondary"
-            size="sm"
-            fill="text"
-            icon={collapsed ? 'angle-down' : 'angle-up'}
-            iconPlacement="right"
-            onClick={() => setCollapsed(!collapsed)}
-            aria-expanded={!collapsed}
-          >
-            {collapsed ? (
-              <Trans i18nKey="home.recommendations.show">Show</Trans>
-            ) : (
-              <Trans i18nKey="home.recommendations.hide">Hide</Trans>
-            )}
-          </Button>
-        </Stack>
-      </Stack>
-
-      {!collapsed && (
-        <div className={styles.cards}>
-          <Grid gap={0} columns={{ xs: 1, md: 2 }}>
-            <div className={styles.card}>
-              <RecommendationExisting />
-
-              <div className={styles.arrow}>
-                <Icon name="arrow-right" size="xl" />
-              </div>
-            </div>
-
-            <div className={cx(styles.card, styles.recommended)}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2}>
-                <Badge color="brand" icon="bolt" text={t('home.recommendations.recommended', 'Recommended')} />
-
-                <Stack direction="row" alignItems="center" gap={1}>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    fill="text"
-                    icon="angle-left"
-                    onClick={() => setIndex((index - 1 + recommendations.length) % recommendations.length)}
-                    aria-label={t('home.recommendations.previous', 'Previous')}
-                  />
-
-                  {recommendations.map((_, i) =>
-                    i === index ? (
-                      <Button
-                        key={i}
-                        variant="secondary"
-                        size="sm"
-                        fill="solid"
-                        icon={paused ? 'play' : 'pause'}
-                        onClick={() => setPaused(!paused)}
-                        aria-label={
-                          paused ? t('home.recommendations.resume', 'Resume') : t('home.recommendations.pause', 'Pause')
-                        }
-                        data-paused={paused ? true : undefined}
-                        className={cx(styles.dot, styles.active)}
-                      />
-                    ) : (
-                      <Button
-                        key={i}
-                        variant="secondary"
-                        size="sm"
-                        fill="solid"
-                        onClick={() => setIndex(i)}
-                        aria-label={t('home.recommendations.go-to', 'Go to recommendation {{index}}', { index: i + 1 })}
-                        className={styles.dot}
-                      />
-                    )
-                  )}
-
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    fill="text"
-                    icon="angle-right"
-                    onClick={() => setIndex((index + 1) % recommendations.length)}
-                    aria-label={t('home.recommendations.next', 'Next')}
-                  />
-                </Stack>
-              </Stack>
-
-              <div className={styles.outer}>
-                <div className={styles.inner} style={{ transform: `translateX(-${index * 100}%)` }}>
-                  {recommendations.map((recommendation, i) => (
-                    <div key={recommendation.title} className={styles.item} aria-hidden={i !== index}>
-                      <RecommendationCard recommendation={recommendation} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </Grid>
-        </div>
-      )}
-    </div>
+    <RecommendationsView
+      recommendations={recommendations}
+      recommendationsBySolution={recommendationsBySolution}
+      startingState={selection?.baseRow ?? 'unknown'}
+      collapsed={collapsed}
+      setCollapsed={setCollapsed}
+    />
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  pills: css({
-    [theme.breakpoints.down('md')]: {
-      order: 1,
-    },
-  }),
-  spacer: css({
-    flex: '1 1 0%',
-  }),
-  line: css({
-    [theme.breakpoints.up('md')]: {
-      background: theme.colors.border.medium,
-      height: '1px',
-    },
-  }),
-  cards: css({
-    background: theme.colors.background.canvas,
-    borderRadius: theme.shape.radius.default,
-    margin: theme.spacing(2, 0, 0),
-    overflow: 'hidden',
-  }),
-  card: css({
-    display: 'flex',
-    flexDirection: 'column',
-    padding: theme.spacing(3, 4),
-    position: 'relative',
-    minWidth: 0,
-  }),
-  recommended: css({
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      inset: 0,
-      background: theme.colors.gradients.brandHorizontal,
-      opacity: 0.05,
-      pointerEvents: 'none',
-    },
-  }),
-  arrow: css({
-    background: theme.colors.background.secondary,
-    borderRadius: theme.shape.radius.circle,
-    border: `1px solid ${theme.colors.border.medium}`,
-    padding: theme.spacing(0.25),
-    lineHeight: 0,
-    position: 'absolute',
-    zIndex: 1,
-    left: '50%',
-    top: '100%',
-    transform: 'translate(-50%, -50%) rotate(90deg)',
-
-    [theme.breakpoints.up('md')]: {
-      top: theme.spacing(2),
-      left: '100%',
-      transform: 'translate(-50%, 0)',
-    },
-  }),
-  dot: css({
-    background: theme.colors.background.secondary,
-    lineHeight: 0,
-    padding: 0,
-    width: theme.spacing(1),
-    height: theme.spacing(1),
-    borderRadius: theme.shape.radius.pill,
-    position: 'relative',
-
-    '&::after': {
-      content: '""',
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      width: theme.spacing(2),
-      height: theme.spacing(2),
-    },
-
-    [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-      transition: theme.transitions.create(['background-color', 'width', 'height'], {
-        duration: theme.transitions.duration.short,
-      }),
-    },
-  }),
-  active: css({
-    '&, &::after': {
-      width: theme.spacing(3),
-    },
-
-    '&, &:hover, &:focus': {
-      background: theme.colors.text.maxContrast,
-      color: theme.colors.background.secondary,
-    },
-
-    '&:hover, &[data-paused]': {
-      height: theme.spacing(2),
-    },
-
-    '& > svg': {
-      margin: '0 auto',
-
-      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
-        transition: theme.transitions.create(['opacity'], {
-          duration: theme.transitions.duration.short,
-        }),
-      },
-    },
-
-    '&:not(:hover):not([data-paused])': {
-      '& > svg': {
-        opacity: 0,
-      },
-    },
-  }),
-  outer: css({
-    overflow: 'hidden',
-    flex: 1,
-    margin: theme.spacing(2, 0, 0),
-  }),
-  inner: css({
-    display: 'flex',
-
-    [theme.transitions.handleMotion('no-preference')]: {
-      transition: theme.transitions.create(['transform']),
-    },
-  }),
-  item: css({
-    display: 'flex',
-    minWidth: '100%',
-  }),
-});

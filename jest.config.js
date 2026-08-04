@@ -47,6 +47,7 @@ const esModules = [
   'is-any-array',
   '@react-hookz/web',
   '@ver0/deep-equal',
+  '@marcbachmann/cel-js',
 ].join('|');
 
 module.exports = {
@@ -63,9 +64,12 @@ module.exports = {
     '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest')],
   },
   transformIgnorePatterns: [
-    // The optional .pnpm/<pkg>@<ver>/node_modules/ segment matches pnpm's nested
-    // store layout so ESM packages there are still transformed, not skipped.
-    `/node_modules/(?!(?:\\.pnpm/.+/node_modules/)?(${esModules}))`, // exclude es modules to prevent TS complaining
+    // Transform listed ESM packages at the top level or nested under another
+    // `node_modules/` — either a package's own nested copy (@grafana/plugin-ui → uuid)
+    // or pnpm's `.pnpm/<pkg>@<ver>/node_modules/` store, which is where jest's
+    // realpath resolution lands for nearly every dependency. Prefix matching is used
+    // throughout so entries like `d3` keep covering related packages (d3-force, etc.).
+    `/node_modules/(?!(?:.*/node_modules/)?(?:${esModules}))`, // exclude es modules to prevent TS complaining
   ],
   moduleDirectories: ['public', 'node_modules'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts/tests'],
@@ -102,14 +106,9 @@ module.exports = {
     '/node_modules/',
     // Decoupled plugins run their own tests so ignoring them here.
     '<rootDir>/public/app/plugins/datasource/azuremonitor',
-    '<rootDir>/public/app/plugins/datasource/grafana-postgresql-datasource',
-    '<rootDir>/public/app/plugins/datasource/grafana-pyroscope-datasource',
+    '<rootDir>/public/app/plugins/datasource/cloudwatch',
     '<rootDir>/public/app/plugins/datasource/grafana-testdata-datasource',
     '<rootDir>/public/app/plugins/datasource/influxdb',
     '<rootDir>/public/app/plugins/datasource/graphite',
-    '<rootDir>/public/app/plugins/datasource/jaeger',
-    '<rootDir>/public/app/plugins/datasource/loki',
-    '<rootDir>/public/app/plugins/datasource/mssql',
-    '<rootDir>/public/app/plugins/datasource/mysql',
   ],
 };

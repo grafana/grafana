@@ -48,6 +48,16 @@ do
   I18N_STATS+="\"grafana.ci-code.i18n.${name}\": \"${value}\","
 done <<< "$(pnpm run i18n:stats)"
 
+# Requires the frontend to have been built (pnpm run build) so the assets manifests exist.
+# Assigned separately from the herestring below so that set -e catches a failure here.
+BUNDLE_SIZES="$(pnpm run bundle-size:stats)"
+BUNDLE_SIZE_STATS=""
+while read -r name value
+do
+  BUNDLE_SIZE_STATS+=$'\n  '
+  BUNDLE_SIZE_STATS+="\"grafana.ci-code.bundleSize.${name}\": \"${value}\","
+done <<< "$BUNDLE_SIZES"
+
 THEME_TOKEN_USAGE=""
 while read -r name value
 do
@@ -59,6 +69,7 @@ echo "Metrics: {
   $THEME_TOKEN_USAGE
   $ESLINT_STATS
   $I18N_STATS
+  $BUNDLE_SIZE_STATS
   \"grafana.ci-code.strictErrors\": \"${ERROR_COUNT}\",
   \"grafana.ci-code.directives\": \"${DIRECTIVES}\",
   \"grafana.ci-code.controllers\": \"${CONTROLLERS}\",

@@ -3,7 +3,9 @@ package resource
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -13,22 +15,37 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
 
-type fakeSubscription struct{ unsubscribed bool }
+type fakeSubscription struct {
+	mu           sync.Mutex
+	unsubscribed bool
+}
 
 func (f *fakeSubscription) Unsubscribe() error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.unsubscribed = true
 	return nil
 }
 
+func (f *fakeSubscription) wasUnsubscribed() bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.unsubscribed
+}
+
 type fakeEventSubscriber struct {
 	enabled bool
-	subErr  error
 
+	// mu guards the fields below: the notifier's retry loop may call Subscribe
+	// concurrently with a test inspecting the wiring.
+	mu      sync.Mutex
+	subErr  error
 	subject string
 	handler func(subject string, data []byte)
 	sub     *fakeSubscription
@@ -37,6 +54,8 @@ type fakeEventSubscriber struct {
 func (f *fakeEventSubscriber) Enabled() bool { return f.enabled }
 
 func (f *fakeEventSubscriber) Subscribe(_ context.Context, subject string, handler func(subject string, data []byte)) (Subscription, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if f.subErr != nil {
 		return nil, f.subErr
 	}
@@ -44,6 +63,18 @@ func (f *fakeEventSubscriber) Subscribe(_ context.Context, subject string, handl
 	f.handler = handler
 	f.sub = &fakeSubscription{}
 	return f.sub, nil
+}
+
+func (f *fakeEventSubscriber) setSubErr(err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.subErr = err
+}
+
+func (f *fakeEventSubscriber) currentHandler() func(subject string, data []byte) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.handler
 }
 
 func mustMarshalNotification(t *testing.T, n *resourcepb.WatchNotification) []byte {
@@ -95,7 +126,7 @@ func TestNatsNotifierWatch_ConvertsNotifications(t *testing.T) {
 			defer cancel()
 			out := n.Watch(ctx, WatchOptions{})
 			require.NotNil(t, sub.handler)
-			assert.Equal(t, resourcewatch.SubjectAll, sub.subject)
+			assert.Equal(t, resourcewatch.SubjectAllResources, sub.subject)
 
 			sub.handler("some.subject", mustMarshalNotification(t, &resourcepb.WatchNotification{
 				Type:                    tc.typ,
@@ -186,6 +217,73 @@ func TestNatsNotifierWatch_DropsUnmarshalableData(t *testing.T) {
 	assert.Equal(t, float64(1), testutil.ToFloat64(dropped.WithLabelValues("unmarshal_error")))
 }
 
+func TestThrottledLog_ReleasesOneLinePerInterval(t *testing.T) {
+	// The fake clock lets the interval expire without the test waiting for it.
+	synctest.Test(t, func(t *testing.T) {
+		tl := newThrottledLog(time.Hour)
+
+		suppressed, ok := tl.next("reason")
+		require.True(t, ok, "first occurrence must always be logged")
+		assert.Zero(t, suppressed)
+
+		for range 5 {
+			_, ok := tl.next("reason")
+			assert.False(t, ok, "further occurrences within the interval must be throttled")
+		}
+
+		// Once the interval expires the next line is released, reporting everything
+		// suppressed since the previous one.
+		time.Sleep(time.Hour)
+		suppressed, ok = tl.next("reason")
+		require.True(t, ok)
+		assert.Equal(t, int64(5), suppressed)
+
+		// The count resets once reported.
+		time.Sleep(time.Hour)
+		suppressed, ok = tl.next("reason")
+		require.True(t, ok)
+		assert.Zero(t, suppressed)
+	})
+}
+
+func TestThrottledLog_ThrottlesKeysIndependently(t *testing.T) {
+	tl := newThrottledLog(time.Hour)
+
+	_, ok := tl.next("first")
+	require.True(t, ok)
+	_, ok = tl.next("first")
+	require.False(t, ok)
+
+	// A storm on one key must not hide the first occurrence of another.
+	_, ok = tl.next("second")
+	assert.True(t, ok)
+}
+
+func TestNatsNotifierDrop_CountsEveryDropWhileThrottlingLogs(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := &fakeEventSubscriber{enabled: true}
+		dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
+		logger := &logtest.Fake{}
+		n := newNatsNotifier(sub, dropped, logger)
+
+		// The counter is the source of truth for drop rates, so it must stay exact
+		// even though the warning is throttled to one line per interval.
+		for range 100 {
+			n.drop(dropReasonBufferFull, "dropped watch notification, channel full", "subject", "some.subject")
+		}
+		assert.Equal(t, float64(100), testutil.ToFloat64(dropped.WithLabelValues(dropReasonBufferFull)))
+		require.Equal(t, 1, logger.WarnLogs.Calls, "only the first drop should be logged within the interval")
+
+		// The next drop after the interval logs again and reports the backlog, so a
+		// throttled line still conveys volume.
+		time.Sleep(dropLogInterval)
+		n.drop(dropReasonBufferFull, "dropped watch notification, channel full", "subject", "some.subject")
+		require.Equal(t, 2, logger.WarnLogs.Calls)
+		assert.Contains(t, logger.WarnLogs.Ctx, "suppressed_since_last_log")
+		assert.Contains(t, logger.WarnLogs.Ctx, int64(99))
+	})
+}
+
 func TestNatsNotifierWatch_ClosesAndUnsubscribesOnContextCancel(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
 	n := newNatsNotifier(sub, nil, log.NewNopLogger())
@@ -203,22 +301,43 @@ func TestNatsNotifierWatch_ClosesAndUnsubscribesOnContextCancel(t *testing.T) {
 
 	// AfterFunc runs asynchronously; give it a moment.
 	require.Eventually(t, func() bool {
-		return sub.sub != nil && sub.sub.unsubscribed
+		return sub.sub != nil && sub.sub.wasUnsubscribed()
 	}, 2*time.Second, 10*time.Millisecond, "expected Unsubscribe to be called")
 }
 
-func TestNatsNotifierWatch_SubscribeErrorClosesChannel(t *testing.T) {
+func TestNatsNotifierWatch_RetriesUntilSubscribeSucceeds(t *testing.T) {
+	// Bus unreachable at first, then available: Watch must keep the channel open
+	// and re-subscribe rather than closing it and losing the watch.
 	sub := &fakeEventSubscriber{enabled: true, subErr: errors.New("boom")}
 	n := newNatsNotifier(sub, nil, log.NewNopLogger())
 
-	out := n.Watch(context.Background(), WatchOptions{})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	// Small backoff bounds keep the subscription retry loop fast for the test.
+	out := n.Watch(ctx, WatchOptions{MinBackoff: 10 * time.Millisecond, MaxBackoff: 20 * time.Millisecond})
 
+	// The channel must stay open across the failed subscribe.
 	select {
 	case _, ok := <-out:
-		assert.False(t, ok, "channel should be closed when subscribe fails")
-	case <-time.After(2 * time.Second):
-		t.Fatal("timed out waiting for channel to close")
+		require.True(t, ok, "channel closed on subscribe error; expected retry to keep it open")
+	case <-time.After(50 * time.Millisecond):
 	}
+
+	// Bus recovers; the retry loop should subscribe and start delivering.
+	sub.setSubErr(nil)
+	require.Eventually(t, func() bool {
+		return sub.currentHandler() != nil
+	}, 2*time.Second, 10*time.Millisecond, "expected retry to subscribe once the bus is reachable")
+
+	sub.currentHandler()("some.subject", mustMarshalNotification(t, &resourcepb.WatchNotification{
+		Type:            resourcepb.WatchNotification_ADDED,
+		Group:           "playlist.grafana.app",
+		Resource:        "playlists",
+		Namespace:       "default",
+		Name:            "abc",
+		ResourceVersion: 1,
+	}))
+	assert.Equal(t, "abc", recvEvent(t, out).Name)
 }
 
 func TestNatsNotifierPublishIsNoOp(t *testing.T) {

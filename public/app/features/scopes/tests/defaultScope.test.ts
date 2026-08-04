@@ -32,7 +32,6 @@ describe('Default scope', () => {
 
   beforeEach(() => {
     setTestFlags({
-      'grafana.enableScopesFirstMode': true,
       'grafana.useDefaultScopesEndpoint': true,
     });
     window.localStorage.clear();
@@ -77,25 +76,8 @@ describe('Default scope', () => {
     });
   });
 
-  it('does not fetch the default scope when grafana.enableScopesFirstMode is off', async () => {
-    setTestFlags({
-      'grafana.enableScopesFirstMode': false,
-      'grafana.useDefaultScopesEndpoint': true,
-    });
-
-    ({ scopesSelectorService } = await renderDashboard());
-
-    // Give the dashboard a tick to settle.
-    await waitFor(() => {
-      expect(scopesSelectorService.state.tree).toBeDefined();
-    });
-
-    expect(scopesSelectorService.state.appliedScopes).toEqual([]);
-  });
-
   it('does not fetch the default scope when grafana.useDefaultScopesEndpoint is off', async () => {
     setTestFlags({
-      'grafana.enableScopesFirstMode': true,
       'grafana.useDefaultScopesEndpoint': false,
     });
 

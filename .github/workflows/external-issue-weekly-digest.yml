@@ -31,7 +31,7 @@ concurrency:
 env:
   # community-triage logic version this repo is pinned to. Bump deliberately;
   # re-resolve with: git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: 72c2a930d8219e4684db86663cfac8f3f9ad163c
+  TRIAGE_REF: e0631a1564a1e905aa5e19148f9ff61c6973b062 # trufflehog:ignore
 
 jobs:
   digest:
@@ -90,7 +90,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Get vault secrets
         id: vault-secrets
@@ -116,7 +116,7 @@ jobs:
           ORG_MEMBERS_TOKEN: ${{ steps.triage-token.outputs.token }}
           REPO: ${{ github.repository }}
           TEAM_FILTER: ${{ inputs.team_filter || '' }}
-        run: node --experimental-strip-types ./community-triage/.github/workflows/scripts/issue-digest.mts fetch
+        run: node ./community-triage/.github/workflows/scripts/issue-digest.mts fetch
 
       - name: Build analysis container
         if: steps.fetch-issues.outputs.has_issues == 'true'
@@ -183,7 +183,7 @@ jobs:
             -v "/tmp/oz-context:/context:ro" \
             -v "/tmp/oz-output:/output" \
             -e WARP_API_KEY="${WARP_API_KEY}" \
-            -e OZ_MODEL="claude-4-6-opus-high" \
+            -e OZ_MODEL="claude-4-8-opus-high" \
             -e OZ_SKILL="digest-issue-analysis" \
             -e OZ_PROMPT="Analyze the open issues in issues.json. Use the repository source at /repo to understand code relationships and recently-changed areas. Output analysis.json with insights and regressions." \
             oz-review
@@ -224,4 +224,4 @@ jobs:
           echo "Analysis file: ${ANALYSIS_FILE:-none}"
           echo "::endgroup::"
 
-          node --experimental-strip-types ./community-triage/.github/workflows/scripts/issue-digest.mts process
+          node ./community-triage/.github/workflows/scripts/issue-digest.mts process

@@ -126,6 +126,7 @@ runs:
             - 'pnpm-lock.yaml'
             - 'package.json'
             - '**/package.json'
+            - 'pnpm-workspace.yaml'
           frontend_packages:
             - '.github/actions/checkout/**'
             - '.github/actions/change-detection/**'

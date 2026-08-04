@@ -3,6 +3,7 @@ import { type FC } from 'react';
 import { Controller, type DeepMap, type FieldError, useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
   Checkbox,
@@ -112,7 +113,7 @@ export const OptionField: FC<Props> = ({
       description={option.description || undefined}
       invalid={!!error}
       error={error?.message}
-      data-testid={`${pathPrefix}${option.propertyName}`}
+      data-testid={selectors.pages.Alerting.ContactPointForm.settingsField(`${pathPrefix}${option.propertyName}`)}
     >
       <OptionInput
         id={`${pathPrefix}${option.propertyName}`}
