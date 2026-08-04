@@ -131,15 +131,15 @@ test.describe(
       await tabs.select(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(1)}`);
 
       // intermediate step to verify tab switch happened
-      await expect(panels.getPanels('Tab 2 - Row 1 - Panel repeat 1')).toBeVisible();
+      await expect(panels.getPanel('Tab 2 - Row 1 - Panel repeat 1')).toBeVisible();
 
       // verify edited panel title updated in repeated tab
-      await expect(panels.getPanels('New edited panel')).toBeVisible();
+      await expect(panels.getPanel('New edited panel')).toBeVisible();
 
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
-      await expect(panels.getPanels('New edited panel')).toBeVisible();
+      await expect(panels.getPanel('New edited panel')).toBeVisible();
     });
 
     test('can update repeats after panel change in editor', async ({ dashboardPage, selectors, page, components }) => {
@@ -167,7 +167,7 @@ test.describe(
       await verifyChanges(dashboardPage, page, selectors, 'New edited panel');
 
       // verify panel title change in panel editor UI
-      await expect(panels.getPanels(`New edited panel`)).toBeVisible();
+      await expect(panels.getPanel(`New edited panel`)).toBeVisible();
 
       await controls.clickBackToDashboard();
       await expect(canvas.getContainer()).toBeVisible(); // verifying that dashboard loaded
@@ -175,16 +175,16 @@ test.describe(
       await tabs.select(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(1)}`);
 
       // intermediate step to verify tab switch happened
-      await expect(panels.getPanels('Tab 2 - Row 1 - Panel repeat 1')).toBeVisible();
+      await expect(panels.getPanel('Tab 2 - Row 1 - Panel repeat 1')).toBeVisible();
 
       // verify edited panel title updated in repeated tab
-      await expect(panels.getPanels('New edited panel')).toBeVisible();
+      await expect(panels.getPanel('New edited panel')).toBeVisible();
 
       await saveDashboard(dashboardPage, page, selectors);
       await page.reload();
 
       // verify edited panel title updated in repeated tab
-      await expect(panels.getPanels('New edited panel')).toBeVisible();
+      await expect(panels.getPanel('New edited panel')).toBeVisible();
     });
 
     test('can hide canvas grid add row action in repeats', async ({ dashboardPage, selectors, page, components }) => {
@@ -281,40 +281,40 @@ test.describe(
       await panels.getPanel('New panel').hover();
       await page.keyboard.press('v');
 
-      await expect(panels.getPanels('Tab 1 - Row 1 - Panel repeat 1')).toBeHidden();
-      await expect(panels.getPanels('New panel')).toBeVisible();
+      await expect(panels.getPanel('Tab 1 - Row 1 - Panel repeat 1')).toBeHidden();
+      await expect(panels.getPanel('New panel')).toBeVisible();
 
       await page.reload();
 
-      await expect(panels.getPanels('New panel')).toBeVisible();
+      await expect(panels.getPanel('New panel')).toBeVisible();
 
       await page.keyboard.press('Escape');
 
       // repeated panel in original tab repeat
       await rows.getTitle('Row 2').scrollIntoViewIfNeeded();
-      await panels.getPanels('Tab 1 - Row 2 - Panel repeat 2').hover();
+      await panels.getPanel('Tab 1 - Row 2 - Panel repeat 2').hover();
       await page.keyboard.press('v');
-      await expect(panels.getPanels('Tab 1 - Row 1 - Panel repeat 1')).toBeHidden();
-      await expect(panels.getPanels('Tab 1 - Row 2 - Panel repeat 2')).toBeVisible();
+      await expect(panels.getPanel('Tab 1 - Row 1 - Panel repeat 1')).toBeHidden();
+      await expect(panels.getPanel('Tab 1 - Row 2 - Panel repeat 2')).toBeVisible();
 
       await page.reload();
 
-      await expect(panels.getPanels('Tab 1 - Row 2 - Panel repeat 2')).toBeVisible();
+      await expect(panels.getPanel('Tab 1 - Row 2 - Panel repeat 2')).toBeVisible();
 
       await page.keyboard.press('Escape');
 
       // repeated panel in repeated tab
       await tabs.select(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(2)}`);
       await rows.getTitle('Row 2').scrollIntoViewIfNeeded();
-      await panels.getPanels('Tab 3 - Row 2 - Panel repeat 2').hover();
+      await panels.getPanel('Tab 3 - Row 2 - Panel repeat 2').hover();
       await page.keyboard.press('v');
-      await expect(panels.getPanels('Tab 3 - Row 1 - Panel repeat 1')).toBeHidden();
+      await expect(panels.getPanel('Tab 3 - Row 1 - Panel repeat 1')).toBeHidden();
 
-      await expect(panels.getPanels('Tab 3 - Row 2 - Panel repeat 2')).toBeVisible();
+      await expect(panels.getPanel('Tab 3 - Row 2 - Panel repeat 2')).toBeVisible();
 
       await page.reload();
 
-      await expect(panels.getPanels('Tab 3 - Row 2 - Panel repeat 2')).toBeVisible();
+      await expect(panels.getPanel('Tab 3 - Row 2 - Panel repeat 2')).toBeVisible();
     });
 
     test('can view embedded panels in repeated tab', async ({ dashboardPage, selectors, page, components }) => {
@@ -335,26 +335,26 @@ test.describe(
       await panels.getPanel('New panel').hover();
       await page.keyboard.press('p+e');
       await goToEmbeddedPanel(page);
-      await expect(panels.getPanels('New panel')).toBeVisible();
+      await expect(panels.getPanel('New panel')).toBeVisible();
       await page.goto(dashUrl);
 
       // repeated panel in original tab repeat
       await rows.getTitle('Row 2').scrollIntoViewIfNeeded();
-      await panels.getPanels('Tab 1 - Row 2 - Panel repeat 2').hover();
+      await panels.getPanel('Tab 1 - Row 2 - Panel repeat 2').hover();
       await page.keyboard.press('p+e');
 
       await goToEmbeddedPanel(page);
-      await expect(panels.getPanels('Tab 1 - Row 2 - Panel repeat 2')).toBeVisible();
+      await expect(panels.getPanel('Tab 1 - Row 2 - Panel repeat 2')).toBeVisible();
       await page.goto(dashUrl);
 
       // repeated panel in repeated tab
       await tabs.select(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(2)}`);
       await rows.getTitle('Row 2').scrollIntoViewIfNeeded();
-      await panels.getPanels('Tab 3 - Row 2 - Panel repeat 2').hover();
+      await panels.getPanel('Tab 3 - Row 2 - Panel repeat 2').hover();
       await page.keyboard.press('p+e');
 
       await goToEmbeddedPanel(page);
-      await expect(panels.getPanels('Tab 3 - Row 2 - Panel repeat 2')).toBeVisible();
+      await expect(panels.getPanel('Tab 3 - Row 2 - Panel repeat 2')).toBeVisible();
     });
 
     test('can remove repeats', async ({ dashboardPage, selectors, page, components }) => {

@@ -143,10 +143,12 @@ export async function verifyChanges(
   selectors: E2ESelectorGroups,
   changeText: string
 ) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes')).click();
-  await expect(page.getByText('Full JSON diff').locator('..')).toContainText(changeText);
-  await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
+  await test.step('Verify JSON diff in save drawer', async () => {
+    await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton).click();
+    await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Changes')).click();
+    await expect(page.getByText('Full JSON diff').locator('..')).toContainText(changeText);
+    await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
+  });
 }
 interface ImportTestDashboardOptions {
   checkPanelsVisible?: boolean;
