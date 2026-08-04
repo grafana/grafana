@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type FC } from 'react';
 
@@ -17,6 +17,7 @@ import { TableCellBackgroundDisplayMode } from '@grafana/schema';
 
 import { type PanelContext, PanelContextProvider } from '../../../PanelChrome';
 import { TableCellDisplayMode } from '../../types';
+import { RESIZE_WIDTH_DEBOUNCE_MS } from '../hooks';
 import { LegacyTableNG } from '../legacy/LegacyTableNG';
 import { type TableNGProps } from '../types';
 
@@ -2370,5 +2371,145 @@ describe.each(IMPLEMENTATIONS)('TableNG (%s)', (_impl, TableNG) => {
       expect(screen.getByText('Up Link 2')).toBeInTheDocument();
       expect(screen.queryByText('Down Link 1')).not.toBeInTheDocument();
     });
+  });
+});
+
+// Only the refactored implementation hoists the width debounce into a wrapper that gates the debounce
+// on a prop, so these assert against it directly rather than through the shared parity suite above.
+describe('RefactoredTableNG width debouncing', () => {
+  let origResizeObserver = global.ResizeObserver;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    origResizeObserver = global.ResizeObserver;
+    global.ResizeObserver = class ResizeObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    global.ResizeObserver = origResizeObserver;
+  });
+
+  // react-data-grid lays the columns out with grid-template-columns, so it reflects the width the
+  // table has actually applied.
+  const columnTemplate = (container: HTMLElement) =>
+    container.querySelector<HTMLElement>('[role="grid"], [role="treegrid"]')!.style.gridTemplateColumns;
+
+  const frameWithFields = (fields: Array<Parameters<typeof toDataFrame>[0]['fields'][number]>): DataFrame =>
+    withFieldOverrides(toDataFrame({ name: 'WidthTestData', fields }));
+
+  const valueField = { name: 'Value', type: FieldType.number, values: [1, 2], config: { custom: {} } };
+  const pillField = (custom: Record<string, unknown> = {}) => ({
+    name: 'Tags',
+    type: FieldType.string,
+    values: ['a,b', 'c,d'],
+    config: { custom: { cellOptions: { type: TableCellDisplayMode.Pill }, ...custom } },
+  });
+
+  const renderAtWidth = (data: DataFrame, width: number) =>
+    render(<RefactoredTableNG enableVirtualization={false} data={data} width={width} height={300} />);
+
+  it('applies width changes immediately when no auto-sized column is width-sensitive', () => {
+    const data = frameWithFields([
+      { name: 'Name', type: FieldType.string, values: ['a', 'b'], config: {} },
+      valueField,
+    ]);
+    const { container, rerender } = renderAtWidth(data, 400);
+    expect(columnTemplate(container)).toBe('200px 200px');
+
+    rerender(<RefactoredTableNG enableVirtualization={false} data={data} width={900} height={300} />);
+    expect(columnTemplate(container)).toBe('450px 450px');
+  });
+
+  it('defers width changes until the resize settles when an auto-sized pill column is present', () => {
+    const data = frameWithFields([pillField(), valueField]);
+    const { container, rerender } = renderAtWidth(data, 400);
+    expect(columnTemplate(container)).toBe('200px 200px');
+
+    rerender(<RefactoredTableNG enableVirtualization={false} data={data} width={900} height={300} />);
+    expect(columnTemplate(container)).toBe('200px 200px');
+
+    act(() => jest.advanceTimersByTime(RESIZE_WIDTH_DEBOUNCE_MS));
+    expect(columnTemplate(container)).toBe('450px 450px');
+  });
+
+  it('defers width changes until the resize settles when an auto-sized column wraps its text', () => {
+    const data = frameWithFields([
+      {
+        name: 'Name',
+        type: FieldType.string,
+        values: ['a', 'b'],
+        config: { custom: { wrapText: true } },
+      },
+      valueField,
+    ]);
+    const { container, rerender } = renderAtWidth(data, 400);
+    expect(columnTemplate(container)).toBe('200px 200px');
+
+    rerender(<RefactoredTableNG enableVirtualization={false} data={data} width={900} height={300} />);
+    expect(columnTemplate(container)).toBe('200px 200px');
+
+    act(() => jest.advanceTimersByTime(RESIZE_WIDTH_DEBOUNCE_MS));
+    expect(columnTemplate(container)).toBe('450px 450px');
+  });
+
+  // Toggling width-sensitivity (here by turning on text wrapping) flips whether the debounce is active.
+  // The debounce wrapper stays mounted regardless, so the table must not remount — a remount would
+  // recreate the grid DOM node and wipe local state like filters, pagination, and column resize.
+  it('does not remount the table when width-sensitivity toggles', () => {
+    const gridNode = (container: HTMLElement) => container.querySelector('[role="grid"], [role="treegrid"]');
+
+    const insensitive = frameWithFields([
+      { name: 'Name', type: FieldType.string, values: ['a', 'b'], config: {} },
+      valueField,
+    ]);
+    const sensitive = frameWithFields([
+      { name: 'Name', type: FieldType.string, values: ['a', 'b'], config: { custom: { wrapText: true } } },
+      valueField,
+    ]);
+
+    const { container, rerender } = renderAtWidth(insensitive, 400);
+    const gridBefore = gridNode(container);
+
+    rerender(<RefactoredTableNG enableVirtualization={false} data={sensitive} width={400} height={300} />);
+    expect(gridNode(container)).toBe(gridBefore);
+  });
+
+  it('applies width changes immediately when the pill column has a configured width', () => {
+    const data = frameWithFields([pillField({ width: 100 }), valueField]);
+    const { container, rerender } = renderAtWidth(data, 400);
+    expect(columnTemplate(container)).toBe('100px 300px');
+
+    rerender(<RefactoredTableNG enableVirtualization={false} data={data} width={900} height={300} />);
+    expect(columnTemplate(container)).toBe('100px 800px');
+  });
+
+  it('defers width changes when only a nested table has a width-sensitive column', () => {
+    const nestedFrame = toDataFrame({
+      name: 'Nested',
+      fields: [pillField(), valueField],
+    });
+    const data = frameWithFields([
+      { name: 'Name', type: FieldType.string, values: ['a', 'b'], config: { custom: {} } },
+      {
+        name: '__nestedFrames',
+        type: FieldType.nestedFrames,
+        values: [[nestedFrame], [nestedFrame]],
+        config: { custom: {} },
+      },
+    ]);
+
+    const { container, rerender } = renderAtWidth(data, 400);
+    const initialTemplate = columnTemplate(container);
+
+    rerender(<RefactoredTableNG enableVirtualization={false} data={data} width={900} height={300} />);
+    expect(columnTemplate(container)).toBe(initialTemplate);
+
+    act(() => jest.advanceTimersByTime(RESIZE_WIDTH_DEBOUNCE_MS));
+    expect(columnTemplate(container)).not.toBe(initialTemplate);
   });
 });

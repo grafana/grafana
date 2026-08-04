@@ -4,12 +4,21 @@ import { lazy, Suspense, useMemo, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { CoreApp, type GrafanaTheme2, type PanelProps, type InterpolateFunction } from '@grafana/data';
-import { ScrollContainer, usePanelContext, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 
-import { defaultCodeOptions, defaultOptions, type Options, TextMode } from '../panelcfg.gen';
+import {
+  type CodeOptions,
+  defaultCodeLanguage,
+  defaultCodeOptions,
+  defaultOptions,
+  type Options,
+  TextMode,
+} from '../panelcfg.gen';
 
 import { TextNGCodeView } from './TextNGCodeView';
+import { type TextNGEditorChange } from './editor/TextNGEditor';
+import { getEditorLayoutStyles } from './editor/editorLayout';
 import { getInterpolateFormat, transformContent } from './utils';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
@@ -71,7 +80,7 @@ export function TextNGPanel(props: Props) {
           showLineNumbers={options.code?.showLineNumbers ?? false}
           codeLanguage={options.code?.language}
           replaceVariables={replaceVariables}
-          onChange={(next) => onOptionsChange({ ...options, content: next })}
+          onChange={(change) => onOptionsChange(applyEditorChange(options, change))}
         />
       </Suspense>
     );
@@ -125,12 +134,42 @@ function EditorLoadingFallback({
   options: Options;
   replaceVariables: InterpolateFunction;
 }) {
+  const theme = useTheme2();
+  const layout = useStyles2(getEditorLayoutStyles);
   const content = useMemo(
     () => transformContent(options.mode, interpolateContent(options, replaceVariables), config.disableSanitizeHtml),
     [options, replaceVariables]
   );
+  const isCode = options.mode === TextMode.Code;
 
-  return <TextNGView mode={options.mode} content={content} code={options.code} />;
+  return (
+    <div className={layout.wrapper}>
+      <Stack minHeight={theme.components.height.md} />
+      <div className={layout.body}>
+        <div className={cx(layout.pane, layout.previewPane, !isCode && layout.htmlPreviewPane)}>
+          <TextNGView mode={options.mode} content={content} code={options.code} />
+        </div>
+      </div>
+      {isCode && <Stack minHeight={theme.components.height.md} />}
+    </div>
+  );
+}
+
+function applyEditorChange(options: Options, change: TextNGEditorChange): Options {
+  const { content, mode = options.mode, codeLanguage, showLineNumbers } = change;
+
+  if (codeLanguage === undefined && showLineNumbers === undefined) {
+    return { ...options, content, mode };
+  }
+
+  const code: CodeOptions = {
+    showMiniMap: false,
+    ...options.code,
+    language: codeLanguage ?? options.code?.language ?? defaultCodeLanguage,
+    showLineNumbers: showLineNumbers ?? options.code?.showLineNumbers ?? false,
+  };
+
+  return { ...options, content, mode, code };
 }
 
 function interpolateContent(options: Options, interpolate: InterpolateFunction): string {

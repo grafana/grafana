@@ -2,7 +2,7 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import testV2DashWithRepeats from '../dashboards/V2DashWithRepeats.json';
 
-import { Canvas, Controls, Panel, Sidebar } from './page-objects';
+import { Canvas, Controls, Panels, Sidebar } from './page-objects';
 import {
   checkRepeatedPanelTitles,
   saveDashboard,
@@ -38,7 +38,7 @@ test.describe(
       test('can enable repeats', async ({ dashboardPage, selectors, page, components }) => {
         const controls = new Controls({ page, dashboardPage, selectors, components });
         const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panel = new Panel({ page, dashboardPage, selectors, components });
+        const panels = new Panels({ page, dashboardPage, selectors, components });
 
         await importTestDashboard(page, selectors, 'Auto-grid repeats - add repeats');
 
@@ -46,7 +46,7 @@ test.describe(
         await sidebar.toolbar.clickButton('Options');
         await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
 
-        await panel.selectByIndex(0);
+        await panels.selectByIndex(0);
         await sidebar.panelOptions.setTitle(`${REPEAT_TITLE_BASE}$c1`);
         await sidebar.panelOptions.repeatOptions.repeatByVariable('c1');
 
@@ -61,7 +61,7 @@ test.describe(
       test('can remove repeats', async ({ dashboardPage, selectors, page, components }) => {
         const controls = new Controls({ page, dashboardPage, selectors, components });
         const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panel = new Panel({ page, dashboardPage, selectors, components });
+        const panels = new Panels({ page, dashboardPage, selectors, components });
 
         await importTestDashboard(
           page,
@@ -77,24 +77,24 @@ test.describe(
         await page.reload();
 
         // verify 6 panels are present (4 repeats and 2 normal)
-        await expect(panel.getHeaders()).toHaveCount(6);
+        await expect(panels.getHeaders()).toHaveCount(6);
 
         await controls.enterEditMode();
 
-        await panel.selectByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
+        await panels.selectByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
         await sidebar.panelOptions.repeatOptions.disableRepeatByVariable();
 
-        await expect(panel.getContainerByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
+        await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
 
         // verify only 3 panels are present
-        await expect(panel.getHeaders()).toHaveCount(3);
+        await expect(panels.getHeaders()).toHaveCount(3);
 
         await saveDashboard(dashboardPage, page, selectors);
         await page.reload();
 
-        await expect(panel.getContainerByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
+        await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.join(' + ')}`)).toBeVisible();
 
-        await expect(panel.getHeaders()).toHaveCount(3);
+        await expect(panels.getHeaders()).toHaveCount(3);
       });
     });
 
@@ -102,7 +102,7 @@ test.describe(
       test('can update repeats with variable change', async ({ dashboardPage, selectors, page, components }) => {
         const controls = new Controls({ page, dashboardPage, selectors, components });
         const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panel = new Panel({ page, dashboardPage, selectors, components });
+        const panels = new Panels({ page, dashboardPage, selectors, components });
 
         await importTestDashboard(
           page,
@@ -125,13 +125,13 @@ test.describe(
         await checkRepeatedPanelTitles(dashboardPage, selectors, REPEAT_TITLE_BASE, REPEAT_OPTIONS.slice(0, -1));
 
         // verify there is no repeat with last value
-        await expect(panel.getContainerByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeHidden();
+        await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeHidden();
       });
 
       test('can update repeats in sidebar', async ({ dashboardPage, selectors, page, components }) => {
         const controls = new Controls({ page, dashboardPage, selectors, components });
         const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panel = new Panel({ page, dashboardPage, selectors, components });
+        const panels = new Panels({ page, dashboardPage, selectors, components });
 
         await importTestDashboard(
           page,
@@ -145,7 +145,7 @@ test.describe(
         await sidebar.dashboardOptions.switchLayout('auto', { confirm: true });
 
         // select first/original repeat panel to activate sidebar
-        await panel.selectByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
+        await panels.selectByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
 
         await sidebar.panelOptions.setTitle(`${NEW_TITLE_BASE}$c1`);
 
@@ -160,7 +160,7 @@ test.describe(
       test('can update repeats in panel editor', async ({ dashboardPage, selectors, page, components }) => {
         const controls = new Controls({ page, dashboardPage, selectors, components });
         const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panel = new Panel({ page, dashboardPage, selectors, components });
+        const panels = new Panels({ page, dashboardPage, selectors, components });
         const canvas = new Canvas({ page, dashboardPage, selectors, components });
 
         await importTestDashboard(
@@ -179,7 +179,7 @@ test.describe(
         await controls.enterEditMode();
 
         // selecting last repeat
-        await panel.getContainerByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`).hover();
+        await panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`).hover();
         await page.keyboard.press('e');
 
         // verifying that panel editor loaded
@@ -188,7 +188,7 @@ test.describe(
         ).toBeVisible();
 
         // verify original repeat panel is loaded
-        await expect(panel.getContainerByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeVisible();
+        await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeVisible();
 
         await sidebar.panelOptions.setTitle(`${NEW_TITLE_BASE}$c1`);
 
@@ -196,7 +196,7 @@ test.describe(
         await verifyChanges(dashboardPage, page, selectors, NEW_TITLE_BASE);
 
         // verify panel title change in panel editor UI
-        await expect(panel.getContainerByTitle(`${NEW_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeVisible();
+        await expect(panels.getPanel(`${NEW_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeVisible();
 
         await controls.clickBackToDashboard();
 
@@ -218,7 +218,7 @@ test.describe(
       }) => {
         const controls = new Controls({ page, dashboardPage, selectors, components });
         const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panel = new Panel({ page, dashboardPage, selectors, components });
+        const panels = new Panels({ page, dashboardPage, selectors, components });
         const canvas = new Canvas({ page, dashboardPage, selectors, components });
 
         await importTestDashboard(
@@ -241,14 +241,14 @@ test.describe(
           dashboardPage.getByGrafanaSelector(selectors.components.PanelEditor.General.content)
         ).toBeVisible();
 
-        await expect(panel.getContainerByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeVisible();
+        await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeVisible();
 
         await sidebar.panelOptions.setTitle(`${NEW_TITLE_BASE}$c1`);
 
         // playwright too fast, verifying JSON diff that changes landed
         await verifyChanges(dashboardPage, page, selectors, NEW_TITLE_BASE);
 
-        await expect(panel.getContainerByTitle(`${NEW_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeVisible();
+        await expect(panels.getPanel(`${NEW_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeVisible();
 
         await controls.clickBackToDashboard();
 
@@ -267,7 +267,7 @@ test.describe(
       test('can move repeated panels', async ({ dashboardPage, selectors, page, components }) => {
         const controls = new Controls({ page, dashboardPage, selectors, components });
         const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panel = new Panel({ page, dashboardPage, selectors, components });
+        const panels = new Panels({ page, dashboardPage, selectors, components });
 
         await importTestDashboard(
           page,
@@ -284,8 +284,8 @@ test.describe(
         await movePanel(dashboardPage, selectors, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`, 'New panel');
 
         //  verify move by panel title order
-        await expect(panel.getHeaders().first()).toHaveText('New panel');
-        await expect(panel.getHeaders().last()).toHaveText('New panel');
+        await expect(panels.getHeaders().first()).toHaveText('New panel');
+        await expect(panels.getHeaders().last()).toHaveText('New panel');
 
         // verify move by panel position
         let repeatedPanel = await getPanelPosition(
@@ -308,8 +308,8 @@ test.describe(
         const normalPanel2 = await getPanelPosition(dashboardPage, selectors, 'New panel');
 
         expect(normalPanel2?.x).toBeLessThan(repeatedPanel2?.x || 0);
-        await expect(panel.getHeaders().first()).toHaveText('New panel');
-        await expect(panel.getHeaders().last()).toHaveText('New panel');
+        await expect(panels.getHeaders().first()).toHaveText('New panel');
+        await expect(panels.getHeaders().last()).toHaveText('New panel');
       });
     });
 
@@ -317,7 +317,7 @@ test.describe(
       test('can view repeated panel', async ({ dashboardPage, selectors, page, components }) => {
         const controls = new Controls({ page, dashboardPage, selectors, components });
         const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panel = new Panel({ page, dashboardPage, selectors, components });
+        const panels = new Panels({ page, dashboardPage, selectors, components });
 
         await importTestDashboard(
           page,
@@ -332,32 +332,32 @@ test.describe(
         await saveDashboard(dashboardPage, page, selectors);
         await page.reload();
 
-        await panel.getContainerByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`).hover();
+        await panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`).hover();
         await page.keyboard.press('v');
 
-        await expect(panel.getContainerByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeHidden();
-        await expect(panel.getContainerByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeVisible();
+        await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeHidden();
+        await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeVisible();
 
         const repeatedPanelUrl = page.url();
 
         await page.keyboard.press('Escape');
 
-        await panel.getContainerByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`).hover();
+        await panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`).hover();
         await page.keyboard.press('v');
 
-        await expect(panel.getContainerByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeHidden();
-        await expect(panel.getContainerByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeVisible();
+        await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeHidden();
+        await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`)).toBeVisible();
 
         // load view panel directly
         await page.goto(repeatedPanelUrl);
 
-        await expect(panel.getContainerByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeVisible();
+        await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeVisible();
       });
 
       test('can view embedded repeated panel', async ({ dashboardPage, selectors, page, components }) => {
         const controls = new Controls({ page, dashboardPage, selectors, components });
         const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
-        const panel = new Panel({ page, dashboardPage, selectors, components });
+        const panels = new Panels({ page, dashboardPage, selectors, components });
 
         await importTestDashboard(
           page,
@@ -372,12 +372,12 @@ test.describe(
         await saveDashboard(dashboardPage, page, selectors);
         await page.reload();
 
-        await panel.getContainerByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`).hover();
+        await panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`).hover();
         await page.keyboard.press('p+e');
 
         await goToEmbeddedPanel(page);
 
-        await expect(panel.getContainerByTitle(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeVisible();
+        await expect(panels.getPanel(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`)).toBeVisible();
       });
     });
   }
