@@ -354,9 +354,7 @@ describe('PlaylistForm', () => {
       expect(pasteLink).toHaveStyle({ height: '32px', width: '32px' });
       expect(pasteLink.querySelector('svg')).toHaveStyle({ pointerEvents: 'none' });
       await userEvent.hover(pasteLink);
-      expect(await screen.findByRole('tooltip')).toHaveTextContent(
-        'Paste a link to this dashboard with the view you want to use.'
-      );
+      expect(await screen.findByRole('tooltip')).toHaveTextContent('Paste a link with the view you want');
       await userEvent.unhover(pasteLink);
 
       await userEvent.click(pasteLink);
@@ -364,6 +362,9 @@ describe('PlaylistForm', () => {
       expect(dashboardLinkInput).toHaveAttribute('placeholder', 'Paste dashboard link');
       const cancelPasteLink = screen.getByRole('button', { name: 'Cancel pasting dashboard link' });
       expect(cancelPasteLink).toHaveAttribute('aria-expanded', 'true');
+      await userEvent.hover(cancelPasteLink);
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(/^Cancel$/);
+      await userEvent.unhover(cancelPasteLink);
 
       await userEvent.click(cancelPasteLink);
       expect(screen.queryByRole('textbox', { name: /dashboard state for uid_1/i })).not.toBeInTheDocument();
