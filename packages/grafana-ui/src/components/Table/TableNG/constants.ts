@@ -22,3 +22,14 @@ export const TABLE = {
   BORDER_RIGHT: 1,
   SCROLLBAR_AFFORDANCE: 16,
 };
+
+/**
+ * Horizontal chrome around a cell's content: left + right padding plus the right border. Subtract
+ * from a column's pixel width to get its usable content width, or add to size a column to content.
+ */
+export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGHT;
+
+/** Space a single header affordance icon (filter / sort / type) reserves next to the label. */
+export const HEADER_ICON_WIDTH = 16;
+export const HEADER_ICON_GAP = 4;
+export const HEADER_ICON_SPACE = HEADER_ICON_WIDTH + HEADER_ICON_GAP;

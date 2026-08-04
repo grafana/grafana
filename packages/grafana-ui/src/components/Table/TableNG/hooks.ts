@@ -31,7 +31,7 @@ import { type MatcherScope } from '@grafana/schema';
 
 import { type TableColumnResizeActionCallback } from '../types';
 
-import { TABLE } from './constants';
+import { CELL_HORIZONTAL_CHROME, HEADER_ICON_SPACE, TABLE } from './constants';
 import { IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
@@ -331,9 +331,6 @@ export const useNestedRows = (
   }, [hasNestedFrames, nestedFramesFieldName, rows, sortColumns, filter, frameToRecords, nestedData]);
 };
 
-const ICON_WIDTH = 16;
-const ICON_GAP = 4;
-
 interface UseHeaderHeightOptions {
   enabled: boolean;
   fields: Field[];
@@ -351,8 +348,6 @@ export function useHeaderHeight({
   typographyCtx,
   showTypeIcons = false,
 }: UseHeaderHeightOptions): number {
-  const perIconSpace = ICON_WIDTH + ICON_GAP;
-
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
 
   const columnAvailableWidths = useMemo(
@@ -362,25 +357,25 @@ export function useHeaderHeight({
           return 0; // no width available for this column yet
         }
 
-        let width = c - 2 * TABLE.CELL_PADDING - TABLE.BORDER_RIGHT;
+        let width = c - CELL_HORIZONTAL_CHROME;
         const field = fields[idx];
 
         // filtering icon
         if (field.config?.custom?.filterable) {
-          width -= perIconSpace;
+          width -= HEADER_ICON_SPACE;
         }
         // sorting icon
         if (sortColumns.some((col) => col.columnKey === getDisplayName(field))) {
-          width -= perIconSpace;
+          width -= HEADER_ICON_SPACE;
         }
         // type icon
         if (showTypeIcons) {
-          width -= perIconSpace;
+          width -= HEADER_ICON_SPACE;
         }
         // sadly, the math for this is off by exactly 1 pixel. shrug.
         return Math.floor(width) - 1;
       }),
-    [fields, columnWidths, sortColumns, showTypeIcons, perIconSpace]
+    [fields, columnWidths, sortColumns, showTypeIcons]
   );
 
   const headerHeight = useMemo(() => {
@@ -417,7 +412,7 @@ interface UseRowHeightOptions {
   nestedFooterHeight?: number;
 }
 
-const getTrueColWidths = (cw: number[]): number[] => cw.map((c) => c - (2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT));
+const getTrueColWidths = (cw: number[]): number[] => cw.map((c) => c - CELL_HORIZONTAL_CHROME);
 
 // TODO: maybe there's a way to decouple the nested rows from the top-level rows here.
 export function useRowHeight({

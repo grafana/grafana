@@ -32,7 +32,7 @@ import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
 
 import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
-import { COLUMN, TABLE } from './constants';
+import { CELL_HORIZONTAL_CHROME, COLUMN, HEADER_ICON_SPACE, TABLE } from './constants';
 import { type TextAlign } from './styles';
 import {
   type TableRow,
@@ -1210,10 +1210,6 @@ export function shouldDebounceWidth(fields: Field[]): boolean {
   });
 }
 
-// Horizontal chrome around a cell's content: padding on each side plus the right border.
-const CELL_CHROME = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
-const HEADER_ICON_SPACE = 16 + 4; // ICON_WIDTH + ICON_GAP, matches useHeaderHeight
-
 // Bounds the amount of work content-aware sizing does. We sample at most MAX_SAMPLE rows per
 // column and shrink the per-column sample as the column count grows so a very wide frame doesn't
 // blow up the measurement budget. Sampling the first N rows is sufficient — width is
@@ -1328,7 +1324,7 @@ function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boo
   if (showTypeIcons) {
     iconSpace += HEADER_ICON_SPACE;
   }
-  return textWidth + iconSpace + CELL_CHROME;
+  return textWidth + iconSpace + CELL_HORIZONTAL_CHROME;
 }
 
 interface ColWidthMeasureCtx {
@@ -1346,10 +1342,10 @@ type MeasureColWidth = (field: Field, sampleSize: number, ctx: ColWidthMeasureCt
 const measureGraphicalColWidth: MeasureColWidth = () => COLUMN.DEFAULT_WIDTH;
 
 const measurePillColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
-  measurePillContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_CHROME;
+  measurePillContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
 
 const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
-  measureLongestContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_CHROME;
+  measureLongestContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
 
 // Singleton registry mirroring the buildCellHeightMeasurers factory map: cell types that size
 // differently from the default text measurement register here; anything absent falls back to
