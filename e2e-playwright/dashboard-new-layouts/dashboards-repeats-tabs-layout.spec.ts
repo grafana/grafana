@@ -11,6 +11,7 @@ import {
   groupIntoTab,
   moveTab,
   getTabPosition,
+  checkRepeatedTabTitles,
 } from './utils';
 
 const REPEAT_TITLE_BASE = 'Tab - ';
@@ -189,6 +190,7 @@ test.describe(
     test('can hide canvas grid add row action in repeats', async ({ dashboardPage, selectors, page, components }) => {
       const controls = new Controls({ page, dashboardPage, selectors, components });
       const tabs = new Tabs({ page, dashboardPage, selectors, components });
+      const canvas = new Canvas({ page, dashboardPage, selectors, components });
 
       await importTestDashboard(
         page,
@@ -199,11 +201,11 @@ test.describe(
 
       await controls.enterEditMode();
 
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow)).toBeVisible();
+      await expect(canvas.getAddRowButton()).toBeVisible();
 
       await tabs.select(`${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(1)}`);
 
-      await expect(dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow)).toBeHidden();
+      await expect(canvas.getAddRowButton()).toBeHidden();
     });
 
     test('can move repeated tabs', async ({ dashboardPage, selectors, page, components }) => {
@@ -396,11 +398,3 @@ test.describe(
     });
   }
 );
-
-async function checkRepeatedTabTitles(tabs: Tabs, title: string, options: Array<string | number>) {
-  await test.step('Checking repeated tab titles', async () => {
-    for (const option of options) {
-      await expect(tabs.getTitle(`${title}${option}`)).toBeVisible();
-    }
-  });
-}
