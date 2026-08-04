@@ -9,12 +9,28 @@ import {
   CodeEditorSuggestionItemKind,
   InlineFormLabel,
   LinkButton,
+  type Monaco,
   Segment,
   useStyles2,
 } from '@grafana/ui';
 
 import type InfluxDatasource from '../../../../datasource';
 import { type InfluxQuery } from '../../../../types';
+
+import { conf, language } from './language';
+
+// we must only run the setup code once
+let fluxSetupDone = false;
+const langId = 'flux';
+
+function ensureFlux(monaco: Monaco) {
+  if (!fluxSetupDone) {
+    fluxSetupDone = true;
+    monaco.languages.register({ id: langId });
+    monaco.languages.setMonarchTokensProvider(langId, language);
+    monaco.languages.setLanguageConfiguration(langId, conf);
+  }
+}
 
 interface Props {
   onChange: (query: InfluxQuery) => void;
@@ -161,13 +177,14 @@ export const FluxQueryEditor = memo(function FluxQueryEditor({ query, onChange }
       <CodeEditor
         height={'100%'}
         containerStyles={styles.editorContainerStyles}
-        language="sql"
+        language={langId}
         value={query.query || ''}
         onBlur={onFluxQueryChange}
         onSave={onFluxQueryChange}
         showMiniMap={false}
         showLineNumbers={true}
         getSuggestions={getSuggestions}
+        onBeforeEditorMount={ensureFlux}
       />
       <div className={cx('gf-form-inline', styles.editorActions)}>
         <LinkButton
