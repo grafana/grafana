@@ -93,6 +93,7 @@ export { ThemeDemo } from '../components/ThemeDemos/ThemeDemo';
 
 export { mapMouseEventToMode } from '../components/VizLegend/utils';
 export { Carousel } from '../components/Carousel/Carousel';
+export { SearchStatus, type SearchStatusProps } from '../components/SearchStatus/SearchStatus';
 
 export { getFocusStyles, getMouseFocusStyles, getTooltipContainerStyles } from '../themes/mixins';
 

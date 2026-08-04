@@ -4,6 +4,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -87,12 +89,43 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 		return last
 	}
 
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+	grafanaOpts := testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // start the datasource api servers
 			featuremgmt.FlagDatasourceUseNewCRUDAPIs,             // register the datasource api groups
 		},
+	}
+	grafanaDir, cfgPath := testinfra.CreateGrafDir(t, grafanaOpts)
+
+	pluginDir := filepath.Join(grafanaDir, "plugins", datasources.DS_PROMETHEUS)
+	require.NoError(t, os.MkdirAll(pluginDir, 0o750))
+	require.NoError(t, os.WriteFile(filepath.Join(pluginDir, "plugin.json"), []byte(`{
+		"type": "datasource",
+		"name": "Prometheus",
+		"id": "prometheus",
+		"routes": [
+			{
+				"method": "GET",
+				"path": "/rules",
+				"reqRole": "Viewer",
+				"reqAction": "alert.rules.external:read"
+			},
+			{
+				"method": "DELETE",
+				"path": "/rules",
+				"reqRole": "Editor",
+				"reqAction": "alert.rules.external:write"
+			}
+		],
+		"info": {
+			"version": "1.0.0"
+		}
+	}`), 0o600))
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		Dir:     grafanaDir,
+		DirPath: cfgPath,
 	})
 
 	ds := helper.CreateDS(&datasources.AddDataSourceCommand{

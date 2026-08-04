@@ -62,12 +62,15 @@ You can nest:
 - Rows in a tab
 - Tabs in a row
 
-You can nest up to three levels deep, which means a dashboard can have a maximum of five configuration levels:
+You can't nest tabs directly inside a tab, but you can nest them inside a row that's within a tab (tab > row > tabs).
+
+You can nest up to four levels deep, which means a dashboard can have a maximum of six configuration levels:
 
 - Dashboard
 - Grouping 1 - Row or tab
 - Grouping 2 - Row or tab
 - Grouping 3 - Row or tab
+- Grouping 4 - Row or tab
 - Panels
 
 The following screenshot demonstrates how groupings work:
@@ -106,12 +109,13 @@ The following table describes the options you can set for a row or tab:
 
 When you have panels grouped into rows or tabs, the **Layout** options available depend on which dashboard element is selected and the nesting level of that element.
 
-You can nest up to three levels deep, which means a dashboard can have a maximum of five configuration levels, with the following layout options:
+You can nest up to four levels deep, which means a dashboard can have a maximum of six configuration levels, with the following layout options:
 
 - **Dashboard**: Layout options allow you to choose between rows and tabs or custom and auto layouts.
 - **Grouping 1 (outer)**: Layout options allow you to choose between rows and tabs.
 - **Grouping 2 (middle)**: Layout options allow you to choose between rows and tabs.
-- **Grouping 3 (inner)**: Layout options allow you to choose between custom and auto grid (refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts)).
+- **Grouping 3 (middle)**: Layout options allow you to choose between rows and tabs.
+- **Grouping 4 (inner)**: Layout options allow you to choose between custom and auto grid (refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts)).
 - **Panels**: No layout options
 
 You can switch between rows and tabs or update the panel layout by clicking the parent container and changing the layout selection.

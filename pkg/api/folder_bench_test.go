@@ -54,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -441,7 +442,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		nil,
 		nil,
 		dualwrite.ProvideTestService(),
-		serverlock.ProvideService(sc.db, tracing.InitializeTracerForTest()),
+		serverlock.ProvideService(legacysql.NewDatabaseProvider(sc.db), tracing.InitializeTracerForTest()),
 		kvstore.NewFakeKVStore(),
 		dashclient.NewK8sClientWithFallback(
 			sc.cfg,

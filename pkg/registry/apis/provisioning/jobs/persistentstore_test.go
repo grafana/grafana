@@ -7,10 +7,13 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	k8stesting "k8s.io/client-go/testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	fakeclientset "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
@@ -43,13 +46,182 @@ func TestClaim_StampsOwnerToken(t *testing.T) {
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	claimed, rollback, err := store.Claim(ctx)
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "test-job", "0")
 	require.NoError(t, err)
 	require.NotNil(t, claimed)
 	defer rollback()
 
 	assert.NotEmpty(t, claimed.Labels[LabelJobClaim], "claim timestamp should be set")
 	assert.NotEmpty(t, claimed.Labels[LabelJobClaimOwner], "claim owner token should be set")
+}
+
+// TestClaim_AlreadyClaimed verifies that claiming a job another worker holds
+// fails with ErrAlreadyClaimed and leaves the job untouched.
+func TestClaim_AlreadyClaimed(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := newTestStore(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-job",
+			Namespace: "stacks-123",
+			Labels: map[string]string{
+				LabelJobClaim:      "1000000000000",
+				LabelJobClaimOwner: "owner-B",
+			},
+		},
+		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "test-job", "0")
+	require.ErrorIs(t, err, ErrAlreadyClaimed)
+	assert.Nil(t, claimed)
+	assert.Nil(t, rollback)
+
+	after, err := fakeClient.Jobs("stacks-123").Get(ctx, "test-job", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "owner-B", after.Labels[LabelJobClaimOwner], "the existing claim must be left untouched")
+}
+
+// TestClaim_RecordsContendedWhenAlreadyClaimed verifies that finding the job already
+// held by another worker records claim_rounds_contended (the common contention loss),
+// not just the rare retry-exhaustion tail.
+func TestClaim_RecordsContendedWhenAlreadyClaimed(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := newStoreWithFreshQueueMetrics(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "test-job",
+			Namespace: "stacks-123",
+			Labels: map[string]string{
+				LabelJobClaim:      "1000000000000",
+				LabelJobClaimOwner: "owner-B",
+			},
+		},
+		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	_, _, err = store.Claim(ctx, "stacks-123", "test-job", "0")
+	require.ErrorIs(t, err, ErrAlreadyClaimed)
+	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimRoundsCont.WithLabelValues("0")))
+	require.Equal(t, 0.0, testutil.ToFloat64(store.queueMetrics.claimed.WithLabelValues("0")))
+}
+
+// TestClaim_NotFound verifies that claiming a job that no longer exists (e.g.
+// completed and deleted before we got to it) reports NotFound so callers drop it.
+func TestClaim_NotFound(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := newTestStore(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "no-such-job", "0")
+	require.Error(t, err)
+	assert.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
+	assert.Nil(t, claimed)
+	assert.Nil(t, rollback)
+}
+
+// TestClaim_RetriesOnConflict verifies that a conflicting update (the job
+// changed between our read and write, but is still unclaimed) is retried with
+// fresh state rather than reported as a failure.
+func TestClaim_RetriesOnConflict(t *testing.T) {
+	//nolint:staticcheck // NewSimpleClientset is needed; NewClientset requires schema registration not available for this type.
+	clientset := fakeclientset.NewSimpleClientset()
+	fakeClient := clientset.ProvisioningV0alpha1()
+	store := newTestStore(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "stacks-123"},
+		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	conflicts := 1
+	clientset.PrependReactor("update", "jobs", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		if conflicts > 0 {
+			conflicts--
+			return true, nil, apierrors.NewConflict(provisioning.JobResourceInfo.GroupResource(), "test-job", errors.New("simulated conflict"))
+		}
+		return false, nil, nil
+	})
+
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "test-job", "0")
+	require.NoError(t, err, "a transient conflict on a still-unclaimed job should be retried")
+	require.NotNil(t, claimed)
+	defer rollback()
+	assert.NotEmpty(t, claimed.Labels[LabelJobClaim])
+}
+
+// TestClaim_ConflictThenClaimedByOther verifies that when the conflicting
+// writer turns out to be another claimer, the retry observes the claim and
+// reports ErrAlreadyClaimed instead of stomping it.
+func TestClaim_ConflictThenClaimedByOther(t *testing.T) {
+	//nolint:staticcheck // NewSimpleClientset is needed; NewClientset requires schema registration not available for this type.
+	clientset := fakeclientset.NewSimpleClientset()
+	fakeClient := clientset.ProvisioningV0alpha1()
+	store := newTestStore(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "stacks-123"},
+		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	// The first update conflicts; the "winner" stamps its claim before our retry
+	// re-reads. The winner writes through the object tracker: reactors run under
+	// the Fake's lock, so going through the clientset here would self-deadlock.
+	tracker := clientset.Tracker()
+	gvr := provisioning.JobResourceInfo.GroupVersionResource()
+	intercepted := false
+	clientset.PrependReactor("update", "jobs", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		if intercepted {
+			return false, nil, nil
+		}
+		intercepted = true
+
+		current, err := tracker.Get(gvr, "stacks-123", "test-job")
+		if err != nil {
+			return true, nil, err
+		}
+		winner, ok := current.DeepCopyObject().(*provisioning.Job)
+		if !ok {
+			return true, nil, errors.New("unexpected object type in tracker")
+		}
+		winner.Labels = map[string]string{
+			LabelJobClaim:      "1000000000000",
+			LabelJobClaimOwner: "owner-B",
+		}
+		if err := tracker.Update(gvr, winner, "stacks-123"); err != nil {
+			return true, nil, err
+		}
+		return true, nil, apierrors.NewConflict(provisioning.JobResourceInfo.GroupResource(), "test-job", errors.New("simulated conflict"))
+	})
+
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "test-job", "0")
+	require.ErrorIs(t, err, ErrAlreadyClaimed)
+	assert.Nil(t, claimed)
+	assert.Nil(t, rollback)
+
+	after, err := fakeClient.Jobs("stacks-123").Get(ctx, "test-job", metav1.GetOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "owner-B", after.Labels[LabelJobClaimOwner], "the winner's claim must be left untouched")
 }
 
 // TestClaim_RollbackSkipsJobOwnedByAnother verifies that the claim rollback does not
@@ -69,7 +241,7 @@ func TestClaim_RollbackSkipsJobOwnedByAnother(t *testing.T) {
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	_, rollback, err := store.Claim(ctx)
+	_, rollback, err := store.Claim(ctx, "stacks-123", "test-job", "0")
 	require.NoError(t, err)
 
 	// Simulate another worker taking over the same job name after our claim.
@@ -241,6 +413,117 @@ func newTestClientset() provisioningv0alpha1.ProvisioningV0alpha1Interface {
 	return fakeclientset.NewSimpleClientset().ProvisioningV0alpha1()
 }
 
+// newStoreWithFreshQueueMetrics builds a store whose queue metrics are their own
+// (unregistered) collectors, so assertions are isolated from the process-global
+// singletons other tests share.
+func newStoreWithFreshQueueMetrics(client provisioningv0alpha1.ProvisioningV0alpha1Interface) *persistentStore {
+	return &persistentStore{
+		client: client,
+		clock:  time.Now,
+		expiry: 30 * time.Second,
+		queueMetrics: QueueMetrics{
+			queueWaitTime: prometheus.NewHistogramVec(
+				prometheus.HistogramOpts{Name: "test_queue_wait"}, []string{"action"}),
+			claimed: prometheus.NewCounterVec(
+				prometheus.CounterOpts{Name: "test_claimed"}, []string{"driver_id"}),
+			claimConflicts: prometheus.NewCounterVec(
+				prometheus.CounterOpts{Name: "test_claim_conflicts"}, []string{"driver_id"}),
+			claimErrors: prometheus.NewCounterVec(
+				prometheus.CounterOpts{Name: "test_claim_errors"}, []string{"driver_id"}),
+			claimRoundsCont: prometheus.NewCounterVec(
+				prometheus.CounterOpts{Name: "test_claim_rounds"}, []string{"driver_id"}),
+		},
+	}
+}
+
+// TestClaim_RecordsClaimMetrics verifies the per-driver claim win counter: claiming a
+// job that exists records a win for the calling driver.
+func TestClaim_RecordsClaimMetrics(t *testing.T) {
+	fakeClient := newTestClientset()
+	store := newStoreWithFreshQueueMetrics(fakeClient)
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	// Claiming a job that does not exist returns an error and records no win.
+	_, _, err = store.Claim(ctx, "stacks-123", "job-1", "0")
+	require.Error(t, err)
+	require.Equal(t, 0.0, testutil.ToFloat64(store.queueMetrics.claimed.WithLabelValues("0")))
+
+	// The job exists: claim succeeds -> claimed_total{driver=0} = 1.
+	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "stacks-123"},
+		Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "job-1", "0")
+	require.NoError(t, err)
+	require.NotNil(t, claimed)
+	defer rollback()
+	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimed.WithLabelValues("0")))
+}
+
+// TestClaim_WaitRecordedOnlyOnSuccessfulClaim verifies queue-wait is recorded once —
+// for the job actually claimed — not for a candidate lost to a conflicting worker, and
+// that the lost race is recorded as a claim conflict.
+func TestClaim_WaitRecordedOnlyOnSuccessfulClaim(t *testing.T) {
+	cs := fakeclientset.NewSimpleClientset()
+	var updates int
+	cs.PrependReactor("update", "jobs", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		updates++
+		if updates == 1 {
+			// First CAS attempt loses the race; Claim re-reads and retries.
+			return true, nil, apierrors.NewConflict(provisioning.JobResourceInfo.GroupResource(), "", errors.New("claimed by another worker"))
+		}
+		return false, nil, nil // let the tracker perform the real update on the retry
+	})
+	store := newStoreWithFreshQueueMetrics(cs.ProvisioningV0alpha1())
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	_, err = cs.ProvisioningV0alpha1().Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "job-a", Namespace: "stacks-123"},
+		Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	claimed, rollback, err := store.Claim(ctx, "stacks-123", "job-a", "0")
+	require.NoError(t, err)
+	require.NotNil(t, claimed)
+	defer rollback()
+	require.Equal(t, 2, updates, "expected one conflicting attempt then a successful retry")
+
+	// Exactly one wait observation despite the first attempt conflicting.
+	require.Equal(t, uint64(1), histSampleCount(t, store.queueMetrics.queueWaitTime, "pull"))
+	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimed.WithLabelValues("0")))
+	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimConflicts.WithLabelValues("0")))
+}
+
+// TestClaim_RecordsErrorOnUpdateFailure verifies a non-conflict update failure is
+// recorded as a claim error for the calling driver.
+func TestClaim_RecordsErrorOnUpdateFailure(t *testing.T) {
+	cs := fakeclientset.NewSimpleClientset()
+	cs.PrependReactor("update", "jobs", func(action k8stesting.Action) (bool, runtime.Object, error) {
+		return true, nil, apierrors.NewInternalError(errors.New("boom"))
+	})
+	store := newStoreWithFreshQueueMetrics(cs.ProvisioningV0alpha1())
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	_, err = cs.ProvisioningV0alpha1().Jobs("stacks-123").Create(ctx, &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "stacks-123"},
+		Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	_, _, err = store.Claim(ctx, "stacks-123", "job-1", "0")
+	require.Error(t, err)
+	require.Equal(t, 1.0, testutil.ToFloat64(store.queueMetrics.claimErrors.WithLabelValues("0")))
+}
+
 // TestRenewLease_StaleResourceVersion verifies that after RenewLease, the
 // in-memory job's ResourceVersion matches what K8s actually has.
 //
@@ -255,7 +538,6 @@ func TestRenewLease_StaleResourceVersion(t *testing.T) {
 		clock:  time.Now,
 		expiry: 30 * time.Second,
 		queueMetrics: QueueMetrics{
-			queueSize:     nil,
 			queueWaitTime: nil,
 		},
 	}
@@ -306,7 +588,6 @@ func TestRenewLease_ResourceVersionProgresses(t *testing.T) {
 		clock:  time.Now,
 		expiry: 30 * time.Second,
 		queueMetrics: QueueMetrics{
-			queueSize:     nil,
 			queueWaitTime: nil,
 		},
 	}
@@ -358,7 +639,6 @@ func TestRenewLease_ThenUpdateDoesNotConflict(t *testing.T) {
 		clock:  time.Now,
 		expiry: 30 * time.Second,
 		queueMetrics: QueueMetrics{
-			queueSize:     nil,
 			queueWaitTime: nil,
 		},
 	}

@@ -9,14 +9,7 @@ const packageIgnoreDeps = [
 
 const defaultEntries = ['i18next.config.ts'];
 
-const externalisedDatasources = [
-  'azuremonitor',
-  'grafana-testdata-datasource',
-  'graphite',
-  'influxdb',
-  'loki',
-  'mysql',
-];
+const externalisedDatasources = ['azuremonitor', 'cloudwatch', 'grafana-testdata-datasource', 'graphite', 'influxdb'];
 
 const config: KnipConfig = {
   compilers: {

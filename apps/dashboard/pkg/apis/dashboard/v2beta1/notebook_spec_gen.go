@@ -229,9 +229,12 @@ func (NotebookPanelKind) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type NotebookPanelSpec struct {
-	Id          float64                `json:"id"`
-	Title       string                 `json:"title"`
-	Description string                 `json:"description"`
+	Id    float64 `json:"id"`
+	Title string  `json:"title"`
+	// Shown in a info icon tooltip next to panel title
+	Description *string `json:"description,omitempty"`
+	// Shown in a sub header below the title.
+	Subtitle    *string                `json:"subtitle,omitempty"`
 	Links       []NotebookDataLink     `json:"links"`
 	Data        NotebookQueryGroupKind `json:"data"`
 	VizConfig   NotebookVizConfigKind  `json:"vizConfig"`
@@ -830,7 +833,9 @@ func (NotebookThresholdsMode) OpenAPIModelName() string {
 type NotebookThreshold struct {
 	// Value null means -Infinity
 	Value *float64 `json:"value"`
-	Color string   `json:"color"`
+	// Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+	ValueExpr *string `json:"valueExpr,omitempty"`
+	Color     string  `json:"color"`
 }
 
 // NewNotebookThreshold creates a new NotebookThreshold object.

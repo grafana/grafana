@@ -367,7 +367,7 @@ func initModuleServerForTest(
 	tracer := tracing.InitializeTracerForTest()
 	hooksService := hooks.ProvideService()
 	license := &licensing.OSSLicensingService{}
-	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(), cfg, nil, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, hooksService, zStore.ProvideDefaultStoreProvider(), nil)
+	ms, err := NewModule(opts, apiOpts, featuremgmt.WithFeatures(), cfg, nil, nil, nil, prometheus.NewRegistry(), prometheus.DefaultGatherer, tracer, license, ProvideNoopModuleRegisterer(), nil, nil, hooksService, zStore.ProvideDefaultStoreProvider(), nil)
 	require.NoError(t, err)
 
 	conn, err := grpc.NewClient(cfg.GRPCServer.Address,
