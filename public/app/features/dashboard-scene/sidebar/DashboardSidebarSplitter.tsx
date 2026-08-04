@@ -132,6 +132,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
         <div
           className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk)}
           data-testid={selectors.components.DashboardSidebarSplitter.primaryBody}
+          data-dashboard-body
         >
           <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>{body}</NativeScrollbar>
         </div>
@@ -149,6 +150,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
           ref={onBodyRef}
           onPointerDown={onClearSelection}
           data-testid={selectors.components.DashboardSidebarSplitter.bodyContainer}
+          data-dashboard-body
           // The dashboard scrolls inside this element rather than the document body, so make it
           // focusable; without this, arrow/page keys can't scroll the dashboard once it's focused.
           // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
