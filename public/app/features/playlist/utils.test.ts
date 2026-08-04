@@ -4,7 +4,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { normalizePlaylistItemQueryParams, useCanWritePlaylists } from './utils';
+import { getPlaylistShortLinkUid, normalizePlaylistItemQueryParams, useCanWritePlaylists } from './utils';
 
 jest.mock('app/core/services/context_srv', () => ({
   ...jest.requireActual('app/core/services/context_srv'),
@@ -75,5 +75,17 @@ describe('normalizePlaylistItemQueryParams', () => {
     ['  ', undefined],
   ])('normalizes %s', (value, expected) => {
     expect(normalizePlaylistItemQueryParams(value)).toBe(expected);
+  });
+});
+
+describe('getPlaylistShortLinkUid', () => {
+  it.each([
+    ['https://grafana.example.com/goto/short123?orgId=1', 'short123'],
+    ['/goto/short123', 'short123'],
+    ['https://grafana.example.com/grafana/goto/short%20123', 'short 123'],
+    ['https://grafana.example.com/d/uid/name?var-host=host1', undefined],
+    ['var-host=host1', undefined],
+  ])('extracts a short-link UID from %s', (value, expected) => {
+    expect(getPlaylistShortLinkUid(value)).toBe(expected);
   });
 });
