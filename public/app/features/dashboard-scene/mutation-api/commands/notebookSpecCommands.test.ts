@@ -7,7 +7,13 @@
  */
 
 import { config } from '@grafana/runtime';
-import { type Spec as NotebookSpec } from '@grafana/schema/apis/notebook/v2beta1';
+import {
+  defaultLibraryPanelKind,
+  defaultPanelKind,
+  type LibraryPanelKind,
+  type PanelKind,
+  type Spec as NotebookSpec,
+} from '@grafana/schema/apis/notebook/v2beta1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { buildNotebookEnvelope } from 'app/features/notebook/scene/buildNotebookEnvelope';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -49,6 +55,43 @@ function cell(name: string, source: 'assistant' | 'user') {
   return { kind: 'NotebookLayoutItem', spec: { element: { kind: 'ElementReference', name }, source } };
 }
 
+// Panel elements are built from the generated defaults rather than hand-written: the serializer
+// reads more of a panel than any one test asserts on, so a partial fixture would only carry the
+// fields I thought of and would go stale as the schema grows.
+function panelElement(id: number, title: string): PanelKind {
+  const panel = defaultPanelKind();
+  return {
+    ...panel,
+    spec: {
+      ...panel.spec,
+      id,
+      title,
+      data: {
+        ...panel.spec.data,
+        spec: {
+          ...panel.spec.data.spec,
+          queries: [
+            {
+              kind: 'PanelQuery',
+              spec: {
+                refId: 'A',
+                hidden: false,
+                query: { kind: 'DataQuery', group: 'prometheus', version: 'v0', spec: { expr: 'up' } },
+              },
+            },
+          ],
+        },
+      },
+      vizConfig: { ...panel.spec.vizConfig, group: 'timeseries', version: '1.0.0' },
+    },
+  };
+}
+
+function libraryPanelElement(id: number, title: string, uid: string, name: string): LibraryPanelKind {
+  const libraryPanel = defaultLibraryPanelKind();
+  return { ...libraryPanel, spec: { ...libraryPanel.spec, id, title, libraryPanel: { uid, name } } };
+}
+
 function makeNotebookSpec(overrides: Record<string, unknown> = {}): NotebookSpec {
   const spec = {
     title: 'Checkout latency investigation',
@@ -65,6 +108,41 @@ function makeNotebookSpec(overrides: Record<string, unknown> = {}): NotebookSpec
 
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- hand-built fixture matching the generated spec
   return spec as unknown as NotebookSpec;
+}
+
+/**
+ * A notebook with a panel cell among the narrative ones.
+ *
+ * Kept separate from `makeNotebookSpec` because the cases above assert on the exact element set.
+ * The panel's element name is deliberately not `panel-<id>`: the canonical name is what hides the
+ * element-identity problem these cases are about, which is also why the dogfood seed avoids it.
+ */
+function makeNotebookSpecWithPanel(): NotebookSpec {
+  return makeNotebookSpec({
+    elements: {
+      intro: markdown('## What we know\n\np99 jumped at 14:02.'),
+      'latency-panel': panelElement(1, 'p99 latency'),
+      repro: code('promql', 'histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))'),
+    },
+    layout: {
+      kind: 'NotebookLayout',
+      spec: { cells: [cell('intro', 'user'), cell('latency-panel', 'assistant'), cell('repro', 'assistant')] },
+    },
+  });
+}
+
+/** Separate from the panel fixture so a library panel failure cannot be mistaken for a panel one. */
+function makeNotebookSpecWithLibraryPanel(): NotebookSpec {
+  return makeNotebookSpec({
+    elements: {
+      intro: markdown('## What we know\n\np99 jumped at 14:02.'),
+      'saved-view': libraryPanelElement(2, 'Checkout overview', 'lib-uid-1', 'Checkout overview'),
+    },
+    layout: {
+      kind: 'NotebookLayout',
+      spec: { cells: [cell('intro', 'user'), cell('saved-view', 'user')] },
+    },
+  });
 }
 
 /** Build a notebook scene exactly as NotebookScenePageStateManager does. */
@@ -103,6 +181,27 @@ async function applySpec(scene: DashboardScene, spec: unknown, validate = false)
 function specOf(result: Awaited<ReturnType<typeof getSpec>>): NotebookSpec {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- handler data is untyped by the MutationResult contract
   return (result.data as { spec: NotebookSpec }).spec;
+}
+
+/** The notebook spec APPLY_SPEC echoes back, which is what a caller feeds into its next write. */
+function echoedSpecOf(result: Awaited<ReturnType<typeof applySpec>>): NotebookSpec {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- handler data is untyped by the MutationResult contract
+  return (result.data as { spec: NotebookSpec }).spec;
+}
+
+function referencedNames(spec: NotebookSpec): string[] {
+  return spec.layout.spec.cells.map((c) => c.spec.element.name);
+}
+
+/** Cell references with no element to resolve to: the shape a lost cell takes in a spec. */
+function danglingReferences(spec: NotebookSpec): string[] {
+  return referencedNames(spec).filter((name) => !spec.elements[name]);
+}
+
+/** The panel id an element carries, or undefined for a narrative cell. */
+function panelIdOf(spec: NotebookSpec, name: string): number | undefined {
+  const element = spec.elements[name];
+  return element && 'id' in element.spec ? element.spec.id : undefined;
 }
 
 beforeEach(() => {
@@ -298,6 +397,114 @@ describe('APPLY_SPEC on a notebook', () => {
       expect(result.success).toBe(true);
       expect(specOf(await getSpec(scene)).layout.spec.cells).toHaveLength(2);
     });
+  });
+});
+
+/**
+ * Panel cells, which the rest of this suite has none of.
+ *
+ * "Add a chart to my notebook" is the main use case for the surface, and it crosses a seam the
+ * narrative cases never touch: a cell's reference is written from the layout manager's own
+ * `elementName`, while the matching element key is derived from the serializer's element map. The
+ * two agree for whatever was loaded and can disagree for anything added afterwards.
+ */
+describe('panel cells', () => {
+  it('keeps the element name of a panel the notebook was loaded with', async () => {
+    const spec = specOf(await getSpec(buildNotebookScene(makeNotebookSpecWithPanel())));
+
+    expect(Object.keys(spec.elements).sort()).toEqual(['intro', 'latency-panel', 'repro']);
+    expect(panelIdOf(spec, 'latency-panel')).toBe(1);
+    expect(danglingReferences(spec)).toEqual([]);
+  });
+
+  it('keeps the element name of a panel added through APPLY_SPEC', async () => {
+    const scene = buildNotebookScene(makeNotebookSpecWithPanel());
+    const current = specOf(await getSpec(scene));
+
+    const result = await applySpec(
+      scene,
+      {
+        ...current,
+        elements: { ...current.elements, 'errors-panel': panelElement(3, '5xx rate') },
+        layout: {
+          kind: 'NotebookLayout',
+          spec: { cells: [...current.layout.spec.cells, cell('errors-panel', 'assistant')] },
+        },
+      },
+      true
+    );
+
+    expect(result.error).toBeUndefined();
+    expect(result.success).toBe(true);
+
+    const echoed = echoedSpecOf(result);
+    expect(Object.keys(echoed.elements).sort()).toEqual(['errors-panel', 'intro', 'latency-panel', 'repro']);
+    expect(danglingReferences(echoed)).toEqual([]);
+  });
+
+  it('reads back a notebook that still validates after a panel is added', async () => {
+    const scene = buildNotebookScene(makeNotebookSpecWithPanel());
+    const current = specOf(await getSpec(scene));
+
+    await applySpec(
+      scene,
+      {
+        ...current,
+        elements: { ...current.elements, 'errors-panel': panelElement(3, '5xx rate') },
+        layout: {
+          kind: 'NotebookLayout',
+          spec: { cells: [...current.layout.spec.cells, cell('errors-panel', 'assistant')] },
+        },
+      },
+      true
+    );
+
+    const result = await getSpec(scene, true);
+
+    expect(result.error).toBeUndefined();
+    expect(result.success).toBe(true);
+  });
+
+  // The round trip a caller actually performs: read, edit, apply, then apply what came back.
+  it('keeps a newly added panel when the echoed spec is applied again', async () => {
+    const scene = buildNotebookScene(makeNotebookSpecWithPanel());
+    const current = specOf(await getSpec(scene));
+
+    const applied = await applySpec(scene, {
+      ...current,
+      elements: { ...current.elements, 'errors-panel': panelElement(3, '5xx rate') },
+      layout: {
+        kind: 'NotebookLayout',
+        spec: { cells: [...current.layout.spec.cells, cell('errors-panel', 'assistant')] },
+      },
+    });
+
+    await applySpec(scene, echoedSpecOf(applied));
+
+    const after = specOf(await getSpec(scene));
+    expect(referencedNames(after)).toEqual(['intro', 'latency-panel', 'repro', 'errors-panel']);
+    expect(danglingReferences(after)).toEqual([]);
+  });
+
+  it('does not drift when the same spec is applied twice', async () => {
+    const scene = buildNotebookScene(makeNotebookSpecWithPanel());
+    const current = specOf(await getSpec(scene));
+
+    await applySpec(scene, current);
+    const afterFirst = specOf(await getSpec(scene));
+
+    await applySpec(scene, afterFirst);
+    const afterSecond = specOf(await getSpec(scene));
+
+    expect(afterSecond).toEqual(afterFirst);
+  });
+
+  it('keeps the element name of a library panel cell', async () => {
+    const spec = specOf(await getSpec(buildNotebookScene(makeNotebookSpecWithLibraryPanel())));
+
+    expect(Object.keys(spec.elements).sort()).toEqual(['intro', 'saved-view']);
+    expect(panelIdOf(spec, 'saved-view')).toBe(2);
+    expect(danglingReferences(spec)).toEqual([]);
   });
 });
 
