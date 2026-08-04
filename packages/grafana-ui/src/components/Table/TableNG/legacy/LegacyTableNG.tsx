@@ -146,6 +146,7 @@ export function LegacyTableNG(props: TableNGProps) {
     initialRowIndex,
     sortBy,
     sortByBehavior = 'initial',
+    contentAwareWidthsEnabled = false,
   } = props;
   const uniqueId = useId();
   const theme = useTheme2();
@@ -312,11 +313,17 @@ export function LegacyTableNG(props: TableNGProps) {
 
   prevConfiguredWidthCount.current = configuredWidthCount;
 
+  const contentAwareWidths = useMemo(
+    () => (contentAwareWidthsEnabled ? { typographyCtx, showTypeIcons: showTypeIcons ?? false } : undefined),
+    [contentAwareWidthsEnabled, typographyCtx, showTypeIcons]
+  );
+
   const [widths, numFrozenColsFullyInView] = useColWidths(
     visibleFields,
     availableWidth,
     frozenColumns,
-    widthConfigResetKey
+    widthConfigResetKey,
+    contentAwareWidths
   );
 
   const headerHeight = useHeaderHeight({

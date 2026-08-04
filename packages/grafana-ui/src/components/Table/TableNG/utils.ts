@@ -1298,7 +1298,10 @@ function measurePillContentWidth(field: Field, sampleSize: number, pillCtx: Typo
 
     let rowTotal = 0;
     for (const pill of pills) {
-      const pillWidth = pillCtx.ctx.measureText(String(pill)).width + PILLS_SPACING;
+      // PillCell renders formattedValueToString(field.display(pill)), so measure the same text —
+      // value mappings or units can change the chip's on-screen length. formatCellValue falls back
+      // to String(pill) when the field has no display processor.
+      const pillWidth = pillCtx.ctx.measureText(formatCellValue(field, pill)).width + PILLS_SPACING;
       widestPill = Math.max(widestPill, pillWidth);
       rowTotal += pillWidth;
     }

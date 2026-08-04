@@ -1998,6 +1998,16 @@ describe('TableNG utils', () => {
         const [width] = computeWithPills([pillField('a', [manyPills])], 100);
         expect(width).toBe(COLUMN.MAX_AUTO_WIDTH);
       });
+
+      it('measures the display-formatted pill text, not the raw value', () => {
+        const field = pillField('a', [['x']]);
+        // PillCell renders field.display(pill); a value mapping turns the raw "x" (1 char) into
+        // "mapped" (6 chars) => 6*8+12 = 60; +CELL_CHROME 13 = 73. The raw "x" would only be
+        // 1*8+12=20 (+13=33), so landing on 73 proves we measured the formatted text.
+        field.display = (v) => ({ text: v === 'x' ? 'mapped' : String(v), numeric: NaN });
+        const [width] = computeWithPills([field], 73);
+        expect(width).toBe(73);
+      });
     });
   });
 
