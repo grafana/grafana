@@ -1950,6 +1950,20 @@ describe('TableNG utils', () => {
       expect(compute(fields, COLUMN.IMAGE_WIDTH)).toEqual([COLUMN.IMAGE_WIDTH]);
     });
 
+    it('sizes a markdown column to its header, not its (wrapping) source string', () => {
+      const fields: Field[] = [
+        {
+          name: 'md',
+          type: FieldType.string,
+          values: ['# A long heading with [a link](http://example.com/really/long/url) and **bold** text'],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.Markdown } } },
+        },
+      ];
+      // Markdown always wraps and renders formatted, so it contributes no content width: header "md"
+      // (2*8+13 = 29) floors to MIN_WIDTH 50. The long source would otherwise stretch it to the cap.
+      expect(compute(fields, 50)).toEqual([50]);
+    });
+
     it('sizes an actions column to fit its buttons via getActions (fuzzy width)', () => {
       const fields: Field[] = [
         {

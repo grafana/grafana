@@ -1420,6 +1420,12 @@ const measureActionsColWidth: MeasureColWidth = (field, sampleSize, { typography
 const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
   measureLongestContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
 
+// Markdown always wraps (its cell style forces whiteSpace: normal) and renders formatted, so its
+// raw source string is a poor proxy for rendered width — markup syntax and long link URLs would
+// stretch the column to the cap. Contribute no content width so it sizes to its header and wraps to
+// extra height instead, the same as a wrapped free-text column.
+const measureMarkdownColWidth: MeasureColWidth = () => 0;
+
 // Singleton registry mirroring the buildCellHeightMeasurers factory map: cell types that size
 // differently from the default text measurement register here; anything absent falls back to
 // measureTextColWidth.
@@ -1434,6 +1440,7 @@ const COL_WIDTH_MEASURERS: Partial<Record<TableCellDisplayMode, MeasureColWidth>
   [TableCellDisplayMode.Pill]: measurePillColWidth,
   [TableCellDisplayMode.Actions]: measureActionsColWidth,
   [TableCellDisplayMode.DataLinks]: measureDataLinksColWidth,
+  [TableCellDisplayMode.Markdown]: measureMarkdownColWidth,
 };
 
 const DEFAULT_GROWTH_WEIGHT = 1;
