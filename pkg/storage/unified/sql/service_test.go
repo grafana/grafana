@@ -163,7 +163,7 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 	s := &service{authenticator: testAuth}
 	provider := newDenyAllProvider(t)
 
-	vs := resource.NewVectorStoreServer(nil, nil, nil, nil)
+	vs := resource.NewVectorStoreServer(nil, nil, nil, nil, nil)
 	s.registerUnifiedResourceServer(provider, &mockResourceServer{}, vs)
 
 	conn := startAndConnect(t, provider.GetServer())
