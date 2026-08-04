@@ -76,6 +76,9 @@ func buildSearchRequest(body model.CreateSearchRulesRequestBody, namespace strin
 		Options: &resourcepb.ListOptions{Key: resourceKey(namespace, primary)},
 		Limit:   limit,
 		Offset:  offset,
+		// HACK: this should be implicit but bleve doesn't populate all the columns for free text filters
+		// we can remove this once that behavior is fixed.
+		Fields: append([]string{}, resultColumns...),
 	}
 	for _, gr := range federated {
 		req.Federated = append(req.Federated, resourceKey(namespace, gr))
