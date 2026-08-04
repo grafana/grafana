@@ -576,7 +576,7 @@ func (s *service) createAndRegisterServer(provider grpcserver.Provider, opts Ser
 
 	var vs *resource.VectorStoreServer
 	if opts.VectorBackend != nil && opts.Embedder != nil {
-		vs = resource.NewVectorStoreServer(opts.VectorBackend, opts.Embedder, opts.Cfg.VectorAllowedExternalCollections, opts.VectorMetrics)
+		vs = resource.NewVectorStoreServer(opts.VectorBackend, opts.Embedder, opts.Cfg.VectorAllowedExternalCollections, opts.Cfg.VectorAllowedWriteServices, opts.VectorMetrics)
 	}
 	s.registerUnifiedResourceServer(provider, server, vs)
 	return nil

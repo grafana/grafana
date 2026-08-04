@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	authnlib "github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -112,15 +113,46 @@ func (f *fakeWriteStore) WithEntityLock(ctx context.Context, _, _, _ string, fn 
 }
 
 func newTestVectorStoreServer(store *fakeWriteStore) *VectorStoreServer {
-	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), []string{"g/r"}, nil)
+	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), []string{"g/r"}, nil, nil)
 	s.store = store // swap the nil concrete backend for the fake
 	return s
 }
 
 func vsAuthedCtx() context.Context {
-	return authlib.WithAuthInfo(context.Background(),
-		&identity.StaticRequester{UserID: 1, UserUID: "u", Namespace: "ns", Type: authlib.TypeUser},
-	)
+	return vsAuthedCtxAs("")
+}
+
+// vsAuthedCtxAs builds an authed context carrying the given service identity
+// ("" = a token with no serviceIdentity claim).
+func vsAuthedCtxAs(service string) context.Context {
+	r := &identity.StaticRequester{UserID: 1, UserUID: "u", Namespace: "ns", Type: authlib.TypeUser}
+	if service != "" {
+		r.AccessTokenClaims = &authnlib.Claims[authnlib.AccessTokenClaims]{
+			Rest: authnlib.AccessTokenClaims{ServiceIdentity: service},
+		}
+	}
+	return authlib.WithAuthInfo(context.Background(), r)
+}
+
+func TestVectorStore_ServiceIdentityGate(t *testing.T) {
+	s := newTestVectorStoreServer(&fakeWriteStore{})
+	s.allowedServices = map[string]struct{}{"assistant": {}}
+
+	// Allowed identity passes.
+	_, err := s.Upsert(vsAuthedCtxAs("assistant"), validUpsertReq())
+	require.NoError(t, err)
+
+	// Wrong identity and identity-less tokens are denied.
+	for _, svc := range []string{"intruder", ""} {
+		_, err = s.Upsert(vsAuthedCtxAs(svc), validUpsertReq())
+		require.Error(t, err)
+		assert.Equal(t, codes.PermissionDenied, status.Code(err), "service %q", svc)
+	}
+
+	// Empty config = no restriction.
+	s.allowedServices = nil
+	_, err = s.Upsert(vsAuthedCtx(), validUpsertReq())
+	require.NoError(t, err)
 }
 
 func validUpsertReq() *resourcepb.VectorUpsertRequest {
@@ -248,7 +280,7 @@ func TestVectorStore_UpsertValidation(t *testing.T) {
 
 func TestVectorStore_UpsertEmbedFailureIsInternal(t *testing.T) {
 	store := &fakeWriteStore{}
-	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4, wantErr: errors.New("provider down")}), []string{"g/r"}, nil)
+	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4, wantErr: errors.New("provider down")}), []string{"g/r"}, nil, nil)
 	s.store = store
 	_, err := s.Upsert(vsAuthedCtx(), validUpsertReq())
 	require.Error(t, err)
@@ -469,7 +501,7 @@ func TestVectorStore_DeleteResolveFailureWithCancelledContextIsCanceled(t *testi
 func TestVectorStore_UpsertSubresourcesNoChangesSkipsEmbed(t *testing.T) {
 	fake := &fakeTextEmbedder{dim: 4}
 	store := &fakeWriteStore{stored: map[string]string{"c": "same"}}
-	s := NewVectorStoreServer(nil, newTestEmbedder(fake), []string{"g/r"}, nil)
+	s := NewVectorStoreServer(nil, newTestEmbedder(fake), []string{"g/r"}, nil, nil)
 	s.store = store
 
 	resp, err := s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
@@ -489,7 +521,7 @@ func TestVectorStore_UpsertEmbedQuotaErrorKeepsRetryableCode(t *testing.T) {
 	store := &fakeWriteStore{}
 	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{
 		dim: 4, wantErr: status.Error(codes.ResourceExhausted, "provider quota"),
-	}), []string{"g/r"}, nil)
+	}), []string{"g/r"}, nil, nil)
 	s.store = store
 
 	_, err := s.Upsert(vsAuthedCtx(), validUpsertReq())

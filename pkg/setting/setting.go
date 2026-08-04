@@ -781,6 +781,9 @@ type Cfg struct {
 	// defaults to dashboards; external defaults to none.
 	VectorAllowedInternalCollections []string
 	VectorAllowedExternalCollections []string
+	// Service identities allowed to call the VectorStore write RPCs.
+	// Empty = no identity restriction.
+	VectorAllowedWriteServices []string
 	VectorDBHost                     string
 	VectorDBPort                     string
 	VectorDBName                     string

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -43,25 +44,34 @@ type vectorWriteStore interface {
 // for externally-pushed vector collections. Failures are gRPC status codes
 // only — responses carry no ErrorResult.
 type VectorStoreServer struct {
-	store     vectorWriteStore
-	embedder  *embedder.Embedder
-	allowlist vector.CollectionAllowlist
-	log       log.Logger
-	metrics   *VectorMetrics
+	store           vectorWriteStore
+	embedder        *embedder.Embedder
+	allowlist       vector.CollectionAllowlist
+	allowedServices map[string]struct{}
+	log             log.Logger
+	metrics         *VectorMetrics
 }
 
 var _ resourcepb.VectorStoreServer = (*VectorStoreServer)(nil)
 
 // NewVectorStoreServer builds the write service. externalAllowlist entries
 // are "group/resource" pairs (vector_allowed_external_collections config);
-// only allowlisted external collections are writable.
-func NewVectorStoreServer(store vector.VectorBackend, emb *embedder.Embedder, externalAllowlist []string, metrics *VectorMetrics) *VectorStoreServer {
+// only allowlisted external collections are writable. allowedServices are
+// the service identities permitted to write (vector_allowed_write_services
+// config); empty means no identity restriction. Per-collection ownership is
+// a planned follow-up.
+func NewVectorStoreServer(store vector.VectorBackend, emb *embedder.Embedder, externalAllowlist, allowedServices []string, metrics *VectorMetrics) *VectorStoreServer {
+	services := make(map[string]struct{}, len(allowedServices))
+	for _, s := range allowedServices {
+		services[s] = struct{}{}
+	}
 	return &VectorStoreServer{
-		store:     store,
-		embedder:  emb,
-		allowlist: vector.NewCollectionAllowlist(nil, externalAllowlist),
-		log:       log.New("vector-store-server"),
-		metrics:   metrics,
+		store:           store,
+		embedder:        emb,
+		allowlist:       vector.NewCollectionAllowlist(nil, externalAllowlist),
+		allowedServices: services,
+		log:             log.New("vector-store-server"),
+		metrics:         metrics,
 	}
 }
 
@@ -120,6 +130,15 @@ func (s *VectorStoreServer) authorize(ctx context.Context, namespace, group, res
 	}
 	if !claims.NamespaceMatches(user.GetNamespace(), namespace) {
 		return status.Error(codes.PermissionDenied, "namespace mismatch")
+	}
+	if len(s.allowedServices) > 0 {
+		svc := ""
+		if ids := user.GetExtra()[authnlib.ServiceIdentityKey]; len(ids) > 0 {
+			svc = ids[0]
+		}
+		if _, ok := s.allowedServices[svc]; !ok {
+			return status.Error(codes.PermissionDenied, "service identity not allowed to write vectors")
+		}
 	}
 	// Only external collections are writable through this API. Allowlist
 	// misses and unprovisioned collections answer identically so callers
