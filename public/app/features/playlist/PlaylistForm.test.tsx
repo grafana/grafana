@@ -1,5 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
@@ -240,6 +241,9 @@ describe('PlaylistForm', () => {
       expect(screen.queryByRole('textbox', { name: /interval for uid_1/i })).not.toBeInTheDocument();
 
       const optionsButton = within(rows()[0]).getByRole('button', { name: 'Settings' });
+      const settingsIcon = optionsButton.querySelector('svg');
+      expect(settingsIcon).toBeInTheDocument();
+      expect(settingsIcon).toHaveStyle({ pointerEvents: 'none' });
       await userEvent.hover(optionsButton);
       expect(await screen.findByRole('tooltip')).toHaveTextContent('Settings');
       await userEvent.unhover(optionsButton);
@@ -249,16 +253,16 @@ describe('PlaylistForm', () => {
 
       expect(optionsButton).toHaveAttribute('aria-expanded', 'true');
       expect(screen.getByRole('textbox', { name: /interval for uid_1/i })).toBeInTheDocument();
-      expect(screen.getByRole('textbox', { name: /url parameters for uid_1/i })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /dashboard state for uid_1/i })).toBeInTheDocument();
     });
 
     it('summarizes existing options while keeping the row compact', async () => {
-      getTestContext(mockPerItemIntervalPlaylist);
+      getTestContext(mockPerItemOptionsPlaylist);
 
       // The global interval remains editable.
       expect(screen.getByRole('textbox', { name: 'Interval' })).toHaveValue('10m');
       // uid_1's override is visible as a compact summary until its options are opened.
-      expect(within(rows()[0]).getByText('30s')).toBeInTheDocument();
+      expect(within(rows()[0]).getByText('Custom view · Interval: 30s')).toBeInTheDocument();
       expect(within(rows()[0]).getByRole('button', { name: 'Settings' })).toHaveAttribute('aria-expanded', 'false');
       await openItemOptions('uid_1');
       expect(screen.getByRole('textbox', { name: /interval for uid_1/i })).toHaveValue('30s');
@@ -359,26 +363,27 @@ describe('PlaylistForm', () => {
     });
   });
 
-  describe('per-dashboard URL parameters', () => {
-    it('renders the parameters stored on each playlist item', async () => {
+  describe('per-dashboard state', () => {
+    it('renders the state stored on each playlist item', async () => {
       getTestContext(mockPerItemOptionsPlaylist);
 
       await openItemOptions('uid_1');
       await openItemOptions('uid_2');
-      expect(screen.getByRole('textbox', { name: /url parameters for uid_1/i })).toHaveValue(
+      expect(screen.getByRole('textbox', { name: /dashboard state for uid_1/i })).toHaveValue(
         'var-host=host1&from=now-6h&to=now'
       );
-      expect(screen.getByRole('textbox', { name: /url parameters for uid_2/i })).toHaveValue('var-host=host2');
+      expect(screen.getByRole('textbox', { name: /dashboard state for uid_2/i })).toHaveValue('var-host=host2');
     });
 
     it('accepts a copied dashboard URL and stores only its query string', async () => {
       const { onSubmitMock } = getTestContext();
 
       await openItemOptions('uid_1');
-      await userEvent.type(
-        screen.getByRole('textbox', { name: /url parameters for uid_1/i }),
-        'https://grafana.example.com/d/uid/name?var-host=host1&from=now-6h&to=now'
-      );
+      const dashboardState = screen.getByRole('textbox', { name: /dashboard state for uid_1/i });
+      dashboardState.focus();
+      await userEvent.paste('https://grafana.example.com/d/uid/name?var-host=host1&from=now-6h&to=now');
+
+      expect(dashboardState).toHaveValue('var-host=host1&from=now-6h&to=now');
       await userEvent.click(screen.getByRole('button', { name: /save/i }));
 
       expect(onSubmitMock).toHaveBeenCalledWith(
@@ -395,6 +400,39 @@ describe('PlaylistForm', () => {
       );
     });
 
+    it('resolves a copied short link and stores its dashboard state', async () => {
+      server.use(
+        http.get('/api/short-urls/short123', () =>
+          HttpResponse.json({
+            uid: 'short123',
+            path: '/d/uid/name?var-host=host2&from=now-12h&to=now',
+          })
+        )
+      );
+      const { onSubmitMock } = getTestContext();
+
+      await openItemOptions('uid_1');
+      const dashboardState = screen.getByRole('textbox', { name: /dashboard state for uid_1/i });
+      dashboardState.focus();
+      await userEvent.paste('http://localhost:3000/goto/short123?orgId=1');
+
+      await waitFor(() => expect(dashboardState).toHaveValue('var-host=host2&from=now-12h&to=now'));
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+
+      expect(onSubmitMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          spec: expect.objectContaining({
+            items: expect.arrayContaining([
+              expect.objectContaining({
+                value: 'uid_1',
+                queryParams: 'var-host=host2&from=now-12h&to=now',
+              }),
+            ]),
+          }),
+        })
+      );
+    });
+
     it('keeps parameters attached to the correct item when another row is removed', async () => {
       getTestContext(mockPerItemOptionsPlaylist);
 
@@ -402,7 +440,7 @@ describe('PlaylistForm', () => {
       await waitFor(() => expect(rows()).toHaveLength(1));
 
       await openItemOptions('uid_2');
-      expect(screen.getByRole('textbox', { name: /url parameters for uid_2/i })).toHaveValue('var-host=host2');
+      expect(screen.getByRole('textbox', { name: /dashboard state for uid_2/i })).toHaveValue('var-host=host2');
     });
   });
 });

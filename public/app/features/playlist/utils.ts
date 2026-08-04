@@ -36,6 +36,21 @@ export function normalizePlaylistItemQueryParams(value?: string): string | undef
   return normalized || undefined;
 }
 
+export function getPlaylistShortLinkUid(value?: string): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  try {
+    const pathname = new URL(trimmed, 'http://grafana.local').pathname;
+    const match = pathname.match(/(?:^|\/)goto\/([^/]+)\/?$/);
+    return match?.[1] ? decodeURIComponent(match[1]) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function canWritePlaylists(): boolean {
   return config.featureToggles.playlistsRBAC
     ? contextSrv.hasPermission(AccessControlAction.PlaylistsWrite)

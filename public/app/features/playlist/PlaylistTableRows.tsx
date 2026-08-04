@@ -1,16 +1,30 @@
 import { css } from '@emotion/css';
 import { Draggable, type DraggableProvided } from '@hello-pangea/dnd';
 import pluralize from 'pluralize';
-import { type ReactNode, useId, useState } from 'react';
+import { type ClipboardEvent, type ReactNode, useId, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, urlUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Icon, IconButton, Input, Spinner, Text, useStyles2, type IconName } from '@grafana/ui';
+import { getBackendSrv } from '@grafana/runtime';
+import {
+  Button,
+  Field,
+  Icon,
+  IconButton,
+  Input,
+  LinkButton,
+  Spinner,
+  Text,
+  Tooltip,
+  useStyles2,
+  type IconButtonVariant,
+  type IconName,
+} from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
 import { type PlaylistItemUI } from './types';
-import { isValidInterval } from './utils';
+import { getPlaylistShortLinkUid, isValidInterval, normalizePlaylistItemQueryParams } from './utils';
 
 interface Props {
   items: PlaylistItemUI[];
@@ -136,13 +150,65 @@ function PlaylistTableRow({
 }: RowProps) {
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
+  const [dashboardStateError, setDashboardStateError] = useState<string>();
+  const [resolvingDashboardState, setResolvingDashboardState] = useState(false);
   const optionsId = useId();
   const optionSummary = [
-    item.interval,
-    item.queryParams ? t('playlist.playlist-table-rows.query-params-addon', 'Parameters') : undefined,
+    item.queryParams ? t('playlist.playlist-table-rows.dashboard-state-summary', 'Custom view') : undefined,
+    item.interval
+      ? t('playlist.playlist-table-rows.interval-summary', 'Interval: {{interval}}', { interval: item.interval })
+      : undefined,
   ]
     .filter(Boolean)
     .join(' · ');
+  const dashboard = item.dashboards?.length === 1 ? item.dashboards[0] : undefined;
+  const dashboardUrl = dashboard
+    ? urlUtil.renderUrl(dashboard.url.split('?')[0], {
+        ...urlUtil.parseKeyValue(dashboard.url.split('?')[1] ?? ''),
+        ...urlUtil.parseKeyValue(normalizePlaylistItemQueryParams(item.queryParams) ?? ''),
+      })
+    : undefined;
+
+  const onDashboardStatePaste = async (event: ClipboardEvent<HTMLInputElement>) => {
+    const pastedValue = event.clipboardData.getData('text').trim();
+    if (!pastedValue) {
+      return;
+    }
+
+    event.preventDefault();
+    setDashboardStateError(undefined);
+
+    const shortLinkUid = getPlaylistShortLinkUid(pastedValue);
+    if (!shortLinkUid) {
+      onUpdateQueryParams?.(index, normalizePlaylistItemQueryParams(pastedValue) ?? '');
+      return;
+    }
+
+    setResolvingDashboardState(true);
+    onUpdateQueryParams?.(index, '');
+    try {
+      const shortLink = await getBackendSrv().get<{ path: string }>(
+        `/api/short-urls/${encodeURIComponent(shortLinkUid)}`
+      );
+      const dashboardState = normalizePlaylistItemQueryParams(shortLink.path);
+      if (!dashboardState) {
+        setDashboardStateError(
+          t('playlist.playlist-table-rows.dashboard-state-empty-link', 'This link has no custom dashboard state')
+        );
+        return;
+      }
+      onUpdateQueryParams?.(index, dashboardState);
+    } catch {
+      setDashboardStateError(
+        t(
+          'playlist.playlist-table-rows.dashboard-state-short-link-error',
+          'Could not resolve this short link. Paste the full dashboard URL instead.'
+        )
+      );
+    } finally {
+      setResolvingDashboardState(false);
+    }
+  };
 
   return (
     <Draggable draggableId={`${index}`} index={index}>
@@ -167,14 +233,13 @@ function PlaylistTableRow({
                 </Text>
               </span>
             )}
-            <IconButton
+            <PlaylistActionIconButton
               name="cog"
-              size="md"
+              label={t('playlist.playlist-table-rows.settings', 'Settings')}
               variant={optionsOpen ? 'primary' : 'secondary'}
-              aria-expanded={optionsOpen}
-              aria-controls={optionsId}
-              tooltip={t('playlist.playlist-table-rows.settings', 'Settings')}
-              tooltipPlacement="top"
+              expanded={optionsOpen}
+              controls={optionsId}
+              triggerClassName={styles.iconAction}
               onClick={() => setOptionsOpen((open) => !open)}
             />
             <div {...provided.dragHandleProps}>
@@ -195,14 +260,13 @@ function PlaylistTableRow({
                   </Button>
                 </div>
               ) : (
-                <IconButton
-                  className={styles.deleteButton}
+                <PlaylistActionIconButton
                   name="trash-alt"
-                  size="md"
+                  label={t('playlist-edit.form.table-delete', 'Delete playlist item')}
                   variant="destructive"
-                  data-testid={selectors.pages.PlaylistForm.itemDelete}
-                  tooltip={t('playlist-edit.form.table-delete', 'Delete playlist item')}
-                  tooltipPlacement="top"
+                  buttonClassName={styles.deleteButton}
+                  testId={selectors.pages.PlaylistForm.itemDelete}
+                  triggerClassName={styles.iconAction}
                   onClick={() => setDeleteConfirmationOpen(true)}
                 />
               )}
@@ -210,24 +274,45 @@ function PlaylistTableRow({
           </div>
           {optionsOpen && (
             <div className={styles.options} id={optionsId}>
-              <Field noMargin label={t('playlist.playlist-table-rows.query-params-addon', 'Parameters')}>
+              <Field
+                noMargin
+                label={t('playlist.playlist-table-rows.dashboard-state-label', 'Dashboard state')}
+                invalid={!!dashboardStateError}
+                error={dashboardStateError}
+                loading={resolvingDashboardState}
+              >
                 <Input
                   type="text"
                   value={item.queryParams ?? ''}
-                  placeholder={t(
-                    'playlist.playlist-table-rows.query-params-placeholder',
-                    'var-host=host1&from=now-6h&to=now'
-                  )}
+                  placeholder={t('playlist.playlist-table-rows.dashboard-state-placeholder', 'Paste a dashboard link')}
                   title={t(
-                    'playlist.playlist-table-rows.query-params-title',
-                    'Paste a dashboard URL or enter its query parameters'
+                    'playlist.playlist-table-rows.dashboard-state-title',
+                    'Paste a dashboard link or enter its URL state'
                   )}
                   aria-label={t(
-                    'playlist.playlist-table-rows.aria-label-item-query-params',
-                    'URL parameters for {{itemValue}}',
+                    'playlist.playlist-table-rows.aria-label-item-dashboard-state',
+                    'Dashboard state for {{itemValue}}',
                     { itemValue: item.value }
                   )}
-                  onChange={(e) => onUpdateQueryParams?.(index, e.currentTarget.value)}
+                  loading={resolvingDashboardState}
+                  addonAfter={
+                    dashboardUrl ? (
+                      <LinkButton
+                        href={dashboardUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        icon="external-link-alt"
+                        size="sm"
+                      >
+                        <Trans i18nKey="playlist.playlist-table-rows.open-dashboard">Open dashboard</Trans>
+                      </LinkButton>
+                    ) : undefined
+                  }
+                  onPaste={onDashboardStatePaste}
+                  onChange={(e) => {
+                    setDashboardStateError(undefined);
+                    onUpdateQueryParams?.(index, e.currentTarget.value);
+                  }}
                 />
               </Field>
               <Field noMargin label={t('playlist.playlist-table-rows.interval-addon', 'Interval')}>
@@ -254,6 +339,59 @@ function PlaylistTableRow({
         </div>
       )}
     </Draggable>
+  );
+}
+
+interface PlaylistActionIconButtonProps {
+  name: IconName;
+  label: string;
+  onClick: () => void;
+  triggerClassName: string;
+  buttonClassName?: string;
+  variant?: IconButtonVariant;
+  expanded?: boolean;
+  controls?: string;
+  testId?: string;
+}
+
+function PlaylistActionIconButton({
+  name,
+  label,
+  onClick,
+  triggerClassName,
+  buttonClassName,
+  variant,
+  expanded,
+  controls,
+  testId,
+}: PlaylistActionIconButtonProps) {
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+
+  return (
+    <div
+      className={triggerClassName}
+      onMouseEnter={() => setTooltipOpen(true)}
+      onMouseLeave={() => setTooltipOpen(false)}
+      onFocusCapture={() => setTooltipOpen(true)}
+      onBlurCapture={() => setTooltipOpen(false)}
+    >
+      <Tooltip content={label} placement="top" show={tooltipOpen}>
+        <IconButton
+          name={name}
+          size="md"
+          variant={variant}
+          className={buttonClassName}
+          aria-label={label}
+          aria-expanded={expanded}
+          aria-controls={controls}
+          data-testid={testId}
+          onClick={() => {
+            setTooltipOpen(false);
+            onClick();
+          }}
+        />
+      </Tooltip>
+    </div>
   );
 }
 
@@ -289,6 +427,15 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     optionSummary: css({
       whiteSpace: 'nowrap',
+    }),
+    iconAction: css({
+      alignItems: 'center',
+      display: 'flex',
+      '& svg': {
+        // Keep the button as one uninterrupted tooltip trigger when the pointer
+        // moves from its hit area onto the decorative icon.
+        pointerEvents: 'none',
+      },
     }),
     deleteAction: css({
       alignItems: 'center',
