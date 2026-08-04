@@ -326,22 +326,43 @@ For detailed information about configuring repository write access and branch pr
 **Solution**:
 
 1. Verify the user's folder-level permissions in Grafana
-2. Navigate to **Folder settings > Permissions**
-3. Grant the user or their team **Editor** or **Admin** role
+1. Navigate to **Folder settings > Permissions**
+1. Grant the user or their team **Editor** or **Admin** role
 
 ### Git Sync fails with "403 Forbidden" or "Unauthorized"
 
-**Cause**: The Git provider credentials lack the required permissions.
+**Cause**: The Git provider authentication credentials lack the required repository permissions.
 
 **Solution**:
 
-1. Verify the authentication credentials (GitHub App, Personal Access Token, etc.) have **read and write** permissions on the repository
-2. Check that the credentials have permission to create pull requests (if branch protection is enabled)
-3. If using a GitHub App or OAuth app, verify it is installed and authorized for the target repository
-4. For expired or revoked tokens, generate new credentials and update the Git Sync connection configuration
+1. Verify the authentication credentials (GitHub App, Personal Access Token) have **read and write** permissions on the repository
+1. If using a GitHub App or OAuth app, verify it is installed and authorized for the target repository
+1. Check that the credentials have permission to create pull requests (if branch protection is enabled)
+1. Verify authentication credentials haven't expired
+1. For expired or revoked tokens, generate new credentials and update the Git Sync connection configuration
 
 ### Dashboard changes commit directly instead of creating pull requests
 
 **Cause**: Branch protection is not configured at the Git provider.
 
 **Solution**: Enable branch protection rules at your Git provider to enforce pull request workflows or in your Grafana repository settings. Refer to your Git provider's documentation for instructions on configuring branch protection.
+
+### Dashboard changes commit directly without review
+
+**Cause**: Branch protection is not configured at the Git provider.
+
+**Solution**:
+
+1. Enable branch protection on the target branch at your Git provider
+1. Configure the branch to require pull requests before merging
+1. Verify the branch name in protection rules matches the branch configured in Grafana
+
+### Pull requests not created when expected
+
+**Cause**: Branch protection is not enabled or the authentication credentials lack pull request creation permission.
+
+**Solution**:
+
+1. Verify branch protection is enabled on the correct branch
+1. Check that the credentials have permission to create pull requests
+1. Ensure the branch name in Git Sync settings matches the protected branch exactly

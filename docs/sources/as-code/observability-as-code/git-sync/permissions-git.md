@@ -20,11 +20,9 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code
 
 # Configure Git repository protection
 
-When you use Git Sync, your dashboard configurations are stored as code in a Git repository. Git repository protection controls who can access this source code and who can modify it. This guide explains how to configure repository access at your Git provider to protect your dashboard source code.
+When you use Git Sync, your dashboard configurations are stored as code in a Git repository. Git repository protection controls who can access this source code and who can modify it.
 
-{{< admonition type="note" >}}
-Repository protection works as an additional security layer after Grafana internal permissions. For information about Grafana permissions, refer to [Git Sync permissions and access control](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana).
-{{< /admonition >}}
+You can configure repository access at your Git provider to protect your dashboard source code. Repository protection works as an additional security layer after Grafana internal permissions. For information about Grafana permissions, refer to [Git Sync permissions and access control](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana).
 
 ## Required permissions at the Git provider level
 
@@ -150,33 +148,4 @@ Refer to your Git provider's documentation for instructions on configuring `CODE
 
 ## Troubleshooting
 
-### Git Sync fails with "403 Forbidden" or "Unauthorized"
-
-**Cause**: The authentication credentials lack the required repository permissions.
-
-**Solution**:
-
-1. Verify the credentials have read and write access to the repository
-2. Check that the credentials can create pull requests (if branch protection is enabled)
-3. Verify authentication credentials haven't expired
-4. For GitHub Apps, verify the app is installed and authorized for the repository
-
-### Dashboard changes commit directly without review
-
-**Cause**: Branch protection is not configured at the Git provider.
-
-**Solution**:
-
-1. Enable branch protection on the target branch at your Git provider
-2. Configure the branch to require pull requests before merging
-3. Verify the branch name in protection rules matches the branch configured in Grafana
-
-### Pull requests not created when expected
-
-**Cause**: Branch protection is not enabled or the authentication credentials lack pull request creation permission.
-
-**Solution**:
-
-1. Verify branch protection is enabled on the correct branch
-2. Check that the credentials have permission to create pull requests
-3. Ensure the branch name in Git Sync settings matches the protected branch exactly
+For permissions troubleshooting refer to [Troubleshoot permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/permissions-grafana#troubleshoot-permissions) in the Git Sync permissions documentation.
