@@ -354,7 +354,9 @@ describe('PlaylistForm', () => {
       expect(pasteLink).toHaveStyle({ height: '32px', width: '32px' });
       expect(pasteLink.querySelector('svg')).toHaveStyle({ pointerEvents: 'none' });
       await userEvent.hover(pasteLink);
-      expect(await screen.findByRole('tooltip')).toHaveTextContent('Paste a link with the view you want');
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(
+        'Paste a link to this dashboard with the view you want'
+      );
       await userEvent.unhover(pasteLink);
 
       await userEvent.click(pasteLink);
