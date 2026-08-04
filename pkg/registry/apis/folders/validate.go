@@ -112,6 +112,12 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	}
 
 	parentName := meta.GetFolder()
+
+	// folder cannot be created inside the k6 folder (matches the move restriction below)
+	if parentName == accesscontrol.K6FolderUID {
+		return folder.ErrFolderCannotBeCreatedInK6.Errorf("folders may not be created in the k6 project")
+	}
+
 	if folder.IsRootFolderUID(parentName) {
 		return nil // OK, we do not need to validate the tree
 	}
@@ -190,11 +196,6 @@ func validateOnUpdate(ctx context.Context,
 	// We also don't need to validate circular references because the root folder cannot have a parent.
 	if folder.IsRootFolderUID(newParent) {
 		return nil
-	}
-
-	// folder cannot be moved into the k6 folder
-	if newParent == accesscontrol.K6FolderUID {
-		return folder.ErrFolderCannotBeMovedToK6.Errorf("k6 project may not be moved")
 	}
 
 	parentObj, err := getter.Get(ctx, newParent, &metav1.GetOptions{})

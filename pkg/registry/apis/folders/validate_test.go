@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -146,6 +147,40 @@ func TestValidateCreate(t *testing.T) {
 				},
 			},
 			expectedErr: folder.ErrFolderCannotBeParentOfItself,
+		},
+		{
+			name: "error to create a folder inside the k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				accesscontrol.K6FolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: accesscontrol.K6FolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6",
+					},
+				},
+			},
+			expectedErr: folder.ErrFolderCannotBeCreatedInK6,
+		},
+		{
+			name: "the k6 folder itself can be created at root",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: accesscontrol.K6FolderUID,
+				},
+				Spec: folders.FolderSpec{
+					Title: "k6",
+				},
+			},
 		},
 		{
 			name: "can not create a tree that is too deep",

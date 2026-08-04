@@ -2477,6 +2477,20 @@ func TestIntegrationFolderValidationReturns400(t *testing.T) {
 			expectedMessageID: "folder.cannot-be-parent-of-itself",
 		},
 		{
+			name: "create inside k6 folder",
+			setup: func(t *testing.T) string {
+				out, err := client.Resource.Create(context.Background(),
+					makeFolder(accesscontrol.K6FolderUID, "k6", ""), metav1.CreateOptions{})
+				require.NoError(t, err, "creating the k6 folder itself should succeed")
+				return out.GetName()
+			},
+			folder: func(parentUID string) *unstructured.Unstructured {
+				return makeFolder("child-of-k6", "Child of k6", parentUID)
+			},
+			expectedMsg:       "Folders cannot be created inside the k6 project",
+			expectedMessageID: "folder.cannot-be-created-in-k6",
+		},
+		{
 			name: "max depth exceeded",
 			setup: func(t *testing.T) string {
 				parentUID := ""
