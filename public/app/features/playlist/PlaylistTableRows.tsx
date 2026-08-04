@@ -463,7 +463,7 @@ function PlaylistTableRow({
                               ? t('playlist.playlist-table-rows.cancel-dashboard-link', 'Cancel')
                               : t(
                                   'playlist.playlist-table-rows.dashboard-link-help',
-                                  'Paste a link with the view you want'
+                                  'Paste a link to this dashboard with the view you want'
                                 )
                           }
                           variant={pasteLinkOpen ? 'primary' : 'secondary'}
