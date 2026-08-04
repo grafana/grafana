@@ -99,7 +99,7 @@ const stringifyValue = (value: unknown): string => {
   try {
     return JSON.stringify(value);
   } catch (error) {
-    // This path shouldn't be hittable unless the
+    // This path shouldn't be hittable
     console.warn('Cannot render tooltip value', { error, value });
     return String(value);
   }
