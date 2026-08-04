@@ -3102,8 +3102,8 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
-			Name:        "dashboardGenerationWizard",
-			Description: "Enables the assistant-powered Generate dashboard wizard",
+			Name:        "dashboardGeneration",
+			Description: "Enables the assistant-powered Generate dashboard prompt",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",

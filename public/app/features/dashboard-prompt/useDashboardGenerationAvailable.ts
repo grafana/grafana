@@ -9,5 +9,5 @@ import { config } from '@grafana/runtime';
  */
 export function useDashboardGenerationAvailable(): boolean {
   const { isAvailable } = useAssistant();
-  return Boolean(config.featureToggles.dashboardGenerationWizard) && isAvailable;
+  return Boolean(config.featureToggles.dashboardGeneration) && isAvailable;
 }
