@@ -172,6 +172,38 @@ func TestValidateCreate(t *testing.T) {
 			expectedErr: folder.ErrFolderCannotBeCreatedInK6,
 		},
 		{
+			name: "error to create a folder under an existing descendant of the k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "nnn",
+					Annotations: map[string]string{utils.AnnoKeyFolder: "legacy-k6-child"},
+				},
+				Spec: folders.FolderSpec{
+					Title: "some title",
+				},
+			},
+			mockFolders: map[string]*folders.Folder{
+				"legacy-k6-child": {
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "legacy-k6-child",
+						Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
+					},
+					Spec: folders.FolderSpec{
+						Title: "created before k6 was restricted",
+					},
+				},
+				accesscontrol.K6FolderUID: {
+					ObjectMeta: metav1.ObjectMeta{
+						Name: accesscontrol.K6FolderUID,
+					},
+					Spec: folders.FolderSpec{
+						Title: "k6",
+					},
+				},
+			},
+			expectedErr: folder.ErrFolderCannotBeCreatedInK6,
+		},
+		{
 			name: "the k6 folder itself can be created at root",
 			folder: &folders.Folder{
 				ObjectMeta: metav1.ObjectMeta{
@@ -590,6 +622,68 @@ func TestValidateUpdate(t *testing.T) {
 				},
 			},
 			expectedErr: "k6 project may not be moved",
+		},
+		{
+			name: "error to move into an existing descendant of the k6 folder",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "legacy-k6-child",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+				},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
+			},
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: accesscontrol.K6FolderUID, Title: "k6"},
+					{Name: "legacy-k6-child", Title: "created before k6 was restricted", Parent: accesscontrol.K6FolderUID},
+				},
+			},
+			expectedErr: "[folder.cannot-be-moved-to-k6] k6 project may not be moved",
+		},
+		{
+			name: "error to move a folder out of the k6 tree",
+			folder: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: folder.GeneralFolderUID,
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "changed",
+				},
+			},
+			old: &folders.Folder{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "nnn",
+					Annotations: map[string]string{
+						utils.AnnoKeyFolder: "legacy-k6-child",
+					},
+				},
+				Spec: folders.FolderSpec{
+					Title: "old title",
+				},
+			},
+			// resolved for the source chain, which still runs through k6
+			parents: &folders.FolderInfoList{
+				Items: []folders.FolderInfo{
+					{Name: accesscontrol.K6FolderUID, Title: "k6"},
+					{Name: "legacy-k6-child", Title: "created before k6 was restricted", Parent: accesscontrol.K6FolderUID},
+				},
+			},
+			expectedErr: "[folder.bad-request] k6 project may not be moved",
 		},
 		{
 			name: "error to move the k6 folder itself",

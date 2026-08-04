@@ -75,6 +75,20 @@ func validateOwnerReferencesOnManagedFolder(obj *folders.Folder, old *folders.Fo
 	return nil
 }
 
+// hasK6Ancestor checks the whole chain, not just the immediate parent: folders
+// created under k6 before it was restricted must not become parents themselves.
+func hasK6Ancestor(info *folders.FolderInfoList, self string) bool {
+	if info == nil {
+		return false
+	}
+	for _, item := range info.Items {
+		if item.Name == accesscontrol.K6FolderUID && item.Name != self {
+			return true
+		}
+	}
+	return false
+}
+
 func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int) error {
 	id := f.Name
 
@@ -113,7 +127,7 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 
 	parentName := meta.GetFolder()
 
-	// folder cannot be created inside the k6 folder (matches the move restriction below)
+	// checked before resolving the tree so it also rejects a k6 parent we cannot read
 	if parentName == accesscontrol.K6FolderUID {
 		return folder.ErrFolderCannotBeCreatedInK6.Errorf("folders may not be created in the k6 project")
 	}
@@ -130,6 +144,10 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	parents, err := getter(ctx, f)
 	if err != nil {
 		return fmt.Errorf("unable to create folder inside parent: %w", err)
+	}
+
+	if hasK6Ancestor(parents, f.Name) {
+		return folder.ErrFolderCannotBeCreatedInK6.Errorf("folders may not be created in the k6 project")
 	}
 
 	// Can not create a folder that will be too deep.
@@ -186,6 +204,17 @@ func validateOnUpdate(ctx context.Context,
 		return folder.ErrFolderCannotBeMovedToK6.Errorf("k6 project may not be moved")
 	}
 
+	// k6 folders stay together, so folders under k6 may not be moved out either
+	if !folder.IsRootFolderUID(oldFolder.GetFolder()) {
+		oldInfo, err := parents(ctx, old)
+		if err != nil {
+			return err
+		}
+		if hasK6Ancestor(oldInfo, obj.Name) {
+			return folder.ErrBadRequest.Errorf("k6 project may not be moved")
+		}
+	}
+
 	if err := checkMoveAccess(ctx, obj.Namespace, obj.Name, oldFolder.GetFolder(), newParent, accessClient); err != nil {
 		return err
 	}
@@ -209,6 +238,11 @@ func validateOnUpdate(ctx context.Context,
 	info, err := parents(ctx, parent)
 	if err != nil {
 		return err
+	}
+
+	// nothing may be moved into the k6 tree, at any depth
+	if hasK6Ancestor(info, obj.Name) {
+		return folder.ErrFolderCannotBeMovedToK6.Errorf("k6 project may not be moved")
 	}
 
 	// Check that the folder being moved is not an ancestor of the target parent.
