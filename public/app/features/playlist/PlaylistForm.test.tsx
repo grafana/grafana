@@ -497,7 +497,7 @@ describe('PlaylistForm', () => {
       const dashboardLink = await within(rowForItem('uid_1')).findByRole('link', { name: 'Dashboard one' });
       expect(dashboardLink).toHaveAttribute('target', '_blank');
       expect(dashboardLink).toHaveAttribute('rel', 'noreferrer');
-      expect(dashboardLink.querySelector('svg')).toHaveStyle({ transform: 'translateY(1px)' });
+      expect(dashboardLink.querySelector('svg')).toHaveStyle({ transform: 'translateY(2px)' });
       const truncatedTitle = dashboardLink.querySelector('p');
       expect(truncatedTitle).not.toBeNull();
       expect(truncatedTitle!).toHaveStyle({
