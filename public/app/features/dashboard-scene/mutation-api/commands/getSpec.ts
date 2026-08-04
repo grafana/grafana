@@ -6,16 +6,15 @@
  *
  * The command is resource-polymorphic: on a dashboard scene it returns a v2
  * `DashboardSpec`, on a notebook scene a v2beta1 `NotebookSpec`, reported via
- * `resource`. The scene serializer is dashboard-typed and always emits the full
- * dashboard shape, so a notebook is projected back down to its own fields before
- * it leaves here — a caller that echoed the dashboard shape back through
- * APPLY_SPEC would be writing `variables`, `annotations` and `cursorSync` into a
- * resource that has no such fields.
+ * `resource`. A notebook goes out through `transformSceneToNotebookSaveModel`,
+ * which is where the projection back down to the notebook's own fields lives and
+ * why it is needed.
  */
 
 import * as z from 'zod';
 
-import { dashboardSpecToNotebookSpec, isNotebookScene } from '../../serialization/notebookSpecTransform';
+import { isNotebookScene } from '../../serialization/notebookSpecTransform';
+import { transformSceneToNotebookSaveModel } from '../../serialization/transformSceneToNotebookSaveModel';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 import { validateNotebookSpec } from '../../v2schema/notebookSpecSchema';
@@ -47,10 +46,8 @@ export const getSpecCommand: MutationCommand<GetSpecPayload> = {
   handler: async (payload, context) => {
     const { scene } = context;
     try {
-      const spec = transformSceneToSaveModelSchemaV2(scene);
-
       if (isNotebookScene(scene)) {
-        const notebook = dashboardSpecToNotebookSpec(spec);
+        const notebook = transformSceneToNotebookSaveModel(scene);
 
         // Opt-in structural + referential validation (default off to avoid breaking reads).
         // Worth requesting on a notebook: a read that comes back with dangling cell references
@@ -65,6 +62,8 @@ export const getSpecCommand: MutationCommand<GetSpecPayload> = {
 
         return { success: true, data: { spec: notebook, resource: 'notebook' }, changes: [] };
       }
+
+      const spec = transformSceneToSaveModelSchemaV2(scene);
 
       // Opt-in structural validation (default off to avoid breaking reads).
       if (payload.validate) {

@@ -29,12 +29,12 @@ import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/Dashboar
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
 import {
-  dashboardSpecToNotebookSpec,
   isNotebookScene,
   notebookSpecToDashboardSpec,
   setNotebookDocumentHeader,
 } from '../../serialization/notebookSpecTransform';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
+import { transformSceneToNotebookSaveModel } from '../../serialization/transformSceneToNotebookSaveModel';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardV2SpecSchema } from '../../v2schema/dashboardV2Schema';
 import { validateNotebookSpec } from '../../v2schema/notebookSpecSchema';
@@ -219,7 +219,7 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
         // the write itself already landed.
         let appliedNotebook: NotebookSpec | undefined;
         try {
-          appliedNotebook = dashboardSpecToNotebookSpec(transformSceneToSaveModelSchemaV2(scene));
+          appliedNotebook = transformSceneToNotebookSaveModel(scene);
         } catch {
           appliedNotebook = undefined;
         }
