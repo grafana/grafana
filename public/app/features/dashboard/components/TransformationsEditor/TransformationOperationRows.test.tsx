@@ -1,3 +1,4 @@
+import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -15,7 +16,17 @@ standardTransformersRegistry.setInit(getStandardTransformers);
 const setup = (configs: TransformationsEditorTransformation[]) => {
   const onRemove = jest.fn();
   const onChange = jest.fn();
-  render(<TransformationOperationRows data={data} configs={configs} onRemove={onRemove} onChange={onChange} />);
+  render(
+    <DragDropContext onDragEnd={() => {}}>
+      <Droppable droppableId="transformations-list" direction="vertical">
+        {(provided) => (
+          <div ref={provided.innerRef} {...provided.droppableProps}>
+            <TransformationOperationRows data={data} configs={configs} onRemove={onRemove} onChange={onChange} />
+          </div>
+        )}
+      </Droppable>
+    </DragDropContext>
+  );
   return { onRemove, onChange };
 };
 

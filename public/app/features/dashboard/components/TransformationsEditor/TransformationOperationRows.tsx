@@ -1,3 +1,5 @@
+import { Draggable } from '@hello-pangea/dnd';
+
 import { type DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, Button } from '@grafana/ui';
@@ -26,20 +28,25 @@ export const TransformationOperationRows = ({
 
         if (!uiConfig) {
           return (
-            <Alert
-              key={`${config.id}`}
-              severity="error"
-              title={t(
-                'dashboard.transformation-operation-rows.unknown-transformation-title',
-                'Unknown transformation: {{transformationId}}',
-                { transformationId: config.transformation.id }
+            <Draggable draggableId={`${config.id}`} index={i} key={`${config.id}`} isDragDisabled>
+              {(provided) => (
+                <div ref={provided.innerRef} {...provided.draggableProps}>
+                  <Alert
+                    severity="error"
+                    title={t(
+                      'dashboard.transformation-operation-rows.unknown-transformation-title',
+                      'Unknown transformation: {{transformationId}}',
+                      { transformationId: config.transformation.id }
+                    )}
+                    action={
+                      <Button variant="secondary" onClick={() => onRemove(i)}>
+                        {t('dashboard.transformation-operation-rows.remove-transformation', 'Remove')}
+                      </Button>
+                    }
+                  />
+                </div>
               )}
-              action={
-                <Button variant="secondary" onClick={() => onRemove(i)}>
-                  {t('dashboard.transformation-operation-rows.remove-transformation', 'Remove')}
-                </Button>
-              }
-            />
+            </Draggable>
           );
         }
 
