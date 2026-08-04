@@ -73,8 +73,8 @@ type PlaylistItem struct {
 	Value       string  `json:"value" db:"value"`
 	Order       int     `json:"order" db:"order"`
 	Title       string  `json:"title" db:"title"`
-	Interval    *string `json:"interval,omitempty" db:"-"`
-	QueryParams *string `json:"queryParams,omitempty" db:"-"`
+	Interval    *string `json:"interval,omitempty" db:"-" xorm:"-"`
+	QueryParams *string `json:"queryParams,omitempty" db:"-" xorm:"-"`
 }
 
 type Playlists []*Playlist
