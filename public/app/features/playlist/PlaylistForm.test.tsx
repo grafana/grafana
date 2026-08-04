@@ -209,6 +209,64 @@ describe('PlaylistForm', () => {
     });
   });
 
+  describe('when duplicating a playlist item', () => {
+    it('inserts an independent copy with the same options directly below the source item', async () => {
+      const { onSubmitMock } = getTestContext(mockPerItemOptionsPlaylist);
+      const sourceRow = rows()[0];
+
+      await userEvent.click(within(sourceRow).getByRole('button', { name: 'Duplicate playlist item' }));
+
+      expect(rows()).toHaveLength(3);
+      expectCorrectRow({ index: 0, type: 'dashboard_by_uid', value: 'uid_1' });
+      expectCorrectRow({ index: 1, type: 'dashboard_by_uid', value: 'uid_1' });
+      expectCorrectRow({ index: 2, type: 'dashboard_by_uid', value: 'uid_2' });
+
+      const duplicateRow = rows()[1];
+      await userEvent.click(within(duplicateRow).getByRole('button', { name: 'Settings' }));
+      expect(within(duplicateRow).getByText('Configured')).toBeInTheDocument();
+
+      const duplicateInterval = within(duplicateRow).getByRole('textbox', { name: /interval for uid_1/i });
+      expect(duplicateInterval).toHaveValue('30s');
+      await userEvent.clear(duplicateInterval);
+      await userEvent.type(duplicateInterval, '45s');
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+
+      expect(onSubmitMock.mock.calls[0][0].spec.items).toEqual([
+        {
+          type: 'dashboard_by_uid',
+          value: 'uid_1',
+          interval: '30s',
+          dashboardView: { queryString: 'var-host=host1&from=now-6h&to=now' },
+        },
+        {
+          type: 'dashboard_by_uid',
+          value: 'uid_1',
+          interval: '45s',
+          dashboardView: { queryString: 'var-host=host1&from=now-6h&to=now' },
+        },
+        {
+          type: 'dashboard_by_uid',
+          value: 'uid_2',
+          dashboardView: { queryString: 'var-host=host2' },
+        },
+      ]);
+    });
+
+    it('uses concise tooltips for duplicate and delete while keeping explicit accessible names', async () => {
+      getTestContext();
+      const row = rows()[0];
+      const duplicateButton = within(row).getByRole('button', { name: 'Duplicate playlist item' });
+      const deleteButton = within(row).getByRole('button', { name: 'Delete playlist item' });
+
+      await userEvent.hover(duplicateButton);
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(/^Duplicate$/);
+      await userEvent.unhover(duplicateButton);
+
+      await userEvent.hover(deleteButton);
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(/^Delete$/);
+    });
+  });
+
   describe('when submitting the form', () => {
     it('then the correct item should be submitted', async () => {
       const { onSubmitMock } = getTestContext();
@@ -296,6 +354,12 @@ describe('PlaylistForm', () => {
 
       await userEvent.click(pasteLink);
       expect(screen.getByRole('textbox', { name: /dashboard state for uid_1/i })).toBeInTheDocument();
+      const cancelPasteLink = screen.getByRole('button', { name: 'Cancel pasting dashboard link' });
+      expect(cancelPasteLink).toHaveAttribute('aria-expanded', 'true');
+
+      await userEvent.click(cancelPasteLink);
+      expect(screen.queryByRole('textbox', { name: /dashboard state for uid_1/i })).not.toBeInTheDocument();
+      expect(pasteLink).toHaveAttribute('aria-expanded', 'false');
     });
 
     it('summarizes existing options while keeping the row compact', async () => {

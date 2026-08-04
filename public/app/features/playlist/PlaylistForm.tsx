@@ -54,8 +54,16 @@ export const PlaylistForm = ({
     return () => getGrafanaSearcher().tags({ kind: ['dashboard'] });
   }, []);
 
-  const { items, addByUID, addByTag, deleteItem, moveItem, updateItemInterval, updateItemDashboardView } =
-    usePlaylistItems(propItems);
+  const {
+    items,
+    addByUID,
+    addByTag,
+    deleteItem,
+    duplicateItem,
+    moveItem,
+    updateItemInterval,
+    updateItemDashboardView,
+  } = usePlaylistItems(propItems);
 
   // When the selector is locked the repository can't be changed, so derive the value from the
   // playlist (its managing repository, or "no repository" when unmanaged). Otherwise it's controlled.
@@ -156,6 +164,7 @@ export const PlaylistForm = ({
             <PlaylistTable
               items={items}
               deleteItem={deleteItem}
+              duplicateItem={duplicateItem}
               moveItem={moveItem}
               intervalPlaceholder={currentInterval}
               updateItemInterval={updateItemInterval}
