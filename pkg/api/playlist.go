@@ -303,6 +303,7 @@ func (pk8s *playlistK8sHandler) updatePlaylist(c *contextmodel.ReqContext) {
 		pk8s.writeError(c, err)
 		return
 	}
+	playlist.PreserveLegacyPlaylistItemOptions(&obj, existing)
 	obj.SetResourceVersion(existing.GetResourceVersion())
 	out, err := client.Update(c.Req.Context(), &obj, v1.UpdateOptions{})
 	if err != nil {

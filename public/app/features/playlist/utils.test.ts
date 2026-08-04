@@ -4,7 +4,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { useCanWritePlaylists } from './utils';
+import { normalizePlaylistItemQueryParams, useCanWritePlaylists } from './utils';
 
 jest.mock('app/core/services/context_srv', () => ({
   ...jest.requireActual('app/core/services/context_srv'),
@@ -63,5 +63,17 @@ describe('useCanWritePlaylists', () => {
       const { result } = renderUseCanWritePlaylists();
       expect(result.current).toBe(false);
     });
+  });
+});
+
+describe('normalizePlaylistItemQueryParams', () => {
+  it.each([
+    ['var-host=host1&from=now-6h', 'var-host=host1&from=now-6h'],
+    ['?var-host=host1&from=now-6h', 'var-host=host1&from=now-6h'],
+    ['https://grafana.example.com/d/uid/name?var-host=host1&from=now-6h#view', 'var-host=host1&from=now-6h'],
+    ['', undefined],
+    ['  ', undefined],
+  ])('normalizes %s', (value, expected) => {
+    expect(normalizePlaylistItemQueryParams(value)).toBe(expected);
   });
 });

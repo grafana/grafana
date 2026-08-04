@@ -16,7 +16,7 @@ import { getGrafanaSearcher } from '../search/service/searcher';
 
 import { PlaylistTable } from './PlaylistTable';
 import { usePlaylistItems } from './usePlaylistItems';
-import { isValidInterval } from './utils';
+import { isValidInterval, normalizePlaylistItemQueryParams } from './utils';
 
 const DEFAULT_INTERVAL = '5m';
 
@@ -54,7 +54,8 @@ export const PlaylistForm = ({
     return () => getGrafanaSearcher().tags({ kind: ['dashboard'] });
   }, []);
 
-  const { items, addByUID, addByTag, deleteItem, moveItem, updateItemInterval } = usePlaylistItems(propItems);
+  const { items, addByUID, addByTag, deleteItem, moveItem, updateItemInterval, updateItemQueryParams } =
+    usePlaylistItems(propItems);
 
   // When the selector is locked the repository can't be changed, so derive the value from the
   // playlist (its managing repository, or "no repository" when unmanaged). Otherwise it's controlled.
@@ -71,9 +72,11 @@ export const PlaylistForm = ({
       return;
     }
     setSaving(true);
-    // Strip UI-only properties (dashboards) from items before submission. Per-item intervals are
-    // kept as-is: blank rows are stored as undefined by the hook and fall back to the global interval.
-    const apiItems = items.map(({ dashboards, ...item }) => item);
+    // Strip loaded dashboards and normalize copied URLs to their query string before submission.
+    const apiItems = items.map(({ dashboards, ...item }) => ({
+      ...item,
+      queryParams: normalizePlaylistItemQueryParams(item.queryParams),
+    }));
     try {
       // The direct-save path navigates away; the provisioned path returns after opening the drawer,
       // so reset `saving` here or the Save button would keep spinning behind the drawer.
@@ -153,6 +156,7 @@ export const PlaylistForm = ({
               moveItem={moveItem}
               intervalPlaceholder={currentInterval}
               updateItemInterval={updateItemInterval}
+              updateItemQueryParams={updateItemQueryParams}
             />
 
             <FieldSet label={t('playlist-edit.form.heading', 'Add dashboards')}>

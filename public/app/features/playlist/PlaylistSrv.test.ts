@@ -219,6 +219,63 @@ describe('PlaylistSrv', () => {
     }
   });
 
+  it('applies each item URL parameters without leaking them to the next dashboard', async () => {
+    locationService.push('/playlists/foo?kiosk&orgId=1');
+    const playlist: Playlist = {
+      ...mockPlaylist,
+      spec: {
+        ...mockPlaylist.spec!,
+        items: [
+          {
+            type: 'dashboard_by_uid',
+            value: 'aaa',
+            queryParams:
+              'https://grafana.example.com/d/aaa/name?var-host=host1&var-host=host1-replica&from=now-6h&orgId=2',
+          },
+          { type: 'dashboard_by_uid', value: 'bbb', queryParams: 'var-host=host2&from=now-24h' },
+        ],
+      },
+    };
+
+    await srv.start(playlist);
+
+    expect(locationService.getSearchObject()).toEqual({
+      kiosk: true,
+      orgId: '1',
+      'var-host': ['host1', 'host1-replica'],
+      from: 'now-6h',
+    });
+
+    srv.next();
+    expect(locationService.getSearchObject()).toEqual({
+      kiosk: true,
+      orgId: '1',
+      'var-host': 'host2',
+      from: 'now-24h',
+    });
+  });
+
+  it('merges dashboard URL parameters with item overrides', async () => {
+    loadDashboardsMock.mockResolvedValueOnce([
+      {
+        type: 'dashboard_by_uid',
+        value: 'aaa',
+        queryParams: 'from=now-6h',
+        dashboards: [{ url: '/url/to/aaa?refresh=30s&from=now-1h' } as DashboardQueryResult],
+      },
+    ]);
+
+    await srv.start({
+      ...mockPlaylist,
+      spec: {
+        ...mockPlaylist.spec!,
+        items: [{ type: 'dashboard_by_uid', value: 'aaa', queryParams: 'from=now-6h' }],
+      },
+    });
+
+    expect(locationService.getSearchObject()).toEqual({ refresh: '30s', from: 'now-6h' });
+  });
+
   it('does not enter the playing state when the playlist has no items', async () => {
     await srv.start({ ...mockPlaylist, spec: { ...mockPlaylist.spec!, items: [] } });
 
@@ -264,20 +321,39 @@ describe('PlaylistSrv', () => {
       const pA = srv.start(playlistA);
       const pB = srv.start(playlistB);
 
-      // Resolve A first, then B — the later-resolving start wins and tears down the earlier.
-      resolveA([{ type: 'dashboard_by_uid', value: 'a', dashboards: [{ url: '/url/to/a' } as DashboardQueryResult] }]);
-      await pA;
+      // Resolve the newer request first, then the stale request. Invocation order, rather than
+      // network completion order, decides which playlist remains active.
       resolveB([{ type: 'dashboard_by_uid', value: 'b', dashboards: [{ url: '/url/to/b' } as DashboardQueryResult] }]);
       await pB;
+      resolveA([{ type: 'dashboard_by_uid', value: 'a', dashboards: [{ url: '/url/to/a' } as DashboardQueryResult] }]);
+      await pA;
 
       expect(srv.state.isPlaying).toBe(true);
       expect(getValidUrl()).toBe('/url/to/b');
-      // Exactly one timeout is pending — start A's was cleaned up rather than leaked.
+      // Exactly one timeout is pending — the stale start never scheduled one.
       expect(jest.getTimerCount()).toBe(1);
     } finally {
       srv.stop();
       jest.useRealTimers();
     }
+  });
+
+  it('does not start playback after stop is called while dashboards are loading', async () => {
+    let resolveLoad: (items: PlaylistItemUI[]) => void = () => {};
+    loadDashboardsMock.mockReturnValueOnce(new Promise<PlaylistItemUI[]>((resolve) => (resolveLoad = resolve)));
+
+    const starting = srv.start(mockPlaylist);
+    srv.stop();
+    resolveLoad([
+      {
+        type: 'dashboard_by_uid',
+        value: 'aaa',
+        dashboards: [{ url: '/url/to/aaa' } as DashboardQueryResult],
+      },
+    ]);
+    await starting;
+
+    expect(srv.state.isPlaying).toBe(false);
   });
 
   it('should replace playlist start page in history when starting playlist', async () => {

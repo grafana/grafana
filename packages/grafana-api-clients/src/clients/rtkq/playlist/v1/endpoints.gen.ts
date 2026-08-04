@@ -484,6 +484,9 @@ export type PlaylistPlaylistItem = {
   /** Optional per-item display interval (e.g. "30s", "2m"). When unset, the
     playlist's global spec.interval is used. */
   interval?: string;
+  /** Optional dashboard URL query string applied during playback. Use var-<name>
+    for dashboard variables and from/to for time range overrides. */
+  queryParams?: string;
   /** type of the item. */
   type: 'dashboard_by_tag' | 'dashboard_by_uid' | 'dashboard_by_id';
   /** Value depends on type and describes the playlist item.
