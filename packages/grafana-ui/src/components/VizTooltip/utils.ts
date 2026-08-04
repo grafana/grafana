@@ -87,6 +87,24 @@ const numberCmp = (a: VizTooltipItem, b: VizTooltipItem) => a.numeric! - b.numer
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 const stringCmp = (a: VizTooltipItem, b: VizTooltipItem) => collator.compare(`${a.value}`, `${b.value}`);
 
+/**
+ * Fields holding DataFrames (Tempo's nested spans, sparkline columns, expandable sub-tables) have
+ * no meaningful one-line representation, and `applyFieldOverrides` gives every frame a circular
+ * `__dataContext` back-reference to the field that owns it, so they cannot be serialized either.
+ */
+const isFrameValuedField = (field: Field) => field.type === FieldType.frame || field.type === FieldType.nestedFrames;
+
+// the catch only exists so an unserializable datasource value costs one row, not the whole panel
+const stringifyValue = (value: unknown): string => {
+  try {
+    return JSON.stringify(value);
+  } catch (error) {
+    // This path shouldn't be hittable unless the
+    console.warn('Cannot render tooltip value', { error, value });
+    return String(value);
+  }
+};
+
 export const getTooltipDisplayValue = (
   value: unknown,
   field: Field
@@ -100,11 +118,11 @@ export const getTooltipDisplayValue = (
       return { text: '', numeric: NaN };
     }
 
-    return { text: JSON.stringify(value), numeric: NaN };
+    return { text: stringifyValue(value), numeric: NaN };
   }
 
   if (value && typeof value === 'object') {
-    return { text: JSON.stringify(value), numeric: NaN };
+    return { text: stringifyValue(value), numeric: NaN };
   }
 
   const display = field.display!(value); // super expensive :(
@@ -147,6 +165,7 @@ export const getFieldDisplayItems = (
     if (
       field === xField ||
       field.type === FieldType.time ||
+      isFrameValuedField(field) ||
       !fieldFilter(field) ||
       field.config.custom?.hideFrom?.tooltip
     ) {
@@ -199,7 +218,7 @@ export const getFieldDisplayItems = (
   }
 
   extraFields?.forEach((field) => {
-    if (!field.config.custom?.hideFrom?.tooltip) {
+    if (!field.config.custom?.hideFrom?.tooltip && !isFrameValuedField(field)) {
       const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
       const rawValue = field.values[dataIdxs[0]!];
       const display = getTooltipDisplayValue(rawValue, field);
