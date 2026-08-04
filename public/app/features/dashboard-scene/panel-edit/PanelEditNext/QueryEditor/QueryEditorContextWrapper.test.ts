@@ -5,6 +5,7 @@ import { AlertState } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { mockCombinedRule } from 'app/features/alerting/unified/mocks';
+import { ExpressionQueryType } from 'app/features/expressions/types';
 
 import { type PanelDataPaneNext } from '../PanelDataPaneNext';
 import { QueryEditorType } from '../constants';
@@ -629,11 +630,44 @@ describe('QueryEditorContextWrapper - delete actions', () => {
   });
 });
 
+describe('QueryEditorContextWrapper - query rename', () => {
+  beforeEach(() => {
+    mockUseAlertRulesForPanel.mockReturnValue({
+      alertRules: [],
+      loading: false,
+      isDashboardSaved: true,
+    });
+  });
+
+  it('remaps the active card and the bulk selection when a query is renamed', () => {
+    mockQueryRunnerQueries([{ refId: 'A' }, { refId: 'B' }] as DataQuery[]);
+    const dataPane = makeMockDataPane();
+    const { result } = renderWithBothContexts(dataPane);
+
+    // Make B the active card, then enter multi-select (seeds B) and Cmd+click A alongside it.
+    // B is deliberately not queries[0], so the assertions below can't pass on the auto-select
+    // fallback that kicks in when an id goes stale.
+    act(() => result.current.ui.setSelectedQuery({ refId: 'B' } as DataQuery));
+    act(() => result.current.ui.setMultiSelectMode(true));
+    act(() => result.current.ui.toggleQuerySelection({ refId: 'A' } as DataQuery, { multi: true }));
+    expect(result.current.ui.selectedQueryRefIds).toEqual(['B', 'A']);
+
+    // Renaming the active card from its header re-emits the query list under the new refId, so
+    // the wrapper has to follow the id rather than dropping the card out of the selection.
+    mockQueryRunnerQueries([{ refId: 'A' }, { refId: 'renamed' }] as DataQuery[]);
+    act(() => result.current.actions.updateSelectedQuery({ refId: 'renamed' } as DataQuery, 'B'));
+
+    expect(dataPane.updateSelectedQuery).toHaveBeenCalledWith({ refId: 'renamed' }, 'B');
+    expect(result.current.ui.selectedQuery?.refId).toBe('renamed');
+    expect(result.current.ui.selectedQueryRefIds).toEqual(['renamed', 'A']);
+  });
+});
+
 // Regression: opening a pending picker (+Expression / +Transformation) while in multi-select
 // mode and then cancelling must NOT wipe the bulk selection or silently leave multi-select
 // mode on with empty checkboxes. These tests exercise the REAL pending hooks (the suites above
 // mock them) to cover the full wrapper -> hook -> selection-state flow.
-describe('QueryEditorContextWrapper - pending picker cancel preserves multi-select', () => {
+describe('QueryEditorContextWrapper - pending pickers and multi-select', () => {
   beforeEach(() => {
     mockUseAlertRulesForPanel.mockReturnValue({
       alertRules: [],
@@ -706,6 +740,38 @@ describe('QueryEditorContextWrapper - pending picker cancel preserves multi-sele
     expect(result.current.pendingTransformation).toBeNull();
     expect(result.current.selectedTransformationIds).toEqual(['reduce-0', 'organize-1']);
     expect(result.current.multiSelectMode).toBe(true);
+  });
+
+  it('reseeds the bulk selection to the new card when a pending expression resolves', () => {
+    mockQueryRunnerQueries([{ refId: 'A' }, { refId: 'B' }] as DataQuery[]);
+    const dataPane = makeMockDataPane();
+    jest.mocked(dataPane.addQuery).mockReturnValue('C');
+    const { result } = renderWithWrapper(dataPane);
+
+    act(() => result.current.setMultiSelectMode(true));
+    act(() => result.current.toggleQuerySelection({ refId: 'B' } as DataQuery, { multi: true }));
+    expect(result.current.selectedQueryRefIds).toEqual(['A', 'B']);
+
+    act(() => result.current.setPendingExpression({ insertAfter: 'B' }));
+    act(() => result.current.finalizePendingExpression(ExpressionQueryType.math));
+
+    // The card the user just created becomes the whole selection, so the checkboxes describe it
+    // rather than the stale set from before the picker.
+    expect(result.current.selectedQueryRefIds).toEqual(['C']);
+    expect(result.current.multiSelectMode).toBe(true);
+  });
+
+  it('leaves the bulk selection empty when a pending expression resolves outside multi-select mode', () => {
+    mockQueryRunnerQueries([{ refId: 'A' }] as DataQuery[]);
+    const dataPane = makeMockDataPane();
+    jest.mocked(dataPane.addQuery).mockReturnValue('C');
+    const { result } = renderWithWrapper(dataPane);
+
+    act(() => result.current.setPendingExpression({ insertAfter: 'A' }));
+    act(() => result.current.finalizePendingExpression(ExpressionQueryType.math));
+
+    expect(result.current.selectedQueryRefIds).toEqual([]);
+    expect(result.current.multiSelectMode).toBe(false);
   });
 });
 
@@ -805,6 +871,16 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
 
     act(() => result.current.setSelectedAlert(null));
     expect(result.current.stackedMode.enabled).toBe(true);
+  });
+
+  it('turns the stack off when the user exits it', () => {
+    const { result } = renderWithWrapper(makeMockDataPane());
+
+    act(() => result.current.stackedMode.enter());
+    expect(result.current.stackedMode.enabled).toBe(true);
+
+    act(() => result.current.stackedMode.exit());
+    expect(result.current.stackedMode.enabled).toBe(false);
   });
 
   it('stays off after returning from the alerts view when the user never turned it on', () => {
