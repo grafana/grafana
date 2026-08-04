@@ -239,6 +239,7 @@ require (
 require (
 	github.com/grafana/grafana/apps/advisor v0.0.0 // @grafana/grafana-catalog
 	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0 // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/alerting/alertrulequality v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/alerting/rules v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/annotation v0.0.0 // @grafana/grafana-backend-services-squad
@@ -272,6 +273,7 @@ require (
 replace (
 	github.com/grafana/grafana/apps/advisor => ./apps/advisor
 	github.com/grafana/grafana/apps/alerting/alertenrichment => ./apps/alerting/alertenrichment
+	github.com/grafana/grafana/apps/alerting/alertrulequality => ./apps/alerting/alertrulequality
 	github.com/grafana/grafana/apps/alerting/notifications => ./apps/alerting/notifications
 	github.com/grafana/grafana/apps/alerting/rules => ./apps/alerting/rules
 	github.com/grafana/grafana/apps/annotation => ./apps/annotation
