@@ -95,7 +95,12 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
             <Stack alignItems="center" wrap="wrap">
               {action}
               {onRemove && buttonContent && (
-                <Button aria-label={closeLabel} variant="secondary" onClick={onRemove} type="button">
+                <Button
+                  aria-label={typeof buttonContent === 'string' ? undefined : closeLabel}
+                  variant="secondary"
+                  onClick={onRemove}
+                  type="button"
+                >
                   {buttonContent}
                 </Button>
               )}
