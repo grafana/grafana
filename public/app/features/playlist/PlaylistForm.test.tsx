@@ -497,7 +497,9 @@ describe('PlaylistForm', () => {
       const dashboardLink = await within(rowForItem('uid_1')).findByRole('link', { name: 'Dashboard one' });
       expect(dashboardLink).toHaveAttribute('target', '_blank');
       expect(dashboardLink).toHaveAttribute('rel', 'noreferrer');
-      expect(dashboardLink.closest('p')).toHaveStyle({
+      const truncatedTitle = dashboardLink.querySelector('p');
+      expect(truncatedTitle).not.toBeNull();
+      expect(truncatedTitle!).toHaveStyle({
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',

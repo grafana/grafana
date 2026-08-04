@@ -100,11 +100,11 @@ export const PlaylistTableRows = ({
           </span>
         ) : (
           <span key="info" className={styles.dashboardTitle}>
-            <Text element="p" truncate>
-              <TextLink href={getDashboardUrl(item) ?? first.url} external inline={false}>
+            <TextLink href={getDashboardUrl(item) ?? first.url} external inline={false}>
+              <Text element="p" truncate>
                 {first.name ?? item.value}
-              </TextLink>
-            </Text>
+              </Text>
+            </TextLink>
           </span>
         )
       );
@@ -730,6 +730,18 @@ function getStyles(theme: GrafanaTheme2) {
       flex: 1,
       minWidth: 0,
       overflow: 'hidden',
+      '& > a': {
+        alignItems: 'baseline',
+        display: 'flex',
+        maxWidth: '100%',
+        width: 'fit-content',
+      },
+      '& p': {
+        minWidth: 0,
+      },
+      '& svg': {
+        flexShrink: 0,
+      },
     }),
     rowActions: css({
       alignItems: 'center',
