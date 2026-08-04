@@ -35,7 +35,7 @@ func TestIntegrationRuleSearch(t *testing.T) {
 	// in. Legacy is written (and authoritative) in modes 0-3. Mode 4 reads from
 	// unified storage instead and is not covered here, so nothing below pins the
 	// behaviour of that backend.
-	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3} {
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3, rest.Mode4} {
 		t.Run(fmt.Sprintf("dualWriterMode=%d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -43,7 +43,7 @@ func TestIntegrationRuleSearch(t *testing.T) {
 					"recordingrules.rules.alerting.grafana.app": {DualWriterMode: mode},
 				},
 			})
-			runRuleSearchTests(t, helper)
+			runRuleSearchTests(t, helper, mode)
 		})
 	}
 }
@@ -88,18 +88,18 @@ func (q *query) sort(fields ...string) *query {
 func (q *query) limit(n int64) *query       { q.body.Limit = &n; return q }
 func (q *query) continueAt(s string) *query { q.body.Continue = &s; return q }
 
-func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
+func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
 	ctx := context.Background()
 	common.CreateTestFolder(t, helper, searchFolder)
 
 	alertClient := common.NewAlertRuleClient(t, helper.Org1.Admin)
 	recClient := common.NewRecordingRuleClient(t, helper.Org1.Admin)
 
-	createAlertRule(t, ctx, alertClient, "cpu usage high", false, map[string]string{"team": "a"}, "ds-prom")
-	createAlertRule(t, ctx, alertClient, "memory usage high", true, map[string]string{"team": "b"}, "ds-loki")
-	createAlertRule(t, ctx, alertClient, "disk low", false, map[string]string{"team": "a"}, "ds-prom")
-	createRecordingRule(t, ctx, recClient, "cpu recording", "ds-prom")
-	createRecordingRule(t, ctx, recClient, "disk recording", "ds-prom")
+	createAlertRule(t, ctx, alertClient, "cpu usage high", false, map[string]string{"team": "a"}, "ds-prom", 1234)
+	createAlertRule(t, ctx, alertClient, "memory usage high", true, map[string]string{"team": "b"}, "ds-loki", 4321)
+	createAlertRule(t, ctx, alertClient, "disk low", false, map[string]string{"team": "a"}, "ds-prom", 1000)
+	createRecordingRule(t, ctx, recClient, "cpu recording", "ds-prom", "cpu_seconds_total")
+	createRecordingRule(t, ctx, recClient, "disk recording", "ds-prom", "disk_bytes_total")
 
 	rc := helper.Org1.Admin.RESTClient(t, &v0alpha1.GroupVersion)
 	search := func(t *testing.T, q *query) v0alpha1.CreateSearchRulesResponse {
@@ -198,7 +198,19 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 
 	t.Run("alert rules: paused filter", func(t *testing.T) {
+		// TODO: unskip this once filtering on non-string fields in Unified Search is fixed
+		if mode == rest.Mode4 {
+			t.Skip()
+		}
 		require.Equal(t, []string{"memory usage high"}, titles(searchKind(t, "alertrule", newQuery().filter("paused", opIn, "true"))))
+	})
+
+	t.Run("alert rules: panelID filter", func(t *testing.T) {
+		// TODO: unskip this once filtering on non-string fields in Unified Search is fixed
+		if mode == rest.Mode4 {
+			t.Skip()
+		}
+		require.Equal(t, []string{"cpu usage high"}, titles(searchKind(t, "alertrule", newQuery().filter("panelID", opIn, "1234"))))
 	})
 
 	t.Run("alert rules: sort by title descending", func(t *testing.T) {
@@ -240,6 +252,68 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, []string{"alertrule", "recordingrule", "alertrule", "alertrule", "recordingrule"}, kinds(desc))
 	})
 
+	t.Run("cross-kind: kind-specific fields", func(t *testing.T) {
+		hits := map[string]v0alpha1.CreateSearchRulesSearchResultHit{}
+		for _, h := range search(t, nil).Items {
+			hits[title(h)] = h
+		}
+		require.Len(t, hits, 5)
+
+		t.Run("primary kind carries its own fields", func(t *testing.T) {
+			h, ok := hits["cpu usage high"]
+			require.True(t, ok)
+			require.Equal(t, "alertrule", *h.Fields.Type)
+
+			require.NotNil(t, h.Fields.DashboardUID, "alert-only field must be populated")
+			require.Equal(t, "foo", *h.Fields.DashboardUID)
+			require.NotNil(t, h.Fields.PanelID)
+			require.Equal(t, int64(1234), *h.Fields.PanelID)
+
+			// recording-only fields belong to the other kind
+			require.Nil(t, h.Fields.Metric)
+			require.Nil(t, h.Fields.TargetDatasourceUID)
+		})
+
+		t.Run("federated kind carries its own fields", func(t *testing.T) {
+			// TODO: unskip this once federated searches in Unified Search return
+			// the federated kinds' columns and not just the primary kind's
+			if mode == rest.Mode4 {
+				t.Skip()
+			}
+			h, ok := hits["cpu recording"]
+			require.True(t, ok)
+			require.Equal(t, "recordingrule", *h.Fields.Type)
+
+			require.NotNil(t, h.Fields.Metric, "recording-only field must be populated")
+			require.Equal(t, "cpu_seconds_total", *h.Fields.Metric)
+			require.NotNil(t, h.Fields.TargetDatasourceUID)
+			require.Equal(t, "ds-prom", *h.Fields.TargetDatasourceUID)
+
+			// alert-only fields belong to the other kind
+			require.Nil(t, h.Fields.DashboardUID)
+			require.Nil(t, h.Fields.PanelID)
+		})
+
+		// Narrowing to the recording kind makes it primary, so its fields are
+		// returned on every backend. That contrast is what isolates the gap above
+		// to federation rather than to the kind's own declarations.
+		t.Run("narrowed to the federated kind its fields return", func(t *testing.T) {
+			var h v0alpha1.CreateSearchRulesSearchResultHit
+			var found bool
+			for _, got := range searchKind(t, "recordingrule", nil).Items {
+				if title(got) == "cpu recording" {
+					h, found = got, true
+				}
+			}
+			require.True(t, found, "cpu recording should be returned when narrowed to recordingrule")
+
+			require.NotNil(t, h.Fields.Metric)
+			require.Equal(t, "cpu_seconds_total", *h.Fields.Metric)
+			require.NotNil(t, h.Fields.TargetDatasourceUID)
+			require.Equal(t, "ds-prom", *h.Fields.TargetDatasourceUID)
+		})
+	})
+
 	t.Run("consistency: search matches list", func(t *testing.T) {
 		list, err := alertClient.List(ctx, v1.ListOptions{})
 		require.NoError(t, err)
@@ -274,7 +348,7 @@ func kinds(resp v0alpha1.CreateSearchRulesResponse) []string {
 	return out
 }
 
-func createAlertRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.AlertRule, v0alpha1.AlertRuleList], title string, paused bool, labels map[string]string, dsUID string) {
+func createAlertRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.AlertRule, v0alpha1.AlertRuleList], title string, paused bool, labels map[string]string, dsUID string, panelID int64) {
 	t.Helper()
 	base := ngmodels.RuleGen.With(
 		ngmodels.RuleMuts.WithUniqueUID(),
@@ -296,13 +370,17 @@ func createAlertRule(t *testing.T, ctx context.Context, client *apis.TypedClient
 			Trigger:      v0alpha1.AlertRuleIntervalTrigger{Interval: "10s"},
 			NoDataState:  "NoData",
 			ExecErrState: "Error",
+			PanelRef: &v0alpha1.AlertRulePanelRef{
+				DashboardUID: "foo",
+				PanelID:      panelID,
+			},
 		},
 	}
 	_, err := client.Create(ctx, rule, v1.CreateOptions{})
 	require.NoError(t, err)
 }
 
-func createRecordingRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.RecordingRule, v0alpha1.RecordingRuleList], title, dsUID string) {
+func createRecordingRule(t *testing.T, ctx context.Context, client *apis.TypedClient[v0alpha1.RecordingRule, v0alpha1.RecordingRuleList], title, dsUID, metric string) {
 	t.Helper()
 	base := ngmodels.RuleGen.With(
 		ngmodels.RuleMuts.WithUniqueUID(),
@@ -319,7 +397,7 @@ func createRecordingRule(t *testing.T, ctx context.Context, client *apis.TypedCl
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:               title,
-			Metric:              v0alpha1.RecordingRuleMetricName(base.Record.Metric),
+			Metric:              v0alpha1.RecordingRuleMetricName(metric),
 			TargetDatasourceUID: v0alpha1.RecordingRuleDatasourceUID(dsUID),
 			Expressions: v0alpha1.RecordingRuleExpressionMap{
 				"A": {

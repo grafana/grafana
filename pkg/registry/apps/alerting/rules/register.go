@@ -235,12 +235,9 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 }
 
 func (a *AppInstaller) GetStorageOptions(gr schema.GroupResource) *apistore.StorageOptions {
-	if gr == rulesequence.ResourceInfo.GroupResource() {
-		return &apistore.StorageOptions{
-			EnableFolderSupport: true,
-		}
+	return &apistore.StorageOptions{
+		EnableFolderSupport: true,
 	}
-	return nil
 }
 
 func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
