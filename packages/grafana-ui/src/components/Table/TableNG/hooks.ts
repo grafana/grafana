@@ -9,7 +9,6 @@ import {
   type CSSProperties,
   useEffect,
 } from 'react';
-import { useDebounce } from 'react-use';
 
 import {
   createDataFrame,
@@ -705,20 +704,6 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
   }, [ref, height, updateScrollbarDimensions]);
 
   return scrollbarWidth;
-}
-
-// How long to wait after the last width change before recomputing the width-driven layout.
-export const RESIZE_WIDTH_DEBOUNCE_MS = 100;
-
-/**
- * Trailing-debounces a numeric value. Used for width performance optimization.
- */
-export function useDebouncedNumber(value: number, wait: number): number {
-  const [debounced, setDebounced] = useState(value);
-  // react-use's useDebounce handles the timer lifecycle (reset on change, clear on unmount); we wrap
-  // it in state so this returns the debounced value rather than exposing the callback plumbing.
-  useDebounce(() => setDebounced(value), wait, [value]);
-  return debounced;
 }
 
 /**

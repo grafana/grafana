@@ -16,7 +16,6 @@ import {
   useNestedRows,
   useColWidths,
   useRowCompiler,
-  useDebouncedNumber,
 } from './hooks';
 import { type TableRow } from './types';
 import { applyFilter, createTypographyContext, compileFrameToRecords } from './utils';
@@ -24,34 +23,6 @@ import { applyFilter, createTypographyContext, compileFrameToRecords } from './u
 const emptyFilterResult = applyFilter([], {}, []);
 
 describe('TableNG hooks', () => {
-  describe('useDebouncedNumber', () => {
-    beforeEach(() => jest.useFakeTimers());
-    afterEach(() => jest.useRealTimers());
-
-    it('returns the initial value immediately, without waiting for the debounce', () => {
-      const { result } = renderHook(() => useDebouncedNumber(100, 120));
-      expect(result.current).toBe(100);
-    });
-
-    it('holds the previous value until changes settle, then emits only the final value', () => {
-      const { result, rerender } = renderHook(({ v }) => useDebouncedNumber(v, 120), {
-        initialProps: { v: 100 },
-      });
-
-      // rapid changes (a drag) — none should be reflected until the window elapses
-      rerender({ v: 150 });
-      rerender({ v: 220 });
-      rerender({ v: 315 });
-      expect(result.current).toBe(100);
-
-      act(() => jest.advanceTimersByTime(119));
-      expect(result.current).toBe(100); // still within the debounce window
-
-      act(() => jest.advanceTimersByTime(1));
-      expect(result.current).toBe(315); // only the last value lands, not the intermediate ones
-    });
-  });
-
   function setupData() {
     // Mock data for testing
     const fields: Field[] = [

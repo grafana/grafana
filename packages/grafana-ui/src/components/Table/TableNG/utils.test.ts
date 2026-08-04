@@ -57,7 +57,6 @@ import {
   parseStyleJson,
   predicateByName,
   prepareSparklineValue,
-  shouldDebounceWidth,
   SINGLE_LINE_ESTIMATE_THRESHOLD,
 } from './utils';
 
@@ -1702,90 +1701,6 @@ describe('TableNG utils', () => {
           COLUMN.DEFAULT_WIDTH
         )
       ).toEqual([COLUMN.DEFAULT_WIDTH, COLUMN.DEFAULT_WIDTH]);
-    });
-  });
-
-  describe('shouldDebounceWidth', () => {
-    const field = (config: Field['config'], overrides: Partial<Field> = {}): Field => ({
-      name: 'A',
-      type: FieldType.string,
-      values: ['a'],
-      config,
-      ...overrides,
-    });
-
-    const cellField = (type: TableCellDisplayMode, extraCustom: Record<string, unknown> = {}) =>
-      field({ custom: { cellOptions: { type }, ...extraCustom } });
-
-    it.each([TableCellDisplayMode.Pill, TableCellDisplayMode.Sparkline, TableCellDisplayMode.Gauge])(
-      'debounces an auto-sized %s column',
-      (type) => {
-        expect(shouldDebounceWidth([cellField(type)])).toBe(true);
-      }
-    );
-
-    it.each([
-      TableCellDisplayMode.Auto,
-      TableCellDisplayMode.ColorText,
-      TableCellDisplayMode.ColorBackground,
-      TableCellDisplayMode.DataLinks,
-      TableCellDisplayMode.Markdown,
-      TableCellDisplayMode.JSONView,
-      TableCellDisplayMode.Image,
-    ])('does not debounce an auto-sized %s column', (type) => {
-      expect(shouldDebounceWidth([cellField(type)])).toBe(false);
-    });
-
-    it('debounces an auto cell which resolves to a sparkline', () => {
-      const frame = createDataFrame({
-        fields: [
-          { name: 'time', type: FieldType.time, values: [0, 1000] },
-          { name: 'value', type: FieldType.number, values: [1, 2] },
-        ],
-      });
-
-      expect(
-        shouldDebounceWidth([field({}, { type: FieldType.frame, values: [frame] })]) // cell type defaults to auto
-      ).toBe(true);
-    });
-
-    it('debounces an auto-sized column with wrapped text, whatever its cell type', () => {
-      expect(shouldDebounceWidth([cellField(TableCellDisplayMode.Auto, { wrapText: true })])).toBe(true);
-    });
-
-    it('does not debounce a wrapped-text column with a configured width', () => {
-      expect(shouldDebounceWidth([cellField(TableCellDisplayMode.Auto, { wrapText: true, width: 100 })])).toBe(false);
-    });
-
-    it('does not debounce when the width-sensitive column has a configured width', () => {
-      expect(shouldDebounceWidth([cellField(TableCellDisplayMode.Pill, { width: 100 })])).toBe(false);
-    });
-
-    it('does not debounce when only the plain columns are auto-sized', () => {
-      expect(
-        shouldDebounceWidth([
-          cellField(TableCellDisplayMode.Pill, { width: 100 }),
-          cellField(TableCellDisplayMode.Auto),
-        ])
-      ).toBe(false);
-    });
-
-    it('debounces when any auto-sized column is width-sensitive', () => {
-      expect(
-        shouldDebounceWidth([
-          cellField(TableCellDisplayMode.Auto, { width: 100 }),
-          cellField(TableCellDisplayMode.Auto),
-          cellField(TableCellDisplayMode.Gauge),
-        ])
-      ).toBe(true);
-    });
-
-    it('reads the migrated cell type from the legacy displayMode config', () => {
-      expect(shouldDebounceWidth([field({ custom: { displayMode: 'gradient-gauge' } })])).toBe(true);
-    });
-
-    it('does not debounce an empty field list', () => {
-      expect(shouldDebounceWidth([])).toBe(false);
     });
   });
 
