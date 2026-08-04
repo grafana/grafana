@@ -7354,6 +7354,12 @@
       },
       "title-close": "Close"
     },
+    "playlist-view-banner": {
+      "body": "Adjust dashboard variables and time range, then use this view in your playlist.",
+      "cancel": "Cancel",
+      "title": "Configuring playlist custom view",
+      "use-view": "Use this view"
+    },
     "predefined-variables": {
       "label-all": "All",
       "label-custom": "Custom",
@@ -12961,10 +12967,37 @@
       }
     },
     "playlist-table-rows": {
+      "apply-dashboard-link": "Apply",
+      "aria-label-item-dashboard-state": "Dashboard state for {{itemValue}}",
+      "aria-label-item-interval": "Interval for {{itemValue}}",
       "aria-label-playlist-item": "Playlist item, {{itemType}}, {{itemValue}}",
+      "cancel-clear-view": "Cancel",
+      "cancel-dashboard-link": "Cancel",
+      "clear-view": "Clear custom view",
+      "configure-view": "Configure",
+      "confirm-clear-view": "Clear custom view?",
+      "confirm-clear-view-action": "Clear",
+      "custom-view-configured": "Configured",
+      "custom-view-default": "Uses dashboard defaults",
+      "custom-view-default-time": "Dashboard default",
+      "custom-view-label": "Custom view",
+      "custom-view-time-range": "Time range",
+      "custom-view-tooltip-title": "Custom view options",
+      "custom-view-variable": "Variable: {{name}}",
+      "dashboard-state-empty-link": "This link has no custom dashboard state",
+      "dashboard-state-placeholder": "Paste a link to this dashboard",
+      "dashboard-state-short-link-error": "Could not resolve this short link. Paste the full dashboard URL instead.",
+      "dashboard-state-summary": "Custom view",
+      "dashboard-state-title": "Paste a link to this dashboard or enter its URL state",
+      "interval-addon": "Interval",
+      "interval-summary": "Interval: {{interval}}",
+      "invalid-interval-error": "Invalid interval",
       "multiple-dashboards-found": "Multiple items found: {{items}}",
       "no-dashboards-found": "No dashboards found",
-      "not-found": "Not found: {{items}}"
+      "not-found": "Not found: {{items}}",
+      "paste-dashboard-link": "Paste a link to this dashboard",
+      "settings": "Settings",
+      "show-custom-view-options": "Show custom view options"
     },
     "start-modal": {
       "button-start": "Start {{title}}",
@@ -13004,10 +13037,13 @@
       "name-placeholder": "Name",
       "name-required": "Name is required",
       "save": "Save",
+      "table-cancel-delete": "Cancel",
+      "table-confirm-delete": "Delete",
       "table-delete": "Delete playlist item",
       "table-drag": "Reorder playlist item",
       "table-empty": "Playlist is empty. Add dashboards below.",
-      "table-heading": "Dashboards"
+      "table-heading": "Dashboards",
+      "table-item-settings-help": "Use Settings to configure a custom dashboard view or interval for each playlist item."
     },
     "sub-title": "A playlist rotates through a pre-selected list of dashboards. A playlist can be a great way to build situational awareness, or just show off your metrics to your team or visitors.",
     "title": "Edit playlist"

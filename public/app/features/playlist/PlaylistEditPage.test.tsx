@@ -67,7 +67,7 @@ describe('PlaylistEditPage', () => {
 
       expect(await screen.findByRole('heading', { name: /edit playlist/i })).toBeInTheDocument();
       expect(await screen.findByRole('textbox', { name: /name/i })).toHaveValue('Test Playlist');
-      expect(screen.getByRole('textbox', { name: /interval/i })).toHaveValue('5s');
+      expect(screen.getByRole('textbox', { name: 'Interval' })).toHaveValue('5s');
       expect(screen.getAllByRole('row')).toHaveLength(1);
     });
 
@@ -97,8 +97,8 @@ describe('PlaylistEditPage', () => {
       expect(locationService.getLocation().pathname).toEqual('/');
       await userEvent.clear(await screen.findByRole('textbox', { name: /name/i }));
       await userEvent.type(screen.getByRole('textbox', { name: /name/i }), 'A Name');
-      await userEvent.clear(await screen.findByRole('textbox', { name: /interval/i }));
-      await userEvent.type(screen.getByRole('textbox', { name: /interval/i }), '10s');
+      await userEvent.clear(await screen.findByRole('textbox', { name: 'Interval' }));
+      await userEvent.type(screen.getByRole('textbox', { name: 'Interval' }), '10s');
       fireEvent.submit(screen.getByRole('button', { name: /save/i }));
       await waitFor(() =>
         expect(backendSrvMock).toHaveBeenCalledWith(
