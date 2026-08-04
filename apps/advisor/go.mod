@@ -30,6 +30,7 @@ replace (
 	github.com/grafana/grafana/apps/advisor => ../advisor
 	github.com/grafana/grafana/apps/alerting/alertenrichment => ../alerting/alertenrichment
 	github.com/grafana/grafana/apps/alerting/notifications => ../alerting/notifications
+	github.com/grafana/grafana/apps/alerting/quality => ../alerting/quality
 	github.com/grafana/grafana/apps/alerting/rules => ../alerting/rules
 	github.com/grafana/grafana/apps/annotation => ../annotation
 	github.com/grafana/grafana/apps/collections => ../collections

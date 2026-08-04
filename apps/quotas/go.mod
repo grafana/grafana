@@ -10,6 +10,7 @@ replace (
 	github.com/grafana/grafana/apps/advisor => ../advisor
 	github.com/grafana/grafana/apps/alerting/alertenrichment => ../alerting/alertenrichment
 	github.com/grafana/grafana/apps/alerting/notifications => ../alerting/notifications
+	github.com/grafana/grafana/apps/alerting/quality => ../alerting/quality
 	github.com/grafana/grafana/apps/alerting/rules => ../alerting/rules
 	github.com/grafana/grafana/apps/annotation => ../annotation
 	github.com/grafana/grafana/apps/collections => ../collections
@@ -206,6 +207,7 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.292.2 // indirect
 	github.com/grafana/grafana/apps/advisor v0.0.0 // indirect
 	github.com/grafana/grafana/apps/alerting/notifications v0.0.0 // indirect
+	github.com/grafana/grafana/apps/alerting/quality v0.0.0 // indirect
 	github.com/grafana/grafana/apps/alerting/rules v0.0.0 // indirect
 	github.com/grafana/grafana/apps/annotation v0.0.0 // indirect
 	github.com/grafana/grafana/apps/collections v0.0.0 // indirect
