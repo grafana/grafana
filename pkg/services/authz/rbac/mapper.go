@@ -418,6 +418,7 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
+			"notebooks":     newDashboardTranslation(),
 			"librarypanels": newResourceTranslation("library.panels", "uid", true, nil),
 			// Annotations subresource for dashboards
 			// Uses dashboard scope (dashboards:uid:...) but annotation actions
