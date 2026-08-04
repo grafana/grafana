@@ -21,7 +21,7 @@ import { TableCellDisplayMode } from '../types';
 
 import { COLUMN, TABLE } from './constants';
 import { getJustifyContent } from './styles';
-import { type MeasureCellHeightEntry, type TableRow } from './types';
+import { type GetActionsFunctionLocal, type MeasureCellHeightEntry, type TableRow } from './types';
 import {
   applyFilter,
   applySort,
@@ -1948,6 +1948,52 @@ describe('TableNG utils', () => {
       ];
       // Images take IMAGE_WIDTH regardless of the URL length; availWidth == it, so no growth.
       expect(compute(fields, COLUMN.IMAGE_WIDTH)).toEqual([COLUMN.IMAGE_WIDTH]);
+    });
+
+    it('sizes an actions column to fit its buttons via getActions (fuzzy width)', () => {
+      const fields: Field[] = [
+        {
+          name: 'act',
+          type: FieldType.other,
+          values: [0],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.Actions } } },
+        },
+      ];
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const getActions = (() => [{ title: 'Edit' }, { title: 'Delete' }]) as unknown as GetActionsFunctionLocal;
+      // "Edit" (4*8+20=52) + gap 6 + "Delete" (6*8+20=68) => rowTotal 126; +CELL_CHROME 13 = 139.
+      const widths = computeContentAwareColWidths(fields, 139, { typographyCtx: makeTypographyCtx(), getActions });
+      expect(widths).toEqual([139]);
+    });
+
+    it('falls back to header/floor width for an actions column when getActions is not wired', () => {
+      const fields: Field[] = [
+        {
+          name: 'act',
+          type: FieldType.other,
+          values: [0],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.Actions } } },
+        },
+      ];
+      // No getActions => measurer returns 0, so the column floors to MIN_WIDTH (header "act" is smaller).
+      expect(computeContentAwareColWidths(fields, 50, { typographyCtx: makeTypographyCtx() })).toEqual([50]);
+    });
+
+    it('sizes a data links column to fit its links via getCellLinks (fuzzy width)', () => {
+      const mockLinks: LinkModel[] = [
+        { title: 'Open dashboard', href: 'http://x/1', target: '_blank', origin: { datasourceUid: 'test' } },
+      ];
+      const fields: Field[] = [
+        {
+          name: 'lnk',
+          type: FieldType.string,
+          values: ['x'],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.DataLinks } } },
+          getLinks: () => mockLinks,
+        },
+      ];
+      // "Open dashboard" (14*8+8=120); one link => rowTotal 120; +CELL_CHROME 13 = 133.
+      expect(computeContentAwareColWidths(fields, 133, { typographyCtx: makeTypographyCtx() })).toEqual([133]);
     });
 
     it('resolves an auto cell to its graphical default (geo) instead of measuring it as text', () => {

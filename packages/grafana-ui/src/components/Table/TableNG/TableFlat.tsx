@@ -191,9 +191,9 @@ export function TableFlat(props: TableNGProps) {
   const contentAwareWidths = useMemo(
     () =>
       contentAwareWidthsEnabled
-        ? { typographyCtx, headerTypographyCtx, showTypeIcons: showTypeIcons ?? false }
+        ? { typographyCtx, headerTypographyCtx, showTypeIcons: showTypeIcons ?? false, getActions: getCellActions }
         : undefined,
-    [contentAwareWidthsEnabled, typographyCtx, headerTypographyCtx, showTypeIcons]
+    [contentAwareWidthsEnabled, typographyCtx, headerTypographyCtx, showTypeIcons, getCellActions]
   );
 
   const [widths, numFrozenColsFullyInView] = useColWidths(

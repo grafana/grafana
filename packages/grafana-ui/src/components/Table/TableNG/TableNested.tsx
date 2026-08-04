@@ -244,9 +244,9 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const contentAwareWidths = useMemo(
     () =>
       contentAwareWidthsEnabled
-        ? { typographyCtx, headerTypographyCtx, showTypeIcons: showTypeIcons ?? false }
+        ? { typographyCtx, headerTypographyCtx, showTypeIcons: showTypeIcons ?? false, getActions: getCellActions }
         : undefined,
-    [contentAwareWidthsEnabled, typographyCtx, headerTypographyCtx, showTypeIcons]
+    [contentAwareWidthsEnabled, typographyCtx, headerTypographyCtx, showTypeIcons, getCellActions]
   );
 
   const [widths] = useColWidths(visibleFields, availableWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);

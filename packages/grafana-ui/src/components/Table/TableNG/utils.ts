@@ -43,6 +43,7 @@ import {
   type MeasureCellHeight,
   type MeasureCellHeightEntry,
   type FilterType,
+  type GetActionsFunctionLocal,
 } from './types';
 
 // inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
@@ -293,6 +294,13 @@ export function getDataLinksHeightMeasurer(): MeasureCellHeight {
 const PILLS_FONT_SIZE = 12;
 const PILLS_SPACING = 12; // 6px horizontal padding on each side
 const PILLS_GAP = 4; // gap between pills
+
+// Fuzzy chrome estimates for the other inline-run cell types (see measureInlineRunWidth). Used only
+// for auto-width sizing, so approximate values that slightly over-reserve are fine.
+const LINK_SPACING = 8; // paddingInline (~4px each side) when data links sit inline
+const LINK_GAP = 2; // separator border between inline data links
+const ACTION_SPACING = 20; // horizontal padding of a small action Button
+const ACTION_GAP = 6; // theme.spacing(0.75) gap between action buttons
 
 export function getPillCellHeightMeasurer(measureWidth: (value: string) => number): MeasureCellHeight {
   // Per-pill intrinsic width, keyed by the pill string — shared across values (e.g. an actor who
@@ -1227,6 +1235,8 @@ export interface ContentAwareColWidthsOptions {
    */
   headerTypographyCtx?: TypographyCtx;
   showTypeIcons?: boolean;
+  /** Bound `(field, rowIdx) => actions`, so Actions columns can be sized to their button labels. */
+  getActions?: GetActionsFunctionLocal;
   /** overridable for testing; otherwise derived from the auto-column count */
   sampleSize?: number;
 }
@@ -1260,50 +1270,51 @@ function measureLongestContentWidth(field: Field, sampleSize: number, avgCharWid
 }
 
 /**
- * Width a Pill column wants. Pills render as inline chips (at the smaller pill font) that flow
- * horizontally and wrap, so measuring the longest single value — like a text cell — is wrong: it
- * ignores that a cell holds several pills. Instead we size to fit an *average row's* combined pill
- * width (chip padding + inter-pill gaps) on roughly one line, which the global cap then bounds so
- * long arrays wrap to a few lines rather than one-pill-per-line. The floor is the widest single
- * pill so no chip is ever clipped. Mirrors {@link getPillCellHeightMeasurer} / PillCell geometry.
+ * Width a column of inline "runs" wants — cells that render several chips/links/buttons flowing
+ * horizontally and wrapping (pills, data links, actions). Measuring the single longest value like a
+ * text cell is wrong: it ignores that a cell holds several items. Instead we size to fit an
+ * *average row's* combined item width (per-item `chrome` + inter-item `gap`) on roughly one line,
+ * which the global cap then bounds so long runs wrap to a few lines rather than one-item-per-line.
+ * The floor is the widest single item so none is ever clipped. Mirrors PillCell geometry.
  *
- * Chip text is estimated from character count (`avgCharWidth`) rather than canvas-measured: pills
- * render at a smaller font, so an exact measurement would need its own typography context, and
- * that precision isn't worth it for an auto-width heuristic the global cap already bounds. Reusing
- * the body `avgCharWidth` slightly over-estimates the smaller pill text, which errs toward roomier
- * columns — the safe direction for avoiding clipped chips.
+ * Item text is estimated from character count (`avgCharWidth`) rather than canvas-measured — the
+ * fuzzy sizing used elsewhere. It slightly over-estimates, which errs toward roomier columns: the
+ * safe direction for avoiding clipped items. `itemsForRow` returns the display text of each item in
+ * a sampled row (empty when the row has none).
  */
-function measurePillContentWidth(field: Field, sampleSize: number, avgCharWidth: number): number {
-  const len = Math.min(sampleSize, field.values.length);
-  let widestPill = 0;
+function measureInlineRunWidth(
+  rowCount: number,
+  itemsForRow: (rowIdx: number) => string[],
+  avgCharWidth: number,
+  chrome: number,
+  gap: number
+): number {
+  let widestItem = 0;
   let rowTotalSum = 0;
-  let rowCount = 0;
+  let sampledRows = 0;
 
-  for (let i = 0; i < len; i++) {
-    const pills = inferPills(field.values[i]);
-    if (pills.length === 0) {
+  for (let i = 0; i < rowCount; i++) {
+    const items = itemsForRow(i);
+    if (items.length === 0) {
       continue;
     }
 
     let rowTotal = 0;
-    for (const pill of pills) {
-      // PillCell renders formattedValueToString(field.display(pill)), so estimate from that text —
-      // value mappings or units can change the chip's on-screen length. formatCellValue falls back
-      // to String(pill) when the field has no display processor.
-      const pillWidth = formatCellValue(field, pill).length * avgCharWidth + PILLS_SPACING;
-      widestPill = Math.max(widestPill, pillWidth);
-      rowTotal += pillWidth;
+    for (const text of items) {
+      const itemWidth = text.length * avgCharWidth + chrome;
+      widestItem = Math.max(widestItem, itemWidth);
+      rowTotal += itemWidth;
     }
-    rowTotal += PILLS_GAP * (pills.length - 1);
+    rowTotal += gap * (items.length - 1);
     rowTotalSum += rowTotal;
-    rowCount++;
+    sampledRows++;
   }
 
-  if (rowCount === 0) {
+  if (sampledRows === 0) {
     return 0;
   }
 
-  return Math.max(rowTotalSum / rowCount, widestPill);
+  return Math.max(rowTotalSum / sampledRows, widestItem);
 }
 
 /**
@@ -1329,6 +1340,8 @@ function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boo
 
 interface ColWidthMeasureCtx {
   typographyCtx: TypographyCtx;
+  /** Bound `(field, rowIdx) => actions`, used to size Actions columns; absent when not wired. */
+  getActions?: GetActionsFunctionLocal;
 }
 
 /**
@@ -1346,7 +1359,41 @@ const measureGraphicalColWidth: MeasureColWidth = () => COLUMN.DEFAULT_WIDTH;
 const measureImageColWidth: MeasureColWidth = () => COLUMN.IMAGE_WIDTH;
 
 const measurePillColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
-  measurePillContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
+  measureInlineRunWidth(
+    Math.min(sampleSize, field.values.length),
+    // PillCell renders formattedValueToString(field.display(pill)); estimate from that same text so
+    // value mappings/units are reflected. formatCellValue falls back to String() with no display.
+    (i) => inferPills(field.values[i]).map((pill) => formatCellValue(field, pill)),
+    typographyCtx.avgCharWidth,
+    PILLS_SPACING,
+    PILLS_GAP
+  ) + CELL_HORIZONTAL_CHROME;
+
+const measureDataLinksColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
+  measureInlineRunWidth(
+    Math.min(sampleSize, field.values.length),
+    // DataLinksCell renders one <a> per link title; getCellLinks resolves the same links per row.
+    (i) => getCellLinks(field, i)?.map((link) => link.title ?? '') ?? [],
+    typographyCtx.avgCharWidth,
+    LINK_SPACING,
+    LINK_GAP
+  ) + CELL_HORIZONTAL_CHROME;
+
+const measureActionsColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx, getActions }) => {
+  if (getActions == null) {
+    return 0; // actions aren't wired in this context; fall back to the header/floor width
+  }
+  return (
+    measureInlineRunWidth(
+      Math.min(sampleSize, field.values.length),
+      // ActionsCell renders one Button per action, labelled action.title.
+      (i) => getActions(field, i).map((action) => action.title),
+      typographyCtx.avgCharWidth,
+      ACTION_SPACING,
+      ACTION_GAP
+    ) + CELL_HORIZONTAL_CHROME
+  );
+};
 
 const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
   measureLongestContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
@@ -1363,6 +1410,8 @@ const COL_WIDTH_MEASURERS: Partial<Record<TableCellDisplayMode, MeasureColWidth>
   [TableCellDisplayMode.Image]: measureImageColWidth,
   [TableCellDisplayMode.Geo]: measureGraphicalColWidth,
   [TableCellDisplayMode.Pill]: measurePillColWidth,
+  [TableCellDisplayMode.Actions]: measureActionsColWidth,
+  [TableCellDisplayMode.DataLinks]: measureDataLinksColWidth,
 };
 
 const DEFAULT_GROWTH_WEIGHT = 1;
@@ -1402,6 +1451,7 @@ export function computeContentAwareColWidths(
     typographyCtx,
     headerTypographyCtx = typographyCtx,
     showTypeIcons = false,
+    getActions,
     sampleSize,
   }: ContentAwareColWidthsOptions
 ): number[] {
@@ -1429,7 +1479,7 @@ export function computeContentAwareColWidths(
   const contentWidths = new Map<number, number>();
   let contentTotal = 0;
 
-  const measureCtx: ColWidthMeasureCtx = { typographyCtx };
+  const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions };
 
   for (const i of autoIdxs) {
     const field = fields[i];
