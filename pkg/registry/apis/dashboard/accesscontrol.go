@@ -7,6 +7,7 @@ import (
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -59,18 +60,22 @@ func VariableUIDScopeResolver(folderSvc folder.Service) (string, ac.ScopeAttribu
 		}
 
 		folderUID := folderUIDFromVariableMetadataName(uid)
-		inheritedScopes, err := folder.GetInheritedScopes(ctx, orgID, folderUID, folderSvc)
-		if err != nil {
-			if isFolderNotFound(err) {
-				return []string{
-					folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID),
-					ScopeVariablesProvider.GetResourceScopeUID(uid),
-				}, nil
+		// Walk ancestors under a service identity so GetParents is not truncated by
+		// the caller's folder visibility (same pattern as folder/dashboard UID resolvers).
+		return identity.WithServiceIdentityFn(ctx, orgID, func(ctx context.Context) ([]string, error) {
+			inheritedScopes, err := folder.GetInheritedScopes(ctx, orgID, folderUID, folderSvc)
+			if err != nil {
+				if isFolderNotFound(err) {
+					return []string{
+						folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID),
+						ScopeVariablesProvider.GetResourceScopeUID(uid),
+					}, nil
+				}
+				return nil, err
 			}
-			return nil, err
-		}
 
-		return append(inheritedScopes, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID), ScopeVariablesProvider.GetResourceScopeUID(uid)), nil
+			return append(inheritedScopes, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID), ScopeVariablesProvider.GetResourceScopeUID(uid)), nil
+		})
 	})
 }
 

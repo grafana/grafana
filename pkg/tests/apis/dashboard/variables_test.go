@@ -78,6 +78,26 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "us-east-1,us-west-2,eu-west-1", updatedRootVariable.Object["spec"].(map[string]any)["spec"].(map[string]any)["query"])
 
+	// fixed:variables:reader grants Viewer; BuiltInRolesWithParents also seeds Editor/Admin,
+	// so Editors can GET/list stack-wide vars without variablesWriterRole.
+	t.Run("editor and viewer can read root variables", func(t *testing.T) {
+		got, err := editorVariableClient.Resource.Get(ctx, createdRootVariable.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "region", got.GetName())
+
+		list, err := editorVariableClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.True(t, containsVariableName(list.Items, "region"))
+
+		got, err = viewerVariableClient.Resource.Get(ctx, createdRootVariable.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "region", got.GetName())
+
+		list, err = viewerVariableClient.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err)
+		require.True(t, containsVariableName(list.Items, "region"))
+	})
+
 	folder1 := buildFolderObject(helper.Namespacer(admin.Identity.GetOrgID()), "Folder 1")
 	createdFolder1, err := folderClient.Resource.Create(ctx, folder1, metav1.CreateOptions{})
 	require.NoError(t, err)
@@ -228,6 +248,15 @@ func TestIntegrationVariablesV2Beta1(t *testing.T) {
 	require.NoError(t, err)
 	err = variableClient.Resource.Delete(ctx, createdServiceVariable.GetName(), metav1.DeleteOptions{})
 	require.NoError(t, err)
+}
+
+func containsVariableName(items []unstructured.Unstructured, name string) bool {
+	for _, item := range items {
+		if item.GetName() == name {
+			return true
+		}
+	}
+	return false
 }
 
 func buildFolderObject(namespace string, title string) *unstructured.Unstructured {
