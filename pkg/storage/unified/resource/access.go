@@ -162,18 +162,25 @@ func alwaysEnforced(group, resource string) bool {
 	return ok
 }
 
-// authorizationTarget returns the established resource whose permissions govern
-// a storage resource. Notebooks intentionally reuse dashboard permissions, and
-// this translation must happen before the request leaves Grafana: hosted stacks
-// can use a separately deployed authz service that does not contain the local
-// mapper entry for this experimental resource yet.
-func authorizationTarget(group, resource string) (string, string) {
-	if group == dashboardv2beta1.NotebookResourceInfo.GroupResource().Group &&
-		resource == dashboardv2beta1.NotebookResourceInfo.GroupResource().Resource {
-		return dashboardv1.DashboardResourceInfo.GroupResource().Group,
-			dashboardv1.DashboardResourceInfo.GroupResource().Resource
+const notebookAuthorizationNamePrefix = "notebook/"
+
+func notebookAuthorizationName(name string) string {
+	if name == "" {
+		return ""
 	}
-	return group, resource
+	// Slash is invalid in both legacy and unified dashboard names, but remains
+	// intact in RBAC scopes and Zanzana object identifiers.
+	return notebookAuthorizationNamePrefix + name
+}
+
+func notebookAuthorizationTarget(group, resource, name string) (string, string, string, bool) {
+	notebookResource := dashboardv2beta1.NotebookResourceInfo.GroupResource()
+	if group != notebookResource.Group || resource != notebookResource.Resource {
+		return group, resource, name, false
+	}
+
+	dashboardResource := dashboardv1.DashboardResourceInfo.GroupResource()
+	return dashboardResource.Group, dashboardResource.Resource, notebookAuthorizationName(name), true
 }
 
 // Check implements claims.AccessClient.
@@ -196,7 +203,7 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		return claims.CheckResponse{Allowed: false}, claims.ErrNamespaceMismatch
 	}
 
-	req.Group, req.Resource = authorizationTarget(req.Group, req.Resource)
+	req.Group, req.Resource, req.Name, _ = notebookAuthorizationTarget(req.Group, req.Resource, req.Name)
 	if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
 		span.SetAttributes(attribute.Bool("allowed", true))
 		return claims.CheckResponse{Allowed: true}, nil
@@ -232,7 +239,8 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 		return nil, claims.NoopZookie{}, claims.ErrNamespaceMismatch
 	}
 
-	req.Group, req.Resource = authorizationTarget(req.Group, req.Resource)
+	var notebookRequest bool
+	req.Group, req.Resource, _, notebookRequest = notebookAuthorizationTarget(req.Group, req.Resource, "")
 	if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
 		return func(name, folder string) bool {
 			return true
@@ -248,6 +256,11 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 		return nil, zookie, err
 	}
 	c.metrics.compileDuration.WithLabelValues(req.Group, req.Resource, req.Verb).Observe(time.Since(t).Seconds())
+	if notebookRequest && checker != nil {
+		return func(name, folder string) bool {
+			return checker(notebookAuthorizationName(name), folder)
+		}, zookie, nil
+	}
 	return checker, zookie, nil
 }
 
@@ -288,7 +301,7 @@ func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, 
 	// Build a separate request for items that need to be checked by the underlying client
 	var itemsToCheck []claims.BatchCheckItem
 	for _, item := range req.Checks {
-		item.Group, item.Resource = authorizationTarget(item.Group, item.Resource)
+		item.Group, item.Resource, item.Name, _ = notebookAuthorizationTarget(item.Group, item.Resource, item.Name)
 		if !c.IsCompatibleWithRBAC(item.Group, item.Resource) {
 			// Not compatible with RBAC, allow by default
 			results[item.CorrelationID] = claims.BatchCheckResult{Allowed: true}
