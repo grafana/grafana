@@ -99,7 +99,7 @@ describe('DashboardSidebarRenderer', () => {
     expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
   });
 
-  it('Should sync sidebar docked state with edit pane state', async () => {
+  it('Should sync sidebar docked state with sidebar state', async () => {
     const scene = buildTestScene();
 
     act(() => activateFullSceneTree(scene));

@@ -4,6 +4,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { ConstantVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
 import {
   AnnoKeyIgnorePredefinedVariables,
@@ -235,6 +236,14 @@ describe('SaveDashboardDrawer', () => {
   });
 
   describe('When a dashboard is managed by an external system', () => {
+    beforeEach(() => {
+      config.provisioningEnabled = true;
+    });
+
+    afterEach(() => {
+      config.provisioningEnabled = false;
+    });
+
     it('It should show the changes tab if the resource can be edited', async () => {
       const { dashboard, openAndRender } = setup({
         meta: {

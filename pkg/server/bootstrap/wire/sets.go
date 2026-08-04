@@ -190,8 +190,6 @@ import (
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb"
-	"github.com/grafana/grafana/pkg/tsdb/mysql"
 )
 
 var withOTelSet = wire.NewSet(
@@ -240,7 +238,6 @@ var Basic = wire.NewSet(
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
 	cloudwatch.ProvideService,
 	azuremonitor.ProvideService,
-	mysql.ProvideService,
 	legacydualwrite.ProvideService,
 	httpclientprovider.New,
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
@@ -301,7 +298,6 @@ var Basic = wire.NewSet(
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
 	socialimpl.ProvideService,
-	influxdb.ProvideService,
 	wire.Bind(new(social.Service), new(*socialimpl.SocialService)),
 	graphite.ProvideService,
 	datasourceservice.ProvideCacheService,

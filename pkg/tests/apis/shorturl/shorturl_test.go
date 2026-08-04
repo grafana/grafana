@@ -182,9 +182,8 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 		// Verify cross-API consistency
 		getFromBothAPIs(t, helper, client, uid)
 
-		// Clean up
-		err = client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
-		require.NoError(t, err)
+		// Clean up (delete is admin-only)
+		deleteAsAdmin(t, helper, uid)
 	})
 
 	t.Run("K8s API -> Legacy API visibility", func(t *testing.T) {
@@ -217,9 +216,8 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 		// Verify cross-API consistency
 		getFromBothAPIs(t, helper, client, uid)
 
-		// Clean up
-		err := client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
-		require.NoError(t, err)
+		// Clean up (delete is admin-only)
+		deleteAsAdmin(t, helper, uid)
 	})
 
 	t.Run("Redirect functionality", func(t *testing.T) {
@@ -260,9 +258,8 @@ func doDualWriteTests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest
 			require.Greater(t, lastSeenAt, int64(1), "lastSeenAt should be greater than 1 after redirect")
 		}, time.Second*15, time.Millisecond*150, "lastSeenAt not changed after 15s")
 
-		// Clean up
-		err := client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
-		require.NoError(t, err)
+		// Clean up (delete is admin-only)
+		deleteAsAdmin(t, helper, uid)
 	})
 }
 
@@ -308,9 +305,8 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 		// In unified-only mode, legacy API should not see the resource
 		assert.Nil(t, legacyResponse.Result)
 
-		// Clean up
-		err = client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
-		require.NoError(t, err)
+		// Clean up (delete is admin-only)
+		deleteAsAdmin(t, helper, uid)
 	})
 
 	t.Run("K8s API validation - invalid paths", func(t *testing.T) {
@@ -397,9 +393,8 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 				if response.Result != nil {
 					uid := response.Result.GetName()
 
-					// Clean up
-					err := client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
-					assert.NoError(t, err, "Cleanup should succeed")
+					// Clean up (delete is admin-only)
+					deleteAsAdmin(t, helper, uid)
 				}
 			})
 		}
@@ -430,10 +425,21 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 		}, (*any)(nil))
 		assert.Equal(t, 302, redirectResponse.Response.StatusCode)
 
-		// Clean up
-		err := client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
-		require.NoError(t, err)
+		// Clean up (delete is admin-only)
+		deleteAsAdmin(t, helper, uid)
 	})
+}
+
+// deleteAsAdmin removes a short URL using an org admin. ShortURL deletion is
+// restricted to admins, so tests that create resources as a lower-privileged
+// user must clean up through an admin client.
+func deleteAsAdmin(t *testing.T, helper *apis.K8sTestHelper, uid string) {
+	t.Helper()
+	adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvr,
+	})
+	require.NoError(t, adminClient.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{}))
 }
 
 // Helper function to check if shortURL K8s APIs are available

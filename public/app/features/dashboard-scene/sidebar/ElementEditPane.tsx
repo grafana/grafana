@@ -28,7 +28,7 @@ function ElementEditPaneRenderer({ model }: SceneComponentProps<ElementEditPane>
     return getEditableElementForSelection(sidebar, selected);
   }, [sidebar, selected]);
 
-  const categories = element?.useEditPaneOptions ? element.useEditPaneOptions(sidebar.state.isNewElement) : [];
+  const categories = element?.useSidebarOptions ? element.useSidebarOptions(sidebar.state.isNewElement) : [];
 
   if (!element) {
     return null;

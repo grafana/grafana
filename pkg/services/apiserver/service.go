@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
+	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
@@ -44,6 +45,7 @@ import (
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -96,14 +98,19 @@ type service struct {
 	unified            resource.ResourceClient
 	secrets            secret.InlineSecureValueSupport
 	restConfigProvider RestConfigProvider
+	accessClient       types.AccessClient
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 	aggregatorRunner                  aggregatorrunner.AggregatorRunner
+	apiExtensionsRunner               ApiExtensionsRunner
 	appInstallers                     []appsdkapiserver.AppInstaller
 	builderMetrics                    *builder.BuilderMetrics
 
 	auditBackend            audit.Backend
 	auditPolicyRuleProvider auditing.PolicyRuleProvider
+
+	// vpRegistry serves the resolved policy consulted by apistore.encode.
+	vpRegistry *versionpolicy.VersionPolicyRegistry
 }
 
 func ProvideService(
@@ -116,11 +123,13 @@ func ProvideService(
 	unified resource.ResourceClient,
 	secrets secret.InlineSecureValueSupport,
 	restConfigProvider RestConfigProvider,
+	accessClient types.AccessClient,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
 	eventualResourceClient *resource.EventualClient,
 	reg prometheus.Registerer,
 	aggregatorRunner aggregatorrunner.AggregatorRunner,
+	apiExtensionsRunner ApiExtensionsRunner,
 	appInstallers []appsdkapiserver.AppInstaller,
 	builderMetrics *builder.BuilderMetrics,
 	auditBackend audit.Backend,
@@ -144,8 +153,10 @@ func ProvideService(
 		unified:                           unified,
 		secrets:                           secrets,
 		restConfigProvider:                restConfigProvider,
+		accessClient:                      accessClient,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 		aggregatorRunner:                  aggregatorRunner,
+		apiExtensionsRunner:               apiExtensionsRunner,
 		appInstallers:                     appInstallers,
 		builderMetrics:                    builderMetrics,
 		auditBackend:                      auditBackend,
@@ -330,6 +341,9 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
+	// Snapshot natural priority before applyPreferredAPIVersions reorders the scheme, so the cap ranks against natural order and preferred can't weaken it.
+	naturalOrder := naturalOrderSnapshot(s.scheme, groupVersions)
+
 	if err := applyPreferredAPIVersions(s.log, s.cfg, s.scheme, apiResourceConfig); err != nil {
 		return err
 	}
@@ -355,6 +369,22 @@ func (s *service) start(ctx context.Context) error {
 		}
 	} else {
 		getter := apistore.NewRESTOptionsGetterForClient(s.unified, s.secrets, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
+
+		if s.cfg.EnableVersionPolicy {
+			versionPolicyIni, err := buildVersionPolicyIniLayer(s.cfg)
+			if err != nil {
+				return err
+			}
+			s.vpRegistry = versionpolicy.NewVersionPolicyRegistry(
+				versionpolicy.NewResolver(naturalOrder),
+				versionPolicyIni,
+			)
+			if err := s.vpRegistry.Validate(); err != nil {
+				return err
+			}
+			getter.SetVersionPolicy(s.vpRegistry)
+		}
+
 		optsregister = getter.RegisterOptions
 		serverConfig.RESTOptionsGetter = getter
 	}
@@ -369,7 +399,8 @@ func (s *service) start(ctx context.Context) error {
 
 	// Built once and used twice: the routes have to reach both the OpenAPI spec
 	// and the served WebServices, or the endpoint works but is undiscoverable.
-	searchRoutes := searchroutes.Build(s.cfg, s.tracing, s.unified, builders, s.appInstallers)
+	searchAPIEnabled := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection).Key(searchapi.ConfigKey).MustBool(false)
+	searchRoutes := searchroutes.Build(searchAPIEnabled, s.tracing, s.unified, builders, s.appInstallers)
 
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
@@ -402,8 +433,35 @@ func (s *service) start(ctx context.Context) error {
 		return fmt.Errorf("failed to register post start hooks for app installers: %w", err)
 	}
 
+	// The base of the delegation chain is the notFound handler. When embedded
+	// apiextensions is enabled (enterprise only), the apiextensions server is
+	// chained in front of it so unknown CRD-backed groups fall through to it,
+	// mirroring kube-apiserver: core groups -> apiextensions -> notFound.
+	coreDelegate := genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler)
+	var apiExtAutoRegistration aggregatorrunner.AutoRegistrationControllerProvider
+	if s.apiExtensionsRunner.IsEnabled() {
+		delegate, autoReg, err := s.apiExtensionsRunner.BuildDelegate(ctx, ApiExtensionsDelegateConfig{
+			ServerConfig:          serverConfig,
+			Scheme:                s.scheme,
+			RESTOptionsGetter:     serverConfig.RESTOptionsGetter,
+			StorageClient:         s.unified,
+			AccessClient:          s.accessClient,
+			AuthorizerRegistry:    s.authorizer,
+			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, s.metrics),
+			SecureValues:          s.secrets,
+			ConfigProvider:        s.restConfigProvider,
+			Metrics:               s.metrics,
+			Delegate:              coreDelegate,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to build apiextensions delegate: %w", err)
+		}
+		coreDelegate = delegate
+		apiExtAutoRegistration = autoReg
+	}
+
 	// Create the server
-	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler))
+	server, err := serverConfig.Complete().New("grafana-apiserver", coreDelegate)
 	if err != nil {
 		return err
 	}
@@ -462,7 +520,11 @@ func (s *service) start(ctx context.Context) error {
 
 	if isKubernetesAggregatorEnabled {
 		aggregatorServer, err := s.aggregatorRunner.Configure(
-			s.options, serverConfig, &aggregatorrunner.ExtraConfig{}, server, s.scheme, builders,
+			s.options, serverConfig, &aggregatorrunner.ExtraConfig{
+				// When embedded apiextensions is enabled, CRD-backed groups are
+				// auto-registered into the aggregator's aggregated discovery.
+				AutoRegistrationControllerProvider: apiExtAutoRegistration,
+			}, server, s.scheme, builders,
 		)
 		if err != nil {
 			return err
@@ -481,6 +543,24 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	if !isKubernetesAggregatorEnabled {
+		// Without the aggregator there is no APIService registry, but the CRD
+		// registration controller must still run: it dynamically registers the
+		// per-CRD-group authorizers on the GrafanaAuthorizer. Skipping it would
+		// leave CRD-backed groups to the org-role fallback authorizer, denying
+		// RBAC-granted access (e.g. service accounts with manifest role
+		// permissions). APIService syncing is satisfied by a no-op sink.
+		if apiExtAutoRegistration != nil {
+			crdRegistration := apiExtAutoRegistration(noopAPIServiceRegistration{})
+			if err := server.AddPostStartHook("grafana-apiextensions-authorizer-registration",
+				func(hookCtx genericapiserver.PostStartHookContext) error {
+					go crdRegistration.Run(5, hookCtx.Done())
+					return nil
+				},
+			); err != nil {
+				return err
+			}
+		}
+
 		runningServer, err = s.startCoreServer(ctx, transport, server)
 		if err != nil {
 			return err

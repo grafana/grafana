@@ -221,6 +221,77 @@ describe('alignTimeRangeCompareData', () => {
     expect(second.fields[0].config).toEqual(first.fields[0].config);
     expect(second.fields).toHaveLength(2);
   });
+
+  // #126189 acceptance criteria — "compare is dashed, current is solid".
+  // The compare frame is the only one passed through alignTimeRangeCompareData; the current-period frame
+  // never gets a lineStyle, so leaving the current frame's config untouched is what keeps it solid.
+  // Assert on the returned frame — alignTimeRangeCompareData is non-mutating (#128796).
+  describe('dashed styling for comparison series (#126189)', () => {
+    const DASH_LINE_STYLE = { fill: 'dash', dash: [1, 5, 4, 5] };
+
+    it.each([FieldType.number, FieldType.boolean, FieldType.enum])(
+      'applies the dashed lineStyle to %s value fields',
+      (fieldType) => {
+        const frame = toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000] },
+            { name: 'value', type: fieldType, values: [10, 20] },
+          ],
+        });
+
+        const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+        expect(result.fields[1].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+      }
+    );
+
+    it('does not add a lineStyle to the time field', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'value', type: FieldType.number, values: [10, 20] },
+        ],
+      });
+
+      const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+      expect(result.fields[0].config.custom?.lineStyle).toBeUndefined();
+    });
+
+    it('does not add a lineStyle to string fields', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'label', type: FieldType.string, values: ['a', 'b'] },
+          { name: 'value', type: FieldType.number, values: [10, 20] },
+        ],
+      });
+
+      const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+      expect(result.fields[1].config.custom?.lineStyle).toBeUndefined();
+      expect(result.fields[2].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+    });
+
+    it('preserves an existing lineStyle-adjacent custom config while adding the dash', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [10, 20],
+            config: { custom: { lineWidth: 2 } },
+          },
+        ],
+      });
+
+      const result = alignTimeRangeCompareData(frame, ONE_DAY_MS, createTheme());
+
+      expect(result.fields[1].config.custom?.lineWidth).toBe(2);
+      expect(result.fields[1].config.custom?.lineStyle).toEqual(DASH_LINE_STYLE);
+    });
+  });
 });
 
 describe('shouldAlignTimeCompare', () => {

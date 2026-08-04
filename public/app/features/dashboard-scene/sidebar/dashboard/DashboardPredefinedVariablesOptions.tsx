@@ -134,28 +134,28 @@ export function DashboardPredefinedVariablesOptions({ dashboard }: Props) {
 
   const options: Array<SelectableValue<PredefinedVariablesMode>> = [
     {
-      label: t('dashboard-scene.predefined-variables-options.none', 'None'),
+      label: t('dashboard.sidebar.predefined-variables.none', 'None'),
       value: 'none',
     },
     {
-      label: t('dashboard-scene.predefined-variables-options.all', 'All'),
+      label: t('dashboard.sidebar.predefined-variables.all', 'All'),
       value: 'all',
     },
     {
-      label: t('dashboard-scene.predefined-variables-options.global', 'Global'),
+      label: t('dashboard.sidebar.predefined-variables.global', 'Global'),
       value: 'global',
     },
     {
-      label: t('dashboard-scene.predefined-variables-options.folder', 'Folder'),
+      label: t('dashboard.sidebar.predefined-variables.folder', 'Folder'),
       value: 'folder',
     },
   ];
 
   return (
     <Field
-      label={t('dashboard-scene.predefined-variables-options.label', 'Predefined variables')}
+      label={t('dashboard.sidebar.predefined-variables.label', 'Predefined variables')}
       description={t(
-        'dashboard-scene.predefined-variables-options.description',
+        'dashboard.sidebar.predefined-variables.description',
         'This dashboard receives global and folder-scoped variables by default. Choose which ones to keep.'
       )}
       noMargin

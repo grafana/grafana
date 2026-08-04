@@ -2,6 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { memo, useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Combobox, Field, Input, TextArea } from '@grafana/ui';
 import {
@@ -310,6 +311,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
             {lockComment ? (
               <TextArea
                 id="provisioned-resource-form-comment"
+                data-testid={selectors.components.ProvisionedResourceForm.commentInput}
                 value={commitMessage ?? ''}
                 readOnly
                 disabled={readOnly}
@@ -318,6 +320,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
             ) : (
               <TextArea
                 id="provisioned-resource-form-comment"
+                data-testid={selectors.components.ProvisionedResourceForm.commentInput}
                 {...register('comment')}
                 disabled={readOnly}
                 placeholder={t(

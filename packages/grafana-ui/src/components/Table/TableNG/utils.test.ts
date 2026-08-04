@@ -48,16 +48,92 @@ import {
   getDisplayName,
   getPillCellHeightMeasurer,
   getRowHeight,
+  inferPills,
+  createBoundedCache,
   getTextHeightEstimator,
   getTextHeightMeasurerFromUwrapCount,
   migrateTableDisplayModeToCellOptions,
   parseStyleJson,
   predicateByName,
   prepareSparklineValue,
+  shouldDebounceWidth,
   SINGLE_LINE_ESTIMATE_THRESHOLD,
 } from './utils';
 
 describe('TableNG utils', () => {
+  describe('inferPills', () => {
+    it('returns an empty array for empty/nullish values', () => {
+      expect(inferPills('')).toEqual([]);
+      expect(inferPills(null)).toEqual([]);
+      expect(inferPills(undefined)).toEqual([]);
+    });
+
+    it('trims entries and drops nullish items from an array value', () => {
+      expect(inferPills([' a ', 'b', null, 'c '])).toEqual(['a', 'b', 'c']);
+    });
+
+    it('parses a JSON-array string', () => {
+      expect(inferPills('["a","b","c"]')).toEqual(['a', 'b', 'c']);
+    });
+
+    it('splits a comma-separated string, tolerating surrounding whitespace', () => {
+      expect(inferPills('a, b ,c')).toEqual(['a', 'b', 'c']);
+    });
+
+    it('falls back to comma-splitting when a bracketed value is not valid JSON', () => {
+      expect(inferPills('[a, b')).toEqual(['[a', 'b']);
+    });
+
+    it('memoizes by input so repeated calls (per resize tick) reuse the same array', () => {
+      // string inputs compare by value
+      expect(inferPills('a,b,c')).toBe(inferPills('a,b,c'));
+      // array inputs compare by reference — the stable field.values[i] ref hits the cache
+      const arr = ['x', 'y'];
+      expect(inferPills(arr)).toBe(inferPills(arr));
+    });
+  });
+
+  describe('createBoundedCache', () => {
+    it('returns stored values and undefined for absent keys', () => {
+      const cache = createBoundedCache<string, number>(8);
+      cache.set('a', 1);
+      expect(cache.get('a')).toBe(1);
+      expect(cache.get('missing')).toBeUndefined();
+    });
+
+    it('evicts the oldest entries once churn exceeds capacity', () => {
+      const cache = createBoundedCache<number, number>(4);
+      for (let i = 0; i < 100; i++) {
+        cache.set(i, i);
+      }
+      // early keys have rotated out; the most recent ones are still present
+      expect(cache.get(0)).toBeUndefined();
+      expect(cache.get(99)).toBe(99);
+    });
+
+    it('stays within ~2x maxSize even when reads continuously promote from the secondary generation', () => {
+      // Regression: promotion in get() must run the same rotation check as set(); otherwise a run of
+      // promoting reads grows the primary map past maxSize and the ~2x bound is lost.
+      const maxSize = 8;
+      const cache = createBoundedCache<number, number>(maxSize);
+      const total = 2000;
+      for (let i = 0; i < total; i++) {
+        cache.set(i, i);
+        // re-read a window of recent keys to exercise the secondary->primary promotion path
+        for (let j = Math.max(0, i - 2 * maxSize); j <= i; j++) {
+          cache.get(j);
+        }
+      }
+      let retained = 0;
+      for (let i = 0; i < total; i++) {
+        if (cache.get(i) !== undefined) {
+          retained++;
+        }
+      }
+      expect(retained).toBeLessThanOrEqual(2 * maxSize);
+    });
+  });
+
   describe('alignment', () => {
     it.each(['left', 'center', 'right'] as const)('should return "%s" when configured', (align) => {
       expect(getAlignment({ name: 'Value', type: FieldType.string, values: [], config: { custom: { align } } })).toBe(
@@ -1003,10 +1079,8 @@ describe('TableNG utils', () => {
     it('calculates height based on theme when cellHeight is undefined', () => {
       const result = getDefaultRowHeight(theme, []);
 
-      // Calculate the expected result based on the theme values
-      const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
-
-      expect(result).toBe(expected);
+      // default theme: CELL_PADDING*2 (12) + fontSize 14 * body.lineHeight ≈ 34
+      expect(result).toBe(34);
     });
   });
 
@@ -1115,6 +1189,41 @@ describe('TableNG utils', () => {
       measurer('tag2,tag3,tag2,tag4,tag4,tag2,tag5', 300, {} as Field, 0, 20);
       expect(widthMeasurement).toHaveBeenCalledTimes(6); // Should only call for unique values
     });
+
+    it('does not re-measure pill text when only the column width changes (resize)', () => {
+      const widthMeasurement = jest.fn((str) => str.length * 5);
+      const measurer = getPillCellHeightMeasurer(widthMeasurement);
+      const value = 'aaaa,bbbb,cccc';
+      measurer(value, 100, {} as Field, 0, 20);
+      expect(widthMeasurement).toHaveBeenCalledTimes(3); // one per unique pill
+      // resizing re-runs only the wrap arithmetic; pill text is not measured again
+      measurer(value, 60, {} as Field, 0, 20);
+      measurer(value, 300, {} as Field, 0, 20);
+      expect(widthMeasurement).toHaveBeenCalledTimes(3);
+    });
+
+    it('returns a consistent height when the same value and width are measured repeatedly', () => {
+      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const first = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
+      // react-data-grid re-measures every row on each layout pass; repeats must be stable
+      expect(measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20)).toBe(first);
+    });
+
+    it('wraps to more lines as the column narrows', () => {
+      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const wide = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 400, {} as Field, 0, 20);
+      const narrow = measurer('tag1,tag2,tag3,tag4,tag5,tag6', 100, {} as Field, 0, 20);
+      expect(narrow).toBeGreaterThan(wide);
+    });
+
+    it('scales the height with the caller line height at the same width', () => {
+      const measurer = getPillCellHeightMeasurer(jest.fn((str) => str.length * 5));
+      const value = 'tag1,tag2,tag3,tag4,tag5,tag6';
+      // this value wraps to 3 lines at width 100: 3*20 + 2*4 = 68.
+      expect(measurer(value, 100, {} as Field, 0, 20)).toBe(68);
+      // a different line height applies to the same 3 lines: 3*30 + 2*4 = 98.
+      expect(measurer(value, 100, {} as Field, 0, 30)).toBe(98);
+    });
   });
 
   describe('buildHeaderHeightMeasurers', () => {
@@ -1209,8 +1318,7 @@ describe('TableNG utils', () => {
         },
       ];
       const measurers = buildCellHeightMeasurers(fields, ctx);
-      expect(measurers![0].estimate).toEqual(expect.any(Function));
-      expect(measurers![0].estimate!('tag1,tag2', 100, fields[0], 0, 22)).toEqual(expect.any(Number));
+      // pills are measured precisely (the cheap estimate was removed because it mis-ranked columns)
       expect(measurers![0].measure).toEqual(expect.any(Function));
       expect(measurers![0].measure('tag1,tag2', 100, fields[0], 0, 22)).toEqual(expect.any(Number));
       expect(measurers![0].fieldIdxs).toEqual([0]);
@@ -1413,10 +1521,12 @@ describe('TableNG utils', () => {
         ];
       });
 
-      // 2 lines @ 20px (123,456), 10px vertical padding. when we did this before, 'longer one here' would win, making it 70px.
-      // the `estimate` function is picking `123456` as the longer one now (6 lines), then the `measure` function is used
-      // to calculate the height (2 lines). this is a very forced case, but we just want to prove that it actually works.
+      // the `estimate` function picks `123456` as the tallest (6 lines), then the `measure` function is
+      // used to calculate its true height (2 lines). measurers[0] is forced to a single short line so it
+      // doesn't set the row-height floor — this test is only about the estimate-then-remeasure selection.
+      // 2 lines @ 20px (123,456) + 10px vertical padding = 50.
       it('uses the estimate value rather than the precise value to select the row height', () => {
+        jest.mocked(measurers[0].measure).mockReturnValue(20);
         expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(50);
       });
 
@@ -1439,6 +1549,19 @@ describe('TableNG utils', () => {
         jest.mocked(measurers[1].estimate!).mockReturnValue(SINGLE_LINE_ESTIMATE_THRESHOLD + thresholdOffset);
 
         expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(50);
+      });
+
+      // measurers[0] has no estimate, so it runs precisely in the first pass (like a pill column).
+      // measurers[1] over-estimates and wins the pass, but its precise remeasure comes back shorter
+      // than measurers[0]'s precise height. The row must stay tall enough for measurers[0] rather
+      // than adopting the shrunken winner height and clipping that column.
+      it('does not discard a precise measurer height when the estimated winner remeasures shorter', () => {
+        jest.mocked(measurers[0].measure).mockReturnValue(60); // precise height of the non-estimating column
+        jest.mocked(measurers[1].estimate!).mockReturnValue(100); // over-estimate wins the first pass
+        jest.mocked(measurers[1].measure).mockReturnValue(30); // true height of the winner is short
+
+        // max(remeasured winner 30, precise 60) = 60, + 10px vertical padding = 70
+        expect(getRowHeight(fields, rows[3], [30, 30], 36, measurers, 20, 10)).toBe(70);
       });
     });
 
@@ -1578,6 +1701,90 @@ describe('TableNG utils', () => {
           COLUMN.DEFAULT_WIDTH
         )
       ).toEqual([COLUMN.DEFAULT_WIDTH, COLUMN.DEFAULT_WIDTH]);
+    });
+  });
+
+  describe('shouldDebounceWidth', () => {
+    const field = (config: Field['config'], overrides: Partial<Field> = {}): Field => ({
+      name: 'A',
+      type: FieldType.string,
+      values: ['a'],
+      config,
+      ...overrides,
+    });
+
+    const cellField = (type: TableCellDisplayMode, extraCustom: Record<string, unknown> = {}) =>
+      field({ custom: { cellOptions: { type }, ...extraCustom } });
+
+    it.each([TableCellDisplayMode.Pill, TableCellDisplayMode.Sparkline, TableCellDisplayMode.Gauge])(
+      'debounces an auto-sized %s column',
+      (type) => {
+        expect(shouldDebounceWidth([cellField(type)])).toBe(true);
+      }
+    );
+
+    it.each([
+      TableCellDisplayMode.Auto,
+      TableCellDisplayMode.ColorText,
+      TableCellDisplayMode.ColorBackground,
+      TableCellDisplayMode.DataLinks,
+      TableCellDisplayMode.Markdown,
+      TableCellDisplayMode.JSONView,
+      TableCellDisplayMode.Image,
+    ])('does not debounce an auto-sized %s column', (type) => {
+      expect(shouldDebounceWidth([cellField(type)])).toBe(false);
+    });
+
+    it('debounces an auto cell which resolves to a sparkline', () => {
+      const frame = createDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [0, 1000] },
+          { name: 'value', type: FieldType.number, values: [1, 2] },
+        ],
+      });
+
+      expect(
+        shouldDebounceWidth([field({}, { type: FieldType.frame, values: [frame] })]) // cell type defaults to auto
+      ).toBe(true);
+    });
+
+    it('debounces an auto-sized column with wrapped text, whatever its cell type', () => {
+      expect(shouldDebounceWidth([cellField(TableCellDisplayMode.Auto, { wrapText: true })])).toBe(true);
+    });
+
+    it('does not debounce a wrapped-text column with a configured width', () => {
+      expect(shouldDebounceWidth([cellField(TableCellDisplayMode.Auto, { wrapText: true, width: 100 })])).toBe(false);
+    });
+
+    it('does not debounce when the width-sensitive column has a configured width', () => {
+      expect(shouldDebounceWidth([cellField(TableCellDisplayMode.Pill, { width: 100 })])).toBe(false);
+    });
+
+    it('does not debounce when only the plain columns are auto-sized', () => {
+      expect(
+        shouldDebounceWidth([
+          cellField(TableCellDisplayMode.Pill, { width: 100 }),
+          cellField(TableCellDisplayMode.Auto),
+        ])
+      ).toBe(false);
+    });
+
+    it('debounces when any auto-sized column is width-sensitive', () => {
+      expect(
+        shouldDebounceWidth([
+          cellField(TableCellDisplayMode.Auto, { width: 100 }),
+          cellField(TableCellDisplayMode.Auto),
+          cellField(TableCellDisplayMode.Gauge),
+        ])
+      ).toBe(true);
+    });
+
+    it('reads the migrated cell type from the legacy displayMode config', () => {
+      expect(shouldDebounceWidth([field({ custom: { displayMode: 'gradient-gauge' } })])).toBe(true);
+    });
+
+    it('does not debounce an empty field list', () => {
+      expect(shouldDebounceWidth([])).toBe(false);
     });
   });
 

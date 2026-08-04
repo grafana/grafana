@@ -11,9 +11,8 @@ import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
 import { ContentOutlineItem, QUERIES_PANEL_ID } from './ContentOutline/ContentOutlineItem';
-import { useQueryLibraryContext } from './QueryLibrary/QueryLibraryContext';
 import { changeDatasource } from './state/datasource';
-import { updateQueryLibraryRefAction } from './state/explorePane';
+import { setAddingSavedQueryAction, updateEditSavedQueryRefAction } from './state/explorePane';
 import { changeQueries, runQueries } from './state/query';
 import { getExploreItemSelector } from './state/selectors';
 
@@ -34,20 +33,21 @@ const makeSelectors = (exploreId: string) => {
       exploreItemSelector,
       (s: ExploreItemState | undefined) => getDatasourceSrv().getInstanceSettings(s!.datasourceInstance?.uid)!
     ),
-    getQueryLibraryRef: createSelector(exploreItemSelector, (s) => s!.queryLibraryRef),
+    getEditSavedQueryRef: createSelector(exploreItemSelector, (s) => s!.editSavedQueryRef),
+    getAddingSavedQuery: createSelector(exploreItemSelector, (s) => s!.addingSavedQuery),
   };
 };
 
 export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
   const dispatch = useDispatch();
-  const { openDrawer } = useQueryLibraryContext();
   const {
     getQueries,
     getDatasourceInstanceSettings,
     getQueryResponse,
     getHistory,
     getEventBridge,
-    getQueryLibraryRef,
+    getEditSavedQueryRef,
+    getAddingSavedQuery,
   } = useMemo(() => makeSelectors(exploreId), [exploreId]);
 
   const queries = useSelector(getQueries);
@@ -55,7 +55,8 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
   const queryResponse = useSelector(getQueryResponse);
   const history = useSelector(getHistory);
   const eventBridge = useSelector(getEventBridge);
-  const queryLibraryRef = useSelector(getQueryLibraryRef);
+  const editSavedQueryRef = useSelector(getEditSavedQueryRef);
+  const addingSavedQuery = useSelector(getAddingSavedQuery);
 
   const onRunQueries = useCallback(() => {
     dispatch(runQueries({ exploreId }));
@@ -98,24 +99,14 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
     reportInteraction('grafana_query_row_toggle', queryStatus === undefined ? {} : { queryEnabled: queryStatus });
   };
 
-  const onCancelQueryLibraryEdit = () => {
-    // Store the current queryLibraryRef before clearing it
-    const originalQueryRef = queryLibraryRef;
+  const onExitQueryLibraryEdit = useCallback(
+    () => dispatch(updateEditSavedQueryRefAction({ exploreId, editSavedQueryRef: undefined })),
+    [dispatch, exploreId]
+  );
 
-    // Clear the queryLibraryRef to exit editing mode
-    dispatch(updateQueryLibraryRefAction({ exploreId, queryLibraryRef: undefined }));
-
-    // Open drawer with the original query highlighted
-    if (originalQueryRef) {
-      openDrawer({
-        datasourceFilters: [],
-        options: {
-          context: 'explore',
-          highlightQuery: originalQueryRef,
-        },
-      });
-    }
-  };
+  const onCancelAddSavedQuery = useCallback(() => {
+    dispatch(setAddingSavedQueryAction({ exploreId, addingSavedQuery: false }));
+  }, [dispatch, exploreId]);
 
   const onQueryOpenChanged = () => {
     // Disables compact mode when query is opened.
@@ -140,8 +131,10 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
       app={CoreApp.Explore}
       history={history}
       eventBus={eventBridge}
-      queryLibraryRef={queryLibraryRef}
-      onCancelQueryLibraryEdit={onCancelQueryLibraryEdit}
+      editSavedQueryRef={editSavedQueryRef}
+      onExitQueryLibraryEdit={onExitQueryLibraryEdit}
+      addingSavedQuery={addingSavedQuery}
+      onCancelAddSavedQuery={onCancelAddSavedQuery}
       isOpen={isOpen}
       queryRowWrapper={(children, refId) => (
         <ContentOutlineItem

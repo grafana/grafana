@@ -25,6 +25,7 @@ import {
   type GrafanaTheme2,
   PluginExtensionPoints,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
   reportInteraction,
@@ -405,7 +406,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
       {!hideHeaderDetails && (
         <div className={styles.filtersContainer}>
           <Label>{t('explore.trace-page-header.filters', 'Filters')}</Label>
-          <div className={styles.adhocFiltersRow}>
+          <div className={styles.adhocFiltersRow} data-testid={selectors.components.TraceViewer.filtersRow}>
             {controller && <AdHocFiltersComboboxRenderer controller={controller} />}
           </div>
           {trace && (
