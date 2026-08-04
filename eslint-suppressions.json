@@ -649,11 +649,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/VizTooltip/VizTooltipFooter.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 2
-    }
-  },
   "packages/grafana-ui/src/components/uPlot/Plot.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
@@ -2117,11 +2112,6 @@
   "public/app/features/profile/UserProfileEditForm.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
-    }
-  },
-  "public/app/features/provisioning/Shared/BranchValidationError.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 26
     }
   },
   "public/app/features/query/components/QueryEditorRow.tsx": {

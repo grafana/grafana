@@ -18,7 +18,7 @@ export function OrphanedDashboardBanner({ dashboard }: Props) {
   const kind = dashboard.getManagerKind();
   const name = dashboard.getManagerIdentity();
 
-  const shouldSkip = !config.featureToggles.provisioning || kind !== ManagerKind.Repo || !name;
+  const shouldSkip = !config.provisioningEnabled || kind !== ManagerKind.Repo || !name;
 
   const { status } = useGetResourceRepositoryView({
     name: shouldSkip ? undefined : name,

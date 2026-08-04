@@ -95,8 +95,6 @@ export const FlagKeys = {
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Enables using dashboard variables in panel threshold values */
   GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
-  /** Replaces the bundled home dashboard with the unified homepage React page */
-  GrafanaUnifiedHomepage: "grafana.unifiedHomepage",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
   GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
   /** Enables semantic (vector) dashboard search in the command palette */
@@ -612,17 +610,6 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
  */
 export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.thresholdsInterpolation", false, options).value;
-};
-
-/**
- * Replaces the bundled home dashboard with the unified homepage React page
- *
- * **Details:**
- * - flag key: `grafana.unifiedHomepage`
- * - default value: `false`
- */
-export const useFlagGrafanaUnifiedHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.unifiedHomepage", false, options).value;
 };
 
 /**

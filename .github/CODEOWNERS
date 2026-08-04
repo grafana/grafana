@@ -237,8 +237,8 @@
 /devenv/create_docker_compose.sh @grafana/grafana-backend-services-squad
 /devenv/alert_rules.yaml @grafana/alerting-squad
 /devenv/dashboards.yaml @grafana/dashboards-squad
-/devenv/datasources.yaml @grafana/data-sources
-/devenv/datasources_docker.yaml @grafana/data-sources
+/devenv/datasources.yaml @grafana/data-sources-plugins
+/devenv/datasources_docker.yaml @grafana/data-sources-plugins
 /devenv/dev-dashboards-without-uid/ @grafana/dashboards-squad
 /devenv/dev-dashboards/panel-logstable/logs-table.json @grafana/observability-logs
 /devenv/scopes/ @grafana/grafana-operator-experience-squad
@@ -405,7 +405,7 @@
 /pkg/services/datasourceproxy/ @grafana/grafana-catalog
 /pkg/services/datasources/ @grafana/grafana-catalog
 /pkg/services/datasources/awsexternalid/ @grafana/data-sources-plugins
-/pkg/services/diagnostics/ @grafana/data-sources
+/pkg/services/diagnostics/ @grafana/data-sources-plugins
 /pkg/services/pluginsintegration/ @grafana/grafana-catalog
 /pkg/plugins/codegen/pfs/ @grafana/grafana-catalog @grafana/grafana-as-code
 /pkg/tsdb/grafana-testdata-datasource/ @grafana/grafana-catalog
@@ -844,6 +844,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/components/Animations/ @grafana/grafana-frontend-platform
 /public/app/core/components/AppNotifications/ @grafana/grafana-frontend-navigation
 /public/app/core/components/AppChrome/ @grafana/grafana-frontend-navigation
+/public/app/core/components/AssistantTooltip/ @grafana/dataviz-squad
 /public/app/core/components/Branding/ @grafana/grafana-frontend-platform
 /public/app/core/components/Breadcrumbs/ @grafana/grafana-frontend-navigation
 /public/app/core/components/CardButton.tsx @grafana/dashboards-squad
@@ -1312,7 +1313,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/detect-breaking-changes-* @grafana/grafana-frontend-platform
 /.github/workflows/documentation-ci.yml @grafana/docs-tooling
 /.github/workflows/deploy-pr-preview.yml @grafana/docs-tooling
-/.github/workflows/externalized-datasources-reminder.yml @grafana/data-sources
+/.github/workflows/externalized-datasources-reminder.yml @grafana/data-sources-plugins
 /.github/workflows/feature-toggles-ci.yml @grafana/docs-tooling
 /.github/workflows/github-release.yml @grafana/grafana-backend-services-squad
 /.github/workflows/external-fr-notify.yml @grafana/grafana-community-support
@@ -1404,6 +1405,7 @@ embed.go @grafana/grafana-as-code
 /conf/ldap_multiple.toml @grafana/identity-squad
 /conf/provisioning/access-control/ @grafana/access-squad
 /conf/provisioning/alerting/ @grafana/alerting-squad
+/conf/provisioning/appmanifests/ @grafana/grafana-app-platform-squad
 /conf/provisioning/dashboards/ @grafana/dashboards-squad
 /conf/provisioning/datasources/ @grafana/grafana-catalog
 /conf/provisioning/plugins/ @grafana/grafana-catalog
