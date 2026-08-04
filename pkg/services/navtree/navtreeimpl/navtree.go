@@ -342,10 +342,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagGlobalDashboardVariables) &&
-			hasAccess(ac.EvalAny(
-				ac.EvalPermission(dashboards.ActionDashboardsCreate),
-				ac.EvalPermission(dashboards.ActionDashboardsWrite),
-			)) {
+			hasAccess(ac.EvalPermission(ac.ActionVariablesRead)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text:     "Variables",
 				SubTitle: "Template variables shared across dashboards, globally or per folder",

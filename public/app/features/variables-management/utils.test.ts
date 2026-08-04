@@ -77,19 +77,24 @@ describe('getVariableFolderPickerExcludeUIDs', () => {
 });
 
 describe('canManageGlobalVariables', () => {
-  const originalIsEditor = contextSrv.isEditor;
+  const originalHasRole = contextSrv.hasRole;
 
   afterEach(() => {
-    contextSrv.isEditor = originalIsEditor;
+    contextSrv.hasRole = originalHasRole;
   });
 
-  it('returns true for editors', () => {
-    contextSrv.isEditor = true;
+  it('returns true for org Admins', () => {
+    contextSrv.hasRole = jest.fn((role: string) => role === 'Admin');
     expect(canManageGlobalVariables()).toBe(true);
   });
 
-  it('returns false for non-editors', () => {
-    contextSrv.isEditor = false;
+  it('returns false for Editors without Admin', () => {
+    contextSrv.hasRole = jest.fn((role: string) => role === 'Editor');
+    expect(canManageGlobalVariables()).toBe(false);
+  });
+
+  it('returns false for non-admins', () => {
+    contextSrv.hasRole = jest.fn(() => false);
     expect(canManageGlobalVariables()).toBe(false);
   });
 });

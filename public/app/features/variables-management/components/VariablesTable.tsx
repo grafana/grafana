@@ -20,7 +20,8 @@ export interface VariablesTableProps {
   onToggleFolder: (folderUid: string) => void;
   selected: Set<string>;
   onSetSelected: (names: string[], isSelected: boolean) => void;
-  onEdit: (variable: Variable) => void;
+  onEdit?: (variable: Variable) => void;
+  selectable?: boolean;
 }
 
 export function VariablesTable({
@@ -30,6 +31,7 @@ export function VariablesTable({
   selected,
   onSetSelected,
   onEdit,
+  selectable = true,
 }: VariablesTableProps) {
   const styles = useStyles2(getStyles);
 
@@ -44,14 +46,16 @@ export function VariablesTable({
     <table className={styles.table} role="grid">
       <thead>
         <tr>
-          <th className={styles.checkboxCell}>
-            <Checkbox
-              value={allSelected}
-              indeterminate={someSelected && !allSelected}
-              aria-label={t('variables-management.table.select-all', 'Select all variables')}
-              onChange={() => onSetSelected(allNames, !allSelected)}
-            />
-          </th>
+          {selectable && (
+            <th className={styles.checkboxCell}>
+              <Checkbox
+                value={allSelected}
+                indeterminate={someSelected && !allSelected}
+                aria-label={t('variables-management.table.select-all', 'Select all variables')}
+                onChange={() => onSetSelected(allNames, !allSelected)}
+              />
+            </th>
+          )}
           <th>
             <Trans i18nKey="variables-management.table.header-name">Name</Trans>
           </th>
@@ -70,6 +74,7 @@ export function VariablesTable({
             selected={selected}
             onSetSelected={onSetSelected}
             onEdit={onEdit}
+            selectable={selectable}
           />
         ))}
         {tree.global.map((variable) => (
@@ -80,6 +85,7 @@ export function VariablesTable({
             selected={selected}
             onSetSelected={onSetSelected}
             onEdit={onEdit}
+            selectable={selectable}
           />
         ))}
       </tbody>
@@ -93,10 +99,19 @@ interface FolderRowsProps {
   onToggleFolder: (folderUid: string) => void;
   selected: Set<string>;
   onSetSelected: (names: string[], isSelected: boolean) => void;
-  onEdit: (variable: Variable) => void;
+  onEdit?: (variable: Variable) => void;
+  selectable: boolean;
 }
 
-function FolderRows({ folder, isExpanded, onToggleFolder, selected, onSetSelected, onEdit }: FolderRowsProps) {
+function FolderRows({
+  folder,
+  isExpanded,
+  onToggleFolder,
+  selected,
+  onSetSelected,
+  onEdit,
+  selectable,
+}: FolderRowsProps) {
   const styles = useStyles2(getStyles);
   const names = folder.variables.map((v) => v.metadata.name ?? '').filter(Boolean);
   const allSelected = names.length > 0 && names.every((name) => selected.has(name));
@@ -105,16 +120,18 @@ function FolderRows({ folder, isExpanded, onToggleFolder, selected, onSetSelecte
   return (
     <Fragment>
       <tr>
-        <td className={styles.checkboxCell}>
-          <Checkbox
-            value={allSelected}
-            indeterminate={someSelected && !allSelected}
-            aria-label={t('variables-management.table.select-folder', 'Select all variables in folder {{title}}', {
-              title: folder.title,
-            })}
-            onChange={() => onSetSelected(names, !allSelected)}
-          />
-        </td>
+        {selectable && (
+          <td className={styles.checkboxCell}>
+            <Checkbox
+              value={allSelected}
+              indeterminate={someSelected && !allSelected}
+              aria-label={t('variables-management.table.select-folder', 'Select all variables in folder {{title}}', {
+                title: folder.title,
+              })}
+              onChange={() => onSetSelected(names, !allSelected)}
+            />
+          </td>
+        )}
         <td colSpan={2}>
           <button
             type="button"
@@ -138,6 +155,7 @@ function FolderRows({ folder, isExpanded, onToggleFolder, selected, onSetSelecte
             selected={selected}
             onSetSelected={onSetSelected}
             onEdit={onEdit}
+            selectable={selectable}
           />
         ))}
     </Fragment>
@@ -149,10 +167,11 @@ interface VariableRowProps {
   indented: boolean;
   selected: Set<string>;
   onSetSelected: (names: string[], isSelected: boolean) => void;
-  onEdit: (variable: Variable) => void;
+  onEdit?: (variable: Variable) => void;
+  selectable: boolean;
 }
 
-function VariableRow({ variable, indented, selected, onSetSelected, onEdit }: VariableRowProps) {
+function VariableRow({ variable, indented, selected, onSetSelected, onEdit, selectable }: VariableRowProps) {
   const styles = useStyles2(getStyles);
   const metadataName = variable.metadata.name ?? '';
   const specName = getVariableSpecName(variable);
@@ -162,22 +181,31 @@ function VariableRow({ variable, indented, selected, onSetSelected, onEdit }: Va
 
   return (
     <tr>
-      <td className={styles.checkboxCell}>
-        <Checkbox
-          value={selected.has(metadataName)}
-          aria-label={t('variables-management.table.select-variable', 'Select variable {{name}}', { name: specName })}
-          onChange={() => onSetSelected([metadataName], !selected.has(metadataName))}
-        />
-      </td>
+      {selectable && (
+        <td className={styles.checkboxCell}>
+          <Checkbox
+            value={selected.has(metadataName)}
+            aria-label={t('variables-management.table.select-variable', 'Select variable {{name}}', { name: specName })}
+            onChange={() => onSetSelected([metadataName], !selected.has(metadataName))}
+          />
+        </td>
+      )}
       <td>
-        <button
-          type="button"
-          className={cx(styles.nameButton, indented && styles.indented)}
-          onClick={() => onEdit(variable)}
-        >
-          <Icon name="brackets-curly" />
-          <span>{specName}</span>
-        </button>
+        {onEdit ? (
+          <button
+            type="button"
+            className={cx(styles.nameButton, indented && styles.indented)}
+            onClick={() => onEdit(variable)}
+          >
+            <Icon name="brackets-curly" />
+            <span>{specName}</span>
+          </button>
+        ) : (
+          <span className={cx(styles.namePlain, indented && styles.indented)}>
+            <Icon name="brackets-curly" />
+            <span>{specName}</span>
+          </span>
+        )}
       </td>
       <td>{typeLabel}</td>
     </tr>
@@ -237,6 +265,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       textDecoration: 'underline',
     },
+  }),
+  namePlain: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
+    marginLeft: theme.spacing(3),
+    color: theme.colors.text.primary,
   }),
   indented: css({
     marginLeft: theme.spacing(6),

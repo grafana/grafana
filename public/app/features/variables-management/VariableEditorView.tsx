@@ -59,7 +59,7 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
   const isNew = !source;
   const allowGlobalScope = canManageGlobalVariables();
   const [searchParams] = useSearchParams();
-  // '' is the FolderPicker root/global uid. For non-editors root is hidden, so start
+  // '' is the FolderPicker root/global uid. For non-admins root is hidden, so start
   // with undefined (empty selection) — NestedFolderPicker labels '' as "Dashboards"
   // even when showRootFolder is false. New variables may preselect a folder via
   // ?folderUid= from the folder Variables tab.
@@ -119,7 +119,7 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
   const sourceScopeReady =
     !sourceFolderUid || (needsSeparateSourceFolder ? sourceFolderMatches : selectedFolderMatches);
 
-  // Non-editors may only save folder-scoped variables (root/global requires Editor/Admin),
+  // Non-admins may only save folder-scoped variables (root/global requires Admin),
   // and only into folders they can edit. Edit also requires source-scope rights so rename/move
   // (create-then-delete) cannot leave a duplicate when the original cannot be deleted.
   const hasValidFolderScope = allowGlobalScope || Boolean(folderUid);
