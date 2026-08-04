@@ -96,6 +96,13 @@ function rows() {
   return screen.getAllByRole('row');
 }
 
+async function openItemOptions(itemValue: string) {
+  const button = screen.getByRole('button', { name: `Options for ${itemValue}` });
+  if (button.getAttribute('aria-expanded') === 'false') {
+    await userEvent.click(button);
+  }
+}
+
 describe('PlaylistForm', () => {
   beforeEach(() => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -200,26 +207,41 @@ describe('PlaylistForm', () => {
   });
 
   describe('per-dashboard interval overrides', () => {
-    it('always shows the global interval field and a per-row override input', () => {
+    it('keeps empty item options collapsed until requested', async () => {
       getTestContext();
 
       expect(screen.getByRole('textbox', { name: 'Interval' })).toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: /interval for uid_1/i })).not.toBeInTheDocument();
+
+      const optionsButton = screen.getByRole('button', { name: 'Options for uid_1' });
+      optionsButton.focus();
+      await userEvent.keyboard('{Enter}');
+
+      expect(optionsButton).toHaveAttribute('aria-expanded', 'true');
       expect(screen.getByRole('textbox', { name: /interval for uid_1/i })).toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: /url parameters for uid_1/i })).toBeInTheDocument();
     });
 
-    it('renders existing per-item intervals in the row inputs', () => {
+    it('summarizes existing options while keeping the row compact', async () => {
       getTestContext(mockPerItemIntervalPlaylist);
 
       // The global interval remains editable.
       expect(screen.getByRole('textbox', { name: 'Interval' })).toHaveValue('10m');
-      // uid_1 has an override; uid_2 inherits the global (blank input).
+      // uid_1's override is visible as a compact summary until its options are opened.
+      expect(within(rows()[0]).getByText('30s')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Options for uid_1' })).toHaveAttribute('aria-expanded', 'false');
+      await openItemOptions('uid_1');
       expect(screen.getByRole('textbox', { name: /interval for uid_1/i })).toHaveValue('30s');
+
+      // uid_2 inherits the global interval, so it remains compact until opened.
+      await openItemOptions('uid_2');
       expect(screen.getByRole('textbox', { name: /interval for uid_2/i })).toHaveValue('');
     });
 
     it('submits a per-item interval override and leaves blank rows without one', async () => {
       const { onSubmitMock } = getTestContext();
 
+      await openItemOptions('uid_1');
       await userEvent.type(screen.getByRole('textbox', { name: /interval for uid_1/i }), '30s');
       await userEvent.click(screen.getByRole('button', { name: /save/i }));
 
@@ -246,6 +268,7 @@ describe('PlaylistForm', () => {
     it('marks an unparseable per-item interval invalid and disables saving', async () => {
       getTestContext();
 
+      await openItemOptions('uid_1');
       const input = screen.getByRole('textbox', { name: /interval for uid_1/i });
       await userEvent.type(input, 'not-an-interval');
 
@@ -257,6 +280,7 @@ describe('PlaylistForm', () => {
       const { onSubmitMock } = getTestContext();
 
       // Enter submits even though the disabled button can't be clicked.
+      await openItemOptions('uid_1');
       await userEvent.type(screen.getByRole('textbox', { name: /interval for uid_1/i }), 'bad{Enter}');
 
       expect(onSubmitMock).not.toHaveBeenCalled();
@@ -265,6 +289,7 @@ describe('PlaylistForm', () => {
     it('updates the row interval placeholder when the global interval changes', async () => {
       getTestContext();
 
+      await openItemOptions('uid_1');
       await userEvent.clear(screen.getByRole('textbox', { name: 'Interval' }));
       await userEvent.type(screen.getByRole('textbox', { name: 'Interval' }), '42s');
 
@@ -278,12 +303,14 @@ describe('PlaylistForm', () => {
       await userEvent.click(within(rows()[0]).getByRole('button', { name: /delete playlist item/i }));
       await waitFor(() => expect(rows()).toHaveLength(1));
 
+      await openItemOptions('uid_2');
       expect(screen.getByRole('textbox', { name: /interval for uid_2/i })).toHaveValue('');
     });
 
     it('clearing a per-item interval removes the override', async () => {
       const { onSubmitMock } = getTestContext(mockPerItemIntervalPlaylist);
 
+      await openItemOptions('uid_1');
       await userEvent.clear(screen.getByRole('textbox', { name: /interval for uid_1/i }));
       await userEvent.click(screen.getByRole('button', { name: /save/i }));
 
@@ -303,9 +330,11 @@ describe('PlaylistForm', () => {
   });
 
   describe('per-dashboard URL parameters', () => {
-    it('renders the parameters stored on each playlist item', () => {
+    it('renders the parameters stored on each playlist item', async () => {
       getTestContext(mockPerItemOptionsPlaylist);
 
+      await openItemOptions('uid_1');
+      await openItemOptions('uid_2');
       expect(screen.getByRole('textbox', { name: /url parameters for uid_1/i })).toHaveValue(
         'var-host=host1&from=now-6h&to=now'
       );
@@ -315,6 +344,7 @@ describe('PlaylistForm', () => {
     it('accepts a copied dashboard URL and stores only its query string', async () => {
       const { onSubmitMock } = getTestContext();
 
+      await openItemOptions('uid_1');
       await userEvent.type(
         screen.getByRole('textbox', { name: /url parameters for uid_1/i }),
         'https://grafana.example.com/d/uid/name?var-host=host1&from=now-6h&to=now'
@@ -341,6 +371,7 @@ describe('PlaylistForm', () => {
       await userEvent.click(within(rows()[0]).getByRole('button', { name: /delete playlist item/i }));
       await waitFor(() => expect(rows()).toHaveLength(1));
 
+      await openItemOptions('uid_2');
       expect(screen.getByRole('textbox', { name: /url parameters for uid_2/i })).toHaveValue('var-host=host2');
     });
   });
