@@ -3263,6 +3263,7 @@
       "title-type": "Type"
     },
     "selecting-data-source-tooltip": {
+      "aria-label-data-source-support": "Read about data source support for alerting",
       "tooltip-content": "Not finding the data source you want? Some data sources are not supported for alerting. Click on the icon for more information."
     },
     "settings": {
