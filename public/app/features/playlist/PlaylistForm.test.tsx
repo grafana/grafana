@@ -117,7 +117,8 @@ async function openDashboardLinkPaste(itemValue: string) {
   await openItemOptions(itemValue);
   const row = rowForItem(itemValue);
   if (!within(row).queryByRole('textbox', { name: new RegExp(`dashboard state for ${itemValue}`, 'i') })) {
-    await userEvent.click(within(row).getByRole('button', { name: 'Paste link' }));
+    await userEvent.click(within(row).getByRole('button', { name: 'More custom view actions' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Paste link' }));
   }
 }
 
@@ -286,9 +287,11 @@ describe('PlaylistForm', () => {
       expect(optionsButton).toHaveAttribute('aria-expanded', 'true');
       expect(screen.getByRole('textbox', { name: /interval for uid_1/i })).toBeInTheDocument();
       expect(within(rowForItem('uid_1')).getByText('Configure')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Paste link' })).toBeInTheDocument();
+      const moreActions = screen.getByRole('button', { name: 'More custom view actions' });
+      expect(moreActions).toBeInTheDocument();
 
-      await userEvent.click(screen.getByRole('button', { name: 'Paste link' }));
+      await userEvent.click(moreActions);
+      await userEvent.click(screen.getByRole('menuitem', { name: 'Paste link' }));
       expect(screen.getByRole('textbox', { name: /dashboard state for uid_1/i })).toBeInTheDocument();
     });
 
@@ -411,6 +414,25 @@ describe('PlaylistForm', () => {
       expect(screen.getByRole('textbox', { name: /dashboard state for uid_2/i })).toHaveValue('var-host=host2');
     });
 
+    it('summarizes the configured view on hover and keeps secondary actions in a menu', async () => {
+      getTestContext(mockPerItemOptionsPlaylist);
+
+      await openItemOptions('uid_1');
+      await userEvent.hover(within(rowForItem('uid_1')).getByText('Configured'));
+
+      const tooltip = await screen.findByRole('tooltip');
+      expect(tooltip).toHaveTextContent('Custom view options');
+      expect(tooltip).toHaveTextContent('Time range');
+      expect(tooltip).toHaveTextContent('now-6h → now');
+      expect(tooltip).toHaveTextContent('Variable: host');
+      expect(tooltip).toHaveTextContent('host1');
+
+      await userEvent.unhover(within(rowForItem('uid_1')).getByText('Configured'));
+      await userEvent.click(within(rowForItem('uid_1')).getByRole('button', { name: 'More custom view actions' }));
+      expect(screen.getByRole('menuitem', { name: 'Paste link' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Clear custom view' })).toBeInTheDocument();
+    });
+
     it('accepts a copied dashboard URL and stores only its query string', async () => {
       const { onSubmitMock } = getTestContext();
 
@@ -475,7 +497,7 @@ describe('PlaylistForm', () => {
     });
 
     it('applies a custom view configured on the dashboard', async () => {
-      const { onSubmitMock } = getTestContext(mockPerItemIntervalPlaylist, [
+      const { onSubmitMock } = getTestContext(mockPerItemOptionsPlaylist, [
         { name: 'uid_1', resource: 'dashboards', title: 'Dashboard one' },
       ]);
 
@@ -484,8 +506,12 @@ describe('PlaylistForm', () => {
       await waitFor(() => expect(configureLink).not.toHaveAttribute('aria-disabled', 'true'));
 
       const configureUrl = configureLink.getAttribute('href') ?? '';
-      const token = new URL(configureUrl, window.location.origin).searchParams.get(PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM);
+      const configureSearchParams = new URL(configureUrl, window.location.origin).searchParams;
+      const token = configureSearchParams.get(PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM);
       expect(token).toBeTruthy();
+      expect(configureSearchParams.get('var-host')).toBe('host1');
+      expect(configureSearchParams.get('from')).toBe('now-6h');
+      expect(configureSearchParams.get('to')).toBe('now');
       await userEvent.click(configureLink);
       const channel = mockBroadcastChannels[0];
       expect(channel?.name).toContain(token);

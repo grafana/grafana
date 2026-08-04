@@ -9,11 +9,13 @@ import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import {
   Button,
+  Dropdown,
   Field,
   Icon,
   IconButton,
   Input,
   LinkButton,
+  Menu,
   Spinner,
   Text,
   Tooltip,
@@ -315,9 +317,18 @@ function PlaylistTableRow({
                 <div className={styles.customViewEditor}>
                   <div className={styles.customViewControls}>
                     <Text variant="bodySmall" color="secondary">
-                      {item.queryParams
-                        ? t('playlist.playlist-table-rows.custom-view-configured', 'Configured')
-                        : t('playlist.playlist-table-rows.custom-view-default', 'Uses dashboard defaults')}
+                      {item.queryParams ? (
+                        <Tooltip
+                          placement="top-start"
+                          content={<CustomViewTooltipContent queryParams={item.queryParams} styles={styles} />}
+                        >
+                          <span className={styles.configuredStatus}>
+                            {t('playlist.playlist-table-rows.custom-view-configured', 'Configured')}
+                          </span>
+                        </Tooltip>
+                      ) : (
+                        t('playlist.playlist-table-rows.custom-view-default', 'Uses dashboard defaults')
+                      )}
                     </Text>
                     <div className={styles.customViewActions}>
                       <LinkButton
@@ -332,27 +343,36 @@ function PlaylistTableRow({
                       >
                         <Trans i18nKey="playlist.playlist-table-rows.configure-view">Configure</Trans>
                       </LinkButton>
-                      <Button
-                        size="sm"
-                        fill="text"
-                        icon="clipboard-alt"
-                        onClick={() => setPasteLinkOpen((open) => !open)}
+                      <Dropdown
+                        placement="bottom-end"
+                        overlay={
+                          <Menu>
+                            <Menu.Item
+                              icon="clipboard-alt"
+                              label={t('playlist.playlist-table-rows.paste-dashboard-link', 'Paste link')}
+                              onClick={() => setPasteLinkOpen((open) => !open)}
+                            />
+                            {item.queryParams && (
+                              <Menu.Item
+                                icon="trash-alt"
+                                label={t('playlist.playlist-table-rows.clear-view', 'Clear custom view')}
+                                onClick={() => {
+                                  setDashboardStateError(undefined);
+                                  setPasteLinkOpen(false);
+                                  onUpdateQueryParams?.(index, '');
+                                }}
+                              />
+                            )}
+                          </Menu>
+                        }
                       >
-                        <Trans i18nKey="playlist.playlist-table-rows.paste-dashboard-link">Paste link</Trans>
-                      </Button>
-                      {item.queryParams && (
-                        <Button
-                          size="sm"
-                          fill="text"
-                          onClick={() => {
-                            setDashboardStateError(undefined);
-                            setPasteLinkOpen(false);
-                            onUpdateQueryParams?.(index, '');
-                          }}
-                        >
-                          <Trans i18nKey="playlist.playlist-table-rows.clear-view">Clear</Trans>
-                        </Button>
-                      )}
+                        <IconButton
+                          name="ellipsis-v"
+                          size="md"
+                          aria-label={t('playlist.playlist-table-rows.more-view-actions', 'More custom view actions')}
+                          tooltip={t('playlist.playlist-table-rows.more-view-actions', 'More custom view actions')}
+                        />
+                      </Dropdown>
                     </div>
                   </div>
                   {pasteLinkOpen && (
@@ -407,6 +427,69 @@ function PlaylistTableRow({
         </div>
       )}
     </Draggable>
+  );
+}
+
+interface CustomViewTooltipContentProps {
+  queryParams: string;
+  styles: ReturnType<typeof getStyles>;
+}
+
+function CustomViewTooltipContent({ queryParams, styles }: CustomViewTooltipContentProps) {
+  const params = new URLSearchParams(queryParams);
+  const from = params.get('from');
+  const to = params.get('to');
+  const variables = new Map<string, string[]>();
+  const options: Array<[string, string]> = [];
+
+  params.forEach((value, key) => {
+    if (key.startsWith('var-')) {
+      const name = key.slice(4);
+      variables.set(name, [...(variables.get(name) ?? []), value]);
+    } else if (key !== 'from' && key !== 'to') {
+      options.push([key, value]);
+    }
+  });
+
+  return (
+    <div className={styles.customViewTooltip}>
+      <Text variant="bodySmall" weight="medium">
+        <Trans i18nKey="playlist.playlist-table-rows.custom-view-tooltip-title">Custom view options</Trans>
+      </Text>
+      {from && to && (
+        <CustomViewTooltipRow
+          label={t('playlist.playlist-table-rows.custom-view-time-range', 'Time range')}
+          value={`${from} → ${to}`}
+          styles={styles}
+        />
+      )}
+      {[...variables].map(([name, values]) => (
+        <CustomViewTooltipRow
+          key={`variable-${name}`}
+          label={t('playlist.playlist-table-rows.custom-view-variable', 'Variable: {{name}}', { name })}
+          value={values.join(', ')}
+          styles={styles}
+        />
+      ))}
+      {options.map(([name, value], index) => (
+        <CustomViewTooltipRow key={`option-${name}-${index}`} label={name} value={value} styles={styles} />
+      ))}
+    </div>
+  );
+}
+
+interface CustomViewTooltipRowProps {
+  label: string;
+  value: string;
+  styles: ReturnType<typeof getStyles>;
+}
+
+function CustomViewTooltipRow({ label, value, styles }: CustomViewTooltipRowProps) {
+  return (
+    <div className={styles.customViewTooltipRow}>
+      <span className={styles.customViewTooltipLabel}>{label}</span>
+      <span>{value}</span>
+    </div>
   );
 }
 
@@ -542,6 +625,24 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexWrap: 'wrap',
       gap: theme.spacing(0.5),
+    }),
+    configuredStatus: css({
+      borderBottom: `1px dotted ${theme.colors.text.secondary}`,
+      cursor: 'help',
+    }),
+    customViewTooltip: css({
+      display: 'grid',
+      gap: theme.spacing(0.5),
+      minWidth: 220,
+      padding: theme.spacing(0.5),
+    }),
+    customViewTooltipRow: css({
+      display: 'grid',
+      gap: theme.spacing(1),
+      gridTemplateColumns: 'minmax(88px, auto) minmax(0, 1fr)',
+    }),
+    customViewTooltipLabel: css({
+      color: theme.colors.text.secondary,
     }),
     options: css({
       display: 'grid',
