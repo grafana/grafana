@@ -30,15 +30,11 @@ The query editor has two modes:
 - [Builder mode](#builder-mode) — Visual interface for constructing queries without writing PromQL directly.
 - [Code mode](#code-mode) — Text editor with autocomplete for writing PromQL directly.
 
-![Query editor mode](/media/docs/prometheus/builder-code-v11-mode.png)
-
 Grafana synchronizes both modes, allowing you to switch between them. Grafana also displays a warning message if it detects an issue with the query while switching modes.
 
 ## Query options
 
 The following options are available in both Builder and Code modes. They control how the query is executed and how results are displayed.
-
-{{< figure src="/static/img/docs/prometheus/options.png" max-width="500px" class="docs-image--no-shadow" caption="Query options" >}}
 
 ### Legend
 
@@ -99,18 +95,12 @@ Builder mode contains the following components:
 
 - **Explain** — Toggle on to display a step-by-step explanation of all query components and operations.
 
-{{< figure src="/static/img/docs/prometheus/explain-results.png" max-width="500px" class="docs-image--no-shadow" caption="Explain results" >}}
-
 ### Select a metric
-
-{{< figure src="/static/img/docs/prometheus/metrics-and-labels.png" max-width="500px" class="docs-image--no-shadow" caption="Metric and label filters" >}}
 
 - **Metric** — Select a metric from the drop-down. The data source provides available metrics based on the selected time range. You can type to search and filter the list. Click the book icon to open [Metrics explorer](#metrics-explorer).
 - **Label filters** — Select labels and values to filter the metric. Use the `+` button to add filters and the `x` button to remove them. When a metric is selected, the data source requests available labels and their values from the server.
 
 ### Add operations
-
-{{< figure src="/static/img/docs/prometheus/operations.png" max-width="500px" class="docs-image--no-shadow" caption="Operations" >}}
 
 Click **+ Operations** to add operations to your query. The query editor groups operations into the following categories:
 
@@ -123,19 +113,13 @@ Click **+ Operations** to add operations to your query. The query editor groups 
 
 All operations display function parameters beneath the operation header. Some operations allow you to apply specific labels (for example, `by` or `without` clauses).
 
-{{< figure src="/static/img/docs/prometheus/use-function-by-label-9-5.png" max-width="500px" class="docs-image--no-shadow" caption="Functions and labels" >}}
-
 If you add an operation in a way that would create an invalid query, the query editor automatically places it in the correct position to maintain a valid query structure.
 
 ### Hints
 
 The query editor can detect which operations are most appropriate for certain selected metrics. When it does, it displays a hint next to the **+ Operations** button. Click the hint to add the suggested operation.
 
-{{< figure src="/static/img/docs/prometheus/hint-example.png" max-width="500px" class="docs-image--no-shadow" caption="Hint" >}}
-
 ### Metrics explorer
-
-{{< figure src="/static/img/docs/prometheus/screenshot-grafana-prometheus-metrics-explorer-2.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics explorer" >}}
 
 Click the book icon next to the metric selector to open the Metrics explorer. It displays all metrics in a paginated list showing the name, type, and description for each metric.
 
@@ -154,8 +138,6 @@ The Metrics explorer (Builder mode) and [Metrics browser (Code mode)](#metrics-b
 
 **Code mode** is for experienced Prometheus users who prefer writing PromQL directly. For more information about PromQL, refer to [Querying Prometheus](https://prometheus.io/docs/prometheus/latest/querying/basics/).
 
-{{< figure src="/static/img/docs/prometheus/code-mode.png" max-width="500px" class="docs-image--no-shadow" caption="Code mode" >}}
-
 Code mode provides:
 
 - **Autocomplete** — Suggests metrics, labels, functions, aggregations, and keywords as you type. The drop-down includes documentation for suggested items where available.
@@ -165,8 +147,6 @@ Code mode provides:
 ### Metrics browser
 
 The Metrics browser helps you build basic queries by exploring available metrics and labels.
-
-{{< figure alt="Prometheus query editor metrics browser" src="/media/docs/prometheus/Metrics-browser-V10-prom-query-editor.png" caption="Metrics browser" >}}
 
 1. **Step 1** — Select a metric. The browser narrows available labels to those applicable to the metric.
 2. **Step 2** — Select one or more labels.
