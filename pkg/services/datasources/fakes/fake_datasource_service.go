@@ -53,6 +53,10 @@ func (s *FakeDataSourceService) GetDataSourceInNamespace(ctx context.Context, na
 	return nil, datasources.ErrDataSourceNotFound
 }
 
+func (s *FakeDataSourceService) CanonicalType(_ context.Context, typeOrAlias string) string {
+	return typeOrAlias
+}
+
 func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {
 	var dataSources []*datasources.DataSource
 	for _, datasource := range s.DataSources {

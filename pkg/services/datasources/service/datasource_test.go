@@ -79,6 +79,10 @@ func (d *dataSourceMockRetriever) GetDataSourceInNamespace(ctx context.Context, 
 	return nil, datasources.ErrDataSourceNotFound
 }
 
+func (d *dataSourceMockRetriever) CanonicalType(_ context.Context, typeOrAlias string) string {
+	return typeOrAlias
+}
+
 func TestIntegrationService_AddDataSource(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
