@@ -33,6 +33,7 @@ declare module "@openfeature/core" {
     | "grafana.customDashboardTemplates"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
+    | "alerting.manualAssistantInvestigation"
     | "alerting.ruleQuality"
     | "azureMonitorBatchAPI"
     | "recentlyViewedDashboards"
@@ -41,7 +42,6 @@ declare module "@openfeature/core" {
     | "grafana.starredFolders"
     | "grafana.newTextPanel"
     | "plugins.useMTPlugins"
-    | "dashboardSectionVariables"
     | "globalDashboardVariables"
     | "queryEditorNext"
     | "managedPluginsV2"
@@ -59,7 +59,6 @@ declare module "@openfeature/core" {
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "reporting.anyPageReporting"
     | "assistant.frontend.tools.dashboardTemplates"
-    | "grafana.unifiedHomepage"
     | "alerting.syncExternalAlertmanager"
     | "grafana.enableScopesFirstMode"
     | "grafana.useDefaultScopesEndpoint"
@@ -73,6 +72,8 @@ declare module "@openfeature/core" {
     | "table.protoRowParser"
     | "grafana.queryVarEditorRedesign"
     | "table.refactorNested"
+    | "table.paginationPageSize"
+    | "table.autoColumnWidths"
     | "dataviz.experimentalColorSchemes"
     | "grafana.customizableMegaMenu"
     | "grafana.dashboardSettingsRedesign"
@@ -80,7 +81,8 @@ declare module "@openfeature/core" {
     | "grafana.onDemandDiagnostics"
     | "grafana.multiTenantNavTree"
     | "grafana.exploreMetricsSidebar"
-    | "grafana.dynamicTraceToLogs";
+    | "grafana.dynamicTraceToLogs"
+    | "grafana.thresholdsInterpolation";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey = never;

@@ -6,6 +6,7 @@ import { render, screen, testWithFeatureToggles, userEvent, waitFor, within } fr
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '@grafana/alerting';
+import { selectors } from '@grafana/e2e-selectors';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { PERMISSIONS_NOTIFICATION_POLICIES } from 'app/features/alerting/unified/hooks/abilities/alertmanager/useNotificationPolicyAbility';
@@ -631,7 +632,7 @@ describe('Notification policy tree rendering', () => {
   // https://github.com/grafana/grafana-enterprise/actions/runs/23009165147/job/66815001544
   it.skip('Should render MultiplePoliciesView', async () => {
     renderNotificationPolicies();
-    await screen.findByTestId('search-query-input');
+    await screen.findByTestId(selectors.pages.Alerting.searchInput);
 
     expect(screen.getAllByTestId('am-root-route-container').length).toBeGreaterThan(0);
   });
@@ -691,7 +692,7 @@ describe('alertingNavigationV2', () => {
         },
       }
     );
-    await screen.findByTestId('search-query-input');
+    await screen.findByTestId(selectors.pages.Alerting.searchInput);
 
     expect((await screen.findAllByTestId('am-root-route-container')).length).toBeGreaterThan(0);
   });

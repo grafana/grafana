@@ -13,7 +13,7 @@ import {
   EventBusSrv,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getTemplateSrv, PanelRenderer } from '@grafana/runtime';
+import { getTemplateSrv, PanelRenderer } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
 import { type AdHocFilterItem, PanelChrome, useTheme2, PanelContextProvider } from '@grafana/ui';
 const TEMPO_STREAMING_PROGRESS_REF_ID = 'streaming-progress';
@@ -111,8 +111,11 @@ export const TableContainer = memo(function TableContainer({
   let dataLimited = false;
 
   if (dataFrames?.length) {
-    dataFrames = dataFrames.map((frame) => {
-      frame.fields.forEach((field, index) => {
+    // Fields (and their configs) can be shared by reference with other Explore visualizations, e.g. the
+    // graph frames a joined table frame was built from, so hiding columns must not mutate them in place.
+    dataFrames = dataFrames.map((frame) => ({
+      ...frame,
+      fields: frame.fields.map((field, index) => {
         const custom = field.config.custom ?? {};
 
         const hiddenByColumnLimit = showAll ? false : index >= MAX_NUMBER_OF_COLUMNS;
@@ -121,22 +124,27 @@ export const TableContainer = memo(function TableContainer({
         const hiddenByDatasource = custom.hideFrom?.viz === true || custom.hidden === true;
         const hidden = hiddenByDatasource || hiddenByColumnLimit;
 
-        field.config.custom = {
-          ...custom,
-          hidden,
-          hideFrom: {
-            ...custom.hideFrom,
-            viz: hidden,
+        return {
+          ...field,
+          config: {
+            ...field.config,
+            custom: {
+              ...custom,
+              hidden,
+              hideFrom: {
+                ...custom.hideFrom,
+                viz: hidden,
+              },
+            },
           },
         };
-      });
-      return frame;
-    });
+      }),
+    }));
 
     dataFrames = applyFieldOverrides({
       data: dataFrames,
       timeZone,
-      theme: config.theme2,
+      theme,
       replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
       fieldConfig: {
         defaults: {},
@@ -166,6 +174,7 @@ export const TableContainer = memo(function TableContainer({
               titleItems={[
                 !showAll && dataLimited && (
                   <LimitedDataDisclaimer
+                    key="disclaimer"
                     toggleShowAllSeries={() => setShowAll(true)}
                     info={
                       <Trans i18nKey={'table.container.show-only-series'}>

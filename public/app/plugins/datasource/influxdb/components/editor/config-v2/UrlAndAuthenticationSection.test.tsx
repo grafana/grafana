@@ -10,6 +10,7 @@ jest.mock('@grafana/runtime', () => ({
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { of } from 'rxjs';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { type BackendSrv } from '@grafana/runtime';
 
 import { InfluxVersion } from '../../../types';
@@ -73,7 +74,7 @@ describe('UrlAndAuthenticationSection', () => {
   it('calls onOptionsChange when URL is changed', () => {
     render(<UrlAndAuthenticationSection {...defaultProps} />);
 
-    const input = screen.getByTestId('influxdb-v2-config-url-input');
+    const input = screen.getByTestId(selectors.components.DataSource.InfluxDB.configPage.urlInput);
     fireEvent.change(input, { target: { value: 'http://example.com' } });
 
     expect(onOptionsChangeMock).toHaveBeenCalled();
@@ -142,7 +143,7 @@ describe('UrlAndAuthenticationSection', () => {
 
     render(<UrlAndAuthenticationSection {...props} />);
 
-    const input = screen.getByTestId('influxdb-v2-config-url-input');
+    const input = screen.getByTestId(selectors.components.DataSource.InfluxDB.configPage.urlInput);
     onOptionsChangeMock.mockClear();
     fireEvent.blur(input, { target: { value: 'https://some-random-host.example.com' } });
 
@@ -169,7 +170,7 @@ describe('UrlAndAuthenticationSection', () => {
 
     render(<UrlAndAuthenticationSection {...props} />);
 
-    const input = screen.getByTestId('influxdb-v2-config-url-input');
+    const input = screen.getByTestId(selectors.components.DataSource.InfluxDB.configPage.urlInput);
     onOptionsChangeMock.mockClear();
     fireEvent.blur(input, { target: { value: 'influxdb.io' } });
 
@@ -195,7 +196,7 @@ describe('UrlAndAuthenticationSection', () => {
     };
 
     render(<UrlAndAuthenticationSection {...props} />);
-    const input = screen.getByTestId('influxdb-v2-config-url-input');
+    const input = screen.getByTestId(selectors.components.DataSource.InfluxDB.configPage.urlInput);
 
     onOptionsChangeMock.mockClear();
     fireEvent.blur(input, { target: { value: 'https://us-east-1-1.aws.cloud2.influxdata.com' } });
@@ -222,7 +223,7 @@ describe('UrlAndAuthenticationSection', () => {
     };
 
     render(<UrlAndAuthenticationSection {...props} />);
-    const input = screen.getByTestId('influxdb-v2-config-url-input');
+    const input = screen.getByTestId(selectors.components.DataSource.InfluxDB.configPage.urlInput);
 
     onOptionsChangeMock.mockClear();
     fireEvent.blur(input, { target: { value: 'https://us-west-2-1.aws.cloud2.influxdata.com' } });
@@ -249,7 +250,7 @@ describe('UrlAndAuthenticationSection', () => {
     };
 
     render(<UrlAndAuthenticationSection {...props} />);
-    const input = screen.getByTestId('influxdb-v2-config-url-input');
+    const input = screen.getByTestId(selectors.components.DataSource.InfluxDB.configPage.urlInput);
 
     onOptionsChangeMock.mockClear();
     fireEvent.blur(input, { target: { value: 'https://influxcloud.net' } });
@@ -278,7 +279,7 @@ describe('UrlAndAuthenticationSection', () => {
     mockFetchPing({ build: 'OSS', version: '1.8.10' });
 
     render(<UrlAndAuthenticationSection {...props} />);
-    const input = screen.getByTestId('influxdb-v2-config-url-input');
+    const input = screen.getByTestId(selectors.components.DataSource.InfluxDB.configPage.urlInput);
 
     onOptionsChangeMock.mockClear();
     fireEvent.blur(input, { target: { value: 'https://someinfluxoss1url.com' } });
@@ -307,7 +308,7 @@ describe('UrlAndAuthenticationSection', () => {
     mockFetchPing({ build: 'OSS', version: '2.7.1' });
 
     render(<UrlAndAuthenticationSection {...props} />);
-    const input = screen.getByTestId('influxdb-v2-config-url-input');
+    const input = screen.getByTestId(selectors.components.DataSource.InfluxDB.configPage.urlInput);
 
     onOptionsChangeMock.mockClear();
     fireEvent.blur(input, { target: { value: 'https://someinfluxoss2url.com' } });
@@ -336,7 +337,7 @@ describe('UrlAndAuthenticationSection', () => {
     mockFetchPing({ build: undefined, version: undefined });
 
     render(<UrlAndAuthenticationSection {...props} />);
-    const input = screen.getByTestId('influxdb-v2-config-url-input');
+    const input = screen.getByTestId(selectors.components.DataSource.InfluxDB.configPage.urlInput);
 
     onOptionsChangeMock.mockClear();
     fireEvent.blur(input, { target: { value: 'https://no-known-pattern.example.com' } });
@@ -411,7 +412,7 @@ describe('UrlAndAuthenticationSection', () => {
     };
 
     render(<UrlAndAuthenticationSection {...props} />);
-    const input = screen.getByTestId('influxdb-v2-config-url-input');
+    const input = screen.getByTestId(selectors.components.DataSource.InfluxDB.configPage.urlInput);
 
     onOptionsChangeMock.mockClear();
     fireEvent.blur(input, { target: { value: 'https://us-east-1-1.aws.cloud2.influxdata.com' } });

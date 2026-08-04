@@ -155,6 +155,29 @@ describe('transformSaveModelToScene', () => {
       expect(liveNowTimer).toBeInstanceOf(behaviors.LiveNowTimer);
     });
 
+    it('should leave preload undefined when the dashboard JSON omits it', () => {
+      const dash = {
+        ...defaultDashboard,
+        title: 'test',
+        uid: 'test-uid',
+      };
+      const oldModel = new DashboardModel(dash);
+      const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
+
+      // Unset preload must stay undefined so getIsLazy can defer to the instance-wide default.
+      expect(scene.state.preload).toBeUndefined();
+    });
+
+    it('should preserve an explicit preload value from the dashboard JSON', () => {
+      const dashOff = { ...defaultDashboard, title: 'off', uid: 'off', preload: false };
+      const sceneOff = createDashboardSceneFromDashboardModel(new DashboardModel(dashOff), dashOff);
+      expect(sceneOff.state.preload).toBe(false);
+
+      const dashOn = { ...defaultDashboard, title: 'on', uid: 'on', preload: true };
+      const sceneOn = createDashboardSceneFromDashboardModel(new DashboardModel(dashOn), dashOn);
+      expect(sceneOn.state.preload).toBe(true);
+    });
+
     it('should initialize the Dashboard Scene with empty template variables', () => {
       const dash = {
         ...defaultDashboard,

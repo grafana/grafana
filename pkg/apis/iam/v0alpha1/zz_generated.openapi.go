@@ -64,6 +64,13 @@ func schema_pkg_apis_iam_v0alpha1_Display(ref common.ReferenceCallback) common.O
 							Format:      "int64",
 						},
 					},
+					"role": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"identity", "displayName"},
 			},
@@ -347,6 +354,13 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 							Description: "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
 							Type:        []string{"integer"},
 							Format:      "int64",
+						},
+					},
+					"role": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
 					"external": {

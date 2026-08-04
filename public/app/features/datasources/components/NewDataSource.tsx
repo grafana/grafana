@@ -1,6 +1,7 @@
 import { type Action } from 'redux';
 
 import { type DataSourcePluginMeta, PluginType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { LinkButton, FilterInput } from '@grafana/ui';
@@ -71,6 +72,7 @@ function NewDataSourceView({
             'datasources.new-data-source-view.placeholder-filter-by-name-or-type',
             'Filter by name or type'
           )}
+          data-testid={selectors.pages.AddDataSource.searchInput}
         />
         <div className="page-action-bar__spacer" />
         <LinkButton

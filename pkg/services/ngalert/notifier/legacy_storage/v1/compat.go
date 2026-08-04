@@ -41,41 +41,29 @@ func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
 func PostableApiAlertingConfigToModel(in definition.PostableApiAlertingConfig) PostableApiAlertingConfig {
 	return PostableApiAlertingConfig{
 		Config: Config{
-			Global:            in.Global,
-			Route:             RouteToModel(in.Route),
-			InhibitRules:      slices.Clone(in.InhibitRules),
-			Templates:         slices.Clone(in.Templates),
-			MuteTimeIntervals: MuteTimeIntervalsToModel(in.MuteTimeIntervals),
-			TimeIntervals:     TimeIntervalsToModel(in.TimeIntervals),
+			Global:        in.Global,
+			Route:         RouteToModel(in.Route),
+			InhibitRules:  slices.Clone(in.InhibitRules),
+			Templates:     slices.Clone(in.Templates),
+			TimeIntervals: TimeIntervalsToModel(in.MuteTimeIntervals, in.TimeIntervals),
 		},
 		Receivers: ReceiversToModel(in.Receivers),
 	}
 }
 
-func MuteTimeIntervalsToModel(in []config.MuteTimeInterval) []MuteTimeInterval {
-	if in == nil {
+func TimeIntervalsToModel(muteIntervals []config.MuteTimeInterval, timeIntervals []config.TimeInterval) []TimeInterval {
+	if muteIntervals == nil && timeIntervals == nil {
 		return nil
 	}
-	out := make([]MuteTimeInterval, 0, len(in))
-	for _, interval := range in {
-		out = append(out, MuteTimeInterval{
-			Name:          interval.Name,
-			TimeIntervals: interval.TimeIntervals,
-		})
+	// Fold mute time intervals into time intervals, mute first. A name cannot appear in both lists
+	// because Config rejects duplicates across them at unmarshal time, so the order only needs to be
+	// stable; mute-first matches what the config was previously flattened to when applied.
+	out := make([]TimeInterval, 0, len(muteIntervals)+len(timeIntervals))
+	for _, interval := range muteIntervals {
+		out = append(out, TimeInterval(interval))
 	}
-	return out
-}
-
-func TimeIntervalsToModel(in []config.TimeInterval) []TimeInterval {
-	if in == nil {
-		return nil
-	}
-	out := make([]TimeInterval, 0, len(in))
-	for _, interval := range in {
-		out = append(out, TimeInterval{
-			Name:          interval.Name,
-			TimeIntervals: interval.TimeIntervals,
-		})
+	for _, interval := range timeIntervals {
+		out = append(out, TimeInterval(interval))
 	}
 	return out
 }
@@ -239,29 +227,14 @@ func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
 func PostableApiAlertingConfigToDB(in PostableApiAlertingConfig) definition.PostableApiAlertingConfig {
 	return definition.PostableApiAlertingConfig{
 		Config: definition.Config{
-			Global:            in.Global,
-			Route:             RouteToDB(in.Route),
-			InhibitRules:      slices.Clone(in.InhibitRules),
-			Templates:         slices.Clone(in.Templates),
-			MuteTimeIntervals: MuteTimeIntervalsToDB(in.MuteTimeIntervals),
-			TimeIntervals:     TimeIntervalsToDB(in.TimeIntervals),
+			Global:        in.Global,
+			Route:         RouteToDB(in.Route),
+			InhibitRules:  slices.Clone(in.InhibitRules),
+			Templates:     slices.Clone(in.Templates),
+			TimeIntervals: TimeIntervalsToDB(in.TimeIntervals),
 		},
 		Receivers: ReceiversToDB(in.Receivers),
 	}
-}
-
-func MuteTimeIntervalsToDB(in []MuteTimeInterval) []config.MuteTimeInterval {
-	if in == nil {
-		return nil
-	}
-	out := make([]config.MuteTimeInterval, 0, len(in))
-	for _, interval := range in {
-		out = append(out, config.MuteTimeInterval{
-			Name:          interval.Name,
-			TimeIntervals: interval.TimeIntervals,
-		})
-	}
-	return out
 }
 
 func TimeIntervalsToDB(in []TimeInterval) []config.TimeInterval {

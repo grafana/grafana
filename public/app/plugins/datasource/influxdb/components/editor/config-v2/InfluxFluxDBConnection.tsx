@@ -6,6 +6,7 @@ import {
   onUpdateDatasourceSecureJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Input, SecretInput, Field, Space, Box } from '@grafana/ui';
 
 import {
@@ -65,6 +66,7 @@ export const InfluxFluxDBConnection = (props: Props) => {
       >
         <Input
           id="organization"
+          data-testid={selectors.components.DataSource.InfluxDB.configPage.organizationInput}
           placeholder="myorg"
           onBlur={trackInfluxDBConfigV2FluxDBDetailsOrgInputField}
           onChange={onUpdateDatasourceJsonDataOption(props, 'organization')}
@@ -81,6 +83,7 @@ export const InfluxFluxDBConnection = (props: Props) => {
       >
         <Input
           id="default-bucket"
+          data-testid={selectors.components.DataSource.InfluxDB.configPage.defaultBucketInput}
           onBlur={trackInfluxDBConfigV2FluxDBDetailsDefaultBucketInputField}
           onChange={onUpdateDatasourceJsonDataOption(props, 'defaultBucket')}
           placeholder="mybucket"
@@ -91,6 +94,7 @@ export const InfluxFluxDBConnection = (props: Props) => {
       <Field label="Token" required noMargin invalid={!!fieldErrors.token} error={fieldErrors.token}>
         <SecretInput
           id="token"
+          data-testid={selectors.components.DataSource.InfluxDB.configPage.tokenInput}
           isConfigured={tokenConfigured}
           onBlur={trackInfluxDBConfigV2FluxDBDetailsTokenInputField}
           onChange={onUpdateDatasourceSecureJsonDataOption(props, 'token')}

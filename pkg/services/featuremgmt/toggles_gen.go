@@ -159,10 +159,6 @@ const (
 	// Adds support for Kubernetes logs drilldown
 	FlagKubernetesLogsDrilldown = "kubernetesLogsDrilldown"
 
-	// FlagKubernetesQueryCaching
-	// Adds support for Kubernetes querycaching
-	FlagKubernetesQueryCaching = "kubernetesQueryCaching"
-
 	// FlagDatasourcesQueryTypes
 	// Load Query types from spec.{version}.query.{yaml|json}
 	FlagDatasourcesQueryTypes = "datasources.queryTypes"
@@ -682,10 +678,6 @@ const (
 	// Checks for deprecated Prometheus authentication methods (SigV4 and Azure), installs the relevant data source, and migrates the Prometheus data sources
 	FlagPrometheusTypeMigration = "prometheusTypeMigration"
 
-	// FlagPluginContainers
-	// Enables running plugins in containers
-	FlagPluginContainers = "pluginContainers"
-
 	// FlagCdnPluginsLoadFirst
 	// Prioritize loading plugins from the CDN before other sources
 	FlagCdnPluginsLoadFirst = "cdnPluginsLoadFirst"
@@ -737,6 +729,10 @@ const (
 	// FlagKubernetesAlertingHistorian
 	// Adds support for Kubernetes alerting historian APIs
 	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
+
+	// FlagPluginsUseMTPlugins
+	// Enables plugins decoupling from bootdata
+	FlagPluginsUseMTPlugins = "plugins.useMTPlugins"
 
 	// FlagGlobalDashboardVariables
 	// Enables global and folder-scoped dashboard variables via dashboard.grafana.app
@@ -882,10 +878,6 @@ const (
 	// Enables cache configs data migration to unified storage
 	FlagCacheConfigUnifiedStorageMigration = "cacheConfigUnifiedStorageMigration"
 
-	// FlagQuerycachingRedirectToK8SApi
-	// Redirect caching service cache config reads from legacy storage to K8s API
-	FlagQuerycachingRedirectToK8SApi = "querycaching.redirectToK8SApi"
-
 	// FlagQuerycachingEnableConnectionsClient
 	// Use connections client instead of storage to resolve datasource plugin ID in query caching
 	FlagQuerycachingEnableConnectionsClient = "querycaching.enableConnectionsClient"
@@ -962,6 +954,10 @@ const (
 	// Add support for Kubernetes reporting new APIs
 	FlagKubernetesReporting = "kubernetesReporting"
 
+	// FlagReportingRedirectReportsToK8SApi
+	// Redirect legacy report CRUD API endpoints to the Kubernetes reporting API
+	FlagReportingRedirectReportsToK8SApi = "reporting.redirectReportsToK8SApi"
+
 	// FlagGrafanaOnDemandDiagnostics
 	// Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more
 	FlagGrafanaOnDemandDiagnostics = "grafana.onDemandDiagnostics"
@@ -973,4 +969,20 @@ const (
 	// FlagFeaturesBulkFlagEvalFiltering
 	// Filters bulk OFREP flag evaluations to public-metadata flags only
 	FlagFeaturesBulkFlagEvalFiltering = "features.bulkFlagEvalFiltering"
+
+	// FlagGrafanaMultiTenantNavTree
+	// Builds the navigation tree client-side instead of reading it from /bootdata
+	FlagGrafanaMultiTenantNavTree = "grafana.multiTenantNavTree"
+
+	// FlagAuthzListFoldersViaSearch
+	// Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.
+	FlagAuthzListFoldersViaSearch = "authz.listFoldersViaSearch"
+
+	// FlagLibraryElementsFolderTreeViaSearch
+	// Build the library-elements folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips on GET /api/library-elements.
+	FlagLibraryElementsFolderTreeViaSearch = "libraryElements.folderTreeViaSearch"
+
+	// FlagAlertingStateManagerRequireWarm
+	// Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.
+	FlagAlertingStateManagerRequireWarm = "alerting.stateManagerRequireWarm"
 )

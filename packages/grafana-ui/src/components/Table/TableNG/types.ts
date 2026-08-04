@@ -71,7 +71,7 @@ export interface TableColumn extends Column<TableRow, TableSummaryRow> {
 }
 
 // Possible values for table cells based on field types
-export type TableCellValue =
+type TableCellValue =
   | string // FieldType.string, FieldType.enum
   | number // FieldType.number
   | boolean // FieldType.boolean

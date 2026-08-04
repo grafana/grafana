@@ -12,6 +12,10 @@ on:
       - 'package.json'
       - '.github/CODEOWNERS'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions: {}
 
 jobs:

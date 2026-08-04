@@ -34,6 +34,10 @@ on:
       - .github/workflows/pr-test-docker.yml
       - .github/workflows/build-docker-variants.yml
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # ── Path 1 ────────────────────────────────────────────────────────────────
   # Full source build inside Docker. Validates that the complete compilation

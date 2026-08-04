@@ -139,6 +139,8 @@ export function TableFlat(props: TableNGProps) {
 
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
+  // `width` may already be debounced by RefactoredTableNG. scrollbarWidth never is, so a scrollbar
+  // appearing/disappearing re-sizes columns immediately instead of lagging behind that debounce.
   const availableWidth = useMemo(() => width - scrollbarWidth, [width, scrollbarWidth]);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);

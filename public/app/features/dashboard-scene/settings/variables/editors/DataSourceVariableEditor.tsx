@@ -79,15 +79,15 @@ export function getDataSourceVariableOptions(variable: SceneVariable): OptionsPa
 
   return [
     new OptionsPaneItemDescriptor({
-      title: t('dashboard.edit-pane.variable.datasource-options.type', 'Type'),
+      title: t('dashboard.sidebar.variable.datasource-options.type', 'Type'),
       id: 'datasource-options-type',
       render: ({ props }) => <DataSourceTypeSelect id={props.id} variable={variable} />,
     }),
     new OptionsPaneItemDescriptor({
-      title: t('dashboard.edit-pane.variable.datasource-options.name-filter', 'Name filter'),
+      title: t('dashboard.sidebar.variable.datasource-options.name-filter', 'Name filter'),
       id: 'datasource-options-name-filter',
       description: t(
-        'dashboard.edit-pane.variable.datasource-options.name-filter-description',
+        'dashboard.sidebar.variable.datasource-options.name-filter-description',
         'Regex filter for which data source instances to include. Leave empty for all.'
       ),
       render: ({ props }) => <DataSourceNameFilter id={props.id} variable={variable} />,
@@ -115,7 +115,7 @@ function DataSourceTypeSelect({ variable, id }: InputProps) {
       options={options}
       value={pluginId}
       onChange={onChange}
-      placeholder={t('dashboard.edit-pane.variable.datasource-options.type-placeholder', 'Choose data source type')}
+      placeholder={t('dashboard.sidebar.variable.datasource-options.type-placeholder', 'Choose data source type')}
       data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.datasourceSelect}
     />
   );
@@ -135,7 +135,7 @@ function DataSourceNameFilter({ variable, id }: InputProps) {
       defaultValue={regex}
       onBlur={onBlur}
       data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable.nameFilter}
-      placeholder={t('dashboard.edit-pane.variable.datasource-options.name-filter-placeholder', 'Example: /^prod/')}
+      placeholder={t('dashboard.sidebar.variable.datasource-options.name-filter-placeholder', 'Example: /^prod/')}
     />
   );
 }

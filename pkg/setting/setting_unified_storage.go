@@ -173,6 +173,8 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MigrationChunkMaxBytes = section.Key("migration_chunk_max_bytes").MustInt64(256 * 1024 * 1024)
 	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
 	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
+	cfg.UnifiedStorageAuthzExemptionEnabled = section.Key("authz_exemption_enabled").MustBool(false)
+	cfg.UnifiedStorageAuthzExemptResources = parseCommaSeparatedList(section.Key("authz_exempt_resources").String())
 	cfg.SearchInjectFailuresPercent = section.Key("search_inject_failures_percent").MustInt(0)
 	if cfg.SearchInjectFailuresPercent < 0 {
 		cfg.SearchInjectFailuresPercent = 0
@@ -185,6 +187,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.SearchPostRankAuthzOverFetchFactor = section.Key("search_post_rank_authz_over_fetch_factor").MustInt(0)
 	cfg.SearchPostRankAuthzMaxWindow = section.Key("search_post_rank_authz_max_window").MustInt(0)
 	cfg.SearchPostRankAuthzMaxCandidates = section.Key("search_post_rank_authz_max_candidates").MustInt(0)
+	cfg.SearchPostRankAuthzFacetSampleSize = section.Key("search_post_rank_authz_facet_sample_size").MustInt(0)
 	cfg.EnableVectorBackend = section.Key("vector_backend").MustBool(false)
 	cfg.VectorAllowedInternalCollections = section.Key("vector_allowed_internal_collections").Strings(",")
 	if len(cfg.VectorAllowedInternalCollections) == 0 {
@@ -219,6 +222,10 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
 	cfg.IndexMinUpdateInterval = section.Key("index_min_update_interval").MustDuration(0)
 	cfg.IndexModificationCacheTTL = section.Key("index_modification_cache_ttl").MustDuration(0)
+	// Off by default: switching this on makes the next rebuild of every index pull
+	// in all trash the storage still holds, which is unbounded where garbage
+	// collection is disabled.
+	cfg.IndexDeletedDocuments = section.Key("index_deleted_documents").MustBool(false)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()
@@ -352,6 +359,17 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.AzureAPIVersion = embedSection.Key("azure_api_version").MustString("2024-02-01")
 	cfg.AzureDimensions = embedSection.Key("azure_dimensions").MustInt(1024)
 	cfg.AzureBatchSize = embedSection.Key("azure_batch_size").MustInt(50)
+
+	// Rerank provider for the HybridSearch RPC. Empty = disabled (results
+	// keep their RRF ordering and min_relevance is a no-op). When set, the
+	// matching provider's connection fields must also be configured.
+	rerankSection := cfg.Raw.Section("vector_reranker")
+	cfg.RerankProvider = rerankSection.Key("provider").String()
+	cfg.RerankVertexProjectID = rerankSection.Key("vertex_project_id").String()
+	cfg.RerankVertexLocation = rerankSection.Key("vertex_location").MustString("global")
+	cfg.RerankVertexModel = rerankSection.Key("vertex_model").MustString("semantic-ranker-fast-004")
+	cfg.RerankBedrockRegion = rerankSection.Key("bedrock_region").MustString("us-east-1")
+	cfg.RerankBedrockModel = rerankSection.Key("bedrock_model").MustString("cohere.rerank-v3-5:0")
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,

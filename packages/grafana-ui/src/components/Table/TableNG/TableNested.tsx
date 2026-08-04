@@ -194,6 +194,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   // nested tables don't support frozen columns; subtract expander column width
   const frozenColumns = 0;
   const numFrozenColsFullyInView = 0;
+  // `width` may already be debounced by RefactoredTableNG. scrollbarWidth never is, so a scrollbar
+  // appearing/disappearing re-sizes columns immediately instead of lagging behind that debounce.
   const availableWidth = useMemo(() => width - COLUMN.EXPANDER_WIDTH - scrollbarWidth, [width, scrollbarWidth]);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);

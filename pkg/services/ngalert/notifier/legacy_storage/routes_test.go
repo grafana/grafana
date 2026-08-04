@@ -521,6 +521,51 @@ func TestConfigRevision_ValidateRoute(t *testing.T) {
 	})
 }
 
+func TestConfigRevision_TimeIntervalUsedByRoutes(t *testing.T) {
+	rev := &ConfigRevision{
+		Config: &v1.AMConfigV1{
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{
+						Routes: []*v1.Route{
+							{
+								MuteTimeIntervals:   []string{"root-mute"},
+								ActiveTimeIntervals: []string{"root-active"},
+							},
+						},
+					},
+				},
+			},
+			ManagedRoutes: map[string]*v1.Route{
+				"managed": {
+					Routes: []*v1.Route{
+						{
+							MuteTimeIntervals:   []string{"managed-mute"},
+							ActiveTimeIntervals: []string{"managed-active"},
+						},
+					},
+				},
+				"empty": {},
+			},
+		},
+	}
+
+	for _, name := range []string{"root-mute", "root-active", "managed-mute", "managed-active"} {
+		t.Run(fmt.Sprintf("returns true for %s", name), func(t *testing.T) {
+			assert.True(t, rev.TimeIntervalUsedByRoutes(name))
+		})
+	}
+
+	t.Run("returns false if not referenced by any route", func(t *testing.T) {
+		assert.False(t, rev.TimeIntervalUsedByRoutes("unused"))
+	})
+
+	t.Run("returns false if there is no root route", func(t *testing.T) {
+		rev := &ConfigRevision{Config: &v1.AMConfigV1{}}
+		assert.False(t, rev.TimeIntervalUsedByRoutes("unused"))
+	})
+}
+
 func testConfig() *ConfigRevision {
 	rev := &ConfigRevision{
 		Config: policy_exports.Config(),
