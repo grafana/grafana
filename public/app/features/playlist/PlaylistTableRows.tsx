@@ -458,6 +458,10 @@ function PlaylistTableRow({
                                 )
                               : t('playlist.playlist-table-rows.paste-dashboard-link', 'Paste a link to this dashboard')
                           }
+                          tooltip={t(
+                            'playlist.playlist-table-rows.dashboard-link-help',
+                            'Paste a link to this dashboard with the view you want to use.'
+                          )}
                           variant={pasteLinkOpen ? 'primary' : 'secondary'}
                           expanded={pasteLinkOpen}
                           controls={dashboardLinkEditorId}
@@ -478,11 +482,6 @@ function PlaylistTableRow({
                   </div>
                   {pasteLinkOpen && (
                     <div id={dashboardLinkEditorId} className={styles.dashboardLinkEditor}>
-                      <Text variant="bodySmall" color="secondary" className={styles.dashboardLinkHelp}>
-                        <Trans i18nKey="playlist.playlist-table-rows.dashboard-link-help">
-                          Paste a link to this dashboard with the view you want to use.
-                        </Trans>
-                      </Text>
                       <Input
                         autoFocus
                         type="text"
@@ -835,9 +834,6 @@ function getStyles(theme: GrafanaTheme2) {
       [theme.breakpoints.down('sm')]: {
         gridTemplateColumns: 'minmax(0, 1fr) auto auto',
       },
-    }),
-    dashboardLinkHelp: css({
-      gridColumn: '1 / -1',
     }),
     customViewTooltip: css({
       display: 'grid',
