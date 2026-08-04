@@ -79,7 +79,7 @@
     "@grafana/data": ">=10.4.0",
     "@grafana/runtime": ">=10.4.0",
     "@grafana/ui": ">=10.4.0",
-    "react": ">=18",
-    "react-dom": ">=18"
+    "react": ">=19",
+    "react-dom": ">=19"
   }
 }
