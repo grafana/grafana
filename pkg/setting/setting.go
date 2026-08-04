@@ -784,16 +784,16 @@ type Cfg struct {
 	// Service identities allowed to call the VectorStore write RPCs.
 	// Empty = no identity restriction.
 	VectorAllowedWriteServices []string
-	VectorDBHost                     string
-	VectorDBPort                     string
-	VectorDBName                     string
-	VectorDBUser                     string
-	VectorDBPassword                 string
-	VectorDBSSLMode                  string
-	VectorIndexingEnabled            bool          // run the embedding backfiller and reconciler
-	VectorReconcilerInterval         time.Duration // reconciler tick interval; default 60s
-	VectorPromotionThreshold         int           // row count per tenant to trigger promotion
-	VectorPromoterInterval           time.Duration // promoter tick interval; 0 disables
+	VectorDBHost               string
+	VectorDBPort               string
+	VectorDBName               string
+	VectorDBUser               string
+	VectorDBPassword           string
+	VectorDBSSLMode            string
+	VectorIndexingEnabled      bool          // run the embedding backfiller and reconciler
+	VectorReconcilerInterval   time.Duration // reconciler tick interval; default 60s
+	VectorPromotionThreshold   int           // row count per tenant to trigger promotion
+	VectorPromoterInterval     time.Duration // promoter tick interval; 0 disables
 
 	// VectorSearch per-tenant query-embedding cache (DB-backed, FIFO).
 	VectorQueryCacheEnabled      bool
