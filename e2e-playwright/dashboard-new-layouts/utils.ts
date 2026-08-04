@@ -1,11 +1,10 @@
 import { type Locator, type Page } from '@playwright/test';
 
-import { selectors } from '@grafana/e2e-selectors';
 import { Components, type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../dashboards/TestV2Dashboard.json';
 
-import { Controls, Panel, Sidebar } from './page-objects';
+import { Canvas, Controls, Panels, Sidebar } from './page-objects';
 
 export const flows = {
   async addNewGenericVariable(
@@ -96,13 +95,13 @@ export async function checkRepeatedPanelTitles(
   // Keep the signature unchanged for unmigrated callers: build the
   // `components` fixture equivalent from the page context
   const components = new Components(dashboardPage.ctx);
-  const panel = new Panel({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+  const panels = new Panels({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
 
   for (const option of options) {
     if (expectHidden) {
-      await expect(panel.getContainerByTitle(`${title}${option}`)).toBeHidden();
+      await expect(panels.getPanel(`${title}${option}`)).toBeHidden();
     } else {
-      await expect(panel.getContainerByTitle(`${title}${option}`)).toBeVisible();
+      await expect(panels.getPanel(`${title}${option}`)).toBeVisible();
     }
   }
 }
@@ -116,11 +115,11 @@ export async function movePanel(
   // Keep the signature unchanged for unmigrated callers: build the
   // `components` fixture equivalent from the page context
   const components = new Components(dashboardPage.ctx);
-  const panel = new Panel({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+  const panels = new Panels({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
 
   await test.step(`Move panel "${sourcePanel}" onto "${targetPanel}"`, async () => {
     // Perform drag and drop; pixel-sensitive mechanics stay out of page objects
-    await panel.getHeaderByTitle(sourcePanel).dragTo(panel.getHeaderByTitle(targetPanel));
+    await panels.getHeader(sourcePanel).dragTo(panels.getHeader(targetPanel));
   });
 }
 
@@ -132,10 +131,10 @@ export async function getPanelPosition(
   // Keep the signature unchanged for unmigrated callers: build the
   // `components` fixture equivalent from the page context
   const components = new Components(dashboardPage.ctx);
-  const panel = new Panel({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
+  const panels = new Panels({ page: dashboardPage.ctx.page, dashboardPage, selectors, components });
 
   // boundingBox() is a point-in-time snapshot and stays out of page objects
-  return panel.getHeaderByTitle(panelTitle).boundingBox();
+  return panels.getHeader(panelTitle).boundingBox();
 }
 
 export async function verifyChanges(
@@ -186,7 +185,7 @@ export async function importTestDashboard(
   await page.getByTestId(selectors.components.ImportDashboardForm.name).fill(title);
   if (options.requiresDataSourceSelection) {
     await page.getByTestId(selectors.components.DataSourcePicker.inputV2).click();
-    await page.locator('div[data-testid="data-source-card"]').first().click();
+    await page.locator('div[data-testid^="data-testid data source card"]').first().click();
   }
   await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
   const undockMenuButton = page.locator('[aria-label="Undock menu"]');
@@ -214,15 +213,6 @@ export async function goToEmbeddedPanel(page: Page) {
   soloPanelUrl = soloPanelUrl!.replace(baseUrlRegex, baseUrl!);
 
   await page.goto(soloPanelUrl!);
-}
-
-export async function goToPanelSnapshot(page: Page) {
-  // extracting snapshot url from clipboard
-  const snapshotUrl = await page.evaluate(() => navigator.clipboard.readText());
-
-  expect(snapshotUrl).toBeDefined();
-
-  await page.goto(snapshotUrl);
 }
 
 /**
@@ -295,13 +285,19 @@ export async function moveRow(
 }
 
 export async function groupIntoTab(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addTab).click();
+  // Keep the flows signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const canvas = new Canvas({ page, dashboardPage, selectors, components });
+  await canvas.groupPanels('tab');
 }
 
 export async function groupIntoRow(page: Page, dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.groupPanels).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.CanvasGridAddActions.addRow).click();
+  // Keep the flows signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const canvas = new Canvas({ page, dashboardPage, selectors, components });
+  await canvas.groupPanels('row');
 }
 
 export async function checkRepeatedTabTitles(
@@ -345,13 +341,12 @@ export async function checkRepeatedRowTitles(
   }
 }
 
-export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage) {
-  await page.getByLabel('layout-selection-option-Auto').click();
-  // confirm layout change if applicable
-  const confirmModal = dashboardPage.getByGrafanaSelector(selectors.pages.ConfirmModal.delete);
-  if (confirmModal) {
-    await confirmModal.click();
-  }
+export async function switchToAutoGrid(page: Page, dashboardPage: DashboardPage, confirm = true) {
+  // Keep the signature unchanged for unmigrated callers: build the
+  // `components` fixture equivalent from the page context
+  const components = new Components(dashboardPage.ctx);
+  const sidebar = new Sidebar({ page, dashboardPage, selectors: dashboardPage.ctx.selectors, components });
+  await sidebar.dashboardOptions.switchLayout('auto', { confirm });
 }
 
 export async function selectRow(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
@@ -373,11 +368,6 @@ export function getRowByTitle(dashboardPage: DashboardPage, selectors: E2ESelect
 
 export function getRowWrapper(dashboardPage: DashboardPage, selectors: E2ESelectorGroups, rowTitle: string) {
   return dashboardPage.getByGrafanaSelector(selectors.components.DashboardRow.wrapper(rowTitle)).first();
-}
-
-export async function addNewPanelFromSidebar(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
-  await dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.Sidebar.addButton).click();
-  await dashboardPage.getByGrafanaSelector(selectors.components.Sidebar.newPanelButton).click();
 }
 
 export async function fillVariableValue(

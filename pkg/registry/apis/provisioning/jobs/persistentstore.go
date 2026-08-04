@@ -119,7 +119,7 @@ func NewJobStore(provisioningClient client.ProvisioningV0alpha1Interface, expiry
 // API error if the job no longer exists (completed and deleted).
 //
 // If err is not nil, the job and rollback values are always nil.
-func (s *persistentStore) Claim(ctx context.Context, namespace, name string) (job *provisioning.Job, rollback func(), err error) {
+func (s *persistentStore) Claim(ctx context.Context, namespace, name string, driverID string) (job *provisioning.Job, rollback func(), err error) {
 	ctx, span := tracing.Start(ctx, "provisioning.jobs.claim")
 	defer func() {
 		if err != nil && !errors.Is(err, ErrAlreadyClaimed) && !apierrors.IsNotFound(err) {
@@ -146,6 +146,8 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string) (jo
 			return nil, nil, apifmt.Errorf("failed to get job '%s' in '%s' for claiming: %w", name, namespace, err)
 		}
 		if current.Labels[LabelJobClaim] != "" {
+			// Another worker already holds the claim — the common contention outcome.
+			s.queueMetrics.RecordClaimRoundContended(driverID)
 			return nil, nil, ErrAlreadyClaimed
 		}
 
@@ -161,14 +163,18 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string) (jo
 		// This is the desired behavior, as it ensures that claims are atomic.
 		updatedJob, err := s.client.Jobs(namespace).Update(ctx, claimed, metav1.UpdateOptions{})
 		if apierrors.IsConflict(err) {
-			// Re-read and re-evaluate: another worker probably claimed it first.
+			// Lost the CAS race; another worker updated the job first. Record it and
+			// re-read/re-evaluate on the next attempt.
+			s.queueMetrics.RecordClaimConflict(driverID)
 			continue
 		}
 		if err != nil {
+			// This records only the failure of the claim itself (the atomic Update that
+			// takes the job). Earlier failures — identity setup and the job Get — return
+			// before this point and are intentionally not counted here.
+			s.queueMetrics.RecordClaimError(driverID)
 			return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s': %w", name, namespace, err)
 		}
-
-		s.queueMetrics.RecordWaitTime(string(updatedJob.Spec.Action), s.clock().Sub(updatedJob.CreationTimestamp.Time).Seconds())
 
 		logger.Info("job claim complete",
 			"repository", updatedJob.Spec.Repository,
@@ -181,6 +187,11 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string) (jo
 			attribute.String("job.repository", updatedJob.Spec.Repository),
 			attribute.String("job.action", string(updatedJob.Spec.Action)),
 		)
+
+		// Record the wait only now that the claim succeeded: a conflicting attempt that
+		// retried (the continue above) must not record a wait for a claim it never won.
+		s.queueMetrics.RecordWaitTime(string(updatedJob.Spec.Action), s.clock().Sub(updatedJob.CreationTimestamp.Time).Seconds())
+		s.queueMetrics.RecordClaimWon(driverID)
 
 		return updatedJob.DeepCopy(), func() {
 			// Rolling back does not need to care about the parent's cancellation state.
@@ -227,50 +238,13 @@ func (s *persistentStore) Claim(ctx context.Context, namespace, name string) (jo
 		}, nil
 	}
 
-	// Every attempt conflicted; treat the job as claimed by someone else. If it is in fact
-	// still unclaimed, the backstop poll re-discovers it.
+	// Every attempt hit a CAS conflict (the job kept changing under us) and the retries
+	// are now exhausted. Like the already-claimed case above, this counts as contended
+	// (lost to another worker); each individual lost race is also counted by
+	// claim_conflicts_total.
+	s.queueMetrics.RecordClaimRoundContended(driverID)
 	logger.Debug("job claim conflicted repeatedly - treating as claimed by another worker")
 	return nil, nil, apifmt.Errorf("failed to claim job '%s' in '%s' after %d conflicts: %w", name, namespace, claimConflictRetries, ErrAlreadyClaimed)
-}
-
-// ListUnclaimedJobs lists jobs that no worker has claimed yet, up to limit.
-// It returns a single page: callers poll periodically, so a truncated result
-// self-corrects as claims shrink the unclaimed set.
-func (s *persistentStore) ListUnclaimedJobs(ctx context.Context, limit int) ([]*provisioning.Job, error) {
-	ctx, span := tracing.Start(ctx, "provisioning.jobs.list_unclaimed_jobs")
-	defer span.End()
-
-	// Set up provisioning identity to access jobs across all namespaces
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, "*")
-	if err != nil {
-		span.RecordError(err)
-		return nil, apifmt.Errorf("failed to grant provisioning identity for listing unclaimed jobs: %w", err)
-	}
-
-	requirement, err := labels.NewRequirement(LabelJobClaim, selection.DoesNotExist, nil)
-	if err != nil {
-		span.RecordError(err)
-		return nil, apifmt.Errorf("could not create requirement: %w", err)
-	}
-
-	jobList, err := s.client.Jobs("").List(ctx, metav1.ListOptions{
-		LabelSelector: labels.NewSelector().Add(*requirement).String(),
-		Limit:         int64(limit),
-	})
-	if err != nil {
-		span.RecordError(err)
-		return nil, apifmt.Errorf("failed to list unclaimed jobs: %w", err)
-	}
-
-	result := make([]*provisioning.Job, len(jobList.Items))
-	for i := range jobList.Items {
-		result[i] = &jobList.Items[i]
-	}
-
-	span.SetAttributes(attribute.Int("jobs_found", len(result)))
-	logging.FromContext(ctx).Debug("found unclaimed jobs", "count", len(result))
-
-	return result, nil
 }
 
 // Update saves the job back to the store.
@@ -403,7 +377,6 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 	}
 	delete(job.Labels, LabelJobClaim)
 	delete(job.Labels, LabelJobClaimOwner)
-	s.queueMetrics.DecreaseQueueSize(string(job.Spec.Action))
 
 	logger.Debug("complete job complete")
 	return nil
@@ -604,8 +577,6 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 		return nil, apifmt.Errorf("failed to create job '%s' in '%s': %w", job.GetName(), job.GetNamespace(), err)
 	}
 
-	s.queueMetrics.IncreaseQueueSize(string(job.Spec.Action))
-
 	logger.Info("insert job complete")
 	return created, nil
 }
@@ -691,7 +662,6 @@ func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repositor
 			return deleted, apifmt.Errorf("failed to delete job '%s' in '%s': %w", job.GetName(), namespace, err)
 		}
 
-		s.queueMetrics.DecreaseQueueSize(string(job.Spec.Action))
 		deleted++
 	}
 

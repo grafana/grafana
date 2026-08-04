@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"runtime/debug"
 	"sort"
 	"sync"
 	"time"
@@ -15,7 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/diagnostics"
@@ -276,10 +279,24 @@ func (hs *HTTPServer) QueryDashboardDiagnostics(c *contextmodel.ReqContext) resp
 		return response.Error(http.StatusBadRequest, "at least one panel is required", nil)
 	}
 
+	// FromContext copies the request's log fields (trace ID) into the logger rather than holding the
+	// context, so the detached goroutine below keeps them for the whole run even though the request that
+	// started it is long gone. Every line also carries the job UID, which is what the status/download
+	// calls arrive with.
+	logger := diagnosticsLogger.FromContext(c.Req.Context())
+
 	job, ok := dashboardDiagnosticsJobs.create(len(reqDTO.Panels), c.SignedInUser)
 	if !ok {
+		// Worth a line rather than only a 429: the cap is process-wide, so a rejection means someone
+		// else's runs are saturating it, which the rejected caller's own retries can never resolve.
+		logger.Warn("Rejected dashboard diagnostics run: too many already in progress",
+			"panels", len(reqDTO.Panels), "maxInFlight", diagnosticsMaxInFlightJobs)
 		return response.Error(http.StatusTooManyRequests, "too many dashboard diagnostics jobs are already in progress; try again once one finishes", nil)
 	}
+	if hs.diagnosticsMetrics != nil {
+		hs.diagnosticsMetrics.RecordStarted(c.Req.Context(), diagnostics.ScopeDashboard)
+	}
+	logger.Info("Started dashboard diagnostics run", "jobUid", job.UID, "panels", len(reqDTO.Panels))
 
 	// Snapshot the identity + cache flag + Query V2 signal; the goroutine must not touch the request
 	// or its context (both are tied to the HTTP request's lifetime, which ends when we return 202).
@@ -308,15 +325,32 @@ func (hs *HTTPServer) QueryDashboardDiagnostics(c *contextmodel.ReqContext) resp
 		defer func() {
 			if r := recover(); r != nil {
 				dashboardDiagnosticsJobs.fail(uid, fmt.Errorf("dashboard diagnostics panic: %v", r))
+				if hs.diagnosticsMetrics != nil {
+					hs.diagnosticsMetrics.RecordCompleted(detachedCtx, diagnostics.ScopeDashboard, diagnostics.ResultError)
+				}
+				// The job record keeps the panic value but not where it came from, and this goroutine is
+				// detached from the request that would otherwise log the stack. Without this the only
+				// trace of a panicking plugin is "dashboard diagnostics panic: ..." in a job that expires
+				// within the hour. Logged like the support bundle's collector panic, which is the same
+				// shape of failure: a detached generation that dies mid-flight.
+				logger.Error("Dashboard diagnostics run panicked", "jobUid", uid, "panels", len(req.Panels),
+					"err", r, "stack", string(debug.Stack()))
 			}
 		}()
 
 		archive, err := hs.buildDashboardDiagnosticsArchive(detachedCtx, user, skipDSCache, useQueryDataNew, req, uid)
 		if err != nil {
 			dashboardDiagnosticsJobs.fail(uid, err)
+			if hs.diagnosticsMetrics != nil {
+				hs.diagnosticsMetrics.RecordCompleted(detachedCtx, diagnostics.ScopeDashboard, diagnostics.ResultError)
+			}
+			logger.Error("Dashboard diagnostics run failed", "jobUid", uid, "panels", len(req.Panels), "err", err)
 			return
 		}
 		dashboardDiagnosticsJobs.complete(uid, archive)
+		if hs.diagnosticsMetrics != nil {
+			hs.diagnosticsMetrics.RecordCompleted(detachedCtx, diagnostics.ScopeDashboard, diagnostics.ResultSuccess)
+		}
 	}(job.UID, user, skipDSCache, useQueryDataNew, reqDTO)
 
 	return response.JSON(http.StatusAccepted, map[string]any{"uid": job.UID, "state": jobPending})
@@ -350,6 +384,10 @@ func (hs *HTTPServer) DownloadDashboardDiagnostics(c *contextmodel.ReqContext) r
 	uid := web.Params(c.Req)[":uid"]
 	archive, state, ok := dashboardDiagnosticsJobs.archiveOf(uid, c.SignedInUser)
 	if !ok {
+		// A download that arrives after the job was pruned (retention TTL, max-entries eviction, or a
+		// restart -- the store is in-memory) looks identical to a bad UID from the client's side. Log it
+		// so "the download 404s" can be told apart from "generation never ran".
+		diagnosticsLogger.FromContext(c.Req.Context()).Info("Diagnostics download for an unknown or expired job", "jobUid", uid)
 		return response.Error(http.StatusNotFound, "diagnostics job not found (it may have expired)", nil)
 	}
 	if state != jobComplete {
@@ -369,11 +407,19 @@ func (hs *HTTPServer) DownloadDashboardDiagnostics(c *contextmodel.ReqContext) r
 // job progress as panels complete, then delegates archive assembly to the diagnostics service. A
 // non-data panel (no queries) is recorded as skipped rather than run.
 func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user identity.Requester, skipDSCache, useQueryDataNew bool, reqDTO dashboardDiagnosticsRequest, jobUID string) ([]byte, error) {
+	logger := diagnosticsLogger.FromContext(ctx)
+	started := time.Now()
+
 	queryData := hs.queryDataService.QueryData
 	if useQueryDataNew {
 		queryData = hs.queryDataService.QueryDataNew
 	}
 
+	// Fallback for panels the client posts without inline JSON (it sends the dashboard once instead).
+	vizPluginIDByPanelID := diagnostics.PanelPluginIDs(reqDTO.Dashboard)
+	var envRefs diagnostics.EnvironmentRefs
+
+	outcome := dashboardDiagnosticsOutcome{jobUID: jobUID, panelsTotal: len(reqDTO.Panels)}
 	panels := make([]diagnostics.DashboardPanel, 0, len(reqDTO.Panels))
 	for i, p := range reqDTO.Panels {
 		// ctx is detachedCtx (see QueryDashboardDiagnostics), derived from context.WithoutCancel, so
@@ -389,6 +435,14 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 			Datasources: panelDatasourceUIDs(p.MetricRequest),
 		}
 
+		// Recorded before the skip below: a non-data panel still has a viz plugin worth naming.
+		panelRefs := panelEnvironmentRefs(p.MetricRequest, p.Panel)
+		if len(panelRefs.PanelPluginIDs) == 0 {
+			panelRefs.AddPanelPluginID(vizPluginIDByPanelID[p.ID])
+		}
+		panel.PluginIDs = panelRefs.PluginIDs()
+		envRefs.Merge(panelRefs)
+
 		// A single panel's unserializable query request must not abort the whole archive: record it
 		// against this panel (surfaced in the manifest) and carry on, the same way query and capture
 		// failures are isolated below. The panel still runs, so its HAR and response are still captured.
@@ -400,6 +454,7 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 
 		if len(p.Queries) == 0 {
 			panel.Skipped = "no queries (non-data panel)"
+			outcome.panelsSkipped++
 			panels = append(panels, panel)
 			dashboardDiagnosticsJobs.setProgress(jobUID, i+1)
 			continue
@@ -418,12 +473,87 @@ func (hs *HTTPServer) buildDashboardDiagnosticsArchive(ctx context.Context, user
 		if panel.QueryErr == nil {
 			panel.QueryErr = errors.Join(diagnostics.ResponseError(resp), diagnostics.PluginCaptureError(resp))
 		}
+		if panel.QueryErr != nil {
+			outcome.panelsFailed++
+			// Per panel, at debug: the summary below reports how many failed, and this is what says which
+			// ones and why without asking the operator to unpack the archive's manifest.json.
+			logger.Debug("Dashboard diagnostics panel query failed", "jobUid", jobUID, "panelId", p.ID, "err", panel.QueryErr)
+		}
+		// Asked before BuildDashboard consumes the external plugins' __har__ responses out of resp; after
+		// it, every externalized datasource would report as having captured nothing.
+		if diagnostics.HasCapturedHAR(resp, harBuffer) {
+			outcome.panelsCaptured++
+		}
 
 		panels = append(panels, panel)
 		dashboardDiagnosticsJobs.setProgress(jobUID, i+1)
 	}
 
-	return diagnostics.NewBundler().BuildDashboard(reqDTO.Dashboard, panels)
+	env := diagnostics.CollectEnvironment(ctx, hs.Cfg, hs.pluginStore, envRefs)
+	archive, err := diagnostics.NewBundler(env).BuildDashboard(reqDTO.Dashboard, panels)
+	if err != nil {
+		return nil, err
+	}
+	outcome.durationMs = time.Since(started).Milliseconds()
+	outcome.bundleBytes = len(archive)
+	logDashboardDiagnosticsBundle(logger, outcome)
+	return archive, nil
+}
+
+// dashboardDiagnosticsOutcome is what one whole-dashboard run produced, for the terminal log line.
+// Ratios, not identities: which panels and datasources were involved is in the archive's manifest.json.
+type dashboardDiagnosticsOutcome struct {
+	jobUID      string
+	durationMs  int64
+	bundleBytes int
+	panelsTotal int
+	// panelsSkipped counts non-data panels, which never ran and are not failures.
+	panelsSkipped int
+	// panelsFailed counts panels whose queries errored. Captured failures are what the bundle is for, so
+	// this is a property of the dashboard, not of the run.
+	panelsFailed int
+	// panelsCaptured counts panels that produced HTTP traffic. Run panels beyond this count contributed
+	// no traffic.har at all.
+	panelsCaptured int
+}
+
+// logDashboardDiagnosticsBundle logs a completed archive, warning when no panel that ran produced any
+// captured traffic -- an archive of panel JSON and nothing to diagnose, which is what a non-HTTP
+// datasource (SQL, Mongo) or a plugin with its own HTTP client yields. A partial capture stays at info:
+// a mixed dashboard legitimately has panels of both kinds, and the manifest names which is which.
+func logDashboardDiagnosticsBundle(logger log.Logger, o dashboardDiagnosticsOutcome) {
+	panelsRun := o.panelsTotal - o.panelsSkipped
+	args := []any{"jobUid", o.jobUID, "durationMs", o.durationMs, "bundleBytes", o.bundleBytes,
+		"panelsTotal", o.panelsTotal, "panelsRun", panelsRun, "panelsSkipped", o.panelsSkipped,
+		"panelsFailed", o.panelsFailed, "panelsCaptured", o.panelsCaptured}
+	if panelsRun > 0 && o.panelsCaptured == 0 {
+		logger.Warn("Generated dashboard diagnostics bundle with no captured traffic", args...)
+		return
+	}
+	logger.Info("Generated dashboard diagnostics bundle", args...)
+}
+
+// panelEnvironmentRefs collects the plugins one panel referenced, from the payload the client
+// already posted: each query's datasource type, plus the panel's viz plugin ID.
+func panelEnvironmentRefs(req dtos.MetricRequest, panelJSON json.RawMessage) diagnostics.EnvironmentRefs {
+	var refs diagnostics.EnvironmentRefs
+	for _, q := range req.Queries {
+		if q == nil {
+			continue
+		}
+		ds := q.Get("datasource")
+		uid := ds.Get("uid").MustString()
+		pluginID := ds.Get("type").MustString()
+		// Expression and ML nodes are served by pkg/expr, not by a plugin, so recording their type
+		// would have the plugin store report a phantom uninstalled plugin. Recorded with no plugin ID
+		// rather than dropped, so every UID in the manifest still resolves in environment.json.
+		if expr.IsDataSource(uid) || uid == expr.MLDatasourceUID {
+			pluginID = ""
+		}
+		refs.AddDatasource(uid, pluginID)
+	}
+	refs.AddPanelPluginID(diagnostics.PanelPluginID(panelJSON))
+	return refs
 }
 
 // panelDatasourceUIDs returns the unique datasource UIDs referenced by a panel's queries.

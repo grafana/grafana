@@ -1,16 +1,23 @@
-import { screen, render, waitFor } from '@testing-library/react';
+import { act, screen, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { ConstantVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
-import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import {
+  AnnoKeyIgnorePredefinedVariables,
+  AnnoKeyManagerKind,
+  DENY_ALL_PREDEFINED,
+  ManagerKind,
+} from 'app/features/apiserver/types';
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { serializeIgnorePredefinedVariables } from '../utils/predefinedVariableDenyList';
 
 import { type SaveDashboardDrawer } from './SaveDashboardDrawer';
 import {
@@ -229,6 +236,14 @@ describe('SaveDashboardDrawer', () => {
   });
 
   describe('When a dashboard is managed by an external system', () => {
+    beforeEach(() => {
+      config.provisioningEnabled = true;
+    });
+
+    afterEach(() => {
+      config.provisioningEnabled = false;
+    });
+
     it('It should show the changes tab if the resource can be edited', async () => {
       const { dashboard, openAndRender } = setup({
         meta: {
@@ -300,6 +315,64 @@ describe('SaveDashboardDrawer', () => {
 
       const dataSent = saveDashboardMutationMock.mock.calls[0][0];
       expect(dataSent.dashboard.uid).toEqual('');
+      expect(dataSent.k8s).toBeUndefined();
+    });
+
+    it('restores meta on cancel after a Save As folder change', async () => {
+      const { dashboard, openAndRender } = setup({
+        meta: { folderUid: 'original-folder', folderTitle: 'Original' },
+      });
+      const initialFolderUid = dashboard.getInitialState()?.meta.folderUid;
+
+      const drawer = openAndRender({ saveAsCopy: true });
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      act(() => {
+        dashboard.setState({
+          meta: {
+            ...dashboard.state.meta,
+            folderUid: 'other-folder',
+            folderTitle: 'Other',
+          },
+        });
+      });
+      expect(dashboard.state.meta.folderUid).toBe('other-folder');
+
+      act(() => {
+        drawer.onClose();
+      });
+
+      expect(dashboard.state.overlay).toBeUndefined();
+      expect(dashboard.state.meta.folderUid).toBe(initialFolderUid);
+    });
+
+    it('Should persist predefined-variable denylist annotations', async () => {
+      const denyList = serializeIgnorePredefinedVariables([DENY_ALL_PREDEFINED]);
+      const { dashboard, openAndRender } = setup();
+      dashboard.setState({
+        meta: {
+          ...dashboard.state.meta,
+          k8s: {
+            ...dashboard.state.meta.k8s,
+            annotations: {
+              ...dashboard.state.meta.k8s?.annotations,
+              [AnnoKeyIgnorePredefinedVariables]: denyList,
+            },
+          },
+        },
+      });
+
+      openAndRender({ saveAsCopy: true });
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      mockSaveDashboard();
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      const dataSent = saveDashboardMutationMock.mock.calls[0][0];
+      expect(dataSent.k8s).toEqual({
+        annotations: { [AnnoKeyIgnorePredefinedVariables]: denyList },
+      });
+      expect(dataSent.k8s?.name).toBeUndefined();
     });
   });
 

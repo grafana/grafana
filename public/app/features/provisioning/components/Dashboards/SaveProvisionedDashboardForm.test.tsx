@@ -28,6 +28,9 @@ jest.mock('@grafana/runtime', () => {
           state: 'alpha',
         },
       },
+      // getProvisionedMeta's k8s folder lookup isn't mocked in this suite; keep it disabled
+      // so folder selection doesn't attempt a real getFolder query.
+      provisioningEnabled: false,
     },
   };
 });
@@ -655,6 +658,8 @@ describe('SaveProvisionedDashboardForm', () => {
         }),
         setState: jest.fn(),
         closeModal: jest.fn(),
+        getSaveModel: jest.fn().mockReturnValue({}),
+        saveCompleted: jest.fn(),
         getSaveResource: jest.fn().mockReturnValue(updatedDashboard),
         getSaveResourceFromSpec: jest.fn().mockReturnValue(updatedDashboard),
         setManager: jest.fn(),
@@ -1461,9 +1466,6 @@ describe('SaveProvisionedDashboardForm', () => {
   });
 
   it('syncs dashboard meta with the created folder so defaults recompute against it', async () => {
-    const FOLDER_BASE = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace';
-    server.use(http.get(`${FOLDER_BASE}/folders/:name`, () => HttpResponse.json({ metadata: { annotations: {} } })));
-
     let dashboardRequest: { url: URL; body: unknown } | null = null;
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {

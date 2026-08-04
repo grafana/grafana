@@ -6,6 +6,7 @@ import { AddOptions } from './AddOptions';
 import { ContentOutline } from './ContentOutline';
 import { DashboardOptions } from './DashboardOptions';
 import { PanelOptions } from './PanelOptions';
+import { TabOptions } from './TabOptions';
 import { Toolbar } from './Toolbar';
 import { VariableOptions } from './VariableOptions';
 
@@ -18,6 +19,7 @@ export class Sidebar extends PageObject {
   public dashboardOptions: DashboardOptions;
   public variableOptions: VariableOptions;
   public panelOptions: PanelOptions;
+  public tabOptions: TabOptions;
 
   constructor(args: PageObjectArgs) {
     super(args);
@@ -27,6 +29,7 @@ export class Sidebar extends PageObject {
     this.dashboardOptions = new DashboardOptions(args);
     this.variableOptions = new VariableOptions(args);
     this.panelOptions = new PanelOptions(args);
+    this.tabOptions = new TabOptions(args);
   }
 
   getContainer() {
@@ -49,15 +52,13 @@ export class Sidebar extends PageObject {
     });
   }
 
-  async clickDeleteButton(options: { confirm: boolean } = { confirm: false }) {
-    const stepTitle = options.confirm
-      ? 'Delete selected element(s) (with confirmation)'
-      : 'Click delete button in sidebar';
+  async clickDeleteButton({ confirm = false }: { confirm?: boolean } = {}) {
+    const stepTitle = confirm ? 'Delete selected element(s) (with confirmation)' : 'Click delete button in sidebar';
 
     await test.step(stepTitle, async () => {
       await this.dashboardPage.getByGrafanaSelector(this.selectors.components.EditPaneHeader.deleteButton).click();
 
-      if (options.confirm) {
+      if (confirm) {
         await this.dashboardPage.getByGrafanaSelector(this.selectors.pages.ConfirmModal.delete).click();
       }
     });

@@ -123,6 +123,19 @@ func TestAddCapabilityFieldMappings_FilterAndText(t *testing.T) {
 	assert.False(t, kw.DocValues)
 }
 
+func TestAddCapabilityFieldMappings_TextFacetStoresKeywordVariant(t *testing.T) {
+	got := flatMappings(t, resource.SearchFieldDefinition{
+		Name: "summary",
+		Type: resource.SearchFieldTypeString,
+		Capabilities: []resource.SearchCapability{
+			resource.SearchCapabilityText,
+			resource.SearchCapabilityFacet,
+		},
+	})
+
+	assert.True(t, got["summary_keyword"].Store, "post-rank facets load native keyword terms")
+}
+
 func TestAddCapabilityFieldMappings_FullSet(t *testing.T) {
 	// A field that declares the full capability set produces the same shape
 	// as today's hardcoded standard "title" field: three mappings.
@@ -203,8 +216,8 @@ func TestAddCapabilityFieldMappings_SortWithoutFilter(t *testing.T) {
 }
 
 func TestAddCapabilityFieldMappings_FacetOnly(t *testing.T) {
-	// facet shares the keyword variant. Without retrieve, the field is
-	// indexed but not stored — same as the existing "managedBy" mapping.
+	// facet shares the keyword variant, and facet capability implies stored:
+	// app-side post-rank facet aggregation reads the stored value.
 	got := flatMappings(t, resource.SearchFieldDefinition{
 		Name:         "managedBy",
 		Type:         resource.SearchFieldTypeString,
@@ -213,7 +226,7 @@ func TestAddCapabilityFieldMappings_FacetOnly(t *testing.T) {
 	require.Equal(t, []string{"managedBy"}, slices.Sorted(maps.Keys(got)))
 	m := got["managedBy"]
 	assert.Equal(t, keyword.Name, m.Analyzer)
-	assert.False(t, m.Store)
+	assert.True(t, m.Store)
 }
 
 func TestKeywordFieldsForMapping(t *testing.T) {
@@ -270,6 +283,71 @@ func TestKeywordFieldsForMapping_StandardNameWins(t *testing.T) {
 	fields := keywordFieldsForMapping(provider, gvr.Group, gvr.Resource, nil)
 	assert.Equal(t, resource.SEARCH_FIELD_TAGS, fields[resource.SEARCH_FIELD_TAGS].name)
 	assert.Equal(t, resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_TAGS, fields[resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_TAGS].name)
+}
+
+func TestStoredFacetFieldsForMapping(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: {
+			{Name: "summary", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFacet}},
+			{Name: "category", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFacet}},
+			{Name: "facetOnly", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFacet}},
+		},
+	}, nil)
+
+	fields := storedFacetFieldsForMapping(provider, gvr.Group, gvr.Resource)
+	assert.Equal(t, resource.SEARCH_FIELD_TAGS, fields[resource.SEARCH_FIELD_TAGS])
+	assert.Equal(t, resource.SEARCH_FIELD_MANAGED_BY, fields[resource.SEARCH_FIELD_MANAGED_BY])
+	assert.Equal(t, "fields.summary_keyword", fields["summary"])
+	assert.Equal(t, "fields.summary_keyword", fields["fields.summary"])
+	assert.Equal(t, "fields.category", fields["category"])
+	assert.Equal(t, "fields.category", fields["fields.category"])
+	assert.Equal(t, "fields.facetOnly", fields["facetOnly"])
+	assert.NotContains(t, fields, resource.SEARCH_FIELD_FOLDER)
+	assert.NotContains(t, fields, "labels.region")
+}
+
+func TestPostRankFacetTermsMatchKeywordVariant(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
+	defs := []resource.SearchFieldDefinition{{
+		Name:         "summary",
+		Type:         resource.SearchFieldTypeString,
+		Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityFacet},
+	}}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: defs,
+	}, nil)
+	mappings, err := GetBleveMappings(provider, gvr.Group, gvr.Resource, nil)
+	require.NoError(t, err)
+	idx, err := bleve.NewMemOnly(mappings)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, idx.Close()) })
+
+	doc := &resource.IndexableDocument{
+		Key:    &resourcepb.ResourceKey{Group: gvr.Group, Resource: gvr.Resource},
+		Fields: map[string]any{"summary": "Mixed Case"},
+	}
+	populateFieldVariants(doc, fieldVariantsOf(defs))
+	require.NoError(t, idx.Index("widget", doc))
+
+	req := bleve.NewSearchRequest(bleve.NewMatchAllQuery())
+	req.Fields = []string{"fields.summary_keyword"}
+	req.AddFacet("summary", bleve.NewFacetRequest("fields.summary_keyword", 10))
+	result, err := idx.Search(req)
+	require.NoError(t, err)
+	require.Len(t, result.Hits, 1)
+
+	agg := newFacetAggregator(map[string]*resourcepb.ResourceSearchRequest_Facet{
+		"summary": {Field: "summary", Limit: 10},
+	}, storedFacetFieldsForMapping(provider, gvr.Group, gvr.Resource))
+	agg.add(result.Hits[0])
+
+	nativeTerms := result.Facets["summary"].Terms.Terms()
+	require.Len(t, nativeTerms, 1)
+	postRankTerms := agg.build()["summary"].Terms
+	require.Equal(t, nativeTerms[0].Term, postRankTerms[0].Term)
+	require.Equal(t, int64(nativeTerms[0].Count), postRankTerms[0].Count)
+	assert.Equal(t, "mixed case", postRankTerms[0].Term)
 }
 
 func TestTextQueryKindsForMapping(t *testing.T) {

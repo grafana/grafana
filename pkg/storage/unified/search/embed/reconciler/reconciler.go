@@ -683,7 +683,7 @@ func (s *Reconciler) processEvent(ctx context.Context, builder embed.Builder, ev
 		Name:      ev.name,
 	}
 
-	items, err := builder.Extract(ctx, key, ev.value, "")
+	items, err := builder.Extract(ctx, key, ev.value)
 	if err != nil {
 		statusLabel = "extract_error"
 		return fmt.Errorf("extract: %w", err)

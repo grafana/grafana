@@ -178,6 +178,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.stateManagerRequireWarm",
+        "resourceVersion": "1785789740487",
+        "creationTimestamp": "2026-08-03T20:42:20Z"
+      },
+      "spec": {
+        "description": "Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.syncExternalAlertmanager",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
@@ -3131,7 +3145,8 @@
       "metadata": {
         "name": "grafana.unifiedHomepage",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-22T21:47:47Z"
       },
       "spec": {
         "description": "Replaces the bundled home dashboard with the unified homepage React page",
@@ -4372,15 +4387,18 @@
     {
       "metadata": {
         "name": "newSavedQueriesExperience",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1784725458981",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-22 13:04:18.981698 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new Saved queries (query library) modal experience",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5174,15 +5192,18 @@
     {
       "metadata": {
         "name": "queryLibrary",
-        "resourceVersion": "1779440584464",
+        "resourceVersion": "1784725239984",
         "creationTimestamp": "2022-10-07T18:31:45Z",
-        "deletionTimestamp": "2023-03-20T16:00:14Z"
+        "deletionTimestamp": "2023-03-20T16:00:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-22 13:00:39.984125 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Saved queries (query library) feature",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5549,14 +5570,17 @@
     {
       "metadata": {
         "name": "savedQueriesRBAC",
-        "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "resourceVersion": "1784725458981",
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-07-22 13:04:18.981698 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables Saved queries (query library) RBAC permissions",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/sharing-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5882,6 +5906,36 @@
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "table.autoColumnWidths",
+        "resourceVersion": "1784908309843",
+        "creationTimestamp": "2026-07-24T15:51:49Z"
+      },
+      "spec": {
+        "description": "Sizes TableNG auto-width columns to fit their content instead of distributing evenly",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "table.paginationPageSize",
+        "resourceVersion": "1785352708239",
+        "creationTimestamp": "2026-07-29T19:18:28Z"
+      },
+      "spec": {
+        "description": "Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
