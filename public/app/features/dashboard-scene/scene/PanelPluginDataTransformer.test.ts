@@ -25,11 +25,18 @@ import { PanelPluginDataTransformer, wrapInPanelPluginDataTransformer } from './
 const plugins = new Map<string, PanelPlugin>();
 /** Plugin ids that must be awaited rather than resolved from the synchronous cache. */
 const coldPlugins = new Set<string>();
+/**
+ * Plugin ids invisible to Grafana's importer, mirroring runtime panel plugins: those live in a
+ * registry inside scenes (reached below through `setPluginImportUtils` and `VizPanel.getPlugin`),
+ * while `importPanelPlugin` rejects for their ids.
+ */
+const importerBlindPlugins = new Set<string>();
 
 jest.mock('app/features/plugins/importPanelPlugin', () => ({
-  syncGetPanelPlugin: (id: string) => (coldPlugins.has(id) ? undefined : plugins.get(id)),
+  syncGetPanelPlugin: (id: string) =>
+    coldPlugins.has(id) || importerBlindPlugins.has(id) ? undefined : plugins.get(id),
   importPanelPlugin: (id: string) => {
-    const plugin = plugins.get(id);
+    const plugin = importerBlindPlugins.has(id) ? undefined : plugins.get(id);
     return plugin ? Promise.resolve(plugin) : Promise.reject(new Error(`Plugin ${id} not found`));
   },
 }));
@@ -103,6 +110,7 @@ describe('PanelPluginDataTransformer', () => {
   beforeEach(() => {
     plugins.clear();
     coldPlugins.clear();
+    importerBlindPlugins.clear();
   });
 
   it('runs plugin transformations before user transformations', async () => {
@@ -209,6 +217,35 @@ describe('PanelPluginDataTransformer', () => {
     await waitFor(() => {
       expect(userTransformer.state.data?.series[0]?.fields.map((f) => f.name)).toContain('level');
     });
+  });
+
+  it('applies transformations from a plugin only the panel can resolve', async () => {
+    registerPlugin('runtime-only', (p) => p.setDataTransformations(() => [extractLabels]));
+    importerBlindPlugins.add('runtime-only');
+
+    const { panel, userTransformer } = buildPipeline({ pluginId: 'runtime-only', series: [frameWithLabels()] });
+    // Activating the panel loads its plugin, which is what `getPlugin()` reads. Resolving
+    // through the importer instead would reject for this id and error the panel's data.
+    activateFullSceneTree(panel);
+
+    await waitFor(() => {
+      expect(userTransformer.state.data?.series[0]?.fields.map((f) => f.name)).toContain('level');
+    });
+  });
+
+  it('passes data through when the plugin id resolves nowhere', async () => {
+    // The unconfigured-panel scenario: a fresh panel's id is unknown to the importer and the
+    // panel has not loaded a plugin. Resolution failure must degrade to pass-through — erroring
+    // here would break every newly added panel while its data still streams in.
+    const series = [frameWithLabels()];
+    const { userTransformer } = buildPipeline({ pluginId: 'not-installed', series });
+    activateFullSceneTree(userTransformer);
+
+    await waitFor(() => {
+      expect(userTransformer.state.data?.state).toBe(LoadingState.Done);
+    });
+    expect(userTransformer.state.data?.errors).toBeUndefined();
+    expect(userTransformer.state.data?.series[0] === series[0]).toBe(true);
   });
 
   it('re-runs the supplier when the panel switches visualization', async () => {

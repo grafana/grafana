@@ -1,4 +1,4 @@
-import { from, of, switchMap } from 'rxjs';
+import { catchError, from, of, switchMap } from 'rxjs';
 
 import {
   type CustomTransformOperator,
@@ -42,24 +42,37 @@ export class PanelPluginDataTransformer extends SceneDataTransformer {
   }
 
   /**
-   * Resolves the panel plugin inside the pipeline rather than at construction time: scenes are
-   * built before `VizPanel` activates and loads its plugin, so there is nothing to ask when this
-   * object is created.
+   * Resolves the plugin inside the pipeline rather than at construction time: scenes are
+   * built before `VizPanel` activates and loads its plugin, so there is nothing to ask when
+   * this object is created.
+   *
+   * The panel's own plugin is preferred — scenes resolves it through Grafana's cache AND its
+   * runtime-plugin registry, so ids like the unconfigured panel's are found here despite being
+   * invisible to `importPanelPlugin`. The awaited import remains as a fallback for plugins the
+   * panel has not loaded yet. An id that no layer resolves passes the frames through untouched
+   * and is retried when the panel's plugin lands (see the activation handler): resolution
+   * failure must never error the panel's data.
    */
   private _runPluginTransformations: CustomTransformOperator = (ctx) => (source) =>
     source.pipe(
       switchMap((frames) => {
-        const pluginId = getAncestorVizPanel(this)?.state.pluginId;
+        const panel = getAncestorVizPanel(this);
 
-        if (!pluginId || frames.length === 0) {
+        if (!panel || frames.length === 0) {
           return of(frames);
         }
 
-        const loaded = syncGetPanelPlugin(pluginId);
-        const plugin$ = loaded ? of(loaded) : from(importPanelPlugin(pluginId));
+        const loaded = panel.getPlugin() ?? syncGetPanelPlugin(panel.state.pluginId);
+        const plugin$ = loaded
+          ? of(loaded)
+          : from(importPanelPlugin(panel.state.pluginId)).pipe(catchError(() => of(undefined)));
 
         return plugin$.pipe(
-          switchMap((plugin: PanelPlugin) => {
+          switchMap((plugin: PanelPlugin | undefined) => {
+            if (!plugin) {
+              return of(frames);
+            }
+
             const configs = plugin.getDataTransformations({ series: frames }).filter(appliesToSeriesTopic);
 
             // Passing the input frames through untouched preserves their identity: the base
@@ -88,6 +101,20 @@ export class PanelPluginDataTransformer extends SceneDataTransformer {
         }
       })
     );
+
+    // Data can be processed before the panel loads its plugin: the panel's own activation loads
+    // the plugin before activating `$data`, but other activators (the dashboard datasource's
+    // source-panel path, tests) reach the data chain directly. Re-run once the plugin lands —
+    // `VizPanel._pluginLoaded` always ends in a `setState`, so panel state is a reliable signal.
+    if (!panel.getPlugin()) {
+      const pluginLoadSub = panel.subscribeToState(() => {
+        if (panel.getPlugin()) {
+          pluginLoadSub.unsubscribe();
+          this.reprocessTransformations();
+        }
+      });
+      this._subs.add(pluginLoadSub);
+    }
   }
 }
 
