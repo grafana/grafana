@@ -7690,7 +7690,7 @@
       "add-variable": "Add variable"
     },
     "variable-edit-actions": {
-      "edit-custom-options": "Edit options",
+      "edit-custom-values": "Edit values",
       "edit-query": "Edit query",
       "variable-settings": "Variable settings"
     },

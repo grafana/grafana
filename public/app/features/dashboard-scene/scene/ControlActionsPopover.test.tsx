@@ -207,11 +207,11 @@ describe('<VariableEditActions />', () => {
     return { ...renderResult, onClickEdit, onClickEditQuery, onClickDuplicate, onClickDelete, onAncestorPointerDown };
   }
 
-  test('renders variable settings, edit options, duplicate, and delete controls for a custom variable', () => {
+  test('renders variable settings, edit values, duplicate, and delete controls for a custom variable', () => {
     renderVariableEditActions(buildVariable());
 
     expect(screen.getByRole('button', { name: 'Variable settings' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Edit options' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Edit values' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Edit query' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
@@ -249,11 +249,11 @@ describe('<VariableEditActions />', () => {
     });
   });
 
-  describe('when the user clicks on Edit options', () => {
+  describe('when the user clicks on Edit values', () => {
     test('calls onClickEditQuery and the event does not bubble to ancestors', () => {
       const { onClickEdit, onClickEditQuery, onAncestorPointerDown } = renderVariableEditActions(buildVariable());
 
-      fireEvent.pointerDown(screen.getByRole('button', { name: 'Edit options' }));
+      fireEvent.pointerDown(screen.getByRole('button', { name: 'Edit values' }));
 
       expect(onClickEditQuery).toHaveBeenCalledTimes(1);
       expect(onClickEdit).not.toHaveBeenCalled();

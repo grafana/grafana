@@ -140,7 +140,7 @@ export function VariableEditActions({
             onPointerDown={onClickEditQueryInternal}
           >
             {variable instanceof CustomVariable
-              ? t('dashboard-scene.variable-edit-actions.edit-custom-options', 'Edit options')
+              ? t('dashboard-scene.variable-edit-actions.edit-custom-values', 'Edit values')
               : t('dashboard-scene.variable-edit-actions.edit-query', 'Edit query')}
           </Button>
         </>
