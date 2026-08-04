@@ -36,6 +36,9 @@ func TestIntegrationShortURL(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("with dual write (unified storage, mode 0)", func(t *testing.T) {
+		// ShortURL is migrated to unified storage and enforced to mode 5, so
+		// legacy-only (mode 0) is no longer a supported configuration.
+		t.Skip("shorturls is migrated to unified storage; legacy-only mode is no longer supported")
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    false, // required for  unified storage
 			DisableAnonymous:     true,
@@ -55,6 +58,11 @@ func TestIntegrationShortURL(t *testing.T) {
 			grafanarest.Mode5,
 		} {
 			t.Run(fmt.Sprintf("dual write (unified storage, mode %d)", mode), func(t *testing.T) {
+				// Dual-write (mode 1) is no longer a supported configuration for
+				// shorturls now that it is migrated to unified storage; mode 5 runs.
+				if mode == grafanarest.Mode1 {
+					t.Skip("shorturls is migrated to unified storage; dual-write mode is no longer supported")
+				}
 				helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 					AppModeProduction:    false,
 					DisableAnonymous:     true,
