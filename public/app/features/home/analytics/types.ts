@@ -25,16 +25,38 @@ type Satisfies<Constraint, Target extends Constraint> = Target;
 
 export type CtaClicked = Satisfies<
   CtaClickedBase,
-  | {
+  | ({
       surface: 'alerts_card';
-      action: 'alert_detail' | 'create_rule' | 'view_all_alerts' | 'view_all_rules';
-      placement: 'list' | 'empty_state' | 'footer';
-    }
-  | {
+    } & (
+      | {
+          action: 'alert_detail';
+          placement: 'list';
+        }
+      | {
+          action: 'create_rule';
+          placement: 'empty_state' | 'footer';
+        }
+      | {
+          action: 'view_all_alerts' | 'view_all_rules';
+          placement: 'footer';
+        }
+    ))
+  | ({
       surface: 'incidents_card';
-      action: 'incident_detail' | 'declare_incident' | 'view_all_incidents';
-      placement: 'list' | 'empty_state' | 'footer';
-    }
+    } & (
+      | {
+          action: 'incident_detail';
+          placement: 'list';
+        }
+      | {
+          action: 'declare_incident';
+          placement: 'empty_state' | 'footer';
+        }
+      | {
+          action: 'view_all_incidents';
+          placement: 'footer';
+        }
+    ))
   | {
       surface: 'news_card';
       action: 'read_more_news';
@@ -64,16 +86,31 @@ export type CtaClicked = Satisfies<
       placement: 'card';
       solution: string;
     }
-  | {
+  | ({
       surface: 'no_data_card';
-      action: 'open_solution' | 'connect_data_source';
-      placement: 'pill' | 'card';
-      solution?: string;
-    }
-  | {
+    } & (
+      | {
+          action: 'open_solution';
+          placement: 'pill';
+          solution: string;
+        }
+      | {
+          action: 'connect_data_source';
+          placement: 'card';
+        }
+    ))
+  | ({
       surface: 'overview';
-      action: 'change_overview_filter' | 'open_guide';
-      placement: 'menu' | 'card';
-      solution: string;
-    }
+    } & (
+      | {
+          action: 'change_overview_filter';
+          placement: 'menu';
+          solution: string;
+        }
+      | {
+          action: 'open_guide';
+          placement: 'card';
+          solution: string;
+        }
+    ))
 >;
