@@ -5,8 +5,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -125,5 +127,78 @@ func TestGetPreviewWebAssets(t *testing.T) {
 
 		_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_999")
 		assert.Error(t, err)
+	})
+
+	t.Run("should cache manifest fetch errors between requests", func(t *testing.T) {
+		fswebassets.ResetPreviewAssetsCache()
+		var requests atomic.Int64
+		server := newBucketServer(t, "pr_grafana_42", &requests)
+		preview := fswebassets.PreviewAssetsConfig{Enabled: true, BaseURL: server.URL + "/"}
+
+		for range 3 {
+			_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_999")
+			require.Error(t, err)
+		}
+
+		assert.Equal(t, int64(1), requests.Load(), "a failing manifest lookup should only hit the bucket once within the cache TTL")
+	})
+
+	t.Run("should coalesce concurrent fetches into one request", func(t *testing.T) {
+		fswebassets.ResetPreviewAssetsCache()
+		var requests atomic.Int64
+		release := make(chan struct{})
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requests.Add(1)
+			<-release
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(previewManifest))
+		}))
+		t.Cleanup(server.Close)
+		preview := fswebassets.PreviewAssetsConfig{Enabled: true, BaseURL: server.URL + "/"}
+
+		var wg sync.WaitGroup
+		for range 5 {
+			wg.Go(func() {
+				_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_42")
+				assert.NoError(t, err)
+			})
+		}
+		close(release)
+		wg.Wait()
+
+		assert.Equal(t, int64(1), requests.Load(), "concurrent callers should share one fetch")
+	})
+
+	t.Run("should not fail other callers when one caller is cancelled", func(t *testing.T) {
+		fswebassets.ResetPreviewAssetsCache()
+		var requests atomic.Int64
+		release := make(chan struct{})
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requests.Add(1)
+			<-release
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(previewManifest))
+		}))
+		t.Cleanup(server.Close)
+		preview := fswebassets.PreviewAssetsConfig{Enabled: true, BaseURL: server.URL + "/"}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		leaderErr := make(chan error, 1)
+		go func() {
+			_, err := fswebassets.GetPreviewWebAssets(ctx, preview, "pr_grafana_42")
+			leaderErr <- err
+		}()
+
+		// Wait until the leader's fetch is in flight, then cancel the leader.
+		require.Eventually(t, func() bool { return requests.Load() == 1 }, time.Second, 10*time.Millisecond)
+		cancel()
+		require.ErrorIs(t, <-leaderErr, context.Canceled)
+
+		// The detached fetch must still complete and serve a later caller.
+		close(release)
+		_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_42")
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), requests.Load(), "the cancelled caller's fetch should be reused, not retried")
 	})
 }

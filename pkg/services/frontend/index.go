@@ -234,7 +234,7 @@ func (p *IndexProvider) resolveAssets(ctx context.Context, request *http.Request
 				p.log.Info("resolved preview assets", "folder", cookie.Value)
 				return assets, cookie.Value, nil
 			}
-			p.log.Error("unable to load preview assets, falling back to default assets", "folder", cookie.Value, "err", err)
+			p.log.Warn("unable to load preview assets, falling back to default assets", "folder", cookie.Value, "err", err)
 		}
 	}
 
