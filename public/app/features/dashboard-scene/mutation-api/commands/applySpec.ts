@@ -124,7 +124,10 @@ type MutationContextScene = {
       key?: string;
     };
   };
-  serializer: { getK8SMetadata: () => Partial<ObjectMeta> | undefined };
+  serializer: {
+    getK8SMetadata: () => Partial<ObjectMeta> | undefined;
+    initializeElementMapping: (spec: DashboardV2Spec) => void;
+  };
   setState: (state: unknown) => void;
 };
 
@@ -136,6 +139,14 @@ type MutationContextScene = {
  * flags the caller owns rather than the save model — the notebook page sets `isEmbedded` after
  * loading, and a rebuild would otherwise drop it and reveal the dashboard edit chrome on a page
  * that is meant to be read-only to hand editing.
+ *
+ * The element map has to be reseeded by hand afterwards. `transformSaveModelSchemaV2ToScene` seeds
+ * the map of the scene it builds, but only that scene's *state* is cloned over and the serializer
+ * hangs off the scene object, so the live map would keep what load put there. It then resolves every
+ * element the applied spec added to `panel-<id>` and stores that, leaving the layout referencing a
+ * name the elements no longer use. `initializeElementMapping` clears before it seeds, so the reseed
+ * also undoes any wrong entry an earlier read cached. Deliberately not `setInitialSaveModel`, which
+ * would additionally reset the unsaved-changes baseline and change how dashboards detect dirty state.
  */
 function rebuildSceneFromSpec(
   scene: MutationContextScene,
@@ -149,6 +160,10 @@ function rebuildSceneFromSpec(
   // `scene`) survive the swap.
   const newState = sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key });
   scene.setState(preserveMeta ? { ...newState, meta: { ...newState.meta, ...preserveMeta } } : newState);
+
+  // Safe on a dashboard still served as v1: its serializer reads `panels`, finds none on a v2 spec,
+  // and is left with an empty map, which regenerates the same `panel-<id>` keys it seeds on load.
+  scene.serializer.initializeElementMapping(spec);
 }
 
 export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
@@ -237,8 +252,8 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
       const spec = validatedSpec ?? (payload.spec as unknown as DashboardV2Spec);
       rebuildSceneFromSpec(mutationScene, spec);
 
-      // Return the re-serialized spec so the caller gets the rekeyed element
-      // names (rebuild rekeys to `panel-<id>`) without a follow-up GET_SPEC.
+      // Return the re-serialized spec so the caller can see what landed without a follow-up
+      // GET_SPEC. Element names it chose come back unchanged, since the rebuild reseeds the map.
       // Best effort: a serialization failure still reports success.
       let appliedSpec: DashboardV2Spec | undefined;
       try {
