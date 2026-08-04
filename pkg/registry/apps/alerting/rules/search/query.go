@@ -150,7 +150,10 @@ func applyWhere(req *resourcepb.ResourceSearchRequest, node *model.CreateSearchR
 	if node.Filter != nil {
 		set++
 	}
-	if set > 1 {
+	// Rejecting an unset node matters as much as rejecting an over-set one: an
+	// empty node would otherwise flatten to no constraint at all and quietly
+	// return every rule.
+	if set != 1 {
 		return fmt.Errorf("where node must set exactly one of and/text/filter")
 	}
 

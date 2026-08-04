@@ -524,6 +524,23 @@ func TestBuildSearchRequest_rejectsUnsortableField(t *testing.T) {
 	require.Error(t, err)
 }
 
+// An unset node carries no constraint, so accepting one would turn a filtered
+// search into a match-all.
+func TestBuildSearchRequest_rejectsUnsetWhereNode(t *testing.T) {
+	gr := alertrule.ResourceInfo.GroupResource()
+	empty := model.CreateSearchRulesRequestSearchWhereNode{}
+	for name, node := range map[string]*model.CreateSearchRulesRequestSearchWhereNode{
+		"bare node":       &empty,
+		"empty and":       andNode(),
+		"empty and child": andNode(empty),
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, _, err := buildSearchRequest(model.CreateSearchRulesRequestBody{Where: node}, "default", gr, nil)
+			require.Error(t, err)
+		})
+	}
+}
+
 func TestBuildSearchRequest_rejectsNestedAnd(t *testing.T) {
 	body := model.CreateSearchRulesRequestBody{
 		Where: andNode(*andNode(textLeaf("x"))),
