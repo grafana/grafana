@@ -687,6 +687,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       gap: theme.spacing(0.5),
       minHeight: theme.spacing(4),
+      transform: 'translateY(1px)',
     }),
     customViewIconButton: css({
       height: theme.spacing(4),
