@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { standardTransformersRegistry } from '@grafana/data';
@@ -32,7 +32,8 @@ describe('TransformationOperationRows', () => {
       { id: 'b', transformation: { id: 'unknown-transformation-two', options: {} } },
     ]);
 
-    await userEvent.click(screen.getAllByRole('button', { name: 'Close alert' })[1]);
+    const alert = screen.getByRole('alert', { name: 'Unknown transformation: unknown-transformation-two' });
+    await userEvent.click(within(alert).getByRole('button', { name: 'Remove' }));
 
     expect(onRemove).toHaveBeenCalledWith(1);
   });

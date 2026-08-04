@@ -1,6 +1,6 @@
 import { type DataTransformerConfig, standardTransformersRegistry } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert } from '@grafana/ui';
+import { Alert, Button } from '@grafana/ui';
 
 import { TransformationOperationRow } from './TransformationOperationRow';
 import { type TransformationData } from './TransformationsEditor';
@@ -34,8 +34,11 @@ export const TransformationOperationRows = ({
                 'Unknown transformation: {{transformationId}}',
                 { transformationId: config.transformation.id }
               )}
-              buttonContent={t('dashboard.transformation-operation-rows.remove-transformation', 'Remove')}
-              onRemove={() => onRemove(i)}
+              action={
+                <Button variant="secondary" onClick={() => onRemove(i)}>
+                  {t('dashboard.transformation-operation-rows.remove-transformation', 'Remove')}
+                </Button>
+              }
             />
           );
         }
