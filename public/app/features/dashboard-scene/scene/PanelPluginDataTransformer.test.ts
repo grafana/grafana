@@ -14,6 +14,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneDataNode, SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { DataTopic } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -166,6 +167,36 @@ describe('PanelPluginDataTransformer', () => {
       expect(other.userTransformer.state.data?.state).toBe(LoadingState.Done);
     });
     expect(await outputFieldNames(other.userTransformer)).not.toContain('level');
+  });
+
+  it('ignores transformations that target a topic other than series', async () => {
+    registerPlugin('mixed-topics', (p) =>
+      p.setDataTransformations(() => [
+        // Only series frames reach the plugin operator, so this would collapse the frame into
+        // reducer rows if it were misapplied to series data instead of being dropped.
+        extractLabels,
+        {
+          id: 'organize',
+          options: { indexByName: { level: 0, time: 1, line: 2 }, excludeByName: {} },
+          topic: DataTopic.Annotations,
+        },
+        { id: 'reduce', options: { reducers: ['max'] }, topic: DataTopic.Annotations },
+      ])
+    );
+
+    const { userTransformer } = buildPipeline({ pluginId: 'mixed-topics', series: [frameWithLabels()] });
+    activateFullSceneTree(userTransformer);
+
+    await waitFor(() => {
+      expect(userTransformer.state.data?.series[0]?.fields.map((f) => f.name)).toContain('level');
+    });
+    // The series-topic transformation ran while the original fields survived the dropped one.
+    expect(userTransformer.state.data?.series[0]?.fields.map((f) => f.name)).toEqual([
+      'time',
+      'line',
+      'labels',
+      'level',
+    ]);
   });
 
   it('transforms even when the plugin is not yet in the synchronous cache', async () => {

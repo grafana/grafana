@@ -1,6 +1,11 @@
 import { from, of, switchMap } from 'rxjs';
 
-import { type CustomTransformOperator, type PanelPlugin, transformDataFrame } from '@grafana/data';
+import {
+  type CustomTransformOperator,
+  type DataTransformerConfig,
+  type PanelPlugin,
+  transformDataFrame,
+} from '@grafana/data';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneDataProvider,
@@ -9,6 +14,7 @@ import {
   type SceneObject,
   VizPanel,
 } from '@grafana/scenes';
+import { DataTopic } from '@grafana/schema';
 import { importPanelPlugin, syncGetPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 /**
@@ -54,10 +60,12 @@ export class PanelPluginDataTransformer extends SceneDataTransformer {
 
         return plugin$.pipe(
           switchMap((plugin: PanelPlugin) => {
-            const configs = plugin.getDataTransformations({ series: frames });
+            const configs = plugin.getDataTransformations({ series: frames }).filter(appliesToSeriesTopic);
 
-            // Returning the input array unchanged keeps its identity, so VizPanel can skip
-            // re-running field overrides for panels that register no transformations.
+            // Passing the input frames through untouched preserves their identity: the base
+            // class rebuilds the series array either way, but structurally identical frames
+            // keep the panel's structureRev stable, so panels that register no transformations
+            // avoid needless re-configuration.
             return configs.length ? transformDataFrame(configs, frames, ctx) : of(frames);
           })
         );
@@ -81,6 +89,19 @@ export class PanelPluginDataTransformer extends SceneDataTransformer {
       })
     );
   }
+}
+
+/**
+ * The base class splits transformations by topic above the plugin operator, so only series
+ * frames ever reach it. A config targeting another topic can never see the frames it was
+ * written for — it would be misapplied to series data — so it is dropped instead.
+ */
+function appliesToSeriesTopic(transformation: DataTransformerConfig | CustomTransformOperator): boolean {
+  if (typeof transformation === 'function') {
+    return true;
+  }
+
+  return transformation.topic == null || transformation.topic === DataTopic.Series;
 }
 
 /**

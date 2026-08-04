@@ -369,15 +369,14 @@ export class PanelPlugin<
   }
 
   /**
-   * Register transformations this panel needs in order to render its data, for example
-   * extracting fields out of a JSON column, or reshaping long frames into wide ones.
+   * Registers read-only transformations in dashboard panels.
    *
-   * They run before any user-configured transformation and before field overrides, so
-   * fields they produce can be targeted by overrides. Users cannot edit, reorder, disable,
-   * or delete them, and they are never persisted to the dashboard.
+   * These transformations run before any user-configured transformation and field overrides.
+   * They are not persisted to the dashboard.
    *
    * The supplier receives the query result frames on every data update, so it can return
-   * different transformations for different shapes of data — or none at all.
+   * different transformations for different shapes of data. Empty results pass through
+   * without consulting the supplier.
    *
    * @example
    * ```typescript
