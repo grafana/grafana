@@ -7,21 +7,15 @@ import { StateManagerBase } from 'app/core/services/StateManagerBase';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
 
-import { isValidInterval, loadDashboards, normalizePlaylistItemQueryParams } from './utils';
+import {
+  isValidInterval,
+  loadDashboards,
+  normalizeDashboardViewQueryString,
+  PLAYLIST_RUNTIME_QUERY_PARAMS,
+} from './utils';
 
 // Fallback used when even the global interval is unparseable. Matches the '5m' form default.
 const DEFAULT_INTERVAL_MS = 5 * 60 * 1000;
-
-const queryParamsToPreserve: { [key: string]: boolean } = {
-  kiosk: true,
-  autofitpanels: true,
-  orgId: true,
-  hideLogo: true,
-  '_dash.hideTimePicker': true,
-  '_dash.hideVariables': true,
-  '_dash.hideLinks': true,
-  '_dash.hidePlaylistNav': true,
-};
 
 export interface PlaylistSrvState {
   isPlaying: boolean;
@@ -30,7 +24,7 @@ export interface PlaylistSrvState {
 interface PlaylistEntry {
   url: string;
   interval: number;
-  queryParams?: string;
+  queryString?: string;
 }
 
 export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
@@ -57,7 +51,7 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
   private navigateToDashboard(replaceHistoryEntry = false) {
     const entry = this.entries[this.index];
     const queryParams = locationService.getSearchObject();
-    const filteredParams = pickBy(queryParams, (value: unknown, key: string) => queryParamsToPreserve[key]);
+    const filteredParams = pickBy(queryParams, (value: unknown, key: string) => PLAYLIST_RUNTIME_QUERY_PARAMS.has(key));
     const strippedUrl = locationUtil.stripBaseFromUrl(entry.url);
     const queryStart = strippedUrl.indexOf('?');
     const nextDashboardUrl = queryStart === -1 ? strippedUrl : strippedUrl.slice(0, queryStart);
@@ -69,7 +63,7 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
 
     const urlWithParams = urlUtil.renderUrl(nextDashboardUrl, {
       ...dashboardParams,
-      ...urlUtil.parseKeyValue(normalizePlaylistItemQueryParams(entry.queryParams) ?? ''),
+      ...urlUtil.parseKeyValue(normalizeDashboardViewQueryString(entry.queryString) ?? ''),
       ...filteredParams,
     });
 
@@ -148,7 +142,7 @@ export class PlaylistSrv extends StateManagerBase<PlaylistSrvState> {
         // An invalid per-item interval falls back to the global one.
         const interval = this.toIntervalMs(item.interval, globalInterval);
         for (const dash of item.dashboards) {
-          entries.push({ url: dash.url, interval, queryParams: item.queryParams });
+          entries.push({ url: dash.url, interval, queryString: item.dashboardView?.queryString });
         }
       }
     }

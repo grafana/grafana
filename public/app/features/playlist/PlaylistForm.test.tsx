@@ -73,9 +73,9 @@ const mockPerItemOptionsPlaylist: Playlist = {
         type: 'dashboard_by_uid',
         value: 'uid_1',
         interval: '30s',
-        queryParams: 'var-host=host1&from=now-6h&to=now',
+        dashboardView: { queryString: 'var-host=host1&from=now-6h&to=now' },
       },
-      { type: 'dashboard_by_uid', value: 'uid_2', queryParams: 'var-host=host2' },
+      { type: 'dashboard_by_uid', value: 'uid_2', dashboardView: { queryString: 'var-host=host2' } },
     ],
   },
 };
@@ -117,7 +117,7 @@ async function openDashboardLinkPaste(itemValue: string) {
   await openItemOptions(itemValue);
   const row = rowForItem(itemValue);
   if (!within(row).queryByRole('textbox', { name: new RegExp(`dashboard state for ${itemValue}`, 'i') })) {
-    await userEvent.click(within(row).getByRole('button', { name: 'Paste dashboard link' }));
+    await userEvent.click(within(row).getByRole('button', { name: 'Paste a link to this dashboard' }));
   }
 }
 
@@ -286,12 +286,12 @@ describe('PlaylistForm', () => {
       expect(optionsButton).toHaveAttribute('aria-expanded', 'true');
       expect(screen.getByRole('textbox', { name: /interval for uid_1/i })).toBeInTheDocument();
       expect(within(rowForItem('uid_1')).getByText('Configure')).toBeInTheDocument();
-      const pasteLink = screen.getByRole('button', { name: 'Paste dashboard link' });
+      const pasteLink = screen.getByRole('button', { name: 'Paste a link to this dashboard' });
       expect(pasteLink).toBeInTheDocument();
       expect(pasteLink).toHaveStyle({ height: '32px', width: '32px' });
       expect(pasteLink.querySelector('svg')).toHaveStyle({ pointerEvents: 'none' });
       await userEvent.hover(pasteLink);
-      expect(await screen.findByRole('tooltip')).toHaveTextContent('Paste dashboard link');
+      expect(await screen.findByRole('tooltip')).toHaveTextContent('Paste a link to this dashboard');
       await userEvent.unhover(pasteLink);
 
       await userEvent.click(pasteLink);
@@ -439,7 +439,9 @@ describe('PlaylistForm', () => {
       });
       configuredStatus.focus();
       expect(await screen.findByRole('tooltip')).toHaveTextContent('Custom view options');
-      expect(within(rowForItem('uid_1')).getByRole('button', { name: 'Paste dashboard link' })).toBeInTheDocument();
+      expect(
+        within(rowForItem('uid_1')).getByRole('button', { name: 'Paste a link to this dashboard' })
+      ).toBeInTheDocument();
       const clearView = within(rowForItem('uid_1')).getByRole('button', { name: 'Clear custom view' });
       expect(clearView).toHaveStyle({ height: '32px', width: '32px' });
       await userEvent.click(clearView);
@@ -483,7 +485,7 @@ describe('PlaylistForm', () => {
             items: expect.arrayContaining([
               expect.objectContaining({
                 value: 'uid_1',
-                queryParams: 'var-host=host1&from=now-6h&to=now',
+                dashboardView: { queryString: 'var-host=host1&from=now-6h&to=now' },
               }),
             ]),
           }),
@@ -532,7 +534,7 @@ describe('PlaylistForm', () => {
             items: expect.arrayContaining([
               expect.objectContaining({
                 value: 'uid_1',
-                queryParams: 'var-host=host2&from=now-12h&to=now',
+                dashboardView: { queryString: 'var-host=host2&from=now-12h&to=now' },
               }),
             ]),
           }),
@@ -558,7 +560,7 @@ describe('PlaylistForm', () => {
             items: expect.arrayContaining([
               expect.objectContaining({
                 value: 'uid_1',
-                queryParams: 'var-host=host1&from=now-6h&to=now',
+                dashboardView: { queryString: 'var-host=host1&from=now-6h&to=now' },
               }),
             ]),
           }),
@@ -576,7 +578,10 @@ describe('PlaylistForm', () => {
       expect(screen.queryByRole('textbox', { name: /dashboard state for uid_1/i })).not.toBeInTheDocument();
       await userEvent.click(screen.getByRole('button', { name: /save/i }));
       expect(onSubmitMock.mock.calls[0][0].spec.items).toContainEqual(
-        expect.objectContaining({ value: 'uid_1', queryParams: 'var-host=host1&from=now-6h&to=now' })
+        expect.objectContaining({
+          value: 'uid_1',
+          dashboardView: { queryString: 'var-host=host1&from=now-6h&to=now' },
+        })
       );
     });
 
@@ -585,7 +590,7 @@ describe('PlaylistForm', () => {
         ...mockPlaylist,
         spec: {
           ...mockPlaylist.spec!,
-          items: [{ type: 'dashboard_by_uid', value: 'uid_1', queryParams: 'from=now-6h' }],
+          items: [{ type: 'dashboard_by_uid', value: 'uid_1', dashboardView: { queryString: 'from=now-6h' } }],
         },
       };
       getTestContext(playlist);
@@ -620,7 +625,7 @@ describe('PlaylistForm', () => {
           data: {
             type: PLAYLIST_CUSTOM_VIEW_MESSAGE,
             token,
-            queryParams: `var-host=host3&from=now-3h&to=now&${PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM}=temporary`,
+            queryString: `var-host=host3&from=now-3h&to=now&${PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM}=temporary`,
           },
         })
       );
@@ -633,7 +638,7 @@ describe('PlaylistForm', () => {
             items: expect.arrayContaining([
               expect.objectContaining({
                 value: 'uid_1',
-                queryParams: 'var-host=host3&from=now-3h&to=now',
+                dashboardView: { queryString: 'var-host=host3&from=now-3h&to=now' },
               }),
             ]),
           }),
@@ -651,7 +656,7 @@ describe('PlaylistForm', () => {
       expect(onSubmitMock).toHaveBeenCalledWith(
         expect.objectContaining({
           spec: expect.objectContaining({
-            items: [expect.objectContaining({ value: 'uid_2', queryParams: 'var-host=host2' })],
+            items: [expect.objectContaining({ value: 'uid_2', dashboardView: { queryString: 'var-host=host2' } })],
           }),
         })
       );
@@ -674,7 +679,11 @@ describe('PlaylistForm', () => {
           ...mockPlaylist.spec!,
           items: [
             { type: 'dashboard_by_uid', value: 'uid_1' },
-            { type: 'dashboard_by_uid', value: 'uid_1', queryParams: 'var-host=second-row' },
+            {
+              type: 'dashboard_by_uid',
+              value: 'uid_1',
+              dashboardView: { queryString: 'var-host=second-row' },
+            },
           ],
         },
       };
@@ -682,7 +691,7 @@ describe('PlaylistForm', () => {
       const firstRow = rows()[0];
 
       await userEvent.click(within(firstRow).getByRole('button', { name: 'Settings' }));
-      await userEvent.click(within(firstRow).getByRole('button', { name: 'Paste dashboard link' }));
+      await userEvent.click(within(firstRow).getByRole('button', { name: 'Paste a link to this dashboard' }));
       await userEvent.type(
         within(firstRow).getByRole('textbox', { name: /dashboard state for uid_1/i }),
         '/goto/duplicate-race'
@@ -694,7 +703,11 @@ describe('PlaylistForm', () => {
       await waitFor(() => expect(rows()).toHaveLength(1));
       await userEvent.click(screen.getByRole('button', { name: /save/i }));
       expect(onSubmitMock.mock.calls[0][0].spec.items).toEqual([
-        { type: 'dashboard_by_uid', value: 'uid_1', queryParams: 'var-host=second-row' },
+        {
+          type: 'dashboard_by_uid',
+          value: 'uid_1',
+          dashboardView: { queryString: 'var-host=second-row' },
+        },
       ]);
     });
   });

@@ -4661,6 +4661,15 @@
         },
         "type": "object"
       },
+      "DashboardView": {
+        "properties": {
+          "queryString": {
+            "type": "string"
+          }
+        },
+        "title": "DashboardView contains serialized dashboard view state.",
+        "type": "object"
+      },
       "DataLink": {
         "description": "DataLink define what",
         "properties": {
@@ -8188,15 +8197,15 @@
             "format": "int64",
             "type": "integer"
           },
+          "dashboardView": {
+            "$ref": "#/components/schemas/DashboardView"
+          },
           "interval": {
             "type": "string"
           },
           "order": {
             "format": "int64",
             "type": "integer"
-          },
-          "queryParams": {
-            "type": "string"
           },
           "title": {
             "type": "string"
@@ -8212,12 +8221,11 @@
       },
       "PlaylistItemDTO": {
         "properties": {
+          "dashboardView": {
+            "$ref": "#/components/schemas/DashboardView"
+          },
           "interval": {
             "description": "Interval optionally overrides the playlist interval for this item.",
-            "type": "string"
-          },
-          "queryParams": {
-            "description": "QueryParams contains dashboard variables and time range URL parameters.",
             "type": "string"
           },
           "title": {

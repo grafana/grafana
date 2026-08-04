@@ -13,7 +13,7 @@ interface Props {
   /** Placeholder for empty per-item intervals; the global interval used as fallback during playback. */
   intervalPlaceholder?: string;
   updateItemInterval?: (idx: number, interval: string) => void;
-  updateItemQueryParams?: (idx: number, queryParams: string) => void;
+  updateItemDashboardView?: (idx: number, queryString: string) => void;
 }
 
 export const PlaylistTable = ({
@@ -22,7 +22,7 @@ export const PlaylistTable = ({
   moveItem,
   intervalPlaceholder,
   updateItemInterval,
-  updateItemQueryParams,
+  updateItemDashboardView,
 }: Props) => {
   const onDragEnd = (d: DropResult) => {
     if (d.destination) {
@@ -52,7 +52,7 @@ export const PlaylistTable = ({
                   onDelete={deleteItem}
                   intervalPlaceholder={intervalPlaceholder}
                   onUpdateInterval={updateItemInterval}
-                  onUpdateQueryParams={updateItemQueryParams}
+                  onUpdateDashboardView={updateItemDashboardView}
                 />
                 {provided.placeholder}
               </div>

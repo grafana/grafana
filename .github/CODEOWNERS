@@ -511,6 +511,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/migrate-to-cloud.spec.ts @grafana/grafana-operator-experience-squad
 /e2e-playwright/various-suite/navigation.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/various-suite/pie-chart.spec.ts @grafana/dataviz-squad
+/e2e-playwright/various-suite/playlist-item-options.spec.ts @grafana/sharing-squad
 /e2e-playwright/various-suite/prometheus-annotations.spec.ts @grafana/data-sources-plugins
 /e2e-playwright/various-suite/prometheus-config.spec.ts @grafana/data-sources-plugins
 /e2e-playwright/various-suite/prometheus-editor.spec.ts @grafana/data-sources-plugins

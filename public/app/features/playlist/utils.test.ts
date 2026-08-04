@@ -3,7 +3,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM } from './customView';
-import { canWritePlaylists, getPlaylistShortLinkUid, normalizePlaylistItemQueryParams } from './utils';
+import { canWritePlaylists, getPlaylistShortLinkUid, normalizeDashboardViewQueryString } from './utils';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
@@ -49,19 +49,23 @@ describe('canWritePlaylists', () => {
   });
 });
 
-describe('normalizePlaylistItemQueryParams', () => {
+describe('normalizeDashboardViewQueryString', () => {
   it.each([
     ['var-host=host1&from=now-6h', 'var-host=host1&from=now-6h'],
     ['?var-host=host1&from=now-6h', 'var-host=host1&from=now-6h'],
     ['https://grafana.example.com/d/uid/name?var-host=host1&from=now-6h#view', 'var-host=host1&from=now-6h'],
     [`/d/uid/name?var-host=host1&${PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM}=temporary`, 'var-host=host1'],
+    [
+      '/d/uid/name?var-host=host1&orgId=2&auth_token=secret&forceLogin=true&kiosk&autofitpanels&hideLogo&_dash.hideTimePicker=true',
+      'var-host=host1',
+    ],
     ['var-host=host1&var-host=host2', 'var-host=host1&var-host=host2'],
     ['https://grafana.example.com/d/uid/name', undefined],
     ['/d/uid/name#view', undefined],
     ['', undefined],
     ['  ', undefined],
   ])('normalizes %s', (value, expected) => {
-    expect(normalizePlaylistItemQueryParams(value)).toBe(expected);
+    expect(normalizeDashboardViewQueryString(value)).toBe(expected);
   });
 });
 

@@ -5,7 +5,7 @@ const PLAYLIST_CUSTOM_VIEW_CHANNEL_PREFIX = 'grafana-playlist-custom-view';
 export interface PlaylistCustomViewMessage {
   type: typeof PLAYLIST_CUSTOM_VIEW_MESSAGE;
   token: string;
-  queryParams: string;
+  queryString: string;
 }
 
 export function createPlaylistCustomViewToken(): string {
@@ -29,10 +29,10 @@ export function getPlaylistCustomViewChannelName(token: string): string {
   return `${PLAYLIST_CUSTOM_VIEW_CHANNEL_PREFIX}:${token}`;
 }
 
-export function getPlaylistCustomViewQueryParams(search: string): string {
-  const queryParams = new URLSearchParams(search);
-  queryParams.delete(PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM);
-  return queryParams.toString();
+export function getPlaylistCustomViewQueryString(search: string): string {
+  const query = new URLSearchParams(search);
+  query.delete(PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM);
+  return query.toString();
 }
 
 export function isPlaylistCustomViewMessage(value: unknown): value is PlaylistCustomViewMessage {
@@ -45,7 +45,7 @@ export function isPlaylistCustomViewMessage(value: unknown): value is PlaylistCu
     value.type === PLAYLIST_CUSTOM_VIEW_MESSAGE &&
     'token' in value &&
     typeof value.token === 'string' &&
-    'queryParams' in value &&
-    typeof value.queryParams === 'string'
+    'queryString' in value &&
+    typeof value.queryString === 'string'
   );
 }

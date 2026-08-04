@@ -30,7 +30,7 @@ import {
   isPlaylistCustomViewMessage,
 } from './customView';
 import { type PlaylistItemUI } from './types';
-import { getPlaylistShortLinkUid, isValidInterval, normalizePlaylistItemQueryParams } from './utils';
+import { getPlaylistShortLinkUid, isValidInterval, normalizeDashboardViewQueryString } from './utils';
 
 interface Props {
   items: PlaylistItemUI[];
@@ -38,7 +38,7 @@ interface Props {
   /** Placeholder for empty per-item intervals; the global interval used as fallback during playback. */
   intervalPlaceholder?: string;
   onUpdateInterval?: (idx: number, interval: string) => void;
-  onUpdateQueryParams?: (idx: number, queryParams: string) => void;
+  onUpdateDashboardView?: (idx: number, queryString: string) => void;
 }
 
 export const PlaylistTableRows = ({
@@ -46,7 +46,7 @@ export const PlaylistTableRows = ({
   onDelete,
   intervalPlaceholder,
   onUpdateInterval,
-  onUpdateQueryParams,
+  onUpdateDashboardView,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
@@ -130,7 +130,7 @@ export const PlaylistTableRows = ({
           onDelete={onDelete}
           intervalPlaceholder={intervalPlaceholder}
           onUpdateInterval={onUpdateInterval}
-          onUpdateQueryParams={onUpdateQueryParams}
+          onUpdateDashboardView={onUpdateDashboardView}
         />
       ))}
     </>
@@ -152,7 +152,7 @@ function PlaylistTableRow({
   onDelete,
   intervalPlaceholder,
   onUpdateInterval,
-  onUpdateQueryParams,
+  onUpdateDashboardView,
 }: RowProps) {
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
@@ -168,7 +168,7 @@ function PlaylistTableRow({
   currentIndex.current = index;
   const optionsId = useId();
   const optionSummary = [
-    item.queryParams ? t('playlist.playlist-table-rows.dashboard-state-summary', 'Custom view') : undefined,
+    item.dashboardView ? t('playlist.playlist-table-rows.dashboard-state-summary', 'Custom view') : undefined,
     item.interval
       ? t('playlist.playlist-table-rows.interval-summary', 'Interval: {{interval}}', { interval: item.interval })
       : undefined,
@@ -179,7 +179,7 @@ function PlaylistTableRow({
   const dashboardUrl = dashboard
     ? urlUtil.renderUrl(dashboard.url.split('?')[0], {
         ...urlUtil.parseKeyValue(dashboard.url.split('?')[1] ?? ''),
-        ...urlUtil.parseKeyValue(normalizePlaylistItemQueryParams(item.queryParams) ?? ''),
+        ...urlUtil.parseKeyValue(normalizeDashboardViewQueryString(item.dashboardView?.queryString) ?? ''),
       })
     : undefined;
   const intervalInvalid = !!item.interval && !isValidInterval(item.interval);
@@ -207,7 +207,7 @@ function PlaylistTableRow({
       setDashboardStateError(undefined);
       setClearViewConfirmationOpen(false);
       setPasteLinkOpen(false);
-      onUpdateQueryParams?.(currentIndex.current, normalizePlaylistItemQueryParams(event.data.queryParams) ?? '');
+      onUpdateDashboardView?.(currentIndex.current, normalizeDashboardViewQueryString(event.data.queryString) ?? '');
       channel.close();
       window.focus();
     };
@@ -230,14 +230,14 @@ function PlaylistTableRow({
 
     const shortLinkUid = getPlaylistShortLinkUid(dashboardLink);
     if (!shortLinkUid) {
-      const dashboardState = normalizePlaylistItemQueryParams(dashboardLink);
+      const dashboardState = normalizeDashboardViewQueryString(dashboardLink);
       if (!dashboardState) {
         setDashboardStateError(
           t('playlist.playlist-table-rows.dashboard-state-empty-link', 'This link has no custom dashboard state')
         );
         return;
       }
-      onUpdateQueryParams?.(currentIndex.current, dashboardState);
+      onUpdateDashboardView?.(currentIndex.current, dashboardState);
       closeDashboardLinkEditor();
       return;
     }
@@ -250,14 +250,14 @@ function PlaylistTableRow({
       if (!mounted.current) {
         return;
       }
-      const dashboardState = normalizePlaylistItemQueryParams(shortLink.path);
+      const dashboardState = normalizeDashboardViewQueryString(shortLink.path);
       if (!dashboardState) {
         setDashboardStateError(
           t('playlist.playlist-table-rows.dashboard-state-empty-link', 'This link has no custom dashboard state')
         );
         return;
       }
-      onUpdateQueryParams?.(currentIndex.current, dashboardState);
+      onUpdateDashboardView?.(currentIndex.current, dashboardState);
       closeDashboardLinkEditor();
     } catch {
       if (mounted.current) {
@@ -366,7 +366,7 @@ function PlaylistTableRow({
                               setDashboardStateError(undefined);
                               setDashboardLinkDraft('');
                               setPasteLinkOpen(false);
-                              onUpdateQueryParams?.(currentIndex.current, '');
+                              onUpdateDashboardView?.(currentIndex.current, '');
                             }}
                           >
                             <Trans i18nKey="playlist.playlist-table-rows.confirm-clear-view-action">Clear</Trans>
@@ -375,10 +375,15 @@ function PlaylistTableRow({
                       ) : (
                         <>
                           <Text variant="bodySmall" color="secondary">
-                            {item.queryParams ? (
+                            {item.dashboardView ? (
                               <Tooltip
                                 placement="top-start"
-                                content={<CustomViewTooltipContent queryParams={item.queryParams} styles={styles} />}
+                                content={
+                                  <CustomViewTooltipContent
+                                    queryString={item.dashboardView.queryString}
+                                    styles={styles}
+                                  />
+                                }
                               >
                                 <button
                                   type="button"
@@ -398,7 +403,7 @@ function PlaylistTableRow({
                               t('playlist.playlist-table-rows.custom-view-default', 'Uses dashboard defaults')
                             )}
                           </Text>
-                          {item.queryParams && (
+                          {item.dashboardView && (
                             <PlaylistActionIconButton
                               name="times"
                               label={t('playlist.playlist-table-rows.clear-view', 'Clear custom view')}
@@ -426,7 +431,10 @@ function PlaylistTableRow({
                         </LinkButton>
                         <PlaylistActionIconButton
                           name="clipboard-alt"
-                          label={t('playlist.playlist-table-rows.paste-dashboard-link', 'Paste dashboard link')}
+                          label={t(
+                            'playlist.playlist-table-rows.paste-dashboard-link',
+                            'Paste a link to this dashboard'
+                          )}
                           triggerClassName={styles.iconAction}
                           buttonClassName={styles.customViewIconButton}
                           onClick={() => {
@@ -446,11 +454,11 @@ function PlaylistTableRow({
                         value={dashboardLinkDraft}
                         placeholder={t(
                           'playlist.playlist-table-rows.dashboard-state-placeholder',
-                          'Paste a dashboard link'
+                          'Paste a link to this dashboard'
                         )}
                         title={t(
                           'playlist.playlist-table-rows.dashboard-state-title',
-                          'Paste a dashboard link or enter its URL state'
+                          'Paste a link to this dashboard or enter its URL state'
                         )}
                         aria-label={t(
                           'playlist.playlist-table-rows.aria-label-item-dashboard-state',
@@ -522,12 +530,12 @@ function PlaylistTableRow({
 }
 
 interface CustomViewTooltipContentProps {
-  queryParams: string;
+  queryString: string;
   styles: ReturnType<typeof getStyles>;
 }
 
-function CustomViewTooltipContent({ queryParams, styles }: CustomViewTooltipContentProps) {
-  const params = new URLSearchParams(queryParams);
+function CustomViewTooltipContent({ queryString, styles }: CustomViewTooltipContentProps) {
+  const params = new URLSearchParams(queryString);
   const from = params.get('from');
   const to = params.get('to');
   const variables = new Map<string, string[]>();

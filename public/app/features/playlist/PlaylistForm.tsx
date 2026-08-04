@@ -16,7 +16,7 @@ import { getGrafanaSearcher } from '../search/service/searcher';
 
 import { PlaylistTable } from './PlaylistTable';
 import { usePlaylistItems } from './usePlaylistItems';
-import { isValidInterval, normalizePlaylistItemQueryParams } from './utils';
+import { isValidInterval, normalizeDashboardViewQueryString } from './utils';
 
 const DEFAULT_INTERVAL = '5m';
 
@@ -54,7 +54,7 @@ export const PlaylistForm = ({
     return () => getGrafanaSearcher().tags({ kind: ['dashboard'] });
   }, []);
 
-  const { items, addByUID, addByTag, deleteItem, moveItem, updateItemInterval, updateItemQueryParams } =
+  const { items, addByUID, addByTag, deleteItem, moveItem, updateItemInterval, updateItemDashboardView } =
     usePlaylistItems(propItems);
 
   // When the selector is locked the repository can't be changed, so derive the value from the
@@ -72,11 +72,14 @@ export const PlaylistForm = ({
       return;
     }
     setSaving(true);
-    // Strip loaded dashboards and normalize copied URLs to their query string before submission.
-    const apiItems = items.map(({ dashboards, localId, ...item }) => ({
-      ...item,
-      queryParams: normalizePlaylistItemQueryParams(item.queryParams),
-    }));
+    // Strip UI-only fields and normalize copied URLs to a portable dashboard view before submission.
+    const apiItems = items.map(({ dashboards, localId, ...item }) => {
+      const queryString = normalizeDashboardViewQueryString(item.dashboardView?.queryString);
+      return {
+        ...item,
+        dashboardView: queryString ? { queryString } : undefined,
+      };
+    });
     try {
       // The direct-save path navigates away; the provisioned path returns after opening the drawer,
       // so reset `saving` here or the Save button would keep spinning behind the drawer.
@@ -156,7 +159,7 @@ export const PlaylistForm = ({
               moveItem={moveItem}
               intervalPlaceholder={currentInterval}
               updateItemInterval={updateItemInterval}
-              updateItemQueryParams={updateItemQueryParams}
+              updateItemDashboardView={updateItemDashboardView}
             />
 
             <FieldSet label={t('playlist-edit.form.heading', 'Add dashboards')}>

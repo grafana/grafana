@@ -104,16 +104,19 @@ export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
     });
   }, []);
 
-  const updateItemQueryParams = useCallback((index: number, queryParams: string) => {
+  const updateItemDashboardView = useCallback((index: number, queryString: string) => {
     setItems((prev) => {
       if (!prev[index]) {
         return prev;
       }
       const copy = prev.slice();
-      copy[index] = { ...copy[index], queryParams: queryParams || undefined };
+      copy[index] = {
+        ...copy[index],
+        dashboardView: queryString ? { queryString } : undefined,
+      };
       return copy;
     });
   }, []);
 
-  return { items, addByUID, addByTag, deleteItem, moveItem, updateItemInterval, updateItemQueryParams };
+  return { items, addByUID, addByTag, deleteItem, moveItem, updateItemInterval, updateItemDashboardView };
 }

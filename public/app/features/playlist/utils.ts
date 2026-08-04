@@ -10,6 +10,20 @@ import { type SearchQuery } from '../search/service/types';
 import { PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM } from './customView';
 import { type PlaylistItemUI } from './types';
 
+// Playlist/session controls belong to the playback URL, not a portable dashboard view.
+export const PLAYLIST_RUNTIME_QUERY_PARAMS: ReadonlySet<string> = new Set([
+  'kiosk',
+  'autofitpanels',
+  'orgId',
+  'auth_token',
+  'forceLogin',
+  'hideLogo',
+  '_dash.hideTimePicker',
+  '_dash.hideVariables',
+  '_dash.hideLinks',
+  '_dash.hidePlaylistNav',
+]);
+
 /**
  * Whether an interval string (e.g. "5m", "30s") can be parsed to a positive duration.
  * `rangeUtil.intervalToMs` throws on unparseable input, so callers must guard against it.
@@ -23,7 +37,7 @@ export function isValidInterval(interval: string): boolean {
   }
 }
 
-export function normalizePlaylistItemQueryParams(value?: string): string | undefined {
+export function normalizeDashboardViewQueryString(value?: string): string | undefined {
   const trimmed = value?.trim();
   if (!trimmed) {
     return undefined;
@@ -40,6 +54,9 @@ export function normalizePlaylistItemQueryParams(value?: string): string | undef
   const normalized = (fragmentStart === -1 ? query : query.slice(0, fragmentStart)).replace(/^\?/, '');
   const params = new URLSearchParams(normalized);
   params.delete(PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM);
+  for (const key of PLAYLIST_RUNTIME_QUERY_PARAMS) {
+    params.delete(key);
+  }
   const serialized = params.toString();
 
   return serialized || undefined;

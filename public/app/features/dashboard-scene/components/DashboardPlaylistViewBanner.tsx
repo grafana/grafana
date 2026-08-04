@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import {
-  getPlaylistCustomViewQueryParams,
+  getPlaylistCustomViewQueryString,
   getPlaylistCustomViewChannelName,
   PLAYLIST_CUSTOM_VIEW_MESSAGE,
   PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM,
@@ -30,7 +30,7 @@ export function DashboardPlaylistViewBanner() {
     channel.postMessage({
       type: PLAYLIST_CUSTOM_VIEW_MESSAGE,
       token,
-      queryParams: getPlaylistCustomViewQueryParams(location.search),
+      queryString: getPlaylistCustomViewQueryString(location.search),
     });
     channel.close();
     close();
