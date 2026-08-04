@@ -12381,6 +12381,10 @@
     "new-folder": {
       "title": "New folder"
     },
+    "notebooks": {
+      "subtitle": "Capture investigations with narrative text and live visualizations",
+      "title": "Notebooks"
+    },
     "oncall": {
       "title": "OnCall"
     },
