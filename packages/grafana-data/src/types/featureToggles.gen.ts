@@ -209,11 +209,6 @@ export interface FeatureToggles {
   */
   kubernetesLogsDrilldown?: boolean;
   /**
-  * Adds support for Kubernetes querycaching
-  * @default false
-  */
-  kubernetesQueryCaching?: boolean;
-  /**
   * Register legacy datasource apis that use the numeric id
   * @default false
   */

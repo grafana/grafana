@@ -15940,6 +15940,7 @@
     "editor": {
       "aria-label-content": "Text content",
       "aria-label-mode": "Text mode: {{mode}}",
+      "footer-line-numbers": "Line numbers",
       "format-bold": "B",
       "format-heading": "H",
       "format-italic": "I",
@@ -15960,8 +15961,7 @@
       "view-preview": "Preview",
       "view-split": "Split",
       "view-write": "Write"
-    },
-    "name-show-line-numbers": "Show line numbers"
+    }
   },
   "theme-playground": {
     "label-base-theme": "Base theme",
