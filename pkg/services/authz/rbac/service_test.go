@@ -615,21 +615,21 @@ func TestService_mapping(t *testing.T) {
 			},
 		},
 		{
-			name: "should use the folder field as RBAC action override for the iam permissions resource",
+			name: "should map the permissions subresource to the RBAC action being delegated",
 			input: &authzv1.CheckRequest{
-				Group:    "iam.grafana.app",
-				Resource: "permissions",
-				Name:     "delegate",
-				Verb:     utils.VerbPatch,
-				Folder:   "users.roles:add",
+				Group:       "iam.grafana.app",
+				Resource:    "permissions",
+				Subresource: "users.roles:add",
+				Name:        "delegate",
+				Verb:        utils.VerbPatch,
 			},
 			output: &checkRequest{
-				Action:       "users.roles:add",
-				Group:        "iam.grafana.app",
-				Resource:     "permissions",
-				Name:         "delegate",
-				Verb:         "patch",
-				ParentFolder: "users.roles:add",
+				Action:      "users.roles:add",
+				Group:       "iam.grafana.app",
+				Resource:    "permissions",
+				Subresource: "users.roles:add",
+				Name:        "delegate",
+				Verb:        "patch",
 				Namespace: types.NamespaceInfo{
 					Value: ns,
 					OrgID: 1,
@@ -1617,15 +1617,15 @@ func TestService_Check(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "permissions:type check with action override should deny when user holds the delegate scope on a different action",
+			name: "permissions:type check with action subresource should deny when user holds the delegate scope on a different action",
 			req: &authzv1.CheckRequest{
-				Namespace: "org-12",
-				Subject:   "user:test-uid",
-				Group:     "iam.grafana.app",
-				Resource:  "permissions",
-				Verb:      utils.VerbPatch,
-				Name:      "delegate",
-				Folder:    "users.roles:add",
+				Namespace:   "org-12",
+				Subject:     "user:test-uid",
+				Group:       "iam.grafana.app",
+				Resource:    "permissions",
+				Subresource: "users.roles:add",
+				Verb:        utils.VerbPatch,
+				Name:        "delegate",
 			},
 			permissions: []accesscontrol.Permission{
 				{Action: "roles:write", Scope: "permissions:type:delegate"},
@@ -1633,15 +1633,15 @@ func TestService_Check(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "permissions:type check with action override should allow when user holds the delegate scope on that same action",
+			name: "permissions:type check with action subresource should allow when user holds the delegate scope on that same action",
 			req: &authzv1.CheckRequest{
-				Namespace: "org-12",
-				Subject:   "user:test-uid",
-				Group:     "iam.grafana.app",
-				Resource:  "permissions",
-				Verb:      utils.VerbPatch,
-				Name:      "delegate",
-				Folder:    "users.roles:add",
+				Namespace:   "org-12",
+				Subject:     "user:test-uid",
+				Group:       "iam.grafana.app",
+				Resource:    "permissions",
+				Subresource: "users.roles:add",
+				Verb:        utils.VerbPatch,
+				Name:        "delegate",
 			},
 			permissions: []accesscontrol.Permission{
 				{Action: "users.roles:add", Scope: "permissions:type:delegate"},
@@ -1649,7 +1649,7 @@ func TestService_Check(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "permissions:type check without action override should keep the roles:write verb mapping",
+			name: "permissions:type check without action subresource should keep the roles:write verb mapping",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
 				Subject:   "user:test-uid",
@@ -1692,9 +1692,6 @@ func TestService_Check(t *testing.T) {
 				// Derive the same action and action sets the service used.
 				expAction, expActionSets, err := s.validateAction(ctx, tc.req.Group, tc.req.Resource, tc.req.Subresource, tc.req.Verb)
 				require.NoError(t, err)
-				if override, hasOverride := permissionsActionOverride(tc.req.Group, tc.req.Resource, tc.req.Folder); hasOverride {
-					expAction, expActionSets = override, nil
-				}
 
 				perms, ok := s.permCache.Get(ctx, userPermCacheKey("org-12", "test-uid", expAction, expActionSets))
 				require.True(t, ok)
@@ -1844,13 +1841,13 @@ func TestService_Check_DelegationOverrideCacheIsolation(t *testing.T) {
 		Name:      "dash1",
 	}
 	delegationReq := &authzv1.CheckRequest{
-		Namespace: "org-12",
-		Subject:   "user:test-uid",
-		Group:     "iam.grafana.app",
-		Resource:  "permissions",
-		Verb:      utils.VerbPatch,
-		Name:      "delegate",
-		Folder:    "dashboards:read",
+		Namespace:   "org-12",
+		Subject:     "user:test-uid",
+		Group:       "iam.grafana.app",
+		Resource:    "permissions",
+		Subresource: "dashboards:read",
+		Verb:        utils.VerbPatch,
+		Name:        "delegate",
 	}
 
 	newService := func() *Service {
@@ -3226,7 +3223,7 @@ func TestService_BatchCheck(t *testing.T) {
 			},
 		},
 		{
-			name: "should use the folder field as RBAC action override for iam permissions checks",
+			name: "should use the permissions subresource as the RBAC action being delegated in batch checks",
 			req: &authzv1.BatchCheckRequest{
 				Namespace: "org-12",
 				Subject:   "user:test-uid",
@@ -3235,17 +3232,17 @@ func TestService_BatchCheck(t *testing.T) {
 						CorrelationId: "delegate-roles",
 						Group:         "iam.grafana.app",
 						Resource:      "permissions",
+						Subresource:   "roles:write",
 						Verb:          utils.VerbPatch,
 						Name:          "delegate",
-						Folder:        "roles:write",
 					},
 					{
 						CorrelationId: "delegate-users",
 						Group:         "iam.grafana.app",
 						Resource:      "permissions",
+						Subresource:   "users.roles:add",
 						Verb:          utils.VerbPatch,
 						Name:          "delegate",
-						Folder:        "users.roles:add",
 					},
 				},
 			},
@@ -3274,9 +3271,9 @@ func TestService_BatchCheck(t *testing.T) {
 						CorrelationId: "delegate-dash-read",
 						Group:         "iam.grafana.app",
 						Resource:      "permissions",
+						Subresource:   "dashboards:read",
 						Verb:          utils.VerbPatch,
 						Name:          "delegate",
-						Folder:        "dashboards:read",
 					},
 				},
 			},
@@ -3299,9 +3296,9 @@ func TestService_BatchCheck(t *testing.T) {
 						CorrelationId: "delegate-dash-read",
 						Group:         "iam.grafana.app",
 						Resource:      "permissions",
+						Subresource:   "dashboards:read",
 						Verb:          utils.VerbPatch,
 						Name:          "delegate",
-						Folder:        "dashboards:read",
 					},
 					{
 						CorrelationId: "ordinary-dash",
