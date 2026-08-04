@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards" // TODO: Check if we can remove this import
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -118,9 +117,10 @@ func TestIntegrationDashboardAPIZanzana(t *testing.T) {
 	})
 }
 
-// TestIntegrationDashboardAPIZanzanaCrossOrg keeps the multi-org Zanzana subtests
-// on the legacy reconciler path. The k8s users API requires SingleOrganization=true,
-// so these cases cannot coexist with the IAM APIs enabled in TestIntegrationDashboardAPIZanzana.
+// TestIntegrationDashboardAPIZanzanaCrossOrg runs multi-org Zanzana subtests on the
+// MT reconciler. RBACSingleOrganization is required to register the k8s users API
+// (gated in IAM registration); test identities are pre-signed per org so cross-org
+// requests still exercise namespace isolation without relying on org-sync.
 func TestIntegrationDashboardAPIZanzanaCrossOrg(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -131,13 +131,11 @@ func TestIntegrationDashboardAPIZanzanaCrossOrg(t *testing.T) {
 		DisableZanzanaCache:                 true,
 		DisableZanzanaServerCheckQueryCache: true,
 		ZanzanaReconciliationInterval:       1 * time.Second,
+		ZanzanaReconcilerMode:               setting.ZanzanaReconcilerModeMT,
 		APIServerStorageType:                "unified",
+		RBACSingleOrganization:              true,
 		DBMaxConns:                          10,
-		EnableFeatureToggles: []string{
-			featuremgmt.FlagZanzana,
-			featuremgmt.FlagZanzanaNoLegacyClient,
-			featuremgmt.FlagKubernetesAuthzZanzanaSync,
-		},
+		EnableFeatureToggles:                apis.ZanzanaMTReconcilerFeatureToggles,
 	})
 
 	t.Cleanup(func() {
@@ -161,15 +159,13 @@ func TestIntegrationDashboardAPIZanzanaList(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction:    true,
-		DisableAnonymous:     true,
-		APIServerStorageType: "unified",
-		DBMaxConns:           50,
-		EnableFeatureToggles: []string{
-			"zanzana",
-			"zanzanaNoLegacyClient",
-			"kubernetesAuthzZanzanaSync",
-		},
+		AppModeProduction:             true,
+		DisableAnonymous:              true,
+		APIServerStorageType:          "unified",
+		DBMaxConns:                    50,
+		RBACSingleOrganization:        true,
+		ZanzanaReconcilerMode:         setting.ZanzanaReconcilerModeMT,
+		EnableFeatureToggles:          apis.ZanzanaMTReconcilerFeatureToggles,
 		ZanzanaReconciliationInterval: 100 * time.Millisecond,
 	})
 

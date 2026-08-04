@@ -1,6 +1,7 @@
 package setting
 
 import (
+	"fmt"
 	"slices"
 	"strconv"
 	"time"
@@ -55,13 +56,12 @@ type ZanzanaClientSettings struct {
 type ZanzanaReconcilerMode string
 
 const (
-	ZanzanaReconcilerModeLegacy   ZanzanaReconcilerMode = "legacy"
 	ZanzanaReconcilerModeMT       ZanzanaReconcilerMode = "mt"
 	ZanzanaReconcilerModeDisabled ZanzanaReconcilerMode = "disabled"
 )
 
 type ZanzanaReconcilerSettings struct {
-	// Mode selects which reconciler to run: "legacy", "mt", or "disabled".
+	// Mode selects which reconciler to run: "mt" (default) or "disabled".
 	Mode ZanzanaReconcilerMode
 
 	// --- MT reconciler settings (only used when Mode == "mt") ---
@@ -286,7 +286,7 @@ const (
 	defaultReadPageSize = 100
 )
 
-func (cfg *Cfg) readZanzanaSettings() {
+func (cfg *Cfg) readZanzanaSettings() error {
 	zc := ZanzanaClientSettings{}
 	clientSec := cfg.SectionWithEnvOverrides("zanzana.client")
 
@@ -413,7 +413,12 @@ func (cfg *Cfg) readZanzanaSettings() {
 	// Reconciler settings
 	reconcilerSec := cfg.SectionWithEnvOverrides("zanzana.reconciler")
 	zr := ZanzanaReconcilerSettings{}
-	zr.Mode = ZanzanaReconcilerMode(reconcilerSec.Key("mode").MustString("legacy"))
+	zr.Mode = ZanzanaReconcilerMode(reconcilerSec.Key("mode").MustString(string(ZanzanaReconcilerModeMT)))
+	switch zr.Mode {
+	case ZanzanaReconcilerModeMT, ZanzanaReconcilerModeDisabled:
+	default:
+		return fmt.Errorf("invalid zanzana reconciler mode %q, expected %q or %q; migrate legacy deployments to %q", zr.Mode, ZanzanaReconcilerModeMT, ZanzanaReconcilerModeDisabled, ZanzanaReconcilerModeMT)
+	}
 	zr.FolderAPIServerURL = reconcilerSec.Key("folder_apiserver_url").MustString("")
 	zr.IAMAPIServerURL = reconcilerSec.Key("iam_apiserver_url").MustString("")
 	zr.SettingAPIServerURL = reconcilerSec.Key("setting_apiserver_url").MustString("")
@@ -457,4 +462,5 @@ func (cfg *Cfg) readZanzanaSettings() {
 		rollout.ResourcePercentages[resource] = pct
 	}
 	cfg.ZanzanaRollout = rollout
+	return nil
 }

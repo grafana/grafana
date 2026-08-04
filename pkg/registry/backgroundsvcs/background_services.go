@@ -13,7 +13,6 @@ import (
 	secretsgarbagecollectionworker "github.com/grafana/grafana/pkg/registry/apis/secret/garbagecollectionworker"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
 	"github.com/grafana/grafana/pkg/services/anonymous/anonimpl"
 	grafanaapiserver "github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -72,7 +71,6 @@ func ProvideBackgroundServiceRegistry(
 	ssoSettings *ssosettingsimpl.Service,
 	pluginExternal *pluginexternal.Service,
 	pluginInstaller *plugininstaller.Service,
-	zanzanaReconciler *dualwrite.ZanzanaReconciler,
 	appRegistry *appregistry.Service,
 	pluginDashboardUpdater *plugindashboardsservice.DashboardUpdater,
 	dashboardServiceImpl *service.DashboardServiceImpl,
@@ -130,7 +128,6 @@ func ProvideBackgroundServiceRegistry(
 		ssoSettings,
 		pluginExternal,
 		pluginInstaller,
-		zanzanaReconciler,
 		appRegistry,
 		pluginDashboardUpdater,
 		dashboardServiceImpl,
