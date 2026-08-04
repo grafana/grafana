@@ -54,6 +54,8 @@ On Grafana Cloud, tier limits can't be changed from configuration. Contact Suppo
 
 {{< /admonition >}}
 
+### Recommended limits
+
 **Do not sync more than 1,000 resources per repository connection as of today.** This isn't an arbitrary cap: beyond roughly 1,000 resources per connection, the sync workflow puts noticeable load on Grafana itself, which may result in slower syncs and increased database load. In any case, Git Sync is under continuous development and the recommended ceiling will increase in upcoming releases.
 
 On Grafana Cloud, the repository-connection limit is a per-stack limit. On self-managed Grafana, the effective limit is whatever you set for `max_repositories` (default `10`).
@@ -117,7 +119,7 @@ On-prem users can customize the limits with the following configuration settings
 
 Git Sync supports up to four nested folders within a repository.
 
-### Git Sync across multiple organizations
+## Git Sync across multiple organizations
 
 Git Sync works across multiple organizations for self-managed Grafana instances. You can set up Git Sync independently in each of your organizations, and what you sync in one organization does not affect another. Teams that share a single Grafana instance across separate organizations can each manage their own provisioning from Git.
 
@@ -127,12 +129,13 @@ This feature is available starting in Grafana 13.0.4, but not supported until Gr
 
 Git Sync is available for any Git provider through a Pure Git repository type, and has specific enhanced integrations for GitHub, GitLab and Bitbucket.
 
-| **Provider** | **Available in**       | **Authentication**                  |
-| ------------ | ---------------------- | ----------------------------------- |
-| Pure Git     | Cloud, OSS, Enterprise | Personal Access Token               |
-| GitHub       | Cloud, OSS, Enterprise | Personal Access Token or GitHub App |
-| GitLab       | Cloud, Enterprise      | Personal Access Token               |
-| Bitbucket    | Cloud, Enterprise      | API token with scopes               |
+| **Provider**      | **Available in**       | **Authentication**                  |
+| ----------------- | ---------------------- | ----------------------------------- |
+| Pure Git          | Cloud, OSS, Enterprise | Personal Access Token               |
+| GitHub            | Cloud, OSS, Enterprise | Personal Access Token or GitHub App |
+| GitHub Enterprise | Cloud, Enterprise      | Personal Access Token or GitHub App |
+| GitLab            | Cloud, Enterprise      | Personal Access Token               |
+| Bitbucket         | Cloud, Enterprise      | API token with scopes               |
 
 Note that Pure Git, GitLab and Bitbucket are supported in Grafana v12.4.x or later only. Refer to [Enable Git providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before#enable-git-providers) to set them up.
 
@@ -156,9 +159,9 @@ However, Pure Git doesn't include any features that require provider APIs, such 
 
 If your Git provider is GitHub, GitHub Enterprise, GitLab, or Bitbucket, use the enhanced integration. Enhanced integrations understand the platform you're using, allowing workflows that feel native: automated pull request comments with dashboard previews, instant webhook-based sync, or direct navigation from Grafana to source files in your provider's UI.
 
-The GitHub enhanced integration is the most feature-complete experience today. It enables richer pull request workflows, deeper linking between Grafana and GitHub, and tighter integration into review processes. It is available in Grafana OSS, Enterprise, and Cloud.
+The GitHub enhanced integration is the most feature-complete experience today. It's available in Grafana OSS, Enterprise, and Cloud, and enables richer pull request workflows, deeper linking between Grafana and GitHub, and tighter integration into review processes.
 
-The GitLab and Bitbucket integrations have limited functionality for the moment, and are only available in Grafana Enterprise and Grafana Cloud. Expect continued improvements around pull request workflows, linking, and sync behavior in upcoming releases.
+The GitLab and Bitbucket integrations are only available in Grafana Enterprise and Grafana Cloud. While they're less developed for the moment, expect continued improvements around pull request workflows, linking, and sync behavior.
 
 ## Resource support and compatibility
 
