@@ -1,55 +1,53 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { AssistantPromptCardView, openAssistant } from '@grafana/assistant';
-
 import { PromptForm } from './PromptForm';
 
-// The SDK's prompt card owns the input; stub it with a button that reports a
-// fixed prompt through the props the modal passed in, so the test exercises the
-// feature's own wiring rather than the SDK's internals.
-jest.mock('@grafana/assistant', () => ({
-  openAssistant: jest.fn(),
-  AssistantPromptCardView: jest.fn(),
-}));
-
-const mockCard = jest.mocked(AssistantPromptCardView);
-const mockOpenAssistant = jest.mocked(openAssistant);
-
 describe('PromptForm', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockCard.mockImplementation(({ openAssistant: open, onSubmit }) => (
-      <button
-        type="button"
-        onClick={() => {
-          open({ origin: 'test', prompt: 'monitor checkout' });
-          onSubmit?.('monitor checkout');
-        }}
-      >
-        submit
-      </button>
-    ));
-  });
+  const buildIt = () => screen.getByRole('button', { name: 'Build it' });
 
-  it('routes a submitted prompt to the handoff instead of opening the assistant itself', async () => {
+  it('hands the trimmed prompt to the submit handler', async () => {
     const onSubmitPrompt = jest.fn();
     render(<PromptForm onSubmitPrompt={onSubmitPrompt} onDismiss={jest.fn()} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'submit' }));
+    await userEvent.type(screen.getByTestId('dashboard-prompt-input'), '  monitor checkout  ');
+    await userEvent.click(buildIt());
 
     expect(onSubmitPrompt).toHaveBeenCalledWith('monitor checkout');
-    // The handoff navigates and attaches planning context itself (see handoff.ts),
-    // so the SDK's own openAssistant must never fire from the card.
-    expect(mockOpenAssistant).not.toHaveBeenCalled();
   });
 
-  it('gives the card the dashboarding mode and the feature origin', () => {
-    render(<PromptForm onSubmitPrompt={jest.fn()} onDismiss={jest.fn()} />);
+  it('submits on Enter as well as from the button', async () => {
+    const onSubmitPrompt = jest.fn();
+    render(<PromptForm onSubmitPrompt={onSubmitPrompt} onDismiss={jest.fn()} />);
 
-    expect(mockCard).toHaveBeenCalledWith(
-      expect.objectContaining({ mode: 'dashboarding', origin: 'grafana/dashboard-prompt' }),
-      expect.anything()
-    );
+    await userEvent.type(screen.getByTestId('dashboard-prompt-input'), 'monitor checkout{Enter}');
+
+    expect(onSubmitPrompt).toHaveBeenCalledWith('monitor checkout');
+  });
+
+  it('keeps the submit button disabled until something is typed', async () => {
+    const onSubmitPrompt = jest.fn();
+    render(<PromptForm onSubmitPrompt={onSubmitPrompt} onDismiss={jest.fn()} />);
+
+    expect(buildIt()).toBeDisabled();
+
+    // Whitespace alone is not a prompt.
+    await userEvent.type(screen.getByTestId('dashboard-prompt-input'), '   ');
+    expect(buildIt()).toBeDisabled();
+
+    await userEvent.type(screen.getByTestId('dashboard-prompt-input'), 'checkout');
+    expect(buildIt()).toBeEnabled();
+  });
+
+  it('closes without submitting when cancelled', async () => {
+    const onSubmitPrompt = jest.fn();
+    const onDismiss = jest.fn();
+    render(<PromptForm onSubmitPrompt={onSubmitPrompt} onDismiss={onDismiss} />);
+
+    await userEvent.type(screen.getByTestId('dashboard-prompt-input'), 'monitor checkout');
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onDismiss).toHaveBeenCalled();
+    expect(onSubmitPrompt).not.toHaveBeenCalled();
   });
 });

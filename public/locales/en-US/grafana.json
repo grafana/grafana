@@ -6757,8 +6757,11 @@
       "title": "What do you want to monitor?"
     },
     "prompt": {
+      "cancel": "Cancel",
       "description": "Describe it in your own words — mention the services, data, or questions you care about.",
-      "placeholder": "e.g. Error rates and latency for my checkout service, broken down by environment"
+      "input-label": "Describe the dashboard you want",
+      "placeholder": "e.g. Error rates and latency for my checkout service, broken down by environment",
+      "submit": "Build it"
     }
   },
   "dashboard-scene": {

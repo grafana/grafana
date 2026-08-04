@@ -78,8 +78,8 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
       onDismiss={onDismiss}
       className={styles.modal}
       contentClassName={styles.content}
-      // The prompt card focuses its own input on mount; without this the modal's
-      // focus manager races it and lands on the close button instead.
+      // The form autofocuses its prompt input; without this the modal's focus
+      // manager takes over and lands on the close button instead.
       initialFocus={-1}
     >
       <PromptForm onSubmitPrompt={handleSubmitPrompt} onDismiss={onDismiss} />
