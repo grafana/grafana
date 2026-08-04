@@ -358,7 +358,9 @@ describe('PlaylistForm', () => {
       await userEvent.unhover(pasteLink);
 
       await userEvent.click(pasteLink);
-      expect(screen.getByRole('textbox', { name: /dashboard state for uid_1/i })).toBeInTheDocument();
+      const dashboardLinkInput = screen.getByRole('textbox', { name: /dashboard state for uid_1/i });
+      expect(dashboardLinkInput).toHaveAttribute('placeholder', 'Paste dashboard link');
+      expect(screen.getByText('Paste a link to this dashboard with the view you want to use.')).toBeInTheDocument();
       const cancelPasteLink = screen.getByRole('button', { name: 'Cancel pasting dashboard link' });
       expect(cancelPasteLink).toHaveAttribute('aria-expanded', 'true');
 
