@@ -5,7 +5,6 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { type SceneDataLayerProvider, sceneGraph } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
-import { AnnotationEditableElement } from '../settings/annotations/AnnotationEditableElement';
 import { AnnotationQueryEditorModal } from '../settings/annotations/AnnotationQueryEditorModal';
 import { annotationEditActions } from '../settings/annotations/actions';
 
@@ -58,7 +57,7 @@ export function DataLayerControlEditWrapper({ layer, inMenu }: { layer: SceneDat
 
   const onClickDuplicateLayer = useCallback(() => {
     if (layer instanceof DashboardAnnotationsDataLayer) {
-      new AnnotationEditableElement(layer).onDuplicate();
+      annotationEditActions.duplicateAnnotation(layer);
     }
   }, [layer]);
 

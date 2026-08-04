@@ -156,19 +156,7 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onDuplicate() {
-    const set = this.variable.parent!;
-    if (!(set instanceof SceneVariableSet)) {
-      return;
-    }
-
-    dashboardEditActions.addVariable({
-      source: set,
-      addedObject: this.variable.clone({
-        key: undefined,
-        name: `${this.variable.state.name}_copy${set.state.variables.length}`,
-      }),
-    });
-    DashboardInteractions.variableActionButtonClicked('duplicate', { type: this.variable.state.type });
+    dashboardEditActions.duplicateVariable(this.variable);
   }
 
   public onConfirmDelete() {
