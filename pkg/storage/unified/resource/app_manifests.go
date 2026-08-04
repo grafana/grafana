@@ -8,6 +8,7 @@ import (
 	alerting_historian "github.com/grafana/alerting/apps/historian/pkg/apis"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis"
 	alerting_notifications "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
+	alerting_quality "github.com/grafana/grafana/apps/alerting/quality/pkg/apis/manifestdata"
 	alerting_rules "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	annotation "github.com/grafana/grafana/apps/annotation/pkg/apis"
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/manifestdata"
@@ -34,6 +35,7 @@ func AppManifests() []app.Manifest {
 	return []app.Manifest{
 		advisor.LocalManifest(),
 		alerting_notifications.LocalManifest(),
+		alerting_quality.LocalManifest(),
 		alerting_rules.LocalManifest(),
 		annotation.LocalManifest(),
 		collections.LocalManifest(),
