@@ -193,7 +193,6 @@ export function DashList(props: PanelProps<Options>) {
               layoutMode="list"
               onStarChange={handleStarChange}
               source="dashListView"
-              showDescription
             />
           </li>
         );
