@@ -1415,9 +1415,4 @@ export interface FeatureToggles {
   * @default false
   */
   cujTracking?: boolean;
-  /**
-  * Enables the assistant-powered Generate dashboard prompt
-  * @default false
-  */
-  dashboardGeneration?: boolean;
 }

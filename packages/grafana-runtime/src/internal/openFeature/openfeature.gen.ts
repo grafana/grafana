@@ -29,6 +29,8 @@ export const FlagKeys = {
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
   /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
   AzureMonitorBatchAPI: "azureMonitorBatchAPI",
+  /** Enables the assistant-powered Generate dashboard prompt */
+  DashboardGeneration: "dashboard.generation",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
@@ -247,6 +249,17 @@ export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagE
  */
 export const useFlagAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("azureMonitorBatchAPI", false, options).value;
+};
+
+/**
+ * Enables the assistant-powered Generate dashboard prompt
+ *
+ * **Details:**
+ * - flag key: `dashboard.generation`
+ * - default value: `false`
+ */
+export const useFlagDashboardGeneration = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.generation", false, options).value;
 };
 
 /**

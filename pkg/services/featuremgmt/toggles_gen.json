@@ -1583,6 +1583,20 @@
     },
     {
       "metadata": {
+        "name": "dashboard.generation",
+        "resourceVersion": "1785840164813",
+        "creationTimestamp": "2026-08-04T10:42:44Z"
+      },
+      "spec": {
+        "description": "Enables the assistant-powered Generate dashboard prompt",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.notebooks",
         "resourceVersion": "1783509818865",
         "creationTimestamp": "2026-07-08T11:23:38Z"
@@ -1657,7 +1671,8 @@
       "metadata": {
         "name": "dashboardGeneration",
         "resourceVersion": "1785828839880",
-        "creationTimestamp": "2026-08-04T07:33:59Z"
+        "creationTimestamp": "2026-08-04T07:33:59Z",
+        "deletionTimestamp": "2026-08-04T10:42:44Z"
       },
       "spec": {
         "description": "Enables the assistant-powered Generate dashboard prompt",

@@ -3094,12 +3094,12 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
-			Name:        "dashboardGeneration",
+			Name:        "dashboard.generation",
 			Description: "Enables the assistant-powered Generate dashboard prompt",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:         "features.bulkFlagEvalFiltering",
