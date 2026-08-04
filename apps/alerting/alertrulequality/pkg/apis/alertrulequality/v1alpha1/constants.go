@@ -21,14 +21,4 @@ var (
 		Group:   APIGroup,
 		Version: APIVersion,
 	}
-
-	// SuggestedAnnotations is the starting point offered to an admin who has not
-	// configured a policy yet: it is what the settings UI prefills and what the alert
-	// quality view reports against.
-	//
-	// It is deliberately NOT a fallback for enforcement. A required annotation rejects
-	// rule writes, so an org with no policy, or a policy with an empty list, requires
-	// nothing. Consumers that validate must read the policy; only consumers that
-	// display or prefill may fall back to this list.
-	SuggestedAnnotations = []string{"summary", "description", "runbook_url"}
 )
