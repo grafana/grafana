@@ -148,6 +148,25 @@ describe('<ContentOutline />', () => {
     expect(showContentOutlineButton).toBeInTheDocument();
   });
 
+  it('tracks the scroll container Explore hands over after the first render', () => {
+    const mockUseContentOutlineContext = require('./ContentOutlineContext').useContentOutlineContext;
+    mockUseContentOutlineContext.mockReturnValue({ outlineItems: [], register: jest.fn(), unregister: jest.fn() });
+
+    const scroller = document.createElement('div');
+    const addScrollListener = jest.spyOn(scroller, 'addEventListener');
+
+    // Explore assigns its scroll container in a ref callback, so the outline's first render gets
+    // nothing. Without tracking it, the active item never moves off the one it started on.
+    const { rerender } = render(
+      <ContentOutline scroller={undefined} panelId="content-outline-container-1" timeRange={timeRange} />
+    );
+    expect(addScrollListener).not.toHaveBeenCalled();
+
+    rerender(<ContentOutline scroller={scroller} panelId="content-outline-container-1" timeRange={timeRange} />);
+
+    expect(addScrollListener).toHaveBeenCalledWith('scroll', expect.any(Function), expect.anything());
+  });
+
   it('scrolls into view on content button click', async () => {
     setup();
     const itemButtons = screen.getAllByRole('button', { name: /Item [0-9]+/ });

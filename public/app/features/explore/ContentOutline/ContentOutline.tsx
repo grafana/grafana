@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useToggle, useScroll } from 'react-use';
 
 import { type DataSourceApi, type GrafanaTheme2, type TimeRange, store } from '@grafana/data';
@@ -75,7 +75,10 @@ export function ContentOutline({
   });
   const signalExplorerVisible = metricsSidebarEnabled && showSignalExplorer && contentOutlineExpanded;
   const styles = useStyles2(getStyles, contentOutlineExpanded, signalExplorerVisible);
-  const scrollerRef = useRef(scroller || null);
+  // Explore only has its scroll container after the first render, and `useScroll` subscribes in an
+  // effect keyed on the ref object itself — so the container has to arrive as a new ref, or the
+  // listener never attaches and the active item stays wherever it started.
+  const scrollerRef = useMemo(() => ({ current: scroller ?? null }), [scroller]);
   const { y: verticalScroll } = useScroll(scrollerRef);
   const { outlineItems } = useContentOutlineContext() ?? { outlineItems: [] };
   const [activeSectionId, setActiveSectionId] = useState(outlineItems[0]?.id);
