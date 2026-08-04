@@ -299,7 +299,7 @@ describe('useSnappingSplitter', () => {
       return calls[calls.length - 1][0];
     }
 
-    function mountSplitter(pixelPane: 'primary' | 'secondary', collapsed?: boolean) {
+    function mountSplitter(pixelPane: 'primary' | 'secondary', collapsed?: boolean, minFillingPixels?: number) {
       const { result } = renderHook(() =>
         useSnappingSplitter({
           direction: pixelPane === 'primary' ? 'row' : 'column',
@@ -308,6 +308,7 @@ describe('useSnappingSplitter', () => {
           initialSize: 330,
           collapseBelowPixels: 260,
           collapsed,
+          minFillingPixels,
         })
       );
 
@@ -323,6 +324,9 @@ describe('useSnappingSplitter', () => {
     // the main axis each one is laid out on.
     const mainAxisMinDim = (pixelPane: 'primary' | 'secondary') =>
       pixelPane === 'primary' ? ('minWidth' as const) : ('minHeight' as const);
+
+    const mainAxisMaxDim = (pixelPane: 'primary' | 'secondary') =>
+      pixelPane === 'primary' ? ('maxWidth' as const) : ('maxHeight' as const);
 
     describe.each(['primary', 'secondary'] as const)('%s pane', (pixelPane) => {
       it('holds its size instead of being shrunk away', () => {
@@ -355,6 +359,27 @@ describe('useSnappingSplitter', () => {
         const { fillingStyle } = mountSplitter(pixelPane, true);
 
         expect(fillingStyle()[mainAxisMinDim(pixelPane)]).toBe(0);
+      });
+
+      // Not shrinking sends the whole shortfall to the pane beside it, which is floored at 0 — so
+      // without a reserve a narrow enough container leaves that pane nothing at all.
+      it('caps itself so the filling pane keeps its reserve', () => {
+        const { collapsingStyle } = mountSplitter(pixelPane, false, 400);
+
+        expect(collapsingStyle()[mainAxisMaxDim(pixelPane)]).toBe('calc(100% - 400px)');
+      });
+
+      it('stays uncapped when no reserve is asked for', () => {
+        const { collapsingStyle } = mountSplitter(pixelPane);
+
+        expect(collapsingStyle()[mainAxisMaxDim(pixelPane)]).toBeUndefined();
+      });
+
+      // A closed pane is already at 0 and takes nothing from the pane beside it.
+      it('does not cap itself while closed', () => {
+        const { collapsingStyle } = mountSplitter(pixelPane, true, 400);
+
+        expect(collapsingStyle()[mainAxisMaxDim(pixelPane)]).toBeUndefined();
       });
 
       // Dragging past the threshold still has to close it: the pane holds its *given* size, and a

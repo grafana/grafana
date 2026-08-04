@@ -15,6 +15,7 @@ import {
   DATA_PANE_COLLAPSE_BELOW_PIXELS,
   DEFAULT_SIDEBAR_WIDTH,
   DEFAULT_VIZ_RATIO,
+  MIN_DATA_PANE_WIDTH,
   QUERY_EDITOR_BANNER_DISMISSED_KEY,
   QUERY_EDITOR_SIDEBAR_COLLAPSED_KEY,
   QUERY_EDITOR_SIDEBAR_SIZE_KEY,
@@ -137,6 +138,7 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
     initialSize: sidebarWidth,
     collapsed: isInitiallyCollapsed,
     collapseBelowPixels: SIDEBAR_COLLAPSE_BELOW_PIXELS,
+    minFillingPixels: MIN_DATA_PANE_WIDTH,
     onPaneSizeChanged: setSidebarWidth,
   });
 

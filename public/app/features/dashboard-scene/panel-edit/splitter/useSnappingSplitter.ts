@@ -26,6 +26,14 @@ export interface UseSnappingSplitterOptions {
   disabled?: boolean;
 
   /**
+   * Width/height reserved for the pane that fills the remaining space. Only meaningful with
+   * `usePixels`, which pins the other pane against shrinking: without a reserve, a container too
+   * narrow for both leaves the filling pane with whatever is left, down to nothing. Must exceed the
+   * drag handle, which `useSplitter` already reserves on its own.
+   */
+  minFillingPixels?: number;
+
+  /**
    * Persist hook: called when a resize ends above the threshold, with the collapsing pane's settled
    * size in pixels and the primary pane's share of the container (0-1). Use `flexSize` for a
    * flex-sized splitter, whose size is otherwise only stored on the DOM and lost on remount.
@@ -48,6 +56,7 @@ export function useSnappingSplitter({
   usePixels,
   pixelPane = 'secondary',
   disabled,
+  minFillingPixels,
   onPaneSizeChanged,
 }: UseSnappingSplitterOptions) {
   const [state, setState] = useState<PaneState>({
@@ -186,6 +195,12 @@ export function useSnappingSplitter({
       // 40px against a configured 330px. It is either at the size it was given or deliberately
       // closed, never a useless in between. Closed is deliberate, so it is free to sit at 0.
       collapsingProps.style.flexShrink = 0;
+
+      // Not shrinking means the shortfall lands entirely on the pane beside it, which `minWidth: 0`
+      // above lets run all the way to zero. Cap this pane so that pane keeps its reserve instead.
+      if (minFillingPixels !== undefined) {
+        collapsingProps.style[direction === 'row' ? 'maxWidth' : 'maxHeight'] = `calc(100% - ${minFillingPixels}px)`;
+      }
     }
   }
 

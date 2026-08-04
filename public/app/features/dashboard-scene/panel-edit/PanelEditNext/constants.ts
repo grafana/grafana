@@ -37,6 +37,12 @@ export const QUERY_EDITOR_V2_PREFERENCE_KEY = 'grafana.dashboard.query-editor-ne
 export const DEFAULT_SIDEBAR_WIDTH = 350;
 /** Below this width the sidebar snaps fully closed. */
 export const SIDEBAR_COLLAPSE_BELOW_PIXELS = 260;
+/**
+ * Width the data pane keeps for itself. The sidebar holds its own width against a shrinking
+ * container right up to this point, then yields instead — a pinned sidebar that squeezes the query
+ * editor down to its footer chrome is worse than a narrower one.
+ */
+export const MIN_DATA_PANE_WIDTH = 400;
 /** Share of the editor height given to the viz before the user drags the viz/data splitter. */
 export const DEFAULT_VIZ_RATIO = 0.5;
 /** Below this height the bottom data pane snaps fully closed. */
