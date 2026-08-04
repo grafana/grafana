@@ -14693,7 +14693,6 @@
     },
     "header": {
       "alert": "Alert",
-      "expression": "Expression",
       "pending-expression": "Select an expression",
       "pending-expression-cancel": "Cancel",
       "pending-transformation": "Select a transformation",
@@ -14707,6 +14706,7 @@
     "labels": {
       "alert": "alert",
       "expression": "expression",
+      "expression-title": "{{type}} Expression",
       "query": "query",
       "transformation": "transformation"
     },
