@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"golang.org/x/sync/singleflight"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,8 +24,17 @@ const (
 	maxPreviewAssetsFolderLength = 128
 
 	// previewCacheTTL keeps remote manifest fetches off the hot path while still
-	// picking up re-deploys of the same preview folder quickly.
+	// picking up re-deploys of the same preview folder quickly. Failed lookups
+	// are cached for the same period: the preview cookie lives for 24 hours and
+	// its folder can vanish from the bucket, so without negative caching every
+	// page load would pay a blocking remote roundtrip just to fall back to the
+	// default assets.
 	previewCacheTTL = 30 * time.Second
+
+	// previewFetchTimeout bounds the manifest fetch: the shared HTTP client
+	// (webassets.ReadWebAssetsFromCDN) sets no timeout of its own, and the
+	// fetch runs detached from the caller's context (see GetPreviewWebAssets).
+	previewFetchTimeout = 10 * time.Second
 )
 
 // PreviewAssetsConfig configures serving frontend assets from a preview build
@@ -87,12 +98,18 @@ func ResolvePreviewAssetsURL(baseURL string, folder string) (string, error) {
 
 type cachedPreviewAssets struct {
 	assets    dtos.EntryPointAssets
+	err       error
 	fetchedAt time.Time
 }
 
 var (
 	previewCacheMu sync.Mutex
 	previewCache   = map[string]cachedPreviewAssets{}
+
+	// previewFlights collapses concurrent fetches of the same assets URL into
+	// one remote request, so a slow bucket response costs a single connection
+	// and concurrent misses cannot race each other's cache writes.
+	previewFlights singleflight.Group
 )
 
 // ResetPreviewAssetsCache clears the preview manifest cache. Exported for tests.
@@ -104,6 +121,8 @@ func ResetPreviewAssetsCache() {
 
 // GetPreviewWebAssets fetches the assets manifest for a preview folder and
 // returns entrypoints with all asset URLs rooted at the preview location.
+// Results, including fetch failures, are cached for previewCacheTTL, and
+// concurrent callers for the same URL share a single remote fetch.
 func GetPreviewWebAssets(ctx context.Context, preview PreviewAssetsConfig, folder string) (dtos.EntryPointAssets, error) {
 	if !preview.Active() {
 		return dtos.EntryPointAssets{}, fmt.Errorf("preview assets are not enabled")
@@ -114,6 +133,56 @@ func GetPreviewWebAssets(ctx context.Context, preview PreviewAssetsConfig, folde
 		return dtos.EntryPointAssets{}, err
 	}
 
+	if cached, ok := getCachedPreviewAssets(assetsURL); ok {
+		return cached.assets, cached.err
+	}
+
+	ch := previewFlights.DoChan(assetsURL, func() (any, error) {
+		// Re-check under the flight: a previous flight may have populated the
+		// cache while we waited for the singleflight slot.
+		if cached, ok := getCachedPreviewAssets(assetsURL); ok {
+			return cached, nil
+		}
+
+		logger.Info("fetching preview assets manifest", "url", assetsURL)
+		// Detach from the caller's context so one caller disconnecting doesn't
+		// cache a context error for every request in the next TTL window; the
+		// explicit timeout bounds the fetch because the shared HTTP client
+		// doesn't.
+		fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), previewFetchTimeout)
+		defer cancel()
+
+		result, err := webassets.ReadWebAssetsFromCDN(fetchCtx, "build", assetsURL)
+
+		entry := cachedPreviewAssets{err: err, fetchedAt: time.Now()}
+		if err == nil {
+			entry.assets = *result
+		}
+
+		previewCacheMu.Lock()
+		previewCache[assetsURL] = entry
+		previewCacheMu.Unlock()
+
+		return entry, nil
+	})
+
+	// Wait on this caller's own context so a cancelled request returns promptly
+	// while the shared fetch continues for the other waiters.
+	select {
+	case <-ctx.Done():
+		return dtos.EntryPointAssets{}, ctx.Err()
+	case flight := <-ch:
+		if flight.Err != nil {
+			return dtos.EntryPointAssets{}, flight.Err
+		}
+		entry := flight.Val.(cachedPreviewAssets)
+		return entry.assets, entry.err
+	}
+}
+
+// getCachedPreviewAssets returns the live cache entry for assetsURL, evicting
+// expired entries first.
+func getCachedPreviewAssets(assetsURL string) (cachedPreviewAssets, bool) {
 	previewCacheMu.Lock()
 	defer previewCacheMu.Unlock()
 
@@ -123,20 +192,6 @@ func GetPreviewWebAssets(ctx context.Context, preview PreviewAssetsConfig, folde
 		}
 	}
 
-	if cached, ok := previewCache[assetsURL]; ok {
-		return cached.assets, nil
-	}
-
-	logger.Info("fetching preview assets manifest", "url", assetsURL)
-	result, err := webassets.ReadWebAssetsFromCDN(ctx, "build", assetsURL)
-	if err != nil {
-		return dtos.EntryPointAssets{}, err
-	}
-
-	previewCache[assetsURL] = cachedPreviewAssets{
-		assets:    *result,
-		fetchedAt: time.Now(),
-	}
-
-	return *result, nil
+	cached, ok := previewCache[assetsURL]
+	return cached, ok
 }
