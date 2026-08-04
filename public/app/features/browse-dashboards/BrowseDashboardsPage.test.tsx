@@ -5,6 +5,7 @@ import type AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
 import { render as testRender, screen, waitFor, testWithFeatureToggles } from 'test/test-utils';
 
+import { type DataSourceInstanceListItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
@@ -46,18 +47,16 @@ jest.mock('react-router-dom-v5-compat', () => ({
   useParams: jest.fn().mockReturnValue({}),
 }));
 
-jest.mock('@grafana/runtime', () => {
-  return {
-    ...jest.requireActual('@grafana/runtime'),
-    getDataSourceSrv: () => ({
-      getList: jest
-        .fn()
-        .mockReturnValue([
-          { name: 'Test Data Source', uid: 'test-data-source-uid', type: 'grafana-testdata-datasource' },
-        ]),
-    }),
-  };
-});
+const defaultTestDataSource = {
+  name: 'Test Data Source',
+  uid: 'test-data-source-uid',
+  type: 'grafana-testdata-datasource',
+} as DataSourceInstanceListItem;
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [defaultTestDataSource] })),
+}));
 
 jest.mock('@grafana/assistant', () => ({
   useAssistant: jest.fn(() => ({
@@ -209,7 +208,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     });
 
     describe('folder owner', () => {
-      testWithFeatureToggles({ enable: ['foldersAppPlatformAPI', 'teamFolders'] });
+      testWithFeatureToggles({ enable: ['foldersAppPlatformAPI'] });
       beforeEach(() => {
         jest.spyOn(contextSrv, 'hasRole').mockReturnValue(true);
       });

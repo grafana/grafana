@@ -324,7 +324,7 @@ export function getFormattedThresholds(
     }
     const prev = steps[i - 1];
     formatted.push({
-      value: isFinite(step.value) ? step.value : 0,
+      value: isFinite(step.value) ? step.value : min,
       color: theme.visualization.getColorByName((offsetColor ? prev : step).color),
     });
     if (step === last) {

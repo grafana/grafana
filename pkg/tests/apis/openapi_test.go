@@ -29,7 +29,6 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagQueryService, // Query Library
 			featuremgmt.FlagProvisioning,
-			featuremgmt.FlagGrafanaAdvisor,
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // library panels in v0
 			featuremgmt.FlagQueryServiceWithConnections,
 			featuremgmt.FlagDatasourceUseNewCRUDAPIs,
@@ -43,8 +42,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 			featuremgmt.FlagKubernetesUsersApi,
 			featuremgmt.FlagKubernetesServiceAccountsApi,
 			featuremgmt.FlagKubernetesServiceAccountTokensApi,
-			featuremgmt.FlagKubernetesExternalGroupMappingsApi,
 			featuremgmt.FlagDatasourcesApiServerEnableHealthEndpoint,
+			featuremgmt.FlagGlobalDashboardVariables,
+			featuremgmt.FlagDashboardNotebooks,
 		},
 	})
 
@@ -124,6 +124,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Group:   "preferences.grafana.app",
 		Version: "v1alpha1",
 	}, {
+		Group:   "preferences.grafana.app",
+		Version: "v1",
+	}, {
 		Group:   "collections.grafana.app",
 		Version: "v1alpha1",
 	}, {
@@ -152,6 +155,9 @@ func TestIntegrationOpenAPIs(t *testing.T) {
 		Version: "v1beta1",
 	}, {
 		Group:   "quotas.grafana.app",
+		Version: "v0alpha1",
+	}, {
+		Group:   "plugins.grafana.app",
 		Version: "v0alpha1",
 	}}
 	for _, gv := range groups {

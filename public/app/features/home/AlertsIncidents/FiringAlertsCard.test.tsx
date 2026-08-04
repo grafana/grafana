@@ -1,15 +1,25 @@
 import { http, HttpResponse } from 'msw';
 import { render, screen } from 'test/test-utils';
 
-import { setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
+import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { ctaClicked } from '../analytics/main';
+
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { HOME_CARD_MAX_ITEMS } from './constants';
+
+jest.mock('../analytics/main', () => ({
+  ctaClicked: jest.fn(),
+  tabChanged: jest.fn(),
+  clearHistoryClicked: jest.fn(),
+  homepageViewed: jest.fn(),
+}));
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -60,6 +70,7 @@ beforeEach(() => {
 
 afterEach(() => {
   jest.restoreAllMocks();
+  config.appSubUrl = '';
 });
 
 describe('FiringAlertsCard', () => {
@@ -108,7 +119,7 @@ describe('FiringAlertsCard', () => {
 
     render(<FiringAlertsCard />);
 
-    expect(await screen.findByRole('link', { name: 'Linked alert' })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /^Linked alert/ })).toHaveAttribute(
       'href',
       '/alerting/grafana/abc123/view?orgId=1'
     );
@@ -157,14 +168,16 @@ describe('FiringAlertsCard', () => {
 
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
 
-    // Verify that the request included a team filter matcher
+    // Verify that the request included a case-insensitive matcher with a
+    // tolerant pattern per team (both names are single letter/digit runs).
     const lastReq = capturedRequests[capturedRequests.length - 1];
     const url = new URL(lastReq.url);
     const filters = url.searchParams.getAll('filter');
-    expect(filters.some((f) => f.includes('team') && f.includes('platform|infra'))).toBe(true);
+    expect(filters.some((f) => f.includes('team=~') && f.includes('(?i)') && f.includes('platform'))).toBe(true);
+    expect(filters.some((f) => f.includes('infra'))).toBe(true);
   });
 
-  it('escapes regex metacharacters in team names', async () => {
+  it('matches punctuation in team names as separator gaps instead of literally', async () => {
     const capturedRequests: Request[] = [];
     mockTeams([{ name: 'team.one' }]);
 
@@ -179,10 +192,11 @@ describe('FiringAlertsCard', () => {
 
     expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
 
-    // buildTeamMatchers escapes the '.' to '\.', then quoteWithEscape doubles the backslash on the wire
+    // The '.' becomes a separator gap between the runs; quoteWithEscape doubles
+    // the pattern's backslashes on the wire.
     const lastReq = capturedRequests[capturedRequests.length - 1];
     const filters = new URL(lastReq.url).searchParams.getAll('filter');
-    expect(filters.some((f) => f.includes('team\\\\.one'))).toBe(true);
+    expect(filters.some((f) => f.includes('team[^\\\\p{L}\\\\p{N}]*one'))).toBe(true);
   });
 
   it('shows team-scoped empty state when team-filtered result is empty', async () => {
@@ -224,5 +238,196 @@ describe('FiringAlertsCard', () => {
     expect(screen.getAllByRole('listitem')).toHaveLength(HOME_CARD_MAX_ITEMS);
     // ...but the severity badge still counts every alert.
     expect(screen.getByText(new RegExp(`${HOME_CARD_MAX_ITEMS + 1} critical`, 'i'))).toBeInTheDocument();
+  });
+
+  it('shows the create action next to view-all when permitted and alerts exist', async () => {
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation(
+        (action: string) =>
+          action === AccessControlAction.AlertingInstanceRead || action === AccessControlAction.AlertingRuleCreate
+      );
+    mockTeams([]);
+    mockAlerts([criticalAlert]);
+
+    render(<FiringAlertsCard />);
+
+    expect(await screen.findByRole('link', { name: /create an alert rule/i })).toHaveAttribute(
+      'href',
+      '/alerting/new/alerting'
+    );
+    expect(screen.getByRole('link', { name: /view all firing alerts/i })).toBeInTheDocument();
+  });
+
+  it('shows the create CTA in the empty state when permitted', async () => {
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation(
+        (action: string) =>
+          action === AccessControlAction.AlertingInstanceRead || action === AccessControlAction.AlertingRuleCreate
+      );
+    mockTeams([]);
+    mockAlerts([]);
+
+    render(<FiringAlertsCard />);
+
+    expect(await screen.findByRole('link', { name: /create an alert rule/i })).toHaveAttribute(
+      'href',
+      '/alerting/new/alerting'
+    );
+    expect(screen.getByText('You have no firing alerts.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /view all alert rules/i })).toBeInTheDocument();
+  });
+
+  it('hides the create action when the user lacks rule-create permission', async () => {
+    mockTeams([]);
+    mockAlerts([criticalAlert]);
+
+    render(<FiringAlertsCard />);
+
+    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /create an alert rule/i })).not.toBeInTheDocument();
+  });
+
+  it('prefixes the create and view-all-groups links with config.appSubUrl when alerts exist', async () => {
+    config.appSubUrl = '/grafana';
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation(
+        (action: string) =>
+          action === AccessControlAction.AlertingInstanceRead || action === AccessControlAction.AlertingRuleCreate
+      );
+    mockTeams([]);
+    mockAlerts([criticalAlert]);
+
+    render(<FiringAlertsCard />);
+
+    expect(await screen.findByRole('link', { name: /create an alert rule/i })).toHaveAttribute(
+      'href',
+      '/grafana/alerting/new/alerting'
+    );
+    expect(screen.getByRole('link', { name: /view all firing alerts/i })).toHaveAttribute(
+      'href',
+      '/grafana/alerting/groups?alertmanager=grafana'
+    );
+  });
+
+  it('prefixes the create and view-all-rules links with config.appSubUrl in the empty state', async () => {
+    config.appSubUrl = '/grafana';
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation(
+        (action: string) =>
+          action === AccessControlAction.AlertingInstanceRead || action === AccessControlAction.AlertingRuleCreate
+      );
+    mockTeams([]);
+    mockAlerts([]);
+
+    render(<FiringAlertsCard />);
+
+    expect(await screen.findByRole('link', { name: /create an alert rule/i })).toHaveAttribute(
+      'href',
+      '/grafana/alerting/new/alerting'
+    );
+    // colon is percent-encoded by URLSearchParams; decodes back to source:grafana on read
+    expect(screen.getByRole('link', { name: /view all alert rules/i })).toHaveAttribute(
+      'href',
+      '/grafana/alerting/list?search=source%3Agrafana'
+    );
+  });
+
+  describe('analytics', () => {
+    // LinkButton renders a plain <a href>; clicking it would trigger a real jsdom
+    // navigation (console.error -> jest-fail-on-console). Route anchor clicks through
+    // the SPA history the way the app does so the onClick fires without navigating.
+    beforeEach(() => {
+      document.addEventListener('click', interceptLinkClicks);
+    });
+
+    afterEach(() => {
+      document.removeEventListener('click', interceptLinkClicks);
+    });
+
+    it('tracks alert_detail when an alert title link is clicked', async () => {
+      const linkedAlert = makeAlert({
+        generatorURL: 'https://grafana.example/alerting/foo?bar=1',
+        labels: { alertname: 'Linked alert', severity: 'critical', team: 'platform' },
+      });
+      mockTeams([]);
+      mockAlerts([linkedAlert]);
+
+      const { user } = render(<FiringAlertsCard />);
+
+      await user.click(await screen.findByRole('link', { name: /^Linked alert/ }));
+
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
+        action: 'alert_detail',
+        placement: 'list',
+      });
+    });
+
+    it('tracks create_rule from the empty-state CTA', async () => {
+      jest
+        .spyOn(contextSrv, 'hasPermission')
+        .mockImplementation(
+          (action: string) =>
+            action === AccessControlAction.AlertingInstanceRead || action === AccessControlAction.AlertingRuleCreate
+        );
+      mockTeams([]);
+      mockAlerts([]);
+
+      const { user } = render(<FiringAlertsCard />);
+
+      await user.click(await screen.findByRole('link', { name: /create an alert rule/i }));
+
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
+        action: 'create_rule',
+        placement: 'empty_state',
+      });
+    });
+
+    it('tracks create_rule and view_all_alerts from the footer when alerts exist', async () => {
+      jest
+        .spyOn(contextSrv, 'hasPermission')
+        .mockImplementation(
+          (action: string) =>
+            action === AccessControlAction.AlertingInstanceRead || action === AccessControlAction.AlertingRuleCreate
+        );
+      mockTeams([]);
+      mockAlerts([criticalAlert]);
+
+      const { user } = render(<FiringAlertsCard />);
+
+      await user.click(await screen.findByRole('link', { name: /create an alert rule/i }));
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
+        action: 'create_rule',
+        placement: 'footer',
+      });
+
+      await user.click(screen.getByRole('link', { name: /view all firing alerts/i }));
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
+        action: 'view_all_alerts',
+        placement: 'footer',
+      });
+    });
+
+    it('tracks view_all_rules from the footer in the empty state', async () => {
+      mockTeams([]);
+      mockAlerts([]);
+
+      const { user } = render(<FiringAlertsCard />);
+
+      await user.click(await screen.findByRole('link', { name: /view all alert rules/i }));
+
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'alerts_card',
+        action: 'view_all_rules',
+        placement: 'footer',
+      });
+    });
   });
 });

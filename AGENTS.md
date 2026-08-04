@@ -9,6 +9,7 @@ This file provides guidance to AI agents when working with code in the Grafana r
 - `docs/AGENTS.md` — Documentation style guide (for work under `docs/`)
 - `public/app/features/alerting/unified/AGENTS.md` — Alerting squad patterns
 - `pkg/storage/unified/AGENTS.md` — Unified storage/search compatibility rules (for work under `pkg/storage/unified/`)
+- `public/app/core/journeys/AGENTS.md` — Critical User Journey instrumentation
 
 ## Project Overview
 
@@ -85,7 +86,7 @@ make update-workspace             # Go workspace (after adding modules)
 
 ```bash
 yarn install --immutable                          # Install frontend deps
-make devenv sources=postgres,influxdb,loki        # Start backing services
+make devenv sources=influxdb        # Start backing services
 make devenv-down                                  # Stop backing services
 make lefthook-install                             # Pre-commit hooks
 ```
@@ -129,7 +130,7 @@ Standalone Go apps using Grafana App SDK: `apps/dashboard/`, `apps/folder/`, `ap
 
 ### Plugin Workspaces
 
-These built-in plugins require separate build steps: `azuremonitor`, `cloud-monitoring`, `grafana-postgresql-datasource`, `loki`, `jaeger`, `mysql`, `parca`, `grafana-pyroscope-datasource`, `grafana-testdata-datasource`.
+These built-in plugins require separate build steps: `azuremonitor`, `loki`, `grafana-testdata-datasource`.
 
 Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 
@@ -149,10 +150,11 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 
 ### Prerequisites
 
-- **Node.js v24.x** (see `.nvmrc` for exact version). Use `nvm install` / `nvm use` to match.
-- **Go 1.26.4** (see `go.mod`). Pre-installed in the VM.
-- **Yarn 4.11.0** via corepack (bundled in `.yarn/releases/`). Run `corepack enable` if `yarn` is not found.
+- **Node.js** — version pinned in `.nvmrc` (check that file for the exact version). Installed via nvm and set as the nvm default. **PATH gotcha:** the infra injects `/exec-daemon/node` ahead of nvm, so the plain non-login shell may resolve `node` to an older version — check it satisfies the `engines` range in `package.json` (it does today, so builds/tests work), but it is not the pinned version. Login shells (tmux sessions, `bash -lc '...'`) get the pinned version because `~/.bashrc` prepends the nvm bin. Run `yarn` / `yarn start` / `jest` / webpack via a login shell (tmux or `bash -lc`) to use the pinned Node.
+- **Go** — version pinned in `go.mod` (check that file for the exact version), installed at `/usr/local/go` and symlinked to `/usr/local/bin/go`. The distro `/usr/bin/go` is older; `/usr/local/bin` wins in PATH so `go` resolves correctly. If `go.mod` bumps Go, reinstall a matching toolchain into `/usr/local/go`.
+- **Yarn** via corepack — version pinned by `package.json` `packageManager` (check that field for the exact version). Run `corepack enable` if `yarn` is not found. `.yarnrc.yml` sets `enableScripts: false`, so dependency build/lifecycle scripts are disabled by default.
 - **GCC** required for CGo/SQLite compilation of the backend.
+- Repos in this environment live under `/agent/repos/<repo>` (e.g. `/agent/repos/grafana`); this is a multi-repo workspace, not the single `~/grafana` layout described in `grafana-enterprise/AGENTS.md`.
 
 ### Running services
 

@@ -153,6 +153,7 @@ func buildKeyPath(key *resourcepb.ResourceKey, rv int64, action resourcepb.BulkR
 }
 
 func (b *backend) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resourcepb.BulkResponse {
+	b.logCall("ProcessBulk")
 	if b.disableStorageServices {
 		return &resourcepb.BulkResponse{
 			Error: resource.AsErrorResult(errors.New("storage backend is not enabled")),

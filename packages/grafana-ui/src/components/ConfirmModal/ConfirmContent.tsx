@@ -46,6 +46,8 @@ export interface ConfirmContentProps {
   disabled?: boolean;
 }
 
+const promptCollator = new Intl.Collator();
+
 export const ConfirmContent = ({
   body,
   confirmPromptText,
@@ -64,14 +66,24 @@ export const ConfirmContent = ({
   const [isDisabled, setIsDisabled] = useState(disabled);
   const styles = useStyles2(getStyles);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const onConfirmationTextChange = (event: React.FormEvent<HTMLInputElement>) => {
-    setIsDisabled(confirmPromptText?.toLowerCase().localeCompare(event.currentTarget.value.toLowerCase()) !== 0);
+    setIsDisabled(
+      confirmPromptText === undefined ||
+        promptCollator.compare(confirmPromptText.toLowerCase(), event.currentTarget.value.toLowerCase()) !== 0
+    );
   };
 
   useEffect(() => {
-    buttonRef.current?.focus();
-  }, []);
+    // With a type-to-confirm prompt the confirm button starts disabled, so land focus
+    // on the input the user must type into rather than the unusable button.
+    if (confirmPromptText && !disabled) {
+      inputRef.current?.focus();
+    } else {
+      buttonRef.current?.focus();
+    }
+  }, [confirmPromptText, disabled]);
 
   useEffect(() => {
     setIsDisabled(disabled ? true : Boolean(confirmPromptText));
@@ -111,6 +123,7 @@ export const ConfirmContent = ({
             <Stack alignItems="flex-start">
               <Field disabled={disabled}>
                 <Input
+                  ref={inputRef}
                   placeholder={placeholder}
                   onChange={onConfirmationTextChange}
                   data-testid={selectors.pages.ConfirmModal.input}

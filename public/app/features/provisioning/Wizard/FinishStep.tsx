@@ -1,4 +1,5 @@
-import { memo, useEffect } from 'react';
+import { skipToken } from '@reduxjs/toolkit/query';
+import { memo, useEffect, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
@@ -9,7 +10,8 @@ import { CommitOptionsSection } from '../Config/CommitOptionsSection';
 import { EnablePushToConfiguredBranchOption } from '../Config/EnablePushToConfiguredBranchOption';
 import { PullRequestOptionsSection } from '../Config/PullRequestOptionsSection';
 import { WebhookSection } from '../Config/WebhookSection';
-import { isGitProvider } from '../utils/repositoryTypes';
+import { useConnectionList } from '../hooks/useConnectionList';
+import { isGitProvider, supportsWebhooks } from '../utils/repositoryTypes';
 
 import { useStepStatus } from './StepStatusContext';
 import { getGitProviderFields } from './fields';
@@ -25,15 +27,38 @@ export const FinishStep = memo(function FinishStep() {
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
-  const [type, readOnly] = watch(['repository.type', 'repository.readOnly']);
+  const [type, readOnly, wizardConnectionName, githubAuthType, email] = watch([
+    'repository.type',
+    'repository.readOnly',
+    'githubApp.connectionName',
+    'githubAuthType',
+    'repository.email',
+  ]);
 
-  const isGithub = type === 'github';
+  const emailWebhookDisabled = type === 'bitbucket' && !email?.trim();
+
   const isGitBased = isGitProvider(type);
+
+  const [connections] = useConnectionList(githubAuthType === 'github-app' ? {} : skipToken);
+  const connectionWebhookDisabled = useMemo(() => {
+    if (githubAuthType !== 'github-app' || !wizardConnectionName || !connections) {
+      return false;
+    }
+    const conn = connections.find((c) => c.metadata?.name === wizardConnectionName);
+    return Boolean(conn?.spec?.webhook?.disabled);
+  }, [githubAuthType, wizardConnectionName, connections]);
 
   // Set sync enabled by default
   useEffect(() => {
     setValue('repository.sync.enabled', true);
   }, [setValue]);
+
+  // Force webhook disabled when the selected connection requires it
+  useEffect(() => {
+    if (connectionWebhookDisabled) {
+      setValue('repository.webhook.disabled', true);
+    }
+  }, [connectionWebhookDisabled, setValue]);
 
   useEffect(() => {
     if (!hasStepError) {
@@ -132,6 +157,7 @@ export const FinishStep = memo(function FinishStep() {
             smimeCertificateName="repository.smimeCertificate"
             signerNameName="repository.commit.signerName"
             signerEmailName="repository.commit.signerEmail"
+            signerIsAuthorName="repository.commit.signerIsAuthor"
           />
           {/* Pull requests are not supported by the pure git type. */}
           {type !== 'git' && (
@@ -146,7 +172,24 @@ export const FinishStep = memo(function FinishStep() {
         </>
       )}
 
-      {isGithub && <WebhookSection<WizardFormData> register={register} name="repository.webhook.baseUrl" />}
+      {supportsWebhooks(type) && (
+        <WebhookSection<WizardFormData>
+          register={register}
+          control={control}
+          name="repository.webhook.baseUrl"
+          disabledName="repository.webhook.disabled"
+          connectionWebhookDisabled={connectionWebhookDisabled}
+          disabledReason={
+            emailWebhookDisabled
+              ? t(
+                  'provisioning.webhook-section.description-webhook-disabled-email-step',
+                  'Webhook integration is disabled because the Atlassian account email is not set. Set it in the Connect step to enable webhooks.'
+                )
+              : undefined
+          }
+          disabledError={errors?.repository?.webhook?.disabled?.message}
+        />
+      )}
     </Stack>
   );
 });

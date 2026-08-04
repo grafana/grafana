@@ -78,8 +78,8 @@ export const SynchronizeStep = memo(function SynchronizeStep({
   const isButtonDisabled = hasError || !isHealthy;
 
   const startSynchronization = useCallback(async () => {
-    await startJob(requiresMigration);
-  }, [startJob, requiresMigration]);
+    await startJob(requiresMigration, { syncTarget });
+  }, [startJob, requiresMigration, syncTarget]);
 
   const retryJob = useCallback(() => {
     setJob(undefined);

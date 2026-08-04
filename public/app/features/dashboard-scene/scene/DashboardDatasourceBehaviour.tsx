@@ -24,8 +24,18 @@ import { type LibraryPanelBehaviorState } from './LibraryPanelBehavior';
 
 interface DashboardDatasourceBehaviourState extends SceneObjectState {}
 
+// Trailing-edge window (ms) used to coalesce chained dashboard-DS re-runs. When a
+// chained source forwards fresh data under an unchanged requestId (see #126378),
+// several forwards can arrive close together (e.g. a stale->fresh pair, or multiple
+// sources settling near-simultaneously). Coalescing them into a single trailing
+// re-run avoids re-processing/re-rendering the consumer panel once per forward. Only
+// the chained-forward path is coalesced; normal completions (new requestId) and
+// streaming keep re-running immediately.
+const CHAINED_FORWARD_RERUN_COALESCE_MS = 100;
+
 export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatasourceBehaviourState> {
   private prevRequestIds: Map<number, string> = new Map();
+  private coalescedRerunTimeout?: ReturnType<typeof setTimeout>;
   public constructor(state: DashboardDatasourceBehaviourState) {
     super(state);
 
@@ -121,11 +131,13 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       }
 
       // Only re-run if there's actually new data to process.
-      // This prevents re-running when the source panel is cancelled, which only changes
-      // the loading state but keeps the same requestId.
       // We trigger when:
       // 1. requestId changed (new query completed)
       // 2. isStreaming (continuous data updates)
+      // 3. a terminal -> terminal (Done/Error) transition: a chained dashboard-DS
+      //    source forwarded fresh data under an unchanged requestId. A cancel
+      //    (Loading -> Done) is excluded since oldState is not terminal.
+      const isTerminal = (state?: LoadingState) => state === LoadingState.Done || state === LoadingState.Error;
       const onSourceDataChange = (
         newState: { data?: typeof sourcePanelQueryRunner.state.data },
         oldState: { data?: typeof sourcePanelQueryRunner.state.data }
@@ -134,8 +146,23 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
         const oldRequestId = oldState.data?.request?.requestId;
         const hasNewRequest = newRequestId !== oldRequestId;
         const isStreaming = newState.data?.state === LoadingState.Streaming;
-        if (newState.data !== oldState.data && (hasNewRequest || isStreaming)) {
+        const forwardedNewData = isTerminal(oldState.data?.state) && isTerminal(newState.data?.state);
+        if (newState.data === oldState.data) {
+          return;
+        }
+        if (hasNewRequest || isStreaming) {
+          // Normal completion or streaming update: re-run immediately.
+          // Cancel any pending coalesced re-run so a prior chained forward cannot
+          // trigger a redundant second runQueries() after this one.
+          this.cancelCoalescedRerun();
           queryRunner.runQueries();
+        } else if (forwardedNewData) {
+          // Chained dashboard-DS forward under an unchanged requestId. Coalesce
+          // bursts of forwards into a single trailing re-run so the consumer
+          // re-processes once against the final forwarded frame instead of once
+          // per forward. runQueries() reads the source's latest data at fire time,
+          // so the coalesced re-run still lands on the freshest frame.
+          this.scheduleCoalescedRerun(queryRunner);
         }
       };
 
@@ -165,6 +192,9 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
 
     // Return cleanup function that unsubscribes from ALL subscriptions
     return () => {
+      // Cancel any pending coalesced re-run so it can't fire after deactivation.
+      this.cancelCoalescedRerun();
+
       // Store all current requestIds before cleanup
       for (const dashboardQuery of dashboardQueries) {
         const panelId = dashboardQuery.panelId;
@@ -190,6 +220,21 @@ export class DashboardDatasourceBehaviour extends SceneObjectBase<DashboardDatas
       libraryPanelSubs.forEach((sub) => sub.unsubscribe());
       transformerSubs.forEach((sub) => sub.unsubscribe());
     };
+  }
+
+  private cancelCoalescedRerun() {
+    if (this.coalescedRerunTimeout !== undefined) {
+      clearTimeout(this.coalescedRerunTimeout);
+      this.coalescedRerunTimeout = undefined;
+    }
+  }
+
+  private scheduleCoalescedRerun(queryRunner: SceneQueryRunner) {
+    this.cancelCoalescedRerun();
+    this.coalescedRerunTimeout = setTimeout(() => {
+      this.coalescedRerunTimeout = undefined;
+      queryRunner.runQueries();
+    }, CHAINED_FORWARD_RERUN_COALESCE_MS);
   }
 
   private containsDashboardDSQueries(queryRunner: SceneQueryRunner): boolean {

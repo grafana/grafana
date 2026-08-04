@@ -13,6 +13,7 @@ export const usePullRequestParam = () => {
   const repoType = params.get('repo_type');
   const resourcePushedTo = params.get('resource_pushed_to');
   const actionParam = params.get('action');
+  const prTitleParam = params.get('pr_title');
   const decodedRepoType = repoType ? decodeURIComponent(repoType) : undefined;
   const decodedResourcePushedTo = resourcePushedTo ? decodeURIComponent(resourcePushedTo) : undefined;
 
@@ -24,5 +25,8 @@ export const usePullRequestParam = () => {
     resourcePushedTo:
       decodedResourcePushedTo && K8S_NAME_RE.test(decodedResourcePushedTo) ? decodedResourcePushedTo : undefined,
     action: actionParam === 'create' || actionParam === 'delete' || actionParam === 'update' ? actionParam : undefined,
+    // useUrlParams reads via URLSearchParams.get, which already percent-decodes; re-sanitize the
+    // single-line shape defensively in case the param was hand-crafted in the URL.
+    prTitle: prTitleParam ? prTitleParam.replace(/\s+/g, ' ').trim().slice(0, 255) : undefined,
   };
 };

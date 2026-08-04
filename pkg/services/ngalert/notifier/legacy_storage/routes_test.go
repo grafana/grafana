@@ -258,7 +258,7 @@ func TestConfigRevision_GetManagedRoutes(t *testing.T) {
 	rev := testConfig()
 
 	t.Run("returns all managed routes", func(t *testing.T) {
-		routes := rev.GetManagedRoutes(true)
+		routes := rev.GetManagedRoutes()
 
 		expected := make([]*ManagedRoute, 0, len(rev.Config.ManagedRoutes)+1)
 		for name, mr := range rev.Config.ManagedRoutes {
@@ -268,14 +268,6 @@ func TestConfigRevision_GetManagedRoutes(t *testing.T) {
 
 		assert.Len(t, routes, len(expected))
 		assert.ElementsMatch(t, routes, expected)
-	})
-
-	t.Run("returns only default route when flag is false", func(t *testing.T) {
-		// Ignore non-default routes when `includeManagedRoutes=false`
-		routes := rev.GetManagedRoutes(false)
-
-		assert.Len(t, routes, 1)
-		assert.Equal(t, routes[0], NewManagedRoute(models.DefaultRoutingTreeName, rev.Config.AlertmanagerConfig.Route))
 	})
 }
 
@@ -526,6 +518,51 @@ func TestConfigRevision_ValidateRoute(t *testing.T) {
 
 		err := rev.ValidateRoute(invalid)
 		require.ErrorContains(t, err, "missing-interval")
+	})
+}
+
+func TestConfigRevision_TimeIntervalUsedByRoutes(t *testing.T) {
+	rev := &ConfigRevision{
+		Config: &v1.AMConfigV1{
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Route: &v1.Route{
+						Routes: []*v1.Route{
+							{
+								MuteTimeIntervals:   []string{"root-mute"},
+								ActiveTimeIntervals: []string{"root-active"},
+							},
+						},
+					},
+				},
+			},
+			ManagedRoutes: map[string]*v1.Route{
+				"managed": {
+					Routes: []*v1.Route{
+						{
+							MuteTimeIntervals:   []string{"managed-mute"},
+							ActiveTimeIntervals: []string{"managed-active"},
+						},
+					},
+				},
+				"empty": {},
+			},
+		},
+	}
+
+	for _, name := range []string{"root-mute", "root-active", "managed-mute", "managed-active"} {
+		t.Run(fmt.Sprintf("returns true for %s", name), func(t *testing.T) {
+			assert.True(t, rev.TimeIntervalUsedByRoutes(name))
+		})
+	}
+
+	t.Run("returns false if not referenced by any route", func(t *testing.T) {
+		assert.False(t, rev.TimeIntervalUsedByRoutes("unused"))
+	})
+
+	t.Run("returns false if there is no root route", func(t *testing.T) {
+		rev := &ConfigRevision{Config: &v1.AMConfigV1{}}
+		assert.False(t, rev.TimeIntervalUsedByRoutes("unused"))
 	})
 }
 

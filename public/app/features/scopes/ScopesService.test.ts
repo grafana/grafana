@@ -3,18 +3,21 @@ import { BehaviorSubject } from 'rxjs';
 import { type ScopeSpecFilter } from '@grafana/data';
 import { type LocationService } from '@grafana/runtime';
 
+import { type ScopesApiClient } from './ScopesApiClient';
 import { ScopesService } from './ScopesService';
 import { type ScopesDashboardsService } from './dashboards/ScopesDashboardsService';
 import { type ScopesSelectorService } from './selector/ScopesSelectorService';
 
 jest.mock('./selector/ScopesSelectorService');
 jest.mock('./dashboards/ScopesDashboardsService');
+jest.mock('./ScopesApiClient');
 
 describe('ScopesService', () => {
   let service: ScopesService;
   let selectorService: jest.Mocked<ScopesSelectorService>;
   let dashboardsService: jest.Mocked<ScopesDashboardsService>;
   let locationService: jest.Mocked<LocationService>;
+  let apiClient: jest.Mocked<ScopesApiClient>;
   let selectorStateSubscription:
     | ((
         state: {
@@ -119,6 +122,10 @@ describe('ScopesService', () => {
       ),
       partial: jest.fn(),
     } as unknown as jest.Mocked<LocationService>;
+
+    apiClient = {
+      fetchDefaultScope: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<ScopesApiClient>;
   });
 
   describe('URL initialization', () => {
@@ -128,7 +135,7 @@ describe('ScopesService', () => {
         search: '?scopes=scope1&scope_node=node1',
       });
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, 'node1', false);
     });
@@ -140,7 +147,7 @@ describe('ScopesService', () => {
         search: '?scopes=scope1&scope_parent=parent1',
       });
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       // parentNodeId should be undefined since we don't read it from URL
       expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, undefined, false);
@@ -153,7 +160,7 @@ describe('ScopesService', () => {
         search: '?scopes=scope1&scope_node=node1&scope_parent=parent1',
       });
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       // Should only use scopeNodeId from URL, parentNodeId is undefined
       expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, 'node1', false);
@@ -167,7 +174,7 @@ describe('ScopesService', () => {
         search: '?scopes=scope1&scope_node=node1',
       });
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       expect(selectorService.resolvePathToRoot).toHaveBeenCalledWith('node1', expect.anything());
     });
@@ -181,7 +188,7 @@ describe('ScopesService', () => {
         search: '?scopes=scope1&scope_node=node1',
       });
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       await Promise.resolve();
 
@@ -218,7 +225,7 @@ describe('ScopesService', () => {
         search: '?scopes=scope1',
       });
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       // Wait for changeScopes to complete and resolvePathToRoot to be called
       await changeScopesPromise;
@@ -238,7 +245,7 @@ describe('ScopesService', () => {
         search: '?scopes=scope1&scope_parent=parent1',
       });
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       // Should not preload since we don't read scope_parent from URL
       expect(selectorService.resolvePathToRoot).not.toHaveBeenCalled();
@@ -271,7 +278,7 @@ describe('ScopesService', () => {
         search: '?scopes=scope1',
       });
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       // Await the actual promise that the constructor chains .then() on
       await changeScopesPromise;
@@ -309,7 +316,7 @@ describe('ScopesService', () => {
         search: '?scopes=scope1',
       });
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       await changeScopesPromise;
 
@@ -322,7 +329,7 @@ describe('ScopesService', () => {
         search: '?scopes=scope1&scopes=scope2&scope_node=node1',
       });
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1', 'scope2'], undefined, 'node1', false);
     });
@@ -333,7 +340,7 @@ describe('ScopesService', () => {
         search: '?scopes=scope1&navigation_scope=navScope1',
       });
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith('navScope1', undefined, undefined);
     });
@@ -344,7 +351,7 @@ describe('ScopesService', () => {
         search: '?scopes=scope1&scope_node=node1&navigation_scope=navScope1',
       });
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith('navScope1', undefined, undefined);
       expect(selectorService.changeScopes).toHaveBeenCalledWith(['scope1'], undefined, 'node1', false);
@@ -356,7 +363,7 @@ describe('ScopesService', () => {
         search: '?scopes=scope1',
       });
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       expect(dashboardsService.setNavigationScope).not.toHaveBeenCalled();
     });
@@ -367,7 +374,7 @@ describe('ScopesService', () => {
         search: '?navigation_scope=navScope1&nav_scope_path=mimir%2Cloki',
       });
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith('navScope1', undefined, ['mimir', 'loki']);
     });
@@ -378,7 +385,7 @@ describe('ScopesService', () => {
         search: '?scopes=scope1&nav_scope_path=mimir',
       });
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       // Wait for the changeScopes promise to resolve
       await Promise.resolve();
@@ -392,7 +399,7 @@ describe('ScopesService', () => {
         search: '?navigation_scope=navScope1&nav_scope_path=' + encodeURIComponent('folder one,folder two'),
       });
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       expect(dashboardsService.setNavigationScope).toHaveBeenCalledWith('navScope1', undefined, [
         'folder one',
@@ -407,7 +414,7 @@ describe('ScopesService', () => {
         pathname: '/test',
         search: '',
       });
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
     });
 
     it('should write scope_node to URL when scopes change', () => {
@@ -949,7 +956,7 @@ describe('ScopesService', () => {
         pathname: '/test',
         search: '',
       });
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
     });
 
     it('should sync scopeNodeId when enabling scopes', () => {
@@ -1074,6 +1081,110 @@ describe('ScopesService', () => {
 
       expect(locationService.partial).not.toHaveBeenCalled();
     });
+
+    describe('default scope on first mount', () => {
+      beforeEach(() => {
+        // The ScopesService constructor calls selectorService.changeScopes during URL init.
+        // Clear those calls so the assertions below only see the default-scope flow.
+        jest.clearAllMocks();
+      });
+
+      it('fetches the default scope and applies it when no scope is selected', async () => {
+        selectorService.state.appliedScopes = [];
+        apiClient.fetchDefaultScope = jest.fn().mockResolvedValue('gdev-shoe-org');
+
+        service.setEnabled(true);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(apiClient.fetchDefaultScope).toHaveBeenCalled();
+        // redirectOnApply=true so the user lands on the scope's redirectPath
+        // when one is configured, matching manual selection behavior.
+        expect(selectorService.changeScopes).toHaveBeenCalledWith(['gdev-shoe-org'], undefined, undefined, true);
+      });
+
+      it('does not fetch when a scope is already selected', () => {
+        selectorService.state.appliedScopes = [{ scopeId: 'scope1' }];
+        selectorService.state.scopes = {
+          scope1: { metadata: { name: 'scope1' }, spec: { title: 'Scope 1', filters: [] } },
+        };
+        apiClient.fetchDefaultScope = jest.fn();
+
+        service.setEnabled(true);
+
+        expect(apiClient.fetchDefaultScope).not.toHaveBeenCalled();
+      });
+
+      it('does not apply when fetchDefaultScope resolves to undefined (endpoint flag off or no default)', async () => {
+        selectorService.state.appliedScopes = [];
+        apiClient.fetchDefaultScope = jest.fn().mockResolvedValue(undefined);
+
+        service.setEnabled(true);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(apiClient.fetchDefaultScope).toHaveBeenCalled();
+        expect(selectorService.changeScopes).not.toHaveBeenCalled();
+      });
+
+      it('does not apply if scopes is disabled before the fetch resolves', async () => {
+        selectorService.state.appliedScopes = [];
+        apiClient.fetchDefaultScope = jest.fn().mockResolvedValue('gdev-shoe-org');
+
+        service.setEnabled(true);
+        // User navigates to a non-scope page before the fetch resolves.
+        service.setEnabled(false);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(apiClient.fetchDefaultScope).toHaveBeenCalled();
+        expect(selectorService.changeScopes).not.toHaveBeenCalled();
+      });
+
+      it('does not apply if the user has picked a scope but not yet applied before the fetch resolves', async () => {
+        selectorService.state.appliedScopes = [];
+        selectorService.state.selectedScopes = [];
+        apiClient.fetchDefaultScope = jest.fn().mockImplementation(async () => {
+          // Simulate the user picking a scope in the selector (updates
+          // selectedScopes but not appliedScopes) while fetchDefaultScope
+          // is still in flight.
+          selectorService.state.selectedScopes = [{ scopeId: 'user-picked' }];
+          return 'gdev-shoe-org';
+        });
+
+        service.setEnabled(true);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(apiClient.fetchDefaultScope).toHaveBeenCalled();
+        // The user's pending selection must not be clobbered by the default scope.
+        expect(selectorService.changeScopes).not.toHaveBeenCalled();
+      });
+
+      it('logs and does not throw when the apply promise rejects', async () => {
+        selectorService.state.appliedScopes = [];
+        selectorService.state.selectedScopes = [];
+        apiClient.fetchDefaultScope = jest.fn().mockResolvedValue('gdev-shoe-org');
+        selectorService.changeScopes = jest.fn().mockRejectedValue(new Error('apply failed'));
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        service.setEnabled(true);
+        // Wait long enough for the fetch to resolve, then the changeScopes
+        // rejection to propagate through the .catch() handler.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(errorSpy).toHaveBeenCalledWith('Failed to apply default scope:', expect.any(Error));
+        errorSpy.mockRestore();
+      });
+
+      it('does not fetch twice when setEnabled(true) is called twice in a row', async () => {
+        selectorService.state.appliedScopes = [];
+        apiClient.fetchDefaultScope = jest.fn().mockResolvedValue(undefined);
+
+        service.setEnabled(true);
+        service.setEnabled(true);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+
+        expect(apiClient.fetchDefaultScope).toHaveBeenCalledTimes(1);
+      });
+    });
   });
 
   describe('setReadOnly', () => {
@@ -1082,7 +1193,7 @@ describe('ScopesService', () => {
         pathname: '/test',
         search: '',
       });
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
     });
 
     it('should update readOnly state when changed', () => {
@@ -1121,7 +1232,7 @@ describe('ScopesService', () => {
 
   describe('cleanUp', () => {
     it('should unsubscribe all subscriptions without throwing', () => {
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
 
       expect(() => service.cleanUp()).not.toThrow();
     });
@@ -1146,7 +1257,7 @@ describe('ScopesService', () => {
       dashboardsService.state.navigationScope = undefined;
       dashboardsService.state.navScopePath = undefined;
 
-      service = new ScopesService(selectorService, dashboardsService, locationService);
+      service = new ScopesService(selectorService, dashboardsService, locationService, apiClient);
       service.setEnabled(true);
 
       jest.clearAllMocks();

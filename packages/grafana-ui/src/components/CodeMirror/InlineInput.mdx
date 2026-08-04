@@ -1,0 +1,37 @@
+import { ArgTypes, Meta } from '@storybook/addon-docs/blocks';
+import { CodeMirrorInlineInput } from './InlineInput';
+
+<Meta title="MDX|CodeMirrorInlineInput" component={CodeMirrorInlineInput} />
+
+# CodeMirrorInlineInput
+
+A single-line text input built on `CodeMirrorEditor`, styled to read as a
+standard Grafana text field. It keeps the editor to one line (newlines are
+filtered on keypress and stripped from pasted text), supports a placeholder, and
+accepts completion sources for suggestions. Layer syntax highlighting or token
+theming through the `extensions` prop.
+
+It replaces the legacy Slate-based `DataLinkInput` and is the basis for inputs
+that edit `${...}` variable expressions.
+
+### Usage
+
+```tsx
+<CodeMirrorInlineInput
+  value={url}
+  onChange={setUrl}
+  placeholder="http://your-grafana.com/d/000000010/annotations"
+  completionSources={[myVariableCompletionSource]}
+/>
+```
+
+### Accessibility
+
+The editable element is a `contenteditable`, so it cannot be associated with a
+label via `htmlFor`. Pass `aria-labelledby` (the id of a visible label) or
+`aria-label`. The optional `id` is applied to the wrapping element, so selectors
+like `#your-id [contenteditable="true"]` resolve to the editable.
+
+## Props
+
+<ArgTypes of={CodeMirrorInlineInput} />

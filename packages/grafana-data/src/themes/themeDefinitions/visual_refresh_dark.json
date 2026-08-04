@@ -8,45 +8,76 @@
       "page": "palette.ink900",
       "primary": "palette.ink850",
       "secondary": "palette.ink800",
-      "elevated": "palette.ink800"
+      "elevated": "palette.ink750"
     },
     "primary": {
-      "main": "palette.ink100"
+      "main": "palette.ink100",
+      "background": "palette.ink600",
+      "border": "palette.ink100"
     },
     "secondary": {
       "main": "palette.ink700",
-      "border": "palette.ink600",
+      "background": "palette.ink700",
+      "shade": "palette.ink650",
+      "backgroundEmphasis": "palette.ink650",
+      "border": "palette.ink650",
+      "borderEmphasis": "palette.ink600",
       "text": "palette.ink200",
-      "contrastText": "palette.ink200"
+      "contrastText": "palette.ink100"
     },
     "tertiary": {
-      "main": "palette.violet400"
+      "main": "palette.violet400",
+      "text": "palette.violet400",
+      "textEmphasis": "palette.violet300",
+      "background": "palette.violet950",
+      "backgroundEmphasis": "palette.violet900",
+      "border": "palette.violet900"
     },
     "accent": {
-      "main": "palette.orange400",
-      "text": "palette.orange400"
+      "main": "palette.orange500",
+      "text": "palette.orange500",
+      "textEmphasis": "palette.orange400",
+      "background": "palette.orange950",
+      "backgroundEmphasis": "palette.orange900",
+      "border": "palette.orange900"
     },
     "error": {
-      "main": "palette.coral400",
-      "border": "palette.coral900"
+      "main": "palette.red400",
+      "text": "palette.red400",
+      "textEmphasis": "palette.red300",
+      "background": "palette.red950",
+      "backgroundEmphasis": "palette.red800",
+      "border": "palette.red800"
     },
     "warning": {
       "main": "palette.amber400",
+      "text": "palette.amber400",
+      "textEmphasis": "palette.amber300",
+      "background": "palette.amber950",
+      "backgroundEmphasis": "palette.amber900",
       "border": "palette.amber900"
     },
     "success": {
       "main": "palette.sage400",
+      "text": "palette.sage400",
+      "textEmphasis": "palette.sage300",
+      "background": "palette.sage950",
+      "backgroundEmphasis": "palette.sage900",
       "border": "palette.sage900"
     },
     "info": {
       "main": "palette.blue400",
+      "text": "palette.blue400",
+      "textEmphasis": "palette.blue300",
+      "background": "palette.blue950",
+      "backgroundEmphasis": "palette.blue900",
       "border": "palette.blue900"
     },
     "text": {
-      "primary": "palette.ink100",
-      "secondary": "palette.ink200",
-      "disabled": "palette.ink300",
-      "link": "palette.orange400"
+      "primary": "palette.ink150",
+      "secondary": "palette.ink300",
+      "disabled": "palette.ink400",
+      "link": "palette.orange500"
     },
     "border": {
       "weak": "palette.ink700",
@@ -56,11 +87,55 @@
     "gradients": {
       "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
       "brandVertical": "linear-gradient(0.01deg, palette.orange400 0.01%, palette.orange500 99.99%)"
+    },
+    "contrastThreshold": 3,
+    "action": {
+      "selected": "hsl(from palette.ink100 h s l / 0.10)",
+      "hover": "hsl(from palette.ink100 h s l / 0.07)",
+      "focus": "hsl(from palette.ink100 h s l / 0.07)",
+      "selectedBorder": "palette.orange500"
     }
   },
   "shape": {
-    "borderRadiusSm": 6,
+    "borderRadiusSm": 4,
     "borderRadius": 8,
     "borderRadiusLg": 12
+  },
+  "components": {
+    "checkbox": {
+      "activeBackgroundHover": "palette.orange400"
+    },
+    "switch": {
+      "activeBackgroundHover": "palette.orange400"
+    },
+    "input": {
+      "background": "palette.ink850"
+    },
+    "tag": {
+      "colors": [
+        { "background": "palette.coral900", "text": "palette.coral300" },
+        { "background": "palette.peach900", "text": "palette.peach300" },
+        { "background": "palette.amber900", "text": "palette.amber300" },
+        { "background": "palette.lime900", "text": "palette.lime300" },
+        { "background": "palette.sage900", "text": "palette.sage300" },
+        { "background": "palette.teal900", "text": "palette.teal300" },
+        { "background": "palette.sky900", "text": "palette.sky300" },
+        { "background": "palette.blue900", "text": "palette.blue300" },
+        { "background": "palette.violet900", "text": "palette.violet300" },
+        { "background": "palette.lavender900", "text": "palette.lavender300" },
+        { "background": "palette.rose900", "text": "palette.rose300" },
+        { "background": "palette.coral800", "text": "palette.coral200" },
+        { "background": "palette.peach800", "text": "palette.peach200" },
+        { "background": "palette.amber800", "text": "palette.amber200" },
+        { "background": "palette.lime800", "text": "palette.lime200" },
+        { "background": "palette.sage800", "text": "palette.sage200" },
+        { "background": "palette.teal800", "text": "palette.teal200" },
+        { "background": "palette.sky800", "text": "palette.sky200" },
+        { "background": "palette.blue800", "text": "palette.blue200" },
+        { "background": "palette.violet800", "text": "palette.violet200" },
+        { "background": "palette.lavender800", "text": "palette.lavender200" },
+        { "background": "palette.rose800", "text": "palette.rose200" }
+      ]
+    }
   }
 }

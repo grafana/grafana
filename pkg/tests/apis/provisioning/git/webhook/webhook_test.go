@@ -1,7 +1,6 @@
 package webhook
 
 import (
-	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -25,6 +24,12 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
+// webhookBaseURL is the public base URL the webhook tests configure (matching
+// WithProvisioningPublicRootURL in the shared env). It is both passed to
+// CreateGithubRepo as the repository's spec.webhook.baseUrl and used to predict
+// the webhook URL the reconciler builds, so the mock and the server agree.
+const webhookBaseURL = "https://grafana.example.com"
+
 // githubHealthCheckMocks returns ghmock handlers that satisfy the GitHub
 // branch protection health check (returns 403 — gracefully skipped).
 func githubHealthCheckMocks() []ghmock.MockBackendOption {
@@ -45,43 +50,65 @@ func githubHealthCheckMocks() []ghmock.MockBackendOption {
 	}
 }
 
-// webhookCreationMocks returns ghmock handlers for webhook creation.
-func webhookCreationMocks(hookID int64) []ghmock.MockBackendOption {
+// webhookCreationMocks returns ghmock handlers backing a single immutable
+// webhook, served by the create, list, get-by-id, and delete endpoints —
+// mirroring real GitHub. The hook is built once and only read, so no
+// synchronization is needed.
+//
+// get-by-id must return the same URL and events the reconciler expects so its
+// OnUpdate path is a no-op. If get-by-id is left unmocked it 404s, which the
+// reconciler reads as ErrFileNotFound and so "recreates" the webhook on every
+// reconcile, rotating the webhook secret each time and racing any concurrent job
+// that decrypts it (yielding intermittent "decrypt webhookSecret: not found").
+//
+// delete must also be registered: once get-by-id registers the
+// /repos/.../hooks/{id} path, a DELETE to that same path (from the deletion
+// finalizer's OnDelete) would otherwise match the path but not the method and
+// return 405, which is not tolerated like the unmatched-route 404 — leaving the
+// repository's finalizer stuck and CleanupAllResources timing out.
+func webhookCreationMocks(hookID int64, webhookURL string) []ghmock.MockBackendOption {
+	hook := &github.Hook{
+		ID:     github.Ptr(hookID),
+		Active: github.Ptr(true),
+		Events: []string{"pull_request", "push"}, // == subscribedEvents
+		Config: &github.HookConfig{URL: github.Ptr(webhookURL)},
+	}
+	encode := func(v any) http.HandlerFunc {
+		return func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(v)
+		}
+	}
 	return []ghmock.MockBackendOption{
+		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepo, encode([]*github.Hook{hook})),
+		ghmock.WithRequestMatchHandler(ghmock.PostReposHooksByOwnerByRepo, encode(hook)),
+		ghmock.WithRequestMatchHandler(ghmock.GetReposHooksByOwnerByRepoByHookId, encode(hook)),
 		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposHooksByOwnerByRepo,
+			ghmock.DeleteReposHooksByOwnerByRepoByHookId,
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode([]*github.Hook{})
-			}),
-		),
-		ghmock.WithRequestMatchHandler(
-			ghmock.PostReposHooksByOwnerByRepo,
-			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				var hook github.Hook
-				if err := json.NewDecoder(r.Body).Decode(&hook); err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(&github.Hook{
-					ID:     github.Ptr(hookID),
-					URL:    hook.GetConfig().URL,
-					Config: hook.Config,
-					Events: hook.Events,
-					Active: hook.Active,
-				})
+				w.WriteHeader(http.StatusNoContent)
 			}),
 		),
 	}
 }
 
+// expectedWebhookURL mirrors the server-side webhook URL builder
+// (buildWebhookURL) so a test can predict the URL the reconciler will compare
+// against. The repository's spec.webhook.baseUrl (set via CreateGithubRepo's
+// webhookBaseURL) is the base; the GVR comes from the same resource info the
+// server uses, so only the path template is duplicated.
+func expectedWebhookURL(baseURL, namespace, repoName string) string {
+	gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
+	return fmt.Sprintf("%s/apis/%s/%s/namespaces/%s/%s/%s/webhook",
+		strings.TrimRight(baseURL, "/"), gvr.Group, gvr.Version, namespace, gvr.Resource, repoName)
+}
+
 // waitForWebhook polls until Status.Webhook is populated with the expected ID.
 func waitForWebhook(t *testing.T, helper *common.GitTestHelper, repoName string, expectedID int64) {
 	t.Helper()
-	ctx := context.Background()
+
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		obj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		require.NoError(collect, err)
 		repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 		require.NotNil(collect, repo.Status.Webhook, "webhook should be set")
@@ -92,7 +119,6 @@ func waitForWebhook(t *testing.T, helper *common.GitTestHelper, repoName string,
 
 func TestIntegrationProvisioning_GithubRepoNoWebhookWhenDisabled(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	// The package enables a public root URL so webhook delivery can be tested;
 	// this repo opts out explicitly and should not register a webhook.
@@ -104,7 +130,7 @@ func TestIntegrationProvisioning_GithubRepoNoWebhookWhenDisabled(t *testing.T) {
 	}, "write")
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		obj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
@@ -117,13 +143,15 @@ func TestIntegrationProvisioning_GithubRepoNoWebhookWhenDisabled(t *testing.T) {
 func TestIntegrationProvisioning_GithubRepoWebhookCreated(t *testing.T) {
 	helper := sharedGitHelper(t)
 
-	mockOpts := append(githubHealthCheckMocks(), webhookCreationMocks(456)...)
+	const repoName = "github-with-webhook"
+	webhookURL := expectedWebhookURL(webhookBaseURL, helper.Namespace, repoName)
+
+	mockOpts := append(githubHealthCheckMocks(), webhookCreationMocks(456, webhookURL)...)
 	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
 
-	const repoName = "github-with-webhook"
 	helper.CreateGithubRepo(t, repoName, map[string][]byte{
 		"dashboard.json": common.DashboardJSON("gh-webhook-dash", "GitHub Webhook Dashboard", 1),
-	}, "https://grafana.example.com", "write")
+	}, webhookBaseURL, "write")
 
 	waitForWebhook(t, helper, repoName, 456)
 }
@@ -134,11 +162,14 @@ func TestIntegrationProvisioning_GithubRepoWebhookCreated(t *testing.T) {
 // mocked GitHub comments endpoint captures the PR worker's generated comment.
 func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
+
+	const repoName = "github-pr-comment"
+	const dashboardPath = "dashboard.json"
+	webhookURL := expectedWebhookURL(webhookBaseURL, helper.Namespace, repoName)
 
 	var commentsMu sync.Mutex
 	var comments []string
-	mockOpts := append(githubHealthCheckMocks(), webhookCreationMocks(654)...)
+	mockOpts := append(githubHealthCheckMocks(), webhookCreationMocks(654, webhookURL)...)
 	mockOpts = append(mockOpts, ghmock.WithRequestMatchHandler(
 		ghmock.PostReposIssuesCommentsByOwnerByRepoByIssueNumber,
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -164,11 +195,9 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 	))
 	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
 
-	const repoName = "github-pr-comment"
-	const dashboardPath = "dashboard.json"
 	_, local := helper.CreateGithubRepo(t, repoName, map[string][]byte{
 		dashboardPath: common.DashboardJSON("gh-pr-comment-dash", "GitHub PR Comment Dashboard", 1),
-	}, "https://grafana.example.com", "write")
+	}, webhookBaseURL, "write")
 	waitForWebhook(t, helper, repoName, 654)
 	helper.SyncAndWait(t, repoName)
 
@@ -177,7 +206,7 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 	// produces the [original] link in the comment; SyncAndWait only waits for
 	// job success, not resource visibility, so without this barrier the Get can
 	// race the sync write and drop the [original] link.
-	common.RequireRepoManagedDashboard(t, helper.DashboardsV1, ctx, "gh-pr-comment-dash", repoName, dashboardPath)
+	common.RequireRepoManagedDashboard(t, helper.DashboardsV1, "gh-pr-comment-dash", repoName, dashboardPath)
 
 	const branchName = "feature-pr-comment"
 	_, err := local.Git("checkout", "-b", branchName)
@@ -215,13 +244,13 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 
 	// Sign with the webhook secret Grafana persisted for this repository,
 	// because the webhook handler validates against that decrypted value.
-	obj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+	obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 	require.NoError(t, err, "failed to read repository")
 	repo := common.MustFromUnstructured[provisioning.Repository](t, obj)
 	secretName := repo.Secure.WebhookSecret.Name
 	require.NotEmpty(t, secretName, "webhook secret should be stored")
 
-	decrypted, err := helper.GetEnv().DecryptService.Decrypt(ctx, provisioning.GROUP, repo.Namespace, secretName)
+	decrypted, err := helper.GetEnv().DecryptService.Decrypt(t.Context(), provisioning.GROUP, repo.Namespace, secretName)
 	require.NoError(t, err, "failed to decrypt webhook secret")
 	require.Len(t, decrypted, 1)
 	result, ok := decrypted[secretName]
@@ -247,7 +276,7 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 		SetHeader(github.EventTypeHeader, "pull_request").
 		SetHeader(github.DeliveryIDHeader, fmt.Sprintf("%s-delivery", repoName)).
 		SetHeader(github.SHA256SignatureHeader, signature).
-		Do(ctx).
+		Do(t.Context()).
 		StatusCode(&code)
 
 	require.NoError(t, webhookResult.Error(), "webhook should accept pull request payload")
@@ -257,7 +286,7 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 	require.NoError(t, err, "webhook response should include the queued job")
 	job, ok := jobObj.(*unstructured.Unstructured)
 	require.True(t, ok, "webhook response should be an unstructured job, got %T", jobObj)
-	helper.AwaitJobSuccess(t, ctx, job)
+	helper.AwaitJobSuccess(t, job)
 
 	commentsMu.Lock()
 	capturedComments := append([]string(nil), comments...)
@@ -265,12 +294,12 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 	require.Len(t, capturedComments, 1, "expected one pull request comment")
 
 	comment := capturedComments[0]
-	require.Contains(t, comment, "Grafana spotted some changes to your dashboard")
+	require.Contains(t, comment, "Grafana detected dashboard changes in this pull request")
 	require.Contains(t, comment, dashboardPath)
 
 	// Verify the dashboard and preview links the PR worker posted are
 	// well-formed and carry the context needed by the reviewer UI.
-	originalMarker := "[original]("
+	originalMarker := "[view current]("
 	originalStart := strings.Index(comment, originalMarker)
 	require.NotEqualf(t, -1, originalStart, "comment should contain original link:\n%s", comment)
 	originalRemainder := comment[originalStart+len(originalMarker):]
@@ -280,7 +309,7 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 	require.NoError(t, err, "comment should contain a valid original URL")
 	require.Equal(t, "/d/gh-pr-comment-dash/github-pr-comment-dashboard-updated", originalURL.Path)
 
-	previewMarker := "[preview]("
+	previewMarker := "[preview changes]("
 	previewStart := strings.Index(comment, previewMarker)
 	require.NotEqualf(t, -1, previewStart, "comment should contain preview link:\n%s", comment)
 	previewRemainder := comment[previewStart+len(previewMarker):]
@@ -296,15 +325,16 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 
 func TestIntegrationProvisioning_GithubRepoWebhookRecreatedWhenMissing(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
-
-	mockOpts := append(githubHealthCheckMocks(), webhookCreationMocks(789)...)
-	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
 
 	const repoName = "github-webhook-restart"
+	webhookURL := expectedWebhookURL(webhookBaseURL, helper.Namespace, repoName)
+
+	mockOpts := append(githubHealthCheckMocks(), webhookCreationMocks(789, webhookURL)...)
+	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
+
 	helper.CreateGithubRepo(t, repoName, map[string][]byte{
 		"dashboard.json": common.DashboardJSON("restart-dash", "Restart Dashboard", 1),
-	}, "https://grafana.example.com", "write")
+	}, webhookBaseURL, "write")
 
 	waitForWebhook(t, helper, repoName, 789)
 
@@ -315,19 +345,19 @@ func TestIntegrationProvisioning_GithubRepoWebhookRecreatedWhenMissing(t *testin
 	// "secure value not found" even though the patch itself doesn't touch secure.
 	patch := []byte(`{"status":{"webhook":null}}`)
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		_, err := helper.Repositories.Resource.Patch(ctx, repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
+		_, err := helper.Repositories.Resource.Patch(t.Context(), repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
 		assert.NoError(collect, err)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "clear webhook status")
 
 	// Trigger reconciliation by updating the spec.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		latest, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		latest, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
 		updated := latest.DeepCopy()
 		updated.Object["spec"].(map[string]any)["title"] = "Restart Dashboard (updated)"
-		_, err = helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+		_, err = helper.Repositories.Resource.Update(t.Context(), updated, metav1.UpdateOptions{})
 		assert.NoError(collect, err)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "spec update should succeed")
 
@@ -337,19 +367,20 @@ func TestIntegrationProvisioning_GithubRepoWebhookRecreatedWhenMissing(t *testin
 
 func TestIntegrationProvisioning_WebhookLastRotatedSetOnCreation(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
-
-	mockOpts := append(githubHealthCheckMocks(), webhookCreationMocks(100)...)
-	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
 
 	const repoName = "github-last-rotated"
+	webhookURL := expectedWebhookURL(webhookBaseURL, helper.Namespace, repoName)
+
+	mockOpts := append(githubHealthCheckMocks(), webhookCreationMocks(100, webhookURL)...)
+	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
+
 	helper.CreateGithubRepo(t, repoName, map[string][]byte{
 		"dashboard.json": common.DashboardJSON("rotated-dash", "Rotated Dashboard", 1),
-	}, "https://grafana.example.com", "write")
+	}, webhookBaseURL, "write")
 
 	// Wait for webhook, then check LastRotated.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		obj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
@@ -363,40 +394,30 @@ func TestIntegrationProvisioning_WebhookLastRotatedSetOnCreation(t *testing.T) {
 
 func TestIntegrationProvisioning_WebhookSecretRotatedWhenExpired(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
-	// Mock: health check + webhook creation + webhook get/edit for rotation.
-	mockOpts := append(githubHealthCheckMocks(), webhookCreationMocks(200)...)
+	const repoName = "github-rotation-test"
+	webhookURL := expectedWebhookURL(webhookBaseURL, helper.Namespace, repoName)
+
+	// Mock: health check + webhook create/list/get-by-id + webhook edit for rotation.
+	mockOpts := append(githubHealthCheckMocks(), webhookCreationMocks(200, webhookURL)...)
 	mockOpts = append(mockOpts,
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposHooksByOwnerByRepoByHookId,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(&github.Hook{
-					ID:     github.Ptr(int64(200)),
-					URL:    github.Ptr("https://grafana.example.com/hook"),
-					Events: []string{"pull_request", "push"},
-				})
-			}),
-		),
 		ghmock.WithRequestMatchHandler(
 			ghmock.PatchReposHooksByOwnerByRepoByHookId,
 			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(&github.Hook{
 					ID:     github.Ptr(int64(200)),
-					URL:    github.Ptr("https://grafana.example.com/hook"),
 					Events: []string{"pull_request", "push"},
+					Config: &github.HookConfig{URL: github.Ptr(webhookURL)},
 				})
 			}),
 		),
 	)
 	helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(mockOpts...)
 
-	const repoName = "github-rotation-test"
 	helper.CreateGithubRepo(t, repoName, map[string][]byte{
 		"dashboard.json": common.DashboardJSON("rotation-dash", "Rotation Dashboard", 1),
-	}, "https://grafana.example.com", "write")
+	}, webhookBaseURL, "write")
 
 	waitForWebhook(t, helper, repoName, 200)
 
@@ -408,25 +429,25 @@ func TestIntegrationProvisioning_WebhookSecretRotatedWhenExpired(t *testing.T) {
 	expiredTimestamp := int64(1)
 	patch := []byte(fmt.Sprintf(`{"status":{"webhook":{"id":200,"url":"https://grafana.example.com/hook","subscribedEvents":["pull_request","push"],"lastRotated":%d}}}`, expiredTimestamp))
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		_, err := helper.Repositories.Resource.Patch(ctx, repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
+		_, err := helper.Repositories.Resource.Patch(t.Context(), repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
 		assert.NoError(collect, err)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "expire LastRotated")
 
 	// Trigger reconciliation.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		latest, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		latest, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}
 		updated := latest.DeepCopy()
 		updated.Object["spec"].(map[string]any)["title"] = "Rotation Dashboard (updated)"
-		_, err = helper.Repositories.Resource.Update(ctx, updated, metav1.UpdateOptions{})
+		_, err = helper.Repositories.Resource.Update(t.Context(), updated, metav1.UpdateOptions{})
 		assert.NoError(collect, err)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "spec update should succeed")
 
 	// Wait for rotation — LastRotated should be updated.
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		obj, err := helper.Repositories.Resource.Get(ctx, repoName, metav1.GetOptions{})
+		obj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
 		if !assert.NoError(collect, err) {
 			return
 		}

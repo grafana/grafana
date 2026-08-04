@@ -13,6 +13,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
+
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -164,29 +165,8 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, err
 	}
 
 	if opts.IsApp {
-		// Hide the non-instance based routes
-		delete(oas.Paths.Paths, opts.Path)
-
-		removeName := func(pp []*spec3.Parameter) (ret []*spec3.Parameter) {
-			for _, p := range pp {
-				if p.Name != "name" {
-					ret = append(ret, p)
-				}
-			}
-			return
-		}
-
-		// Replace the {name} property with /instance path
-		appRoutePrefix := opts.Path + "/" + app_INSTANCE_NAME
-		for k, v := range oas.Paths.Paths {
-			if strings.HasPrefix(k, routePrefix) {
-				delete(oas.Paths.Paths, k)
-				k = strings.Replace(k, routePrefix, appRoutePrefix, 1)
-				v.Parameters = removeName(v.Parameters)
-				oas.Paths.Paths[k] = v
-			}
-		}
-		routePrefix = appRoutePrefix
+		RewriteAppInstance(oas, opts.Path)
+		routePrefix = opts.Path + "/" + app_INSTANCE_NAME
 	}
 
 	// When a schema is configured, remove the default mappings
@@ -217,6 +197,28 @@ func AugmentOpenAPI(oas *spec3.OpenAPI, opts PluginOptions) (*spec3.OpenAPI, err
 		oas.Paths.Paths[routePrefix+k] = v
 	}
 	return oas, nil
+}
+
+// RewriteAppInstance rewrites the parameterised {name} paths under `path` to
+// use the fixed /instance segment and drops the collection path itself.
+// App plugins only ever support a single instance named "instance", so the
+// generated OpenAPI should not surface {name} as user-editable.
+func RewriteAppInstance(oas *spec3.OpenAPI, path string) *spec3.OpenAPI {
+	delete(oas.Paths.Paths, path)
+
+	from := path + "/{name}"
+	to := path + "/" + app_INSTANCE_NAME
+	for k, v := range oas.Paths.Paths {
+		if !strings.HasPrefix(k, from) {
+			continue
+		}
+		delete(oas.Paths.Paths, k)
+		v.Parameters = slices.DeleteFunc(v.Parameters, func(p *spec3.Parameter) bool {
+			return p.Name == "name"
+		})
+		oas.Paths.Paths[strings.Replace(k, from, to, 1)] = v
+	}
+	return oas
 }
 
 // getPathOperations returns the set of non-nil operations defined on a path.

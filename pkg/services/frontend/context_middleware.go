@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -26,7 +27,7 @@ func (s *frontendService) contextMiddleware() web.Middleware {
 			ctx := r.Context()
 
 			span := trace.SpanFromContext(ctx)
-			ctx = setRequestContext(ctx, w, r)
+			ctx = setRequestContext(ctx, w, r, s.baggageEvalContextKeys)
 
 			// Preserve the original span so the setRequestContext span doesn't get propagated as a parent of the rest of the request
 			ctx = trace.ContextWithSpan(ctx, span)
@@ -36,7 +37,7 @@ func (s *frontendService) contextMiddleware() web.Middleware {
 	}
 }
 
-func setRequestContext(ctx context.Context, w http.ResponseWriter, r *http.Request) context.Context {
+func setRequestContext(ctx context.Context, w http.ResponseWriter, r *http.Request, baggageEvalContextKeys []string) context.Context {
 	ctx, span := tracing.Start(ctx, "setRequestContext")
 	defer span.End()
 
@@ -75,15 +76,16 @@ func setRequestContext(ctx context.Context, w http.ResponseWriter, r *http.Reque
 		reqContext.Logger = reqContext.Logger.New("user_agent", userAgent)
 	}
 
-	// Parse namespace from W3C baggage header
-	var namespace string
+	// Parse the W3C baggage header once. It carries the namespace plus any
+	// additional members configured for the evaluation context below.
+	var bag baggage.Baggage
 	if baggageHeader := r.Header.Get("baggage"); baggageHeader != "" {
-		if bag, err := baggage.Parse(baggageHeader); err == nil {
-			if member := bag.Member("namespace"); member.Value() != "" {
-				namespace = member.Value()
-			}
+		if parsed, err := baggage.Parse(baggageHeader); err == nil {
+			bag = parsed
 		}
 	}
+
+	namespace := bag.Member("namespace").Value()
 	if namespace != "" {
 		ctx = request.WithNamespace(ctx, namespace)
 	}
@@ -94,11 +96,32 @@ func setRequestContext(ctx context.Context, w http.ResponseWriter, r *http.Reque
 	if namespace != "" {
 		openFeatureNamespace = namespace
 	}
-	evalCtx := openfeature.NewEvaluationContext(openFeatureNamespace, map[string]any{
+	attributes := map[string]any{
 		"namespace": openFeatureNamespace,
 		"hostname":  hostname,
-	})
+	}
+
+	// Copy configured baggage members into the evaluation context. The members
+	// can't be hardcoded here because they may be specific to a particular
+	// deployment, so the set of keys is driven by configuration.
+	for _, key := range baggageEvalContextKeys {
+		if value := bag.Member(key).Value(); value != "" {
+			attributes[key] = value
+		}
+	}
+
+	evalCtx := openfeature.NewEvaluationContext(openFeatureNamespace, attributes)
 	ctx = openfeature.MergeTransactionContext(ctx, evalCtx)
 
 	return ctx
+}
+
+// readBaggageEvalContextKeys returns the list of W3C baggage member keys whose
+// values are copied into the per-request OpenFeature evaluation context.
+//
+// [frontend_service]
+// baggage_eval_context_keys = key1 key2
+func readBaggageEvalContextKeys(cfg *setting.Cfg) []string {
+	sec := cfg.SectionWithEnvOverrides("frontend_service")
+	return sec.Key("baggage_eval_context_keys").Strings(" ")
 }

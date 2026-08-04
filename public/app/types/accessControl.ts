@@ -76,6 +76,8 @@ export enum AccessControlAction {
   DashboardsWrite = 'dashboards:write',
   DashboardsDelete = 'dashboards:delete',
   DashboardsCreate = 'dashboards:create',
+  DashboardTemplatesRead = 'dashboardtemplates:read',
+  DashboardTemplatesWrite = 'dashboardtemplates:write',
   DashboardsPermissionsRead = 'dashboards.permissions:read',
   DashboardsPermissionsWrite = 'dashboards.permissions:write',
   DashboardsPublicWrite = 'dashboards.public:write',
@@ -156,6 +158,9 @@ export enum AccessControlAction {
   AlertingRoutesRead = 'alert.notifications.routes:read',
   AlertingRoutesWrite = 'alert.notifications.routes:write',
 
+  // Alerting notifications config actions (new, scoped per-resource)
+  ActionAlertingNotificationsConfigRead = 'notifications.alerting.grafana.app/configs:get',
+
   // Alerting managed routes actions (new, scoped per-resource)
   ActionAlertingManagedRoutesRead = 'notifications.alerting.grafana.app/routingtrees:get',
   ActionAlertingManagedRoutesWrite = 'notifications.alerting.grafana.app/routingtrees:update',
@@ -179,6 +184,7 @@ export enum AccessControlAction {
 
   PluginsInstall = 'plugins:install',
   PluginsWrite = 'plugins:write',
+  PluginsAppAccess = 'plugins.app:access',
 
   // Settings
   SettingsRead = 'settings:read',
@@ -194,6 +200,12 @@ export enum AccessControlAction {
   // Saved Queries
   QueriesRead = 'queries:read',
   QueriesWrite = 'queries:write',
+
+  // Provisioning
+  ProvisioningRepositoriesRead = 'provisioning.repositories:read',
+  ProvisioningRepositoriesWrite = 'provisioning.repositories:write',
+  ProvisioningConnectionsCreate = 'provisioning.connections:create',
+  ProvisioningConnectionsWrite = 'provisioning.connections:write',
 }
 
 export interface Role extends RoleDto {

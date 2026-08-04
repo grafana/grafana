@@ -1,7 +1,8 @@
 import { lastValueFrom } from 'rxjs';
 
 import { type DataQuery, generateUUID, store } from '@grafana/data';
-import { config, getBackendSrv, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { config, getBackendSrv, reportInteraction } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { DEFAULT_RICH_HISTORY_SETTINGS } from 'app/core/utils/richHistoryTypes';
 
 import type { IndexedDBMigrationAccess } from './RichHistoryIndexedDBStorage';
@@ -34,6 +35,36 @@ function isValidEntry(entry: unknown): entry is RichHistoryLocalStorageDTO {
     'queries' in entry &&
     Array.isArray(entry.queries)
   );
+}
+
+/**
+ * Resolves datasource uids for a set of datasource names. Unknown names map to ''.
+ * Deduplicates names so each datasource is looked up at most once.
+ */
+async function resolveDatasourceUids(names: string[]): Promise<Map<string, string>> {
+  const uidByName = new Map<string, string>();
+  await Promise.all(
+    Array.from(new Set(names)).map(async (name) => {
+      const settings = await getDataSourceInstanceSettings(name);
+      uidByName.set(name, settings?.uid || '');
+    })
+  );
+  return uidByName;
+}
+
+/**
+ * Resolves datasource names for a set of datasource uids. Unknown uids map to ''.
+ * Deduplicates uids so each datasource is looked up at most once.
+ */
+async function resolveDatasourceNames(uids: string[]): Promise<Map<string, string>> {
+  const nameByUid = new Map<string, string>();
+  await Promise.all(
+    Array.from(new Set(uids)).map(async (uid) => {
+      const settings = await getDataSourceInstanceSettings({ uid });
+      nameByUid.set(uid, settings?.name || '');
+    })
+  );
+  return nameByUid;
 }
 
 /** Shape of a single query history entry from the remote API. */
@@ -198,6 +229,11 @@ async function migrateFromLocalStorage(
   let invalidEntriesSkipped = 0;
 
   try {
+    // Resolve each datasource's uid up front: the async settings lookup cannot run
+    // inside the IndexedDB transaction below (a non-IDB await would let the
+    // transaction auto-commit early), so build a name->uid map first.
+    const uidByName = await resolveDatasourceUids(validEntries.map((entry) => entry.datasourceName));
+
     const db = await indexedDBStorage.getDB();
 
     // Single transaction over both stores: the completion-flag re-check, the entry
@@ -210,8 +246,7 @@ async function migrateFromLocalStorage(
     const alreadyDone = (await tx.objectStore('metadata').get(METADATA_LOCAL_MIGRATION_COMPLETE)) === true;
     if (!alreadyDone) {
       for (const entry of validEntries) {
-        const datasource = getDataSourceSrv().getInstanceSettings(entry.datasourceName);
-        const datasourceUid = datasource?.uid || '';
+        const datasourceUid = uidByName.get(entry.datasourceName) || '';
 
         const id = generateUUID();
 
@@ -294,6 +329,11 @@ async function migrateFromRemoteStorage(
 
     totalFetched = allItems.length;
 
+    // Resolve each datasource's name up front: the async settings lookup cannot run
+    // inside the IndexedDB transaction below (a non-IDB await would let the
+    // transaction auto-commit early), so build a uid->name map first.
+    const nameByUid = await resolveDatasourceNames(allItems.map((dto) => dto.datasourceUid));
+
     // Write to IndexedDB with dedup
     const db = await indexedDBStorage.getDB();
     const tx = db.transaction('queries', 'readwrite');
@@ -323,8 +363,7 @@ async function migrateFromRemoteStorage(
       }
 
       // Look up datasource name from uid
-      const dsSettings = getDataSourceSrv().getInstanceSettings({ uid: dto.datasourceUid });
-      const datasourceName = dsSettings?.name || '';
+      const datasourceName = nameByUid.get(dto.datasourceUid) || '';
 
       await tx.store.put({
         id: generateUUID(),

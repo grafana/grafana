@@ -166,6 +166,60 @@ describe('provisioning data mapping', () => {
       expect(data.url).toBe('https://github.com/owner/repo');
       expect(data.generateDashboardPreviews).toBe(true);
     });
+
+    it('honors github.generateDashboardPreviews for github specs, ignoring pullRequest', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        description: '',
+        sync: baseSync,
+        workflows: [],
+        github: {
+          url: 'https://github.com/owner/repo',
+          branch: 'main',
+          path: '',
+          generateDashboardPreviews: false,
+        },
+        pullRequest: {
+          generateDashboardPreviews: true,
+        },
+      };
+
+      const data = specToData(spec);
+      expect(data.generateDashboardPreviews).toBe(false);
+    });
+  });
+
+  describe('githubEnterprise', () => {
+    it('writes generateDashboardPreviews onto pullRequest options, not the githubEnterprise config', () => {
+      const formData = makeFormData('githubEnterprise');
+      formData.generateDashboardPreviews = true;
+      const spec = dataToSpec(formData);
+
+      expect(spec.pullRequest?.generateDashboardPreviews).toBe(true);
+      expect(spec.githubEnterprise).not.toHaveProperty('generateDashboardPreviews');
+    });
+
+    it('reads generateDashboardPreviews from pullRequest options', () => {
+      const spec: RepositorySpec = {
+        type: 'githubEnterprise',
+        title: 'repo',
+        description: '',
+        sync: baseSync,
+        workflows: [],
+        githubEnterprise: {
+          url: 'https://ghes.example.com/owner/repo',
+          branch: 'main',
+          path: '',
+        },
+        pullRequest: {
+          generateDashboardPreviews: true,
+        },
+      };
+
+      const data = specToData(spec);
+      expect(data.generateDashboardPreviews).toBe(true);
+    });
   });
 
   describe('webhook', () => {
@@ -188,7 +242,29 @@ describe('provisioning data mapping', () => {
       expect(spec.webhook).toBeUndefined();
     });
 
-    it('reads webhook from spec to form data', () => {
+    it('sets disabled:true and omits baseUrl when disabled is true', () => {
+      const formData = makeFormData('github');
+      formData.webhook = { disabled: true, baseUrl: 'https://grafana.example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.webhook).toEqual({ disabled: true });
+      expect(spec.webhook).not.toHaveProperty('baseUrl');
+    });
+
+    it('sets disabled:true and omits baseUrl when disabled is true and baseUrl is absent', () => {
+      const formData = makeFormData('github');
+      formData.webhook = { disabled: true };
+      const spec = dataToSpec(formData);
+      expect(spec.webhook).toEqual({ disabled: true });
+    });
+
+    it('omits disabled when disabled is false and includes baseUrl', () => {
+      const formData = makeFormData('github');
+      formData.webhook = { disabled: false, baseUrl: 'https://grafana.example.com' };
+      const spec = dataToSpec(formData);
+      expect(spec.webhook).toEqual({ baseUrl: 'https://grafana.example.com' });
+    });
+
+    it('reads webhook baseUrl from spec to form data', () => {
       const spec: RepositorySpec = {
         type: 'github',
         title: 'repo',
@@ -199,6 +275,20 @@ describe('provisioning data mapping', () => {
       };
       const data = specToData(spec);
       expect(data.webhook?.baseUrl).toBe('https://grafana.example.com');
+    });
+
+    it('reads webhook disabled:true from spec to form data', () => {
+      const spec: RepositorySpec = {
+        type: 'github',
+        title: 'repo',
+        sync: baseSync,
+        workflows: [],
+        github: { url: 'https://github.com/owner/repo', branch: 'main', path: '' },
+        webhook: { disabled: true },
+      };
+      const data = specToData(spec);
+      expect(data.webhook?.disabled).toBe(true);
+      expect(data.webhook?.baseUrl).toBeUndefined();
     });
   });
 

@@ -32,6 +32,13 @@ export function initializeFromURL(
   // Clear all the panes in the store first to avoid stale data.
   dispatch(clearPanes());
 
+  // Seeded onto the first pane only so the "Adding a new saved query" banner shows; split-view URLs are unaffected.
+  const addingSavedQuery = location.getSearch().get('createSavedQuery') === 'true';
+
+  // Seeding it at init (rather than a post-navigation dispatch) is what lets the "Editing from saved queries" banner render
+  // on the first, cold Explore mount. First pane only, mirroring addingSavedQuery.
+  const editSavedQueryRef = location.getSearch().get('editSavedQueryRef') ?? undefined;
+
   Promise.all(
     Object.entries(urlState.panes).map(([exploreId, { datasource, queries, range, panelsState, compact }]) => {
       return getPaneDatasource(datasource, queries, orgId).then((paneDatasource) => {
@@ -70,7 +77,7 @@ export function initializeFromURL(
     })
   ).then(async (panes) => {
     const initializedPanes = await Promise.all(
-      panes.map(({ exploreId, range, panelsState, queries, datasource, compact }) => {
+      panes.map(({ exploreId, range, panelsState, queries, datasource, compact }, index) => {
         return dispatch(
           initializeExplore({
             exploreId,
@@ -80,6 +87,8 @@ export function initializeFromURL(
             panelsState,
             eventBridge: new EventBusSrv(),
             compact: !!compact,
+            addingSavedQuery: index === 0 ? addingSavedQuery : undefined,
+            editSavedQueryRef: index === 0 ? editSavedQueryRef : undefined,
           })
         ).unwrap();
       })
@@ -103,10 +112,10 @@ export function initializeFromURL(
     const oldQuery = location.getSearchObject();
 
     // we create the default query params from the current URL, omitting all the properties we know should be in the final url.
-    // This includes params from previous schema versions and 'schemaVersion', 'panes', 'orgId' as we want to replace those.
+    // This includes params from previous schema versions and 'schemaVersion', 'panes' as we want to replace those.
     let defaults: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(oldQuery).filter(
-      ([key]) => !['schemaVersion', 'panes', 'orgId', 'left', 'right'].includes(key)
+      ([key]) => !['schemaVersion', 'panes', 'left', 'right'].includes(key)
     )) {
       defaults[key] = value;
     }
@@ -115,7 +124,6 @@ export function initializeFromURL(
       // we set the schemaVersion as the first parameter so that when URLs are truncated the schemaVersion is more likely to be present.
       schemaVersion: `${urlState.schemaVersion}`,
       panes: JSON.stringify(panesObj),
-      orgId: `${orgId}`,
       ...defaults,
     });
 

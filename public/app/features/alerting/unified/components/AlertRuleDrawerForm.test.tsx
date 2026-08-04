@@ -2,11 +2,14 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render, testWithFeatureToggles } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
+import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type GrafanaGroupUpdatedResponse } from '../api/alertRuleModel';
+import { alertingApi } from '../api/alertingApi';
 import { type ContactPoint, RuleFormType, type RuleFormValues } from '../types/rule-form';
 
 import { AlertRuleDrawerForm, type AlertRuleDrawerFormProps } from './AlertRuleDrawerForm';
@@ -371,6 +374,29 @@ describe('AlertRuleDrawerForm', () => {
         );
       });
 
+      it('invalidates the legacy rule cache so the panel alerts list refreshes', async () => {
+        // The app-platform create lives on a separate cache slice, so the drawer must explicitly
+        // invalidate the CombinedAlertRule tag the panel list relies on.
+        mockUpsertUngroupedGrafanaRule.mockResolvedValue('new-rule-uid');
+
+        // Spy on dispatch before render so the component's useDispatch() captures the spy.
+        const store = configureStore();
+        const dispatchSpy = jest.spyOn(store, 'dispatch');
+
+        const { user } = render(<AlertRuleDrawerForm {...defaultProps} prefill={submittablePrefill} />, { store });
+
+        await user.click(screen.getByRole('button', { name: /Create/i }));
+
+        await waitFor(() => {
+          expect(dispatchSpy).toHaveBeenCalledWith(
+            expect.objectContaining({
+              type: `${alertingApi.reducerPath}/invalidateTags`,
+              payload: expect.arrayContaining(['CombinedAlertRule']),
+            })
+          );
+        });
+      });
+
       it('shows an error notification when the v2 mutation rejects', async () => {
         mockUpsertUngroupedGrafanaRule.mockRejectedValue(new Error('boom from the api'));
         const onClose = jest.fn();
@@ -387,7 +413,7 @@ describe('AlertRuleDrawerForm', () => {
       it('hides the evaluation group picker and shows a per-rule evaluation interval input', () => {
         renderDrawer({ prefill: submittablePrefill });
 
-        expect(screen.queryByTestId('group-picker')).not.toBeInTheDocument();
+        expect(screen.queryByTestId(selectors.components.AlertRules.groupPicker)).not.toBeInTheDocument();
         expect(screen.queryByTestId('new-evaluation-group-button')).not.toBeInTheDocument();
         expect(screen.getByTestId(EVALUATION_INTERVAL_FIELD_TEST_ID)).toBeInTheDocument();
       });

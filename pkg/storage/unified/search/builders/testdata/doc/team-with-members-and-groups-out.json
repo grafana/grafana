@@ -1,0 +1,24 @@
+{
+  "key": {
+    "namespace": "default",
+    "group": "iam.grafana.app",
+    "resource": "teams",
+    "name": "with-members-and-groups"
+  },
+  "name": "with-members-and-groups",
+  "rv": 1234,
+  "title": "Team With Members And Groups",
+  "title_ngram": "Team With Members And Groups",
+  "title_phrase": "team with members and groups",
+  "fields": {
+    "email": "team@example.com",
+    "externalGroups": [
+      "group-a",
+      "group-b"
+    ],
+    "members": [
+      "user-uid-1",
+      "user-uid-2"
+    ]
+  }
+}

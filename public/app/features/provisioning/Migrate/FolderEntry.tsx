@@ -4,7 +4,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Checkbox, Icon, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { type FolderRow, resourceKey } from './hooks/useFolderMigrationData';
+import { type FolderRow, resourceKey } from './hooks/useMigrationData';
 
 interface FolderEntryProps {
   folder: FolderRow;
@@ -57,6 +57,11 @@ export function FolderEntry({
         />
         <Icon name="folder" />
         <Stack direction="column" gap={0} flex={1}>
+          {folder.path.length > 0 && (
+            <Text variant="bodySmall" color="secondary" truncate>
+              {folder.path.join(' / ')}
+            </Text>
+          )}
           <Text>{folder.title}</Text>
           <Text variant="bodySmall" color="secondary">
             {t('provisioning.migrate.resources-folder-summary', '', {

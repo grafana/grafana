@@ -22,8 +22,6 @@ export function FolderFilter({ onChange }: FolderFilterProps): JSX.Element {
   return (
     <MultiCombobox
       prefixIcon="filter"
-      minWidth={40}
-      width="auto"
       options={getFoldersAsOptions}
       value={value}
       onChange={onSelectOptionChange}

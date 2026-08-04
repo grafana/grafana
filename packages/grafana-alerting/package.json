@@ -71,6 +71,7 @@
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
     "@types/tinycolor2": "^1",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "i18next-cli": "^1.48.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -80,7 +81,7 @@
     "rollup-plugin-esbuild": "6.2.1",
     "rollup-plugin-node-externals": "^8.0.0",
     "type-fest": "^4.40.0",
-    "typescript": "6.0.2"
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
   },
   "peerDependencies": {
     "@grafana/data": ">=11.6 <= 12.x",
@@ -91,11 +92,11 @@
     "react-dom": "^18.0.0"
   },
   "dependencies": {
-    "@emotion/css": "11.13.5",
+    "@emotion/css": "^11.13.5",
     "@faker-js/faker": "^9.8.0",
     "@grafana/api-clients": "13.2.0-pre",
     "@grafana/i18n": "13.2.0-pre",
-    "@reduxjs/toolkit": "2.10.1",
+    "@reduxjs/toolkit": "^2.10.1",
     "fishery": "^2.3.1",
     "lodash": "^4.17.21",
     "tinycolor2": "^1.6.0"

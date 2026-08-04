@@ -11,8 +11,9 @@ import {
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
-import { dashboardEditActions, ObjectsReorderedOnCanvasEvent } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
+import { ObjectsReorderedOnCanvasEvent } from '../../sidebar/events';
+import { dashboardEditActions } from '../../sidebar/shared';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
@@ -336,8 +337,8 @@ export class RowsLayoutManager
       return;
     }
 
-    const editPane = getDashboardSceneFor(this).state.editPane;
-    editPane.selectObject(row!, { force: true, multi: false });
+    const sidebar = getDashboardSceneFor(this).state.sidebar;
+    sidebar.selectObject(row!, { force: true, multi: false });
   }
 
   public static createEmpty(): RowsLayoutManager {

@@ -1,6 +1,15 @@
+import { type Page } from '@playwright/test';
+
 import { test, expect } from '@grafana/plugin-e2e';
 
-test.describe.skip(
+// Clicking "View panel" lands on the dashboard scene, which appends the slug to
+// the URL (/d/<uid> -> /d/<uid>/<slug>) asynchronously. Clicking "Back" before
+// that commit lets the scene's deferred URL sync clobber the ReturnToPrevious
+// navigation, leaving us on the dashboard instead of the alert rule -- the race
+// that made this suite flaky. Waiting for the committed URL removes it.
+const waitForPanelViewToLoad = (page: Page) => page.waitForURL(/\/d\/[^/]+\/[^/?#]+/);
+
+test.describe(
   'ReturnToPrevious button',
   {
     tag: ['@various'],
@@ -14,6 +23,7 @@ test.describe.skip(
       // Click "View panel" link -- triggers ReturnToPrevious
       const viewPanelLink = page.getByRole('link', { name: 'View panel' });
       await viewPanelLink.click();
+      await waitForPanelViewToLoad(page);
 
       // Store the alert rule URL for later comparison
       test.info().annotations.push({
@@ -83,6 +93,7 @@ test.describe.skip(
       // Click "View panel" link on the second rule
       const viewPanelLink = page.getByRole('link', { name: 'View panel' });
       await viewPanelLink.click();
+      await waitForPanelViewToLoad(page);
 
       // Check that the button now shows the new alert rule name
       const newBackButton = page.getByTestId(selectors.components.ReturnToPrevious.backButton);

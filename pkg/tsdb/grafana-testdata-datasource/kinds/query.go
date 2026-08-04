@@ -56,6 +56,8 @@ const (
 	TestDataQueryTypeCsvMetricValues              TestDataQueryType = "csv_metric_values"
 	TestDataQueryTypeDatapointsOutsideRange       TestDataQueryType = "datapoints_outside_range"
 	TestDataQueryTypeErrorWithSource              TestDataQueryType = "error_with_source"
+	TestDataQueryTypeErrorsAndNotices             TestDataQueryType = "errors_and_notices"
+	TestDataQueryTypeExemplars                    TestDataQueryType = "exemplars"
 	TestDataQueryTypeFlakyQuery                   TestDataQueryType = "flaky_query"
 	TestDataQueryTypeExponentialHeatmapBucketData TestDataQueryType = "exponential_heatmap_bucket_data"
 	TestDataQueryTypeFlameGraph                   TestDataQueryType = "flame_graph"
@@ -127,11 +129,28 @@ type TestDataQuery struct {
 	QueryDelay            string  `json:"queryDelay,omitempty"`
 	QueryDelayVariability float64 `json:"queryDelayVariability,omitempty"`
 
+	// Exemplars scenario: number of exemplars to generate (defaults to 100)
+	ExemplarCount int `json:"exemplarCount,omitempty"`
+
+	// Exemplars scenario: label fields added to each exemplar
+	ExemplarLabels []ExemplarLabel `json:"exemplarLabels,omitempty"`
+
 	Nodes     *NodesQuery      `json:"nodes,omitempty"`
 	PulseWave *PulseWaveQuery  `json:"pulseWave,omitempty"`
 	Sim       *SimulationQuery `json:"sim,omitempty"`
 	Stream    *StreamingQuery  `json:"stream,omitempty"`
 	Usa       *USAQuery        `json:"usa,omitempty"`
+}
+
+// ExemplarLabel defines model for ExemplarLabel.
+type ExemplarLabel struct {
+	Name string `json:"name,omitempty"`
+
+	// Number of characters in each generated value (defaults to 16)
+	Length int `json:"length,omitempty"`
+
+	// Optional data link URL; supports ${__value.raw}
+	Link string `json:"link,omitempty"`
 }
 
 // CSVWave defines model for CSVWave.

@@ -19,6 +19,11 @@ review_date: 2026-04-10
 
 # Troubleshoot Parca data source issues
 
+{{< admonition type="caution" >}}
+Starting January 2, 2027, the Parca data source plugin is deprecated.
+It will no longer receive updates after that date.
+{{< /admonition >}}
+
 This page provides solutions to common issues you might encounter when configuring or using the Parca data source. For configuration instructions, refer to [Configure the Parca data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/configure/).
 
 ## Connection errors
@@ -161,7 +166,7 @@ These issues relate to using template variables with the Parca data source.
 | Cause                         | Solution                                                                                                                                  |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | Variable used in profile type | Template variables are only supported in the **label selector** field. The profile type drop-down doesn't support variable interpolation. |
-| Variable not defined          | Verify the variable exists in **Dashboard settings** > **Variables** and has valid values.                                                |
+| Variable not defined          | Verify the variable exists in **Dashboard options** > **Variables** and has valid values.                                                 |
 | Wrong variable syntax         | Use `$variablename` or `${variablename}`. Verify there are no typos in the variable name.                                                 |
 
 ### Can't use Parca to populate variable options

@@ -50,7 +50,7 @@ jest.mock('@grafana/runtime', () => {
 });
 
 jest.mock('./LogListContext');
-jest.mock('../LogDetails');
+jest.mock('../useAttributesExtensionLinks');
 
 const theme = createTheme();
 const virtualization = new LogLineVirtualization(theme, 'default');

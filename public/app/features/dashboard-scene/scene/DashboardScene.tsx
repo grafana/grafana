@@ -13,9 +13,10 @@ import {
   store,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService, RefreshEvent } from '@grafana/runtime';
-import { getPanelPluginMeta } from '@grafana/runtime/internal';
+import { config, getDataSourceSrv, locationService, RefreshEvent, reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient, getPanelPluginMeta } from '@grafana/runtime/internal';
 import {
+  type CancelActivationHandler,
   SceneDataTransformer,
   sceneGraph,
   type SceneObject,
@@ -26,6 +27,7 @@ import {
   sceneUtils,
   type SceneVariable,
   type SceneVariableDependencyConfigLike,
+  MultiValueVariable,
   type VizPanel,
 } from '@grafana/scenes';
 import { type Dashboard, type DashboardLink, type LibraryPanel } from '@grafana/schema';
@@ -57,11 +59,10 @@ import {
   AnnoKeyManagerIdentity,
   AnnoKeyManagerKind,
   AnnoKeySourcePath,
+  AnnoKeyIgnorePredefinedVariables,
   ManagerKind,
   type ResourceForCreate,
 } from '../../apiserver/types';
-import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
-import { dashboardEditActions } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { type DashboardChangeInfo } from '../saving/shared';
@@ -82,6 +83,8 @@ import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
 import { JsonModelEditView } from '../settings/JsonModelEditView';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
+import { DashboardSidebar } from '../sidebar/DashboardSidebar';
+import { dashboardEditActions } from '../sidebar/shared';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -89,6 +92,11 @@ import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { DashboardInteractions } from '../utils/interactions';
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
+import {
+  mayInjectAnyPredefinedVariables,
+  resolvePredefinedVariablesForDashboard,
+} from '../utils/predefinedVariableDenyList';
+import { fetchPredefinedVariables, isPredefinedOrigin } from '../utils/predefinedVariables';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
@@ -112,9 +120,8 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
-import { type DashboardLayoutManager } from './types/DashboardLayoutManager';
-import { type LayoutParent } from './types/LayoutParent';
-import { type DashboardSceneLike, type DashboardSceneState as DashboardSceneStateBase } from './types/dashboard';
+import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
+import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
@@ -151,10 +158,7 @@ function extractOptionProps(source: Record<string, unknown>, props: readonly str
   return result;
 }
 
-// Temp re-export, will follup with a specific circular dependency fix in separate PR
-export type DashboardSceneState = DashboardSceneStateBase;
-
-export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements LayoutParent, DashboardSceneLike {
+export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements DashboardSceneLike {
   static Component = DashboardSceneRenderer;
   public isDashboardScene = true;
 
@@ -180,11 +184,25 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    */
   private _changeTracker: DashboardSceneChangeTracker;
 
+  private _sidebarActivation?: CancelActivationHandler;
+
   /**
    * Remember scroll position when going into panel edit
    */
   private _scrollRef?: ScrollRefElement;
   private _prevScrollPos?: number;
+
+  /**
+   * What initiated the current edit session, e.g. the assistant building a dashboard for the user
+   */
+  private _editSessionSource?: 'user' | 'assistant';
+
+  /**
+   * Monotonic id so overlapping refreshPredefinedVariables() calls only apply the latest result.
+   * Also bumped on discard/restore so an in-flight refresh that snapped a discarded denylist
+   * cannot overwrite the restored variable set.
+   */
+  private _predefinedVariablesRefreshId = 0;
 
   public serializer: DashboardSceneSerializerLike<
     Dashboard | DashboardV2Spec,
@@ -203,7 +221,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         state.body ?? state.preferences?.defaultLayoutTemplate?.clone() ?? DefaultGridLayoutManager.fromVizPanels([]),
       links: state.links ?? [],
       ...state,
-      editPane: new DashboardEditPane(),
+      sidebar: new DashboardSidebar(),
       layoutOrchestrator: new DashboardLayoutOrchestrator(),
       preferences: state.preferences ?? {},
     });
@@ -230,7 +248,15 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (isNew) {
-      this.onEnterEditMode();
+      // Silent CUJ signal so the dashboard_edit journey starts on /dashboard/new
+      // (the regular `dashboards_edit_button_clicked` doesn't fire here — auto-edit
+      // mode bypasses the button).
+      reportInteraction('dashboards_new_dashboard_init', {}, { silent: true });
+      // New dashboards enter edit mode on activation, before any caller can tag the
+      // session, so the initiator is carried in the url (set by the assistant when it
+      // opens the editor to build a dashboard itself)
+      const editSource = locationService.getSearchObject().editSource;
+      this.onEnterEditMode(editSource === 'assistant' ? 'assistant' : 'user');
       this.setState({ isDirty: true });
     }
 
@@ -254,6 +280,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();
+      this.deactivateSidebar();
       oldDashboardWrapper.destroy();
       dashboardWatcher.leave();
     };
@@ -274,7 +301,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public setDefaultVariables(defaultVariables: VariableKind[]) {
     const variableSet = sceneGraph.getVariables(this);
-    const userVars = variableSet.state.variables.filter((v) => !v.state.origin);
+    // Only replace datasource-provided defaults. Variables with other origins (e.g.
+    // predefined global/folder variables) are injected elsewhere and must survive.
+    const keptVars = variableSet.state.variables.filter((v) => v.state.origin?.type !== 'datasource');
+    const keptNames = new Set(keptVars.map((v) => v.state.name));
     const defaultVarObjects = defaultVariables
       .map((v) => {
         try {
@@ -284,9 +314,89 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           return null;
         }
       })
-      .filter((v): v is SceneVariable => Boolean(v));
+      .filter((v): v is SceneVariable => Boolean(v))
+      // Nearest scope wins: existing variables shadow incoming defaults of the same name.
+      .filter((v) => !keptNames.has(v.state.name));
 
-    variableSet.setState({ variables: [...defaultVarObjects, ...userVars] });
+    variableSet.setState({ variables: [...defaultVarObjects, ...keptVars] });
+  }
+
+  /**
+   * Replaces predefined (global/folder) variables on a live/cached scene.
+   * Used when the scene cache is reused but predefined variables were re-fetched —
+   * the scene cache has no TTL, while the predefined-variables cache is only 30s.
+   */
+  public setPredefinedVariables(predefinedVariables: VariableKind[]) {
+    const variableSet = sceneGraph.getVariables(this);
+    const previousByName = new Map(
+      variableSet.state.variables.filter((v) => isPredefinedOrigin(v.state.origin)).map((v) => [v.state.name, v])
+    );
+    const keptVars = variableSet.state.variables.filter((v) => !isPredefinedOrigin(v.state.origin));
+    const keptNames = new Set(keptVars.map((v) => v.state.name));
+    const predefinedVarObjects = predefinedVariables
+      .map((v) => {
+        try {
+          return createSceneVariableFromVariableModelV2(v);
+        } catch (err) {
+          console.error(err);
+          return null;
+        }
+      })
+      .filter((v): v is SceneVariable => Boolean(v))
+      // Nearest scope wins: dashboard-local / datasource defaults shadow predefined names.
+      .filter((v) => !keptNames.has(v.state.name))
+      .map((v) => {
+        const previous = previousByName.get(v.state.name);
+        // Preserve the user's current selection when refreshing definitions on a cached scene.
+        if (previous instanceof MultiValueVariable && v instanceof MultiValueVariable) {
+          v.setState({
+            value: previous.state.value,
+            text: previous.state.text,
+          });
+        }
+        return v;
+      });
+
+    variableSet.setState({ variables: [...predefinedVarObjects, ...keptVars] });
+  }
+
+  /**
+   * Re-resolve global/folder variables from the current denylist annotation and apply them
+   * to the live scene (e.g. after save) so a full page reload is not required.
+   */
+  public async refreshPredefinedVariables(): Promise<void> {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GlobalDashboardVariables, false)) {
+      return;
+    }
+
+    const refreshId = ++this._predefinedVariablesRefreshId;
+    const folderUid = this.state.meta.folderUid;
+    const annotations: Record<string, string | undefined> = {};
+    for (const [key, value] of Object.entries(this.state.meta.k8s?.annotations ?? {})) {
+      if (typeof value === 'string') {
+        annotations[key] = value;
+      }
+    }
+    const resolutionInput = { annotations };
+
+    if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
+      if (refreshId !== this._predefinedVariablesRefreshId) {
+        return;
+      }
+      this.setPredefinedVariables([]);
+      return;
+    }
+
+    const candidates = await fetchPredefinedVariables(folderUid);
+    // A newer radio/save refresh may have started while this fetch was in flight.
+    if (refreshId !== this._predefinedVariablesRefreshId) {
+      return;
+    }
+    // Keep the currently injected set when the fetch fails — do not treat failure as "none".
+    if (candidates === null) {
+      return;
+    }
+    this.setPredefinedVariables(resolvePredefinedVariablesForDashboard(candidates, resolutionInput));
   }
 
   public setDefaultLinks(defaultLinks: DashboardLink[]) {
@@ -296,8 +406,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public clearDefaultControls() {
     const variableSet = sceneGraph.getVariables(this);
-    const nonDefaultVars = variableSet.state.variables.filter((v) => !v.state.origin);
-    variableSet.setState({ variables: nonDefaultVars });
+    // Predefined (global/folder) variables are not datasource defaults — keep them.
+    const keptVars = variableSet.state.variables.filter((v) => v.state.origin?.type !== 'datasource');
+    variableSet.setState({ variables: keptVars });
 
     const nonDefaultLinks = this.state.links.filter((l) => !l.origin);
     this.setState({ links: nonDefaultLinks });
@@ -305,6 +416,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public onEnterEditMode = (source: 'user' | 'assistant' = 'user') => {
     const wasEditing = this.state.isEditing;
+
+    this._editSessionSource = source;
 
     // Save this state
     this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false });
@@ -323,10 +436,41 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   };
 
-  public saveCompleted(saveModel: Dashboard | DashboardV2Spec, result: SaveDashboardResponseDTO, folderUid?: string) {
+  public getEditSessionSource() {
+    return this._editSessionSource;
+  }
+
+  /**
+   * Activate the sidebar if it is not already active (e.g. not rendered), so programmatic
+   * mutations that dispatch DashboardEditActionEvents get performed. The activation is
+   * reference-counted, so we retain the handler and release it on exit (see deactivateSidebar).
+   */
+  public activateSidebar() {
+    const { sidebar } = this.state;
+    if (sidebar.isActive) {
+      return;
+    }
+    // Release the previous pane's activation before acquiring a new one.
+    this.deactivateSidebar();
+    this._sidebarActivation = sidebar.activate();
+  }
+
+  private deactivateSidebar() {
+    this._sidebarActivation?.();
+    this._sidebarActivation = undefined;
+  }
+
+  public async saveCompleted(
+    saveModel: Dashboard | DashboardV2Spec,
+    result: SaveDashboardResponseDTO,
+    folderUid?: string
+  ) {
     this.serializer.onSaveComplete(saveModel, result);
 
     this._changeTracker.stopTrackingChanges();
+
+    // Save As / first save mint a new uid; skip the refresh await below so redirect isn't delayed.
+    const isNewResource = result.uid !== this.state.uid;
 
     this.setState({
       version: result.version,
@@ -344,6 +488,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     });
 
     this.state.editPanel?.dashboardSaved();
+
+    // Re-apply denylist before re-baselining on in-place saves. Skip awaiting on Save As —
+    // we're about to navigate away.
+    if (!isNewResource) {
+      await this.refreshPredefinedVariables();
+    }
 
     this._initialState = sceneUtils.cloneSceneObjectState(this.state);
     this._initialUrlState = locationService.getLocation();
@@ -414,6 +564,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
 
+    // CUJ-only signal: ends dashboard_edit journey when the user actually leaves
+    // edit mode, regardless of whether changes were discarded or there were
+    // none to begin with. dashboardEditDiscarded only fires on the dirty path,
+    // so we'd otherwise lose the no-op exit case.
+    reportInteraction('dashboards_edit_exited', { restoreInitialState }, { silent: true });
+    // Release any sidebar we activated programmatically before the pane is swapped/unmounted.
+    this.deactivateSidebar();
+
     // We are updating url and removing editview and editPanel.
     // The initial url may be including edit view, edit panel or inspect query params if the user pasted the url,
     // hence we need to cleanup those query params to get back to the dashboard view. Otherwise url sync can trigger overlays.
@@ -428,9 +586,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     locationService.replace(locationUtil.stripBaseFromUrl(url));
 
     if (restoreInitialState) {
-      //  Restore initial state and disable editing
+      // Restore initial state and disable editing
       this.setState({ ...this._initialState, isEditing: false });
+      this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
+      DashboardInteractions.dashboardEditDiscarded();
     } else {
       // Do not restore
       this.setState({ isEditing: false });
@@ -465,6 +625,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Stop tracking while we reset state.
     this._changeTracker.stopTrackingChanges();
 
+    // The restored state swaps in a cloned sidebar, so release the one we activated programmatically.
+    const hadProgrammaticSidebar = this._sidebarActivation !== undefined;
+    this.deactivateSidebar();
+
     const restoredState = sceneUtils.cloneSceneObjectState(this._initialState!, { isDirty: false });
 
     // Ensure the restored layout stays editable.
@@ -480,7 +644,40 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       overlay: undefined,
     });
 
+    // We stay in edit mode, so re-activate the swapped-in pane to keep programmatic mutations working.
+    if (hadProgrammaticSidebar) {
+      this.activateSidebar();
+    }
+
+    this.restoreSerializerAnnotationsFromInitialState();
     this._changeTracker.startTrackingChanges();
+  }
+
+  /**
+   * Serializer annotations are mutated outside scene state when editing the denylist.
+   * Restore them from the edit-session baseline when discarding.
+   */
+  private restoreSerializerAnnotationsFromInitialState() {
+    // Drop any in-flight refresh that captured the discarded denylist.
+    this._predefinedVariablesRefreshId++;
+
+    const k8s = this.serializer.getK8SMetadata();
+    if (!k8s) {
+      return;
+    }
+    const annotations: Record<string, string> = {};
+    for (const [key, value] of Object.entries(k8s.annotations ?? {})) {
+      if (typeof value === 'string') {
+        annotations[key] = value;
+      }
+    }
+    const initialValue = this._initialState?.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
+    if (typeof initialValue === 'string') {
+      annotations[AnnoKeyIgnorePredefinedVariables] = initialValue;
+    } else {
+      delete annotations[AnnoKeyIgnorePredefinedVariables];
+    }
+    this.serializer.setK8SAnnotations(annotations);
   }
 
   public pauseTrackingChanges() {
@@ -575,14 +772,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       text: title,
       url: isProvisioningPreview
         ? locationUtil.getUrlForPartial(location, clearPanelView)
-        : getDashboardUrl({
-            uid,
-            slug: meta.slug,
-            currentQueryParams: location.search,
-            updateQuery: clearPanelView,
-            isHomeDashboard: !meta.url && !meta.slug && !isNew && !meta.isSnapshot,
-            isSnapshot: meta.isSnapshot,
-          }),
+        : locationUtil.assureBaseUrl(
+            getDashboardUrl({
+              uid,
+              slug: meta.slug,
+              currentQueryParams: location.search,
+              updateQuery: clearPanelView,
+              isHomeDashboard: !meta.url && !meta.slug && !isNew && !meta.isSnapshot,
+              isSnapshot: meta.isSnapshot,
+            })
+          ),
     };
 
     const { folderUid } = meta;
@@ -704,6 +903,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public pastePanel() {
+    if (!store.exists(LS_PANEL_COPY_KEY)) {
+      return;
+    }
+
     if (config.featureToggles.dashboardNewLayouts) {
       const layout = getLayoutForObject(this);
       if (layout) {
@@ -769,10 +972,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /** @internal */
   public copyPanelStyles(vizPanel: VizPanel) {
-    if (!config.featureToggles.panelStyleActions) {
-      return;
-    }
-
     const panelType = vizPanel.state.pluginId;
     const styleConfig = getPanelStyleConfig(panelType);
 
@@ -791,10 +990,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /** @internal */
   public static hasPanelStylesToPaste(panelType: string): boolean {
-    if (!config.featureToggles.panelStyleActions) {
-      return false;
-    }
-
     const stylesJson = store.get(LS_STYLES_COPY_KEY);
     if (!stylesJson) {
       return false;
@@ -810,10 +1005,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /** @internal */
   public pastePanelStyles(vizPanel: VizPanel) {
-    if (!config.featureToggles.panelStyleActions) {
-      return;
-    }
-
     const stylesJson = store.get(LS_STYLES_COPY_KEY);
     if (!stylesJson) {
       return;
@@ -910,10 +1101,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (!skipDataQuery && !panel.state.$data) {
+      const defaultDs = getDataSourceSrv().getInstanceSettings(null);
       panel.setState({
         $data: new SceneDataTransformer({
           $data: new SceneQueryRunner({
-            datasource: { uid: config.defaultDatasource },
+            // The query editor needs the datasource type, which config.defaultDatasource does not provide.
+            datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined,
             queries: [{ refId: 'A' }],
           }),
           transformations: [],
@@ -952,7 +1145,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onOpenSettings = () => {
-    locationService.partial({ editview: 'settings' });
+    const editview = this.state.meta.isDashboardTemplate ? 'template' : 'settings';
+    locationService.partial({ editview });
   };
 
   public onShowAddLibraryPanelDrawer(panelToReplaceRef?: SceneObjectRef<VizPanel>) {
@@ -990,7 +1184,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
-  public getLayout(): DashboardLayoutManager {
+  public getLayout(): AnyDashboardLayoutManager {
     return this.state.body;
   }
 
@@ -1290,7 +1484,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   isManagedRepository() {
-    if (!config.featureToggles.provisioning) {
+    if (!config.provisioningEnabled) {
       return false;
     }
     return Boolean(this.getManagerKind() === ManagerKind.Repo);

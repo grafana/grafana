@@ -35,6 +35,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
@@ -82,6 +83,19 @@ func TestIntegrationContactPointService(t *testing.T) {
 		require.Len(t, cps, 2)
 		require.Equal(t, "grafana-default-email", cps[0].Name)
 		require.Equal(t, "slack receiver", cps[1].Name)
+	})
+
+	t.Run("service returns empty list when org has no Alertmanager config", func(t *testing.T) {
+		cfgStore := fakes.NewFakeAlertmanagerConfigStore("")
+		cfgStore.GetFn = func(ctx context.Context, orgID int64) (*models.AlertConfiguration, error) {
+			return nil, store.ErrNoAlertmanagerConfiguration
+		}
+		sut := createContactPointServiceSutWithConfigStore(t, secretsService, cfgStore)
+
+		cps, err := sut.GetContactPoints(context.Background(), cpsQuery(1), redactedUser)
+		require.NoError(t, err)
+		require.NotNil(t, cps)
+		require.Empty(t, cps)
 	})
 
 	t.Run("service filters contact points by name", func(t *testing.T) {
@@ -283,7 +297,7 @@ func TestIntegrationContactPointService(t *testing.T) {
 		newCp.Name = newName
 
 		svc.RenameReceiverInDependentResourcesFunc = func(ctx context.Context, orgID int64, revision *legacy_storage.ConfigRevision, oldName, newName string, receiverProvenance models.Provenance) error {
-			revision.RenameReceiverInRoutes(oldName, newName, false)
+			revision.RenameReceiverInRoutes(oldName, newName)
 			return nil
 		}
 
@@ -379,7 +393,8 @@ func TestIntegrationContactPointService(t *testing.T) {
 					require.Equal(t, newCp.UID, cps[0].UID)
 					require.Equal(t, test.to, models.Provenance(cps[0].Provenance))
 				} else {
-					require.Error(t, err, fmt.Sprintf("cannot change provenance from '%s' to '%s'", test.from, test.to))
+					require.Error(t, err)
+					require.Truef(t, validation.ErrProvenanceChangeNotAllowed.Base.Is(err), "expected ErrProvenanceChangeNotAllowed but got %s", err)
 				}
 			})
 		}

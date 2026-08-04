@@ -26,16 +26,18 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
 import { Button, Collapse, Combobox, type ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
 import { splitOpen } from 'app/features/explore/state/main';
+import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { useDispatch } from 'app/types/store';
 
 import { dataFrameToLogsModel } from '../../logsModel';
 import { sortLogRows } from '../../utils';
-import { ScrollDirection } from '../InfiniteScroll';
 import { LoadingIndicator } from '../LoadingIndicator';
+import { ScrollDirection } from '../infiniteScrollUtils';
 
 import { LogLineDetailsLog } from './LogLineDetailsLog';
 import { type LogLineMenuCustomItem } from './LogLineMenu';
@@ -55,6 +57,7 @@ interface LogLineContextProps {
     options?: LogRowContextOptions,
     cacheFilters?: boolean
   ) => Promise<DataQuery | null>;
+  getFieldLinks?: GetFieldLinksFn;
   sortOrder?: LogsSortOrder;
   runContextQuery?: () => void;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
@@ -68,6 +71,20 @@ interface LogLineContextProps {
 export const PAGE_SIZE = 100;
 export const DEFAULT_TIME_WINDOW = 7200000;
 
+// Merge the above/below context request states into one for InfiniteScroll, preserving Streaming/Error.
+export function combineLoadingStates(...states: LoadingState[]): LoadingState {
+  if (states.includes(LoadingState.Streaming)) {
+    return LoadingState.Streaming;
+  }
+  if (states.includes(LoadingState.Loading)) {
+    return LoadingState.Loading;
+  }
+  if (states.includes(LoadingState.Error)) {
+    return LoadingState.Error;
+  }
+  return LoadingState.Done;
+}
+
 export const LogLineContext = memo(
   ({
     log,
@@ -79,6 +96,7 @@ export const LogLineContext = memo(
     timeZone,
     getLogRowContextUi,
     getRowContextQuery,
+    getFieldLinks,
     onClose,
     getRowContext,
     displayedFields: displayedFieldsProp = [],
@@ -322,7 +340,7 @@ export const LogLineContext = memo(
       ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true)
       : true;
 
-    // @todo: Remove when the LogRows are deprecated
+    // @todo: Remove when legacy LogRows are fully deleted
     const logListModel = useMemo(
       () =>
         log instanceof LogListModel
@@ -338,13 +356,11 @@ export const LogLineContext = memo(
 
     useEffect(() => {
       if (log.datasourceUid) {
-        getDataSourceSrv()
-          .get({ uid: log.datasourceUid })
-          .then((ds) => {
-            if (hasLogsContextSupport(ds)) {
-              setDatasourceInstance(ds);
-            }
-          });
+        getDataSourceInstance({ uid: log.datasourceUid }).then((ds) => {
+          if (hasLogsContextSupport(ds)) {
+            setDatasourceInstance(ds);
+          }
+        });
       }
     }, [log.datasourceUid]);
 
@@ -446,12 +462,13 @@ export const LogLineContext = memo(
                 displayedFields={displayedFields}
                 enableLogDetails={true}
                 eventBus={eventBusRef.current}
+                getFieldLinks={getFieldLinks}
                 infiniteScrollMode="unlimited"
                 loadMore={handleLoadMore}
                 logLineMenuCustomItems={logLineMenuCustomItems}
                 logOptionsStorageKey={logOptionsStorageKey}
                 logs={allLogs}
-                loading={aboveState === LoadingState.Loading || belowState === LoadingState.Loading}
+                loadingState={combineLoadingStates(aboveState, belowState)}
                 permalinkedLogId={log.uid}
                 onPermalinkClick={onPermalinkClick}
                 onLogOptionsChange={onLogOptionsChange}
