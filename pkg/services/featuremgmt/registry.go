@@ -692,10 +692,10 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "reportingV2Layouts",
+			Name:        "grafana.reportingV2Layouts",
 			Description: "Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{React: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
 		},

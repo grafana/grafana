@@ -85,6 +85,8 @@ export const FlagKeys = {
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
+  /** Enable v2 dashboard layout support in reports (auto-grid, tabs, rows) */
+  GrafanaReportingV2Layouts: "grafana.reportingV2Layouts",
   /** Enables the dedicated Saved queries page and its navigation entry */
   GrafanaSavedQueriesPage: "grafana.savedQueriesPage",
   /** Prevents flickering in dashboards */
@@ -555,6 +557,17 @@ export const useFlagGrafanaPanelEditNextFeedbackEvent = (options?: ReactFlagEval
  */
 export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.queryVarEditorRedesign", true, options).value;
+};
+
+/**
+ * Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)
+ *
+ * **Details:**
+ * - flag key: `grafana.reportingV2Layouts`
+ * - default value: `false`
+ */
+export const useFlagGrafanaReportingV2Layouts = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.reportingV2Layouts", false, options).value;
 };
 
 /**

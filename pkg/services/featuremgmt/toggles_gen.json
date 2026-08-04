@@ -3041,6 +3041,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.reportingV2Layouts",
+        "resourceVersion": "1785231301633",
+        "creationTimestamp": "2026-07-28T09:35:01Z"
+      },
+      "spec": {
+        "description": "Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.savedQueriesPage",
         "resourceVersion": "1784068714544",
         "creationTimestamp": "2026-07-14T22:38:34Z"
@@ -5501,7 +5515,8 @@
       "metadata": {
         "name": "reportingV2Layouts",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z",
+        "deletionTimestamp": "2026-07-28T09:35:01Z"
       },
       "spec": {
         "description": "Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)",

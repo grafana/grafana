@@ -319,11 +319,6 @@ export interface FeatureToggles {
   */
   pdfTables?: boolean;
   /**
-  * Enable v2 dashboard layout support in reports (auto-grid, tabs, rows)
-  * @default false
-  */
-  reportingV2Layouts?: boolean;
-  /**
   * Enables render binding support for report rendering
   * @default false
   */
