@@ -1337,9 +1337,13 @@ interface ColWidthMeasureCtx {
  */
 type MeasureColWidth = (field: Field, sampleSize: number, ctx: ColWidthMeasureCtx) => number;
 
-// Graphical cells don't render free text — gauges need bar room, sparklines/images/geo are
-// pictorial — so they take a fixed default instead of being measured.
+// Graphical cells don't render free text — gauges need bar room, sparklines/geo are pictorial — so
+// they take a fixed default instead of being measured.
 const measureGraphicalColWidth: MeasureColWidth = () => COLUMN.DEFAULT_WIDTH;
+
+// Images scale to the cell (object-fit: contain), so a wide column is mostly whitespace — a small
+// fixed default reads better than the graphical default.
+const measureImageColWidth: MeasureColWidth = () => COLUMN.IMAGE_WIDTH;
 
 const measurePillColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
   measurePillContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
@@ -1356,7 +1360,7 @@ const COL_WIDTH_MEASURERS: Partial<Record<TableCellDisplayMode, MeasureColWidth>
   [TableCellDisplayMode.BasicGauge]: measureGraphicalColWidth,
   [TableCellDisplayMode.GradientGauge]: measureGraphicalColWidth,
   [TableCellDisplayMode.LcdGauge]: measureGraphicalColWidth,
-  [TableCellDisplayMode.Image]: measureGraphicalColWidth,
+  [TableCellDisplayMode.Image]: measureImageColWidth,
   [TableCellDisplayMode.Geo]: measureGraphicalColWidth,
   [TableCellDisplayMode.Pill]: measurePillColWidth,
 };

@@ -7,6 +7,9 @@ export const COLUMN = {
   // Upper bound for a content-aware auto-sized column before we grow it to fill the panel.
   // Keeps one long value (e.g. a JSON blob) from consuming the whole table width.
   MAX_AUTO_WIDTH: 400,
+  // Content-aware width for image columns. Images scale to the cell (object-fit: contain), so a
+  // wide column is mostly whitespace — a small default reads better than the graphical default.
+  IMAGE_WIDTH: 72,
 };
 
 /** Table layout and display constants */

@@ -1937,6 +1937,19 @@ describe('TableNG utils', () => {
       expect(compute(fields, COLUMN.DEFAULT_WIDTH)).toEqual([COLUMN.DEFAULT_WIDTH]);
     });
 
+    it('uses a small fixed width for image columns rather than the graphical default', () => {
+      const fields: Field[] = [
+        {
+          name: 'img',
+          type: FieldType.string,
+          values: ['http://example.com/a-very-long-image-url-that-should-not-widen-the-column.png'],
+          config: { custom: { cellOptions: { type: TableCellDisplayMode.Image } } },
+        },
+      ];
+      // Images take IMAGE_WIDTH regardless of the URL length; availWidth == it, so no growth.
+      expect(compute(fields, COLUMN.IMAGE_WIDTH)).toEqual([COLUMN.IMAGE_WIDTH]);
+    });
+
     it('resolves an auto cell to its graphical default (geo) instead of measuring it as text', () => {
       // No explicit cellOptions, so the cell type is Auto; getAutoRendererDisplayMode maps a geo
       // field to Geo, which is graphical. availWidth < the default leaves no room to grow, so text
