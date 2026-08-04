@@ -244,6 +244,28 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	})
 	ctx := createTestContext(t, helper, helper.Org1)
 
+	legacyOnlyUIDBody, err := json.Marshal(map[string]interface{}{
+		"kind": 1,
+		"uid":  "Legacy_UID",
+		"name": "Legacy-only UID",
+		"model": map[string]interface{}{
+			"type":  "text",
+			"title": "Legacy-only UID",
+		},
+	})
+	require.NoError(t, err)
+	legacyOnlyUIDResp := apis.DoRequest(ctx.Helper, apis.RequestParams{
+		User:        ctx.AdminUser,
+		Method:      http.MethodPost,
+		Path:        "/api/library-elements",
+		Body:        legacyOnlyUIDBody,
+		ContentType: "application/json",
+	}, &struct{}{})
+	require.Equal(t, http.StatusBadRequest, legacyOnlyUIDResp.Response.StatusCode)
+	var legacyOnlyUIDError map[string]interface{}
+	require.NoError(t, json.Unmarshal(legacyOnlyUIDResp.Body, &legacyOnlyUIDError))
+	require.Equal(t, model.ErrLibraryElementInvalidUID.Error(), legacyOnlyUIDError["message"])
+
 	legacyFolderResponse := apis.DoRequest(helper, apis.RequestParams{
 		User:        ctx.AdminUser,
 		Method:      http.MethodPost,

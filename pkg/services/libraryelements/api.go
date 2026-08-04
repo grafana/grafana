@@ -16,6 +16,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/client-go/dynamic"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -731,6 +732,10 @@ func (lk8s *libraryElementsK8sHandler) createK8sLibraryElement(c *contextmodel.R
 	if uid == "" {
 		uid = util.GenerateShortUID()
 	}
+	if err := validateK8sLibraryPanelUID(uid); err != nil {
+		c.JsonApiErr(http.StatusBadRequest, err.Error(), err)
+		return
+	}
 	folderUID := ac.GeneralFolderUID
 	switch {
 	case cmd.FolderUID != nil:
@@ -905,14 +910,7 @@ func (lk8s *libraryElementsK8sHandler) getAllK8sLibraryElements(c *contextmodel.
 	filtered := lk8s.filterK8sLibraryPanels(c, items, query, folderUIDFilter)
 
 	sortAsc := query.SortDirection != sort.SortAlphaDesc.Name
-	gosort.SliceStable(filtered, func(i, j int) bool {
-		iName, _, _ := unstructured.NestedString(filtered[i].Object, "spec", "title")
-		jName, _, _ := unstructured.NestedString(filtered[j].Object, "spec", "title")
-		if sortAsc {
-			return iName < jName
-		}
-		return iName > jName
-	})
+	sortK8sLibraryPanelsByTitle(filtered, sortAsc)
 
 	totalCount := int64(len(filtered))
 	start := query.PerPage * (query.Page - 1)
@@ -940,6 +938,19 @@ func (lk8s *libraryElementsK8sHandler) getAllK8sLibraryElements(c *contextmodel.
 		Page:       query.Page,
 		PerPage:    query.PerPage,
 	}})
+}
+
+func sortK8sLibraryPanelsByTitle(items []unstructured.Unstructured, sortAsc bool) {
+	gosort.SliceStable(items, func(i, j int) bool {
+		iName, _, _ := unstructured.NestedString(items[i].Object, "spec", "title")
+		jName, _, _ := unstructured.NestedString(items[j].Object, "spec", "title")
+		iName = strings.ToLower(iName)
+		jName = strings.ToLower(jName)
+		if sortAsc {
+			return iName < jName
+		}
+		return iName > jName
+	})
 }
 
 // filterK8sLibraryPanels applies the legacy search query semantics to the listed
@@ -1133,6 +1144,21 @@ func (lk8s *libraryElementsK8sHandler) listAllK8sLibraryPanels(c *contextmodel.R
 			return items, true
 		}
 	}
+}
+
+func validateK8sLibraryPanelUID(uid string) error {
+	if !util.IsValidShortUID(uid) {
+		return model.ErrLibraryElementInvalidUID
+	}
+	if util.IsShortUIDTooLong(uid) {
+		return model.ErrLibraryElementUIDTooLong
+	}
+	// App Platform resources use the UID as metadata.name, which is stricter than
+	// the legacy UID alphabet (notably uppercase letters and underscores).
+	if len(k8svalidation.IsDNS1123Subdomain(uid)) > 0 {
+		return model.ErrLibraryElementInvalidUID
+	}
+	return nil
 }
 
 // legacyLibraryPanelToUnstructured builds the k8s representation of a library panel

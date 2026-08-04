@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -30,6 +31,56 @@ func TestFilterK8sLibraryPanelsEmptyFolderFilter(t *testing.T) {
 
 	require.Len(t, handler.filterK8sLibraryPanels(nil, items, model.SearchLibraryElementsQuery{}, nil), 1)
 	require.Empty(t, handler.filterK8sLibraryPanels(nil, items, model.SearchLibraryElementsQuery{}, []string{}))
+}
+
+func TestSortK8sLibraryPanelsByTitleCaseInsensitive(t *testing.T) {
+	makeItems := func() []unstructured.Unstructured {
+		return []unstructured.Unstructured{
+			{Object: map[string]interface{}{"spec": map[string]interface{}{"title": "charlie"}}},
+			{Object: map[string]interface{}{"spec": map[string]interface{}{"title": "Bravo"}}},
+			{Object: map[string]interface{}{"spec": map[string]interface{}{"title": "alpha"}}},
+		}
+	}
+	titles := func(items []unstructured.Unstructured) []string {
+		result := make([]string, 0, len(items))
+		for _, item := range items {
+			title, _, _ := unstructured.NestedString(item.Object, "spec", "title")
+			result = append(result, title)
+		}
+		return result
+	}
+
+	ascending := makeItems()
+	sortK8sLibraryPanelsByTitle(ascending, true)
+	require.Equal(t, []string{"alpha", "Bravo", "charlie"}, titles(ascending))
+
+	descending := makeItems()
+	sortK8sLibraryPanelsByTitle(descending, false)
+	require.Equal(t, []string{"charlie", "Bravo", "alpha"}, titles(descending))
+}
+
+func TestValidateK8sLibraryPanelUID(t *testing.T) {
+	tests := []struct {
+		name string
+		uid  string
+		err  error
+	}{
+		{name: "valid", uid: "valid-library-panel", err: nil},
+		{name: "legacy uppercase and underscore", uid: "Legacy_UID", err: model.ErrLibraryElementInvalidUID},
+		{name: "legacy invalid character", uid: "invalid.uid", err: model.ErrLibraryElementInvalidUID},
+		{name: "legacy length limit", uid: strings.Repeat("a", 41), err: model.ErrLibraryElementUIDTooLong},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateK8sLibraryPanelUID(tt.uid)
+			if tt.err == nil {
+				require.NoError(t, err)
+				return
+			}
+			require.ErrorIs(t, err, tt.err)
+		})
+	}
 }
 
 func TestFilterK8sLibraryPanelsFolderTitleSearchWithDeprecatedIDFilter(t *testing.T) {
