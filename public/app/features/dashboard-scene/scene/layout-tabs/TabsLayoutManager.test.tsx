@@ -1,4 +1,4 @@
-import { ConstantVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { ConstantVariable, LocalValueVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
@@ -582,6 +582,26 @@ describe('TabsLayoutManager', () => {
       expect(scene.state.$variables?.state.variables).toContain(variable);
     });
 
+    it('should not move repeater-injected local variables up when dissolving a repeated tab', () => {
+      const sectionVariable = new ConstantVariable({ name: 'env', value: 'prod' });
+      const localVariable = new LocalValueVariable({ name: 'server', value: 'A', text: 'A' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Repeated',
+          repeatByVariable: 'server',
+          layout: new RowsLayoutManager({ rows: [new RowItem({ title: 'Row 1' })] }),
+          $variables: new SceneVariableSet({ variables: [sectionVariable, localVariable] }),
+        }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.hoistNestedGroups('rows');
+
+      const sceneVariables = scene.state.$variables?.state.variables ?? [];
+      expect(sceneVariables).toContain(sectionVariable);
+      expect(sceneVariables).not.toContain(localVariable);
+    });
+
     it('should hoist nested tabs into this layout and convert nested rows into tabs when hoisting to tabs', () => {
       const innerTab1 = new TabItem({ title: 'Inner 1' });
       const innerTab2 = new TabItem({ title: 'Inner 2' });
@@ -650,6 +670,30 @@ describe('TabsLayoutManager', () => {
       tabsLayoutManager.ungroup(GridLayoutType.GridLayout);
 
       expect(scene.state.$variables?.state.variables).toContain(variable);
+    });
+
+    it('should not move repeater-injected local variables up when merging a repeated tab', () => {
+      const sectionVariable = new ConstantVariable({ name: 'env', value: 'prod' });
+      const localVariable = new LocalValueVariable({ name: 'server', value: 'A', text: 'A' });
+      const tabsLayoutManager = buildTabsLayoutManager([
+        new TabItem({
+          title: 'Repeated',
+          repeatByVariable: 'server',
+          layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-1' })]),
+          $variables: new SceneVariableSet({ variables: [sectionVariable, localVariable] }),
+        }),
+        new TabItem({
+          title: 'Tab 2',
+          layout: DefaultGridLayoutManager.fromVizPanels([new VizPanel({ key: 'panel-2' })]),
+        }),
+      ]);
+      const scene = tabsLayoutManager.parent as DashboardScene;
+
+      tabsLayoutManager.ungroup(GridLayoutType.GridLayout);
+
+      const sceneVariables = scene.state.$variables?.state.variables ?? [];
+      expect(sceneVariables).toContain(sectionVariable);
+      expect(sceneVariables).not.toContain(localVariable);
     });
 
     it('should flatten nested groups recursively into a single grid', () => {

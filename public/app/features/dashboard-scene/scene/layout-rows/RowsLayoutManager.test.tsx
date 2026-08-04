@@ -1,5 +1,5 @@
 import { VariableHide } from '@grafana/data';
-import { ConstantVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { ConstantVariable, LocalValueVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
@@ -324,6 +324,26 @@ describe('RowsLayoutManager', () => {
       rowsLayoutManager.hoistNestedGroups('rows');
 
       expect(scene.state.$variables?.state.variables).toContain(variable);
+    });
+
+    it('should not move repeater-injected local variables up when dissolving a repeated row', () => {
+      const sectionVariable = new ConstantVariable({ name: 'env', value: 'prod' });
+      const localVariable = new LocalValueVariable({ name: 'server', value: 'A', text: 'A' });
+      const rowsLayoutManager = buildRowsLayoutManager([
+        new RowItem({
+          title: 'Repeated',
+          repeatByVariable: 'server',
+          layout: new RowsLayoutManager({ rows: [new RowItem({ title: 'Inner' })] }),
+          $variables: new SceneVariableSet({ variables: [sectionVariable, localVariable] }),
+        }),
+      ]);
+      const scene = rowsLayoutManager.parent as DashboardScene;
+
+      rowsLayoutManager.hoistNestedGroups('rows');
+
+      const sceneVariables = scene.state.$variables?.state.variables ?? [];
+      expect(sceneVariables).toContain(sectionVariable);
+      expect(sceneVariables).not.toContain(localVariable);
     });
 
     it('should hoist nested rows into this layout and convert nested tabs into rows when hoisting to rows', () => {
