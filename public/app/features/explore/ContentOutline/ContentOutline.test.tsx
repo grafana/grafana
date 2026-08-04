@@ -5,7 +5,8 @@ import { type DataSourceInstanceSettings, type TimeRange, store } from '@grafana
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
-import { CONTENT_OUTLINE_LOCAL_STORAGE_KEYS, ContentOutline } from './ContentOutline';
+import { CONTENT_OUTLINE_LOCAL_STORAGE_KEYS, ContentOutline, shouldBeActive } from './ContentOutline';
+import { type ContentOutlineItemContextProps } from './ContentOutlineContext';
 import { QUERIES_PANEL_ID } from './ContentOutlineItem';
 
 jest.mock('./ContentOutlineContext', () => ({
@@ -384,5 +385,31 @@ describe('<ContentOutline />', () => {
       expect(screen.queryByText('Datasource explorer')).not.toBeInTheDocument();
       expect(screen.queryByText('Outline')).not.toBeInTheDocument();
     });
+  });
+});
+
+// The highlight is styling, so it cannot be read off the rendered rows. These cover the rule the
+// rows are given instead: a section takes the highlight only while it stands in for its children.
+describe('shouldBeActive', () => {
+  const queryRow = { id: 'query-1', title: 'A', level: 'child' } as ContentOutlineItemContextProps;
+  const secondQueryRow = { id: 'query-2', title: 'B', level: 'child' } as ContentOutlineItemContextProps;
+  const section = (children: ContentOutlineItemContextProps[], mergeSingleChild = false) =>
+    ({ id: 'queries', title: 'Queries', mergeSingleChild, children }) as ContentOutlineItemContextProps;
+
+  it('highlights a section that is merged into its single child', () => {
+    // The child never gets a row of its own, so the section is all the user has to go on.
+    expect(shouldBeActive(section([queryRow], true), 'queries', undefined, false)).toBe(true);
+  });
+
+  it('highlights a collapsed section on behalf of its active child', () => {
+    expect(shouldBeActive(section([queryRow, secondQueryRow]), 'queries', 'query-1', false)).toBe(true);
+  });
+
+  it('leaves the highlight to the children once they are on screen', () => {
+    expect(shouldBeActive(section([queryRow, secondQueryRow]), 'queries', 'query-1', true)).toBe(false);
+  });
+
+  it('highlights a row that has no children of its own', () => {
+    expect(shouldBeActive(queryRow, 'queries', 'query-1', false)).toBe(true);
   });
 });

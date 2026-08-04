@@ -22,20 +22,24 @@ function scrollableChildren(item: ContentOutlineItemContextProps) {
 
 type SectionsExpanded = Record<string, boolean>;
 
-function shouldBeActive(
+/**
+ * @param childrenRendered - whether the item's own children are on screen. A section that has
+ * children but doesn't show them — collapsed, or merged into a single child — stands in for them,
+ * so it takes the highlight on their behalf.
+ */
+export function shouldBeActive(
   item: ContentOutlineItemContextProps,
   activeSectionId: string,
   activeSectionChildId: string | undefined,
-  sectionsExpanded: SectionsExpanded
+  childrenRendered: boolean
 ) {
   const isAnActiveParent = activeSectionId === item.id;
   const isAnActiveChild = activeSectionChildId === item.id;
-  const isCollapsed = !sectionsExpanded[item.id];
   const containsScrollableChildren = scrollableChildren(item).length > 0;
-  const anyChildActive = isChildActive(item, activeSectionChildId) && !sectionsExpanded[item.id];
+  const anyChildActive = isChildActive(item, activeSectionChildId) && !childrenRendered;
 
   if (containsScrollableChildren) {
-    return isCollapsed && (isAnActiveParent || anyChildActive);
+    return !childrenRendered && (isAnActiveParent || anyChildActive);
   } else {
     return isAnActiveParent || isAnActiveChild;
   }
@@ -104,18 +108,11 @@ export function ContentOutline({
   );
 
   const [sectionsExpanded, setSectionsExpanded] = useState(() => {
-    return outlineItems.reduce((acc: { [key: string]: boolean }, item) => {
+    return outlineItems.reduce((acc: SectionsExpanded, item) => {
       acc[item.id] = !!item.expanded;
       return acc;
     }, {});
   });
-
-  // Icon-only mode has no label to save space on, so sections render open and lose the collapse
-  // affordance — a lone chevron next to an icon reads as nothing at all. `sectionsExpanded` is
-  // left untouched so the user's choice is still there when the outline is expanded again.
-  const effectiveSectionsExpanded: SectionsExpanded = contentOutlineExpanded
-    ? sectionsExpanded
-    : Object.fromEntries(visibleOutlineItems.map((item) => [item.id, true]));
 
   const handleItemClicked = (item: ContentOutlineItemContextProps) => {
     if (item.level === 'child' && item.type === 'filter') {
@@ -221,7 +218,11 @@ export function ContentOutline({
           <div className={styles.content}>
             {!signalExplorerVisible && toggleButton}
             {visibleOutlineItems.map((item) => {
-              const childrenRendered = isCollapsible(item) && effectiveSectionsExpanded[item.id];
+              // Icon-only mode has no label to save space on, so sections render open and lose the
+              // collapse affordance — a lone chevron next to an icon reads as nothing at all.
+              // `sectionsExpanded` is left untouched, so the user's choice is still there when the
+              // outline is expanded again.
+              const childrenRendered = isCollapsible(item) && (!contentOutlineExpanded || !!sectionsExpanded[item.id]);
               // Children carry the section's own icon while the outline is icon-only, so a section
               // row there is an unlabelled duplicate of the row right below it. Let the children
               // stand for the section instead — every one of them scrolls back into it.
@@ -246,9 +247,9 @@ export function ContentOutline({
                       onClick={() => handleItemClicked(item)}
                       tooltip={item.title}
                       collapsible={isCollapsible(item) && contentOutlineExpanded}
-                      collapsed={!effectiveSectionsExpanded[item.id]}
+                      collapsed={!childrenRendered}
                       toggleCollapsed={() => toggleSection(item.id)}
-                      isActive={shouldBeActive(item, activeSectionId, activeSectionChildId, effectiveSectionsExpanded)}
+                      isActive={shouldBeActive(item, activeSectionId, activeSectionChildId, childrenRendered)}
                       sectionId={item.id}
                       color={item.color}
                     />
@@ -281,12 +282,7 @@ export function ContentOutline({
                               child.onClick?.(e);
                             }}
                             tooltip={child.title}
-                            isActive={shouldBeActive(
-                              child,
-                              activeSectionId,
-                              activeSectionChildId,
-                              effectiveSectionsExpanded
-                            )}
+                            isActive={shouldBeActive(child, activeSectionId, activeSectionChildId, childrenRendered)}
                             extraHighlight={child.highlight}
                             color={child.color}
                             onRemove={child.onRemove ? () => child.onRemove?.(child.id) : undefined}
