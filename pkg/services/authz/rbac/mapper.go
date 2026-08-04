@@ -174,6 +174,12 @@ func newDashboardTranslation() translation {
 	return dashTranslation
 }
 
+func newNotebookTranslation() translation {
+	notebookTranslation := newDashboardTranslation()
+	notebookTranslation.resource = "notebooks"
+	return notebookTranslation
+}
+
 // newFolderTranslation creates a translation for folders and also maps the actions to action sets
 func newFolderTranslation() translation {
 	folderTranslation := newResourceTranslation("folders", "uid", true, nil)
@@ -418,7 +424,7 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
-			"notebooks":     newDashboardTranslation(),
+			"notebooks":     newNotebookTranslation(),
 			"librarypanels": newResourceTranslation("library.panels", "uid", true, nil),
 			// Annotations subresource for dashboards
 			// Uses dashboard scope (dashboards:uid:...) but annotation actions

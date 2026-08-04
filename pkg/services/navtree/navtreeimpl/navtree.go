@@ -1,7 +1,6 @@
 package navtreeimpl
 
 import (
-	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -28,8 +27,6 @@ import (
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/navtree/navtreeimpl")
-
-var ofClient = openfeature.NewDefaultClient()
 
 type ServiceImpl struct {
 	cfg                  *setting.Cfg
@@ -150,15 +147,12 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		})
 	}
 
-	notebooksEnabled, _ := ofClient.BooleanValue(
-		c.Req.Context(), featuremgmt.FlagDashboardNotebooks, false, openfeature.TransactionContext(c.Req.Context()),
-	)
-	if c.IsSignedIn && notebooksEnabled {
+	if c.IsSignedIn && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardNotebooks) {
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Notebooks",
 			Id:         navtree.NavIDNotebooks,
 			SubTitle:   "Capture investigations with narrative text and live visualizations",
-			Icon:       "book-open",
+			Icon:       "book",
 			SortWeight: navtree.WeightNotebooks,
 			Url:        s.cfg.AppSubURL + "/notebooks",
 		})

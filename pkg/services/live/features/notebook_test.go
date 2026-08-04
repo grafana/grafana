@@ -80,7 +80,7 @@ func TestNotebookHandler_OnPublish(t *testing.T) {
 	t.Run("anonymous identity is denied", func(t *testing.T) {
 		anon := &identity.StaticRequester{Type: types.TypeAnonymous, OrgID: 1}
 		_, status, err := h.OnPublish(context.Background(), anon, model.PublishEvent{Path: "uid/abc123", Data: json.RawMessage(`{}`)})
-		require.Error(t, err)
+		require.NoError(t, err)
 		require.Equal(t, backend.PublishStreamStatusPermissionDenied, status)
 	})
 }

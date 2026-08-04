@@ -165,7 +165,7 @@ func TestMapperRegistry_ExactMatchPreferred(t *testing.T) {
 	assert.Equal(t, "dashboards:uid:", mapping.Prefix())
 }
 
-func TestMapperRegistry_NotebooksUseDashboardPermissions(t *testing.T) {
+func TestMapperRegistry_NotebooksUseDashboardPermissionsWithIndependentScopes(t *testing.T) {
 	reg := NewMapperRegistry()
 
 	notebookMapping, ok := reg.Get("dashboard.grafana.app", "notebooks", "")
@@ -193,8 +193,9 @@ func TestMapperRegistry_NotebooksUseDashboardPermissions(t *testing.T) {
 		assert.Equal(t, dashboardMapping.ActionSets(verb), notebookMapping.ActionSets(verb))
 	}
 
-	assert.Equal(t, "dashboards:uid:", notebookMapping.Prefix())
-	assert.Equal(t, "dashboards:uid:nb1", notebookMapping.Scope("nb1"))
+	assert.Equal(t, "notebooks:uid:", notebookMapping.Prefix())
+	assert.Equal(t, "notebooks:uid:nb1", notebookMapping.Scope("nb1"))
+	assert.NotEqual(t, dashboardMapping.Scope("nb1"), notebookMapping.Scope("nb1"))
 	assert.True(t, notebookMapping.HasFolderSupport())
 }
 
