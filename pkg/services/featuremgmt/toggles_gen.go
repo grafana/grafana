@@ -275,10 +275,6 @@ const (
 	// Writes the state periodically to the database, asynchronous to rule evaluation
 	FlagAlertingSaveStatePeriodic = "alertingSaveStatePeriodic"
 
-	// FlagAlertingSaveStateCompressed
-	// Enables the compressed protobuf-based alert state storage. Default is enabled.
-	FlagAlertingSaveStateCompressed = "alertingSaveStateCompressed"
-
 	// FlagScopeApi
 	// In-development feature flag for the scope api using the app platform.
 	FlagScopeApi = "scopeApi"

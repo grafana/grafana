@@ -89,7 +89,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `canvasPanelPanZoom`              | Allow pan and zoom in canvas panel                                                             |
 | `timeComparison`                  | Enables time comparison option in supported panels                                             |
 | `secretsManagementAppPlatformUI`  | Enable the secrets management app platform UI                                                  |
-| `alertingSaveStateCompressed`     | Enables the compressed protobuf-based alert state storage. Default is enabled.                 |
 | `dashboardTemplates`              | Enables a flow to get started with a new dashboard from a template                             |
 | `alertRuleRestore`                | Enables the alert rule restore feature                                                         |
 | `azureMonitorLogsBuilderEditor`   | Enables the logs builder mode for the Azure Monitor data source                                |
