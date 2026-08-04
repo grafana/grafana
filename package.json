@@ -425,7 +425,7 @@
   "engines": {
     "node": ">= 22 <25"
   },
-  "packageManager": "pnpm@11.9.0",
+  "packageManager": "pnpm@11.19.0",
   "msw": {
     "workerDirectory": [
       "public"
