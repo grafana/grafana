@@ -39,7 +39,7 @@ export interface GrafanaTheme2 {
      * @internal
      */
     visualDesignRefresh?: boolean;
-  } & Record<string, boolean>;
+  } & Record<string, boolean | undefined>;
 }
 
 export const ThemeRichColorInputSchema = z.object({
