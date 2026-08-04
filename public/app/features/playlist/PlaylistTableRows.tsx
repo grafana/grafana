@@ -334,11 +334,11 @@ function PlaylistTableRow({
                           <Text variant="bodySmall">
                             <Trans i18nKey="playlist.playlist-table-rows.confirm-clear-view">Clear custom view?</Trans>
                           </Text>
-                          <Button fill="text" size="sm" onClick={() => setClearViewConfirmationOpen(false)}>
+                          <Button fill="text" size="md" onClick={() => setClearViewConfirmationOpen(false)}>
                             <Trans i18nKey="playlist.playlist-table-rows.cancel-clear-view">Cancel</Trans>
                           </Button>
                           <Button
-                            size="sm"
+                            size="md"
                             variant="destructive"
                             onClick={() => {
                               setClearViewConfirmationOpen(false);
@@ -375,6 +375,7 @@ function PlaylistTableRow({
                               name="times"
                               label={t('playlist.playlist-table-rows.clear-view', 'Clear custom view')}
                               triggerClassName={styles.iconAction}
+                              buttonClassName={styles.customViewIconButton}
                               onClick={() => setClearViewConfirmationOpen(true)}
                             />
                           )}
@@ -384,7 +385,7 @@ function PlaylistTableRow({
                     {!clearViewConfirmationOpen && (
                       <div className={styles.customViewActions}>
                         <LinkButton
-                          size="sm"
+                          size="md"
                           variant="secondary"
                           icon="sliders-v-alt"
                           href={configureCustomViewUrl ?? ''}
@@ -399,6 +400,7 @@ function PlaylistTableRow({
                           name="clipboard-alt"
                           label={t('playlist.playlist-table-rows.paste-dashboard-link', 'Paste dashboard link')}
                           triggerClassName={styles.iconAction}
+                          buttonClassName={styles.customViewIconButton}
                           onClick={() => {
                             setDashboardStateError(undefined);
                             setDashboardLinkDraft('');
@@ -440,7 +442,7 @@ function PlaylistTableRow({
                         }}
                       />
                       <Button
-                        size="sm"
+                        size="md"
                         variant="secondary"
                         disabled={resolvingDashboardState}
                         onClick={closeDashboardLinkEditor}
@@ -448,7 +450,7 @@ function PlaylistTableRow({
                         <Trans i18nKey="playlist.playlist-table-rows.cancel-dashboard-link">Cancel</Trans>
                       </Button>
                       <Button
-                        size="sm"
+                        size="md"
                         disabled={!dashboardLinkDraft.trim() || resolvingDashboardState}
                         onClick={applyDashboardLink}
                       >
@@ -669,18 +671,27 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'wrap',
       gap: theme.spacing(0.5, 1.5),
       justifyContent: 'flex-start',
-      minHeight: theme.spacing(3),
+      // Match the neighboring Interval input's 32px control box while keeping
+      // the compact actions themselves at their native 24px height.
+      minHeight: theme.spacing(4),
     }),
     customViewActions: css({
       alignItems: 'center',
       display: 'flex',
       flexWrap: 'wrap',
       gap: theme.spacing(1),
+      minHeight: theme.spacing(4),
     }),
     customViewStatus: css({
       alignItems: 'center',
       display: 'flex',
       gap: theme.spacing(0.5),
+      minHeight: theme.spacing(4),
+    }),
+    customViewIconButton: css({
+      height: theme.spacing(4),
+      margin: 0,
+      width: theme.spacing(4),
     }),
     clearViewConfirmation: css({
       alignItems: 'center',
