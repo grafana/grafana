@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { Controls, Sidebar } from './page-objects';
+import { Controls, Panels, Sidebar } from './page-objects';
 import { flows, type Variable } from './utils';
 
 test.use({
@@ -26,6 +26,7 @@ test.describe(
 
       const controls = new Controls({ page, dashboardPage, selectors, components });
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+      const panels = new Panels({ page, dashboardPage, selectors, components });
 
       const variable: Variable = {
         type: 'groupby',
@@ -49,9 +50,9 @@ test.describe(
       await page.locator('body').click();
 
       // assert the panel is visible and has the correct value
-      const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
-      await expect(panelContent).toBeVisible();
-      const markdownContent = panelContent.locator('.markdown-html');
+      const panelBody = panels.getBodies().first();
+      await expect(panelBody).toBeVisible();
+      const markdownContent = panelBody.locator('.markdown-html');
       await expect(markdownContent).toContainText(`VariableUnderTest: ${labels[1]}`);
     });
   }

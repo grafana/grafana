@@ -1,6 +1,6 @@
 import { test, expect } from '@grafana/plugin-e2e';
 
-import { Controls, Sidebar } from './page-objects';
+import { Controls, Panels, Sidebar } from './page-objects';
 import { flows, saveDashboard, type Variable } from './utils';
 
 test.use({
@@ -33,6 +33,7 @@ test.describe(
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
 
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
+      const panels = new Panels({ page, dashboardPage, selectors, components });
 
       const variable = variableWithDefaults({ type: 'constant' });
       await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
@@ -40,9 +41,9 @@ test.describe(
       await sidebar.variableOptions.constant.setValue(variable.value);
 
       // assert the panel is visible and has the correct value
-      const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
-      await expect(panelContent).toBeVisible();
-      const markdownContent = panelContent.locator('.markdown-html');
+      const panelBody = panels.getBodies().first();
+      await expect(panelBody).toBeVisible();
+      const markdownContent = panelBody.locator('.markdown-html');
       await expect(markdownContent).toContainText(`VariableUnderTest: ${variable.value}`);
     });
 
@@ -51,6 +52,7 @@ test.describe(
       await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
 
       const controls = new Controls({ page, dashboardPage, selectors, components });
+      const panels = new Panels({ page, dashboardPage, selectors, components });
 
       const variable = variableWithDefaults();
       await flows.addNewTextBoxVariable(page, dashboardPage, selectors, variable);
@@ -67,9 +69,9 @@ test.describe(
       await variableInput.blur();
 
       // assert the panel is visible and has the correct value
-      const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
-      await expect(panelContent).toBeVisible();
-      const markdownContent = panelContent.locator('.markdown-html');
+      const panelBody = panels.getBodies().first();
+      await expect(panelBody).toBeVisible();
+      const markdownContent = panelBody.locator('.markdown-html');
       await expect(markdownContent).toContainText(`VariableUnderTest: bar`);
     });
 
@@ -79,6 +81,7 @@ test.describe(
 
       const sidebar = new Sidebar({ page, dashboardPage, selectors, components });
       const controls = new Controls({ page, dashboardPage, selectors, components });
+      const panels = new Panels({ page, dashboardPage, selectors, components });
 
       const variable = variableWithDefaults({ type: 'interval', value: '1m' });
       await flows.addNewGenericVariable(page, dashboardPage, selectors, variable);
@@ -94,9 +97,9 @@ test.describe(
       await controls.variables.selectOption(variable.label, 'Auto');
 
       // assert the panel is visible and has the correct value
-      const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
-      await expect(panelContent).toBeVisible();
-      const markdownContent = panelContent.locator('.markdown-html');
+      const panelBody = panels.getBodies().first();
+      await expect(panelBody).toBeVisible();
+      const markdownContent = panelBody.locator('.markdown-html');
       await expect(markdownContent).toContainText('VariableUnderTest: 10m');
     });
 
