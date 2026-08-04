@@ -15,7 +15,7 @@ import { t } from '@grafana/i18n';
 import { config, getObservablePluginLinks, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { LocalValueVariable, sceneGraph, VizPanel, type VizPanelMenu } from '@grafana/scenes';
-import { type DataQuery, type OptionsWithLegend } from '@grafana/schema';
+import { type DataQuery, type LegendPlacement, type OptionsWithLegend } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -257,6 +257,22 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           toggleVizPanelLegend(panel);
         },
         shortcut: 'p l',
+      });
+    }
+
+    // Placement is only editable in the options pane while the legend is shown, keep the menu in sync with that
+    if (hasLegendPlacement(panel.state.options) && panel.state.options.legend.showLegend && !isEditingPanel) {
+      const isPlacedBottom = panel.state.options.legend.placement === 'bottom';
+      moreSubMenu.push({
+        text: isPlacedBottom
+          ? t('panel.header-menu.place-legend-right', 'Place legend right')
+          : t('panel.header-menu.place-legend-bottom', 'Place legend bottom'),
+        iconClassName: isPlacedBottom ? 'horizontal-align-right' : 'vertical-align-bottom',
+        onClick: (e) => {
+          e.preventDefault();
+          toggleVizPanelLegendPlacement(panel);
+        },
+        shortcut: 'p o',
       });
     }
 
@@ -623,6 +639,26 @@ export function toggleVizPanelLegend(vizPanel: VizPanel): void {
   }
 }
 
+export function toggleVizPanelLegendPlacement(vizPanel: VizPanel): void {
+  const options = vizPanel.state.options;
+  if (hasLegendPlacement(options)) {
+    vizPanel.onOptionsChange({
+      legend: {
+        placement: options.legend.placement === 'bottom' ? 'right' : 'bottom',
+      },
+    });
+  }
+}
+
 function hasLegendOptions(optionsWithLegend: unknown): optionsWithLegend is OptionsWithLegend {
   return optionsWithLegend != null && typeof optionsWithLegend === 'object' && 'legend' in optionsWithLegend;
+}
+
+function hasLegendPlacement(
+  optionsWithLegend: unknown
+): optionsWithLegend is OptionsWithLegend & { legend: { placement: LegendPlacement } } {
+  return (
+    hasLegendOptions(optionsWithLegend) &&
+    (optionsWithLegend.legend.placement === 'bottom' || optionsWithLegend.legend.placement === 'right')
+  );
 }

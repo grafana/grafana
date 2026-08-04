@@ -24,7 +24,7 @@ import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders'
 import { getPanelIdForVizPanel } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
-import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
+import { onRemovePanel, toggleVizPanelLegend, toggleVizPanelLegendPlacement } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
@@ -130,6 +130,12 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'p l',
     onTrigger: withFocusedPanel(scene, toggleVizPanelLegend),
+  });
+
+  // Toggle legend placement (bottom / right)
+  keybindings.addBinding({
+    key: 'p o',
+    onTrigger: withFocusedPanel(scene, toggleVizPanelLegendPlacement),
   });
 
   // Copy panel (available outside edit mode so it can be pasted into another dashboard)

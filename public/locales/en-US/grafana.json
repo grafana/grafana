@@ -10836,6 +10836,7 @@
       "toggle-panel-edit": "Toggle panel edit view",
       "toggle-panel-fullscreen": "Toggle panel fullscreen view",
       "toggle-panel-legend": "Toggle panel legend",
+      "toggle-panel-legend-placement": "Toggle panel legend placement (bottom / right)",
       "zoom-in-time-range": "Zoom in time range",
       "zoom-out-time-range": "Zoom out time range"
     },
@@ -12849,6 +12850,8 @@
       "new-alert-rule": "New alert rule",
       "panel-copy-success": "Panel \"{{panelName}}\" copied to clipboard",
       "paste-styles": "Paste styles",
+      "place-legend-bottom": "Place legend bottom",
+      "place-legend-right": "Place legend right",
       "query": "Query",
       "remove": "Remove",
       "replace-library-panel": "Replace library panel",

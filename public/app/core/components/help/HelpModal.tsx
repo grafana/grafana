@@ -237,6 +237,13 @@ export const useShortcuts = () => {
             keys: ['p', 'l'],
             description: t('help-modal.shortcuts-description.toggle-panel-legend', 'Toggle panel legend'),
           },
+          {
+            keys: ['p', 'o'],
+            description: t(
+              'help-modal.shortcuts-description.toggle-panel-legend-placement',
+              'Toggle panel legend placement (bottom / right)'
+            ),
+          },
         ],
       },
     ];

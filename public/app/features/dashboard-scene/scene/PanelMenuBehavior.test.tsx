@@ -36,7 +36,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { DashboardScene } from './DashboardScene';
 import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
-import { panelMenuBehavior } from './PanelMenuBehavior';
+import { panelMenuBehavior, toggleVizPanelLegendPlacement } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 const mocks = {
@@ -1124,6 +1124,113 @@ describe('panelMenuBehavior', () => {
       expect(stylesMenu).toHaveLength(1);
       expect(stylesMenu?.[0].text).toBe('Copy styles');
     });
+  });
+
+  describe('Legend placement menu item', () => {
+    async function buildLegendTestScene(legend: { showLegend: boolean; placement?: string }) {
+      const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
+      const panel = new VizPanel({
+        title: 'Timeseries Panel',
+        pluginId: 'timeseries',
+        key: 'panel-legend',
+        menu,
+        options: { legend },
+      });
+
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      new DashboardScene({
+        title: 'My dashboard',
+        uid: 'dash-1',
+        meta: { canEdit: true },
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const moreSubMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+
+      return { menu, panel, moreSubMenu };
+    }
+
+    it('should offer to place the legend right when it is placed bottom', async () => {
+      const { moreSubMenu } = await buildLegendTestScene({ showLegend: true, placement: 'bottom' });
+
+      const placementItem = moreSubMenu?.find((i) => i.shortcut === 'p o');
+      expect(placementItem?.text).toBe('Place legend right');
+      expect(placementItem?.iconClassName).toBe('horizontal-align-right');
+    });
+
+    it('should offer to place the legend bottom when it is placed right', async () => {
+      const { moreSubMenu } = await buildLegendTestScene({ showLegend: true, placement: 'right' });
+
+      const placementItem = moreSubMenu?.find((i) => i.shortcut === 'p o');
+      expect(placementItem?.text).toBe('Place legend bottom');
+      expect(placementItem?.iconClassName).toBe('vertical-align-bottom');
+    });
+
+    it('should flip the placement when clicked', async () => {
+      const { panel, moreSubMenu } = await buildLegendTestScene({ showLegend: true, placement: 'bottom' });
+      const onOptionsChange = jest.spyOn(panel, 'onOptionsChange').mockImplementation();
+
+      moreSubMenu?.find((i) => i.shortcut === 'p o')?.onClick?.({ preventDefault: jest.fn() } as never);
+
+      expect(onOptionsChange).toHaveBeenCalledWith({ legend: { placement: 'right' } });
+    });
+
+    it('should not show the item when the legend is hidden', async () => {
+      const { moreSubMenu } = await buildLegendTestScene({ showLegend: false, placement: 'bottom' });
+
+      expect(moreSubMenu?.find((i) => i.shortcut === 'p o')).toBeUndefined();
+    });
+
+    it('should not show the item when the legend has no placement option', async () => {
+      const { moreSubMenu } = await buildLegendTestScene({ showLegend: true });
+
+      expect(moreSubMenu?.find((i) => i.shortcut === 'p o')).toBeUndefined();
+    });
+
+    it('should not show the item for panels without legend options', async () => {
+      const { menu } = await buildTestScene({});
+      const moreSubMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+
+      expect(moreSubMenu?.find((i) => i.shortcut === 'p o')).toBeUndefined();
+    });
+  });
+});
+
+describe('toggleVizPanelLegendPlacement', () => {
+  function buildPanel(options: unknown) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return new VizPanel({ pluginId: 'timeseries', options: options as {} });
+  }
+
+  it('should move a bottom placed legend to the right', () => {
+    const panel = buildPanel({ legend: { showLegend: true, placement: 'bottom' } });
+    const onOptionsChange = jest.spyOn(panel, 'onOptionsChange').mockImplementation();
+
+    toggleVizPanelLegendPlacement(panel);
+
+    expect(onOptionsChange).toHaveBeenCalledWith({ legend: { placement: 'right' } });
+  });
+
+  it('should move a right placed legend to the bottom', () => {
+    const panel = buildPanel({ legend: { showLegend: true, placement: 'right' } });
+    const onOptionsChange = jest.spyOn(panel, 'onOptionsChange').mockImplementation();
+
+    toggleVizPanelLegendPlacement(panel);
+
+    expect(onOptionsChange).toHaveBeenCalledWith({ legend: { placement: 'bottom' } });
+  });
+
+  it('should do nothing when the panel has no legend placement option', () => {
+    const panel = buildPanel({ legend: { showLegend: true } });
+    const onOptionsChange = jest.spyOn(panel, 'onOptionsChange').mockImplementation();
+
+    toggleVizPanelLegendPlacement(panel);
+
+    expect(onOptionsChange).not.toHaveBeenCalled();
   });
 });
 

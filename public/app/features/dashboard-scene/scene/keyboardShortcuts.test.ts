@@ -260,6 +260,44 @@ describe('setupKeyboardShortcuts', () => {
     });
   });
 
+  describe('p o shortcut (toggle legend placement)', () => {
+    let poHandler: () => void;
+    let focusedPanel: VizPanel;
+
+    beforeEach(() => {
+      focusedPanel = new VizPanel({
+        pluginId: 'timeseries',
+        options: { legend: { showLegend: true, placement: 'bottom' } },
+      });
+      jest.spyOn(focusedPanel, 'onOptionsChange').mockImplementation();
+      jest.mocked(findVizPanelByPathId).mockReturnValue(focusedPanel);
+
+      setupKeyboardShortcuts(mockScene);
+
+      const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+      attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
+
+      const poBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'p o');
+      expect(poBinding).toBeDefined();
+      poHandler = poBinding![0].onTrigger;
+    });
+
+    it('should flip the legend placement of the focused panel', () => {
+      poHandler();
+
+      expect(focusedPanel.onOptionsChange).toHaveBeenCalledWith({ legend: { placement: 'right' } });
+    });
+
+    it('should do nothing when no panel is focused', () => {
+      jest.clearAllMocks();
+      setupKeyboardShortcuts(mockScene);
+      const poBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'p o');
+      poBinding![0].onTrigger();
+
+      expect(focusedPanel.onOptionsChange).not.toHaveBeenCalled();
+    });
+  });
+
   describe('edit mode shortcuts', () => {
     beforeEach(() => {
       jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
