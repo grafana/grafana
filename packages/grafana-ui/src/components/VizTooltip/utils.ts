@@ -8,14 +8,15 @@ import {
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 
+import { type ColorIndicatorStyles } from './VizTooltipColorIndicator';
+import { isFrameValue, isFrameValuedField } from './narrowing';
+import { VizTooltipColorIndicator, VizTooltipColorPlacement, type VizTooltipItem } from './types';
+
 /** @alpha */
 export interface TooltipScrollableOptions {
   mode: TooltipDisplayMode;
   maxHeight?: number;
 }
-
-import { type ColorIndicatorStyles } from './VizTooltipColorIndicator';
-import { VizTooltipColorIndicator, VizTooltipColorPlacement, type VizTooltipItem } from './types';
 
 export const calculateTooltipPosition = (
   xPos = 0,
@@ -87,6 +88,16 @@ const numberCmp = (a: VizTooltipItem, b: VizTooltipItem) => a.numeric! - b.numer
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
 const stringCmp = (a: VizTooltipItem, b: VizTooltipItem) => collator.compare(`${a.value}`, `${b.value}`);
 
+// The catch exists so an unserializable value costs one row, not the whole panel.
+const stringifyValue = (value: unknown): string => {
+  try {
+    return JSON.stringify(value);
+  } catch (error) {
+    console.warn('Cannot render tooltip value', { error, value });
+    return String(value);
+  }
+};
+
 export const getTooltipDisplayValue = (
   value: unknown,
   field: Field
@@ -100,11 +111,11 @@ export const getTooltipDisplayValue = (
       return { text: '', numeric: NaN };
     }
 
-    return { text: JSON.stringify(value), numeric: NaN };
+    return { text: stringifyValue(value), numeric: NaN };
   }
 
   if (value && typeof value === 'object') {
-    return { text: JSON.stringify(value), numeric: NaN };
+    return { text: stringifyValue(value), numeric: NaN };
   }
 
   const display = field.display!(value); // super expensive :(
@@ -115,6 +126,9 @@ export const getTooltipDisplayValue = (
  * @alpha
  *
  * Builds the list of {@link VizTooltipItem} rows to display in a visualization tooltip.
+ *
+ * Fields whose values are DataFrames (`frame`, `nestedFrames`) are always excluded from both
+ * `fields` and `extraFields` — they have no meaningful single-value representation.
  *
  * @param fields - All fields in the aligned data frame (including the x/time field).
  * @param xField - The x-axis or time field; it is excluded from the output rows.
@@ -147,6 +161,7 @@ export const getFieldDisplayItems = (
     if (
       field === xField ||
       field.type === FieldType.time ||
+      isFrameValuedField(field) ||
       !fieldFilter(field) ||
       field.config.custom?.hideFrom?.tooltip
     ) {
@@ -171,7 +186,7 @@ export const getFieldDisplayItems = (
 
     const v = fields[i].values[dataIdx];
 
-    if ((v == null && field.config.noValue == null) || (hideZeros && v === 0)) {
+    if ((v == null && field.config.noValue == null) || (hideZeros && v === 0) || isFrameValue(v)) {
       continue;
     }
 
@@ -199,21 +214,28 @@ export const getFieldDisplayItems = (
   }
 
   extraFields?.forEach((field) => {
-    if (!field.config.custom?.hideFrom?.tooltip) {
-      const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
-      const rawValue = field.values[dataIdxs[0]!];
-      const display = getTooltipDisplayValue(rawValue, field);
-
-      rows.push({
-        label: field.state?.displayName ?? field.name,
-        value: display.text,
-        color: FALLBACK_COLOR,
-        colorIndicator,
-        colorPlacement,
-        lineStyle: field.config.custom?.lineStyle,
-        isHiddenFromViz: true,
-      });
+    if (field.config.custom?.hideFrom?.tooltip || isFrameValuedField(field)) {
+      return;
     }
+
+    const rawValue = field.values[dataIdxs[0]!];
+
+    if (isFrameValue(rawValue)) {
+      return;
+    }
+
+    const { colorIndicator, colorPlacement } = getIndicatorAndPlacement(field);
+    const display = getTooltipDisplayValue(rawValue, field);
+
+    rows.push({
+      label: field.state?.displayName ?? field.name,
+      value: display.text,
+      color: FALLBACK_COLOR,
+      colorIndicator,
+      colorPlacement,
+      lineStyle: field.config.custom?.lineStyle,
+      isHiddenFromViz: true,
+    });
   });
 
   if (sortOrder !== SortOrder.None && rows.length > 1) {

@@ -549,6 +549,130 @@ describe('utils', () => {
       expect(result.text).toBe('[[1,2],[3,4]]');
       expect(result.numeric).toBeNaN();
     });
+
+    it('falls back instead of throwing on an unserializable value', () => {
+      const value: Record<string, unknown> = { spanID: '123' };
+      value.self = value;
+
+      const result = getTooltipDisplayValue(value, mockField);
+      expect(result.text).toBe('[object Object]');
+      expect(result.numeric).toBeNaN();
+    });
+
+    it('keeps repeated sibling references, which are not cycles', () => {
+      const tag = { key: 'service', value: 'api' };
+
+      const result = getTooltipDisplayValue([tag, tag], mockField);
+      expect(result.text).toBe('[{"key":"service","value":"api"},{"key":"service","value":"api"}]');
+    });
+  });
+
+  // repro for panels hovering data that carries sub-frames (e.g. Tempo traces with tableType:
+  // traces), where the frames are circular and used to crash the whole panel on JSON.stringify
+  describe('getFieldDisplayItems with frame-valued fields', () => {
+    // mirrors what applyFieldOverrides() produces: each field gets a __dataContext back-reference
+    // to the frame that owns it, so the frame cannot be serialized
+    const makeCircularFrame = (): DataFrame => {
+      const frame: DataFrame = {
+        name: 'spans',
+        length: 1,
+        fields: [{ name: 'spanID', type: FieldType.string, values: ['abc'], config: {} }],
+      };
+
+      frame.fields[0].state = {
+        scopedVars: {
+          __dataContext: { value: { data: [frame], frame, frameIndex: 0, field: frame.fields[0] } },
+        },
+      };
+
+      return frame;
+    };
+
+    const makeFrameValuedField = (type: FieldType.frame | FieldType.nestedFrames): Field => ({
+      name: 'nested',
+      type,
+      // nestedFrames values are DataFrame[], frame values are a single DataFrame
+      values: [type === FieldType.nestedFrames ? [makeCircularFrame()] : makeCircularFrame()],
+      config: {},
+    });
+
+    const xField: Field = {
+      name: 'traceService',
+      type: FieldType.string,
+      values: ['frontend'],
+      config: {},
+      display: (value: unknown) => ({ text: String(value), numeric: NaN }),
+    };
+
+    const durationField: Field = {
+      name: 'duration',
+      type: FieldType.number,
+      values: [42],
+      config: {},
+      display: (value: unknown) => ({ text: String(value), numeric: Number(value) }),
+    };
+
+    it.each([FieldType.nestedFrames, FieldType.frame] as const)('omits %s fields from extraFields', (type) => {
+      const rows = getFieldDisplayItems(
+        [xField, durationField],
+        xField,
+        [0, 0],
+        null,
+        TooltipDisplayMode.Multi,
+        SortOrder.None,
+        undefined,
+        false,
+        [makeFrameValuedField(type)]
+      );
+
+      expect(rows.map((row) => row.label)).toEqual(['duration']);
+    });
+
+    it.each([FieldType.nestedFrames, FieldType.frame] as const)('omits %s fields from series rows', (type) => {
+      const rows = getFieldDisplayItems(
+        [xField, durationField, makeFrameValuedField(type)],
+        xField,
+        [0, 0, 0],
+        null,
+        TooltipDisplayMode.Multi,
+        SortOrder.None
+      );
+
+      expect(rows.map((row) => row.label)).toEqual(['duration']);
+    });
+
+    // datasources don't reliably tag these fields, so the value has to be checked too
+    it.each([FieldType.other, FieldType.string] as const)(
+      'omits frame values carried by a %s field',
+      (mislabelledType) => {
+        const mislabelled: Field = { ...makeFrameValuedField(FieldType.nestedFrames), type: mislabelledType };
+
+        expect(
+          getFieldDisplayItems(
+            [xField, durationField, mislabelled],
+            xField,
+            [0, 0, 0],
+            null,
+            TooltipDisplayMode.Multi,
+            SortOrder.None
+          ).map((row) => row.label)
+        ).toEqual(['duration']);
+
+        expect(
+          getFieldDisplayItems(
+            [xField, durationField],
+            xField,
+            [0, 0],
+            null,
+            TooltipDisplayMode.Multi,
+            SortOrder.None,
+            undefined,
+            false,
+            [mislabelled]
+          ).map((row) => row.label)
+        ).toEqual(['duration']);
+      }
+    );
   });
 
   describe('getColorIndicatorClass', () => {
