@@ -334,6 +334,27 @@ describe('RadialGauge utils', () => {
       expect(result.startValueAngle).toBe(0);
       expect(result.endValueAngle).toBe(90);
     });
+
+    // Regression: https://github.com/grafana/grafana/issues/130075
+    // With a neutral point, values outside [min, max] must still produce arcs that fit the gauge.
+    it('should clamp overflow above max when neutral is set', () => {
+      const fieldDisplay = createFieldDisplay(10, -5, 5);
+      const result = getValueAngleForValue(fieldDisplay, 0, 360, 0);
+
+      expect(result.startValueAngle).toBe(180); // neutral at 0
+      expect(result.endValueAngle).toBe(180); // fill to max only
+      expect(result.startValueAngle + result.endValueAngle).toBeLessThanOrEqual(result.angleRange);
+    });
+
+    it('should clamp overflow below min when neutral is set', () => {
+      const fieldDisplay = createFieldDisplay(-10, -5, 5);
+      const result = getValueAngleForValue(fieldDisplay, 0, 360, 0);
+
+      expect(result.startValueAngle).toBe(0); // clamped value at min
+      expect(result.endValueAngle).toBe(180); // fill from min to neutral
+      expect(result.startValueAngle + result.endValueAngle).toBeLessThanOrEqual(result.angleRange);
+      expect(result.startValueAngle).toBeGreaterThanOrEqual(0);
+    });
   });
 
   describe('drawRadialArcPath', () => {

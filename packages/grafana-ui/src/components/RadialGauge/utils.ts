@@ -59,7 +59,11 @@ export function getValueAngleForValue(
   neutral?: number
 ) {
   const angleRange = (360 % (startAngle === 0 ? 1 : startAngle)) + endAngle;
-  const value = fieldDisplay.display.numeric;
+  const [min, max] = getFieldConfigMinMax(fieldDisplay);
+
+  // Clamp arc geometry to [min, max]. Center text still uses the real value;
+  // without this, overflow with a neutral point can produce invalid SVG arcs (#130075).
+  const value = Math.min(Math.max(fieldDisplay.display.numeric, min), max);
 
   const valueAngle = getValuePercentageForValue(fieldDisplay, value) * angleRange;
 
@@ -67,7 +71,6 @@ export function getValueAngleForValue(
 
   let startValueAngle = 0;
   if (typeof neutral === 'number') {
-    const [min, max] = getFieldConfigMinMax(fieldDisplay);
     const clampedNeutral = Math.min(Math.max(min, neutral), max);
     const neutralAngle = getValuePercentageForValue(fieldDisplay, clampedNeutral) * angleRange;
     if (neutralAngle <= valueAngle) {
