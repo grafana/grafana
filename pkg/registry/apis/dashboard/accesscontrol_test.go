@@ -6,10 +6,22 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 )
+
+// serviceIdentityFolderService records whether GetParents ran under a service identity.
+type serviceIdentityFolderService struct {
+	*foldertest.FakeService
+	getParentsUsedServiceIdentity bool
+}
+
+func (s *serviceIdentityFolderService) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	s.getParentsUsedServiceIdentity = identity.IsServiceIdentity(ctx)
+	return s.FakeService.GetParents(ctx, q)
+}
 
 func TestVariableUIDScopeResolver(t *testing.T) {
 	folderSvc := foldertest.NewFakeService()
@@ -55,5 +67,18 @@ func TestVariableUIDScopeResolver(t *testing.T) {
 			folder.ScopeFoldersProvider.GetResourceScopeUID("gone"),
 			ScopeVariablesProvider.GetResourceScopeUID("region--gone"),
 		}, scopes)
+	})
+
+	t.Run("walks ancestors under service identity", func(t *testing.T) {
+		svc := &serviceIdentityFolderService{FakeService: foldertest.NewFakeService()}
+		svc.ExpectedFolders = []*folder.Folder{{UID: "parent", OrgID: 1}}
+		_, res := VariableUIDScopeResolver(svc)
+
+		scopes, err := res.Resolve(context.Background(), 1, "variables:uid:region--child")
+		require.NoError(t, err)
+		require.True(t, svc.getParentsUsedServiceIdentity)
+		require.Contains(t, scopes, folder.ScopeFoldersProvider.GetResourceScopeUID("parent"))
+		require.Contains(t, scopes, folder.ScopeFoldersProvider.GetResourceScopeUID("child"))
+		require.Contains(t, scopes, ScopeVariablesProvider.GetResourceScopeUID("region--child"))
 	})
 }

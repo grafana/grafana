@@ -897,6 +897,12 @@ type Cfg struct {
 	// only; OSS keeps the no-op path. Default off.
 	EnableEmbeddedAPIExtensions bool
 
+	// EnableVersionPolicy turns on the global API version policy (preferred and
+	// max-allowed API version per group). Off leaves today's behavior unchanged.
+	// Temporary opt-in kill-switch while the feature is experimental; remove it and
+	// enforce unconditionally once the version policy is enabled by default.
+	EnableVersionPolicy bool
+
 	// Enable playlist reconciler
 	EnablePlaylistsReconciler bool
 }
@@ -1937,6 +1943,7 @@ func (cfg *Cfg) readStartupParams(iniFile *ini.File) {
 	cfg.EnableKubernetesAggregator = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_enabled").MustBool(false)
 	cfg.EnableKubernetesAggregatorCapTokenAuth = iniFile.Section("grafana-apiserver").Key("kubernetes_aggregator_cap_token_auth_enabled").MustBool(false)
 	cfg.EnableEmbeddedAPIExtensions = iniFile.Section("grafana-apiserver").Key("apiextensions_enabled").MustBool(false)
+	cfg.EnableVersionPolicy = iniFile.Section("grafana-apiserver").Key("version_policy_enabled").MustBool(false)
 }
 func (cfg *Cfg) LogConfigSources() {
 	var text bytes.Buffer

@@ -497,6 +497,8 @@ func FixedRoleRegistrations(viewersCanEdit, dsPermissionsEnforced bool) []ac.Rol
 		Grants: []string{"Editor"},
 	}
 
+	// Grants Viewer; BuiltInRolesWithParents also seeds Editor and Admin so stack-wide
+	// variables:read is available without variablesWriterRole (Admin-only CRUD).
 	variablesReaderRole := ac.RoleRegistration{
 		Role: ac.RoleDTO{
 			Name:        "fixed:variables:reader",

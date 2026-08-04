@@ -3997,6 +3997,9 @@
       "trace-id": "ID de rastreamento: {{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": ""
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Configurações de autenticação"
@@ -6177,13 +6180,10 @@
         "show-in": ""
       },
       "annotations": {
-        "add-annotation": "",
         "add-annotation-query": "",
         "name-builtin": "",
         "name-disabled": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-annotation": "",
         "title-above-dashboard-count_one": "",
         "title-above-dashboard-count_other": "",
         "title-controls-menu-count_one": "",
@@ -6269,10 +6269,7 @@
       "links": {
         "add-link": "",
         "new-link": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-link": "",
-        "untitled": "",
         "title-above-dashboard_one": "",
         "title-above-dashboard_other": "",
         "title-controls-menu_one": "",
@@ -6372,11 +6369,9 @@
       "variables": {
         "add-variable": "",
         "change-type": "",
-        "reorder": "",
         "reorder-description": "",
         "select-type": "",
         "select-type-card-tooltip": "",
-        "select-variable": "",
         "top-placement-default": "",
         "title-controls-menu_one": "",
         "title-controls-menu_other": "",
@@ -6814,11 +6809,6 @@
       "delete-text": "Tem certeza de que deseja excluir: {{name}}?",
       "delete-title": "Excluir consulta de anotação"
     },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "Anotação"
-      }
-    },
     "annotation-query-library-dropdown": {
       "use-saved-query": "Usar consulta salva"
     },
@@ -7241,11 +7231,6 @@
       "delete-text": "Tem certeza de que deseja excluir: {{name}}?",
       "delete-title": "Excluir link",
       "unnamed": "Link sem nome"
-    },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "Link"
-      }
     },
     "link-options": {
       "icon": "Ícone",
@@ -15952,18 +15937,29 @@
     },
     "editor": {
       "aria-label-content": "",
+      "aria-label-mode": "",
+      "footer-line-numbers": "",
+      "format-bold": "",
+      "format-heading": "",
+      "format-italic": "",
+      "language-plaintext": "",
+      "mode-code": "",
+      "mode-html": "",
+      "mode-markdown": "",
+      "mode-picker-label": "",
+      "tooltip-bold": "",
+      "tooltip-bullet-list": "",
+      "tooltip-checklist": "",
+      "tooltip-heading": "",
+      "tooltip-insert-variable": "",
+      "tooltip-italic": "",
+      "tooltip-link": "",
+      "tooltip-numbered-list": "",
+      "tooltip-table": "",
       "view-preview": "",
       "view-split": "",
       "view-write": ""
-    },
-    "mode-options": {
-      "label-code": "",
-      "label-html": "",
-      "label-markdown": ""
-    },
-    "name-language": "",
-    "name-mode": "",
-    "name-show-line-numbers": ""
+    }
   },
   "theme-playground": {
     "label-base-theme": "Tema base",
