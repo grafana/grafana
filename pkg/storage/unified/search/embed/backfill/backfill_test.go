@@ -11,6 +11,7 @@ import (
 
 	"github.com/aws/smithy-go"
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/openai/openai-go/v3"
 	"github.com/prometheus/client_golang/prometheus"
@@ -592,6 +593,8 @@ func TestIsPermanentItemError(t *testing.T) {
 	}{
 		{"pq data exception", &pq.Error{Code: "22021"}, true},
 		{"wrapped pq data exception", fmt.Errorf("upsert: %w", &pq.Error{Code: "22021"}), true},
+		{"pgx data exception", &pgconn.PgError{Code: "22021"}, true},
+		{"pgx check violation", &pgconn.PgError{Code: "23514"}, false},
 		// Class 23 stays retryable: a missing partition is 23514 check_violation.
 		{"pq check violation", &pq.Error{Code: "23514"}, false},
 		{"pq connection failure", &pq.Error{Code: "08006"}, false},
