@@ -62,19 +62,24 @@ type PlaylistItemDTO struct {
 	// Interval optionally overrides the playlist interval for this item.
 	Interval *string `json:"interval,omitempty"`
 
-	// QueryParams contains dashboard variables and time range URL parameters.
-	QueryParams *string `json:"queryParams,omitempty"`
+	// DashboardView contains dashboard state applied during playback.
+	DashboardView *DashboardView `json:"dashboardView,omitempty"`
+}
+
+// DashboardView contains serialized dashboard view state.
+type DashboardView struct {
+	QueryString string `json:"queryString"`
 }
 
 type PlaylistItem struct {
-	Id          int64   `db:"id"`
-	PlaylistId  int64   `db:"playlist_id"`
-	Type        string  `json:"type" db:"type"`
-	Value       string  `json:"value" db:"value"`
-	Order       int     `json:"order" db:"order"`
-	Title       string  `json:"title" db:"title"`
-	Interval    *string `json:"interval,omitempty" db:"-" xorm:"-"`
-	QueryParams *string `json:"queryParams,omitempty" db:"-" xorm:"-"`
+	Id            int64          `db:"id"`
+	PlaylistId    int64          `db:"playlist_id"`
+	Type          string         `json:"type" db:"type"`
+	Value         string         `json:"value" db:"value"`
+	Order         int            `json:"order" db:"order"`
+	Title         string         `json:"title" db:"title"`
+	Interval      *string        `json:"interval,omitempty" db:"-" xorm:"-"`
+	DashboardView *DashboardView `json:"dashboardView,omitempty" db:"-" xorm:"-"`
 }
 
 type Playlists []*Playlist

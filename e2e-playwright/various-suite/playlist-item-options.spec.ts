@@ -90,7 +90,7 @@ test.describe('Playlist item options', { tag: ['@various'] }, () => {
     await expect(firstRow).toBeVisible();
     await firstRow.getByRole('button', { name: 'Settings' }).click();
     await firstRow.getByRole('textbox', { name: `Interval for ${firstDashboardUID}` }).fill('4s');
-    await firstRow.getByRole('button', { name: 'Paste dashboard link' }).click();
+    await firstRow.getByRole('button', { name: 'Paste a link to this dashboard' }).click();
     await firstRow
       .getByRole('textbox', { name: `Dashboard state for ${firstDashboardUID}` })
       .fill(`https://grafana.example.com/d/${firstDashboardUID}/playlist-options?var-host=prod&from=now-6h&to=now`);
@@ -112,7 +112,7 @@ test.describe('Playlist item options', { tag: ['@various'] }, () => {
         type: 'dashboard_by_uid',
         value: firstDashboardUID,
         interval: '4s',
-        queryParams: 'var-host=prod&from=now-6h&to=now',
+        dashboardView: { queryString: 'var-host=prod&from=now-6h&to=now' },
       },
       { type: 'dashboard_by_uid', value: secondDashboardUID },
     ]);

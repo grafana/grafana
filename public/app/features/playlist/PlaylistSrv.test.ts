@@ -229,10 +229,16 @@ describe('PlaylistSrv', () => {
           {
             type: 'dashboard_by_uid',
             value: 'aaa',
-            queryParams:
-              'https://grafana.example.com/d/aaa/name?var-host=host1&var-host=host1-replica&from=now-6h&orgId=2',
+            dashboardView: {
+              queryString:
+                'https://grafana.example.com/d/aaa/name?var-host=host1&var-host=host1-replica&from=now-6h&orgId=2',
+            },
           },
-          { type: 'dashboard_by_uid', value: 'bbb', queryParams: 'var-host=host2&from=now-24h' },
+          {
+            type: 'dashboard_by_uid',
+            value: 'bbb',
+            dashboardView: { queryString: 'var-host=host2&from=now-24h' },
+          },
         ],
       },
     };
@@ -260,7 +266,7 @@ describe('PlaylistSrv', () => {
       {
         type: 'dashboard_by_uid',
         value: 'aaa',
-        queryParams: 'from=now-6h',
+        dashboardView: { queryString: 'from=now-6h' },
         dashboards: [{ url: '/url/to/aaa?refresh=30s&from=now-1h' } as DashboardQueryResult],
       },
     ]);
@@ -269,11 +275,38 @@ describe('PlaylistSrv', () => {
       ...mockPlaylist,
       spec: {
         ...mockPlaylist.spec!,
-        items: [{ type: 'dashboard_by_uid', value: 'aaa', queryParams: 'from=now-6h' }],
+        items: [{ type: 'dashboard_by_uid', value: 'aaa', dashboardView: { queryString: 'from=now-6h' } }],
       },
     });
 
     expect(locationService.getSearchObject()).toEqual({ refresh: '30s', from: 'now-6h' });
+  });
+
+  it('applies a tag item dashboard view to every dashboard it resolves', async () => {
+    const dashboardView = { queryString: 'var-region=us-east-1&from=now-2h' };
+    loadDashboardsMock.mockResolvedValueOnce([
+      {
+        type: 'dashboard_by_tag',
+        value: 'operations',
+        dashboardView,
+        dashboards: [
+          { url: '/url/to/first' } as DashboardQueryResult,
+          { url: '/url/to/second' } as DashboardQueryResult,
+        ],
+      },
+    ]);
+
+    await srv.start({
+      ...mockPlaylist,
+      spec: {
+        ...mockPlaylist.spec!,
+        items: [{ type: 'dashboard_by_tag', value: 'operations', dashboardView }],
+      },
+    });
+
+    expect(locationService.getSearchObject()).toEqual({ 'var-region': 'us-east-1', from: 'now-2h' });
+    srv.next();
+    expect(locationService.getSearchObject()).toEqual({ 'var-region': 'us-east-1', from: 'now-2h' });
   });
 
   it('does not enter the playing state when the playlist has no items', async () => {

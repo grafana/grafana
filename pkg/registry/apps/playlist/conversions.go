@@ -19,8 +19,8 @@ func LegacyUpdateCommandToUnstructured(cmd UpdatePlaylistCommand) unstructured.U
 		if item.Interval != nil {
 			converted["interval"] = *item.Interval
 		}
-		if item.QueryParams != nil {
-			converted["queryParams"] = *item.QueryParams
+		if item.DashboardView != nil {
+			converted["dashboardView"] = map[string]any{"queryString": item.DashboardView.QueryString}
 		}
 		items = append(items, converted)
 	}
@@ -67,7 +67,7 @@ func PreserveLegacyPlaylistItemOptions(obj *unstructured.Unstructured, existing 
 				continue
 			}
 			used[i] = true
-			for _, field := range []string{"interval", "queryParams"} {
+			for _, field := range []string{"interval", "dashboardView"} {
 				if _, supplied := itemMap[field]; supplied {
 					continue
 				}

@@ -1,5 +1,15 @@
 package playlist
 
+import "strings"
+
+// Dashboard view state applied to a playlist item during playback.
+#DashboardView: {
+	// Normalized URL query string containing dashboard variables, time range, and other
+	// view state. It does not include a leading question mark, URL fragment, host, or path.
+	// +k8s:validation:minLength=1
+	queryString: string & strings.MinRunes(1)
+}
+
 // Shared item definition for all versions
 #PlaylistItem: {
 	// type of the item.
@@ -15,9 +25,8 @@ package playlist
 	// Optional per-item display interval (e.g. "30s", "2m"). When unset, the
 	// playlist's global spec.interval is used.
 	interval?: string
-	// Optional dashboard URL query string applied during playback. Use var-<name>
-	// for dashboard variables and from/to for time range overrides.
-	queryParams?: string
+	// Optional dashboard view applied during playback.
+	dashboardView?: #DashboardView
 }
 
 playlistv1: {

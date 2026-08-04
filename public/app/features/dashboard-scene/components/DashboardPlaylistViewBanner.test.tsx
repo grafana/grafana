@@ -46,7 +46,7 @@ describe('DashboardPlaylistViewBanner', () => {
     expect(postMessage).toHaveBeenCalledWith({
       type: PLAYLIST_CUSTOM_VIEW_MESSAGE,
       token: 'token-1',
-      queryParams: 'var-host=prod&from=now-6h&to=now',
+      queryString: 'var-host=prod&from=now-6h&to=now',
     });
     expect(closeChannel).toHaveBeenCalled();
     expect(window.close).toHaveBeenCalled();

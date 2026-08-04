@@ -26,9 +26,8 @@ type PlaylistPlaylistItem struct {
 	// Optional per-item display interval (e.g. "30s", "2m"). When unset, the
 	// playlist's global spec.interval is used.
 	Interval *string `json:"interval,omitempty"`
-	// Optional dashboard URL query string applied during playback. Use var-<name>
-	// for dashboard variables and from/to for time range overrides.
-	QueryParams *string `json:"queryParams,omitempty"`
+	// Optional dashboard view applied during playback.
+	DashboardView *PlaylistDashboardView `json:"dashboardView,omitempty"`
 }
 
 // NewPlaylistPlaylistItem creates a new PlaylistPlaylistItem object.
@@ -39,6 +38,25 @@ func NewPlaylistPlaylistItem() *PlaylistPlaylistItem {
 // OpenAPIModelName returns the OpenAPI model name for PlaylistPlaylistItem.
 func (PlaylistPlaylistItem) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistPlaylistItem"
+}
+
+// Dashboard view state applied to a playlist item during playback.
+// +k8s:openapi-gen=true
+type PlaylistDashboardView struct {
+	// Normalized URL query string containing dashboard variables, time range, and other
+	// view state. It does not include a leading question mark, URL fragment, host, or path.
+	// +k8s:validation:minLength=1
+	QueryString string `json:"queryString"`
+}
+
+// NewPlaylistDashboardView creates a new PlaylistDashboardView object.
+func NewPlaylistDashboardView() *PlaylistDashboardView {
+	return &PlaylistDashboardView{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for PlaylistDashboardView.
+func (PlaylistDashboardView) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.playlist.pkg.apis.playlist.v1.PlaylistDashboardView"
 }
 
 // +k8s:openapi-gen=true

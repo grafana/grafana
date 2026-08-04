@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { contextSrv } from 'app/core/services/context_srv';
@@ -53,5 +54,16 @@ describe('PlaylistCard', () => {
     );
 
     expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
+  });
+
+  it('keeps the share tooltip visible when the pointer moves over the icon', async () => {
+    setup(getPlaylist());
+    const user = userEvent.setup();
+    const shareButton = screen.getByRole('button', { name: 'Share playlist' });
+
+    await user.hover(shareButton);
+    await user.hover(screen.getByTestId('icon-share-alt'));
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Share playlist');
   });
 });
