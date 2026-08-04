@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
@@ -170,6 +171,16 @@ func (tw *testWatcher) start(ctx context.Context) {
 	}()
 }
 
+// settleBackoff advances virtual time past one whole backoff step and settles
+// the watcher. dskit jitters within the exponential range, so a test cannot
+// name the exact delay; sleeping the ceiling covers any draw. Only the backoff
+// test itself cares where inside the range a given wait landed.
+func settleBackoff() {
+	synctest.Wait()
+	time.Sleep(resumeBackoffMax)
+	synctest.Wait()
+}
+
 func TestWatcherResumesAfterStreamCloses(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		first, second := watch.NewFake(), watch.NewFake()
@@ -184,7 +195,7 @@ func TestWatcherResumesAfterStreamCloses(t *testing.T) {
 		require.Equal(t, []string{"1"}, tw.publishedVersions())
 
 		first.Stop() // closes ResultChan, as a real ended watch does
-		synctest.Wait()
+		settleBackoff()
 		require.Equal(t, []string{"1"}, tw.resumes(),
 			"resume must start at the last published resourceVersion")
 
@@ -205,12 +216,12 @@ func TestWatcherRestartsFromNowWhenResourceVersionExpired(t *testing.T) {
 		first, second := watch.NewFake(), watch.NewFake()
 		tw := newTestWatcher(t, first, second)
 
-		// Mimic the apiserver rejecting a version that aged out of history.
+		// Mimic a store that rejects a version aged out of its history window.
 		handOut := tw.newWatch
 		tw.newWatch = func(ctx context.Context, resourceVersion string) (watch.Interface, error) {
 			if resourceVersion != "" {
 				tw.recordResume(resourceVersion)
-				return nil, fmt.Errorf("too old resource version")
+				return nil, apierrors.NewResourceExpired("too old resource version")
 			}
 			return handOut(ctx, resourceVersion)
 		}
@@ -222,7 +233,7 @@ func TestWatcherRestartsFromNowWhenResourceVersionExpired(t *testing.T) {
 		first.Add(testObject("7"))
 		synctest.Wait()
 		first.Stop()
-		synctest.Wait()
+		settleBackoff()
 
 		require.Equal(t, []string{"7", ""}, tw.resumes(),
 			"should retry from the last version, then fall back to watching from now")
@@ -239,19 +250,10 @@ func TestWatcherRestartsFromNowWhenResourceVersionExpired(t *testing.T) {
 
 func TestWatcherBacksOffBetweenResumes(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		// The wait doubles after every break and is then held at the maximum.
-		// The last two steps are what catch an unclamped doubling: it would ask
-		// for 6.4s and 12.8s, so a 5s tick would leave the watcher still asleep.
-		var waits []time.Duration
-		for d := resumeBackoffMin; d < resumeBackoffMax; d = min(d*2, resumeBackoffMax) {
-			waits = append(waits, d)
-		}
-		waits = append(waits, resumeBackoffMax, resumeBackoffMax)
-
 		// Every stream closes immediately with nothing published, which is the
-		// case that could otherwise spin the loop. One stream to start with, one
-		// per resume, and a spare so the final resume still has one to hand out.
-		streams := make([]*watch.FakeWatcher, len(waits)+2)
+		// case that could otherwise spin the loop.
+		const breaks = 8
+		streams := make([]*watch.FakeWatcher, breaks+1)
 		for i := range streams {
 			streams[i] = watch.NewFake()
 		}
@@ -261,23 +263,70 @@ func TestWatcherBacksOffBetweenResumes(t *testing.T) {
 		defer cancel()
 		tw.start(ctx)
 
-		streams[0].Stop()
-		synctest.Wait()
-		require.Len(t, tw.resumes(), 1, "the first break resumes straight away")
-
-		// Each further break is only picked up once the backoff has elapsed.
-		// Virtual time makes that exact: the watcher stays put until the clock
-		// is moved, and moving it by the expected wait is enough to free it.
-		for i, wait := range waits {
-			streams[i+1].Stop()
+		// dskit draws each wait from the exponential range rather than a fixed
+		// value, so assert the bounds rather than an instant: nothing may
+		// happen before the minimum, and everything must be free by the
+		// maximum. Virtual time makes both edges exact.
+		for i := range breaks {
+			streams[i].Stop()
 			synctest.Wait()
-			require.Len(t, tw.resumes(), i+1, "must wait out the backoff before resuming again")
+			require.Len(t, tw.resumes(), i, "must not resume before the backoff starts")
 
-			time.Sleep(wait) // advances the bubble's clock
+			time.Sleep(resumeBackoffMin - time.Nanosecond) // advances the bubble's clock
 			synctest.Wait()
-			require.Len(t, tw.resumes(), i+2,
-				"resume %d should be released after %s", i+2, wait)
+			require.Len(t, tw.resumes(), i, "must not resume before the minimum backoff")
+
+			time.Sleep(resumeBackoffMax)
+			synctest.Wait()
+			require.Len(t, tw.resumes(), i+1,
+				"resume %d must be released by the maximum backoff; an unclamped "+
+					"backoff would still be asleep here", i+1)
 		}
+
+		cancel()
+		<-tw.stopped
+	})
+}
+
+// The watcher must not die because a reconnect attempt failed -- that would
+// recreate the silently dead subscription it exists to prevent.
+func TestWatcherKeepsRetryingWhenReopenFails(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		first, second := watch.NewFake(), watch.NewFake()
+		tw := newTestWatcher(t, first, second)
+
+		// The store is unreachable for the first few attempts, as during an
+		// apiserver rollout, then recovers.
+		handOut := tw.newWatch
+		failures := 0
+		tw.newWatch = func(ctx context.Context, resourceVersion string) (watch.Interface, error) {
+			if failures < 3 {
+				failures++
+				tw.recordResume(resourceVersion)
+				return nil, fmt.Errorf("connection refused")
+			}
+			return handOut(ctx, resourceVersion)
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		tw.start(ctx)
+
+		first.Add(testObject("4"))
+		synctest.Wait()
+		first.Stop()
+
+		for range 4 {
+			settleBackoff()
+		}
+
+		require.Equal(t, []string{"4", "4", "4", "4"}, tw.resumes(),
+			"a transient open failure must not discard the resume point")
+
+		second.Add(testObject("5"))
+		synctest.Wait()
+		require.Equal(t, []string{"4", "5"}, tw.publishedVersions(),
+			"the channel must recover once the store is reachable again")
 
 		cancel()
 		<-tw.stopped

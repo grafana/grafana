@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -18,6 +19,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data/utils/jsoniter"
@@ -198,7 +200,9 @@ type watcher struct {
 }
 
 // resumeBackoff is applied between watch resumes so a stream that closes
-// immediately and repeatedly cannot spin this loop.
+// immediately and repeatedly cannot spin this loop. dskit jitters within the
+// exponential range, which matters here because streams close in batches: an
+// unjittered backoff would have every watcher retry in lockstep.
 const (
 	resumeBackoffMin = 100 * time.Millisecond
 	resumeBackoffMax = 5 * time.Second
@@ -223,7 +227,12 @@ func (b *watcher) run(ctx context.Context) {
 		b.done.Store(true)
 	}()
 
-	backoff := resumeBackoffMin
+	bo := backoff.New(ctx, backoff.Config{
+		MinBackoff: resumeBackoffMin,
+		MaxBackoff: resumeBackoffMax,
+		MaxRetries: 0, // infinite retries; ctx cancel stops the loop
+	})
+
 	for {
 		ch := b.watch.ResultChan()
 		broken := false
@@ -267,7 +276,7 @@ func (b *watcher) run(ctx context.Context) {
 				// anything the subscriber has not actually been sent.
 				if rv := resourceVersionOf(event); rv != "" {
 					b.lastRV = rv
-					backoff = resumeBackoffMin
+					bo.Reset()
 				}
 			}
 		}
@@ -277,35 +286,54 @@ func (b *watcher) run(ctx context.Context) {
 		}
 		b.watch.Stop()
 
-		next, err := b.newWatch(ctx, b.lastRV)
-		if err != nil && b.lastRV != "" {
-			// Most likely the resourceVersion has aged out of the history window.
-			// Start from now instead. Unified storage does not replay existing
-			// objects for an unset resourceVersion -- it starts the watch at the
-			// current version unless SendInitialEvents is set, see the
-			// !SendInitialEvents && Since == 0 branch in
-			// pkg/storage/unified/resource/server.go -- so the subscriber keeps
-			// whatever it already had and only sees changes from here on: it
-			// stays stale for the gap, but the channel is alive and self-heals
-			// on the next update rather than going silent for good.
-			logger.Warn("watch resume failed, restarting from now",
-				"channel", b.channel, "resourceVersion", b.lastRV, "err", err)
-			b.lastRV = ""
-			next, err = b.newWatch(ctx, "")
-		}
-		if err != nil {
-			logger.Error("watch resume failed", "channel", b.channel, "err", err)
+		// Pace every resume, not just the failed ones: a stream that opens
+		// fine but closes straight away would otherwise spin this loop. The
+		// backoff is reset on each successful publish, so a channel that is
+		// actually delivering always waits the minimum.
+		bo.Wait()
+
+		next, ok := b.reopen(ctx, logger, bo)
+		if !ok {
 			return
 		}
 		b.watch = next
-
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(backoff):
-		}
-		backoff = min(backoff*2, resumeBackoffMax)
 	}
+}
+
+// reopen retries until the watch is open again, and only gives up when the
+// context is cancelled. Returning on a failed open would leave the channel
+// silently dead, which is the failure this watcher resumes to avoid: an
+// apiserver rollout or a brief network fault landing on the reconnect would
+// otherwise undo the resume entirely.
+func (b *watcher) reopen(ctx context.Context, logger logging.Logger, bo *backoff.Backoff) (watch.Interface, bool) {
+	for bo.Ongoing() {
+		next, err := b.newWatch(ctx, b.lastRV)
+		if err == nil {
+			return next, true
+		}
+
+		// Only drop the resume point when the server actually rejects it.
+		// Unified storage never does -- it treats `since` as a filter over the
+		// live stream rather than an index into history, see the
+		// `event.ResourceVersion > since` check in
+		// pkg/storage/unified/resource/server.go -- but a store that keeps a
+		// history window can expire it, and retrying a version it will keep
+		// refusing would never recover. Starting from now loses the gap but
+		// keeps the channel alive.
+		if b.lastRV != "" && (apierrors.IsResourceExpired(err) || apierrors.IsGone(err)) {
+			logger.Warn("watch resume rejected, restarting from now",
+				"channel", b.channel, "resourceVersion", b.lastRV, "err", err)
+			b.lastRV = ""
+			continue
+		}
+
+		logger.Warn("watch resume failed, retrying",
+			"channel", b.channel, "resourceVersion", b.lastRV, "err", err)
+		bo.Wait()
+	}
+
+	logger.Info("giving up on watch resume", "channel", b.channel, "err", bo.Err())
+	return nil, false
 }
 
 // marshalWatchEvent serializes a watch event to JSON. This is extracted from the
