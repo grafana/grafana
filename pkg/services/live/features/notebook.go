@@ -21,9 +21,8 @@ import (
 // the org-prefixed channel id); nothing is persisted here — the notebooks
 // resource API remains the source of truth for the saved document.
 //
-// Authz for the POC requires a signed-in, non-anonymous identity. Per-notebook
-// ACL checks (akin to DashboardHandler.HasDashboardAccess) are deferred until
-// notebooks have a dedicated access service.
+// Authz for the POC requires a signed-in, non-anonymous identity.
+// TODO: Enforce per-notebook read authorization before broader rollout (grafana/grafana#130089).
 type NotebookHandler struct{}
 
 // GetHandlerForPath called on init.
@@ -60,7 +59,7 @@ func (h *NotebookHandler) OnPublish(ctx context.Context, user identity.Requester
 		return model.PublishReply{}, backend.PublishStreamStatusNotFound, nil
 	}
 	if err := requireSignedInNotebookUser(user); err != nil {
-		return model.PublishReply{}, backend.PublishStreamStatusPermissionDenied, err
+		return model.PublishReply{}, backend.PublishStreamStatusPermissionDenied, nil
 	}
 
 	return model.PublishReply{Data: e.Data}, backend.PublishStreamStatusOK, nil

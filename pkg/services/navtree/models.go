@@ -38,10 +38,6 @@ const (
 	WeightHelp
 )
 
-// WeightNotebooks places Notebooks right after Drilldown without renumbering
-// the iota-derived weights above (extensions may rely on those exact values).
-const WeightNotebooks = WeightDrilldown + 50
-
 const (
 	NavIDRoot                 = "root"
 	NavIDDashboards           = "dashboards/browse"
@@ -60,7 +56,6 @@ const (
 	NavIDCfgPlugins           = "cfg/plugins"
 	NavIDCfgAccess            = "cfg/access"
 	NavIDBookmarks            = "bookmarks"
-	NavIDNotebooks            = "notebooks"
 )
 
 type NavLink struct {
