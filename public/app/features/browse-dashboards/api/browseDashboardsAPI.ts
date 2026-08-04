@@ -273,7 +273,7 @@ export const browseDashboardsAPI = createApi({
           const dashboard = isDashboardV2Resource(fullDash) ? fullDash.spec : fullDash.dashboard;
           const k8s = isDashboardV2Resource(fullDash) ? fullDash.metadata : undefined;
 
-          if (config.featureToggles.provisioning) {
+          if (config.provisioningEnabled) {
             if (isProvisionedDashboard(fullDash)) {
               appEvents.publish({
                 type: AppEvents.alertWarning.name,
@@ -395,7 +395,7 @@ export const browseDashboardsAPI = createApi({
           for (const dashboardUID of dashboardUIDs) {
             // It's not possible to select a mix of provisioned and non-provisioned dashboards
             // from the UI, so this is mostly a guard in case that somehow happens
-            if (config.featureToggles.provisioning) {
+            if (config.provisioningEnabled) {
               const dto = await api.getDashboardDTO(dashboardUID);
               if (isProvisionedDashboard(dto)) {
                 appEvents.publish({
