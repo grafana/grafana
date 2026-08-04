@@ -13637,7 +13637,6 @@
     "playlist-table-rows": {
       "aria-label-item-interval": "Interval for {{itemValue}}",
       "aria-label-item-query-params": "URL parameters for {{itemValue}}",
-      "aria-label-item-settings": "Settings for {{itemValue}}",
       "aria-label-playlist-item": "Playlist item, {{itemType}}, {{itemValue}}",
       "interval-addon": "Interval",
       "invalid-interval": "Invalid interval (e.g. 30s, 5m, 1h)",
@@ -13687,6 +13686,8 @@
       "name-placeholder": "Name",
       "name-required": "Name is required",
       "save": "Save",
+      "table-cancel-delete": "Cancel",
+      "table-confirm-delete": "Delete",
       "table-delete": "Delete playlist item",
       "table-drag": "Reorder playlist item",
       "table-empty": "Playlist is empty. Add dashboards below.",

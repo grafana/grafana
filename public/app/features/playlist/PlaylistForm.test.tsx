@@ -97,10 +97,28 @@ function rows() {
 }
 
 async function openItemOptions(itemValue: string) {
-  const button = screen.getByRole('button', { name: `Settings for ${itemValue}` });
+  const button = within(rowForItem(itemValue)).getByRole('button', { name: 'Settings' });
   if (button.getAttribute('aria-expanded') === 'false') {
     await userEvent.click(button);
   }
+}
+
+function rowForItem(itemValue: string) {
+  const cell = screen.getByRole('cell', {
+    name: `Playlist item, dashboard_by_uid, ${itemValue}`,
+  });
+  const row = cell.closest('[role="row"]');
+
+  if (!row) {
+    throw new Error(`Could not find the row for ${itemValue}`);
+  }
+
+  return row as HTMLElement;
+}
+
+async function deleteItem(row: HTMLElement) {
+  await userEvent.click(within(row).getByRole('button', { name: /delete playlist item/i }));
+  await userEvent.click(within(row).getByRole('button', { name: 'Delete' }));
 }
 
 describe('PlaylistForm', () => {
@@ -141,7 +159,15 @@ describe('PlaylistForm', () => {
       getTestContext();
 
       expect(rows()).toHaveLength(3);
-      await userEvent.click(within(rows()[2]).getByRole('button', { name: /delete playlist item/i }));
+      const row = rows()[2];
+      await userEvent.click(within(row).getByRole('button', { name: /delete playlist item/i }));
+
+      expect(rows()).toHaveLength(3);
+      expect(within(row).getByRole('button', { name: 'Cancel' })).toHaveFocus();
+      await userEvent.click(within(row).getByRole('button', { name: 'Cancel' }));
+      expect(rows()).toHaveLength(3);
+
+      await deleteItem(row);
       await waitFor(() => {
         expect(rows()).toHaveLength(2);
       });
@@ -213,7 +239,11 @@ describe('PlaylistForm', () => {
       expect(screen.getByRole('textbox', { name: 'Interval' })).toBeInTheDocument();
       expect(screen.queryByRole('textbox', { name: /interval for uid_1/i })).not.toBeInTheDocument();
 
-      const optionsButton = screen.getByRole('button', { name: 'Settings for uid_1' });
+      const optionsButton = within(rows()[0]).getByRole('button', { name: 'Settings' });
+      await userEvent.hover(optionsButton);
+      expect(await screen.findByRole('tooltip')).toHaveTextContent('Settings');
+      await userEvent.unhover(optionsButton);
+
       optionsButton.focus();
       await userEvent.keyboard('{Enter}');
 
@@ -229,7 +259,7 @@ describe('PlaylistForm', () => {
       expect(screen.getByRole('textbox', { name: 'Interval' })).toHaveValue('10m');
       // uid_1's override is visible as a compact summary until its options are opened.
       expect(within(rows()[0]).getByText('30s')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Settings for uid_1' })).toHaveAttribute('aria-expanded', 'false');
+      expect(within(rows()[0]).getByRole('button', { name: 'Settings' })).toHaveAttribute('aria-expanded', 'false');
       await openItemOptions('uid_1');
       expect(screen.getByRole('textbox', { name: /interval for uid_1/i })).toHaveValue('30s');
 
@@ -300,7 +330,7 @@ describe('PlaylistForm', () => {
       getTestContext(mockPerItemIntervalPlaylist);
 
       // uid_1 has 30s, uid_2 is blank. Removing uid_1 must not leave 30s on uid_2's input.
-      await userEvent.click(within(rows()[0]).getByRole('button', { name: /delete playlist item/i }));
+      await deleteItem(rows()[0]);
       await waitFor(() => expect(rows()).toHaveLength(1));
 
       await openItemOptions('uid_2');
@@ -368,7 +398,7 @@ describe('PlaylistForm', () => {
     it('keeps parameters attached to the correct item when another row is removed', async () => {
       getTestContext(mockPerItemOptionsPlaylist);
 
-      await userEvent.click(within(rows()[0]).getByRole('button', { name: /delete playlist item/i }));
+      await deleteItem(rows()[0]);
       await waitFor(() => expect(rows()).toHaveLength(1));
 
       await openItemOptions('uid_2');
