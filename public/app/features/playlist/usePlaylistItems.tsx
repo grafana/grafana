@@ -6,8 +6,18 @@ import { type DashboardPickerDTO } from 'app/core/components/Select/DashboardPic
 import { type PlaylistItemUI } from './types';
 import { loadDashboards } from './utils';
 
+let nextPlaylistItemId = 0;
+
+function createLocalId(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `playlist-item-${Date.now()}-${nextPlaylistItemId++}`;
+}
+
+function withLocalId(item: PlaylistItemUI): PlaylistItemUI {
+  return item.localId ? item : { ...item, localId: createLocalId() };
+}
+
 export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
-  const [items, setItems] = useState<PlaylistItemUI[]>(playlistItems ?? []);
+  const [items, setItems] = useState<PlaylistItemUI[]>(() => (playlistItems ?? []).map(withLocalId));
 
   // Attach dashboards to any items still missing them. Merge onto the current state so an
   // in-flight load cannot clobber item settings edited while it was running.
@@ -16,12 +26,12 @@ export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
       return;
     }
     const loaded = await loadDashboards(items);
+    const loadedById = new Map(loaded.map((item) => [item.localId, item]));
     setItems((current) => {
-      // Bail if the list changed shape while loading; indices would no longer line up.
-      if (current.length !== loaded.length) {
-        return current;
-      }
-      return current.map((item, i) => (item.dashboards ? item : { ...item, dashboards: loaded[i].dashboards }));
+      return current.map((item) => {
+        const loadedItem = loadedById.get(item.localId);
+        return item.dashboards || !loadedItem ? item : { ...item, dashboards: loadedItem.dashboards };
+      });
     });
   }, [items]);
 
@@ -36,6 +46,7 @@ export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
         {
           type: 'dashboard_by_uid',
           value: dashboard.uid,
+          localId: createLocalId(),
         },
       ]);
     },
@@ -52,6 +63,7 @@ export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
       const newItem: PlaylistItemUI = {
         type: 'dashboard_by_tag',
         value: tag,
+        localId: createLocalId(),
       };
       setItems([...items, newItem]);
     },

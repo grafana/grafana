@@ -55,3 +55,37 @@ func TestPreserveLegacyPlaylistItemOptions(t *testing.T) {
 	require.Equal(t, "1m", items[1].(map[string]any)["interval"])
 	require.Equal(t, "var-host=two", items[1].(map[string]any)["queryParams"])
 }
+
+func TestPreserveLegacyPlaylistItemOptionsRespectsSuppliedValues(t *testing.T) {
+	existing := unstructured.Unstructured{Object: map[string]any{
+		"spec": map[string]any{
+			"items": []any{
+				map[string]any{"type": "dashboard_by_uid", "value": "dashboard", "interval": "30s", "queryParams": "var-host=prod"},
+				map[string]any{"type": "dashboard_by_uid", "value": "dashboard-to-clear", "interval": "1m", "queryParams": "var-host=staging"},
+			},
+		},
+	}}
+	interval := "10s"
+	empty := ""
+	obj := LegacyUpdateCommandToUnstructured(UpdatePlaylistCommand{
+		Name:     "playlist",
+		Interval: "5m",
+		Items: []PlaylistItem{
+			{Type: "dashboard_by_uid", Value: "dashboard", Interval: &interval},
+			{Type: "dashboard_by_uid", Value: "dashboard-to-clear", Interval: &empty, QueryParams: &empty},
+			{Type: "dashboard_by_uid", Value: "new-dashboard"},
+		},
+	})
+
+	PreserveLegacyPlaylistItemOptions(&obj, &existing)
+
+	items, found, err := unstructured.NestedSlice(obj.Object, "spec", "items")
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, "10s", items[0].(map[string]any)["interval"])
+	require.Equal(t, "var-host=prod", items[0].(map[string]any)["queryParams"])
+	require.Equal(t, "", items[1].(map[string]any)["interval"])
+	require.Equal(t, "", items[1].(map[string]any)["queryParams"])
+	require.NotContains(t, items[2].(map[string]any), "interval")
+	require.NotContains(t, items[2].(map[string]any), "queryParams")
+}

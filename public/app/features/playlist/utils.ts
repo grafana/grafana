@@ -7,6 +7,7 @@ import { contextSrv } from '../../core/services/context_srv';
 import { getGrafanaSearcher } from '../search/service/searcher';
 import { type SearchQuery } from '../search/service/types';
 
+import { PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM } from './customView';
 import { type PlaylistItemUI } from './types';
 
 /**
@@ -29,11 +30,19 @@ export function normalizePlaylistItemQueryParams(value?: string): string | undef
   }
 
   const queryStart = trimmed.indexOf('?');
+  const looksLikeDashboardUrl = /^(?:[a-z][a-z\d+.-]*:\/\/|\/)/i.test(trimmed);
+  if (queryStart === -1 && looksLikeDashboardUrl) {
+    return undefined;
+  }
+
   const query = queryStart === -1 ? trimmed : trimmed.slice(queryStart + 1);
   const fragmentStart = query.indexOf('#');
   const normalized = (fragmentStart === -1 ? query : query.slice(0, fragmentStart)).replace(/^\?/, '');
+  const params = new URLSearchParams(normalized);
+  params.delete(PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM);
+  const serialized = params.toString();
 
-  return normalized || undefined;
+  return serialized || undefined;
 }
 
 export function getPlaylistShortLinkUid(value?: string): string | undefined {

@@ -10,8 +10,17 @@ describe('playlist custom view flow', () => {
   it('adds and removes the temporary configuration token', () => {
     const url = addPlaylistCustomViewToken('/d/uid/name?var-host=prod', 'token 1');
 
-    expect(url).toBe(`/d/uid/name?var-host=prod&${PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM}=token%201`);
+    expect(url).toBe(`/d/uid/name?var-host=prod&${PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM}=token+1`);
     expect(getPlaylistCustomViewQueryParams(new URL(url, 'http://localhost').search)).toBe('var-host=prod');
+  });
+
+  it('replaces an existing token and keeps the URL fragment at the end', () => {
+    const url = addPlaylistCustomViewToken(
+      `/d/uid/name?${PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM}=old&var-host=prod#panel-2`,
+      'new token'
+    );
+
+    expect(url).toBe(`/d/uid/name?${PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM}=new+token&var-host=prod#panel-2`);
   });
 
   it('recognizes messages from the dashboard configuration flow', () => {

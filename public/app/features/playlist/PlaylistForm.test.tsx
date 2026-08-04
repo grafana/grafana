@@ -304,7 +304,10 @@ describe('PlaylistForm', () => {
       // The global interval remains editable.
       expect(screen.getByRole('textbox', { name: 'Interval' })).toHaveValue('10m');
       // uid_1's override is visible as a compact summary until its options are opened.
-      expect(within(rows()[0]).getByText('Custom view · Interval: 30s')).toBeInTheDocument();
+      expect(within(rows()[0]).getByText('Custom view · Interval: 30s').closest('[title]')).toHaveAttribute(
+        'title',
+        'Custom view · Interval: 30s'
+      );
       expect(within(rows()[0]).getByRole('button', { name: 'Settings' })).toHaveAttribute('aria-expanded', 'false');
       await openItemOptions('uid_1');
       expect(screen.getByRole('textbox', { name: /interval for uid_1/i })).toHaveValue('30s');
@@ -349,6 +352,8 @@ describe('PlaylistForm', () => {
       await userEvent.type(input, 'not-an-interval');
 
       expect(input).toBeInvalid();
+      expect(screen.getByText('Invalid interval')).toBeInTheDocument();
+      expect(input).toHaveAttribute('title', 'Invalid interval');
       expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
     });
 
@@ -429,6 +434,11 @@ describe('PlaylistForm', () => {
       expect(tooltip).toHaveTextContent('host1');
 
       await userEvent.unhover(within(rowForItem('uid_1')).getByText('Configured'));
+      const configuredStatus = within(rowForItem('uid_1')).getByRole('button', {
+        name: 'Show custom view options',
+      });
+      configuredStatus.focus();
+      expect(await screen.findByRole('tooltip')).toHaveTextContent('Custom view options');
       expect(within(rowForItem('uid_1')).getByRole('button', { name: 'Paste dashboard link' })).toBeInTheDocument();
       const clearView = within(rowForItem('uid_1')).getByRole('button', { name: 'Clear custom view' });
       expect(clearView).toHaveStyle({ height: '32px', width: '32px' });
@@ -479,6 +489,21 @@ describe('PlaylistForm', () => {
           }),
         })
       );
+    });
+
+    it('rejects a dashboard URL that has no custom state', async () => {
+      const { onSubmitMock } = getTestContext();
+
+      await openDashboardLinkPaste('uid_1');
+      await userEvent.type(
+        screen.getByRole('textbox', { name: /dashboard state for uid_1/i }),
+        'https://grafana.example.com/d/uid/name'
+      );
+      await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+      expect(screen.getByText('This link has no custom dashboard state')).toBeInTheDocument();
+      expect(within(rowForItem('uid_1')).getByText('Uses dashboard defaults')).toBeInTheDocument();
+      expect(onSubmitMock).not.toHaveBeenCalled();
     });
 
     it('resolves a copied short link and stores its dashboard state', async () => {
@@ -541,6 +566,36 @@ describe('PlaylistForm', () => {
       );
     });
 
+    it('cancels pasting a link with Escape without changing the configured view', async () => {
+      const { onSubmitMock } = getTestContext(mockPerItemOptionsPlaylist);
+
+      await openDashboardLinkPaste('uid_1');
+      const dashboardState = screen.getByRole('textbox', { name: /dashboard state for uid_1/i });
+      await userEvent.type(dashboardState, 'https://grafana.example.com/d/uid/name?var-host=replacement{Escape}');
+
+      expect(screen.queryByRole('textbox', { name: /dashboard state for uid_1/i })).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+      expect(onSubmitMock.mock.calls[0][0].spec.items).toContainEqual(
+        expect.objectContaining({ value: 'uid_1', queryParams: 'var-host=host1&from=now-6h&to=now' })
+      );
+    });
+
+    it('describes a partial custom time range using dashboard defaults', async () => {
+      const playlist: Playlist = {
+        ...mockPlaylist,
+        spec: {
+          ...mockPlaylist.spec!,
+          items: [{ type: 'dashboard_by_uid', value: 'uid_1', queryParams: 'from=now-6h' }],
+        },
+      };
+      getTestContext(playlist);
+
+      await openItemOptions('uid_1');
+      await userEvent.hover(within(rowForItem('uid_1')).getByText('Configured'));
+
+      expect(await screen.findByRole('tooltip')).toHaveTextContent('now-6h → Dashboard default');
+    });
+
     it('applies a custom view configured on the dashboard', async () => {
       const { onSubmitMock } = getTestContext(mockPerItemOptionsPlaylist, [
         { name: 'uid_1', resource: 'dashboards', title: 'Dashboard one' },
@@ -565,7 +620,7 @@ describe('PlaylistForm', () => {
           data: {
             type: PLAYLIST_CUSTOM_VIEW_MESSAGE,
             token,
-            queryParams: 'var-host=host3&from=now-3h&to=now',
+            queryParams: `var-host=host3&from=now-3h&to=now&${PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM}=temporary`,
           },
         })
       );
@@ -600,6 +655,47 @@ describe('PlaylistForm', () => {
           }),
         })
       );
+    });
+
+    it('does not apply a late short-link response to a different duplicate row', async () => {
+      let resolveShortLink = () => {};
+      const shortLinkResponse = new Promise<void>((resolve) => {
+        resolveShortLink = resolve;
+      });
+      server.use(
+        http.get('/api/short-urls/duplicate-race', async () => {
+          await shortLinkResponse;
+          return HttpResponse.json({ path: '/d/uid_1/name?var-host=late-response' });
+        })
+      );
+      const duplicatePlaylist: Playlist = {
+        ...mockPlaylist,
+        spec: {
+          ...mockPlaylist.spec!,
+          items: [
+            { type: 'dashboard_by_uid', value: 'uid_1' },
+            { type: 'dashboard_by_uid', value: 'uid_1', queryParams: 'var-host=second-row' },
+          ],
+        },
+      };
+      const { onSubmitMock } = getTestContext(duplicatePlaylist);
+      const firstRow = rows()[0];
+
+      await userEvent.click(within(firstRow).getByRole('button', { name: 'Settings' }));
+      await userEvent.click(within(firstRow).getByRole('button', { name: 'Paste dashboard link' }));
+      await userEvent.type(
+        within(firstRow).getByRole('textbox', { name: /dashboard state for uid_1/i }),
+        '/goto/duplicate-race'
+      );
+      await userEvent.click(within(firstRow).getByRole('button', { name: 'Apply' }));
+      await deleteItem(firstRow);
+      resolveShortLink();
+
+      await waitFor(() => expect(rows()).toHaveLength(1));
+      await userEvent.click(screen.getByRole('button', { name: /save/i }));
+      expect(onSubmitMock.mock.calls[0][0].spec.items).toEqual([
+        { type: 'dashboard_by_uid', value: 'uid_1', queryParams: 'var-host=second-row' },
+      ]);
     });
   });
 });

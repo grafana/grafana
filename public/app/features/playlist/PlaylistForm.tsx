@@ -73,7 +73,7 @@ export const PlaylistForm = ({
     }
     setSaving(true);
     // Strip loaded dashboards and normalize copied URLs to their query string before submission.
-    const apiItems = items.map(({ dashboards, ...item }) => ({
+    const apiItems = items.map(({ dashboards, localId, ...item }) => ({
       ...item,
       queryParams: normalizePlaylistItemQueryParams(item.queryParams),
     }));
