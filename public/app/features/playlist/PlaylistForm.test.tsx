@@ -288,6 +288,7 @@ describe('PlaylistForm', () => {
       expect(within(rowForItem('uid_1')).getByText('Configure')).toBeInTheDocument();
       const pasteLink = screen.getByRole('button', { name: 'Paste dashboard link' });
       expect(pasteLink).toBeInTheDocument();
+      expect(pasteLink).toHaveStyle({ height: '32px', width: '32px' });
       expect(pasteLink.querySelector('svg')).toHaveStyle({ pointerEvents: 'none' });
       await userEvent.hover(pasteLink);
       expect(await screen.findByRole('tooltip')).toHaveTextContent('Paste dashboard link');
@@ -429,7 +430,9 @@ describe('PlaylistForm', () => {
 
       await userEvent.unhover(within(rowForItem('uid_1')).getByText('Configured'));
       expect(within(rowForItem('uid_1')).getByRole('button', { name: 'Paste dashboard link' })).toBeInTheDocument();
-      await userEvent.click(within(rowForItem('uid_1')).getByRole('button', { name: 'Clear custom view' }));
+      const clearView = within(rowForItem('uid_1')).getByRole('button', { name: 'Clear custom view' });
+      expect(clearView).toHaveStyle({ height: '32px', width: '32px' });
+      await userEvent.click(clearView);
       expect(within(rowForItem('uid_1')).getByText('Clear custom view?')).toBeInTheDocument();
       await userEvent.click(within(rowForItem('uid_1')).getByRole('button', { name: 'Cancel' }));
       expect(within(rowForItem('uid_1')).getByText('Configured')).toBeInTheDocument();
