@@ -122,11 +122,14 @@ type IndexStoreLock interface {
 type RemoteIndexStore interface {
 	// LockBuildIndex acquires a distributed build/upload lock for namespace/group/resource.
 	// buildVersion scopes contention to replicas running the same exact Grafana version.
+	// When another replica holds the lock, the returned error must match errLockHeld:
+	// build coordination relies on that to keep waiting instead of building alone.
 	LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource, buildVersion string) (IndexStoreLock, error)
 
 	// LockNamespaceForCleanup acquires a distributed cleanup lock for a namespace.
 	// Uses a different lock key than LockBuildIndex so cleanup never blocks an
 	// in-flight upload for any resource in the namespace.
+	// When another replica holds the lock, the returned error must match errLockHeld.
 	LockNamespaceForCleanup(ctx context.Context, namespace string) (IndexStoreLock, error)
 
 	// WriteSnapshotFile writes one data file at relPath under the snapshot

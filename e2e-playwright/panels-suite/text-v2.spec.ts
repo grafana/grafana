@@ -115,13 +115,21 @@ test.describe('Panels test: Text v2', { tag: ['@panels'] }, () => {
     const preview = page.getByTestId('TextNGEditor-preview');
     await expect(preview).toBeVisible();
 
-    await page.getByRole('radio', { name: 'HTML' }).click();
+    // Mode lives in the editor toolbar, not the options pane.
+    const modePicker = page.getByRole('button', { name: /^Text mode/ });
+
+    await modePicker.click();
+    await page.getByRole('menuitemradio', { name: 'HTML' }).click();
     await expect(preview).toBeVisible();
 
-    await page.getByRole('radio', { name: 'Code' }).click();
+    // Code mode is picked through its language submenu.
+    await modePicker.click();
+    await page.getByRole('menuitem', { name: 'Code' }).hover();
+    await page.getByRole('menuitemradio', { name: 'JSON' }).click();
     await expect(preview.locator('.cm-editor')).toBeVisible();
 
-    await page.getByRole('radio', { name: 'Markdown' }).click();
+    await modePicker.click();
+    await page.getByRole('menuitemradio', { name: 'Markdown' }).click();
     await expect(preview).toBeVisible();
   });
 });

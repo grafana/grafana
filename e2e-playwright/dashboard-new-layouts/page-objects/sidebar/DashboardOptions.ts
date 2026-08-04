@@ -2,6 +2,8 @@ import { test } from '@playwright/test';
 
 import { PageObject } from '../PageObject';
 
+// The "Dashboard options" pane in the sidebar — title/description inputs
+// and the layout switcher (auto/custom grid)
 export class DashboardOptions extends PageObject {
   getTitleInput() {
     return this.dashboardPage

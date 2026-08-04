@@ -270,6 +270,7 @@
       "placeholder-search-devices-by-ip-address": "IPアドレスでデバイスを検索します。"
     },
     "user-list-page": {
+      "label-active-users": "",
       "label-all-users": "すべてのユーザー",
       "label-anonymous-devices": "匿名のデバイス",
       "label-organization-users": "組織ユーザー",
@@ -3968,6 +3969,9 @@
       "trace-id": "トレースID：{{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": ""
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "認証設定"
@@ -6136,13 +6140,10 @@
         "show-in": ""
       },
       "annotations": {
-        "add-annotation": "",
         "add-annotation-query": "",
         "name-builtin": "",
         "name-disabled": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-annotation": "",
         "title-above-dashboard-count_other": "",
         "title-controls-menu-count_other": "",
         "title-hidden-count_other": ""
@@ -6222,10 +6223,7 @@
       "links": {
         "add-link": "",
         "new-link": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-link": "",
-        "untitled": "",
         "title-above-dashboard_other": "",
         "title-controls-menu_other": ""
       },
@@ -6323,11 +6321,9 @@
       "variables": {
         "add-variable": "",
         "change-type": "",
-        "reorder": "",
         "reorder-description": "",
         "select-type": "",
         "select-type-card-tooltip": "",
-        "select-variable": "",
         "top-placement-default": "",
         "title-controls-menu_other": "",
         "title-hidden_other": "",
@@ -6760,11 +6756,6 @@
       "delete-text": "{{name}}を削除してもよろしいですか？",
       "delete-title": "注釈クエリを削除"
     },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "注釈"
-      }
-    },
     "annotation-query-library-dropdown": {
       "use-saved-query": "保存されたクエリを使用"
     },
@@ -7186,11 +7177,6 @@
       "delete-text": "{{name}}を削除してもよろしいですか？",
       "delete-title": "リンクを削除",
       "unnamed": "無名のリンク"
-    },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "リンク"
-      }
     },
     "link-options": {
       "icon": "アイコン",
@@ -8553,7 +8539,24 @@
       "body-no-logs-volume-available": "現在のクエリと時間範囲で利用可能なログ量情報はありません。"
     },
     "metrics-list": {
-      "search-placeholder": ""
+      "collapse-metric": "",
+      "error": "",
+      "expand-metric": "",
+      "filter-values": "",
+      "hide-values": "",
+      "labels-error": "",
+      "loading": "",
+      "loading-labels": "",
+      "loading-values": "",
+      "no-metrics": "",
+      "search-placeholder": "",
+      "show-more": "",
+      "show-more-metrics": "",
+      "show-more-values": "",
+      "show-values": "",
+      "sort-ascending": "",
+      "sort-descending": "",
+      "values-error": ""
     },
     "next-prev-result": {
       "aria-label-next": "次の結果ボタン",
@@ -10856,6 +10859,83 @@
       "read-more": "",
       "title": ""
     },
+    "overview": {
+      "get-started": {
+        "cards": {
+          "app-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "cloud-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "database-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "demo-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "hosted-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "infra-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "kubernetes": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "logs": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "opentelemetry": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "prometheus": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "visualize-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "website-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          }
+        },
+        "show-less": "",
+        "show-more": "",
+        "title": ""
+      },
+      "options": {
+        "all": "",
+        "attention": "",
+        "available": "",
+        "enabled": "",
+        "get-started": ""
+      },
+      "title": ""
+    },
     "recent-dashboards-tab": {
       "browse": "",
       "clear": "",
@@ -10876,14 +10956,25 @@
       },
       "carousel-label": "",
       "carousel-roledescription": "",
-      "existing": "",
-      "frontend-observability": {
+      "connect-metrics": {
         "action": "",
         "context": "",
         "description": "",
-        "setup-action": "",
         "title": ""
       },
+      "enable-logs": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "title": ""
+      },
+      "enable-logs-k8s": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "title": ""
+      },
+      "existing": "",
       "go-to": "",
       "health": {
         "nodes_other": "",
@@ -10908,16 +10999,51 @@
         "clusters_other": "",
         "pods_other": ""
       },
+      "kubernetes-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
+      "logs": {
+        "action": "",
+        "action-explore": "",
+        "datasource": "",
+        "stats": "",
+        "title": "",
+        "volume": "",
+        "stats-sources_other": ""
+      },
+      "metrics": {
+        "action": "",
+        "action-explore": "",
+        "data-points-per-minute": "",
+        "datasource": "",
+        "disk-worst": "",
+        "series-trend": "",
+        "stats": "",
+        "title": "",
+        "view": "",
+        "disk-eta_other": "",
+        "disk-hosts_other": "",
+        "names_other": "",
+        "series_other": "",
+        "stats-hosts_other": ""
+      },
       "next": "",
       "no-data": {
         "badge": "",
         "connect": "",
         "description": "",
+        "description-partial": "",
+        "description-unknown": "",
         "popular-solutions": "",
         "solution-k6": "",
         "solution-kubernetes": "",
         "solution-synthetics": "",
-        "title": ""
+        "title": "",
+        "title-partial": ""
       },
       "pause": "",
       "previous": "",
@@ -10926,14 +11052,17 @@
       "show": "",
       "switch": "",
       "switchSolution": "",
-      "synthetic-monitoring": {
+      "title": "",
+      "traces": {
         "action": "",
-        "context": "",
-        "description": "",
-        "setup-action": "",
-        "title": ""
-      },
-      "title": ""
+        "action-explore": "",
+        "datasource": "",
+        "stats": "",
+        "throughput": "",
+        "title": "",
+        "spans_other": "",
+        "stats-services_other": ""
+      }
     },
     "starred-dashboards-tab": {
       "empty": "",
@@ -15681,18 +15810,29 @@
     },
     "editor": {
       "aria-label-content": "",
+      "aria-label-mode": "",
+      "footer-line-numbers": "",
+      "format-bold": "",
+      "format-heading": "",
+      "format-italic": "",
+      "language-plaintext": "",
+      "mode-code": "",
+      "mode-html": "",
+      "mode-markdown": "",
+      "mode-picker-label": "",
+      "tooltip-bold": "",
+      "tooltip-bullet-list": "",
+      "tooltip-checklist": "",
+      "tooltip-heading": "",
+      "tooltip-insert-variable": "",
+      "tooltip-italic": "",
+      "tooltip-link": "",
+      "tooltip-numbered-list": "",
+      "tooltip-table": "",
       "view-preview": "",
       "view-split": "",
       "view-write": ""
-    },
-    "mode-options": {
-      "label-code": "",
-      "label-html": "",
-      "label-markdown": ""
-    },
-    "name-language": "",
-    "name-mode": "",
-    "name-show-line-numbers": ""
+    }
   },
   "theme-playground": {
     "label-base-theme": "基本テーマ",
@@ -17000,6 +17140,7 @@
       "delete-modal-confirm": "",
       "delete-modal-title": "",
       "folder-description": "",
+      "folder-description-folder-only": "",
       "folder-label": "",
       "moved": "",
       "name-exists": "",
@@ -17018,7 +17159,8 @@
       "move": "",
       "moving": "",
       "title": "",
-      "body_other": ""
+      "body_other": "",
+      "body-folder-only_other": ""
     },
     "page": {
       "delete": "",
