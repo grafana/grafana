@@ -2,7 +2,7 @@ import { type Page } from '@playwright/test';
 
 import { test, expect, type Components, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { Controls, Panel, Sidebar } from './page-objects';
+import { Controls, Sidebar } from './page-objects';
 import { importTestDashboard, switchToAutoGrid } from './utils';
 
 test.use({
@@ -37,7 +37,7 @@ test.describe(
       await dragResizeCorner(page);
 
       // The popover explains why the resize was blocked and offers the two ways out.
-      await expect(page.getByText('Cannot resize in auto layout')).toBeVisible();
+      await expect(page.getByText('Panel sizes are managed by auto layout')).toBeVisible();
 
       await page.getByRole('menuitem', { name: 'Switch to custom' }).click();
 
@@ -57,12 +57,12 @@ test.describe(
       await setupAutoGridInEditMode(page, dashboardPage, selectors, components, 'Auto grid resize intercept - edit');
 
       await dragResizeCorner(page);
-      await expect(page.getByText('Cannot resize in auto layout')).toBeVisible();
+      await expect(page.getByText('Panel sizes are managed by auto layout')).toBeVisible();
 
       await page.getByRole('menuitem', { name: 'Edit auto layout' }).click();
       const autoLayoutOption = page.getByLabel('layout-selection-option-Auto');
 
-      expect(autoLayoutOption).toBeVisible();
+      await expect(autoLayoutOption).toBeVisible();
     });
   }
 );

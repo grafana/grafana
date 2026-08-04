@@ -56,24 +56,24 @@ export function generateUniqueTitle(title: string | undefined, existingTitles: S
   return baseTitle;
 }
 
+function switchLayoutOnParent(current: DashboardLayoutManager, newLayout: DashboardLayoutManager, skipUndo?: boolean) {
+  const layoutParent = current.parent;
+  if (layoutParent && isLayoutParent(layoutParent)) {
+    layoutParent.switchLayout(newLayout, skipUndo);
+  }
+}
+
 export function changeLayoutTo(
   currentManager: DashboardLayoutManager,
   layoutItem: LayoutRegistryItem,
   skipUndo?: boolean
 ) {
-  const layoutParent = currentManager.parent;
-
-  if (layoutParent && isLayoutParent(layoutParent)) {
-    layoutParent.switchLayout(layoutItem.createFromLayout(currentManager), skipUndo);
-  }
+  switchLayoutOnParent(currentManager, layoutItem.createFromLayout(currentManager), skipUndo);
 }
 
 export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: DashboardLayoutManager, skipUndo?: boolean) {
-  const layoutParent = layout.parent!;
-  if (isLayoutParent(layoutParent)) {
-    innerLayout.clearParent();
-    layoutParent.switchLayout(innerLayout, skipUndo);
-  }
+  innerLayout.clearParent();
+  switchLayoutOnParent(layout, innerLayout, skipUndo);
 }
 
 export function getIsLazy(preload: boolean | undefined): boolean {

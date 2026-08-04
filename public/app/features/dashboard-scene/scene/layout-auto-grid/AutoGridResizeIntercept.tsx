@@ -20,6 +20,8 @@ import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { type AutoGridItem } from './AutoGridItem';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 
+export const interceptorTestId = 'auto-grid-resize-intercept';
+
 export interface AutoGridResizeInterceptProps {
   item: AutoGridItem;
 }
@@ -39,13 +41,21 @@ export function AutoGridResizeIntercept({ item }: AutoGridResizeInterceptProps) 
   const styles = useStyles2(getStyles);
   const [open, setOpen] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [refEl, setRefEl] = useState<HTMLButtonElement | null>(null);
+  const [refEl, setRefEl] = useState<HTMLDivElement | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const openRef = useRef(false);
   const hoverReportedRef = useRef(false);
   const actionTakenRef = useRef(false);
+  const springBackTimeoutRef = useRef<number | null>(null);
   // teardown for an in-flight pointer gesture; held in a ref so an unmount mid-drag can run it.
   const gestureCleanupRef = useRef<(() => void) | null>(null);
+
+  const clearSpringBackTimeout = useCallback(() => {
+    if (springBackTimeoutRef.current !== null) {
+      window.clearTimeout(springBackTimeoutRef.current);
+      springBackTimeoutRef.current = null;
+    }
+  }, []);
 
   const { manager, container, scope } = useMemo(() => {
     const mgr = sceneGraph.getAncestor(item, AutoGridLayoutManager);
@@ -109,11 +119,12 @@ export function AutoGridResizeIntercept({ item }: AutoGridResizeInterceptProps) 
   useEffect(() => {
     return () => {
       gestureCleanupRef.current?.();
+      clearSpringBackTimeout();
     };
-  }, []);
+  }, [clearSpringBackTimeout]);
 
   const onZonePointerDown = useCallback(
-    (evt: ReactPointerEvent<HTMLButtonElement>) => {
+    (evt: ReactPointerEvent<HTMLDivElement>) => {
       // Prevent the auto grid from starting a panel drag from this corner.
       evt.stopPropagation();
 
@@ -139,6 +150,7 @@ export function AutoGridResizeIntercept({ item }: AutoGridResizeInterceptProps) 
       const controller = new AbortController();
       const endGesture = () => {
         controller.abort();
+        clearSpringBackTimeout();
         document.body.style.cursor = '';
         document.body.style.userSelect = prevUserSelect;
         gestureCleanupRef.current = null;
@@ -146,10 +158,10 @@ export function AutoGridResizeIntercept({ item }: AutoGridResizeInterceptProps) 
       gestureCleanupRef.current = endGesture;
 
       const handleMove = (moveEvt: PointerEvent) => {
-        if (!panelEl || !rect) {
+        moved = true;
+        if (reducedMotion || !panelEl || !rect) {
           return;
         }
-        moved = true;
         // Stretch from the top-left so dragging the bottom-right corner grows the panel a little —
         // with heavy resistance. It springs back on release.
         const sx = rect.width > 0 ? (rect.width + resist(moveEvt.clientX - start.x)) / rect.width : 1;
@@ -162,13 +174,12 @@ export function AutoGridResizeIntercept({ item }: AutoGridResizeInterceptProps) 
       const handleUp = () => {
         endGesture();
 
+        if (!moved) {
+          return;
+        }
+
         // No stretch to undo — open immediately at the resize corner.
-        if (!moved || !panelEl) {
-          if (panelEl) {
-            panelEl.style.transition = 'none';
-            panelEl.style.transform = '';
-            panelEl.style.transformOrigin = '';
-          }
+        if (reducedMotion || !panelEl) {
           openPopover();
           return;
         }
@@ -181,6 +192,7 @@ export function AutoGridResizeIntercept({ item }: AutoGridResizeInterceptProps) 
             return;
           }
           opened = true;
+          clearSpringBackTimeout();
           panelEl.removeEventListener('transitionend', finish);
           panelEl.style.transition = '';
           panelEl.style.transformOrigin = '';
@@ -189,15 +201,18 @@ export function AutoGridResizeIntercept({ item }: AutoGridResizeInterceptProps) 
         panelEl.addEventListener('transitionend', finish);
         panelEl.style.transition = 'transform 0.2s ease-out';
         panelEl.style.transform = '';
-        window.setTimeout(finish, 300);
+        clearSpringBackTimeout();
+        springBackTimeoutRef.current = window.setTimeout(finish, 300);
       };
 
-      if (!reducedMotion) {
-        window.addEventListener('pointermove', handleMove, { signal: controller.signal });
-      }
-      window.addEventListener('pointerup', handleUp, { signal: controller.signal });
+      // Capture phase: panels and rows stopPropagation on pointer events, so a bubble-phase listener
+      // misses the release whenever the pointer ends up over an interactive child of the panel, and
+      // the gesture would never end.
+      const opts = { signal: controller.signal, capture: true };
+      window.addEventListener('pointermove', handleMove, opts);
+      window.addEventListener('pointerup', handleUp, opts);
     },
-    [openPopover]
+    [openPopover, clearSpringBackTimeout]
   );
 
   const onEditAutoLayout = useCallback(() => {
@@ -223,13 +238,10 @@ export function AutoGridResizeIntercept({ item }: AutoGridResizeInterceptProps) 
 
   return (
     <>
-      <button
+      <div
         ref={setRefEl}
-        type="button"
-        // no keyboard resize support
-        tabIndex={-1}
         className={styles.zone}
-        aria-label={t('dashboard.auto-grid.resize-intercept.aria-label', 'Panel sizes are managed by auto layout')}
+        data-testid={interceptorTestId}
         onMouseEnter={onHover}
         onMouseLeave={onHoverEnd}
         onPointerDown={onZonePointerDown}
@@ -244,7 +256,7 @@ export function AutoGridResizeIntercept({ item }: AutoGridResizeInterceptProps) 
               <Menu
                 header={
                   <Text variant="bodySmall" color="secondary">
-                    {t('dashboard.auto-grid.resize-intercept.header', 'Cannot resize in auto layout')}
+                    {t('dashboard.auto-grid.resize-intercept.header', 'Panel sizes are managed by auto layout')}
                   </Text>
                 }
               >
@@ -255,7 +267,7 @@ export function AutoGridResizeIntercept({ item }: AutoGridResizeInterceptProps) 
                 />
                 <Menu.Item
                   icon="window-grid"
-                  label={t('dashboard.auto-grid.resize-intercept.switch', 'Switch to custom')}
+                  label={t('dashboard.auto-grid.resize-intercept.switch', 'Switch to custom layout')}
                   onClick={onSwitchToCustom}
                 />
               </Menu>
@@ -289,7 +301,7 @@ function getLayoutScope(container: SceneObject): AutoLayoutScope {
 }
 
 function selectAndEditLayout(container: SceneObject): void {
-  getDashboardSceneFor(container).state.editPane.selectObject(container, { force: true });
+  getDashboardSceneFor(container).state.sidebar.selectObject(container, { force: true });
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

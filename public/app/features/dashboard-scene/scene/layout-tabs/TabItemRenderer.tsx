@@ -14,8 +14,8 @@ import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
 import { SectionVariableControls } from '../VariableControls';
-import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
+import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
 import { type TabItem } from './TabItem';
@@ -43,7 +43,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 
   const isDraggable = !isClone && isEditing;
   const showLayoutIndicator = isEditing && isActive;
-  const layoutMode = layout instanceof AutoGridLayoutManager ? 'auto' : 'custom';
+  const layoutMode = mapIdToGridLayoutType(layout.descriptor.id);
 
   const tabSuffix = useMemo(() => {
     if (!showLayoutIndicator && !isConditionallyHidden) {
@@ -53,7 +53,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
     return function TabSuffix({ className }: { className?: string }) {
       return (
         <span className={cx(className, styles.tabSuffix)}>
-          {showLayoutIndicator && <LayoutModeIndicator layoutMode={layoutMode} />}
+          {showLayoutIndicator && layoutMode && <LayoutModeIndicator layoutType={layoutMode} />}
           {isConditionallyHidden && <IsHiddenSuffix />}
         </span>
       );

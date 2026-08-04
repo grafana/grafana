@@ -14,8 +14,8 @@ import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { SectionVariableControls } from '../VariableControls';
-import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
+import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 
@@ -58,6 +58,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const [selectableHighlight, setSelectableHighlight] = useState(false);
   const onHeaderEnter = useCallback(() => setSelectableHighlight(true), []);
   const onHeaderLeave = useCallback(() => setSelectableHighlight(false), []);
+  const layoutType = mapIdToGridLayoutType(layout.descriptor.id);
 
   const isDraggable = !isClone && isEditing;
 
@@ -161,12 +162,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 {!isEditing && titleElement}
               </button>
               {isEditing && titleElement}
-              {isEditing && (
-                <LayoutModeIndicator
-                  layoutMode={layout instanceof AutoGridLayoutManager ? 'auto' : 'custom'}
-                  className="layout-indicator"
-                />
-              )}
+              {isEditing && layoutType && <LayoutModeIndicator layoutType={layoutType} className="layout-indicator" />}
               {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
             </div>
           )}

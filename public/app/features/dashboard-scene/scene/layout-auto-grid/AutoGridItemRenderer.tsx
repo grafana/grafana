@@ -41,6 +41,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragged,
           showDropTarget,
           isRepeat = false,
+          isLastRepeatedPanel = false,
           isSelected = false,
         }: {
           item: VizPanel;
@@ -49,12 +50,13 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragged: boolean;
           showDropTarget: boolean;
           isRepeat?: boolean;
+          isLastRepeatedPanel?: boolean;
           isSelected?: boolean;
         }) => {
           const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
             useIsConditionallyHidden(conditionalRendering);
 
-          const showResizeIntercept = isEditing && !isRepeat && !isDragged;
+          const showResizeIntercept = isEditing && isLastRepeatedPanel && !isDragged;
 
           const wrapperClass = cx(
             conditionalRenderingClass,
@@ -131,6 +133,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragged={isDragged}
           showDropTarget={showDropTarget}
           isRepeat={true}
+          isLastRepeatedPanel={idx === repeatedPanels.length - 1}
           isSelected={isSourceSelected}
         />
       ))}

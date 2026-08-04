@@ -1,6 +1,7 @@
 import { act, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
+import type { PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { CustomVariable, SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
@@ -12,16 +13,23 @@ import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutMan
 import { AutoGridItem } from './AutoGridItem';
 import { AutoGridLayout } from './AutoGridLayout';
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
+import { interceptorTestId } from './AutoGridResizeIntercept';
+
+function TestVizPanel(props: PanelProps) {
+  return <div>{props.title}</div>;
+}
 
 setPluginImportUtils({
-  importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
+  importPanelPlugin: () => Promise.resolve(getPanelPlugin({ id: 'table' }, TestVizPanel)),
   getPanelPluginFromCache: () => undefined,
 });
 
-const INTERCEPT_LABEL = 'Panel sizes are managed by auto layout';
-
 function getInterceptors() {
-  return screen.queryAllByRole('button', { name: INTERCEPT_LABEL });
+  return screen.queryAllByTestId(interceptorTestId);
+}
+
+function getPanelContainer(title: string) {
+  return screen.getByText(title).closest('div[id]');
 }
 
 // Panels load their plugin asynchronously and update state on resolve; flush that inside act()
@@ -31,89 +39,102 @@ async function flushPanelLoad() {
 }
 
 describe('AutoGridResizeIntercept', () => {
-  it('renders only for the source panel, not for repeated panels', async () => {
-    const panel = new VizPanel({ title: 'Panel 1', key: 'panel-1', pluginId: 'table' });
+  it('it renders only for the last repeated panel', async () => {
+    const { gridItem } = await buildAutoGridScene();
 
-    const gridItem = new AutoGridItem({
-      key: 'grid-item-1',
-      body: panel,
-      variableName: 'values',
-    });
-
-    const scene = new DashboardScene({
-      isEditing: true,
-      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
-      $variables: new SceneVariableSet({
-        variables: [
-          new CustomVariable({
-            name: 'values',
-            query: 'A,B,C',
-            options: [
-              { label: 'A', value: 'A' },
-              { label: 'B', value: 'B' },
-              { label: 'C', value: 'C' },
-            ],
-            value: ['A', 'B', 'C'],
-            text: ['A', 'B', 'C'],
-            isMulti: true,
-          }),
-        ],
-      }),
-      body: new AutoGridLayoutManager({
-        key: 'test-AutoGridLayoutManager',
-        layout: new AutoGridLayout({ children: [gridItem] }),
-      }),
-    });
-
-    render(<scene.Component model={scene} />);
-    await flushPanelLoad();
-
-    // The repeat produces one source panel plus two repeated clones, but only the source panel
+    // The repeat produces one source panel plus two repeated clones, but only the last panel
     // gets the resize interceptor.
     expect(gridItem.state.repeatedPanels).toHaveLength(2);
-    expect(getInterceptors()).toHaveLength(1);
+
+    const [interceptor] = getInterceptors();
+    const firstPanel = getPanelContainer('Panel A');
+    const middlePanel = getPanelContainer('Panel B');
+    const lastPanel = getPanelContainer('Panel C');
+
+    expect(interceptor).toBeInTheDocument();
+    expect(firstPanel).not.toContainElement(interceptor);
+    expect(middlePanel).not.toContainElement(interceptor);
+    expect(lastPanel).toContainElement(interceptor);
   });
 
   it('renders in auto layout but not in a custom (default) grid layout', async () => {
-    const autoScene = new DashboardScene({
-      isEditing: true,
-      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
-      body: new AutoGridLayoutManager({
-        key: 'auto-grid',
-        layout: new AutoGridLayout({
-          children: [
-            new AutoGridItem({ key: 'grid-item-1', body: new VizPanel({ key: 'panel-1', pluginId: 'table' }) }),
-          ],
-        }),
-      }),
-    });
-
-    const { unmount } = render(<autoScene.Component model={autoScene} />);
-    await flushPanelLoad();
+    const { unmount } = await buildAutoGridScene();
     expect(getInterceptors()).toHaveLength(1);
     unmount();
 
-    const customScene = new DashboardScene({
-      isEditing: true,
-      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
-      body: new DefaultGridLayoutManager({
-        grid: new SceneGridLayout({
-          children: [
-            new DashboardGridItem({
-              key: 'gi-1',
-              x: 0,
-              y: 0,
-              width: 8,
-              height: 6,
-              body: new VizPanel({ key: 'panel-1', pluginId: 'table' }),
-            }),
-          ],
-        }),
-      }),
-    });
+    await buildCustomGridScene();
 
-    render(<customScene.Component model={customScene} />);
     await flushPanelLoad();
     expect(getInterceptors()).toHaveLength(0);
   });
+
+  it('does not render when not editing', async () => {
+    await buildAutoGridScene({ isEditing: false });
+    expect(getInterceptors()).toHaveLength(0);
+  });
 });
+
+const buildAutoGridScene = async ({ isEditing = true } = {}) => {
+  const panel = new VizPanel({ title: 'Panel $values', key: 'panel-1', pluginId: 'table' });
+
+  const gridItem = new AutoGridItem({
+    key: 'grid-item-1',
+    body: panel,
+    variableName: 'values',
+  });
+
+  const scene = new DashboardScene({
+    isEditing,
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    $variables: new SceneVariableSet({
+      variables: [
+        new CustomVariable({
+          name: 'values',
+          query: 'A,B,C',
+          options: [
+            { label: 'A', value: 'A' },
+            { label: 'B', value: 'B' },
+            { label: 'C', value: 'C' },
+          ],
+          value: ['A', 'B', 'C'],
+          text: ['A', 'B', 'C'],
+          isMulti: true,
+        }),
+      ],
+    }),
+    body: new AutoGridLayoutManager({
+      key: 'test-AutoGridLayoutManager',
+      layout: new AutoGridLayout({ children: [gridItem] }),
+    }),
+  });
+
+  const { unmount } = render(<scene.Component model={scene} />);
+  await flushPanelLoad();
+  return { scene, gridItem, unmount };
+};
+
+const buildCustomGridScene = async () => {
+  const scene = new DashboardScene({
+    isEditing: true,
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: [
+          new DashboardGridItem({
+            key: 'gi-1',
+            x: 0,
+            y: 0,
+            width: 8,
+            height: 6,
+            body: new VizPanel({ key: 'panel-1', pluginId: 'table' }),
+          }),
+        ],
+      }),
+    }),
+  });
+
+  const { unmount } = render(<scene.Component model={scene} />);
+  await flushPanelLoad();
+
+  return { scene, unmount };
+};

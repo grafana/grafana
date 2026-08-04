@@ -1,23 +1,28 @@
-import { type IconName } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { Icon, Tooltip } from '@grafana/ui';
+import { css, cx } from '@emotion/css';
 
-export function LayoutModeIndicator({
-  layoutMode: layoutType,
-  className,
-}: {
-  layoutMode: 'auto' | 'custom';
-  className?: string;
-}) {
+import { type GrafanaTheme2, type IconName } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+
+import { GridLayoutType } from './utils';
+
+export function LayoutModeIndicator({ layoutType, className }: { layoutType: GridLayoutType; className?: string }) {
+  const styles = useStyles2(getStyles);
   const tooltip =
-    layoutType === 'auto'
-      ? t('dashboard.auto-grid.layout-indicator', 'Auto layout - panel size managed by auto grid')
+    layoutType === GridLayoutType.AutoGridLayout
+      ? t('dashboard.auto-grid.layout-indicator', 'Auto layout – panel sizes are managed automatically')
       : t('dashboard.default-layout.layout-indicator', 'Custom layout');
-  const icon: IconName = layoutType === 'auto' ? 'apps' : 'window-grid';
+  const icon: IconName = layoutType === GridLayoutType.AutoGridLayout ? 'apps' : 'window-grid';
 
   return (
-    <Tooltip content={tooltip}>
-      <Icon name={icon} size="sm" className={className} />
+    <Tooltip content={tooltip} placement="top">
+      <Icon name={icon} size="sm" className={cx(className, styles.layoutIndicator)} />
     </Tooltip>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  layoutIndicator: css({
+    cursor: 'help',
+  }),
+});

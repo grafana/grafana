@@ -7,7 +7,6 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { type DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
-import { isLayoutParent } from '../types/LayoutParent';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { hasDirectTabsChild } from './hasDirectTabsChild';
