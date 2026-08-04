@@ -32,7 +32,9 @@ func TestIntegrationRuleSearch(t *testing.T) {
 
 	// Search reads through the provisioning service (the ngalert SQL store), so
 	// results must be correct whichever dual-writer mode the rule resources run
-	// in. Legacy is written (and authoritative) in modes 0-3.
+	// in. Legacy is written (and authoritative) in modes 0-3. Mode 4 reads from
+	// unified storage instead and is not covered here, so nothing below pins the
+	// behaviour of that backend.
 	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3} {
 		t.Run(fmt.Sprintf("dualWriterMode=%d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -154,20 +156,20 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.ElementsMatch(t, []string{"cpu usage high", "memory usage high"}, titles(searchKind(t, "alertrule", newQuery().text("usage"))))
 	})
 
-	// A text leaf searches the title and only the title on both backends: the
-	// handler rejects a per-field text leaf, legacy pushes it into a LIKE on the
-	// title column, and unified defaults its query fields to title.
-	//
-	// Legacy pushes it down as a sequential-word LIKE, so the words must appear
-	// in order but need not be adjacent. That differs from the plain substring
-	// match this used to do in memory, and the difference is invisible to a
-	// single-word query, so pin it explicitly.
+	// A text leaf searches the title and only the title: the handler rejects a
+	// per-field text leaf, legacy pushes it into a LIKE on the title column, and
+	// unified defaults its query fields to title. Every term must appear, in any
+	// order, which a single-word query cannot show, so pin both axes explicitly.
 	t.Run("alert rules: title text spans non-adjacent words", func(t *testing.T) {
 		require.Equal(t, []string{"cpu usage high"}, titles(searchKind(t, "alertrule", newQuery().text("cpu high"))))
 	})
 
-	t.Run("alert rules: title text is order-sensitive", func(t *testing.T) {
-		require.Empty(t, titles(searchKind(t, "alertrule", newQuery().text("high cpu"))))
+	t.Run("alert rules: title text is order-insensitive", func(t *testing.T) {
+		require.Equal(t, []string{"cpu usage high"}, titles(searchKind(t, "alertrule", newQuery().text("high cpu"))))
+	})
+
+	t.Run("alert rules: title text requires every term to match", func(t *testing.T) {
+		require.Empty(t, titles(searchKind(t, "alertrule", newQuery().text("cpu nonexistent"))))
 	})
 
 	t.Run("alert rules: title text is case-insensitive", func(t *testing.T) {

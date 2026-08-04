@@ -70,7 +70,7 @@ func RegisterAppInstaller(
 	membershipIndex := rulesequence_app.NewMembershipIndex()
 
 	// Search routes through a dual-writer-aware client per kind: the legacy
-	// backend (provisioning service) serves modes 0-2, the unified client 3+.
+	// backend (provisioning service) serves modes 0-3, the unified client 4+.
 	legacySearch := search.NewLegacyClient(*ng.Api.AlertRules)
 	searchAdapter := dualwrite.NewSearchAdapter(dual)
 	searchHandler := search.NewHandler(
