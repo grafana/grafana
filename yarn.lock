@@ -20241,10 +20241,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ip-address@npm:10.2.0, ip-address@npm:^10.2.0":
-  version: 10.2.0
-  resolution: "ip-address@npm:10.2.0"
-  checksum: 10/12fec399e1af5753ac322e47a6d81a50d3a528b3abb17c09525b2a2edcaedcca628c40520706f7037bc4d8e951b0296c47e7b86d0a8e6e2335c8f0ba4afcfac1
+"ip-address@npm:10.3.1, ip-address@npm:^10.2.0":
+  version: 10.3.1
+  resolution: "ip-address@npm:10.3.1"
+  checksum: 10/cc0d5b9953acb4114990a3887e0701f8fe843903811f982cf2856cd307c5fb6cdca426ad16c39a1f4950091935c8be4d42631a443f797a96626cce161fffed41
   languageName: node
   linkType: hard
 
