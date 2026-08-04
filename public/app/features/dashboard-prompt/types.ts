@@ -7,12 +7,12 @@ export interface PromptDatasource {
 }
 
 /**
- * Pre-seeded context for entry points that already know what the user
- * is looking at (a datasource's settings page, an Explore pane, …).
+ * Pre-seeded context for entry points that already know what the user is
+ * looking at — today that's a datasource's settings page.
  */
 export interface PromptSeed {
   /** Scope the build to these datasources (uids). */
   datasourceUids?: string[];
-  /** Extra request context, e.g. the queries currently open in Explore. */
+  /** Extra request context describing where the user came from. */
   promptHint?: string;
 }

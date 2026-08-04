@@ -8493,9 +8493,6 @@
       "description-explore-disabled": "To enable Explore, enable it in the Grafana config:",
       "title-explore-disabled": "Explore is disabled"
     },
-    "generate-dashboard-button": {
-      "tooltip": "Generate a dashboard from this data with the Grafana Assistant"
-    },
     "get-field-links-for-explore": {
       "text": {
         "data": "Data",

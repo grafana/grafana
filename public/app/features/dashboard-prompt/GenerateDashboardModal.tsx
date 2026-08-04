@@ -13,7 +13,7 @@ import { type PromptSeed } from './types';
 
 interface Props {
   onDismiss: () => void;
-  /** Entry points that already know the subject (datasource page, Explore) pre-seed the prompt. */
+  /** Entry points that already know the subject (the datasource page) pre-seed the prompt. */
   seed?: PromptSeed;
 }
 
