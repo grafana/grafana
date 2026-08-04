@@ -169,6 +169,14 @@
           padding: 0 16px;
           font-family: Sans-serif;
           line-height: 1.5;
+          color: #52545c;
+        }
+
+        /* No theme-* body classes here without JS; follow system preference like the loader. */
+        @media (prefers-color-scheme: dark) {
+          .js-required-message {
+            color: #d8d9da;
+          }
         }
       </style>
       <main class="js-required-message">
