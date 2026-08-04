@@ -64,10 +64,10 @@ func buildSearchRequest(body model.CreateSearchRulesRequestBody, namespace strin
 	}
 
 	var offset int64
-	if body.Continue != nil && *body.Continue != "" {
-		n, err := strconv.ParseInt(*body.Continue, 10, 64)
-		if err != nil || n < 0 {
-			return nil, 0, fmt.Errorf("invalid continue token %q", *body.Continue)
+	if body.Continue != nil {
+		n, err := decodeCursor(*body.Continue)
+		if err != nil {
+			return nil, 0, err
 		}
 		offset = n
 	}

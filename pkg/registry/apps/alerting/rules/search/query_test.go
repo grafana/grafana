@@ -1,7 +1,6 @@
 package search
 
 import (
-	"strconv"
 	"testing"
 	"time"
 
@@ -711,17 +710,25 @@ func TestBuildSearchRequestPagination(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int64(defaultLimit), req.Limit)
 	})
+	// The token is opaque, so a client-constructed one is rejected rather than
+	// interpreted: "40" is a plausible offset but not a token this API issued.
 	t.Run("rejects invalid continue token", func(t *testing.T) {
-		for _, v := range []string{"notanumber", "-1"} {
+		for _, v := range []string{"notanumber", "-1", "40", encodeCursor(0), encodeCursor(-1)} {
 			_, _, err := buildSearchRequest(continueBody(v), "default", gr, nil)
 			require.Error(t, err, "continue=%s", v)
 		}
 	})
-	t.Run("accepts valid continue token as offset", func(t *testing.T) {
-		req, offset, err := buildSearchRequest(continueBody(strconv.Itoa(40)), "default", gr, nil)
+	t.Run("accepts a token it issued", func(t *testing.T) {
+		req, offset, err := buildSearchRequest(continueBody(encodeCursor(40)), "default", gr, nil)
 		require.NoError(t, err)
 		assert.Equal(t, int64(40), offset)
 		assert.Equal(t, int64(40), req.Offset)
+	})
+	t.Run("treats an empty continue token as the first page", func(t *testing.T) {
+		req, offset, err := buildSearchRequest(continueBody(""), "default", gr, nil)
+		require.NoError(t, err)
+		assert.Zero(t, offset)
+		assert.Zero(t, req.Offset)
 	})
 }
 

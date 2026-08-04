@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -126,15 +125,13 @@ func (h *Handler) run(ctx context.Context, body model.CreateSearchRulesRequestBo
 	if resp.Error != nil {
 		return nil, "", resource.GetError(resp.Error)
 	}
-	// The continue token is a numeric offset into a single, stably-ordered
-	// result set. This is correct only because each backend paginates one
-	// globally-ordered set: the legacy backend sorts and paginates the merged
-	// alert+recording rows itself, and the unified backend applies one ordering
-	// across the federated kinds. If a backend ever returns a differently
-	// ordered set between pages, offset paging would skip or duplicate rows.
+	// Offset paging rather than the generic search API's sort-value cursor,
+	// because rows from the legacy backend carry no sort values. Correct only
+	// while each backend paginates one globally-ordered set: pages ordered
+	// differently would skip or duplicate rows.
 	next := ""
 	if rows := rowCount(resp); rows != 0 && offset+rows < resp.TotalHits {
-		next = strconv.FormatInt(offset+rows, 10)
+		next = encodeCursor(offset + rows)
 	}
 	return resp, next, nil
 }
