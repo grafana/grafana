@@ -19140,7 +19140,7 @@ __metadata:
     papaparse: "npm:5.5.3"
     pdf-parse: "npm:^1.1.1"
     pluralize: "npm:^8.0.0"
-    postcss: "npm:8.5.18"
+    postcss: "npm:8.5.23"
     postcss-loader: "npm:8.1.1"
     postcss-reporter: "npm:7.1.0"
     prettier: "npm:3.6.2"
@@ -20241,10 +20241,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ip-address@npm:10.2.0, ip-address@npm:^10.2.0":
-  version: 10.2.0
-  resolution: "ip-address@npm:10.2.0"
-  checksum: 10/12fec399e1af5753ac322e47a6d81a50d3a528b3abb17c09525b2a2edcaedcca628c40520706f7037bc4d8e951b0296c47e7b86d0a8e6e2335c8f0ba4afcfac1
+"ip-address@npm:10.3.1, ip-address@npm:^10.2.0":
+  version: 10.3.1
+  resolution: "ip-address@npm:10.3.1"
+  checksum: 10/cc0d5b9953acb4114990a3887e0701f8fe843903811f982cf2856cd307c5fb6cdca426ad16c39a1f4950091935c8be4d42631a443f797a96626cce161fffed41
   languageName: node
   linkType: hard
 
@@ -24693,7 +24693,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^3.3.12":
+"nanoid@npm:^3.3.16":
   version: 3.3.16
   resolution: "nanoid@npm:3.3.16"
   bin:
@@ -27156,14 +27156,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:8.5.18, postcss@npm:^8.4.33, postcss@npm:^8.4.38, postcss@npm:^8.4.40, postcss@npm:^8.5.1, postcss@npm:^8.5.6":
-  version: 8.5.18
-  resolution: "postcss@npm:8.5.18"
+"postcss@npm:8.5.23, postcss@npm:^8.4.33, postcss@npm:^8.4.38, postcss@npm:^8.4.40, postcss@npm:^8.5.1, postcss@npm:^8.5.6":
+  version: 8.5.23
+  resolution: "postcss@npm:8.5.23"
   dependencies:
-    nanoid: "npm:^3.3.12"
+    nanoid: "npm:^3.3.16"
     picocolors: "npm:^1.1.1"
     source-map-js: "npm:^1.2.1"
-  checksum: 10/b43f2d2493d82dc43fa50d21cf184bf3b66229e7f53fa1dedc7b8a7c4cecd7ac8ee18fad099f47570da7f78bbf46997a4c6e6c87d8d8ece683dc1f32cda6db3b
+  checksum: 10/8387f421216696bf62a13e5a270e9fefdafc81e196903c0f8d7653f8bab315367cc2261b3c22cf197e492cb075f31bdfc07fd9c3be1cb165ff3cabe14c5a039a
   languageName: node
   linkType: hard
 

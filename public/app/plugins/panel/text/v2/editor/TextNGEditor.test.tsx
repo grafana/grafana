@@ -7,6 +7,7 @@ import config from 'app/core/config';
 import { CodeLanguage, TextMode } from '../../panelcfg.gen';
 
 import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNGEditor';
+import { FOOTER_TEST_ID } from './TextNGEditorFooter';
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
@@ -36,7 +37,7 @@ jest.mock('@grafana/ui/unstable', () => ({
 function ControlledEditor({
   initialValue,
   mode: initialMode,
-  showLineNumbers = false,
+  showLineNumbers: initialShowLineNumbers = false,
   codeLanguage: initialLanguage,
   replaceVariables = (value: string) => value,
   onChange,
@@ -51,6 +52,7 @@ function ControlledEditor({
   const [value, setValue] = useState(initialValue);
   const [mode, setMode] = useState(initialMode);
   const [codeLanguage, setCodeLanguage] = useState(initialLanguage);
+  const [showLineNumbers, setShowLineNumbers] = useState(initialShowLineNumbers);
   return (
     <TextNGEditor
       content={value}
@@ -65,6 +67,9 @@ function ControlledEditor({
         }
         if (change.codeLanguage !== undefined) {
           setCodeLanguage(change.codeLanguage);
+        }
+        if (change.showLineNumbers !== undefined) {
+          setShowLineNumbers(change.showLineNumbers);
         }
         onChange(change);
       }}
@@ -472,6 +477,47 @@ describe('TextNGEditor', () => {
       await enterWriteMode();
 
       expect(screen.getByRole('textbox')).toHaveAttribute('data-line-numbers', 'false');
+    });
+  });
+
+  describe('footer', () => {
+    const lineNumbersToggle = () => screen.getByRole('switch', { name: 'Line numbers' });
+
+    it('only shows the footer in Code mode', async () => {
+      setup('# Hello', TextMode.Markdown);
+
+      expect(screen.queryByTestId(FOOTER_TEST_ID)).not.toBeInTheDocument();
+
+      await selectLanguage('JSON');
+      expect(screen.getByTestId(FOOTER_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('keeps the footer in Preview view, where the editor is hidden', () => {
+      setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+
+      expect(screen.getByRole('radio', { name: 'Preview' })).toBeChecked();
+      expect(screen.getByTestId(FOOTER_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('turns line numbers on and applies them to the editor', async () => {
+      const { onChange } = setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+      await enterWriteMode();
+
+      await userEvent.click(lineNumbersToggle());
+
+      expect(onChange).toHaveBeenLastCalledWith({ showLineNumbers: true, content: 'const a = 1;' });
+      expect(screen.getByRole('textbox')).toHaveAttribute('data-line-numbers', 'true');
+    });
+
+    it('sends the pending draft with the line numbers change, so typing is not lost', async () => {
+      const { onChange } = setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+      await enterWriteMode();
+
+      fireEvent.change(screen.getByRole('textbox'), { target: { value: 'const b = 2;' } });
+      await userEvent.click(lineNumbersToggle());
+
+      expect(onChange).toHaveBeenLastCalledWith({ showLineNumbers: true, content: 'const b = 2;' });
+      expect(screen.getByRole('textbox')).toHaveValue('const b = 2;');
     });
   });
 });
