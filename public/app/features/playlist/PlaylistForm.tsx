@@ -114,6 +114,7 @@ export const PlaylistForm = ({
         // Blank rows inherit the global interval; track the live field value so the row
         // placeholders update as the user edits it, not just the initial value.
         const currentInterval = watch('interval') || interval || DEFAULT_INTERVAL;
+        const currentTitle = watch('title') || name || '';
         return (
           <>
             <Field
@@ -163,6 +164,7 @@ export const PlaylistForm = ({
 
             <PlaylistTable
               items={items}
+              playlistTitle={currentTitle}
               deleteItem={deleteItem}
               duplicateItem={duplicateItem}
               moveItem={moveItem}

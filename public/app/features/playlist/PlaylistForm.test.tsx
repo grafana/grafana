@@ -11,7 +11,11 @@ import { type Playlist } from '../../api/clients/playlist/v1';
 import { backendSrv } from '../../core/services/backend_srv';
 
 import { PlaylistForm } from './PlaylistForm';
-import { PLAYLIST_CUSTOM_VIEW_MESSAGE, PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM } from './customView';
+import {
+  PLAYLIST_CUSTOM_VIEW_MESSAGE,
+  PLAYLIST_CUSTOM_VIEW_TITLE_PARAM,
+  PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM,
+} from './customView';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -678,6 +682,7 @@ describe('PlaylistForm', () => {
       const configureSearchParams = new URL(configureUrl, window.location.origin).searchParams;
       const token = configureSearchParams.get(PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM);
       expect(token).toBeTruthy();
+      expect(configureSearchParams.get(PLAYLIST_CUSTOM_VIEW_TITLE_PARAM)).toBe('A test playlist');
       expect(configureSearchParams.get('var-host')).toBe('host1');
       expect(configureSearchParams.get('from')).toBe('now-6h');
       expect(configureSearchParams.get('to')).toBe('now');

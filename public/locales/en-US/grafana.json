@@ -7356,9 +7356,10 @@
       "title-close": "Close"
     },
     "playlist-view-banner": {
-      "body": "Adjust dashboard variables and time range, then use this view in your playlist.",
+      "body": "Adjust this dashboard to the view you want—including variables, time range, timezone, and selected tabs—then use this view in the playlist.",
       "cancel": "Cancel",
       "title": "Configuring playlist custom view",
+      "title-with-playlist": "Configuring “{{playlistTitle}}” playlist custom view",
       "use-view": "Use this view"
     },
     "predefined-variables": {

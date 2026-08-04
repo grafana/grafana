@@ -1,21 +1,24 @@
 import {
-  addPlaylistCustomViewToken,
+  addPlaylistCustomViewContext,
   getPlaylistCustomViewQueryString,
   isPlaylistCustomViewMessage,
   PLAYLIST_CUSTOM_VIEW_MESSAGE,
+  PLAYLIST_CUSTOM_VIEW_TITLE_PARAM,
   PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM,
 } from './customView';
 
 describe('playlist custom view flow', () => {
   it('adds and removes the temporary configuration token', () => {
-    const url = addPlaylistCustomViewToken('/d/uid/name?var-host=prod', 'token 1');
+    const url = addPlaylistCustomViewContext('/d/uid/name?var-host=prod', 'token 1', 'Operations rotation');
 
-    expect(url).toBe(`/d/uid/name?var-host=prod&${PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM}=token+1`);
+    expect(url).toBe(
+      `/d/uid/name?var-host=prod&${PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM}=token+1&${PLAYLIST_CUSTOM_VIEW_TITLE_PARAM}=Operations+rotation`
+    );
     expect(getPlaylistCustomViewQueryString(new URL(url, 'http://localhost').search)).toBe('var-host=prod');
   });
 
   it('replaces an existing token and keeps the URL fragment at the end', () => {
-    const url = addPlaylistCustomViewToken(
+    const url = addPlaylistCustomViewContext(
       `/d/uid/name?${PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM}=old&var-host=prod#panel-2`,
       'new token'
     );
