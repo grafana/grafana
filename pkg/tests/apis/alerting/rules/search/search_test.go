@@ -30,11 +30,9 @@ const searchFolder = "search-folder"
 func TestIntegrationRuleSearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// Search reads through the provisioning service (the ngalert SQL store), so
-	// results must be correct whichever dual-writer mode the rule resources run
-	// in. Legacy is written (and authoritative) in modes 0-3. Mode 4 reads from
-	// unified storage instead and is not covered here, so nothing below pins the
-	// behaviour of that backend.
+	// Search reads through the provisioning service (the ngalert SQL store) in
+	// modes 0-3, where legacy is authoritative, and from unified storage in mode
+	// 4, so every case below has to hold on both backends.
 	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode3, rest.Mode4} {
 		t.Run(fmt.Sprintf("dualWriterMode=%d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
