@@ -458,10 +458,14 @@ function PlaylistTableRow({
                                 )
                               : t('playlist.playlist-table-rows.paste-dashboard-link', 'Paste a link to this dashboard')
                           }
-                          tooltip={t(
-                            'playlist.playlist-table-rows.dashboard-link-help',
-                            'Paste a link to this dashboard with the view you want to use.'
-                          )}
+                          tooltip={
+                            pasteLinkOpen
+                              ? t('playlist.playlist-table-rows.cancel-dashboard-link', 'Cancel')
+                              : t(
+                                  'playlist.playlist-table-rows.dashboard-link-help',
+                                  'Paste a link with the view you want'
+                                )
+                          }
                           variant={pasteLinkOpen ? 'primary' : 'secondary'}
                           expanded={pasteLinkOpen}
                           controls={dashboardLinkEditorId}

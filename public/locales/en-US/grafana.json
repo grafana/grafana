@@ -12990,7 +12990,7 @@
       "custom-view-time-range": "Time range",
       "custom-view-tooltip-title": "Custom view options",
       "custom-view-variable": "Variable: {{name}}",
-      "dashboard-link-help": "Paste a link to this dashboard with the view you want to use.",
+      "dashboard-link-help": "Paste a link with the view you want",
       "dashboard-state-empty-link": "This link has no custom dashboard state",
       "dashboard-state-placeholder": "Paste dashboard link",
       "dashboard-state-short-link-error": "Could not resolve this short link. Paste the full dashboard URL instead.",
