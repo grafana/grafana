@@ -12208,10 +12208,6 @@
       "subtitle": "Upgrade your existing legacy alerts and notification channels to the new Grafana Alerting",
       "title": "Alerting upgrade"
     },
-    "alerting-watchers": {
-      "subtitle": "Let the Assistant watch your data and notify you when something needs attention",
-      "title": "Watchers"
-    },
     "alerts-and-incidents": {
       "subtitle": "Alerting and incident management apps",
       "title": "Alerts & IRM"
