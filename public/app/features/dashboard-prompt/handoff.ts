@@ -12,6 +12,9 @@ import { type PromptDatasource } from './types';
  */
 const PLANNING_INSTRUCTIONS_TITLE = 'Dashboard planning instructions';
 
+/** Where the plan (and later the build) plays out. */
+const NEW_DASHBOARD_PATH = '/dashboard/new';
+
 interface StartPlanningArgs {
   /** The user's free text plus any entry-point hint (see composeRequest in the modal). */
   request: string;
@@ -19,6 +22,8 @@ interface StartPlanningArgs {
   displayPrompt: string;
   /** Datasources already scoped to the seed. */
   datasources: PromptDatasource[];
+  /** Folder the draft should land in, when the entry point knows one. */
+  folderUid?: string;
 }
 
 /**
@@ -28,18 +33,32 @@ interface StartPlanningArgs {
  * The assistant grounds a plan with its own datasource tools, asks clarifying
  * questions in the chat, renders the plan as a card with a "Build it" button,
  * and builds in the same conversation once the plan is accepted.
+ *
+ * Returns false when the navigation was refused and nothing was started, so the
+ * caller can keep the user's prompt on screen instead of losing it.
  */
-export function startPlanningInAssistant(args: StartPlanningArgs): void {
+export function startPlanningInAssistant(args: StartPlanningArgs): boolean {
+  // Land in the new-dashboard editor first so the plan (and later the build)
+  // plays out next to the dashboard it will produce.
+  locationService.push(
+    args.folderUid ? `${NEW_DASHBOARD_PATH}?folderUid=${encodeURIComponent(args.folderUid)}` : NEW_DASHBOARD_PATH
+  );
+
+  // An unsaved dashboard blocks navigation (dashboard-scene's DashboardPrompt
+  // installs a history blocker and shows its own modal instead). That runs
+  // synchronously, so a pathname that hasn't moved means we never left: opening
+  // a dashboarding conversation now would point the assistant at the dashboard
+  // the user is still sitting on, and tell it a blank one is open.
+  if (locationService.getLocation().pathname !== NEW_DASHBOARD_PATH) {
+    return false;
+  }
+
   const planningItem = createAssistantContextItem('structured', {
     title: PLANNING_INSTRUCTIONS_TITLE,
     hidden: true,
     bypassLimits: true,
     data: { instructions: buildPlanningInstructions(args) },
   });
-
-  // Land in the new-dashboard editor first so the plan (and later the build)
-  // plays out next to the dashboard it will produce.
-  locationService.push('/dashboard/new');
 
   openAssistant({
     origin: PROMPT_ORIGIN,
@@ -48,6 +67,8 @@ export function startPlanningInAssistant(args: StartPlanningArgs): void {
     prompt: args.displayPrompt,
     context: [planningItem],
   });
+
+  return true;
 }
 
 /**

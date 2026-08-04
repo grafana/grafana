@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { AssistantPromptCardView, openAssistant } from '@grafana/assistant';
 
-import { DashboardPrompt } from './DashboardPrompt';
+import { PromptForm } from './PromptForm';
 
 // The SDK's prompt card owns the input; stub it with a button that reports a
 // fixed prompt through the props the modal passed in, so the test exercises the
@@ -16,7 +16,7 @@ jest.mock('@grafana/assistant', () => ({
 const mockCard = jest.mocked(AssistantPromptCardView);
 const mockOpenAssistant = jest.mocked(openAssistant);
 
-describe('DashboardPrompt', () => {
+describe('PromptForm', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockCard.mockImplementation(({ openAssistant: open, onSubmit }) => (
@@ -34,7 +34,7 @@ describe('DashboardPrompt', () => {
 
   it('routes a submitted prompt to the handoff instead of opening the assistant itself', async () => {
     const onSubmitPrompt = jest.fn();
-    render(<DashboardPrompt onSubmitPrompt={onSubmitPrompt} onDismiss={jest.fn()} />);
+    render(<PromptForm onSubmitPrompt={onSubmitPrompt} onDismiss={jest.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'submit' }));
 
@@ -45,7 +45,7 @@ describe('DashboardPrompt', () => {
   });
 
   it('gives the card the dashboarding mode and the feature origin', () => {
-    render(<DashboardPrompt onSubmitPrompt={jest.fn()} onDismiss={jest.fn()} />);
+    render(<PromptForm onSubmitPrompt={jest.fn()} onDismiss={jest.fn()} />);
 
     expect(mockCard).toHaveBeenCalledWith(
       expect.objectContaining({ mode: 'dashboarding', origin: 'grafana/dashboard-prompt' }),

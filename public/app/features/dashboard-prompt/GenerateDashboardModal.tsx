@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Modal, useStyles2 } from '@grafana/ui';
 
-import { DashboardPrompt } from './DashboardPrompt';
+import { PromptForm } from './PromptForm';
 import { getPromptDatasources } from './datasources';
 import { startPlanningInAssistant } from './handoff';
 import { type PromptSeed } from './types';
@@ -53,14 +53,21 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
    * the new-dashboard editor and the conversation takes it from there.
    */
   const handleSubmitPrompt = (prompt: string) => {
-    reportInteraction('dashboard_prompt_planning_started');
-
-    startPlanningInAssistant({
+    const started = startPlanningInAssistant({
       request: composeRequest(prompt),
       displayPrompt: prompt,
       datasources,
+      folderUid: seed?.folderUid,
     });
 
+    // Navigation refused — an unsaved dashboard is asking the user what to do
+    // about it. Stay open behind that modal so their prompt survives the
+    // decision instead of being thrown away.
+    if (!started) {
+      return;
+    }
+
+    reportInteraction('dashboard_prompt_planning_started');
     onDismiss();
   };
 
@@ -75,7 +82,7 @@ export function GenerateDashboardModal({ onDismiss, seed }: Props) {
       // focus manager races it and lands on the close button instead.
       initialFocus={-1}
     >
-      <DashboardPrompt onSubmitPrompt={handleSubmitPrompt} onDismiss={onDismiss} />
+      <PromptForm onSubmitPrompt={handleSubmitPrompt} onDismiss={onDismiss} />
     </Modal>
   );
 }

@@ -15,4 +15,10 @@ export interface PromptSeed {
   datasourceUids?: string[];
   /** Extra request context describing where the user came from. */
   promptHint?: string;
+  /**
+   * Folder the draft should be created in, matching what the entry point's
+   * sibling "New dashboard" link would do. Affects where the dashboard lands,
+   * not what the assistant is told.
+   */
+  folderUid?: string;
 }

@@ -18,7 +18,7 @@ interface Props {
  * The modal's body: describe the dashboard, then hand off to the sidebar.
  * The question itself is the modal's title, so this only carries the subtext.
  */
-export function DashboardPrompt({ onSubmitPrompt, onDismiss }: Props) {
+export function PromptForm({ onSubmitPrompt, onDismiss }: Props) {
   const styles = useStyles2(getStyles);
 
   return (

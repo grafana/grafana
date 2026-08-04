@@ -23,11 +23,24 @@ jest.mock('@grafana/assistant', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  locationService: { push: jest.fn() },
+  locationService: { push: jest.fn(), getLocation: jest.fn() },
 }));
 
 const openAssistantMock = jest.mocked(openAssistant);
 const pushMock = jest.mocked(locationService.push);
+const getLocationMock = jest.mocked(locationService.getLocation);
+
+/** Navigation succeeded: we're on the new-dashboard editor afterwards. */
+function landedOnNewDashboard() {
+  getLocationMock.mockReturnValue({ pathname: '/dashboard/new' } as ReturnType<typeof locationService.getLocation>);
+}
+
+/** Navigation was refused, e.g. by the unsaved-changes blocker. */
+function stayedPut() {
+  getLocationMock.mockReturnValue({ pathname: '/d/abc/my-dashboard' } as ReturnType<
+    typeof locationService.getLocation
+  >);
+}
 
 const args = {
   request: 'Monitor my checkout service\n\nWhere this request came from:\nPrometheus datasource page',
@@ -38,10 +51,11 @@ const args = {
 describe('startPlanningInAssistant', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    landedOnNewDashboard();
   });
 
   it('lands in the new-dashboard editor and opens a dashboarding conversation', () => {
-    startPlanningInAssistant(args);
+    expect(startPlanningInAssistant(args)).toBe(true);
 
     expect(pushMock).toHaveBeenCalledWith('/dashboard/new');
     expect(openAssistantMock).toHaveBeenCalledTimes(1);
@@ -64,6 +78,43 @@ describe('startPlanningInAssistant', () => {
     // The exact title is the trigger the assistant's plan-first workflow matches on.
     expect(planningItem?.node.name).toBe('Dashboard planning instructions');
     expect(planningItem?.node.data?.params?.hidden).toBe(true);
+  });
+});
+
+describe('startPlanningInAssistant when navigation is refused', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    stayedPut();
+  });
+
+  it('starts nothing, so the assistant is never pointed at the wrong dashboard', () => {
+    expect(startPlanningInAssistant(args)).toBe(false);
+
+    // The push was attempted; the blocker swallowed it.
+    expect(pushMock).toHaveBeenCalledWith('/dashboard/new');
+    expect(openAssistantMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('startPlanningInAssistant folder handling', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    landedOnNewDashboard();
+  });
+
+  it('creates the draft in the folder the entry point knew about', () => {
+    startPlanningInAssistant({ ...args, folderUid: 'folder-1' });
+    expect(pushMock).toHaveBeenCalledWith('/dashboard/new?folderUid=folder-1');
+  });
+
+  it('escapes the folder uid', () => {
+    startPlanningInAssistant({ ...args, folderUid: 'a b/c&d' });
+    expect(pushMock).toHaveBeenCalledWith('/dashboard/new?folderUid=a%20b%2Fc%26d');
+  });
+
+  it('goes to the bare new-dashboard path when no folder is known', () => {
+    startPlanningInAssistant(args);
+    expect(pushMock).toHaveBeenCalledWith('/dashboard/new');
   });
 });
 

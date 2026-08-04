@@ -224,7 +224,11 @@ export default function CreateNewButton({
       )}
       {showGenerateDashboardPrompt && (
         <Suspense fallback={null}>
-          <GenerateDashboardModal onDismiss={() => setShowGenerateDashboardPrompt(false)} />
+          {/* Keep the draft in the folder being browsed, like the sibling "New dashboard" link. */}
+          <GenerateDashboardModal
+            seed={{ folderUid: parentFolder?.uid }}
+            onDismiss={() => setShowGenerateDashboardPrompt(false)}
+          />
         </Suspense>
       )}
     </>
