@@ -198,7 +198,7 @@ export function canGroupSelection(items: SceneObject[], target: GroupTarget): Gr
     return {
       enabled: false,
       reason: t(
-        'dashboard.edit-pane.group.different-parents',
+        'dashboard.sidebar.group.different-parents',
         'Select items within the same row, tab, or grid to group them'
       ),
     };

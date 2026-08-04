@@ -55,14 +55,14 @@ export function GroupSelectedActions({ items }: Props) {
     <Stack direction="column" gap={1}>
       <AddButton
         icon="list-ul"
-        label={t('dashboard.edit-pane.group.into-row', 'Group into row')}
+        label={t('dashboard.sidebar.group.into-row', 'Group into row')}
         disabled={!rowGrouping.enabled}
         tooltip={!rowGrouping.enabled ? rowGrouping.reason : undefined}
         onClick={() => group('row')}
       />
       <AddButton
         icon="layers"
-        label={t('dashboard.edit-pane.group.into-tab', 'Group into tab')}
+        label={t('dashboard.sidebar.group.into-tab', 'Group into tab')}
         disabled={!tabGrouping.enabled}
         tooltip={!tabGrouping.enabled ? tabGrouping.reason : undefined}
         onClick={() => group('tab')}
@@ -74,7 +74,7 @@ export function GroupSelectedActions({ items }: Props) {
 export function getGroupSelectedCategory(items: SceneObject[]): OptionsPaneCategoryDescriptor {
   const id = 'group-selected-options';
   return new OptionsPaneCategoryDescriptor({
-    title: t('dashboard.edit-pane.group.title', 'Group'),
+    title: t('dashboard.sidebar.group.title', 'Group'),
     id,
   }).addItem(
     new OptionsPaneItemDescriptor({
