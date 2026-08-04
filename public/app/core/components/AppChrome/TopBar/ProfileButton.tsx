@@ -17,9 +17,10 @@ import { TopNavBarMenu } from './TopNavBarMenu';
 export interface Props {
   profileNode: NavModelItem;
   onToggleKioskMode: () => void;
+  onNavigate?: () => void;
 }
 
-export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
+export function ProfileButton({ profileNode, onToggleKioskMode, onNavigate }: Props) {
   const styles = useStyles2(getStyles);
   const node = enrichWithInteractionTracking(cloneDeep(profileNode), false);
   const [showNewsDrawer, onToggleShowNewsDrawer] = useToggle(false);
@@ -30,7 +31,7 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
   }
 
   const renderMenu = () => (
-    <TopNavBarMenu node={profileNode}>
+    <TopNavBarMenu node={profileNode} onNavigate={onNavigate}>
       <>
         <MenuItem icon="palette" onClick={onToggleThemeDrawer} label={t('profile.change-theme', 'Change theme')} />
         <Menu.Item
@@ -53,6 +54,7 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
               label={t('nav.sign-out.title', 'Sign out')}
               icon="arrow-from-right"
               target={'_self'}
+              onClick={onNavigate}
             />
           </>
         )}
