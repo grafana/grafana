@@ -193,7 +193,7 @@ func APIReceiverToPostableAPIReceiver(r alertingModels.ReceiverConfig) *definiti
 	}
 
 	return &definition.PostableApiReceiver{
-		Receiver: definition.Receiver{Name: r.Name},
+		Name: r.Name,
 		PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
 			GrafanaManagedReceivers: receivers,
 		},

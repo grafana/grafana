@@ -366,7 +366,7 @@ func (b *VectorBackfiller) processBackfillItem(ctx context.Context, job vector.B
 		Name:      name,
 	}
 
-	items, err := builder.Extract(ctx, key, iter.Value(), "")
+	items, err := builder.Extract(ctx, key, iter.Value())
 	if err != nil {
 		return fmt.Errorf("extract %s/%s: %w", namespace, name, err)
 	}

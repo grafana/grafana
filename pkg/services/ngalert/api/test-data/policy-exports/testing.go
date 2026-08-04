@@ -8,8 +8,6 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/alerting/definition"
-
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 )
 
@@ -52,12 +50,12 @@ var Config = func() *v1.AMConfigV1 {
 			},
 			// Add receiver references to help tests avoid validation errors.
 			Receivers: []*v1.PostableApiReceiver{
-				{Receiver: definition.Receiver{Name: "default-receiver"}},
-				{Receiver: definition.Receiver{Name: "lotsa-emails"}},
-				{Receiver: definition.Receiver{Name: "lotsa-emails-override"}},
-				{Receiver: definition.Receiver{Name: "slack-multi-channel"}},
-				{Receiver: definition.Receiver{Name: "provisioned-contact-point"}},
-				{Receiver: definition.Receiver{Name: "nested-receiver"}},
+				{Name: "default-receiver"},
+				{Name: "lotsa-emails"},
+				{Name: "lotsa-emails-override"},
+				{Name: "slack-multi-channel"},
+				{Name: "provisioned-contact-point"},
+				{Name: "nested-receiver"},
 			},
 		},
 		ManagedRoutes: map[string]*v1.Route{

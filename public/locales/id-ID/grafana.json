@@ -3969,6 +3969,9 @@
       "trace-id": "ID Pelacakan: {{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": ""
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Pengaturan autentikasi"
@@ -6137,13 +6140,10 @@
         "show-in": ""
       },
       "annotations": {
-        "add-annotation": "",
         "add-annotation-query": "",
         "name-builtin": "",
         "name-disabled": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-annotation": "",
         "title-above-dashboard-count_other": "",
         "title-controls-menu-count_other": "",
         "title-hidden-count_other": ""
@@ -6223,10 +6223,7 @@
       "links": {
         "add-link": "",
         "new-link": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-link": "",
-        "untitled": "",
         "title-above-dashboard_other": "",
         "title-controls-menu_other": ""
       },
@@ -6324,11 +6321,9 @@
       "variables": {
         "add-variable": "",
         "change-type": "",
-        "reorder": "",
         "reorder-description": "",
         "select-type": "",
         "select-type-card-tooltip": "",
-        "select-variable": "",
         "top-placement-default": "",
         "title-controls-menu_other": "",
         "title-hidden_other": "",
@@ -6761,11 +6756,6 @@
       "delete-text": "Yakin ingin menghapus: {{name}}?",
       "delete-title": "Hapus kueri anotasi"
     },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "Anotasi"
-      }
-    },
     "annotation-query-library-dropdown": {
       "use-saved-query": "Gunakan kueri tersimpan"
     },
@@ -7187,11 +7177,6 @@
       "delete-text": "Yakin ingin menghapus: {{name}}?",
       "delete-title": "Hapus tautan",
       "unnamed": "Tautan tanpa nama"
-    },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "Tautan"
-      }
     },
     "link-options": {
       "icon": "Ikon",
@@ -15825,18 +15810,29 @@
     },
     "editor": {
       "aria-label-content": "",
+      "aria-label-mode": "",
+      "footer-line-numbers": "",
+      "format-bold": "",
+      "format-heading": "",
+      "format-italic": "",
+      "language-plaintext": "",
+      "mode-code": "",
+      "mode-html": "",
+      "mode-markdown": "",
+      "mode-picker-label": "",
+      "tooltip-bold": "",
+      "tooltip-bullet-list": "",
+      "tooltip-checklist": "",
+      "tooltip-heading": "",
+      "tooltip-insert-variable": "",
+      "tooltip-italic": "",
+      "tooltip-link": "",
+      "tooltip-numbered-list": "",
+      "tooltip-table": "",
       "view-preview": "",
       "view-split": "",
       "view-write": ""
-    },
-    "mode-options": {
-      "label-code": "",
-      "label-html": "",
-      "label-markdown": ""
-    },
-    "name-language": "",
-    "name-mode": "",
-    "name-show-line-numbers": ""
+    }
   },
   "theme-playground": {
     "label-base-theme": "Tema dasar",
