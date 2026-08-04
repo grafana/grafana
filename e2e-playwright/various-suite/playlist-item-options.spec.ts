@@ -6,7 +6,7 @@ const suffix = Date.now().toString(36);
 const firstDashboardUID = `playlist-options-a-${suffix}`;
 const secondDashboardUID = `playlist-options-b-${suffix}`;
 const playlistUID = `playlist-options-${suffix}`;
-const playlistAPI = `/apis/playlist.grafana.app/v1/namespaces/default/playlists`;
+let playlistAPI = '';
 
 function dashboard(title: string, uid: string) {
   return {
@@ -49,6 +49,12 @@ function itemRow(page: Page, itemUID: string) {
 
 test.describe('Playlist item options', { tag: ['@various'] }, () => {
   test.beforeAll(async ({ request }) => {
+    const settingsResponse = await request.get('/api/frontend/settings');
+    expect(settingsResponse.ok()).toBe(true);
+    const { namespace } = await settingsResponse.json();
+    expect(namespace).toBeTruthy();
+    playlistAPI = `/apis/playlist.grafana.app/v1/namespaces/${encodeURIComponent(namespace)}/playlists`;
+
     for (const [title, uid] of [
       ['Playlist options first dashboard', firstDashboardUID],
       ['Playlist options second dashboard', secondDashboardUID],
@@ -78,7 +84,9 @@ test.describe('Playlist item options', { tag: ['@various'] }, () => {
   });
 
   test.afterAll(async ({ request }) => {
-    await request.delete(`${playlistAPI}/${playlistUID}`);
+    if (playlistAPI) {
+      await request.delete(`${playlistAPI}/${playlistUID}`);
+    }
     await request.delete(`/api/dashboards/uid/${firstDashboardUID}`);
     await request.delete(`/api/dashboards/uid/${secondDashboardUID}`);
   });
