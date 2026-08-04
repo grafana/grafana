@@ -35,6 +35,7 @@ import { getPlaylistShortLinkUid, isValidInterval, normalizeDashboardViewQuerySt
 interface Props {
   items: PlaylistItemUI[];
   onDelete: (idx: number) => void;
+  onDuplicate: (idx: number) => void;
   /** Placeholder for empty per-item intervals; the global interval used as fallback during playback. */
   intervalPlaceholder?: string;
   onUpdateInterval?: (idx: number, interval: string) => void;
@@ -44,6 +45,7 @@ interface Props {
 export const PlaylistTableRows = ({
   items,
   onDelete,
+  onDuplicate,
   intervalPlaceholder,
   onUpdateInterval,
   onUpdateDashboardView,
@@ -128,6 +130,7 @@ export const PlaylistTableRows = ({
           styles={styles}
           renderItem={renderItem}
           onDelete={onDelete}
+          onDuplicate={onDuplicate}
           intervalPlaceholder={intervalPlaceholder}
           onUpdateInterval={onUpdateInterval}
           onUpdateDashboardView={onUpdateDashboardView}
@@ -150,6 +153,7 @@ function PlaylistTableRow({
   styles,
   renderItem,
   onDelete,
+  onDuplicate,
   intervalPlaceholder,
   onUpdateInterval,
   onUpdateDashboardView,
@@ -167,6 +171,7 @@ function PlaylistTableRow({
   const mounted = useRef(true);
   currentIndex.current = index;
   const optionsId = useId();
+  const dashboardLinkEditorId = useId();
   const optionSummary = [
     item.dashboardView ? t('playlist.playlist-table-rows.dashboard-state-summary', 'Custom view') : undefined,
     item.interval
@@ -299,6 +304,13 @@ function PlaylistTableRow({
               </span>
             )}
             <PlaylistActionIconButton
+              name="copy"
+              label={t('playlist.playlist-table-rows.duplicate-item', 'Duplicate playlist item')}
+              tooltip={t('playlist.playlist-table-rows.duplicate-item-tooltip', 'Duplicate')}
+              triggerClassName={styles.iconAction}
+              onClick={() => onDuplicate(index)}
+            />
+            <PlaylistActionIconButton
               name="cog"
               label={t('playlist.playlist-table-rows.settings', 'Settings')}
               variant={optionsOpen ? 'primary' : 'secondary'}
@@ -308,13 +320,6 @@ function PlaylistTableRow({
               buttonClassName={styles.settingsButton}
               onClick={() => setOptionsOpen((open) => !open)}
             />
-            <div {...provided.dragHandleProps}>
-              <Icon
-                title={t('playlist-edit.form.table-drag', 'Reorder playlist item')}
-                name="draggabledots"
-                size="md"
-              />
-            </div>
             <div className={styles.deleteAction}>
               {deleteConfirmationOpen ? (
                 <div className={styles.deleteConfirmation}>
@@ -329,6 +334,7 @@ function PlaylistTableRow({
                 <PlaylistActionIconButton
                   name="trash-alt"
                   label={t('playlist-edit.form.table-delete', 'Delete playlist item')}
+                  tooltip={t('playlist.playlist-table-rows.delete-item-tooltip', 'Delete')}
                   variant="destructive"
                   buttonClassName={styles.deleteButton}
                   testId={selectors.pages.PlaylistForm.itemDelete}
@@ -336,6 +342,13 @@ function PlaylistTableRow({
                   onClick={() => setDeleteConfirmationOpen(true)}
                 />
               )}
+            </div>
+            <div {...provided.dragHandleProps}>
+              <Icon
+                title={t('playlist-edit.form.table-drag', 'Reorder playlist item')}
+                name="draggabledots"
+                size="md"
+              />
             </div>
           </div>
           {optionsOpen && (
@@ -431,13 +444,24 @@ function PlaylistTableRow({
                         </LinkButton>
                         <PlaylistActionIconButton
                           name="clipboard-alt"
-                          label={t(
-                            'playlist.playlist-table-rows.paste-dashboard-link',
-                            'Paste a link to this dashboard'
-                          )}
+                          label={
+                            pasteLinkOpen
+                              ? t(
+                                  'playlist.playlist-table-rows.cancel-pasting-dashboard-link',
+                                  'Cancel pasting dashboard link'
+                                )
+                              : t('playlist.playlist-table-rows.paste-dashboard-link', 'Paste a link to this dashboard')
+                          }
+                          variant={pasteLinkOpen ? 'primary' : 'secondary'}
+                          expanded={pasteLinkOpen}
+                          controls={dashboardLinkEditorId}
                           triggerClassName={styles.iconAction}
                           buttonClassName={styles.customViewIconButton}
                           onClick={() => {
+                            if (pasteLinkOpen) {
+                              closeDashboardLinkEditor();
+                              return;
+                            }
                             setDashboardStateError(undefined);
                             setDashboardLinkDraft('');
                             setPasteLinkOpen(true);
@@ -447,7 +471,7 @@ function PlaylistTableRow({
                     )}
                   </div>
                   {pasteLinkOpen && (
-                    <div className={styles.dashboardLinkEditor}>
+                    <div id={dashboardLinkEditorId} className={styles.dashboardLinkEditor}>
                       <Input
                         autoFocus
                         type="text"
@@ -597,6 +621,7 @@ function CustomViewTooltipRow({ label, value, styles }: CustomViewTooltipRowProp
 interface PlaylistActionIconButtonProps {
   name: IconName;
   label: string;
+  tooltip?: string;
   onClick: () => void;
   triggerClassName: string;
   buttonClassName?: string;
@@ -609,6 +634,7 @@ interface PlaylistActionIconButtonProps {
 function PlaylistActionIconButton({
   name,
   label,
+  tooltip,
   onClick,
   triggerClassName,
   buttonClassName,
@@ -627,7 +653,7 @@ function PlaylistActionIconButton({
       onFocusCapture={() => setTooltipOpen(true)}
       onBlurCapture={() => setTooltipOpen(false)}
     >
-      <Tooltip content={label} placement="top" show={tooltipOpen}>
+      <Tooltip content={tooltip ?? label} placement="top" show={tooltipOpen}>
         <IconButton
           name={name}
           size="md"
@@ -704,7 +730,6 @@ function getStyles(theme: GrafanaTheme2) {
       borderLeft: `1px solid ${theme.colors.border.weak}`,
       display: 'flex',
       minHeight: theme.spacing(3),
-      marginLeft: theme.spacing(0.5),
       padding: theme.spacing(0, 0.5, 0, 1),
     }),
     deleteButton: css({
@@ -733,7 +758,7 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       display: 'flex',
       flexWrap: 'wrap',
-      gap: theme.spacing(1),
+      gap: theme.spacing(0.5),
       minHeight: theme.spacing(4),
     }),
     customViewStatus: css({

@@ -105,6 +105,11 @@ test.describe('Playlist item options', { tag: ['@various'] }, () => {
     await firstRow.getByRole('button', { name: 'Apply' }).click();
     await expect(firstRow.getByText('Configured')).toBeVisible();
 
+    await firstRow.getByRole('button', { name: 'Duplicate playlist item' }).click();
+    const duplicatedRows = itemRow(page, firstDashboardUID);
+    await expect(duplicatedRows).toHaveCount(2);
+    await expect(duplicatedRows.nth(1).getByText('Custom view · Interval: 4s')).toBeVisible();
+
     const replaceResponsePromise = page.waitForResponse(
       (response) => response.request().method() === 'PUT' && response.url().endsWith(`/playlists/${playlistUID}`)
     );
@@ -122,11 +127,18 @@ test.describe('Playlist item options', { tag: ['@various'] }, () => {
         interval: '4s',
         dashboardView: { queryString: 'var-host=prod&from=now-6h&to=now' },
       },
+      {
+        type: 'dashboard_by_uid',
+        value: firstDashboardUID,
+        interval: '4s',
+        dashboardView: { queryString: 'var-host=prod&from=now-6h&to=now' },
+      },
       { type: 'dashboard_by_uid', value: secondDashboardUID },
     ]);
 
     await page.goto(`/playlists/edit/${playlistUID}`);
-    await expect(itemRow(page, firstDashboardUID).getByText('Custom view · Interval: 4s')).toBeVisible();
+    await expect(itemRow(page, firstDashboardUID)).toHaveCount(2);
+    await expect(itemRow(page, firstDashboardUID).first().getByText('Custom view · Interval: 4s')).toBeVisible();
 
     await page.goto(`/playlists/play/${playlistUID}`);
     await expect(page).toHaveURL(new RegExp(`/d/${firstDashboardUID}(?:/|\\?|$)`), { timeout: 15_000 });

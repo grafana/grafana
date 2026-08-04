@@ -92,6 +92,25 @@ export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
     [items]
   );
 
+  const duplicateItem = useCallback((index: number) => {
+    setItems((current) => {
+      const source = current[index];
+      if (!source) {
+        return current;
+      }
+
+      const duplicate: PlaylistItemUI = {
+        ...source,
+        dashboardView: source.dashboardView ? { ...source.dashboardView } : undefined,
+        dashboards: source.dashboards ? [...source.dashboards] : undefined,
+        localId: createLocalId(),
+      };
+      const copy = current.slice();
+      copy.splice(index + 1, 0, duplicate);
+      return copy;
+    });
+  }, []);
+
   const updateItemInterval = useCallback((index: number, interval: string) => {
     setItems((prev) => {
       if (!prev[index]) {
@@ -118,5 +137,14 @@ export function usePlaylistItems(playlistItems?: PlaylistItemUI[]) {
     });
   }, []);
 
-  return { items, addByUID, addByTag, deleteItem, moveItem, updateItemInterval, updateItemDashboardView };
+  return {
+    items,
+    addByUID,
+    addByTag,
+    deleteItem,
+    duplicateItem,
+    moveItem,
+    updateItemInterval,
+    updateItemDashboardView,
+  };
 }

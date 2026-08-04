@@ -9,6 +9,7 @@ import { type PlaylistItemUI } from './types';
 interface Props {
   items: PlaylistItemUI[];
   deleteItem: (idx: number) => void;
+  duplicateItem: (idx: number) => void;
   moveItem: (src: number, dst: number) => void;
   /** Placeholder for empty per-item intervals; the global interval used as fallback during playback. */
   intervalPlaceholder?: string;
@@ -19,6 +20,7 @@ interface Props {
 export const PlaylistTable = ({
   items,
   deleteItem,
+  duplicateItem,
   moveItem,
   intervalPlaceholder,
   updateItemInterval,
@@ -50,6 +52,7 @@ export const PlaylistTable = ({
                 <PlaylistTableRows
                   items={items}
                   onDelete={deleteItem}
+                  onDuplicate={duplicateItem}
                   intervalPlaceholder={intervalPlaceholder}
                   onUpdateInterval={updateItemInterval}
                   onUpdateDashboardView={updateItemDashboardView}
