@@ -146,7 +146,7 @@ func readNATSSettings(cfg *Cfg) error {
 
 		DiscoveryEnabled:  section.Key("discovery_enabled").MustBool(true),
 		DiscoveryInterval: section.Key("discovery_interval").MustDuration(5 * time.Second),
-		DiscoveryTTL:      section.Key("discovery_ttl").MustDuration(30 * time.Second),
+		DiscoveryTTL:      section.Key("discovery_ttl").MustDuration(15 * time.Second),
 		NotifierShadow:    section.Key("notifier_shadow").MustBool(false),
 		Notifier:          section.Key("notifier").MustBool(false),
 		TLS: NATSTLSSettings{

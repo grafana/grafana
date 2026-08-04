@@ -22,7 +22,7 @@ const (
 	// Fallbacks used when the config supplies no interval/TTL. Keep the TTL a
 	// comfortable multiple of the interval so one missed tick doesn't evict a peer.
 	defaultDiscoveryInterval = 5 * time.Second
-	defaultDiscoveryTTL      = 30 * time.Second
+	defaultDiscoveryTTL      = 15 * time.Second
 )
 
 // peer is an embedded NATS server advertising the cluster route URL peers dial.
