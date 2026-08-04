@@ -3843,8 +3843,7 @@
       "metadata": {
         "name": "kubernetesQueryCaching",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2025-10-20T16:11:25Z",
-        "deletionTimestamp": "2026-08-04T08:36:41Z"
+        "creationTimestamp": "2025-10-20T16:11:25Z"
       },
       "spec": {
         "description": "Adds support for Kubernetes querycaching",
@@ -5295,8 +5294,7 @@
       "metadata": {
         "name": "querycaching.redirectToK8SApi",
         "resourceVersion": "1779440584464",
-        "creationTimestamp": "2026-05-22T09:03:04Z",
-        "deletionTimestamp": "2026-08-04T08:36:41Z"
+        "creationTimestamp": "2026-05-22T09:03:04Z"
       },
       "spec": {
         "description": "Redirect caching service cache config reads from legacy storage to K8s API",
