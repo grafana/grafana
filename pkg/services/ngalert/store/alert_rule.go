@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -139,7 +140,7 @@ func (st DBstore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int64,
 			}
 			result = append(result, *rule)
 		}
-		if err := rows.Err(); err != nil {
+		if err := rows.Err(); err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 		return nil
@@ -288,7 +289,7 @@ func (st DBstore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid st
 			previousVersion = rule
 			alertRules = append(alertRules, &converted)
 		}
-		if err := rows.Err(); err != nil {
+		if err := rows.Err(); err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 		return nil
@@ -356,7 +357,7 @@ func (st DBstore) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmodel
 			}
 			alertRules = append(alertRules, &converted)
 		}
-		if err := rows.Err(); err != nil {
+		if err := rows.Err(); err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 		return nil
