@@ -2,6 +2,8 @@ package rbac
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"slices"
@@ -29,10 +31,17 @@ func userIdentifierCacheKeyById(namespace, ID string) string {
 // delegation checks, which exclude action sets) must not share entries.
 // The separator is always present so no key matches the legacy bare-action
 // format and entries written by older instances sharing the cache are never read.
+// Action sets are folded into a fixed-length digest: embedding them verbatim
+// pushes long mappings past memcached's 250-byte key limit, turning every
+// check for those actions into a permanent cache miss.
 func permCacheActionPart(action string, actionSets []string) string {
+	if len(actionSets) == 0 {
+		return action + "!"
+	}
 	sets := slices.Clone(actionSets)
 	slices.Sort(sets)
-	return action + "!" + strings.Join(sets, ",")
+	digest := sha256.Sum256([]byte(strings.Join(sets, ",")))
+	return action + "!" + hex.EncodeToString(digest[:8])
 }
 
 func anonymousPermCacheKey(namespace, action string, actionSets []string) string {

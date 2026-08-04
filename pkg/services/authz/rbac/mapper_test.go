@@ -376,3 +376,34 @@ func TestMapperRegistry_Settings(t *testing.T) {
 	assert.Equal(t, "settings:uid:", mapping.Prefix())
 	assert.False(t, mapping.HasFolderSupport())
 }
+
+func TestMapperRegistry_PermissionsDelegation(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	t.Run("action-shaped subresource gets the dynamic delegation translation", func(t *testing.T) {
+		m, ok := reg.Get("iam.grafana.app", "permissions", "users.roles:add")
+		require.True(t, ok)
+		action, ok := m.Action(utils.VerbPatch)
+		require.True(t, ok)
+		assert.Equal(t, "users.roles:add", action)
+		assert.Equal(t, "permissions:type:delegate", m.Scope("delegate"))
+		assert.True(t, m.SkipWildcard())
+		assert.Empty(t, m.ActionSets(utils.VerbPatch))
+	})
+
+	t.Run("group-qualified action subresource is accepted", func(t *testing.T) {
+		m, ok := reg.Get("iam.grafana.app", "permissions", "dashboard.grafana.app/dashboards:get")
+		require.True(t, ok)
+		action, ok := m.Action(utils.VerbPatch)
+		require.True(t, ok)
+		assert.Equal(t, "dashboard.grafana.app/dashboards:get", action)
+	})
+
+	t.Run("plain subresource names are not captured", func(t *testing.T) {
+		// A real subresource (e.g. status or search) is not action-shaped and
+		// must fall through to normal handling instead of being treated as a
+		// delegated action.
+		_, ok := reg.Get("iam.grafana.app", "permissions", "status")
+		assert.False(t, ok)
+	})
+}

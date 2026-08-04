@@ -672,8 +672,10 @@ func newPermissionsDelegationTranslation(action string) Mapping {
 func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
 	// Delegation checks name the RBAC action being delegated as the subresource
 	// of the permissions pseudo-resource. The actions are open-ended, so the
-	// translation is built from the request instead of the static table.
-	if group == "iam.grafana.app" && resource == "permissions" && subresource != "" {
+	// translation is built from the request instead of the static table. Only
+	// action-shaped values (containing a colon) are captured, so a real
+	// subresource of a future permissions resource falls through untouched.
+	if group == "iam.grafana.app" && resource == "permissions" && strings.Contains(subresource, ":") {
 		return newPermissionsDelegationTranslation(subresource), true
 	}
 
