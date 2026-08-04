@@ -39,6 +39,11 @@ async function flushPanelLoad() {
 }
 
 describe('AutoGridResizeIntercept', () => {
+  it('renders for a panel that does not repeat', async () => {
+    await buildAutoGridScene({ repeat: false });
+    expect(getInterceptors()).toHaveLength(1);
+  });
+
   it('it renders only for the last repeated panel', async () => {
     const { gridItem } = await buildAutoGridScene();
 
@@ -74,13 +79,13 @@ describe('AutoGridResizeIntercept', () => {
   });
 });
 
-const buildAutoGridScene = async ({ isEditing = true } = {}) => {
+const buildAutoGridScene = async ({ isEditing = true, repeat = true } = {}) => {
   const panel = new VizPanel({ title: 'Panel $values', key: 'panel-1', pluginId: 'table' });
 
   const gridItem = new AutoGridItem({
     key: 'grid-item-1',
     body: panel,
-    variableName: 'values',
+    variableName: repeat ? 'values' : undefined,
   });
 
   const scene = new DashboardScene({

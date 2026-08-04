@@ -15,7 +15,8 @@ test.use({
   viewport: { width: 1920, height: 1080 },
 });
 
-const RESIZE_ZONE_LABEL = 'Panel sizes are managed by auto layout';
+// mirrors interceptorTestId in AutoGridResizeIntercept.tsx
+const RESIZE_ZONE_TESTID = 'auto-grid-resize-intercept';
 
 test.describe(
   'Dashboard auto grid resize intercept',
@@ -31,7 +32,7 @@ test.describe(
     }) => {
       await setupAutoGridInEditMode(page, dashboardPage, selectors, components, 'Auto grid resize intercept - switch');
 
-      const resizeZones = page.getByRole('button', { name: RESIZE_ZONE_LABEL });
+      const resizeZones = page.getByTestId(RESIZE_ZONE_TESTID);
       await expect(resizeZones.first()).toBeVisible();
 
       await dragResizeCorner(page);
@@ -88,7 +89,7 @@ async function setupAutoGridInEditMode(
 // Drags the panel's bottom-right resize corner. Uses the raw mouse API (not locator.hover) because
 // the zone is a tiny transparent overlay; this stays in the spec per the timing-sensitive-mechanics rule.
 async function dragResizeCorner(page: Page) {
-  const zone = page.getByRole('button', { name: RESIZE_ZONE_LABEL }).first();
+  const zone = page.getByTestId(RESIZE_ZONE_TESTID).first();
   const box = await zone.boundingBox();
   expect(box).not.toBeNull();
 

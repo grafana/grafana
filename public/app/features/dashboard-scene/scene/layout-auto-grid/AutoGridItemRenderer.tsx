@@ -41,7 +41,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragged,
           showDropTarget,
           isRepeat = false,
-          isLastRepeatedPanel = false,
+          isLastPanel = false,
           isSelected = false,
         }: {
           item: VizPanel;
@@ -50,13 +50,14 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragged: boolean;
           showDropTarget: boolean;
           isRepeat?: boolean;
-          isLastRepeatedPanel?: boolean;
+          isLastPanel?: boolean;
           isSelected?: boolean;
         }) => {
           const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay, renderHidden] =
             useIsConditionallyHidden(conditionalRendering);
 
-          const showResizeIntercept = isEditing && isLastRepeatedPanel && !isDragged;
+          // Only the last panel gets the intercept, so a repeat shows one handle for the group.
+          const showResizeIntercept = isEditing && isLastPanel && !isDragged;
 
           const wrapperClass = cx(
             conditionalRenderingClass,
@@ -123,6 +124,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
         key={body.state.key!}
         isDragged={isDragged}
         showDropTarget={showDropTarget}
+        isLastPanel={repeatedPanels.length === 0}
       />
       {repeatedPanels.map((item, idx) => (
         <Wrapper
@@ -133,7 +135,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           isDragged={isDragged}
           showDropTarget={showDropTarget}
           isRepeat={true}
-          isLastRepeatedPanel={idx === repeatedPanels.length - 1}
+          isLastPanel={idx === repeatedPanels.length - 1}
           isSelected={isSourceSelected}
         />
       ))}
