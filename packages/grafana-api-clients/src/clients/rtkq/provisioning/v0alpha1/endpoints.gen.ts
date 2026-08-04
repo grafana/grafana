@@ -1455,8 +1455,8 @@ export type ConnectionSecure = {
   token?: InlineSecureValue;
 };
 export type BitbucketConnectionConfig = {
-  /** App client ID */
-  clientID: string;
+  /** The workspace the OAuth consumer belongs to */
+  workspace: string;
 };
 export type GitHubConnectionConfig = {
   /** GitHub App ID */
@@ -1472,8 +1472,8 @@ export type GitHubEnterpriseConnectionConfig = {
   /** The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`). */
   serverUrl: string;
 };
-export type GitlabConnectionConfig = {
-  /** App client ID */
+export type ConnectionOAuthConfig = {
+  /** The OAuth app client ID */
   clientID: string;
 };
 export type ConnectionWebhookConfig = {
@@ -1489,8 +1489,8 @@ export type ConnectionSpec = {
   github?: GitHubConnectionConfig;
   /** GitHub Enterprise Server connection configuration Only applicable when provider is "githubEnterprise" */
   githubEnterprise?: GitHubEnterpriseConnectionConfig;
-  /** Gitlab connection configuration Only applicable when provider is "gitlab" */
-  gitlab?: GitlabConnectionConfig;
+  /** OAuth app configuration shared by all OAuth app providers */
+  oauth?: ConnectionOAuthConfig;
   /** The connection display name (shown in the UI) */
   title: string;
   /** The connection provider type
@@ -1656,12 +1656,16 @@ export type FixFolderMetadataJobOptions = {
   ref?: string;
 };
 export type MigrateJobOptions = {
+  /** Target branch for the migration (git only). When set to a branch other than the repository's configured branch, the migration writes the exported resources to that branch (a pull request workflow) and removes the migrated resources from the instance instead of taking ownership of them — they return as managed resources once the branch is merged and a regular sync runs on the configured branch. When empty (or equal to the configured branch), the migration writes directly to the configured branch and takes ownership of the exported resources. */
+  branch?: string;
   /** GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. The subsequent pull creates new folders rather than taking over the originals. Has no effect when folder metadata is not written. */
   generateNewFolderIDs?: boolean;
   /** Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty. */
   message?: string;
   /** Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported. */
   resources?: ResourceRef[];
+  /** SkipResourceDeletion keeps the migrated resources on the instance instead of removing them. By default a migration deletes the resources it moved (the whole namespace for an instance target, or the exported resources for a branch migration); when true, no deletion happens and the resources are left in place. */
+  skipResourceDeletion?: boolean;
 };
 export type MoveJobOptions = {
   /** Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks */
@@ -1764,6 +1768,8 @@ export type JobResourceSummary = {
   /** No action required (useful for sync) */
   noop?: number;
   total?: number;
+  /** TotalChanges is the action-aware count of resources changed for this group/kind, set by the progress recorder as results are recorded. Used for the job-duration histogram's resources_changed bucket. */
+  totalChanges?: number;
   update?: number;
   /** The error count */
   warning?: number;
@@ -1786,6 +1792,8 @@ export type JobStatus = {
   message?: string;
   /** Optional value 0-100 that can be set while running */
   progress?: number;
+  /** ProgressUpdates is the number of times the job's status has been written while it was processed. It is carried over to the historic job so the total number of progress updates a job went through remains observable after completion. */
+  progressUpdates?: number;
   started?: number;
   /** Possible enum values:
      - `"error"` Finished with errors

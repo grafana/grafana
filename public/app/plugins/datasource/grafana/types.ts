@@ -17,7 +17,6 @@ export enum GrafanaQueryType {
   // backend
   RandomWalk = 'randomWalk',
   List = 'list',
-  Read = 'read',
 }
 
 export interface GrafanaQuery extends DataQuery {
@@ -25,7 +24,7 @@ export interface GrafanaQuery extends DataQuery {
   channel?: string;
   filter?: LiveDataFilter;
   buffer?: number;
-  path?: string; // for list and read
+  path?: string; // for list
   search?: SearchQuery;
   searchNext?: SearchQuery;
   snapshot?: DataFrameJSON[];

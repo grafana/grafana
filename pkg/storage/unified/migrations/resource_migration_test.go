@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -81,10 +80,24 @@ func testDef(gr schema.GroupResource, lockTables, renameTables []string) Migrati
 
 func newRunner(t *testing.T, locker MigrationTableLocker, renamer MigrationTableRenamer, def MigrationDefinition) (*MigrationRunner, *fakeUnifiedMigrator) {
 	t.Helper()
+	return newRunnerCfg(t, setting.NewCfg(), locker, renamer, def)
+}
+
+func newRunnerCfg(t *testing.T, cfg *setting.Cfg, locker MigrationTableLocker, renamer MigrationTableRenamer, def MigrationDefinition) (*MigrationRunner, *fakeUnifiedMigrator) {
+	t.Helper()
 	fake := &fakeUnifiedMigrator{
 		migrateResponse: &resourcepb.BulkResponse{},
 	}
-	return NewMigrationRunner(fake, locker, renamer, setting.NewCfg(), def, nil), fake
+	return NewMigrationRunner(fake, locker, renamer, cfg, def, nil), fake
+}
+
+// cfgMigrationLockingDisabled: [unified_storage] migration_locking = false.
+func cfgMigrationLockingDisabled(t *testing.T) *setting.Cfg {
+	t.Helper()
+	cfg := setting.NewCfg()
+	_, err := cfg.Raw.Section("unified_storage").NewKey("migration_locking", "false")
+	require.NoError(t, err)
+	return cfg
 }
 
 func ensureOrg(t *testing.T, engine *xorm.Engine) {
@@ -241,6 +254,48 @@ func TestIntegrationRun_Rename(t *testing.T) {
 			} else {
 				assertNotRenamed(t, env.engine, tables[0])
 			}
+		})
+	}
+}
+
+// With migration_locking=false, rename must be skipped. On MySQL the lock-dependent rename would
+// otherwise hang until the deadline; the short waitDeadline makes a regression fail fast.
+func TestIntegrationRun_LockingDisabledSkipsRename(t *testing.T) {
+	env := newTestEnv(t)
+
+	cases := []struct {
+		name    string
+		skip    func() bool
+		renamer func() MigrationTableRenamer
+	}{
+		{
+			name:    "MySQL",
+			skip:    func() bool { return !db.IsTestDbMySQL() },
+			renamer: func() MigrationTableRenamer { return &mysqlTableRenamer{log: logger, waitDeadline: 2 * time.Second} },
+		},
+		{
+			name:    "Postgres",
+			skip:    func() bool { return !db.IsTestDbPostgres() },
+			renamer: func() MigrationTableRenamer { return &transactionalTableRenamer{log: logger} },
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.skip() {
+				t.Skip("skipped for this DB type")
+			}
+
+			table := uniqueTable(t, env.engine)
+			locker := newTableLocker(env.store, legacysql.NewDatabaseProvider(env.store), false)
+			require.IsType(t, &noopTableLocker{}, locker)
+
+			// RenameTables configured, but disabled locking must force renaming off.
+			def := testDef(dummyGR(), []string{table}, []string{table})
+			runner, _ := newRunnerCfg(t, cfgMigrationLockingDisabled(t), locker, tc.renamer(), def)
+			runMigration(t, env.engine, runner, env.engine.DriverName())
+
+			assertNotRenamed(t, env.engine, table)
 		})
 	}
 }
@@ -668,7 +723,7 @@ func newRetryTestResourceServerWithSearch(t *testing.T, backend resource.Storage
 		},
 	}
 
-	searchOpts, err := search.NewSearchOptions(featuremgmt.WithFeatures(), cfg, docBuilders, nil, nil, nil)
+	searchOpts, err := search.NewSearchOptions(cfg, docBuilders, nil, nil, nil)
 	require.NoError(t, err)
 
 	return resource.NewResourceServer(resource.ResourceServerOptions{

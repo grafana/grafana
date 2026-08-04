@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 // Test-only wildcard pattern; not used in the real mapper.
@@ -351,4 +352,27 @@ func TestMapper_AnnotationSubresource_ActionSets(t *testing.T) {
 			assert.ElementsMatch(t, tt.expected, mapping.ActionSets(tt.verb))
 		})
 	}
+}
+
+func TestMapperRegistry_Settings(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("setting.grafana.app", "settings", "")
+	require.True(t, ok, "settings should be registered in the mapper")
+	require.NotNil(t, mapping)
+
+	for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbWatch} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, accesscontrol.ActionSettingsRead, action, "verb %q should map to settings:read", verb)
+	}
+	for _, verb := range []string{utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, accesscontrol.ActionSettingsWrite, action, "verb %q should map to settings:write", verb)
+	}
+
+	assert.Equal(t, "settings:uid:auth.saml", mapping.Scope("auth.saml"))
+	assert.Equal(t, "settings:uid:", mapping.Prefix())
+	assert.False(t, mapping.HasFolderSupport())
 }

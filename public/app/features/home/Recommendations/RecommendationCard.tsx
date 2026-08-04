@@ -3,11 +3,18 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { recommendationEnableClicked } from '../analytics/main';
+import { ctaClicked } from '../analytics/main';
 
-import type { RecommendationItem } from './Recommendations';
+import type { RecommendationItem } from './types';
 
-export function RecommendationCard({ recommendation }: { recommendation: RecommendationItem }) {
+interface RecommendationCardProps {
+  recommendation: RecommendationItem;
+  startingState: string;
+  /** Solution view active when the card was clicked; absent when no solution is selected. */
+  solution?: string;
+}
+
+export function RecommendationCard({ recommendation, startingState, solution }: RecommendationCardProps) {
   const styles = useStyles2(getStyles, recommendation.color);
 
   return (
@@ -35,7 +42,16 @@ export function RecommendationCard({ recommendation }: { recommendation: Recomme
           icon="arrow-right"
           iconPlacement="right"
           href={recommendation.href}
-          onClick={() => recommendationEnableClicked({ recommendation_id: recommendation.id, source: 'card' })}
+          onClick={() =>
+            ctaClicked({
+              surface: 'recommendations',
+              action: recommendation.cta ?? 'enable',
+              placement: 'card',
+              recommendation_id: recommendation.id,
+              starting_state: startingState,
+              solution,
+            })
+          }
         >
           {recommendation.action}
         </LinkButton>

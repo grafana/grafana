@@ -1,6 +1,6 @@
 import type * as React from 'react';
 
-import { type Field, type LinkModel, type LinkTarget } from '@grafana/data';
+import { type IconName, type Field, type LinkModel, type LinkTarget } from '@grafana/data';
 
 import { type TraceSpan } from './trace';
 
@@ -23,6 +23,14 @@ export type SpanLinkDef = {
   type: SpanLinkType;
   target?: LinkTarget;
   linkModel?: LinkModel;
+};
+
+export type SpanLinkModel = {
+  linkModel: LinkModel;
+  icon: IconName;
+  className?: string;
+  type: SpanLinkType;
+  traceDatasourceUid?: string;
 };
 
 export type SpanLinkFunc = (span: TraceSpan) => SpanLinkDef[] | undefined;

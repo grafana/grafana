@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/httpclient/harcapture"
+	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/diagnostics"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -24,12 +26,21 @@ type diagnosticsRequest struct {
 	dtos.MetricRequest
 	Dashboard json.RawMessage `json:"dashboard"`
 	Panel     json.RawMessage `json:"panel"`
+	PanelData json.RawMessage `json:"panelData"`
 }
 
 // diagnosticsFeatureClient is a shared OpenFeature client reused across requests. Flags are
 // evaluated via OpenFeature rather than featuremgmt.FeatureToggles.IsEnabled, which is deprecated
 // (staticcheck SA1019) and slated for removal.
 var diagnosticsFeatureClient = openfeature.NewDefaultClient()
+
+// diagnosticsLogger is the named logger shared by both diagnostics endpoints, so an operator can raise
+// only this feature ([log] filters = diagnostics:debug) instead of http.server as a whole.
+//
+// Every run reaches a terminal line here, because a failed generation is otherwise invisible on the
+// server that ran it: the panel path reports the failure only in the requesting browser, and the
+// dashboard path only in a job record that expires within the hour.
+var diagnosticsLogger = log.New("diagnostics")
 
 // QueryDiagnostics executes the supplied datasource queries with HAR capture active and returns a
 // .tar.gz diagnostic bundle (captured traffic and the panel/dashboard JSON). Bundle assembly lives
@@ -50,6 +61,19 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	if len(reqDTO.Queries) == 0 {
 		return response.Error(http.StatusBadRequest, "at least one query is required", nil)
 	}
+
+	result := diagnostics.ResultError
+	if hs.diagnosticsMetrics != nil {
+		hs.diagnosticsMetrics.RecordStarted(ctx, diagnostics.ScopePanel)
+		defer func() {
+			hs.diagnosticsMetrics.RecordCompleted(ctx, diagnostics.ScopePanel, result)
+		}()
+	}
+
+	// FromContext so the run's lines carry the request's trace ID, which is what ties them to the
+	// datasource and plugin lines emitted while the queries below run.
+	logger := diagnosticsLogger.FromContext(ctx)
+	started := time.Now()
 
 	captureCtx, harBuffer := harcapture.WithCapture(ctx)
 
@@ -73,8 +97,14 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	resp, queryErr := queryData(captureCtx, c.SignedInUser, c.SkipDSCache, reqDTO.MetricRequest)
 
 	// A datasource query usually fails per-refId (DataResponse.Error) with no top-level error, the
-	// same way QueryMetricsV2 surfaces failures. Capture that too so it's recorded in the bundle.
-	respErr := diagnostics.ResponseError(resp)
+	// same way QueryMetricsV2 surfaces failures. Capture that too so it's recorded in the bundle. An
+	// externalized plugin whose top-level QueryData error was swallowed to survive the gRPC boundary
+	// carries it in the __har__ frame instead; fold that in as well.
+	// Combine both: a mixed multi-datasource panel can carry a per-refId failure (ResponseError) AND
+	// an external plugin's swallowed error (PluginCaptureError, from the __har__ frame) at the same
+	// time, so folding in only one would drop the other from query-error.txt. errors.Join is nil-safe
+	// (returns nil when both are nil).
+	respErr := errors.Join(diagnostics.ResponseError(resp), diagnostics.PluginCaptureError(resp))
 
 	// If the query failed before any traffic was captured (e.g. pre-flight access-denied or
 	// datasource-not-found, which never reach the datasource), there's nothing to diagnose, so
@@ -83,8 +113,13 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	// failure is a client error (400). A failure that did hit the wire leaves captured traffic and
 	// falls through — that captured failure is exactly what the bundle is for, recorded alongside
 	// query-error.txt.
-	if !diagnostics.HasCapturedHAR(harBuffer) {
+	// Read before Build: collectHAR consumes the external plugins' __har__ responses out of resp, so
+	// asking afterwards would report "nothing captured" for every externalized datasource.
+	capturedHAR := diagnostics.HasCapturedHAR(resp, harBuffer)
+	if !capturedHAR {
 		if r := hs.diagnosticsNoCaptureError(queryErr, respErr); r != nil {
+			logger.Warn("Panel diagnostics failed before any traffic was captured", "durationMs", time.Since(started).Milliseconds(),
+				"queries", len(reqDTO.Queries), "err", errors.Join(queryErr, respErr))
 			return r
 		}
 	}
@@ -94,16 +129,69 @@ func (hs *HTTPServer) QueryDiagnostics(c *contextmodel.ReqContext) response.Resp
 	if bundleErr == nil {
 		bundleErr = respErr
 	}
-	bundle, err := diagnostics.NewBundler().Build(harBuffer, reqDTO.Panel, reqDTO.Dashboard, bundleErr)
+	// Serializing the request must not sink a bundle that already captured HAR and a response: drop the
+	// request JSON on failure but hand the error to Build so it records querydata-error.txt instead of
+	// silently omitting the request, mirroring how the per-panel dashboard path isolates the same failure.
+	queryRequestJSON, marshalErr := json.Marshal(reqDTO.MetricRequest)
+	if marshalErr != nil {
+		queryRequestJSON = nil
+	}
+	refs := panelEnvironmentRefs(reqDTO.MetricRequest, reqDTO.Panel)
+	env := diagnostics.CollectEnvironment(ctx, hs.Cfg, hs.pluginStore, refs)
+	bundle, err := diagnostics.NewBundler(env).Build(resp, harBuffer, reqDTO.Panel, reqDTO.Dashboard, queryRequestJSON, marshalErr, bundleErr,
+		diagnostics.WithPanelData(reqDTO.PanelData))
 	if err != nil {
+		logger.Error("Failed to build panel diagnostics bundle", "durationMs", time.Since(started).Milliseconds(),
+			"queries", len(reqDTO.Queries), "capturedHar", capturedHAR, "err", err)
 		return response.Error(http.StatusInternalServerError, "failed to build diagnostics bundle", err)
 	}
+	logPanelDiagnosticsBundle(logger, panelDiagnosticsOutcome{
+		durationMs:   time.Since(started).Milliseconds(),
+		queries:      len(reqDTO.Queries),
+		bundleBytes:  len(bundle),
+		harEntries:   harBuffer.Len(),
+		capturedHAR:  capturedHAR,
+		queryFailed:  bundleErr != nil,
+		requestError: marshalErr != nil,
+	})
 
 	filename := fmt.Sprintf("diagnostics-%s.tar.gz", time.Now().UTC().Format("20060102-150405"))
 	header := http.Header{}
 	header.Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
 	header.Set("Content-Type", "application/tar+gzip")
+	result = diagnostics.ResultSuccess
 	return response.CreateNormalResponse(header, bundle, http.StatusOK)
+}
+
+// panelDiagnosticsOutcome is what one single-panel run produced, for the terminal log line.
+type panelDiagnosticsOutcome struct {
+	durationMs  int64
+	queries     int
+	bundleBytes int
+	harEntries  int // in-process (core plugin) entries only; an externalized plugin's arrive pre-serialized
+	capturedHAR bool
+	// queryFailed records that the run captured a query failure; it does not record a
+	// failure in generating a diagnostic bundle, which should NOT happen
+	queryFailed bool
+	// requestError records that the submitted queries could not be serialized, so the bundle has no
+	// request to compare its captured traffic against.
+	requestError bool
+}
+
+// logPanelDiagnosticsBundle logs a delivered bundle, warning when it is missing an artifact the reader
+// will expect. A bundle with no traffic.har is the failure worth a warning even though the request
+// succeeded: the datasource may not run its HTTP through the instrumented client (SQL and other
+// non-HTTP plugins never do), or the failure may be in a call diagnostics does not capture -- and
+// without this line, the only symptom is a support engineer opening an archive with nothing in it.
+func logPanelDiagnosticsBundle(logger log.Logger, o panelDiagnosticsOutcome) {
+	args := []any{"durationMs", o.durationMs, "queries", o.queries, "bundleBytes", o.bundleBytes,
+		"harEntries", o.harEntries, "capturedHar", o.capturedHAR, "queryFailed", o.queryFailed,
+		"requestSerializeFailed", o.requestError}
+	if !o.capturedHAR || o.requestError {
+		logger.Warn("Generated panel diagnostics bundle with missing artifacts", args...)
+		return
+	}
+	logger.Info("Generated panel diagnostics bundle", args...)
 }
 
 // diagnosticsNoCaptureError returns the response to send when a query failed and nothing was

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 
 import {
   type GridLayoutItemKind,
@@ -113,9 +113,6 @@ export function isPanelKindV2(value: unknown): value is PanelKind {
     return false;
   }
   if (typeof spec.title !== 'string') {
-    return false;
-  }
-  if (typeof spec.description !== 'string') {
     return false;
   }
   if (!Array.isArray(spec.links)) {

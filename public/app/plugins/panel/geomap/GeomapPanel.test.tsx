@@ -831,7 +831,6 @@ describe('GeomapPanel - View Listener', () => {
           },
           options: { name: 'Test Layer', type: 'test' },
           onChange: jest.fn(),
-          mouseEvents: { next: jest.fn(), subscribe: jest.fn() },
           getName: () => 'Test Layer',
         },
       ] as unknown as typeof panel.layers;

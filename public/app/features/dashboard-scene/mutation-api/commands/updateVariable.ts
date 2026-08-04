@@ -4,7 +4,7 @@
  * Replace an existing template variable with a new definition, preserving its position.
  */
 
-import { type z } from 'zod';
+import type * as z from 'zod';
 
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
@@ -12,13 +12,7 @@ import { createSceneVariableFromVariableModel } from '../../serialization/transf
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
-import {
-  buildVariableChangePath,
-  findSectionPathsContainingVariable,
-  getEffectiveVariableParentPath,
-  isSectionVariablesFeatureEnabled,
-  resolveVariableScope,
-} from './variableScope';
+import { buildVariableChangePath, findSectionPathsContainingVariable, resolveVariableScope } from './variableScope';
 import { dashboardHasVariableNamed, getScopeVariableArray, replaceScopeVariableSet } from './variableUtils';
 
 const updateVariablePayloadSchema = payloads.updateVariable;
@@ -39,13 +33,12 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
 
     try {
       const { name, variable: variableKind, parentPath } = payload;
-      const effectiveParentPath = getEffectiveVariableParentPath(parentPath);
-      const sectionVariablesEnabled = isSectionVariablesFeatureEnabled();
+      const effectiveParentPath = parentPath ?? '/';
 
       let scope;
       if (effectiveParentPath === '/') {
         if (!dashboardHasVariableNamed(scene, name)) {
-          const sectionPaths = sectionVariablesEnabled ? findSectionPathsContainingVariable(scene, name) : [];
+          const sectionPaths = findSectionPathsContainingVariable(scene, name);
           if (sectionPaths.length === 0) {
             throw new Error(`Variable '${name}' not found`);
           }

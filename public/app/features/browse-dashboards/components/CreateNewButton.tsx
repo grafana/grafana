@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { locationUtil } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
@@ -112,6 +113,7 @@ export default function CreateNewButton({
               })
             }
             url={buildUrl('/dashboard/new', parentFolder?.uid)}
+            testId={selectors.components.CreateNewButton.newDashboardLink}
           />
           <Menu.Item
             label={getImportPhrase()}
@@ -148,6 +150,7 @@ export default function CreateNewButton({
                     })
               }
               url={buildUrl('/dashboards?templateDashboards=true&source=createNewButton', parentFolder?.uid)}
+              testId={selectors.components.CreateNewButton.newTemplateDashboardLink}
             />
           )}
         </Menu.Group>
@@ -156,7 +159,12 @@ export default function CreateNewButton({
         <>
           {canCreateDashboard && <Menu.Divider />}
           <Menu.Item
-            onClick={() => setShowNewFolderDrawer(true)}
+            onClick={() => {
+              reportInteraction('grafana_browse_dashboards_new_folder_drawer_opened', {
+                from: location.pathname,
+              });
+              setShowNewFolderDrawer(true);
+            }}
             label={getNewFolderPhrase()}
             icon={ITEM_ICONS['folder']}
             // folder action use default grey, so no need to set icon color
@@ -173,6 +181,7 @@ export default function CreateNewButton({
           disabled={isReadOnlyRepo}
           tooltip={isReadOnlyRepo ? getReadOnlyTooltipText({ isLocal: repoType === 'local' }) : undefined}
           variant="secondary"
+          data-testid={selectors.components.CreateNewButton.newButton}
         >
           {getNewPhrase()}
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />

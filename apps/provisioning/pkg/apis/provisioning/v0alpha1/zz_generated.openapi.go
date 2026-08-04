@@ -23,6 +23,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		Connection{}.OpenAPIModelName():                       schema_pkg_apis_provisioning_v0alpha1_Connection(ref),
 		ConnectionInfo{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_ConnectionInfo(ref),
 		ConnectionList{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref),
+		ConnectionOAuthConfig{}.OpenAPIModelName():            schema_pkg_apis_provisioning_v0alpha1_ConnectionOAuthConfig(ref),
 		ConnectionSecure{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref),
 		ConnectionSpec{}.OpenAPIModelName():                   schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref),
 		ConnectionStatus{}.OpenAPIModelName():                 schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref),
@@ -41,7 +42,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		GitHubRepositoryConfig{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref),
 		GitLabRepositoryConfig{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref),
 		GitRepositoryConfig{}.OpenAPIModelName():              schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref),
-		GitlabConnectionConfig{}.OpenAPIModelName():           schema_pkg_apis_provisioning_v0alpha1_GitlabConnectionConfig(ref),
 		HealthStatus{}.OpenAPIModelName():                     schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref),
 		HistoricJob{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref),
 		HistoricJobList{}.OpenAPIModelName():                  schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref),
@@ -130,16 +130,16 @@ func schema_pkg_apis_provisioning_v0alpha1_BitbucketConnectionConfig(ref common.
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"clientID": {
+					"workspace": {
 						SchemaProps: spec.SchemaProps{
-							Description: "App client ID",
+							Description: "The workspace the OAuth consumer belongs to",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 				},
-				Required: []string{"clientID"},
+				Required: []string{"workspace"},
 			},
 		},
 	}
@@ -408,6 +408,27 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionList(ref common.ReferenceCa
 	}
 }
 
+func schema_pkg_apis_provisioning_v0alpha1_ConnectionOAuthConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"clientID": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The OAuth app client ID",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"clientID"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_provisioning_v0alpha1_ConnectionSecure(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -498,10 +519,10 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 							Ref:         ref(BitbucketConnectionConfig{}.OpenAPIModelName()),
 						},
 					},
-					"gitlab": {
+					"oauth": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Gitlab connection configuration Only applicable when provider is \"gitlab\"",
-							Ref:         ref(GitlabConnectionConfig{}.OpenAPIModelName()),
+							Description: "OAuth app configuration shared by all OAuth app providers",
+							Ref:         ref(ConnectionOAuthConfig{}.OpenAPIModelName()),
 						},
 					},
 					"webhook": {
@@ -515,7 +536,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionSpec(ref common.ReferenceCa
 			},
 		},
 		Dependencies: []string{
-			BitbucketConnectionConfig{}.OpenAPIModelName(), ConnectionWebhookConfig{}.OpenAPIModelName(), GitHubConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseConnectionConfig{}.OpenAPIModelName(), GitlabConnectionConfig{}.OpenAPIModelName()},
+			BitbucketConnectionConfig{}.OpenAPIModelName(), ConnectionOAuthConfig{}.OpenAPIModelName(), ConnectionWebhookConfig{}.OpenAPIModelName(), GitHubConnectionConfig{}.OpenAPIModelName(), GitHubEnterpriseConnectionConfig{}.OpenAPIModelName()},
 	}
 }
 
@@ -1216,27 +1237,6 @@ func schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref common.Refere
 	}
 }
 
-func schema_pkg_apis_provisioning_v0alpha1_GitlabConnectionConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"clientID": {
-						SchemaProps: spec.SchemaProps{
-							Description: "App client ID",
-							Default:     "",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-				},
-				Required: []string{"clientID"},
-			},
-		},
-	}
-}
-
 func schema_pkg_apis_provisioning_v0alpha1_HealthStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1659,6 +1659,13 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 							Format:      "int64",
 						},
 					},
+					"totalChanges": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TotalChanges is the action-aware count of resources changed for this group/kind, set by the progress recorder as results are recorded. Used for the job-duration histogram's resources_changed bucket.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 					"errors": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info",
@@ -1848,6 +1855,13 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 							Format:      "double",
 						},
 					},
+					"progressUpdates": {
+						SchemaProps: spec.SchemaProps{
+							Description: "ProgressUpdates is the number of times the job's status has been written while it was processed. It is carried over to the historic job so the total number of progress updates a job went through remains observable after completion.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 					"summary": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Summary of processed actions",
@@ -1949,6 +1963,13 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 							Format:      "",
 						},
 					},
+					"branch": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Target branch for the migration (git only). When set to a branch other than the repository's configured branch, the migration writes the exported resources to that branch (a pull request workflow) and removes the migrated resources from the instance instead of taking ownership of them — they return as managed resources once the branch is merged and a regular sync runs on the configured branch. When empty (or equal to the configured branch), the migration writes directly to the configured branch and takes ownership of the exported resources.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"resources": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported.",
@@ -1966,6 +1987,13 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 					"generateNewFolderIDs": {
 						SchemaProps: spec.SchemaProps{
 							Description: "GenerateNewFolderIDs writes a freshly generated identifier into each exported folder's metadata (_folder.json) instead of preserving the existing folder UID. The subsequent pull creates new folders rather than taking over the originals. Has no effect when folder metadata is not written.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
+					"skipResourceDeletion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "SkipResourceDeletion keeps the migrated resources on the instance instead of removing them. By default a migration deletes the resources it moved (the whole namespace for an instance target, or the exported resources for a branch migration); when true, no deletion happens and the resources are left in place.",
 							Type:        []string{"boolean"},
 							Format:      "",
 						},

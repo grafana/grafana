@@ -1,5 +1,7 @@
 import { type Locator, type Page, expect } from '@playwright/test';
 
+import { selectors } from '@grafana/e2e-selectors';
+
 export class AlertRuleEditPage {
   constructor(private readonly page: Page) {}
 
@@ -67,7 +69,7 @@ export class AlertRuleEditPage {
     // whose accessible name combines the DS name with badges/tags
     // (e.g. "gdev-testdata Tags TestData") — match by prefix.
     await this.page
-      .getByRole('button', { name: new RegExp(`^${dataSourceName}\\b`, 'i') })
+      .getByRole('option', { name: new RegExp(`^${dataSourceName}\\b`, 'i') })
       .first()
       .click();
   }
@@ -90,7 +92,7 @@ export class AlertRuleEditPage {
   }
 
   async addLabel(key: string, value: string): Promise<void> {
-    await this.page.getByTestId('add-labels-button').click();
+    await this.page.getByTestId(selectors.components.AlertRules.addLabelsButton).click();
 
     const dialog = this.page.getByRole('dialog');
     // The dialog opens with a pre-existing empty row. "Add more" appends a new row at the end;
@@ -128,12 +130,13 @@ export class AlertRuleEditPage {
 
   async save(): Promise<void> {
     await this.saveButton.click();
-    // Wait for the submit to actually settle (button re-enables, or disappears on navigation)
-    // instead of racing ahead of it the way a bare click does.
-    await expect(async () => {
-      const settled = (await this.saveButton.isHidden()) || !(await this.saveButton.isDisabled());
-      expect(settled).toBe(true);
-    }).toPass({ timeout: 30_000 });
+  }
+
+  async saveAndWaitForSuccess(outcome: 'created' | 'updated'): Promise<void> {
+    await this.save();
+
+    const message = outcome === 'created' ? 'Rule added successfully' : 'Rule updated successfully';
+    await expect(this.page.getByRole('status', { name: message })).toBeVisible();
   }
 
   protected get nameInput(): Locator {
@@ -165,11 +168,11 @@ export class AlertRuleEditPage {
   }
 
   selectedGroupText(name: string): Locator {
-    return this.page.getByTestId('group-picker').getByText(name, { exact: true });
+    return this.page.getByTestId(selectors.components.AlertRules.groupPicker).getByText(name, { exact: true });
   }
 
   protected get saveButton(): Locator {
-    return this.page.getByTestId('save-rule');
+    return this.page.getByTestId(selectors.components.AlertRules.saveRuleButton);
   }
 
   evaluationModeRadio(mode: 'rule-based' | 'group-based'): Locator {
