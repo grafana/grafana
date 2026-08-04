@@ -3,6 +3,7 @@ package rbac
 import (
 	"fmt"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -42,8 +43,9 @@ type translation struct {
 	// actions to skip scope on, e.g., create actions
 	skipScopeOnVerb map[string]bool
 	// use this option if you need to limit access to users that can access all resources
-	useWildcardScope bool
-	skipWildcard     bool
+	useWildcardScope     bool
+	skipWildcard         bool
+	legacyActionPriority int
 }
 
 func (t translation) Action(verb string) (string, bool) {
@@ -171,12 +173,14 @@ func newDashboardTranslation() translation {
 	}
 
 	dashTranslation.actionSetMapping = actionSetMapping
+	dashTranslation.legacyActionPriority = 1
 	return dashTranslation
 }
 
 func newNotebookTranslation() translation {
 	notebookTranslation := newDashboardTranslation()
 	notebookTranslation.resource = "notebooks"
+	notebookTranslation.legacyActionPriority = 0
 	return notebookTranslation
 }
 
@@ -703,9 +707,17 @@ func (m mapper) GetAll(group string) []Mapping {
 
 	resources := m[groupKey]
 
-	translations := make([]Mapping, 0, len(resources))
+	ordered := make([]translation, 0, len(resources))
 	for _, t := range resources {
-		translations = append(translations, &t)
+		ordered = append(ordered, t)
+	}
+	sort.SliceStable(ordered, func(i, j int) bool {
+		return ordered[i].legacyActionPriority < ordered[j].legacyActionPriority
+	})
+
+	translations := make([]Mapping, 0, len(ordered))
+	for i := range ordered {
+		translations = append(translations, &ordered[i])
 	}
 
 	return translations
