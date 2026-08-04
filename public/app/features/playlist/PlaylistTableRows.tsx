@@ -710,9 +710,6 @@ function getStyles(theme: GrafanaTheme2) {
       cursor: 'help',
       display: 'inline-flex',
       gap: theme.spacing(0.5),
-      // The dotted tooltip affordance adds visual weight below the text.
-      // Lift this indicator slightly while keeping the surrounding controls centered.
-      transform: 'translateY(-1px)',
     }),
     configuredStatusText: css({
       borderBottom: `1px dotted ${theme.colors.text.secondary}`,
