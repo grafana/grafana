@@ -53,6 +53,7 @@ import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { PanelPluginDataTransformer } from '../scene/PanelPluginDataTransformer';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -1254,6 +1255,43 @@ describe('getVizPanelQueries', () => {
       expect(result[0].spec.query.spec.snapshot).toHaveLength(1);
       // Verify it gets data from the nested $data (SceneDataNode) not the transformer
       expect(result[0].spec.query.spec.snapshot[0].schema?.fields).toBeDefined();
+    });
+
+    it('should snapshot the raw query result through a nested panel-plugin transformer', () => {
+      const timeRange = getDefaultTimeRange();
+      const rawFrame = toDataFrame({
+        name: 'raw-series',
+        fields: [{ name: 'value', type: FieldType.number, values: [1, 2, 3] }],
+      });
+      const transformedFrame = toDataFrame({
+        name: 'plugin-transformed',
+        fields: [{ name: 'value', type: FieldType.number, values: [10, 20, 30] }],
+      });
+
+      // Each provider level carries its own current data, so the assertion can tell exactly
+      // which level was snapshotted — the transformers' data must never be captured.
+      const vizPanel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'timeseries',
+        $data: new SceneDataTransformer({
+          $data: new PanelPluginDataTransformer({
+            $data: new SceneDataNode({
+              data: { series: [rawFrame], state: LoadingState.Done, timeRange },
+            }),
+            transformations: [],
+            data: { series: [transformedFrame], state: LoadingState.Done, timeRange },
+          }),
+          transformations: [],
+          data: { series: [transformedFrame], state: LoadingState.Done, timeRange },
+        }),
+      });
+
+      const result = getVizPanelQueries(vizPanel, undefined, true);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].spec.query.spec.queryType).toBe(GrafanaQueryType.Snapshot);
+      // Unwrapping a single `$data` level would snapshot the plugin transformer's output.
+      expect(result[0].spec.query.spec.snapshot[0].schema?.name).toBe('raw-series');
     });
   });
 });

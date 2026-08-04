@@ -1,4 +1,4 @@
-import { first, ReplaySubject } from 'rxjs';
+import { first, map, ReplaySubject } from 'rxjs';
 
 import {
   arrayToDataFrame,
@@ -27,6 +27,7 @@ import {
   SceneTimeRange,
   VizPanel,
 } from '@grafana/scenes';
+import { PanelPluginDataTransformer } from 'app/features/dashboard-scene/scene/PanelPluginDataTransformer';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -44,9 +45,23 @@ jest.mock('rxjs', () => {
 });
 
 standardTransformersRegistry.setInit(getStandardTransformers);
+
+/** Scales every value by 10, so plugin-transformed frames are distinguishable from raw ones. */
+const transformingPanelPlugin = getPanelPlugin({ id: 'transforming-panel' }).setDataTransformations(() => [
+  () => (source) =>
+    source.pipe(
+      map((frames) =>
+        frames.map((frame) => ({
+          ...frame,
+          fields: frame.fields.map((field) => ({ ...field, values: field.values.map((value) => value * 10) })),
+        }))
+      )
+    ),
+]);
+
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
-  getPanelPluginFromCache: (id: string) => undefined,
+  getPanelPluginFromCache: (id: string) => (id === 'transforming-panel' ? transformingPanelPlugin : undefined),
 });
 
 describe('DashboardDatasource', () => {
@@ -84,6 +99,27 @@ describe('DashboardDatasource', () => {
     );
 
     expect(rsp?.data[0].fields[1].values).toEqual([3]);
+  });
+
+  describe('with a panel-plugin transformer nested in the source panel', () => {
+    it('withTransforms: false unwraps past the plugin transformer to the raw query result', async () => {
+      const { observable } = setup({ refId: 'A', panelId: 1, withTransforms: false }, undefined, true);
+
+      const rsp = await new Promise<DataQueryResponse | undefined>((r) => observable.subscribe({ next: r }));
+
+      // Unwrapping a single `$data` level would land on the plugin transformer, whose
+      // output is scaled — downstream panels would silently read transformed data as raw.
+      expect(rsp?.data[0].fields[0].values).toEqual([1, 2, 3]);
+    });
+
+    it('withTransforms: true applies plugin transformations before user transformations', async () => {
+      const { observable } = setup({ refId: 'A', panelId: 1, withTransforms: true }, undefined, true);
+
+      const rsp = await new Promise<DataQueryResponse | undefined>((r) => observable.subscribe({ next: r }));
+
+      // The plugin scales values (x10) before the user's reduce keeps the last one.
+      expect(rsp?.data[0].fields[1].values).toEqual([30]);
+    });
   });
 
   it('Should activate source provder on observable subscribe and deactivate when completed (if only activator)', async () => {
@@ -1135,27 +1171,34 @@ function setupWithControllableUpstream(
   return { observable, upstreamStream, sourceData };
 }
 
-function setup(query: DashboardQuery, requestId?: string) {
+function setup(query: DashboardQuery, requestId?: string, nestPluginTransformer?: boolean) {
+  const rawData = new SceneDataNode({
+    data: {
+      series: [arrayToDataFrame([1, 2, 3])],
+      state: LoadingState.Done,
+      timeRange: getDefaultTimeRange(),
+    },
+  });
+
   const sourceData = new SceneDataTransformer({
-    $data: new SceneDataNode({
-      data: {
-        series: [arrayToDataFrame([1, 2, 3])],
-        state: LoadingState.Done,
-        timeRange: getDefaultTimeRange(),
-      },
-    }),
+    $data: nestPluginTransformer ? new PanelPluginDataTransformer({ $data: rawData, transformations: [] }) : rawData,
     transformations: [{ id: 'reduce', options: {} }],
   });
 
+  const panel = new VizPanel({
+    key: getVizPanelKeyForPanelId(1),
+    ...(nestPluginTransformer ? { pluginId: 'transforming-panel' } : {}),
+    $data: sourceData,
+  });
+
+  if (nestPluginTransformer) {
+    // Match production ordering: the panel activates first and loads its plugin synchronously
+    // from the cache, so the plugin transformer's first emission is already plugin-transformed.
+    panel.activate();
+  }
+
   const scene = new SceneFlexLayout({
-    children: [
-      new SceneFlexItem({
-        body: new VizPanel({
-          key: getVizPanelKeyForPanelId(1),
-          $data: sourceData,
-        }),
-      }),
-    ],
+    children: [new SceneFlexItem({ body: panel })],
   });
 
   const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
