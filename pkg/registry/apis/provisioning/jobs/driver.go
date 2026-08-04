@@ -206,7 +206,7 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 	go d.leaseRenewalLoop(leaseRenewalCtx, logger, leaseExpired)
 	defer cancelLeaseRenewal()
 
-	recorder := newJobProgressRecorder(d.onProgress(), d.metrics, claimedJob.Spec.Action)
+	recorder := NewJobProgressRecorder(d.onProgress(), d.metrics, claimedJob.Spec.Action)
 	recorder.SetMessage(ctx, "start job")
 
 	// Process the job with lease loss detection
