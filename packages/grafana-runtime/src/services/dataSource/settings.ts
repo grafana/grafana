@@ -207,8 +207,10 @@ function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
 export async function getDefaultDataSourceInstance(
   type: string
 ): Promise<DataSourceInstanceListItem | undefined> {
-  const list = (await getDataSourceInstanceList({ type, all: true })).filter((item) => matchesType(item, type));
-  return list.find((item) => item.isDefault) ?? list[0];
+  const allOfType = await getDataSourceInstanceList({ type, all: true });
+  const list = allOfType.filter((item) => matchesType(item, type));
+  const defaultInstance = list.find((item) => item.isDefault);
+  return defaultInstance ?? list[0];
 }
 
 /**
