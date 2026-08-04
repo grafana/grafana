@@ -1,3 +1,6 @@
+import { getFieldColorModeForField } from '../field/fieldColor';
+import { getFieldSeriesColor } from '../field/scale';
+import { darken, lighten } from '../themes/colorManipulator';
 import { type GrafanaTheme2 } from '../themes/types';
 import { type DataFrame, type Field, FieldType } from '../types/dataFrame';
 import { type TimeRange } from '../types/time';
@@ -154,13 +157,27 @@ export function alignTimeRangeCompareData(series: DataFrame, diff: number, theme
 
     // Apply visual styling for comparison series
     if (field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum) {
-      config.custom = {
-        ...config.custom,
-        lineStyle: {
-          fill: 'dash',
-          dash: [1, 5, 4, 5],
-        },
-      };
+      const mode = getFieldColorModeForField(field);
+
+      if (mode.isByValue || mode.isContinuous) {
+        config.custom = {
+          ...config.custom,
+          lineStyle: {
+            fill: 'dash',
+            dash: [1, 5, 4, 5],
+          },
+        };
+      } else {
+        const color = getFieldSeriesColor(field, theme).color;
+        const ghostColor = theme.isDark ? darken(color, 0.6) : lighten(color, 0.6);
+
+        config.custom = {
+          ...config.custom,
+          lineColor: ghostColor,
+        };
+
+        config.color = { mode: 'fixed', fixedColor: ghostColor };
+      }
     }
 
     return { ...field, values, config };
