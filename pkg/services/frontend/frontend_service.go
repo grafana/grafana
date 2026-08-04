@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	fswebassets "github.com/grafana/grafana/pkg/services/frontend/webassets"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -57,9 +58,11 @@ type frontendService struct {
 	tracer       trace.Tracer
 	license      licensing.Licensing
 
-	index           *IndexProvider
-	settingsService settingservice.Service // nil if not configured
-	pluginsCDN      *pluginscdn.Service
+	index                *IndexProvider
+	previewCfg           fswebassets.PreviewAssetsConfig
+	previewAssetsHandler *previewAssetsHandler
+	settingsService      settingservice.Service // nil if not configured
+	pluginsCDN           *pluginscdn.Service
 
 	// baggageEvalContextKeys are the W3C baggage member keys copied into the
 	// per-request OpenFeature evaluation context.
@@ -69,7 +72,9 @@ type frontendService struct {
 func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing, hooksService *hooks.HooksService) (*frontendService, error) {
 	logger := log.New("frontend-service")
 
-	index, err := NewIndexProvider(cfg, license, hooksService)
+	previewCfg := fswebassets.ReadPreviewAssetsConfig(cfg)
+
+	index, err := NewIndexProvider(cfg, license, hooksService, previewCfg)
 	if err != nil {
 		return nil, err
 	}
@@ -89,16 +94,18 @@ func ProvideFrontendService(cfg *setting.Cfg, features featuremgmt.FeatureToggle
 	}
 
 	s := &frontendService{
-		cfg:             cfg,
-		features:        features,
-		log:             logger,
-		promGatherer:    promGatherer,
-		promRegister:    promRegister,
-		tracer:          tracer,
-		license:         license,
-		index:           index,
-		settingsService: settingsService,
-		pluginsCDN:      pluginsCDN,
+		cfg:                  cfg,
+		features:             features,
+		log:                  logger,
+		promGatherer:         promGatherer,
+		promRegister:         promRegister,
+		tracer:               tracer,
+		license:              license,
+		index:                index,
+		previewCfg:           previewCfg,
+		previewAssetsHandler: newPreviewAssetsHandler(cfg, previewCfg),
+		settingsService:      settingsService,
+		pluginsCDN:           pluginsCDN,
 
 		baggageEvalContextKeys: readBaggageEvalContextKeys(cfg),
 	}
@@ -198,6 +205,12 @@ func (s *frontendService) registerRoutes(m *web.Mux) {
 	// GET because all POST requests are passed to the backend, even though POST is more correct. The frontend
 	// uses cache busting to ensure requests aren't cached.
 	s.routeGet(m, "/-/fe-boot-error", s.handleBootError)
+
+	// Preview assets opt-in flow. When the feature is disabled (the default)
+	// the route is not registered at all.
+	if s.previewCfg.Active() {
+		s.routeGet(m, previewAssetsPath, s.previewAssetsHandler.handleGet)
+	}
 
 	s.routeGet(m, "/public-dashboards/:accessToken",
 		publicdashboards.SetPublicDashboardAccessToken,
