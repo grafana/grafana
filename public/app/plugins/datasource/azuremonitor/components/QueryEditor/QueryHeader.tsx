@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CoreApp, LoadingState, type PanelData, type SelectableValue } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { EditorHeader, FlexItem, InlineSelect } from '@grafana/plugin-ui';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Button, ConfirmModal, RadioButtonGroup } from '@grafana/ui';
 
 import { AzureQueryType, LogsEditorMode } from '../../dataquery.gen';
@@ -153,10 +153,6 @@ export const QueryHeader = ({
             size="sm"
             onClick={() => {
               setAzureLogsCheatSheetModalOpen((prev) => !prev);
-              reportInteraction('grafana_azure_logs_query_patterns_opened', {
-                version: 'v2',
-                editorMode: query.azureLogAnalytics,
-              });
             }}
           >
             <Trans i18nKey="components.query-header.button-kick-start-your-query">Kick start your query</Trans>

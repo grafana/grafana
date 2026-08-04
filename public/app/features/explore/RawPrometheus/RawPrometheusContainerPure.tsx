@@ -80,6 +80,11 @@ export const RawPrometheusContainerPure = memo(
       return (
         <div className={styles.spacing}>
           <RadioButtonGroup
+            onClick={() => {
+              const props = {
+                state: resultsStyle === TABLE_RESULTS_STYLE.table ? TABLE_RESULTS_STYLE.raw : TABLE_RESULTS_STYLE.table,
+              };
+            }}
             size="sm"
             options={ALL_GRAPH_STYLE_OPTIONS}
             value={resultsStyle}
