@@ -18425,9 +18425,15 @@
           "type": "integer",
           "format": "int64"
         },
+        "interval": {
+          "type": "string"
+        },
         "order": {
           "type": "integer",
           "format": "int64"
+        },
+        "queryParams": {
+          "type": "string"
         },
         "title": {
           "type": "string"
@@ -18443,6 +18449,14 @@
     "PlaylistItemDTO": {
       "type": "object",
       "properties": {
+        "interval": {
+          "description": "Interval optionally overrides the playlist interval for this item.",
+          "type": "string"
+        },
+        "queryParams": {
+          "description": "QueryParams contains dashboard variables and time range URL parameters.",
+          "type": "string"
+        },
         "title": {
           "description": "Title is an unused property -- it will be removed in the future",
           "type": "string"
