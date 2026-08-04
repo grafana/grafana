@@ -109,7 +109,7 @@ func runRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper) {
 			require.NoError(t, err)
 		}
 		raw, err := rc.Post().
-			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", "search").
+			AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", "searchRules").
 			Body(payload).
 			DoRaw(ctx)
 		require.NoError(t, err)

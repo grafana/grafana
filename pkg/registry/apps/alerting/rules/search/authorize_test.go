@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
@@ -27,6 +28,22 @@ type mockAccessControl struct {
 
 func (m *mockAccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
 	return m.evaluateFunc(ctx, user, evaluator)
+}
+
+// The authorizer matches on the route's path segment, so a path rename that
+// misses RouteResource would silently drop this route's rule-read check and
+// leave it to whatever the rest of the authorizer chain decides.
+func TestRouteResourceMatchesManifestPath(t *testing.T) {
+	data := rulesmanifest.LocalManifest().ManifestData
+	require.NotNil(t, data)
+
+	paths := map[string]struct{}{}
+	for _, version := range data.Versions {
+		for path := range version.Routes.Namespaced {
+			paths[path] = struct{}{}
+		}
+	}
+	require.Contains(t, paths, "/"+RouteResource)
 }
 
 func TestAuthorize(t *testing.T) {
