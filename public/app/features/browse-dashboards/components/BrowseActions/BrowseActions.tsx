@@ -42,7 +42,7 @@ export function BrowseActions({ folderDTO }: Props) {
   const [moveFolders] = useMoveMultipleFoldersMutationFacade();
   const [moveDashboards] = useMoveDashboardsMutation();
   const [, stateManager] = useSearchStateManager();
-  const provisioningEnabled = config.featureToggles.provisioning;
+  const provisioningEnabled = config.provisioningEnabled;
 
   const { hasProvisioned, hasNonProvisioned } = useSelectionProvisioningStatus(
     selectedItems,
