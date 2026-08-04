@@ -176,6 +176,25 @@ describe('PanelTimeRange', () => {
     expect(panelTime.state.to).toBe('now-2h');
   });
 
+  it('should update the initial panel time range only once on activate', () => {
+    const panelTime = new PanelTimeRange({ compareWith: '1d' });
+    const stateUpdates = jest.fn();
+    panelTime.subscribeToState(stateUpdates);
+
+    buildAndActivateSceneFor(panelTime);
+
+    expect(stateUpdates).toHaveBeenCalledTimes(1);
+  });
+
+  it('should initialize a panel time override when dashboard zoom behavior is enabled', () => {
+    const panelTime = new PanelTimeRange({ timeFrom: '2h', zoomBehavior: 'dashboard' });
+
+    buildAndActivateSceneFor(panelTime);
+
+    expect(panelTime.state.from).toBe('now-2h');
+    expect(panelTime.state.to).toBe('now');
+  });
+
   it('should properly apply timeZone', () => {
     const panelTime = new PanelTimeRange({ timeFrom: '2h' });
 
