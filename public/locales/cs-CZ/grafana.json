@@ -270,6 +270,7 @@
       "placeholder-search-devices-by-ip-address": "Hledat zařízení podle IP adresy."
     },
     "user-list-page": {
+      "label-active-users": "",
       "label-all-users": "Všichni uživatelé",
       "label-anonymous-devices": "Anonymní zařízení",
       "label-organization-users": "Uživatelé organizace",
@@ -4052,6 +4053,9 @@
       "trace-id": "ID trasování: {{traceId}}"
     }
   },
+  "assistant-tooltip": {
+    "add-to-assistant": ""
+  },
   "auth-config": {
     "auth-config-page-unconnected": {
       "auth-settings": "Nastavení ověření"
@@ -6256,13 +6260,10 @@
         "show-in": ""
       },
       "annotations": {
-        "add-annotation": "",
         "add-annotation-query": "",
         "name-builtin": "",
         "name-disabled": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-annotation": "",
         "title-above-dashboard-count_one": "",
         "title-above-dashboard-count_few": "",
         "title-above-dashboard-count_many": "",
@@ -6360,10 +6361,7 @@
       "links": {
         "add-link": "",
         "new-link": "",
-        "reorder": "",
         "reorder-description": "",
-        "select-link": "",
-        "untitled": "",
         "title-above-dashboard_one": "",
         "title-above-dashboard_few": "",
         "title-above-dashboard_many": "",
@@ -6467,11 +6465,9 @@
       "variables": {
         "add-variable": "",
         "change-type": "",
-        "reorder": "",
         "reorder-description": "",
         "select-type": "",
         "select-type-card-tooltip": "",
-        "select-variable": "",
         "top-placement-default": "",
         "title-controls-menu_one": "",
         "title-controls-menu_few": "",
@@ -6919,11 +6915,6 @@
       "delete-text": "Opravdu chcete odstranit: {{name}}?",
       "delete-title": "Odstranit dotaz na vysvětlivky"
     },
-    "annotation-list": {
-      "render-list": {
-        "aria-label-annotation": "Vysvětlivky"
-      }
-    },
     "annotation-query-library-dropdown": {
       "use-saved-query": "Použít uložený dotaz"
     },
@@ -7348,11 +7339,6 @@
       "delete-text": "Opravdu chcete odstranit: {{name}}?",
       "delete-title": "Odstranit odkaz",
       "unnamed": "Nepojmenovaný odkaz"
-    },
-    "link-list": {
-      "render-list": {
-        "aria-label-link": "Odkaz"
-      }
     },
     "link-options": {
       "icon": "Ikona",
@@ -8724,7 +8710,24 @@
       "body-no-logs-volume-available": "Nejsou dostupné žádné informace o objemu pro aktuální dotazy a časový rozsah."
     },
     "metrics-list": {
-      "search-placeholder": ""
+      "collapse-metric": "",
+      "error": "",
+      "expand-metric": "",
+      "filter-values": "",
+      "hide-values": "",
+      "labels-error": "",
+      "loading": "",
+      "loading-labels": "",
+      "loading-values": "",
+      "no-metrics": "",
+      "search-placeholder": "",
+      "show-more": "",
+      "show-more-metrics": "",
+      "show-more-values": "",
+      "show-values": "",
+      "sort-ascending": "",
+      "sort-descending": "",
+      "values-error": ""
     },
     "next-prev-result": {
       "aria-label-next": "Tlačítko Další výsledek",
@@ -11075,6 +11078,83 @@
       "read-more": "",
       "title": ""
     },
+    "overview": {
+      "get-started": {
+        "cards": {
+          "app-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "cloud-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "database-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "demo-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "hosted-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "infra-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "kubernetes": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "logs": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "opentelemetry": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "prometheus": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "visualize-data": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          },
+          "website-monitoring": {
+            "cta": "",
+            "description": "",
+            "title": ""
+          }
+        },
+        "show-less": "",
+        "show-more": "",
+        "title": ""
+      },
+      "options": {
+        "all": "",
+        "attention": "",
+        "available": "",
+        "enabled": "",
+        "get-started": ""
+      },
+      "title": ""
+    },
     "recent-dashboards-tab": {
       "browse": "",
       "clear": "",
@@ -11095,14 +11175,25 @@
       },
       "carousel-label": "",
       "carousel-roledescription": "",
-      "existing": "",
-      "frontend-observability": {
+      "connect-metrics": {
         "action": "",
         "context": "",
         "description": "",
-        "setup-action": "",
         "title": ""
       },
+      "enable-logs": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "title": ""
+      },
+      "enable-logs-k8s": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "title": ""
+      },
+      "existing": "",
       "go-to": "",
       "health": {
         "nodes_one": "",
@@ -11145,16 +11236,69 @@
         "pods_many": "",
         "pods_other": ""
       },
+      "kubernetes-monitoring": {
+        "action": "",
+        "context": "",
+        "description": "",
+        "setup-action": "",
+        "title": ""
+      },
+      "logs": {
+        "action": "",
+        "action-explore": "",
+        "datasource": "",
+        "stats": "",
+        "title": "",
+        "volume": "",
+        "stats-sources_one": "",
+        "stats-sources_few": "",
+        "stats-sources_many": "",
+        "stats-sources_other": ""
+      },
+      "metrics": {
+        "action": "",
+        "action-explore": "",
+        "data-points-per-minute": "",
+        "datasource": "",
+        "disk-worst": "",
+        "series-trend": "",
+        "stats": "",
+        "title": "",
+        "view": "",
+        "disk-eta_one": "",
+        "disk-eta_few": "",
+        "disk-eta_many": "",
+        "disk-eta_other": "",
+        "disk-hosts_one": "",
+        "disk-hosts_few": "",
+        "disk-hosts_many": "",
+        "disk-hosts_other": "",
+        "names_one": "",
+        "names_few": "",
+        "names_many": "",
+        "names_other": "",
+        "series_one": "",
+        "series_few": "",
+        "series_many": "",
+        "series_other": "",
+        "stats-hosts_one": "",
+        "stats-hosts_few": "",
+        "stats-hosts_many": "",
+        "stats-hosts_other": ""
+      },
       "next": "",
       "no-data": {
         "badge": "",
         "connect": "",
         "description": "",
+        "description-partial": "",
+        "description-unknown": "",
         "popular-solutions": "",
         "solution-k6": "",
         "solution-kubernetes": "",
         "solution-synthetics": "",
-        "title": ""
+        "title": "",
+        "title-partial": ""
       },
       "pause": "",
       "previous": "",
@@ -11163,14 +11307,23 @@
       "show": "",
       "switch": "",
       "switchSolution": "",
-      "synthetic-monitoring": {
+      "title": "",
+      "traces": {
         "action": "",
-        "context": "",
-        "description": "",
-        "setup-action": "",
-        "title": ""
-      },
-      "title": ""
+        "action-explore": "",
+        "datasource": "",
+        "stats": "",
+        "throughput": "",
+        "title": "",
+        "spans_one": "",
+        "spans_few": "",
+        "spans_many": "",
+        "spans_other": "",
+        "stats-services_one": "",
+        "stats-services_few": "",
+        "stats-services_many": "",
+        "stats-services_other": ""
+      }
     },
     "starred-dashboards-tab": {
       "empty": "",
@@ -16038,18 +16191,29 @@
     },
     "editor": {
       "aria-label-content": "",
+      "aria-label-mode": "",
+      "footer-line-numbers": "",
+      "format-bold": "",
+      "format-heading": "",
+      "format-italic": "",
+      "language-plaintext": "",
+      "mode-code": "",
+      "mode-html": "",
+      "mode-markdown": "",
+      "mode-picker-label": "",
+      "tooltip-bold": "",
+      "tooltip-bullet-list": "",
+      "tooltip-checklist": "",
+      "tooltip-heading": "",
+      "tooltip-insert-variable": "",
+      "tooltip-italic": "",
+      "tooltip-link": "",
+      "tooltip-numbered-list": "",
+      "tooltip-table": "",
       "view-preview": "",
       "view-split": "",
       "view-write": ""
-    },
-    "mode-options": {
-      "label-code": "",
-      "label-html": "",
-      "label-markdown": ""
-    },
-    "name-language": "",
-    "name-mode": "",
-    "name-show-line-numbers": ""
+    }
   },
   "theme-playground": {
     "label-base-theme": "Základní motiv",
@@ -17369,6 +17533,7 @@
       "delete-modal-confirm": "",
       "delete-modal-title": "",
       "folder-description": "",
+      "folder-description-folder-only": "",
       "folder-label": "",
       "moved": "",
       "name-exists": "",
@@ -17390,7 +17555,11 @@
       "body_one": "",
       "body_few": "",
       "body_many": "",
-      "body_other": ""
+      "body_other": "",
+      "body-folder-only_one": "",
+      "body-folder-only_few": "",
+      "body-folder-only_many": "",
+      "body-folder-only_other": ""
     },
     "page": {
       "delete": "",

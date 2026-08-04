@@ -328,9 +328,6 @@
     }
   },
   "packages/grafana-runtime/src/config.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 1
-    },
     "@typescript-eslint/consistent-type-assertions": {
       "count": 5
     }
@@ -341,11 +338,8 @@
     }
   },
   "packages/grafana-runtime/src/services/LocationService.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    },
     "@typescript-eslint/no-explicit-any": {
-      "count": 5
+      "count": 4
     }
   },
   "packages/grafana-runtime/src/services/backendSrv.ts": {
@@ -652,11 +646,6 @@
   },
   "packages/grafana-ui/src/components/VizTooltip/VizTooltip.tsx": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    }
-  },
-  "packages/grafana-ui/src/components/VizTooltip/VizTooltipFooter.tsx": {
-    "react/no-unescaped-entities": {
       "count": 2
     }
   },
@@ -2123,11 +2112,6 @@
   "public/app/features/profile/UserProfileEditForm.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
-    }
-  },
-  "public/app/features/provisioning/Shared/BranchValidationError.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 26
     }
   },
   "public/app/features/query/components/QueryEditorRow.tsx": {

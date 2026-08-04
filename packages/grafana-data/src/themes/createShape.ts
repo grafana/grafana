@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 
 const DEFAULT_BORDER_RADIUS_SM = 4;
 const DEFAULT_BORDER_RADIUS_MD = 6;
