@@ -1,11 +1,13 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
+import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { getLogger, setLogger } from '../logging/registry';
 
 import {
   getAppPluginMeta,
   getAppPluginMetas,
+  getAppPluginMetasStrict,
   getAppPluginVersion,
   isAppPluginInstalled,
   setAppPluginMetas,
@@ -17,6 +19,7 @@ import { v0alpha1Response } from './test-fixtures/v0alpha1Response';
 jest.mock('./plugins', () => ({ ...jest.requireActual('./plugins'), initPluginMetas: jest.fn() }));
 
 const initPluginMetasMock = jest.mocked(initPluginMetas);
+const originalFetch = global.fetch;
 const getGrafanaExploretracesApp = () =>
   structuredClone(v0alpha1Response.items.find((a) => a.spec.pluginJson.id === 'grafana-exploretraces-app'));
 
@@ -377,5 +380,29 @@ describe('immutability', () => {
     expect(result).toBeDefined();
     expect(result!.dependencies.grafanaDependency).toEqual('>=10.4.0');
     expect(result!.extensions.addedLinks).toHaveLength(0);
+  });
+
+  it('getAppPluginMetasStrict should return a deep clone despite the shared cache', async () => {
+    setTestFlags({ [FlagKeys.PluginsUseMTPlugins]: true });
+    invalidateCachedPromisesCache();
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(structuredClone(v0alpha1Response)),
+    });
+
+    const mutated = await getAppPluginMetasStrict();
+    expect(mutated.length).toBeGreaterThan(0);
+    const originalPath = mutated[0].path;
+
+    mutated[0].path = 'mutated/module.js';
+    mutated.pop();
+
+    const metas = await getAppPluginMetasStrict();
+    expect(metas[0].path).toEqual(originalPath);
+    expect(metas).toHaveLength(mutated.length + 1);
+
+    global.fetch = originalFetch;
+    setTestFlags({});
   });
 });
