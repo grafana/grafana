@@ -10,7 +10,7 @@ import {
   useDataSourceInstance,
   useDataSourceInstanceList,
   useDataSourceInstanceSettings,
-  useDefaultDataSourceInstanceListItem,
+  useDefaultDataSourceInstance,
   useHasDataSourceInstance,
 } from './hooks';
 import { _resetForTests as resetInstanceSettings, initDataSourceInstanceSettings } from './settings';
@@ -155,9 +155,9 @@ describe('useDataSourceInstance', () => {
   });
 });
 
-describe('useDefaultDataSourceInstanceListItem', () => {
+describe('useDefaultDataSourceInstance', () => {
   it('starts loading then resolves to the default instance of the type', async () => {
-    const { result } = renderHook(() => useDefaultDataSourceInstanceListItem('test-db'));
+    const { result } = renderHook(() => useDefaultDataSourceInstance('test-db'));
 
     expect(result.current.isLoading).toBe(true);
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -166,7 +166,7 @@ describe('useDefaultDataSourceInstanceListItem', () => {
   });
 
   it('resolves to undefined for an unknown type', async () => {
-    const { result } = renderHook(() => useDefaultDataSourceInstanceListItem('nonexistent'));
+    const { result } = renderHook(() => useDefaultDataSourceInstance('nonexistent'));
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.item).toBeUndefined();

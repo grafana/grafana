@@ -204,7 +204,7 @@ function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
  *
  * @public
  */
-export async function getDefaultDataSourceInstanceListItem(
+export async function getDefaultDataSourceInstance(
   type: string
 ): Promise<DataSourceInstanceListItem | undefined> {
   const list = (await getDataSourceInstanceList({ type, all: true })).filter((item) => matchesType(item, type));

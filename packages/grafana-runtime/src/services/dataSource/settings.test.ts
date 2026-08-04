@@ -11,7 +11,7 @@ import {
   _resetForTests,
   getDataSourceInstanceList,
   getDataSourceInstanceSettings,
-  getDefaultDataSourceInstanceListItem,
+  getDefaultDataSourceInstance,
   hasDataSourceInstance,
   initDataSourceInstanceSettings,
   reloadDataSourceInstanceSettings,
@@ -624,10 +624,10 @@ describe('instanceSettings', () => {
     });
   });
 
-  describe('getDefaultDataSourceInstanceListItem', () => {
+  describe('getDefaultDataSourceInstance', () => {
     it('returns the default instance of the type', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
-      const item = await getDefaultDataSourceInstanceListItem('test-db');
+      const item = await getDefaultDataSourceInstance('test-db');
       expect(item?.name).toBe('Bravo');
       expect(item?.isDefault).toBe(true);
     });
@@ -638,14 +638,14 @@ describe('instanceSettings', () => {
         Charlie: ds({ id: 3, uid: 'uid-charlie', name: 'Charlie', type: 'test-db' }),
       };
       initDataSourceInstanceSettings(noDefault, 'Alpha');
-      const item = await getDefaultDataSourceInstanceListItem('test-db');
+      const item = await getDefaultDataSourceInstance('test-db');
       // Sorted alphabetically, so Alpha comes first.
       expect(item?.name).toBe('Alpha');
     });
 
     it('returns undefined when no instance of the type exists (does not return -- Grafana --)', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
-      const item = await getDefaultDataSourceInstanceListItem('nonexistent');
+      const item = await getDefaultDataSourceInstance('nonexistent');
       expect(item).toBeUndefined();
     });
 
@@ -669,7 +669,7 @@ describe('instanceSettings', () => {
         }),
       };
       initDataSourceInstanceSettings(noCapability, 'NoOp');
-      const item = await getDefaultDataSourceInstanceListItem('noop');
+      const item = await getDefaultDataSourceInstance('noop');
       expect(item?.name).toBe('NoOp');
     });
 
@@ -684,7 +684,7 @@ describe('instanceSettings', () => {
         }),
       };
       initDataSourceInstanceSettings(withAlias, 'Real');
-      const item = await getDefaultDataSourceInstanceListItem('legacy-type');
+      const item = await getDefaultDataSourceInstance('legacy-type');
       expect(item?.name).toBe('Real');
     });
   });

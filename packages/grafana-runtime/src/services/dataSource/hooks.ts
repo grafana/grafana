@@ -14,7 +14,7 @@ import {
   type GetDataSourceInstanceListFilters,
   getDataSourceInstanceSettings,
   getDataSourceInstanceList,
-  getDefaultDataSourceInstanceListItem,
+  getDefaultDataSourceInstance,
   hasDataSourceInstance,
 } from './settings';
 
@@ -48,7 +48,7 @@ export interface UseDataSourceInstanceResult {
 /**
  * @public
  */
-export interface UseDefaultDataSourceInstanceListItemResult {
+export interface UseDefaultDataSourceInstanceResult {
   isLoading: boolean;
   error?: Error;
   item?: DataSourceInstanceListItem;
@@ -132,13 +132,13 @@ export function useDataSourceInstance(ref?: DataSourceRef | string | null): UseD
 }
 
 /**
- * React hook wrapping {@link getDefaultDataSourceInstanceListItem}. Re-fetches when
+ * React hook wrapping {@link getDefaultDataSourceInstance}. Re-fetches when
  * `type` changes.
  *
  * @public
  */
-export function useDefaultDataSourceInstanceListItem(type: string): UseDefaultDataSourceInstanceListItemResult {
-  const { loading, error, value } = useAsync(() => getDefaultDataSourceInstanceListItem(type), [type]);
+export function useDefaultDataSourceInstance(type: string): UseDefaultDataSourceInstanceResult {
+  const { loading, error, value } = useAsync(() => getDefaultDataSourceInstance(type), [type]);
   return { isLoading: loading, error, item: value };
 }
 
