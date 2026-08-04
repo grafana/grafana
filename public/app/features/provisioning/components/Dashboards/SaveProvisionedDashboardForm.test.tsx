@@ -29,6 +29,9 @@ jest.mock('@grafana/runtime', () => {
           state: 'alpha',
         },
       },
+      // getProvisionedMeta's k8s folder lookup isn't mocked in this suite; keep it disabled
+      // so folder selection doesn't attempt a real getFolder query.
+      provisioningEnabled: false,
     },
   };
 });

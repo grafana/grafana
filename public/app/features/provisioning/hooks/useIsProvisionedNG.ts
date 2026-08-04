@@ -23,8 +23,8 @@ export function useIsProvisionedNG(dashboard: DashboardScene): ProvisionedNGStat
     includeFolderless: !folderName && isNewDashboard,
   });
 
-  // The toggle wins over everything, even repo-managed annotations on the dashboard itself
-  if (!config.featureToggles.provisioning) {
+  // The config flag wins over everything, even repo-managed annotations on the dashboard itself
+  if (!config.provisioningEnabled) {
     return { isProvisioned: false, isLoading: false };
   }
 

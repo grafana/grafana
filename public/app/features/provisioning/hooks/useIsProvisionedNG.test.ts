@@ -39,21 +39,21 @@ function createDashboard({
 }
 
 describe('useIsProvisionedNG', () => {
-  const originalToggles = config.featureToggles;
+  const originalProvisioningEnabled = config.provisioningEnabled;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    config.featureToggles = { ...originalToggles, provisioning: true };
+    config.provisioningEnabled = true;
     locationService.push('/');
     mockRepositoryView();
   });
 
   afterEach(() => {
-    config.featureToggles = originalToggles;
+    config.provisioningEnabled = originalProvisioningEnabled;
   });
 
   it('returns false when provisioning is disabled, even for a managed dashboard with a resolved repository', () => {
-    config.featureToggles = { ...originalToggles, provisioning: false };
+    config.provisioningEnabled = false;
     mockRepositoryView({ repository: { name: 'my-repo' }, isInstanceManaged: true });
 
     const { result } = renderHook(() => useIsProvisionedNG(createDashboard({ managed: true })));

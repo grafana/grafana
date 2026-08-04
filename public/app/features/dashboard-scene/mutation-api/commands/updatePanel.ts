@@ -8,7 +8,7 @@
  */
 
 import { mergeWith, cloneDeep, isArray } from 'lodash';
-import { type z } from 'zod';
+import type * as z from 'zod';
 
 import { type FieldConfigSource } from '@grafana/data';
 

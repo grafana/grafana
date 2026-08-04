@@ -58,7 +58,7 @@ const useResourceRepositoryViewData = ({
   includeInstance,
   includeFolderless,
 }: GetResourceRepositoryArgs): Omit<RepositoryViewData, 'isMissingRepo'> => {
-  const provisioningEnabled = config.featureToggles.provisioning;
+  const provisioningEnabled = config.provisioningEnabled;
   // Skip when caller has no target. This query is shared across many
   // components, so a failing fetch would cycle all of them through retries.
   // `includeInstance`/`includeFolderless` override the skip for root-level lookups.
