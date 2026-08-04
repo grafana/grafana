@@ -25,6 +25,7 @@ describe('FeatureControlProvider', () => {
     jest.clearAllMocks();
 
     window.localStorage.clear();
+    delete window.__grafanaPreviewAssets;
     locationServiceMock.getSearchObject.mockReturnValue({});
     locationServiceMock.getLocationObservable.mockReturnValue({
       subscribe: jest.fn().mockReturnValue({
@@ -87,6 +88,22 @@ describe('FeatureControlProvider', () => {
 
     expectState({ isAccessible: true, isOpen: true });
     expectStorage({ isAccessible: 'true', isOpen: 'true' });
+  });
+
+  it('should default to accessible and open when preview assets are active', () => {
+    window.__grafanaPreviewAssets = 'pr_grafana_123456';
+    renderProvider();
+
+    expectState({ isAccessible: true, isOpen: true });
+  });
+
+  it('should respect a stored dismissal when preview assets are active', () => {
+    window.__grafanaPreviewAssets = 'pr_grafana_123456';
+    window.localStorage.setItem(STORAGE_KEYS.accessible, 'false');
+    window.localStorage.setItem(STORAGE_KEYS.open, 'false');
+    renderProvider();
+
+    expectState({ isAccessible: false, isOpen: false });
   });
 
   it('should update accessibility and open state', async () => {

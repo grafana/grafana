@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react';
 import type { GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { getLocalStorageProvider } from '@grafana/runtime/internal';
-import { Card, Dropdown, Icon, IconButton, Menu, MenuItem, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Card, Dropdown, Icon, IconButton, Menu, MenuItem, Stack, Text, useStyles2 } from '@grafana/ui';
+import { getPreviewAssetsFolder } from 'app/core/utils/previewAssets';
 
 import { FeatureControlFlag, type FeatureControlFlagProps } from './FeatureControlFlag';
 import { useFeatureControlContext } from './FeatureControlProvider';
@@ -18,6 +19,7 @@ export const FeatureControlFlags = () => {
   const { setIsOpen, setIsAccessible } = useFeatureControlContext();
   const [flags, setFlags] = useState<Flag[]>([]);
   const styles = useStyles2(getStyles);
+  const previewAssetsFolder = getPreviewAssetsFolder();
 
   useEffect(() => {
     const loadFlags = () => {
@@ -81,6 +83,30 @@ export const FeatureControlFlags = () => {
         </Trans>
       </Text>
 
+      {previewAssetsFolder && (
+        <Alert
+          severity="info"
+          title={t('feature-control.preview-assets.title', 'Frontend preview active')}
+          action={
+            <Button
+              size="sm"
+              variant="secondary"
+              // Must be a full page load so the request reaches the frontend
+              // service instead of the SPA router
+              onClick={() => window.location.assign('/-/set-preview-assets?clear=1')}
+            >
+              {t('feature-control.preview-assets.stop', 'Stop preview')}
+            </Button>
+          }
+          className={styles.previewAlert}
+        >
+          <Trans i18nKey="feature-control.preview-assets.body" values={{ folder: previewAssetsFolder }}>
+            This session is using frontend assets from the preview build <code>{'{{ folder }}'}</code> instead of the
+            released frontend.
+          </Trans>
+        </Alert>
+      )}
+
       <div className={styles.list}>
         {flags.map((flag) => (
           <FeatureControlFlag key={flag.key} flag={flag} />
@@ -102,6 +128,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   menu: css({
     marginLeft: 'auto',
+  }),
+  previewAlert: css({
+    marginBottom: 0,
   }),
   list: css({
     display: 'flex',
