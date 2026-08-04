@@ -6,7 +6,7 @@ import { type ReactNode, useId, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Field, Icon, IconButton, Input, Spinner, Text, Tooltip, useStyles2, type IconName } from '@grafana/ui';
+import { Button, Field, Icon, IconButton, Input, Spinner, Text, useStyles2, type IconName } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
 import { type PlaylistItemUI } from './types';
@@ -135,6 +135,7 @@ function PlaylistTableRow({
   onUpdateQueryParams,
 }: RowProps) {
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const optionsId = useId();
   const optionSummary = [
     item.interval,
@@ -166,25 +167,15 @@ function PlaylistTableRow({
                 </Text>
               </span>
             )}
-            <Tooltip content={t('playlist.playlist-table-rows.settings', 'Settings')}>
-              <IconButton
-                name="cog"
-                size="md"
-                variant={optionsOpen ? 'primary' : 'secondary'}
-                aria-expanded={optionsOpen}
-                aria-controls={optionsId}
-                aria-label={t('playlist.playlist-table-rows.aria-label-item-settings', 'Settings for {{itemValue}}', {
-                  itemValue: item.value,
-                })}
-                onClick={() => setOptionsOpen((open) => !open)}
-              />
-            </Tooltip>
             <IconButton
-              name="times"
+              name="cog"
               size="md"
-              onClick={() => onDelete(index)}
-              data-testid={selectors.pages.PlaylistForm.itemDelete}
-              tooltip={t('playlist-edit.form.table-delete', 'Delete playlist item')}
+              variant={optionsOpen ? 'primary' : 'secondary'}
+              aria-expanded={optionsOpen}
+              aria-controls={optionsId}
+              tooltip={t('playlist.playlist-table-rows.settings', 'Settings')}
+              tooltipPlacement="top"
+              onClick={() => setOptionsOpen((open) => !open)}
             />
             <div {...provided.dragHandleProps}>
               <Icon
@@ -192,6 +183,29 @@ function PlaylistTableRow({
                 name="draggabledots"
                 size="md"
               />
+            </div>
+            <div className={styles.deleteAction}>
+              {deleteConfirmationOpen ? (
+                <div className={styles.deleteConfirmation}>
+                  <Button autoFocus fill="text" size="sm" onClick={() => setDeleteConfirmationOpen(false)}>
+                    <Trans i18nKey="playlist-edit.form.table-cancel-delete">Cancel</Trans>
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={() => onDelete(index)}>
+                    <Trans i18nKey="playlist-edit.form.table-confirm-delete">Delete</Trans>
+                  </Button>
+                </div>
+              ) : (
+                <IconButton
+                  className={styles.deleteButton}
+                  name="trash-alt"
+                  size="md"
+                  variant="destructive"
+                  data-testid={selectors.pages.PlaylistForm.itemDelete}
+                  tooltip={t('playlist-edit.form.table-delete', 'Delete playlist item')}
+                  tooltipPlacement="top"
+                  onClick={() => setDeleteConfirmationOpen(true)}
+                />
+              )}
             </div>
           </div>
           {optionsOpen && (
@@ -275,6 +289,22 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     optionSummary: css({
       whiteSpace: 'nowrap',
+    }),
+    deleteAction: css({
+      alignItems: 'center',
+      borderLeft: `1px solid ${theme.colors.border.weak}`,
+      display: 'flex',
+      minHeight: theme.spacing(3),
+      marginLeft: theme.spacing(0.5),
+      padding: theme.spacing(0, 0.5, 0, 1),
+    }),
+    deleteButton: css({
+      margin: 0,
+    }),
+    deleteConfirmation: css({
+      alignItems: 'center',
+      display: 'flex',
+      gap: theme.spacing(0.5),
     }),
     options: css({
       display: 'grid',
