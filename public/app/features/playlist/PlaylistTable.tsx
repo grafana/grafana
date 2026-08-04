@@ -37,7 +37,7 @@ export const PlaylistTable = ({
           <Text variant="bodySmall" color="secondary">
             {t(
               'playlist-edit.form.table-item-settings-help',
-              'Each dashboard can override the interval and add URL parameters for variables or time ranges. Duplicate a dashboard to show another combination.'
+              "Use Options to override a dashboard's interval or add URL parameters. Duplicate a dashboard to show another combination."
             )}
           </Text>
         </Box>

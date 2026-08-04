@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { Draggable } from '@hello-pangea/dnd';
+import { Draggable, type DraggableProvided } from '@hello-pangea/dnd';
 import pluralize from 'pluralize';
-import { type ReactNode } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Field, Icon, IconButton, Input, useStyles2, Spinner, type IconName } from '@grafana/ui';
+import { Button, Field, Icon, IconButton, Input, Spinner, Text, useStyles2, type IconName } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
 import { type PlaylistItemUI } from './types';
@@ -101,86 +101,148 @@ export const PlaylistTableRows = ({
   return (
     <>
       {items.map((item, index) => (
-        <Draggable key={`${index}/${item.value}`} draggableId={`${index}`} index={index}>
-          {(provided) => (
-            <div className={styles.row} ref={provided.innerRef} {...provided.draggableProps} role="row">
-              <div
-                className={styles.itemInfo}
-                role="cell"
-                aria-label={t(
-                  'playlist.playlist-table-rows.aria-label-playlist-item',
-                  'Playlist item, {{itemType}}, {{itemValue}}',
-                  { itemType: item.type, itemValue: item.value }
-                )}
-              >
-                {renderItem(item)}
-              </div>
-              <div className={styles.rowActions}>
-                <IconButton
-                  name="times"
-                  size="md"
-                  onClick={() => onDelete(index)}
-                  data-testid={selectors.pages.PlaylistForm.itemDelete}
-                  tooltip={t('playlist-edit.form.table-delete', 'Delete playlist item')}
-                />
-                <div {...provided.dragHandleProps}>
-                  <Icon
-                    title={t('playlist-edit.form.table-drag', 'Reorder playlist item')}
-                    name="draggabledots"
-                    size="md"
-                  />
-                </div>
-              </div>
-              <div className={styles.options}>
-                <Field noMargin label={t('playlist.playlist-table-rows.query-params-addon', 'Parameters')}>
-                  <Input
-                    type="text"
-                    value={item.queryParams ?? ''}
-                    placeholder={t(
-                      'playlist.playlist-table-rows.query-params-placeholder',
-                      'var-host=host1&from=now-6h&to=now'
-                    )}
-                    title={t(
-                      'playlist.playlist-table-rows.query-params-title',
-                      'Paste a dashboard URL or enter its query parameters'
-                    )}
-                    aria-label={t(
-                      'playlist.playlist-table-rows.aria-label-item-query-params',
-                      'URL parameters for {{itemValue}}',
-                      { itemValue: item.value }
-                    )}
-                    onChange={(e) => onUpdateQueryParams?.(index, e.currentTarget.value)}
-                  />
-                </Field>
-                <Field noMargin label={t('playlist.playlist-table-rows.interval-addon', 'Interval')}>
-                  <Input
-                    type="text"
-                    // Controlled so the value always reflects the correct item after a
-                    // reorder and stays synced for submission/validation on every keystroke.
-                    value={item.interval ?? ''}
-                    placeholder={intervalPlaceholder}
-                    invalid={!!item.interval && !isValidInterval(item.interval)}
-                    title={
-                      !!item.interval && !isValidInterval(item.interval)
-                        ? t('playlist.playlist-table-rows.invalid-interval', 'Invalid interval (e.g. 30s, 5m, 1h)')
-                        : undefined
-                    }
-                    aria-label={t(
-                      'playlist.playlist-table-rows.aria-label-item-interval',
-                      'Interval for {{itemValue}}',
-                      { itemValue: item.value }
-                    )}
-                    onChange={(e) => onUpdateInterval?.(index, e.currentTarget.value.trim())}
-                  />
-                </Field>
-              </div>
-            </div>
-          )}
-        </Draggable>
+        <PlaylistTableRow
+          key={`${index}/${item.value}`}
+          item={item}
+          index={index}
+          styles={styles}
+          renderItem={renderItem}
+          onDelete={onDelete}
+          intervalPlaceholder={intervalPlaceholder}
+          onUpdateInterval={onUpdateInterval}
+          onUpdateQueryParams={onUpdateQueryParams}
+        />
       ))}
     </>
   );
 };
+
+interface RowProps extends Omit<Props, 'items'> {
+  item: PlaylistItemUI;
+  index: number;
+  styles: ReturnType<typeof getStyles>;
+  renderItem: (item: PlaylistItemUI) => ReactNode;
+}
+
+function PlaylistTableRow({
+  item,
+  index,
+  styles,
+  renderItem,
+  onDelete,
+  intervalPlaceholder,
+  onUpdateInterval,
+  onUpdateQueryParams,
+}: RowProps) {
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const optionsId = useId();
+  const optionSummary = [
+    item.interval,
+    item.queryParams ? t('playlist.playlist-table-rows.query-params-addon', 'Parameters') : undefined,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  return (
+    <Draggable draggableId={`${index}`} index={index}>
+      {(provided: DraggableProvided) => (
+        <div className={styles.row} ref={provided.innerRef} {...provided.draggableProps} role="row">
+          <div
+            className={styles.itemInfo}
+            role="cell"
+            aria-label={t(
+              'playlist.playlist-table-rows.aria-label-playlist-item',
+              'Playlist item, {{itemType}}, {{itemValue}}',
+              { itemType: item.type, itemValue: item.value }
+            )}
+          >
+            {renderItem(item)}
+          </div>
+          <div className={styles.rowActions}>
+            {!optionsOpen && optionSummary && (
+              <span className={styles.optionSummary}>
+                <Text variant="bodySmall" color="secondary">
+                  {optionSummary}
+                </Text>
+              </span>
+            )}
+            <Button
+              icon="sliders-v-alt"
+              size="sm"
+              variant="secondary"
+              fill="outline"
+              aria-expanded={optionsOpen}
+              aria-controls={optionsId}
+              aria-label={t('playlist.playlist-table-rows.aria-label-item-options', 'Options for {{itemValue}}', {
+                itemValue: item.value,
+              })}
+              onClick={() => setOptionsOpen((open) => !open)}
+            >
+              <Trans i18nKey="playlist.playlist-table-rows.options">Options</Trans>
+            </Button>
+            <IconButton
+              name="times"
+              size="md"
+              onClick={() => onDelete(index)}
+              data-testid={selectors.pages.PlaylistForm.itemDelete}
+              tooltip={t('playlist-edit.form.table-delete', 'Delete playlist item')}
+            />
+            <div {...provided.dragHandleProps}>
+              <Icon
+                title={t('playlist-edit.form.table-drag', 'Reorder playlist item')}
+                name="draggabledots"
+                size="md"
+              />
+            </div>
+          </div>
+          {optionsOpen && (
+            <div className={styles.options} id={optionsId}>
+              <Field noMargin label={t('playlist.playlist-table-rows.query-params-addon', 'Parameters')}>
+                <Input
+                  type="text"
+                  value={item.queryParams ?? ''}
+                  placeholder={t(
+                    'playlist.playlist-table-rows.query-params-placeholder',
+                    'var-host=host1&from=now-6h&to=now'
+                  )}
+                  title={t(
+                    'playlist.playlist-table-rows.query-params-title',
+                    'Paste a dashboard URL or enter its query parameters'
+                  )}
+                  aria-label={t(
+                    'playlist.playlist-table-rows.aria-label-item-query-params',
+                    'URL parameters for {{itemValue}}',
+                    { itemValue: item.value }
+                  )}
+                  onChange={(e) => onUpdateQueryParams?.(index, e.currentTarget.value)}
+                />
+              </Field>
+              <Field noMargin label={t('playlist.playlist-table-rows.interval-addon', 'Interval')}>
+                <Input
+                  type="text"
+                  // Controlled so the value always reflects the correct item after a
+                  // reorder and stays synced for submission/validation on every keystroke.
+                  value={item.interval ?? ''}
+                  placeholder={intervalPlaceholder}
+                  invalid={!!item.interval && !isValidInterval(item.interval)}
+                  title={
+                    !!item.interval && !isValidInterval(item.interval)
+                      ? t('playlist.playlist-table-rows.invalid-interval', 'Invalid interval (e.g. 30s, 5m, 1h)')
+                      : undefined
+                  }
+                  aria-label={t('playlist.playlist-table-rows.aria-label-item-interval', 'Interval for {{itemValue}}', {
+                    itemValue: item.value,
+                  })}
+                  onChange={(e) => onUpdateInterval?.(index, e.currentTarget.value.trim())}
+                />
+              </Field>
+            </div>
+          )}
+        </div>
+      )}
+    </Draggable>
+  );
+}
 
 function getStyles(theme: GrafanaTheme2) {
   return {
@@ -212,12 +274,18 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       gap: theme.spacing(0.5),
     }),
+    optionSummary: css({
+      whiteSpace: 'nowrap',
+    }),
     options: css({
       display: 'grid',
       gridColumn: '1 / -1',
       gridTemplateColumns: 'minmax(0, 1fr) minmax(88px, 120px)',
       gap: theme.spacing(1),
       marginTop: theme.spacing(1),
+      [theme.breakpoints.down('sm')]: {
+        gridTemplateColumns: 'minmax(0, 1fr)',
+      },
     }),
   };
 }
