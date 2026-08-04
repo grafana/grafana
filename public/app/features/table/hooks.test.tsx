@@ -208,6 +208,7 @@ describe('useCommonTableProps', () => {
       disableKeyboardEvents: true,
       disableSanitizeHtml: false,
       nestedRefactorEnabled: false,
+      contentAwareWidthsEnabled: false,
     });
   });
 

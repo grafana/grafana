@@ -1419,9 +1419,14 @@ export function computeContentAwareColWidths(
     // Text wrapping is cross-cutting: a wrapped column grows in height, not width, so it sizes to
     // its header regardless of cell type. Otherwise the cell type's registered measurer (or the
     // default text measurement) gives the content width, which is then unioned with the header.
+    const cellType = getCellOptions(field).type;
     const measure = shouldTextWrap(field)
       ? undefined
-      : (COL_WIDTH_MEASURERS[getCellOptions(field).type] ?? measureTextColWidth);
+      : (COL_WIDTH_MEASURERS[
+          // auto cells resolve to a sparkline when the field holds time series frames, so resolve
+          // the display mode before the registry lookup (mirrors shouldDebounceWidth).
+          cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType
+        ] ?? measureTextColWidth);
     const cellWidth = measure?.(field, effectiveSampleSize, measureCtx) ?? 0;
 
     const floor = Math.max(COLUMN.MIN_WIDTH, field.config.custom?.minWidth ?? 0);

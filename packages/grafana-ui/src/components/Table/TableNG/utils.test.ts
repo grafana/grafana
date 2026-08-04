@@ -1911,6 +1911,15 @@ describe('TableNG utils', () => {
       expect(compute(fields, COLUMN.DEFAULT_WIDTH)).toEqual([COLUMN.DEFAULT_WIDTH]);
     });
 
+    it('resolves an auto cell to its graphical default (geo) instead of measuring it as text', () => {
+      // No explicit cellOptions, so the cell type is Auto; getAutoRendererDisplayMode maps a geo
+      // field to Geo, which is graphical. availWidth < the default leaves no room to grow, so text
+      // measurement (which would floor to MIN_WIDTH) is distinguishable from the graphical default.
+      const fields: Field[] = [{ name: 'g', type: FieldType.geo, values: [new Point([0, -74.1])], config: {} }];
+
+      expect(compute(fields, 40)).toEqual([COLUMN.DEFAULT_WIDTH]);
+    });
+
     it('sizes a wrapped column to its header, not its (wrapping) content', () => {
       const fields: Field[] = [
         {
