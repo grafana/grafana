@@ -164,6 +164,12 @@ describe('PlaylistForm', () => {
   });
 
   describe('when mounted with a playlist', () => {
+    it('uses the wider responsive playlist editor layout', () => {
+      const { container } = render(<PlaylistForm onSubmit={jest.fn()} playlist={mockPlaylist} />);
+
+      expect(container.querySelector('form')).toHaveStyle({ maxWidth: '800px', width: '100%' });
+    });
+
     it('then name field should have correct value', () => {
       getTestContext();
 
