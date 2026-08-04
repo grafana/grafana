@@ -1224,9 +1224,6 @@ const HEADER_ICON_SPACE = 16 + 4; // ICON_WIDTH + ICON_GAP, matches useHeaderHei
 const TARGET_MEASUREMENTS = 2000;
 const MIN_SAMPLE = 20;
 const MAX_SAMPLE = 100;
-// Precisely measuring only the few longest-by-length strings keeps measureText calls to O(1) per
-// column while still catching proportional-font width (e.g. "WWW" is wider than "iiiiii").
-const MEASURE_CANDIDATES = 3;
 
 export interface ContentAwareColWidthsOptions {
   typographyCtx: TypographyCtx;
@@ -1255,36 +1252,18 @@ function formatCellValue(field: Field, value: unknown): string {
 }
 
 /**
- * Measures the pixel width of the longest content in a field. To keep this cheap we first pick the
- * `MEASURE_CANDIDATES` longest strings by character length, then run the (more expensive)
- * canvas `measureText` only on those.
+ * Estimates the pixel width of the longest content in a field from character count. Width is
+ * proportional to length under `avgCharWidth`, so the longest-by-length value is the widest — we
+ * just track the max length and scale it, no per-value canvas measurement. This trades exact
+ * proportional-font width (e.g. "WWW" vs "iiiiii") for a cheap estimate the global cap bounds.
  */
-function measureLongestContentWidth(field: Field, sampleSize: number, ctx: TypographyCtx): number {
+function measureLongestContentWidth(field: Field, sampleSize: number, avgCharWidth: number): number {
   const len = Math.min(sampleSize, field.values.length);
-  const candidates: string[] = [];
-  let shortestCandidateLen = 0;
-
+  let maxLen = 0;
   for (let i = 0; i < len; i++) {
-    const str = formatCellValue(field, field.values[i]);
-    if (str.length === 0) {
-      continue;
-    }
-    if (candidates.length < MEASURE_CANDIDATES) {
-      candidates.push(str);
-      shortestCandidateLen = Math.min(...candidates.map((c) => c.length));
-    } else if (str.length > shortestCandidateLen) {
-      // replace the shortest current candidate
-      const shortestIdx = candidates.findIndex((c) => c.length === shortestCandidateLen);
-      candidates[shortestIdx] = str;
-      shortestCandidateLen = Math.min(...candidates.map((c) => c.length));
-    }
+    maxLen = Math.max(maxLen, formatCellValue(field, field.values[i]).length);
   }
-
-  let maxWidth = 0;
-  for (const candidate of candidates) {
-    maxWidth = Math.max(maxWidth, ctx.ctx.measureText(candidate).width);
-  }
-  return maxWidth;
+  return maxLen * avgCharWidth;
 }
 
 /**
@@ -1294,8 +1273,14 @@ function measureLongestContentWidth(field: Field, sampleSize: number, ctx: Typog
  * width (chip padding + inter-pill gaps) on roughly one line, which the global cap then bounds so
  * long arrays wrap to a few lines rather than one-pill-per-line. The floor is the widest single
  * pill so no chip is ever clipped. Mirrors {@link getPillCellHeightMeasurer} / PillCell geometry.
+ *
+ * Chip text is estimated from character count (`avgCharWidth`) rather than canvas-measured: pills
+ * render at a smaller font, so an exact measurement would need its own typography context, and
+ * that precision isn't worth it for an auto-width heuristic the global cap already bounds. Reusing
+ * the body `avgCharWidth` slightly over-estimates the smaller pill text, which errs toward roomier
+ * columns — the safe direction for avoiding clipped chips.
  */
-function measurePillContentWidth(field: Field, sampleSize: number, pillCtx: TypographyCtx): number {
+function measurePillContentWidth(field: Field, sampleSize: number, avgCharWidth: number): number {
   const len = Math.min(sampleSize, field.values.length);
   let widestPill = 0;
   let rowTotalSum = 0;
@@ -1309,10 +1294,10 @@ function measurePillContentWidth(field: Field, sampleSize: number, pillCtx: Typo
 
     let rowTotal = 0;
     for (const pill of pills) {
-      // PillCell renders formattedValueToString(field.display(pill)), so measure the same text —
+      // PillCell renders formattedValueToString(field.display(pill)), so estimate from that text —
       // value mappings or units can change the chip's on-screen length. formatCellValue falls back
       // to String(pill) when the field has no display processor.
-      const pillWidth = pillCtx.ctx.measureText(formatCellValue(field, pill)).width + PILLS_SPACING;
+      const pillWidth = formatCellValue(field, pill).length * avgCharWidth + PILLS_SPACING;
       widestPill = Math.max(widestPill, pillWidth);
       rowTotal += pillWidth;
     }
@@ -1328,7 +1313,15 @@ function measurePillContentWidth(field: Field, sampleSize: number, pillCtx: Typo
   return Math.max(rowTotalSum / rowCount, widestPill);
 }
 
-/** Width the header label needs, including its filter/type-icon affordances. */
+/**
+ * Width the header label needs, including its filter/type-icon affordances.
+ *
+ * Unlike body/pill content, the header is canvas-measured exactly rather than estimated from
+ * `avgCharWidth`. It's the only measurement that sets a hard lower bound: a wrapped column sizes to
+ * its header alone (its cells grow in height, not width), so an under-estimate here truncates the
+ * title outright — there's no wider cell content to absorb the slack. Exactness is also affordable
+ * here: it's one short string measured once per column, not a value sampled across many rows.
+ */
 function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boolean): number {
   const textWidth = ctx.ctx.measureText(getDisplayName(field)).width;
   let iconSpace = 0;
@@ -1343,8 +1336,6 @@ function measureHeaderWidth(field: Field, ctx: TypographyCtx, showTypeIcons: boo
 
 interface ColWidthMeasureCtx {
   typographyCtx: TypographyCtx;
-  /** lazily-created pill-font context, shared across pill columns (most tables have none). */
-  getPillCtx: () => TypographyCtx;
 }
 
 /**
@@ -1357,11 +1348,11 @@ type MeasureColWidth = (field: Field, sampleSize: number, ctx: ColWidthMeasureCt
 // pictorial — so they take a fixed default instead of being measured.
 const measureGraphicalColWidth: MeasureColWidth = () => COLUMN.DEFAULT_WIDTH;
 
-const measurePillColWidth: MeasureColWidth = (field, sampleSize, { getPillCtx }) =>
-  measurePillContentWidth(field, sampleSize, getPillCtx()) + CELL_CHROME;
+const measurePillColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
+  measurePillContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_CHROME;
 
 const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) =>
-  measureLongestContentWidth(field, sampleSize, typographyCtx) + CELL_CHROME;
+  measureLongestContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_CHROME;
 
 // Singleton registry mirroring the buildCellHeightMeasurers factory map: cell types that size
 // differently from the default text measurement register here; anything absent falls back to
@@ -1422,14 +1413,7 @@ export function computeContentAwareColWidths(
   const contentWidths = new Map<number, number>();
   let contentTotal = 0;
 
-  // Pills render at a smaller font, so they need their own measuring context. Created lazily and
-  // reused across pill columns, since most tables have none.
-  let pillCtx: TypographyCtx | undefined;
-  const measureCtx: ColWidthMeasureCtx = {
-    typographyCtx,
-    getPillCtx: () =>
-      (pillCtx ??= createTypographyContext(PILLS_FONT_SIZE, typographyCtx.fontFamily, typographyCtx.letterSpacing)),
-  };
+  const measureCtx: ColWidthMeasureCtx = { typographyCtx };
 
   for (const i of autoIdxs) {
     const field = fields[i];
@@ -1441,11 +1425,8 @@ export function computeContentAwareColWidths(
     const cellType = getCellOptions(field).type;
     const measure = shouldTextWrap(field)
       ? undefined
-      : (COL_WIDTH_MEASURERS[
-          // auto cells resolve to a sparkline when the field holds time series frames, so resolve
-          // the display mode before the registry lookup (mirrors shouldDebounceWidth).
-          cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType
-        ] ?? measureTextColWidth);
+      : (COL_WIDTH_MEASURERS[cellType === TableCellDisplayMode.Auto ? getAutoRendererDisplayMode(field) : cellType] ??
+        measureTextColWidth);
     const cellWidth = measure?.(field, effectiveSampleSize, measureCtx) ?? 0;
 
     const floor = Math.max(COLUMN.MIN_WIDTH, field.config.custom?.minWidth ?? 0);

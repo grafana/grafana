@@ -1790,9 +1790,10 @@ describe('TableNG utils', () => {
   });
 
   describe('computeContentAwareColWidths', () => {
-    // Deterministic text measurement: every glyph is CHAR_W px wide, so a string of length L
-    // measures L * CHAR_W. jsdom's real canvas measureText returns 0, which would make width
-    // assertions meaningless. CELL_CHROME = 2 * CELL_PADDING + BORDER_RIGHT = 13.
+    // Deterministic text measurement: every glyph is CHAR_W px wide, so a string of length L is
+    // CHAR_W * L. Header widths are canvas-measured, so we mock measureText; body/pill content is
+    // estimated from avgCharWidth, so we pin that to CHAR_W too (jsdom's real measureText returns
+    // 0, which would otherwise make both meaningless). CELL_CHROME = 2 * CELL_PADDING + BORDER_RIGHT = 13.
     const CHAR_W = 8;
     const CELL_CHROME = 2 * TABLE.CELL_PADDING + TABLE.BORDER_RIGHT;
 
@@ -1804,6 +1805,7 @@ describe('TableNG utils', () => {
         .mockImplementation(((text: string) => ({
           width: String(text).length * CHAR_W,
         })) as typeof typographyCtx.ctx.measureText);
+      typographyCtx.avgCharWidth = CHAR_W;
       return typographyCtx;
     };
 
@@ -1979,9 +1981,9 @@ describe('TableNG utils', () => {
     });
 
     describe('pill columns', () => {
-      // Pills measure at the smaller pill font in their own context, so we mock measureText on the
-      // prototype to cover both the body and pill contexts. Pill geometry: 12px chip padding + 4px
-      // inter-pill gap (see the per-case comments below).
+      // Pill chip text is estimated from character count using the body ctx's avgCharWidth (no
+      // separate pill-font measurement), which makeTypographyCtx pins to CHAR_W. Pill geometry:
+      // 12px chip padding + 4px inter-pill gap (see the per-case comments below).
       const pillField = (name: string, values: unknown[]): Field => ({
         name,
         type: FieldType.other,
@@ -1989,15 +1991,8 @@ describe('TableNG utils', () => {
         config: { custom: { cellOptions: { type: TableCellDisplayMode.Pill } } },
       });
 
-      const computeWithPills = (fields: Field[], availWidth: number) => {
-        jest
-          .spyOn(CanvasRenderingContext2D.prototype, 'measureText')
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          .mockImplementation(((text: string) => ({ width: String(text).length * CHAR_W })) as never);
-        return computeContentAwareColWidths(fields, availWidth, {
-          typographyCtx: createTypographyContext(14, 'sans-serif', 0.15),
-        });
-      };
+      const computeWithPills = (fields: Field[], availWidth: number) =>
+        computeContentAwareColWidths(fields, availWidth, { typographyCtx: makeTypographyCtx() });
 
       it('sizes to fit an average row of pills across a couple of entries, not the longest value', () => {
         // one row: "AB" (2*8+12=28) + gap 4 + "CDE" (3*8+12=36) => rowTotal 68; +CELL_CHROME 13 = 81.
