@@ -4,6 +4,7 @@ import { render } from 'test/test-utils';
 import {
   getPlaylistCustomViewChannelName,
   PLAYLIST_CUSTOM_VIEW_MESSAGE,
+  PLAYLIST_CUSTOM_VIEW_TITLE_PARAM,
   PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM,
 } from 'app/features/playlist/customView';
 
@@ -36,9 +37,18 @@ describe('DashboardPlaylistViewBanner', () => {
   it('returns the current dashboard state to the playlist editor', async () => {
     const { user } = render(<DashboardPlaylistViewBanner />, {
       historyOptions: {
-        initialEntries: [`/d/uid/name?var-host=prod&from=now-6h&to=now&${PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM}=token-1`],
+        initialEntries: [
+          `/d/uid/name?var-host=prod&from=now-6h&to=now&dtab=Performance&${PLAYLIST_CUSTOM_VIEW_TOKEN_PARAM}=token-1&${PLAYLIST_CUSTOM_VIEW_TITLE_PARAM}=Operations+rotation`,
+        ],
       },
     });
+
+    expect(screen.getByText('Configuring “Operations rotation” playlist custom view')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Adjust this dashboard to the view you want—including variables, time range, timezone, and selected tabs—then use this view in the playlist.'
+      )
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Use this view' }));
 
@@ -46,7 +56,7 @@ describe('DashboardPlaylistViewBanner', () => {
     expect(postMessage).toHaveBeenCalledWith({
       type: PLAYLIST_CUSTOM_VIEW_MESSAGE,
       token: 'token-1',
-      queryString: 'var-host=prod&from=now-6h&to=now',
+      queryString: 'var-host=prod&from=now-6h&to=now&dtab=Performance',
     });
     expect(closeChannel).toHaveBeenCalled();
     expect(window.close).toHaveBeenCalled();
