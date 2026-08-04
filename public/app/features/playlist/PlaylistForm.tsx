@@ -106,7 +106,7 @@ export const PlaylistForm = ({
   };
 
   return (
-    <Form<PlaylistSpec> onSubmit={doSubmit} validateOn={'onBlur'}>
+    <Form<PlaylistSpec> onSubmit={doSubmit} validateOn={'onBlur'} maxWidth={800}>
       {({ register, errors, watch }) => {
         // Block saving on any unparseable per-item interval (the input isn't part of the RHF form).
         const hasInvalidItemInterval = items.some((item) => item.interval && !isValidInterval(item.interval));
