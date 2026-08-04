@@ -6,7 +6,7 @@ import { type ReactNode } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, IconButton, Input, useStyles2, Spinner, type IconName } from '@grafana/ui';
+import { Field, Icon, IconButton, Input, useStyles2, Spinner, type IconName } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 
 import { type PlaylistItemUI } from './types';
@@ -105,7 +105,7 @@ export const PlaylistTableRows = ({
           {(provided) => (
             <div className={styles.row} ref={provided.innerRef} {...provided.draggableProps} role="row">
               <div
-                className={styles.actions}
+                className={styles.itemInfo}
                 role="cell"
                 aria-label={t(
                   'playlist.playlist-table-rows.aria-label-playlist-item',
@@ -115,48 +115,7 @@ export const PlaylistTableRows = ({
               >
                 {renderItem(item)}
               </div>
-              <div className={styles.actions}>
-                <Input
-                  className={styles.rightMargin}
-                  width={35}
-                  type="text"
-                  addonBefore={t('playlist.playlist-table-rows.query-params-addon', 'Parameters')}
-                  value={item.queryParams ?? ''}
-                  placeholder={t(
-                    'playlist.playlist-table-rows.query-params-placeholder',
-                    'var-host=host1&from=now-6h&to=now'
-                  )}
-                  title={t(
-                    'playlist.playlist-table-rows.query-params-title',
-                    'Paste a dashboard URL or enter its query parameters'
-                  )}
-                  aria-label={t(
-                    'playlist.playlist-table-rows.aria-label-item-query-params',
-                    'URL parameters for {{itemValue}}',
-                    { itemValue: item.value }
-                  )}
-                  onChange={(e) => onUpdateQueryParams?.(index, e.currentTarget.value)}
-                />
-                <Input
-                  className={styles.rightMargin}
-                  width={10}
-                  type="text"
-                  addonBefore={t('playlist.playlist-table-rows.interval-addon', 'Interval')}
-                  // Controlled so the value always reflects the correct item after a
-                  // reorder and stays synced for submission/validation on every keystroke.
-                  value={item.interval ?? ''}
-                  placeholder={intervalPlaceholder}
-                  invalid={!!item.interval && !isValidInterval(item.interval)}
-                  title={
-                    !!item.interval && !isValidInterval(item.interval)
-                      ? t('playlist.playlist-table-rows.invalid-interval', 'Invalid interval (e.g. 30s, 5m, 1h)')
-                      : undefined
-                  }
-                  aria-label={t('playlist.playlist-table-rows.aria-label-item-interval', 'Interval for {{itemValue}}', {
-                    itemValue: item.value,
-                  })}
-                  onChange={(e) => onUpdateInterval?.(index, e.currentTarget.value.trim())}
-                />
+              <div className={styles.rowActions}>
                 <IconButton
                   name="times"
                   size="md"
@@ -172,6 +131,49 @@ export const PlaylistTableRows = ({
                   />
                 </div>
               </div>
+              <div className={styles.options}>
+                <Field noMargin label={t('playlist.playlist-table-rows.query-params-addon', 'Parameters')}>
+                  <Input
+                    type="text"
+                    value={item.queryParams ?? ''}
+                    placeholder={t(
+                      'playlist.playlist-table-rows.query-params-placeholder',
+                      'var-host=host1&from=now-6h&to=now'
+                    )}
+                    title={t(
+                      'playlist.playlist-table-rows.query-params-title',
+                      'Paste a dashboard URL or enter its query parameters'
+                    )}
+                    aria-label={t(
+                      'playlist.playlist-table-rows.aria-label-item-query-params',
+                      'URL parameters for {{itemValue}}',
+                      { itemValue: item.value }
+                    )}
+                    onChange={(e) => onUpdateQueryParams?.(index, e.currentTarget.value)}
+                  />
+                </Field>
+                <Field noMargin label={t('playlist.playlist-table-rows.interval-addon', 'Interval')}>
+                  <Input
+                    type="text"
+                    // Controlled so the value always reflects the correct item after a
+                    // reorder and stays synced for submission/validation on every keystroke.
+                    value={item.interval ?? ''}
+                    placeholder={intervalPlaceholder}
+                    invalid={!!item.interval && !isValidInterval(item.interval)}
+                    title={
+                      !!item.interval && !isValidInterval(item.interval)
+                        ? t('playlist.playlist-table-rows.invalid-interval', 'Invalid interval (e.g. 30s, 5m, 1h)')
+                        : undefined
+                    }
+                    aria-label={t(
+                      'playlist.playlist-table-rows.aria-label-item-interval',
+                      'Interval for {{itemValue}}',
+                      { itemValue: item.value }
+                    )}
+                    onChange={(e) => onUpdateInterval?.(index, e.currentTarget.value.trim())}
+                  />
+                </Field>
+              </div>
             </div>
           )}
         </Draggable>
@@ -183,13 +185,14 @@ export const PlaylistTableRows = ({
 function getStyles(theme: GrafanaTheme2) {
   return {
     row: css({
-      padding: theme.spacing(0.75),
+      padding: theme.spacing(1),
       background: theme.colors.background.secondary,
       borderRadius: theme.shape.radius.default,
-      display: 'flex',
+      display: 'grid',
+      gridTemplateColumns: 'minmax(0, 1fr) auto',
+      columnGap: theme.spacing(1),
       alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: '3px',
+      marginBottom: theme.spacing(0.5),
 
       border: `1px solid ${theme.colors.border.medium}`,
       '&:hover': {
@@ -199,14 +202,22 @@ function getStyles(theme: GrafanaTheme2) {
     rightMargin: css({
       marginRight: '5px',
     }),
-    actions: css({
+    itemInfo: css({
       alignItems: 'center',
-      justifyContent: 'center',
       display: 'flex',
+      minWidth: 0,
     }),
-    settings: css({
-      label: 'settings',
-      textAlign: 'right',
+    rowActions: css({
+      alignItems: 'center',
+      display: 'flex',
+      gap: theme.spacing(0.5),
+    }),
+    options: css({
+      display: 'grid',
+      gridColumn: '1 / -1',
+      gridTemplateColumns: 'minmax(0, 1fr) minmax(88px, 120px)',
+      gap: theme.spacing(1),
+      marginTop: theme.spacing(1),
     }),
   };
 }
