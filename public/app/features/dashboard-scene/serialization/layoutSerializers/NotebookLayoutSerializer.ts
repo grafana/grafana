@@ -9,7 +9,13 @@ import { NotebookCellItem } from '../../scene/layout-notebook/NotebookCellItem';
 import { NotebookLayoutManager } from '../../scene/layout-notebook/NotebookLayoutManager';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 
-import { buildLibraryPanel, buildVizPanel } from './utils';
+import { type BuildPanelOptions, buildLibraryPanel, buildVizPanel } from './utils';
+
+// A notebook panel is a document cell, not a dashboard panel: the dashboard dropdown (Share,
+// Explore, Inspect, More…) does not belong on it. Opting out here rather than relying on
+// `meta.isEmbedded` keeps the suppression local to the notebook and honest about what a
+// notebook is. The notebook's own cell menu will replace this.
+const NOTEBOOK_PANEL_OPTIONS: BuildPanelOptions = { menu: false };
 
 export function deserializeNotebookLayout(
   layout: DashboardV2Spec['layout'],
@@ -51,13 +57,20 @@ export function deserializeNotebookLayout(
       // so buildVizPanel (dashboard-typed) rejects the notebook-typed value without this bridge.
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- identical leaf type across the two schemas
       const panel = element as unknown as DashboardPanelKind;
-      cells.push(new NotebookCellItem({ ...base, body: buildVizPanel(panel, panelIdGenerator?.()) }));
+      cells.push(
+        new NotebookCellItem({ ...base, body: buildVizPanel(panel, panelIdGenerator?.(), NOTEBOOK_PANEL_OPTIONS) })
+      );
     } else if (element.kind === 'LibraryPanel') {
       // Same bridge as the Panel branch: identical generated LibraryPanelKind, different module,
       // so buildLibraryPanel (dashboard-typed) needs the notebook-typed value widened through unknown.
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- identical leaf type across the two schemas
       const libraryPanel = element as unknown as DashboardLibraryPanelKind;
-      cells.push(new NotebookCellItem({ ...base, body: buildLibraryPanel(libraryPanel, panelIdGenerator?.()) }));
+      cells.push(
+        new NotebookCellItem({
+          ...base,
+          body: buildLibraryPanel(libraryPanel, panelIdGenerator?.(), NOTEBOOK_PANEL_OPTIONS),
+        })
+      );
     } else if (element.kind === 'Cell') {
       cells.push(new NotebookCellItem({ ...base, content: element.spec.content }));
     }

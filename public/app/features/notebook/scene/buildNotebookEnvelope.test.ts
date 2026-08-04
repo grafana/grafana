@@ -52,15 +52,17 @@ describe('buildNotebookEnvelope', () => {
     expect(envelope.spec.cursorSync).toBeDefined();
   });
 
-  it('denies every permission because the notebook view is read-only', () => {
+  // Dashboard affordances are excluded by construction (own chrome, no dashboard URL keys, no
+  // panel menu), not by denying permissions here — so the envelope no longer suppresses anything.
+  it('grants permissions and leaves affordance decisions to NotebookScene', () => {
     const envelope = buildNotebookEnvelope(notebookResource());
 
     expect(envelope.access).toEqual({
-      canSave: false,
-      canEdit: false,
-      canDelete: false,
-      canShare: false,
-      canStar: false,
+      canSave: true,
+      canEdit: true,
+      canDelete: true,
+      canShare: true,
+      canStar: true,
     });
   });
 });

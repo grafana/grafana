@@ -29,6 +29,9 @@ interface NotebookLayoutManagerState extends SceneObjectState {
   // dependency cycle.
   title?: string;
   tags?: string[];
+  // Mirrored from the scene's edit mode so cell chrome (drag handles, insert buttons, inline
+  // editors) can be gated without reaching up to the scene. Nothing reads it yet.
+  isEditing?: boolean;
 }
 
 export class NotebookLayoutManager
@@ -74,6 +77,10 @@ export class NotebookLayoutManager
   // intentionally invisible to the rest of the scene (query runner, edit tooling).
   public getVizPanels(): VizPanel[] {
     return this.state.cells.map((cell) => cell.state.body).filter((body): body is VizPanel => body !== undefined);
+  }
+
+  public editModeChanged(isEditing: boolean): void {
+    this.setState({ isEditing });
   }
 
   // Editing (add/reorder/remove) is out of scope for the POC; these satisfy the

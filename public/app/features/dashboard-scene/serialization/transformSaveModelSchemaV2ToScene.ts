@@ -80,6 +80,7 @@ import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
+import { type DashboardSceneState } from '../scene/types/dashboard';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { transformV2ToV1AnnotationQuery } from './annotations';
@@ -109,11 +110,18 @@ export type TypedVariableModelV2 =
   | AdhocVariableKind
   | SwitchVariableKind;
 
-export function transformSaveModelSchemaV2ToScene(
+/**
+ * Builds the scene state for a v2 spec, without constructing the scene itself.
+ *
+ * Exported so sibling resources that render through the same scene runtime (the notebook) can
+ * construct their own DashboardScene subclass from this state. Keeping the construction on the
+ * caller side is what lets `features/notebook` depend on `dashboard-scene` and not the reverse.
+ */
+export function buildV2SceneState(
   dto: DashboardWithAccessInfo<DashboardV2Spec>,
   options?: LoadDashboardOptions
-): DashboardScene {
-  const { spec: dashboard, metadata, apiVersion } = dto;
+): Partial<DashboardSceneState> {
+  const { spec: dashboard, metadata } = dto;
 
   const isSnapshot = Boolean(metadata.annotations?.[AnnoKeyDashboardIsSnapshot]);
 
@@ -223,77 +231,81 @@ export function transformSaveModelSchemaV2ToScene(
     dashboardProfiler
   );
 
-  const dashboardScene = new DashboardScene(
-    {
-      preferences: templateLayoutManager
-        ? {
-            defaultLayoutTemplate: templateLayoutManager,
-          }
-        : undefined,
-      description: dashboard.description,
-      editable: dashboard.editable,
-      preload: dashboard.preload,
-      isDirty: false,
-      links: [...(options?.defaultLinks ?? []), ...dashboard.links],
-      meta,
-      tags: dashboard.tags,
-      title: dashboard.title,
-      uid: metadata.name,
-      version: metadata.generation,
-      body: layoutManager,
-      $timeRange: new SceneTimeRange({
-        // Use defaults when time is empty to match DashboardModel behavior
-        from: dashboard.timeSettings.from || defaultTimeSettingsSpec().from,
-        to: dashboard.timeSettings.to || defaultTimeSettingsSpec().to,
-        fiscalYearStartMonth: dashboard.timeSettings.fiscalYearStartMonth,
-        timeZone: dashboard.timeSettings.timezone,
-        weekStart: dashboard.timeSettings.weekStart,
-        UNSAFE_nowDelay: dashboard.timeSettings.nowDelay,
+  return {
+    preferences: templateLayoutManager
+      ? {
+          defaultLayoutTemplate: templateLayoutManager,
+        }
+      : undefined,
+    description: dashboard.description,
+    editable: dashboard.editable,
+    preload: dashboard.preload,
+    isDirty: false,
+    links: [...(options?.defaultLinks ?? []), ...dashboard.links],
+    meta,
+    tags: dashboard.tags,
+    title: dashboard.title,
+    uid: metadata.name,
+    version: metadata.generation,
+    body: layoutManager,
+    $timeRange: new SceneTimeRange({
+      // Use defaults when time is empty to match DashboardModel behavior
+      from: dashboard.timeSettings.from || defaultTimeSettingsSpec().from,
+      to: dashboard.timeSettings.to || defaultTimeSettingsSpec().to,
+      fiscalYearStartMonth: dashboard.timeSettings.fiscalYearStartMonth,
+      timeZone: dashboard.timeSettings.timezone,
+      weekStart: dashboard.timeSettings.weekStart,
+      UNSAFE_nowDelay: dashboard.timeSettings.nowDelay,
+    }),
+    $variables: getVariables(dashboard, meta.isSnapshot ?? false, options?.defaultVariables),
+    $behaviors: [
+      new behaviors.CursorSync({
+        sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
       }),
-      $variables: getVariables(dashboard, meta.isSnapshot ?? false, options?.defaultVariables),
-      $behaviors: [
-        new behaviors.CursorSync({
-          sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
-        }),
-        queryController,
-        interactionTracker,
-        registerDashboardMacro,
-        registerPanelInteractionsReporter,
-        new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
-        addPanelsOnLoadBehavior,
-        new DashboardReloadBehavior({
-          reloadOnParamsChange:
-            config.featureToggles.reloadDashboardsOnParamsChange &&
-            Boolean(metadata.annotations?.[AnnoReloadOnParamsChange]),
-          uid: metadata.name,
-        }),
-        ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),
-        new DefaultControlsBehavior(),
-      ],
-      $data: new DashboardDataLayerSet({
-        annotationLayers,
-        alertStatesLayer,
+      queryController,
+      interactionTracker,
+      registerDashboardMacro,
+      registerPanelInteractionsReporter,
+      new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
+      addPanelsOnLoadBehavior,
+      new DashboardReloadBehavior({
+        reloadOnParamsChange:
+          config.featureToggles.reloadDashboardsOnParamsChange &&
+          Boolean(metadata.annotations?.[AnnoReloadOnParamsChange]),
+        uid: metadata.name,
       }),
-      controls: new DashboardControls({
-        timePicker: new SceneTimePicker({
-          quickRanges: dashboard.timeSettings.quickRanges,
-          defaultQuickRanges: config.quickRanges,
-        }),
-        refreshPicker: new SceneRefreshPicker({
-          refresh: dashboard.timeSettings.autoRefresh,
-          intervals: dashboard.timeSettings.autoRefreshIntervals,
-          withText: true,
-        }),
-        hideTimeControls: dashboard.timeSettings.hideTimepicker,
+      ...(enableProfiling ? [dashboardAnalyticsInitializer] : []),
+      new DefaultControlsBehavior(),
+    ],
+    $data: new DashboardDataLayerSet({
+      annotationLayers,
+      alertStatesLayer,
+    }),
+    controls: new DashboardControls({
+      timePicker: new SceneTimePicker({
+        quickRanges: dashboard.timeSettings.quickRanges,
+        defaultQuickRanges: config.quickRanges,
       }),
-    },
-    'v2'
-  );
+      refreshPicker: new SceneRefreshPicker({
+        refresh: dashboard.timeSettings.autoRefresh,
+        intervals: dashboard.timeSettings.autoRefreshIntervals,
+        withText: true,
+      }),
+      hideTimeControls: dashboard.timeSettings.hideTimepicker,
+    }),
+  };
+}
 
-  dashboardScene.setInitialSaveModel(dto.spec, dto.metadata, apiVersion);
+export function transformSaveModelSchemaV2ToScene(
+  dto: DashboardWithAccessInfo<DashboardV2Spec>,
+  options?: LoadDashboardOptions
+): DashboardScene {
+  const dashboardScene = new DashboardScene(buildV2SceneState(dto, options), 'v2');
+
+  dashboardScene.setInitialSaveModel(dto.spec, dto.metadata, dto.apiVersion);
 
   // Enable panel profiling for this dashboard using the composed SceneRenderProfiler
-  enablePanelProfilingForDashboard(dashboardScene, metadata.name);
+  enablePanelProfilingForDashboard(dashboardScene, dto.metadata.name);
 
   return dashboardScene;
 }

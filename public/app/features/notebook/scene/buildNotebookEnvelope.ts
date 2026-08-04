@@ -32,14 +32,17 @@ export function buildNotebookEnvelope(notebook: Resource<NotebookSpec>): Dashboa
     metadata: notebook.metadata,
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- notebook overlays dashboard defaults; layout/elements are the notebook's sibling kinds
     spec: spec as unknown as DashboardV2Spec,
-    // The notebook view is read-only, so every permission is denied. This is honest rather than
-    // relying only on the scene's isEmbedded flag to hide edit/share affordances.
+    // Notebook permissions are not modelled on the resource yet, so the envelope grants them and
+    // NotebookScene decides what is actually reachable. Nothing is suppressed here: dashboard
+    // affordances are excluded by construction — the page renders its own chrome, the notebook
+    // declares no dashboard URL keys, and panel cells opt out of the dashboard menu in
+    // NotebookLayoutSerializer. (This previously set meta.isEmbedded to fake all of that.)
     access: {
-      canSave: false,
-      canEdit: false,
-      canDelete: false,
-      canShare: false,
-      canStar: false,
+      canSave: true,
+      canEdit: true,
+      canDelete: true,
+      canShare: true,
+      canStar: true,
     },
   };
 }

@@ -11,6 +11,7 @@ import { NotebookLayoutManager } from 'app/features/dashboard-scene/scene/layout
 import { dispatch } from 'app/store/store';
 import { DashboardRoutes } from 'app/types/dashboard';
 
+import { NotebookScene } from '../scene/NotebookScene';
 import { buildNotebookEnvelope } from '../scene/buildNotebookEnvelope';
 
 import { getNotebookScenePageStateManager } from './NotebookScenePageStateManager';
@@ -108,7 +109,7 @@ describe('NotebookScenePageStateManager', () => {
   });
 
   describe('transformResponseToScene', () => {
-    it('marks the scene read-only and pushes title and tags onto the notebook layout', () => {
+    it('builds a NotebookScene and pushes title and tags onto the notebook layout', () => {
       const envelope = buildNotebookEnvelope(notebookResource());
 
       const scene = getNotebookScenePageStateManager().transformResponseToScene(envelope, {
@@ -116,7 +117,7 @@ describe('NotebookScenePageStateManager', () => {
         route: DashboardRoutes.Notebook,
       });
 
-      expect(scene?.state.meta.isEmbedded).toBe(true);
+      expect(scene).toBeInstanceOf(NotebookScene);
 
       const body = scene?.state.body;
       expect(body).toBeInstanceOf(NotebookLayoutManager);

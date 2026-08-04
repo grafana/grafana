@@ -48,7 +48,17 @@ import { transformMappingsToV1 } from '../transformToV1TypesUtils';
 import { transformDataTopic } from '../transformToV2TypesUtils';
 import { normalizeTransformation } from '../transformationCompat';
 
-export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
+export interface BuildPanelOptions {
+  /**
+   * Attach the dashboard panel menu (View / Edit / Share / Explore / Inspect / More).
+   * Defaults to true. Sibling resources that render panels but want their own panel
+   * affordances (the notebook) pass false rather than suppressing the menu through
+   * dashboard meta flags.
+   */
+  menu?: boolean;
+}
+
+export function buildVizPanel(panel: PanelKind, id?: number, opts?: BuildPanelOptions): VizPanel {
   const titleItems: SceneObject[] = [];
 
   titleItems.push(
@@ -112,7 +122,7 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
     vizPanelState._UNSAFE_customMigrationHandler = getV2AngularMigrationHandler(angularMigration);
   }
 
-  if (!config.publicDashboardAccessToken) {
+  if (!config.publicDashboardAccessToken && (opts?.menu ?? true)) {
     vizPanelState.menu = new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     });
@@ -130,7 +140,7 @@ export function buildVizPanel(panel: PanelKind, id?: number): VizPanel {
   return new VizPanel(vizPanelState);
 }
 
-export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPanel {
+export function buildLibraryPanel(panel: LibraryPanelKind, id?: number, opts?: BuildPanelOptions): VizPanel {
   const titleItems: SceneObject[] = [];
 
   titleItems.push(
@@ -175,7 +185,7 @@ export function buildLibraryPanel(panel: LibraryPanelKind, id?: number): VizPane
     _UNSAFE_clearPreviousFieldValues: true,
   };
 
-  if (!config.publicDashboardAccessToken) {
+  if (!config.publicDashboardAccessToken && (opts?.menu ?? true)) {
     vizPanelState.menu = new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     });
