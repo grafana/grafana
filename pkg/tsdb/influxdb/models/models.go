@@ -31,6 +31,11 @@ type Tag struct {
 	Operator  string
 	Value     string
 	Condition string
+	// Type holds the InfluxDB field data type (for example "float", "integer",
+	// "boolean" or "string") when it is known. It lets renderTags decide whether
+	// a "::field" value should be quoted in a WHERE clause. It is optional and
+	// may be empty, in which case the type is inferred from the value.
+	Type string
 }
 
 type Select []QueryPart

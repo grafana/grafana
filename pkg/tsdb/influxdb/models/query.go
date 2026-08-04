@@ -17,6 +17,7 @@ var (
 	regexpMeasurementPattern        = regexp.MustCompile(`^\/.*\/$`)
 	regexMatcherWithStartEndPattern = regexp.MustCompile(`^/\^(.*)\$/$`)
 	regexpRawQueryWhere             = regexp.MustCompile(`(?i)WHERE`)
+	regexpNumberPattern             = regexp.MustCompile(`^-?[0-9.]+$`)
 )
 
 func (query *Query) getRawQueryWithAdhocFilters() string {
@@ -99,6 +100,36 @@ func (query *Query) renderAdhocFilters() []string {
 	return renderTags(query.AdhocFilters)
 }
 
+// renderFieldValue formats the value of a "::field" comparison for a WHERE
+// clause. Numeric and boolean fields must stay unquoted so InfluxDB compares
+// them by value; string fields (and any value we cannot classify) are quoted.
+// A known fieldType is authoritative, which lets saved queries with a stored
+// dataType render correctly. Otherwise the type is inferred from the value
+// itself, so existing dashboards are fixed without any extra metadata.
+func renderFieldValue(value string, fieldType string) string {
+	quoted := fmt.Sprintf("'%s'", strings.ReplaceAll(value, `\`, `\\`))
+	lowerValue := strings.ToLower(value)
+
+	switch strings.ToLower(fieldType) {
+	case "float", "integer", "unsigned":
+		return value
+	case "boolean":
+		return lowerValue
+	case "string":
+		return quoted
+	}
+
+	// Without a usable field type, fall back to inferring it from the value.
+	switch {
+	case lowerValue == "true" || lowerValue == "false":
+		return lowerValue
+	case regexpNumberPattern.MatchString(value):
+		return value
+	default:
+		return quoted
+	}
+}
+
 func renderTags(tags []*Tag) []string {
 	res := make([]string, 0, len(tags))
 	for i, tag := range tags {
@@ -123,10 +154,6 @@ func renderTags(tags []*Tag) []string {
 		}
 
 		isOperatorTypeHandler := func(tag *Tag) (string, string) {
-			// Attempt to identify the type of the supplied value
-			var lowerValue = strings.ToLower(tag.Value)
-			var r = regexp.MustCompile(`^(-?)[0-9\.]+$`)
-			var textValue string
 			var operator string
 
 			// Perform operator replacements
@@ -142,23 +169,12 @@ func renderTags(tags []*Tag) []string {
 
 			// Always quote tag values
 			if strings.HasSuffix(tag.Key, "::tag") {
-				textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
-				return textValue, operator
+				return fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`)), operator
 			}
 
-			// Try and discern the type of fields
-			if lowerValue == "true" || lowerValue == "false" {
-				// boolean, don't quote, but make lowercase
-				textValue = lowerValue
-			} else if r.MatchString(tag.Value) {
-				// Integer or float, don't quote
-				textValue = tag.Value
-			} else {
-				// String (or unknown) - quote
-				textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(tag.Value, `\`, `\\`))
-			}
-
-			return removeRegexWrappers(textValue, `'`), operator
+			// Fields keep their natural type: numbers and booleans are left
+			// unquoted, everything else is quoted as a string.
+			return removeRegexWrappers(renderFieldValue(tag.Value, tag.Type), `'`), operator
 		}
 
 		// quote value unless regex or number
@@ -171,7 +187,15 @@ func renderTags(tags []*Tag) []string {
 		case "Is", "Is Not":
 			textValue, tag.Operator = isOperatorTypeHandler(tag)
 		default:
-			textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(removeRegexWrappers(tag.Value, ""), `\`, `\\`))
+			// For explicit field selectors ("name::field") we honour the field
+			// type so numeric and boolean comparisons stay unquoted. Quoting them
+			// would make InfluxDB compare against a string and return no data
+			// (issue #94472). Tags and plain keys keep the always-quote behaviour.
+			if strings.HasSuffix(tag.Key, "::field") {
+				textValue = renderFieldValue(removeRegexWrappers(tag.Value, ""), tag.Type)
+			} else {
+				textValue = fmt.Sprintf("'%s'", strings.ReplaceAll(removeRegexWrappers(tag.Value, ""), `\`, `\\`))
+			}
 		}
 
 		escapedKey := fmt.Sprintf(`"%s"`, tag.Key)

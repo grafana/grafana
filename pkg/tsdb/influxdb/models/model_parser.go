@@ -178,6 +178,13 @@ func parseTags(model *simplejson.Json) ([]*Tag, error) {
 			tag.Condition = condition
 		}
 
+		// dataType is optional. When the UI resolves the InfluxDB field type it
+		// is sent along so renderTags can quote "::field" values correctly.
+		dataType, err := tagJson.Get("dataType").String()
+		if err == nil {
+			tag.Type = dataType
+		}
+
 		result = append(result, tag)
 	}
 
