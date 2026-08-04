@@ -178,6 +178,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.stateManagerRequireWarm",
+        "resourceVersion": "1785789740487",
+        "creationTimestamp": "2026-08-03T20:42:20Z"
+      },
+      "spec": {
+        "description": "Hold back alert state writes until the state cache has been warmed. For rulers that warm asynchronously, such as the multi-tenant ruler.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.syncExternalAlertmanager",
         "resourceVersion": "1779440584464",
         "creationTimestamp": "2026-05-22T09:03:04Z"
