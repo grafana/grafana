@@ -199,6 +199,21 @@ func TestMapperRegistry_NotebooksUseDashboardPermissionsWithIndependentScopes(t 
 	assert.True(t, notebookMapping.HasFolderSupport())
 }
 
+func TestMapperRegistry_DashboardWinsSharedLegacyActionReverseMapping(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	var reverseMapping Mapping
+	for _, mapping := range reg.GetAll("dashboard.grafana.app") {
+		action, ok := mapping.Action(utils.VerbGet)
+		if ok && action == "dashboards:read" {
+			reverseMapping = mapping
+		}
+	}
+
+	require.NotNil(t, reverseMapping)
+	assert.Equal(t, "dashboards:uid:", reverseMapping.Prefix())
+}
+
 func TestMapperRegistry_SubresourceLookup(t *testing.T) {
 	parentTr := newResourceTranslation("widgets", "uid", true, nil)
 	subTr := translation{
